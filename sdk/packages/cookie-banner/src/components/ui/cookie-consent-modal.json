@@ -1,0 +1,17 @@
+{
+  "name": "cookie-consent-modal",
+  "dependencies": [
+    "lucide-react",
+    "react-hook-form",
+    "@/components/ui/accordion",
+    "@/components/ui/button",
+    "@/components/ui/dialog",
+    "@/components/ui/form",
+    "@/components/ui/switch",
+    "@/types/consent"
+  ],
+  "files": [
+    "components/ui/cookie-consent-modal.tsx",
+    "components/ui/cookie-popup.tsx"
+  ]
+}
