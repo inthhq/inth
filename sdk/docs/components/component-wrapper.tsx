@@ -4,6 +4,7 @@ interface ComponentWrapperProps {
   className?: string;
   children: any;
 }
+
 const ComponentWrapper = ({ className, children }: ComponentWrapperProps) => {
   return (
     <div

@@ -1,0 +1,15 @@
+{
+    "root": true,
+    "title": "Components",
+    "description": "Ready-to-use privacy components.",
+    "icon": "Component",
+    "pages": [
+      "---Guide---",
+      "index",
+      "installation",
+      "cli",
+      "---Components---",
+      "components/cookie-banner"
+    ]
+  }
+  
