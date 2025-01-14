@@ -2,8 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-.ui {
-  --primary: var(--ui-color);
+.components {
+  --primary: var(--components-color);
 }
 
 .core {
@@ -38,7 +38,7 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
 
-    --ui-color: 45.4 93.4% 47.5%;
+    --components-color: 45.4 93.4% 47.5%;
     --core-color: 142.1 70.6% 45.3%;
   }
 
@@ -69,7 +69,7 @@
     --chart-5: 340 75% 55%;
 
     --core-color: 142.4 71.8% 29.2%;
-    --ui-color: 35.5 91.7% 32.9%;
+    --components-color: 35.5 91.7% 32.9%;
   }
 }
 @layer base {
