@@ -1,0 +1,22 @@
+[
+  {
+    "name": "cookie-consent-modal",
+    "type": "registry:ui",
+    "files": [
+      {
+        "path": "better-events/cookie-consent-modal.tsx",
+        "type": "registry:ui"
+      }
+    ]
+  },
+  {
+    "name": "cookie-popup",
+    "type": "registry:ui",
+    "files": [
+      {
+        "path": "better-events/cookie-popup.tsx",
+        "type": "registry:ui"
+      }
+    ]
+  }
+]
