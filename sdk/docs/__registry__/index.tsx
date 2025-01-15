@@ -5,49 +5,20 @@ import * as React from "react"
 
 export const Index: Record<string, any> = {
   "default": {
-    "cookie-consent-modal": {
-      name: "cookie-consent-modal",
-      type: "registry:ui",
-      registryDependencies: undefined,
-      files: ["registry/default/better-events/cookie-consent-modal.tsx"],
-      component: React.lazy(() => import("@/registry/default/better-events/cookie-consent-modal.tsx")),
-      source: "",
-      category: "undefined",
-      subcategory: "undefined",
-      chunks: []
-    },
-    "cookie-popup": {
-      name: "cookie-popup",
-      type: "registry:ui",
-      registryDependencies: undefined,
-      files: ["registry/default/better-events/cookie-popup.tsx"],
-      component: React.lazy(() => import("@/registry/default/better-events/cookie-popup.tsx")),
-      source: "",
-      category: "undefined",
-      subcategory: "undefined",
-      chunks: []
-    },
-    "cookie-consent-modal-demo": {
-      name: "cookie-consent-modal-demo",
-      type: "registry:example",
-      registryDependencies: ["cookie-consent-modal","cookie-popup"],
-      files: ["registry/default/example/cookie-consent-modal-demo.tsx"],
-      component: React.lazy(() => import("@/registry/default/example/cookie-consent-modal-demo.tsx")),
-      source: "",
-      category: "undefined",
-      subcategory: "undefined",
-      chunks: []
-    },
     "utils": {
       name: "utils",
+      description: "",
       type: "registry:lib",
       registryDependencies: undefined,
-      files: ["registry/default/lib/utils.ts"],
+      files: [{
+        path: "registry/default/lib/utils.ts",
+        type: "registry:lib",
+        target: ""
+      }],
+      categories: undefined,
       component: React.lazy(() => import("@/registry/default/lib/utils.ts")),
       source: "",
-      category: "undefined",
-      subcategory: "undefined",
-      chunks: []
+      meta: undefined,
     },
   },
 }

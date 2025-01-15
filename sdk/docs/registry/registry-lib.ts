@@ -1,6 +1,6 @@
 import { Registry } from "@/registry/schema";
 
-export const lib: Registry = [
+export const lib: Registry["items"] = [
   {
     name: "utils",
     type: "registry:lib",
