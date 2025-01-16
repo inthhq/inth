@@ -9,7 +9,8 @@ import { ConsentState, consentTypes } from "./types";
 import { initialState } from "./store.initial-state";
 import { PrivacyConsentState } from "./store.type";
 
-export const store = createStore<PrivacyConsentState>((set, get) => ({
+export const createConsentManagerStore = (namespace: string | undefined = "KoroflowStore") => {
+ const store = createStore<PrivacyConsentState>((set, get) => ({
   ...initialState,
   setConsent: (name, value) => {
     set((state) => {
@@ -26,7 +27,6 @@ export const store = createStore<PrivacyConsentState>((set, get) => ({
     }
   },
   setIsPrivacyDialogOpen: (isOpen) => {
-    console.log("open pp");
     set({ isPrivacyDialogOpen: isOpen });
   },
   saveConsents: (type) => {
@@ -57,6 +57,7 @@ export const store = createStore<PrivacyConsentState>((set, get) => ({
     updateConsentMode();
     callbacks.onConsentGiven?.();
     callbacks.onPreferenceExpressed?.();
+
   },
   resetConsents: () =>
     set((state) => ({
@@ -126,8 +127,14 @@ export const store = createStore<PrivacyConsentState>((set, get) => ({
     set({ includeNonDisplayedConsents: include }),
 }));
 
+
+
 if (typeof window !== "undefined") {
-  (window as any).KoroflowStore = store;
+  (window as any)[namespace] = store;
 }
 
-export default store;
+return store;
+};
+
+
+export default createConsentManagerStore;

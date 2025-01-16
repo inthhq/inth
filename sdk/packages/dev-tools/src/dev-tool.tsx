@@ -8,7 +8,7 @@ import React, {
   useState,
 } from "react";
 import { Router } from "./router/router";
-import { PrivacyConsentState } from "@koroflow/core-js";
+import { NamespaceProps, PrivacyConsentState } from "@koroflow/core-js";
 import { ErrorState } from "./components/error-state";
 import { Header } from "./components/header";
 import DevToolWrapper from "./components/wrapper";
@@ -22,7 +22,7 @@ export const getStore = () => {
   const context = useContext(PrivacyConsentContext);
   if (context === null) {
     throw new Error(
-      "usePrivacyConsentContext must be used within a PrivacyConsentProvider"
+      "useConsentManagerContext must be used within a ConsentManagerProvider"
     );
   }
   
@@ -50,11 +50,10 @@ export const getStore = () => {
 
 export default PrivacyConsentContext;
 
-interface PrivacyConsentProviderProps {
-  namespace?: string;
+interface ConsentManagerProviderProps extends NamespaceProps {
 }
 
-export const KoroflowDevTool: React.FC<PrivacyConsentProviderProps> = ({
+export const KoroflowDevTool: React.FC<ConsentManagerProviderProps> = ({
   namespace = 'KoroflowStore'
 }) => {
   const [state, setState] = useState<PrivacyConsentState | null>(null);

@@ -1,16 +1,14 @@
-// import PlaygroundExampleWrapper from "@/registry/default/example/cookie-consent/playground";
-
-import { PrivacyConsentProvider } from "@koroflow/core-react";
+import { ConsentManagerProvider } from "@koroflow/core-react";
 
 import KoroflowDevTool from "@koroflow/dev-tools";
-import PrivacySettingsModal from "@/components/ui/privacy-setting-modal";
+import ConsentCustomizationModal from "@/registry/default/components/consent/consent-customization-modal";
 import { Button } from "@/components/ui/button";
-import CookieConsentBanner from "@/components/ui/cookie-consent-banner";
+import CookieBanner from "@/registry/default/components/consent/cookie-banner";
 
 export default function PrivacyConsentPage() {
   return (
     <main className="container py-10">
-      <PrivacyConsentProvider
+      <ConsentManagerProvider
         initialGdprTypes={["necessary", "marketing", "functionality", "measurement"]}
         initialComplianceSettings={{
           gdpr: { enabled: true, appliesGlobally: true, applies: true },
@@ -29,14 +27,14 @@ export default function PrivacyConsentPage() {
             Explore our privacy consent management tools
           </p>
           <div className="space-x-4">
-            <PrivacySettingsModal>
+            <ConsentCustomizationModal>
               <Button>Open Privacy Settings</Button>
-            </PrivacySettingsModal>
+            </ConsentCustomizationModal>
           </div>
         </div>
-        <CookieConsentBanner />
+        <CookieBanner />
         <KoroflowDevTool />
-      </PrivacyConsentProvider>
+      </ConsentManagerProvider>
     </main>
   );
 }

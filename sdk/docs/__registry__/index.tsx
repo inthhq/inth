@@ -5,6 +5,33 @@ import * as React from "react"
 
 export const Index: Record<string, any> = {
   "default": {
+    "consent-solution": {
+      name: "consent-solution",
+      description: "",
+      type: "registry:ui",
+      registryDependencies: [],
+      files: [{
+        path: "registry/default/components/consent/cookie-banner.tsx",
+        type: "registry:ui",
+        target: ""
+      },{
+        path: "registry/default/components/consent/overlay.tsx",
+        type: "registry:ui",
+        target: ""
+      },{
+        path: "registry/default/components/consent/consent-customization-modal.tsx",
+        type: "registry:ui",
+        target: ""
+      },{
+        path: "registry/default/components/consent/consent-customization-widget.tsx",
+        type: "registry:ui",
+        target: ""
+      }],
+      categories: undefined,
+      component: React.lazy(() => import("@/registry/default/components/consent/cookie-banner.tsx")),
+      source: "",
+      meta: undefined,
+    },
     "utils": {
       name: "utils",
       description: "",
@@ -17,6 +44,51 @@ export const Index: Record<string, any> = {
       }],
       categories: undefined,
       component: React.lazy(() => import("@/registry/default/lib/utils.ts")),
+      source: "",
+      meta: undefined,
+    },
+    "consent-solution-demo": {
+      name: "consent-solution-demo",
+      description: "",
+      type: "registry:example",
+      registryDependencies: ["consent-solution"],
+      files: [{
+        path: "registry/default/examples/consent-solution-demo.tsx",
+        type: "registry:example",
+        target: ""
+      }],
+      categories: undefined,
+      component: React.lazy(() => import("@/registry/default/examples/consent-solution-demo.tsx")),
+      source: "",
+      meta: undefined,
+    },
+    "consent-solution-minimal-demo": {
+      name: "consent-solution-minimal-demo",
+      description: "",
+      type: "registry:example",
+      registryDependencies: ["consent-solution"],
+      files: [{
+        path: "registry/default/examples/consent-solution-minimal-demo.tsx",
+        type: "registry:example",
+        target: ""
+      }],
+      categories: undefined,
+      component: React.lazy(() => import("@/registry/default/examples/consent-solution-minimal-demo.tsx")),
+      source: "",
+      meta: undefined,
+    },
+    "consent-solution-callback-demo": {
+      name: "consent-solution-callback-demo",
+      description: "",
+      type: "registry:example",
+      registryDependencies: ["consent-solution"],
+      files: [{
+        path: "registry/default/examples/consent-solution-callback-demo.tsx",
+        type: "registry:example",
+        target: ""
+      }],
+      categories: undefined,
+      component: React.lazy(() => import("@/registry/default/examples/consent-solution-callback-demo.tsx")),
       source: "",
       meta: undefined,
     },

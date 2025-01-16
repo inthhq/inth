@@ -1,8 +1,9 @@
 // src/index.ts
 export {
-  PrivacyConsentProvider,
-  usePrivacyConsent,
+  ConsentManagerProvider,
+
 } from "./privacy-consent-widget";
+export { useConsentManager } from "./hooks/use-consent-manager";
 
 // Re-export types and constants
 export { consentTypes } from "@koroflow/core-js";
