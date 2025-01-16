@@ -242,8 +242,8 @@ importers:
   packages/core/react:
     dependencies:
       '@koroflow/core-js':
-        specifier: workspace:*
-        version: link:../js
+        specifier: 0.0.1-beta.1
+        version: 0.0.1-beta.1(@types/react@19.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react:
         specifier: ^16.8.0 || ^17.0.0 || ^18.0.0
         version: 18.3.1
@@ -270,8 +270,8 @@ importers:
   packages/dev-tools:
     dependencies:
       '@koroflow/core-js':
-        specifier: workspace:*
-        version: link:../core/js
+        specifier: 0.0.1-beta.1
+        version: 0.0.1-beta.1(@types/react@19.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-accordion':
         specifier: 1.2.2
         version: 1.2.2(@types/react-dom@19.0.3(@types/react@19.0.7))(@types/react@19.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -1012,6 +1012,12 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.25':
     resolution: {integrity: sha512-vNk6aEwybGtawWmy/PzwnGDOjCkLWSD2wqvjGGAgOAwCGWySYXfYoxt00IJkTF+8Lb57DwOb3Aa0o9CApepiYQ==}
+
+  '@koroflow/core-js@0.0.1-beta.1':
+    resolution: {integrity: sha512-vAcu0jmQez4dD2Nhw/VctlBnZlgShH6yfXYBhzVe+sLfkOx7CKM1ugzdTrDaOXWX2RkLKOCivOiI4ml+UOrENA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
 
   '@mdx-js/mdx@3.1.0':
     resolution: {integrity: sha512-/QxEhPAvGwbQmy1Px8F899L5Uc2KZ6JtXwlCgJmjSTBedwOZkByYcBG4GceIGPXRDsmfxhHazuS+hlOShRLeDw==}
@@ -4817,6 +4823,16 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
+
+  '@koroflow/core-js@0.0.1-beta.1(@types/react@19.0.7)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      zustand: 5.0.3(@types/react@19.0.7)(react@18.3.1)
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - use-sync-external-store
 
   '@mdx-js/mdx@3.1.0(acorn@8.14.0)':
     dependencies:
