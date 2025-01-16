@@ -62,10 +62,10 @@ importers:
 
   docs:
     dependencies:
-      '@better-events/core-react':
+      '@koroflow/core-react':
         specifier: workspace:*
         version: link:../packages/core/react
-      '@better-events/dev-tools':
+      '@koroflow/dev-tools':
         specifier: workspace:*
         version: link:../packages/dev-tools
       '@radix-ui/react-accordion':
@@ -226,9 +226,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.3
         version: 19.0.3(@types/react@19.0.7)
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
       tsup:
         specifier: ^8.3.5
         version: 8.3.5(jiti@2.4.2)(postcss@8.5.0)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
@@ -238,7 +235,7 @@ importers:
 
   packages/core/react:
     dependencies:
-      '@better-events/core-js':
+      '@koroflow/core-js':
         specifier: workspace:*
         version: link:../js
       react:
@@ -257,9 +254,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.3
         version: 19.0.3(@types/react@19.0.7)
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
       tsup:
         specifier: ^8.3.5
         version: 8.3.5(jiti@2.4.2)(postcss@8.5.0)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
@@ -269,7 +263,7 @@ importers:
 
   packages/dev-tools:
     dependencies:
-      '@better-events/core-js':
+      '@koroflow/core-js':
         specifier: workspace:*
         version: link:../core/js
       '@radix-ui/react-accordion':
@@ -336,9 +330,6 @@ importers:
       postcss:
         specifier: ^8.4.49
         version: 8.5.0
-      rimraf:
-        specifier: ^6.0.1
-        version: 6.0.1
       tsup:
         specifier: ^8.3.5
         version: 8.3.5(jiti@2.4.2)(postcss@8.5.0)(tsx@4.19.2)(typescript@5.7.3)(yaml@2.7.0)
