@@ -1,28 +1,26 @@
 [
-  {
-    "name": "consent-solution",
-    "type": "registry:ui",
-    "dependencies": [
-      "@koroflow/core-react"
-    ],
-    "registryDependencies": [],
-    "files": [
-      {
-        "path": "components/consent/cookie-banner.tsx",
-        "type": "registry:ui"
-      },
-      {
-        "path": "components/consent/overlay.tsx",
-        "type": "registry:ui"
-      },
-      {
-        "path": "components/consent/consent-customization-modal.tsx",
-        "type": "registry:ui"
-      },
-      {
-        "path": "components/consent/consent-customization-widget.tsx",
-        "type": "registry:ui"
-      }
-    ]
-  }
+	{
+		"name": "consent-solution",
+		"type": "registry:ui",
+		"dependencies": ["@koroflow/core-react"],
+		"registryDependencies": [],
+		"files": [
+			{
+				"path": "components/consent/cookie-banner.tsx",
+				"type": "registry:ui"
+			},
+			{
+				"path": "components/consent/overlay.tsx",
+				"type": "registry:ui"
+			},
+			{
+				"path": "components/consent/consent-customization-modal.tsx",
+				"type": "registry:ui"
+			},
+			{
+				"path": "components/consent/consent-customization-widget.tsx",
+				"type": "registry:ui"
+			}
+		]
+	}
 ]

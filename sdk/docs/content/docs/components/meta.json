@@ -1,7 +1,5 @@
 {
-  "title": "Components",
-  "defaultOpen": true,
-  "pages": [
-    "..."
-  ]
+	"title": "Components",
+	"defaultOpen": true,
+	"pages": ["..."]
 }

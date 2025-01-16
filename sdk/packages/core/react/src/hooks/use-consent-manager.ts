@@ -1,6 +1,9 @@
 "use client";
+import type {
+	PrivacyConsentState,
+	createConsentManagerStore,
+} from "@koroflow/core-js";
 import { useContext } from "react";
-import { PrivacyConsentState, createConsentManagerStore } from "@koroflow/core-js";
 import { ConsentStateContext } from "../privacy-consent-widget";
 
 /**
@@ -11,9 +14,9 @@ import { ConsentStateContext } from "../privacy-consent-widget";
  * @remarks
  * This hook must be used within a ConsentManagerProvider component.
  * It provides access to both the consent state and store methods for managing consent.
- * 
+ *
  * @throws {Error} If used outside of a ConsentManagerProvider
- * 
+ *
  * @example
  * ```tsx
  * function MyComponent() {
@@ -30,19 +33,21 @@ import { ConsentStateContext } from "../privacy-consent-widget";
  * }
  * ```
  */
-export function useConsentManager(): PrivacyConsentState & ReturnType<typeof createConsentManagerStore>["getState"] {
-  const context = useContext(ConsentStateContext);
-  
-  if (context === undefined) {
-    throw new Error(
-      "useConsentManager must be used within a ConsentManagerProvider"
-    );
-  }
+export function useConsentManager(): PrivacyConsentState &
+	ReturnType<typeof createConsentManagerStore>["getState"] {
+	const context = useContext(ConsentStateContext);
 
-  const storeState = context.store.getState();
-  
-  return {
-    ...context.state,
-    ...storeState,
-  } as PrivacyConsentState & ReturnType<typeof createConsentManagerStore>["getState"];
+	if (context === undefined) {
+		throw new Error(
+			"useConsentManager must be used within a ConsentManagerProvider",
+		);
+	}
+
+	const storeState = context.store.getState();
+
+	return {
+		...context.state,
+		...storeState,
+	} as PrivacyConsentState &
+		ReturnType<typeof createConsentManagerStore>["getState"];
 }

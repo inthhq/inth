@@ -1,3 +1,3 @@
-import { Registry } from "@/registry/schema";
+import type { Registry } from "@/registry/schema";
 
 export const blocks: Registry["items"] = [];

@@ -1,4 +1,3 @@
-import { KoroflowDevTool } from './dev-tool';
+import { KoroflowDevTool } from "./dev-tool";
 
 export default KoroflowDevTool;
-

@@ -1,4 +1,4 @@
-import { AllConsentNames } from "./gdpr";
+import type { AllConsentNames } from "./gdpr";
 
 /**
  * Represents the state of consents for different types of data processing.
@@ -20,9 +20,9 @@ export type ComplianceRegion = "gdpr" | "ccpa" | "lgpd" | "usStatePrivacy";
  * @property applies - Specifies if the regulation applies to the current context.
  */
 export type ComplianceSettings = {
-  enabled: boolean;
-  appliesGlobally: boolean;
-  applies: boolean | undefined;
+	enabled: boolean;
+	appliesGlobally: boolean;
+	applies: boolean | undefined;
 };
 
 /**
@@ -31,7 +31,7 @@ export type ComplianceSettings = {
  * @property honorDoNotTrack - Indicates whether the application should respect the user's Do Not Track setting.
  */
 export type PrivacySettings = {
-  honorDoNotTrack: boolean;
+	honorDoNotTrack: boolean;
 };
 
 /**
@@ -42,22 +42,22 @@ export type PrivacySettings = {
  * This type can also be `null` if no consent information is available.
  */
 export type HasConsentedProps = {
-  time: number;
-  type: "all" | "custom" | "necessary";
+	time: number;
+	type: "all" | "custom" | "necessary";
 } | null;
 
 /**
  * Props for the consent manager provider.
  */
 export type NamespaceProps = {
-/**
-   * The namespace to use for the consent manager store.
-   * 
-   * @default "KoroflowStore"
-   * @remarks
-   * This property determines the global namespace under which the consent manager store is attached to the `window` object.
-   * By default, it is set to `window.KoroflowStore`, allowing for centralized access and management of consent states across the application.
-   * This can be customized to avoid conflicts with other global variables or to support multiple consent managers.
-   */
-namespace?: string;
-}
+	/**
+	 * The namespace to use for the consent manager store.
+	 *
+	 * @default "KoroflowStore"
+	 * @remarks
+	 * This property determines the global namespace under which the consent manager store is attached to the `window` object.
+	 * By default, it is set to `window.KoroflowStore`, allowing for centralized access and management of consent states across the application.
+	 * This can be customized to avoid conflicts with other global variables or to support multiple consent managers.
+	 */
+	namespace?: string;
+};

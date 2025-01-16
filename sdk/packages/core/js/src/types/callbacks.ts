@@ -20,11 +20,13 @@ export type CallbackFunction<T = void> = (arg: T) => void;
  * - `onError`: Called when an error occurs, with an optional argument detailing the error message.
  */
 export interface Callbacks {
-  onReady?: CallbackFunction;
-  onBannerShown?: CallbackFunction;
-  onBannerClosed?: CallbackFunction;
-  onConsentGiven?: CallbackFunction<{ consentType: string } | void>;
-  onConsentRejected?: CallbackFunction<{ reason: string } | void>;
-  onPreferenceExpressed?: CallbackFunction<{ preferences: Record<string, boolean> } | void>;
-  onError?: CallbackFunction<string>;
+	onReady?: CallbackFunction;
+	onBannerShown?: CallbackFunction;
+	onBannerClosed?: CallbackFunction;
+	onConsentGiven?: CallbackFunction<{ consentType: string } | undefined>;
+	onConsentRejected?: CallbackFunction<{ reason: string } | undefined>;
+	onPreferenceExpressed?: CallbackFunction<
+		{ preferences: Record<string, boolean> } | undefined
+	>;
+	onError?: CallbackFunction<string>;
 }

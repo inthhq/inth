@@ -1,12 +1,12 @@
 export default function PrivacyConsentLayout({
-  children,
+	children,
 }: {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }) {
-  return children;
+	return children;
 }
 
 export const metadata = {
-  title: "Privacy Consent Playground",
-  description: "Test and configure privacy consent components",
-}; 
+	title: "Privacy Consent Playground",
+	description: "Test and configure privacy consent components",
+};
