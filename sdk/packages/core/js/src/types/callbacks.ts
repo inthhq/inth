@@ -23,10 +23,8 @@ export interface Callbacks {
 	onReady?: CallbackFunction;
 	onBannerShown?: CallbackFunction;
 	onBannerClosed?: CallbackFunction;
-	onConsentGiven?: CallbackFunction<{ consentType: string } | undefined>;
-	onConsentRejected?: CallbackFunction<{ reason: string } | undefined>;
-	onPreferenceExpressed?: CallbackFunction<
-		{ preferences: Record<string, boolean> } | undefined
-	>;
+	onConsentGiven?: CallbackFunction;
+	onConsentRejected?: CallbackFunction;
+	onPreferenceExpressed?: CallbackFunction;
 	onError?: CallbackFunction<string>;
 }
