@@ -9,6 +9,7 @@ import {
 	useEffect,
 	useState,
 } from "react";
+import type { StoreApi } from "zustand/vanilla";
 import { ErrorState } from "./components/error-state";
 import { Header } from "./components/header";
 import DevToolWrapper from "./components/wrapper";
@@ -16,7 +17,7 @@ import { Router } from "./router/router";
 
 const PrivacyConsentContext = createContext<{
 	state: PrivacyConsentState | null;
-	store: any | null;
+	store: StoreApi<PrivacyConsentState> | null;
 } | null>(null);
 
 export const getStore = () => {
@@ -62,13 +63,17 @@ export const KoroflowDevTool: React.FC<ConsentManagerProviderProps> = ({
 	position = "bottom-right",
 }) => {
 	const [state, setState] = useState<PrivacyConsentState | null>(null);
-	const [store, setStore] = useState<any | null>(null);
+	const [store, setStore] = useState<StoreApi<PrivacyConsentState> | null>(
+		null,
+	);
 	const [isOpen, setIsOpen] = useState(false);
 	const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
 
 	useEffect(() => {
 		const storeInstance =
-			(typeof window !== "undefined" && (window as any)[namespace]) || null;
+			(typeof window !== "undefined" &&
+				(window as Window)[namespace as keyof Window]) ||
+			null;
 
 		if (storeInstance) {
 			setStore(storeInstance);

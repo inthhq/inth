@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useConsentManager } from "@koroflow/core-react";
+import { type AllConsentNames, useConsentManager } from "@koroflow/core-react";
 import { ChevronDown } from "lucide-react";
 
 interface ConsentCustomizationWidgetProps
@@ -46,8 +46,8 @@ const ConsentCustomizationWidget = React.forwardRef<
 	}, [saveConsents, onSave]);
 
 	const handleConsentChange = React.useCallback(
-		(name: string, checked: boolean) => {
-			setConsent(name as any, checked);
+		(name: AllConsentNames, checked: boolean) => {
+			setConsent(name, checked);
 		},
 		[setConsent],
 	);
@@ -66,6 +66,17 @@ const ConsentCustomizationWidget = React.forwardRef<
 							<div
 								className="flex-grow"
 								onClick={() => toggleAccordion(consent.name)}
+								onKeyUp={(e) => {
+									if (e.key === "Enter") {
+										toggleAccordion(consent.name);
+									}
+								}}
+								onKeyDown={(e) => {
+									if (e.key === " ") {
+										e.preventDefault();
+										toggleAccordion(consent.name);
+									}
+								}}
 							>
 								<div className="flex items-center justify-between cursor-pointer">
 									<span className="font-medium capitalize">

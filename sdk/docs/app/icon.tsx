@@ -11,6 +11,7 @@ export const contentType = "image/png";
 // Image generation
 export default function Icon() {
 	return new ImageResponse(
+		// biome-ignore lint/a11y/noSvgWithoutTitle: <explanation>
 		<svg
 			width="32"
 			height="32"
@@ -18,7 +19,6 @@ export default function Icon() {
 			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		>
-			<title>Koroflow Icon</title>
 			<g clip-path="url(#clip0_12_9)">
 				<g filter="url(#filter0_i_12_9)">
 					<rect width="500" height="500" rx="250" fill="#5C8BD6" />

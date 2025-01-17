@@ -31,6 +31,7 @@ export const Ripple = React.memo(function Ripple({
 
 				return (
 					<div
+						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						key={i}
 						className={`absolute animate-ripple rounded-full bg-foreground/25 shadow-xl border [--i:${i}]`}
 						style={

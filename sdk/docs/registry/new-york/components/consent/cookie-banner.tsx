@@ -83,9 +83,9 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 
 		const acceptAll = React.useCallback(() => {
 			const allConsents = Object.keys(consents) as (keyof typeof consents)[];
-			allConsents.forEach((consentName) => {
+			for (const consentName of allConsents) {
 				setConsent(consentName, true);
-			});
+			}
 			saveConsents("all");
 		}, [consents, setConsent, saveConsents]);
 
@@ -123,12 +123,11 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 				{showPopup && !isPrivacyDialogOpen && (
 					<>
 						<Overlay show={showPopup} />
-						<motion.div
+						<motion.dialog
 							className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
 							exit={{ opacity: 0 }}
-							role="dialog"
 							aria-modal="true"
 							aria-labelledby="cookie-consent-title"
 						>
@@ -178,7 +177,7 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 									</CardFooter>
 								</Card>
 							</motion.div>
-						</motion.div>
+						</motion.dialog>
 					</>
 				)}
 			</AnimatePresence>

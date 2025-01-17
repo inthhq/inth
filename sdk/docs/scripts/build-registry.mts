@@ -7,8 +7,6 @@ import { Project, ScriptKind } from "ts-morph";
 import type { z } from "zod";
 import {
 	type Registry,
-	RegistryEntry,
-	registryEntrySchema,
 	registryItemSchema,
 	type registryItemTypeSchema,
 	registrySchema,
@@ -164,8 +162,10 @@ export const Index: Record<string, any> = {
 						isDefault?: boolean;
 					}
 				>();
+				// biome-ignore lint/complexity/noForEach: <explanation>
 				sourceFile.getImportDeclarations().forEach((node) => {
 					const module = node.getModuleSpecifier().getLiteralValue();
+					// biome-ignore lint/complexity/noForEach: <explanation>
 					node.getNamedImports().forEach((item) => {
 						imports.set(item.getText(), {
 							module,
@@ -304,6 +304,7 @@ async function buildStyles(registry: Registry) {
 				continue;
 			}
 
+			// biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
 			let files;
 			if (item.files) {
 				files = await Promise.all(
@@ -448,6 +449,7 @@ async function buildThemes() {
 		await fs.mkdir(colorsTargetPath, { recursive: true });
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	const colorsData: Record<string, any> = {};
 	for (const [color, value] of Object.entries(colors)) {
 		if (typeof value === "string") {
@@ -564,6 +566,7 @@ async function buildThemes() {
 }`;
 
 	for (const baseColor of ["slate", "gray", "zinc", "neutral", "stone"]) {
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		const base: Record<string, any> = {
 			inlineColors: {},
 			cssVars: {},
@@ -585,6 +588,7 @@ async function buildThemes() {
 					const [resolvedBase, scale] = resolvedColor.split("-");
 					const color = scale
 						? colorsData[resolvedBase].find(
+								// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 								(item: any) => item.scale === Number.parseInt(scale),
 							)
 						: colorsData[resolvedBase];
@@ -596,7 +600,9 @@ async function buildThemes() {
 		}
 
 		// Build css vars.
+		//@ts-expect-error
 		base.inlineColorsTemplate = template(BASE_STYLES)({});
+		//@ts-expect-error
 		base.cssVarsTemplate = template(BASE_STYLES_WITH_VARIABLES)({
 			colors: base.cssVars,
 		});
@@ -697,6 +703,7 @@ async function buildThemes() {
 		// ----------------------------------------------------------------------------
 		rimraf.sync(path.join(REGISTRY_PATH, "themes"));
 		for (const baseColor of ["slate", "gray", "zinc", "neutral", "stone"]) {
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 			const payload: Record<string, any> = {
 				name: baseColor,
 				label: baseColor.charAt(0).toUpperCase() + baseColor.slice(1),
@@ -712,6 +719,7 @@ async function buildThemes() {
 						const [resolvedBase, scale] = resolvedColor.split("-");
 						const color = scale
 							? colorsData[resolvedBase].find(
+									// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 									(item: any) => item.scale === Number.parseInt(scale),
 								)
 							: colorsData[resolvedBase];

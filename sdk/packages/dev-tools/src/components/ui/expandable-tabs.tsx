@@ -151,7 +151,12 @@ export function ExpandableTabs({
 		<div ref={outsideClickRef} className={containerClassName}>
 			{tabs.map((tab, index) =>
 				tab.type === "separator" ? (
-					<Separator key={`separator-${index}`} />
+					<Separator
+						key={`separator-${
+							// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+							index
+						}`}
+					/>
 				) : (
 					<TabButton
 						key={`${tab.title}-${index}`}

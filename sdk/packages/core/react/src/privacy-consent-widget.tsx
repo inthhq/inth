@@ -83,11 +83,11 @@ export function ConsentManagerProvider({
 
 		// Initialize compliance settings if provided
 		if (initialComplianceSettings) {
-			Object.entries(initialComplianceSettings).forEach(
-				([region, settings]) => {
-					setComplianceSetting(region as ComplianceRegion, settings);
-				},
-			);
+			for (const [region, settings] of Object.entries(
+				initialComplianceSettings,
+			)) {
+				setComplianceSetting(region as ComplianceRegion, settings);
+			}
 		}
 
 		// Set detected country

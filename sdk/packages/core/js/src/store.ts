@@ -92,15 +92,14 @@ export const createConsentManagerStore = (
 				includeNonDisplayedConsents,
 			} = get();
 			const newConsents = { ...consents };
-
 			if (type === "all") {
-				consentTypes.forEach((consent) => {
+				for (const consent of consentTypes) {
 					newConsents[consent.name] = true;
-				});
+				}
 			} else if (type === "necessary") {
-				consentTypes.forEach((consent) => {
+				for (const consent of consentTypes) {
 					newConsents[consent.name] = consent.name === "necessary";
-				});
+				}
 			}
 
 			const consentInfo = {
@@ -217,6 +216,7 @@ export const createConsentManagerStore = (
 	}));
 
 	if (typeof window !== "undefined") {
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		(window as any)[namespace] = store;
 	}
 
