@@ -6,8 +6,8 @@
 	"module": "dist/esm/index.js",
 	"types": "dist/types/index.d.ts",
 	"publishConfig": {
-        "access": "public"
-      },
+		"access": "public"
+	},
 	"scripts": {
 		"build": "tsup",
 		"build:declarations": "tsc -p tsconfig.declarations.json",

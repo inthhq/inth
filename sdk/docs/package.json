@@ -7,7 +7,7 @@
 		"dev": "next dev",
 		"start": "next start",
 		"postinstall": "fumadocs-mdx",
-		"build:registry": "tsx --tsconfig ./tsconfig.scripts.json ./scripts/build-registry.mts && prettier --loglevel silent --write \"registry/**/*.{ts,tsx,mdx}\" --cache"
+		"build:registry": "tsx --tsconfig ./tsconfig.scripts.json ./scripts/build-registry.mts"
 	},
 	"dependencies": {
 		"@koroflow/core-react": "workspace:*",

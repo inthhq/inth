@@ -7,16 +7,16 @@ import { ui } from "./registry-ui";
 import type { Registry } from "./schema";
 
 export const registry = {
-  name: "koroflow",
-  homepage: "https://koroflow.com/components",
-  items: [
-    ...ui,
-    ...blocks,
-    ...lib,
-    ...hooks,
-    ...themes,
+	name: "koroflow",
+	homepage: "https://koroflow.com/components",
+	items: [
+		...ui,
+		...blocks,
+		...lib,
+		...hooks,
+		...themes,
 
-    // Internal use only.
-    ...examples,
-  ],
+		// Internal use only.
+		...examples,
+	],
 } satisfies Registry;
