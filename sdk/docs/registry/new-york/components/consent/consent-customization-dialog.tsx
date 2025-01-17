@@ -16,7 +16,7 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import ConsentCustomizationWidget from "./consent-customization-widget";
 
-interface ConsentCustomizationModalProps {
+export interface ConsentCustomizationDialogProps {
 	children?: React.ReactNode;
 	triggerClassName?: string;
 	showCloseButton?: boolean;
@@ -42,7 +42,7 @@ const contentVariants = {
 	},
 };
 
-const ModalContent = ({
+const ConsentCustomizationCard = ({
 	onClose,
 	showCloseButton,
 	handleSave,
@@ -78,9 +78,9 @@ const ModalContent = ({
 	</Card>
 );
 
-const ConsentCustomizationModal = React.forwardRef<
+export const ConsentCustomizationDialog = React.forwardRef<
 	HTMLDivElement,
-	ConsentCustomizationModalProps
+	ConsentCustomizationDialogProps
 >(({ children, triggerClassName, showCloseButton = false }, ref) => {
 	const {
 		isPrivacyDialogOpen,
@@ -115,18 +115,17 @@ const ConsentCustomizationModal = React.forwardRef<
 		setIsPrivacyDialogOpen(false);
 	}, [setIsPrivacyDialogOpen]);
 
-	const modalContent = (
+	const dialogContent = (
 		<AnimatePresence mode="wait">
 			{isPrivacyDialogOpen && (
 				<>
 					<Overlay show={isPrivacyDialogOpen} />
-					<motion.div
+					<motion.dialog
 						className="fixed inset-0 z-50 flex items-center justify-center"
 						variants={modalVariants}
 						initial="hidden"
 						animate="visible"
 						exit="exit"
-						role="dialog"
 						aria-modal="true"
 						aria-labelledby="privacy-settings-title"
 					>
@@ -138,14 +137,14 @@ const ConsentCustomizationModal = React.forwardRef<
 							animate="visible"
 							exit="exit"
 						>
-							<ModalContent
+							<ConsentCustomizationCard
 								ref={ref as React.RefObject<HTMLDivElement>}
 								onClose={handleClose}
 								showCloseButton={showCloseButton}
 								handleSave={handleSave}
 							/>
 						</motion.div>
-					</motion.div>
+					</motion.dialog>
 				</>
 			)}
 		</AnimatePresence>
@@ -153,18 +152,18 @@ const ConsentCustomizationModal = React.forwardRef<
 
 	return (
 		<>
-			<div onClick={() => handleOpenChange(true)}>
+			<div
+				onClick={() => handleOpenChange(true)}
+				onKeyUp={(e) => e.key === "Enter" && handleOpenChange(true)}
+				onKeyDown={(e) => e.key === "Enter" && handleOpenChange(true)}
+			>
 				{children || (
 					<Button variant="outline" size="sm" className={triggerClassName}>
-						Customise Consent
+						Customize Consent
 					</Button>
 				)}
 			</div>
-			{isMounted && createPortal(modalContent, document.body)}
+			{isMounted && createPortal(dialogContent, document.body)}
 		</>
 	);
 });
-
-ConsentCustomizationModal.displayName = "ConsentCustomizationModal";
-
-export default ConsentCustomizationModal;

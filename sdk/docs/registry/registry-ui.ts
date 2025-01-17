@@ -18,8 +18,8 @@ export const ui: Registry["items"] = [
 				type: "registry:ui",
 			},
 			{
-				path: "components/consent/consent-customization-modal.tsx",
-				target: "components/consent/consent-customization-modal.tsx",
+				path: "components/consent/consent-customization-dialog.tsx",
+				target: "components/consent/consent-customization-dialog.tsx",
 				type: "registry:ui",
 			},
 			{

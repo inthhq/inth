@@ -1,6 +1,7 @@
 "use client";
 
-import CookieBanner from "@/registry/default/components/consent/cookie-banner";
+import { ConsentCustomizationDialog } from "@/registry/default/components/consent/consent-customization-dialog";
+import { CookieBanner } from "@/registry/default/components/consent/cookie-banner";
 import {
 	ConsentManagerProvider,
 	useConsentManager,
@@ -8,7 +9,6 @@ import {
 import { Cookie, Lock, RefreshCw } from "lucide-react";
 import { useCallback, useEffect } from "react";
 import { Button } from "../components/button";
-import ConsentCustomizationModal from "../components/consent/consent-customization-modal";
 
 export default function PrivacyPopupMinimalDemo() {
 	return (
@@ -64,12 +64,12 @@ export function DemoWidget() {
 				<Cookie className="h-4 w-4 mr-2" />
 				Open Cookie Banner
 			</Button>
-			<ConsentCustomizationModal>
+			<ConsentCustomizationDialog>
 				<Button>
 					<Lock className="h-4 w-4 mr-2" />
 					Open Consent Customization{" "}
 				</Button>
-			</ConsentCustomizationModal>
+			</ConsentCustomizationDialog>
 			<Button onClick={handleResetConsent}>
 				<RefreshCw className="h-4 w-4 mr-2" />
 				Reset Local Storage Consent

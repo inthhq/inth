@@ -16,7 +16,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/registry/default/components/card";
-import ConsentCustomizationModal from "@/registry/default/components/consent/consent-customization-modal";
+import { ConsentCustomizationDialog } from "@/registry/default/components/consent/consent-customization-dialog";
 import { Overlay } from "@/registry/default/components/consent/overlay";
 
 type HorizontalPosition = "left" | "center" | "right";
@@ -166,11 +166,11 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 													Reject All
 												</Button>
 											)}
-											<ConsentCustomizationModal>
+											<ConsentCustomizationDialog>
 												<Button variant="outline" size="sm">
 													Customise Consent
 												</Button>
-											</ConsentCustomizationModal>
+											</ConsentCustomizationDialog>
 										</div>
 										<Button size="sm" onClick={acceptAll}>
 											Accept All

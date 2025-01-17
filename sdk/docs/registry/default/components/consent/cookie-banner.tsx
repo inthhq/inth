@@ -15,7 +15,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/registry/default/components/card";
-import ConsentCustomizationModal from "@/registry/default/components/consent/consent-customization-modal";
+import { ConsentCustomizationDialog } from "@/registry/default/components/consent/consent-customization-dialog";
 import { Overlay } from "@/registry/default/components/consent/overlay";
 
 type HorizontalPosition = "left" | "center" | "right";
@@ -29,7 +29,7 @@ interface PrivacyPopupProps extends React.HTMLAttributes<HTMLDivElement> {
 	showCloseButton?: boolean;
 }
 
-const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
+export const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 	(
 		{
 			bannerDescription = "This site uses cookies and similar technologies to measure and improve your experience and show you personalized content and ads.",
@@ -82,9 +82,9 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 
 		const acceptAll = React.useCallback(() => {
 			const allConsents = Object.keys(consents) as (keyof typeof consents)[];
-			allConsents.forEach((consentName) => {
+			for (const consentName of allConsents) {
 				setConsent(consentName, true);
-			});
+			}
 			saveConsents("all");
 		}, [consents, setConsent, saveConsents]);
 
@@ -173,7 +173,7 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 													Reject All
 												</Button>
 											)}
-											<ConsentCustomizationModal>
+											<ConsentCustomizationDialog>
 												<Button
 													variant="outline"
 													size="sm"
@@ -181,7 +181,7 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 												>
 													Customise Consent
 												</Button>
-											</ConsentCustomizationModal>
+											</ConsentCustomizationDialog>
 										</div>
 										<Button
 											size="sm"
@@ -202,7 +202,3 @@ const CookieBanner = React.forwardRef<HTMLDivElement, PrivacyPopupProps>(
 		return isMounted && createPortal(<BannerContent />, document.body);
 	},
 );
-
-CookieBanner.displayName = "CookieBanner";
-
-export default CookieBanner;

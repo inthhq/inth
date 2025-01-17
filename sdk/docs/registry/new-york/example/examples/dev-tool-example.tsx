@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import ConsentCustomizationModal from "@/registry/default/components/consent/consent-customization-modal";
-import CookieBanner from "@/registry/default/components/consent/cookie-banner";
+import { ConsentCustomizationDialog } from "@/registry/default/components/consent/consent-customization-dialog";
+import { CookieBanner } from "@/registry/default/components/consent/cookie-banner";
 import {
 	ConsentManagerProvider,
 	useConsentManager,
@@ -48,12 +48,12 @@ export function DemoWidget() {
 				<Cookie className="h-4 w-4 mr-2" />
 				Open Cookie Banner
 			</Button>
-			<ConsentCustomizationModal>
+			<ConsentCustomizationDialog>
 				<Button>
 					<Lock className="h-4 w-4 mr-2" />
 					Open Consent Customization{" "}
 				</Button>
-			</ConsentCustomizationModal>
+			</ConsentCustomizationDialog>
 			<Button onClick={handleResetConsent}>
 				<RefreshCw className="h-4 w-4 mr-2" />
 				Reset Local Storage Consent

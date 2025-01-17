@@ -22,9 +22,9 @@ export const Index: Record<string, any> = {
 					target: "components/consent/overlay.tsx",
 				},
 				{
-					path: "registry/default/components/consent/consent-customization-modal.tsx",
+					path: "registry/default/components/consent/consent-customization-dialog.tsx",
 					type: "registry:ui",
-					target: "components/consent/consent-customization-modal.tsx",
+					target: "components/consent/consent-customization-dialog.tsx",
 				},
 				{
 					path: "registry/default/components/consent/consent-customization-widget.tsx",

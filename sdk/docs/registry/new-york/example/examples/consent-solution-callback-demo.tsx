@@ -1,6 +1,6 @@
 "use client";
 
-import CookieBanner from "@/registry/default/components/consent/cookie-banner";
+import { CookieBanner } from "@/registry/default/components/consent/cookie-banner";
 import {
 	ConsentManagerProvider,
 	useConsentManager,

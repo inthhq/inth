@@ -16,9 +16,9 @@
 				"target": "components/consent/overlay.tsx"
 			},
 			{
-				"path": "components/consent/consent-customization-modal.tsx",
+				"path": "components/consent/consent-customization-dialog.tsx",
 				"type": "registry:ui",
-				"target": "components/consent/consent-customization-modal.tsx"
+				"target": "components/consent/consent-customization-dialog.tsx"
 			},
 			{
 				"path": "components/consent/consent-customization-widget.tsx",
