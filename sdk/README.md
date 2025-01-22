@@ -10,11 +10,15 @@ Privacy-first consent management and unified event streaming system. Koroflow he
 │   ├── core/         # Core consent and event management
 │   │   ├── js/       # JavaScript implementation
 │   │   └── react/    # React bindings
+│   ├-─ elements/     # Radix Based Components
+│   ├-─ shadcn/     # Shadcn Based Components
 │   └── dev-tools/    # Development utilities
 ├── docs/            # Documentation site
 └── configs/         # Shared configurations
     ├── eslint-config/
-    └── typescript-config/
+    ├── tailwindcss-transformer/ # ESBuild plugin for compress tailwind classes
+    ├── tsup-config/ # Common config for tsup
+    └── typescript-config/ # Common config for typescript
 ```
 
 ## Development
