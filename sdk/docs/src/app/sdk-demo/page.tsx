@@ -1,7 +1,8 @@
 import KoroflowDevTool from "@koroflow/dev-tools";
 import { ConsentManagerProvider } from "@koroflow/elements/common";
+import { ConsentManagerDialog, ConsentManagerWidget } from "@koroflow/elements/consent-manager";
 import CookieBanner from "@koroflow/elements/cookie-banner";
-import "@koroflow/elements/styles.css";
+import "@koroflow/elements/globals.css";
 
 export default function PrivacyConsentPage() {
 	return (
@@ -24,6 +25,8 @@ export default function PrivacyConsentPage() {
 					<p className="text-xl">Explore our privacy consent management tools</p>
 				</div>
 				<CookieBanner />
+				<ConsentManagerDialog />
+				<ConsentManagerWidget />
 				<KoroflowDevTool />
 			</ConsentManagerProvider>
 		</main>
