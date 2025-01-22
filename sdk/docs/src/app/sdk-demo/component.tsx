@@ -1,11 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {  useConsentManager } from "@koroflow/elements/common"
+import { useConsentManager } from "@koroflow/elements/common";
 import "@koroflow/elements/globals.css";
 import { Cookie, RefreshCw } from "lucide-react";
 import { useCallback } from "react";
-
 
 export function DemoWidget() {
 	const { clearAllData, setShowPopup, setIsPrivacyDialogOpen } = useConsentManager();
