@@ -1,9 +1,7 @@
-import { ConsentManagerProvider } from "@koroflow/core-react";
-
-import { Button } from "@/components/ui/button";
-import { ConsentCustomizationDialog } from "@/registry/default/components/consent/consent-customization-dialog";
-import { CookieBanner } from "@/registry/default/components/consent/cookie-banner";
 import KoroflowDevTool from "@koroflow/dev-tools";
+import { ConsentManagerProvider } from "@koroflow/elements/common";
+import CookieBanner from "@koroflow/elements/cookie-banner";
+import "@koroflow/elements/styles.css";
 
 export default function PrivacyConsentPage() {
 	return (
@@ -31,11 +29,6 @@ export default function PrivacyConsentPage() {
 					<p className="text-xl">
 						Explore our privacy consent management tools
 					</p>
-					<div className="space-x-4">
-						<ConsentCustomizationDialog>
-							<Button>Open Privacy Settings</Button>
-						</ConsentCustomizationDialog>
-					</div>
 				</div>
 				<CookieBanner />
 				<KoroflowDevTool />
