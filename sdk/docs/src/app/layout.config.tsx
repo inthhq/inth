@@ -1,6 +1,7 @@
 import type { LinkItemType } from "fumadocs-ui/layouts/docs";
-// import { Index } from "@koroflow/shadcn/themes/default/components/consent/cookie-banner";
+import * as StatusBadge from "~/components/ui/status-badge";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import { BookText } from "lucide-react";
 export const linkItems: LinkItemType[] = [
 	{
 		type: "icon",
@@ -28,7 +29,10 @@ export const baseOptions: BaseLayoutProps = {
 		title: (
 			<>
 				<span className="font-medium">Koroflow</span>
-				{/* <Badge>Beta</Badge> */}
+				<StatusBadge.Root>
+      {/* <StatusBadge.Icon as={<BookText />} /> */}
+      Beta
+    </StatusBadge.Root>
 			</>
 		),
 		transparentMode: "top",

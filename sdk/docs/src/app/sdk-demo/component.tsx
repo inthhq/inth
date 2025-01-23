@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import  * as Button from "~/components/ui/button";
 import { useConsentManager } from "@koroflow/elements/common";
 import "@koroflow/elements/globals.css";
 import { Cookie, RefreshCw } from "lucide-react";
@@ -28,20 +28,20 @@ export function DemoWidget() {
 			</div>
 
 			<div className="flex flex-row gap-4 py-8 lg:py-0 items-center justify-center max-w-xl mx-auto">
-				<Button onClick={handleOpenCookiePopup}>
-					<Cookie className="h-4 w-4 mr-2" />
+				<Button.Root onClick={handleOpenCookiePopup} mode="lighter">
+					{/* <Button.Icon icon={Cookie}/> */}
 					Open Cookie Banner
-				</Button>
-				<Button onClick={handleOpenConsentCustomization}>
-					<Cookie className="h-4 w-4 mr-2" />
+				</Button.Root>
+				<Button.Root onClick={handleOpenConsentCustomization} mode="lighter">
+				{/* <Button.Icon icon={Cookie}/> */}
 					Open Consent Dialog
-				</Button>
+				</Button.Root>
 			</div>
 			<div className="flex flex-row gap-4 py-8 lg:py-0 items-center justify-center max-w-xl mx-auto">
-				<Button onClick={handleResetConsent} variant="ghost">
-					<RefreshCw className="h-4 w-4 mr-2" />
+				<Button.Root onClick={handleResetConsent} variant="neutral" mode="lighter">
+				{/* <Button.Icon icon={RefreshCw}/> */}
 					Reset Local Storage Consent
-				</Button>
+				</Button.Root>
 			</div>
 		</div>
 	);

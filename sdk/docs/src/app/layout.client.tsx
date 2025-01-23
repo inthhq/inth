@@ -1,8 +1,6 @@
 "use client";
 
-import { GradientIcon } from "@/components/gradient-icon";
 import { cn } from "@/lib/utils";
-import { Waypoints } from "lucide-react";
 import { useParams } from "next/navigation";
 import { type ReactNode, useId } from "react";
 

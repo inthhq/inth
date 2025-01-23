@@ -5,7 +5,7 @@
 	"scripts": {
 		"build:copy-registry": "cp -r ../packages/shadcn/src/public/r ./src/public/r",
 		"build": "pnpm build:copy-registry && next build",
-		"dev": "next dev",
+		"dev": "next dev --turbo",
 		"start": "next start",
 		"postinstall": "fumadocs-mdx"
 	},
@@ -37,7 +37,8 @@
 		"react-dom": "^19.0.0",
 		"react-hook-form": "7.54.2",
 		"shadcn": "2.2.0-canary.2",
-		"tailwind-merge": "2.6.0"
+		"tailwind-merge": "2.6.0",
+		"tailwind-variants": "^0.3.1"
 	},
 	"devDependencies": {
 		"@types/mdx": "^2.0.13",

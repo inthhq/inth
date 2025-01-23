@@ -5,7 +5,7 @@ import { Suspense, lazy, useEffect, useState } from "react";
 
 import { Section } from "@/components/section";
 import { AuroraText } from "@/components/ui/aurora-text";
-import { Button } from "@/components/ui/button";
+import * as Button from "@/components/ui/button";
 import { siteConfig } from "@/lib/config";
 import Link from "next/link";
 
@@ -62,9 +62,9 @@ function HeroCTA() {
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.8, duration: 0.8, ease }}
 			>
-				<Button className="flex items-center gap-2" asChild>
+				<Button.Root className="flex items-center gap-2" asChild>
 					<Link href="/docs/getting-started">Get Started</Link>
-				</Button>
+				</Button.Root>
 			</motion.div>
 		</div>
 	);

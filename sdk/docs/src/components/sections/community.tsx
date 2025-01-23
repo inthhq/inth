@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { Icons } from "@/components/icons";
 import { Section } from "@/components/section";
-import { Button } from "@/components/ui/button";
+import * as Button from "@/components/ui/button";
 import { Ripple } from "@/components/ui/ripple";
 
 export function Community() {
@@ -18,12 +18,12 @@ export function Community() {
 					</p>
 
 					<div className="flex justify-center space-x-4">
-						<Button className="flex items-center gap-2" asChild>
+						<Button.Root className="flex items-center gap-2" asChild>
 							<Link href="https://github.com/koroflow/koroflow">
-								<Icons.github className="h-5 w-5" />
+								<Button.Icon icon={Icons.github} />
 								Become a contributor
 							</Link>
-						</Button>
+						</Button.Root>
 					</div>
 				</div>
 			</div>

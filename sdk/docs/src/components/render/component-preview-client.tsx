@@ -2,7 +2,7 @@
 
 import { Icons } from "@/components/icons";
 import ComponentWrapper from "@/components/render/component-wrapper";
-import { Button } from "@/components/ui/button";
+import  * as Button from "~/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import { RotateCcw } from "lucide-react";
@@ -103,13 +103,14 @@ export function ComponentPreviewClient({
 				<Tab value="Preview" className="p-0 rounded-none">
 					<div className="relative" key={key}>
 						<ComponentWrapper>
-							<Button
+							<Button.Root
 								onClick={() => setKey((prev) => prev + 1)}
 								className="absolute right-1.5 top-1.5 z-10 ml-4 flex items-center rounded-lg px-3 py-1"
-								variant="ghost"
+								variant="neutral"
+								mode="ghost"
 							>
-								<RotateCcw aria-label="restart-btn" size={16} />
-							</Button>
+								<Button.Icon icon={RotateCcw}/>
+							</Button.Root>
 							<React.Suspense
 								fallback={
 									<div className="flex items-center text-sm text-muted-foreground">
