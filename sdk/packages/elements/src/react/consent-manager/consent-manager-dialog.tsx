@@ -20,6 +20,7 @@ import { ConsentManagerWidget } from "./consent-manager-widget";
 import { useConsentManager } from "../common";
 // import { Overlay } from "./atoms/overlay";
 import "./consent-manager-dialog.css";
+import { Overlay } from "./overlay";
 
 export interface ConsentManagerDialogProps {
 	children?: React.ReactNode;
@@ -89,7 +90,7 @@ const ConsentCustomizationCard = ({
 );
 
 export const ConsentManagerDialog = React.forwardRef<HTMLDivElement, ConsentManagerDialogProps>(
-	({ children, triggerClassName, showCloseButton = false }, ref) => {
+	({ showCloseButton = false }, ref) => {
 		const { isPrivacyDialogOpen, setIsPrivacyDialogOpen, setShowPopup, saveConsents } =
 			useConsentManager();
 		const [isMounted, setIsMounted] = React.useState(false);
@@ -99,16 +100,6 @@ export const ConsentManagerDialog = React.forwardRef<HTMLDivElement, ConsentMana
 			setIsMounted(true);
 			return () => setIsMounted(false);
 		}, []);
-
-		const handleOpenChange = React.useCallback(
-			(newOpen: boolean) => {
-				setIsPrivacyDialogOpen(newOpen);
-				if (newOpen) {
-					setShowPopup(false);
-				}
-			},
-			[setIsPrivacyDialogOpen, setShowPopup],
-		);
 
 		const handleSave = React.useCallback(() => {
 			saveConsents("custom");
@@ -123,7 +114,7 @@ export const ConsentManagerDialog = React.forwardRef<HTMLDivElement, ConsentMana
 			<AnimatePresence mode="wait">
 				{isPrivacyDialogOpen && (
 					<>
-						{/* <Overlay /> */}
+						<Overlay />
 						<motion.dialog
 							className="consent-manager-dialog-root"
 							variants={dialogVariants}

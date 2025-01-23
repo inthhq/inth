@@ -18,6 +18,12 @@
 	--kf-accordion-arrow-color: var(--kf-text-soft-400);
 	--kf-accordion-content-color: var(--kf-text-sub-600);
 	--kf-accordion-focus-ring: var(--kf-focus-ring);
+
+	& > :not([hidden]) ~ :not([hidden]) {
+		--kf-space-y-reverse: 0;
+		margin-top: calc(1rem /* 24px */ * calc(1 - var(--kf-space-y-reverse)));
+		margin-bottom: calc(1rem /* 24px */ * var(--kf-space-y-reverse));
+	}
 }
 
 /* Accordion item wrapper */
@@ -27,16 +33,7 @@
 	background-color: hsl(var(--kf-accordion-bg-default));
 	box-shadow: inset 0 0 0 1px hsl(var(--kf-accordion-border-color));
 	transition: all var(--kf-accordion-duration) var(--kf-accordion-ease);
-
-	&:first-child {
-		border-top-left-radius: var(--kf-accordion-radius);
-		border-top-right-radius: var(--kf-accordion-radius);
-	}
-
-	&:last-child {
-		border-bottom-left-radius: var(--kf-accordion-radius);
-		border-bottom-right-radius: var(--kf-accordion-radius);
-	}
+  border-radius: var(--kf-accordion-radius);
 }
 
 .accordion-item:is(:hover, :focus-within, [data-state="open"]) {

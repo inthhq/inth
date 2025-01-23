@@ -53,7 +53,7 @@ export const CookieBannerRejectButton = forwardRef<
 		baseClassName: cn(
 			Button.buttonVariants({
 				variantStyle: "neutral",
-				mode: "lighter",
+				mode: "stroke",
 				size: "small",
 			}).root(),
 			"cookie-banner-reject-button",
@@ -110,7 +110,7 @@ export const CookieBannerAcceptButton = forwardRef<
 		baseClassName: cn(
 			Button.buttonVariants({
 				variantStyle: "primary",
-				mode: "lighter",
+				mode: "stroke",
 				size: "small",
 			}).root(),
 			"cookie-banner-accept-button",
@@ -169,7 +169,7 @@ export const CookieBannerCustomizeButton = forwardRef<
 		baseClassName: cn(
 			Button.buttonVariants({
 				variantStyle: "neutral",
-				mode: "lighter",
+				mode: "stroke",
 				size: "small",
 			}).root(),
 			"cookie-banner-customize-button",

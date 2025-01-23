@@ -81,7 +81,7 @@ export const ConsentManagerWidget = React.forwardRef<HTMLDivElement, ConsentMana
 						<Button.Root
 							onClick={handleDenyConsents}
 							variantStyle="neutral"
-							mode="lighter"
+							mode="stroke"
 							size="small"
 						>
 							Deny
@@ -89,7 +89,7 @@ export const ConsentManagerWidget = React.forwardRef<HTMLDivElement, ConsentMana
 						<Button.Root
 							onClick={handleAcceptAllConsents}
 							variantStyle="neutral"
-							mode="lighter"
+							mode="stroke"
 							size="small"
 						>
 							Accept All
@@ -98,7 +98,7 @@ export const ConsentManagerWidget = React.forwardRef<HTMLDivElement, ConsentMana
 					<Button.Root
 						onClick={handleSaveConsents}
 						variantStyle="primary"
-						mode="lighter"
+						mode="stroke"
 						size="small"
 					>
 						Save
