@@ -1,65 +1,25 @@
-import type { CSSProperties } from "react";
-
-/**
- * Represents a class name string or undefined value.
- * @public
- */
-export type ClassName = string | undefined;
-
-/**
- * Represents a style configuration that can include both inline styles and class names.
- * @public
- */
-export type ClassNameStyle = {
-	/** @remarks CSS properties to be applied inline to the component */
-	style?: CSSProperties;
-	/** @remarks CSS class names to be applied to the component */
-	className?: ClassName;
-};
-
-/**
- * Represents a style value that can be either a class name string or a {@link ClassNameStyle} object.
- * @public
- */
-export type StyleValue = ClassName | ClassNameStyle;
+import type { ThemeValue } from "../theme";
 
 /**
  * Configuration object for styling different parts of the CookieBanner component.
  * @public
  */
-export interface CookieBannerStyles {
+export type CookieBannerTheme = {
 	/** @remarks Styles for the root container element */
-	root?: StyleValue;
+	"cookie-banner.root"?: ThemeValue;
+	"cookie-banner.card"?: ThemeValue;
 	/** @remarks Styles for the main content wrapper */
-	content?: StyleValue;
+	"cookie-banner.header.root": ThemeValue;
 	/** @remarks Styles for the banner title */
-	title?: StyleValue;
+	"cookie-banner.header.title": ThemeValue;
 	/** @remarks Styles for the banner description text */
-	description?: StyleValue;
+	"cookie-banner.header.description": ThemeValue;
 	/** @remarks Styles for the actions container */
-	actions?: StyleValue;
-	/** @remarks Styles for the reject button */
-	rejectButton?: StyleValue;
-	/** @remarks Styles for the customize button */
-	customizeButton?: StyleValue;
-	/** @remarks Styles for the accept button */
-	acceptButton?: StyleValue;
+	"cookie-banner.footer": ThemeValue;
+	"cookie-banner.footer.sub-group": ThemeValue;
 	/** @remarks Styles for the overlay background */
-	overlay?: StyleValue;
-}
-
-/**
- * Result of style application containing computed className and optional style object.
- * @public
- */
-export interface StyleResult {
-	/** @remarks The final computed class name after processing */
-	className: string;
-	/** @remarks The final computed inline styles after processing */
-	style?: CSSProperties;
-}
-
-/**
- * Keys of the CookieBannerStyles interface
- */
-export type StyleKey = keyof CookieBannerStyles;
+	"cookie-banner.overlay": ThemeValue;
+	"cookie-banner.footer.reject-button": ThemeValue;
+	"cookie-banner.footer.customize-button": ThemeValue;
+	"cookie-banner.footer.accept-button": ThemeValue;
+};

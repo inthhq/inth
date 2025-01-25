@@ -10,15 +10,12 @@ import {
 	useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { useConsentManager } from "../../common/store/consent-manager";
-import {
-	CookieBannerContext,
-	type CookieBannerContextValue,
-	useCookieBannerContext,
-} from "../context";
-import { useStyles } from "../hooks/use-styles";
-import type { CookieBannerStyles } from "../types";
+
+import { ThemeContext, useStyles } from "../../theme";
 import { Overlay } from "./overlay";
+
+import { useConsentManager } from "../../headless";
+import type { CookieBannerTheme } from "../types";
 
 /**
  * Props for the root component of the CookieBanner.
@@ -50,7 +47,7 @@ interface CookieBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 	 * Custom styles to be applied to the banner and its child components.
 	 * These styles are made available through the CookieBanner context.
 	 */
-	styles?: CookieBannerStyles;
+	theme?: Partial<CookieBannerTheme>;
 
 	/**
 	 * @remarks
@@ -100,9 +97,9 @@ interface CookieBannerRootProps extends HTMLAttributes<HTMLDivElement> {
 export const CookieBannerRoot: FC<CookieBannerRootProps> = ({
 	children,
 	className,
-	noStyle = false,
-	disableAnimation = false,
-	styles = {},
+	noStyle,
+	disableAnimation,
+	theme,
 	...props
 }) => {
 	/** Access the consent manager for handling cookie preferences */
@@ -112,19 +109,23 @@ export const CookieBannerRoot: FC<CookieBannerRootProps> = ({
 	 * Combine consent manager state with styling configuration
 	 * to create the context value for child components
 	 */
-	const contextValue: CookieBannerContextValue = {
+	const contextValue = {
 		...consentManager,
 		disableAnimation,
 		noStyle,
-		styles,
+		theme,
 	};
 
 	return (
-		<CookieBannerContext.Provider value={contextValue}>
-			<CookieBannerRootChildren className={className} {...props}>
+		<ThemeContext.Provider value={contextValue}>
+			<CookieBannerRootChildren
+				disableAnimation={disableAnimation}
+				className={className}
+				{...props}
+			>
 				{children}
 			</CookieBannerRootChildren>
-		</CookieBannerContext.Provider>
+		</ThemeContext.Provider>
 	);
 };
 
@@ -153,6 +154,8 @@ interface CookieBannerRootChildrenProps extends HTMLAttributes<HTMLDivElement> {
 	 * This enables better composition with other components.
 	 */
 	asChild?: boolean;
+
+	disableAnimation?: boolean;
 }
 
 /**
@@ -193,18 +196,28 @@ interface CookieBannerRootChildrenProps extends HTMLAttributes<HTMLDivElement> {
  * @public
  */
 export const CookieBannerRootChildren = forwardRef<HTMLDivElement, CookieBannerRootChildrenProps>(
-	({ asChild, children, className, style, noStyle, ...props }, ref) => {
-		const { showPopup, disableAnimation } = useCookieBannerContext();
+	(
+		{
+			asChild,
+			children,
+			className,
+			style,
+			className: forwardedClassName,
+			disableAnimation,
+			...props
+		}: CookieBannerRootChildrenProps & { style?: React.CSSProperties; className?: string },
+		ref,
+	) => {
+		const { showPopup } = useConsentManager();
 
 		/**
 		 * Apply styles from the CookieBanner context and merge with local styles.
 		 * Uses the 'content' style key for consistent theming.
 		 */
-		const contentStyle = useStyles({
-			baseClassName: "cookie-banner cookie-banner-root cookie-banner-root-bottom-left",
-			componentStyle: className,
-			styleKey: "content",
-			noStyle,
+		const contentStyle = useStyles("cookie-banner.root", {
+			baseClassName: ["cookie-banner cookie-banner-root cookie-banner-root-bottom-left"],
+			style,
+			className: forwardedClassName,
 		});
 
 		/**
@@ -232,12 +245,7 @@ export const CookieBannerRootChildren = forwardRef<HTMLDivElement, CookieBannerR
 					<>
 						<Overlay />
 						{disableAnimation ? (
-							<div
-								ref={ref}
-								{...contentStyle}
-								style={{ ...style, ...contentStyle.style }}
-								{...props}
-							>
+							<div ref={ref} {...props} {...contentStyle}>
 								{children}
 							</div>
 						) : (
@@ -248,7 +256,6 @@ export const CookieBannerRootChildren = forwardRef<HTMLDivElement, CookieBannerR
 									exit={{ opacity: 0, y: 50 }}
 									transition={{ type: "spring", stiffness: 300, damping: 30 }}
 									{...contentStyle}
-									style={{ ...style, ...contentStyle.style }}
 								>
 									{children}
 								</motion.div>

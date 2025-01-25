@@ -1,9 +1,9 @@
 "use client";
 
 import KoroflowDevTool from "@koroflow/dev-tools";
-import { ConsentManagerProvider, useConsentManager } from "@koroflow/elements/common";
 import { ConsentManagerDialog } from "@koroflow/elements/consent-manager";
 import CookieBanner from "@koroflow/elements/cookie-banner";
+import { ConsentManagerProvider } from "@koroflow/elements/headless";
 import "@koroflow/elements/globals.css";
 import { DemoWidget } from "./component";
 

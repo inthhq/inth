@@ -1,39 +1,37 @@
 "use client";
 
-import * as Button from "../common/primitives/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "../common/primitives/card";
+/**
+ * @packageDocumentation
+ * Provides the dialog component for detailed privacy consent management.
+ * Implements an accessible, animated modal interface for consent customization.
+ */
 
-import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import * as React from "react";
+import { type FC, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useConsentManager } from "../headless";
+import { ThemeContext, type ThemeContextValue } from "../theme";
+import { ConsentCustomizationCard } from "./atoms/dialog-card";
+import { Overlay } from "./atoms/overlay";
+import type { ConsentManagerWidgetTheme } from "./theme";
 
-import { ConsentManagerWidget } from "./consent-manager-widget";
-
-import { useConsentManager } from "../common";
-// import { Overlay } from "./atoms/overlay";
 import "./consent-manager-dialog.css";
-import { Overlay } from "./overlay";
+import "../ui/components/card.css";
 
-export interface ConsentManagerDialogProps {
-	children?: React.ReactNode;
-	triggerClassName?: string;
-	showCloseButton?: boolean;
-}
-
+/**
+ * Animation variants for the dialog container
+ * @internal
+ */
 const dialogVariants = {
 	hidden: { opacity: 0 },
 	visible: { opacity: 1 },
 	exit: { opacity: 0 },
 };
 
+/**
+ * Animation variants for the dialog content
+ * @internal
+ */
 const contentVariants = {
 	hidden: { opacity: 0, scale: 0.95 },
 	visible: {
@@ -48,71 +46,72 @@ const contentVariants = {
 	},
 };
 
-const ConsentCustomizationCard = ({
-	onClose,
-	showCloseButton,
-	handleSave,
-	ref,
-}: {
-	onClose: () => void;
-	showCloseButton: boolean;
-	handleSave: () => void;
-	ref: React.RefObject<HTMLDivElement>;
-}) => (
-	<Card className="consent-manager-dialog-card">
-		<CardHeader className="relative">
-			{showCloseButton && (
-				<Button.Root
-					// variant="ghost"
-					// size="icon"
-					className="consent-manager-dialog-header-close"
-					onClick={onClose}
-					aria-label="Close privacy settings"
-				>
-					<X className="h-4 w-4" />
-				</Button.Root>
-			)}
-			<CardTitle id="privacy-settings-title">Privacy Settings</CardTitle>
-			<CardDescription>
-				Customize your privacy settings here. You can choose which types of cookies and tracking
-				technologies you allow.
-			</CardDescription>
-		</CardHeader>
-		<CardContent>
-			<ConsentManagerWidget hideBranding={true} onSave={handleSave} />
-		</CardContent>
-		<CardFooter>
-			<a className="consent-manager-widget-branding-link" href="https://koroflow.com">
-				Secured by <span className="consent-manager-widget-branding-link-span">Koroflow</span>
-			</a>
-		</CardFooter>
-	</Card>
-);
+/**
+ * Props for the ConsentManagerDialog component
+ *
+ * @remarks
+ * Extends ThemeContextValue to provide comprehensive theming support
+ * while maintaining type safety for consent management specific features.
+ */
+interface ConsentManagerDialogProps extends ThemeContextValue<ConsentManagerWidgetTheme> {
+	/** Disables animation when true */
+	disableAnimation?: boolean;
+	/** Removes default styling when true */
+	noStyle?: boolean;
+}
 
-export const ConsentManagerDialog = React.forwardRef<HTMLDivElement, ConsentManagerDialogProps>(
-	({ showCloseButton = false }, ref) => {
-		const { isPrivacyDialogOpen, setIsPrivacyDialogOpen, setShowPopup, saveConsents } =
-			useConsentManager();
-		const [isMounted, setIsMounted] = React.useState(false);
-		const contentRef = React.useRef<HTMLDivElement>(null);
+/**
+ * A modal dialog component for detailed privacy consent management.
+ *
+ * @remarks
+ * Key features:
+ * - Provides an accessible modal interface for consent customization
+ * - Implements smooth enter/exit animations
+ * - Manages proper focus handling
+ * - Supports theme customization
+ * - Handles client-side portal rendering
+ *
+ * @example
+ * ```tsx
+ * <ConsentManagerDialog
+ *   theme={customTheme}
+ *   disableAnimation={false}
+ *   noStyle={false}
+ * />
+ * ```
+ *
+ * @public
+ */
+export const ConsentManagerDialog: FC<ConsentManagerDialogProps> = ({
+	theme,
+	disableAnimation,
+	noStyle,
+}) => {
+	const consentManager = useConsentManager();
+	const [isMounted, setIsMounted] = useState(false);
+	const contentRef = useRef<HTMLDivElement>(null);
 
-		React.useEffect(() => {
-			setIsMounted(true);
-			return () => setIsMounted(false);
-		}, []);
+	// Handle client-side mounting
+	useEffect(() => {
+		setIsMounted(true);
+		return () => setIsMounted(false);
+	}, []);
 
-		const handleSave = React.useCallback(() => {
-			saveConsents("custom");
-			setIsPrivacyDialogOpen(false);
-		}, [setIsPrivacyDialogOpen, saveConsents]);
-
-		const handleClose = React.useCallback(() => {
-			setIsPrivacyDialogOpen(false);
-		}, [setIsPrivacyDialogOpen]);
-
-		const dialogContent = (
+	/**
+	 * Dialog content with theme context and animation support
+	 * @internal
+	 */
+	const dialogContent = (
+		<ThemeContext.Provider
+			value={{
+				...consentManager,
+				theme,
+				disableAnimation,
+				noStyle,
+			}}
+		>
 			<AnimatePresence mode="wait">
-				{isPrivacyDialogOpen && (
+				{consentManager.isPrivacyDialogOpen && (
 					<>
 						<Overlay />
 						<motion.dialog
@@ -132,19 +131,15 @@ export const ConsentManagerDialog = React.forwardRef<HTMLDivElement, ConsentMana
 								animate="visible"
 								exit="exit"
 							>
-								<ConsentCustomizationCard
-									ref={ref as React.RefObject<HTMLDivElement>}
-									onClose={handleClose}
-									showCloseButton={showCloseButton}
-									handleSave={handleSave}
-								/>
+								<ConsentCustomizationCard noStyle={noStyle} />
 							</motion.div>
 						</motion.dialog>
 					</>
 				)}
 			</AnimatePresence>
-		);
+		</ThemeContext.Provider>
+	);
 
-		return isMounted && createPortal(dialogContent, document.body);
-	},
-);
+	// Only render on client-side to prevent hydration issues
+	return isMounted && createPortal(dialogContent, document.body);
+};

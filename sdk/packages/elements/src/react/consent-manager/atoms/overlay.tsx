@@ -1,20 +1,21 @@
 /**
  * @packageDocumentation
- * Provides the overlay backdrop component for the CookieBanner.
+ * Provides the overlay backdrop component for the consent management interface.
+ * Implements accessible modal behavior with animation support.
  */
 
 import { AnimatePresence, motion } from "motion/react";
 import type { FC } from "react";
-import { useCookieBannerContext } from "../context";
-import { useStyles } from "../hooks/use-styles";
-import type { StyleValue } from "../types";
+import { useConsentManager } from "../../headless";
+import { type ThemeValue, useStyles, useThemeContext } from "../../theme";
 
 /**
  * Props for the Overlay component.
  *
  * @remarks
- * The overlay provides a semi-transparent backdrop behind the cookie banner content.
- * It can be styled using the CookieBanner theme system or through direct style props.
+ * The overlay provides a semi-transparent backdrop behind the consent dialog.
+ * It helps focus user attention on the privacy settings interface and prevents
+ * interaction with the main content while the dialog is open.
  *
  * @public
  */
@@ -23,50 +24,61 @@ interface OverlayProps {
 	 * Custom styles to override default overlay styling.
 	 *
 	 * @remarks
-	 * Can be either a string class name or an object with className and style properties.
-	 * These styles will be merged with the theme styles and default styles.
+	 * - Can be a string class name or an object with className and style properties
+	 * - Styles are merged with theme styles and default styles
+	 * - Useful for customizing overlay appearance while maintaining functionality
 	 */
-	style?: StyleValue;
+	style?: ThemeValue;
 
 	/**
+	 * Disables default styling when true.
+	 *
 	 * @remarks
-	 * When true, the component will not apply any styles.
+	 * - When enabled, removes all default styles
+	 * - Useful for implementing completely custom overlay styling
+	 * - Maintains functionality without visual opinions
 	 */
 	noStyle?: boolean;
 }
 
 /**
- * Overlay component that provides a backdrop for the CookieBanner content.
+ * Overlay component that provides a backdrop for the consent management interface.
  *
  * @remarks
- * This component handles:
- * - Rendering a semi-transparent backdrop
- * - Fade in/out animations (when animations are enabled)
- * - Proper z-indexing for modal behavior
- * - Theme-based styling
+ * Key features:
+ * - Renders a semi-transparent backdrop
+ * - Implements fade in/out animations (when enabled)
+ * - Manages proper z-indexing for modal behavior
+ * - Supports theme-based styling
+ * - Automatically handles visibility based on dialog state
  *
- * The overlay visibility is controlled by the `showPopup` state from CookieBanner context,
- * and its animation behavior is controlled by the `disableAnimation` flag.
+ * @example
+ * ```tsx
+ * <ConsentManager>
+ *   <Overlay />
+ *   <DialogCard>
+ *     // Dialog content
+ *   </DialogCard>
+ * </ConsentManager>
+ * ```
  *
  * @public
  */
-export const Overlay: FC<OverlayProps> = ({ style, noStyle }) => {
-	const { disableAnimation, isPrivacyDialogOpen } = useCookieBannerContext();
-	const { className, style: overlayStyle } = useStyles({
-		baseClassName: "fixed inset-0 bg-black/50 z-[999999998]",
-		componentStyle: style,
-		styleKey: "overlay",
+export const Overlay: FC<OverlayProps> = ({ noStyle }) => {
+	const { isPrivacyDialogOpen } = useConsentManager();
+	const { disableAnimation } = useThemeContext();
+	const theme = useStyles("consent-manager.overlay", {
+		baseClassName: "consent-manager-overlay",
 		noStyle,
 	});
 
 	return isPrivacyDialogOpen ? (
 		disableAnimation ? (
-			<div className={className} style={overlayStyle} />
+			<div {...theme} />
 		) : (
 			<AnimatePresence>
 				<motion.div
-					className={className}
-					style={overlayStyle}
+					{...theme}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
 					exit={{ opacity: 0 }}

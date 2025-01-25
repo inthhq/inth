@@ -4,10 +4,10 @@
  */
 
 import { AnimatePresence, motion } from "motion/react";
-import type { FC } from "react";
-import { useCookieBannerContext } from "../context";
-import { useStyles } from "../hooks/use-styles";
-import type { StyleValue } from "../types";
+import { type FC, type HTMLAttributes, forwardRef } from "react";
+
+import { useConsentManager } from "../../headless";
+import { useStyles, useThemeContext } from "../../theme";
 
 /**
  * Props for the Overlay component.
@@ -18,21 +18,18 @@ import type { StyleValue } from "../types";
  *
  * @public
  */
-interface OverlayProps {
-	/**
-	 * Custom styles to override default overlay styling.
-	 *
-	 * @remarks
-	 * Can be either a string class name or an object with className and style properties.
-	 * These styles will be merged with the theme styles and default styles.
-	 */
-	style?: StyleValue;
-
+interface OverlayProps extends HTMLAttributes<HTMLDivElement> {
 	/**
 	 * @remarks
 	 * When true, the component will not apply any styles.
 	 */
 	noStyle?: boolean;
+	/**
+	 * @remarks
+	 * When true, the component will render its children directly without wrapping them in a DOM element.
+	 * This enables better composition with other components.
+	 */
+	asChild?: boolean;
 }
 
 /**
@@ -50,28 +47,29 @@ interface OverlayProps {
  *
  * @public
  */
-export const Overlay: FC<OverlayProps> = ({ style, noStyle }) => {
-	const { disableAnimation, showPopup } = useCookieBannerContext();
-	const { className, style: overlayStyle } = useStyles({
-		baseClassName: "cookie-banner-overlay",
-		componentStyle: style,
-		styleKey: "overlay",
-		noStyle,
-	});
+export const Overlay = forwardRef<HTMLDivElement, OverlayProps>(
+	({ className, style, noStyle, asChild, ...props }, ref) => {
+		const { showPopup } = useConsentManager();
+		const { disableAnimation, noStyle: contextNoStyle } = useThemeContext();
+		const theme = useStyles("cookie-banner.overlay", {
+			baseClassName: !(contextNoStyle || noStyle) && "cookie-banner-overlay",
+			noStyle,
+		});
 
-	return showPopup ? (
-		disableAnimation ? (
-			<div className={className} style={overlayStyle} />
-		) : (
-			<AnimatePresence>
-				<motion.div
-					className={className}
-					style={overlayStyle}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-				/>
-			</AnimatePresence>
-		)
-	) : null;
-};
+		return showPopup ? (
+			disableAnimation ? (
+				<div ref={ref} {...props} {...theme} />
+			) : (
+				<AnimatePresence>
+					<motion.div
+						ref={ref}
+						{...theme}
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+					/>
+				</AnimatePresence>
+			)
+		) : null;
+	},
+);
