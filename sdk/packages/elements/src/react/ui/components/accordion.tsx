@@ -66,7 +66,7 @@ const AccordionItem = forwardRef<
 	ComponentPropsWithoutRef<typeof AccordionPrimitive.Item> & ExtendThemeKeys
 >(({ className, themeKey, baseClassName, noStyle, style, ...rest }, forwardedRef) => {
 	const accordionItemStyle = useStyles(themeKey ?? "accordion.item", {
-		baseClassName,
+		baseClassName: [baseClassName, "accordion-item"],
 		className,
 		noStyle,
 		style,
@@ -80,7 +80,7 @@ const AccordionTrigger = forwardRef<
 	ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & ExtendThemeKeys
 >(({ children, className, themeKey, baseClassName, noStyle, style, ...rest }, forwardedRef) => {
 	const accordionTriggerStyle = useStyles(themeKey ?? "accordion.trigger", {
-		baseClassName,
+		baseClassName: [baseClassName, "accordion-trigger"],
 		className,
 		noStyle,
 		style,
@@ -103,7 +103,7 @@ function AccordionIcon<T extends ElementType>({
 	...rest
 }: PolymorphicComponentProps<T> & ExtendThemeKeys) {
 	const accordionIconStyle = useStyles(themeKey ?? "accordion.icon", {
-		baseClassName,
+		baseClassName: [baseClassName, "accordion-icon"],
 		className,
 		noStyle,
 		style,
@@ -155,7 +155,7 @@ const AccordionContent = forwardRef<
 	}
 >(({ children, className, theme, ...rest }, forwardedRef) => {
 	const accordionContentStyle = useStyles(theme?.content?.themeKey ?? "accordion.content", {
-		baseClassName: theme?.content?.baseClassName,
+		baseClassName: [theme?.content?.baseClassName, "accordion-content"],
 		className,
 		noStyle: theme?.content?.noStyle,
 		style: theme?.content?.style,

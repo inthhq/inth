@@ -111,7 +111,7 @@ const DialogHeaderDescription = forwardRef<HTMLDivElement, Omit<BoxProps, "theme
 		return (
 			<Box
 				ref={ref as Ref<HTMLDivElement>}
-				baseClassName="card-title"
+				baseClassName="card-description"
 				themeKey="consent-manager-widget.dialog.description"
 				{...props}
 			>

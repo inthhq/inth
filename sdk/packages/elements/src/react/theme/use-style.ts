@@ -43,45 +43,67 @@ import { mergeStyles } from "./utils/merge-styles";
 
 export function useStyles(themeKey: AllThemeKeys, componentStyle?: ThemeValue): ClassNameStyle {
 	const { noStyle: contextNoStyle, theme } = useThemeContext();
-	// Merge noStyle from props and context
 	const mergedNoStyle =
 		typeof componentStyle === "object" && "noStyle" in componentStyle
 			? componentStyle.noStyle
 			: contextNoStyle;
 
-	return useMemo(() => {
-		// Get the style from context using the styleKey, if provided
-		const themeStylesObject = themeKey
-			? (theme as Record<AllThemeKeys, ThemeValue>)?.[themeKey]
-			: null;
-		// debugger
-		// If noStyle is true, bypass base and context styles, using only component styles
-		if (mergedNoStyle) {
-			if (!themeStylesObject) return {}; // Return empty if no component style is provided
+	// Memoize theme styles retrieval
+	const themeStylesObject = useMemo(() => {
+		if (themeKey === "consent-manager-widget.switch") console.log("Theme Key:", themeKey);
+		return themeKey ? (theme as Record<AllThemeKeys, ThemeValue>)?.[themeKey] : null;
+	}, [themeKey, theme]);
 
-			// Return a new object to ensure immutability
-			return typeof themeStylesObject === "string"
-				? { className: themeStylesObject }
-				: { className: themeStylesObject.className, style: themeStylesObject.style };
-		}
-
-		// Initialize mergedStyle with empty values if no component style, or component style is a string
-		const initialStyle: ThemeValue = {
+	// Memoize initial style setup
+	const initialStyle = useMemo(() => {
+		const initial = {
 			className: typeof componentStyle === "string" ? componentStyle : componentStyle?.className,
 			style: undefined,
 		};
 
-		// Merge context style if available, creating a new object
-		const mergedWithContext = themeStylesObject
-			? mergeStyles(initialStyle, themeStylesObject)
-			: initialStyle;
+		return initial;
+	}, [componentStyle]);
 
-		// Merge component style if provided, creating a new object
-		const finalMergedStyle = componentStyle
+	// Memoize merged style with context
+	const mergedWithContext = useMemo(() => {
+		const merged = themeStylesObject ? mergeStyles(initialStyle, themeStylesObject) : initialStyle;
+
+		return merged;
+	}, [initialStyle, themeStylesObject]);
+
+	// Memoize final merged style
+	const finalMergedStyle = useMemo(() => {
+		const final = componentStyle
 			? mergeStyles(mergedWithContext, componentStyle)
 			: mergedWithContext;
 
-		// Return the final merged style, ensuring immutability
-		return { ...finalMergedStyle };
-	}, [componentStyle, themeKey, mergedNoStyle, theme]);
+		return final;
+	}, [mergedWithContext, componentStyle]);
+
+	// Return the final merged style, ensuring immutability
+	return useMemo(() => {
+		if (mergedNoStyle) {
+			if (!themeStylesObject) return {};
+			const noStyleResult =
+				typeof themeStylesObject === "string"
+					? { className: themeStylesObject }
+					: { className: themeStylesObject.className, style: themeStylesObject.style };
+
+			return noStyleResult;
+		}
+		// Ensure className is included and prevent duplication
+		const finalClassName = Array.from(
+			new Set(
+				[
+					typeof componentStyle === "string" ? componentStyle : componentStyle?.className,
+					finalMergedStyle.className,
+				]
+					.filter(Boolean)
+					.flat(),
+			),
+		).join(" ");
+		const result = { ...finalMergedStyle, className: finalClassName };
+
+		return result;
+	}, [finalMergedStyle, mergedNoStyle, themeStylesObject, componentStyle]);
 }

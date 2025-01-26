@@ -122,7 +122,7 @@ const ConsentManagerWidgetAccordionItem = forwardRef<
 	ComponentRef<typeof AccordionItem>,
 	ComponentPropsWithoutRef<typeof AccordionItem>
 >(({ className, ...rest }, forwardedRef) => {
-	return <AccordionItem ref={forwardedRef} baseClassName="accordion-item" {...rest} />;
+	return <AccordionItem ref={forwardedRef} {...rest} />;
 });
 
 /**

@@ -30,26 +30,34 @@ export interface SwitchProps extends ComponentPropsWithoutRef<typeof SwitchPrimi
 const Switch = forwardRef<ComponentRef<typeof SwitchPrimitives.Root>, SwitchProps>(
 	({ className, disabled, slot, theme, ...rest }, forwardedRef) => {
 		const switchRoot = useStyles(theme?.root.themeKey ?? "switch.root", {
-			baseClassName: ["switch switch-root"],
 			...theme?.root,
+			baseClassName: ["switch switch-root", theme?.root.baseClassName],
+			className,
 		});
+
 		const switchThumb = useStyles(theme?.thumb.themeKey ?? "switch.thumb", {
-			baseClassName: ["switch-thumb", disabled && "switch-thumb-disabled"],
+			...theme?.thumb,
+			baseClassName: [
+				theme?.thumb.baseClassName,
+				"switch-thumb",
+				disabled && "switch-thumb-disabled",
+			],
 			style: {
+				...theme?.thumb.style,
 				["--mask" as string]:
 					"radial-gradient(circle farthest-side at 50% 50%, #0000 1.95px, #000 2.05px 100%) 50% 50%/100% 100% no-repeat",
-				...theme?.thumb.style,
 			},
-			...theme?.thumb,
 		});
-		const switchTrack = useStyles(theme?.track.themeKey ?? "switch.track", {
-			baseClassName: ["switch-track", disabled && "switch-track-disabled"],
-			...theme?.track,
-		});
+
+		console.log("Switch Root Styles:", switchRoot);
 
 		return (
 			<SwitchPrimitives.Root ref={forwardedRef} disabled={disabled} {...rest} {...switchRoot}>
-				<Box themeKey={theme?.track.themeKey ?? "switch.track"} {...switchTrack}>
+				<Box
+					themeKey={theme?.track.themeKey ?? "switch.track"}
+					baseClassName={["switch-track", disabled && "switch-track-disabled"]}
+					style={theme?.track.style}
+				>
 					<SwitchPrimitives.Thumb {...switchThumb} />
 				</Box>
 			</SwitchPrimitives.Root>
