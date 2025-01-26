@@ -92,8 +92,6 @@ export const ConsentManagerWidgetAccordionItems = () => {
 				</ConsentManagerWidgetAccordionSubGroup>
 
 				<ConsentManagerWidgetSwitch
-					slot="div"
-					asChild
 					checked={consents[consent.name]}
 					onClick={(e) => e.stopPropagation()}
 					onKeyUp={(e) => e.stopPropagation()}

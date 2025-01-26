@@ -50,7 +50,6 @@ export function useStyles(themeKey: AllThemeKeys, componentStyle?: ThemeValue): 
 
 	// Memoize theme styles retrieval
 	const themeStylesObject = useMemo(() => {
-		if (themeKey === "consent-manager-widget.switch") console.log("Theme Key:", themeKey);
 		return themeKey ? (theme as Record<AllThemeKeys, ThemeValue>)?.[themeKey] : null;
 	}, [themeKey, theme]);
 

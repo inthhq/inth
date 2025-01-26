@@ -49,17 +49,23 @@ const Switch = forwardRef<ComponentRef<typeof SwitchPrimitives.Root>, SwitchProp
 			},
 		});
 
-		console.log("Switch Root Styles:", switchRoot);
-
 		return (
-			<SwitchPrimitives.Root ref={forwardedRef} disabled={disabled} {...rest} {...switchRoot}>
-				<Box
-					themeKey={theme?.track.themeKey ?? "switch.track"}
-					baseClassName={["switch-track", disabled && "switch-track-disabled"]}
-					style={theme?.track.style}
-				>
-					<SwitchPrimitives.Thumb {...switchThumb} />
-				</Box>
+			<SwitchPrimitives.Root
+				ref={forwardedRef}
+				disabled={disabled}
+				{...rest}
+				{...switchRoot}
+				asChild
+			>
+				<span>
+					<Box
+						themeKey={theme?.track.themeKey ?? "switch.track"}
+						baseClassName={["switch-track", disabled && "switch-track-disabled"]}
+						style={theme?.track.style}
+					>
+						<SwitchPrimitives.Thumb {...switchThumb} />
+					</Box>
+				</span>
 			</SwitchPrimitives.Root>
 		);
 	},
