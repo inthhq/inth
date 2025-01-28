@@ -20,6 +20,11 @@ const config = {
 				permanent: true,
 			},
 			{
+				source: "/docs/elements",
+				destination: "/docs/getting-started",
+				permanent: true,
+			},
+			{
 				source: "/r/:name((?!index\\.json|styles/).*)",
 				destination: "/r/styles/default/:name.json",
 				permanent: true,
