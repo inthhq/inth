@@ -14,7 +14,7 @@ export const BLUR_FADE_DELAY = 0.15;
 
 export const siteConfig = {
 	name: "Koroflow",
-	description: "Privacy infrastructure for the modern web.",
+	description: "Consent infrastructure for the modern web.",
 	cta: "Get Started",
 	url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
 	keywords: [
@@ -22,6 +22,7 @@ export const siteConfig = {
 		"GDPR Compliance",
 		"Consent Management",
 		"Privacy Infrastructure",
+		"Consent Infrastructure",
 	],
 	links: {
 		email: "support@koroflow.dev",
@@ -29,7 +30,7 @@ export const siteConfig = {
 		github: "https://github.com/koroflow/koroflow",
 	},
 	hero: {
-		title: "Privacy infrastructure for the modern web",
+		title: "Consent infrastructure for the modern web",
 		description:
 			"Transform privacy consent from a compliance checkbox into a fully observable system. Built for developers who care about performance, privacy, and clean code.",
 		cta: { text: "Get Started", href: "/docs/elements" },
