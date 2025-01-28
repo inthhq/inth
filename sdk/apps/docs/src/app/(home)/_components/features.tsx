@@ -16,6 +16,7 @@ export function FeaturesSection() {
 						description={feature.description}
 						icon={feature.icon}
 						index={index}
+						comingSoon={feature.comingSoon}
 					/>
 				))}
 			</Features.Root>

@@ -2,6 +2,7 @@
 import {
 	Bolt,
 	BoxIcon,
+	Brain,
 	CodeIcon,
 	EyeIcon,
 	GaugeIcon,
@@ -10,6 +11,7 @@ import {
 	ZapIcon,
 } from "lucide-react";
 import { GithubIcon } from "~/components/icons/github";
+import { ReactIcon } from "~/components/icons/react";
 import { XIcon } from "~/components/icons/x";
 
 export const BLUR_FADE_DELAY = 0.15;
@@ -47,11 +49,16 @@ export const siteConfig = {
 		{
 			name: "React Components",
 			description: "Beautiful UI components built on Radix Primitives. Ready to go.",
-			icon: <BoxIcon className="h-6 w-6" />,
+			icon: <ReactIcon className="h-6 w-6" />,
+		},
+		{
+			name: "Headless Options",
+			description: "No UI, no bloat, just the tools you need.",
+			icon: <Brain className="h-6 w-6" />,
 		},
 		{
 			name: "Performance First",
-			description: "Minimal bundle impact with zero external dependencies.",
+			description: "Minimal bundle impact, tree-shakable.",
 			icon: <ZapIcon className="h-6 w-6" />,
 		},
 		{
@@ -62,11 +69,6 @@ export const siteConfig = {
 		{
 			name: "Open Source",
 			description: "GNU3 license and open source from day one.",
-			icon: <Server className="h-6 w-6" />,
-		},
-		{
-			name: "Headless Options",
-			description: "No UI, no bloat, just the tools you need.",
 			icon: <Server className="h-6 w-6" />,
 		},
 		{
