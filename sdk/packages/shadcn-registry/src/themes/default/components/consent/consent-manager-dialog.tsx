@@ -7,8 +7,8 @@ import * as React from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../card";
-import { Overlay } from "./overlay";
 import ConsentManagerWidget from "./consent-manager-widget";
+import { Overlay } from "./overlay";
 
 export interface ConsentManagerDialogProps {
 	children?: React.ReactNode;

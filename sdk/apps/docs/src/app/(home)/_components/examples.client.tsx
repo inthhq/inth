@@ -35,7 +35,7 @@ export function ExamplesClient({ features }: ExamplesClientProps) {
 
 	return (
 		<motion.div
- className="grid grid-cols-1 md:grid-cols-5 relative gap-6"
+			className="grid grid-cols-1 md:grid-cols-5 relative gap-6"
 			initial={{ opacity: 0 }}
 			animate={{ opacity: 1 }}
 			transition={{ duration: 0.5 }}
@@ -85,7 +85,9 @@ export function ExamplesClient({ features }: ExamplesClientProps) {
 										)}
 									</motion.div>
 									<div>
-										<h3 className="font-medium tracking-tight text-sm sm:text-base">{option.title}</h3>
+										<h3 className="font-medium tracking-tight text-sm sm:text-base">
+											{option.title}
+										</h3>
 										<p className="text-xs sm:text-sm text-muted-foreground">{option.description}</p>
 									</div>
 								</div>

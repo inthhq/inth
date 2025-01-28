@@ -14,7 +14,9 @@ export function CTA() {
 
 				<div className="flex justify-center space-x-4">
 					<Button className="flex items-center gap-2" variant={"outline"} asChild>
-						<Link href="/docs/elements">Get Started <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6" /></Link>
+						<Link href="/docs/elements">
+							Get Started <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6" />
+						</Link>
 					</Button>
 
 					<Button className="flex items-center gap-2" variant={"ghost"} asChild>
