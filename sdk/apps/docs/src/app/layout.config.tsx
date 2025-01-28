@@ -2,7 +2,6 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import Image from "next/image";
 import logo from "../public/logo.svg";
 import type { LinkItemType } from "fumadocs-ui/layouts/links";
-import { Badge } from "@koroflow/shadcn/components";
 
 export const linkItems: LinkItemType[] = [
 	{
