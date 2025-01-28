@@ -40,7 +40,7 @@ const Item = React.forwardRef<HTMLDivElement, FeatureProps>(
 			<div
 				ref={ref}
 				className={cn(
-					"flex flex-col lg:border-r py-10 relative group/feature dark:border-neutral-800 border-b sm:border-b-0",
+					"flex flex-col py-10 relative group/feature dark:border-neutral-800 border lg:border-0 lg:border-r",
 					(index === 0 || index === 4) && "lg:border-l dark:border-neutral-800",
 					index < 4 && "lg:border-b dark:border-neutral-800",
 					className,
@@ -60,17 +60,16 @@ const Item = React.forwardRef<HTMLDivElement, FeatureProps>(
 					{icon}
 				</div>
 				{comingSoon && (
-						<span className="inline-flex absolute top-5 right-5 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-fd-primary/10 text-fd-primary">
-							Coming Soon
-						</span>
-					)}
+					<span className="inline-flex absolute top-5 right-5 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-fd-primary/10 text-fd-primary">
+						Coming Soon
+					</span>
+				)}
 				<div className="text-lg font-bold mb-2 relative z-10 px-10">
 					<div className="absolute left-0 inset-y-0 h-6 group-hover/feature:h-8 w-1 rounded-tr-full rounded-br-full bg-neutral-300 dark:bg-neutral-700 group-hover/feature:bg-blue-500 transition-all duration-200 origin-center" />
 
 					<span className="group-hover/feature:translate-x-2 transition duration-200 inline-block text-neutral-800 dark:text-neutral-100">
 						{title}
 					</span>
-
 				</div>
 				<p className="text-sm text-neutral-600 dark:text-neutral-300 max-w-xs relative z-10 px-10">
 					{description}
