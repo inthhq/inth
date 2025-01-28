@@ -2,6 +2,7 @@ import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import Image from "next/image";
 import logo from "../public/logo.svg";
 import type { LinkItemType } from "fumadocs-ui/layouts/links";
+import { Badge } from "@koroflow/shadcn/components";
 
 export const linkItems: LinkItemType[] = [
 	{
@@ -29,7 +30,10 @@ export const linkItems: LinkItemType[] = [
 export const baseOptions: BaseLayoutProps = {
 	nav: {
 		title: (
-			<Image src={logo} alt="Koroflow" width={93} height={16} className="h-4 w-auto dark:invert" />
+			<>
+				<Image src={logo} alt="Koroflow" width={93} height={16} className="h-4 w-auto dark:invert" />
+				<span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-fd-primary/10 text-fd-primary">Beta</span>
+			</>
 		),
 		transparentMode: "top",
 	},
