@@ -75,7 +75,7 @@ export const homePageOptions: BaseLayoutProps = {
 		{
 			type: "menu",
 			text: "Documentation",
-			url: "/docs/elements",
+			url: "/docs/getting-started",
 			items: [
 				{
 					menu: {
@@ -97,7 +97,7 @@ export const homePageOptions: BaseLayoutProps = {
 					text: "Getting Started",
 					description:
 						" Our plug-and-play components handle compliance so you can focus on your product",
-					url: "/docs/elements",
+					url: "/docs/getting-started",
 				},
 				{
 					icon: <Cookie />,
