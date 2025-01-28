@@ -8,7 +8,7 @@ import type { Metadata } from "next/types";
 import { siteConfig } from "./config";
 
 export const metadata: Metadata = {
-	title: `${siteConfig.hero.title} | Koroflow`,
+	title: `Koroflow: ${siteConfig.hero.title}`,
 	description: siteConfig.hero.description,
 };
 
