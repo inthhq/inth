@@ -10,6 +10,11 @@ const config = {
 	async redirects() {
 		return [
 			{
+				source: "/discord",
+				destination: "https://discord.gg/3NbHyKB94u",
+				permanent: true,
+			},
+			{
 				source: "/r",
 				destination: "/r/index.json",
 				permanent: true,
