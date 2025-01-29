@@ -1,10 +1,17 @@
 import { cn } from "@koroflow/shadcn/libs";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
 import defaultMdxComponents from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "~/components/header";
 import { source } from "~/lib/source";
+
+const components = {
+	...defaultMdxComponents,
+	Tabs,
+	Tab,
+  };
 
 export default async function Page(props: {
 	params: Promise<{ slug?: string[] }>;
@@ -31,7 +38,7 @@ export default async function Page(props: {
 							"prose-a:border-fd-primary prose-a:border-b-px prose-a:font-semibold prose-a:text-foreground prose-a:decoration-none prose-a:transition-all hover:prose-a:border-b-2",
 						)}
 					>
-						<MDX components={{ ...defaultMdxComponents }} />
+						<MDX components={{ ...defaultMdxComponents, ...components }} />
 					</DocsBody>
 				</DocsPage>
 			</div>
