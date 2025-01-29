@@ -29,7 +29,7 @@ npm install @koroflow/elements
 Then add the dialog to your application:
 
 ```tsx
-import { ConsentManagerDialog } from '@koroflow/elements'
+import { ConsentManagerDialog } from '@koroflow/elements/consent-manager'
 import { ConsentManagerProvider } from '@koroflow/elements/headless'
 function App() {
   return (
@@ -72,9 +72,34 @@ Apply custom styles through the theme prop:
 ```tsx
 <ConsentManagerDialog
   theme={{
-    dialog: "rounded-xl shadow-lg",
-    overlay: "backdrop-blur-sm",
-    content: "p-6 bg-white"
+    "consent-manager-widget.root": "",
+	  "consent-manager-widget.branding": "",
+	  "consent-manager-widget.footer": "",
+	  "consent-manager-widget.footer.sub-group": "",
+		"consent-manager-widget.footer.reject-button": "",
+		"consent-manager-widget.footer.accept-button": "",
+		"consent-manager-widget.footer.customize-button": "",
+		"consent-manager-widget.footer.save-button": "",
+		"consent-manager-widget.accordion": "",
+		"consent-manager-widget.accordion.trigger": "",
+		"consent-manager-widget.accordion.trigger-sub-group": "",
+		"consent-manager-widget.accordion.item": "",
+		"consent-manager-widget.accordion.icon": "",
+		"consent-manager-widget.accordion.arrow.open": "",
+		"consent-manager-widget.accordion.arrow.close": "",
+		"consent-manager-widget.accordion.content": "",
+		"consent-manager-widget.accordion.content-inner": "",
+		"consent-manager-widget.switch": "",
+		"consent-manager-widget.switch.track": "",
+		"consent-manager-widget.switch.thumb": "",
+		"consent-manager-widget.dialog": "",
+		"consent-manager-widget.dialog.root": "",
+		"consent-manager-widget.dialog.header": "",
+		"consent-manager-widget.dialog.title": "",
+		"consent-manager-widget.dialog.description": "",
+		"consent-manager-widget.dialog.content": "",
+		"consent-manager-widget.dialog.footer": "",
+		"consent-manager.overlay": "",
   }}
 />
 ```
