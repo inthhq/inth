@@ -15,6 +15,11 @@ const config = {
 				permanent: true,
 			},
 			{
+				source: "/docs/components/consent-solution",
+				destination: "/docs/getting-started",
+				permanent: true,
+			},
+			{
 				source: "/r",
 				destination: "/r/index.json",
 				permanent: true,
