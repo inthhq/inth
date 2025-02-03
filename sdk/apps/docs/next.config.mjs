@@ -7,6 +7,7 @@ const withMDX = createMDX({
 /** @type {import('next').NextConfig} */
 const config = {
 	reactStrictMode: true,
+	// biome-ignore lint/suspicious/useAwait: <explanation>
 	async redirects() {
 		return [
 			{
