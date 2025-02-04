@@ -1,5 +1,11 @@
 # @koroflow/dev-tools
 
+## 0.0.1-beta.11
+
+### Patch Changes
+
+- Refactored package.json imports
+  
 ## 0.0.1-beta.10
 
 ### Patch Changes
