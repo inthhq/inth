@@ -15,6 +15,7 @@ import {
 	type ExtendThemeKeys,
 	type ThemeValue,
 	useStyles,
+	useThemeContext,
 } from '../../theme';
 import type { PolymorphicComponentProps } from '../libs/polymorphic';
 import { LucideIcon } from './icon';
@@ -53,10 +54,12 @@ const AccordionRoot = forwardRef<
 		},
 		forwardedRef
 	) => {
+		const { noStyle: contextNoStyle } = useThemeContext();
+
 		const accordionStyle = useStyles(themeKey, {
 			baseClassName: [baseClassName, 'accordion'],
 			className,
-			noStyle,
+			noStyle: contextNoStyle || noStyle,
 			style,
 		});
 
@@ -80,10 +83,12 @@ const AccordionItem = forwardRef<
 		{ className, themeKey, baseClassName, noStyle, style, ...rest },
 		forwardedRef
 	) => {
+		const { noStyle: contextNoStyle } = useThemeContext();
+
 		const accordionItemStyle = useStyles(themeKey ?? 'accordion.item', {
 			baseClassName: [baseClassName, 'accordion-item'],
 			className,
-			noStyle,
+			noStyle: contextNoStyle || noStyle,
 			style,
 		});
 		return (
@@ -105,12 +110,15 @@ const AccordionTrigger = forwardRef<
 		{ children, className, themeKey, baseClassName, noStyle, style, ...rest },
 		forwardedRef
 	) => {
+		const { noStyle: contextNoStyle } = useThemeContext();
+
 		const accordionTriggerStyle = useStyles(themeKey ?? 'accordion.trigger', {
 			baseClassName: [baseClassName, 'accordion-trigger'],
 			className,
-			noStyle,
+			noStyle: contextNoStyle || noStyle,
 			style,
 		});
+
 		return (
 			<AccordionPrimitive.Trigger
 				ref={forwardedRef}
@@ -197,12 +205,14 @@ const AccordionContent = forwardRef<
 		theme: { content: ExtendThemeKeys; contentInner: ExtendThemeKeys };
 	}
 >(({ children, className, theme, ...rest }, forwardedRef) => {
+	const { noStyle: contextNoStyle } = useThemeContext();
+
 	const accordionContentStyle = useStyles(
 		theme?.content?.themeKey ?? 'accordion.content',
 		{
 			baseClassName: [theme?.content?.baseClassName, 'accordion-content'],
 			className,
-			noStyle: theme?.content?.noStyle,
+			noStyle: theme?.content?.noStyle || contextNoStyle,
 			style: theme?.content?.style,
 		}
 	);

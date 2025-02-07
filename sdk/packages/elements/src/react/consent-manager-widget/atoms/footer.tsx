@@ -19,6 +19,7 @@ export const ConsentManagerWidgetFooter = forwardRef<
 		<Box
 			ref={ref as Ref<HTMLDivElement>}
 			baseClassName="consent-manager-widget-footer"
+			data-testid="consent-manager-widget-footer"
 			{...props}
 			themeKey="consent-manager-widget.footer"
 		>
@@ -35,6 +36,7 @@ export const ConsentManagerWidgetFooterSubGroup = forwardRef<
 		<Box
 			ref={ref as Ref<HTMLDivElement>}
 			baseClassName="consent-manager-widget-footer-sub-group"
+			data-testid="consent-manager-widget-footer-sub-group"
 			{...props}
 			themeKey="consent-manager-widget.footer.sub-group"
 		>
@@ -64,6 +66,7 @@ export const ConsentManagerWidgetRejectButton = forwardRef<
 			action="reject-consent"
 			{...props}
 			themeKey="consent-manager-widget.footer.reject-button"
+			data-testid="consent-manager-widget-reject-button"
 		>
 			{children}
 		</ConsentButton>
