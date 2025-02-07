@@ -4,7 +4,6 @@ import { render } from 'vitest-browser-react';
 import { ConsentManagerProvider } from '../../../index';
 import type { ThemeValue } from '../../theme/types/style-types';
 
-
 interface ComponentStyles {
 	component: ReactNode;
 	testCases: {

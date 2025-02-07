@@ -74,7 +74,7 @@ export const ConsentManagerWidget = ({
 }: ConsentManagerWidgetProps) => {
 	const [openItems, setOpenItems] = useState<string[]>([]);
 
-  return (
+	return (
 		<ConsentManagerWidgetRoot {...props}>
 			<ConsentManagerWidgetAccordion
 				themeKey="consent-manager-widget.accordion"
