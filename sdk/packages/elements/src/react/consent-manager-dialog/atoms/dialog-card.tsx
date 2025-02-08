@@ -45,6 +45,7 @@ const DialogCard = forwardRef<HTMLDivElement, DialogCardProps>(
 				baseClassName="card consent-manager-dialog-card"
 				{...props}
 				themeKey="consent-manager-dialog.root"
+				data-testid="consent-manager-dialog-root"
 			>
 				{children}
 			</Box>
@@ -69,6 +70,7 @@ const DialogHeader = forwardRef<HTMLDivElement, Omit<BoxProps, 'themeKey'>>(
 				baseClassName="card-header consent-manager-dialog-card"
 				{...props}
 				themeKey="consent-manager-dialog.header"
+				data-testid="consent-manager-dialog-header"
 			>
 				{children}
 			</Box>
@@ -95,6 +97,7 @@ const DialogHeaderTitle = forwardRef<
 			baseClassName="card-title"
 			themeKey="consent-manager-dialog.title"
 			{...props}
+			data-testid="consent-manager-dialog-title"
 		>
 			{children}
 		</Box>
@@ -120,6 +123,7 @@ const DialogHeaderDescription = forwardRef<
 			baseClassName="card-description"
 			themeKey="consent-manager-dialog.description"
 			{...props}
+			data-testid="consent-manager-dialog-description"
 		>
 			{children}
 		</Box>
@@ -142,6 +146,7 @@ const DialogContent = forwardRef<HTMLDivElement, Omit<BoxProps, 'themeKey'>>(
 				ref={ref as Ref<HTMLDivElement>}
 				baseClassName="card-content"
 				themeKey="consent-manager-dialog.content"
+				data-testid="consent-manager-dialog-content"
 				{...props}
 			>
 				{children}
@@ -167,6 +172,7 @@ const DialogFooter = forwardRef<HTMLDivElement, Omit<BoxProps, 'themeKey'>>(
 				baseClassName="card-footer"
 				themeKey="consent-manager-dialog.footer"
 				{...props}
+				data-testid="consent-manager-dialog-footer"
 			>
 				<a
 					className="consent-manager-widget-branding-link"
