@@ -1,0 +1,10 @@
+{
+	"extends": "@consent-management/typescript-config/react-library.json",
+	"compilerOptions": {
+		"moduleResolution": "node10",
+		"baseUrl": ".",
+		"types": ["@vitest/browser/matchers"]
+	},
+	"include": ["src"],
+	"exclude": ["node_modules"]
+}

@@ -1,13 +1,12 @@
 'use client';
 
-import { cn } from '@koroflow/shadcn/libs';
+import { cn } from '@consent-management/shadcn/libs';
 import { ThemeToggle } from 'fumadocs-ui/components/layout/theme-toggle';
 import { Menu, X } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import logo from '../../../public/logo.svg';
+import { LogoWithBadge } from '../logo';
 import { navigation } from './navigation';
 import { LargeSearchToggle } from './search';
 
@@ -38,20 +37,9 @@ const Navbar = () => {
 		>
 			{/* Main Navbar */}
 			<div className="mx-auto flex h-16 max-w-[var(--fd-layout-width)] items-center justify-between px-2 lg:px-4">
-				<div className="flex items-center gap-4">
-					<Link href="/" className="flex items-center gap-4">
-						<Image
-							src={logo}
-							alt="Koroflow"
-							width={93}
-							height={16}
-							className="h-4 w-auto dark:invert"
-						/>
-						<span className="inline-flex items-center rounded-full border bg-fd-primary/10 px-2.5 py-0.5 font-semibold text-fd-primary text-xs">
-							Beta
-						</span>
-					</Link>
-				</div>
+				<Link href="/">
+					<LogoWithBadge />
+				</Link>
 
 				<div className="hidden flex-1 justify-center lg:flex">
 					<div className="w-full max-w-lg">

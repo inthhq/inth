@@ -20,13 +20,18 @@ const config = {
 	async redirects() {
 		return [
 			{
+				source: '/docs',
+				destination: '/docs/getting-started',
+				permanent: true,
+			},
+			{
 				source: '/discord',
 				destination: 'https://discord.gg/3NbHyKB94u',
 				permanent: true,
 			},
 			{
-				source: '/docs/components/consent-solution',
-				destination: '/docs/components/index',
+				source: '/docs/framework/react/consent-solution',
+				destination: '/docs/framework/react/index',
 				permanent: true,
 			},
 		];

@@ -1,0 +1,12 @@
+{
+	"title": "Docs",
+	"root": true,
+	"pages": [
+		"---Getting Started---",
+		"index",
+		"--- Open Source ---",
+		"open-source/why-open-source",
+		"open-source/contributing",
+		"open-source/license"
+	]
+}

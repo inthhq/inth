@@ -1,6 +1,6 @@
 'use client';
 
-import { cn } from '@koroflow/shadcn/libs';
+import { cn } from '@consent-management/shadcn/libs';
 
 import { type ReactNode, forwardRef, useRef } from 'react';
 
@@ -40,7 +40,7 @@ const Section = forwardRef<HTMLElement, SectionProps>(
 
 		return (
 			<section id={id} ref={ref}>
-				<div className={cn('container relative mx-auto', className)}>
+				<div className={cn('mx-auto max-w-7xl', className)}>
 					{(title || subtitle || description) && (
 						<div
 							className={cn(

@@ -2,19 +2,17 @@ import {
 	Bolt,
 	Brain,
 	CodeIcon,
-	EyeIcon,
+	LanguagesIcon,
 	Server,
 	ShieldIcon,
 	ZapIcon,
 } from 'lucide-react';
 import { ReactIcon } from '~/components/icons/react';
 
-export const BLUR_FADE_DELAY = 0.15;
-
 export const siteConfig = {
-	name: 'Koroflow',
-	description: 'Consent infrastructure for the modern web.',
-	cta: 'Get Started',
+	name: 'Consent Management',
+	description:
+		'Leverage native React components for seamless integration and high performance in a robust content management solution that empowers your development team while prioritizing privacy and compliance.',
 	url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
 	keywords: [
 		'Privacy Management',
@@ -24,15 +22,15 @@ export const siteConfig = {
 		'Consent Infrastructure',
 	],
 	links: {
-		email: 'support@koroflow.dev',
+		email: 'support@consent-management.com',
 		twitter: 'https://x.com/koroflow',
-		github: 'https://github.com/koroflow/koroflow',
+		github: 'https://github.com/koroflow/consent-management',
 	},
 	hero: {
-		title: 'Consent infrastructure for the modern web',
+		title: 'Content Management Redefined',
 		description:
-			'Transform privacy consent from a compliance checkbox into a fully observable system. Built for developers who care about performance, privacy, and clean code.',
-		cta: { text: 'Get Started', href: '/docs/components' },
+			'Leverage native React components for seamless integration and high performance in a robust content management solution that empowers your development team while prioritizing privacy and compliance.',
+		cta: { text: 'Get Started', href: '/docs/framework/react' },
 		demo: {
 			text: 'Book A Demo',
 			href: 'https://cal.com/christopherburns/koroflow',
@@ -56,6 +54,11 @@ export const siteConfig = {
 			icon: <Brain className="h-6 w-6" />,
 		},
 		{
+			name: 'i18n included',
+			description: 'Built-in internationalization support.',
+			icon: <LanguagesIcon className="h-6 w-6" />,
+		},
+		{
 			name: 'Performance First',
 			description: 'Minimal bundle impact, tree-shakable.',
 			icon: <ZapIcon className="h-6 w-6" />,
@@ -71,12 +74,6 @@ export const siteConfig = {
 			icon: <Server className="h-6 w-6" />,
 		},
 		{
-			name: 'Complete Observability',
-			comingSoon: true,
-			description: 'Track and analyze privacy consent patterns.',
-			icon: <EyeIcon className="h-6 w-6" />,
-		},
-		{
 			name: 'Event Relay System',
 			comingSoon: true,
 			description: 'Real-time privacy event streaming with zero latency.',
@@ -89,7 +86,7 @@ export const siteConfig = {
 				title: 'Product',
 				items: [
 					{ text: 'Documentation', url: '/docs' },
-					{ text: 'Components', url: '/docs/components' },
+					{ text: 'Components', url: '/docs/framework/react' },
 					{ text: 'Privacy Regulations', url: '/docs/privacy-regulations' },
 				],
 			},
@@ -98,13 +95,13 @@ export const siteConfig = {
 				items: [
 					{
 						text: 'GitHub',
-						url: 'https://github.com/koroflow/koroflow',
+						url: 'https://github.com/koroflow/consent-management',
 						external: true,
 					},
 					{ text: 'Twitter', url: 'https://x.com/koroflow', external: true },
 					{
 						text: 'Contact',
-						url: 'mailto:support@koroflow.dev',
+						url: 'mailto:support@consent-management.com',
 						external: true,
 					},
 				],
@@ -117,8 +114,8 @@ export const siteConfig = {
 				],
 			},
 		],
-		bottomText: 'Open source privacy infrastructure.',
-		brandText: 'KOROFLOW',
+		bottomText:
+			'Leverage native React components for seamless integration and high performance in a robust content management solution that empowers your development team while prioritizing privacy and compliance.',
 	},
 };
 

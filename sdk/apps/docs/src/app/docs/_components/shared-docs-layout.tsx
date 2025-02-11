@@ -7,7 +7,7 @@ import {
 import type { ReactNode } from 'react';
 import { docsOptions } from '~/app/layout.config';
 import { HeaderBg } from '~/components/docs/header-bg';
-import type { source } from '~/lib/source';
+import type { Source } from '~/lib/source';
 
 /**
  * Props for the SharedDocsLayout component
@@ -18,7 +18,7 @@ import type { source } from '~/lib/source';
  */
 interface SharedDocsLayoutProps {
 	children: ReactNode;
-	source: typeof source;
+	source: Source;
 	noSidebar?: boolean;
 }
 

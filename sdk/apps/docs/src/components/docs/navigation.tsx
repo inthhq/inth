@@ -7,7 +7,7 @@ export const navigation = {
 	mainLinks: [
 		{
 			type: 'icon',
-			url: 'https://github.com/koroflow/koroflow',
+			url: 'https://github.com/koroflow/consent-management',
 			text: 'Github',
 			icon: <GithubIcon className="h-5 w-5" />,
 			external: true,
@@ -28,19 +28,20 @@ export const navigation = {
 		},
 		{
 			type: 'icon',
-			url: 'https://koroflow.com/discord',
+			url: 'https://consent.management/discord',
 			text: 'Discord',
 			icon: <DiscordIcon className="h-5 w-5" />,
 			external: true,
 		},
 	],
 	secondaryLinks: [
-		{ name: 'Documentation', href: '/docs' },
-		{ name: 'Components', href: '/docs/components' },
+		{ name: 'Getting Started', href: '/docs/getting-started' },
+		{ name: 'Core', href: '/docs/core' },
+		{ name: 'React', href: '/docs/framework/react' },
 		// {
 		// 	name: 'Privacy Regulations',
 		// 	href: '/docs/privacy-regulations',
 		// },
-		{ name: 'Release Notes', href: '/docs/release-notes' },
+		// { name: 'Release Notes', href: '/docs/release-notes' },
 	],
 };

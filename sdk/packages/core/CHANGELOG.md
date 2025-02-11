@@ -1,7 +1,7 @@
-# @koroflow/core-js
+# @consent-management/core
 
 
-## 0.0.1-beta.11
+## 1.0.0-rc.1
 
 ### Patch Changes
 

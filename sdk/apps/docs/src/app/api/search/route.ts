@@ -1,14 +1,12 @@
 import { createFromSource } from 'fumadocs-core/search/server';
 import {
-	componentsSource,
-	privacyRegulationsSource,
+	frameworkSource,
+	gettingStartedSource,
 	releaseNotesSource,
-	source,
 } from '~/lib/source';
 
 export const { GET } = createFromSource({
-	...source,
-	...componentsSource,
-	...privacyRegulationsSource,
+	...gettingStartedSource,
+	...frameworkSource,
 	...releaseNotesSource,
 });

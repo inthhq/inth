@@ -1,4 +1,4 @@
-import { Button } from '@koroflow/shadcn/components';
+import { Button } from '@consent-management/shadcn/components';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { BorderIcon } from '~/components/marketing/border-icon';
@@ -8,8 +8,8 @@ export function CTA() {
 	return (
 		<Section id="cta" className="my-12">
 			<div className="relative mx-auto border py-16 text-center">
-				<p className="mx-auto mb-6 max-w-3xl text-balance font-medium text-4xl text-foreground">
-					Make your next project compliant. Start today.
+				<p className="mx-auto mb-6 max-w-3xl text-wrap text-pretty text-4xl text-foreground">
+					Transform Your Project with Ready-to-Go Drop-In React Components.
 				</p>
 
 				<div className="flex justify-center space-x-4">
@@ -18,7 +18,7 @@ export function CTA() {
 						variant={'outline'}
 						asChild
 					>
-						<Link href="/docs/components">
+						<Link href="/docs/framework/react">
 							Get Started <ArrowRight className="h-4 w-4 sm:h-6 sm:w-6" />
 						</Link>
 					</Button>

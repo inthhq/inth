@@ -106,7 +106,7 @@ const getStoredConsent = (): StoredConsent | null => {
  * @public
  */
 export const createConsentManagerStore = (
-	namespace: string | undefined = 'KoroflowStore'
+	namespace: string | undefined = 'ConsentManagerStore'
 ) => {
 	// Load initial state from localStorage if available
 	const storedConsent = getStoredConsent();

@@ -1,10 +1,10 @@
 <div align="center">
    <img src="https://koroflow.com/logo-icon.png" alt="Koroflow Logo" width="64" height="64" />
-  <h1>Koroflow</h1>
+  <h1>consent.management by Koroflow</h1>
   <p>Transform privacy consent from a compliance checkbox into a fully observable system</p>
 
-  [![GitHub stars](https://img.shields.io/github/stars/koroflow/koroflow?style=flat-square)](https://github.com/koroflow/koroflow)
-  [![CI](https://img.shields.io/github/actions/workflow/status/koroflow/koroflow/ci.yml?style=flat-square)](https://github.com/koroflow/koroflow/actions/workflows/ci.yml)
+  [![GitHub stars](https://img.shields.io/github/stars/koroflow/consent-management?style=flat-square)](https://github.com/koroflow/consent-management)
+  [![CI](https://img.shields.io/github/actions/workflow/status/koroflow/consent-management/ci.yml?style=flat-square)](https://github.com/koroflow/consent-management/actions/workflows/ci.yml)
   [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](LICENSE)
   [![Discord](https://img.shields.io/discord/1312171102268690493?style=flat-square)](https://discord.gg/koroflow)
 </div>
@@ -13,7 +13,7 @@
 
 Koroflow unifies analytics, consent tracking, and privacy controls into a single performant solution. Built for modern development teams, it transforms privacy management from a compliance burden into a fully observable system.
 
-### Why Koroflow?
+### Why consent.management?
 
 - 🚫 No more slow cookie banners
 - 👁️ Complete visibility into consent choices
@@ -25,22 +25,22 @@ Koroflow unifies analytics, consent tracking, and privacy controls into a single
 
 | Package | Description | Version |
 |---------|-------------|---------|
-| `@koroflow/core-js` | Core consent and event management | [![npm](https://img.shields.io/npm/v/@koroflow/core-js?style=flat-square)](https://www.npmjs.com/package/@koroflow/core-js) |
-| `@koroflow/elements` | shadcn/ui based components | [![npm](https://img.shields.io/npm/v/@koroflow/elements?style=flat-square)](https://www.npmjs.com/package/@koroflow/elements) |
-| `@koroflow/dev-tools` | Development and debugging tools | [![npm](https://img.shields.io/npm/v/@koroflow/dev-tools?style=flat-square)](https://www.npmjs.com/package/@koroflow/dev-tools) |
+| `@consent-management/core` | Core consent and event management | [![npm](https://img.shields.io/npm/v/@consent-management/core?style=flat-square)](https://www.npmjs.com/package/@consent-management/core) |
+| `@consent-management/react` | shadcn/ui based components | [![npm](https://img.shields.io/npm/v/@consent-management/react?style=flat-square)](https://www.npmjs.com/package/@consent-management/react) |
+| `@consent-management/dev-tools` | Development and debugging tools | [![npm](https://img.shields.io/npm/v/@consent-management/dev-tools?style=flat-square)](https://www.npmjs.com/package/@consent-management/dev-tools) |
 
 ## ⚡ Quick Start
 
 ```bash
 # Install packages
-npm install @koroflow/elements
+npm install @consent-management/react
 
 # Optional: Install dev tools
-npm install -D @koroflow/dev-tools
+npm install -D @consent-management/dev-tools
 ```
 
 ```tsx
-import { ConsentManagerProvider, CookieBanner, ConsentManagerDialog } from "@koroflow/elements";
+import { ConsentManagerProvider, CookieBanner, ConsentManagerDialog } from "@consent-management/react";
 
 export default function App() {
   return (
@@ -70,8 +70,8 @@ Prerequisites:
 
 ```bash
 # Clone repository
-git clone https://github.com/koroflow/koroflow.git
-cd koroflow
+git clone https://github.com/koroflow/consent-management.git
+cd c1t5
 
 # Install dependencies
 pnpm install
@@ -100,21 +100,21 @@ pnpm test
 
 ## 📚 Documentation
 
-- [Getting Started](https://koroflow.com/docs/components)
-- [Core Concepts](https://koroflow.com/docs/concepts)
-- [API Reference](https://koroflow.com/docs/api)
-- [UI Components](https://koroflow.com/docs/components)
-- [Privacy Regulations](https://koroflow.com/docs/regulations)
+- [Getting Started](https://consent.management/docs)
+- [Core Concepts](https://consent.management/docs/concepts)
+- [API Reference](https://consent.management/docs/api)
+- [UI Components](https://consent.management/docs/framework/react)
+- [Privacy Regulations](https://consent.management/docs/regulations)
 
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 
-- 🐛 [Report bugs](https://github.com/koroflow/koroflow/issues/new?template=bug_report.yml)
-- ✨ [Request features](https://github.com/koroflow/koroflow/issues/new?template=feature_request.yml)
-- 📚 [Improve docs](https://github.com/koroflow/koroflow/issues/new?template=doc_report.yml)
-- 🧪 [Fix tests](https://github.com/koroflow/koroflow/issues/new?template=test.yml)
-- ⚡ [Report performance issues](https://github.com/koroflow/koroflow/issues/new?template=performance.yml)
+- 🐛 [Report bugs](https://github.com/koroflow/consent-management/issues/new?template=bug_report.yml)
+- ✨ [Request features](https://github.com/koroflow/consent-management/issues/new?template=feature_request.yml)
+- 📚 [Improve docs](https://github.com/koroflow/consent-management/issues/new?template=doc_report.yml)
+- 🧪 [Fix tests](https://github.com/koroflow/consent-management/issues/new?template=test.yml)
+- ⚡ [Report performance issues](https://github.com/koroflow/consent-management/issues/new?template=performance.yml)
 
 ## 🌟 Self-Hosting vs Cloud
 

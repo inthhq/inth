@@ -3,7 +3,7 @@ import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
 import Image from 'next/image';
 import { GithubIcon } from '~/components/icons/github';
 import { XIcon } from '~/components/icons/x';
-import logo from '../../public/logo.svg';
+import GetStarted from '../../public/cookie-banner.png';
 
 import {
 	Book,
@@ -12,12 +12,12 @@ import {
 	MessageSquareCode,
 	Palette,
 } from 'lucide-react';
-import GetStarted from '../../public/cookie-banner.png';
+import { LogoWithBadge } from '~/components/logo';
 
 export const linkItems: LinkItemType[] = [
 	{
 		type: 'icon',
-		url: 'https://github.com/koroflow/koroflow',
+		url: 'https://github.com/koroflow/consent-management',
 		text: 'Github',
 		icon: <GithubIcon className="h-5 w-5" />,
 		external: true,
@@ -40,20 +40,7 @@ export const linkItems: LinkItemType[] = [
  */
 export const docsOptions: BaseLayoutProps = {
 	nav: {
-		title: (
-			<>
-				<Image
-					src={logo}
-					alt="Koroflow"
-					width={93}
-					height={16}
-					className="h-4 w-auto dark:invert"
-				/>
-				<span className="inline-flex items-center rounded-full border bg-fd-primary/10 px-2.5 py-0.5 font-semibold text-fd-primary text-xs">
-					Beta
-				</span>
-			</>
-		),
+		title: <LogoWithBadge />,
 		// transparentMode: 'top',
 		component: undefined,
 	},
@@ -62,27 +49,22 @@ export const docsOptions: BaseLayoutProps = {
 
 export const homePageOptions: BaseLayoutProps = {
 	nav: {
-		title: (
-			<>
-				<Image
-					src={logo}
-					alt="Koroflow"
-					width={93}
-					height={16}
-					className="h-4 w-auto dark:invert"
-				/>
-				<span className="inline-flex items-center rounded-full border bg-fd-primary/10 px-2.5 py-0.5 font-semibold text-fd-primary text-xs">
-					Beta
-				</span>
-			</>
-		),
+		title: <LogoWithBadge />,
 		transparentMode: 'top',
 	},
 	links: [
 		{
+			text: 'Getting Started',
+			url: '/docs',
+		},
+		{
+			text: 'Core',
+			url: '/docs/core',
+		},
+		{
 			type: 'menu',
-			text: 'Documentation',
-			url: '/docs/components',
+			text: 'React',
+			url: '/docs/framework/react',
 			items: [
 				{
 					menu: {
@@ -104,15 +86,15 @@ export const homePageOptions: BaseLayoutProps = {
 					icon: <Book />,
 					text: 'Getting Started',
 					description:
-						' Our plug-and-play components handle compliance so you can focus on your product',
-					url: '/docs/components',
+						'Our plug-and-play components handle compliance so you can focus on your product',
+					url: '/docs/framework/react',
 				},
 				{
 					icon: <Cookie />,
 					text: 'Cookie Banner',
 					description:
 						'A customizable cookie consent banner that handles privacy compliance with zero configuration required.',
-					url: '/docs/components/cookie-banner',
+					url: '/docs/framework/react/cookie-banner',
 					menu: {
 						className: 'lg:col-start-2',
 					},
@@ -123,7 +105,7 @@ export const homePageOptions: BaseLayoutProps = {
 					text: 'Consent Dialog',
 					description:
 						'An accessible, animated modal interface that wraps the Consent Manager Widget for a focused privacy customization experience.',
-					url: '/docs/components/consent-manager-dialog',
+					url: '/docs/framework/react/consent-manager-dialog',
 					menu: {
 						className: 'lg:col-start-2',
 					},
@@ -133,7 +115,7 @@ export const homePageOptions: BaseLayoutProps = {
 					text: 'Consent Widget',
 					description:
 						'A flexible, composable widget for building custom privacy consent interfaces.',
-					url: '/docs/components/consent-manager-widget',
+					url: '/docs/framework/react/consent-manager-widget',
 					menu: {
 						className: 'lg:col-start-3 lg:row-start-1',
 					},
@@ -142,13 +124,17 @@ export const homePageOptions: BaseLayoutProps = {
 					icon: <Palette />,
 					text: 'Styling',
 					description:
-						'Learn how to customize the appearance of Koroflow Elements components through our flexible theming system.',
-					url: '/docs/components/guides/customization',
+						'Learn how to customize the appearance of @consent-management/react components through our flexible theming system.',
+					url: '/docs/framework/react/guides/customization',
 					menu: {
 						className: 'lg:col-start-3',
 					},
 				},
 			],
 		},
+		// {
+		// 	text: 'Release Notes',
+		// 	url: '/docs/release-notes',
+		// },
 	],
 };
