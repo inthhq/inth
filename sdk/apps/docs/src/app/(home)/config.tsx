@@ -1,9 +1,9 @@
 import {
-	Bolt,
 	Brain,
 	CodeIcon,
 	LanguagesIcon,
-	Server,
+	NetworkIcon,
+	ServerIcon,
 	ShieldIcon,
 	ZapIcon,
 } from 'lucide-react';
@@ -59,6 +59,13 @@ export const siteConfig = {
 			icon: <LanguagesIcon className="h-6 w-6" />,
 		},
 		{
+			name: 'Automatic Fetch / XHR Blocking',
+			description:
+				'Automatically block fetch and XHR requests until consent is granted.',
+			icon: <NetworkIcon className="h-6 w-6" />,
+			comingSoon: true,
+		},
+		{
 			name: 'Performance First',
 			description: 'Minimal bundle impact, tree-shakable.',
 			icon: <ZapIcon className="h-6 w-6" />,
@@ -71,13 +78,7 @@ export const siteConfig = {
 		{
 			name: 'Open Source',
 			description: 'GNU3 license and open source from day one.',
-			icon: <Server className="h-6 w-6" />,
-		},
-		{
-			name: 'Event Relay System',
-			comingSoon: true,
-			description: 'Real-time privacy event streaming with zero latency.',
-			icon: <Bolt className="h-6 w-6" />,
+			icon: <ServerIcon className="h-6 w-6" />,
 		},
 	],
 	footer: {
