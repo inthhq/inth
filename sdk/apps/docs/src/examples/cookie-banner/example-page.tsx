@@ -2,7 +2,7 @@ export const defaultPage = `import {
 	ConsentManagerProvider,
 	ConsentManagerDialog,
 	CookieBanner,
-} from '@consent-management/react';
+} from '@c15t/react';
 import { ExampleContent } from './exampleContent';
 
 function App() {
@@ -54,7 +54,7 @@ export function ExampleContent() {
 	return (
 		<div className="min-h-screen flex justify-center items-center dark:bg-[#18191c]">
 				<main className="mx-auto max-w-2xl text-center">
-					<div className="bg-gradient-to-t light:from-black/40 dark:from-white/40 light:to-black/10 dark:to-white/10 bg-clip-text font-bold text-[60px] text-transparent leading-none tracking-tighter">consent.management</div>
+					<div className="bg-gradient-to-t light:from-black/40 dark:from-white/40 light:to-black/10 dark:to-white/10 bg-clip-text font-bold text-[60px] text-transparent leading-none tracking-tighter">c15t.com</div>
 			  </main>
 			</div>
 	);

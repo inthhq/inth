@@ -9,7 +9,7 @@ import {
 	useRef,
 } from 'react';
 
-import { cn } from '@consent-management/shadcn/libs';
+import { cn } from '@c15t/shadcn/libs';
 import type { ScrollAreaViewportProps } from '@radix-ui/react-scroll-area';
 import { buttonVariants } from 'fumadocs-ui/components/ui/button';
 import {

@@ -62,13 +62,13 @@ importers:
 
   apps/docs:
     dependencies:
-      '@consent-management/core':
+      'c15t':
         specifier: workspace:*
         version: link:../../packages/core
-      '@consent-management/react':
+      '@c15t/react':
         specifier: workspace:*
         version: link:../../packages/react
-      '@consent-management/shadcn':
+      '@c15t/shadcn':
         specifier: workspace:*
         version: link:../../internals/shadcn
       '@radix-ui/react-scroll-area':
@@ -129,7 +129,7 @@ importers:
         specifier: ^3.24.1
         version: 3.24.1
     devDependencies:
-      '@consent-management/typescript-config':
+      '@c15t/typescript-config':
         specifier: workspace:*
         version: link:../../internals/typescript-config
       '@types/mdx':
@@ -159,7 +159,7 @@ importers:
       '@astrojs/react':
         specifier: ^4.2.0
         version: 4.2.0(@types/node@22.13.1)(@types/react-dom@19.0.3(@types/react@19.0.8))(@types/react@19.0.8)(jiti@2.4.2)(lightningcss@1.29.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(tsx@4.19.2)(yaml@2.7.0)
-      '@consent-management/react':
+      '@c15t/react':
         specifier: workspace:*
         version: link:../../../packages/react
       '@types/react':
@@ -187,7 +187,7 @@ importers:
         specifier: ^19.0.0
         version: 19.0.0(react@19.0.0)
     devDependencies:
-      '@consent-management/react':
+      '@c15t/react':
         specifier: workspace:*
         version: link:../../../packages/react
       '@types/react':
@@ -236,7 +236,7 @@ importers:
         specifier: ^3.0.1
         version: 3.0.1
     devDependencies:
-      '@consent-management/typescript-config':
+      '@c15t/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
 
@@ -248,7 +248,7 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/react@19.0.8)(react@19.0.0)
     devDependencies:
-      '@consent-management/typescript-config':
+      '@c15t/typescript-config':
         specifier: workspace:*
         version: link:../../internals/typescript-config
       happy-dom:
@@ -257,7 +257,7 @@ importers:
 
   packages/dev-tools:
     dependencies:
-      '@consent-management/core':
+      'c15t':
         specifier: workspace:*
         version: link:../core
       '@radix-ui/react-accordion':
@@ -309,7 +309,7 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/react@19.0.8)(react@19.0.0)
     devDependencies:
-      '@consent-management/typescript-config':
+      '@c15t/typescript-config':
         specifier: workspace:*
         version: link:../../internals/typescript-config
       postcss:
@@ -318,7 +318,7 @@ importers:
 
   packages/react:
     dependencies:
-      '@consent-management/core':
+      'c15t':
         specifier: workspace:*
         version: link:../core
       '@radix-ui/react-accordion':
@@ -349,7 +349,7 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/react@19.0.8)(react@19.0.0)
     devDependencies:
-      '@consent-management/typescript-config':
+      '@c15t/typescript-config':
         specifier: workspace:*
         version: link:../../internals/typescript-config
 

@@ -162,7 +162,7 @@ const DialogContent = forwardRef<HTMLDivElement, Omit<BoxProps, 'themeKey'>>(
  *
  * @remarks
  * - Should be the last child of DialogCard
- * - Includes consent.management branding by default
+ * - Includes c15t.com branding by default
  * - Can be customized through theme configuration
  */
 const DialogFooter = forwardRef<HTMLDivElement, Omit<BoxProps, 'themeKey'>>(

@@ -22,7 +22,7 @@ export const siteConfig = {
 		'Consent Infrastructure',
 	],
 	links: {
-		email: 'support@consent-management.com',
+		email: 'support@c15t.com',
 		twitter: 'https://x.com/koroflow',
 		github: 'https://github.com/koroflow/consent-management',
 	},
@@ -101,7 +101,7 @@ export const siteConfig = {
 					{ text: 'Twitter', url: 'https://x.com/koroflow', external: true },
 					{
 						text: 'Contact',
-						url: 'mailto:support@consent-management.com',
+						url: 'mailto:support@c15t.com',
 						external: true,
 					},
 				],
