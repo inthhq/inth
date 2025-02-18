@@ -12,7 +12,7 @@ import { ReactIcon } from '~/components/icons/react';
 export const siteConfig = {
 	name: 'Consent Management',
 	description:
-		'Leverage native React components for seamless integration and high performance in a robust content management solution that empowers your development team while prioritizing privacy and compliance.',
+		'Leverage native React components for seamless integration and high performance in a robust Consent Management solution that empowers your development team while prioritizing privacy and compliance.',
 	url: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
 	keywords: [
 		'Privacy Management',
@@ -27,9 +27,9 @@ export const siteConfig = {
 		github: 'https://github.com/koroflow/consent-management',
 	},
 	hero: {
-		title: 'Content Management Redefined',
+		title: 'Consent Management Redefined',
 		description:
-			'Leverage native React components for seamless integration and high performance in a robust content management solution that empowers your development team while prioritizing privacy and compliance.',
+			'Leverage native React components for seamless integration and high performance in a robust Consent Management solution that empowers your development team while prioritizing privacy and compliance.',
 		cta: { text: 'Get Started', href: '/docs/framework/react' },
 		demo: {
 			text: 'Book A Demo',
@@ -115,7 +115,7 @@ export const siteConfig = {
 			},
 		],
 		bottomText:
-			'Leverage native React components for seamless integration and high performance in a robust content management solution that empowers your development team while prioritizing privacy and compliance.',
+			'Leverage native React components for seamless integration and high performance in a robust Consent Management solution that empowers your development team while prioritizing privacy and compliance.',
 	},
 };
 
