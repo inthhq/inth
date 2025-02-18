@@ -87,7 +87,10 @@ export const siteConfig = {
 				items: [
 					{ text: 'Documentation', url: '/docs' },
 					{ text: 'Components', url: '/docs/framework/react' },
-					{ text: 'Privacy Regulations', url: '/docs/privacy-regulations' },
+					{
+						text: 'Privacy Regulations',
+						url: 'https://regulations.koroflow.com',
+					},
 				],
 			},
 			{
