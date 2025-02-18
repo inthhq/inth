@@ -90,7 +90,7 @@ export function Hero() {
 					>
 						{/* <div className="w-full absolute inset-0 bg-linear-to-r from-background via-background/0 to-background z-30" /> */}
 						<div className="absolute inset-0 z-20 flex items-center justify-center">
-							<div className="rounded-full border-2 border-fd-foreground/10 bg-fd-background px-2 py-2 font-bold text-fd-primary text-xs sm:block sm:px-4 sm:py-3 md:text-base">
+							<div className="rounded-full border-2 border-fd-foreground/10 bg-fd-background px-2 py-2 font-bold text-fd-accent-foreground text-xs sm:block sm:px-4 sm:py-3 md:text-base">
 								<ConsentManagementIcon className="h-3 w-auto sm:h-4 md:h-6" />
 							</div>
 						</div>
