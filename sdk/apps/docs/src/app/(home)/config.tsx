@@ -112,8 +112,8 @@ export const siteConfig = {
 			{
 				title: 'Legal',
 				items: [
-					{ text: 'Privacy Policy', url: '/privacy' },
-					{ text: 'Terms of Service', url: '/terms' },
+					{ text: 'Privacy Policy', url: '/docs/legals/privacy-policy' },
+					{ text: 'Cookie Policy', url: '/docs/legals/cookie-policy' },
 				],
 			},
 		],
