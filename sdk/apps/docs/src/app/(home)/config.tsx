@@ -101,7 +101,7 @@ export const siteConfig = {
 						url: 'https://github.com/koroflow/consent-management',
 						external: true,
 					},
-					{ text: 'Twitter', url: 'https://x.com/koroflow', external: true },
+					// { text: 'Twitter', url: 'https://x.com/koroflow', external: true },
 					{
 						text: 'Contact',
 						url: 'mailto:support@c15t.com',
