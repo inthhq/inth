@@ -114,19 +114,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md).
 - 🧪 [Fix tests](https://github.com/c15t/c15t/issues/new?template=test.yml)
 - ⚡ [Report performance issues](https://github.com/c15t/c15t/issues/new?template=performance.yml)
 
-## 🌟 Self-Hosting vs Cloud
-
-### Self-Hosted (Open Source)
-- Full GNU3 licensed platform
-- Complete infrastructure control
-- Free to modify and extend
-- Community support
-
-### Cloud Platform (Coming Soon)
-- Managed infrastructure
-- Advanced analytics
-- Team collaboration
-- Enterprise support
 
 ## 📜 License
 
