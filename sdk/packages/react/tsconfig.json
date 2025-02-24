@@ -1,9 +1,12 @@
 {
 	"extends": "@c15t/typescript-config/react-library.json",
 	"compilerOptions": {
-		"moduleResolution": "node10",
+		"moduleResolution": "bundler",
 		"baseUrl": ".",
-		"types": ["@vitest/browser/matchers"]
+		"types": ["@vitest/browser/matchers"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
 	},
 	"include": ["src"],
 	"exclude": ["node_modules"]

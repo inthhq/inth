@@ -21,8 +21,11 @@ export default defineConfig({
 	],
 	output: {
 		target: 'web',
-
 		cleanDistPath: true,
+		cssModules: {
+			auto: true,
+			localIdentName: 'c15t-[local]-[hash:base64:5]',
+		},
 	},
 	plugins: [pluginReact()],
 });
