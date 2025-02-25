@@ -1,11 +1,9 @@
 {
 	"name": "@c15t/react",
-	"version": "0.0.1-rc.8",
+	"version": "0.0.1-rc.9",
+	"license": "GPL-3.0-only",
 	"sideEffects": false,
 	"type": "module",
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
 	"exports": {
 		"./consent-manager-dialog": {
 			"types": "./dist/components/consent-manager-dialog/index.d.ts",
@@ -48,6 +46,9 @@
 			"require": "./dist/index.cjs"
 		}
 	},
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"files": ["dist"],
 	"scripts": {
 		"build": "rslib build",
@@ -56,8 +57,8 @@
 		"fmt": "pnpm biome format --write .",
 		"lint": "pnpm biome lint ./src",
 		"test": "vitest run",
-		"test:watch": "vitest",
-		"test:coverage": "vitest run --coverage"
+		"test:coverage": "vitest run --coverage",
+		"test:watch": "vitest"
 	},
 	"browserslist": [">0.2%", "not dead", "not op_mini all"],
 	"dependencies": {
