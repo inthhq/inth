@@ -6,6 +6,7 @@ const withMDX = createMDX({
 
 /** @type {import('next').NextConfig} */
 const config = {
+	serverExternalPackages: ['oxc-transform', 'shiki', 'ts-morph'],
 	images: {
 		formats: ['image/avif', 'image/webp'],
 		remotePatterns: [
