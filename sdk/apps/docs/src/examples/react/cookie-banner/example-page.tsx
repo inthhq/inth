@@ -1,7 +1,11 @@
+import { c15tClientExample } from '~/examples/c15t-client-example';
+
 export const pages = {
+	'c15tClient.ts': c15tClientExample,
 	'App.tsx': `import { ConsentManagerProvider, ConsentManagerDialog, CookieBanner } from '@c15t/react';
 import { ExampleContent } from './ExampleContent';
 import { clearLocalStorage } from './lib/utils';
+import { clientConfig } from './c15tClient';
 
 export default function App() {
     // Clear localStorage on mount to ensure a clean state
@@ -9,6 +13,7 @@ export default function App() {
 
     return (
         <ConsentManagerProvider 
+            client={c15tClient}
             initialGdprTypes={['necessary', 'marketing']}
         >
             <CookieBanner />
