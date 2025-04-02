@@ -3,7 +3,7 @@ export const c15tClientExample = `import { createConsentClient } from '@c15t/rea
 /**
  * Create a client for React components to use
  */
-export const clientConfig = {
+export const c15tClient = {
     baseURL: '/api/c15t-demo',
     defaultPreferences: {
         analytics: true,

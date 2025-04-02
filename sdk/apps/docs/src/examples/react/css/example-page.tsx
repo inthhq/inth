@@ -2,9 +2,9 @@ import { c15tClientExample } from '~/examples/c15t-client-example';
 
 export const pages = {
 	'App.tsx': `import { ConsentManagerProvider, ConsentManagerDialog, CookieBanner } from '@c15t/react';
-import { ExampleContent } from './ExampleContent';
+import { ExampleContent } from './example-content';
 import { clearLocalStorage } from './lib/utils';
-import { c15tClient } from './c15tClient';
+import { c15tClient } from './c15t';
 
 import buttons from './buttons.module.css';
 export default function App() {
@@ -106,8 +106,8 @@ export default function App() {
 	background-color: #dc2626;
 }
 `,
-	'c15tClient.ts': c15tClientExample,
-	'ExampleContent.tsx': `import { useConsentManager } from '@c15t/react';
+	'c15t.ts': c15tClientExample,
+	'example-content.tsx': `import { useConsentManager } from '@c15t/react';
 import { setupDarkMode } from './lib/utils';
 import { useEffect } from 'react';
 

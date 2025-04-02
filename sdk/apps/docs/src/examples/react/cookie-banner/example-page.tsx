@@ -1,11 +1,11 @@
 import { c15tClientExample } from '~/examples/c15t-client-example';
 
 export const pages = {
-	'c15tClient.ts': c15tClientExample,
+	'c15t.ts': c15tClientExample,
 	'App.tsx': `import { ConsentManagerProvider, ConsentManagerDialog, CookieBanner } from '@c15t/react';
-import { ExampleContent } from './ExampleContent';
+import { ExampleContent } from './example-content';
 import { clearLocalStorage } from './lib/utils';
-import { clientConfig } from './c15tClient';
+import { c15tClient } from './c15t';
 
 export default function App() {
     // Clear localStorage on mount to ensure a clean state
@@ -22,8 +22,7 @@ export default function App() {
         </ConsentManagerProvider>
     );
 }`,
-
-	'ExampleContent.tsx': `import { useConsentManager } from '@c15t/react';
+	'example-content.tsx': `import { useConsentManager } from '@c15t/react';
 import { setupDarkMode } from './lib/utils';
 import { useEffect } from 'react';
 
