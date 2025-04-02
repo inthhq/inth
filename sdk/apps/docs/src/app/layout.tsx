@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 import { c15tClient } from '~/c15t-client';
 import { cn } from '~/lib/cn';
 import { SandPackCSS } from './styles/sandpack-styles';
+import { PostHogProvider } from './post-hog-provider';
 
 const inter = Inter({
 	subsets: ['latin'],
@@ -34,14 +35,16 @@ export default function Layout({ children }: { children: ReactNode }) {
 				<SandPackCSS />
 			</head>
 			<body className="flex min-h-screen flex-col">
+      <PostHogProvider>
 				<RootProvider>
 					<ConsentManagerProvider client={c15tClient}>
 						<CookieBanner />
 						<ConsentManagerDialog />
 						{process.env.NODE_ENV === 'development' && <C15TDevTools />}
 						{children}
-					</ConsentManagerProvider>
-				</RootProvider>
+						</ConsentManagerProvider>
+					</RootProvider>
+				</PostHogProvider>
 			</body>
 		</html>
 	);
