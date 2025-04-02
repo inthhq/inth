@@ -42,7 +42,7 @@ const config = {
 				destination: '/docs/framework/react/index',
 				permanent: true,
 			},
-      {
+			{
 				source: '/ingest/static/:path*',
 				destination: 'https://eu-assets.i.posthog.com/static/:path*',
 			},
@@ -56,7 +56,7 @@ const config = {
 			},
 		];
 	},
-  skipTrailingSlashRedirect: true,
+	skipTrailingSlashRedirect: true,
 };
 
 export default withSentryConfig(withMDX(config), {
