@@ -46,7 +46,8 @@ export const env = createEnv({
 	runtimeEnv: {
 		NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
 		NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-		NEXT_PUBLIC_C15T_URL: process.env.NEXT_PUBLIC_C15T_URL ?? 'http://localhost:8787/',
+		NEXT_PUBLIC_C15T_URL:
+			process.env.NEXT_PUBLIC_C15T_URL ?? 'http://localhost:8787/',
 		NODE_ENV: process.env.NODE_ENV,
 	},
 	/**

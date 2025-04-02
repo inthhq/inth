@@ -4,8 +4,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider, usePostHog } from 'posthog-js/react';
 import { type ReactNode, Suspense, useEffect } from 'react';
-
-
+import { env } from '~/env';
 export function PostHogProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		env.NEXT_PUBLIC_POSTHOG_KEY &&
