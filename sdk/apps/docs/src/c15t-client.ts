@@ -11,10 +11,10 @@ import { env } from './env';
  */
 export const c15tClient = createConsentClient({
 	baseURL: env.NEXT_PUBLIC_C15T_URL as string,
-	defaultPreferences: {
-		analytics: true,
-		marketing: true,
-		preferences: true,
-	},
+	// defaultPreferences: {
+	// 	analytics: true,
+	// 	marketing: true,
+	// 	preferences: true,
+	// },
 	// Note: plugins property removed as it's not in the c15tClientConfig type
 } satisfies c15tClientOptions);
