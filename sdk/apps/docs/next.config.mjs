@@ -25,7 +25,6 @@ const config = {
 		],
 	},
 	reactStrictMode: true,
-	// biome-ignore lint/suspicious/useAwait: <explanation>
 	async redirects() {
 		return [
 			{
@@ -43,8 +42,21 @@ const config = {
 				destination: '/docs/framework/react/index',
 				permanent: true,
 			},
+      {
+				source: '/ingest/static/:path*',
+				destination: 'https://eu-assets.i.posthog.com/static/:path*',
+			},
+			{
+				source: '/ingest/:path*',
+				destination: 'https://eu.i.posthog.com/:path*',
+			},
+			{
+				source: '/ingest/decide',
+				destination: 'https://eu.i.posthog.com/decide',
+			},
 		];
 	},
+  skipTrailingSlashRedirect: true,
 };
 
 export default withSentryConfig(withMDX(config), {
