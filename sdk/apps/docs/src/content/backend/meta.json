@@ -5,6 +5,15 @@
 		"index",
 		"core-concepts",
 		"database-adapters",
-		"plugins"
+		"plugins",
+		"--- Databases ---",
+		"databases/postgres",
+		"databases/mysql",
+		"databases/sqlite",
+		"--- DatabaseAdapters ---",
+		"adapters/memory",
+		"adapters/kysely",
+		"adapters/prisma",
+		"adapters/drizzle"
 	]
 }
