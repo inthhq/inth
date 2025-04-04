@@ -5,7 +5,6 @@
 		"index",
 		"core-concepts",
 		"database-adapters",
-		"plugins",
-		"endpoints"
+		"plugins"
 	]
 }
