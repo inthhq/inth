@@ -66,15 +66,6 @@ export class OfflineClient implements ConsentManagerInterface {
 	}
 
 	/**
-	 * Checks if the client is in disabled mode.
-	 *
-	 * @returns Always returns true for offline client
-	 */
-	isDisabled(): boolean {
-		return true;
-	}
-
-	/**
 	 * Returns the client's configured callbacks.
 	 *
 	 * @returns The callbacks object or undefined if no callbacks are configured

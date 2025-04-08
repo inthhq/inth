@@ -1,12 +1,8 @@
 /**
  * C15t backend implementation of the consent client interface.
  * This client makes HTTP requests to the c15t consent management backend.
- *
- * When `backendURL` is set to `false`, the client enters disabled mode,
- * where all API methods return successful empty responses without making
- * network requests. This is useful for implementing offline mode or for
- * testing without requiring complex mocks.
  */
+
 import type {
 	SetConsentRequestBody,
 	SetConsentResponse,
@@ -132,16 +128,6 @@ export class C15tClient implements ConsentManagerInterface {
 		this.customFetch = options.customFetch;
 		this.callbacks = options.callbacks;
 		this.corsMode = options.corsMode || 'cors';
-	}
-
-	/**
-	 * Checks if the client is in disabled mode.
-	 * C15t client is never disabled.
-	 *
-	 * @returns Always returns false
-	 */
-	isDisabled(): boolean {
-		return this.backendURL === false;
 	}
 
 	/**

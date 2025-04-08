@@ -64,13 +64,6 @@ export interface ConsentManagerInterface {
 	): Promise<ResponseContext<ResponseType>>;
 
 	/**
-	 * Checks if the client is in disabled mode.
-	 *
-	 * @returns True if the client is disabled, false otherwise
-	 */
-	isDisabled(): boolean;
-
-	/**
 	 * Returns the client's configured callbacks.
 	 *
 	 * @returns The callbacks object or undefined if no callbacks are configured

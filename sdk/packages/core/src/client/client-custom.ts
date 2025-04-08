@@ -106,16 +106,6 @@ export class CustomClient implements ConsentManagerInterface {
 	}
 
 	/**
-	 * Checks if the client is in disabled mode.
-	 * Custom client is never disabled.
-	 *
-	 * @returns Always returns false
-	 */
-	isDisabled(): boolean {
-		return false;
-	}
-
-	/**
 	 * Returns the client's configured callbacks.
 	 *
 	 * @returns The callbacks object or undefined if no callbacks are configured
