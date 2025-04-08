@@ -18,7 +18,7 @@ const handler = (env: Env) => {
 			authToken: env.TURSO_AUTH_TOKEN,
 		}),
 		basePath: '/',
-		trustedOrigins: env.TRUSTED_ORIGINS,
+		trustedOrigins: env.TRUSTED_ORIGINS as string[],
 		cors: true,
 		advanced: {
 			cors: {
@@ -49,5 +49,5 @@ export default {
 interface Env {
 	TURSO_DATABASE_URL: string;
 	TURSO_AUTH_TOKEN: string;
-	TRUSTED_ORIGINS: string[];
+	TRUSTED_ORIGINS: string | string[];
 }

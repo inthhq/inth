@@ -20,6 +20,9 @@ coverage
 # Turbo
 .turbo
 
+# Wrangler
+.wrangler
+
 # Vercel
 .vercel
 
