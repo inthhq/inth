@@ -16,11 +16,10 @@ export { useColorScheme } from './hooks/use-color-scheme';
 export {
 	configureConsentManager,
 	type ConsentManagerInterface,
-	type ConsentManagerOptions,
 } from 'c15t';
 
 // Export types
-export type { ConsentManagerProviderProps } from './types/consent-manager';
+export type { ConsentManagerProviderProps, ConsentManagerOptions } from './types/consent-manager';
 
 // Export utilities
 export * from './utils/translations';
