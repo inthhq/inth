@@ -87,7 +87,7 @@ Offline mode completely disables all network requests while simulating successfu
 Unlike Custom mode which lets you implement your own HTTP handling logic, Offline mode eliminates network requests entirely while providing a functional interface.
 
 ```tsx
-const client = {
+const options = {
   mode: 'offline',
   
   // Optional: Global event callbacks
@@ -96,9 +96,6 @@ const client = {
       console.log('Consent set (offline mode)');
     }
   },
-  
-  // Optional: Custom localStorage key for storing consent state
-  localStorageKey: 'my-app-consent'
 };
 ```
 
@@ -108,13 +105,19 @@ The Offline mode saves user consent preferences to localStorage by default, maki
 - Implement a completely client-side consent solution
 - Eliminate dependency on external consent management services
 
-### Offline Mode Options 
+### Offline Mode Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `callbacks` | `ConsentManagerCallbacks` | Global callbacks for handling API responses |
+| `localStorageKey` | `string` | Custom localStorage key to track consent banner visibility (default: 'c15t-consent') |
+
 ## Custom Mode
 
 Custom mode lets you implement your own handlers for consent-related operations. This gives you complete control over how consent operations are processed.
 
 ```tsx
-const client = {
+const options = {
   mode: 'custom',
   
   // Required: Custom handlers for each endpoint
@@ -171,8 +174,8 @@ const client = {
 ## When to Use Each Mode
 
 - **C15t Mode**: For production applications with a real C15t backend
-- **Offline Mode**: For development, testing, or when you need to disable consent functionality
-- **Custom Mode**: When you need to integrate with an existing consent system or implement custom behavior
+- **Offline Mode**: For production applications with your own backend systems, or when you want to eliminate external service dependencies
+- **Custom Mode**: When you need to integrate with an existing consent system but still want to implement custom HTTP request handling
 
 ## Global Callback Events
 

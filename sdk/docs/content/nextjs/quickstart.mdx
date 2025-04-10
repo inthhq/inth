@@ -162,4 +162,21 @@ c15t can be self-hosted by using the `@c15t/backend` package. This is the most f
 
 ### Offline
 
-If you do not want to use the c15t backend, you can use c15t offline by setting `mode: 'undefined'`. This method is ideal if you have an existing consent management backend. 
+If you do not want to use the c15t backend, you can use c15t offline by setting `mode: 'offline'`. This mode completely disables all network requests while providing a functional interface.
+
+```tsx
+const options: ConsentManagerOptions = {
+  mode: 'offline',
+  // Optional: Custom localStorage key for storing consent state
+  localStorageKey: 'my-app-consent'
+};
+```
+
+Offline mode is ideal for:
+
+- Production applications with your own existing consent backend
+- Applications that want to use C15t's UI components but handle data storage elsewhere
+- Implementing a completely client-side consent solution
+- Eliminating dependency on external consent management services
+
+The Offline mode saves user consent preferences to localStorage by default, making it a practical solution for applications that need to comply with consent regulations without relying on external services.
