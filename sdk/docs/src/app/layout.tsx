@@ -1,5 +1,5 @@
 import './global.css';
-import { ConsentManagerProvider } from '@c15t/react';
+import { ConsentManagerDialog, ConsentManagerProvider, CookieBanner } from '@c15t/react';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { Inter } from 'next/font/google';
 import type { ReactNode } from 'react';
@@ -25,6 +25,8 @@ export default function Layout({ children }: { children: ReactNode }) {
 						}}
 					>
 						<PostHogProvider>{children}</PostHogProvider>
+						<CookieBanner />
+            <ConsentManagerDialog/>
 					</ConsentManagerProvider>
 				</RootProvider>
 			</body>
