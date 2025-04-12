@@ -6,8 +6,8 @@ import {
 	forwardRef,
 } from 'react';
 import { Box } from '~/components/shared/primitives/box';
+import { useStyles } from '~/hooks/use-styles';
 import type { ExtendThemeKeys, ThemeValue } from '~/types/theme';
-import { useStyles } from '~/utils/use-styles';
 import styles from './switch.module.css';
 
 export type SwitchStylesKeys = {
