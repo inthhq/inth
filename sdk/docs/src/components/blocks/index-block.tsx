@@ -12,7 +12,7 @@ const frameworkCards = [
 	{
 		href: '/docs/react',
 		title: 'React',
-		icon: <ReactIcon />,
+		icon: <ReactIcon className="text-[#53C1DE]" />,
 		description:
 			'Get started installing and initializing C15T in a new React + Vite app.',
 	},
