@@ -4,7 +4,7 @@
  * client instances based on configuration options.
  */
 
-import type {
+export type {
 	SetConsentRequestBody,
 	SetConsentResponse,
 	ShowConsentBannerResponse,
@@ -19,8 +19,13 @@ import type {
 	ConsentManagerCallbacks,
 	ConsentManagerInterface,
 } from './client-interface';
+export type {
+	ConsentManagerCallbacks,
+	ConsentManagerInterface,
+} from './client-interface';
 import { OfflineClient } from './client-offline';
-import type { FetchOptions, ResponseContext, RetryConfig } from './types';
+import type { RetryConfig } from './types';
+export type { FetchOptions, ResponseContext, RetryConfig } from './types';
 
 /**
  * Default API endpoint URL
@@ -31,6 +36,38 @@ const DEFAULT_BACKEND_URL = '/api/c15t';
  * Default client mode
  */
 const DEFAULT_CLIENT_MODE = 'c15t';
+
+// Add at the module level (before the configureConsentManager function)
+const clientRegistry = new Map<string, ConsentManagerInterface>();
+
+/**
+ * Create a stable cache key for client instances
+ * @internal
+ */
+function getClientCacheKey(options: ConsentManagerOptions): string {
+	if (options.mode === 'offline') {
+		return 'offline';
+	}
+
+	if (options.mode === 'custom') {
+		// Include handler keys in the cache key to differentiate custom clients
+		const handlerKeys = Object.keys(options.endpointHandlers || {})
+			.sort()
+			.join(',');
+		return `custom:${handlerKeys}`;
+	}
+
+	// For c15t clients, include headers in the cache key if present
+	let headersPart = '';
+	if ('headers' in options && options.headers) {
+		// Sort header keys for a stable key
+		const headerKeys = Object.keys(options.headers).sort();
+		headersPart = `:headers:${headerKeys.map((k) => `${k}=${options.headers?.[k]}`).join(',')}`;
+	}
+
+	// For c15t clients, use the backendURL as the key
+	return `c15t:${options.backendURL || ''}${headersPart}`;
+}
 
 /**
  * Configuration for Custom mode
@@ -192,51 +229,82 @@ export type ConsentManagerOptions = {
 export function configureConsentManager(
 	options: ConsentManagerOptions
 ): ConsentManagerInterface {
-	// Determine the client mode, with fallback to default
+	const cacheKey = getClientCacheKey(options);
+
+	// Return existing client if found
+	if (clientRegistry.has(cacheKey)) {
+		// If the existing client is a C15tClient and new options include headers,
+		// update the client's headers
+		if (
+			options.mode !== 'offline' &&
+			options.mode !== 'custom' &&
+			'headers' in options &&
+			options.headers
+		) {
+			const existingClient = clientRegistry.get(cacheKey);
+			// Update headers if the client is a C15tClient
+			if (existingClient instanceof C15tClient) {
+				// @ts-expect-error: headers is a private property
+				existingClient.headers = {
+					'Content-Type': 'application/json',
+					...options.headers,
+				};
+			}
+		}
+
+		const existingClient = clientRegistry.get(cacheKey);
+		if (existingClient) {
+			return new Proxy(existingClient, {
+				get(target, prop) {
+					if (prop === 'getCallbacks') {
+						return () => options.callbacks;
+					}
+					return target[prop as keyof ConsentManagerInterface];
+				},
+			});
+		}
+	}
+
+	// Create a new client
 	const mode = options.mode || DEFAULT_CLIENT_MODE;
+	let client: ConsentManagerInterface;
 
 	// Create the appropriate client based on the mode
 	switch (mode) {
 		case 'custom': {
-			// Use a properly typed cast
 			const customOptions = options as CustomClientOptions;
-			return new CustomClient({
+			client = new CustomClient({
 				endpointHandlers: customOptions.endpointHandlers,
 				callbacks: customOptions.callbacks,
 			});
+			break;
 		}
 		case 'offline':
-			return new OfflineClient({
+			client = new OfflineClient({
 				callbacks: options.callbacks,
 			});
+			break;
 		default: {
-			// Use a properly typed cast
 			const c15tOptions = options as {
 				backendURL: string;
 				headers?: Record<string, string>;
 				customFetch?: typeof fetch;
 				callbacks?: ConsentManagerCallbacks;
+				retryConfig?: RetryConfig;
 			};
-			return new C15tClient({
+			client = new C15tClient({
 				backendURL: c15tOptions.backendURL || DEFAULT_BACKEND_URL,
 				headers: c15tOptions.headers,
 				customFetch: c15tOptions.customFetch,
 				callbacks: c15tOptions.callbacks,
+				retryConfig: c15tOptions.retryConfig,
 			});
+			break;
 		}
 	}
-}
 
-// Re-export core types for convenience
-export type {
-	ConsentManagerInterface,
-	ConsentManagerCallbacks,
-	EndpointHandlers,
-	ResponseContext,
-	FetchOptions,
-	ShowConsentBannerResponse,
-	SetConsentResponse,
-	SetConsentRequestBody,
-	VerifyConsentResponse,
-	VerifyConsentRequestBody,
-};
+	// Store the client in the registry
+	clientRegistry.set(cacheKey, client);
+
+	return client;
+}

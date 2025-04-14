@@ -71,6 +71,13 @@ export class OfflineClient implements ConsentManagerInterface {
 	}
 
 	/**
+	 * Sets the client's callback functions.
+	 */
+	setCallbacks(callbacks: ConsentManagerCallbacks): void {
+		this.callbacks = callbacks;
+	}
+
+	/**
 	 * Creates a response context object for success cases.
 	 */
 	private createResponseContext<T>(data: T | null = null): ResponseContext<T> {

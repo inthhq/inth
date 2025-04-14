@@ -115,6 +115,13 @@ export class CustomClient implements ConsentManagerInterface {
 	}
 
 	/**
+	 * Sets the client's callback functions.
+	 */
+	setCallbacks(callbacks: ConsentManagerCallbacks): void {
+		this.callbacks = callbacks;
+	}
+
+	/**
 	 * Creates a basic response context for error cases.
 	 */
 	private createErrorResponse<T>(

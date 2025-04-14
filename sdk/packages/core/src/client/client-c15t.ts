@@ -244,6 +244,13 @@ export class C15tClient implements ConsentManagerInterface {
 	}
 
 	/**
+	 * Sets the client's callback functions.
+	 */
+	setCallbacks(callbacks: ConsentManagerCallbacks): void {
+		this.callbacks = callbacks;
+	}
+
+	/**
 	 * Creates a response context object for success or error cases.
 	 */
 	private createResponseContext<T>(

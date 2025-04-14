@@ -69,6 +69,13 @@ export interface ConsentManagerInterface {
 	 * @returns The callbacks object or undefined if no callbacks are configured
 	 */
 	getCallbacks(): ConsentManagerCallbacks | undefined;
+
+	/**
+	 * Sets the client's configured callbacks.
+	 *
+	 * @param callbacks - The new callbacks object
+	 */
+	setCallbacks(callbacks: ConsentManagerCallbacks): void;
 }
 
 /**
