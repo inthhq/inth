@@ -2,6 +2,8 @@
 title: Next.js Quickstart
 description: Learn how to integrate c15t into your Next.js application with this step-by-step guide. We'll cover installation, configuration, and basic usage.
 ---
+import { RiFileCopyLine, RiFlashlightLine, RiServerLine, RiWifiOffLine, RiSettings4Line } from '@remixicon/react';
+
 <Steps>
 <Step>
  
@@ -39,28 +41,36 @@ export default function Layout ({ children }: { children: ReactNode }) => {
 };
 ```
 
-You can create an instance at [Consent.io](https://consent.io) or self-host your own instance. Otherwise, you can use c15t offline by setting `mode: 'undefined'`. More information on these methods can be found [below](#creating-a-consentio-instance-recommended). 
+<Callout type="tip">
+You can create an instance at [consent.io](https://consent.io) or self-host your own instance. Otherwise, you can use c15t offline by setting `mode: 'offline'`.
+</Callout>
 </Step>
 </Steps>
 
 --- 
 
-## Hosted c15t Instances
+## Hosting Options
 
-### Creating a Consent.io Instance (Recommended)
+### Creating a consent.io Instance (Recommended)
 
-Instead of self-hosting your own c15t instance, you can use a [Consent.io](https://consent.io) instance. This is the recommended method as it is the easiest way to get started and requires little maintenance.
+<Callout type="info">
+Using consent.io is the recommended method as it is the easiest way to get started and requires little maintenance.
+</Callout>
+
+Instead of self-hosting your own c15t instance, you can use a [consent.io](https://consent.io) instance. This is the recommended method as it is the easiest way to get started and requires little maintenance.
 
 <Steps>
 
 <Step>
-Sign up for a [Consent.io](https://consent.io) account.
+Sign up for a [consent.io](https://consent.io) account.
 </Step>
 
 <Step>
 After signing up, create a new instance, located in the top-right corner.
 
+<Callout>
 When creating an instance it is important to list all the trusted origins for your application such as "localhost", "vercel.app", "c15t.com" etc.
+</Callout>
 
 </Step>
 
@@ -73,83 +83,95 @@ A backend URL might look like this: `https://<my-instance>.c15t.dev/`.
 
 </Steps>
 
-### Self-Hosting (Next.js)
+### Alternative Hosting Options
 
-<Steps>
+<Callout type="note">
+For more advanced setup options, choose the approach that best suits your infrastructure and requirements.
+</Callout>
 
-<Step>
-Install `@c15t/backend` Package
- 
-<Tabs items={['npm', 'yarn', 'pnpm']}>
-	<Tab value="npm">npm add @c15t/backend</Tab>
-	<Tab value="yarn">yarn add @c15t/backend</Tab>
-	<Tab value="pnpm">pnpm add @c15t/backend</Tab>
-</Tabs>
-</Step>
+For more advanced setup options, please refer to:
 
-<Step>
+- [Server-Based Consent Storage](/docs/nextjs/server-based-storage) - Standard mode connecting to a c15t backend (detailed configuration)
+- [Self-Hosting with Next.js](/docs/nextjs/self-hosting) - Quickstart guide for setting up c15t in your Next.js API routes
+- [Self-Hosting with Other Frameworks](/docs/backend) - General self-hosting information for various platforms
+- [Offline Mode](/docs/nextjs/offline-mode) - Complete guide to using c15t without a backend
+- [Custom Client](/docs/nextjs/custom-client) - Advanced implementation with custom handlers for full control
 
-Create Next.js API Handler
+## Decision Guide
 
-```tsx title="app/api/c15t/[...all].ts"
-import { c15tInstance } from '@c15t/backend';
-import { toNextHandler } from '@c15t/backend/integrations/next';
-import { memoryAdapter } from '@c15t/backend/pkgs/db-adapters/adapters/memory-adapter';
+<Callout>
+Use this flowchart to determine which c15t configuration is best for your needs.
+</Callout>
 
-export const { GET, POST, OPTIONS } = toNextHandler(
-	c15tInstance({
-		appName: 'Next.js Example App',
-		basePath: '/api/c15t',
-		database: memoryAdapter({}),
-		trustedOrigins: ['http://localhost:3000', 'http://localhost:8787'],
-		cors: true,
-		advanced: {
-			cors: {
-				allowHeaders: ['content-type', 'x-request-id'],
-			},
-			disableCSRFCheck: true,
-		},
-	})
-);
-```
+Use this flowchart to determine which c15t configuration is best for your needs:
 
-</Step>
+<Mermaid chart={`
+flowchart TD
+    Start([Start here]) --> StoreConsent
+    
+    StoreConsent{Need to store\nconsent choices?}
+    StoreConsent -->|Yes| ManagedService
+    StoreConsent -->|No| OfflineMode
+    
+    ManagedService{Want a managed\nservice?}
+    ManagedService -->|Yes| ConsentIO
+    ManagedService -->|No| SelfHosted
+    
+    OfflineMode([c15t Offline Mode]):::optionStyle
+    OfflineMode -.-> OfflineNote[Client-side only\nStores in localStorage]:::noteStyle
+    
+    ConsentIO([consent.io]):::recommendStyle
+    ConsentIO -.-> ConsentIONote[Fully managed\nSimplest setup]:::noteStyle
+    
+    SelfHosted([Self-Hosted Instance]):::optionStyle
+    SelfHosted -.-> SelfHostedNote[Full control\nRequires maintenance]:::noteStyle
+    
+    %% Styling
+    classDef recommendStyle fill:#4caf50,stroke:#388e3c,color:white,stroke-width:2px;
+    classDef optionStyle fill:#37474f,stroke:#263238,color:white,stroke-width:1px;
+    classDef noteStyle fill:#424242,stroke:none,color:#aaa,font-size:12px;
+`} />
 
-<Step>
-After you've created the API handler, you can update your backendURL to be `api/c15t` in the `ConsentManagerOptions`.
+## Next Steps in This Guide
 
-```tsx title="app/layout.tsx"
-const options: ConsentManagerOptions = {
-	mode: 'c15t',
-	backendURL: '/api/c15t',
-};
-```
+<Callout type="tip">
+Choose your next step based on your specific implementation needs.
+</Callout>
 
-</Step>
+<div className="mt-6">
+  <CompactCard 
+    href="/docs/nextjs/client-config-options" 
+    icon={<RiFileCopyLine size={16} />}
+  >
+Learn more about <code>Client Configuration Options</code>
+  </CompactCard>
 
-</Steps>
+  <CompactCard 
+    href="/docs/nextjs/storing-consent/server-based-storage"
+    icon={<RiFlashlightLine size={16} />}
+  >
+    Learn more about <code >Server-Based Consent Storage</code>
+  </CompactCard>
 
-### Self-Hosting
+  <CompactCard 
+    href="/docs/nextjs/self-hosting"
+    icon={<RiServerLine size={16} />}
+  >
+    Learn more about <code >Self-Hosting with Next.js</code>
+  </CompactCard>
 
-c15t can be self-hosted by using the `@c15t/backend` package. This is the most flexible way to use c15t, but it requires more maintenance and is deployable to platforms such as Cloudflare Workers. [Learn More](/backend)
+  <CompactCard 
+    href="/docs/nextjs/storing-consent/offline-mode"
+    icon={<RiWifiOffLine size={16} />}
+  >
+    Learn more about <code>Offline Mode</code>
+  </CompactCard>
 
-### Offline
+  <CompactCard 
+    href="/docs/nextjs/storing-consent/custom-client"
+    icon={<RiSettings4Line size={16} />}
+  >
+    Learn more about <code>Custom Client</code>
+  </CompactCard>
+</div>
 
-If you do not want to use the c15t backend, you can use c15t offline by setting `mode: 'offline'`. This mode completely disables all network requests while providing a functional interface.
-
-```tsx
-const options: ConsentManagerOptions = {
-  mode: 'offline',
-  // Optional: Custom localStorage key for storing consent state
-  localStorageKey: 'my-app-consent'
-};
-```
-
-Offline mode is ideal for:
-
-- Production applications with your own existing consent backend
-- Applications that want to use c15t's UI components but handle data storage elsewhere
-- Implementing a completely client-side consent solution
-- Eliminating dependency on external consent management services
-
-The Offline mode saves user consent preferences to localStorage by default, making it a practical solution for applications that need to comply with consent regulations without relying on external services.
