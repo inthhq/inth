@@ -6,68 +6,41 @@ description: Learn how to integrate c15t into your Next.js application with this
 <Step>
  
 ### Install `@c15t/react` Package
- 
-<Tabs items={['npm', 'yarn', 'pnpm']}>
-	<Tab value="npm">npm add @c15t/react</Tab>
-	<Tab value="yarn">yarn add @c15t/react</Tab>
-	<Tab value="pnpm">pnpm add @c15t/react</Tab>
-</Tabs>
- 
+ ```package-install
+ @c15t/react
+ ```
 </Step>
  
 <Step>
  
-### Consent Mangaer Provider
+### Adding it to your Next Application
 
 ```tsx title="app/layout.tsx"
-import { ConsentManagerProvider, type ConsentManagerOptions } from '@c15t/react';
+import { 
+  ConsentManagerDialog,
+  ConsentManagerProvider,
+  CookieBanner,
+  type ConsentManagerOptions
+} from '@c15t/react';
 
 export default function Layout ({ children }: { children: ReactNode }) => {
 	const options: ConsentManagerOptions = {
-	 	mode: 'c15t', // Optional, defaults to 'c15t'
-		// Backend URL is required for c15t mode
-		backendURL: process.env.NEXT_PUBLIC_CONSENT_INSTANCE,
-		react: {
-			theme: 'light',
-			// ...
-		}
+	  mode: 'c15t', 
+	  backendURL: process.env.NEXT_PUBLIC_C15T_URL,
 	}
 
 	return (
-		<ConsentManagerProvider options={options}>
-			{children}
-		</ConsentManagerProvider>
-	);
+    <ConsentManagerProvider options={options}>
+      {children}
+      <CookieBanner />
+      <ConsentManagerDialog />
+    </ConsentManagerProvider>
+  );
 };
 ```
 
-You can create an instance at [Consent.io](https://consent.io) or self-host your own instance. Otherwise, you can use c15t offline by setting `mode: 'undefined'`. More information on these methods can be found [below](#hosted-c15t-instances). 
-
-
+You can create an instance at [Consent.io](https://consent.io) or self-host your own instance. Otherwise, you can use c15t offline by setting `mode: 'undefined'`. More information on these methods can be found [below](#creating-a-consentio-instance-recommended). 
 </Step>
-
-<Step>
-
-### Add Pre-Made components
-
-Using the `@c15t/react` package, you can add pre-made components to your application to get started quickly.
-
-```tsx title="app/layout.tsx"
-import { ConsentManagerProvider, CookieBanner } from '@c15t/react';
-
-export default function Layout ({ children }: { children: ReactNode }) => {
-	// ...
-	return (
-		<ConsentManagerProvider options={options}>
-			<CookieBanner />
-			{children}
-		</ConsentManagerProvider>
-	);
-};
-```
-
-</Step>
-
 </Steps>
 
 --- 
