@@ -3,6 +3,8 @@
 	"root": true,
 	"icon": "react",
 	"pages": [
+    "../introduction",
+    "../ai-tools-integrations",
 		"quickstart",
 		"--- React Components ---",
 		"../components/react/cookie-banner",
@@ -22,6 +24,10 @@
 		"../styling/classnames",
 		"../styling/tailwind",
 		"../styling/css-variables",
-		"../styling/inline-styles"
+		"../styling/inline-styles",
+    "--- Contributing ---",
+    "../oss/contributing",
+    "../oss/license",
+    "../oss/why-open-source"
 	]
 }

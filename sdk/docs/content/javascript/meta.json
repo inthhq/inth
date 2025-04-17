@@ -3,10 +3,17 @@
 	"icon": "js",
 	"root": true,
 	"pages": [
+    "../introduction",
+    "../ai-tools-integrations",
+    "--- Javascript ---",
 		"index",
 		"how-it-works",
 		"client-config-options",
 		"auto-detect",
-		"api-reference"
+		"api-reference",
+    "--- Contributing ---",
+    "../oss/contributing",
+    "../oss/license",
+    "../oss/why-open-source"
 	]
 }
