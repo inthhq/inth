@@ -3,19 +3,19 @@
 	"icon": "js",
 	"root": true,
 	"pages": [
-    "../introduction",
-    "../ai-tools-integrations",
-    "--- Javascript ---",
-    "quickstart",
+		"../introduction",
+		"../ai-tools-integrations",
+		"--- Javascript ---",
+		"quickstart",
 		"api-reference",
 		"--- Storing Consent ---",
 		"./storing-consent/overview",
 		"./storing-consent/hosted-c15t",
 		"./storing-consent/offline-mode",
 		"./storing-consent/self-hosting",
-    "--- Contributing ---",
-    "../oss/contributing",
-    "../oss/license",
-    "../oss/why-open-source"
+		"--- Contributing ---",
+		"../oss/contributing",
+		"../oss/license",
+		"../oss/why-open-source"
 	]
 }

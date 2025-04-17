@@ -3,8 +3,8 @@
 	"root": true,
 	"icon": "next",
 	"pages": [
-    "../introduction",
-    "../ai-tools-integrations",
+		"../introduction",
+		"../ai-tools-integrations",
 		"quickstart",
 		"--- React Components ---",
 		"../components/react/cookie-banner",
@@ -40,9 +40,9 @@
 		"../backend/adapters/kysely",
 		"../backend/adapters/prisma",
 		"../backend/adapters/drizzle",
-    "--- Contributing ---",
-    "../oss/contributing",
-    "../oss/license",
-    "../oss/why-open-source"
+		"--- Contributing ---",
+		"../oss/contributing",
+		"../oss/license",
+		"../oss/why-open-source"
 	]
 }
