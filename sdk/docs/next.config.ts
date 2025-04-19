@@ -25,6 +25,7 @@ const config: NextConfig = {
 		'shiki',
 	],
 	reactStrictMode: true,
+	// biome-ignore lint/suspicious/useAwait: <explanation>
 	async redirects() {
 		return [
 			{
@@ -54,7 +55,6 @@ const config: NextConfig = {
 			},
 		];
 	},
-	skipTrailingSlashRedirect: true,
 };
 
 export default withSentryConfig(withMDX(config), {
