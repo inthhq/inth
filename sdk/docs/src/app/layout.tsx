@@ -50,6 +50,10 @@ export default function Layout({ children }: { children: ReactNode }) {
 								'banner.root': {
 									style: {
 										...baseTheme.style,
+										'--banner-background-color-dark': bgColorDark,
+										'--banner-background-color': bgColor,
+										'--banner-footer-background-color-dark': '#000000',
+										'--banner-footer-background-color': bgColor,
 									},
 								},
 							}}
