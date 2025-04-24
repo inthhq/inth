@@ -1,6 +1,5 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
 import {
 	type CSSProperties,
 	type FC,
@@ -142,6 +141,7 @@ const CookieBannerRoot: FC<CookieBannerRootProps> = ({
 			<CookieBannerRootChildren
 				disableAnimation={disableAnimation}
 				className={className}
+				noStyle={noStyle}
 				{...props}
 			>
 				{children}
@@ -228,6 +228,7 @@ const CookieBannerRootChildren = forwardRef<
 			style,
 			className: forwardedClassName,
 			disableAnimation,
+			noStyle,
 			...props
 		}: CookieBannerRootChildrenProps & {
 			style?: CSSProperties;
@@ -236,27 +237,37 @@ const CookieBannerRootChildren = forwardRef<
 		ref
 	) => {
 		const { showPopup } = useConsentManager();
+		const [isVisible, setIsVisible] = useState(false);
 
-		/**
-		 * Apply styles from the CookieBanner context and merge with local styles.
-		 * Uses the 'content' style key for consistent theming.
-		 */
+		// Handle animation visibility state
+		useEffect(() => {
+			if (showPopup) {
+				setIsVisible(true);
+			} else if (disableAnimation) {
+				setIsVisible(false);
+			} else {
+				const timer = setTimeout(() => {
+					setIsVisible(false);
+				}, 200); // Match CSS animation duration
+				return () => clearTimeout(timer);
+			}
+		}, [showPopup, disableAnimation]);
+
+		// Apply styles from the CookieBanner context and merge with local styles.
+		// Uses the 'content' style key for consistent theming.
 		const contentStyle = useStyles('banner.root', {
 			baseClassName: [styles.root, styles.bottomLeft],
 			style: style as CSSPropertiesWithVars<Record<string, never>>,
 			className: className || forwardedClassName,
+			noStyle,
 		});
 
-		/**
-		 * Track client-side mounting state to prevent SSR hydration issues
-		 * with the portal rendering
-		 */
+		// Track client-side mounting state to prevent SSR hydration issues
+		// with the portal rendering
 		const [isMounted, setIsMounted] = useState(false);
 
-		/**
-		 * Initialize mounting state after initial render
-		 * This ensures we only render the portal on the client side
-		 */
+		// Initialize mounting state after initial render
+		// This ensures we only render the portal on the client side
 		useEffect(() => {
 			setIsMounted(true);
 		}, []);
@@ -266,35 +277,25 @@ const CookieBannerRootChildren = forwardRef<
 			return null;
 		}
 
+		// Create a final class name that respects the noStyle flag
+		const finalClassName = noStyle
+			? contentStyle.className || ''
+			: `${contentStyle.className || ''} ${isVisible ? styles.bannerVisible : styles.bannerHidden}`;
+
 		// Only render when the banner should be shown
 		return showPopup
 			? createPortal(
 					<>
 						<Overlay />
-						{disableAnimation ? (
-							<div
-								ref={ref}
-								{...props}
-								{...contentStyle}
-								data-testid="cookie-banner-root"
-							>
-								{children}
-							</div>
-						) : (
-							<AnimatePresence>
-								<motion.div
-									ref={ref}
-									initial={{ opacity: 0, y: 50 }}
-									animate={{ opacity: 1, y: 0 }}
-									exit={{ opacity: 0, y: 50 }}
-									transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-									{...contentStyle}
-									data-testid="cookie-banner-root"
-								>
-									{children}
-								</motion.div>
-							</AnimatePresence>
-						)}
+						<div
+							ref={ref}
+							{...props}
+							{...contentStyle}
+							className={finalClassName}
+							data-testid="cookie-banner-root"
+						>
+							{children}
+						</div>
 					</>,
 					document.body
 				)

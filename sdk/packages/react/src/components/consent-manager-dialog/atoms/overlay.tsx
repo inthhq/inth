@@ -4,8 +4,8 @@
  * Implements accessible modal behavior with animation support.
  */
 
-import { AnimatePresence, motion } from 'motion/react';
-import type { FC } from 'react';
+import clsx from 'clsx';
+import { type FC, useEffect, useState } from 'react';
 import { useConsentManager } from '~/hooks/use-consent-manager';
 import { useScrollLock } from '~/hooks/use-scroll-lock';
 import { useStyles } from '~/hooks/use-styles';
@@ -78,6 +78,7 @@ interface OverlayProps {
  */
 const ConsentManagerDialogOverlay: FC<OverlayProps> = ({
 	noStyle,
+	style,
 	open = false,
 }) => {
 	const { isPrivacyDialogOpen } = useConsentManager();
@@ -87,29 +88,61 @@ const ConsentManagerDialogOverlay: FC<OverlayProps> = ({
 		scrollLock = true,
 	} = useTheme();
 
+	const [isVisible, setIsVisible] = useState(false);
+
+	// Handle animation visibility state
+	useEffect(() => {
+		if (open || isPrivacyDialogOpen) {
+			setIsVisible(true);
+		} else if (disableAnimation) {
+			setIsVisible(false);
+		} else {
+			const timer = setTimeout(() => {
+				setIsVisible(false);
+			}, 200); // Match CSS animation duration
+			return () => clearTimeout(timer);
+		}
+	}, [open, isPrivacyDialogOpen, disableAnimation]);
+
+	// Get custom className from style prop
+	const customClassName = typeof style === 'string' ? style : style?.className;
+
+	// Apply theme styles
 	const theme = useStyles('dialog.overlay', {
-		baseClassName: styles.overlay,
+		baseClassName: !(isThemeNoStyle || noStyle) && styles.overlay,
+		className: customClassName,
 		noStyle: isThemeNoStyle || noStyle,
 	});
+
+	// Animations are handled with CSS classes
+	const shouldApplyAnimation =
+		!(isThemeNoStyle || noStyle) && !disableAnimation;
+
+	// Use conditional assignment instead of nested ternaries
+	const animationClass = shouldApplyAnimation
+		? // biome-ignore lint/nursery/noNestedTernary: easier to read
+			isVisible
+			? styles.overlayVisible
+			: styles.overlayHidden
+		: undefined;
+
+	// Combine theme className with animation class if needed
+	const finalClassName = clsx(theme.className, animationClass);
 
 	const shouldLockScroll = !!(open || isPrivacyDialogOpen) && scrollLock;
 
 	useScrollLock(shouldLockScroll);
 
 	return shouldLockScroll ? (
-		disableAnimation ? (
-			<div {...theme} data-testid="consent-manager-dialog-overlay" />
-		) : (
-			<AnimatePresence>
-				<motion.div
-					{...theme}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-					data-testid="consent-manager-dialog-overlay"
-				/>
-			</AnimatePresence>
-		)
+		<div
+			style={
+				typeof style === 'object' && 'style' in style
+					? { ...theme.style, ...style.style }
+					: theme.style
+			}
+			className={finalClassName}
+			data-testid="consent-manager-dialog-overlay"
+		/>
 	) : null;
 };
 

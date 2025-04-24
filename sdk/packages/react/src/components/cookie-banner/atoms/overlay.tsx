@@ -3,14 +3,14 @@
  * Provides the overlay backdrop component for the CookieBanner.
  */
 
-import { AnimatePresence, motion } from 'motion/react';
-import { type HTMLAttributes, forwardRef } from 'react';
+import { type HTMLAttributes, forwardRef, useEffect, useState } from 'react';
 
 import { useConsentManager } from '~/hooks/use-consent-manager';
 import { useScrollLock } from '~/hooks/use-scroll-lock';
 import { useStyles } from '~/hooks/use-styles';
 import { useTheme } from '~/hooks/use-theme';
 
+import clsx from 'clsx';
 import styles from '../cookie-banner.module.css';
 
 /**
@@ -59,33 +59,54 @@ const CookieBannerOverlay = forwardRef<HTMLDivElement, OverlayProps>(
 			noStyle: contextNoStyle,
 			scrollLock,
 		} = useTheme();
+
+		const [isVisible, setIsVisible] = useState(false);
+
+		// Handle animation visibility state
+		useEffect(() => {
+			if (showPopup) {
+				setIsVisible(true);
+			} else if (disableAnimation) {
+				setIsVisible(false);
+			} else {
+				const timer = setTimeout(() => {
+					setIsVisible(false);
+				}, 200); // Match CSS animation duration
+				return () => clearTimeout(timer);
+			}
+		}, [showPopup, disableAnimation]);
+
+		// Apply theme styles
 		const theme = useStyles('banner.overlay', {
 			baseClassName: !(contextNoStyle || noStyle) && styles.overlay,
-			noStyle,
+			className, // Always pass custom className
+			noStyle: contextNoStyle || noStyle,
 		});
+
+		// Animations are handled with CSS classes
+		const shouldApplyAnimation =
+			!(contextNoStyle || noStyle) && !disableAnimation;
+
+		const animationClass = shouldApplyAnimation
+			? // biome-ignore lint/nursery/noNestedTernary: easier to read
+				isVisible
+				? styles.overlayVisible
+				: styles.overlayHidden
+			: undefined;
+
+		// Combine theme className with animation class if needed
+		const finalClassName = clsx(theme.className, animationClass);
 
 		useScrollLock(!!(showPopup && scrollLock));
 
 		return showPopup && scrollLock ? (
-			disableAnimation ? (
-				<div
-					ref={ref}
-					{...props}
-					{...theme}
-					data-testid="cookie-banner-overlay"
-				/>
-			) : (
-				<AnimatePresence>
-					<motion.div
-						ref={ref}
-						{...theme}
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						data-testid="cookie-banner-overlay"
-					/>
-				</AnimatePresence>
-			)
+			<div
+				ref={ref}
+				{...props}
+				className={finalClassName}
+				style={{ ...theme.style, ...style }}
+				data-testid="cookie-banner-overlay"
+			/>
 		) : null;
 	}
 );
