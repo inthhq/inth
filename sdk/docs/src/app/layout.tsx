@@ -2,7 +2,7 @@ import {
 	ConsentManagerDialog,
 	ConsentManagerProvider,
 	CookieBanner,
-} from '@c15t/nextjs';
+} from '@c15t/react';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { RootProvider } from 'fumadocs-ui/provider';

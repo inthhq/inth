@@ -185,9 +185,6 @@ importers:
       '@c15t/middleware':
         specifier: workspace:*
         version: link:../packages/middleware
-      '@c15t/nextjs':
-        specifier: workspace:*
-        version: link:../packages/nextjs
       '@c15t/react':
         specifier: workspace:*
         version: link:../packages/react
