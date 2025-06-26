@@ -1,4 +1,7 @@
-type LocationHeader = (typeof LOCATION_HEADERS)[number];
+type LocationHeader =
+	| (typeof LOCATION_HEADERS)[number]
+	| 'x-c15t-country'
+	| 'x-c15t-region';
 
 const COUNTRY_PRIORITY = [
 	'cf-ipcountry',
@@ -40,8 +43,7 @@ export function extractRelevantHeaders(
 		(header) => relevantHeaders[header]
 	);
 	if (countryHeader) {
-		relevantHeaders['x-c15t-country' as LocationHeader] =
-			relevantHeaders[countryHeader];
+		relevantHeaders['x-c15t-country'] = relevantHeaders[countryHeader];
 	}
 
 	// Set region based on priority
@@ -49,8 +51,7 @@ export function extractRelevantHeaders(
 		(header) => relevantHeaders[header]
 	);
 	if (regionHeader) {
-		relevantHeaders['x-c15t-region' as LocationHeader] =
-			relevantHeaders[regionHeader];
+		relevantHeaders['x-c15t-region'] = relevantHeaders[regionHeader];
 	}
 
 	return relevantHeaders;
