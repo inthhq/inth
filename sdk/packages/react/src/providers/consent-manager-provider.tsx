@@ -7,6 +7,7 @@ import {
 	createConsentManagerStore,
 } from 'c15t';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import packageJson from '../../package.json';
 import {
 	ConsentStateContext,
 	type ConsentStateContextValue,
@@ -14,7 +15,6 @@ import {
 import { GlobalThemeContext } from '../context/theme-context';
 import { useColorScheme } from '../hooks/use-color-scheme';
 import type { ConsentManagerProviderProps } from '../types/consent-manager';
-
 /**
  * Provider component for consent management functionality.
  *
@@ -131,6 +131,13 @@ export function ConsentManagerProvider({
 		if (shouldRecreateStore) {
 			storeRef.current = createConsentManagerStore(consentManager, {
 				unstable_googleTagManager: options.unstable_googleTagManager,
+				config: {
+					pkg: '@c15t/react',
+					version: packageJson.version,
+					mode: mode || 'Unknown',
+				},
+				ignoreGeoLocation: options.ignoreGeoLocation,
+				initialGdprTypes: options.consentCategories,
 				...store,
 				isConsentDomain,
 				initialTranslationConfig: translations,
@@ -143,6 +150,8 @@ export function ConsentManagerProvider({
 		isConsentDomain,
 		translations,
 		options.unstable_googleTagManager,
+		options.ignoreGeoLocation,
+		options.consentCategories,
 		store,
 		backendURL,
 		mode,
@@ -166,8 +175,8 @@ export function ConsentManagerProvider({
 			consentStore.getState();
 
 		// Initialize GDPR types if provided
-		if (initialGdprTypes) {
-			setGdprTypes(initialGdprTypes);
+		if (initialGdprTypes || options.consentCategories) {
+			setGdprTypes(initialGdprTypes || options.consentCategories || []);
 		}
 
 		// Initialize compliance settings if provided
@@ -190,7 +199,12 @@ export function ConsentManagerProvider({
 		const unsubscribe = consentStore.subscribe(setState);
 
 		return unsubscribe;
-	}, [consentStore, initialGdprTypes, initialComplianceSettings]);
+	}, [
+		consentStore,
+		initialGdprTypes,
+		initialComplianceSettings,
+		options.consentCategories,
+	]);
 
 	// Create theme context value
 	const themeContextValue = useMemo(() => {

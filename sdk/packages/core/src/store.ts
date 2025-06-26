@@ -94,6 +94,13 @@ export interface StoreOptions {
 	 */
 	namespace?: string;
 
+	/** Information about the consent manager */
+	config?: {
+		pkg: string;
+		version: string;
+		mode: string;
+	};
+
 	/**
 	 * Initial GDPR consent types to activate.
 	 */
@@ -119,6 +126,12 @@ export interface StoreOptions {
 	 * Google Tag Manager configuration.
 	 */
 	unstable_googleTagManager?: GTMConfiguration;
+
+	/**
+	 * Whether to ignore geo location. Will always show the consent banner.
+	 * @default false
+	 */
+	ignoreGeoLocation?: boolean;
 
 	/**
 	 * Initial Translation Config
@@ -235,6 +248,8 @@ export const createConsentManagerStore = (
 
 	const store = createStore<PrivacyConsentState>((set, get) => ({
 		...initialState,
+		ignoreGeoLocation: options.ignoreGeoLocation ?? false,
+		config: options.config ?? initialState.config,
 		// Set isConsentDomain based on the provider's baseURL
 		isConsentDomain,
 		// Override the callbacks with merged callbacks
