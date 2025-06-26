@@ -7,5 +7,6 @@
 
 feat(core, react): added ignoreGeoLocation, improved provider props
 feat(core): added 'config' prop to store for better debugging
+fix(react): add aria label to cookie banner component
 fix(cli): removed env import
 fix(cli): asks for pkg manager twice
