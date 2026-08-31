@@ -1,11 +1,11 @@
-type DeferredPromise<Value> = {
+interface DeferredPromise<Value> {
 	promise: Promise<Value>;
 	resolve: (value: Value | PromiseLike<Value>) => void;
 	reject: (reason?: unknown) => void;
-};
+}
 
 type PromiseWithResolversConstructor = PromiseConstructor & {
-	withResolvers<Value>(): DeferredPromise<Value>;
+	withResolvers: <Value>() => DeferredPromise<Value>;
 };
 
 export function createCallbackPromise<Value>(
@@ -21,8 +21,21 @@ export function createCallbackPromise<Value>(
 	return deferred.promise;
 }
 
+export function createVoidCallbackPromise(
+	run: (
+		resolve: () => void,
+		reject: DeferredPromise<undefined>['reject']
+	) => void
+): Promise<void> {
+	const deferred = (
+		Promise as PromiseWithResolversConstructor
+	).withResolvers<undefined>();
+	run(() => deferred.resolve(undefined), deferred.reject);
+	return deferred.promise;
+}
+
 export async function waitForTimeout(milliseconds: number): Promise<void> {
-	await createCallbackPromise<void>((resolve) => {
+	await createVoidCallbackPromise((resolve) => {
 		setTimeout(resolve, milliseconds);
 	});
 }
