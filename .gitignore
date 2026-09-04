@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Turborepo
+.turbo/
+
+# Build output
+.next/
+build/
+dist/
+out/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Debug logs
+*.log
+
+# Editors and operating systems
+.DS_Store
+.idea/
+*.swp
+
+# TypeScript
+*.tsbuildinfo
