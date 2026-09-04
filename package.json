@@ -1,0 +1,29 @@
+{
+  "name": "inth",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "check": "pnpm lint && pnpm typecheck && pnpm test:unit && pnpm test",
+    "dev": "turbo run dev",
+    "format": "ultracite fix .",
+    "lint": "ultracite check .",
+    "lint:fix": "ultracite fix .",
+    "test": "turbo run test",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@oxlint/plugins": "1.81.0",
+    "oxfmt": "0.66.0",
+    "oxlint": "1.81.0",
+    "turbo": "2.10.12",
+    "ultracite": "7.10.8",
+    "vitest": "5.0.0"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "pnpm@11.25.0"
+}
