@@ -2,7 +2,11 @@
 
 These are the production CLI's Scriptc adapters. The main entry is `../inth.ts`; shared OAuth, argument parsing, organization policy, and output contracts live alongside it. Build with `pnpm --filter @inth/cli build`, which compiles statically without `--dynamic` and writes `dist/inth`.
 
-The build pins Scriptc 0.0.36, compiles the C adapters with warnings treated as errors, and links macOS Security, CoreFoundation, and libcurl. The FFI manifest is generated under `build/native/` using SDK paths discovered on the host.
+The build pins Scriptc 0.0.36 and compiles first-party C adapters with warnings treated as errors. macOS links Security and CoreFoundation. Linux loads libsecret only for credential operations. Windows uses Credential Manager, Win32 file locks and private ACLs, ShellExecute, and console input events. HTTP date parsing is shared C; network requests use Scriptc's native fetch.
+
+`SCRIPTC_CC=zigcc SCRIPTC_TARGET=<triple>` selects a cross-build. Native FFI manifests are generated under `build/native/`, or `build/native-<platform>-<arch>/` for cross-builds. The same selected target compiles the FFI objects and the Scriptc executable. See the package README for supported targets and toolchains.
+
+MCP setup uses source-preserving JSONC/TOML edits with per-file locks and atomic replacement. The small vendored TOML parser validates both sides of each TOML edit. No Node launcher or dynamic JS runtime is included in distribution packages.
 
 `native-protocol.ts` uses Scriptc's checked JSON casts, which validate record fields at runtime. It also checks URLs, bearer type, nonempty tokens, and positive finite lifetimes. Do not execute this parser under Node: ordinary TypeScript assertions do not validate JSON. The Node reference under `experiments/node/` uses Zod.
 

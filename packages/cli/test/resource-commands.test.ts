@@ -57,7 +57,7 @@ describe("public resource commands", () => {
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       data: payload,
       ok: true,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
   });
   it.each(invalidRequests.map((args) => [args]))(

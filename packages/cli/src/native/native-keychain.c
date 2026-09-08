@@ -1,5 +1,3 @@
-#include <CoreFoundation/CoreFoundation.h>
-#include <Security/Security.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
@@ -9,14 +7,16 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <curl/curl.h>
-#include <math.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#ifdef __APPLE__
+#include <copyfile.h>
+#else
+#include <sys/xattr.h>
+#endif
 
 extern char **environ;
 
-typedef void (*inth_secret_callback)(const uint8_t *, size_t, void *);
 
 int32_t inth_prepare_directory(const uint8_t *path, size_t length) {
   if (!length || length > 4096 || memchr(path, 0, length)) return -1;
@@ -35,48 +35,24 @@ int32_t inth_prepare_directory(const uint8_t *path, size_t length) {
 }
 
 int32_t inth_open_browser(const uint8_t *url, size_t length) {
-  if (!length || length > 16384 || memchr(url, 0, length)) return -1;
-  // Validate at the FFI boundary as well as in the OAuth response parser.
-  if (length < 9 || memcmp(url, "https://", 8)) return -1;
-  for (size_t index = 0; index < length; index++) {
-    if (url[index] <= 0x20 || url[index] == 0x7f || url[index] == '\\') return -1;
-  }
-  CFURLRef parsed = CFURLCreateWithBytes(NULL, url, (CFIndex)length, kCFStringEncodingUTF8, NULL);
-  if (!parsed) return -1;
-  CFStringRef host = CFURLCopyHostName(parsed);
-  CFStringRef user = CFURLCopyUserName(parsed);
-  CFStringRef password = CFURLCopyPassword(parsed);
-  CFStringRef fragment = CFURLCopyFragment(parsed, NULL);
-  int valid = host && CFStringGetLength(host) > 0 && !user && !password && !fragment;
-  if (host) CFRelease(host);
-  if (user) CFRelease(user);
-  if (password) CFRelease(password);
-  if (fragment) CFRelease(fragment);
-  CFRelease(parsed);
-  if (!valid) return -1;
+  extern int32_t inth_browser_url_valid(const uint8_t *, size_t);
+  if (!inth_browser_url_valid(url, length)) return -1;
   char *value = malloc(length + 1);
   if (!value) return -1;
   memcpy(value, url, length);
   value[length] = 0;
+#ifdef __APPLE__
   char *args[] = {"/usr/bin/open", value, NULL};
+#else
+  char *args[] = {"xdg-open", value, NULL};
+#endif
   pid_t child;
-  int result = posix_spawn(&child, args[0], NULL, NULL, args, environ);
+  int result = posix_spawnp(&child, args[0], NULL, NULL, args, environ);
   free(value);
   if (result) return -1;
   int status;
   while (waitpid(child, &status, 0) < 0) { if (errno != EINTR) return -1; }
   return WIFEXITED(status) && WEXITSTATUS(status) == 0 ? 0 : -1;
-}
-
-double inth_http_date(const uint8_t *value, size_t length) {
-  if (!length || length > 4096 || memchr(value, 0, length)) return NAN;
-  char *text = malloc(length + 1);
-  if (!text) return NAN;
-  memcpy(text, value, length);
-  text[length] = 0;
-  time_t result = curl_getdate(text, NULL);
-  free(text);
-  return result == (time_t)-1 ? NAN : (double)result * 1000.0;
 }
 
 int32_t inth_remove_directory(const uint8_t *path, size_t length) {
@@ -116,93 +92,44 @@ int32_t inth_lock_release(int32_t fd) {
   return status || closed ? -1 : 0;
 }
 
-static CFMutableDictionaryRef query(const uint8_t *service, size_t service_len,
-                                    const uint8_t *account, size_t account_len) {
-  if (service_len > INT32_MAX || account_len > INT32_MAX) return NULL;
-  CFStringRef s = CFStringCreateWithBytes(NULL, service, (CFIndex)service_len,
-                                        kCFStringEncodingUTF8, false);
-  CFStringRef a = CFStringCreateWithBytes(NULL, account, (CFIndex)account_len,
-                                        kCFStringEncodingUTF8, false);
-  if (!s || !a) {
-    if (s) CFRelease(s);
-    if (a) CFRelease(a);
-    return NULL;
-  }
-  CFMutableDictionaryRef q = CFDictionaryCreateMutable(NULL, 0,
-      &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-  if (q) {
-    CFDictionarySetValue(q, kSecClass, kSecClassGenericPassword);
-    CFDictionarySetValue(q, kSecAttrService, s);
-    CFDictionarySetValue(q, kSecAttrAccount, a);
-  }
-  CFRelease(s);
-  CFRelease(a);
-  return q;
-}
-
-int32_t inth_secret_read(const uint8_t *service, size_t service_len,
-                        const uint8_t *account, size_t account_len,
-                        inth_secret_callback callback, void *context) {
-  CFMutableDictionaryRef q = query(service, service_len, account, account_len);
-  if (!q) return errSecParam;
-  CFDictionarySetValue(q, kSecReturnData, kCFBooleanTrue);
-  CFDictionarySetValue(q, kSecMatchLimit, kSecMatchLimitOne);
-  CFTypeRef result = NULL;
-  OSStatus status = SecItemCopyMatching(q, &result);
-  CFRelease(q);
-  if (status == errSecSuccess) {
-    if (!result || CFGetTypeID(result) != CFDataGetTypeID()) {
-      status = errSecDecode;
-    } else {
-      CFDataRef data = (CFDataRef)result;
-      // Scriptc copies these borrowed bytes before this callback returns.
-      callback(CFDataGetBytePtr(data), (size_t)CFDataGetLength(data), context);
+// Copy access permissions before replacing an existing shared MCP configuration.
+static int copy_permissions(const char *name, int destination) {
+  int source = open(name, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+  if (source < 0) return errno == ENOENT ? 0 : -1;
+  struct stat info;
+  int result = -1;
+  if (fstat(source, &info) || !S_ISREG(info.st_mode) ||
+      fchown(destination, info.st_uid, info.st_gid) ||
+      fchmod(destination, info.st_mode & 07777)) goto done;
+#ifdef __APPLE__
+  result = fcopyfile(source, destination, NULL, COPYFILE_ACL);
+#else
+  // Linux stores POSIX access ACLs in this xattr; no libacl dependency is needed.
+  ssize_t size = fgetxattr(source, "system.posix_acl_access", NULL, 0);
+  if (size < 0) {
+    if (errno == ENODATA || errno == ENOTSUP) {
+      // A temporary file can inherit an ACL from its parent even when the original has none.
+      result = fremovexattr(destination, "system.posix_acl_access");
+      if (result && (errno == ENODATA || errno == ENOTSUP)) result = 0;
+    }
+  } else {
+    void *acl = malloc(size ? (size_t)size : 1);
+    if (acl) {
+      if (fgetxattr(source, "system.posix_acl_access", acl, (size_t)size) == size)
+        result = fsetxattr(destination, "system.posix_acl_access", acl, (size_t)size, 0);
+      free(acl);
     }
   }
-  if (result) CFRelease(result);
-  return status;
+#endif
+ done:
+  close(source);
+  return result;
 }
 
-int32_t inth_secret_write(const uint8_t *service, size_t service_len,
-                         const uint8_t *account, size_t account_len,
-                         const uint8_t *value, size_t value_len) {
-  if (value_len > INT32_MAX) return errSecParam;
-  CFMutableDictionaryRef q = query(service, service_len, account, account_len);
-  if (!q) return errSecParam;
-  CFDataRef data = CFDataCreate(NULL, value, (CFIndex)value_len);
-  CFMutableDictionaryRef changes = CFDictionaryCreateMutable(NULL, 0,
-      &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-  if (!data || !changes) {
-    if (data) CFRelease(data);
-    if (changes) CFRelease(changes);
-    CFRelease(q);
-    return errSecAllocate;
-  }
-  CFDictionarySetValue(changes, kSecValueData, data);
-  OSStatus status = SecItemUpdate(q, changes);
-  if (status == errSecItemNotFound) {
-    CFDictionarySetValue(q, kSecValueData, data);
-    status = SecItemAdd(q, NULL);
-  }
-  CFRelease(changes);
-  CFRelease(data);
-  CFRelease(q);
-  return status;
-}
-
-int32_t inth_secret_delete(const uint8_t *service, size_t service_len,
-                          const uint8_t *account, size_t account_len) {
-  CFMutableDictionaryRef q = query(service, service_len, account, account_len);
-  if (!q) return errSecParam;
-  OSStatus status = SecItemDelete(q);
-  CFRelease(q);
-  return status;
-}
-
-// Atomic owner-only configuration replacement. Credentials never use this path.
-int32_t inth_write_config(const uint8_t *path, size_t length,
-                          const uint8_t *value, size_t value_length) {
-  if (!length || length > 4096 || memchr(path, 0, length) || value_length > 16384) return -1;
+// Atomic configuration replacement. Credentials never use this path.
+static int32_t write_config(const uint8_t *path, size_t length,
+                          const uint8_t *value, size_t value_length, int preserve) {
+  if (!length || length > 4096 || memchr(path, 0, length) || value_length > 4 * 1024 * 1024) return -1;
   char *name = malloc(length + 1);
   char *temporary = malloc(length + 12);
   if (!name || !temporary) { free(name); free(temporary); return -1; }
@@ -218,9 +145,10 @@ int32_t inth_write_config(const uint8_t *path, size_t length,
       if (written <= 0) break;
       offset += (size_t)written;
     }
+    int permissions = preserve ? copy_permissions(name, fd) : 0;
     int synced = fsync(fd);
     int closed = close(fd);
-    if (offset == value_length && !synced && !closed) result = rename(temporary, name);
+    if (offset == value_length && !permissions && !synced && !closed) result = rename(temporary, name);
     if (result) {
       unlink(temporary);
     } else {
@@ -242,4 +170,13 @@ int32_t inth_write_config(const uint8_t *path, size_t length,
   }
   free(name); free(temporary);
   return result;
+}
+
+int32_t inth_write_config(const uint8_t *path, size_t length,
+                          const uint8_t *value, size_t value_length) {
+  return write_config(path, length, value, value_length, 0);
+}
+int32_t inth_write_mcp_config(const uint8_t *path, size_t length,
+                              const uint8_t *value, size_t value_length) {
+  return write_config(path, length, value, value_length, 1);
 }

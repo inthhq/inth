@@ -8,7 +8,10 @@ import { apiUrl } from "../../src/api-options.ts";
 import { AuthFlow } from "../../src/auth-flow.ts";
 import type { OAuthTransport, OAuthResponse } from "../../src/auth-types.ts";
 import { NativeApi, apiOutput } from "../../src/native/native-api.ts";
-import { writeConfig } from "../../src/native/native-bindings.ts";
+import {
+  prepareDirectory,
+  writeConfig,
+} from "../../src/native/native-bindings.ts";
 import { NativeKeychain } from "../../src/native/native-keychain.ts";
 import {
   parseDevice,
@@ -27,6 +30,7 @@ if (!directory) {
 }
 const state = join(directory, "state");
 const project = join(directory, "project");
+check(prepareDirectory(state) === 0, "Cannot prepare private test state.");
 const store = new NativeStore(
   new NativeKeychain("com.inth.cli.commands-test", randomUUID()),
   join(state, "credentials.lock")

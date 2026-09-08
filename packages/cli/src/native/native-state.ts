@@ -1,5 +1,5 @@
 /* eslint-disable require-await -- Convert synchronous filesystem FFI failures to the asynchronous state contract. */
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
 
@@ -33,6 +33,7 @@ const write = async (
   id: string
 ): Promise<void> => {
   const config = { organizationId: organizationId(id) };
+  await mkdir(dirname(directory), { recursive: true });
   if (prepareDirectory(directory) !== 0) {
     throw new Error(
       "Cannot create a private organization configuration directory."

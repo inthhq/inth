@@ -37,3 +37,6 @@ dist-bin/
 # Rebuilt vendored source and inrepo caches
 inrepo_modules/
 .inrepo/
+
+# Native distribution archives
+artifacts/

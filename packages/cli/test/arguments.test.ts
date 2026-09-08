@@ -73,7 +73,7 @@ describe("native CLI arguments", () => {
       parseArguments(["login", "--token", "inth_one", "--token", "inth_two"])
     ).toThrow("Use --token only once");
     expect(() => parseArguments(["login", "--bad=secret"])).toThrow(
-      'Unknown option. Run "inth --help" for available options.'
+      'Unknown option "--bad". Run inth --help for available options.'
     );
   });
   it("offers a correction for misplaced auth subcommands", () => {

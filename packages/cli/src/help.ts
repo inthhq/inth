@@ -1,86 +1,165 @@
-import { RESOURCE_COMMANDS, RESOURCE_OPTIONS } from "./resource-commands.ts";
+/* eslint-disable unicorn/prefer-single-call -- Scriptc cannot mix positional and spread arguments in push. */
+import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
+import type { CommandMetadata, OptionMetadata } from "./command-metadata.ts";
+import { padText, textWidth, wrapText } from "./display.ts";
 
-export const COMMANDS = [
-  "login",
-  "logout",
-  "whoami",
-  "auth status",
-  "auth refresh",
-  ...RESOURCE_COMMANDS.map(
-    (entry) =>
-      `${entry.command}${entry.action ? ` ${entry.action}` : ""}${entry.path.includes(":id") ? " <id>" : ""}${entry.required.map((name) => ` --${name} <${name}>`).join("")}`
-  ),
-  "api <path> [--method <method>] [--data <json>]",
-  "switch [organization-id]",
-  "link [organization-id]",
-];
-export const OPTIONS = [
-  "--json",
-  "--non-interactive",
-  "--token <key>",
-  "--organization <id>",
-  ...RESOURCE_OPTIONS.map((name) => `--${name} <value>`),
-  "--no-browser",
-  "--help",
-  "--version",
-];
 export const VERSION = "0.1.0";
-export const HELP = `inth ${VERSION}
-
-Usage: inth <command> [options]
-
-Commands:
-  login                     Sign in through your browser
-  logout                    Revoke the CLI session and remove saved credentials
-  auth refresh              Refresh the saved browser sign-in
-  auth status               Show the local sign-in status without printing tokens
-  whoami                    Fetch your identity and organizations from the API
-${COMMANDS.slice(5, -2)
-  .map((entry) => `  ${entry}`)
-  .join("\n")}
-  switch [organization-id]   Set your default organization
-  link [organization-id]     Save an organization default for this directory
-
-Options:
-  --json                    Emit one JSON result; never prompt or open a browser
-  --non-interactive         Disable prompts and browser login
-  --token <inth_...>         Organization API key, overrides INTH_TOKEN
-  --organization <id>        Organization for login or this API request
-  --name <name>             Name for organization, project, or API key writes
-  --slug <slug>             Organization slug for org create
-  --limit <1-100>            List page size, defaults to 50
-  --cursor <cursor>          Opaque cursor from pagination.nextCursor
-  --region <id>              Project region from region list
-  --description <text>       Project description
-  --branding <value>         Consent branding: inth, c15t, or none
-  --trusted-origins <json>   Consent origins as a JSON array of strings
-  --email <email>            Invitation email address
-  --role <role>              Member or invitation role: owner, admin, member
-  --repository <id>          Repository for scan filters, starts, or requests
-  --status <status>          Scan filter or Inbox status
-  --request-id <id>          Idempotency key for a scan start
-  --item-version <version>   Last-read Inbox version for an update
-  --method <method>          Raw API method: GET, POST, PATCH, DELETE
-  --data <json>              JSON object for writes, instead of body options
-  --no-browser              Print the approval link without opening it
-  -h, --help                Show help
-  -v, --version             Show the version
-
-Examples:
-  inth login
-  inth whoami
-  inth org create --name "Acme" --slug acme
-  inth project create --name Website --region <region-id>
-  inth code-audit start --repository repo_123 --request-id deploy_123
-  inth inbox update inbox_123 --status resolved --item-version 3
-  inth project list --organization org_123
-  INTH_TOKEN=inth_... inth api /v1/projects
-
-Lists return one page with pagination.nextCursor. Fetch another page with --cursor.
-Scan starts may return starting; poll code-audit request <preparation-id> --repository <id>.
-Project deletion, member removal, invitations, key rotation, report unlocks, and
-GitHub issue creation take effect immediately. Unlocks spend credits. API key
-creation and rotation return a secret once; store it before closing the output.
-
-Credentials stay in the OS credential store. Linked directories contain only
-an organization ID. API keys supplied by flag or environment are never saved.`;
+export const COMMANDS = COMMAND_METADATA.map((entry) =>
+  entry.command === "api"
+    ? "api <path> [--method <method>] [--data <json>]"
+    : entry.usage.slice(5)
+);
+export const OPTIONS = OPTION_METADATA.map(
+  (entry) => `--${entry.name}${entry.type === "boolean" ? "" : " <value>"}`
+);
+const groupDescriptions = [
+  ["auth", "Inspect or refresh your saved sign-in"],
+  ["org", "List, create, and inspect organizations"],
+  ["project", "Manage projects and consent settings"],
+  ["member", "Manage organization members and roles"],
+  ["invitation", "Send and manage invitations"],
+  ["api-key", "Create, rotate, and revoke API keys"],
+  ["code-audit", "Scan repositories and read findings"],
+  ["inbox", "Review and update Inbox findings"],
+  ["mcp", "Configure Inth MCP in your coding client"],
+];
+const authenticationDescription = (value: string): string => {
+  if (value === "browser") {
+    return "Browser sign-in required. Run inth login first.";
+  }
+  if (value === "browser-or-api-key") {
+    return "Use a browser sign-in or an organization API key.";
+  }
+  if (value === "client-oauth") {
+    return "Sign in to Inth through your coding client after setup.";
+  }
+  return "No sign-in required.";
+};
+export const helpCommands = (command = "", action = ""): CommandMetadata[] =>
+  COMMAND_METADATA.filter(
+    (entry) =>
+      (!command || entry.command === command) &&
+      (!action || !entry.action || entry.action === action)
+  );
+const rows = (entries: string[][], columns: number): string[] => {
+  const size = Math.max(
+    0,
+    Math.max(...entries.map((entry) => textWidth(entry[0] ?? "")))
+  );
+  return entries.map((entry) => {
+    const label = entry[0] ?? "";
+    const description = entry[1] ?? "";
+    if (size + 24 > columns) {
+      return `  ${label}\n    ${wrapText(description, columns - 4, "    ")}`;
+    }
+    return `  ${padText(label, size)}  ${wrapText(description, columns - size - 4, " ".repeat(size + 4))}`;
+  });
+};
+const optionLabel = (item: OptionMetadata): string =>
+  `--${item.name}${item.type === "boolean" ? "" : ` <${item.name}>`}`;
+const optionDescription = (item: OptionMetadata): string => {
+  let { description } = item;
+  if (item.required) {
+    description += ". Required";
+  }
+  if (item.values.length) {
+    description += `. Values: ${item.values.join(", ")}`;
+  }
+  if (item.defaultValue !== null) {
+    description += `. Default: ${item.defaultValue}`;
+  }
+  return description;
+};
+export const formatHelp = (command = "", action = "", columns = 80): string => {
+  const width = Math.max(20, columns - 1);
+  const entries = helpCommands(command, action);
+  const detail = entries.length === 1 ? entries[0] : undefined;
+  const lines = [`inth ${VERSION}`, ""];
+  if (detail) {
+    lines.push(
+      wrapText(detail.description, width),
+      "",
+      "Usage:",
+      `  ${detail.usage} [options]`,
+      "",
+      "Options:"
+    );
+    lines.push(
+      ...rows(
+        detail.options.map((item) => [
+          optionLabel(item),
+          optionDescription(item),
+        ]),
+        width
+      )
+    );
+    lines.push(
+      "",
+      wrapText(authenticationDescription(detail.authentication), width)
+    );
+    if (detail.scopes.length) {
+      lines.push(
+        wrapText(`Required scopes: ${detail.scopes.join(", ")}.`, width)
+      );
+    }
+    if (detail.paginated) {
+      lines.push(
+        wrapText(
+          "Returns one page. Pass pagination.nextCursor with --cursor for the next page.",
+          width
+        )
+      );
+    }
+    for (const effect of detail.effects) {
+      lines.push(wrapText(effect, width));
+    }
+    lines.push("", "Examples:");
+    lines.push(...detail.examples.map((example) => `  ${example}`));
+  } else {
+    lines.push(
+      `Usage: inth${command ? ` ${command}` : ""} <command> [options]`,
+      "",
+      "Commands:"
+    );
+    if (command) {
+      lines.push(
+        ...rows(
+          entries.map((entry) => [entry.action, entry.description]),
+          width
+        )
+      );
+    } else {
+      const groups: string[][] = [];
+      for (const entry of entries) {
+        if (groups.some((group) => group[0] === entry.command)) {
+          continue;
+        }
+        groups.push([
+          entry.command,
+          groupDescriptions.find((group) => group[0] === entry.command)?.[1] ??
+            entry.description,
+        ]);
+      }
+      lines.push(...rows(groups, width));
+    }
+    const common = OPTION_METADATA.filter((entry) =>
+      ["json", "non-interactive", "help", "version"].includes(entry.name)
+    );
+    lines.push("", "Options:");
+    lines.push(
+      ...rows(
+        common.map((entry) => [optionLabel(entry), entry.description]),
+        width
+      )
+    );
+    lines.push(
+      "",
+      wrapText(
+        "Use inth <command> --help for options and examples. Add --json for scripts and agents.",
+        width
+      )
+    );
+  }
+  return lines.join("\n");
+};
+export const HELP = formatHelp();

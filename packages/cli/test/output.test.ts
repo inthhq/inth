@@ -15,7 +15,7 @@ describe("machine output", () => {
       '{"data":[{"id":"one"}],"pagination":{"nextCursor":"next"}}'
     );
     expect(stdout).toHaveBeenCalledExactlyOnceWith(
-      '{"schemaVersion":1,"ok":true,"data":{"data":[{"id":"one"}],"pagination":{"nextCursor":"next"}}}'
+      '{"schemaVersion":2,"ok":true,"data":{"data":[{"id":"one"}],"pagination":{"nextCursor":"next"}}}'
     );
     expect(stderr).not.toHaveBeenCalled();
   });
@@ -23,7 +23,7 @@ describe("machine output", () => {
     const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
     printResult(true, "", "null");
     expect(stdout).toHaveBeenCalledExactlyOnceWith(
-      '{"schemaVersion":1,"ok":true,"data":null}'
+      '{"schemaVersion":2,"ok":true,"data":null}'
     );
   });
   it("returns structured HTTP status and a sanitized request ID", () => {
@@ -38,13 +38,14 @@ describe("machine output", () => {
     expect(stdout).toHaveBeenCalledTimes(1);
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       error: {
+        apiCode: null,
         code: "rate_limited",
         httpStatus: 429,
         message: "Request failed: HTTP 429. Request ID: req-123",
         requestId: "req-123",
       },
       ok: false,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
     expect(stderr).not.toHaveBeenCalled();
   });
@@ -108,26 +109,28 @@ describe("machine output", () => {
     ).toBe(1);
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       error: {
+        apiCode: null,
         code: "authentication_required",
         httpStatus: 400,
         message: "Sign in again",
         requestId: "refresh-id",
       },
       ok: false,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
     expect(
       reportError(true, new Error("Private cancellation reason"), true)
     ).toBe(130);
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       error: {
+        apiCode: null,
         code: "cancelled",
         httpStatus: null,
         message: "Cancelled.",
         requestId: null,
       },
       ok: false,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
   });
 });

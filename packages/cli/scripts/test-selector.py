@@ -11,13 +11,14 @@ import termios
 import time
 
 
-def check(keys, expected, long_list=False, terminate=None, fatal=False):
+def check(keys, expected, long_list=False, terminate=None, fatal=False, fragment_delay=0.025):
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 48, 0, 0))
     original = termios.tcgetattr(slave)
     environment = dict(os.environ, TERM="xterm-256color", CI="", INTH_TEST_LONG_LIST="1" if long_list else "0")
     child = subprocess.Popen(sys.argv[1:], stdin=slave, stdout=subprocess.PIPE, stderr=slave, env=environment)
     output = b""
+    input_times = []
     try:
         deadline = time.monotonic() + 5
         while b"Choose your default organization" not in output:
@@ -29,7 +30,15 @@ def check(keys, expected, long_list=False, terminate=None, fatal=False):
         # Let each frame settle and deliberately split one arrow sequence.
         for key in keys:
             os.write(master, key)
-            time.sleep(0.025)
+            input_times.append((key, time.monotonic()))
+            if key == b"\x1b" and expected:
+                # Keep this short, deliberate gap independent of sleep timer
+                # coalescing, which can outlast the terminal's Escape timeout.
+                fragment_at = time.monotonic() + fragment_delay
+                while time.monotonic() < fragment_at:
+                    pass
+            else:
+                time.sleep(0.025)
         if terminate:
             child.send_signal(terminate)
         deadline = time.monotonic() + 5
@@ -48,7 +57,8 @@ def check(keys, expected, long_list=False, terminate=None, fatal=False):
         assert b"\x1b[?25h" in output, "Cursor not restored"
         assert b"Organization number" not in output
         if expected:
-            assert child.returncode == 0, output
+            input_gaps = [(key, round((at - input_times[0][1]) * 1000, 1)) for key, at in input_times]
+            assert child.returncode == 0, (output, {"input_ms": input_gaps})
             assert stdout == f"Selected: {expected}\n", (stdout, output)
         else:
             assert child.returncode == (-terminate if fatal else 130), (child.returncode, output)
@@ -71,6 +81,8 @@ check([b"\x1b"], None)
 check([b"\x03"], None)
 check([], None, terminate=signal.SIGTERM)
 if len(sys.argv) == 2:
+    # The native adapter controls its own escape timeout; Clack does not.
+    check([b"\x1b", b"[B", b"\r"], "org-two", fragment_delay=0.12)
     check([], None, terminate=signal.SIGHUP, fatal=True)
     check([], None, terminate=signal.SIGQUIT, fatal=True)
 check([b"\x1b[B"] * 11 + [b"\r"], "org-12", long_list=True)

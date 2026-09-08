@@ -66,16 +66,26 @@ export const wrapText = (
 ): string => {
   const lines: string[] = [];
   let line = "";
-  let width = 0;
-  for (const character of terminalText(text)) {
-    const cells = cellWidth(character);
-    if (width + cells > columns && line) {
-      lines.push(line);
-      line = "";
-      width = 0;
+  const limit = Math.max(1, columns);
+  for (const word of terminalText(text).split(/\s+/u)) {
+    if (!word) {
+      continue;
     }
-    line += character;
-    width += cells;
+    if (line && textWidth(line) + 1 + textWidth(word) <= limit) {
+      line += ` ${word}`;
+      continue;
+    }
+    if (line) {
+      lines.push(line);
+    }
+    line = "";
+    for (const character of word) {
+      if (line && textWidth(line) + cellWidth(character) > limit) {
+        lines.push(line);
+        line = "";
+      }
+      line += character;
+    }
   }
   lines.push(line);
   return lines.join(`\n${indent}`);

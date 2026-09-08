@@ -1,5 +1,11 @@
 import { CliError } from "./cli-error.ts";
-import { COMMANDS, HELP, OPTIONS, VERSION } from "./help.ts";
+import {
+  COMMANDS,
+  OPTIONS,
+  VERSION,
+  formatHelp,
+  helpCommands,
+} from "./help.ts";
 import { HttpError } from "./http-error.ts";
 
 // Callers serialize typed command data or validated API JSON before passing it here.
@@ -9,12 +15,18 @@ export const printResult = (
   data: string
 ): void => {
   if (json) {
-    console.log(`{"schemaVersion":1,"ok":true,"data":${data}}`);
+    console.log(`{"schemaVersion":2,"ok":true,"data":${data}}`);
   } else if (message) {
     console.log(message);
   }
 };
-export const printHelp = (json: boolean, version: boolean): void => {
+export const printHelp = (
+  json: boolean,
+  version: boolean,
+  command = "",
+  action = "",
+  columns = 80
+): void => {
   if (version) {
     printResult(
       json,
@@ -23,12 +35,14 @@ export const printHelp = (json: boolean, version: boolean): void => {
     );
     return;
   }
+  const help = formatHelp(command, action, columns);
   printResult(
     json,
-    HELP,
+    help,
     JSON.stringify({
+      commandDefinitions: helpCommands(command, action),
       commands: COMMANDS,
-      help: HELP,
+      help,
       name: "inth",
       options: OPTIONS,
       version: VERSION,
@@ -42,12 +56,14 @@ export const reportError = (
 ): number => {
   let code = "command_failed";
   let { message } = error;
+  let apiCode: string | null = null;
   let httpStatus: number | null = null;
   let requestId: string | null = null;
   if (error instanceof CliError) {
     ({ code, httpStatus, requestId } = error);
   } else if (error instanceof HttpError) {
     httpStatus = error.status;
+    ({ apiCode } = error);
     ({ requestId } = error);
     code = "http_error";
     if (httpStatus === 400 && error.code === "invalid_scope") {
@@ -66,13 +82,14 @@ export const reportError = (
   if (cancelled) {
     code = "cancelled";
     message = "Cancelled.";
+    apiCode = null;
   }
   if (json) {
     console.log(
       JSON.stringify({
-        error: { code, httpStatus, message, requestId },
+        error: { apiCode, code, httpStatus, message, requestId },
         ok: false,
-        schemaVersion: 1,
+        schemaVersion: 2,
       })
     );
   } else {

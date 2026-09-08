@@ -42,7 +42,7 @@ describe("organization commands", () => {
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       data: { data: organization, success: true },
       ok: true,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
     expect(resolve).not.toHaveBeenCalled();
     expect(select).not.toHaveBeenCalled();

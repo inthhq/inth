@@ -144,7 +144,7 @@ describe("human resource output", () => {
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       data: JSON.parse(billingBody),
       ok: true,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
   });
 });

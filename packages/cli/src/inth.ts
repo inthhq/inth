@@ -1,7 +1,7 @@
 /* eslint-disable require-await -- Browser approval implements the shared asynchronous login UI contract. */
-import { homedir } from "node:os";
+import { mkdirSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 import { apiKey } from "./api-options.ts";
 import { parseArguments } from "./arguments.ts";
@@ -17,6 +17,7 @@ import {
 } from "./native/native-bindings.ts";
 import { nativeClock, nativeHttp } from "./native/native-http.ts";
 import { NativeKeychain } from "./native/native-keychain.ts";
+import { runMcp } from "./native/native-mcp.ts";
 import { httpsUrl } from "./native/native-protocol.ts";
 import { formatNativeResource } from "./native/native-resource-output.ts";
 import { NativeContext } from "./native/native-state.ts";
@@ -32,6 +33,7 @@ import {
   reportError,
   requireInteractiveLogin,
 } from "./output.ts";
+import { nativeStateDirectory } from "./platform.ts";
 import {
   buildResourceRequest,
   rawApiRequest,
@@ -45,21 +47,27 @@ let exitCode = 0;
 try {
   const options = parseArguments(process.argv.slice(2));
   if (options.version || options.help || !options.command) {
-    printHelp(options.json, options.version);
+    printHelp(
+      options.json,
+      options.version,
+      options.command,
+      options.argument,
+      outputColumns()
+    );
+    process.exit(0);
+  }
+  if (options.command === "mcp") {
+    await runMcp(options, controller.signal);
     process.exit(0);
   }
   const allowInteractive = !options.json && !options.nonInteractive;
   const key = apiKey(options.token, process.env.INTH_TOKEN);
   // Preserve the existing native sign-in and defaults while Node/yao retain their own store.
-  const directory = join(
-    homedir(),
-    "Library",
-    "Application Support",
-    "inth-scriptc"
-  );
+  const directory = nativeStateDirectory();
   const context = new NativeContext(directory, process.cwd());
   const http = nativeHttp(controller.signal, nativeClock(controller.signal));
   const getStore = (): NativeStore => {
+    mkdirSync(dirname(directory), { recursive: true });
     if (prepareDirectory(directory) !== 0) {
       throw new Error("Cannot create a private credential directory.");
     }

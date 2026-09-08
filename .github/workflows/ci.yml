@@ -3,8 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -16,31 +15,72 @@ concurrency:
 
 jobs:
   check:
-    name: Lint, typecheck, test, and build
-    runs-on: ubuntu-latest
+    name: Lint, types, and unit tests
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-
-      - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: .node-version
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           cache: true
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint && pnpm typecheck && pnpm test:unit
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Lint, typecheck, and test
-        run: pnpm check
-
-      - name: Build
-        run: pnpm build
+  native:
+    name: Native CLI on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          [
+            macos-15,
+            macos-15-intel,
+            ubuntu-24.04,
+            ubuntu-24.04-arm,
+            windows-2025,
+          ]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          cache: true
+      - name: Install Windows toolchain
+        if: runner.os == 'Windows'
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
+        with:
+          version: 0.15.2
+      - name: Select Windows target
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          "SCRIPTC_CC=zigcc" >> $env:GITHUB_ENV
+          "SCRIPTC_TARGET=x86_64-windows-gnu" >> $env:GITHUB_ENV
+      - name: Install Linux credential service
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -qq && sudo apt-get install -y clang zlib1g-dev libsecret-1-0 gnome-keyring dbus-x11
+      - run: pnpm install --frozen-lockfile
+      - name: Native and package tests on Linux
+        if: runner.os == 'Linux'
+        run: |
+          dbus-run-session -- sh -c 'printf "test-only\n" | gnome-keyring-daemon --unlock --components=secrets >/dev/null; pnpm --filter @inth/cli test && pnpm --filter @inth/cli test:package'
+      - name: Native and package tests on macOS and Windows
+        if: runner.os != 'Linux'
+        run: pnpm --filter @inth/cli test && pnpm --filter @inth/cli test:package
+      - name: Upload native npm package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: inth-${{ runner.os }}-${{ runner.arch }}
+          path: packages/cli/artifacts/*.tgz
+          if-no-files-found: error

@@ -4,39 +4,51 @@
 
 <p align="center">
   <a href="#get-started"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Status-In%20development.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/badge/Status-In%20development.svg?variant=outline&size=xs&mode=light" alt="Status: in development"></picture></a>
-  <a href="#get-started"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Platform-macOS%20arm64.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/badge/Platform-macOS%20arm64.svg?variant=outline&size=xs&mode=light" alt="Platform: macOS arm64"></picture></a>
+  <a href="#get-started"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows.svg?variant=outline&size=xs&mode=light" alt="Platform: macOS, Linux, Windows"></picture></a>
   <a href="../../LICENSE"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/License-Apache%202.0.svg?variant=outline&size=xs&mode=dark"><img src="https://shieldcn.dev/badge/License-Apache%202.0.svg?variant=outline&size=xs&mode=light" alt="License: Apache 2.0"></picture></a>
   <a href="https://inth.com?utm_source=github&utm_medium=repo_homepage"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?size=xs&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&color=ffc803&labelTextColor=000000&valueColor=000000&mode=dark"><img src="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?size=xs&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&color=ffc803&labelTextColor=000000&valueColor=000000&mode=light" alt="Made by Inth"></picture></a>
 </p>
 
 The `@inth/cli` package provides the `inth` command. Named commands print formatted text by default. Add `--json` for scripts and agents.
 
-This package is in development and has not been published to npm. The current build supports macOS on Apple Silicon.
+This package is in development and has not been published to npm. Native targets are macOS and Linux on arm64/x64, plus Windows x64.
 
 [Get started](#get-started) · [Commands](#public-resource-commands) · [Development](#development) · [Agents and scripts](AGENT-USAGE.md)
 
 ## Get started
 
-You need Node.js 24, pnpm, and Xcode Command Line Tools. Use the pnpm version declared in the repository's `packageManager` field.
+You need Node.js 24 and the pnpm version declared in the repository's `packageManager` field. Install Xcode Command Line Tools on macOS, Clang 18 or newer and zlib development headers on Linux (`clang` and `zlib1g-dev` on Ubuntu 24.04), or Zig 0.15.2 on Windows.
+
+On Windows, select Zig before building in PowerShell:
+
+```powershell
+$env:SCRIPTC_CC = "zigcc"
+$env:SCRIPTC_TARGET = "x86_64-windows-gnu"
+```
 
 From the repository root:
 
 ```sh
 pnpm install
-pnpm --filter @inth/cli build
-pnpm --filter @inth/cli inth --help
+pnpm dev:link
+inth --help
 ```
 
-The build produces `packages/cli/dist/inth`, a standalone executable with no Node.js runtime dependency. To use the shorter commands in this guide, add an alias for your current shell:
+`pnpm dev:link` builds the CLI and links this checkout's `inth` command into npm's global bin directory. It works on macOS, Linux, and Windows without editing a shell profile. That directory must be on your `PATH`.
+
+Run `inth` from any directory:
 
 ```sh
-alias inth="$PWD/packages/cli/dist/inth"
 inth login
 inth whoami
 inth billing
 ```
 
-`login` opens your browser for approval, saves the session in macOS Keychain, and helps you choose an organization. Use `inth login --no-browser` to open the printed approval URL yourself. Run `inth --help` for the full command and option list.
+After edits, run `pnpm dev:link` again to rebuild. The link uses this checkout's latest build and keeps your current working directory, so project commands and MCP setup work where you run them. Run `pnpm dev:unlink` to remove the development command. Only one checkout can own the global `inth` link at a time.
+
+The development link uses Node.js 24 to launch `packages/cli/dist/inth`, or `dist/inth.exe` on Windows. Distributed native executables have no Node.js runtime dependency.
+
+`login` opens your browser for approval, saves the session in the system credential store, and helps you choose an organization. Use `inth login --no-browser` to open the printed approval URL yourself. Run `inth --help` for command groups and `inth <command> --help` for relevant options and examples.
 
 ## Development
 
@@ -128,6 +140,28 @@ inth switch acme
 For automation, supply an organization API key through `INTH_TOKEN` or `--token`. The flag takes precedence. Supplied keys are never saved or refreshed. API keys can manage projects and read organizations, API keys, Inbox, and billing. Use browser sign-in for other operations.
 
 See [authentication and credential storage](docs/authentication.md) for OAuth scopes, token refresh, passkeys, and Keychain troubleshooting.
+
+## Inth MCP
+
+Configure Inth's OAuth MCP server in Codex, Claude Code, Cursor, VS Code, or OpenCode:
+
+```sh
+inth mcp
+inth mcp setup --agent cursor --scope project
+inth mcp setup --agent codex --scope global --dry-run --json
+inth mcp list --scope project --json
+inth mcp remove --agent cursor --scope project --json
+```
+
+Bare `inth mcp` asks for a client and project or global scope. Scripts must supply `--agent` and `--scope` for setup and removal. Listing defaults to all five clients in project scope.
+
+Setup writes `https://api.inth.com/mcp` and prints the next command for your client. For Codex, run `codex mcp login inth`; for Claude Code, `claude mcp login inth`; for OpenCode, `opencode mcp auth inth`. Cursor and VS Code get a launch command and the steps to sign in from the editor. The client owns the OAuth flow; CLI tokens and API keys are never copied into the config. Setup reports configuration changes, not a verified connection.
+
+Codex global setup uses `CODEX_HOME` when set, otherwise `~/.codex`. The summary identifies an active `CODEX_HOME` profile. Run the login command in the same terminal so it uses the same profile. If Codex reports a missing server, run `inth mcp list --agent codex --scope global --json` to inspect the full config path, then `codex mcp get inth` to check what Codex can see. Project setup writes `.codex/config.toml`; Codex only loads project configuration in trusted projects.
+
+Edits preserve unrelated settings and comments. Repeating setup leaves an existing Inth entry unchanged, including its custom options. If another server occupies the name `inth`, the command fails without overwriting it. Removal supports ordinary Codex `[mcp_servers.inth]` tables and their subtables; inline or dotted-key layouts that cannot be safely removed require an edit in the client. `--dry-run` previews changes without writing files.
+
+Client mappings are adapted from the pinned [add-mcp source](vendor/add-mcp/UPSTREAM.md). Native TOML validation uses the pinned [tomlc99 parser](vendor/tomlc99/UPSTREAM.md). Their license notices ship with each package.
 
 ## Public resource commands
 
@@ -222,4 +256,17 @@ Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. An ex
 
 ## Packaging
 
-`pnpm --filter @inth/cli test:package` verifies the package without publishing it. The npm `inth` entry points directly to `dist/inth`; `prepack` builds it for macOS arm64. Public distribution still needs release signing, notarization, and support for other platforms.
+`pnpm --filter @inth/cli package:native` builds and packs the current target into `packages/cli/artifacts/`. `test:package` extracts that archive and checks the executable, JSON output, and MCP setup.
+
+The development workspace package is private. Distribution packages are `@inth/cli-darwin-arm64`, `@inth/cli-darwin-x64`, `@inth/cli-linux-arm64`, `@inth/cli-linux-x64`, and `@inth/cli-win32-x64`. Each installs the `inth` command directly from its native executable. They have no runtime npm dependencies. Install a built archive with `npm install -g <archive.tgz>`.
+
+CI builds, tests, and uploads all five target packages. Publishing and release signing remain separate release steps. No packages are published by CI.
+
+To cross-compile from macOS with Zig installed:
+
+```sh
+SCRIPTC_CC=zigcc SCRIPTC_TARGET=x86_64-windows-gnu pnpm --filter @inth/cli package:native
+SCRIPTC_CC=zigcc SCRIPTC_TARGET=aarch64-linux-gnu.2.36 pnpm --filter @inth/cli package:native
+```
+
+A successful cross-build verifies compilation and linking. Run the native suite on the destination OS to verify runtime behavior. Linux browser sign-in needs `libsecret-1.so.0` and an unlocked Secret Service keyring. Headless users can supply `INTH_TOKEN`.

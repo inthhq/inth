@@ -1,5 +1,6 @@
 import { setTimeout } from "node:timers/promises";
 
+import { httpDate } from "../../src/native/native-bindings.ts";
 import {
   nativeClock,
   nativeHttp,
@@ -30,6 +31,31 @@ check(
   "HTTP date parsing failed."
 );
 check(retryDelay("2", 0) === 2000, "Retry-After seconds failed.");
+for (const date of [
+  "Sun, 06 Nov 1994 08:49:37 GMT",
+  "Sunday, 06-Nov-94 08:49:37 GMT",
+  "Sun Nov  6 08:49:37 1994",
+]) {
+  check(
+    httpDate(date) === 784_111_777_000,
+    `HTTP-date compatibility failed: ${date}`
+  );
+}
+for (const date of [
+  "Sun, 31 Feb 2024 08:49:37 GMT",
+  "Sun, 29 Feb 2023 08:49:37 GMT",
+  "Sun, 31 Apr 2024 08:49:37 GMT",
+  "Sun, 06 Nov 1994 -1:49:37 GMT",
+  "bad, 06 Nov 1994 08:49:37 GMT",
+  "Sunday, 06-Nov-94 08:49:37 GMT trailing",
+  "Sunday, 06-Nov--1 08:49:37 GMT",
+]) {
+  check(Number.isNaN(httpDate(date)), `Invalid HTTP date accepted: ${date}`);
+}
+check(
+  httpDate("Thu, 29 Feb 2024 00:00:00 GMT") === 1_709_164_800_000,
+  "Leap day rejected."
+);
 const rateLimited = await http.request(`${base}/rate-limit`);
 check(
   rateLimited.status === 200 && waits.join(",") === "3000",
