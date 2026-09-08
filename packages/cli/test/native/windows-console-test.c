@@ -10,7 +10,8 @@ int main(int argc, char **argv) {
     if (argv[1][0] == '1') { inth_output_columns(); return 0; }
     if (argv[1][0] == '2') inth_output_columns();
     assert(inth_terminal_begin() == 0);
-    if (argv[1][0] == '2') inth_terminal_end();
+    if (argv[1][0] >= '4') inth_output_columns();
+    if (argv[1][0] != '3' && argv[1][0] != '5') inth_terminal_end();
     return 0;
   }
   // Allocate a private console so these checks cannot alter the CI shell.
@@ -25,11 +26,12 @@ int main(int argc, char **argv) {
   assert(SetConsoleMode(output, output_mode)); assert(SetConsoleMode(error, output_mode));
   assert(SetConsoleCP(437)); assert(SetConsoleOutputCP(437));
   wchar_t executable[32768]; assert(GetModuleFileNameW(NULL, executable, 32768));
-  for (int scenario = 1; scenario <= 3; scenario++) {
+  for (int scenario = 1; scenario <= 6; scenario++) {
     wchar_t command[32800]; swprintf(command, 32800, L"\"%ls\" %d", executable, scenario);
     STARTUPINFOW startup = {0}; startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESTDHANDLES;
-    startup.hStdInput = input; startup.hStdOutput = output; startup.hStdError = error;
+    startup.hStdInput = input; startup.hStdOutput = output;
+    startup.hStdError = scenario == 6 ? output : error;
     PROCESS_INFORMATION child = {0};
     assert(CreateProcessW(NULL, command, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &child));
     assert(WaitForSingleObject(child.hProcess, 10000) == WAIT_OBJECT_0);

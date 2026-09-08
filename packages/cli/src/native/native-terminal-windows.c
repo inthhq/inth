@@ -40,21 +40,29 @@ static int register_restoration(void) {
   registered = 1;
   return 1;
 }
-static void utf8_output(void) {
+static int capture_output(void) {
+  if (output_active) return 1;
   DWORD mode;
   HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
-  if (!output_active && GetConsoleMode(output, &mode) && register_restoration()) {
-    output_handle = output; saved_output = mode;
-    original_output_page = GetConsoleOutputCP();
-    output_active = 1;
+  if (!GetConsoleMode(output, &mode) || !register_restoration()) return 0;
+  output_handle = output; saved_output = mode;
+  original_output_page = active ? saved_output_page : GetConsoleOutputCP();
+  output_active = 1;
+  return 1;
+}
+static void utf8_output(void) {
+  if (capture_output()) {
     SetConsoleOutputCP(CP_UTF8);
-    SetConsoleMode(output, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+    SetConsoleMode(output_handle, saved_output | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
   }
 }
 int32_t inth_terminal_begin(void) {
   HANDLE input = GetStdHandle(STD_INPUT_HANDLE), error = GetStdHandle(STD_ERROR_HANDLE);
   if (active || !GetConsoleMode(input, &saved_input) || !GetConsoleMode(error, &saved_error)) return -1;
   if (!register_restoration()) return -1;
+  // stdout and stderr can refer to the same screen buffer. Snapshot stdout
+  // before the picker changes stderr's mode, even if columns are queried later.
+  capture_output();
   saved_input_page = GetConsoleCP(); saved_output_page = GetConsoleOutputCP();
   if (!SetConsoleMode(input, (saved_input & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT)) | ENABLE_WINDOW_INPUT)) return -1;
   if (!SetConsoleMode(error, saved_error | ENABLE_VIRTUAL_TERMINAL_PROCESSING)) {
