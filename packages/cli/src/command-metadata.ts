@@ -199,7 +199,7 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   const keyAllowed =
     spec.command === "region" ||
     spec.command === "project" ||
-    (!write && spec.command !== "code-audit");
+    (!write && ["org", "api-key", "inbox", "billing"].includes(spec.command));
   const usage = `inth ${key}${spec.path.includes(":id") ? " <id>" : ""}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;
   const effects = resourceEffects(spec);
   return {

@@ -6,7 +6,9 @@ import { wrapText } from "../src/display.ts";
 import { formatHelp } from "../src/help.ts";
 import { HttpError } from "../src/http-error.ts";
 import { reportError } from "../src/output.ts";
+import { RESOURCE_COMMANDS } from "../src/resource-commands.ts";
 import { resourceSummary } from "../src/resource-output.ts";
+import { keyIdentity } from "./fixtures/identity.ts";
 
 describe("human help and machine discovery", () => {
   it("shows only the selected command's flags and required inputs", () => {
@@ -38,6 +40,26 @@ describe("human help and machine discovery", () => {
     expect(inbox?.options).not.toContainEqual(
       expect.objectContaining({ name: "organization" })
     );
+  });
+  it("advertises API-key authentication only for supported resource capabilities", () => {
+    for (const spec of RESOURCE_COMMANDS) {
+      const metadata = COMMAND_METADATA.find(
+        (entry) =>
+          entry.command === spec.command && entry.action === spec.action
+      );
+      expect(metadata).toBeDefined();
+      const supported = metadata?.scopes.every((scope) =>
+        keyIdentity.data.scopes.includes(scope)
+      );
+      expect(metadata?.authentication, `${spec.command} ${spec.action}`).toBe(
+        supported ? "browser-or-api-key" : "browser"
+      );
+    }
+    for (const command of ["member", "invitation"]) {
+      expect(formatHelp(command, "list")).toContain(
+        "Browser sign-in required."
+      );
+    }
   });
   it("identifies a misspelled flag without exposing its value", () => {
     expect(() =>
