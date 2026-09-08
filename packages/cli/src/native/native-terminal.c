@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 #include <wchar.h>
 
@@ -71,14 +72,33 @@ int32_t inth_terminal_begin(void) {
   return 0;
 }
 int32_t inth_terminal_end(void) { restore_terminal(); return 0; }
+static int64_t monotonic_ms(void) {
+  struct timespec now;
+  if (clock_gettime(CLOCK_MONOTONIC, &now)) return -1;
+  return (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+}
 static int read_byte(int timeout) {
-  struct pollfd descriptor = {STDIN_FILENO, POLLIN, 0};
-  int result = poll(&descriptor, 1, timeout);
-  if (result == 0 || (result < 0 && errno == EINTR)) return -2;
-  if (result < 0) return -1;
-  unsigned char key;
-  if (read(STDIN_FILENO, &key, 1) != 1) return -1;
-  return key;
+  int64_t start = monotonic_ms();
+  if (start < 0) return -1;
+  int64_t deadline = start + timeout;
+  for (;;) {
+    struct pollfd descriptor = {STDIN_FILENO, POLLIN, 0};
+    int result = poll(&descriptor, 1, timeout);
+    if (result == 0) return -2;
+    if (result > 0) {
+      unsigned char key;
+      ssize_t length = read(STDIN_FILENO, &key, 1);
+      if (length == 1) return key;
+      if (length == 0 || errno != EINTR) return -1;
+    } else if (errno != EINTR) {
+      return -1;
+    }
+    // Signals must not turn an incomplete arrow key into an Escape press.
+    int64_t now = monotonic_ms();
+    if (now < 0) return -1;
+    if (now >= deadline) return -2;
+    timeout = (int)(deadline - now);
+  }
 }
 // 0 idle, 1 up, 2 down, 3 submit, 4 cancel, 5 home, 6 end, -1 closed.
 int32_t inth_terminal_key(void) {
@@ -90,12 +110,14 @@ int32_t inth_terminal_key(void) {
   if (key == 'k') return 1;
   if (key == 'j' || key == '\t') return 2;
   if (key != 27) return 0;
-  key = read_byte(75);
+  // Allow delayed escape-sequence fragments from SSH and busy terminals.
+  // A standalone Escape still cancels within a quarter of a second.
+  key = read_byte(250);
   if (key == -2 || key < 0) return 4;
   if (key != '[' && key != 'O') return 0;
   // Consume an entire CSI sequence so unknown keys cannot become a selection.
   for (int count = 0; count < 16; count++) {
-    key = read_byte(75);
+    key = read_byte(250);
     if (key < 0) return 0;
     if (key >= 0x40 && key <= 0x7e) {
       if (key == 'A' || key == 'D') return 1;

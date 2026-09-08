@@ -11,7 +11,7 @@ import termios
 import time
 
 
-def check(keys, expected, long_list=False, terminate=None, fatal=False):
+def check(keys, expected, long_list=False, terminate=None, fatal=False, fragment_delay=0.025):
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 48, 0, 0))
     original = termios.tcgetattr(slave)
@@ -29,7 +29,7 @@ def check(keys, expected, long_list=False, terminate=None, fatal=False):
         # Let each frame settle and deliberately split one arrow sequence.
         for key in keys:
             os.write(master, key)
-            time.sleep(0.025)
+            time.sleep(fragment_delay if key == b"\x1b" and expected else 0.025)
         if terminate:
             child.send_signal(terminate)
         deadline = time.monotonic() + 5
@@ -71,6 +71,8 @@ check([b"\x1b"], None)
 check([b"\x03"], None)
 check([], None, terminate=signal.SIGTERM)
 if len(sys.argv) == 2:
+    # The native adapter controls its own escape timeout; Clack does not.
+    check([b"\x1b", b"[B", b"\r"], "org-two", fragment_delay=0.12)
     check([], None, terminate=signal.SIGHUP, fatal=True)
     check([], None, terminate=signal.SIGQUIT, fatal=True)
 check([b"\x1b[B"] * 11 + [b"\r"], "org-12", long_list=True)

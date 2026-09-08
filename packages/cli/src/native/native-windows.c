@@ -70,7 +70,9 @@ static PSECURITY_DESCRIPTOR private_security(void) {
   if (!user) return NULL;
   if (!ConvertSidToStringSidW(user->User.Sid, &sid)) { free(user); return NULL; }
   wchar_t sddl[512];
-  swprintf(sddl, 512, L"D:P(A;;FA;;;%ls)(A;;FA;;;SY)", sid);
+  // Elevated tokens can default ownership to Administrators. Set the user
+  // explicitly so newly created files pass the same private-owner checks.
+  swprintf(sddl, 512, L"O:%lsD:P(A;;FA;;;%ls)(A;;FA;;;SY)", sid, sid);
   PSECURITY_DESCRIPTOR descriptor = NULL;
   ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, SDDL_REVISION_1, &descriptor, NULL);
   LocalFree(sid); free(user); return descriptor;
