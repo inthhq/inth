@@ -1,11 +1,11 @@
 import { style, textWidth, wrapText } from "./display.ts";
 import type { DisplayOptions } from "./display.ts";
 import { mcpClientName } from "./mcp-clients.ts";
-import type { McpEnvironment } from "./mcp-clients.ts";
+import type { McpClient, McpEnvironment } from "./mcp-clients.ts";
 import { terminalText } from "./organizations.ts";
 
 export interface McpResult {
-  agent: string;
+  agent: McpClient;
   scope: string;
   path: string;
   status: string;
@@ -13,8 +13,30 @@ export interface McpResult {
   nextStep: { command: string; instruction: string } | null;
 }
 
+const NEXT_STEPS: Record<McpClient, { command: string; instruction: string }> =
+  {
+    "claude-code": {
+      command: "claude mcp login inth",
+      instruction: "Sign in to Inth:",
+    },
+    codex: { command: "codex mcp login inth", instruction: "Sign in to Inth:" },
+    cursor: {
+      command: "cursor .",
+      instruction:
+        "Open Cursor, then open MCP settings and connect inth to sign in.",
+    },
+    opencode: {
+      command: "opencode mcp auth inth",
+      instruction: "Sign in to Inth:",
+    },
+    vscode: {
+      command: "code .",
+      instruction:
+        'Open VS Code, then run "MCP: List Servers" in the Command Palette. Select inth, start it, and sign in.',
+    },
+  };
 export const mcpNextStep = (
-  agent: string,
+  agent: McpClient,
   scope: string,
   action: string,
   dryRun: boolean
@@ -28,30 +50,7 @@ export const mcpNextStep = (
       instruction: "Apply these changes:",
     };
   }
-  if (agent === "codex" || agent === "claude-code") {
-    return {
-      command: `${agent === "codex" ? "codex" : "claude"} mcp login inth`,
-      instruction: "Sign in to Inth:",
-    };
-  }
-  if (agent === "opencode") {
-    return {
-      command: "opencode mcp auth inth",
-      instruction: "Sign in to Inth:",
-    };
-  }
-  if (agent === "vscode") {
-    return {
-      command: "code .",
-      instruction:
-        'Open VS Code, then run "MCP: List Servers" in the Command Palette. Select inth, start it, and sign in.',
-    };
-  }
-  return {
-    command: "cursor .",
-    instruction:
-      "Open Cursor, then open MCP settings and connect inth to sign in.",
-  };
+  return NEXT_STEPS[agent];
 };
 
 const abbreviatePath = (

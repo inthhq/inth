@@ -30,13 +30,8 @@ int32_t inth_prepare_directory(const uint8_t *path, size_t length) {
 }
 
 int32_t inth_open_browser(const uint8_t *url, size_t length) {
-  if (!length || length > 16384 || memchr(url, 0, length)) return -1;
-  // Validate at the FFI boundary as well as in the OAuth response parser.
-  if (length < 9 || memcmp(url, "https://", 8)) return -1;
-  if (url[8] == '/' || url[8] == '?' || memchr(url, '@', length) || memchr(url, '#', length)) return -1;
-  for (size_t index = 0; index < length; index++) {
-    if (url[index] <= 0x20 || url[index] == 0x7f || url[index] == '\\') return -1;
-  }
+  extern int32_t inth_browser_url_valid(const uint8_t *, size_t);
+  if (!inth_browser_url_valid(url, length)) return -1;
   char *value = malloc(length + 1);
   if (!value) return -1;
   memcpy(value, url, length);

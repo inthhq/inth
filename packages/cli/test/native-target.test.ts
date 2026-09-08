@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import { expect, it } from "vitest";
 
 import { nativeTarget } from "../scripts/native-target.ts";
@@ -34,12 +36,21 @@ it("requires a cross toolchain and rejects unsupported targets", () => {
 });
 it("preserves macOS credentials and respects platform state directories", () => {
   expect(stateDirectory("darwin", "/home/person")).toBe(
-    "/home/person/Library/Application Support/inth-scriptc"
+    path.join("/home/person", "Library", "Application Support", "inth-scriptc")
   );
   expect(stateDirectory("linux", "/home/person", undefined, "/state")).toBe(
-    "/state/inth"
+    path.join("/state", "inth")
   );
   expect(stateDirectory("win32", "/home/person", "/appdata")).toBe(
-    "/appdata/inth"
+    path.join("/appdata", "inth")
+  );
+});
+
+it("ignores relative state roots", () => {
+  expect(stateDirectory("linux", "/home/person", undefined, "relative")).toBe(
+    stateDirectory("linux", "/home/person")
+  );
+  expect(stateDirectory("win32", "/home/person", "relative")).toBe(
+    stateDirectory("win32", "/home/person")
   );
 });

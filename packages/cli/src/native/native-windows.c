@@ -1,6 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <wincred.h>
+#include <bcrypt.h>
 #include <aclapi.h>
 #include <sddl.h>
 #include <shellapi.h>
@@ -28,33 +29,132 @@ static wchar_t *target(const uint8_t *service, size_t service_len, const uint8_t
   wchar_t *result = wide(text, service_len + account_len + 1);
   free(text); return result;
 }
+// Keep small credentials in their original format. Large values use independent
+// protected entries; publish their manifest only after every chunk is written.
+#define INTH_SECRET_LIMIT (1024 * 1024)
+#define INTH_MANIFEST_SIZE 32
+static const BYTE manifest_magic[8] = {'I', 'N', 'T', 'H', 0, 'C', 'R', '1'};
+static DWORD manifest_length(const PCREDENTIALW credential) {
+  if (credential->CredentialBlobSize != INTH_MANIFEST_SIZE ||
+      memcmp(credential->CredentialBlob, manifest_magic, sizeof(manifest_magic))) return 0;
+  DWORD length;
+  memcpy(&length, credential->CredentialBlob + 8, sizeof(length));
+  return length > CRED_MAX_CREDENTIAL_BLOB_SIZE && length <= INTH_SECRET_LIMIT ? length : 0;
+}
+static wchar_t *chunk_target(const wchar_t *name, const BYTE *manifest, DWORD index) {
+  size_t length = wcslen(name) + 64;
+  wchar_t *result = calloc(length, sizeof(wchar_t));
+  if (!result) return NULL;
+  wchar_t generation[33];
+  for (int byte = 0; byte < 16; byte++) swprintf(generation + byte * 2, 3, L"%02x", manifest[12 + byte]);
+  swprintf(result, length, L"%ls:chunk:%ls:%lu", name, generation, (unsigned long)index);
+  return result;
+}
+static int write_credential(wchar_t *name, const BYTE *value, DWORD length) {
+  CREDENTIALW credential = {0};
+  credential.Type = CRED_TYPE_GENERIC; credential.TargetName = name;
+  credential.CredentialBlobSize = length; credential.CredentialBlob = (LPBYTE)value;
+  credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
+  return CredWriteW(&credential, 0) ? 0 : -1;
+}
+static void delete_chunks(const wchar_t *name, const BYTE *manifest, DWORD length) {
+  DWORD count = (length + CRED_MAX_CREDENTIAL_BLOB_SIZE - 1) / CRED_MAX_CREDENTIAL_BLOB_SIZE;
+  for (DWORD index = 0; index < count; index++) {
+    wchar_t *chunk = chunk_target(name, manifest, index);
+    if (chunk) { CredDeleteW(chunk, CRED_TYPE_GENERIC, 0); free(chunk); }
+  }
+}
 int32_t inth_secret_read(const uint8_t *service, size_t service_len, const uint8_t *account,
                         size_t account_len, inth_secret_callback callback, void *context) {
   wchar_t *name = target(service, service_len, account, account_len);
   if (!name) return -1;
-  PCREDENTIALW credential = NULL;
-  BOOL ok = CredReadW(name, CRED_TYPE_GENERIC, 0, &credential);
-  DWORD error = GetLastError(); free(name);
-  if (!ok) return error == ERROR_NOT_FOUND ? -25300 : -1;
-  callback(credential->CredentialBlob, credential->CredentialBlobSize, context);
-  CredFree(credential); return 0;
+  int result = -1;
+  for (int attempt = 0; attempt < 3; attempt++) {
+    PCREDENTIALW credential = NULL;
+    if (!CredReadW(name, CRED_TYPE_GENERIC, 0, &credential)) {
+      result = GetLastError() == ERROR_NOT_FOUND ? -25300 : -1; break;
+    }
+    DWORD length = manifest_length(credential);
+    if (!length) {
+      callback(credential->CredentialBlob, credential->CredentialBlobSize, context);
+      CredFree(credential); result = 0; break;
+    }
+    BYTE *value = malloc(length);
+    if (!value) { CredFree(credential); break; }
+    DWORD offset = 0, index = 0;
+    while (offset < length) {
+      wchar_t *chunk = chunk_target(name, credential->CredentialBlob, index++);
+      PCREDENTIALW part = NULL;
+      BOOL ok = chunk && CredReadW(chunk, CRED_TYPE_GENERIC, 0, &part);
+      free(chunk);
+      if (!ok) break;
+      DWORD expected = length - offset;
+      if (expected > CRED_MAX_CREDENTIAL_BLOB_SIZE) expected = CRED_MAX_CREDENTIAL_BLOB_SIZE;
+      if (part->CredentialBlobSize != expected) { CredFree(part); break; }
+      memcpy(value + offset, part->CredentialBlob, expected);
+      offset += expected; CredFree(part);
+    }
+    CredFree(credential);
+    if (offset == length) { callback(value, length, context); result = 0; }
+    SecureZeroMemory(value, length); free(value);
+    if (!result) break;
+    // A concurrent refresh can retire the old chunks while we read them.
+    // Re-read the published manifest instead of returning a partial session.
+  }
+  free(name); return result;
 }
 int32_t inth_secret_write(const uint8_t *service, size_t service_len, const uint8_t *account,
                          size_t account_len, const uint8_t *value, size_t value_len) {
+  if (value_len > INTH_SECRET_LIMIT) return -1;
   wchar_t *name = target(service, service_len, account, account_len);
-  if (!name || value_len > CRED_MAX_CREDENTIAL_BLOB_SIZE) { free(name); return -1; }
-  CREDENTIALW credential = {0};
-  credential.Type = CRED_TYPE_GENERIC; credential.TargetName = name;
-  credential.CredentialBlobSize = (DWORD)value_len; credential.CredentialBlob = (LPBYTE)value;
-  credential.Persist = CRED_PERSIST_LOCAL_MACHINE;
-  BOOL ok = CredWriteW(&credential, 0); free(name);
-  return ok ? 0 : -1;
+  if (!name) return -1;
+  PCREDENTIALW previous = NULL;
+  if (!CredReadW(name, CRED_TYPE_GENERIC, 0, &previous) && GetLastError() != ERROR_NOT_FOUND) { free(name); return -1; }
+  int result = -1;
+  if (value_len <= CRED_MAX_CREDENTIAL_BLOB_SIZE) {
+    result = write_credential(name, value, (DWORD)value_len);
+  } else {
+    BYTE manifest[INTH_MANIFEST_SIZE] = {0};
+    DWORD length = (DWORD)value_len;
+    memcpy(manifest, manifest_magic, sizeof(manifest_magic));
+    memcpy(manifest + 8, &length, sizeof(length));
+    if (BCryptGenRandom(NULL, manifest + 12, 16, BCRYPT_USE_SYSTEM_PREFERRED_RNG) == 0) {
+      DWORD offset = 0, index = 0;
+      while (offset < length) {
+        DWORD size = length - offset;
+        if (size > CRED_MAX_CREDENTIAL_BLOB_SIZE) size = CRED_MAX_CREDENTIAL_BLOB_SIZE;
+        wchar_t *chunk = chunk_target(name, manifest, index++);
+        int written = chunk ? write_credential(chunk, value + offset, size) : -1;
+        free(chunk);
+        if (written) break;
+        offset += size;
+      }
+      if (offset == length) result = write_credential(name, manifest, sizeof(manifest));
+      if (result) delete_chunks(name, manifest, length);
+    }
+  }
+  if (!result && previous) {
+    DWORD length = manifest_length(previous);
+    if (length) delete_chunks(name, previous->CredentialBlob, length);
+  }
+  if (previous) CredFree(previous);
+  free(name); return result;
 }
 int32_t inth_secret_delete(const uint8_t *service, size_t service_len, const uint8_t *account, size_t account_len) {
   wchar_t *name = target(service, service_len, account, account_len);
   if (!name) return -1;
+  PCREDENTIALW previous = NULL;
+  if (!CredReadW(name, CRED_TYPE_GENERIC, 0, &previous)) {
+    DWORD error = GetLastError(); free(name);
+    return error == ERROR_NOT_FOUND ? -25300 : -1;
+  }
   BOOL ok = CredDeleteW(name, CRED_TYPE_GENERIC, 0);
-  DWORD error = GetLastError(); free(name);
+  DWORD error = GetLastError();
+  if (ok) {
+    DWORD length = manifest_length(previous);
+    if (length) delete_chunks(name, previous->CredentialBlob, length);
+  }
+  CredFree(previous); free(name);
   return ok ? 0 : error == ERROR_NOT_FOUND ? -25300 : -1;
 }
 static TOKEN_USER *current_user(void) {
@@ -144,9 +244,8 @@ int32_t inth_remove_directory(const uint8_t *path, size_t length) {
   BOOL ok = RemoveDirectoryW(name); free(name); return ok ? 0 : -1;
 }
 int32_t inth_open_browser(const uint8_t *url, size_t length) {
-  if (length < 9 || memcmp(url, "https://", 8)) return -1;
-  if (url[8] == '/' || url[8] == '?' || memchr(url, '@', length) || memchr(url, '#', length)) return -1;
-  for (size_t index = 0; index < length; index++) if (url[index] <= 0x20 || url[index] == 0x7f || url[index] == '\\') return -1;
+  extern int32_t inth_browser_url_valid(const uint8_t *, size_t);
+  if (!inth_browser_url_valid(url, length)) return -1;
   wchar_t *name = wide(url, length); if (!name) return -1;
   INT_PTR result = (INT_PTR)ShellExecuteW(NULL, L"open", name, NULL, NULL, SW_SHOWNORMAL);
   free(name); return result > 32 ? 0 : -1;

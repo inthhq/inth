@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "inth CLI JSON output, schema version 1",
+  "title": "inth CLI JSON output, schema version 2",
   "oneOf": [
     {
       "type": "object",
@@ -8,7 +8,7 @@
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1
+          "const": 2
         },
         "ok": {
           "const": true
@@ -22,7 +22,7 @@
       "additionalProperties": false,
       "properties": {
         "schemaVersion": {
-          "const": 1
+          "const": 2
         },
         "ok": {
           "const": false

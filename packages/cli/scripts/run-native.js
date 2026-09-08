@@ -11,6 +11,11 @@ const binary = fileURLToPath(
 );
 const result = spawnSync(binary, process.argv.slice(2), { stdio: "inherit" });
 if (result.error) {
-  throw result.error;
+  console.error(
+    result.error.code === "ENOENT"
+      ? "Inth has not been built. Run pnpm --filter @inth/cli build, then retry."
+      : `Could not start Inth: ${result.error.message}`
+  );
+  process.exit(1);
 }
 process.exitCode = result.status ?? 1;

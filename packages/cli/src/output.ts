@@ -15,7 +15,7 @@ export const printResult = (
   data: string
 ): void => {
   if (json) {
-    console.log(`{"schemaVersion":1,"ok":true,"data":${data}}`);
+    console.log(`{"schemaVersion":2,"ok":true,"data":${data}}`);
   } else if (message) {
     console.log(message);
   }
@@ -89,7 +89,7 @@ export const reportError = (
       JSON.stringify({
         error: { apiCode, code, httpStatus, message, requestId },
         ok: false,
-        schemaVersion: 1,
+        schemaVersion: 2,
       })
     );
   } else {

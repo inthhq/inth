@@ -15,7 +15,7 @@ describe("machine output", () => {
       '{"data":[{"id":"one"}],"pagination":{"nextCursor":"next"}}'
     );
     expect(stdout).toHaveBeenCalledExactlyOnceWith(
-      '{"schemaVersion":1,"ok":true,"data":{"data":[{"id":"one"}],"pagination":{"nextCursor":"next"}}}'
+      '{"schemaVersion":2,"ok":true,"data":{"data":[{"id":"one"}],"pagination":{"nextCursor":"next"}}}'
     );
     expect(stderr).not.toHaveBeenCalled();
   });
@@ -23,7 +23,7 @@ describe("machine output", () => {
     const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
     printResult(true, "", "null");
     expect(stdout).toHaveBeenCalledExactlyOnceWith(
-      '{"schemaVersion":1,"ok":true,"data":null}'
+      '{"schemaVersion":2,"ok":true,"data":null}'
     );
   });
   it("returns structured HTTP status and a sanitized request ID", () => {
@@ -45,7 +45,7 @@ describe("machine output", () => {
         requestId: "req-123",
       },
       ok: false,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
     expect(stderr).not.toHaveBeenCalled();
   });
@@ -116,7 +116,7 @@ describe("machine output", () => {
         requestId: "refresh-id",
       },
       ok: false,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
     expect(
       reportError(true, new Error("Private cancellation reason"), true)
@@ -130,7 +130,7 @@ describe("machine output", () => {
         requestId: null,
       },
       ok: false,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
   });
 });

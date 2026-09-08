@@ -15,6 +15,7 @@ export declare function httpDate(value: string): number;
 export declare function removeDirectory(path: string): number;
 export declare function prepareDirectory(path: string): number;
 export declare function openBrowser(url: string): number;
+export declare function browserUrlValid(url: string): number;
 
 export declare function writeConfig(path: string, value: string): number;
 

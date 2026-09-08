@@ -5,30 +5,19 @@
   "description": "The inth command line interface",
   "license": "Apache-2.0",
   "bin": {
-    "inth": "scripts/run-native.ts"
+    "inth": "scripts/run-native.js"
   },
-  "files": [
-    "dist/inth",
-    "README.md",
-    "docs/authentication.md",
-    "output.schema.json",
-    "AGENT-USAGE.md",
-    "vendor"
-  ],
   "type": "module",
-  "publishConfig": {
-    "access": "public"
-  },
   "scripts": {
     "build": "node scripts/build-scriptc.ts",
     "build:native": "pnpm build",
-    "dev": "pnpm build && node scripts/run-native.ts",
+    "dev": "pnpm build && node scripts/run-native.js",
     "dev:link": "pnpm build && npm link --ignore-scripts --no-audit --no-fund",
     "dev:unlink": "npm unlink --global @inth/cli --ignore-scripts --no-audit --no-fund",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.native.json",
     "bench": "node scripts/benchmark-scriptc.ts",
     "build:native:dynamic": "scriptc build experiments/node/inth.ts --dynamic -o dist-bin/inth-dynamic",
-    "inth": "node scripts/run-native.ts",
+    "inth": "node scripts/run-native.js",
     "build:yao": "node scripts/build-yao.ts",
     "test:yao": "node scripts/verify-yao.ts",
     "assess:vendoring": "node scripts/assess-vendoring.ts",

@@ -12,8 +12,20 @@ import { z } from "zod";
 import { userIdentity, keyIdentity } from "../test/fixtures/identity.ts";
 import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
+import { nativeTarget } from "./native-target.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
+const target = nativeTarget(
+  process.platform,
+  process.arch,
+  process.env.SCRIPTC_TARGET,
+  process.env.SCRIPTC_CC
+);
+if (target.platform !== process.platform || target.arch !== process.arch) {
+  throw new Error(
+    "Run native tests on the destination OS and architecture. Use pnpm build for cross-compilation."
+  );
+}
 const build = spawnSync(
   process.execPath,
   [path.join(root, "scripts/build-scriptc.ts"), "--tests"],
@@ -89,6 +101,17 @@ const output = path.join(
     ? `native-${process.platform}-${process.arch}`
     : "native"
 );
+if (process.platform === "win32") {
+  for (const name of ["windows-console-test", "windows-credentials-test"]) {
+    const result = spawnSync(path.join(output, executable(name)), [], {
+      encoding: "utf-8",
+      timeout: 30_000,
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    console.log(result.stdout.trim());
+  }
+}
 const resources = spawnSync(
   path.join(output, executable("resource-test")),
   [],
@@ -177,7 +200,7 @@ for (const scenario of [
         requestId: z.string().nullable(),
       }),
       ok: z.literal(false),
-      schemaVersion: z.literal(1),
+      schemaVersion: z.literal(2),
     })
     .parse(JSON.parse(result.stdout));
   assert.equal(value.error.code, scenario.code);
@@ -210,7 +233,7 @@ for (const scenario of [
     assert.deepEqual(value, {
       data: scenario === "user" ? userIdentity : keyIdentity,
       ok: true,
-      schemaVersion: 1,
+      schemaVersion: 2,
     });
   } else {
     assert.equal(value.error.code, "invalid_response");
@@ -306,7 +329,7 @@ assert.equal(successful.stderr, "");
 assert.deepEqual(JSON.parse(successful.stdout), {
   data: { data: [{ id: "one" }], pagination: { nextCursor: "next" } },
   ok: true,
-  schemaVersion: 1,
+  schemaVersion: 2,
 });
 const unattended = spawnSync(path.join(output, executable("ui-test")), [], {
   encoding: "utf-8",

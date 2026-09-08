@@ -9,6 +9,10 @@
 static DWORD saved_input, saved_error;
 static UINT saved_input_page, saved_output_page;
 static int active;
+static DWORD saved_output;
+static UINT original_output_page;
+static HANDLE output_handle;
+static int output_active, registered;
 static void restore_terminal(void) {
   if (!active) return;
   fputs("\033[?25h", stderr); fflush(stderr);
@@ -17,13 +21,32 @@ static void restore_terminal(void) {
   SetConsoleCP(saved_input_page); SetConsoleOutputCP(saved_output_page);
   active = 0;
 }
+static void restore_all(void) {
+  restore_terminal();
+  if (output_active) {
+    fflush(stdout); fflush(stderr);
+    SetConsoleMode(output_handle, saved_output);
+    SetConsoleOutputCP(original_output_page);
+    output_active = 0;
+  }
+}
 static BOOL WINAPI console_signal(DWORD event) {
-  (void)event; restore_terminal(); return FALSE;
+  (void)event; restore_all(); return FALSE;
+}
+static int register_restoration(void) {
+  if (registered) return 1;
+  if (atexit(restore_all)) return 0;
+  if (!SetConsoleCtrlHandler(console_signal, TRUE)) return 0;
+  registered = 1;
+  return 1;
 }
 static void utf8_output(void) {
   DWORD mode;
   HANDLE output = GetStdHandle(STD_OUTPUT_HANDLE);
-  if (GetConsoleMode(output, &mode)) {
+  if (!output_active && GetConsoleMode(output, &mode) && register_restoration()) {
+    output_handle = output; saved_output = mode;
+    original_output_page = GetConsoleOutputCP();
+    output_active = 1;
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleMode(output, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
   }
@@ -31,16 +54,16 @@ static void utf8_output(void) {
 int32_t inth_terminal_begin(void) {
   HANDLE input = GetStdHandle(STD_INPUT_HANDLE), error = GetStdHandle(STD_ERROR_HANDLE);
   if (active || !GetConsoleMode(input, &saved_input) || !GetConsoleMode(error, &saved_error)) return -1;
+  if (!register_restoration()) return -1;
   saved_input_page = GetConsoleCP(); saved_output_page = GetConsoleOutputCP();
   if (!SetConsoleMode(input, (saved_input & ~(ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT)) | ENABLE_WINDOW_INPUT)) return -1;
   if (!SetConsoleMode(error, saved_error | ENABLE_VIRTUAL_TERMINAL_PROCESSING)) {
     SetConsoleMode(input, saved_input); return -1;
   }
   active = 1; SetConsoleCP(CP_UTF8); SetConsoleOutputCP(CP_UTF8);
-  atexit(restore_terminal); SetConsoleCtrlHandler(console_signal, TRUE);
   fputs("\033[?25l", stderr); fflush(stderr); return 0;
 }
-int32_t inth_terminal_end(void) { restore_terminal(); SetConsoleCtrlHandler(console_signal, FALSE); return 0; }
+int32_t inth_terminal_end(void) { restore_terminal(); return 0; }
 int32_t inth_terminal_key(void) {
   HANDLE input = GetStdHandle(STD_INPUT_HANDLE);
   DWORD result = WaitForSingleObject(input, 25);

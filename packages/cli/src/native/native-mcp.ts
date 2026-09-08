@@ -15,6 +15,7 @@ import {
   mcpClientName,
   mcpLocation,
 } from "../mcp-clients.ts";
+import type { McpClient } from "../mcp-clients.ts";
 import { editMcpJson } from "../mcp-json.ts";
 import { mcpNextStep, mcpSummary } from "../mcp-output.ts";
 import type { McpResult } from "../mcp-output.ts";
@@ -72,7 +73,7 @@ const read = async (path: string): Promise<string> => {
 const chooseTargets = async (
   options: CliArguments,
   signal: AbortSignal
-): Promise<{ agents: string[]; scope: string }> => {
+): Promise<{ agents: McpClient[]; scope: string }> => {
   const action = options.argument || "setup";
   let agent = optionValue(options, "agent");
   let scope = optionValue(options, "scope");
@@ -112,7 +113,11 @@ const chooseTargets = async (
     }
   }
   const selectedScope = scope || "project";
-  const agents = agent ? [agent] : MCP_CLIENTS;
+  const client = MCP_CLIENTS.find((value) => value === agent);
+  if (agent && !client) {
+    throw new CliError("usage_error", "Unknown MCP client.");
+  }
+  const agents = client ? [client] : MCP_CLIENTS;
   return { agents, scope: selectedScope };
 };
 const editStatus = (

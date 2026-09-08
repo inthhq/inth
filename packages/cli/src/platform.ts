@@ -1,6 +1,6 @@
 import { homedir } from "node:os";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 
 export const stateDirectory = (
   platform: string,
@@ -12,9 +12,17 @@ export const stateDirectory = (
     return join(home, "Library", "Application Support", "inth-scriptc");
   }
   if (platform === "win32") {
-    return join(appData || join(home, "AppData", "Roaming"), "inth");
+    return join(
+      appData && isAbsolute(appData)
+        ? appData
+        : join(home, "AppData", "Roaming"),
+      "inth"
+    );
   }
-  return join(xdgState || join(home, ".local", "state"), "inth");
+  return join(
+    xdgState && isAbsolute(xdgState) ? xdgState : join(home, ".local", "state"),
+    "inth"
+  );
 };
 export const nativeStateDirectory = (): string =>
   stateDirectory(

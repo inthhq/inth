@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import { parseArguments } from "../src/arguments.ts";
@@ -41,15 +43,20 @@ describe("Inth MCP config edits", () => {
     );
   });
   it.each([
-    '{"mcpServers":null}',
-    '{"mcpServers":{},"mcpServers":{}}',
-    '{"theme":',
-    '{"mcpServers":{"inth":{"url":"https://other.example"}}}',
-  ])("refuses malformed or conflicting config: %s", (source) => {
-    expect(() => editMcpJson(source, "mcpServers", config, false)).toThrow();
+    ['{"mcpServers":null}', "invalid_config"],
+    ['{"mcpServers":{},"mcpServers":{}}', "invalid_config"],
+    ['{"theme":', "invalid_config"],
+    [
+      '{"mcpServers":{"inth":{"url":"https://other.example"}}}',
+      "config_conflict",
+    ],
+  ])("refuses malformed or conflicting config: %s", (source, code) => {
+    expect(() => editMcpJson(source, "mcpServers", config, false)).toThrow(
+      expect.objectContaining({ code })
+    );
   });
   it("leaves existing Inth options and credentials untouched", () => {
-    const source = `{"mcpServers":{"inth":{"url":"${MCP_URL}","headers":{"custom":"keep"},"disabled":true}}}`;
+    const source = `{"mcpServers":{"inth":{"type":"http","url":"${MCP_URL}","headers":{"custom":"keep"},"disabled":true}}}`;
     expect(editMcpJson(source, "mcpServers", config, false).source).toBe(
       source
     );
@@ -68,7 +75,9 @@ it("requires known clients and explicit scopes and rejects credential flags", ()
     ["--scope", "bad"],
     ["--token", "inth_secret"],
   ]) {
-    expect(() => parseArguments(["mcp", "setup", ...args])).toThrow();
+    expect(() => parseArguments(["mcp", "setup", ...args])).toThrow(
+      expect.objectContaining({ code: "usage_error" })
+    );
   }
   expect(
     parseArguments([
@@ -96,12 +105,64 @@ it("maps client config files and uses OAuth without embedding tokens", () => {
         expect(target.path).not.toBe("");
         expect(target.config).not.toContain("Authorization");
         if (client === "codex" && scope === "global") {
-          expect(target.path).toBe("/custom-codex/config.toml");
+          expect(target.path).toBe(path.join("/custom-codex", "config.toml"));
         }
         if (client === "vscode" && scope === "global" && platform === "win32") {
-          expect(target.path).toBe("/appdata/Code/User/mcp.json");
+          expect(target.path).toBe(
+            path.join("/appdata", "Code", "User", "mcp.json")
+          );
         }
       }
     }
   }
 });
+
+it.each(["claude-code", "vscode", "opencode"] as const)(
+  "repairs managed %s fields without changing custom config",
+  (agent) => {
+    const location = mcpLocation(agent, "project", {
+      cwd: "/project",
+      home: "/home",
+      platform: "linux",
+    });
+    for (const existing of [
+      { url: MCP_URL },
+      { enabled: false, type: "local", url: MCP_URL },
+    ]) {
+      const source = `{ // keep settings\n "${location.key}": {"inth": ${JSON.stringify({ ...existing, disabled: true, headers: { custom: "keep" } })}}}`;
+      const inspected = editMcpJson(
+        source,
+        location.key,
+        location.config,
+        true,
+        true
+      );
+      expect(inspected).toMatchObject({
+        changed: false,
+        configured: false,
+        source,
+      });
+      const repaired = editMcpJson(
+        source,
+        location.key,
+        location.config,
+        false
+      );
+      expect(repaired).toMatchObject({ changed: true, configured: true });
+      expect(repaired.source).toContain("// keep settings");
+      expect(repaired.source).toContain('"headers":{"custom":"keep"}');
+      expect(repaired.source).toContain('"disabled":true');
+      expect(
+        editMcpJson(repaired.source, location.key, location.config, false)
+      ).toMatchObject({
+        changed: false,
+        configured: true,
+        source: repaired.source,
+      });
+      expect(
+        editMcpJson(repaired.source, location.key, location.config, true, true)
+          .configured
+      ).toBe(true);
+    }
+  }
+);

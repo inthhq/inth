@@ -22,6 +22,22 @@ const result: McpResult = {
 };
 
 describe("MCP setup output", () => {
+  it.each([
+    ["would-add", "setup", "Add Inth to Codex"],
+    ["would-remove", "remove", "Remove Inth from Codex"],
+    ["removed", "remove", "Inth removed from Codex"],
+    ["not-configured", "list", "Inth is not configured in Codex"],
+    ["unchanged", "remove", "Inth is not configured in Codex"],
+  ])("describes %s for %s", (status, action, expected) => {
+    const text = mcpSummary(
+      [{ ...result, status }],
+      action,
+      status.startsWith("would-"),
+      environment,
+      { color: false, columns: 80 }
+    );
+    expect(text).toContain(expected);
+  });
   it("shows a readable client, config location, and exact login command", () => {
     const text = mcpSummary([result], "setup", false, environment, {
       color: false,
@@ -40,7 +56,7 @@ describe("MCP setup output", () => {
     ["codex", "codex mcp login inth"],
     ["claude-code", "claude mcp login inth"],
     ["opencode", "opencode mcp auth inth"],
-  ])("gives %s its own authentication command", (agent, command) => {
+  ] as const)("gives %s its own authentication command", (agent, command) => {
     expect(mcpNextStep(agent, "project", "setup", false)?.command).toBe(
       command
     );

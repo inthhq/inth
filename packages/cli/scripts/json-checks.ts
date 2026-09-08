@@ -8,7 +8,7 @@ const responseSchema = z.discriminatedUnion("ok", [
     .object({
       data: z.json(),
       ok: z.literal(true),
-      schemaVersion: z.literal(1),
+      schemaVersion: z.literal(2),
     })
     .strict(),
   z
@@ -23,7 +23,7 @@ const responseSchema = z.discriminatedUnion("ok", [
         })
         .strict(),
       ok: z.literal(false),
-      schemaVersion: z.literal(1),
+      schemaVersion: z.literal(2),
     })
     .strict(),
 ]);

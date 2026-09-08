@@ -212,6 +212,42 @@ export interface ConfigEdit {
   configured: boolean;
   changed: boolean;
 }
+const configureEntry = (
+  source: string,
+  key: string,
+  config: string,
+  inspect: boolean
+): ConfigEdit => {
+  const requested = new JsonDocument(config);
+  let next = source;
+  let configured = true;
+  for (const field of requested.nodes.filter((node) => node.parent === 0)) {
+    const current = new JsonDocument(next);
+    const currentServer = current.child(current.child(0, key), "inth");
+    const index = current.child(currentServer, field.key);
+    const existing = current.nodes[index];
+    const expected = config.slice(field.valueStart, field.end);
+    if (
+      existing &&
+      next.slice(existing.valueStart, existing.end) === expected
+    ) {
+      continue;
+    }
+    configured = false;
+    if (!inspect) {
+      next = existing
+        ? next.slice(0, existing.valueStart) +
+          expected +
+          next.slice(existing.end)
+        : current.insert(currentServer, field.key, expected);
+    }
+  }
+  if (inspect) {
+    return { changed: false, configured, source };
+  }
+  new JsonDocument(next);
+  return { changed: !configured, configured: true, source: next };
+};
 export const editMcpJson = (
   source: string,
   key: string,
@@ -241,8 +277,8 @@ export const editMcpJson = (
         'The client already has an "inth" entry for another server. Rename it in the client before continuing.'
       );
     }
-    if (inspect || !remove) {
-      return { changed: false, configured: true, source: original };
+    if (!remove || inspect) {
+      return configureEntry(original, key, config, inspect);
     }
     const next = document.remove(server);
     new JsonDocument(next);

@@ -3,25 +3,25 @@
 import { join } from "node:path";
 
 export const MCP_URL = "https://api.inth.com/mcp";
-export const MCP_CLIENTS = [
-  "codex",
-  "claude-code",
-  "cursor",
-  "vscode",
-  "opencode",
-];
-export const mcpClientName = (agent: string): string => {
-  const names = [
-    ["codex", "Codex"],
-    ["claude-code", "Claude Code"],
-    ["cursor", "Cursor"],
-    ["vscode", "VS Code"],
-    ["opencode", "OpenCode"],
-  ];
-  return names.find((entry) => entry[0] === agent)?.[1] ?? agent;
+const CLIENT_DEFINITIONS = [
+  { id: "codex", name: "Codex" },
+  { id: "claude-code", name: "Claude Code" },
+  { id: "cursor", name: "Cursor" },
+  { id: "vscode", name: "VS Code" },
+  { id: "opencode", name: "OpenCode" },
+] as const;
+export type McpClient = (typeof CLIENT_DEFINITIONS)[number]["id"];
+export const MCP_CLIENTS = CLIENT_DEFINITIONS.map((client) => client.id);
+export const mcpClientName = (agent: McpClient): string => {
+  for (const client of CLIENT_DEFINITIONS) {
+    if (client.id === agent) {
+      return client.name;
+    }
+  }
+  return agent;
 };
 export interface McpLocation {
-  agent: string;
+  agent: McpClient;
   path: string;
   key: string;
   format: string;
@@ -36,7 +36,7 @@ export interface McpEnvironment {
   codexHome?: string;
 }
 export const mcpLocation = (
-  agent: string,
+  agent: McpClient,
   scope: string,
   environment: McpEnvironment
 ): McpLocation => {

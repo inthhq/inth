@@ -89,12 +89,13 @@ export const editMcpToml = (
       .toReversed();
     for (const target of targets) {
       const block = source.slice(target.start, target.end);
-      const trailing = /(?:\r?\n[ \t]*(?:#[^\n]*)?)*$/u.exec(block)?.[0] ?? "";
+      const suffix = /(?:\r?\n[ \t]*(?:#[^\n]*)?)*$/u.exec(block)?.[0] ?? "";
+      const trailing = suffix.includes("#") ? suffix : "";
       next = next.slice(0, target.start) + trailing + next.slice(target.end);
     }
   } else {
     const newline = source.includes("\r\n") ? "\r\n" : "\n";
-    next += `${source && !source.endsWith("\n") ? newline : ""}${source ? newline : ""}[mcp_servers.inth]${newline}url = "${MCP_URL}"${newline}`;
+    next += `${source && !source.endsWith("\n") ? newline : ""}[mcp_servers.inth]${newline}url = "${MCP_URL}"${newline}`;
   }
   if (status(next) !== (remove ? 0 : 1)) {
     throw new CliError(

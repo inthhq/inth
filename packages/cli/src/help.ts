@@ -39,7 +39,7 @@ export const helpCommands = (command = "", action = ""): CommandMetadata[] =>
   COMMAND_METADATA.filter(
     (entry) =>
       (!command || entry.command === command) &&
-      (!action || entry.action === action)
+      (!action || !entry.action || entry.action === action)
   );
 const rows = (entries: string[][], columns: number): string[] => {
   const size = Math.max(

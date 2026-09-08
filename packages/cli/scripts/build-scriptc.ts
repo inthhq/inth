@@ -150,6 +150,12 @@ await writeFile(
           symbol: "inth_open_browser",
         },
         {
+          name: "browserUrlValid",
+          params: ["string"],
+          returns: "i32",
+          symbol: "inth_browser_url_valid",
+        },
+        {
           name: "secretRead",
           params: [
             "string",
@@ -247,6 +253,21 @@ for (const entry of entries) {
   console.log(`Built static Scriptc ${entry.name}.`);
 }
 // Sign before copying compatibility paths so every entry has the same code identity.
+if (fixtures && target.platform === "win32") {
+  for (const name of ["windows-console-test", "windows-credentials-test"]) {
+    run(target.compiler, [
+      ...target.compilerArgs,
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      `test/native/${name}.c`,
+      path.join(output, "native-url.o"),
+      ...target.systemLibraries.map((library) => `-l${library}`),
+      "-o",
+      path.join(output, `${name}.exe`),
+    ]);
+  }
+}
 if (target.platform === "darwin") {
   signNative(path.join(binaries, "inth"), identity);
 }

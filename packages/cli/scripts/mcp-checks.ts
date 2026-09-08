@@ -7,12 +7,25 @@ import path from "node:path";
 
 export const verifyMcp = async (binary: string): Promise<void> => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "inth-mcp-test-"));
+  const env = {
+    ...process.env,
+    APPDATA: path.join(directory, "appdata"),
+    CODEX_HOME: path.join(directory, ".codex"),
+    HOME: directory,
+    USERPROFILE: directory,
+    XDG_CONFIG_HOME: path.join(directory, "config"),
+    XDG_STATE_HOME: path.join(directory, "state"),
+  };
   const invoke = (args: string[]) => {
     const result = spawnSync(binary, ["mcp", ...args, "--json"], {
       cwd: directory,
       encoding: "utf-8",
+      env,
       timeout: 5000,
     });
+    assert.ifError(result.error);
+    assert.equal(result.signal, null, "MCP process was terminated.");
+    assert.notEqual(result.status, null, "MCP process did not exit.");
     assert.equal(result.stderr, "");
     return { ...result, data: JSON.parse(result.stdout) };
   };
@@ -55,6 +68,7 @@ export const verifyMcp = async (binary: string): Promise<void> => {
         const human = spawnSync(binary, ["mcp", "setup", ...flags], {
           cwd: directory,
           encoding: "utf-8",
+          env,
           timeout: 5000,
         });
         assert.equal(human.status, 0, human.stderr);
@@ -86,6 +100,52 @@ export const verifyMcp = async (binary: string): Promise<void> => {
       }
       if (source.includes("https://example.com")) {
         assert.match(removed, /https:\/\/example.com/u);
+      }
+      if (["claude-code", "vscode", "opencode"].includes(agent)) {
+        let key = "mcpServers";
+        if (agent === "vscode") {
+          key = "servers";
+        }
+        if (agent === "opencode") {
+          key = "mcp";
+        }
+        const broken = JSON.stringify({
+          [key]: {
+            inth: {
+              enabled: false,
+              headers: { custom: "keep" },
+              type: "local",
+              url: "https://api.inth.com/mcp",
+            },
+          },
+        });
+        await writeFile(filename, broken);
+        assert.equal(
+          invoke(["list", ...flags]).data.data.results[0].status,
+          "not-configured"
+        );
+        assert.equal(
+          invoke(["setup", ...flags, "--dry-run"]).data.data.results[0].status,
+          "would-add"
+        );
+        assert.equal(await readFile(filename, "utf-8"), broken);
+        assert.equal(invoke(["setup", ...flags]).status, 0);
+        const repaired = JSON.parse(await readFile(filename, "utf-8"))[key]
+          .inth;
+        assert.equal(repaired.type, agent === "opencode" ? "remote" : "http");
+        if (agent === "opencode") {
+          assert.equal(repaired.enabled, true);
+        }
+        assert.deepEqual(repaired.headers, { custom: "keep" });
+        assert.equal(
+          invoke(["setup", ...flags]).data.data.results[0].status,
+          "unchanged"
+        );
+        assert.equal(
+          invoke(["list", ...flags]).data.data.results[0].status,
+          "configured"
+        );
+        assert.equal(invoke(["remove", ...flags]).status, 0);
       }
     }
     const filename = path.join(directory, ".cursor/mcp.json");

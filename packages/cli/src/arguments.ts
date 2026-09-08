@@ -85,7 +85,9 @@ const validateArguments = (result: CliArguments, count: number): void => {
       !COMMAND_METADATA.some(
         (entry) =>
           entry.command === result.command &&
-          (!result.argument || entry.action === result.argument)
+          (!result.argument ||
+            !entry.action ||
+            entry.action === result.argument)
       )
     ) {
       throw new CliError(

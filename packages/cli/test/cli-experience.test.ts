@@ -94,3 +94,13 @@ it("keeps server error codes separate from CLI error categories", () => {
     output.mockRestore();
   }
 });
+
+it.each([
+  ["api", "/v1/me"],
+  ["switch", "org_123"],
+  ["link", "org_123"],
+])("shows %s help after a positional value", (command, value) => {
+  const args = parseArguments([command, value, "--help"]);
+  expect(args.help).toBe(true);
+  expect(formatHelp(args.command, args.argument)).toBe(formatHelp(command));
+});

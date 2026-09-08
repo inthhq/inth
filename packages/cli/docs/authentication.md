@@ -22,6 +22,8 @@ All requests reject redirects. Authenticated API requests must stay under `https
 
 The native build uses macOS Security framework calls, Windows Credential Manager, or Linux Secret Service through libsecret. The service remains `com.inth.cli.scriptc`, account `oauth`, preserving existing macOS sign-ins. It writes organization preferences atomically with permissions restricted to the current user. Windows also allows Local System.
 
+Windows stores sessions larger than one Credential Manager entry in protected chunks, with a manifest published after every chunk has been saved. A failed write keeps the previous session. Rotation and logout remove the retired chunks. Serialized sessions may be up to 1 MiB; credentials never use the client-configuration file writer.
+
 Native state contains preferences and lock files, never tokens:
 
 - macOS: `~/Library/Application Support/inth-scriptc`

@@ -26,6 +26,15 @@ for (const source of [
     "Removal failed."
   );
   check(removed.source.startsWith(source), "Unrelated config changed.");
+  check(removed.source === source, "Setup/removal accumulated whitespace.");
+  const again = editMcpToml(removed.source, false, (value) =>
+    mcpTomlStatus(value)
+  );
+  check(
+    editMcpToml(again.source, true, (value) => mcpTomlStatus(value)).source ===
+      source,
+    "Repeated setup/removal changed whitespace."
+  );
 }
 for (const source of [
   "broken = [",

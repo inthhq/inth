@@ -18,7 +18,7 @@ const envelope = z.object({
     })
     .optional(),
   ok: z.boolean(),
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
 });
 const execute = (args: string[], token = "inth_test_agent") => {
   const env = { ...process.env };
