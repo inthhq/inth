@@ -1,0 +1,37 @@
+{
+  "cpu": "Apple M5 Pro",
+  "iterations": 100,
+  "measured_at": "2026-09-05T07:34:54.677Z",
+  "native_bytes": 71600,
+  "node": "v24.20.0",
+  "os_release": "25.6.0",
+  "platform": "darwin arm64",
+  "results": [
+    {
+      "median_ms": 29.02020799999991,
+      "p95_ms": 33.4187090000014,
+      "target": "yao-pkg complete CLI"
+    },
+    {
+      "median_ms": 22.525374999999258,
+      "p95_ms": 25.621750000000247,
+      "target": "Node CLI"
+    },
+    {
+      "median_ms": 39.14420799999971,
+      "p95_ms": 45.33404200000041,
+      "target": "Node same-source probe"
+    },
+    {
+      "median_ms": 2.042250000000422,
+      "p95_ms": 2.6821670000008453,
+      "target": "Scriptc static probe"
+    }
+  ],
+  "scope": "Warm filesystem, fresh-process --help latency including spawn overhead. Static probe prints the real CLI help but excludes auth, HTTP, validation and credential storage. Node same-source probe includes Node TypeScript stripping. No native auth or CPU-throughput claim.",
+  "scriptc": "0.0.36",
+  "warmups": 10,
+  "yao_bytes": 122754016,
+  "yao_node": "24.20.0",
+  "yao_pkg": "6.22.0"
+}

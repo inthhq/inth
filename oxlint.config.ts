@@ -3,7 +3,12 @@ import core from "ultracite/oxlint/core";
 
 export default defineConfig({
   extends: [core],
-  ignorePatterns: [...core.ignorePatterns, "tools/oxlint/anti-slop/**"],
+  ignorePatterns: [
+    ...core.ignorePatterns,
+    "tools/oxlint/anti-slop/**",
+    "**/inrepo_modules/**",
+    "**/.inrepo/**",
+  ],
   jsPlugins: [
     {
       name: "anti-slop",

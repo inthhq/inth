@@ -1,0 +1,66 @@
+{
+  "name": "@inth/cli",
+  "version": "0.1.0",
+  "description": "The inth command line interface",
+  "license": "Apache-2.0",
+  "bin": {
+    "inth": "dist/inth"
+  },
+  "files": [
+    "dist/inth",
+    "README.md",
+    "docs/authentication.md",
+    "output.schema.json",
+    "AGENT-USAGE.md"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node scripts/build-scriptc.ts",
+    "build:native": "pnpm build",
+    "dev": "pnpm build && ./dist/inth",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.native.json",
+    "bench": "node scripts/benchmark-scriptc.ts",
+    "prepack": "pnpm build",
+    "build:native:dynamic": "scriptc build experiments/node/inth.ts --dynamic -o dist-bin/inth-dynamic",
+    "inth": "./dist/inth",
+    "build:yao": "node scripts/build-yao.ts",
+    "test:yao": "node scripts/verify-yao.ts",
+    "assess:vendoring": "node scripts/assess-vendoring.ts",
+    "build:scriptc:auth": "pnpm build",
+    "test:scriptc": "node scripts/test-scriptc.ts",
+    "bench:scriptc": "node scripts/benchmark-scriptc.ts",
+    "bench:auth": "node scripts/build-scriptc.ts --tests && node scripts/build-yao.ts --auth-bench && node scripts/benchmark-auth.ts",
+    "bench:vercel": "node scripts/benchmark-vercel.ts",
+    "bench:switch": "node scripts/build-scriptc.ts --tests && node scripts/build-yao.ts --selector && python3 scripts/benchmark-switch.py",
+    "bench:switch:live": "python3 scripts/benchmark-switch.py --live",
+    "build:node": "tsc -p tsconfig.build.json",
+    "dev:node": "node experiments/node/inth.ts",
+    "inth:node": "node build/node/experiments/node/inth.js",
+    "inth:yao": "./dist-bin/yao/inth",
+    "test": "node scripts/test-scriptc.ts",
+    "bench:probe": "node scripts/benchmark.ts",
+    "test:package": "node scripts/verify-package.ts"
+  },
+  "devDependencies": {
+    "@clack/prompts": "1.7.0",
+    "@napi-rs/keyring": "2.0.0",
+    "@types/node": "24.13.3",
+    "@types/proper-lockfile": "4.1.4",
+    "@yao-pkg/pkg": "6.22.0",
+    "esbuild": "0.27.0",
+    "inrepo": "0.0.9",
+    "proper-lockfile": "4.1.2",
+    "scriptc": "0.0.36",
+    "typescript": "6.0.3",
+    "zod": "4.5.4"
+  }
+}

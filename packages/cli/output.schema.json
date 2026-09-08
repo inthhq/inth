@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "inth CLI JSON output, schema version 1",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["schemaVersion", "ok", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "ok": {
+          "const": true
+        },
+        "data": {}
+      }
+    },
+    {
+      "type": "object",
+      "required": ["schemaVersion", "ok", "error"],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1
+        },
+        "ok": {
+          "const": false
+        },
+        "error": {
+          "type": "object",
+          "required": ["code", "message", "httpStatus", "requestId"],
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "httpStatus": {
+              "type": ["integer", "null"]
+            },
+            "requestId": {
+              "type": ["string", "null"]
+            }
+          }
+        }
+      }
+    }
+  ]
+}

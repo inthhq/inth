@@ -27,3 +27,13 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Scriptc intermediate compiler output
+.scriptc/
+
+# Standalone executables
+dist-bin/
+
+# Rebuilt vendored source and inrepo caches
+inrepo_modules/
+.inrepo/

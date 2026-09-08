@@ -1,5 +1,8 @@
 packages:
   - apps/*
   - packages/*
+allowBuilds:
+  esbuild: true
+  scriptc: true
 minimumReleaseAgeExclude:
   - ultracite@7.10.8

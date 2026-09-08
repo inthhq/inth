@@ -1,0 +1,13 @@
+{
+  "lockfileVersion": 3,
+  "modules": {
+    "zod": {
+      "commit": "e8e206fa33ac5fe7ce20a2beb12d57b1cb3df653",
+      "gitUrl": "https://github.com/colinhacks/zod.git",
+      "ref": "e8e206fa33ac5fe7ce20a2beb12d57b1cb3df653",
+      "source": "zod",
+      "updatedAt": "2026-09-05T07:23:34.348Z",
+      "repositoryDirectory": "packages/zod"
+    }
+  }
+}

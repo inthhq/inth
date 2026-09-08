@@ -3,5 +3,10 @@ import ultracite from "ultracite/oxfmt";
 
 export default defineConfig({
   ...ultracite,
-  ignorePatterns: [...ultracite.ignorePatterns, "tools/oxlint/anti-slop/**"],
+  ignorePatterns: [
+    ...ultracite.ignorePatterns,
+    "tools/oxlint/anti-slop/**",
+    "**/inrepo_modules/**",
+    "**/.inrepo/**",
+  ],
 });

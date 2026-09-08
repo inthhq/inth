@@ -1,0 +1,24 @@
+{
+  "binary_bytes": 1037368,
+  "compiler": "scriptc@0.0.36",
+  "cpu": "Apple M5 Pro",
+  "dynamic_runtime": false,
+  "iterations": 100,
+  "measured_at": "2026-09-05T08:33:44.569Z",
+  "node": "v24.20.0",
+  "platform": "darwin arm64",
+  "results": [
+    {
+      "median_ms": 6.7952920000007,
+      "p95_ms": 8.102084000000104,
+      "target": "Scriptc auth CLI"
+    },
+    {
+      "median_ms": 42.0865419999991,
+      "p95_ms": 48.67033300000003,
+      "target": "Node complete CLI reference"
+    }
+  ],
+  "scope": "Interleaved fresh-process --help latency with warm filesystem caches and spawn overhead. Native binary contains shared OAuth, HTTP and Keychain code, but help does not execute authentication. Node is a contemporaneous startup reference, not a feature-equivalent comparison: its CLI includes API and organization commands, and help text differs. Each target's output is checked for consistency separately.",
+  "warmups": 10
+}
