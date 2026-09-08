@@ -9,6 +9,11 @@
 #include <unistd.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#ifdef __APPLE__
+#include <copyfile.h>
+#else
+#include <sys/xattr.h>
+#endif
 
 extern char **environ;
 
@@ -87,9 +92,43 @@ int32_t inth_lock_release(int32_t fd) {
   return status || closed ? -1 : 0;
 }
 
-// Atomic owner-only configuration replacement. Credentials never use this path.
-int32_t inth_write_config(const uint8_t *path, size_t length,
-                          const uint8_t *value, size_t value_length) {
+// Copy access permissions before replacing an existing shared MCP configuration.
+static int copy_permissions(const char *name, int destination) {
+  int source = open(name, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+  if (source < 0) return errno == ENOENT ? 0 : -1;
+  struct stat info;
+  int result = -1;
+  if (fstat(source, &info) || !S_ISREG(info.st_mode) ||
+      fchown(destination, info.st_uid, info.st_gid) ||
+      fchmod(destination, info.st_mode & 07777)) goto done;
+#ifdef __APPLE__
+  result = fcopyfile(source, destination, NULL, COPYFILE_ACL);
+#else
+  // Linux stores POSIX access ACLs in this xattr; no libacl dependency is needed.
+  ssize_t size = fgetxattr(source, "system.posix_acl_access", NULL, 0);
+  if (size < 0) {
+    if (errno == ENODATA || errno == ENOTSUP) {
+      // A temporary file can inherit an ACL from its parent even when the original has none.
+      result = fremovexattr(destination, "system.posix_acl_access");
+      if (result && (errno == ENODATA || errno == ENOTSUP)) result = 0;
+    }
+  } else {
+    void *acl = malloc(size ? (size_t)size : 1);
+    if (acl) {
+      if (fgetxattr(source, "system.posix_acl_access", acl, (size_t)size) == size)
+        result = fsetxattr(destination, "system.posix_acl_access", acl, (size_t)size, 0);
+      free(acl);
+    }
+  }
+#endif
+ done:
+  close(source);
+  return result;
+}
+
+// Atomic configuration replacement. Credentials never use this path.
+static int32_t write_config(const uint8_t *path, size_t length,
+                          const uint8_t *value, size_t value_length, int preserve) {
   if (!length || length > 4096 || memchr(path, 0, length) || value_length > 4 * 1024 * 1024) return -1;
   char *name = malloc(length + 1);
   char *temporary = malloc(length + 12);
@@ -106,9 +145,10 @@ int32_t inth_write_config(const uint8_t *path, size_t length,
       if (written <= 0) break;
       offset += (size_t)written;
     }
+    int permissions = preserve ? copy_permissions(name, fd) : 0;
     int synced = fsync(fd);
     int closed = close(fd);
-    if (offset == value_length && !synced && !closed) result = rename(temporary, name);
+    if (offset == value_length && !permissions && !synced && !closed) result = rename(temporary, name);
     if (result) {
       unlink(temporary);
     } else {
@@ -130,4 +170,13 @@ int32_t inth_write_config(const uint8_t *path, size_t length,
   }
   free(name); free(temporary);
   return result;
+}
+
+int32_t inth_write_config(const uint8_t *path, size_t length,
+                          const uint8_t *value, size_t value_length) {
+  return write_config(path, length, value, value_length, 0);
+}
+int32_t inth_write_mcp_config(const uint8_t *path, size_t length,
+                              const uint8_t *value, size_t value_length) {
+  return write_config(path, length, value, value_length, 1);
 }

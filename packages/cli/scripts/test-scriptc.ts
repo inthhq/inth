@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { once } from "node:events";
-import { mkdtemp, mkdir, rm, readFile, stat, readdir } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  rm,
+  readFile,
+  stat,
+  readdir,
+  writeFile,
+} from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -77,22 +85,49 @@ for (const scenario of [
   assert.equal(invalid.stdout, "");
   assert.equal(invalid.stderr, `Error: ${scenario.error}\n`);
 }
-for (const args of [
-  ["login"],
-  ["auth", "status"],
-  ["login", "--token", "inth_flag"],
-]) {
-  const bypass = spawnSync(binary, args, {
-    encoding: "utf-8",
-    env: { ...process.env, INTH_TOKEN: "inth_test_environment" },
-    timeout: 5000,
-  });
-  assert.equal(bypass.status, 0, bypass.stderr);
-  assert.match(bypass.stdout, /organization API key/u);
-  assert.doesNotMatch(
-    bypass.stdout + bypass.stderr,
-    /inth_test_environment|inth_flag/u
+const blockedHome = await mkdtemp(
+  path.join(os.tmpdir(), "inth-stateless-test-")
+);
+try {
+  const blockedParent = path.join(blockedHome, "unavailable");
+  await writeFile(
+    blockedParent,
+    "This is a file, so no state directory can be created inside it."
   );
+  await writeFile(
+    path.join(blockedHome, "Library"),
+    "Unavailable macOS state parent."
+  );
+  for (const args of [
+    ["login"],
+    ["auth", "status"],
+    ["login", "--token", "inth_flag"],
+  ]) {
+    const bypass = spawnSync(binary, args, {
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        APPDATA: blockedParent,
+        HOME: blockedHome,
+        INTH_TOKEN: "inth_test_environment",
+        USERPROFILE: blockedHome,
+        XDG_STATE_HOME: blockedParent,
+      },
+      timeout: 5000,
+    });
+    assert.ifError(bypass.error);
+    assert.equal(bypass.status, 0, bypass.stderr);
+    assert.match(bypass.stdout, /organization API key/u);
+    assert.doesNotMatch(
+      bypass.stdout + bypass.stderr,
+      /inth_test_environment|inth_flag/u
+    );
+    assert.equal(bypass.stderr, "");
+  }
+  const blockedFiles = await readdir(blockedHome);
+  assert.deepEqual(blockedFiles.toSorted(), ["Library", "unavailable"]);
+} finally {
+  await rm(blockedHome, { force: true, recursive: true });
 }
 const output = path.join(
   root,

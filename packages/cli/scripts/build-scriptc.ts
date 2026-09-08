@@ -138,6 +138,12 @@ await writeFile(
           symbol: "inth_write_config",
         },
         {
+          name: "writeMcpConfig",
+          params: ["string", "string"],
+          returns: "i32",
+          symbol: "inth_write_mcp_config",
+        },
+        {
           name: "prepareDirectory",
           params: ["string"],
           returns: "i32",

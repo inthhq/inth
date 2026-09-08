@@ -1,9 +1,41 @@
 /* eslint-disable no-await-in-loop -- Each setup, read, and removal depends on the preceding step. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
+const permissions = async (filename: string): Promise<string> => {
+  if (process.platform !== "win32") {
+    const info = await stat(filename);
+    return String(info.mode % 0o1000);
+  }
+  const result = spawnSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      "(Get-Acl -LiteralPath $env:INTH_TEST_CONFIG).GetSecurityDescriptorSddlForm([System.Security.AccessControl.AccessControlSections]::Access)",
+    ],
+    {
+      encoding: "utf-8",
+      env: { ...process.env, INTH_TEST_CONFIG: filename },
+      timeout: 10_000,
+    }
+  );
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
+};
 
 export const verifyMcp = async (binary: string): Promise<void> => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "inth-mcp-test-"));
@@ -61,6 +93,18 @@ export const verifyMcp = async (binary: string): Promise<void> => {
       const filename = path.join(directory, file);
       await mkdir(path.dirname(filename), { recursive: true });
       await writeFile(filename, source);
+      if (process.platform === "win32") {
+        const grant = spawnSync(
+          "icacls.exe",
+          [filename, "/grant", "*S-1-5-11:(R)"],
+          { encoding: "utf-8", timeout: 5000 }
+        );
+        assert.ifError(grant.error);
+        assert.equal(grant.status, 0, grant.stderr);
+      } else {
+        await chmod(filename, 0o664);
+      }
+      const originalPermissions = await permissions(filename);
       const flags = ["--agent", agent, "--scope", "project"];
       const preview = invoke(["setup", ...flags, "--dry-run"]);
       assert.equal(preview.status, 0, preview.stdout);
@@ -68,6 +112,7 @@ export const verifyMcp = async (binary: string): Promise<void> => {
       assert.equal(await readFile(filename, "utf-8"), source);
       const setup = invoke(["setup", ...flags]);
       assert.equal(setup.status, 0, setup.stdout);
+      assert.equal(await permissions(filename), originalPermissions);
       assert.equal(setup.data.data.connectionVerified, false);
       if (agent === "codex") {
         assert.equal(
@@ -99,6 +144,7 @@ export const verifyMcp = async (binary: string): Promise<void> => {
         "configured"
       );
       assert.equal(invoke(["remove", ...flags]).status, 0);
+      assert.equal(await permissions(filename), originalPermissions);
       assert.equal(
         invoke(["list", ...flags]).data.data.results[0].status,
         "not-configured"

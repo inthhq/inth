@@ -19,6 +19,8 @@ export declare function openBrowser(url: string): number;
 export declare function browserUrlValid(url: string): number;
 
 export declare function writeConfig(path: string, value: string): number;
+/** Atomically save an MCP config, preserving existing file permissions. */
+export declare function writeMcpConfig(path: string, value: string): number;
 
 export declare function terminalBegin(): number;
 export declare function terminalEnd(): number;

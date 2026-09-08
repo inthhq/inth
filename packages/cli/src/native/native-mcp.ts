@@ -29,7 +29,7 @@ import {
   mcpTomlStatus,
   outputColumns,
   prepareDirectory,
-  writeConfig,
+  writeMcpConfig,
 } from "./native-bindings.ts";
 import { nativeUI } from "./native-ui.ts";
 
@@ -210,7 +210,7 @@ export const runMcp = async (
           );
         }
         signal.throwIfAborted();
-        if (writeConfig(location.path, edit.source) !== 0) {
+        if (writeMcpConfig(location.path, edit.source) !== 0) {
           throw new CliError(
             "config_write_failed",
             "Cannot save the client configuration."

@@ -253,7 +253,7 @@ int32_t inth_open_browser(const uint8_t *url, size_t length) {
   INT_PTR result = (INT_PTR)ShellExecuteW(NULL, L"open", name, NULL, NULL, SW_SHOWNORMAL);
   free(name); return result > 32 ? 0 : -1;
 }
-int32_t inth_write_config(const uint8_t *path, size_t length, const uint8_t *value, size_t value_length) {
+static int32_t write_config(const uint8_t *path, size_t length, const uint8_t *value, size_t value_length, int preserve) {
   wchar_t *name = wide(path, length); PSECURITY_DESCRIPTOR descriptor = private_security();
   if (!name || !descriptor || value_length > 4 * 1024 * 1024) { free(name); if (descriptor) LocalFree(descriptor); return -1; }
   size_t size = wcslen(name) + 80;
@@ -271,9 +271,24 @@ int32_t inth_write_config(const uint8_t *path, size_t length, const uint8_t *val
     DWORD written = 0;
     BOOL ok = WriteFile(handle, value, (DWORD)value_length, &written, NULL);
     BOOL flushed = FlushFileBuffers(handle); BOOL closed = CloseHandle(handle);
-    if (ok && written == value_length && flushed && closed &&
-        MoveFileExW(temporary, name, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) result = 0;
+    if (ok && written == value_length && flushed && closed) {
+      if (preserve) {
+        // ReplaceFile preserves the destination DACL and attributes. Never ignore ACL errors.
+        if (ReplaceFileW(name, temporary, NULL, 0, NULL, NULL)) result = 0;
+        else if (GetLastError() == ERROR_FILE_NOT_FOUND &&
+            MoveFileExW(temporary, name, MOVEFILE_WRITE_THROUGH)) result = 0;
+      } else if (MoveFileExW(temporary, name, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) result = 0;
+    }
     if (result) DeleteFileW(temporary);
   }
   free(temporary); free(name); return result;
+}
+
+int32_t inth_write_config(const uint8_t *path, size_t length,
+                          const uint8_t *value, size_t value_length) {
+  return write_config(path, length, value, value_length, 0);
+}
+int32_t inth_write_mcp_config(const uint8_t *path, size_t length,
+                              const uint8_t *value, size_t value_length) {
+  return write_config(path, length, value, value_length, 1);
 }
