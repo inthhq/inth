@@ -57,12 +57,11 @@ for (const example of requestCases) {
   check(request.method === example.method, "Wrong command method");
   check(request.body === example.body, "Wrong command body");
   check(request.scoped === example.scoped, "Wrong organization scope");
-  expectedUrl = `https://api.inth.com${example.path}`;
-  if (example.scoped) {
-    const url = new URL(expectedUrl);
-    url.searchParams.set("organizationId", "org_default");
-    expectedUrl = url.href;
-  }
+  check(
+    !example.scoped || Boolean(example.scopedPath),
+    "Missing scoped URL fixture"
+  );
+  expectedUrl = `https://api.inth.com${example.scoped ? example.scopedPath : example.path}`;
   expectedMethod = example.method;
   expectedBody = example.body;
   // eslint-disable-next-line no-await-in-loop -- Exercise one request and expectation at a time.

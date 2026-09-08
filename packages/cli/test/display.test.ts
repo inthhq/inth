@@ -150,9 +150,15 @@ describe("terminal colour policy", () => {
     expect(colorEnabled(true)).toBe(false);
   });
 
-  it.each(["", "1", "0"])("respects NO_COLOR=%s", (value) => {
+  it.each(["1", "0", "true"])("respects NO_COLOR=%s", (value) => {
     vi.stubEnv("NO_COLOR", value);
     vi.stubEnv("TERM", "xterm-256color");
     expect(colorEnabled(true)).toBe(false);
   });
+});
+
+it("ignores an empty NO_COLOR", () => {
+  vi.stubEnv("NO_COLOR", "");
+  vi.stubEnv("TERM", "xterm-256color");
+  expect(colorEnabled(true)).toBe(true);
 });

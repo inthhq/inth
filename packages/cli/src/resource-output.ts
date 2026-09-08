@@ -444,6 +444,15 @@ const scanSummary = (
     ...detailLines(resourceFields(options, item), display),
   ];
 };
+const emptyNoun = (options: CliArguments): string => {
+  if (options.command === "api-key") {
+    return "API keys";
+  }
+  if (options.command === "inbox") {
+    return "Inbox findings";
+  }
+  return labels(options).toLowerCase();
+};
 const listSummary = (
   options: CliArguments,
   page: ResourcePage,
@@ -458,9 +467,7 @@ const listSummary = (
       )
     );
   } else {
-    lines.push(
-      line(`No ${labels(options).toLowerCase()} on this page.`, display)
-    );
+    lines.push(line(`No ${emptyNoun(options)} on this page.`, display));
   }
   if (page.pagination) {
     const more = page.pagination.hasMore

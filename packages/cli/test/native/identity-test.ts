@@ -42,9 +42,17 @@ if (scenario === "unicode") {
     },
   });
 }
+if (scenario === "future") {
+  body = JSON.stringify({
+    ...userIdentity,
+    data: { ...userIdentity.data, principal: { type: "service" } },
+  });
+}
 if (scenario === "malformed") {
-  body =
-    '{"success":true,"data":{"principal":{"type":"unknown"},"activeOrganizationId":null,"organizations":[]}}';
+  body = JSON.stringify({
+    ...userIdentity,
+    data: { ...userIdentity.data, principal: { type: "" } },
+  });
 }
 if (scenario === "missing") {
   body =
@@ -104,7 +112,7 @@ try {
   check(error instanceof CliError, "Unexpected error type.");
   process.exit(
     reportError(
-      true,
+      process.argv.includes("--json"),
       error instanceof Error ? error : new Error("Failed."),
       false
     )

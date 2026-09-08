@@ -40,7 +40,7 @@ export class ApiClient {
     if (
       !includeProfile ||
       !auth ||
-      value.data.principal.type === "api_key" ||
+      !["session", "oauth"].includes(value.data.principal.type) ||
       !value.data.principal.userId
     ) {
       return value;

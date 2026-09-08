@@ -50,7 +50,7 @@ describe("whoami", () => {
   it.each([
     { ...userIdentity, success: false },
     {
-      data: { ...userIdentity.data, principal: { type: "unknown" } },
+      data: { ...userIdentity.data, principal: { type: "" } },
       success: true,
     },
     { data: { ...userIdentity.data, organizations: "invalid" }, success: true },
@@ -237,4 +237,27 @@ describe("whoami", () => {
     );
     expect(await api.getMe(true)).toEqual(userIdentity);
   });
+});
+
+it("accepts additive principal types and preserves them in output", async () => {
+  const identity = {
+    ...userIdentity,
+    data: {
+      ...userIdentity.data,
+      principal: { type: "service", userId: "service-one" },
+    },
+  };
+  const f = setup([Response.json(identity)]);
+  const api = new ApiClient(
+    f.http,
+    () => {
+      throw new Error("Unexpected credential read");
+    },
+    "inth_fixture"
+  );
+  expect(await api.getMe(true)).toEqual(identity);
+  const output = identitySummary(identity.data);
+  expect(output).toContain("service");
+  expect(output).not.toContain("Session");
+  expect(output).not.toContain("Browser login");
 });

@@ -15,9 +15,17 @@ const release = (handle: number): void => {
 export class NativeStore implements AuthStore {
   private readonly entry: NativeKeychain;
   private readonly lockPath: string;
-  constructor(entry: NativeKeychain, lockPath: string) {
+  private readonly checkAbort: () => void;
+  constructor(
+    entry: NativeKeychain,
+    lockPath: string,
+    checkAbort: () => void = () => {
+      // Benchmarks and isolated store callers may have no cancellation source.
+    }
+  ) {
     this.entry = entry;
     this.lockPath = lockPath;
+    this.checkAbort = checkAbort;
   }
   adapter(): AuthStore {
     return {
@@ -49,16 +57,19 @@ export class NativeStore implements AuthStore {
     this.entry.clear();
   }
   async exclusive(work: () => Promise<void>): Promise<void> {
+    this.checkAbort();
     const deadline = Date.now() + 30_000;
     let handle = lockAcquire(this.lockPath);
     while (handle === -2 && Date.now() < deadline) {
       await setTimeout(25);
+      this.checkAbort();
       handle = lockAcquire(this.lockPath);
     }
     if (handle < 0) {
       throw new Error("Cannot acquire the credential lock.");
     }
     try {
+      this.checkAbort();
       await work();
     } finally {
       release(handle);

@@ -148,3 +148,16 @@ describe("human resource output", () => {
     });
   });
 });
+
+it.each([
+  ["api-key", "API keys"],
+  ["inbox", "Inbox findings"],
+])("uses the correct empty-state noun for %s", (command, noun) => {
+  expect(
+    formatResource(
+      parseArguments([command, "list"]),
+      '{"success":true,"data":[]}',
+      plain
+    )
+  ).toContain(`No ${noun} on this page.`);
+});

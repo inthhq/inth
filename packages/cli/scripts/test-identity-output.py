@@ -84,7 +84,8 @@ assert all(width(line) < 28 for line in unicode_output.splitlines()), unicode_ou
 assert "東京開発チーム🌱" * 4 in re.sub(r"\s", "", unicode_output), unicode_output
 assert "a-very-long-organization-slug-that-must-stay-readable" in re.sub(r"\s", "", unicode_output)
 
-for no_color in ("", "1", "0"):
+assert "\x1b" in render(80, no_color="")
+for no_color in ("1", "0"):
     output = render(80, no_color=no_color)
     assert "\x1b" not in output, output
     assert "● Inth" in output, output

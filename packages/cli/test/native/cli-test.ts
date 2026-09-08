@@ -39,7 +39,8 @@ const http: OAuthTransport = {
   error: (response) => responseError(response),
   form: async (url, fields, _deadline) => scenario.next(url, fields),
   request: async (url) => scenario.next(url, new URLSearchParams()),
-  tokens: async (response) => parseTokens(response.body),
+  tokens: async (response, previousRefreshToken) =>
+    parseTokens(response.body, previousRefreshToken),
 };
 const auth = new AuthFlow(http, store.adapter());
 try {

@@ -1,3 +1,4 @@
+/* eslint-disable anti-slop/no-runtime-typeof -- This native JSON boundary cannot use Zod; explicit field checks also validate Node callers. */
 /* eslint-disable require-await -- Match the asynchronous OAuth error decoder contract. */
 import type {
   OAuthResponse,
@@ -8,10 +9,13 @@ import type {
 } from "../auth-types.ts";
 import { HttpError } from "../http-error.ts";
 
-// This module is only executed by Scriptc. Its checked casts validate JSON fields
-// at runtime, unlike TypeScript assertions in Node. Native tests cover bad inputs.
+// Scriptc validates the checked casts; explicit semantic checks also protect
+// callers using Node. Native tests cover the compiled JSON boundaries.
 export const httpsUrl = (value: string): boolean => {
-  if (!/^https:\/\/[^/?#@\\\s]+(?:[/?][^#\\\s]*)?$/u.test(value)) {
+  if (
+    typeof value !== "string" ||
+    !/^https:\/\/[^/?#@\\\s]+(?:[/?][^#\\\s]*)?$/u.test(value)
+  ) {
     return false;
   }
   try {
@@ -27,7 +31,9 @@ export const parseCredentials = (text: string): Credentials => {
   // SAFETY: Scriptc validates the exact record's field types at this checked JSON boundary.
   const value = JSON.parse(text) as Credentials;
   if (
+    typeof value.access_token !== "string" ||
     !value.access_token ||
+    typeof value.refresh_token !== "string" ||
     !value.refresh_token ||
     !positive(value.expires_at)
   ) {
@@ -61,9 +67,11 @@ interface DeviceResponse {
 export const parseDevice = (text: string): DeviceAuthorization => {
   // SAFETY: Scriptc checks this record and the optional interval's type at runtime.
   const value = JSON.parse(text) as DeviceResponse;
-  const interval = value.interval ?? 5;
+  const interval = value.interval === undefined ? 5 : value.interval;
   if (
+    typeof value.device_code !== "string" ||
     !value.device_code ||
+    typeof value.user_code !== "string" ||
     !value.user_code ||
     !positive(value.expires_in) ||
     !positive(interval) ||
@@ -81,35 +89,51 @@ export const parseDevice = (text: string): DeviceAuthorization => {
     verification_uri_complete: value.verification_uri_complete,
   };
 };
-export const parseTokens = (text: string): Tokens => {
-  // SAFETY: Scriptc validates all required field types; semantic constraints follow below.
-  const value = JSON.parse(text) as Tokens;
+interface TokenResponse {
+  access_token: string;
+  expires_in: number;
+  refresh_token?: string;
+  token_type: string;
+}
+export const parseTokens = (
+  text: string,
+  previousRefreshToken?: string | null
+): Tokens => {
+  // SAFETY: Scriptc validates this record's field types; semantic checks also run under Node.
+  const value = JSON.parse(text) as TokenResponse;
+  const refresh =
+    value.refresh_token === undefined
+      ? previousRefreshToken
+      : value.refresh_token;
   if (
+    typeof value.access_token !== "string" ||
     !value.access_token ||
-    !value.refresh_token ||
+    typeof refresh !== "string" ||
+    !refresh ||
     !positive(value.expires_in) ||
+    typeof value.token_type !== "string" ||
     value.token_type.toLowerCase() !== "bearer"
   ) {
     throw new Error("Invalid token response.");
   }
-  return value;
+  return { ...value, refresh_token: refresh };
 };
 export const responseError = async (
   response: OAuthResponse
 ): Promise<HttpError> => {
   let code = "";
   try {
-    // SAFETY: Scriptc's checked cast throws for a non-object or a non-string error field.
-    const body = JSON.parse(response.body) as { error: string };
-    code = body.error;
-  } catch {
-    try {
-      // SAFETY: Scriptc checks the public API error object's code field.
-      const body = JSON.parse(response.body) as { error: { code: string } };
+    // SAFETY: Scriptc checks the supported OAuth and public API error shapes.
+    const body = JSON.parse(response.body) as {
+      error: string | { code: string };
+    };
+    if (typeof body.error === "string") {
+      code = body.error;
+    } else if (body.error && typeof body.error.code === "string") {
       ({ code } = body.error);
-    } catch {
-      code = "";
     }
+  } catch {
+    code = "";
   }
   return new HttpError(response.status, code, response.requestId);
 };

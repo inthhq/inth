@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { chooseOrganization } from "../src/organizations.ts";
+import {
+  chooseOrganization,
+  collectOrganizations,
+} from "../src/organizations.ts";
 import type { Organization, OrganizationUI } from "../src/organizations.ts";
 
 const organizations: Organization[] = [
@@ -90,4 +93,19 @@ describe("organization selection", () => {
       })
     ).rejects.toThrow("Cancelled");
   });
+});
+
+it("bounds organization pagination even when every cursor is new", async () => {
+  let pages = 0;
+  await expect(
+    collectOrganizations(() => {
+      pages += 1;
+      return Promise.resolve({
+        data: [],
+        pagination: { hasMore: true, nextCursor: `cursor-${pages}` },
+        success: true,
+      });
+    })
+  ).rejects.toMatchObject({ code: "invalid_response" });
+  expect(pages).toBe(100);
 });

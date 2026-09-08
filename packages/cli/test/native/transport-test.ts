@@ -56,10 +56,23 @@ for (const method of ["PATCH", "DELETE", "POST"]) {
 let redirectRejected = false;
 try {
   await http.request(`${base}/redirect`);
-} catch {
-  redirectRejected = true;
+} catch (error) {
+  redirectRejected =
+    error instanceof Error &&
+    error.message ===
+      "Could not reach inth. Check your connection and try again.";
 }
 check(redirectRejected, "The native transport followed a redirect.");
+let unreachable = false;
+try {
+  await http.request(`${base}/disconnect`);
+} catch (error) {
+  unreachable =
+    error instanceof Error &&
+    error.message ===
+      "Could not reach inth. Check your connection and try again.";
+}
+check(unreachable, "Transport failures were not normalized.");
 let invalidRejected = false;
 try {
   await http.discovery(await http.request(`${base}/malformed`));
@@ -81,8 +94,8 @@ const cancelJob = abort();
 let cancelled = false;
 try {
   await cancellable.request(`${base}/hang`);
-} catch {
-  cancelled = true;
+} catch (error) {
+  cancelled = error instanceof Error && error.name === "AbortError";
 }
 await cancelJob;
 check(cancelled, "HTTP cancellation failed.");
@@ -96,8 +109,8 @@ const sleepJob = stopSleep();
 let sleepCancelled = false;
 try {
   await clock.sleep(5000);
-} catch {
-  sleepCancelled = true;
+} catch (error) {
+  sleepCancelled = error instanceof Error && error.name === "AbortError";
 }
 await sleepJob;
 check(sleepCancelled, "Polling cancellation failed.");

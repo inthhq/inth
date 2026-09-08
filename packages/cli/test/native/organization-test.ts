@@ -58,7 +58,8 @@ const auth = new AuthFlow(
           token_endpoint: "https://dashboard.example/token",
         })
       ),
-    tokens: async (value) => parseTokens(value.body),
+    tokens: async (value, previousRefreshToken) =>
+      parseTokens(value.body, previousRefreshToken),
   },
   {
     clear: async () => {
@@ -135,18 +136,10 @@ const api = new NativeApi(
   () => auth,
   scenario === "key" ? "inth_fixture" : undefined
 );
-let rejected = false;
+let created;
 try {
-  const created = await api.createOrganization({
-    name: "Acme Team",
-    slug: "acme",
-  });
-  check(
-    created.data.id === "org-new" && created.data.role === "owner",
-    "Missing organization response"
-  );
+  created = await api.createOrganization({ name: "Acme Team", slug: "acme" });
 } catch (error) {
-  rejected = true;
   if (scenario === "key") {
     check(
       error instanceof CliError && error.code === "usage_error",
@@ -175,6 +168,14 @@ try {
     }
   }
 }
+const rejected = !created;
+if (created) {
+  check(
+    created.data.id === "org-new" && created.data.role === "owner",
+    "Missing organization response"
+  );
+}
+
 check(
   rejected === !["success", "refresh"].includes(scenario),
   "Unexpected creation outcome"

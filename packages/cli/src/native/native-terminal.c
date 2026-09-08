@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <locale.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,27 +12,62 @@
 #include <wchar.h>
 
 static struct termios saved;
-static int active;
+static volatile sig_atomic_t active;
+static int registered;
+static const int terminal_signals[] = {SIGTERM, SIGHUP, SIGQUIT};
+static struct sigaction previous_handlers[3];
+
 static void restore_terminal(void) {
   if (!active) return;
   tcsetattr(STDIN_FILENO, TCSANOW, &saved);
-  fputs("\033[?25h", stderr);
-  fflush(stderr);
+  // write and tcsetattr are async-signal-safe; stdio is not.
+  const char cursor[] = "\033[?25h";
+  (void)write(STDERR_FILENO, cursor, sizeof(cursor) - 1);
   active = 0;
+  for (size_t index = 0; index < 3; index++) {
+    sigaction(terminal_signals[index], &previous_handlers[index], NULL);
+  }
+}
+static void terminate_terminal(int signal_number) {
+  restore_terminal();
+  // Preserve the process's original handler, including Scriptc's cancellation handler.
+  kill(getpid(), signal_number);
 }
 int32_t inth_terminal_begin(void) {
   if (active || !isatty(STDIN_FILENO) || !isatty(STDERR_FILENO) ||
       tcgetattr(STDIN_FILENO, &saved)) return -1;
+  if (!registered) {
+    if (atexit(restore_terminal)) return -1;
+    registered = 1;
+  }
+  sigset_t blocked, original_mask;
+  sigemptyset(&blocked);
+  for (size_t index = 0; index < 3; index++) sigaddset(&blocked, terminal_signals[index]);
+  if (sigprocmask(SIG_BLOCK, &blocked, &original_mask)) return -1;
+  struct sigaction handler = {0};
+  handler.sa_handler = terminate_terminal;
+  handler.sa_mask = blocked;
+  size_t installed = 0;
+  for (; installed < 3; installed++) {
+    if (sigaction(terminal_signals[installed], &handler, &previous_handlers[installed])) break;
+  }
   struct termios raw = saved;
   raw.c_lflag &= ~(ICANON | ECHO | ISIG);
   raw.c_iflag &= ~(IXON | ICRNL);
   raw.c_cc[VMIN] = 1;
   raw.c_cc[VTIME] = 0;
-  if (tcsetattr(STDIN_FILENO, TCSANOW, &raw)) return -1;
+  if (installed != 3 || tcsetattr(STDIN_FILENO, TCSANOW, &raw)) {
+    for (size_t index = 0; index < installed; index++) {
+      sigaction(terminal_signals[index], &previous_handlers[index], NULL);
+    }
+    sigprocmask(SIG_SETMASK, &original_mask, NULL);
+    return -1;
+  }
   active = 1;
-  atexit(restore_terminal);
   setlocale(LC_CTYPE, "");
   fputs("\033[?25l", stderr);
+  fflush(stderr);
+  sigprocmask(SIG_SETMASK, &original_mask, NULL);
   return 0;
 }
 int32_t inth_terminal_end(void) { restore_terminal(); return 0; }

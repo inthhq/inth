@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { AuthFlow } from "../../src/auth-flow.ts";
 import type { Credentials, OAuthResponse } from "../../src/auth-types.ts";
 import type { HttpClient } from "./http.ts";
@@ -34,7 +36,18 @@ export class Auth extends AuthFlow {
         form: async (url, fields, deadline) =>
           capture(await http.form(url, fields, deadline)),
         request: async (url) => capture(await http.request(url)),
-        tokens: (response) => http.json(restore(response), tokenSchema),
+        tokens: (response, previousRefreshToken) =>
+          http.json(
+            restore(response),
+            previousRefreshToken === null
+              ? tokenSchema
+              : tokenSchema.extend({
+                  refresh_token: z
+                    .string()
+                    .min(1)
+                    .default(previousRefreshToken),
+                })
+          ),
       },
       store
     );

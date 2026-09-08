@@ -15,6 +15,8 @@ it.skipIf(process.platform === "win32")(
       ],
       { encoding: "utf-8", timeout: 20_000 }
     );
+    expect(result.error).toBeUndefined();
+    expect(result.status).not.toBeNull();
     expect(result.stderr, result.stdout).toBe("");
     expect(result.status, result.error?.message).toBe(0);
   },

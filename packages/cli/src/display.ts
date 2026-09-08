@@ -10,7 +10,7 @@ export interface DisplayOptions {
 }
 
 export const colorEnabled = (tty: boolean): boolean =>
-  tty && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb";
+  tty && !process.env.NO_COLOR && process.env.TERM !== "dumb";
 
 export const style = (text: string, code: string, color: boolean): string =>
   color ? `\u001B[${code}m${text}\u001B[0m` : text;

@@ -102,7 +102,9 @@ export const collectOrganizations = async (
   read: (path: string) => Promise<OrganizationPage>
 ): Promise<Organization[]> => {
   const organizations: Organization[] = [];
-  const cursors: string[] = [];
+  const cursors = new Set<string>();
+  const maxPages = 100;
+  let pages = 0;
   let cursor: string | null = null;
   while (true) {
     const query = new URLSearchParams({ limit: "100" });
@@ -112,16 +114,17 @@ export const collectOrganizations = async (
     // eslint-disable-next-line no-await-in-loop -- Each page needs the cursor from the preceding response.
     const page = await read(`/v1/organizations?${query.toString()}`);
     organizations.push(...page.data);
+    pages += 1;
     if (!page.pagination.hasMore) {
       return organizations;
     }
     cursor = page.pagination.nextCursor;
-    if (!cursor || cursors.includes(cursor)) {
+    if (!cursor || cursors.has(cursor) || pages >= maxPages) {
       throw new CliError(
         "invalid_response",
         "Invalid organization pagination cursor."
       );
     }
-    cursors.push(cursor);
+    cursors.add(cursor);
   }
 };

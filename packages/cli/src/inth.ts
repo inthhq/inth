@@ -65,7 +65,8 @@ try {
     }
     return new NativeStore(
       new NativeKeychain("com.inth.cli.scriptc", "oauth"),
-      join(directory, "credentials.lock")
+      join(directory, "credentials.lock"),
+      () => controller.signal.throwIfAborted()
     );
   };
   const getAuth = (): AuthFlow => new AuthFlow(http, getStore().adapter());

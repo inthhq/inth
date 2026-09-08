@@ -4,6 +4,7 @@ export interface RequestCase {
   path: string;
   body?: string;
   scoped: boolean;
+  scopedPath?: string;
 }
 
 export const requestCases: RequestCase[] = [
@@ -30,6 +31,8 @@ export const requestCases: RequestCase[] = [
     method: "GET",
     path: "/v1/projects?limit=10&cursor=a%2B%2F%3D",
     scoped: true,
+    scopedPath:
+      "/v1/projects?limit=10&cursor=a%2B%2F%3D&organizationId=org_default",
   },
   {
     args: ["project", "get", "prj_123"],
@@ -54,6 +57,7 @@ export const requestCases: RequestCase[] = [
     method: "POST",
     path: "/v1/projects",
     scoped: true,
+    scopedPath: "/v1/projects?organizationId=org_default",
   },
   {
     args: [
@@ -96,6 +100,7 @@ export const requestCases: RequestCase[] = [
     method: "GET",
     path: "/v1/members?limit=50",
     scoped: true,
+    scopedPath: "/v1/members?limit=50&organizationId=org_default",
   },
   {
     args: ["member", "update", "mem_123", "--role", "admin"],
@@ -115,6 +120,7 @@ export const requestCases: RequestCase[] = [
     method: "GET",
     path: "/v1/invitations?limit=50",
     scoped: true,
+    scopedPath: "/v1/invitations?limit=50&organizationId=org_default",
   },
   {
     args: [
@@ -129,6 +135,7 @@ export const requestCases: RequestCase[] = [
     method: "POST",
     path: "/v1/invitations",
     scoped: true,
+    scopedPath: "/v1/invitations?organizationId=org_default",
   },
   {
     args: ["invitation", "cancel", "inv_123"],
@@ -141,6 +148,7 @@ export const requestCases: RequestCase[] = [
     method: "GET",
     path: "/v1/api-keys?limit=50",
     scoped: true,
+    scopedPath: "/v1/api-keys?limit=50&organizationId=org_default",
   },
   {
     args: ["api-key", "create", "--name", "CI deploy"],
@@ -148,6 +156,7 @@ export const requestCases: RequestCase[] = [
     method: "POST",
     path: "/v1/api-keys",
     scoped: true,
+    scopedPath: "/v1/api-keys?organizationId=org_default",
   },
   {
     args: ["api-key", "roll", "key_123"],
@@ -161,12 +170,20 @@ export const requestCases: RequestCase[] = [
     path: "/v1/api-keys/key_123",
     scoped: false,
   },
-  { args: ["billing"], method: "GET", path: "/v1/billing", scoped: true },
+  {
+    args: ["billing"],
+    method: "GET",
+    path: "/v1/billing",
+    scoped: true,
+    scopedPath: "/v1/billing?organizationId=org_default",
+  },
   {
     args: ["code-audit", "repositories"],
     method: "GET",
     path: "/v1/code-audit/repositories?limit=50",
     scoped: true,
+    scopedPath:
+      "/v1/code-audit/repositories?limit=50&organizationId=org_default",
   },
   {
     args: [
@@ -180,6 +197,8 @@ export const requestCases: RequestCase[] = [
     method: "GET",
     path: "/v1/code-audit/scans?limit=50&repositoryId=repo_123&status=completed",
     scoped: true,
+    scopedPath:
+      "/v1/code-audit/scans?limit=50&repositoryId=repo_123&status=completed&organizationId=org_default",
   },
   {
     args: [
@@ -224,6 +243,7 @@ export const requestCases: RequestCase[] = [
     method: "GET",
     path: "/v1/inbox?limit=50&status=open",
     scoped: true,
+    scopedPath: "/v1/inbox?limit=50&status=open&organizationId=org_default",
   },
   {
     args: ["inbox", "get", "inbox_123"],

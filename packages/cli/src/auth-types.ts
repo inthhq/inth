@@ -67,7 +67,10 @@ export interface OAuthTransport {
   ) => Promise<OAuthResponse>;
   discovery: (response: OAuthResponse) => Promise<Discovery>;
   device: (response: OAuthResponse) => Promise<DeviceAuthorization>;
-  tokens: (response: OAuthResponse) => Promise<Tokens>;
+  tokens: (
+    response: OAuthResponse,
+    previousRefreshToken: string | null
+  ) => Promise<Tokens>;
   error: (response: OAuthResponse) => Promise<HttpError>;
 }
 

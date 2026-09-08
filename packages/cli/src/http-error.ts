@@ -19,6 +19,7 @@ export class HttpError extends Error {
       "UNLOCK_REQUIRED",
       "REPOSITORY_NOT_LINKED",
       "INSUFFICIENT_CREDITS",
+      "INSUFFICIENT_SCOPE",
       "SERVICE_UNAVAILABLE",
     ];
     const reason = known.includes(code) ? ` (${code})` : "";
@@ -36,7 +37,7 @@ export class HttpError extends Error {
       guidance = " A plan or organization owner limit has been reached.";
     }
     const id =
-      requestId?.replaceAll(/[^a-zA-Z0-9._:-]/gu, "").slice(0, 200) ?? null;
+      requestId?.replaceAll(/[^a-zA-Z0-9._:-]/gu, "").slice(0, 200) || null;
     super(
       `Request failed: HTTP ${status}${reason}.${guidance}${id ? ` Request ID: ${id}` : ""}`
     );

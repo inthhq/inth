@@ -1,10 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClient } from "../experiments/node/api.ts";
-import { run, selectLoginOrganization } from "../experiments/node/commands.ts";
+import {
+  run,
+  selectLoginOrganization,
+  showDevice,
+} from "../experiments/node/commands.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";
 import { parseArguments } from "../src/arguments.ts";
-import { setup } from "./fixtures.ts";
+import { setup, device } from "./fixtures.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -100,4 +104,18 @@ describe("organization commands", () => {
       expect.stringContaining("Create your first organization")
     );
   });
+});
+
+it("rejects an unsafe approval link before writing to the terminal", async () => {
+  const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+  await expect(
+    showDevice(
+      {
+        ...device,
+        verification_uri_complete: "https://dashboard.example/\u001B[31m",
+      },
+      true
+    )
+  ).rejects.toThrow();
+  expect(stdout).not.toHaveBeenCalled();
 });

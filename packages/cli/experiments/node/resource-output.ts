@@ -119,12 +119,12 @@ export const formatResource = (
   if (options.json || options.command === "api") {
     return body;
   }
-  try {
-    if (!body) {
-      return resourceSummary(options, { data: [], success: true }, display);
-    }
+  if (!body) {
+    return resourceSummary(options, { data: [], success: true }, display);
+  }
+  const parsePage = () => {
     if (resourceIsList(options)) {
-      const page = z
+      return z
         .object({
           data: z.array(itemSchema),
           pagination: z
@@ -133,20 +133,20 @@ export const formatResource = (
           success: z.literal(true),
         })
         .parse(JSON.parse(body));
-      return resourceSummary(options, page, display);
     }
     const result = z
       .object({ data: itemSchema, success: z.literal(true) })
       .parse(JSON.parse(body));
-    return resourceSummary(
-      options,
-      { data: [result.data], success: true },
-      display
-    );
+    return { data: [result.data], success: result.success };
+  };
+  let page;
+  try {
+    page = parsePage();
   } catch {
     throw new CliError(
       "invalid_response",
       "Cannot format the API response. Run the command with --json to inspect it."
     );
   }
+  return resourceSummary(options, page, display);
 };

@@ -7,6 +7,9 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
+import { summarize } from "./benchmark-stats.ts";
+import { packageVersion, YAO_NODE_VERSION } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const metrics = z.object({
   cycle_ms: z.number(),
@@ -18,12 +21,12 @@ const targets = [
   {
     args: [],
     executable: path.join(root, "build/native/auth-bench"),
-    name: "Scriptc 0.0.36",
+    name: `Scriptc ${packageVersion("scriptc")}`,
   },
   {
     args: [],
     executable: path.join(root, "dist-bin/yao/inth-auth-bench"),
-    name: "yao-pkg 6.22.0 / Node 24.20.0",
+    name: `yao-pkg ${packageVersion("@yao-pkg/pkg")} / Node ${YAO_NODE_VERSION}`,
   },
   {
     args: [path.join(root, "build/yao/dist/inth.js")],
@@ -64,18 +67,7 @@ const results = targets.map((target, index) => {
   const list = samples[index];
   assert.ok(list);
   const summary = Object.fromEntries(
-    keys.map((key) => {
-      const sorted = list
-        .map((sample) => sample[key])
-        .toSorted((a, b) => a - b);
-      return [
-        key,
-        {
-          median: (Number(sorted[9]) + Number(sorted[10])) / 2,
-          p95: sorted[18],
-        },
-      ];
-    })
+    keys.map((key) => [key, summarize(list.map((sample) => sample[key]))])
   );
   return { samples: list, summary, target: target.name };
 });

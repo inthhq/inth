@@ -74,34 +74,43 @@ export const nativeHttp = (
         signal,
         AbortSignal.timeout(Math.ceil(Math.min(30_000, remaining))),
       ]);
-      const response =
-        fields === null
-          ? await fetch(url, {
-              headers: token
-                ? {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                  }
-                : {},
-              method,
-              redirect: "error",
-              signal: timeout,
-            })
-          : await fetch(url, {
-              // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Only the non-null-body branch sends JSON or form writes; callers reject GET bodies.
-              body: fields,
-              headers: json
-                ? {
-                    Accept: "application/json",
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  }
-                : { "Content-Type": "application/x-www-form-urlencoded" },
-              method,
-              redirect: "error",
-              signal: timeout,
-            });
-      const body = await response.text();
+      let response: Response;
+      let body: string;
+      try {
+        response =
+          fields === null
+            ? await fetch(url, {
+                headers: token
+                  ? {
+                      Accept: "application/json",
+                      Authorization: `Bearer ${token}`,
+                    }
+                  : {},
+                method,
+                redirect: "error",
+                signal: timeout,
+              })
+            : await fetch(url, {
+                // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Only the non-null-body branch sends JSON or form writes; callers reject GET bodies.
+                body: fields,
+                headers: json
+                  ? {
+                      Accept: "application/json",
+                      Authorization: `Bearer ${token}`,
+                      "Content-Type": "application/json",
+                    }
+                  : { "Content-Type": "application/x-www-form-urlencoded" },
+                method,
+                redirect: "error",
+                signal: timeout,
+              });
+        body = await response.text();
+      } catch {
+        signal.throwIfAborted();
+        throw new Error(
+          "Could not reach inth. Check your connection and try again."
+        );
+      }
       const result: OAuthResponse = {
         body,
         ok: response.ok,
@@ -151,10 +160,10 @@ export const nativeHttp = (
     request: (url) => request(url, null, Number.POSITIVE_INFINITY, ""),
     send: (url, token, method, body) =>
       request(url, body ?? null, Number.POSITIVE_INFINITY, token, true, method),
-    tokens: async (response) => {
+    tokens: async (response, previousRefreshToken) => {
       const body = await checkedBody(response);
       try {
-        return parseTokens(body);
+        return parseTokens(body, previousRefreshToken);
       } catch {
         throw invalid(response);
       }

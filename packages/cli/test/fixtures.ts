@@ -1,4 +1,6 @@
 /* eslint-disable max-classes-per-file -- Related in-memory dependencies for protocol tests. */
+import { afterEach, expect } from "vitest";
+
 import type { CredentialStore } from "../experiments/node/auth.ts";
 import { HttpClient } from "../experiments/node/http.ts";
 import type { Clock, Fetch } from "../experiments/node/http.ts";
@@ -81,20 +83,34 @@ export class TestClock implements Clock {
 export class Server {
   readonly calls: { url: string; init: RequestInit }[] = [];
   private readonly responses: Response[];
+  private readonly unexpected: string[] = [];
   constructor(responses: Response[]) {
     this.responses = responses;
+  }
+  assertComplete(): void {
+    expect(this.unexpected, "Unexpected HTTP requests").toEqual([]);
+    expect(this.responses, "Unconsumed HTTP responses").toHaveLength(0);
   }
   fetch: Fetch = (url, init) => {
     this.calls.push({ init, url });
     const response = this.responses.shift();
     if (!response) {
+      this.unexpected.push(url);
       throw new Error(`Unexpected request to ${url}`);
     }
     return Promise.resolve(response);
   };
 }
+const servers: Server[] = [];
+afterEach(() => {
+  const completed = servers.splice(0);
+  for (const server of completed) {
+    server.assertComplete();
+  }
+});
 export const setup = (responses: Response[], store = new MemoryStore()) => {
   const server = new Server(responses);
+  servers.push(server);
   const clock = new TestClock();
   const controller = new AbortController();
   const http = new HttpClient(server.fetch, clock, controller.signal);

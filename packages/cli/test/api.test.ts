@@ -33,6 +33,7 @@ describe("API authentication", () => {
     expect(apiKey("inth_flag", "inth_env")).toBe("inth_flag");
     expect(apiKey(undefined, "inth_env")).toBe("inth_env");
     expect(apiKey()).toBeUndefined();
+    expect(apiKey(undefined, "")).toBeUndefined();
     expect(() => apiKey("", "inth_env")).toThrow("organization API key");
     expect(() => apiKey(undefined, "secret")).toThrow("organization API key");
   });

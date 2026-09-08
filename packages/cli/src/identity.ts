@@ -14,7 +14,7 @@ import type { Organization } from "./organizations.ts";
 // Response contract from https://api.inth.com/openapi.json, components.schemas.Me.
 // Profile details are fetched separately from OAuth UserInfo.
 export interface Principal {
-  type: "session" | "api_key" | "oauth";
+  type: string;
   userId?: string;
   keyId?: string;
   organizationId?: string;
@@ -114,6 +114,16 @@ const profileLabel = (profile: UserProfile | undefined): string => {
   return name && email ? `${name} <${email}>` : name || email;
 };
 
+const principalLabel = (type: string): string => {
+  if (type === "oauth") {
+    return "Browser login";
+  }
+  if (type === "session") {
+    return "Session";
+  }
+  return terminalText(type);
+};
+
 const plainDisplay: DisplayOptions = { color: false, columns: 80 };
 
 export const identitySummary = (
@@ -125,7 +135,7 @@ export const identitySummary = (
   const line = (text: string): string => wrapText(text, columns);
   const key = principal.type === "api_key";
   const id = key ? principal.keyId : principal.userId;
-  const method = principal.type === "oauth" ? "Browser login" : "Session";
+  const method = principalLabel(principal.type);
   const lines = [
     style(
       line(key ? "Organization API key" : "Signed in"),

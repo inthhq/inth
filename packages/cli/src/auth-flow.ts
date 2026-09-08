@@ -79,7 +79,7 @@ export class AuthFlow {
         deadline
       );
       if (poll.ok) {
-        const tokens = await this.http.tokens(poll);
+        const tokens = await this.http.tokens(poll, null);
         await this.store.exclusive(() =>
           this.store.write({
             access_token: tokens.access_token,
@@ -169,7 +169,7 @@ export class AuthFlow {
         }
         throw error;
       }
-      const tokens = await this.http.tokens(response);
+      const tokens = await this.http.tokens(response, current.refresh_token);
       await this.store.write({
         access_token: tokens.access_token,
         expires_at: issuedAt + tokens.expires_in * 1000,

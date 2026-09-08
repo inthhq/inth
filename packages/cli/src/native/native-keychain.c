@@ -36,6 +36,24 @@ int32_t inth_prepare_directory(const uint8_t *path, size_t length) {
 
 int32_t inth_open_browser(const uint8_t *url, size_t length) {
   if (!length || length > 16384 || memchr(url, 0, length)) return -1;
+  // Validate at the FFI boundary as well as in the OAuth response parser.
+  if (length < 9 || memcmp(url, "https://", 8)) return -1;
+  for (size_t index = 0; index < length; index++) {
+    if (url[index] <= 0x20 || url[index] == 0x7f || url[index] == '\\') return -1;
+  }
+  CFURLRef parsed = CFURLCreateWithBytes(NULL, url, (CFIndex)length, kCFStringEncodingUTF8, NULL);
+  if (!parsed) return -1;
+  CFStringRef host = CFURLCopyHostName(parsed);
+  CFStringRef user = CFURLCopyUserName(parsed);
+  CFStringRef password = CFURLCopyPassword(parsed);
+  CFStringRef fragment = CFURLCopyFragment(parsed, NULL);
+  int valid = host && CFStringGetLength(host) > 0 && !user && !password && !fragment;
+  if (host) CFRelease(host);
+  if (user) CFRelease(user);
+  if (password) CFRelease(password);
+  if (fragment) CFRelease(fragment);
+  CFRelease(parsed);
+  if (!valid) return -1;
   char *value = malloc(length + 1);
   if (!value) return -1;
   memcpy(value, url, length);
@@ -203,7 +221,24 @@ int32_t inth_write_config(const uint8_t *path, size_t length,
     int synced = fsync(fd);
     int closed = close(fd);
     if (offset == value_length && !synced && !closed) result = rename(temporary, name);
-    if (result) unlink(temporary);
+    if (result) {
+      unlink(temporary);
+    } else {
+      char *slash = strrchr(name, '/');
+      const char *parent = ".";
+      if (slash) {
+        *slash = 0;
+        parent = slash == name ? "/" : name;
+      }
+      int parent_fd = open(parent, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+      if (parent_fd < 0) {
+        result = -1;
+      } else {
+        int synced_parent = fsync(parent_fd);
+        int closed_parent = close(parent_fd);
+        result = synced_parent || closed_parent ? -1 : 0;
+      }
+    }
   }
   free(name); free(temporary);
   return result;

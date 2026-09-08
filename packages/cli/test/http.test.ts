@@ -67,3 +67,35 @@ describe("HTTP failures", () => {
     expect(retryDelay("0", 0)).toBe(0);
   });
 });
+
+it("retains error details when Retry-After exceeds the timer limit", async () => {
+  const f = setup([
+    Response.json(
+      { error: "slow_down" },
+      {
+        headers: {
+          "Retry-After": "Fri, 01 Jan 2100 00:00:00 GMT",
+          "X-Request-Id": "overflow-id",
+        },
+        status: 429,
+      }
+    ),
+  ]);
+  await expect(f.http.request("https://api.inth.com")).rejects.toMatchObject({
+    code: "slow_down",
+    requestId: "overflow-id",
+    status: 429,
+  });
+  expect(f.clock.waits).toEqual([]);
+});
+it("reports insufficient scope and normalizes empty request IDs", async () => {
+  const f = setup([]);
+  const error = await f.http.error(
+    Response.json(
+      { error: { code: "INSUFFICIENT_SCOPE" } },
+      { headers: { "X-Request-Id": "!!!" }, status: 403 }
+    )
+  );
+  expect(error.message).toContain("(INSUFFICIENT_SCOPE)");
+  expect(error.requestId).toBeNull();
+});

@@ -301,3 +301,38 @@ describe("logout", () => {
     expect(f.server.calls).toHaveLength(0);
   });
 });
+
+it("keeps the current refresh token when the server does not rotate it", async () => {
+  const f = setup(
+    [
+      Response.json(metadata),
+      Response.json({
+        access_token: "new-access",
+        expires_in: 900,
+        token_type: "Bearer",
+      }),
+    ],
+    new MemoryStore(credentials)
+  );
+  expect(await new Auth(f.http, f.store).refresh()).toBe("new-access");
+  expect(f.store.value).toEqual({
+    access_token: "new-access",
+    expires_at: f.clock.now() + 900_000,
+    refresh_token: credentials.refresh_token,
+  });
+});
+it("still requires a refresh token when completing login", async () => {
+  const f = setup([
+    Response.json(metadata),
+    Response.json(device),
+    Response.json({
+      access_token: "new-access",
+      expires_in: 900,
+      token_type: "Bearer",
+    }),
+  ]);
+  await expect(
+    new Auth(f.http, f.store).login({ show: async () => {} })
+  ).rejects.toMatchObject({ code: "invalid_response" });
+  expect(f.store.value).toBeNull();
+});

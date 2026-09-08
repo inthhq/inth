@@ -56,11 +56,13 @@ const readOrganization = async (
     }
     throw error;
   }
-  const parsed = organizationSchema.safeParse(JSON.parse(source));
-  if (!parsed.success) {
-    throw new Error(`Invalid organization configuration: ${filename}`);
+  try {
+    return organizationSchema.parse(JSON.parse(source)).organizationId;
+  } catch (error) {
+    throw new Error(`Invalid organization configuration: ${filename}`, {
+      cause: error,
+    });
   }
-  return parsed.data.organizationId;
 };
 
 export class OrganizationContext {

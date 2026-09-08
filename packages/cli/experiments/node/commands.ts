@@ -24,6 +24,7 @@ import { Auth } from "./auth.ts";
 import { openBrowser } from "./browser.ts";
 import { HttpClient, systemClock } from "./http.ts";
 import { listOrganizations, organizationUI } from "./organization-ui.ts";
+import { httpsUrl } from "./protocol.ts";
 import type { DeviceAuthorization } from "./protocol.ts";
 import { formatResource } from "./resource-output.ts";
 import { OrganizationContext, stateDirectory } from "./state.ts";
@@ -32,13 +33,14 @@ export const showDevice = async (
   device: DeviceAuthorization,
   noBrowser: boolean
 ): Promise<void> => {
+  const approvalUrl = httpsUrl.parse(device.verification_uri_complete);
   // Restrict terminal output to printable ASCII; codes are issued for humans to transcribe.
   const code = device.user_code.replaceAll(/[^\u0020-\u007E]/gu, "");
   console.log(`Your code: ${code}`);
-  console.log(`Approve sign-in: ${device.verification_uri_complete}`);
+  console.log(`Approve sign-in: ${approvalUrl}`);
   if (!noBrowser) {
     try {
-      await openBrowser(device.verification_uri_complete);
+      await openBrowser(approvalUrl);
     } catch {
       console.error(
         "Could not open your browser. Open the approval link above."

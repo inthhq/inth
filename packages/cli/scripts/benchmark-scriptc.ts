@@ -6,6 +6,9 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { summarize } from "./benchmark-stats.ts";
+import { packageVersion } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const build = spawnSync(
   process.execPath,
@@ -68,12 +71,13 @@ for (let iteration = 0; iteration < 110; iteration += 1) {
 const results = targets.map((target, index) => {
   const sorted = samples[index]?.toSorted((a, b) => a - b);
   assert.ok(sorted);
-  return { median_ms: sorted[50], p95_ms: sorted[94], target: target.name };
+  const stats = summarize(sorted);
+  return { median_ms: stats.median, p95_ms: stats.p95, target: target.name };
 });
 const info = await stat(binary);
 const report = {
   binary_bytes: info.size,
-  compiler: "scriptc@0.0.36",
+  compiler: `scriptc@${packageVersion("scriptc")}`,
   cpu: os.cpus()[0]?.model,
   dynamic_runtime: false,
   iterations: 100,

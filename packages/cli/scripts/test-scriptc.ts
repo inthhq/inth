@@ -203,6 +203,24 @@ for (const scenario of [
   });
   assert.equal(result.status, 0, `Native organization ${scenario} failed.`);
 }
+const futureIdentity = spawnSync(
+  path.join(output, "identity-test"),
+  ["future", "--json"],
+  { encoding: "utf-8", timeout: 5000 }
+);
+assert.equal(futureIdentity.status, 0, futureIdentity.stderr);
+assert.equal(
+  JSON.parse(futureIdentity.stdout).data.data.principal.type,
+  "service"
+);
+const identityFailure = spawnSync(
+  path.join(output, "identity-test"),
+  ["malformed"],
+  { encoding: "utf-8", timeout: 5000 }
+);
+assert.equal(identityFailure.status, 1);
+assert.equal(identityFailure.stdout, "");
+assert.match(identityFailure.stderr, /whoami-id/u);
 const identityText = spawnSync(path.join(output, "identity-test"), ["user"], {
   encoding: "utf-8",
   timeout: 5000,
@@ -276,10 +294,8 @@ try {
       { organizationId: id }
     );
   }
-  assert.deepEqual(await readdir(path.join(directory, "state")), [
-    "config.json",
-    "credentials.lock",
-  ]);
+  const stateFiles = await readdir(path.join(directory, "state"));
+  assert.deepEqual(stateFiles.toSorted(), ["config.json", "credentials.lock"]);
 } finally {
   await rm(directory, { force: true, recursive: true });
 }
@@ -296,64 +312,89 @@ let retries = 0;
 let redirects = 0;
 let hung = 0;
 let bearer = 0;
+const handlerFailures: string[] = [];
 const server = createServer((request, response) => {
-  if (request.url?.startsWith("/mutation/")) {
-    assert.equal(request.method, request.url.slice("/mutation/".length));
-    assert.equal(request.headers.authorization, "Bearer inth_transport_test");
-    let body = "";
-    request.on("data", (chunk) => {
-      body += chunk;
-    });
-    request.on("end", () => {
-      if (request.method === "PATCH") {
-        assert.equal(request.headers["content-type"], "application/json");
-        assert.deepEqual(JSON.parse(body), { description: null });
-      } else {
-        assert.equal(body, "");
-      }
-      response.writeHead(204);
+  const guard = (work: () => void): void => {
+    try {
+      work();
+    } catch (error) {
+      handlerFailures.push(
+        `${request.method} ${request.url}: ${error instanceof Error ? error.message : String(error)}`
+      );
+      response.writeHead(500);
       response.end();
-    });
-  } else if (request.url === "/create") {
-    assert.equal(request.method, "POST");
-    assert.equal(request.headers.authorization, "Bearer inth_transport_test");
-    assert.equal(request.headers["content-type"], "application/json");
-    let body = "";
-    request.on("data", (chunk) => {
-      body += chunk;
-    });
-    request.on("end", () => {
-      assert.deepEqual(JSON.parse(body), { name: "Acme Team", slug: "acme" });
-      response.writeHead(201);
-      response.end("{}");
-    });
-  } else if (request.url === "/bearer") {
-    if (request.headers.authorization === "Bearer inth_transport_test") {
-      bearer += 1;
     }
-    response.writeHead(bearer === 1 ? 200 : 401);
-    response.end("{}");
-  } else if (request.url === "/rate-limit") {
-    retries += 1;
-    response.writeHead(retries === 1 ? 429 : 200, {
-      "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT",
-    });
-    response.end("{}");
-  } else if (request.url === "/redirect") {
-    response.writeHead(302, { Location: "/redirect-target" });
-    response.end();
-  } else if (request.url === "/redirect-target") {
-    redirects += 1;
-    response.end("should not be reached");
-  } else if (request.url === "/malformed") {
-    response.writeHead(200, { "X-Request-Id": "native-malformed" });
-    response.end('{"token_endpoint":false}');
-  } else if (request.url === "/hang") {
-    hung += 1;
-  } else {
-    response.writeHead(404);
-    response.end();
-  }
+  };
+  guard(() => {
+    if (request.url?.startsWith("/mutation/")) {
+      assert.equal(request.method, request.url.slice("/mutation/".length));
+      assert.equal(request.headers.authorization, "Bearer inth_transport_test");
+      let body = "";
+      request.on("data", (chunk) => {
+        body += chunk;
+      });
+      request.on("end", () =>
+        guard(() => {
+          if (request.method === "PATCH") {
+            assert.equal(request.headers["content-type"], "application/json");
+            assert.deepEqual(JSON.parse(body), { description: null });
+          } else {
+            assert.equal(body, "");
+          }
+          response.writeHead(204);
+          response.end();
+        })
+      );
+    } else if (request.url === "/create") {
+      assert.equal(request.method, "POST");
+      assert.equal(request.headers.authorization, "Bearer inth_transport_test");
+      assert.equal(request.headers["content-type"], "application/json");
+      let body = "";
+      request.on("data", (chunk) => {
+        body += chunk;
+      });
+      request.on("end", () =>
+        guard(() => {
+          assert.deepEqual(JSON.parse(body), {
+            name: "Acme Team",
+            slug: "acme",
+          });
+          response.writeHead(201);
+          response.end("{}");
+        })
+      );
+    } else if (request.url === "/bearer") {
+      if (request.headers.authorization === "Bearer inth_transport_test") {
+        bearer += 1;
+      }
+      response.writeHead(bearer === 1 ? 200 : 401);
+      response.end("{}");
+    } else if (request.url === "/rate-limit") {
+      retries += 1;
+      response.writeHead(retries === 1 ? 429 : 200, {
+        "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT",
+      });
+      response.end("{}");
+    } else if (request.url === "/redirect") {
+      response.writeHead(302, { Location: "/redirect-target" });
+      response.end();
+    } else if (request.url === "/redirect-target") {
+      redirects += 1;
+      response.end("should not be reached");
+    } else if (request.url === "/malformed") {
+      response.writeHead(200, { "X-Request-Id": "native-malformed" });
+      response.end('{"token_endpoint":false}');
+    } else if (request.url === "/disconnect") {
+      request.socket.destroy();
+    } else if (request.url === "/hang") {
+      response.writeHead(200);
+      response.write("{");
+      hung += 1;
+    } else {
+      response.writeHead(404);
+      response.end();
+    }
+  });
 });
 server.listen(0, "127.0.0.1");
 await once(server, "listening");
@@ -365,6 +406,11 @@ try {
     { stdio: "inherit", timeout: 5000 }
   );
   const [status] = await once(child, "exit");
+  assert.deepEqual(
+    handlerFailures,
+    [],
+    "Native HTTP handler expectations failed."
+  );
   assert.equal(status, 0, "Native HTTP checks failed or timed out.");
   assert.equal(retries, 2);
   assert.equal(redirects, 0);

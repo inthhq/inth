@@ -1,13 +1,19 @@
+/* eslint-disable complexity -- The sequential native auth fixture covers protocol scenarios within one cleanup scope. */
 /* eslint-disable max-classes-per-file -- Clock and HTTP fixtures belong to this compiled protocol test. */
 /* eslint-disable no-await-in-loop -- Each scenario must finish before reusing the isolated Keychain account. */
 /* eslint-disable require-await -- Async fixture methods implement the production OAuth transport contract. */
 /* eslint-disable class-methods-use-this -- Parsing methods implement the same transport interface as the live adapter. */
 import { randomUUID } from "node:crypto";
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
+import { setTimeout } from "node:timers/promises";
 
+import {
+  runWithCleanup,
+  removeOptionalFile,
+} from "../../scripts/native-cleanup.ts";
 import { AuthFlow } from "../../src/auth-flow.ts";
 import type {
   AuthStore,
@@ -76,7 +82,8 @@ class ScriptedHttp implements OAuthTransport {
       error: (value) => this.error(value),
       form: (url, fields, _deadline) => this.form(url, fields),
       request: (url) => this.request(url),
-      tokens: (value) => this.tokens(value),
+      tokens: (value, previousRefreshToken) =>
+        this.tokens(value, previousRefreshToken),
     };
   }
   async request(url: string): Promise<OAuthResponse> {
@@ -115,8 +122,11 @@ class ScriptedHttp implements OAuthTransport {
   async device(response: OAuthResponse): Promise<DeviceAuthorization> {
     return parseDevice(response.body);
   }
-  async tokens(response: OAuthResponse): Promise<Tokens> {
-    return parseTokens(response.body);
+  async tokens(
+    response: OAuthResponse,
+    previousRefreshToken?: string | null
+  ): Promise<Tokens> {
+    return parseTokens(response.body, previousRefreshToken);
   }
   error(response: OAuthResponse): Promise<HttpError> {
     return responseError(response);
@@ -137,7 +147,8 @@ const approve = {
     check(value.user_code === "ABCD", "Wrong approval code.");
   },
 };
-try {
+await runWithCleanup(async () => {
+  await removeOptionalFile(join(directory, "never-created.lock"));
   const http = new ScriptedHttp([
     response(discovery),
     response(device),
@@ -326,6 +337,55 @@ try {
   );
   console.log("Static auth: explicit refresh uses one locked credential read.");
 
+  const nonRotatingHttp = new ScriptedHttp([
+    response(discovery),
+    response(
+      '{"access_token":"non-rotated-access","expires_in":900,"token_type":"Bearer"}'
+    ),
+  ]);
+  await new AuthFlow(nonRotatingHttp.transport(), store.adapter()).refresh();
+  const retained = await store.read();
+  check(
+    retained?.refresh_token === "forced-refresh",
+    "Non-rotating refresh discarded the stored token."
+  );
+
+  const controller = new AbortController();
+  const waitingStore = new NativeStore(
+    entry,
+    join(directory, "credentials.lock"),
+    () => controller.signal.throwIfAborted()
+  );
+  await store.exclusive(async () => {
+    const started = Date.now();
+    const cancel = async (): Promise<void> => {
+      await setTimeout(50);
+      controller.abort();
+    };
+    const cancellation = cancel();
+    let aborted = false;
+    try {
+      await waitingStore.exclusive(async () => {
+        throw new Error("Contended lock admitted a waiter.");
+      });
+    } catch (error) {
+      aborted = error instanceof Error && error.name === "AbortError";
+    }
+    await cancellation;
+    check(
+      aborted && Date.now() - started < 1000,
+      "Credential lock did not cancel promptly."
+    );
+  });
+  let lockReused = false;
+  await store.exclusive(async () => {
+    lockReused = true;
+  });
+  check(lockReused, "Lock remains usable after cancellation.");
+  console.log(
+    "Static auth: non-rotating refresh and contended-lock cancellation passed."
+  );
+
   const malformed = [
     "null",
     "[]",
@@ -362,11 +422,13 @@ try {
     corruptRejected,
     "Corrupt credentials were not rejected without exposing their contents."
   );
-} finally {
-  await store.clear();
-  await rm(join(directory, "credentials.lock"));
-  check(
-    removeDirectory(directory) === 0,
-    "Could not remove the temporary test directory."
-  );
-}
+}, [
+  () => store.clear(),
+  () => removeOptionalFile(join(directory, "credentials.lock")),
+  async () => {
+    check(
+      removeDirectory(directory) === 0,
+      "Cannot remove temporary directory."
+    );
+  },
+]);

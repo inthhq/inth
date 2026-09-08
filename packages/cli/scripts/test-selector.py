@@ -11,7 +11,7 @@ import termios
 import time
 
 
-def check(keys, expected, long_list=False, terminate=False):
+def check(keys, expected, long_list=False, terminate=None, fatal=False):
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 48, 0, 0))
     original = termios.tcgetattr(slave)
@@ -31,7 +31,8 @@ def check(keys, expected, long_list=False, terminate=False):
             os.write(master, key)
             time.sleep(0.025)
         if terminate:
-            child.send_signal(signal.SIGTERM)
+            child.send_signal(terminate)
+        deadline = time.monotonic() + 5
         while child.poll() is None:
             assert time.monotonic() < deadline, f"Prompt hung: {output!r}"
             if select.select([master], [], [], 0.05)[0]:
@@ -50,9 +51,10 @@ def check(keys, expected, long_list=False, terminate=False):
             assert child.returncode == 0, output
             assert stdout == f"Selected: {expected}\n", (stdout, output)
         else:
-            assert child.returncode == 130, (child.returncode, output)
+            assert child.returncode == (-terminate if fatal else 130), (child.returncode, output)
             assert stdout == "", stdout
-            assert b"cancelled" in output.lower(), output
+            if not fatal:
+                assert b"cancelled" in output.lower(), output
     finally:
         if child.poll() is None:
             child.kill()
@@ -67,6 +69,9 @@ check([b"\x1b[A", b"\r"], "org-two")
 check([b"\x1b[B", b"\x1b[B", b"\r"], "org-one")
 check([b"\x1b"], None)
 check([b"\x03"], None)
-check([], None, terminate=True)
+check([], None, terminate=signal.SIGTERM)
+if len(sys.argv) == 2:
+    check([], None, terminate=signal.SIGHUP, fatal=True)
+    check([], None, terminate=signal.SIGQUIT, fatal=True)
 check([b"\x1b[B"] * 11 + [b"\r"], "org-12", long_list=True)
 print("Terminal selector passed: arrows, wrapping, fragmented input, Escape, Ctrl+C, SIGTERM, long Unicode labels, stderr output, terminal restoration.")

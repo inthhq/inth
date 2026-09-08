@@ -26,6 +26,18 @@ export interface ApiTransport {
   ) => Promise<OAuthResponse>;
   post: (url: string, token: string, body: string) => Promise<OAuthResponse>;
 }
+const invalidResponse = (
+  response: OAuthResponse,
+  message: string
+): CliError => {
+  const detail = new HttpError(response.status, "", response.requestId);
+  return new CliError(
+    "invalid_response",
+    `${message}${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
+    response.status,
+    detail.requestId
+  );
+};
 export const apiOutput = (response: OAuthResponse): string => {
   if (response.status === 204) {
     return "";
@@ -33,13 +45,7 @@ export const apiOutput = (response: OAuthResponse): string => {
   try {
     return JSON.stringify(JSON.parse(response.body), null, 2);
   } catch {
-    const detail = new HttpError(response.status, "", response.requestId);
-    throw new CliError(
-      "invalid_response",
-      `Invalid JSON response.${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-      response.status,
-      detail.requestId
-    );
+    throw invalidResponse(response, "Invalid JSON response.");
   }
 };
 interface AuthorizedResponse {
@@ -123,7 +129,7 @@ export class NativeApi {
     if (
       !includeProfile ||
       !auth ||
-      value.data.principal.type === "api_key" ||
+      !["session", "oauth"].includes(value.data.principal.type) ||
       !value.data.principal.userId
     ) {
       return value;
@@ -141,35 +147,20 @@ export class NativeApi {
       }
       return { ...value, profile };
     } catch {
-      const detail = new HttpError(response.status, "", response.requestId);
-      throw new CliError(
-        "invalid_response",
-        `Invalid user profile.${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-        response.status,
-        detail.requestId
-      );
+      throw invalidResponse(response, "Invalid user profile.");
     }
   }
   private static parseMe(response: OAuthResponse): MeResponse {
     try {
       // SAFETY: Scriptc checks the OpenAPI response record and nested field types at runtime.
       const value = JSON.parse(response.body) as MeResponse;
-      // Checked casts validate field types, but Scriptc does not enforce string enums.
-      if (
-        !value.success ||
-        !["session", "api_key", "oauth"].includes(value.data.principal.type)
-      ) {
+      // Accept additive principal types while rejecting empty discriminators.
+      if (!value.success || !value.data.principal.type) {
         throw new Error("Identity lookup failed.");
       }
       return value;
     } catch {
-      const detail = new HttpError(response.status, "", response.requestId);
-      throw new CliError(
-        "invalid_response",
-        `Invalid identity response.${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-        response.status,
-        detail.requestId
-      );
+      throw invalidResponse(response, "Invalid identity response.");
     }
   }
   async createOrganization(
@@ -196,13 +187,7 @@ export class NativeApi {
       }
       return value;
     } catch {
-      const detail = new HttpError(response.status, "", response.requestId);
-      throw new CliError(
-        "invalid_response",
-        `Invalid organization response.${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-        response.status,
-        detail.requestId
-      );
+      throw invalidResponse(response, "Invalid organization response.");
     }
   }
   organizations(): Promise<Organization[]> {
@@ -218,13 +203,7 @@ export class NativeApi {
       }
       return value;
     } catch {
-      const detail = new HttpError(response.status, "", response.requestId);
-      throw new CliError(
-        "invalid_response",
-        `Invalid organization response.${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-        response.status,
-        detail.requestId
-      );
+      throw invalidResponse(response, "Invalid organization response.");
     }
   }
 }

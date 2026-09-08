@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, rm, stat } from "node:fs/promises";
+import { mkdtemp, writeFile, readdir, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -127,4 +127,13 @@ describe("organization context", () => {
       "project.json",
     ]);
   });
+});
+
+it("includes the filename when organization configuration is malformed", async () => {
+  const directory = await temporary();
+  const filename = path.join(directory, "config.json");
+  await writeFile(filename, "{broken-json");
+  await expect(
+    new OrganizationContext(directory, directory).defaultOrganization()
+  ).rejects.toThrow(`Invalid organization configuration: ${filename}`);
 });

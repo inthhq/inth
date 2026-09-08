@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 
+import { openBrowser } from "../../src/native/native-bindings.ts";
 import { NativeKeychain } from "../../src/native/native-keychain.ts";
 
 const entry = new NativeKeychain("com.inth.cli.scriptc-test", randomUUID());
@@ -24,4 +25,18 @@ try {
   console.log("Static Scriptc Keychain create/read/rotate/delete passed.");
 } finally {
   entry.clear();
+}
+
+for (const url of [
+  "-a",
+  "file:///tmp/example",
+  "https://",
+  "https://user:password@example.com/",
+  "https://example.com/#fragment",
+  "https://example.com/\n",
+  "https://example.com/\u001B[31m",
+]) {
+  if (openBrowser(url) !== -1) {
+    throw new Error("Unsafe URL passed the browser FFI boundary.");
+  }
 }

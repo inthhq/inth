@@ -1,10 +1,14 @@
-/* eslint-disable require-await -- The in-memory transport implements the asynchronous OAuth contract. */
 import { randomUUID } from "node:crypto";
-import { mkdir, rm } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
+/* eslint-disable require-await -- The in-memory transport implements the asynchronous OAuth contract. */
+import {
+  runWithCleanup,
+  removeOptionalFile,
+} from "../scripts/native-cleanup.ts";
 import { AuthFlow } from "../src/auth-flow.ts";
 import type { OAuthTransport } from "../src/auth-types.ts";
 import { removeDirectory } from "../src/native/native-bindings.ts";
@@ -32,17 +36,23 @@ const http: OAuthTransport = {
   error: (response) => responseError(response),
   form: async (url, fields, _deadline) => scenario.next(url, fields),
   request: async (url) => scenario.next(url, new URLSearchParams()),
-  tokens: async (response) => parseTokens(response.body),
+  tokens: async (response, previousRefreshToken) =>
+    parseTokens(response.body, previousRefreshToken),
 };
-try {
+await runWithCleanup(async () => {
   await workload(
     new AuthFlow(http, store.adapter()),
     store.adapter(),
     scenario
   );
-} finally {
-  await store.clear();
-  await rm(join(directory, "credentials.lock"));
-  check(removeDirectory(directory) === 0, "Cannot remove benchmark directory.");
-}
+}, [
+  () => store.clear(),
+  () => removeOptionalFile(join(directory, "credentials.lock")),
+  async () => {
+    check(
+      removeDirectory(directory) === 0,
+      "Cannot remove temporary directory."
+    );
+  },
+]);
 process.exit(0);

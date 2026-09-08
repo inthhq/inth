@@ -86,11 +86,11 @@ export class HttpClient {
         return response;
       }
       // Release the connection before waiting, including for non-JSON error pages.
-      await response.body?.cancel();
       // Node timers overflow above this limit. Never retry earlier than Retry-After.
       if (delay > 2_147_483_647) {
         throw await this.error(response);
       }
+      await response.body?.cancel();
       await this.clock.sleep(delay);
     }
   }

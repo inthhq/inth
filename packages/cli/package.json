@@ -54,13 +54,13 @@
     "@clack/prompts": "1.7.0",
     "@napi-rs/keyring": "2.0.0",
     "@types/node": "24.13.3",
-    "@types/proper-lockfile": "^4.1.4",
+    "@types/proper-lockfile": "4.1.4",
     "@yao-pkg/pkg": "6.22.0",
     "esbuild": "0.27.0",
     "inrepo": "0.0.9",
-    "proper-lockfile": "^4.1.2",
+    "proper-lockfile": "4.1.2",
     "scriptc": "0.0.36",
     "typescript": "6.0.3",
-    "zod": "^4.5.4"
+    "zod": "4.5.4"
   }
 }

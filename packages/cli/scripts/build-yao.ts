@@ -9,6 +9,7 @@ import { build } from "esbuild";
 import { z } from "zod";
 
 import { resolveManifest } from "./resolve-manifest.ts";
+import { YAO_NODE_VERSION } from "./runtime-versions.ts";
 
 const packageSchema = z.object({
   dependencies: z.record(z.string(), z.string()).default({}),
@@ -74,7 +75,7 @@ if (!platform || !["arm64", "x64"].includes(process.arch)) {
   );
 }
 // Pin the embedded runtime independently of the developer's installed Node version.
-const target = `node24.20.0-${platform}-${process.arch}`;
+const target = `node${YAO_NODE_VERSION}-${platform}-${process.arch}`;
 const require = createRequire(import.meta.url);
 const manifest = packageSchema.parse(
   JSON.parse(await readFile(path.join(root, "package.json"), "utf-8"))

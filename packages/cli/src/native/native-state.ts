@@ -1,5 +1,4 @@
 /* eslint-disable require-await -- Convert synchronous filesystem FFI failures to the asynchronous state contract. */
-import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
@@ -8,10 +7,16 @@ import { organizationId } from "../organizations.ts";
 import { prepareDirectory, writeConfig } from "./native-bindings.ts";
 
 const read = async (filename: string): Promise<string | undefined> => {
-  if (!existsSync(filename)) {
-    return undefined;
+  let source: string;
+  try {
+    source = await readFile(filename, "utf-8");
+  } catch (error) {
+    // Scriptc exposes filesystem errno in Error.message, but not Error.code.
+    if (error instanceof Error && error.message.startsWith("ENOENT:")) {
+      return undefined;
+    }
+    throw error;
   }
-  const source = await readFile(filename, "utf-8");
   try {
     // SAFETY: Scriptc validates this JSON record's field types at runtime.
     const value = JSON.parse(source) as { organizationId: string };

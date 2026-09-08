@@ -32,6 +32,8 @@ const execute = (args: string[], token = "inth_test_agent") => {
     env,
     timeout: 5000,
   });
+  expect(result.error).toBeUndefined();
+  expect(result.status).not.toBeNull();
   expect(result.stderr).toBe("");
   expect(result.stdout).not.toContain("inth_test_agent");
   return {

@@ -28,7 +28,7 @@ export const apiKey = (
   flag?: string,
   environment?: string
 ): string | undefined => {
-  const token = flag ?? environment;
+  const token = flag ?? (environment || undefined);
   if (token === undefined) {
     return undefined;
   }

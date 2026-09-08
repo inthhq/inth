@@ -23,7 +23,7 @@ export const meSchema = z.object({
       createdBy: z.string().optional(),
       keyId: z.string().optional(),
       organizationId: z.string().optional(),
-      type: z.enum(["session", "api_key", "oauth"]),
+      type: z.string().min(1),
       userId: z.string().optional(),
     }),
     scopes: z.array(z.string()),

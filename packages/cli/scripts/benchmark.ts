@@ -4,6 +4,9 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { summarize } from "./benchmark-stats.ts";
+import { packageVersion, YAO_NODE_VERSION } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const dist = path.join(root, "dist");
 await mkdir(dist, { recursive: true });
@@ -99,9 +102,10 @@ const results = targets.map((target, index) => {
   if (!sorted) {
     throw new Error("Missing benchmark samples");
   }
+  const stats = summarize(sorted);
   return {
-    median_ms: sorted[Math.floor(iterations / 2)],
-    p95_ms: sorted[Math.ceil(iterations * 0.95) - 1],
+    median_ms: stats.median,
+    p95_ms: stats.p95,
     target: target.name,
   };
 });
@@ -118,11 +122,11 @@ const report = {
   results,
   scope:
     "Warm filesystem, fresh-process --help latency including spawn overhead. Static probe prints the real CLI help but excludes auth, HTTP, validation and credential storage. Node same-source probe includes Node TypeScript stripping. No native auth or CPU-throughput claim.",
-  scriptc: "0.0.36",
+  scriptc: packageVersion("scriptc"),
   warmups,
   yao_bytes: yaoStat.size,
-  yao_node: "24.20.0",
-  yao_pkg: "6.22.0",
+  yao_node: YAO_NODE_VERSION,
+  yao_pkg: packageVersion("@yao-pkg/pkg"),
 };
 await writeFile(
   path.join(root, "bench", "results.json"),

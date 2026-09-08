@@ -82,7 +82,8 @@ const auth = new AuthFlow(
         })
       );
     },
-    tokens: async (value) => parseTokens(value.body),
+    tokens: async (value, previousRefreshToken) =>
+      parseTokens(value.body, previousRefreshToken),
   },
   {
     clear: async () => {
@@ -146,8 +147,28 @@ const api = new NativeApi(
   scenario === "key" ? "inth_fixture" : undefined
 );
 
+let identity;
 try {
-  const identity = await api.getMe(true);
+  identity = await api.getMe(true);
+} catch (error) {
+  check(
+    ["mismatch", "malformed", "unsafe"].includes(scenario),
+    "Unexpected profile failure"
+  );
+  check(
+    error instanceof CliError && error.code === "invalid_response",
+    "Wrong profile error"
+  );
+  if (scenario === "unsafe") {
+    check(profiles === 0, "Unsafe endpoint received token");
+  } else {
+    check(
+      error instanceof CliError && error.requestId === "profile-id",
+      "Missing profile request ID"
+    );
+  }
+}
+if (identity) {
   check(
     !["mismatch", "malformed", "unsafe"].includes(scenario),
     "Accepted an invalid profile"
@@ -182,23 +203,7 @@ try {
       );
     }
   }
-} catch (error) {
-  check(
-    ["mismatch", "malformed", "unsafe"].includes(scenario),
-    "Unexpected profile failure"
-  );
-  check(
-    error instanceof CliError && error.code === "invalid_response",
-    "Wrong profile error"
-  );
-  if (scenario === "unsafe") {
-    check(profiles === 0, "Unsafe endpoint received token");
-  } else {
-    check(
-      error instanceof CliError && error.requestId === "profile-id",
-      "Missing profile request ID"
-    );
-  }
 }
+
 console.log(`Native profile ${scenario} passed.`);
 process.exit(0);
