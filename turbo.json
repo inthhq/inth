@@ -4,7 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", "build/**"],
+      "env": ["INTH_CODESIGN_IDENTITY"]
     },
     "dev": {
       "cache": false,
@@ -12,7 +13,8 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
+      "env": ["INTH_CODESIGN_IDENTITY"]
     },
     "typecheck": {
       "dependsOn": ["^build"],

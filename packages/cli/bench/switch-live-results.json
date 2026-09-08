@@ -1,0 +1,85 @@
+{
+  "measured_at": "2026-09-05T12:49:06Z",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "iterations": 10,
+  "warmups": 1,
+  "scope": "Native production switch against api.inth.com, fresh processes with warm filesystem caches; real saved sign-in, production Keychain/locking/HTTP/membership parsing and terminal rendering. Cancel at the picker, no default organization writes. Includes network latency and any automatic token refresh. Warmup is recorded separately. No prompt contents or credentials saved. p95 of ten samples is their maximum.",
+  "results": [
+    {
+      "target": "Scriptc live switch",
+      "samples": [
+        {
+          "launch_to_picker_ms": 574.36775,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 0.800958
+        },
+        {
+          "launch_to_picker_ms": 613.934833,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 2.075125
+        },
+        {
+          "launch_to_picker_ms": 548.292166,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 2.1655
+        },
+        {
+          "launch_to_picker_ms": 508.933292,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 1.965583
+        },
+        {
+          "launch_to_picker_ms": 586.288958,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 1.487125
+        },
+        {
+          "launch_to_picker_ms": 528.646542,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 1.746667
+        },
+        {
+          "launch_to_picker_ms": 520.544666,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 1.227292
+        },
+        {
+          "launch_to_picker_ms": 530.516042,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 2.011167
+        },
+        {
+          "launch_to_picker_ms": 513.780208,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 0.818
+        },
+        {
+          "launch_to_picker_ms": 543.546792,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 2.581166
+        }
+      ],
+      "warmup_samples": [
+        {
+          "launch_to_picker_ms": 573.269209,
+          "arrow_to_redraw_ms": null,
+          "confirm_or_cancel_to_exit_ms": 1.598833
+        }
+      ],
+      "summary": {
+        "launch_to_picker_ms": {
+          "median": 537.0314169999999,
+          "p95": 613.934833,
+          "min": 508.933292,
+          "max": 613.934833
+        },
+        "confirm_or_cancel_to_exit_ms": {
+          "median": 1.856125,
+          "p95": 2.581166,
+          "min": 0.800958,
+          "max": 2.581166
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+"""Exercise the real terminal adapters without credentials or network access."""
+import fcntl
+import os
+import pty
+import select
+import signal
+import struct
+import subprocess
+import sys
+import termios
+import time
+
+
+def check(keys, expected, long_list=False, terminate=False):
+    master, slave = pty.openpty()
+    fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 12, 48, 0, 0))
+    original = termios.tcgetattr(slave)
+    environment = dict(os.environ, TERM="xterm-256color", CI="", INTH_TEST_LONG_LIST="1" if long_list else "0")
+    child = subprocess.Popen(sys.argv[1:], stdin=slave, stdout=subprocess.PIPE, stderr=slave, env=environment)
+    output = b""
+    try:
+        deadline = time.monotonic() + 5
+        while b"Choose your default organization" not in output:
+            assert time.monotonic() < deadline, f"Prompt not shown: {output!r}"
+            if select.select([master], [], [], 0.1)[0]:
+                output += os.read(master, 65536)
+            assert child.poll() is None, f"Exited before prompt: {output!r}"
+        assert not select.select([child.stdout], [], [], 0)[0], "Prompt polluted stdout"
+        # Let each frame settle and deliberately split one arrow sequence.
+        for key in keys:
+            os.write(master, key)
+            time.sleep(0.025)
+        if terminate:
+            child.send_signal(signal.SIGTERM)
+        while child.poll() is None:
+            assert time.monotonic() < deadline, f"Prompt hung: {output!r}"
+            if select.select([master], [], [], 0.05)[0]:
+                output += os.read(master, 65536)
+        while select.select([master], [], [], 0)[0]:
+            output += os.read(master, 65536)
+        stdout = child.stdout.read().decode()
+        restored = termios.tcgetattr(slave)
+        # macOS sets PENDIN when tcsetattr restores canonical input; it is kernel state.
+        restored[3] &= ~getattr(termios, "PENDIN", 0)
+        original[3] &= ~getattr(termios, "PENDIN", 0)
+        assert restored == original, f"Terminal settings were not restored: {original!r} -> {restored!r}"
+        assert b"\x1b[?25h" in output, "Cursor not restored"
+        assert b"Organization number" not in output
+        if expected:
+            assert child.returncode == 0, output
+            assert stdout == f"Selected: {expected}\n", (stdout, output)
+        else:
+            assert child.returncode == 130, (child.returncode, output)
+            assert stdout == "", stdout
+            assert b"cancelled" in output.lower(), output
+    finally:
+        if child.poll() is None:
+            child.kill()
+            child.wait()
+        child.stdout.close()
+        os.close(master)
+        os.close(slave)
+
+
+check([b"\x1b", b"[B", b"\r"], "org-two")
+check([b"\x1b[A", b"\r"], "org-two")
+check([b"\x1b[B", b"\x1b[B", b"\r"], "org-one")
+check([b"\x1b"], None)
+check([b"\x03"], None)
+check([], None, terminate=True)
+check([b"\x1b[B"] * 11 + [b"\r"], "org-12", long_list=True)
+print("Terminal selector passed: arrows, wrapping, fragmented input, Escape, Ctrl+C, SIGTERM, long Unicode labels, stderr output, terminal restoration.")

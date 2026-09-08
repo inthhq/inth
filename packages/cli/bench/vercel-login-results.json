@@ -1,0 +1,33 @@
+{
+  "cpu": "Apple M5 Pro",
+  "iterations": 5,
+  "measured_at": "2026-09-05T08:50:56.957Z",
+  "node": "v24.20.0",
+  "platform": "darwin arm64",
+  "results": [
+    {
+      "max_ms": 1473.8841250000005,
+      "median_ms": 1403.6015000000007,
+      "min_ms": 1371.852417,
+      "samples_ms": [
+        1371.852417, 1418.9362920000003, 1403.6015000000007, 1381.4288749999996,
+        1473.8841250000005
+      ],
+      "target": "vercel@59.11.7 published Node",
+      "warmup_ms": 1251.816833
+    },
+    {
+      "max_ms": 1583.0635829999992,
+      "median_ms": 1521.052208000001,
+      "min_ms": 1433.2876669999996,
+      "samples_ms": [
+        1433.2876669999996, 1487.0189169999994, 1533.0255830000006,
+        1521.052208000001, 1583.0635829999992
+      ],
+      "target": "@vercel/vc-native-darwin-arm64@59.11.7",
+      "warmup_ms": 5027.241542
+    }
+  ],
+  "scope": "Interleaved fresh processes, warm filesystem and Node compile caches. Spawn to live Vercel device-approval URL printed, including startup, discovery, DNS/TLS and device authorization. CI=1 suppresses browser; terminal hyperlinks and telemetry off; fresh --global-config and cwd per run, isolating credential accounts. Published vc.js shim forced to Node, official native platform binary invoked directly. Kill immediately at prompt; no approval, token storage, refresh or logout measured. Twelve unapproved device grants including warmups. Small network-sensitive sample; no p95 claim.",
+  "warmups": 1
+}

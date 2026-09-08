@@ -1,0 +1,11 @@
+{
+  "packages": [
+    {
+      "name": "zod",
+      "git": "https://github.com/colinhacks/zod.git",
+      "ref": "e8e206fa33ac5fe7ce20a2beb12d57b1cb3df653",
+      "repositoryDirectory": "packages/zod"
+    }
+  ],
+  "$schema": "https://raw.githubusercontent.com/inthhq/inrepo/main/inrepo.schema.json"
+}

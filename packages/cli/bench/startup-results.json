@@ -1,0 +1,29 @@
+{
+  "binary_bytes": 1354680,
+  "compiler": "scriptc@0.0.36",
+  "cpu": "Apple M5 Pro",
+  "dynamic_runtime": false,
+  "iterations": 100,
+  "measured_at": "2026-09-08T10:49:43.861Z",
+  "node": "v24.20.0",
+  "platform": "darwin arm64",
+  "results": [
+    {
+      "median_ms": 27.69458300000042,
+      "p95_ms": 29.46229200000016,
+      "target": "yao-pkg CLI"
+    },
+    {
+      "median_ms": 3.42804199999955,
+      "p95_ms": 3.5684999999994034,
+      "target": "Scriptc CLI"
+    },
+    {
+      "median_ms": 21.269250000001193,
+      "p95_ms": 22.90666699999929,
+      "target": "Node CLI"
+    }
+  ],
+  "scope": "Interleaved fresh-process --help latency with warm filesystem caches and spawn overhead. All three CLIs contain auth, API, and organization commands and share help text. Help does not execute authentication. Each target's output is checked for consistency; runtime adapters differ, so this does not isolate compiler performance.",
+  "warmups": 10
+}
