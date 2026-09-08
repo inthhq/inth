@@ -3,7 +3,8 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { HELP, VERSION } from "../src/help.ts";
+import { HELP } from "../src/help.ts";
+import { VERSION } from "../src/version.ts";
 
 const entry = fileURLToPath(
   new URL("../experiments/node/inth.ts", import.meta.url)

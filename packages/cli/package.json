@@ -1,13 +1,34 @@
 {
   "name": "@inth/cli",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.0.0",
   "description": "The inth command line interface",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/cli"
+  },
   "bin": {
     "inth": "scripts/run-native.js"
   },
+  "files": [
+    "scripts/run-native.js",
+    "AGENT-USAGE.md",
+    "output.schema.json",
+    "docs",
+    "LICENSE",
+    "scripts/run-published.js"
+  ],
   "type": "module",
+  "publishConfig": {
+    "bin": {
+      "inth": "scripts/run-published.js"
+    },
+    "access": "public",
+    "executableFiles": [
+      "scripts/run-published.js"
+    ]
+  },
   "scripts": {
     "build": "node scripts/build-scriptc.ts",
     "build:native": "pnpm build",
@@ -49,5 +70,11 @@
     "scriptc": "0.0.36",
     "typescript": "6.0.3",
     "zod": "4.5.4"
+  },
+  "optionalDependencies": {
+    "@inth/cli-darwin-arm64": "workspace:*",
+    "@inth/cli-linux-arm64": "workspace:*",
+    "@inth/cli-linux-x64": "workspace:*",
+    "@inth/cli-win32-x64": "workspace:*"
   }
 }

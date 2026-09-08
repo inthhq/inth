@@ -1,0 +1,36 @@
+core:changelogs:
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Publish the Inth CLI\n\nInstall `@inth/cli` to run the Inth CLI on Apple silicon Macs, Linux arm64/x64, or Windows x64. The package selects the native executable for your platform.\n"
+    filename: 2026-09-08-native-cli.md
+    v: 0.0.0
+core:packages:
+  - changelogIds:
+      - 2026-09-08-native-cli.md
+    id: npm:@inth/cli-darwin-arm64
+    updated: true
+  - changelogIds:
+      - 2026-09-08-native-cli.md
+    id: npm:@inth/cli-linux-arm64
+    updated: true
+  - changelogIds:
+      - 2026-09-08-native-cli.md
+    id: npm:@inth/cli-linux-x64
+    updated: true
+  - changelogIds:
+      - 2026-09-08-native-cli.md
+    id: npm:@inth/cli
+    updated: true
+  - changelogIds:
+      - 2026-09-08-native-cli.md
+    id: npm:@inth/cli-win32-x64
+    updated: true
+npm:packages:
+  - distTag: latest
+    id: npm:@inth/cli-darwin-arm64
+  - distTag: latest
+    id: npm:@inth/cli-linux-arm64
+  - distTag: latest
+    id: npm:@inth/cli-linux-x64
+  - distTag: latest
+    id: npm:@inth/cli
+  - distTag: latest
+    id: npm:@inth/cli-win32-x64

@@ -40,3 +40,8 @@ inrepo_modules/
 
 # Native distribution archives
 artifacts/
+
+# Native files staged for release. Manifests and changelogs stay in git.
+npm/*/*
+!npm/*/package.json
+!npm/*/CHANGELOG.md

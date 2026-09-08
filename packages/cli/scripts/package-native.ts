@@ -20,6 +20,13 @@ const source = z
   .object({ description: z.string(), license: z.string(), version: z.string() })
   .parse(JSON.parse(await readFile(path.join(root, "package.json"), "utf-8")));
 const name = `cli-${target.platform}-${target.arch}`;
+const manifest = JSON.parse(
+  await readFile(path.join(root, "../../npm", name, "package.json"), "utf-8")
+);
+const metadata = z.object({ version: z.string() }).parse(manifest);
+if (metadata.version !== source.version) {
+  throw new Error(`Version mismatch between @inth/cli and @inth/${name}.`);
+}
 const directory = path.join(root, "build", "packages", name);
 await rm(directory, { force: true, recursive: true });
 await mkdir(path.join(directory, "bin"), { recursive: true });
@@ -39,7 +46,7 @@ await cp(path.join(root, "vendor"), path.join(directory, "vendor"), {
 });
 await writeFile(
   path.join(directory, "package.json"),
-  `${JSON.stringify({ ...source, bin: { inth: `bin/${target.executable}` }, cpu: [target.arch], name: `@inth/${name}`, os: [target.platform], publishConfig: { access: "public" } }, null, 2)}\n`
+  `${JSON.stringify(manifest, null, 2)}\n`
 );
 const output = path.join(root, "artifacts");
 await mkdir(output, { recursive: true });

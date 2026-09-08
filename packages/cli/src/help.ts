@@ -2,8 +2,10 @@
 import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
 import type { CommandMetadata, OptionMetadata } from "./command-metadata.ts";
 import { padText, textWidth, wrapText } from "./display.ts";
+import { VERSION } from "./version.ts";
 
-export const VERSION = "0.1.0";
+export { VERSION } from "./version.ts";
+
 export const COMMANDS = COMMAND_METADATA.map((entry) =>
   entry.command === "api"
     ? "api <path> [--method <method>] [--data <json>]"

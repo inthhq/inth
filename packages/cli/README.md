@@ -11,7 +11,7 @@
 
 The `@inth/cli` package provides the `inth` command. Named commands print formatted text by default. Add `--json` for scripts and agents.
 
-This package is in development and has not been published to npm. Native targets are macOS and Linux on arm64/x64, plus Windows x64.
+This package is in development and has not been published to npm. Native targets are Apple silicon Macs, Linux arm64/x64, and Windows x64.
 
 [Get started](#get-started) · [Commands](#public-resource-commands) · [Development](#development) · [Agents and scripts](AGENT-USAGE.md)
 
@@ -258,9 +258,9 @@ Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. An ex
 
 `pnpm --filter @inth/cli package:native` builds and packs the current target into `packages/cli/artifacts/`. `test:package` extracts that archive and checks the executable, JSON output, and MCP setup.
 
-The development workspace package is private. Distribution packages are `@inth/cli-darwin-arm64`, `@inth/cli-darwin-x64`, `@inth/cli-linux-arm64`, `@inth/cli-linux-x64`, and `@inth/cli-win32-x64`. Each installs the `inth` command directly from its native executable. They have no runtime npm dependencies. Install a built archive with `npm install -g <archive.tgz>`.
+Once the first release is published, install `@inth/cli` with `npm install -g @inth/cli`. It selects the native package for Apple silicon Macs, Linux arm64/x64, or Windows x64. Users do not need to choose a platform package. The launcher uses Node.js; the native executable itself has no runtime npm dependencies.
 
-CI builds, tests, and uploads all five target packages. Publishing and release signing remain separate release steps. No packages are published by CI.
+CI builds, tests, and uploads all four target packages. The Release workflow publishes verified artifacts through npm trusted publishing. See [publishing with Tegami](../../.tegami/README.md) for setup and release instructions. Certificate signing will be added separately.
 
 To cross-compile from macOS with Zig installed:
 
