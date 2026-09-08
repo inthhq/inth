@@ -32,8 +32,6 @@ importers:
 
   npm/cli-darwin-arm64: {}
 
-  npm/cli-darwin-x64: {}
-
   npm/cli-linux-arm64: {}
 
   npm/cli-linux-x64: {}
@@ -79,9 +77,6 @@ importers:
       '@inth/cli-darwin-arm64':
         specifier: workspace:*
         version: link:../../npm/cli-darwin-arm64
-      '@inth/cli-darwin-x64':
-        specifier: workspace:*
-        version: link:../../npm/cli-darwin-x64
       '@inth/cli-linux-arm64':
         specifier: workspace:*
         version: link:../../npm/cli-linux-arm64

@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop -- Each fixture assembles five small native archives. */
+/* eslint-disable no-await-in-loop -- Each fixture assembles four small native archives. */
 import { spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -89,7 +89,7 @@ test.each([
   );
   const release = createRelease(root);
   const draft = await release.draft();
-  expect(draft.getPackageDrafts().size).toBe(6);
+  expect(draft.getPackageDrafts().size).toBe(5);
   await draft.apply();
   expect(
     await readFile(path.join(root, "packages/cli/src/version.ts"), "utf-8")

@@ -10,7 +10,7 @@ try {
   binary = require.resolve(`${packageName}/bin/${executable}`);
 } catch {
   console.error(
-    `Inth could not find ${packageName}. Reinstall @inth/cli with optional dependencies enabled. Supported platforms are macOS and Linux arm64/x64, and Windows x64.`
+    `Inth could not find ${packageName}. Reinstall @inth/cli with optional dependencies enabled. Supported platforms are Apple silicon Macs, Linux arm64/x64, and Windows x64.`
   );
   process.exit(1);
 }

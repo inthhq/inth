@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop -- Validate all five archives before staging any package. */
+/* eslint-disable no-await-in-loop -- Validate all four archives before staging any package. */
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
@@ -17,7 +17,6 @@ const manifestSchema = z.object({
 
 export const nativePackages = [
   "cli-darwin-arm64",
-  "cli-darwin-x64",
   "cli-linux-arm64",
   "cli-linux-x64",
   "cli-win32-x64",

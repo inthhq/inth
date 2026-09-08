@@ -7,7 +7,6 @@ import { stateDirectory } from "../src/platform.ts";
 
 it.each([
   ["darwin", "arm64"],
-  ["darwin", "x64"],
   ["linux", "arm64"],
   ["linux", "x64"],
   ["win32", "x64"],
@@ -33,6 +32,12 @@ it("requires a cross toolchain and rejects unsupported targets", () => {
       .systemLibraries
   ).toContain("advapi32");
   expect(() => nativeTarget("win32", "arm64")).toThrow("Unsupported");
+});
+it("rejects Intel Macs and cross-compilation to Intel macOS", () => {
+  expect(() => nativeTarget("darwin", "x64")).toThrow("Apple silicon");
+  expect(() =>
+    nativeTarget("darwin", "arm64", "x86_64-macos", "zigcc")
+  ).toThrow("Apple silicon");
 });
 it("preserves macOS credentials and respects platform state directories", () => {
   expect(stateDirectory("darwin", "/home/person")).toBe(

@@ -157,7 +157,7 @@ try {
   );
   assert.equal(wrapperVersion.status, 0, wrapperVersion.stderr);
   assert.equal(wrapperVersion.stdout.trim(), source.version);
-  assert.equal(Object.keys(wrapperManifest.optionalDependencies).length, 5);
+  assert.equal(Object.keys(wrapperManifest.optionalDependencies).length, 4);
   for (const version of Object.values(wrapperManifest.optionalDependencies)) {
     assert.equal(version, source.version);
   }

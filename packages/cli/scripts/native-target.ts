@@ -40,12 +40,12 @@ export const nativeTarget = (
   const platform = target ? targetPlatform(target) : hostPlatform;
   const arch = target ? targetArch(target) : hostArch;
   if (
-    !["darwin", "linux", "win32"].includes(platform) ||
-    !["arm64", "x64"].includes(arch) ||
-    (platform === "win32" && arch !== "x64")
+    !["darwin-arm64", "linux-arm64", "linux-x64", "win32-x64"].includes(
+      `${platform}-${arch}`
+    )
   ) {
     throw new Error(
-      `Unsupported native target: ${platform}-${arch}. Use macOS or Linux arm64/x64, or Windows x64.`
+      `Unsupported native target: ${platform}-${arch}. Use an Apple silicon Mac, Linux arm64/x64, or Windows x64.`
     );
   }
   if (cc && !["clang", "zigcc"].includes(cc)) {

@@ -73,7 +73,6 @@
   },
   "optionalDependencies": {
     "@inth/cli-darwin-arm64": "workspace:*",
-    "@inth/cli-darwin-x64": "workspace:*",
     "@inth/cli-linux-arm64": "workspace:*",
     "@inth/cli-linux-x64": "workspace:*",
     "@inth/cli-win32-x64": "workspace:*"
