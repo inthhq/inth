@@ -166,3 +166,21 @@ it.each(["claude-code", "vscode", "opencode"] as const)(
     }
   }
 );
+
+it.each([
+  ["vscode", "linux"],
+  ["opencode", "linux"],
+  ["vscode", "win32"],
+] as const)(
+  "ignores relative global %s config roots on %s",
+  (agent, platform) => {
+    const environment = { cwd: "/project", home: "/home/person", platform };
+    expect(
+      mcpLocation(agent, "global", {
+        ...environment,
+        appData: "relative-appdata",
+        xdgConfig: "relative-config",
+      })
+    ).toEqual(mcpLocation(agent, "global", environment));
+  }
+);

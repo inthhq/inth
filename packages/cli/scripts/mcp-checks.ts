@@ -16,11 +16,11 @@ export const verifyMcp = async (binary: string): Promise<void> => {
     XDG_CONFIG_HOME: path.join(directory, "config"),
     XDG_STATE_HOME: path.join(directory, "state"),
   };
-  const invoke = (args: string[]) => {
+  const invoke = (args: string[], overrides: NodeJS.ProcessEnv = {}) => {
     const result = spawnSync(binary, ["mcp", ...args, "--json"], {
       cwd: directory,
       encoding: "utf-8",
-      env,
+      env: { ...env, ...overrides },
       timeout: 5000,
     });
     assert.ifError(result.error);
@@ -33,6 +33,15 @@ export const verifyMcp = async (binary: string): Promise<void> => {
     const missing = invoke([]);
     assert.equal(missing.status, 1);
     assert.equal(missing.data.error.code, "interaction_required");
+    const globalPreview = invoke(
+      ["setup", "--agent", "opencode", "--scope", "global", "--dry-run"],
+      { XDG_CONFIG_HOME: "relative-config" }
+    );
+    assert.equal(globalPreview.status, 0, globalPreview.stdout);
+    assert.equal(
+      globalPreview.data.data.results[0].path,
+      path.join(directory, ".config", "opencode", "opencode.json")
+    );
     for (const [agent, file, source] of [
       [
         "codex",

@@ -35,6 +35,7 @@ static DWORD entries(const char *account) {
 int main(void) {
   char account[80]; snprintf(account, sizeof(account), "chunks-%lu-%llu", GetCurrentProcessId(), GetTickCount64());
   BYTE large[9000]; memset(large, 'x', sizeof(large));
+  const DWORD chunk_count = (sizeof(large) + INTH_CHUNK_SIZE - 1) / INTH_CHUNK_SIZE;
   const BYTE small[] = "previous session";
   size_t account_len = strlen(account);
   assert(inth_secret_write((const BYTE *)"inth-test", 9, (const BYTE *)account, account_len, small, sizeof(small)) == 0);
@@ -43,14 +44,14 @@ int main(void) {
   round_trip(account, small, sizeof(small)); assert(entries(account) == 1);
   fail_write = 0;
   assert(inth_secret_write((const BYTE *)"inth-test", 9, (const BYTE *)account, account_len, large, sizeof(large)) == 0);
-  round_trip(account, large, sizeof(large)); assert(entries(account) == 5);
-  // Fail the manifest commit after all four new chunks have been written.
-  fail_write = 5; writes = 0;
+  round_trip(account, large, sizeof(large)); assert(entries(account) == chunk_count + 1);
+  // Fail the manifest commit after all new chunks have been written.
+  fail_write = (int)chunk_count + 1; writes = 0;
   assert(inth_secret_write((const BYTE *)"inth-test", 9, (const BYTE *)account, account_len, large, sizeof(large)) == -1);
-  round_trip(account, large, sizeof(large)); assert(entries(account) == 5);
+  round_trip(account, large, sizeof(large)); assert(entries(account) == chunk_count + 1);
   fail_write = 0; large[0] = 'y';
   assert(inth_secret_write((const BYTE *)"inth-test", 9, (const BYTE *)account, account_len, large, sizeof(large)) == 0);
-  round_trip(account, large, sizeof(large)); assert(entries(account) == 5);
+  round_trip(account, large, sizeof(large)); assert(entries(account) == chunk_count + 1);
   assert(inth_secret_write((const BYTE *)"inth-test", 9, (const BYTE *)account, account_len, small, sizeof(small)) == 0);
   round_trip(account, small, sizeof(small)); assert(entries(account) == 1);
   assert(inth_secret_delete((const BYTE *)"inth-test", 9, (const BYTE *)account, account_len) == 0);

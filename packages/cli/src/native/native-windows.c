@@ -33,13 +33,16 @@ static wchar_t *target(const uint8_t *service, size_t service_len, const uint8_t
 // protected entries; publish their manifest only after every chunk is written.
 #define INTH_SECRET_LIMIT (1024 * 1024)
 #define INTH_MANIFEST_SIZE 32
+// This is part of the storage format. SDK headers disagree on the platform
+// maximum; keep existing sessions readable when the compiler is upgraded.
+#define INTH_CHUNK_SIZE 512
 static const BYTE manifest_magic[8] = {'I', 'N', 'T', 'H', 0, 'C', 'R', '1'};
 static DWORD manifest_length(const PCREDENTIALW credential) {
   if (credential->CredentialBlobSize != INTH_MANIFEST_SIZE ||
       memcmp(credential->CredentialBlob, manifest_magic, sizeof(manifest_magic))) return 0;
   DWORD length;
   memcpy(&length, credential->CredentialBlob + 8, sizeof(length));
-  return length > CRED_MAX_CREDENTIAL_BLOB_SIZE && length <= INTH_SECRET_LIMIT ? length : 0;
+  return length > INTH_CHUNK_SIZE && length <= INTH_SECRET_LIMIT ? length : 0;
 }
 static wchar_t *chunk_target(const wchar_t *name, const BYTE *manifest, DWORD index) {
   size_t length = wcslen(name) + 64;
@@ -58,7 +61,7 @@ static int write_credential(wchar_t *name, const BYTE *value, DWORD length) {
   return CredWriteW(&credential, 0) ? 0 : -1;
 }
 static void delete_chunks(const wchar_t *name, const BYTE *manifest, DWORD length) {
-  DWORD count = (length + CRED_MAX_CREDENTIAL_BLOB_SIZE - 1) / CRED_MAX_CREDENTIAL_BLOB_SIZE;
+  DWORD count = (length + INTH_CHUNK_SIZE - 1) / INTH_CHUNK_SIZE;
   for (DWORD index = 0; index < count; index++) {
     wchar_t *chunk = chunk_target(name, manifest, index);
     if (chunk) { CredDeleteW(chunk, CRED_TYPE_GENERIC, 0); free(chunk); }
@@ -89,7 +92,7 @@ int32_t inth_secret_read(const uint8_t *service, size_t service_len, const uint8
       free(chunk);
       if (!ok) break;
       DWORD expected = length - offset;
-      if (expected > CRED_MAX_CREDENTIAL_BLOB_SIZE) expected = CRED_MAX_CREDENTIAL_BLOB_SIZE;
+      if (expected > INTH_CHUNK_SIZE) expected = INTH_CHUNK_SIZE;
       if (part->CredentialBlobSize != expected) { CredFree(part); break; }
       memcpy(value + offset, part->CredentialBlob, expected);
       offset += expected; CredFree(part);
@@ -111,7 +114,7 @@ int32_t inth_secret_write(const uint8_t *service, size_t service_len, const uint
   PCREDENTIALW previous = NULL;
   if (!CredReadW(name, CRED_TYPE_GENERIC, 0, &previous) && GetLastError() != ERROR_NOT_FOUND) { free(name); return -1; }
   int result = -1;
-  if (value_len <= CRED_MAX_CREDENTIAL_BLOB_SIZE) {
+  if (value_len <= INTH_CHUNK_SIZE) {
     result = write_credential(name, value, (DWORD)value_len);
   } else {
     BYTE manifest[INTH_MANIFEST_SIZE] = {0};
@@ -122,7 +125,7 @@ int32_t inth_secret_write(const uint8_t *service, size_t service_len, const uint
       DWORD offset = 0, index = 0;
       while (offset < length) {
         DWORD size = length - offset;
-        if (size > CRED_MAX_CREDENTIAL_BLOB_SIZE) size = CRED_MAX_CREDENTIAL_BLOB_SIZE;
+        if (size > INTH_CHUNK_SIZE) size = INTH_CHUNK_SIZE;
         wchar_t *chunk = chunk_target(name, manifest, index++);
         int written = chunk ? write_credential(chunk, value + offset, size) : -1;
         free(chunk);

@@ -1,6 +1,6 @@
 // Client paths and remote config shapes adapted from add-mcp. See vendor/add-mcp/UPSTREAM.md.
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 
 export const MCP_URL = "https://api.inth.com/mcp";
 const CLIENT_DEFINITIONS = [
@@ -42,7 +42,10 @@ export const mcpLocation = (
 ): McpLocation => {
   const { home, cwd, platform } = environment;
   const local = scope === "project";
-  const xdg = environment.xdgConfig || join(home, ".config");
+  const xdg =
+    environment.xdgConfig && isAbsolute(environment.xdgConfig)
+      ? environment.xdgConfig
+      : join(home, ".config");
   let format = "json";
   let key = "mcpServers";
   let path = "";
@@ -65,7 +68,9 @@ export const mcpLocation = (
     }
     if (platform === "win32") {
       directory = join(
-        environment.appData || join(home, "AppData", "Roaming"),
+        environment.appData && isAbsolute(environment.appData)
+          ? environment.appData
+          : join(home, "AppData", "Roaming"),
         "Code",
         "User"
       );
