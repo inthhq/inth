@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { userIdentity, keyIdentity } from "../test/fixtures/identity.ts";
 import { verifyJson } from "./json-checks.ts";
+import { verifyMcp } from "./mcp-checks.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const build = spawnSync(
@@ -19,15 +20,18 @@ const build = spawnSync(
   { stdio: "inherit" }
 );
 assert.equal(build.status, 0, "Static build failed.");
-const binary = path.join(root, "dist/inth");
+const executable = (name: string): string =>
+  name + (process.platform === "win32" ? ".exe" : "");
+const binary = path.join(root, "dist", executable("inth"));
 verifyJson(binary);
+await verifyMcp(binary);
 const help = spawnSync(binary, ["--help"], {
   encoding: "utf-8",
   env: { ...process.env, PATH: "" },
   timeout: 5000,
 });
 assert.equal(help.status, 0, help.stderr);
-assert.match(help.stdout, /auth refresh/u);
+assert.match(help.stdout, /auth/u);
 assert.equal(help.stderr, "");
 for (const scenario of [
   {
@@ -49,7 +53,7 @@ for (const scenario of [
   },
   {
     args: ["login", "--unknown"],
-    error: 'Unknown option. Run "inth --help" for available options.',
+    error: 'Unknown option "--unknown". Run inth --help for available options.',
   },
   { args: ["logout", "extra"], error: "Usage: inth logout" },
 ]) {
@@ -78,15 +82,25 @@ for (const args of [
     /inth_test_environment|inth_flag/u
   );
 }
-const output = path.join(root, "build/native");
-const resources = spawnSync(path.join(output, "resource-test"), [], {
-  encoding: "utf-8",
-  timeout: 10_000,
-});
+const output = path.join(
+  root,
+  "build",
+  process.env.SCRIPTC_TARGET
+    ? `native-${process.platform}-${process.arch}`
+    : "native"
+);
+const resources = spawnSync(
+  path.join(output, executable("resource-test")),
+  [],
+  {
+    encoding: "utf-8",
+    timeout: 10_000,
+  }
+);
 assert.equal(resources.status, 0, resources.stderr || resources.stdout);
 console.log(resources.stdout.trim());
 const resourceOutput = spawnSync(
-  path.join(output, "resource-output-test"),
+  path.join(output, executable("resource-output-test")),
   [],
   { encoding: "utf-8", timeout: 10_000 }
 );
@@ -96,13 +110,25 @@ assert.equal(
   resourceOutput.stderr || resourceOutput.stdout
 );
 console.log(resourceOutput.stdout.trim());
-const selector = spawnSync(
-  "python3",
-  [path.join(root, "scripts/test-selector.py"), path.join(output, "ui-test")],
-  { encoding: "utf-8", timeout: 20_000 }
-);
-assert.equal(selector.status, 0, selector.stderr || selector.stdout);
-console.log(selector.stdout.trim());
+if (process.platform !== "win32") {
+  const selector = spawnSync(
+    "python3",
+    [
+      path.join(root, "scripts/test-selector.py"),
+      path.join(output, executable("ui-test")),
+    ],
+    { encoding: "utf-8", timeout: 20_000 }
+  );
+  assert.equal(selector.status, 0, selector.stderr || selector.stdout);
+  console.log(selector.stdout.trim());
+  const mcpUi = spawnSync(
+    "python3",
+    [path.join(root, "scripts/test-mcp-ui.py"), binary],
+    { encoding: "utf-8", timeout: 20_000 }
+  );
+  assert.equal(mcpUi.status, 0, mcpUi.stderr || mcpUi.stdout);
+  console.log(mcpUi.stdout.trim());
+}
 for (const scenario of [
   {
     code: "rate_limited",
@@ -133,10 +159,14 @@ for (const scenario of [
     status: 130,
   },
 ]) {
-  const result = spawnSync(path.join(output, "output-test"), [scenario.name], {
-    encoding: "utf-8",
-    timeout: 5000,
-  });
+  const result = spawnSync(
+    path.join(output, executable("output-test")),
+    [scenario.name],
+    {
+      encoding: "utf-8",
+      timeout: 5000,
+    }
+  );
   assert.equal(result.status, scenario.status);
   assert.equal(result.stderr, "");
   const value = z
@@ -168,7 +198,7 @@ for (const scenario of [
   "missing-capabilities",
 ]) {
   const response = spawnSync(
-    path.join(output, "identity-test"),
+    path.join(output, executable("identity-test")),
     [scenario, "--json"],
     { encoding: "utf-8", timeout: 5000 }
   );
@@ -197,14 +227,18 @@ for (const scenario of [
   "malformed",
   "failed",
 ]) {
-  const result = spawnSync(path.join(output, "organization-test"), [scenario], {
-    stdio: "inherit",
-    timeout: 5000,
-  });
+  const result = spawnSync(
+    path.join(output, executable("organization-test")),
+    [scenario],
+    {
+      stdio: "inherit",
+      timeout: 5000,
+    }
+  );
   assert.equal(result.status, 0, `Native organization ${scenario} failed.`);
 }
 const futureIdentity = spawnSync(
-  path.join(output, "identity-test"),
+  path.join(output, executable("identity-test")),
   ["future", "--json"],
   { encoding: "utf-8", timeout: 5000 }
 );
@@ -214,28 +248,34 @@ assert.equal(
   "service"
 );
 const identityFailure = spawnSync(
-  path.join(output, "identity-test"),
+  path.join(output, executable("identity-test")),
   ["malformed"],
   { encoding: "utf-8", timeout: 5000 }
 );
 assert.equal(identityFailure.status, 1);
 assert.equal(identityFailure.stdout, "");
 assert.match(identityFailure.stderr, /whoami-id/u);
-const identityText = spawnSync(path.join(output, "identity-test"), ["user"], {
-  encoding: "utf-8",
-  timeout: 5000,
-});
+const identityText = spawnSync(
+  path.join(output, executable("identity-test")),
+  ["user"],
+  {
+    encoding: "utf-8",
+    timeout: 5000,
+  }
+);
 assert.equal(identityText.status, 0, identityText.stderr);
 assert.match(identityText.stdout, /User …-one · Browser login/u);
-const identityTerminal = spawnSync(
-  "python3",
-  [
-    path.join(root, "scripts/test-identity-output.py"),
-    path.join(output, "identity-test"),
-  ],
-  { stdio: "inherit", timeout: 15_000 }
-);
-assert.equal(identityTerminal.status, 0, "Identity terminal output failed.");
+if (process.platform !== "win32") {
+  const identityTerminal = spawnSync(
+    "python3",
+    [
+      path.join(root, "scripts/test-identity-output.py"),
+      path.join(output, executable("identity-test")),
+    ],
+    { stdio: "inherit", timeout: 15_000 }
+  );
+  assert.equal(identityTerminal.status, 0, "Identity terminal output failed.");
+}
 for (const scenario of [
   "success",
   "key",
@@ -244,16 +284,20 @@ for (const scenario of [
   "malformed",
   "unsafe",
 ]) {
-  const profile = spawnSync(path.join(output, "profile-test"), [scenario], {
-    stdio: "inherit",
-    timeout: 5000,
-  });
+  const profile = spawnSync(
+    path.join(output, executable("profile-test")),
+    [scenario],
+    {
+      stdio: "inherit",
+      timeout: 5000,
+    }
+  );
   assert.equal(profile.status, 0, `Native profile ${scenario} failed.`);
 }
 console.log(
   "Static whoami: user and API-key identities, schema validation, request IDs, human and JSON output passed."
 );
-const successful = spawnSync(path.join(output, "output-test"), [], {
+const successful = spawnSync(path.join(output, executable("output-test")), [], {
   encoding: "utf-8",
   timeout: 5000,
 });
@@ -264,7 +308,7 @@ assert.deepEqual(JSON.parse(successful.stdout), {
   ok: true,
   schemaVersion: 1,
 });
-const unattended = spawnSync(path.join(output, "ui-test"), [], {
+const unattended = spawnSync(path.join(output, executable("ui-test")), [], {
   encoding: "utf-8",
   timeout: 5000,
 });
@@ -272,12 +316,18 @@ assert.equal(unattended.status, 1);
 assert.match(unattended.stderr, /--organization/u);
 const directory = await mkdtemp(path.join(os.tmpdir(), "inth-cli-test-"));
 try {
-  await mkdir(path.join(directory, "state"), { mode: 0o700 });
+  if (process.platform !== "win32") {
+    await mkdir(path.join(directory, "state"), { mode: 0o700 });
+  }
   await mkdir(path.join(directory, "project"), { mode: 0o700 });
-  const result = spawnSync(path.join(output, "cli-test"), [directory], {
-    encoding: "utf-8",
-    timeout: 10_000,
-  });
+  const result = spawnSync(
+    path.join(output, executable("cli-test")),
+    [directory],
+    {
+      encoding: "utf-8",
+      timeout: 10_000,
+    }
+  );
   assert.equal(result.status, 0, result.stderr);
   console.log(result.stdout.trim());
   for (const [filename, id] of [
@@ -287,7 +337,9 @@ try {
     assert.ok(filename && id);
     // eslint-disable-next-line no-await-in-loop -- Check the two configuration outputs in order.
     const info = await stat(path.join(directory, filename));
-    assert.equal(info.mode % 0o1000, 0o600);
+    if (process.platform !== "win32") {
+      assert.equal(info.mode % 0o1000, 0o600);
+    }
     assert.deepEqual(
       // eslint-disable-next-line no-await-in-loop -- Check the two configuration outputs in order.
       JSON.parse(await readFile(path.join(directory, filename), "utf-8")),
@@ -300,8 +352,8 @@ try {
   await rm(directory, { force: true, recursive: true });
 }
 
-for (const name of ["keychain-test", "auth-test"]) {
-  const result = spawnSync(path.join(output, name), [], {
+for (const name of ["mcp-test", "keychain-test", "auth-test"]) {
+  const result = spawnSync(path.join(output, executable(name)), [], {
     encoding: "utf-8",
     timeout: 30_000,
   });
@@ -401,7 +453,7 @@ await once(server, "listening");
 try {
   const { port } = z.object({ port: z.number() }).parse(server.address());
   const child = spawn(
-    path.join(output, "transport-test"),
+    path.join(output, executable("transport-test")),
     [`http://127.0.0.1:${port}`],
     { stdio: "inherit", timeout: 5000 }
   );

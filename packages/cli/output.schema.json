@@ -29,7 +29,7 @@
         },
         "error": {
           "type": "object",
-          "required": ["code", "message", "httpStatus", "requestId"],
+          "required": ["code", "message", "httpStatus", "requestId", "apiCode"],
           "additionalProperties": false,
           "properties": {
             "code": {
@@ -42,6 +42,9 @@
               "type": ["integer", "null"]
             },
             "requestId": {
+              "type": ["string", "null"]
+            },
+            "apiCode": {
               "type": ["string", "null"]
             }
           }

@@ -24,3 +24,5 @@ export declare function terminalKey(): number;
 export declare function terminalRows(): number;
 export declare function outputColumns(): number;
 export declare function terminalLine(value: string): number;
+
+export declare function mcpTomlStatus(source: string): number;

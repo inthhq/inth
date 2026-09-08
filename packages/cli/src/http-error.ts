@@ -1,10 +1,17 @@
 export class HttpError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly apiCode: string | null;
   readonly requestId: string | null;
   constructor(status: number, code: string, requestId: string | null) {
-    // Only known OAuth codes are displayed. Response bodies may contain secrets or terminal escapes.
-    const known = [
+    // Only known API and OAuth codes are displayed. Response bodies may contain secrets or terminal escapes.
+    const known = new Set([
+      "UNAUTHORIZED",
+      "FORBIDDEN",
+      "PLAN_REQUIRED",
+      "RATE_LIMITED",
+      "KEY_LIMIT_REACHED",
+      "PAYLOAD_TOO_LARGE",
       "authorization_pending",
       "slow_down",
       "expired_token",
@@ -21,8 +28,8 @@ export class HttpError extends Error {
       "INSUFFICIENT_CREDITS",
       "INSUFFICIENT_SCOPE",
       "SERVICE_UNAVAILABLE",
-    ];
-    const reason = known.includes(code) ? ` (${code})` : "";
+    ]);
+    const reason = known.has(code) ? ` (${code})` : "";
     let guidance = "";
     if (status === 400 && code === "invalid_scope") {
       guidance =
@@ -44,6 +51,7 @@ export class HttpError extends Error {
     this.name = "HttpError";
     this.status = status;
     this.code = code;
+    this.apiCode = known.has(code) ? code : null;
     this.requestId = id;
   }
 }

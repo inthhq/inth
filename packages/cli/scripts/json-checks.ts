@@ -15,6 +15,7 @@ const responseSchema = z.discriminatedUnion("ok", [
     .object({
       error: z
         .object({
+          apiCode: z.string().nullable(),
           code: z.string(),
           httpStatus: z.number().nullable(),
           message: z.string(),

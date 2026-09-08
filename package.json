@@ -6,6 +6,8 @@
     "build": "turbo run build",
     "check": "pnpm lint && pnpm typecheck && pnpm test:unit && pnpm test",
     "dev": "turbo run dev",
+    "dev:link": "pnpm --filter @inth/cli dev:link",
+    "dev:unlink": "pnpm --filter @inth/cli dev:unlink",
     "format": "ultracite fix .",
     "lint": "ultracite check .",
     "lint:fix": "ultracite fix .",

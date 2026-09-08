@@ -422,10 +422,8 @@ const scanSummary = (
         display
       ),
       "",
-      line(
-        `Check progress with inth code-audit request ${item.preparationId ?? "<request-id>"} --repository ${item.repositoryId ?? "<repository-id>"}`,
-        display
-      ),
+      line("Check progress:", display),
+      `  inth code-audit request ${terminalText(item.preparationId ?? "<request-id>")} --repository ${terminalText(item.repositoryId ?? "<repository-id>")}`,
     ];
   }
   if (item.status === "failed" && options.argument === "request") {

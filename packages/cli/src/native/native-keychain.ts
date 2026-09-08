@@ -1,5 +1,10 @@
 import { secretRead, secretWrite, secretDelete } from "./native-bindings.ts";
 
+const credentialError = (operation: string, status: number): string =>
+  status === -3
+    ? "The system credential store is unavailable. On Linux, install libsecret and unlock a Secret Service keyring, or supply INTH_TOKEN for headless use."
+    : `System credential store ${operation} failed (${status}).`;
+
 export class NativeKeychain {
   private readonly service: string;
   private readonly account: string;
@@ -16,20 +21,20 @@ export class NativeKeychain {
       return null;
     }
     if (status !== 0) {
-      throw new Error(`Keychain read failed (${status}).`);
+      throw new Error(credentialError("read", status));
     }
     return value;
   }
   write(value: string): void {
     const status = secretWrite(this.service, this.account, value);
     if (status !== 0) {
-      throw new Error(`Keychain write failed (${status}).`);
+      throw new Error(credentialError("write", status));
     }
   }
   clear(): void {
     const status = secretDelete(this.service, this.account);
     if (status !== 0 && status !== -25_300) {
-      throw new Error(`Keychain deletion failed (${status}).`);
+      throw new Error(credentialError("deletion", status));
     }
   }
 }

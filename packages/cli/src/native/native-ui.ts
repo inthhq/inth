@@ -1,6 +1,7 @@
 import { CliError } from "../cli-error.ts";
 import { colorEnabled, organizationLabel } from "../display.ts";
 import type { Organization, OrganizationUI } from "../organizations.ts";
+import { terminalText } from "../organizations.ts";
 import {
   terminalBegin,
   terminalEnd,
@@ -33,7 +34,17 @@ const coloredLine = (text: string, code: string): void => {
     process.stderr.write("\u001B[0m");
   }
 };
-const render = (organizations: Organization[], cursor: number): number => {
+const choiceLabel = (
+  choice: Organization,
+  organizationMode: boolean
+): string =>
+  organizationMode ? organizationLabel(choice) : terminalText(choice.name);
+const render = (
+  organizations: Organization[],
+  cursor: number,
+  title: string,
+  organizationMode: boolean
+): number => {
   const count = Math.min(
     organizations.length,
     Math.max(1, terminalRows() - 4),
@@ -43,10 +54,10 @@ const render = (organizations: Organization[], cursor: number): number => {
     Math.max(0, cursor - count + 1),
     organizations.length - count
   );
-  coloredLine("◆ Choose your default organization", "1;36");
+  coloredLine(`◆ ${title}`, "1;36");
   for (let index = start; index < start + count; index += 1) {
     coloredLine(
-      `│ ${index === cursor ? "●" : "○"} ${organizationLabel(selectedOrganization(organizations, index))}`,
+      `│ ${index === cursor ? "●" : "○"} ${choiceLabel(selectedOrganization(organizations, index), organizationMode)}`,
       index === cursor ? "1;36" : "2"
     );
   }
@@ -65,30 +76,41 @@ const erase = (lines: number): void => {
 };
 const select = async (
   organizations: Organization[],
-  signal: AbortSignal
+  signal: AbortSignal,
+  title: string,
+  organizationMode: boolean
 ): Promise<string> => {
   signal.throwIfAborted();
   if (terminalBegin() !== 0) {
     throw new CliError(
       "interaction_required",
-      "A terminal is required. Use inth switch <organization-id>."
+      organizationMode
+        ? "A terminal is required. Use inth switch <organization-id>."
+        : "A terminal is required. Provide --agent and --scope project|global."
     );
   }
   let lines = 0;
   let cursor = 0;
   try {
-    lines = render(organizations, cursor);
+    lines = render(organizations, cursor, title, organizationMode);
     for (;;) {
       signal.throwIfAborted();
       const key = terminalKey();
       if (key === 4 || key === -1) {
-        throw new CliError("cancelled", "Organization selection cancelled.");
+        throw new CliError(
+          "cancelled",
+          organizationMode
+            ? "Organization selection cancelled."
+            : "MCP setup cancelled."
+        );
       }
       if (key === 3) {
         const org = selectedOrganization(organizations, cursor);
         erase(lines);
         lines = 0;
-        coloredLine(`◇ ${organizationLabel(org)}`, "32");
+        if (organizationMode) {
+          coloredLine(`◇ ${organizationLabel(org)}`, "32");
+        }
         return org.id;
       }
       if (key === 1) {
@@ -105,7 +127,7 @@ const select = async (
       }
       if (key > 0) {
         erase(lines);
-        lines = render(organizations, cursor);
+        lines = render(organizations, cursor, title, organizationMode);
       }
       // eslint-disable-next-line no-await-in-loop, promise/avoid-new -- Yield between bounded terminal polls so abort signals can run.
       await new Promise<void>((resolve) => {
@@ -119,9 +141,12 @@ const select = async (
 };
 export const nativeUI = (
   signal: AbortSignal,
-  allowInteractive = true
+  allowInteractive = true,
+  title = "Choose your default organization",
+  organizationMode = true
 ): OrganizationUI => ({
   interactive:
     allowInteractive && Boolean(process.stdin.isTTY && process.stderr.isTTY),
-  select: (organizations) => select(organizations, signal),
+  select: (organizations) =>
+    select(organizations, signal, title, organizationMode),
 });

@@ -4,15 +4,23 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { nativeTarget } from "./native-target.ts";
 import { signNative, signingIdentity } from "./sign-native.ts";
 
-if (process.platform !== "darwin" || process.arch !== "arm64") {
-  throw new Error(
-    "The inth native CLI currently targets macOS arm64. Use build:node or build:yao for the benchmark experiments on other platforms."
-  );
-}
+const target = nativeTarget(
+  process.platform,
+  process.arch,
+  process.env.SCRIPTC_TARGET,
+  process.env.SCRIPTC_CC
+);
 const root = fileURLToPath(new URL("../", import.meta.url));
-const output = path.join(root, "build", "native");
+const output = path.join(
+  root,
+  "build",
+  process.env.SCRIPTC_TARGET
+    ? `native-${target.platform}-${target.arch}`
+    : "native"
+);
 const binaries = path.join(root, "dist");
 const fixtures = process.argv.includes("--tests");
 const identity = signingIdentity(process.env.INTH_CODESIGN_IDENTITY);
@@ -24,7 +32,7 @@ const run = (command: string, args: string[]): string => {
   const result = spawnSync(command, args, {
     cwd: root,
     encoding: "utf-8",
-    timeout: 120_000,
+    timeout: 600_000,
   });
   if (result.status !== 0) {
     throw new Error(result.stderr || result.stdout || `${command} failed.`);
@@ -38,27 +46,42 @@ run(process.execPath, [
   "-p",
   "tsconfig.native.json",
 ]);
-const sdk = run("xcrun", ["--show-sdk-path"]);
-const object = path.join(output, "native-keychain.o");
-run("clang", [
-  "-Wall",
-  "-Wextra",
-  "-Werror",
+const libraries: string[] = [];
+target.sources.push("native-mcp");
+for (const source of target.sources) {
+  const object = path.join(output, `${source}.o`);
+  run(target.compiler, [
+    ...target.compilerArgs,
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-c",
+    `src/native/${source}.c`,
+    "-o",
+    object,
+  ]);
+  libraries.push(object);
+}
+const tomlObject = path.join(output, "toml.o");
+run(target.compiler, [
+  ...target.compilerArgs,
   "-c",
-  "src/native/native-keychain.c",
+  "vendor/tomlc99/toml.c",
   "-o",
-  object,
+  tomlObject,
 ]);
-const terminalObject = path.join(output, "native-terminal.o");
-run("clang", [
-  "-Wall",
-  "-Wextra",
-  "-Werror",
-  "-c",
-  "src/native/native-terminal.c",
-  "-o",
-  terminalObject,
-]);
+libraries.push(tomlObject);
+if (target.platform === "darwin") {
+  const sdk = run("xcrun", ["--show-sdk-path"]);
+  for (const framework of ["Security", "CoreFoundation"]) {
+    libraries.push(
+      path.join(
+        sdk,
+        `System/Library/Frameworks/${framework}.framework/${framework}.tbd`
+      )
+    );
+  }
+}
 const manifest = path.join(output, "ffi.json");
 await writeFile(
   manifest,
@@ -66,6 +89,12 @@ await writeFile(
     {
       ffi_format: 3,
       functions: [
+        {
+          name: "mcpTomlStatus",
+          params: ["string"],
+          returns: "i32",
+          symbol: "inth_mcp_toml_status",
+        },
         {
           name: "outputColumns",
           params: [],
@@ -175,19 +204,8 @@ await writeFile(
           symbol: "inth_http_date",
         },
       ],
-      libraries: [
-        object,
-        terminalObject,
-        path.join(
-          sdk,
-          "System/Library/Frameworks/Security.framework/Security.tbd"
-        ),
-        path.join(
-          sdk,
-          "System/Library/Frameworks/CoreFoundation.framework/CoreFoundation.tbd"
-        ),
-      ],
-      system_libraries: ["curl"],
+      libraries,
+      system_libraries: target.systemLibraries,
     },
     null,
     2
@@ -197,6 +215,7 @@ const entries = [{ name: "inth", source: "src/inth.ts" }];
 if (fixtures) {
   entries.push({ name: "auth-bench", source: "bench/native-auth.ts" });
   for (const name of [
+    "mcp-test",
     "keychain-test",
     "auth-test",
     "transport-test",
@@ -220,14 +239,33 @@ for (const entry of entries) {
     "--ffi",
     manifest,
     "-o",
-    path.join(entry.name === "inth" ? binaries : output, entry.name),
+    path.join(
+      entry.name === "inth" ? binaries : output,
+      entry.name + (target.platform === "win32" ? ".exe" : "")
+    ),
   ]);
   console.log(`Built static Scriptc ${entry.name}.`);
 }
 // Sign before copying compatibility paths so every entry has the same code identity.
-signNative(path.join(binaries, "inth"), identity);
+if (target.platform === "darwin") {
+  signNative(path.join(binaries, "inth"), identity);
+}
 // Preserve paths used during the native experiment, with the same credentials.
 const legacy = path.join(root, "dist-bin", "scriptc");
 await mkdir(legacy, { recursive: true });
-await cp(path.join(binaries, "inth"), path.join(legacy, "inth"));
-await cp(path.join(binaries, "inth"), path.join(legacy, "inth-auth"));
+await cp(
+  path.join(binaries, target.executable),
+  path.join(legacy, target.executable)
+);
+await cp(
+  path.join(binaries, target.executable),
+  path.join(legacy, target.platform === "win32" ? "inth-auth.exe" : "inth-auth")
+);
+await writeFile(
+  path.join(binaries, "target.json"),
+  JSON.stringify({
+    arch: target.arch,
+    executable: target.executable,
+    platform: target.platform,
+  })
+);

@@ -1,9 +1,10 @@
 import { CliError } from "./cli-error.ts";
+import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
+import { terminalText } from "./organizations.ts";
 import {
   buildResourceRequest,
   rawApiRequest,
   RESOURCE_COMMANDS,
-  RESOURCE_OPTIONS,
 } from "./resource-commands.ts";
 
 export interface CliArguments {
@@ -43,8 +44,59 @@ const validateCommandOptions = (result: CliArguments): void => {
   }
 };
 
+const validateMcpArguments = (result: CliArguments, count: number): void => {
+  if (count > 2 || !["", "setup", "list", "remove"].includes(result.argument)) {
+    throw new CliError(
+      "usage_error",
+      "Usage: inth mcp [setup|list|remove] [--agent <client>] [--scope project|global]"
+    );
+  }
+  if (result.token || result.organization || result.noBrowser) {
+    throw new CliError(
+      "usage_error",
+      "MCP uses client OAuth. Token, organization, and browser-login flags do not apply."
+    );
+  }
+  for (const entry of result.values) {
+    const spec = OPTION_METADATA.find((item) => item.name === entry.name);
+    if (
+      !["agent", "scope", "dry-run"].includes(entry.name) ||
+      (entry.name === "dry-run" && result.argument === "list")
+    ) {
+      throw new CliError(
+        "usage_error",
+        `--${entry.name} is not available with this MCP command.`
+      );
+    }
+    if (spec?.values.length && !spec.values.includes(entry.value)) {
+      throw new CliError(
+        "usage_error",
+        `--${entry.name} must be one of: ${spec.values.join(", ")}.`
+      );
+    }
+  }
+};
 const validateArguments = (result: CliArguments, count: number): void => {
-  if (result.help || result.version || !result.command) {
+  if (result.version || !result.command) {
+    return;
+  }
+  if (result.help) {
+    if (
+      !COMMAND_METADATA.some(
+        (entry) =>
+          entry.command === result.command &&
+          (!result.argument || entry.action === result.argument)
+      )
+    ) {
+      throw new CliError(
+        "usage_error",
+        `Unknown command "${terminalText(`${result.command} ${result.argument}`.trim())}". Run inth --help.`
+      );
+    }
+    return;
+  }
+  if (result.command === "mcp") {
+    validateMcpArguments(result, count);
     return;
   }
   const resource = RESOURCE_COMMANDS.some(
@@ -130,11 +182,13 @@ const consumeOption = (
   const option = (equals === -1 ? arg : arg.slice(0, equals)).slice(2);
   if (
     !arg.startsWith("--") ||
-    !["token", "organization", ...RESOURCE_OPTIONS].includes(option)
+    !OPTION_METADATA.some(
+      (entry) => entry.name === option && entry.type !== "boolean"
+    )
   ) {
     throw new CliError(
       "usage_error",
-      'Unknown option. Run "inth --help" for available options.'
+      `Unknown option "${terminalText(equals === -1 ? arg : arg.slice(0, equals))}". Run inth ${result.command ? `${terminalText(result.command)} ` : ""}--help for available options.`
     );
   }
   if (equals === -1 && index + 1 >= args.length) {
@@ -173,6 +227,8 @@ export const parseArguments = (args: string[]): CliArguments => {
       result.version = true;
     } else if (arg === "--no-browser") {
       result.noBrowser = true;
+    } else if (arg === "--dry-run") {
+      setOption(result, "dry-run", "true");
     } else if (arg === "--json") {
       result.json = true;
     } else if (arg === "--non-interactive") {

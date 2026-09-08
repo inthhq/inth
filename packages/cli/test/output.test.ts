@@ -38,6 +38,7 @@ describe("machine output", () => {
     expect(stdout).toHaveBeenCalledTimes(1);
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       error: {
+        apiCode: null,
         code: "rate_limited",
         httpStatus: 429,
         message: "Request failed: HTTP 429. Request ID: req-123",
@@ -108,6 +109,7 @@ describe("machine output", () => {
     ).toBe(1);
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       error: {
+        apiCode: null,
         code: "authentication_required",
         httpStatus: 400,
         message: "Sign in again",
@@ -121,6 +123,7 @@ describe("machine output", () => {
     ).toBe(130);
     expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toEqual({
       error: {
+        apiCode: null,
         code: "cancelled",
         httpStatus: null,
         message: "Cancelled.",

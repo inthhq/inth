@@ -38,6 +38,7 @@ Failure:
   "schemaVersion": 1,
   "ok": false,
   "error": {
+    "apiCode": null,
     "code": "authentication_required",
     "message": "Not signed in. Run inth login.",
     "httpStatus": null,
@@ -46,7 +47,7 @@ Failure:
 }
 ```
 
-The envelope is defined in [output.schema.json](output.schema.json). Consumers should branch on `ok` and `error.code`, rather than matching error messages or relying on JSON property order. `schemaVersion` versions the envelope. API payloads keep their server-defined shape inside `data`, including server envelopes and pagination fields. A successful HTTP 204 produces `data: null`. The CLI does not automatically follow pagination; request the next page using the returned cursor.
+The envelope is defined in [output.schema.json](output.schema.json). Consumers should branch on `ok` and `error.code`, rather than matching error messages or relying on JSON property order. `error.apiCode` preserves recognized server codes such as `INSUFFICIENT_CREDITS`, `CONFLICT`, and `PLAN_LIMIT_REACHED`; it is null for local errors or unrecognized server codes. `schemaVersion` versions the envelope. API payloads keep their server-defined shape inside `data`, including server envelopes and pagination fields. A successful HTTP 204 produces `data: null`. The CLI does not automatically follow pagination; request the next page using the returned cursor.
 
 Exit codes are `0` for success, `1` for failure, and `130` for handled cancellation. HTTP failures include `httpStatus` and the sanitized `X-Request-Id` when available. Preserve the request ID for support.
 
@@ -91,3 +92,20 @@ For scan starts, supply a stable `--request-id` to make a manual retry idempoten
 For Inbox updates, read the item first and pass its `data.data.version` using `--item-version`. Do not retry a version conflict with the old version. Read again and decide whether the intended update still applies. An unresolved GitHub issue send may require server reconciliation before another attempt.
 
 New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`, `inbox.write`, and `billing.read` alongside the existing scopes. A person must run `inth login` again to grant these scopes to an older sign-in. API keys have fixed capabilities; they can read Inbox and billing but cannot use Code Audit or perform Inbox writes.
+
+## Command discovery and MCP setup
+
+MCP setup results include `results[].nextStep` with a `command` and an `instruction` for client sign-in. Dry runs return the command to apply changes instead. Listing and completed removals return `nextStep: null`. Full config paths stay in JSON even when the human summary abbreviates them.
+
+`inth project create --help --json` returns only that command's structured metadata in `data.commandDefinitions`. Definitions include typed options, required fields, accepted enum values, defaults, required OAuth scopes, credential support, effects, examples, and pagination behavior. The older `commands` and `options` string arrays remain available for existing consumers.
+
+```sh
+inth mcp setup --agent codex --scope global --dry-run --json
+inth mcp setup --agent cursor --scope project --json
+inth mcp list --scope project --json
+inth mcp remove --agent cursor --scope project --json
+```
+
+Setup and removal require explicit `--agent` and `--scope` in noninteractive mode. Supported clients are `codex`, `claude-code`, `cursor`, `vscode`, and `opencode`. Scope is `project` or `global`. The result contains each client path, status, and whether a file changed. `--dry-run` does not write files. `connectionVerified: false` distinguishes configuration from authentication and connectivity. Sign-in happens in the MCP client through OAuth; do not supply an organization API key.
+
+Configuration failures use `invalid_config`, `config_conflict`, `config_busy`, or `config_write_failed`. Conflicting and malformed configs are preserved. Native distributions target macOS and Linux arm64/x64 and Windows x64. Use an organization API key for Linux environments without a desktop credential service.

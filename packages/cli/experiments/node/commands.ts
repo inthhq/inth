@@ -199,7 +199,13 @@ export const run = async (
 ): Promise<void> => {
   const options = parseArguments(args);
   if (options.help || options.version || !options.command) {
-    printHelp(options.json, options.version);
+    printHelp(
+      options.json,
+      options.version,
+      options.command,
+      options.argument,
+      process.stdout.columns || 80
+    );
     return;
   }
   const key = apiKey(options.token, process.env.INTH_TOKEN);
