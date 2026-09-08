@@ -15,6 +15,7 @@ export const OPTIONS = OPTION_METADATA.map(
   (entry) => `--${entry.name}${entry.type === "boolean" ? "" : " <value>"}`
 );
 const groupDescriptions = [
+  ["telemetry", "Enable, disable, or inspect usage telemetry"],
   ["auth", "Inspect or refresh your saved sign-in"],
   ["org", "List, create, and inspect organizations"],
   ["project", "Manage projects and consent settings"],

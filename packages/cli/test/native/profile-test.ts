@@ -99,6 +99,7 @@ const auth = new AuthFlow(
     },
   }
 );
+let observedUser = "";
 const api = new NativeApi(
   {
     get: async (url, token) => {
@@ -144,7 +145,14 @@ const api = new NativeApi(
     check(scenario !== "key", "API key accessed browser credentials");
     return auth;
   },
-  scenario === "key" ? "inth_fixture" : undefined
+  scenario === "key" ? "inth_fixture" : undefined,
+  (token, userId) => {
+    check(
+      token === credentials.access_token,
+      "Identity observation used the wrong credential."
+    );
+    observedUser = userId;
+  }
 );
 
 let identity;
@@ -168,6 +176,10 @@ try {
     );
   }
 }
+check(
+  observedUser === (scenario === "key" ? "" : "user-one"),
+  "Identity observation confused a browser user with an API key."
+);
 if (identity) {
   check(
     !["mismatch", "malformed", "unsafe"].includes(scenario),

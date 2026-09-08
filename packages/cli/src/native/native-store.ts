@@ -15,14 +15,19 @@ const release = (handle: number): void => {
 export class NativeStore implements AuthStore {
   private readonly entry: NativeKeychain;
   private readonly lockPath: string;
+  private readonly observe: (token: string) => void;
   private readonly checkAbort: () => void;
   constructor(
     entry: NativeKeychain,
     lockPath: string,
     checkAbort: () => void = () => {
       // Benchmarks and isolated store callers may have no cancellation source.
+    },
+    observe: (token: string) => void = () => {
+      // Most credential-store callers do not need to observe the active token.
     }
   ) {
+    this.observe = observe;
     this.entry = entry;
     this.lockPath = lockPath;
     this.checkAbort = checkAbort;
@@ -38,10 +43,13 @@ export class NativeStore implements AuthStore {
   async read(): Promise<Credentials | null> {
     const value = this.entry.read();
     if (value === null) {
+      this.observe("");
       return null;
     }
     try {
-      return parseCredentials(value);
+      const credentials = parseCredentials(value);
+      this.observe(credentials.access_token);
+      return credentials;
     } catch {
       throw new Error(
         "The saved sign-in is invalid. Run inth logout, then inth login."
@@ -52,9 +60,11 @@ export class NativeStore implements AuthStore {
     const encoded = JSON.stringify(value);
     parseCredentials(encoded);
     this.entry.write(encoded);
+    this.observe(value.access_token);
   }
   async clear(): Promise<void> {
     this.entry.clear();
+    this.observe("");
   }
   async exclusive(work: () => Promise<void>): Promise<void> {
     this.checkAbort();

@@ -254,6 +254,25 @@ inth api /v1/projects/prj_123 --method PATCH --data '{"description":null}'
 
 Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. An explicit `organizationId` query parameter overrides organization defaults.
 
+## Usage telemetry
+
+Telemetry is enabled by default. The CLI prints a one-time notice to stderr on the first interactive command. To opt out or check your preference:
+
+```sh
+inth telemetry disable
+inth telemetry status
+# Re-enable later.
+inth telemetry enable
+```
+
+Enabled installations send one `cli_command_completed` event to Inth's main PostHog project in the EU. Events identify signed-in browser users by their Inth user ID when the command accesses saved credentials. API-key usage and local commands that do not access credentials use a random installation ID. Events include the CLI library name, command name, outcome, duration, CLI version, OS, architecture, JSON and interactive mode, and the MCP client when supplied with `--agent`. Error categories come from a fixed list.
+
+Events exclude arguments, tokens, resource and organization IDs, file paths, API request and response bodies, and error messages. Signed-in events use PostHog person profiles. Installation events disable person-profile processing and are not merged into user profiles. GeoIP enrichment is disabled for all events. The ingestion service still receives the network request's IP address.
+
+`INTH_TELEMETRY_DISABLED=1` or a truthy `CI` value disables delivery even when enabled locally. Empty values, `0`, and `false` do not override the saved preference. Tests and benchmarks disable telemetry. Help, version, telemetry settings, and invocations rejected during argument parsing send no events.
+
+Delivery waits at most 1.5 seconds for the HTTP request, with no retries or offline queue. An uncached user identity can require a separate API lookup with the same 1.5-second limit. The local identity cache stores the verified user ID and a SHA-256 credential fingerprint, never the credential itself. Account changes cannot reuse another credential's cached identity. Failures do not change command output or exit status. Disabling telemetry removes the local installation ID and clears the cached user ID. Logout clears the cached user ID. Enabling it again creates a new ID.
+
 ## Packaging
 
 `pnpm --filter @inth/cli package:native` builds and packs the current target into `packages/cli/artifacts/`. `test:package` extracts that archive and checks the executable, JSON output, and MCP setup.

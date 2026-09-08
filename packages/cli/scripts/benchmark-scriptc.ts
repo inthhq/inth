@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 import { summarize } from "./benchmark-stats.ts";
 import { packageVersion } from "./runtime-versions.ts";
 
+process.env.INTH_TELEMETRY_DISABLED = "1";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const build = spawnSync(
   process.execPath,

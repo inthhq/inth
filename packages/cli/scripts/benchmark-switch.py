@@ -24,7 +24,7 @@ def sample(command, live=False, iteration=0):
     master, slave = pty.openpty()
     fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 100, 0, 0))
     original = termios.tcgetattr(slave)
-    environment = dict(os.environ, TERM="xterm-256color", CI="", NO_COLOR="1", INTH_TEST_LONG_LIST="0")
+    environment = dict(os.environ, INTH_TELEMETRY_DISABLED="1", TERM="xterm-256color", CI="", NO_COLOR="1", INTH_TEST_LONG_LIST="0")
     environment.pop("INTH_TOKEN", None)
     started = time.perf_counter_ns()
     child = subprocess.Popen(command, stdin=slave, stdout=subprocess.PIPE, stderr=slave, env=environment)

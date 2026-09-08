@@ -231,6 +231,7 @@ if (fixtures) {
     "keychain-test",
     "auth-test",
     "transport-test",
+    "telemetry-test",
     "cli-test",
     "ui-test",
     "output-test",

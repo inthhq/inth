@@ -10,6 +10,8 @@ import { z } from "zod";
 import { summarize } from "./benchmark-stats.ts";
 import { packageVersion, YAO_NODE_VERSION } from "./runtime-versions.ts";
 
+process.env.INTH_TELEMETRY_DISABLED = "1";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const metrics = z.object({
   cycle_ms: z.number(),

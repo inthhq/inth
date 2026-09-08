@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { summarize } from "./benchmark-stats.ts";
 import { packageVersion, YAO_NODE_VERSION } from "./runtime-versions.ts";
 
+process.env.INTH_TELEMETRY_DISABLED = "1";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const dist = path.join(root, "dist");
 await mkdir(dist, { recursive: true });

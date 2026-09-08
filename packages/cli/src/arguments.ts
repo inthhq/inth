@@ -76,6 +76,24 @@ const validateMcpArguments = (result: CliArguments, count: number): void => {
     }
   }
 };
+const validateTelemetryArguments = (
+  result: CliArguments,
+  count: number
+): void => {
+  if (
+    count !== 2 ||
+    !["enable", "disable", "status"].includes(result.argument) ||
+    result.token ||
+    result.organization ||
+    result.noBrowser ||
+    result.values.length
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Usage: inth telemetry <enable|disable|status> [--json]"
+    );
+  }
+};
 const validateArguments = (result: CliArguments, count: number): void => {
   if (result.version || !result.command) {
     return;
@@ -99,6 +117,10 @@ const validateArguments = (result: CliArguments, count: number): void => {
   }
   if (result.command === "mcp") {
     validateMcpArguments(result, count);
+    return;
+  }
+  if (result.command === "telemetry") {
+    validateTelemetryArguments(result, count);
     return;
   }
   const resource = RESOURCE_COMMANDS.some(

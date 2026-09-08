@@ -1,21 +1,27 @@
 import { setTimeout } from "node:timers/promises";
 
+import { parseArguments } from "../../src/arguments.ts";
 import { httpDate } from "../../src/native/native-bindings.ts";
 import {
   nativeClock,
   nativeHttp,
   retryDelay,
 } from "../../src/native/native-http.ts";
+import { NativeTelemetry } from "../../src/native/native-telemetry.ts";
+import { sendTelemetry, telemetryPayload } from "../../src/telemetry.ts";
 
 const check = (condition: boolean, message: string): void => {
   if (!condition) {
     throw new Error(message);
   }
 };
-if (process.argv.length !== 3) {
+if (process.argv.length !== 4) {
   throw new Error("Expected the local test server URL.");
 }
-const [base] = process.argv.slice(2);
+const [base, directory] = process.argv.slice(2);
+if (!directory) {
+  throw new Error("Missing identity test directory.");
+}
 // eslint-disable-next-line prefer-destructuring -- Scriptc lowers this native handle's property access, not object destructuring.
 const signal = new AbortController().signal;
 const waits: number[] = [];
@@ -145,4 +151,81 @@ console.log(
 );
 // Scriptc currently keeps AbortSignal.timeout timers alive after fetch completes.
 // All requests and cleanup have finished; CLI entrypoints explicitly terminate.
+
+const telemetryBody = telemetryPayload(
+  parseArguments(["mcp", "list", "--json"]),
+  "native-test",
+  1,
+  "",
+  false
+);
+check(
+  await sendTelemetry(telemetryBody, `${base}/telemetry`),
+  "Native telemetry delivery failed."
+);
+const telemetryStarted = Date.now();
+check(
+  !(await sendTelemetry(telemetryBody, `${base}/hang`)),
+  "Hung telemetry request succeeded."
+);
+check(Date.now() - telemetryStarted < 2500, "Telemetry delayed command exit.");
+check(
+  !(await sendTelemetry(telemetryBody, `${base}/disconnect`)),
+  "Disconnected telemetry request succeeded."
+);
+check(
+  !(await sendTelemetry(telemetryBody, `${base}/redirect`)),
+  "Telemetry followed a redirect."
+);
+
+const identity = new NativeTelemetry(directory, false);
+identity.installationId();
+check(
+  (await identity.userId("browser-first", "", `${base}/telemetry/me`)) ===
+    "user-one",
+  "Browser identity lookup failed."
+);
+check(
+  (await identity.userId("browser-first", "", `${base}/disconnect`)) ===
+    "user-one",
+  "Identity cache did not avoid another request."
+);
+check(
+  (await identity.userId("browser-second", "", `${base}/telemetry/me`)) ===
+    "user-two",
+  "Changed credentials inherited another user's identity."
+);
+check(
+  (await identity.userId(
+    "invalid-identity",
+    "",
+    `${base}/telemetry/invalid`
+  )) === "",
+  "Malformed API identity was trusted."
+);
+check(
+  (await identity.userId("api-key", "", `${base}/telemetry/key`)) === "",
+  "API key was identified as its creator."
+);
+check(
+  (await identity.userId("redirect", "", `${base}/redirect`)) === "",
+  "Identity lookup followed a redirect."
+);
+const identityStarted = Date.now();
+check(
+  (await identity.userId("hung-identity", "", `${base}/hang`)) === "",
+  "Hung identity request succeeded."
+);
+check(
+  Date.now() - identityStarted < 2500,
+  "Identity lookup exceeded its delivery budget."
+);
+identity.clearIdentity();
+check(
+  (await identity.userId("browser-second", "", `${base}/disconnect`)) === "",
+  "Logout retained a cached identity."
+);
+console.log(
+  "Native telemetry identity: API lookup, cache, account changes, key isolation, malformed responses and timeouts passed."
+);
 process.exit(0);
