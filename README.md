@@ -31,3 +31,5 @@ pnpm --filter @inth/cli dev billing
 Development builds call the live Inth API. Named commands print formatted text by default; add `--json` for scripts.
 
 Licensed under [Apache 2.0](LICENSE).
+
+Maintainers: see [publishing with Tegami](.tegami/README.md) for changelogs, version PRs, and npm setup.

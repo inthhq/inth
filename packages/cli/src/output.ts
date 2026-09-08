@@ -1,12 +1,7 @@
 import { CliError } from "./cli-error.ts";
-import {
-  COMMANDS,
-  OPTIONS,
-  VERSION,
-  formatHelp,
-  helpCommands,
-} from "./help.ts";
+import { COMMANDS, OPTIONS, formatHelp, helpCommands } from "./help.ts";
 import { HttpError } from "./http-error.ts";
+import { VERSION } from "./version.ts";
 
 // Callers serialize typed command data or validated API JSON before passing it here.
 export const printResult = (

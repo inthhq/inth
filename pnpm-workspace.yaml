@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - npm/*
 allowBuilds:
   esbuild: true
   scriptc: true

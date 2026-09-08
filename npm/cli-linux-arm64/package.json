@@ -1,0 +1,32 @@
+{
+  "name": "@inth/cli-linux-arm64",
+  "version": "0.0.0",
+  "description": "The Inth CLI native executable for linux arm64",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "npm/cli-linux-arm64"
+  },
+  "bin": {
+    "inth": "bin/inth"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "AGENT-USAGE.md",
+    "output.schema.json",
+    "docs",
+    "vendor",
+    "LICENSE"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

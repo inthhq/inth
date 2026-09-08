@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { VERSION } from "../src/version.ts";
+
 const entry = fileURLToPath(
   new URL("../experiments/node/inth.ts", import.meta.url)
 );
@@ -56,7 +58,7 @@ describe("agent commands", () => {
       ok: true,
     });
     expect(execute(["--json", "--version"]).result).toMatchObject({
-      data: { name: "inth", version: "0.1.0" },
+      data: { name: "inth", version: VERSION },
       ok: true,
     });
   });

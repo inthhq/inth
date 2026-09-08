@@ -5,7 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { HELP, VERSION } from "../src/help.ts";
+import { HELP } from "../src/help.ts";
+import { VERSION } from "../src/version.ts";
 import { verifyJson } from "./json-checks.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
