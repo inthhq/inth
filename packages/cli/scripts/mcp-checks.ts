@@ -18,23 +18,19 @@ const permissions = async (filename: string): Promise<string> => {
     const info = await stat(filename);
     return String(info.mode % 0o1000);
   }
-  const result = spawnSync(
-    "powershell.exe",
-    [
-      "-NoProfile",
-      "-NonInteractive",
-      "-Command",
-      "(Get-Acl -LiteralPath $env:INTH_TEST_CONFIG).GetSecurityDescriptorSddlForm([System.Security.AccessControl.AccessControlSections]::Access)",
-    ],
-    {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "inth-acl-test-"));
+  try {
+    const saved = path.join(directory, "permissions.txt");
+    const result = spawnSync("icacls.exe", [filename, "/save", saved, "/q"], {
       encoding: "utf-8",
-      env: { ...process.env, INTH_TEST_CONFIG: filename },
-      timeout: 10_000,
-    }
-  );
-  assert.ifError(result.error);
-  assert.equal(result.status, 0, result.stderr);
-  return result.stdout.trim();
+      timeout: 5000,
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, 0, result.stderr);
+    return await readFile(saved, "utf16le");
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
 };
 
 export const verifyMcp = async (binary: string): Promise<void> => {
