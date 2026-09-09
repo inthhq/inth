@@ -75,6 +75,25 @@ const created = await http.post(
   '{"name":"Acme Team","slug":"acme"}'
 );
 check(created.status === 201, "Authenticated JSON POST failed");
+const agentHttp = nativeHttp(signal, http.clock, false);
+const registration = await agentHttp.post(
+  `${base}/register`,
+  "",
+  '{"login_hint":"test@example.com"}'
+);
+check(
+  registration.status === 201,
+  "Agent registration sent browser credentials"
+);
+const claimResponse = await agentHttp.form(
+  `${base}/claim`,
+  new URLSearchParams({ claim_token: "clm_test" }),
+  Number.POSITIVE_INFINITY
+);
+check(
+  claimResponse.status === 429 && claimResponse.retryAfter === "60",
+  "Single-use claim was retried or lost Retry-After"
+);
 for (const method of ["PATCH", "DELETE", "POST"]) {
   // eslint-disable-next-line no-await-in-loop -- Check each HTTP verb against the local server.
   const result = await http.send(

@@ -75,6 +75,7 @@ export interface OAuthTransport {
 }
 
 export interface OAuthResponse {
+  retryAfter?: string;
   ok: boolean;
   status: number;
   body: string;

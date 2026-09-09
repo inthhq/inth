@@ -261,3 +261,13 @@ it("accepts additive principal types and preserves them in output", async () => 
   expect(output).not.toContain("Session");
   expect(output).not.toContain("Browser login");
 });
+
+it("labels an explicitly selected auth.md identity", () => {
+  expect(
+    identitySummary(userIdentity.data, {
+      authMode: "agent",
+      color: false,
+      columns: 80,
+    })
+  ).toContain("Auth.md agent");
+});

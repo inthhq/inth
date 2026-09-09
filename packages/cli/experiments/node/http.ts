@@ -41,7 +41,14 @@ export class HttpClient {
   readonly clock: Clock;
   private readonly fetcher: Fetch;
   private readonly signal: AbortSignal;
-  constructor(fetcher: Fetch, clock: Clock, signal: AbortSignal) {
+  private readonly retryRateLimit: boolean;
+  constructor(
+    fetcher: Fetch,
+    clock: Clock,
+    signal: AbortSignal,
+    retryRateLimit = true
+  ) {
+    this.retryRateLimit = retryRateLimit;
     this.fetcher = fetcher;
     this.clock = clock;
     this.signal = signal;
@@ -75,7 +82,7 @@ export class HttpClient {
           "Could not reach inth. Check your connection and try again."
         );
       }
-      if (response.status !== 429 || attempt >= 3) {
+      if (!this.retryRateLimit || response.status !== 429 || attempt >= 3) {
         return response;
       }
       const delay = retryDelay(

@@ -114,7 +114,10 @@ const profileLabel = (profile: UserProfile | undefined): string => {
   return name && email ? `${name} <${email}>` : name || email;
 };
 
-const principalLabel = (type: string): string => {
+const principalLabel = (type: string, authMode?: string): string => {
+  if (authMode === "agent") {
+    return "Auth.md agent";
+  }
   if (type === "oauth") {
     return "Browser login";
   }
@@ -135,7 +138,7 @@ export const identitySummary = (
   const line = (text: string): string => wrapText(text, columns);
   const key = principal.type === "api_key";
   const id = key ? principal.keyId : principal.userId;
-  const method = principalLabel(principal.type);
+  const method = principalLabel(principal.type, display.authMode);
   const lines = [
     style(
       line(key ? "Organization API key" : "Signed in"),
@@ -166,7 +169,9 @@ export const identitySummary = (
   if (!key && !identity.scopes.includes("organizations.read")) {
     lines.push(
       line(
-        "Organization access was not granted. Run inth login again to approve the current scopes."
+        display.authMode === "agent"
+          ? "Organization access was not granted. Start a new auth.md claim with organizations.read."
+          : "Organization access was not granted. Run inth login again to approve the current scopes."
       )
     );
     return lines.join("\n");

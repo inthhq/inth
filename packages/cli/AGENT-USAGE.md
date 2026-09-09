@@ -1,5 +1,7 @@
 # Using inth from agents and scripts
 
+For hosted consent setup, follow [Set up hosted c15t with an agent](docs/c15t-setup.md). Existing browser sign-in supports organization and project creation from JSON commands. For a separate, explicitly scoped credential, use [auth.md sign-in](docs/agent-auth-integration.md).
+
 Use `--json` for machine-readable output. Named commands default to formatted text, including when piped or run with `--non-interactive`. The raw `api` command prints JSON by default; add `--json` for the standard CLI envelope. It is supported by the Scriptc, Node, and yao-pkg builds. Discover commands and flags with `inth --help --json`; read the CLI version with `inth --version --json`.
 
 ```sh
@@ -13,9 +15,25 @@ inth switch org_123 --json
 inth link org_123 --json
 ```
 
-Authenticate through an existing browser sign-in or an organization API key in `INTH_TOKEN`. A person runs `inth login` interactively once; subsequent API requests can use that stored session and refresh it automatically. `--json` never opens a browser or asks a question. `login --json` without an API key fails before starting a device grant, even in a terminal. Supplying an API key skips device login, but `login` does not validate the key against the server. Use `inth whoami --json` to check access and read the principal, scopes, and memberships from `/v1/me`. Browser sign-ins also include an optional `data.profile` object from OAuth UserInfo with `sub`, `name`, and `email`; organization keys do not have a person’s profile.
+Authenticate through an existing browser sign-in or an organization API key in `INTH_TOKEN`. A person runs `inth login` interactively once; subsequent API requests can use that stored session and refresh it automatically. `--json` never opens a browser or asks a question. `login --json` without an email or API key fails before starting a device grant, even in a terminal. Supplying an API key skips device login, but `login` does not validate the key against the server. Use `inth whoami --json` to check access and read the principal, scopes, and memberships from `/v1/me`. Browser sign-ins also include an optional `data.profile` object from OAuth UserInfo with `sub`, `name`, and `email`; organization keys do not have a person’s profile.
 
 `--non-interactive` also disables prompts and browser login while keeping human-readable output. When several organizations are available, provide an ID or slug to `switch` or `link`. An API request can specify `--organization` to override linked project and user defaults. An explicit `organizationId` in the API URL query takes precedence over those defaults.
+
+## Sign in or create an account
+
+Tell the person which email and permissions Inth will receive before starting. After they agree:
+
+```sh
+inth login --email user@example.com --scopes organizations.read,organizations.write,projects.read,projects.write --json
+inth login --complete --json
+inth org list --auth agent --json
+```
+
+`inth signup --email <email> --json` uses the same approval page for account creation. Follow `data.nextStep.command` and `data.nextStep.instruction`. The CLI discovers hosted sign-in endpoints automatically.
+
+Return `data.verificationUri` and `data.userCode` to the person for browser approval. `complete` returns after one poll; `pending` means try again later. Use `--auth agent` on every resource command. Conflicting API keys are rejected. General API access requires the server's auth.md CLI rollout; older servers support `inth auth organizations` only.
+
+Use `inth auth retry --json` for an expired approval code and `inth logout --auth agent --json` to disconnect. A `claim_uncertain` error requires a new claim because the previous single-use exchange may have succeeded. Tokens stay in the OS credential store. Identity assertion renewal lasts one hour after approval and cannot extend that deadline.
 
 ## Output contract
 
@@ -73,7 +91,7 @@ Handle unfamiliar error codes as failures. New codes may be added without changi
 
 `auth status --json` reports `credentialSource`, `credentialPresent`, `validated: false`, and `expiresAt` in Unix milliseconds, or null for an API key. Browser status also reports the resolved `organizationId`. This checks local credential presence, not server validity. CLI auth results never contain saved access tokens, refresh tokens, or supplied API keys. The `api` command returns the requested server payload unchanged in meaning; treat that data according to the endpoint's sensitivity.
 
-`org create` requires a saved browser sign-in and explicit `--name` and `--slug` values. API keys are refused before making a request. The success payload keeps the server envelope, so the new ID is at `data.data.id`. Creation does not change the CLI default or directory link. Run `inth switch <slug> --json` to select the new organization. Server validation, slug conflicts, and owner limits return HTTP errors with status and request ID. Network and server failures are not automatically retried; retry the same name and slug within 24 hours to resume creation if billing failed after the organization was saved.
+`org create` requires a saved browser sign-in or an approved connection selected with `--auth agent` and explicit `--name` and `--slug` values. API keys are refused before making a request. The success payload keeps the server envelope, so the new ID is at `data.data.id`. Creation does not change the CLI default or directory link. Run `inth switch <slug> --json` to select the new organization. Server validation, slug conflicts, and owner limits return HTTP errors with status and request ID. Network and server failures are not automatically retried; retry the same name and slug within 24 hours to resume creation if billing failed after the organization was saved.
 
 JSON mode does not imply approval or make commands read-only. `switch` and `link` change local defaults, and `logout` revokes the browser session. `org create` creates a server-side organization. The `api` command supports GET, POST, PATCH, and DELETE.
 

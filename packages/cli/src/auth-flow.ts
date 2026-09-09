@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop -- The device grant requires sequential, timed polling. */
+import type { AccessTokenProvider } from "./agent-types.ts";
 import { API_ORIGIN, CLIENT_ID, DISCOVERY_URL, SCOPE } from "./auth-types.ts";
 import type {
   AuthStore,
@@ -23,6 +24,12 @@ export class AuthFlow {
     this.http = http;
     this.store = store;
     this.clock = http.clock;
+  }
+  tokenProvider(): AccessTokenProvider {
+    return {
+      accessToken: (rejected, force) => this.accessToken(rejected, force),
+      userInfoEndpoint: () => this.userInfoEndpoint(),
+    };
   }
   private async discover(): Promise<Discovery> {
     if (!this.metadata) {

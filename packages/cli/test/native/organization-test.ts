@@ -133,7 +133,7 @@ const api = new NativeApi(
       throw new Error("Unexpected mutation");
     },
   },
-  () => auth,
+  () => auth.tokenProvider(),
   scenario === "key" ? "inth_fixture" : undefined
 );
 let created;
@@ -238,7 +238,7 @@ if (scenario === "success") {
           return response("", attempts === 1 ? 401 : 204);
         },
       },
-      () => auth
+      () => auth.tokenProvider()
     );
     // eslint-disable-next-line no-await-in-loop -- Each mutation gets a fresh saved token and one rejected request.
     const result = await mutation.execute("/v1/inbox/item_123", method, body);

@@ -13,6 +13,11 @@ export class HttpError extends Error {
       "KEY_LIMIT_REACHED",
       "PAYLOAD_TOO_LARGE",
       "authorization_pending",
+      "claim_expired",
+      "invalid_claim",
+      "invalid_login_hint",
+      "account_mismatch",
+      "invalid_target",
       "slow_down",
       "expired_token",
       "access_denied",
@@ -33,10 +38,10 @@ export class HttpError extends Error {
     let guidance = "";
     if (status === 400 && code === "invalid_scope") {
       guidance =
-        " The OAuth server rejected the CLI's requested scopes. Check the deployed inth-cli client registration and its allowed scopes.";
+        " The authorization server rejected the requested scopes. Check the deployed inth-cli client registration and its allowed scopes, or the auth.md scope request.";
     } else if (status === 403 && code === "INSUFFICIENT_SCOPE") {
       guidance =
-        " This credential lacks a required capability. For browser sign-ins, run inth login again to approve the current scopes. Organization API keys cannot gain additional capabilities.";
+        " This credential lacks a required capability. For browser sign-ins, run inth login again to approve the current scopes. For auth.md, start a new claim with the required --scopes. Organization API keys cannot gain additional capabilities.";
     } else if (status === 409 && code === "CONFLICT") {
       guidance =
         " The request conflicts with the current resource state. Fetch it again before retrying.";

@@ -317,6 +317,7 @@ if (fixtures) {
     "mcp-test",
     "keychain-test",
     "auth-test",
+    "agent-test",
     "transport-test",
     "telemetry-test",
     "sentry-test",

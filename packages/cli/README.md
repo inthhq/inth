@@ -66,7 +66,7 @@ pnpm --filter @inth/cli inth billing --json
 
 From `packages/cli`, the equivalents are `pnpm dev billing` and `pnpm inth billing`. `dev` rebuilds on each invocation; it does not watch files.
 
-Development builds call the live API at `https://api.inth.com`. There is no local API URL override. Commands that create, update, or delete resources take effect immediately.
+Development builds call the live API at `https://api.inth.com` by default. For local auth.md testing, configure the API and Dashboard origins using the [local API setup](docs/agent-auth-integration.md#test-against-a-local-api). Commands that create, update, or delete resources take effect immediately.
 
 Local rebuilds can trigger another Keychain prompt because ad hoc signing changes the executable's identity. Reuse the built binary between edits, or configure a stable signing identity using the [Keychain guide](docs/authentication.md#repeated-macos-keychain-prompts).
 
@@ -101,6 +101,12 @@ The terminal tests require Python 3. Automated authentication tests use fake cre
 Scriptc compiles the production CLI. Node and yao-pkg remain benchmark experiments with separate credential stores. See the [experiment guide](experiments/README.md) for their build commands and the [authentication](bench/AUTH.md) and [organization picker](bench/SWITCH.md) benchmark results.
 
 The resource commands follow [public API PR #1756](https://github.com/inthhq/monorepo/pull/1756) at commit `4e1d272f71971f7470bcbe25ce261472d7f0af16`. API types and response validation are maintained manually against the [OpenAPI schema](https://api.inth.com/openapi.json).
+
+## Sign in from an agent
+
+Use `inth login --email <email> --json` to sign in, or `inth signup --email <email> --json` to create an account. These commands send the email and requested permissions to Inth and return an approval link and code. Give both to the person. They sign in or create their account in the browser, then approve access. Run `inth login --complete --json` after approval. Results include `nextStep.command` and `nextStep.instruction`; use `--auth agent` on subsequent resource commands.
+
+For c15t provisioning, request `--scopes organizations.read,organizations.write,projects.read,projects.write`. General API access requires the accompanying backend deployment and account rollout. See [auth.md sign-in](docs/agent-auth-integration.md) for approval, storage, expiry and deployment requirements.
 
 ## Sign-in and organizations
 
@@ -140,6 +146,8 @@ inth switch acme
 For automation, supply an organization API key through `INTH_TOKEN` or `--token`. The flag takes precedence. Supplied keys are never saved or refreshed. API keys can manage projects and read organizations, API keys, Inbox, and billing. Use browser sign-in for other operations.
 
 See [authentication and credential storage](docs/authentication.md) for OAuth scopes, token refresh, passkeys, and Keychain troubleshooting.
+
+For an agent to provision a hosted consent project and integrate it into an application, follow [the c15t setup guide](docs/c15t-setup.md). It uses the existing browser sign-in and includes a repeatable browser verification check.
 
 ## Inth MCP
 

@@ -98,7 +98,7 @@ export const requireInteractiveLogin = (interactive: boolean): void => {
   if (!interactive) {
     throw new CliError(
       "interaction_required",
-      "Browser login requires an interactive terminal. Run inth login in a terminal first, or supply an organization API key through INTH_TOKEN."
+      "Browser login requires an interactive terminal. For agents, run inth login --email <email> --json and return the approval URL and code to the person. You can also run inth login in a terminal first, or supply an organization API key through INTH_TOKEN."
     );
   }
 };

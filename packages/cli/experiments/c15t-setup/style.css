@@ -1,0 +1,6 @@
+@import "@c15t/react/styles.css";
+
+body {
+  font-family: system-ui, sans-serif;
+  padding: 24px;
+}

@@ -1,3 +1,11 @@
+import {
+  requireAgentCredentialSelection,
+  runSelectedAgentCommand,
+} from "../../src/agent-commands.ts";
+import {
+  agentEnvironment,
+  agentStateDirectory,
+} from "../../src/agent-environment.ts";
 import { parseArguments } from "../../src/arguments.ts";
 import type { CliArguments } from "../../src/arguments.ts";
 import { CliError } from "../../src/cli-error.ts";
@@ -208,8 +216,14 @@ export const run = async (
     );
     return;
   }
+  const environment = agentEnvironment(
+    process.env.INTH_DEV_API_ORIGIN,
+    process.env.INTH_DEV_DASHBOARD_ORIGIN,
+    options.authMode
+  );
   const key = apiKey(options.token, process.env.INTH_TOKEN);
-  const directory = stateDirectory();
+  requireAgentCredentialSelection(options, key);
+  const directory = agentStateDirectory(stateDirectory(), environment);
   const context = new OrganizationContext(directory, process.cwd());
   const http = new HttpClient(
     (url, init) => fetch(url, init),
@@ -221,7 +235,25 @@ export const run = async (
     return platformStore(directory);
   };
   const getAuth = async () => new Auth(http, await getStore());
-  const api = new ApiClient(http, getAuth, key);
+  const getAgent = async () => {
+    const { agentAuth } = await import("./agent-auth.ts");
+    return agentAuth(
+      new HttpClient(
+        (url, init) => fetch(url, init),
+        http.clock,
+        signal,
+        false
+      ),
+      directory,
+      environment
+    );
+  };
+  const getSelectedAuth = () =>
+    options.authMode === "agent" ? getAgent() : getAuth();
+  const api = new ApiClient(http, getSelectedAuth, key, environment.apiOrigin);
+  if (await runSelectedAgentCommand(options, getAgent)) {
+    return;
+  }
   const allowInteractive = !options.json && !options.nonInteractive;
   if (await runResourceCommand(options, api, context)) {
     return;
@@ -265,6 +297,7 @@ export const run = async (
         options.json
           ? ""
           : identitySummary(identity.data, {
+              authMode: options.authMode,
               color: colorEnabled(Boolean(process.stdout.isTTY)),
               columns: terminalColumns(),
               profile: identity.profile,

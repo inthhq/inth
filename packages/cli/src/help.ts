@@ -16,7 +16,7 @@ export const OPTIONS = OPTION_METADATA.map(
 );
 const groupDescriptions = [
   ["telemetry", "Enable, disable, or inspect usage telemetry"],
-  ["auth", "Inspect or refresh your saved sign-in"],
+  ["auth", "Manage sign-in, approval, and saved credentials"],
   ["org", "List, create, and inspect organizations"],
   ["project", "Manage projects and consent settings"],
   ["member", "Manage organization members and roles"],
@@ -27,6 +27,15 @@ const groupDescriptions = [
   ["mcp", "Configure Inth MCP in your coding client"],
 ];
 const authenticationDescription = (value: string): string => {
+  if (value === "agent") {
+    return "Use an approved auth.md connection. Run inth auth start first.";
+  }
+  if (value === "browser-or-agent") {
+    return "Use a browser sign-in or an approved auth.md connection with --auth agent.";
+  }
+  if (value === "browser-or-agent-or-api-key") {
+    return "Use a browser sign-in, --auth agent, or an organization API key.";
+  }
   if (value === "browser") {
     return "Browser sign-in required. Run inth login first.";
   }
@@ -78,6 +87,23 @@ export const formatHelp = (command = "", action = "", columns = 80): string => {
   const entries = helpCommands(command, action);
   const detail = entries.length === 1 ? entries[0] : undefined;
   const lines = [`inth ${VERSION}`, ""];
+  if (!command || ["login", "signup"].includes(command)) {
+    lines.push(
+      "Sign in or create an account from an agent:",
+      "  inth login --email <email> --json",
+      wrapText(
+        "Give the person the returned approval URL and code. After approval:",
+        width
+      ),
+      "  inth login --complete --json",
+      "Use --auth agent on subsequent commands.",
+      wrapText(
+        "For organization and project setup, add --scopes organizations.read,organizations.write,projects.read,projects.write to login.",
+        width
+      ),
+      ""
+    );
+  }
   if (detail) {
     lines.push(
       wrapText(detail.description, width),

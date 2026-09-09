@@ -1,0 +1,439 @@
+/* eslint-disable require-await -- In-memory adapters implement async storage and HTTP contracts. */
+import { describe, expect, it } from "vitest";
+
+import { AgentAuth } from "../src/agent-auth.ts";
+import {
+  requestedAgentScopes,
+  requireAgentCredentialSelection,
+} from "../src/agent-commands.ts";
+import { parseAgentDiscovery, parseAgentState } from "../src/agent-protocol.ts";
+import type { AgentHttp, AgentStore } from "../src/agent-types.ts";
+import { parseArguments } from "../src/arguments.ts";
+import { API_ORIGIN, DISCOVERY_URL } from "../src/auth-types.ts";
+import type { OAuthResponse } from "../src/auth-types.ts";
+import { responseError } from "../src/native/native-protocol.ts";
+
+const issuer = "https://inth.com/api/auth";
+const discovery = {
+  agent_auth: {
+    claim_endpoint: `${issuer}/agent/identity/claim`,
+    identity_assertion_revocation_supported: true,
+    identity_endpoint: `${issuer}/agent/identity`,
+    identity_types_supported: ["service_auth"],
+  },
+  issuer,
+  revocation_endpoint: `${issuer}/oauth2/revoke`,
+  token_endpoint: `${issuer}/oauth2/token`,
+};
+const now = 1_800_000_000_000;
+const claim = {
+  expires_in: 600,
+  interval: 5,
+  user_code: "123456",
+  verification_uri:
+    "https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_test",
+};
+const registration = {
+  claim,
+  claim_token: "clm_secret",
+  claim_token_expires: new Date(now + 86_400_000).toISOString(),
+  post_claim_scopes: ["organizations.read"],
+  registration_id: "reg_1",
+  registration_type: "service_auth",
+};
+const tokens = {
+  access_token: "access_secret",
+  assertion_expires: new Date(now + 3_600_000).toISOString(),
+  expires_in: 900,
+  identity_assertion: "assertion_secret",
+  scope: "organizations.read",
+  token_type: "Bearer",
+};
+const response = <Body>(body: Body, status = 200): OAuthResponse => ({
+  body: JSON.stringify(body),
+  ok: status < 400,
+  requestId: null,
+  status,
+});
+
+const fixture = () => {
+  let saved: string | null = null;
+  let currentTime = now;
+  let lock = Promise.resolve(true);
+  const replies: (OAuthResponse | Error)[] = [];
+  const calls: { url: string; body?: string }[] = [];
+  const waits: number[] = [];
+  const store: AgentStore = {
+    clear: async () => {
+      saved = null;
+    },
+    exclusive: async (work) => {
+      const previous = lock;
+      const deferred = Promise.withResolvers<boolean>();
+      lock = deferred.promise;
+      await previous;
+      try {
+        await work();
+      } finally {
+        deferred.resolve(true);
+      }
+    },
+    read: async () => saved,
+    write: async (value) => {
+      saved = value;
+    },
+  };
+  const send = async (url: string, body?: string): Promise<OAuthResponse> => {
+    calls.push({ body, url });
+    if (url === DISCOVERY_URL) {
+      return response(discovery);
+    }
+    const reply = replies.shift();
+    if (!reply) {
+      throw new Error("Unexpected request");
+    }
+    if (reply instanceof Error) {
+      throw reply;
+    }
+    return reply;
+  };
+  const http: AgentHttp = {
+    clock: {
+      now: () => currentTime,
+      sleep: async (ms) => {
+        waits.push(ms);
+        currentTime += ms;
+      },
+    },
+    error: responseError,
+    form: (url, fields) => send(url, fields.toString()),
+    get: (url) => send(url),
+    post: (url, _token, body) => send(url, body),
+    request: (url) => send(url),
+  };
+  return {
+    advance: (ms: number) => {
+      currentTime += ms;
+    },
+    auth: () => new AgentAuth(http, store),
+    calls,
+    read: () => saved,
+    replies,
+    waits,
+  };
+};
+const start = async (f: ReturnType<typeof fixture>) => {
+  f.replies.push(response(registration));
+  return f.auth().start("person@example.com", ["organizations.read"]);
+};
+const signIn = async (f: ReturnType<typeof fixture>) => {
+  await start(f);
+  f.replies.push(response(tokens));
+  return f.auth().complete();
+};
+
+describe("auth.md credentials", () => {
+  it("uses the complete approval link for initial and retried claims", async () => {
+    const f = fixture();
+    const complete = `${claim.verification_uri}&user_code=123456`;
+    f.replies.push(
+      response({
+        ...registration,
+        claim: { ...claim, verification_uri_complete: complete },
+      })
+    );
+    expect(
+      JSON.parse(
+        await f.auth().start("person@example.com", ["organizations.read"])
+      ).verificationUri
+    ).toBe(complete);
+    const retryComplete = `${claim.verification_uri}&user_code=654321`;
+    f.replies.push(
+      response({
+        claim_attempt: {
+          ...claim,
+          user_code: "654321",
+          verification_uri_complete: retryComplete,
+        },
+      })
+    );
+    expect(JSON.parse(await f.auth().retry()).verificationUri).toBe(
+      retryComplete
+    );
+    expect(JSON.parse(await f.auth().status()).verificationUri).toBe(
+      retryComplete
+    );
+  });
+  it.each([
+    "https://evil.example/claim",
+    "http://inth.com/claim",
+    "https://inth.com@evil.example/claim",
+  ])("rejects an unsafe complete approval link: %s", async (url) => {
+    const f = fixture();
+    f.replies.push(
+      response({
+        ...registration,
+        claim: { ...claim, verification_uri_complete: url },
+      })
+    );
+    await expect(
+      f.auth().start("person@example.com", ["organizations.read"])
+    ).rejects.toThrow();
+    expect(f.read()).toBeNull();
+  });
+  it("resumes approval across commands, waits between polls and never prints secrets", async () => {
+    const f = fixture();
+    const pending = await start(f);
+    expect(JSON.parse(pending)).toMatchObject({
+      status: "pending",
+      userCode: "123456",
+      verificationUri: claim.verification_uri,
+    });
+    f.replies.push(
+      response({ error: "authorization_pending" }, 400),
+      response(tokens)
+    );
+    expect(JSON.parse(await f.auth().complete()).status).toBe("pending");
+    const active = await f.auth().complete();
+    expect(JSON.parse(active)).toMatchObject({
+      scopes: ["organizations.read"],
+      status: "authenticated",
+    });
+    const status = await f.auth().status();
+    for (const secret of [
+      registration.claim_token,
+      tokens.access_token,
+      tokens.identity_assertion,
+      "person@example.com",
+    ]) {
+      expect(pending + active + status).not.toContain(secret);
+    }
+    expect(f.waits).toEqual([5000, 5000]);
+    expect(parseAgentState(f.read() ?? "").pending).toBeUndefined();
+    expect(
+      f.calls
+        .filter((call) => call.url === discovery.token_endpoint)
+        .every(
+          (call) =>
+            new URLSearchParams(call.body).get("resource") === API_ORIGIN
+        )
+    ).toBe(true);
+  });
+  it("does not register again when the same claim is pending", async () => {
+    const f = fixture();
+    expect(await start(f)).toBe(
+      await f.auth().start("PERSON@example.com", ["organizations.read"])
+    );
+    expect(
+      f.calls.filter(
+        (call) => call.url === discovery.agent_auth.identity_endpoint
+      )
+    ).toHaveLength(1);
+  });
+  it("serializes simultaneous single-use claim exchanges", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(response(tokens));
+    const results = await Promise.all([
+      f.auth().complete(),
+      f.auth().complete(),
+    ]);
+    expect(results[0]).toBe(results[1]);
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(1);
+  });
+  it.each([
+    new Error("connection lost"),
+    response({ error: "invalid_grant" }, 400),
+    response({ error: "server_error" }, 500),
+    response({ access_token: "secret" }),
+  ])("never replays a claim after an uncertain response", async (reply) => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(reply);
+    await expect(f.auth().complete()).rejects.toThrow();
+    await expect(f.auth().complete()).rejects.toMatchObject({
+      code: "claim_uncertain",
+    });
+    await expect(f.auth().retry()).rejects.toMatchObject({
+      code: "claim_uncertain",
+    });
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(1);
+  });
+  it("increases the polling interval on slow_down", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(response({ error: "slow_down" }, 400), response(tokens));
+    expect(JSON.parse(await f.auth().complete()).interval).toBe(10);
+    await f.auth().complete();
+    expect(f.waits).toEqual([5000, 10_000]);
+  });
+  it("replaces an expired code while preserving the claim token and outer deadline", async () => {
+    const f = fixture();
+    await start(f);
+    f.advance(610_000);
+    f.replies.push(
+      response({ error: "expired_token" }, 400),
+      response({ claim_attempt: { ...claim, user_code: "987654" } })
+    );
+    await expect(f.auth().complete()).rejects.toMatchObject({
+      code: "authentication_expired",
+    });
+    expect(JSON.parse(await f.auth().retry()).userCode).toBe("987654");
+    const saved = parseAgentState(f.read() ?? "").pending;
+    expect(saved?.claimToken).toBe(registration.claim_token);
+    expect(saved?.claimExpiresAt).toBe(now + 86_400_000);
+  });
+  it("can collect a previously approved claim after the code window", async () => {
+    const f = fixture();
+    await start(f);
+    f.advance(610_000);
+    f.replies.push(response(tokens));
+    expect(JSON.parse(await f.auth().complete()).status).toBe("authenticated");
+  });
+  it("refreshes once under concurrent use and preserves the assertion expiry", async () => {
+    const f = fixture();
+    await signIn(f);
+    f.advance(900_000);
+    f.replies.push(
+      response({
+        ...tokens,
+        access_token: "renewed",
+        assertion_expires: new Date(now + 86_400_000).toISOString(),
+      })
+    );
+    expect(
+      await Promise.all([f.auth().accessToken(), f.auth().accessToken()])
+    ).toEqual(["renewed", "renewed"]);
+    expect(
+      parseAgentState(f.read() ?? "").credentials?.assertionExpiresAt
+    ).toBe(now + 3_600_000);
+    f.advance(3_600_000);
+    await expect(f.auth().accessToken()).rejects.toMatchObject({
+      code: "authentication_expired",
+    });
+  });
+  it("discards revoked assertions without retrying", async () => {
+    const f = fixture();
+    await signIn(f);
+    f.replies.push(response({ error: "invalid_grant" }, 400));
+    await expect(f.auth().accessToken(undefined, true)).rejects.toMatchObject({
+      code: "authentication_required",
+    });
+    expect(f.read()).toBeNull();
+  });
+  it("rejects registration scope downgrade instead of borrowing browser credentials", async () => {
+    const f = fixture();
+    f.replies.push(response(registration));
+    await expect(
+      f
+        .auth()
+        .start("person@example.com", ["organizations.read", "projects.write"])
+    ).rejects.toMatchObject({ code: "insufficient_scope" });
+    expect(f.read()).toBeNull();
+  });
+  it("rejects a token that adds permissions after approval", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(
+      response({ ...tokens, scope: "organizations.read projects.write" })
+    );
+    await expect(f.auth().complete()).rejects.toMatchObject({
+      code: "claim_uncertain",
+    });
+  });
+  it("revokes the registration and access token before clearing saved credentials", async () => {
+    const f = fixture();
+    await signIn(f);
+    f.replies.push(response({}), response({}));
+    await f.auth().logout();
+    expect(f.read()).toBeNull();
+    expect(
+      f.calls
+        .filter((call) => call.url === discovery.revocation_endpoint)
+        .map((call) => new URLSearchParams(call.body).get("token_type_hint"))
+    ).toEqual(["identity_assertion", "access_token"]);
+  });
+  it("honors Retry-After across separate claim commands", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(
+      { ...response({ error: "slow_down" }, 429), retryAfter: "60" },
+      response(tokens)
+    );
+    await f.auth().complete();
+    await f.auth().complete();
+    expect(f.waits).toEqual([5000, 60_000]);
+  });
+  it("disconnects using its access token when the assertion has expired", async () => {
+    const f = fixture();
+    await signIn(f);
+    f.advance(3_550_000);
+    f.replies.push(response({ ...tokens, access_token: "last-access" }));
+    await f.auth().accessToken(undefined, true);
+    f.advance(60_000);
+    f.replies.push(response({}), response({}));
+    await f.auth().logout();
+    const revoke = f.calls.find(
+      (call) => call.url === discovery.revocation_endpoint
+    );
+    expect(new URLSearchParams(revoke?.body).get("token_type_hint")).toBe(
+      "auth_md_registration"
+    );
+    expect(new URLSearchParams(revoke?.body).get("token")).toBe("last-access");
+  });
+  it("clears local credentials even when remote revocation fails", async () => {
+    const f = fixture();
+    await signIn(f);
+    f.replies.push(response({ error: "server_error" }, 500));
+    await expect(f.auth().logout()).rejects.toMatchObject({
+      code: "revocation_failed",
+    });
+    expect(f.read()).toBeNull();
+  });
+  it.each([
+    "https://attacker.test/token",
+    "https://inth.com.evil.test/api/auth/token",
+    "https://inth.com/api/auth/../token",
+    "http://inth.com/api/auth/token",
+  ])("rejects discovery endpoint %s", (token_endpoint) => {
+    expect(() =>
+      parseAgentDiscovery(JSON.stringify({ ...discovery, token_endpoint }))
+    ).toThrow();
+  });
+});
+
+describe("agent command selection", () => {
+  it("requires explicit disclosure confirmation before registration", () => {
+    expect(() =>
+      parseArguments(["auth", "start", "--email", "person@example.com"])
+    ).toThrow("--yes");
+    expect(
+      parseArguments([
+        "auth",
+        "start",
+        "--email",
+        "person@example.com",
+        "--yes",
+        "--json",
+      ]).authMode
+    ).toBe("agent");
+  });
+  it("refuses ambiguous API key selection and preserves browser defaults", () => {
+    const options = parseArguments(["org", "list", "--auth", "agent"]);
+    expect(() => requireAgentCredentialSelection(options, "inth_key")).toThrow(
+      "INTH_TOKEN"
+    );
+    expect(parseArguments(["org", "list"]).authMode).toBeUndefined();
+  });
+  it("validates requested scopes", () => {
+    expect(requestedAgentScopes()).toEqual(["organizations.read"]);
+    expect(requestedAgentScopes("projects.write,projects.write")).toEqual([
+      "projects.write",
+    ]);
+    expect(() => requestedAgentScopes("*")).toThrow("scopes");
+  });
+});

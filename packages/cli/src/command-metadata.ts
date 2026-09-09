@@ -44,6 +44,26 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option("non-interactive", "boolean", "Disable prompts and browser login"),
   option("help", "boolean", "Show help for this command"),
   option("version", "boolean", "Show the CLI version"),
+  option("complete", "boolean", "Check browser approval and finish signing in"),
+  option(
+    "auth",
+    "string",
+    "Saved credential to use",
+    ["browser", "agent"],
+    "browser"
+  ),
+  option(
+    "scopes",
+    "string",
+    "Comma-separated account permissions",
+    [],
+    "organizations.read"
+  ),
+  option(
+    "yes",
+    "boolean",
+    "Confirm sending the email and requested scopes to Inth for approval"
+  ),
   option("token", "string", "Organization API key; overrides INTH_TOKEN"),
   option("organization", "string", "Organization ID or local default override"),
   option("no-browser", "boolean", "Print the approval URL without opening it"),
@@ -63,7 +83,7 @@ export const OPTION_METADATA: OptionMetadata[] = [
     "json-array",
     "Consent origins as a JSON array of strings"
   ),
-  option("email", "string", "Invitation email address"),
+  option("email", "string", "Sign-in or invitation email address"),
   option("role", "string", "Organization role", ["owner", "admin", "member"]),
   option("repository", "string", "Repository ID"),
   option("status", "string", "Filter or update the resource status"),
@@ -171,7 +191,7 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
 const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   const key = `${spec.command} ${spec.action}`.trim();
   const write = spec.method !== "GET";
-  const names = ["token", ...spec.fields];
+  const names = ["token", "auth", ...spec.fields];
   if (spec.scoped) {
     names.push("organization");
   }
@@ -204,7 +224,9 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   const effects = resourceEffects(spec);
   return {
     action: spec.action,
-    authentication: keyAllowed ? "browser-or-api-key" : "browser",
+    authentication: keyAllowed
+      ? "browser-or-agent-or-api-key"
+      : "browser-or-agent",
     command: spec.command,
     description: descriptions.find((entry) => entry[0] === key)?.[1] ?? key,
     effects,
@@ -214,6 +236,27 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
     scopes,
     usage,
   };
+};
+const localExamples = (
+  command: string,
+  action: string,
+  positional: string
+): string[] => {
+  if (command === "login") {
+    return [
+      "inth login",
+      "inth login --email <email> --json",
+      "inth login --email <email> --scopes organizations.read,organizations.write,projects.read,projects.write --json",
+      "inth login --complete --json",
+    ];
+  }
+  if (command === "mcp") {
+    return [
+      `inth mcp ${action} --agent codex --scope project`,
+      `inth mcp ${action} --agent cursor --scope global --json`,
+    ];
+  }
+  return [`inth ${command}${action ? ` ${action}` : ""}${positional}`];
 };
 const localCommand = (
   command: string,
@@ -229,13 +272,7 @@ const localCommand = (
   command,
   description,
   effects,
-  examples:
-    command === "mcp"
-      ? [
-          `inth mcp ${action} --agent codex --scope project`,
-          `inth mcp ${action} --agent cursor --scope global --json`,
-        ]
-      : [`inth ${command}${action ? ` ${action}` : ""}${positional}`],
+  examples: localExamples(command, action, positional),
   options: commandOptions(names),
   paginated: false,
   scopes: [],
@@ -245,50 +282,109 @@ export const COMMAND_METADATA: CommandMetadata[] = [
   localCommand(
     "login",
     "",
-    "Sign in through your browser",
-    ["token", "organization", "no-browser"],
+    "Sign in or create an account",
+    [
+      "token",
+      "organization",
+      "no-browser",
+      "email",
+      "scopes",
+      "complete",
+      "yes",
+    ],
     "none",
-    ["Saves browser credentials and a default organization."]
+    [
+      "With --email, sends the email and requested permissions to Inth and returns an approval URL and code. The person signs in or creates their account in the browser.",
+      "After approval, run inth login --complete --json. Use --auth agent on subsequent commands.",
+      "Without --email, opens interactive browser sign-in and saves a default organization.",
+    ]
+  ),
+  localCommand(
+    "signup",
+    "",
+    "Create an account through browser approval",
+    ["email", "scopes", "complete", "yes"],
+    "none",
+    [
+      "Sends the email and requested permissions to Inth. The person creates and verifies their account in the browser, then approves access.",
+      "After approval, run inth login --complete --json. Existing accounts can sign in on the same page.",
+    ],
+    " --email <email> --json"
   ),
   localCommand(
     "logout",
     "",
-    "Revoke the CLI session and remove saved credentials",
-    ["token"],
-    "browser",
-    ["Revokes the saved browser session."]
+    "Revoke the selected CLI session and remove saved credentials",
+    ["token", "auth"],
+    "browser-or-agent",
+    ["Revokes the selected saved session."]
   ),
   localCommand(
     "whoami",
     "",
     "Read identity, organizations, and capabilities",
-    ["token", "organization"],
-    "browser-or-api-key",
+    ["token", "auth", "organization"],
+    "browser-or-agent-or-api-key",
     []
   ),
   localCommand(
     "auth",
     "status",
     "Show local credential status without checking validity",
-    ["token", "organization"],
+    ["token", "auth", "organization"],
     "none",
     []
   ),
   localCommand(
     "auth",
     "refresh",
-    "Refresh the saved browser sign-in",
-    ["token"],
-    "browser",
+    "Refresh the selected saved sign-in",
+    ["token", "auth"],
+    "browser-or-agent",
     ["Replaces saved credentials."]
+  ),
+  localCommand(
+    "auth",
+    "start",
+    "Start resumable auth.md approval",
+    ["email", "scopes", "yes"],
+    "none",
+    [
+      "Sends the email and requested scopes to Inth. Saves the pending claim in the OS credential store.",
+    ],
+    " --email <email> --yes"
+  ),
+  localCommand(
+    "auth",
+    "complete",
+    "Check approval once and save auth.md credentials",
+    [],
+    "agent",
+    ["Consumes the single-use claim after human approval."]
+  ),
+  localCommand(
+    "auth",
+    "retry",
+    "Replace the pending approval code",
+    [],
+    "agent",
+    ["Invalidates the previous approval code."]
+  ),
+  localCommand(
+    "auth",
+    "organizations",
+    "List organizations through the auth.md discovery API",
+    [],
+    "agent",
+    []
   ),
   ...RESOURCE_COMMANDS.map(resourceMetadata),
   localCommand(
     "api",
     "",
     "Make a raw API request",
-    ["token", "organization", "method", "data"],
-    "browser-or-api-key",
+    ["token", "auth", "organization", "method", "data"],
+    "browser-or-agent-or-api-key",
     [
       "POST, PATCH, and DELETE can change data immediately. Required scopes depend on the endpoint.",
     ],
@@ -298,8 +394,8 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     "switch",
     "",
     "Set your default organization",
-    ["token", "organization"],
-    "browser-or-api-key",
+    ["token", "auth", "organization"],
+    "browser-or-agent-or-api-key",
     ["Changes the saved default organization."],
     " [organization-id-or-slug]"
   ),
@@ -307,8 +403,8 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     "link",
     "",
     "Save an organization default for this directory",
-    ["token", "organization"],
-    "browser-or-api-key",
+    ["token", "auth", "organization"],
+    "browser-or-agent-or-api-key",
     ["Writes .inth/project.json."],
     " [organization-id-or-slug]"
   ),

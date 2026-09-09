@@ -95,7 +95,7 @@ try {
         throw new Error("Unexpected mutation");
       },
     },
-    () => auth
+    () => auth.tokenProvider()
   );
   const response = await api.get("/v1/projects", "org-one");
   check(response.status === 200, "API request failed.");
