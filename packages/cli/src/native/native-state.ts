@@ -3,6 +3,7 @@ import { mkdir, readFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
 
+import { parseConnection } from "../connection-selection.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
 import { organizationId } from "../organizations.ts";
 import { prepareDirectory, writeConfig } from "./native-bindings.ts";
@@ -55,6 +56,31 @@ export class NativeContext {
   }
   defaultOrganization(): Promise<string | undefined> {
     return read(join(this.directory, "config.json"));
+  }
+  async selectedConnection(): Promise<string | undefined> {
+    let source: string;
+    try {
+      source = await readFile(join(this.directory, "connection.json"), "utf-8");
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("ENOENT:")) {
+        return undefined;
+      }
+      throw error;
+    }
+    return parseConnection(source);
+  }
+  async selectConnection(auth: string): Promise<void> {
+    const source = JSON.stringify({ auth });
+    parseConnection(source);
+    await mkdir(dirname(this.directory), { recursive: true });
+    if (
+      prepareDirectory(this.directory) !== 0 ||
+      writeConfig(join(this.directory, "connection.json"), source) !== 0
+    ) {
+      throw new Error(
+        "Cannot save the selected connection. Retry sign-in completion."
+      );
+    }
   }
   async resolve(explicit?: string): Promise<string | undefined> {
     if (explicit) {

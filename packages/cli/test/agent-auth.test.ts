@@ -1,16 +1,17 @@
 /* eslint-disable require-await -- In-memory adapters implement async storage and HTTP contracts. */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { AgentAuth } from "../src/agent-auth.ts";
 import {
+  runAgentCommand,
   requestedAgentScopes,
-  requireAgentCredentialSelection,
 } from "../src/agent-commands.ts";
 import { parseAgentDiscovery, parseAgentState } from "../src/agent-protocol.ts";
 import type { AgentHttp, AgentStore } from "../src/agent-types.ts";
 import { parseArguments } from "../src/arguments.ts";
 import { API_ORIGIN, DISCOVERY_URL } from "../src/auth-types.ts";
 import type { OAuthResponse } from "../src/auth-types.ts";
+import { requireAgentCredentialSelection } from "../src/connection-selection.ts";
 import { responseError } from "../src/native/native-protocol.ts";
 
 const issuer = "https://inth.com/api/auth";
@@ -56,7 +57,7 @@ const response = <Body>(body: Body, status = 200): OAuthResponse => ({
   status,
 });
 
-const fixture = () => {
+const fixture = (onSleep?: (ms: number) => Promise<void>) => {
   let saved: string | null = null;
   let currentTime = now;
   let lock = Promise.resolve(true);
@@ -101,6 +102,9 @@ const fixture = () => {
     clock: {
       now: () => currentTime,
       sleep: async (ms) => {
+        if (onSleep) {
+          await onSleep(ms);
+        }
         waits.push(ms);
         currentTime += ms;
       },
@@ -252,7 +256,7 @@ describe("auth.md credentials", () => {
     const f = fixture();
     await start(f);
     f.replies.push(reply);
-    await expect(f.auth().complete()).rejects.toThrow();
+    await expect(f.auth().waitForApproval()).rejects.toThrow();
     await expect(f.auth().complete()).rejects.toMatchObject({
       code: "claim_uncertain",
     });
@@ -436,4 +440,186 @@ describe("agent command selection", () => {
     ]);
     expect(() => requestedAgentScopes("*")).toThrow("scopes");
   });
+});
+
+describe("waiting for browser approval", () => {
+  it("continues through pending, slow_down and rate limits without another command", async () => {
+    const f = fixture();
+    const pending = JSON.parse(await start(f));
+    expect(pending.nextStep.command).toBe(
+      "inth login --complete --wait --json"
+    );
+    f.replies.push(
+      response({ error: "authorization_pending" }, 400),
+      response({ error: "slow_down" }, 400),
+      { ...response({ error: "rate_limit_exceeded" }, 429), retryAfter: "30" },
+      response(tokens)
+    );
+    const output = await f.auth().waitForApproval();
+    expect(JSON.parse(output).status).toBe("authenticated");
+    expect(f.waits).toEqual([5000, 5000, 10_000, 30_000]);
+    expect(output).not.toContain(tokens.access_token);
+  });
+
+  it("bounds the wait and resumes the saved claim across processes", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push({
+      ...response({ error: "rate_limit_exceeded" }, 429),
+      retryAfter: "60",
+    });
+    await expect(f.auth().waitForApproval(10_000)).rejects.toMatchObject({
+      code: "approval_timeout",
+    });
+    expect(f.waits).toEqual([5000, 5000]);
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(false);
+    f.replies.push(response(tokens));
+    expect(JSON.parse(await f.auth().waitForApproval()).status).toBe(
+      "authenticated"
+    );
+    expect(f.waits.at(-1)).toBe(55_000);
+  });
+
+  it("serializes concurrent waiters without replaying a successful claim", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(response(tokens));
+    const outputs = await Promise.all([
+      f.auth().waitForApproval(),
+      f.auth().waitForApproval(),
+    ]);
+    expect(outputs[0]).toBe(outputs[1]);
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(1);
+  });
+
+  it("allows logout while a waiter is sleeping", async () => {
+    const f = fixture(async () => {
+      await f.auth().logout();
+    });
+    await start(f);
+    await expect(f.auth().waitForApproval()).rejects.toMatchObject({
+      code: "authentication_required",
+    });
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(0);
+  });
+
+  it("preserves the claim if cancelled between polls", async () => {
+    let cancelled = true;
+    const f = fixture(() =>
+      cancelled ? Promise.reject(new Error("cancelled")) : Promise.resolve()
+    );
+    await start(f);
+    await expect(f.auth().waitForApproval()).rejects.toThrow("cancelled");
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(false);
+    cancelled = false;
+    f.replies.push(response(tokens));
+    expect(JSON.parse(await f.auth().waitForApproval()).status).toBe(
+      "authenticated"
+    );
+  });
+
+  it("stops on denial without selecting or replaying the claim", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(response({ error: "access_denied" }, 400));
+    const select = vi.fn();
+    await expect(
+      runAgentCommand(
+        parseArguments(["login", "--complete", "--wait", "--json"]),
+        f.auth(),
+        select
+      )
+    ).rejects.toMatchObject({ code: "access_denied" });
+    expect(select).not.toHaveBeenCalled();
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(1);
+  });
+
+  it("never reports a fully expired connection as a completed sign-in", async () => {
+    const f = fixture();
+    await signIn(f);
+    f.advance(3_600_000);
+    await expect(f.auth().waitForApproval()).rejects.toMatchObject({
+      code: "authentication_expired",
+    });
+  });
+
+  it("selects only after approval, prints one final result and keeps selection after logout", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push(
+      response({ error: "authorization_pending" }, 400),
+      response(tokens)
+    );
+    let selection = "browser";
+    const select = vi.fn(() => {
+      selection = "agent";
+      return Promise.resolve();
+    });
+    const output = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      await runAgentCommand(
+        parseArguments(["auth", "complete", "--json"]),
+        f.auth(),
+        select
+      );
+      expect(selection).toBe("browser");
+      output.mockClear();
+      await runAgentCommand(
+        parseArguments(["login", "--complete", "--wait", "--json"]),
+        f.auth(),
+        select
+      );
+      expect(selection).toBe("agent");
+      expect(output).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(output.mock.calls[0]?.[0]).data.status).toBe(
+        "authenticated"
+      );
+      f.replies.push(response({}), response({}));
+      await runAgentCommand(
+        parseArguments(["logout", "--auth", "agent", "--json"]),
+        f.auth(),
+        select
+      );
+      expect(selection).toBe("agent");
+      await expect(f.auth().accessToken()).rejects.toMatchObject({
+        code: "authentication_required",
+      });
+    } finally {
+      output.mockRestore();
+    }
+  });
+});
+
+it("can retry saving the connection after a successful single-use exchange", async () => {
+  const f = fixture();
+  await start(f);
+  f.replies.push(response(tokens));
+  const select = vi
+    .fn<() => Promise<void>>()
+    .mockRejectedValueOnce(new Error("disk unavailable"))
+    .mockImplementation(() => Promise.resolve());
+  const output = vi.spyOn(console, "log").mockImplementation(() => {});
+  try {
+    const args = parseArguments(["login", "--complete", "--wait", "--json"]);
+    await expect(runAgentCommand(args, f.auth(), select)).rejects.toThrow(
+      "disk unavailable"
+    );
+    expect(output).not.toHaveBeenCalled();
+    await runAgentCommand(args, f.auth(), select);
+    expect(select).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(output.mock.calls[0]?.[0]).data.status).toBe(
+      "authenticated"
+    );
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(1);
+  } finally {
+    output.mockRestore();
+  }
 });

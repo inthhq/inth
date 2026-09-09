@@ -104,14 +104,12 @@ const started = await new AgentAuth(http, store).start("person@example.com", [
 ]);
 check(
   started.includes('"status":"pending"') &&
-    started.includes("inth login --complete --json") &&
+    started.includes("inth login --complete --wait --json") &&
     started.includes("&user_code=123456") &&
     !started.includes("native-claim"),
   "Claim leaked or status missing"
 );
-const pending = await new AgentAuth(http, store).complete();
-check(pending.includes('"status":"pending"'), "Pending claim failed");
-const complete = await new AgentAuth(http, store).complete();
+const complete = await new AgentAuth(http, store).waitForApproval();
 check(
   complete.includes('"status":"authenticated"') &&
     !complete.includes("native-access") &&

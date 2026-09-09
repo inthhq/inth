@@ -437,7 +437,23 @@ try {
     );
   }
   const stateFiles = await readdir(path.join(directory, "state"));
-  assert.deepEqual(stateFiles.toSorted(), ["config.json", "credentials.lock"]);
+  assert.deepEqual(stateFiles.toSorted(), [
+    "config.json",
+    "connection.json",
+    "credentials.lock",
+  ]);
+  assert.deepEqual(
+    JSON.parse(
+      await readFile(path.join(directory, "state", "connection.json"), "utf-8")
+    ),
+    { auth: "agent" }
+  );
+  const connectionInfo = await stat(
+    path.join(directory, "state", "connection.json")
+  );
+  if (process.platform !== "win32") {
+    assert.equal(connectionInfo.mode % 0o1000, 0o600);
+  }
 } finally {
   await rm(directory, { force: true, recursive: true });
 }

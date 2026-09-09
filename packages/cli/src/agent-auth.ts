@@ -92,7 +92,7 @@ export class AgentAuth {
     }
     return state.pending;
   }
-  private static statusValue(state: AgentState): string {
+  private static statusValue(state: AgentState, selected = false): string {
     const c = state.credentials;
     if (c) {
       return JSON.stringify({
@@ -100,9 +100,12 @@ export class AgentAuth {
         credentialSource: "auth.md",
         expiresAt: c.expiresAt,
         nextStep: {
-          command: "inth whoami --auth agent --json",
-          instruction:
-            "Signed in. Use --auth agent on subsequent CLI commands to use the approved permissions.",
+          command: selected
+            ? "inth whoami --json"
+            : "inth whoami --auth agent --json",
+          instruction: selected
+            ? "Signed in. This connection is selected for subsequent CLI commands."
+            : "Saved agent credentials are available. Complete sign-in to select this connection, or use --auth agent explicitly.",
         },
         scopes: c.scopes,
         status: "authenticated",
@@ -119,10 +122,10 @@ export class AgentAuth {
         nextStep: {
           command: p.exchanging
             ? "inth logout --auth agent --json"
-            : "inth login --complete --json",
+            : "inth login --complete --wait --json",
           instruction: p.exchanging
             ? "The approval exchange had an uncertain outcome. Disconnect and start sign-in again."
-            : "Give verificationUri and userCode to the person. They can sign in or create an account and approve access. After approval, run the next command; if still pending, retry after nextPollAt.",
+            : "Show verificationUri and userCode to the person, then immediately run the next command in a background terminal. It waits for approval and completes sign-in automatically; do not wait for the person to say done.",
         },
         scopes: p.scopes,
         status: p.exchanging ? "uncertain" : "pending",
@@ -250,13 +253,39 @@ export class AgentAuth {
       );
     }
   }
-  async complete(): Promise<string> {
+  private requireActiveConnection(credentials: AgentCredentials): void {
+    if (
+      Math.max(credentials.expiresAt, credentials.assertionExpiresAt) <=
+      this.http.clock.now()
+    ) {
+      throw new CliError(
+        "authentication_expired",
+        "Your connection expired. Run inth logout --auth agent, then inth login --email <email> --json to sign in again."
+      );
+    }
+  }
+  async complete(deadline = Number.POSITIVE_INFINITY): Promise<string> {
     const metadata = await this.discover();
+    // Sleep outside the lock so logout and another CLI process can proceed.
+    const before = await this.read();
+    if (before.pending && !before.pending.exchanging) {
+      await this.http.clock.sleep(
+        Math.max(
+          0,
+          Math.min(
+            before.pending.nextPollAt,
+            before.pending.claimExpiresAt,
+            deadline
+          ) - this.http.clock.now()
+        )
+      );
+    }
     let output = "";
     await this.store.exclusive(async () => {
       const state = await this.read();
       if (state.credentials) {
-        output = AgentAuth.statusValue(state);
+        this.requireActiveConnection(state.credentials);
+        output = AgentAuth.statusValue(state, true);
         return;
       }
       const p = AgentAuth.pending(state);
@@ -266,9 +295,16 @@ export class AgentAuth {
           "The claim expired. Run inth logout --auth agent, then start again."
         );
       }
-      await this.http.clock.sleep(
-        Math.max(0, p.nextPollAt - this.http.clock.now())
-      );
+      if (this.http.clock.now() >= deadline) {
+        throw new CliError(
+          "approval_timeout",
+          "Still waiting for browser approval. Your sign-in is saved. Run inth login --complete --wait --json to resume waiting."
+        );
+      }
+      if (p.nextPollAt > this.http.clock.now()) {
+        output = AgentAuth.statusValue(state);
+        return;
+      }
       // Persist before the single-use request. A crash or ambiguous network error cannot replay it.
       p.exchanging = true;
       await this.write(state);
@@ -303,7 +339,8 @@ export class AgentAuth {
           await this.write(state);
           if (
             error.code === "authorization_pending" ||
-            error.code === "slow_down"
+            error.code === "slow_down" ||
+            response.status === 429
           ) {
             output = AgentAuth.statusValue(state);
             return;
@@ -334,9 +371,30 @@ export class AgentAuth {
       }
       credentials.expiresAt += issuedAt;
       await this.write({ credentials });
-      output = AgentAuth.statusValue({ credentials });
+      output = AgentAuth.statusValue({ credentials }, true);
     });
     return output;
+  }
+  async waitForApproval(timeoutMs = 600_000): Promise<string> {
+    const deadline = this.http.clock.now() + timeoutMs;
+    for (;;) {
+      // eslint-disable-next-line no-await-in-loop -- Each poll observes the saved server interval and releases the credential lock.
+      const output = await this.complete(deadline);
+      // SAFETY: This is the sanitized status produced by complete in both runtimes.
+      const status = JSON.parse(output) as {
+        status: string;
+        expiresAt: number;
+      };
+      if (status.status === "authenticated") {
+        return output;
+      }
+      if (status.expiresAt <= this.http.clock.now()) {
+        throw new CliError(
+          "authentication_expired",
+          "The approval link expired. Run inth auth retry --json and show the new link, then resume waiting. Your setup can continue after sign-in."
+        );
+      }
+    }
   }
   async retry(): Promise<string> {
     const metadata = await this.discover();

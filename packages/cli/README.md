@@ -104,7 +104,7 @@ The resource commands follow [public API PR #1756](https://github.com/inthhq/mon
 
 ## Sign in from an agent
 
-Use `inth login --email <email> --json` to sign in, or `inth signup --email <email> --json` to create an account. These commands send the email and requested permissions to Inth and return an approval link and code. Give both to the person. They sign in or create their account in the browser, then approve access. Run `inth login --complete --json` after approval. Results include `nextStep.command` and `nextStep.instruction`; use `--auth agent` on subsequent resource commands.
+Use `inth login --email <email> --json` to sign in, or `inth signup --email <email> --json` to create an account. These commands send the email and requested permissions to Inth and return an approval link and code. Give both to the person. They sign in or create their account in the browser, then approve access. Immediately run `inth login --complete --wait --json` in a background terminal. It waits for browser approval, finishes sign-in, and selects the connection for subsequent commands. Results include `nextStep.command` and `nextStep.instruction`. A timeout or Ctrl+C preserves the pending sign-in; run the waiting command again to resume.
 
 For c15t provisioning, request `--scopes organizations.read,organizations.write,projects.read,projects.write`. General API access requires the accompanying backend deployment and account rollout. See [auth.md sign-in](docs/agent-auth-integration.md) for approval, storage, expiry and deployment requirements.
 

@@ -14,6 +14,8 @@ import { dirname, join } from "node:path";
 
 import { z } from "zod";
 
+import { parseConnection } from "../../src/connection-selection.ts";
+
 export const stateDirectory = (): string => {
   const home = homedir();
   if (process.platform === "darwin") {
@@ -74,6 +76,26 @@ export class OrganizationContext {
   }
   defaultOrganization(): Promise<string | undefined> {
     return readOrganization(join(this.directory, "config.json"));
+  }
+  async selectedConnection(): Promise<string | undefined> {
+    let source: string;
+    try {
+      source = await readFile(join(this.directory, "connection.json"), "utf-8");
+    } catch (error) {
+      if (error instanceof Error && error.message.startsWith("ENOENT:")) {
+        return undefined;
+      }
+      throw error;
+    }
+    return parseConnection(source);
+  }
+  async selectConnection(auth: string): Promise<void> {
+    const source = JSON.stringify({ auth });
+    parseConnection(source);
+    await privateDirectory(this.directory);
+    const temporary = join(this.directory, `connection.${randomUUID()}.tmp`);
+    await writeFile(temporary, source, { flag: "wx", mode: 0o600 });
+    await rename(temporary, join(this.directory, "connection.json"));
   }
   async resolve(explicit?: string): Promise<string | undefined> {
     if (explicit) {

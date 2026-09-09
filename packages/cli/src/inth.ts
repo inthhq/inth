@@ -4,10 +4,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { AgentAuth } from "./agent-auth.ts";
-import {
-  requireAgentCredentialSelection,
-  runAgentCommand,
-} from "./agent-commands.ts";
+import { runAgentCommand } from "./agent-commands.ts";
 import { agentEnvironment, agentStateDirectory } from "./agent-environment.ts";
 import type { AccessTokenProvider } from "./agent-types.ts";
 import { apiKey } from "./api-options.ts";
@@ -15,6 +12,7 @@ import type { CliArguments } from "./arguments.ts";
 import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
 import { CliError } from "./cli-error.ts";
+import { selectCommandConnection } from "./connection-selection.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
 import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
 import { identitySummary } from "./identity.ts";
@@ -113,6 +111,7 @@ const runLogin = async (
         console.log("Waiting for approval. Press Ctrl+C to cancel.");
       },
     });
+    await context.selectConnection("browser");
     console.log("Signed in.");
     const organizations = await api.organizations();
     if (organizations.length === 0 && !options.organization) {
@@ -255,7 +254,8 @@ const runOrganizationCreate = async (
 };
 const runAgentAccountCommand = async (
   options: CliArguments,
-  getAgent: () => AgentAuth
+  getAgent: () => AgentAuth,
+  context: NativeContext
 ): Promise<boolean> => {
   if (
     options.authMode !== "agent" ||
@@ -263,7 +263,9 @@ const runAgentAccountCommand = async (
   ) {
     return false;
   }
-  return runAgentCommand(options, getAgent());
+  return runAgentCommand(options, getAgent(), () =>
+    context.selectConnection("agent")
+  );
 };
 
 const run = async (options: CliArguments): Promise<void> => {
@@ -285,7 +287,7 @@ const run = async (options: CliArguments): Promise<void> => {
   const environment = agentEnvironment(
     process.env.INTH_DEV_API_ORIGIN,
     process.env.INTH_DEV_DASHBOARD_ORIGIN,
-    options.authMode
+    options.authMode ?? "agent"
   );
   if (options.command === "mcp") {
     diagnosticStep("mcp_command");
@@ -294,10 +296,15 @@ const run = async (options: CliArguments): Promise<void> => {
   }
   const allowInteractive = promptsAllowed(options);
   const key = apiKey(options.token, process.env.INTH_TOKEN);
-  requireAgentCredentialSelection(options, key);
   // Preserve the existing native sign-in and defaults while Node/yao retain their own store.
   const directory = agentStateDirectory(nativeStateDirectory(), environment);
   const context = new NativeContext(directory, process.cwd());
+  await selectCommandConnection(
+    options,
+    key,
+    () => context.selectedConnection(),
+    environment
+  );
   const http = nativeHttp(controller.signal, nativeClock(controller.signal));
   const getStore = (): NativeStore => {
     mkdirSync(dirname(directory), { recursive: true });
@@ -349,7 +356,7 @@ const run = async (options: CliArguments): Promise<void> => {
     observeIdentity,
     environment.apiOrigin
   );
-  if (await runAgentAccountCommand(options, getAgent)) {
+  if (await runAgentAccountCommand(options, getAgent, context)) {
     return;
   }
   if (options.command === "login") {

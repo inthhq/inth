@@ -8,6 +8,7 @@ export default defineConfig({
       ...configDefaults.exclude,
       "**/inrepo_modules/**",
       "**/.inrepo/**",
+      "**/e2e/**",
     ],
     passWithNoTests: true,
   },

@@ -31,6 +31,11 @@ const validateCommandOptions = (result: CliArguments): void => {
       !(command === "api" && ["method", "data"].includes(entry.name)) &&
       !(
         command === "auth" &&
+        result.argument === "complete" &&
+        ["wait", "timeout"].includes(entry.name)
+      ) &&
+      !(
+        command === "auth" &&
         result.argument === "start" &&
         ["email", "scopes", "yes"].includes(entry.name)
       )
@@ -114,6 +119,21 @@ const validateCredentialMode = (result: CliArguments): void => {
   }
 };
 const validateAuthArguments = (result: CliArguments): void => {
+  const timeout = result.values.find(
+    (entry) => entry.name === "timeout"
+  )?.value;
+  if (
+    timeout !== undefined &&
+    (!result.values.some((entry) => entry.name === "wait") ||
+      !/^\d+$/u.test(timeout) ||
+      Number(timeout) < 1 ||
+      Number(timeout) > 3600)
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Use --timeout with --wait, from 1 to 3600 seconds."
+    );
+  }
   if (
     result.command === "auth" &&
     ![
@@ -250,7 +270,12 @@ const normalizeAccountSignIn = (result: CliArguments): void => {
       "Use inth login --email <email> --json, or inth login --complete --json."
     );
   }
-  if (complete && result.values.some((entry) => entry.name !== "complete")) {
+  if (
+    complete &&
+    result.values.some(
+      (entry) => !["complete", "wait", "timeout"].includes(entry.name)
+    )
+  ) {
     throw new CliError(
       "usage_error",
       "Use inth login --complete without email, scopes, or approval options."
@@ -358,7 +383,7 @@ export const parseArguments = (args: string[]): CliArguments => {
       result.version = true;
     } else if (arg === "--no-browser") {
       result.noBrowser = true;
-    } else if (["--dry-run", "--yes", "--complete"].includes(arg)) {
+    } else if (["--dry-run", "--yes", "--complete", "--wait"].includes(arg)) {
       setOption(result, arg.slice(2), "true");
     } else if (arg === "--json") {
       result.json = true;

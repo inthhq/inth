@@ -4,18 +4,6 @@ import { CAPABILITIES } from "./auth-types.ts";
 import { CliError } from "./cli-error.ts";
 import { printResult } from "./output.ts";
 
-export const requireAgentCredentialSelection = (
-  options: CliArguments,
-  key?: string
-): void => {
-  if (options.authMode === "agent" && key) {
-    throw new CliError(
-      "usage_error",
-      "--auth agent cannot be combined with --token or INTH_TOKEN. Unset the API key to use the approved agent credential."
-    );
-  }
-};
-
 export const requestedAgentScopes = (value?: string): string[] => {
   const scopes = (value ?? "organizations.read")
     .split(",")
@@ -31,7 +19,8 @@ export const requestedAgentScopes = (value?: string): string[] => {
 
 export const runAgentCommand = async (
   options: CliArguments,
-  auth: AgentAuth
+  auth: AgentAuth,
+  selectConnection: () => Promise<void>
 ): Promise<boolean> => {
   if (
     options.authMode !== "agent" ||
@@ -57,7 +46,19 @@ export const runAgentCommand = async (
       )
     );
   } else if (options.argument === "complete") {
-    output = await auth.complete();
+    output = options.values.some((entry) => entry.name === "wait")
+      ? await auth.waitForApproval(
+          Number(
+            options.values.find((entry) => entry.name === "timeout")?.value ??
+              "600"
+          ) * 1000
+        )
+      : await auth.complete();
+    // SAFETY: Auth status is produced by AgentAuth, never by an API response.
+    const status = JSON.parse(output) as { status: string };
+    if (status.status === "authenticated") {
+      await selectConnection();
+    }
   } else if (options.argument === "retry") {
     output = await auth.retry();
   } else if (options.argument === "organizations") {
@@ -79,7 +80,8 @@ export const runAgentCommand = async (
 
 export const runSelectedAgentCommand = async (
   options: CliArguments,
-  getAgent: () => Promise<AgentAuth>
+  getAgent: () => Promise<AgentAuth>,
+  selectConnection: () => Promise<void>
 ): Promise<boolean> => {
   if (
     options.authMode !== "agent" ||
@@ -87,5 +89,5 @@ export const runSelectedAgentCommand = async (
   ) {
     return false;
   }
-  return runAgentCommand(options, await getAgent());
+  return runAgentCommand(options, await getAgent(), selectConnection);
 };

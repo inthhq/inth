@@ -14,8 +14,8 @@ describe("human help and machine discovery", () => {
   it("makes account sign-in discoverable in the first screen without protocol knowledge", () => {
     const firstScreen = formatHelp().split("\n").slice(0, 20).join("\n");
     expect(firstScreen).toContain("inth login --email <email> --json");
-    expect(firstScreen).toContain("inth login --complete --json");
-    expect(firstScreen).toContain("--auth agent");
+    expect(firstScreen).toContain("inth login --complete --wait --json");
+    expect(firstScreen).toContain("Approval selects this connection");
     const login = COMMAND_METADATA.find((entry) => entry.command === "login");
     expect(login?.options).toContainEqual(
       expect.objectContaining({ name: "email" })
@@ -139,4 +139,39 @@ it.each([
   const args = parseArguments([command, value, "--help"]);
   expect(args.help).toBe(true);
   expect(formatHelp(args.command, args.argument)).toBe(formatHelp(command));
+});
+
+it.each(["login", "signup"])(
+  "supports bounded waiting through %s",
+  (command) => {
+    expect(
+      parseArguments([
+        command,
+        "--complete",
+        "--wait",
+        "--timeout",
+        "30",
+        "--json",
+      ])
+    ).toMatchObject({
+      argument: "complete",
+      authMode: "agent",
+      command: "auth",
+    });
+  }
+);
+it.each([
+  ["login", "--wait"],
+  ["login", "--email", "person@example.com", "--wait", "--json"],
+  ["auth", "status", "--wait"],
+  ["login", "--complete", "--timeout", "30"],
+  ...["0", "-1", "1.5", "3601", "Infinity", "NaN"].map((timeout) => [
+    "login",
+    "--complete",
+    "--wait",
+    "--timeout",
+    timeout,
+  ]),
+])("rejects invalid wait flags: %j", (...args) => {
+  expect(() => parseArguments(args)).toThrow();
 });

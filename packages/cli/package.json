@@ -59,11 +59,13 @@
     "test": "node scripts/test-scriptc.ts",
     "bench:probe": "node scripts/benchmark.ts",
     "test:package": "node scripts/verify-package.ts",
-    "package:native": "pnpm build:production && node scripts/package-native.ts"
+    "package:native": "pnpm build:production && node scripts/package-native.ts",
+    "test:e2e:agent": "node scripts/build-scriptc.ts --tests && playwright test --config playwright.agent.config.ts"
   },
   "devDependencies": {
     "@clack/prompts": "1.7.0",
     "@napi-rs/keyring": "2.0.0",
+    "@playwright/test": "1.63.0",
     "@types/node": "24.13.3",
     "@types/proper-lockfile": "4.1.4",
     "@yao-pkg/pkg": "6.22.0",

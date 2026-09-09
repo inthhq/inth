@@ -1,7 +1,4 @@
-import {
-  requireAgentCredentialSelection,
-  runSelectedAgentCommand,
-} from "../../src/agent-commands.ts";
+import { runSelectedAgentCommand } from "../../src/agent-commands.ts";
 import {
   agentEnvironment,
   agentStateDirectory,
@@ -9,6 +6,7 @@ import {
 import { parseArguments } from "../../src/arguments.ts";
 import type { CliArguments } from "../../src/arguments.ts";
 import { CliError } from "../../src/cli-error.ts";
+import { selectCommandConnection } from "../../src/connection-selection.ts";
 import { colorEnabled, organizationReference } from "../../src/display.ts";
 import { identitySummary } from "../../src/identity.ts";
 import type { OrganizationUI } from "../../src/organizations.ts";
@@ -212,19 +210,24 @@ export const run = async (
       options.version,
       options.command,
       options.argument,
-      process.stdout.columns || 80
+      process.stdout.columns
     );
     return;
   }
   const environment = agentEnvironment(
     process.env.INTH_DEV_API_ORIGIN,
     process.env.INTH_DEV_DASHBOARD_ORIGIN,
-    options.authMode
+    options.authMode || "agent"
   );
   const key = apiKey(options.token, process.env.INTH_TOKEN);
-  requireAgentCredentialSelection(options, key);
   const directory = agentStateDirectory(stateDirectory(), environment);
   const context = new OrganizationContext(directory, process.cwd());
+  await selectCommandConnection(
+    options,
+    key,
+    () => context.selectedConnection(),
+    environment
+  );
   const http = new HttpClient(
     (url, init) => fetch(url, init),
     systemClock(signal),
@@ -251,7 +254,11 @@ export const run = async (
   const getSelectedAuth = () =>
     options.authMode === "agent" ? getAgent() : getAuth();
   const api = new ApiClient(http, getSelectedAuth, key, environment.apiOrigin);
-  if (await runSelectedAgentCommand(options, getAgent)) {
+  if (
+    await runSelectedAgentCommand(options, getAgent, () =>
+      context.selectConnection("agent")
+    )
+  ) {
     return;
   }
   const allowInteractive = !options.json && !options.nonInteractive;
@@ -273,6 +280,7 @@ export const run = async (
       await auth.login({
         show: (device) => showDevice(device, options.noBrowser),
       });
+      await context.selectConnection("browser");
       console.log("Signed in.");
       await selectLoginOrganization(
         options,

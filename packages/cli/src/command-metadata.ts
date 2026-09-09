@@ -46,11 +46,23 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option("version", "boolean", "Show the CLI version"),
   option("complete", "boolean", "Check browser approval and finish signing in"),
   option(
+    "wait",
+    "boolean",
+    "Wait for browser approval and finish sign-in automatically"
+  ),
+  option(
+    "timeout",
+    "integer",
+    "Maximum approval wait in seconds, 1 through 3600",
+    [],
+    "600"
+  ),
+  option(
     "auth",
     "string",
-    "Saved credential to use",
+    "Override the selected saved connection",
     ["browser", "agent"],
-    "browser"
+    null
   ),
   option(
     "scopes",
@@ -247,7 +259,7 @@ const localExamples = (
       "inth login",
       "inth login --email <email> --json",
       "inth login --email <email> --scopes organizations.read,organizations.write,projects.read,projects.write --json",
-      "inth login --complete --json",
+      "inth login --complete --wait --json",
     ];
   }
   if (command === "mcp") {
@@ -290,12 +302,14 @@ export const COMMAND_METADATA: CommandMetadata[] = [
       "email",
       "scopes",
       "complete",
+      "wait",
+      "timeout",
       "yes",
     ],
     "none",
     [
       "With --email, sends the email and requested permissions to Inth and returns an approval URL and code. The person signs in or creates their account in the browser.",
-      "After approval, run inth login --complete --json. Use --auth agent on subsequent commands.",
+      "Show the approval link, then run inth login --complete --wait --json in the background. Successful sign-in selects this connection for subsequent commands.",
       "Without --email, opens interactive browser sign-in and saves a default organization.",
     ]
   ),
@@ -303,11 +317,11 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     "signup",
     "",
     "Create an account through browser approval",
-    ["email", "scopes", "complete", "yes"],
+    ["email", "scopes", "complete", "wait", "timeout", "yes"],
     "none",
     [
       "Sends the email and requested permissions to Inth. The person creates and verifies their account in the browser, then approves access.",
-      "After approval, run inth login --complete --json. Existing accounts can sign in on the same page.",
+      "Show the approval link, then run inth login --complete --wait --json in the background. Existing accounts can sign in on the same page.",
     ],
     " --email <email> --json"
   ),
@@ -357,8 +371,8 @@ export const COMMAND_METADATA: CommandMetadata[] = [
   localCommand(
     "auth",
     "complete",
-    "Check approval once and save auth.md credentials",
-    [],
+    "Finish approval and select the connection; add --wait to wait automatically",
+    ["wait", "timeout"],
     "agent",
     ["Consumes the single-use claim after human approval."]
   ),

@@ -92,11 +92,11 @@ export const formatHelp = (command = "", action = "", columns = 80): string => {
       "Sign in or create an account from an agent:",
       "  inth login --email <email> --json",
       wrapText(
-        "Give the person the returned approval URL and code. After approval:",
+        "Give the person the returned approval URL and code, then run:",
         width
       ),
-      "  inth login --complete --json",
-      "Use --auth agent on subsequent commands.",
+      "  inth login --complete --wait --json",
+      "Run the waiting command immediately in the background. Approval selects this connection.",
       wrapText(
         "For organization and project setup, add --scopes organizations.read,organizations.write,projects.read,projects.write to login.",
         width
