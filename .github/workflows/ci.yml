@@ -17,7 +17,7 @@ concurrency:
 jobs:
   check:
     name: Lint, types, and unit tests
-    runs-on: ubuntu-24.04
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -33,12 +33,20 @@ jobs:
       - run: pnpm lint && pnpm typecheck && pnpm test:unit
 
   native:
-    name: Native CLI on ${{ matrix.os }}
+    name: Native CLI on ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15, ubuntu-24.04, ubuntu-24.04-arm, windows-2025]
-    runs-on: ${{ matrix.os }}
+        include:
+          - platform: macOS arm64
+            runner: blacksmith-6vcpu-macos-15
+          - platform: Linux x64
+            runner: blacksmith-4vcpu-ubuntu-2404
+          - platform: Linux arm64
+            runner: blacksmith-4vcpu-ubuntu-2404-arm
+          - platform: Windows x64
+            runner: blacksmith-4vcpu-windows-2025
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
