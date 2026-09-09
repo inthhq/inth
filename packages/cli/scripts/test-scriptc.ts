@@ -450,7 +450,9 @@ const telemetryDirectory = await mkdtemp(
 try {
   const result = spawnSync(
     path.join(output, executable("telemetry-test")),
-    [telemetryDirectory],
+    // Let the CLI create its private state directory. Node's temporary parent
+    // inherits a Windows ACL that the native state checks correctly reject.
+    [path.join(telemetryDirectory, "state")],
     {
       encoding: "utf-8",
       timeout: 5000,
@@ -604,7 +606,7 @@ try {
   const { port } = z.object({ port: z.number() }).parse(server.address());
   const child = spawn(
     path.join(output, executable("transport-test")),
-    [`http://127.0.0.1:${port}`, identityDirectory],
+    [`http://127.0.0.1:${port}`, path.join(identityDirectory, "state")],
     { stdio: "inherit", timeout: 8000 }
   );
   const [status] = await once(child, "exit");

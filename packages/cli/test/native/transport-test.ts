@@ -179,7 +179,10 @@ check(
 );
 
 const identity = new NativeTelemetry(directory, false);
-identity.installationId();
+check(
+  identity.installationId().length === 36,
+  "Identity tests could not initialize private telemetry state."
+);
 check(
   (await identity.userId("browser-first", "", `${base}/telemetry/me`)) ===
     "user-one",
