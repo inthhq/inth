@@ -3,6 +3,7 @@ import { setTimeout } from "node:timers/promises";
 
 import type { Clock, OAuthResponse, OAuthTransport } from "../auth-types.ts";
 import { CliError } from "../cli-error.ts";
+import { diagnosticStep } from "../error-diagnostics.ts";
 import { HttpError } from "../http-error.ts";
 import type { ApiTransport } from "./native-api.ts";
 import { httpDate } from "./native-bindings.ts";
@@ -63,6 +64,7 @@ export const nativeHttp = (
     method = fields === null ? "GET" : "POST"
   ): Promise<OAuthResponse> => {
     for (let attempt = 0; ; attempt += 1) {
+      diagnosticStep("http_request");
       signal.throwIfAborted();
       const remaining = deadline - clock.now();
       if (remaining <= 0) {
@@ -104,6 +106,7 @@ export const nativeHttp = (
                 redirect: "error",
                 signal: timeout,
               });
+        diagnosticStep("http_response");
         body = await response.text();
       } catch {
         signal.throwIfAborted();
@@ -136,6 +139,7 @@ export const nativeHttp = (
   return {
     clock,
     device: async (response) => {
+      diagnosticStep("oauth_device");
       const body = await checkedBody(response);
       try {
         return parseDevice(body);
@@ -144,6 +148,7 @@ export const nativeHttp = (
       }
     },
     discovery: async (response) => {
+      diagnosticStep("oauth_discovery");
       const body = await checkedBody(response);
       try {
         return parseDiscovery(body);
@@ -161,6 +166,7 @@ export const nativeHttp = (
     send: (url, token, method, body) =>
       request(url, body ?? null, Number.POSITIVE_INFINITY, token, true, method),
     tokens: async (response, previousRefreshToken) => {
+      diagnosticStep("oauth_tokens");
       const body = await checkedBody(response);
       try {
         return parseTokens(body, previousRefreshToken);

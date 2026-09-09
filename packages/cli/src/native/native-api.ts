@@ -2,6 +2,7 @@ import { apiUrl } from "../api-options.ts";
 import type { AuthFlow } from "../auth-flow.ts";
 import type { OAuthResponse } from "../auth-types.ts";
 import { CliError } from "../cli-error.ts";
+import { diagnosticStep } from "../error-diagnostics.ts";
 import { HttpError } from "../http-error.ts";
 import type { IdentityResponse, MeResponse, UserProfile } from "../identity.ts";
 import {
@@ -14,6 +15,7 @@ import type {
   CreateOrganizationInput,
   OrganizationResponse,
 } from "../organizations.ts";
+import { telemetryUserId } from "../telemetry.ts";
 import { responseError } from "./native-protocol.ts";
 
 export interface ApiTransport {
@@ -39,6 +41,7 @@ const invalidResponse = (
   );
 };
 export const apiOutput = (response: OAuthResponse): string => {
+  diagnosticStep("api_decode");
   if (response.status === 204) {
     return "";
   }
@@ -57,7 +60,16 @@ export class NativeApi {
   private readonly http: ApiTransport;
   private readonly auth: () => AuthFlow;
   private readonly key: string | undefined;
-  constructor(http: ApiTransport, auth: () => AuthFlow, key?: string) {
+  private readonly observeIdentity: (token: string, userId: string) => void;
+  constructor(
+    http: ApiTransport,
+    auth: () => AuthFlow,
+    key?: string,
+    observeIdentity: (token: string, userId: string) => void = () => {
+      // Identity observation is optional for API callers.
+    }
+  ) {
+    this.observeIdentity = observeIdentity;
     this.http = http;
     this.auth = auth;
     this.key = key;
@@ -126,6 +138,9 @@ export class NativeApi {
     const auth = this.key ? undefined : this.auth();
     const result = await this.request(apiUrl("/v1/me"), auth);
     const value = NativeApi.parseMe(result.response);
+    if (auth) {
+      this.observeIdentity(result.token, telemetryUserId(value));
+    }
     if (
       !includeProfile ||
       !auth ||

@@ -1,3 +1,4 @@
+import { diagnosticStep } from "../error-diagnostics.ts";
 import { secretRead, secretWrite, secretDelete } from "./native-bindings.ts";
 
 const credentialError = (operation: string, status: number): string =>
@@ -13,6 +14,7 @@ export class NativeKeychain {
     this.account = account;
   }
   read(): string | null {
+    diagnosticStep("credential_read");
     let value: string | null = null;
     const status = secretRead(this.service, this.account, (received) => {
       value = received;
@@ -26,12 +28,14 @@ export class NativeKeychain {
     return value;
   }
   write(value: string): void {
+    diagnosticStep("credential_write");
     const status = secretWrite(this.service, this.account, value);
     if (status !== 0) {
       throw new Error(credentialError("write", status));
     }
   }
   clear(): void {
+    diagnosticStep("credential_delete");
     const status = secretDelete(this.service, this.account);
     if (status !== 0 && status !== -25_300) {
       throw new Error(credentialError("deletion", status));

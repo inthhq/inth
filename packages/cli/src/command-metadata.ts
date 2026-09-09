@@ -336,4 +336,18 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     "none",
     ["Removes only the Inth server entry."]
   ),
+  localCommand("telemetry", "enable", "Enable usage telemetry", [], "none", [
+    "Saves your telemetry preference and a random installation ID.",
+  ]),
+  localCommand("telemetry", "disable", "Disable usage telemetry", [], "none", [
+    "Disables telemetry and removes the installation ID.",
+  ]),
+  localCommand(
+    "telemetry",
+    "status",
+    "Show whether CLI telemetry is enabled",
+    [],
+    "none",
+    []
+  ),
 ];

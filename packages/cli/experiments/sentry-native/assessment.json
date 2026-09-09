@@ -1,0 +1,60 @@
+{
+  "backend": "inproc",
+  "binary_bytes": 302104,
+  "capture_exit_ms": 21,
+  "capture_frames": [
+    {
+      "function": "main",
+      "instruction_addr": "0x102140bfc"
+    },
+    {
+      "function": "inth_sentry_probe_capture",
+      "instruction_addr": "0x102140e78"
+    },
+    {
+      "function": "sentry_value_set_stacktrace",
+      "instruction_addr": "0x10215666c"
+    },
+    {
+      "function": "sentry_value_new_stacktrace",
+      "instruction_addr": "0x1021561c4"
+    },
+    {
+      "function": "sentry__unwind_stack_libunwind_mac",
+      "instruction_addr": "0x10215e864"
+    }
+  ],
+  "compiler": "scriptc@0.0.36",
+  "crash_delivered_before_restart": false,
+  "crash_frames": [
+    {
+      "function": "main",
+      "instruction_addr": "0x10038cb73"
+    },
+    {
+      "function": "inth_sentry_probe_crash",
+      "instruction_addr": "0x10038cf3b"
+    },
+    {
+      "function": "abort",
+      "instruction_addr": "0x18901d977"
+    },
+    {
+      "function": "pthread_kill",
+      "instruction_addr": "0x1891178d7"
+    },
+    {
+      "function": "__pthread_kill",
+      "instruction_addr": "0x1890dc5e8"
+    }
+  ],
+  "crash_type": "SIGABRT",
+  "dynamic_runtime": false,
+  "env_opt_out": "passed",
+  "live_sentry_delivery": "not tested",
+  "platform": "darwin-arm64",
+  "raw_argument_and_env_sentinels_absent": true,
+  "sdk": "sentry-native@0.16.2",
+  "source_commit": "724479b549a299ea8363994306b36a00c754fcba",
+  "stalled_server_exit_ms": 514
+}

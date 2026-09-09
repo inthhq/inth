@@ -10,6 +10,9 @@ import { z } from "zod";
 import { HELP } from "../src/help.ts";
 import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
+import { verifyTelemetry } from "./telemetry-checks.ts";
+
+process.env.INTH_TELEMETRY_DISABLED = "1";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const temporary = await mkdtemp(path.join(os.tmpdir(), "inth-native-package-"));
@@ -17,7 +20,10 @@ try {
   for (const script of ["build-scriptc.ts", "package-native.ts"]) {
     const result = spawnSync(
       process.execPath,
-      [path.join(root, "scripts", script)],
+      [
+        path.join(root, "scripts", script),
+        ...(script === "build-scriptc.ts" ? ["--production"] : []),
+      ],
       { cwd: root, encoding: "utf-8", timeout: 600_000 }
     );
     assert.equal(result.status, 0, result.stderr || result.stdout);
@@ -183,6 +189,7 @@ try {
   );
   assert.equal(missing.status, 1);
   assert.match(missing.stderr, /optional dependencies enabled/u);
+  await verifyTelemetry(binary);
   console.log(
     "Package checks passed: native executable, JSON and MCP commands, npm installation, platform selection, and missing-binary error."
   );

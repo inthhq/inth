@@ -1,4 +1,5 @@
 import { CliError } from "./cli-error.ts";
+import { diagnosticStep } from "./error-diagnostics.ts";
 import { COMMANDS, OPTIONS, formatHelp, helpCommands } from "./help.ts";
 import { HttpError } from "./http-error.ts";
 import { VERSION } from "./version.ts";
@@ -9,6 +10,7 @@ export const printResult = (
   message: string,
   data: string
 ): void => {
+  diagnosticStep("output_write");
   if (json) {
     console.log(`{"schemaVersion":2,"ok":true,"data":${data}}`);
   } else if (message) {

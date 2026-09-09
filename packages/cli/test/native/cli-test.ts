@@ -31,9 +31,16 @@ if (!directory) {
 const state = join(directory, "state");
 const project = join(directory, "project");
 check(prepareDirectory(state) === 0, "Cannot prepare private test state.");
+let observedToken = "";
 const store = new NativeStore(
   new NativeKeychain("com.inth.cli.commands-test", randomUUID()),
-  join(state, "credentials.lock")
+  join(state, "credentials.lock"),
+  () => {
+    /* No cancellation source in this fixture. */
+  },
+  (token) => {
+    observedToken = token;
+  }
 );
 const scenario = new AuthScenario();
 const http: OAuthTransport = {
@@ -53,6 +60,10 @@ try {
       check(device.user_code === "BENCH", "Wrong user code.");
     },
   });
+  check(
+    observedToken === "bench-first",
+    "Login did not expose the active credential to identity tracking."
+  );
   let requests = 0;
   const api = new NativeApi(
     {
@@ -88,7 +99,12 @@ try {
   );
   const response = await api.get("/v1/projects", "org-one");
   check(response.status === 200, "API request failed.");
+  check(
+    observedToken === "bench-second",
+    "Refresh left identity tracking on an old credential."
+  );
   await auth.logout();
+  check(observedToken === "", "Logout retained the observed credential.");
   check(scenario.position === 7, "Refresh or revocation was skipped.");
   check(
     apiOutput({

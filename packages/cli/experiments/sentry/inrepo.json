@@ -1,0 +1,18 @@
+{
+  "packages": [
+    {
+      "name": "@sentry/core",
+      "git": "https://github.com/getsentry/sentry-javascript.git",
+      "ref": "10.73.0",
+      "repositoryDirectory": "packages/core"
+    },
+    {
+      "name": "@sentry/conventions",
+      "module": "@sentry/conventions@0.16.0",
+      "git": "https://github.com/getsentry/sentry-conventions.git",
+      "ref": "0.16.0",
+      "repositoryDirectory": "javascript/sentry-conventions"
+    }
+  ],
+  "$schema": "https://raw.githubusercontent.com/inthhq/inrepo/main/inrepo.schema.json"
+}

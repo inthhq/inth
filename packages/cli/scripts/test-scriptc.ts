@@ -21,6 +21,11 @@ import { userIdentity, keyIdentity } from "../test/fixtures/identity.ts";
 import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
 import { nativeTarget } from "./native-target.ts";
+import { verifyDevelopmentTelemetry, verifySentry } from "./sentry-checks.ts";
+import { verifyTelemetry } from "./telemetry-checks.ts";
+
+// Native subprocesses must never send production analytics.
+process.env.INTH_TELEMETRY_DISABLED = "1";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const target = nativeTarget(
@@ -43,6 +48,24 @@ assert.equal(build.status, 0, "Static build failed.");
 const executable = (name: string): string =>
   name + (process.platform === "win32" ? ".exe" : "");
 const binary = path.join(root, "dist", executable("inth"));
+const developmentPackage = spawnSync(
+  process.execPath,
+  [path.join(root, "scripts/package-native.ts")],
+  { encoding: "utf-8", timeout: 5000 }
+);
+assert.notEqual(developmentPackage.status, 0);
+assert.match(developmentPackage.stderr, /Cannot package a development build/u);
+await verifySentry(
+  path.join(
+    root,
+    "build",
+    process.env.SCRIPTC_TARGET
+      ? `native-${target.platform}-${target.arch}`
+      : "native",
+    executable("sentry-test")
+  )
+);
+await verifyTelemetry(binary, false);
 verifyJson(binary);
 await verifyMcp(binary);
 const help = spawnSync(binary, ["--help"], {
@@ -135,6 +158,9 @@ const output = path.join(
   process.env.SCRIPTC_TARGET
     ? `native-${process.platform}-${process.arch}`
     : "native"
+);
+await verifyDevelopmentTelemetry(
+  path.join(output, executable("development-telemetry-test"))
 );
 if (process.platform === "win32") {
   for (const name of ["windows-console-test", "windows-credentials-test"]) {
@@ -418,6 +444,27 @@ for (const name of ["mcp-test", "keychain-test", "auth-test"]) {
   assert.equal(result.status, 0, result.stderr);
   console.log(result.stdout.trim());
 }
+const telemetryDirectory = await mkdtemp(
+  path.join(os.tmpdir(), "inth-telemetry-test-")
+);
+try {
+  const result = spawnSync(
+    path.join(output, executable("telemetry-test")),
+    // Let the CLI create its private state directory. Node's temporary parent
+    // inherits a Windows ACL that the native state checks correctly reject.
+    [path.join(telemetryDirectory, "state")],
+    {
+      encoding: "utf-8",
+      timeout: 5000,
+    }
+  );
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  console.log(result.stdout.trim());
+} finally {
+  await rm(telemetryDirectory, { force: true, recursive: true });
+}
+let identityRequests = 0;
+let telemetryRequests = 0;
 let retries = 0;
 let redirects = 0;
 let hung = 0;
@@ -436,7 +483,51 @@ const server = createServer((request, response) => {
     }
   };
   guard(() => {
-    if (request.url?.startsWith("/mutation/")) {
+    if (request.url === "/telemetry/me") {
+      identityRequests += 1;
+      assert.equal(request.method, "GET");
+      const token = request.headers.authorization;
+      assert.ok(
+        token === "Bearer browser-first" || token === "Bearer browser-second"
+      );
+      response.end(
+        JSON.stringify({
+          ...userIdentity,
+          data: {
+            ...userIdentity.data,
+            principal: {
+              type: "oauth",
+              userId:
+                token === "Bearer browser-first" ? "user-one" : "user-two",
+            },
+          },
+        })
+      );
+    } else if (request.url === "/telemetry/key") {
+      response.end(JSON.stringify(keyIdentity));
+    } else if (request.url === "/telemetry/invalid") {
+      response.end(
+        '{"success":true,"data":{"principal":{"type":"oauth","userId":42}}}'
+      );
+    } else if (request.url === "/telemetry") {
+      telemetryRequests += 1;
+      assert.equal(request.method, "POST");
+      assert.equal(request.headers.authorization, undefined);
+      let body = "";
+      request.on("data", (chunk) => {
+        body += chunk;
+      });
+      request.on("end", () =>
+        guard(() => {
+          const event = JSON.parse(body);
+          assert.equal(event.event, "cli_command_completed");
+          assert.equal(event.properties.command, "mcp list");
+          assert.equal(event.properties.source, "cli");
+          assert.equal(event.properties.$process_person_profile, false);
+          response.end("{}");
+        })
+      );
+    } else if (request.url?.startsWith("/mutation/")) {
       assert.equal(request.method, request.url.slice("/mutation/".length));
       assert.equal(request.headers.authorization, "Bearer inth_transport_test");
       let body = "";
@@ -508,12 +599,15 @@ const server = createServer((request, response) => {
 });
 server.listen(0, "127.0.0.1");
 await once(server, "listening");
+const identityDirectory = await mkdtemp(
+  path.join(os.tmpdir(), "inth-identity-cache-")
+);
 try {
   const { port } = z.object({ port: z.number() }).parse(server.address());
   const child = spawn(
     path.join(output, executable("transport-test")),
-    [`http://127.0.0.1:${port}`],
-    { stdio: "inherit", timeout: 5000 }
+    [`http://127.0.0.1:${port}`, path.join(identityDirectory, "state")],
+    { stdio: "inherit", timeout: 8000 }
   );
   const [status] = await once(child, "exit");
   assert.deepEqual(
@@ -524,11 +618,14 @@ try {
   assert.equal(status, 0, "Native HTTP checks failed or timed out.");
   assert.equal(retries, 2);
   assert.equal(redirects, 0);
-  assert.equal(hung, 1);
+  assert.equal(hung, 3);
+  assert.equal(identityRequests, 2);
+  assert.equal(telemetryRequests, 1);
   assert.equal(bearer, 1);
 } finally {
   const closed = once(server, "close");
   server.closeAllConnections();
   server.close();
   await closed;
+  await rm(identityDirectory, { force: true, recursive: true });
 }

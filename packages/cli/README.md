@@ -254,9 +254,34 @@ inth api /v1/projects/prj_123 --method PATCH --data '{"description":null}'
 
 Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. An explicit `organizationId` query parameter overrides organization defaults.
 
+## Usage telemetry
+
+Unexpected command errors also support Sentry reporting through the native SDK. The SDK initializes only after an unexpected error and only when a project DSN is configured. Successful commands, handled `CliError` and HTTP failures, cancellation, and recognized connection or filesystem failures do not initialize it. The same saved telemetry preference, `INTH_TELEMETRY_DISABLED`, and CI override control error reporting.
+
+Reports contain the CLI release and source revision, OS version and architecture, fixed command name, exception category, elapsed time, output mode, and up to 12 recent operations. Operation names are fixed labels such as `credential_read` and `resource_format`. Reports also include native stack addresses and function names and the already-known signed-in user ID or installation ID. Only exact code-defined failure messages and bounded numeric credential-store status codes are included. Arbitrary error text, raw arguments, environment values, request bodies, and absolute module paths are excluded. No extra identity lookup runs for Sentry. Caught-error frames start where reporting occurs; they do not recover the original TypeScript throw location. Events explicitly mark this as `stack_origin: report_site` and `original_stack_available: false`. Grouping uses command, exception type, diagnostic code, and last operation, so the shared reporting stack does not merge distinct known failures. Unknown failures of the same type within the same operation can still group together. Crash handlers are disabled.
+
+The report is sent once with a one-second HTTP timeout and no redirects, retries, or offline queue. Temporary SDK state is removed after the attempt. Reporting failures preserve the original command output and exit status. `src/sentry.ts` holds the public DSN; an empty DSN disables reporting. Building from source now requires CMake in addition to the existing native toolchain. The local Sentry test triggers a real credential-lock failure and saves the scrubbed event to `build/native/sentry-event-example.json` for inspection. It uses a loopback receiver and sends no live events.
+
+Production builds enable telemetry by default. Local `pnpm build`, `pnpm dev`, and `pnpm dev:link` builds disable PostHog and Sentry entirely, including the notice and telemetry identity lookup. `inth telemetry enable` saves a preference for production builds but cannot enable reporting in a development binary. Setting `NODE_ENV=production` at runtime cannot change the build mode. The CLI prints a one-time notice to stderr on the first interactive command. To opt out or check your preference:
+
+```sh
+inth telemetry disable
+inth telemetry status
+# Re-enable later.
+inth telemetry enable
+```
+
+Enabled installations send one `cli_command_completed` event to Inth's main PostHog project in the EU. Events identify signed-in browser users by their Inth user ID when the command accesses saved credentials. API-key usage and local commands that do not access credentials use a random installation ID. Events include the CLI library name, command name, outcome, duration, CLI version, production environment, OS, architecture, JSON and interactive mode, and the MCP client when supplied with `--agent`. Error categories come from a fixed list.
+
+Events exclude arguments, tokens, resource and organization IDs, file paths, API request and response bodies, and error messages. Signed-in events use PostHog person profiles. Installation events disable person-profile processing and are not merged into user profiles. GeoIP enrichment is disabled for all events. The ingestion service still receives the network request's IP address.
+
+`INTH_TELEMETRY_DISABLED=1` or a truthy `CI` value disables delivery even when enabled locally. Empty values, `0`, and `false` do not override the saved preference. Tests and benchmarks disable telemetry. Help, version, telemetry settings, and invocations rejected during argument parsing send no events.
+
+Delivery waits at most 1.5 seconds for the HTTP request, with no retries or offline queue. An uncached user identity can require a separate API lookup with the same 1.5-second limit. The local identity cache stores the verified user ID and a SHA-256 credential fingerprint, never the credential itself. Account changes cannot reuse another credential's cached identity. Failures do not change command output or exit status. Disabling telemetry removes the local installation ID and clears the cached user ID. Logout clears the cached user ID. Enabling it again creates a new ID.
+
 ## Packaging
 
-`pnpm --filter @inth/cli package:native` builds and packs the current target into `packages/cli/artifacts/`. `test:package` extracts that archive and checks the executable, JSON output, and MCP setup.
+`pnpm build:production` explicitly enables production reporting at build time. `pnpm --filter @inth/cli package:native` uses that production build and packs the current target into `packages/cli/artifacts/`. The packer rejects development builds. `test:package` extracts that archive and checks the executable, JSON output, and MCP setup.
 
 Once the first release is published, install `@inth/cli` with `npm install -g @inth/cli`. It selects the native package for Apple silicon Macs, Linux arm64/x64, or Windows x64. Users do not need to choose a platform package. The launcher uses Node.js; the native executable itself has no runtime npm dependencies.
 

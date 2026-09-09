@@ -10,12 +10,18 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const target = z
   .object({
     arch: z.enum(["arm64", "x64"]),
+    environment: z.enum(["development", "production"]),
     executable: z.enum(["inth", "inth.exe"]),
     platform: z.enum(["darwin", "linux", "win32"]),
   })
   .parse(
     JSON.parse(await readFile(path.join(root, "dist/target.json"), "utf-8"))
   );
+if (target.environment !== "production") {
+  throw new Error(
+    "Cannot package a development build. Run pnpm build:production first."
+  );
+}
 const source = z
   .object({ description: z.string(), license: z.string(), version: z.string() })
   .parse(JSON.parse(await readFile(path.join(root, "package.json"), "utf-8")));

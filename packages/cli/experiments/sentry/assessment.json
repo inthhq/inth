@@ -1,0 +1,29 @@
+{
+  "compiler": "scriptc@0.0.36",
+  "dynamic_runtime": false,
+  "network_delivery_tested": false,
+  "node_capture_and_flush": "passed",
+  "probes": [
+    {
+      "compiler_exit_code": 1,
+      "diagnostics": "<experiment>/inrepo_modules/@sentry/core/src/tracing/spans/captureSpan.ts:26:1 - error SC1010: the '@sentry/conventions/attributes' package (nothing installed resolves it) is not supported yet\n\n  25 | import { DEFAULT_ENVIRONMENT } from '../../constants';\n  26 | import {\n     | ^~~~~~~~\n  27 |   SENTRY_SDK_NAME,\n\n  hint: relative imports (./file, ../dir/file), package.json-mediated project imports (#alias via the imports field, self-name references via exports), installed npm packages (their code runs under --dynamic), and the built-in fs, fs/promises, path, os, url, crypto, zlib, child_process, net, http, tls, https, http2, dgram, dns, util, util/types, string_decoder, querystring, readline, events, stream, stream/promises, stream/consumers, buffer, assert, assert/strict, worker_threads, cluster, tty, async_hooks, timers, timers/promises, diagnostics_channel, perf_hooks, and module modules (bare or node:-prefixed) and node:test (node:-prefixed only, like in Node) are supported\n\n<experiment>/inrepo_modules/@sentry/core/src/tracing/spans/captureSpan.ts:32:8 - error SC0001: Cannot find module '@sentry/conventions/attributes' or its corresponding type declarations.\n\n  31 |   SENTRY_TRACE_LIFECYCLE,\n  32 | } from '@sentry/conventions/attributes';\n     |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n  33 | \n\n<experiment>/inrepo_modules/@sentry/core/src/utils/is.ts:156:17 - error SC0001: Cannot find name 'Element'. Did you mean 'isElement'?\n\n  155 | export function isElement(wat: unknown): boolean {\n  156 |   return typeof Element !== 'undefined' && isInstanceOf(wat, Element);\n      |                 ^~~~~~~\n  157 | }\n\n<experiment>/inrepo_modules/@sentry/core/src/utils/is.ts:156:62 - error SC0001: Cannot find name 'Element'. Did you mean 'isElement'?\n\n  155 | export function isElement(wat: unknown): boolean {\n  156 |   return typeof Element !== 'undefined' && isInstanceOf(wat, Element);\n      |                                                              ^~~~~~~\n  157 | }\n\n<experiment>/inrepo_modules/@sentry/core/src/utils/isBrowser.ts:9:17 - error SC0001: Cannot find name 'window'.\n\n   8 |   // eslint-disable-next-line no-restricted-globals\n   9 |   return typeof window !== 'undefined' && (!isNodeEnv() || isElectronNodeRenderer());\n     |                 ^~~~~~\n  10 | }\n\n<experiment>/inrepo_modules/@sentry/core/src/utils/time.ts:90:61 - error SC0001: Cannot find name 'Window'.\n\n  89 | function getBrowserTimeOrigin(): number | undefined {\n  90 |   const { performance } = GLOBAL_OBJ as typeof GLOBAL_OBJ & Window;\n     |                                                             ^~~~~~\n  91 |   if (!performance?.now) {\n\n6 errors.\n",
+      "entry": "core-probe.ts"
+    },
+    {
+      "compiler_exit_code": 1,
+      "diagnostics": "<experiment>/stack-probe.ts:8:17 - error SC2020: 'Error.stack' is part of the standard library types but has no scriptc lowering yet\n\n  7 |   if (error instanceof Error) {\n  8 |     console.log(error.stack || \"No stack available\");\n    |                 ^~~~~~~~~~~\n  9 |   }\n\n  hint: stack traces are not captured (frames would need runtime bookkeeping); name, message, and toString() are available\n\n1 error.\n",
+      "entry": "stack-probe.ts"
+    }
+  ],
+  "sdk": "@sentry/core@10.73.0",
+  "source_commits": {
+    "@sentry/conventions@0.16.0": {
+      "commit": "fd88fd9e5c0d3cab4c14bf58ba2e1131621737b1"
+    },
+    "@sentry/core": {
+      "commit": "f109d922f5971e2ade549b6c755524168b101818"
+    }
+  },
+  "source_typecheck": "passed",
+  "vendor_verify": "passed"
+}
