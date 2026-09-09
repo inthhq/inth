@@ -1,9 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { cp, mkdir, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { buildSentry } from "./build-sentry.ts";
 import { nativeTarget } from "./native-target.ts";
 import { signNative, signingIdentity } from "./sign-native.ts";
 
@@ -23,9 +24,14 @@ const output = path.join(
 );
 const binaries = path.join(root, "dist");
 const fixtures = process.argv.includes("--tests");
+const production = process.argv.includes("--production");
 const identity = signingIdentity(process.env.INTH_CODESIGN_IDENTITY);
-if (process.argv.slice(2).some((argument) => argument !== "--tests")) {
-  throw new Error("Usage: build-scriptc.ts [--tests]");
+if (
+  process.argv
+    .slice(2)
+    .some((argument) => !["--tests", "--production"].includes(argument))
+) {
+  throw new Error("Usage: build-scriptc.ts [--tests] [--production]");
 }
 const require = createRequire(import.meta.url);
 const run = (command: string, args: string[]): string => {
@@ -46,12 +52,26 @@ run(process.execPath, [
   "-p",
   "tsconfig.native.json",
 ]);
-const libraries: string[] = [];
-target.sources.push("native-mcp");
+const commit = spawnSync("git", ["rev-parse", "HEAD"], {
+  cwd: root,
+  encoding: "utf-8",
+});
+const revision = /^[0-9a-f]{40}$/u.test(commit.stdout?.trim() ?? "")
+  ? commit.stdout.trim()
+  : "unknown";
+const dirty = spawnSync("git", ["status", "--porcelain", "--", "."], {
+  cwd: root,
+  encoding: "utf-8",
+});
+const buildRevision = revision + (dirty.stdout?.trim() ? ".dirty" : "");
+const libraries = await buildSentry(root, target, output);
+target.sources.push("native-mcp", "native-build");
 for (const source of target.sources) {
   const object = path.join(output, `${source}.o`);
   run(target.compiler, [
     ...target.compilerArgs,
+    `-DINTH_PRODUCTION=${production ? 1 : 0}`,
+    `-DINTH_BUILD_REVISION="${buildRevision}"`,
     "-Wall",
     "-Wextra",
     "-Werror",
@@ -89,6 +109,35 @@ await writeFile(
     {
       ffi_format: 3,
       functions: [
+        {
+          name: "productionBuild",
+          params: [],
+          returns: "i32",
+          symbol: "inth_production_build",
+        },
+        {
+          name: "sentryCapture",
+          params: [
+            "string",
+            "string",
+            "string",
+            "string",
+            "string",
+            "string",
+            "string",
+            {
+              callback: {
+                id: "envelope",
+                lifetime: "call",
+                params: ["string", { context: "envelope" }],
+                returns: "void",
+              },
+            },
+            { context: "envelope" },
+          ],
+          returns: "i32",
+          symbol: "inth_sentry_capture",
+        },
         {
           name: "mcpTomlStatus",
           params: ["string"],
@@ -223,6 +272,44 @@ await writeFile(
     2
   )
 );
+// Positive telemetry fixtures use a separate production object. The CLI keeps
+// the requested build mode, and development regressions always use a dev object.
+const fixtureManifests = new Map<boolean, string>();
+if (fixtures) {
+  const contents = await readFile(manifest, "utf-8");
+  const writes: Promise<void>[] = [];
+  for (const enabled of [false, true]) {
+    const object = path.join(
+      output,
+      `native-build-${enabled ? "production" : "development"}.o`
+    );
+    run(target.compiler, [
+      ...target.compilerArgs,
+      `-DINTH_PRODUCTION=${enabled ? 1 : 0}`,
+      `-DINTH_BUILD_REVISION="${buildRevision}"`,
+      "-c",
+      "src/native/native-build.c",
+      "-o",
+      object,
+    ]);
+    const filename = path.join(
+      output,
+      `ffi-${enabled ? "production" : "development"}.json`
+    );
+    // Replace only the build object in the manifest just written above.
+    writes.push(
+      writeFile(
+        filename,
+        contents.replace(
+          JSON.stringify(path.join(output, "native-build.o")),
+          JSON.stringify(object)
+        )
+      )
+    );
+    fixtureManifests.set(enabled, filename);
+  }
+  await Promise.all(writes);
+}
 const entries = [{ name: "inth", source: "src/inth.ts" }];
 if (fixtures) {
   entries.push({ name: "auth-bench", source: "bench/native-auth.ts" });
@@ -232,6 +319,8 @@ if (fixtures) {
     "auth-test",
     "transport-test",
     "telemetry-test",
+    "sentry-test",
+    "development-telemetry-test",
     "cli-test",
     "ui-test",
     "output-test",
@@ -245,12 +334,21 @@ if (fixtures) {
   }
 }
 for (const entry of entries) {
+  let entryManifest = manifest;
+  if (
+    ["sentry-test", "telemetry-test", "transport-test"].includes(entry.name)
+  ) {
+    entryManifest = fixtureManifests.get(true) ?? manifest;
+  }
+  if (entry.name === "development-telemetry-test") {
+    entryManifest = fixtureManifests.get(false) ?? manifest;
+  }
   run(process.execPath, [
     require.resolve("scriptc/dist/bootstrap.js"),
     "build",
     entry.source,
     "--ffi",
-    manifest,
+    entryManifest,
     "-o",
     path.join(
       entry.name === "inth" ? binaries : output,
@@ -293,6 +391,7 @@ await writeFile(
   path.join(binaries, "target.json"),
   JSON.stringify({
     arch: target.arch,
+    environment: production ? "production" : "development",
     executable: target.executable,
     platform: target.platform,
   })

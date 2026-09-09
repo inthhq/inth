@@ -20,7 +20,10 @@ try {
   for (const script of ["build-scriptc.ts", "package-native.ts"]) {
     const result = spawnSync(
       process.execPath,
-      [path.join(root, "scripts", script)],
+      [
+        path.join(root, "scripts", script),
+        ...(script === "build-scriptc.ts" ? ["--production"] : []),
+      ],
       { cwd: root, encoding: "utf-8", timeout: 600_000 }
     );
     assert.equal(result.status, 0, result.stderr || result.stdout);

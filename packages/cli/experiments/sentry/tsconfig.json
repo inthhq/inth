@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "strictBindCallApply": false,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@sentry/conventions": [
+        "./inrepo_modules/@sentry/conventions@0.16.0/src/index.ts"
+      ],
+      "@sentry/conventions/*": [
+        "./inrepo_modules/@sentry/conventions@0.16.0/src/*.ts"
+      ]
+    }
+  },
+  "include": ["core-probe.ts", "stack-probe.ts"]
+}

@@ -5,7 +5,10 @@ import os from "node:os";
 
 import { z } from "zod";
 
-export const verifyTelemetry = async (binary: string): Promise<void> => {
+export const verifyTelemetry = async (
+  binary: string,
+  production = true
+): Promise<void> => {
   const directory = await mkdtemp(`${os.tmpdir()}/inth-telemetry-cli-`);
   try {
     const run = (action: string, disabled = "", ci = ""): boolean => {
@@ -17,6 +20,7 @@ export const verifyTelemetry = async (binary: string): Promise<void> => {
           CI: ci,
           HOME: directory,
           INTH_TELEMETRY_DISABLED: disabled,
+          NODE_ENV: "production",
           USERPROFILE: directory,
           XDG_STATE_HOME: directory,
         },
@@ -34,14 +38,14 @@ export const verifyTelemetry = async (binary: string): Promise<void> => {
         .parse(JSON.parse(result.stdout));
       return output.data.enabled;
     };
-    assert.equal(run("status"), true);
+    assert.equal(run("status"), production);
     assert.equal(run("disable"), false);
     assert.equal(run("status"), false);
-    assert.equal(run("enable"), true);
-    assert.equal(run("status"), true);
+    assert.equal(run("enable"), production);
+    assert.equal(run("status"), production);
     assert.equal(run("status", "1"), false);
     assert.equal(run("status", "", "true"), false);
-    assert.equal(run("status", "0", "false"), true);
+    assert.equal(run("status", "0", "false"), production);
     assert.equal(run("disable"), false);
     assert.equal(run("status"), false);
     console.log(

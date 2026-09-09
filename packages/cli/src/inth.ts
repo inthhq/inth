@@ -9,18 +9,21 @@ import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
 import { CliError } from "./cli-error.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
+import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
 import { identitySummary } from "./identity.ts";
 import { NativeApi, apiOutput } from "./native/native-api.ts";
 import {
   openBrowser,
   outputColumns,
   prepareDirectory,
+  productionBuild,
 } from "./native/native-bindings.ts";
 import { nativeClock, nativeHttp } from "./native/native-http.ts";
 import { NativeKeychain } from "./native/native-keychain.ts";
 import { runMcp } from "./native/native-mcp.ts";
 import { httpsUrl } from "./native/native-protocol.ts";
 import { formatNativeResource } from "./native/native-resource-output.ts";
+import { reportUnexpectedError } from "./native/native-sentry.ts";
 import { NativeContext } from "./native/native-state.ts";
 import { NativeStore } from "./native/native-store.ts";
 import {
@@ -45,7 +48,6 @@ import {
   resourceCommand,
 } from "./resource-commands.ts";
 import {
-  sendTelemetry,
   telemetryCommand,
   telemetryError,
   telemetryPayload,
@@ -191,13 +193,13 @@ const runTelemetry = (options: CliArguments): void => {
     telemetry.setEnabled(options.argument === "enable");
   }
   const enabled = telemetry.enabled();
-  printResult(
-    options.json,
-    enabled
+  let message = "Usage telemetry is disabled in development builds.";
+  if (productionBuild() === 1) {
+    message = enabled
       ? "Usage telemetry is enabled. To opt out, run `inth telemetry disable`."
-      : "Usage telemetry is disabled. To enable it, run `inth telemetry enable`. INTH_TELEMETRY_DISABLED and CI override the saved preference.",
-    JSON.stringify({ enabled })
-  );
+      : "Usage telemetry is disabled. To enable it, run `inth telemetry enable`. INTH_TELEMETRY_DISABLED and CI override the saved preference.";
+  }
+  printResult(options.json, message, JSON.stringify({ enabled }));
 };
 
 const runResource = async (
@@ -216,6 +218,7 @@ const runResource = async (
     request.scoped ? await context.resolve(options.organization) : undefined
   );
   const output = apiOutput(response);
+  diagnosticStep("resource_format");
   const message =
     options.json || options.command === "api"
       ? output
@@ -230,6 +233,7 @@ const promptsAllowed = (options: CliArguments): boolean =>
   !options.json && !options.nonInteractive;
 
 const run = async (options: CliArguments): Promise<void> => {
+  diagnosticStep("command_setup");
   if (options.version || options.help || !options.command) {
     printHelp(
       options.json,
@@ -245,6 +249,7 @@ const run = async (options: CliArguments): Promise<void> => {
     return;
   }
   if (options.command === "mcp") {
+    diagnosticStep("mcp_command");
     await runMcp(options, controller.signal);
     return;
   }
@@ -342,6 +347,8 @@ let installationId = "";
 let options: CliArguments | undefined;
 const started = Date.now();
 try {
+  startErrorDiagnostics();
+  diagnosticStep("argument_parse");
   options = parseArguments(process.argv.slice(2));
   if (
     telemetryCommand(options) &&
@@ -378,6 +385,18 @@ try {
     failure,
     controller.signal.aborted
   );
+  // SDK initialization and transmission happen only on the unexpected-error path.
+  try {
+    await reportUnexpectedError(
+      failure,
+      controller.signal.aborted,
+      options,
+      nativeStateDirectory(),
+      options?.token || process.env.INTH_TOKEN ? "" : knownTelemetryUser
+    );
+  } catch {
+    // Preserve the original output and exit status even if state resolution fails.
+  }
 }
 if (options && installationId) {
   const duration = Date.now() - started;
@@ -394,7 +413,7 @@ if (options && installationId) {
     options.token || process.env.INTH_TOKEN
       ? ""
       : await telemetry.userId(telemetryToken, knownTelemetryUser);
-  await sendTelemetry(
+  await telemetry.send(
     telemetryPayload(
       options,
       installationId,

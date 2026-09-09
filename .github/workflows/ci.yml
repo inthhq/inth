@@ -63,7 +63,7 @@ jobs:
           "SCRIPTC_TARGET=x86_64-windows-gnu" >> $env:GITHUB_ENV
       - name: Install Linux credential service
         if: runner.os == 'Linux'
-        run: sudo apt-get update -qq && sudo apt-get install -y clang zlib1g-dev libsecret-1-0 gnome-keyring dbus-x11
+        run: sudo apt-get update -qq && sudo apt-get install -y clang cmake zlib1g-dev libsecret-1-0 gnome-keyring dbus-x11
       - run: pnpm install --frozen-lockfile
       - name: Native and package tests on Linux
         if: runner.os == 'Linux'

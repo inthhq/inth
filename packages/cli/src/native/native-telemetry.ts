@@ -7,10 +7,16 @@ import { API_ORIGIN } from "../auth-types.ts";
 import type { MeResponse } from "../identity.ts";
 import {
   formatTelemetryNotice,
+  sendTelemetry,
+  TELEMETRY_URL,
   telemetryUserId,
   TELEMETRY_TIMEOUT_MS,
 } from "../telemetry.ts";
-import { prepareDirectory, writeConfig } from "./native-bindings.ts";
+import {
+  prepareDirectory,
+  productionBuild,
+  writeConfig,
+} from "./native-bindings.ts";
 
 export const telemetryDisabled = (
   disabled: string | undefined,
@@ -31,7 +37,7 @@ export class NativeTelemetry {
   private readonly disabled: boolean;
   constructor(directory: string, disabled: boolean) {
     this.directory = directory;
-    this.disabled = disabled;
+    this.disabled = disabled || productionBuild() !== 1;
   }
   enabled(): boolean {
     if (this.disabled) {
@@ -39,6 +45,9 @@ export class NativeTelemetry {
     }
     const value = this.preference();
     return value === "" || validId(value);
+  }
+  async send(body: string, destination = TELEMETRY_URL): Promise<boolean> {
+    return this.enabled() ? await sendTelemetry(body, destination) : false;
   }
   installationId(): string {
     if (this.disabled) {

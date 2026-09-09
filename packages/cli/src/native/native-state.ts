@@ -3,10 +3,12 @@ import { mkdir, readFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
 
+import { diagnosticStep } from "../error-diagnostics.ts";
 import { organizationId } from "../organizations.ts";
 import { prepareDirectory, writeConfig } from "./native-bindings.ts";
 
 const read = async (filename: string): Promise<string | undefined> => {
+  diagnosticStep("config_read");
   let source: string;
   try {
     source = await readFile(filename, "utf-8");
@@ -32,6 +34,7 @@ const write = async (
   name: string,
   id: string
 ): Promise<void> => {
+  diagnosticStep("config_write");
   const config = { organizationId: organizationId(id) };
   await mkdir(dirname(directory), { recursive: true });
   if (prepareDirectory(directory) !== 0) {

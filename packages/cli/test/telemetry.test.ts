@@ -61,6 +61,7 @@ describe("telemetry privacy", () => {
         cli_version: expect.any(String),
         command: "mcp setup",
         duration_ms: 25,
+        environment: "production",
         error_code: "cancelled",
         interactive: false,
         json: true,

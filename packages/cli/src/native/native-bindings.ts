@@ -1,3 +1,4 @@
+export declare function productionBuild(): number;
 export declare function secretRead(
   service: string,
   account: string,
@@ -30,3 +31,13 @@ export declare function outputColumns(): number;
 export declare function terminalLine(value: string): number;
 
 export declare function mcpTomlStatus(source: string): number;
+export declare function sentryCapture(
+  dsn: string,
+  release: string,
+  command: string,
+  type: string,
+  diagnostic: string,
+  userId: string,
+  database: string,
+  receive: (envelope: string) => void
+): number;

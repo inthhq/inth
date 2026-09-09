@@ -2,6 +2,7 @@ import { apiUrl } from "../api-options.ts";
 import type { AuthFlow } from "../auth-flow.ts";
 import type { OAuthResponse } from "../auth-types.ts";
 import { CliError } from "../cli-error.ts";
+import { diagnosticStep } from "../error-diagnostics.ts";
 import { HttpError } from "../http-error.ts";
 import type { IdentityResponse, MeResponse, UserProfile } from "../identity.ts";
 import {
@@ -40,6 +41,7 @@ const invalidResponse = (
   );
 };
 export const apiOutput = (response: OAuthResponse): string => {
+  diagnosticStep("api_decode");
   if (response.status === 204) {
     return "";
   }

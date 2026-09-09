@@ -3,12 +3,14 @@
 import { setTimeout } from "node:timers/promises";
 
 import type { AuthStore, Credentials } from "../auth-types.ts";
+import { diagnosticStep } from "../error-diagnostics.ts";
 import { lockAcquire, lockRelease } from "./native-bindings.ts";
 import type { NativeKeychain } from "./native-keychain.ts";
 import { parseCredentials } from "./native-protocol.ts";
 
 const release = (handle: number): void => {
   if (lockRelease(handle) !== 0) {
+    diagnosticStep("credential_unlock");
     throw new Error("Cannot release the credential lock.");
   }
 };
@@ -47,6 +49,7 @@ export class NativeStore implements AuthStore {
       return null;
     }
     try {
+      diagnosticStep("credential_decode");
       const credentials = parseCredentials(value);
       this.observe(credentials.access_token);
       return credentials;
@@ -67,6 +70,7 @@ export class NativeStore implements AuthStore {
     this.observe("");
   }
   async exclusive(work: () => Promise<void>): Promise<void> {
+    diagnosticStep("credential_lock");
     this.checkAbort();
     const deadline = Date.now() + 30_000;
     let handle = lockAcquire(this.lockPath);

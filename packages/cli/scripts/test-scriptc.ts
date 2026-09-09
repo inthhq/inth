@@ -21,6 +21,7 @@ import { userIdentity, keyIdentity } from "../test/fixtures/identity.ts";
 import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
 import { nativeTarget } from "./native-target.ts";
+import { verifyDevelopmentTelemetry, verifySentry } from "./sentry-checks.ts";
 import { verifyTelemetry } from "./telemetry-checks.ts";
 
 // Native subprocesses must never send production analytics.
@@ -47,7 +48,24 @@ assert.equal(build.status, 0, "Static build failed.");
 const executable = (name: string): string =>
   name + (process.platform === "win32" ? ".exe" : "");
 const binary = path.join(root, "dist", executable("inth"));
-await verifyTelemetry(binary);
+const developmentPackage = spawnSync(
+  process.execPath,
+  [path.join(root, "scripts/package-native.ts")],
+  { encoding: "utf-8", timeout: 5000 }
+);
+assert.notEqual(developmentPackage.status, 0);
+assert.match(developmentPackage.stderr, /Cannot package a development build/u);
+await verifySentry(
+  path.join(
+    root,
+    "build",
+    process.env.SCRIPTC_TARGET
+      ? `native-${target.platform}-${target.arch}`
+      : "native",
+    executable("sentry-test")
+  )
+);
+await verifyTelemetry(binary, false);
 verifyJson(binary);
 await verifyMcp(binary);
 const help = spawnSync(binary, ["--help"], {
@@ -140,6 +158,9 @@ const output = path.join(
   process.env.SCRIPTC_TARGET
     ? `native-${process.platform}-${process.arch}`
     : "native"
+);
+await verifyDevelopmentTelemetry(
+  path.join(output, executable("development-telemetry-test"))
 );
 if (process.platform === "win32") {
   for (const name of ["windows-console-test", "windows-credentials-test"]) {

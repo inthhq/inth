@@ -114,6 +114,7 @@ export const telemetryPayload = (
       cli_version: VERSION,
       command,
       duration_ms: Math.max(0, Math.round(duration)),
+      environment: "production",
       error_code: errorCode || null,
       interactive,
       json: options.json,

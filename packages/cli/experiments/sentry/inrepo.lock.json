@@ -1,0 +1,41 @@
+{
+  "graph": {
+    "@sentry/core": {
+      "version": "10.73.0",
+      "root": true,
+      "dependencies": {
+        "@sentry/conventions": {
+          "module": "@sentry/conventions@0.16.0",
+          "range": "^0.16.0",
+          "version": "0.16.0"
+        }
+      }
+    },
+    "@sentry/conventions@0.16.0": {
+      "version": "0.16.0"
+    }
+  },
+  "lockfileVersion": 5,
+  "modules": {
+    "@sentry/conventions@0.16.0": {
+      "commit": "fd88fd9e5c0d3cab4c14bf58ba2e1131621737b1",
+      "gitUrl": "https://github.com/getsentry/sentry-conventions.git",
+      "ref": "0.16.0",
+      "source": "@sentry/conventions",
+      "updatedAt": "2026-09-08T22:27:45.393Z",
+      "repositoryDirectory": "javascript/sentry-conventions",
+      "artifact": {
+        "integrity": "sha512-fO9PLmHdVURcSPUpWCItWAtgKiMwGdJHbovoSEyLplX5sxs2ugvI4CBPTrkkgqhObnZOD0CnWBKDzSVQYBKEyQ==",
+        "tarballUrl": "https://registry.npmjs.org/@sentry/conventions/-/conventions-0.16.0.tgz"
+      }
+    },
+    "@sentry/core": {
+      "commit": "f109d922f5971e2ade549b6c755524168b101818",
+      "gitUrl": "https://github.com/getsentry/sentry-javascript.git",
+      "ref": "10.73.0",
+      "source": "@sentry/core",
+      "updatedAt": "2026-09-08T22:27:45.570Z",
+      "repositoryDirectory": "packages/core"
+    }
+  }
+}

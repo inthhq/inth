@@ -1,0 +1,8 @@
+{
+  "name": "inth-sentry-probe",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@sentry/core": "file:inrepo_modules/@sentry/core"
+  }
+}
