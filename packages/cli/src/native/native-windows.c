@@ -256,6 +256,19 @@ int32_t inth_open_browser(const uint8_t *url, size_t length) {
 static int32_t write_config(const uint8_t *path, size_t length, const uint8_t *value, size_t value_length, int preserve) {
   wchar_t *name = wide(path, length); PSECURITY_DESCRIPTOR descriptor = private_security();
   if (!name || !descriptor || value_length > 4 * 1024 * 1024) { free(name); if (descriptor) LocalFree(descriptor); return -1; }
+  if (preserve) {
+    PSECURITY_DESCRIPTOR original = NULL;
+    DWORD error = GetNamedSecurityInfoW(name, SE_FILE_OBJECT,
+        OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION, NULL, NULL, NULL, NULL, &original);
+    if (error == ERROR_SUCCESS) {
+      // Match the original owner as well as its DACL. ReplaceFile can add an
+      // explicit grant for the old owner when the replacement has a different owner.
+      LocalFree(descriptor); descriptor = original;
+    } else {
+      if (original) LocalFree(original);
+      if (error != ERROR_FILE_NOT_FOUND) { free(name); LocalFree(descriptor); return -1; }
+    }
+  }
   size_t size = wcslen(name) + 80;
   wchar_t *temporary = calloc(size, sizeof(wchar_t));
   if (!temporary) { free(name); LocalFree(descriptor); return -1; }
