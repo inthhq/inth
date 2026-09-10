@@ -143,6 +143,22 @@ describe("skills arguments", () => {
       ).toThrow("does not use Inth authentication");
     }
   );
+  it("forwards repeated leading agents only for skills", () => {
+    const flags = ["--agent", "claude-code", "--agent=cursor"];
+    expect(
+      parseArguments([...flags, "skills", "--yes"]).skillsArguments
+    ).toEqual(["--agent", "claude-code", "--agent", "cursor", "--yes"]);
+    for (const command of [
+      ["mcp"],
+      ["mcp", "--help"],
+      ["whoami"],
+      ["--version"],
+    ]) {
+      expect(() => parseArguments([...flags, ...command])).toThrow(
+        "Use --agent only once."
+      );
+    }
+  });
 });
 
 describe("skills process", () => {

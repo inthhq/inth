@@ -120,7 +120,7 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
     ]);
     const leadingAgent = spawnSync(
       binary,
-      ["--agent=claude-code", "skills", "--yes"],
+      ["--agent=claude-code", "--agent", "cursor", "skills", "--yes"],
       { cwd: directory, encoding: "utf-8", env, timeout: 5000 }
     );
     assert.equal(leadingAgent.status, 0, leadingAgent.stderr);
@@ -131,6 +131,8 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
       "c15t/skills",
       "--agent",
       "claude-code",
+      "--agent",
+      "cursor",
       "--yes",
     ]);
     for (const args of [
