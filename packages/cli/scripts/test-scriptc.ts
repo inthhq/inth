@@ -492,6 +492,7 @@ let registrations = 0;
 let retries = 0;
 let redirects = 0;
 let hung = 0;
+let deadlineRequests = 0;
 let bearer = 0;
 const handlerFailures: string[] = [];
 const handleTelemetryRequest = (
@@ -636,10 +637,14 @@ const server = createServer((request, response) => {
       response.end('{"token_endpoint":false}');
     } else if (request.url === "/disconnect") {
       request.socket.destroy();
-    } else if (request.url === "/hang") {
+    } else if (request.url === "/hang" || request.url === "/deadline-hang") {
       response.writeHead(200);
       response.write("{");
-      hung += 1;
+      if (request.url === "/deadline-hang") {
+        deadlineRequests += 1;
+      } else {
+        hung += 1;
+      }
     } else {
       response.writeHead(404);
       response.end();
@@ -669,7 +674,9 @@ try {
   assert.equal(registrations, 1);
   assert.equal(retries, 2);
   assert.equal(redirects, 0);
-  assert.equal(hung, 4);
+  assert.equal(hung, 3);
+  // The short approval deadline can expire before the request is sent.
+  assert.ok(deadlineRequests <= 1);
   assert.equal(identityRequests, 2);
   assert.equal(telemetryRequests, 1);
   assert.equal(bearer, 1);

@@ -24,9 +24,37 @@ it.each(["switch", "link"])(
       .spyOn(OrganizationContext.prototype, "link")
       .mockResolvedValue();
     const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
-    const accessToken = vi
-      .spyOn(AgentAuth.prototype, "accessToken")
-      .mockResolvedValue("agent-access");
+    const createAgent = vi.fn(() =>
+      Promise.resolve(
+        new AgentAuth(
+          {
+            clock: { now: Date.now, sleep: vi.fn() },
+            error: vi.fn(),
+            form: vi.fn(),
+            get: vi.fn(),
+            post: vi.fn(),
+            request: vi.fn(),
+          },
+          {
+            clear: vi.fn(),
+            exclusive: (work) => work(),
+            read: () =>
+              Promise.resolve(
+                JSON.stringify({
+                  credentials: {
+                    accessToken: "agent-access",
+                    assertion: "agent-assertion",
+                    assertionExpiresAt: Date.now() + 3_600_000,
+                    expiresAt: Date.now() + 900_000,
+                    scopes: ["organizations.read"],
+                  },
+                })
+              ),
+            write: vi.fn(),
+          }
+        )
+      )
+    );
     const fetcher = vi.fn();
     for (const id of ["org-one", "org-two"]) {
       fetcher.mockResolvedValueOnce(
@@ -43,10 +71,10 @@ it.each(["switch", "link"])(
     vi.stubGlobal("fetch", fetcher);
     await run(
       [command, "org-two", "--auth", "agent", "--json"],
-      new AbortController().signal
+      new AbortController().signal,
+      createAgent
     );
-    expect(accessToken).toHaveBeenCalledTimes(2);
-    expect(accessToken.mock.contexts[0]).toBe(accessToken.mock.contexts[1]);
+    expect(createAgent).toHaveBeenCalledTimes(1);
     expect(fetcher).toHaveBeenCalledTimes(2);
     expect(fetcher).toHaveBeenLastCalledWith(
       "https://api.inth.com/v1/organizations?limit=100&cursor=next-page",

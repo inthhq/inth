@@ -141,12 +141,14 @@ const bounded = nativeHttp(signal, nativeClock(signal));
 const deadlineStarted = Date.now();
 let deadlineExpired = false;
 try {
-  await bounded.request(`${base}/hang`, deadlineStarted + 50);
+  await bounded.request(`${base}/deadline-hang`, deadlineStarted + 50);
 } catch (error) {
   deadlineExpired =
     error instanceof Error &&
-    error.message ===
-      "Could not reach inth. Check your connection and try again.";
+    (error.message ===
+      "Could not reach inth. Check your connection and try again." ||
+      error.message ===
+        "The approval code expired. Run `inth login` to start again.");
 }
 check(
   deadlineExpired && Date.now() - deadlineStarted < 1000,

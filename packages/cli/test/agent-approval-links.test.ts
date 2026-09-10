@@ -150,7 +150,7 @@ describe("agent approval links", () => {
         parseAgentRegistration(
           JSON.stringify({ ...registration, claim: { ...claim, [field]: url } })
         )
-      ).toThrow();
+      ).toThrow("Invalid auth.md response. Credentials were not displayed.");
     }
   });
 

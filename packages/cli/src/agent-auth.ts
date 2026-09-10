@@ -385,6 +385,14 @@ export class AgentAuth {
               "The approval code expired. Run inth auth retry."
             );
           }
+          if (error.code === "access_denied") {
+            throw new CliError(
+              "access_denied",
+              `Sign-in was refused. ${error.message}`,
+              error.status,
+              error.requestId
+            );
+          }
         }
         throw error;
       }

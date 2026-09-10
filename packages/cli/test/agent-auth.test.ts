@@ -13,6 +13,7 @@ import { API_ORIGIN, DISCOVERY_URL } from "../src/auth-types.ts";
 import type { OAuthResponse } from "../src/auth-types.ts";
 import { requireAgentCredentialSelection } from "../src/connection-selection.ts";
 import { responseError } from "../src/native/native-protocol.ts";
+import { reportError } from "../src/output.ts";
 
 const issuer = "https://inth.com/api/auth";
 const discovery = {
@@ -713,18 +714,35 @@ describe("waiting for browser approval", () => {
     );
   });
 
-  it("stops on denial without selecting or replaying the claim", async () => {
+  it("reports denial in command JSON without selecting or replaying the claim", async () => {
     const f = fixture();
     await start(f);
-    f.replies.push(response({ error: "access_denied" }, 400));
+    f.replies.push({
+      ...response({ error: "access_denied" }, 400),
+      requestId: "denial-request",
+    });
     const select = vi.fn();
-    await expect(
-      runAgentCommand(
+    const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const exitCode = await runAgentCommand(
         parseArguments(["login", "--complete", "--wait", "--json"]),
         f.auth(),
         select
-      )
-    ).rejects.toMatchObject({ code: "access_denied" });
+      ).catch((error: Error) => reportError(true, error, false));
+      expect(exitCode).toBe(1);
+      expect(stdout).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toMatchObject({
+        error: {
+          code: "access_denied",
+          httpStatus: 400,
+          message: expect.stringContaining("Sign-in was refused."),
+          requestId: "denial-request",
+        },
+        ok: false,
+      });
+    } finally {
+      stdout.mockRestore();
+    }
     expect(select).not.toHaveBeenCalled();
     expect(
       f.calls.filter((call) => call.url === discovery.token_endpoint)

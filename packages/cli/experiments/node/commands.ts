@@ -202,7 +202,8 @@ const runResourceCommand = async (
 };
 export const run = async (
   args: string[],
-  signal: AbortSignal
+  signal: AbortSignal,
+  createAgent?: () => Promise<AgentAuth>
 ): Promise<void> => {
   const options = parseArguments(args);
   if (options.help || options.version || !options.command) {
@@ -239,7 +240,7 @@ export const run = async (
     return platformStore(directory);
   };
   const getAuth = async () => new Auth(http, await getStore());
-  const createAgent = async () => {
+  const createPlatformAgent = async () => {
     const { agentAuth } = await import("./agent-auth.ts");
     return agentAuth(
       new HttpClient(
@@ -253,7 +254,7 @@ export const run = async (
     );
   };
   let agent: Promise<AgentAuth> | undefined;
-  const getAgent = () => (agent ??= createAgent());
+  const getAgent = () => (agent ??= (createAgent ?? createPlatformAgent)());
   const getSelectedAuth = () =>
     options.authMode === "agent" ? getAgent() : getAuth();
   const api = new ApiClient(http, getSelectedAuth, key, environment.apiOrigin);
