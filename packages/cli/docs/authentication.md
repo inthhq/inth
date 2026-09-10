@@ -18,6 +18,12 @@ Logout sends the refresh token to the discovered revocation endpoint, then clear
 
 All requests reject redirects. Authenticated API requests must stay under `https://api.inth.com/v1/`. HTTP 429 responses honor `Retry-After` seconds or HTTP dates, with at most three retries. Errors include the response's `X-Request-Id` when available. Raw response bodies and supplied keys are excluded from error messages.
 
+## Auth.md credentials
+
+[Auth.md sign-in](agent-auth-integration.md) uses separate claim and identity-assertion credentials. After the person agrees to send their email and requested permissions to Inth, start with `inth login --email <email> --json`. This command confirms registration without an additional `--yes`; `inth auth start` requires that flag. Give the person the approval link, then immediately run `inth login --complete --wait --json` in a background terminal. Browser approval finishes sign-in and selects the connection for subsequent commands. Explicit `--auth browser`, `--auth agent`, or API keys override the saved selection. Logout retains the selection so subsequent commands cannot silently use another account. These commands work in JSON mode and can resume across processes. Browser `login` remains interactive.
+
+Agent credentials use account `auth.md` under the same native or Node service, with a separate cross-process lock. HTTP writes for the single-use claim are never retried automatically. An interrupted exchange remains marked uncertain in protected storage until the person starts a new claim. The dedicated `auth organizations` command can also call the fixed `/api/agent/organizations` endpoint used by the original server.
+
 ## Credential storage
 
 The native build uses macOS Security framework calls, Windows Credential Manager, or Linux Secret Service through libsecret. The service remains `com.inth.cli.scriptc`, account `oauth`, preserving existing macOS sign-ins. It writes organization preferences atomically with permissions restricted to the current user. Windows also allows Local System.

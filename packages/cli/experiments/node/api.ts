@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import type { AccessTokenProvider } from "../../src/agent-types.ts";
 import { apiUrl } from "../../src/api-options.ts";
+import { API_ORIGIN } from "../../src/auth-types.ts";
 import { CliError } from "../../src/cli-error.ts";
 import { HttpError } from "../../src/http-error.ts";
 import type { IdentityResponse } from "../../src/identity.ts";
@@ -13,7 +15,6 @@ import type {
   Organization,
   OrganizationResponse,
 } from "../../src/organizations.ts";
-import type { Auth } from "./auth.ts";
 import type { HttpClient } from "./http.ts";
 import { meSchema, userInfoSchema } from "./identity.ts";
 
@@ -26,16 +27,26 @@ interface AuthorizedResponse {
 
 export class ApiClient {
   private readonly http: HttpClient;
-  private readonly auth: () => Promise<Auth>;
+  private readonly auth: () => Promise<AccessTokenProvider>;
   private readonly key: string | undefined;
-  constructor(http: HttpClient, auth: () => Promise<Auth>, key?: string) {
+  private readonly origin: string;
+  constructor(
+    http: HttpClient,
+    auth: () => Promise<AccessTokenProvider>,
+    key?: string,
+    origin = API_ORIGIN
+  ) {
     this.http = http;
     this.auth = auth;
     this.key = key;
+    this.origin = origin;
   }
   async getMe(includeProfile = false): Promise<IdentityResponse> {
     const auth = this.key ? undefined : await this.auth();
-    const result = await this.request(apiUrl("/v1/me"), auth);
+    const result = await this.request(
+      apiUrl("/v1/me", undefined, this.origin),
+      auth
+    );
     const value = await this.http.json(result.response, meSchema);
     if (
       !includeProfile ||
@@ -76,7 +87,7 @@ export class ApiClient {
     organizationId?: string
   ): Promise<string> {
     const { response } = await this.request(
-      apiUrl(path, organizationId),
+      apiUrl(path, organizationId, this.origin),
       this.key ? undefined : await this.auth(),
       undefined,
       body,
@@ -91,7 +102,7 @@ export class ApiClient {
   organizations(): Promise<Organization[]> {
     return collectOrganizations(async (path) => {
       const { response } = await this.request(
-        apiUrl(path),
+        apiUrl(path, undefined, this.origin),
         this.key ? undefined : await this.auth()
       );
       return this.http.json(
@@ -119,7 +130,7 @@ export class ApiClient {
   ): Promise<OrganizationResponse> {
     requireOrganizationCreator(this.key);
     const { response } = await this.request(
-      apiUrl("/v1/organizations"),
+      apiUrl("/v1/organizations", undefined, this.origin),
       await this.auth(),
       undefined,
       JSON.stringify(input)
@@ -139,7 +150,7 @@ export class ApiClient {
   }
   private async request(
     url: string,
-    auth: Auth | undefined,
+    auth: AccessTokenProvider | undefined,
     providedToken?: string,
     body?: string,
     method = body === undefined ? "GET" : "POST"

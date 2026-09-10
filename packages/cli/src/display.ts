@@ -3,6 +3,7 @@ import { terminalText } from "./organizations.ts";
 import type { Organization } from "./organizations.ts";
 
 export interface DisplayOptions {
+  authMode?: string;
   color: boolean;
   columns: number;
   selectedOrganization?: string;

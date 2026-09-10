@@ -88,6 +88,8 @@ describe("skills arguments", () => {
     ["skills", "--json"],
     ["--json", "skills"],
     ["--token", "secret", "skills"],
+    ["--auth", "agent", "skills", "--list", "--json"],
+    ["skills", "--auth", "agent", "--list", "--json"],
     ["skills", "--non-interactive"],
   ])("rejects invalid invocations before running a process: %j", (...args) => {
     expect(() => parseArguments(args)).toThrow();

@@ -11,6 +11,20 @@ import { resourceSummary } from "../src/resource-output.ts";
 import { keyIdentity } from "./fixtures/identity.ts";
 
 describe("human help and machine discovery", () => {
+  it("makes account sign-in discoverable in the first screen without protocol knowledge", () => {
+    const firstScreen = formatHelp().split("\n").slice(0, 20).join("\n");
+    expect(firstScreen).toContain("inth login --email <email> --json");
+    expect(firstScreen).toContain("inth login --complete --wait --json");
+    expect(firstScreen).toContain("Approval selects this connection");
+    const login = COMMAND_METADATA.find((entry) => entry.command === "login");
+    expect(login?.options).toContainEqual(
+      expect.objectContaining({ name: "email" })
+    );
+    expect(login?.examples).toContain("inth login --email <email> --json");
+    expect(formatHelp("signup")).toMatch(
+      /creates and\s+verifies their account/u
+    );
+  });
   it("shows only the selected command's flags and required inputs", () => {
     const text = formatHelp("project", "create");
     expect(text).toContain("--region");
@@ -35,7 +49,7 @@ describe("human help and machine discovery", () => {
       })
     );
     expect(inbox?.scopes).toEqual(["inbox.write"]);
-    expect(inbox?.authentication).toBe("browser");
+    expect(inbox?.authentication).toBe("browser-or-agent");
     expect(inbox?.effects.length).toBeGreaterThan(0);
     expect(inbox?.options).not.toContainEqual(
       expect.objectContaining({ name: "organization" })
@@ -52,12 +66,12 @@ describe("human help and machine discovery", () => {
         keyIdentity.data.scopes.includes(scope)
       );
       expect(metadata?.authentication, `${spec.command} ${spec.action}`).toBe(
-        supported ? "browser-or-api-key" : "browser"
+        supported ? "browser-or-agent-or-api-key" : "browser-or-agent"
       );
     }
     for (const command of ["member", "invitation"]) {
       expect(formatHelp(command, "list")).toContain(
-        "Browser sign-in required."
+        "Use a browser sign-in or an approved auth.md connection"
       );
     }
   });
@@ -125,4 +139,39 @@ it.each([
   const args = parseArguments([command, value, "--help"]);
   expect(args.help).toBe(true);
   expect(formatHelp(args.command, args.argument)).toBe(formatHelp(command));
+});
+
+it.each(["login", "signup"])(
+  "supports bounded waiting through %s",
+  (command) => {
+    expect(
+      parseArguments([
+        command,
+        "--complete",
+        "--wait",
+        "--timeout",
+        "30",
+        "--json",
+      ])
+    ).toMatchObject({
+      argument: "complete",
+      authMode: "agent",
+      command: "auth",
+    });
+  }
+);
+it.each([
+  ["login", "--wait"],
+  ["login", "--email", "person@example.com", "--wait", "--json"],
+  ["auth", "status", "--wait"],
+  ["login", "--complete", "--timeout", "30"],
+  ...["0", "-1", "1.5", "3601", "Infinity", "NaN"].map((timeout) => [
+    "login",
+    "--complete",
+    "--wait",
+    "--timeout",
+    timeout,
+  ]),
+])("rejects invalid wait flags: %j", (...args) => {
+  expect(() => parseArguments(args)).toThrow();
 });

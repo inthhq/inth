@@ -1,6 +1,13 @@
+import type { AgentAuth } from "../../src/agent-auth.ts";
+import { runSelectedAgentCommand } from "../../src/agent-commands.ts";
+import {
+  agentEnvironment,
+  agentStateDirectory,
+} from "../../src/agent-environment.ts";
 import { parseArguments } from "../../src/arguments.ts";
 import type { CliArguments } from "../../src/arguments.ts";
 import { CliError } from "../../src/cli-error.ts";
+import { selectCommandConnection } from "../../src/connection-selection.ts";
 import { colorEnabled, organizationReference } from "../../src/display.ts";
 import { identitySummary } from "../../src/identity.ts";
 import type { OrganizationUI } from "../../src/organizations.ts";
@@ -194,9 +201,31 @@ const runResourceCommand = async (
   }
   return false;
 };
+const runWhoami = async (
+  options: CliArguments,
+  api: ApiClient,
+  context: OrganizationContext
+): Promise<void> => {
+  const identity = await api.getMe(true);
+  printResult(
+    options.json,
+    options.json
+      ? ""
+      : identitySummary(identity.data, {
+          authMode: options.authMode,
+          color: colorEnabled(Boolean(process.stdout.isTTY)),
+          columns: terminalColumns(),
+          profile: identity.profile,
+          selectedOrganization: await context.resolve(options.organization),
+        }),
+    JSON.stringify(identity)
+  );
+};
+
 export const run = async (
   args: string[],
-  signal: AbortSignal
+  signal: AbortSignal,
+  createAgent?: () => Promise<AgentAuth>
 ): Promise<void> => {
   const options = parseArguments(args);
   if (options.help || options.version || !options.command) {
@@ -205,7 +234,7 @@ export const run = async (
       options.version,
       options.command,
       options.argument,
-      process.stdout.columns || 80
+      process.stdout.columns
     );
     return;
   }
@@ -223,9 +252,20 @@ export const run = async (
     );
     return;
   }
+  const environment = agentEnvironment(
+    process.env.INTH_DEV_API_ORIGIN,
+    process.env.INTH_DEV_DASHBOARD_ORIGIN,
+    options.authMode || "agent"
+  );
   const key = apiKey(options.token, process.env.INTH_TOKEN);
-  const directory = stateDirectory();
+  const directory = agentStateDirectory(stateDirectory(), environment);
   const context = new OrganizationContext(directory, process.cwd());
+  await selectCommandConnection(
+    options,
+    key,
+    () => context.selectedConnection(),
+    environment
+  );
   const http = new HttpClient(
     (url, init) => fetch(url, init),
     systemClock(signal),
@@ -236,7 +276,34 @@ export const run = async (
     return platformStore(directory);
   };
   const getAuth = async () => new Auth(http, await getStore());
-  const api = new ApiClient(http, getAuth, key);
+  const createPlatformAgent = async () => {
+    const { agentAuth } = await import("./agent-auth.ts");
+    return agentAuth(
+      new HttpClient(
+        (url, init) => fetch(url, init),
+        http.clock,
+        signal,
+        false
+      ),
+      directory,
+      environment
+    );
+  };
+  let agent: Promise<AgentAuth> | undefined;
+  const getAgent = () => (agent ??= (createAgent ?? createPlatformAgent)());
+  const getSelectedAuth = () =>
+    options.authMode === "agent" ? getAgent() : getAuth();
+  const api = new ApiClient(http, getSelectedAuth, key, environment.apiOrigin);
+  if (
+    await runSelectedAgentCommand(
+      options,
+      getAgent,
+      () => context.selectConnection("agent"),
+      () => context.selectedConnection()
+    )
+  ) {
+    return;
+  }
   if (await runResourceCommand(options, api, context)) {
     return;
   }
@@ -255,6 +322,7 @@ export const run = async (
       await auth.login({
         show: (device) => showDevice(device, options.noBrowser),
       });
+      await context.selectConnection("browser");
       console.log("Signed in.");
       await selectLoginOrganization(
         options,
@@ -273,19 +341,7 @@ export const run = async (
       return;
     }
     case "whoami": {
-      const identity = await api.getMe(true);
-      printResult(
-        options.json,
-        options.json
-          ? ""
-          : identitySummary(identity.data, {
-              color: colorEnabled(Boolean(process.stdout.isTTY)),
-              columns: terminalColumns(),
-              profile: identity.profile,
-              selectedOrganization: await context.resolve(options.organization),
-            }),
-        JSON.stringify(identity)
-      );
+      await runWhoami(options, api, context);
       return;
     }
     case "switch":

@@ -1,4 +1,4 @@
-# CLI benchmark experiments
+# CLI experiments
 
 The production CLI is `../src/inth.ts`, compiled statically to `../dist/inth`. The Node reference is kept here so we can compare behavior and performance against Node and yao-pkg without changing the production entry.
 
@@ -19,6 +19,10 @@ Both experiments share `node/inth.ts` and its runtime adapters. They import comm
 Clack, Zod, proper-lockfile, and the NAPI keyring addon are development dependencies of `@inth/cli`. They are used by these experiments and their tests; the production binary does not load them. yao-pkg bundles JavaScript, the host's keyring addon, and dependency licenses. Native addons use yao-pkg's extraction cache.
 
 Node and yao-pkg retain Keychain service `com.inth.cli`, account `oauth`, and the original platform state directory. The production native CLI retains `com.inth.cli.scriptc`, account `oauth`, and `~/Library/Application Support/inth-scriptc`. A benchmark does not migrate a person's credentials between these stores.
+
+## Hosted c15t setup
+
+The [c15t browser smoke check](c15t-setup/README.md) uses a CLI-provisioned project to verify hosted consent writes, persistence and script gating in a real browser. It has isolated, pinned dependencies and uses the CLI's saved credentials only for project lookup.
 
 ## Comparisons
 

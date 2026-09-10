@@ -3,11 +3,16 @@ import { mkdirSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
 
+import { AgentAuth } from "./agent-auth.ts";
+import { runAgentCommand } from "./agent-commands.ts";
+import { agentEnvironment, agentStateDirectory } from "./agent-environment.ts";
+import type { AccessTokenProvider } from "./agent-types.ts";
 import { apiKey } from "./api-options.ts";
 import type { CliArguments } from "./arguments.ts";
 import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
 import { CliError } from "./cli-error.ts";
+import { selectCommandConnection } from "./connection-selection.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
 import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
 import { identitySummary } from "./identity.ts";
@@ -107,6 +112,7 @@ const runLogin = async (
         console.log("Waiting for approval. Press Ctrl+C to cancel.");
       },
     });
+    await context.selectConnection("browser");
     console.log("Signed in.");
     const organizations = await api.organizations();
     if (organizations.length === 0 && !options.organization) {
@@ -233,6 +239,39 @@ const runResource = async (
 const promptsAllowed = (options: CliArguments): boolean =>
   !options.json && !options.nonInteractive;
 
+const runOrganizationCreate = async (
+  options: CliArguments,
+  api: NativeApi
+): Promise<void> => {
+  const created = await api.createOrganization({
+    name: options.name ?? "",
+    slug: options.slug ?? "",
+  });
+  printResult(
+    options.json,
+    createdOrganizationMessage(created.data),
+    JSON.stringify(created)
+  );
+};
+const runAgentAccountCommand = async (
+  options: CliArguments,
+  getAgent: () => AgentAuth,
+  context: NativeContext
+): Promise<boolean> => {
+  if (
+    options.authMode !== "agent" ||
+    !["auth", "logout"].includes(options.command)
+  ) {
+    return false;
+  }
+  return runAgentCommand(
+    options,
+    getAgent(),
+    () => context.selectConnection("agent"),
+    () => context.selectedConnection()
+  );
+};
+
 const run = async (options: CliArguments): Promise<void> => {
   diagnosticStep("command_setup");
   if (options.version || options.help || !options.command) {
@@ -249,6 +288,11 @@ const run = async (options: CliArguments): Promise<void> => {
     runTelemetry(options);
     return;
   }
+  const environment = agentEnvironment(
+    process.env.INTH_DEV_API_ORIGIN,
+    process.env.INTH_DEV_DASHBOARD_ORIGIN,
+    options.authMode ?? "agent"
+  );
   if (options.command === "mcp") {
     diagnosticStep("mcp_command");
     await runMcp(options, controller.signal);
@@ -257,8 +301,14 @@ const run = async (options: CliArguments): Promise<void> => {
   const allowInteractive = promptsAllowed(options);
   const key = apiKey(options.token, process.env.INTH_TOKEN);
   // Preserve the existing native sign-in and defaults while Node/yao retain their own store.
-  const directory = nativeStateDirectory();
+  const directory = agentStateDirectory(nativeStateDirectory(), environment);
   const context = new NativeContext(directory, process.cwd());
+  await selectCommandConnection(
+    options,
+    key,
+    () => context.selectedConnection(),
+    environment
+  );
   const http = nativeHttp(controller.signal, nativeClock(controller.signal));
   const getStore = (): NativeStore => {
     mkdirSync(dirname(directory), { recursive: true });
@@ -273,7 +323,46 @@ const run = async (options: CliArguments): Promise<void> => {
     );
   };
   const getAuth = (): AuthFlow => new AuthFlow(http, getStore().adapter());
-  const api = new NativeApi(http, getAuth, key, observeIdentity);
+  const getAgent = (): AgentAuth => {
+    getStore();
+    const entry = new NativeKeychain(
+      "com.inth.cli.scriptc",
+      environment.account
+    );
+    const lock = new NativeStore(entry, join(directory, "agent.lock"), () =>
+      controller.signal.throwIfAborted()
+    );
+    return new AgentAuth(
+      nativeHttp(controller.signal, http.clock, false),
+      {
+        clear: async () => entry.clear(),
+        exclusive: (work, deadline) => lock.exclusive(work, deadline),
+        read: async () => entry.read(),
+        write: async (value) => entry.write(value),
+      },
+      environment
+    );
+  };
+  const getSelectedAuth = (): AccessTokenProvider => {
+    if (options.authMode === "agent") {
+      const agent = getAgent();
+      return {
+        accessToken: (rejected, force) => agent.accessToken(rejected, force),
+        userInfoEndpoint: () => agent.userInfoEndpoint(),
+      };
+    }
+    return getAuth().tokenProvider();
+  };
+  const api = new NativeApi(
+    http,
+    getSelectedAuth,
+    key,
+    observeIdentity,
+    environment.apiOrigin
+  );
+  if (await runAgentAccountCommand(options, getAgent, context)) {
+    return;
+  }
   if (options.command === "login") {
     await runLogin(options, key, getAuth, api, context, allowInteractive);
   } else if (options.command === "logout") {
@@ -297,6 +386,7 @@ const run = async (options: CliArguments): Promise<void> => {
       options.json
         ? ""
         : identitySummary(identity.data, {
+            authMode: options.authMode,
             color: colorEnabled(Boolean(process.stdout.isTTY)),
             columns: outputColumns(),
             profile: identity.profile,
@@ -305,15 +395,7 @@ const run = async (options: CliArguments): Promise<void> => {
       JSON.stringify(identity)
     );
   } else if (options.command === "org" && options.argument === "create") {
-    const created = await api.createOrganization({
-      name: options.name ?? "",
-      slug: options.slug ?? "",
-    });
-    printResult(
-      options.json,
-      createdOrganizationMessage(created.data),
-      JSON.stringify(created)
-    );
+    await runOrganizationCreate(options, api);
   } else if (options.command === "api" || resourceCommand(options)) {
     await runResource(options, api, context);
   } else {
@@ -347,12 +429,16 @@ let errorCode = "";
 let installationId = "";
 let options: CliArguments | undefined;
 const started = Date.now();
+const localApiConfigured = Boolean(
+  process.env.INTH_DEV_API_ORIGIN || process.env.INTH_DEV_DASHBOARD_ORIGIN
+);
 try {
   startErrorDiagnostics();
   diagnosticStep("argument_parse");
   options = parseArguments(process.argv.slice(2));
   if (
     telemetryCommand(options) &&
+    !localApiConfigured &&
     !telemetryDisabled(process.env.INTH_TELEMETRY_DISABLED, process.env.CI)
   ) {
     // Telemetry state must never prevent a command from running.
@@ -408,13 +494,15 @@ try {
   );
   // SDK initialization and transmission happen only on the unexpected-error path.
   try {
-    await reportUnexpectedError(
-      failure,
-      controller.signal.aborted,
-      options,
-      nativeStateDirectory(),
-      options?.token || process.env.INTH_TOKEN ? "" : knownTelemetryUser
-    );
+    if (!localApiConfigured) {
+      await reportUnexpectedError(
+        failure,
+        controller.signal.aborted,
+        options,
+        nativeStateDirectory(),
+        options?.token || process.env.INTH_TOKEN ? "" : knownTelemetryUser
+      );
+    }
   } catch {
     // Preserve the original output and exit status even if state resolution fails.
   }

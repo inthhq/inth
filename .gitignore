@@ -45,3 +45,7 @@ artifacts/
 npm/*/*
 !npm/*/package.json
 !npm/*/CHANGELOG.md
+
+# Browser test artifacts
+playwright-report/
+test-results/

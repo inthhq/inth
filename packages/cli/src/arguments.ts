@@ -14,6 +14,7 @@ export interface CliArguments {
   id: string;
   values: { name: string; value: string }[];
   token?: string;
+  authMode?: string;
   name?: string;
   slug?: string;
   organization?: string;
@@ -30,7 +31,19 @@ export interface CliArguments {
 const validateCommandOptions = (result: CliArguments): void => {
   const { command } = result;
   for (const entry of result.values) {
-    if (command !== "api" || !["method", "data"].includes(entry.name)) {
+    if (
+      !(command === "api" && ["method", "data"].includes(entry.name)) &&
+      !(
+        command === "auth" &&
+        result.argument === "complete" &&
+        ["wait", "timeout"].includes(entry.name)
+      ) &&
+      !(
+        command === "auth" &&
+        result.argument === "start" &&
+        ["email", "scopes", "yes"].includes(entry.name)
+      )
+    ) {
       throw new CliError(
         "usage_error",
         `--${entry.name} is not available with ${command}.`
@@ -98,6 +111,73 @@ const validateTelemetryArguments = (
     );
   }
 };
+const validateCredentialMode = (result: CliArguments): void => {
+  if (result.authMode && !["browser", "agent"].includes(result.authMode)) {
+    throw new CliError("usage_error", "--auth must be browser or agent.");
+  }
+  if (result.authMode && ["mcp", "login"].includes(result.command)) {
+    throw new CliError(
+      "usage_error",
+      "Use inth auth start for agent sign-in. --auth does not apply to login or MCP."
+    );
+  }
+};
+const validateAuthArguments = (result: CliArguments): void => {
+  const timeout = result.values.find(
+    (entry) => entry.name === "timeout"
+  )?.value;
+  if (
+    timeout !== undefined &&
+    (!result.values.some((entry) => entry.name === "wait") ||
+      !/^\d+$/u.test(timeout) ||
+      Number(timeout) < 1 ||
+      Number(timeout) > 3600)
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Use --timeout with --wait, from 1 to 3600 seconds."
+    );
+  }
+  if (
+    result.command === "auth" &&
+    ![
+      "status",
+      "refresh",
+      "start",
+      "complete",
+      "retry",
+      "organizations",
+    ].includes(result.argument)
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Usage: inth auth <start|complete|retry|status|refresh|organizations>"
+    );
+  }
+  if (
+    result.command === "auth" &&
+    ["start", "complete", "retry", "organizations"].includes(result.argument)
+  ) {
+    if (result.authMode === "browser" || result.organization) {
+      throw new CliError(
+        "usage_error",
+        "This auth.md command does not accept browser or organization overrides."
+      );
+    }
+    result.authMode = "agent";
+  }
+  if (
+    result.command === "auth" &&
+    result.argument === "start" &&
+    (!result.values.some((entry) => entry.name === "email") ||
+      !result.values.some((entry) => entry.name === "yes"))
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Use inth auth start --email <email> [--scopes <scopes>] --yes. --yes confirms sending that email and the requested scopes to Inth for approval."
+    );
+  }
+};
 const validateArguments = (result: CliArguments, count: number): void => {
   if (result.version || !result.command) {
     return;
@@ -119,6 +199,7 @@ const validateArguments = (result: CliArguments, count: number): void => {
     }
     return;
   }
+  validateCredentialMode(result);
   if (result.command === "mcp") {
     validateMcpArguments(result, count);
     return;
@@ -166,10 +247,56 @@ const validateArguments = (result: CliArguments, count: number): void => {
       `Usage: inth ${command}${command === "login" ? " [--no-browser] [--organization <id>]" : ""}`
     );
   }
-  if (command === "auth" && !["status", "refresh"].includes(result.argument)) {
-    throw new CliError("usage_error", "Usage: inth auth <status|refresh>");
-  }
+  validateAuthArguments(result);
   validateCommandOptions(result);
+};
+const normalizeAccountSignIn = (result: CliArguments): void => {
+  if (
+    result.help ||
+    result.version ||
+    !["login", "signup"].includes(result.command)
+  ) {
+    return;
+  }
+  const email = result.values.some((entry) => entry.name === "email");
+  const complete = result.values.some((entry) => entry.name === "complete");
+  if (!email && !complete && result.command === "login") {
+    return;
+  }
+  if (
+    result.argument ||
+    result.authMode === "browser" ||
+    result.organization ||
+    result.noBrowser
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Use inth login --email <email> --json, or inth login --complete --json."
+    );
+  }
+  if (
+    complete &&
+    result.values.some(
+      (entry) => !["complete", "wait", "timeout"].includes(entry.name)
+    )
+  ) {
+    throw new CliError(
+      "usage_error",
+      "Use inth login --complete without email, scopes, or approval options."
+    );
+  }
+  if (!email && !complete) {
+    throw new CliError(
+      "usage_error",
+      "Use inth signup --email <email> --json. The person creates their account on the approval page."
+    );
+  }
+  result.command = "auth";
+  result.argument = complete ? "complete" : "start";
+  result.values = result.values.filter((entry) => entry.name !== "complete");
+  if (!complete && !result.values.some((entry) => entry.name === "yes")) {
+    result.values.push({ name: "yes", value: "true" });
+  }
 };
 const setOption = (
   result: CliArguments,
@@ -181,6 +308,11 @@ const setOption = (
       throw new CliError("usage_error", "Use --token only once.");
     }
     result.token = value;
+  } else if (option === "auth") {
+    if (result.authMode) {
+      throw new CliError("usage_error", "Use --auth only once.");
+    }
+    result.authMode = value;
   } else if (option === "organization") {
     if (result.organization !== undefined) {
       throw new CliError("usage_error", "Use --organization only once.");
@@ -259,8 +391,8 @@ export const parseArguments = (args: string[]): CliArguments => {
       result.version = true;
     } else if (arg === "--no-browser") {
       result.noBrowser = true;
-    } else if (arg === "--dry-run") {
-      setOption(result, "dry-run", "true");
+    } else if (["--dry-run", "--yes", "--complete", "--wait"].includes(arg)) {
+      setOption(result, arg.slice(2), "true");
     } else if (arg === "--json") {
       result.json = true;
     } else if (arg === "--non-interactive") {
@@ -279,6 +411,7 @@ export const parseArguments = (args: string[]): CliArguments => {
   result.command = positional[0] ?? "";
   result.argument = positional[1] ?? "";
   result.id = positional[2] ?? "";
+  normalizeAccountSignIn(result);
   if (result.values.filter((entry) => entry.name === "agent").length > 1) {
     throw new CliError("usage_error", "Use --agent only once.");
   }

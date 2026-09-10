@@ -69,14 +69,23 @@ export class NativeStore implements AuthStore {
     this.entry.clear();
     this.observe("");
   }
-  async exclusive(work: () => Promise<void>): Promise<void> {
+  async exclusive(
+    work: () => Promise<void>,
+    requestedDeadline = Number.POSITIVE_INFINITY
+  ): Promise<void> {
     diagnosticStep("credential_lock");
     this.checkAbort();
-    const deadline = Date.now() + 30_000;
+    const deadline = Math.min(Date.now() + 30_000, requestedDeadline);
+    if (Date.now() >= deadline) {
+      throw new Error("Cannot acquire the credential lock.");
+    }
     let handle = lockAcquire(this.lockPath);
     while (handle === -2 && Date.now() < deadline) {
-      await setTimeout(25);
+      await setTimeout(Math.min(25, deadline - Date.now()));
       this.checkAbort();
+      if (Date.now() >= deadline) {
+        break;
+      }
       handle = lockAcquire(this.lockPath);
     }
     if (handle < 0) {
@@ -84,6 +93,9 @@ export class NativeStore implements AuthStore {
     }
     try {
       this.checkAbort();
+      if (Date.now() >= requestedDeadline) {
+        throw new Error("Cannot acquire the credential lock.");
+      }
       await work();
     } finally {
       release(handle);

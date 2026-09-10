@@ -1,5 +1,6 @@
+import type { AccessTokenProvider } from "../agent-types.ts";
 import { apiUrl } from "../api-options.ts";
-import type { AuthFlow } from "../auth-flow.ts";
+import { API_ORIGIN } from "../auth-types.ts";
 import type { OAuthResponse } from "../auth-types.ts";
 import { CliError } from "../cli-error.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
@@ -58,25 +59,28 @@ interface AuthorizedResponse {
 
 export class NativeApi {
   private readonly http: ApiTransport;
-  private readonly auth: () => AuthFlow;
+  private readonly auth: () => AccessTokenProvider;
   private readonly key: string | undefined;
+  private readonly origin: string;
   private readonly observeIdentity: (token: string, userId: string) => void;
   constructor(
     http: ApiTransport,
-    auth: () => AuthFlow,
+    auth: () => AccessTokenProvider,
     key?: string,
     observeIdentity: (token: string, userId: string) => void = () => {
       // Identity observation is optional for API callers.
-    }
+    },
+    origin = API_ORIGIN
   ) {
     this.observeIdentity = observeIdentity;
     this.http = http;
     this.auth = auth;
     this.key = key;
+    this.origin = origin;
   }
   async get(path: string, organization?: string): Promise<OAuthResponse> {
     const result = await this.request(
-      apiUrl(path, organization),
+      apiUrl(path, organization, this.origin),
       this.key ? undefined : this.auth()
     );
     return result.response;
@@ -88,7 +92,7 @@ export class NativeApi {
     organization?: string
   ): Promise<OAuthResponse> {
     const result = await this.request(
-      apiUrl(path, organization),
+      apiUrl(path, organization, this.origin),
       this.key ? undefined : this.auth(),
       undefined,
       body,
@@ -112,21 +116,21 @@ export class NativeApi {
   }
   private async request(
     url: string,
-    auth: AuthFlow | undefined,
+    auth: AccessTokenProvider | undefined,
     providedToken?: string,
     body?: string,
     method = body === undefined ? "GET" : "POST"
   ): Promise<AuthorizedResponse> {
     let token = providedToken || this.key;
     if (auth && !token) {
-      token = await auth.accessToken();
+      token = await auth.accessToken(undefined, false);
     }
     if (!token) {
       throw new Error("Not signed in. Run inth login.");
     }
     let response = await this.send(url, token, method, body);
     if (response.status === 401 && auth) {
-      token = await auth.accessToken(token);
+      token = await auth.accessToken(token, false);
       response = await this.send(url, token, method, body);
     }
     if (!response.ok) {
@@ -136,7 +140,10 @@ export class NativeApi {
   }
   async getMe(includeProfile = false): Promise<IdentityResponse> {
     const auth = this.key ? undefined : this.auth();
-    const result = await this.request(apiUrl("/v1/me"), auth);
+    const result = await this.request(
+      apiUrl("/v1/me", undefined, this.origin),
+      auth
+    );
     const value = NativeApi.parseMe(result.response);
     if (auth) {
       this.observeIdentity(result.token, telemetryUserId(value));
@@ -183,7 +190,7 @@ export class NativeApi {
   ): Promise<OrganizationResponse> {
     requireOrganizationCreator(this.key);
     const { response } = await this.request(
-      apiUrl("/v1/organizations"),
+      apiUrl("/v1/organizations", undefined, this.origin),
       this.auth(),
       undefined,
       JSON.stringify(input)

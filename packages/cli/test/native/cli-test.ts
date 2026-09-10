@@ -112,7 +112,7 @@ try {
         throw new Error("Unexpected mutation");
       },
     },
-    () => auth
+    () => auth.tokenProvider()
   );
   const response = await api.get("/v1/projects", "org-one");
   check(response.status === 200, "API request failed.");
@@ -265,6 +265,33 @@ try {
     check(rejected, "Unsafe bearer destination accepted.");
   }
   const context = new NativeContext(state, project);
+  check(
+    (await context.selectedConnection()) === undefined,
+    "Fresh state selected a connection."
+  );
+  await context.selectConnection("agent");
+  const nextContext = new NativeContext(state, project);
+  check(
+    (await nextContext.selectedConnection()) === "agent",
+    "Agent selection did not persist."
+  );
+  await nextContext.selectConnection("browser");
+  check(
+    (await context.selectedConnection()) === "browser",
+    "Browser selection did not replace agent selection."
+  );
+  check(
+    writeConfig(join(state, "connection.json"), '{"auth":false}') === 0,
+    "Cannot write malformed connection."
+  );
+  let invalidConnection = false;
+  try {
+    await context.selectedConnection();
+  } catch {
+    invalidConnection = true;
+  }
+  check(invalidConnection, "Malformed connection silently fell back.");
+  await context.selectConnection("agent");
   check(
     (await context.defaultOrganization()) === undefined,
     "Unexpected saved organization."

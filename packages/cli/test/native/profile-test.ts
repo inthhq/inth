@@ -143,7 +143,7 @@ const api = new NativeApi(
   },
   () => {
     check(scenario !== "key", "API key accessed browser credentials");
-    return auth;
+    return auth.tokenProvider();
   },
   scenario === "key" ? "inth_fixture" : undefined,
   (token, userId) => {

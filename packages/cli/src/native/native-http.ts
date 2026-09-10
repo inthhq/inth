@@ -51,9 +51,55 @@ const invalid = (response: OAuthResponse): Error => {
     error.requestId
   );
 };
+// Keep each header record exact. Scriptc stringifies absent optional record fields as "undefined".
+const fetchBody = (
+  url: string,
+  fields: string,
+  token: string,
+  json: boolean,
+  method: string,
+  signal: AbortSignal
+): Promise<Response> => {
+  if (json && token) {
+    return fetch(url, {
+      // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Callers validate methods before passing a body.
+      body: fields,
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      method,
+      redirect: "error",
+      signal,
+    });
+  }
+  if (json) {
+    return fetch(url, {
+      // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Callers validate methods before passing a body.
+      body: fields,
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      method,
+      redirect: "error",
+      signal,
+    });
+  }
+  return fetch(url, {
+    // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Form requests use POST.
+    body: fields,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    method,
+    redirect: "error",
+    signal,
+  });
+};
 export const nativeHttp = (
   signal: AbortSignal,
-  clock: Clock
+  clock: Clock,
+  retryRateLimit = true
 ): OAuthTransport & ApiTransport => {
   const request = async (
     url: string,
@@ -92,20 +138,7 @@ export const nativeHttp = (
                 redirect: "error",
                 signal: timeout,
               })
-            : await fetch(url, {
-                // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Only the non-null-body branch sends JSON or form writes; callers reject GET bodies.
-                body: fields,
-                headers: json
-                  ? {
-                      Accept: "application/json",
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    }
-                  : { "Content-Type": "application/x-www-form-urlencoded" },
-                method,
-                redirect: "error",
-                signal: timeout,
-              });
+            : await fetchBody(url, fields, token, json, method, timeout);
         diagnosticStep("http_response");
         body = await response.text();
       } catch {
@@ -118,9 +151,10 @@ export const nativeHttp = (
         body,
         ok: response.ok,
         requestId: response.headers.get("X-Request-Id"),
+        retryAfter: response.headers.get("Retry-After") ?? undefined,
         status: response.status,
       };
-      if (result.status !== 429 || attempt >= 3) {
+      if (!retryRateLimit || result.status !== 429 || attempt >= 3) {
         return result;
       }
       const delay = retryDelay(
@@ -162,7 +196,7 @@ export const nativeHttp = (
     get: (url, token) => request(url, null, Number.POSITIVE_INFINITY, token),
     post: (url, token, body) =>
       request(url, body, Number.POSITIVE_INFINITY, token, true),
-    request: (url) => request(url, null, Number.POSITIVE_INFINITY, ""),
+    request: (url, deadline) => request(url, null, deadline, ""),
     send: (url, token, method, body) =>
       request(url, body ?? null, Number.POSITIVE_INFINITY, token, true, method),
     tokens: async (response, previousRefreshToken) => {

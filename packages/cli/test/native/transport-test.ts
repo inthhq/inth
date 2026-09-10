@@ -62,7 +62,10 @@ check(
   httpDate("Thu, 29 Feb 2024 00:00:00 GMT") === 1_709_164_800_000,
   "Leap day rejected."
 );
-const rateLimited = await http.request(`${base}/rate-limit`);
+const rateLimited = await http.request(
+  `${base}/rate-limit`,
+  Number.POSITIVE_INFINITY
+);
 check(
   rateLimited.status === 200 && waits.join(",") === "3000",
   "HTTP 429 backoff failed."
@@ -75,6 +78,25 @@ const created = await http.post(
   '{"name":"Acme Team","slug":"acme"}'
 );
 check(created.status === 201, "Authenticated JSON POST failed");
+const agentHttp = nativeHttp(signal, http.clock, false);
+const registration = await agentHttp.post(
+  `${base}/register`,
+  "",
+  '{"login_hint":"test@example.com"}'
+);
+check(
+  registration.status === 201,
+  "Agent registration sent browser credentials"
+);
+const claimResponse = await agentHttp.form(
+  `${base}/claim`,
+  new URLSearchParams({ claim_token: "clm_test" }),
+  Number.POSITIVE_INFINITY
+);
+check(
+  claimResponse.status === 429 && claimResponse.retryAfter === "60",
+  "Single-use claim was retried or lost Retry-After"
+);
 for (const method of ["PATCH", "DELETE", "POST"]) {
   // eslint-disable-next-line no-await-in-loop -- Check each HTTP verb against the local server.
   const result = await http.send(
@@ -87,7 +109,7 @@ for (const method of ["PATCH", "DELETE", "POST"]) {
 }
 let redirectRejected = false;
 try {
-  await http.request(`${base}/redirect`);
+  await http.request(`${base}/redirect`, Number.POSITIVE_INFINITY);
 } catch (error) {
   redirectRejected =
     error instanceof Error &&
@@ -97,7 +119,7 @@ try {
 check(redirectRejected, "The native transport followed a redirect.");
 let unreachable = false;
 try {
-  await http.request(`${base}/disconnect`);
+  await http.request(`${base}/disconnect`, Number.POSITIVE_INFINITY);
 } catch (error) {
   unreachable =
     error instanceof Error &&
@@ -107,12 +129,31 @@ try {
 check(unreachable, "Transport failures were not normalized.");
 let invalidRejected = false;
 try {
-  await http.discovery(await http.request(`${base}/malformed`));
+  await http.discovery(
+    await http.request(`${base}/malformed`, Number.POSITIVE_INFINITY)
+  );
 } catch (error) {
   invalidRejected =
     error instanceof Error && error.message.includes("native-malformed");
 }
 check(invalidRejected, "Invalid discovery did not report the request ID.");
+const bounded = nativeHttp(signal, nativeClock(signal));
+const deadlineStarted = Date.now();
+let deadlineExpired = false;
+try {
+  await bounded.request(`${base}/deadline-hang`, deadlineStarted + 50);
+} catch (error) {
+  deadlineExpired =
+    error instanceof Error &&
+    (error.message ===
+      "Could not reach inth. Check your connection and try again." ||
+      error.message ===
+        "The approval code expired. Run `inth login` to start again.");
+}
+check(
+  deadlineExpired && Date.now() - deadlineStarted < 1000,
+  "HTTP request did not respect the approval deadline."
+);
 const controller = new AbortController();
 const cancellable = nativeHttp(
   controller.signal,
@@ -125,7 +166,7 @@ const abort = async (): Promise<void> => {
 const cancelJob = abort();
 let cancelled = false;
 try {
-  await cancellable.request(`${base}/hang`);
+  await cancellable.request(`${base}/hang`, Number.POSITIVE_INFINITY);
 } catch (error) {
   cancelled = error instanceof Error && error.name === "AbortError";
 }

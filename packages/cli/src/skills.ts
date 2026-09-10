@@ -24,15 +24,16 @@ const validateSkillsOptions = (
   forwarded: string[]
 ): void => {
   if (
+    options.authMode ||
     options.token ||
     options.organization ||
     options.noBrowser ||
     options.values.length ||
     forwarded.some((arg) =>
       OPTION_METADATA.some(
-        // --agent is shared with the upstream skills installer.
+        // --agent and --yes are shared with the upstream skills installer.
         (option) =>
-          option.name !== "agent" &&
+          !["agent", "yes"].includes(option.name) &&
           (arg === `--${option.name}` || arg.startsWith(`--${option.name}=`))
       )
     )

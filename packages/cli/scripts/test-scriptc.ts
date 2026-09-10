@@ -11,6 +11,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { createServer } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -91,10 +92,15 @@ for (const scenario of [
     args: ["unsupported-command"],
     error: 'Unknown command. Run "inth --help" for available commands.',
   },
-  { args: ["auth"], error: "Usage: inth auth <status|refresh>" },
+  {
+    args: ["auth"],
+    error:
+      "Usage: inth auth <start|complete|retry|status|refresh|organizations>",
+  },
   {
     args: ["auth", "unknown"],
-    error: "Usage: inth auth <status|refresh>",
+    error:
+      "Usage: inth auth <start|complete|retry|status|refresh|organizations>",
   },
   {
     args: ["login", "--unknown"],
@@ -440,12 +446,28 @@ try {
     );
   }
   const stateFiles = await readdir(path.join(directory, "state"));
-  assert.deepEqual(stateFiles.toSorted(), ["config.json", "credentials.lock"]);
+  assert.deepEqual(stateFiles.toSorted(), [
+    "config.json",
+    "connection.json",
+    "credentials.lock",
+  ]);
+  assert.deepEqual(
+    JSON.parse(
+      await readFile(path.join(directory, "state", "connection.json"), "utf-8")
+    ),
+    { auth: "agent" }
+  );
+  const connectionInfo = await stat(
+    path.join(directory, "state", "connection.json")
+  );
+  if (process.platform !== "win32") {
+    assert.equal(connectionInfo.mode % 0o1000, 0o600);
+  }
 } finally {
   await rm(directory, { force: true, recursive: true });
 }
 
-for (const name of ["mcp-test", "keychain-test", "auth-test"]) {
+for (const name of ["mcp-test", "keychain-test", "auth-test", "agent-test"]) {
   const result = spawnSync(path.join(output, executable(name)), [], {
     encoding: "utf-8",
     timeout: 30_000,
@@ -474,11 +496,67 @@ try {
 }
 let identityRequests = 0;
 let telemetryRequests = 0;
+let claims = 0;
+let registrations = 0;
 let retries = 0;
 let redirects = 0;
 let hung = 0;
+let deadlineRequests = 0;
 let bearer = 0;
 const handlerFailures: string[] = [];
+const handleTelemetryRequest = (
+  request: IncomingMessage,
+  response: ServerResponse,
+  guard: (work: () => void) => void
+): boolean => {
+  if (request.url === "/telemetry/me") {
+    identityRequests += 1;
+    assert.equal(request.method, "GET");
+    const token = request.headers.authorization;
+    assert.ok(
+      token === "Bearer browser-first" || token === "Bearer browser-second"
+    );
+    response.end(
+      JSON.stringify({
+        ...userIdentity,
+        data: {
+          ...userIdentity.data,
+          principal: {
+            type: "oauth",
+            userId: token === "Bearer browser-first" ? "user-one" : "user-two",
+          },
+        },
+      })
+    );
+  } else if (request.url === "/telemetry/key") {
+    response.end(JSON.stringify(keyIdentity));
+  } else if (request.url === "/telemetry/invalid") {
+    response.end(
+      '{"success":true,"data":{"principal":{"type":"oauth","userId":42}}}'
+    );
+  } else if (request.url === "/telemetry") {
+    telemetryRequests += 1;
+    assert.equal(request.method, "POST");
+    assert.equal(request.headers.authorization, undefined);
+    let body = "";
+    request.on("data", (chunk) => {
+      body += chunk;
+    });
+    request.on("end", () =>
+      guard(() => {
+        const event = JSON.parse(body);
+        assert.equal(event.event, "cli_command_completed");
+        assert.equal(event.properties.command, "mcp list");
+        assert.equal(event.properties.source, "cli");
+        assert.equal(event.properties.$process_person_profile, false);
+        response.end("{}");
+      })
+    );
+  } else {
+    return false;
+  }
+  return true;
+};
 const server = createServer((request, response) => {
   const guard = (work: () => void): void => {
     try {
@@ -492,51 +570,10 @@ const server = createServer((request, response) => {
     }
   };
   guard(() => {
-    if (request.url === "/telemetry/me") {
-      identityRequests += 1;
-      assert.equal(request.method, "GET");
-      const token = request.headers.authorization;
-      assert.ok(
-        token === "Bearer browser-first" || token === "Bearer browser-second"
-      );
-      response.end(
-        JSON.stringify({
-          ...userIdentity,
-          data: {
-            ...userIdentity.data,
-            principal: {
-              type: "oauth",
-              userId:
-                token === "Bearer browser-first" ? "user-one" : "user-two",
-            },
-          },
-        })
-      );
-    } else if (request.url === "/telemetry/key") {
-      response.end(JSON.stringify(keyIdentity));
-    } else if (request.url === "/telemetry/invalid") {
-      response.end(
-        '{"success":true,"data":{"principal":{"type":"oauth","userId":42}}}'
-      );
-    } else if (request.url === "/telemetry") {
-      telemetryRequests += 1;
-      assert.equal(request.method, "POST");
-      assert.equal(request.headers.authorization, undefined);
-      let body = "";
-      request.on("data", (chunk) => {
-        body += chunk;
-      });
-      request.on("end", () =>
-        guard(() => {
-          const event = JSON.parse(body);
-          assert.equal(event.event, "cli_command_completed");
-          assert.equal(event.properties.command, "mcp list");
-          assert.equal(event.properties.source, "cli");
-          assert.equal(event.properties.$process_person_profile, false);
-          response.end("{}");
-        })
-      );
-    } else if (request.url?.startsWith("/mutation/")) {
+    if (handleTelemetryRequest(request, response, guard)) {
+      return;
+    }
+    if (request.url?.startsWith("/mutation/")) {
       assert.equal(request.method, request.url.slice("/mutation/".length));
       assert.equal(request.headers.authorization, "Bearer inth_transport_test");
       let body = "";
@@ -555,6 +592,19 @@ const server = createServer((request, response) => {
           response.end();
         })
       );
+    } else if (request.url === "/register") {
+      registrations += 1;
+      assert.equal(request.method, "POST");
+      assert.equal(request.headers.authorization, undefined);
+      assert.equal(request.headers["content-type"], "application/json");
+      response.writeHead(201);
+      response.end("{}");
+    } else if (request.url === "/claim") {
+      claims += 1;
+      assert.equal(request.method, "POST");
+      assert.equal(request.headers.authorization, undefined);
+      response.writeHead(429, { "Retry-After": "60" });
+      response.end('{"error":"slow_down"}');
     } else if (request.url === "/create") {
       assert.equal(request.method, "POST");
       assert.equal(request.headers.authorization, "Bearer inth_transport_test");
@@ -596,10 +646,14 @@ const server = createServer((request, response) => {
       response.end('{"token_endpoint":false}');
     } else if (request.url === "/disconnect") {
       request.socket.destroy();
-    } else if (request.url === "/hang") {
+    } else if (request.url === "/hang" || request.url === "/deadline-hang") {
       response.writeHead(200);
       response.write("{");
-      hung += 1;
+      if (request.url === "/deadline-hang") {
+        deadlineRequests += 1;
+      } else {
+        hung += 1;
+      }
     } else {
       response.writeHead(404);
       response.end();
@@ -625,9 +679,13 @@ try {
     "Native HTTP handler expectations failed."
   );
   assert.equal(status, 0, "Native HTTP checks failed or timed out.");
+  assert.equal(claims, 1);
+  assert.equal(registrations, 1);
   assert.equal(retries, 2);
   assert.equal(redirects, 0);
   assert.equal(hung, 3);
+  // The short approval deadline can expire before the request is sent.
+  assert.ok(deadlineRequests <= 1);
   assert.equal(identityRequests, 2);
   assert.equal(telemetryRequests, 1);
   assert.equal(bearer, 1);
