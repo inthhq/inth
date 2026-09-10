@@ -21,18 +21,33 @@ export const verifySkills = async (binary: string): Promise<void> => {
     await mkdir(bin);
     const windows = process.platform === "win32";
     const entry = windows
-      ? path.join(bin, "node_modules", "npm", "bin", "npx-cli.js")
+      ? path.join(directory, "external npm", "npx-cli.js")
       : path.join(bin, "npx");
     await mkdir(path.dirname(entry), { recursive: true });
     await writeFile(
       entry,
       `#!/usr/bin/env node
-console.log(JSON.stringify({args: process.argv.slice(2), cwd: process.cwd(), doNotTrack: process.env.DO_NOT_TRACK, disabled: process.env.DISABLE_TELEMETRY}));
+console.log(JSON.stringify({args: process.argv.slice(2), cwd: process.cwd(), doNotTrack: process.env.DO_NOT_TRACK, disabled: process.env.DISABLE_TELEMETRY, inthTokenPresent: Object.keys(process.env).some(key => key.toUpperCase() === "INTH_TOKEN")}));
 if (process.env.INTH_TEST_SKILLS_WAIT) { setInterval(() => {}, 1000); }
 else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
 `
     );
-    if (!windows) {
+    if (windows) {
+      await writeFile(path.join(bin, "npx.cmd"), `@node "${entry}" %*\r\n`);
+      const fallback = path.join(
+        bin,
+        "node_modules",
+        "npm",
+        "bin",
+        "npx-cli.js"
+      );
+      await mkdir(path.dirname(fallback), { recursive: true });
+      // A resolver that ignores the shim must fail here, never run real npm.
+      await writeFile(
+        fallback,
+        'console.error("Ignored npx shim"); process.exit(77);'
+      );
+    } else {
       await chmod(entry, 0o755);
     }
     const env = {
@@ -40,7 +55,9 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
       DISABLE_TELEMETRY: "1",
       DO_NOT_TRACK: "1",
       INTH_TELEMETRY_DISABLED: "1",
+      INTH_TOKEN: "private-key-never-forward",
       PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
+      inth_token: "private-key-other-case",
     };
     const forwarded = [
       "--skill",
@@ -84,6 +101,7 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
         cwd: directory,
         disabled: "1",
         doNotTrack: "1",
+        inthTokenPresent: false,
       });
     }
     const custom = spawnSync(binary, ["skills", "owner/repo", "--list"], {

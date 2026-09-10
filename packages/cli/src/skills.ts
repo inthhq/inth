@@ -1,7 +1,9 @@
+/* eslint-disable prefer-named-capture-group -- Scriptc uses indexed regex captures. */
+/* eslint-disable unicorn/prefer-string-replace-all -- Scriptc lowers global regex replace without the dynamic engine. */
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
-import { join } from "node:path";
+import { dirname, join, resolve as resolvePath } from "node:path";
 
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
@@ -122,6 +124,41 @@ interface SkillsProcess {
   args: string[];
 }
 
+const windowsNpxEntry = (filename: string): string => {
+  let shim = filename;
+  // Follow static npm/Scoop-style targets, with a bound for cyclic wrappers.
+  for (let depth = 0; depth < 8 && existsSync(shim); depth += 1) {
+    shim = realpathSync(shim);
+    const contents = readFileSync(shim, "utf-8");
+    const targets =
+      /[="]([^"\r\n=]*(?:npx-cli\.(?:js|mjs)|npx\.(?:cmd|exe)))"/iu;
+    let next = "";
+    for (const line of contents.split("\n")) {
+      const match = targets.exec(line);
+      if (!match) {
+        continue;
+      }
+      const relative = (match[1] ?? "")
+        .replace(/%~dp0[\\/]?/giu, `${dirname(shim)}/`)
+        .replace(/%dp0%[\\/]?/giu, `${dirname(shim)}/`)
+        .replace(/\\/gu, "/");
+      const target = resolvePath(dirname(shim), relative);
+      if (!relative.includes("%") && existsSync(target)) {
+        if (!target.toLowerCase().endsWith(".cmd")) {
+          return target;
+        }
+        next = target;
+        break;
+      }
+    }
+    if (!next) {
+      return "";
+    }
+    shim = next;
+  }
+  return "";
+};
+
 export const skillsProcess = (
   source: string,
   forwarded: string[],
@@ -138,6 +175,16 @@ export const skillsProcess = (
   for (const directory of path.split(";")) {
     if (!directory) {
       continue;
+    }
+    const executable = join(directory, "npx.exe");
+    if (existsSync(executable)) {
+      return { args, command: executable };
+    }
+    const shimEntry = windowsNpxEntry(join(directory, "npx.cmd"));
+    if (shimEntry) {
+      return shimEntry.toLowerCase().endsWith(".exe")
+        ? { args, command: shimEntry }
+        : { args: [shimEntry, ...args], command: "node" };
     }
     const entry = join(directory, "node_modules", "npm", "bin", "npx-cli.js");
     if (existsSync(entry)) {
@@ -172,9 +219,18 @@ export const runSkills = async (
     process.platform,
     process.env.PATH ?? ""
   );
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.toUpperCase() === "INTH_TOKEN") {
+      env[key] = undefined;
+    }
+  }
   // eslint-disable-next-line promise/avoid-new -- Adapt Scriptc child process events to the async command contract.
   return await new Promise<number>((resolve, reject) => {
-    const child = spawn(command.command, command.args, { stdio: "inherit" });
+    const child = spawn(command.command, command.args, {
+      env,
+      stdio: "inherit",
+    });
     const cancel = (): void => {
       child.kill("SIGTERM");
     };

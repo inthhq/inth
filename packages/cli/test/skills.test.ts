@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -107,6 +113,62 @@ describe("skills arguments", () => {
 });
 
 describe("skills process", () => {
+  it.each(["exe", "absolute", "relative", "wrapper"])(
+    "resolves Windows %s shims without sending arguments through a shell",
+    (kind) => {
+      const directory = realpathSync(
+        mkdtempSync(path.join(os.tmpdir(), "inth-npx-shim-"))
+      );
+      try {
+        const bin = path.join(directory, "shims");
+        const npm = path.join(directory, "npm elsewhere");
+        mkdirSync(bin);
+        mkdirSync(npm);
+        const entry = path.join(npm, "npx-cli.js");
+        writeFileSync(entry, "");
+        const executable = path.join(bin, "npx.exe");
+        if (kind === "exe") {
+          writeFileSync(executable, "");
+        } else {
+          const wrapper = path.join(npm, "npx.cmd");
+          writeFileSync(wrapper, '@node "%~dp0npx-cli.js" %*');
+          let target = entry;
+          if (kind === "relative") {
+            target = "%dp0%\\..\\npm elsewhere\\npx-cli.js";
+          } else if (kind === "wrapper") {
+            target = wrapper;
+          }
+          writeFileSync(path.join(bin, "npx.cmd"), `@node "${target}" %*`);
+        }
+        const forwarded = ["--skill", "%PATH% & echo unsafe"];
+        const result = skillsProcess("c15t/skills", forwarded, "win32", bin);
+        const expected = [
+          "--yes",
+          "skills@1.5.25",
+          "add",
+          "c15t/skills",
+          ...forwarded,
+        ];
+        expect(result).toEqual({
+          args: kind === "exe" ? expected : [entry, ...expected],
+          command: kind === "exe" ? executable : "node",
+        });
+      } finally {
+        rmSync(directory, { force: true, recursive: true });
+      }
+    }
+  );
+  it("rejects cyclic Windows shims without executing them", () => {
+    const directory = mkdtempSync(path.join(os.tmpdir(), "inth-npx-cycle-"));
+    try {
+      writeFileSync(path.join(directory, "npx.cmd"), '@call "%~dp0npx.cmd" %*');
+      expect(() =>
+        skillsProcess("c15t/skills", [], "win32", directory)
+      ).toThrow("Cannot find npx");
+    } finally {
+      rmSync(directory, { force: true, recursive: true });
+    }
+  });
   it("passes the source to the official CLI without a shell", () => {
     expect(
       skillsProcess("c15t/skills", ["--skill", "c15t"], "linux", "")
