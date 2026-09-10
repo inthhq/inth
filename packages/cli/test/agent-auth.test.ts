@@ -322,6 +322,37 @@ describe("auth.md credentials", () => {
     f.replies.push(response(tokens));
     expect(JSON.parse(await f.auth().complete()).status).toBe("authenticated");
   });
+  it("preserves server expiry diagnostics in the JSON error result", async () => {
+    const f = fixture();
+    await start(f);
+    f.replies.push({
+      ...response({ error: "expired_token" }, 400),
+      requestId: "expiry-request",
+    });
+    const select = vi.fn();
+    const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+    try {
+      const exitCode = await runAgentCommand(
+        parseArguments(["login", "--complete", "--json"]),
+        f.auth(),
+        select
+      ).catch((error: Error) => reportError(true, error, false));
+      expect(exitCode).toBe(1);
+      expect(stdout).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toMatchObject({
+        error: {
+          code: "authentication_expired",
+          httpStatus: 400,
+          requestId: "expiry-request",
+        },
+        ok: false,
+        schemaVersion: 2,
+      });
+      expect(select).not.toHaveBeenCalled();
+    } finally {
+      stdout.mockRestore();
+    }
+  });
   it("does not mark a claim uncertain when it expires during discovery", async () => {
     const f = fixture();
     await start(f);

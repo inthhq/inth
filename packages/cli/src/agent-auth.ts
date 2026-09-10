@@ -125,6 +125,7 @@ export class AgentAuth {
     if (c) {
       return JSON.stringify({
         assertionExpiresAt: c.assertionExpiresAt,
+        credentialPresent: true,
         credentialSource: "auth.md",
         expiresAt: c.expiresAt,
         nextStep: {
@@ -143,6 +144,7 @@ export class AgentAuth {
     const p = state.pending;
     if (p) {
       return JSON.stringify({
+        credentialPresent: false,
         credentialSource: "auth.md",
         expiresAt: p.expiresAt,
         interval: p.interval,
@@ -158,11 +160,14 @@ export class AgentAuth {
         scopes: p.scopes,
         status: p.exchanging ? "uncertain" : "pending",
         userCode: p.userCode,
+        validated: false,
         verificationUri: p.verificationUri,
       });
     }
     return JSON.stringify({
+      credentialPresent: false,
       credentialSource: "auth.md",
+      expiresAt: null,
       status: "signed_out",
       validated: false,
     });
@@ -382,7 +387,9 @@ export class AgentAuth {
           if (error.code === "expired_token") {
             throw new CliError(
               "authentication_expired",
-              "The approval code expired. Run inth auth retry."
+              "The approval code expired. Run inth auth retry.",
+              error.status,
+              error.requestId
             );
           }
           if (error.code === "access_denied") {
