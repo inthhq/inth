@@ -18,6 +18,7 @@ import {
   rawApiRequest,
   resourceCommand,
 } from "../../src/resource-commands.ts";
+import { runSkills } from "../../src/skills.ts";
 import { ApiClient, apiKey } from "./api.ts";
 import type { CredentialStore } from "./auth.ts";
 import { Auth } from "./auth.ts";
@@ -208,6 +209,20 @@ export const run = async (
     );
     return;
   }
+  const allowInteractive = !options.json && !options.nonInteractive;
+  if (options.command === "skills") {
+    process.exitCode = await runSkills(
+      options,
+      signal,
+      organizationUI(
+        signal,
+        allowInteractive,
+        "Choose an Inth skill",
+        "Skills selection cancelled."
+      )
+    );
+    return;
+  }
   const key = apiKey(options.token, process.env.INTH_TOKEN);
   const directory = stateDirectory();
   const context = new OrganizationContext(directory, process.cwd());
@@ -222,7 +237,6 @@ export const run = async (
   };
   const getAuth = async () => new Auth(http, await getStore());
   const api = new ApiClient(http, getAuth, key);
-  const allowInteractive = !options.json && !options.nonInteractive;
   if (await runResourceCommand(options, api, context)) {
     return;
   }

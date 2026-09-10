@@ -95,6 +95,8 @@ New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`
 
 ## Command discovery and MCP setup
 
+Bare `inth skills` opens a native picker. Use `inth skills --list --json` to read the bundled catalog offline through `data.skills`, or `inth skills --non-interactive --yes --skill c15t --agent claude-code` for unattended installation. An explicit `owner/repo` bypasses the picker; without one, installation defaults to `c15t/skills`. Installation uses `npx skills add` and requires Node.js and npm. Installer options pass through unchanged. Installation and listing an explicit repository emit upstream terminal output; JSON is available for the bundled catalog and help.
+
 MCP setup results include `results[].nextStep` with a `command` and an `instruction` for client sign-in. Dry runs return the command to apply changes instead. Listing and completed removals return `nextStep: null`. Full config paths stay in JSON even when the human summary abbreviates them.
 
 `inth project create --help --json` returns only that command's structured metadata in `data.commandDefinitions`. Definitions include typed options, required fields, accepted enum values, defaults, required OAuth scopes, credential support, effects, examples, and pagination behavior. The older `commands` and `options` string arrays remain available for existing consumers.

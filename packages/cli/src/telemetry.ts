@@ -5,6 +5,7 @@ import { style, wrapText } from "./display.ts";
 import { VERSION } from "./help.ts";
 import { HttpError } from "./http-error.ts";
 import type { MeResponse } from "./identity.ts";
+import { skillsCatalogList, skillsNeedsSelection } from "./skills-catalog.ts";
 
 // Public ingestion token, not a personal or project secret API key.
 export const TELEMETRY_TOKEN =
@@ -101,6 +102,22 @@ export const telemetryPayload = (
   if (errorCode === "cancelled") {
     outcome = "cancelled";
   }
+  let skillsSource: string | null = null;
+  let skillsOperation: string | null = null;
+  if (options.command === "skills") {
+    skillsSource = options.argument === "c15t/skills" ? "c15t/skills" : "other";
+    skillsOperation = (options.skillsArguments ?? []).some((arg) =>
+      ["--list", "-l"].includes(arg)
+    )
+      ? "list"
+      : "add";
+    if (skillsCatalogList(options) || skillsNeedsSelection(options)) {
+      skillsSource = "catalog";
+    }
+    if (skillsNeedsSelection(options)) {
+      skillsOperation = "browse";
+    }
+  }
   return JSON.stringify({
     api_key: TELEMETRY_TOKEN,
     distinct_id: userId || `cli:${installationId}`,
@@ -126,6 +143,8 @@ export const telemetryPayload = (
       os: process.platform,
       outcome,
       schema_version: 1,
+      skills_operation: skillsOperation,
+      skills_source: skillsSource,
       source: "cli",
     },
   });

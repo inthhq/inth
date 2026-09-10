@@ -6,6 +6,7 @@ import {
   rawApiRequest,
   RESOURCE_COMMANDS,
 } from "./resource-commands.ts";
+import { parseSkillsArguments } from "./skills.ts";
 
 export interface CliArguments {
   command: string;
@@ -21,6 +22,8 @@ export interface CliArguments {
   nonInteractive: boolean;
   help: boolean;
   version: boolean;
+  skillsArguments?: string[];
+  skillsSourceExplicit?: boolean;
 }
 
 const validateCommandOptions = (result: CliArguments): void => {
@@ -261,6 +264,11 @@ export const parseArguments = (args: string[]): CliArguments => {
       index = consumeOption(result, args, index, arg);
     } else {
       positional.push(arg);
+      if (positional.length === 1 && arg === "skills") {
+        result.command = "skills";
+        parseSkillsArguments(result, args.slice(index + 1));
+        return result;
+      }
     }
   }
   result.command = positional[0] ?? "";
