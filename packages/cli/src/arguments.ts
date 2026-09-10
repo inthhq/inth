@@ -23,6 +23,7 @@ export interface CliArguments {
   help: boolean;
   version: boolean;
   skillsArguments?: string[];
+  skillsBrowse?: boolean;
   skillsSourceExplicit?: boolean;
 }
 

@@ -89,6 +89,21 @@ describe("skills arguments", () => {
     expect(formatHelp("skills")).toContain("--skill");
     expect(formatHelp()).toContain("skills");
   });
+  it.each([["--agent", "claude-code"], ["--agent=claude-code"]])(
+    "forwards the shared leading agent option: %j",
+    (...flags) => {
+      expect(parseArguments([...flags, "skills", "--yes"])).toMatchObject({
+        skillsArguments: ["--agent", "claude-code", "--yes"],
+        values: [],
+      });
+      expect(() =>
+        parseArguments([...flags, "--token=private-value", "skills", "--yes"])
+      ).toThrow("does not use Inth authentication");
+      expect(() =>
+        parseArguments([...flags, "--name=private-value", "skills", "--yes"])
+      ).toThrow("does not use Inth authentication");
+    }
+  );
 });
 
 describe("skills process", () => {

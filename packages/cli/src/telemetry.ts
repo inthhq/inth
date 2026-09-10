@@ -105,16 +105,17 @@ export const telemetryPayload = (
   let skillsSource: string | null = null;
   let skillsOperation: string | null = null;
   if (options.command === "skills") {
+    const browse = options.skillsBrowse || skillsNeedsSelection(options);
     skillsSource = options.argument === "c15t/skills" ? "c15t/skills" : "other";
     skillsOperation = (options.skillsArguments ?? []).some((arg) =>
       ["--list", "-l"].includes(arg)
     )
       ? "list"
       : "add";
-    if (skillsCatalogList(options) || skillsNeedsSelection(options)) {
+    if (skillsCatalogList(options) || browse) {
       skillsSource = "catalog";
     }
-    if (skillsNeedsSelection(options)) {
+    if (browse) {
       skillsOperation = "browse";
     }
   }

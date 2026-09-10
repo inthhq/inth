@@ -71,6 +71,12 @@ export const parseSkillsArguments = (
   args: string[]
 ): void => {
   const forwarded: string[] = [];
+  for (const option of options.values) {
+    if (option.name === "agent") {
+      forwarded.push("--agent", option.value);
+    }
+  }
+  options.values = options.values.filter((option) => option.name !== "agent");
   let index = args.length > 0 && args[0] === "add" ? 1 : 0;
   options.argument = DEFAULT_SKILLS_SOURCE;
   const source = index < args.length ? args[index] : undefined;

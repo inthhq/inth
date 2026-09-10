@@ -100,6 +100,21 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
       "owner/repo",
       "--list",
     ]);
+    const leadingAgent = spawnSync(
+      binary,
+      ["--agent=claude-code", "skills", "--yes"],
+      { cwd: directory, encoding: "utf-8", env, timeout: 5000 }
+    );
+    assert.equal(leadingAgent.status, 0, leadingAgent.stderr);
+    assert.deepEqual(JSON.parse(leadingAgent.stdout).args, [
+      "--yes",
+      "skills",
+      "add",
+      "c15t/skills",
+      "--agent",
+      "claude-code",
+      "--yes",
+    ]);
     const help = spawnSync(binary, ["skills", "--help", "--json"], {
       encoding: "utf-8",
       env: { ...env, PATH: "" },

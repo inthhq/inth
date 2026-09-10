@@ -9,8 +9,27 @@ import {
   skillsCatalogList,
   skillsNeedsSelection,
 } from "../src/skills-catalog.ts";
+import { telemetryPayload } from "../src/telemetry.ts";
 
 describe("Inth skills catalog", () => {
+  it.each(["", "command_failed"])(
+    "preserves catalog attribution after selection with outcome %j",
+    async (errorCode) => {
+      const options = parseArguments(["skills"]);
+      await selectInthSkill(options, {
+        interactive: true,
+        select: async () => "c15t",
+      });
+      const payload = JSON.parse(
+        telemetryPayload(options, "installation", 10, errorCode, true)
+      );
+      expect(payload.properties).toMatchObject({
+        outcome: errorCode ? "error" : "success",
+        skills_operation: "browse",
+        skills_source: "catalog",
+      });
+    }
+  );
   it("offers the picker even with one skill, then forwards that selection", async () => {
     const options = parseArguments([
       "skills",

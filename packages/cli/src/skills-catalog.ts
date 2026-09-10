@@ -40,6 +40,8 @@ export const selectInthSkill = async (
   if (!skillsNeedsSelection(options)) {
     return;
   }
+  // Keep the entry flow after the selected skill changes the installer arguments.
+  options.skillsBrowse = true;
   if (!ui.interactive) {
     throw new CliError(
       "interaction_required",
