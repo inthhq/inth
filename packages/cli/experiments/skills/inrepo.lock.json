@@ -1,0 +1,12 @@
+{
+  "lockfileVersion": 1,
+  "modules": {
+    "skills": {
+      "commit": "7ffbeb96f012a63c0583a2e71e24385dc497566d",
+      "gitUrl": "https://github.com/vercel-labs/skills.git",
+      "ref": "7ffbeb96f012a63c0583a2e71e24385dc497566d",
+      "source": "skills",
+      "updatedAt": "2026-09-10T12:22:30.809Z"
+    }
+  }
+}

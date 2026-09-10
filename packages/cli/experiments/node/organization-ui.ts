@@ -9,14 +9,16 @@ export const listOrganizations = (api: ApiClient): Promise<Organization[]> =>
   api.organizations();
 export const organizationUI = (
   signal: AbortSignal,
-  allowInteractive = true
+  allowInteractive = true,
+  title = "Choose your default organization",
+  cancellationMessage = "Organization selection cancelled."
 ): OrganizationUI => ({
   interactive:
     allowInteractive && Boolean(process.stdin.isTTY && process.stderr.isTTY),
   select: async (organizations) => {
     signal.throwIfAborted();
     const value = await select({
-      message: "Choose your default organization",
+      message: title,
       options: organizations.map((org) => ({
         hint: terminalText(org.slug),
         label: terminalText(org.name),
@@ -26,7 +28,7 @@ export const organizationUI = (
       signal,
     });
     if (isCancel(value)) {
-      throw new CliError("cancelled", "Organization selection cancelled.");
+      throw new CliError("cancelled", cancellationMessage);
     }
     return value;
   },

@@ -11,6 +11,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("lists skills without initializing authentication or its environment", async () => {
+  vi.stubEnv("INTH_DEV_API_ORIGIN", "invalid-origin");
+  vi.stubEnv("INTH_DEV_DASHBOARD_ORIGIN", "invalid-origin");
+  const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+  const createAgent = vi.fn<() => Promise<AgentAuth>>();
+  const selectedConnection = vi.spyOn(
+    OrganizationContext.prototype,
+    "selectedConnection"
+  );
+  await run(
+    ["skills", "--list", "--json"],
+    new AbortController().signal,
+    createAgent
+  );
+  expect(createAgent).not.toHaveBeenCalled();
+  expect(selectedConnection).not.toHaveBeenCalled();
+  expect(stdout).toHaveBeenCalledTimes(1);
+  expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toMatchObject({
+    data: {
+      skills: expect.arrayContaining([
+        expect.objectContaining({ name: "c15t" }),
+      ]),
+    },
+    ok: true,
+  });
+});
+
 it.each(["switch", "link"])(
   "initializes agent credentials once while %s paginates organizations",
   async (command) => {

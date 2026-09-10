@@ -43,6 +43,7 @@
     "build:yao": "node scripts/build-yao.ts",
     "test:yao": "node scripts/verify-yao.ts",
     "assess:vendoring": "node scripts/assess-vendoring.ts",
+    "assess:skills": "node scripts/assess-skills.ts",
     "assess:sentry": "node scripts/assess-sentry.ts",
     "assess:sentry:native": "node scripts/assess-sentry-native.ts",
     "build:scriptc:auth": "pnpm build",

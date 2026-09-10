@@ -6,6 +6,7 @@ import {
   rawApiRequest,
   RESOURCE_COMMANDS,
 } from "./resource-commands.ts";
+import { parseSkillsArguments } from "./skills.ts";
 
 export interface CliArguments {
   command: string;
@@ -22,6 +23,9 @@ export interface CliArguments {
   nonInteractive: boolean;
   help: boolean;
   version: boolean;
+  skillsArguments?: string[];
+  skillsBrowse?: boolean;
+  skillsSourceExplicit?: boolean;
 }
 
 const validateCommandOptions = (result: CliArguments): void => {
@@ -315,7 +319,11 @@ const setOption = (
     }
     result.organization = value;
   } else {
-    if (result.values.some((entry) => entry.name === option)) {
+    // Skills consumes repeated leading agents before general validation.
+    if (
+      option !== "agent" &&
+      result.values.some((entry) => entry.name === option)
+    ) {
       throw new CliError("usage_error", `Use --${option} only once.`);
     }
     result.values.push({ name: option, value });
@@ -393,12 +401,20 @@ export const parseArguments = (args: string[]): CliArguments => {
       index = consumeOption(result, args, index, arg);
     } else {
       positional.push(arg);
+      if (positional.length === 1 && arg === "skills") {
+        result.command = "skills";
+        parseSkillsArguments(result, args.slice(index + 1));
+        return result;
+      }
     }
   }
   result.command = positional[0] ?? "";
   result.argument = positional[1] ?? "";
   result.id = positional[2] ?? "";
   normalizeAccountSignIn(result);
+  if (result.values.filter((entry) => entry.name === "agent").length > 1) {
+    throw new CliError("usage_error", "Use --agent only once.");
+  }
   validateArguments(result, positional.length);
   return result;
 };

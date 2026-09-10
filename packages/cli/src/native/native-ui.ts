@@ -78,16 +78,20 @@ const select = async (
   organizations: Organization[],
   signal: AbortSignal,
   title: string,
-  organizationMode: boolean
+  organizationMode: boolean,
+  purpose: string
 ): Promise<string> => {
   signal.throwIfAborted();
+  let terminalMessage =
+    "A terminal is required. Provide --agent and --scope project|global.";
+  if (organizationMode) {
+    terminalMessage =
+      "A terminal is required. Use inth switch <organization-id>.";
+  } else if (purpose) {
+    terminalMessage = "A terminal is required for this selection.";
+  }
   if (terminalBegin() !== 0) {
-    throw new CliError(
-      "interaction_required",
-      organizationMode
-        ? "A terminal is required. Use inth switch <organization-id>."
-        : "A terminal is required. Provide --agent and --scope project|global."
-    );
+    throw new CliError("interaction_required", terminalMessage);
   }
   let lines = 0;
   let cursor = 0;
@@ -101,7 +105,7 @@ const select = async (
           "cancelled",
           organizationMode
             ? "Organization selection cancelled."
-            : "MCP setup cancelled."
+            : `${purpose || "MCP setup"} cancelled.`
         );
       }
       if (key === 3) {
@@ -110,6 +114,8 @@ const select = async (
         lines = 0;
         if (organizationMode) {
           coloredLine(`◇ ${organizationLabel(org)}`, "32");
+        } else if (purpose) {
+          coloredLine(`◇ ${terminalText(org.name)}`, "32");
         }
         return org.id;
       }
@@ -143,10 +149,11 @@ export const nativeUI = (
   signal: AbortSignal,
   allowInteractive = true,
   title = "Choose your default organization",
-  organizationMode = true
+  organizationMode = true,
+  purpose = ""
 ): OrganizationUI => ({
   interactive:
     allowInteractive && Boolean(process.stdin.isTTY && process.stderr.isTTY),
   select: (organizations) =>
-    select(organizations, signal, title, organizationMode),
+    select(organizations, signal, title, organizationMode, purpose),
 });

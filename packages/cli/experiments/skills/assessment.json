@@ -1,0 +1,361 @@
+{
+  "compiler": "scriptc@0.0.36",
+  "install_tested": false,
+  "native_execution_tested": false,
+  "node": "v24.19.0",
+  "node_help": "passed",
+  "node_local_skill_discovery": "passed",
+  "platform": "darwin-arm64",
+  "probes": [
+    {
+      "compiler_exit_code": 1,
+      "diagnostic_counts": {
+        "SC2013": 23,
+        "SC2011": 2,
+        "SC1090": 7,
+        "SC2020": 5,
+        "SC2004": 1,
+        "SC2012": 1
+      },
+      "entry": "cli-probe.ts",
+      "examples": [
+        {
+          "code": "SC2013",
+          "column": 1,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1,
+          "message": "importing '@clack/prompts' requires the embedded dynamic engine, which this build does not include — the package's implementation runs there"
+        },
+        {
+          "code": "SC2011",
+          "column": 7,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/agents.ts",
+          "line": 27,
+          "message": "values of type 'unknown' have no static representation but run in the embedded dynamic engine, which this build does not include"
+        },
+        {
+          "code": "SC1090",
+          "column": 43,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/agents.ts",
+          "line": 36,
+          "message": "library functions as values (call 'existsSync' directly) are not supported yet"
+        },
+        {
+          "code": "SC2020",
+          "column": 41,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/cli.ts",
+          "line": 17,
+          "message": "'ImportMeta.url' is typed by @types/node but has no scriptc lowering yet"
+        },
+        {
+          "code": "SC2004",
+          "column": 24,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/detect-agent.ts",
+          "line": 74,
+          "message": "uses of 'detectAgent' inherit the blocker on its declaration"
+        },
+        {
+          "code": "SC2012",
+          "column": 18,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/git.ts",
+          "line": 14,
+          "message": "'Number.parseInt' runs in the embedded dynamic engine, which this build does not include"
+        }
+      ],
+      "flags": [],
+      "log": "build/skills-assessment/cli-static.log",
+      "name": "cli-static"
+    },
+    {
+      "compiler_exit_code": 1,
+      "diagnostic_counts": {
+        "SC2013": 172,
+        "SC2003": 4,
+        "SC2004": 12,
+        "SC1090": 28,
+        "SC2020": 64,
+        "SC1101": 1,
+        "SC2002": 3,
+        "SC2011": 18,
+        "SC2009": 2,
+        "SC1100": 1,
+        "SC2012": 4
+      },
+      "entry": "add-probe.ts",
+      "examples": [
+        {
+          "code": "SC2013",
+          "column": 1,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1,
+          "message": "importing '@clack/prompts' requires the embedded dynamic engine, which this build does not include — the package's implementation runs there"
+        },
+        {
+          "code": "SC2003",
+          "column": 12,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 154,
+          "message": "union types must match exactly: expected 'boolean | undefined', got '{ [key: string]: { alerts: number | undefined; analyzedAt: string; risk: string; score: number | undefined } } | undefined' (a union re-tags into another union only when every arm of the source has an identical arm in the destination, or is a record/array that width-coerces into exactly one destination arm)"
+        },
+        {
+          "code": "SC2004",
+          "column": 29,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1086,
+          "message": "uses of 'detectAgent' inherit the blocker on its declaration"
+        },
+        {
+          "code": "SC1090",
+          "column": 44,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1133,
+          "message": "'Promise<null | undefined>' values where 'Promise<boolean | null>' is expected is not supported yet"
+        },
+        {
+          "code": "SC2020",
+          "column": 24,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1204,
+          "message": "'Object.hasOwn' is part of the standard library types but has no scriptc lowering yet"
+        },
+        {
+          "code": "SC1101",
+          "column": 23,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1381,
+          "message": "converting typed values to 'unknown' is not supported yet"
+        },
+        {
+          "code": "SC2002",
+          "column": 29,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1761,
+          "message": "record shapes must match exactly or width-coerce: expected '{ description: string; files: { contents: string; path: string }[]; metadata: { [key: string]: unknown } | undefined; name: string; path: string; pluginName: string | undefined; rawContent: string | undefined; repoPath: string; snapshotHash: string }', got '{ description: string; metadata: { [key: string]: unknown } | undefined; name: string; path: string; pluginName: string | undefined; rawContent: string | undefined }' — the expected field 'files' is missing on the source and is not optional"
+        },
+        {
+          "code": "SC2011",
+          "column": 7,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/agents.ts",
+          "line": 27,
+          "message": "values of type 'unknown' have no static representation but run in the embedded dynamic engine, which this build does not include"
+        },
+        {
+          "code": "SC2009",
+          "column": 17,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/archive.ts",
+          "line": 265,
+          "message": "values of type 'Map<string, Uint8Array<ArrayBufferLike>>' cannot be compiled: the Map shape is supported, but 'Uint8Array<ArrayBufferLike>' values have no Map slot yet (functions, promises, and nested Maps stay out)"
+        },
+        {
+          "code": "SC1100",
+          "column": 20,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/blob.ts",
+          "line": 196,
+          "message": "passing 'unknown' values where '{ sha: unknown; tree: unknown }' is expected is not supported yet"
+        },
+        {
+          "code": "SC2012",
+          "column": 18,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/download-source.ts",
+          "line": 35,
+          "message": "'Number.parseInt' runs in the embedded dynamic engine, which this build does not include"
+        }
+      ],
+      "flags": [],
+      "log": "build/skills-assessment/add-static.log",
+      "name": "add-static"
+    },
+    {
+      "compiler_exit_code": 1,
+      "diagnostic_counts": {
+        "SC2013": 88,
+        "SC1090": 108,
+        "SC2003": 4,
+        "SC2004": 12,
+        "SC2020": 64,
+        "SC1101": 3,
+        "SC2002": 3,
+        "SC2011": 18,
+        "SC2009": 2,
+        "SC1100": 1,
+        "SC2012": 4
+      },
+      "entry": "add-probe.ts",
+      "examples": [
+        {
+          "code": "SC2013",
+          "column": 1,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1,
+          "message": "importing '@clack/prompts' requires the embedded dynamic engine, which this build does not include — the package's implementation runs there"
+        },
+        {
+          "code": "SC1090",
+          "column": 17,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 112,
+          "message": "the reference to 'red' (a binding form with no lowering) is not supported yet"
+        },
+        {
+          "code": "SC2003",
+          "column": 12,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 154,
+          "message": "union types must match exactly: expected 'boolean | undefined', got '{ [key: string]: { alerts: number | undefined; analyzedAt: string; risk: string; score: number | undefined } } | undefined' (a union re-tags into another union only when every arm of the source has an identical arm in the destination, or is a record/array that width-coerces into exactly one destination arm)"
+        },
+        {
+          "code": "SC2004",
+          "column": 29,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1086,
+          "message": "uses of 'detectAgent' inherit the blocker on its declaration"
+        },
+        {
+          "code": "SC2020",
+          "column": 24,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1204,
+          "message": "'Object.hasOwn' is part of the standard library types but has no scriptc lowering yet"
+        },
+        {
+          "code": "SC1101",
+          "column": 23,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1381,
+          "message": "converting typed values to 'unknown' is not supported yet"
+        },
+        {
+          "code": "SC2002",
+          "column": 29,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1761,
+          "message": "record shapes must match exactly or width-coerce: expected '{ description: string; files: { contents: string; path: string }[]; metadata: { [key: string]: unknown } | undefined; name: string; path: string; pluginName: string | undefined; rawContent: string | undefined; repoPath: string; snapshotHash: string }', got '{ description: string; metadata: { [key: string]: unknown } | undefined; name: string; path: string; pluginName: string | undefined; rawContent: string | undefined }' — the expected field 'files' is missing on the source and is not optional"
+        },
+        {
+          "code": "SC2011",
+          "column": 7,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/agents.ts",
+          "line": 27,
+          "message": "values of type 'unknown' have no static representation but run in the embedded dynamic engine, which this build does not include"
+        },
+        {
+          "code": "SC2009",
+          "column": 17,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/archive.ts",
+          "line": 265,
+          "message": "values of type 'Map<string, Uint8Array<ArrayBufferLike>>' cannot be compiled: the Map shape is supported, but 'Uint8Array<ArrayBufferLike>' values have no Map slot yet (functions, promises, and nested Maps stay out)"
+        },
+        {
+          "code": "SC1100",
+          "column": 20,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/blob.ts",
+          "line": 196,
+          "message": "passing 'unknown' values where '{ sha: unknown; tree: unknown }' is expected is not supported yet"
+        },
+        {
+          "code": "SC2012",
+          "column": 18,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/download-source.ts",
+          "line": 35,
+          "message": "'Number.parseInt' runs in the embedded dynamic engine, which this build does not include"
+        }
+      ],
+      "flags": ["--npm-static", "auto"],
+      "log": "build/skills-assessment/add-npm-static.log",
+      "name": "add-npm-static"
+    },
+    {
+      "compiler_exit_code": 1,
+      "diagnostic_counts": {
+        "SC2003": 4,
+        "SC1101": 9,
+        "SC2020": 91,
+        "SC1090": 38,
+        "SC2004": 59,
+        "SC2002": 8,
+        "SC2001": 25,
+        "SC2009": 4,
+        "SC1100": 1
+      },
+      "entry": "add-probe.ts",
+      "examples": [
+        {
+          "code": "SC2003",
+          "column": 12,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 154,
+          "message": "union types must match exactly: expected 'boolean | undefined', got '{ [key: string]: { alerts: number | undefined; analyzedAt: string; risk: string; score: number | undefined } } | undefined' (a union re-tags into another union only when every arm of the source has an identical arm in the destination, or is a record/array that width-coerces into exactly one destination arm)"
+        },
+        {
+          "code": "SC1101",
+          "column": 20,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 462,
+          "message": "converting typed values to 'unknown' is not supported yet"
+        },
+        {
+          "code": "SC2020",
+          "column": 51,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 612,
+          "message": "'.keys() outside an immediate array spread' is part of the standard library types but has no scriptc lowering yet"
+        },
+        {
+          "code": "SC1090",
+          "column": 27,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 831,
+          "message": "Map values of type 'Map<string, boolean>' (Map values must be number, string, boolean, records, class instances, arrays, promises, or unions of those — not functions, Maps, 'unknown', or 'any') is not supported yet"
+        },
+        {
+          "code": "SC2004",
+          "column": 22,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 852,
+          "message": "uses of 'skillOverwrites' inherit the blocker on its declaration"
+        },
+        {
+          "code": "SC2002",
+          "column": 29,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/add.ts",
+          "line": 1761,
+          "message": "record shapes must match exactly or width-coerce: expected '{ description: string; files: { contents: string; path: string }[]; metadata: { [key: string]: unknown } | undefined; name: string; path: string; pluginName: string | undefined; rawContent: string | undefined; repoPath: string; snapshotHash: string }', got '{ description: string; metadata: { [key: string]: unknown } | undefined; name: string; path: string; pluginName: string | undefined; rawContent: string | undefined }' — the expected field 'files' is missing on the source and is not optional"
+        },
+        {
+          "code": "SC2001",
+          "column": 7,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/agents.ts",
+          "line": 27,
+          "message": "values of type 'unknown' cannot be compiled yet (supported: number, string, boolean, arrays, Maps, Sets, RegExp, read-only Date values, functions, classes, records, unions of those, and 'unknown')"
+        },
+        {
+          "code": "SC2009",
+          "column": 17,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/archive.ts",
+          "line": 265,
+          "message": "values of type 'Map<string, Uint8Array<ArrayBufferLike>>' cannot be compiled: the Map shape is supported, but 'Uint8Array<ArrayBufferLike>' values have no Map slot yet (functions, promises, and nested Maps stay out)"
+        },
+        {
+          "code": "SC1100",
+          "column": 20,
+          "file": "<cli>/experiments/skills/inrepo_modules/skills/src/blob.ts",
+          "line": 196,
+          "message": "passing 'unknown' values where '{ sha: unknown; tree: unknown }' is expected is not supported yet"
+        }
+      ],
+      "flags": ["--dynamic"],
+      "log": "build/skills-assessment/add-dynamic.log",
+      "name": "add-dynamic"
+    }
+  ],
+  "source_commits": {
+    "skills": {
+      "commit": "7ffbeb96f012a63c0583a2e71e24385dc497566d"
+    }
+  },
+  "source_typecheck": "passed",
+  "telemetry_delivery_tested": false,
+  "upstream": "skills@1.5.25",
+  "vendor_tool": "inrepo@0.0.9",
+  "vendor_verify": "passed"
+}

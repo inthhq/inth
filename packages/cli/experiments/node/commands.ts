@@ -25,6 +25,7 @@ import {
   rawApiRequest,
   resourceCommand,
 } from "../../src/resource-commands.ts";
+import { runSkills } from "../../src/skills.ts";
 import { ApiClient, apiKey } from "./api.ts";
 import type { CredentialStore } from "./auth.ts";
 import { Auth } from "./auth.ts";
@@ -200,6 +201,27 @@ const runResourceCommand = async (
   }
   return false;
 };
+const runWhoami = async (
+  options: CliArguments,
+  api: ApiClient,
+  context: OrganizationContext
+): Promise<void> => {
+  const identity = await api.getMe(true);
+  printResult(
+    options.json,
+    options.json
+      ? ""
+      : identitySummary(identity.data, {
+          authMode: options.authMode,
+          color: colorEnabled(Boolean(process.stdout.isTTY)),
+          columns: terminalColumns(),
+          profile: identity.profile,
+          selectedOrganization: await context.resolve(options.organization),
+        }),
+    JSON.stringify(identity)
+  );
+};
+
 export const run = async (
   args: string[],
   signal: AbortSignal,
@@ -213,6 +235,20 @@ export const run = async (
       options.command,
       options.argument,
       process.stdout.columns
+    );
+    return;
+  }
+  const allowInteractive = !options.json && !options.nonInteractive;
+  if (options.command === "skills") {
+    process.exitCode = await runSkills(
+      options,
+      signal,
+      organizationUI(
+        signal,
+        allowInteractive,
+        "Choose an Inth skill",
+        "Skills selection cancelled."
+      )
     );
     return;
   }
@@ -268,7 +304,6 @@ export const run = async (
   ) {
     return;
   }
-  const allowInteractive = !options.json && !options.nonInteractive;
   if (await runResourceCommand(options, api, context)) {
     return;
   }
@@ -306,20 +341,7 @@ export const run = async (
       return;
     }
     case "whoami": {
-      const identity = await api.getMe(true);
-      printResult(
-        options.json,
-        options.json
-          ? ""
-          : identitySummary(identity.data, {
-              authMode: options.authMode,
-              color: colorEnabled(Boolean(process.stdout.isTTY)),
-              columns: terminalColumns(),
-              profile: identity.profile,
-              selectedOrganization: await context.resolve(options.organization),
-            }),
-        JSON.stringify(identity)
-      );
+      await runWhoami(options, api, context);
       return;
     }
     case "switch":

@@ -291,6 +291,47 @@ const localCommand = (
   usage: `inth ${command}${action ? ` ${action}` : ""}${positional}`,
 });
 export const COMMAND_METADATA: CommandMetadata[] = [
+  {
+    action: "",
+    authentication: "none",
+    command: "skills",
+    description: "Browse and install Inth agent skills",
+    effects: [
+      "Opens a native picker when no source or skill is specified. The bundled catalog works offline.",
+      "Installation requires Node.js and npm. An explicit source bypasses the picker.",
+      "Runs npx skills@1.5.25 add and forwards installer options. Installs files in your project or home directory.",
+      "Installer output is text. --json is supported with --list or --help.",
+    ],
+    examples: [
+      "inth skills",
+      "inth skills c15t/skills --skill c15t",
+      "inth skills owner/repo --agent claude-code --global --yes",
+      "inth skills --list",
+      "inth skills --list --json",
+    ],
+    options: [
+      option("help", "boolean", "Show help for this command"),
+      option("non-interactive", "boolean", "Require --yes, --all, or --list"),
+      option("skill", "string[]", "Skill names to install"),
+      option("agent", "string[]", "Agents supported by the skills installer"),
+      option("global", "boolean", "Install in your home directory"),
+      option("yes", "boolean", "Skip installer confirmation prompts"),
+      option(
+        "list",
+        "boolean",
+        "List Inth skills offline, or inspect an explicit repository"
+      ),
+      option("copy", "boolean", "Copy files instead of creating symlinks"),
+      option(
+        "all",
+        "boolean",
+        "Install all skills to all agents without prompts"
+      ),
+    ],
+    paginated: false,
+    scopes: [],
+    usage: "inth skills [owner/repo]",
+  },
   localCommand(
     "login",
     "",
