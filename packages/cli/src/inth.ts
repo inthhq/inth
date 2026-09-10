@@ -47,6 +47,7 @@ import {
   rawApiRequest,
   resourceCommand,
 } from "./resource-commands.ts";
+import { runSkills } from "./skills.ts";
 import {
   telemetryCommand,
   telemetryError,
@@ -376,7 +377,27 @@ try {
       installationId = "";
     }
   }
-  await run(options);
+  if (options.command === "skills" && !options.help && !options.version) {
+    diagnosticStep("skills_command");
+    exitCode = await runSkills(
+      options,
+      controller.signal,
+      nativeUI(
+        controller.signal,
+        promptsAllowed(options),
+        "Choose an Inth skill",
+        false,
+        "Skills selection"
+      )
+    );
+    if (exitCode !== 0) {
+      errorCode = [130, 143].includes(exitCode)
+        ? "cancelled"
+        : "command_failed";
+    }
+  } else {
+    await run(options);
+  }
 } catch (error) {
   const failure = error instanceof Error ? error : new Error("Command failed.");
   errorCode = controller.signal.aborted ? "cancelled" : telemetryError(failure);

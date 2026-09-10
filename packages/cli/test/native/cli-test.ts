@@ -1,5 +1,6 @@
 /* eslint-disable require-await -- Scripted transports implement the async production contract. */
 import { randomUUID } from "node:crypto";
+import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
@@ -23,10 +24,26 @@ import { NativeContext } from "../../src/native/native-state.ts";
 import { NativeStore } from "../../src/native/native-store.ts";
 import { chooseOrganization } from "../../src/organizations.ts";
 import type { Organization } from "../../src/organizations.ts";
+import { skillsProcess } from "../../src/skills.ts";
 
 const directory = process.argv.length > 2 ? process.argv[2] : undefined;
 if (!directory) {
   throw new Error("Missing test directory.");
+}
+const shimDirectory = join(realpathSync(directory), "npx shims");
+const npmDirectory = join(realpathSync(directory), "external npm");
+mkdirSync(shimDirectory);
+mkdirSync(npmDirectory);
+const npxEntry = join(npmDirectory, "npx-cli.js");
+writeFileSync(npxEntry, "");
+for (const target of [npxEntry, "%dp0%\\..\\external npm\\npx-cli.js"]) {
+  writeFileSync(join(shimDirectory, "npx.cmd"), `@node "${target}" %*`);
+  const resolved = skillsProcess("c15t/skills", [], "win32", shimDirectory);
+  check(resolved.command === "node", "Windows shim must run Node directly.");
+  check(
+    resolved.args[0] === npxEntry,
+    "Windows shim must resolve external npm."
+  );
 }
 const state = join(directory, "state");
 const project = join(directory, "project");

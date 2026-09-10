@@ -9,6 +9,17 @@ import {
 describe("error diagnostics", () => {
   beforeEach(startErrorDiagnostics);
 
+  it("attributes unexpected skills failures without including installer data", () => {
+    diagnosticStep("argument_parse");
+    diagnosticStep("skills_command");
+    expect(errorDiagnostic(new Error("private installer data"))).toMatchObject({
+      last_operation: "skills_command",
+      message:
+        "Unexpected error after entering skills_command. Original message omitted.",
+      recent_operations: ["argument_parse", "skills_command"],
+    });
+  });
+
   it("preserves actionable, code-defined failure messages", () => {
     const acquire = errorDiagnostic(
       new Error("Cannot acquire the credential lock.")

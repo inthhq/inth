@@ -69,6 +69,8 @@ describe("telemetry privacy", () => {
         os: process.platform,
         outcome: "cancelled",
         schema_version: 1,
+        skills_operation: null,
+        skills_source: null,
         source: "cli",
       },
     });

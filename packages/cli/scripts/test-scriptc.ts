@@ -22,6 +22,7 @@ import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
 import { nativeTarget } from "./native-target.ts";
 import { verifyDevelopmentTelemetry, verifySentry } from "./sentry-checks.ts";
+import { verifySkills } from "./skills-checks.ts";
 import { verifyTelemetry } from "./telemetry-checks.ts";
 
 // Native subprocesses must never send production analytics.
@@ -68,6 +69,7 @@ await verifySentry(
 await verifyTelemetry(binary, false);
 verifyJson(binary);
 await verifyMcp(binary);
+await verifySkills(binary);
 const help = spawnSync(binary, ["--help"], {
   encoding: "utf-8",
   env: { ...process.env, PATH: "" },
@@ -212,6 +214,13 @@ if (process.platform !== "win32") {
   );
   assert.equal(mcpUi.status, 0, mcpUi.stderr || mcpUi.stdout);
   console.log(mcpUi.stdout.trim());
+  const skillsUi = spawnSync(
+    "python3",
+    [path.join(root, "scripts/test-skills-ui.py"), binary],
+    { encoding: "utf-8", timeout: 30_000 }
+  );
+  assert.equal(skillsUi.status, 0, skillsUi.stderr || skillsUi.stdout);
+  console.log(skillsUi.stdout.trim());
 }
 for (const scenario of [
   {
