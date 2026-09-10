@@ -5,6 +5,7 @@ import { join } from "node:path";
 
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
+import { OPTION_METADATA } from "./command-metadata.ts";
 import type { OrganizationUI } from "./organizations.ts";
 import { printResult } from "./output.ts";
 import {
@@ -24,7 +25,15 @@ const validateSkillsOptions = (
     options.token ||
     options.organization ||
     options.noBrowser ||
-    options.values.length
+    options.values.length ||
+    forwarded.some((arg) =>
+      OPTION_METADATA.some(
+        // --agent is shared with the upstream skills installer.
+        (option) =>
+          option.name !== "agent" &&
+          (arg === `--${option.name}` || arg.startsWith(`--${option.name}=`))
+      )
+    )
   ) {
     throw new CliError(
       "usage_error",

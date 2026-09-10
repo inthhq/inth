@@ -53,6 +53,27 @@ describe("skills arguments", () => {
   ])("rejects invalid invocations before running a process: %j", (...args) => {
     expect(() => parseArguments(args)).toThrow();
   });
+  it.each([
+    ["--token", "private-value"],
+    ["--token=private-value"],
+    ["--organization", "private-value"],
+    ["--organization=private-value"],
+    ["--name", "private-value"],
+    ["--data=private-value"],
+    ["--no-browser"],
+    ["--dry-run"],
+  ])("rejects Inth-only options on either side of skills: %j", (...flags) => {
+    for (const args of [
+      [...flags, "skills", "--yes"],
+      ["skills", ...flags, "--yes"],
+      ["skills", "add", "owner/repo", "--yes", ...flags],
+    ]) {
+      expect(() => parseArguments(args)).toThrow(
+        "Skills installation does not use Inth authentication or resource options."
+      );
+      expect(() => parseArguments(args)).not.toThrow("private-value");
+    }
+  });
   it("supports command discovery and explicit unattended confirmation", () => {
     expect(parseArguments(["skills", "--version"])).toMatchObject({
       version: true,

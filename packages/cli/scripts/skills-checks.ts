@@ -52,6 +52,25 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
       "--metadata",
       '{"test":"spaces & $() %PATH%"}',
     ];
+    for (const flags of [
+      ["--token", "private-value"],
+      ["--token=private-value"],
+      ["--organization", "private-value"],
+      ["--organization=private-value"],
+      ["--no-browser"],
+    ]) {
+      const rejected = spawnSync(binary, ["skills", "--yes", ...flags], {
+        cwd: directory,
+        encoding: "utf-8",
+        env,
+        timeout: 5000,
+      });
+      assert.equal(rejected.status, 1);
+      // The fake installer writes to stdout as soon as it starts.
+      assert.equal(rejected.stdout, "");
+      assert.match(rejected.stderr, /does not use Inth authentication/u);
+      assert.doesNotMatch(rejected.stderr, /private-value/u);
+    }
     for (const code of [0, 42]) {
       const result = spawnSync(binary, ["skills", ...forwarded], {
         cwd: directory,
