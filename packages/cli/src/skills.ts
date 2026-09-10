@@ -68,6 +68,24 @@ const validateSkillsOptions = (
   }
 };
 
+const consumeSkillsGlobalOption = (
+  options: CliArguments,
+  arg: string
+): boolean => {
+  if (arg === "--help" || arg === "-h") {
+    options.help = true;
+  } else if (arg === "--version" || arg === "-v") {
+    options.version = true;
+  } else if (arg === "--json") {
+    options.json = true;
+  } else if (arg === "--non-interactive") {
+    options.nonInteractive = true;
+  } else {
+    return false;
+  }
+  return true;
+};
+
 export const parseSkillsArguments = (
   options: CliArguments,
   args: string[]
@@ -79,40 +97,77 @@ export const parseSkillsArguments = (
     }
   }
   options.values = options.values.filter((option) => option.name !== "agent");
-  let index = args.length > 0 && args[0] === "add" ? 1 : 0;
+  const start = args.length > 0 && args[0] === "add" ? 1 : 0;
   options.argument = DEFAULT_SKILLS_SOURCE;
-  const source = index < args.length ? args[index] : undefined;
-  if (source !== undefined && !source.startsWith("-")) {
-    if (
-      !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/u.test(source)
-    ) {
+  let takesValue = false;
+  let takesManyValues = false;
+  for (let index = start; index < args.length; index += 1) {
+    const arg = args[index] ?? "";
+    if (arg.includes("\0")) {
       throw new CliError(
         "usage_error",
-        "Usage: inth skills [owner/repo] [options]"
+        "Skills arguments cannot contain null bytes."
       );
     }
-    options.argument = source;
-    options.skillsSourceExplicit = true;
-    index += 1;
-  }
-  for (; index < args.length; index += 1) {
-    const arg = args[index] ?? "";
-    if (arg === "--help" || arg === "-h") {
-      options.help = true;
-    } else if (arg === "--version" || arg === "-v") {
-      options.version = true;
-    } else if (arg === "--json") {
-      options.json = true;
-    } else if (arg === "--non-interactive") {
-      options.nonInteractive = true;
+    if (takesValue) {
+      forwarded.push(arg);
+      takesValue = false;
+      continue;
+    }
+    if (!arg.startsWith("-")) {
+      if (takesManyValues) {
+        forwarded.push(arg);
+      } else {
+        if (
+          options.skillsSourceExplicit ||
+          !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/u.test(arg)
+        ) {
+          throw new CliError(
+            "usage_error",
+            "Usage: inth skills [owner/repo] [options]"
+          );
+        }
+        options.argument = arg;
+        options.skillsSourceExplicit = true;
+      }
+      continue;
+    }
+    takesManyValues = false;
+    if (consumeSkillsGlobalOption(options, arg)) {
+      continue;
     } else {
-      if (arg.includes("\0")) {
-        throw new CliError(
-          "usage_error",
-          "Skills arguments cannot contain null bytes."
-        );
+      const equals = arg.indexOf("=");
+      const option = equals > 0 ? arg.slice(0, equals) : arg;
+      if (
+        equals > 0 &&
+        ["--agent", "--skill", "--subagent", "--metadata"].includes(option)
+      ) {
+        // The pinned upstream parser only accepts separate option/value tokens.
+        forwarded.push(option, arg.slice(equals + 1));
+        takesManyValues = option !== "--metadata";
+        continue;
       }
       forwarded.push(arg);
+      if (arg === "--metadata") {
+        takesValue = true;
+      } else if (
+        !arg.includes("=") &&
+        ![
+          "--global",
+          "-g",
+          "--yes",
+          "-y",
+          "--list",
+          "-l",
+          "--all",
+          "--copy",
+          "--full-depth",
+        ].includes(arg)
+      ) {
+        // Agent/skill/subagent options consume values until the next flag.
+        // Treat unknown option operands the same way so they stay intact.
+        takesManyValues = true;
+      }
     }
   }
   options.skillsArguments = forwarded;

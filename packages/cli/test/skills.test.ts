@@ -16,6 +16,39 @@ import { skillsProcess } from "../src/skills.ts";
 import { telemetryPayload } from "../src/telemetry.ts";
 
 describe("skills arguments", () => {
+  it.each(["--agent", "--skill", "--subagent", "--metadata"])(
+    "normalizes %s=value for the pinned upstream parser",
+    (flag) => {
+      expect(
+        parseArguments(["skills", "owner/repo", `${flag}=some/value`, "--yes"])
+          .skillsArguments
+      ).toEqual([flag, "some/value", "--yes"]);
+    }
+  );
+  it.each([
+    ["--yes", "owner/repo"],
+    ["add", "--global", "owner/repo", "--yes"],
+    ["--agent", "claude-code", "cursor", "--yes", "owner/repo"],
+    ["--skill", "group/skill", "--yes", "owner/repo"],
+    ["--metadata", '{"source":"private/repo"}', "owner/repo", "--yes"],
+    ["--future-option", "private/value", "--yes", "owner/repo"],
+  ])(
+    "finds a source after options without consuming option values: %j",
+    (...args) => {
+      const parsed = parseArguments(["skills", ...args]);
+      expect(parsed.argument).toBe("owner/repo");
+      expect(parsed.skillsSourceExplicit).toBe(true);
+      expect(parsed.skillsArguments).toEqual(
+        args.filter((arg) => arg !== "owner/repo" && arg !== "add")
+      );
+    }
+  );
+  it.each([
+    ["skills", "--global", "https://github.com/owner/repo"],
+    ["skills", "--yes", "owner/repo", "second/repo"],
+  ])("rejects invalid or multiple sources after options: %j", (...args) => {
+    expect(() => parseArguments(args)).toThrow("Usage: inth skills");
+  });
   it.each([["skills"], ["skills", "add"], ["skills", "c15t/skills"]])(
     "defaults to the public c15t repository for %j",
     (...args) => {

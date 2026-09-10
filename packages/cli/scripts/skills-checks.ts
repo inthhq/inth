@@ -133,6 +133,31 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
       "claude-code",
       "--yes",
     ]);
+    for (const args of [
+      ["skills", "--yes", "owner/repo", "--skill=c15t"],
+      ["skills", "add", "--skill", "c15t", "--yes", "owner/repo"],
+    ]) {
+      const result = spawnSync(binary, args, {
+        cwd: directory,
+        encoding: "utf-8",
+        env,
+        timeout: 5000,
+      });
+      assert.equal(result.status, 0, result.stderr);
+      const forwardedArgs = JSON.parse(result.stdout).args;
+      assert.deepEqual(forwardedArgs.slice(0, 4), [
+        "--yes",
+        "skills@1.5.25",
+        "add",
+        "owner/repo",
+      ]);
+      assert.ok(forwardedArgs.includes("--skill"));
+      assert.ok(forwardedArgs.includes("c15t"));
+      assert.equal(
+        forwardedArgs.filter((arg: string) => arg === "owner/repo").length,
+        1
+      );
+    }
     const help = spawnSync(binary, ["skills", "--help", "--json"], {
       encoding: "utf-8",
       env: { ...env, PATH: "" },
