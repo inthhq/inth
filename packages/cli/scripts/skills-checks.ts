@@ -80,7 +80,7 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
       });
       assert.equal(result.status, code, result.stderr);
       assert.deepEqual(JSON.parse(result.stdout), {
-        args: ["--yes", "skills", "add", "c15t/skills", ...forwarded],
+        args: ["--yes", "skills@1.5.25", "add", "c15t/skills", ...forwarded],
         cwd: directory,
         disabled: "1",
         doNotTrack: "1",
@@ -95,7 +95,7 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
     assert.equal(custom.status, 0, custom.stderr);
     assert.deepEqual(JSON.parse(custom.stdout).args, [
       "--yes",
-      "skills",
+      "skills@1.5.25",
       "add",
       "owner/repo",
       "--list",
@@ -108,7 +108,7 @@ else { process.exit(Number(process.env.INTH_TEST_SKILLS_EXIT || "0")); }
     assert.equal(leadingAgent.status, 0, leadingAgent.stderr);
     assert.deepEqual(JSON.parse(leadingAgent.stdout).args, [
       "--yes",
-      "skills",
+      "skills@1.5.25",
       "add",
       "c15t/skills",
       "--agent",

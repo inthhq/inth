@@ -128,7 +128,8 @@ export const skillsProcess = (
   platform: string,
   path: string
 ): SkillsProcess => {
-  const args = ["--yes", "skills", "add", source, ...forwarded];
+  // Match the assessed upstream release instead of accepting any local version.
+  const args = ["--yes", "skills@1.5.25", "add", source, ...forwarded];
   if (platform !== "win32") {
     return { args, command: "npx" };
   }

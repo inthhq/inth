@@ -145,6 +145,8 @@ See [authentication and credential storage](docs/authentication.md) for OAuth sc
 
 Browse Inth's bundled skill catalog with the native picker. Installation uses the official [skills CLI](https://github.com/vercel-labs/skills) and requires Node.js and npm on your PATH.
 
+The installer is pinned to `skills@1.5.25`, so a different project-local version cannot change the installation flow. Update the pin alongside the installer compatibility checks when adopting a new upstream release.
+
 The [inrepo and Scriptc assessment](./experiments/skills/README.md) pins and tests the upstream source. Vendoring works, but the tested compiler rejects both the full CLI and the installer entry point. Run `pnpm --filter @inth/cli assess:skills` to reproduce the results.
 
 ```sh
@@ -157,7 +159,7 @@ inth skills --list --json
 
 `inth skills` opens a picker with the same arrow-key, Enter, and Escape controls as the organization switcher. The catalog currently contains `c15t`, with consent management guidance for React, Next.js, and JavaScript. The catalog ships with the CLI and requires no network request or Node process to display. `--list` prints it without prompts, and `--list --json` returns `data.skills` for scripts. Add new Inth skills in `src/skills-catalog.ts` as they are published.
 
-After selection, Inth runs `npx --yes skills add <owner/repo> --skill <name>` in your current directory. The official installer handles agent and location choices. An explicit `owner/repo`, `--skill`, `--yes`, or `--all` bypasses the native picker. Without a source, direct installation defaults to `c15t/skills`. Installer options pass through, including multiple `--skill` and `--agent` values. `inth skills add <owner/repo>` also works. Use `inth skills owner/repo --list` to inspect another repository through the official installer.
+After selection, Inth runs `npx --yes skills@1.5.25 add <owner/repo> --skill <name>` in your current directory. The official installer handles agent and location choices. An explicit `owner/repo`, `--skill`, `--yes`, or `--all` bypasses the native picker. Without a source, direct installation defaults to `c15t/skills`. Installer options pass through, including multiple `--skill` and `--agent` values. `inth skills add <owner/repo>` also works. Use `inth skills owner/repo --list` to inspect another repository through the official installer.
 
 The first `--yes` lets npx obtain the installer; installation still prompts unless you pass `--yes` or `--all`. For unattended installation, use `inth skills --non-interactive --yes --skill c15t --agent claude-code`. Installation emits upstream terminal output and preserves the installer's exit code. JSON is available for the bundled catalog and help, not installation or listing an explicit repository.
 

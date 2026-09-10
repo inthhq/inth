@@ -70,7 +70,7 @@ def check(cancel=None):
             else:
                 assert child.returncode == 0, bytes(output)
                 assert json.loads(stdout) == [
-                    "--yes", "skills", "add", "c15t/skills", "--skill", "c15t",
+                    "--yes", "skills@1.5.25", "add", "c15t/skills", "--skill", "c15t",
                     "--global", "--agent", "claude-code",
                 ]
             return prompt_ms

@@ -250,7 +250,7 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     effects: [
       "Opens a native picker when no source or skill is specified. The bundled catalog works offline.",
       "Installation requires Node.js and npm. An explicit source bypasses the picker.",
-      "Runs npx skills add and forwards installer options. Installs files in your project or home directory.",
+      "Runs npx skills@1.5.25 add and forwards installer options. Installs files in your project or home directory.",
       "Installer output is text. --json is supported with --list or --help.",
     ],
     examples: [

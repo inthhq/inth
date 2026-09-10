@@ -111,7 +111,7 @@ describe("skills process", () => {
     expect(
       skillsProcess("c15t/skills", ["--skill", "c15t"], "linux", "")
     ).toEqual({
-      args: ["--yes", "skills", "add", "c15t/skills", "--skill", "c15t"],
+      args: ["--yes", "skills@1.5.25", "add", "c15t/skills", "--skill", "c15t"],
       command: "npx",
     });
   });
@@ -133,7 +133,7 @@ describe("skills process", () => {
         args: [
           entry,
           "--yes",
-          "skills",
+          "skills@1.5.25",
           "add",
           "c15t/skills",
           "--skill",
