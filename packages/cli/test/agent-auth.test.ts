@@ -60,20 +60,26 @@ const response = <Body>(body: Body, status = 200): OAuthResponse => ({
 const fixture = (onSleep?: (ms: number) => Promise<void>) => {
   let saved: string | null = null;
   let currentTime = now;
+  let busyUntil = now;
   let lock = Promise.resolve(true);
   const replies: (OAuthResponse | Error)[] = [];
   const calls: { url: string; body?: string }[] = [];
+  const delays = new Map<string, number>();
   const waits: number[] = [];
   const store: AgentStore = {
     clear: async () => {
       saved = null;
     },
-    exclusive: async (work) => {
+    exclusive: async (work, deadline = Number.POSITIVE_INFINITY) => {
       const previous = lock;
       const deferred = Promise.withResolvers<boolean>();
       lock = deferred.promise;
       await previous;
       try {
+        currentTime = Math.max(currentTime, Math.min(busyUntil, deadline));
+        if (currentTime < busyUntil) {
+          throw new Error("Cannot acquire the credential lock.");
+        }
         await work();
       } finally {
         deferred.resolve(true);
@@ -84,8 +90,18 @@ const fixture = (onSleep?: (ms: number) => Promise<void>) => {
       saved = value;
     },
   };
-  const send = async (url: string, body?: string): Promise<OAuthResponse> => {
+  const send = async (
+    url: string,
+    body?: string,
+    deadline = Number.POSITIVE_INFINITY
+  ): Promise<OAuthResponse> => {
     calls.push({ body, url });
+    const delay = delays.get(url) ?? 0;
+    const remaining = Math.max(0, deadline - currentTime);
+    currentTime += Math.min(delay, remaining);
+    if (delay > remaining) {
+      throw new Error("Request timed out");
+    }
     if (url === DISCOVERY_URL) {
       return response(discovery);
     }
@@ -110,10 +126,10 @@ const fixture = (onSleep?: (ms: number) => Promise<void>) => {
       },
     },
     error: responseError,
-    form: (url, fields) => send(url, fields.toString()),
+    form: (url, fields, deadline) => send(url, fields.toString(), deadline),
     get: (url) => send(url),
     post: (url, _token, body) => send(url, body),
-    request: (url) => send(url),
+    request: (url, deadline) => send(url, undefined, deadline),
   };
   return {
     advance: (ms: number) => {
@@ -121,8 +137,15 @@ const fixture = (onSleep?: (ms: number) => Promise<void>) => {
     },
     auth: () => new AgentAuth(http, store),
     calls,
+    delays,
+    holdLockFor: (ms: number) => {
+      busyUntil = currentTime + ms;
+    },
+    http,
+    now: () => currentTime,
     read: () => saved,
     replies,
+    store,
     waits,
   };
 };
@@ -298,6 +321,19 @@ describe("auth.md credentials", () => {
     f.replies.push(response(tokens));
     expect(JSON.parse(await f.auth().complete()).status).toBe("authenticated");
   });
+  it("does not mark a claim uncertain when it expires during discovery", async () => {
+    const f = fixture();
+    await start(f);
+    f.advance(86_399_000);
+    f.delays.set(DISCOVERY_URL, 2000);
+    await expect(f.auth().complete()).rejects.toMatchObject({
+      code: "authentication_expired",
+    });
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(false);
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(0);
+  });
   it("refreshes once under concurrent use and preserves the assertion expiry", async () => {
     const f = fixture();
     await signIn(f);
@@ -398,6 +434,73 @@ describe("auth.md credentials", () => {
     });
     expect(f.read()).toBeNull();
   });
+  it("preserves invalid saved-state errors while clearing local credentials", async () => {
+    const f = fixture();
+    await f.store.write("corrupt saved state");
+    await expect(f.auth().logout()).rejects.toMatchObject({
+      code: "invalid_response",
+    });
+    expect(f.read()).toBeNull();
+    expect(f.calls).toHaveLength(0);
+  });
+  it("preserves local read errors while still clearing local credentials", async () => {
+    const f = fixture();
+    await signIn(f);
+    const error = new Error("Credential store is locked");
+    vi.spyOn(f.store, "read").mockRejectedValueOnce(error);
+    await expect(f.auth().logout()).rejects.toBe(error);
+    expect(f.read()).toBeNull();
+  });
+  it("preserves discovery response details while clearing local credentials", async () => {
+    const f = fixture();
+    await signIn(f);
+    vi.spyOn(f.http, "request").mockResolvedValueOnce({
+      ...response({}),
+      requestId: "discovery-123",
+    });
+    await expect(f.auth().logout()).rejects.toMatchObject({
+      code: "invalid_response",
+      httpStatus: 200,
+      requestId: "discovery-123",
+    });
+    expect(f.read()).toBeNull();
+    expect(
+      f.calls.filter((call) => call.url === discovery.revocation_endpoint)
+    ).toHaveLength(0);
+  });
+  it("preserves discovery network errors while clearing local credentials", async () => {
+    const f = fixture();
+    await signIn(f);
+    const error = new Error("Cannot reach discovery");
+    vi.spyOn(f.http, "request").mockRejectedValueOnce(error);
+    await expect(f.auth().logout()).rejects.toBe(error);
+    expect(f.read()).toBeNull();
+  });
+  it.each(["", "<html>upstream error</html>"])(
+    "reports non-JSON organization responses with HTTP details: %s",
+    async (body) => {
+      const f = fixture();
+      await signIn(f);
+      f.replies.push({
+        body,
+        ok: true,
+        requestId: "organizations-123",
+        status: 200,
+      });
+      await expect(f.auth().organizations()).rejects.toMatchObject({
+        code: "invalid_response",
+        httpStatus: 200,
+        requestId: "organizations-123",
+      });
+    }
+  );
+  it("preserves valid organization response text", async () => {
+    const f = fixture();
+    await signIn(f);
+    const body = '{ "organizations": [{"id": "org_1"}] }';
+    f.replies.push({ body, ok: true, requestId: null, status: 200 });
+    expect(await f.auth().organizations()).toBe(body);
+  });
   it.each([
     "https://attacker.test/token",
     "https://inth.com.evil.test/api/auth/token",
@@ -443,6 +546,94 @@ describe("agent command selection", () => {
 });
 
 describe("waiting for browser approval", () => {
+  it("bounds lock contention and resumes without sending a late exchange", async () => {
+    const f = fixture();
+    await start(f);
+    f.holdLockFor(30_000);
+    await expect(f.auth().waitForApproval(6000)).rejects.toMatchObject({
+      code: "approval_timeout",
+    });
+    expect(f.now()).toBe(now + 6000);
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(false);
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(0);
+    f.advance(24_000);
+    f.replies.push(response(tokens));
+    expect(JSON.parse(await f.auth().waitForApproval()).status).toBe(
+      "authenticated"
+    );
+  });
+
+  it("bounds slow discovery and preserves the claim for another process", async () => {
+    const f = fixture();
+    await start(f);
+    f.delays.set(DISCOVERY_URL, 20_000);
+    await expect(f.auth().waitForApproval(6000)).rejects.toMatchObject({
+      code: "approval_timeout",
+    });
+    expect(f.now()).toBe(now + 6000);
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(false);
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(0);
+    f.delays.clear();
+    f.replies.push(response(tokens));
+    expect(JSON.parse(await f.auth().waitForApproval()).status).toBe(
+      "authenticated"
+    );
+  });
+
+  it("does not send the claim when discovery uses the remaining wait time", async () => {
+    const f = fixture();
+    await start(f);
+    f.delays.set(DISCOVERY_URL, 1000);
+    await expect(f.auth().waitForApproval(6000)).rejects.toMatchObject({
+      code: "approval_timeout",
+    });
+    expect(f.now()).toBe(now + 6000);
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(false);
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(0);
+  });
+
+  it("bounds a slow single-use exchange without replaying its uncertain result", async () => {
+    const f = fixture();
+    await start(f);
+    f.delays.set(discovery.token_endpoint, 20_000);
+    f.replies.push(response(tokens));
+    await expect(f.auth().waitForApproval(6000)).rejects.toMatchObject({
+      code: "claim_uncertain",
+    });
+    expect(f.now()).toBe(now + 6000);
+    expect(parseAgentState(f.read() ?? "").pending?.exchanging).toBe(true);
+    f.delays.clear();
+    await expect(f.auth().waitForApproval()).rejects.toMatchObject({
+      code: "claim_uncertain",
+    });
+    await expect(f.auth().retry()).rejects.toMatchObject({
+      code: "claim_uncertain",
+    });
+    expect(
+      f.calls.filter((call) => call.url === discovery.token_endpoint)
+    ).toHaveLength(1);
+  });
+
+  it("saves a successful exchange even when its response reaches the deadline", async () => {
+    const f = fixture();
+    await start(f);
+    f.delays.set(discovery.token_endpoint, 1000);
+    f.replies.push(response(tokens));
+    expect(JSON.parse(await f.auth().waitForApproval(6000)).status).toBe(
+      "authenticated"
+    );
+    expect(f.now()).toBe(now + 6000);
+    expect(parseAgentState(f.read() ?? "").credentials?.accessToken).toBe(
+      tokens.access_token
+    );
+  });
+
   it("continues through pending, slow_down and rate limits without another command", async () => {
     const f = fixture();
     const pending = JSON.parse(await start(f));

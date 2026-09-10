@@ -39,6 +39,21 @@ export const agentScopes = (value: string[]): string[] => {
 const endpoint = (value: string, environment: AgentEnvironment): boolean =>
   httpsUrl(value) &&
   value.startsWith(`${environment.dashboardOrigin}/api/auth/`);
+const approvalUrl = (value: string, environment: AgentEnvironment): boolean => {
+  if (typeof value !== "string" || /[\\\s]/u.test(value)) {
+    return false;
+  }
+  // Approval pages carry login_hint in the fragment. Discovery endpoints do not.
+  const fragment = value.indexOf("#");
+  const base = fragment === -1 ? value : value.slice(0, fragment);
+  if (!httpsUrl(base)) {
+    return false;
+  }
+  const url = new URL(value);
+  return (
+    url.href === value && `https://${url.host}` === environment.dashboardOrigin
+  );
+};
 export const parseAgentDiscovery = (
   body: string,
   environment = productionAgentEnvironment
@@ -68,13 +83,9 @@ export const checkAgentClaim = (
     !value ||
     typeof value.user_code !== "string" ||
     !/^\d{6}$/u.test(value.user_code) ||
-    !httpsUrl(value.verification_uri) ||
-    `https://${new URL(value.verification_uri).host}` !==
-      environment.dashboardOrigin ||
+    !approvalUrl(value.verification_uri, environment) ||
     (value.verification_uri_complete !== undefined &&
-      (!httpsUrl(value.verification_uri_complete) ||
-        `https://${new URL(value.verification_uri_complete).host}` !==
-          environment.dashboardOrigin)) ||
+      !approvalUrl(value.verification_uri_complete, environment)) ||
     !positive(value.expires_in) ||
     !positive(value.interval) ||
     value.interval > 3600

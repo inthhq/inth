@@ -33,7 +33,10 @@ export class AuthFlow {
   }
   private async discover(): Promise<Discovery> {
     if (!this.metadata) {
-      const response = await this.http.request(DISCOVERY_URL);
+      const response = await this.http.request(
+        DISCOVERY_URL,
+        Number.POSITIVE_INFINITY
+      );
       this.metadata = await this.http.discovery(response);
     }
     return this.metadata;

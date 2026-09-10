@@ -1,6 +1,6 @@
 # Hosted c15t browser smoke check
 
-Verify that the CLI's returned project configuration works with a real c15t React application. This uses a saved CLI sign-in, a hosted backend and a fresh browser context. It creates test consent records but does not create or delete projects, change CLI defaults, or send analytics to third parties.
+Verify that the CLI's returned project configuration works with a real c15t React application. This uses the saved CLI connection, a hosted backend and a fresh browser context. Complete browser or auth.md sign-in before running it. The spawned CLI command uses that selected connection, including when local API origins are configured. It creates test consent records but does not create or delete projects, change CLI defaults, or send analytics to third parties.
 
 Use a disposable project. Create it with the existing CLI, using an organization you own and a region returned by `inth region list --json`:
 

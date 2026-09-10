@@ -81,10 +81,16 @@ const http: AgentHttp = {
   get: async () => {
     throw new Error("Unexpected API request");
   },
-  post: async () =>
-    response(
-      '{"registration_id":"reg_native","registration_type":"service_auth","claim_token":"native-claim","claim_token_expires":"2027-01-16T08:00:00.000Z","post_claim_scopes":["organizations.read"],"claim":{"user_code":"123456","verification_uri":"https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_native","verification_uri_complete":"https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_native&user_code=123456","expires_in":600,"interval":5}}'
-    ),
+  post: async (url) => {
+    if (url === `${issuer}/agent/identity/claim`) {
+      return response(
+        '{"claim_attempt":{"user_code":"654321","verification_uri":"https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_retry#login_hint=person%40example.com","verification_uri_complete":"https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_retry&user_code=654321#login_hint=person%40example.com","expires_in":600,"interval":5}}'
+      );
+    }
+    return response(
+      '{"registration_id":"reg_native","registration_type":"service_auth","claim_token":"native-claim","claim_token_expires":"2027-01-16T08:00:00.000Z","post_claim_scopes":["organizations.read"],"claim":{"user_code":"123456","verification_uri":"https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_native#login_hint=person%40example.com","verification_uri_complete":"https://inth.com/dashboard/agent-auth/claim?claim_attempt_token=cla_native&user_code=123456#login_hint=person%40example.com","expires_in":600,"interval":5}}'
+    );
+  },
   request: async () =>
     response(
       JSON.stringify({
@@ -105,9 +111,19 @@ const started = await new AgentAuth(http, store).start("person@example.com", [
 check(
   started.includes('"status":"pending"') &&
     started.includes("inth login --complete --wait --json") &&
-    started.includes("&user_code=123456") &&
+    started.includes("&user_code=123456#login_hint=person%40example.com") &&
     !started.includes("native-claim"),
   "Claim leaked or status missing"
+);
+const restored = await new AgentAuth(http, store).status();
+check(
+  restored.includes("&user_code=123456#login_hint=person%40example.com"),
+  "Saved approval link lost its login hint"
+);
+const retried = await new AgentAuth(http, store).retry();
+check(
+  retried.includes("&user_code=654321#login_hint=person%40example.com"),
+  "Retried approval link lost its login hint"
 );
 const complete = await new AgentAuth(http, store).waitForApproval();
 check(

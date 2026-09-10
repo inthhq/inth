@@ -17,10 +17,23 @@ export const requestedAgentScopes = (value?: string): string[] => {
   return [...new Set(scopes)];
 };
 
+const savedAgentSelected = async (
+  read: () => Promise<string | undefined>
+): Promise<boolean> => {
+  try {
+    return (await read()) === "agent";
+  } catch {
+    // Selection is advisory here. Explicit --auth agent works even if it is unreadable.
+    return false;
+  }
+};
+
 export const runAgentCommand = async (
   options: CliArguments,
   auth: AgentAuth,
-  selectConnection: () => Promise<void>
+  selectConnection: () => Promise<void>,
+  selectedConnection: () => Promise<string | undefined> = () =>
+    Promise.resolve("")
 ): Promise<boolean> => {
   if (
     options.authMode !== "agent" ||
@@ -67,7 +80,7 @@ export const runAgentCommand = async (
     if (options.argument === "refresh") {
       await auth.accessToken(undefined, true);
     }
-    output = await auth.status();
+    output = await auth.status(await savedAgentSelected(selectedConnection));
   }
   // Only the sanitized status or organization response reaches stdout.
   printResult(
@@ -81,7 +94,9 @@ export const runAgentCommand = async (
 export const runSelectedAgentCommand = async (
   options: CliArguments,
   getAgent: () => Promise<AgentAuth>,
-  selectConnection: () => Promise<void>
+  selectConnection: () => Promise<void>,
+  selectedConnection: () => Promise<string | undefined> = () =>
+    Promise.resolve("")
 ): Promise<boolean> => {
   if (
     options.authMode !== "agent" ||
@@ -89,5 +104,10 @@ export const runSelectedAgentCommand = async (
   ) {
     return false;
   }
-  return runAgentCommand(options, await getAgent(), selectConnection);
+  return runAgentCommand(
+    options,
+    await getAgent(),
+    selectConnection,
+    selectedConnection
+  );
 };

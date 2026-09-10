@@ -104,6 +104,25 @@ describe("platform credentials", () => {
         items.join(",") === "second:start,second:end,first:start,first:end"
     );
   });
+  it("expires a contended lock without running its work after the owner releases", async () => {
+    const directory = await temporary();
+    const entry = new TestEntry();
+    const first = new PlatformStore(entry, directory);
+    const second = new PlatformStore(entry, directory);
+    let entered = false;
+    await first.exclusive(async () => {
+      const startedAt = Date.now();
+      await expect(
+        second.exclusive(() => {
+          entered = true;
+          return Promise.resolve();
+        }, startedAt + 50)
+      ).rejects.toThrow("Cannot acquire the credential lock.");
+      expect(Date.now() - startedAt).toBeLessThan(1000);
+    });
+    await second.exclusive(() => Promise.resolve());
+    expect(entered).toBe(false);
+  });
 });
 
 describe("organization context", () => {

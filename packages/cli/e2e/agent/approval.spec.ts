@@ -56,8 +56,12 @@ const launch = (directory: string, account: string, args: string[]) => {
   return { child, finished: () => finished, output: () => stdout, result };
 };
 
-for (const returning of [false, true]) {
-  test(`${returning ? "Returning account" : "New account"}: browser approval resumes native CLI setup`, async ({
+for (const accountState of [
+  "New account",
+  "Returning account requiring legal acceptance",
+  "Returning account with current legal acceptance",
+]) {
+  test(`${accountState}: browser approval resumes native CLI setup`, async ({
     page,
     context,
   }) => {
@@ -93,8 +97,10 @@ for (const returning of [false, true]) {
       return code;
     };
     try {
-      if (returning) {
-        // Returning accounts can lack acceptance recorded by the browser UI.
+      const needsLegalAcceptance =
+        accountState === "Returning account requiring legal acceptance";
+      if (accountState !== "New account") {
+        // Seed returning accounts independently of the browser sign-up flow.
         const beforeSeed = await readFile(otpLog, "utf-8");
         const sent = await context.request.post(
           `${origin}/api/auth/email-otp/send-verification-otp`,
@@ -114,6 +120,16 @@ for (const returning of [false, true]) {
         );
         const acceptanceBody = await acceptance.json();
         expect(acceptanceBody.accepted).toBe(false);
+        expect(acceptanceBody.enforced).toBe(true);
+        if (!needsLegalAcceptance) {
+          const accepted = await context.request.post(
+            `${origin}/api/legal/acceptance`,
+            { data: { acceptedVia: "manual" }, headers: { origin } }
+          );
+          expect(accepted.ok()).toBe(true);
+          const acceptedBody = await accepted.json();
+          expect(acceptedBody.accepted).toBe(true);
+        }
         await context.clearCookies();
         // The dashboard treats accounts created within ten seconds as new.
         const created = Date.now();
@@ -127,14 +143,14 @@ for (const returning of [false, true]) {
         "inth login --complete --wait --json"
       );
       const waiter = run(["login", "--complete", "--wait", "--timeout", "90"]);
-      const legalScreens: string[] = [];
+      const legalScreens = new Set<string>();
       let approvalRequests = 0;
       page.on("framenavigated", (frame) => {
         if (
           frame === page.mainFrame() &&
           new URL(frame.url()).pathname === "/dashboard/legal"
         ) {
-          legalScreens.push(frame.url());
+          legalScreens.add(frame.url());
         }
       });
       page.on("request", (request) => {
@@ -170,6 +186,29 @@ for (const returning of [false, true]) {
       expect(waiter.finished()).toBe(false);
       await page.locator('input[inputmode="numeric"]').fill(code);
       await page.getByRole("button", { exact: true, name: "Verify" }).click();
+      if (needsLegalAcceptance) {
+        await expect(
+          page.getByRole("heading", {
+            exact: true,
+            name: "Review legal documents",
+          })
+        ).toBeVisible({ timeout: 30_000 });
+        expect(new URL(page.url()).pathname).toBe("/dashboard/legal");
+        const pendingAcceptance = await context.request.get(
+          `${origin}/api/legal/acceptance`
+        );
+        const pendingAcceptanceBody = await pendingAcceptance.json();
+        expect(pendingAcceptanceBody.accepted).toBe(false);
+        expect(approvalRequests).toBe(0);
+        expect(waiter.finished()).toBe(false);
+        expect(waiter.output()).toBe("");
+        await expect(
+          page.getByRole("button", { exact: true, name: "Authorize agent" })
+        ).toHaveCount(0);
+        await page
+          .getByRole("button", { exact: true, name: "I accept and continue" })
+          .click();
+      }
       await expect(
         page.getByRole("heading", { exact: true, name: "Authorize this agent" })
       ).toBeVisible({ timeout: 30_000 });
@@ -177,7 +216,7 @@ for (const returning of [false, true]) {
         page.getByText(started.data.userCode, { exact: true })
       ).toBeVisible();
       await expect(page.locator('input[inputmode="numeric"]')).toHaveCount(0);
-      expect(legalScreens).toHaveLength(0);
+      expect(legalScreens.size).toBe(needsLegalAcceptance ? 1 : 0);
       expect(approvalRequests).toBe(0);
       expect(waiter.finished()).toBe(false);
       expect(waiter.output()).toBe("");
@@ -201,6 +240,11 @@ for (const returning of [false, true]) {
       expect(completed.stdout.trim().split("\n")).toHaveLength(1);
       expect(JSON.parse(completed.stdout).data.status).toBe("authenticated");
       expect(approvalRequests).toBe(1);
+      const status = await command(["auth", "status"]);
+      expect(status.data.nextStep.command).toBe("inth whoami --json");
+      expect(status.data.nextStep.instruction).toBe(
+        "Signed in. This connection is selected for subsequent CLI commands."
+      );
       const identity = await command(["whoami"]);
       const sessionResponse = await context.request.get(
         `${origin}/api/auth/get-session`

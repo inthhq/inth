@@ -382,6 +382,33 @@ await runWithCleanup(async () => {
     lockReused = true;
   });
   check(lockReused, "Lock remains usable after cancellation.");
+  const deadlineStore = new NativeStore(
+    entry,
+    join(directory, "credentials.lock")
+  );
+  let deadlineWorkRan = false;
+  await store.exclusive(async () => {
+    const started = Date.now();
+    let timedOut = false;
+    try {
+      await deadlineStore.exclusive(async () => {
+        deadlineWorkRan = true;
+      }, started + 50);
+    } catch (error) {
+      timedOut =
+        error instanceof Error && error.message.includes("credential lock");
+    }
+    check(
+      timedOut && Date.now() - started < 1000,
+      "Credential lock did not respect the approval deadline."
+    );
+  });
+  await deadlineStore.exclusive(async () => {
+    check(
+      !deadlineWorkRan,
+      "Expired lock work ran after the owner released it."
+    );
+  });
   console.log(
     "Static auth: non-rotating refresh and contended-lock cancellation passed."
   );

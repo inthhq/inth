@@ -28,7 +28,7 @@ const groupDescriptions = [
 ];
 const authenticationDescription = (value: string): string => {
   if (value === "agent") {
-    return "Use an approved auth.md connection. Run inth auth start first.";
+    return "Use an approved auth.md connection. Run inth login --email <email> --json first.";
   }
   if (value === "browser-or-agent") {
     return "Use a browser sign-in or an approved auth.md connection with --auth agent.";

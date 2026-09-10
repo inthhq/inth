@@ -59,7 +59,7 @@ export interface AuthStore {
 }
 export interface OAuthTransport {
   clock: Clock;
-  request: (url: string) => Promise<OAuthResponse>;
+  request: (url: string, deadline: number) => Promise<OAuthResponse>;
   form: (
     url: string,
     fields: URLSearchParams,

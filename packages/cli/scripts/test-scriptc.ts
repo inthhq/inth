@@ -669,7 +669,7 @@ try {
   assert.equal(registrations, 1);
   assert.equal(retries, 2);
   assert.equal(redirects, 0);
-  assert.equal(hung, 3);
+  assert.equal(hung, 4);
   assert.equal(identityRequests, 2);
   assert.equal(telemetryRequests, 1);
   assert.equal(bearer, 1);

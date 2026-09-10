@@ -21,7 +21,7 @@ Authenticate through an existing browser sign-in or an organization API key in `
 
 ## Sign in or create an account
 
-Tell the person which email and permissions Inth will receive before starting. After they agree:
+Tell the person which email and permissions Inth will receive before starting. `login --email` and `signup --email` treat the command itself as confirmation to send those details; `auth start` requires `--yes`. The person still approves access in their browser. After they agree:
 
 ```sh
 inth login --email user@example.com --scopes organizations.read,organizations.write,projects.read,projects.write --json
@@ -31,7 +31,7 @@ inth org list --json
 
 `inth signup --email <email> --json` uses the same approval page for account creation. Follow `data.nextStep.command` and `data.nextStep.instruction`. The CLI discovers hosted sign-in endpoints automatically.
 
-Return `data.verificationUri` and `data.userCode` to the person, then immediately run `inth login --complete --wait --json` in a background terminal. Do not wait for them to say "done". The command finishes after browser approval and selects this connection for subsequent commands. It prints one final JSON result. The default wait is ten minutes; use `--timeout <seconds>` to change it. A timeout or cancellation preserves the pending sign-in, so run the waiting command again to resume. Without `--wait`, completion checks once. Explicit `--auth` or an API key overrides the saved selection; combining an explicit agent selection with an API key is rejected. General API access requires the server's auth.md CLI rollout; older servers support `inth auth organizations` only.
+Return `data.verificationUri` and `data.userCode` to the person, then immediately run `inth login --complete --wait --json` in a background terminal. Do not wait for them to say "done". The command finishes after browser approval and selects this connection for subsequent commands. It prints one final JSON result. The default wait is ten minutes; use `--timeout <seconds>` to change it. A timeout or cancellation between polls, during discovery, or while waiting for the credential lock preserves the pending sign-in. Run the waiting command again to resume. If it interrupts a single-use claim exchange, the result can be `claim_uncertain`; disconnect with `inth logout --auth agent --json` and start a new claim. Without `--wait`, completion checks once. Explicit `--auth` or an API key overrides the saved selection; combining an explicit agent selection with an API key is rejected. General API access requires the scoped auth.md backend deployment; older servers support `inth auth organizations` only.
 
 Use `inth auth retry --json` for an expired approval code and `inth logout --auth agent --json` to disconnect. A `claim_uncertain` error requires a new claim because the previous single-use exchange may have succeeded. Tokens stay in the OS credential store. Identity assertion renewal lasts one hour after approval and cannot extend that deadline.
 

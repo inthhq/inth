@@ -62,7 +62,10 @@ check(
   httpDate("Thu, 29 Feb 2024 00:00:00 GMT") === 1_709_164_800_000,
   "Leap day rejected."
 );
-const rateLimited = await http.request(`${base}/rate-limit`);
+const rateLimited = await http.request(
+  `${base}/rate-limit`,
+  Number.POSITIVE_INFINITY
+);
 check(
   rateLimited.status === 200 && waits.join(",") === "3000",
   "HTTP 429 backoff failed."
@@ -106,7 +109,7 @@ for (const method of ["PATCH", "DELETE", "POST"]) {
 }
 let redirectRejected = false;
 try {
-  await http.request(`${base}/redirect`);
+  await http.request(`${base}/redirect`, Number.POSITIVE_INFINITY);
 } catch (error) {
   redirectRejected =
     error instanceof Error &&
@@ -116,7 +119,7 @@ try {
 check(redirectRejected, "The native transport followed a redirect.");
 let unreachable = false;
 try {
-  await http.request(`${base}/disconnect`);
+  await http.request(`${base}/disconnect`, Number.POSITIVE_INFINITY);
 } catch (error) {
   unreachable =
     error instanceof Error &&
@@ -126,12 +129,29 @@ try {
 check(unreachable, "Transport failures were not normalized.");
 let invalidRejected = false;
 try {
-  await http.discovery(await http.request(`${base}/malformed`));
+  await http.discovery(
+    await http.request(`${base}/malformed`, Number.POSITIVE_INFINITY)
+  );
 } catch (error) {
   invalidRejected =
     error instanceof Error && error.message.includes("native-malformed");
 }
 check(invalidRejected, "Invalid discovery did not report the request ID.");
+const bounded = nativeHttp(signal, nativeClock(signal));
+const deadlineStarted = Date.now();
+let deadlineExpired = false;
+try {
+  await bounded.request(`${base}/hang`, deadlineStarted + 50);
+} catch (error) {
+  deadlineExpired =
+    error instanceof Error &&
+    error.message ===
+      "Could not reach inth. Check your connection and try again.";
+}
+check(
+  deadlineExpired && Date.now() - deadlineStarted < 1000,
+  "HTTP request did not respect the approval deadline."
+);
 const controller = new AbortController();
 const cancellable = nativeHttp(
   controller.signal,
@@ -144,7 +164,7 @@ const abort = async (): Promise<void> => {
 const cancelJob = abort();
 let cancelled = false;
 try {
-  await cancellable.request(`${base}/hang`);
+  await cancellable.request(`${base}/hang`, Number.POSITIVE_INFINITY);
 } catch (error) {
   cancelled = error instanceof Error && error.name === "AbortError";
 }

@@ -1,5 +1,6 @@
 // eslint-disable-next-line unicorn/import-style -- Scriptc only supports named imports from node:path.
 import { join } from "node:path";
+import { setTimeout } from "node:timers/promises";
 
 import { AsyncEntry } from "@napi-rs/keyring";
 import lockfile from "proper-lockfile";
@@ -65,15 +66,48 @@ export class PlatformStore implements CredentialStore {
       );
     }
   }
-  async exclusive<T>(work: () => Promise<T>): Promise<T> {
-    await privateDirectory(this.directory);
-    const release = await lockfile.lock(join(this.directory, "credentials"), {
+  private async acquire(deadline: number): Promise<() => Promise<void>> {
+    const options = {
       realpath: false,
-      retries: { factor: 1, maxTimeout: 250, minTimeout: 250, retries: 120 },
       stale: 60_000,
       update: 10_000,
-    });
+    };
+    const target = join(this.directory, "credentials");
+    if (!Number.isFinite(deadline)) {
+      return lockfile.lock(target, {
+        ...options,
+        retries: { factor: 1, maxTimeout: 250, minTimeout: 250, retries: 120 },
+      });
+    }
+    const stopAt = Math.min(Date.now() + 30_000, deadline);
+    while (Date.now() < stopAt) {
+      try {
+        // eslint-disable-next-line no-await-in-loop -- Retry contention only until the caller's deadline.
+        return await lockfile.lock(target, { ...options, retries: 0 });
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          !("code" in error) ||
+          error.code !== "ELOCKED"
+        ) {
+          throw error;
+        }
+      }
+      // eslint-disable-next-line no-await-in-loop -- Bound each contention wait by the remaining time.
+      await setTimeout(Math.max(0, Math.min(250, stopAt - Date.now())));
+    }
+    throw new Error("Cannot acquire the credential lock.");
+  }
+  async exclusive<T>(
+    work: () => Promise<T>,
+    deadline = Number.POSITIVE_INFINITY
+  ): Promise<T> {
+    await privateDirectory(this.directory);
+    const release = await this.acquire(deadline);
     try {
+      if (Date.now() >= deadline) {
+        throw new Error("Cannot acquire the credential lock.");
+      }
       return await work();
     } finally {
       await release();

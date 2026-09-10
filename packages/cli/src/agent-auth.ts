@@ -41,11 +41,39 @@ export class AgentAuth {
     }
     return response.body;
   }
-  private async discover(): Promise<AgentDiscovery> {
-    if (!this.metadata) {
-      const response = await this.http.request(
-        `${this.environment.apiOrigin}/.well-known/oauth-authorization-server`
+  private requireApprovalTime(deadline: number): void {
+    if (this.http.clock.now() >= deadline) {
+      throw new CliError(
+        "approval_timeout",
+        "Still waiting for browser approval. Your sign-in is saved. Run inth login --complete --wait --json to resume waiting."
       );
+    }
+  }
+  private requireClaimTime(pending: AgentPending): void {
+    if (
+      Math.max(this.http.clock.now(), pending.nextPollAt) >=
+      pending.claimExpiresAt
+    ) {
+      throw new CliError(
+        "authentication_expired",
+        "The claim expired. Run inth logout --auth agent, then start again."
+      );
+    }
+  }
+  private async discover(
+    deadline = Number.POSITIVE_INFINITY
+  ): Promise<AgentDiscovery> {
+    if (!this.metadata) {
+      let response: OAuthResponse;
+      try {
+        response = await this.http.request(
+          `${this.environment.apiOrigin}/.well-known/oauth-authorization-server`,
+          deadline
+        );
+      } catch (error) {
+        this.requireApprovalTime(deadline);
+        throw error;
+      }
       const body = await this.body(response);
       try {
         this.metadata = parseAgentDiscovery(body, this.environment);
@@ -139,11 +167,11 @@ export class AgentAuth {
       validated: false,
     });
   }
-  async status(): Promise<string> {
+  async status(selected = false): Promise<string> {
     let output = "";
     await this.store.exclusive(async () => {
-      output = AgentAuth.statusValue(await this.read());
-    });
+      output = AgentAuth.statusValue(await this.read(), selected);
+    }, Number.POSITIVE_INFINITY);
     return output;
   }
   async start(email: string, scopes: string[]): Promise<string> {
@@ -229,12 +257,13 @@ export class AgentAuth {
       };
       await this.write(state);
       output = AgentAuth.statusValue(state);
-    });
+    }, Number.POSITIVE_INFINITY);
     return output;
   }
   private async exchangeClaim(
     endpoint: string,
-    pending: AgentPending
+    pending: AgentPending,
+    deadline: number
   ): Promise<OAuthResponse> {
     try {
       return await this.http.form(
@@ -244,7 +273,7 @@ export class AgentAuth {
           grant_type: "urn:workos:agent-auth:grant-type:claim",
           resource: this.environment.apiOrigin,
         }),
-        pending.claimExpiresAt
+        Math.min(pending.claimExpiresAt, deadline)
       );
     } catch {
       throw new CliError(
@@ -265,7 +294,6 @@ export class AgentAuth {
     }
   }
   async complete(deadline = Number.POSITIVE_INFINITY): Promise<string> {
-    const metadata = await this.discover();
     // Sleep outside the lock so logout and another CLI process can proceed.
     const before = await this.read();
     if (before.pending && !before.pending.exchanging) {
@@ -281,7 +309,9 @@ export class AgentAuth {
       );
     }
     let output = "";
-    await this.store.exclusive(async () => {
+    let acquired = false;
+    const completion = this.store.exclusive(async () => {
+      acquired = true;
       const state = await this.read();
       if (state.credentials) {
         this.requireActiveConnection(state.credentials);
@@ -289,27 +319,31 @@ export class AgentAuth {
         return;
       }
       const p = AgentAuth.pending(state);
-      if (Math.max(this.http.clock.now(), p.nextPollAt) >= p.claimExpiresAt) {
-        throw new CliError(
-          "authentication_expired",
-          "The claim expired. Run inth logout --auth agent, then start again."
-        );
-      }
-      if (this.http.clock.now() >= deadline) {
-        throw new CliError(
-          "approval_timeout",
-          "Still waiting for browser approval. Your sign-in is saved. Run inth login --complete --wait --json to resume waiting."
-        );
-      }
+      this.requireClaimTime(p);
+      this.requireApprovalTime(deadline);
       if (p.nextPollAt > this.http.clock.now()) {
         output = AgentAuth.statusValue(state);
         return;
       }
+      const metadata = await this.discover(deadline);
+      this.requireApprovalTime(deadline);
+      this.requireClaimTime(p);
       // Persist before the single-use request. A crash or ambiguous network error cannot replay it.
       p.exchanging = true;
       await this.write(state);
+      if (this.http.clock.now() >= Math.min(deadline, p.claimExpiresAt)) {
+        // No exchange was sent, so the saved claim is still safe to resume.
+        p.exchanging = false;
+        await this.write(state);
+        this.requireClaimTime(p);
+        this.requireApprovalTime(deadline);
+      }
       const issuedAt = this.http.clock.now();
-      const response = await this.exchangeClaim(metadata.token_endpoint, p);
+      const response = await this.exchangeClaim(
+        metadata.token_endpoint,
+        p,
+        deadline
+      );
       if (!response.ok) {
         const error = await this.http.error(response);
         if (
@@ -372,6 +406,12 @@ export class AgentAuth {
       credentials.expiresAt += issuedAt;
       await this.write({ credentials });
       output = AgentAuth.statusValue({ credentials }, true);
+    }, deadline);
+    await completion.catch((error) => {
+      if (!acquired) {
+        this.requireApprovalTime(deadline);
+      }
+      throw error;
     });
     return output;
   }
@@ -434,7 +474,7 @@ export class AgentAuth {
       p.nextPollAt = this.http.clock.now() + claim.interval * 1000;
       await this.write(state);
       output = AgentAuth.statusValue(state);
-    });
+    }, Number.POSITIVE_INFINITY);
     return output;
   }
   // eslint-disable-next-line require-await, class-methods-use-this -- Match the token provider contract; agent tokens have no UserInfo endpoint.
@@ -513,7 +553,7 @@ export class AgentAuth {
       renewed.expiresAt += issuedAt;
       await this.write({ credentials: renewed });
       token = renewed.accessToken;
-    });
+    }, Number.POSITIVE_INFINITY);
     return token;
   }
   async organizations(): Promise<string> {
@@ -529,7 +569,18 @@ export class AgentAuth {
         token
       );
     }
-    return this.body(response);
+    const body = await this.body(response);
+    try {
+      JSON.parse(body);
+    } catch {
+      throw new CliError(
+        "invalid_response",
+        "Inth returned an organization response that is not valid JSON.",
+        response.status,
+        response.requestId
+      );
+    }
+    return body;
   }
   async logout(): Promise<void> {
     await this.store.exclusive(async () => {
@@ -539,42 +590,44 @@ export class AgentAuth {
           return;
         }
         const metadata = await this.discover();
-        if (
-          metadata.agent_auth.identity_assertion_revocation_supported === true
-        ) {
-          const assertionValid =
-            state.credentials.assertionExpiresAt > this.http.clock.now();
-          const revoked = await this.http.form(
+        try {
+          if (
+            metadata.agent_auth.identity_assertion_revocation_supported === true
+          ) {
+            const assertionValid =
+              state.credentials.assertionExpiresAt > this.http.clock.now();
+            const revoked = await this.http.form(
+              metadata.revocation_endpoint,
+              new URLSearchParams({
+                token: assertionValid
+                  ? state.credentials.assertion
+                  : state.credentials.accessToken,
+                token_type_hint: assertionValid
+                  ? "identity_assertion"
+                  : "auth_md_registration",
+              }),
+              Number.POSITIVE_INFINITY
+            );
+            await this.body(revoked);
+          }
+          const response = await this.http.form(
             metadata.revocation_endpoint,
             new URLSearchParams({
-              token: assertionValid
-                ? state.credentials.assertion
-                : state.credentials.accessToken,
-              token_type_hint: assertionValid
-                ? "identity_assertion"
-                : "auth_md_registration",
+              token: state.credentials.accessToken,
+              token_type_hint: "access_token",
             }),
             Number.POSITIVE_INFINITY
           );
-          await this.body(revoked);
+          await this.body(response);
+        } catch {
+          throw new CliError(
+            "revocation_failed",
+            "Local auth.md credentials were cleared, but remote revocation could not be confirmed."
+          );
         }
-        const response = await this.http.form(
-          metadata.revocation_endpoint,
-          new URLSearchParams({
-            token: state.credentials.accessToken,
-            token_type_hint: "access_token",
-          }),
-          Number.POSITIVE_INFINITY
-        );
-        await this.body(response);
-      } catch {
-        throw new CliError(
-          "revocation_failed",
-          "Local auth.md credentials were cleared, but remote revocation could not be confirmed."
-        );
       } finally {
         await this.store.clear();
       }
-    });
+    }, Number.POSITIVE_INFINITY);
   }
 }

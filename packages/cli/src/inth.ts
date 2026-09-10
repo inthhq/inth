@@ -263,8 +263,11 @@ const runAgentAccountCommand = async (
   ) {
     return false;
   }
-  return runAgentCommand(options, getAgent(), () =>
-    context.selectConnection("agent")
+  return runAgentCommand(
+    options,
+    getAgent(),
+    () => context.selectConnection("agent"),
+    () => context.selectedConnection()
   );
 };
 
@@ -332,7 +335,7 @@ const run = async (options: CliArguments): Promise<void> => {
       nativeHttp(controller.signal, http.clock, false),
       {
         clear: async () => entry.clear(),
-        exclusive: (work) => lock.exclusive(work),
+        exclusive: (work, deadline) => lock.exclusive(work, deadline),
         read: async () => entry.read(),
         write: async (value) => entry.write(value),
       },

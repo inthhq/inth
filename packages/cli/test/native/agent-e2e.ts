@@ -62,15 +62,18 @@ try {
     http,
     {
       clear: async () => entry.clear(),
-      exclusive: (work) => lock.exclusive(work),
+      exclusive: (work, deadline) => lock.exclusive(work, deadline),
       read: async () => entry.read(),
       write: async (value) => entry.write(value),
     },
     environment
   );
   if (
-    !(await runAgentCommand(options, auth, () =>
-      context.selectConnection("agent")
+    !(await runAgentCommand(
+      options,
+      auth,
+      () => context.selectConnection("agent"),
+      () => context.selectedConnection()
     ))
   ) {
     if (options.command !== "whoami") {
@@ -96,4 +99,5 @@ try {
     controller.signal.aborted
   );
 }
+// Scriptc flushes stdout before _Exit. Explicit exit also stops native timeout timers.
 process.exit(exitCode);

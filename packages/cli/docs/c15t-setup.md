@@ -2,7 +2,7 @@
 
 An agent can provision Inth and integrate c15t using an existing CLI browser sign-in or an approved auth.md connection. The agent needs access to the application's source files and permission to make the requested changes.
 
-For an auth.md credential, first complete [agent sign-in](agent-auth-integration.md) with `organizations.read,organizations.write,projects.read,projects.write`. Successful sign-in selects that connection for the API commands below. This requires the server's CLI rollout. Human account verification and permission approval happen in the browser.
+For an auth.md credential, first complete [agent sign-in](agent-auth-integration.md) with `organizations.read,organizations.write,projects.read,projects.write`. Successful sign-in selects that connection for the API commands below. This requires the scoped auth.md backend deployment. Human account verification and permission approval happen in the browser.
 
 ## Check access
 

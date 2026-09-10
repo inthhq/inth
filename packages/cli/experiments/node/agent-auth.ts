@@ -44,13 +44,14 @@ export const agentAuth = (
             method: "POST",
           })
         ),
-      request: async (url) => capture(await http.request(url)),
+      request: async (url, deadline) =>
+        capture(await http.request(url, {}, deadline)),
     },
     {
       clear: async () => {
         await entry.deleteCredential();
       },
-      exclusive: (work) => lock.exclusive(work),
+      exclusive: (work, deadline) => lock.exclusive(work, deadline),
       read: async () => (await entry.getPassword()) ?? null,
       write: (value) => entry.setPassword(value),
     },

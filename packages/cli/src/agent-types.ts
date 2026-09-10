@@ -5,11 +5,11 @@ export interface AgentStore {
   read: () => Promise<string | null>;
   write: (value: string) => Promise<void>;
   clear: () => Promise<void>;
-  exclusive: (work: () => Promise<void>) => Promise<void>;
+  exclusive: (work: () => Promise<void>, deadline: number) => Promise<void>;
 }
 export interface AgentHttp {
   clock: Clock;
-  request: (url: string) => Promise<OAuthResponse>;
+  request: (url: string, deadline: number) => Promise<OAuthResponse>;
   post: (url: string, token: string, body: string) => Promise<OAuthResponse>;
   get: (url: string, token: string) => Promise<OAuthResponse>;
   form: (

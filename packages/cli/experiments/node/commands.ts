@@ -1,3 +1,4 @@
+import type { AgentAuth } from "../../src/agent-auth.ts";
 import { runSelectedAgentCommand } from "../../src/agent-commands.ts";
 import {
   agentEnvironment,
@@ -238,7 +239,7 @@ export const run = async (
     return platformStore(directory);
   };
   const getAuth = async () => new Auth(http, await getStore());
-  const getAgent = async () => {
+  const createAgent = async () => {
     const { agentAuth } = await import("./agent-auth.ts");
     return agentAuth(
       new HttpClient(
@@ -251,12 +252,17 @@ export const run = async (
       environment
     );
   };
+  let agent: Promise<AgentAuth> | undefined;
+  const getAgent = () => (agent ??= createAgent());
   const getSelectedAuth = () =>
     options.authMode === "agent" ? getAgent() : getAuth();
   const api = new ApiClient(http, getSelectedAuth, key, environment.apiOrigin);
   if (
-    await runSelectedAgentCommand(options, getAgent, () =>
-      context.selectConnection("agent")
+    await runSelectedAgentCommand(
+      options,
+      getAgent,
+      () => context.selectConnection("agent"),
+      () => context.selectedConnection()
     )
   ) {
     return;

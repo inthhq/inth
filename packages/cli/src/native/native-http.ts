@@ -196,7 +196,7 @@ export const nativeHttp = (
     get: (url, token) => request(url, null, Number.POSITIVE_INFINITY, token),
     post: (url, token, body) =>
       request(url, body, Number.POSITIVE_INFINITY, token, true),
-    request: (url) => request(url, null, Number.POSITIVE_INFINITY, ""),
+    request: (url, deadline) => request(url, null, deadline, ""),
     send: (url, token, method, body) =>
       request(url, body ?? null, Number.POSITIVE_INFINITY, token, true, method),
     tokens: async (response, previousRefreshToken) => {
