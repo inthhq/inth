@@ -24,9 +24,11 @@ Use `patch`, `minor`, or `major`. Include a Markdown heading. A changelog for `@
 The initial `0.0.0` release already has generated changelogs and a publish lock. After npm setup, merging this setup into `main` publishes that exact version. Subsequent releases use version PRs:
 
 1. Merge the change and its changelog into `main`.
-2. The Release workflow runs lint, typechecks, unit tests, and native/package tests on all four supported targets: Apple silicon Macs, Linux arm64/x64, and Windows x64.
+2. The Release workflow runs documentation checks, lint, typechecks, unit tests, and native/package tests on all four supported targets: Apple silicon Macs, Linux arm64/x64, and Windows x64.
 3. `pnpm tegami ci` opens or updates the version PR with package versions, changelogs, and the publish lock.
 4. Merge the version PR. The next run rebuilds and tests those versions, checks the downloaded native artifacts, publishes the platform packages, then publishes `@inth/cli` and creates one GitHub release.
+
+Leadtype bundles CLI documentation before native packaging and again before publishing the launcher. Both package types include `AGENTS.md`, `SKILL.md`, and the generated topics. See [documentation maintenance](../.github/DOCUMENTATION.md).
 
 Failed releases can be rerun from GitHub Actions. Tegami skips versions already published. The release workflow only runs on `main` in `inthhq/inth` and does not cancel an active publication.
 

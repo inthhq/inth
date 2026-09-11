@@ -1,0 +1,52 @@
+---
+title: Control Inth CLI telemetry
+description: Disable Inth CLI analytics and error reporting, inspect telemetry settings, and see which data production builds send.
+---
+
+Run `inth telemetry disable` to opt out of both usage analytics and unexpected-error reporting. Production builds enable telemetry by default. Development builds disable both PostHog and Sentry at build time.
+
+## How do I disable or check telemetry?
+
+```sh
+inth telemetry disable
+inth telemetry status
+inth telemetry status --json
+```
+
+The saved preference controls both PostHog usage events and Sentry error reports. Disabling telemetry removes the local installation ID and clears the cached user ID. To enable telemetry again in a production build:
+
+```sh
+inth telemetry enable
+```
+
+Enabling telemetry creates a new installation ID. The CLI prints a one-time notice to stderr on the first interactive command.
+
+## How do environment variables override telemetry?
+
+Set `INTH_TELEMETRY_DISABLED=1` to disable reporting regardless of the saved preference. A truthy `CI` value also disables reporting. Empty values, `0`, and `false` do not override the saved preference.
+
+Local `pnpm build`, `pnpm dev`, and `pnpm dev:link` builds disable reporting, the notice, and telemetry identity lookup. Neither `inth telemetry enable` nor setting `NODE_ENV=production` at runtime can enable reporting in a development binary.
+
+Tests and benchmarks disable telemetry. Help, version, telemetry settings, and invocations rejected during argument parsing send no usage events.
+
+## What does a usage event contain?
+
+Enabled production installations send one `cli_command_completed` event to Inth's PostHog project in the EU. Usage events contain the command name, outcome, duration, CLI version and library name, production environment, OS, architecture, JSON and interactive mode, and the MCP client when supplied with `--agent`. Error categories come from a fixed list.
+
+Signed-in browser users are identified by their Inth user ID when the command accesses saved credentials. API-key usage and local commands without credential access use a random installation ID. Installation events disable person-profile processing and are not merged into user profiles. Signed-in events use person profiles.
+
+Usage events exclude arguments, tokens, resource and organization IDs, file paths, API request and response bodies, and error messages. GeoIP enrichment is disabled; the ingestion service still receives the network request's IP address.
+
+## When does the CLI send an error report?
+
+Sentry initializes only after an unexpected error, with telemetry enabled and a configured project DSN. Successful commands, handled CLI and HTTP errors, cancellation, and recognized connection or filesystem failures do not initialize Sentry. Crash handlers are disabled.
+
+Reports contain the CLI release and source revision, OS version and architecture, fixed command name, exception category, elapsed time, output mode, and up to 12 recent operations. Reports can include native stack addresses and function names, plus an already-known Inth user ID or installation ID. Sentry performs no extra identity lookup.
+
+Only code-defined failure messages and bounded numeric credential-store status codes are included. Reports exclude arbitrary error text, raw arguments, environment values, request bodies, and absolute module paths. Caught-error stacks identify the reporting location, not the original TypeScript throw location. Reports mark this with `stack_origin: report_site` and `original_stack_available: false`.
+
+## Can reporting delay or fail a command?
+
+Usage delivery allows 1.5 seconds for the HTTP request. An uncached user identity can require a separate API lookup with another 1.5-second limit. Error reporting uses a one-second HTTP timeout. Neither delivery path retries or queues events offline; reporting failures preserve command output and exit status.
+
+The local identity cache stores a verified user ID and a SHA-256 credential fingerprint, never the credential itself. Account changes cannot reuse another credential's cached identity. Logout clears the cached user ID. Temporary Sentry SDK state is removed after each reporting attempt.

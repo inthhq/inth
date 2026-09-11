@@ -18,7 +18,9 @@
     "output.schema.json",
     "docs",
     "vendor",
-    "LICENSE"
+    "LICENSE",
+    "AGENTS.md",
+    "SKILL.md"
   ],
   "os": [
     "darwin"

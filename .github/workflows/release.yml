@@ -46,6 +46,8 @@ jobs:
           pattern: inth-*
           merge-multiple: true
           path: packages/cli/artifacts
+      - name: Generate package documentation
+        run: pnpm docs:bundle
       - name: Version or publish packages
         run: pnpm tegami ci
         env:

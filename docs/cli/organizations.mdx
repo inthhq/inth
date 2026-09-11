@@ -1,0 +1,47 @@
+---
+title: Select an Inth organization
+description: Select a default organization, link a directory, or override the organization for one command.
+---
+
+Organization-owned list and create commands use the first available organization from this order:
+
+1. The `--organization` flag.
+2. The nearest `.inth/project.json` in the current directory or a parent.
+3. Your saved default organization.
+4. The API's active organization when the CLI has no local selection.
+
+## How do I set my default organization?
+
+```sh
+inth org list
+inth switch
+inth switch acme
+inth switch org_123 --json
+```
+
+`switch` opens an organization picker when no ID or slug is supplied. Scripts must provide a value. The saved default applies outside directories with their own link.
+
+## How do I link an organization to a directory?
+
+```sh
+inth link acme
+```
+
+`link` writes an organization ID to `.inth/project.json` in the current directory. It does not create or select a project. Commands look for the nearest link while walking up through parent directories.
+
+## How do I override the organization for one command?
+
+```sh
+inth project list --organization org_123
+```
+
+Commands targeting a resource ID resolve ownership on the server and reject `--organization`. Scan starts use `--repository`. Organization and region commands do not use the local default. For raw API calls, an explicit `organizationId` in the URL query takes precedence over organization defaults.
+
+## How do I create an organization?
+
+```sh
+inth org create --name Acme --slug acme
+inth switch acme
+```
+
+Creation requires a browser session or an approved agent connection with organization write access. API keys cannot create organizations. Creating an organization does not change the saved default or directory link.

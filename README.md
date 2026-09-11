@@ -11,7 +11,7 @@
 
 This repository contains [`@inth/cli`](packages/cli/README.md), the public Inth command-line client. Use it to manage organizations, projects, team access, API keys, billing, Code Audit scans, and Inbox findings.
 
-The CLI is in development and has not been published to npm. Native builds target Apple silicon Macs, Linux arm64/x64, and Windows x64. Building requires Node.js 24, pnpm, and a native toolchain. See the CLI guide for platform setup.
+Native builds target Apple silicon Macs, Linux arm64/x64, and Windows x64. Building requires Node.js 24, pnpm, and a native toolchain. See the CLI guide for platform setup.
 
 ```sh
 pnpm install
@@ -31,5 +31,7 @@ pnpm --filter @inth/cli dev billing
 Development builds call the live Inth API. Named commands print formatted text by default; add `--json` for scripts.
 
 Licensed under [Apache 2.0](LICENSE).
+
+Public CLI documentation lives in [docs/cli](docs/cli/index.mdx). The same source produces the package docs and can be imported into the monorepo for `inth.com/docs/cli`. See [documentation maintenance](.github/DOCUMENTATION.md) for Leadtype checks, bundling, and the import setup.
 
 Maintainers: see [publishing with Tegami](.tegami/README.md) for changelogs, version PRs, and npm setup.

@@ -1,0 +1,77 @@
+---
+title: Authenticate the Inth CLI
+description: Run inth login for browser approval or set INTH_TOKEN for API-key access. Learn credential storage, refresh, and sign-out behavior.
+---
+
+Run `inth login` to sign in through a browser. For unattended commands that accept organization API keys, supply the key through `INTH_TOKEN`. Run `inth whoami` to verify the selected credentials with the API.
+
+## How do I sign in through a browser?
+
+```sh
+inth login
+inth whoami
+inth auth status
+```
+
+`login` opens an approval page, stores the session in your operating system's credential store, and helps you choose an organization. Use `inth login --no-browser` to open the printed URL yourself.
+
+`whoami` checks your identity and granted scopes with the API. `auth status` reads local state without contacting the server; it does not confirm that credentials are still valid.
+
+Saved browser sessions refresh automatically near expiry or after an unauthorized response. To refresh explicitly:
+
+```sh
+inth auth refresh
+```
+
+An older session may lack permissions for newer commands. Run `inth login` again to approve them. Refreshing cannot add scopes.
+
+## How does an agent request browser approval?
+
+Tell the person which email and permissions Inth will receive. After they agree:
+
+```sh
+inth login --email user@example.com --scopes organizations.read,organizations.write,projects.read,projects.write --json
+inth login --complete --wait --json
+```
+
+Give the person the returned approval URL and code. Immediately run the completion command in a background terminal so it can finish after approval. `signup --email` uses the same flow for account creation. General API access through this connection requires the scoped auth.md backend deployment; older servers only support `inth auth organizations`.
+
+Successful approval selects the agent connection for subsequent commands. Use `--auth browser` or `--auth agent` to override the saved selection. See [Agents and scripts](./automation) for timeouts, retries, and the output contract.
+
+## How do I authenticate in CI with an API key?
+
+Set `INTH_TOKEN` through your shell environment or your CI secret store. `--token` overrides the environment variable. Supplied keys are never saved or refreshed.
+
+```sh
+inth whoami --json
+inth project list --organization org_123 --json
+```
+
+API keys can manage projects and read organizations, API keys, Inbox, and billing. They cannot create organizations, manage members or API keys, run Code Audit, or update Inbox findings. Use a browser session or an approved agent connection with the required scopes for those operations.
+
+`login` with an API key skips browser login but does not validate the key. Use `whoami` to check access. An explicit agent selection combined with an API key is rejected.
+
+## Where does the Inth CLI store credentials?
+
+The native CLI uses macOS Keychain, Windows Credential Manager, or Linux Secret Service through libsecret. It does not fall back to plaintext token files. Linux sign-in needs a session bus and an unlocked keyring; use an API key for supported commands on headless machines.
+
+Preferences and locks live in these directories. They do not contain tokens.
+
+| Platform | State directory                                  |
+| -------- | ------------------------------------------------ |
+| macOS    | `~/Library/Application Support/inth-scriptc`     |
+| Windows  | `%APPDATA%\inth`                                 |
+| Linux    | `$XDG_STATE_HOME/inth`, or `~/.local/state/inth` |
+
+Local rebuilds on macOS can trigger another Keychain prompt because ad hoc signing changes the executable's identity. Reuse the current build between edits, or configure a stable signing identity using the repository's [credential storage guide](https://github.com/inthhq/inth/blob/main/packages/cli/docs/authentication.md#repeated-macos-keychain-prompts).
+
+MCP clients sign in separately. [MCP setup](./mcp) never copies CLI credentials into a client config.
+
+## How do I sign out and revoke a session?
+
+```sh
+inth logout
+inth logout --auth agent --json
+```
+
+Logout revokes the selected session and removes local credentials. If remote revocation fails, local credentials are still removed and the command reports the failure. The saved connection selection remains so a later command cannot silently switch to another account.

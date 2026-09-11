@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
+import { generatePackageDocs } from "./generate-docs.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const target = z
   .object({
@@ -22,6 +24,8 @@ if (target.environment !== "production") {
     "Cannot package a development build. Run pnpm build:production first."
   );
 }
+await generatePackageDocs();
+
 const source = z
   .object({ description: z.string(), license: z.string(), version: z.string() })
   .parse(JSON.parse(await readFile(path.join(root, "package.json"), "utf-8")));
@@ -40,7 +44,13 @@ await cp(
   path.join(root, "dist", target.executable),
   path.join(directory, "bin", target.executable)
 );
-for (const file of ["README.md", "AGENT-USAGE.md", "output.schema.json"]) {
+for (const file of [
+  "README.md",
+  "AGENT-USAGE.md",
+  "AGENTS.md",
+  "SKILL.md",
+  "output.schema.json",
+]) {
   await cp(path.join(root, file), path.join(directory, file));
 }
 await cp(path.join(root, "docs"), path.join(directory, "docs"), {

@@ -1,0 +1,14 @@
+{
+  "title": "Inth CLI",
+  "pages": [
+    "getting-started",
+    "authentication",
+    "organizations",
+    "commands",
+    "automation",
+    "mcp",
+    "skills",
+    "global-flags",
+    "telemetry"
+  ]
+}
