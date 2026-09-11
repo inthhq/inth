@@ -64,6 +64,7 @@
     "test:package": "node scripts/verify-package.ts",
     "package:native": "pnpm build:production && node scripts/package-native.ts",
     "test:e2e:agent": "node scripts/build-scriptc.ts --tests && playwright test --config playwright.agent.config.ts",
+    "test:e2e:agent:live": "node scripts/build-scriptc.ts --tests && playwright test --config playwright.agent.live.config.ts",
     "prepack": "pnpm --workspace-root docs:bundle"
   },
   "devDependencies": {

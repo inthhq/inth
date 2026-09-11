@@ -84,19 +84,29 @@ Native credentials use service `com.inth.cli.scriptc`, account `auth.md`, and a 
 
 [WorkOS auth.md](https://workos.com/auth-md) and [Better Auth Agent Auth](https://better-auth.com/docs/plugins/agent-auth) are distinct protocols. This CLI implements the auth.md claim and assertion flow. It does not implement Better Auth's agent key registration and signed-request protocol. The monorepo keeps that plugin and repairs its public discovery routing separately.
 
-## Run the browser E2E test
+## Run the browser E2E tests
 
-Start the companion local API and dashboard as described above. Install Chromium once with `pnpm --filter @inth/cli exec playwright install chromium`. Then run:
+Two Playwright variants share one compiled test entry point. It uses the CLI's argument parser, authentication command handler, HTTP transport, connection selection, and OS keychain adapters. Each run uses a unique credential entry and removes it afterwards. This tests the native authentication path across processes; it does not launch the shipping CLI entry point or exercise unrelated resource commands. Install Chromium once with `pnpm --filter @inth/cli exec playwright install chromium`.
+
+### Mock variant
+
+```sh
+pnpm --filter @inth/cli test:e2e:agent
+```
+
+The spec in `e2e/agent/mock/` starts a mock API and dashboard on two ephemeral `https://localhost` ports, generating a throwaway CA and certificate with the `openssl` binary at test start. The spawned CLI receives `INTH_DEV_API_ORIGIN`, `INTH_DEV_DASHBOARD_ORIGIN` and `NODE_EXTRA_CA_CERTS` for that run. The mock implements discovery, registration, claim retry, claim exchange, assertion renewal, revocation, `/v1/me`, `/api/agent/organizations` and a minimal approval page; exchange returns `authorization_pending` until the "Authorize agent" button is clicked. It needs no monorepo checkout and runs from the manual `Browser E2E` workflow in `.github/workflows/e2e.yml`.
+
+### Live variant
+
+Start the companion local API and dashboard as described above. Then run:
 
 ```sh
 INTH_E2E_API_LOG=/tmp/inth-auth-md-api-local.log \
-  pnpm --filter @inth/cli test:e2e:agent
+  pnpm --filter @inth/cli test:e2e:agent:live
 ```
 
-Keep both `INTH_DEV_*` origins and `NODE_EXTRA_CA_CERTS` set. The test requires the local API's terminal OTP delivery and reads only newly appended OTP lines. Use a dedicated dev instance without other simultaneous OTP requests. It fails if these prerequisites are missing. It does not contact production or read a real inbox.
+Keep both `INTH_DEV_*` origins and `NODE_EXTRA_CA_CERTS` set. The spec in `e2e/agent/live/` requires the local API's terminal OTP delivery and reads only newly appended OTP lines. Use a dedicated dev instance without other simultaneous OTP requests. It fails if these prerequisites are missing. It does not contact production or read a real inbox. Each run creates a unique local fixture account; the fixture user remains in the local database.
 
-Playwright drives the real dashboard and API. A compiled test entry point uses the CLI's argument parser, authentication command handler, HTTP transport, connection selection, and OS keychain adapters. Each run creates a unique local fixture account and separate credential entry, then removes its credentials. The fixture user remains in the local database. This tests the native authentication path across processes; it does not launch the shipping CLI entry point or exercise unrelated resource commands.
+The live variant covers new accounts and returning accounts with and without current legal acceptance. Returning accounts missing acceptance must accept the legal documents before reaching agent approval, while new accounts and returning accounts with current acceptance proceed without that extra screen. Every case checks email prefill, rejection of an incorrect email code, no second approval-code input, explicit human approval, cancellation and resume, one final JSON result, `whoami` using the saved connection, and logout without credential fallback. The mock variant checks the same CLI steps without the sign-in and legal screens. Traces and screenshots are retained on failure under `packages/cli/test-results`.
 
-The test covers new accounts and returning accounts with and without current legal acceptance. Returning accounts missing acceptance must accept the legal documents before reaching agent approval, while new accounts and returning accounts with current acceptance proceed without that extra screen. Every case checks email prefill, rejection of an incorrect email code, no second approval-code input, explicit human approval, cancellation and resume, one final JSON result, `whoami` using the saved connection, and logout without credential fallback. Traces and screenshots are retained on failure under `packages/cli/test-results`.
-
-Unit tests cover polling intervals, rate limits, timeouts, concurrent completion, ambiguous exchanges and selection precedence. The normal native suite also compiles and checks the polling loop and saved connection state. Those tests run in CI; the browser test requires the companion local services and runs separately.
+Unit tests cover polling intervals, rate limits, timeouts, concurrent completion, ambiguous exchanges and selection precedence. The normal native suite also compiles and checks the polling loop and saved connection state. Those tests run in CI; the live browser test requires the companion local services and runs separately.
