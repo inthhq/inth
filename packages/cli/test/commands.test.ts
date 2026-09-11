@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { HELP } from "../src/help.ts";
+import { formatHelp } from "../src/help.ts";
 import { VERSION } from "../src/version.ts";
 
 const entry = fileURLToPath(
@@ -20,7 +20,7 @@ describe("CLI commands", () => {
   it("prints help and version without loading credentials", () => {
     const help = execute(["--help"]);
     expect(help.status).toBe(0);
-    expect(help.stdout.trim()).toBe(HELP);
+    expect(help.stdout.trim()).toBe(formatHelp());
     expect(help.stderr).toBe("");
     expect(execute(["--version"]).stdout.trim()).toBe(VERSION);
   });

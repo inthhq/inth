@@ -334,7 +334,7 @@ describe("auth.md credentials", () => {
     try {
       const exitCode = await runAgentCommand(
         parseArguments(["login", "--complete", "--json"]),
-        f.auth(),
+        async () => f.auth(),
         select
       ).catch((error: Error) => reportError(true, error, false));
       expect(exitCode).toBe(1);
@@ -757,7 +757,7 @@ describe("waiting for browser approval", () => {
     try {
       const exitCode = await runAgentCommand(
         parseArguments(["login", "--complete", "--wait", "--json"]),
-        f.auth(),
+        async () => f.auth(),
         select
       ).catch((error: Error) => reportError(true, error, false));
       expect(exitCode).toBe(1);
@@ -805,14 +805,14 @@ describe("waiting for browser approval", () => {
     try {
       await runAgentCommand(
         parseArguments(["auth", "complete", "--json"]),
-        f.auth(),
+        async () => f.auth(),
         select
       );
       expect(selection).toBe("browser");
       output.mockClear();
       await runAgentCommand(
         parseArguments(["login", "--complete", "--wait", "--json"]),
-        f.auth(),
+        async () => f.auth(),
         select
       );
       expect(selection).toBe("agent");
@@ -823,7 +823,7 @@ describe("waiting for browser approval", () => {
       f.replies.push(response({}), response({}));
       await runAgentCommand(
         parseArguments(["logout", "--auth", "agent", "--json"]),
-        f.auth(),
+        async () => f.auth(),
         select
       );
       expect(selection).toBe("agent");
@@ -847,11 +847,11 @@ it("can retry saving the connection after a successful single-use exchange", asy
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   try {
     const args = parseArguments(["login", "--complete", "--wait", "--json"]);
-    await expect(runAgentCommand(args, f.auth(), select)).rejects.toThrow(
-      "disk unavailable"
-    );
+    await expect(
+      runAgentCommand(args, async () => f.auth(), select)
+    ).rejects.toThrow("disk unavailable");
     expect(output).not.toHaveBeenCalled();
-    await runAgentCommand(args, f.auth(), select);
+    await runAgentCommand(args, async () => f.auth(), select);
     expect(select).toHaveBeenCalledTimes(2);
     expect(JSON.parse(output.mock.calls[0]?.[0]).data.status).toBe(
       "authenticated"

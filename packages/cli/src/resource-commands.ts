@@ -154,25 +154,6 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
   command("inbox", "github-issue", "POST", "/v1/inbox/:id/github-issue"),
 ];
 
-export const RESOURCE_OPTIONS = [
-  "name",
-  "slug",
-  "limit",
-  "cursor",
-  "region",
-  "description",
-  "branding",
-  "trusted-origins",
-  "role",
-  "email",
-  "repository",
-  "status",
-  "request-id",
-  "item-version",
-  "method",
-  "data",
-];
-
 export const optionValue = (
   options: CliArguments,
   name: string

@@ -71,7 +71,7 @@ try {
   if (
     !(await runAgentCommand(
       options,
-      auth,
+      async () => auth,
       () => context.selectConnection("agent"),
       () => context.selectedConnection()
     ))

@@ -1,40 +1,46 @@
+// Only known API and OAuth codes are displayed. Response bodies may contain secrets or terminal escapes.
+const KNOWN_CODES = new Set([
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "PLAN_REQUIRED",
+  "RATE_LIMITED",
+  "KEY_LIMIT_REACHED",
+  "PAYLOAD_TOO_LARGE",
+  "authorization_pending",
+  "claim_expired",
+  "invalid_claim",
+  "invalid_login_hint",
+  "account_mismatch",
+  "invalid_target",
+  "slow_down",
+  "expired_token",
+  "access_denied",
+  "invalid_grant",
+  "invalid_scope",
+  "CONFLICT",
+  "INVALID_PAYLOAD",
+  "NOT_FOUND",
+  "PLAN_LIMIT_REACHED",
+  "SCAN_IN_PROGRESS",
+  "UNLOCK_REQUIRED",
+  "REPOSITORY_NOT_LINKED",
+  "INSUFFICIENT_CREDITS",
+  "INSUFFICIENT_SCOPE",
+  "SERVICE_UNAVAILABLE",
+]);
+
+// Request IDs come from response headers, so restrict them to a safe, bounded alphabet.
+export const safeRequestId = (requestId: string | null): string | null =>
+  requestId?.replaceAll(/[^a-zA-Z0-9._:-]/gu, "").slice(0, 200) || null;
+
 export class HttpError extends Error {
   readonly status: number;
   readonly code: string;
   readonly apiCode: string | null;
   readonly requestId: string | null;
   constructor(status: number, code: string, requestId: string | null) {
-    // Only known API and OAuth codes are displayed. Response bodies may contain secrets or terminal escapes.
-    const known = new Set([
-      "UNAUTHORIZED",
-      "FORBIDDEN",
-      "PLAN_REQUIRED",
-      "RATE_LIMITED",
-      "KEY_LIMIT_REACHED",
-      "PAYLOAD_TOO_LARGE",
-      "authorization_pending",
-      "claim_expired",
-      "invalid_claim",
-      "invalid_login_hint",
-      "account_mismatch",
-      "invalid_target",
-      "slow_down",
-      "expired_token",
-      "access_denied",
-      "invalid_grant",
-      "invalid_scope",
-      "CONFLICT",
-      "INVALID_PAYLOAD",
-      "NOT_FOUND",
-      "PLAN_LIMIT_REACHED",
-      "SCAN_IN_PROGRESS",
-      "UNLOCK_REQUIRED",
-      "REPOSITORY_NOT_LINKED",
-      "INSUFFICIENT_CREDITS",
-      "INSUFFICIENT_SCOPE",
-      "SERVICE_UNAVAILABLE",
-    ]);
-    const reason = known.has(code) ? ` (${code})` : "";
+    const known = KNOWN_CODES.has(code);
+    const reason = known ? ` (${code})` : "";
     let guidance = "";
     if (status === 400 && code === "invalid_scope") {
       guidance =
@@ -48,15 +54,14 @@ export class HttpError extends Error {
     } else if (status === 422 && code === "PLAN_LIMIT_REACHED") {
       guidance = " A plan or organization owner limit has been reached.";
     }
-    const id =
-      requestId?.replaceAll(/[^a-zA-Z0-9._:-]/gu, "").slice(0, 200) || null;
+    const id = safeRequestId(requestId);
     super(
       `Request failed: HTTP ${status}${reason}.${guidance}${id ? ` Request ID: ${id}` : ""}`
     );
     this.name = "HttpError";
     this.status = status;
     this.code = code;
-    this.apiCode = known.has(code) ? code : null;
+    this.apiCode = known ? code : null;
     this.requestId = id;
   }
 }

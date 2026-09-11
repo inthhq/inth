@@ -10,6 +10,5 @@ export default defineConfig({
       "**/.inrepo/**",
       "**/e2e/**",
     ],
-    passWithNoTests: true,
   },
 });

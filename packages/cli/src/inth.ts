@@ -253,25 +253,6 @@ const runOrganizationCreate = async (
     JSON.stringify(created)
   );
 };
-const runAgentAccountCommand = async (
-  options: CliArguments,
-  getAgent: () => AgentAuth,
-  context: NativeContext
-): Promise<boolean> => {
-  if (
-    options.authMode !== "agent" ||
-    !["auth", "logout"].includes(options.command)
-  ) {
-    return false;
-  }
-  return runAgentCommand(
-    options,
-    getAgent(),
-    () => context.selectConnection("agent"),
-    () => context.selectedConnection()
-  );
-};
-
 const run = async (options: CliArguments): Promise<void> => {
   diagnosticStep("command_setup");
   if (options.version || options.help || !options.command) {
@@ -360,7 +341,14 @@ const run = async (options: CliArguments): Promise<void> => {
     observeIdentity,
     environment.apiOrigin
   );
-  if (await runAgentAccountCommand(options, getAgent, context)) {
+  if (
+    await runAgentCommand(
+      options,
+      async () => getAgent(),
+      () => context.selectConnection("agent"),
+      () => context.selectedConnection()
+    )
+  ) {
     return;
   }
   if (options.command === "login") {
@@ -510,8 +498,7 @@ try {
 if (options && installationId) {
   const duration = Date.now() - started;
   const interactive =
-    !options.json &&
-    !options.nonInteractive &&
+    promptsAllowed(options) &&
     Boolean(process.stdin.isTTY && process.stdout.isTTY);
   const telemetry = new NativeTelemetry(nativeStateDirectory(), false);
   if (options.command === "logout" || errorCode === "authentication_required") {

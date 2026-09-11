@@ -34,6 +34,7 @@ export class NativeStore implements AuthStore {
     this.lockPath = lockPath;
     this.checkAbort = checkAbort;
   }
+  // Scriptc (SC2002) only accepts record literals for interface parameters, not class instances.
   adapter(): AuthStore {
     return {
       clear: () => this.clear(),

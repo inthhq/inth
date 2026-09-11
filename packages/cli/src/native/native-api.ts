@@ -2,9 +2,7 @@ import type { AccessTokenProvider } from "../agent-types.ts";
 import { apiUrl } from "../api-options.ts";
 import { API_ORIGIN } from "../auth-types.ts";
 import type { OAuthResponse } from "../auth-types.ts";
-import { CliError } from "../cli-error.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
-import { HttpError } from "../http-error.ts";
 import type { IdentityResponse, MeResponse, UserProfile } from "../identity.ts";
 import {
   collectOrganizations,
@@ -17,7 +15,7 @@ import type {
   OrganizationResponse,
 } from "../organizations.ts";
 import { telemetryUserId } from "../telemetry.ts";
-import { responseError } from "./native-protocol.ts";
+import { invalidResponse, responseError } from "./native-protocol.ts";
 
 export interface ApiTransport {
   get: (url: string, token: string) => Promise<OAuthResponse>;
@@ -29,18 +27,6 @@ export interface ApiTransport {
   ) => Promise<OAuthResponse>;
   post: (url: string, token: string, body: string) => Promise<OAuthResponse>;
 }
-const invalidResponse = (
-  response: OAuthResponse,
-  message: string
-): CliError => {
-  const detail = new HttpError(response.status, "", response.requestId);
-  return new CliError(
-    "invalid_response",
-    `${message}${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-    response.status,
-    detail.requestId
-  );
-};
 export const apiOutput = (response: OAuthResponse): string => {
   diagnosticStep("api_decode");
   if (response.status === 204) {

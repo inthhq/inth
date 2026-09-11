@@ -28,9 +28,11 @@ const savedAgentSelected = async (
   }
 };
 
+// Runs auth.md account commands when the agent connection is selected.
+// Returns false, without constructing the agent, for every other command.
 export const runAgentCommand = async (
   options: CliArguments,
-  auth: AgentAuth,
+  getAgent: () => Promise<AgentAuth>,
   selectConnection: () => Promise<void>,
   selectedConnection: () => Promise<string | undefined> = () =>
     Promise.resolve("")
@@ -41,6 +43,7 @@ export const runAgentCommand = async (
   ) {
     return false;
   }
+  const auth = await getAgent();
   if (options.command === "logout") {
     await auth.logout();
     printResult(
@@ -89,25 +92,4 @@ export const runAgentCommand = async (
     output
   );
   return true;
-};
-
-export const runSelectedAgentCommand = async (
-  options: CliArguments,
-  getAgent: () => Promise<AgentAuth>,
-  selectConnection: () => Promise<void>,
-  selectedConnection: () => Promise<string | undefined> = () =>
-    Promise.resolve("")
-): Promise<boolean> => {
-  if (
-    options.authMode !== "agent" ||
-    !["auth", "logout"].includes(options.command)
-  ) {
-    return false;
-  }
-  return runAgentCommand(
-    options,
-    await getAgent(),
-    selectConnection,
-    selectedConnection
-  );
 };
