@@ -5,7 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { verifyPackageDocs } from "./docs-checks.ts";
+import { verifyPackageDocs, verifySiteDocs } from "./docs-checks.ts";
+import { generateDocsArtifacts } from "./generate-docs.ts";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const temporary = await mkdtemp(path.join(os.tmpdir(), "inth-docs-package-"));
@@ -33,8 +34,11 @@ try {
   );
   assert.equal(extracted.status, 0, extracted.stderr);
   await verifyPackageDocs(path.join(temporary, "package"));
+  const site = path.join(temporary, "site");
+  await generateDocsArtifacts(site, "site");
+  await verifySiteDocs(site);
   console.log(
-    "Package docs verified: index, skill, every topic, and local links."
+    "Docs verified: package links, Markdown mirrors, llms indexes, search, sitemap, and canonical metadata."
   );
 } finally {
   await rm(temporary, { force: true, recursive: true });

@@ -1,9 +1,11 @@
 ---
-title: Inth MCP
+title: Set up Inth MCP in a coding client
 description: Configure Inth MCP in your coding client and complete client-owned OAuth sign-in.
 ---
 
-Configure Inth's OAuth MCP server in fx, Codex, Claude Code, Cursor, VS Code, OpenCode, and other MCP clients:
+Run `inth mcp setup --agent <client> --scope project|global` to configure the Inth MCP server at `https://api.inth.com/mcp`. Then complete OAuth sign-in in the selected client. CLI browser sessions and API keys are not copied into client configuration.
+
+## How do I configure or preview an Inth MCP connection?
 
 ```sh
 inth mcp
@@ -16,14 +18,22 @@ inth mcp remove --agent cursor --scope project --json
 
 Bare `inth mcp` asks for a client and project or global scope. Clients that only support global configuration skip the scope picker. Scripts must supply `--agent` and `--scope` for setup and removal. Listing defaults to clients that support project scope; `--scope global` lists all supported clients.
 
+## Which MCP clients and configuration scopes are supported?
+
 Supported clients are `codex`, `claude-code`, `cursor`, `vscode`, `opencode`, `fx`, `antigravity`, `cline`, `cline-cli`, `gemini-cli`, `github-copilot-cli`, `grok-build`, `kilo-code`, `kimi-code`, `kiro-cli`, `mastracode`, `mcporter`, `pi`, `windsurf`, and `zed`. Antigravity, Cline, Cline CLI, and Windsurf require `--scope global`.
 
 fx global setup writes `~/.fx/mcp.json`. Run `/mcp reload`, then `/mcp auth inth --open` in fx. Project setup writes `.mcp.json`; trust the project's server in fx before signing in. Pi requires `pi-mcp-adapter`; setup prints its install command. Kimi Code requires a trusted folder for project configuration.
 
 Claude Desktop remote servers must be added through the app's Settings > Connectors. Goose's YAML configuration is not supported by this command yet.
 
+## How do I sign in after MCP setup?
+
 Setup writes `https://api.inth.com/mcp` and prints the next command for your client. For Codex, run `codex mcp login inth`; for Claude Code, `claude mcp login inth`; for OpenCode, `opencode mcp auth inth`. Cursor and VS Code get a launch command and the steps to sign in from the editor. The client owns the OAuth flow; CLI tokens and API keys are never copied into the config. Setup reports configuration changes, not a verified connection.
 
+## Why does Codex report that the Inth server is missing?
+
 Codex global setup uses `CODEX_HOME` when set, otherwise `~/.codex`. The summary identifies an active `CODEX_HOME` profile. Run the login command in the same terminal so it uses the same profile. If Codex reports a missing server, run `inth mcp list --agent codex --scope global --json` to inspect the full config path, then `codex mcp get inth` to check what Codex can see. Project setup writes `.codex/config.toml`; Codex only loads project configuration in trusted projects.
+
+## Does setup overwrite an existing client configuration?
 
 Edits preserve unrelated settings and comments. Repeating setup leaves an existing Inth entry unchanged, including its custom options. If another server occupies the name `inth`, the command fails without overwriting it. Removal supports ordinary Codex `[mcp_servers.inth]` tables and their subtables; inline or dotted-key layouts that cannot be safely removed require an edit in the client. `--dry-run` previews changes without writing files.

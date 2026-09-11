@@ -1,9 +1,11 @@
 ---
-title: Authentication
-description: Sign in through a browser, resume agent approval, or supply an organization API key.
+title: Authenticate the Inth CLI
+description: Run inth login for browser approval or set INTH_TOKEN for API-key access. Learn credential storage, refresh, and sign-out behavior.
 ---
 
-## Sign in through a browser
+Run `inth login` to sign in through a browser. For unattended commands that accept organization API keys, supply the key through `INTH_TOKEN`. Run `inth whoami` to verify the selected credentials with the API.
+
+## How do I sign in through a browser?
 
 ```sh
 inth login
@@ -23,7 +25,7 @@ inth auth refresh
 
 An older session may lack permissions for newer commands. Run `inth login` again to approve them. Refreshing cannot add scopes.
 
-## Sign in from an agent
+## How does an agent request browser approval?
 
 Tell the person which email and permissions Inth will receive. After they agree:
 
@@ -36,7 +38,7 @@ Give the person the returned approval URL and code. Immediately run the completi
 
 Successful approval selects the agent connection for subsequent commands. Use `--auth browser` or `--auth agent` to override the saved selection. See [Agents and scripts](./automation) for timeouts, retries, and the output contract.
 
-## Supply an API key
+## How do I authenticate in CI with an API key?
 
 Set `INTH_TOKEN` through your shell environment or your CI secret store. `--token` overrides the environment variable. Supplied keys are never saved or refreshed.
 
@@ -49,7 +51,7 @@ API keys can manage projects and read organizations, API keys, Inbox, and billin
 
 `login` with an API key skips browser login but does not validate the key. Use `whoami` to check access. An explicit agent selection combined with an API key is rejected.
 
-## Credential storage
+## Where does the Inth CLI store credentials?
 
 The native CLI uses macOS Keychain, Windows Credential Manager, or Linux Secret Service through libsecret. It does not fall back to plaintext token files. Linux sign-in needs a session bus and an unlocked keyring; use an API key for supported commands on headless machines.
 
@@ -65,7 +67,7 @@ Local rebuilds on macOS can trigger another Keychain prompt because ad hoc signi
 
 MCP clients sign in separately. [MCP setup](./mcp) never copies CLI credentials into a client config.
 
-## Sign out
+## How do I sign out and revoke a session?
 
 ```sh
 inth logout

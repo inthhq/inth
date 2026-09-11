@@ -11,7 +11,7 @@
 
 This repository contains [`@inth/cli`](packages/cli/README.md), the public Inth command-line client. Use it to manage organizations, projects, team access, API keys, billing, Code Audit scans, and Inbox findings.
 
-The CLI is in development and has not been published to npm. Native builds target Apple silicon Macs, Linux arm64/x64, and Windows x64. Building requires Node.js 24, pnpm, and a native toolchain. See the CLI guide for platform setup.
+Native builds target Apple silicon Macs, Linux arm64/x64, and Windows x64. Building requires Node.js 24, pnpm, and a native toolchain. See the CLI guide for platform setup.
 
 ```sh
 pnpm install

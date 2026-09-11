@@ -1,9 +1,11 @@
 ---
-title: Flags and raw API requests
+title: Inth CLI flags and raw API requests
 description: Choose output and authentication options or call the Inth API directly.
 ---
 
-## Shared flags
+Use `--json` for structured output, `--non-interactive` to disable prompts, and `inth api <path>` for a raw API request. Check `inth <command> --help` before choosing flags, because accepted options depend on the command.
+
+## Which flags control output and authentication?
 
 | Flag | Behavior |
 | --- | --- |
@@ -19,9 +21,9 @@ Flags are command-specific. Use `inth <command> --help` to check whether a flag 
 
 Piping output does not select JSON mode. The [automation guide](./automation) describes the JSON envelope, error codes, and exit statuses. Skill installation forwards upstream text output and does not support `--json`; the bundled skill catalog supports `--list --json`.
 
-## Pagination and request bodies
+## How do I set pagination and JSON request bodies?
 
-Paginated lists accept `--limit` from 1 through 100, defaulting to 50, and an opaque `--cursor`. Each invocation returns one page. Pass `pagination.nextCursor` from the response unchanged when requesting the next page.
+Paginated lists accept `--limit` from 1 through 100, defaulting to 50, and an opaque `--cursor`. Values outside the `--limit` range fail argument validation. Each invocation returns one page. Pass `pagination.nextCursor` from the response unchanged when requesting the next page.
 
 Resource writes with body options accept `--data '<JSON object>'` instead of individual fields, except `org create`. This supports nested fields and explicit null values. Do not combine `--data` with individual body options.
 
@@ -29,7 +31,7 @@ Resource writes with body options accept `--data '<JSON object>'` instead of ind
 inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigins":[]}}'
 ```
 
-## Raw API requests
+## How do I call the Inth API directly?
 
 `api` prints the server JSON response by default. Add `--json` to wrap it in the CLI envelope.
 
@@ -43,7 +45,7 @@ Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. Authe
 
 Writes take effect immediately without confirmation prompts. The requested endpoint determines the required scopes and accepted credentials.
 
-## Environment variables
+## Which environment variables does the Inth CLI read?
 
 | Variable | Purpose |
 | --- | --- |

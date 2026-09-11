@@ -11,7 +11,7 @@
 
 The `@inth/cli` package provides the `inth` command. Named commands print formatted text by default. Add `--json` for scripts and agents.
 
-This package is in development and has not been published to npm. Native targets are Apple silicon Macs, Linux arm64/x64, and Windows x64.
+Native targets are Apple silicon Macs, Linux arm64/x64, and Windows x64.
 
 [Get started](#get-started) · [Commands](#public-resource-commands) · [Development](#development) · [Agents and scripts](AGENT-USAGE.md)
 
@@ -328,7 +328,7 @@ Delivery waits at most 1.5 seconds for the HTTP request, with no retries or offl
 
 `pnpm build:production` explicitly enables production reporting at build time. `pnpm --filter @inth/cli package:native` uses that production build and packs the current target into `packages/cli/artifacts/`. The packer rejects development builds. `test:package` extracts that archive and checks the executable, JSON output, and MCP setup.
 
-Once the first release is published, install `@inth/cli` with `npm install -g @inth/cli`. It selects the native package for Apple silicon Macs, Linux arm64/x64, or Windows x64. Users do not need to choose a platform package. The launcher uses Node.js; the native executable itself has no runtime npm dependencies.
+For published releases, install `@inth/cli` with `npm install -g @inth/cli`. It selects the native package for Apple silicon Macs, Linux arm64/x64, or Windows x64. Users do not need to choose a platform package. The launcher uses Node.js; the native executable itself has no runtime npm dependencies.
 
 CI builds, tests, and uploads all four target packages. The Release workflow publishes verified artifacts through npm trusted publishing. See [publishing with Tegami](../../.tegami/README.md) for setup and release instructions. Certificate signing will be added separately.
 
