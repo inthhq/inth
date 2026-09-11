@@ -1,3 +1,5 @@
+// Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
+
 import { once } from "node:events";
 import { createServer } from "node:http";
 

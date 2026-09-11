@@ -1,3 +1,5 @@
+// Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
+
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 

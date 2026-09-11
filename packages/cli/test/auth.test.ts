@@ -1,3 +1,5 @@
+// Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
+
 import { describe, expect, it } from "vitest";
 
 import { Auth } from "../experiments/node/auth.ts";

@@ -1,3 +1,5 @@
+// Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
+
 import { mkdtemp, writeFile, readdir, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
