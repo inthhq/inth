@@ -183,3 +183,21 @@ it("uses plain product wording and preserves copyable opt-out commands", () => {
     "\u001B[1minth telemetry disable\u001B[0m"
   );
 });
+
+it.each(["fx", "gemini-cli", "windsurf"])(
+  "allows the supported MCP client %s in telemetry",
+  (agent) => {
+    const options = parseArguments([
+      "mcp",
+      "setup",
+      "--agent",
+      agent,
+      "--scope",
+      "global",
+    ]);
+    expect(
+      JSON.parse(telemetryPayload(options, "installation", 0, "", false))
+        .properties.mcp_client
+    ).toBe(agent);
+  }
+);

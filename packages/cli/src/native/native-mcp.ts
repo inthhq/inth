@@ -14,9 +14,10 @@ import {
   MCP_URL,
   mcpClientName,
   mcpLocation,
+  mcpSupportsProject,
 } from "../mcp-clients.ts";
 import type { McpClient } from "../mcp-clients.ts";
-import { editMcpJson } from "../mcp-json.ts";
+import { editMcpJson, mcpJsonKey } from "../mcp-json.ts";
 import { mcpNextStep, mcpSummary } from "../mcp-output.ts";
 import type { McpResult } from "../mcp-output.ts";
 import { editMcpToml } from "../mcp-toml.ts";
@@ -100,6 +101,9 @@ const chooseTargets = async (
         }))
       );
     }
+    if (!scope && !mcpSupportsProject(agent)) {
+      scope = "global";
+    }
     if (!scope) {
       scope = await nativeUI(
         signal,
@@ -112,12 +116,17 @@ const chooseTargets = async (
       ]);
     }
   }
-  const selectedScope = scope || "project";
+  const selectedScope =
+    scope || (agent && !mcpSupportsProject(agent) ? "global" : "project");
   const client = MCP_CLIENTS.find((value) => value === agent);
   if (agent && !client) {
     throw new CliError("usage_error", "Unknown MCP client.");
   }
-  const agents = client ? [client] : MCP_CLIENTS;
+  const agents = client
+    ? [client]
+    : MCP_CLIENTS.filter(
+        (value) => selectedScope === "global" || mcpSupportsProject(value)
+      );
   return { agents, scope: selectedScope };
 };
 const editStatus = (
@@ -145,20 +154,24 @@ export const runMcp = async (
   const results: McpResult[] = [];
   const environment = {
     appData: process.env.APPDATA,
+    clineHome: process.env.CLINE_DIR,
     codexHome: process.env.CODEX_HOME,
     cwd: process.cwd(),
+    grokHome: process.env.GROK_HOME,
     home: homedir(),
+    kimiHome: process.env.KIMI_CODE_HOME,
+    piHome: process.env.PI_CODING_AGENT_DIR,
     platform: process.platform,
     xdgConfig: process.env.XDG_CONFIG_HOME,
   };
   for (const client of agents) {
     signal.throwIfAborted();
     const location = mcpLocation(client, selectedScope, environment);
-    if (client === "opencode") {
-      const jsonc = location.path.replace(/\.json$/u, ".jsonc");
+    for (const candidate of location.candidates) {
       try {
-        lstatSync(jsonc);
-        location.path = jsonc;
+        lstatSync(candidate);
+        location.path = candidate;
+        break;
       } catch (error) {
         if (!(error instanceof Error) || !missing(error)) {
           throw error;
@@ -166,6 +179,9 @@ export const runMcp = async (
       }
     }
     const original = await read(location.path);
+    if (location.format === "json") {
+      location.key = mcpJsonKey(original, client, location.key);
+    }
     const remove = action === "remove" || action === "list";
     const edit =
       location.format === "toml"

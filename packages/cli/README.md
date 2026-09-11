@@ -175,17 +175,24 @@ The official installer's telemetry attributes c15t installs to [c15t on skills.s
 
 ## Inth MCP
 
-Configure Inth's OAuth MCP server in Codex, Claude Code, Cursor, VS Code, or OpenCode:
+Configure Inth's OAuth MCP server in fx, Codex, Claude Code, Cursor, VS Code, OpenCode, and other MCP clients:
 
 ```sh
 inth mcp
 inth mcp setup --agent cursor --scope project
+inth mcp setup --agent fx --scope global
 inth mcp setup --agent codex --scope global --dry-run --json
 inth mcp list --scope project --json
 inth mcp remove --agent cursor --scope project --json
 ```
 
-Bare `inth mcp` asks for a client and project or global scope. Scripts must supply `--agent` and `--scope` for setup and removal. Listing defaults to all five clients in project scope.
+Bare `inth mcp` asks for a client and project or global scope. Clients that only support global configuration skip the scope picker. Scripts must supply `--agent` and `--scope` for setup and removal. Listing defaults to clients that support project scope; `--scope global` lists all supported clients.
+
+Supported clients are `codex`, `claude-code`, `cursor`, `vscode`, `opencode`, `fx`, `antigravity`, `cline`, `cline-cli`, `gemini-cli`, `github-copilot-cli`, `grok-build`, `kilo-code`, `kimi-code`, `kiro-cli`, `mastracode`, `mcporter`, `pi`, `windsurf`, and `zed`. Antigravity, Cline, Cline CLI, and Windsurf require `--scope global`.
+
+fx global setup writes `~/.fx/mcp.json`. Run `/mcp reload`, then `/mcp auth inth --open` in fx. Project setup writes `.mcp.json`; trust the project's server in fx before signing in. Pi requires `pi-mcp-adapter`; setup prints its install command. Kimi Code requires a trusted folder for project configuration.
+
+Claude Desktop remote servers must be added through the app's Settings > Connectors. Goose's YAML configuration is not supported by this command yet.
 
 Setup writes `https://api.inth.com/mcp` and prints the next command for your client. For Codex, run `codex mcp login inth`; for Claude Code, `claude mcp login inth`; for OpenCode, `opencode mcp auth inth`. Cursor and VS Code get a launch command and the steps to sign in from the editor. The client owns the OAuth flow; CLI tokens and API keys are never copied into the config. Setup reports configuration changes, not a verified connection.
 
