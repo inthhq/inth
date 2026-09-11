@@ -99,6 +99,8 @@ The native suite builds the fixtures, then runs named steps in order, printing e
 
 The browser tests need Chromium from `pnpm --filter @inth/cli exec playwright install chromium`. The mock variant starts its own HTTPS API and dashboard with an `openssl`-generated certificate and runs from the manual `Browser E2E` workflow. The live variant drives the companion monorepo's local services; see [auth.md sign-in](docs/agent-auth-integration.md#run-the-browser-e2e-tests).
 
+`pnpm test:unit` covers shared `src/*.ts` logic and the Node reference in `experiments/node/`; fifteen of its files test experiment code rather than the shipped Scriptc adapters. The adapters in `src/native/` are proven only by the compiled suite in `test/native/` through `pnpm --filter @inth/cli test`. See [the experiment test list](experiments/README.md#tests-that-depend-on-these-experiments).
+
 ### Source layout
 
 | Location | Purpose |

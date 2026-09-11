@@ -20,6 +20,39 @@ Clack, Zod, proper-lockfile, and the NAPI keyring addon are development dependen
 
 Node and yao-pkg retain Keychain service `com.inth.cli`, account `oauth`, and the original platform state directory. The production native CLI retains `com.inth.cli.scriptc`, account `oauth`, and `~/Library/Application Support/inth-scriptc`. A benchmark does not migrate a person's credentials between these stores.
 
+## Tests that depend on these experiments
+
+`pnpm test:unit` runs Vitest over `../test/*.test.ts`. Fifteen of those forty files exercise `node/` rather than the Scriptc adapters in `../src/native/`. Removing `experiments/` removes them. The production adapters (`native-api.ts`, `native-http.ts`, `native-store.ts`, `native-state.ts`, `native-resource-output.ts`, `native-ui.ts`) and the production entry are covered only by the compiled suite in `../test/native/`, run by `pnpm --filter @inth/cli test`. The experiments import shared logic from `../src/`, so these tests reach that logic indirectly, but the HTTP, credential, state, and command adapters they drive are experiment code.
+
+Tests whose subject is experiment code. Each starts with a comment saying so.
+
+| Test | Covers |
+| --- | --- |
+| `api.test.ts` | `node/api.ts`: token precedence, refresh and retry after 401, organization query parameters |
+| `auth.test.ts` | `node/auth.ts`: device login, polling, refresh rotation, logout and revocation |
+| `identity.test.ts` | `node/api.ts` and `node/auth.ts` for `whoami` and UserInfo requests, with `src/identity.ts` summaries |
+| `create-organization.test.ts` | `node/api.ts`: organization creation, input validation, API-key rejection |
+| `resource-api.test.ts` | `node/api.ts`: raw resource writes, error mapping, organization pagination |
+| `http.test.ts` | `node/http.ts`: `Retry-After`, retry limits, request IDs, device deadlines |
+| `transport.test.ts` | `node/http.ts` against a local HTTP server; redirect refusal |
+| `store.test.ts` | `node/store.ts` `PlatformStore` and its lockfile; `node/state.ts` `OrganizationContext` resolution |
+| `resource-commands.test.ts` | `node/commands.ts`: routing public resource commands to API requests |
+| `resource-output.test.ts` | `node/resource-output.ts` human-readable formatting; `node/commands.ts` billing output |
+| `organization-commands.test.ts` | `node/commands.ts`: organization create, list, login without memberships, approval links |
+| `node-agent-reuse.test.ts` | `node/commands.ts`: skills listing without auth, single agent credential initialization |
+| `commands.test.ts` | Spawns `node/inth.ts`: help, version, environment-key login, `auth status`, unsafe URLs |
+| `json-cli.test.ts` | Spawns `node/inth.ts`: `--json` envelopes, machine-mode failures, exit codes |
+| `organization-ui.test.ts` | Spawns `../test/fixtures/node-picker.ts`, which drives `node/organization-ui.ts` through a pseudo-terminal |
+
+Tests whose subject is `../src/` code but that use `node/state.ts` `OrganizationContext` as a filesystem fixture. They carry no comment; replacing the fixture keeps them.
+
+| Test | Covers |
+| --- | --- |
+| `agent-status.test.ts` | `src/agent-commands.ts` and `src/connection-selection.ts` `auth status` guidance |
+| `connection-selection.test.ts` | `src/connection-selection.ts` connection resolution; one case asserts `OrganizationContext` persistence directly |
+
+`../test/fixtures.ts` imports `HttpClient` and types from `node/`. Every test that imports it, including `native-protocol.test.ts` for `../src/native/native-protocol.ts`, fails to load without `experiments/`.
+
 ## Hosted c15t setup
 
 The [c15t browser smoke check](c15t-setup/README.md) uses a CLI-provisioned project to verify hosted consent writes, persistence and script gating in a real browser. It has isolated, pinned dependencies and uses the CLI's saved credentials only for project lookup.

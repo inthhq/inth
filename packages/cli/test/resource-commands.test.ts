@@ -1,3 +1,5 @@
+// Exercises the Node reference implementation in experiments/node, not the shipped Scriptc adapters.
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { run } from "../experiments/node/commands.ts";
