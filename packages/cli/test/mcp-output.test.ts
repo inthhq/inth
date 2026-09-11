@@ -103,3 +103,21 @@ describe("MCP setup output", () => {
     expect(mcpClientName("vscode")).toBe("VS Code");
   });
 });
+
+it("gives fx reload and authentication steps, with project trust when needed", () => {
+  expect(mcpNextStep("fx", "global", "setup", false)?.instruction).toContain(
+    "/mcp reload"
+  );
+  expect(mcpNextStep("fx", "project", "setup", false)?.instruction).toContain(
+    "trust the project's inth server"
+  );
+  expect(mcpNextStep("fx", "global", "setup", false)?.instruction).toContain(
+    "/mcp auth inth --open"
+  );
+});
+
+it("explains Pi's required adapter", () => {
+  expect(mcpNextStep("pi", "project", "setup", false)?.command).toBe(
+    "pi install npm:pi-mcp-adapter"
+  );
+});

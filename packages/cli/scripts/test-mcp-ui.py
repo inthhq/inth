@@ -11,7 +11,7 @@ import termios
 import time
 
 
-def check(cancel=False):
+def check(cancel=False, agent="codex", steps=0, global_only=False):
     with tempfile.TemporaryDirectory(prefix="inth-mcp-ui-") as directory:
         master, slave = pty.openpty()
         fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 18, 60, 0, 0))
@@ -19,7 +19,7 @@ def check(cancel=False):
         child = subprocess.Popen(
             [sys.argv[1], "mcp", "--dry-run"],
             cwd=directory, stdin=slave, stdout=subprocess.PIPE, stderr=slave,
-            env=dict(os.environ, TERM="xterm-256color", NO_COLOR="1"),
+            env=dict(os.environ, TERM="xterm-256color", NO_COLOR="1", HOME=directory, USERPROFILE=directory, INTH_TELEMETRY_DISABLED="1"),
         )
         output = bytearray()
 
@@ -36,9 +36,14 @@ def check(cancel=False):
             if cancel:
                 os.write(master, b"\x1b")
             else:
+                until(b"1/20")
+                for index in range(steps):
+                    os.write(master, b"\x1b[B")
+                    until(f"{index + 2}/20".encode())
                 os.write(master, b"\r")
-                until(b"Choose where to configure Inth MCP")
-                os.write(master, b"\r")
+                if not global_only:
+                    until(b"Choose where to configure Inth MCP")
+                    os.write(master, b"\r")
             stdout, _ = child.communicate(timeout=5)
             while select.select([master], [], [], 0)[0]:
                 output.extend(os.read(master, 65536))
@@ -56,8 +61,10 @@ def check(cancel=False):
                 assert stdout == b""
             else:
                 assert child.returncode == 0, bytes(output)
-                assert b"Add Inth to Codex" in stdout
-                assert b"inth mcp setup --agent codex --scope project" in stdout
+                scope = "global" if global_only else "project"
+                assert f"inth mcp setup --agent {agent} --scope {scope}".encode() in stdout
+                if global_only:
+                    assert b"Choose where to configure Inth MCP" not in output
                 assert directory.encode() not in stdout
                 assert "\x1b" not in stdout.decode()
                 assert not os.listdir(directory), "Dry run wrote configuration"
@@ -71,4 +78,6 @@ def check(cancel=False):
 
 check()
 check(cancel=True)
+check(agent="fx", steps=5)
+check(agent="windsurf", steps=18, global_only=True)
 print("MCP terminal setup passed: client labels, clean summary, next command, dry run, cancellation, and terminal restoration.")

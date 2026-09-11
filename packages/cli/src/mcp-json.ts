@@ -163,6 +163,16 @@ class JsonDocument {
       (node) => node.parent === parent && node.key === key
     );
   }
+  parent(key: string): number {
+    let parent = 0;
+    for (const part of key ? key.split(".") : []) {
+      parent = this.child(parent, part);
+      if (parent < 0) {
+        return -1;
+      }
+    }
+    return parent;
+  }
   insert(parent: number, key: string, value: string): string {
     const node = this.nodes[parent];
     if (!node || node.kind !== "object") {
@@ -223,7 +233,7 @@ const configureEntry = (
   let configured = true;
   for (const field of requested.nodes.filter((node) => node.parent === 0)) {
     const current = new JsonDocument(next);
-    const currentServer = current.child(current.child(0, key), "inth");
+    const currentServer = current.child(current.parent(key), "inth");
     const index = current.child(currentServer, field.key);
     const existing = current.nodes[index];
     const expected = config.slice(field.valueStart, field.end);
@@ -258,13 +268,18 @@ export const editMcpJson = (
   const original = source;
   const text = source || "{\n}\n";
   const document = new JsonDocument(text);
-  const parent = document.child(0, key);
+  const parent = document.parent(key);
   const server = parent < 0 ? -1 : document.child(parent, "inth");
   if (parent >= 0 && document.nodes[parent]?.kind !== "object") {
     invalid();
   }
   if (server >= 0) {
-    const urlIndex = document.child(server, "url");
+    const requested = new JsonDocument(config);
+    const urlKey =
+      ["url", "serverUrl", "httpUrl"].find(
+        (field) => requested.child(0, field) >= 0
+      ) || "url";
+    const urlIndex = document.child(server, urlKey);
     const url = urlIndex < 0 ? undefined : document.nodes[urlIndex];
     if (!url || url.kind !== "string") {
       invalid();
@@ -293,4 +308,69 @@ export const editMcpJson = (
       : document.insert(parent, "inth", config);
   new JsonDocument(next);
   return { changed: true, configured: true, source: next };
+};
+
+// Select existing client layouts without reserializing user configuration.
+export const mcpJsonKey = (
+  source: string,
+  agent: string,
+  key: string
+): string => {
+  if (!source) {
+    return key;
+  }
+  const document = new JsonDocument(source);
+  if (agent === "opencode") {
+    const mcp = document.child(0, "mcp");
+    const servers = mcp < 0 ? -1 : document.child(mcp, "servers");
+    if (
+      servers >= 0 &&
+      document.nodes[servers]?.kind === "object" &&
+      document.child(servers, "url") < 0 &&
+      document.child(servers, "command") < 0
+    ) {
+      if (document.child(servers, "inth") >= 0) {
+        return "mcp.servers";
+      }
+      // A mixed file keeps legacy entries in their original map.
+      const legacy = document.nodes.some(
+        (node) =>
+          node.parent === mcp &&
+          node.key !== "servers" &&
+          node.kind === "object"
+      );
+      return legacy ? "mcp" : "mcp.servers";
+    }
+  }
+  if (
+    agent === "fx" &&
+    key === "mcp" &&
+    document.child(0, "mcp") < 0 &&
+    document.child(0, "mcpServers") >= 0
+  ) {
+    return "mcpServers";
+  }
+  if (agent === "github-copilot-cli" && document.child(0, "mcpServers") < 0) {
+    const entries = document.nodes.filter((node) => node.parent === 0);
+    const bare =
+      entries.length > 0 &&
+      entries.every((node) => {
+        const index = document.child(0, node.key);
+        return (
+          node.kind === "object" &&
+          (document.child(index, "url") >= 0 ||
+            document.child(index, "command") >= 0)
+        );
+      });
+    if (bare) {
+      return "";
+    }
+    if (document.child(0, "servers") >= 0) {
+      throw new CliError(
+        "invalid_config",
+        'This file uses VS Code\'s "servers" layout. Use --agent vscode or move Copilot servers under "mcpServers".'
+      );
+    }
+  }
+  return key;
 };

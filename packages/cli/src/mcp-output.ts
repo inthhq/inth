@@ -15,9 +15,23 @@ export interface McpResult {
 
 const NEXT_STEPS: Record<McpClient, { command: string; instruction: string }> =
   {
+    antigravity: {
+      command: "",
+      instruction:
+        "Open Antigravity, refresh MCP servers, and connect inth to sign in.",
+    },
     "claude-code": {
       command: "claude mcp login inth",
       instruction: "Sign in to Inth:",
+    },
+    cline: {
+      command: "code .",
+      instruction:
+        "Open Cline's MCP servers panel and connect inth to sign in.",
+    },
+    "cline-cli": {
+      command: "cline",
+      instruction: "Restart Cline and connect inth from its MCP settings.",
     },
     codex: { command: "codex mcp login inth", instruction: "Sign in to Inth:" },
     cursor: {
@@ -25,14 +39,69 @@ const NEXT_STEPS: Record<McpClient, { command: string; instruction: string }> =
       instruction:
         "Open Cursor, then open MCP settings and connect inth to sign in.",
     },
+    fx: {
+      command: "fx",
+      instruction:
+        "In fx, run /mcp reload, then /mcp auth inth --open to sign in.",
+    },
+    "gemini-cli": {
+      command: "gemini",
+      instruction: "Start Gemini CLI, then run /mcp auth inth to sign in.",
+    },
+    "github-copilot-cli": {
+      command: "copilot",
+      instruction:
+        "Start GitHub Copilot CLI, then use /mcp to connect inth and sign in.",
+    },
+    "grok-build": {
+      command: "grok",
+      instruction:
+        "Restart Grok Build, then connect inth from its MCP settings.",
+    },
+    "kilo-code": {
+      command: "kilo mcp auth inth",
+      instruction: "Sign in to Inth:",
+    },
+    "kimi-code": {
+      command: "kimi",
+      instruction:
+        "Restart Kimi Code and connect inth. Trust the folder to load a project configuration.",
+    },
+    "kiro-cli": {
+      command: "kiro-cli",
+      instruction: "Restart Kiro and connect inth from its MCP settings.",
+    },
+    mastracode: {
+      command: "mastracode",
+      instruction:
+        "Restart Mastra Code and connect inth from its MCP settings.",
+    },
+    mcporter: {
+      command: "mcporter auth inth",
+      instruction: "Sign in to Inth:",
+    },
     opencode: {
       command: "opencode mcp auth inth",
       instruction: "Sign in to Inth:",
+    },
+    pi: {
+      command: "pi install npm:pi-mcp-adapter",
+      instruction:
+        "Install the MCP adapter if needed, then run /reload in Pi and connect inth.",
     },
     vscode: {
       command: "code .",
       instruction:
         'Open VS Code, then run "MCP: List Servers" in the Command Palette. Select inth, start it, and sign in.',
+    },
+    windsurf: {
+      command: "windsurf .",
+      instruction:
+        "Open Windsurf's MCP settings, refresh servers, and connect inth to sign in.",
+    },
+    zed: {
+      command: "zed .",
+      instruction: "Open Zed's assistant settings and connect inth to sign in.",
     },
   };
 export const mcpNextStep = (
@@ -48,6 +117,13 @@ export const mcpNextStep = (
     return {
       command: `inth mcp ${action} --agent ${agent} --scope ${scope}`,
       instruction: "Apply these changes:",
+    };
+  }
+  if (agent === "fx" && scope === "project") {
+    return {
+      command: "fx",
+      instruction:
+        "In fx, trust the project's inth server when prompted, then run /mcp auth inth --open to sign in.",
     };
   }
   return NEXT_STEPS[agent];
@@ -149,11 +225,15 @@ export const mcpSummary = (
     if (result.nextStep) {
       lines.push(
         "",
-        `  ${wrapText(result.nextStep.instruction, width - 2, "  ")}`,
-        "",
-        // Keep commands intact so copied text remains executable.
-        style(`    ${result.nextStep.command}`, "1;36", display.color)
+        `  ${wrapText(result.nextStep.instruction, width - 2, "  ")}`
       );
+      if (result.nextStep.command) {
+        // Keep commands intact so copied text remains executable.
+        lines.push(
+          "",
+          style(`    ${result.nextStep.command}`, "1;36", display.color)
+        );
+      }
     }
     if (dryRun) {
       lines.push(

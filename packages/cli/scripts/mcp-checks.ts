@@ -6,12 +6,19 @@ import {
   mkdtemp,
   mkdir,
   readFile,
+  realpath,
   rm,
   stat,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
+import {
+  MCP_CLIENTS,
+  mcpLocation,
+  mcpSupportsProject,
+} from "../src/mcp-clients.ts";
 
 const permissions = async (filename: string): Promise<string> => {
   if (process.platform !== "win32") {
@@ -39,12 +46,18 @@ const permissions = async (filename: string): Promise<string> => {
 };
 
 export const verifyMcp = async (binary: string): Promise<void> => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "inth-mcp-test-"));
+  const directory = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "inth-mcp-test-"))
+  );
   const env = {
     ...process.env,
     APPDATA: path.join(directory, "appdata"),
+    CLINE_DIR: path.join(directory, ".cline"),
     CODEX_HOME: path.join(directory, ".codex"),
+    GROK_HOME: path.join(directory, ".grok"),
     HOME: directory,
+    KIMI_CODE_HOME: path.join(directory, ".kimi-code"),
+    PI_CODING_AGENT_DIR: path.join(directory, ".pi", "agent"),
     USERPROFILE: directory,
     XDG_CONFIG_HOME: path.join(directory, "config"),
     XDG_STATE_HOME: path.join(directory, "state"),
@@ -204,6 +217,83 @@ export const verifyMcp = async (binary: string): Promise<void> => {
         assert.equal(invoke(["remove", ...flags]).status, 0);
       }
     }
+    const environment = {
+      appData: env.APPDATA,
+      clineHome: env.CLINE_DIR,
+      codexHome: env.CODEX_HOME,
+      cwd: directory,
+      grokHome: env.GROK_HOME,
+      home: directory,
+      kimiHome: env.KIMI_CODE_HOME,
+      piHome: env.PI_CODING_AGENT_DIR,
+      platform: process.platform,
+      xdgConfig: env.XDG_CONFIG_HOME,
+    };
+    for (const agent of MCP_CLIENTS) {
+      for (const scope of ["global", "project"]) {
+        const flags = ["--agent", agent, "--scope", scope];
+        if (scope === "project" && !mcpSupportsProject(agent)) {
+          const rejected = invoke(["setup", ...flags]);
+          assert.equal(rejected.status, 1, rejected.stdout);
+          assert.equal(rejected.data.error.code, "usage_error");
+          assert.match(rejected.data.error.message, /--scope global/u);
+          continue;
+        }
+        const target = mcpLocation(agent, scope, environment);
+        const preview = invoke(["setup", ...flags, "--dry-run"]);
+        assert.equal(preview.status, 0, preview.stdout);
+        const filename = preview.data.data.results[0].path;
+        assert.ok(
+          [target.path, ...target.candidates].includes(filename),
+          filename
+        );
+        const setup = invoke(["setup", ...flags]);
+        assert.equal(setup.status, 0, setup.stdout);
+        assert.equal(setup.data.data.results[0].status, "configured");
+        const installed = await readFile(filename, "utf-8");
+        if (target.format === "json") {
+          // The earlier OpenCode fixture intentionally contains comments.
+          assert.match(installed, new RegExp(target.key, "u"));
+          for (const field of Object.keys(JSON.parse(target.config))) {
+            assert.ok(
+              installed.includes(`"${field}"`),
+              `${agent} missing ${field}`
+            );
+          }
+        }
+        assert.equal(
+          invoke(["list", ...flags]).data.data.results[0].status,
+          "configured"
+        );
+        assert.equal(
+          invoke(["setup", ...flags]).data.data.results[0].status,
+          "unchanged"
+        );
+        assert.equal(await readFile(filename, "utf-8"), installed);
+        assert.equal(
+          invoke(["remove", ...flags]).data.data.results[0].status,
+          "removed"
+        );
+        assert.equal(
+          invoke(["list", ...flags]).data.data.results[0].status,
+          "not-configured"
+        );
+      }
+    }
+    assert.equal(
+      invoke(["list", "--scope", "global"]).data.data.results.length,
+      MCP_CLIENTS.length
+    );
+    assert.deepEqual(
+      invoke(["list"]).data.data.results.map(
+        (result: { agent: string }) => result.agent
+      ),
+      MCP_CLIENTS.filter(mcpSupportsProject)
+    );
+    assert.equal(
+      invoke(["list", "--agent", "windsurf"]).data.data.results[0].scope,
+      "global"
+    );
     const filename = path.join(directory, ".cursor/mcp.json");
     for (const source of [
       '{"mcpServers":',
@@ -221,7 +311,7 @@ export const verifyMcp = async (binary: string): Promise<void> => {
       assert.equal(await readFile(filename, "utf-8"), source);
     }
     console.log(
-      "Native MCP: all five clients, dry runs, repeated setup, list, removal, comments, and conflict preservation passed."
+      "Native MCP: all supported clients, dry runs, repeated setup, list, removal, comments, and conflict preservation passed."
     );
   } finally {
     await rm(directory, { force: true, recursive: true });

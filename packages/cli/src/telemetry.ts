@@ -5,6 +5,7 @@ import { style, wrapText } from "./display.ts";
 import { VERSION } from "./help.ts";
 import { HttpError } from "./http-error.ts";
 import type { MeResponse } from "./identity.ts";
+import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { skillsCatalogList, skillsNeedsSelection } from "./skills-catalog.ts";
 
 // Public ingestion token, not a personal or project secret API key.
@@ -138,7 +139,7 @@ export const telemetryPayload = (
       json: options.json,
       mcp_client:
         options.command === "mcp" &&
-        ["codex", "claude-code", "cursor", "vscode", "opencode"].includes(agent)
+        MCP_CLIENTS.some((client) => client === agent)
           ? agent
           : null,
       os: process.platform,

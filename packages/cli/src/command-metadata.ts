@@ -1,3 +1,4 @@
+import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { RESOURCE_COMMANDS } from "./resource-commands.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
 
@@ -117,13 +118,7 @@ export const OPTION_METADATA: OptionMetadata[] = [
     "json-object",
     "JSON body; replaces individual body options, including required fields"
   ),
-  option("agent", "string", "MCP client to configure", [
-    "codex",
-    "claude-code",
-    "cursor",
-    "vscode",
-    "opencode",
-  ]),
+  option("agent", "string", "MCP client to configure", MCP_CLIENTS),
   option("scope", "string", "MCP configuration location", [
     "project",
     "global",
