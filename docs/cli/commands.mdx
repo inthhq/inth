@@ -1,0 +1,62 @@
+---
+title: Resource commands
+description: Manage projects, members, invitations, API keys, Code Audit scans, and Inbox findings.
+---
+
+| Command | Operation |
+| --- | --- |
+| `org list`, `org get <id>`, `org create` | List, read, or create organizations |
+| `region list` | List project region IDs |
+| `project list`, `project get <id>` | Read projects, including consent settings |
+| `project create --name <name> --region <id>` | Create a project |
+| `project update <id>`, `project delete <id>` | Update or delete a project |
+| `member list`, `member update <id> --role <role>` | Read members or change a role |
+| `member remove <id>` | Remove a member |
+| `invitation list`, `invitation create --email <email> --role <role>` | Read pending invitations or send an invitation |
+| `invitation cancel <id>` | Cancel a pending invitation |
+| `api-key list`, `api-key create --name <name>` | List or create organization API keys |
+| `api-key roll <id>`, `api-key delete <id>` | Rotate or revoke a key |
+| `billing` | Read the organization's plan and credit balance |
+| `code-audit repositories` | List connected repositories |
+| `code-audit scans` | List scans, optionally with `--repository` and `--status` |
+| `code-audit start --repository <id>` | Start a scan of the repository's production branch |
+| `code-audit request <preparation-id> --repository <id>` | Check a delayed scan request |
+| `code-audit get <id>`, `code-audit issues <id>` | Read a scan or its report |
+| `code-audit unlock <id>` | Spend credits to unlock a report |
+| `inbox list`, `inbox get <id>` | Read findings, optionally filtering the list with `--status` |
+| `inbox update <id> --status <status> --item-version <version>` | Change a finding's status |
+| `inbox github-issue <id>` | Create a GitHub issue for a finding |
+
+List commands return one page. `--limit` defaults to 50 and accepts 1 through 100. Pass the returned cursor unchanged to `--cursor` for the next page.
+
+```sh
+inth project list --limit 20
+inth project list --limit 20 --cursor '<nextCursor>'
+inth region list
+inth project create --name Website --region '<region-id>' \
+  --branding inth --trusted-origins '["example.com", "*.example.com"]'
+inth project update prj_123 --name 'Marketing site' --branding c15t
+inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigins":[]}}'
+```
+
+Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|c15t|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` instead of individual body options for nested fields or explicit null values.
+
+## Code Audit and Inbox
+
+```sh
+inth code-audit repositories
+inth code-audit start --repository repo_123 --request-id deploy_123
+inth code-audit request prep_123 --repository repo_123
+inth code-audit get scan_123
+inth code-audit issues scan_123
+
+inth inbox list
+inth inbox get inbox_123
+inth inbox update inbox_123 --status resolved --item-version 3
+```
+
+A scan start can return `starting` with a `preparationId` and `repositoryId`. Check those IDs with `code-audit request` until the state is `started` or `failed`. Each invocation checks once. Reuse the same `--request-id` when retrying a start.
+
+Inbox updates require the version from the latest read. Supported statuses are `open`, `accepted`, `dismissed`, and `resolved`. After a version conflict, read the item again before updating it.
+
+Writes run without confirmation prompts. Invitations send email, key rotation replaces the old key, report unlocks spend credits and require an owner, and `inbox github-issue` creates a GitHub issue. Key creation and rotation print the new secret once; save it before closing the terminal. An unresolved GitHub issue send can return 409 and require server reconciliation before another attempt.

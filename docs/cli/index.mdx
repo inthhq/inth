@@ -1,0 +1,32 @@
+---
+title: Inth CLI
+description: Manage Inth organizations, projects, Code Audit, and Inbox from your terminal.
+---
+
+The `inth` command manages your Inth account and resources from the terminal. Use formatted output for interactive work and `--json` for agents and scripts.
+
+The CLI is in development. This checkout uses version `0.0.0`; the package has not been published to npm yet. Follow [Get started](./getting-started) to build and link a local command.
+
+## Choose a task
+
+- [Sign in](./authentication) with browser approval or an organization API key.
+- [Select an organization](./organizations) for your commands or current directory.
+- [Manage resources](./commands), including projects, members, API keys, scans, and findings.
+- [Automate commands](./automation) with structured help, JSON output, and resumable approval.
+- [Configure Inth MCP](./mcp) in your coding client.
+- [Install agent skills](./skills) from the bundled catalog or a repository.
+- [Use flags and raw API requests](./global-flags).
+- [Control telemetry](./telemetry).
+
+## Find command help
+
+```sh
+inth --help
+inth project create --help
+inth project create --help --json
+inth --version
+```
+
+Help describes the installed version, including required flags, supported credentials, scopes, and command effects. Use it when hosted documentation describes a newer release.
+
+Named commands print text by default, even when piped. Add `--json` when another program will read the result.

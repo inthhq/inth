@@ -1,0 +1,57 @@
+---
+title: Flags and raw API requests
+description: Choose output and authentication options or call the Inth API directly.
+---
+
+## Shared flags
+
+| Flag | Behavior |
+| --- | --- |
+| `--help` | Show the relevant command's options and examples |
+| `--version` | Print the installed CLI version |
+| `--json` | Emit one JSON result and disable prompts and browser login |
+| `--non-interactive` | Disable prompts while keeping text output |
+| `--token <key>` | Use an organization API key instead of `INTH_TOKEN` or saved credentials |
+| `--auth browser\|agent` | Override the selected saved connection |
+| `--organization <id>` | Override the organization for commands that support it |
+
+Flags are command-specific. Use `inth <command> --help` to check whether a flag is accepted. For example, a command that takes a resource ID rejects `--organization`, since the server resolves ownership from the ID.
+
+Piping output does not select JSON mode. The [automation guide](./automation) describes the JSON envelope, error codes, and exit statuses. Skill installation forwards upstream text output and does not support `--json`; the bundled skill catalog supports `--list --json`.
+
+## Pagination and request bodies
+
+Paginated lists accept `--limit` from 1 through 100, defaulting to 50, and an opaque `--cursor`. Each invocation returns one page. Pass `pagination.nextCursor` from the response unchanged when requesting the next page.
+
+Resource writes with body options accept `--data '<JSON object>'` instead of individual fields, except `org create`. This supports nested fields and explicit null values. Do not combine `--data` with individual body options.
+
+```sh
+inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigins":[]}}'
+```
+
+## Raw API requests
+
+`api` prints the server JSON response by default. Add `--json` to wrap it in the CLI envelope.
+
+```sh
+inth api /v1/me
+inth api /v1/projects --organization org_123 --json
+inth api /v1/projects/prj_123 --method PATCH --data '{"description":null}'
+```
+
+Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. Authenticated requests must stay under `https://api.inth.com/v1/`, and redirects are rejected. An explicit `organizationId` query parameter overrides organization defaults.
+
+Writes take effect immediately without confirmation prompts. The requested endpoint determines the required scopes and accepted credentials.
+
+## Environment variables
+
+| Variable | Purpose |
+| --- | --- |
+| `INTH_TOKEN` | Organization API key for commands that accept keys |
+| `INTH_TELEMETRY_DISABLED=1` | Disable analytics and unexpected-error reporting |
+| `CI` | A truthy value disables telemetry |
+| `NO_COLOR=1` | Disable terminal colors |
+| `CODEX_HOME` | Select the Codex global configuration directory for MCP setup |
+| `DO_NOT_TRACK`, `DISABLE_TELEMETRY` | Passed through to the upstream skills installer |
+
+For telemetry overrides, empty values, `0`, and `false` do not override the saved preference. See [Telemetry](./telemetry) for exactly what production builds send.

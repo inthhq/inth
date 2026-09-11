@@ -49,3 +49,8 @@ npm/*/*
 # Browser test artifacts
 playwright-report/
 test-results/
+
+# Leadtype package output. Authored pages live in docs/cli.
+/packages/cli/AGENTS.md
+/packages/cli/SKILL.md
+/packages/cli/docs/cli/

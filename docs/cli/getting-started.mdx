@@ -1,0 +1,64 @@
+---
+title: Get started
+description: Build and link the Inth CLI, then sign in and run your first command.
+---
+
+Build from the [Inth CLI repository](https://github.com/inthhq/inth). The npm package is not published yet.
+
+You need Node.js 24 and the pnpm version declared in the repository's `packageManager` field. Install Xcode Command Line Tools on macOS, Clang 18 or newer and zlib development headers on Linux (`clang` and `zlib1g-dev` on Ubuntu 24.04), or Zig 0.15.2 on Windows. All platforms also need CMake for the native Sentry SDK.
+
+On Windows, select Zig before building in PowerShell:
+
+```powershell
+$env:SCRIPTC_CC = "zigcc"
+$env:SCRIPTC_TARGET = "x86_64-windows-gnu"
+```
+
+From the repository root:
+
+```sh
+pnpm install
+pnpm dev:link
+inth --help
+```
+
+`pnpm dev:link` builds the CLI and links this checkout's `inth` command into npm's global bin directory. It works on macOS, Linux, and Windows without editing a shell profile. That directory must be on your `PATH`.
+
+Run `inth` from any directory:
+
+```sh
+inth login
+inth whoami
+inth billing
+```
+
+After edits, run `pnpm dev:link` again to rebuild. The link uses this checkout's latest build and keeps your current working directory, so project commands and MCP setup work where you run them. Run `pnpm dev:unlink` to remove the development command. Only one checkout can own the global `inth` link at a time.
+
+The development link uses Node.js 24 to launch `packages/cli/dist/inth`, or `dist/inth.exe` on Windows. Distributed native executables have no Node.js runtime dependency.
+
+`login` opens your browser for approval, saves the session in the system credential store, and helps you choose an organization. Use `inth login --no-browser` to open the printed approval URL yourself. Run `inth --help` for command groups and `inth <command> --help` for relevant options and examples.
+
+## Run from a checkout without a global link
+
+```sh
+pnpm --filter @inth/cli dev --help
+pnpm --filter @inth/cli inth billing --json
+```
+
+`dev` rebuilds before running. `inth` runs the current build. Development commands call `https://api.inth.com`; writes take effect immediately.
+
+## Platform requirements
+
+Native builds target macOS arm64, Linux arm64 and x64, and Windows x64. The npm launcher requires Node.js. The native executable itself does not.
+
+Linux browser sign-in needs `libsecret-1.so.0`, a session bus, and an unlocked Secret Service keyring. On a headless machine, use an organization API key through `INTH_TOKEN` for commands that accept keys. See [Authentication](./authentication).
+
+## Install after the first npm release
+
+Once `@inth/cli` is published, install the launcher with:
+
+```sh
+npm install -g @inth/cli
+```
+
+npm selects the native package for your platform. Keep optional dependencies enabled, since they contain the executable.

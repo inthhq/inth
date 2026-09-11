@@ -15,6 +15,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  docs:
+    name: Documentation
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          cache: true
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm docs:lint --format github
+      - run: pnpm docs:bundle
+      - run: node packages/cli/scripts/verify-docs.ts
+
   check:
     name: Lint, types, and unit tests
     runs-on: blacksmith-4vcpu-ubuntu-2404

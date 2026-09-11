@@ -32,4 +32,6 @@ Development builds call the live Inth API. Named commands print formatted text b
 
 Licensed under [Apache 2.0](LICENSE).
 
+Public CLI documentation lives in [docs/cli](docs/cli/index.mdx). The same source produces the package docs and can be imported into the monorepo for `inth.com/docs/cli`. See [documentation maintenance](.github/DOCUMENTATION.md) for Leadtype checks, bundling, and the import setup.
+
 Maintainers: see [publishing with Tegami](.tegami/README.md) for changelogs, version PRs, and npm setup.

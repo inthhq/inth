@@ -15,6 +15,12 @@ This package is in development and has not been published to npm. Native targets
 
 [Get started](#get-started) · [Commands](#public-resource-commands) · [Development](#development) · [Agents and scripts](AGENT-USAGE.md)
 
+## Documentation
+
+Public task guides live in the repository's [docs/cli directory](https://github.com/inthhq/inth/tree/main/docs/cli), ready for import at `inth.com/docs/cli`. Published packages include an `AGENTS.md` index, `SKILL.md`, and Markdown topics under `docs/cli`. Read `node_modules/@inth/cli/AGENTS.md` for docs matching a project-local installation. For a global installation, find the package under `npm root -g`.
+
+Maintainers can run `pnpm docs:check` from the repository root to lint the source and verify the packed docs. See [documentation maintenance](https://github.com/inthhq/inth/blob/main/.github/DOCUMENTATION.md) for the generation and import workflow.
+
 ## Get started
 
 You need Node.js 24 and the pnpm version declared in the repository's `packageManager` field. Install Xcode Command Line Tools on macOS, Clang 18 or newer and zlib development headers on Linux (`clang` and `zlib1g-dev` on Ubuntu 24.04), or Zig 0.15.2 on Windows.

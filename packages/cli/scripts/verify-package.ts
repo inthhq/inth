@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 import { HELP } from "../src/help.ts";
+import { verifyPackageDocs } from "./docs-checks.ts";
 import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
 import { verifyTelemetry } from "./telemetry-checks.ts";
@@ -44,6 +45,7 @@ try {
   });
   assert.equal(extracted.status, 0, extracted.stderr);
   const directory = path.join(temporary, "package");
+  await verifyPackageDocs(directory);
   const manifest = z
     .object({
       bin: z.object({ inth: z.string() }),
@@ -135,6 +137,7 @@ try {
   );
   assert.equal(launched.status, 0, launched.stderr);
   assert.equal(launched.stdout.trim(), HELP);
+  await verifyPackageDocs(path.join(consumer, "node_modules/@inth/cli"));
   const wrapperManifest = z
     .object({
       bin: z.object({ inth: z.string() }),
