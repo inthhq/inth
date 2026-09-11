@@ -15,15 +15,52 @@ Native targets are Apple silicon Macs, Linux arm64/x64, and Windows x64.
 
 [Get started](#get-started) · [Commands](#public-resource-commands) · [Development](#development) · [Agents and scripts](AGENT-USAGE.md)
 
-## Documentation
-
-Public task guides live in the repository's [docs/cli directory](https://github.com/inthhq/inth/tree/main/docs/cli), ready for import at `inth.com/docs/cli`. Published packages include an `AGENTS.md` index, `SKILL.md`, and Markdown topics under `docs/cli`. Read `node_modules/@inth/cli/AGENTS.md` for docs matching a project-local installation. For a global installation, find the package under `npm root -g`.
-
-Maintainers can run `pnpm docs:check` from the repository root to lint the source and verify the packed docs. See [documentation maintenance](https://github.com/inthhq/inth/blob/main/.github/DOCUMENTATION.md) for the generation and import workflow.
-
 ## Get started
 
-You need Node.js 24 and the pnpm version declared in the repository's `packageManager` field. Install Xcode Command Line Tools on macOS, Clang 18 or newer and zlib development headers on Linux (`clang` and `zlib1g-dev` on Ubuntu 24.04), or Zig 0.15.2 on Windows.
+### Install
+
+For releases available on npm, install the CLI globally:
+
+```sh
+npm install -g @inth/cli
+inth --version
+```
+
+The npm launcher requires Node.js and selects the native executable for your platform. Keep optional dependencies enabled, since they contain the executable. If the release is not yet available on npm, [build from source](#build-from-source).
+
+Linux browser sign-in needs `libsecret-1.so.0`, a session bus, and an unlocked Secret Service keyring. For headless use, see [authentication and credential storage](docs/authentication.md).
+
+### Sign in and run commands
+
+```sh
+inth login
+inth whoami
+inth project list
+inth billing
+```
+
+`login` opens your browser for approval, saves the session in the system credential store, and helps you choose an organization. Use `inth login --no-browser` to open the printed approval URL yourself. Run `inth --help` for command groups and `inth <command> --help` for relevant options and examples.
+
+To use a different organization or get JSON output:
+
+```sh
+inth switch
+inth project list --json
+```
+
+See [public resource commands](#public-resource-commands) for the command list and [output and scripting](#output-and-scripting) for automation examples.
+
+## Documentation
+
+Public task guides live in the repository's [docs/cli directory](https://github.com/inthhq/inth/tree/main/docs/cli). Published packages include an `AGENTS.md` index, `SKILL.md`, and Markdown topics under `docs/cli`. Read `node_modules/@inth/cli/AGENTS.md` for docs matching a project-local installation. For a global installation, find the package under `npm root -g`.
+
+Maintainers can run `pnpm docs:check` from the repository root to lint the source and verify the packed docs. See [documentation maintenance](https://github.com/inthhq/inth/blob/main/.github/DOCUMENTATION.md) for source checks and package bundling.
+
+## Development
+
+### Build from source
+
+You need Node.js 24 and the pnpm version declared in the repository's `packageManager` field. Install Xcode Command Line Tools on macOS, Clang 18 or newer and zlib development headers on Linux (`clang` and `zlib1g-dev` on Ubuntu 24.04), or Zig 0.15.2 on Windows. All platforms also need CMake for the native Sentry SDK.
 
 On Windows, select Zig before building in PowerShell:
 
@@ -54,9 +91,7 @@ After edits, run `pnpm dev:link` again to rebuild. The link uses this checkout's
 
 The development link uses Node.js 24 to launch `packages/cli/dist/inth`, or `dist/inth.exe` on Windows. Distributed native executables have no Node.js runtime dependency.
 
-`login` opens your browser for approval, saves the session in the system credential store, and helps you choose an organization. Use `inth login --no-browser` to open the printed approval URL yourself. Run `inth --help` for command groups and `inth <command> --help` for relevant options and examples.
-
-## Development
+### Run from a checkout
 
 Run these commands from the repository root:
 
@@ -90,14 +125,14 @@ pnpm --filter @inth/cli test
 # Build, pack, and verify the distributed executable.
 pnpm --filter @inth/cli test:package
 
-# Browser sign-in test against a mock API; the live variant needs the companion monorepo.
+# Browser sign-in tests against a mock API or local development services.
 pnpm --filter @inth/cli test:e2e:agent
 pnpm --filter @inth/cli test:e2e:agent:live
 ```
 
 The native suite builds the fixtures, then runs named steps in order, printing each step with its elapsed time and stopping at the first failure with `Step failed: <name>`. Steps live in `scripts/test-scriptc.ts` and the `scripts/*-checks.ts` modules. The terminal tests require Python 3. Automated authentication tests use fake credentials and isolated state. The package check extracts the npm archive and runs its native executable with an empty `PATH` to check that it works without Node.js.
 
-The browser tests need Chromium from `pnpm --filter @inth/cli exec playwright install chromium`. The mock variant starts its own HTTPS API and dashboard with an `openssl`-generated certificate and runs from the manual `Browser E2E` workflow. The live variant drives the companion monorepo's local services; see [auth.md sign-in](docs/agent-auth-integration.md#run-the-browser-e2e-tests).
+The browser tests need Chromium from `pnpm --filter @inth/cli exec playwright install chromium`. The mock variant starts its own HTTPS API and dashboard with an `openssl`-generated certificate and runs from the manual `Browser E2E` workflow. The live variant requires a running local API and dashboard; see [auth.md sign-in](docs/agent-auth-integration.md#run-the-browser-e2e-tests).
 
 `pnpm test:unit` covers shared `src/*.ts` logic and the Node reference in `experiments/node/`; fifteen of its files test experiment code rather than the shipped Scriptc adapters. The adapters in `src/native/` are proven only by the compiled suite in `test/native/` through `pnpm --filter @inth/cli test`. See [the experiment test list](experiments/README.md#tests-that-depend-on-these-experiments).
 
@@ -114,13 +149,13 @@ The browser tests need Chromium from `pnpm --filter @inth/cli exec playwright in
 
 Scriptc compiles the production CLI. Node and yao-pkg remain benchmark experiments with separate credential stores. See the [experiment guide](experiments/README.md) for their build commands and the [authentication](bench/AUTH.md) and [organization picker](bench/SWITCH.md) benchmark results.
 
-The resource commands follow [public API PR #1756](https://github.com/inthhq/monorepo/pull/1756) at commit `4e1d272f71971f7470bcbe25ce261472d7f0af16`. API types and response validation are maintained manually against the [OpenAPI schema](https://api.inth.com/openapi.json).
+API types and response validation are maintained manually against the [OpenAPI schema](https://api.inth.com/openapi.json).
 
 ## Sign in from an agent
 
 Use `inth login --email <email> --json` to sign in, or `inth signup --email <email> --json` to create an account. Tell the person which email and permissions Inth will receive, and run these commands after they agree. The command itself confirms sending those details, so it does not require `--yes`. It returns an approval link and code. Give both to the person. They sign in or create their account in the browser, then approve access. Immediately run `inth login --complete --wait --json` in a background terminal. It waits for browser approval, finishes sign-in, and selects the connection for subsequent commands. Results include `nextStep.command` and `nextStep.instruction`. A timeout or Ctrl+C between polls preserves the pending sign-in; run the waiting command again to resume. An interrupted single-use exchange can return `claim_uncertain`, which requires disconnecting and starting a new claim.
 
-For c15t provisioning, request `--scopes organizations.read,organizations.write,projects.read,projects.write`. General API access requires the accompanying backend deployment. See [auth.md sign-in](docs/agent-auth-integration.md) for approval, storage, expiry and deployment requirements.
+For c15t provisioning, request `--scopes organizations.read,organizations.write,projects.read,projects.write`. See [auth.md sign-in](docs/agent-auth-integration.md) for approval, storage, and expiry.
 
 ## Sign-in and organizations
 

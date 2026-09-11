@@ -2,7 +2,7 @@
 
 The CLI supports Inth's WorkOS auth.md `service_auth` flow. A person approves the requested permissions in their browser, then the agent uses a separate saved credential for CLI commands.
 
-General API access requires migration `0060_auth_md_scopes` and the accompanying Dashboard and API deployment. Scoped CLI access is available to all accounts after deployment. Older servers support only `organizations.read` through `inth auth organizations`.
+Older servers support only `organizations.read` through `inth auth organizations`.
 
 ## Approve a connection
 
@@ -63,18 +63,18 @@ The upgraded server advertises `identity_assertion_revocation_supported` in `age
 
 ## Test against a local API
 
-Use the companion monorepo worktree's Portless HTTPS origins:
+Set the HTTPS origins of your local API and dashboard, and the path to their trusted CA certificate:
 
 ```sh
-export INTH_DEV_API_ORIGIN=https://auth-md-cli-access.api.localhost
-export INTH_DEV_DASHBOARD_ORIGIN=https://auth-md-cli-access.dashboard.localhost
-export NODE_EXTRA_CA_CERTS="$HOME/.portless/ca.pem"
-pnpm --filter @inth/cli inth auth start --email dev@inth.com \
+export INTH_DEV_API_ORIGIN=https://api.localhost
+export INTH_DEV_DASHBOARD_ORIGIN=https://dashboard.localhost
+export NODE_EXTRA_CA_CERTS="/path/to/local-ca.pem"
+pnpm --filter @inth/cli inth auth start --email dev@example.com \
   --scopes organizations.read,organizations.write,projects.read,projects.write \
   --yes --json
 ```
 
-Both origins must be local HTTPS addresses. After sign-in completes, resource commands use the saved connection. Before completion, use `--auth agent` to inspect the local pending sign-in. Local credentials and defaults are separated from production and from other origin pairs. Discovery and approval links must match the configured Dashboard origin. Start the API and Dashboard with the local database wrapper; see the monorepo's `docs/auth-md-cli.md` for startup commands. Clear the two `INTH_DEV_*` variables to return to production.
+Both origins must be local HTTPS addresses. After sign-in completes, resource commands use the saved connection. Before completion, use `--auth agent` to inspect the local pending sign-in. Local credentials and defaults are separated from production and from other origin pairs. Discovery and approval links must match the configured Dashboard origin. Clear the two `INTH_DEV_*` variables to return to production.
 
 ## Protocol and storage
 
@@ -82,7 +82,7 @@ Discovery comes from `https://api.inth.com/.well-known/oauth-authorization-serve
 
 Native credentials use service `com.inth.cli.scriptc`, account `auth.md`, and a separate `agent.lock`. Node and yao use service `com.inth.cli`, account `auth.md`, with a separate lock directory. Browser OAuth remains in account `oauth`. There is no plaintext credential fallback.
 
-[WorkOS auth.md](https://workos.com/auth-md) and [Better Auth Agent Auth](https://better-auth.com/docs/plugins/agent-auth) are distinct protocols. This CLI implements the auth.md claim and assertion flow. It does not implement Better Auth's agent key registration and signed-request protocol. The monorepo keeps that plugin and repairs its public discovery routing separately.
+[WorkOS auth.md](https://workos.com/auth-md) and [Better Auth Agent Auth](https://better-auth.com/docs/plugins/agent-auth) are distinct protocols. This CLI implements the auth.md claim and assertion flow. It does not implement Better Auth's agent key registration and signed-request protocol.
 
 ## Run the browser E2E tests
 
@@ -94,11 +94,11 @@ Two Playwright variants share one compiled test entry point. It uses the CLI's a
 pnpm --filter @inth/cli test:e2e:agent
 ```
 
-The spec in `e2e/agent/mock/` starts a mock API and dashboard on two ephemeral `https://localhost` ports, generating a throwaway CA and certificate with the `openssl` binary at test start. The spawned CLI receives `INTH_DEV_API_ORIGIN`, `INTH_DEV_DASHBOARD_ORIGIN` and `NODE_EXTRA_CA_CERTS` for that run. The mock implements discovery, registration, claim retry, claim exchange, assertion renewal, revocation, `/v1/me`, `/api/agent/organizations` and a minimal approval page; exchange returns `authorization_pending` until the "Authorize agent" button is clicked. It needs no monorepo checkout and runs from the manual `Browser E2E` workflow in `.github/workflows/e2e.yml`.
+The spec in `e2e/agent/mock/` starts a mock API and dashboard on two ephemeral `https://localhost` ports, generating a throwaway CA and certificate with the `openssl` binary at test start. The spawned CLI receives `INTH_DEV_API_ORIGIN`, `INTH_DEV_DASHBOARD_ORIGIN` and `NODE_EXTRA_CA_CERTS` for that run. The mock implements discovery, registration, claim retry, claim exchange, assertion renewal, revocation, `/v1/me`, `/api/agent/organizations` and a minimal approval page; exchange returns `authorization_pending` until the "Authorize agent" button is clicked. It starts its own services and runs from the manual `Browser E2E` workflow in `.github/workflows/e2e.yml`.
 
 ### Live variant
 
-Start the companion local API and dashboard as described above. Then run:
+Start a local API and dashboard that support the auth.md flow and configure the origins above. Then run:
 
 ```sh
 INTH_E2E_API_LOG=/tmp/inth-auth-md-api-local.log \
@@ -109,4 +109,4 @@ Keep both `INTH_DEV_*` origins and `NODE_EXTRA_CA_CERTS` set. The spec in `e2e/a
 
 The live variant covers new accounts and returning accounts with and without current legal acceptance. Returning accounts missing acceptance must accept the legal documents before reaching agent approval, while new accounts and returning accounts with current acceptance proceed without that extra screen. Every case checks email prefill, rejection of an incorrect email code, no second approval-code input, explicit human approval, cancellation and resume, one final JSON result, `whoami` using the saved connection, and logout without credential fallback. The mock variant checks the same CLI steps without the sign-in and legal screens. Traces and screenshots are retained on failure under `packages/cli/test-results`.
 
-Unit tests cover polling intervals, rate limits, timeouts, concurrent completion, ambiguous exchanges and selection precedence. The normal native suite also compiles and checks the polling loop and saved connection state. Those tests run in CI; the live browser test requires the companion local services and runs separately.
+Unit tests cover polling intervals, rate limits, timeouts, concurrent completion, ambiguous exchanges and selection precedence. The normal native suite also compiles and checks the polling loop and saved connection state. Those tests run in CI; the live browser test requires local development services and runs separately.
