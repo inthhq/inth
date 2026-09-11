@@ -1,13 +1,13 @@
-import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { expect, test } from "@playwright/test";
 
-import { agentEnvironment } from "../../src/agent-environment.ts";
+import { agentEnvironment } from "../../../src/agent-environment.ts";
+import { launch } from "../cli.ts";
+import type { CliProcess } from "../cli.ts";
 
 const api = process.env.INTH_DEV_API_ORIGIN;
 const dashboard = process.env.INTH_DEV_DASHBOARD_ORIGIN;
@@ -18,43 +18,8 @@ if (!api || !dashboard || !logPath) {
   );
 }
 agentEnvironment(api, dashboard, "agent");
-const binary = fileURLToPath(
-  new URL(
-    `../../build/native/agent-e2e${process.platform === "win32" ? ".exe" : ""}`,
-    import.meta.url
-  )
-);
 const otpLog = logPath;
 const origin = dashboard;
-
-const launch = (directory: string, account: string, args: string[]) => {
-  const child = spawn(binary, [directory, account, ...args, "--json"], {
-    env: { ...process.env, INTH_TELEMETRY_DISABLED: "1", INTH_TOKEN: "" },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  let stdout = "";
-  let stderr = "";
-  let finished = false;
-  child.stdout.on("data", (chunk: Buffer) => {
-    stdout += chunk.toString();
-  });
-  child.stderr.on("data", (chunk: Buffer) => {
-    stderr += chunk.toString();
-  });
-  // eslint-disable-next-line promise/avoid-new -- Adapt child-process completion and spawn errors.
-  const result = new Promise<{
-    code: number | null;
-    stdout: string;
-    stderr: string;
-  }>((resolve, reject) => {
-    child.once("error", reject);
-    child.once("close", (code) => {
-      finished = true;
-      resolve({ code, stderr, stdout });
-    });
-  });
-  return { child, finished: () => finished, output: () => stdout, result };
-};
 
 for (const accountState of [
   "New account",
@@ -68,7 +33,7 @@ for (const accountState of [
     const account = randomUUID();
     const email = `cli-e2e-${account}@inth.com`;
     const directory = await mkdtemp(path.join(tmpdir(), "inth-agent-e2e-"));
-    const processes: ReturnType<typeof launch>[] = [];
+    const processes: CliProcess[] = [];
     const run = (args: string[]) => {
       const process = launch(directory, account, args);
       processes.push(process);

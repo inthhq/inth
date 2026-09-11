@@ -1,11 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
-// Mock variant: a local API and dashboard start inside the spec, so it runs
-// without the companion monorepo. The live variant is playwright.agent.live.config.ts.
+// Live variant: drives the companion monorepo's local API and dashboard.
+// Requires INTH_DEV_API_ORIGIN, INTH_DEV_DASHBOARD_ORIGIN and INTH_E2E_API_LOG.
 export default defineConfig({
   reporter: [["list"], ["html", { open: "never" }]],
   retries: 0,
-  testDir: "./e2e/agent/mock",
+  testDir: "./e2e/agent/live",
   timeout: 120_000,
   use: {
     ignoreHTTPSErrors: true,

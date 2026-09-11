@@ -1,0 +1,39 @@
+name: Browser E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  agent-mock:
+    name: Auth.md sign-in against the mock API
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .node-version
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          cache: true
+      - name: Install Linux credential service
+        run: sudo apt-get update -qq && sudo apt-get install -y clang cmake zlib1g-dev libsecret-1-0 gnome-keyring dbus-x11
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @inth/cli exec playwright install --with-deps chromium
+      - name: Mock browser E2E on Linux
+        run: |
+          dbus-run-session -- sh -c 'printf "test-only\n" | gnome-keyring-daemon --unlock --components=secrets >/dev/null; pnpm --filter @inth/cli test:e2e:agent'
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: playwright-report-agent-mock
+          path: |
+            packages/cli/playwright-report
+            packages/cli/test-results
+          if-no-files-found: ignore

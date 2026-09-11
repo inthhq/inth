@@ -18,7 +18,8 @@
     "bench/**/*.ts",
     "experiments/node/**/*.ts",
     "e2e/**/*.ts",
-    "playwright.agent.config.ts"
+    "playwright.agent.config.ts",
+    "playwright.agent.live.config.ts"
   ],
   "exclude": [
     "src/inth.ts",
