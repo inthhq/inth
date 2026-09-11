@@ -7,7 +7,22 @@ import type {
   Discovery,
   Tokens,
 } from "../auth-types.ts";
-import { HttpError } from "../http-error.ts";
+import { CliError } from "../cli-error.ts";
+import { HttpError, safeRequestId } from "../http-error.ts";
+
+// A 2xx response whose body failed validation. The body is never echoed.
+export const invalidResponse = (
+  response: OAuthResponse,
+  message: string
+): CliError => {
+  const requestId = safeRequestId(response.requestId);
+  return new CliError(
+    "invalid_response",
+    `${message}${requestId ? ` Request ID: ${requestId}` : ""}`,
+    response.status,
+    requestId
+  );
+};
 
 // Scriptc validates the checked casts; explicit semantic checks also protect
 // callers using Node. Native tests cover the compiled JSON boundaries.

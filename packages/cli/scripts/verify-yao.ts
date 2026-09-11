@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { HELP } from "../src/help.ts";
+import { formatHelp } from "../src/help.ts";
 import { VERSION } from "../src/version.ts";
 import { verifyJson } from "./json-checks.ts";
 
@@ -51,7 +51,7 @@ try {
     });
   const help = run(binary, ["--help"]);
   assert.equal(help.status, 0, help.stderr);
-  assert.equal(help.stdout.trim(), HELP);
+  assert.equal(help.stdout.trim(), formatHelp());
   const version = run(binary, ["--version"]);
   assert.equal(version.status, 0, version.stderr);
   assert.equal(version.stdout.trim(), VERSION);

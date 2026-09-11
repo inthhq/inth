@@ -1,10 +1,9 @@
 import type { CliArguments } from "../arguments.ts";
 import type { OAuthResponse } from "../auth-types.ts";
-import { CliError } from "../cli-error.ts";
 import type { DisplayOptions } from "../display.ts";
-import { HttpError } from "../http-error.ts";
 import type { ResourcePage, ResourceDetail } from "../resource-output-types.ts";
 import { resourceIsList, resourceSummary } from "../resource-output.ts";
+import { invalidResponse } from "./native-protocol.ts";
 
 export const formatNativeResource = (
   options: CliArguments,
@@ -34,12 +33,9 @@ export const formatNativeResource = (
       display
     );
   } catch {
-    const detail = new HttpError(response.status, "", response.requestId);
-    throw new CliError(
-      "invalid_response",
-      `Cannot format the API response. Run the command with --json to inspect it.${detail.requestId ? ` Request ID: ${detail.requestId}` : ""}`,
-      response.status,
-      detail.requestId
+    throw invalidResponse(
+      response,
+      "Cannot format the API response. Run the command with --json to inspect it."
     );
   }
 };

@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { OrganizationContext } from "../experiments/node/state.ts";
 import { AgentAuth } from "../src/agent-auth.ts";
-import { runSelectedAgentCommand } from "../src/agent-commands.ts";
+import { runAgentCommand } from "../src/agent-commands.ts";
 import { productionAgentEnvironment } from "../src/agent-environment.ts";
 import type { AgentHttp, AgentState, AgentStore } from "../src/agent-types.ts";
 import { parseArguments } from "../src/arguments.ts";
@@ -68,7 +68,7 @@ describe("agent status guidance", () => {
         );
         const select = vi.fn<() => Promise<void>>();
         expect(
-          await runSelectedAgentCommand(
+          await runAgentCommand(
             options,
             () => Promise.resolve(auth),
             select,
@@ -224,7 +224,7 @@ it.each(states)("reports local credential presence for $name", async (test) => {
     store
   );
   try {
-    await runSelectedAgentCommand(
+    await runAgentCommand(
       parseArguments(["auth", "status", "--auth", "agent", "--json"]),
       () => Promise.resolve(auth),
       vi.fn(),

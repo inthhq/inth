@@ -1,5 +1,5 @@
 import type { AgentAuth } from "../../src/agent-auth.ts";
-import { runSelectedAgentCommand } from "../../src/agent-commands.ts";
+import { runAgentCommand } from "../../src/agent-commands.ts";
 import {
   agentEnvironment,
   agentStateDirectory,
@@ -295,7 +295,7 @@ export const run = async (
     options.authMode === "agent" ? getAgent() : getAuth();
   const api = new ApiClient(http, getSelectedAuth, key, environment.apiOrigin);
   if (
-    await runSelectedAgentCommand(
+    await runAgentCommand(
       options,
       getAgent,
       () => context.selectConnection("agent"),

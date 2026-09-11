@@ -59,9 +59,8 @@ export const reportError = (
   if (error instanceof CliError) {
     ({ code, httpStatus, requestId } = error);
   } else if (error instanceof HttpError) {
+    ({ apiCode, requestId } = error);
     httpStatus = error.status;
-    ({ apiCode } = error);
-    ({ requestId } = error);
     code = "http_error";
     if (httpStatus === 400 && error.code === "invalid_scope") {
       code = "invalid_scope";

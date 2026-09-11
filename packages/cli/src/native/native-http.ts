@@ -2,12 +2,11 @@
 import { setTimeout } from "node:timers/promises";
 
 import type { Clock, OAuthResponse, OAuthTransport } from "../auth-types.ts";
-import { CliError } from "../cli-error.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
-import { HttpError } from "../http-error.ts";
 import type { ApiTransport } from "./native-api.ts";
 import { httpDate } from "./native-bindings.ts";
 import {
+  invalidResponse,
   parseDevice,
   parseDiscovery,
   parseTokens,
@@ -42,15 +41,8 @@ const checkedBody = async (response: OAuthResponse): Promise<string> => {
   }
   return response.body;
 };
-const invalid = (response: OAuthResponse): Error => {
-  const error = new HttpError(response.status, "", response.requestId);
-  return new CliError(
-    "invalid_response",
-    `inth returned an invalid response.${error.requestId ? ` Request ID: ${error.requestId}` : ""}`,
-    response.status,
-    error.requestId
-  );
-};
+const invalid = (response: OAuthResponse): Error =>
+  invalidResponse(response, "inth returned an invalid response.");
 // Keep each header record exact. Scriptc stringifies absent optional record fields as "undefined".
 const fetchBody = (
   url: string,

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { HELP, VERSION } from "../../src/help.ts";
+import { formatHelp } from "../../src/help.ts";
 import { reportError } from "../../src/output.ts";
+import { VERSION } from "../../src/version.ts";
 
 const args = process.argv.slice(2);
 // Keep help and version independent of networking and native credential bindings.
@@ -8,7 +9,7 @@ if (
   args.length === 0 ||
   (args.length === 1 && (args[0] === "--help" || args[0] === "-h"))
 ) {
-  console.log(HELP);
+  console.log(formatHelp());
 } else if (args.length === 1 && (args[0] === "--version" || args[0] === "-v")) {
   console.log(VERSION);
 } else {

@@ -4,8 +4,6 @@ import type { CommandMetadata, OptionMetadata } from "./command-metadata.ts";
 import { padText, textWidth, wrapText } from "./display.ts";
 import { VERSION } from "./version.ts";
 
-export { VERSION } from "./version.ts";
-
 export const COMMANDS = COMMAND_METADATA.map((entry) =>
   entry.command === "api"
     ? "api <path> [--method <method>] [--data <json>]"
@@ -191,4 +189,3 @@ export const formatHelp = (command = "", action = "", columns = 80): string => {
   }
   return lines.join("\n");
 };
-export const HELP = formatHelp();

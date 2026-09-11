@@ -2,11 +2,11 @@ import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
 import { COMMAND_METADATA } from "./command-metadata.ts";
 import { style, wrapText } from "./display.ts";
-import { VERSION } from "./help.ts";
 import { HttpError } from "./http-error.ts";
 import type { MeResponse } from "./identity.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { skillsCatalogList, skillsNeedsSelection } from "./skills-catalog.ts";
+import { VERSION } from "./version.ts";
 
 // Public ingestion token, not a personal or project secret API key.
 export const TELEMETRY_TOKEN =

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
-import { HELP } from "../src/help.ts";
+import { formatHelp } from "../src/help.ts";
 import { verifyPackageDocs } from "./docs-checks.ts";
 import { verifyJson } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
@@ -82,7 +82,7 @@ try {
     timeout: 5000,
   });
   assert.equal(help.status, 0, help.stderr);
-  assert.equal(help.stdout.trim(), HELP);
+  assert.equal(help.stdout.trim(), formatHelp());
   const nativeVersion = spawnSync(binary, ["--version"], {
     cwd: temporary,
     encoding: "utf-8",
@@ -136,7 +136,7 @@ try {
     }
   );
   assert.equal(launched.status, 0, launched.stderr);
-  assert.equal(launched.stdout.trim(), HELP);
+  assert.equal(launched.stdout.trim(), formatHelp());
   await verifyPackageDocs(path.join(consumer, "node_modules/@inth/cli"));
   const wrapperManifest = z
     .object({

@@ -25,6 +25,7 @@ export class AuthFlow {
     this.store = store;
     this.clock = http.clock;
   }
+  // Scriptc (SC2002) only accepts record literals for interface parameters, not class instances.
   tokenProvider(): AccessTokenProvider {
     return {
       accessToken: (rejected, force) => this.accessToken(rejected, force),

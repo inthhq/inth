@@ -5,7 +5,6 @@ import { join } from "node:path";
 
 import type { CliArguments } from "../arguments.ts";
 import { sentryDiagnostic } from "../error-diagnostics.ts";
-import { VERSION } from "../help.ts";
 import {
   SENTRY_DSN,
   sentryEndpoint,
@@ -13,6 +12,7 @@ import {
   unexpectedErrorType,
 } from "../sentry.ts";
 import { telemetryCommand } from "../telemetry.ts";
+import { VERSION } from "../version.ts";
 import { prepareDirectory, sentryCapture } from "./native-bindings.ts";
 import { NativeTelemetry, telemetryDisabled } from "./native-telemetry.ts";
 
