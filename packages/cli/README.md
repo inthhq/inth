@@ -91,7 +91,7 @@ pnpm --filter @inth/cli test
 pnpm --filter @inth/cli test:package
 ```
 
-The terminal tests require Python 3. Automated authentication tests use fake credentials and isolated state. The package check extracts the npm archive and runs its native executable with an empty `PATH` to check that it works without Node.js.
+The native suite builds the fixtures, then runs named steps in order, printing each step with its elapsed time and stopping at the first failure with `Step failed: <name>`. Steps live in `scripts/test-scriptc.ts` and the `scripts/*-checks.ts` modules. The terminal tests require Python 3. Automated authentication tests use fake credentials and isolated state. The package check extracts the npm archive and runs its native executable with an empty `PATH` to check that it works without Node.js.
 
 ### Source layout
 
