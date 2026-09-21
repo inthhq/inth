@@ -1,0 +1,208 @@
+{
+  "cpu": "Apple M5 Pro",
+  "env_overrides": [
+    "CI",
+    "DISABLE_TELEMETRY",
+    "DO_NOT_TRACK",
+    "INTH_TELEMETRY_DISABLED",
+    "VERCEL_TELEMETRY_DISABLED",
+    "WRANGLER_SEND_METRICS"
+  ],
+  "measured_at": "2026-09-21T10:51:59.908Z",
+  "os": "darwin 27.0.0 (27.0)",
+  "results": [
+    {
+      "args": [],
+      "binary_bytes": 70368,
+      "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/build/cross-cli/hello-scriptc",
+      "median_ms": 1.815792,
+      "name": "hello world",
+      "p95_ms": 2.535125,
+      "runtime": "Scriptc 0.0.36"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 6304240,
+      "executable": "~/.local/bin/fx",
+      "median_ms": 2.2012085,
+      "name": "fx 0.0.8",
+      "p95_ms": 2.503125,
+      "runtime": "Zig"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 2011432,
+      "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist/inth",
+      "median_ms": 3.6414999999999997,
+      "name": "inth",
+      "p95_ms": 4.539291,
+      "runtime": "Scriptc"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 9977218,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/lib/node_modules/unkey/bin/unkey",
+      "median_ms": 4.325854,
+      "name": "unkey 2.0.150, bare binary",
+      "p95_ms": 6.342292,
+      "runtime": "Go"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 217695408,
+      "executable": "~/.local/share/claude/versions/2.1.278",
+      "median_ms": 6.826313000000001,
+      "name": "claude 2.1.278",
+      "p95_ms": 7.492708,
+      "runtime": "Bun 1.4.3"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 228803200,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+      "median_ms": 8.0563965,
+      "name": "codex 0.155.1, bare binary",
+      "p95_ms": 9.0755,
+      "runtime": "Rust"
+    },
+    {
+      "args": [],
+      "binary_bytes": 61069216,
+      "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/build/cross-cli/hello-bun",
+      "median_ms": 8.1591875,
+      "name": "hello world",
+      "p95_ms": 9.891833,
+      "runtime": "Bun 1.3.11, --compile"
+    },
+    {
+      "args": [
+        "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/build/node/experiments/node/inth.js",
+        "--version"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.bun/bin/bun",
+      "median_ms": 11.9849795,
+      "name": "inth, source under Bun",
+      "p95_ms": 14.296833,
+      "runtime": "Bun 1.3.11"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 68499616,
+      "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist-bin/bun/inth-bytecode",
+      "median_ms": 19.26075,
+      "name": "inth, --compile --bytecode",
+      "p95_ms": 23.855334,
+      "runtime": "Bun 1.3.11"
+    },
+    {
+      "args": [
+        "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/build/cross-cli/hello.js"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "median_ms": 22.8006045,
+      "name": "hello world",
+      "p95_ms": 25.241291,
+      "runtime": "Node 24.21.0"
+    },
+    {
+      "args": [
+        "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/bench/cross-cli/node_modules/vercel/dist/vc.js",
+        "--version"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "median_ms": 25.846271,
+      "name": "vercel 59.16.0",
+      "p95_ms": 28.563875,
+      "runtime": "Node"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 62588320,
+      "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist-bin/bun/inth",
+      "median_ms": 26.5695835,
+      "name": "inth, --compile",
+      "p95_ms": 31.664708,
+      "runtime": "Bun 1.3.11"
+    },
+    {
+      "args": [
+        "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist-bin/launcher/node_modules/@inth/cli/scripts/run-published.js",
+        "--version"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "median_ms": 27.677562,
+      "name": "inth, via npm launcher",
+      "p95_ms": 34.99525,
+      "runtime": "Node, then Scriptc"
+    },
+    {
+      "args": [
+        "~/.local/share/fnm/node-versions/v24.21.0/installation/lib/node_modules/@openai/codex/bin/codex.js",
+        "--version"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "median_ms": 32.3402705,
+      "name": "codex 0.155.1, via npm launcher",
+      "p95_ms": 36.28575,
+      "runtime": "Node, then Rust"
+    },
+    {
+      "args": [
+        "--version"
+      ],
+      "binary_bytes": 39866194,
+      "executable": "/opt/homebrew/Cellar/gh/2.101.0/bin/gh",
+      "median_ms": 33.3915205,
+      "name": "gh 2.101.0",
+      "p95_ms": 37.307958,
+      "runtime": "Go"
+    },
+    {
+      "args": [
+        "~/.local/share/fnm/node-versions/v24.21.0/installation/lib/node_modules/unkey/run-unkey.js",
+        "--version"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "median_ms": 50.266396,
+      "name": "unkey 2.0.150, via npm launcher",
+      "p95_ms": 63.780208,
+      "runtime": "Node, then Go"
+    },
+    {
+      "args": [
+        "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/bench/cross-cli/node_modules/wrangler/bin/wrangler.js",
+        "--version"
+      ],
+      "binary_bytes": null,
+      "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/bin/node",
+      "median_ms": 267.3867295,
+      "name": "wrangler 4.131.1",
+      "p95_ms": 280.549875,
+      "runtime": "Node"
+    }
+  ],
+  "runs": 30,
+  "scope": "Fresh-process --version latency, interleaved in random order per run, warm filesystem caches, spawn overhead included. Compares specific executables as installed on one machine; it does not isolate languages or runtimes.",
+  "skipped": [],
+  "warmups": 10
+}

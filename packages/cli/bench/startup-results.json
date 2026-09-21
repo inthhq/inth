@@ -1,29 +1,53 @@
 {
-  "binary_bytes": 1354680,
+  "binary_bytes": 2011432,
+  "bun": "1.3.11",
+  "bun_binary_bytes": 62588320,
+  "bun_bytecode_binary_bytes": 68499616,
+  "yao_binary_bytes": 122916608,
   "compiler": "scriptc@0.0.36",
   "cpu": "Apple M5 Pro",
   "dynamic_runtime": false,
   "iterations": 100,
-  "measured_at": "2026-09-08T10:49:43.861Z",
-  "node": "v24.20.0",
+  "measured_at": "2026-09-18T14:26:04.246Z",
+  "node": "v24.21.0",
   "platform": "darwin arm64",
   "results": [
     {
-      "median_ms": 27.69458300000042,
-      "p95_ms": 29.46229200000016,
+      "median_ms": 13.027687499998137,
+      "p95_ms": 14.437959000002593,
+      "target": "Bun CLI"
+    },
+    {
+      "median_ms": 27.5621874999988,
+      "p95_ms": 29.599750000001222,
+      "target": "Bun --compile CLI"
+    },
+    {
+      "median_ms": 20.817416500000036,
+      "p95_ms": 23.493749999997817,
+      "target": "Bun --compile --bytecode CLI"
+    },
+    {
+      "median_ms": 31.98206200000004,
+      "p95_ms": 34.55474999999933,
       "target": "yao-pkg CLI"
     },
     {
-      "median_ms": 3.42804199999955,
-      "p95_ms": 3.5684999999994034,
+      "median_ms": 5.022604500001762,
+      "p95_ms": 5.6854999999995925,
       "target": "Scriptc CLI"
     },
     {
-      "median_ms": 21.269250000001193,
-      "p95_ms": 22.90666699999929,
+      "median_ms": 27.19885400000203,
+      "p95_ms": 29.897249999998166,
       "target": "Node CLI"
+    },
+    {
+      "median_ms": 28.93560400000024,
+      "p95_ms": 31.738208999999188,
+      "target": "Scriptc CLI via npm launcher"
     }
   ],
-  "scope": "Interleaved fresh-process --help latency with warm filesystem caches and spawn overhead. All three CLIs contain auth, API, and organization commands and share help text. Help does not execute authentication. Each target's output is checked for consistency; runtime adapters differ, so this does not isolate compiler performance.",
+  "scope": "Interleaved fresh-process --help latency with warm filesystem caches and spawn overhead. Every target contains auth, API, and organization commands and shares help text. Help does not execute authentication. Each target's output is checked for consistency across its own runs; runtime adapters differ, so this does not isolate compiler performance. The npm launcher target runs the published run-published.js against a staged platform package, and its time includes the native child. The Bun targets run the Node reference under Bun, as a `bun build --compile` binary, and as a `--compile --bytecode --format=esm` binary; they are skipped when Bun is not installed.",
   "warmups": 10
 }
