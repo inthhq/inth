@@ -30,6 +30,8 @@ The initial `0.0.0` release already has generated changelogs and a publish lock.
 
 Leadtype bundles CLI documentation before native packaging and again before publishing the launcher. Both package types include `AGENTS.md`, `SKILL.md`, and the generated topics. See [documentation maintenance](../.github/DOCUMENTATION.md).
 
+Linux artifacts target glibc 2.36 with Zig 0.15.2, regardless of the build runner's glibc version. CI runs each Linux archive and its credential fixtures in Debian 12 before uploading it. Keep that check when changing runners or compilers. The macOS artifact requires macOS 14 or newer on Apple silicon.
+
 Failed releases can be rerun from GitHub Actions. Tegami skips versions already published. The release workflow only runs on `main` in `inthhq/inth` and does not cancel an active publication.
 
 Once the first release is published:
