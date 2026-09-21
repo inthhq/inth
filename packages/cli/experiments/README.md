@@ -63,10 +63,11 @@ The [c15t browser smoke check](c15t-setup/README.md) uses a CLI-provisioned proj
 pnpm --filter @inth/cli bench
 pnpm --filter @inth/cli bench:auth
 pnpm --filter @inth/cli bench:switch
+pnpm --filter @inth/cli bench:cross
 pnpm --filter @inth/cli bench:probe
 ```
 
-The first command measures the complete CLIs' help startup. Auth and selector comparisons use explicit workloads with isolated test accounts or fake memberships. The old help-only compiler probe remains under `bench:probe`; its results are not native auth timings. See [auth measurements](../bench/AUTH.md) and [switch measurements](../bench/SWITCH.md).
+The first command measures the complete CLIs' help startup: the Scriptc binary, the Node reference, the yao-pkg build, the published npm launcher (`run-published.js`, staged against a platform package under `dist-bin/launcher/`) in front of the Scriptc binary, and, when Bun is installed, the Node reference run under Bun, compiled with `bun build --compile`, and compiled with `--compile --bytecode --format=esm`. Auth and selector comparisons use explicit workloads with isolated test accounts or fake memberships. The old help-only compiler probe remains under `bench:probe`; its results are not native auth timings. `bench:cross` times `--version` for inth next to other CLIs installed on the machine (fx, Claude Code, Codex, unkey, gh, and Vercel and Wrangler pinned in `bench/cross-cli/package.json`), with a hello world per runtime for context; it uses the Bun and launcher artifacts from `bench` when they exist. See [auth measurements](../bench/AUTH.md), [switch measurements](../bench/SWITCH.md), and [cross-CLI measurements](../bench/CROSS-CLI.md).
 
 `build-yao.ts` also accepts `--smoke`, `--auth-bench`, `--selector`, and `--live-auth` to package separate fixtures. `--live-auth` is a manual browser test that creates an isolated sign-in, exercises refresh and revocation, then removes its credentials. It does not replace the normal CLI session.
 

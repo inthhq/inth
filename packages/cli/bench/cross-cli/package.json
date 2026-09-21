@@ -1,0 +1,9 @@
+{
+  "name": "@inth/cli-cross-cli-bench",
+  "private": true,
+  "description": "Pinned Node CLIs for scripts/benchmark-cross-cli.ts. Run npm install here before the benchmark.",
+  "dependencies": {
+    "vercel": "59.16.0",
+    "wrangler": "4.131.1"
+  }
+}

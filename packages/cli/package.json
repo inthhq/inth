@@ -51,6 +51,7 @@
     "build:scriptc:auth": "pnpm build",
     "test:scriptc": "node scripts/test-scriptc.ts",
     "bench:scriptc": "node scripts/benchmark-scriptc.ts",
+    "bench:cross": "node scripts/benchmark-cross-cli.ts",
     "bench:auth": "node scripts/build-scriptc.ts --tests && node scripts/build-yao.ts --auth-bench && node scripts/benchmark-auth.ts",
     "bench:vercel": "node scripts/benchmark-vercel.ts",
     "bench:switch": "node scripts/build-scriptc.ts --tests && node scripts/build-yao.ts --selector && python3 scripts/benchmark-switch.py",
