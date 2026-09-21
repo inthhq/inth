@@ -63,6 +63,6 @@ pnpm --filter @inth/cli inth billing --json
 
 ## Which platforms and runtimes does the CLI support?
 
-Native builds target macOS arm64, Linux arm64 and x64, and Windows x64. The npm launcher requires Node.js. The native executable itself does not.
+Native builds target Apple silicon Macs running macOS 14 or newer, Linux arm64 and x64 with glibc 2.36 or newer, and Windows x64. Debian 12 and Ubuntu 24.04 meet the Linux requirement. Ubuntu 22.04 and Alpine Linux with musl are not supported by the published binaries. The npm launcher requires Node.js. The native executable itself does not.
 
 Linux browser sign-in needs `libsecret-1.so.0`, a session bus, and an unlocked Secret Service keyring. On a headless machine, use an organization API key through `INTH_TOKEN` for commands that accept keys. See [Authentication](./authentication).
