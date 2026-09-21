@@ -38,13 +38,14 @@ const nodeReference = path.join(root, "build/node/experiments/node/inth.js");
 // the shape most native-feeling TypeScript CLIs ship today, so measure it when
 // the machine has it.
 // Targets run with an empty PATH, so resolve Bun's absolute path up front.
+// Newline-separated so an install path containing spaces survives the split.
 const bunLookup = spawnSync(
   "bun",
-  ["-e", "console.log(Bun.version, process.execPath)"],
+  ["-e", "console.log(Bun.version); console.log(process.execPath)"],
   { encoding: "utf-8" }
 );
 const [bunVersion, bunPath] =
-  bunLookup.status === 0 ? bunLookup.stdout.trim().split(" ") : [];
+  bunLookup.status === 0 ? bunLookup.stdout.trim().split("\n") : [];
 const bunBinary = path.join(root, "dist-bin/bun/inth");
 const bunBytecodeBinary = path.join(root, "dist-bin/bun/inth-bytecode");
 if (bunVersion) {
@@ -168,15 +169,17 @@ const results = targets.map((target, index) => {
   const stats = summarize(sorted);
   return { median_ms: stats.median, p95_ms: stats.p95, target: target.name };
 });
-const info = await stat(binary);
+const sizeOf = async (file: string): Promise<number> => {
+  const info = await stat(file);
+  return info.size;
+};
 const report = {
-  binary_bytes: info.size,
+  binary_bytes: await sizeOf(binary),
   bun: bunVersion ?? null,
-  bun_binary_bytes: bunVersion ? (await stat(bunBinary)).size : null,
+  bun_binary_bytes: bunVersion ? await sizeOf(bunBinary) : null,
   bun_bytecode_binary_bytes: bunVersion
-    ? (await stat(bunBytecodeBinary)).size
+    ? await sizeOf(bunBytecodeBinary)
     : null,
-  yao_binary_bytes: (await stat(path.join(root, "dist-bin/yao/inth"))).size,
   compiler: `scriptc@${packageVersion("scriptc")}`,
   cpu: os.cpus()[0]?.model,
   dynamic_runtime: false,
@@ -188,6 +191,7 @@ const report = {
   scope:
     "Interleaved fresh-process --help latency with warm filesystem caches and spawn overhead. Every target contains auth, API, and organization commands and shares help text. Help does not execute authentication. Each target's output is checked for consistency across its own runs; runtime adapters differ, so this does not isolate compiler performance. The npm launcher target runs the published run-published.js against a staged platform package, and its time includes the native child. The Bun targets run the Node reference under Bun, as a `bun build --compile` binary, and as a `--compile --bytecode --format=esm` binary; they are skipped when Bun is not installed.",
   warmups: 10,
+  yao_binary_bytes: await sizeOf(path.join(root, "dist-bin/yao/inth")),
 };
 await writeFile(
   path.join(root, "bench/startup-results.json"),

@@ -21,9 +21,7 @@
       "runtime": "Scriptc 0.0.36"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 6304240,
       "executable": "~/.local/bin/fx",
       "median_ms": 2.2012085,
@@ -32,9 +30,7 @@
       "runtime": "Zig"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 2011432,
       "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist/inth",
       "median_ms": 3.6414999999999997,
@@ -43,9 +39,7 @@
       "runtime": "Scriptc"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 9977218,
       "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/lib/node_modules/unkey/bin/unkey",
       "median_ms": 4.325854,
@@ -54,9 +48,7 @@
       "runtime": "Go"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 217695408,
       "executable": "~/.local/share/claude/versions/2.1.278",
       "median_ms": 6.826313000000001,
@@ -65,9 +57,7 @@
       "runtime": "Bun 1.4.3"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 228803200,
       "executable": "~/.local/share/fnm/node-versions/v24.21.0/installation/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
       "median_ms": 8.0563965,
@@ -97,9 +87,7 @@
       "runtime": "Bun 1.3.11"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 68499616,
       "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist-bin/bun/inth-bytecode",
       "median_ms": 19.26075,
@@ -131,9 +119,7 @@
       "runtime": "Node"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 62588320,
       "executable": "~/.t3/worktrees/inth/t3code-a88dd78b/packages/cli/dist-bin/bun/inth",
       "median_ms": 26.5695835,
@@ -166,9 +152,7 @@
       "runtime": "Node, then Rust"
     },
     {
-      "args": [
-        "--version"
-      ],
+      "args": ["--version"],
       "binary_bytes": 39866194,
       "executable": "/opt/homebrew/Cellar/gh/2.101.0/bin/gh",
       "median_ms": 33.3915205,

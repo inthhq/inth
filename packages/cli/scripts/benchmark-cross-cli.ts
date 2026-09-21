@@ -57,6 +57,16 @@ const versionOf = (executable: string, args: string[] = []): string =>
   /\d+\.\d+\.\d+/u.exec(firstLine(executable, [...args, "--version"]))?.[0] ??
   "unknown";
 const isScript = (file: string): boolean => /\.[cm]?js$/u.test(file);
+// macOS reports the marketing version separately from the Darwin release.
+const productVersion = (): string => {
+  if (process.platform !== "darwin") {
+    return "";
+  }
+  const result = spawnSync("sw_vers", ["-productVersion"], {
+    encoding: "utf-8",
+  });
+  return result.status === 0 ? ` (${result.stdout.trim()})` : "";
+};
 const isExecutable = (file: string): boolean => {
   try {
     accessSync(file, constants.X_OK);
@@ -339,7 +349,7 @@ const report = {
   cpu: os.cpus()[0]?.model,
   env_overrides: Object.keys(env).filter((k) => !(k in process.env)),
   measured_at: new Date().toISOString(),
-  os: `${process.platform} ${os.release()} (${spawnSync("sw_vers", ["-productVersion"], { encoding: "utf-8" }).stdout.trim() || "n/a"})`,
+  os: `${process.platform} ${os.release()}${productVersion()}`,
   results,
   runs: RUNS,
   scope:
