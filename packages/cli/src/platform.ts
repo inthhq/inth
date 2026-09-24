@@ -9,14 +9,14 @@ export const stateDirectory = (
   xdgState?: string
 ): string => {
   if (platform === "darwin") {
-    return join(home, "Library", "Application Support", "inth-scriptc");
+    return join(home, "Library", "Application Support", "com.inth.cli");
   }
   if (platform === "win32") {
     return join(
       appData && isAbsolute(appData)
         ? appData
         : join(home, "AppData", "Roaming"),
-      "inth"
+      "com.inth.cli"
     );
   }
   return join(

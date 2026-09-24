@@ -140,7 +140,7 @@ const response = (body: string, status = 200): OAuthResponse => ({
 });
 const directory = join(tmpdir(), `inth-native-auth-${randomUUID()}`);
 await mkdir(directory, { mode: 0o700 });
-const entry = new NativeKeychain("com.inth.cli.scriptc-test", randomUUID());
+const entry = new NativeKeychain("com.inth.cli.native-test", randomUUID());
 const store = new NativeStore(entry, join(directory, "credentials.lock"));
 const approve = {
   show: async (value: DeviceAuthorization): Promise<void> => {

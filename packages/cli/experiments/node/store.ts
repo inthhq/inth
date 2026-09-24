@@ -116,4 +116,4 @@ export class PlatformStore implements CredentialStore {
 }
 
 export const platformStore = (directory: string): PlatformStore =>
-  new PlatformStore(new AsyncEntry("com.inth.cli", "oauth"), directory);
+  new PlatformStore(new AsyncEntry("com.inth.cli.node", "oauth"), directory);

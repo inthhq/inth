@@ -19,12 +19,12 @@ import { parseConnection } from "../../src/connection-selection.ts";
 export const stateDirectory = (): string => {
   const home = homedir();
   if (process.platform === "darwin") {
-    return join(home, "Library", "Application Support", "inth");
+    return join(home, "Library", "Application Support", "inth-node");
   }
   if (process.platform === "win32") {
-    return join(home, "AppData", "Local", "inth");
+    return join(home, "AppData", "Local", "inth-node");
   }
-  return join(home, ".local", "state", "inth");
+  return join(home, ".local", "state", "inth-node");
 };
 
 export const privateDirectory = async (directory: string): Promise<void> => {

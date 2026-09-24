@@ -39,15 +39,15 @@ it("rejects Intel Macs and cross-compilation to Intel macOS", () => {
     nativeTarget("darwin", "arm64", "x86_64-macos", "zigcc")
   ).toThrow("Apple silicon");
 });
-it("preserves macOS credentials and respects platform state directories", () => {
+it("respects platform state directories", () => {
   expect(stateDirectory("darwin", "/home/person")).toBe(
-    path.join("/home/person", "Library", "Application Support", "inth-scriptc")
+    path.join("/home/person", "Library", "Application Support", "com.inth.cli")
   );
   expect(stateDirectory("linux", "/home/person", undefined, "/state")).toBe(
     path.join("/state", "inth")
   );
   expect(stateDirectory("win32", "/home/person", "/appdata")).toBe(
-    path.join("/appdata", "inth")
+    path.join("/appdata", "com.inth.cli")
   );
 });
 

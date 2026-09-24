@@ -281,7 +281,6 @@ const run = async (options: CliArguments): Promise<void> => {
   }
   const allowInteractive = promptsAllowed(options);
   const key = apiKey(options.token, process.env.INTH_TOKEN);
-  // Preserve the existing native sign-in and defaults while Node/yao retain their own store.
   const directory = agentStateDirectory(nativeStateDirectory(), environment);
   const context = new NativeContext(directory, process.cwd());
   await selectCommandConnection(
@@ -297,7 +296,7 @@ const run = async (options: CliArguments): Promise<void> => {
       throw new Error("Cannot create a private credential directory.");
     }
     return new NativeStore(
-      new NativeKeychain("com.inth.cli.scriptc", "oauth"),
+      new NativeKeychain("com.inth.cli", "oauth"),
       join(directory, "credentials.lock"),
       () => controller.signal.throwIfAborted(),
       observeCredential
@@ -306,10 +305,7 @@ const run = async (options: CliArguments): Promise<void> => {
   const getAuth = (): AuthFlow => new AuthFlow(http, getStore().adapter());
   const getAgent = (): AgentAuth => {
     getStore();
-    const entry = new NativeKeychain(
-      "com.inth.cli.scriptc",
-      environment.account
-    );
+    const entry = new NativeKeychain("com.inth.cli", environment.account);
     const lock = new NativeStore(entry, join(directory, "agent.lock"), () =>
       controller.signal.throwIfAborted()
     );

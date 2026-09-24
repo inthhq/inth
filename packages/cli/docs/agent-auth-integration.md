@@ -80,7 +80,7 @@ Both origins must be local HTTPS addresses. After sign-in completes, resource co
 
 Discovery comes from `https://api.inth.com/.well-known/oauth-authorization-server`. The CLI validates the Inth issuer and HTTPS endpoints before sending credentials. API requests remain restricted to the Inth API. It never parses Markdown to derive endpoints.
 
-Native credentials use service `com.inth.cli.scriptc`, account `auth.md`, and a separate `agent.lock`. Node and yao use service `com.inth.cli`, account `auth.md`, with a separate lock directory. Browser OAuth remains in account `oauth`. There is no plaintext credential fallback.
+Native credentials use service `com.inth.cli`, account `auth.md`, and a separate `agent.lock`. Node and yao use service `com.inth.cli.node`, account `auth.md`, with a separate lock directory. Browser OAuth remains in account `oauth`. There is no plaintext credential fallback.
 
 [WorkOS auth.md](https://workos.com/auth-md) and [Better Auth Agent Auth](https://better-auth.com/docs/plugins/agent-auth) are distinct protocols. This CLI implements the auth.md claim and assertion flow. It does not implement Better Auth's agent key registration and signed-request protocol.
 
