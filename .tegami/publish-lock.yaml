@@ -1,27 +1,27 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Publish the Inth CLI\n\nInstall `@inth/cli` to run the Inth CLI on Apple silicon Macs, Linux arm64/x64, or Windows x64. The package selects the native executable for your platform.\n"
-    filename: 2026-09-08-native-cli.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Store credentials and preferences under `com.inth.cli`\n\nSign-ins are now saved under the `com.inth.cli` credential service instead of `com.inth.cli.scriptc`. Preferences move to `~/Library/Application Support/com.inth.cli` on macOS and `%APPDATA%\\com.inth.cli` on Windows. Linux keeps `$XDG_STATE_HOME/inth`.\n\nExisting sign-ins and organization preferences are not migrated. Run `inth login` once after upgrading. On macOS, you can delete the old `com.inth.cli.scriptc` item in Keychain Access and the `inth-scriptc` folder.\n"
+    filename: 2026-09-24-keychain-service-name.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-09-08-native-cli.md
+      - 2026-09-24-keychain-service-name.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-09-08-native-cli.md
+      - 2026-09-24-keychain-service-name.md
     id: npm:@inth/cli-linux-arm64
     updated: true
   - changelogIds:
-      - 2026-09-08-native-cli.md
+      - 2026-09-24-keychain-service-name.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-09-08-native-cli.md
-    id: npm:@inth/cli
+      - 2026-09-24-keychain-service-name.md
+    id: npm:@inth/cli-win32-x64
     updated: true
   - changelogIds:
-      - 2026-09-08-native-cli.md
-    id: npm:@inth/cli-win32-x64
+      - 2026-09-24-keychain-service-name.md
+    id: npm:@inth/cli
     updated: true
 npm:packages:
   - distTag: latest
@@ -31,6 +31,6 @@ npm:packages:
   - distTag: latest
     id: npm:@inth/cli-linux-x64
   - distTag: latest
-    id: npm:@inth/cli
-  - distTag: latest
     id: npm:@inth/cli-win32-x64
+  - distTag: latest
+    id: npm:@inth/cli
