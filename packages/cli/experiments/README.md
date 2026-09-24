@@ -18,7 +18,7 @@ Both experiments share `node/inth.ts` and its runtime adapters. They import comm
 
 Clack, Zod, proper-lockfile, and the NAPI keyring addon are development dependencies of `@inth/cli`. They are used by these experiments and their tests; the production binary does not load them. yao-pkg bundles JavaScript, the host's keyring addon, and dependency licenses. Native addons use yao-pkg's extraction cache.
 
-Node and yao-pkg retain Keychain service `com.inth.cli`, account `oauth`, and the original platform state directory. The production native CLI retains `com.inth.cli.scriptc`, account `oauth`, and `~/Library/Application Support/inth-scriptc`. A benchmark does not migrate a person's credentials between these stores.
+Node and yao-pkg use Keychain service `com.inth.cli.node`, account `oauth`, and an `inth-node` state directory. The production native CLI uses `com.inth.cli`, account `oauth`, and a `com.inth.cli` state directory on macOS and Windows. The two builds never share credentials.
 
 ## Tests that depend on these experiments
 

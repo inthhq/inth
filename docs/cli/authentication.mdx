@@ -59,8 +59,8 @@ Preferences and locks live in these directories. They do not contain tokens.
 
 | Platform | State directory                                  |
 | -------- | ------------------------------------------------ |
-| macOS    | `~/Library/Application Support/inth-scriptc`     |
-| Windows  | `%APPDATA%\inth`                                 |
+| macOS    | `~/Library/Application Support/com.inth.cli`     |
+| Windows  | `%APPDATA%\com.inth.cli`                         |
 | Linux    | `$XDG_STATE_HOME/inth`, or `~/.local/state/inth` |
 
 Local rebuilds on macOS can trigger another Keychain prompt because ad hoc signing changes the executable's identity. Reuse the current build between edits, or configure a stable signing identity using the repository's [credential storage guide](https://github.com/inthhq/inth/blob/main/packages/cli/docs/authentication.md#repeated-macos-keychain-prompts).

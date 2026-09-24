@@ -22,7 +22,7 @@ export const agentAuth = (
   directory: string,
   environment = productionAgentEnvironment
 ): AgentAuth => {
-  const entry = new AsyncEntry("com.inth.cli", environment.account);
+  const entry = new AsyncEntry("com.inth.cli.node", environment.account);
   const lock = new PlatformStore(entry, path.join(directory, "agent"));
   return new AgentAuth(
     {

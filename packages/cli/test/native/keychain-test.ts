@@ -6,7 +6,7 @@ import {
 } from "../../src/native/native-bindings.ts";
 import { NativeKeychain } from "../../src/native/native-keychain.ts";
 
-const entry = new NativeKeychain("com.inth.cli.scriptc-test", randomUUID());
+const entry = new NativeKeychain("com.inth.cli.native-test", randomUUID());
 try {
   if (entry.read() !== null) {
     throw new Error("Fresh test credential already exists.");
