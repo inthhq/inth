@@ -83,7 +83,7 @@ export const sandboxError = (
   if (CREDENTIAL_STORE_FAILURE.test(error.message)) {
     return new CliError(
       "sandbox_restricted",
-      `Cannot use the system credential store. ${sandbox}'s agent sandbox may be blocking it. Run this command outside the sandbox.`
+      `${error.message} ${sandbox}'s agent sandbox may be blocking the system credential store. Run this command outside the sandbox.`
     );
   }
   if (error.message === NETWORK_FAILURE) {

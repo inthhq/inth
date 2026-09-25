@@ -111,10 +111,10 @@ describe("agent sandbox errors", () => {
       "System credential store write failed (100001).",
       "The system credential store is unavailable. On Linux, install libsecret and unlock a Secret Service keyring, or supply INTH_TOKEN for headless use.",
     ]) {
+      // Keep the original remedy, such as installing libsecret on Linux.
       expect(sandboxError(new Error(message), "Cursor", STATE)).toMatchObject({
         code: "sandbox_restricted",
-        message:
-          "Cannot use the system credential store. Cursor's agent sandbox may be blocking it. Run this command outside the sandbox.",
+        message: `${message} Cursor's agent sandbox may be blocking the system credential store. Run this command outside the sandbox.`,
       });
     }
   });
