@@ -1,6 +1,6 @@
 {
   "name": "@inth/cli-linux-arm64",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The Inth CLI native executable for linux arm64",
   "license": "Apache-2.0",
   "repository": {
