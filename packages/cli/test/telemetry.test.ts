@@ -105,6 +105,9 @@ describe("telemetry privacy", () => {
     expect(telemetryError(new CliError("cancelled", "Cancelled."))).toBe(
       "cancelled"
     );
+    expect(
+      telemetryError(new CliError("sandbox_restricted", "secret-message"))
+    ).toBe("sandbox_restricted");
   });
 });
 

@@ -78,6 +78,7 @@ export const telemetryError = (error: Error): string => {
       "access_denied",
       "invalid_scope",
       "insufficient_scope",
+      "sandbox_restricted",
     ].includes(error.code)
   ) {
     return error.code;
