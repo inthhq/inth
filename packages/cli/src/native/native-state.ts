@@ -6,6 +6,7 @@ import { dirname, join } from "node:path";
 import { parseConnection } from "../connection-selection.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
 import { organizationId } from "../organizations.ts";
+import { StateDirectoryError } from "../sandbox.ts";
 import { prepareDirectory, writeConfig } from "./native-bindings.ts";
 
 const read = async (filename: string): Promise<string | undefined> => {
@@ -30,21 +31,31 @@ const read = async (filename: string): Promise<string | undefined> => {
     );
   }
 };
+// `state` marks writes to the CLI state directory rather than a project link.
 const write = async (
   directory: string,
   name: string,
-  id: string
+  id: string,
+  state: boolean
 ): Promise<void> => {
   diagnosticStep("config_write");
+  const failure = (message: string): Error =>
+    state ? new StateDirectoryError(message) : new Error(message);
   const config = { organizationId: organizationId(id) };
-  await mkdir(dirname(directory), { recursive: true });
+  try {
+    await mkdir(dirname(directory), { recursive: true });
+  } catch {
+    throw failure(
+      "Cannot create a private organization configuration directory."
+    );
+  }
   if (prepareDirectory(directory) !== 0) {
-    throw new Error(
+    throw failure(
       "Cannot create a private organization configuration directory."
     );
   }
   if (writeConfig(join(directory, name), JSON.stringify(config)) !== 0) {
-    throw new Error("Cannot save organization configuration.");
+    throw failure("Cannot save organization configuration.");
   }
 };
 export class NativeContext {
@@ -102,9 +113,9 @@ export class NativeContext {
     return this.defaultOrganization();
   }
   select(id: string): Promise<void> {
-    return write(this.directory, "config.json", id);
+    return write(this.directory, "config.json", id, true);
   }
   link(id: string): Promise<void> {
-    return write(join(this.cwd, ".inth"), "project.json", id);
+    return write(join(this.cwd, ".inth"), "project.json", id, false);
   }
 }

@@ -17,6 +17,12 @@ inth --help
 
 npm selects the native package for your platform. Keep optional dependencies enabled, since they contain the executable. If the requested release is unavailable on npm, build from source using the steps below. The [repository's releases](https://github.com/inthhq/inth/releases) record published versions.
 
+## How do I install from a sandboxed agent terminal?
+
+Run the install outside the sandbox. Cursor and other coding agents can run terminal commands in a sandbox that writes only to the project and temporary directories. `npm install -g @inth/cli` writes to npm's global directory and cache, so it fails there. npm then reports that the cache folder contains root-owned files and suggests `sudo chown`. The cache is fine; the sandbox blocked the write. In Cursor, approve running the command outside the sandbox.
+
+Sign-in and API commands need the same approval. They write locks and settings to the [state directory](./authentication#where-does-the-inth-cli-store-credentials), read credentials from the system credential store, and connect to `api.inth.com`. Adding `api.inth.com` to Cursor's network allowlist does not help, because the CLI does not use the sandbox's HTTP proxy. Inside Cursor's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code. Other failures keep their usual code. `inth --help` and `inth --version` work inside the sandbox.
+
 ## How do I build and link the CLI from source?
 
 Check out the [Inth CLI repository](https://github.com/inthhq/inth). You need Node.js 24 and the pnpm version declared in the repository's `packageManager` field. Install Xcode Command Line Tools on macOS, Clang 18 or newer and zlib development headers on Linux (`clang` and `zlib1g-dev` on Ubuntu 24.04), or Zig 0.15.2 on Windows. All platforms also need CMake for the native Sentry SDK.

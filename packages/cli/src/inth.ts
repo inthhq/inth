@@ -52,6 +52,7 @@ import {
   rawApiRequest,
   resourceCommand,
 } from "./resource-commands.ts";
+import { agentSandbox, sandboxError } from "./sandbox.ts";
 import { runSkills } from "./skills.ts";
 import {
   telemetryCommand,
@@ -469,7 +470,11 @@ try {
     await run(options);
   }
 } catch (error) {
-  const failure = error instanceof Error ? error : new Error("Command failed.");
+  const failure = sandboxError(
+    error instanceof Error ? error : new Error("Command failed."),
+    agentSandbox(process.env.CURSOR_SANDBOX),
+    nativeStateDirectory()
+  );
   errorCode = controller.signal.aborted ? "cancelled" : telemetryError(failure);
   exitCode = reportError(
     process.argv.includes("--json"),
