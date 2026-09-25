@@ -21,7 +21,17 @@ export const signNative = (
   }
   const signed = spawnSync(
     "/usr/bin/codesign",
-    ["--force", "--sign", identity, "--identifier", "com.inth.cli", binary],
+    [
+      "--force",
+      "--sign",
+      identity,
+      "--identifier",
+      "com.inth.cli",
+      // Match release signing, which notarization requires.
+      "--options",
+      "runtime",
+      binary,
+    ],
     { encoding: "utf-8", timeout: 120_000 }
   );
   if (signed.status !== 0) {

@@ -18,8 +18,47 @@ jobs:
     permissions:
       contents: read
 
-  release:
+  sign-macos:
+    name: Sign and notarize macOS package
     needs: verify
+    if: github.repository == 'inthhq/inth' && github.ref == 'refs/heads/main'
+    # Signing secrets live in this environment, which only main can use.
+    # The job runs system tools only: no pnpm install and no third-party actions.
+    environment: macos-signing
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          sparse-checkout: packages/cli/scripts/sign-macos-release.sh
+          sparse-checkout-cone-mode: false
+      - name: Download unsigned macOS package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: unsigned-macOS-ARM64
+          path: unsigned
+      - name: Sign and notarize
+        run: sh packages/cli/scripts/sign-macos-release.sh unsigned/inth-cli-darwin-arm64-*.tgz signed
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          SIGNING_IDENTITY: "Developer ID Application: Consent Management Inc (738K38NVK6)"
+          TEAM_ID: 738K38NVK6
+      - name: Upload signed macOS package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: inth-macOS-ARM64
+          path: signed/*.tgz
+          if-no-files-found: error
+
+  release:
+    needs: [verify, sign-macos]
     # npm trusted publishing requires a GitHub-hosted runner.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
