@@ -27,7 +27,7 @@ describe("agent sandbox errors", () => {
     expect(error).toBeInstanceOf(CliError);
     expect(error).toMatchObject({
       code: "sandbox_restricted",
-      message: `Cannot acquire the credential lock. Cursor's agent sandbox blocks writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
+      message: `Cannot acquire the credential lock. Cursor's agent sandbox may be blocking writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
     });
   });
 
@@ -45,7 +45,7 @@ describe("agent sandbox errors", () => {
         )
       ).toMatchObject({
         code: "sandbox_restricted",
-        message: `Cannot create the CLI state directory. Cursor's agent sandbox blocks writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
+        message: `Cannot create the CLI state directory. Cursor's agent sandbox may be blocking writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
       });
     }
   });

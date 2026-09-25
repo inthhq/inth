@@ -42,7 +42,7 @@ export const sandboxError = (
   if (!sandbox || error instanceof CliError) {
     return error;
   }
-  const blocked = `${sandbox}'s agent sandbox blocks writes to ${stateDirectory}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`;
+  const blocked = `${sandbox}'s agent sandbox may be blocking writes to ${stateDirectory}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`;
   if (STATE_FAILURES.has(error.message)) {
     return new CliError("sandbox_restricted", `${error.message} ${blocked}`);
   }
