@@ -22,6 +22,9 @@ const MCP_LOCK_FAILURES = new Set([
   "Cannot create a private configuration lock directory.",
   "Cannot lock the client configuration. Close other setup commands and retry.",
 ]);
+// Keychain, Credential Manager, or Secret Service failures from native-keychain.ts.
+const CREDENTIAL_STORE_FAILURE =
+  /^(?:System credential store (?:read|write|deletion) failed \(-?[0-9]{1,10}\)\.|The system credential store is unavailable\.)/u;
 const NETWORK_FAILURE =
   "Could not reach inth. Check your connection and try again.";
 // Filesystem errors carry the errno and quoted path, as in Node.
@@ -75,6 +78,12 @@ export const sandboxError = (
     return new CliError(
       "sandbox_restricted",
       `Cannot create the CLI state directory. ${blocked}`
+    );
+  }
+  if (CREDENTIAL_STORE_FAILURE.test(error.message)) {
+    return new CliError(
+      "sandbox_restricted",
+      `Cannot use the system credential store. ${sandbox}'s agent sandbox may be blocking it. Run this command outside the sandbox.`
     );
   }
   if (error.message === NETWORK_FAILURE) {

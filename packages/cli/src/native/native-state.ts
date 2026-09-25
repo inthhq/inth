@@ -42,7 +42,13 @@ const write = async (
   const failure = (message: string): Error =>
     state ? new StateDirectoryError(message) : new Error(message);
   const config = { organizationId: organizationId(id) };
-  await mkdir(dirname(directory), { recursive: true });
+  try {
+    await mkdir(dirname(directory), { recursive: true });
+  } catch {
+    throw failure(
+      "Cannot create a private organization configuration directory."
+    );
+  }
   if (prepareDirectory(directory) !== 0) {
     throw failure(
       "Cannot create a private organization configuration directory."
