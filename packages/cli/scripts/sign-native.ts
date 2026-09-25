@@ -27,7 +27,7 @@ export const signNative = (
       identity,
       "--identifier",
       "com.inth.cli",
-      // Match release signing, which notarization requires.
+      // Match release signing.
       "--options",
       "runtime",
       binary,

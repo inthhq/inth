@@ -19,7 +19,7 @@ jobs:
       contents: read
 
   sign-macos:
-    name: Sign and notarize macOS package
+    name: Sign macOS package
     needs: verify
     if: github.repository == 'inthhq/inth' && github.ref == 'refs/heads/main'
     # Signing secrets live in this environment, which only main can use.
@@ -40,14 +40,11 @@ jobs:
         with:
           name: unsigned-macOS-ARM64
           path: unsigned
-      - name: Sign and notarize
+      - name: Sign
         run: sh packages/cli/scripts/sign-macos-release.sh unsigned/inth-cli-darwin-arm64-*.tgz signed
         env:
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-          NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY }}
-          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
-          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
           SIGNING_IDENTITY: "Developer ID Application: Consent Management Inc (738K38NVK6)"
           TEAM_ID: 738K38NVK6
       - name: Upload signed macOS package
