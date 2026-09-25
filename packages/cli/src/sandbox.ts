@@ -7,6 +7,12 @@ const STATE_FAILURES = new Set([
   "Cannot acquire the credential lock.",
   "Cannot create a private credential directory.",
   "Cannot save the selected connection. Retry sign-in completion.",
+  "Cannot save telemetry preference.",
+]);
+// MCP setup keeps its config locks in the state directory.
+const MCP_LOCK_FAILURES = new Set([
+  "Cannot create a private configuration lock directory.",
+  "Cannot lock the client configuration. Close other setup commands and retry.",
 ]);
 const NETWORK_FAILURE =
   "Could not reach inth. Check your connection and try again.";
@@ -39,10 +45,18 @@ export const sandboxError = (
   sandbox: string,
   stateDirectory: string
 ): Error => {
-  if (!sandbox || error instanceof CliError) {
+  if (!sandbox) {
     return error;
   }
   const blocked = `${sandbox}'s agent sandbox may be blocking writes to ${stateDirectory}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`;
+  if (error instanceof CliError) {
+    return error.code === "config_busy" && MCP_LOCK_FAILURES.has(error.message)
+      ? new CliError(
+          "sandbox_restricted",
+          `Cannot lock the client configuration. ${blocked}`
+        )
+      : error;
+  }
   if (STATE_FAILURES.has(error.message)) {
     return new CliError("sandbox_restricted", `${error.message} ${blocked}`);
   }

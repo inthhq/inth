@@ -31,6 +31,35 @@ describe("agent sandbox errors", () => {
     });
   });
 
+  it("explains other state directory writes", () => {
+    expect(
+      sandboxError(
+        new Error("Cannot save telemetry preference."),
+        "Cursor",
+        STATE
+      )
+    ).toMatchObject({ code: "sandbox_restricted" });
+  });
+
+  it("explains MCP config locks in the state directory", () => {
+    for (const message of [
+      "Cannot create a private configuration lock directory.",
+      "Cannot lock the client configuration. Close other setup commands and retry.",
+    ]) {
+      expect(
+        sandboxError(new CliError("config_busy", message), "Cursor", STATE)
+      ).toMatchObject({
+        code: "sandbox_restricted",
+        message: `Cannot lock the client configuration. Cursor's agent sandbox may be blocking writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
+      });
+    }
+    const conflict = new CliError(
+      "config_conflict",
+      "Client configuration changed during setup. Retry the command."
+    );
+    expect(sandboxError(conflict, "Cursor", STATE)).toBe(conflict);
+  });
+
   it("explains a fresh account's blocked state directory", () => {
     for (const path of [
       "/Users/person",
