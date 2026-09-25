@@ -57,8 +57,31 @@ jobs:
           path: signed/*.tgz
           if-no-files-found: error
 
+  test-signed-macos:
+    name: Test signed macOS package
+    needs: sign-macos
+    # Runs the signed binary here, away from the signing secrets.
+    runs-on: macos-15
+    timeout-minutes: 10
+    permissions: {}
+    steps:
+      - name: Download signed macOS package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: inth-macOS-ARM64
+          path: signed
+      - name: Run the signed binary
+        run: |
+          mkdir package-test
+          tar -xzf signed/inth-cli-darwin-arm64-*.tgz -C package-test
+          binary=package-test/package/bin/inth
+          codesign --verify --strict --verbose=2 "$binary"
+          expected=$(plutil -extract version raw -o - package-test/package/package.json)
+          test "$("$binary" --version)" = "$expected"
+          env PATH= "$binary" --help >/dev/null
+
   release:
-    needs: [verify, sign-macos]
+    needs: [verify, sign-macos, test-signed-macos]
     # npm trusted publishing requires a GitHub-hosted runner.
     runs-on: ubuntu-24.04
     timeout-minutes: 15

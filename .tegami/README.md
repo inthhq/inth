@@ -67,12 +67,12 @@ The second command previews the bootstrap. The third publishes empty setup versi
 
 The Release workflow signs the macOS binary with the Developer ID Application certificate for Consent Management Inc (team `738K38NVK6`). It uses the hardened runtime, a secure timestamp, and the identifier `com.inth.cli`. Keeping the identifier and team stable lets a Keychain **Always Allow** approval carry over to new CLI versions.
 
-CI builds the macOS package unsigned and uploads it as `unsigned-macOS-ARM64`. On `main`, the `sign-macos` job downloads it, signs and notarizes the binary with `packages/cli/scripts/sign-macos-release.sh`, and uploads the result as `inth-macOS-ARM64` for the release job. If signing fails, nothing is published.
+CI builds the macOS package unsigned and uploads it as `unsigned-macOS-ARM64`. On `main`, the `sign-macos` job downloads it, signs and notarizes the binary with `packages/cli/scripts/sign-macos-release.sh`, and uploads the result as `inth-macOS-ARM64`. The `test-signed-macos` job then runs the signed binary in a separate job without secrets. If signing, notarization, or that test fails, nothing is published.
 
 The signing job is isolated from pull requests and dependencies:
 
 - Its secrets are stored in the `macos-signing` environment, which only `main` can deploy to. Pull requests, other branches, and forks cannot read them. They are not repository secrets.
-- It runs on a GitHub-hosted runner, checks out only the signing script, and uses system tools. It does not run `pnpm install`, repository build scripts, or third-party actions.
+- It runs on a GitHub-hosted runner, checks out only the signing script, and uses system tools. It does not run `pnpm install`, repository build scripts, third-party actions, or the binary it signs.
 - The script imports the certificate into a temporary keychain and deletes it when the job ends.
 - `ci.yml` never receives signing secrets, including when `release.yml` calls it.
 
@@ -88,7 +88,7 @@ Environment secrets:
 | `APPLE_NOTARY_KEY_ID` | Key ID of the API key |
 | `APPLE_NOTARY_ISSUER_ID` | Issuer ID from App Store Connect → Users and Access → Integrations |
 
-Without the three notary secrets, the job signs but skips notarization and adds a warning to the run.
+All five secrets are required. If any is missing, the signing job fails and the release does not publish.
 
 Only the Account Holder of the Apple Developer team can create Developer ID certificates. The certificate expires in September 2031. To replace it, generate a new key and certificate signing request, have the Account Holder issue a new Developer ID Application certificate, then update both certificate secrets:
 
