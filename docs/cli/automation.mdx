@@ -105,6 +105,7 @@ Exit codes are `0` for success, `1` for failure, and `130` for handled cancellat
 | `invalid_response` | The server returned malformed JSON or an invalid protocol response |
 | `revocation_failed` | Remote logout could not be confirmed |
 | `http_error` | Another HTTP failure |
+| `sandbox_restricted` | An agent sandbox, such as Cursor's, blocked the CLI state directory or the Inth API. Run the command outside the sandbox |
 | `command_failed` | Another command failure, including unavailable local storage |
 | `cancelled` | The command was cancelled |
 

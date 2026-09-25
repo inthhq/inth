@@ -29,6 +29,8 @@ inth --version
 
 The npm launcher requires Node.js and selects the native executable for your platform. Keep optional dependencies enabled, since they contain the executable. If the release is not yet available on npm, [build from source](#build-from-source).
 
+Coding agents that sandbox terminal commands, such as Cursor, must run the install outside the sandbox. Inside it, npm cannot write its global directory or cache, and it misreports the cache as root-owned. Sign-in and API commands also need to run outside the sandbox. Inside Cursor's sandbox, they fail with the `sandbox_restricted` error code.
+
 Linux browser sign-in needs `libsecret-1.so.0`, a session bus, and an unlocked Secret Service keyring. For headless use, see [authentication and credential storage](docs/authentication.md).
 
 ### Sign in and run commands
