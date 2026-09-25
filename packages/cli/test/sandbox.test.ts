@@ -31,6 +31,36 @@ describe("agent sandbox errors", () => {
     });
   });
 
+  it("explains a fresh account's blocked state directory", () => {
+    for (const path of [
+      "/Users/person",
+      `${STATE}`,
+      `${STATE}/auth.md-local`,
+    ]) {
+      expect(
+        sandboxError(
+          new Error(`EPERM: operation not permitted, mkdir '${path}'`),
+          "Cursor",
+          STATE
+        )
+      ).toMatchObject({
+        code: "sandbox_restricted",
+        message: `Cannot create the CLI state directory. Cursor's agent sandbox blocks writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
+      });
+    }
+  });
+
+  it("keeps permission errors outside the state directory", () => {
+    for (const message of [
+      "EPERM: operation not permitted, mkdir '/work/project/.inth'",
+      `EACCES: permission denied, open '${STATE}-other/config.json'`,
+      "ENOENT: no such file or directory, open '/Users/person'",
+    ]) {
+      const error = new Error(message);
+      expect(sandboxError(error, "Cursor", STATE)).toBe(error);
+    }
+  });
+
   it("explains network failures inside Cursor's sandbox", () => {
     expect(sandboxError(offline, "Cursor", STATE)).toMatchObject({
       code: "sandbox_restricted",
