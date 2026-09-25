@@ -1,3 +1,9 @@
+## @inth/cli-linux-x64@0.0.2
+
+### Sign the macOS binary with a Developer ID
+
+The Apple silicon binary is now signed with a Developer ID certificate and the hardened runtime. When you choose **Always Allow** at the Keychain prompt, the approval now carries over to later CLI updates instead of prompting again after each upgrade.
+
 ## @inth/cli-linux-x64@0.0.1
 
 ### Store credentials and preferences under `com.inth.cli`
