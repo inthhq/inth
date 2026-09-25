@@ -1,26 +1,26 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Store credentials and preferences under `com.inth.cli`\n\nSign-ins are now saved under the `com.inth.cli` credential service instead of `com.inth.cli.scriptc`. Preferences move to `~/Library/Application Support/com.inth.cli` on macOS and `%APPDATA%\\com.inth.cli` on Windows. Linux keeps `$XDG_STATE_HOME/inth`.\n\nExisting sign-ins and organization preferences are not migrated. Run `inth login` once after upgrading. On macOS, you can delete the old `com.inth.cli.scriptc` item in Keychain Access and the `inth-scriptc` folder.\n"
-    filename: 2026-09-24-keychain-service-name.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Sign the macOS binary with a Developer ID\n\nThe Apple silicon binary is now signed with a Developer ID certificate and the hardened runtime. When you choose **Always Allow** at the Keychain prompt, the approval now carries over to later CLI updates instead of prompting again after each upgrade.\n"
+    filename: 2026-09-25-macos-signing.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-09-24-keychain-service-name.md
+      - 2026-09-25-macos-signing.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-09-24-keychain-service-name.md
+      - 2026-09-25-macos-signing.md
     id: npm:@inth/cli-linux-arm64
     updated: true
   - changelogIds:
-      - 2026-09-24-keychain-service-name.md
+      - 2026-09-25-macos-signing.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-09-24-keychain-service-name.md
+      - 2026-09-25-macos-signing.md
     id: npm:@inth/cli-win32-x64
     updated: true
   - changelogIds:
-      - 2026-09-24-keychain-service-name.md
+      - 2026-09-25-macos-signing.md
     id: npm:@inth/cli
     updated: true
 npm:packages:
