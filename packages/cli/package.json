@@ -1,6 +1,6 @@
 {
   "name": "@inth/cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The inth command line interface",
   "license": "Apache-2.0",
   "repository": {

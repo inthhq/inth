@@ -1,26 +1,26 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Sign the macOS binary with a Developer ID\n\nThe Apple silicon binary is now signed with a Developer ID certificate and the hardened runtime. When you choose **Always Allow** at the Keychain prompt, the approval now carries over to later CLI updates instead of prompting again after each upgrade.\n"
-    filename: 2026-09-25-macos-signing.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Explain failures inside Cursor's agent sandbox\n\nWhen Cursor's sandbox blocks the CLI state directory, the system credential store, or the Inth API, the CLI now returns the `sandbox_restricted` error code. The message names the likely block and asks you to run the command outside the sandbox. The install docs also explain how to install from a sandboxed agent terminal, including npm's misleading report of a root-owned cache.\n"
+    filename: 2026-09-25-agent-sandbox-errors.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-09-25-macos-signing.md
+      - 2026-09-25-agent-sandbox-errors.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-09-25-macos-signing.md
+      - 2026-09-25-agent-sandbox-errors.md
     id: npm:@inth/cli-linux-arm64
     updated: true
   - changelogIds:
-      - 2026-09-25-macos-signing.md
+      - 2026-09-25-agent-sandbox-errors.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-09-25-macos-signing.md
+      - 2026-09-25-agent-sandbox-errors.md
     id: npm:@inth/cli-win32-x64
     updated: true
   - changelogIds:
-      - 2026-09-25-macos-signing.md
+      - 2026-09-25-agent-sandbox-errors.md
     id: npm:@inth/cli
     updated: true
 npm:packages:
