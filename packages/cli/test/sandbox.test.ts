@@ -71,6 +71,14 @@ describe("agent sandbox errors", () => {
 
   it("keeps unrelated and already structured errors", () => {
     const other = new Error("Invalid token response.");
+    // `inth link` writes <cwd>/.inth with the same messages as the state directory.
+    for (const message of [
+      "Cannot create a private organization configuration directory.",
+      "Cannot save organization configuration.",
+    ]) {
+      const link = new Error(message);
+      expect(sandboxError(link, "Cursor", STATE)).toBe(link);
+    }
     const usage = new CliError(
       "usage_error",
       "Cannot acquire the credential lock."

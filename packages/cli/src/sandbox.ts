@@ -1,12 +1,11 @@
 /* eslint-disable prefer-named-capture-group -- Scriptc supports indexed regex captures. */
 import { CliError } from "./cli-error.ts";
 
-// Messages thrown when the state directory cannot be written.
+// Messages thrown only when the state directory cannot be written. Organization
+// config messages are excluded because `inth link` also uses them for <cwd>/.inth.
 const STATE_FAILURES = new Set([
   "Cannot acquire the credential lock.",
   "Cannot create a private credential directory.",
-  "Cannot create a private organization configuration directory.",
-  "Cannot save organization configuration.",
   "Cannot save the selected connection. Retry sign-in completion.",
 ]);
 const NETWORK_FAILURE =
