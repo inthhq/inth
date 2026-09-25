@@ -106,6 +106,7 @@ jobs:
       - name: Upload native npm package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: inth-${{ runner.os }}-${{ runner.arch }}
+          # Release signs the macOS package in its own job before publishing it as inth-macOS-ARM64.
+          name: ${{ runner.os == 'macOS' && 'unsigned' || 'inth' }}-${{ runner.os }}-${{ runner.arch }}
           path: packages/cli/artifacts/*.tgz
           if-no-files-found: error

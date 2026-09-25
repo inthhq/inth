@@ -50,7 +50,7 @@ On POSIX systems, those directories use mode `0700` and preference files use `06
 
 ### Repeated macOS Keychain prompts
 
-Choose **Always Allow** to authorize the current executable persistently; **Allow** grants one access. Local builds use ad hoc signing by default. When the executable changes, its Keychain identity changes too, so earlier approval may not apply. This is separate from the saved organization preference.
+Choose **Always Allow** to authorize the current executable persistently; **Allow** grants one access. Released macOS binaries are signed with the Developer ID of Consent Management Inc (`738K38NVK6`) under that identifier, so the approval carries over to CLI updates. Local builds use ad hoc signing by default. When the executable changes, its Keychain identity changes too, so earlier approval may not apply. This is separate from the saved organization preference.
 
 For trust across changed builds, install a code-signing certificate and build with the same identity:
 
@@ -59,7 +59,7 @@ security find-identity -v -p codesigning
 INTH_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" pnpm --filter @inth/cli build
 ```
 
-The build signs the primary binary with identifier `com.inth.cli`, verifies the signature, then copies the legacy entry paths. The first move from ad hoc to certificate signing may need one new **Always Allow** approval. The setting does not create a certificate, change Keychain access controls, or grant other programs access to CLI tokens. Without an installed certificate, use the built `dist/inth` between rebuilds; `dev` rebuilds first.
+The build signs the primary binary with identifier `com.inth.cli` and the hardened runtime, verifies the signature, then copies the legacy entry paths. The first move from ad hoc to certificate signing may need one new **Always Allow** approval. The setting does not create a certificate, change Keychain access controls, or grant other programs access to CLI tokens. Without an installed certificate, use the built `dist/inth` between rebuilds; `dev` rebuilds first.
 
 Apple documents [Keychain prompt choices](https://support.apple.com/en-md/guide/keychain-access/kyca1243/mac) and [how code identity changes affect authorization](https://developer.apple.com/documentation/technotes/tn3127-inside-code-signing-requirements). Manual `auth refresh` uses one credential read under the refresh lock; a refresh still updates the stored tokens afterward.
 

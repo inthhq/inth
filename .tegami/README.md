@@ -26,7 +26,7 @@ The initial `0.0.0` release already has generated changelogs and a publish lock.
 1. Merge the change and its changelog into `main`.
 2. The Release workflow runs documentation checks, lint, typechecks, unit tests, and native/package tests on all four supported targets: Apple silicon Macs, Linux arm64/x64, and Windows x64.
 3. `pnpm tegami ci` opens or updates the version PR with package versions, changelogs, and the publish lock.
-4. Merge the version PR. The next run rebuilds and tests those versions, checks the downloaded native artifacts, publishes the platform packages, then publishes `@inth/cli` and creates one GitHub release.
+4. Merge the version PR. The next run rebuilds and tests those versions, signs the macOS binary, checks the downloaded native artifacts, publishes the platform packages, then publishes `@inth/cli` and creates one GitHub release.
 
 Leadtype bundles CLI documentation before native packaging and again before publishing the launcher. Both package types include `AGENTS.md`, `SKILL.md`, and the generated topics. See [documentation maintenance](../.github/DOCUMENTATION.md).
 
@@ -62,3 +62,38 @@ pnpm tegami npm pretrust
 ```
 
 The second command previews the bootstrap. The third publishes empty setup versions under the `temp` tag and configures trust. Commit any resulting publish-lock change with the release setup before merging it. Existing packages are skipped by `pretrust`; configure their trusted publisher in npm settings.
+
+## macOS signing
+
+The Release workflow signs the macOS binary with the Developer ID Application certificate for Consent Management Inc (team `738K38NVK6`). It uses the hardened runtime, a secure timestamp, and the identifier `com.inth.cli`. Keeping the identifier and team stable lets a Keychain **Always Allow** approval carry over to new CLI versions.
+
+CI builds the macOS package unsigned and uploads it as `unsigned-macOS-ARM64`. On `main`, the `sign-macos` job downloads it, signs the binary with `packages/cli/scripts/sign-macos-release.sh`, and uploads the result as `inth-macOS-ARM64`. The `test-signed-macos` job then runs the signed binary in a separate job without secrets. If signing or that test fails, nothing is published.
+
+The signing job is isolated from pull requests and dependencies:
+
+- Its secrets are stored in the `macos-signing` environment, which only `main` can deploy to. Pull requests, other branches, and forks cannot read them. They are not repository secrets.
+- It runs on a GitHub-hosted runner, checks out only the signing script, and uses system tools. It does not run `pnpm install`, repository build scripts, third-party actions, or the binary it signs.
+- The script imports the certificate into a temporary keychain and deletes it when the job ends.
+- `ci.yml` never receives signing secrets, including when `release.yml` calls it.
+
+Keep these properties when editing the workflows. Do not add the secrets at repository level, use `pull_request_target`, or pass `secrets: inherit` to `ci.yml`.
+
+Environment secrets:
+
+| Secret | Contents |
+| --- | --- |
+| `MACOS_CERTIFICATE` | Base64 `.p12` with the certificate, its private key, and Apple's Developer ID G2 intermediate |
+| `MACOS_CERTIFICATE_PASSWORD` | Password for the `.p12` |
+
+Both secrets are required. If either is missing, the signing job fails and the release does not publish.
+
+The binary is not notarized. npm and curl do not mark downloads as quarantined, so Gatekeeper does not check the npm-installed binary. Add notarization with `xcrun notarytool` and an App Store Connect API key before distributing the binary as a browser download, such as a GitHub release asset or Homebrew cask. The hardened runtime and secure timestamp that notarization requires are already in place.
+
+Only the Account Holder of the Apple Developer team can create Developer ID certificates. The certificate expires in September 2031. To replace it, generate a new key and certificate signing request, have the Account Holder issue a new Developer ID Application certificate, then update both certificate secrets:
+
+```sh
+base64 -i developer-id.p12 | gh secret set MACOS_CERTIFICATE --env macos-signing --repo inthhq/inth
+gh secret set MACOS_CERTIFICATE_PASSWORD --env macos-signing --repo inthhq/inth
+```
+
+If the private key leaks, ask the Account Holder to revoke the certificate at developer.apple.com, then issue a new one. Revoking a Developer ID certificate can invalidate binaries already signed with it, so contact Apple Developer Support to choose a revocation date.
