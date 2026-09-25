@@ -65,7 +65,7 @@ describe("agent sandbox errors", () => {
     expect(sandboxError(offline, "Cursor", STATE)).toMatchObject({
       code: "sandbox_restricted",
       message:
-        "Could not reach inth from Cursor's agent sandbox. Run this command outside the sandbox.",
+        "Could not reach inth. Cursor's agent sandbox may be blocking the connection. Run this command outside the sandbox.",
     });
   });
 

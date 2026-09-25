@@ -56,7 +56,7 @@ export const sandboxError = (
   if (error.message === NETWORK_FAILURE) {
     return new CliError(
       "sandbox_restricted",
-      `Could not reach inth from ${sandbox}'s agent sandbox. Run this command outside the sandbox.`
+      `Could not reach inth. ${sandbox}'s agent sandbox may be blocking the connection. Run this command outside the sandbox.`
     );
   }
   return error;
