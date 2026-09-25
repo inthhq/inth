@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { CliError } from "../src/cli-error.ts";
-import { agentSandbox, sandboxError } from "../src/sandbox.ts";
+import {
+  StateDirectoryError,
+  agentSandbox,
+  sandboxError,
+} from "../src/sandbox.ts";
 
 const STATE = "/Users/person/Library/Application Support/com.inth.cli";
 const lock = new Error("Cannot acquire the credential lock.");
@@ -39,6 +43,17 @@ describe("agent sandbox errors", () => {
         STATE
       )
     ).toMatchObject({ code: "sandbox_restricted" });
+    // `inth switch` tags the organization config write it shares with `inth link`.
+    expect(
+      sandboxError(
+        new StateDirectoryError("Cannot save organization configuration."),
+        "Cursor",
+        STATE
+      )
+    ).toMatchObject({
+      code: "sandbox_restricted",
+      message: `Cannot save organization configuration. Cursor's agent sandbox may be blocking writes to ${STATE}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`,
+    });
   });
 
   it("explains MCP config locks in the state directory", () => {

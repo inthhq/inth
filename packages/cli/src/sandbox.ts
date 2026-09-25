@@ -1,8 +1,16 @@
 /* eslint-disable prefer-named-capture-group -- Scriptc supports indexed regex captures. */
 import { CliError } from "./cli-error.ts";
 
-// Messages thrown only when the state directory cannot be written. Organization
-// config messages are excluded because `inth link` also uses them for <cwd>/.inth.
+// A state directory write whose message other paths share, such as `inth switch`
+// saving the organization config that `inth link` also writes to <cwd>/.inth.
+export class StateDirectoryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "StateDirectoryError";
+  }
+}
+
+// Messages thrown only when the state directory cannot be written.
 const STATE_FAILURES = new Set([
   "Cannot acquire the credential lock.",
   "Cannot create a private credential directory.",
@@ -57,7 +65,10 @@ export const sandboxError = (
         )
       : error;
   }
-  if (STATE_FAILURES.has(error.message)) {
+  if (
+    STATE_FAILURES.has(error.message) ||
+    error instanceof StateDirectoryError
+  ) {
     return new CliError("sandbox_restricted", `${error.message} ${blocked}`);
   }
   if (blocksState(error.message, stateDirectory)) {
