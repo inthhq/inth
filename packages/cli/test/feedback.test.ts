@@ -3,12 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import { parseArguments } from "../src/arguments.ts";
 import { NativeApi } from "../src/native/native-api.ts";
 import { buildResourceRequest } from "../src/resource-commands.ts";
+import { checkFeedbackIds } from "./fixtures/feedback.ts";
 
 const request = buildResourceRequest(
   parseArguments([
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -25,6 +24,10 @@ const result = (status: number, body: string) => ({
 });
 
 describe("feedback submission", () => {
+  it(
+    "generates a stable UUID per invocation for flags and JSON bodies",
+    checkFeedbackIds
+  );
   it("preserves the report and submission ID across an OAuth refresh and a duplicate submission", async () => {
     const post = vi
       .fn()

@@ -30,8 +30,6 @@ export const outputCases: OutputCase[] = [
   {
     args: [
       "feedback",
-      "--client-submission-id",
-      "d18367d4-d518-4e30-a723-752206b15877",
       "--category",
       "bug",
       "--surface",
@@ -45,8 +43,6 @@ export const outputCases: OutputCase[] = [
   {
     args: [
       "feedback",
-      "--client-submission-id",
-      "d18367d4-d518-4e30-a723-752206b15877",
       "--category",
       "bug",
       "--surface",

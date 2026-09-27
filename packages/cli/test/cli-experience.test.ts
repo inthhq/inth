@@ -24,7 +24,10 @@ describe("human help and machine discovery", () => {
         .filter((entry) => entry.required)
         .map((entry) => entry.name)
         .toSorted()
-    ).toEqual(["category", "client-submission-id", "message", "surface"]);
+    ).toEqual(["category", "message", "surface"]);
+    expect(feedback?.options).not.toContainEqual(
+      expect.objectContaining({ name: "client-submission-id" })
+    );
     expect(feedback?.options).not.toContainEqual(
       expect.objectContaining({ name: "organization" })
     );

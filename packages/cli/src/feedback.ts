@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+
+import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
 
 export const FEEDBACK_CATEGORIES = [
@@ -8,6 +11,22 @@ export const FEEDBACK_CATEGORIES = [
   "performance",
 ];
 export const FEEDBACK_SURFACES = ["api", "mcp", "cli", "docs", "sdk"];
+
+export const feedbackBody = (options: CliArguments, body: string): string => {
+  // SAFETY: Read only the optional ID; preserve the complete raw body for server validation.
+  const input = JSON.parse(body) as { clientSubmissionId?: string };
+  if (input.clientSubmissionId !== undefined) {
+    throw new CliError(
+      "usage_error",
+      "Submission IDs are generated automatically; omit clientSubmissionId from --data."
+    );
+  }
+  if (!options.feedbackSubmissionId) {
+    options.feedbackSubmissionId = randomUUID();
+  }
+  const contents = body.trim().slice(1, -1).trim();
+  return `{"clientSubmissionId":${JSON.stringify(options.feedbackSubmissionId)}${contents ? `,${contents}` : ""}}`;
+};
 
 const textFields = [
   { limit: 8000, name: "message" },
@@ -27,17 +46,6 @@ export const feedbackFieldJson = (name: string, input: string): string => {
     throw new CliError(
       "usage_error",
       `--${name} must contain 1 through ${field.limit} characters after trimming.`
-    );
-  }
-  if (
-    name === "client-submission-id" &&
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
-      value
-    )
-  ) {
-    throw new CliError(
-      "usage_error",
-      "--client-submission-id must be a UUID v4. Reuse it with the same report when retrying."
     );
   }
   let values: string[] = [];

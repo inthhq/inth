@@ -102,11 +102,6 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option("repository", "string", "Repository ID"),
   option("status", "string", "Filter or update the resource status"),
   option("request-id", "string", "Idempotency key for scan start retries"),
-  option(
-    "client-submission-id",
-    "string",
-    "UUID v4; reuse with the same report when retrying"
-  ),
   option("category", "string", "Feedback category", FEEDBACK_CATEGORIES),
   option(
     "surface",
@@ -217,7 +212,7 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
       "Sends the supplied report immediately. Follow the user's permission to send feedback.",
       "Report unexpected failures, misleading docs, missing capabilities, or workarounds. Do not report routine validation errors.",
       "Do not include credentials, personal data, customer payloads, or full transcripts.",
-      "Submit once per distinct issue. Reuse the submission ID and content for retries; changed content returns 409. Continue the original task if reporting fails.",
+      "Submit once per distinct issue. Continue the original task if reporting fails.",
       "Requires authentication, with no product scope or organization role. No credits charged. Ten new reports per caller per UTC clock hour; retries do not consume that quota.",
     ];
   }

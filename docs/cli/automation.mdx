@@ -143,7 +143,7 @@ New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`
 
 Use `inth feedback --help --json` to discover report fields. Follow the user's permission to send feedback to the Inth team. Report unexpected Inth failures, misleading documentation, missing capabilities, or workarounds once per distinct issue. Include expected and actual behavior and the failed request ID when available. Exclude routine validation errors, credentials, personal data, customer payloads, and full transcripts.
 
-Supply a UUID v4 with `--client-submission-id` and reuse it with unchanged content for retries. The response exposes `data.data.reference` and `data.data.alreadySubmitted`. Feedback uses any existing Inth credential without additional scopes or an organization selection. Continue the original task if submission fails. See [feedback commands](./commands#how-do-i-send-feedback-about-inth) for flags and limits.
+The response exposes `data.data.reference` and `data.data.alreadySubmitted`. Feedback uses any existing Inth credential without additional scopes or an organization selection. Continue the original task if submission fails. See [feedback commands](./commands#how-do-i-send-feedback-about-inth) for flags and limits.
 
 ## How do I discover command options and configure MCP?
 

@@ -7,12 +7,15 @@ export interface RequestCase {
   scopedPath?: string;
 }
 
+export const withoutSubmissionId = (
+  body: string | undefined
+): string | undefined =>
+  body?.replace(/"clientSubmissionId":"[0-9a-f-]+",/u, "");
+
 export const requestCases: RequestCase[] = [
   {
     args: [
       "feedback",
-      "--client-submission-id",
-      "d18367d4-d518-4e30-a723-752206b15877",
       "--category",
       "bug",
       "--surface",
@@ -20,7 +23,7 @@ export const requestCases: RequestCase[] = [
       "--message",
       "  Command failed  ",
     ],
-    body: '{"clientSubmissionId":"d18367d4-d518-4e30-a723-752206b15877","category":"bug","surface":"cli","message":"Command failed"}',
+    body: '{"category":"bug","surface":"cli","message":"Command failed"}',
     method: "POST",
     path: "/v1/feedback",
     scoped: false,
@@ -28,8 +31,6 @@ export const requestCases: RequestCase[] = [
   {
     args: [
       "feedback",
-      "--client-submission-id",
-      "d18367d4-d518-4e30-a723-752206b15877",
       "--category",
       "bug",
       "--surface",
@@ -51,7 +52,7 @@ export const requestCases: RequestCase[] = [
       "--client-version",
       "1.0",
     ],
-    body: '{"clientSubmissionId":"d18367d4-d518-4e30-a723-752206b15877","category":"bug","surface":"cli","message":"Command failed","expected":"A report","actual":"An error","reproduction":"Run the command","requestId":"req_123","operation":"inth project list","clientName":"test-agent","clientVersion":"1.0"}',
+    body: '{"category":"bug","surface":"cli","message":"Command failed","expected":"A report","actual":"An error","reproduction":"Run the command","requestId":"req_123","operation":"inth project list","clientName":"test-agent","clientVersion":"1.0"}',
     method: "POST",
     path: "/v1/feedback",
     scoped: false,
@@ -60,9 +61,9 @@ export const requestCases: RequestCase[] = [
     args: [
       "feedback",
       "--data",
-      '{"clientSubmissionId":"d18367d4-d518-4e30-a723-752206b15877","category":"bug","surface":"cli","message":"Command failed"}',
+      '{"category":"bug","surface":"cli","message":"Command failed"}',
     ],
-    body: '{"clientSubmissionId":"d18367d4-d518-4e30-a723-752206b15877","category":"bug","surface":"cli","message":"Command failed"}',
+    body: '{"category":"bug","surface":"cli","message":"Command failed"}',
     method: "POST",
     path: "/v1/feedback",
     scoped: false,
@@ -334,11 +335,14 @@ export const requestCases: RequestCase[] = [
 ];
 
 export const invalidRequests: string[][] = [
+  [
+    "feedback",
+    "--data",
+    '{"clientSubmissionId":"d18367d4-d518-4e30-a723-752206b15877","category":"bug","surface":"cli","message":"Command failed"}',
+  ],
   ["feedback"],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -349,8 +353,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -362,8 +364,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -375,8 +375,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -410,8 +408,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "invalid",
     "--surface",
@@ -421,8 +417,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -430,21 +424,9 @@ export const invalidRequests: string[][] = [
     "--message",
     "Command failed",
   ],
+  ["feedback", "--category", "bug", "--surface", "cli", "--message", " "],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
-    "--category",
-    "bug",
-    "--surface",
-    "cli",
-    "--message",
-    " ",
-  ],
-  [
-    "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -456,8 +438,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -467,8 +447,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -480,8 +458,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
@@ -493,8 +469,6 @@ export const invalidRequests: string[][] = [
   ],
   [
     "feedback",
-    "--client-submission-id",
-    "d18367d4-d518-4e30-a723-752206b15877",
     "--category",
     "bug",
     "--surface",
