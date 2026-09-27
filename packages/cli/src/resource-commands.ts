@@ -1,5 +1,6 @@
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
+import { feedbackFieldJson } from "./feedback.ts";
 
 export interface ResourceCommand {
   command: string;
@@ -34,6 +35,28 @@ const command = (
 
 // Public REST contract at monorepo PR #1756, commit 4e1d272f71971f7470bcbe25ce261472d7f0af16.
 export const RESOURCE_COMMANDS: ResourceCommand[] = [
+  command(
+    "feedback",
+    "",
+    "POST",
+    "/v1/feedback",
+    false,
+    false,
+    [
+      "client-submission-id",
+      "category",
+      "surface",
+      "message",
+      "expected",
+      "actual",
+      "reproduction",
+      "request-id",
+      "operation",
+      "client-name",
+      "client-version",
+    ],
+    ["client-submission-id", "category", "surface", "message"]
+  ),
   command("org", "list", "GET", "/v1/organizations", false, true),
   command("org", "get", "GET", "/v1/organizations/:id"),
   command(
@@ -240,7 +263,9 @@ const validateResourceId = (
   if (options.organization !== undefined && !spec.scoped) {
     throw new CliError(
       "usage_error",
-      "This command does not accept --organization; resource IDs resolve their own organization."
+      spec.command === "feedback"
+        ? "Feedback does not accept --organization; it belongs to the calling credential."
+        : "This command does not accept --organization; resource IDs resolve their own organization."
     );
   }
 };
@@ -328,7 +353,9 @@ const resourceBody = (
     if (value === undefined) {
       continue;
     }
-    if (name === "branding" || name === "trusted-origins") {
+    if (spec.command === "feedback") {
+      fields.push(feedbackFieldJson(name, value));
+    } else if (name === "branding" || name === "trusted-origins") {
       consent.push(fieldJson(name, value));
     } else {
       fields.push(fieldJson(name, value));

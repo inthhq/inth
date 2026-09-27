@@ -490,6 +490,18 @@ export const resourceSummary = (
     return listSummary(options, page, display).join("\n");
   }
   const [item] = page.data;
+  if (options.command === "feedback" && item) {
+    return [
+      heading(
+        item.alreadySubmitted
+          ? "Feedback already submitted"
+          : "Feedback submitted",
+        display
+      ),
+      "",
+      ...detailLines([field("Reference", item.reference)], display),
+    ].join("\n");
+  }
   if (!item || item.deleted === true || item.updated === true) {
     const lines = [heading(resultHeading(options), display)];
     if (options.id) {

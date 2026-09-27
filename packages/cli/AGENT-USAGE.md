@@ -98,6 +98,12 @@ Handle unfamiliar error codes as failures. New codes may be added without changi
 
 JSON mode does not imply approval or make commands read-only. `switch` and `link` change local defaults, and `logout` revokes the selected session. `org create` creates a server-side organization. The `api` command supports GET, POST, PATCH, and DELETE.
 
+## Feedback
+
+Use `inth feedback --help --json` to discover report fields. Follow the user's permission to send feedback to the Inth team. Report unexpected Inth failures, misleading documentation, missing capabilities, or workarounds once per distinct issue. Include expected and actual behavior and the failed request ID when available. Exclude routine validation errors, credentials, personal data, customer payloads, and full transcripts.
+
+Supply `--client-submission-id <uuid-v4>`, `--category <category>`, `--surface <surface>`, and `--message <message>`, or use `--data` with the complete API body. Reuse the submission ID with unchanged content for retries. With `--json`, read `data.data.reference` and `data.data.alreadySubmitted`. Any existing Inth credential works without additional scopes or an organization selection. No credits are charged. The limit is ten new reports per caller per UTC clock hour; retries do not consume that quota. Continue the original task if submission fails.
+
 ## Resource commands
 
 Use `inth --help --json` to discover commands and options. `project`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `billing`, and `region` expose the public REST resources. The [command reference](README.md#public-resource-commands) lists each operation and its required inputs.

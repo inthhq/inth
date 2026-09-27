@@ -11,6 +11,43 @@ import { resourceSummary } from "../src/resource-output.ts";
 import { keyIdentity } from "./fixtures/identity.ts";
 
 describe("human help and machine discovery", () => {
+  it("exposes feedback fields without requiring organization access or scopes", () => {
+    const feedback = COMMAND_METADATA.find(
+      (entry) => entry.command === "feedback"
+    );
+    expect(feedback).toMatchObject({
+      authentication: "browser-or-agent-or-api-key",
+      scopes: [],
+    });
+    expect(
+      feedback?.options
+        .filter((entry) => entry.required)
+        .map((entry) => entry.name)
+        .toSorted()
+    ).toEqual(["category", "client-submission-id", "message", "surface"]);
+    expect(feedback?.options).not.toContainEqual(
+      expect.objectContaining({ name: "organization" })
+    );
+    expect(feedback?.options).toContainEqual(
+      expect.objectContaining({
+        name: "category",
+        values: [
+          "bug",
+          "friction",
+          "docs_mismatch",
+          "feature_request",
+          "performance",
+        ],
+      })
+    );
+    expect(feedback?.options).toContainEqual(
+      expect.objectContaining({
+        description: expect.stringContaining("failed operation"),
+        name: "request-id",
+      })
+    );
+    expect(formatHelp("feedback")).toContain("Continue the original task");
+  });
   it("makes account sign-in discoverable in the first screen without protocol knowledge", () => {
     const firstScreen = formatHelp().split("\n").slice(0, 20).join("\n");
     expect(firstScreen).toContain("inth login --email <email> --json");

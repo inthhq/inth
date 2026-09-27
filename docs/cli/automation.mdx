@@ -139,6 +139,12 @@ For Inbox updates, read the item first and pass its `data.data.version` using `-
 
 New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`, `inbox.write`, and `billing.read` alongside the existing scopes. A person must run `inth login` again to grant these scopes to an older sign-in. API keys have fixed capabilities; they can read Inbox and billing but cannot use Code Audit or perform Inbox writes.
 
+## How should agents report problems with Inth?
+
+Use `inth feedback --help --json` to discover report fields. Follow the user's permission to send feedback to the Inth team. Report unexpected Inth failures, misleading documentation, missing capabilities, or workarounds once per distinct issue. Include expected and actual behavior and the failed request ID when available. Exclude routine validation errors, credentials, personal data, customer payloads, and full transcripts.
+
+Supply a UUID v4 with `--client-submission-id` and reuse it with unchanged content for retries. The response exposes `data.data.reference` and `data.data.alreadySubmitted`. Feedback uses any existing Inth credential without additional scopes or an organization selection. Continue the original task if submission fails. See [feedback commands](./commands#how-do-i-send-feedback-about-inth) for flags and limits.
+
 ## How do I discover command options and configure MCP?
 
 Bare `inth skills` opens a native picker. Use `inth skills --list --json` to read the bundled catalog offline through `data.skills`, or `inth skills --non-interactive --yes --skill c15t --agent claude-code` for unattended installation. An explicit `owner/repo` bypasses the picker; without one, installation defaults to `c15t/skills`. Installation uses `npx skills@1.5.25 add` and requires Node.js and npm. Installer option values are preserved; supported --option=value forms are normalized for the upstream parser. Installation and listing an explicit repository emit upstream terminal output; JSON is available for the bundled catalog and help.

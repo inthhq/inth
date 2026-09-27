@@ -27,6 +27,7 @@ const scanSchema = z.object({
 });
 const personSchema = z.object({ email: z.string(), name: z.string() });
 const itemSchema = scanSchema.extend({
+  alreadySubmitted: z.boolean().optional(),
   autoTopUp: z
     .object({
       enabled: z.boolean(),
@@ -97,6 +98,7 @@ const itemSchema = scanSchema.extend({
   prefix: z.string().nullable().optional(),
   preparationId: z.string().optional(),
   priority: z.string().nullable().optional(),
+  reference: z.string().optional(),
   role: z.string().optional(),
   scan: scanSchema.optional(),
   scanId: z.string().optional(),

@@ -21,6 +21,7 @@ Use `inth project` for consent projects, `inth code-audit` for repository scans,
 | `api-key list`, `api-key create --name <name>` | List or create organization API keys |
 | `api-key roll <id>`, `api-key delete <id>` | Rotate or revoke a key |
 | `billing` | Read the organization's plan and credit balance |
+| `feedback` | Send a report about Inth to the Inth team |
 | `code-audit repositories` | List connected repositories |
 | `code-audit scans` | List scans, optionally with `--repository` and `--status` |
 | `code-audit start --repository <id>` | Start a scan of the repository's production branch |
@@ -72,6 +73,28 @@ inth inbox update inbox_123 --status resolved --item-version 3
 ```
 
 Inbox updates require the version from the latest read. Supported statuses are `open`, `accepted`, `dismissed`, and `resolved`. After a version conflict, read the item again before updating it.
+
+## How do I send feedback about Inth?
+
+Use `inth feedback` for unexpected failures, misleading docs, missing capabilities, or workarounds. Reports go to the Inth team immediately. Follow the user's permission to send feedback, and exclude credentials, personal data, customer payloads, and full transcripts. Do not report routine validation errors.
+
+```sh
+inth feedback --client-submission-id '<uuid-v4>' \
+  --category bug --surface cli \
+  --message 'Project listing failed after sign-in' \
+  --expected 'A list of projects' --actual 'HTTP 500' \
+  --operation 'inth project list' --request-id '<failed-request-id>' --json
+```
+
+Generate a UUID v4 for each distinct issue. Keep the same ID and report content when retrying. A duplicate returns the original reference with `alreadySubmitted: true`; the same ID with different content returns HTTP 409. `--request-id` identifies the failed operation and is separate from the submission ID.
+
+Required flags are `--client-submission-id`, `--category`, `--surface`, and `--message`. Categories are `bug`, `friction`, `docs_mismatch`, `feature_request`, and `performance`. Surfaces are `api`, `mcp`, `cli`, `docs`, and `sdk`. Optional flags include `--expected`, `--actual`, `--reproduction`, `--request-id`, `--operation`, `--client-name`, and `--client-version`.
+
+You can instead pass the complete API body with `--data '<JSON object>'`. Use camelCase property names such as `clientSubmissionId`, `requestId`, `clientName`, and `clientVersion`. Do not combine `--data` with individual body flags. The server validates raw JSON bodies.
+
+Feedback accepts a saved browser or agent sign-in, or an organization API key. It requires no product scope, organization role, or `--organization` selection and charges no credits. The limit is ten new reports per caller per UTC clock hour; retries do not consume that quota. Continue the original task if reporting fails.
+
+Human output shows the ticket reference and whether it was already submitted. With `--json`, read `data.data.reference` and `data.data.alreadySubmitted`.
 
 ## Which commands send messages, expose secrets, or spend credits?
 
