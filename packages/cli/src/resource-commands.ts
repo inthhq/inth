@@ -1,6 +1,6 @@
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
-import { feedbackBody, feedbackFieldJson } from "./feedback.ts";
+import { feedbackFieldJson } from "./feedback.ts";
 
 export interface ResourceCommand {
   command: string;
@@ -54,7 +54,7 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
       "client-name",
       "client-version",
     ],
-    ["category", "surface", "message"]
+    ["category", "message"]
   ),
   command("org", "list", "GET", "/v1/organizations", false, true),
   command("org", "get", "GET", "/v1/organizations/:id"),
@@ -381,10 +381,8 @@ export const buildResourceRequest = (
   validateResourceId(options, spec);
   validateResourceOptions(options, spec);
   const suffix = resourceQuery(options, spec);
-  const body = resourceBody(options, spec);
   return {
-    body:
-      spec.command === "feedback" ? feedbackBody(options, body ?? "{}") : body,
+    body: resourceBody(options, spec),
     method: spec.method,
     path:
       spec.path.split(":id").join(encodeURIComponent(options.id)) +

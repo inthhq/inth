@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import { parseArguments } from "../src/arguments.ts";
 import { NativeApi } from "../src/native/native-api.ts";
 import { buildResourceRequest } from "../src/resource-commands.ts";
-import { checkFeedbackIds } from "./fixtures/feedback.ts";
 
 const request = buildResourceRequest(
   parseArguments([
@@ -24,11 +23,7 @@ const result = (status: number, body: string) => ({
 });
 
 describe("feedback submission", () => {
-  it(
-    "generates a stable UUID per invocation for flags and JSON bodies",
-    checkFeedbackIds
-  );
-  it("preserves the report and submission ID across an OAuth refresh and a duplicate submission", async () => {
+  it("preserves the report across an OAuth refresh and a duplicate submission", async () => {
     const post = vi
       .fn()
       .mockResolvedValueOnce(result(401, '{"success":false}'))
@@ -75,11 +70,11 @@ describe("feedback submission", () => {
   });
 
   it.each([
-    [409, "CONFLICT"],
-    [429, "RATE_LIMITED"],
+    [500, "INTERNAL_ERROR", null],
+    [429, "RATE_LIMITED", "RATE_LIMITED"],
   ] as const)(
     "returns HTTP %s with its request ID without resubmitting",
-    async (status, code) => {
+    async (status, code, apiCode) => {
       const post = vi.fn().mockResolvedValue(
         result(
           status,
@@ -98,7 +93,7 @@ describe("feedback submission", () => {
       await expect(
         api.execute(request.path, request.method, request.body)
       ).rejects.toMatchObject({
-        apiCode: code,
+        apiCode,
         message: expect.not.stringContaining("private report"),
         requestId: "feedback-request",
         status,

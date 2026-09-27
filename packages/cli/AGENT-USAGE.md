@@ -102,7 +102,7 @@ JSON mode does not imply approval or make commands read-only. `switch` and `link
 
 Use `inth feedback --help --json` to discover report fields. Follow the user's permission to send feedback to the Inth team. Report unexpected Inth failures, misleading documentation, missing capabilities, or workarounds once per distinct issue. Include expected and actual behavior and the failed request ID when available. Exclude routine validation errors, credentials, personal data, customer payloads, and full transcripts.
 
-Supply `--category <category>`, `--surface <surface>`, and `--message <message>`, or use `--data` with the API body. With `--json`, read `data.data.reference` and `data.data.alreadySubmitted`. Any existing Inth credential works without additional scopes or an organization selection. No credits are charged. The limit is ten new reports per caller per UTC clock hour; retries do not consume that quota. Continue the original task if submission fails.
+Supply `--category <category>` and `--message <message>`, or use `--data` with the API body. `--surface` is optional and accepts `api`, `mcp`, `cli`, `docs`, `sdk`, `dashboard`, or `other`. Identical reports from the same caller within a UTC day return the existing ticket. With `--json`, read `data.data.reference` and `data.data.alreadySubmitted`. Any existing Inth credential works without additional scopes or an organization selection. No credits are charged. The limit is ten new reports per caller per UTC clock hour; same-day duplicate reports do not consume that quota. Continue the original task if submission fails.
 
 ## Resource commands
 

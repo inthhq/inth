@@ -7,12 +7,55 @@ export interface RequestCase {
   scopedPath?: string;
 }
 
-export const withoutSubmissionId = (
-  body: string | undefined
-): string | undefined =>
-  body?.replace(/"clientSubmissionId":"[0-9a-f-]+",/u, "");
-
 export const requestCases: RequestCase[] = [
+  {
+    args: ["feedback", "--category", "bug", "--message", "Command failed"],
+    body: '{"category":"bug","message":"Command failed"}',
+    method: "POST",
+    path: "/v1/feedback",
+    scoped: false,
+  },
+  {
+    args: [
+      "feedback",
+      "--data",
+      '{"category":"bug","message":"Command failed"}',
+    ],
+    body: '{"category":"bug","message":"Command failed"}',
+    method: "POST",
+    path: "/v1/feedback",
+    scoped: false,
+  },
+  {
+    args: [
+      "feedback",
+      "--category",
+      "bug",
+      "--surface",
+      "dashboard",
+      "--message",
+      "Command failed",
+    ],
+    body: '{"category":"bug","surface":"dashboard","message":"Command failed"}',
+    method: "POST",
+    path: "/v1/feedback",
+    scoped: false,
+  },
+  {
+    args: [
+      "feedback",
+      "--category",
+      "friction",
+      "--surface",
+      "other",
+      "--message",
+      "Command failed",
+    ],
+    body: '{"category":"friction","surface":"other","message":"Command failed"}',
+    method: "POST",
+    path: "/v1/feedback",
+    scoped: false,
+  },
   {
     args: [
       "feedback",
@@ -335,11 +378,8 @@ export const requestCases: RequestCase[] = [
 ];
 
 export const invalidRequests: string[][] = [
-  [
-    "feedback",
-    "--data",
-    '{"clientSubmissionId":"d18367d4-d518-4e30-a723-752206b15877","category":"bug","surface":"cli","message":"Command failed"}',
-  ],
+  ["feedback", "--message", "Command failed"],
+  ["feedback", "--category", "bug"],
   ["feedback"],
   [
     "feedback",

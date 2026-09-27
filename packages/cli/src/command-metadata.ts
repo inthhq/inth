@@ -213,7 +213,7 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
       "Report unexpected failures, misleading docs, missing capabilities, or workarounds. Do not report routine validation errors.",
       "Do not include credentials, personal data, customer payloads, or full transcripts.",
       "Submit once per distinct issue. Continue the original task if reporting fails.",
-      "Requires authentication, with no product scope or organization role. No credits charged. Ten new reports per caller per UTC clock hour; retries do not consume that quota.",
+      "Requires authentication, with no product scope or organization role. No credits charged. Ten new reports per caller per UTC clock hour. Identical reports from the same caller within a UTC day return the existing reference without consuming that quota.",
     ];
   }
   const effects =

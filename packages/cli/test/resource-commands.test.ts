@@ -9,11 +9,7 @@ import {
   buildResourceRequest,
   rawApiRequest,
 } from "../src/resource-commands.ts";
-import {
-  requestCases,
-  invalidRequests,
-  withoutSubmissionId,
-} from "./fixtures/resource-requests.ts";
+import { requestCases, invalidRequests } from "./fixtures/resource-requests.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -24,8 +20,7 @@ afterEach(() => {
 describe("public resource commands", () => {
   it.each(requestCases)("routes $args to $method $path", async (example) => {
     const options = parseArguments(example.args);
-    const request = buildResourceRequest(options);
-    expect({ ...request, body: withoutSubmissionId(request.body) }).toEqual({
+    expect(buildResourceRequest(options)).toEqual({
       body: example.body,
       method: example.method,
       path: example.path,
@@ -51,17 +46,13 @@ describe("public resource commands", () => {
     expect(fetcher).toHaveBeenCalledExactlyOnceWith(
       url.href,
       expect.objectContaining({
-        body:
-          example.args[0] === "feedback" ? expect.any(String) : example.body,
+        body: example.body,
         headers: expect.objectContaining({
           Authorization: "Bearer inth_fixture",
         }),
         method: example.method,
         redirect: "error",
       })
-    );
-    expect(withoutSubmissionId(fetcher.mock.calls[0]?.[1]?.body)).toBe(
-      example.body
     );
     expect(resolve).toHaveBeenCalledTimes(example.scoped ? 1 : 0);
     expect(stdout).toHaveBeenCalledTimes(1);

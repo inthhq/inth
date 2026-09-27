@@ -85,13 +85,13 @@ inth feedback --category bug --surface cli \
   --operation 'inth project list' --request-id '<failed-request-id>' --json
 ```
 
-The CLI handles submission IDs and automatic retries internally. `--request-id` identifies the failed operation you are reporting.
+The API deduplicates identical reports from the same caller within a UTC day. Resending the same report returns the original reference with `alreadySubmitted: true`. Changed content or a new UTC day creates a new report. `--request-id` identifies the failed operation you are reporting.
 
-Required flags are `--category`, `--surface`, and `--message`. Categories are `bug`, `friction`, `docs_mismatch`, `feature_request`, and `performance`. Surfaces are `api`, `mcp`, `cli`, `docs`, and `sdk`. Optional flags include `--expected`, `--actual`, `--reproduction`, `--request-id`, `--operation`, `--client-name`, and `--client-version`.
+Only `--category` and `--message` are required. Categories are `bug`, `friction`, `docs_mismatch`, `feature_request`, and `performance`. The optional `--surface` accepts `api`, `mcp`, `cli`, `docs`, `sdk`, `dashboard`, and `other`. When omitted, the API uses the transport, `api`, in the ticket subject. Optional flags include `--expected`, `--actual`, `--reproduction`, `--request-id`, `--operation`, `--client-name`, and `--client-version`.
 
 You can instead pass the report fields with `--data '<JSON object>'`. Use camelCase property names such as `requestId`, `clientName`, and `clientVersion`. Do not combine `--data` with individual body flags. The server validates raw JSON bodies.
 
-Feedback accepts a saved browser or agent sign-in, or an organization API key. It requires no product scope, organization role, or `--organization` selection and charges no credits. The limit is ten new reports per caller per UTC clock hour; retries do not consume that quota. Continue the original task if reporting fails.
+Feedback accepts a saved browser or agent sign-in, or an organization API key. It requires no product scope, organization role, or `--organization` selection and charges no credits. The limit is ten new reports per caller per UTC clock hour; same-day duplicate reports do not consume that quota. Continue the original task if reporting fails.
 
 Human output shows the ticket reference and whether it was already submitted. With `--json`, read `data.data.reference` and `data.data.alreadySubmitted`.
 

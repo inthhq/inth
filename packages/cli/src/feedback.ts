@@ -1,6 +1,3 @@
-import { randomUUID } from "node:crypto";
-
-import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
 
 export const FEEDBACK_CATEGORIES = [
@@ -10,23 +7,15 @@ export const FEEDBACK_CATEGORIES = [
   "feature_request",
   "performance",
 ];
-export const FEEDBACK_SURFACES = ["api", "mcp", "cli", "docs", "sdk"];
-
-export const feedbackBody = (options: CliArguments, body: string): string => {
-  // SAFETY: Read only the optional ID; preserve the complete raw body for server validation.
-  const input = JSON.parse(body) as { clientSubmissionId?: string };
-  if (input.clientSubmissionId !== undefined) {
-    throw new CliError(
-      "usage_error",
-      "Submission IDs are generated automatically; omit clientSubmissionId from --data."
-    );
-  }
-  if (!options.feedbackSubmissionId) {
-    options.feedbackSubmissionId = randomUUID();
-  }
-  const contents = body.trim().slice(1, -1).trim();
-  return `{"clientSubmissionId":${JSON.stringify(options.feedbackSubmissionId)}${contents ? `,${contents}` : ""}}`;
-};
+export const FEEDBACK_SURFACES = [
+  "api",
+  "mcp",
+  "cli",
+  "docs",
+  "sdk",
+  "dashboard",
+  "other",
+];
 
 const textFields = [
   { limit: 8000, name: "message" },

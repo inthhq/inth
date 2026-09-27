@@ -8,11 +8,9 @@ import {
   buildResourceRequest,
   rawApiRequest,
 } from "../../src/resource-commands.ts";
-import { checkFeedbackIds } from "../fixtures/feedback.ts";
 import {
   requestCases,
   invalidRequests,
-  withoutSubmissionId,
 } from "../fixtures/resource-requests.ts";
 
 const check = (condition: boolean, message: string): void => {
@@ -21,7 +19,6 @@ const check = (condition: boolean, message: string): void => {
   }
 };
 let expectedMethod = "";
-checkFeedbackIds();
 let expectedUrl = "";
 let expectedBody: string | undefined;
 let calls = 0;
@@ -33,7 +30,7 @@ const verify = async (
 ): Promise<OAuthResponse> => {
   check(url === expectedUrl, `Wrong URL for ${expectedMethod}: ${url}`);
   check(method === expectedMethod, "Wrong HTTP method");
-  check(withoutSubmissionId(body) === expectedBody, "Wrong request body");
+  check(body === expectedBody, "Wrong request body");
   check(token === "inth_fixture", "Wrong bearer token");
   calls += 1;
   return {
@@ -58,10 +55,7 @@ for (const example of requestCases) {
   const request = buildResourceRequest(parseArguments(example.args));
   check(request.path === example.path, `Wrong command path: ${request.path}`);
   check(request.method === example.method, "Wrong command method");
-  check(
-    withoutSubmissionId(request.body) === example.body,
-    "Wrong command body"
-  );
+  check(request.body === example.body, "Wrong command body");
   check(request.scoped === example.scoped, "Wrong organization scope");
   check(
     !example.scoped || Boolean(example.scopedPath),

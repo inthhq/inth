@@ -13,7 +13,6 @@ export interface CliArguments {
   argument: string;
   id: string;
   values: { name: string; value: string }[];
-  feedbackSubmissionId?: string;
   token?: string;
   authMode?: string;
   name?: string;
