@@ -1,26 +1,26 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Explain failures inside Cursor's agent sandbox\n\nWhen Cursor's sandbox blocks the CLI state directory, the system credential store, or the Inth API, the CLI now returns the `sandbox_restricted` error code. The message names the likely block and asks you to run the command outside the sandbox. The install docs also explain how to install from a sandboxed agent terminal, including npm's misleading report of a root-owned cache.\n"
-    filename: 2026-09-25-agent-sandbox-errors.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Send feedback from the CLI\n\nAdd `inth feedback` to report Inth failures, documentation mismatches, and feature requests. Supports structured flags, JSON bodies and output, and existing sign-ins and API keys. Only category and message are required. The API deduplicates identical reports from the same caller within a UTC day. Rate-limit errors return immediately without waiting or retrying.\n"
+    filename: 2026-09-27-feedback-command.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-09-25-agent-sandbox-errors.md
+      - 2026-09-27-feedback-command.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-09-25-agent-sandbox-errors.md
+      - 2026-09-27-feedback-command.md
     id: npm:@inth/cli-linux-arm64
     updated: true
   - changelogIds:
-      - 2026-09-25-agent-sandbox-errors.md
+      - 2026-09-27-feedback-command.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-09-25-agent-sandbox-errors.md
+      - 2026-09-27-feedback-command.md
     id: npm:@inth/cli-win32-x64
     updated: true
   - changelogIds:
-      - 2026-09-25-agent-sandbox-errors.md
+      - 2026-09-27-feedback-command.md
     id: npm:@inth/cli
     updated: true
 npm:packages:
