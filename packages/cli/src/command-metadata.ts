@@ -1,3 +1,4 @@
+import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { RESOURCE_COMMANDS } from "./resource-commands.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
@@ -101,6 +102,28 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option("repository", "string", "Repository ID"),
   option("status", "string", "Filter or update the resource status"),
   option("request-id", "string", "Idempotency key for scan start retries"),
+  option("category", "string", "Feedback category", FEEDBACK_CATEGORIES),
+  option(
+    "surface",
+    "string",
+    "Inth interface the report concerns",
+    FEEDBACK_SURFACES
+  ),
+  option("message", "string", "Feedback summary, up to 8000 characters"),
+  option("expected", "string", "Expected behavior, up to 2000 characters"),
+  option("actual", "string", "Actual behavior, up to 2000 characters"),
+  option("reproduction", "string", "Steps to reproduce, up to 4000 characters"),
+  option("operation", "string", "Affected operation, up to 255 characters"),
+  option(
+    "client-name",
+    "string",
+    "Reporting client name, up to 100 characters"
+  ),
+  option(
+    "client-version",
+    "string",
+    "Reporting client version, up to 100 characters"
+  ),
   option(
     "item-version",
     "integer",
@@ -139,6 +162,10 @@ export const commandOptions = (
     [...baseOptions, ...names].includes(item.name)
   ).map((item) => ({
     ...item,
+    description:
+      item.name === "request-id" && group === "feedback"
+        ? "Request ID from the failed operation, up to 128 characters"
+        : item.description,
     required: required.includes(item.name),
     values:
       item.name === "status" && group === "inbox"
@@ -146,6 +173,7 @@ export const commandOptions = (
         : item.values,
   }));
 const descriptions = [
+  ["feedback", "Send feedback about Inth to the Inth team"],
   ["org list", "List organizations"],
   ["org get", "Read an organization"],
   ["org create", "Create an organization"],
@@ -179,6 +207,15 @@ const descriptions = [
   ["inbox github-issue", "Create a GitHub issue for a finding"],
 ];
 const resourceEffects = (spec: ResourceCommand): string[] => {
+  if (spec.command === "feedback") {
+    return [
+      "Sends the supplied report immediately. Follow the user's permission to send feedback.",
+      "Report unexpected failures, misleading docs, missing capabilities, or workarounds. Do not report routine validation errors.",
+      "Do not include credentials, personal data, customer payloads, or full transcripts.",
+      "Submit once per distinct issue. Continue the original task if reporting fails.",
+      "Requires authentication, with no product scope or organization role. No credits charged. Ten new reports per caller per UTC clock hour. Identical reports from the same caller within a UTC day return the existing reference without consuming that quota.",
+    ];
+  }
   const effects =
     spec.method === "GET" ? [] : ["Writes take effect immediately."];
   if (
@@ -221,10 +258,11 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   if (family === "api-key") {
     family = "api-keys";
   }
-  const scopes =
-    spec.command === "region" ? [] : [`${family}.${write ? "write" : "read"}`];
+  const scopes = ["region", "feedback"].includes(spec.command)
+    ? []
+    : [`${family}.${write ? "write" : "read"}`];
   const keyAllowed =
-    spec.command === "region" ||
+    ["feedback", "region"].includes(spec.command) ||
     spec.command === "project" ||
     (!write && ["org", "api-key", "inbox", "billing"].includes(spec.command));
   const usage = `inth ${key}${spec.path.includes(":id") ? " <id>" : ""}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;

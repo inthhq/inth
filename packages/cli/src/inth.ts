@@ -290,7 +290,11 @@ const run = async (options: CliArguments): Promise<void> => {
     () => context.selectedConnection(),
     environment
   );
-  const http = nativeHttp(controller.signal, nativeClock(controller.signal));
+  const http = nativeHttp(
+    controller.signal,
+    nativeClock(controller.signal),
+    options.command !== "feedback"
+  );
   const getStore = (): NativeStore => {
     mkdirSync(dirname(directory), { recursive: true });
     if (prepareDirectory(directory) !== 0) {

@@ -28,6 +28,32 @@ export interface OutputCase {
 }
 export const outputCases: OutputCase[] = [
   {
+    args: [
+      "feedback",
+      "--category",
+      "bug",
+      "--surface",
+      "cli",
+      "--message",
+      "Command failed",
+    ],
+    body: '{"success": true, "data": {"reference": "FDB-123", "alreadySubmitted": false}}',
+    expected: ["Feedback submitted", "Reference", "FDB-123"],
+  },
+  {
+    args: [
+      "feedback",
+      "--category",
+      "bug",
+      "--surface",
+      "cli",
+      "--message",
+      "Command failed",
+    ],
+    body: '{"success": true, "data": {"reference": "FDB-123", "alreadySubmitted": true}}',
+    expected: ["Feedback already submitted", "Reference", "FDB-123"],
+  },
+  {
     args: ["billing"],
     body: billingBody,
     expected: [

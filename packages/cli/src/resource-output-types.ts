@@ -25,6 +25,8 @@ export interface FindingDetails {
   files?: string[];
 }
 export interface ResourceItem extends ScanDetails {
+  reference?: string;
+  alreadySubmitted?: boolean;
   name?: string;
   slug?: string;
   role?: string;
