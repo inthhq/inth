@@ -269,7 +269,8 @@ export const run = async (
   const http = new HttpClient(
     (url, init) => fetch(url, init),
     systemClock(signal),
-    signal
+    signal,
+    options.command !== "feedback"
   );
   const getStore = async () => {
     const { platformStore } = await import("./store.ts");

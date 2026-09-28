@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { run } from "../experiments/node/commands.ts";
 import { parseArguments } from "../src/arguments.ts";
 import { NativeApi } from "../src/native/native-api.ts";
 import { buildResourceRequest } from "../src/resource-commands.ts";
@@ -23,6 +24,55 @@ const result = (status: number, body: string) => ({
 });
 
 describe("feedback submission", () => {
+  it("returns a quota error through the command HTTP layer without waiting for Retry-After", async () => {
+    const fetcher = vi.fn().mockResolvedValue(
+      Response.json(
+        { error: { code: "RATE_LIMITED" }, success: false },
+        {
+          headers: {
+            "Retry-After": "3600",
+            "X-Request-Id": "feedback-quota",
+          },
+          status: 429,
+        }
+      )
+    );
+    vi.stubGlobal("fetch", fetcher);
+    vi.stubEnv("INTH_DEV_API_ORIGIN", "");
+    vi.stubEnv("INTH_DEV_DASHBOARD_ORIGIN", "");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1000);
+    try {
+      await expect(
+        run(
+          [
+            "feedback",
+            "--category",
+            "bug",
+            "--message",
+            "Test report",
+            "--json",
+            "--token",
+            "inth_test",
+          ],
+          controller.signal
+        )
+      ).rejects.toMatchObject({
+        code: "RATE_LIMITED",
+        requestId: "feedback-quota",
+        status: 429,
+      });
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      expect(fetcher).toHaveBeenCalledWith(
+        "https://api.inth.com/v1/feedback",
+        expect.objectContaining({ method: "POST" })
+      );
+    } finally {
+      clearTimeout(timeout);
+      vi.unstubAllGlobals();
+      vi.unstubAllEnvs();
+    }
+  });
   it("preserves the report across an OAuth refresh and a duplicate submission", async () => {
     const post = vi
       .fn()

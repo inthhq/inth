@@ -16,7 +16,7 @@ Every device-token and refresh request includes the API resource. Saved credenti
 
 Logout sends the refresh token to the discovered revocation endpoint, then clears local credentials. If revocation fails, it still clears local credentials and reports that remote sign-out needs checking in the dashboard. An unavailable OS store is an error; the CLI never falls back to plaintext token files.
 
-All requests reject redirects. Authenticated API requests must stay under `https://api.inth.com/v1/`. HTTP 429 responses honor `Retry-After` seconds or HTTP dates, with at most three retries. Errors include the response's `X-Request-Id` when available. Raw response bodies and supplied keys are excluded from error messages.
+All requests reject redirects. Authenticated API requests must stay under `https://api.inth.com/v1/`. Feedback returns HTTP 429 errors immediately without retrying. Other HTTP 429 responses honor `Retry-After` seconds or HTTP dates, with at most three retries. Errors include the response's `X-Request-Id` when available. Raw response bodies and supplied keys are excluded from error messages.
 
 ## Auth.md credentials
 

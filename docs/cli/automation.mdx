@@ -101,7 +101,7 @@ Exit codes are `0` for success, `1` for failure, and `130` for handled cancellat
 | `authentication_expired` | Device approval expired |
 | `organization_required` | No organizations are available |
 | `organization_unavailable` | The requested organization is not in the accessible list |
-| `rate_limited` | HTTP 429 remains after the CLI's bounded Retry-After retries |
+| `rate_limited` | HTTP 429, returned immediately for feedback or after bounded Retry-After retries for other commands |
 | `invalid_response` | The server returned malformed JSON or an invalid protocol response |
 | `revocation_failed` | Remote logout could not be confirmed |
 | `http_error` | Another HTTP failure |

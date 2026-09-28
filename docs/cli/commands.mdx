@@ -91,7 +91,7 @@ Only `--category` and `--message` are required. Categories are `bug`, `friction`
 
 You can instead pass the report fields with `--data '<JSON object>'`. Use camelCase property names such as `requestId`, `clientName`, and `clientVersion`. Do not combine `--data` with individual body flags. The server validates raw JSON bodies.
 
-Feedback accepts a saved browser or agent sign-in, or an organization API key. It requires no product scope, organization role, or `--organization` selection and charges no credits. The limit is ten new reports per caller per UTC clock hour; same-day duplicate reports do not consume that quota. Continue the original task if reporting fails.
+Feedback accepts a saved browser or agent sign-in, or an organization API key. It requires no product scope, organization role, or `--organization` selection and charges no credits. The limit is ten new reports per caller per UTC clock hour; same-day duplicate reports do not consume that quota. Feedback returns HTTP 429 errors immediately without waiting or retrying. Continue the original task if reporting fails.
 
 Human output shows the ticket reference and whether it was already submitted. With `--json`, read `data.data.reference` and `data.data.alreadySubmitted`.
 
