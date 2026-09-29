@@ -256,6 +256,74 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
     );
   });
 
+  test("reports wget's failure reason when curl is unavailable", async () => {
+    // A PATH with the installer's tools but no curl, and a wget stub that
+    // answers the metadata request and fails the download like GNU wget.
+    const bin = await temporary();
+    const tools = [
+      "base64",
+      "basename",
+      "cat",
+      "chmod",
+      "cp",
+      "cut",
+      "dirname",
+      "getconf",
+      "grep",
+      "head",
+      "ls",
+      "mkdir",
+      "mktemp",
+      "mv",
+      "od",
+      "openssl",
+      "rm",
+      "sed",
+      "sh",
+      "sha512sum",
+      "shasum",
+      "sysctl",
+      "tail",
+      "tar",
+      "tr",
+      "uname",
+    ].map((tool) => ({
+      found: spawnSync("sh", ["-c", `command -v ${tool}`], {
+        encoding: "utf-8",
+      }).stdout.trim(),
+      tool,
+    }));
+    await Promise.all(
+      tools
+        .filter(({ found }) => found.startsWith("/"))
+        .map(({ found, tool }) => symlink(found, path.join(bin, tool)))
+    );
+    await executable(
+      path.join(bin, "wget"),
+      [
+        "#!/bin/sh",
+        'if [ "$1" = "--quiet" ]; then',
+        `  printf '%s' '{"version":"9.9.9","dist":{"tarball":"http://127.0.0.1:9/missing.tgz","integrity":"sha512-AAAA"}}'`,
+        "  exit 0",
+        "fi",
+        'echo "--2026-09-29 17:40:00--  http://127.0.0.1:9/missing.tgz" >&2',
+        'echo "HTTP request sent, awaiting response... 404 Not Found" >&2',
+        'echo "2026-09-29 17:40:00 ERROR 404: Not Found." >&2',
+        "exit 8",
+        "",
+      ].join("\n")
+    );
+
+    const result = await install("Linux", "x86_64", "http://127.0.0.1:9", {
+      PATH: bin,
+    });
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe(
+      "inth install: Could not download http://127.0.0.1:9/missing.tgz. 2026-09-29 17:40:00 ERROR 404: Not Found.\n"
+    );
+  });
+
   test("installs the release pinned by INTH_VERSION", async () => {
     const tarball = await archive();
     const server = await registry(tarball, sha512(tarball));

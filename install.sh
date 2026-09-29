@@ -111,7 +111,12 @@ download() {
   if has curl; then
     curl --fail --silent --show-error --location --retry 3 --output "$2" "$1"
   else
-    wget --quiet --output-document="$2" "$1"
+    # --quiet would also hide the failure reason, and BusyBox wget lacks
+    # --no-verbose, so log everything and report wget's last line on failure.
+    wget --output-document="$2" "$1" 2>"$tmp/wget.log" || {
+      grep . "$tmp/wget.log" | tail -n 1 >&2
+      return 1
+    }
   fi
 }
 
