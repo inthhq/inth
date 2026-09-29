@@ -22,11 +22,23 @@ say() {
 
 fail() {
   # Clear an unfinished progress line so the error starts on a clean line.
-  if [ -n "${progress_open:-}" ] && [ -t 2 ]; then
-    printf '\r\033[K' >&2
+  # Descriptor 4 is the terminal the progress line was written to, even inside
+  # command substitutions that capture standard output.
+  if [ -n "${progress_open:-}" ]; then
+    printf '\r\033[K' >&4
   fi
   printf 'inth install: %s\n' "$*" >&2
   exit 1
+}
+
+# Runs a command with its diagnostics held back, so fail() can clear the
+# progress line before they appear. detail prints them on one line.
+quietly() {
+  "$@" 2>"$tmp/error"
+}
+
+detail() {
+  tr '\n' ' ' <"$tmp/error" 2>/dev/null | sed 's/ *$//'
 }
 
 has() {
@@ -207,7 +219,8 @@ on_path() {
 # outcome stays on screen. Piped output and logs keep the line.
 progress() {
   if [ -n "$live" ]; then
-    printf '%s' "$1"
+    exec 4>&1
+    printf '%s' "$1" >&4
     progress_open=1
   else
     say "$1"
@@ -216,7 +229,7 @@ progress() {
 
 clear_progress() {
   if [ -n "${progress_open:-}" ]; then
-    printf '\r%s[K' "$esc"
+    printf '\r%s[K' "$esc" >&4
     progress_open=""
   fi
 }
@@ -226,24 +239,53 @@ say_command() {
   say "    $cyan$1$reset"
 }
 
+# Escapes a path for the double-quoted strings in shell profiles and for fish.
+escape_double() {
+  printf '%s' "$1" | sed 's/[\\"$`]/\\&/g'
+}
+
+escape_fish() {
+  printf '%s' "$1" | sed 's/[\\"$]/\\&/g'
+}
+
+# Escapes text for a single-quoted shell argument.
+escape_single() {
+  printf '%s' "$1" | sed "s/'/'\\\\''/g"
+}
+
 # The shell profile line that adds a directory to PATH. Paths under the home
-# directory are written with $HOME so the line stays portable.
+# directory keep a live $HOME prefix so the line stays portable; the rest of
+# the path is escaped so any directory name survives each quoting layer.
+# The printed command keeps $HOME and ~ literal for the reader's shell to expand.
+# shellcheck disable=SC2016,SC2088
 path_command() {
-  directory=$1
-  case "$directory" in
-    "$HOME"/*) directory="\$HOME${directory#"$HOME"}" ;;
+  prefix=""
+  rest=$1
+  case "$1" in
+    "$HOME"/*)
+      prefix='$HOME'
+      rest=${1#"$HOME"}
+      ;;
   esac
   case "$(basename "${SHELL:-sh}")" in
-    fish) printf '%s' "fish_add_path \"$directory\"" ;;
-    zsh) printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.zshrc" ;;
+    fish)
+      printf '%s' "fish_add_path \"$prefix$(escape_fish "$rest")\""
+      return
+      ;;
+    zsh) profile="~/.zshrc" ;;
     bash)
+      profile="~/.bashrc"
       if [ "$(uname -s)" = Darwin ]; then
-        printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.bash_profile"
-      else
-        printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.bashrc"
+        profile="~/.bash_profile"
       fi
       ;;
-    *) printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.profile" ;;
+    *) profile="~/.profile" ;;
+  esac
+  line="export PATH=\"$prefix$(escape_double "$rest"):\$PATH\""
+  # echo rewrites backslashes in zsh and some sh builds; printf does not.
+  case "$rest" in
+    *\\*) printf '%s' "printf '%s\\n' '$(escape_single "$line")' >> $profile" ;;
+    *) printf '%s' "echo '$(escape_single "$line")' >> $profile" ;;
   esac
 }
 
@@ -277,10 +319,11 @@ main() {
     *) fail "The registry did not return a download URL for $package@$version." ;;
   esac
 
-  download "$tarball" "$tmp/package.tgz" || fail "Could not download $tarball."
+  quietly download "$tarball" "$tmp/package.tgz" ||
+    fail "Could not download $tarball. $(detail)"
   verify_integrity "$tmp/package.tgz" "$integrity"
-  tar -xzf "$tmp/package.tgz" -C "$tmp" package/bin/inth ||
-    fail "The downloaded archive does not contain the inth executable."
+  quietly tar -xzf "$tmp/package.tgz" -C "$tmp" package/bin/inth ||
+    fail "The downloaded archive does not contain the inth executable. $(detail)"
 
   # Run the new executable before replacing a working installation.
   installed=$(INTH_TELEMETRY_DISABLED=1 "$tmp/package/bin/inth" --version 2>&1) ||
@@ -291,11 +334,16 @@ main() {
     previous=$(INTH_TELEMETRY_DISABLED=1 "$install_dir/inth" --version 2>/dev/null || true)
   fi
 
-  mkdir -p "$install_dir" || fail "Could not create $install_dir. Set INTH_INSTALL_DIR to a writable directory."
+  unwritable="Set INTH_INSTALL_DIR to a writable directory."
+  quietly mkdir -p "$install_dir" ||
+    fail "Could not create $install_dir. $unwritable $(detail)"
   staged="$install_dir/.inth.$$"
-  cp "$tmp/package/bin/inth" "$staged" || fail "Could not write to $install_dir. Set INTH_INSTALL_DIR to a writable directory."
-  chmod 755 "$staged"
-  mv -f "$staged" "$install_dir/inth"
+  quietly cp "$tmp/package/bin/inth" "$staged" ||
+    fail "Could not write to $install_dir. $unwritable $(detail)"
+  quietly chmod 755 "$staged" ||
+    fail "Could not make $staged executable. $(detail)"
+  quietly mv -f "$staged" "$install_dir/inth" ||
+    fail "Could not replace $install_dir/inth. $unwritable $(detail)"
 
   location=$(tilde "$install_dir/inth")
   clear_progress

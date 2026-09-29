@@ -56,7 +56,12 @@ const archive = async () => {
 const sha512 = (contents: Buffer) =>
   `sha512-${createHash("sha512").update(contents).digest("base64")}`;
 
-const registry = async (tarball: Buffer, integrity: string) => {
+// Serves version metadata and the tarball; any other .tgz path answers 404.
+const registry = async (
+  tarball: Buffer,
+  integrity: string,
+  tarballPath = "/package.tgz"
+) => {
   const requests: string[] = [];
   let url = "";
   const server = createServer((request, response) => {
@@ -65,10 +70,15 @@ const registry = async (tarball: Buffer, integrity: string) => {
       response.end(tarball);
       return;
     }
+    if (request.url?.endsWith(".tgz")) {
+      response.statusCode = 404;
+      response.end();
+      return;
+    }
     response.setHeader("content-type", "application/json");
     response.end(
       JSON.stringify({
-        dist: { integrity, tarball: `${url}/package.tgz` },
+        dist: { integrity, tarball: `${url}${tarballPath}` },
         version: "9.9.9",
       })
     );
@@ -184,6 +194,44 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
     expect(result.code).toBe(0);
     expect(result.stdout).not.toContain("is not on your PATH");
     expect(result.stdout).not.toContain("comes first on your PATH");
+  });
+
+  test("prints a PATH hint that survives quotes in the directory name", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+    const home = await temporary();
+    const installDir = path.join(home, "bin 'a' \"b\" $c `d`");
+
+    const result = await install("Linux", "x86_64", server.url, {
+      HOME: home,
+      INTH_INSTALL_DIR: installDir,
+      SHELL: "/bin/sh",
+    });
+
+    const hint = result.stdout
+      .split("\n")
+      .find((line) => line.startsWith("    echo "));
+    expect(hint).toContain(">> ~/.profile");
+    // Running the printed line and sourcing the profile must yield the directory.
+    spawnSync("sh", ["-c", hint?.trim() ?? "false"], { env: { HOME: home } });
+    const sourced = spawnSync(
+      "sh",
+      ["-c", '. "$HOME/.profile"; printf %s "${PATH%%:*}"'],
+      { encoding: "utf-8", env: { HOME: home, PATH: "/usr/bin:/bin" } }
+    );
+    expect(sourced.stdout).toBe(installDir);
+  });
+
+  test("reports a failed download on one line with the downloader's reason", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball), "/missing.tgz");
+
+    const result = await install("Linux", "x86_64", server.url);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toMatch(
+      /^inth install: Could not download http:\/\/127\.0\.0\.1:\d+\/missing\.tgz\. \S.*404.*\n$/u
+    );
   });
 
   test("installs the release pinned by INTH_VERSION", async () => {
