@@ -551,7 +551,7 @@ if (updateNotifier && !controller.signal.aborted) {
       colorEnabled(Boolean(process.stderr.isTTY))
     );
     if (notice) {
-      console.error(notice);
+      console.error(`\n${notice}`);
     }
   } catch {
     // The notice is optional and must not change the command's result.

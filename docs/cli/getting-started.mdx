@@ -60,8 +60,7 @@ inth update --check --json
 An interactive command checks npm for the latest `@inth/cli` version at most once a day. The check runs alongside the command. If a newer release exists, the CLI prints this to stderr after the command finishes:
 
 ```text
-A new version of inth is available: 0.0.4 -> 0.0.5.
-Run `inth update` to update.
+Update available 0.0.4 → 0.0.5 · Run inth update
 ```
 
 The notice appears at most once a day. The check sends one request to `registry.npmjs.org` with no account, installation, or command details. It can add up to 1.5 seconds to one command a day when npm responds slowly.

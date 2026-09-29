@@ -1,7 +1,7 @@
 /* eslint-disable prefer-named-capture-group -- Scriptc uses indexed regex captures. */
 // Update policy shared by the native CLI and its unit tests. Keep native
 // bindings out of this module so Vitest can exercise it under Node.
-import { style, wrapText } from "./display.ts";
+import { padText, style, textWidth } from "./display.ts";
 
 export const DEFAULT_REGISTRY = "https://registry.npmjs.org";
 export const INSTALL_SCRIPT_URL = "https://inth.com/cli/install.sh";
@@ -274,6 +274,15 @@ export const updateNoticeDue = (
 ): boolean =>
   newerVersion(state.latest, current) && elapsed(state.notifiedAt, now);
 
+export const releaseNotesUrl = (version: string): string =>
+  `https://github.com/inthhq/inth/releases/tag/inth@${version}`;
+
+// Output follows the rest of the CLI: bold green results, dim row labels, and
+// commands on their own line in bold cyan so they copy cleanly.
+const versionChange = (from: string, to: string, color: boolean): string =>
+  `${style(from, "2", color)} → ${style(to, "1", color)}`;
+
+/** One line after an interactive command, wrapped before "Run" when narrow */
 export const formatUpdateNotice = (
   current: string,
   latest: string,
@@ -282,5 +291,50 @@ export const formatUpdateNotice = (
   color = false
 ): string => {
   const width = Math.max(20, columns - 1);
-  return `${wrapText(`A new version of inth is available: ${current} -> ${latest}.`, width)}\nRun \`${style(command, "1", color)}\` to update.`;
+  const available = `Update available ${current} → ${latest}`;
+  const run = `Run ${command}`;
+  const separator = textWidth(`${available} · ${run}`) <= width ? " · " : "\n";
+  return `${style("Update available", "1", color)} ${versionChange(current, latest, color)}${separator}Run ${style(command, "1;36", color)}`;
 };
+
+const rows = (entries: string[][], color: boolean): string[] => {
+  const size = Math.max(...entries.map((entry) => textWidth(entry[0] ?? "")));
+  return entries.map(
+    ([label = "", value = ""]) =>
+      `  ${style(padText(label, size), "2", color)}  ${value}`
+  );
+};
+
+/** The result of `inth update --check`, or of `inth update` with nothing to install */
+export const formatUpdateCheck = (
+  current: string,
+  latest: string,
+  next: string,
+  command: string,
+  color = false
+): string => {
+  if (!newerVersion(latest, current)) {
+    return style(`inth ${current} is up to date`, "1;32", color);
+  }
+  const lines = [
+    `${style("Update available", "1", color)} ${versionChange(current, latest, color)}`,
+    ...rows([["Release notes", releaseNotesUrl(latest)]], color),
+    "",
+    next,
+  ];
+  if (command) {
+    lines.push("", style(`    ${command}`, "1;36", color));
+  }
+  return lines.join("\n");
+};
+
+/** The result of a package-manager update. The install script prints its own. */
+export const formatUpdateResult = (
+  previous: string,
+  latest: string,
+  color = false
+): string =>
+  [
+    style(`Updated inth ${previous} → ${latest}`, "1;32", color),
+    ...rows([["Release notes", releaseNotesUrl(latest)]], color),
+  ].join("\n");
