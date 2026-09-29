@@ -180,7 +180,7 @@ export class UpdateNotifier {
 // Replace the running executable by rerunning the install script. The script
 // is downloaded to a file first so a failed download cannot run a partial script.
 const INSTALLER = `set -eu
-script=$(mktemp)
+script=$(mktemp 2>/dev/null || mktemp -t inth)
 trap 'rm -f "$script"' EXIT
 if command -v curl >/dev/null 2>&1; then
   curl -fsSL "$1" -o "$script"
