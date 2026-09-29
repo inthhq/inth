@@ -42,7 +42,11 @@ describe("installMethod", () => {
     ],
     [
       "/Users/a/Library/pnpm/store/v11/links/@inth/cli-darwin-arm64/0.0.4/820e125f/node_modules/@inth/cli-darwin-arm64/bin/inth",
-      "pnpm",
+      "pnpm-virtual-store",
+    ],
+    [
+      "/work/site/node_modules/.pnpm-store/v10/links/@inth/cli-linux-x64/0.0.4/820e125f/node_modules/@inth/cli-linux-x64/bin/inth",
+      "pnpm-virtual-store",
     ],
     [
       "/Users/a/.bun/install/global/node_modules/@inth/cli-darwin-arm64/bin/inth",
@@ -115,6 +119,9 @@ describe("update commands", () => {
     expect(automaticUpdate("project", "linux")).toBe(false);
     expect(updateCommand("project", "linux", "/work/site")).toBe("");
     expect(automaticUpdate("temporary", "linux")).toBe(false);
+    // Global installations and project dependencies share this location.
+    expect(automaticUpdate("pnpm-virtual-store", "linux")).toBe(false);
+    expect(updateCommand("pnpm-virtual-store", "linux", "/unused")).toBe("");
   });
 
   test("limits the launch notice to global installations", () => {
@@ -122,6 +129,7 @@ describe("update commands", () => {
     expect(updateNoticeMethod("pnpm")).toBe(true);
     expect(updateNoticeMethod("project")).toBe(false);
     expect(updateNoticeMethod("temporary")).toBe(false);
+    expect(updateNoticeMethod("pnpm-virtual-store")).toBe(false);
     expect(updateNoticeMethod("development")).toBe(false);
   });
 });

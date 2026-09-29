@@ -53,7 +53,7 @@ inth update --check
 inth update --check --json
 ```
 
-In three cases `inth update` prints the command to run instead of running it: when `@inth/cli` is a project dependency, when it runs through `npx`, `pnpm dlx`, or `bunx`, and on Windows, which cannot replace a running `inth.exe`.
+`inth update` prints what to run instead of running it when `@inth/cli` is a project dependency, when it runs through `npx`, `pnpm dlx`, or `bunx`, and on Windows, which cannot replace a running `inth.exe`. It does the same when pnpm's global virtual store holds the CLI, because global installations and project dependencies share that location.
 
 ## When does the CLI announce a new release?
 

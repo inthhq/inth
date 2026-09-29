@@ -13,6 +13,7 @@ export type InstallMethod =
   | "standalone"
   | "npm"
   | "pnpm"
+  | "pnpm-virtual-store"
   | "bun"
   | "yarn"
   | "temporary"
@@ -40,14 +41,15 @@ export const installMethod = (
   if (/\/yarn\/(?:data\/)?global\/node_modules\//iu.test(path)) {
     return "yarn";
   }
-  // pnpm 10 uses global/5/.pnpm, pnpm 11+ global/v11/<id>/node_modules/.pnpm,
-  // and the global virtual store keeps packages in store/v11/links.
-  if (
-    /\/global\/v?\d+\/(?:[^/]+\/)?(?:node_modules\/)?\.pnpm\/|\/store\/v\d+\/links\//iu.test(
-      path
-    )
-  ) {
+  // pnpm 10 uses global/5/.pnpm and pnpm 11+ global/v11/<id>/node_modules/.pnpm.
+  if (/\/global\/v?\d+\/(?:[^/]+\/)?(?:node_modules\/)?\.pnpm\//iu.test(path)) {
     return "pnpm";
+  }
+  // With enable-global-virtual-store, global installations and project
+  // dependencies both resolve into the store's v<N>/links, so the path cannot
+  // tell them apart. Stores on another filesystem are named .pnpm-store.
+  if (/\/(?:\.pnpm-)?store\/v\d+\/links\//iu.test(path)) {
+    return "pnpm-virtual-store";
   }
   // npm nests platform packages under the launcher for global installs and
   // hoists them for project installs.

@@ -233,6 +233,9 @@ const manualUpdateMessage = (
   if (method === "project") {
     return `inth is a dependency of the project in ${projectDirectory(executable)}. Update @inth/cli in that project with its package manager.`;
   }
+  if (method === "pnpm-virtual-store") {
+    return "inth runs from pnpm's global virtual store, which global installations and project dependencies share. For a global installation, run pnpm add -g @inth/cli@latest. For a project dependency, update @inth/cli in that project.";
+  }
   return `Windows cannot replace a running inth.exe. Run ${command} to update.`;
 };
 
