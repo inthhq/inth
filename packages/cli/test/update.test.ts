@@ -78,11 +78,28 @@ describe("installMethod", () => {
       "project",
     ],
   ])("classifies %s as %s", (executable, method) => {
-    expect(installMethod(executable, true)).toBe(method);
+    expect(installMethod(executable, true, () => false)).toBe(method);
+  });
+
+  test("keeps nested npm project installs project-local", () => {
+    const nested =
+      "/work/site/node_modules/@inth/cli/node_modules/@inth/cli-linux-x64/bin/inth";
+    const projects = new Set(["/work/site"]);
+    expect(
+      installMethod(nested, true, (directory) => projects.has(directory))
+    ).toBe("project");
+    // A global prefix holds node_modules without a package.json beside it.
+    expect(
+      installMethod(
+        "/usr/local/lib/node_modules/@inth/cli/node_modules/@inth/cli-linux-x64/bin/inth",
+        true,
+        (directory) => projects.has(directory)
+      )
+    ).toBe("npm");
   });
 
   test("treats every development build as development", () => {
-    expect(installMethod("/Users/a/.local/bin/inth", false)).toBe(
+    expect(installMethod("/Users/a/.local/bin/inth", false, () => false)).toBe(
       "development"
     );
   });

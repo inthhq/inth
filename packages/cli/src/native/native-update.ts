@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync, realpathSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
 
@@ -41,8 +41,11 @@ export const currentExecutable = (): string => {
   }
 };
 
+const hasPackageJson = (directory: string): boolean =>
+  existsSync(join(directory, "package.json"));
+
 export const currentInstallMethod = (): InstallMethod =>
-  installMethod(currentExecutable(), productionBuild() === 1);
+  installMethod(currentExecutable(), productionBuild() === 1, hasPackageJson);
 
 const readState = (directory: string): UpdateState => {
   try {
@@ -245,7 +248,11 @@ export const runUpdate = async (
   signal: AbortSignal
 ): Promise<void> => {
   const executable = currentExecutable();
-  const method = installMethod(executable, productionBuild() === 1);
+  const method = installMethod(
+    executable,
+    productionBuild() === 1,
+    hasPackageJson
+  );
   const check = options.values.some((entry) => entry.name === "check");
   const latest = await latestVersion(
     AbortSignal.any([signal, AbortSignal.timeout(UPDATE_REQUEST_TIMEOUT_MS)])

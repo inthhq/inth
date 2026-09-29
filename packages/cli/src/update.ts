@@ -19,11 +19,22 @@ export type InstallMethod =
   | "temporary"
   | "project";
 
+export const projectDirectory = (executable: string): string => {
+  const index = executable
+    .split("\\")
+    .join("/")
+    .toLowerCase()
+    .indexOf("/node_modules/");
+  return index > 0 ? executable.slice(0, index) : executable;
+};
+
 // Classifies the real path of the running executable. Global package-manager
 // layouts were measured with npm 11, pnpm 10 through 12, bun 1.3, and Yarn 1.
+// hasPackageJson reports whether a directory contains package.json.
 export const installMethod = (
   executable: string,
-  production: boolean
+  production: boolean,
+  hasPackageJson: (directory: string) => boolean
 ): InstallMethod => {
   if (!production) {
     return "development";
@@ -51,21 +62,13 @@ export const installMethod = (
   if (/\/(?:\.pnpm-)?store\/v\d+\/links\//iu.test(path)) {
     return "pnpm-virtual-store";
   }
-  // npm nests platform packages under the launcher for global installs and
-  // hoists them for project installs.
+  // npm nests platform packages under the launcher for global installs. A
+  // project installed with --install-strategy nested looks the same, but its
+  // node_modules sits beside package.json and a global prefix's does not.
   if (/\/node_modules\/@inth\/cli\/node_modules\/@inth\/cli-/iu.test(path)) {
-    return "npm";
+    return hasPackageJson(projectDirectory(executable)) ? "project" : "npm";
   }
   return "project";
-};
-
-export const projectDirectory = (executable: string): string => {
-  const index = executable
-    .split("\\")
-    .join("/")
-    .toLowerCase()
-    .indexOf("/node_modules/");
-  return index > 0 ? executable.slice(0, index) : executable;
 };
 
 // Each entry holds the argv the CLI runs and the shorter form it prints.
