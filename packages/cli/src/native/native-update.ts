@@ -179,6 +179,9 @@ export class UpdateNotifier {
 
 // Replace the running executable by rerunning the install script. The script
 // is downloaded to a file first so a failed download cannot run a partial script.
+// The shell then execs the installer, so cancelling inth signals the installer
+// itself. It reads the script from an open descriptor to a file already
+// removed, which install.sh supports because curl | sh runs it from stdin.
 const INSTALLER = `set -eu
 script=$(mktemp 2>/dev/null || mktemp -t inth)
 trap 'rm -f "$script"' EXIT
@@ -190,7 +193,10 @@ else
   echo "Install curl or wget, then run inth update again." >&2
   exit 1
 fi
-sh "$script"`;
+exec 3<"$script"
+rm -f "$script"
+trap - EXIT
+exec sh <&3 3<&-`;
 
 // Runs an updater with inherited output. The child gets this process's
 // environment without INTH_TOKEN, plus any extra variables.
