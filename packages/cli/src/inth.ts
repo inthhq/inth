@@ -37,6 +37,11 @@ import {
 } from "./native/native-telemetry.ts";
 import { nativeUI } from "./native/native-ui.ts";
 import {
+  currentInstallMethod,
+  runUpdate,
+  UpdateNotifier,
+} from "./native/native-update.ts";
+import {
   chooseOrganization,
   createdOrganizationMessage,
 } from "./organizations.ts";
@@ -59,6 +64,7 @@ import {
   telemetryError,
   telemetryPayload,
 } from "./telemetry.ts";
+import { updateChecksDisabled, updateNoticeMethod } from "./update.ts";
 
 let telemetryToken = "";
 let knownTelemetryUser = "";
@@ -210,6 +216,19 @@ const runTelemetry = (options: CliArguments): void => {
   printResult(options.json, message, JSON.stringify({ enabled }));
 };
 
+// Commands that need neither API access nor saved credentials.
+const runLocalCommand = async (options: CliArguments): Promise<boolean> => {
+  if (options.command === "telemetry") {
+    runTelemetry(options);
+    return true;
+  }
+  if (options.command === "update") {
+    await runUpdate(options, nativeStateDirectory(), controller.signal);
+    return true;
+  }
+  return false;
+};
+
 const runResource = async (
   options: CliArguments,
   api: NativeApi,
@@ -266,8 +285,7 @@ const run = async (options: CliArguments): Promise<void> => {
     );
     return;
   }
-  if (options.command === "telemetry") {
-    runTelemetry(options);
+  if (await runLocalCommand(options)) {
     return;
   }
   const environment = agentEnvironment(
@@ -417,6 +435,7 @@ let exitCode = 0;
 let errorCode = "";
 let installationId = "";
 let options: CliArguments | undefined;
+let updateNotifier: UpdateNotifier | undefined;
 const started = Date.now();
 const localApiConfigured = Boolean(
   process.env.INTH_DEV_API_ORIGIN || process.env.INTH_DEV_DASHBOARD_ORIGIN
@@ -451,6 +470,30 @@ try {
     } catch {
       installationId = "";
     }
+  }
+  // Update state must never prevent a command from running.
+  try {
+    const method = currentInstallMethod();
+    if (
+      options.command &&
+      options.command !== "update" &&
+      !options.help &&
+      !options.version &&
+      promptsAllowed(options) &&
+      process.stdin.isTTY &&
+      process.stderr.isTTY &&
+      updateNoticeMethod(method) &&
+      !updateChecksDisabled(
+        process.env.INTH_UPDATE_CHECK_DISABLED,
+        process.env.NO_UPDATE_NOTIFIER,
+        process.env.CI
+      )
+    ) {
+      updateNotifier = new UpdateNotifier(nativeStateDirectory(), method);
+      updateNotifier.start();
+    }
+  } catch {
+    updateNotifier = undefined;
   }
   if (options.command === "skills" && !options.help && !options.version) {
     diagnosticStep("skills_command");
@@ -498,6 +541,20 @@ try {
     }
   } catch {
     // Preserve the original output and exit status even if state resolution fails.
+  }
+}
+// Cancellation exits without waiting for a pending check.
+if (updateNotifier && !controller.signal.aborted) {
+  try {
+    const notice = await updateNotifier.finish(
+      outputColumns(),
+      colorEnabled(Boolean(process.stderr.isTTY))
+    );
+    if (notice) {
+      console.error(notice);
+    }
+  } catch {
+    // The notice is optional and must not change the command's result.
   }
 }
 if (options && installationId) {

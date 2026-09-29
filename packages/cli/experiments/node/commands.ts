@@ -222,6 +222,15 @@ const runWhoami = async (
   );
 };
 
+const rejectNativeOnlyCommand = (options: CliArguments): void => {
+  if (options.command === "update") {
+    throw new CliError(
+      "usage_error",
+      "The Node reference cannot update itself. Use the native CLI."
+    );
+  }
+};
+
 export const run = async (
   args: string[],
   signal: AbortSignal,
@@ -238,6 +247,7 @@ export const run = async (
     );
     return;
   }
+  rejectNativeOnlyCommand(options);
   const allowInteractive = !options.json && !options.nonInteractive;
   if (options.command === "skills") {
     process.exitCode = await runSkills(

@@ -20,7 +20,16 @@ Native targets are Apple silicon Macs running macOS 14 or newer, Linux arm64/x64
 
 ### Install
 
-For releases available on npm, install the CLI globally:
+On macOS or Linux, run the install script. It needs no Node.js:
+
+```sh
+curl -fsSL https://inth.com/cli/install.sh | sh
+inth --version
+```
+
+The script downloads your platform's native package from npm, verifies its sha512 integrity, and copies `inth` to `~/.local/bin`. Set `INTH_VERSION` to pin a release or `INTH_INSTALL_DIR` to change the directory. Run `inth update` later to install a new release the same way. See [Get started](https://github.com/inthhq/inth/blob/main/docs/cli/getting-started.mdx) for details.
+
+On any supported platform, including Windows, install from npm for releases available there:
 
 ```sh
 npm install -g @inth/cli
@@ -29,7 +38,7 @@ inth --version
 
 The npm launcher requires Node.js and selects the native executable for your platform. Keep optional dependencies enabled, since they contain the executable. If the release is not yet available on npm, [build from source](#build-from-source).
 
-Coding agents that sandbox terminal commands, such as Cursor, must run the install outside the sandbox. Inside it, npm cannot write its global directory or cache, and it misreports the cache as root-owned. Sign-in and API commands also need to run outside the sandbox. Inside Cursor's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code.
+Coding agents that sandbox terminal commands, such as Cursor, must run the install outside the sandbox. Inside it, the install script cannot write `~/.local/bin`, and npm cannot write its global directory or cache and misreports the cache as root-owned. Sign-in and API commands also need to run outside the sandbox. Inside Cursor's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code.
 
 Linux browser sign-in needs `libsecret-1.so.0`, a session bus, and an unlocked Secret Service keyring. For headless use, see [authentication and credential storage](docs/authentication.md).
 

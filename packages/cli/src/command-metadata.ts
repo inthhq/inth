@@ -151,6 +151,11 @@ export const OPTION_METADATA: OptionMetadata[] = [
     "boolean",
     "Preview configuration changes without writing files"
   ),
+  option(
+    "check",
+    "boolean",
+    "Report whether an update is available without installing it"
+  ),
 ];
 const baseOptions = ["json", "non-interactive", "help", "version"];
 export const commandOptions = (
@@ -294,6 +299,9 @@ const localExamples = (
       "inth login --email <email> --scopes organizations.read,organizations.write,projects.read,projects.write --json",
       "inth login --complete --wait --json",
     ];
+  }
+  if (command === "update") {
+    return ["inth update", "inth update --check", "inth update --check --json"];
   }
   if (command === "mcp") {
     return [
@@ -533,5 +541,17 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     [],
     "none",
     []
+  ),
+  localCommand(
+    "update",
+    "",
+    "Update the CLI to the latest release",
+    ["check"],
+    "none",
+    [
+      "Installs the latest release the way this copy was installed: with the install script, or with a global npm, pnpm, bun, or Yarn installation.",
+      "Project dependencies, temporary package runners, and Windows installations get the command to run instead.",
+      "Reads the latest version from registry.npmjs.org or INTH_NPM_REGISTRY. Update output is text. --json is supported with --check.",
+    ]
   ),
 ];
