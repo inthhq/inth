@@ -100,7 +100,8 @@ const install = async (
   system: string,
   machine: string,
   registryUrl: string,
-  environment: Record<string, string> = {}
+  // Undefined values remove a variable from the child's environment.
+  environment: Record<string, string | undefined> = {}
 ) => {
   const root = await temporary();
   const bin = path.join(root, "fake-bin");
@@ -231,6 +232,27 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
     expect(result.code).toBe(1);
     expect(result.stderr).toMatch(
       /^inth install: Could not download http:\/\/127\.0\.0\.1:\d+\/missing\.tgz\. \S.*404.*\n$/u
+    );
+  });
+
+  test("finishes with an explicit install directory when HOME is unset", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+    const installDir = path.join(await temporary(), "bin");
+
+    const result = await install("Linux", "x86_64", server.url, {
+      HOME: undefined,
+      INTH_INSTALL_DIR: installDir,
+      SHELL: "/bin/sh",
+    });
+
+    expect(result.stderr).toBe("");
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain(
+      `Installed inth 9.9.9\n  Location  ${path.join(installDir, "inth")}`
+    );
+    expect(result.stdout).toContain(
+      `echo 'export PATH="${installDir}:$PATH"' >> ~/.profile`
     );
   });
 

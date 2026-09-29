@@ -177,8 +177,13 @@ setup_style() {
   fi
 }
 
-# Shortens paths under the home directory to ~ for display.
+# Shortens paths under the home directory to ~ for display. An explicit
+# install directory works without HOME, so an unset HOME shortens nothing.
 tilde() {
+  if [ -z "${HOME:-}" ]; then
+    printf '%s' "$1"
+    return
+  fi
   case "$1" in
     "$HOME"/*) printf '~%s' "${1#"$HOME"}" ;;
     *) printf '%s' "$1" ;;
@@ -261,12 +266,14 @@ escape_single() {
 path_command() {
   prefix=""
   rest=$1
-  case "$1" in
-    "$HOME"/*)
-      prefix='$HOME'
-      rest=${1#"$HOME"}
-      ;;
-  esac
+  if [ -n "${HOME:-}" ]; then
+    case "$1" in
+      "$HOME"/*)
+        prefix='$HOME'
+        rest=${1#"$HOME"}
+        ;;
+    esac
+  fi
   case "$(basename "${SHELL:-sh}")" in
     fish)
       printf '%s' "fish_add_path \"$prefix$(escape_fish "$rest")\""
