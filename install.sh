@@ -140,18 +140,84 @@ verify_integrity() {
   fi
 }
 
-path_hint() {
+# Output follows the inth CLI: bold green results, dim row labels, and
+# commands on their own line in bold cyan so they copy cleanly.
+setup_style() {
+  if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
+    esc=$(printf '\033')
+    dim="${esc}[2m"
+    green="${esc}[1;32m"
+    cyan="${esc}[1;36m"
+    reset="${esc}[0m"
+  else
+    dim=""
+    green=""
+    cyan=""
+    reset=""
+  fi
+}
+
+# Shortens paths under the home directory to ~ for display.
+tilde() {
+  case "$1" in
+    "$HOME"/*) printf '~%s' "${1#"$HOME"}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+platform_label() {
+  case "$1" in
+    darwin-arm64) printf 'macOS (arm64)' ;;
+    linux-x64) printf 'Linux (x64)' ;;
+    linux-arm64) printf 'Linux (arm64)' ;;
+  esac
+}
+
+# Resolves symlinks so /tmp and /private/tmp, for example, compare equal.
+physical() {
+  (cd "$1" 2>/dev/null && pwd -P) || printf '%s' "$1"
+}
+
+on_path() {
+  target=$(physical "$1")
+  found=1
+  old_ifs=$IFS
+  IFS=:
+  set -f
+  for entry in ${PATH:-}; do
+    if [ -n "$entry" ] && [ "$(physical "$entry")" = "$target" ]; then
+      found=0
+      break
+    fi
+  done
+  set +f
+  IFS=$old_ifs
+  return "$found"
+}
+
+say_command() {
+  say ""
+  say "    $cyan$1$reset"
+}
+
+# The shell profile line that adds a directory to PATH. Paths under the home
+# directory are written with $HOME so the line stays portable.
+path_command() {
+  directory=$1
+  case "$directory" in
+    "$HOME"/*) directory="\$HOME${directory#"$HOME"}" ;;
+  esac
   case "$(basename "${SHELL:-sh}")" in
-    fish) say "  fish_add_path \"$1\"" ;;
-    zsh) say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.zshrc" ;;
+    fish) printf '%s' "fish_add_path \"$directory\"" ;;
+    zsh) printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.zshrc" ;;
     bash)
       if [ "$(uname -s)" = Darwin ]; then
-        say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.bash_profile"
+        printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.bash_profile"
       else
-        say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.bashrc"
+        printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.bashrc"
       fi
       ;;
-    *) say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.profile" ;;
+    *) printf '%s' "echo 'export PATH=\"$directory:\$PATH\"' >> ~/.profile" ;;
   esac
 }
 
@@ -164,15 +230,20 @@ main() {
   platform=$(detect_platform)
   package="@inth/cli-$platform"
   has tar || fail "Install tar, then run this script again."
+  setup_style
 
   tmp=$(mktemp -d 2>/dev/null || mktemp -d -t inth)
   trap 'rm -rf "$tmp"' EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
 
-  say "Downloading $package@$version"
   metadata=$(fetch "$registry/$package/$version") ||
     fail "Could not find $package@$version in $registry."
+  target=$(json_field version "$metadata")
+  case "$target" in
+    [0-9]*) say "Downloading inth $target for $(platform_label "$platform")…" ;;
+    *) say "Downloading inth for $(platform_label "$platform")…" ;;
+  esac
   tarball=$(json_field tarball "$metadata")
   integrity=$(json_field integrity "$metadata")
   case "$tarball" in
@@ -200,28 +271,35 @@ main() {
   chmod 755 "$staged"
   mv -f "$staged" "$install_dir/inth"
 
-  if [ -n "$previous" ]; then
-    say "Updated inth $previous to $installed in $install_dir/inth"
+  location=$(tilde "$install_dir/inth")
+  say ""
+  if [ -n "$previous" ] && [ "$previous" != "$installed" ]; then
+    say "${green}Updated inth $previous → $installed$reset"
+    say "  ${dim}Location$reset       $location"
+    say "  ${dim}Release notes$reset  https://github.com/inthhq/inth/releases/tag/inth@$installed"
+  elif [ -n "$previous" ]; then
+    say "${green}Reinstalled inth $installed$reset"
+    say "  ${dim}Location$reset  $location"
   else
-    say "Installed inth $installed to $install_dir/inth"
+    say "${green}Installed inth $installed$reset"
+    say "  ${dim}Location$reset  $location"
   fi
-  case ":${PATH:-}:" in
-    *":$install_dir:"*)
-      resolved=$(command -v inth 2>/dev/null || true)
-      if [ -n "$resolved" ] && [ "$resolved" != "$install_dir/inth" ]; then
-        say ""
-        say "Another inth at $resolved comes first on your PATH. Remove it or move $install_dir earlier."
-      fi
-      ;;
-    *)
+  if on_path "$install_dir"; then
+    resolved=$(command -v inth 2>/dev/null || true)
+    if [ -n "$resolved" ] &&
+      [ "$(physical "$(dirname "$resolved")")" != "$(physical "$install_dir")" ]; then
       say ""
-      say "$install_dir is not on your PATH. Add it, then open a new terminal:"
-      path_hint "$install_dir"
-      ;;
-  esac
+      say "Another inth at $(tilde "$resolved") comes first on your PATH. Remove it, or move $(tilde "$install_dir") earlier in PATH."
+    fi
+  else
+    say ""
+    say "$(tilde "$install_dir") is not on your PATH. Add it, then open a new terminal:"
+    say_command "$(path_command "$install_dir")"
+  fi
   if [ -z "$previous" ]; then
     say ""
-    say "Run \`inth login\` to sign in."
+    say "Sign in to get started:"
+    say_command "inth login"
   fi
 }
 

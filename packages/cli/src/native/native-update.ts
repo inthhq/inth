@@ -5,11 +5,14 @@ import { dirname, join } from "node:path";
 
 import type { CliArguments } from "../arguments.ts";
 import { CliError } from "../cli-error.ts";
+import { colorEnabled, style } from "../display.ts";
 import { printResult } from "../output.ts";
 import {
   automaticUpdate,
   distTagsUrl,
+  formatUpdateCheck,
   formatUpdateNotice,
+  formatUpdateResult,
   INSTALL_SCRIPT_URL,
   installMethod,
   latestFromDistTags,
@@ -247,25 +250,40 @@ const runInherited = async (
   });
 };
 
+// What to do when inth cannot update itself, and the command to run, if any
+const manualUpdate = (method: InstallMethod, executable: string): string[] => {
+  const command = updateCommand(method, process.platform, executable);
+  if (method === "development") {
+    return ["This is a development build. Rebuild it with:", command];
+  }
+  if (method === "temporary") {
+    return [
+      "This inth runs from a temporary package runner cache. Run the latest release with:",
+      command,
+    ];
+  }
+  if (method === "project") {
+    return [
+      `inth is a dependency of the project in ${projectDirectory(executable)}. Update @inth/cli there with the project's package manager.`,
+      "",
+    ];
+  }
+  if (method === "pnpm-virtual-store") {
+    return [
+      "inth runs from pnpm's global virtual store, which global installations and project dependencies share. Update a project dependency in its project. For a global installation, run:",
+      "pnpm add -g @inth/cli@latest",
+    ];
+  }
+  return [
+    "Windows cannot replace inth.exe while it runs. Update it with:",
+    command,
+  ];
+};
+
 const manualUpdateMessage = (
   method: InstallMethod,
   executable: string
-): string => {
-  const command = updateCommand(method, process.platform, executable);
-  if (method === "development") {
-    return "This is a development build. Run pnpm dev:link to rebuild it.";
-  }
-  if (method === "temporary") {
-    return `This inth runs from a temporary package runner cache. Run ${command} for the latest release, or install it globally.`;
-  }
-  if (method === "project") {
-    return `inth is a dependency of the project in ${projectDirectory(executable)}. Update @inth/cli in that project with its package manager.`;
-  }
-  if (method === "pnpm-virtual-store") {
-    return "inth runs from pnpm's global virtual store, which global installations and project dependencies share. For a global installation, run pnpm add -g @inth/cli@latest. For a project dependency, update @inth/cli in that project.";
-  }
-  return `Windows cannot replace a running inth.exe. Run ${command} to update.`;
-};
+): string => manualUpdate(method, executable).join(" ").trim();
 
 export const runUpdate = async (
   options: CliArguments,
@@ -285,18 +303,14 @@ export const runUpdate = async (
   const available = newerVersion(latest, VERSION);
   const automatic = automaticUpdate(method, process.platform);
   const command = updateCommand(method, process.platform, executable);
+  const color = colorEnabled(Boolean(process.stdout.isTTY));
   if (check || !available) {
-    let message = `inth ${VERSION} is the latest version.`;
-    if (available) {
-      message = `A new version of inth is available: ${VERSION} -> ${latest}.\n${
-        automatic
-          ? "Run `inth update` to update."
-          : manualUpdateMessage(method, executable)
-      }`;
-    }
+    const [next = "", manual = ""] = automatic
+      ? ["Install it with:", "inth update"]
+      : manualUpdate(method, executable);
     printResult(
       options.json,
-      message,
+      formatUpdateCheck(VERSION, latest, next, manual, color),
       JSON.stringify({
         automatic,
         currentVersion: VERSION,
@@ -313,9 +327,7 @@ export const runUpdate = async (
   }
   let status = 0;
   if (method === "standalone") {
-    console.log(
-      `Updating inth ${VERSION} -> ${latest} with the install script.`
-    );
+    // The install script reports progress and the result itself.
     status = await runInherited(
       "sh",
       [
@@ -335,11 +347,11 @@ export const runUpdate = async (
     // reach a different registry and install another release.
     const [program = "", ...args] = packageManagerCommand(method, latest);
     console.log(
-      `Updating inth ${VERSION} -> ${latest} with ${[program, ...args].join(" ")}`
+      `Updating inth ${VERSION} → ${latest} with ${program}\n${style(`  ${[program, ...args].join(" ")}`, "2", color)}\n`
     );
     status = await runInherited(program, args, [], signal);
     if (status === 0) {
-      console.log(`Updated inth to ${latest}.`);
+      console.log(`\n${formatUpdateResult(VERSION, latest, color)}`);
     }
   }
   if (status !== 0) {

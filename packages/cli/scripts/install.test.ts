@@ -7,6 +7,7 @@ import {
   mkdtemp,
   readFile,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -136,7 +137,7 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
       expect(result.code).toBe(0);
       expect(server.requests[0]).toBe(`/@inth/cli-${target}/latest`);
       expect(result.stdout).toContain(
-        `Installed inth 9.9.9 to ${result.installed}`
+        "Installed inth 9.9.9\n  Location  ~/install/inth"
       );
       const run = spawnSync(result.installed, ["--version"], {
         encoding: "utf-8",
@@ -144,6 +145,46 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
       expect(run.stdout.trim()).toBe("9.9.9");
     }
   );
+
+  test("names the version and platform, and prints next steps as commands", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+
+    // bash fills in SHELL from the login shell when it is unset, so pin it.
+    const result = await install("Linux", "x86_64", server.url, {
+      SHELL: "/bin/zsh",
+    });
+
+    expect(result.stdout).toContain("Downloading inth 9.9.9 for Linux (x64)…");
+    // The profile line keeps $HOME literal so it works after the shell restarts.
+    expect(result.stdout).toContain(
+      `\n    echo 'export PATH="$HOME/install:$PATH"' >> ~/.zshrc\n`
+    );
+    expect(result.stdout).toContain(
+      "Sign in to get started:\n\n    inth login"
+    );
+    // Output to a pipe has no color codes.
+    expect(result.stdout).not.toContain("\u001B[");
+  });
+
+  test("treats a symlinked PATH entry as the install directory", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+    const root = await temporary();
+    const installDir = path.join(root, "real-bin");
+    const linked = path.join(root, "linked-bin");
+    await mkdir(installDir);
+    await symlink(installDir, linked);
+
+    const result = await install("Linux", "x86_64", server.url, {
+      INTH_INSTALL_DIR: installDir,
+      PATH: `${linked}:${process.env.PATH ?? ""}`,
+    });
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).not.toContain("is not on your PATH");
+    expect(result.stdout).not.toContain("comes first on your PATH");
+  });
 
   test("installs the release pinned by INTH_VERSION", async () => {
     const tarball = await archive();
@@ -187,7 +228,11 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain(
-      `Updated inth 0.0.1 to 9.9.9 in ${path.join(installDir, "inth")}`
+      [
+        "Updated inth 0.0.1 → 9.9.9",
+        `  Location       ${path.join(installDir, "inth")}`,
+        "  Release notes  https://github.com/inthhq/inth/releases/tag/inth@9.9.9",
+      ].join("\n")
     );
     expect(result.stdout).not.toContain("inth login");
   });
