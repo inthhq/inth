@@ -1,0 +1,231 @@
+/* eslint-disable prefer-named-capture-group -- Scriptc uses indexed regex captures. */
+// Update policy shared by the native CLI and its unit tests. Keep native
+// bindings out of this module so Vitest can exercise it under Node.
+import { style, wrapText } from "./display.ts";
+
+export const DEFAULT_REGISTRY = "https://registry.npmjs.org";
+export const INSTALL_SCRIPT_URL = "https://inth.com/cli/install.sh";
+export const UPDATE_CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000;
+export const UPDATE_CHECK_TIMEOUT_MS = 1500;
+
+export type InstallMethod =
+  | "development"
+  | "standalone"
+  | "npm"
+  | "pnpm"
+  | "bun"
+  | "yarn"
+  | "temporary"
+  | "project";
+
+// Classifies the real path of the running executable. Global package-manager
+// layouts were measured with npm 11, pnpm 10 through 12, bun 1.3, and Yarn 1.
+export const installMethod = (
+  executable: string,
+  production: boolean
+): InstallMethod => {
+  if (!production) {
+    return "development";
+  }
+  const path = executable.split("\\").join("/");
+  if (!/\/node_modules\//iu.test(path)) {
+    return "standalone";
+  }
+  if (/\/(?:_npx|dlx)\/|\/bunx-/iu.test(path)) {
+    return "temporary";
+  }
+  if (/\/install\/global\/node_modules\//iu.test(path)) {
+    return "bun";
+  }
+  if (/\/yarn\/(?:data\/)?global\/node_modules\//iu.test(path)) {
+    return "yarn";
+  }
+  // pnpm 10 uses global/5/.pnpm, pnpm 11+ global/v11/<id>/node_modules/.pnpm,
+  // and the global virtual store keeps packages in store/v11/links.
+  if (
+    /\/global\/v?\d+\/(?:[^/]+\/)?(?:node_modules\/)?\.pnpm\/|\/store\/v\d+\/links\//iu.test(
+      path
+    )
+  ) {
+    return "pnpm";
+  }
+  // npm nests platform packages under the launcher for global installs and
+  // hoists them for project installs.
+  if (/\/node_modules\/@inth\/cli\/node_modules\/@inth\/cli-/iu.test(path)) {
+    return "npm";
+  }
+  return "project";
+};
+
+export const projectDirectory = (executable: string): string => {
+  const index = executable
+    .split("\\")
+    .join("/")
+    .toLowerCase()
+    .indexOf("/node_modules/");
+  return index > 0 ? executable.slice(0, index) : executable;
+};
+
+// Each entry holds the argv the CLI runs and the shorter form it prints.
+const PACKAGE_MANAGER_COMMANDS: [InstallMethod, string[], string][] = [
+  [
+    "npm",
+    ["npm", "install", "--global", "@inth/cli@latest"],
+    "npm install -g @inth/cli@latest",
+  ],
+  [
+    "pnpm",
+    ["pnpm", "add", "--global", "@inth/cli@latest"],
+    "pnpm add -g @inth/cli@latest",
+  ],
+  [
+    "bun",
+    ["bun", "add", "--global", "@inth/cli@latest"],
+    "bun add -g @inth/cli@latest",
+  ],
+  [
+    "yarn",
+    ["yarn", "global", "add", "@inth/cli@latest"],
+    "yarn global add @inth/cli@latest",
+  ],
+];
+
+const packageManagerEntry = (method: InstallMethod) =>
+  PACKAGE_MANAGER_COMMANDS.find((entry) => entry[0] === method);
+
+// Returns the package manager command for a global installation, or an empty list.
+export const packageManagerCommand = (method: InstallMethod): string[] =>
+  packageManagerEntry(method)?.[1] ?? [];
+
+// Windows cannot replace a running executable, so updates there are manual.
+export const automaticUpdate = (
+  method: InstallMethod,
+  platform: string
+): boolean =>
+  platform !== "win32" &&
+  (method === "standalone" || packageManagerCommand(method).length > 0);
+
+// Global installations get the launch notice. Project dependencies and
+// temporary runners use the version their project or command requests.
+export const updateNoticeMethod = (method: InstallMethod): boolean =>
+  method === "standalone" || packageManagerCommand(method).length > 0;
+
+const shellQuote = (value: string): string =>
+  /^[A-Za-z0-9_./~-]+$/u.test(value)
+    ? value
+    : `'${value.split("'").join(String.raw`'\''`)}'`;
+
+// The command that installs the latest release for this installation, or an
+// empty string when the CLI cannot name one.
+export const updateCommand = (
+  method: InstallMethod,
+  platform: string,
+  executable: string
+): string => {
+  if (method === "standalone") {
+    if (platform === "win32") {
+      return "npm install -g @inth/cli@latest";
+    }
+    const directory = executable.slice(0, executable.lastIndexOf("/"));
+    return `curl -fsSL ${INSTALL_SCRIPT_URL} | INTH_INSTALL_DIR=${shellQuote(directory)} sh`;
+  }
+  if (method === "temporary") {
+    return "npx @inth/cli@latest";
+  }
+  if (method === "development") {
+    return "pnpm dev:link";
+  }
+  return packageManagerEntry(method)?.[2] ?? "";
+};
+
+const versionParts = (value: string): number[] => {
+  const match = /^(\d{1,9})\.(\d{1,9})\.(\d{1,9})(-[0-9A-Za-z.-]+)?$/u.exec(
+    value
+  );
+  if (!match) {
+    return [];
+  }
+  // A release sorts after its prereleases.
+  return [
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    match[4] ? 0 : 1,
+  ];
+};
+
+export const validVersion = (value: string): boolean =>
+  versionParts(value).length > 0;
+
+export const newerVersion = (candidate: string, current: string): boolean => {
+  const next = versionParts(candidate);
+  const installed = versionParts(current);
+  if (!next.length || !installed.length) {
+    return false;
+  }
+  for (let index = 0; index < next.length; index += 1) {
+    const left = next[index] ?? 0;
+    const right = installed[index] ?? 0;
+    if (left !== right) {
+      return left > right;
+    }
+  }
+  return false;
+};
+
+export const registryOrigin = (value?: string): string => {
+  const origin = (value ?? "").trim().replace(/\/+$/u, "");
+  return /^https?:\/\/[^\s/]+(?:\/\S*)?$/u.test(origin)
+    ? origin
+    : DEFAULT_REGISTRY;
+};
+
+export const distTagsUrl = (registry: string): string =>
+  `${registry}/-/package/@inth/cli/dist-tags`;
+
+// Reads `latest` from the registry's dist-tags document.
+export const latestFromDistTags = (body: string): string => {
+  const match = /"latest"\s*:\s*"([^"]{1,64})"/u.exec(body);
+  const version = match?.[1] ?? "";
+  return validVersion(version) ? version : "";
+};
+
+export const updateChecksDisabled = (
+  disabled: string | undefined,
+  noNotifier: string | undefined,
+  ci: string | undefined
+): boolean =>
+  [disabled, noNotifier, ci].some(
+    (value) => Boolean(value) && value !== "0" && value !== "false"
+  );
+
+export interface UpdateState {
+  checkedAt: number;
+  latest: string;
+  notifiedAt: number;
+}
+
+// Clock changes that move time backwards make a saved timestamp due again.
+const elapsed = (since: number, now: number): boolean =>
+  now < since || now - since >= UPDATE_CHECK_INTERVAL_MS;
+
+export const updateCheckDue = (state: UpdateState, now: number): boolean =>
+  elapsed(state.checkedAt, now);
+
+export const updateNoticeDue = (
+  state: UpdateState,
+  current: string,
+  now: number
+): boolean =>
+  newerVersion(state.latest, current) && elapsed(state.notifiedAt, now);
+
+export const formatUpdateNotice = (
+  current: string,
+  latest: string,
+  command: string,
+  columns = 80,
+  color = false
+): string => {
+  const width = Math.max(20, columns - 1);
+  return `${wrapText(`A new version of inth is available: ${current} -> ${latest}.`, width)}\nRun \`${style(command, "1", color)}\` to update.`;
+};

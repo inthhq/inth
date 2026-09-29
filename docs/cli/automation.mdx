@@ -20,7 +20,7 @@ inth link org_123 --json
 
 Authenticate through an existing browser sign-in or an organization API key in `INTH_TOKEN`. A person runs `inth login` interactively once; subsequent API requests can use that stored session and refresh it automatically.
 
-`--json` never opens a browser or asks a question. `login --json` without an email or API key fails before starting a device grant, even in a terminal.
+`--json` never opens a browser or asks a question. `login --json` without an email or API key fails before starting a device grant, even in a terminal. JSON and non-interactive commands never check for updates or print update notices. Use `inth update --check --json` to read `currentVersion`, `latestVersion`, `updateAvailable`, `installMethod`, and `updateCommand`.
 
 Supplying an API key skips device login, but `login` does not validate the key against the server. Use `inth whoami --json` to check access and read the principal, scopes, and memberships from `/v1/me`.
 

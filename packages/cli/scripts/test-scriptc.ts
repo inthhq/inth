@@ -29,6 +29,7 @@ import { verifyDevelopmentTelemetry, verifySentry } from "./sentry-checks.ts";
 import { verifySkills } from "./skills-checks.ts";
 import { verifyTelemetry } from "./telemetry-checks.ts";
 import { verifyTransport } from "./transport-checks.ts";
+import { verifyUpdateCheck } from "./update-checks.ts";
 
 // Native subprocesses must never send production analytics.
 process.env.INTH_TELEMETRY_DISABLED = "1";
@@ -74,6 +75,10 @@ const steps: Step[] = [
   { name: "JSON output", run: () => verifyJson(binary) },
   { name: "MCP setup", run: () => verifyMcp(binary) },
   { name: "Skills", run: () => verifySkills(binary) },
+  {
+    name: "Update check",
+    run: () => verifyUpdateCheck(binary, "development", false),
+  },
   { name: "Help", run: verifyHelp },
   { name: "Usage errors", run: verifyUsageErrors },
   { name: "Stateless API-key bypass", run: verifyStatelessBypass },

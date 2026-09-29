@@ -1,11 +1,30 @@
 ---
 title: Install and run the Inth CLI
-description: Install a published Inth CLI package or build from source, then sign in and verify your account.
+description: Install the Inth CLI with the install script or npm, or build from source, then sign in and verify your account.
 ---
 
-Install a published `@inth/cli` release with npm, or build the CLI from its GitHub repository. After installation, run `inth login` for browser approval and `inth whoami` to verify API access.
+Install a published `@inth/cli` release with the install script on macOS or Linux, with npm on any supported platform, or build the CLI from its GitHub repository. After installation, run `inth login` for browser approval and `inth whoami` to verify API access.
 
-## How do I install a published release?
+## How do I install on macOS or Linux without Node.js?
+
+Run the install script:
+
+```sh
+curl -fsSL https://inth.com/cli/install.sh | sh
+inth --version
+```
+
+The script downloads the native package for your platform from npm and checks it against the registry's sha512 integrity. It runs the new executable once, then copies `inth` to `~/.local/bin`. If that directory is not on your `PATH`, the script prints the line to add to your shell profile. Run `inth update` to update.
+
+Set `INTH_VERSION` to install a specific published release instead of the latest. Set `INTH_INSTALL_DIR` to install somewhere else:
+
+```sh
+curl -fsSL https://inth.com/cli/install.sh | INTH_INSTALL_DIR="$HOME/bin" sh
+```
+
+The script installs only the executable. The `AGENTS.md`, `SKILL.md`, and Markdown topics bundled for agents ship with the npm package. To uninstall, delete `~/.local/bin/inth`. On Windows, install with npm.
+
+## How do I install with npm?
 
 For releases available on npm, install the launcher globally:
 
@@ -17,9 +36,41 @@ inth --help
 
 npm selects the native package for your platform. Keep optional dependencies enabled, since they contain the executable. If the requested release is unavailable on npm, build from source using the steps below. The [repository's releases](https://github.com/inthhq/inth/releases) record published versions.
 
+## How do I update the Inth CLI?
+
+Run `inth update`:
+
+```sh
+inth update
+```
+
+The command installs the latest release the same way the CLI was installed. An install-script installation reruns the install script in the same directory. A global npm, pnpm, bun, or Yarn installation runs that package manager's global install, such as `pnpm add -g @inth/cli@latest`.
+
+To check for a release without installing it:
+
+```sh
+inth update --check
+inth update --check --json
+```
+
+In three cases `inth update` prints the command to run instead of running it: when `@inth/cli` is a project dependency, when it runs through `npx`, `pnpm dlx`, or `bunx`, and on Windows, which cannot replace a running `inth.exe`.
+
+## When does the CLI announce a new release?
+
+An interactive command checks npm for the latest `@inth/cli` version at most once a day. The check runs alongside the command. If a newer release exists, the CLI prints this to stderr after the command finishes:
+
+```text
+A new version of inth is available: 0.0.4 -> 0.0.5.
+Run `inth update` to update.
+```
+
+The notice appears at most once a day. The check sends one request to `registry.npmjs.org` with no account, installation, or command details. It can add up to 1.5 seconds to one command a day when npm responds slowly.
+
+Only global installations in a terminal check. Project dependencies, `npx` runs, development builds, `--json`, `--non-interactive`, CI, and commands whose stdin or stderr is not a terminal skip both the request and the notice. Set `INTH_UPDATE_CHECK_DISABLED=1` or `NO_UPDATE_NOTIFIER=1` to turn it off. Set `INTH_NPM_REGISTRY` to use a registry mirror for update checks and the install script.
+
 ## How do I install from a sandboxed agent terminal?
 
-Run the install outside the sandbox. Cursor and other coding agents can run terminal commands in a sandbox that writes only to the project and temporary directories. `npm install -g @inth/cli` writes to npm's global directory and cache, so it fails there. npm then reports that the cache folder contains root-owned files and suggests `sudo chown`. The cache is fine; the sandbox blocked the write. In Cursor, approve running the command outside the sandbox.
+Run the install outside the sandbox. Cursor and other coding agents can run terminal commands in a sandbox that writes only to the project and temporary directories. The install script writes to `~/.local/bin` and `npm install -g @inth/cli` writes to npm's global directory and cache, so both fail there. npm then reports that the cache folder contains root-owned files and suggests `sudo chown`. The cache is fine; the sandbox blocked the write. In Cursor, approve running the command outside the sandbox.
 
 Sign-in and API commands need the same approval. They write locks and settings to the [state directory](./authentication#where-does-the-inth-cli-store-credentials), read credentials from the system credential store, and connect to `api.inth.com`. Adding `api.inth.com` to Cursor's network allowlist does not help, because the CLI does not use the sandbox's HTTP proxy. Inside Cursor's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code. Other failures keep their usual code. `inth --help` and `inth --version` work inside the sandbox.
 
@@ -69,6 +120,6 @@ pnpm --filter @inth/cli inth billing --json
 
 ## Which platforms and runtimes does the CLI support?
 
-Native builds target Apple silicon Macs running macOS 14 or newer, Linux arm64 and x64 with glibc 2.36 or newer, and Windows x64. Debian 12 and Ubuntu 24.04 meet the Linux requirement. Ubuntu 22.04 and Alpine Linux with musl are not supported by the published binaries. The npm launcher requires Node.js. The native executable itself does not.
+Native builds target Apple silicon Macs running macOS 14 or newer, Linux arm64 and x64 with glibc 2.36 or newer, and Windows x64. Debian 12 and Ubuntu 24.04 meet the Linux requirement. Ubuntu 22.04 and Alpine Linux with musl are not supported by the published binaries. The npm launcher requires Node.js. The native executable itself does not. The install script needs `curl` or `wget`, `tar`, and `sha512sum`, `shasum`, or `openssl`; macOS and most Linux distributions include them.
 
 Linux browser sign-in needs `libsecret-1.so.0`, a session bus, and an unlocked Secret Service keyring. On a headless machine, use an organization API key through `INTH_TOKEN` for commands that accept keys. See [Authentication](./authentication).

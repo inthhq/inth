@@ -111,6 +111,24 @@ const validateTelemetryArguments = (
     );
   }
 };
+const validateUpdateArguments = (result: CliArguments, count: number): void => {
+  if (
+    count !== 1 ||
+    result.token ||
+    result.authMode ||
+    result.organization ||
+    result.noBrowser ||
+    result.values.some((entry) => entry.name !== "check")
+  ) {
+    throw new CliError("usage_error", "Usage: inth update [--check] [--json]");
+  }
+  if (result.json && !result.values.length) {
+    throw new CliError(
+      "usage_error",
+      "Updates print installer output as text. Use inth update --check --json to report available updates."
+    );
+  }
+};
 const validateCredentialMode = (result: CliArguments): void => {
   if (result.authMode && !["browser", "agent"].includes(result.authMode)) {
     throw new CliError("usage_error", "--auth must be browser or agent.");
@@ -206,6 +224,10 @@ const validateArguments = (result: CliArguments, count: number): void => {
   }
   if (result.command === "telemetry") {
     validateTelemetryArguments(result, count);
+    return;
+  }
+  if (result.command === "update") {
+    validateUpdateArguments(result, count);
     return;
   }
   const resource = RESOURCE_COMMANDS.some(
@@ -391,7 +413,9 @@ export const parseArguments = (args: string[]): CliArguments => {
       result.version = true;
     } else if (arg === "--no-browser") {
       result.noBrowser = true;
-    } else if (["--dry-run", "--yes", "--complete", "--wait"].includes(arg)) {
+    } else if (
+      ["--dry-run", "--yes", "--complete", "--wait", "--check"].includes(arg)
+    ) {
       setOption(result, arg.slice(2), "true");
     } else if (arg === "--json") {
       result.json = true;
