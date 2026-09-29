@@ -216,10 +216,10 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
     spawnSync("sh", ["-c", hint?.trim() ?? "false"], { env: { HOME: home } });
     const sourced = spawnSync(
       "sh",
-      ["-c", '. "$HOME/.profile"; printf %s "${PATH%%:*}"'],
+      ["-c", '. "$HOME/.profile"; printf %s "$PATH"'],
       { encoding: "utf-8", env: { HOME: home, PATH: "/usr/bin:/bin" } }
     );
-    expect(sourced.stdout).toBe(installDir);
+    expect(sourced.stdout.split(":")[0]).toBe(installDir);
   });
 
   test("reports a failed download on one line with the downloader's reason", async () => {
