@@ -309,8 +309,9 @@ main() {
 
   tmp=$(mktemp -d 2>/dev/null || mktemp -d -t inth)
   trap 'rm -rf "$tmp"' EXIT
-  trap 'exit 130' INT
-  trap 'exit 143' TERM
+  # Cancelling leaves the terminal on a clean line, not after Downloading….
+  trap 'clear_progress; exit 130' INT
+  trap 'clear_progress; exit 143' TERM
 
   metadata=$(fetch "$registry/$package/$version") ||
     fail "Could not find $package@$version in $registry."
