@@ -161,6 +161,13 @@ describe("versions", () => {
     ["0.0.3", "0.0.4", false],
     ["0.0.5", "0.0.5-beta.1", true],
     ["0.0.5-beta.1", "0.0.5", false],
+    ["1.0.0-beta.2", "1.0.0-beta.1", true],
+    ["1.0.0-beta.10", "1.0.0-beta.9", true],
+    ["1.0.0-rc.1", "1.0.0-beta.2", true],
+    ["1.0.0-alpha.1", "1.0.0-alpha", true],
+    ["1.0.0-alpha", "1.0.0-1", true],
+    ["1.0.0-beta.1", "1.0.0-beta.1", false],
+    ["1.0.0-beta.1", "1.0.0-beta.2", false],
     ["latest", "0.0.4", false],
     ["0.0.5", "dev", false],
   ])("treats %s as newer than %s: %s", (candidate, current, expected) => {

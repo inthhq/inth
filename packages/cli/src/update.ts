@@ -143,39 +143,83 @@ export const updateCommand = (
   return packageManagerEntry(method)?.[2] ?? "";
 };
 
-const versionParts = (value: string): number[] => {
-  const match = /^(\d{1,9})\.(\d{1,9})\.(\d{1,9})(-[0-9A-Za-z.-]+)?$/u.exec(
-    value
-  );
+interface SemanticVersion {
+  core: number[];
+  prerelease: string[];
+}
+
+const parseVersion = (value: string): SemanticVersion | undefined => {
+  const match =
+    /^(\d{1,9})\.(\d{1,9})\.(\d{1,9})(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/u.exec(
+      value
+    );
   if (!match) {
-    return [];
+    return undefined;
+  }
+  return {
+    core: [Number(match[1]), Number(match[2]), Number(match[3])],
+    prerelease: match[4] ? match[4].split(".") : [],
+  };
+};
+
+// SemVer precedence for one prerelease identifier: numeric identifiers compare
+// numerically and sort before alphanumeric ones, which compare in ASCII order.
+const compareIdentifier = (left: string, right: string): number => {
+  const leftNumeric = /^\d{1,15}$/u.test(left);
+  const rightNumeric = /^\d{1,15}$/u.test(right);
+  if (leftNumeric && rightNumeric) {
+    return Number(left) - Number(right);
+  }
+  if (leftNumeric !== rightNumeric) {
+    return leftNumeric ? -1 : 1;
+  }
+  if (left === right) {
+    return 0;
+  }
+  return left < right ? -1 : 1;
+};
+
+const compareVersions = (
+  left: SemanticVersion,
+  right: SemanticVersion
+): number => {
+  for (let index = 0; index < 3; index += 1) {
+    const difference = (left.core[index] ?? 0) - (right.core[index] ?? 0);
+    if (difference !== 0) {
+      return difference;
+    }
   }
   // A release sorts after its prereleases.
-  return [
-    Number(match[1]),
-    Number(match[2]),
-    Number(match[3]),
-    match[4] ? 0 : 1,
-  ];
+  if (!left.prerelease.length || !right.prerelease.length) {
+    return right.prerelease.length - left.prerelease.length;
+  }
+  const length = Math.max(left.prerelease.length, right.prerelease.length);
+  for (let index = 0; index < length; index += 1) {
+    const leftIdentifier = left.prerelease[index];
+    const rightIdentifier = right.prerelease[index];
+    if (leftIdentifier === undefined) {
+      return -1;
+    }
+    if (rightIdentifier === undefined) {
+      return 1;
+    }
+    const difference = compareIdentifier(leftIdentifier, rightIdentifier);
+    if (difference !== 0) {
+      return difference;
+    }
+  }
+  return 0;
 };
 
 export const validVersion = (value: string): boolean =>
-  versionParts(value).length > 0;
+  parseVersion(value) !== undefined;
 
 export const newerVersion = (candidate: string, current: string): boolean => {
-  const next = versionParts(candidate);
-  const installed = versionParts(current);
-  if (!next.length || !installed.length) {
-    return false;
-  }
-  for (let index = 0; index < next.length; index += 1) {
-    const left = next[index] ?? 0;
-    const right = installed[index] ?? 0;
-    if (left !== right) {
-      return left > right;
-    }
-  }
-  return false;
+  const next = parseVersion(candidate);
+  const installed = parseVersion(current);
+  return next !== undefined && installed !== undefined
+    ? compareVersions(next, installed) > 0
+    : false;
 };
 
 export const registryOrigin = (value?: string): string => {
