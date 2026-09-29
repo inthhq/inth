@@ -77,7 +77,7 @@ const steps: Step[] = [
   { name: "Skills", run: () => verifySkills(binary) },
   {
     name: "Update check",
-    run: () => verifyUpdateCheck(binary, "development", false),
+    run: () => verifyUpdateCheck(binary, [], "development", false),
   },
   { name: "Help", run: verifyHelp },
   { name: "Usage errors", run: verifyUsageErrors },

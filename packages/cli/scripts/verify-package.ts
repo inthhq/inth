@@ -94,7 +94,12 @@ try {
   verifyJson(binary);
   await verifyMcp(binary);
   // The extracted package is laid out like an install-script installation.
-  await verifyUpdateCheck(binary, "standalone", process.platform !== "win32");
+  await verifyUpdateCheck(
+    binary,
+    [],
+    "standalone",
+    process.platform !== "win32"
+  );
 
   const wrapper = spawnSync("pnpm", ["pack", "--pack-destination", temporary], {
     cwd: root,
@@ -140,12 +145,10 @@ try {
   );
   assert.equal(launched.status, 0, launched.stderr);
   assert.equal(launched.stdout.trim(), formatHelp());
+  // Run the npm launcher with Node, as its bin shim does, so no shell is involved.
   await verifyUpdateCheck(
-    path.join(
-      consumer,
-      "node_modules/.bin",
-      process.platform === "win32" ? "inth.cmd" : "inth"
-    ),
+    process.execPath,
+    [path.join(consumer, "node_modules/@inth/cli/scripts/run-published.js")],
     "project",
     false
   );
@@ -164,7 +167,10 @@ try {
       "--no-audit",
       "--no-fund",
       path.join(temporary, `inth-cli-${source.version}.tgz`),
-    ],
+    ].map((arg) =>
+      // cmd.exe receives shell arguments unescaped; quote paths with spaces.
+      process.platform === "win32" && arg.includes(" ") ? `"${arg}"` : arg
+    ),
     {
       encoding: "utf-8",
       shell: process.platform === "win32",
@@ -187,9 +193,14 @@ try {
     { recursive: true }
   );
   await verifyUpdateCheck(
-    process.platform === "win32"
-      ? path.join(globalPrefix, "inth.cmd")
-      : path.join(globalPrefix, "bin", "inth"),
+    process.execPath,
+    [
+      path.join(
+        globalPrefix,
+        process.platform === "win32" ? "" : "lib",
+        "node_modules/@inth/cli/scripts/run-published.js"
+      ),
+    ],
     "npm",
     process.platform !== "win32"
   );

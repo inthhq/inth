@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import { once } from "node:events";
 import { mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 
 import { z } from "zod";
 
@@ -49,7 +51,21 @@ const registry = async (body: string) => {
   };
 };
 
-// spawnSync would block the in-process registry, so the CLI runs asynchronously.
+const RUN_TIMEOUT_MS = 10_000;
+
+const closed = async (child: ChildProcess): Promise<number | null> => {
+  const [code] = await once(child, "close");
+  return code;
+};
+
+const expired = async (signal: AbortSignal): Promise<"timeout"> => {
+  await delay(RUN_TIMEOUT_MS, undefined, { signal });
+  return "timeout";
+};
+
+// spawnSync would block the in-process registry, so the CLI runs
+// asynchronously. Commands run without a shell, so the timeout kills the
+// process that owns the output pipes and paths need no quoting.
 const runCli = async (
   command: string,
   args: string[],
@@ -66,7 +82,6 @@ const runCli = async (
       USERPROFILE: state,
       XDG_STATE_HOME: state,
     },
-    shell: process.platform === "win32" && command.endsWith(".cmd"),
   });
   let stdout = "";
   let stderr = "";
@@ -76,15 +91,24 @@ const runCli = async (
   child.stderr.on("data", (chunk: Buffer) => {
     stderr += chunk.toString();
   });
-  const timer = setTimeout(() => child.kill(), 10_000);
-  const [status] = await once(child, "close");
-  clearTimeout(timer);
+  const stop = new AbortController();
+  const status = await Promise.race([closed(child), expired(stop.signal)]);
+  stop.abort();
+  if (status === "timeout") {
+    child.kill();
+    assert.fail(`${command} did not finish within ${RUN_TIMEOUT_MS} ms.`);
+  }
   return { status, stderr, stdout };
 };
 
-/** Checks install-method detection and the registry request for one layout. */
+/**
+ * Checks install-method detection and the registry request for one layout.
+ * `launcher` holds arguments that precede the CLI's own, such as the npm
+ * launcher script when `command` is Node.
+ */
 export const verifyUpdateCheck = async (
   command: string,
+  launcher: string[],
   method: string,
   automatic: boolean
 ): Promise<void> => {
@@ -94,7 +118,7 @@ export const verifyUpdateCheck = async (
   try {
     const checked = await runCli(
       command,
-      ["update", "--check", "--json"],
+      [...launcher, "update", "--check", "--json"],
       available.url,
       state
     );
@@ -108,7 +132,7 @@ export const verifyUpdateCheck = async (
 
     const rejected = await runCli(
       command,
-      ["update", "--check", "--json"],
+      [...launcher, "update", "--check", "--json"],
       invalid.url,
       state
     );
@@ -119,7 +143,12 @@ export const verifyUpdateCheck = async (
     );
 
     if (!automatic) {
-      const update = await runCli(command, ["update"], available.url, state);
+      const update = await runCli(
+        command,
+        [...launcher, "update"],
+        available.url,
+        state
+      );
       assert.equal(update.status, 1);
       assert.match(update.stderr, /^Error: /u);
     }
