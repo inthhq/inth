@@ -21,6 +21,10 @@ say() {
 }
 
 fail() {
+  # Clear an unfinished progress line so the error starts on a clean line.
+  if [ -n "${progress_open:-}" ] && [ -t 2 ]; then
+    printf '\r\033[K' >&2
+  fi
   printf 'inth install: %s\n' "$*" >&2
   exit 1
 }
@@ -143,8 +147,12 @@ verify_integrity() {
 # Output follows the inth CLI: bold green results, dim row labels, and
 # commands on their own line in bold cyan so they copy cleanly.
 setup_style() {
-  if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != dumb ]; then
-    esc=$(printf '\033')
+  esc=$(printf '\033')
+  live=""
+  if [ -t 1 ] && [ "${TERM:-}" != dumb ]; then
+    live=1
+  fi
+  if [ -n "$live" ] && [ -z "${NO_COLOR:-}" ]; then
     dim="${esc}[2m"
     green="${esc}[1;32m"
     cyan="${esc}[1;36m"
@@ -195,6 +203,24 @@ on_path() {
   return "$found"
 }
 
+# On a terminal the progress line is replaced by the result, so only the
+# outcome stays on screen. Piped output and logs keep the line.
+progress() {
+  if [ -n "$live" ]; then
+    printf '%s' "$1"
+    progress_open=1
+  else
+    say "$1"
+  fi
+}
+
+clear_progress() {
+  if [ -n "${progress_open:-}" ]; then
+    printf '\r%s[K' "$esc"
+    progress_open=""
+  fi
+}
+
 say_command() {
   say ""
   say "    $cyan$1$reset"
@@ -241,8 +267,8 @@ main() {
     fail "Could not find $package@$version in $registry."
   target=$(json_field version "$metadata")
   case "$target" in
-    [0-9]*) say "Downloading inth $target for $(platform_label "$platform")…" ;;
-    *) say "Downloading inth for $(platform_label "$platform")…" ;;
+    [0-9]*) progress "Downloading inth $target for $(platform_label "$platform")…" ;;
+    *) progress "Downloading inth for $(platform_label "$platform")…" ;;
   esac
   tarball=$(json_field tarball "$metadata")
   integrity=$(json_field integrity "$metadata")
@@ -272,6 +298,7 @@ main() {
   mv -f "$staged" "$install_dir/inth"
 
   location=$(tilde "$install_dir/inth")
+  clear_progress
   say ""
   if [ -n "$previous" ] && [ "$previous" != "$installed" ]; then
     say "${green}Updated inth $previous → $installed$reset"

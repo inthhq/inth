@@ -346,8 +346,9 @@ export const runUpdate = async (
     // Install the version that was checked. Resolving @latest again could
     // reach a different registry and install another release.
     const [program = "", ...args] = packageManagerCommand(method, latest);
+    // Name the command once; the result line carries the version change.
     console.log(
-      `Updating inth ${VERSION} → ${latest} with ${program}\n${style(`  ${[program, ...args].join(" ")}`, "2", color)}\n`
+      `\n${style(`Running ${[program, ...args].join(" ")}`, "2", color)}\n`
     );
     status = await runInherited(program, args, [], signal);
     if (status === 0) {
