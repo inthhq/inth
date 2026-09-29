@@ -70,12 +70,16 @@ const saveState = (directory: string, state: UpdateState): void => {
 };
 
 export const latestVersion = async (signal: AbortSignal): Promise<string> => {
-  let response: Response;
+  // Keep fetch types inferred; Scriptc's Windows target resolves fewer ambient types.
+  let status = 0;
+  let body = "";
   try {
-    response = await fetch(
+    const response = await fetch(
       distTagsUrl(registryOrigin(process.env.INTH_NPM_REGISTRY)),
       { headers: { Accept: "application/json" }, redirect: "error", signal }
     );
+    ({ status } = response);
+    body = await response.text();
   } catch (error) {
     signal.throwIfAborted();
     throw new CliError(
@@ -83,12 +87,11 @@ export const latestVersion = async (signal: AbortSignal): Promise<string> => {
       `Cannot reach the npm registry to check for updates${error instanceof Error && error.message ? `: ${error.message}` : "."}`
     );
   }
-  const body = await response.text();
-  if (!response.ok) {
+  if (status < 200 || status > 299) {
     throw new CliError(
       "http_error",
-      `The npm registry answered the update check with HTTP ${response.status}.`,
-      response.status
+      `The npm registry answered the update check with HTTP ${status}.`,
+      status
     );
   }
   const latest = latestFromDistTags(body);
@@ -167,14 +170,26 @@ else
 fi
 sh "$script"`;
 
+// Runs an updater with inherited output. The child gets this process's
+// environment without INTH_TOKEN, plus any extra variables.
 const runInherited = async (
   command: string,
   args: string[],
-  env: NodeJS.ProcessEnv,
+  extra: string[][],
   signal: AbortSignal
-): Promise<number> =>
+): Promise<number> => {
+  // Scriptc's Windows target lacks NodeJS.ProcessEnv, so keep this type inferred.
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) {
+    if (key.toUpperCase() === "INTH_TOKEN") {
+      env[key] = undefined;
+    }
+  }
+  for (const [key = "", value = ""] of extra) {
+    env[key] = value;
+  }
   // eslint-disable-next-line promise/avoid-new -- Adapt Scriptc child process events to the async command contract.
-  await new Promise<number>((resolve, reject) => {
+  return await new Promise<number>((resolve, reject) => {
     const child = spawn(command, args, { env, stdio: "inherit" });
     const cancel = (): void => {
       child.kill("SIGTERM");
@@ -202,6 +217,7 @@ const runInherited = async (
       }
     });
   });
+};
 
 const manualUpdateMessage = (
   method: InstallMethod,
@@ -262,19 +278,11 @@ export const runUpdate = async (
   if (!automatic) {
     throw new CliError("usage_error", manualUpdateMessage(method, executable));
   }
-  const env = { ...process.env };
-  for (const key of Object.keys(env)) {
-    if (key.toUpperCase() === "INTH_TOKEN") {
-      env[key] = undefined;
-    }
-  }
   let status = 0;
   if (method === "standalone") {
     console.log(
       `Updating inth ${VERSION} -> ${latest} with the install script.`
     );
-    env.INTH_INSTALL_DIR = dirname(executable);
-    env.INTH_VERSION = latest;
     status = await runInherited(
       "sh",
       [
@@ -283,13 +291,16 @@ export const runUpdate = async (
         "sh",
         process.env.INTH_INSTALL_SCRIPT_URL || INSTALL_SCRIPT_URL,
       ],
-      env,
+      [
+        ["INTH_INSTALL_DIR", dirname(executable)],
+        ["INTH_VERSION", latest],
+      ],
       signal
     );
   } else {
     const [program = "", ...args] = packageManagerCommand(method);
     console.log(`Updating inth ${VERSION} -> ${latest} with ${command}`);
-    status = await runInherited(program, args, env, signal);
+    status = await runInherited(program, args, [], signal);
     if (status === 0) {
       console.log(`Updated inth to ${latest}.`);
     }
