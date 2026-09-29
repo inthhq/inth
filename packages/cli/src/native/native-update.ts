@@ -72,19 +72,35 @@ const saveState = (directory: string, state: UpdateState): void => {
   }
 };
 
-export const latestVersion = async (signal: AbortSignal): Promise<string> => {
+// Cancellation propagates as cancellation. A timeout is an ordinary registry
+// failure, so it reports a handled error instead of an unexpected exception.
+export const latestVersion = async (
+  cancel: AbortSignal,
+  timeoutMs: number
+): Promise<string> => {
+  const timeout = AbortSignal.timeout(timeoutMs);
   // Keep fetch types inferred; Scriptc's Windows target resolves fewer ambient types.
   let status = 0;
   let body = "";
   try {
     const response = await fetch(
       distTagsUrl(registryOrigin(process.env.INTH_NPM_REGISTRY)),
-      { headers: { Accept: "application/json" }, redirect: "error", signal }
+      {
+        headers: { Accept: "application/json" },
+        redirect: "error",
+        signal: AbortSignal.any([cancel, timeout]),
+      }
     );
     ({ status } = response);
     body = await response.text();
   } catch (error) {
-    signal.throwIfAborted();
+    cancel.throwIfAborted();
+    if (timeout.aborted) {
+      throw new CliError(
+        "command_failed",
+        `The npm registry did not answer the update check within ${Math.round(timeoutMs / 1000)} seconds.`
+      );
+    }
     throw new CliError(
       "command_failed",
       `Cannot reach the npm registry to check for updates${error instanceof Error && error.message ? `: ${error.message}` : "."}`
@@ -109,7 +125,10 @@ export const latestVersion = async (signal: AbortSignal): Promise<string> => {
 
 const latestOrEmpty = async (): Promise<string> => {
   try {
-    return await latestVersion(AbortSignal.timeout(UPDATE_CHECK_TIMEOUT_MS));
+    return await latestVersion(
+      new AbortController().signal,
+      UPDATE_CHECK_TIMEOUT_MS
+    );
   } catch {
     return "";
   }
@@ -254,9 +273,7 @@ export const runUpdate = async (
     hasPackageJson
   );
   const check = options.values.some((entry) => entry.name === "check");
-  const latest = await latestVersion(
-    AbortSignal.any([signal, AbortSignal.timeout(UPDATE_REQUEST_TIMEOUT_MS)])
-  );
+  const latest = await latestVersion(signal, UPDATE_REQUEST_TIMEOUT_MS);
   const state = readState(directory);
   saveState(directory, { ...state, checkedAt: Date.now(), latest });
   const available = newerVersion(latest, VERSION);
@@ -308,8 +325,12 @@ export const runUpdate = async (
       signal
     );
   } else {
-    const [program = "", ...args] = packageManagerCommand(method);
-    console.log(`Updating inth ${VERSION} -> ${latest} with ${command}`);
+    // Install the version that was checked. Resolving @latest again could
+    // reach a different registry and install another release.
+    const [program = "", ...args] = packageManagerCommand(method, latest);
+    console.log(
+      `Updating inth ${VERSION} -> ${latest} with ${[program, ...args].join(" ")}`
+    );
     status = await runInherited(program, args, [], signal);
     if (status === 0) {
       console.log(`Updated inth to ${latest}.`);

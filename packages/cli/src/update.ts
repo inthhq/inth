@@ -98,9 +98,15 @@ const PACKAGE_MANAGER_COMMANDS: [InstallMethod, string[], string][] = [
 const packageManagerEntry = (method: InstallMethod) =>
   PACKAGE_MANAGER_COMMANDS.find((entry) => entry[0] === method);
 
-// Returns the package manager command for a global installation, or an empty list.
-export const packageManagerCommand = (method: InstallMethod): string[] =>
-  packageManagerEntry(method)?.[1] ?? [];
+// Returns the package manager command for a global installation, or an empty
+// list. A version pins the release instead of resolving the latest tag again.
+export const packageManagerCommand = (
+  method: InstallMethod,
+  version = "latest"
+): string[] =>
+  (packageManagerEntry(method)?.[1] ?? []).map((arg) =>
+    arg === "@inth/cli@latest" ? `@inth/cli@${version}` : arg
+  );
 
 // Windows cannot replace a running executable, so updates there are manual.
 export const automaticUpdate = (

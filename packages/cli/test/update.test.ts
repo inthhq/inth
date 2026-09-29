@@ -6,6 +6,7 @@ import {
   installMethod,
   latestFromDistTags,
   newerVersion,
+  packageManagerCommand,
   projectDirectory,
   registryOrigin,
   updateCheckDue,
@@ -120,6 +121,22 @@ describe("update commands", () => {
   ] as const)("updates a global %s installation", (method, command) => {
     expect(automaticUpdate(method, "darwin")).toBe(true);
     expect(updateCommand(method, "darwin", "/unused")).toBe(command);
+  });
+
+  test("pins package-manager updates to the checked release", () => {
+    expect(packageManagerCommand("pnpm", "0.0.5")).toEqual([
+      "pnpm",
+      "add",
+      "--global",
+      "@inth/cli@0.0.5",
+    ]);
+    expect(packageManagerCommand("yarn", "0.0.5")).toEqual([
+      "yarn",
+      "global",
+      "add",
+      "@inth/cli@0.0.5",
+    ]);
+    expect(packageManagerCommand("npm")).toContain("@inth/cli@latest");
   });
 
   test("reruns the install script in the executable's directory", () => {
