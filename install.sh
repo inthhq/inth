@@ -21,8 +21,24 @@ say() {
 }
 
 fail() {
+  # Clear an unfinished progress line so the error starts on a clean line.
+  # Descriptor 4 is the terminal the progress line was written to, even inside
+  # command substitutions that capture standard output.
+  if [ -n "${progress_open:-}" ]; then
+    printf '\r\033[K' >&4
+  fi
   printf 'inth install: %s\n' "$*" >&2
   exit 1
+}
+
+# Runs a command with its diagnostics held back, so fail() can clear the
+# progress line before they appear. detail prints them on one line.
+quietly() {
+  "$@" 2>"$tmp/error"
+}
+
+detail() {
+  tr '\n' ' ' <"$tmp/error" 2>/dev/null | sed 's/ *$//'
 }
 
 has() {
@@ -95,7 +111,12 @@ download() {
   if has curl; then
     curl --fail --silent --show-error --location --retry 3 --output "$2" "$1"
   else
-    wget --quiet --output-document="$2" "$1"
+    # --quiet would also hide the failure reason, and BusyBox wget lacks
+    # --no-verbose, so log everything and report wget's last line on failure.
+    wget --output-document="$2" "$1" 2>"$tmp/wget.log" || {
+      grep . "$tmp/wget.log" | tail -n 1 >&2
+      return 1
+    }
   fi
 }
 
@@ -140,18 +161,143 @@ verify_integrity() {
   fi
 }
 
-path_hint() {
+# Output follows the inth CLI: bold green results, dim row labels, and
+# commands on their own line in bold cyan so they copy cleanly.
+setup_style() {
+  esc=$(printf '\033')
+  live=""
+  if [ -t 1 ] && [ "${TERM:-}" != dumb ]; then
+    live=1
+  fi
+  if [ -n "$live" ] && [ -z "${NO_COLOR:-}" ]; then
+    dim="${esc}[2m"
+    green="${esc}[1;32m"
+    cyan="${esc}[1;36m"
+    reset="${esc}[0m"
+  else
+    dim=""
+    green=""
+    cyan=""
+    reset=""
+  fi
+}
+
+# Shortens paths under the home directory to ~ for display. An explicit
+# install directory works without HOME, so an unset HOME shortens nothing.
+tilde() {
+  if [ -z "${HOME:-}" ]; then
+    printf '%s' "$1"
+    return
+  fi
+  case "$1" in
+    "$HOME"/*) printf '~%s' "${1#"$HOME"}" ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+
+platform_label() {
+  case "$1" in
+    darwin-arm64) printf 'macOS (arm64)' ;;
+    linux-x64) printf 'Linux (x64)' ;;
+    linux-arm64) printf 'Linux (arm64)' ;;
+  esac
+}
+
+# Resolves symlinks so /tmp and /private/tmp, for example, compare equal.
+physical() {
+  (cd "$1" 2>/dev/null && pwd -P) || printf '%s' "$1"
+}
+
+on_path() {
+  target=$(physical "$1")
+  found=1
+  old_ifs=$IFS
+  IFS=:
+  set -f
+  for entry in ${PATH:-}; do
+    if [ -n "$entry" ] && [ "$(physical "$entry")" = "$target" ]; then
+      found=0
+      break
+    fi
+  done
+  set +f
+  IFS=$old_ifs
+  return "$found"
+}
+
+# On a terminal the progress line is replaced by the result, so only the
+# outcome stays on screen. Piped output and logs keep the line.
+progress() {
+  if [ -n "$live" ]; then
+    exec 4>&1
+    printf '%s' "$1" >&4
+    progress_open=1
+  else
+    say "$1"
+  fi
+}
+
+clear_progress() {
+  if [ -n "${progress_open:-}" ]; then
+    printf '\r%s[K' "$esc" >&4
+    progress_open=""
+  fi
+}
+
+say_command() {
+  say ""
+  say "    $cyan$1$reset"
+}
+
+# Escapes a path for the double-quoted strings in shell profiles and for fish.
+escape_double() {
+  printf '%s' "$1" | sed 's/[\\"$`]/\\&/g'
+}
+
+escape_fish() {
+  printf '%s' "$1" | sed 's/[\\"$]/\\&/g'
+}
+
+# Escapes text for a single-quoted shell argument.
+escape_single() {
+  printf '%s' "$1" | sed "s/'/'\\\\''/g"
+}
+
+# The shell profile line that adds a directory to PATH. Paths under the home
+# directory keep a live $HOME prefix so the line stays portable; the rest of
+# the path is escaped so any directory name survives each quoting layer.
+# The printed command keeps $HOME and ~ literal for the reader's shell to expand.
+# shellcheck disable=SC2016,SC2088
+path_command() {
+  prefix=""
+  rest=$1
+  if [ -n "${HOME:-}" ]; then
+    case "$1" in
+      "$HOME"/*)
+        prefix='$HOME'
+        rest=${1#"$HOME"}
+        ;;
+    esac
+  fi
   case "$(basename "${SHELL:-sh}")" in
-    fish) say "  fish_add_path \"$1\"" ;;
-    zsh) say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.zshrc" ;;
+    fish)
+      printf '%s' "fish_add_path \"$prefix$(escape_fish "$rest")\""
+      return
+      ;;
+    zsh) profile="~/.zshrc" ;;
     bash)
+      profile="~/.bashrc"
       if [ "$(uname -s)" = Darwin ]; then
-        say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.bash_profile"
-      else
-        say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.bashrc"
+        profile="~/.bash_profile"
       fi
       ;;
-    *) say "  echo 'export PATH=\"$1:\$PATH\"' >> ~/.profile" ;;
+    *) profile="~/.profile" ;;
+  esac
+  line="export PATH=\"$prefix$(escape_double "$rest"):\$PATH\""
+  # echo rewrites backslashes in zsh and some sh builds; printf does not.
+  case "$rest" in
+    *\\*) printf '%s' "printf '%s\\n' '$(escape_single "$line")' >> $profile" ;;
+    *) printf '%s' "echo '$(escape_single "$line")' >> $profile" ;;
   esac
 }
 
@@ -164,15 +310,21 @@ main() {
   platform=$(detect_platform)
   package="@inth/cli-$platform"
   has tar || fail "Install tar, then run this script again."
+  setup_style
 
   tmp=$(mktemp -d 2>/dev/null || mktemp -d -t inth)
   trap 'rm -rf "$tmp"' EXIT
-  trap 'exit 130' INT
-  trap 'exit 143' TERM
+  # Cancelling leaves the terminal on a clean line, not after Downloading….
+  trap 'clear_progress; exit 130' INT
+  trap 'clear_progress; exit 143' TERM
 
-  say "Downloading $package@$version"
   metadata=$(fetch "$registry/$package/$version") ||
     fail "Could not find $package@$version in $registry."
+  target=$(json_field version "$metadata")
+  case "$target" in
+    [0-9]*) progress "Downloading inth $target for $(platform_label "$platform")…" ;;
+    *) progress "Downloading inth for $(platform_label "$platform")…" ;;
+  esac
   tarball=$(json_field tarball "$metadata")
   integrity=$(json_field integrity "$metadata")
   case "$tarball" in
@@ -180,10 +332,11 @@ main() {
     *) fail "The registry did not return a download URL for $package@$version." ;;
   esac
 
-  download "$tarball" "$tmp/package.tgz" || fail "Could not download $tarball."
+  quietly download "$tarball" "$tmp/package.tgz" ||
+    fail "Could not download $tarball. $(detail)"
   verify_integrity "$tmp/package.tgz" "$integrity"
-  tar -xzf "$tmp/package.tgz" -C "$tmp" package/bin/inth ||
-    fail "The downloaded archive does not contain the inth executable."
+  quietly tar -xzf "$tmp/package.tgz" -C "$tmp" package/bin/inth ||
+    fail "The downloaded archive does not contain the inth executable. $(detail)"
 
   # Run the new executable before replacing a working installation.
   installed=$(INTH_TELEMETRY_DISABLED=1 "$tmp/package/bin/inth" --version 2>&1) ||
@@ -194,34 +347,47 @@ main() {
     previous=$(INTH_TELEMETRY_DISABLED=1 "$install_dir/inth" --version 2>/dev/null || true)
   fi
 
-  mkdir -p "$install_dir" || fail "Could not create $install_dir. Set INTH_INSTALL_DIR to a writable directory."
+  unwritable="Set INTH_INSTALL_DIR to a writable directory."
+  quietly mkdir -p "$install_dir" ||
+    fail "Could not create $install_dir. $unwritable $(detail)"
   staged="$install_dir/.inth.$$"
-  cp "$tmp/package/bin/inth" "$staged" || fail "Could not write to $install_dir. Set INTH_INSTALL_DIR to a writable directory."
-  chmod 755 "$staged"
-  mv -f "$staged" "$install_dir/inth"
+  quietly cp "$tmp/package/bin/inth" "$staged" ||
+    fail "Could not write to $install_dir. $unwritable $(detail)"
+  quietly chmod 755 "$staged" ||
+    fail "Could not make $staged executable. $(detail)"
+  quietly mv -f "$staged" "$install_dir/inth" ||
+    fail "Could not replace $install_dir/inth. $unwritable $(detail)"
 
-  if [ -n "$previous" ]; then
-    say "Updated inth $previous to $installed in $install_dir/inth"
+  location=$(tilde "$install_dir/inth")
+  clear_progress
+  say ""
+  if [ -n "$previous" ] && [ "$previous" != "$installed" ]; then
+    say "${green}Updated inth $previous → $installed$reset"
+    say "  ${dim}Location$reset       $location"
+    say "  ${dim}Release notes$reset  https://github.com/inthhq/inth/releases/tag/inth@$installed"
+  elif [ -n "$previous" ]; then
+    say "${green}Reinstalled inth $installed$reset"
+    say "  ${dim}Location$reset  $location"
   else
-    say "Installed inth $installed to $install_dir/inth"
+    say "${green}Installed inth $installed$reset"
+    say "  ${dim}Location$reset  $location"
   fi
-  case ":${PATH:-}:" in
-    *":$install_dir:"*)
-      resolved=$(command -v inth 2>/dev/null || true)
-      if [ -n "$resolved" ] && [ "$resolved" != "$install_dir/inth" ]; then
-        say ""
-        say "Another inth at $resolved comes first on your PATH. Remove it or move $install_dir earlier."
-      fi
-      ;;
-    *)
+  if on_path "$install_dir"; then
+    resolved=$(command -v inth 2>/dev/null || true)
+    if [ -n "$resolved" ] &&
+      [ "$(physical "$(dirname "$resolved")")" != "$(physical "$install_dir")" ]; then
       say ""
-      say "$install_dir is not on your PATH. Add it, then open a new terminal:"
-      path_hint "$install_dir"
-      ;;
-  esac
+      say "Another inth at $(tilde "$resolved") comes first on your PATH. Remove it, or move $(tilde "$install_dir") earlier in PATH."
+    fi
+  else
+    say ""
+    say "$(tilde "$install_dir") is not on your PATH. Add it, then open a new terminal:"
+    say_command "$(path_command "$install_dir")"
+  fi
   if [ -z "$previous" ]; then
     say ""
-    say "Run \`inth login\` to sign in."
+    say "Sign in to get started:"
+    say_command "inth login"
   fi
 }
 

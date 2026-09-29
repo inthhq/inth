@@ -2,7 +2,9 @@ import { describe, expect, test } from "vitest";
 
 import {
   automaticUpdate,
+  formatUpdateCheck,
   formatUpdateNotice,
+  formatUpdateResult,
   installMethod,
   latestFromDistTags,
   newerVersion,
@@ -225,9 +227,39 @@ describe("update schedule", () => {
     expect(updateNoticeDue(state, "0.0.5", 11 * day)).toBe(false);
   });
 
-  test("formats the notice with the command to run", () => {
+  test("formats the notice on one line, wrapping before the command when narrow", () => {
     expect(formatUpdateNotice("0.0.4", "0.0.5", "inth update")).toBe(
-      "A new version of inth is available: 0.0.4 -> 0.0.5.\nRun `inth update` to update."
+      "Update available 0.0.4 → 0.0.5 · Run inth update"
+    );
+    expect(formatUpdateNotice("0.0.4", "0.0.5", "inth update", 40)).toBe(
+      "Update available 0.0.4 → 0.0.5\nRun inth update"
+    );
+  });
+
+  test("styles the notice like other CLI output when color is on", () => {
+    expect(formatUpdateNotice("0.0.4", "0.0.5", "inth update", 80, true)).toBe(
+      "\u001B[1mUpdate available\u001B[0m \u001B[2m0.0.4\u001B[0m → \u001B[1m0.0.5\u001B[0m · Run \u001B[1;36minth update\u001B[0m"
+    );
+  });
+
+  test("reports checks with release notes and the command on its own line", () => {
+    expect(
+      formatUpdateCheck("0.0.4", "0.0.5", "Install it with:", "inth update")
+    ).toBe(
+      [
+        "Update available 0.0.4 → 0.0.5",
+        "  Release notes  https://github.com/inthhq/inth/releases/tag/inth@0.0.5",
+        "",
+        "Install it with:",
+        "",
+        "    inth update",
+      ].join("\n")
+    );
+    expect(formatUpdateCheck("0.0.5", "0.0.5", "", "")).toBe(
+      "inth 0.0.5 is up to date"
+    );
+    expect(formatUpdateResult("0.0.4", "0.0.5")).toBe(
+      "Updated inth 0.0.4 → 0.0.5\n  Release notes  https://github.com/inthhq/inth/releases/tag/inth@0.0.5"
     );
   });
 });

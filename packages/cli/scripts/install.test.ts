@@ -7,6 +7,7 @@ import {
   mkdtemp,
   readFile,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import { createServer } from "node:http";
@@ -55,7 +56,12 @@ const archive = async () => {
 const sha512 = (contents: Buffer) =>
   `sha512-${createHash("sha512").update(contents).digest("base64")}`;
 
-const registry = async (tarball: Buffer, integrity: string) => {
+// Serves version metadata and the tarball; any other .tgz path answers 404.
+const registry = async (
+  tarball: Buffer,
+  integrity: string,
+  tarballPath = "/package.tgz"
+) => {
   const requests: string[] = [];
   let url = "";
   const server = createServer((request, response) => {
@@ -64,10 +70,15 @@ const registry = async (tarball: Buffer, integrity: string) => {
       response.end(tarball);
       return;
     }
+    if (request.url?.endsWith(".tgz")) {
+      response.statusCode = 404;
+      response.end();
+      return;
+    }
     response.setHeader("content-type", "application/json");
     response.end(
       JSON.stringify({
-        dist: { integrity, tarball: `${url}/package.tgz` },
+        dist: { integrity, tarball: `${url}${tarballPath}` },
         version: "9.9.9",
       })
     );
@@ -89,7 +100,8 @@ const install = async (
   system: string,
   machine: string,
   registryUrl: string,
-  environment: Record<string, string> = {}
+  // Undefined values remove a variable from the child's environment.
+  environment: Record<string, string | undefined> = {}
 ) => {
   const root = await temporary();
   const bin = path.join(root, "fake-bin");
@@ -136,7 +148,7 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
       expect(result.code).toBe(0);
       expect(server.requests[0]).toBe(`/@inth/cli-${target}/latest`);
       expect(result.stdout).toContain(
-        `Installed inth 9.9.9 to ${result.installed}`
+        "Installed inth 9.9.9\n  Location  ~/install/inth"
       );
       const run = spawnSync(result.installed, ["--version"], {
         encoding: "utf-8",
@@ -144,6 +156,173 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
       expect(run.stdout.trim()).toBe("9.9.9");
     }
   );
+
+  test("names the version and platform, and prints next steps as commands", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+
+    // bash fills in SHELL from the login shell when it is unset, so pin it.
+    const result = await install("Linux", "x86_64", server.url, {
+      SHELL: "/bin/zsh",
+    });
+
+    expect(result.stdout).toContain("Downloading inth 9.9.9 for Linux (x64)…");
+    // The profile line keeps $HOME literal so it works after the shell restarts.
+    expect(result.stdout).toContain(
+      `\n    echo 'export PATH="$HOME/install:$PATH"' >> ~/.zshrc\n`
+    );
+    expect(result.stdout).toContain(
+      "Sign in to get started:\n\n    inth login"
+    );
+    // Output to a pipe has no color codes.
+    expect(result.stdout).not.toContain("\u001B[");
+  });
+
+  test("treats a symlinked PATH entry as the install directory", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+    const root = await temporary();
+    const installDir = path.join(root, "real-bin");
+    const linked = path.join(root, "linked-bin");
+    await mkdir(installDir);
+    await symlink(installDir, linked);
+
+    const result = await install("Linux", "x86_64", server.url, {
+      INTH_INSTALL_DIR: installDir,
+      PATH: `${linked}:${process.env.PATH ?? ""}`,
+    });
+
+    expect(result.code).toBe(0);
+    expect(result.stdout).not.toContain("is not on your PATH");
+    expect(result.stdout).not.toContain("comes first on your PATH");
+  });
+
+  test("prints a PATH hint that survives quotes in the directory name", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+    const home = await temporary();
+    const installDir = path.join(home, "bin 'a' \"b\" $c `d`");
+
+    const result = await install("Linux", "x86_64", server.url, {
+      HOME: home,
+      INTH_INSTALL_DIR: installDir,
+      SHELL: "/bin/sh",
+    });
+
+    const hint = result.stdout
+      .split("\n")
+      .find((line) => line.startsWith("    echo "));
+    expect(hint).toContain(">> ~/.profile");
+    // Running the printed line and sourcing the profile must yield the directory.
+    spawnSync("sh", ["-c", hint?.trim() ?? "false"], { env: { HOME: home } });
+    const sourced = spawnSync(
+      "sh",
+      ["-c", '. "$HOME/.profile"; printf %s "$PATH"'],
+      { encoding: "utf-8", env: { HOME: home, PATH: "/usr/bin:/bin" } }
+    );
+    expect(sourced.stdout.split(":")[0]).toBe(installDir);
+  });
+
+  test("reports a failed download on one line with the downloader's reason", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball), "/missing.tgz");
+
+    const result = await install("Linux", "x86_64", server.url);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toMatch(
+      /^inth install: Could not download http:\/\/127\.0\.0\.1:\d+\/missing\.tgz\. \S.*404.*\n$/u
+    );
+  });
+
+  test("finishes with an explicit install directory when HOME is unset", async () => {
+    const tarball = await archive();
+    const server = await registry(tarball, sha512(tarball));
+    const installDir = path.join(await temporary(), "bin");
+
+    const result = await install("Linux", "x86_64", server.url, {
+      HOME: undefined,
+      INTH_INSTALL_DIR: installDir,
+      SHELL: "/bin/sh",
+    });
+
+    expect(result.stderr).toBe("");
+    expect(result.code).toBe(0);
+    expect(result.stdout).toContain(
+      `Installed inth 9.9.9\n  Location  ${path.join(installDir, "inth")}`
+    );
+    expect(result.stdout).toContain(
+      `echo 'export PATH="${installDir}:$PATH"' >> ~/.profile`
+    );
+  });
+
+  test("reports wget's failure reason when curl is unavailable", async () => {
+    // A PATH with the installer's tools but no curl, and a wget stub that
+    // answers the metadata request and fails the download like GNU wget.
+    const bin = await temporary();
+    const tools = [
+      "base64",
+      "basename",
+      "cat",
+      "chmod",
+      "cp",
+      "cut",
+      "dirname",
+      "getconf",
+      "grep",
+      "head",
+      "ls",
+      "mkdir",
+      "mktemp",
+      "mv",
+      "od",
+      "openssl",
+      "rm",
+      "sed",
+      "sh",
+      "sha512sum",
+      "shasum",
+      "sysctl",
+      "tail",
+      "tar",
+      "tr",
+      "uname",
+    ].map((tool) => ({
+      found: spawnSync("sh", ["-c", `command -v ${tool}`], {
+        encoding: "utf-8",
+      }).stdout.trim(),
+      tool,
+    }));
+    await Promise.all(
+      tools
+        .filter(({ found }) => found.startsWith("/"))
+        .map(({ found, tool }) => symlink(found, path.join(bin, tool)))
+    );
+    await executable(
+      path.join(bin, "wget"),
+      [
+        "#!/bin/sh",
+        'if [ "$1" = "--quiet" ]; then',
+        `  printf '%s' '{"version":"9.9.9","dist":{"tarball":"http://127.0.0.1:9/missing.tgz","integrity":"sha512-AAAA"}}'`,
+        "  exit 0",
+        "fi",
+        'echo "--2026-09-29 17:40:00--  http://127.0.0.1:9/missing.tgz" >&2',
+        'echo "HTTP request sent, awaiting response... 404 Not Found" >&2',
+        'echo "2026-09-29 17:40:00 ERROR 404: Not Found." >&2',
+        "exit 8",
+        "",
+      ].join("\n")
+    );
+
+    const result = await install("Linux", "x86_64", "http://127.0.0.1:9", {
+      PATH: bin,
+    });
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toBe(
+      "inth install: Could not download http://127.0.0.1:9/missing.tgz. 2026-09-29 17:40:00 ERROR 404: Not Found.\n"
+    );
+  });
 
   test("installs the release pinned by INTH_VERSION", async () => {
     const tarball = await archive();
@@ -187,7 +366,11 @@ describe.skipIf(process.platform === "win32")("install.sh", () => {
 
     expect(result.code).toBe(0);
     expect(result.stdout).toContain(
-      `Updated inth 0.0.1 to 9.9.9 in ${path.join(installDir, "inth")}`
+      [
+        "Updated inth 0.0.1 → 9.9.9",
+        `  Location       ${path.join(installDir, "inth")}`,
+        "  Release notes  https://github.com/inthhq/inth/releases/tag/inth@9.9.9",
+      ].join("\n")
     );
     expect(result.stdout).not.toContain("inth login");
   });
