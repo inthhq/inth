@@ -1,35 +1,35 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Send feedback from the CLI\n\nAdd `inth feedback` to report Inth failures, documentation mismatches, and feature requests. Supports structured flags, JSON bodies and output, and existing sign-ins and API keys. Only category and message are required. The API deduplicates identical reports from the same caller within a UTC day. Rate-limit errors return immediately without waiting or retrying.\n"
-    filename: 2026-09-27-feedback-command.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Update the CLI with `inth update`\n\nInstall on macOS or Linux without Node.js: `curl -fsSL https://inth.com/cli/install.sh | sh`.\n\n`inth update` installs the latest release the way the CLI was installed: with the install script, or with a global npm, pnpm, bun, or Yarn installation. `inth update --check` reports whether a release is available. Interactive commands check npm at most once a day and print a notice when a newer release exists. Set `INTH_UPDATE_CHECK_DISABLED=1` or `NO_UPDATE_NOTIFIER=1` to turn the check off.\n"
+    filename: 2026-09-29-update-command.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-09-27-feedback-command.md
+      - 2026-09-29-update-command.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-09-27-feedback-command.md
-    id: npm:@inth/cli-linux-arm64
-    updated: true
-  - changelogIds:
-      - 2026-09-27-feedback-command.md
+      - 2026-09-29-update-command.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-09-27-feedback-command.md
+      - 2026-09-29-update-command.md
+    id: npm:@inth/cli-linux-arm64
+    updated: true
+  - changelogIds:
+      - 2026-09-29-update-command.md
     id: npm:@inth/cli-win32-x64
     updated: true
   - changelogIds:
-      - 2026-09-27-feedback-command.md
+      - 2026-09-29-update-command.md
     id: npm:@inth/cli
     updated: true
 npm:packages:
   - distTag: latest
     id: npm:@inth/cli-darwin-arm64
   - distTag: latest
-    id: npm:@inth/cli-linux-arm64
-  - distTag: latest
     id: npm:@inth/cli-linux-x64
+  - distTag: latest
+    id: npm:@inth/cli-linux-arm64
   - distTag: latest
     id: npm:@inth/cli-win32-x64
   - distTag: latest
