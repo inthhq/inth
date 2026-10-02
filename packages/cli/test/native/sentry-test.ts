@@ -51,6 +51,16 @@ if (mode === "credential-lock") {
     throw new Error("Expected credential lock failure.");
   }
 }
+if (mode === "credential-unavailable") {
+  try {
+    new NativeKeychain("com.inth.cli.native-test", "unavailable").read();
+  } catch (error) {
+    if (!(error instanceof Error)) {
+      throw error;
+    }
+    failure = error;
+  }
+}
 if (mode === "other-operation") {
   diagnosticStep("api_decode");
 }

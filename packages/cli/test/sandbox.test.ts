@@ -21,6 +21,12 @@ describe("agent sandbox errors", () => {
     expect(agentSandbox("")).toBe("");
   });
 
+  it("detects Codex's sandbox", () => {
+    expect(agentSandbox("", "seatbelt")).toBe("Codex");
+    expect(agentSandbox("", "", "1")).toBe("Codex");
+    expect(agentSandbox("", "", "")).toBe("");
+  });
+
   it("leaves errors unchanged outside a sandbox", () => {
     expect(sandboxError(lock, "", STATE)).toBe(lock);
     expect(sandboxError(offline, "", STATE)).toBe(offline);
@@ -106,13 +112,17 @@ describe("agent sandbox errors", () => {
   });
 
   it("explains a blocked credential store", () => {
-    for (const message of [
-      "System credential store read failed (-50).",
-      "System credential store write failed (100001).",
-      "The system credential store is unavailable. On Linux, install libsecret and unlock a Secret Service keyring, or supply INTH_TOKEN for headless use.",
+    for (const error of [
+      new Error("System credential store read failed (-50)."),
+      new Error("System credential store write failed (100001)."),
+      new CliError(
+        "credential_store_unavailable",
+        "The system credential store is unavailable because the session bus cannot be reached. Run inth in a desktop session, or supply INTH_TOKEN for headless use."
+      ),
     ]) {
+      const { message } = error;
       // Keep the original remedy, such as installing libsecret on Linux.
-      expect(sandboxError(new Error(message), "Cursor", STATE)).toMatchObject({
+      expect(sandboxError(error, "Cursor", STATE)).toMatchObject({
         code: "sandbox_restricted",
         message: `${message} Cursor's agent sandbox may be blocking the system credential store. Run this command outside the sandbox.`,
       });
@@ -143,5 +153,9 @@ describe("agent sandbox errors", () => {
     );
     expect(sandboxError(other, "Cursor", STATE)).toBe(other);
     expect(sandboxError(usage, "Cursor", STATE)).toBe(usage);
+    const extended = new Error(
+      "System credential store read failed (-50). Unrelated detail."
+    );
+    expect(sandboxError(extended, "Cursor", STATE)).toBe(extended);
   });
 });

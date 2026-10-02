@@ -22,7 +22,7 @@ import {
   verifyUnattendedUi,
   verifyWindowsFixtures,
 } from "./fixture-checks.ts";
-import { verifyJson } from "./json-checks.ts";
+import { verifyJson, verifyUnavailableCredentialStore } from "./json-checks.ts";
 import { verifyMcp } from "./mcp-checks.ts";
 import { binary, fixture, root, target } from "./native-test-support.ts";
 import { verifyDevelopmentTelemetry, verifySentry } from "./sentry-checks.ts";
@@ -73,6 +73,14 @@ const steps: Step[] = [
   { name: "Sentry reporting", run: () => verifySentry(fixture("sentry-test")) },
   { name: "Telemetry commands", run: () => verifyTelemetry(binary, false) },
   { name: "JSON output", run: () => verifyJson(binary) },
+  ...(process.platform === "linux"
+    ? [
+        {
+          name: "Unavailable credential store",
+          run: () => verifyUnavailableCredentialStore(binary),
+        },
+      ]
+    : []),
   { name: "MCP setup", run: () => verifyMcp(binary) },
   { name: "Skills", run: () => verifySkills(binary) },
   {

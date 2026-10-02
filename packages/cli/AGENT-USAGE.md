@@ -1,6 +1,6 @@
 # Using inth from agents and scripts
 
-If your terminal runs in a sandbox, such as Cursor's, run `npm install -g @inth/cli` and any sign-in or API command outside it. The sandbox blocks npm's global directory and cache, the CLI state directory, the system credential store, and `api.inth.com`. npm reports the blocked cache as root-owned files; do not run `sudo chown`. Inside Cursor's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code; other failures keep their usual code.
+If your terminal runs in a sandbox, such as Cursor's or Codex's, run `npm install -g @inth/cli` and any sign-in or API command outside it. The sandbox blocks npm's global directory and cache, the CLI state directory, the system credential store, and `api.inth.com`. npm reports the blocked cache as root-owned files; do not run `sudo chown`. Inside Cursor's or Codex's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code; other failures keep their usual code.
 
 For hosted consent setup, follow [Set up hosted c15t with an agent](docs/c15t-setup.md). Existing browser sign-in supports organization and project creation from JSON commands. For a separate, explicitly scoped credential, use [auth.md sign-in](docs/agent-auth-integration.md).
 
@@ -86,7 +86,8 @@ Exit codes are `0` for success, `1` for failure, and `130` for handled cancellat
 | `invalid_response` | The server returned malformed JSON or an invalid protocol response |
 | `revocation_failed` | Remote logout could not be confirmed |
 | `http_error` | Another HTTP failure |
-| `sandbox_restricted` | An agent sandbox, such as Cursor's, blocked the CLI state directory, the system credential store, or the Inth API. Run the command outside the sandbox |
+| `credential_store_unavailable` | The system credential store cannot be reached. On Linux, the message names the cause: libsecret is missing, the session bus cannot be reached, or no Secret Service is running. Set `INTH_TOKEN` for headless use |
+| `sandbox_restricted` | An agent sandbox, such as Cursor's or Codex's, blocked the CLI state directory, the system credential store, or the Inth API. Run the command outside the sandbox |
 | `command_failed` | Another command failure, including unavailable local storage |
 | `cancelled` | The command was cancelled |
 

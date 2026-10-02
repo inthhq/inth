@@ -24,7 +24,7 @@ const MCP_LOCK_FAILURES = new Set([
 ]);
 // Keychain, Credential Manager, or Secret Service failures from native-keychain.ts.
 const CREDENTIAL_STORE_FAILURE =
-  /^(?:System credential store (?:read|write|deletion) failed \(-?[0-9]{1,10}\)\.|The system credential store is unavailable\.)/u;
+  /^System credential store (?:read|write|deletion) failed \(-?[0-9]{1,10}\)\.$/u;
 const NETWORK_FAILURE =
   "Could not reach inth. Check your connection and try again.";
 // Filesystem errors carry the errno and quoted path, as in Node.
@@ -46,9 +46,19 @@ const blocksState = (message: string, stateDirectory: string): boolean => {
   );
 };
 
-// Cursor sets CURSOR_SANDBOX for agent commands it runs in its sandbox.
-export const agentSandbox = (cursor?: string): string =>
-  cursor ? "Cursor" : "";
+// Cursor sets CURSOR_SANDBOX for agent commands it runs in its sandbox. Codex
+// sets CODEX_SANDBOX on macOS, and CODEX_SANDBOX_NETWORK_DISABLED whenever its
+// sandbox blocks sockets, which also blocks the Linux session bus.
+export const agentSandbox = (
+  cursor?: string,
+  codex?: string,
+  codexNetworkDisabled?: string
+): string => {
+  if (cursor) {
+    return "Cursor";
+  }
+  return codex || codexNetworkDisabled ? "Codex" : "";
+};
 
 // Explain failures that an agent sandbox causes, so agents stop retrying them.
 export const sandboxError = (
@@ -60,7 +70,14 @@ export const sandboxError = (
     return error;
   }
   const blocked = `${sandbox}'s agent sandbox may be blocking writes to ${stateDirectory}, where Inth keeps sign-in locks and settings. Run this command outside the sandbox.`;
+  const storeBlocked = `${sandbox}'s agent sandbox may be blocking the system credential store. Run this command outside the sandbox.`;
   if (error instanceof CliError) {
+    if (error.code === "credential_store_unavailable") {
+      return new CliError(
+        "sandbox_restricted",
+        `${error.message} ${storeBlocked}`
+      );
+    }
     return error.code === "config_busy" && MCP_LOCK_FAILURES.has(error.message)
       ? new CliError(
           "sandbox_restricted",
@@ -83,7 +100,7 @@ export const sandboxError = (
   if (CREDENTIAL_STORE_FAILURE.test(error.message)) {
     return new CliError(
       "sandbox_restricted",
-      `${error.message} ${sandbox}'s agent sandbox may be blocking the system credential store. Run this command outside the sandbox.`
+      `${error.message} ${storeBlocked}`
     );
   }
   if (error.message === NETWORK_FAILURE) {
