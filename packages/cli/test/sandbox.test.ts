@@ -153,5 +153,9 @@ describe("agent sandbox errors", () => {
     );
     expect(sandboxError(other, "Cursor", STATE)).toBe(other);
     expect(sandboxError(usage, "Cursor", STATE)).toBe(usage);
+    const extended = new Error(
+      "System credential store read failed (-50). Unrelated detail."
+    );
+    expect(sandboxError(extended, "Cursor", STATE)).toBe(extended);
   });
 });

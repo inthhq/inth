@@ -15,7 +15,7 @@ const UNAVAILABLE = new Map([
   ],
   [
     -5,
-    "The system credential store is unavailable. Start and unlock a Secret Service keyring, such as GNOME Keyring or KWallet, or supply INTH_TOKEN for headless use.",
+    "The system credential store is unavailable because no Secret Service is running. Start a keyring such as GNOME Keyring or KWallet, or supply INTH_TOKEN for headless use.",
   ],
 ]);
 const credentialError = (operation: string, status: number): Error => {

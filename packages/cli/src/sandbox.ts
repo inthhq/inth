@@ -24,7 +24,7 @@ const MCP_LOCK_FAILURES = new Set([
 ]);
 // Keychain, Credential Manager, or Secret Service failures from native-keychain.ts.
 const CREDENTIAL_STORE_FAILURE =
-  /^System credential store (?:read|write|deletion) failed \(-?[0-9]{1,10}\)\./u;
+  /^System credential store (?:read|write|deletion) failed \(-?[0-9]{1,10}\)\.$/u;
 const NETWORK_FAILURE =
   "Could not reach inth. Check your connection and try again.";
 // Filesystem errors carry the errno and quoted path, as in Node.

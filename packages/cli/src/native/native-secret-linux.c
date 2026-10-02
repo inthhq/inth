@@ -1,7 +1,8 @@
 // Load Secret Service only when browser credentials are used. API-key commands
 // also work on headless installations without libsecret or a session bus.
 // Status -3: libsecret is missing. -4: the session bus is unreachable, as in a
-// headless session or an agent sandbox. -5: the Secret Service itself failed.
+// headless session or an agent sandbox. -5: no Secret Service is running.
+// -6: any other Secret Service error, reported with its status.
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -34,10 +35,15 @@ static int initialize(void) {
   schema = create("com.inth.cli", 0, "service", 0, "account", 0, NULL);
   return schema ? 0 : -3;
 }
-// GIO reports every failure to connect to the bus in its I/O error domain.
+// GIO reports a failure to reach the bus in its I/O error domain. A remote
+// error from the service uses the same domain with G_IO_ERROR_DBUS_ERROR (36).
 static int32_t failure(void *error) {
-  const char *domain = quark_name(((inth_gerror *)error)->domain);
-  int32_t status = domain && !strcmp(domain, "g-io-error-quark") ? -4 : -5;
+  const inth_gerror *value = error;
+  const char *domain = quark_name(value->domain);
+  int32_t status = -6;
+  if (domain && !strcmp(domain, "g-io-error-quark") && value->code != 36) status = -4;
+  // G_DBUS_ERROR_SERVICE_UNKNOWN: nothing provides org.freedesktop.secrets.
+  else if (domain && !strcmp(domain, "g-dbus-error-quark") && value->code == 2) status = -5;
   free_error(error);
   return status;
 }
@@ -87,7 +93,7 @@ int32_t inth_secret_write(const uint8_t *service, size_t service_len, const uint
   int result = store(schema, "default", "Inth CLI", v, NULL, &error, "service", s, "account", a, NULL);
   memset(v, 0, value_len * 2 + 9); free(v); free(s); free(a);
   if (error) return failure(error);
-  return result ? 0 : -5;
+  return result ? 0 : -6;
 }
 int32_t inth_secret_delete(const uint8_t *service, size_t service_len, const uint8_t *account, size_t account_len) {
   if (initialize()) return -3;
