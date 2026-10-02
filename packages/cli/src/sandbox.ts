@@ -46,9 +46,19 @@ const blocksState = (message: string, stateDirectory: string): boolean => {
   );
 };
 
-// Cursor sets CURSOR_SANDBOX for agent commands it runs in its sandbox.
-export const agentSandbox = (cursor?: string): string =>
-  cursor ? "Cursor" : "";
+// Cursor sets CURSOR_SANDBOX for agent commands it runs in its sandbox. Codex
+// sets CODEX_SANDBOX on macOS, and CODEX_SANDBOX_NETWORK_DISABLED whenever its
+// sandbox blocks sockets, which also blocks the Linux session bus.
+export const agentSandbox = (
+  cursor?: string,
+  codex?: string,
+  codexNetworkDisabled?: string
+): string => {
+  if (cursor) {
+    return "Cursor";
+  }
+  return codex || codexNetworkDisabled ? "Codex" : "";
+};
 
 // Explain failures that an agent sandbox causes, so agents stop retrying them.
 export const sandboxError = (

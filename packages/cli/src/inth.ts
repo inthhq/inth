@@ -519,7 +519,11 @@ try {
 } catch (error) {
   const failure = sandboxError(
     error instanceof Error ? error : new Error("Command failed."),
-    agentSandbox(process.env.CURSOR_SANDBOX),
+    agentSandbox(
+      process.env.CURSOR_SANDBOX,
+      process.env.CODEX_SANDBOX,
+      process.env.CODEX_SANDBOX_NETWORK_DISABLED
+    ),
     nativeStateDirectory()
   );
   errorCode = controller.signal.aborted ? "cancelled" : telemetryError(failure);

@@ -21,6 +21,12 @@ describe("agent sandbox errors", () => {
     expect(agentSandbox("")).toBe("");
   });
 
+  it("detects Codex's sandbox", () => {
+    expect(agentSandbox("", "seatbelt")).toBe("Codex");
+    expect(agentSandbox("", "", "1")).toBe("Codex");
+    expect(agentSandbox("", "", "")).toBe("");
+  });
+
   it("leaves errors unchanged outside a sandbox", () => {
     expect(sandboxError(lock, "", STATE)).toBe(lock);
     expect(sandboxError(offline, "", STATE)).toBe(offline);
@@ -111,7 +117,7 @@ describe("agent sandbox errors", () => {
       new Error("System credential store write failed (100001)."),
       new CliError(
         "credential_store_unavailable",
-        "The system credential store is unavailable. On Linux, install libsecret and unlock a Secret Service keyring, or supply INTH_TOKEN for headless use."
+        "The system credential store is unavailable because the session bus cannot be reached. Run inth in a desktop session, or supply INTH_TOKEN for headless use."
       ),
     ]) {
       const { message } = error;

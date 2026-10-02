@@ -2,14 +2,30 @@ import { CliError } from "../cli-error.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
 import { secretRead, secretWrite, secretDelete } from "./native-bindings.ts";
 
-// An unavailable store is an environment problem the user can fix, not a CLI bug.
-const credentialError = (operation: string, status: number): Error =>
-  status === -3
-    ? new CliError(
-        "credential_store_unavailable",
-        "The system credential store is unavailable. On Linux, install libsecret and unlock a Secret Service keyring, or supply INTH_TOKEN for headless use."
-      )
+// Linux Secret Service statuses from native-secret-linux.c. An unavailable
+// store is an environment problem the user can fix, not a CLI bug.
+const UNAVAILABLE = new Map([
+  [
+    -3,
+    "The system credential store is unavailable because libsecret is not installed. Install libsecret, or supply INTH_TOKEN for headless use.",
+  ],
+  [
+    -4,
+    "The system credential store is unavailable because the session bus cannot be reached. Run inth in a desktop session, or supply INTH_TOKEN for headless use.",
+  ],
+  [
+    -5,
+    "The system credential store is unavailable. Start and unlock a Secret Service keyring, such as GNOME Keyring or KWallet, or supply INTH_TOKEN for headless use.",
+  ],
+]);
+const credentialError = (operation: string, status: number): Error => {
+  // macOS passes OSStatus through, where -4 is errSecUnimplemented.
+  const unavailable =
+    process.platform === "linux" ? UNAVAILABLE.get(status) : undefined;
+  return unavailable
+    ? new CliError("credential_store_unavailable", unavailable)
     : new Error(`System credential store ${operation} failed (${status}).`);
+};
 
 export class NativeKeychain {
   private readonly service: string;

@@ -79,14 +79,26 @@ export const verifyUnavailableCredentialStore = (command: string): void => {
       XDG_RUNTIME_DIR: directory,
       XDG_STATE_HOME: directory,
     };
-    Reflect.deleteProperty(env, "INTH_TOKEN");
-    for (const args of [
-      ["logout", "--json"],
-      ["whoami", "--json"],
+    for (const name of [
+      "INTH_TOKEN",
+      "CURSOR_SANDBOX",
+      "CODEX_SANDBOX",
+      "CODEX_SANDBOX_NETWORK_DISABLED",
     ]) {
-      const result = spawnSync(command, args, {
+      Reflect.deleteProperty(env, name);
+    }
+    for (const scenario of [
+      { args: ["logout", "--json"], code: "credential_store_unavailable" },
+      { args: ["whoami", "--json"], code: "credential_store_unavailable" },
+      {
+        args: ["whoami", "--json"],
+        code: "sandbox_restricted",
+        extra: { CODEX_SANDBOX_NETWORK_DISABLED: "1" },
+      },
+    ]) {
+      const result = spawnSync(command, scenario.args, {
         encoding: "utf-8",
-        env,
+        env: { ...env, ...scenario.extra },
         timeout: 5000,
       });
       assert.equal(result.stderr, "");
@@ -94,7 +106,8 @@ export const verifyUnavailableCredentialStore = (command: string): void => {
       const response = responseSchema.parse(JSON.parse(result.stdout));
       assert.equal(response.ok, false);
       if (!response.ok) {
-        assert.equal(response.error.code, "credential_store_unavailable");
+        assert.equal(response.error.code, scenario.code);
+        assert.match(response.error.message, /session bus cannot be reached/u);
       }
     }
   } finally {
