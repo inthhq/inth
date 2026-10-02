@@ -107,7 +107,11 @@ export const verifyUnavailableCredentialStore = (command: string): void => {
       assert.equal(response.ok, false);
       if (!response.ok) {
         assert.equal(response.error.code, scenario.code);
-        assert.match(response.error.message, /session bus cannot be reached/u);
+        // libsecret is optional, so a host without it reports that instead.
+        assert.match(
+          response.error.message,
+          /^The system credential store is unavailable because (?:the session bus cannot be reached|libsecret is not installed)\./u
+        );
       }
     }
   } finally {
