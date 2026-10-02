@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 import { z } from "zod";
 
@@ -63,5 +66,38 @@ export const verifyJson = (command: string, prefix: string[] = []): void => {
       result.stdout,
       /inth_json_test_key|private-value|Approve sign-in/u
     );
+  }
+};
+
+// Linux only: point libsecret at a missing session bus so the store is unavailable.
+export const verifyUnavailableCredentialStore = (command: string): void => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), "inth-no-bus-"));
+  try {
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      DBUS_SESSION_BUS_ADDRESS: `unix:path=${path.join(directory, "missing-bus")}`,
+      XDG_RUNTIME_DIR: directory,
+      XDG_STATE_HOME: directory,
+    };
+    Reflect.deleteProperty(env, "INTH_TOKEN");
+    for (const args of [
+      ["logout", "--json"],
+      ["whoami", "--json"],
+    ]) {
+      const result = spawnSync(command, args, {
+        encoding: "utf-8",
+        env,
+        timeout: 5000,
+      });
+      assert.equal(result.stderr, "");
+      assert.equal(result.status, 1, result.stdout);
+      const response = responseSchema.parse(JSON.parse(result.stdout));
+      assert.equal(response.ok, false);
+      if (!response.ok) {
+        assert.equal(response.error.code, "credential_store_unavailable");
+      }
+    }
+  } finally {
+    rmSync(directory, { force: true, recursive: true });
   }
 };

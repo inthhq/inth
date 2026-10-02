@@ -167,7 +167,8 @@ export const verifySentry = async (binary: string): Promise<void> => {
     scenario: string,
     disabled = "",
     ci = "",
-    endpoint = dsn
+    endpoint = dsn,
+    extra: NodeJS.ProcessEnv = {}
   ) => {
     const state = path.join(directory, scenario);
     const started = performance.now();
@@ -177,6 +178,7 @@ export const verifySentry = async (binary: string): Promise<void> => {
         CI: ci,
         INTH_TELEMETRY_DISABLED: disabled,
         SENTRY_SECRET_TEST: "private-environment-secret",
+        ...extra,
       },
       timeout: 8000,
     });
@@ -227,6 +229,14 @@ export const verifySentry = async (binary: string): Promise<void> => {
       await mkdir(state, { recursive: true });
       await writeFile(path.join(state, "telemetry"), preference);
       const result = await launch("preference");
+      assert.equal(result.stdout, "skipped");
+    }
+    if (process.platform === "linux") {
+      // A missing session bus makes libsecret report the store as unavailable.
+      const result = await launch("credential-unavailable", "", "", dsn, {
+        DBUS_SESSION_BUS_ADDRESS: `unix:path=${path.join(directory, "missing-bus")}`,
+        XDG_RUNTIME_DIR: directory,
+      });
       assert.equal(result.stdout, "skipped");
     }
     assert.equal(
