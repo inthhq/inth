@@ -8,7 +8,10 @@ import {
   requireProjectBackendURL,
   resolveProject,
 } from "../../vendor/c15t/frontend/projects.ts";
-import { runGenerationWorkflow } from "../../vendor/c15t/frontend/runtime/index.ts";
+import {
+  recoverGeneration,
+  runGenerationWorkflow,
+} from "../../vendor/c15t/frontend/runtime/index.ts";
 import type { GenerationWorkflowResult } from "../../vendor/c15t/frontend/runtime/index.ts";
 import { boilerplateFrameworks } from "../../vendor/c15t/generate/index.ts";
 import type { BoilerplateFramework } from "../../vendor/c15t/generate/index.ts";
@@ -56,6 +59,8 @@ interface RegionList {
 }
 
 const NEW_PROJECT = "__inth_new_project__";
+// Where c15t's runtime journals an apply; see vendor/c15t/frontend/runtime/files.ts.
+const RECOVERY_DIRECTORY = ".c15t-native-generation";
 // A new project's consent backend usually provisions within a minute.
 const PROVISION_ATTEMPTS = 30;
 const PROVISION_INTERVAL_MS = 2000;
@@ -456,6 +461,33 @@ class C15tSetup {
     return framework;
   }
 
+  // An interrupted apply blocks every later plan until it is undone.
+  async recover(cwd: string): Promise<void> {
+    if (!existsSync(join(cwd, RECOVERY_DIRECTORY))) {
+      return;
+    }
+    if (!this.c15t.resume) {
+      const message =
+        "An earlier inth c15t scaffold in this app was interrupted. Run inth c15t scaffold --resume to undo its partial files and try again.";
+      if (!this.interactive || this.c15t.dryRun) {
+        throw new CliError("interaction_required", message);
+      }
+      const selected = await this.select(
+        "An earlier c15t setup in this app was interrupted",
+        [
+          choice("resume", "Undo its partial files and continue"),
+          choice("cancel", "Cancel"),
+        ]
+      );
+      if (selected !== "resume") {
+        throw new CliError("cancelled", "c15t setup cancelled.");
+      }
+    }
+    if (recoverGeneration(cwd)) {
+      console.error("Undid the interrupted c15t setup.");
+    }
+  }
+
   async confirm(count: number): Promise<void> {
     if (this.c15t.yes) {
       return;
@@ -585,6 +617,7 @@ export const runC15t = async (
   );
   const args = ["setup", "--framework", framework];
   const generation = { generation: { backendURL } };
+  await setup.recover(cwd);
   const preview = await runGenerationWorkflow(args, generation, {
     cwd,
     signal,

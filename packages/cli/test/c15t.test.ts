@@ -43,6 +43,7 @@ describe("inth c15t arguments", () => {
       dryRun: false,
       framework: "next-app",
       project: "acme/Website",
+      resume: false,
       skipInstall: true,
       yes: true,
     });
@@ -63,6 +64,11 @@ describe("inth c15t arguments", () => {
     [["--codex", "--claude"], "Choose one of scaffold, prompt"],
     [["--codex", "scaffold"], "Choose one of scaffold, prompt"],
     [["--codex", "--yes"], "apply to scaffold"],
+    [["prompt", "--resume"], "apply to scaffold"],
+    [
+      ["scaffold", "--resume", "--dry-run"],
+      "cannot be combined with --dry-run",
+    ],
     [["--codex", "--json"], "Agent sessions use this terminal"],
     [["website"], "Usage: inth c15t"],
   ])("rejects %j", (args, message) => {

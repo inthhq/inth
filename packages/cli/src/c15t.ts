@@ -41,11 +41,13 @@ export interface C15tOptions {
   framework?: BoilerplateFramework;
   skipInstall: boolean;
   dryRun: boolean;
+  // Undo an interrupted scaffold before writing again.
+  resume: boolean;
   yes: boolean;
 }
 
 export const C15T_USAGE =
-  "Usage: inth c15t [scaffold|prompt|--codex|--claude|--cursor|--grok|--fx] [--project <id|name>] [--name <name> --region <id>] [--framework <name>] [--organization <id>] [--yes] [--dry-run] [--skip-install] [--json]";
+  "Usage: inth c15t [scaffold|prompt|--codex|--claude|--cursor|--grok|--fx] [--project <id|name>] [--name <name> --region <id>] [--framework <name>] [--organization <id>] [--yes] [--dry-run] [--skip-install] [--resume] [--json]";
 
 export const c15tHelp = (): string =>
   [
@@ -68,6 +70,7 @@ export const c15tHelp = (): string =>
     "  --yes                  Write files without confirming",
     "  --dry-run              Show the files scaffold would write",
     "  --skip-install         Write files without installing packages",
+    "  --resume               Undo an interrupted scaffold, then write again",
     "  --json                 Print the result as JSON",
     "",
     "Without an action or project, inth asks in the terminal.",
@@ -139,11 +142,17 @@ const validate = (c15t: C15tOptions): void => {
   }
   if (
     (c15t.action === "prompt" || c15t.action === "agent") &&
-    (c15t.dryRun || c15t.skipInstall || c15t.yes)
+    (c15t.dryRun || c15t.skipInstall || c15t.yes || c15t.resume)
   ) {
     throw new CliError(
       "usage_error",
-      "--yes, --dry-run, and --skip-install apply to scaffold."
+      "--yes, --dry-run, --skip-install, and --resume apply to scaffold."
+    );
+  }
+  if (c15t.resume && c15t.dryRun) {
+    throw new CliError(
+      "usage_error",
+      "--resume removes files, so it cannot be combined with --dry-run."
     );
   }
 };
@@ -161,6 +170,22 @@ const setAction = (c15t: C15tOptions, action: string, agent = ""): void => {
   }
 };
 
+// Scaffold switches. Returns whether `arg` was one.
+const setScaffoldFlag = (c15t: C15tOptions, arg: string): boolean => {
+  if (arg === "--yes" || arg === "-y") {
+    c15t.yes = true;
+  } else if (arg === "--dry-run") {
+    c15t.dryRun = true;
+  } else if (arg === "--skip-install") {
+    c15t.skipInstall = true;
+  } else if (arg === "--resume") {
+    c15t.resume = true;
+  } else {
+    return false;
+  }
+  return true;
+};
+
 // Parses everything after `c15t`, including the shared flags the main parser
 // would otherwise consume.
 export const parseC15tArguments = (
@@ -170,6 +195,7 @@ export const parseC15tArguments = (
   const c15t: C15tOptions = {
     action: "",
     dryRun: false,
+    resume: false,
     skipInstall: false,
     yes: false,
   };
@@ -181,12 +207,8 @@ export const parseC15tArguments = (
       result.json = true;
     } else if (arg === "--non-interactive") {
       result.nonInteractive = true;
-    } else if (arg === "--yes" || arg === "-y") {
-      c15t.yes = true;
-    } else if (arg === "--dry-run") {
-      c15t.dryRun = true;
-    } else if (arg === "--skip-install") {
-      c15t.skipInstall = true;
+    } else if (setScaffoldFlag(c15t, arg)) {
+      continue;
     } else if (CODING_AGENTS.some((agent) => arg === `--${agent.id}`)) {
       setAction(c15t, "agent", arg.slice(2));
     } else if (arg.startsWith("--")) {

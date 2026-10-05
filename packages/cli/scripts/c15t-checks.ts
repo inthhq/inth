@@ -204,6 +204,49 @@ const verifyScaffold = async (
       "@c15t/nextjs@alpha",
     ]);
   }
+  // An interrupted apply leaves c15t's journal directory behind.
+  await rm(path.join(directory, "src"), { force: true, recursive: true });
+  await mkdir(path.join(directory, ".c15t-native-generation"));
+  const blocked = run(
+    test,
+    [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+    ],
+    directory
+  );
+  assert.equal(blocked.status, 1);
+  assert.match(blocked.stderr, /Run inth c15t scaffold --resume/u);
+  const resumed = run(
+    test,
+    [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+      "--resume",
+    ],
+    directory
+  );
+  assert.equal(resumed.status, 0, resumed.stderr);
+  assert.match(resumed.stderr, /Undid the interrupted c15t setup/u);
+  const entries = await readdir(directory);
+  assert.deepEqual(entries.toSorted(), [
+    "app",
+    "package.json",
+    "pnpm-lock.yaml",
+    "src",
+  ]);
   await writeFile(
     path.join(directory, "src/consent/consent-manager.tsx"),
     `${manager}// edited\n`
