@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
+import { packageVersion } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const experiment = path.join(root, "experiments", "scriptc");
 const require = createRequire(import.meta.url);
@@ -53,7 +55,7 @@ const source = z
     )
   );
 const report = {
-  compiler: "scriptc@0.0.36",
+  compiler: `scriptc@${packageVersion("@scriptc/compiler")}`,
   compiler_exit_code: compilation.status,
   diagnostics,
   dynamic_runtime: false,
