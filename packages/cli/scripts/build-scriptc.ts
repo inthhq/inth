@@ -331,6 +331,7 @@ if (fixtures) {
     "organization-test",
     "resource-test",
     "resource-output-test",
+    "c15t-test",
   ]) {
     entries.push({ name, source: `test/native/${name}.ts` });
   }

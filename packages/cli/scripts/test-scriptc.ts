@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
 
+import { verifyC15t } from "./c15t-checks.ts";
 import {
   verifyHelp,
   verifyStatelessBypass,
@@ -83,6 +84,7 @@ const steps: Step[] = [
     : []),
   { name: "MCP setup", run: () => verifyMcp(binary) },
   { name: "Skills", run: () => verifySkills(binary) },
+  { name: "c15t", run: () => verifyC15t(binary) },
   {
     name: "Update check",
     run: () => verifyUpdateCheck(binary, [], "development", false),

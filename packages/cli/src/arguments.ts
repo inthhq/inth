@@ -1,3 +1,5 @@
+import { parseC15tArguments } from "./c15t.ts";
+import type { C15tOptions } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
 import { terminalText } from "./organizations.ts";
@@ -26,6 +28,7 @@ export interface CliArguments {
   skillsArguments?: string[];
   skillsBrowse?: boolean;
   skillsSourceExplicit?: boolean;
+  c15t?: C15tOptions;
 }
 
 const validateCommandOptions = (result: CliArguments): void => {
@@ -392,7 +395,28 @@ const consumeOption = (
   return equals === -1 ? index + 1 : index;
 };
 
-export const parseArguments = (args: string[]): CliArguments => {
+// Commands that parse their own arguments. Returns whether `arg` was one.
+const parseSubcommand = (
+  result: CliArguments,
+  arg: string,
+  rest: string[],
+  c15t: boolean
+): boolean => {
+  if (arg === "skills") {
+    result.command = "skills";
+    parseSkillsArguments(result, rest);
+    return true;
+  }
+  if (arg === "c15t" && c15t) {
+    result.command = "c15t";
+    result.c15t = parseC15tArguments(result, rest);
+    return true;
+  }
+  return false;
+};
+
+// `c15t` enables the experimental `inth c15t` command; see c15t.ts.
+export const parseArguments = (args: string[], c15t = false): CliArguments => {
   const result: CliArguments = {
     argument: "",
     command: "",
@@ -425,9 +449,10 @@ export const parseArguments = (args: string[]): CliArguments => {
       index = consumeOption(result, args, index, arg);
     } else {
       positional.push(arg);
-      if (positional.length === 1 && arg === "skills") {
-        result.command = "skills";
-        parseSkillsArguments(result, args.slice(index + 1));
+      if (
+        positional.length === 1 &&
+        parseSubcommand(result, arg, args.slice(index + 1), c15t)
+      ) {
         return result;
       }
     }
