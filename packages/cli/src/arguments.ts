@@ -395,6 +395,15 @@ const consumeOption = (
   return equals === -1 ? index + 1 : index;
 };
 
+// Options without values. setOption records them with the value "true".
+const SWITCHES = new Set([
+  "--dry-run",
+  "--yes",
+  "--complete",
+  "--wait",
+  "--check",
+]);
+
 // Commands that parse their own arguments. Returns whether `arg` was one.
 const parseSubcommand = (
   result: CliArguments,
@@ -408,8 +417,16 @@ const parseSubcommand = (
     return true;
   }
   if (arg === "c15t" && c15t) {
+    // Options before `c15t` were already consumed; let the c15t parser apply
+    // or reject them instead of dropping them.
+    const leading = result.values.map((entry) =>
+      SWITCHES.has(`--${entry.name}`)
+        ? `--${entry.name}`
+        : `--${entry.name}=${entry.value}`
+    );
+    result.values = [];
     result.command = "c15t";
-    result.c15t = parseC15tArguments(result, rest);
+    result.c15t = parseC15tArguments(result, [...leading, ...rest]);
     return true;
   }
   return false;
@@ -437,9 +454,7 @@ export const parseArguments = (args: string[], c15t = false): CliArguments => {
       result.version = true;
     } else if (arg === "--no-browser") {
       result.noBrowser = true;
-    } else if (
-      ["--dry-run", "--yes", "--complete", "--wait", "--check"].includes(arg)
-    ) {
+    } else if (SWITCHES.has(arg)) {
       setOption(result, arg.slice(2), "true");
     } else if (arg === "--json") {
       result.json = true;

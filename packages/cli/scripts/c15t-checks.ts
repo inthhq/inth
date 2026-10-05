@@ -137,6 +137,27 @@ const verifyExistingProject = async (
     "package.json",
     "pnpm-lock.yaml",
   ]);
+  // Options before `c15t` still apply, so --dry-run outranks --yes.
+  const leading = run(
+    test,
+    [
+      "--dry-run",
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--yes",
+    ],
+    directory
+  );
+  assert.equal(leading.status, 0, leading.stderr);
+  assert.deepEqual(await readdir(directory), [
+    "app",
+    "package.json",
+    "pnpm-lock.yaml",
+  ]);
 
   const unconfirmed = run(
     test,

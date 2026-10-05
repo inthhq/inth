@@ -76,6 +76,28 @@ describe("inth c15t arguments", () => {
   });
 });
 
+describe("inth c15t options before the command", () => {
+  it("keeps options that precede c15t", () => {
+    const result = parseArguments(
+      ["--dry-run", "--name", "Site", "c15t", "scaffold", "--region", "eu"],
+      true
+    );
+    expect(result.c15t).toMatchObject({
+      action: "scaffold",
+      dryRun: true,
+      name: "Site",
+      region: "eu",
+    });
+    expect(result.values).toEqual([]);
+  });
+
+  it("rejects options c15t does not support", () => {
+    expect(() => parseArguments(["--complete", "c15t"], true)).toThrow(
+      'Unknown option "--complete"'
+    );
+  });
+});
+
 describe("inth c15t agents", () => {
   it.each([
     ["--codex", "codex"],
