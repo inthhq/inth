@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 import { z } from "zod";
 
+import { packageVersion } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const experiment = path.join(root, "experiments", "skills");
 const logs = path.join(root, "build", "skills-assessment");
@@ -97,7 +99,7 @@ const diagnosticPattern =
   /^(?<file>.+?):(?<line>\d+):(?<column>\d+) - error (?<code>SC\d+): (?<message>.+)$/gmu;
 for (const { name, entry, flags } of configurations) {
   console.log(`Compiling ${name}...`);
-  const result = invoke("scriptc/dist/bootstrap.js", [
+  const result = invoke("./scriptc.ts", [
     "build",
     entry,
     "--emit=ir",
@@ -151,7 +153,7 @@ const manifest = z.object({ version: z.string() });
 const version = async (file: string) =>
   manifest.parse(JSON.parse(await readFile(file, "utf-8"))).version;
 const report = {
-  compiler: `scriptc@${await version(require.resolve("scriptc/package.json"))}`,
+  compiler: `scriptc@${packageVersion("@scriptc/compiler")}`,
   install_tested: false,
   native_execution_tested: false,
   node: process.version,

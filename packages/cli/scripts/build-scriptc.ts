@@ -331,6 +331,7 @@ if (fixtures) {
     "organization-test",
     "resource-test",
     "resource-output-test",
+    "c15t-test",
   ]) {
     entries.push({ name, source: `test/native/${name}.ts` });
   }
@@ -346,7 +347,7 @@ for (const entry of entries) {
     entryManifest = fixtureManifests.get(false) ?? manifest;
   }
   run(process.execPath, [
-    require.resolve("scriptc/dist/bootstrap.js"),
+    path.join(root, "scripts", "scriptc.ts"),
     "build",
     entry.source,
     "--ffi",

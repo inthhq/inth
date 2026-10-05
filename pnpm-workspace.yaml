@@ -4,6 +4,7 @@ packages:
   - npm/*
 allowBuilds:
   esbuild: true
-  scriptc: true
 minimumReleaseAgeExclude:
   - ultracite@7.10.8
+patchedDependencies:
+  "@scriptc/compiler@0.2.2": patches/@scriptc__compiler@0.2.2.patch

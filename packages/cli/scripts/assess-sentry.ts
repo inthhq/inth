@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 import { z } from "zod";
 
+import { packageVersion } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const experiment = path.join(root, "experiments", "sentry");
 const require = createRequire(import.meta.url);
@@ -60,11 +62,7 @@ if (baseline.status !== 0) {
 }
 
 const probes = ["core-probe.ts", "stack-probe.ts"].map((entry) => {
-  const result = invoke("scriptc/dist/bootstrap.js", [
-    "build",
-    entry,
-    "--emit=ir",
-  ]);
+  const result = invoke("./scriptc.ts", ["build", entry, "--emit=ir"]);
   if (result.error || result.signal) {
     throw new Error(`The compiler did not finish ${entry}.`);
   }
@@ -88,7 +86,7 @@ const lock = z
     )
   );
 const report = {
-  compiler: "scriptc@0.0.36",
+  compiler: `scriptc@${packageVersion("@scriptc/compiler")}`,
   dynamic_runtime: false,
   network_delivery_tested: false,
   node_capture_and_flush: "passed",

@@ -117,13 +117,7 @@ const hello = path.join(root, "bench/cross-cli/hello.ts");
 const helloScriptc = path.join(output, "hello-scriptc");
 const scriptcBuild = spawnSync(
   process.execPath,
-  [
-    require.resolve("scriptc/dist/bootstrap.js"),
-    "build",
-    hello,
-    "-o",
-    helloScriptc,
-  ],
+  [require.resolve("./scriptc.ts"), "build", hello, "-o", helloScriptc],
   { cwd: root, encoding: "utf-8" }
 );
 assert.equal(scriptcBuild.status, 0, scriptcBuild.stderr);
@@ -132,7 +126,7 @@ add({
   binary: helloScriptc,
   executable: helloScriptc,
   name: "hello world",
-  runtime: `Scriptc ${packageVersion("scriptc")}`,
+  runtime: `Scriptc ${packageVersion("@scriptc/compiler")}`,
 });
 const bun = which("bun");
 const bunVersion = bun ? versionOf(bun) : null;

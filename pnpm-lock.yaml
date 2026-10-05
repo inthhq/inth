@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@scriptc/compiler@0.2.2': 614abe2b2b222bef449e34dd9bb383081e85079bf94446727a21b969cc4a1810
+
 importers:
 
   .:
@@ -52,6 +55,9 @@ importers:
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
+      '@scriptc/compiler':
+        specifier: 0.2.2
+        version: 0.2.2(patch_hash=614abe2b2b222bef449e34dd9bb383081e85079bf94446727a21b969cc4a1810)
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
@@ -70,9 +76,6 @@ importers:
       proper-lockfile:
         specifier: 4.1.2
         version: 4.1.2
-      scriptc:
-        specifier: 0.0.36
-        version: 0.0.36
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -995,22 +998,85 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@scriptc/compiler@0.0.36':
-    resolution: {integrity: sha512-3NRngr5BB7P6ynraWSS1gB9M+XoApp0SSmaV999hvaM1loqdgySQEUNfhJNWD2FBPxOSk1MxGc3zrKDN+2drJw==}
+  '@scriptc/compiler@0.2.2':
+    resolution: {integrity: sha512-BgGLj666sKgWR+BLed6l7f8LO/9wWqm/j3VmtU3bqT2WqivvTLPKdR/0ltWCPdKyxYbGkA3aw9UnfWN3xP9W/Q==}
 
-  '@scriptc/llvm-darwin-arm64@0.0.36':
-    resolution: {integrity: sha512-FPupxAkIaEbOSBGwIVihAmTXSX94Cln43WRFgEOm9OWGDjYCdKuVZ2/ftjqo+ptTi3k65W7KgW6SrvywC70rRA==}
+  '@scriptc/llvm-darwin-arm64@0.2.2':
+    resolution: {integrity: sha512-VCXdesCNI07jVSG5JM8R7HU8z1T4HlpEocLYTD1De76G45qocBYC2YCC1G1x+d56oct6lsFE7plkrdgUMZtTlg==}
     cpu: [arm64]
     os: [darwin]
     hasBin: true
 
-  '@scriptc/runtime-darwin-arm64@0.0.36':
-    resolution: {integrity: sha512-WvrBGmUmWejvrRZ59HehXlyuRW4++/ciO303ZEHiEc96l1hdPefvjFZMK6offxRCi5en5l4O8Odj4UcAnG9K3g==}
-    cpu: [arm64]
+  '@scriptc/llvm-darwin-x64@0.2.2':
+    resolution: {integrity: sha512-MCPkIoM3ZUY59HMwHoyARNTI1JI5iDC3tUp2ZIgiho/5bL6bEKcj9wGGEpYB0Rp2gnjlNeh5JAd44swejyLvSA==}
+    cpu: [x64]
     os: [darwin]
+    hasBin: true
 
-  '@scriptc/runtime@0.0.36':
-    resolution: {integrity: sha512-5WGzxlWvx28Qc+oE6QsbJfHVZ1WX5fDAQUvcOgrInzATzkEws4knnBs0y+5J7Sn0HnyYD/Wg4HNBwg47MlDKng==}
+  '@scriptc/llvm-linux-arm64-gnu@0.2.2':
+    resolution: {integrity: sha512-nJjkaCgYIfuhjWYTm3wfO0tPqj+e5UpHYZ+0NRYqPLBpAIEWM99YmfOkJ6TwBTooxwMKAdjzjezQu8/ONYziNQ==}
+    cpu: [arm64]
+    os: [linux]
+    hasBin: true
+
+  '@scriptc/llvm-linux-arm64-musl@0.2.2':
+    resolution: {integrity: sha512-jQzsLzCHD+mVrJ3JtK7YRiygiLnu5YwyhM0Xo+DuAZkiJthEybGHXzoUbyWDahb9aMPK/VPUEw20DvFNfvcQ3Q==}
+    cpu: [arm64]
+    os: [linux]
+    hasBin: true
+
+  '@scriptc/llvm-linux-x64-gnu@0.2.2':
+    resolution: {integrity: sha512-4TfiekSHWg1QqaKnRr/ExkU4bNvE1E4Ljg5vVlJ5rikD/xenKgAb74RC+4c1WdSFwGO3FfTRU+lbeM0X/ewLPQ==}
+    cpu: [x64]
+    os: [linux]
+    hasBin: true
+
+  '@scriptc/llvm-linux-x64-musl@0.2.2':
+    resolution: {integrity: sha512-8fpqdTafEEyggRTH2wmiMNqImAtr9Ix44mJurEoFatMjUuXM2EA0My9CZFS6p/XN6eKuu9zJsr0P1LbUGNSILg==}
+    cpu: [x64]
+    os: [linux]
+    hasBin: true
+
+  '@scriptc/llvm-win32-x64-msvc@0.2.2':
+    resolution: {integrity: sha512-hd6gGhk3Lcbrj6AmWeBtizIZNNspxD5knLIrskicBC61KU7VCIhzfKvH2f0cJ2DXUG4gPe83Fvs2IUzlX3Zlcw==}
+    cpu: [x64]
+    os: [win32]
+
+  '@scriptc/runtime-android-arm64@0.2.2':
+    resolution: {integrity: sha512-LZdyVlGFcF1uee3dCPbZTD3ypzzZfEXPtNVLpjZxiLwkP4P2sgMve+LKmehGqffuP+RXYZYh7YhbQsuY/YfUtQ==}
+
+  '@scriptc/runtime-darwin-arm64@0.2.2':
+    resolution: {integrity: sha512-8DIIqYicROGj753x9PfTY1NahscfHeKE96tpDxCIM85BjOvhTAqz7mQjC0FazLnwmXhIH2Lgj/P+kGJ6I1D58Q==}
+
+  '@scriptc/runtime-darwin-x64@0.2.2':
+    resolution: {integrity: sha512-X4QBORGhmAJwrfjkP12WLOZxKSTgjqOO8VsLs344ZriTe3YTFsZfFXslU2fSRGER7Cz2iDXOD4/KPuygGRR1TA==}
+
+  '@scriptc/runtime-ios-arm64@0.2.2':
+    resolution: {integrity: sha512-2AHjG5uxqaxnqut3ttWP4umDOMbw1Orp8AtHHgp4kZH/ToQHL50xBs8JSrpass/qHJ5AQADaAHcJLn4N5hREKg==}
+
+  '@scriptc/runtime-ios-simulator-arm64@0.2.2':
+    resolution: {integrity: sha512-0DSLktNjnwdrJJk/XIT1IkCl3qi2d3FjzRVAlMRlf/gkv75K2jj10n2lJbwAjIl83e50xklmC7ux5INJbMdAlg==}
+
+  '@scriptc/runtime-linux-arm64-gnu@0.2.2':
+    resolution: {integrity: sha512-LYqRQtmL74mKiK22HcgU07kkhK18LPOIpt9mh565BHZ/U8CTtBM3he64WoZfX14jueD/qZFeZUP4FsuvjSQ8QA==}
+
+  '@scriptc/runtime-linux-arm64-musl@0.2.2':
+    resolution: {integrity: sha512-bKgS5XCRKoB4i4Wmg3KQRt6/Wx0KQgO+xBGxcqv/pxqn4r1J44U+gFFcYHw67IK5BUJkJA07iSAbDhNgcGz7Dw==}
+
+  '@scriptc/runtime-linux-x64-gnu@0.2.2':
+    resolution: {integrity: sha512-5dpBUOM2IUeLtZ42tmjWh2aUf+VZhnVqpToVGeP3lAKveGBQ0bhwiK1PxrNYIfvuSkyJxcKoZfqlsEp+RoHieQ==}
+
+  '@scriptc/runtime-linux-x64-musl@0.2.2':
+    resolution: {integrity: sha512-MwNUtSc3FIviUG/y3BmsgnD80/8c5bQkTJp6M9COkDtoPauZoyIFNml3OuUadN51NEbFgkudFFG+avkPUBHVSA==}
+
+  '@scriptc/runtime-wasm32-wasi@0.2.2':
+    resolution: {integrity: sha512-QJF+apW2aTiac8kawPAZRCNqB5anVvk3JWAUuOkWTJ6pILI9ZF5DlljPTfeYGJvNknHOwgh2RyPFnF8l3EVDcA==}
+
+  '@scriptc/runtime-win32-x64-msvc@0.2.2':
+    resolution: {integrity: sha512-DUjmvx62FI17ceZSAVQfabmWURQJWCVyjnRoeMWevyVGE6Z1dq78vUjDCQT6A2W9tAH/uOU+wEn1QBlXHQolOA==}
+
+  '@scriptc/runtime@0.2.2':
+    resolution: {integrity: sha512-igeGnPd+oDZ98Xo/ltDHmqu5165TDUp6AoBMS18j5WZ7gK5Lny8KJE2j6CBpHRbDA2JKCg29KvS+c0Ab+G5ztw==}
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
@@ -2118,11 +2184,6 @@ packages:
   satteri@0.9.5:
     resolution: {integrity: sha512-ZuWVl+vnM64y+/TtX8Kosv2c00W+hLQiiwnEL6H0UKVVrxFqMw4D2CJHHQaouVd89OAhtBBfjWLqhKi3TVUV4w==}
 
-  scriptc@0.0.36:
-    resolution: {integrity: sha512-jxyL8VMi771nU3PuYCj8U+P6sQGgioD5yIMigXbUyVEDyR3IUrxkkZH/Iu/j8Z0VM5cTaLqLr65Gk8ff3wciNQ==}
-    engines: {node: '>=24'}
-    hasBin: true
-
   semver@7.8.5:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
@@ -3021,22 +3082,86 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@scriptc/compiler@0.0.36':
+  '@scriptc/compiler@0.2.2(patch_hash=614abe2b2b222bef449e34dd9bb383081e85079bf94446727a21b969cc4a1810)':
     dependencies:
-      '@scriptc/runtime': 0.0.36
+      '@scriptc/runtime': 0.2.2
       typescript: 7.0.2
       typescript5: typescript@5.9.3
     optionalDependencies:
-      '@scriptc/llvm-darwin-arm64': 0.0.36
-      '@scriptc/runtime-darwin-arm64': 0.0.36
+      '@scriptc/llvm-darwin-arm64': 0.2.2
+      '@scriptc/llvm-darwin-x64': 0.2.2
+      '@scriptc/llvm-linux-arm64-gnu': 0.2.2
+      '@scriptc/llvm-linux-arm64-musl': 0.2.2
+      '@scriptc/llvm-linux-x64-gnu': 0.2.2
+      '@scriptc/llvm-linux-x64-musl': 0.2.2
+      '@scriptc/llvm-win32-x64-msvc': 0.2.2
+      '@scriptc/runtime-android-arm64': 0.2.2
+      '@scriptc/runtime-darwin-arm64': 0.2.2
+      '@scriptc/runtime-darwin-x64': 0.2.2
+      '@scriptc/runtime-ios-arm64': 0.2.2
+      '@scriptc/runtime-ios-simulator-arm64': 0.2.2
+      '@scriptc/runtime-linux-arm64-gnu': 0.2.2
+      '@scriptc/runtime-linux-arm64-musl': 0.2.2
+      '@scriptc/runtime-linux-x64-gnu': 0.2.2
+      '@scriptc/runtime-linux-x64-musl': 0.2.2
+      '@scriptc/runtime-wasm32-wasi': 0.2.2
+      '@scriptc/runtime-win32-x64-msvc': 0.2.2
 
-  '@scriptc/llvm-darwin-arm64@0.0.36':
+  '@scriptc/llvm-darwin-arm64@0.2.2':
     optional: true
 
-  '@scriptc/runtime-darwin-arm64@0.0.36':
+  '@scriptc/llvm-darwin-x64@0.2.2':
     optional: true
 
-  '@scriptc/runtime@0.0.36': {}
+  '@scriptc/llvm-linux-arm64-gnu@0.2.2':
+    optional: true
+
+  '@scriptc/llvm-linux-arm64-musl@0.2.2':
+    optional: true
+
+  '@scriptc/llvm-linux-x64-gnu@0.2.2':
+    optional: true
+
+  '@scriptc/llvm-linux-x64-musl@0.2.2':
+    optional: true
+
+  '@scriptc/llvm-win32-x64-msvc@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-android-arm64@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-darwin-arm64@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-darwin-x64@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-ios-arm64@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-ios-simulator-arm64@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-linux-arm64-gnu@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-linux-arm64-musl@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-linux-x64-gnu@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-linux-x64-musl@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-wasm32-wasi@0.2.2':
+    optional: true
+
+  '@scriptc/runtime-win32-x64-msvc@0.2.2':
+    optional: true
+
+  '@scriptc/runtime@0.2.2': {}
 
   '@sec-ant/readable-stream@0.4.1': {}
 
@@ -4074,10 +4199,6 @@ snapshots:
       '@bruits/satteri-wasm32-wasi': 0.9.5
       '@bruits/satteri-win32-arm64-msvc': 0.9.5
       '@bruits/satteri-win32-x64-msvc': 0.9.5
-
-  scriptc@0.0.36:
-    dependencies:
-      '@scriptc/compiler': 0.0.36
 
   semver@7.8.5: {}
 

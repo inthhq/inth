@@ -124,7 +124,7 @@ const report = {
   results,
   scope:
     "Warm filesystem, fresh-process --help latency including spawn overhead. Static probe prints the real CLI help but excludes auth, HTTP, validation and credential storage. Node same-source probe includes Node TypeScript stripping. No native auth or CPU-throughput claim.",
-  scriptc: packageVersion("scriptc"),
+  scriptc: packageVersion("@scriptc/compiler"),
   warmups,
   yao_bytes: yaoStat.size,
   yao_node: YAO_NODE_VERSION,

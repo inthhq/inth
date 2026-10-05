@@ -12,6 +12,8 @@ import { promisify } from "node:util";
 
 import { z } from "zod";
 
+import { packageVersion } from "./runtime-versions.ts";
+
 const root = fileURLToPath(new URL("../", import.meta.url));
 const experiment = path.join(root, "experiments", "sentry-native");
 const source = path.join(root, "build", "sentry-native-source");
@@ -97,7 +99,7 @@ run(process.execPath, [
 ]);
 const binary = path.join(output, "probe");
 run(process.execPath, [
-  require.resolve("scriptc/dist/bootstrap.js"),
+  require.resolve("./scriptc.ts"),
   "build",
   path.join(experiment, "probe.ts"),
   "--ffi",
@@ -257,7 +259,7 @@ try {
     binary_bytes: binaryStat.size,
     capture_exit_ms: Math.round(capture.elapsed_ms),
     capture_frames: capturedException.stacktrace.frames,
-    compiler: "scriptc@0.0.36",
+    compiler: `scriptc@${packageVersion("@scriptc/compiler")}`,
     crash_delivered_before_restart: deliveredBeforeRestart,
     crash_frames: crashedException.stacktrace.frames,
     crash_type: crashedException.type,

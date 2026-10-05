@@ -166,12 +166,14 @@ export const commandOptions = (
   OPTION_METADATA.filter((item) =>
     [...baseOptions, ...names].includes(item.name)
   ).map((item) => ({
-    ...item,
+    defaultValue: item.defaultValue,
     description:
       item.name === "request-id" && group === "feedback"
         ? "Request ID from the failed operation, up to 128 characters"
         : item.description,
+    name: item.name,
     required: required.includes(item.name),
+    type: item.type,
     values:
       item.name === "status" && group === "inbox"
         ? ["open", "accepted", "dismissed", "resolved"]

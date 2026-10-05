@@ -34,6 +34,7 @@ export const verifyTerminals = (): void => {
   python("test-selector.py", [fixture("ui-test")], 20_000);
   python("test-mcp-ui.py", [binary], 20_000);
   python("test-skills-ui.py", [binary], 30_000);
+  python("test-c15t-ui.py", [fixture("c15t-test")], 60_000);
 };
 
 export const verifyOutput = (): void => {

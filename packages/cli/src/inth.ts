@@ -11,6 +11,7 @@ import { apiKey } from "./api-options.ts";
 import type { CliArguments } from "./arguments.ts";
 import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
+import { c15tEnabled, c15tHelp } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { selectCommandConnection } from "./connection-selection.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
@@ -23,6 +24,7 @@ import {
   prepareDirectory,
   productionBuild,
 } from "./native/native-bindings.ts";
+import { runC15t } from "./native/native-c15t.ts";
 import { nativeClock, nativeHttp } from "./native/native-http.ts";
 import { NativeKeychain } from "./native/native-keychain.ts";
 import { runMcp } from "./native/native-mcp.ts";
@@ -273,6 +275,23 @@ const runOrganizationCreate = async (
     JSON.stringify(created)
   );
 };
+// Commands with their own API workflow rather than one resource request.
+const runApiCommand = async (
+  options: CliArguments,
+  api: NativeApi,
+  context: NativeContext,
+  allowInteractive: boolean
+): Promise<boolean> => {
+  if (options.command === "c15t") {
+    await runC15t(options, api, context, controller.signal, allowInteractive);
+    return true;
+  }
+  if (options.command === "org" && options.argument === "create") {
+    await runOrganizationCreate(options, api);
+    return true;
+  }
+  return false;
+};
 const run = async (options: CliArguments): Promise<void> => {
   diagnosticStep("command_setup");
   if (options.version || options.help || !options.command) {
@@ -370,6 +389,9 @@ const run = async (options: CliArguments): Promise<void> => {
   ) {
     return;
   }
+  if (await runApiCommand(options, api, context, allowInteractive)) {
+    return;
+  }
   if (options.command === "login") {
     await runLogin(options, key, getAuth, api, context, allowInteractive);
   } else if (options.command === "logout") {
@@ -401,8 +423,6 @@ const run = async (options: CliArguments): Promise<void> => {
           }),
       JSON.stringify(identity)
     );
-  } else if (options.command === "org" && options.argument === "create") {
-    await runOrganizationCreate(options, api);
   } else if (options.command === "api" || resourceCommand(options)) {
     await runResource(options, api, context);
   } else {
@@ -443,7 +463,10 @@ const localApiConfigured = Boolean(
 try {
   startErrorDiagnostics();
   diagnosticStep("argument_parse");
-  options = parseArguments(process.argv.slice(2));
+  options = parseArguments(
+    process.argv.slice(2),
+    c15tEnabled(process.env.INTH_EXPERIMENTAL_C15T)
+  );
   if (
     telemetryCommand(options) &&
     !localApiConfigured &&
@@ -513,6 +536,8 @@ try {
         ? "cancelled"
         : "command_failed";
     }
+  } else if (options.command === "c15t" && options.help) {
+    printResult(options.json, c15tHelp(), JSON.stringify({ help: c15tHelp() }));
   } else {
     await run(options);
   }
