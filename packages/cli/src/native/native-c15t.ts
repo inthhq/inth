@@ -388,7 +388,7 @@ class C15tSetup {
     return requireProjectBackendURL(hostedProject(project));
   }
 
-  action(agents: CodingAgent[]): Promise<string> {
+  action(agents: CodingAgent[], scaffold: boolean): Promise<string> {
     if (this.c15t.action) {
       return Promise.resolve(this.c15t.action);
     }
@@ -401,10 +401,11 @@ class C15tSetup {
     const choices = agents.length
       ? [choice("agent", "Use a coding agent")]
       : [];
-    choices.push(
-      choice("scaffold", "Add the c15t files to this app"),
-      choice("prompt", "Show the setup prompt")
-    );
+    // Without package.json there is no app to write files into.
+    if (scaffold) {
+      choices.push(choice("scaffold", "Add the c15t files to this app"));
+    }
+    choices.push(choice("prompt", "Show the setup prompt"));
     return this.select("How do you want to set up c15t?", choices);
   }
 
@@ -488,7 +489,7 @@ class C15tSetup {
     }
   }
 
-  async confirm(count: number): Promise<void> {
+  async confirm(count: number, install: boolean): Promise<void> {
     if (this.c15t.yes) {
       return;
     }
@@ -498,9 +499,9 @@ class C15tSetup {
         "Use --yes to write files without confirming, or --dry-run to preview them."
       );
     }
-    const install = this.c15t.skipInstall ? "" : " and install packages";
+    const packages = install ? " and install packages" : "";
     const selected = await this.select("Write these files?", [
-      choice("write", `Create ${count} files${install}`),
+      choice("write", `Create ${count} files${packages}`),
       choice("cancel", "Cancel"),
     ]);
     if (selected !== "write") {
@@ -508,6 +509,18 @@ class C15tSetup {
     }
   }
 }
+
+const requireManifest = (
+  manifest: PackageManifest | undefined
+): PackageManifest => {
+  if (!manifest) {
+    throw new CliError(
+      "usage_error",
+      "Run inth c15t scaffold from the app directory that contains package.json."
+    );
+  }
+  return manifest;
+};
 
 const planText = (result: GenerationWorkflowResult): string => {
   const lines = [`Files in ${result.plan.root}:`];
@@ -558,14 +571,22 @@ export const runC15t = async (
   });
   const cwd = process.cwd();
   const manifest = readManifest(cwd);
-  const organization = await setup.organization(context);
-  const project = await setup.chooseProject(organization, manifest, cwd);
-  const backendURL = await setup.backendURL(project);
-  const agents = installedAgents();
-  const action = await setup.action(agents);
   const detected = manifest
     ? detectFramework(dependencyNames(manifest), pagesRouter(cwd))
     : undefined;
+  const agents = installedAgents();
+  // Check local requirements before any API call that can create a project.
+  const requestedAgent =
+    c15t.action === "agent" ? await setup.agent(agents) : undefined;
+  let requestedFramework: BoilerplateFramework | undefined;
+  if (c15t.action === "scaffold") {
+    requireManifest(manifest);
+    requestedFramework = await setup.framework(detected);
+  }
+  const organization = await setup.organization(context);
+  const project = await setup.chooseProject(organization, manifest, cwd);
+  const backendURL = await setup.backendURL(project);
+  const action = await setup.action(agents, Boolean(manifest));
   const summary = {
     backendUrl: backendURL,
     id: project.id,
@@ -578,7 +599,7 @@ export const runC15t = async (
       mode: "hosted",
     });
     if (action === "agent") {
-      const agent = await setup.agent(agents);
+      const agent = requestedAgent ?? (await setup.agent(agents));
       console.error(
         `Starting ${agent.name} in ${cwd} to set up c15t for ${terminalText(project.name)}.`
       );
@@ -604,15 +625,10 @@ export const runC15t = async (
     );
     return;
   }
-  if (!manifest) {
-    throw new CliError(
-      "usage_error",
-      "Run inth c15t scaffold from the app directory that contains package.json."
-    );
-  }
-  const framework = await setup.framework(detected);
+  const app = requireManifest(manifest);
+  const framework = requestedFramework ?? (await setup.framework(detected));
   const manager = detectPackageManager(
-    manifest.packageManager,
+    app.packageManager,
     nearestLockfiles(cwd)
   );
   const args = ["setup", "--framework", framework];
@@ -639,9 +655,11 @@ export const runC15t = async (
   if (!options.json) {
     console.error(planText(preview));
   }
-  await setup.confirm(pending);
+  // c15t's installer refuses Windows, so write the files and print the command.
+  const skipInstall = c15t.skipInstall || process.platform === "win32";
+  await setup.confirm(pending, !skipInstall);
   args.push("--apply");
-  if (c15t.skipInstall) {
+  if (skipInstall) {
     args.push("--skip-install");
   }
   const result = await runGenerationWorkflow(args, generation, {

@@ -166,7 +166,7 @@ const verifyScaffold = async (
     `#!/bin/sh\nprintf '%s\\n' "$PWD" "$@" > "${log}"\n`
   );
   await chmod(path.join(bin, "pnpm"), 0o755);
-  // Native installation is unavailable on Windows; c15t says to skip it.
+  // Windows skips installation because c15t's installer refuses it there.
   const args = [
     "c15t",
     "scaffold",
@@ -177,9 +177,7 @@ const verifyScaffold = async (
     "--yes",
     "--json",
   ];
-  if (windows) {
-    args.push("--skip-install");
-  }
+
   const scaffold = run(test, args, directory, {
     ...process.env,
     PATH: `${bin}${path.delimiter}${process.env.PATH ?? ""}`,
@@ -335,12 +333,23 @@ const verifyAgents = async (
   assert.match(fxPrompt ?? "", /^Integrate or migrate this application/u);
   const missing = run(
     test,
-    ["c15t", "--grok", "--project", "Website", "--organization", "org_acme"],
+    [
+      "c15t",
+      "--grok",
+      "--name",
+      "Site",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+    ],
     directory,
     env
   );
   assert.equal(missing.status, 1);
   assert.match(missing.stderr, /Grok is not installed: grok is not on PATH/u);
+  // Local checks run before any request that could create a project.
+  assert.deepEqual(calls(missing.stderr), []);
 };
 
 const verifyNewProject = (test: string, directory: string): void => {
@@ -397,14 +406,37 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       [
         "c15t",
         "scaffold",
-        "--project",
-        "Website",
+        "--name",
+        "Created",
+        "--region",
+        "eu",
         "--organization",
         "org_acme",
         "--yes",
       ],
       plain
     );
+    assert.deepEqual(calls(unknown.stderr), []);
+    const empty = path.join(parent, "empty");
+    await mkdir(empty);
+    const noApp = run(
+      test,
+      [
+        "c15t",
+        "scaffold",
+        "--name",
+        "Created",
+        "--region",
+        "eu",
+        "--organization",
+        "org_acme",
+        "--yes",
+      ],
+      empty
+    );
+    assert.equal(noApp.status, 1);
+    assert.match(noApp.stderr, /directory that contains package.json/u);
+    assert.deepEqual(calls(noApp.stderr), []);
     assert.equal(unknown.status, 1);
     assert.match(unknown.stderr, /No supported framework found/u);
     console.log(
