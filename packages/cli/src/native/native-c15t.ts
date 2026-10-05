@@ -325,7 +325,8 @@ class C15tSetup {
     const response = await this.api.execute(
       "/v1/projects",
       "POST",
-      JSON.stringify({ branding: "c15t", name, region }),
+      // The project API nests branding under consent, like inth project create.
+      JSON.stringify({ consent: { branding: "c15t" }, name, region }),
       organization
     );
     let created: ApiProject;

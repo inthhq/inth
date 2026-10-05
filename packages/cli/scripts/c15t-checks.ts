@@ -418,7 +418,7 @@ const verifyNewProject = (test: string, directory: string): void => {
   assert.equal(data.framework, "react");
   assert.equal(data.project.backendUrl, BACKEND);
   assert.deepEqual(calls(created.stderr), [
-    'POST /v1/projects?organizationId=org_acme {"branding":"c15t","name":"Created","region":"eu"}',
+    'POST /v1/projects?organizationId=org_acme {"consent":{"branding":"c15t"},"name":"Created","region":"eu"}',
     "GET /v1/projects/prj_created",
     "GET /v1/projects/prj_created",
   ]);

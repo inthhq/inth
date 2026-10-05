@@ -42,6 +42,9 @@ const reply = async (
     );
   }
   if (method === "POST" && path.startsWith("/v1/projects?")) {
+    if (!body?.includes('"consent":{"branding":"c15t"}')) {
+      throw new Error(`Project creation needs consent.branding: ${body ?? ""}`);
+    }
     return respond(`{"success":true,"data":${project("Created", "")}}`);
   }
   if (method === "GET" && path === "/v1/projects/prj_created") {
