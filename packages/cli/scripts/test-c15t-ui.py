@@ -22,7 +22,7 @@ def read_until(master, child, output, text, timeout=15):
             output.extend(os.read(master, 65536))
 
 
-def run(conflict):
+def run(conflict=False, cancel=False):
     with tempfile.TemporaryDirectory(prefix="inth-c15t-ui-") as directory:
         with open(os.path.join(directory, "package.json"), "w") as manifest:
             json.dump({"name": "site", "dependencies": {"react": "19.0.0"}}, manifest)
@@ -48,21 +48,24 @@ def run(conflict):
             read_until(master, child, output, b"How do you want to set up c15t")
             os.write(master, b"\r")
             if not conflict:
-                # The region is chosen only once the project is about to be created.
-                read_until(master, child, output, b"Choose a region for the project")
-                os.write(master, b"\r")
+                # Files are confirmed, and the region chosen, before creation.
                 read_until(master, child, output, b"Write these files?")
+                os.write(master, b"\x1b[B\r" if cancel else b"\r")
+            if not conflict and not cancel:
+                read_until(master, child, output, b"Choose a region for the project")
                 os.write(master, b"\r")
             child.wait(timeout=30)
             while select.select([master], [], [], 0.05)[0]:
                 output.extend(os.read(master, 65536))
             text = re.sub(rb"\x1b\[[0-9;?]*[A-Za-z]", b"", bytes(output)).decode()
             calls = json.loads(re.search(r"CALLS (\[.*\])", text).group(1))
-            if conflict:
+            if conflict or cancel:
                 assert child.returncode == 1, text
-                assert "Refusing to overwrite existing file" in text, text
+                expected = "Refusing to overwrite existing file" if conflict else "c15t setup cancelled"
+                assert expected in text, text
                 assert not any(call.startswith("POST") for call in calls), calls
                 assert b"Choose a region" not in output, text
+                assert not cancel or not os.path.exists(target), text
             else:
                 assert child.returncode == 0, text
                 assert any(call.startswith("POST /v1/projects") for call in calls), calls
@@ -76,5 +79,6 @@ def run(conflict):
 
 
 run(conflict=True)
-run(conflict=False)
-print("c15t picker passed: new projects are created only after scaffold checks pass.")
+run(cancel=True)
+run()
+print("c15t picker passed: new projects are created only after scaffold checks and confirmation.")

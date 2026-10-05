@@ -482,6 +482,38 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     assert.equal(noApp.status, 1);
     assert.match(noApp.stderr, /directory that contains package.json/u);
     assert.deepEqual(calls(noApp.stderr), []);
+    // A new project is created only after the files are confirmed.
+    const fresh = await app(parent, "fresh", { react: "19.0.0" });
+    const newProject = [
+      "c15t",
+      "scaffold",
+      "--name",
+      "Created",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+    ];
+    const unconfirmedNew = run(test, newProject, fresh);
+    assert.equal(unconfirmedNew.status, 1, unconfirmedNew.stderr);
+    assert.match(unconfirmedNew.stderr, /Use --yes to write files/u);
+    assert.deepEqual(calls(unconfirmedNew.stderr), []);
+    const previewNew = run(test, [...newProject, "--dry-run", "--json"], fresh);
+    assert.equal(previewNew.status, 0, previewNew.stderr);
+    assert.deepEqual(calls(previewNew.stderr), []);
+    assert.doesNotMatch(previewNew.stdout, /new-project\.invalid/u);
+    const previewData = JSON.parse(previewNew.stdout).data;
+    assert.equal(previewData.project.id, null);
+    assert.deepEqual(
+      previewData.plan.files.map((file: { path: string }) => file.path),
+      ["src/consent/consent-manager.tsx", "src/consent/README.md"]
+    );
+    const freshEntries = await readdir(fresh);
+    assert.deepEqual(freshEntries.toSorted(), [
+      "app",
+      "package.json",
+      "pnpm-lock.yaml",
+    ]);
     console.log(
       "Native c15t: command gate, prompts, agent launches, dry runs, scaffolding, installation, conflicts, and project creation passed."
     );

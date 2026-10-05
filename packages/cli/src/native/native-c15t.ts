@@ -54,6 +54,13 @@ interface ProjectSelection {
   // Absent when the user asked for a new project.
   project?: ApiProject;
 }
+interface ScaffoldCheck {
+  framework: BoilerplateFramework;
+  // The files were already reviewed and confirmed for a new project.
+  confirmed: boolean;
+  // False after a dry run for a new project, which creates nothing.
+  proceed: boolean;
+}
 interface Region {
   id: string;
   label: string;
@@ -176,6 +183,15 @@ const sleep = async (ms: number, signal: AbortSignal): Promise<void> => {
     setTimeout(resolve, ms);
   });
   signal.throwIfAborted();
+};
+
+const planText = (result: GenerationWorkflowResult): string => {
+  const lines = [`Files in ${result.plan.root}:`];
+  for (const file of result.plan.files) {
+    lines.push(`  ${file.path}${file.exists ? " (unchanged)" : ""}`);
+  }
+  lines.push(`Packages: ${result.plan.dependencies.join(" ")}`);
+  return lines.join("\n");
 };
 
 // Scriptc classes cannot hold an AbortSignal, so the signal stays in closures.
@@ -496,6 +512,73 @@ class C15tSetup {
     }
   }
 
+  // Local scaffold checks, plus review and confirmation for a new project.
+  async prepareScaffold(
+    cwd: string,
+    detected: BoilerplateFramework | undefined,
+    selection: ProjectSelection,
+    install: boolean,
+    signal: AbortSignal
+  ): Promise<ScaffoldCheck> {
+    const framework = await this.framework(detected);
+    await this.recover(cwd);
+    if (selection.project) {
+      return { confirmed: false, framework, proceed: true };
+    }
+    const confirmed = await this.confirmNewScaffold(
+      cwd,
+      framework,
+      selection.name,
+      install,
+      signal
+    );
+    return { confirmed, framework, proceed: confirmed };
+  }
+
+  // A new project's backend URL matches no existing file and does not change
+  // the file list, so review a placeholder plan before creating the project.
+  // Returns false after a dry run, when nothing should be created.
+  async confirmNewScaffold(
+    cwd: string,
+    framework: BoilerplateFramework,
+    name: string,
+    install: boolean,
+    signal: AbortSignal
+  ): Promise<boolean> {
+    const draft = await runGenerationWorkflow(
+      ["setup", "--framework", framework],
+      { generation: { backendURL: "https://new-project.invalid" } },
+      { cwd, signal }
+    );
+    // Omit contents, which hold the placeholder URL.
+    const files = draft.plan.files.map((file) => ({
+      exists: file.exists,
+      path: file.path,
+    }));
+    if (this.c15t.dryRun) {
+      printResult(
+        this.options.json,
+        `${planText(draft)}\nRun without --dry-run to create the project "${terminalText(name)}" and write these files.`,
+        JSON.stringify({
+          action: "scaffold",
+          framework,
+          plan: {
+            dependencies: draft.plan.dependencies,
+            files,
+            root: draft.plan.root,
+          },
+          project: { backendUrl: null, id: null, name },
+        })
+      );
+      return false;
+    }
+    if (!this.options.json) {
+      console.error(planText(draft));
+    }
+    await this.confirm(files.filter((file) => !file.exists).length, install);
+    return true;
+  }
+
   async confirm(count: number, install: boolean): Promise<void> {
     if (this.c15t.yes) {
       return;
@@ -529,15 +612,6 @@ const requireManifest = (
   return manifest;
 };
 
-const planText = (result: GenerationWorkflowResult): string => {
-  const lines = [`Files in ${result.plan.root}:`];
-  for (const file of result.plan.files) {
-    lines.push(`  ${file.path}${file.exists ? " (unchanged)" : ""}`);
-  }
-  lines.push(`Packages: ${result.plan.dependencies.join(" ")}`);
-  return lines.join("\n");
-};
-
 const resultText = (
   result: GenerationWorkflowResult,
   manager: string
@@ -557,6 +631,31 @@ const resultText = (
     lines.push(`- ${instruction}`);
   }
   return lines.join("\n");
+};
+
+const startAgent = async (
+  agent: CodingAgent,
+  prompt: string,
+  cwd: string,
+  project: string,
+  signal: AbortSignal
+): Promise<void> => {
+  console.error(
+    `Starting ${agent.name} in ${cwd} to set up c15t for ${terminalText(project)}.`
+  );
+  const status = await launchAgent(agent, prompt, cwd, signal);
+  if (status !== 0) {
+    throw new CliError(
+      "command_failed",
+      `${agent.name} exited with status ${status}. Review any changes it made.`
+    );
+  }
+  const resume = agent.resume
+    ? ` Continue the conversation with ${agent.resume}.`
+    : "";
+  console.log(
+    `${agent.name} finished. Review its changes before you commit.${resume}`
+  );
 };
 
 export const runC15t = async (
@@ -585,22 +684,23 @@ export const runC15t = async (
   const organization = await setup.organization(context);
   const selection = await setup.chooseProject(organization, manifest, cwd);
   const action = await setup.action(agents, Boolean(manifest));
-  // Check local requirements before creating a project.
+  // c15t's installer refuses Windows, so write the files and print the command.
+  const skipInstall = c15t.skipInstall || process.platform === "win32";
+  // Check and confirm everything local before creating a project.
   const requestedAgent =
     action === "agent" ? await setup.agent(agents) : undefined;
-  let requestedFramework: BoilerplateFramework | undefined;
+  let scaffold: ScaffoldCheck | undefined;
   if (action === "scaffold") {
     requireManifest(manifest);
-    requestedFramework = await setup.framework(detected);
-    await setup.recover(cwd);
-    if (!selection.project) {
-      // A new project's backend URL matches no existing file, so a placeholder
-      // finds conflicts, symlinks, and unwritable paths before creating it.
-      await runGenerationWorkflow(
-        ["setup", "--framework", requestedFramework],
-        { generation: { backendURL: "https://new-project.invalid" } },
-        { cwd, signal }
-      );
+    scaffold = await setup.prepareScaffold(
+      cwd,
+      detected,
+      selection,
+      !skipInstall,
+      signal
+    );
+    if (!scaffold.proceed) {
+      return;
     }
   }
   const project =
@@ -618,22 +718,12 @@ export const runC15t = async (
       mode: "hosted",
     });
     if (action === "agent") {
-      const agent = requestedAgent ?? (await setup.agent(agents));
-      console.error(
-        `Starting ${agent.name} in ${cwd} to set up c15t for ${terminalText(project.name)}.`
-      );
-      const status = await launchAgent(agent, plan.prompt, cwd, signal);
-      if (status !== 0) {
-        throw new CliError(
-          "command_failed",
-          `${agent.name} exited with status ${status}. Review any changes it made.`
-        );
-      }
-      const resume = agent.resume
-        ? ` Continue the conversation with ${agent.resume}.`
-        : "";
-      console.log(
-        `${agent.name} finished. Review its changes before you commit.${resume}`
+      await startAgent(
+        requestedAgent ?? (await setup.agent(agents)),
+        plan.prompt,
+        cwd,
+        project.name,
+        signal
       );
       return;
     }
@@ -645,7 +735,7 @@ export const runC15t = async (
     return;
   }
   const app = requireManifest(manifest);
-  const framework = requestedFramework ?? (await setup.framework(detected));
+  const framework = scaffold?.framework ?? (await setup.framework(detected));
   const manager = detectPackageManager(
     app.packageManager,
     nearestLockfiles(cwd)
@@ -671,12 +761,12 @@ export const runC15t = async (
     );
     return;
   }
-  if (!options.json) {
-    console.error(planText(preview));
+  if (!scaffold?.confirmed) {
+    if (!options.json) {
+      console.error(planText(preview));
+    }
+    await setup.confirm(pending, !skipInstall);
   }
-  // c15t's installer refuses Windows, so write the files and print the command.
-  const skipInstall = c15t.skipInstall || process.platform === "win32";
-  await setup.confirm(pending, !skipInstall);
   args.push("--apply");
   if (skipInstall) {
     args.push("--skip-install");
