@@ -416,6 +416,8 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       ],
       plain
     );
+    assert.equal(unknown.status, 1, unknown.stderr);
+    assert.match(unknown.stderr, /No supported framework found/u);
     assert.deepEqual(calls(unknown.stderr), []);
     const empty = path.join(parent, "empty");
     await mkdir(empty);
@@ -437,8 +439,6 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     assert.equal(noApp.status, 1);
     assert.match(noApp.stderr, /directory that contains package.json/u);
     assert.deepEqual(calls(noApp.stderr), []);
-    assert.equal(unknown.status, 1);
-    assert.match(unknown.stderr, /No supported framework found/u);
     console.log(
       "Native c15t: command gate, prompts, agent launches, dry runs, scaffolding, installation, conflicts, and project creation passed."
     );
