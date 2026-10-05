@@ -33,7 +33,7 @@ if (preflight.status !== 0) {
     `Vendored source does not typecheck: ${preflight.stdout}${preflight.stderr}`
   );
 }
-const compilation = invoke("scriptc/dist/bootstrap.js", [
+const compilation = invoke("./scriptc.ts", [
   "build",
   "zod-source.ts",
   "--emit=ir",

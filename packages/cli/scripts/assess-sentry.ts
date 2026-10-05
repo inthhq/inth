@@ -60,11 +60,7 @@ if (baseline.status !== 0) {
 }
 
 const probes = ["core-probe.ts", "stack-probe.ts"].map((entry) => {
-  const result = invoke("scriptc/dist/bootstrap.js", [
-    "build",
-    entry,
-    "--emit=ir",
-  ]);
+  const result = invoke("./scriptc.ts", ["build", entry, "--emit=ir"]);
   if (result.error || result.signal) {
     throw new Error(`The compiler did not finish ${entry}.`);
   }

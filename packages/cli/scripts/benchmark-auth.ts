@@ -23,7 +23,7 @@ const targets = [
   {
     args: [],
     executable: path.join(root, "build/native/auth-bench"),
-    name: `Scriptc ${packageVersion("scriptc")}`,
+    name: `Scriptc ${packageVersion("@scriptc/compiler")}`,
   },
   {
     args: [],

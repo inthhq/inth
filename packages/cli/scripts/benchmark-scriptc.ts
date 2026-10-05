@@ -180,7 +180,7 @@ const report = {
   bun_bytecode_binary_bytes: bunVersion
     ? await sizeOf(bunBytecodeBinary)
     : null,
-  compiler: `scriptc@${packageVersion("scriptc")}`,
+  compiler: `scriptc@${packageVersion("@scriptc/compiler")}`,
   cpu: os.cpus()[0]?.model,
   dynamic_runtime: false,
   iterations: 100,

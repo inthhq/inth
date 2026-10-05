@@ -346,7 +346,7 @@ for (const entry of entries) {
     entryManifest = fixtureManifests.get(false) ?? manifest;
   }
   run(process.execPath, [
-    require.resolve("scriptc/dist/bootstrap.js"),
+    path.join(root, "scripts", "scriptc.ts"),
     "build",
     entry.source,
     "--ffi",

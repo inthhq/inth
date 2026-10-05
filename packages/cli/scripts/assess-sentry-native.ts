@@ -97,7 +97,7 @@ run(process.execPath, [
 ]);
 const binary = path.join(output, "probe");
 run(process.execPath, [
-  require.resolve("scriptc/dist/bootstrap.js"),
+  require.resolve("./scriptc.ts"),
   "build",
   path.join(experiment, "probe.ts"),
   "--ffi",

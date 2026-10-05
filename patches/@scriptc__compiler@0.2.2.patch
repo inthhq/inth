@@ -1,0 +1,82 @@
+diff --git a/dist/frontend/lowering/lower-calls.js b/dist/frontend/lowering/lower-calls.js
+index 564cb13e9bfff38ed8753c0410c80efc4380f3f5..62bbcc2d67924f3c9b228ac01fa1b912dc1f4718 100644
+--- a/dist/frontend/lowering/lower-calls.js
++++ b/dist/frontend/lowering/lower-calls.js
+@@ -6106,7 +6106,9 @@ function lowerDynReceiverMethodCall(lowerer, call, access) {
+         const mapped = lowerer.mapTypeOf(recvTs);
+         if (mapped?.kind === "union" && lowerer.unions.get(mapped.unionId)?.arms.every((arm) => arm.kind === "object" && lowerer.classes.get(arm.className)?.fields.has(access.name.text)))
+             return true;
+-        return prop !== undefined && lowerer.checker.declarationsOf(prop).some((decl) => ts.isPropertyDeclaration(decl) || ts.isPropertySignature(decl));
++        // Library declarations spell native methods as readonly function
++        // properties (undici-types `Headers.get`); those still dispatch by name.
++        return prop !== undefined && !lowerer.isStdlibSymbol(prop) && lowerer.checker.declarationsOf(prop).some((decl) => ts.isPropertyDeclaration(decl) || ts.isPropertySignature(decl));
+     })();
+     const dispatched = callbackProperty ? null : lowerDynDispatchMethodCall(lowerer, call, access, recv, arrayReceiver);
+     if (dispatched)
+diff --git a/dist/ir/ir.js b/dist/ir/ir.js
+index cdd4d480b669af68573a86b7a03d2fac4174ba27..14ac794edf2b4247269018c90571cfe45d6eba6e 100644
+--- a/dist/ir/ir.js
++++ b/dist/ir/ir.js
+@@ -1347,6 +1347,50 @@ const DYN_ASYNC_LIB_FNS = new Set([
+ export function moduleRuntimeFeatures(mod) {
+     return scanRuntimeFeatures(mod);
+ }
++/** True when boxing a value of type `t` into dyn can box a promise, which
++ * needs scr_async_dyn.c (scr_dyn_new_promise / _adapting). */
++function boxesPromise(mod, t, seen) {
++    switch (t.kind) {
++        case "promise":
++            return true;
++        case "func":
++            return boxesPromise(mod, t.ret, seen) || t.params.some((param) => boxesPromise(mod, param, seen));
++        case "array":
++        case "set":
++            return boxesPromise(mod, t.elem, seen);
++        case "map":
++            return boxesPromise(mod, t.key, seen) || boxesPromise(mod, t.value, seen);
++        case "generator":
++            return boxesPromise(mod, t.yieldT, seen) || boxesPromise(mod, t.retT, seen) || boxesPromise(mod, t.nextT, seen);
++        case "record":
++        case "union":
++        case "object": {
++            const key = typeKey(t);
++            if (seen.has(key))
++                return false;
++            seen.add(key);
++            if (t.kind === "record") {
++                const shape = mod.records?.find((r) => r.id === t.shapeId);
++                return shape?.fields.some((field) => boxesPromise(mod, field.type, seen)) ?? false;
++            }
++            if (t.kind === "union") {
++                const union = mod.unions?.find((u) => u.id === t.unionId);
++                return union?.arms.some((arm) => boxesPromise(mod, arm, seen)) ?? false;
++            }
++            for (let name = t.className; name !== undefined;) {
++                const cls = mod.classes?.find((c) => c.name === name);
++                if (cls === undefined)
++                    return false;
++                if (cls.fields.some((field) => boxesPromise(mod, field.type, seen)))
++                    return true;
++                name = cls.base;
++            }
++            return false;
++        }
++        default:
++            return false;
++    }
++}
+ function scanRuntimeFeatures(mod, stopAt) {
+     const features = {
+         regex: false, copying: false, legacyTextDecoder: false, fileHandle: false,
+@@ -1460,8 +1504,9 @@ function scanRuntimeFeatures(mod, stopAt) {
+                         features.dynAsync = true;
+                     break;
+                 case "dynFrom": {
+-                    const boxed = node.value.type;
+-                    if (boxed.kind === "promise" || (boxed.kind === "func" && boxed.ret.kind === "promise"))
++                    // Boxing converts nested fields too, so a promise inside a
++                    // record, class instance, or callback still needs the adapter.
++                    if (boxesPromise(mod, node.value.type, new Set()))
+                         features.dynAsync = true;
+                     break;
+                 }

@@ -385,7 +385,7 @@ Delivery waits at most 1.5 seconds for the HTTP request, with no retries or offl
 
 For published releases, install `@inth/cli` with `npm install -g @inth/cli`. It selects the native package for Apple silicon Macs, Linux arm64/x64, or Windows x64. Users do not need to choose a platform package. The launcher uses Node.js; the native executable itself has no runtime npm dependencies.
 
-CI builds, tests, and uploads all four target packages. Linux builds use Zig 0.15.2 with a glibc 2.36 target, then test the packed executable and credential fixtures in Debian 12 before upload. Scriptc 0.0.36 uses `arc4random_buf`, which requires glibc 2.36; targeting Ubuntu 22.04's glibc 2.35 would require a runtime change. The Release workflow publishes verified artifacts through npm trusted publishing. See [publishing with Tegami](../../.tegami/README.md) for setup and release instructions. Certificate signing will be added separately.
+CI builds, tests, and uploads all four target packages. Linux builds use Zig 0.15.2 with a glibc 2.36 target, then test the packed executable and credential fixtures in Debian 12 before upload. The Scriptc 0.2.2 runtime needs glibc 2.34 or newer. The Release workflow publishes verified artifacts through npm trusted publishing. See [publishing with Tegami](../../.tegami/README.md) for setup and release instructions. Certificate signing will be added separately.
 
 To cross-compile from macOS with Zig installed:
 
