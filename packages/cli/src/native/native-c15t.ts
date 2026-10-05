@@ -49,6 +49,11 @@ interface ProjectDetail {
   success: boolean;
   data: ApiProject;
 }
+interface ProjectSelection {
+  name: string;
+  // Absent when the user asked for a new project.
+  project?: ApiProject;
+}
 interface Region {
   id: string;
   label: string;
@@ -318,15 +323,17 @@ class C15tSetup {
     return created;
   }
 
+  // Picks an existing project or names a new one. Creation waits until the
+  // local checks pass, so a failed setup leaves no project behind.
   async chooseProject(
     organization: string,
     manifest: PackageManifest | undefined,
     cwd: string
-  ): Promise<ApiProject> {
+  ): Promise<ProjectSelection> {
     const name =
       this.c15t.name ?? defaultProjectName(manifest?.name, basename(cwd));
     if (this.c15t.name) {
-      return this.create(organization, name);
+      return { name };
     }
     const projects = await this.projects(organization);
     if (this.c15t.project) {
@@ -337,7 +344,7 @@ class C15tSetup {
         );
         const project = projects.find((entry) => entry.id === match.id);
         if (project) {
-          return project;
+          return { name: project.name, project };
         }
       } catch (error) {
         throw new CliError(
@@ -362,9 +369,9 @@ class C15tSetup {
     const selected = await this.select("Choose your Inth project", choices);
     const project = projects.find((entry) => entry.id === selected);
     if (project) {
-      return project;
+      return { name: project.name, project };
     }
-    return this.create(organization, name);
+    return { name };
   }
 
   // Wait for a new project's consent backend, then return its URL.
@@ -575,15 +582,18 @@ export const runC15t = async (
     ? detectFramework(dependencyNames(manifest), pagesRouter(cwd))
     : undefined;
   const agents = installedAgents();
-  // Check local requirements before any API call that can create a project.
+  const organization = await setup.organization(context);
+  const selection = await setup.chooseProject(organization, manifest, cwd);
+  const action = await setup.action(agents, Boolean(manifest));
+  // Check local requirements before creating a project.
   const requestedAgent =
-    c15t.action === "agent" ? await setup.agent(agents) : undefined;
+    action === "agent" ? await setup.agent(agents) : undefined;
   let requestedFramework: BoilerplateFramework | undefined;
-  if (c15t.action === "scaffold") {
+  if (action === "scaffold") {
     requireManifest(manifest);
     requestedFramework = await setup.framework(detected);
     await setup.recover(cwd);
-    if (c15t.name) {
+    if (!selection.project) {
       // A new project's backend URL matches no existing file, so a placeholder
       // finds conflicts, symlinks, and unwritable paths before creating it.
       await runGenerationWorkflow(
@@ -593,10 +603,9 @@ export const runC15t = async (
       );
     }
   }
-  const organization = await setup.organization(context);
-  const project = await setup.chooseProject(organization, manifest, cwd);
+  const project =
+    selection.project ?? (await setup.create(organization, selection.name));
   const backendURL = await setup.backendURL(project);
-  const action = await setup.action(agents, Boolean(manifest));
   const summary = {
     backendUrl: backendURL,
     id: project.id,

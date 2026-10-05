@@ -75,7 +75,8 @@ try {
     api,
     new NativeContext(process.cwd(), process.cwd()),
     controller.signal,
-    false
+    // scripts/test-c15t-ui.py drives the pickers through a terminal.
+    process.env.INTH_TEST_C15T_INTERACTIVE === "1"
   );
 } catch (error) {
   console.error(`ERROR ${error instanceof Error ? error.message : "failed"}`);
