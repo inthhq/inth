@@ -210,8 +210,10 @@ const verifyScaffold = async (
     [
       "c15t",
       "scaffold",
-      "--project",
-      "Website",
+      "--name",
+      "Created",
+      "--region",
+      "eu",
       "--organization",
       "org_acme",
       "--yes",
@@ -221,6 +223,7 @@ const verifyScaffold = async (
   );
   assert.equal(blocked.status, 1);
   assert.match(blocked.stderr, /Run inth c15t scaffold --resume/u);
+  assert.deepEqual(calls(blocked.stderr), []);
   const resumed = run(
     test,
     [
@@ -265,6 +268,25 @@ const verifyScaffold = async (
   );
   assert.equal(conflict.status, 1);
   assert.match(conflict.stderr, /Refusing to overwrite existing file/u);
+  const conflictNew = run(
+    test,
+    [
+      "c15t",
+      "scaffold",
+      "--name",
+      "Created",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+    ],
+    directory
+  );
+  assert.equal(conflictNew.status, 1, conflictNew.stderr);
+  assert.match(conflictNew.stderr, /Refusing to overwrite existing file/u);
+  assert.deepEqual(calls(conflictNew.stderr), []);
 };
 
 const verifyAgents = async (

@@ -582,6 +582,16 @@ export const runC15t = async (
   if (c15t.action === "scaffold") {
     requireManifest(manifest);
     requestedFramework = await setup.framework(detected);
+    await setup.recover(cwd);
+    if (c15t.name) {
+      // A new project's backend URL matches no existing file, so a placeholder
+      // finds conflicts, symlinks, and unwritable paths before creating it.
+      await runGenerationWorkflow(
+        ["setup", "--framework", requestedFramework],
+        { generation: { backendURL: "https://new-project.invalid" } },
+        { cwd, signal }
+      );
+    }
   }
   const organization = await setup.organization(context);
   const project = await setup.chooseProject(organization, manifest, cwd);
