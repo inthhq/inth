@@ -66,6 +66,7 @@ import {
   telemetryError,
   telemetryPayload,
 } from "./telemetry.ts";
+import type { InstallMethod } from "./update.ts";
 import { updateChecksDisabled, updateNoticeMethod } from "./update.ts";
 
 let telemetryToken = "";
@@ -454,6 +455,7 @@ const run = async (options: CliArguments): Promise<void> => {
 let exitCode = 0;
 let errorCode = "";
 let installationId = "";
+let method: InstallMethod | null = null;
 let options: CliArguments | undefined;
 let updateNotifier: UpdateNotifier | undefined;
 const started = Date.now();
@@ -496,7 +498,7 @@ try {
   }
   // Update state must never prevent a command from running.
   try {
-    const method = currentInstallMethod();
+    method = currentInstallMethod();
     if (
       options.command &&
       options.command !== "update" &&
@@ -607,7 +609,8 @@ if (options && installationId) {
       duration,
       errorCode,
       interactive,
-      userId
+      userId,
+      method
     )
   );
 }
