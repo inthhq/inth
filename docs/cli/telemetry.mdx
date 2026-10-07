@@ -31,9 +31,13 @@ Tests and benchmarks disable telemetry. Help, version, telemetry settings, and i
 
 ## What does a usage event contain?
 
-Enabled production installations send one `cli_command_completed` event to Inth's PostHog project in the EU. Usage events contain the command name, outcome, duration, CLI version and library name, production environment, OS, architecture, JSON and interactive mode, and the MCP client when supplied with `--agent`. Error categories come from a fixed list.
+Enabled production installations send one `cli_command_completed` event to Inth's PostHog project in the EU. Usage events contain the command name, outcome, duration, CLI version and library name, production environment, OS, architecture, JSON and interactive mode, install method, and the MCP client when supplied with `--agent`. Error categories come from a fixed list.
 
-Signed-in browser users are identified by their Inth user ID when the command accesses saved credentials. API-key usage and local commands without credential access use a random installation ID. Installation events disable person-profile processing and are not merged into user profiles. Signed-in events use person profiles.
+The install method is `install_method`: `standalone` for an executable outside `node_modules`, such as one from the install script; `npm`, `pnpm`, `bun`, or `yarn` for a global package-manager installation; `pnpm-virtual-store` when pnpm's global virtual store holds the CLI; `temporary` for `npx`, `pnpm dlx`, or `bunx`; and `project` for a project dependency. The event never includes the executable's path.
+
+Signed-in browser users are identified by their Inth user ID when the command accesses saved credentials. API-key usage and local commands without credential access use a random installation ID. Installation events disable person-profile processing. Signed-in events use person profiles.
+
+Every usage event also includes the installation ID as `installation_id`, so installations can be counted separately from people. On a signed-in event, this links the installation ID to the user ID.
 
 Usage events exclude arguments, tokens, resource and organization IDs, file paths, API request and response bodies, and error messages. GeoIP enrichment is disabled; the ingestion service still receives the network request's IP address.
 

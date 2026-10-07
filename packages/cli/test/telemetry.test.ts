@@ -46,7 +46,15 @@ describe("telemetry privacy", () => {
       "--json",
     ]);
     const event = JSON.parse(
-      telemetryPayload(options, "installation", 25, "cancelled", false)
+      telemetryPayload(
+        options,
+        "installation",
+        25,
+        "cancelled",
+        false,
+        "",
+        "standalone"
+      )
     );
     expect(event).toEqual({
       api_key: expect.any(String),
@@ -63,6 +71,8 @@ describe("telemetry privacy", () => {
         duration_ms: 25,
         environment: "production",
         error_code: "cancelled",
+        install_method: "standalone",
+        installation_id: "installation",
         interactive: false,
         json: true,
         mcp_client: "cursor",
@@ -151,7 +161,7 @@ it.each([
   expect(() => parseArguments(args)).toThrow("Usage: inth telemetry");
 });
 
-it("identifies browser users with the same ID as the app, without merging installation identities", () => {
+it("identifies browser users with the same ID as the app and keeps the installation ID as a property", () => {
   expect(telemetryUserId(userIdentity)).toBe("user-one");
   expect(telemetryUserId(keyIdentity)).toBe("");
   const event = JSON.parse(
@@ -167,7 +177,8 @@ it("identifies browser users with the same ID as the app, without merging instal
   expect(event.distinct_id).toBe("user-one");
   expect(event.properties.$process_person_profile).toBe(true);
   expect(event.properties.$lib).toBe("inth-cli");
-  expect(JSON.stringify(event)).not.toContain("installation");
+  expect(event.properties.installation_id).toBe("installation");
+  expect(JSON.stringify(event)).not.toContain("cli:installation");
   expect(JSON.stringify(event)).not.toContain("user-creator");
 });
 

@@ -6,6 +6,7 @@ import { HttpError } from "./http-error.ts";
 import type { MeResponse } from "./identity.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { skillsCatalogList, skillsNeedsSelection } from "./skills-catalog.ts";
+import type { InstallMethod } from "./update.ts";
 import { VERSION } from "./version.ts";
 
 // Public ingestion token, not a personal or project secret API key.
@@ -92,7 +93,8 @@ export const telemetryPayload = (
   duration: number,
   errorCode: string,
   interactive: boolean,
-  userId = ""
+  userId = "",
+  installMethod: InstallMethod | null = null
 ): string => {
   const command = telemetryCommand(options);
   if (!command) {
@@ -136,6 +138,10 @@ export const telemetryPayload = (
       duration_ms: Math.max(0, Math.round(duration)),
       environment: "production",
       error_code: errorCode || null,
+      install_method: installMethod,
+      // Signed-in events use the user ID as distinct_id. The installation ID
+      // still counts machines, whoever is signed in.
+      installation_id: installationId,
       interactive,
       json: options.json,
       mcp_client:
