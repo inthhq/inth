@@ -69,6 +69,7 @@ v3 is prerelease: npm's `latest` tag for `c15t` is still 2.x. Resolve exact vers
 | --------------- | ------------------------------------------------ |
 | npm             | `npm view <package>@alpha version`               |
 | pnpm            | `pnpm view <package>@alpha version`              |
+| Yarn 1          | `yarn info <package> dist-tags.alpha`            |
 | Yarn 2+         | `yarn npm info <package>@alpha --fields version` |
 | Bun             | `bun info <package>@alpha version`               |
 
