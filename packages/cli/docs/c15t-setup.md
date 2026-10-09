@@ -59,7 +59,7 @@ Project lookup and update take a project ID and do not accept `--organization`.
 
 ## Integrate the application
 
-Detect the installed c15t major version from the application's `package.json` or lockfile first. `@c15t/nextjs` or `@c15t/react` on `2.x` is c15t v2. An existing v2 app stays on v2 unless the task asks for an upgrade; point it at [the v3 upgrade guide](https://v3.c15t.com/docs/upgrade-v3.md) rather than installing v3 packages alongside it.
+Detect the installed c15t major version from the application's `package.json` or lockfile first. `@c15t/nextjs` or `@c15t/react` on `2.x` is c15t v2. An existing v2 app stays on v2 unless the task asks for an upgrade, and v3 packages must not be installed alongside it. To stay on v2, read the installed package's bundled docs or the v2 [React](https://c15t.com/docs/frameworks/react/quickstart.md), [Next.js](https://c15t.com/docs/frameworks/next/quickstart.md) or [JavaScript](https://c15t.com/docs/frameworks/javascript/quickstart.md) quickstart, and follow the installed version's API; the rest of this section covers v3 only. Tell the user v3 is available. If the task asks for the upgrade, follow [the v3 upgrade guide](https://v3.c15t.com/docs/upgrade-v3.md).
 
 For a new install, c15t v3 replaces `@c15t/nextjs` and `@c15t/react` with one umbrella package, `c15t`, with framework subpaths: `c15t/next`, `c15t/react`, `c15t/vue`, `c15t/astro`, and more. Vendor script helpers (GTM, GA4, pixels, PostHog, ...) live in `@c15t/integrations`, not the v2 `@c15t/scripts`.
 
@@ -79,7 +79,7 @@ Once installed, read `node_modules/c15t/SKILL.md` and `node_modules/c15t/AGENTS.
 
 Inventory analytics, pixels, embeds and tracking already present in the app. Use the matching `@c15t/integrations` helper for each vendor and remove duplicate unmanaged script loading. Configure consent categories for the integrations actually used. Existing applications need targeted edits; a scaffold alone does not move their scripts behind consent.
 
-For a first installation, [`c15t setup`](https://v3.c15t.com/docs/cli/commands/setup.md) (`npx @c15t/cli@alpha setup hosted --backend-url <backend-url> ...`) can scaffold the app and installs matching package versions itself. Check its exact installed version and supported flags before automating it.
+For a first installation, [`c15t setup`](https://v3.c15t.com/docs/cli/commands/setup.md) can scaffold the app and installs matching package versions itself. Resolve `@c15t/cli@alpha` to an exact version with the lookup above, then run that version: `npx @c15t/cli@<exact-version> setup hosted --backend-url <backend-url> ...`. Check that version's supported flags before automating it.
 
 ## Verify before deployment
 
