@@ -63,14 +63,16 @@ Detect the installed c15t major version from the application's `package.json` or
 
 For a new install, c15t v3 replaces `@c15t/nextjs` and `@c15t/react` with one umbrella package, `c15t`, with framework subpaths: `c15t/next`, `c15t/react`, `c15t/vue`, `c15t/astro`, and more. Vendor script helpers (GTM, GA4, pixels, PostHog, ...) live in `@c15t/integrations`, not the v2 `@c15t/scripts`.
 
-v3 is prerelease: npm's `latest` tag for `c15t` is still 2.x. Resolve exact versions from the `alpha` dist-tag before installing, and pin them rather than installing the moving `@alpha` tag directly:
+v3 is prerelease: npm's `latest` tag for `c15t` is still 2.x. Resolve exact versions from the `alpha` dist-tag before installing, and pin them rather than installing the moving `@alpha` tag directly. Run the lookup for the application's package manager once for `c15t@alpha` and once for `@c15t/integrations@alpha`:
 
-```sh
-<pm> view c15t@alpha version
-<pm> view @c15t/integrations@alpha version
-```
+| Package manager | Version lookup                                   |
+| --------------- | ------------------------------------------------ |
+| npm             | `npm view <package>@alpha version`               |
+| pnpm            | `pnpm view <package>@alpha version`              |
+| Yarn 2+         | `yarn npm info <package>@alpha --fields version` |
+| Bun             | `bun info <package>@alpha version`               |
 
-`@c15t/integrations` can have a different version number from `c15t`, so resolve each one. Install the exact versions both commands return, for example `<pm> add c15t@3.0.0-alpha.9 @c15t/integrations@3.0.0-alpha.8`. If the package manager is pnpm, a configured `minimumReleaseAge` can resolve `alpha` or a semver range to an older release than `view` just reported, which risks two different `@c15t/core` versions landing in `node_modules`. After installing, confirm only one does — `pnpm why @c15t/core` (or `npm ls` / `yarn why` for other package managers) should show a single version.
+`@c15t/integrations` can have a different version number from `c15t`, so resolve each one. Install the exact versions both lookups return, for example `<pm> add c15t@3.0.0-alpha.9 @c15t/integrations@3.0.0-alpha.8`. If the package manager is pnpm, a configured `minimumReleaseAge` can resolve `alpha` or a semver range to an older release than the lookup just reported, which risks two different `@c15t/core` versions landing in `node_modules`. After installing, confirm only one does — `pnpm why @c15t/core` (or `npm ls`, `yarn why` or `bun why` for other package managers) should show a single version.
 
 Once installed, read `node_modules/c15t/SKILL.md` and `node_modules/c15t/AGENTS.md` before writing code: both ship inside the package, are version-matched to what just got installed, and index the full docs set. For the integration walkthrough itself, follow the [React](https://v3.c15t.com/docs/frameworks/react/quickstart.md), [Next.js](https://v3.c15t.com/docs/frameworks/next/quickstart.md) or [JavaScript](https://v3.c15t.com/docs/frameworks/javascript/quickstart.md) quickstart exactly. v3 bundles the policy at build time by default and mounts `ConsentProvider`/`ConsentRoot` plus `ConsentBanner`, `ConsentDialog`, and `ConsentDialogLink` to reopen privacy preferences — there is no stylesheet to add, since components render their own styles. Configure the transport with the returned backend URL. The public browser configuration needs the consent backend URL. Never put the CLI's OAuth tokens or organization management API keys in frontend code or public environment variables.
 
