@@ -59,13 +59,24 @@ Project lookup and update take a project ID and do not accept `--organization`.
 
 ## Integrate the application
 
-Detect the framework and installed c15t version from the application. Read the matching package's bundled docs, or the [React](https://c15t.com/docs/frameworks/react/quickstart), [Next.js](https://c15t.com/docs/frameworks/next/quickstart) or [JavaScript](https://c15t.com/docs/frameworks/javascript/quickstart) guide. Follow the installed version's API.
+Detect the installed c15t major version from the application's `package.json` or lockfile first. `@c15t/nextjs` or `@c15t/react` on `2.x` is c15t v2. An existing v2 app stays on v2 unless the task asks for an upgrade; point it at [the v3 upgrade guide](https://v3.c15t.com/docs/upgrade-v3.md) rather than installing v3 packages alongside it.
 
-Install the appropriate package, add its stylesheet to the app's CSS entrypoint, and configure hosted mode with the returned backend URL. Mount the consent provider, banner and dialog, and include a way to reopen privacy preferences. The public browser configuration needs the consent backend URL. Never put the CLI's OAuth tokens or organization management API keys in frontend code or public environment variables.
+For a new install, c15t v3 replaces `@c15t/nextjs` and `@c15t/react` with one umbrella package, `c15t`, with framework subpaths: `c15t/next`, `c15t/react`, `c15t/vue`, `c15t/astro`, and more. Vendor script helpers (GTM, GA4, pixels, PostHog, ...) live in `@c15t/integrations`, not the v2 `@c15t/scripts`.
 
-Inventory analytics, pixels, embeds and tracking already present in the app. Use the available c15t integration helpers and remove duplicate unmanaged script loading. Configure consent categories for the integrations actually used. Existing applications need targeted edits; a scaffold alone does not move their scripts behind consent.
+v3 is prerelease: npm's `latest` tag for `c15t` is still 2.x. Resolve exact versions from the `alpha` dist-tag before installing, and pin them rather than installing the moving `@alpha` tag directly:
 
-For a first installation, the [c15t setup tool](https://c15t.com/docs/cli/commands/setup) can help scaffold the app. Check its exact installed version and supported flags before automating it. This guide's verification used manual installation from the bundled React docs, not the interactive scaffolder.
+```sh
+<pm> view c15t@alpha version
+<pm> view @c15t/integrations@alpha version
+```
+
+`@c15t/integrations` versions independently of `c15t` — do not assume they share a number. Install the exact versions both commands return, for example `<pm> add c15t@3.0.0-alpha.9 @c15t/integrations@3.0.0-alpha.8`. If the package manager is pnpm, a configured `minimumReleaseAge` can resolve `alpha` or a semver range to an older release than `view` just reported, which risks two different `@c15t/core` versions landing in `node_modules`. After installing, confirm only one does — `pnpm why @c15t/core` (or `npm ls` / `yarn why` for other package managers) should show a single version.
+
+Once installed, read `node_modules/c15t/SKILL.md` and `node_modules/c15t/AGENTS.md` before writing code: both ship inside the package, are version-matched to what just got installed, and index the full docs set. For the integration walkthrough itself, follow the [React](https://v3.c15t.com/docs/frameworks/react/quickstart.md), [Next.js](https://v3.c15t.com/docs/frameworks/next/quickstart.md) or [JavaScript](https://v3.c15t.com/docs/frameworks/javascript/quickstart.md) quickstart exactly. v3 bundles the policy at build time by default and mounts `ConsentProvider`/`ConsentRoot` plus `ConsentBanner`, `ConsentDialog`, and `ConsentDialogLink` to reopen privacy preferences — there is no stylesheet to add, since components render their own styles. Configure the transport with the returned backend URL. The public browser configuration needs the consent backend URL. Never put the CLI's OAuth tokens or organization management API keys in frontend code or public environment variables.
+
+Inventory analytics, pixels, embeds and tracking already present in the app. Use the matching `@c15t/integrations` helper for each vendor and remove duplicate unmanaged script loading. Configure consent categories for the integrations actually used. Existing applications need targeted edits; a scaffold alone does not move their scripts behind consent.
+
+For a first installation, [`c15t setup`](https://v3.c15t.com/docs/cli/commands/setup.md) (`npx @c15t/cli@alpha setup hosted --backend-url <backend-url> ...`) can scaffold the app and installs matching package versions itself. Check its exact installed version and supported flags before automating it.
 
 ## Verify before deployment
 
@@ -79,4 +90,4 @@ Test in a clean browser session, with a local test script instead of sending eve
 
 Wait for successful backend responses, not just the banner closing. Client persistence can make a failed hosted save appear successful. Run the app's build and existing checks, then deploy through the user's authorized deployment workflow. Deployment access is separate from Inth authentication.
 
-The [browser smoke check](../experiments/c15t-setup/README.md) repeats these checks against a disposable hosted project. It passed on 9 September 2026 with the existing native CLI browser session and c15t 2.2.1. The run covered project creation and lookup, backend initialization, three successful consent writes, persistence and script gating. It did not test a new user's sign-up, the c15t scaffolder, Next.js integration or production deployment.
+The [browser smoke check](../experiments/c15t-setup/README.md) repeats these checks against a disposable hosted project. For c15t v2, it passed on 9 September 2026 with the existing native CLI browser session and c15t 2.2.1. The run covered project creation and lookup, backend initialization, three successful consent writes, persistence and script gating. It did not test a new user's sign-up, the c15t scaffolder, Next.js integration or production deployment. It has not been re-run against c15t v3; the v3 package layout and quickstarts above are unverified by this check.
