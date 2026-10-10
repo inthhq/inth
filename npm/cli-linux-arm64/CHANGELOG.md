@@ -1,3 +1,15 @@
+## @inth/cli-linux-arm64@0.0.7
+
+### Include the installation ID and install method in usage events
+
+Usage events now include the random installation ID as `installation_id`, including events from signed-in users, so installations can be counted separately from people. Signed-in events still use the Inth user ID as their identity, and the installation ID is now linked to it.
+
+Events also include `install_method`, the same check `inth update` uses to choose how to update: `standalone` for the install script's executable, a package manager for global installations, `temporary` for `npx`, `pnpm dlx`, or `bunx`, or `project` for a project dependency.
+
+### Point the c15t setup guide at v3
+
+The bundled `docs/c15t-setup.md` now sets up c15t v3: the `c15t` package with framework subpaths, `@c15t/integrations` for vendor helpers, exact versions resolved from the `alpha` dist-tag, and links to v3.c15t.com. Apps on c15t v2 are pointed at the upgrade guide. The guide previously linked v2 quickstarts, so agents following it installed c15t v2.
+
 ## @inth/cli-linux-arm64@0.0.6
 
 ### Explain why the credential store is unavailable
