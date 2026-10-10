@@ -1,35 +1,35 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Explain why the credential store is unavailable\n\nWhen the system credential store can't be reached, `--json` output now returns `credential_store_unavailable` instead of `command_failed`, including from `inth logout`. These failures are no longer sent to error reporting.\n\nOn Linux, the message now names the cause: libsecret is missing, the session bus can't be reached, or no Secret Service is running. Inside Codex's sandbox, which blocks the session bus, the CLI returns `sandbox_restricted` and says to run the command outside the sandbox, as it already does for Cursor.\n"
-    filename: 2026-10-02-credential-store-unavailable.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Include the installation ID and install method in usage events\n\nUsage events now include the random installation ID as `installation_id`, including events from signed-in users, so installations can be counted separately from people. Signed-in events still use the Inth user ID as their identity, and the installation ID is now linked to it.\n\nEvents also include `install_method`, the same check `inth update` uses to choose how to update: `standalone` for the install script's executable, a package manager for global installations, `temporary` for `npx`, `pnpm dlx`, or `bunx`, or `project` for a project dependency.\n"
+    filename: 2026-10-07-telemetry-installation-id.md
     v: 0.0.0
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Try c15t v3 setup with `inth c15t` (experimental)\n\nSet `INTH_EXPERIMENTAL_C15T=1` to enable `inth c15t`, which sets up c15t v3 in the current app. Choose an Inth project or create one, then pick how to set up c15t: start a coding agent (Codex, Claude Code, Cursor, Grok, or fx) with the c15t setup prompt, add the c15t files to the app and install its packages, or print the prompt for another agent. `--codex`, `--claude`, `--cursor`, `--grok`, and `--fx` start that agent directly. `inth c15t scaffold` and `inth c15t prompt` support `--json` for scripts.\n\nThe command uses c15t v3 prereleases and stays hidden from help until v3 ships. Without the variable, `inth c15t` remains an unknown command.\n"
-    filename: 2026-10-05-c15t-setup-command.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Point the c15t setup guide at v3\n\nThe bundled `docs/c15t-setup.md` now sets up c15t v3: the `c15t` package with framework subpaths, `@c15t/integrations` for vendor helpers, exact versions resolved from the `alpha` dist-tag, and links to v3.c15t.com. Apps on c15t v2 are pointed at the upgrade guide. The guide previously linked v2 quickstarts, so agents following it installed c15t v2.\n"
+    filename: 2026-10-09-c15t-v3-setup-docs.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-10-02-credential-store-unavailable.md
-      - 2026-10-05-c15t-setup-command.md
+      - 2026-10-07-telemetry-installation-id.md
+      - 2026-10-09-c15t-v3-setup-docs.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-10-02-credential-store-unavailable.md
-      - 2026-10-05-c15t-setup-command.md
+      - 2026-10-07-telemetry-installation-id.md
+      - 2026-10-09-c15t-v3-setup-docs.md
     id: npm:@inth/cli-linux-arm64
     updated: true
   - changelogIds:
-      - 2026-10-02-credential-store-unavailable.md
-      - 2026-10-05-c15t-setup-command.md
+      - 2026-10-07-telemetry-installation-id.md
+      - 2026-10-09-c15t-v3-setup-docs.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-10-02-credential-store-unavailable.md
-      - 2026-10-05-c15t-setup-command.md
-    id: npm:@inth/cli
+      - 2026-10-07-telemetry-installation-id.md
+      - 2026-10-09-c15t-v3-setup-docs.md
+    id: npm:@inth/cli-win32-x64
     updated: true
   - changelogIds:
-      - 2026-10-02-credential-store-unavailable.md
-      - 2026-10-05-c15t-setup-command.md
-    id: npm:@inth/cli-win32-x64
+      - 2026-10-07-telemetry-installation-id.md
+      - 2026-10-09-c15t-v3-setup-docs.md
+    id: npm:@inth/cli
     updated: true
 npm:packages:
   - distTag: latest
@@ -39,6 +39,6 @@ npm:packages:
   - distTag: latest
     id: npm:@inth/cli-linux-x64
   - distTag: latest
-    id: npm:@inth/cli
-  - distTag: latest
     id: npm:@inth/cli-win32-x64
+  - distTag: latest
+    id: npm:@inth/cli
