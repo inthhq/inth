@@ -301,8 +301,8 @@ const verifyScaffold = async (
     "pnpm-lock.yaml",
   ]);
   await writeFile(
-    path.join(directory, "app/layout.tsx"),
-    `${manager}// edited\n`
+    path.join(directory, "c15t.config.ts"),
+    "// Custom consent configuration\n"
   );
   const conflict = run(
     test,
@@ -496,7 +496,7 @@ const verifyFrameworks = async (
       react: ["c15t@3"],
       solid: ["@c15t/core@3"],
       svelte: ["@c15t/svelte@latest"],
-      sveltekit: ["@c15t/svelte@latest"],
+      sveltekit: ["@c15t/svelte@latest", "@sveltejs/adapter-auto"],
       "tanstack-start": ["c15t@3"],
       vue: ["c15t@3"],
     }[framework];
@@ -600,14 +600,163 @@ const verifyNextSourceTrees = async (
       assert.doesNotMatch(await readFile(layout, "utf-8"), /globals\.css/u);
       await writeFile(layout, "// Existing app entry point\n");
       const conflict = run(test, [...args, "--yes"], directory);
-      assert.equal(conflict.status, 1, conflict.stderr);
-      assert.match(
-        conflict.stderr,
-        /Refusing to overwrite existing file: src\//u
+      assert.equal(conflict.status, 0, conflict.stderr);
+      assert.match(conflict.stdout, /Integrate c15t into src\//u);
+      assert.equal(
+        await readFile(layout, "utf-8"),
+        "// Existing app entry point\n"
       );
       const entries = await readdir(directory);
       assert.ok(!entries.includes(router));
     }
+  }
+};
+
+const verifyNextEntryExtensions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const root of ["", "src/"]) {
+    for (const router of ["app", "pages"]) {
+      for (const extension of ["js", "jsx", "ts", "tsx"]) {
+        const directory = await app(
+          parent,
+          `next-entries-${root ? "src" : "root"}-${router}-${extension}`,
+          {
+            next: "16.0.0",
+            react: "19.0.0",
+          }
+        );
+        await rm(path.join(directory, "app"), { recursive: true });
+        const names =
+          router === "app"
+            ? [`${root}app/layout.${extension}`]
+            : [
+                `${root}pages/_app.${extension}`,
+                `${root}pages/index.${extension}`,
+                `${root}pages/api/c15t/[...c15t].${extension}`,
+              ];
+        for (const name of names) {
+          await mkdir(path.dirname(path.join(directory, name)), {
+            recursive: true,
+          });
+          await writeFile(
+            path.join(directory, name),
+            "// private-existing-entry\n"
+          );
+        }
+        const args = [
+          "c15t",
+          "scaffold",
+          "--framework",
+          `next-${router}`,
+          "--project",
+          "Website",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+        ];
+        for (const flags of [["--dry-run"], ["--yes"], ["--yes"]]) {
+          const result = run(test, [...args, ...flags], directory);
+          assert.equal(result.status, 0, result.stderr);
+          const { data } = envelope.parse(JSON.parse(result.stdout));
+          const files = data.plan?.files.map((file) => file.path) ?? [];
+          for (const name of names) {
+            assert.ok(files.includes(name), name);
+            assert.ok(
+              data.plan?.instructions.some((instruction) =>
+                instruction.startsWith(`Integrate c15t into ${name}:`)
+              ),
+              name
+            );
+            assert.equal(
+              await readFile(path.join(directory, name), "utf-8"),
+              "// private-existing-entry\n"
+            );
+          }
+          assert.ok(
+            files.every(
+              (file) =>
+                !file.startsWith(`${root}${router}/`) || names.includes(file)
+            ),
+            files.join(", ")
+          );
+          assert.doesNotMatch(
+            result.stdout + result.stderr,
+            /private-existing-entry/u
+          );
+        }
+        const entries = await readdir(path.join(directory, root, router));
+        assert.deepEqual(
+          entries.toSorted(),
+          router === "app"
+            ? [`layout.${extension}`]
+            : [`_app.${extension}`, "api", `index.${extension}`]
+        );
+      }
+    }
+  }
+};
+
+interface SvelteKitFixtureDependencies {
+  "@sveltejs/adapter-auto"?: string;
+  "@sveltejs/kit": string;
+  svelte: string;
+}
+
+const verifySvelteKitAdapter = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [kit, adapter, expected] of [
+    ["^2.63.0", "", "@sveltejs/adapter-auto@7"],
+    ["~2.63.0", "^7.0.1", "@sveltejs/adapter-auto@^7.0.1"],
+    ["^3.0.1", "", "@sveltejs/adapter-auto"],
+  ] as const) {
+    const directory = await app(
+      parent,
+      `sveltekit-adapter-${kit}-${adapter}`,
+      {}
+    );
+    const devDependencies: SvelteKitFixtureDependencies = {
+      "@sveltejs/kit": kit,
+      svelte: "^5.57.1",
+    };
+    if (adapter) {
+      devDependencies["@sveltejs/adapter-auto"] = adapter;
+    }
+    const manifest = JSON.stringify({ devDependencies, private: true });
+    await writeFile(path.join(directory, "package.json"), manifest);
+    for (const flag of ["--dry-run", "--yes"]) {
+      const result = run(
+        test,
+        [
+          "c15t",
+          "scaffold",
+          "--project",
+          "Website",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+          flag,
+        ],
+        directory
+      );
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, "sveltekit");
+      assert.ok(data.plan?.dependencies.includes(expected), expected);
+      assert.equal(
+        await readFile(path.join(directory, "package.json"), "utf-8"),
+        manifest
+      );
+    }
+    assert.match(
+      await readFile(path.join(directory, "vite.config.ts"), "utf-8"),
+      /import adapter from '@sveltejs\/adapter-auto'/u
+    );
   }
 };
 
@@ -937,6 +1086,8 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyScaffold(test, next, bin);
     await verifyFrameworks(test, parent);
     await verifyNextSourceTrees(test, parent);
+    await verifyNextEntryExtensions(test, parent);
+    await verifySvelteKitAdapter(test, parent);
     await verifyEnvironmentGuidance(test, parent);
     await verifyAstroOutput(test, parent);
     await verifyPartialHtml(test, parent);

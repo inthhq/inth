@@ -8,6 +8,48 @@ import type {
   GenerationPlan,
 } from "../../vendor/c15t/generate/index.ts";
 
+const preserveNextEntries = (generation: GenerationPlan, cwd: string): void => {
+  for (const [name, content] of Object.entries(generation.files)) {
+    if (!/^(?:src\/)?(?:app|pages)\/.*\.tsx?$/u.test(name)) {
+      continue;
+    }
+    const stem = name.replace(/\.tsx?$/u, "");
+    const existing = ["tsx", "ts", "jsx", "js"]
+      .map((extension) => `${stem}.${extension}`)
+      .find((candidate) => existsSync(join(cwd, candidate)));
+    if (!existing) {
+      continue;
+    }
+    generation.files = {
+      ...Object.fromEntries(
+        Object.entries(generation.files).filter(([key]) => key !== name)
+      ),
+      [existing]: content,
+    };
+    generation.merge = {
+      ...Object.fromEntries(
+        Object.entries(generation.merge ?? {}).filter(([key]) => key !== name)
+      ),
+      [existing]: { type: "keep" },
+    };
+    let guidance =
+      "Keep your page content. For server consent, import withConsentProps from 'c15t/next/pages' and integrate it with getServerSideProps.";
+    if (stem.endsWith("/layout")) {
+      guidance =
+        "Keep your layout, styles, and metadata. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from 'c15t/next', and resolveConsent from 'c15t/next/server'. Inside the body, wrap children and the consent components in <ConsentRoot state={resolveConsent()}>.";
+    } else if (stem.endsWith("/_app")) {
+      guidance =
+        "Keep your providers and styles. Import ConsentRoot, ConsentBanner, ConsentDialog, and ConsentDialogLink from 'c15t/next'. Wrap <Component {...pageProps} /> and the consent components in <ConsentRoot state={pageProps.consent}>.";
+    } else if (stem.endsWith("/[...c15t]")) {
+      guidance =
+        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from 'c15t/next/pages' and use createPagesConsentRoute() as the default handler for /api/c15t.";
+    }
+    generation.instructions.push(
+      `Integrate c15t into ${existing}: ${guidance}`
+    );
+  }
+};
+
 /** Keep upstream Next.js templates in the app's active router and config. */
 export const adaptNextGeneration = (
   generation: GenerationPlan,
@@ -48,6 +90,7 @@ export const adaptNextGeneration = (
       instruction.replaceAll(`${router}/`, `src/${router}/`)
     );
   }
+  preserveNextEntries(generation, cwd);
   const config = ["next.config.js", "next.config.mjs", "next.config.ts"].find(
     (name) => existsSync(join(cwd, name))
   );

@@ -17,3 +17,5 @@ The host exports file metadata through `publicGenerationPlan`, keeping existing 
 `src/native/c15t-next.ts` maps Next.js templates into the active root or `src` router directory and preserves the existing config filename. The host gives instructions for wrapping that config without changing its options, then uses upstream's planning, publication, recovery, and installation functions.
 
 The Next.js adapter removes app stylesheet imports that the quickstarts do not generate, so entry points need no existing CSS file or `@` alias. Inth defaults auto-detected Astro projects to the `astro-static` template; the `astro` server target remains an explicit choice.
+
+The Next.js adapter reuses existing `.js`, `.jsx`, `.ts`, and `.tsx` entry filenames and gives integration instructions without replacing those files or creating competing routes. The generation host adds `@sveltejs/adapter-auto` to the SvelteKit install plan because its upstream Vite template imports that package. It preserves a declared adapter version and selects adapter 7 for SvelteKit 2; new SvelteKit 3 apps use the current adapter.
