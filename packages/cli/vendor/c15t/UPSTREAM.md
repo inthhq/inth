@@ -9,3 +9,5 @@ inth supplies the account, organization, and project state that `frontend/index.
 `src/native/c15t-generation.ts` adapts the runtime's manual insert guidance for existing files. Version 3.0.0 lists all snippets when only some are missing; the host uses upstream's merge checks to recommend only missing snippets. The vendored runtime remains unchanged.
 
 `src/native/c15t-agent.ts` applies Inth's upgrade policy to exported and launched agent prompts. Existing c15t installations keep their current major unless the user explicitly requests an upgrade.
+
+The host exports file metadata through `publicGenerationPlan`, keeping existing file contents internal. `src/native/c15t-html.ts` supports HTML sites without `package.json`, using upstream's generated snippets and recovery journal format with exclusive hard-link publication.

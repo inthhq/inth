@@ -32,7 +32,10 @@ import { chooseOrganization, terminalText } from "../organizations.ts";
 import type { Organization, OrganizationUI } from "../organizations.ts";
 import { printResult } from "../output.ts";
 import { createAgentSetupPlan } from "./c15t-agent.ts";
-import { runGenerationWorkflow } from "./c15t-generation.ts";
+import {
+  publicGenerationPlan,
+  runGenerationWorkflow,
+} from "./c15t-generation.ts";
 import type { NativeApi } from "./native-api.ts";
 import { invalidResponse } from "./native-protocol.ts";
 import type { NativeContext } from "./native-state.ts";
@@ -431,7 +434,7 @@ class C15tSetup {
           : "Show the setup prompt for your agent (recommended)"
       )
     );
-    // Without package.json there is no app to write files into.
+    // HTML sites can scaffold without a package manifest.
     if (scaffold) {
       choices.push(
         choice("scaffold", "Scaffold the framework quickstart files")
@@ -537,7 +540,7 @@ class C15tSetup {
       cwd,
       framework,
       selection.name,
-      install,
+      install && framework !== "html",
       signal
     );
     return { confirmed, framework, proceed: confirmed };
@@ -620,6 +623,33 @@ const requireManifest = (
   return manifest;
 };
 
+const scaffoldFramework = (
+  manifest: PackageManifest | undefined,
+  cwd: string
+): BoilerplateFramework | undefined => {
+  if (manifest) {
+    return detectFramework(dependencyNames(manifest), pagesRouter(cwd));
+  }
+  return existsSync(join(cwd, "index.html")) ? "html" : undefined;
+};
+
+const canScaffold = (
+  manifest: PackageManifest | undefined,
+  framework: BoilerplateFramework | undefined
+): boolean => Boolean(manifest) || framework === "html";
+
+const requireScaffoldApp = (
+  manifest: PackageManifest | undefined,
+  framework: BoilerplateFramework | undefined
+): void => {
+  if (framework !== "html") {
+    requireManifest(manifest);
+  }
+};
+
+const shouldInstall = (skip: boolean, dependencies: string[]): boolean =>
+  !skip && dependencies.length > 0;
+
 const resultText = (
   result: GenerationWorkflowResult,
   manager: string
@@ -631,7 +661,7 @@ const resultText = (
   ];
   if (result.installed) {
     lines.push(`Installed c15t packages with ${manager}.`);
-  } else {
+  } else if (result.plan.dependencies.length) {
     lines.push(`Install the packages: ${result.plan.dependencies.join(" ")}`);
   }
   lines.push("", "Next steps:");
@@ -685,13 +715,11 @@ export const runC15t = async (
   });
   const cwd = process.cwd();
   const manifest = readManifest(cwd);
-  const detected = manifest
-    ? detectFramework(dependencyNames(manifest), pagesRouter(cwd))
-    : undefined;
+  const detected = c15t.framework ?? scaffoldFramework(manifest, cwd);
   const agents = installedAgents();
   const organization = await setup.organization(context);
   const selection = await setup.chooseProject(organization, manifest, cwd);
-  const action = await setup.action(agents, Boolean(manifest));
+  const action = await setup.action(agents, canScaffold(manifest, detected));
   // c15t's installer refuses Windows, so write the files and print the command.
   const skipInstall = c15t.skipInstall || process.platform === "win32";
   // Check and confirm everything local before creating a project.
@@ -699,7 +727,7 @@ export const runC15t = async (
     action === "agent" ? await setup.agent(agents) : undefined;
   let scaffold: ScaffoldCheck | undefined;
   if (action === "scaffold") {
-    requireManifest(manifest);
+    requireScaffoldApp(manifest, detected);
     scaffold = await setup.prepareScaffold(
       cwd,
       detected,
@@ -722,7 +750,7 @@ export const runC15t = async (
   if (action === "agent" || action === "prompt") {
     const plan = createAgentSetupPlan({
       backendURL,
-      framework: c15t.framework ?? detected,
+      framework: detected,
       mode: "hosted",
     });
     if (action === "agent") {
@@ -742,10 +770,9 @@ export const runC15t = async (
     );
     return;
   }
-  const app = requireManifest(manifest);
   const framework = scaffold?.framework ?? (await setup.framework(detected));
   const manager = detectPackageManager(
-    app.packageManager,
+    manifest?.packageManager,
     nearestLockfiles(cwd)
   );
   const args = ["setup", "--framework", framework];
@@ -763,7 +790,7 @@ export const runC15t = async (
       JSON.stringify({
         action,
         framework,
-        plan: preview.plan,
+        plan: publicGenerationPlan(preview.plan),
         project: summary,
       })
     );
@@ -773,7 +800,10 @@ export const runC15t = async (
     if (!options.json) {
       console.error(planText(preview));
     }
-    await setup.confirm(pending, !skipInstall);
+    await setup.confirm(
+      pending,
+      shouldInstall(skipInstall, preview.plan.dependencies)
+    );
   }
   args.push("--apply");
   if (skipInstall) {
@@ -793,7 +823,7 @@ export const runC15t = async (
       framework,
       installed: result.installed,
       packageManager: manager,
-      plan: result.plan,
+      plan: publicGenerationPlan(result.plan),
       project: summary,
     })
   );

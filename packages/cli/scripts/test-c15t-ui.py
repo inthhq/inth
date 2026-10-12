@@ -135,6 +135,44 @@ def run_default(installed_agent):
                 os.close(slave)
 
 
+def run_html_site():
+    with tempfile.TemporaryDirectory(prefix="inth-c15t-html-picker-") as directory:
+        html = '<html><head></head><body></body></html>'
+        with open(os.path.join(directory, "index.html"), "w") as page:
+            page.write(html)
+        master, slave = pty.openpty()
+        child = subprocess.Popen(
+            [sys.argv[1], "c15t", "--project", "Website", "--organization", "org_acme"],
+            cwd=directory, stdin=slave, stdout=slave, stderr=slave,
+            env=dict(os.environ, PATH="/usr/bin:/bin", TERM="xterm-256color",
+                     NO_COLOR="1", INTH_TELEMETRY_DISABLED="1",
+                     INTH_TEST_C15T_INTERACTIVE="1"),
+        )
+        output = bytearray()
+        try:
+            read_until(master, child, output, b"Scaffold the framework quickstart files")
+            os.write(master, b"\x1b[B\r")
+            read_until(master, child, output, b"Write these files?")
+            os.write(master, b"\r")
+            read_until(master, child, output, b"CALLS ")
+            child.wait(timeout=15)
+            text = re.sub(rb"\x1b\[[0-9;?]*[A-Za-z]", b"", bytes(output)).decode()
+            assert child.returncode == 0, text
+            assert "Add to index.html:" in text, text
+            assert "#c15t-preferences" in text, text
+            assert "/c15t.js" in text, text
+            with open(os.path.join(directory, "index.html")) as page:
+                assert page.read() == html
+            assert os.listdir(directory) == ["index.html"], os.listdir(directory)
+        finally:
+            if child.poll() is None:
+                child.kill()
+                child.wait()
+            os.close(master)
+            os.close(slave)
+
+
+run_html_site()
 run_default(installed_agent=True)
 run_default(installed_agent=False)
 run(conflict=True)

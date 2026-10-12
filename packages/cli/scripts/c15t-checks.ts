@@ -3,12 +3,14 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   chmod,
+  link as hardLink,
   mkdir,
   mkdtemp,
   readFile,
   readdir,
   realpath,
   rm,
+  symlink,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
@@ -31,7 +33,9 @@ const envelope = z.object({
     plan: z
       .object({
         dependencies: z.array(z.string()),
-        files: z.array(z.object({ exists: z.boolean(), path: z.string() })),
+        files: z.array(
+          z.object({ exists: z.boolean(), path: z.string() }).strict()
+        ),
       })
       .optional(),
     project: z.object({ backendUrl: z.string(), id: z.string() }),
@@ -566,6 +570,151 @@ const verifyPartialHtml = async (
         "pnpm-lock.yaml",
       ]);
     }
+    await rm(path.join(directory, "package.json"));
+    await rm(path.join(directory, "pnpm-lock.yaml"));
+    for (const flags of [["--dry-run"], ["--yes"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = JSON.parse(result.stdout);
+      const guidance = data.plan.instructions.join("\n");
+      if (missing) {
+        assert.ok(guidance.includes(missing), guidance);
+        assert.ok(!guidance.includes(present), guidance);
+      } else {
+        assert.doesNotMatch(guidance, /Add to index.html/u);
+      }
+      assert.equal(
+        await readFile(path.join(directory, "index.html"), "utf-8"),
+        html
+      );
+      assert.deepEqual(await readdir(directory), ["app", "index.html"]);
+      assert.deepEqual(data.plan.dependencies, []);
+    }
+  }
+};
+
+const verifyRedactedPlans = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const directory = await app(parent, "secret-env", { react: "19.0.0" });
+  const secret = "PRIVATE_KEY=fixture-secret-never-log\n";
+  await writeFile(path.join(directory, ".env"), secret);
+  const args = [
+    "c15t",
+    "scaffold",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+    "--json",
+  ];
+  for (const flags of [["--dry-run"], ["--yes", "--skip-install"]]) {
+    const result = run(test, [...args, ...flags], directory);
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(!`${result.stdout}${result.stderr}`.includes(secret.trim()));
+    const { data } = envelope.parse(JSON.parse(result.stdout));
+    assert.ok(
+      data.plan?.files.some((file) => file.path === ".env" && file.exists)
+    );
+    assert.match(result.stdout, /Add to \.env/u);
+    assert.equal(await readFile(path.join(directory, ".env"), "utf-8"), secret);
+  }
+};
+
+const verifyHtmlSite = async (test: string, parent: string): Promise<void> => {
+  const directory = path.join(parent, "html-site");
+  await mkdir(directory);
+  const args = [
+    "c15t",
+    "scaffold",
+    "--framework",
+    "html",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+    "--json",
+  ];
+  const dry = run(test, [...args, "--dry-run"], directory);
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.deepEqual(await readdir(directory), []);
+  const previewNew = run(
+    test,
+    [
+      "c15t",
+      "scaffold",
+      "--framework",
+      "html",
+      "--name",
+      "Site",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+      "--dry-run",
+      "--json",
+    ],
+    directory
+  );
+  assert.equal(previewNew.status, 0, previewNew.stderr);
+  assert.deepEqual(calls(previewNew.stderr), []);
+  assert.deepEqual(await readdir(directory), []);
+  const created = run(test, [...args, "--yes"], directory);
+  assert.equal(created.status, 0, created.stderr);
+  assert.deepEqual(envelope.parse(JSON.parse(created.stdout)).data.created, [
+    "index.html",
+  ]);
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  const html = await readFile(path.join(directory, "index.html"), "utf-8");
+  assert.match(html, /\/c15t\.js/u);
+  assert.match(html, /#c15t-preferences/u);
+  const repeated = run(test, [...args, "--yes"], directory);
+  assert.equal(repeated.status, 0, repeated.stderr);
+  assert.deepEqual(
+    envelope.parse(JSON.parse(repeated.stdout)).data.created,
+    []
+  );
+  assert.equal(
+    await readFile(path.join(directory, "index.html"), "utf-8"),
+    html
+  );
+  await rm(path.join(directory, "index.html"));
+  await mkdir(path.join(directory, ".c15t-native-generation"));
+  const interrupted = run(test, [...args, "--yes"], directory);
+  assert.equal(interrupted.status, 1);
+  const resumed = run(test, [...args, "--yes", "--resume"], directory);
+  assert.equal(resumed.status, 0, resumed.stderr);
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  await rm(path.join(directory, "index.html"));
+  const stage = path.join(directory, ".c15t-native-generation");
+  await mkdir(stage);
+  await writeFile(
+    path.join(stage, "journal.json"),
+    JSON.stringify({
+      directories: [],
+      files: [{ content: html, exists: false, path: "index.html" }],
+      root: directory,
+      version: 1,
+    })
+  );
+  await writeFile(path.join(stage, "0.tmp"), html);
+  await hardLink(path.join(stage, "0.tmp"), path.join(directory, "index.html"));
+  const published = run(test, [...args, "--yes", "--resume"], directory);
+  assert.equal(published.status, 0, published.stderr);
+  assert.deepEqual(envelope.parse(JSON.parse(published.stdout)).data.created, [
+    "index.html",
+  ]);
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  if (!windows) {
+    await rm(path.join(directory, "index.html"));
+    await symlink(
+      path.join(parent, "missing-index.html"),
+      path.join(directory, "index.html")
+    );
+    const linked = run(test, [...args, "--yes"], directory);
+    assert.equal(linked.status, 1);
+    assert.match(linked.stderr, /not a symlink/u);
   }
 };
 
@@ -586,6 +735,8 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyScaffold(test, next, bin);
     await verifyFrameworks(test, parent);
     await verifyPartialHtml(test, parent);
+    await verifyRedactedPlans(test, parent);
+    await verifyHtmlSite(test, parent);
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
     if (!windows) {
       await verifyAgents(test, next, bin);

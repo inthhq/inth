@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+// eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
+import { join } from "node:path";
+
 import { runFrontendCommand } from "../../vendor/c15t/frontend/index.ts";
 import type { FrontendCommandContext } from "../../vendor/c15t/frontend/index.ts";
 import {
@@ -5,10 +9,20 @@ import {
   runGenerationWorkflow as upstreamGenerationWorkflow,
 } from "../../vendor/c15t/frontend/runtime/index.ts";
 import type {
+  ApplicationPlan,
   GenerationRuntimeOptions,
   GenerationWorkflowResult,
 } from "../../vendor/c15t/frontend/runtime/index.ts";
 import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
+import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
+
+/** Public plans contain file metadata, never application file contents. */
+export const publicGenerationPlan = (plan: ApplicationPlan) => ({
+  dependencies: plan.dependencies,
+  files: plan.files.map((file) => ({ exists: file.exists, path: file.path })),
+  instructions: plan.instructions,
+  root: plan.root,
+});
 
 // Upstream 3.0.0 prints every insert when an existing file needs any insert.
 // Keep its runtime and sources intact, but show only the snippets still missing.
@@ -17,6 +31,12 @@ export const runGenerationWorkflow = async (
   context: FrontendCommandContext,
   options: GenerationRuntimeOptions
 ): Promise<GenerationWorkflowResult> => {
+  if (
+    !existsSync(join(options.cwd, "package.json")) &&
+    (args.includes("html") || context.generation?.framework === "html")
+  ) {
+    return runHtmlGenerationWorkflow(args, context, options);
+  }
   const result = await upstreamGenerationWorkflow(args, context, options);
   const flags = parseGenerationWorkflowArguments(args);
   const generation = runFrontendCommand(flags.forwarded, context);
