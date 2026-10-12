@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
@@ -23,6 +23,7 @@ import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
 import { adaptReactGeneration } from "./c15t-react.ts";
+import { adaptSvelteKitGeneration } from "./c15t-svelte.ts";
 
 /** Public plans contain file metadata, never application file contents. */
 export const publicGenerationPlan = (plan: ApplicationPlan) => ({
@@ -135,33 +136,6 @@ const installAppliedPlan = async (
   }
 };
 
-const addTemplateDependencies = (
-  generation: GenerationPlan,
-  cwd: string
-): void => {
-  if (
-    !generation.files["vite.config.ts"]?.includes(
-      "import adapter from '@sveltejs/adapter-auto';"
-    )
-  ) {
-    return;
-  }
-  const manifest: {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-  } = JSON.parse(readFileSync(join(cwd, "package.json"), "utf-8"));
-  const dependencies = {
-    ...manifest.devDependencies,
-    ...manifest.dependencies,
-  };
-  const declared = dependencies["@sveltejs/adapter-auto"];
-  const kit = dependencies["@sveltejs/kit"] ?? "";
-  const version = declared ?? (/^[~^]?\s*2(?:\.|$)/u.test(kit) ? "7" : "");
-  generation.dependencies.push(
-    `@sveltejs/adapter-auto${version ? `@${version}` : ""}`
-  );
-};
-
 /** Adapt upstream plans before using its filesystem and installation runtime. */
 export const runGenerationWorkflow = async (
   args: string[],
@@ -195,7 +169,7 @@ export const runGenerationWorkflow = async (
   const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
   adaptNextGeneration(generation.data, options.cwd);
   adaptReactGeneration(generation.data, options.cwd);
-  addTemplateDependencies(generation.data, options.cwd);
+  adaptSvelteKitGeneration(generation.data, options.cwd);
   const plan = planGeneration(options.cwd, generation.data);
   addNextConfigInstructions(plan, generation.data);
   missingInsertInstructions(plan, generation.data);

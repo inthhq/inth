@@ -818,6 +818,87 @@ const verifySvelteKitAdapter = async (
   }
 };
 
+const verifySvelteKitVersions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [name, declared, installed, supported] of [
+    ["legacy-range", "^2.48.5", "", false],
+    ["pre-peer-minimum", "2.62.4", "", false],
+    ["old-installed", "^2.63.0", "2.48.5", false],
+    ["new-installed", "^2.48.5", "2.63.0", true],
+    ["prerelease", "^3.0.0", "3.0.0-next.1", false],
+    ["mixed-range", "^2.63.0 || ^2.48.5", "", false],
+  ] as const) {
+    const directory = await app(parent, `sveltekit-version-${name}`, {
+      "@sveltejs/kit": declared,
+      svelte: "^5.57.1",
+    });
+    const config = "export default { kit: { adapter: 'existing-adapter' } };\n";
+    await writeFile(path.join(directory, "svelte.config.js"), config);
+    const manifest = await readFile(
+      path.join(directory, "package.json"),
+      "utf-8"
+    );
+    if (installed) {
+      const packageDirectory = path.join(
+        directory,
+        "node_modules",
+        "@sveltejs",
+        "kit"
+      );
+      await mkdir(packageDirectory, { recursive: true });
+      await writeFile(
+        path.join(packageDirectory, "package.json"),
+        JSON.stringify({ version: installed })
+      );
+    }
+    const before = await readdir(directory);
+    for (const flags of [
+      ["--project", "Website", "--dry-run"],
+      ["--project", "Website", "--yes"],
+      ["--name", "Created", "--region", "eu", "--yes"],
+    ]) {
+      if (supported && flags.includes("--name")) {
+        continue;
+      }
+      const result = run(
+        test,
+        [
+          "c15t",
+          "scaffold",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+          ...flags,
+        ],
+        directory
+      );
+      assert.equal(result.status, supported ? 0 : 1, result.stderr);
+      if (supported) {
+        const { data } = envelope.parse(JSON.parse(result.stdout));
+        assert.ok(data.plan?.dependencies.includes("@sveltejs/adapter-auto@7"));
+      } else {
+        assert.match(
+          result.stdout + result.stderr,
+          /SvelteKit scaffolding requires @sveltejs\/kit 2\.63\.0/u
+        );
+        assert.deepEqual(await readdir(directory), before);
+      }
+      assert.ok(calls(result.stderr).every((call) => call.startsWith("GET")));
+      assert.equal(
+        await readFile(path.join(directory, "svelte.config.js"), "utf-8"),
+        config
+      );
+      assert.equal(
+        await readFile(path.join(directory, "package.json"), "utf-8"),
+        manifest
+      );
+    }
+  }
+};
+
 const verifyEnvironmentGuidance = async (
   test: string,
   parent: string
@@ -1178,6 +1259,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyNextSourceTrees(test, parent);
     await verifyNextEntryExtensions(test, parent);
     await verifySvelteKitAdapter(test, parent);
+    await verifySvelteKitVersions(test, parent);
     await verifyReactEntry(test, parent);
     await verifyEnvironmentGuidance(test, parent);
     await verifyAstroOutput(test, parent);

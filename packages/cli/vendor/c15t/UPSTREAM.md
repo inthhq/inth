@@ -20,4 +20,6 @@ The Next.js adapter removes app stylesheet imports that the quickstarts do not g
 
 The Next.js adapter reuses existing `.js`, `.jsx`, `.ts`, and `.tsx` entry filenames and gives integration instructions without replacing those files or creating competing routes. The generation host adds `@sveltejs/adapter-auto` to the SvelteKit install plan because its upstream Vite template imports that package. It preserves a declared adapter version and selects adapter 7 for SvelteKit 2; new SvelteKit 3 apps use the current adapter.
 
+`src/native/c15t-svelte.ts` checks for stable Kit 2.63+ or 3.x, matching the published `@c15t/svelte@3.0.0` peer dependency. The installed Kit version takes precedence over the manifest range. Older versions receive upgrade guidance before publication or project creation, without changes to the app's Svelte config or package manifest.
+
 `src/native/c15t-react.ts` adapts the React quickstart to import the default export from an existing conventional `src/App.tsx`, `.jsx`, `.ts`, or `.js`. It preserves the upstream named `App` import for apps that use `src/app.tsx`.

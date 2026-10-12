@@ -68,6 +68,8 @@ Next.js scaffolding uses the active `app` or `pages` directory, including apps t
 
 Next.js quickstart entry points do not import an app stylesheet or require an `@` path alias. Astro autodetection selects static output. Use `--framework astro` to choose server output explicitly.
 
+SvelteKit scaffolding requires stable SvelteKit 2.63+ or 3.x to match `@c15t/svelte@3`. Setup checks the installed Kit version first, then the version range in `package.json` when Kit is not installed. Upgrade and install older apps before scaffolding, or use agent setup to plan the upgrade. Setup preserves your existing Svelte config and package manifest.
+
 For an existing `.env`, scaffold distinguishes new keys from assignments to replace. If the selected backend variable occurs more than once, the instructions ask you to keep one assignment with the selected backend URL. Existing file contents stay out of the output.
 
 To create a hosted project, pass `--name Website --region <region-id>` instead of `--project`. Use `inth region list` to choose the region. Scaffold checks local files and asks for confirmation before creating a project. `--dry-run` previews the files without creating a project, writing files, or installing packages. `--yes` confirms file creation, and `--skip-install` leaves package installation to you. Windows always skips installation and prints the required packages. Use `--resume` to undo files from an interrupted scaffold before trying again.
