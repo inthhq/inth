@@ -8,13 +8,70 @@ import type {
   GenerationPlan,
 } from "../../vendor/c15t/generate/index.ts";
 
+const withoutConfigComments = (source: string): string => {
+  let result = "";
+  let quote = "";
+  let escaped = false;
+  let lineComment = false;
+  let blockComment = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index] ?? "";
+    const next = source[index + 1];
+    if (lineComment) {
+      if (character === "\n") {
+        lineComment = false;
+        result += character;
+      }
+      continue;
+    }
+    if (blockComment) {
+      if (character === "*" && next === "/") {
+        blockComment = false;
+        index += 1;
+      } else if (character === "\n") {
+        result += character;
+      }
+      continue;
+    }
+    if (quote) {
+      result += character;
+      if (escaped) {
+        escaped = false;
+      } else if (character === "\\") {
+        escaped = true;
+      } else if (character === quote) {
+        quote = "";
+      }
+      continue;
+    }
+    if (character === "/" && (next === "/" || next === "*")) {
+      lineComment = next === "/";
+      blockComment = next === "*";
+      result += " ";
+      index += 1;
+    } else {
+      if (character === "'" || character === '"' || character === "`") {
+        quote = character;
+      }
+      result += character;
+    }
+  }
+  return result;
+};
+
 const nextPageExtensions = (cwd: string, config?: string): string[] => {
   const defaults = ["tsx", "ts", "jsx", "js"];
   if (!config) {
     return defaults;
   }
-  const contents = readFileSync(join(cwd, config), "utf-8");
-  if (!/\bpageExtensions\b/u.test(contents)) {
+  const contents = withoutConfigComments(
+    readFileSync(join(cwd, config), "utf-8")
+  );
+  if (
+    !/(?:["']?\bpageExtensions\b["']?\s*:|\.pageExtensions\s*=|\[\s*["']pageExtensions["']\s*\]\s*=|\bpageExtensions\b\s*[,}])/u.test(
+      contents
+    )
+  ) {
     return defaults;
   }
   const match =
@@ -22,7 +79,7 @@ const nextPageExtensions = (cwd: string, config?: string): string[] => {
       contents
     );
   const values = match ? match.groups?.values : undefined;
-  const list = values?.replaceAll(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/gu, "") ?? "";
+  const list = values ?? "";
   const literals = list
     .split(",")
     .map((literal) => literal.trim())
@@ -50,7 +107,7 @@ const generatedPageExtension = (name: string, extensions: string[]): string => {
     ) ??
     (script
       ? extensions.find((candidate) => /(?:^|\.)(?:tsx|jsx)$/u.test(candidate))
-      : undefined);
+      : extensions.find((candidate) => /(?:^|\.)js$/u.test(candidate)));
   if (!extension) {
     throw new Error(
       "Next.js pageExtensions must include a TypeScript or JavaScript extension for generated consent pages and API routes. Use agent setup to integrate c15t with other page formats."

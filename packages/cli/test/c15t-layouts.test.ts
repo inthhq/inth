@@ -29,37 +29,77 @@ afterEach(async () => {
   await rm(directory, { force: true, recursive: true });
 });
 
-it("generates executable JSX pages and an API handler with the configured suffix", async () => {
-  await writeFile(
-    path.join(directory, "next.config.mjs"),
-    "export default { pageExtensions: ['page.jsx'] };\n"
-  );
+it.each(["page.jsx", "page.js", "js"])(
+  "generates executable pages and an API handler with %s",
+  async (extension) => {
+    await writeFile(
+      path.join(directory, "next.config.mjs"),
+      `export default { pageExtensions: ['${extension}'] };\n`
+    );
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
+      context,
+      { cwd: directory }
+    );
+    expect(result.created).toEqual(
+      expect.arrayContaining([
+        `pages/_app.${extension}`,
+        `pages/index.${extension}`,
+        `pages/api/c15t/[...c15t].${extension}`,
+      ])
+    );
+    expect(await readdir(path.join(directory, "pages"))).toEqual([
+      `_app.${extension}`,
+      "api",
+      `index.${extension}`,
+    ]);
+    await Promise.all(
+      [
+        `pages/_app.${extension}`,
+        `pages/index.${extension}`,
+        `pages/api/c15t/[...c15t].${extension}`,
+      ].map(async (filename) => {
+        const content = await readFile(path.join(directory, filename), "utf-8");
+        expect(() => transformSync(content, { loader: "jsx" })).not.toThrow();
+      })
+    );
+  }
+);
+
+it.each([
+  "// Keep the default pageExtensions\nexport default {};",
+  "/* pageExtensions: ['ignored.tsx'] */\nexport default {};",
+  "export default { docs: 'https://example.com/pageExtensions' };",
+])(
+  "uses default extensions when config only mentions them as text: %s",
+  async (config) => {
+    await writeFile(path.join(directory, "next.config.mjs"), config);
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
+      context,
+      { cwd: directory }
+    );
+    expect(result.created).toContain("pages/_app.tsx");
+    expect(result.created).toContain("pages/api/c15t/[...c15t].ts");
+    expect(
+      await readFile(path.join(directory, "next.config.mjs"), "utf-8")
+    ).toBe(config);
+  }
+);
+
+it("reads a real extension property after comments without stripping URL strings", async () => {
+  const config =
+    "export default { docs: 'https://example.com/docs', pageExtensions: /* next pages */ [\n'page.js', // page.tsx is unused\n] };\n";
+  await writeFile(path.join(directory, "next.config.mjs"), config);
   const result = await runGenerationWorkflow(
     ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
     context,
     { cwd: directory }
   );
-  expect(result.created).toEqual(
-    expect.arrayContaining([
-      "pages/_app.page.jsx",
-      "pages/index.page.jsx",
-      "pages/api/c15t/[...c15t].page.jsx",
-    ])
-  );
-  expect(await readdir(path.join(directory, "pages"))).toEqual([
-    "_app.page.jsx",
-    "api",
-    "index.page.jsx",
-  ]);
-  await Promise.all(
-    [
-      "pages/_app.page.jsx",
-      "pages/index.page.jsx",
-      "pages/api/c15t/[...c15t].page.jsx",
-    ].map(async (filename) => {
-      const content = await readFile(path.join(directory, filename), "utf-8");
-      expect(() => transformSync(content, { loader: "jsx" })).not.toThrow();
-    })
+  expect(result.created).toContain("pages/_app.page.js");
+  expect(result.created).toContain("pages/api/c15t/[...c15t].page.js");
+  expect(await readFile(path.join(directory, "next.config.mjs"), "utf-8")).toBe(
+    config
   );
 });
 

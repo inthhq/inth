@@ -778,6 +778,88 @@ const verifyNextPageExtensions = async (
       }
     }
   }
+  for (const [label, config, extension, script] of [
+    ["js-only", "export default { pageExtensions: ['js'] };", "js", "js"],
+    [
+      "custom-js",
+      "export default { pageExtensions: ['page.js'] };",
+      "page.js",
+      "page.js",
+    ],
+    [
+      "line-comment",
+      "// Keep the default pageExtensions\nexport default {};",
+      "tsx",
+      "ts",
+    ],
+    [
+      "block-comment",
+      "/* pageExtensions: ['ignored.tsx'] */\nexport default {};",
+      "tsx",
+      "ts",
+    ],
+    [
+      "url-and-comments",
+      "export default { docs: 'https://example.com/docs', pageExtensions: /* pages */ ['page.js', // unused page.tsx\n] };",
+      "page.js",
+      "page.js",
+    ],
+  ] as const) {
+    const directory = await app(parent, `next-extension-${label}`, {
+      next: "16.0.0",
+      react: "19.2.0",
+    });
+    await rm(path.join(directory, "app"), { recursive: true });
+    await mkdir(path.join(directory, "pages"));
+    await writeFile(path.join(directory, "next.config.mjs"), config);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--framework",
+      "next-pages",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    const names = [
+      `pages/_app.${extension}`,
+      `pages/index.${extension}`,
+      `pages/api/c15t/[...c15t].${script}`,
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      const planned = data.plan?.files.map((file) => file.path) ?? [];
+      for (const name of names) {
+        assert.ok(planned.includes(name), planned.join(", "));
+      }
+      assert.equal(
+        await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
+        config
+      );
+      if (flag === "--dry-run") {
+        assert.deepEqual(await readdir(path.join(directory, "pages")), []);
+      } else {
+        for (const name of names) {
+          const content = await readFile(path.join(directory, name), "utf-8");
+          assert.match(content, /c15t\/next/u);
+          if (extension.endsWith("js")) {
+            assert.doesNotMatch(content, /import type|: AppProps/u);
+          }
+        }
+        const entries = await readdir(path.join(directory, "pages"));
+        assert.deepEqual(entries.toSorted(), [
+          `_app.${extension}`,
+          "api",
+          `index.${extension}`,
+        ]);
+      }
+    }
+  }
 };
 
 const verifyNuxtLayouts = async (
