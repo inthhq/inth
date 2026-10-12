@@ -72,7 +72,7 @@ const api = new NativeApi(
 const controller = new AbortController();
 let exitCode = 0;
 try {
-  const options = parseArguments(process.argv.slice(2), true);
+  const options = parseArguments(process.argv.slice(2));
   await runC15t(
     options,
     api,

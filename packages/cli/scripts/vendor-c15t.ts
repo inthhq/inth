@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Keep in sync with vendor/c15t/UPSTREAM.md.
-const VERSION = "3.0.0-alpha.4";
+const VERSION = "3.0.0";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const temporary = await mkdtemp(path.join(tmpdir(), "inth-c15t-"));

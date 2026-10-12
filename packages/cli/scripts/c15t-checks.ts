@@ -3,12 +3,15 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {
   chmod,
+  link as hardLink,
   mkdir,
   mkdtemp,
   readFile,
   readdir,
   realpath,
   rm,
+  symlink,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
@@ -16,6 +19,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
 import { fixture } from "./native-test-support.ts";
 
 const BACKEND = "https://acme-website.c15t.dev";
@@ -30,7 +34,10 @@ const envelope = z.object({
     plan: z
       .object({
         dependencies: z.array(z.string()),
-        files: z.array(z.object({ exists: z.boolean(), path: z.string() })),
+        files: z.array(
+          z.object({ exists: z.boolean(), path: z.string() }).strict()
+        ),
+        instructions: z.array(z.string()),
       })
       .optional(),
     project: z.object({ backendUrl: z.string(), id: z.string() }),
@@ -74,22 +81,27 @@ const app = async (
   return directory;
 };
 
-const verifyCommandGate = (binary: string, cwd: string): void => {
-  const hidden = run(binary, ["c15t"], cwd, {
-    ...process.env,
-    INTH_EXPERIMENTAL_C15T: "",
-  });
-  assert.equal(hidden.status, 1);
-  assert.match(hidden.stderr, /Unknown command/u);
-  const enabled = { ...process.env, INTH_EXPERIMENTAL_C15T: "1" };
-  const help = run(binary, ["c15t", "--help"], cwd, enabled);
+const verifyPublicCommand = (binary: string, cwd: string): void => {
+  const env = { ...process.env };
+  delete env.INTH_EXPERIMENTAL_C15T;
+  for (const args of [["c15t", "--help"], ["--help"]]) {
+    const help = run(binary, args, cwd, env);
+    assert.equal(help.status, 0, help.stderr);
+    assert.match(help.stdout, /c15t/u);
+    assert.doesNotMatch(help.stdout, /experimental/u);
+  }
+  const help = run(binary, ["c15t", "--help", "--json"], cwd, env);
   assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /--codex, --claude, --cursor, --grok/u);
-  const usage = run(binary, ["c15t", "--region", "eu"], cwd, enabled);
+  const [definition] = JSON.parse(help.stdout).data.commandDefinitions;
+  assert.equal(definition.command, "c15t");
+  assert.ok(
+    definition.options.some(
+      (entry: { name: string }) => entry.name === "framework"
+    )
+  );
+  const usage = run(binary, ["c15t", "--region", "eu"], cwd, env);
   assert.equal(usage.status, 1);
   assert.match(usage.stderr, /Use --region with --name/u);
-  const main = run(binary, ["--help"], cwd, enabled);
-  assert.doesNotMatch(main.stdout, /c15t/u);
 };
 
 const verifyExistingProject = async (
@@ -114,6 +126,18 @@ const verifyExistingProject = async (
   assert.equal(promptData.project.backendUrl, BACKEND);
   assert.match(promptData.prompt ?? "", /"framework": "next-app"/u);
   assert.match(promptData.prompt ?? "", new RegExp(BACKEND, "u"));
+  assert.match(promptData.prompt ?? "", /<package>@latest/u);
+  assert.match(promptData.prompt ?? "", /https:\/\/c15t\.com\/docs/u);
+  assert.doesNotMatch(promptData.prompt ?? "", /@alpha|v3\.c15t\.com/u);
+  assert.match(
+    promptData.prompt ?? "",
+    /Running inth c15t alone does not request an upgrade/u
+  );
+  assert.match(
+    promptData.prompt ?? "",
+    /follow its installed package's bundled docs, skip the v3 installation and migration steps/u
+  );
+  assert.doesNotMatch(promptData.prompt ?? "", /below 3\.0 → Upgrade path/u);
 
   const preview = run(
     test,
@@ -131,7 +155,7 @@ const verifyExistingProject = async (
   );
   assert.equal(preview.status, 0, preview.stderr);
   const previewData = envelope.parse(JSON.parse(preview.stdout)).data;
-  assert.deepEqual(previewData.plan?.dependencies, ["@c15t/nextjs@alpha"]);
+  assert.deepEqual(previewData.plan?.dependencies, ["c15t@3"]);
   assert.deepEqual(await readdir(directory), [
     "app",
     "package.json",
@@ -206,25 +230,31 @@ const verifyScaffold = async (
   assert.equal(scaffold.status, 0, scaffold.stderr);
   const { data } = envelope.parse(JSON.parse(scaffold.stdout));
   assert.deepEqual(data.created, [
-    "src/consent/consent-manager.tsx",
-    "src/consent/README.md",
+    ".env",
+    "c15t.config.ts",
+    "next.config.ts",
+    "app/layout.tsx",
   ]);
   assert.equal(data.installed, !windows);
   const manager = await readFile(
-    path.join(directory, "src/consent/consent-manager.tsx"),
+    path.join(directory, "app/layout.tsx"),
     "utf-8"
   );
-  assert.match(manager, new RegExp(BACKEND, "u"));
+  assert.match(manager, /from 'c15t\/next'/u);
+  assert.equal(
+    await readFile(path.join(directory, ".env"), "utf-8"),
+    `NEXT_PUBLIC_C15T_BACKEND_URL=${BACKEND}\n`
+  );
   if (!windows) {
     const installer = await readFile(log, "utf-8");
     assert.deepEqual(installer.trim().split("\n"), [
       directory,
       "add",
-      "@c15t/nextjs@alpha",
+      "c15t@3",
     ]);
   }
   // An interrupted apply leaves c15t's journal directory behind.
-  await rm(path.join(directory, "src"), { force: true, recursive: true });
+  await rm(path.join(directory, "app/layout.tsx"));
   await mkdir(path.join(directory, ".c15t-native-generation"));
   const blocked = run(
     test,
@@ -264,14 +294,16 @@ const verifyScaffold = async (
   assert.match(resumed.stderr, /Undid the interrupted c15t setup/u);
   const entries = await readdir(directory);
   assert.deepEqual(entries.toSorted(), [
+    ".env",
     "app",
+    "c15t.config.ts",
+    "next.config.ts",
     "package.json",
     "pnpm-lock.yaml",
-    "src",
   ]);
   await writeFile(
-    path.join(directory, "src/consent/consent-manager.tsx"),
-    `${manager}// edited\n`
+    path.join(directory, "c15t.config.ts"),
+    "// Custom consent configuration\n"
   );
   const conflict = run(
     test,
@@ -345,7 +377,8 @@ const verifyAgents = async (
   const [cwd, count, prompt] = launch.split("\n");
   assert.equal(cwd, directory);
   assert.equal(count, "1");
-  assert.match(prompt ?? "", /^Integrate or migrate this application/u);
+  assert.match(prompt ?? "", /^Set up c15t v3/u);
+  assert.match(launch, /Running inth c15t alone does not request an upgrade/u);
   const failed = run(test, args, directory, {
     ...env,
     INTH_TEST_AGENT_EXIT: "3",
@@ -373,7 +406,11 @@ const verifyAgents = async (
   const [fxCount, fxCommand, fxPrompt] = fxLaunch.split("\n");
   assert.equal(fxCount, "2");
   assert.equal(fxCommand, "ask");
-  assert.match(fxPrompt ?? "", /^Integrate or migrate this application/u);
+  assert.match(fxPrompt ?? "", /^Set up c15t v3/u);
+  assert.match(
+    fxLaunch,
+    /Running inth c15t alone does not request an upgrade/u
+  );
   const missing = run(
     test,
     [
@@ -424,6 +461,1268 @@ const verifyNewProject = (test: string, directory: string): void => {
   ]);
 };
 
+const verifyFrameworks = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const framework of boilerplateFrameworks) {
+    const directory = await app(parent, framework, {});
+    const env = "EXISTING=value\n";
+    await writeFile(path.join(directory, ".env"), env);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--framework",
+      framework,
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+      "--json",
+    ];
+    const result = run(test, args, directory);
+    assert.equal(result.status, 0, `${framework}: ${result.stderr}`);
+    const { data } = envelope.parse(JSON.parse(result.stdout));
+    assert.equal(data.framework, framework);
+    const dependencies = {
+      astro: ["c15t@3", "@astrojs/node", "@astrojs/svelte", "svelte"],
+      "astro-static": ["c15t@3", "@astrojs/svelte", "svelte"],
+      html: [],
+      javascript: ["@c15t/browser@latest", "c15t@3"],
+      "next-app": ["c15t@3"],
+      "next-pages": ["c15t@3"],
+      nuxt: ["c15t@3"],
+      react: ["c15t@3"],
+      solid: ["@c15t/core@3"],
+      svelte: ["@c15t/svelte@latest"],
+      sveltekit: ["@c15t/svelte@latest", "@sveltejs/adapter-auto"],
+      "tanstack-start": ["c15t@3"],
+      vue: ["c15t@3"],
+    }[framework];
+    assert.deepEqual(data.plan?.dependencies, dependencies, framework);
+    assert.ok(data.created?.length);
+    assert.equal(await readFile(path.join(directory, ".env"), "utf-8"), env);
+    for (const file of data.created ?? []) {
+      const contents = await readFile(path.join(directory, file), "utf-8");
+      assert.ok(contents.length);
+      if (file === "pages/_app.tsx" || file === "app/layout.tsx") {
+        assert.doesNotMatch(contents, /globals\.css/u);
+      }
+    }
+    if (!["html", "solid"].includes(framework)) {
+      assert.match(result.stdout, /Add to \.env/u);
+    }
+    assert.match(result.stdout, /acme-website\.c15t\.dev/u);
+    assert.ok(calls(result.stderr).every((call) => call.startsWith("GET")));
+    const repeated = run(test, args, directory);
+    assert.equal(repeated.status, 0, `${framework}: ${repeated.stderr}`);
+    assert.deepEqual(
+      envelope.parse(JSON.parse(repeated.stdout)).data.created,
+      []
+    );
+  }
+};
+
+const verifyNextSourceTrees = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const router of ["app", "pages"]) {
+    for (const extension of ["js", "mjs", "ts"]) {
+      const directory = await app(parent, `next-src-${router}-${extension}`, {
+        next: "16.0.0",
+        react: "19.0.0",
+      });
+      await rm(path.join(directory, "app"), { recursive: true });
+      const source = path.join(directory, "src", router);
+      await mkdir(source, { recursive: true });
+      const route = path.join(
+        source,
+        router === "app" ? "page.tsx" : "index.tsx"
+      );
+      const page =
+        "export default function Page() { return <h1>Existing route</h1>; }\n";
+      await writeFile(route, page);
+      const config = `next.config.${extension}`;
+      const contents =
+        extension === "js"
+          ? "module.exports = { basePath: '/existing', env: { KEY: 'private-config-value' } };\n"
+          : "import { withConsentManifest } from 'c15t/next/build';\nexport default { basePath: '/existing', env: { KEY: 'private-config-value' } };\n";
+      await writeFile(path.join(directory, config), contents);
+      const args = [
+        "c15t",
+        "scaffold",
+        "--project",
+        "Website",
+        "--organization",
+        "org_acme",
+        "--skip-install",
+        "--json",
+      ];
+      for (const flags of [["--dry-run"], ["--yes"], ["--yes"]]) {
+        const result = run(test, [...args, ...flags], directory);
+        assert.equal(result.status, 0, result.stderr);
+        const { data } = envelope.parse(JSON.parse(result.stdout));
+        assert.equal(data.framework, `next-${router}`);
+        const files = data.plan?.files.map((file) => file.path) ?? [];
+        assert.ok(
+          files.includes(
+            `src/${router}/${router === "app" ? "layout.tsx" : "_app.tsx"}`
+          )
+        );
+        assert.ok(files.includes(config));
+        assert.ok(files.every((file) => !file.startsWith(`${router}/`)));
+        assert.match(
+          result.stdout,
+          new RegExp(`Update next\\.config\\.${extension}:`, "u")
+        );
+        assert.match(result.stdout, /withConsentManifest\(nextConfig\)/u);
+        assert.doesNotMatch(
+          result.stdout + result.stderr,
+          /private-config-value/u
+        );
+        assert.equal(await readFile(route, "utf-8"), page);
+        assert.equal(
+          await readFile(path.join(directory, config), "utf-8"),
+          contents
+        );
+        const entries = await readdir(directory);
+        assert.ok(!entries.includes(router));
+        if (extension !== "ts") {
+          assert.ok(!entries.includes("next.config.ts"));
+        }
+      }
+      const layout = path.join(
+        source,
+        router === "app" ? "layout.tsx" : "_app.tsx"
+      );
+      assert.doesNotMatch(await readFile(layout, "utf-8"), /globals\.css/u);
+      await writeFile(layout, "// Existing app entry point\n");
+      const conflict = run(test, [...args, "--yes"], directory);
+      assert.equal(conflict.status, 0, conflict.stderr);
+      assert.match(conflict.stdout, /Integrate c15t into src\//u);
+      assert.equal(
+        await readFile(layout, "utf-8"),
+        "// Existing app entry point\n"
+      );
+      const entries = await readdir(directory);
+      assert.ok(!entries.includes(router));
+    }
+  }
+};
+
+const verifyNextEntryExtensions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const root of ["", "src/"]) {
+    for (const router of ["app", "pages"]) {
+      for (const extension of ["js", "jsx", "ts", "tsx"]) {
+        const directory = await app(
+          parent,
+          `next-entries-${root ? "src" : "root"}-${router}-${extension}`,
+          {
+            next: "16.0.0",
+            react: "19.0.0",
+          }
+        );
+        await rm(path.join(directory, "app"), { recursive: true });
+        const names =
+          router === "app"
+            ? [`${root}app/layout.${extension}`]
+            : [
+                `${root}pages/_app.${extension}`,
+                `${root}pages/index.${extension}`,
+                `${root}pages/api/c15t/[...c15t].${extension}`,
+              ];
+        for (const name of names) {
+          await mkdir(path.dirname(path.join(directory, name)), {
+            recursive: true,
+          });
+          await writeFile(
+            path.join(directory, name),
+            "// private-existing-entry\n"
+          );
+        }
+        const args = [
+          "c15t",
+          "scaffold",
+          "--framework",
+          `next-${router}`,
+          "--project",
+          "Website",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+        ];
+        for (const flags of [["--dry-run"], ["--yes"], ["--yes"]]) {
+          const result = run(test, [...args, ...flags], directory);
+          assert.equal(result.status, 0, result.stderr);
+          const { data } = envelope.parse(JSON.parse(result.stdout));
+          const files = data.plan?.files.map((file) => file.path) ?? [];
+          for (const name of names) {
+            assert.ok(files.includes(name), name);
+            assert.ok(
+              data.plan?.instructions.some((instruction) =>
+                instruction.startsWith(`Integrate c15t into ${name}:`)
+              ),
+              name
+            );
+            assert.equal(
+              await readFile(path.join(directory, name), "utf-8"),
+              "// private-existing-entry\n"
+            );
+          }
+          assert.ok(
+            files.every(
+              (file) =>
+                !file.startsWith(`${root}${router}/`) || names.includes(file)
+            ),
+            files.join(", ")
+          );
+          assert.doesNotMatch(
+            result.stdout + result.stderr,
+            /private-existing-entry/u
+          );
+        }
+        const entries = await readdir(path.join(directory, root, router));
+        assert.deepEqual(
+          entries.toSorted(),
+          router === "app"
+            ? [`layout.${extension}`]
+            : [`_app.${extension}`, "api", `index.${extension}`]
+        );
+      }
+    }
+  }
+};
+
+const verifyNextPageExtensions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const root of ["", "src/"]) {
+    for (const extension of ["tsx", "jsx"]) {
+      const directory = await app(
+        parent,
+        `next-custom-${root.replace("/", "")}-${extension}`,
+        {
+          next: "16.0.0",
+          react: "19.2.0",
+        }
+      );
+      await rm(path.join(directory, "app"), { recursive: true });
+      const route = `${root}pages`;
+      await mkdir(path.join(directory, route), { recursive: true });
+      const script = extension === "tsx" ? "ts" : "js";
+      const config = `export default { pageExtensions: ['page.${extension}', 'page.${script}'] };\n`;
+      await writeFile(path.join(directory, "next.config.mjs"), config);
+      for (const stem of ["_app", "index"]) {
+        await writeFile(
+          path.join(directory, route, `${stem}.page.${extension}`),
+          "// private-custom-page\n"
+        );
+      }
+      const args = [
+        "c15t",
+        "scaffold",
+        "--framework",
+        "next-pages",
+        "--project",
+        "Website",
+        "--organization",
+        "org_acme",
+        "--skip-install",
+        "--json",
+      ];
+      for (const flag of ["--dry-run", "--yes", "--yes"]) {
+        const result = run(test, [...args, flag], directory);
+        assert.equal(result.status, 0, result.stderr);
+        const { data } = envelope.parse(JSON.parse(result.stdout));
+        const names = data.plan?.files.map((file) => file.path) ?? [];
+        for (const stem of ["_app", "index"]) {
+          const name = `${route}/${stem}.page.${extension}`;
+          assert.ok(names.includes(name), names.join(", "));
+          assert.equal(
+            await readFile(path.join(directory, name), "utf-8"),
+            "// private-custom-page\n"
+          );
+          assert.ok(
+            data.plan?.instructions.some((instruction) =>
+              instruction.startsWith(`Integrate c15t into ${name}:`)
+            )
+          );
+        }
+        const api = `${route}/api/c15t/[...c15t].page.${script}`;
+        assert.ok(names.includes(api), names.join(", "));
+        assert.equal(
+          await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
+          config
+        );
+        assert.ok(!names.includes(`${route}/_app.tsx`));
+        assert.ok(!names.includes(`${route}/index.tsx`));
+        assert.ok(!names.includes(`${route}/api/c15t/[...c15t].ts`));
+        assert.doesNotMatch(
+          result.stdout + result.stderr,
+          /private-custom-page/u
+        );
+        if (flag === "--yes") {
+          assert.match(
+            await readFile(path.join(directory, api), "utf-8"),
+            /createPagesConsentRoute/u
+          );
+        }
+      }
+    }
+  }
+  for (const [label, config, extension, script] of [
+    ["js-only", "export default { pageExtensions: ['js'] };", "js", "js"],
+    [
+      "custom-js",
+      "export default { pageExtensions: ['page.js'] };",
+      "page.js",
+      "page.js",
+    ],
+    [
+      "line-comment",
+      "// Keep the default pageExtensions\nexport default {};",
+      "tsx",
+      "ts",
+    ],
+    [
+      "block-comment",
+      "/* pageExtensions: ['ignored.tsx'] */\nexport default {};",
+      "tsx",
+      "ts",
+    ],
+    [
+      "url-and-comments",
+      "export default { docs: 'https://example.com/docs', pageExtensions: /* pages */ ['page.js', // unused page.tsx\n] };",
+      "page.js",
+      "page.js",
+    ],
+  ] as const) {
+    const directory = await app(parent, `next-extension-${label}`, {
+      next: "16.0.0",
+      react: "19.2.0",
+    });
+    await rm(path.join(directory, "app"), { recursive: true });
+    await mkdir(path.join(directory, "pages"));
+    await writeFile(path.join(directory, "next.config.mjs"), config);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--framework",
+      "next-pages",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    const names = [
+      `pages/_app.${extension}`,
+      `pages/index.${extension}`,
+      `pages/api/c15t/[...c15t].${script}`,
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      const planned = data.plan?.files.map((file) => file.path) ?? [];
+      for (const name of names) {
+        assert.ok(planned.includes(name), planned.join(", "));
+      }
+      assert.equal(
+        await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
+        config
+      );
+      if (flag === "--dry-run") {
+        assert.deepEqual(await readdir(path.join(directory, "pages")), []);
+      } else {
+        for (const name of names) {
+          const content = await readFile(path.join(directory, name), "utf-8");
+          assert.match(content, /c15t\/next/u);
+          if (extension.endsWith("js")) {
+            assert.doesNotMatch(content, /import type|: AppProps/u);
+          }
+        }
+        const entries = await readdir(path.join(directory, "pages"));
+        assert.deepEqual(entries.toSorted(), [
+          `_app.${extension}`,
+          "api",
+          `index.${extension}`,
+        ]);
+      }
+    }
+  }
+};
+
+const verifyNextAppPageExtensions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const root of ["", "src/"]) {
+    for (const extension of ["page.tsx", "page.jsx", "page.js"]) {
+      for (const existing of [true, false]) {
+        const directory = await app(
+          parent,
+          `next-app-custom-${root.replace("/", "")}-${extension}-${existing}`,
+          { next: "16.0.0", react: "19.2.0" }
+        );
+        await rm(path.join(directory, "app"), { recursive: true });
+        const route = `${root}app`;
+        await mkdir(path.join(directory, route), { recursive: true });
+        const name = `${route}/layout.${extension}`;
+        const content = "// private-custom-layout\n";
+        if (existing) {
+          await writeFile(path.join(directory, name), content);
+        }
+        const config = `export default { pageExtensions: ['${extension}', 'page.ts'] };\n`;
+        await writeFile(path.join(directory, "next.config.mjs"), config);
+        const args = [
+          "c15t",
+          "scaffold",
+          "--framework",
+          "next-app",
+          "--project",
+          "Website",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+        ];
+        for (const flag of ["--dry-run", "--yes", "--yes"]) {
+          const result = run(test, [...args, flag], directory);
+          assert.equal(result.status, 0, result.stderr);
+          const { data } = envelope.parse(JSON.parse(result.stdout));
+          const names = data.plan?.files.map((file) => file.path) ?? [];
+          assert.ok(names.includes(name), names.join(", "));
+          assert.ok(!names.includes(`${route}/layout.tsx`));
+          assert.equal(
+            await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
+            config
+          );
+          assert.doesNotMatch(
+            result.stdout + result.stderr,
+            /private-custom-layout/u
+          );
+          if (existing) {
+            assert.equal(
+              await readFile(path.join(directory, name), "utf-8"),
+              content
+            );
+            assert.ok(
+              data.plan?.instructions.some((instruction) =>
+                instruction.startsWith(`Integrate c15t into ${name}:`)
+              )
+            );
+          } else if (flag === "--yes") {
+            const generated = await readFile(
+              path.join(directory, name),
+              "utf-8"
+            );
+            assert.match(generated, /resolveConsent/u);
+            if (!extension.endsWith("tsx")) {
+              assert.doesNotMatch(
+                generated,
+                /import type|: \{ children: ReactNode \}/u
+              );
+            }
+          }
+          const entries = await readdir(path.join(directory, route));
+          assert.deepEqual(
+            entries,
+            existing || flag === "--yes" ? [`layout.${extension}`] : []
+          );
+        }
+      }
+    }
+  }
+};
+
+const verifyNuxtConfigComments = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [label, config, source] of [
+    ["line", "// srcDir can be customized here\nexport default {};", ""],
+    ["block", "/* srcDir: 'ignored/' */\nexport default {};", ""],
+    ["url", "export default { docs: 'https://example.com/srcDir' };", ""],
+    [
+      "property",
+      "export default { docs: 'https://example.com', srcDir: /* directory */ 'src/' };",
+      "src/",
+    ],
+  ] as const) {
+    const directory = await app(parent, `nuxt-comments-${label}`, {
+      nuxt: "3.20.0",
+    });
+    await writeFile(path.join(directory, "nuxt.config.mjs"), config);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      const names = data.plan?.files.map((file) => file.path) ?? [];
+      const entry = `${source}app.vue`;
+      assert.ok(names.includes(entry), names.join(", "));
+      assert.ok(!names.includes("ignored/app.vue"));
+      assert.equal(
+        await readFile(path.join(directory, "nuxt.config.mjs"), "utf-8"),
+        config
+      );
+      if (flag === "--yes") {
+        assert.match(
+          await readFile(path.join(directory, entry), "utf-8"),
+          /<ConsentRoot \/>/u
+        );
+      }
+    }
+  }
+};
+
+const verifyHtmlWithoutInstallation = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const directory = await app(parent, "html-manifest-no-install", {});
+  const args = [
+    "c15t",
+    "scaffold",
+    "--framework",
+    "html",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+  ];
+  for (const flags of [
+    ["--dry-run", "--json"],
+    ["--yes", "--json"],
+    ["--yes"],
+  ]) {
+    const result = run(test, [...args, ...flags], directory);
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /Installed c15t packages/u
+    );
+    if (flags.includes("--json")) {
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      if (flags.includes("--yes")) {
+        assert.equal(data.installed, false);
+      }
+      assert.deepEqual(data.plan?.dependencies, []);
+    }
+  }
+  assert.match(
+    await readFile(path.join(directory, "index.html"), "utf-8"),
+    /\/c15t.js/u
+  );
+};
+
+const verifyNuxtLayouts = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [version, source, existing] of [
+    ["3.20.0", "", true],
+    ["3.20.0", "", false],
+    ["4.0.0", "app/", true],
+    ["3.20.0", "src/", true],
+  ] as const) {
+    const directory = await app(
+      parent,
+      `nuxt-${version}-${source.replace("/", "")}-${existing}`,
+      { nuxt: version }
+    );
+    const config = `export default defineNuxtConfig({ modules: ['existing-module']${source === "src/" ? ", srcDir: 'src/'" : ""} });\n`;
+    await writeFile(path.join(directory, "nuxt.config.js"), config);
+    const entry = `${source}app.vue`;
+    if (existing) {
+      await mkdir(path.dirname(path.join(directory, entry)), {
+        recursive: true,
+      });
+      await writeFile(
+        path.join(directory, entry),
+        "<template><h1>private-nuxt-page</h1></template>\n"
+      );
+    }
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, "nuxt");
+      const names = data.plan?.files.map((file) => file.path) ?? [];
+      assert.ok(names.includes(entry), names.join(", "));
+      assert.ok(names.includes("nuxt.config.js"));
+      assert.ok(!names.includes("nuxt.config.ts"));
+      assert.ok(!names.includes(source ? "app.vue" : "app/app.vue"));
+      assert.ok(
+        data.plan?.instructions.some(
+          (instruction) =>
+            instruction.includes("nuxt.config.js") &&
+            instruction.includes("c15t/vue")
+        )
+      );
+      assert.equal(
+        await readFile(path.join(directory, "nuxt.config.js"), "utf-8"),
+        config
+      );
+      if (existing) {
+        assert.equal(
+          await readFile(path.join(directory, entry), "utf-8"),
+          "<template><h1>private-nuxt-page</h1></template>\n"
+        );
+        assert.ok(
+          data.plan?.instructions.some(
+            (instruction) =>
+              instruction.includes(entry) && instruction.includes("ConsentRoot")
+          )
+        );
+      } else if (flag === "--yes") {
+        assert.match(
+          await readFile(path.join(directory, entry), "utf-8"),
+          /<ConsentRoot \/>/u
+        );
+      }
+      assert.doesNotMatch(result.stdout + result.stderr, /private-nuxt-page/u);
+    }
+  }
+};
+
+const verifyComputedFrameworkConfigs = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [framework, filename, config, dependency, message] of [
+    [
+      "next-pages",
+      "next.config.mjs",
+      "export default { pageExtensions: extensions };",
+      "next",
+      "Cannot verify Next.js pageExtensions",
+    ],
+    [
+      "nuxt",
+      "nuxt.config.ts",
+      "export default defineNuxtConfig({ srcDir: process.env.SOURCE });",
+      "nuxt",
+      "Cannot verify the Nuxt srcDir",
+    ],
+  ] as const) {
+    const directory = await app(parent, `computed-${framework}`, {
+      [dependency]: framework === "nuxt" ? "3.20.0" : "16.0.0",
+    });
+    await writeFile(path.join(directory, filename), config);
+    const before = await readdir(directory);
+    const result = run(
+      test,
+      [
+        "c15t",
+        "scaffold",
+        "--framework",
+        framework,
+        "--name",
+        "Created",
+        "--region",
+        "eu",
+        "--organization",
+        "org_acme",
+        "--yes",
+        "--skip-install",
+        "--json",
+      ],
+      directory
+    );
+    assert.equal(result.status, 1, result.stderr);
+    assert.ok((result.stdout + result.stderr).includes(message));
+    assert.deepEqual(await readdir(directory), before);
+    assert.equal(
+      await readFile(path.join(directory, filename), "utf-8"),
+      config
+    );
+    assert.ok(calls(result.stderr).every((call) => call.startsWith("GET")));
+  }
+};
+
+interface SvelteKitFixtureDependencies {
+  "@sveltejs/adapter-auto"?: string;
+  "@sveltejs/kit": string;
+  svelte: string;
+}
+
+const verifyReactEntry = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const name of ["App.tsx", "App.jsx", "App.ts", "App.js", "app.tsx"]) {
+    const kind = name.startsWith("App.") ? "default" : "named";
+    const directory = await app(parent, `react-entry-${kind}-${name}`, {
+      react: "19.2.0",
+    });
+    await mkdir(path.join(directory, "src"));
+    const content =
+      name === "app.tsx"
+        ? "export const App = () => null;\n"
+        : "export default function App() { return null; }\n";
+    await writeFile(path.join(directory, "src", name), content);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, "react");
+      assert.equal(
+        await readFile(path.join(directory, "src", name), "utf-8"),
+        content
+      );
+      if (flag === "--yes") {
+        const main = await readFile(
+          path.join(directory, "src/main.tsx"),
+          "utf-8"
+        );
+        assert.ok(
+          main.includes(
+            name === "app.tsx"
+              ? "import { App } from './app';"
+              : "import App from './App';"
+          ),
+          main
+        );
+      }
+      assert.ok(
+        data.plan?.instructions.some((instruction) =>
+          instruction.includes(`src/${name}`)
+        )
+      );
+    }
+  }
+};
+
+const verifySvelteKitAdapter = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [kit, adapter, expected] of [
+    ["^2.63.0", "", "@sveltejs/adapter-auto@7"],
+    ["~2.63.0", "^7.0.1", "@sveltejs/adapter-auto@^7.0.1"],
+    ["^3.0.1", "", "@sveltejs/adapter-auto"],
+  ] as const) {
+    const directory = await app(
+      parent,
+      `sveltekit-adapter-${kit}-${adapter}`,
+      {}
+    );
+    const devDependencies: SvelteKitFixtureDependencies = {
+      "@sveltejs/kit": kit,
+      svelte: "^5.57.1",
+    };
+    if (adapter) {
+      devDependencies["@sveltejs/adapter-auto"] = adapter;
+    }
+    const manifest = JSON.stringify({ devDependencies, private: true });
+    await writeFile(path.join(directory, "package.json"), manifest);
+    for (const flag of ["--dry-run", "--yes"]) {
+      const result = run(
+        test,
+        [
+          "c15t",
+          "scaffold",
+          "--project",
+          "Website",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+          flag,
+        ],
+        directory
+      );
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, "sveltekit");
+      assert.ok(data.plan?.dependencies.includes(expected), expected);
+      assert.equal(
+        await readFile(path.join(directory, "package.json"), "utf-8"),
+        manifest
+      );
+    }
+    assert.match(
+      await readFile(path.join(directory, "vite.config.ts"), "utf-8"),
+      /import adapter from '@sveltejs\/adapter-auto'/u
+    );
+  }
+};
+
+const verifySvelteKitVersions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [name, declared, installed, supported] of [
+    ["legacy-range", "^2.48.5", "", false],
+    ["pre-peer-minimum", "2.62.4", "", false],
+    ["old-installed", "^2.63.0", "2.48.5", false],
+    ["new-installed", "^2.48.5", "2.63.0", true],
+    ["prerelease", "^3.0.0", "3.0.0-next.1", false],
+    ["mixed-range", "^2.63.0 || ^2.48.5", "", false],
+    ["lower-bound", ">=2.63.0", "", false],
+    ["workspace-range", "workspace:*", "", false],
+    ["major-range", "2.x", "", false],
+    ["latest-tag", "latest", "", false],
+    ["workspace-installed", "workspace:*", "2.63.0", true],
+  ] as const) {
+    const directory = await app(parent, `sveltekit-version-${name}`, {
+      "@sveltejs/kit": declared,
+      svelte: "^5.57.1",
+    });
+    const config = "export default { kit: { adapter: 'existing-adapter' } };\n";
+    await writeFile(path.join(directory, "svelte.config.js"), config);
+    const manifest = await readFile(
+      path.join(directory, "package.json"),
+      "utf-8"
+    );
+    if (installed) {
+      const packageDirectory = path.join(
+        directory,
+        "node_modules",
+        "@sveltejs",
+        "kit"
+      );
+      await mkdir(packageDirectory, { recursive: true });
+      await writeFile(
+        path.join(packageDirectory, "package.json"),
+        JSON.stringify({ version: installed })
+      );
+    }
+    const before = await readdir(directory);
+    for (const flags of [
+      ["--project", "Website", "--dry-run"],
+      ["--project", "Website", "--yes"],
+      ["--name", "Created", "--region", "eu", "--yes"],
+    ]) {
+      if (supported && flags.includes("--name")) {
+        continue;
+      }
+      const result = run(
+        test,
+        [
+          "c15t",
+          "scaffold",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+          ...flags,
+        ],
+        directory
+      );
+      assert.equal(result.status, supported ? 0 : 1, result.stderr);
+      if (supported) {
+        const { data } = envelope.parse(JSON.parse(result.stdout));
+        assert.ok(data.plan?.dependencies.includes("@sveltejs/adapter-auto@7"));
+      } else {
+        assert.match(
+          result.stdout + result.stderr,
+          [
+            "mixed-range",
+            "lower-bound",
+            "workspace-range",
+            "major-range",
+            "latest-tag",
+          ].includes(name)
+            ? /Cannot verify the declared SvelteKit range/u
+            : /SvelteKit scaffolding requires @sveltejs\/kit 2\.63\.0/u
+        );
+        assert.deepEqual(await readdir(directory), before);
+      }
+      assert.ok(calls(result.stderr).every((call) => call.startsWith("GET")));
+      assert.equal(
+        await readFile(path.join(directory, "svelte.config.js"), "utf-8"),
+        config
+      );
+      assert.equal(
+        await readFile(path.join(directory, "package.json"), "utf-8"),
+        manifest
+      );
+    }
+  }
+};
+
+const verifyEnvironmentGuidance = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const assignment = `VITE_C15T_BACKEND_URL=${BACKEND}`;
+  for (const [name, existing, expected] of [
+    [
+      "missing",
+      "PRIVATE_KEY=private-env-value\n",
+      `Add to .env:\n${assignment}`,
+    ],
+    [
+      "different",
+      "PRIVATE_KEY=private-env-value\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\n",
+      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+    ],
+    [
+      "exported",
+      "PRIVATE_KEY=private-env-value\n  export VITE_C15T_BACKEND_URL = 'https://old-backend.invalid'\n",
+      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+    ],
+    ["matching", `${assignment}\nPRIVATE_KEY=private-env-value\n`, ""],
+    [
+      "alternate",
+      "VITE_INTH_PROJECT_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n",
+      "",
+    ],
+    [
+      "duplicates",
+      `${assignment}\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n`,
+      `Replace all VITE_C15T_BACKEND_URL assignments in .env with this single assignment:\n${assignment}`,
+    ],
+  ] as const) {
+    const directory = await app(parent, `env-guidance-${name}`, {
+      react: "19.0.0",
+    });
+    await writeFile(path.join(directory, ".env"), existing);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flags of [["--dry-run"], ["--yes"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      const instructions =
+        data.plan?.instructions.filter((instruction) =>
+          instruction.includes(".env")
+        ) ?? [];
+      assert.deepEqual(instructions, expected ? [expected] : [], name);
+      assert.doesNotMatch(
+        result.stdout + result.stderr,
+        /private-env-value|old-backend\.invalid/u
+      );
+      assert.equal(
+        await readFile(path.join(directory, ".env"), "utf-8"),
+        existing
+      );
+    }
+  }
+};
+
+const verifyAstroOutput = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const server of [false, true]) {
+    const directory = await app(parent, `astro-output-${server}`, {
+      astro: "6.0.0",
+    });
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+      ...(server ? ["--framework", "astro"] : []),
+    ];
+    for (const flags of [["--dry-run"], ["--yes"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, server ? "astro" : "astro-static");
+      assert.equal(data.plan?.dependencies.includes("@astrojs/node"), server);
+    }
+    const config = await readFile(
+      path.join(directory, "astro.config.mjs"),
+      "utf-8"
+    );
+    if (server) {
+      assert.match(config, /output: 'server'/u);
+      assert.match(config, /adapter: node/u);
+    } else {
+      assert.doesNotMatch(
+        config,
+        /output: 'server'|adapter: node|@astrojs\/node/u
+      );
+      assert.match(config, /mode: hosted\(\)/u);
+    }
+  }
+};
+
+const verifyPartialHtml = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const script = `<script src="${BACKEND}/c15t.js" defer></script>`;
+  const link = '<a href="#c15t-preferences">Privacy settings</a>';
+  for (const [name, head, body, missing, present] of [
+    ["html-script", script, "", "#c15t-preferences", "/c15t.js"],
+    ["html-link", "", link, "/c15t.js", "#c15t-preferences"],
+    ["html-complete", script, link, "", ""],
+  ]) {
+    const directory = await app(parent, name ?? "", {});
+    const html = `<html><head>${head}</head><body>${body}</body></html>`;
+    await writeFile(path.join(directory, "index.html"), html);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--framework",
+      "html",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--json",
+    ];
+    for (const flags of [["--dry-run"], ["--yes", "--skip-install"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = JSON.parse(result.stdout);
+      const guidance = data.plan.instructions.filter((instruction: string) =>
+        instruction.startsWith("Add to index.html:")
+      );
+      if (missing) {
+        assert.equal(guidance.length, 1);
+        assert.ok(guidance[0].includes(missing), guidance[0]);
+        assert.ok(!guidance[0].includes(present), guidance[0]);
+      } else {
+        assert.deepEqual(guidance, []);
+      }
+      assert.equal(
+        await readFile(path.join(directory, "index.html"), "utf-8"),
+        html
+      );
+      assert.deepEqual(await readdir(directory), [
+        "app",
+        "index.html",
+        "package.json",
+        "pnpm-lock.yaml",
+      ]);
+    }
+    await rm(path.join(directory, "package.json"));
+    await rm(path.join(directory, "pnpm-lock.yaml"));
+    for (const flags of [["--dry-run"], ["--yes"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = JSON.parse(result.stdout);
+      const guidance = data.plan.instructions.join("\n");
+      if (missing) {
+        assert.ok(guidance.includes(missing), guidance);
+        assert.ok(!guidance.includes(present), guidance);
+      } else {
+        assert.doesNotMatch(guidance, /Add to index.html/u);
+      }
+      assert.equal(
+        await readFile(path.join(directory, "index.html"), "utf-8"),
+        html
+      );
+      assert.deepEqual(await readdir(directory), ["app", "index.html"]);
+      assert.deepEqual(data.plan.dependencies, []);
+    }
+  }
+};
+
+const verifyRedactedPlans = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const directory = await app(parent, "secret-env", { react: "19.0.0" });
+  const secret = "PRIVATE_KEY=fixture-secret-never-log\n";
+  await writeFile(path.join(directory, ".env"), secret);
+  const args = [
+    "c15t",
+    "scaffold",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+    "--json",
+  ];
+  for (const flags of [["--dry-run"], ["--yes", "--skip-install"]]) {
+    const result = run(test, [...args, ...flags], directory);
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(!`${result.stdout}${result.stderr}`.includes(secret.trim()));
+    const { data } = envelope.parse(JSON.parse(result.stdout));
+    assert.ok(
+      data.plan?.files.some((file) => file.path === ".env" && file.exists)
+    );
+    assert.match(result.stdout, /Add to \.env/u);
+    assert.equal(await readFile(path.join(directory, ".env"), "utf-8"), secret);
+  }
+};
+
+const verifyHtmlSite = async (test: string, parent: string): Promise<void> => {
+  const directory = path.join(parent, "html-site");
+  await mkdir(directory);
+  const args = [
+    "c15t",
+    "scaffold",
+    "--framework",
+    "html",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+    "--json",
+  ];
+  const dry = run(test, [...args, "--dry-run"], directory);
+  assert.equal(dry.status, 0, dry.stderr);
+  assert.deepEqual(await readdir(directory), []);
+  const previewNew = run(
+    test,
+    [
+      "c15t",
+      "scaffold",
+      "--framework",
+      "html",
+      "--name",
+      "Site",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+      "--dry-run",
+      "--json",
+    ],
+    directory
+  );
+  assert.equal(previewNew.status, 0, previewNew.stderr);
+  assert.deepEqual(calls(previewNew.stderr), []);
+  assert.deepEqual(await readdir(directory), []);
+  const created = run(test, [...args, "--yes"], directory);
+  assert.equal(created.status, 0, created.stderr);
+  assert.deepEqual(envelope.parse(JSON.parse(created.stdout)).data.created, [
+    "index.html",
+  ]);
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  const html = await readFile(path.join(directory, "index.html"), "utf-8");
+  assert.match(html, /\/c15t\.js/u);
+  assert.match(html, /#c15t-preferences/u);
+  const repeated = run(test, [...args, "--yes"], directory);
+  assert.equal(repeated.status, 0, repeated.stderr);
+  assert.deepEqual(
+    envelope.parse(JSON.parse(repeated.stdout)).data.created,
+    []
+  );
+  assert.equal(
+    await readFile(path.join(directory, "index.html"), "utf-8"),
+    html
+  );
+  await rm(path.join(directory, "index.html"));
+  await mkdir(path.join(directory, ".c15t-native-generation"));
+  const interrupted = run(test, [...args, "--yes"], directory);
+  assert.equal(interrupted.status, 1);
+  const resumed = run(test, [...args, "--yes", "--resume"], directory);
+  assert.equal(resumed.status, 0, resumed.stderr);
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  await rm(path.join(directory, "index.html"));
+  const stage = path.join(directory, ".c15t-native-generation");
+  await mkdir(stage);
+  await writeFile(
+    path.join(stage, "journal.json"),
+    JSON.stringify({
+      directories: [],
+      files: [{ content: html, exists: false, path: "index.html" }],
+      root: directory,
+      version: 1,
+    })
+  );
+  await writeFile(path.join(stage, "0.tmp"), html);
+  await hardLink(path.join(stage, "0.tmp"), path.join(directory, "index.html"));
+  const published = run(test, [...args, "--yes", "--resume"], directory);
+  assert.equal(published.status, 0, published.stderr);
+  assert.deepEqual(envelope.parse(JSON.parse(published.stdout)).data.created, [
+    "index.html",
+  ]);
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  await rm(path.join(directory, "index.html"));
+  await mkdir(stage);
+  await writeFile(
+    path.join(stage, "journal.json"),
+    JSON.stringify({
+      directories: [],
+      files: [{ content: html, exists: false, path: "index.html" }],
+      root: directory,
+      version: 1,
+    })
+  );
+  await writeFile(path.join(stage, "0.tmp"), html);
+  const target = path.join(directory, "index.html");
+  await writeFile(target, html);
+  const copied = await stat(target);
+  await writeFile(
+    path.join(stage, "0.copy"),
+    JSON.stringify({
+      ctimeUs: Math.round(copied.ctimeMs * 1000),
+      dev: copied.dev,
+      ino: copied.ino,
+      mtimeUs: Math.round(copied.mtimeMs * 1000),
+      size: copied.size,
+    })
+  );
+  const recoveredCopy = run(test, [...args, "--yes", "--resume"], directory);
+  assert.equal(recoveredCopy.status, 0, recoveredCopy.stderr);
+  assert.deepEqual(
+    envelope.parse(JSON.parse(recoveredCopy.stdout)).data.created,
+    ["index.html"]
+  );
+  assert.deepEqual(await readdir(directory), ["index.html"]);
+  if (!windows) {
+    await rm(path.join(directory, "index.html"));
+    await symlink(
+      path.join(parent, "missing-index.html"),
+      path.join(directory, "index.html")
+    );
+    const linked = run(test, [...args, "--yes"], directory);
+    assert.equal(linked.status, 1);
+    assert.match(linked.stderr, /not a symlink/u);
+  }
+};
+
 export const verifyC15t = async (binary: string): Promise<void> => {
   const parent = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "inth-c15t-"))
@@ -433,12 +1732,29 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       next: "16.0.0",
       react: "19.0.0",
     });
-    verifyCommandGate(binary, next);
+    verifyPublicCommand(binary, next);
     const test = fixture("c15t-test");
     await verifyExistingProject(test, next);
     const bin = path.join(parent, "bin");
     await mkdir(bin);
     await verifyScaffold(test, next, bin);
+    await verifyFrameworks(test, parent);
+    await verifyNextSourceTrees(test, parent);
+    await verifyNextEntryExtensions(test, parent);
+    await verifyNextPageExtensions(test, parent);
+    await verifyNextAppPageExtensions(test, parent);
+    await verifyNuxtConfigComments(test, parent);
+    await verifyHtmlWithoutInstallation(test, parent);
+    await verifyNuxtLayouts(test, parent);
+    await verifyComputedFrameworkConfigs(test, parent);
+    await verifySvelteKitAdapter(test, parent);
+    await verifySvelteKitVersions(test, parent);
+    await verifyReactEntry(test, parent);
+    await verifyEnvironmentGuidance(test, parent);
+    await verifyAstroOutput(test, parent);
+    await verifyPartialHtml(test, parent);
+    await verifyRedactedPlans(test, parent);
+    await verifyHtmlSite(test, parent);
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
     if (!windows) {
       await verifyAgents(test, next, bin);
@@ -506,7 +1822,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     assert.equal(previewData.project.id, null);
     assert.deepEqual(
       previewData.plan.files.map((file: { path: string }) => file.path),
-      ["src/consent/consent-manager.tsx", "src/consent/README.md"]
+      [".env", "src/consent.tsx", "src/main.tsx", "vite.config.ts"]
     );
     const freshEntries = await readdir(fresh);
     assert.deepEqual(freshEntries.toSorted(), [
@@ -515,7 +1831,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       "pnpm-lock.yaml",
     ]);
     console.log(
-      "Native c15t: command gate, prompts, agent launches, dry runs, scaffolding, installation, conflicts, and project creation passed."
+      "Native c15t: public help, prompts, agent launches, dry runs, scaffolding, installation, conflicts, all frameworks, and project creation passed."
     );
   } finally {
     await rm(parent, { force: true, recursive: true });

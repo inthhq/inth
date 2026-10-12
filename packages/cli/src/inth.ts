@@ -11,11 +11,12 @@ import { apiKey } from "./api-options.ts";
 import type { CliArguments } from "./arguments.ts";
 import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
-import { c15tEnabled, c15tHelp } from "./c15t.ts";
+import { c15tHelp } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { selectCommandConnection } from "./connection-selection.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
 import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
+import { helpCommands } from "./help.ts";
 import { identitySummary } from "./identity.ts";
 import { NativeApi, apiOutput } from "./native/native-api.ts";
 import {
@@ -465,10 +466,7 @@ const localApiConfigured = Boolean(
 try {
   startErrorDiagnostics();
   diagnosticStep("argument_parse");
-  options = parseArguments(
-    process.argv.slice(2),
-    c15tEnabled(process.env.INTH_EXPERIMENTAL_C15T)
-  );
+  options = parseArguments(process.argv.slice(2));
   if (
     telemetryCommand(options) &&
     !localApiConfigured &&
@@ -539,7 +537,14 @@ try {
         : "command_failed";
     }
   } else if (options.command === "c15t" && options.help) {
-    printResult(options.json, c15tHelp(), JSON.stringify({ help: c15tHelp() }));
+    printResult(
+      options.json,
+      c15tHelp(),
+      JSON.stringify({
+        commandDefinitions: helpCommands("c15t"),
+        help: c15tHelp(),
+      })
+    );
   } else {
     await run(options);
   }

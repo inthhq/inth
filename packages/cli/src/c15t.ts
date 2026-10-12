@@ -1,14 +1,9 @@
-// `inth c15t`: set up c15t v3 in the current application. Experimental and
-// hidden until v3 is released; INTH_EXPERIMENTAL_C15T=1 enables it.
 import type { HostedProject } from "../vendor/c15t/frontend/projects.ts";
 import type { PackageManager } from "../vendor/c15t/frontend/runtime/install.ts";
 import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
 import type { BoilerplateFramework } from "../vendor/c15t/generate/index.ts";
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
-
-export const c15tEnabled = (value: string | undefined): boolean =>
-  value === "1" || value === "true";
 
 // Coding agents inth can start with the setup prompt as their last argument.
 export interface CodingAgent {
@@ -51,15 +46,18 @@ export const C15T_USAGE =
 
 export const c15tHelp = (): string =>
   [
-    "Set up c15t v3 consent management in the current application (experimental).",
+    "Set up c15t v3 consent management in the current application.",
     "",
     C15T_USAGE,
+    "",
+    "Recommended: use a coding agent to adapt c15t to this app and verify consent in a browser.",
+    "If your agent is not installed here, use prompt and paste the output into it.",
     "",
     "Actions:",
     "  --codex, --claude, --cursor, --grok, --fx",
     "            Start that coding agent here with the c15t setup prompt",
-    "  scaffold  Write c15t files into this app and install its packages",
     "  prompt    Print the setup prompt for any other agent",
+    "  scaffold  Write framework quickstart files and install c15t packages",
     "",
     "Options:",
     "  --project <id|name>    Use an existing project (ID, name, or organization/name)",
@@ -263,7 +261,8 @@ const FRAMEWORK_PACKAGES = [
   ["next", "next"],
   ["nuxt", "nuxt"],
   ["@sveltejs/kit", "sveltekit"],
-  ["astro", "astro"],
+  // Dependencies do not identify Astro's output mode. Server output is explicit.
+  ["astro", "astro-static"],
   ["svelte", "svelte"],
   ["solid-js", "solid"],
   ["vue", "vue"],

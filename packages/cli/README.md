@@ -208,7 +208,7 @@ For automation, supply an organization API key through `INTH_TOKEN` or `--token`
 
 See [authentication and credential storage](docs/authentication.md) for OAuth scopes, token refresh, passkeys, and Keychain troubleshooting.
 
-For an agent to provision a hosted consent project and integrate it into an application, follow [the c15t setup guide](docs/c15t-setup.md). It uses a saved CLI connection and includes a repeatable browser verification check.
+Run `inth c15t` from your app directory to select a hosted consent project and set up c15t v3. The picker recommends a coding agent to adapt the integration and verify consent in a browser. If no agent is installed, it recommends a prompt to paste into your agent. Scaffolding is also available. For an agent to provision a hosted project itself, follow [the c15t setup guide](docs/c15t-setup.md).
 
 ## Agent skills
 
