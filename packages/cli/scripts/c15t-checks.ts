@@ -11,6 +11,7 @@ import {
   realpath,
   rm,
   symlink,
+  stat,
   writeFile,
 } from "node:fs/promises";
 import os from "node:os";
@@ -705,6 +706,63 @@ interface SvelteKitFixtureDependencies {
   svelte: string;
 }
 
+const verifyReactEntry = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const name of ["App.tsx", "App.jsx", "App.ts", "App.js", "app.tsx"]) {
+    const kind = name.startsWith("App.") ? "default" : "named";
+    const directory = await app(parent, `react-entry-${kind}-${name}`, {
+      react: "19.2.0",
+    });
+    await mkdir(path.join(directory, "src"));
+    const content =
+      name === "app.tsx"
+        ? "export const App = () => null;\n"
+        : "export default function App() { return null; }\n";
+    await writeFile(path.join(directory, "src", name), content);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, "react");
+      assert.equal(
+        await readFile(path.join(directory, "src", name), "utf-8"),
+        content
+      );
+      if (flag === "--yes") {
+        const main = await readFile(
+          path.join(directory, "src/main.tsx"),
+          "utf-8"
+        );
+        assert.ok(
+          main.includes(
+            name === "app.tsx"
+              ? "import { App } from './app';"
+              : "import App from './App';"
+          ),
+          main
+        );
+      }
+      assert.ok(
+        data.plan?.instructions.some((instruction) =>
+          instruction.includes(`src/${name}`)
+        )
+      );
+    }
+  }
+};
+
 const verifySvelteKitAdapter = async (
   test: string,
   parent: string
@@ -1057,6 +1115,38 @@ const verifyHtmlSite = async (test: string, parent: string): Promise<void> => {
     "index.html",
   ]);
   assert.deepEqual(await readdir(directory), ["index.html"]);
+  await rm(path.join(directory, "index.html"));
+  await mkdir(stage);
+  await writeFile(
+    path.join(stage, "journal.json"),
+    JSON.stringify({
+      directories: [],
+      files: [{ content: html, exists: false, path: "index.html" }],
+      root: directory,
+      version: 1,
+    })
+  );
+  await writeFile(path.join(stage, "0.tmp"), html);
+  const target = path.join(directory, "index.html");
+  await writeFile(target, html);
+  const copied = await stat(target);
+  await writeFile(
+    path.join(stage, "0.copy"),
+    JSON.stringify({
+      ctimeUs: Math.round(copied.ctimeMs * 1000),
+      dev: copied.dev,
+      ino: copied.ino,
+      mtimeUs: Math.round(copied.mtimeMs * 1000),
+      size: copied.size,
+    })
+  );
+  const recoveredCopy = run(test, [...args, "--yes", "--resume"], directory);
+  assert.equal(recoveredCopy.status, 0, recoveredCopy.stderr);
+  assert.deepEqual(
+    envelope.parse(JSON.parse(recoveredCopy.stdout)).data.created,
+    ["index.html"]
+  );
+  assert.deepEqual(await readdir(directory), ["index.html"]);
   if (!windows) {
     await rm(path.join(directory, "index.html"));
     await symlink(
@@ -1088,6 +1178,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyNextSourceTrees(test, parent);
     await verifyNextEntryExtensions(test, parent);
     await verifySvelteKitAdapter(test, parent);
+    await verifyReactEntry(test, parent);
     await verifyEnvironmentGuidance(test, parent);
     await verifyAstroOutput(test, parent);
     await verifyPartialHtml(test, parent);

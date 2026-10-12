@@ -12,10 +12,12 @@ The same host adapter distinguishes missing environment keys from existing assig
 
 `src/native/c15t-agent.ts` applies Inth's upgrade policy to exported and launched agent prompts. Existing c15t installations keep their current major unless the user explicitly requests an upgrade.
 
-The host exports file metadata through `publicGenerationPlan`, keeping existing file contents internal. `src/native/c15t-html.ts` supports HTML sites without `package.json`, using upstream's generated snippets and recovery journal format with exclusive hard-link publication.
+The host exports file metadata through `publicGenerationPlan`, keeping existing file contents internal. `src/native/c15t-html.ts` supports HTML sites without `package.json`, using upstream's generated snippets and recovery journal format. It publishes with an exclusive hard link or, when the filesystem does not support links, an exclusive copy with an identity record for upstream recovery.
 
 `src/native/c15t-next.ts` maps Next.js templates into the active root or `src` router directory and preserves the existing config filename. The host gives instructions for wrapping that config without changing its options, then uses upstream's planning, publication, recovery, and installation functions.
 
 The Next.js adapter removes app stylesheet imports that the quickstarts do not generate, so entry points need no existing CSS file or `@` alias. Inth defaults auto-detected Astro projects to the `astro-static` template; the `astro` server target remains an explicit choice.
 
 The Next.js adapter reuses existing `.js`, `.jsx`, `.ts`, and `.tsx` entry filenames and gives integration instructions without replacing those files or creating competing routes. The generation host adds `@sveltejs/adapter-auto` to the SvelteKit install plan because its upstream Vite template imports that package. It preserves a declared adapter version and selects adapter 7 for SvelteKit 2; new SvelteKit 3 apps use the current adapter.
+
+`src/native/c15t-react.ts` adapts the React quickstart to import the default export from an existing conventional `src/App.tsx`, `.jsx`, `.ts`, or `.js`. It preserves the upstream named `App` import for apps that use `src/app.tsx`.

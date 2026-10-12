@@ -1,6 +1,7 @@
 import {
   closeSync,
   constants,
+  fstatSync,
   fsyncSync,
   linkSync,
   lstatSync,
@@ -28,42 +29,96 @@ import type {
 import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
 import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
 
+const filesystemCode = (error: Error): string | undefined => {
+  // eslint-disable-next-line anti-slop/no-runtime-typeof -- Decode Node's errno at the filesystem boundary; Scriptc errors use the message prefix.
+  if ("code" in error && typeof error.code === "string") {
+    return error.code;
+  }
+  return error.message.split(":")[0];
+};
+
 const entryOrNull = (path: string) => {
   try {
     return lstatSync(path);
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith("ENOENT:")) {
+    if (error instanceof Error && filesystemCode(error) === "ENOENT") {
       return null;
     }
     throw error;
   }
 };
 
-const writeExclusive = (path: string, content: string, mode: number): void => {
-  const descriptor = openSync(
+const openExclusive = (path: string, mode: number): number =>
+  openSync(
     path,
     // eslint-disable-next-line no-bitwise -- Scriptc requires inline exclusive-open flags.
     constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,
     mode
   );
-  try {
-    const bytes = new TextEncoder().encode(content);
-    let offset = 0;
-    while (offset < bytes.length) {
-      const written = writeSync(
-        descriptor,
-        bytes,
-        offset,
-        bytes.length - offset
-      );
-      if (written <= 0) {
-        throw new Error("Could not finish writing the HTML scaffold.");
-      }
-      offset += written;
+
+const writeAll = (descriptor: number, content: string): void => {
+  const bytes = new TextEncoder().encode(content);
+  let offset = 0;
+  while (offset < bytes.length) {
+    const written = writeSync(descriptor, bytes, offset, bytes.length - offset);
+    if (written <= 0) {
+      throw new Error("Could not finish writing the HTML scaffold.");
     }
-    fsyncSync(descriptor);
+    offset += written;
+  }
+  fsyncSync(descriptor);
+};
+
+const writeExclusive = (path: string, content: string, mode: number): void => {
+  const descriptor = openExclusive(path, mode);
+  try {
+    writeAll(descriptor, content);
   } finally {
     closeSync(descriptor);
+  }
+};
+
+/** Record an exclusive copy in the format understood by upstream recovery. */
+const publishCopy = (target: string, content: string, record: string): void => {
+  const descriptor = openExclusive(target, 0o644);
+  const opened = fstatSync(descriptor);
+  try {
+    writeAll(descriptor, content);
+    const created = fstatSync(descriptor);
+    writeExclusive(
+      record,
+      JSON.stringify({
+        ctimeUs: Math.round(created.ctimeMs * 1000),
+        dev: created.dev,
+        ino: created.ino,
+        mtimeUs: Math.round(created.mtimeMs * 1000),
+        size: created.size,
+      }),
+      0o600
+    );
+  } catch (error) {
+    const current = entryOrNull(target);
+    if (current && current.dev === opened.dev && current.ino === opened.ino) {
+      unlinkSync(target);
+    }
+    throw error;
+  } finally {
+    closeSync(descriptor);
+  }
+};
+
+const publishHtml = (stage: string, target: string, content: string): void => {
+  try {
+    linkSync(join(stage, "0.tmp"), target);
+  } catch (error) {
+    const code = error instanceof Error ? filesystemCode(error) : undefined;
+    if (
+      !code ||
+      !["EXDEV", "EPERM", "ENOTSUP", "EOPNOTSUPP", "ENOSYS"].includes(code)
+    ) {
+      throw error;
+    }
+    publishCopy(target, content, join(stage, "0.copy"));
   }
 };
 
@@ -153,7 +208,7 @@ export const runHtmlGenerationWorkflow = (
   const created: string[] = [];
   if (flags.apply && current === null) {
     options.signal?.throwIfAborted();
-    // Use upstream's recovery journal format and exclusive hard-link publication.
+    // Use upstream's journal and copy identity formats for exclusive publication.
     mkdirSync(stage, { mode: 0o700 });
     try {
       writeExclusive(
@@ -162,8 +217,11 @@ export const runHtmlGenerationWorkflow = (
         0o600
       );
       writeExclusive(join(stage, "0.tmp"), content, 0o644);
-      linkSync(join(stage, "0.tmp"), target);
+      publishHtml(stage, target, content);
       unlinkSync(join(stage, "0.tmp"));
+      if (entryOrNull(join(stage, "0.copy"))) {
+        unlinkSync(join(stage, "0.copy"));
+      }
       unlinkSync(join(stage, "journal.json"));
       rmdirSync(stage);
       created.push("index.html");

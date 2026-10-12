@@ -22,6 +22,7 @@ import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
 import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
+import { adaptReactGeneration } from "./c15t-react.ts";
 
 /** Public plans contain file metadata, never application file contents. */
 export const publicGenerationPlan = (plan: ApplicationPlan) => ({
@@ -193,6 +194,7 @@ export const runGenerationWorkflow = async (
   }
   const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
   adaptNextGeneration(generation.data, options.cwd);
+  adaptReactGeneration(generation.data, options.cwd);
   addTemplateDependencies(generation.data, options.cwd);
   const plan = planGeneration(options.cwd, generation.data);
   addNextConfigInstructions(plan, generation.data);
