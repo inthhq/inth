@@ -505,6 +505,9 @@ const verifyFrameworks = async (
     for (const file of data.created ?? []) {
       const contents = await readFile(path.join(directory, file), "utf-8");
       assert.ok(contents.length);
+      if (file === "pages/_app.tsx" || file === "app/layout.tsx") {
+        assert.doesNotMatch(contents, /globals\.css/u);
+      }
     }
     if (!["html", "solid"].includes(framework)) {
       assert.match(result.stdout, /Add to \.env/u);
@@ -593,6 +596,7 @@ const verifyNextSourceTrees = async (
         source,
         router === "app" ? "layout.tsx" : "_app.tsx"
       );
+      assert.doesNotMatch(await readFile(layout, "utf-8"), /globals\.css/u);
       await writeFile(layout, "// Existing app entry point\n");
       const conflict = run(test, [...args, "--yes"], directory);
       assert.equal(conflict.status, 1, conflict.stderr);
@@ -602,6 +606,49 @@ const verifyNextSourceTrees = async (
       );
       const entries = await readdir(directory);
       assert.ok(!entries.includes(router));
+    }
+  }
+};
+
+const verifyAstroOutput = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const server of [false, true]) {
+    const directory = await app(parent, `astro-output-${server}`, {
+      astro: "6.0.0",
+    });
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+      ...(server ? ["--framework", "astro"] : []),
+    ];
+    for (const flags of [["--dry-run"], ["--yes"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, server ? "astro" : "astro-static");
+      assert.equal(data.plan?.dependencies.includes("@astrojs/node"), server);
+    }
+    const config = await readFile(
+      path.join(directory, "astro.config.mjs"),
+      "utf-8"
+    );
+    if (server) {
+      assert.match(config, /output: 'server'/u);
+      assert.match(config, /adapter: node/u);
+    } else {
+      assert.doesNotMatch(
+        config,
+        /output: 'server'|adapter: node|@astrojs\/node/u
+      );
+      assert.match(config, /mode: hosted\(\)/u);
     }
   }
 };
@@ -821,6 +868,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyScaffold(test, next, bin);
     await verifyFrameworks(test, parent);
     await verifyNextSourceTrees(test, parent);
+    await verifyAstroOutput(test, parent);
     await verifyPartialHtml(test, parent);
     await verifyRedactedPlans(test, parent);
     await verifyHtmlSite(test, parent);

@@ -16,6 +16,20 @@ export const adaptNextGeneration = (
   if (!Object.hasOwn(generation.files, "next.config.ts")) {
     return;
   }
+  // Quickstart shells cannot assume an app stylesheet or a configured @ alias.
+  for (const name of ["app/layout.tsx", "pages/_app.tsx"]) {
+    const content = generation.files[name];
+    if (content) {
+      generation.files[name] = content
+        .replace("import './globals.css';\n", "")
+        .replace("import '@/styles/globals.css';\n", "");
+    }
+  }
+  generation.instructions = generation.instructions.map((instruction) =>
+    instruction.startsWith("app/layout.tsx imports ./globals.css.")
+      ? "Keep your existing fonts, styles, and metadata when integrating consent with your layout."
+      : instruction
+  );
   const router = Object.hasOwn(generation.files, "app/layout.tsx")
     ? "app"
     : "pages";

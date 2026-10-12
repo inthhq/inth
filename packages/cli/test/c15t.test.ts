@@ -146,7 +146,7 @@ describe("inth c15t app detection", () => {
     [["nuxt", "vue"], false, "nuxt"],
     [["@sveltejs/kit", "svelte"], false, "sveltekit"],
     [["svelte"], false, "svelte"],
-    [["astro", "react"], false, "astro"],
+    [["astro", "react"], false, "astro-static"],
     [["solid-js"], false, "solid"],
     [["vue"], false, "vue"],
     [["react", "react-dom"], false, "react"],

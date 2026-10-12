@@ -261,7 +261,8 @@ const FRAMEWORK_PACKAGES = [
   ["next", "next"],
   ["nuxt", "nuxt"],
   ["@sveltejs/kit", "sveltekit"],
-  ["astro", "astro"],
+  // Dependencies do not identify Astro's output mode. Server output is explicit.
+  ["astro", "astro-static"],
   ["svelte", "svelte"],
   ["solid-js", "solid"],
   ["vue", "vue"],
