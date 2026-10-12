@@ -423,13 +423,22 @@ class C15tSetup {
       );
     }
     const choices = agents.length
-      ? [choice("agent", "Use a coding agent")]
+      ? [choice("agent", "Use a coding agent (recommended)")]
       : [];
+    choices.push(
+      choice(
+        "prompt",
+        agents.length
+          ? "Show the setup prompt for another agent"
+          : "Show the setup prompt for your agent (recommended)"
+      )
+    );
     // Without package.json there is no app to write files into.
     if (scaffold) {
-      choices.push(choice("scaffold", "Add the c15t files to this app"));
+      choices.push(
+        choice("scaffold", "Scaffold the framework quickstart files")
+      );
     }
-    choices.push(choice("prompt", "Show the setup prompt"));
     return this.select("How do you want to set up c15t?", choices);
   }
 

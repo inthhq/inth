@@ -1,3 +1,5 @@
+import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
 import { RESOURCE_COMMANDS } from "./resource-commands.ts";
@@ -334,6 +336,77 @@ const localCommand = (
   usage: `inth ${command}${action ? ` ${action}` : ""}${positional}`,
 });
 export const COMMAND_METADATA: CommandMetadata[] = [
+  {
+    action: "",
+    authentication: "browser-or-agent-or-api-key",
+    command: "c15t",
+    description: "Set up c15t v3 consent management in this app",
+    effects: [
+      "Selects an Inth project or creates one with c15t branding. New projects require a region.",
+      "Agent setup is recommended to adapt the integration to this app and verify consent in a browser. The picker defaults to an installed agent, or a prompt for another agent.",
+      "Prompt prints public setup inputs. Agent flags start the chosen coding agent in this directory.",
+      "Scaffold writes framework quickstart files and installs c15t on the alpha release line. Existing files are preserved; conflicting generated files stop setup.",
+      "Scaffold and prompt support --json. Agent sessions require a terminal.",
+    ],
+    examples: [
+      "inth c15t",
+      "inth c15t --codex --project Website",
+      "inth c15t prompt --project Website --json",
+      "inth c15t scaffold --project Website --dry-run --json",
+      "inth c15t scaffold --name Website --region eu --organization <id> --yes",
+    ],
+    options: [
+      option(
+        "project",
+        "string",
+        "Existing project ID, name, or organization/name"
+      ),
+      option("name", "string", "Create a project with this name"),
+      option(
+        "region",
+        "string",
+        "Region for a new project; see inth region list"
+      ),
+      option("framework", "string", "Framework for generated files", [
+        ...boilerplateFrameworks,
+      ]),
+      option(
+        "organization",
+        "string",
+        "Organization to list or create projects in"
+      ),
+      option("token", "string", "Organization API key; overrides INTH_TOKEN"),
+      option("yes", "boolean", "Write files without confirming"),
+      option(
+        "dry-run",
+        "boolean",
+        "Preview scaffold files without creating a project or writing files"
+      ),
+      option(
+        "skip-install",
+        "boolean",
+        "Write files without installing packages"
+      ),
+      option(
+        "resume",
+        "boolean",
+        "Undo an interrupted scaffold, then write again"
+      ),
+      ...CODING_AGENTS.map((agent) =>
+        option(
+          agent.id,
+          "boolean",
+          `Start ${agent.name} with the c15t setup prompt`
+        )
+      ),
+      option("json", "boolean", "Print scaffold, prompt, or help as JSON"),
+      option("non-interactive", "boolean", "Disable prompts and browser login"),
+      option("help", "boolean", "Show help for this command"),
+    ],
+    paginated: false,
+    scopes: ["organizations.read", "projects.read", "projects.write"],
+    usage: C15T_USAGE.slice(7),
+  },
   {
     action: "",
     authentication: "none",

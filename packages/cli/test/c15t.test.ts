@@ -2,37 +2,57 @@ import { describe, expect, it } from "vitest";
 
 import { parseArguments } from "../src/arguments.ts";
 import {
-  c15tEnabled,
+  c15tHelp,
   defaultProjectName,
   detectFramework,
   detectPackageManager,
   hostedProject,
 } from "../src/c15t.ts";
+import { helpCommands, formatHelp } from "../src/help.ts";
 
 describe("inth c15t arguments", () => {
-  it("stays an unknown command without the experimental flag", () => {
-    expect(() => parseArguments(["c15t"])).toThrow("Unknown command");
-    expect(c15tEnabled("")).toBe(false);
-    expect(c15tEnabled("0")).toBe(false);
-    expect(c15tEnabled("1")).toBe(true);
+  it("is available without an experimental flag", () => {
+    expect(parseArguments(["c15t"])).toMatchObject({
+      c15t: { action: "" },
+      command: "c15t",
+    });
+    expect(parseArguments(["c15t", "--help", "--json"])).toMatchObject({
+      command: "c15t",
+      help: true,
+      json: true,
+    });
+    expect(c15tHelp()).not.toContain("experimental");
+  });
+
+  it("is discoverable in human and machine help", () => {
+    expect(formatHelp()).toContain("c15t");
+    const [command] = helpCommands("c15t");
+    expect(command).toMatchObject({
+      authentication: "browser-or-agent-or-api-key",
+      command: "c15t",
+      usage: expect.stringContaining("scaffold|prompt"),
+    });
+    expect(command?.options).toContainEqual(
+      expect.objectContaining({
+        name: "framework",
+        values: expect.arrayContaining(["next-app", "react", "html"]),
+      })
+    );
   });
 
   it("parses an action, its options, and shared flags after c15t", () => {
-    const result = parseArguments(
-      [
-        "c15t",
-        "scaffold",
-        "--project=acme/Website",
-        "--framework",
-        "next-app",
-        "--organization",
-        "org_acme",
-        "--yes",
-        "--skip-install",
-        "--json",
-      ],
-      true
-    );
+    const result = parseArguments([
+      "c15t",
+      "scaffold",
+      "--project=acme/Website",
+      "--framework",
+      "next-app",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+      "--json",
+    ]);
     expect(result).toMatchObject({
       command: "c15t",
       json: true,
@@ -72,16 +92,21 @@ describe("inth c15t arguments", () => {
     [["--codex", "--json"], "Agent sessions use this terminal"],
     [["website"], "Usage: inth c15t"],
   ])("rejects %j", (args, message) => {
-    expect(() => parseArguments(["c15t", ...args], true)).toThrow(message);
+    expect(() => parseArguments(["c15t", ...args])).toThrow(message);
   });
 });
 
 describe("inth c15t options before the command", () => {
   it("keeps options that precede c15t", () => {
-    const result = parseArguments(
-      ["--dry-run", "--name", "Site", "c15t", "scaffold", "--region", "eu"],
-      true
-    );
+    const result = parseArguments([
+      "--dry-run",
+      "--name",
+      "Site",
+      "c15t",
+      "scaffold",
+      "--region",
+      "eu",
+    ]);
     expect(result.c15t).toMatchObject({
       action: "scaffold",
       dryRun: true,
@@ -92,7 +117,7 @@ describe("inth c15t options before the command", () => {
   });
 
   it("rejects options c15t does not support", () => {
-    expect(() => parseArguments(["--complete", "c15t"], true)).toThrow(
+    expect(() => parseArguments(["--complete", "c15t"])).toThrow(
       'Unknown option "--complete"'
     );
   });
@@ -106,7 +131,7 @@ describe("inth c15t agents", () => {
     ["--grok", "grok"],
     ["--fx", "fx"],
   ])("%s starts the agent route", (flag, agent) => {
-    expect(parseArguments(["c15t", flag], true).c15t).toMatchObject({
+    expect(parseArguments(["c15t", flag]).c15t).toMatchObject({
       action: "agent",
       agent,
     });

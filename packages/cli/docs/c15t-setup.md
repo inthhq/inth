@@ -1,5 +1,7 @@
 # Set up hosted c15t with an agent
 
+For interactive setup, run `inth c15t` from the app directory. Agent setup is the recommended first choice. It starts an installed coding agent with the selected project's backend URL and the c15t v3 setup instructions. If your agent runs elsewhere, choose the setup prompt and paste it into that agent. Scaffolding is available for writing framework quickstart files; an agent can adapt the integration and move the app's existing tracking behind consent.
+
 An agent can provision Inth and integrate c15t using an existing CLI browser sign-in or an approved auth.md connection. The agent needs access to the application's source files and permission to make the requested changes.
 
 For an auth.md credential, first complete [agent sign-in](agent-auth-integration.md) with `organizations.read,organizations.write,projects.read,projects.write`. Successful sign-in selects that connection for the API commands below. This requires the scoped auth.md backend deployment. Human account verification and permission approval happen in the browser.

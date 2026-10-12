@@ -16,6 +16,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
+import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
 import { fixture } from "./native-test-support.ts";
 
 const BACKEND = "https://acme-website.c15t.dev";
@@ -74,22 +75,27 @@ const app = async (
   return directory;
 };
 
-const verifyCommandGate = (binary: string, cwd: string): void => {
-  const hidden = run(binary, ["c15t"], cwd, {
-    ...process.env,
-    INTH_EXPERIMENTAL_C15T: "",
-  });
-  assert.equal(hidden.status, 1);
-  assert.match(hidden.stderr, /Unknown command/u);
-  const enabled = { ...process.env, INTH_EXPERIMENTAL_C15T: "1" };
-  const help = run(binary, ["c15t", "--help"], cwd, enabled);
+const verifyPublicCommand = (binary: string, cwd: string): void => {
+  const env = { ...process.env };
+  delete env.INTH_EXPERIMENTAL_C15T;
+  for (const args of [["c15t", "--help"], ["--help"]]) {
+    const help = run(binary, args, cwd, env);
+    assert.equal(help.status, 0, help.stderr);
+    assert.match(help.stdout, /c15t/u);
+    assert.doesNotMatch(help.stdout, /experimental/u);
+  }
+  const help = run(binary, ["c15t", "--help", "--json"], cwd, env);
   assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /--codex, --claude, --cursor, --grok/u);
-  const usage = run(binary, ["c15t", "--region", "eu"], cwd, enabled);
+  const [definition] = JSON.parse(help.stdout).data.commandDefinitions;
+  assert.equal(definition.command, "c15t");
+  assert.ok(
+    definition.options.some(
+      (entry: { name: string }) => entry.name === "framework"
+    )
+  );
+  const usage = run(binary, ["c15t", "--region", "eu"], cwd, env);
   assert.equal(usage.status, 1);
   assert.match(usage.stderr, /Use --region with --name/u);
-  const main = run(binary, ["--help"], cwd, enabled);
-  assert.doesNotMatch(main.stdout, /c15t/u);
 };
 
 const verifyExistingProject = async (
@@ -131,7 +137,7 @@ const verifyExistingProject = async (
   );
   assert.equal(preview.status, 0, preview.stderr);
   const previewData = envelope.parse(JSON.parse(preview.stdout)).data;
-  assert.deepEqual(previewData.plan?.dependencies, ["@c15t/nextjs@alpha"]);
+  assert.deepEqual(previewData.plan?.dependencies, ["c15t@alpha"]);
   assert.deepEqual(await readdir(directory), [
     "app",
     "package.json",
@@ -206,25 +212,31 @@ const verifyScaffold = async (
   assert.equal(scaffold.status, 0, scaffold.stderr);
   const { data } = envelope.parse(JSON.parse(scaffold.stdout));
   assert.deepEqual(data.created, [
-    "src/consent/consent-manager.tsx",
-    "src/consent/README.md",
+    ".env",
+    "c15t.config.ts",
+    "next.config.ts",
+    "app/layout.tsx",
   ]);
   assert.equal(data.installed, !windows);
   const manager = await readFile(
-    path.join(directory, "src/consent/consent-manager.tsx"),
+    path.join(directory, "app/layout.tsx"),
     "utf-8"
   );
-  assert.match(manager, new RegExp(BACKEND, "u"));
+  assert.match(manager, /from 'c15t\/next'/u);
+  assert.equal(
+    await readFile(path.join(directory, ".env"), "utf-8"),
+    `NEXT_PUBLIC_C15T_BACKEND_URL=${BACKEND}\n`
+  );
   if (!windows) {
     const installer = await readFile(log, "utf-8");
     assert.deepEqual(installer.trim().split("\n"), [
       directory,
       "add",
-      "@c15t/nextjs@alpha",
+      "c15t@alpha",
     ]);
   }
   // An interrupted apply leaves c15t's journal directory behind.
-  await rm(path.join(directory, "src"), { force: true, recursive: true });
+  await rm(path.join(directory, "app/layout.tsx"));
   await mkdir(path.join(directory, ".c15t-native-generation"));
   const blocked = run(
     test,
@@ -264,13 +276,15 @@ const verifyScaffold = async (
   assert.match(resumed.stderr, /Undid the interrupted c15t setup/u);
   const entries = await readdir(directory);
   assert.deepEqual(entries.toSorted(), [
+    ".env",
     "app",
+    "c15t.config.ts",
+    "next.config.ts",
     "package.json",
     "pnpm-lock.yaml",
-    "src",
   ]);
   await writeFile(
-    path.join(directory, "src/consent/consent-manager.tsx"),
+    path.join(directory, "app/layout.tsx"),
     `${manager}// edited\n`
   );
   const conflict = run(
@@ -345,7 +359,7 @@ const verifyAgents = async (
   const [cwd, count, prompt] = launch.split("\n");
   assert.equal(cwd, directory);
   assert.equal(count, "1");
-  assert.match(prompt ?? "", /^Integrate or migrate this application/u);
+  assert.match(prompt ?? "", /^Set up c15t v3/u);
   const failed = run(test, args, directory, {
     ...env,
     INTH_TEST_AGENT_EXIT: "3",
@@ -373,7 +387,7 @@ const verifyAgents = async (
   const [fxCount, fxCommand, fxPrompt] = fxLaunch.split("\n");
   assert.equal(fxCount, "2");
   assert.equal(fxCommand, "ask");
-  assert.match(fxPrompt ?? "", /^Integrate or migrate this application/u);
+  assert.match(fxPrompt ?? "", /^Set up c15t v3/u);
   const missing = run(
     test,
     [
@@ -424,6 +438,67 @@ const verifyNewProject = (test: string, directory: string): void => {
   ]);
 };
 
+const verifyFrameworks = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const framework of boilerplateFrameworks) {
+    const directory = await app(parent, framework, {});
+    const env = "EXISTING=value\n";
+    await writeFile(path.join(directory, ".env"), env);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--framework",
+      framework,
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+      "--json",
+    ];
+    const result = run(test, args, directory);
+    assert.equal(result.status, 0, `${framework}: ${result.stderr}`);
+    const { data } = envelope.parse(JSON.parse(result.stdout));
+    assert.equal(data.framework, framework);
+    const dependencies = {
+      astro: ["c15t@alpha", "@astrojs/node", "@astrojs/svelte", "svelte"],
+      "astro-static": ["c15t@alpha", "@astrojs/svelte", "svelte"],
+      html: [],
+      javascript: ["@c15t/browser@alpha", "c15t@alpha"],
+      "next-app": ["c15t@alpha"],
+      "next-pages": ["c15t@alpha"],
+      nuxt: ["c15t@alpha"],
+      react: ["c15t@alpha"],
+      solid: ["@c15t/core@alpha"],
+      svelte: ["@c15t/svelte@alpha"],
+      sveltekit: ["@c15t/svelte@alpha"],
+      "tanstack-start": ["c15t@alpha"],
+      vue: ["c15t@alpha"],
+    }[framework];
+    assert.deepEqual(data.plan?.dependencies, dependencies, framework);
+    assert.ok(data.created?.length);
+    assert.equal(await readFile(path.join(directory, ".env"), "utf-8"), env);
+    for (const file of data.created ?? []) {
+      const contents = await readFile(path.join(directory, file), "utf-8");
+      assert.ok(contents.length);
+    }
+    if (!["html", "solid"].includes(framework)) {
+      assert.match(result.stdout, /Add to \.env/u);
+    }
+    assert.match(result.stdout, /acme-website\.c15t\.dev/u);
+    assert.ok(calls(result.stderr).every((call) => call.startsWith("GET")));
+    const repeated = run(test, args, directory);
+    assert.equal(repeated.status, 0, `${framework}: ${repeated.stderr}`);
+    assert.deepEqual(
+      envelope.parse(JSON.parse(repeated.stdout)).data.created,
+      []
+    );
+  }
+};
+
 export const verifyC15t = async (binary: string): Promise<void> => {
   const parent = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "inth-c15t-"))
@@ -433,12 +508,13 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       next: "16.0.0",
       react: "19.0.0",
     });
-    verifyCommandGate(binary, next);
+    verifyPublicCommand(binary, next);
     const test = fixture("c15t-test");
     await verifyExistingProject(test, next);
     const bin = path.join(parent, "bin");
     await mkdir(bin);
     await verifyScaffold(test, next, bin);
+    await verifyFrameworks(test, parent);
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
     if (!windows) {
       await verifyAgents(test, next, bin);
@@ -506,7 +582,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     assert.equal(previewData.project.id, null);
     assert.deepEqual(
       previewData.plan.files.map((file: { path: string }) => file.path),
-      ["src/consent/consent-manager.tsx", "src/consent/README.md"]
+      [".env", "src/consent.tsx", "src/main.tsx", "vite.config.ts"]
     );
     const freshEntries = await readdir(fresh);
     assert.deepEqual(freshEntries.toSorted(), [
@@ -515,7 +591,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       "pnpm-lock.yaml",
     ]);
     console.log(
-      "Native c15t: command gate, prompts, agent launches, dry runs, scaffolding, installation, conflicts, and project creation passed."
+      "Native c15t: public help, prompts, agent launches, dry runs, scaffolding, installation, conflicts, all frameworks, and project creation passed."
     );
   } finally {
     await rm(parent, { force: true, recursive: true });

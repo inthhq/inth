@@ -408,15 +408,14 @@ const SWITCHES = new Set([
 const parseSubcommand = (
   result: CliArguments,
   arg: string,
-  rest: string[],
-  c15t: boolean
+  rest: string[]
 ): boolean => {
   if (arg === "skills") {
     result.command = "skills";
     parseSkillsArguments(result, rest);
     return true;
   }
-  if (arg === "c15t" && c15t) {
+  if (arg === "c15t") {
     // Options before `c15t` were already consumed; let the c15t parser apply
     // or reject them instead of dropping them.
     const leading = result.values.map((entry) =>
@@ -432,8 +431,7 @@ const parseSubcommand = (
   return false;
 };
 
-// `c15t` enables the experimental `inth c15t` command; see c15t.ts.
-export const parseArguments = (args: string[], c15t = false): CliArguments => {
+export const parseArguments = (args: string[]): CliArguments => {
   const result: CliArguments = {
     argument: "",
     command: "",
@@ -466,7 +464,7 @@ export const parseArguments = (args: string[], c15t = false): CliArguments => {
       positional.push(arg);
       if (
         positional.length === 1 &&
-        parseSubcommand(result, arg, args.slice(index + 1), c15t)
+        parseSubcommand(result, arg, args.slice(index + 1))
       ) {
         return result;
       }
