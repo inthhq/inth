@@ -520,6 +520,92 @@ const verifyFrameworks = async (
   }
 };
 
+const verifyNextSourceTrees = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const router of ["app", "pages"]) {
+    for (const extension of ["js", "mjs", "ts"]) {
+      const directory = await app(parent, `next-src-${router}-${extension}`, {
+        next: "16.0.0",
+        react: "19.0.0",
+      });
+      await rm(path.join(directory, "app"), { recursive: true });
+      const source = path.join(directory, "src", router);
+      await mkdir(source, { recursive: true });
+      const route = path.join(
+        source,
+        router === "app" ? "page.tsx" : "index.tsx"
+      );
+      const page =
+        "export default function Page() { return <h1>Existing route</h1>; }\n";
+      await writeFile(route, page);
+      const config = `next.config.${extension}`;
+      const contents =
+        extension === "js"
+          ? "module.exports = { basePath: '/existing', env: { KEY: 'private-config-value' } };\n"
+          : "import { withConsentManifest } from 'c15t/next/build';\nexport default { basePath: '/existing', env: { KEY: 'private-config-value' } };\n";
+      await writeFile(path.join(directory, config), contents);
+      const args = [
+        "c15t",
+        "scaffold",
+        "--project",
+        "Website",
+        "--organization",
+        "org_acme",
+        "--skip-install",
+        "--json",
+      ];
+      for (const flags of [["--dry-run"], ["--yes"], ["--yes"]]) {
+        const result = run(test, [...args, ...flags], directory);
+        assert.equal(result.status, 0, result.stderr);
+        const { data } = envelope.parse(JSON.parse(result.stdout));
+        assert.equal(data.framework, `next-${router}`);
+        const files = data.plan?.files.map((file) => file.path) ?? [];
+        assert.ok(
+          files.includes(
+            `src/${router}/${router === "app" ? "layout.tsx" : "_app.tsx"}`
+          )
+        );
+        assert.ok(files.includes(config));
+        assert.ok(files.every((file) => !file.startsWith(`${router}/`)));
+        assert.match(
+          result.stdout,
+          new RegExp(`Update next\\.config\\.${extension}:`, "u")
+        );
+        assert.match(result.stdout, /withConsentManifest\(nextConfig\)/u);
+        assert.doesNotMatch(
+          result.stdout + result.stderr,
+          /private-config-value/u
+        );
+        assert.equal(await readFile(route, "utf-8"), page);
+        assert.equal(
+          await readFile(path.join(directory, config), "utf-8"),
+          contents
+        );
+        const entries = await readdir(directory);
+        assert.ok(!entries.includes(router));
+        if (extension !== "ts") {
+          assert.ok(!entries.includes("next.config.ts"));
+        }
+      }
+      const layout = path.join(
+        source,
+        router === "app" ? "layout.tsx" : "_app.tsx"
+      );
+      await writeFile(layout, "// Existing app entry point\n");
+      const conflict = run(test, [...args, "--yes"], directory);
+      assert.equal(conflict.status, 1, conflict.stderr);
+      assert.match(
+        conflict.stderr,
+        /Refusing to overwrite existing file: src\//u
+      );
+      const entries = await readdir(directory);
+      assert.ok(!entries.includes(router));
+    }
+  }
+};
+
 const verifyPartialHtml = async (
   test: string,
   parent: string
@@ -734,6 +820,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await mkdir(bin);
     await verifyScaffold(test, next, bin);
     await verifyFrameworks(test, parent);
+    await verifyNextSourceTrees(test, parent);
     await verifyPartialHtml(test, parent);
     await verifyRedactedPlans(test, parent);
     await verifyHtmlSite(test, parent);

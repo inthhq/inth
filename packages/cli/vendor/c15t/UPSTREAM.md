@@ -11,3 +11,5 @@ inth supplies the account, organization, and project state that `frontend/index.
 `src/native/c15t-agent.ts` applies Inth's upgrade policy to exported and launched agent prompts. Existing c15t installations keep their current major unless the user explicitly requests an upgrade.
 
 The host exports file metadata through `publicGenerationPlan`, keeping existing file contents internal. `src/native/c15t-html.ts` supports HTML sites without `package.json`, using upstream's generated snippets and recovery journal format with exclusive hard-link publication.
+
+`src/native/c15t-next.ts` maps Next.js templates into the active root or `src` router directory and preserves the existing config filename. The host gives instructions for wrapping that config without changing its options, then uses upstream's planning, publication, recovery, and installation functions.

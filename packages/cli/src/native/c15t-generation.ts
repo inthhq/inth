@@ -5,16 +5,23 @@ import { join } from "node:path";
 import { runFrontendCommand } from "../../vendor/c15t/frontend/index.ts";
 import type { FrontendCommandContext } from "../../vendor/c15t/frontend/index.ts";
 import {
+  applyGeneration,
+  installGenerationDependencies,
   parseGenerationWorkflowArguments,
-  runGenerationWorkflow as upstreamGenerationWorkflow,
+  planGeneration,
+  recoverGeneration,
 } from "../../vendor/c15t/frontend/runtime/index.ts";
 import type {
   ApplicationPlan,
   GenerationRuntimeOptions,
   GenerationWorkflowResult,
+  PackageManager,
 } from "../../vendor/c15t/frontend/runtime/index.ts";
+import { requireNativeInstaller } from "../../vendor/c15t/frontend/runtime/install.ts";
+import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
 import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
+import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
 
 /** Public plans contain file metadata, never application file contents. */
 export const publicGenerationPlan = (plan: ApplicationPlan) => ({
@@ -25,26 +32,12 @@ export const publicGenerationPlan = (plan: ApplicationPlan) => ({
 });
 
 // Upstream 3.0.0 prints every insert when an existing file needs any insert.
-// Keep its runtime and sources intact, but show only the snippets still missing.
-export const runGenerationWorkflow = async (
-  args: string[],
-  context: FrontendCommandContext,
-  options: GenerationRuntimeOptions
-): Promise<GenerationWorkflowResult> => {
-  if (
-    !existsSync(join(options.cwd, "package.json")) &&
-    (args.includes("html") || context.generation?.framework === "html")
-  ) {
-    return runHtmlGenerationWorkflow(args, context, options);
-  }
-  const result = await upstreamGenerationWorkflow(args, context, options);
-  const flags = parseGenerationWorkflowArguments(args);
-  const generation = runFrontendCommand(flags.forwarded, context);
-  if (generation.command !== "setup" && generation.command !== "generate") {
-    return result;
-  }
-  for (const file of result.plan.files) {
-    const merge = generation.data.merge?.[file.path];
+const missingInsertInstructions = (
+  plan: ApplicationPlan,
+  generation: GenerationPlan
+): void => {
+  for (const file of plan.files) {
+    const merge = generation.merge?.[file.path];
     if (!file.exists || merge?.type !== "insert") {
       continue;
     }
@@ -66,11 +59,90 @@ export const runGenerationWorkflow = async (
       current = merged;
     }
     const prefix = `Add to ${file.path}:\n`;
-    result.plan.instructions = result.plan.instructions.map((instruction) =>
+    plan.instructions = plan.instructions.map((instruction) =>
       instruction.startsWith(prefix)
         ? `${prefix}${snippets.join("\n")}`
         : instruction
     );
   }
-  return result;
+};
+
+const installAppliedPlan = async (
+  plan: ApplicationPlan,
+  created: string[],
+  manager: PackageManager,
+  signal?: AbortSignal
+): Promise<void> => {
+  try {
+    await installGenerationDependencies(
+      plan.root,
+      plan.dependencies,
+      manager,
+      signal
+    );
+  } catch (error) {
+    if (!created.length || !(error instanceof Error)) {
+      throw error;
+    }
+    throw new Error(`${error.message} Created: ${created.join(", ")}.`, {
+      cause: error,
+    });
+  }
+};
+
+/** Adapt upstream plans before using its filesystem and installation runtime. */
+export const runGenerationWorkflow = async (
+  args: string[],
+  context: FrontendCommandContext,
+  options: GenerationRuntimeOptions
+): Promise<GenerationWorkflowResult> => {
+  if (
+    !existsSync(join(options.cwd, "package.json")) &&
+    (args.includes("html") || context.generation?.framework === "html")
+  ) {
+    return runHtmlGenerationWorkflow(args, context, options);
+  }
+  options.signal?.throwIfAborted();
+  const flags = parseGenerationWorkflowArguments(args);
+  const generation = runFrontendCommand(flags.forwarded, context);
+  if (generation.command !== "setup" && generation.command !== "generate") {
+    throw new Error("The generation runtime accepts setup and generate only.");
+  }
+  if (flags.apply && !flags.skipInstall && !options.packageManager) {
+    throw new Error(
+      "Supply a package manager from the host or use --skip-install."
+    );
+  }
+  if (
+    flags.apply &&
+    !flags.skipInstall &&
+    generation.data.dependencies.length
+  ) {
+    requireNativeInstaller();
+  }
+  const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
+  adaptNextGeneration(generation.data, options.cwd);
+  const plan = planGeneration(options.cwd, generation.data);
+  addNextConfigInstructions(plan, generation.data);
+  missingInsertInstructions(plan, generation.data);
+  options.signal?.throwIfAborted();
+  const created = flags.apply ? applyGeneration(plan) : [];
+  let installed = false;
+  if (flags.apply && !flags.skipInstall && options.packageManager) {
+    await installAppliedPlan(
+      plan,
+      created,
+      options.packageManager,
+      options.signal
+    );
+    installed = true;
+  }
+  return {
+    applied: flags.apply,
+    command: generation.command,
+    created,
+    installed,
+    plan,
+    recovered,
+  };
 };
