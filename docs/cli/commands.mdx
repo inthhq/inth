@@ -60,13 +60,15 @@ inth c15t scaffold --project Website --organization org_123 --dry-run --json
 inth c15t scaffold --project Website --organization org_123 --yes
 ```
 
-Scaffold detects the framework from `package.json`. Use `--framework` to choose it explicitly, and `inth c15t --help` to list supported frameworks. It writes the framework's quickstart files and installs its c15t packages from the stable v3 release line with the app's package manager. Next.js and React use `c15t@3`; the HTML script tag needs no package installation. Existing generated files must match, or setup stops without overwriting them. An existing `.env` stays intact; the next steps show any backend URL entry to add by hand. For an existing app with custom entry points or config, use an agent to adapt the integration.
+Scaffold detects the framework from `package.json`. Use `--framework` to choose it explicitly, and `inth c15t --help` to list supported frameworks. It writes the framework's quickstart files and installs its c15t packages from the stable v3 release line with the app's package manager. Next.js and React use `c15t@3`; the HTML script tag needs no package installation. Existing generated files must match, or setup stops without overwriting them. An existing `.env` stays intact; the next steps identify backend URL assignments to add or replace by hand. For an existing app with custom entry points or config, use an agent to adapt the integration.
 
 Static HTML sites can scaffold without `package.json`. An existing `index.html` selects the HTML target, or use `--framework html` to create one. Existing pages stay intact, with instructions for adding only the missing script or preferences link. JSON plans expose file paths and existence flags.
 
 Next.js scaffolding uses the active `app` or `pages` directory, including apps that keep these directories under `src`. An existing `next.config.js`, `next.config.mjs`, or `next.config.ts` stays intact. Follow the next steps to wrap its current config in `withConsentManifest`.
 
 Next.js quickstart entry points do not import an app stylesheet or require an `@` path alias. Astro autodetection selects static output. Use `--framework astro` to choose server output explicitly.
+
+For an existing `.env`, scaffold distinguishes new keys from assignments to replace. If the selected backend variable occurs more than once, the instructions ask you to keep one assignment with the selected backend URL. Existing file contents stay out of the output.
 
 To create a hosted project, pass `--name Website --region <region-id>` instead of `--project`. Use `inth region list` to choose the region. Scaffold checks local files and asks for confirmation before creating a project. `--dry-run` previews the files without creating a project, writing files, or installing packages. `--yes` confirms file creation, and `--skip-install` leaves package installation to you. Windows always skips installation and prints the required packages. Use `--resume` to undo files from an interrupted scaffold before trying again.
 

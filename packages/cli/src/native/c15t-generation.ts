@@ -67,6 +67,50 @@ const missingInsertInstructions = (
   }
 };
 
+const environmentKey = (line: string): string =>
+  line
+    .trim()
+    .replace(/^export\s+/u, "")
+    .split("=")[0]
+    ?.trim() ?? "";
+
+// Describe edits to public generated assignments without exposing current values.
+const environmentInstructions = (
+  plan: ApplicationPlan,
+  generation: GenerationPlan
+): void => {
+  for (const file of plan.files) {
+    const merge = generation.merge?.[file.path];
+    const generated = generation.files[file.path];
+    if (!file.exists || merge?.type !== "env" || !generated) {
+      continue;
+    }
+    const prefix = `Add to ${file.path}:\n`;
+    plan.instructions = plan.instructions.filter(
+      (instruction) => !instruction.startsWith(prefix)
+    );
+    for (const line of generated.split("\n").filter(Boolean)) {
+      const key = environmentKey(line);
+      const count = file.content
+        .split("\n")
+        .filter((current) => environmentKey(current) === key).length;
+      if (
+        count <= 1 &&
+        mergeFile(file.content, `${line}\n`, merge) === file.content
+      ) {
+        continue;
+      }
+      let action = `Add to ${file.path}:`;
+      if (count > 1) {
+        action = `Replace all ${key} assignments in ${file.path} with this single assignment:`;
+      } else if (count === 1) {
+        action = `Replace the ${key} assignment in ${file.path} with:`;
+      }
+      plan.instructions.push(`${action}\n${line}`);
+    }
+  }
+};
+
 const installAppliedPlan = async (
   plan: ApplicationPlan,
   created: string[],
@@ -125,6 +169,7 @@ export const runGenerationWorkflow = async (
   const plan = planGeneration(options.cwd, generation.data);
   addNextConfigInstructions(plan, generation.data);
   missingInsertInstructions(plan, generation.data);
+  environmentInstructions(plan, generation.data);
   options.signal?.throwIfAborted();
   const created = flags.apply ? applyGeneration(plan) : [];
   let installed = false;

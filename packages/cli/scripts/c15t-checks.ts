@@ -36,6 +36,7 @@ const envelope = z.object({
         files: z.array(
           z.object({ exists: z.boolean(), path: z.string() }).strict()
         ),
+        instructions: z.array(z.string()),
       })
       .optional(),
     project: z.object({ backendUrl: z.string(), id: z.string() }),
@@ -610,6 +611,74 @@ const verifyNextSourceTrees = async (
   }
 };
 
+const verifyEnvironmentGuidance = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const assignment = `VITE_C15T_BACKEND_URL=${BACKEND}`;
+  for (const [name, existing, expected] of [
+    [
+      "missing",
+      "PRIVATE_KEY=private-env-value\n",
+      `Add to .env:\n${assignment}`,
+    ],
+    [
+      "different",
+      "PRIVATE_KEY=private-env-value\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\n",
+      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+    ],
+    [
+      "exported",
+      "PRIVATE_KEY=private-env-value\n  export VITE_C15T_BACKEND_URL = 'https://old-backend.invalid'\n",
+      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+    ],
+    ["matching", `${assignment}\nPRIVATE_KEY=private-env-value\n`, ""],
+    [
+      "alternate",
+      "VITE_INTH_PROJECT_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n",
+      "",
+    ],
+    [
+      "duplicates",
+      `${assignment}\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n`,
+      `Replace all VITE_C15T_BACKEND_URL assignments in .env with this single assignment:\n${assignment}`,
+    ],
+  ] as const) {
+    const directory = await app(parent, `env-guidance-${name}`, {
+      react: "19.0.0",
+    });
+    await writeFile(path.join(directory, ".env"), existing);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flags of [["--dry-run"], ["--yes"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      const instructions =
+        data.plan?.instructions.filter((instruction) =>
+          instruction.includes(".env")
+        ) ?? [];
+      assert.deepEqual(instructions, expected ? [expected] : [], name);
+      assert.doesNotMatch(
+        result.stdout + result.stderr,
+        /private-env-value|old-backend\.invalid/u
+      );
+      assert.equal(
+        await readFile(path.join(directory, ".env"), "utf-8"),
+        existing
+      );
+    }
+  }
+};
+
 const verifyAstroOutput = async (
   test: string,
   parent: string
@@ -868,6 +937,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyScaffold(test, next, bin);
     await verifyFrameworks(test, parent);
     await verifyNextSourceTrees(test, parent);
+    await verifyEnvironmentGuidance(test, parent);
     await verifyAstroOutput(test, parent);
     await verifyPartialHtml(test, parent);
     await verifyRedactedPlans(test, parent);
