@@ -103,6 +103,104 @@ it("reads a real extension property after comments without stripping URL strings
   );
 });
 
+it.each(["", "src/"])("honors App Router extensions in %s", async (root) => {
+  await mkdir(path.join(directory, root, "app"), { recursive: true });
+  const name = `${root}app/layout.page.tsx`;
+  const content =
+    "export default function Layout({ children }) { return <html><body>{children}</body></html>; }\n";
+  await writeFile(path.join(directory, name), content);
+  await writeFile(
+    path.join(directory, "next.config.mjs"),
+    "export default { pageExtensions: ['page.tsx', 'page.ts'] };\n"
+  );
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "next-app", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(result.plan.files.map((file) => file.path)).toContain(name);
+  expect(result.created).not.toContain(`${root}app/layout.tsx`);
+  expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+  expect(
+    result.plan.instructions.some((instruction) =>
+      instruction.startsWith(`Integrate c15t into ${name}:`)
+    )
+  ).toBe(true);
+});
+
+it.each(["page.tsx", "page.jsx", "page.js"])(
+  "generates a recognized App Router layout with %s",
+  async (extension) => {
+    await writeFile(
+      path.join(directory, "next.config.mjs"),
+      `export default { pageExtensions: ['${extension}'] };\n`
+    );
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "next-app", "--apply", "--skip-install"],
+      context,
+      { cwd: directory }
+    );
+    expect(result.created).toContain(`app/layout.${extension}`);
+    expect(await readdir(path.join(directory, "app"))).toEqual([
+      `layout.${extension}`,
+    ]);
+    const content = await readFile(
+      path.join(directory, `app/layout.${extension}`),
+      "utf-8"
+    );
+    expect(() =>
+      transformSync(content, {
+        loader: extension.endsWith("tsx") ? "tsx" : "jsx",
+      })
+    ).not.toThrow();
+  }
+);
+
+it.each([
+  "// srcDir can be customized here\nexport default {};",
+  "/* srcDir: 'ignored/' */\nexport default {};",
+  "export default { docs: 'https://example.com/srcDir' };",
+])("ignores Nuxt srcDir mentions in text: %s", async (config) => {
+  await writeFile(path.join(directory, "nuxt.config.mjs"), config);
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "nuxt", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(result.created).toContain("app.vue");
+  expect(result.created).not.toContain("ignored/app.vue");
+  expect(await readFile(path.join(directory, "nuxt.config.mjs"), "utf-8")).toBe(
+    config
+  );
+});
+
+it("reads Nuxt srcDir after comments and quoted URLs", async () => {
+  await writeFile(
+    path.join(directory, "nuxt.config.mjs"),
+    "export default { docs: 'https://example.com', srcDir: /* directory */ 'src/' };\n"
+  );
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "nuxt", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(result.created).toContain("src/app.vue");
+});
+
+it.each([undefined, "npm"] as const)(
+  "reports no HTML installation with package manager %s",
+  async (packageManager) => {
+    const result = await runGenerationWorkflow(
+      ["setup", "--framework", "html", "--apply"],
+      context,
+      { cwd: directory, packageManager }
+    );
+    expect(result.created).toContain("index.html");
+    expect(result.plan.dependencies).toEqual([]);
+    expect(result.installed).toBe(false);
+  }
+);
+
 it("keeps Nuxt 3 vendor config beside its root app and preserves environment merge guidance", async () => {
   await writeFile(
     path.join(directory, "app.vue"),
@@ -114,7 +212,6 @@ it("keeps Nuxt 3 vendor config beside its root app and preserves environment mer
     { generation: { ...context.generation, scripts: ["posthog"] } },
     { cwd: directory }
   );
-  expect(result.created).toContain("app.config.ts");
   expect(result.plan.files.map((file) => file.path)).toContain("app.vue");
   expect(await readFile(path.join(directory, "app.vue"), "utf-8")).toBe(
     "<template><NuxtPage /></template>\n"

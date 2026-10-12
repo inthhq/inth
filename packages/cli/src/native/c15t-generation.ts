@@ -155,16 +155,16 @@ export const runGenerationWorkflow = async (
   if (generation.command !== "setup" && generation.command !== "generate") {
     throw new Error("The generation runtime accepts setup and generate only.");
   }
-  if (flags.apply && !flags.skipInstall && !options.packageManager) {
+  const shouldInstall =
+    flags.apply &&
+    !flags.skipInstall &&
+    generation.data.dependencies.length > 0;
+  if (shouldInstall && !options.packageManager) {
     throw new Error(
       "Supply a package manager from the host or use --skip-install."
     );
   }
-  if (
-    flags.apply &&
-    !flags.skipInstall &&
-    generation.data.dependencies.length
-  ) {
+  if (shouldInstall) {
     requireNativeInstaller();
   }
   const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
@@ -179,7 +179,7 @@ export const runGenerationWorkflow = async (
   options.signal?.throwIfAborted();
   const created = flags.apply ? applyGeneration(plan) : [];
   let installed = false;
-  if (flags.apply && !flags.skipInstall && options.packageManager) {
+  if (shouldInstall && options.packageManager) {
     await installAppliedPlan(
       plan,
       created,

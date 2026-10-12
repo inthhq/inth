@@ -7,57 +7,7 @@ import type {
   FileMerge,
   GenerationPlan,
 } from "../../vendor/c15t/generate/index.ts";
-
-const withoutConfigComments = (source: string): string => {
-  let result = "";
-  let quote = "";
-  let escaped = false;
-  let lineComment = false;
-  let blockComment = false;
-  for (let index = 0; index < source.length; index += 1) {
-    const character = source[index] ?? "";
-    const next = source[index + 1];
-    if (lineComment) {
-      if (character === "\n") {
-        lineComment = false;
-        result += character;
-      }
-      continue;
-    }
-    if (blockComment) {
-      if (character === "*" && next === "/") {
-        blockComment = false;
-        index += 1;
-      } else if (character === "\n") {
-        result += character;
-      }
-      continue;
-    }
-    if (quote) {
-      result += character;
-      if (escaped) {
-        escaped = false;
-      } else if (character === "\\") {
-        escaped = true;
-      } else if (character === quote) {
-        quote = "";
-      }
-      continue;
-    }
-    if (character === "/" && (next === "/" || next === "*")) {
-      lineComment = next === "/";
-      blockComment = next === "*";
-      result += " ";
-      index += 1;
-    } else {
-      if (character === "'" || character === '"' || character === "`") {
-        quote = character;
-      }
-      result += character;
-    }
-  }
-  return result;
-};
+import { withoutConfigComments } from "./c15t-config.ts";
 
 const nextPageExtensions = (cwd: string, config?: string): string[] => {
   const defaults = ["tsx", "ts", "jsx", "js"];
@@ -126,14 +76,11 @@ const preserveNextEntries = (
       continue;
     }
     const stem = name.replace(/\.tsx?$/u, "");
-    const pages = /^(?:src\/)?pages\//u.test(name);
-    const suffixes = pages ? extensions : ["tsx", "ts", "jsx", "js"];
-    const existing = suffixes
+    const existing = extensions
       .map((extension) => `${stem}.${extension}`)
       .find((candidate) => existsSync(join(cwd, candidate)));
     const target =
-      existing ??
-      (pages ? `${stem}.${generatedPageExtension(name, extensions)}` : name);
+      existing ?? `${stem}.${generatedPageExtension(name, extensions)}`;
     if (!existing && target === name) {
       continue;
     }
@@ -141,6 +88,7 @@ const preserveNextEntries = (
       ? content
           .replaceAll(/^import type .*\n/gmu, "")
           .replace(": AppProps<ConsentPageProps>", "")
+          .replace(": { children: ReactNode }", "")
       : content;
     generation.files = {
       ...Object.fromEntries(
@@ -220,13 +168,7 @@ export const adaptNextGeneration = (
   const config = ["next.config.js", "next.config.mjs", "next.config.ts"].find(
     (name) => existsSync(join(cwd, name))
   );
-  preserveNextEntries(
-    generation,
-    cwd,
-    router === "pages"
-      ? nextPageExtensions(cwd, config)
-      : ["tsx", "ts", "jsx", "js"]
-  );
+  preserveNextEntries(generation, cwd, nextPageExtensions(cwd, config));
   if (config) {
     const content = generation.files["next.config.ts"];
     if (!content) {

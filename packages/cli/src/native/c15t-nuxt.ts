@@ -7,11 +7,18 @@ import type {
   GenerationPlan,
 } from "../../vendor/c15t/generate/index.ts";
 import type { PackageManifest } from "../c15t.ts";
+import { withoutConfigComments } from "./c15t-config.ts";
 
 const nuxtSource = (cwd: string, config?: string): string => {
   if (config) {
-    const contents = readFileSync(join(cwd, config), "utf-8");
-    if (/\bsrcDir\b/u.test(contents)) {
+    const contents = withoutConfigComments(
+      readFileSync(join(cwd, config), "utf-8")
+    );
+    if (
+      /(?:["']?\bsrcDir\b["']?\s*:|\.srcDir\s*=|\[\s*["']srcDir["']\s*\]\s*=|\bsrcDir\b\s*[,}])/u.test(
+        contents
+      )
+    ) {
       const match =
         /["']?\bsrcDir\b["']?\s*:\s*["'](?<source>[^"']*)["']\s*(?:[,}]|$)/u.exec(
           contents

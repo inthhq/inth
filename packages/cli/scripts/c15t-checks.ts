@@ -862,6 +862,179 @@ const verifyNextPageExtensions = async (
   }
 };
 
+const verifyNextAppPageExtensions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const root of ["", "src/"]) {
+    for (const extension of ["page.tsx", "page.jsx", "page.js"]) {
+      for (const existing of [true, false]) {
+        const directory = await app(
+          parent,
+          `next-app-custom-${root.replace("/", "")}-${extension}-${existing}`,
+          { next: "16.0.0", react: "19.2.0" }
+        );
+        await rm(path.join(directory, "app"), { recursive: true });
+        const route = `${root}app`;
+        await mkdir(path.join(directory, route), { recursive: true });
+        const name = `${route}/layout.${extension}`;
+        const content = "// private-custom-layout\n";
+        if (existing) {
+          await writeFile(path.join(directory, name), content);
+        }
+        const config = `export default { pageExtensions: ['${extension}', 'page.ts'] };\n`;
+        await writeFile(path.join(directory, "next.config.mjs"), config);
+        const args = [
+          "c15t",
+          "scaffold",
+          "--framework",
+          "next-app",
+          "--project",
+          "Website",
+          "--organization",
+          "org_acme",
+          "--skip-install",
+          "--json",
+        ];
+        for (const flag of ["--dry-run", "--yes", "--yes"]) {
+          const result = run(test, [...args, flag], directory);
+          assert.equal(result.status, 0, result.stderr);
+          const { data } = envelope.parse(JSON.parse(result.stdout));
+          const names = data.plan?.files.map((file) => file.path) ?? [];
+          assert.ok(names.includes(name), names.join(", "));
+          assert.ok(!names.includes(`${route}/layout.tsx`));
+          assert.equal(
+            await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
+            config
+          );
+          assert.doesNotMatch(
+            result.stdout + result.stderr,
+            /private-custom-layout/u
+          );
+          if (existing) {
+            assert.equal(
+              await readFile(path.join(directory, name), "utf-8"),
+              content
+            );
+            assert.ok(
+              data.plan?.instructions.some((instruction) =>
+                instruction.startsWith(`Integrate c15t into ${name}:`)
+              )
+            );
+          } else if (flag === "--yes") {
+            const generated = await readFile(
+              path.join(directory, name),
+              "utf-8"
+            );
+            assert.match(generated, /resolveConsent/u);
+            if (!extension.endsWith("tsx")) {
+              assert.doesNotMatch(
+                generated,
+                /import type|: \{ children: ReactNode \}/u
+              );
+            }
+          }
+          const entries = await readdir(path.join(directory, route));
+          assert.deepEqual(
+            entries,
+            existing || flag === "--yes" ? [`layout.${extension}`] : []
+          );
+        }
+      }
+    }
+  }
+};
+
+const verifyNuxtConfigComments = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [label, config, source] of [
+    ["line", "// srcDir can be customized here\nexport default {};", ""],
+    ["block", "/* srcDir: 'ignored/' */\nexport default {};", ""],
+    ["url", "export default { docs: 'https://example.com/srcDir' };", ""],
+    [
+      "property",
+      "export default { docs: 'https://example.com', srcDir: /* directory */ 'src/' };",
+      "src/",
+    ],
+  ] as const) {
+    const directory = await app(parent, `nuxt-comments-${label}`, {
+      nuxt: "3.20.0",
+    });
+    await writeFile(path.join(directory, "nuxt.config.mjs"), config);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      const names = data.plan?.files.map((file) => file.path) ?? [];
+      const entry = `${source}app.vue`;
+      assert.ok(names.includes(entry), names.join(", "));
+      assert.ok(!names.includes("ignored/app.vue"));
+      assert.equal(
+        await readFile(path.join(directory, "nuxt.config.mjs"), "utf-8"),
+        config
+      );
+      if (flag === "--yes") {
+        assert.match(
+          await readFile(path.join(directory, entry), "utf-8"),
+          /<ConsentRoot \/>/u
+        );
+      }
+    }
+  }
+};
+
+const verifyHtmlWithoutInstallation = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const directory = await app(parent, "html-manifest-no-install", {});
+  const args = [
+    "c15t",
+    "scaffold",
+    "--framework",
+    "html",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+  ];
+  for (const flags of [
+    ["--dry-run", "--json"],
+    ["--yes", "--json"],
+    ["--yes"],
+  ]) {
+    const result = run(test, [...args, ...flags], directory);
+    assert.equal(result.status, 0, result.stderr);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /Installed c15t packages/u
+    );
+    if (flags.includes("--json")) {
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      if (flags.includes("--yes")) {
+        assert.equal(data.installed, false);
+      }
+      assert.deepEqual(data.plan?.dependencies, []);
+    }
+  }
+  assert.match(
+    await readFile(path.join(directory, "index.html"), "utf-8"),
+    /\/c15t.js/u
+  );
+};
+
 const verifyNuxtLayouts = async (
   test: string,
   parent: string
@@ -1569,6 +1742,9 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyNextSourceTrees(test, parent);
     await verifyNextEntryExtensions(test, parent);
     await verifyNextPageExtensions(test, parent);
+    await verifyNextAppPageExtensions(test, parent);
+    await verifyNuxtConfigComments(test, parent);
+    await verifyHtmlWithoutInstallation(test, parent);
     await verifyNuxtLayouts(test, parent);
     await verifyComputedFrameworkConfigs(test, parent);
     await verifySvelteKitAdapter(test, parent);
