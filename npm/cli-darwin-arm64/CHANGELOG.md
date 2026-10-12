@@ -1,3 +1,39 @@
+## @inth/cli-darwin-arm64@0.0.7
+
+### Include the installation ID and install method in usage events
+
+Usage events now include the random installation ID as `installation_id`, including events from signed-in users, so installations can be counted separately from people. Signed-in events still use the Inth user ID as their identity, and the installation ID is now linked to it.
+
+Events also include `install_method`, the same check `inth update` uses to choose how to update: `standalone` for the install script's executable, a package manager for global installations, `temporary` for `npx`, `pnpm dlx`, or `bunx`, or `project` for a project dependency.
+
+### Point the c15t setup guide at v3
+
+The bundled `docs/c15t-setup.md` now sets up c15t v3: the `c15t` package with framework subpaths, `@c15t/integrations` for vendor helpers, exact versions resolved from the `alpha` dist-tag, and links to v3.c15t.com. Apps on c15t v2 are pointed at the upgrade guide. The guide previously linked v2 quickstarts, so agents following it installed c15t v2.
+
+### Set up c15t without an experimental flag
+
+`inth c15t` is available by default and appears in CLI help, including JSON command discovery. The generator now uses `@c15t/cli@3.0.0`, writes the v3 framework quickstart files, and installs `c15t@3`. Existing `.env` files stay intact, with instructions for adding or replacing the backend URL assignment. Agent setup prompts use the latest v3 integration guidance.
+
+The setup picker recommends a coding agent first, or a prompt to paste into your agent when none is installed. Help and docs recommend this path to adapt the integration to an existing app and verify consent in a browser. Scaffolding remains available as an explicit choice. Agent prompts keep existing c15t installations on their current major unless the user requests an upgrade.
+
+For existing HTML pages, scaffold only recommends missing inserts. A page that already loads c15t's script receives instructions for adding the preferences link without loading c15t twice.
+
+HTML scaffolding works without `package.json`. JSON scaffold plans expose file paths and existence flags while keeping existing file contents private.
+
+Next.js scaffolding keeps routes in the active `app`, `pages`, `src/app`, or `src/pages` directory. Existing Next.js config files stay intact, with instructions for wrapping their current options in `withConsentManifest`.
+
+Next.js quickstart entry points do not assume an app stylesheet or path alias. Astro autodetection defaults to static output; use `--framework astro` for the server template.
+
+Next.js scaffolding preserves existing JavaScript and TypeScript entry filenames and gives integration instructions without creating competing routes. SvelteKit scaffolds include the adapter imported by the generated Vite config, preserving its declared version or selecting one for the app's SvelteKit major.
+
+React scaffolding uses the default export from Vite's conventional `src/App` component. HTML sites without `package.json` can scaffold on filesystems that do not support hard links, using an exclusive copy and a recovery record while preserving competing files.
+
+SvelteKit scaffolding checks for stable Kit 2.63+ or 3.x before writing files or creating a project. Older apps receive upgrade guidance without changes to their config or package versions.
+
+Next.js Pages Router scaffolding follows literal `pageExtensions` lists, including custom JavaScript and TypeScript suffixes. Nuxt 3 scaffolding uses its root app component and preserves existing config filenames. Computed source paths and unverified SvelteKit ranges receive guidance before file creation.
+
+When a backend variable already exists in `.env`, scaffold tells you to replace its assignment instead of adding a duplicate. The file and unrelated values stay private and unchanged.
+
 ## @inth/cli-darwin-arm64@0.0.6
 
 ### Explain why the credential store is unavailable
