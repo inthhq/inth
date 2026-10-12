@@ -22,6 +22,7 @@ import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
 import { mergeFile } from "../../vendor/c15t/generate/merge.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
+import { adaptNuxtGeneration } from "./c15t-nuxt.ts";
 import { adaptReactGeneration } from "./c15t-react.ts";
 import { adaptSvelteKitGeneration } from "./c15t-svelte.ts";
 
@@ -168,6 +169,7 @@ export const runGenerationWorkflow = async (
   }
   const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
   adaptNextGeneration(generation.data, options.cwd);
+  adaptNuxtGeneration(generation.data, options.cwd);
   adaptReactGeneration(generation.data, options.cwd);
   adaptSvelteKitGeneration(generation.data, options.cwd);
   const plan = planGeneration(options.cwd, generation.data);

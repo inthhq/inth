@@ -700,6 +700,221 @@ const verifyNextEntryExtensions = async (
   }
 };
 
+const verifyNextPageExtensions = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const root of ["", "src/"]) {
+    for (const extension of ["tsx", "jsx"]) {
+      const directory = await app(
+        parent,
+        `next-custom-${root.replace("/", "")}-${extension}`,
+        {
+          next: "16.0.0",
+          react: "19.2.0",
+        }
+      );
+      await rm(path.join(directory, "app"), { recursive: true });
+      const route = `${root}pages`;
+      await mkdir(path.join(directory, route), { recursive: true });
+      const script = extension === "tsx" ? "ts" : "js";
+      const config = `export default { pageExtensions: ['page.${extension}', 'page.${script}'] };\n`;
+      await writeFile(path.join(directory, "next.config.mjs"), config);
+      for (const stem of ["_app", "index"]) {
+        await writeFile(
+          path.join(directory, route, `${stem}.page.${extension}`),
+          "// private-custom-page\n"
+        );
+      }
+      const args = [
+        "c15t",
+        "scaffold",
+        "--framework",
+        "next-pages",
+        "--project",
+        "Website",
+        "--organization",
+        "org_acme",
+        "--skip-install",
+        "--json",
+      ];
+      for (const flag of ["--dry-run", "--yes", "--yes"]) {
+        const result = run(test, [...args, flag], directory);
+        assert.equal(result.status, 0, result.stderr);
+        const { data } = envelope.parse(JSON.parse(result.stdout));
+        const names = data.plan?.files.map((file) => file.path) ?? [];
+        for (const stem of ["_app", "index"]) {
+          const name = `${route}/${stem}.page.${extension}`;
+          assert.ok(names.includes(name), names.join(", "));
+          assert.equal(
+            await readFile(path.join(directory, name), "utf-8"),
+            "// private-custom-page\n"
+          );
+          assert.ok(
+            data.plan?.instructions.some((instruction) =>
+              instruction.startsWith(`Integrate c15t into ${name}:`)
+            )
+          );
+        }
+        const api = `${route}/api/c15t/[...c15t].page.${script}`;
+        assert.ok(names.includes(api), names.join(", "));
+        assert.equal(
+          await readFile(path.join(directory, "next.config.mjs"), "utf-8"),
+          config
+        );
+        assert.ok(!names.includes(`${route}/_app.tsx`));
+        assert.ok(!names.includes(`${route}/index.tsx`));
+        assert.ok(!names.includes(`${route}/api/c15t/[...c15t].ts`));
+        assert.doesNotMatch(
+          result.stdout + result.stderr,
+          /private-custom-page/u
+        );
+        if (flag === "--yes") {
+          assert.match(
+            await readFile(path.join(directory, api), "utf-8"),
+            /createPagesConsentRoute/u
+          );
+        }
+      }
+    }
+  }
+};
+
+const verifyNuxtLayouts = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [version, source, existing] of [
+    ["3.20.0", "", true],
+    ["3.20.0", "", false],
+    ["4.0.0", "app/", true],
+    ["3.20.0", "src/", true],
+  ] as const) {
+    const directory = await app(
+      parent,
+      `nuxt-${version}-${source.replace("/", "")}-${existing}`,
+      { nuxt: version }
+    );
+    const config = `export default defineNuxtConfig({ modules: ['existing-module']${source === "src/" ? ", srcDir: 'src/'" : ""} });\n`;
+    await writeFile(path.join(directory, "nuxt.config.js"), config);
+    const entry = `${source}app.vue`;
+    if (existing) {
+      await mkdir(path.dirname(path.join(directory, entry)), {
+        recursive: true,
+      });
+      await writeFile(
+        path.join(directory, entry),
+        "<template><h1>private-nuxt-page</h1></template>\n"
+      );
+    }
+    const args = [
+      "c15t",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--json",
+    ];
+    for (const flag of ["--dry-run", "--yes", "--yes"]) {
+      const result = run(test, [...args, flag], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = envelope.parse(JSON.parse(result.stdout));
+      assert.equal(data.framework, "nuxt");
+      const names = data.plan?.files.map((file) => file.path) ?? [];
+      assert.ok(names.includes(entry), names.join(", "));
+      assert.ok(names.includes("nuxt.config.js"));
+      assert.ok(!names.includes("nuxt.config.ts"));
+      assert.ok(!names.includes(source ? "app.vue" : "app/app.vue"));
+      assert.ok(
+        data.plan?.instructions.some(
+          (instruction) =>
+            instruction.includes("nuxt.config.js") &&
+            instruction.includes("c15t/vue")
+        )
+      );
+      assert.equal(
+        await readFile(path.join(directory, "nuxt.config.js"), "utf-8"),
+        config
+      );
+      if (existing) {
+        assert.equal(
+          await readFile(path.join(directory, entry), "utf-8"),
+          "<template><h1>private-nuxt-page</h1></template>\n"
+        );
+        assert.ok(
+          data.plan?.instructions.some(
+            (instruction) =>
+              instruction.includes(entry) && instruction.includes("ConsentRoot")
+          )
+        );
+      } else if (flag === "--yes") {
+        assert.match(
+          await readFile(path.join(directory, entry), "utf-8"),
+          /<ConsentRoot \/>/u
+        );
+      }
+      assert.doesNotMatch(result.stdout + result.stderr, /private-nuxt-page/u);
+    }
+  }
+};
+
+const verifyComputedFrameworkConfigs = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  for (const [framework, filename, config, dependency, message] of [
+    [
+      "next-pages",
+      "next.config.mjs",
+      "export default { pageExtensions: extensions };",
+      "next",
+      "Cannot verify Next.js pageExtensions",
+    ],
+    [
+      "nuxt",
+      "nuxt.config.ts",
+      "export default defineNuxtConfig({ srcDir: process.env.SOURCE });",
+      "nuxt",
+      "Cannot verify the Nuxt srcDir",
+    ],
+  ] as const) {
+    const directory = await app(parent, `computed-${framework}`, {
+      [dependency]: framework === "nuxt" ? "3.20.0" : "16.0.0",
+    });
+    await writeFile(path.join(directory, filename), config);
+    const before = await readdir(directory);
+    const result = run(
+      test,
+      [
+        "c15t",
+        "scaffold",
+        "--framework",
+        framework,
+        "--name",
+        "Created",
+        "--region",
+        "eu",
+        "--organization",
+        "org_acme",
+        "--yes",
+        "--skip-install",
+        "--json",
+      ],
+      directory
+    );
+    assert.equal(result.status, 1, result.stderr);
+    assert.ok((result.stdout + result.stderr).includes(message));
+    assert.deepEqual(await readdir(directory), before);
+    assert.equal(
+      await readFile(path.join(directory, filename), "utf-8"),
+      config
+    );
+    assert.ok(calls(result.stderr).every((call) => call.startsWith("GET")));
+  }
+};
+
 interface SvelteKitFixtureDependencies {
   "@sveltejs/adapter-auto"?: string;
   "@sveltejs/kit": string;
@@ -829,6 +1044,11 @@ const verifySvelteKitVersions = async (
     ["new-installed", "^2.48.5", "2.63.0", true],
     ["prerelease", "^3.0.0", "3.0.0-next.1", false],
     ["mixed-range", "^2.63.0 || ^2.48.5", "", false],
+    ["lower-bound", ">=2.63.0", "", false],
+    ["workspace-range", "workspace:*", "", false],
+    ["major-range", "2.x", "", false],
+    ["latest-tag", "latest", "", false],
+    ["workspace-installed", "workspace:*", "2.63.0", true],
   ] as const) {
     const directory = await app(parent, `sveltekit-version-${name}`, {
       "@sveltejs/kit": declared,
@@ -882,7 +1102,15 @@ const verifySvelteKitVersions = async (
       } else {
         assert.match(
           result.stdout + result.stderr,
-          /SvelteKit scaffolding requires @sveltejs\/kit 2\.63\.0/u
+          [
+            "mixed-range",
+            "lower-bound",
+            "workspace-range",
+            "major-range",
+            "latest-tag",
+          ].includes(name)
+            ? /Cannot verify the declared SvelteKit range/u
+            : /SvelteKit scaffolding requires @sveltejs\/kit 2\.63\.0/u
         );
         assert.deepEqual(await readdir(directory), before);
       }
@@ -1258,6 +1486,9 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyFrameworks(test, parent);
     await verifyNextSourceTrees(test, parent);
     await verifyNextEntryExtensions(test, parent);
+    await verifyNextPageExtensions(test, parent);
+    await verifyNuxtLayouts(test, parent);
+    await verifyComputedFrameworkConfigs(test, parent);
     await verifySvelteKitAdapter(test, parent);
     await verifySvelteKitVersions(test, parent);
     await verifyReactEntry(test, parent);

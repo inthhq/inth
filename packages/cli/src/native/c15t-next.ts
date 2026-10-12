@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
@@ -8,30 +8,100 @@ import type {
   GenerationPlan,
 } from "../../vendor/c15t/generate/index.ts";
 
-const preserveNextEntries = (generation: GenerationPlan, cwd: string): void => {
+const nextPageExtensions = (cwd: string, config?: string): string[] => {
+  const defaults = ["tsx", "ts", "jsx", "js"];
+  if (!config) {
+    return defaults;
+  }
+  const contents = readFileSync(join(cwd, config), "utf-8");
+  if (!/\bpageExtensions\b/u.test(contents)) {
+    return defaults;
+  }
+  const match =
+    /["']?\bpageExtensions\b["']?\s*:\s*\[(?<values>[^\]]*)\]\s*(?:[,}]|$)/u.exec(
+      contents
+    );
+  const values = match ? match.groups?.values : undefined;
+  const list = values?.replaceAll(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/gu, "") ?? "";
+  const literals = list
+    .split(",")
+    .map((literal) => literal.trim())
+    .filter(Boolean);
+  const extensions = literals.map((literal) => literal.slice(1, -1));
+  if (
+    !extensions.length ||
+    literals.some((literal) => !/^(?:"[^"\n]+"|'[^'\n]+')$/u.test(literal)) ||
+    extensions.some((extension) => !/^[\w-]+(?:\.[\w-]+)*$/u.test(extension))
+  ) {
+    throw new Error(
+      "Cannot verify Next.js pageExtensions. Scaffolding needs a literal list of file extensions in the config. Use agent setup to integrate c15t with a computed pageExtensions config."
+    );
+  }
+  return extensions;
+};
+
+const generatedPageExtension = (name: string, extensions: string[]): string => {
+  const script = name.endsWith(".ts");
+  const extension =
+    extensions.find((candidate) =>
+      script
+        ? /(?:^|\.)(?:ts|js)$/u.test(candidate)
+        : /(?:^|\.)(?:tsx|jsx)$/u.test(candidate)
+    ) ??
+    (script
+      ? extensions.find((candidate) => /(?:^|\.)(?:tsx|jsx)$/u.test(candidate))
+      : undefined);
+  if (!extension) {
+    throw new Error(
+      "Next.js pageExtensions must include a TypeScript or JavaScript extension for generated consent pages and API routes. Use agent setup to integrate c15t with other page formats."
+    );
+  }
+  return extension;
+};
+
+const preserveNextEntries = (
+  generation: GenerationPlan,
+  cwd: string,
+  extensions: string[]
+): void => {
   for (const [name, content] of Object.entries(generation.files)) {
     if (!/^(?:src\/)?(?:app|pages)\/.*\.tsx?$/u.test(name)) {
       continue;
     }
     const stem = name.replace(/\.tsx?$/u, "");
-    const existing = ["tsx", "ts", "jsx", "js"]
+    const pages = /^(?:src\/)?pages\//u.test(name);
+    const suffixes = pages ? extensions : ["tsx", "ts", "jsx", "js"];
+    const existing = suffixes
       .map((extension) => `${stem}.${extension}`)
       .find((candidate) => existsSync(join(cwd, candidate)));
-    if (!existing) {
+    const target =
+      existing ??
+      (pages ? `${stem}.${generatedPageExtension(name, extensions)}` : name);
+    if (!existing && target === name) {
       continue;
     }
+    const generated = /(?:^|\.)jsx?$/u.test(target)
+      ? content
+          .replaceAll(/^import type .*\n/gmu, "")
+          .replace(": AppProps<ConsentPageProps>", "")
+      : content;
     generation.files = {
       ...Object.fromEntries(
         Object.entries(generation.files).filter(([key]) => key !== name)
       ),
-      [existing]: content,
+      [target]: generated,
     };
     generation.merge = {
       ...Object.fromEntries(
         Object.entries(generation.merge ?? {}).filter(([key]) => key !== name)
       ),
-      [existing]: { type: "keep" },
+      [target]: existing
+        ? { type: "keep" }
+        : (generation.merge?.[name] ?? { type: "keep" }),
     };
+    if (!existing) {
+      continue;
+    }
     let guidance =
       "Keep your page content. For server consent, import withConsentProps from 'c15t/next/pages' and integrate it with getServerSideProps.";
     if (stem.endsWith("/layout")) {
@@ -90,9 +160,15 @@ export const adaptNextGeneration = (
       instruction.replaceAll(`${router}/`, `src/${router}/`)
     );
   }
-  preserveNextEntries(generation, cwd);
   const config = ["next.config.js", "next.config.mjs", "next.config.ts"].find(
     (name) => existsSync(join(cwd, name))
+  );
+  preserveNextEntries(
+    generation,
+    cwd,
+    router === "pages"
+      ? nextPageExtensions(cwd, config)
+      : ["tsx", "ts", "jsx", "js"]
   );
   if (config) {
     const content = generation.files["next.config.ts"];

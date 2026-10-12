@@ -5,12 +5,17 @@ import { join } from "node:path";
 import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
 import type { PackageManifest } from "../c15t.ts";
 
-const requireSupportedKit = (version: string): void => {
+const requireSupportedKit = (version: string, declaredRange: boolean): void => {
   const match =
     /^[~^]?\s*(?<major>\d+)(?:\.(?<minor>\d+)(?:\.\d+)?)?(?:\+[\w.-]+)?$/u.exec(
       version.trim()
     );
   const parts = match ? match.groups : undefined;
+  if (!parts && declaredRange) {
+    throw new Error(
+      "Cannot verify the declared SvelteKit range. Install the app's dependencies and retry so setup can check the installed @sveltejs/kit version. Scaffolding needs stable Kit 2.63+ or 3.x."
+    );
+  }
   const major = Number(parts?.major);
   const minor = Number(parts?.minor ?? "0");
   if (!parts || (major !== 2 && major !== 3) || (major === 2 && minor < 63)) {
@@ -47,14 +52,15 @@ export const adaptSvelteKitGeneration = (
     "package.json"
   );
   let kit = dependencies["@sveltejs/kit"] ?? "";
-  if (existsSync(installedPath)) {
+  const installedKit = existsSync(installedPath);
+  if (installedKit) {
     const installed: { version: string } = JSON.parse(
       readFileSync(installedPath, "utf-8")
     );
     kit = installed.version;
   }
   if (kit) {
-    requireSupportedKit(kit);
+    requireSupportedKit(kit, !installedKit);
   }
   const declared = dependencies["@sveltejs/adapter-auto"];
   const version = declared ?? (/^[~^]?\s*2(?:\.|$)/u.test(kit) ? "7" : "");

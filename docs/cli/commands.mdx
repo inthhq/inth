@@ -68,7 +68,11 @@ Next.js scaffolding uses the active `app` or `pages` directory, including apps t
 
 Next.js quickstart entry points do not import an app stylesheet or require an `@` path alias. Astro autodetection selects static output. Use `--framework astro` to choose server output explicitly.
 
-SvelteKit scaffolding requires stable SvelteKit 2.63+ or 3.x to match `@c15t/svelte@3`. Setup checks the installed Kit version first, then the version range in `package.json` when Kit is not installed. Upgrade and install older apps before scaffolding, or use agent setup to plan the upgrade. Setup preserves your existing Svelte config and package manifest.
+For Next.js Pages Router, scaffold reads a literal `pageExtensions` list from your config and uses its suffixes for existing entries and new consent API routes. Use agent setup for computed extension lists or page formats other than JavaScript and TypeScript.
+
+Nuxt scaffolding uses the root `app.vue` for Nuxt 3 and `app/app.vue` for Nuxt 4. It also supports a literal `srcDir` inside the app. Scaffold preserves existing app components and config filenames, and gives instructions to add the consent components and `c15t/vue` module. Use agent setup for a computed source directory.
+
+SvelteKit scaffolding requires stable SvelteKit 2.63+ or 3.x to match `@c15t/svelte@3`. Setup checks the installed Kit version first, then simple exact, caret, or tilde versions in `package.json` when Kit is not installed. If the range cannot be checked, install dependencies and retry. Upgrade and install older apps before scaffolding, or use agent setup to plan the upgrade. Setup preserves your existing Svelte config and package manifest.
 
 For an existing `.env`, scaffold distinguishes new keys from assignments to replace. If the selected backend variable occurs more than once, the instructions ask you to keep one assignment with the selected backend URL. Existing file contents stay out of the output.
 
