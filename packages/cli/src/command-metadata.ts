@@ -345,7 +345,7 @@ export const COMMAND_METADATA: CommandMetadata[] = [
       "Selects an Inth project or creates one with c15t branding. New projects require a region.",
       "Agent setup is recommended to adapt the integration to this app and verify consent in a browser. The picker defaults to an installed agent, or a prompt for another agent.",
       "Prompt prints public setup inputs. Agent flags start the chosen coding agent in this directory.",
-      "Scaffold writes framework quickstart files and installs c15t on the alpha release line. Existing files are preserved; conflicting generated files stop setup.",
+      "Scaffold writes framework quickstart files and installs c15t on the stable v3 release line. Existing files are preserved; conflicting generated files stop setup.",
       "Scaffold and prompt support --json. Agent sessions require a terminal.",
     ],
     examples: [

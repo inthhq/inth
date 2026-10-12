@@ -8,10 +8,7 @@ import {
   requireProjectBackendURL,
   resolveProject,
 } from "../../vendor/c15t/frontend/projects.ts";
-import {
-  recoverGeneration,
-  runGenerationWorkflow,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
+import { recoverGeneration } from "../../vendor/c15t/frontend/runtime/index.ts";
 import type { GenerationWorkflowResult } from "../../vendor/c15t/frontend/runtime/index.ts";
 import { boilerplateFrameworks } from "../../vendor/c15t/generate/index.ts";
 import type { BoilerplateFramework } from "../../vendor/c15t/generate/index.ts";
@@ -35,6 +32,7 @@ import { CliError } from "../cli-error.ts";
 import { chooseOrganization, terminalText } from "../organizations.ts";
 import type { Organization, OrganizationUI } from "../organizations.ts";
 import { printResult } from "../output.ts";
+import { runGenerationWorkflow } from "./c15t-generation.ts";
 import type { NativeApi } from "./native-api.ts";
 import { invalidResponse } from "./native-protocol.ts";
 import type { NativeContext } from "./native-state.ts";

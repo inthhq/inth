@@ -120,6 +120,9 @@ const verifyExistingProject = async (
   assert.equal(promptData.project.backendUrl, BACKEND);
   assert.match(promptData.prompt ?? "", /"framework": "next-app"/u);
   assert.match(promptData.prompt ?? "", new RegExp(BACKEND, "u"));
+  assert.match(promptData.prompt ?? "", /<package>@latest/u);
+  assert.match(promptData.prompt ?? "", /https:\/\/c15t\.com\/docs/u);
+  assert.doesNotMatch(promptData.prompt ?? "", /@alpha|v3\.c15t\.com/u);
 
   const preview = run(
     test,
@@ -137,7 +140,7 @@ const verifyExistingProject = async (
   );
   assert.equal(preview.status, 0, preview.stderr);
   const previewData = envelope.parse(JSON.parse(preview.stdout)).data;
-  assert.deepEqual(previewData.plan?.dependencies, ["c15t@alpha"]);
+  assert.deepEqual(previewData.plan?.dependencies, ["c15t@3"]);
   assert.deepEqual(await readdir(directory), [
     "app",
     "package.json",
@@ -232,7 +235,7 @@ const verifyScaffold = async (
     assert.deepEqual(installer.trim().split("\n"), [
       directory,
       "add",
-      "c15t@alpha",
+      "c15t@3",
     ]);
   }
   // An interrupted apply leaves c15t's journal directory behind.
@@ -464,19 +467,19 @@ const verifyFrameworks = async (
     const { data } = envelope.parse(JSON.parse(result.stdout));
     assert.equal(data.framework, framework);
     const dependencies = {
-      astro: ["c15t@alpha", "@astrojs/node", "@astrojs/svelte", "svelte"],
-      "astro-static": ["c15t@alpha", "@astrojs/svelte", "svelte"],
+      astro: ["c15t@3", "@astrojs/node", "@astrojs/svelte", "svelte"],
+      "astro-static": ["c15t@3", "@astrojs/svelte", "svelte"],
       html: [],
-      javascript: ["@c15t/browser@alpha", "c15t@alpha"],
-      "next-app": ["c15t@alpha"],
-      "next-pages": ["c15t@alpha"],
-      nuxt: ["c15t@alpha"],
-      react: ["c15t@alpha"],
-      solid: ["@c15t/core@alpha"],
-      svelte: ["@c15t/svelte@alpha"],
-      sveltekit: ["@c15t/svelte@alpha"],
-      "tanstack-start": ["c15t@alpha"],
-      vue: ["c15t@alpha"],
+      javascript: ["@c15t/browser@latest", "c15t@3"],
+      "next-app": ["c15t@3"],
+      "next-pages": ["c15t@3"],
+      nuxt: ["c15t@3"],
+      react: ["c15t@3"],
+      solid: ["@c15t/core@3"],
+      svelte: ["@c15t/svelte@latest"],
+      sveltekit: ["@c15t/svelte@latest"],
+      "tanstack-start": ["c15t@3"],
+      vue: ["c15t@3"],
     }[framework];
     assert.deepEqual(data.plan?.dependencies, dependencies, framework);
     assert.ok(data.created?.length);
@@ -499,6 +502,59 @@ const verifyFrameworks = async (
   }
 };
 
+const verifyPartialHtml = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const script = `<script src="${BACKEND}/c15t.js" defer></script>`;
+  const link = '<a href="#c15t-preferences">Privacy settings</a>';
+  for (const [name, head, body, missing, present] of [
+    ["html-script", script, "", "#c15t-preferences", "/c15t.js"],
+    ["html-link", "", link, "/c15t.js", "#c15t-preferences"],
+    ["html-complete", script, link, "", ""],
+  ]) {
+    const directory = await app(parent, name ?? "", {});
+    const html = `<html><head>${head}</head><body>${body}</body></html>`;
+    await writeFile(path.join(directory, "index.html"), html);
+    const args = [
+      "c15t",
+      "scaffold",
+      "--framework",
+      "html",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--json",
+    ];
+    for (const flags of [["--dry-run"], ["--yes", "--skip-install"]]) {
+      const result = run(test, [...args, ...flags], directory);
+      assert.equal(result.status, 0, result.stderr);
+      const { data } = JSON.parse(result.stdout);
+      const guidance = data.plan.instructions.filter((instruction: string) =>
+        instruction.startsWith("Add to index.html:")
+      );
+      if (missing) {
+        assert.equal(guidance.length, 1);
+        assert.ok(guidance[0].includes(missing), guidance[0]);
+        assert.ok(!guidance[0].includes(present), guidance[0]);
+      } else {
+        assert.deepEqual(guidance, []);
+      }
+      assert.equal(
+        await readFile(path.join(directory, "index.html"), "utf-8"),
+        html
+      );
+      assert.deepEqual(await readdir(directory), [
+        "app",
+        "index.html",
+        "package.json",
+        "pnpm-lock.yaml",
+      ]);
+    }
+  }
+};
+
 export const verifyC15t = async (binary: string): Promise<void> => {
   const parent = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "inth-c15t-"))
@@ -515,6 +571,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await mkdir(bin);
     await verifyScaffold(test, next, bin);
     await verifyFrameworks(test, parent);
+    await verifyPartialHtml(test, parent);
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
     if (!windows) {
       await verifyAgents(test, next, bin);
