@@ -123,6 +123,15 @@ const verifyExistingProject = async (
   assert.match(promptData.prompt ?? "", /<package>@latest/u);
   assert.match(promptData.prompt ?? "", /https:\/\/c15t\.com\/docs/u);
   assert.doesNotMatch(promptData.prompt ?? "", /@alpha|v3\.c15t\.com/u);
+  assert.match(
+    promptData.prompt ?? "",
+    /Running inth c15t alone does not request an upgrade/u
+  );
+  assert.match(
+    promptData.prompt ?? "",
+    /follow its installed package's bundled docs, skip the v3 installation and migration steps/u
+  );
+  assert.doesNotMatch(promptData.prompt ?? "", /below 3\.0 → Upgrade path/u);
 
   const preview = run(
     test,
@@ -363,6 +372,7 @@ const verifyAgents = async (
   assert.equal(cwd, directory);
   assert.equal(count, "1");
   assert.match(prompt ?? "", /^Set up c15t v3/u);
+  assert.match(launch, /Running inth c15t alone does not request an upgrade/u);
   const failed = run(test, args, directory, {
     ...env,
     INTH_TEST_AGENT_EXIT: "3",
@@ -391,6 +401,10 @@ const verifyAgents = async (
   assert.equal(fxCount, "2");
   assert.equal(fxCommand, "ask");
   assert.match(fxPrompt ?? "", /^Set up c15t v3/u);
+  assert.match(
+    fxLaunch,
+    /Running inth c15t alone does not request an upgrade/u
+  );
   const missing = run(
     test,
     [

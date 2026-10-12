@@ -7,3 +7,5 @@ The files are unmodified. Refresh them with `node scripts/vendor-c15t.ts` after 
 inth supplies the account, organization, and project state that `frontend/index.ts` expects from a host. It uses `frontend/agent/prompt.ts` for agent prompts and `frontend/runtime` to plan, write, and install generated files.
 
 `src/native/c15t-generation.ts` adapts the runtime's manual insert guidance for existing files. Version 3.0.0 lists all snippets when only some are missing; the host uses upstream's merge checks to recommend only missing snippets. The vendored runtime remains unchanged.
+
+`src/native/c15t-agent.ts` applies Inth's upgrade policy to exported and launched agent prompts. Existing c15t installations keep their current major unless the user explicitly requests an upgrade.

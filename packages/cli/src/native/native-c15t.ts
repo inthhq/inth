@@ -3,7 +3,6 @@ import { existsSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { basename, delimiter, dirname, join } from "node:path";
 
-import { createAgentSetupPlan } from "../../vendor/c15t/frontend/agent/prompt.ts";
 import {
   requireProjectBackendURL,
   resolveProject,
@@ -32,6 +31,7 @@ import { CliError } from "../cli-error.ts";
 import { chooseOrganization, terminalText } from "../organizations.ts";
 import type { Organization, OrganizationUI } from "../organizations.ts";
 import { printResult } from "../output.ts";
+import { createAgentSetupPlan } from "./c15t-agent.ts";
 import { runGenerationWorkflow } from "./c15t-generation.ts";
 import type { NativeApi } from "./native-api.ts";
 import { invalidResponse } from "./native-protocol.ts";
