@@ -40,7 +40,6 @@
     "dev:unlink": "npm unlink --global @inth/cli --ignore-scripts --no-audit --no-fund",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.native.json",
     "bench": "node scripts/benchmark-scriptc.ts",
-    "build:native:dynamic": "node scripts/scriptc.ts build experiments/node/inth.ts --dynamic -o dist-bin/inth-dynamic",
     "inth": "node scripts/run-native.js",
     "build:yao": "node scripts/build-yao.ts",
     "test:yao": "node scripts/verify-yao.ts",

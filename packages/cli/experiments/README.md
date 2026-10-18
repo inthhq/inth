@@ -74,5 +74,3 @@ The first command measures the complete CLIs' help startup: the Scriptc binary, 
 ## Earlier Scriptc compatibility probes
 
 `scriptc/` retains the pinned inrepo Zod assessment and its original results. `pnpm --filter @inth/cli assess:vendoring` reproduces it. Source validation passes; the static compilation probe intentionally exits with SC1016 for circular module initialization. See [the assessment](scriptc/README.md).
-
-`pnpm --filter @inth/cli build:native:dynamic` attempts to compile the Node reference with Scriptc's dynamic runtime. It remains a compatibility experiment and is not the production build. The static CLI's supported native adapters live in `../src/native/`.
