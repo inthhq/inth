@@ -11,6 +11,8 @@ import {
   billingBody,
   outputCases,
   projectsBody,
+  runtimeFindingBody,
+  vendorIgnoredBody,
 } from "./fixtures/resource-output.ts";
 
 const plain = { color: false, columns: 120 };
@@ -55,6 +57,31 @@ describe("human resource output", () => {
     expect(text).toMatch(/Credits\s+Unlimited/u);
     expect(text).not.toMatch(/Credits\s+0/u);
     expect(text).toMatch(/Auto top-up\s+Not configured/u);
+  });
+  it("says when a vendor decision closed no Inbox finding", () => {
+    const text = formatResource(
+      parseArguments([
+        "vendors",
+        "ignore",
+        "google-analytics",
+        "--project",
+        "prj_123",
+      ]),
+      vendorIgnoredBody,
+      plain
+    );
+    expect(text).toMatch(/Inbox finding\s+None/u);
+    expect(text).toMatch(/State\s+ignored/u);
+  });
+  it("shows each way a runtime vendor loaded once", () => {
+    const text = formatResource(
+      parseArguments(["inbox", "get", "inbox_456"]),
+      runtimeFindingBody,
+      plain
+    );
+    expect(/Loaded by\s+(?<loader>.+)/u.exec(text)?.groups?.loader).toBe(
+      "Google Tag Manager (GTM-ABC123), https://cdn.example.com/loader.js"
+    );
   });
   it("uses aligned tables when they fit and labelled rows at narrow widths", () => {
     const options = parseArguments(["project", "list"]);

@@ -67,6 +67,7 @@ const itemSchema = scanSchema.extend({
     .nullable()
     .optional(),
   htmlUrl: z.string().optional(),
+  inboxItemId: z.string().nullable().optional(),
   invitedBy: personSchema.optional(),
   issues: z
     .array(
@@ -98,18 +99,42 @@ const itemSchema = scanSchema.extend({
   prefix: z.string().nullable().optional(),
   preparationId: z.string().optional(),
   priority: z.string().nullable().optional(),
+  projectId: z.string().optional(),
   reference: z.string().optional(),
+  reviewState: z.string().optional(),
   role: z.string().optional(),
+  runtimeVendor: z
+    .object({
+      evidence: z.array(
+        z.object({
+          loadedBy: z
+            .object({
+              scriptUrl: z.string().nullable(),
+              tagManagerContainerId: z.string().nullable(),
+              viaGoogleTagManager: z.boolean(),
+            })
+            .nullable(),
+        })
+      ),
+      name: z.string(),
+      projectId: z.string(),
+      state: z.string(),
+      vendorId: z.string(),
+    })
+    .nullable()
+    .optional(),
   scan: scanSchema.optional(),
   scanId: z.string().optional(),
   slug: z.string().optional(),
   source: z.string().optional(),
+  state: z.string().optional(),
   summary: z.string().nullable().optional(),
   tier: z.string().optional(),
   title: z.string().optional(),
   totalCount: z.number().optional(),
   updated: z.boolean().optional(),
   user: personSchema.optional(),
+  vendorId: z.string().optional(),
   version: z.string().optional(),
   visibility: z.string().optional(),
 });

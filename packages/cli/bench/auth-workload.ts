@@ -43,7 +43,7 @@ export class AuthScenario {
       check(
         url === "https://dashboard.example/device" &&
           fields.get("scope") ===
-            "openid profile email offline_access organizations.read organizations.write projects.read projects.write members.read members.write api-keys.read api-keys.write code-audit.read code-audit.write inbox.read inbox.write billing.read",
+            "openid profile email offline_access organizations.read organizations.write projects.read projects.write members.read members.write api-keys.read api-keys.write code-audit.read code-audit.write inbox.read inbox.write vendors.write billing.read",
         "Wrong device request."
       );
       body =

@@ -21,6 +21,72 @@ export const projectsBody = JSON.stringify({
   pagination: { hasMore: true, nextCursor: "cursor+/=" },
   success: true,
 });
+// A runtime finding as GET /v1/inbox/:id returns it, with every runtimeVendor field.
+export const runtimeFindingBody = JSON.stringify({
+  data: {
+    codeEvidence: null,
+    id: "inbox_456",
+    priority: "P2",
+    runtimeVendor: {
+      consentCategory: "measurement",
+      evidence: [
+        {
+          kind: "request",
+          loadedBy: {
+            initiator: "script",
+            scriptUrl: "https://www.googletagmanager.com/gtm.js?id=GTM-ABC123",
+            tagManagerContainerId: "GTM-ABC123",
+            viaGoogleTagManager: true,
+          },
+          observedAt: "2026-10-01T12:00:00.000Z",
+          pageUrl: "https://example.com/",
+          source: "scan",
+          value: "https://www.google-analytics.com/g/collect",
+        },
+        {
+          kind: "cookie",
+          loadedBy: {
+            initiator: "script",
+            scriptUrl: "https://cdn.example.com/loader.js",
+            tagManagerContainerId: null,
+            viaGoogleTagManager: false,
+          },
+          observedAt: "2026-10-01T12:00:00.000Z",
+          pageUrl: null,
+          source: "scan",
+          value: "_ga",
+        },
+        {
+          kind: "cookie",
+          loadedBy: null,
+          observedAt: "2026-10-01T12:00:00.000Z",
+          pageUrl: null,
+          source: "scan",
+          value: "_gid",
+        },
+      ],
+      firstSeenAt: "2026-09-01T12:00:00.000Z",
+      hosts: ["www.google-analytics.com"],
+      lastSeenAt: "2026-10-01T12:00:00.000Z",
+      name: "Google Analytics",
+      privacyPolicyUrl: "https://policies.google.com/privacy",
+      projectId: "prj_123",
+      projectSlug: "website",
+      reviewState: "needs_review",
+      sources: ["scan"],
+      state: "active",
+      vendorId: "google-analytics",
+    },
+    source: "runtime",
+    status: "open",
+    title: "New vendor: Google Analytics",
+    version: "1",
+  },
+  success: true,
+});
+// A decision for a vendor with no runtime Inbox finding.
+export const vendorIgnoredBody =
+  '{"success":true,"data":{"inboxItemId":null,"projectId":"prj_123","reviewState":"needs_review","state":"ignored","vendorId":"google-analytics"}}';
 export interface OutputCase {
   args: string[];
   body: string;
@@ -258,5 +324,34 @@ export const outputCases: OutputCase[] = [
     args: ["inbox", "github-issue", "inbox_123"],
     body: '{"success":true,"data":{"id":"inbox_123","title":"Personal data in logs","githubIssue":{"number":42,"url":"https://github.com/acme/website/issues/42"}}}',
     expected: ["GitHub issue", "https://github.com/acme/website/issues/42"],
+  },
+  {
+    args: ["inbox", "get", "inbox_456"],
+    body: runtimeFindingBody,
+    expected: [
+      "Google Analytics",
+      "google-analytics",
+      "prj_123",
+      "active",
+      "Google Tag Manager (GTM-ABC123)",
+      "https://cdn.example.com/loader.js",
+    ],
+  },
+  {
+    args: ["vendors", "approve", "google-analytics", "--project", "prj_123"],
+    body: '{"success":true,"data":{"inboxItemId":"inbox_456","projectId":"prj_123","reviewState":"accepted","state":"approved","vendorId":"google-analytics"}}',
+    expected: [
+      "Vendor approved",
+      "google-analytics",
+      "prj_123",
+      "approved",
+      "accepted",
+      "inbox_456 (resolved)",
+    ],
+  },
+  {
+    args: ["vendors", "ignore", "google-analytics", "--project", "prj_123"],
+    body: vendorIgnoredBody,
+    expected: ["Vendor ignored", "google-analytics", "ignored", "None"],
   },
 ];

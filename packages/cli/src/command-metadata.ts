@@ -2,7 +2,7 @@ import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
-import { RESOURCE_COMMANDS } from "./resource-commands.ts";
+import { RESOURCE_COMMANDS, acceptsData } from "./resource-commands.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
 
 export interface OptionMetadata {
@@ -92,6 +92,7 @@ export const OPTION_METADATA: OptionMetadata[] = [
     "Opaque pagination.nextCursor from the previous page"
   ),
   option("region", "string", "Project region ID from inth region list"),
+  option("project", "string", "Project ID"),
   option("description", "string", "Project description"),
   option("branding", "string", "Consent branding", ["inth", "c15t", "none"]),
   option(
@@ -214,6 +215,8 @@ const descriptions = [
   ["inbox get", "Read a finding"],
   ["inbox update", "Change a finding's status"],
   ["inbox github-issue", "Create a GitHub issue for a finding"],
+  ["vendors approve", "Approve a vendor seen on a project"],
+  ["vendors ignore", "Ignore a vendor seen on a project"],
 ];
 const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.command === "feedback") {
@@ -239,6 +242,15 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.action === "github-issue") {
     effects.push("Creates an issue on GitHub.");
   }
+  if (spec.command === "vendors") {
+    effects.push(
+      spec.action === "approve"
+        ? "Accepts the vendor's data sharing on the project."
+        : "Ignores the vendor on the project.",
+      "Closes the vendor's runtime Inbox finding, if one exists. Later scans keep the decision. Repeating a decision changes nothing.",
+      "Take the vendor and project IDs from runtimeVendor in inth inbox get. Requires an admin or owner role."
+    );
+  }
   return effects;
 };
 const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
@@ -251,7 +263,7 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   if (spec.paginated) {
     names.push("limit", "cursor");
   }
-  if (write && spec.fields.length && spec.command !== "org") {
+  if (acceptsData(spec)) {
     names.push("data");
   }
   let family = spec.command;

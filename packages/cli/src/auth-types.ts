@@ -17,6 +17,7 @@ export const CAPABILITIES = [
   "code-audit.write",
   "inbox.read",
   "inbox.write",
+  "vendors.write",
   "billing.read",
 ];
 export const SCOPE = `openid profile email offline_access ${CAPABILITIES.join(" ")}`;

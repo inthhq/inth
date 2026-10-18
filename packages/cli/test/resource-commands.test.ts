@@ -5,6 +5,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { run } from "../experiments/node/commands.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";
 import { parseArguments } from "../src/arguments.ts";
+import { HttpError } from "../src/http-error.ts";
+import { reportError } from "../src/output.ts";
 import {
   buildResourceRequest,
   rawApiRequest,
@@ -66,6 +68,52 @@ describe("public resource commands", () => {
     "rejects invalid requests %j before HTTP",
     (args) => {
       expect(() => parseArguments(args)).toThrow();
+    }
+  );
+  it.each([
+    [
+      "INSUFFICIENT_SCOPE",
+      "insufficient_scope",
+      "Organization API keys cannot gain",
+    ],
+    ["FORBIDDEN", "access_denied", "HTTP 403"],
+  ])(
+    "reports a refused vendor decision (%s) with guidance",
+    async (apiCode, code, guidance) => {
+      vi.stubEnv("INTH_TOKEN", "inth_fixture");
+      vi.stubGlobal(
+        "fetch",
+        vi
+          .fn()
+          .mockResolvedValue(
+            Response.json(
+              { error: { code: apiCode }, success: false },
+              { headers: { "X-Request-Id": "decision-id" }, status: 403 }
+            )
+          )
+      );
+      const args = [
+        "vendors",
+        "approve",
+        "google-analytics",
+        "--project",
+        "prj_123",
+        "--json",
+      ];
+      const failure = await run(args, new AbortController().signal).then(
+        () => new Error("The decision was not refused."),
+        (error: Error) => error
+      );
+      expect(failure).toBeInstanceOf(HttpError);
+      const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+      expect(reportError(true, failure, false)).toBe(1);
+      expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "").error).toMatchObject({
+        apiCode,
+        code,
+        httpStatus: 403,
+        message: expect.stringContaining(guidance),
+        requestId: "decision-id",
+      });
     }
   );
   it("encodes resource IDs as a single path segment", () => {

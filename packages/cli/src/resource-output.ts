@@ -6,6 +6,7 @@ import { resourceCommand } from "./resource-commands.ts";
 import type {
   ResourceItem,
   ResourcePage,
+  RuntimeVendor,
   ScanDetails,
 } from "./resource-output-types.ts";
 
@@ -276,6 +277,40 @@ const projectFields = (item: ResourceItem): Field[] => {
   }
   return fields;
 };
+// How the scan saw the vendor load: a Google Tag Manager container or a script.
+const loadedBy = (vendor: RuntimeVendor): string | undefined => {
+  const sources: string[] = [];
+  for (const evidence of vendor.evidence) {
+    const loader = evidence.loadedBy;
+    let source = loader?.scriptUrl ?? undefined;
+    if (loader?.viaGoogleTagManager) {
+      source = loader.tagManagerContainerId
+        ? `Google Tag Manager (${loader.tagManagerContainerId})`
+        : "Google Tag Manager";
+    }
+    if (source && !sources.includes(source)) {
+      sources.push(source);
+    }
+  }
+  return sources.length ? sources.join(", ") : undefined;
+};
+// Approving resolves the vendor's Inbox finding; ignoring dismisses it.
+const vendorDecisionFields = (
+  options: CliArguments,
+  item: ResourceItem
+): Field[] => {
+  let finding = "None";
+  if (item.inboxItemId) {
+    finding = `${item.inboxItemId} (${options.argument === "approve" ? "resolved" : "dismissed"})`;
+  }
+  return [
+    field("Vendor", item.vendorId),
+    field("Project", item.projectId),
+    field("State", item.state),
+    field("Review state", item.reviewState),
+    field("Inbox finding", finding),
+  ];
+};
 const inboxFields = (item: ResourceItem): Field[] => {
   const fields = [field("Finding", item.title), field("ID", item.id)];
   add(fields, "Status", item.status);
@@ -290,6 +325,14 @@ const inboxFields = (item: ResourceItem): Field[] => {
     add(fields, "Lines", item.codeEvidence.lineNumbers.join(", "));
     add(fields, "Recommendation", item.codeEvidence.recommendation);
   }
+  const vendor = item.runtimeVendor;
+  if (vendor) {
+    add(fields, "Vendor", vendor.name);
+    add(fields, "Vendor ID", vendor.vendorId);
+    add(fields, "Project", vendor.projectId);
+    add(fields, "Vendor state", vendor.state);
+    add(fields, "Loaded by", loadedBy(vendor));
+  }
   return fields;
 };
 const resourceFields = (options: CliArguments, item: ResourceItem): Field[] => {
@@ -302,6 +345,9 @@ const resourceFields = (options: CliArguments, item: ResourceItem): Field[] => {
     }
     case "inbox": {
       return inboxFields(item);
+    }
+    case "vendors": {
+      return vendorDecisionFields(options, item);
     }
     case "code-audit": {
       return scanFields(item.scan ?? item);
@@ -350,6 +396,12 @@ const resultHeading = (options: CliArguments): string => {
     }
     case "github-issue": {
       return "GitHub issue";
+    }
+    case "approve": {
+      return "Vendor approved";
+    }
+    case "ignore": {
+      return "Vendor ignored";
     }
     default: {
       return noun;

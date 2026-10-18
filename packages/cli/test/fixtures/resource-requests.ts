@@ -375,6 +375,20 @@ export const requestCases: RequestCase[] = [
     path: "/v1/inbox/inbox_123/github-issue",
     scoped: false,
   },
+  {
+    args: ["vendors", "approve", "google-analytics", "--project", "prj_123"],
+    body: '{"decision":"approve"}',
+    method: "POST",
+    path: "/v1/projects/prj_123/vendors/google-analytics/decision",
+    scoped: false,
+  },
+  {
+    args: ["vendors", "ignore", "vendor/a b", "--project", "prj 1"],
+    body: '{"decision":"ignore"}',
+    method: "POST",
+    path: "/v1/projects/prj%201/vendors/vendor%2Fa%20b/decision",
+    scoped: false,
+  },
 ];
 
 export const invalidRequests: string[][] = [
@@ -536,6 +550,27 @@ export const invalidRequests: string[][] = [
   ["member", "update", "mem_123"],
   ["invitation", "create", "--email", "kim@example.com"],
   ["inbox", "update", "inbox_123", "--status", "resolved"],
+  ["vendors", "approve", "google-analytics"],
+  ["vendors", "approve", "--project", "prj_123"],
+  ["vendors", "ignore", "google-analytics", "--project", ".."],
+  [
+    "vendors",
+    "approve",
+    "google-analytics",
+    "--project",
+    "prj_123",
+    "--data",
+    '{"decision":"ignore"}',
+  ],
+  [
+    "vendors",
+    "ignore",
+    "google-analytics",
+    "--project",
+    "prj_123",
+    "--organization",
+    "org_123",
+  ],
   ["code-audit", "request", "prep_123"],
   [
     "code-audit",
