@@ -1,0 +1,28 @@
+diff --git a/dist/frontend/lowering/lower-calls.js b/dist/frontend/lowering/lower-calls.js
+index ce503faf608fb5db6e17f3f8a595e87f552f04de..4bb3d918c98c5cc0938404dbd4410fcf70861027 100644
+--- a/dist/frontend/lowering/lower-calls.js
++++ b/dist/frontend/lowering/lower-calls.js
+@@ -2839,7 +2839,10 @@ function lowerDynReceiverMethodCall(lowerer, call, access) {
+                 ?.arms.every((arm) => arm.kind === "object" &&
+                 lowerer.classes.get(arm.className)?.fields.has(access.name.text)))
+             return true;
++        // Library declarations spell native methods as readonly function
++        // properties (undici-types `Headers.get`); those still dispatch by name.
+         return (prop !== undefined &&
++            !lowerer.isStdlibSymbol(prop) &&
+             lowerer.checker
+                 .declarationsOf(prop)
+                 .some((decl) => ts.isPropertyDeclaration(decl) || ts.isPropertySignature(decl)));
+diff --git a/dist/ir/analysis.js b/dist/ir/analysis.js
+index 5767f9786e3657d167c553af3b47660348d6270a..4c409c8da83ab7986bb1b8b03b5a1becfd4744af 100644
+--- a/dist/ir/analysis.js
++++ b/dist/ir/analysis.js
+@@ -138,6 +138,8 @@ export function dynDesc(t, recordsById, unionsById) {
+             return "RegExp";
+         case "url":
+             return "URL";
++        case "searchParams":
++            return "URLSearchParams";
+         case "date":
+             return "Date";
+         default: {

@@ -1,6 +1,6 @@
 // Runs the scriptc compiler from @scriptc/compiler under Node. The prebuilt
 // scriptc executable embeds the same compiler, but only the JavaScript build can
-// carry patches/@scriptc__compiler@0.2.2.patch. Usage matches `scriptc`.
+// carry patches/@scriptc__compiler@0.3.6.patch. Usage matches `scriptc`.
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
