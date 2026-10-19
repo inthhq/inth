@@ -1,34 +1,36 @@
-import { readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { readFile } from "node:fs/promises";
+// eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
+import { dirname, join, resolve } from "node:path";
 
 import {
-	intersects,
-	minVersion,
-	parse,
-	subset,
-	valid,
-	validRange,
-} from 'semver';
+  intersects,
+  minVersion,
+  parse,
+  subset,
+  valid,
+  validRange,
+} from "./semver.ts";
 
 /** The dependency fields of an app's `package.json` the codemods read. */
 export interface PackageJson {
-	dependencies?: Record<string, string>;
-	devDependencies?: Record<string, string>;
-	peerDependencies?: Record<string, string>;
-	optionalDependencies?: Record<string, string>;
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
 }
 
 /** The app's `package.json`, or null when it is missing or not JSON. */
 export const readPackageJson = async function readPackageJson(
-	projectRoot: string
+  projectRoot: string
 ): Promise<PackageJson | null> {
-	try {
-		return JSON.parse(
-			await readFile(join(projectRoot, 'package.json'), 'utf-8')
-		) as PackageJson;
-	} catch {
-		return null;
-	}
+  try {
+    const text = await readFile(join(projectRoot, "package.json"), "utf-8");
+    // SAFETY: Codemods read only the dependency groups, which npm writes as
+    // maps of package names to version ranges.
+    return JSON.parse(text) as PackageJson;
+  } catch {
+    return null;
+  }
 };
 
 /**
@@ -38,14 +40,14 @@ export const readPackageJson = async function readPackageJson(
  * `peerDependencies`.
  */
 export const dependenciesOf = function dependenciesOf(
-	manifest: PackageJson | null
-): Record<string, string> {
-	return {
-		...manifest?.optionalDependencies,
-		...manifest?.peerDependencies,
-		...manifest?.devDependencies,
-		...manifest?.dependencies,
-	};
+  manifest: PackageJson | null
+) {
+  return {
+    ...manifest?.optionalDependencies,
+    ...manifest?.peerDependencies,
+    ...manifest?.devDependencies,
+    ...manifest?.dependencies,
+  };
 };
 
 /** `workspace:` and `npm:<name>@` prefixes in front of a semver range. */
@@ -57,7 +59,7 @@ const RANGE_PREFIX = /^(?:workspace:|npm:(?:@[^/]+\/)?[^@]+@)/u;
  * whatever digits it holds.
  */
 export const rangeOf = function rangeOf(specifier: string): string | null {
-	return validRange(specifier.replace(RANGE_PREFIX, ''));
+  return validRange(specifier.replace(RANGE_PREFIX, ""));
 };
 
 /**
@@ -67,55 +69,55 @@ export const rangeOf = function rangeOf(specifier: string): string | null {
  * whatever digits it holds.
  */
 const declaredMajorOf = function declaredMajorOf(
-	specifier: string
+  specifier: string
 ): number | null {
-	const range = rangeOf(specifier);
-	if (range === null) {
-		return null;
-	}
-	const major = minVersion(range)?.major;
-	if (major === undefined) {
-		return null;
-	}
-	return subset(range, `>=${major}.0.0-0 <${major + 1}.0.0`, {
-		includePrerelease: true,
-	})
-		? major
-		: null;
+  const range = rangeOf(specifier);
+  if (range === null) {
+    return null;
+  }
+  const major = minVersion(range)?.major;
+  if (major === undefined) {
+    return null;
+  }
+  return subset(range, `>=${major}.0.0-0 <${major + 1}.0.0`, {
+    includePrerelease: true,
+  })
+    ? major
+    : null;
 };
 
 /** Whether a semver specifier allows some version with this major. */
 const admitsMajor = function admitsMajor(
-	specifier: string,
-	major: number
+  specifier: string,
+  major: number
 ): boolean {
-	const range = rangeOf(specifier);
-	return (
-		range !== null &&
-		intersects(range, `>=${major}.0.0-0 <${major + 1}.0.0`, {
-			includePrerelease: true,
-		})
-	);
+  const range = rangeOf(specifier);
+  return (
+    range !== null &&
+    intersects(range, `>=${major}.0.0-0 <${major + 1}.0.0`, {
+      includePrerelease: true,
+    })
+  );
 };
 
 /** The valid version a `package.json` text declares, or null. */
 const versionIn = function versionIn(text: string): string | null {
-	try {
-		const { version } = JSON.parse(text) as { version?: unknown };
-		return typeof version === 'string' && valid(version) !== null
-			? version
-			: null;
-	} catch {
-		return null;
-	}
+  try {
+    // SAFETY: A version that is not a string throws in `valid`, and the
+    // catch below treats it as no version.
+    const { version } = JSON.parse(text) as { version?: string };
+    return version !== undefined && valid(version) !== null ? version : null;
+  } catch {
+    return null;
+  }
 };
 
 /** A directory and each directory above it, up to the filesystem root. */
 const ancestorsOf = function ancestorsOf(directory: string): string[] {
-	const parent = dirname(directory);
-	return parent === directory
-		? [directory]
-		: [directory, ...ancestorsOf(parent)];
+  const parent = dirname(directory);
+  return parent === directory
+    ? [directory]
+    : [directory, ...ancestorsOf(parent)];
 };
 
 /**
@@ -126,28 +128,28 @@ const ancestorsOf = function ancestorsOf(directory: string): string[] {
  * expose it to `require.resolve()`.
  */
 export const installedVersion = async function installedVersion(
-	projectRoot: string,
-	name: string
+  projectRoot: string,
+  name: string
 ): Promise<string | null> {
-	const manifests = await Promise.all(
-		ancestorsOf(resolve(projectRoot)).map((directory) =>
-			readFile(
-				join(directory, 'node_modules', name, 'package.json'),
-				'utf-8'
-			).catch(() => undefined)
-		)
-	);
-	const nearest = manifests.find((text) => text !== undefined);
-	return nearest === undefined ? null : versionIn(nearest);
+  const manifests = await Promise.all(
+    ancestorsOf(resolve(projectRoot)).map((directory) =>
+      readFile(
+        join(directory, "node_modules", name, "package.json"),
+        "utf-8"
+      ).catch(() => null)
+    )
+  );
+  const nearest = manifests.find((text) => text !== null) ?? null;
+  return nearest === null ? null : versionIn(nearest);
 };
 
 /** The major version of an installed package, or null when it isn't installed. */
 const installedMajor = async function installedMajor(
-	projectRoot: string,
-	name: string
+  projectRoot: string,
+  name: string
 ): Promise<number | null> {
-	const version = await installedVersion(projectRoot, name);
-	return version === null ? null : (parse(version)?.major ?? null);
+  const version = await installedVersion(projectRoot, name);
+  return version === null ? null : (parse(version)?.major ?? null);
 };
 
 /**
@@ -157,21 +159,21 @@ const installedMajor = async function installedMajor(
  * installed version decides, and with nothing installed the answer is null.
  */
 export const isAtLeastMajor = async function isAtLeastMajor(
-	projectRoot: string,
-	name: string,
-	specifier: string,
-	atLeast: number
+  projectRoot: string,
+  name: string,
+  specifier: string,
+  atLeast: number
 ): Promise<boolean | null> {
-	const range = rangeOf(specifier);
-	const options = { includePrerelease: true };
-	if (range !== null && !intersects(range, `<${atLeast}.0.0-0`, options)) {
-		return true;
-	}
-	if (range !== null && !intersects(range, `>=${atLeast}.0.0-0`, options)) {
-		return false;
-	}
-	const installed = await installedMajor(projectRoot, name);
-	return installed === null ? null : installed >= atLeast;
+  const range = rangeOf(specifier);
+  const options = { includePrerelease: true };
+  if (range !== null && !intersects(range, `<${atLeast}.0.0-0`, options)) {
+    return true;
+  }
+  if (range !== null && !intersects(range, `>=${atLeast}.0.0-0`, options)) {
+    return false;
+  }
+  const installed = await installedMajor(projectRoot, name);
+  return installed === null ? null : installed >= atLeast;
 };
 
 /**
@@ -182,20 +184,20 @@ export const isAtLeastMajor = async function isAtLeastMajor(
  * `catalog:`, by the installed package.
  */
 export const usesUmbrella = async function usesUmbrella(
-	projectRoot: string,
-	dependencies: Record<string, string>
+  projectRoot: string,
+  dependencies: Record<string, string>
 ): Promise<boolean> {
-	const umbrella = dependencies.c15t;
-	if (
-		umbrella !== undefined &&
-		(await isAtLeastMajor(projectRoot, 'c15t', umbrella, 3))
-	) {
-		return true;
-	}
-	return (
-		dependencies['@c15t/nextjs'] === undefined &&
-		dependencies['@c15t/react'] === undefined
-	);
+  const umbrella = dependencies.c15t;
+  if (
+    umbrella !== undefined &&
+    (await isAtLeastMajor(projectRoot, "c15t", umbrella, 3))
+  ) {
+    return true;
+  }
+  return (
+    dependencies["@c15t/nextjs"] === undefined &&
+    dependencies["@c15t/react"] === undefined
+  );
 };
 
 /**
@@ -207,24 +209,24 @@ export const usesUmbrella = async function usesUmbrella(
  * major it allows.
  */
 export const declaresTailwind3 = function declaresTailwind3(
-	manifest: PackageJson | null
+  manifest: PackageJson | null
 ): boolean {
-	const consumer = [
-		manifest?.peerDependencies?.tailwindcss,
-		manifest?.optionalDependencies?.tailwindcss,
-	];
-	const own = [
-		manifest?.dependencies?.tailwindcss,
-		manifest?.devDependencies?.tailwindcss,
-	];
-	return (
-		consumer.some(
-			(specifier) => specifier !== undefined && admitsMajor(specifier, 3)
-		) ||
-		own.some(
-			(specifier) => specifier !== undefined && declaredMajorOf(specifier) === 3
-		)
-	);
+  const consumer = [
+    manifest?.peerDependencies?.tailwindcss,
+    manifest?.optionalDependencies?.tailwindcss,
+  ];
+  const own = [
+    manifest?.dependencies?.tailwindcss,
+    manifest?.devDependencies?.tailwindcss,
+  ];
+  return (
+    consumer.some(
+      (specifier) => specifier !== undefined && admitsMajor(specifier, 3)
+    ) ||
+    own.some(
+      (specifier) => specifier !== undefined && declaredMajorOf(specifier) === 3
+    )
+  );
 };
 
 /**
@@ -233,11 +235,11 @@ export const declaresTailwind3 = function declaresTailwind3(
  * to the installed package.
  */
 export const tailwindMajor = async function tailwindMajor(
-	projectRoot: string,
-	specifier: string
+  projectRoot: string,
+  specifier: string
 ): Promise<number | null> {
-	return (
-		declaredMajorOf(specifier) ??
-		(await installedMajor(projectRoot, 'tailwindcss'))
-	);
+  return (
+    declaredMajorOf(specifier) ??
+    (await installedMajor(projectRoot, "tailwindcss"))
+  );
 };

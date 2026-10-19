@@ -1,3 +1,6 @@
+/* eslint-disable unicorn/prefer-code-point -- The scanner walks UTF-16 code units, as the TypeScript scanner does. */
+/* eslint-disable complexity -- One case per punctuation character. */
+
 // Tokenizer for TypeScript, TSX and JavaScript. It follows the TypeScript
 // compiler's scanner: `>` is always one token until the parser rescans it,
 // and the parser drives regex, template and JSX rescans.
@@ -204,7 +207,10 @@ export class Scanner {
       this.token = this.scanNumber();
       return this.token;
     }
-    if (isIdentifierStart(ch) || (ch === 92 && this.code(this.pos + 1) === 117)) {
+    if (
+      isIdentifierStart(ch) ||
+      (ch === 92 && this.code(this.pos + 1) === 117)
+    ) {
       this.scanName();
       this.token = Token.Name;
       return this.token;
@@ -383,8 +389,8 @@ export class Scanner {
   private scanNumber(): string {
     const start = this.pos;
     const ch = this.text.charCodeAt(this.pos);
-    const next = this.code(this.pos + 1) | 32;
-    if (ch === 48 && (next === 120 || next === 98 || next === 111)) {
+    const radix = this.text.charAt(this.pos + 1).toLowerCase();
+    if (ch === 48 && (radix === "x" || radix === "b" || radix === "o")) {
       this.pos += 2;
       this.scanDigits(isHexDigit);
     } else {
@@ -393,7 +399,7 @@ export class Scanner {
         this.pos += 1;
         this.scanDigits(isDigit);
       }
-      if ((this.code(this.pos) | 32) === 101) {
+      if (this.text.charAt(this.pos).toLowerCase() === "e") {
         const sign = this.code(this.pos + 1);
         const digit = sign === 43 || sign === 45 ? this.pos + 2 : this.pos + 1;
         if (isDigit(this.code(digit))) {
@@ -596,7 +602,10 @@ export class Scanner {
         inClass = false;
       }
     }
-    while (this.pos < this.text.length && isIdentifierPart(this.code(this.pos))) {
+    while (
+      this.pos < this.text.length &&
+      isIdentifierPart(this.code(this.pos))
+    ) {
       this.pos += 1;
     }
     this.value = this.text.slice(this.tokenStart, this.pos);

@@ -7,6 +7,9 @@
 // and nodes that an edit does not touch stay valid afterwards. Nodes an edit
 // replaces are forgotten, and reading them throws, as in ts-morph.
 
+/* eslint-disable max-classes-per-file -- Nodes, symbols and the ts-morph stand-ins they return. */
+/* eslint-disable no-use-before-define -- Tree helpers and the Node class refer to each other. */
+
 import {
   getLineEndFromPos,
   getLineStartFromPos,
@@ -67,6 +70,7 @@ export const SyntaxKind = {
   JsxSelfClosingElement: "JsxSelfClosingElement",
   MultiLineCommentTrivia: "MultiLineCommentTrivia",
   NoSubstitutionTemplateLiteral: "NoSubstitutionTemplateLiteral",
+  ObjectLiteralExpression: "ObjectLiteralExpression",
   PropertyAccessExpression: "PropertyAccessExpression",
   PropertyAssignment: "PropertyAssignment",
   QualifiedName: "QualifiedName",
@@ -150,6 +154,7 @@ export class SyntacticType {
 
 /** Stands in for ts-morph's type checker, for the one call the codemods make. */
 export class SyntaxTypeChecker {
+  // eslint-disable-next-line class-methods-use-this -- ts-morph's checker API.
   getShorthandAssignmentValueSymbol(node: Node): SyntaxSymbol | undefined {
     return node.getValueSymbol();
   }
@@ -165,6 +170,24 @@ export class SyntaxProjectView {
 }
 
 const EMPTY: Node[] = [];
+
+const isKind = <Kind extends string>(
+  node: Node | undefined,
+  kind: Kind
+): node is Node<Kind> => node?.kind === kind;
+
+const ofKind = <Kind extends string>(
+  nodes: readonly Node[],
+  kind: Kind
+): Node<Kind>[] => {
+  const found: Node<Kind>[] = [];
+  for (const node of nodes) {
+    if (isKind(node, kind)) {
+      found.push(node);
+    }
+  }
+  return found;
+};
 const FORGOTTEN =
   "Attempted to get information from a node that was removed or forgotten.";
 
@@ -531,38 +554,35 @@ const hasBlankLineFormatting = (node: Node): boolean => {
 // Whether a value is an object, from its syntax: a literal, function, class
 // or `new` expression, or a variable initialized with one. The codemods ask
 // ts-morph's type checker; this answers the same for code in the file.
+const WRAPPER_KINDS = new Set([
+  "AsExpression",
+  "NonNullExpression",
+  "ParenthesizedExpression",
+  "SatisfiesExpression",
+  "TypeAssertionExpression",
+]);
+
+const OBJECT_KINDS = new Set([
+  "ArrayLiteralExpression",
+  "ArrowFunction",
+  "ClassExpression",
+  "FunctionExpression",
+  "NewExpression",
+  "ObjectLiteralExpression",
+]);
+
 const isObjectValue = (node: Node | undefined, depth: number): boolean => {
   let current = node;
-  while (
-    current &&
-    (current.kind === "ParenthesizedExpression" ||
-      current.kind === "AsExpression" ||
-      current.kind === "SatisfiesExpression" ||
-      current.kind === "NonNullExpression" ||
-      current.kind === "TypeAssertionExpression")
-  ) {
+  while (current && WRAPPER_KINDS.has(current.kind)) {
     current = current.field("expression");
   }
   if (!current) {
     return false;
   }
-  switch (current.kind) {
-    case "ObjectLiteralExpression":
-    case "ArrayLiteralExpression":
-    case "FunctionExpression":
-    case "ArrowFunction":
-    case "ClassExpression":
-    case "NewExpression": {
-      return true;
-    }
-    case "Identifier": {
-      break;
-    }
-    default: {
-      return false;
-    }
+  if (OBJECT_KINDS.has(current.kind)) {
+    return true;
   }
-  if (depth > 8) {
+  if (current.kind !== "Identifier" || depth > 8) {
     return false;
   }
   const { parent } = current;
@@ -637,7 +657,9 @@ export class Node<Kind extends string = string> {
     return node !== undefined && STATEMENT_KINDS.has(node.kind);
   }
 
-  static isArrayLiteralExpression(node: Node | undefined): node is Node<"ArrayLiteralExpression"> {
+  static isArrayLiteralExpression(
+    node: Node | undefined
+  ): node is Node<"ArrayLiteralExpression"> {
     return node?.kind === "ArrayLiteralExpression";
   }
 
@@ -645,39 +667,57 @@ export class Node<Kind extends string = string> {
     return node?.kind === "AsExpression";
   }
 
-  static isBindingElement(node: Node | undefined): node is Node<"BindingElement"> {
+  static isBindingElement(
+    node: Node | undefined
+  ): node is Node<"BindingElement"> {
     return node?.kind === "BindingElement";
   }
 
-  static isCallExpression(node: Node | undefined): node is Node<"CallExpression"> {
+  static isCallExpression(
+    node: Node | undefined
+  ): node is Node<"CallExpression"> {
     return node?.kind === "CallExpression";
   }
 
-  static isClassDeclaration(node: Node | undefined): node is Node<"ClassDeclaration"> {
+  static isClassDeclaration(
+    node: Node | undefined
+  ): node is Node<"ClassDeclaration"> {
     return node?.kind === "ClassDeclaration";
   }
 
-  static isComputedPropertyName(node: Node | undefined): node is Node<"ComputedPropertyName"> {
+  static isComputedPropertyName(
+    node: Node | undefined
+  ): node is Node<"ComputedPropertyName"> {
     return node?.kind === "ComputedPropertyName";
   }
 
-  static isConditionalExpression(node: Node | undefined): node is Node<"ConditionalExpression"> {
+  static isConditionalExpression(
+    node: Node | undefined
+  ): node is Node<"ConditionalExpression"> {
     return node?.kind === "ConditionalExpression";
   }
 
-  static isExportDeclaration(node: Node | undefined): node is Node<"ExportDeclaration"> {
+  static isExportDeclaration(
+    node: Node | undefined
+  ): node is Node<"ExportDeclaration"> {
     return node?.kind === "ExportDeclaration";
   }
 
-  static isExpressionStatement(node: Node | undefined): node is Node<"ExpressionStatement"> {
+  static isExpressionStatement(
+    node: Node | undefined
+  ): node is Node<"ExpressionStatement"> {
     return node?.kind === "ExpressionStatement";
   }
 
-  static isExternalModuleReference(node: Node | undefined): node is Node<"ExternalModuleReference"> {
+  static isExternalModuleReference(
+    node: Node | undefined
+  ): node is Node<"ExternalModuleReference"> {
     return node?.kind === "ExternalModuleReference";
   }
 
-  static isFunctionDeclaration(node: Node | undefined): node is Node<"FunctionDeclaration"> {
+  static isFunctionDeclaration(
+    node: Node | undefined
+  ): node is Node<"FunctionDeclaration"> {
     return node?.kind === "FunctionDeclaration";
   }
 
@@ -689,11 +729,15 @@ export class Node<Kind extends string = string> {
     return node?.kind === "ImportClause";
   }
 
-  static isImportDeclaration(node: Node | undefined): node is Node<"ImportDeclaration"> {
+  static isImportDeclaration(
+    node: Node | undefined
+  ): node is Node<"ImportDeclaration"> {
     return node?.kind === "ImportDeclaration";
   }
 
-  static isImportSpecifier(node: Node | undefined): node is Node<"ImportSpecifier"> {
+  static isImportSpecifier(
+    node: Node | undefined
+  ): node is Node<"ImportSpecifier"> {
     return node?.kind === "ImportSpecifier";
   }
 
@@ -709,23 +753,33 @@ export class Node<Kind extends string = string> {
     return node?.kind === "JsxAttribute";
   }
 
-  static isJsxExpression(node: Node | undefined): node is Node<"JsxExpression"> {
+  static isJsxExpression(
+    node: Node | undefined
+  ): node is Node<"JsxExpression"> {
     return node?.kind === "JsxExpression";
   }
 
-  static isJsxOpeningElement(node: Node | undefined): node is Node<"JsxOpeningElement"> {
+  static isJsxOpeningElement(
+    node: Node | undefined
+  ): node is Node<"JsxOpeningElement"> {
     return node?.kind === "JsxOpeningElement";
   }
 
-  static isJsxSelfClosingElement(node: Node | undefined): node is Node<"JsxSelfClosingElement"> {
+  static isJsxSelfClosingElement(
+    node: Node | undefined
+  ): node is Node<"JsxSelfClosingElement"> {
     return node?.kind === "JsxSelfClosingElement";
   }
 
-  static isLiteralTypeNode(node: Node | undefined): node is Node<"LiteralType"> {
+  static isLiteralTypeNode(
+    node: Node | undefined
+  ): node is Node<"LiteralType"> {
     return node?.kind === "LiteralType";
   }
 
-  static isMethodDeclaration(node: Node | undefined): node is Node<"MethodDeclaration"> {
+  static isMethodDeclaration(
+    node: Node | undefined
+  ): node is Node<"MethodDeclaration"> {
     return node?.kind === "MethodDeclaration";
   }
 
@@ -733,71 +787,105 @@ export class Node<Kind extends string = string> {
     return node?.kind === "NamedImports";
   }
 
-  static isNamespaceImport(node: Node | undefined): node is Node<"NamespaceImport"> {
+  static isNamespaceImport(
+    node: Node | undefined
+  ): node is Node<"NamespaceImport"> {
     return node?.kind === "NamespaceImport";
   }
 
-  static isNonNullExpression(node: Node | undefined): node is Node<"NonNullExpression"> {
+  static isNonNullExpression(
+    node: Node | undefined
+  ): node is Node<"NonNullExpression"> {
     return node?.kind === "NonNullExpression";
   }
 
-  static isNoSubstitutionTemplateLiteral(node: Node | undefined): node is Node<"NoSubstitutionTemplateLiteral"> {
+  static isNoSubstitutionTemplateLiteral(
+    node: Node | undefined
+  ): node is Node<"NoSubstitutionTemplateLiteral"> {
     return node?.kind === "NoSubstitutionTemplateLiteral";
   }
 
-  static isObjectBindingPattern(node: Node | undefined): node is Node<"ObjectBindingPattern"> {
+  static isObjectBindingPattern(
+    node: Node | undefined
+  ): node is Node<"ObjectBindingPattern"> {
     return node?.kind === "ObjectBindingPattern";
   }
 
-  static isObjectLiteralExpression(node: Node | undefined): node is Node<"ObjectLiteralExpression"> {
+  static isObjectLiteralExpression(
+    node: Node | undefined
+  ): node is Node<"ObjectLiteralExpression"> {
     return node?.kind === "ObjectLiteralExpression";
   }
 
-  static isParameterDeclaration(node: Node | undefined): node is Node<"Parameter"> {
+  static isParameterDeclaration(
+    node: Node | undefined
+  ): node is Node<"Parameter"> {
     return node?.kind === "Parameter";
   }
 
-  static isParenthesizedExpression(node: Node | undefined): node is Node<"ParenthesizedExpression"> {
+  static isParenthesizedExpression(
+    node: Node | undefined
+  ): node is Node<"ParenthesizedExpression"> {
     return node?.kind === "ParenthesizedExpression";
   }
 
-  static isPropertyAccessExpression(node: Node | undefined): node is Node<"PropertyAccessExpression"> {
+  static isPropertyAccessExpression(
+    node: Node | undefined
+  ): node is Node<"PropertyAccessExpression"> {
     return node?.kind === "PropertyAccessExpression";
   }
 
-  static isPropertyAssignment(node: Node | undefined): node is Node<"PropertyAssignment"> {
+  static isPropertyAssignment(
+    node: Node | undefined
+  ): node is Node<"PropertyAssignment"> {
     return node?.kind === "PropertyAssignment";
   }
 
-  static isQualifiedName(node: Node | undefined): node is Node<"QualifiedName"> {
+  static isQualifiedName(
+    node: Node | undefined
+  ): node is Node<"QualifiedName"> {
     return node?.kind === "QualifiedName";
   }
 
-  static isSatisfiesExpression(node: Node | undefined): node is Node<"SatisfiesExpression"> {
+  static isSatisfiesExpression(
+    node: Node | undefined
+  ): node is Node<"SatisfiesExpression"> {
     return node?.kind === "SatisfiesExpression";
   }
 
-  static isShorthandPropertyAssignment(node: Node | undefined): node is Node<"ShorthandPropertyAssignment"> {
+  static isShorthandPropertyAssignment(
+    node: Node | undefined
+  ): node is Node<"ShorthandPropertyAssignment"> {
     return node?.kind === "ShorthandPropertyAssignment";
   }
 
-  static isSpreadAssignment(node: Node | undefined): node is Node<"SpreadAssignment"> {
+  static isSpreadAssignment(
+    node: Node | undefined
+  ): node is Node<"SpreadAssignment"> {
     return node?.kind === "SpreadAssignment";
   }
 
-  static isStringLiteral(node: Node | undefined): node is Node<"StringLiteral"> {
+  static isStringLiteral(
+    node: Node | undefined
+  ): node is Node<"StringLiteral"> {
     return node?.kind === "StringLiteral";
   }
 
-  static isTypeAssertion(node: Node | undefined): node is Node<"TypeAssertionExpression"> {
+  static isTypeAssertion(
+    node: Node | undefined
+  ): node is Node<"TypeAssertionExpression"> {
     return node?.kind === "TypeAssertionExpression";
   }
 
-  static isTypeReference(node: Node | undefined): node is Node<"TypeReference"> {
+  static isTypeReference(
+    node: Node | undefined
+  ): node is Node<"TypeReference"> {
     return node?.kind === "TypeReference";
   }
 
-  static isVariableDeclaration(node: Node | undefined): node is Node<"VariableDeclaration"> {
+  static isVariableDeclaration(
+    node: Node | undefined
+  ): node is Node<"VariableDeclaration"> {
     return node?.kind === "VariableDeclaration";
   }
 
@@ -822,6 +910,7 @@ export class Node<Kind extends string = string> {
   }
 
   has(flag: number): boolean {
+    // eslint-disable-next-line no-bitwise -- Flags are a bit set.
     return (this.flags & flag) !== 0;
   }
 
@@ -858,19 +947,23 @@ export class Node<Kind extends string = string> {
     return this.kind;
   }
 
-  getSourceFile(): Node {
+  private root(): Node {
+    return this.parent ? this.parent.root() : this;
+  }
+
+  getSourceFile(): Node<"SourceFile"> {
     if (this.forgotten) {
       throw new Error(FORGOTTEN);
     }
-    let node: Node = this;
-    while (node.parent) {
-      node = node.parent;
+    const node = this.root();
+    if (!isKind(node, "SourceFile")) {
+      throw new Error(`${this.kind} is not part of a source file.`);
     }
     return node;
   }
 
   private source(): SourceText {
-    const file = this.getSourceFile().file;
+    const { file } = this.getSourceFile();
     if (!file) {
       throw new Error("Node is not part of a source file.");
     }
@@ -903,7 +996,7 @@ export class Node<Kind extends string = string> {
   }
 
   getStart(includeJsDocComments = false): number {
-    const jsDoc = this.jsDocs[0];
+    const [jsDoc] = this.jsDocs;
     return includeJsDocComments && jsDoc ? jsDoc.start : this.start;
   }
 
@@ -928,7 +1021,7 @@ export class Node<Kind extends string = string> {
     const start = this.getStart(includeJsDocComments);
     let line = 1;
     for (let index = 0; index < start; index += 1) {
-      if (text.charCodeAt(index) === 10) {
+      if (text.charAt(index) === "\n") {
         line += 1;
       }
     }
@@ -1002,9 +1095,11 @@ export class Node<Kind extends string = string> {
     return parent;
   }
 
-  getParentIfKind(kind: string): Node | undefined {
+  getParentIfKind<Wanted extends string>(
+    kind: Wanted
+  ): Node<Wanted> | undefined {
     const parent = this.getParent();
-    return parent?.kind === kind ? parent : undefined;
+    return isKind(parent, kind) ? parent : undefined;
   }
 
   getChildren(): Node[] {
@@ -1041,7 +1136,7 @@ export class Node<Kind extends string = string> {
       }
       items = syntaxChildren(this.parent, name);
     }
-    const first = items[0];
+    const [first] = items;
     const last = items.at(-1);
     const list = new Node(
       "SyntaxList",
@@ -1108,8 +1203,17 @@ export class Node<Kind extends string = string> {
     return undefined;
   }
 
-  getFirstAncestorByKind(kind: string): Node | undefined {
-    return this.getFirstAncestor((node) => node.kind === kind);
+  getFirstAncestorByKind<Wanted extends string>(
+    kind: Wanted
+  ): Node<Wanted> | undefined {
+    let node = this.getParent();
+    while (node) {
+      if (isKind(node, kind)) {
+        return node;
+      }
+      node = node.parent;
+    }
+    return undefined;
   }
 
   getDescendants(): Node[] {
@@ -1137,14 +1241,16 @@ export class Node<Kind extends string = string> {
     return found;
   }
 
-  getDescendantsOfKind(kind: string): Node[] {
+  getDescendantsOfKind<Wanted extends string>(kind: Wanted): Node<Wanted>[] {
     const nodes = isTokenKind(kind)
       ? preorder(this, false)
       : this.getDescendants();
-    return nodes.filter((node) => node.kind === kind);
+    return ofKind(nodes, kind);
   }
 
-  getFirstDescendantByKind(kind: string): Node | undefined {
+  getFirstDescendantByKind<Wanted extends string>(
+    kind: Wanted
+  ): Node<Wanted> | undefined {
     return this.getDescendantsOfKind(kind)[0];
   }
 
@@ -1336,21 +1442,17 @@ export class Node<Kind extends string = string> {
 
   // Imports and exports.
 
-  getImportDeclarations(): Node[] {
-    return this.getStatements().filter(
-      (statement) => statement.kind === "ImportDeclaration"
-    );
+  getImportDeclarations(): Node<"ImportDeclaration">[] {
+    return ofKind(this.getStatements(), "ImportDeclaration");
   }
 
-  getExportDeclarations(): Node[] {
-    return this.getStatements().filter(
-      (statement) => statement.kind === "ExportDeclaration"
-    );
+  getExportDeclarations(): Node<"ExportDeclaration">[] {
+    return ofKind(this.getStatements(), "ExportDeclaration");
   }
 
   /** An import's module specifier. Throws on `export { a }` with no `from`. */
-  getModuleSpecifier(): Node {
-    const specifier = this.field("moduleSpecifier");
+  getModuleSpecifier(): Node<"StringLiteral"> {
+    const specifier = this.getModuleSpecifierIfExists();
     if (!specifier) {
       throw new Error(`${this.kind} has no module specifier.`);
     }
@@ -1358,8 +1460,9 @@ export class Node<Kind extends string = string> {
   }
 
   /** The module specifier of an export, which may have none. */
-  getModuleSpecifierIfExists(): Node | undefined {
-    return this.field("moduleSpecifier");
+  getModuleSpecifierIfExists(): Node<"StringLiteral"> | undefined {
+    const specifier = this.field("moduleSpecifier");
+    return isKind(specifier, "StringLiteral") ? specifier : undefined;
   }
 
   getModuleSpecifierValue(): string {
@@ -1375,32 +1478,36 @@ export class Node<Kind extends string = string> {
     return this.field("namedBindings");
   }
 
-  getNamedImports(): Node[] {
+  getNamedImports(): Node<"ImportSpecifier">[] {
     const bindings = this.field("importClause")?.field("namedBindings");
-    return bindings?.kind === "NamedImports" ? bindings.list("elements") : EMPTY;
+    return bindings?.kind === "NamedImports"
+      ? ofKind(bindings.list("elements"), "ImportSpecifier")
+      : [];
   }
 
   getDefaultImport(): Node | undefined {
     return this.field("importClause")?.field("name");
   }
 
-  getNamespaceImport(): Node | undefined {
+  getNamespaceImport(): Node<"Identifier"> | undefined {
     const bindings = this.field("importClause")?.field("namedBindings");
-    return bindings?.kind === "NamespaceImport"
-      ? bindings.field("name")
-      : undefined;
+    const name =
+      bindings?.kind === "NamespaceImport" ? bindings.field("name") : undefined;
+    return isKind(name, "Identifier") ? name : undefined;
   }
 
-  getNamedExports(): Node[] {
+  getNamedExports(): Node<"ExportSpecifier">[] {
     const clause = this.field("exportClause");
-    return clause?.kind === "NamedExports" ? clause.list("elements") : EMPTY;
+    return clause?.kind === "NamedExports"
+      ? ofKind(clause.list("elements"), "ExportSpecifier")
+      : [];
   }
 
   hasNamedExports(): boolean {
     return this.field("exportClause")?.kind === "NamedExports";
   }
 
-  getImportDeclaration(): Node {
+  getImportDeclaration(): Node<"ImportDeclaration"> {
     const declaration = this.getFirstAncestorByKind("ImportDeclaration");
     if (!declaration) {
       throw new Error(`${this.kind} is not inside an import declaration.`);
@@ -1427,7 +1534,9 @@ export class Node<Kind extends string = string> {
 
   /** Replace a string literal's contents. Like ts-morph, it does not escape. */
   setLiteralValue(value: string): this {
-    this.applyChanges([{ end: this.end - 1, start: this.start + 1, text: value }]);
+    this.applyChanges([
+      { end: this.end - 1, start: this.start + 1, text: value },
+    ]);
     return this;
   }
 
@@ -1447,6 +1556,7 @@ export class Node<Kind extends string = string> {
     return this.getValueSymbol();
   }
 
+  // eslint-disable-next-line class-methods-use-this -- ts-morph's Node API.
   getProject(): SyntaxProjectView {
     return new SyntaxProjectView();
   }
@@ -1466,7 +1576,7 @@ export class Node<Kind extends string = string> {
         (declaration) => declaration.field("name") === reference
       );
     return [...symbol.references]
-      .sort((left, right) => left.start - right.start)
+      .toSorted((left, right) => left.start - right.start)
       .filter(
         (reference, index) =>
           symbol.alias || index > 0 || !isDefinition(reference)
@@ -1479,7 +1589,7 @@ export class Node<Kind extends string = string> {
   applyChanges(changes: TextChange[]): void {
     const root = this.getSourceFile();
     const file = root.source();
-    const sorted = [...changes].sort(
+    const sorted = [...changes].toSorted(
       (left, right) => left.start - right.start || left.end - right.end
     );
     let text = "";
@@ -1646,7 +1756,7 @@ export class Node<Kind extends string = string> {
     removePrecedingNewLines: boolean,
     removeFollowingNewLines: boolean
   ): void {
-    const first = children[0];
+    const [first] = children;
     const last = children.at(-1);
     if (!first || !last) {
       return;
@@ -1681,7 +1791,10 @@ export class Node<Kind extends string = string> {
       toRemove.push(next);
     }
     const previous = siblings[index - 1];
-    if (siblings.at(-1) === toRemove.at(-1) && previous?.kind === "CommaToken") {
+    if (
+      siblings.at(-1) === toRemove.at(-1) &&
+      previous?.kind === "CommaToken"
+    ) {
       toRemove.unshift(previous);
     }
     this.removeChildren(

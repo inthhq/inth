@@ -1,3 +1,6 @@
+/* eslint-disable no-bitwise -- Symbol meanings are a value and type bit set, as in the TypeScript binder. */
+/* eslint-disable max-classes-per-file -- Scopes exist only for the binder. */
+
 // Resolves identifiers to the declarations they name within one file. The
 // codemods ask ts-morph for symbols to tell an import apart from a local of
 // the same name and to follow a variable to its initializer. Declarations in
@@ -24,7 +27,12 @@ class Scope {
     this.functionScope = functionScope;
   }
 
-  declare(name: Node, declaration: Node, meaning: number, alias: boolean): void {
+  declare(
+    name: Node,
+    declaration: Node,
+    meaning: number,
+    alias: boolean
+  ): void {
     if (name.kind !== "Identifier") {
       return;
     }
@@ -41,23 +49,17 @@ class Scope {
   }
 
   resolve(name: string, meaning: number): SyntaxSymbol | undefined {
-    let scope: Scope | undefined = this;
-    while (scope) {
-      const symbol = scope.symbols.get(name);
-      if (symbol && ((scope.meanings.get(symbol) ?? 0) & meaning) !== 0) {
-        return symbol;
-      }
-      scope = scope.parent;
+    const symbol = this.symbols.get(name);
+    if (symbol && ((this.meanings.get(symbol) ?? 0) & meaning) !== 0) {
+      return symbol;
     }
-    return undefined;
+    return this.parent?.resolve(name, meaning);
   }
 
   functionLike(): Scope {
-    let scope: Scope = this;
-    while (!scope.functionScope && scope.parent) {
-      scope = scope.parent;
-    }
-    return scope;
+    return this.functionScope || !this.parent
+      ? this
+      : this.parent.functionLike();
   }
 }
 
@@ -116,6 +118,7 @@ const bindingNames = (
 };
 
 // Identifiers that name a property or label rather than a binding.
+// eslint-disable-next-line complexity -- One case per parent kind.
 const isPropertyName = (node: Node, parent: Node): boolean => {
   switch (parent.kind) {
     case "PropertyAccessExpression":
@@ -132,10 +135,7 @@ const isPropertyName = (node: Node, parent: Node): boolean => {
     case "MetaProperty":
     case "NamedTupleMember":
     case "ImportAttribute": {
-      return (
-        parent.field("name") === node ||
-        parent.field("right") === node
-      );
+      return parent.field("name") === node || parent.field("right") === node;
     }
     case "BindingElement":
     case "ImportSpecifier": {
@@ -173,10 +173,10 @@ const isPropertyName = (node: Node, parent: Node): boolean => {
 // side of a qualified type name.
 const isTypePosition = (node: Node): boolean => {
   let current = node;
-  let parent = node.parent;
+  let { parent } = node;
   while (parent?.kind === "QualifiedName" && parent.field("left") === current) {
     current = parent;
-    parent = parent.parent;
+    ({ parent } = parent);
   }
   if (!parent) {
     return false;
@@ -280,13 +280,7 @@ class Binder {
       case "NamespaceImport":
       case "ImportSpecifier":
       case "ImportEqualsDeclaration": {
-        this.declareIn(
-          scope,
-          name,
-          node,
-          Meaning.Value | Meaning.Type,
-          true
-        );
+        this.declareIn(scope, name, node, Meaning.Value | Meaning.Type, true);
         break;
       }
       default: {
@@ -318,14 +312,14 @@ class Binder {
       }
     }
 
-    if (node.kind === "Identifier" && node.parent) {
-      if (
-        !this.declarationNames.has(node) &&
-        !isPropertyName(node, node.parent) &&
-        !isIntrinsicJsxTag(node, node.parent)
-      ) {
-        this.references.push({ name: node, scope });
-      }
+    if (
+      node.kind === "Identifier" &&
+      node.parent &&
+      !this.declarationNames.has(node) &&
+      !isPropertyName(node, node.parent) &&
+      !isIntrinsicJsxTag(node, node.parent)
+    ) {
+      this.references.push({ name: node, scope });
     }
 
     for (const child of node.children) {
@@ -362,4 +356,3 @@ export const bindSourceFile = (root: Node): void => {
   binder.visit(root, new Scope(undefined, true));
   binder.resolveAll();
 };
-

@@ -1,34 +1,38 @@
-import type * as TsMorphTypes from 'ts-morph';
-
-import { findOptionsObjects } from './consent-provider-options';
-import { runTransform } from './runner';
-import type { CodemodRunOptions, CodemodRunResult } from './runner';
-import { addTodo, applyEdits, findProperty, UNCHANGED } from './source-edits';
-import type { TextEdit, TransformResult } from './source-edits';
+import { findOptionsObjects } from "./consent-provider-options.ts";
+import { runTransform } from "./runner.ts";
+import type { CodemodRunOptions, CodemodRunResult } from "./runner.ts";
+import {
+  addTodo,
+  applyEdits,
+  findProperty,
+  UNCHANGED,
+} from "./source-edits.ts";
+import type { TextEdit, TransformResult } from "./source-edits.ts";
+import type * as Syntax from "./syntax/index.ts";
 
 const IAB_TODO =
-	'The iab provider option was removed. Render <IABProvider> from c15t/react/iab inside the provider, around the IAB components, and pass the options you gave iab() as its props.';
+  "The iab provider option was removed. Render <IABProvider> from c15t/react/iab inside the provider, around the IAB components, and pass the options you gave iab() as its props.";
 
 const transformSourceFile = function transformSourceFile(
-	sourceFile: TsMorphTypes.SourceFile
+  sourceFile: Syntax.SourceFile
 ): TransformResult {
-	const edits: TextEdit[] = [];
-	let operations = 0;
-	for (const { object, entry } of findOptionsObjects(sourceFile)) {
-		// The v3 runtime still takes `iab`; only the React providers moved it.
-		if (entry === 'c15t') {
-			continue;
-		}
-		const property = findProperty(object, 'iab');
-		if (property && addTodo(property, IAB_TODO, edits)) {
-			operations += 1;
-		}
-	}
-	if (edits.length === 0) {
-		return UNCHANGED;
-	}
-	applyEdits(sourceFile, edits);
-	return { changed: true, operations, summaries: ['TODO: iab -> IABProvider'] };
+  const edits: TextEdit[] = [];
+  let operations = 0;
+  for (const { object, entry } of findOptionsObjects(sourceFile)) {
+    // The v3 runtime still takes `iab`; only the React providers moved it.
+    if (entry === "c15t") {
+      continue;
+    }
+    const property = findProperty(object, "iab");
+    if (property && addTodo(property, IAB_TODO, edits)) {
+      operations += 1;
+    }
+  }
+  if (edits.length === 0) {
+    return UNCHANGED;
+  }
+  applyEdits(sourceFile, edits);
+  return { changed: true, operations, summaries: ["TODO: iab -> IABProvider"] };
 };
 
 /**
@@ -40,8 +44,8 @@ const transformSourceFile = function transformSourceFile(
  * @returns Changed files and non-fatal per-file errors.
  */
 export const runIabOptionToIabProviderCodemod =
-	function runIabOptionToIabProviderCodemod(
-		options: CodemodRunOptions
-	): Promise<CodemodRunResult> {
-		return runTransform(options, transformSourceFile);
-	};
+  function runIabOptionToIabProviderCodemod(
+    options: CodemodRunOptions
+  ): Promise<CodemodRunResult> {
+    return runTransform(options, transformSourceFile);
+  };

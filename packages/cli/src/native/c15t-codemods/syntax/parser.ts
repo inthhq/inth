@@ -1,3 +1,7 @@
+/* eslint-disable no-bitwise, oxc/bad-bitwise-operator -- Node and context flags are bit sets, as in the TypeScript parser. */
+/* eslint-disable complexity -- Parse methods follow the TypeScript parser's case analysis. */
+/* eslint-disable prefer-named-capture-group -- Scriptc reads regex captures by index. */
+
 // Parser for TypeScript, TSX and JavaScript. It follows the structure of the
 // TypeScript compiler's parser so node kinds, positions and ambiguity rules
 // match what ts-morph reports. Unlike the compiler it throws on the first
@@ -154,6 +158,25 @@ interface Modifiers {
   flags: number;
 }
 
+const LITERAL_KEYWORD_KINDS = new Map([
+  ["false", "FalseKeyword"],
+  ["null", "NullKeyword"],
+  ["true", "TrueKeyword"],
+]);
+
+/** A node that starts where `first` does. */
+const startAt = (kind: string, first: Node): Node =>
+  new Node(kind, first.pos, first.start);
+
+const applyModifiers = (node: Node, modifiers?: Modifiers): void => {
+  if (modifiers) {
+    node.flags |= modifiers.flags;
+    if (modifiers.decorators.length > 0) {
+      node.setList("modifiers", modifiers.decorators);
+    }
+  }
+};
+
 class Parser {
   scanner: Scanner;
   javascript: boolean;
@@ -264,7 +287,10 @@ class Parser {
   canParseSemicolon(): boolean {
     const token = this.token();
     return (
-      token === ";" || token === "}" || token === Token.Eof || this.scanner.lineBreak
+      token === ";" ||
+      token === "}" ||
+      token === Token.Eof ||
+      this.scanner.lineBreak
     );
   }
 
@@ -397,10 +423,6 @@ class Parser {
     return new Node(kind, this.scanner.tokenFullStart, this.scanner.tokenStart);
   }
 
-  startAt(kind: string, first: Node): Node {
-    return new Node(kind, first.pos, first.start);
-  }
-
   finish(node: Node): Node {
     node.end = this.scanner.lastTokenEnd;
     // TypeScript starts an empty node at its full start.
@@ -419,15 +441,6 @@ class Parser {
     return this.finish(node);
   }
 
-  applyModifiers(node: Node, modifiers: Modifiers | undefined): void {
-    if (modifiers) {
-      node.flags |= modifiers.flags;
-      if (modifiers.decorators.length > 0) {
-        node.setList("modifiers", modifiers.decorators);
-      }
-    }
-  }
-
   delimited(close: string, parseElement: () => Node): Node[] {
     const list: Node[] = [];
     while (this.token() !== close) {
@@ -439,11 +452,7 @@ class Parser {
     return list;
   }
 
-  bracketed(
-    open: string,
-    close: string,
-    parseElement: () => Node
-  ): Node[] {
+  bracketed(open: string, close: string, parseElement: () => Node): Node[] {
     this.expect(open);
     const list = this.delimited(close, parseElement);
     this.expect(close);
@@ -486,7 +495,7 @@ class Parser {
       ? this.parseIdentifierName()
       : this.parseIdentifier();
     while (this.isPunct(".")) {
-      const node = this.startAt("QualifiedName", entity);
+      const node = startAt("QualifiedName", entity);
       this.next();
       node.set("left", entity);
       node.set("right", this.parseIdentifierName());
@@ -517,7 +526,11 @@ class Parser {
 
   parsePropertyName(): Node {
     const token = this.token();
-    if (token === Token.String || token === Token.Number || token === Token.BigInt) {
+    if (
+      token === Token.String ||
+      token === Token.Number ||
+      token === Token.BigInt
+    ) {
       return this.parseLiteral();
     }
     if (token === Token.PrivateName) {
@@ -544,9 +557,9 @@ class Parser {
 
   // Source file and statements.
 
-  parseSourceFile(): Node {
+  parseSourceFile(): Node<"SourceFile"> {
     this.scanner.scan();
-    const node: Node = new Node("SourceFile", 0, this.scanner.tokenStart);
+    const node = new Node("SourceFile", 0, this.scanner.tokenStart);
     const statements: Node[] = [];
     while (this.token() !== Token.Eof) {
       statements.push(this.parseStatement());
@@ -616,28 +629,28 @@ class Parser {
   parseKeywordStatement(word: string): Node | undefined {
     switch (word) {
       case "var": {
-        return this.parseVariableStatement(this.start("VariableStatement"), undefined);
+        return this.parseVariableStatement(this.start("VariableStatement"));
       }
       case "let": {
         return this.isLetDeclaration()
-          ? this.parseVariableStatement(this.start("VariableStatement"), undefined)
+          ? this.parseVariableStatement(this.start("VariableStatement"))
           : undefined;
       }
       case "await": {
         return this.isAwaitUsingDeclaration()
-          ? this.parseVariableStatement(this.start("VariableStatement"), undefined)
+          ? this.parseVariableStatement(this.start("VariableStatement"))
           : undefined;
       }
       case "using": {
         return this.isUsingDeclaration()
-          ? this.parseVariableStatement(this.start("VariableStatement"), undefined)
+          ? this.parseVariableStatement(this.start("VariableStatement"))
           : undefined;
       }
       case "function": {
-        return this.parseFunctionDeclaration(this.start("FunctionDeclaration"), undefined);
+        return this.parseFunctionDeclaration(this.start("FunctionDeclaration"));
       }
       case "class": {
-        return this.parseClass(this.start("ClassDeclaration"), undefined);
+        return this.parseClass(this.start("ClassDeclaration"));
       }
       case "if": {
         return this.parseIfStatement();
@@ -788,7 +801,10 @@ class Parser {
           this.next();
           const token = this.token();
           return (
-            token === Token.String || token === "*" || token === "{" || this.isName()
+            token === Token.String ||
+            token === "*" ||
+            token === "{" ||
+            this.isName()
           );
         }
         case "export": {
@@ -872,7 +888,7 @@ class Parser {
             this.expectWord("namespace");
             node.set("name", this.parseIdentifier());
             this.parseSemicolon();
-            this.applyModifiers(node, modifiers);
+            applyModifiers(node, modifiers);
             return this.finish(node);
           }
           return this.parseExportDeclaration(node, modifiers);
@@ -983,7 +999,11 @@ class Parser {
       }
       const word = this.scanner.value;
       const flag = modifierFlag(word);
-      if (flag === NodeFlags.None || flag === NodeFlags.In || flag === NodeFlags.Out) {
+      if (
+        flag === NodeFlags.None ||
+        flag === NodeFlags.In ||
+        flag === NodeFlags.Out
+      ) {
         break;
       }
       if (word === "static" && seenStatic) {
@@ -995,8 +1015,11 @@ class Parser {
           : this.lookAhead(() => {
               this.next();
               return (
-                !(word === "static" && stopOnStaticBlock && this.isPunct("{")) &&
-                this.canFollowModifierWord(word)
+                !(
+                  word === "static" &&
+                  stopOnStaticBlock &&
+                  this.isPunct("{")
+                ) && this.canFollowModifierWord(word)
               );
             });
       if (!accepted) {
@@ -1031,15 +1054,12 @@ class Parser {
 
   // Variables.
 
-  parseVariableStatement(
-    node: Node,
-    modifiers: Modifiers | undefined
-  ): Node {
+  parseVariableStatement(node: Node, modifiers?: Modifiers): Node {
     const list = this.parseVariableDeclarationList(false);
     node.set("declarationList", list);
     node.value = list.value;
     this.parseSemicolon();
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     return this.finish(node);
   }
 
@@ -1073,7 +1093,9 @@ class Parser {
     try {
       node.setList(
         "declarations",
-        this.delimited("", () => this.parseVariableDeclaration(!inForInitializer))
+        this.delimited("", () =>
+          this.parseVariableDeclaration(!inForInitializer)
+        )
       );
     } finally {
       this.disallowIn = saved;
@@ -1227,18 +1249,16 @@ class Parser {
     this.expect("(");
     let initializer: Node | undefined;
     if (!this.isPunct(";")) {
-      if (
+      const declares =
         this.is("var") ||
         this.is("let") ||
         this.is("const") ||
         (this.is("using") &&
           this.nextIsOnSameLine(() => this.isIdentifier() && !this.is("of"))) ||
-        (this.is("await") && this.isAwaitUsingDeclaration())
-      ) {
-        initializer = this.parseVariableDeclarationList(true);
-      } else {
-        initializer = this.withDisallowIn(() => this.parseExpression());
-      }
+        (this.is("await") && this.isAwaitUsingDeclaration());
+      initializer = declares
+        ? this.parseVariableDeclarationList(true)
+        : this.withDisallowIn(() => this.parseExpression());
     }
     node.set("initializer", initializer);
     if (isAwait) {
@@ -1386,11 +1406,8 @@ class Parser {
 
   // Functions and classes.
 
-  parseFunctionDeclaration(
-    node: Node,
-    modifiers: Modifiers | undefined
-  ): Node {
-    this.applyModifiers(node, modifiers);
+  parseFunctionDeclaration(node: Node, modifiers?: Modifiers): Node {
+    applyModifiers(node, modifiers);
     this.expectWord("function");
     const isGenerator = this.optional("*");
     if (isGenerator) {
@@ -1439,7 +1456,9 @@ class Parser {
     }
     node.setList(
       "parameters",
-      this.withFunctionContext(isAsync, isGenerator, () => this.parseParameters())
+      this.withFunctionContext(isAsync, isGenerator, () =>
+        this.parseParameters()
+      )
     );
     node.set("type", this.parseReturnType(returnToken));
   }
@@ -1450,7 +1469,9 @@ class Parser {
     } else if (!this.optional(":")) {
       return undefined;
     }
-    return this.withConditionalTypes(false, () => this.parseTypeOrTypePredicate());
+    return this.withConditionalTypes(false, () =>
+      this.parseTypeOrTypePredicate()
+    );
   }
 
   parseParameters(): Node[] {
@@ -1459,7 +1480,7 @@ class Parser {
 
   parseParameter(): Node {
     const node = this.start("Parameter");
-    this.applyModifiers(node, this.parseModifiers(true, false, false));
+    applyModifiers(node, this.parseModifiers(true, false, false));
     if (this.is("this")) {
       node.set("name", this.tokenNode("Identifier"));
       node.set("type", this.parseTypeAnnotation());
@@ -1477,8 +1498,8 @@ class Parser {
     return this.finish(node);
   }
 
-  parseClass(node: Node, modifiers: Modifiers | undefined): Node {
-    this.applyModifiers(node, modifiers);
+  parseClass(node: Node, modifiers?: Modifiers): Node {
+    applyModifiers(node, modifiers);
     this.expectWord("class");
     if (
       this.isIdentifier() &&
@@ -1530,7 +1551,10 @@ class Parser {
     }
     node.set("expression", expression);
     if (this.isPunct("<")) {
-      node.setList("typeArguments", this.bracketed("<", ">", () => this.parseType()));
+      node.setList(
+        "typeArguments",
+        this.bracketed("<", ">", () => this.parseType())
+      );
     }
     return this.finish(node);
   }
@@ -1541,7 +1565,7 @@ class Parser {
     }
     const node = this.start("");
     const modifiers = this.parseModifiers(true, true, true);
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     if (
       this.is("static") &&
       this.lookAhead(() => {
@@ -1562,7 +1586,8 @@ class Parser {
     }
     if (
       (this.is("constructor") ||
-        (this.token() === Token.String && this.scanner.value === "constructor")) &&
+        (this.token() === Token.String &&
+          this.scanner.value === "constructor")) &&
       this.lookAhead(() => {
         this.next();
         return this.isPunct("(") || this.isPunct("<");
@@ -1577,7 +1602,12 @@ class Parser {
     if (this.isIndexSignature()) {
       return this.parseIndexSignature(node);
     }
-    if (this.isLiteralPropertyName() || this.isPunct("*") || this.isPunct("[") || this.token() === Token.PrivateName) {
+    if (
+      this.isLiteralPropertyName() ||
+      this.isPunct("*") ||
+      this.isPunct("[") ||
+      this.token() === Token.PrivateName
+    ) {
       return this.parsePropertyOrMethod(node);
     }
     throw this.fail("Declaration or statement expected");
@@ -1608,7 +1638,10 @@ class Parser {
       node.kind = "MethodDeclaration";
       const isAsync = node.has(NodeFlags.Async);
       this.parseSignature(node, ":", isAsync, isGenerator);
-      node.set("body", this.parseFunctionBlockOrSemicolon(isAsync, isGenerator));
+      node.set(
+        "body",
+        this.parseFunctionBlockOrSemicolon(isAsync, isGenerator)
+      );
       return this.finish(node);
     }
     node.kind = "PropertyDeclaration";
@@ -1674,9 +1707,9 @@ class Parser {
 
   // TypeScript declarations.
 
-  parseInterface(node: Node, modifiers: Modifiers | undefined): Node {
+  parseInterface(node: Node, modifiers?: Modifiers): Node {
     node.kind = "InterfaceDeclaration";
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     this.expectWord("interface");
     node.set("name", this.parseIdentifier());
     const typeParameters = this.parseTypeParameters();
@@ -1688,9 +1721,9 @@ class Parser {
     return this.finish(node);
   }
 
-  parseTypeAlias(node: Node, modifiers: Modifiers | undefined): Node {
+  parseTypeAlias(node: Node, modifiers?: Modifiers): Node {
     node.kind = "TypeAliasDeclaration";
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     this.expectWord("type");
     node.set("name", this.parseIdentifier());
     const typeParameters = this.parseTypeParameters();
@@ -1713,9 +1746,9 @@ class Parser {
     return this.finish(node);
   }
 
-  parseEnum(node: Node, modifiers: Modifiers | undefined): Node {
+  parseEnum(node: Node, modifiers?: Modifiers): Node {
     node.kind = "EnumDeclaration";
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     this.expectWord("enum");
     node.set("name", this.parseIdentifier());
     node.setList(
@@ -1733,12 +1766,9 @@ class Parser {
     return this.finish(node);
   }
 
-  parseModuleDeclaration(
-    node: Node,
-    modifiers: Modifiers | undefined
-  ): Node {
+  parseModuleDeclaration(node: Node, modifiers?: Modifiers): Node {
     node.kind = "ModuleDeclaration";
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     if (this.is("global")) {
       node.set("name", this.parseIdentifierName());
       if (this.isPunct("{")) {
@@ -1764,7 +1794,10 @@ class Parser {
   }
 
   parseNamespaceBody(node: Node, nested = false): Node {
-    node.set("name", nested ? this.parseIdentifierName() : this.parseIdentifier());
+    node.set(
+      "name",
+      nested ? this.parseIdentifierName() : this.parseIdentifier()
+    );
     if (this.optional(".")) {
       const inner = this.start("ModuleDeclaration");
       node.set("body", this.parseNamespaceBody(inner, true));
@@ -1784,11 +1817,8 @@ class Parser {
 
   // Imports and exports.
 
-  parseImportDeclaration(
-    node: Node,
-    modifiers: Modifiers | undefined
-  ): Node {
-    this.applyModifiers(node, modifiers);
+  parseImportDeclaration(node: Node, modifiers?: Modifiers): Node {
+    applyModifiers(node, modifiers);
     this.expectWord("import");
     const clause = this.start("ImportClause");
     let identifier: Node | undefined;
@@ -1881,7 +1911,9 @@ class Parser {
         const attribute = this.start("ImportAttribute");
         attribute.set(
           "name",
-          this.token() === Token.String ? this.parseLiteral() : this.parseIdentifierName()
+          this.token() === Token.String
+            ? this.parseLiteral()
+            : this.parseIdentifierName()
         );
         this.expect(":");
         attribute.set("value", this.parseAssignmentExpression(true));
@@ -1922,12 +1954,11 @@ class Parser {
             node.flags |= NodeFlags.TypeOnly;
             propertyName = firstAs;
             name = this.parseModuleExportName();
-            canParseAs = false;
           } else {
             propertyName = name;
             name = secondAs;
-            canParseAs = false;
           }
+          canParseAs = false;
         } else if (this.isName() || this.token() === Token.String) {
           propertyName = name;
           canParseAs = false;
@@ -1951,12 +1982,9 @@ class Parser {
     return this.finish(node);
   }
 
-  parseExportAssignment(
-    node: Node,
-    modifiers: Modifiers | undefined
-  ): Node {
+  parseExportAssignment(node: Node, modifiers?: Modifiers): Node {
     node.kind = "ExportAssignment";
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     if (this.optional("=")) {
       node.flags |= NodeFlags.ExportEquals;
     } else {
@@ -1970,12 +1998,9 @@ class Parser {
     return this.finish(node);
   }
 
-  parseExportDeclaration(
-    node: Node,
-    modifiers: Modifiers | undefined
-  ): Node {
+  parseExportDeclaration(node: Node, modifiers?: Modifiers): Node {
     node.kind = "ExportDeclaration";
-    this.applyModifiers(node, modifiers);
+    applyModifiers(node, modifiers);
     if (this.optionalWord("type")) {
       node.flags |= NodeFlags.TypeOnly;
     }
@@ -2012,7 +2037,7 @@ class Parser {
   parseExpression(): Node {
     let expression = this.parseAssignmentExpression(true);
     while (this.isPunct(",")) {
-      const node = this.startAt("BinaryExpression", expression);
+      const node = startAt("BinaryExpression", expression);
       node.value = ",";
       this.next();
       node.set("left", expression);
@@ -2034,15 +2059,11 @@ class Parser {
     }
     const expression = this.parseBinaryExpression(0);
     if (expression.kind === "Identifier" && this.isPunct("=>")) {
-      return this.parseSimpleArrowFunction(
-        expression,
-        allowReturnTypeInArrow,
-        undefined
-      );
+      return this.parseSimpleArrowFunction(expression, allowReturnTypeInArrow);
     }
     this.scanner.reScanGreater();
     if (ASSIGNMENT_OPERATORS.has(this.token())) {
-      const node = this.startAt("BinaryExpression", expression);
+      const node = startAt("BinaryExpression", expression);
       node.value = this.token();
       this.next();
       node.set("left", expression);
@@ -2052,14 +2073,11 @@ class Parser {
     return this.parseConditionalRest(expression, allowReturnTypeInArrow);
   }
 
-  parseConditionalRest(
-    condition: Node,
-    allowReturnTypeInArrow: boolean
-  ): Node {
+  parseConditionalRest(condition: Node, allowReturnTypeInArrow: boolean): Node {
     if (!this.isPunct("?")) {
       return condition;
     }
-    const node = this.startAt("ConditionalExpression", condition);
+    const node = startAt("ConditionalExpression", condition);
     this.next();
     node.set("condition", condition);
     node.set(
@@ -2067,7 +2085,10 @@ class Parser {
       this.allowIn(() => this.parseAssignmentExpression(false))
     );
     this.expect(":");
-    node.set("whenFalse", this.parseAssignmentExpression(allowReturnTypeInArrow));
+    node.set(
+      "whenFalse",
+      this.parseAssignmentExpression(allowReturnTypeInArrow)
+    );
     return this.finish(node);
   }
 
@@ -2194,7 +2215,7 @@ class Parser {
         if (this.scanner.lineBreak) {
           break;
         }
-        const node = this.startAt(
+        const node = startAt(
           this.is("as") ? "AsExpression" : "SatisfiesExpression",
           left
         );
@@ -2204,8 +2225,9 @@ class Parser {
         left = this.finish(node);
         continue;
       }
-      const node = this.startAt("BinaryExpression", left);
-      node.value = this.token() === Token.Name ? this.scanner.value : this.token();
+      const node = startAt("BinaryExpression", left);
+      node.value =
+        this.token() === Token.Name ? this.scanner.value : this.token();
       this.next();
       node.set("left", left);
       node.set("right", this.parseBinaryExpression(newPrecedence));
@@ -2237,7 +2259,9 @@ class Parser {
   parseUnaryExpression(): Node {
     if (this.isUpdateExpression()) {
       const expression = this.parseUpdateExpression();
-      return this.isPunct("**") ? this.parseBinaryRest(15, expression) : expression;
+      return this.isPunct("**")
+        ? this.parseBinaryRest(15, expression)
+        : expression;
     }
     return this.parseSimpleUnaryExpression();
   }
@@ -2252,11 +2276,12 @@ class Parser {
       return this.finish(node);
     }
     if (this.is("delete") || this.is("typeof") || this.is("void")) {
-      const kind = this.is("delete")
-        ? "DeleteExpression"
-        : this.is("typeof")
-          ? "TypeOfExpression"
-          : "VoidExpression";
+      let kind = "VoidExpression";
+      if (this.is("delete")) {
+        kind = "DeleteExpression";
+      } else if (this.is("typeof")) {
+        kind = "TypeOfExpression";
+      }
       const node = this.start(kind);
       this.next();
       node.set("expression", this.parseSimpleUnaryExpression());
@@ -2312,11 +2337,8 @@ class Parser {
       return this.parseJsxElementOrFragment(true);
     }
     const expression = this.parseLeftHandSideExpression();
-    if (
-      (this.isPunct("++") || this.isPunct("--")) &&
-      !this.scanner.lineBreak
-    ) {
-      const node = this.startAt("PostfixUnaryExpression", expression);
+    if ((this.isPunct("++") || this.isPunct("--")) && !this.scanner.lineBreak) {
+      const node = startAt("PostfixUnaryExpression", expression);
       node.value = this.token();
       this.next();
       node.set("operand", expression);
@@ -2388,7 +2410,7 @@ class Parser {
         isPropertyAccess = this.optional(".");
       }
       if (isPropertyAccess) {
-        const node = this.startAt("PropertyAccessExpression", expression);
+        const node = startAt("PropertyAccessExpression", expression);
         if (questionDot) {
           node.flags |= NodeFlags.QuestionDot;
         }
@@ -2398,7 +2420,7 @@ class Parser {
         continue;
       }
       if ((questionDot || !this.inDecorator) && this.isPunct("[")) {
-        const node = this.startAt("ElementAccessExpression", expression);
+        const node = startAt("ElementAccessExpression", expression);
         this.next();
         if (questionDot) {
           node.flags |= NodeFlags.QuestionDot;
@@ -2413,21 +2435,21 @@ class Parser {
         continue;
       }
       if (this.isTemplateStart()) {
-        if (!questionDot && expression.kind === "ExpressionWithTypeArguments") {
-          expression = this.parseTaggedTemplate(
-            expression,
-            expression.getExpression(),
-            false,
-            expression.list("typeArguments")
-          );
-        } else {
-          expression = this.parseTaggedTemplate(expression, expression, questionDot, undefined);
-        }
+        const instantiated =
+          !questionDot && expression.kind === "ExpressionWithTypeArguments";
+        expression = instantiated
+          ? this.parseTaggedTemplate(
+              expression,
+              expression.getExpression(),
+              false,
+              expression.list("typeArguments")
+            )
+          : this.parseTaggedTemplate(expression, expression, questionDot);
         continue;
       }
       if (!questionDot) {
         if (this.isPunct("!") && !this.scanner.lineBreak) {
-          const node = this.startAt("NonNullExpression", expression);
+          const node = startAt("NonNullExpression", expression);
           this.next();
           node.set("expression", expression);
           expression = this.finish(node);
@@ -2438,7 +2460,7 @@ class Parser {
             ? this.tryParse(() => this.parseTypeArgumentsInExpression())
             : undefined;
         if (typeArguments) {
-          const node = this.startAt("ExpressionWithTypeArguments", expression);
+          const node = startAt("ExpressionWithTypeArguments", expression);
           node.set("expression", expression);
           node.setList("typeArguments", typeArguments);
           expression = this.finish(node);
@@ -2453,9 +2475,9 @@ class Parser {
     first: Node,
     tag: Node,
     questionDot: boolean,
-    typeArguments: Node[] | undefined
+    typeArguments?: Node[]
   ): Node {
-    const node = this.startAt("TaggedTemplateExpression", first);
+    const node = startAt("TaggedTemplateExpression", first);
     if (questionDot) {
       node.flags |= NodeFlags.QuestionDot;
     }
@@ -2482,7 +2504,9 @@ class Parser {
       return undefined;
     }
     this.next();
-    return this.canFollowTypeArgumentsInExpression() ? typeArguments : undefined;
+    return this.canFollowTypeArgumentsInExpression()
+      ? typeArguments
+      : undefined;
   }
 
   canFollowTypeArgumentsInExpression(): boolean {
@@ -2507,9 +2531,16 @@ class Parser {
       let typeArguments: Node[] | undefined;
       const questionDot = this.optional("?.");
       if (questionDot) {
-        typeArguments = this.tryParse(() => this.parseTypeArgumentsInExpression());
+        typeArguments = this.tryParse(() =>
+          this.parseTypeArgumentsInExpression()
+        );
         if (this.isTemplateStart()) {
-          expression = this.parseTaggedTemplate(expression, expression, true, typeArguments);
+          expression = this.parseTaggedTemplate(
+            expression,
+            expression,
+            true,
+            typeArguments
+          );
           continue;
         }
       }
@@ -2519,7 +2550,7 @@ class Parser {
           typeArguments = expression.list("typeArguments");
           callee = expression.getExpression();
         }
-        const node = this.startAt("CallExpression", expression);
+        const node = startAt("CallExpression", expression);
         if (questionDot) {
           node.flags |= NodeFlags.QuestionDot;
         }
@@ -2710,7 +2741,7 @@ class Parser {
           return this.parseFunctionExpression();
         }
         case "class": {
-          return this.parseClass(this.start("ClassExpression"), undefined);
+          return this.parseClass(this.start("ClassExpression"));
         }
         case "new": {
           return this.parseNewExpression();
@@ -2776,7 +2807,9 @@ class Parser {
       throw this.fail("'}' expected");
     }
     const token = this.scanner.reScanTemplate();
-    return this.tokenNode(token === Token.TemplateTail ? "TemplateTail" : "TemplateMiddle");
+    return this.tokenNode(
+      token === Token.TemplateTail ? "TemplateTail" : "TemplateMiddle"
+    );
   }
 
   parseObjectLiteral(): Node {
@@ -2797,7 +2830,7 @@ class Parser {
       node.set("expression", this.parseAssignmentExpression(true));
       return this.finish(node);
     }
-    this.applyModifiers(node, this.parseModifiers(true, false, false));
+    applyModifiers(node, this.parseModifiers(true, false, false));
     if (this.parseAccessorKeyword("get")) {
       return this.parseAccessor(node, "GetAccessor", false);
     }
@@ -2871,7 +2904,9 @@ class Parser {
   isParenthesizedArrowFunction(): number {
     const token = this.token();
     if (token === "(" || token === "<" || this.is("async")) {
-      return this.lookAheadTristate(() => this.isParenthesizedArrowFunctionWorker());
+      return this.lookAheadTristate(() =>
+        this.isParenthesizedArrowFunctionWorker()
+      );
     }
     if (token === "=>") {
       return Tristate.True;
@@ -2924,7 +2959,10 @@ class Parser {
       }
       if (third === "?") {
         const fourth = this.next();
-        return fourth === ":" || fourth === "," || fourth === "=" || fourth === ")"
+        return fourth === ":" ||
+          fourth === "," ||
+          fourth === "=" ||
+          fourth === ")"
           ? Tristate.True
           : Tristate.False;
       }
@@ -2974,7 +3012,10 @@ class Parser {
       return undefined;
     }
     this.expect("=>");
-    node.set("body", this.parseArrowFunctionBody(isAsync, allowReturnTypeInArrow));
+    node.set(
+      "body",
+      this.parseArrowFunctionBody(isAsync, allowReturnTypeInArrow)
+    );
     if (!allowReturnTypeInArrow && hasReturnColon && !this.isPunct(":")) {
       return undefined;
     }
@@ -3004,26 +3045,33 @@ class Parser {
     const node = this.start("ArrowFunction");
     this.next();
     const parameter = this.parseBinaryExpression(0);
-    return this.parseSimpleArrowFunction(parameter, allowReturnTypeInArrow, node);
+    return this.parseSimpleArrowFunction(
+      parameter,
+      allowReturnTypeInArrow,
+      node
+    );
   }
 
   parseSimpleArrowFunction(
     identifier: Node,
     allowReturnTypeInArrow: boolean,
-    asyncNode: Node | undefined
+    asyncNode?: Node
   ): Node {
-    const parameter = this.startAt("Parameter", identifier);
+    const parameter = startAt("Parameter", identifier);
     parameter.set("name", identifier);
     parameter.end = identifier.end;
     parameter.link();
-    const node = asyncNode ?? this.startAt("ArrowFunction", identifier);
+    const node = asyncNode ?? startAt("ArrowFunction", identifier);
     const isAsync = asyncNode !== undefined;
     if (isAsync) {
       node.flags |= NodeFlags.Async;
     }
     node.setList("parameters", [parameter]);
     this.expect("=>");
-    node.set("body", this.parseArrowFunctionBody(isAsync, allowReturnTypeInArrow));
+    node.set(
+      "body",
+      this.parseArrowFunctionBody(isAsync, allowReturnTypeInArrow)
+    );
     return this.finish(node);
   }
 
@@ -3051,7 +3099,7 @@ class Parser {
       !this.scanner.lineBreak &&
       this.is("extends")
     ) {
-      const node = this.startAt("ConditionalType", type);
+      const node = startAt("ConditionalType", type);
       this.next();
       node.set("checkType", type);
       node.set(
@@ -3078,11 +3126,11 @@ class Parser {
     const parameterName = this.isIdentifier()
       ? this.tryParse(() => {
           const name = this.parseIdentifier();
-          if (this.is("is") && !this.scanner.lineBreak) {
+          const predicate = this.is("is") && !this.scanner.lineBreak;
+          if (predicate) {
             this.next();
-            return name;
           }
-          return undefined;
+          return predicate ? name : undefined;
         })
       : undefined;
     const type = this.parseType();
@@ -3210,9 +3258,11 @@ class Parser {
         "constraint",
         this.tryParse(() => {
           if (!this.optionalWord("extends")) {
-            return undefined;
+            return;
           }
-          const constraint = this.withConditionalTypes(true, () => this.parseType());
+          const constraint = this.withConditionalTypes(true, () =>
+            this.parseType()
+          );
           return this.disallowConditionalTypes || !this.isPunct("?")
             ? constraint
             : undefined;
@@ -3227,7 +3277,7 @@ class Parser {
   parsePostfixType(): Node {
     let type = this.parseNonArrayType();
     while (!this.scanner.lineBreak && this.isPunct("[")) {
-      const node = this.startAt("ArrayType", type);
+      const node = startAt("ArrayType", type);
       this.next();
       if (this.isStartOfType()) {
         node.kind = "IndexedAccessType";
@@ -3267,7 +3317,10 @@ class Parser {
         break;
       }
     }
-    return this.isIdentifier() || (this.isName() && TYPE_START_WORDS.has(this.scanner.value));
+    return (
+      this.isIdentifier() ||
+      (this.isName() && TYPE_START_WORDS.has(this.scanner.value))
+    );
   }
 
   parseNonArrayType(): Node {
@@ -3285,7 +3338,9 @@ class Parser {
         if (
           this.lookAhead(() => {
             this.next();
-            return this.token() === Token.Number || this.token() === Token.BigInt;
+            return (
+              this.token() === Token.Number || this.token() === Token.BigInt
+            );
           })
         ) {
           const node = this.start("LiteralType");
@@ -3357,13 +3412,7 @@ class Parser {
           const node = this.start("LiteralType");
           node.set(
             "literal",
-            this.tokenNode(
-              word === "true"
-                ? "TrueKeyword"
-                : word === "false"
-                  ? "FalseKeyword"
-                  : "NullKeyword"
-            )
+            this.tokenNode(LITERAL_KEYWORD_KINDS.get(word) ?? "NullKeyword")
           );
           return this.finish(node);
         }
@@ -3373,7 +3422,7 @@ class Parser {
         case "this": {
           const thisType = this.tokenNode("ThisType");
           if (this.is("is") && !this.scanner.lineBreak) {
-            const node = this.startAt("TypePredicate", thisType);
+            const node = startAt("TypePredicate", thisType);
             this.next();
             node.set("parameterName", thisType);
             node.set("type", this.parseType());
@@ -3424,7 +3473,10 @@ class Parser {
     const node = this.start("TypeReference");
     node.set("typeName", this.parseEntityName(true));
     if (!this.scanner.lineBreak && this.scanner.reScanLessThan() === "<") {
-      node.setList("typeArguments", this.bracketed("<", ">", () => this.parseType()));
+      node.setList(
+        "typeArguments",
+        this.bracketed("<", ">", () => this.parseType())
+      );
     }
     return this.finish(node);
   }
@@ -3434,7 +3486,10 @@ class Parser {
     this.expectWord("typeof");
     node.set("exprName", this.parseEntityName(true));
     if (!this.scanner.lineBreak && this.isPunct("<")) {
-      node.setList("typeArguments", this.bracketed("<", ">", () => this.parseType()));
+      node.setList(
+        "typeArguments",
+        this.bracketed("<", ">", () => this.parseType())
+      );
     }
     return this.finish(node);
   }
@@ -3460,7 +3515,9 @@ class Parser {
           const attribute = this.start("ImportAttribute");
           attribute.set(
             "name",
-            this.token() === Token.String ? this.parseLiteral() : this.parseIdentifierName()
+            this.token() === Token.String
+              ? this.parseLiteral()
+              : this.parseIdentifierName()
           );
           this.expect(":");
           attribute.set("value", this.parseAssignmentExpression(true));
@@ -3476,7 +3533,10 @@ class Parser {
       node.set("qualifier", this.parseEntityName(true));
     }
     if (!this.scanner.lineBreak && this.scanner.reScanLessThan() === "<") {
-      node.setList("typeArguments", this.bracketed("<", ">", () => this.parseType()));
+      node.setList(
+        "typeArguments",
+        this.bracketed("<", ">", () => this.parseType())
+      );
     }
     return this.finish(node);
   }
@@ -3569,7 +3629,7 @@ class Parser {
       return this.finish(node);
     }
     const node = this.start("");
-    this.applyModifiers(node, this.parseModifiers(false, false, false));
+    applyModifiers(node, this.parseModifiers(false, false, false));
     if (this.parseAccessorKeyword("get")) {
       return this.parseAccessor(node, "GetAccessor", true);
     }
@@ -3654,7 +3714,7 @@ class Parser {
     }
     const type = this.parseType();
     if (this.isPunct("?")) {
-      const node = this.startAt("OptionalType", type);
+      const node = startAt("OptionalType", type);
       this.next();
       node.set("type", type);
       return this.finish(node);
@@ -3709,17 +3769,23 @@ class Parser {
   parseJsxElementOrFragment(inExpressionContext: boolean): Node {
     const opening = this.parseJsxOpening(inExpressionContext);
     if (opening.kind === "JsxOpeningElement") {
-      const node = this.startAt("JsxElement", opening);
+      const node = startAt("JsxElement", opening);
       node.set("openingElement", opening);
       node.setList("children", this.parseJsxChildren());
-      node.set("closingElement", this.parseJsxClosing(inExpressionContext, false));
+      node.set(
+        "closingElement",
+        this.parseJsxClosing(inExpressionContext, false)
+      );
       return this.finish(node);
     }
     if (opening.kind === "JsxOpeningFragment") {
-      const node = this.startAt("JsxFragment", opening);
+      const node = startAt("JsxFragment", opening);
       node.set("openingFragment", opening);
       node.setList("children", this.parseJsxChildren());
-      node.set("closingFragment", this.parseJsxClosing(inExpressionContext, true));
+      node.set(
+        "closingFragment",
+        this.parseJsxClosing(inExpressionContext, true)
+      );
       return this.finish(node);
     }
     return opening;
@@ -3735,7 +3801,10 @@ class Parser {
     }
     node.set("tagName", this.parseJsxElementName());
     if (!this.javascript && this.isPunct("<")) {
-      node.setList("typeArguments", this.bracketed("<", ">", () => this.parseType()));
+      node.setList(
+        "typeArguments",
+        this.bracketed("<", ">", () => this.parseType())
+      );
     }
     const attributes = this.start("JsxAttributes");
     const properties: Node[] = [];
@@ -3771,7 +3840,7 @@ class Parser {
       ? this.tokenNode("ThisKeyword")
       : this.parseIdentifierName();
     if (!isThis && this.isPunct(":")) {
-      const node = this.startAt("JsxNamespacedName", expression);
+      const node = startAt("JsxNamespacedName", expression);
       this.next();
       this.scanner.scanJsxIdentifier();
       node.set("namespace", expression);
@@ -3779,7 +3848,7 @@ class Parser {
       return this.finish(node);
     }
     while (this.isPunct(".")) {
-      const node = this.startAt("PropertyAccessExpression", expression);
+      const node = startAt("PropertyAccessExpression", expression);
       this.next();
       node.set("expression", expression);
       node.set("name", this.parseIdentifierName());
@@ -3801,7 +3870,7 @@ class Parser {
     this.scanner.scanJsxIdentifier();
     let name = this.parseIdentifierName();
     if (this.isPunct(":")) {
-      const namespaced = this.startAt("JsxNamespacedName", name);
+      const namespaced = startAt("JsxNamespacedName", name);
       this.next();
       this.scanner.scanJsxIdentifier();
       namespaced.set("namespace", name);
@@ -3831,7 +3900,10 @@ class Parser {
       if (!inExpressionContext && this.optional("...")) {
         node.flags |= NodeFlags.DotDotDot;
       }
-      node.set("expression", this.allowIn(() => this.parseExpression()));
+      node.set(
+        "expression",
+        this.allowIn(() => this.parseExpression())
+      );
     }
     if (inExpressionContext) {
       this.expect("}");
@@ -3886,7 +3958,9 @@ class Parser {
   }
 
   parseJsxClosing(inExpressionContext: boolean, fragment: boolean): Node {
-    const node = this.start(fragment ? "JsxClosingFragment" : "JsxClosingElement");
+    const node = this.start(
+      fragment ? "JsxClosingFragment" : "JsxClosingElement"
+    );
     this.expect("</");
     if (!fragment) {
       node.set("tagName", this.parseJsxElementName());
@@ -3953,16 +4027,18 @@ const JSDOC_KINDS = new Set([
   "WhileStatement",
 ]);
 
-const JSDOC_TAG_KINDS: Record<string, string> = {
-  arg: "JSDocParameterTag",
-  argument: "JSDocParameterTag",
-  param: "JSDocParameterTag",
-  return: "JSDocReturnTag",
-  returns: "JSDocReturnTag",
-  satisfies: "JSDocSatisfiesTag",
-  type: "JSDocTypeTag",
-  typedef: "JSDocTypedefTag",
-};
+const JSDOC_TAG_KINDS = new Map(
+  Object.entries({
+    arg: "JSDocParameterTag",
+    argument: "JSDocParameterTag",
+    param: "JSDocParameterTag",
+    return: "JSDocReturnTag",
+    returns: "JSDocReturnTag",
+    satisfies: "JSDocSatisfiesTag",
+    type: "JSDocTypeTag",
+    typedef: "JSDocTypedefTag",
+  })
+);
 
 // The `/** … */` comments in the trivia between `pos` and `start`.
 const jsDocRanges = (
@@ -4022,7 +4098,7 @@ const parseJsDoc = (
     const name = match[1] ?? "";
     const tagStart = range.start + match.index;
     const tag: Node = new Node(
-      JSDOC_TAG_KINDS[name] ?? "JSDocTag",
+      JSDOC_TAG_KINDS.get(name) ?? "JSDocTag",
       tagStart,
       tagStart
     );
@@ -4033,7 +4109,8 @@ const parseJsDoc = (
     }
     if (text[index] === "{") {
       const close = closingBrace(text, index, range.end);
-      const type = close === -1 ? undefined : parser.parseJsDocType(index, close);
+      const type =
+        close === -1 ? undefined : parser.parseJsDocType(index, close);
       if (type) {
         const expression: Node = new Node("JSDocTypeExpression", index, index);
         expression.end = close + 1;
@@ -4082,7 +4159,10 @@ const attachJsDocs = (root: Node, parser: Parser, text: string): void => {
 };
 
 /** Parse a source file. The language follows the file extension. */
-export const parseSourceFile = (text: string, path: string): Node => {
+export const parseSourceFile = (
+  text: string,
+  path: string
+): Node<"SourceFile"> => {
   const parser = new Parser(text, path);
   const root = parser.parseSourceFile();
   if (text.includes("/**")) {

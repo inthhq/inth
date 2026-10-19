@@ -14,7 +14,9 @@ const isWhitespaceCode = (code: number): boolean =>
 
 /** Whether `char` is a whitespace character, as ts-morph counts them. */
 export const isWhitespace = (char: string | undefined): boolean =>
-  char !== undefined && char.length > 0 && isWhitespaceCode(char.charCodeAt(0));
+  char !== undefined &&
+  char.length > 0 &&
+  isWhitespaceCode(char.codePointAt(0) ?? -1);
 
 /** The first position at or after `pos` whose character matches. */
 export const getNextMatchingPos = (
@@ -23,7 +25,7 @@ export const getNextMatchingPos = (
   condition: (code: number) => boolean
 ): number => {
   let next = pos;
-  while (next < text.length && !condition(text.charCodeAt(next))) {
+  while (next < text.length && !condition(text.codePointAt(next) ?? -1)) {
     next += 1;
   }
   return next;
@@ -36,7 +38,7 @@ export const getPreviousMatchingPos = (
   condition: (code: number) => boolean
 ): number => {
   let previous = pos;
-  while (previous > 0 && !condition(text.charCodeAt(previous - 1))) {
+  while (previous > 0 && !condition(text.codePointAt(previous - 1) ?? -1)) {
     previous -= 1;
   }
   return previous;
@@ -51,7 +53,10 @@ export const getPreviousNonWhitespacePos = (
 ): number =>
   getPreviousMatchingPos(text, pos, (code) => !isWhitespaceCode(code));
 
-export const getPosAtEndOfPreviousLine = (text: string, pos: number): number => {
+export const getPosAtEndOfPreviousLine = (
+  text: string,
+  pos: number
+): number => {
   let current = pos;
   while (current > 0) {
     current -= 1;
