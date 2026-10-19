@@ -295,10 +295,10 @@ const loadedBy = (evidenceRows: VendorEvidence[]): string | undefined => {
   for (const evidence of evidenceRows) {
     const loader = evidence.loadedBy;
     let source = loader?.scriptUrl ?? undefined;
-    if (loader?.viaGoogleTagManager) {
-      source = loader.tagManagerContainerId
-        ? `Google Tag Manager (${loader.tagManagerContainerId})`
-        : "Google Tag Manager";
+    if (loader?.viaGoogleTagManager && loader.tagManagerContainerId) {
+      source = `Google Tag Manager (${loader.tagManagerContainerId})`;
+    } else if (loader?.viaGoogleTagManager && !source) {
+      source = "Google Tag Manager";
     }
     if (source && !sources.includes(source)) {
       sources.push(source);

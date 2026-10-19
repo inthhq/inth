@@ -100,6 +100,37 @@ describe("human resource output", () => {
       "Google Tag Manager (GTM-ABC123), https://cdn.example.com/loader.js"
     );
   });
+  it("keeps the script URL when Tag Manager loaded a vendor without a known container", () => {
+    const finding = JSON.parse(runtimeFindingBody);
+    finding.data.runtimeVendor.evidence = [
+      {
+        ...finding.data.runtimeVendor.evidence[0],
+        loadedBy: {
+          initiator: "script",
+          scriptUrl: "https://tags.example.com/gtm.js",
+          tagManagerContainerId: null,
+          viaGoogleTagManager: true,
+        },
+      },
+      {
+        ...finding.data.runtimeVendor.evidence[0],
+        loadedBy: {
+          initiator: "script",
+          scriptUrl: null,
+          tagManagerContainerId: null,
+          viaGoogleTagManager: true,
+        },
+      },
+    ];
+    const text = formatResource(
+      parseArguments(["inbox", "get", "inbox_456"]),
+      JSON.stringify(finding),
+      plain
+    );
+    expect(/Loaded by\s+(?<loader>.+)/u.exec(text)?.groups?.loader).toBe(
+      "https://tags.example.com/gtm.js, Google Tag Manager"
+    );
+  });
   it("uses aligned tables when they fit and labelled rows at narrow widths", () => {
     const options = parseArguments(["project", "list"]);
     expect(formatResource(options, projectsBody, plain)).toMatch(
