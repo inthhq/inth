@@ -5,7 +5,7 @@ import { extname, join } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
-import type { SyntaxNode } from "../src/native/c15t-codemods/syntax/node.ts";
+import type { Node } from "../src/native/c15t-codemods/syntax/node.ts";
 import { parseSourceFile } from "../src/native/c15t-codemods/syntax/parser.ts";
 
 // The codemod parser stands in for the TypeScript compiler, which Scriptc
@@ -94,7 +94,7 @@ const compilerTree = (text: string, path: string): string[] => {
 
 const codemodTree = (text: string, path: string): string[] => {
   const lines: string[] = [];
-  const visit = (node: SyntaxNode): void => {
+  const visit = (node: Node): void => {
     if (compared(node.kind)) {
       lines.push(`${node.kind} ${node.pos} ${node.start} ${node.end}`);
     }
