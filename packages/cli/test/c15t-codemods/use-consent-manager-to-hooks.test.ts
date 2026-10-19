@@ -1,36 +1,37 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+// eslint-disable-next-line unicorn/import-style -- Matches the native sources.
+import { join } from "node:path";
 
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from "vitest";
 
-import { runUseConsentManagerToHooksCodemod } from './use-consent-manager-to-hooks';
+import { runUseConsentManagerToHooksCodemod } from "../../src/native/c15t-codemods/use-consent-manager-to-hooks.ts";
 
 const createdDirs: string[] = [];
 
 const transform = async function transform(content: string) {
-	const rootDir = await mkdtemp(join(tmpdir(), 'c15t-codemod-'));
-	createdDirs.push(rootDir);
-	const filePath = join(rootDir, 'consent.tsx');
-	await writeFile(filePath, content, 'utf-8');
-	const result = await runUseConsentManagerToHooksCodemod({
-		dryRun: false,
-		projectRoot: rootDir,
-	});
-	return { result, updated: await readFile(filePath, 'utf-8') };
+  const rootDir = await mkdtemp(join(tmpdir(), "c15t-codemod-"));
+  createdDirs.push(rootDir);
+  const filePath = join(rootDir, "consent.tsx");
+  await writeFile(filePath, content, "utf-8");
+  const result = await runUseConsentManagerToHooksCodemod({
+    dryRun: false,
+    projectRoot: rootDir,
+  });
+  return { result, updated: await readFile(filePath, "utf-8") };
 };
 
-describe('use-consent-manager-to-hooks codemod', () => {
-	afterEach(async () => {
-		await Promise.all(
-			createdDirs
-				.splice(0)
-				.map((dir) => rm(dir, { force: true, recursive: true }))
-		);
-	});
+describe("use-consent-manager-to-hooks codemod", () => {
+  afterEach(async () => {
+    await Promise.all(
+      createdDirs
+        .splice(0)
+        .map((dir) => rm(dir, { force: true, recursive: true }))
+    );
+  });
 
-	it('rewrites common fields to one hook call each', async () => {
-		const { result, updated } = await transform(`
+  it("rewrites common fields to one hook call each", async () => {
+    const { result, updated } = await transform(`
 import { ConsentBanner, useConsentManager } from '@c15t/react';
 
 export const Banner = () => {
@@ -50,34 +51,34 @@ export const Banner = () => {
 };
 `);
 
-		expect(result.errors).toEqual([]);
-		expect(result.changedFiles).toHaveLength(1);
-		expect(updated).not.toContain('useConsentManager');
-		expect(updated).toContain(
-			"import { ConsentBanner, useActiveUI, useConsent, useConsents, useSetActiveUI } from '@c15t/react';"
-		);
-		expect(updated).toContain(
-			"import { useHeadlessConsentUI } from '@c15t/react/headless';"
-		);
-		expect(updated).toContain("const activeUI = useActiveUI() ?? 'none';");
-		expect(updated).toContain('const setActiveUI = useSetActiveUI();');
-		expect(updated).toContain('const consents = useConsents();');
-		expect(updated).toContain("const hasMarketing = useConsent('marketing');");
-		expect(updated).toContain(
-			"const hasMeasurement = useConsent('measurement');"
-		);
-		expect(updated).toContain("activeUI === 'none' || !hasMarketing");
-		expect(updated).toContain('data-measurement={hasMeasurement}');
-		expect(updated).toContain(
-			'const { saveCustomPreferences: saveConsents } = useHeadlessConsentUI();'
-		);
-		expect(updated).toContain("saveConsents('all')");
-		expect(updated).toContain("saveConsents('none')");
-		expect(updated).not.toContain('ConsentDraftProvider');
-	});
+    expect(result.errors).toEqual([]);
+    expect(result.changedFiles).toHaveLength(1);
+    expect(updated).not.toContain("useConsentManager");
+    expect(updated).toContain(
+      "import { ConsentBanner, useActiveUI, useConsent, useConsents, useSetActiveUI } from '@c15t/react';"
+    );
+    expect(updated).toContain(
+      "import { useHeadlessConsentUI } from '@c15t/react/headless';"
+    );
+    expect(updated).toContain("const activeUI = useActiveUI() ?? 'none';");
+    expect(updated).toContain("const setActiveUI = useSetActiveUI();");
+    expect(updated).toContain("const consents = useConsents();");
+    expect(updated).toContain("const hasMarketing = useConsent('marketing');");
+    expect(updated).toContain(
+      "const hasMeasurement = useConsent('measurement');"
+    );
+    expect(updated).toContain("activeUI === 'none' || !hasMarketing");
+    expect(updated).toContain("data-measurement={hasMeasurement}");
+    expect(updated).toContain(
+      "const { saveCustomPreferences: saveConsents } = useHeadlessConsentUI();"
+    );
+    expect(updated).toContain("saveConsents('all')");
+    expect(updated).toContain("saveConsents('none')");
+    expect(updated).not.toContain("ConsentDraftProvider");
+  });
 
-	it('moves draft fields to useConsentDraft and flags the shared draft', async () => {
-		const { updated } = await transform(`
+  it("moves draft fields to useConsentDraft and flags the shared draft", async () => {
+    const { updated } = await transform(`
 import { useConsentManager as useManager } from 'c15t/next/headless';
 
 export const Preferences = () => {
@@ -94,20 +95,20 @@ export const Preferences = () => {
 };
 `);
 
-		expect(updated).not.toContain('useManager');
-		expect(updated).toContain(
-			'const { values: selectedConsents, set: select } = useConsentDraft();'
-		);
-		expect(updated).toContain('void saveConsents();');
-		expect(updated).toContain("import { useConsentDraft } from 'c15t/next';");
-		expect(updated).toContain(
-			"import { useHeadlessConsentUI } from 'c15t/next/headless';"
-		);
-		expect(updated).toContain('<ConsentDraftProvider>');
-	});
+    expect(updated).not.toContain("useManager");
+    expect(updated).toContain(
+      "const { values: selectedConsents, set: select } = useConsentDraft();"
+    );
+    expect(updated).toContain("void saveConsents();");
+    expect(updated).toContain("import { useConsentDraft } from 'c15t/next';");
+    expect(updated).toContain(
+      "import { useHeadlessConsentUI } from 'c15t/next/headless';"
+    );
+    expect(updated).toContain("<ConsentDraftProvider>");
+  });
 
-	it('keeps fields without a one-call replacement on a marked residual call', async () => {
-		const { result, updated } = await transform(`
+  it("keeps fields without a one-call replacement on a marked residual call", async () => {
+    const { result, updated } = await transform(`
 import { useConsentManager } from '@c15t/nextjs';
 
 export const Labels = ({ category }: { category: 'marketing' }) => {
@@ -116,25 +117,25 @@ export const Labels = ({ category }: { category: 'marketing' }) => {
 };
 `);
 
-		expect(updated).toContain("const model = useModel() ?? 'opt-in';");
-		expect(updated).toContain(
-			'TODO(c15t v3): useConsentManager() was removed. Migrate these fields by hand:'
-		);
-		expect(updated).toContain('// - consentTypes:');
-		expect(updated).toContain('// - has: useConsent(category)');
-		expect(updated).toContain(
-			'const { consentTypes, has } = useConsentManager();'
-		);
-		expect(updated).toContain(
-			"import { useConsentManager, useModel } from '@c15t/nextjs';"
-		);
-		expect(result.changedFiles[0]?.summaries).toEqual(
-			expect.arrayContaining(['TODO: consentTypes', 'TODO: has'])
-		);
-	});
+    expect(updated).toContain("const model = useModel() ?? 'opt-in';");
+    expect(updated).toContain(
+      "TODO(c15t v3): useConsentManager() was removed. Migrate these fields by hand:"
+    );
+    expect(updated).toContain("// - consentTypes:");
+    expect(updated).toContain("// - has: useConsent(category)");
+    expect(updated).toContain(
+      "const { consentTypes, has } = useConsentManager();"
+    );
+    expect(updated).toContain(
+      "import { useConsentManager, useModel } from '@c15t/nextjs';"
+    );
+    expect(result.changedFiles[0]?.summaries).toEqual(
+      expect.arrayContaining(["TODO: consentTypes", "TODO: has"])
+    );
+  });
 
-	it('leaves removed privacy directives for a manual migration', async () => {
-		const { result, updated } = await transform(`
+  it("leaves removed privacy directives for a manual migration", async () => {
+    const { result, updated } = await transform(`
 import { useConsentManager } from '@c15t/nextjs';
 
 export const Gpc = () => {
@@ -143,21 +144,21 @@ export const Gpc = () => {
 };
 `);
 
-		expect(updated).toContain('const privacySignals = usePrivacySignals();');
-		expect(updated).not.toContain('useOptOutDirectives');
-		expect(updated).toContain(
-			'// - optOutDirectives: nothing; GPC is no longer stored'
-		);
-		expect(updated).toContain(
-			'const { optOutDirectives } = useConsentManager();'
-		);
-		expect(result.changedFiles[0]?.summaries).toEqual(
-			expect.arrayContaining(['TODO: optOutDirectives'])
-		);
-	});
+    expect(updated).toContain("const privacySignals = usePrivacySignals();");
+    expect(updated).not.toContain("useOptOutDirectives");
+    expect(updated).toContain(
+      "// - optOutDirectives: nothing; GPC is no longer stored"
+    );
+    expect(updated).toContain(
+      "const { optOutDirectives } = useConsentManager();"
+    );
+    expect(result.changedFiles[0]?.summaries).toEqual(
+      expect.arrayContaining(["TODO: optOutDirectives"])
+    );
+  });
 
-	it('marks a call it cannot destructure', async () => {
-		const { result, updated } = await transform(`
+  it("marks a call it cannot destructure", async () => {
+    const { result, updated } = await transform(`
 import { useConsentManager } from 'c15t/react';
 
 export const Status = () => {
@@ -166,17 +167,17 @@ export const Status = () => {
 };
 `);
 
-		expect(updated).toContain(
-			'// TODO(c15t v3): useConsentManager() was removed. Read each field through its own hook'
-		);
-		expect(updated).toContain('const manager = useConsentManager();');
-		expect(result.changedFiles[0]?.summaries).toEqual([
-			'TODO: useConsentManager() without destructuring',
-		]);
-	});
+    expect(updated).toContain(
+      "// TODO(c15t v3): useConsentManager() was removed. Read each field through its own hook"
+    );
+    expect(updated).toContain("const manager = useConsentManager();");
+    expect(result.changedFiles[0]?.summaries).toEqual([
+      "TODO: useConsentManager() without destructuring",
+    ]);
+  });
 
-	it('keeps policyCategories referentially stable across renders', async () => {
-		const { updated } = await transform(`
+  it("keeps policyCategories referentially stable across renders", async () => {
+    const { updated } = await transform(`
 import { useEffect, useState } from 'react';
 import { useConsentManager } from '@c15t/react';
 
@@ -190,23 +191,23 @@ export const Categories = () => {
 };
 `);
 
-		expect(updated).not.toContain("['necessary', ...usePolicyCategories()]");
-		expect(updated).toContain(
-			'const policyCategoriesScope = usePolicyCategories();'
-		);
-		expect(updated).toContain(
-			"const policyCategories = useMemo(() => ['necessary', ...policyCategoriesScope], [policyCategoriesScope]);"
-		);
-		expect(updated).toContain(
-			"import { useEffect, useState, useMemo } from 'react';"
-		);
-		expect(updated).toContain(
-			"import { usePolicyCategories } from '@c15t/react';"
-		);
-	});
+    expect(updated).not.toContain("['necessary', ...usePolicyCategories()]");
+    expect(updated).toContain(
+      "const policyCategoriesScope = usePolicyCategories();"
+    );
+    expect(updated).toContain(
+      "const policyCategories = useMemo(() => ['necessary', ...policyCategoriesScope], [policyCategoriesScope]);"
+    );
+    expect(updated).toContain(
+      "import { useEffect, useState, useMemo } from 'react';"
+    );
+    expect(updated).toContain(
+      "import { usePolicyCategories } from '@c15t/react';"
+    );
+  });
 
-	it('memoizes policyCategories through an existing React namespace import', async () => {
-		const { updated } = await transform(`
+  it("memoizes policyCategories through an existing React namespace import", async () => {
+    const { updated } = await transform(`
 import * as React from 'react';
 import { useConsentManager } from '@c15t/react';
 
@@ -216,14 +217,14 @@ export const Categories = () => {
 };
 `);
 
-		expect(updated).toContain(
-			"const categories = React.useMemo(() => ['necessary', ...categoriesScope], [categoriesScope]);"
-		);
-		expect(updated).not.toContain("import { useMemo } from 'react';");
-	});
+    expect(updated).toContain(
+      "const categories = React.useMemo(() => ['necessary', ...categoriesScope], [categoriesScope]);"
+    );
+    expect(updated).not.toContain("import { useMemo } from 'react';");
+  });
 
-	it('adds a React import for useMemo when the file has none', async () => {
-		const { updated } = await transform(`
+  it("adds a React import for useMemo when the file has none", async () => {
+    const { updated } = await transform(`
 import { useConsentManager } from '@c15t/react';
 
 export const useCategories = () => {
@@ -232,12 +233,12 @@ export const useCategories = () => {
 };
 `);
 
-		expect(updated).toContain("import { useMemo } from 'react';");
-		expect(updated).toContain('useMemo(() => [');
-	});
+    expect(updated).toContain("import { useMemo } from 'react';");
+    expect(updated).toContain("useMemo(() => [");
+  });
 
-	it('leaves same-named local bindings alone', async () => {
-		const { result, updated } = await transform(`
+  it("leaves same-named local bindings alone", async () => {
+    const { result, updated } = await transform(`
 import { useConsentManager } from '@c15t/react';
 
 export const Child = ({
@@ -263,18 +264,18 @@ export const Banner = () => {
 };
 `);
 
-		expect(result.changedFiles[0]?.operations).toBe(1);
-		expect(updated).toContain("const model = useModel() ?? 'opt-in';");
-		expect(updated).not.toContain('useActiveUI');
-		expect(
-			updated.match(/const \{ activeUI \} = useConsentManager\(\);/gu)
-		).toHaveLength(2);
-		expect(updated).toContain("import { useModel } from '@c15t/react';");
-	});
+    expect(result.changedFiles[0]?.operations).toBe(1);
+    expect(updated).toContain("const model = useModel() ?? 'opt-in';");
+    expect(updated).not.toContain("useActiveUI");
+    expect(
+      updated.match(/const \{ activeUI \} = useConsentManager\(\);/gu)
+    ).toHaveLength(2);
+    expect(updated).toContain("import { useModel } from '@c15t/react';");
+  });
 
-	it('ignores a useConsentManager that is not imported from c15t', async () => {
-		const { result } = await transform(`
-import { useConsentManager } from './local-store';
+  it("ignores a useConsentManager that is not imported from c15t", async () => {
+    const { result } = await transform(`
+import { useConsentManager } from '../../src/native/c15t-codemods/local-store.ts';
 
 export const Local = () => {
 	const { activeUI } = useConsentManager();
@@ -282,6 +283,6 @@ export const Local = () => {
 };
 `);
 
-		expect(result.changedFiles).toEqual([]);
-	});
+    expect(result.changedFiles).toEqual([]);
+  });
 });

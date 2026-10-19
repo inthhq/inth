@@ -1,20 +1,16 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from "vitest";
 
-import {
-	cleanupProjects,
-	transformFile,
-	transformTwice,
-} from './__tests__/helpers';
-import { runCallbacksToV3Codemod as codemod } from './callbacks-to-v3';
+import { runCallbacksToV3Codemod as codemod } from "../../src/native/c15t-codemods/callbacks-to-v3.ts";
+import { cleanupProjects, transformFile, transformTwice } from "./helpers.ts";
 
 // Each run builds a TypeScript program, which is slow on a busy machine.
-describe('callbacks-to-v3 codemod', { timeout: 20_000 }, () => {
-	afterEach(cleanupProjects);
+describe("callbacks-to-v3 codemod", { timeout: 20_000 }, () => {
+  afterEach(cleanupProjects);
 
-	it('renames onConsentChanged and marks callbacks that need a decision', async () => {
-		const { result, updated } = await transformFile(
-			codemod,
-			`import { ConsentManagerProvider } from '@c15t/nextjs';
+  it("renames onConsentChanged and marks callbacks that need a decision", async () => {
+    const { result, updated } = await transformFile(
+      codemod,
+      `import { ConsentManagerProvider } from '@c15t/nextjs';
 
 export const App = ({ children }) => (
 	<ConsentManagerProvider
@@ -36,10 +32,10 @@ export const App = ({ children }) => (
 	</ConsentManagerProvider>
 );
 `
-		);
+    );
 
-		expect(result.errors).toEqual([]);
-		expect(updated).toBe(`import { ConsentManagerProvider } from '@c15t/nextjs';
+    expect(result.errors).toEqual([]);
+    expect(updated).toBe(`import { ConsentManagerProvider } from '@c15t/nextjs';
 
 export const App = ({ children }) => (
 	<ConsentManagerProvider
@@ -64,83 +60,83 @@ export const App = ({ children }) => (
 	</ConsentManagerProvider>
 );
 `);
-		expect(result.changedFiles[0]?.summaries).toEqual([
-			'onConsentChanged -> onChoiceRecorded',
-			'TODO: onChoiceRecorded payload',
-			'TODO: onConsentSet',
-			'TODO: onBannerFetched',
-		]);
-	});
+    expect(result.changedFiles[0]?.summaries).toEqual([
+      "onConsentChanged -> onChoiceRecorded",
+      "TODO: onChoiceRecorded payload",
+      "TODO: onConsentSet",
+      "TODO: onBannerFetched",
+    ]);
+  });
 
-	it('follows callbacks and options bound to variables on the umbrella entry', async () => {
-		const { updated } = await transformFile(
-			codemod,
-			`import { ConsentProvider, type ConsentProviderOptions } from 'c15t/react';
+  it("follows callbacks and options bound to variables on the umbrella entry", async () => {
+    const { updated } = await transformFile(
+      codemod,
+      `import { ConsentProvider, type ConsentProviderOptions } from 'c15t/react';
 
 const callbacks = { onConsentChanged };
 const options: ConsentProviderOptions = { callbacks };
 `
-		);
-		expect(updated).toContain(
-			'const callbacks = { /* TODO(c15t v3): onConsentChanged is now onChoiceRecorded.'
-		);
-		expect(updated).toContain(
-			'previousPreferences. */ onChoiceRecorded: onConsentChanged };'
-		);
-	});
+    );
+    expect(updated).toContain(
+      "const callbacks = { /* TODO(c15t v3): onConsentChanged is now onChoiceRecorded."
+    );
+    expect(updated).toContain(
+      "previousPreferences. */ onChoiceRecorded: onConsentChanged };"
+    );
+  });
 
-	it('points JavaScript runtime users at the kernel snapshot', async () => {
-		const { updated } = await transformFile(
-			codemod,
-			`import { getOrCreateConsentRuntime } from 'c15t';
+  it("points JavaScript runtime users at the kernel snapshot", async () => {
+    const { updated } = await transformFile(
+      codemod,
+      `import { getOrCreateConsentRuntime } from 'c15t';
 
 getOrCreateConsentRuntime({
 	callbacks: { onBannerFetched: () => {} },
 });
 `,
-			{ fileName: 'consent.ts' }
-		);
-		expect(updated).toContain(
-			'/* TODO(c15t v3): onBannerFetched was removed. Read resolution from the kernel snapshot'
-		);
-	});
+      { fileName: "consent.ts" }
+    );
+    expect(updated).toContain(
+      "/* TODO(c15t v3): onBannerFetched was removed. Read resolution from the kernel snapshot"
+    );
+  });
 
-	it('only marks onConsentChanged when onChoiceRecorded already exists', async () => {
-		const { updated } = await transformFile(
-			codemod,
-			`import { ConsentProvider } from '@c15t/react';
+  it("only marks onConsentChanged when onChoiceRecorded already exists", async () => {
+    const { updated } = await transformFile(
+      codemod,
+      `import { ConsentProvider } from '@c15t/react';
 
 export const App = () => (
 	<ConsentProvider options={{ callbacks: { onConsentChanged: a, onChoiceRecorded: b } }} />
 );
 `
-		);
-		expect(updated).toContain('onConsentChanged: a, onChoiceRecorded: b');
-		expect(updated).toContain('/* TODO(c15t v3): onConsentChanged is now');
-	});
+    );
+    expect(updated).toContain("onConsentChanged: a, onChoiceRecorded: b");
+    expect(updated).toContain("/* TODO(c15t v3): onConsentChanged is now");
+  });
 
-	it('leaves other callbacks objects and v3 callbacks alone', async () => {
-		const unrelated = await transformFile(
-			codemod,
-			`import { Provider } from './store';
+  it("leaves other callbacks objects and v3 callbacks alone", async () => {
+    const unrelated = await transformFile(
+      codemod,
+      `import { Provider } from './store';
 export const App = () => <Provider options={{ callbacks: { onConsentSet() {} } }} />;
 `
-		);
-		expect(unrelated.result.changedFiles).toEqual([]);
+    );
+    expect(unrelated.result.changedFiles).toEqual([]);
 
-		const migrated = await transformFile(
-			codemod,
-			`import { ConsentProvider } from 'c15t/react';
+    const migrated = await transformFile(
+      codemod,
+      `import { ConsentProvider } from 'c15t/react';
 export const App = () => (
 	<ConsentProvider options={{ callbacks: { onChoiceRecorded() {}, onPermissionsChanged() {} } }} />
 );
 `
-		);
-		expect(migrated.result.changedFiles).toEqual([]);
-	});
+    );
+    expect(migrated.result.changedFiles).toEqual([]);
+  });
 
-	it('is idempotent and writes nothing in a dry run', async () => {
-		const source = `import { ConsentManagerProvider } from '@c15t/react';
+  it("is idempotent and writes nothing in a dry run", async () => {
+    const source = `import { ConsentManagerProvider } from '@c15t/react';
 export const App = () => (
 	<ConsentManagerProvider
 		options={{
@@ -152,15 +148,15 @@ export const App = () => (
 	/>
 );
 `;
-		const { first, second, secondResult } = await transformTwice(
-			codemod,
-			source
-		);
-		expect(second).toBe(first);
-		expect(secondResult.changedFiles).toEqual([]);
+    const { first, second, secondResult } = await transformTwice(
+      codemod,
+      source
+    );
+    expect(second).toBe(first);
+    expect(secondResult.changedFiles).toEqual([]);
 
-		const dry = await transformFile(codemod, source, { dryRun: true });
-		expect(dry.updated).toBe(source);
-		expect(dry.result.changedFiles[0]?.after).toBe(first);
-	});
+    const dry = await transformFile(codemod, source, { dryRun: true });
+    expect(dry.updated).toBe(source);
+    expect(dry.result.changedFiles[0]?.after).toBe(first);
+  });
 });

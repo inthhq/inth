@@ -38,6 +38,7 @@ const SKIPPED_KINDS = new Set([
 const KIND_NAMES = new Map<number, string>();
 for (const [name, value] of Object.entries(ts.SyntaxKind)) {
   if (
+    // eslint-disable-next-line anti-slop/no-runtime-typeof -- Numeric enums map numbers back to names too.
     typeof value === "number" &&
     !/^(?:First|Last)/u.test(name) &&
     !KIND_NAMES.has(value)
@@ -118,7 +119,10 @@ const sourceFiles = (directory: string): string[] =>
 describe("c15t codemod parser", () => {
   it.each([
     ["generic arrow in TSX", "const pick = <Value,>(value: Value) => value;"],
-    ["satisfies and as const", "export const x = { a: 1 } satisfies X as const;"],
+    [
+      "satisfies and as const",
+      "export const x = { a: 1 } satisfies X as const;",
+    ],
     [
       "JSX with entities and expressions",
       'const a = <A.B x="&amp;" {...rest} y={<>{c}</>}>text {d} more</A.B>;',
@@ -126,10 +130,12 @@ describe("c15t codemod parser", () => {
     ["regex after an operator", "const r = a / b / /c[/]d/giu.test(e);"],
     [
       "template literal types",
+      // eslint-disable-next-line no-template-curly-in-string -- TypeScript source text.
       "type T<Name extends string> = `on${Capitalize<Name>}`;",
     ],
     [
       "conditional and mapped types",
+      // eslint-disable-next-line no-template-curly-in-string -- TypeScript source text.
       "type M<T> = { readonly [K in keyof T as `x${K & string}`]-?: T[K] extends (infer U)[] ? U : never };",
     ],
     [
@@ -148,16 +154,25 @@ describe("c15t codemod parser", () => {
       "dynamic import and import.meta",
       'const m = await import("./m.ts"); const u = import.meta.url;',
     ],
-    ["for await and labels", "outer: for await (const x of xs) { continue outer; }"],
+    [
+      "for await and labels",
+      "outer: for await (const x of xs) { continue outer; }",
+    ],
     ["optional chaining and calls", "a?.b?.[c]?.(d)!.e<F>(g);"],
     ["unicode escapes in names", "const \\u0061b = 1; ab;"],
     ["Flow nullable types", "let a: ?string; let b: Array<?>;"],
-    ["namespaces and enums", "declare global { namespace A.B { enum C { D = 1, E } } }"],
+    [
+      "namespaces and enums",
+      "declare global { namespace A.B { enum C { D = 1, E } } }",
+    ],
     [
       "type predicates and assertions",
       "function f(x: unknown): asserts x is string {} const g = (y: unknown): y is number => true;",
     ],
-    ["comments and JSDoc", "/** @type {import('a').B} */\n// note\nconst x = 1; /* end */"],
+    [
+      "comments and JSDoc",
+      "/** @type {import('a').B} */\n// note\nconst x = 1; /* end */",
+    ],
     [
       "object literal members",
       "const o = { a, b: 1, [c]: 2, ...d, get e() { return 1; }, set e(v) {}, async *f() {} };",
@@ -168,19 +183,27 @@ describe("c15t codemod parser", () => {
 
   it("parses JSX only in TSX and JavaScript files", () => {
     expectCompilerTree("const x = <T>y;", "input.ts");
-    expectCompilerTree("const pick = <Value>(value: Value) => value;", "input.ts");
+    expectCompilerTree(
+      "const pick = <Value>(value: Value) => value;",
+      "input.ts"
+    );
     expectCompilerTree("const x = <div>y</div>;", "input.jsx");
   });
 
-  it("matches the compiler on the CLI's own sources", () => {
-    const root = join(import.meta.dirname, "..");
-    const files = ["src", "test", "scripts"].flatMap((directory) =>
-      sourceFiles(join(root, directory))
-    );
-    expect(files.length).toBeGreaterThan(100);
-    for (const file of files) {
-      const text = readFileSync(file, "utf8");
-      expect(codemodTree(text, file), file).toEqual(compilerTree(text, file));
+  // Parses every file twice, about five seconds on its own.
+  it(
+    "matches the compiler on the CLI's own sources",
+    { timeout: 60_000 },
+    () => {
+      const root = join(import.meta.dirname, "..");
+      const files = ["src", "test", "scripts"].flatMap((directory) =>
+        sourceFiles(join(root, directory))
+      );
+      expect(files.length).toBeGreaterThan(100);
+      for (const file of files) {
+        const text = readFileSync(file, "utf-8");
+        expect(codemodTree(text, file), file).toEqual(compilerTree(text, file));
+      }
     }
-  });
+  );
 });
