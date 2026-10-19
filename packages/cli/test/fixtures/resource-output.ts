@@ -85,8 +85,37 @@ export const runtimeFindingBody = JSON.stringify({
   success: true,
 });
 // A decision for a vendor with no runtime Inbox finding.
+// GET /v1/projects/:projectId/vendors/:vendorId for a vendor whose load source is unknown.
+export const vendorDetailBody = JSON.stringify({
+  data: {
+    consentCategory: null,
+    evidence: [
+      {
+        kind: "request",
+        loadedBy: null,
+        observedAt: "2026-10-01T12:00:00.000Z",
+        pageUrl: "https://example.com/",
+        source: "scan",
+        value: "https://pixel.example.net/collect",
+      },
+    ],
+    firstSeenAt: "2026-10-01T12:00:00.000Z",
+    hosts: ["pixel.example.net"],
+    id: "example-pixel",
+    inboxItemId: null,
+    lastSeenAt: "2026-10-02T12:00:00.000Z",
+    name: "Example Pixel",
+    privacyPolicyUrl: null,
+    projectId: "prj_123",
+    projectSlug: "website",
+    reviewState: "needs_review",
+    sources: ["web_scan"],
+    state: "active",
+  },
+  success: true,
+});
 export const vendorIgnoredBody =
-  '{"success":true,"data":{"inboxItemId":null,"projectId":"prj_123","reviewState":"needs_review","state":"ignored","vendorId":"google-analytics"}}';
+  '{"success":true,"data":{"inboxItemId":null,"name":"Google Analytics","projectId":"prj_123","reviewState":"needs_review","state":"ignored","vendorId":"google-analytics"}}';
 export interface OutputCase {
   args: string[];
   body: string;
@@ -338,10 +367,34 @@ export const outputCases: OutputCase[] = [
     ],
   },
   {
-    args: ["vendors", "approve", "google-analytics", "--project", "prj_123"],
-    body: '{"success":true,"data":{"inboxItemId":"inbox_456","projectId":"prj_123","reviewState":"accepted","state":"approved","vendorId":"google-analytics"}}',
+    args: ["vendor", "list", "--project", "prj_123"],
+    body: '{"success":true,"data":[{"id":"google-analytics","name":"Google Analytics","consentCategory":"measurement","state":"active","reviewState":"needs_review","projectId":"prj_123"}],"pagination":{"hasMore":false,"nextCursor":null}}',
+    expected: [
+      "Vendors",
+      "Google Analytics",
+      "measurement",
+      "active",
+      "needs_review",
+      "google-analytics",
+    ],
+  },
+  {
+    args: ["vendor", "get", "example-pixel", "--project", "prj_123"],
+    body: vendorDetailBody,
+    expected: [
+      "Example Pixel",
+      "example-pixel",
+      "prj_123",
+      "pixel.example.net",
+      "2026-10-02T12:00:00.000Z",
+    ],
+  },
+  {
+    args: ["vendor", "approve", "google-analytics", "--project", "prj_123"],
+    body: '{"success":true,"data":{"inboxItemId":"inbox_456","name":"Google Analytics","projectId":"prj_123","reviewState":"accepted","state":"approved","vendorId":"google-analytics"}}',
     expected: [
       "Vendor approved",
+      "Google Analytics",
       "google-analytics",
       "prj_123",
       "approved",
@@ -350,7 +403,7 @@ export const outputCases: OutputCase[] = [
     ],
   },
   {
-    args: ["vendors", "ignore", "google-analytics", "--project", "prj_123"],
+    args: ["vendor", "ignore", "google-analytics", "--project", "prj_123"],
     body: vendorIgnoredBody,
     expected: ["Vendor ignored", "google-analytics", "ignored", "None"],
   },

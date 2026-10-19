@@ -26,6 +26,15 @@ const scanSchema = z.object({
   unlockCredits: z.number().nullable().optional(),
 });
 const personSchema = z.object({ email: z.string(), name: z.string() });
+const vendorEvidenceSchema = z.object({
+  loadedBy: z
+    .object({
+      scriptUrl: z.string().nullable(),
+      tagManagerContainerId: z.string().nullable(),
+      viaGoogleTagManager: z.boolean(),
+    })
+    .nullable(),
+});
 const itemSchema = scanSchema.extend({
   alreadySubmitted: z.boolean().optional(),
   autoTopUp: z
@@ -52,6 +61,7 @@ const itemSchema = scanSchema.extend({
     })
     .nullable()
     .optional(),
+  consentCategory: z.string().nullable().optional(),
   credits: z
     .object({ remaining: z.number(), unlimited: z.boolean() })
     .nullable()
@@ -61,11 +71,13 @@ const itemSchema = scanSchema.extend({
   deleted: z.boolean().optional(),
   description: z.string().nullable().optional(),
   email: z.string().optional(),
+  evidence: z.array(vendorEvidenceSchema).optional(),
   expiresAt: z.string().optional(),
   githubIssue: z
     .object({ number: z.number(), url: z.string() })
     .nullable()
     .optional(),
+  hosts: z.array(z.string()).optional(),
   htmlUrl: z.string().optional(),
   inboxItemId: z.string().nullable().optional(),
   invitedBy: personSchema.optional(),
@@ -83,6 +95,7 @@ const itemSchema = scanSchema.extend({
     .optional(),
   key: z.string().optional(),
   label: z.string().optional(),
+  lastSeenAt: z.string().optional(),
   lockedCount: z.number().optional(),
   message: z.string().optional(),
   name: z.string().optional(),
@@ -105,17 +118,7 @@ const itemSchema = scanSchema.extend({
   role: z.string().optional(),
   runtimeVendor: z
     .object({
-      evidence: z.array(
-        z.object({
-          loadedBy: z
-            .object({
-              scriptUrl: z.string().nullable(),
-              tagManagerContainerId: z.string().nullable(),
-              viaGoogleTagManager: z.boolean(),
-            })
-            .nullable(),
-        })
-      ),
+      evidence: z.array(vendorEvidenceSchema),
       name: z.string(),
       projectId: z.string(),
       state: z.string(),
@@ -127,7 +130,7 @@ const itemSchema = scanSchema.extend({
   scanId: z.string().optional(),
   slug: z.string().optional(),
   source: z.string().optional(),
-  state: z.string().optional(),
+  state: z.string().nullable().optional(),
   summary: z.string().nullable().optional(),
   tier: z.string().optional(),
   title: z.string().optional(),

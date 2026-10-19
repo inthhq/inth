@@ -179,7 +179,27 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
   ),
   command("inbox", "github-issue", "POST", "/v1/inbox/:id/github-issue"),
   command(
-    "vendors",
+    "vendor",
+    "list",
+    "GET",
+    "/v1/projects/:project/vendors",
+    false,
+    true,
+    ["project", "state"],
+    ["project"]
+  ),
+  command(
+    "vendor",
+    "get",
+    "GET",
+    "/v1/projects/:project/vendors/:id",
+    false,
+    false,
+    ["project"],
+    ["project"]
+  ),
+  command(
+    "vendor",
     "approve",
     "POST",
     "/v1/projects/:project/vendors/:id/decision",
@@ -190,7 +210,7 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
     '{"decision":"approve"}'
   ),
   command(
-    "vendors",
+    "vendor",
     "ignore",
     "POST",
     "/v1/projects/:project/vendors/:id/decision",
@@ -250,7 +270,10 @@ export const acceptsData = (spec: ResourceCommand): boolean =>
 
 // Options that fill a path segment, such as --project in /v1/projects/:project.
 const pathFields = (spec: ResourceCommand): string[] =>
-  spec.fields.filter((name) => spec.path.includes(`/:${name}/`));
+  spec.fields.filter(
+    (name) =>
+      spec.path.includes(`/:${name}/`) || spec.path.endsWith(`/:${name}`)
+  );
 
 const fieldJson = (name: string, value: string): string => {
   if (name === "trusted-origins") {
@@ -370,6 +393,9 @@ const resourceQuery = (
   }
   if (spec.method === "GET") {
     for (const name of spec.fields) {
+      if (pathFields(spec).includes(name)) {
+        continue;
+      }
       const value = optionValue(options, name);
       if (value !== undefined) {
         query.set(fieldName(name), value);

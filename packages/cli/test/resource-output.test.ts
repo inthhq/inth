@@ -12,6 +12,7 @@ import {
   outputCases,
   projectsBody,
   runtimeFindingBody,
+  vendorDetailBody,
   vendorIgnoredBody,
 } from "./fixtures/resource-output.ts";
 
@@ -61,7 +62,7 @@ describe("human resource output", () => {
   it("says when a vendor decision closed no Inbox finding", () => {
     const text = formatResource(
       parseArguments([
-        "vendors",
+        "vendor",
         "ignore",
         "google-analytics",
         "--project",
@@ -72,6 +73,22 @@ describe("human resource output", () => {
     );
     expect(text).toMatch(/Inbox finding\s+None/u);
     expect(text).toMatch(/State\s+ignored/u);
+  });
+  it("says when the scan could not tell how a vendor loaded", () => {
+    const text = formatResource(
+      parseArguments([
+        "vendor",
+        "get",
+        "example-pixel",
+        "--project",
+        "prj_123",
+      ]),
+      vendorDetailBody,
+      plain
+    );
+    expect(text).toMatch(/Loaded by\s+Unknown/u);
+    expect(text).toMatch(/Category\s+Uncategorized/u);
+    expect(text).toMatch(/Inbox finding\s+None/u);
   });
   it("shows each way a runtime vendor loaded once", () => {
     const text = formatResource(

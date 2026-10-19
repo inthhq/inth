@@ -104,6 +104,13 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option("role", "string", "Organization role", ["owner", "admin", "member"]),
   option("repository", "string", "Repository ID"),
   option("status", "string", "Filter or update the resource status"),
+  option("state", "string", "Vendor state", [
+    "active",
+    "not_seen_recently",
+    "ignored",
+    "approved",
+    "blocked",
+  ]),
   option("request-id", "string", "Idempotency key for scan start retries"),
   option("category", "string", "Feedback category", FEEDBACK_CATEGORIES),
   option(
@@ -215,8 +222,10 @@ const descriptions = [
   ["inbox get", "Read a finding"],
   ["inbox update", "Change a finding's status"],
   ["inbox github-issue", "Create a GitHub issue for a finding"],
-  ["vendors approve", "Approve a vendor seen on a project"],
-  ["vendors ignore", "Ignore a vendor seen on a project"],
+  ["vendor list", "List vendors seen on a project"],
+  ["vendor get", "Read a vendor, where it was seen, and how it loaded"],
+  ["vendor approve", "Approve a vendor seen on a project"],
+  ["vendor ignore", "Ignore a vendor seen on a project"],
 ];
 const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.command === "feedback") {
@@ -242,13 +251,13 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.action === "github-issue") {
     effects.push("Creates an issue on GitHub.");
   }
-  if (spec.command === "vendors") {
+  if (spec.command === "vendor" && spec.method !== "GET") {
     effects.push(
       spec.action === "approve"
         ? "Accepts the vendor's data sharing on the project."
         : "Ignores the vendor on the project.",
       "Closes the vendor's runtime Inbox finding, if one exists. Later scans keep the decision. Repeating a decision changes nothing.",
-      "Take the vendor and project IDs from runtimeVendor in inth inbox get. Requires an admin or owner role."
+      "Take the vendor ID from inth vendor list, or both IDs from runtimeVendor in inth inbox get. Requires an admin or owner role."
     );
   }
   return effects;
@@ -279,13 +288,18 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   if (family === "api-key") {
     family = "api-keys";
   }
+  // Vendors are read with the project; decisions have their own scope.
+  if (family === "vendor") {
+    family = write ? "vendors" : "projects";
+  }
   const scopes = ["region", "feedback"].includes(spec.command)
     ? []
     : [`${family}.${write ? "write" : "read"}`];
   const keyAllowed =
     ["feedback", "region"].includes(spec.command) ||
     spec.command === "project" ||
-    (!write && ["org", "api-key", "inbox", "billing"].includes(spec.command));
+    (!write &&
+      ["org", "api-key", "inbox", "billing", "vendor"].includes(spec.command));
   const usage = `inth ${key}${spec.path.includes(":id") ? " <id>" : ""}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;
   const effects = resourceEffects(spec);
   return {

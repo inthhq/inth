@@ -1,9 +1,9 @@
 ---
 title: Manage Inth resources from the CLI
-description: Manage projects, members, invitations, API keys, Code Audit scans, Inbox findings, and vendor decisions.
+description: Manage projects, members, invitations, API keys, Code Audit scans, Inbox findings, and vendors.
 ---
 
-Use `inth project` for consent projects, `inth code-audit` for repository scans, `inth inbox` for findings, and `inth vendors` to approve or ignore vendors that scans find. Resource writes take effect immediately. Use a saved sign-in or an API key accepted by the command, and check `inth <command> --help` for required scopes and flags.
+Use `inth project` for consent projects, `inth code-audit` for repository scans, `inth inbox` for findings, and `inth vendor` to list, read, approve, or ignore vendors that scans find. Resource writes take effect immediately. Use a saved sign-in or an API key accepted by the command, and check `inth <command> --help` for required scopes and flags.
 
 ## Which command manages each resource?
 
@@ -31,7 +31,8 @@ Use `inth project` for consent projects, `inth code-audit` for repository scans,
 | `inbox list`, `inbox get <id>` | Read findings, optionally filtering the list with `--status` |
 | `inbox update <id> --status <status> --item-version <version>` | Change a finding's status |
 | `inbox github-issue <id>` | Create a GitHub issue for a finding |
-| `vendors approve <vendor-id> --project <project-id>`, `vendors ignore <vendor-id> --project <project-id>` | Approve or ignore a vendor seen on a project |
+| `vendor list --project <project-id> [--state <state>]`, `vendor get <vendor-id> --project <project-id>` | List vendors seen on a project, or read one with its hosts and what loaded it |
+| `vendor approve <vendor-id> --project <project-id>`, `vendor ignore <vendor-id> --project <project-id>` | Approve or ignore a vendor seen on a project |
 
 ## How do I list and configure consent projects?
 
@@ -107,19 +108,23 @@ inth inbox update inbox_123 --status resolved --item-version 3
 
 Inbox updates require the version from the latest read. Supported statuses are `open`, `accepted`, `dismissed`, and `resolved`. After a version conflict, read the item again before updating it.
 
-## How do I approve or ignore a vendor?
+## How do I review a vendor?
 
-Runtime findings name a vendor that a scan saw on a project. `inth inbox get <id>` shows the vendor's name, vendor ID, project ID, and how it loaded, such as a script URL or a Google Tag Manager container. Pass those IDs to `vendors approve` or `vendors ignore`.
+`inth vendor list --project <project-id>` lists the vendors scans saw on a project, with their category, state, and vendor ID. Add `--state active` to see only vendors nobody has decided on yet. `inth vendor get <vendor-id> --project <project-id>` shows one vendor's hosts, when it was last seen, how it loaded, such as a script URL or a Google Tag Manager container, and its open Inbox finding.
+
+Runtime findings also name the vendor. `inth inbox get <id>` shows its name, vendor ID, and project ID. Pass those IDs to `vendor approve` or `vendor ignore`.
 
 ```sh
 inth inbox get inbox_456
-inth vendors approve google-analytics --project prj_123
-inth vendors ignore google-analytics --project prj_123
+inth vendor list --project prj_123 --state active
+inth vendor get google-analytics --project prj_123
+inth vendor approve google-analytics --project prj_123
+inth vendor ignore google-analytics --project prj_123
 ```
 
 Approving a vendor accepts its data sharing and resolves its runtime Inbox finding. Ignoring it dismisses the finding. Later scans keep the decision, and repeating a decision changes nothing. The output shows the vendor's new state and the Inbox finding the decision closed, or `None` when the vendor had no finding. With `--json`, read `data.data.state` and `data.data.inboxItemId`.
 
-Vendor decisions need a person's sign-in with the `vendors.write` scope and an admin or owner role in the project's organization. Organization API keys cannot hold `vendors.write`. Sign-ins from earlier CLI versions lack the scope; run `inth login` again.
+Listing and reading vendors needs `projects.read`, which API keys have. Vendor decisions need a person's sign-in with the `vendors.write` scope and an admin or owner role in the project's organization. Organization API keys cannot hold `vendors.write`. Sign-ins from earlier CLI versions lack the scope; run `inth login` again.
 
 ## How do I send feedback about Inth?
 

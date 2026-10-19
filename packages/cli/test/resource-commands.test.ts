@@ -93,7 +93,7 @@ describe("public resource commands", () => {
           )
       );
       const args = [
-        "vendors",
+        "vendor",
         "approve",
         "google-analytics",
         "--project",

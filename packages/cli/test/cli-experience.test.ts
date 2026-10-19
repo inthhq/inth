@@ -103,10 +103,10 @@ describe("human help and machine discovery", () => {
     );
   });
   it.each(["approve", "ignore"])(
-    "describes vendors %s as a person-only write with a required project",
+    "describes vendor %s as a person-only write with a required project",
     (action) => {
       const vendors = COMMAND_METADATA.find(
-        (entry) => entry.command === "vendors" && entry.action === action
+        (entry) => entry.command === "vendor" && entry.action === action
       );
       expect(vendors?.scopes).toEqual(["vendors.write"]);
       expect(vendors?.authentication).toBe("browser-or-agent");
@@ -116,6 +116,19 @@ describe("human help and machine discovery", () => {
       const names = vendors?.options.map((entry) => entry.name);
       expect(names).not.toContain("data");
       expect(names).not.toContain("organization");
+    }
+  );
+  it.each(["list", "get"])(
+    "reads vendor %s with the project scope and a required project",
+    (action) => {
+      const vendors = COMMAND_METADATA.find(
+        (entry) => entry.command === "vendor" && entry.action === action
+      );
+      expect(vendors?.scopes).toEqual(["projects.read"]);
+      expect(vendors?.authentication).toBe("browser-or-agent-or-api-key");
+      expect(vendors?.options).toContainEqual(
+        expect.objectContaining({ name: "project", required: true })
+      );
     }
   );
   it("advertises API-key authentication only for supported resource capabilities", () => {

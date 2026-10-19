@@ -6,8 +6,8 @@ import { resourceCommand } from "./resource-commands.ts";
 import type {
   ResourceItem,
   ResourcePage,
-  RuntimeVendor,
   ScanDetails,
+  VendorEvidence,
 } from "./resource-output-types.ts";
 
 interface Field {
@@ -68,6 +68,9 @@ const labels = (options: CliArguments): string => {
     case "inbox": {
       return "Inbox";
     }
+    case "vendor": {
+      return "Vendors";
+    }
     default: {
       return options.argument === "repositories" ? "Repositories" : "Scans";
     }
@@ -121,6 +124,15 @@ const listFields = (options: CliArguments, item: ResourceItem): Field[] => {
         field("Finding", item.title),
         field("Priority", item.priority),
         field("Status", item.status),
+        field("ID", item.id),
+      ];
+    }
+    case "vendor": {
+      return [
+        field("Vendor", item.name),
+        field("Category", item.consentCategory ?? "Uncategorized"),
+        field("State", item.state),
+        field("Review", item.reviewState),
         field("ID", item.id),
       ];
     }
@@ -278,9 +290,9 @@ const projectFields = (item: ResourceItem): Field[] => {
   return fields;
 };
 // How the scan saw the vendor load: a Google Tag Manager container or a script.
-const loadedBy = (vendor: RuntimeVendor): string | undefined => {
+const loadedBy = (evidenceRows: VendorEvidence[]): string | undefined => {
   const sources: string[] = [];
-  for (const evidence of vendor.evidence) {
+  for (const evidence of evidenceRows) {
     const loader = evidence.loadedBy;
     let source = loader?.scriptUrl ?? undefined;
     if (loader?.viaGoogleTagManager) {
@@ -304,12 +316,34 @@ const vendorDecisionFields = (
     finding = `${item.inboxItemId} (${options.argument === "approve" ? "resolved" : "dismissed"})`;
   }
   return [
-    field("Vendor", item.vendorId),
+    field("Vendor", item.name),
+    field("ID", item.vendorId),
     field("Project", item.projectId),
     field("State", item.state),
     field("Review state", item.reviewState),
     field("Inbox finding", finding),
   ];
+};
+const vendorFields = (item: ResourceItem): Field[] => {
+  const fields = [
+    field("Vendor", item.name),
+    field("ID", item.id),
+    field("Project", item.projectId),
+    field("Category", item.consentCategory ?? "Uncategorized"),
+    field("State", item.state),
+    field("Review state", item.reviewState),
+  ];
+  if (item.hosts?.length) {
+    add(fields, "Hosts", item.hosts.join(", "));
+  }
+  add(fields, "Last seen", item.lastSeenAt);
+  add(
+    fields,
+    "Loaded by",
+    item.evidence ? (loadedBy(item.evidence) ?? "Unknown") : undefined
+  );
+  fields.push(field("Inbox finding", item.inboxItemId ?? "None"));
+  return fields;
 };
 const inboxFields = (item: ResourceItem): Field[] => {
   const fields = [field("Finding", item.title), field("ID", item.id)];
@@ -331,7 +365,7 @@ const inboxFields = (item: ResourceItem): Field[] => {
     add(fields, "Vendor ID", vendor.vendorId);
     add(fields, "Project", vendor.projectId);
     add(fields, "Vendor state", vendor.state);
-    add(fields, "Loaded by", loadedBy(vendor));
+    add(fields, "Loaded by", loadedBy(vendor.evidence));
   }
   return fields;
 };
@@ -346,8 +380,10 @@ const resourceFields = (options: CliArguments, item: ResourceItem): Field[] => {
     case "inbox": {
       return inboxFields(item);
     }
-    case "vendors": {
-      return vendorDecisionFields(options, item);
+    case "vendor": {
+      return options.argument === "get"
+        ? vendorFields(item)
+        : vendorDecisionFields(options, item);
     }
     case "code-audit": {
       return scanFields(item.scan ?? item);

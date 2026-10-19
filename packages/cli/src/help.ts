@@ -22,7 +22,7 @@ const groupDescriptions = [
   ["api-key", "Create, rotate, and revoke API keys"],
   ["code-audit", "Scan repositories and read findings"],
   ["inbox", "Review and update Inbox findings"],
-  ["vendors", "Approve or ignore vendors seen on a project"],
+  ["vendor", "List, read, approve, or ignore vendors seen on a project"],
   ["mcp", "Configure Inth MCP in your coding client"],
 ];
 const authenticationDescription = (value: string): string => {

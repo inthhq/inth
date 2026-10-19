@@ -24,18 +24,19 @@ export interface FindingDetails {
   recommendation?: string | null;
   files?: string[];
 }
+export interface VendorEvidence {
+  loadedBy: {
+    scriptUrl: string | null;
+    tagManagerContainerId: string | null;
+    viaGoogleTagManager: boolean;
+  } | null;
+}
 export interface RuntimeVendor {
   vendorId: string;
   name: string;
   projectId: string;
   state: string;
-  evidence: {
-    loadedBy: {
-      scriptUrl: string | null;
-      tagManagerContainerId: string | null;
-      viaGoogleTagManager: boolean;
-    } | null;
-  }[];
+  evidence: VendorEvidence[];
 }
 export interface ResourceItem extends ScanDetails {
   reference?: string;
@@ -76,9 +77,13 @@ export interface ResourceItem extends ScanDetails {
   runtimeVendor?: RuntimeVendor | null;
   vendorId?: string;
   projectId?: string;
-  state?: string;
+  state?: string | null;
   reviewState?: string;
   inboxItemId?: string | null;
+  consentCategory?: string | null;
+  hosts?: string[];
+  lastSeenAt?: string;
+  evidence?: VendorEvidence[];
   tier?: string;
   plan?: {
     name: string;
