@@ -195,6 +195,7 @@ describe("c15t codemod parser", () => {
     String.raw`const s = '\u{'; const o = { a: 1 };`,
     String.raw`const s = '\u{110000}'; const o = { a: 1 };`,
     String.raw`const s = '\x'; const t = '\x4g'; const u = '\u12';`,
+    // eslint-disable-next-line no-template-curly-in-string -- Source for the parser.
     "const r = String.raw`\\u`; const s = String.raw`\\x${1}\\u{`;",
   ])("scans invalid hex escapes in %s", (text) => {
     expectCompilerTree(text);

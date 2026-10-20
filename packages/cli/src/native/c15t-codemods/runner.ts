@@ -142,7 +142,7 @@ export const runTransform = async (
       // TypeScript parses past syntax errors and upstream's codemods run on
       // the result. One unreadable file, such as a fixture or a merge
       // conflict, shouldn't stop the run.
-      if (isSyntaxError(error)) {
+      if (isSyntaxError(message)) {
         result.warnings = [
           ...(result.warnings ?? []),
           {

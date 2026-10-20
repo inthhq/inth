@@ -575,6 +575,30 @@ const addNamedImports = function addNamedImports(
   );
 };
 
+/** The name a `useConsentManager` import binds in the file. */
+const localNameOf = function localNameOf(
+  named: Syntax.ImportSpecifier
+): string {
+  return named.getAliasNode()?.getText() ?? named.getName();
+};
+
+/** Every value import of `useConsentManager` from a c15t entry. */
+const sourceImports = function sourceImports(
+  sourceFile: Syntax.SourceFile
+): Syntax.ImportSpecifier[] {
+  return sourceFile
+    .getImportDeclarations()
+    .filter(
+      (candidate) =>
+        SOURCE_SPECIFIERS.has(candidate.getModuleSpecifierValue()) &&
+        !candidate.isTypeOnly()
+    )
+    .flatMap((candidate) => candidate.getNamedImports())
+    .filter(
+      (named) => named.getName() === "useConsentManager" && !named.isTypeOnly()
+    );
+};
+
 /**
  * Adds the replacement hook imports and drops the `useConsentManager` import
  * once no reference to it is left.
@@ -625,30 +649,6 @@ const updateImports = function updateImports(
       current.remove();
     }
   }
-};
-
-/** The name a `useConsentManager` import binds in the file. */
-const localNameOf = function localNameOf(
-  named: Syntax.ImportSpecifier
-): string {
-  return named.getAliasNode()?.getText() ?? named.getName();
-};
-
-/** Every value import of `useConsentManager` from a c15t entry. */
-const sourceImports = function sourceImports(
-  sourceFile: Syntax.SourceFile
-): Syntax.ImportSpecifier[] {
-  return sourceFile
-    .getImportDeclarations()
-    .filter(
-      (candidate) =>
-        SOURCE_SPECIFIERS.has(candidate.getModuleSpecifierValue()) &&
-        !candidate.isTypeOnly()
-    )
-    .flatMap((candidate) => candidate.getNamedImports())
-    .filter(
-      (named) => named.getName() === "useConsentManager" && !named.isTypeOnly()
-    );
 };
 
 /** Migrates the calls of one `useConsentManager` import. */

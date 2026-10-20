@@ -307,11 +307,12 @@ export const runCodemods = async (
           )
         ),
       ];
-      const saved = options.dryRun
-        ? "No changes saved."
-        : changed.length > 0
-          ? `Changed before it stopped: ${changed.join(", ")}.`
-          : "No files changed.";
+      let saved = "No files changed.";
+      if (options.dryRun) {
+        saved = "No changes saved.";
+      } else if (changed.length > 0) {
+        saved = `Changed before it stopped: ${changed.join(", ")}.`;
+      }
       throw new CliError(
         "migration_failed",
         `${item.id} failed for ${result.errors.length} file(s). ${saved} ${result.errors.map(({ filePath, error }) => `${filePath}: ${error}`).join("; ")}`

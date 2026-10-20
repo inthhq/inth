@@ -83,9 +83,9 @@ const SYNTAX_ERROR = "Syntax error at offset ";
 export const syntaxError = (message: string, offset: number): Error =>
   new Error(`${SYNTAX_ERROR}${String(offset)}: ${message}`);
 
-/** Whether an error is one {@link syntaxError} made. */
-export const isSyntaxError = (error: unknown): boolean =>
-  error instanceof Error && error.message.startsWith(SYNTAX_ERROR);
+/** Whether an error message came from {@link syntaxError}. */
+export const isSyntaxError = (message: string): boolean =>
+  message.startsWith(SYNTAX_ERROR);
 
 export class Scanner {
   text: string;

@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { parseArguments } from "../../src/arguments.ts";
 import { helpCommands } from "../../src/help.ts";
-import { runCodemods } from "../../src/native/c15t-codemods/command.ts";
+import {
+  CODEMODS,
+  runCodemods,
+} from "../../src/native/c15t-codemods/command.ts";
 import { telemetryCommand } from "../../src/telemetry.ts";
 import { cleanupProjects, createProject } from "./helpers.ts";
 
@@ -176,20 +179,15 @@ describe("runCodemods", { timeout: 20_000 }, () => {
 
   it("names the files earlier codemods changed when a later one fails", async () => {
     quiet();
-    vi.resetModules();
-    vi.doMock(
-      "../../src/native/c15t-codemods/scripts-to-integrations.ts",
-      () => ({
-        runScriptsToIntegrationsCodemod: () =>
-          Promise.resolve({
-            changedFiles: [],
-            errors: [{ error: "boom", filePath: "app/broken.ts" }],
-            totalFiles: 1,
-          }),
-      })
-    );
-    const { runCodemods: run } =
-      await import("../../src/native/c15t-codemods/command.ts");
+    const failing = CODEMODS.find(({ id }) => id === "scripts-to-integrations");
+    if (!failing) {
+      throw new Error("scripts-to-integrations is missing");
+    }
+    vi.spyOn(failing, "run").mockResolvedValue({
+      changedFiles: [],
+      errors: [{ error: "boom", filePath: "app/broken.ts" }],
+      totalFiles: 1,
+    });
     const root = await createProject({
       ...V2_APP,
       "package.json": JSON.stringify({
@@ -199,7 +197,7 @@ describe("runCodemods", { timeout: 20_000 }, () => {
     });
     const layout = join(root, "app", "layout.tsx");
     await expect(
-      run(
+      runCodemods(
         {
           dryRun: false,
           list: false,
@@ -212,7 +210,6 @@ describe("runCodemods", { timeout: 20_000 }, () => {
       code: "migration_failed",
       message: expect.stringContaining(`Changed before it stopped: ${layout}.`),
     });
-    vi.doUnmock("../../src/native/c15t-codemods/scripts-to-integrations.ts");
   });
 
   it("names unknown codemods and asks for at least one", async () => {

@@ -102,6 +102,59 @@ const planMethodRenames = function planMethodRenames(
   return operations;
 };
 
+/**
+ * Plans renames for presets reached through a namespace import, such as
+ * `import * as c15t from 'c15t'` then `c15t.policyPackPresets.worldNoBanner()`.
+ */
+const planNamespaceAccesses = function planNamespaceAccesses(
+  sourceFile: Syntax.SourceFile,
+  edits: TextEdit[],
+  summaries: string[]
+): number {
+  let operations = 0;
+  for (const access of sourceFile.getDescendantsOfKind(
+    SyntaxKind.PropertyAccessExpression
+  )) {
+    const next = RENAMES.get(access.getName());
+    const namespace = access.getExpression();
+    if (!next || !Node.isIdentifier(namespace)) {
+      continue;
+    }
+    const declaration = namespace
+      .getSymbol()
+      ?.getDeclarations()
+      .find((imported) => Node.isNamespaceImport(imported))
+      ?.getFirstAncestorByKind(SyntaxKind.ImportDeclaration);
+    const entry = declaration?.getModuleSpecifierValue();
+    const target = entry === undefined ? undefined : PRESET_ENTRIES.get(entry);
+    if (!(declaration && entry && target)) {
+      continue;
+    }
+    let renamed = 0;
+    if (target === entry) {
+      edits.push(toTextEdit(access.getNameNode(), next));
+      summaries.push(`${access.getName()} -> ${next}`);
+      renamed = 1;
+    } else if (
+      // The entry no longer exports presets, so the access can't stay.
+      addTodo(
+        declaration,
+        `${access.getText()}: ${entry} no longer exports presets. Import ${next} from ${target}.`,
+        edits
+      )
+    ) {
+      summaries.push(`TODO: ${access.getName()}`);
+      renamed = 1;
+    }
+    const methods = planMethodRenames([access], edits);
+    operations += renamed + methods;
+    if (methods > 0) {
+      summaries.push("worldNoBanner -> worldOptOutNoPrompt");
+    }
+  }
+  return operations;
+};
+
 const transformSourceFile = function transformSourceFile(
   sourceFile: Syntax.SourceFile
 ): TransformResult {
@@ -143,47 +196,7 @@ const transformSourceFile = function transformSourceFile(
     }
     moveSpecifiers(declaration, moves, edits);
   }
-  // `import * as c15t from 'c15t'` then `c15t.policyPackPresets.worldNoBanner()`.
-  for (const access of sourceFile.getDescendantsOfKind(
-    SyntaxKind.PropertyAccessExpression
-  )) {
-    const next = RENAMES.get(access.getName());
-    const namespace = access.getExpression();
-    if (!next || !Node.isIdentifier(namespace)) {
-      continue;
-    }
-    const declaration = namespace
-      .getSymbol()
-      ?.getDeclarations()
-      .find((imported) => Node.isNamespaceImport(imported))
-      ?.getFirstAncestorByKind(SyntaxKind.ImportDeclaration);
-    const entry = declaration?.getModuleSpecifierValue();
-    const target = entry === undefined ? undefined : PRESET_ENTRIES.get(entry);
-    if (!(declaration && entry && target)) {
-      continue;
-    }
-    let renamed = 0;
-    if (target === entry) {
-      edits.push(toTextEdit(access.getNameNode(), next));
-      summaries.push(`${access.getName()} -> ${next}`);
-      renamed = 1;
-    } else if (
-      // The entry no longer exports presets, so the access can't stay.
-      addTodo(
-        declaration,
-        `${access.getText()}: ${entry} no longer exports presets. Import ${next} from ${target}.`,
-        edits
-      )
-    ) {
-      summaries.push(`TODO: ${access.getName()}`);
-      renamed = 1;
-    }
-    const methods = planMethodRenames([access], edits);
-    operations += renamed + methods;
-    if (methods > 0) {
-      summaries.push("worldNoBanner -> worldOptOutNoPrompt");
-    }
-  }
+  operations += planNamespaceAccesses(sourceFile, edits, summaries);
   if (edits.length === 0) {
     return UNCHANGED;
   }
