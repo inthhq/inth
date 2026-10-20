@@ -1,7 +1,9 @@
-import { parseC15tArguments } from "./c15t.ts";
+import { parseCodemodsArguments } from "./c15t-codemods.ts";
+import { c15tOptionTakesValue, parseC15tArguments } from "./c15t.ts";
 import type { C15tOptions } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
+import type { CodemodOptions } from "./native/c15t-codemods/command.ts";
 import { terminalText } from "./organizations.ts";
 import {
   buildResourceRequest,
@@ -29,6 +31,8 @@ export interface CliArguments {
   skillsBrowse?: boolean;
   skillsSourceExplicit?: boolean;
   c15t?: C15tOptions;
+  // Set for `inth c15t codemods`, which runs without sign-in or a project.
+  c15tCodemods?: CodemodOptions;
 }
 
 const validateCommandOptions = (result: CliArguments): void => {
@@ -425,7 +429,21 @@ const parseSubcommand = (
     );
     result.values = [];
     result.command = "c15t";
-    result.c15t = parseC15tArguments(result, [...leading, ...rest]);
+    const args = [...leading, ...rest];
+    // The first word that is not an option's value names the action.
+    const action = args.findIndex(
+      (entry, index) =>
+        !entry.startsWith("-") && !c15tOptionTakesValue(args[index - 1] ?? "")
+    );
+    if (args[action] === "codemods") {
+      result.argument = "codemods";
+      result.c15tCodemods = parseCodemodsArguments(
+        result,
+        args.filter((_entry, index) => index !== action)
+      );
+      return true;
+    }
+    result.c15t = parseC15tArguments(result, args);
     return true;
   }
   return false;
