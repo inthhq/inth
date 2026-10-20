@@ -93,6 +93,76 @@ const lazy = () => import('@c15t/nextjs/devtools');
 `);
   });
 
+  it("rewrites require calls, mocks, import equals and import types", async () => {
+    const source = `import { createRequire } from 'node:module';
+import { vi } from 'vitest';
+import tools = require('@c15t/dev-tools/react');
+
+const load = createRequire(import.meta.url);
+const react = require('@c15t/dev-tools/react');
+const tanstack = load('@c15t/dev-tools/tanstack');
+const path = require.resolve('@c15t/dev-tools/react');
+vi.mock('@c15t/dev-tools/react');
+jest.mock('@c15t/dev-tools/tanstack');
+type Tools = typeof import('@c15t/dev-tools/react');
+`;
+    const { result, updated } = await run({ c15t: "3.0.0" }, source);
+
+    expect(result.errors).toEqual([]);
+    expect(updated).toBe(
+      source.replaceAll(
+        /@c15t\/dev-tools\/(?:react|tanstack)/gu,
+        "c15t/react/devtools"
+      )
+    );
+    expect(result.changedFiles[0]?.operations).toBe(7);
+  });
+
+  it("leaves a require that a local function shadows alone", async () => {
+    const source = `const require = (path: string) => path;
+export const tools = require('@c15t/dev-tools/react');
+`;
+    const { result } = await run({ c15t: "3.0.0" }, source);
+    expect(result.changedFiles).toEqual([]);
+  });
+
+  it.each(["* as D", "D"])(
+    "drops namespace from components reached through import %s",
+    async (clause) => {
+      const { updated } = await run(
+        { c15t: "3.0.0" },
+        `import ${clause} from '@c15t/dev-tools/react';
+
+export const plugin = D.c15tDevtoolsPlugin({ namespace: 'consent', defaultOpen: true });
+export const Tools = () => <D.DevTools namespace="store" />;
+`
+      );
+      expect(updated).toBe(`import ${clause} from 'c15t/react/devtools';
+
+export const plugin = D.c15tDevtoolsPlugin({ defaultOpen: true });
+export const Tools = () => <D.DevTools />;
+`);
+    }
+  );
+
+  it("marks removed store helpers reached through a namespace import", async () => {
+    const { updated } = await run(
+      { c15t: "3.0.0" },
+      `import * as tools from '@c15t/dev-tools';
+
+export const store = tools.getC15tStore();
+export const devtools = tools.createDevTools;
+`
+    );
+    expect(updated)
+      .toBe(`// TODO(c15t v3): getC15tStore was removed. Dev tools read the consent engine; render DevTools inside the provider, or call createDevTools({ kernel }).
+import * as tools from '@c15t/dev-tools';
+
+export const store = tools.getC15tStore();
+export const devtools = tools.createDevTools;
+`);
+  });
+
   it.each<[string | undefined, string]>([
     ["3.0.0", "c15t/next/devtools"],
     ["2.3.0", "@c15t/nextjs/devtools"],

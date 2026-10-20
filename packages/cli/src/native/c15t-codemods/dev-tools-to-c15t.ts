@@ -6,8 +6,11 @@ import {
   addTodo,
   applyEdits,
   findProperty,
+  localDeclarationsOf,
+  moduleSpecifiersOf,
   propertyRemoval,
   referencesOf,
+  sourceNameOf,
   toTextEdit,
   UNCHANGED,
   unwrapExpression,
@@ -59,39 +62,112 @@ const devtoolsEntryFor = async function devtoolsEntryFor(
   return usesNext ? "@c15t/nextjs/devtools" : "@c15t/react/devtools";
 };
 
-const planNamespaceProps = function planNamespaceProps(
-  named: Syntax.ImportSpecifier,
+/** The module each name comes from, for `sourceNameOf`. */
+const modulesFor = (
+  names: ReadonlySet<string>,
+  modules: readonly string[]
+): ReadonlyMap<string, readonly string[]> =>
+  new Map([...names].map((name) => [name, modules] as const));
+
+const TAKER_MODULES = modulesFor(NAMESPACE_TAKERS, [...OLD_ENTRIES]);
+const REMOVED_ROOT_MODULES = modulesFor(REMOVED_ROOT, ["@c15t/dev-tools"]);
+
+/**
+ * Drops `namespace` from the JSX element or call that `tag` names, as in
+ * `<DevTools namespace="…" />`, `<D.DevTools namespace="…" />` or
+ * `c15tDevtools({ namespace })`.
+ */
+const planNamespaceProp = function planNamespaceProp(
+  tag: Syntax.Node,
   edits: TextEdit[]
 ): number {
-  if (!NAMESPACE_TAKERS.has(named.getName())) {
+  const parent = tag.getParent();
+  if (
+    (Node.isJsxOpeningElement(parent) ||
+      Node.isJsxSelfClosingElement(parent)) &&
+    parent.getTagNameNode() === tag
+  ) {
+    const attribute = parent.getAttribute("namespace");
+    if (!attribute) {
+      return 0;
+    }
+    edits.push(propertyRemoval(attribute));
+    return 1;
+  }
+  if (!(Node.isCallExpression(parent) && parent.getExpression() === tag)) {
     return 0;
   }
+  const [argument] = parent.getArguments();
+  const object = argument && unwrapExpression(argument);
+  const property =
+    object && Node.isObjectLiteralExpression(object)
+      ? findProperty(object, "namespace")
+      : undefined;
+  if (!property) {
+    return 0;
+  }
+  edits.push(propertyRemoval(property));
+  return 1;
+};
+
+/**
+ * The places that use a `namespace` taker from the v2 React entries: the
+ * references of a named import, and `D.DevTools` after a namespace or
+ * default import.
+ */
+const namespaceTakersOf = function namespaceTakersOf(
+  sourceFile: Syntax.SourceFile
+): Syntax.Node[] {
+  const named = sourceFile
+    .getImportDeclarations()
+    .filter((declaration) =>
+      OLD_ENTRIES.has(declaration.getModuleSpecifierValue())
+    )
+    .flatMap((declaration) => declaration.getNamedImports())
+    .filter((specifier) => NAMESPACE_TAKERS.has(specifier.getName()))
+    .flatMap((specifier) => referencesOf(specifier));
+  const accessed = sourceFile
+    .getDescendantsOfKind(SyntaxKind.PropertyAccessExpression)
+    .filter((access) => sourceNameOf(access, TAKER_MODULES) !== undefined);
+  return [...named, ...accessed];
+};
+
+/** Marks removed store helpers imported by name or reached as `D.getC15tStore`. */
+const planRemovedRoot = function planRemovedRoot(
+  sourceFile: Syntax.SourceFile,
+  edits: TextEdit[],
+  summaries: Set<string>
+): number {
   let operations = 0;
-  for (const reference of referencesOf(named)) {
-    const parent = reference.getParent();
-    if (
-      (Node.isJsxOpeningElement(parent) ||
-        Node.isJsxSelfClosingElement(parent)) &&
-      parent.getTagNameNode() === reference
-    ) {
-      const attribute = parent.getAttribute("namespace");
-      if (attribute) {
-        edits.push(propertyRemoval(attribute));
-        operations += 1;
-      }
+  const mark = (declaration: Syntax.Node, name: string) => {
+    if (addTodo(declaration, REMOVED_ROOT_TODO(name), edits)) {
+      summaries.add(`TODO: ${name}`);
+      operations += 1;
+    }
+  };
+  for (const declaration of sourceFile.getImportDeclarations()) {
+    if (declaration.getModuleSpecifierValue() !== "@c15t/dev-tools") {
       continue;
     }
-    if (Node.isCallExpression(parent) && parent.getExpression() === reference) {
-      const [argument] = parent.getArguments();
-      const object = argument && unwrapExpression(argument);
-      const property =
-        object && Node.isObjectLiteralExpression(object)
-          ? findProperty(object, "namespace")
-          : undefined;
-      if (property) {
-        edits.push(propertyRemoval(property));
-        operations += 1;
+    for (const named of declaration.getNamedImports()) {
+      if (REMOVED_ROOT.has(named.getName())) {
+        mark(declaration, named.getName());
       }
+    }
+  }
+  for (const access of sourceFile.getDescendantsOfKind(
+    SyntaxKind.PropertyAccessExpression
+  )) {
+    const namespace = access.getExpression();
+    const declaration =
+      sourceNameOf(access, REMOVED_ROOT_MODULES) !== undefined &&
+      Node.isIdentifier(namespace)
+        ? localDeclarationsOf(namespace)[0]?.getFirstAncestorByKind(
+            SyntaxKind.ImportDeclaration
+          )
+        : undefined;
+    if (declaration) {
+      mark(declaration, access.getName());
     }
   }
   return operations;
@@ -102,66 +178,25 @@ const transformWith = (entry: string) =>
     const edits: TextEdit[] = [];
     const summaries = new Set<string>();
     let operations = 0;
-    for (const declaration of sourceFile.getImportDeclarations()) {
-      const specifier = declaration.getModuleSpecifierValue();
+    // Imports, re-exports, `import()`, `require()`, mocks and import types.
+    for (const literal of moduleSpecifiersOf(sourceFile)) {
+      const specifier = literal.getLiteralValue();
       if (OLD_ENTRIES.has(specifier)) {
-        const quote = declaration.getModuleSpecifier().getText().charAt(0);
-        edits.push(
-          toTextEdit(
-            declaration.getModuleSpecifier(),
-            `${quote}${entry}${quote}`
-          )
-        );
-        summaries.add(`${specifier} -> ${entry}`);
-        operations += 1;
-        for (const named of declaration.getNamedImports()) {
-          const removed = planNamespaceProps(named, edits);
-          if (removed > 0) {
-            summaries.add("removed namespace prop");
-            operations += removed;
-          }
-        }
-        continue;
-      }
-      if (specifier !== "@c15t/dev-tools") {
-        continue;
-      }
-      for (const named of declaration.getNamedImports()) {
-        if (
-          REMOVED_ROOT.has(named.getName()) &&
-          addTodo(declaration, REMOVED_ROOT_TODO(named.getName()), edits)
-        ) {
-          summaries.add(`TODO: ${named.getName()}`);
-          operations += 1;
-        }
-      }
-    }
-    for (const declaration of sourceFile.getExportDeclarations()) {
-      const specifier = declaration.getModuleSpecifierValue();
-      const node = declaration.getModuleSpecifier();
-      if (specifier && node && OLD_ENTRIES.has(specifier)) {
-        const quote = node.getText().charAt(0);
-        edits.push(toTextEdit(node, `${quote}${entry}${quote}`));
+        const quote = literal.getText().charAt(0);
+        edits.push(toTextEdit(literal, `${quote}${entry}${quote}`));
         summaries.add(`${specifier} -> ${entry}`);
         operations += 1;
       }
     }
-    for (const call of sourceFile.getDescendantsOfKind(
-      SyntaxKind.CallExpression
-    )) {
-      const [argument] = call.getArguments();
-      if (
-        call.getExpression().getKind() === SyntaxKind.ImportKeyword &&
-        argument &&
-        Node.isStringLiteral(argument) &&
-        OLD_ENTRIES.has(argument.getLiteralText())
-      ) {
-        const quote = argument.getText().charAt(0);
-        edits.push(toTextEdit(argument, `${quote}${entry}${quote}`));
-        summaries.add(`${argument.getLiteralText()} -> ${entry}`);
-        operations += 1;
-      }
+    let removed = 0;
+    for (const tag of namespaceTakersOf(sourceFile)) {
+      removed += planNamespaceProp(tag, edits);
     }
+    if (removed > 0) {
+      summaries.add("removed namespace prop");
+      operations += removed;
+    }
+    operations += planRemovedRoot(sourceFile, edits, summaries);
     if (edits.length === 0) {
       return UNCHANGED;
     }
