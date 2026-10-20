@@ -41,6 +41,8 @@ export interface CodemodSession {
    * later transform builds on an earlier one's edits even in a dry run.
    */
   texts: Map<string, string>;
+  /** Files that failed to parse, so later transforms skip them silently. */
+  unparseable: Set<string>;
 }
 
 export interface CodemodRunOptions {
@@ -113,6 +115,7 @@ export const createCodemodSession = async (
   filePaths: await collectSourceFiles(projectRoot),
   project: new Project(),
   texts: new Map(),
+  unparseable: new Set(),
 });
 
 /** Apply one transform and report exact before/after source for review. */
@@ -124,7 +127,7 @@ export const runTransform = async (
     summaries: string[];
   }
 ): Promise<CodemodRunResult> => {
-  const { project, filePaths } =
+  const { project, filePaths, unparseable } =
     options.session ?? (await createCodemodSession(options.projectRoot));
   const result: CodemodRunResult = {
     changedFiles: [],
@@ -132,6 +135,10 @@ export const runTransform = async (
     totalFiles: filePaths.length,
   };
   for (const filePath of filePaths) {
+    // An earlier transform in this session already warned about it.
+    if (unparseable.has(filePath)) {
+      continue;
+    }
     let source: SourceFile;
     try {
       source =
@@ -143,6 +150,7 @@ export const runTransform = async (
       // the result. One unreadable file, such as a fixture or a merge
       // conflict, shouldn't stop the run.
       if (isSyntaxError(message)) {
+        unparseable.add(filePath);
         result.warnings = [
           ...(result.warnings ?? []),
           {

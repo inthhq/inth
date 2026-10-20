@@ -10,6 +10,7 @@ import {
   CODEMODS,
   runCodemods,
 } from "../../src/native/c15t-codemods/command.ts";
+import { Project } from "../../src/native/c15t-codemods/syntax/index.ts";
 import { telemetryCommand } from "../../src/telemetry.ts";
 import { cleanupProjects, createProject } from "./helpers.ts";
 
@@ -174,6 +175,40 @@ describe("runCodemods", { timeout: 20_000 }, () => {
     );
     expect(await readFile(join(root, "app", "layout.tsx"), "utf-8")).toContain(
       'from "c15t/next"'
+    );
+  });
+
+  it("parses and warns about an unreadable file once per session", async () => {
+    quiet();
+    const root = await createProject({
+      ...V2_APP,
+      "fixtures/conflict.ts": "<<<<<<< HEAD\nexport const a = 1;\n",
+      "package.json": JSON.stringify({
+        dependencies: { "@c15t/nextjs": "2.0.0", c15t: "3.1.0" },
+        name: "app",
+      }),
+    });
+    const conflict = join(root, "fixtures", "conflict.ts");
+    const parse = vi.spyOn(Project.prototype, "addSourceFileAtPath");
+    const ran = await runCodemods(
+      {
+        dryRun: true,
+        list: false,
+        names: ["packages-to-c15t", "scripts-to-integrations"],
+      },
+      root,
+      true
+    );
+    const results = "results" in ran ? ran.results : [];
+    expect(results).toHaveLength(2);
+    expect(results.flatMap(({ result }) => result.warnings ?? [])).toEqual([
+      {
+        filePath: conflict,
+        message: expect.stringContaining("could not parse"),
+      },
+    ]);
+    expect(parse.mock.calls.filter(([path]) => path === conflict)).toHaveLength(
+      1
     );
   });
 
