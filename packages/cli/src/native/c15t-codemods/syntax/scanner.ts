@@ -423,6 +423,20 @@ export class Scanner {
     return Token.Number;
   }
 
+  /**
+   * Read `count` hex digits at `start` and move past them. Returns -1 and
+   * leaves the position alone when any of them is not a hex digit.
+   */
+  private scanHex(start: number, count: number): number {
+    for (let index = start; index < start + count; index += 1) {
+      if (!isHexDigit(this.code(index))) {
+        return -1;
+      }
+    }
+    this.pos = start + count;
+    return Number.parseInt(this.text.slice(start, this.pos), 16);
+  }
+
   /** Read an escape after a backslash and return its cooked text. */
   private scanEscape(): string {
     const ch = this.code(this.pos);
@@ -449,21 +463,31 @@ export class Scanner {
       case 118: {
         return "\v";
       }
+      // An invalid hex escape is an error in a string and allowed in a
+      // tagged template. Either way, the text after it is scanned as usual.
       case 120: {
-        const hex = this.text.slice(this.pos, this.pos + 2);
-        this.pos += 2;
-        return String.fromCharCode(Number.parseInt(hex, 16));
+        const code = this.scanHex(this.pos, 2);
+        return code === -1 ? "x" : String.fromCharCode(code);
       }
       case 117: {
-        if (this.code(this.pos) === 123) {
-          const close = this.text.indexOf("}", this.pos);
-          const hex = this.text.slice(this.pos + 1, close);
-          this.pos = close + 1;
-          return fromCodePoint(Number.parseInt(hex, 16));
+        if (this.code(this.pos) !== 123) {
+          const code = this.scanHex(this.pos, 4);
+          return code === -1 ? "u" : String.fromCharCode(code);
         }
-        const hex = this.text.slice(this.pos, this.pos + 4);
-        this.pos += 4;
-        return String.fromCharCode(Number.parseInt(hex, 16));
+        let end = this.pos + 1;
+        while (isHexDigit(this.code(end))) {
+          end += 1;
+        }
+        const code = Number.parseInt(this.text.slice(this.pos + 1, end), 16);
+        if (
+          end === this.pos + 1 ||
+          this.code(end) !== 125 ||
+          code > 0x10_ff_ff
+        ) {
+          return "u";
+        }
+        this.pos = end + 1;
+        return fromCodePoint(code);
       }
       case 13: {
         if (this.code(this.pos) === 10) {

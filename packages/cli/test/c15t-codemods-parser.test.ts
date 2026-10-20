@@ -190,6 +190,16 @@ describe("c15t codemod parser", () => {
     expectCompilerTree("const x = <div>y</div>;", "input.jsx");
   });
 
+  // The compiler reports these escapes and keeps parsing after them.
+  it.each([
+    String.raw`const s = '\u{'; const o = { a: 1 };`,
+    String.raw`const s = '\u{110000}'; const o = { a: 1 };`,
+    String.raw`const s = '\x'; const t = '\x4g'; const u = '\u12';`,
+    "const r = String.raw`\\u`; const s = String.raw`\\x${1}\\u{`;",
+  ])("scans invalid hex escapes in %s", (text) => {
+    expectCompilerTree(text);
+  });
+
   // Parses every file twice, about five seconds on its own.
   it(
     "matches the compiler on the CLI's own sources",
