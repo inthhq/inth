@@ -1,6 +1,6 @@
 import { runTransform } from "./runner.ts";
 import type { CodemodRunOptions, CodemodRunResult } from "./runner.ts";
-import { isNodeRequire } from "./source-edits.ts";
+import { isModuleHelperCall, isNodeRequire } from "./source-edits.ts";
 import { Node, SyntaxKind } from "./syntax/index.ts";
 import type { SourceFile, StringLiteral } from "./syntax/index.ts";
 
@@ -36,7 +36,11 @@ const transformSourceFile = (sourceFile: SourceFile) => {
     const isRequire =
       Node.isIdentifier(expression) && isNodeRequire(expression);
     const [argument] = call.getArguments();
-    if ((isImport || isRequire) && argument && Node.isStringLiteral(argument)) {
+    if (
+      (isImport || isRequire || isModuleHelperCall(call)) &&
+      argument &&
+      Node.isStringLiteral(argument)
+    ) {
       rename(argument);
     }
   }

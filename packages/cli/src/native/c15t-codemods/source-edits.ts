@@ -332,6 +332,77 @@ export const isNodeRequire = function isNodeRequire(
 };
 
 /**
+ * Test-runner and `require` helpers whose first argument names a module, so
+ * a mock of `@c15t/react` follows the import it replaces.
+ */
+const MODULE_HELPERS = new Set([
+  "jest.createMockFromModule",
+  "jest.deepUnmock",
+  "jest.doMock",
+  "jest.dontMock",
+  "jest.mock",
+  "jest.requireActual",
+  "jest.requireMock",
+  "jest.setMock",
+  "jest.unmock",
+  "jest.unstable_mockModule",
+  "jest.unstable_unmockModule",
+  "require.resolve",
+  "vi.doMock",
+  "vi.doUnmock",
+  "vi.importActual",
+  "vi.importMock",
+  "vi.mock",
+  "vi.unmock",
+]);
+
+/** The method names in {@link MODULE_HELPERS}, checked before any binding. */
+const HELPER_METHODS = new Set(
+  [...MODULE_HELPERS].map((helper) => helper.slice(helper.indexOf(".") + 1))
+);
+
+/** Modules that export the test-runner globals, as `vitest` exports `vi`. */
+const HELPER_MODULES = new Map<string, readonly string[]>(
+  Object.entries({
+    jest: ["@jest/globals"],
+    vi: ["vitest"],
+  })
+);
+
+/**
+ * Whether a node is a `vi.mock()`-style call from {@link MODULE_HELPERS}.
+ * The receiver is matched by what it refers to, not its local name: the
+ * global `vi`, `jest` or `require`, a `createRequire()` binding, or `vi` or
+ * `jest` imported under any name, as `import { vi as test } from 'vitest'`
+ * or `import * as V from 'vitest'` does. A local binding that shadows a
+ * global doesn't count.
+ */
+export const isModuleHelperCall = function isModuleHelperCall(
+  node: Syntax.Node
+): boolean {
+  if (!Node.isCallExpression(node)) {
+    return false;
+  }
+  const callee = node.getExpression();
+  if (
+    !(
+      Node.isPropertyAccessExpression(callee) &&
+      HELPER_METHODS.has(callee.getName())
+    )
+  ) {
+    return false;
+  }
+  const receiver = callee.getExpression();
+  const helper =
+    Node.isIdentifier(receiver) && isNodeRequire(receiver)
+      ? "require"
+      : sourceNameOf(receiver, HELPER_MODULES);
+  return (
+    helper !== undefined && MODULE_HELPERS.has(`${helper}.${callee.getName()}`)
+  );
+};
+
+/**
  * An object property's key without quotes. A computed key counts when it is
  * a string, as in `['tailwindcss']: {}`; any other computed key is
  * `undefined`.

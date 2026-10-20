@@ -19,6 +19,7 @@ Written for inth:
 Changes to upstream's behavior:
 
 - `consent-provider-options` leaves `mode: 'offline'` and `offlinePolicy` as they are and adds a `TODO(c15t v3)` comment. Upstream rewrites them to `offline({ policyRules })`. inth migrates hosted apps only. Custom mode gets upstream's TODO.
+- `scripts-to-integrations` also rewrites the module argument of `vi.mock()`, `jest.mock()`, `require.resolve()` and the other test-runner helpers `packages-to-c15t` recognizes. Upstream rewrites only imports, `require()` and import types.
 - Lookup tables are `Map`s instead of objects, so a name such as `constructor` no longer matches an `Object.prototype` member.
 - Results use inth's JSON envelope. `data` keeps upstream's shape.
 

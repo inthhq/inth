@@ -166,6 +166,39 @@ const scripts = [analytics({ token: 'test' })];
     expect(rerun.changedFiles).toEqual([]);
   });
 
+  it("rewrites test-runner mocks and require.resolve", async () => {
+    const source = `import { vi as test } from 'vitest';
+test.mock('@c15t/scripts/posthog');
+const actual = await vi.importActual('@c15t/scripts/events');
+jest.mock('@c15t/scripts');
+const path = require.resolve('@c15t/scripts/meta-pixel');
+`;
+    const { filePath, projectRoot } = await fixture(source);
+    const result = await runScriptsToIntegrationsCodemod({
+      dryRun: false,
+      projectRoot,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.changedFiles[0]?.operations).toBe(4);
+    expect(await readFile(filePath, "utf-8")).toBe(
+      source.replaceAll("@c15t/scripts", "@c15t/integrations")
+    );
+  });
+
+  it("leaves mocks on a local vi object alone", async () => {
+    const source = `const vi = { mock: (_path: string) => undefined };
+vi.mock('@c15t/scripts/posthog');
+`;
+    const { filePath, projectRoot } = await fixture(source);
+    const result = await runScriptsToIntegrationsCodemod({
+      dryRun: false,
+      projectRoot,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.changedFiles).toEqual([]);
+    expect(await readFile(filePath, "utf-8")).toBe(source);
+  });
+
   it("previews JavaScript changes without saving files", async () => {
     const source = `export { posthog } from '@c15t/scripts/posthog';\n`;
     const { filePath, projectRoot } = await fixture(source, "js");
