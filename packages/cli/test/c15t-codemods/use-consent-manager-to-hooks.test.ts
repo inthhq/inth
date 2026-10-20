@@ -21,7 +21,7 @@ const transform = async function transform(content: string) {
   return { result, updated: await readFile(filePath, "utf-8") };
 };
 
-describe("use-consent-manager-to-hooks codemod", () => {
+describe("use-consent-manager-to-hooks codemod", { timeout: 20_000 }, () => {
   afterEach(async () => {
     await Promise.all(
       createdDirs

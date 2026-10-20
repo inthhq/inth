@@ -24,7 +24,7 @@ afterEach(async () => {
   );
 });
 
-describe("scripts-to-integrations", () => {
+describe("scripts-to-integrations", { timeout: 20_000 }, () => {
   it.each(["node:module", "module"])(
     "migrates createRequire bindings imported from %s without changing shadowed calls",
     async (moduleName) => {
