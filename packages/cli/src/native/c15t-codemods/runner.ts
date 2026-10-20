@@ -4,7 +4,7 @@ import { readdir, readFile, writeFile } from "node:fs/promises";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { extname, join } from "node:path";
 
-import { Project, saveSourceFile } from "./syntax/index.ts";
+import { isSyntaxError, Project, saveSourceFile } from "./syntax/index.ts";
 import type { SourceFile } from "./syntax/index.ts";
 
 const SOURCE_EXTENSIONS = new Set([
@@ -132,10 +132,30 @@ export const runTransform = async (
     totalFiles: filePaths.length,
   };
   for (const filePath of filePaths) {
+    let source: SourceFile;
     try {
-      const source =
+      source =
         project.getSourceFile(filePath) ??
         project.addSourceFileAtPath(filePath);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // TypeScript parses past syntax errors and upstream's codemods run on
+      // the result. One unreadable file, such as a fixture or a merge
+      // conflict, shouldn't stop the run.
+      if (isSyntaxError(error)) {
+        result.warnings = [
+          ...(result.warnings ?? []),
+          {
+            filePath,
+            message: `Skipped: could not parse this file (${message}). If it uses c15t, fix it and run the codemod again.`,
+          },
+        ];
+      } else {
+        result.errors.push({ error: message, filePath });
+      }
+      continue;
+    }
+    try {
       const before = source.getFullText();
       const transformed = transform(source);
       if (!transformed.changed) {

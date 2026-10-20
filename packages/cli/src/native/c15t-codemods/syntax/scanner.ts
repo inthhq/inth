@@ -77,9 +77,15 @@ const fromCodePoint = (code: number): string => {
   );
 };
 
+const SYNTAX_ERROR = "Syntax error at offset ";
+
 /** A syntax error with the offset it was found at. */
 export const syntaxError = (message: string, offset: number): Error =>
-  new Error(`Syntax error at offset ${String(offset)}: ${message}`);
+  new Error(`${SYNTAX_ERROR}${String(offset)}: ${message}`);
+
+/** Whether an error is one {@link syntaxError} made. */
+export const isSyntaxError = (error: unknown): boolean =>
+  error instanceof Error && error.message.startsWith(SYNTAX_ERROR);
 
 export class Scanner {
   text: string;

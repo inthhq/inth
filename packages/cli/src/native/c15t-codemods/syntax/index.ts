@@ -9,6 +9,7 @@ import type { Node, NodeOf, SyntaxSymbol } from "./node.ts";
 import { parseSourceFile } from "./parser.ts";
 
 export { Node, SyntaxKind } from "./node.ts";
+export { isSyntaxError } from "./scanner.ts";
 
 export type BindingElement = NodeOf<"BindingElement">;
 export type CallExpression = NodeOf<"CallExpression">;

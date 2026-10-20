@@ -142,6 +142,38 @@ describe("runCodemods", { timeout: 20_000 }, () => {
     expect(await readFile(layout, "utf-8")).toContain('from "c15t/next"');
   });
 
+  it("warns about files it cannot parse and migrates the rest", async () => {
+    const stderr = quiet();
+    const root = await createProject({
+      ...V2_APP,
+      "fixtures/conflict.ts":
+        "<<<<<<< HEAD\nexport const a = 1;\n=======\nexport const a = 2;\n>>>>>>> main\n",
+      "package.json": JSON.stringify({
+        dependencies: { "@c15t/nextjs": "2.0.0", c15t: "3.1.0" },
+        name: "app",
+      }),
+    });
+    const ran = await runCodemods(
+      { dryRun: false, list: false, names: ["packages-to-c15t"] },
+      root,
+      true
+    );
+    const [entry] = "results" in ran ? ran.results : [];
+    expect(entry?.result.errors).toEqual([]);
+    expect(entry?.result.warnings).toEqual([
+      {
+        filePath: join(root, "fixtures", "conflict.ts"),
+        message: expect.stringContaining("could not parse"),
+      },
+    ]);
+    expect(stderr).toHaveBeenCalledWith(
+      expect.stringContaining("conflict.ts: ")
+    );
+    expect(await readFile(join(root, "app", "layout.tsx"), "utf-8")).toContain(
+      'from "c15t/next"'
+    );
+  });
+
   it("names unknown codemods and asks for at least one", async () => {
     quiet();
     const root = await createProject(V2_APP);
