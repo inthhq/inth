@@ -104,7 +104,8 @@ const planMethodRenames = function planMethodRenames(
 
 /**
  * Plans renames for presets reached through a namespace import, such as
- * `import * as c15t from 'c15t'` then `c15t.policyPackPresets.worldNoBanner()`.
+ * `import * as c15t from 'c15t'` then `c15t.policyPackPresets.worldNoBanner()`
+ * or the type `c15t.PolicyPackPresets`.
  */
 const planNamespaceAccesses = function planNamespaceAccesses(
   sourceFile: Syntax.SourceFile,
@@ -112,11 +113,19 @@ const planNamespaceAccesses = function planNamespaceAccesses(
   summaries: string[]
 ): number {
   let operations = 0;
-  for (const access of sourceFile.getDescendantsOfKind(
-    SyntaxKind.PropertyAccessExpression
-  )) {
-    const next = RENAMES.get(access.getName());
-    const namespace = access.getExpression();
+  const accesses = [
+    ...sourceFile.getDescendantsOfKind(SyntaxKind.PropertyAccessExpression),
+    ...sourceFile.getDescendantsOfKind(SyntaxKind.QualifiedName),
+  ];
+  for (const access of accesses) {
+    const nameNode = Node.isPropertyAccessExpression(access)
+      ? access.getNameNode()
+      : access.getRight();
+    const name = nameNode.getText();
+    const next = RENAMES.get(name);
+    const namespace = Node.isPropertyAccessExpression(access)
+      ? access.getExpression()
+      : access.getLeft();
     if (!next || !Node.isIdentifier(namespace)) {
       continue;
     }
@@ -132,8 +141,8 @@ const planNamespaceAccesses = function planNamespaceAccesses(
     }
     let renamed = 0;
     if (target === entry) {
-      edits.push(toTextEdit(access.getNameNode(), next));
-      summaries.push(`${access.getName()} -> ${next}`);
+      edits.push(toTextEdit(nameNode, next));
+      summaries.push(`${name} -> ${next}`);
       renamed = 1;
     } else if (
       // The entry no longer exports presets, so the access can't stay.
@@ -143,7 +152,7 @@ const planNamespaceAccesses = function planNamespaceAccesses(
         edits
       )
     ) {
-      summaries.push(`TODO: ${access.getName()}`);
+      summaries.push(`TODO: ${name}`);
       renamed = 1;
     }
     const methods = planMethodRenames([access], edits);
@@ -151,6 +160,45 @@ const planNamespaceAccesses = function planNamespaceAccesses(
     if (methods > 0) {
       summaries.push("worldNoBanner -> worldOptOutNoPrompt");
     }
+  }
+  return operations;
+};
+
+/**
+ * Renames presets re-exported from a v2 entry, as
+ * `export { policyPackPresets } from 'c15t'`, and moves them to the entry
+ * that exports them now. The re-export keeps its exported name so this
+ * module's importers still resolve.
+ */
+const planReExports = function planReExports(
+  sourceFile: Syntax.SourceFile,
+  edits: TextEdit[],
+  summaries: string[]
+): number {
+  let operations = 0;
+  for (const declaration of sourceFile.getExportDeclarations()) {
+    const entry = declaration.getModuleSpecifierValue();
+    const target = entry === undefined ? undefined : PRESET_ENTRIES.get(entry);
+    if (!target) {
+      continue;
+    }
+    const moves = new Map<Syntax.Node, SpecifierMove>();
+    for (const named of declaration.getNamedExports()) {
+      const name = named.getNameNode().getText();
+      const next = RENAMES.get(name);
+      if (!next) {
+        continue;
+      }
+      const text = renamedSpecifierText(named, next, true);
+      if (target === entry) {
+        edits.push(toTextEdit(named, text));
+      } else {
+        moves.set(named, { target, text });
+      }
+      summaries.push(`${name} -> ${next}`);
+      operations += 1;
+    }
+    moveSpecifiers(declaration, moves, edits);
   }
   return operations;
 };
@@ -197,6 +245,7 @@ const transformSourceFile = function transformSourceFile(
     moveSpecifiers(declaration, moves, edits);
   }
   operations += planNamespaceAccesses(sourceFile, edits, summaries);
+  operations += planReExports(sourceFile, edits, summaries);
   if (edits.length === 0) {
     return UNCHANGED;
   }

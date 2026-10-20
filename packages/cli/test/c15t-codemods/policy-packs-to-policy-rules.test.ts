@@ -132,6 +132,36 @@ export const rule = c15t.policyPackPresets.worldNoBanner();
     expect(updated).toContain("c15t.policyRulePresets.worldOptOutNoPrompt()");
   });
 
+  it("renames the presets type through a namespace import", async () => {
+    const { updated } = await transformFile(
+      codemod,
+      `import type * as c15t from 'c15t';
+
+export type Presets = c15t.PolicyPackPresets;
+`,
+      { fileName: "rules.ts" }
+    );
+    expect(updated).toBe(`import type * as c15t from 'c15t';
+
+export type Presets = c15t.PolicyRulePresets;
+`);
+  });
+
+  it("renames re-exports and keeps the exported name", async () => {
+    const { first, second } = await transformTwice(
+      codemod,
+      `export { policyPackPresets, type PolicyPackPresets as Presets } from 'c15t';
+export { policyPackPresets as presets } from '@c15t/react';
+`,
+      "rules.ts"
+    );
+    expect(first)
+      .toBe(`export { policyRulePresets as policyPackPresets, type PolicyRulePresets as Presets } from 'c15t';
+export { policyRulePresets as presets } from '@c15t/core';
+`);
+    expect(second).toBe(first);
+  });
+
   it("leaves a TODO for presets reached through a namespace of an entry that dropped them", async () => {
     const source = `import * as c15t from 'c15t/react';
 
