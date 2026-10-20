@@ -299,9 +299,22 @@ export const runCodemods = async (
     logResult(log, result, options.dryRun);
     results.push({ id: item.id, result, targetVersion: TARGET_VERSION });
     if (result.errors.length > 0) {
+      // The error replaces the result, so name what earlier codemods wrote.
+      const changed = [
+        ...new Set(
+          results.flatMap((entry) =>
+            entry.result.changedFiles.map(({ filePath }) => filePath)
+          )
+        ),
+      ];
+      const saved = options.dryRun
+        ? "No changes saved."
+        : changed.length > 0
+          ? `Changed before it stopped: ${changed.join(", ")}.`
+          : "No files changed.";
       throw new CliError(
         "migration_failed",
-        `${item.id} failed for ${result.errors.length} file(s). ${options.dryRun ? "No changes saved." : "Some files may have changed; review the working tree."} ${result.errors.map(({ filePath, error }) => `${filePath}: ${error}`).join("; ")}`
+        `${item.id} failed for ${result.errors.length} file(s). ${saved} ${result.errors.map(({ filePath, error }) => `${filePath}: ${error}`).join("; ")}`
       );
     }
   }

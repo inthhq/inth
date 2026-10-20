@@ -88,7 +88,7 @@ Exit codes are `0` for success, `1` for failure, and `130` for handled cancellat
 | `http_error` | Another HTTP failure |
 | `credential_store_unavailable` | The system credential store cannot be reached. On Linux, the message names the cause: libsecret is missing, the session bus cannot be reached, or no Secret Service is running. Set `INTH_TOKEN` for headless use |
 | `sandbox_restricted` | An agent sandbox, such as Cursor's or Codex's, blocked the CLI state directory, the system credential store, or the Inth API. Run the command outside the sandbox |
-| `migration_failed` | A c15t codemod could not transform a file. The message names the files. Without `--dry-run`, files may already have changed |
+| `migration_failed` | A c15t codemod could not transform a file. The message names those files and, without `--dry-run`, the files already changed |
 | `command_failed` | Another command failure, including unavailable local storage |
 | `cancelled` | The command was cancelled |
 

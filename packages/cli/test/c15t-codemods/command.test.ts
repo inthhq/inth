@@ -174,6 +174,47 @@ describe("runCodemods", { timeout: 20_000 }, () => {
     );
   });
 
+  it("names the files earlier codemods changed when a later one fails", async () => {
+    quiet();
+    vi.resetModules();
+    vi.doMock(
+      "../../src/native/c15t-codemods/scripts-to-integrations.ts",
+      () => ({
+        runScriptsToIntegrationsCodemod: () =>
+          Promise.resolve({
+            changedFiles: [],
+            errors: [{ error: "boom", filePath: "app/broken.ts" }],
+            totalFiles: 1,
+          }),
+      })
+    );
+    const { runCodemods: run } =
+      await import("../../src/native/c15t-codemods/command.ts");
+    const root = await createProject({
+      ...V2_APP,
+      "package.json": JSON.stringify({
+        dependencies: { "@c15t/nextjs": "2.0.0", c15t: "3.1.0" },
+        name: "app",
+      }),
+    });
+    const layout = join(root, "app", "layout.tsx");
+    await expect(
+      run(
+        {
+          dryRun: false,
+          list: false,
+          names: ["packages-to-c15t", "scripts-to-integrations"],
+        },
+        root,
+        true
+      )
+    ).rejects.toMatchObject({
+      code: "migration_failed",
+      message: expect.stringContaining(`Changed before it stopped: ${layout}.`),
+    });
+    vi.doUnmock("../../src/native/c15t-codemods/scripts-to-integrations.ts");
+  });
+
   it("names unknown codemods and asks for at least one", async () => {
     quiet();
     const root = await createProject(V2_APP);

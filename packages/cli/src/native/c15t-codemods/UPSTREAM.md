@@ -25,5 +25,6 @@ Changes to upstream's behavior:
 - A source file the parser can't read, such as one with merge conflict markers, is skipped with a warning. TypeScript parses past syntax errors, so upstream runs its codemods on such a file instead.
 - Lookup tables are `Map`s instead of objects, so a name such as `constructor` no longer matches an `Object.prototype` member.
 - Results use inth's JSON envelope. `data` keeps upstream's shape.
+- The `migration_failed` message lists the files already changed, since the error replaces the results. Upstream says "Some files may have changed".
 
 Not ported: `backend-config-to-v3`, `node-sdk-to-v3`, and the v1 to v2 codemods.
