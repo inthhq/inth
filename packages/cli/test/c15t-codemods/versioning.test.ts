@@ -157,6 +157,23 @@ describe("codemod versioning", () => {
     expect(await detectInstalledC15tVersion(app)).toBe("2.3.0");
   });
 
+  it.each([
+    ["^3", "3.0.0"],
+    ["3.x", "3.0.0"],
+    ["~3.1", "3.1.0"],
+    ["^3.0.0 || ^2.0.0", "2.0.0"],
+    [">=2.1 <4", "2.1.0"],
+    [">2.0.0", "2.0.1"],
+    ["*", null],
+    ["<3.0.0", null],
+  ])("reads the lowest version %s allows", (specifier, expected) => {
+    expect(
+      detectInstalledC15tVersionFromPackageJson({
+        dependencies: { c15t: specifier },
+      })
+    ).toBe(expected);
+  });
+
   it("ignores the digits in a specifier that names no version", () => {
     expect(
       detectInstalledC15tVersionFromPackageJson({

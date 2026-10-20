@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { installedVersion, rangeOf } from "./manifest.ts";
+import { format, minVersion } from "./semver.ts";
 
 interface ParsedVersion {
   major: number;
@@ -72,29 +73,20 @@ const parseVersion = function parseVersion(raw: string): ParsedVersion | null {
   return { major, minor, patch, preRelease };
 };
 
-const extractVersionFromSpecifier = function extractVersionFromSpecifier(
-  specifier: string
-): string | null {
-  const match = specifier.match(
-    /(?<version>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)/u
-  );
-  if (!match) {
-    return null;
-  }
-
-  return match[1] ?? null;
-};
-
 /**
- * The version a semver specifier names, or null when it names none, as
- * `catalog:`, a `link:`, `file:` or git specifier, a dist-tag or `*` don't.
+ * The lowest version a semver specifier allows, or null when it names none:
+ * `catalog:`, a `link:`, `file:` or git specifier, a dist-tag, `*` or a range
+ * with no lower bound, such as `<3.0.0`.
  */
 const declaredVersionOf = function declaredVersionOf(
   specifier: string
 ): string | null {
-  return rangeOf(specifier) === null
-    ? null
-    : extractVersionFromSpecifier(specifier);
+  const range = rangeOf(specifier);
+  const lowest = range === null ? null : minVersion(range);
+  if (lowest === null || format(lowest) === "0.0.0") {
+    return null;
+  }
+  return format(lowest);
 };
 
 const isNumericSegment = function isNumericSegment(value: string): boolean {
@@ -284,11 +276,12 @@ const dependencyGroupsOf = function dependencyGroupsOf(
 /**
  * Best-effort c15t version detection from a package.json object.
  *
- * Returns the lowest declared core/framework version. Independently versioned
+ * Returns the lowest version the core/framework specifiers allow, so `^3`
+ * gives 3.0.0 and `^3.0.0 || ^2.0.0` gives 2.0.0. Independently versioned
  * integrations and tooling do not determine the application API version.
  * A specifier that names no version, such as `catalog:`, a `link:`, `file:`
- * or git specifier, a dist-tag or `*`, whatever digits it holds, takes its
- * version from `installed`.
+ * or git specifier, a dist-tag, `*` or `<3.0.0`, whatever digits it holds,
+ * takes its version from `installed`.
  *
  * @param manifest - The app's `package.json`.
  * @param installed - Installed versions by package name.

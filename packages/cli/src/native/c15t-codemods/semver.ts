@@ -63,7 +63,8 @@ export const parse = (version: string): SemVer | null => {
   };
 };
 
-const format = (version: SemVer): string => {
+/** The version as text, such as `3.1.0` or `3.0.0-canary.2`. */
+export const format = (version: SemVer): string => {
   const main = `${version.major}.${version.minor}.${version.patch}`;
   return version.prerelease.length === 0
     ? main
