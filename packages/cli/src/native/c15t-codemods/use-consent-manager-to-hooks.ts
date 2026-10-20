@@ -558,8 +558,12 @@ const addNamedImports = function addNamedImports(
   quote: string
 ): void {
   const existing = findImport(sourceFile, specifier);
+  // The new calls use the hook's own name, so an alias doesn't count.
   const present = new Set(
-    existing?.getNamedImports().map((named) => named.getName())
+    existing
+      ?.getNamedImports()
+      .filter((named) => !named.getAliasNode() && !named.isTypeOnly())
+      .map((named) => named.getName())
   );
   const missing = [...names].filter((name) => !present.has(name)).toSorted();
   if (missing.length === 0) {

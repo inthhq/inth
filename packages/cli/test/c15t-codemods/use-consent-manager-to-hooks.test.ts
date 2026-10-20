@@ -164,6 +164,22 @@ export const Status = () => {
 `);
   });
 
+  it("adds the hook unaliased when the entry imports it under another name", async () => {
+    const { updated } = await transform(`
+import { useConsentManager, useConsents as getConsents } from 'c15t/react';
+
+export const Status = () => {
+	const { consents } = useConsentManager();
+	return <p data-all={String(getConsents())}>{String(consents.marketing)}</p>;
+};
+`);
+
+    expect(updated).toContain(
+      "import { useConsents as getConsents, useConsents } from 'c15t/react';"
+    );
+    expect(updated).toContain("const consents = useConsents();");
+  });
+
   it("leaves a marked residual call alone on a second run", async () => {
     const { first, second, secondResult } = await transformTwice(
       codemod,
