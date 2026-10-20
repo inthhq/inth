@@ -5,7 +5,11 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { runUseConsentManagerToHooksCodemod } from "../../src/native/c15t-codemods/use-consent-manager-to-hooks.ts";
+import {
+  runUseConsentManagerToHooksCodemod,
+  runUseConsentManagerToHooksCodemod as codemod,
+} from "../../src/native/c15t-codemods/use-consent-manager-to-hooks.ts";
+import { cleanupProjects, transformTwice } from "./helpers.ts";
 
 const createdDirs: string[] = [];
 
@@ -28,6 +32,7 @@ describe("use-consent-manager-to-hooks codemod", { timeout: 20_000 }, () => {
         .splice(0)
         .map((dir) => rm(dir, { force: true, recursive: true }))
     );
+    await cleanupProjects();
   });
 
   it("rewrites common fields to one hook call each", async () => {
@@ -132,6 +137,23 @@ export const Labels = ({ category }: { category: 'marketing' }) => {
     expect(result.changedFiles[0]?.summaries).toEqual(
       expect.arrayContaining(["TODO: consentTypes", "TODO: has"])
     );
+  });
+
+  it("leaves a marked residual call alone on a second run", async () => {
+    const { first, second, secondResult } = await transformTwice(
+      codemod,
+      `
+import { useConsentManager } from '@c15t/nextjs';
+
+export const Labels = () => {
+	const { consentTypes, model } = useConsentManager();
+	return <p data-model={model}>{consentTypes.length}</p>;
+};
+`
+    );
+    expect(first).toContain("Migrate these fields by hand:");
+    expect(second).toBe(first);
+    expect(secondResult.changedFiles).toEqual([]);
   });
 
   it("leaves removed privacy directives for a manual migration", async () => {

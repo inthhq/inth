@@ -133,6 +133,7 @@ const SAVE_ARGUMENTS = new Map(
 );
 
 const TODO_PREFIX = "TODO(c15t v3): useConsentManager() was removed.";
+const MANUAL_TODO = `${TODO_PREFIX} Migrate these fields by hand:`;
 
 interface UseConsentManagerResult {
   changed: boolean;
@@ -370,9 +371,7 @@ const manualComment = function manualComment(
     const hint = MANUAL_HINTS.get(field) ?? "no direct v3 replacement";
     return `${indent}// - ${field}: ${hint}`;
   });
-  return [`// ${TODO_PREFIX} Migrate these fields by hand:`, ...lines].join(
-    "\n"
-  );
+  return [`// ${MANUAL_TODO}`, ...lines].join("\n");
 };
 
 interface CallContext {
@@ -454,6 +453,10 @@ const planCall = function planCall(
     !Node.isObjectBindingPattern(pattern)
   ) {
     return markCall(call, context);
+  }
+  // A residual call from an earlier run already carries its TODO.
+  if (statement.getFullText().includes(MANUAL_TODO)) {
+    return false;
   }
 
   const plan: FieldPlan = {
