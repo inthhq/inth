@@ -2,7 +2,7 @@
 
 If your terminal runs in a sandbox, such as Cursor's or Codex's, run `npm install -g @inth/cli` and any sign-in or API command outside it. The sandbox blocks npm's global directory and cache, the CLI state directory, the system credential store, and `api.inth.com`. npm reports the blocked cache as root-owned files; do not run `sudo chown`. Inside Cursor's or Codex's sandbox, the CLI reports the blocks it recognizes with the `sandbox_restricted` error code; other failures keep their usual code.
 
-For hosted consent setup, follow [Set up hosted c15t with an agent](docs/c15t-setup.md). Existing browser sign-in supports organization and project creation from JSON commands. For a separate, explicitly scoped credential, use [auth.md sign-in](docs/agent-auth-integration.md).
+For hosted consent setup, follow [Set up hosted c15t with an agent](docs/c15t-setup.md). To upgrade a hosted app from c15t v2, run `inth c15t codemods <names...> --json --dry-run`, review the changes, then run it without `--dry-run`. It needs no sign-in or Inth project and never prompts. `inth c15t codemods --list --json` lists the codemods. Existing browser sign-in supports organization and project creation from JSON commands. For a separate, explicitly scoped credential, use [auth.md sign-in](docs/agent-auth-integration.md).
 
 Use `--json` for machine-readable output. Named commands default to formatted text, including when piped or run with `--non-interactive`. The raw `api` command prints JSON by default; add `--json` for the standard CLI envelope. It is supported by the Scriptc, Node, and yao-pkg builds. Discover commands and flags with `inth --help --json`; read the CLI version with `inth --version --json`.
 
@@ -88,6 +88,7 @@ Exit codes are `0` for success, `1` for failure, and `130` for handled cancellat
 | `http_error` | Another HTTP failure |
 | `credential_store_unavailable` | The system credential store cannot be reached. On Linux, the message names the cause: libsecret is missing, the session bus cannot be reached, or no Secret Service is running. Set `INTH_TOKEN` for headless use |
 | `sandbox_restricted` | An agent sandbox, such as Cursor's or Codex's, blocked the CLI state directory, the system credential store, or the Inth API. Run the command outside the sandbox |
+| `migration_failed` | A c15t codemod could not transform a file. The message names the files. Without `--dry-run`, files may already have changed |
 | `command_failed` | Another command failure, including unavailable local storage |
 | `cancelled` | The command was cancelled |
 

@@ -80,6 +80,21 @@ To create a hosted project, pass `--name Website --region <region-id>` instead o
 
 Agent flags include `--codex`, `--claude`, `--cursor`, `--grok`, and `--fx`. The agent must be installed on your path, and agent sessions run in the terminal on macOS and Linux. Use `prompt --json` to export public setup inputs for another agent. Scaffold and prompt accept `--json`; interactive agent sessions do not.
 
+## How do I migrate a hosted c15t app from v2 to v3?
+
+Run `inth c15t codemods` from your app directory. Each codemod rewrites one part of the v2 API. It needs no sign-in or Inth project, and changes only files in your app.
+
+```sh
+inth c15t codemods --list
+inth c15t codemods packages-to-c15t consent-provider-options --dry-run
+inth c15t codemods packages-to-c15t consent-provider-options root-exports-to-subpaths
+inth c15t codemods css-variables-to-v3 --json
+```
+
+`--list` shows each codemod and whether it applies to the c15t version in `package.json`. Named codemods run in the order `--list` shows. `--dry-run` reports the changes without writing files. With `--json`, the result goes to stdout and progress lines go to stderr.
+
+The codemods are ported from `@c15t/cli@3.1.0` and cover hosted apps. Where an app uses offline or custom mode, they leave that code unchanged and add a `TODO(c15t v3)` comment. Other changes that need a decision also get a `TODO(c15t v3)` comment. Search for it after a run. To migrate offline mode, a self-hosted backend, or `@c15t/node-sdk`, use the codemods in `@c15t/cli`.
+
 ## How do I start a Code Audit scan?
 
 Run `inth code-audit start --repository <id>` with an ID returned by `inth code-audit repositories`. Supply a stable `--request-id` when a start may need a manual retry.
