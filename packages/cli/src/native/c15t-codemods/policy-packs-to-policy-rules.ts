@@ -5,6 +5,7 @@ import {
   applyEdits,
   moveSpecifiers,
   referencesOf,
+  renameReference,
   renamedSpecifierText,
   toTextEdit,
   UNCHANGED,
@@ -224,7 +225,7 @@ const transformSourceFile = function transformSourceFile(
       const references = referencesOf(named);
       if (!named.getAliasNode()) {
         for (const reference of references) {
-          edits.push(toTextEdit(reference, next));
+          edits.push(renameReference(reference, next));
         }
       }
       const methods = planMethodRenames(references, edits);

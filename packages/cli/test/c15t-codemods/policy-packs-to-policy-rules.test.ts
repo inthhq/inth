@@ -120,6 +120,25 @@ export const policyPacks = [europeOptIn(), worldNoBanner(), none()];
 `);
   });
 
+  it("keeps shorthand property keys and local export names", async () => {
+    const { first, second } = await transformTwice(
+      codemod,
+      `import { policyPackPresets, type PolicyPackPresets } from 'c15t';
+
+export const config = { policyPackPresets };
+export { policyPackPresets, type PolicyPackPresets };
+`,
+      "rules.ts"
+    );
+    expect(first)
+      .toBe(`import { policyRulePresets, type PolicyRulePresets } from 'c15t';
+
+export const config = { policyPackPresets: policyRulePresets };
+export { policyRulePresets as policyPackPresets, type PolicyRulePresets as PolicyPackPresets };
+`);
+    expect(second).toBe(first);
+  });
+
   it("renames access through a namespace import", async () => {
     const { updated } = await transformFile(
       codemod,

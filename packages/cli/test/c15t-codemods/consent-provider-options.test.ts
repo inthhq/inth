@@ -124,6 +124,23 @@ export const App = ({ children }) => (
     );
   });
 
+  it("keeps shorthand property keys and local export names", async () => {
+    const { first, second } = await transformTwice(
+      codemod,
+      `import { ConsentManagerProvider } from '@c15t/react';
+
+export const components = { ConsentManagerProvider };
+export { ConsentManagerProvider };
+`
+    );
+    expect(first).toBe(`import { ConsentProvider } from '@c15t/react';
+
+export const components = { ConsentManagerProvider: ConsentProvider };
+export { ConsentProvider as ConsentManagerProvider };
+`);
+    expect(second).toBe(first);
+  });
+
   it("keeps the old local name when the file declares its own ConsentProvider", async () => {
     const { result, updated } = await transformFile(
       codemod,

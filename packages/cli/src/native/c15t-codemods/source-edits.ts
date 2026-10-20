@@ -159,10 +159,17 @@ export const importedBinding = function importedBinding(
     namedImport.getAliasNode() ?? namedImport.getNameNode()
   ).getSymbol()?.compilerSymbol;
   return {
-    isReference: (node) =>
-      symbol !== undefined &&
-      Node.isIdentifier(node) &&
-      node.getSymbol()?.compilerSymbol === symbol,
+    isReference: (node) => {
+      if (symbol === undefined || !Node.isIdentifier(node)) {
+        return false;
+      }
+      // In `{ name }` the identifier's own symbol is the property.
+      const parent = node.getParent();
+      const resolved = Node.isShorthandPropertyAssignment(parent)
+        ? parent.getValueSymbol()
+        : node.getSymbol();
+      return resolved?.compilerSymbol === symbol;
+    },
   };
 };
 
@@ -179,6 +186,26 @@ export const referencesOf = function referencesOf(
         !identifier.getFirstAncestorByKind(SyntaxKind.ImportDeclaration) &&
         binding.isReference(identifier)
     );
+};
+
+/**
+ * The edit that points a reference from `referencesOf` at `next`. A shorthand
+ * property keeps its key and a local `export { name }` keeps the name it
+ * exports, so neither changes what the object or module exposes.
+ */
+export const renameReference = function renameReference(
+  reference: Syntax.Identifier,
+  next: string
+): TextEdit {
+  const name = reference.getText();
+  const parent = reference.getParent();
+  if (Node.isShorthandPropertyAssignment(parent)) {
+    return toTextEdit(reference, `${name}: ${next}`);
+  }
+  if (Node.isExportSpecifier(parent) && !parent.getAliasNode()) {
+    return toTextEdit(reference, `${next} as ${name}`);
+  }
+  return toTextEdit(reference, next);
 };
 
 /** The declarations an identifier resolves to in its own file. */

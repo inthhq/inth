@@ -711,6 +711,12 @@ export class Node {
     return node?.kind === "ExportDeclaration";
   }
 
+  static isExportSpecifier(
+    node: Node | undefined
+  ): node is NodeOf<"ExportSpecifier"> {
+    return node?.kind === "ExportSpecifier";
+  }
+
   static isExpressionStatement(
     node: Node | undefined
   ): node is NodeOf<"ExpressionStatement"> {

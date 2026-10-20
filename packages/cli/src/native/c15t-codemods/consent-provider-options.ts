@@ -11,6 +11,7 @@ import {
   propertyText,
   propertyValueText,
   referencesOf,
+  renameReference,
   toTextEdit,
   UNCHANGED,
   unwrapExpression,
@@ -504,7 +505,7 @@ const planRenames = function planRenames(
       plan.edits.push(toTextEdit(named.getNameNode(), next));
       if (!named.getAliasNode()) {
         for (const reference of referencesOf(named)) {
-          plan.edits.push(toTextEdit(reference, next));
+          plan.edits.push(renameReference(reference, next));
         }
       }
       renamed.add(named.getName());
