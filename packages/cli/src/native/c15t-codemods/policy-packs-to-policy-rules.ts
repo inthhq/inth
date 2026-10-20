@@ -1,6 +1,7 @@
 import { runTransform } from "./runner.ts";
 import type { CodemodRunOptions, CodemodRunResult } from "./runner.ts";
 import {
+  addTodo,
   applyEdits,
   moveSpecifiers,
   referencesOf,
@@ -151,19 +152,34 @@ const transformSourceFile = function transformSourceFile(
     if (!next || !Node.isIdentifier(namespace)) {
       continue;
     }
-    const entry = namespace
+    const declaration = namespace
       .getSymbol()
       ?.getDeclarations()
-      .find((declaration) => Node.isNamespaceImport(declaration))
-      ?.getFirstAncestorByKind(SyntaxKind.ImportDeclaration)
-      ?.getModuleSpecifierValue();
-    if (!entry || PRESET_ENTRIES.get(entry) !== entry) {
+      .find((imported) => Node.isNamespaceImport(imported))
+      ?.getFirstAncestorByKind(SyntaxKind.ImportDeclaration);
+    const entry = declaration?.getModuleSpecifierValue();
+    const target = entry === undefined ? undefined : PRESET_ENTRIES.get(entry);
+    if (!(declaration && entry && target)) {
       continue;
     }
-    edits.push(toTextEdit(access.getNameNode(), next));
+    let renamed = 0;
+    if (target === entry) {
+      edits.push(toTextEdit(access.getNameNode(), next));
+      summaries.push(`${access.getName()} -> ${next}`);
+      renamed = 1;
+    } else if (
+      // The entry no longer exports presets, so the access can't stay.
+      addTodo(
+        declaration,
+        `${access.getText()}: ${entry} no longer exports presets. Import ${next} from ${target}.`,
+        edits
+      )
+    ) {
+      summaries.push(`TODO: ${access.getName()}`);
+      renamed = 1;
+    }
     const methods = planMethodRenames([access], edits);
-    operations += 1 + methods;
-    summaries.push(`${access.getName()} -> ${next}`);
+    operations += renamed + methods;
     if (methods > 0) {
       summaries.push("worldNoBanner -> worldOptOutNoPrompt");
     }

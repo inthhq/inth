@@ -132,6 +132,26 @@ export const rule = c15t.policyPackPresets.worldNoBanner();
     expect(updated).toContain("c15t.policyRulePresets.worldOptOutNoPrompt()");
   });
 
+  it("leaves a TODO for presets reached through a namespace of an entry that dropped them", async () => {
+    const source = `import * as c15t from 'c15t/react';
+
+export const rules = [c15t.policyPackPresets.worldNoBanner(), c15t.policyPackPresets.europeOptIn()];
+`;
+    const { first, second, secondResult } = await transformTwice(
+      codemod,
+      source,
+      "rules.ts"
+    );
+    expect(first)
+      .toBe(`// TODO(c15t v3): c15t.policyPackPresets: c15t/react no longer exports presets. Import policyRulePresets from c15t.
+import * as c15t from 'c15t/react';
+
+export const rules = [c15t.policyPackPresets.worldOptOutNoPrompt(), c15t.policyPackPresets.europeOptIn()];
+`);
+    expect(second).toBe(first);
+    expect(secondResult.changedFiles).toEqual([]);
+  });
+
   it("leaves unrelated and migrated code alone, and is idempotent", async () => {
     const unrelated = await transformFile(
       codemod,
