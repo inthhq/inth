@@ -139,6 +139,31 @@ export const Labels = ({ category }: { category: 'marketing' }) => {
     );
   });
 
+  it("migrates useConsentManager imported from several entries", async () => {
+    const { result, updated } = await transform(`
+import { useConsentManager } from 'c15t/react';
+import { useConsentManager as useHeadlessManager } from 'c15t/react/headless';
+
+export const Status = () => {
+	const { activeUI } = useConsentManager();
+	const { consents } = useHeadlessManager();
+	return <p data-ui={activeUI}>{String(consents.marketing)}</p>;
+};
+`);
+
+    expect(result.errors).toEqual([]);
+    expect(result.changedFiles[0]?.operations).toBe(2);
+    // Upstream reaches this text after two runs.
+    expect(updated).toBe(`
+import { useActiveUI, useConsents } from 'c15t/react';
+export const Status = () => {
+	const activeUI = useActiveUI() ?? 'none';
+	const consents = useConsents();
+	return <p data-ui={activeUI}>{String(consents.marketing)}</p>;
+};
+`);
+  });
+
   it("leaves a marked residual call alone on a second run", async () => {
     const { first, second, secondResult } = await transformTwice(
       codemod,

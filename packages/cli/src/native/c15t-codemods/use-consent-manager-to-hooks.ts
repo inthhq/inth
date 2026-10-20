@@ -589,18 +589,10 @@ const updateImports = function updateImports(
     ? specifier.slice(0, -HEADLESS_SUFFIX.length)
     : specifier;
   // The edits re-parsed the file; find the import again.
-  const current = sourceFile
-    .getImportDeclarations()
-    .find(
-      (candidate) =>
-        candidate.getModuleSpecifierValue() === specifier &&
-        candidate
-          .getNamedImports()
-          .some((named) => named.getName() === "useConsentManager")
-    );
-  const currentImport = current
-    ?.getNamedImports()
-    .find((named) => named.getName() === "useConsentManager");
+  const currentImport = sourceImports(sourceFile).find(
+    (named) => localNameOf(named) === context.localName
+  );
+  const current = currentImport?.getImportDeclaration();
   if (!current || !currentImport) {
     return;
   }
@@ -624,10 +616,7 @@ const updateImports = function updateImports(
     addNamedImports(sourceFile, "react", new Set(["useMemo"]), current, quote);
   }
   if (!stillUsed) {
-    current
-      .getNamedImports()
-      .find((named) => named.getName() === "useConsentManager")
-      ?.remove();
+    currentImport.remove();
     if (
       current.getNamedImports().length === 0 &&
       !current.getDefaultImport() &&
@@ -638,37 +627,47 @@ const updateImports = function updateImports(
   }
 };
 
-const transformSourceFile = function transformSourceFile(
+/** The name a `useConsentManager` import binds in the file. */
+const localNameOf = function localNameOf(
+  named: Syntax.ImportSpecifier
+): string {
+  return named.getAliasNode()?.getText() ?? named.getName();
+};
+
+/** Every value import of `useConsentManager` from a c15t entry. */
+const sourceImports = function sourceImports(
   sourceFile: Syntax.SourceFile
-): UseConsentManagerResult {
-  const declaration = sourceFile
+): Syntax.ImportSpecifier[] {
+  return sourceFile
     .getImportDeclarations()
-    .find(
+    .filter(
       (candidate) =>
         SOURCE_SPECIFIERS.has(candidate.getModuleSpecifierValue()) &&
-        !candidate.isTypeOnly() &&
-        candidate
-          .getNamedImports()
-          .some((named) => named.getName() === "useConsentManager")
+        !candidate.isTypeOnly()
+    )
+    .flatMap((candidate) => candidate.getNamedImports())
+    .filter(
+      (named) => named.getName() === "useConsentManager" && !named.isTypeOnly()
     );
-  const namedImport = declaration
-    ?.getNamedImports()
-    .find((named) => named.getName() === "useConsentManager");
-  if (!declaration || !namedImport || namedImport.isTypeOnly()) {
-    return { changed: false, operations: 0, summaries: [] };
-  }
+};
+
+/** Migrates the calls of one `useConsentManager` import. */
+const transformImport = function transformImport(
+  sourceFile: Syntax.SourceFile,
+  namedImport: Syntax.ImportSpecifier,
+  summaries: string[]
+): number {
+  const declaration = namedImport.getImportDeclaration();
   const specifier = declaration.getModuleSpecifierValue();
   const quote = declaration.getModuleSpecifier().getText().charAt(0);
-  const localName =
-    namedImport.getAliasNode()?.getText() ?? "useConsentManager";
   const context: CallContext = {
     edits: [],
     headlessHooks: new Set(),
     hooks: new Set(),
-    localName,
+    localName: localNameOf(namedImport),
     memo: findMemoCallee(sourceFile),
     sourceFile,
-    summaries: [],
+    summaries,
     usesMemo: false,
   };
   const imported = importedBinding(namedImport);
@@ -681,12 +680,29 @@ const transformSourceFile = function transformSourceFile(
     }
   }
   if (operations === 0) {
-    return { changed: false, operations: 0, summaries: [] };
+    return 0;
   }
   applyEdits(sourceFile, context.edits);
 
   updateImports(sourceFile, specifier, quote, context);
-  return { changed: true, operations, summaries: context.summaries };
+  return operations;
+};
+
+const transformSourceFile = function transformSourceFile(
+  sourceFile: Syntax.SourceFile
+): UseConsentManagerResult {
+  const summaries: string[] = [];
+  let operations = 0;
+  // Each import's edits re-parse the file, so find the next one again.
+  for (const localName of sourceImports(sourceFile).map(localNameOf)) {
+    const namedImport = sourceImports(sourceFile).find(
+      (named) => localNameOf(named) === localName
+    );
+    if (namedImport) {
+      operations += transformImport(sourceFile, namedImport, summaries);
+    }
+  }
+  return { changed: operations > 0, operations, summaries };
 };
 
 /**
