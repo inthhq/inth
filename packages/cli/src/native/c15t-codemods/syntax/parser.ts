@@ -1828,6 +1828,7 @@ class Parser {
       identifier = this.parseIdentifier();
     }
     let isTypeOnly = false;
+    let isDefer = false;
     if (
       identifier?.value === "type" &&
       (!this.is("from") ||
@@ -1840,8 +1841,20 @@ class Parser {
     ) {
       isTypeOnly = true;
       identifier = this.isIdentifier() ? this.parseIdentifier() : undefined;
+    } else if (
+      // `import defer * as ns from 'x'`, as the compiler reads it.
+      identifier?.value === "defer" &&
+      (this.is("from")
+        ? !this.lookAhead(() => {
+            this.next();
+            return this.token() === Token.String;
+          })
+        : !this.isPunct(",") && !this.isPunct("="))
+    ) {
+      isDefer = true;
+      identifier = this.isIdentifier() ? this.parseIdentifier() : undefined;
     }
-    if (identifier && !this.isPunct(",") && !this.is("from")) {
+    if (identifier && !this.isPunct(",") && !this.is("from") && !isDefer) {
       node.kind = "ImportEqualsDeclaration";
       if (isTypeOnly) {
         node.flags |= NodeFlags.TypeOnly;

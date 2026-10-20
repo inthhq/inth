@@ -190,6 +190,15 @@ describe("c15t codemod parser", () => {
     expectCompilerTree("const x = <div>y</div>;", "input.jsx");
   });
 
+  // `defer` is a phase modifier unless a comma, `=` or `from 'x'` follows it.
+  it.each([
+    "import defer * as ns from './module.js'; ns.run();",
+    "import defer from 'x'; import defer, { a } from 'x';",
+    "import defer = require('x'); import { defer as later } from 'x';",
+  ])("parses %s like the compiler", (text) => {
+    expectCompilerTree(text, "input.ts");
+  });
+
   // The compiler reports these escapes and keeps parsing after them.
   it.each([
     String.raw`const s = '\u{'; const o = { a: 1 };`,
