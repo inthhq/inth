@@ -164,6 +164,28 @@ export const Status = () => {
 `);
   });
 
+  it("migrates useConsentManager reached through a namespace import", async () => {
+    const { first, second } = await transformTwice(
+      codemod,
+      `
+import * as c15t from 'c15t/react';
+
+export const Status = () => {
+	const { activeUI, consentTypes } = c15t.useConsentManager();
+	return <c15t.ConsentBanner data-ui={activeUI} data-types={consentTypes.length} />;
+};
+`
+    );
+
+    expect(first).toContain(`import * as c15t from 'c15t/react';
+import { useActiveUI } from 'c15t/react';`);
+    expect(first).toContain("const activeUI = useActiveUI() ?? 'none';");
+    expect(first).toContain(
+      "const { consentTypes } = c15t.useConsentManager();"
+    );
+    expect(second).toBe(first);
+  });
+
   it("adds the hook unaliased when the entry imports it under another name", async () => {
     const { updated } = await transform(`
 import { useConsentManager, useConsents as getConsents } from 'c15t/react';
