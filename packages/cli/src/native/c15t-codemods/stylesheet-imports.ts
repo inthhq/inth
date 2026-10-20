@@ -51,7 +51,7 @@ export interface StylesheetImport {
    * `@import 'theme', 'reset';`. In CSS and Less, a comma after the URL
    * separates media queries instead.
    */
-  targets?: [StylesheetTarget, StylesheetTarget, ...StylesheetTarget[]];
+  targets?: StylesheetTarget[];
   /**
    * Text after the URL, such as `layer(c15t)`, a media query or
    * `supports()`, which places the import on purpose, or a Sass `as`,

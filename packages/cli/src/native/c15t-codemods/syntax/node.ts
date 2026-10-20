@@ -174,13 +174,13 @@ const EMPTY: Node[] = [];
 const isKind = <Kind extends string>(
   node: Node | undefined,
   kind: Kind
-): node is Node<Kind> => node?.kind === kind;
+): node is NodeOf<Kind> => node?.kind === kind;
 
 const ofKind = <Kind extends string>(
   nodes: readonly Node[],
   kind: Kind
-): Node<Kind>[] => {
-  const found: Node<Kind>[] = [];
+): NodeOf<Kind>[] => {
+  const found: NodeOf<Kind>[] = [];
   for (const node of nodes) {
     if (isKind(node, kind)) {
       found.push(node);
@@ -618,8 +618,14 @@ const removalCondition =
   };
 
 /** A syntax tree node. Method names and behavior follow ts-morph. */
-export class Node<Kind extends string = string> {
-  kind: Kind;
+/**
+ * A node of `kind`. Type-only: Scriptc gives a generic class no prototype
+ * table, so dynamic calls on its instances would fail at runtime.
+ */
+export type NodeOf<Kind extends string> = Node & { kind: Kind };
+
+export class Node {
+  kind: string;
   pos: number;
   start: number;
   end = 0;
@@ -645,7 +651,7 @@ export class Node<Kind extends string = string> {
   // The matching node from the other tree while an edit is applied.
   adopted: Node | undefined = undefined;
 
-  constructor(kind: Kind, pos: number, start: number) {
+  constructor(kind: string, pos: number, start: number) {
     this.kind = kind;
     this.pos = pos;
     this.start = start;
@@ -659,233 +665,243 @@ export class Node<Kind extends string = string> {
 
   static isArrayLiteralExpression(
     node: Node | undefined
-  ): node is Node<"ArrayLiteralExpression"> {
+  ): node is NodeOf<"ArrayLiteralExpression"> {
     return node?.kind === "ArrayLiteralExpression";
   }
 
-  static isAsExpression(node: Node | undefined): node is Node<"AsExpression"> {
+  static isAsExpression(
+    node: Node | undefined
+  ): node is NodeOf<"AsExpression"> {
     return node?.kind === "AsExpression";
   }
 
   static isBindingElement(
     node: Node | undefined
-  ): node is Node<"BindingElement"> {
+  ): node is NodeOf<"BindingElement"> {
     return node?.kind === "BindingElement";
   }
 
   static isCallExpression(
     node: Node | undefined
-  ): node is Node<"CallExpression"> {
+  ): node is NodeOf<"CallExpression"> {
     return node?.kind === "CallExpression";
   }
 
   static isClassDeclaration(
     node: Node | undefined
-  ): node is Node<"ClassDeclaration"> {
+  ): node is NodeOf<"ClassDeclaration"> {
     return node?.kind === "ClassDeclaration";
   }
 
   static isComputedPropertyName(
     node: Node | undefined
-  ): node is Node<"ComputedPropertyName"> {
+  ): node is NodeOf<"ComputedPropertyName"> {
     return node?.kind === "ComputedPropertyName";
   }
 
   static isConditionalExpression(
     node: Node | undefined
-  ): node is Node<"ConditionalExpression"> {
+  ): node is NodeOf<"ConditionalExpression"> {
     return node?.kind === "ConditionalExpression";
   }
 
   static isExportDeclaration(
     node: Node | undefined
-  ): node is Node<"ExportDeclaration"> {
+  ): node is NodeOf<"ExportDeclaration"> {
     return node?.kind === "ExportDeclaration";
   }
 
   static isExpressionStatement(
     node: Node | undefined
-  ): node is Node<"ExpressionStatement"> {
+  ): node is NodeOf<"ExpressionStatement"> {
     return node?.kind === "ExpressionStatement";
   }
 
   static isExternalModuleReference(
     node: Node | undefined
-  ): node is Node<"ExternalModuleReference"> {
+  ): node is NodeOf<"ExternalModuleReference"> {
     return node?.kind === "ExternalModuleReference";
   }
 
   static isFunctionDeclaration(
     node: Node | undefined
-  ): node is Node<"FunctionDeclaration"> {
+  ): node is NodeOf<"FunctionDeclaration"> {
     return node?.kind === "FunctionDeclaration";
   }
 
-  static isIdentifier(node: Node | undefined): node is Node<"Identifier"> {
+  static isIdentifier(node: Node | undefined): node is NodeOf<"Identifier"> {
     return node?.kind === "Identifier";
   }
 
-  static isImportClause(node: Node | undefined): node is Node<"ImportClause"> {
+  static isImportClause(
+    node: Node | undefined
+  ): node is NodeOf<"ImportClause"> {
     return node?.kind === "ImportClause";
   }
 
   static isImportDeclaration(
     node: Node | undefined
-  ): node is Node<"ImportDeclaration"> {
+  ): node is NodeOf<"ImportDeclaration"> {
     return node?.kind === "ImportDeclaration";
   }
 
   static isImportSpecifier(
     node: Node | undefined
-  ): node is Node<"ImportSpecifier"> {
+  ): node is NodeOf<"ImportSpecifier"> {
     return node?.kind === "ImportSpecifier";
   }
 
-  static isImportTypeNode(node: Node | undefined): node is Node<"ImportType"> {
+  static isImportTypeNode(
+    node: Node | undefined
+  ): node is NodeOf<"ImportType"> {
     return node?.kind === "ImportType";
   }
 
-  static isJSDoc(node: Node | undefined): node is Node<"JSDoc"> {
+  static isJSDoc(node: Node | undefined): node is NodeOf<"JSDoc"> {
     return node?.kind === "JSDoc";
   }
 
-  static isJsxAttribute(node: Node | undefined): node is Node<"JsxAttribute"> {
+  static isJsxAttribute(
+    node: Node | undefined
+  ): node is NodeOf<"JsxAttribute"> {
     return node?.kind === "JsxAttribute";
   }
 
   static isJsxExpression(
     node: Node | undefined
-  ): node is Node<"JsxExpression"> {
+  ): node is NodeOf<"JsxExpression"> {
     return node?.kind === "JsxExpression";
   }
 
   static isJsxOpeningElement(
     node: Node | undefined
-  ): node is Node<"JsxOpeningElement"> {
+  ): node is NodeOf<"JsxOpeningElement"> {
     return node?.kind === "JsxOpeningElement";
   }
 
   static isJsxSelfClosingElement(
     node: Node | undefined
-  ): node is Node<"JsxSelfClosingElement"> {
+  ): node is NodeOf<"JsxSelfClosingElement"> {
     return node?.kind === "JsxSelfClosingElement";
   }
 
   static isLiteralTypeNode(
     node: Node | undefined
-  ): node is Node<"LiteralType"> {
+  ): node is NodeOf<"LiteralType"> {
     return node?.kind === "LiteralType";
   }
 
   static isMethodDeclaration(
     node: Node | undefined
-  ): node is Node<"MethodDeclaration"> {
+  ): node is NodeOf<"MethodDeclaration"> {
     return node?.kind === "MethodDeclaration";
   }
 
-  static isNamedImports(node: Node | undefined): node is Node<"NamedImports"> {
+  static isNamedImports(
+    node: Node | undefined
+  ): node is NodeOf<"NamedImports"> {
     return node?.kind === "NamedImports";
   }
 
   static isNamespaceImport(
     node: Node | undefined
-  ): node is Node<"NamespaceImport"> {
+  ): node is NodeOf<"NamespaceImport"> {
     return node?.kind === "NamespaceImport";
   }
 
   static isNonNullExpression(
     node: Node | undefined
-  ): node is Node<"NonNullExpression"> {
+  ): node is NodeOf<"NonNullExpression"> {
     return node?.kind === "NonNullExpression";
   }
 
   static isNoSubstitutionTemplateLiteral(
     node: Node | undefined
-  ): node is Node<"NoSubstitutionTemplateLiteral"> {
+  ): node is NodeOf<"NoSubstitutionTemplateLiteral"> {
     return node?.kind === "NoSubstitutionTemplateLiteral";
   }
 
   static isObjectBindingPattern(
     node: Node | undefined
-  ): node is Node<"ObjectBindingPattern"> {
+  ): node is NodeOf<"ObjectBindingPattern"> {
     return node?.kind === "ObjectBindingPattern";
   }
 
   static isObjectLiteralExpression(
     node: Node | undefined
-  ): node is Node<"ObjectLiteralExpression"> {
+  ): node is NodeOf<"ObjectLiteralExpression"> {
     return node?.kind === "ObjectLiteralExpression";
   }
 
   static isParameterDeclaration(
     node: Node | undefined
-  ): node is Node<"Parameter"> {
+  ): node is NodeOf<"Parameter"> {
     return node?.kind === "Parameter";
   }
 
   static isParenthesizedExpression(
     node: Node | undefined
-  ): node is Node<"ParenthesizedExpression"> {
+  ): node is NodeOf<"ParenthesizedExpression"> {
     return node?.kind === "ParenthesizedExpression";
   }
 
   static isPropertyAccessExpression(
     node: Node | undefined
-  ): node is Node<"PropertyAccessExpression"> {
+  ): node is NodeOf<"PropertyAccessExpression"> {
     return node?.kind === "PropertyAccessExpression";
   }
 
   static isPropertyAssignment(
     node: Node | undefined
-  ): node is Node<"PropertyAssignment"> {
+  ): node is NodeOf<"PropertyAssignment"> {
     return node?.kind === "PropertyAssignment";
   }
 
   static isQualifiedName(
     node: Node | undefined
-  ): node is Node<"QualifiedName"> {
+  ): node is NodeOf<"QualifiedName"> {
     return node?.kind === "QualifiedName";
   }
 
   static isSatisfiesExpression(
     node: Node | undefined
-  ): node is Node<"SatisfiesExpression"> {
+  ): node is NodeOf<"SatisfiesExpression"> {
     return node?.kind === "SatisfiesExpression";
   }
 
   static isShorthandPropertyAssignment(
     node: Node | undefined
-  ): node is Node<"ShorthandPropertyAssignment"> {
+  ): node is NodeOf<"ShorthandPropertyAssignment"> {
     return node?.kind === "ShorthandPropertyAssignment";
   }
 
   static isSpreadAssignment(
     node: Node | undefined
-  ): node is Node<"SpreadAssignment"> {
+  ): node is NodeOf<"SpreadAssignment"> {
     return node?.kind === "SpreadAssignment";
   }
 
   static isStringLiteral(
     node: Node | undefined
-  ): node is Node<"StringLiteral"> {
+  ): node is NodeOf<"StringLiteral"> {
     return node?.kind === "StringLiteral";
   }
 
   static isTypeAssertion(
     node: Node | undefined
-  ): node is Node<"TypeAssertionExpression"> {
+  ): node is NodeOf<"TypeAssertionExpression"> {
     return node?.kind === "TypeAssertionExpression";
   }
 
   static isTypeReference(
     node: Node | undefined
-  ): node is Node<"TypeReference"> {
+  ): node is NodeOf<"TypeReference"> {
     return node?.kind === "TypeReference";
   }
 
   static isVariableDeclaration(
     node: Node | undefined
-  ): node is Node<"VariableDeclaration"> {
+  ): node is NodeOf<"VariableDeclaration"> {
     return node?.kind === "VariableDeclaration";
   }
 
@@ -951,7 +967,7 @@ export class Node<Kind extends string = string> {
     return this.parent ? this.parent.root() : this;
   }
 
-  getSourceFile(): Node<"SourceFile"> {
+  getSourceFile(): NodeOf<"SourceFile"> {
     if (this.forgotten) {
       throw new Error(FORGOTTEN);
     }
@@ -1097,7 +1113,7 @@ export class Node<Kind extends string = string> {
 
   getParentIfKind<Wanted extends string>(
     kind: Wanted
-  ): Node<Wanted> | undefined {
+  ): NodeOf<Wanted> | undefined {
     const parent = this.getParent();
     return isKind(parent, kind) ? parent : undefined;
   }
@@ -1205,7 +1221,7 @@ export class Node<Kind extends string = string> {
 
   getFirstAncestorByKind<Wanted extends string>(
     kind: Wanted
-  ): Node<Wanted> | undefined {
+  ): NodeOf<Wanted> | undefined {
     let node = this.getParent();
     while (node) {
       if (isKind(node, kind)) {
@@ -1241,7 +1257,7 @@ export class Node<Kind extends string = string> {
     return found;
   }
 
-  getDescendantsOfKind<Wanted extends string>(kind: Wanted): Node<Wanted>[] {
+  getDescendantsOfKind<Wanted extends string>(kind: Wanted): NodeOf<Wanted>[] {
     const nodes = isTokenKind(kind)
       ? preorder(this, false)
       : this.getDescendants();
@@ -1250,7 +1266,7 @@ export class Node<Kind extends string = string> {
 
   getFirstDescendantByKind<Wanted extends string>(
     kind: Wanted
-  ): Node<Wanted> | undefined {
+  ): NodeOf<Wanted> | undefined {
     return this.getDescendantsOfKind(kind)[0];
   }
 
@@ -1442,16 +1458,16 @@ export class Node<Kind extends string = string> {
 
   // Imports and exports.
 
-  getImportDeclarations(): Node<"ImportDeclaration">[] {
+  getImportDeclarations(): NodeOf<"ImportDeclaration">[] {
     return ofKind(this.getStatements(), "ImportDeclaration");
   }
 
-  getExportDeclarations(): Node<"ExportDeclaration">[] {
+  getExportDeclarations(): NodeOf<"ExportDeclaration">[] {
     return ofKind(this.getStatements(), "ExportDeclaration");
   }
 
   /** An import's module specifier. Throws on `export { a }` with no `from`. */
-  getModuleSpecifier(): Node<"StringLiteral"> {
+  getModuleSpecifier(): NodeOf<"StringLiteral"> {
     const specifier = this.getModuleSpecifierIfExists();
     if (!specifier) {
       throw new Error(`${this.kind} has no module specifier.`);
@@ -1460,7 +1476,7 @@ export class Node<Kind extends string = string> {
   }
 
   /** The module specifier of an export, which may have none. */
-  getModuleSpecifierIfExists(): Node<"StringLiteral"> | undefined {
+  getModuleSpecifierIfExists(): NodeOf<"StringLiteral"> | undefined {
     const specifier = this.field("moduleSpecifier");
     return isKind(specifier, "StringLiteral") ? specifier : undefined;
   }
@@ -1478,7 +1494,7 @@ export class Node<Kind extends string = string> {
     return this.field("namedBindings");
   }
 
-  getNamedImports(): Node<"ImportSpecifier">[] {
+  getNamedImports(): NodeOf<"ImportSpecifier">[] {
     const bindings = this.field("importClause")?.field("namedBindings");
     return bindings?.kind === "NamedImports"
       ? ofKind(bindings.list("elements"), "ImportSpecifier")
@@ -1489,14 +1505,14 @@ export class Node<Kind extends string = string> {
     return this.field("importClause")?.field("name");
   }
 
-  getNamespaceImport(): Node<"Identifier"> | undefined {
+  getNamespaceImport(): NodeOf<"Identifier"> | undefined {
     const bindings = this.field("importClause")?.field("namedBindings");
     const name =
       bindings?.kind === "NamespaceImport" ? bindings.field("name") : undefined;
     return isKind(name, "Identifier") ? name : undefined;
   }
 
-  getNamedExports(): Node<"ExportSpecifier">[] {
+  getNamedExports(): NodeOf<"ExportSpecifier">[] {
     const clause = this.field("exportClause");
     return clause?.kind === "NamedExports"
       ? ofKind(clause.list("elements"), "ExportSpecifier")
@@ -1507,7 +1523,7 @@ export class Node<Kind extends string = string> {
     return this.field("exportClause")?.kind === "NamedExports";
   }
 
-  getImportDeclaration(): Node<"ImportDeclaration"> {
+  getImportDeclaration(): NodeOf<"ImportDeclaration"> {
     const declaration = this.getFirstAncestorByKind("ImportDeclaration");
     if (!declaration) {
       throw new Error(`${this.kind} is not inside an import declaration.`);
@@ -1985,7 +2001,8 @@ const adoptTree = (root: Node, parsed: Node, changes: TextChange[]): void => {
     canonical.forgotten = false;
   }
   for (const node of [parsed, ...newNodes]) {
-    (node.adopted ?? node).link();
+    const target = node.adopted ?? node;
+    target.link();
   }
   root.parent = undefined;
 

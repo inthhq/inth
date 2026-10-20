@@ -360,16 +360,17 @@ const installedVersionsOf = async function installedVersionsOf(
         .map(([name]) => name)
     )
   );
-  const entries = await Promise.all(
-    [...names].map(
-      async (name) => [name, await installedVersion(projectRoot, name)] as const
-    )
+  const versions = await Promise.all(
+    [...names].map((name) => installedVersion(projectRoot, name))
   );
-  return Object.fromEntries(
-    entries.filter(
-      (entry): entry is readonly [string, string] => entry[1] !== null
-    )
-  );
+  const installed: Record<string, string> = {};
+  for (const [index, name] of [...names].entries()) {
+    const version = versions[index];
+    if (version !== null && version !== undefined) {
+      installed[name] = version;
+    }
+  }
+  return installed;
 };
 
 /**

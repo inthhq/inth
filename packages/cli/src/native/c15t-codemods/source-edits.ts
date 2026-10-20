@@ -480,7 +480,7 @@ const hasTriviaBetween = function hasTriviaBetween(
  * ends the run, so it stays.
  */
 export const elementRemovals = function elementRemovals(
-  elements: Iterable<Syntax.Node>
+  elements: Syntax.Node[]
 ): TextEdit[] {
   const removing = new Set(elements);
   const covered = new Set<Syntax.Node>();
@@ -574,7 +574,7 @@ const insertNamedImports = function insertNamedImports(
 export const ensureNamedImports = function ensureNamedImports(
   sourceFile: Syntax.SourceFile,
   specifier: string,
-  names: Iterable<string>
+  names: string[]
 ): void {
   const existing = findValueImport(sourceFile, specifier);
   const present = new Set(
@@ -670,7 +670,7 @@ export const moveSpecifiers = function moveSpecifiers(
     );
     return;
   }
-  edits.push(...elementRemovals(moves.keys()), {
+  edits.push(...elementRemovals([...moves.keys()]), {
     end: declaration.getEnd(),
     start: declaration.getEnd(),
     text: lines.map((line) => `\n${line}`).join(""),

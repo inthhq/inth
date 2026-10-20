@@ -347,19 +347,19 @@ const isTransport = function isTransport(
   }
   const shorthand = Node.isShorthandPropertyAssignment(value);
   const symbol = shorthand ? value.getValueSymbol() : value.getSymbol();
-  // `const mode = hosted()`, then `{ mode }` or `mode: mode`.
-  const holdsTransport =
-    (shorthand || Node.isIdentifier(value)) &&
-    (symbol?.getDeclarations() ?? []).some((declaration) => {
+  // `const mode = hosted()`, then `{ mode }` or `mode: mode`. A loop, not
+  // a callback: Scriptc can't call this function from a closure.
+  if (shorthand || Node.isIdentifier(value)) {
+    for (const declaration of symbol?.getDeclarations() ?? []) {
       const initializer = Node.isVariableDeclaration(declaration)
         ? declaration.getInitializer()
         : undefined;
-      return initializer !== undefined && isTransport(initializer, depth + 1);
-    });
-  return (
-    holdsTransport ||
-    (shorthand ? value.getNameNode() : value).getType().isObject()
-  );
+      if (initializer !== undefined && isTransport(initializer, depth + 1)) {
+        return true;
+      }
+    }
+  }
+  return (shorthand ? value.getNameNode() : value).getType().isObject();
 };
 
 /** What a `mode` property holds, with its text when it is a string. */
@@ -419,9 +419,8 @@ const planHosted = function planHosted(
   plan.edits.push(
     toTextEdit(anchor, replacement),
     ...elementRemovals(
-      [backend, headers, customFetch].filter(
-        (property): property is Syntax.ObjectLiteralElementLike =>
-          property !== undefined && property !== anchor
+      [backend, headers, customFetch].flatMap((property) =>
+        property === undefined || property === anchor ? [] : [property]
       )
     )
   );
@@ -697,7 +696,7 @@ const transformSourceFile = function transformSourceFile(
   }
   applyEdits(sourceFile, plan.edits);
   for (const [entry, names] of plan.imports) {
-    ensureNamedImports(sourceFile, entry, names);
+    ensureNamedImports(sourceFile, entry, [...names]);
   }
   dedupeSpecifiers(sourceFile);
   return {

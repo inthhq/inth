@@ -11,6 +11,7 @@
 
 import { bindSourceFile } from "./binder.ts";
 import { Node, NodeFlags, SourceText } from "./node.ts";
+import type { NodeOf } from "./node.ts";
 import { Scanner, Token, syntaxError } from "./scanner.ts";
 
 const Tristate = { False: 0, True: 1, Unknown: 2 } as const;
@@ -557,7 +558,7 @@ class Parser {
 
   // Source file and statements.
 
-  parseSourceFile(): Node<"SourceFile"> {
+  parseSourceFile(): NodeOf<"SourceFile"> {
     this.scanner.scan();
     const node = new Node("SourceFile", 0, this.scanner.tokenStart);
     const statements: Node[] = [];
@@ -567,7 +568,8 @@ class Parser {
     node.setList("statements", statements);
     node.end = this.scanner.text.length;
     node.link();
-    return node;
+    // SAFETY: The node was created with the SourceFile kind above.
+    return node as NodeOf<"SourceFile">;
   }
 
   parseStatementList(close: string): Node[] {
@@ -4162,7 +4164,7 @@ const attachJsDocs = (root: Node, parser: Parser, text: string): void => {
 export const parseSourceFile = (
   text: string,
   path: string
-): Node<"SourceFile"> => {
+): NodeOf<"SourceFile"> => {
   const parser = new Parser(text, path);
   const root = parser.parseSourceFile();
   if (text.includes("/**")) {

@@ -5,24 +5,24 @@
 import { readFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 
-import type { Node, SyntaxSymbol } from "./node.ts";
+import type { Node, NodeOf, SyntaxSymbol } from "./node.ts";
 import { parseSourceFile } from "./parser.ts";
 
 export { Node, SyntaxKind } from "./node.ts";
 
-export type BindingElement = Node<"BindingElement">;
-export type CallExpression = Node<"CallExpression">;
-export type ExportDeclaration = Node<"ExportDeclaration">;
-export type ExportSpecifier = Node<"ExportSpecifier">;
-export type Identifier = Node<"Identifier">;
-export type ImportDeclaration = Node<"ImportDeclaration">;
-export type ImportSpecifier = Node<"ImportSpecifier">;
+export type BindingElement = NodeOf<"BindingElement">;
+export type CallExpression = NodeOf<"CallExpression">;
+export type ExportDeclaration = NodeOf<"ExportDeclaration">;
+export type ExportSpecifier = NodeOf<"ExportSpecifier">;
+export type Identifier = NodeOf<"Identifier">;
+export type ImportDeclaration = NodeOf<"ImportDeclaration">;
+export type ImportSpecifier = NodeOf<"ImportSpecifier">;
 export type NoSubstitutionTemplateLiteral =
-  Node<"NoSubstitutionTemplateLiteral">;
+  NodeOf<"NoSubstitutionTemplateLiteral">;
 export type ObjectLiteralElementLike = Node;
-export type ObjectLiteralExpression = Node<"ObjectLiteralExpression">;
-export type SourceFile = Node<"SourceFile">;
-export type StringLiteral = Node<"StringLiteral">;
+export type ObjectLiteralExpression = NodeOf<"ObjectLiteralExpression">;
+export type SourceFile = NodeOf<"SourceFile">;
+export type StringLiteral = NodeOf<"StringLiteral">;
 export type Symbol = SyntaxSymbol;
 export type TypeNode = Node;
 

@@ -703,10 +703,10 @@ const targetListEdit = function targetListEdit(
   if (trailing !== "") {
     list += ` ${trailing}`;
   }
-  const [first] = targets;
+  // A target list always holds at least two targets.
   return {
-    end: (targets.at(-1) ?? first).end,
-    start: first.start,
+    end: targets.at(-1)?.end ?? 0,
+    start: targets[0]?.start ?? 0,
     text: list,
   };
 };
