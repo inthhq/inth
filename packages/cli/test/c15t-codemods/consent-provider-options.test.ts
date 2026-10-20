@@ -317,6 +317,28 @@ const runtime = getOrCreateConsentRuntime({
 `);
   });
 
+  it("rewrites options passed to the v2 runtime through a namespace import", async () => {
+    const { updated } = await transformFile(
+      codemod,
+      `import * as c15t from 'c15t';
+
+const runtime = c15t.getOrCreateConsentRuntime({
+	mode: 'hosted',
+	backendURL: '/api/c15t',
+});
+`,
+      { fileName: "consent.ts" }
+    );
+
+    expect(updated).toBe(`import * as c15t from 'c15t';
+import { hosted } from 'c15t';
+
+const runtime = c15t.getOrCreateConsentRuntime({
+	mode: hosted({ backendURL: '/api/c15t' }),
+});
+`);
+  });
+
   it("leaves files without c15t, and code that already uses v3, unchanged", async () => {
     const unrelated = await transformFile(
       codemod,

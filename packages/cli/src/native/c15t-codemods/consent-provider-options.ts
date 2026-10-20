@@ -116,13 +116,17 @@ const namespaceEntry = function namespaceEntry(
   return undefined;
 };
 
-/** The provider entry a JSX tag or type name resolves to. */
-const resolveName = function resolveName(
+/**
+ * The entry, one of `entries`, that a JSX tag, callee or type name reads
+ * one of `names` from: by name, under an alias, or as `Namespace.Name`.
+ */
+const resolveFrom = function resolveFrom(
   node: Syntax.Node,
+  entries: ReadonlySet<string>,
   names: ReadonlySet<string>
 ): string | undefined {
   if (Node.isIdentifier(node)) {
-    return importedFrom(node, PROVIDER_ENTRIES, names);
+    return importedFrom(node, entries, names);
   }
   if (Node.isPropertyAccessExpression(node) || Node.isQualifiedName(node)) {
     const right = Node.isPropertyAccessExpression(node)
@@ -131,12 +135,18 @@ const resolveName = function resolveName(
     const left = Node.isPropertyAccessExpression(node)
       ? node.getExpression()
       : node.getLeft();
-    return names.has(right)
-      ? namespaceEntry(left, PROVIDER_ENTRIES)
-      : undefined;
+    return names.has(right) ? namespaceEntry(left, entries) : undefined;
   }
   return undefined;
 };
+
+/** The provider entry a JSX tag or type name resolves to. */
+const resolveName = (
+  node: Syntax.Node,
+  names: ReadonlySet<string>
+): string | undefined => resolveFrom(node, PROVIDER_ENTRIES, names);
+
+const RUNTIME_ENTRIES = new Set([RUNTIME_ENTRY]);
 
 const objectFor = objectLiteralFor;
 
@@ -195,11 +205,7 @@ const findOptionsObjects = function findOptionsObjects(
   for (const call of sourceFile.getDescendantsOfKind(
     SyntaxKind.CallExpression
   )) {
-    const callee = call.getExpression();
-    if (
-      Node.isIdentifier(callee) &&
-      importedFrom(callee, new Set([RUNTIME_ENTRY]), RUNTIME_FACTORIES)
-    ) {
+    if (resolveFrom(call.getExpression(), RUNTIME_ENTRIES, RUNTIME_FACTORIES)) {
       add(objectFor(call.getArguments()[0]), RUNTIME_ENTRY);
     }
   }
