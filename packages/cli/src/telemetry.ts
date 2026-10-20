@@ -49,11 +49,17 @@ export const telemetryCommand = (options: CliArguments): string => {
   if (options.command === "mcp" && !options.argument) {
     return "mcp setup";
   }
-  const entry = COMMAND_METADATA.find(
-    (item) =>
-      item.command === options.command &&
-      (!item.action || item.action === options.argument)
-  );
+  // An entry for the action wins over the command's catch-all entry.
+  const entry =
+    COMMAND_METADATA.find(
+      (item) =>
+        item.command === options.command &&
+        Boolean(item.action) &&
+        item.action === options.argument
+    ) ??
+    COMMAND_METADATA.find(
+      (item) => item.command === options.command && !item.action
+    );
   return entry ? `${entry.command} ${entry.action}`.trim() : "";
 };
 

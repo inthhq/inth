@@ -11,6 +11,7 @@ import { apiKey } from "./api-options.ts";
 import type { CliArguments } from "./arguments.ts";
 import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
+import { c15tCodemodsHelp } from "./c15t-codemods.ts";
 import { c15tHelp } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { selectCommandConnection } from "./connection-selection.ts";
@@ -18,6 +19,7 @@ import { colorEnabled, organizationReference } from "./display.ts";
 import { diagnosticStep, startErrorDiagnostics } from "./error-diagnostics.ts";
 import { helpCommands } from "./help.ts";
 import { identitySummary } from "./identity.ts";
+import { runCodemods } from "./native/c15t-codemods/command.ts";
 import { NativeApi, apiOutput } from "./native/native-api.ts";
 import {
   openBrowser,
@@ -228,6 +230,18 @@ const runLocalCommand = async (options: CliArguments): Promise<boolean> => {
   }
   if (options.command === "update") {
     await runUpdate(options, nativeStateDirectory(), controller.signal);
+    return true;
+  }
+  // Codemods only rewrite files in the app, so they run before any sign-in or
+  // project lookup.
+  if (options.c15tCodemods) {
+    diagnosticStep("c15t_codemods");
+    const data = await runCodemods(
+      options.c15tCodemods,
+      process.cwd(),
+      options.json
+    );
+    printResult(options.json, "", JSON.stringify(data));
     return true;
   }
   return false;
@@ -536,6 +550,17 @@ try {
         ? "cancelled"
         : "command_failed";
     }
+  } else if (options.c15tCodemods && options.help) {
+    printResult(
+      options.json,
+      c15tCodemodsHelp(),
+      JSON.stringify({
+        commandDefinitions: helpCommands("c15t", "codemods").filter(
+          (entry) => entry.action === "codemods"
+        ),
+        help: c15tCodemodsHelp(),
+      })
+    );
   } else if (options.command === "c15t" && options.help) {
     printResult(
       options.json,

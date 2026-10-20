@@ -1,4 +1,5 @@
 import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
@@ -406,6 +407,33 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     paginated: false,
     scopes: ["organizations.read", "projects.read", "projects.write"],
     usage: C15T_USAGE.slice(7),
+  },
+  {
+    action: "codemods",
+    authentication: "none",
+    command: "c15t",
+    description: "Rewrite c15t v2 source files for c15t v3",
+    effects: [
+      "Rewrites source files under the nearest package.json for a hosted app. Offline and custom modes are left unchanged with a TODO(c15t v3) comment.",
+      "Needs no sign-in or Inth project, and never prompts.",
+      "Codemods run in --list order. --dry-run reports changes without writing files.",
+      "With --json, the result goes to stdout and progress to stderr.",
+    ],
+    examples: [
+      "inth c15t codemods --list --json",
+      "inth c15t codemods packages-to-c15t consent-provider-options --dry-run --json",
+      "inth c15t codemods packages-to-c15t",
+    ],
+    options: [
+      option("list", "boolean", "List the codemods"),
+      option("dry-run", "boolean", "Report changes without writing files"),
+      option("json", "boolean", "Print the result as JSON"),
+      option("non-interactive", "boolean", "Accepted; codemods never prompt"),
+      option("help", "boolean", "Show help for this command"),
+    ],
+    paginated: false,
+    scopes: [],
+    usage: C15T_CODEMODS_USAGE.slice(7),
   },
   {
     action: "",

@@ -58,6 +58,7 @@ export const c15tHelp = (): string =>
     "            Start that coding agent here with the c15t setup prompt",
     "  prompt    Print the setup prompt for any other agent",
     "  scaffold  Write framework quickstart files and install c15t packages",
+    "  codemods  Rewrite c15t v2 source for v3; needs no sign-in",
     "",
     "Options:",
     "  --project <id|name>    Use an existing project (ID, name, or organization/name)",
@@ -82,6 +83,10 @@ const VALUE_OPTIONS = new Set([
   "organization",
   "token",
 ]);
+
+/** Whether `arg` is a c15t option whose value is the next argument. */
+export const c15tOptionTakesValue = (arg: string): boolean =>
+  arg.startsWith("--") && VALUE_OPTIONS.has(arg.slice(2));
 
 const readFramework = (value: string): BoilerplateFramework => {
   const framework = boilerplateFrameworks.find((entry) => entry === value);

@@ -1723,6 +1723,71 @@ const verifyHtmlSite = async (test: string, parent: string): Promise<void> => {
   }
 };
 
+// `inth c15t codemods` only rewrites files, so it must run with no session,
+// no project link, no keychain and nowhere to keep state.
+const verifyCodemodsWithoutAccount = async (
+  binary: string,
+  parent: string
+): Promise<void> => {
+  const home = path.join(parent, "codemods-home");
+  await mkdir(home);
+  const blocked = path.join(home, "unavailable");
+  await writeFile(blocked, "A file, so no state directory fits inside it.");
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    APPDATA: blocked,
+    DBUS_SESSION_BUS_ADDRESS: `unix:path=${path.join(home, "missing-bus")}`,
+    HOME: home,
+    USERPROFILE: home,
+    XDG_CONFIG_HOME: blocked,
+    XDG_STATE_HOME: blocked,
+  };
+  delete env.INTH_TOKEN;
+  delete env.INTH_DEV_API_ORIGIN;
+  delete env.INTH_DEV_DASHBOARD_ORIGIN;
+  const directory = await app(parent, "codemods", {
+    "@c15t/nextjs": "2.0.0",
+    c15t: "3.1.0",
+  });
+  const layout = path.join(directory, "app", "layout.tsx");
+  const before =
+    'import { ConsentManagerProvider } from "@c15t/nextjs";\nexport const Layout = () => <ConsentManagerProvider />;\n';
+  await writeFile(layout, before);
+  const codemods = (args: string[]) => {
+    const result = run(
+      binary,
+      ["c15t", "codemods", ...args, "--json", "--non-interactive"],
+      directory,
+      env
+    );
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.doesNotMatch(
+      result.stdout + result.stderr,
+      /interaction_required|authentication_required|credential_store_unavailable|sign in|log ?in/iu
+    );
+    const output = z
+      .object({ data: z.record(z.string(), z.unknown()), ok: z.literal(true) })
+      .parse(JSON.parse(result.stdout));
+    return output.data;
+  };
+  const listed = codemods(["--list"]);
+  // The oldest c15t package sets the version, as @c15t/cli reads it.
+  assert.equal(listed.declaredVersion, "2.0.0");
+  const dry = codemods(["packages-to-c15t", "--dry-run"]);
+  assert.equal(dry.dryRun, true);
+  assert.equal(await readFile(layout, "utf-8"), before);
+  codemods(["packages-to-c15t"]);
+  assert.match(await readFile(layout, "utf-8"), /from "c15t\/next"/u);
+  assert.deepEqual(await readdir(home), ["unavailable"]);
+  // No .inth project link appears next to the app.
+  const entries = await readdir(directory);
+  assert.deepEqual(entries.toSorted(), [
+    "app",
+    "package.json",
+    "pnpm-lock.yaml",
+  ]);
+};
+
 export const verifyC15t = async (binary: string): Promise<void> => {
   const parent = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "inth-c15t-"))
@@ -1733,6 +1798,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
       react: "19.0.0",
     });
     verifyPublicCommand(binary, next);
+    await verifyCodemodsWithoutAccount(binary, parent);
     const test = fixture("c15t-test");
     await verifyExistingProject(test, next);
     const bin = path.join(parent, "bin");

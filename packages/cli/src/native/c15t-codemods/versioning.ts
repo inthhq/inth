@@ -1,0 +1,391 @@
+import { readFile } from "node:fs/promises";
+// eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
+import { join } from "node:path";
+
+import { installedVersion, rangeOf } from "./manifest.ts";
+import { format, minVersion } from "./semver.ts";
+
+interface ParsedVersion {
+  major: number;
+  minor: number;
+  patch: number;
+  preRelease: string[];
+}
+
+type DependencyMap = Record<string, string>;
+
+interface PackageJsonLike {
+  dependencies?: DependencyMap;
+  devDependencies?: DependencyMap;
+  peerDependencies?: DependencyMap;
+  optionalDependencies?: DependencyMap;
+}
+
+const MIGRATED_PACKAGES = new Set([
+  "c15t",
+  "@c15t/core",
+  "@c15t/react",
+  "@c15t/nextjs",
+]);
+
+/**
+ * Codemod version metadata used for filtering by installed project version.
+ */
+export interface CodemodVersionMetadata {
+  /**
+   * Version range the project must satisfy for the codemod to be considered.
+   *
+   * @example "<2.0.0"
+   * @example ">=1.0.0 <2.0.0"
+   */
+  fromRange?: string;
+  /**
+   * Target range this codemod migrates toward.
+   * When the current project version already satisfies this range,
+   * the codemod is treated as not applicable.
+   *
+   * @example ">=2.0.0"
+   */
+  toRange?: string;
+}
+
+const parseVersion = function parseVersion(raw: string): ParsedVersion | null {
+  const match = raw
+    .trim()
+    .match(
+      /^v?(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-(?<preRelease>[0-9A-Za-z.-]+))?$/u
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  const [, majorPart, minorPart, patchPart, preReleasePart] = match;
+  if (!majorPart || !minorPart || !patchPart) {
+    return null;
+  }
+
+  const major = Number(majorPart);
+  const minor = Number(minorPart);
+  const patch = Number(patchPart);
+  const preRelease = preReleasePart ? preReleasePart.split(".") : [];
+
+  return { major, minor, patch, preRelease };
+};
+
+/**
+ * The lowest version a semver specifier allows, or null when it names none:
+ * `catalog:`, a `link:`, `file:` or git specifier, a dist-tag, `*` or a range
+ * with no lower bound, such as `<3.0.0`.
+ */
+const declaredVersionOf = function declaredVersionOf(
+  specifier: string
+): string | null {
+  const range = rangeOf(specifier);
+  const lowest = range === null ? null : minVersion(range);
+  if (lowest === null || format(lowest) === "0.0.0") {
+    return null;
+  }
+  return format(lowest);
+};
+
+const isNumericSegment = function isNumericSegment(value: string): boolean {
+  return /^\d+$/u.test(value);
+};
+
+const comparePreRelease = function comparePreRelease(
+  a: string[],
+  b: string[]
+): number {
+  // No pre-release > any pre-release
+  if (a.length === 0 && b.length === 0) {
+    return 0;
+  }
+  if (a.length === 0) {
+    return 1;
+  }
+  if (b.length === 0) {
+    return -1;
+  }
+
+  const maxLength = Math.max(a.length, b.length);
+  for (let index = 0; index < maxLength; index += 1) {
+    const aValue = a[index];
+    const bValue = b[index];
+
+    if (aValue === undefined) {
+      return -1;
+    }
+    if (bValue === undefined) {
+      return 1;
+    }
+
+    const aNumeric = isNumericSegment(aValue);
+    const bNumeric = isNumericSegment(bValue);
+
+    if (aNumeric && bNumeric) {
+      const aNumber = Number(aValue);
+      const bNumber = Number(bValue);
+      if (aNumber !== bNumber) {
+        return aNumber > bNumber ? 1 : -1;
+      }
+      continue;
+    }
+
+    if (aNumeric && !bNumeric) {
+      return -1;
+    }
+    if (!aNumeric && bNumeric) {
+      return 1;
+    }
+
+    if (aValue !== bValue) {
+      return aValue > bValue ? 1 : -1;
+    }
+  }
+
+  return 0;
+};
+
+const compareVersions = function compareVersions(
+  a: string,
+  b: string
+): number | null {
+  const parsedA = parseVersion(a);
+  const parsedB = parseVersion(b);
+
+  if (!parsedA || !parsedB) {
+    return null;
+  }
+
+  if (parsedA.major !== parsedB.major) {
+    return parsedA.major > parsedB.major ? 1 : -1;
+  }
+  if (parsedA.minor !== parsedB.minor) {
+    return parsedA.minor > parsedB.minor ? 1 : -1;
+  }
+  if (parsedA.patch !== parsedB.patch) {
+    return parsedA.patch > parsedB.patch ? 1 : -1;
+  }
+
+  return comparePreRelease(parsedA.preRelease, parsedB.preRelease);
+};
+
+const satisfiesComparator = function satisfiesComparator(
+  version: string,
+  comparator: string
+): boolean {
+  const match = comparator
+    .trim()
+    .match(
+      /^(?<operator><=|>=|<|>|=)?\s*v?(?<target>\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)$/u
+    );
+
+  if (!match) {
+    return false;
+  }
+
+  const [, operatorRaw, target] = match;
+  if (!target) {
+    return false;
+  }
+
+  const operator = operatorRaw ?? "=";
+  const comparison = compareVersions(version, target);
+  if (comparison === null) {
+    return false;
+  }
+
+  switch (operator) {
+    case "<": {
+      return comparison < 0;
+    }
+    case "<=": {
+      return comparison <= 0;
+    }
+    case ">": {
+      return comparison > 0;
+    }
+    case ">=": {
+      return comparison >= 0;
+    }
+    default: {
+      return comparison === 0;
+    }
+  }
+};
+
+/**
+ * Evaluates simple semver comparator ranges.
+ *
+ * Supports comparator sets such as `>=1.0.0 <2.0.0`.
+ */
+export const satisfiesSimpleRange = function satisfiesSimpleRange(
+  version: string,
+  range: string
+): boolean {
+  const comparators = range.trim().split(/\s+/u).filter(Boolean);
+
+  if (comparators.length === 0) {
+    return true;
+  }
+
+  return comparators.every((comparator) =>
+    satisfiesComparator(version, comparator)
+  );
+};
+
+/**
+ * Determines whether a codemod should be shown for a detected project version.
+ */
+export const isCodemodApplicableForVersion =
+  function isCodemodApplicableForVersion(
+    version: string | null,
+    metadata: CodemodVersionMetadata
+  ): boolean {
+    if (!version) {
+      return true;
+    }
+
+    if (
+      metadata.fromRange &&
+      !satisfiesSimpleRange(version, metadata.fromRange)
+    ) {
+      return false;
+    }
+
+    if (metadata.toRange && satisfiesSimpleRange(version, metadata.toRange)) {
+      return false;
+    }
+
+    return true;
+  };
+
+/** The dependency groups of a manifest, in the order they are read. */
+const dependencyGroupsOf = function dependencyGroupsOf(
+  manifest: PackageJsonLike
+): (DependencyMap | undefined)[] {
+  return [
+    manifest.dependencies,
+    manifest.devDependencies,
+    manifest.peerDependencies,
+    manifest.optionalDependencies,
+  ];
+};
+
+/**
+ * Best-effort c15t version detection from a package.json object.
+ *
+ * Returns the lowest version the core/framework specifiers allow, so `^3`
+ * gives 3.0.0 and `^3.0.0 || ^2.0.0` gives 2.0.0. Independently versioned
+ * integrations and tooling do not determine the application API version.
+ * A specifier that names no version, such as `catalog:`, a `link:`, `file:`
+ * or git specifier, a dist-tag, `*` or `<3.0.0`, whatever digits it holds,
+ * takes its version from `installed`.
+ *
+ * @param manifest - The app's `package.json`.
+ * @param installed - Installed versions by package name.
+ * @returns The lowest version found, or null when there is none.
+ */
+export const detectInstalledC15tVersionFromPackageJson =
+  function detectInstalledC15tVersionFromPackageJson(
+    manifest: PackageJsonLike,
+    installed: Readonly<Record<string, string>> = {}
+  ): string | null {
+    const versions: string[] = [];
+    for (const dependencies of dependencyGroupsOf(manifest)) {
+      if (!dependencies) {
+        continue;
+      }
+
+      for (const [packageName, specifier] of Object.entries(dependencies)) {
+        if (!MIGRATED_PACKAGES.has(packageName)) {
+          continue;
+        }
+
+        const extracted =
+          declaredVersionOf(specifier) ?? installed[packageName];
+        if (!extracted) {
+          continue;
+        }
+
+        if (parseVersion(extracted)) {
+          versions.push(extracted);
+        }
+      }
+    }
+
+    if (versions.length === 0) {
+      return null;
+    }
+
+    const firstVersion = versions.at(0);
+    if (!firstVersion) {
+      return null;
+    }
+
+    let selected = firstVersion;
+    for (const current of versions.slice(1)) {
+      const comparison = compareVersions(current, selected);
+      if (comparison !== null && comparison < 0) {
+        selected = current;
+      }
+    }
+
+    return selected;
+  };
+
+/**
+ * The installed versions of the c15t packages whose specifier names no
+ * version.
+ */
+const installedVersionsOf = async function installedVersionsOf(
+  projectRoot: string,
+  manifest: PackageJsonLike
+): Promise<Record<string, string>> {
+  const names = new Set(
+    dependencyGroupsOf(manifest).flatMap((dependencies) =>
+      Object.entries(dependencies ?? {})
+        .filter(
+          ([name, specifier]) =>
+            MIGRATED_PACKAGES.has(name) && declaredVersionOf(specifier) === null
+        )
+        .map(([name]) => name)
+    )
+  );
+  const versions = await Promise.all(
+    [...names].map((name) => installedVersion(projectRoot, name))
+  );
+  const installed: Record<string, string> = {};
+  for (const [index, name] of [...names].entries()) {
+    const version = versions[index];
+    if (version !== null && version !== undefined) {
+      installed[name] = version;
+    }
+  }
+  return installed;
+};
+
+/**
+ * Best-effort c15t version detection from `<projectRoot>/package.json`,
+ * reading the installed version for a specifier that names none.
+ */
+export const detectInstalledC15tVersion =
+  async function detectInstalledC15tVersion(
+    projectRoot: string
+  ): Promise<string | null> {
+    const manifestPath = join(projectRoot, "package.json");
+
+    try {
+      const content = await readFile(manifestPath, "utf-8");
+      // SAFETY: Detection reads only the dependency groups, which npm writes
+      // as maps of package names to version ranges.
+      const parsed = JSON.parse(content) as PackageJsonLike;
+      return detectInstalledC15tVersionFromPackageJson(
+        parsed,
+        await installedVersionsOf(projectRoot, parsed)
+      );
+    } catch {
+      return null;
+    }
+  };

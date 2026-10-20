@@ -61,7 +61,7 @@ Project lookup and update take a project ID and do not accept `--organization`.
 
 ## Integrate the application
 
-Detect the installed c15t major version from the application's `package.json` or lockfile first. `@c15t/nextjs` or `@c15t/react` on `2.x` is c15t v2. An existing v2 app stays on v2 unless the task asks for an upgrade, and v3 packages must not be installed alongside it. To stay on v2, read the installed package's bundled docs and follow the installed version's API; the rest of this section covers v3 only. Tell the user v3 is available. If the task asks for the upgrade, follow [the v3 upgrade guide](https://c15t.com/docs/upgrade-v3.md).
+Detect the installed c15t major version from the application's `package.json` or lockfile first. `@c15t/nextjs` or `@c15t/react` on `2.x` is c15t v2. An existing v2 app stays on v2 unless the task asks for an upgrade, and v3 packages must not be installed alongside it. To stay on v2, read the installed package's bundled docs and follow the installed version's API; the rest of this section covers v3 only. Tell the user v3 is available. If the task asks for the upgrade, follow [the v3 upgrade guide](https://c15t.com/docs/upgrade-v3.md). For a hosted app, `inth c15t codemods` makes the source changes. Run it with `--dry-run --json` first, then search for `TODO(c15t v3)` comments after the real run.
 
 For a new install, c15t v3 replaces `@c15t/nextjs` and `@c15t/react` with one umbrella package, `c15t`, with framework subpaths: `c15t/next`, `c15t/react`, `c15t/vue`, `c15t/astro`, and more. Vendor script helpers (GTM, GA4, pixels, PostHog, ...) live in `@c15t/integrations`, not the v2 `@c15t/scripts`.
 
