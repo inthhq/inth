@@ -139,6 +139,28 @@ export const Labels = ({ category }: { category: 'marketing' }) => {
     );
   });
 
+  it("keeps the export on every statement it writes for an exported destructuring", async () => {
+    const { first, second } = await transformTwice(
+      codemod,
+      `import { useConsentManager } from 'c15t/react';
+
+export let { consents, consentTypes, has, setSelectedConsent } = useConsentManager();
+const marketing = has('marketing');
+`
+    );
+    expect(first).toContain("export let consents = useConsents();");
+    expect(first).toContain(
+      "export let { set: setSelectedConsent } = useConsentDraft();"
+    );
+    // Callers in other modules still call has(), so it stays on the residual.
+    expect(first).toContain(
+      "export let { consentTypes, has } = useConsentManager();"
+    );
+    expect(first).toContain("const marketing = has('marketing');");
+    expect(first).not.toMatch(/export let \/\//u);
+    expect(second).toBe(first);
+  });
+
   it("migrates useConsentManager imported from several entries", async () => {
     const { result, updated } = await transform(`
 import { useConsentManager } from 'c15t/react';

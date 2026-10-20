@@ -155,6 +155,11 @@ interface FieldPlan {
   draftProperties: string[];
   usesDraftSave: boolean;
   usesMemo: boolean;
+  /**
+   * Whether the statement is exported. Other modules then call `has()` and
+   * `saveConsents()` with the old arguments, so those stay on the residual.
+   */
+  exported: boolean;
 }
 
 /** How this file calls React's `useMemo`, and whether it must import it. */
@@ -354,10 +359,14 @@ const planElement = function planElement(
     );
     return;
   }
-  if (key === "has" && planHas(sourceFile, local, plan, taken)) {
+  if (
+    key === "has" &&
+    !plan.exported &&
+    planHas(sourceFile, local, plan, taken)
+  ) {
     return;
   }
-  if (key === "saveConsents" && planSave(local, plan)) {
+  if (key === "saveConsents" && !plan.exported && planSave(local, plan)) {
     return;
   }
   keep();
@@ -459,9 +468,14 @@ const planCall = function planCall(
     return false;
   }
 
+  // `export`, `declare` and any other modifiers before the keyword.
+  const modifiers = statement
+    .getText()
+    .slice(0, list.getStart() - statement.getStart());
   const plan: FieldPlan = {
     draftProperties: [],
     edits: [],
+    exported: /\bexport\b/u.test(modifiers),
     headlessHooks: new Set(),
     hooks: new Set(),
     manual: [],
@@ -480,7 +494,9 @@ const planCall = function planCall(
   const keyword = list.getDeclarationKind();
   const replacement = replacementLines(plan, indent, context.localName)
     .map((line) =>
-      keyword === "const" ? line : line.replace(/^const /u, `${keyword} `)
+      line.startsWith("const ")
+        ? `${modifiers}${keyword} ${line.slice("const ".length)}`
+        : line
     )
     .join(`\n${indent}`);
 
