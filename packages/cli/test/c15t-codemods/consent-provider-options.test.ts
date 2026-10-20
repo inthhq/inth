@@ -167,12 +167,17 @@ export const App = ({ children }) => (
     expect(updated).toContain(
       "<C15t.ConsentProvider options={options}>{children}</C15t.ConsentProvider>"
     );
-    expect(updated).toContain("mode: offline()");
-    expect(updated).toContain("import { offline } from '@c15t/react';");
+    expect(updated).toContain(
+      "{ /* TODO(c15t v3): mode 'offline' is now the offline() transport"
+    );
+    expect(updated).toContain(
+      "move offline copy to the i18n option. */ mode: 'offline' };"
+    );
   });
 
-  it("moves offline policy packs to offline({ policyRules })", async () => {
-    const { updated } = await transformFile(
+  // Upstream rewrites offline mode; inth migrates hosted apps only.
+  it("leaves offline mode and its policy packs with a TODO", async () => {
+    const { result, updated } = await transformFile(
       codemod,
       `import { ConsentManagerProvider, policyPackPresets } from '@c15t/react';
 
@@ -181,7 +186,7 @@ export const App = ({ children }) => (
 		options={{
 			mode: 'offline',
 			offlinePolicy: {
-				policyPacks: [policyPackPresets.europeOptIn(), policyPackPresets.worldNoBanner()],
+				policyPacks: [policyPackPresets.europeOptIn()],
 			},
 		}}
 	>
@@ -191,96 +196,35 @@ export const App = ({ children }) => (
 `
     );
 
+    expect(result.errors).toEqual([]);
+    expect(updated)
+      .toContain(`\t\t\t// TODO(c15t v3): mode 'offline' is now the offline() transport, and offlinePolicy was removed. Use mode: offline({ policyRules }) with the policyPacks, and move offline copy to the i18n option.
+\t\t\tmode: 'offline',
+\t\t\tofflinePolicy: {
+\t\t\t\tpolicyPacks: [policyPackPresets.europeOptIn()],
+\t\t\t},`);
     expect(updated).toContain(
-      "mode: offline({ policyRules: [policyPackPresets.europeOptIn(), policyPackPresets.worldNoBanner()] }),"
+      "import { ConsentProvider, policyPackPresets } from '@c15t/react';"
     );
-    expect(updated).not.toContain("offlinePolicy");
-    expect(updated).toContain(
-      "import { ConsentProvider, policyPackPresets, offline } from '@c15t/react';"
-    );
+    expect(result.changedFiles[0]?.summaries).toEqual([
+      "TODO: mode 'offline'",
+      "ConsentManagerProvider -> ConsentProvider",
+    ]);
   });
 
-  it("follows policy packs held in a variable", async () => {
-    const todo =
-      "// TODO(c15t v3): v3 policy rules are flat ({ id, match, model, prompt, ... }) instead of { consent, ui }.";
-    const handWritten = await transformFile(
-      codemod,
-      `import type { ConsentManagerOptions } from '@c15t/react';
-
-const policyPacks = [{ id: 'eu', match: { regions: ['eu'] }, consent: { model: 'opt-in' } }];
-export const options: ConsentManagerOptions = {
-	mode: 'offline',
-	offlinePolicy: { policyPacks },
-};
-`
-    );
-    expect(handWritten.updated).toContain(
-      `\t${todo} Rewrite hand-written rules; preset calls need no change.\n\tmode: offline({ policyRules: policyPacks }),`
-    );
-
-    const presets = await transformFile(
-      codemod,
-      `import { policyPackPresets, type ConsentManagerOptions } from '@c15t/react';
-
-const packs = [policyPackPresets.europeOptIn()];
-export const options: ConsentManagerOptions = {
-	mode: 'offline',
-	offlinePolicy: { policyPacks: packs },
-};
-`
-    );
-    expect(presets.updated).toContain(
-      "\tmode: offline({ policyRules: packs }),"
-    );
-    expect(presets.updated).not.toContain(todo);
-
-    const imported = await transformFile(
-      codemod,
-      `import type { ConsentManagerOptions } from '@c15t/react';
-import { packs } from '../../src/native/c15t-codemods/packs.ts';
-
-export const options: ConsentManagerOptions = {
-	mode: 'offline',
-	offlinePolicy: { policyPacks: packs },
-};
-`
-    );
-    expect(imported.updated).toContain(todo);
-  });
-
-  it("flags hand-written policy packs and other offlinePolicy keys", async () => {
+  it("keeps upstream's mode TODO when offline() cannot be imported", async () => {
     const { updated } = await transformFile(
       codemod,
-      `import { ConsentManagerProvider } from '@c15t/react';
+      `import type { ConsentManagerOptions } from '@c15t/react';
 
-const policyPacks = [{ id: 'eu', match: { regions: ['eu'] }, consent: { model: 'opt-in' } }];
-
-export const App = ({ children }) => (
-	<ConsentManagerProvider
-		options={{
-			mode: 'offline',
-			offlinePolicy: {
-				policyPacks: [{ id: 'world', match: { isDefault: true }, consent: { model: 'none' } }],
-				i18n: { defaultProfile: 'default' },
-			},
-		}}
-	>
-		{children}
-	</ConsentManagerProvider>
-);
+const offline = true;
+export const options: ConsentManagerOptions = { mode: 'offline' };
 `
     );
-
     expect(updated).toContain(
-      "mode: offline({ policyRules: [{ id: 'world', match: { isDefault: true }, consent: { model: 'none' } }] }),"
+      "{ /* TODO(c15t v3): mode now takes a transport: hosted({ backendURL })"
     );
-    expect(updated).toContain(
-      "// TODO(c15t v3): v3 policy rules are flat ({ id, match, model, prompt, ... }) instead of { consent, ui }."
-    );
-    expect(updated).toContain(
-      "// TODO(c15t v3): offlinePolicy was removed. offline() takes only policyRules"
-    );
-    expect(updated).toContain("i18n: { defaultProfile: 'default' },");
+    expect(updated).not.toContain("mode 'offline' is now");
   });
 
   it("leaves custom mode with a TODO that fails the build", async () => {
@@ -454,16 +398,18 @@ export const options: ConsentManagerOptions = {
 import { ConsentManagerProvider } from 'c15t/next';
 
 export const Consent = ({ children }) => (
-	<ConsentManagerProvider options={{ mode: 'offline' }}>{children}</ConsentManagerProvider>
+	<ConsentManagerProvider options={{ mode: 'hosted', backendURL: '/api/c15t' }}>{children}</ConsentManagerProvider>
 );
 `
     );
 
-    // c15t/next exports hosted() and offline() as data for
-    // defineConsentConfig; ConsentProvider needs the transport.
+    // c15t/next exports hosted() as data for defineConsentConfig;
+    // ConsentProvider needs the transport.
     expect(updated).toContain("import { ConsentProvider } from 'c15t/next';");
-    expect(updated).toContain("import { offline } from 'c15t/react';");
-    expect(updated).toContain("options={{ mode: offline() }}");
+    expect(updated).toContain("import { hosted } from 'c15t/react';");
+    expect(updated).toContain(
+      "options={{ mode: hosted({ backendURL: '/api/c15t' }) }}"
+    );
   });
 
   it("leaves a manifest() mode alone", async () => {

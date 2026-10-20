@@ -8,7 +8,6 @@ import {
   findProperty,
   isNameTaken,
   objectLiteralFor,
-  propertyRemoval,
   propertyText,
   propertyValueText,
   referencesOf,
@@ -68,9 +67,6 @@ const OPTION_TYPES = new Set([
 
 /** v2 hosted mode fell back to this URL when `backendURL` was empty. */
 const V2_DEFAULT_BACKEND_URL = "'/api/c15t'";
-
-export const POLICY_RULES_TODO =
-  "v3 policy rules are flat ({ id, match, model, prompt, ... }) instead of { consent, ui }. Rewrite hand-written rules; preset calls need no change.";
 
 interface OptionsObject {
   object: Syntax.ObjectLiteralExpression;
@@ -240,53 +236,6 @@ const canImport = function canImport(
     );
 };
 
-/**
- * Whether policy packs may be hand-written rather than preset calls: an
- * array that holds an object literal, followed through a property or a
- * variable initialized in the same file. A value the codemod cannot read,
- * such as an import or a call, counts too, so it gets a TODO.
- */
-export const hasHandWrittenRules = function hasHandWrittenRules(
-  value: Syntax.Node | undefined,
-  depth = 0
-): boolean {
-  if (!value || depth > 5) {
-    return false;
-  }
-  if (Node.isPropertyAssignment(value)) {
-    return hasHandWrittenRules(value.getInitializer(), depth + 1);
-  }
-  const expression = Node.isShorthandPropertyAssignment(value)
-    ? value
-    : unwrapExpression(value);
-  if (Node.isArrayLiteralExpression(expression)) {
-    return expression
-      .getElements()
-      .some((element) =>
-        Node.isObjectLiteralExpression(unwrapExpression(element))
-      );
-  }
-  let symbol: Syntax.Symbol | undefined;
-  if (Node.isShorthandPropertyAssignment(expression)) {
-    symbol = expression.getValueSymbol();
-  } else if (Node.isIdentifier(expression)) {
-    symbol = expression.getSymbol();
-  }
-  const initializers = (symbol?.getDeclarations() ?? []).flatMap(
-    (declaration) =>
-      Node.isVariableDeclaration(declaration) &&
-      declaration.getSourceFile() === value.getSourceFile()
-        ? (declaration.getInitializer() ?? [])
-        : []
-  );
-  if (initializers.length === 0) {
-    return true;
-  }
-  return initializers.some((initializer) =>
-    hasHandWrittenRules(initializer, depth + 1)
-  );
-};
-
 /** How far to follow variables and conditionals when resolving a mode. */
 const MAX_MODE_DEPTH = 5;
 
@@ -429,59 +378,9 @@ const planHosted = function planHosted(
   plan.operations += 1;
 };
 
-const OFFLINE_POLICY_TODO =
-  "offlinePolicy was removed. offline() takes only policyRules; move its policyPacks there and offline copy to the i18n option.";
-
-const planOffline = function planOffline(
-  object: Syntax.ObjectLiteralExpression,
-  entry: string,
-  plan: Plan
-): void {
-  const mode = findProperty(object, "mode");
-  if (!mode) {
-    return;
-  }
-  const offlinePolicy = findProperty(object, "offlinePolicy");
-  const policyObject =
-    offlinePolicy && Node.isPropertyAssignment(offlinePolicy)
-      ? unwrapExpression(offlinePolicy.getInitializer() ?? offlinePolicy)
-      : undefined;
-  const packs =
-    policyObject && Node.isObjectLiteralExpression(policyObject)
-      ? findProperty(policyObject, "policyPacks")
-      : undefined;
-  const packsValue = packs && propertyValueText(packs);
-  const transport = packsValue
-    ? `offline({ ${propertyText("policyRules", packsValue)} })`
-    : "offline()";
-  plan.edits.push(toTextEdit(mode, `mode: ${transport}`));
-  requireImport(plan, transportEntry(entry), "offline");
-  if (packsValue && hasHandWrittenRules(packs)) {
-    addTodo(mode, POLICY_RULES_TODO, plan.edits);
-  }
-  if (
-    offlinePolicy &&
-    policyObject &&
-    Node.isObjectLiteralExpression(policyObject)
-  ) {
-    const others = policyObject
-      .getProperties()
-      .filter((property) => property !== packs);
-    if (others.length === 0) {
-      plan.edits.push(propertyRemoval(offlinePolicy));
-    } else {
-      if (packs) {
-        plan.edits.push(propertyRemoval(packs));
-      }
-      addTodo(offlinePolicy, OFFLINE_POLICY_TODO, plan.edits);
-    }
-  } else if (offlinePolicy) {
-    addTodo(offlinePolicy, OFFLINE_POLICY_TODO, plan.edits);
-  }
-  plan.summaries.push("mode 'offline' -> offline()");
-  plan.operations += 1;
-};
-
+// inth migrates hosted apps only, so offline mode keeps its v2 shape.
+const OFFLINE_TODO =
+  "mode 'offline' is now the offline() transport, and offlinePolicy was removed. Use mode: offline({ policyRules }) with the policyPacks, and move offline copy to the i18n option.";
 const CUSTOM_TODO =
   "mode 'custom' and endpointHandlers were removed. Implement the v3 transport interface and pass mode: custom(transport). See https://c15t.com/docs/concepts/data-fetching";
 const MODE_TODO =
@@ -525,8 +424,9 @@ const planTransport = function planTransport(
     return;
   }
   if (kind === "literal" && value === "offline") {
+    // Where upstream cannot import offline() either, keep its TODO.
     if (canImport(sourceFile, transportEntry(entry), "offline")) {
-      planOffline(object, entry, plan);
+      planTodo(plan, mode, OFFLINE_TODO, "TODO: mode 'offline'");
     } else {
       planTodo(plan, mode, MODE_TODO, "TODO: mode");
     }
@@ -710,13 +610,13 @@ export { findOptionsObjects };
 
 /**
  * Renames `ConsentManagerProvider` and its option types to `ConsentProvider`,
- * turns `mode`/`backendURL`/`offlinePolicy` into `hosted({ backendURL })` or
- * `offline()` transports, and renames `iframeBlockerConfig` to
- * `iframeBlocker`. The transports come from the React entry, also for a
- * provider imported from the Next.js or TanStack Start entry, whose
- * `hosted()` is plain data for `defineConsentConfig`. A mode that is
- * already `manifest()`, `hosted()`, `offline()` or `custom()` is left alone.
- * Custom mode gets a `TODO(c15t v3)` comment.
+ * turns `mode`/`backendURL` into a `hosted({ backendURL })` transport, and
+ * renames `iframeBlockerConfig` to `iframeBlocker`. The transport comes from
+ * the React entry, also for a provider imported from the Next.js or TanStack
+ * Start entry, whose `hosted()` is plain data for `defineConsentConfig`. A
+ * mode that is already `manifest()`, `hosted()`, `offline()` or `custom()` is
+ * left alone. Offline and custom modes keep their v2 shape and get a
+ * `TODO(c15t v3)` comment, where upstream rewrites offline mode.
  *
  * @param options - Codemod execution options.
  * @returns Changed files and non-fatal per-file errors.
