@@ -402,6 +402,64 @@ export const isModuleHelperCall = function isModuleHelperCall(
   );
 };
 
+/** Whether a call is Node's `require(...)`, not a local function of that name. */
+export const isRequireCall = function isRequireCall(
+  call: Syntax.CallExpression
+): boolean {
+  const callee = call.getExpression();
+  return Node.isIdentifier(callee) && isNodeRequire(callee);
+};
+
+/**
+ * Whether a call's first argument names a module: `import()`, `require()`,
+ * and the helpers {@link isModuleHelperCall} matches.
+ */
+export const takesModuleSpecifier = function takesModuleSpecifier(
+  call: Syntax.CallExpression
+): boolean {
+  return (
+    call.getExpression().getKind() === SyntaxKind.ImportKeyword ||
+    isRequireCall(call) ||
+    isModuleHelperCall(call)
+  );
+};
+
+/**
+ * Whether a string literal names a module: in an import, a re-export,
+ * `import x = require()`, the first argument of a call
+ * {@link takesModuleSpecifier} matches, or an import type, JSDoc ones too.
+ */
+export const isModuleSpecifier = function isModuleSpecifier(
+  literal: Syntax.StringLiteral
+): boolean {
+  const parent = literal.getParent();
+  if (Node.isImportDeclaration(parent) || Node.isExportDeclaration(parent)) {
+    return parent.getModuleSpecifier() === literal;
+  }
+  if (Node.isExternalModuleReference(parent)) {
+    return true;
+  }
+  if (Node.isCallExpression(parent)) {
+    return parent.getArguments()[0] === literal && takesModuleSpecifier(parent);
+  }
+  return (
+    Node.isLiteralTypeNode(parent) && Node.isImportTypeNode(parent.getParent())
+  );
+};
+
+/**
+ * The string literals in a file that name a module, in every form
+ * {@link isModuleSpecifier} accepts. A template literal or computed argument
+ * is left out.
+ */
+export const moduleSpecifiersOf = function moduleSpecifiersOf(
+  sourceFile: Syntax.SourceFile
+): Syntax.StringLiteral[] {
+  return sourceFile
+    .getDescendantsOfKind(SyntaxKind.StringLiteral)
+    .filter((literal) => isModuleSpecifier(literal));
+};
+
 /**
  * An object property's key without quotes. A computed key counts when it is
  * a string, as in `['tailwindcss']: {}`; any other computed key is

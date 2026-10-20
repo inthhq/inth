@@ -185,6 +185,21 @@ const path = require.resolve('@c15t/scripts/meta-pixel');
     );
   });
 
+  it("rewrites TypeScript import equals declarations", async () => {
+    const source = `import posthog = require('@c15t/scripts/posthog');
+export = posthog;
+`;
+    const { filePath, projectRoot } = await fixture(source, "cts");
+    const result = await runScriptsToIntegrationsCodemod({
+      dryRun: false,
+      projectRoot,
+    });
+    expect(result.errors).toEqual([]);
+    expect(await readFile(filePath, "utf-8")).toBe(
+      source.replace("@c15t/scripts", "@c15t/integrations")
+    );
+  });
+
   it("leaves mocks on a local vi object alone", async () => {
     const source = `const vi = { mock: (_path: string) => undefined };
 vi.mock('@c15t/scripts/posthog');

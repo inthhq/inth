@@ -20,7 +20,8 @@ import {
   applyEdits,
   elementRemovals,
   isModuleHelperCall,
-  isNodeRequire,
+  isModuleSpecifier,
+  isRequireCall,
   propertyKey,
   TODO_MARKER,
   UNCHANGED,
@@ -253,25 +254,6 @@ const isPostcssPluginKey = function isPostcssPluginKey(
   );
 };
 
-/** Whether a call is Node's `require(...)`, not a local function of that name. */
-const isRequireCall = function isRequireCall(
-  call: Syntax.CallExpression
-): boolean {
-  const callee = call.getExpression();
-  return Node.isIdentifier(callee) && isNodeRequire(callee);
-};
-
-/** Whether a call's first argument is a module specifier. */
-const takesModuleSpecifier = function takesModuleSpecifier(
-  call: Syntax.CallExpression
-): boolean {
-  return (
-    call.getExpression().getKind() === SyntaxKind.ImportKeyword ||
-    isRequireCall(call) ||
-    isModuleHelperCall(call)
-  );
-};
-
 /**
  * Where a mock of a stylesheet points: the path a kept import goes to, or
  * `undefined` when it already names it. A mock of a removed import moves
@@ -286,11 +268,9 @@ const stylesheetMockTarget = function stylesheetMockTarget(
 };
 
 /**
- * The string literals that name a module: imports, re-exports,
- * `import x = require()`, `import()` and `require()` calls, `vi.mock()` and
- * `jest.mock()` calls, import types (JSDoc ones too), and PostCSS plugin
- * keys, computed ones included. Any other template literal or computed
- * argument is left alone.
+ * The string literals that name a module, in every form
+ * `isModuleSpecifier` accepts, and PostCSS plugin keys, computed ones
+ * included.
  */
 const moduleSpecifiersOf = function moduleSpecifiersOf(
   sourceFile: Syntax.SourceFile
@@ -300,30 +280,11 @@ const moduleSpecifiersOf = function moduleSpecifiersOf(
     .filter((literal) => isPostcssPluginKey(literal, literal.getParent()));
   const strings = sourceFile
     .getDescendantsOfKind(SyntaxKind.StringLiteral)
-    .filter((literal) => {
-      const parent = literal.getParent();
-      if (isPostcssPluginKey(literal, parent)) {
-        return true;
-      }
-      if (
-        Node.isImportDeclaration(parent) ||
-        Node.isExportDeclaration(parent)
-      ) {
-        return parent.getModuleSpecifier() === literal;
-      }
-      if (Node.isExternalModuleReference(parent)) {
-        return true;
-      }
-      if (Node.isCallExpression(parent)) {
-        return (
-          parent.getArguments()[0] === literal && takesModuleSpecifier(parent)
-        );
-      }
-      return (
-        Node.isLiteralTypeNode(parent) &&
-        Node.isImportTypeNode(parent.getParent())
-      );
-    });
+    .filter(
+      (literal) =>
+        isPostcssPluginKey(literal, literal.getParent()) ||
+        isModuleSpecifier(literal)
+    );
   return [...strings, ...computedKeys];
 };
 

@@ -1,7 +1,6 @@
 import { runTransform } from "./runner.ts";
 import type { CodemodRunOptions, CodemodRunResult } from "./runner.ts";
-import { isModuleHelperCall, isNodeRequire } from "./source-edits.ts";
-import { Node, SyntaxKind } from "./syntax/index.ts";
+import { moduleSpecifiersOf } from "./source-edits.ts";
 import type { SourceFile, StringLiteral } from "./syntax/index.ts";
 
 const OLD_PACKAGE = "@c15t/scripts";
@@ -19,39 +18,8 @@ const transformSourceFile = (sourceFile: SourceFile) => {
     }
   };
 
-  for (const declaration of sourceFile.getImportDeclarations()) {
-    rename(declaration.getModuleSpecifier());
-  }
-  for (const declaration of sourceFile.getExportDeclarations()) {
-    const specifier = declaration.getModuleSpecifier();
-    if (specifier) {
-      rename(specifier);
-    }
-  }
-  for (const call of sourceFile.getDescendantsOfKind(
-    SyntaxKind.CallExpression
-  )) {
-    const expression = call.getExpression();
-    const isImport = expression.getKind() === SyntaxKind.ImportKeyword;
-    const isRequire =
-      Node.isIdentifier(expression) && isNodeRequire(expression);
-    const [argument] = call.getArguments();
-    if (
-      (isImport || isRequire || isModuleHelperCall(call)) &&
-      argument &&
-      Node.isStringLiteral(argument)
-    ) {
-      rename(argument);
-    }
-  }
-  for (const type of sourceFile.getDescendantsOfKind(SyntaxKind.ImportType)) {
-    const argument = type.getArgument();
-    if (Node.isLiteralTypeNode(argument)) {
-      const literal = argument.getLiteral();
-      if (Node.isStringLiteral(literal)) {
-        rename(literal);
-      }
-    }
+  for (const literal of moduleSpecifiersOf(sourceFile)) {
+    rename(literal);
   }
   return {
     changed: operations > 0,
