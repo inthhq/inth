@@ -168,7 +168,7 @@ await runWithCleanup(async () => {
   check(saved !== null, "Login did not persist credentials.");
   check(
     (http.calls[1] ?? "").includes(
-      "scope=openid+profile+email+offline_access+organizations.read+organizations.write+projects.read+projects.write+members.read+members.write+api-keys.read+api-keys.write+code-audit.read+code-audit.write+inbox.read+inbox.write+billing.read"
+      "scope=openid+profile+email+offline_access+organizations.read+organizations.write+projects.read+projects.write+members.read+members.write+api-keys.read+api-keys.write+code-audit.read+code-audit.write+inbox.read+inbox.write+vendors.write+billing.read"
     ),
     "Missing requested scopes."
   );

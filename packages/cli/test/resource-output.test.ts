@@ -11,6 +11,9 @@ import {
   billingBody,
   outputCases,
   projectsBody,
+  runtimeFindingBody,
+  vendorDetailBody,
+  vendorIgnoredBody,
 } from "./fixtures/resource-output.ts";
 
 const plain = { color: false, columns: 120 };
@@ -55,6 +58,78 @@ describe("human resource output", () => {
     expect(text).toMatch(/Credits\s+Unlimited/u);
     expect(text).not.toMatch(/Credits\s+0/u);
     expect(text).toMatch(/Auto top-up\s+Not configured/u);
+  });
+  it("says when a vendor decision closed no Inbox finding", () => {
+    const text = formatResource(
+      parseArguments([
+        "vendor",
+        "ignore",
+        "google-analytics",
+        "--project",
+        "prj_123",
+      ]),
+      vendorIgnoredBody,
+      plain
+    );
+    expect(text).toMatch(/Inbox finding\s+None/u);
+    expect(text).toMatch(/State\s+ignored/u);
+  });
+  it("says when the scan could not tell how a vendor loaded", () => {
+    const text = formatResource(
+      parseArguments([
+        "vendor",
+        "get",
+        "example-pixel",
+        "--project",
+        "prj_123",
+      ]),
+      vendorDetailBody,
+      plain
+    );
+    expect(text).toMatch(/Loaded by\s+Unknown/u);
+    expect(text).toMatch(/Category\s+Uncategorized/u);
+    expect(text).toMatch(/Inbox finding\s+None/u);
+  });
+  it("shows each way a runtime vendor loaded once", () => {
+    const text = formatResource(
+      parseArguments(["inbox", "get", "inbox_456"]),
+      runtimeFindingBody,
+      plain
+    );
+    expect(/Loaded by\s+(?<loader>.+)/u.exec(text)?.groups?.loader).toBe(
+      "Google Tag Manager (GTM-ABC123), https://cdn.example.com/loader.js"
+    );
+  });
+  it("keeps the script URL when Tag Manager loaded a vendor without a known container", () => {
+    const finding = JSON.parse(runtimeFindingBody);
+    finding.data.runtimeVendor.evidence = [
+      {
+        ...finding.data.runtimeVendor.evidence[0],
+        loadedBy: {
+          initiator: "script",
+          scriptUrl: "https://tags.example.com/gtm.js",
+          tagManagerContainerId: null,
+          viaGoogleTagManager: true,
+        },
+      },
+      {
+        ...finding.data.runtimeVendor.evidence[0],
+        loadedBy: {
+          initiator: "script",
+          scriptUrl: null,
+          tagManagerContainerId: null,
+          viaGoogleTagManager: true,
+        },
+      },
+    ];
+    const text = formatResource(
+      parseArguments(["inbox", "get", "inbox_456"]),
+      JSON.stringify(finding),
+      plain
+    );
+    expect(/Loaded by\s+(?<loader>.+)/u.exec(text)?.groups?.loader).toBe(
+      "https://tags.example.com/gtm.js, Google Tag Manager"
+    );
   });
   it("uses aligned tables when they fit and labelled rows at narrow widths", () => {
     const options = parseArguments(["project", "list"]);

@@ -108,19 +108,21 @@ Supply `--category <category>` and `--message <message>`, or use `--data` with t
 
 ## Resource commands
 
-Use `inth --help --json` to discover commands and options. `project`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `billing`, and `region` expose the public REST resources. The [command reference](README.md#public-resource-commands) lists each operation and its required inputs.
+Use `inth --help --json` to discover commands and options. `project`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `vendor`, `billing`, and `region` expose the public REST resources. The [command reference](README.md#public-resource-commands) lists each operation and its required inputs.
 
 Lists return a single page. Read `data.pagination.nextCursor` and pass it to `--cursor`, keeping the same organization and filters. `--limit` defaults to 50 and accepts 1 through 100. Login, switch, and link retrieve all membership pages before choosing an organization.
 
 Use `--organization` for organization-owned lists and creates. Commands targeting a resource ID resolve ownership on the server and do not accept it. Scan start and scan-request polling use `--repository` instead. Existing local selection files still use `organizationId`; API organization records now use `id`, `name`, and `slug`. `whoami --json` exposes capabilities at `data.data.scopes`.
 
-Writes accept explicit body options or `--data '<JSON object>'`. Raw requests support `--method GET|POST|PATCH|DELETE`; GET is the default and cannot carry `--data`. Resource writes execute immediately without prompts. Invitation sends, key rotation, report unlocks, and GitHub issue creation have the effects described in the command reference. Key creation and rotation return the plaintext key at `data.data.key` once. Keep it out of logs.
+Writes with body options accept explicit flags or `--data '<JSON object>'`. Raw requests support `--method GET|POST|PATCH|DELETE`; GET is the default and cannot carry `--data`. Resource writes execute immediately without prompts. Invitation sends, key rotation, report unlocks, and GitHub issue creation have the effects described in the command reference. Key creation and rotation return the plaintext key at `data.data.key` once. Keep it out of logs.
 
 For scan starts, supply a stable `--request-id` to make a manual retry idempotent. A `starting` response contains `data.data.preparationId` and `data.data.repositoryId`; pass them to `code-audit request <preparation-id> --repository <repository-id>`. Each call returns one state. Continue until `started` or `failed`, then use the returned scan ID to read progress or findings.
 
 For Inbox updates, read the item first and pass its `data.data.version` using `--item-version`. Do not retry a version conflict with the old version. Read again and decide whether the intended update still applies. An unresolved GitHub issue send may require server reconciliation before another attempt.
 
-New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`, `inbox.write`, and `billing.read` alongside the existing scopes. A person must run `inth login` again to grant these scopes to an older sign-in. API keys have fixed capabilities; they can read Inbox and billing but cannot use Code Audit or perform Inbox writes.
+To review a project's vendors, run `inth vendor list --project <project-id> --state active --json` and read each vendor's `id`. `inth vendor get <vendor-id> --project <project-id> --json` returns its `hosts`, `evidence[].loadedBy`, and `inboxItemId`. For a runtime finding, read `data.data.runtimeVendor` from `inth inbox get <id> --json` and pass its `vendorId` and `projectId` to `inth vendor approve <vendor-id> --project <project-id>` or `inth vendor ignore`. Either decision closes the finding, so do not also update it with `inbox update`. Vendor decisions need a person's sign-in and an admin or owner role; API keys are refused. An agent connection must include `vendors.write` in `--scopes`. If an existing agent connection lacks it, disconnect with `inth logout --auth agent --json` and sign in again so the person can approve it.
+
+New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`, `inbox.write`, `vendors.write`, and `billing.read` alongside the existing scopes. A person must run `inth login` again to grant these scopes to an older sign-in. API keys have fixed capabilities; they can read Inbox, vendors, and billing but cannot use Code Audit, perform Inbox writes, or approve or ignore vendors.
 
 ## Command discovery and MCP setup
 

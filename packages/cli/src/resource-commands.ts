@@ -11,6 +11,8 @@ export interface ResourceCommand {
   paginated: boolean;
   fields: string[];
   required: string[];
+  // Fixed JSON body. Commands with one have no body options or --data.
+  body?: string;
 }
 
 const command = (
@@ -21,9 +23,11 @@ const command = (
   scoped = false,
   paginated = false,
   fields: string[] = [],
-  required: string[] = []
+  required: string[] = [],
+  body?: string
 ): ResourceCommand => ({
   action,
+  body,
   command: group,
   fields,
   method,
@@ -174,6 +178,48 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
     ["status", "item-version"]
   ),
   command("inbox", "github-issue", "POST", "/v1/inbox/:id/github-issue"),
+  command(
+    "vendor",
+    "list",
+    "GET",
+    "/v1/projects/:project/vendors",
+    false,
+    true,
+    ["project", "state"],
+    ["project"]
+  ),
+  command(
+    "vendor",
+    "get",
+    "GET",
+    "/v1/projects/:project/vendors/:id",
+    false,
+    false,
+    ["project"],
+    ["project"]
+  ),
+  command(
+    "vendor",
+    "approve",
+    "POST",
+    "/v1/projects/:project/vendors/:id/decision",
+    false,
+    false,
+    ["project"],
+    ["project"],
+    '{"decision":"approve"}'
+  ),
+  command(
+    "vendor",
+    "ignore",
+    "POST",
+    "/v1/projects/:project/vendors/:id/decision",
+    false,
+    false,
+    ["project"],
+    ["project"],
+    '{"decision":"ignore"}'
+  ),
 ];
 
 export const optionValue = (
@@ -214,6 +260,20 @@ const fieldName = (name: string): string => {
   }
   return name;
 };
+
+// Whether --data can replace the body options.
+export const acceptsData = (spec: ResourceCommand): boolean =>
+  spec.method !== "GET" &&
+  spec.fields.length > 0 &&
+  spec.body === undefined &&
+  spec.command !== "org";
+
+// Options that fill a path segment, such as --project in /v1/projects/:project.
+const pathFields = (spec: ResourceCommand): string[] =>
+  spec.fields.filter(
+    (name) =>
+      spec.path.includes(`/:${name}/`) || spec.path.endsWith(`/:${name}`)
+  );
 
 const fieldJson = (name: string, value: string): string => {
   if (name === "trusted-origins") {
@@ -259,6 +319,12 @@ const validateResourceId = (
   if (options.id === "." || options.id === "..") {
     throw new CliError("usage_error", "Use a resource ID.");
   }
+  for (const name of pathFields(spec)) {
+    const value = optionValue(options, name);
+    if (value === "." || value === "..") {
+      throw new CliError("usage_error", `--${name} must be a resource ID.`);
+    }
+  }
   if (options.organization !== undefined && !spec.scoped) {
     throw new CliError(
       "usage_error",
@@ -277,17 +343,18 @@ const validateResourceOptions = (
     const allowed =
       spec.fields.includes(entry.name) ||
       (spec.paginated && ["limit", "cursor"].includes(entry.name)) ||
-      (entry.name === "data" &&
-        spec.method !== "GET" &&
-        spec.fields.length > 0 &&
-        spec.command !== "org");
+      (entry.name === "data" && acceptsData(spec));
     if (!allowed) {
       throw new CliError(
         "usage_error",
         `--${entry.name} is not available with ${spec.command} ${spec.action}.`
       );
     }
-    if (data !== undefined && spec.fields.includes(entry.name)) {
+    if (
+      data !== undefined &&
+      spec.fields.includes(entry.name) &&
+      !pathFields(spec).includes(entry.name)
+    ) {
       throw new CliError(
         "usage_error",
         "Use --data or individual body options, not both."
@@ -326,6 +393,9 @@ const resourceQuery = (
   }
   if (spec.method === "GET") {
     for (const name of spec.fields) {
+      if (pathFields(spec).includes(name)) {
+        continue;
+      }
       const value = optionValue(options, name);
       if (value !== undefined) {
         query.set(fieldName(name), value);
@@ -340,6 +410,9 @@ const resourceBody = (
 ): string | undefined => {
   if (spec.method === "GET") {
     return undefined;
+  }
+  if (spec.body !== undefined) {
+    return spec.body;
   }
   const data = optionValue(options, "data");
   if (data !== undefined) {
@@ -381,12 +454,16 @@ export const buildResourceRequest = (
   validateResourceId(options, spec);
   validateResourceOptions(options, spec);
   const suffix = resourceQuery(options, spec);
+  let path = spec.path.split(":id").join(encodeURIComponent(options.id));
+  for (const name of pathFields(spec)) {
+    path = path
+      .split(`:${name}`)
+      .join(encodeURIComponent(optionValue(options, name) ?? ""));
+  }
   return {
     body: resourceBody(options, spec),
     method: spec.method,
-    path:
-      spec.path.split(":id").join(encodeURIComponent(options.id)) +
-      (suffix ? `?${suffix}` : ""),
+    path: path + (suffix ? `?${suffix}` : ""),
     scoped: spec.scoped,
   };
 };

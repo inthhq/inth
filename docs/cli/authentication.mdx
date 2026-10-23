@@ -34,6 +34,8 @@ inth login --email user@example.com --scopes organizations.read,organizations.wr
 inth login --complete --wait --json
 ```
 
+Request only the scopes the task needs. To approve or ignore vendors, add `vendors.write`; an existing agent connection without it must disconnect with `inth logout --auth agent` and sign in again.
+
 Give the person the returned approval URL and code. Immediately run the completion command in a background terminal so it can finish after approval. `signup --email` uses the same flow for account creation. General API access through this connection requires the scoped auth.md backend deployment; older servers only support `inth auth organizations`.
 
 Successful approval selects the agent connection for subsequent commands. Use `--auth browser` or `--auth agent` to override the saved selection. See [Agents and scripts](./automation) for timeouts, retries, and the output contract.
@@ -47,7 +49,7 @@ inth whoami --json
 inth project list --organization org_123 --json
 ```
 
-API keys can manage projects and read organizations, API keys, Inbox, and billing. They cannot create organizations, manage members or API keys, run Code Audit, or update Inbox findings. Use a browser session or an approved agent connection with the required scopes for those operations.
+API keys can manage projects and read organizations, API keys, Inbox, and billing. They cannot create organizations, manage members or API keys, run Code Audit, update Inbox findings, or approve or ignore vendors. Use a browser session or an approved agent connection with the required scopes for those operations.
 
 `login` with an API key skips browser login but does not validate the key. Use `whoami` to check access. An explicit agent selection combined with an API key is rejected.
 

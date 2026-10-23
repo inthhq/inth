@@ -290,6 +290,8 @@ Client mappings are adapted from the pinned [add-mcp source](vendor/add-mcp/UPST
 | `inbox list`, `inbox get <id>` | Read findings, optionally filtering the list with `--status` |
 | `inbox update <id> --status <status> --item-version <version>` | Change a finding's status |
 | `inbox github-issue <id>` | Create a GitHub issue for a finding |
+| `vendor list --project <project-id> [--state <state>]`, `vendor get <vendor-id> --project <project-id>` | List vendors seen on a project, or read one with its hosts and what loaded it |
+| `vendor approve <vendor-id> --project <project-id>`, `vendor ignore <vendor-id> --project <project-id>` | Approve or ignore a vendor seen on a project |
 
 List commands return one page. `--limit` defaults to 50 and accepts 1 through 100. Pass the returned cursor unchanged to `--cursor` for the next page.
 
@@ -322,6 +324,24 @@ inth inbox update inbox_123 --status resolved --item-version 3
 A scan start can return `starting` with a `preparationId` and `repositoryId`. Check those IDs with `code-audit request` until the state is `started` or `failed`. Each invocation checks once. Reuse the same `--request-id` when retrying a start.
 
 Inbox updates require the version from the latest read. Supported statuses are `open`, `accepted`, `dismissed`, and `resolved`. After a version conflict, read the item again before updating it.
+
+### Vendor decisions
+
+`inth vendor list --project <project-id>` lists the vendors scans saw on a project, with their category, state, and vendor ID. Add `--state active` to see only vendors nobody has decided on yet. `inth vendor get <vendor-id> --project <project-id>` shows one vendor's hosts, when it was last seen, how it loaded, such as a script URL or a Google Tag Manager container, and its open Inbox finding.
+
+Runtime findings also name the vendor. `inth inbox get <id>` shows its name, vendor ID, and project ID. Pass those IDs to `vendor approve` or `vendor ignore`.
+
+```sh
+inth inbox get inbox_456
+inth vendor list --project prj_123 --state active
+inth vendor get google-analytics --project prj_123
+inth vendor approve google-analytics --project prj_123
+inth vendor ignore google-analytics --project prj_123
+```
+
+Approving a vendor accepts its data sharing and resolves its runtime Inbox finding. Ignoring it dismisses the finding. Later scans keep the decision, and repeating a decision changes nothing. The output shows the vendor's new state and the Inbox finding the decision closed, or `None` when the vendor had no finding. With `--json`, read `data.data.state` and `data.data.inboxItemId`.
+
+Listing and reading vendors needs `projects.read`, which API keys have. Vendor decisions need a person's sign-in with the `vendors.write` scope and an admin or owner role in the project's organization. Organization API keys cannot hold `vendors.write`. Sign-ins from earlier CLI versions lack the scope; run `inth login` again.
 
 Writes run without confirmation prompts. Invitations send email, key rotation replaces the old key, report unlocks spend credits and require an owner, and `inbox github-issue` creates a GitHub issue. Key creation and rotation print the new secret once; save it before closing the terminal. An unresolved GitHub issue send can return 409 and require server reconciliation before another attempt.
 

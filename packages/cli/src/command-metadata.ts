@@ -3,7 +3,7 @@ import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
-import { RESOURCE_COMMANDS } from "./resource-commands.ts";
+import { RESOURCE_COMMANDS, acceptsData } from "./resource-commands.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
 
 export interface OptionMetadata {
@@ -93,6 +93,7 @@ export const OPTION_METADATA: OptionMetadata[] = [
     "Opaque pagination.nextCursor from the previous page"
   ),
   option("region", "string", "Project region ID from inth region list"),
+  option("project", "string", "Project ID"),
   option("description", "string", "Project description"),
   option("branding", "string", "Consent branding", ["inth", "c15t", "none"]),
   option(
@@ -104,6 +105,13 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option("role", "string", "Organization role", ["owner", "admin", "member"]),
   option("repository", "string", "Repository ID"),
   option("status", "string", "Filter or update the resource status"),
+  option("state", "string", "Vendor state", [
+    "active",
+    "not_seen_recently",
+    "ignored",
+    "approved",
+    "blocked",
+  ]),
   option("request-id", "string", "Idempotency key for scan start retries"),
   option("category", "string", "Feedback category", FEEDBACK_CATEGORIES),
   option(
@@ -215,6 +223,10 @@ const descriptions = [
   ["inbox get", "Read a finding"],
   ["inbox update", "Change a finding's status"],
   ["inbox github-issue", "Create a GitHub issue for a finding"],
+  ["vendor list", "List vendors seen on a project"],
+  ["vendor get", "Read a vendor, where it was seen, and how it loaded"],
+  ["vendor approve", "Approve a vendor seen on a project"],
+  ["vendor ignore", "Ignore a vendor seen on a project"],
 ];
 const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.command === "feedback") {
@@ -240,6 +252,15 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.action === "github-issue") {
     effects.push("Creates an issue on GitHub.");
   }
+  if (spec.command === "vendor" && spec.method !== "GET") {
+    effects.push(
+      spec.action === "approve"
+        ? "Accepts the vendor's data sharing on the project."
+        : "Ignores the vendor on the project.",
+      "Closes the vendor's runtime Inbox finding, if one exists. Later scans keep the decision. Repeating a decision changes nothing.",
+      "Take the vendor ID from inth vendor list, or both IDs from runtimeVendor in inth inbox get. Requires an admin or owner role."
+    );
+  }
   return effects;
 };
 const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
@@ -252,7 +273,7 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   if (spec.paginated) {
     names.push("limit", "cursor");
   }
-  if (write && spec.fields.length && spec.command !== "org") {
+  if (acceptsData(spec)) {
     names.push("data");
   }
   let family = spec.command;
@@ -268,13 +289,18 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   if (family === "api-key") {
     family = "api-keys";
   }
+  // Vendors are read with the project; decisions have their own scope.
+  if (family === "vendor") {
+    family = write ? "vendors" : "projects";
+  }
   const scopes = ["region", "feedback"].includes(spec.command)
     ? []
     : [`${family}.${write ? "write" : "read"}`];
   const keyAllowed =
     ["feedback", "region"].includes(spec.command) ||
     spec.command === "project" ||
-    (!write && ["org", "api-key", "inbox", "billing"].includes(spec.command));
+    (!write &&
+      ["org", "api-key", "inbox", "billing", "vendor"].includes(spec.command));
   const usage = `inth ${key}${spec.path.includes(":id") ? " <id>" : ""}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;
   const effects = resourceEffects(spec);
   return {

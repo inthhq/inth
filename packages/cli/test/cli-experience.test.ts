@@ -102,6 +102,35 @@ describe("human help and machine discovery", () => {
       expect.objectContaining({ name: "organization" })
     );
   });
+  it.each(["approve", "ignore"])(
+    "describes vendor %s as a person-only write with a required project",
+    (action) => {
+      const vendors = COMMAND_METADATA.find(
+        (entry) => entry.command === "vendor" && entry.action === action
+      );
+      expect(vendors?.scopes).toEqual(["vendors.write"]);
+      expect(vendors?.authentication).toBe("browser-or-agent");
+      expect(vendors?.options).toContainEqual(
+        expect.objectContaining({ name: "project", required: true })
+      );
+      const names = vendors?.options.map((entry) => entry.name);
+      expect(names).not.toContain("data");
+      expect(names).not.toContain("organization");
+    }
+  );
+  it.each(["list", "get"])(
+    "reads vendor %s with the project scope and a required project",
+    (action) => {
+      const vendors = COMMAND_METADATA.find(
+        (entry) => entry.command === "vendor" && entry.action === action
+      );
+      expect(vendors?.scopes).toEqual(["projects.read"]);
+      expect(vendors?.authentication).toBe("browser-or-agent-or-api-key");
+      expect(vendors?.options).toContainEqual(
+        expect.objectContaining({ name: "project", required: true })
+      );
+    }
+  );
   it("advertises API-key authentication only for supported resource capabilities", () => {
     for (const spec of RESOURCE_COMMANDS) {
       const metadata = COMMAND_METADATA.find(
