@@ -98,7 +98,9 @@ describe.each([
 			tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
 		});
 		await flushPromises();
-		expect(roleNodes(tree.container(), 'dialog')).toHaveLength(0);
+		expect(tree.container().querySelectorAll('[role="dialog"]')).toHaveLength(
+			0
+		);
 		tree.unmount();
 	});
 
@@ -190,7 +192,9 @@ describe.each([
 			flush(() => {
 				tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
 			});
-			expect(roleNodes(tree.container(), 'dialog')).toHaveLength(0);
+			expect(tree.container().querySelectorAll('[role="dialog"]')).toHaveLength(
+				0
+			);
 			tree.unmount();
 		}
 	);

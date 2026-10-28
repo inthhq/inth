@@ -52,7 +52,10 @@ export interface ConsentDialogProps {
 	readonly hideBranding?: boolean;
 	/** Entry point to the app's own preference centre, rendered when supplied. */
 	readonly onOpenPreferences?: () => void;
-	/** Called when the subject closes the dialog without saving. */
+	/**
+	 * Request closing after dismissal or a successful local save.
+	 * Keep this callback idempotent: a pending save may finish after dismissal.
+	 */
 	readonly onRequestClose: () => void;
 	/** Whether the dialog is open. */
 	readonly open: boolean;
@@ -79,7 +82,7 @@ interface ConsentDialogContentProps {
 	readonly copy: ConsentCopy;
 	/** Entry point to the app's own preference centre. */
 	readonly onOpenPreferences?: () => void;
-	/** Called when the subject closes the dialog without saving. */
+	/** Request closing after dismissal or a successful local save. */
 	readonly onRequestClose: () => void;
 }
 

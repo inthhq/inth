@@ -29,6 +29,8 @@ center. If no new opening has started, a successful action still tells the host
 to close after the content has finished hiding. Unmounting the surface cancels
 its ability to reset or close a replacement surface. Native code still handles
 commits pending across different presentations.
+Keep host close handlers idempotent. If a user dismisses during a pending save,
+its later success can request closing again when no newer presentation started.
 Retry messages use one explicit accessibility announcement path on iOS and Android. VoiceOver
 and TalkBack behavior still requires device validation.
 

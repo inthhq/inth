@@ -48,7 +48,10 @@ export interface ConsentPreferencesProps {
 	 * removing it is the only reason to.
 	 */
 	readonly hideBranding?: boolean;
-	/** Called when the subject closes the centre, saved or not. */
+	/**
+	 * Request closing after dismissal or a successful local save.
+	 * Keep this callback idempotent: a pending save may finish after dismissal.
+	 */
 	readonly onRequestClose: () => void;
 	/** Whether the centre is open. */
 	readonly open: boolean;
