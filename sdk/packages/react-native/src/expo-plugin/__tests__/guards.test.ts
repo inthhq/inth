@@ -76,6 +76,29 @@ afterAll(() => {
 });
 
 describe('Expo Go', () => {
+	it.each(['init', 'project:init', 'build', 'run:ios'])(
+		'refuses Expo Go when the project directory is named %s',
+		(directory) => {
+			expect(() =>
+				applyParamsOnConfig(fixtureConfig(), PROPS, {
+					argv: ['node', 'expo', 'start', directory, '--go'],
+					env: {},
+					projectRoot: emptyProjectRoot,
+				})
+			).toThrowError(/needs a custom native build[\s\S]*Expo Go/u);
+		}
+	);
+
+	it('accepts an explicit development client after the project directory', () => {
+		expect(() =>
+			applyParamsOnConfig(fixtureConfig(), PROPS, {
+				argv: ['node', 'expo', 'start', 'app', '--dev-client'],
+				env: {},
+				projectRoot: emptyProjectRoot,
+			})
+		).not.toThrowError();
+	});
+
 	it('refuses a project whose only launch target is Expo Go', () => {
 		expect(() =>
 			applyParamsOnConfig(fixtureConfig(), PROPS, {

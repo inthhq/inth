@@ -43,14 +43,12 @@ const NATIVE_COMMAND_TOKENS = new Set([
 const isNativeBuildInvocation = function isNativeBuildInvocation(
 	argv: readonly string[]
 ): boolean {
-	return argv.some((token) => {
-		const value = token.trim();
-		return (
-			NATIVE_COMMAND_TOKENS.has(value) ||
-			value.startsWith('run:') ||
-			value.startsWith('--dev-client')
-		);
-	});
+	const command = argv[2]?.trim();
+	return (
+		(command !== undefined &&
+			(NATIVE_COMMAND_TOKENS.has(command) || command.startsWith('run:'))) ||
+		argv.some((token) => token.trim().startsWith('--dev-client'))
+	);
 };
 
 const isEasBuild = function isEasBuild(
