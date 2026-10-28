@@ -14,11 +14,15 @@ final class C15tAppleAttachmentTests: XCTestCase {
     func testInfoPlistLoopbackHTTPInstallsBeforeJavaScript() {
         C15tApple.shutdown()
         C15t.resetForTests()
-        XCTAssertTrue(C15tReactNativeBootstrap.start(infoPlist: [
+        let infoPlist: [String: Any] = [
             "com.c15t.backend.mode": "self-hosted",
             "com.c15t.backend.url": "http://localhost:8787",
-            "com.c15t.storage.mode": "memory"
-        ]))
+            C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory"
+        ]
+        let configuration = C15tBridgeConfiguration.from(infoPlist: infoPlist)
+        XCTAssertEqual(configuration.storageMode, .memory)
+        guard configuration.storageMode == .memory else { return }
+        XCTAssertTrue(C15tReactNativeBootstrap.start(infoPlist: infoPlist))
         XCTAssertTrue(C15t.current?.isBootstrapped == true)
         XCTAssertFalse(C15t.isAllowed(.marketing))
     }
@@ -29,8 +33,10 @@ final class C15tAppleAttachmentTests: XCTestCase {
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
             "com.c15t.backend.mode": "hosted",
             "com.c15t.backend.url": "http://invalid.example",
-            "com.c15t.storage.mode": "memory"
+            C15tBridgeConfiguration.InfoPlistKey.storageMode: "memory"
         ])
+        XCTAssertEqual(configuration.storageMode, .memory)
+        guard configuration.storageMode == .memory else { return }
         let pipe = Pipe()
         let original = dup(STDERR_FILENO)
         XCTAssertGreaterThanOrEqual(original, 0)
