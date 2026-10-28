@@ -10,6 +10,12 @@ final class ConsentExampleAppDelegate: UIResponder, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(retryOnActivation(_:)),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
         do {
             try InstallConsent.install()
         } catch {
@@ -23,8 +29,12 @@ final class ConsentExampleAppDelegate: UIResponder, UIApplicationDelegate {
         retryInstallation()
     }
 
-    func applicationDidBecomeActive(_ application: UIApplication) {
+    @objc private func retryOnActivation(_: Notification) {
         retryInstallation()
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     private func retryInstallation() {

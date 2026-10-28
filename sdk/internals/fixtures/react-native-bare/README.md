@@ -306,14 +306,11 @@ Run them from this directory, or from the root with `bun run --cwd internals/fix
 | `bun run check-types` | `tsc --noEmit` |
 | `bun run lint` / `bun run fmt` | Oxlint and Oxfmt, from the repo presets |
 
-Both native cores are built from this repository rather than resolved from a package
-registry, and both need one line of wiring an app outside the monorepo would not carry.
-Neither is c15t behaviour; both are marked in the file.
+The native build setup is maintained in each platform directory.
 
-- iOS: the first run needs `bun run pod-install`. The Podfile adds `pod 'C15tCore',
-  :path => '../../../../native/core-swift'` and sets the deployment target to 16.4, which is
-  the core's floor and above RN's. `@c15t/react-native`'s own pod is autolinked. Build
-  against the published pod with `C15T_LOCAL_PODS=false`.
+- iOS: the first run needs `bun run pod-install`. The autolinked `C15tReactNative`
+  pod compiles its generated Swift core and Apple services. Do not add a separate
+  `C15tCore` pod. The deployment target is 16.4.
 - Android: `android/settings.gradle` includes `../../../../native/core-android` and
   substitutes `com.c15t:c15t-core` and `com.c15t:c15t-android` into that build, because
   the autolinked library depends on those coordinates and a host app's settings script

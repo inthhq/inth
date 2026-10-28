@@ -60,7 +60,7 @@ also fail explicitly.
 
 The SwiftUI example retries on protected-data availability and activation. The
 UIKit delegate retries in `applicationProtectedDataDidBecomeAvailable` and
-`applicationDidBecomeActive`. A retry clears the recorded storage error only
+observes `UIApplication.didBecomeActiveNotification`, which also covers scene-based apps. A retry clears the recorded storage error only
 after installation succeeds. Reevaluate native gates before starting optional
 SDKs after recovery. These are compiled examples, not proof of an OS unlock flow.
 
