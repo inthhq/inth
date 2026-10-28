@@ -6,7 +6,7 @@
  * subject's edits until save, and the payload is exactly the visible rows.
  */
 
-import { StrictMode, useState } from 'react';
+import { StrictMode, Suspense, useState } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { flush, flushPromises } from '../../__tests__/helpers/fake-native';
@@ -47,6 +47,109 @@ describe.each([
 	['dialog', ConsentDialog],
 	['preferences', ConsentPreferences],
 ])('%s commit outcomes', (_name, Surface) => {
+	test('a successful save still closes its presentation while Suspense hides it', async () => {
+		let resolveReply!: (result: string) => void;
+		const reply = new Promise<string>((resolve) => {
+			resolveReply = resolve;
+		});
+		const hidden = new Promise<void>(() => {});
+		const onRequestClose = vi.fn();
+		const Content = ({ open, close }: { open: boolean; close: () => void }) => {
+			const { ready } = useConsentStatus();
+			if (!ready) {
+				throw hidden;
+			}
+			return (
+				<Surface
+					open={open}
+					onRequestClose={close}
+				/>
+			);
+		};
+		const Host = () => {
+			const [open, setOpen] = useState(true);
+			return (
+				<Suspense fallback={<span>Loading consent</span>}>
+					<Content
+						close={() => {
+							onRequestClose();
+							setOpen(false);
+						}}
+						open={open}
+					/>
+				</Suspense>
+			);
+		};
+		const tree = mountSurface(
+			<StrictMode>
+				<Host />
+			</StrictMode>
+		);
+		vi.spyOn(tree.fake, 'commit').mockImplementationOnce(() => reply);
+		tap(requireRole(tree.container(), 'button', 'Speichern'));
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ ready: false, revision: 2 }));
+		});
+		expect(tree.text()).toContain('Loading consent');
+		resolveReply(JSON.stringify({ ok: true, queued: true }));
+		await flushPromises();
+		expect(onRequestClose).toHaveBeenCalledTimes(1);
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+		});
+		await flushPromises();
+		expect(roleNodes(tree.container(), 'dialog')).toHaveLength(0);
+		tree.unmount();
+	});
+
+	test.each(['Speichern', 'Alle akzeptieren', 'Alle ablehnen'])(
+		'%s completion cannot close a replacement surface after unmount',
+		async (action) => {
+			let resolveReply!: (result: string) => void;
+			const reply = new Promise<string>((resolve) => {
+				resolveReply = resolve;
+			});
+			const onRequestClose = vi.fn();
+			const Host = () => {
+				const [open, setOpen] = useState(true);
+				const { ready } = useConsentStatus();
+				return ready ? (
+					<Surface
+						onRequestClose={() => {
+							onRequestClose();
+							setOpen(false);
+						}}
+						open={open}
+					/>
+				) : null;
+			};
+			const tree = mountSurface(
+				<StrictMode>
+					<Host />
+				</StrictMode>
+			);
+			vi.spyOn(tree.fake, 'commit').mockImplementationOnce(() => reply);
+			tap(requireRole(tree.container(), 'button', action));
+			flush(() => {
+				tree.fake.pushSnapshot(
+					translatedSnapshot({ ready: false, revision: 2 })
+				);
+			});
+			flush(() => {
+				tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+			});
+			tap(requireRole(tree.container(), 'switch', 'Werbung'));
+			resolveReply(JSON.stringify({ ok: true, queued: true }));
+			await flushPromises();
+			expect(onRequestClose).not.toHaveBeenCalled();
+			expect(checked(tree, 'Werbung')).toBe('true');
+			tap(requireRole(tree.container(), 'button', 'Speichern'));
+			await flushPromises();
+			expect(onRequestClose).toHaveBeenCalledTimes(1);
+			tree.unmount();
+		}
+	);
+
 	test.each(['Speichern', 'Alle akzeptieren', 'Alle ablehnen'])(
 		'%s still closes after a settled hide if no newer presentation started',
 		async (action) => {

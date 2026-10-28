@@ -4,7 +4,7 @@
  *
  * The banner is an absolutely positioned layer over the app, never a row in its
  * layout, so the moment a policy resolves a prompt nothing on screen moves. It
- * reads the four lifecycle fields and the copy, and nothing else, so a grant
+ * reads lifecycle, prompt identity and copy, so a grant
  * made elsewhere in the app does not rerender it.
  */
 
@@ -16,6 +16,7 @@ import { useConsentActions } from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import { useConsentStatus } from '../hooks/use-consent-status';
 import { isStatusPromptOwed } from '../lib/selectors';
+import type { ConsentSnapshot } from '../protocol';
 import { ConsentDialog } from './consent-dialog';
 import { ConsentBrandingTag } from './internal/branding-tag';
 import {
@@ -64,6 +65,19 @@ interface ConsentBannerActionsProps {
 	readonly customize: () => void;
 	readonly notice: boolean;
 }
+
+const selectBannerPromptKey = (snapshot: ConsentSnapshot): string =>
+	JSON.stringify([
+		snapshot.promptRequirement.kind,
+		snapshot.promptRequirement.kind === 'none'
+			? null
+			: snapshot.promptRequirement.reason,
+		snapshot.resolution.policyId,
+		snapshot.resolution.fingerprint,
+		snapshot.subject?.subjectId,
+		snapshot.subject?.externalId,
+		snapshot.subject?.identityProvider,
+	]);
 
 const ConsentBannerActions = ({
 	copy,
@@ -196,6 +210,7 @@ export const ConsentBanner = ({
 	theme,
 }: ConsentBannerProps): ReactNode => {
 	const status = useConsentStatus();
+	const promptKey = useConsentSelector(selectBannerPromptKey);
 	const copy = useConsentSelector(selectConsentCopy, isConsentCopyEqual);
 	// The banner's own type roles: its heading is larger than the copy under it,
 	// which is the opposite of the sheet this component can open.
@@ -254,6 +269,7 @@ export const ConsentBanner = ({
 					<ConsentBannerActions
 						copy={copy}
 						customize={customize}
+						key={promptKey}
 						notice={notice}
 					/>
 				</ConsentSurfaceFooter>

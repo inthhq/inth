@@ -14,6 +14,7 @@ import {
 	uiState,
 } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
+import type { ConsentSnapshot } from '../../protocol';
 import { ConsentBanner } from '../consent-banner';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
 import { lightTheme } from '../theme/create-consent-theme';
@@ -185,6 +186,64 @@ describe('ConsentBanner', () => {
 
 		expect(tree.text()).toContain('Deine Privatsphaere');
 		expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+		tree.unmount();
+	});
+
+	test.each<[string, Partial<ConsentSnapshot>]>([
+		['notice', { promptRequirement: { kind: 'notice', reason: 'missing' } }],
+		[
+			'new reason',
+			{ promptRequirement: { kind: 'choice', reason: 'expired' } },
+		],
+		[
+			'new policy',
+			{
+				resolution: {
+					fingerprint: 'new-policy',
+					policyId: 'p2',
+					status: 'matched',
+				},
+			},
+		],
+		['new subject', { subject: { subjectId: 'sub-2' } }],
+	])(
+		'clears a refusal when the visible prompt changes to %s',
+		async (_name, change) => {
+			const tree = mountSurface(<ConsentBanner />);
+			tree.fake.failCommitWith(JSON.stringify({ ok: false, queued: false }));
+			tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+			await flushPromises();
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(1);
+			flush(() => {
+				tree.fake.pushSnapshot(translatedSnapshot({ ...change, revision: 2 }));
+			});
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+			requireRole(tree.container(), 'button', 'Auswahlen');
+			tree.unmount();
+		}
+	);
+
+	test('ignores an earlier choice refusal after a notice replaces it', async () => {
+		let resolveReply!: (result: string) => void;
+		const reply = new Promise<string>((resolve) => {
+			resolveReply = resolve;
+		});
+		const tree = mountSurface(<ConsentBanner />);
+		vi.spyOn(tree.fake, 'commit').mockImplementationOnce(() => reply);
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		flush(() => {
+			tree.fake.pushSnapshot(
+				translatedSnapshot({
+					promptRequirement: { kind: 'notice', reason: 'missing' },
+					revision: 2,
+				})
+			);
+		});
+		resolveReply(JSON.stringify({ ok: false, queued: false }));
+		await flushPromises();
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+		tap(requireRole(tree.container(), 'button', 'Verstanden'));
+		expect(tree.fake.dismissCalls).toBe(1);
 		tree.unmount();
 	});
 

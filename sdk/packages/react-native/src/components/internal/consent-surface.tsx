@@ -23,6 +23,7 @@
 import {
 	createContext,
 	useContext,
+	useEffect,
 	useLayoutEffect,
 	useMemo,
 	useRef,
@@ -378,6 +379,14 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		reducedMotion,
 	});
 	const currentPresentation = useRef(contentKey);
+	const mounted = useRef(true);
+	// Passive cleanup preserves completions while Suspense hides this surface.
+	useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
 	useLayoutEffect(() => {
 		currentPresentation.current = contentKey;
 	}, [contentKey]);
@@ -396,7 +405,8 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 	// value and rerender content that reads the frame.
 	const frame = useMemo(
 		() => ({
-			isCurrentPresentation: () => currentPresentation.current === contentKey,
+			isCurrentPresentation: () =>
+				mounted.current && currentPresentation.current === contentKey,
 			maxBodyHeight,
 			parts,
 			presentation,

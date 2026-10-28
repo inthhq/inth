@@ -20,12 +20,14 @@ The existing React Native dialog and preference center close and reset their
 drafts only for `ok: true`. A refused action or rejected bridge call leaves them
 open with the draft intact and shows an accessible retry message. The banner
 also reports failures and leaves the choice available. The error clears when the
-user retries. Each new presentation starts with fresh error and draft state,
-even when it interrupts an exit animation. Action buttons prevent another commit
+user retries. A different banner prompt kind, reason, policy or subject starts
+with fresh action state. Each new presentation starts with fresh error and draft
+state, even when it interrupts an exit animation. Action buttons prevent another commit
 within that presentation while its current action is pending. A success from an
 earlier presentation cannot reset or close a newly opened dialog or preference
 center. If no new opening has started, a successful action still tells the host
-to close after the content has finished hiding. Native code still handles
+to close after the content has finished hiding. Unmounting the surface cancels
+its ability to reset or close a replacement surface. Native code still handles
 commits pending across different presentations.
 Retry messages use one explicit accessibility announcement path on iOS and Android. VoiceOver
 and TalkBack behavior still requires device validation.
