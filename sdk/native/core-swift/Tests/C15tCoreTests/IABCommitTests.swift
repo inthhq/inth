@@ -87,6 +87,22 @@ final class IABCommitTests: XCTestCase {
         }
     }
 
+    func testConfiguredConsentLanguageIsEncodedInCommittedString() async throws {
+        let vector = try fixture()
+        for language in ["DE", "FR"] {
+            var configuration = vector.cases[0].configuration
+            configuration.consentLanguage = language
+            let core = try await boot(vector, configuration: configuration, store: InMemoryStore())
+            XCTAssertEqual(core.save(.all).status, .committed)
+            let committed = try XCTUnwrap(core.iabConsent())
+            guard case .decoded(let decoded) = TcStringWireReader.read(committed.tcString) else {
+                return XCTFail("Committed TC string must decode")
+            }
+            XCTAssertEqual(decoded.consentLanguage, language)
+            XCTAssertEqual(committed.configuration.consentLanguage, language)
+        }
+    }
+
     func testRealFileRestartHydratesChoicesAndReplaysIdenticalBytes() async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
