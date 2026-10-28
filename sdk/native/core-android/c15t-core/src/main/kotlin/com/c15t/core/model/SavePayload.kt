@@ -1,5 +1,7 @@
 package com.c15t.core.model
 
+import kotlinx.serialization.json.*
+
 import kotlinx.serialization.Serializable
 
 /**
@@ -61,8 +63,18 @@ data class QueuedSave(
 
 /** A complete denial owes delivery even after current consent authority expires. */
 internal fun QueuedSave.isWithdrawal(): Boolean {
+	if (body == null && payload.tcString == null && payload.model != ConsentModel.IAB) return false
 	if (ConsentCategory.OPTIONAL.any { payload.consents[it] }) return false
-	val encoded = payload.tcString ?: return payload.consentAction == ConsentAction.NECESSARY
+	if (body != null) {
+		val wire = runCatching { Json.parseToJsonElement(body).jsonObject }.getOrNull() ?: return false
+		if (wire["subjectId"]?.jsonPrimitive?.contentOrNull != payload.subjectId ||
+			wire["givenAt"]?.jsonPrimitive?.longOrNull != payload.givenAt ||
+			wire["tcString"]?.jsonPrimitive?.contentOrNull != payload.tcString) return false
+		val preferences = wire["preferences"] as? JsonObject ?: return false
+		if (ConsentCategory.OPTIONAL.any { (preferences[it.wireName] as? JsonPrimitive)?.booleanOrNull == true }) return false
+	}
+	val encoded = payload.tcString ?: return payload.consentAction == ConsentAction.NECESSARY ||
+		payload.confirmed.categories.let { it.isNotEmpty() && it.values.none { granted -> granted } }
 	val tc = runCatching { com.c15t.core.tc.TcStringDecoder.decode(encoded) }.getOrNull() ?: return false
 	val c = tc.core
 	val p = tc.publisher

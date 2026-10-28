@@ -1,5 +1,7 @@
 package com.c15t.core
 
+import com.c15t.core.model.isWithdrawal
+
 import com.c15t.core.iab.*
 import com.c15t.core.model.*
 import com.c15t.core.spi.*
@@ -184,7 +186,8 @@ class IabCommitTest {
 		assertEquals(vector.cases[1].tcString, core.iabConsent?.tcString)
 		assertEquals(2, core.iabConsent?.consentVersion)
 		assertEquals(IabChoices(), core.iabConsent?.choices)
-		assertEquals(core.iabConsent?.tcString, store.readPending().single().payload.tcString)
+		assertEquals(core.iabConsent?.tcString, store.readPending().last().payload.tcString)
+		assertTrue(store.readPending().dropLast(1).all { it.isWithdrawal() })
 		val cold = boot(store)
 		assertEquals(IabChoices(), cold.iabConsent?.choices)
 		assertFalse(cold.isAllowed(ConsentCategory.MARKETING))
@@ -211,6 +214,7 @@ class IabCommitTest {
 			val backend = FailingBackend()
 			val store = C15tStore(backend)
 			val core = boot(store)
+			if (operation == "logout") core.identify(KernelUser("current"))
 			assertTrue(core.save(CommitIntent.All).ok)
 			val granted = core.iabConsent
 			val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
@@ -255,7 +259,8 @@ class IabCommitTest {
 		assertTrue(committed > 0)
 		assertEquals(committed, core.iabConsent?.consentVersion)
 		assertEquals(core.iabConsent, store.readEnvelope()?.iabConsent)
-		assertEquals(core.iabConsent?.tcString, store.readPending().single().payload.tcString)
+		assertEquals(core.iabConsent?.tcString, store.readPending().last().payload.tcString)
+		assertTrue(store.readPending().dropLast(1).all { it.isWithdrawal() })
 	}
 
 	@Test
@@ -365,9 +370,33 @@ class IabCommitTest {
 		assertEquals(1, store.readPending().size)
 	}
 
+	@Test fun `buffered custom store cannot claim durable IAB commits through readback`() {
+		val cache = mutableMapOf<String, String>()
+		val buffered = object : KeyValueStore {
+			override fun read(key: String) = cache[key]
+			override fun write(key: String, value: String?) {
+				if (value == null) cache.remove(key) else cache[key] = value
+			}
+		}
+		val prior = "durable-old-value"
+		cache["probe"] = prior
+		assertFalse(buffered.writeDurably("probe", "new-cache-value"))
+		assertEquals(prior, cache["probe"], "refusal must not mutate even the cache")
+		val transport = transport()
+		val core = boot(C15tStore(buffered), transport = transport)
+		assertFalse(core.save(CommitIntent.All).ok)
+		assertNull(core.iabConsent)
+		assertTrue(transport.saveRequests.isEmpty())
+	}
+
 	private class FailingBackend : KeyValueStore {
 		private val inner = InMemoryKeyValueStore()
 		var fail = false
+
+		override fun writeDurably(key: String, value: String?): Boolean {
+			if (fail && key == C15tStoreKeys.SNAPSHOT) return false
+			return inner.writeDurably(key, value)
+		}
 
 		override fun read(key: String) = inner.read(key)
 
@@ -377,6 +406,11 @@ class IabCommitTest {
 	}
 
 	private class FileBackend(val dir: File) : KeyValueStore {
+		override fun writeDurably(key: String, value: String?): Boolean {
+			write(key, value)
+			return read(key) == value
+		}
+
 		override fun read(key: String): String? = File(dir, key).takeIf { it.exists() }?.readText()
 
 		override fun write(key: String, value: String?) {

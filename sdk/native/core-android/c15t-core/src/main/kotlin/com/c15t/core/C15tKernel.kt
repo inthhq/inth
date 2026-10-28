@@ -1,6 +1,7 @@
 package com.c15t.core
 
 import com.c15t.core.model.isWithdrawal
+import com.c15t.core.model.ConsentState
 
 import com.c15t.core.iab.*
 import com.c15t.core.model.ActiveUI
@@ -713,6 +714,7 @@ class C15tKernel(
 		}
 
 		if (nextIab != null) published = published.copy(model = ConsentModel.IAB)
+		else if (policy?.model == ConsentModel.IAB) published = published.copy(effectivePermissions = ConsentState.DENY_ALL)
 
 		// Built from the snapshot computed above, which is a value: the frozen body is the
 		// one that revision describes, and building it here keeps the subject resolution and
@@ -1683,7 +1685,8 @@ class C15tKernel(
 				clock.nowMillis(),
 				choiceScopeOf(evaluationPolicy),
 			)
-			.let {
+			.let { evaluated ->
+				val it = if (evaluationPolicy?.model == ConsentModel.IAB) evaluated.copy(effectivePermissions = ConsentState.DENY_ALL) else evaluated
 				if (
 					iabConfiguration != null &&
 						evaluationPolicy?.model == ConsentModel.IAB &&

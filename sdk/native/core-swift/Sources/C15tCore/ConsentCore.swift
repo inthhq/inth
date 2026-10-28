@@ -611,7 +611,8 @@ public final class ConsentCore: @unchecked Sendable {
             let baseRevision = currentSnapshot.revision
             let next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = storedChoice
-                draft.effectivePermissions = evaluation.permissions
+                draft.effectivePermissions = resolved.policy.model == .iab && nextIAB == nil
+                    ? .necessaryOnly : evaluation.permissions
                 draft.restrictions = evaluation.restrictions
                 draft.promptRequirement = evaluation.promptRequirement
                 draft.nextDeadline = evaluation.nextDeadline
@@ -636,7 +637,7 @@ public final class ConsentCore: @unchecked Sendable {
                 ),
                 choice: choice,
                 confirmed: ConfirmedCoverage(categories: receipts, actionAt: actionAt),
-                consents: evaluation.permissions,
+                consents: next.effectivePermissions,
                 overrides: wireOverrides,
                 user: user,
                 model: nextIAB != nil ? .iab : resolved.policy.model.runtimeModel,
@@ -1585,7 +1586,8 @@ public final class ConsentCore: @unchecked Sendable {
             choiceScope: choiceScopeLocked(resolved)
         )
         var draft = ConsentSnapshot.Draft(current: currentSnapshot)
-            draft.effectivePermissions = evaluation.permissions
+            draft.effectivePermissions = resolved.policy.model == .iab && committedIAB == nil
+                ? .necessaryOnly : evaluation.permissions
             draft.restrictions = evaluation.restrictions
             draft.promptRequirement = evaluation.promptRequirement
             draft.nextDeadline = evaluation.nextDeadline
@@ -1848,7 +1850,7 @@ public final class ConsentCore: @unchecked Sendable {
             // back to the full optional set the pending evaluator uses.
             draft.consentCategories = decidedCategories(self.resolvedPolicy)
             currentSnapshot = draft.build(revision: currentSnapshot.revision + 1)
-            if config?.iab != nil || committedIAB != nil { reevaluateLocked(now: nowMs, bumpRevision: false) }
+            if resolvedPolicy?.policy.model == .iab || config?.iab != nil || committedIAB != nil { reevaluateLocked(now: nowMs, bumpRevision: false) }
         }
 
         publish(persist: true)

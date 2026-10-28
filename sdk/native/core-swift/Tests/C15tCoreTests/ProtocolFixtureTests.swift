@@ -462,10 +462,13 @@ final class ProtocolFixtureTests: XCTestCase {
         }
         let run = try makeRun(entry: entry, input: input)
         await run.core.bootstrapAndSettle(run.config)
+        // Native IAB authority is stricter than the generic web category evaluator.
+        let nativeIABExpected = C15tJSON.parse(try Data(contentsOf:
+            IABCommitTests.fixtureURL.deletingLastPathComponent().appendingPathComponent("missing-authority-expectations.json")))?["snapshots"]?[entry.id]
         record(
             for: entry,
             path: "expected.snapshot",
-            expected: expected,
+            expected: nativeIABExpected ?? expected,
             actual: try snapshotJSON(run.core)
         )
     }

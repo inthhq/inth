@@ -195,7 +195,9 @@ final class IABCommitTests: XCTestCase {
         XCTAssertGreaterThan(saved.consentVersion, 0)
         let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
         XCTAssertEqual(saved, envelope.iabConsent)
-        XCTAssertEqual(envelope.pendingSaves?.count, 1)
+        let pending = envelope.pendingSaves ?? []
+        XCTAssertEqual(pending.last.flatMap { C15tJSON.parse($0.body)?["tcString"]?.stringValue }, saved.tcString)
+        XCTAssertTrue(pending.dropLast().allSatisfy { $0.isProtectedWithdrawal })
         XCTAssertEqual(core.save(.necessary, expectedRevision: revision).error?.code, "concurrent-change")
         XCTAssertEqual(saved, core.iabConsent())
     }
@@ -258,6 +260,7 @@ final class IABCommitTests: XCTestCase {
         for operation in ["identify", "logout", "reset"] {
             let store = FailingIABStore()
             let core = try await boot(vector, configuration: config, store: store)
+            if operation == "logout" { core.identify(KernelUser(externalId: "current")) }
             XCTAssertEqual(core.save(.all).status, .committed)
             await core.waitUntilIdle()
             let granted = core.iabConsent()

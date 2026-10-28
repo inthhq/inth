@@ -16,6 +16,12 @@ struct PendingSaveEntry: Sendable, Codable, Equatable {
     let queuedAt: Int64
     var attempts: Int
     let body: Data
+    var retainWithdrawal: Bool? = nil
+
+    var isProtectedWithdrawal: Bool {
+        (retainWithdrawal == true || C15tJSON.parse(body)?["tcString"]?.stringValue != nil)
+            && ConsentDelivery.isWithdrawal(body)
+    }
 }
 
 /// A frozen denial remains owed after the local policy or identity changes.
@@ -160,7 +166,7 @@ final class PendingSaveQueue: @unchecked Sendable {
             ))
             // Newest 20 only, oldest dropped first.
             while entries.count > Self.maxEntries {
-                guard let discard = entries.firstIndex(where: { !ConsentDelivery.isWithdrawal($0.body) && $0.id != id }) else { return false }
+                guard let discard = entries.firstIndex(where: { !$0.isProtectedWithdrawal && $0.id != id }) else { return false }
                 entries.remove(at: discard)
             }
             return writeEntries(entries)
@@ -200,7 +206,7 @@ final class PendingSaveQueue: @unchecked Sendable {
 
     /// Remove queued grants after authority invalidation, retaining owed withdrawals.
     func discardGrants() {
-        lock.withLock { _ = writeEntries(readEntries().filter { ConsentDelivery.isWithdrawal($0.body) }) }
+        lock.withLock { _ = writeEntries(readEntries().filter { $0.isProtectedWithdrawal }) }
     }
 
     /// Drop every entry when its stored subject cannot be recovered.
@@ -233,7 +239,7 @@ final class PendingSaveQueue: @unchecked Sendable {
             entries[index].attempts = min(entries[index].attempts, Self.maxAttempts) + 1
             let entry = entries[index]
 
-            if ConsentDelivery.isWithdrawal(entry.body) {
+            if entry.isProtectedWithdrawal {
                 _ = writeEntries(entries)
                 return .retrying
             }
@@ -338,9 +344,9 @@ final class PendingSaveQueue: @unchecked Sendable {
         lock.withLock {
             let entry = PendingSaveEntry(
                 id: newID(), subjectId: subjectId, actionAt: actionAt,
-                queuedAt: now(), attempts: 0, body: body)
+                queuedAt: now(), attempts: 0, body: body, retainWithdrawal: true)
             var next = envelope
-            let withdrawals = readEntries().filter { ConsentDelivery.isWithdrawal($0.body) }
+            let withdrawals = readEntries().filter { $0.isProtectedWithdrawal }
             guard withdrawals.count < Self.maxEntries else { return nil }
             next.pendingSaves = withdrawals + [entry]
             guard store.encode(next, for: StorageKey.snapshot) else { return nil }
@@ -352,7 +358,7 @@ final class PendingSaveQueue: @unchecked Sendable {
     func replace(_ envelope: StoredEnvelope) -> Bool {
         lock.withLock {
             var next = envelope
-            next.pendingSaves = readEntries().filter { ConsentDelivery.isWithdrawal($0.body) }
+            next.pendingSaves = readEntries().filter { $0.isProtectedWithdrawal }
             return store.encode(next, for: StorageKey.snapshot)
         }
     }
