@@ -337,7 +337,7 @@ export interface ConsentSurfaceProps {
 	readonly dismissLabel?: string;
 	/** Name of the surface, announced and used as its accessibility label. */
 	readonly label: string;
-	/** Called when the subject dismisses without deciding. */
+	/** Request closing after dismissal or a successful local save. */
 	readonly onRequestClose?: () => void;
 	/** Whether the surface should be showing. */
 	readonly open: boolean;
@@ -381,6 +381,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 	const currentPresentation = useRef(contentKey);
 	const mounted = useRef(true);
 	// Passive cleanup preserves completions while Suspense hides this surface.
+	// Activity also runs this cleanup, so completions received while hidden stop.
 	useEffect(() => {
 		mounted.current = true;
 		return () => {

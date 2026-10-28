@@ -6,7 +6,7 @@
  * subject's edits until save, and the payload is exactly the visible rows.
  */
 
-import { StrictMode, Suspense, useState } from 'react';
+import { Activity, StrictMode, Suspense, useState } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { flush, flushPromises } from '../../__tests__/helpers/fake-native';
@@ -47,6 +47,58 @@ describe.each([
 	['dialog', ConsentDialog],
 	['preferences', ConsentPreferences],
 ])('%s commit outcomes', (_name, Surface) => {
+	test.each(['unmount', 'Activity'])(
+		'a success during %s does not request closing before the host reveals it',
+		async (mode) => {
+			let resolveReply!: (result: string) => void;
+			const reply = new Promise<string>((resolve) => {
+				resolveReply = resolve;
+			});
+			const onRequestClose = vi.fn();
+			const Host = () => {
+				const [open, setOpen] = useState(true);
+				const { ready } = useConsentStatus();
+				const content = (
+					<Surface
+						onRequestClose={() => {
+							onRequestClose();
+							setOpen(false);
+						}}
+						open={open}
+					/>
+				);
+				if (mode === 'unmount') {
+					return ready ? content : null;
+				}
+				return (
+					<Activity mode={ready ? 'visible' : 'hidden'}>{content}</Activity>
+				);
+			};
+			const tree = mountSurface(
+				<StrictMode>
+					<Host />
+				</StrictMode>
+			);
+			vi.spyOn(tree.fake, 'commit').mockImplementationOnce(() => reply);
+			tap(requireRole(tree.container(), 'button', 'Speichern'));
+			flush(() => {
+				tree.fake.pushSnapshot(
+					translatedSnapshot({ ready: false, revision: 2 })
+				);
+			});
+			resolveReply(JSON.stringify({ ok: true, queued: true }));
+			await flushPromises();
+			expect(onRequestClose).not.toHaveBeenCalled();
+			flush(() => {
+				tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+			});
+			await flushPromises();
+			requireRole(tree.container(), 'button', 'Speichern');
+			expect(onRequestClose).not.toHaveBeenCalled();
+			tree.unmount();
+		}
+	);
+
 	test('a successful save still closes its presentation while Suspense hides it', async () => {
 		let resolveReply!: (result: string) => void;
 		const reply = new Promise<string>((resolve) => {

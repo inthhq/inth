@@ -61,6 +61,10 @@ export interface ConsentBannerProps {
 }
 
 interface ConsentBannerActionsProps {
+	readonly busy: boolean;
+	readonly commit: (
+		choice: 'accept' | 'reject'
+	) => Promise<boolean | undefined>;
 	readonly copy: ConsentCopy;
 	readonly customize: () => void;
 	readonly notice: boolean;
@@ -80,34 +84,26 @@ const selectBannerPromptKey = (snapshot: ConsentSnapshot): string =>
 	]);
 
 const ConsentBannerActions = ({
+	busy,
+	commit,
 	copy,
 	customize,
 	notice,
 }: ConsentBannerActionsProps): ReactNode => {
 	const actions = useConsentActions();
 	const { parts } = useConsentSurfaceFrame();
-	const [busy, setBusy] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
-	const pending = useRef(false);
 
 	const decide = async (choice: 'accept' | 'reject'): Promise<void> => {
-		if (pending.current) {
-			return;
-		}
-
-		pending.current = true;
-		setBusy(true);
 		setSaveFailed(false);
 		try {
-			const result = await (choice === 'accept'
-				? actions.acceptAll()
-				: actions.rejectAll());
-			setSaveFailed(!result.ok);
+			const written = await commit(choice);
+			if (written !== undefined) {
+				setSaveFailed(!written);
+			}
 		} catch {
 			setSaveFailed(true);
 		}
-		pending.current = false;
-		setBusy(false);
 	};
 
 	useAnnounceOnOpen(saveFailed, copy.saveError);
@@ -209,6 +205,7 @@ export const ConsentBanner = ({
 	styles,
 	theme,
 }: ConsentBannerProps): ReactNode => {
+	const actions = useConsentActions();
 	const status = useConsentStatus();
 	const promptKey = useConsentSelector(selectBannerPromptKey);
 	const copy = useConsentSelector(selectConsentCopy, isConsentCopyEqual);
@@ -216,6 +213,30 @@ export const ConsentBanner = ({
 	// which is the opposite of the sheet this component can open.
 	const surface = useConsentStyles({ presentation: 'banner', styles, theme });
 	const [customizing, setCustomizing] = useState(false);
+	const [busy, setBusy] = useState(false);
+	const pending = useRef(false);
+
+	const commit = async (
+		choice: 'accept' | 'reject'
+	): Promise<boolean | undefined> => {
+		if (pending.current) {
+			return;
+		}
+		pending.current = true;
+		setBusy(true);
+		let written: boolean;
+		try {
+			const result = await (choice === 'accept'
+				? actions.acceptAll()
+				: actions.rejectAll());
+			written = result.ok;
+		} catch {
+			written = false;
+		}
+		pending.current = false;
+		setBusy(false);
+		return written;
+	};
 
 	const notice = status.promptRequirement.kind === 'notice';
 	const title = notice ? copy.noticeTitle : copy.bannerTitle;
@@ -267,6 +288,8 @@ export const ConsentBanner = ({
 				</ConsentSurfaceBody>
 				<ConsentSurfaceFooter>
 					<ConsentBannerActions
+						busy={busy}
+						commit={commit}
 						copy={copy}
 						customize={customize}
 						key={promptKey}

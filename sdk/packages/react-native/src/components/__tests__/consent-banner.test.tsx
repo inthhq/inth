@@ -247,6 +247,53 @@ describe('ConsentBanner', () => {
 		tree.unmount();
 	});
 
+	test.each([true, false])(
+		'keeps a changed prompt busy until its earlier action finishes, ok: %s',
+		async (ok) => {
+			let resolveReply!: (result: string) => void;
+			const reply = new Promise<string>((resolve) => {
+				resolveReply = resolve;
+			});
+			const tree = mountSurface(<ConsentBanner />);
+			const commit = vi
+				.spyOn(tree.fake, 'commit')
+				.mockImplementationOnce(() => reply);
+			tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+			flush(() => {
+				tree.fake.pushSnapshot(
+					translatedSnapshot({
+						resolution: {
+							fingerprint: 'new-policy',
+							policyId: 'p2',
+							status: 'matched',
+						},
+						revision: 2,
+					})
+				);
+			});
+			const reject = requireRole(tree.container(), 'button', 'Alle ablehnen');
+			expect(reject.getAttribute('aria-disabled')).toBe('true');
+			tap(reject);
+			expect(commit).toHaveBeenCalledTimes(1);
+
+			resolveReply(JSON.stringify({ ok, queued: ok }));
+			await flushPromises();
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+			expect(
+				requireRole(tree.container(), 'button', 'Alle ablehnen').getAttribute(
+					'aria-disabled'
+				)
+			).not.toBe('true');
+			tap(requireRole(tree.container(), 'button', 'Alle ablehnen'));
+			await flushPromises();
+			expect(commit).toHaveBeenCalledTimes(2);
+			expect(JSON.parse(tree.fake.commitIntents[0] as string)).toEqual({
+				action: 'necessary',
+			});
+			tree.unmount();
+		}
+	);
+
 	test('updates a visible failure when native supplies translated retry copy', async () => {
 		const tree = mountSurface(<ConsentBanner />);
 		tree.fake.failCommitWith(JSON.stringify({ ok: false, queued: false }));

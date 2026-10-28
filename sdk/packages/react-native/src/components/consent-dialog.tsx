@@ -55,6 +55,9 @@ export interface ConsentDialogProps {
 	/**
 	 * Request closing after dismissal or a successful local save.
 	 * Keep this callback idempotent: a pending save may finish after dismissal.
+	 * A save finishing after unmount or while Activity hides the dialog does not
+	 * call it. Keep the dialog mounted and control visibility with `open` if the
+	 * host relies on this callback to clear its open state.
 	 */
 	readonly onRequestClose: () => void;
 	/** Whether the dialog is open. */
