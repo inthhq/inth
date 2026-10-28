@@ -157,14 +157,50 @@ class C15tStore(
 	 * failure through this seam; a drop that leaves the mirror one commit stale
 	 * is rebuilt by the next write, the next launch, or [rebuildTcStorageBus].
 	 */
+	@Synchronized
 	fun writeEnvelope(envelope: SnapshotEnvelope) {
-		backend.write(C15tStoreKeys.SNAPSHOT, json.encodeToString(SnapshotEnvelope.serializer(), envelope))
-		tcStorageBus?.write(TcStorageBusProjection.values(envelope))
+		val old = readEnvelope()
+		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return
+		val next = envelope.copy(pendingSaves = old?.pendingSaves)
+		writeAtomic(next)
+	}
+
+	/** Persist a full IAB transaction before publishing any grant. */
+	@Synchronized
+	fun commit(envelope: SnapshotEnvelope, entry: QueuedSave): Boolean =
+		writeAtomic(envelope.copy(pendingSaves = listOf(entry)))
+
+	/** Atomic empty consent state for reset and identity changes. */
+	@Synchronized
+	fun replace(envelope: SnapshotEnvelope): Boolean =
+		writeAtomic(envelope.copy(pendingSaves = emptyList()))
+
+	private fun writeAtomic(envelope: SnapshotEnvelope): Boolean {
+		val raw = json.encodeToString(SnapshotEnvelope.serializer(), envelope)
+		val written =
+			try {
+				backend.writeDurably(C15tStoreKeys.SNAPSHOT, raw)
+			} catch (_: Exception) {
+				false
+			}
+		if (!written) return false
+		// A failed vendor mirror cannot undo an authoritative transaction.
+		try {
+			tcStorageBus?.write(TcStorageBusProjection.values(envelope))
+		} catch (_: Exception) {
+			/* Rebuilt from authority on the next publication. */
+		}
+		return true
 	}
 
 	/** Read the offline write queue; an unparseable queue reads as empty. */
-	fun readPending(): List<QueuedSave> =
-		tryDecode(C15tStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
+	@Synchronized
+	fun readPending(): List<QueuedSave> {
+		val envelope = readEnvelope()
+		if (backend.read(C15tStoreKeys.SNAPSHOT) != null && envelope == null) return emptyList()
+		return envelope?.pendingSaves
+			?: tryDecode(C15tStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
+	}
 
 	/**
 	 * Replace the whole offline write queue, and report whether the bytes came back.
@@ -176,11 +212,13 @@ class C15tStore(
 	 * wrote from a queue that quietly did not, which is the difference between a save that
 	 * owes delivery and a save that only believes it does.
 	 *
-	 * Comparison is on the plaintext that went in, not on the stored blob: an encrypted
-	 * store returns ciphertext, and it is the round trip through decryption that is being
-	 * proven.
+	 * Comparison is on the plaintext that went in, not on the stored blob: an encrypted store
+	 * returns ciphertext, and it is the round trip through decryption that is being proven.
 	 */
+	@Synchronized
 	fun writePending(entries: List<QueuedSave>): Boolean {
+		val old = readEnvelope()
+		if (old?.pendingSaves != null) return writeAtomic(old.copy(pendingSaves = entries))
 		val raw = queueJson.encodeToString(PendingQueue.serializer(), PendingQueue(entries))
 		backend.write(C15tStoreKeys.PENDING, raw)
 		return backend.read(C15tStoreKeys.PENDING) == raw

@@ -298,31 +298,10 @@ class KernelTest {
 		}
 
 		val accepted = kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
-		assertTrue(accepted.ok)
-		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT), "the subject's own grant is what opens it")
-		assertFalse(kernel.isAllowed(ConsentCategory.MARKETING), "and only what they granted")
-
-		// A grant for a category the rule does not govern is refused by the strict scope,
-		// which is the row the web answers the same way for all four models. The refusal is
-		// the scope's, not the model's: `iab` is not allowed to be the reason.
-		assertTrue(kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.FUNCTIONALITY to true))).ok)
-		assertFalse(kernel.isAllowed(ConsentCategory.FUNCTIONALITY), "a strict scope withholds what it does not govern")
-		val after = kernel.snapshot()
-		assertEquals(
-			true,
-			after.explicitChoice?.valueOf(ConsentCategory.FUNCTIONALITY),
-			"the receipt is still recorded, masked rather than rewritten",
-		)
-		assertTrue(
-			after.restrictions[ConsentCategory.FUNCTIONALITY.wireName]?.contains("strict-scope") == true,
-			"and it says so, the way the web answer for that row does",
-		)
-		assertEquals(ConsentModel.OPT_IN, kernel.snapshot().model)
-
-		// The write carries the reported model, not the rule's name, which is what the
-		// kernel puts in `model` for the same situation.
-		val payload = transport.saveRequests.last().payload
-		assertEquals(ConsentModel.OPT_IN, payload.model)
+		assertFalse(accepted.ok)
+		assertEquals("iab-unavailable", accepted.error?.code)
+		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
+		assertTrue(transport.saveRequests.isEmpty())
 	}
 
 	@Test

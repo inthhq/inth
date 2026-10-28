@@ -154,6 +154,11 @@ internal class EncryptedFileStore(
 		return names.filterTo(mutableSetOf()) { StorePaths.fileName(it) == it }
 	}
 
+	override fun writeDurably(key: String, value: String?): Boolean {
+		write(key, value)
+		return read(key) == value
+	}
+
 	override fun flush() {
 		// Each write already lands through a rename, so there is nothing buffered.
 	}
@@ -177,21 +182,10 @@ internal class EncryptedFileStore(
 				stream.write(blob)
 				stream.fd.sync()
 			}
-			if (!temp.renameTo(file)) {
-				file.delete()
-				blob.writeTo(file)
-			}
+			if (!temp.renameTo(file)) throw IOException("cannot replace consent item")
 		} catch (error: IOException) {
 			Log.e(TAG, "failed to persist c15t state", error)
 			temp.delete()
-		}
-	}
-
-	private fun ByteArray.writeTo(file: File) {
-		try {
-			file.outputStream().use { it.write(this) }
-		} catch (error: IOException) {
-			Log.e(TAG, "failed to persist c15t state", error)
 		}
 	}
 
@@ -232,13 +226,31 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 		}
 	}
 
-	override fun flush() {
-		prefs.edit().apply()
-	}
+	override fun writeDurably(key: String, value: String?): Boolean =
+		try {
+			val previous = prefs.getString(key, null)
+			val editor = prefs.edit()
+			if (value == null) editor.remove(key) else editor.putString(key, value)
+			val written = editor.commit()
+			if (!written) {
+				// commit() changes the memory cache even when the disk write fails.
+				val rollback = prefs.edit()
+				if (previous == null) rollback.remove(key) else rollback.putString(key, previous)
+				rollback.commit()
+			}
+			written
+		} catch (error: Exception) {
+			Log.e(TAG, "failed to persist c15t preference", error)
+			false
+		}
 
-	private companion object {
-		const val TAG = "c15t"
-	}
+		override fun flush() {
+			prefs.edit().apply()
+		}
+
+		private companion object {
+			const val TAG = "c15t"
+		}
 }
 
 /**
@@ -264,31 +276,31 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
  * next launch, or through [C15tStore.rebuildTcStorageBus].
  */
 internal class DefaultPreferencesTcStorageBus(context: Context) : TcStorageBusSink {
-	/** Opened once: the default file is process-wide, like the bus it holds. */
-	private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
+		/** Opened once: the default file is process-wide, like the bus it holds. */
+		private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
 
-	override fun write(values: Map<String, TcBusValue>) {
-		try {
-			val editor = prefs.edit()
-			for (key in TcStorageBusKeys.ALL_NAMES) {
-				when (val value = values[key]) {
-					is TcBusValue.NumberValue -> editor.putInt(key, value.value)
-					is TcBusValue.TextValue -> editor.putString(key, value.value)
-					null -> editor.remove(key)
+		override fun write(values: Map<String, TcBusValue>) {
+			try {
+				val editor = prefs.edit()
+				for (key in TcStorageBusKeys.ALL_NAMES) {
+					when (val value = values[key]) {
+						is TcBusValue.NumberValue -> editor.putInt(key, value.value)
+						is TcBusValue.TextValue -> editor.putString(key, value.value)
+						null -> editor.remove(key)
+					}
 				}
+				editor.apply()
+			} catch (error: Throwable) {
+				// Includes a preferences file somebody else left unreadable. The consent
+				// record is in the encrypted store either way; only the mirror is missing.
+				Log.e(TAG, "failed to publish the IABTCF storage bus", error)
 			}
-			editor.apply()
-		} catch (error: Throwable) {
-			// Includes a preferences file somebody else left unreadable. The consent
-			// record is in the encrypted store either way; only the mirror is missing.
-			Log.e(TAG, "failed to publish the IABTCF storage bus", error)
 		}
-	}
 
-	/** Empty the table: a whole-table write that fills nothing. */
-	override fun clear() = write(emptyMap())
+		/** Empty the table: a whole-table write that fills nothing. */
+		override fun clear() = write(emptyMap())
 
-	private companion object {
-		const val TAG = "c15t"
-	}
+		private companion object {
+			const val TAG = "c15t"
+		}
 }

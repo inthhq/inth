@@ -1,0 +1,296 @@
+import Foundation
+import XCTest
+
+@testable import C15tCore
+
+final class IABCommitTests: XCTestCase {
+    struct Vector: Decodable {
+        struct Case: Decodable {
+            let id: String
+            let configuration: IABConfiguration
+            let choices: IABChoices
+            let tcString: String
+        }
+        let invalidChoices: [IABChoices]
+        let invalidConfigurations: [IABConfiguration]
+        let now: Int64
+        let gvl: GlobalVendorList
+        let cases: [Case]
+    }
+    static let fixtureURL = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("protocol/iab/commit-cases.json")
+    func fixture() throws -> Vector {
+        try C15tJSON.decode(Vector.self, from: Data(contentsOf: Self.fixtureURL))
+    }
+
+    func boot(
+        _ vector: Vector, configuration: IABConfiguration?, store: any ConsentStore,
+        http: StubHTTP = StubHTTP(), user: KernelUser? = nil
+    ) async throws -> ConsentCore {
+        let gvl = try C15tJSON.parse(C15tJSON.encode(vector.gvl))!
+        var body = Fixture.initBody(
+            policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab")))
+        var fields = C15tJSON.parse(body)!.objectValue!
+        fields["gvl"] = gvl
+        body = try C15tJSON.encode(JSONValue.object(fields))
+        http.initResponse = HTTPResponse(status: 200, body: body)
+        http.setSavesFail(true)
+        let core = ConsentCore()
+        core.bootstrap(
+            CoreConfig(
+                store: store, transport: Fixture.transport(http), iab: configuration,
+                user: user, now: { vector.now }, initRetry: .disabled, flushPendingOnBootstrap: false))
+        await core.waitUntilIdle()
+        return core
+    }
+
+    func testCategorySaveCannotClaimIABCommitWithoutConfiguration() async throws {
+        let vector = try fixture()
+        let core = try await boot(vector, configuration: nil, store: InMemoryStore())
+        let result = core.save(.all)
+        XCTAssertEqual(result.status, .rejected)
+        XCTAssertEqual(result.error?.code, "iab-unavailable")
+        XCTAssertFalse(core.isAllowed(.marketing))
+    }
+
+    func testSharedChoicesProduceReferenceStringsAndExactBackendPayload() async throws {
+        let vector = try fixture()
+        for row in vector.cases {
+            let store = InMemoryStore()
+            let http = StubHTTP()
+            let core = try await boot(vector, configuration: row.configuration, store: store, http: http)
+            let result = core.save(.iab(row.choices, categories: [.marketing: row.id != "reject"]))
+            XCTAssertEqual(result.status, .committed, row.id)
+            let committed = try XCTUnwrap(core.iabConsent())
+            XCTAssertEqual(committed.tcString, row.tcString, row.id)
+            XCTAssertEqual(committed.choices, row.choices, row.id)
+            let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
+            XCTAssertEqual(envelope.iabConsent, committed)
+            let entry = try XCTUnwrap(envelope.pendingSaves?.first)
+            XCTAssertEqual(C15tJSON.parse(entry.body)?["tcString"]?.stringValue, row.tcString)
+            await core.waitUntilIdle()
+            XCTAssertEqual(http.recordedSaveRequests.first?.body, entry.body)
+            XCTAssertEqual(core.pendingSaveCount(), 1)
+            if let path = ProcessInfo.processInfo.environment["C15T_IAB_SAVE_EVIDENCE_DIR"] {
+                try FileManager.default.createDirectory(atPath: path, withIntermediateDirectories: true)
+                try entry.body.write(
+                    to: URL(fileURLWithPath: path).appendingPathComponent("swift-\(row.id).json"))
+            }
+            if row.id == "restriction" {
+                XCTAssertTrue(core.isIABAllowed(vendorId: 2, purposeId: 2, basis: .consent))
+            }
+            if row.id == "custom" {
+                XCTAssertTrue(core.isIABAllowed(vendorId: 1, purposeId: 1, basis: .consent))
+                XCTAssertFalse(core.isIABAllowed(vendorId: 2, purposeId: 7, basis: .legitimateInterest))
+            }
+        }
+    }
+
+    func testRealFileRestartHydratesChoicesAndReplaysIdenticalBytes() async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = FileStore(directory: directory)
+        let vector = try fixture()
+        let row = vector.cases[2]
+        let first = try await boot(vector, configuration: row.configuration, store: store)
+        XCTAssertEqual(first.save(.iab(row.choices, categories: [.marketing: true])).status, .committed)
+        await first.waitUntilIdle()
+        let before = try XCTUnwrap(
+            store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves?.first?.body)
+        let http = StubHTTP()
+        http.setSavesFail(true)
+        http.initResponse = HTTPResponse(status: 503, body: Data("{}".utf8))
+        let second = ConsentCore()
+        second.bootstrap(CoreConfig(store: FileStore(directory: directory), transport: Fixture.transport(http),
+            iab: row.configuration, now: { vector.now }, initRetry: .disabled, flushPendingOnBootstrap: false))
+        XCTAssertEqual(second.iabConsent()?.choices, row.choices)
+        XCTAssertEqual(second.iabConsent()?.tcString, row.tcString)
+        XCTAssertTrue(second.isAllowed(.marketing))
+        second.flushPending()
+        await second.waitUntilIdle()
+        XCTAssertTrue(http.recordedSaveRequests.allSatisfy { $0.body == before })
+        XCTAssertFalse(http.recordedSaveRequests.isEmpty)
+    }
+
+    func testFailedAtomicWriteLeavesStateBytesAndQueueUnchanged() async throws {
+        let vector = try fixture()
+        let store = FailingIABStore()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        let before = core.snapshot()
+        let bytes = store.data(for: StorageKey.snapshot)
+        store.fail = true
+        let result = core.save(.all)
+        XCTAssertEqual(result.status, .rejected)
+        XCTAssertEqual(result.error?.code, "queue-write-failed")
+        XCTAssertEqual(core.snapshot(), before)
+        XCTAssertEqual(store.data(for: StorageKey.snapshot), bytes)
+        XCTAssertNil(core.iabConsent())
+        XCTAssertEqual(core.pendingSaveCount(), 0)
+    }
+
+    func testFailedWithdrawalKeepsTheLastDurableGrantAndBody() async throws {
+        let vector = try fixture()
+        let store = FailingIABStore()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        let before = core.snapshot()
+        let authority = core.iabConsent()
+        let bytes = store.data(for: StorageKey.snapshot)
+        store.fail = true
+        XCTAssertEqual(core.save(.necessary).error?.code, "queue-write-failed")
+        XCTAssertEqual(core.snapshot(), before)
+        XCTAssertEqual(core.iabConsent(), authority)
+        XCTAssertEqual(store.data(for: StorageKey.snapshot), bytes)
+        XCTAssertEqual(core.pendingSaveCount(), 1)
+    }
+
+    func testWithdrawalSupersedesQueuedGrantAndSurvivesRestart() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        XCTAssertEqual(core.iabConsent()?.tcString, vector.cases[0].tcString)
+        let grantAt = core.iabConsent()?.actionAt
+        let createdAt = core.iabConsent()?.createdAt
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        XCTAssertGreaterThan(core.iabConsent()!.actionAt, grantAt!)
+        XCTAssertEqual(core.iabConsent()?.createdAt, createdAt)
+        XCTAssertEqual(core.iabConsent()?.tcString, vector.cases[1].tcString)
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.iabConsent()?.consentVersion, 2)
+        XCTAssertEqual(core.iabConsent()?.choices, IABChoices())
+        let entries = try XCTUnwrap(
+            store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(C15tJSON.parse(entries[0].body)?["tcString"]?.stringValue, core.iabConsent()?.tcString)
+        let restored = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(restored.iabConsent()?.choices, IABChoices())
+        XCTAssertFalse(restored.isAllowed(.marketing))
+    }
+
+    func testInvalidDraftAndObjectionConflictAreRejectedWithoutMutation() async throws {
+        let vector = try fixture()
+        let core = try await boot(
+            vector, configuration: vector.cases[0].configuration, store: InMemoryStore())
+        let revision = core.snapshot().revision
+        for invalid in vector.invalidChoices {
+            XCTAssertEqual(core.save(.iab(invalid, categories: [:])).error?.code, "invalid-iab-choices")
+        }
+        XCTAssertEqual(core.snapshot().revision, revision)
+        XCTAssertEqual(core.pendingSaveCount(), 0)
+    }
+
+    func testConcurrentCommitsKeepTheLatestDurableDecisionAndStaleDraftIsRejected() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        let revision = core.snapshot().revision
+        DispatchQueue.concurrentPerform(iterations: 20) { index in
+            _ = core.save(index.isMultiple(of: 2) ? .all : .necessary)
+        }
+        await core.waitUntilIdle()
+        let saved = try XCTUnwrap(core.iabConsent())
+        XCTAssertGreaterThan(saved.consentVersion, 0)
+        let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
+        XCTAssertEqual(saved, envelope.iabConsent)
+        XCTAssertEqual(envelope.pendingSaves?.count, 1)
+        XCTAssertEqual(core.save(.necessary, expectedRevision: revision).error?.code, "concurrent-change")
+        XCTAssertEqual(saved, core.iabConsent())
+    }
+
+    func testChangedConfigurationAndTamperedStringRequireFreshIABConsent() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        var configuration = vector.cases[0].configuration
+        let core = try await boot(vector, configuration: configuration, store: store)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        configuration.cmpVersion += 1
+        let cold = try await boot(vector, configuration: configuration, store: store)
+        XCTAssertNil(cold.iabConsent())
+        XCTAssertFalse(cold.isAllowed(.marketing))
+        XCTAssertEqual(cold.pendingSaveCount(), 0)
+        XCTAssertEqual(cold.save(.all).status, .committed)
+        await cold.waitUntilIdle()
+        let raw = try XCTUnwrap(store.data(for: StorageKey.snapshot))
+        var envelope = try XCTUnwrap(C15tJSON.parse(raw)?.objectValue)
+        var iab = try XCTUnwrap(envelope["iabConsent"]?.objectValue)
+        iab["tcString"] = .string("invalid")
+        envelope["iabConsent"] = .object(iab)
+        store.set(try C15tJSON.encode(JSONValue.object(envelope)), for: StorageKey.snapshot)
+        let tampered = try await boot(vector, configuration: configuration, store: store)
+        XCTAssertNil(tampered.iabConsent())
+        XCTAssertFalse(tampered.isAllowed(.marketing))
+        XCTAssertEqual(tampered.pendingSaveCount(), 0)
+    }
+
+    func testInvalidConfigurationCannotCommitAndExpiredStateCannotReplay() async throws {
+        let vector = try fixture()
+        for configuration in vector.invalidConfigurations {
+            let core = try await boot(vector, configuration: configuration, store: InMemoryStore())
+            XCTAssertEqual(core.save(.all).error?.code, "invalid-iab-choices")
+            XCTAssertNil(core.iabConsent())
+            XCTAssertFalse(core.isAllowed(.marketing))
+        }
+        let store = InMemoryStore()
+        let configuration = vector.cases[0].configuration
+        let first = try await boot(vector, configuration: configuration, store: store)
+        XCTAssertEqual(first.save(.all).status, .committed)
+        await first.waitUntilIdle()
+        let later = Vector(
+            invalidChoices: vector.invalidChoices, invalidConfigurations: vector.invalidConfigurations,
+            now: vector.now + 31_536_000_001, gvl: vector.gvl, cases: vector.cases)
+        let http = StubHTTP()
+        let cold = try await boot(later, configuration: configuration, store: store, http: http)
+        XCTAssertNil(cold.iabConsent())
+        XCTAssertFalse(cold.isIABAllowed(vendorId: 1, purposeId: 1, basis: .consent))
+        XCTAssertFalse(cold.isAllowed(.marketing))
+        cold.flushPending()
+        await cold.waitUntilIdle()
+        XCTAssertTrue(http.recordedSaveRequests.isEmpty)
+    }
+
+    func testIdentityLogoutResetAndFailedTransitionsCannotRestoreGrant() async throws {
+        let vector = try fixture()
+        let config = vector.cases[0].configuration
+        for operation in ["identify", "logout", "reset"] {
+            let store = FailingIABStore()
+            let core = try await boot(vector, configuration: config, store: store)
+            XCTAssertEqual(core.save(.all).status, .committed)
+            await core.waitUntilIdle()
+            let granted = core.iabConsent()
+            let bytes = store.data(for: StorageKey.snapshot)
+            store.fail = true
+            if operation == "identify" { core.identify(KernelUser(externalId: "next")) }
+            if operation == "logout" { core.logout() }
+            if operation == "reset" { core.reset() }
+            XCTAssertEqual(core.iabConsent(), granted)
+            XCTAssertEqual(store.data(for: StorageKey.snapshot), bytes)
+            store.fail = false
+            if operation == "identify" { core.identify(KernelUser(externalId: "next")) }
+            if operation == "logout" { core.logout() }
+            if operation == "reset" { core.reset() }
+            await core.waitUntilIdle()
+            XCTAssertNil(core.iabConsent())
+            XCTAssertEqual(core.pendingSaveCount(), 0)
+            XCTAssertFalse(core.isAllowed(.marketing))
+            let cold = try await boot(vector, configuration: config, store: store)
+            XCTAssertNil(cold.iabConsent())
+            XCTAssertFalse(cold.isAllowed(.marketing))
+            XCTAssertEqual(cold.save(.all).status, .committed)
+            XCTAssertGreaterThan(cold.iabConsent()!.actionAt, granted!.actionAt)
+        }
+    }
+}
+
+private final class FailingIABStore: ConsentStore, @unchecked Sendable {
+    let inner = InMemoryStore()
+    var fail = false
+    func data(for key: String) -> Data? { inner.data(for: key) }
+    func set(_ data: Data?, for key: String) -> Bool {
+        if fail && key == StorageKey.snapshot { return false }
+        return inner.set(data, for: key)
+    }
+}

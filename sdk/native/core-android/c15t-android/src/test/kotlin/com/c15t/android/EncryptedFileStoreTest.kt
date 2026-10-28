@@ -89,6 +89,16 @@ class EncryptedFileStoreTest {
 		assertTrue(store.isDegraded)
 	}
 
+	@Test
+	fun `a failed atomic replacement preserves the prior encrypted record`() {
+		val directory = newDirectory()
+		val store = encryptedStore(directory, RotatingKey(generateKey()))
+		assertTrue(store.writeDurably(KEY, "before"))
+		File(directory, "$KEY.tmp").mkdir()
+		assertFalse(store.writeDurably(KEY, "after"))
+		assertEquals("before", store.read(KEY))
+	}
+
 	private fun encryptedStore(directory: File, key: SymmetricKeyProvider): ResilientKeyValueStore =
 		ResilientKeyValueStore(EncryptedFileStore(directory, AesGcmCodec(key)), MemoryStore())
 

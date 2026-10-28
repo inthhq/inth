@@ -13,6 +13,9 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// than mis-reads.
     static let currentVersion = 1
 
+    let lastIABActionAt: Int64?
+    let iabConsent: IABCommittedConsent?
+    var pendingSaves: [PendingSaveEntry]?
     let version: Int
     /// Epoch milliseconds of the write, for diagnostics and for the
     /// newest-writer-wins check when persisting.
@@ -31,8 +34,14 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
         snapshot: ConsentSnapshot,
         noticeDismissal: NoticeDismissal?,
         policyResolution: JSONValue?,
-        storedAt: Int64
+        storedAt: Int64,
+        iabConsent: IABCommittedConsent? = nil,
+        pendingSaves: [PendingSaveEntry]? = nil,
+        lastIABActionAt: Int64? = nil
     ) {
+        self.lastIABActionAt = lastIABActionAt ?? iabConsent?.actionAt
+        self.iabConsent = iabConsent
+        self.pendingSaves = pendingSaves
         self.version = Self.currentVersion
         self.storedAt = storedAt
         self.snapshot = snapshot

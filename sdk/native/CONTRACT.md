@@ -36,13 +36,17 @@ own:
                     evaluation answers, and where it still differs from the web
                     kernel, is the three paragraphs below plus
                     `docs/internal/evaluator-parity.md`.
-    TC string       still out of scope, and with it the bus rows that encode
-                    from it: no CMP identity and no purpose or vendor vectors
-                    exist in the cores yet, whatever model matched. Saving a
-                    `tcString` beside a decision is not implemented either.
-                    Every spec-table key is named in TcStorageBus.swift /
-                    TcStorageBus.kt; the rows that stay absent name their
-                    missing field there.
+    TC string       explicit native CMP/publisher configuration and complete IAB
+                    choices feed the existing native codecs. Choices, TC bytes,
+                    consent version and exact pending HTTP body commit together
+                    in the protected envelope before publication. Configuration
+                    is required to commit under an IAB policy; fixture CMP IDs
+                    are never production defaults. Complete IABTCF publication,
+                    GVL lifecycle, TCF 2.4 disclosures and AC v2 remain separate
+                    required release work.
+
+`docs/internal/native-iab-commits.mdx` defines the native commit, migration,
+withdrawal and delivery contract, including the storage adapter requirements.
 
 `docs/internal/tcf-mobile.md` records the sources behind all of that, including
 the Keychain-versus-shared-defaults trade-off the bus forces.
@@ -83,17 +87,12 @@ an `iab` case added to it inherits exactly what `opt-in` already did; divergence
 in `docs/internal/evaluator-parity.md` owns the fix, and it flips both models in
 both kernels on one measured fixture rather than carving an exception for IAB.
 
-The model a device reports is not the model a device evaluates. `deriveModel` in
-`packages/core/src/policy.ts` runs an IAB rule as `iab` only once `@c15t/iab` is
-installed, and a device has nothing to install there: no registered `cmpId`, no
-per-vendor vector, no TC String. So both cores publish `opt-in` for the `model`
-of a snapshot running an IAB rule, and both send `model: "opt-in"` on
-the write that follows it, while `resolution` keeps naming the IAB policy that
-matched. The rule's own model does move one byte: `IABTCF_gdprApplies` reads the
-stored rule, the way `packages/iab` does, so an IAB rule puts `1` on the bus where
-every other model puts `0`. Reporting `iab` on the snapshot would additionally
-promise the per-vendor vectors that slot's other members name, and the core has
-none.
+With native IAB configuration, an IAB policy reports `model: "iab"` and saves
+native-generated `tcString` bytes. Without that configuration, the legacy
+category-only snapshot reports `opt-in`; IAB saves reject rather than claiming
+an IAB commit. The matched resolution retains the policy's `iab` model in both
+cases. The existing bus still projects only policy version and applicability;
+ENG-510 must publish the complete committed authority.
 
 Layout
 ------
@@ -137,7 +136,7 @@ mobile, minus IAB:
     revision: number                  // monotonic, bumps on every mutation
     policyPending: boolean            // true until the first init resolves
     ready: boolean                    // false until hydrate() completed or the first init resolved
-    model: 'opt-in' | 'opt-out' | 'none'   // the reported model; an IAB rule reports `opt-in`
+    model: 'opt-in' | 'opt-out' | 'none' | 'iab' // configured native IAB reports `iab`
     activeUI: 'none' | 'banner' | 'dialog' | null
     effectivePermissions: { necessary, functionality, experience, measurement, marketing }  // all boolean
     consentCategories: string[] | null
@@ -562,6 +561,13 @@ that the backend has them, which no synchronous call can know. Delivery is a
 later fact, reported by the delivered event and by the error that replaced it,
 and the depth stays readable.
 
+IAB decisions atomically store the complete decision and pending body in the
+snapshot envelope. Their latest decision supersedes older queued bodies. Identity
+changes and reset persist an empty consent record and queue, retaining an action
+time watermark. Their failure semantics and migration rules are defined in
+`docs/internal/native-iab-commits.mdx`. The legacy category queue below still uses
+its separate protected key.
+
 Order is what makes the assertion honest. The queue write lands before the
 snapshot moves, and no branch answers committed without a durable entry behind
 it. A save that cannot take on the obligation answers not-ok with the reason and
@@ -786,8 +792,8 @@ the Swift core it stops persistence for the rest of the session, because a write
 revision is not ahead of the last one is refused. Reset moves the current revision by
 one, and the next init continues from there.
 
-It is the one mutation whose own durable effect is a deletion, so it writes no envelope of
-its own. The snapshot key goes rather than getting a null written over it, and the queue
+For category-only state, the durable effect is a deletion, so reset writes no envelope of
+its own. Configured native IAB instead writes an atomic empty record as described above. The snapshot key goes rather than getting a null written over it, and the queue
 goes the same way, because an empty queue as bytes is not the answer a first launch has.
 What is on disk when `reset()` finishes is the subject id and nothing else. The only
 envelope that appears afterwards is the one the init below writes, which is the envelope a

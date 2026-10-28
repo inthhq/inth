@@ -96,18 +96,16 @@ internal object TcSemanticPreEncoder {
 			// of it are pinned in TcSemanticPreEncoderTest. `legIntPurposes` is already known empty
 			// here: this branch is reached through `declared`, which is that field.
 			isLegitimateInterest && vendor.specialPurposes.isNotEmpty() -> true
-			// Nothing left, so the reference has one more question: is the string service-specific,
-			// and if so do this vendor's flexible purposes plus a publisher restriction add up to an
-			// override that permits this basis? Both roads end at unset from here. Globally-scoped
-			// strings skip the question entirely, because purpose restrictions only apply to
-			// service-specific ones. Service-specific strings ask it, and then read
-			// `publisherRestrictions.getRestrictions(vendorId)` for a REQUIRE_CONSENT or REQUIRE_LI
-			// entry -- which for this codec is always empty. TcConsentInput has no field that could
-			// carry a restriction, so the override the reference is looking for cannot be expressed,
-			// `isValid` stays false, and the bit is cleared. Anyone who later adds restriction
-			// authorising has to revisit this branch, not just this comment.
-			else -> false
-		}
+				// Service-specific publisher restrictions can permit a flexible purpose
+				// under a basis the vendor did not otherwise declare.
+				else ->
+					input.isServiceSpecific &&
+						input.publisherRestrictions.restrictions.any { r ->
+							vendorId in r.vendorIds &&
+								r.purposeId in vendor.flexiblePurposes &&
+								r.restrictionTypeValue == if (isLegitimateInterest) 2 else 1
+						}
+			}
 	}
 
 	/** Two six-bit characters, which is all the 12-bit ConsentLanguage field can hold. */

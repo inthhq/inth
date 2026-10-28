@@ -1,0 +1,142 @@
+---
+title: Native IAB commits
+description: Native CMP configuration, complete IAB drafts, atomic persistence, restart validation, and exact backend delivery in Swift and Kotlin.
+---
+
+The Swift and Kotlin cores own IAB choices and generate TC strings without a JS
+runtime. This contract is for native core and platform implementers. RN commands,
+shared SwiftUI and Compose screens, GVL refresh rules, platform key publication,
+and Additional Consent v2 have separate integration work.
+
+## Configure an approved CMP identity
+
+Pass `IABConfiguration` through Swift `CoreConfig.iab`, or `IabConfiguration`
+through Kotlin `NativeConfig.iab`. Supply the approved registered CMP ID, integer
+CMP version and publisher country. There is no default CMP identity. Numeric
+validation accepts IDs 2 through 4095; it does not prove registration, ownership,
+mobile validation or Google certification. Fixture IDs are test data and must
+never become production configuration.
+
+The owner supplied CMP ID 490 for c15t. The official [CMP registry](https://cmp-list.consensu.org/v2/cmp-list.json), updated
+22 October 2026, lists 490 as `Consent Management Inc`, commercial, with the
+`Web` environment only. That identifies the registrant; it does not establish
+mobile approval. The owner handles registration and Google App and AC v2
+certification. Mobile validation and approval of the exact native candidate builds
+remain external release gates. Keep 490 explicit in deployment configuration;
+it is not a universal SDK default.
+
+Configuration also carries the disclosure language, consent screen number,
+custom-purpose count and publisher restrictions. Language and country codes must
+be two uppercase ASCII letters. The default language is `EN`, screen is 1 and
+custom-purpose count is 0. Restrictions use TCF types 0 for not allowed, 1 for
+require consent and 2 for require legitimate interest. The authority validates
+each restriction against the vendor's declared and flexible legal bases.
+
+The authoring profile is service-specific, uses standard texts and discloses
+Purpose 1. The native codecs retain their existing UTC-day timestamp encoding.
+The exact action time remains in the committed record and backend body.
+
+## Commit a complete native draft
+
+Swift `IABChoices` and Kotlin `IabChoices` hold purpose consent, purpose legitimate
+interest and objections, vendor consent, vendor legitimate interest and
+objections, special-feature opt-ins, publisher consent and legitimate interest,
+and custom publisher purposes. An absent ID has no positive signal. Purpose and
+vendor objections cannot overlap their corresponding legitimate-interest grants.
+LI is prohibited for purposes 1, 3, 4, 5 and 6. Unknown IDs and duplicates reject
+the whole action. Native codecs prune vendor signals that have no supported basis;
+the committed choices expose that normalized result.
+
+Use Swift `save(.iab(choices, categories: categories), expectedRevision: revision)`
+or Kotlin `save(CommitIntent.Iab(choices, categories), expectedRevision = revision)`.
+Capture the revision when opening the native draft. A changed revision rejects
+with `concurrent-change`, leaving the current decision intact. The category map
+records the app categories this action confirmed; it is separate from IAB purpose
+and vendor permissions.
+
+Under an IAB policy, `all` builds the complete native acceptance and `necessary`
+withdraws every optional IAB signal. A category-only custom action rejects with
+`iab-choices-required`. Missing CMP configuration or a missing disclosed GVL
+rejects with `iab-unavailable`. An IAB draft under another policy also rejects.
+Configuration and selection validation failures report `invalid-iab-choices`.
+
+Read the current committed record through Swift `iabConsent()` or Kotlin
+`iabConsent`. Native vendor startup can call Swift `isIABAllowed` or Kotlin
+`isIabAllowed`, supplying both vendor ID and purpose ID with the intended legal
+basis. These checks include expiry, policy validity and publisher restrictions.
+A category grant alone does not authorize an IAB vendor-purpose pair.
+
+## Persist and deliver one decision
+
+Before publishing a grant, the core atomically replaces one protected snapshot
+item containing the evaluated snapshot, complete IAB record, consent version,
+generated TC string and immutable pending HTTP body. No second queue write is
+needed for an IAB commit. A failed authoritative write rejects the action with
+`queue-write-failed` and preserves the previous state and pending body.
+
+Swift `ConsentStore.set` must atomically replace an item and return only after
+storage acknowledges it. Kotlin `KeyValueStore.writeDurably` has the same
+obligation. Buffered adapters must override it. The Android fallback uses
+synchronous SharedPreferences `commit`; an in-memory `apply` acknowledgement is
+insufficient. The encrypted file adapter syncs a temporary file before renaming
+it and preserves the previous file if replacement fails. Vendor storage is a
+projection; a failed mirror write cannot undo the authoritative commit.
+
+`committed` means local persistence succeeded. It does not mean the backend
+accepted the request. Delivery sends `tcString` and `model: "iab"` through the real
+`POST /subjects` contract beside category receipts, policy inputs, identity and
+`givenAt`. Retry and restart reuse the exact saved HTTP bytes, including their
+original domain. Retry bookkeeping updates the same envelope without changing
+the decision or body. Existing attempt and retention ceilings still apply.
+
+A newer IAB decision supersedes older queued IAB decisions. A withdrawal therefore
+cannot replay an older queued acceptance. Delivery also checks the actual saved
+body against the current TC string, identity and action time. An already started
+request may finish after a withdrawal; the core cannot recall a request already
+on the network.
+
+Backend consent IDs include `givenAt`. The core advances IAB action times by at
+least one millisecond, even when the clock repeats. A durable timestamp watermark
+survives reset and identity changes so a later decision cannot reuse an earlier
+submission ID. The TC creation day stays unchanged across edits to the same
+consent record; consent version increments per successful decision.
+
+## Hydrate and invalidate authority
+
+Hydration validates stored IAB choices before exposing authority. It checks CMP
+and publisher configuration, subject and external identity, policy fingerprint,
+GVL and TCF policy versions, expiry and regenerated TC bytes. Invalid or expired
+records lose their grants and pending deliveries. A changed list or configuration
+currently requires a fresh decision; ENG-509 owns finer retention and refresh
+rules. A cached compatible list can support offline commits. This does not prove
+that the list is fresh enough for release.
+
+Existing category-only envelopes still hydrate for apps without native IAB
+configuration. Enabling native IAB configuration requires a valid native IAB
+record or fresh consent. Category-only backend receipts cannot restore native
+IAB grants. Older SDKs reject envelopes with unknown authority fields and require
+a fresh decision; do not rely on downgrades preserving these choices.
+
+Identify, logout and reset atomically persist an empty consent state and empty
+pending queue before publishing the transition. A failed write keeps the previous
+identity and consent state and emits `identity-write-failed` or
+`reset-write-failed`. Reset retains app configuration and the installation subject
+ID, then requests a new policy. These operations do not erase backend audit
+history. A durable empty record avoids restoring an earlier acceptance after a
+failed deletion.
+
+## Verify the contract and remaining release gates
+
+`native/protocol/iab/commit-cases.json` comes from the pinned reference codec.
+Both native suites consume it for acceptance, rejection, custom choices,
+objections and publisher restrictions. Native tests also exercise file restart,
+failed writes, concurrent commits, expiry, identity transitions and withdrawal.
+The fixture generator and its Vitest test are development tools only.
+
+This work does not establish device behavior, vendor SDK interoperability,
+performance, registry publication or certification. First release still requires
+TCF 2.4 disclosures, including GVL `standardTexts.features`, approved CMP identity
+and mobile registration, complete typed IABTCF publication before vendor startup,
+Google App certification and AC v2 support. ENG-509, ENG-510 and ENG-511 remain
+required. The selected native screens and RN adapter must consume this authority
+without creating a JS consent or TCF engine.

@@ -57,6 +57,8 @@ public struct CoreConfig: @unchecked Sendable {
     /// publisher-custom id costs nothing, and the list's framework half -- purposes,
     /// features, stacks, and both version numbers -- is never touched by a scope.
     public let vendors: [Int]?
+    /// Approved CMP identity and publisher settings, required for native IAB commits.
+    public let iab: IABConfiguration?
     public let overrides: ConsentOverrides
     public let user: KernelUser?
     /// The Global Privacy Control signal as the host app reports it.
@@ -91,6 +93,7 @@ public struct CoreConfig: @unchecked Sendable {
         transport: (any C15tTransport)? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
+        iab: IABConfiguration? = nil,
         overrides: ConsentOverrides = .default(),
         user: KernelUser? = nil,
         gpc: Bool? = nil,
@@ -103,6 +106,7 @@ public struct CoreConfig: @unchecked Sendable {
         self.transport = transport
         self.consentCategories = consentCategories
         self.vendors = vendors
+        self.iab = iab
         self.overrides = overrides
         self.user = user
         self.gpc = gpc
@@ -137,6 +141,32 @@ public final class ConsentCore: @unchecked Sendable {
     private var resolvedPolicy: ResolvedPolicy?
     private var policyWire: JSONValue?
     private var noticeDismissal: NoticeDismissal?
+    private var lastIABActionAt: Int64?
+    private var committedIAB: IABCommittedConsent?
+
+    /// The last native decision. The bridge does not receive the full draft.
+    public func iabConsent() -> IABCommittedConsent? {
+        lock.withLock {
+            guard let saved = committedIAB, let resolved = resolvedPolicy, resolved.policy.model == .iab,
+                !currentSnapshot.policyPending,
+                let now = config?.now(), saved.isCurrent(now: now, maxAge: resolved.policy.choiceMaxAgeMs)
+            else { return nil }
+            return saved
+        }
+    }
+    /// Check a vendor and purpose together from current native authority, before JS starts.
+    public func isIABAllowed(vendorId: Int, purposeId: Int, basis: IABLegalBasis) -> Bool {
+        // Read authority and its disclosure under the same lock as the commit.
+        lock.withLock {
+            guard let saved = committedIAB, let gvl = currentSnapshot.iab?.gvl,
+                let resolved = resolvedPolicy, !currentSnapshot.policyPending,
+                resolved.policy.model == .iab, saved.fingerprint == resolved.choiceFingerprint,
+                let now = config?.now(), saved.isCurrent(now: now, maxAge: resolved.policy.choiceMaxAgeMs)
+            else { return false }
+            return saved.allows(vendorId: vendorId, purposeId: purposeId, basis: basis, gvl: gvl)
+        }
+    }
+
     private var user: KernelUser?
     private var overrides = ConsentOverrides.default()
     /// The overrides the host configured, as opposed to the ones the snapshot carries.
@@ -432,10 +462,10 @@ public final class ConsentCore: @unchecked Sendable {
     /// with `queue-write-failed`, `not-bootstrapped`, `no-subject`, or
     /// `concurrent-change`, and changes nothing.
     @discardableResult
-    public func save(_ intent: CommitIntent) -> CommitResult {
+    public func save(_ intent: CommitIntent, expectedRevision: Int? = nil) -> CommitResult {
         // Captured first: a save that took 40 ms to build a body must still report
         // the instant the subject acted.
-        let actionAt = (lock.withLock { config }?.now ?? Self.wallClock)()
+        var actionAt = (lock.withLock { config }?.now ?? Self.wallClock)()
 
         struct Planned {
             let payload: SavePayload
@@ -452,9 +482,16 @@ public final class ConsentCore: @unchecked Sendable {
             let result: CommitResult
             /// The acknowledgement this action records, installed with `next`.
             let acknowledgement: NoticeDismissal?
+            let iabConsent: IABCommittedConsent?
         }
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
+            if let expectedRevision, expectedRevision != currentSnapshot.revision {
+                return .failure(
+                    CoreErrorInfo(
+                        code: "concurrent-change",
+                        message: "The draft was based on an older consent snapshot."))
+            }
             guard let queue else {
                 return .failure(CoreErrorInfo(
                     code: "not-bootstrapped",
@@ -476,6 +513,48 @@ public final class ConsentCore: @unchecked Sendable {
                 ))
             }
 
+            var nextIAB: IABCommittedConsent?
+            if resolved.policy.model == .iab {
+                if let previous = lastIABActionAt {
+                    guard previous < Int64.max else {
+                        return .failure(
+                            CoreErrorInfo(
+                                code: "invalid-action-time",
+                                message: "The previous action time cannot be advanced."))
+                    }
+                    actionAt = max(actionAt, previous + 1)
+                }
+                guard let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else {
+                    return .failure(
+                        CoreErrorInfo(
+                            code: "iab-unavailable",
+                            message: "IAB saves require CMP configuration and a disclosed vendor list."))
+                }
+                let choices: IABChoices
+                switch intent {
+                case .all: choices = IABAuthority.accepting(gvl, configuration: configuration)
+                case .necessary: choices = IABChoices()
+                case let .iab(draft, _): choices = draft
+                case .custom:
+                    return .failure(
+                        CoreErrorInfo(
+                            code: "iab-choices-required",
+                            message: "Save the complete native IAB draft with category choices."))
+                }
+                do {
+                    nextIAB = try IABAuthority.build(
+                        configuration: configuration, choices: choices,
+                        gvl: gvl, subjectId: identity.id, externalId: user?.externalId,
+                        fingerprint: resolved.choiceFingerprint, actionAt: actionAt, previous: committedIAB)
+                } catch let info as CoreErrorInfo { return .failure(info) } catch {
+                    return .failure(
+                        CoreErrorInfo(code: "invalid-iab-choices", message: "Native IAB validation failed."))
+                }
+            } else if case .iab = intent {
+                return .failure(
+                    CoreErrorInfo(code: "iab-unavailable", message: "The resolved policy does not use IAB."))
+            }
+
             // A bulk action covers the categories the prompt asks about, which is
             // what `resolveSaveSelection` in `packages/core` narrows it to.
             let choiceScope = choiceScopeLocked(resolved)
@@ -491,7 +570,7 @@ public final class ConsentCore: @unchecked Sendable {
             switch intent {
             case .all: action = coversShown ? .all : .custom
             case .necessary: action = coversShown ? .necessary : .custom
-            case .custom: action = .custom
+            case .custom, .iab: action = .custom
             }
 
             let choice = ExplicitChoice(
@@ -536,7 +615,9 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.promptRequirement = evaluation.promptRequirement
                 draft.nextDeadline = evaluation.nextDeadline
                 draft.evaluatedAt = actionAt
-                draft.model = resolved.policy.model.runtimeModel
+                draft.model =
+                    config?.iab != nil && resolved.policy.model == .iab
+                    ? .iab : resolved.policy.model.runtimeModel
                 // Visibility follows the remaining obligation, not the fact that an
                 // action was taken: a choice save under a notice rule still owes the
                 // notice, so the first layer stays. Same rule as `deriveActiveUI`.
@@ -557,7 +638,7 @@ public final class ConsentCore: @unchecked Sendable {
                 consents: evaluation.permissions,
                 overrides: wireOverrides,
                 user: user,
-                model: resolved.policy.model.runtimeModel,
+                model: nextIAB != nil ? .iab : resolved.policy.model.runtimeModel,
                 uiSource: surfaceAtAction,
                 consentAction: action,
                 policySnapshotToken: next.policySnapshotToken,
@@ -569,7 +650,8 @@ public final class ConsentCore: @unchecked Sendable {
                     language: overrides.language,
                     gpc: gpcSignal.active
                 ),
-                givenAt: actionAt
+                givenAt: actionAt,
+                tcString: nextIAB?.tcString
             )
 
             do {
@@ -590,7 +672,8 @@ public final class ConsentCore: @unchecked Sendable {
                         consentAction: action,
                         confirmed: receipts
                     ),
-                    acknowledgement: acknowledgement
+                        acknowledgement: acknowledgement,
+                        iabConsent: nextIAB
                 ))
             } catch {
                 return .failure(CoreErrorInfo(
@@ -619,13 +702,37 @@ public final class ConsentCore: @unchecked Sendable {
             // sent and never reported committed, because delivering something nothing
             // remembers is how duplicates happen and promising something nothing
             // remembers is how decisions go missing.
-            guard let queuedID = plan.queue.enqueue(
-                body: plan.body,
-                subjectId: plan.payload.subjectId,
-                actionAt: plan.payload.confirmed.actionAt
-            ) else {
+            let atomicID: String? = lock.withLock {
+                guard plan.iabConsent != nil, currentSnapshot.revision == plan.baseRevision,
+                    let config
+                else { return nil }
+                let envelope = StoredEnvelope(
+                    snapshot: plan.next,
+                    noticeDismissal: plan.acknowledgement ?? noticeDismissal,
+                    policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent)
+                guard
+                    let id = plan.queue.commit(
+                        envelope, body: plan.body,
+                        subjectId: plan.payload.subjectId, actionAt: actionAt)
+                else { return nil }
+                committedIAB = plan.iabConsent
+                lastIABActionAt = actionAt
+                currentSnapshot = plan.next
+                noticeDismissal = plan.acknowledgement ?? noticeDismissal
+                persistedRevision = plan.next.revision
+                config.storageBus?.write(TcStorageBus.values(for: envelope))
+                return id
+            }
+            let queued =
+                plan.iabConsent != nil
+                ? atomicID
+                : plan.queue.enqueue(
+                    body: plan.body, subjectId: plan.payload.subjectId,
+                    actionAt: plan.payload.confirmed.actionAt)
+            guard let queuedID = queued else {
+                let changed = lock.withLock { currentSnapshot.revision != plan.baseRevision }
                 let info = CoreErrorInfo(
-                    code: "queue-write-failed",
+                    code: changed ? "concurrent-change" : "queue-write-failed",
                     message: "Pending save could not be persisted, so the decision was not recorded and nothing was sent."
                 )
                 events.emit(.error(info))
@@ -644,6 +751,7 @@ public final class ConsentCore: @unchecked Sendable {
             // withdrawn rather than replayed over it, and the caller is told the
             // action did not take.
             let applied = lock.withLock { () -> Bool in
+                if plan.iabConsent != nil { return true }
                 guard currentSnapshot.revision == plan.baseRevision else { return false }
                 currentSnapshot = plan.next
                 if let acknowledgement = plan.acknowledgement {
@@ -694,7 +802,7 @@ public final class ConsentCore: @unchecked Sendable {
                     // reach here, so an entry that is already gone was landed by the
                     // pass that held the core before this one; re-sending the same
                     // frozen bytes would buy a second POST for one decision.
-                    guard queue.isPending(id: queuedID) else { return }
+                    guard queue.isPending(id: queuedID), self.canDeliverIAB(body) else { return }
 
                     switch await transport.sendSave(body) {
                     case .success:
@@ -827,14 +935,25 @@ public final class ConsentCore: @unchecked Sendable {
     /// Attach an identified user. The c15t subject id does not change: an external
     /// id is a second key on the same subject, not a new subject.
     public func identify(_ user: KernelUser) {
+        let transition = transitionIAB(user: user, reset: false)
+        if transition == false {
+            events.emit(
+                .error(
+                    CoreErrorInfo(
+                        code: "identity-write-failed",
+                        message: "Identity was not changed because its consent reset could not be persisted.")
+                ))
+            return
+        }
         let identity = lock.withLock { () -> SubjectIdentity? in
+            if transition == true { return self.identity }
             self.user = user
             currentSnapshot = currentSnapshot.byApplying { draft in
                 draft.subject = self.identity.map { $0.snapshot(externalId: user.externalId) }
             }
             return self.identity
         }
-        publish(persist: true)
+        publish(persist: transition == nil)
         guard let identity else { return }
         schedule {
             guard let transport = self.transport else { return }
@@ -852,6 +971,19 @@ public final class ConsentCore: @unchecked Sendable {
     /// subject's decisions belong to the device's subject, not to the account that
     /// happened to be signed in when they were made.
     public func logout() {
+        if let changed = transitionIAB(user: nil, reset: false) {
+            if changed {
+                publish(persist: false)
+            } else {
+                events.emit(
+                    .error(
+                        CoreErrorInfo(
+                            code: "identity-write-failed",
+                            message:
+                                "Logout was not recorded because its consent reset could not be persisted.")))
+            }
+            return
+        }
         lock.withLock {
             user = nil
             currentSnapshot = currentSnapshot.byApplying { draft in
@@ -929,9 +1061,21 @@ public final class ConsentCore: @unchecked Sendable {
     /// waits for it. The entries still queued carry a decision the subject just withdrew,
     /// and the one already on the wire was current when it was made.
     public func reset() {
+        if let changed = transitionIAB(user: lock.withLock { user }, reset: true) {
+            if changed {
+                publish(persist: false); scheduleInit(attempt: 1)
+            } else {
+                events.emit(
+                    .error(
+                        CoreErrorInfo(
+                            code: "reset-write-failed", message: "Consent reset could not be persisted.")))
+            }
+            return
+        }
         let wired = lock.withLock {
             () -> (store: any ConsentStore, queue: PendingSaveQueue, bus: (any TcStorageBusWriting)?)? in
             let now = (config?.now ?? Self.wallClock)()
+            committedIAB = nil
             resolvedPolicy = nil
             policyWire = nil
             noticeDismissal = nil
@@ -1052,13 +1196,19 @@ public final class ConsentCore: @unchecked Sendable {
 
             self.policyWire = envelope?.policyResolution
             self.noticeDismissal = envelope?.noticeDismissal
+            self.committedIAB = envelope?.iabConsent
+            let watermark = envelope?.lastIABActionAt ?? envelope?.iabConsent?.actionAt
+            let now = config.now()
+            self.lastIABActionAt = watermark.flatMap { $0 >= 0 && now >= 0 && $0 - now <= 600_000 ? $0 : nil }
 
             if let wire = envelope?.policyResolution {
                 switch PolicyWireReader.read(wire) {
                 case let .resolved(resolved):
                     self.resolvedPolicy = resolved
                     draft.resolution = resolved.resolution
-                    draft.model = resolved.policy.model.runtimeModel
+                    draft.model =
+                        config.iab != nil && resolved.policy.model == .iab
+                        ? .iab : resolved.policy.model.runtimeModel
                     draft.policyPending = false
                     draft.error = nil
                 case let .rejected(reason, message):
@@ -1324,7 +1474,7 @@ public final class ConsentCore: @unchecked Sendable {
             var receipts: [OptionalConsentCategory: Bool] = [:]
             for category in scope { receipts[category] = false }
             return receipts
-        case let .custom(map):
+        case let .custom(map), let .iab(_, map):
             // Exactly what the form sent. Categories outside scope are still
             // recorded: the evaluator masks them, and a later policy that brings
             // them into scope should find the answer the subject already gave.
@@ -1332,10 +1482,79 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
+    private func validateIABLocked() {
+        guard config?.iab != nil || committedIAB != nil else { return }
+        guard resolvedPolicy?.policy.model == .iab || committedIAB != nil else { return }
+        let valid: Bool
+        if let saved = committedIAB, let c = config?.iab, saved.configuration == c,
+            let now = config?.now(),
+            saved.isCurrent(now: now, maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0),
+            let gvl = currentSnapshot.iab?.gvl,
+            saved.vendorListVersion == gvl.vendorListVersion, saved.policyVersion == gvl.tcfPolicyVersion,
+            saved.subjectId == identity?.id, saved.externalId == user?.externalId,
+            resolvedPolicy?.policy.model == .iab, saved.fingerprint == resolvedPolicy?.choiceFingerprint,
+            let rebuilt = try? IABAuthority.build(
+                configuration: c, choices: saved.choices,
+                gvl: gvl, subjectId: saved.subjectId, externalId: saved.externalId,
+                fingerprint: saved.fingerprint, actionAt: saved.actionAt, previous: saved)
+        {
+            valid = rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices
+        } else {
+            valid = false
+        }
+        if !valid {
+            committedIAB = nil
+            var draft = ConsentSnapshot.Draft(current: currentSnapshot)
+            draft.explicitChoice = nil
+            currentSnapshot = draft.build(revision: currentSnapshot.revision)
+            queue?.clear()
+        }
+    }
+
+    /// Identity changes and reset use a durable empty decision, so a failed deletion
+    /// cannot restore an earlier grant on the next launch.
+    private func transitionIAB(user nextUser: KernelUser?, reset: Bool) -> Bool? {
+        lock.withLock {
+            guard let config, let queue, config.iab != nil || committedIAB != nil else { return nil }
+            var next = currentSnapshot.byApplying { draft in
+                draft.explicitChoice = nil
+                draft.effectivePermissions = .necessaryOnly
+                draft.subject = identity?.snapshot(externalId: nextUser?.externalId)
+                if reset {
+                    draft.iab = nil; draft.policyPending = true; draft.ready = false
+                    draft.resolution = .pending; draft.policySnapshotToken = nil
+                    draft.activeUI = .none; draft.promptRequirement = .none
+                    draft.restrictions = [:]; draft.nextDeadline = nil
+                }
+            }
+            if !reset, let resolved = resolvedPolicy {
+                let e = PolicyEvaluator.evaluate(
+                    resolved, choice: nil, noticeDismissal: nil,
+                    gpcActive: gpcSignal.active, now: config.now(), choiceScope: choiceScopeLocked(resolved))
+                next = next.byApplying { draft in
+                    draft.effectivePermissions = e.permissions; draft.promptRequirement = e.promptRequirement
+                    draft.restrictions = e.restrictions; draft.nextDeadline = e.nextDeadline
+                    draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
+                }
+            }
+            let envelope = StoredEnvelope(
+                snapshot: next, noticeDismissal: nil,
+                policyResolution: reset ? nil : policyWire, storedAt: config.now(),
+                lastIABActionAt: lastIABActionAt)
+            guard queue.replace(envelope) else { return false }
+            currentSnapshot = next; committedIAB = nil; noticeDismissal = nil; user = nextUser
+            persistedRevision = next.revision
+            if reset { resolvedPolicy = nil; policyWire = nil; restoredFromStore = false }
+            config.storageBus?.clear()
+            return true
+        }
+    }
+
     /// Re-run the evaluator against the current policy and records. Callers must
     /// already hold the lock.
-    private func reevaluateLocked(now: Int64) {
+    private func reevaluateLocked(now: Int64, bumpRevision: Bool = true) {
         guard let resolved = resolvedPolicy, !currentSnapshot.policyPending else { return }
+        validateIABLocked()
         let evaluation = PolicyEvaluator.evaluate(
             resolved,
             choice: currentSnapshot.explicitChoice,
@@ -1344,17 +1563,18 @@ public final class ConsentCore: @unchecked Sendable {
             now: now,
             choiceScope: choiceScopeLocked(resolved)
         )
-        currentSnapshot = currentSnapshot.byApplying { draft in
+        var draft = ConsentSnapshot.Draft(current: currentSnapshot)
             draft.effectivePermissions = evaluation.permissions
             draft.restrictions = evaluation.restrictions
             draft.promptRequirement = evaluation.promptRequirement
             draft.nextDeadline = evaluation.nextDeadline
             draft.evaluatedAt = now
-            draft.model = resolved.policy.model.runtimeModel
+        draft.model =
+            config?.iab != nil && resolved.policy.model == .iab ? .iab : resolved.policy.model.runtimeModel
             draft.activeUI = evaluation.promptRequirement.kind == .none
                 ? ActiveUI.none
                 : ActiveUI.banner
-        }
+        currentSnapshot = draft.build(revision: currentSnapshot.revision + (bumpRevision ? 1 : 0))
     }
 
     /// Publish the current snapshot to observers, then persist it.
@@ -1372,28 +1592,27 @@ public final class ConsentCore: @unchecked Sendable {
     /// Write the envelope. Encoding happens under the lock; the write does not.
     private func persistEnvelope() {
         struct Write {
-            let store: any ConsentStore
-            let data: Data
-            let revision: Int
+            let envelope: StoredEnvelope
+            let queue: PendingSaveQueue
             let bus: (any TcStorageBusWriting)?
             let busValues: [String: TcBusValue]
         }
         let pending: Write? = lock.withLock {
-            guard let config, currentSnapshot.revision > persistedRevision else { return nil }
+            guard let config, let queue, currentSnapshot.revision > persistedRevision else { return nil }
             let envelope = StoredEnvelope(
                 snapshot: currentSnapshot,
                 noticeDismissal: noticeDismissal,
                 policyResolution: policyWire,
-                storedAt: config.now()
+                storedAt: config.now(),
+                iabConsent: committedIAB,
+                lastIABActionAt: lastIABActionAt
             )
-            guard let data = try? C15tJSON.encode(envelope) else { return nil }
             // Claim the revision before releasing the lock, so two overlapping
             // publishes cannot both decide they are the newest writer.
             persistedRevision = currentSnapshot.revision
             return Write(
-                store: config.store,
-                data: data,
-                revision: currentSnapshot.revision,
+                envelope: envelope,
+                queue: queue,
                 bus: config.storageBus,
                 busValues: TcStorageBus.values(for: envelope)
             )
@@ -1402,7 +1621,7 @@ public final class ConsentCore: @unchecked Sendable {
         // The write is outside the lock. A failed write leaves the claimed revision
         // alone on purpose: the next mutation writes again, and rolling the claim
         // back would let an older envelope overtake a newer one.
-        let committed = pending.store.encode(pending.data, for: StorageKey.snapshot)
+        let committed = pending.queue.persist(pending.envelope)
         // The bus is a projection of the committed step, so it moves only when
         // the authoritative write moved: a mirror of state that never landed on
         // disk is the one thing the bus must never become. A store write that
@@ -1410,7 +1629,11 @@ public final class ConsentCore: @unchecked Sendable {
         // ``rebuildTcStorageBus``, and the next launch's hydrate enforces the
         // rule either way.
         if committed {
-            pending.bus?.write(pending.busValues)
+            lock.withLock {
+                if currentSnapshot.revision == pending.envelope.snapshot.revision {
+                    pending.bus?.write(pending.busValues)
+                }
+            }
         }
     }
 
@@ -1541,7 +1764,7 @@ public final class ConsentCore: @unchecked Sendable {
             // Server-mapped receipts merge in per category, newest wins. A local
             // receipt that has not reached the backend yet is newer than anything
             // the server can say about it, and must survive the round trip.
-            if let records = response.records {
+            if config?.iab == nil, let records = response.records {
                 draft.explicitChoice = merge(records: records)
             }
 
@@ -1559,7 +1782,9 @@ public final class ConsentCore: @unchecked Sendable {
                 // lost signal keeps the snapshot the contract says it may serve.
                 draft.ready = true
                 draft.resolution = resolved.resolution
-                draft.model = resolved.policy.model.runtimeModel
+                draft.model =
+                    config?.iab != nil && resolved.policy.model == .iab
+                    ? .iab : resolved.policy.model.runtimeModel
                 draft.error = nil
 
                 let evaluation = PolicyEvaluator.evaluate(
@@ -1602,6 +1827,7 @@ public final class ConsentCore: @unchecked Sendable {
             // back to the full optional set the pending evaluator uses.
             draft.consentCategories = decidedCategories(self.resolvedPolicy)
             currentSnapshot = draft.build(revision: currentSnapshot.revision + 1)
+            if config?.iab != nil || committedIAB != nil { reevaluateLocked(now: nowMs, bumpRevision: false) }
         }
 
         publish(persist: true)
@@ -1804,13 +2030,26 @@ public final class ConsentCore: @unchecked Sendable {
     /// Only ``requestDeliveryPass(ownSend:)`` may call this, which is what keeps a
     /// second copy of the loop from reading the queue while a send from the first is
     /// still open.
+    private func canDeliverIAB(_ body: Data) -> Bool {
+        let wire = C15tJSON.parse(body)
+        let tcString = wire?["tcString"]?.stringValue
+        let requiresIAB = wire?["model"]?.stringValue == "iab" || lock.withLock { config?.iab != nil && resolvedPolicy?.policy.model == .iab }
+        if tcString == nil && !requiresIAB { return true }
+        guard let saved = iabConsent() else { return false }
+        return tcString == saved.tcString && wire?["subjectId"]?.stringValue == saved.subjectId
+            && wire?["givenAt"]?.intValue == saved.actionAt
+            && wire?["externalSubjectId"]?.stringValue == saved.externalId
+            && wire?["model"]?.stringValue == "iab"
+    }
+
     private func runDeliveryPass() async -> ReplayReport {
         guard let transport = self.transport else { return .empty }
         let queue = lock.withLock { self.queue }
         guard let queue else { return .empty }
         // Nothing can be delivered to a producer whose contract this build cannot
         // read, and the queue already holds the bodies for a later attempt.
-        let report = await queue.replay(using: transport) { entry, result in
+        let report = await queue.replay(using: transport, shouldDeliver: { self.canDeliverIAB($0.body) }) {
+            entry, result in
             self.events.emit(.saveReplayed(subjectId: entry.subjectId, ok: result.isSuccess))
         } onDrop: { entry, error, outcome in
             // A pass that reported only deliveries would leave this entry missing
@@ -1914,7 +2153,7 @@ extension CommitIntent {
         switch self {
         case .all: return .all
         case .necessary: return .necessary
-        case .custom: return .custom
+        case .custom, .iab: return .custom
         }
     }
 }

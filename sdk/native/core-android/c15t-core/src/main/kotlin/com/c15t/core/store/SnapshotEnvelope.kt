@@ -4,6 +4,7 @@ import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.policy.EvaluationPolicy
 import com.c15t.core.policy.NoticeDismissal
 import com.c15t.core.tc.GlobalVendorList
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -18,6 +19,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SnapshotEnvelope(
 	val snapshot: ConsentSnapshot,
+	@SerialName("lastIABActionAt") val lastIabActionAt: Long? = null,
+	val iabConsent: com.c15t.core.iab.IabCommittedConsent? = null,
+	val pendingSaves: List<com.c15t.core.model.QueuedSave>? = null,
 	val evaluationPolicy: EvaluationPolicy? = null,
 	val noticeDismissal: NoticeDismissal? = null,
 	/**

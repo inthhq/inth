@@ -74,16 +74,9 @@ data class TcCoreSegment(
 	/**
 	 * The core field that stops this segment from being written back, or null if none does.
 	 *
-	 * Two fields carry more than this build's encoder is willing to say. Publisher restrictions are
-	 * a GVL-semantic structure -- the reference filters them against each vendor's declared and
-	 * flexible purposes before writing one -- and PurposeOneTreatment is a policy statement about
-	 * whether Purpose 1 was disclosed at all. c15t's web codec never sets either, so a mobile
-	 * encoder that wrote them would be inventing behaviour with no web counterpart to check it
-	 * against. Refusing is the honest move: the alternative is a string that decodes with the
-	 * constraint gone, which is a consent state quietly edited.
-	 *
-	 * Callers use this to separate "round-trip this string" from "decode it and stop": nothing here
-	 * fails just because a string carries one of the two.
+	 * Re-emitting a decoded restriction still requires GVL validation. Authoring from the native
+	 * authority supplies that validation before this wire step. PurposeOneTreatment remains
+	 * unsupported for authored consent.
 	 */
 	val fieldBlockingEncode: String?
 		get() = when {
@@ -93,8 +86,9 @@ data class TcCoreSegment(
 		}
 
 	/** Write the segment, which throws for the two fields named by [fieldBlockingEncode]. */
-	fun write(writer: BitWriter) {
-		fieldBlockingEncode?.let {
+	fun write(writer: BitWriter, authoring: Boolean = false) {
+		val blocked = if (authoring && !purposeOneTreatment) null else fieldBlockingEncode
+		blocked?.let {
 			throw TcEncodingException("refusing to encode $it: this codec does not write it, and dropping it would change the consent state")
 		}
 		writer.appendInt(version.toLong(), VERSION_BITS)
@@ -115,7 +109,7 @@ data class TcCoreSegment(
 		writer.appendLetters(publisherCountryCode, PUBLISHER_COUNTRY_CODE_BITS)
 		vendorConsents.write(writer)
 		vendorLegitimateInterests.write(writer)
-		writer.appendInt(0L, TcPublisherRestrictions.NUM_RESTRICTIONS_BITS)
+		publisherRestrictions.write(writer)
 	}
 
 	companion object {

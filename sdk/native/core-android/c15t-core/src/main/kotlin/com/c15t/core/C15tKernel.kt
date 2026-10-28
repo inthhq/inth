@@ -1,19 +1,21 @@
 package com.c15t.core
 
+import com.c15t.core.iab.*
 import com.c15t.core.model.ActiveUI
+import com.c15t.core.model.ConfirmedCoverage
 import com.c15t.core.model.ConsentAction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentDecision
+import com.c15t.core.model.ConsentModel
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.ConfirmedCoverage
 import com.c15t.core.model.DecisionInputs
 import com.c15t.core.model.ExplicitChoice
 import com.c15t.core.model.GpcSignal
+import com.c15t.core.model.KernelError
 import com.c15t.core.model.KernelIabState
+import com.c15t.core.model.KernelOverrides
+import com.c15t.core.model.KernelUser
 import com.c15t.core.model.PrivacySignals
 import com.c15t.core.model.QueuedSave
 import com.c15t.core.model.SavePayload
@@ -32,26 +34,25 @@ import com.c15t.core.tc.GlobalVendorList
 import com.c15t.core.tc.GlobalVendorListJson
 import com.c15t.core.tc.narrowToVendorIds
 import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.MappedInit
 import com.c15t.core.transport.InitContext
 import com.c15t.core.transport.InitMapper
+import com.c15t.core.transport.MappedInit
 import com.c15t.core.transport.SaveOutcome
 import com.c15t.core.transport.TransportOutcome
-import kotlinx.serialization.json.JsonObject
 import java.lang.ref.WeakReference
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.serialization.json.*
 
 /**
  * The answer of one send of a queued body.
  *
- * [Reached] is the only case that lets a caller stop owing the body, and it is a claim
- * about storage rather than about the network: the entry is gone from disk. A `save()` that
- * has not been answered at all is a `null` in an atomic, not a case here -- see
- * [C15tKernel.save].
+ * [Reached] is the only case that lets a caller stop owing the body, and it is a claim about
+ * storage rather than about the network: the entry is gone from disk. A `save()` that has not been
+ * answered at all is a `null` in an atomic, not a case here -- see [C15tKernel.save].
  */
 private sealed interface Delivery {
 	/** The backend accepted the body and the queue released the entry. */
@@ -63,12 +64,13 @@ private sealed interface Delivery {
 	/** The producer answered, and did not accept. */
 	data class Refused(val attempt: FailedAttempt, val error: KernelError) : Delivery
 }
+
 /**
  * What one delivery pass did, as [C15tKernel.requestDeliveryPass] hands it back.
  *
- * Private to the core: `FlushResult` is the shape a host sees, and this carries the one fact a
- * host has no use for -- whether the pass stopped because no sender could be reached at all,
- * which is what decides whether reading the queue again is worth anything.
+ * Private to the core: `FlushResult` is the shape a host sees, and this carries the one fact a host
+ * has no use for -- whether the pass stopped because no sender could be reached at all, which is
+ * what decides whether reading the queue again is worth anything.
  */
 private class PassReport(
 	val delivered: Int,
@@ -88,22 +90,20 @@ private class PassReport(
 /**
  * The consent engine.
  *
- * One immutable [ConsentSnapshot] is the whole state, held in an
- * [AtomicReference] and replaced on every mutation. That shape is the contract's
- * central performance rule: [snapshot], [isAllowed], [decision], and [isReady] are a
- * single volatile read with no lock, no disk, and no allocation, which is what lets an
- * ad SDK call them from the main thread while a save is in flight.
+ * One immutable [ConsentSnapshot] is the whole state, held in an [AtomicReference] and replaced on
+ * every mutation. That shape is the contract's central performance rule: [snapshot], [isAllowed],
+ * [decision], and [isReady] are a single volatile read with no lock, no disk, and no allocation,
+ * which is what lets an ad SDK call them from the main thread while a save is in flight.
  *
- * Mutation paths hold [mutationLock] only while they compute the next snapshot in
- * memory. Persistence and network always happen after the lock is released.
+ * Mutation paths hold [mutationLock] only while they compute the next snapshot in memory.
+ * Persistence and network always happen after the lock is released.
  *
  * @param store Typed persistence over the host's storage.
  * @param transport Backend commands; [C15tTransport.NONE] keeps the core local-only.
- * @param executor Where init and write delivery run. [TaskExecutor.DIRECT] runs
- * them inline, which is what the tests use to make ordering observable. It does not have to
- * be serial: a delivery pass is guarded by [requestDeliveryPass] rather than by the shape of
- * this executor, so a host that hands the core a pool of its own still gets the contract's
- * one-pass-in-flight rule.
+ * @param executor Where init and write delivery run. [TaskExecutor.DIRECT] runs them inline, which
+ *   is what the tests use to make ordering observable. It does not have to be serial: a delivery
+ *   pass is guarded by [requestDeliveryPass] rather than by the shape of this executor, so a host
+ *   that hands the core a pool of its own still gets the contract's one-pass-in-flight rule.
  * @param logger Receives every [KernelError] the core emits.
  */
 class C15tKernel(
@@ -116,21 +116,51 @@ class C15tKernel(
 	private val queueIdGenerator: () -> String = { UUID.randomUUID().toString() },
 	private val logger: (KernelError) -> Unit = {},
 ) {
-	private val background: TaskExecutor = executor
-		?: TaskExecutor { task -> backgroundPool.execute(task) }
+	private val background: TaskExecutor =
+		executor ?: TaskExecutor { task -> backgroundPool.execute(task) }
 
 	/**
 	 * Mints the c15t-owned subject id, in the `sub_` format the backend validates.
 	 *
-	 * Separate from [queueIdGenerator] on purpose: a subject id travels and has to
-	 * satisfy `subjectIdSchema` in `@c15t/schema`, while a queue entry id is a local
-	 * row id that never reaches the wire. The default follows the injected [clock],
-	 * so a test that pins time gets ids it can predict.
+	 * Separate from [queueIdGenerator] on purpose: a subject id travels and has to satisfy
+	 * `subjectIdSchema` in `@c15t/schema`, while a queue entry id is a local row id that never
+	 * reaches the wire. The default follows the injected [clock], so a test that pins time gets ids
+	 * it can predict.
 	 */
-	private val subjectIdGenerator: () -> String = subjectIdGenerator
-		?: SubjectIdGenerator(clock = clock)::generate
+	private val subjectIdGenerator: () -> String =
+		subjectIdGenerator ?: SubjectIdGenerator(clock = clock)::generate
 
 	private val state = AtomicReference(ConsentSnapshot.denyAll())
+	private var lastIabActionAt: Long? = null
+	private var committedIab: IabCommittedConsent? = null
+	private val iabConfiguration = config.iab?.detached()
+	/** Compact authority is read natively; full drafts do not cross the RN stock UI boundary. */
+	val iabConsent: IabCommittedConsent?
+		get() =
+			synchronized(mutationLock) {
+				committedIab
+					?.takeIf { saved ->
+						saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
+							evaluationPolicy?.model == ConsentModel.IAB &&
+							!state.get().policyPending
+					}
+					?.detached()
+			}
+
+	/** Check a vendor and purpose together from native authority, before JS starts. */
+	fun isIabAllowed(vendorId: Int, purposeId: Int, basis: IabLegalBasis): Boolean =
+		synchronized(mutationLock) {
+			val saved = committedIab ?: return@synchronized false
+			val snapshot = state.get()
+			val gvl = snapshot.iab?.gvl ?: return@synchronized false
+			val policy = evaluationPolicy ?: return@synchronized false
+			!snapshot.policyPending &&
+				policy.model == ConsentModel.IAB &&
+				saved.fingerprint == policy.choiceFingerprint &&
+				saved.isCurrent(clock.nowMillis(), policy.choiceMs) &&
+				saved.allows(vendorId, purposeId, basis, gvl)
+		}
+
 	private val mutationLock = Any()
 	private val bootstrapped = AtomicBoolean(false)
 
@@ -140,22 +170,19 @@ class C15tKernel(
 	/**
 	 * The overrides the host configured, as opposed to the ones the snapshot carries.
 	 *
-	 * They are not the same value once an init has landed: [runInit] folds the country
-	 * and region the backend matched on over whatever the app pinned, and the snapshot
-	 * has to carry both because that is what the backend recomputes a save against. So
-	 * the snapshot's copy claims a geography the app never asked for, and the only place
-	 * the host's own pin still exists on its own is here. [reset] needs that distinction:
-	 * a wipe deletes the policy resolution, and a location that came from it has to go
-	 * with it, while a country pinned for QA has to survive.
+	 * They are not the same value once an init has landed: [runInit] folds the country and region
+	 * the backend matched on over whatever the app pinned, and the snapshot has to carry both
+	 * because that is what the backend recomputes a save against. So the snapshot's copy claims a
+	 * geography the app never asked for, and the only place the host's own pin still exists on its
+	 * own is here. [reset] needs that distinction: a wipe deletes the policy resolution, and a
+	 * location that came from it has to go with it, while a country pinned for QA has to survive.
 	 */
-	@Volatile
-	private var configuredOverrides: KernelOverrides = config.overrides
+	@Volatile private var configuredOverrides: KernelOverrides = config.overrides
 
 	/** Local notice dismissal, guarded by [mutationLock]. */
 	private var noticeDismissal: NoticeDismissal? = null
 
-	@Volatile
-	private var storedSnapshotFound = false
+	@Volatile private var storedSnapshotFound = false
 
 	/** Whether `subject-id-unusable` has been reported. One launch, one announcement. */
 	private val unusableSubjectAnnounced = AtomicBoolean(false)
@@ -163,13 +190,11 @@ class C15tKernel(
 	/**
 	 * GPC as the device and the backend report it, with no override applied.
 	 *
-	 * Kept apart from the override on purpose: the evaluator honors the merged
-	 * value, while the write-time staleness check compares only what the app
-	 * pinned. `null` means no signal has been reported yet, which is not the same
-	 * answer as `false`.
+	 * Kept apart from the override on purpose: the evaluator honors the merged value, while the
+	 * write-time staleness check compares only what the app pinned. `null` means no signal has been
+	 * reported yet, which is not the same answer as `false`.
 	 */
-	@Volatile
-	private var detectedGpc: Boolean? = null
+	@Volatile private var detectedGpc: Boolean? = null
 
 	private val snapshotObservers = CopyOnWriteArrayList<WeakReference<(ConsentSnapshot) -> Unit>>()
 	private val strongObservers = CopyOnWriteArrayList<(ConsentSnapshot) -> Unit>()
@@ -178,8 +203,8 @@ class C15tKernel(
 	private val queue = PendingSaveQueue(store, config.maxPendingSaves, queueIdGenerator)
 
 	/**
-	 * Which delivery work, if any, holds this core. See [requestDeliveryPass] for the rule it
-	 * holds and for why it lives here rather than in the shape of [background].
+	 * Which delivery work, if any, holds this core. See [requestDeliveryPass] for the rule it holds
+	 * and for why it lives here rather than in the shape of [background].
 	 */
 	private val passInFlight = AtomicBoolean(false)
 
@@ -189,9 +214,9 @@ class C15tKernel(
 	/**
 	 * Load stored state, adopt the subject id, then kick a flush and an init.
 	 *
-	 * Idempotent and safe from any launch hook, including one that runs before the
-	 * first Activity exists. Everything after the synchronous hydration runs on
-	 * [background], so the caller's thread never waits on the network.
+	 * Idempotent and safe from any launch hook, including one that runs before the first Activity
+	 * exists. Everything after the synchronous hydration runs on [background], so the caller's
+	 * thread never waits on the network.
 	 */
 	fun bootstrap() {
 		if (!bootstrapped.compareAndSet(false, true)) {
@@ -209,11 +234,12 @@ class C15tKernel(
 			// First launch, or a payload this build cannot read: deny-all until an
 			// init resolves, with ready false so a host can tell the two apart.
 			publishPure(
-				ConsentSnapshot.denyAll(subject, now).copy(
-					consentCategories = decidedCategories(null),
-					overrides = config.overrides,
-					privacySignals = signalsFor(config.overrides),
-				)
+				ConsentSnapshot.denyAll(subject, now)
+					.copy(
+						consentCategories = decidedCategories(null),
+						overrides = config.overrides,
+						privacySignals = signalsFor(config.overrides),
+					)
 			)
 			synchronized(mutationLock) {
 				evaluationPolicy = null
@@ -224,51 +250,72 @@ class C15tKernel(
 			val restored = envelope.snapshot
 			synchronized(mutationLock) {
 				evaluationPolicy = envelope.evaluationPolicy
+				committedIab = envelope.iabConsent
+				lastIabActionAt =
+					(envelope.lastIabActionAt ?: envelope.iabConsent?.actionAt)?.takeIf {
+						it >= 0 && now >= 0 && it - now <= 600_000
+					}
 				noticeDismissal = envelope.noticeDismissal
 			}
 			val hydratedOverrides = merge(restored.overrides, config.overrides)
-			val hydrated = restored.copy(
-				ready = true,
-				// The envelope key is where the list is durable -- one copy of the document in the
-				// blob, and the key a build before this one wrote too -- and `iab` is where the
-				// published snapshot carries it, because that is the key the bridge reads. The
-				// fallback reads the other shape, so a device whose bytes hold the list the way a
-				// later build stores it is not stranded without its disclosure either.
-				//
-				// The declared scope is applied to whichever shape the list arrived in, which is
-				// what makes this a read-path rule rather than a first-store rule. Stored bytes
-				// can predate the declaration: the host scoped the app in this release, or the
-				// envelope came from a build that never scoped anything, or a scope was widened and
-				// narrowed again on a device that has been offline since. Reading those bytes whole
-				// would serve the wider list to the first drawer that opens before `/init` lands,
-				// and on a device whose network never comes back that drawer is the answer for the
-				// life of the app. Applying it costs nothing when the list is already inside the
-				// scope -- [com.c15t.core.tc.narrowToVendorIds] over an already-narrow list returns
-				// an equal one -- so this is the whole rule and not a race against the network.
-				// [persist] then writes the pruned document back, so the device stops storing the
-				// scope it no longer discloses.
-				//
-				// A `null` scope is a no-op on both branches, so a host that declared nothing keeps
-				// a served list byte for byte the same, which is what the retention tests around
-				// this line have always graded.
-				iab = (envelope.gvl ?: restored.iab?.gvl)
-					?.narrowToVendorIds(config.vendors)
-					?.let(::KernelIabState),
-				subject = restored.subject?.copy(id = subject.id) ?: subject,
-				consentCategories = decidedCategories(envelope.evaluationPolicy),
-				overrides = hydratedOverrides,
-				// A stored `active` is never trusted: it would keep a category denied
-				// after the signal that caused it is gone.
-				privacySignals = signalsFor(hydratedOverrides),
-			)
+			val hydrated =
+				restored.copy(
+					ready = true,
+					// The envelope key is where the list is durable -- one copy of the document in
+					// the
+					// blob, and the key a build before this one wrote too -- and `iab` is where the
+					// published snapshot carries it, because that is the key the bridge reads. The
+					// fallback reads the other shape, so a device whose bytes hold the list the way
+					// a
+					// later build stores it is not stranded without its disclosure either.
+					//
+					// The declared scope is applied to whichever shape the list arrived in, which
+					// is
+					// what makes this a read-path rule rather than a first-store rule. Stored bytes
+					// can predate the declaration: the host scoped the app in this release, or the
+					// envelope came from a build that never scoped anything, or a scope was widened
+					// and
+					// narrowed again on a device that has been offline since. Reading those bytes
+					// whole
+					// would serve the wider list to the first drawer that opens before `/init`
+					// lands,
+					// and on a device whose network never comes back that drawer is the answer for
+					// the
+					// life of the app. Applying it costs nothing when the list is already inside
+					// the
+					// scope -- [com.c15t.core.tc.narrowToVendorIds] over an already-narrow list
+					// returns
+					// an equal one -- so this is the whole rule and not a race against the network.
+					// [persist] then writes the pruned document back, so the device stops storing
+					// the
+					// scope it no longer discloses.
+					//
+					// A `null` scope is a no-op on both branches, so a host that declared nothing
+					// keeps
+					// a served list byte for byte the same, which is what the retention tests
+					// around
+					// this line have always graded.
+					iab =
+						(envelope.gvl ?: restored.iab?.gvl)
+							?.narrowToVendorIds(config.vendors)
+							?.let(::KernelIabState),
+					subject = restored.subject?.copy(id = subject.id) ?: subject,
+					consentCategories = decidedCategories(envelope.evaluationPolicy),
+					overrides = hydratedOverrides,
+					// A stored `active` is never trusted: it would keep a category denied
+					// after the signal that caused it is gone.
+					privacySignals = signalsFor(hydratedOverrides),
+				)
 			publishPure(
-				PolicyEvaluator.evaluate(
-					hydrated,
-					envelope.evaluationPolicy,
-					envelope.noticeDismissal,
-					now,
-					choiceScopeOf(envelope.evaluationPolicy),
-				),
+				validateIab(
+					PolicyEvaluator.evaluate(
+						hydrated,
+						envelope.evaluationPolicy,
+						envelope.noticeDismissal,
+						now,
+						choiceScopeOf(envelope.evaluationPolicy),
+					)
+				)
 			)
 			persist()
 		}
@@ -288,10 +335,10 @@ class C15tKernel(
 	/**
 	 * Whether [bootstrap] found a stored envelope to hydrate from.
 	 *
-	 * Binding layers report this in their handshake so JavaScript can tell "the user
-	 * has never decided" apart from "we have a cached answer and no connectivity". It
-	 * is recorded during [bootstrap] rather than read on demand: the read has to be
-	 * synchronous and disk-free, and a getter that reopened storage would break that.
+	 * Binding layers report this in their handshake so JavaScript can tell "the user has never
+	 * decided" apart from "we have a cached answer and no connectivity". It is recorded during
+	 * [bootstrap] rather than read on demand: the read has to be synchronous and disk-free, and a
+	 * getter that reopened storage would break that.
 	 */
 	val hasStoredSnapshot: Boolean
 		get() = storedSnapshotFound
@@ -299,9 +346,9 @@ class C15tKernel(
 	/**
 	 * The current snapshot.
 	 *
-	 * Synchronous, allocation-free, and never touches disk or the network. Returns
-	 * the same instance until something changes, so a caller can compare by
-	 * identity to decide whether to do work.
+	 * Synchronous, allocation-free, and never touches disk or the network. Returns the same
+	 * instance until something changes, so a caller can compare by identity to decide whether to do
+	 * work.
 	 */
 	fun snapshot(): ConsentSnapshot = state.get()
 
@@ -317,9 +364,9 @@ class C15tKernel(
 	 *
 	 * Why the list latches. It is what a purpose id and a vendor id mean. A subject shown "cookie
 	 * analytics, advertising personalisation" above a named list of vendors was shown those words
-	 * out of this document, and the disclosure the dialog draws and the TC String written next to it
-	 * both repeat that claim on every later launch. If a refresh that happened to carry no `gvl` --
-	 * which is normal, because the backend embeds one only when the matched model is `iab` --
+	 * out of this document, and the disclosure the dialog draws and the TC String written next to
+	 * it both repeat that claim on every later launch. If a refresh that happened to carry no `gvl`
+	 * -- which is normal, because the backend embeds one only when the matched model is `iab` --
 	 * cleared it, a device would wake up one morning with a saved consent record pointing at ids it
 	 * can no longer name, and a surface that either goes blank or re-derives an empty disclosure.
 	 * The subject did nothing; the claim already made would have changed underneath them.
@@ -349,10 +396,10 @@ class C15tKernel(
 	/**
 	 * [vendorList] as the JSON body the web reads, or `null` when there is no list.
 	 *
-	 * The bytes are the served document: `globalVendorListSchema`'s key names, the numbered records as
-	 * objects keyed by id rather than as arrays, and no invented mobile-only field. A JavaScript reader
-	 * that already handles `iab.gvl` from `/init` handles this unchanged, which is the requirement this
-	 * accessor exists to satisfy -- see [GlobalVendorListJson.toJsonElement].
+	 * The bytes are the served document: `globalVendorListSchema`'s key names, the numbered records
+	 * as objects keyed by id rather than as arrays, and no invented mobile-only field. A JavaScript
+	 * reader that already handles `iab.gvl` from `/init` handles this unchanged, which is the
+	 * requirement this accessor exists to satisfy -- see [GlobalVendorListJson.toJsonElement].
 	 *
 	 * Encoded per call rather than cached, because [vendorList] is the snapshot's own field and a
 	 * stored body could only fall behind it. It costs a serialisation on each call, and the callers
@@ -361,32 +408,31 @@ class C15tKernel(
 	fun vendorListBody(): String? = vendorList?.let { GlobalVendorListJson.toJson(it) }
 
 	/** [vendorListBody] as a document, for a caller that is composing a larger payload. */
-	fun vendorListJson(): JsonObject? =
-		vendorList?.let { GlobalVendorListJson.toJsonElement(it) }
+	fun vendorListJson(): JsonObject? = vendorList?.let { GlobalVendorListJson.toJsonElement(it) }
 
 	/**
 	 * Whether [category] may run right now.
 	 *
-	 * `necessary` is always true. Every optional category is false while the state
-	 * is not ready or the policy is still pending.
+	 * `necessary` is always true. Every optional category is false while the state is not ready or
+	 * the policy is still pending.
 	 */
 	fun isAllowed(category: ConsentCategory): Boolean = state.get().isAllowed(category)
 
 	/**
-	 * Call [onChange] now with the current permission for [category], then again on
-	 * every published snapshot.
+	 * Call [onChange] now with the current permission for [category], then again on every published
+	 * snapshot.
 	 *
-	 * This one fires per publication rather than per change, which is what
-	 * `native/CONTRACT.md` leaves it: "the boolean `gate` predates this one and keeps
-	 * its per-snapshot fan-out; narrowing that is a separate decision from adding
-	 * this API." A host that acts on the transition keeps its own last value and
-	 * compares. A host that wants the dedupe uses [gateDecision].
+	 * This one fires per publication rather than per change, which is what `native/CONTRACT.md`
+	 * leaves it: "the boolean `gate` predates this one and keeps its per-snapshot fan-out;
+	 * narrowing that is a separate decision from adding this API." A host that acts on the
+	 * transition keeps its own last value and compares. A host that wants the dedupe uses
+	 * [gateDecision].
 	 *
-	 * The observer is held strongly for as long as the returned handle is open, so
-	 * a caller that keeps only the handle still gets callbacks.
+	 * The observer is held strongly for as long as the returned handle is open, so a caller that
+	 * keeps only the handle still gets callbacks.
 	 *
-	 * This is the boolean surface the React Native bridge forwards. A host that has to
-	 * tell a refusal apart from an unresolved policy wants [gateDecision] instead.
+	 * This is the boolean surface the React Native bridge forwards. A host that has to tell a
+	 * refusal apart from an unresolved policy wants [gateDecision] instead.
 	 */
 	fun gate(
 		category: ConsentCategory,
@@ -399,32 +445,29 @@ class C15tKernel(
 	}
 
 	/**
-	 * Call [onDecision] now with the current [ConsentDecision] for [category], then
-	 * again whenever the decision for that category changes, with the returned handle
-	 * cancelling. This is the contract's decision-carrying `gate`.
+	 * Call [onDecision] now with the current [ConsentDecision] for [category], then again whenever
+	 * the decision for that category changes, with the returned handle cancelling. This is the
+	 * contract's decision-carrying `gate`.
 	 *
-	 * "Whenever the decision changes" is a dedupe, and it is the whole reason this gate
-	 * carries a decision instead of a boolean. A device that publishes five snapshots
-	 * while the answer stays `PENDING` delivers one `PENDING`, not five: a host acts on
-	 * the transition, so each repeat makes it wonder whether its `init` is idempotent,
-	 * and the core cannot know that it is. A decision that moves away and back fires
-	 * again, which is correct, and a host that must act exactly once still guards its
-	 * own action.
+	 * "Whenever the decision changes" is a dedupe, and it is the whole reason this gate carries a
+	 * decision instead of a boolean. A device that publishes five snapshots while the answer stays
+	 * `PENDING` delivers one `PENDING`, not five: a host acts on the transition, so each repeat
+	 * makes it wonder whether its `init` is idempotent, and the core cannot know that it is. A
+	 * decision that moves away and back fires again, which is correct, and a host that must act
+	 * exactly once still guards its own action.
 	 *
-	 * The rest of the rules are the boolean [gate]'s, plus the one that matters to a
-	 * late starter: registering never produces silence. An analytics SDK that
-	 * initializes two seconds into the launch, long after the policy resolved, is told
-	 * at registration the decision it would otherwise have had to go and read. A
-	 * listener that saw [ConsentDecision.PENDING] keeps the handle open and hears the
-	 * answer land, in either direction.
+	 * The rest of the rules are the boolean [gate]'s, plus the one that matters to a late starter:
+	 * registering never produces silence. An analytics SDK that initializes two seconds into the
+	 * launch, long after the policy resolved, is told at registration the decision it would
+	 * otherwise have had to go and read. A listener that saw [ConsentDecision.PENDING] keeps the
+	 * handle open and hears the answer land, in either direction.
 	 *
-	 * It carries a different name rather than being a second `gate` overload because
-	 * Kotlin erases both `(Boolean) -> Unit` and `(ConsentDecision) -> Unit` to
-	 * `Function1`, so two overloads are not two JVM methods: the declaration fails to
-	 * compile, and a Kotlin/Java host could not call either one. The name keeps the
-	 * contract's verb so the two surfaces still read as the same call with a richer
-	 * answer, and Swift keeps a single `gate`, where the closure types are part of the
-	 * signature and the overload does exist.
+	 * It carries a different name rather than being a second `gate` overload because Kotlin erases
+	 * both `(Boolean) -> Unit` and `(ConsentDecision) -> Unit` to `Function1`, so two overloads are
+	 * not two JVM methods: the declaration fails to compile, and a Kotlin/Java host could not call
+	 * either one. The name keeps the contract's verb so the two surfaces still read as the same
+	 * call with a richer answer, and Swift keeps a single `gate`, where the closure types are part
+	 * of the signature and the overload does exist.
 	 */
 	fun gateDecision(
 		category: ConsentCategory,
@@ -457,22 +500,21 @@ class C15tKernel(
 	/**
 	 * Why [category] is or is not allowed, in the three states a host SDK can act on.
 	 *
-	 * The same single-read rule as [snapshot] and [isAllowed]: one read of the
-	 * [AtomicReference], no disk, no network, and no lock that can be held across
-	 * either. Ad SDKs call this from the main thread inside `Application.onCreate`,
-	 * and blocking there is an ANR the store files against the host app.
+	 * The same single-read rule as [snapshot] and [isAllowed]: one read of the [AtomicReference],
+	 * no disk, no network, and no lock that can be held across either. Ad SDKs call this from the
+	 * main thread inside `Application.onCreate`, and blocking there is an ANR the store files
+	 * against the host app.
 	 */
 	fun decision(category: ConsentCategory): ConsentDecision = state.get().decision(category)
 
 	/**
-	 * Whether a decision can be read as an answer: [bootstrap] hydrated a state and
-	 * the first init has resolved a policy the core can represent.
+	 * Whether a decision can be read as an answer: [bootstrap] hydrated a state and the first init
+	 * has resolved a policy the core can represent.
 	 *
-	 * `false` means [decision] answers `PENDING` for every optional category. Like
-	 * [decision] this is one read of memory, and the core adds no timeout to it: a
-	 * device that never reaches the network stays `false` for the life of the
-	 * process, and a number invented here would become an answer the policy never
-	 * gave.
+	 * `false` means [decision] answers `PENDING` for every optional category. Like [decision] this
+	 * is one read of memory, and the core adds no timeout to it: a device that never reaches the
+	 * network stays `false` for the life of the process, and a number invented here would become an
+	 * answer the policy never gave.
 	 */
 	fun isReady(): Boolean = state.get().isReady
 
@@ -493,45 +535,41 @@ class C15tKernel(
 	/**
 	 * Record a consent decision.
 	 *
-	 * Order is the whole contract here. The queue write lands first, the snapshot moves
-	 * second, and no branch answers ok without a durable entry behind it, because
-	 * [CommitResult.ok] claims three device-side facts: the receipts are applied, the
-	 * snapshot is stored, and the queue holds the exact bytes that owe delivery. It never
-	 * claims the backend has them, which no synchronous call on this thread could know.
+	 * Order is the whole contract here. The queue write lands first, the snapshot moves second, and
+	 * no branch answers ok without a durable entry behind it, because [CommitResult.ok] claims
+	 * three device-side facts: the receipts are applied, the snapshot is stored, and the queue
+	 * holds the exact bytes that owe delivery. It never claims the backend has them, which no
+	 * synchronous call on this thread could know.
 	 *
-	 * A save that cannot take on the delivery obligation answers not-ok with the reason
-	 * and changes nothing at all -- no snapshot move, no snapshot write, no request, no
-	 * observer callback. A decision nothing remembers having to deliver is worse than a
-	 * refusal the caller can act on.
+	 * A save that cannot take on the delivery obligation answers not-ok with the reason and changes
+	 * nothing at all -- no snapshot move, no snapshot write, no request, no observer callback. A
+	 * decision nothing remembers having to deliver is worse than a refusal the caller can act on.
 	 *
-	 * What makes the two steps atomic is [mutationLock], and it is worth being precise
-	 * about how. [PendingSaveQueue] does its own read-modify-write on [store] and takes no
-	 * lock of ours, so the enqueue deliberately happens *outside* the critical section: a
-	 * disk write must not hold the lock every other mutation path waits on, and must not
-	 * hold it while the store is being read either, which is what would let a slow keychain
-	 * stall a snapshot read. The state move that follows is then taken as a guarded swap:
-	 * still under the lock, the snapshot is installed only if it is the very snapshot this
-	 * body was built from. If another mutation landed during the write, that one stands,
-	 * this body is withdrawn from the queue rather than replayed over it, and the caller is
-	 * told to repeat against the current snapshot. A swap is atomic precisely because the
-	 * reference is only ever replaced inside the lock, so there is no window in which a
-	 * reader or a competing writer sees a queue entry whose snapshot was never installed,
-	 * or an installed snapshot with no entry behind it.
+	 * What makes the two steps atomic is [mutationLock], and it is worth being precise about how.
+	 * [PendingSaveQueue] does its own read-modify-write on [store] and takes no lock of ours, so
+	 * the enqueue deliberately happens *outside* the critical section: a disk write must not hold
+	 * the lock every other mutation path waits on, and must not hold it while the store is being
+	 * read either, which is what would let a slow keychain stall a snapshot read. The state move
+	 * that follows is then taken as a guarded swap: still under the lock, the snapshot is installed
+	 * only if it is the very snapshot this body was built from. If another mutation landed during
+	 * the write, that one stands, this body is withdrawn from the queue rather than replayed over
+	 * it, and the caller is told to repeat against the current snapshot. A swap is atomic precisely
+	 * because the reference is only ever replaced inside the lock, so there is no window in which a
+	 * reader or a competing writer sees a queue entry whose snapshot was never installed, or an
+	 * installed snapshot with no entry behind it.
 	 *
-	 * Delivery is a later fact than any of this. It arrives as a drained queue, or as an
-	 * error event carrying `save-rejected`, `save-undeliverable`, or
-	 * `transport-unavailable`. See [CommitResult.delivered] for the one case where this
-	 * call can report it.
+	 * Delivery is a later fact than any of this. It arrives as a drained queue, or as an error
+	 * event carrying `save-rejected`, `save-undeliverable`, or `transport-unavailable`. See
+	 * [CommitResult.delivered] for the one case where this call can report it.
 	 *
 	 * @returns [CommitResult.ok] is true only for a committed decision; on a refusal
-	 * [CommitResult.failure] names which of `queue-write-failed` or `concurrent-change`
-	 * stopped it, and `not-bootstrapped` comes from the [C15t] facade in front of this
-	 * kernel.
+	 *   [CommitResult.failure] names which of `queue-write-failed` or `concurrent-change` stopped
+	 *   it, and `not-bootstrapped` comes from the [C15t] facade in front of this kernel.
 	 */
-	fun save(intent: CommitIntent): CommitResult {
+	fun save(intent: CommitIntent, expectedRevision: Long? = null): CommitResult {
 		// Captured once, before any disk or network call, and reused by every
 		// replay so the backend derives the same consent id.
-		val actionAt = clock.nowMillis()
+		var actionAt = clock.nowMillis()
 		var base: ConsentSnapshot
 		var published: ConsentSnapshot
 		var policy: EvaluationPolicy?
@@ -543,105 +581,212 @@ class C15tKernel(
 		var action: ConsentAction
 		var confirmed: Map<String, Boolean>
 		var acknowledgement: NoticeDismissal?
+		var nextIab: IabCommittedConsent? = null
 
 		synchronized(mutationLock) {
 			val current = state.get()
+			if (expectedRevision != null && expectedRevision != current.revision)
+				return refusedCommit(
+					"concurrent-change",
+					"The draft was based on an older consent snapshot",
+				)
 			base = current
 			surfaceAtAction = current.activeUI
 			policy = evaluationPolicy
+			if (policy?.model == com.c15t.core.model.ConsentModel.IAB) {
+				lastIabActionAt?.let { previous ->
+					if (previous == Long.MAX_VALUE)
+						return refusedCommit(
+							"invalid-action-time",
+							"The previous action time cannot be advanced",
+						)
+					actionAt = maxOf(actionAt, previous + 1)
+				}
+				val configuration = iabConfiguration
+				val gvl = current.iab?.gvl
+				if (configuration == null || gvl == null)
+					return refusedCommit(
+						"iab-unavailable",
+						"IAB saves require CMP configuration and a disclosed vendor list",
+					)
+				val choices =
+					when (intent) {
+						is CommitIntent.All -> IabAuthority.accepting(gvl, configuration)
+						is CommitIntent.Necessary -> IabChoices()
+						is CommitIntent.Iab -> intent.choices
+						is CommitIntent.Explicit ->
+							return refusedCommit(
+								"iab-choices-required",
+								"Save the complete native IAB draft with category choices",
+							)
+					}
+				try {
+					nextIab =
+						IabAuthority.build(
+							configuration,
+							choices,
+							gvl,
+							current.subject!!.id,
+							current.subject.externalId,
+							policy!!.choiceFingerprint,
+							actionAt,
+							committedIab,
+						)
+				} catch (_: IllegalArgumentException) {
+					return refusedCommit(
+						"invalid-iab-choices",
+						"IAB configuration or choices do not match the disclosed list",
+					)
+				}
+			} else if (intent is CommitIntent.Iab) {
+				return refusedCommit("iab-unavailable", "The resolved policy does not use IAB")
+			}
 			// A bulk action covers the categories the prompt asks about, which is what
 			// `resolveSaveSelection` in `@c15t/core` narrows it to. Before a policy
 			// resolves that is the safe fallback rule's: every optional category,
 			// narrowed by the declaration.
 			val policyScope = policy?.scope ?: ConsentCategory.OPTIONAL
 			val choiceScope = choiceScopeOf(policy) ?: fallbackChoiceScope()
-			val intentConsents = when (intent) {
-				is CommitIntent.All -> choiceScope.associateWith { true }
-				is CommitIntent.Necessary -> choiceScope.associateWith { false }
-				is CommitIntent.Explicit -> intent.consents
-			}
+			val intentConsents =
+				when (intent) {
+					is CommitIntent.All -> choiceScope.associateWith { true }
+					is CommitIntent.Necessary -> choiceScope.associateWith { false }
+					is CommitIntent.Explicit -> intent.consents
+					is CommitIntent.Iab -> intent.consents
+				}
 			// With nothing to decide, a bulk action still covers everything the subject
 			// was shown: strictly necessary alone.
-			action = if (
-				intent is CommitIntent.Explicit ||
-				choiceScope.size == policyScope.size ||
-				choiceScope.isEmpty()
-			) {
-				intent.action
-			} else {
-				ConsentAction.CUSTOM
-			}
+			action =
+				if (
+					(intent is CommitIntent.Explicit || intent is CommitIntent.Iab) ||
+						choiceScope.size == policyScope.size ||
+						choiceScope.isEmpty()
+				) {
+					intent.action
+				} else {
+					ConsentAction.CUSTOM
+				}
 			val prior = stillValid(current.explicitChoice, policy, actionAt)
 			val consents = LinkedHashMap(prior)
 			for ((category, value) in intentConsents) {
 				consents[category.wireName] = value
 			}
-			confirmed = LinkedHashMap<String, Boolean>(intentConsents.size).apply {
-				for ((category, value) in intentConsents) {
-					put(category.wireName, value)
+			confirmed =
+				LinkedHashMap<String, Boolean>(intentConsents.size).apply {
+					for ((category, value) in intentConsents) {
+						put(category.wireName, value)
+					}
 				}
-			}
 
 			// Any action on a choice prompt with nothing to decide acknowledges it. One
 			// that confirmed no category leaves the stored choice as it was, the way the
 			// kernel only patches a choice it changed.
 			acknowledgement = choiceAcknowledgement(policy, choiceScope, actionAt)
-			val choice = if (acknowledgement != null && confirmed.isEmpty()) {
-				current.explicitChoice
-			} else {
-				ExplicitChoice(
-					consents = consents,
-					action = action,
-					actionAt = actionAt,
-					fingerprint = policy?.choiceFingerprint,
+			val choice =
+				if (acknowledgement != null && confirmed.isEmpty()) {
+					current.explicitChoice
+				} else {
+					ExplicitChoice(
+						consents = consents,
+						action = action,
+						actionAt = actionAt,
+						fingerprint = policy?.choiceFingerprint,
+					)
+				}
+			published =
+				PolicyEvaluator.evaluate(
+					snapshot =
+						current.copy(
+							explicitChoice = choice,
+							revision = current.revision + 1,
+							error = null,
+						),
+					policy = policy,
+					noticeDismissal = acknowledgement ?: noticeDismissal,
+					now = actionAt,
+					choiceScope = choiceScope,
 				)
-			}
-			published = PolicyEvaluator.evaluate(
-				snapshot = current.copy(
-					explicitChoice = choice,
-					revision = current.revision + 1,
-					error = null,
-				),
-				policy = policy,
-				noticeDismissal = acknowledgement ?: noticeDismissal,
-				now = actionAt,
-				choiceScope = choiceScope,
-			)
 		}
+
+		if (nextIab != null) published = published.copy(model = ConsentModel.IAB)
 
 		// Built from the snapshot computed above, which is a value: the frozen body is the
 		// one that revision describes, and building it here keeps the subject resolution and
 		// its storage write off the lock, as the class requires.
-		val payload = buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
+		val payload =
+			buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
+				.copy(tcString = nextIab?.tcString)
 
 		// Obligation first, state second. A process that dies at this point already has
 		// the action on disk, and a save that gets no further than here promised nothing.
-		val entry = queue.enqueue(payload, actionAt)
-			?: return refusedCommit(
-				code = "queue-write-failed",
-				message = "c15t: the pending save could not be persisted, so the decision was " +
-					"not recorded and nothing was sent",
-			)
-
-		// The guarded swap, for the reason given above.
-		val applied = synchronized(mutationLock) {
-			if (state.get() !== base) {
-				false
-			} else {
+		val entry: QueuedSave
+		if (nextIab != null) {
+			synchronized(mutationLock) {
+				if (state.get() !== base)
+					return refusedCommit(
+						"concurrent-change",
+						"Consent changed while recording this draft",
+					)
+				val frozen =
+					com.c15t.core.transport.SaveBodyBuilder.build(
+							payload,
+							config.domain ?: java.net.URI(config.portalUrl).host.orEmpty(),
+						)
+						.toString()
+				val proposed =
+					QueuedSave(UUID.randomUUID().toString(), actionAt, payload, body = frozen)
+				val envelope =
+					SnapshotEnvelope(
+						snapshot = published.copy(iab = null),
+						evaluationPolicy = policy,
+						noticeDismissal = acknowledgement ?: noticeDismissal,
+						gvl = published.iab?.gvl,
+						iabConsent = nextIab,
+						lastIabActionAt = actionAt,
+					)
+				if (!store.commit(envelope, proposed))
+					return refusedCommit(
+						"queue-write-failed",
+						"The atomic IAB decision write failed; nothing was sent",
+					)
+				committedIab = nextIab
+				lastIabActionAt = actionAt
 				state.set(published)
 				acknowledgement?.let { noticeDismissal = it }
-				true
+				entry = proposed
 			}
-		}
-		if (!applied) {
-			// Withdraw. Replaying this body would deliver a decision the device has already
-			// moved past, and the later mutation carries its own, newer receipts.
-			queue.complete(entry.id)
-			return refusedCommit(
-				code = "concurrent-change",
-				message = "c15t: consent state changed while this save was being recorded, so it " +
-					"was withdrawn. Repeat the action against the current snapshot",
-			)
+		} else {
+			entry =
+				queue.enqueue(payload, actionAt)
+					?: return refusedCommit(
+						code = "queue-write-failed",
+						message =
+							"c15t: the pending save could not be persisted, so the decision was " +
+								"not recorded and nothing was sent",
+					)
+
+			// The guarded swap, for the reason given above.
+			val applied =
+				synchronized(mutationLock) {
+					if (state.get() !== base) {
+						false
+					} else {
+						state.set(published)
+						acknowledgement?.let { noticeDismissal = it }
+						true
+					}
+				}
+			if (!applied) {
+				// Withdraw. Replaying this body would deliver a decision the device has already
+				// moved past, and the later mutation carries its own, newer receipts.
+				queue.complete(entry.id)
+				return refusedCommit(
+					code = "concurrent-change",
+					message =
+						"c15t: consent state changed while this save was being recorded, so it " +
+							"was withdrawn. Repeat the action against the current snapshot",
+				)
+			}
 		}
 
 		persist()
@@ -653,13 +798,14 @@ class C15tKernel(
 		background.execute { requestDeliveryPass { deliverIfOwed(entry)?.let(firstSend::set) } }
 		val delivered = firstSend.get() === Delivery.Reached
 
-		val result = CommitResult(
-			ok = true,
-			revision = published.revision,
-			confirmed = payload.confirmed.categories,
-			queued = true,
-			delivered = delivered,
-		)
+		val result =
+			CommitResult(
+				ok = true,
+				revision = published.revision,
+				confirmed = payload.confirmed.categories,
+				queued = true,
+				delivered = delivered,
+			)
 		notifySnapshot(published)
 		return result
 	}
@@ -667,10 +813,9 @@ class C15tKernel(
 	/**
 	 * A save that changed nothing, announced and then refused.
 	 *
-	 * Refusals are emitted rather than only returned: a host that renders a banner and
-	 * never reads the return value has no other way to learn that the subject's tap was
-	 * dropped. The snapshot observers deliberately get nothing, because the snapshot did
-	 * not move.
+	 * Refusals are emitted rather than only returned: a host that renders a banner and never reads
+	 * the return value has no other way to learn that the subject's tap was dropped. The snapshot
+	 * observers deliberately get nothing, because the snapshot did not move.
 	 */
 	private fun refusedCommit(
 		code: String,
@@ -695,17 +840,25 @@ class C15tKernel(
 		var published: ConsentSnapshot
 		synchronized(mutationLock) {
 			val current = state.get()
-			noticeDismissal = NoticeDismissal(
-				dismissedAt = now,
-				fingerprint = evaluationPolicy?.noticeFingerprint ?: "",
+			noticeDismissal =
+				NoticeDismissal(
+					dismissedAt = now,
+					fingerprint = evaluationPolicy?.noticeFingerprint ?: "",
+				)
+			published =
+				PolicyEvaluator.evaluate(
+					snapshot = current.copy(revision = current.revision + 1),
+					policy = evaluationPolicy,
+					noticeDismissal = noticeDismissal,
+					now = now,
+					choiceScope = choiceScopeOf(evaluationPolicy),
+				)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
 			)
-			published = PolicyEvaluator.evaluate(
-				snapshot = current.copy(revision = current.revision + 1),
-				policy = evaluationPolicy,
-				noticeDismissal = noticeDismissal,
-				now = now,
-				choiceScope = choiceScopeOf(evaluationPolicy),
-			)
+				published = published.copy(model = ConsentModel.IAB)
 			state.set(published)
 		}
 		persist()
@@ -719,17 +872,40 @@ class C15tKernel(
 
 	/** Attach an external identity to the subject, then refresh. */
 	fun identify(user: KernelUser) {
+		val transition = transitionIab(user.externalId, false)
+		if (transition != null) {
+			if (!transition)
+				emitError(
+					KernelError(
+						"identity-write-failed",
+						"Identity consent reset could not be persisted",
+					)
+				)
+			else {
+				val snapshot = state.get()
+				notifySnapshot(snapshot)
+				background.execute {
+					transport.identify(snapshot.subject!!, user)
+					runInit()
+				}
+			}
+			return
+		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
 		synchronized(mutationLock) {
 			val current = state.get()
-			subject = (current.subject ?: ConsentSubject(subjectIdGenerator())).let {
-				it.copy(externalId = user.externalId)
-			}
-			published = current.copy(
-				subject = subject,
-				revision = current.revision + 1,
+			subject =
+				(current.subject ?: ConsentSubject(subjectIdGenerator())).let {
+					it.copy(externalId = user.externalId)
+				}
+			published = current.copy(subject = subject, revision = current.revision + 1)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
 			)
+				published = published.copy(model = ConsentModel.IAB)
 			state.set(published)
 		}
 		persist()
@@ -743,16 +919,35 @@ class C15tKernel(
 	/**
 	 * Detach the external identity.
 	 *
-	 * The c15t subject id stays: it is the installation's identity, not the user's,
-	 * and the records already attached to it stay attributable.
+	 * The c15t subject id stays: it is the installation's identity, not the user's, and the records
+	 * already attached to it stay attributable.
 	 */
 	fun logout() {
+		val transition = transitionIab(null, false)
+		if (transition != null) {
+			if (transition) notifySnapshot(state.get())
+			else
+				emitError(
+					KernelError(
+						"identity-write-failed",
+						"Logout consent reset could not be persisted",
+					)
+				)
+			return
+		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
 		synchronized(mutationLock) {
 			val current = state.get()
-			subject = (current.subject ?: ConsentSubject(subjectIdGenerator())).copy(externalId = null)
+			subject =
+				(current.subject ?: ConsentSubject(subjectIdGenerator())).copy(externalId = null)
 			published = current.copy(subject = subject, revision = current.revision + 1)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
+			)
+				published = published.copy(model = ConsentModel.IAB)
 			state.set(published)
 		}
 		persist()
@@ -763,12 +958,11 @@ class C15tKernel(
 	/**
 	 * Apply developer overrides and re-evaluate immediately.
 	 *
-	 * With [merge] only the members present in [overrides] change, so a caller can pin
-	 * a country without clearing its language. With [merge] false [overrides] is the
-	 * whole record, which is the only way to clear one: a null member means "unset" in
-	 * [KernelOverrides], so it cannot express "unset this" while also leaving the
-	 * others alone. A binding that receives explicit nulls from JavaScript uses the
-	 * replace form after computing the full desired record.
+	 * With [merge] only the members present in [overrides] change, so a caller can pin a country
+	 * without clearing its language. With [merge] false [overrides] is the whole record, which is
+	 * the only way to clear one: a null member means "unset" in [KernelOverrides], so it cannot
+	 * express "unset this" while also leaving the others alone. A binding that receives explicit
+	 * nulls from JavaScript uses the replace form after computing the full desired record.
 	 */
 	fun setOverrides(overrides: KernelOverrides, merge: Boolean = true) {
 		var published: ConsentSnapshot
@@ -777,16 +971,25 @@ class C15tKernel(
 			// Merged against the host's own pins rather than the snapshot's, which an
 			// earlier init may have widened with a matched country.
 			configuredOverrides = if (merge) merge(configuredOverrides, overrides) else overrides
-			published = PolicyEvaluator.evaluate(
-				snapshot = current.copy(
-					overrides = if (merge) merge(current.overrides, overrides) else overrides,
-					revision = current.revision + 1,
-				),
-				policy = evaluationPolicy,
-				noticeDismissal = noticeDismissal,
-				now = clock.nowMillis(),
-				choiceScope = choiceScopeOf(evaluationPolicy),
+			published =
+				PolicyEvaluator.evaluate(
+					snapshot =
+						current.copy(
+							overrides =
+								if (merge) merge(current.overrides, overrides) else overrides,
+							revision = current.revision + 1,
+						),
+					policy = evaluationPolicy,
+					noticeDismissal = noticeDismissal,
+					now = clock.nowMillis(),
+					choiceScope = choiceScopeOf(evaluationPolicy),
+				)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
 			)
+				published = published.copy(model = ConsentModel.IAB)
 			state.set(published)
 		}
 		persist()
@@ -797,36 +1000,36 @@ class C15tKernel(
 	/**
 	 * Replay the offline queue, oldest first, each payload unchanged.
 	 *
-	 * Stops at the first entry the backend could not be reached for, since trying the rest on
-	 * a dead connection wastes battery. Entries this pass never sent keep the attempt count
-	 * they had: an attempt is spent by a send, not by a pass that skipped them.
+	 * Stops at the first entry the backend could not be reached for, since trying the rest on a
+	 * dead connection wastes battery. Entries this pass never sent keep the attempt count they had:
+	 * an attempt is spent by a send, not by a pass that skipped them.
 	 *
-	 * Each entry settles by the same rules as the first send of a save, including which
-	 * refusals are permanent and which releases get announced.
+	 * Each entry settles by the same rules as the first send of a save, including which refusals
+	 * are permanent and which releases get announced.
 	 *
-	 * Only one pass may be in flight per core. That is the rule `native/CONTRACT.md` sets in
-	 * "The pending save queue", and [requestDeliveryPass] is where this core holds it, because a
-	 * flush is not a pass of its own and this method is a public synchronous entry point that
-	 * reaches it from several threads at once: bootstrap and a resolved init on [background], a
-	 * foreground transition on the lifecycle observer's worker, a reachability change on the
-	 * main thread, a React Native `refresh` on the module's thread, and any host that calls it
-	 * directly. A pass reads the queue once and then delivers entry by entry, so an entry stays
-	 * readable until its own send lands, and a flush that ran its own pass on any two of those
-	 * threads resends whatever was in flight. The single thread behind [backgroundPool] does not
-	 * cover this: it only ever orders the work handed to it.
+	 * Only one pass may be in flight per core. That is the rule `native/CONTRACT.md` sets in "The
+	 * pending save queue", and [requestDeliveryPass] is where this core holds it, because a flush
+	 * is not a pass of its own and this method is a public synchronous entry point that reaches it
+	 * from several threads at once: bootstrap and a resolved init on [background], a foreground
+	 * transition on the lifecycle observer's worker, a reachability change on the main thread, a
+	 * React Native `refresh` on the module's thread, and any host that calls it directly. A pass
+	 * reads the queue once and then delivers entry by entry, so an entry stays readable until its
+	 * own send lands, and a flush that ran its own pass on any two of those threads resends
+	 * whatever was in flight. The single thread behind [backgroundPool] does not cover this: it
+	 * only ever orders the work handed to it.
 	 *
 	 * A flush that arrives while a pass is running is answered by that pass. It reports the depth
 	 * the queue owes with [FlushResult.delivered] at zero and no error -- nothing failed, another
-	 * thread is sending it -- and it asks the running pass to read the queue again on the way
-	 * out, which is what covers an entry queued after that pass had already read. Nothing about
+	 * thread is sending it -- and it asks the running pass to read the queue again on the way out,
+	 * which is what covers an entry queued after that pass had already read. Nothing about
 	 * `committed` softens as a result: an entry waiting on the running pass is still owed, still
 	 * counted in [FlushResult.remaining], and still announced by exactly one delivered event.
 	 *
 	 * The exclusivity is load-bearing rather than tidy, and it is tested: a scripted transport
 	 * holds a send open, a second flush is asked for from another thread mid-send, and the test
-	 * fails if any queued decision reaches the transport twice. Losing it does not need a bug,
-	 * only a host that hands this core an executor with two threads in it, which is why the rule
-	 * is guarded here instead of left to the shape of a queue.
+	 * fails if any queued decision reaches the transport twice. Losing it does not need a bug, only
+	 * a host that hands this core an executor with two threads in it, which is why the rule is
+	 * guarded here instead of left to the shape of a queue.
 	 */
 	fun flushPending(): FlushResult {
 		if (queue.pending().isEmpty()) {
@@ -846,21 +1049,21 @@ class C15tKernel(
 	 * Contract: `native/CONTRACT.md`, "The pending save queue" -- only one pass may be in flight
 	 * per core, and this is the only place that answers that question. Two threads running
 	 * [runDeliveryPass] at once is the defect the contract describes: each reads the whole queue,
-	 * so each sends what the other is still sending, and because the bytes are frozen and carry
-	 * the same consent id the backend dedupes, nothing in stored state moves, and the only trace
-	 * is a second POST for a decision the subject already saw delivered.
+	 * so each sends what the other is still sending, and because the bytes are frozen and carry the
+	 * same consent id the backend dedupes, nothing in stored state moves, and the only trace is a
+	 * second POST for a decision the subject already saw delivered.
 	 *
 	 * A request that finds the core held neither waits nor starts a pass. It records itself and
-	 * returns at once: a flush arrives on the main thread from a reachability callback on
-	 * Android, so this must never sit behind someone else's network timeout, and the running pass
-	 * is what answers it. That pass reads the queue again before releasing, which is how an entry
-	 * queued after its first read still gets delivered without waiting for the next launch,
-	 * foreground, or network.
+	 * returns at once: a flush arrives on the main thread from a reachability callback on Android,
+	 * so this must never sit behind someone else's network timeout, and the running pass is what
+	 * answers it. That pass reads the queue again before releasing, which is how an entry queued
+	 * after its first read still gets delivered without waiting for the next launch, foreground, or
+	 * network.
 	 *
-	 * @param ownSend the first send of the entry a save just queued, run before the queue is
-	 * read, or `null` for a pass over the whole queue. It takes the same guard a replay does, so a
-	 * save's own send and a replay can never hold the same entry at the same time; when the guard
-	 * is already held, the pass that holds it covers this entry on its re-read.
+	 * @param ownSend the first send of the entry a save just queued, run before the queue is read,
+	 *   or `null` for a pass over the whole queue. It takes the same guard a replay does, so a
+	 *   save's own send and a replay can never hold the same entry at the same time; when the guard
+	 *   is already held, the pass that holds it covers this entry on its re-read.
 	 */
 	private fun requestDeliveryPass(ownSend: (() -> Unit)?): PassReport {
 		val askedForAPass = ownSend == null
@@ -905,8 +1108,8 @@ class C15tKernel(
 	/**
 	 * One read of the queue and the sends it owed, oldest first.
 	 *
-	 * Only [requestDeliveryPass] may call this, which is what keeps a second copy of the loop
-	 * from reading the queue while a send from the first is still open.
+	 * Only [requestDeliveryPass] may call this, which is what keeps a second copy of the loop from
+	 * reading the queue while a send from the first is still open.
 	 */
 	private fun runDeliveryPass(): PassReport {
 		val pending = queue.pending()
@@ -940,41 +1143,48 @@ class C15tKernel(
 	/**
 	 * Return the device to the state a first launch is in, keeping the subject id.
 	 *
-	 * The baseline installed here is the cold-start snapshot, and the difference between
-	 * that and a recorded denial is the entire point of the method. A denial is an
-	 * [ExplicitChoice] that says the subject answered, so the evaluator finds a current
-	 * receipt, owes nothing, and no prompt ever returns. This installs no receipt at all,
-	 * so [PolicyEvaluator] sees `choice == null`, owes the choice again, and the banner
-	 * comes back once the init below lands. `native/CONTRACT.md` states this under
-	 * "Wiping consent (reset)".
+	 * The baseline installed here is the cold-start snapshot, and the difference between that and a
+	 * recorded denial is the entire point of the method. A denial is an [ExplicitChoice] that says
+	 * the subject answered, so the evaluator finds a current receipt, owes nothing, and no prompt
+	 * ever returns. This installs no receipt at all, so [PolicyEvaluator] sees `choice == null`,
+	 * owes the choice again, and the banner comes back once the init below lands.
+	 * `native/CONTRACT.md` states this under "Wiping consent (reset)".
 	 *
 	 * Three things this has to do that "clear the store" does not cover:
+	 * - Publish. It is a committed mutation, so it moves the revision by one and goes out through
+	 *   the observers like any other. Installing the baseline silently would leave every [gate] in
+	 *   the process holding a decision the device no longer remembers, and restarting the numbering
+	 *   at the cold-start revision would hand each subscriber a snapshot older than the one it
+	 *   holds.
+	 * - Skip the envelope write. Its durable effect is the deletion, so on-disk state after a reset
+	 *   is a subject id and nothing else, which is what a first launch has. That is also the only
+	 *   reason [storedSnapshotFound] moves: reporting cached consent from a device that just wiped
+	 *   it is the claim the unreadable-envelope rule refuses.
+	 * - Re-run init. A first launch does not sit at `policyPending` once the network answers, and a
+	 *   wipe that stopped at the baseline would leave the app there until the next launch, with the
+	 *   subject withdrawn from everything and nothing asking them to decide again. A caller must
+	 *   not have to remember to refresh after this.
 	 *
-	 * - Publish. It is a committed mutation, so it moves the revision by one and goes out
-	 *   through the observers like any other. Installing the baseline silently would leave
-	 *   every [gate] in the process holding a decision the device no longer remembers, and
-	 *   restarting the numbering at the cold-start revision would hand each subscriber a
-	 *   snapshot older than the one it holds.
-	 * - Skip the envelope write. Its durable effect is the deletion, so on-disk state after
-	 *   a reset is a subject id and nothing else, which is what a first launch has. That is
-	 *   also the only reason [storedSnapshotFound] moves: reporting cached consent from a
-	 *   device that just wiped it is the claim the unreadable-envelope rule refuses.
-	 * - Re-run init. A first launch does not sit at `policyPending` once the network
-	 *   answers, and a wipe that stopped at the baseline would leave the app there until
-	 *   the next launch, with the subject withdrawn from everything and nothing asking them
-	 *   to decide again. A caller must not have to remember to refresh after this.
-	 *
-	 * What survives is configuration rather than consent: the subject id, the overrides the
-	 * host pinned, and the configured category scope. A host that pinned a country for QA or switched GPC on
-	 * would otherwise get a different policy resolved than the one its app is configured to
+	 * What survives is configuration rather than consent: the subject id, the overrides the host
+	 * pinned, and the configured category scope. A host that pinned a country for QA or switched
+	 * GPC on would otherwise get a different policy resolved than the one its app is configured to
 	 * evaluate.
 	 *
-	 * A save a delivery pass had already handed to the transport can still land after the
-	 * queue is dropped, and the pass finds its entry gone when it settles. Nothing here
-	 * waits for it: the entries still in the queue carry a decision the subject just
-	 * withdrew, and the one already on the wire was a valid decision when it was made.
+	 * A save a delivery pass had already handed to the transport can still land after the queue is
+	 * dropped, and the pass finds its entry gone when it settles. Nothing here waits for it: the
+	 * entries still in the queue carry a decision the subject just withdrew, and the one already on
+	 * the wire was a valid decision when it was made.
 	 */
 	fun reset() {
+		val transition = transitionIab(state.get().subject?.externalId, true)
+		if (transition != null) {
+			if (transition) {
+				notifySnapshot(state.get())
+				background.execute { runInit() }
+			} else
+				emitError(KernelError("reset-write-failed", "Consent reset could not be persisted"))
+			return
+		}
 		val now = clock.nowMillis()
 		// Identity first, off the lock, because a missing subject is the one case that
 		// reaches storage. A subject this launch already answers with is reused untouched.
@@ -983,23 +1193,31 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			evaluationPolicy = null
+			committedIab = null
 			noticeDismissal = null
-			published = ConsentSnapshot.denyAll(current.subject ?: resolved, now).copy(
-				// The list goes with the policy. Not because a wipe has anything to hide -- the list
-				// is a public document -- but because a wipe is a device no longer showing anybody a
-				// disclosure, so the claim the latch exists to protect has been withdrawn with it.
-				// Written out here rather than trusted to `denyAll`'s default, the way `core-swift`
-				// wipes it, because a list kept on the snapshot past a wipe is written straight back
-				// into the next envelope this core persists.
-				iab = null,
-				revision = current.revision + 1,
-				consentCategories = decidedCategories(null),
-				// The host's pins, not the snapshot's. See [configuredOverrides]: the
-				// folded country came from the resolution this wipe is deleting, and
-				// keeping it would leave a first launch's answer one field off.
-				overrides = configuredOverrides,
-				privacySignals = signalsFor(configuredOverrides),
-			)
+			published =
+				ConsentSnapshot.denyAll(current.subject ?: resolved, now)
+					.copy(
+						// The list goes with the policy. Not because a wipe has anything to hide --
+						// the list
+						// is a public document -- but because a wipe is a device no longer showing
+						// anybody a
+						// disclosure, so the claim the latch exists to protect has been withdrawn
+						// with it.
+						// Written out here rather than trusted to `denyAll`'s default, the way
+						// `core-swift`
+						// wipes it, because a list kept on the snapshot past a wipe is written
+						// straight back
+						// into the next envelope this core persists.
+						iab = null,
+						revision = current.revision + 1,
+						consentCategories = decidedCategories(null),
+						// The host's pins, not the snapshot's. See [configuredOverrides]: the
+						// folded country came from the resolution this wipe is deleting, and
+						// keeping it would leave a first launch's answer one field off.
+						overrides = configuredOverrides,
+						privacySignals = signalsFor(configuredOverrides),
+					)
 			state.set(published)
 		}
 		queue.clear()
@@ -1014,15 +1232,15 @@ class C15tKernel(
 	/**
 	 * The subject this launch answers with: the stored one, or a fresh one.
 	 *
-	 * A stored id that the producer will not accept is not an identity, so it is not
-	 * adopted -- see [C15tStore.readSubject]. Replacing it is only honest together with the
-	 * records written under it, so this path clears them: keep the envelope and the fresh
-	 * id inherits a decision nobody made under it, which splits one subject across two ids
-	 * and re-prompts nobody, so nobody ever notices that it happened.
+	 * A stored id that the producer will not accept is not an identity, so it is not adopted -- see
+	 * [C15tStore.readSubject]. Replacing it is only honest together with the records written under
+	 * it, so this path clears them: keep the envelope and the fresh id inherits a decision nobody
+	 * made under it, which splits one subject across two ids and re-prompts nobody, so nobody ever
+	 * notices that it happened.
 	 *
-	 * The queue goes with the envelope. Its bodies are frozen and they carry the refused id,
-	 * so they are bytes the producer has already turned away on their own terms; replaying
-	 * them buys one more rejection of a decision this device has stopped remembering.
+	 * The queue goes with the envelope. Its bodies are frozen and they carry the refused id, so
+	 * they are bytes the producer has already turned away on their own terms; replaying them buys
+	 * one more rejection of a decision this device has stopped remembering.
 	 */
 	private fun resolveSubject(): ConsentSubject {
 		store.readSubject()?.let { return it }
@@ -1039,10 +1257,10 @@ class C15tKernel(
 	/**
 	 * Drop the consent state an unusable identity keyed, and say so once per launch.
 	 *
-	 * The message is written for a host that has to explain a re-prompt to a person: which
-	 * id was refused, which build could have written it, what the core gave up, and the
-	 * fact that the backend holds nothing to lose. `subject-id-unusable` is the code both
-	 * cores use, per `native/CONTRACT.md`.
+	 * The message is written for a host that has to explain a re-prompt to a person: which id was
+	 * refused, which build could have written it, what the core gave up, and the fact that the
+	 * backend holds nothing to lose. `subject-id-unusable` is the code both cores use, per
+	 * `native/CONTRACT.md`.
 	 */
 	private fun discardRecordsOfUnusableSubject(unusable: UnusableSubjectId) {
 		store.clearConsentState()
@@ -1070,27 +1288,36 @@ class C15tKernel(
 	private fun runInit() {
 		var detected = detectedGpc
 		val current = state.get()
-		val outcome = try {
-			transport.init(
-				InitContext(
-					overrides = current.overrides,
-					subject = current.subject,
-					gpc = GpcSignal.derive(override = current.overrides.gpc, detected = detected == true).active,
-					vendors = config.vendors,
+		val outcome =
+			try {
+				transport.init(
+					InitContext(
+						overrides = current.overrides,
+						subject = current.subject,
+						gpc =
+							GpcSignal.derive(
+									override = current.overrides.gpc,
+									detected = detected == true,
+								)
+								.active,
+						vendors = config.vendors,
+					)
 				)
-			)
-		} catch (error: Exception) {
-			TransportOutcome.NetworkFailure("c15t transport: ${error.message ?: error.javaClass.simpleName}")
-		}
+			} catch (error: Exception) {
+				TransportOutcome.NetworkFailure(
+					"c15t transport: ${error.message ?: error.javaClass.simpleName}"
+				)
+			}
 		val mapped = InitMapper.map(outcome)
 		var published: ConsentSnapshot
 		var emitted: KernelError?
 
 		synchronized(mutationLock) {
 			val base = state.get()
-			val subject = mapped.subjectId?.let { serverId ->
-				base.subject?.copy(id = serverId) ?: ConsentSubject(id = serverId)
-			} ?: base.subject
+			val subject =
+				mapped.subjectId?.let { serverId ->
+					base.subject?.copy(id = serverId) ?: ConsentSubject(id = serverId)
+				} ?: base.subject
 			// Rule 5 is the one exception to the latching below, and a different event
 			// from a failed init: the response carried a resolution this build cannot
 			// parse, so there is no answer left to serve. The rule the current
@@ -1098,24 +1325,31 @@ class C15tKernel(
 			// `core-swift` drops its resolved policy in the same branch -- permissions
 			// derived from a wire this build cannot re-read are permissions it can no
 			// longer justify.
-			evaluationPolicy = if (mapped.policyUnreadable) {
-				null
-			} else {
-				mapped.evaluationPolicy ?: evaluationPolicy
-			}
+			evaluationPolicy =
+				if (mapped.policyUnreadable) {
+					null
+				} else {
+					mapped.evaluationPolicy ?: evaluationPolicy
+				}
 			// Latched, exactly like the policy two lines above, and for the reason on
-			// [vendorList]: once a purpose or vendor name has been drawn from a list, a `/init` that
+			// [vendorList]: once a purpose or vendor name has been drawn from a list, a `/init`
+			// that
 			// served none must not take the name back, because the disclosure it belonged to has
-			// already been shown. Only a better list displaces it -- `fromInitBody` answers null for
+			// already been shown. Only a better list displaces it -- `fromInitBody` answers null
+			// for
 			// absent and for refused alike, so the fold below cannot empty anything. Note the `gvl`
-			// stays outside the `policyUnreadable` branch above on purpose: an unreadable resolution
-			// costs the core its claim about permissions, which is rule 5, and costs it nothing about
+			// stays outside the `policyUnreadable` branch above on purpose: an unreadable
+			// resolution
+			// costs the core its claim about permissions, which is rule 5, and costs it nothing
+			// about
 			// who vendor 755 is.
 			//
 			// The declared scope narrows what arrives, before the latch. Web does the same on both
 			// of its routes: `createIAB` in `packages/iab` asks the GVL endpoint for its scope and
-			// then prunes whatever comes back, in case the endpoint ignored the parameter. The prune
-			// is the part that carries the disclosure promise and the `x-c15t-vendors` header is the
+			// then prunes whatever comes back, in case the endpoint ignored the parameter. The
+			// prune
+			// is the part that carries the disclosure promise and the `x-c15t-vendors` header is
+			// the
 			// bytes-saving optimisation in front of it, so a producer that embeds the whole list
 			// here is answered by this line and not by the request.
 			//
@@ -1141,40 +1375,48 @@ class C15tKernel(
 			// subject's own refusal and invites a host to stop listening, which would
 			// make the category unrecoverable when the next resolution parses.
 			val superseded = mapped.policyPending && !base.policyPending
-			published = PolicyEvaluator.evaluate(
-				snapshot = base.copy(
-					// The latch lands on the snapshot's own field, which is the copy the bridge
-					// reads, so the list behind a JavaScript disclosure is the list a host's own
-					// Kotlin reads off [vendorList].
-					iab = latchedVendorList?.let(::KernelIabState),
-					resolution = if (superseded) base.resolution else mapped.resolution,
-					policyPending = mapped.policyPending &&
-						(base.policyPending || mapped.policyUnreadable),
-					// A failed init leaves the local state unready: nothing resolved, so
-					// gates keep denying. Only a definitive answer makes it ready.
-					ready = if (mapped.policyPending) base.ready else true,
-					subject = subject,
-					location = mapped.location ?: base.location,
-					// The overrides the decision was actually made against, which is
-					// what the backend recomputes before it accepts a save.
-					// `mapResolvedOverrides` and the merge in `@c15t/core` fold the served
-					// location and translation language over the app's own overrides, so a
-					// device that pinned nothing still reports the country and region it
-					// was matched on. `gpc` survives from the app because `/init` serves a
-					// detection, not an override.
-					overrides = resolvedOverrides(base.overrides, mapped),
-					privacySignals = signalsFor(resolvedOverrides(base.overrides, mapped), detected),
-					policySnapshotToken = mapped.policySnapshotToken ?: base.policySnapshotToken,
-					translations = mapped.translations ?: base.translations,
-					error = mapped.error,
-					revision = base.revision + 1,
-					consentCategories = decidedCategories(evaluationPolicy),
-				),
-				policy = evaluationPolicy,
-				noticeDismissal = noticeDismissal,
-				now = clock.nowMillis(),
-				choiceScope = choiceScopeOf(evaluationPolicy),
-			)
+			published =
+				PolicyEvaluator.evaluate(
+					snapshot =
+						base.copy(
+							// The latch lands on the snapshot's own field, which is the copy the
+							// bridge
+							// reads, so the list behind a JavaScript disclosure is the list a
+							// host's own
+							// Kotlin reads off [vendorList].
+							iab = latchedVendorList?.let(::KernelIabState),
+							resolution = if (superseded) base.resolution else mapped.resolution,
+							policyPending =
+								mapped.policyPending &&
+									(base.policyPending || mapped.policyUnreadable),
+							// A failed init leaves the local state unready: nothing resolved, so
+							// gates keep denying. Only a definitive answer makes it ready.
+							ready = if (mapped.policyPending) base.ready else true,
+							subject = subject,
+							location = mapped.location ?: base.location,
+							// The overrides the decision was actually made against, which is
+							// what the backend recomputes before it accepts a save.
+							// `mapResolvedOverrides` and the merge in `@c15t/core` fold the served
+							// location and translation language over the app's own overrides, so a
+							// device that pinned nothing still reports the country and region it
+							// was matched on. `gpc` survives from the app because `/init` serves a
+							// detection, not an override.
+							overrides = resolvedOverrides(base.overrides, mapped),
+							privacySignals =
+								signalsFor(resolvedOverrides(base.overrides, mapped), detected),
+							policySnapshotToken =
+								mapped.policySnapshotToken ?: base.policySnapshotToken,
+							translations = mapped.translations ?: base.translations,
+							error = mapped.error,
+							revision = base.revision + 1,
+							consentCategories = decidedCategories(evaluationPolicy),
+						),
+					policy = evaluationPolicy,
+					noticeDismissal = noticeDismissal,
+					now = clock.nowMillis(),
+					choiceScope = choiceScopeOf(evaluationPolicy),
+				)
+			published = validateIab(published)
 			state.set(published)
 		}
 
@@ -1189,12 +1431,35 @@ class C15tKernel(
 	 * Send one queued body once, unless the queue no longer holds it.
 	 *
 	 * `null` says the body was not this sender's to send. Both senders hold [passInFlight] when
-	 * they reach here, so the only way an entry is already gone is that the pass or send which
-	 * held the guard before this one landed it -- after the read that brought this sender here.
-	 * Sending anyway is the second POST the contract names, so the queue gets asked last, and an
-	 * entry that is not owed spends no attempt and announces nothing.
+	 * they reach here, so the only way an entry is already gone is that the pass or send which held
+	 * the guard before this one landed it -- after the read that brought this sender here. Sending
+	 * anyway is the second POST the contract names, so the queue gets asked last, and an entry that
+	 * is not owed spends no attempt and announces nothing.
 	 */
 	private fun deliverIfOwed(entry: QueuedSave): Delivery? {
+		val requiresIab =
+			synchronized(mutationLock) {
+				iabConfiguration != null && evaluationPolicy?.model == ConsentModel.IAB
+			}
+		if (
+			entry.payload.tcString != null || entry.payload.model == ConsentModel.IAB || requiresIab
+		) {
+			val saved = iabConsent ?: return null
+			val body =
+				entry.body?.let {
+					runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull()
+				} ?: return null
+			fun value(key: String) = body[key] as? JsonPrimitive
+			if (
+				entry.payload.tcString != saved.tcString ||
+					value("tcString")?.contentOrNull != saved.tcString ||
+					value("subjectId")?.contentOrNull != saved.subjectId ||
+					value("externalSubjectId")?.contentOrNull != saved.externalId ||
+					value("givenAt")?.longOrNull != saved.actionAt ||
+					value("model")?.contentOrNull != "iab"
+			)
+				return null
+		}
 		if (!queue.isPending(entry.id)) {
 			return null
 		}
@@ -1204,8 +1469,8 @@ class C15tKernel(
 	/**
 	 * Send one queued body once, and settle what the answer means for the queue.
 	 *
-	 * A delivered answer is a claim about storage rather than about the network: the entry is
-	 * gone from disk, which is the only thing that lets a caller stop owing this body.
+	 * A delivered answer is a claim about storage rather than about the network: the entry is gone
+	 * from disk, which is the only thing that lets a caller stop owing this body.
 	 */
 	private fun deliver(entry: QueuedSave): Delivery {
 		return when (val outcome = transport.save(entry)) {
@@ -1259,16 +1524,16 @@ class C15tKernel(
 	/**
 	 * Spend one attempt on a send that did not land, and announce the result.
 	 *
-	 * Every failed send spends an attempt, including the very first send of the save that
-	 * queued the body. Without that, the attempt ceiling is reachable only by replays, so a
-	 * body the transport refuses on the first try sits in the queue across every launch,
-	 * replaying bytes nobody will accept.
+	 * Every failed send spends an attempt, including the very first send of the save that queued
+	 * the body. Without that, the attempt ceiling is reachable only by replays, so a body the
+	 * transport refuses on the first try sits in the queue across every launch, replaying bytes
+	 * nobody will accept.
 	 *
 	 * @param notice the code to announce while the entry is still owed. A release is always
-	 * announced as `save-undeliverable` instead, because at that point the caller's question
-	 * is no longer "why did this try fail" but "why is this no longer being tried".
-	 * @returns the error that was announced, so a caller that also reports per pass does not
-	 * have to invent a second, different sentence for the same failure.
+	 *   announced as `save-undeliverable` instead, because at that point the caller's question is
+	 *   no longer "why did this try fail" but "why is this no longer being tried".
+	 * @returns the error that was announced, so a caller that also reports per pass does not have
+	 *   to invent a second, different sentence for the same failure.
 	 */
 	private fun announceFailedAttempt(
 		entry: QueuedSave,
@@ -1312,36 +1577,138 @@ class C15tKernel(
 	/**
 	 * The announcement for an obligation the queue released with its body never accepted.
 	 *
-	 * Both roads reach it: a save whose very first send spent the last attempt, and a replay
-	 * that ran a body out. One message builder keeps the two from drifting apart, because
-	 * after this point nothing on the device remembers that the decision owed anyone
-	 * anything, and a host that is not told has no way to learn it.
+	 * Both roads reach it: a save whose very first send spent the last attempt, and a replay that
+	 * ran a body out. One message builder keeps the two from drifting apart, because after this
+	 * point nothing on the device remembers that the decision owed anyone anything, and a host that
+	 * is not told has no way to learn it.
 	 */
 	private fun undeliverableSave(
 		entry: QueuedSave,
 		outcome: SaveOutcome,
 		attempt: FailedAttempt,
 	): KernelError {
-		val reason = when (attempt) {
-			is FailedAttempt.DroppedAfterAttempts ->
-				"it was refused ${attempt.attempts} times, which is the ceiling of " +
-					"${PendingSaveQueue.MAX_ATTEMPTS} attempts"
+		val reason =
+			when (attempt) {
+				is FailedAttempt.DroppedAfterAttempts ->
+					"it was refused ${attempt.attempts} times, which is the ceiling of " +
+						"${PendingSaveQueue.MAX_ATTEMPTS} attempts"
 
-			is FailedAttempt.DroppedAsTooOld ->
-				"it waited longer than the queue's ${PendingSaveQueue.MAX_AGE_MS / 86_400_000L} " +
-					"day retention window"
+				is FailedAttempt.DroppedAsTooOld ->
+					"it waited longer than the queue's ${PendingSaveQueue.MAX_AGE_MS / 86_400_000L} " +
+						"day retention window"
 
-			FailedAttempt.Retrying,
-			FailedAttempt.AlreadyGone,
-			-> "it left the queue unaccepted"
-		}
+				FailedAttempt.Retrying,
+				FailedAttempt.AlreadyGone -> "it left the queue unaccepted"
+			}
 		return KernelError(
 			code = "save-undeliverable",
-			message = "c15t: a queued consent save for ${entry.payload.subjectId} was dropped " +
-				"because $reason. Last backend answer: $outcome",
+			message =
+				"c15t: a queued consent save for ${entry.payload.subjectId} was dropped " +
+					"because $reason. Last backend answer: $outcome",
 		)
 	}
 
+	private fun validateIab(snapshot: ConsentSnapshot): ConsentSnapshot {
+		if (iabConfiguration == null && committedIab == null) return snapshot
+		if (evaluationPolicy?.model != com.c15t.core.model.ConsentModel.IAB && committedIab == null)
+			return snapshot
+		val saved = committedIab
+		val c = iabConfiguration
+		val gvl = snapshot.iab?.gvl
+		val valid =
+			if (
+				saved != null &&
+					saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					c != null &&
+					gvl != null &&
+					saved.configuration == c &&
+					saved.subjectId == snapshot.subject?.id &&
+					saved.externalId == snapshot.subject?.externalId &&
+					saved.fingerprint == evaluationPolicy?.choiceFingerprint &&
+					saved.vendorListVersion.toLong() == gvl.vendorListVersion &&
+					saved.policyVersion.toLong() == gvl.tcfPolicyVersion
+			) {
+				try {
+					val rebuilt =
+						IabAuthority.build(
+							c,
+							saved.choices,
+							gvl,
+							saved.subjectId,
+							saved.externalId,
+							saved.fingerprint,
+							saved.actionAt,
+							saved,
+						)
+					rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices
+				} catch (_: IllegalArgumentException) {
+					false
+				}
+			} else false
+		if (valid) return snapshot.copy(model = ConsentModel.IAB)
+		committedIab = null
+		queue.clear()
+		return PolicyEvaluator.evaluate(
+				snapshot.copy(explicitChoice = null),
+				evaluationPolicy,
+				noticeDismissal,
+				clock.nowMillis(),
+				choiceScopeOf(evaluationPolicy),
+			)
+			.let {
+				if (
+					iabConfiguration != null &&
+						evaluationPolicy?.model == ConsentModel.IAB &&
+						!it.policyPending
+				)
+					it.copy(model = ConsentModel.IAB)
+				else it
+			}
+	}
+
+	private fun transitionIab(externalId: String?, reset: Boolean): Boolean? =
+		synchronized(mutationLock) {
+			if (iabConfiguration == null && committedIab == null) return@synchronized null
+			val current = state.get()
+			val subject = current.subject?.copy(externalId = externalId)
+			val next =
+				if (reset)
+					ConsentSnapshot.denyAll(subject!!, clock.nowMillis())
+						.copy(
+							revision = current.revision + 1,
+							overrides = configuredOverrides,
+							consentCategories = decidedCategories(null),
+						)
+				else
+					PolicyEvaluator.evaluate(
+						current.copy(
+							subject = subject,
+							explicitChoice = null,
+							revision = current.revision + 1,
+						),
+						evaluationPolicy,
+						null,
+						clock.nowMillis(),
+						choiceScopeOf(evaluationPolicy),
+					)
+			val envelope =
+				SnapshotEnvelope(
+					snapshot = next.copy(iab = null),
+					evaluationPolicy = if (reset) null else evaluationPolicy,
+					gvl = if (reset) null else next.iab?.gvl,
+					lastIabActionAt = lastIabActionAt,
+				)
+			if (!store.replace(envelope)) return@synchronized false
+			committedIab = null
+			noticeDismissal = null
+			if (reset) {
+				evaluationPolicy = null
+				storedSnapshotFound = false
+			}
+			state.set(next)
+			true
+		}
 
 	private fun buildSavePayload(
 		published: ConsentSnapshot,
@@ -1387,20 +1754,19 @@ class C15tKernel(
 	/**
 	 * The categories the consent surfaces list right now.
 	 *
-	 * The same derivation the web dialog uses (`getDisplayedConsents` in
-	 * `use-manager.ts`): `necessary` first, then the choice scope, which is the
-	 * policy scope narrowed by the host's own declaration. A host that declares
-	 * nothing is asked about the whole scope of a strict rule and about none of a
-	 * permissive one, where it is offered `necessary` alone; a name the host declares
-	 * that the resolved policy does not govern is dropped, because a row the
-	 * evaluator will not honour is a row that cannot be honoured. Before any policy
-	 * resolves the evaluator runs the safe fallback rule, which is strict, over every
-	 * optional category, so the scope behind the list is the full optional set --
-	 * the same rows the web shows while it waits for init.
+	 * The same derivation the web dialog uses (`getDisplayedConsents` in `use-manager.ts`):
+	 * `necessary` first, then the choice scope, which is the policy scope narrowed by the host's
+	 * own declaration. A host that declares nothing is asked about the whole scope of a strict rule
+	 * and about none of a permissive one, where it is offered `necessary` alone; a name the host
+	 * declares that the resolved policy does not govern is dropped, because a row the evaluator
+	 * will not honour is a row that cannot be honoured. Before any policy resolves the evaluator
+	 * runs the safe fallback rule, which is strict, over every optional category, so the scope
+	 * behind the list is the full optional set -- the same rows the web shows while it waits for
+	 * init.
 	 *
-	 * The list is `necessary` plus the optional names in canonical (sorted) order;
-	 * the JavaScript layer restyles that into display order, and both native cores
-	 * emit this exact shape so the protocol fixtures can pin them together.
+	 * The list is `necessary` plus the optional names in canonical (sorted) order; the JavaScript
+	 * layer restyles that into display order, and both native cores emit this exact shape so the
+	 * protocol fixtures can pin them together.
 	 */
 	private fun decidedCategories(policy: EvaluationPolicy?): List<String> {
 		val scope = (choiceScopeOf(policy) ?: fallbackChoiceScope()).toSet()
@@ -1415,8 +1781,8 @@ class C15tKernel(
 		policy?.choiceScope(config.consentCategories)
 
 	/**
-	 * The choice scope before any policy resolves: the safe fallback rule is strict
-	 * and governs every optional category, so the declaration narrows that.
+	 * The choice scope before any policy resolves: the safe fallback rule is strict and governs
+	 * every optional category, so the declaration narrows that.
 	 */
 	private fun fallbackChoiceScope(): List<ConsentCategory> {
 		val declared = config.consentCategories?.takeIf { it.isNotEmpty() }
@@ -1424,14 +1790,13 @@ class C15tKernel(
 	}
 
 	/**
-	 * The acknowledgement a save records when the choice prompt has no category to
-	 * decide, or `null` when it has one.
+	 * The acknowledgement a save records when the choice prompt has no category to decide, or
+	 * `null` when it has one.
 	 *
-	 * `choiceAcknowledgement` in `packages/core/src/kernel/commands.ts`. It is a notice
-	 * dismissal bound to the choice fingerprint, so the envelope carries it the way it
-	 * carries a notice dismissal, and the evaluator never mistakes it for one. A stored
-	 * acknowledgement at least as new is kept. Called with [mutationLock] held, because
-	 * it reads [noticeDismissal].
+	 * `choiceAcknowledgement` in `packages/core/src/kernel/commands.ts`. It is a notice dismissal
+	 * bound to the choice fingerprint, so the envelope carries it the way it carries a notice
+	 * dismissal, and the evaluator never mistakes it for one. A stored acknowledgement at least as
+	 * new is kept. Called with [mutationLock] held, because it reads [noticeDismissal].
 	 */
 	private fun choiceAcknowledgement(
 		policy: EvaluationPolicy?,
@@ -1469,20 +1834,26 @@ class C15tKernel(
 
 	/** Persist the published state. Always called with [mutationLock] released. */
 	private fun persist() {
-		val snapshot = state.get()
-		val envelope = synchronized(mutationLock) {
-			SnapshotEnvelope(
-				// One copy of the document per write. The envelope's `gvl` key is where the list is
-				// durable -- it is that key a build from before this field existed read, and
-				// [bootstrap] reads it back onto the snapshot -- so the stored snapshot goes with
-				// `iab` nulled instead of carrying the largest thing either object holds a second
-				// time, on a write that happens for every committed mutation.
-				snapshot = snapshot.copy(iab = null),
-				evaluationPolicy = evaluationPolicy,
-				noticeDismissal = noticeDismissal,
-				gvl = snapshot.iab?.gvl,
-			)
-		}
+		val envelope =
+			synchronized(mutationLock) {
+				val snapshot = state.get()
+				SnapshotEnvelope(
+					// One copy of the document per write. The envelope's `gvl` key is where the
+					// list is
+					// durable -- it is that key a build from before this field existed read, and
+					// [bootstrap] reads it back onto the snapshot -- so the stored snapshot goes
+					// with
+					// `iab` nulled instead of carrying the largest thing either object holds a
+					// second
+					// time, on a write that happens for every committed mutation.
+					snapshot = snapshot.copy(iab = null),
+					evaluationPolicy = evaluationPolicy,
+					noticeDismissal = noticeDismissal,
+					gvl = snapshot.iab?.gvl,
+					iabConsent = committedIab,
+					lastIabActionAt = lastIabActionAt,
+				)
+			}
 		store.writeEnvelope(envelope)
 		store.flush()
 	}
@@ -1503,37 +1874,30 @@ class C15tKernel(
 	}
 
 	/**
-	 * The overrides in force after an init, following `mapResolvedOverrides` and the
-	 * merge in `@c15t/core`: the served location and translation language win over
-	 * what the app pinned, and `gpc` is the app's own because `/init` serves a
-	 * detection rather than an override.
+	 * The overrides in force after an init, following `mapResolvedOverrides` and the merge in
+	 * `@c15t/core`: the served location and translation language win over what the app pinned, and
+	 * `gpc` is the app's own because `/init` serves a detection rather than an override.
 	 */
-	private fun resolvedOverrides(
-		base: KernelOverrides,
-		mapped: MappedInit,
-	): KernelOverrides = KernelOverrides(
-		country = mapped.resolvedOverrides?.country
-			?: mapped.location?.country
-			?: base.country,
-		region = mapped.resolvedOverrides?.region
-			?: mapped.location?.region
-			?: base.region,
-		language = mapped.resolvedOverrides?.language
-			?: mapped.translationsLanguage
-			?: base.language,
-		gpc = mapped.resolvedOverrides?.gpc ?: base.gpc,
-	)
+	private fun resolvedOverrides(base: KernelOverrides, mapped: MappedInit): KernelOverrides =
+		KernelOverrides(
+			country = mapped.resolvedOverrides?.country ?: mapped.location?.country ?: base.country,
+			region = mapped.resolvedOverrides?.region ?: mapped.location?.region ?: base.region,
+			language =
+				mapped.resolvedOverrides?.language ?: mapped.translationsLanguage ?: base.language,
+			gpc = mapped.resolvedOverrides?.gpc ?: base.gpc,
+		)
 
 	/**
-	 * The signal view the snapshot carries, derived rather than stored. The app's
-	 * override outranks the device, which is what makes it an override.
+	 * The signal view the snapshot carries, derived rather than stored. The app's override outranks
+	 * the device, which is what makes it an override.
 	 */
 	private fun signalsFor(
 		overrides: KernelOverrides,
 		detected: Boolean? = detectedGpc,
-	): PrivacySignals = PrivacySignals(
-		gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true),
-	)
+	): PrivacySignals =
+		PrivacySignals(
+			gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true)
+		)
 
 	private fun notifySnapshot(snapshot: ConsentSnapshot) {
 		for (reference in snapshotObservers) {
@@ -1557,17 +1921,18 @@ class C15tKernel(
 		 *
 		 * One thread, so the work handed to it cannot overlap. Useful, and not what keeps a
 		 * delivery pass exclusive. [flushPending] is a public synchronous method that the shipped
-		 * wiring calls from the main thread on a reachability change, from the lifecycle
-		 * observer's worker, and from the React Native module's thread, while [save] hands its
-		 * first send to this pool with any of those already running, so a second pass can always
-		 * arrive on a thread this pool never sees. `native/CONTRACT.md` allows one pass per core
-		 * in flight, and [requestDeliveryPass] is what holds it: the guard is the guarantee, not
-		 * the thread count. Deliberately, because a host may hand this core a [TaskExecutor] with
-		 * two threads in it, and consent delivery must not begin resending bodies the moment
-		 * someone swaps this pool for a busier one.
+		 * wiring calls from the main thread on a reachability change, from the lifecycle observer's
+		 * worker, and from the React Native module's thread, while [save] hands its first send to
+		 * this pool with any of those already running, so a second pass can always arrive on a
+		 * thread this pool never sees. `native/CONTRACT.md` allows one pass per core in flight, and
+		 * [requestDeliveryPass] is what holds it: the guard is the guarantee, not the thread count.
+		 * Deliberately, because a host may hand this core a [TaskExecutor] with two threads in it,
+		 * and consent delivery must not begin resending bodies the moment someone swaps this pool
+		 * for a busier one.
 		 */
-		val backgroundPool = Executors.newSingleThreadExecutor { runnable ->
-			Thread(runnable, "c15t-core").apply { isDaemon = true }
-		}
+		val backgroundPool =
+			Executors.newSingleThreadExecutor { runnable ->
+				Thread(runnable, "c15t-core").apply { isDaemon = true }
+			}
 	}
 }

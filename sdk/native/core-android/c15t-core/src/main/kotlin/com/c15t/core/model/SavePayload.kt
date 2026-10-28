@@ -31,6 +31,7 @@ data class SavePayload(
 	val decisionInputs: DecisionInputs? = null,
 	/** Equals `confirmed.actionAt`, for backends that read one time. */
 	val givenAt: Long,
+	val tcString: String? = null,
 )
 
 /**
@@ -54,4 +55,6 @@ data class QueuedSave(
 	 * under this build.
 	 */
 	val attempts: Int = 0,
+	/** Exact UTF-8 POST body captured for native IAB commits. */
+	val body: String? = null,
 )

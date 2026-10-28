@@ -653,17 +653,12 @@ final class ConsentCoreTests: XCTestCase {
             XCTAssertEqual(core.decision(for: category.category), .denied)
         }
 
-        core.save(.custom([.marketing: true]))
+        let result = core.save(.custom([.marketing: true]))
         await core.waitUntilIdle()
-        XCTAssertTrue(core.isAllowed(.marketing), "the subject's own grant is what opens it")
-        XCTAssertFalse(core.isAllowed(.measurement), "and only what they granted")
-        XCTAssertEqual(core.snapshot().model, .optIn)
-        XCTAssertEqual(core.decision(for: .marketing), .granted)
-
-        // The write carries the reported model, not the rule's name, which is what the
-        // kernel puts in `model` for the same situation.
-        let body = http.recordedSaveRequests.last?.body ?? Data()
-        XCTAssertEqual(C15tJSON.parse(body)?["model"]?.stringValue, "opt-in")
+        XCTAssertEqual(result.status, .rejected)
+        XCTAssertEqual(result.error?.code, "iab-unavailable")
+        XCTAssertFalse(core.isAllowed(.marketing))
+        XCTAssertTrue(http.recordedSaveRequests.isEmpty)
 
         // A relaunch reads the same rule out of the stored envelope and reaches the same
         // answer, so the projection is not a thing only a fresh init gets right. The
@@ -684,7 +679,7 @@ final class ConsentCoreTests: XCTestCase {
         ))
         XCTAssertEqual(relaunched.snapshot().model, .optIn)
         XCTAssertEqual(relaunched.snapshot().resolution.policyId, "de-tcf")
-        XCTAssertTrue(relaunched.isAllowed(.marketing))
+        XCTAssertFalse(relaunched.isAllowed(.marketing))
     }
 
     /// Two rules an IAB policy cannot be, both straight out of `@c15t/schema`:

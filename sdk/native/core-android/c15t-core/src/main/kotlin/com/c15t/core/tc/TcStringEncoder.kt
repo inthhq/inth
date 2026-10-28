@@ -3,14 +3,10 @@ package com.c15t.core.tc
 /**
  * The consent facts this build is willing to author a TC String from.
  *
- * Exactly the fields c15t's web codec sets on a `TCModel`: `packages/iab/src/tcf/tc-string.ts`
- * touches cmpId, cmpVersion, consentScreen, consentLanguage, publisherCountryCode,
- * isServiceSpecific, purposeConsents, purposeLegitimateInterests, vendorConsents,
- * vendorLegitimateInterests, specialFeatureOptins and vendorsDisclosed, and nothing else. What is
- * missing here is missing on purpose. Publisher restrictions need the GVL to say which vendor may
- * be restricted how; PurposeOneTreatment is a policy claim about whether Purpose 1 was disclosed;
- * the publisher segment has nothing on a consent snapshot to be built from. Authoring those on
- * mobile would invent behaviour with no web counterpart to check it against.
+ * The native IAB authority validates complete choices against a disclosed GVL, including publisher
+ * restrictions and custom publisher purposes. Low-level callers can still author the original
+ * web-compatible subset using the defaults below. PurposeOneTreatment remains false in this
+ * authoring profile.
  *
  * [consentScreen] and [publisherCountryCode] default to what the web codec defaults to, because
  * both land in the bytes. A mobile default that disagrees with web's is a parity failure neither
@@ -39,6 +35,10 @@ data class TcConsentInput(
 	val confirmedAtMillis: Long,
 	val vendorList: TcVendorList,
 	val cmpVersion: Int = 0,
+	val createdAtMillis: Long = confirmedAtMillis,
+	val publisherRestrictions: TcPublisherRestrictions = TcPublisherRestrictions.EMPTY,
+	val publisher: TcPublisherSegment =
+		TcPublisherSegment(emptyList(), emptyList(), 0, emptyList(), emptyList()),
 	val consentScreen: Int = DEFAULT_CONSENT_SCREEN,
 	val publisherCountryCode: String = DEFAULT_PUBLISHER_COUNTRY_CODE,
 	val isServiceSpecific: Boolean = DEFAULT_IS_SERVICE_SPECIFIC,
@@ -102,7 +102,7 @@ object TcStringEncoder {
 		val day = utcDayDeciseconds(input.confirmedAtMillis)
 		val core = TcCoreSegment(
 			version = TcCoreSegment.SUPPORTED_VERSION,
-			createdDeciseconds = day,
+			createdDeciseconds = utcDayDeciseconds(input.createdAtMillis),
 			lastUpdatedDeciseconds = day,
 			cmpId = input.cmpId,
 			cmpVersion = input.cmpVersion,
@@ -119,16 +119,15 @@ object TcStringEncoder {
 			publisherCountryCode = input.publisherCountryCode.uppercase(),
 			vendorConsents = TcVectorSection.ofIds(prepared.vendorConsents),
 			vendorLegitimateInterests = TcVectorSection.ofIds(prepared.vendorLegitimateInterests),
-			publisherRestrictions = TcPublisherRestrictions.EMPTY,
-		)
+			publisherRestrictions = input.publisherRestrictions,
+			)
 
-		val parts = mutableListOf(encodeCore(core))
+		val parts = mutableListOf(encodeCore(core, authoring = true))
 		parts += encodeSection(TcSegmentType.VENDORS_DISCLOSED.id) {
 			TcVectorSection.ofIds(input.vendorsDisclosed).write(it)
 		}
 		if (input.isServiceSpecific) {
-			parts += encodeSection(TcSegmentType.PUBLISHER_TC.id) {
-				TcPublisherSegment(emptyList(), emptyList(), 0, emptyList(), emptyList()).write(it)
+			parts += encodeSection(TcSegmentType.PUBLISHER_TC.id) { input.publisher.write(it)
 			}
 		}
 		return parts.joinToString(".")
@@ -169,9 +168,9 @@ object TcStringEncoder {
 		return days * (TcConsentInput.MILLIS_PER_DAY / TcConsentInput.MILLIS_PER_DECISSECOND)
 	}
 
-	private fun encodeCore(core: TcCoreSegment): String {
+	private fun encodeCore(core: TcCoreSegment, authoring: Boolean = false): String {
 		val writer = BitWriter()
-		core.write(writer)
+		core.write(writer, authoring = authoring)
 		return Base64Url.encodeBits(writer.toBits())
 	}
 

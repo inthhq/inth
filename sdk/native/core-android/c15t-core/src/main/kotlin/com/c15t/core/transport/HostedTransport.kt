@@ -67,7 +67,7 @@ class HostedTransport(
 			method = HttpRequest.POST,
 			url = "$base/subjects",
 			headers = headers,
-			body = json.encodeToString(JsonElement.serializer(), body),
+			body = entry.body ?: json.encodeToString(JsonElement.serializer(), body),
 		)
 		return when (val outcome = send(request)) {
 			is TransportOutcome.Success -> deliveredOrWrongContract(outcome)

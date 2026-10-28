@@ -54,6 +54,12 @@ class SubjectPreservingStore(
 		}
 	}
 
+	override fun writeDurably(key: String, value: String?): Boolean {
+		recoverSubjectIfNeeded()
+		return if (key == C15tStoreKeys.SUBJECT) identity.writeDurably(key, value)
+		else records.writeDurably(key, value)
+	}
+
 	override fun keys(): Set<String> = records.keys() + identity.keys()
 
 	override fun flush() {

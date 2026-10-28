@@ -29,6 +29,18 @@ interface KeyValueStore {
 	 */
 	fun keys(): Set<String> = emptySet()
 
+	/**
+	 * Atomically replace one key and wait for durable storage. A false result must leave the
+	 * previous durable value intact. Buffered adapters must override this method and report their
+	 * disk result, rather than reading their memory cache. The default supports synchronous stores
+	 * with a durable [write]/[flush].
+	 */
+	fun writeDurably(key: String, value: String?): Boolean {
+		write(key, value)
+		flush()
+		return read(key) == value
+	}
+
 	/** Push buffered writes to durable storage. Optional. */
 	fun flush() = Unit
 }
