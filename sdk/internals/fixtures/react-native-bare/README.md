@@ -54,6 +54,24 @@ it and inlines every `process.env.C15T_*` read at build time, which is the only 
 value reaches a React Native bundle. A variable already in the real environment wins,
 so `C15T_FAKE_NATIVE=true bun run android` overrides the file.
 
+Android resolves versioned native artifacts. Before a local Android run, stage
+the core and platform artifacts from the checkout. Run these commands from the
+repository root with JDK 17 and an Android SDK configured:
+
+```sh
+./native/core-android/gradlew -p native/core-android \
+  :c15t-core:publishAllPublicationsToStagingRepository \
+  :c15t-android:publishAllPublicationsToStagingRepository
+export C15T_MAVEN_URL="file://$(pwd)/native/core-android/build/maven-staging"
+bun run --cwd internals/fixtures/react-native-bare android
+```
+
+Keep `C15T_MAVEN_URL` in the shell that starts Gradle. The fixture's `.env` loader
+only configures JavaScript. Local staging needs no GitHub Packages credentials
+and does not prove remote artifact availability. Without this override, Gradle
+uses the private GitHub Packages repository and needs `C15T_MAVEN_USERNAME` and
+`C15T_MAVEN_TOKEN` supplied through the secure environment.
+
 Point the native core at a backend by editing the two files the core actually reads:
 
 - `ios/C15tBare/Info.plist` → `com.c15t.backend.url`, `com.c15t.backend.mode`
@@ -306,20 +324,17 @@ Run them from this directory, or from the root with `bun run --cwd internals/fix
 | `bun run check-types` | `tsc --noEmit` |
 | `bun run lint` / `bun run fmt` | Oxlint and Oxfmt, from the repo presets |
 
-Both native cores are built from this repository rather than resolved from a package
-registry, and both need one line of wiring an app outside the monorepo would not carry.
-Neither is c15t behaviour; both are marked in the file.
+The fixture supports local Apple sources and versioned Android artifacts:
 
 - iOS: the first run needs `bun run pod-install`. The Podfile adds `pod 'C15tCore',
   :path => '../../../../native/core-swift'` and sets the deployment target to 16.4, which is
   the core's floor and above RN's. `@c15t/react-native`'s own pod is autolinked. Build
   against the published pod with `C15T_LOCAL_PODS=false`.
-- Android: `android/settings.gradle` includes `../../../../native/core-android` and
-  substitutes `com.c15t:c15t-core` and `com.c15t:c15t-android` into that build, because
-  the autolinked library depends on those coordinates and a host app's settings script
-  is what resolves them. Pass `-Pc15t.core.fromSource=false` to resolve published
-  artifacts instead. JDK 17 and an Android SDK are required; set `ANDROID_HOME` or write
-  `sdk.dir` into `android/local.properties`.
+- Android: Gradle resolves `com.c15t:c15t-core` and `com.c15t:c15t-android` from
+  `C15T_MAVEN_URL`, or private GitHub Packages when it is unset. Use the local
+  staging commands in [Setup](#setup) for checkout development. There is no
+  composite source substitution or `c15t.core.fromSource` property. Set
+  `ANDROID_HOME` or write `sdk.dir` into `android/local.properties`.
 
 `xcode-select -p` points at `/Applications/Xcode.app/Contents/Developer` here, so no
 `DEVELOPER_DIR` override is needed for `pod install` or `xcodebuild`. Where it points at
@@ -328,10 +343,10 @@ invocation needs `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
 ## Native build status
 
-Verified here: `bun run check-types` is clean, `bun run bundle` writes a release bundle
-for both platforms, `pod install` completes, and the Android app gets through Gradle
-configuration. Both platforms have been built, installed and launched;
-[Device run](#device-run) says what each one proved and what it still cannot.
+The artifact-based Android path has passed an isolated packed consumer build
+with real Codegen and R8. This fixture's current artifact-based app still needs
+a build and launch check. The earlier [Device run](#device-run) used the source
+build path and does not establish acceptance for these artifacts.
 
 iOS resolves. `pod install` from `ios/` prints:
 
