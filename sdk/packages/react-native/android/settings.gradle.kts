@@ -27,15 +27,19 @@ dependencyResolutionManagement {
 		google()
 		mavenCentral()
 		providers.environmentVariable("C15T_MAVEN_URL").orNull?.let { repositoryUrl ->
-			maven {
-				url = uri(repositoryUrl)
-				if (repositoryUrl.startsWith("https://")) {
-					credentials {
-						username = providers.environmentVariable("C15T_MAVEN_USERNAME").orNull
-						password = providers.environmentVariable("C15T_MAVEN_TOKEN").orNull
+			exclusiveContent {
+				forRepository {
+					maven {
+						url = uri(repositoryUrl)
+						if (repositoryUrl.startsWith("https://")) {
+							credentials {
+								username = providers.environmentVariable("C15T_MAVEN_USERNAME").orNull
+								password = providers.environmentVariable("C15T_MAVEN_TOKEN").orNull
+							}
+						}
 					}
 				}
-				content { includeGroup("com.c15t") }
+				filter { includeGroup("com.c15t") }
 			}
 		}
 	}

@@ -38,7 +38,10 @@ android {
 	}
 
 	kotlin {
+		coreLibrariesVersion = "2.1.20"
 		compilerOptions {
+			apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+			languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
 			jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
 		}
 	}

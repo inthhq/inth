@@ -29,7 +29,9 @@ release runs as part of this check.
 The native producer uses JDK 17, AGP 9.2.1 and Kotlin 2.2.10. The isolated
 consumer uses Gradle 9.3.1, AGP 8.12.0 and Kotlin 2.1.20, matching the Expo 57 /
 RN 0.86 Android build tools. Serialization is pinned to 1.8.1 because 1.11.0
-exports Kotlin 2.3 metadata that the consumer cannot read. Do not hide this
+exports Kotlin 2.3 metadata that the consumer cannot read. Both producers set
+Kotlin API and language compatibility to 2.1 and the standard library baseline
+to 2.1.20, including the versions in their published dependency metadata. Do not hide this
 failure with `-Xskip-metadata-version-check` or a source substitution.
 
 The fixture compiles with API 36 and declares a minimum API of 24. Compilation
@@ -53,7 +55,7 @@ native/core-android/gradlew -p native/core-android \
 Both coordinates are written under `native/core-android/build/maven-staging`.
 Each publication includes Maven POM and Gradle module metadata, sources and
 Dokka HTML API documentation in the `javadoc` classifier. The JAR/AAR contains
-Apache 2.0 license text and native version metadata. JVM shrinker rules ship
+Apache 2.0 license text, the root NOTICE attribution and native version metadata. JVM shrinker rules ship
 under `META-INF/proguard`; platform rules retain the initializer that AndroidX
 Startup discovers through the merged manifest.
 
@@ -81,12 +83,37 @@ The standalone bridge reads `C15T_MAVEN_URL`, `C15T_MAVEN_USERNAME` and
 repository configuration; the library's standalone settings do not configure
 its host. For a host using settings-owned repositories, use the
 `exclusiveContent` declaration in
-`native/core-android/consumer-smoke/settings.gradle`, replacing the
+`native/core-android/consumer-smoke/android/settings.gradle`, replacing the
 `c15t.repository` provider with the approved HTTPS repository. For a standard
-RN host with project-owned repositories, add the equivalent Maven declaration
-to the root `allprojects.repositories` block.
+RN host with project-owned repositories, add this explicit block to the root
+`android/build.gradle`. Replace the URL with the approved repository:
 
-Keep `com.c15t` exclusive to that repository. Do not add `mavenLocal()`,
+```groovy
+allprojects {
+  repositories {
+    exclusiveContent {
+      forRepository {
+        maven {
+          url = uri('https://maven.example.com/c15t')
+          credentials {
+            username = System.getenv('C15T_MAVEN_USERNAME')
+            password = System.getenv('C15T_MAVEN_TOKEN')
+            if (!username || !password) {
+              throw new GradleException('Set Maven credentials in the build environment.')
+            }
+          }
+        }
+      }
+      filter { includeGroup('com.c15t') }
+    }
+  }
+}
+```
+
+Keep `com.c15t` exclusive to that repository with `exclusiveContent`, not a
+`content` filter on one Maven repository. A content filter alone still lets
+earlier repositories supply these coordinates. Exclusive routing fails when
+the configured repository lacks an artifact, without falling back elsewhere. Do not add `mavenLocal()`,
 `includeBuild` for the native core, or dependency substitutions. Set
 `c15t.core.version` in the host's Gradle properties when validating another
 native prerelease. Credentials belong in environment variables supplied by the
@@ -118,7 +145,9 @@ python3 native/core-android/consumer-smoke/verify.py \
 
 To add the installed RN bridge and real Codegen output, first build and pack the
 RN package, then pass its tarball as `--rn-package /absolute/path/package.tgz`.
-The runner installs RN 0.86.3 and React 19.2.7 into the isolated consumer. This
+The runner keeps the Gradle root in `consumer/android` and the npm install in
+`consumer/node_modules`, matching a normal scoped installation. It leaves
+`c15t.spec.source` unset so normal Codegen detection runs. The runner installs RN 0.86.3 and React 19.2.7 into the isolated consumer. This
 checks packed bridge compilation against the Expo toolchain; it is not a full
 Expo or RN app launch.
 

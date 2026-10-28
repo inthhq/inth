@@ -29,7 +29,7 @@ dependencyResolutionManagement {
 }
 rootProject.name = 'c15t-artifact-consumer'
 include ':headless', ':app'
-if (file('node_modules/@c15t/react-native').isDirectory()) {
+if (file('../node_modules/@c15t/react-native').isDirectory()) {
     include ':c15t-react-native'
-    project(':c15t-react-native').projectDir = file('node_modules/@c15t/react-native/android/c15t-react-native')
+    project(':c15t-react-native').projectDir = file('../node_modules/@c15t/react-native/android/c15t-react-native')
 }

@@ -58,7 +58,12 @@ JDK 17 and an Android SDK are required. `local.properties` holds `sdk.dir` and i
 `ANDROID_HOME` works too. The standalone build pins AGP 9.2.1. A host owns its
 AGP/Kotlin versions; AGP 8 hosts apply their Kotlin Android plugin, while AGP 9
 uses built-in Kotlin unless the host opts out. Set `C15T_MAVEN_URL` and the
-repository credentials before running these commands.
+repository credentials before running these commands. Its settings route
+`com.c15t` exclusively to that repository. Host apps must configure their own
+`exclusiveContent` block, as described in
+[`docs/internal/android-artifacts.md`](../../../docs/internal/android-artifacts.md).
+A content filter on one repository does not stop earlier repositories from
+supplying the same coordinates.
 `codegen` mode needs `node` on `PATH` and a `react-native` install to resolve
 `@react-native/codegen` from, which the package's own devDependency satisfies inside this
 repository.

@@ -247,6 +247,7 @@ describe('the files allowlist against a build tree', () => {
 			].join('\n'),
 			'C15tReactNative.podspec': 'Pod::Spec.new do |s|\nend\n',
 			'LICENSE.md': 'Apache-2.0',
+			NOTICE: 'Copyright Consent Management Inc',
 			'android/.gradle/9.0/checksums.lock': 'binary\n',
 			'android/c15t-react-native/build.gradle.kts': 'plugins {\n}\n',
 			'android/c15t-react-native/build/outputs/aar/a.aar': 'binary\n',
@@ -357,6 +358,28 @@ describe('the files allowlist against a build tree', () => {
 });
 
 describe('published license copies', () => {
+	it('accepts root NOTICE attribution and rejects a modified copy', () => {
+		const packageDir = mkdtempSync(join(tmpdir(), 'c15t-notice-'));
+		try {
+			const notice = readFileSync(join(ROOT, 'NOTICE'), 'utf8');
+			makeTree(packageDir, { NOTICE: notice });
+			expect(
+				scanPublishedLicenses(packageDir, new Set(['NOTICE']))
+			).toStrictEqual([]);
+			makeTree(packageDir, { NOTICE: `${notice}modified` });
+			expect(
+				scanPublishedLicenses(packageDir, new Set(['NOTICE']))
+			).toMatchObject([
+				{
+					path: 'NOTICE',
+					reason: 'NOTICE copy differs from the repository attribution',
+				},
+			]);
+		} finally {
+			rmSync(packageDir, { force: true, recursive: true });
+		}
+	});
+
 	const workDir = mkdtempSync(join(tmpdir(), 'c15t-license-'));
 
 	afterAll(() => {

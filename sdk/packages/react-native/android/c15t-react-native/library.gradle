@@ -64,7 +64,9 @@ List<File> candidateInstalls = [
 	new File(packageRoot, 'node_modules/react-native'),
 	packageRoot.parentFile ? new File(packageRoot.parentFile, 'node_modules/react-native') : null,
 	packageRoot.parentFile?.parentFile ? new File(packageRoot.parentFile.parentFile, 'node_modules/react-native') : null,
+	packageRoot.parentFile?.parentFile ? new File(packageRoot.parentFile.parentFile, 'react-native') : null,
 	new File(rootProject.projectDir, 'node_modules/react-native'),
+	new File(rootProject.projectDir.parentFile, 'node_modules/react-native'),
 	prop('c15t.reactNativeDir') ? file(prop('c15t.reactNativeDir')) : null,
 ].findAll { it != null }
 
@@ -168,11 +170,10 @@ if ((agpMajor < 9 || builtInKotlin.equalsIgnoreCase('false')) && !project.plugin
 		project.apply plugin: 'org.jetbrains.kotlin.android'
 	} catch (Exception failure) {
 		throw new GradleException(
-			'@c15t/react-native builds its Android bridge in Kotlin, and this build opted out of ' +
-				"AGP's built-in Kotlin (android.builtInKotlin=false) without putting the Kotlin " +
-				'Android plugin on the classpath. The React Native template does: add ' +
-				'org.jetbrains.kotlin:kotlin-gradle-plugin to the root buildscript classpath, or ' +
-				'drop android.builtInKotlin=false. Caused by: ' + failure.message,
+			'@c15t/react-native requires the Kotlin Android plugin on the root buildscript ' +
+				'classpath when using AGP 8 or when AGP 9 built-in Kotlin is disabled. Add ' +
+				'org.jetbrains.kotlin:kotlin-gradle-plugin to the root buildscript classpath. ' +
+				'On AGP 9, enabling built-in Kotlin is also supported. Caused by: ' + failure.message,
 		)
 	}
 

@@ -385,15 +385,22 @@ export const scanPublishedLicenses = function scanPublishedLicenses(
 
 	const rootLicense = readFileSync(rootLicensePath);
 
-	for (const path of ['LICENSE.md', 'LICENSE']) {
+	for (const path of ['LICENSE.md', 'LICENSE', 'NOTICE']) {
 		if (!packedFilePaths.has(path)) {
 			continue;
 		}
 
-		if (!readFileSync(join(packageDir, path)).equals(rootLicense)) {
+		if (
+			!readFileSync(join(packageDir, path)).equals(
+				path === 'NOTICE' ? readFileSync(join(ROOT, 'NOTICE')) : rootLicense
+			)
+		) {
 			issues.push({
 				path,
-				reason: 'license copy differs from the repository license',
+				reason:
+					path === 'NOTICE'
+						? 'NOTICE copy differs from the repository attribution'
+						: 'license copy differs from the repository license',
 				size: 0,
 			});
 		}
