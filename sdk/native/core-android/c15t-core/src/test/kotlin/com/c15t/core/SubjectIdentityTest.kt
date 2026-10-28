@@ -286,6 +286,11 @@ class SubjectIdentityTest {
 			data[key] = value
 		}
 
+		override fun writeDurably(key: String, value: String?): Boolean {
+			write(key, value)
+			return read(key) == value
+		}
+
 		override fun read(key: String): String? {
 			timeline += "read:$key"
 			if (key == C15tStoreKeys.SUBJECT) {
