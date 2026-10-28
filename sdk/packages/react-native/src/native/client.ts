@@ -44,6 +44,7 @@ import type {
 	TrackingRequestPayload,
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
+import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -79,7 +80,7 @@ export interface ConsentClient {
 	/**
 	 * Read the current snapshot.
 	 *
-	 * Repeated calls on unchanged state return the identical frozen object, so
+	 * Repeated calls on unchanged state return the identical cached object, so
 	 * it is safe as a store snapshot and cheap in a render path.
 	 *
 	 * @returns The snapshot the native core holds, or a deny-all snapshot when
@@ -365,7 +366,7 @@ const warnSnapshotDrift = function warnSnapshotDrift(
 
 	seen.value = signature;
 	console.warn(
-		'c15t ConsentClient: the native snapshot does not use the key names this package declares. Consent state may read as missing.',
+		'c15t ConsentClient: the native snapshot does not match the declared wire shape. Consent state may read as missing.',
 		problems
 	);
 };
@@ -394,16 +395,10 @@ const isUsableSnapshot = function isUsableSnapshot(
 		typeof record.policyPending === 'boolean' &&
 		typeof permissions === 'object' &&
 		permissions !== null &&
-		'necessary' in permissions &&
-		typeof permissions.necessary === 'boolean' &&
-		'functionality' in permissions &&
-		typeof permissions.functionality === 'boolean' &&
-		'experience' in permissions &&
-		typeof permissions.experience === 'boolean' &&
-		'measurement' in permissions &&
-		typeof permissions.measurement === 'boolean' &&
-		'marketing' in permissions &&
-		typeof permissions.marketing === 'boolean' &&
+		CONSENT_CATEGORIES.every(
+			(category) =>
+				typeof (permissions as Record<string, unknown>)[category] === 'boolean'
+		) &&
 		typeof record.promptRequirement === 'object' &&
 		record.promptRequirement !== null
 	);
@@ -566,6 +561,25 @@ export const createConsentClient = function createConsentClient(
 		rawSnapshot = raw;
 
 		const parsed = parseObject(raw);
+		if (typeof parsed === 'object' && parsed !== null) {
+			const problems = describeSnapshotWireDrift(parsed, {
+				allowUnknownKeys: true,
+			});
+			const permissions = (parsed as Record<string, unknown>)
+				.effectivePermissions;
+			const values =
+				typeof permissions === 'object' && permissions !== null
+					? (permissions as Record<string, unknown>)
+					: {};
+			for (const category of CONSENT_CATEGORIES) {
+				if (typeof values[category] !== 'boolean') {
+					problems.push(
+						`effectivePermissions.${category}: expected a boolean, found ${typeof values[category]}`
+					);
+				}
+			}
+			warnSnapshotDrift(problems, drift);
+		}
 
 		if (!isUsableSnapshot(parsed)) {
 			snapshot = denyAllSnapshot(
@@ -577,10 +591,6 @@ export const createConsentClient = function createConsentClient(
 		}
 
 		snapshot = parsed;
-		warnSnapshotDrift(
-			describeSnapshotWireDrift(parsed, { allowUnknownKeys: true }),
-			drift
-		);
 
 		return snapshot;
 	};

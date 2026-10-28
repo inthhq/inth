@@ -303,6 +303,7 @@ describe('snapshot reads', () => {
 	);
 
 	test('rejects a snapshot with malformed permission values', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { client, fake } = makeClient();
 		const good = client.getSnapshot();
 		fake.pushUnreadableSnapshot(
@@ -318,6 +319,10 @@ describe('snapshot reads', () => {
 
 		expect(client.isAllowed('marketing')).toBe(false);
 		expect(client.getSnapshot().error?.code).toBe('invalid-native-snapshot');
+		expect(warn).toHaveBeenCalledWith(expect.any(String), [
+			'effectivePermissions.measurement: expected a boolean, found string',
+		]);
+		warn.mockRestore();
 	});
 });
 
@@ -362,9 +367,7 @@ describe('wire drift', () => {
 			readonly string[],
 		];
 
-		expect(message).toContain(
-			'does not use the key names this package declares'
-		);
+		expect(message).toContain('does not match the declared wire shape');
 		expect(problems).toContain(
 			'location.countryCode: required here, absent from the payload'
 		);
