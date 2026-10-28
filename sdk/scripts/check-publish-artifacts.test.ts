@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import {
 	appendFileSync,
+	cpSync,
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
@@ -492,6 +493,30 @@ describe('vendored native sources', () => {
 		expect(scanVendoredNativeSources(packageDir)).toStrictEqual([]);
 		expect(scanPackedVendoredSources(packageDir, new Set())).toStrictEqual([]);
 	});
+
+	it.each(['C15tCore', 'C15tApple'])(
+		'rejects a missing %s directory before prepack can recreate it',
+		(module) => {
+			const packageDir = vendoredPackage(`missing-${module}`);
+			makeTree(packageDir, {
+				'package.json': JSON.stringify({ name: '@c15t/react-native' }),
+			});
+			const appleSource = join(ROOT, 'native/core-swift/Sources/C15tApple');
+			cpSync(appleSource, join(packageDir, 'vendor/C15tApple'), {
+				recursive: true,
+			});
+			rmSync(join(packageDir, 'vendor', module), { recursive: true });
+
+			const issues = scanVendoredNativeSources(packageDir);
+			expect(issues.length).toBeGreaterThan(0);
+			expect(
+				issues.every(({ path }) => path.startsWith(`vendor/${module}/`))
+			).toBe(true);
+			expect(issues.map(({ path }) => path)).toContain(
+				`vendor/${module}/${module === 'C15tCore' ? 'ConsentCore.swift' : 'C15tApple.swift'}`
+			);
+		}
+	);
 
 	it('accepts a copy that matches native/core-swift', () => {
 		expect(scanVendoredNativeSources(vendoredPackage('clean'))).toStrictEqual(

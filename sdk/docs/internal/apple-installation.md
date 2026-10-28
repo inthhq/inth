@@ -68,6 +68,8 @@ instance. Set `com.c15t.reactnative.AutoBootstrap` to `false` when the applicati
 owns startup. `C15tReactNativeBootstrap.install(core)` remains an attachment path
 for an already bootstrapped engine. It refuses a different installed engine.
 No adapter creates a second authoritative consent engine.
+Startup returns `false` and logs configuration or installation failures. The
+optional configuration and transport factories return `nil` for refused settings.
 
 The Apple module owns foreground and reachability subscriptions. Foreground hands
 queue replay and policy refresh to the core. A newly regained network requests

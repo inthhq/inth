@@ -344,9 +344,10 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// way, because the Keychain stays authoritative and nothing here reads the mirror
     /// back.
     ///
-    /// - Returns: The config, or `nil` when the storage mode cannot be honoured, such
-    ///   as a Keychain on a platform without one. Starting with an unencrypted store
-    ///   because the intended one is unavailable is not a fallback this makes quietly.
+    /// - Returns: The config, or `nil` when storage or backend configuration is refused,
+    ///   such as a Keychain on a platform without one or a non-HTTPS backend.
+    ///   Starting with an unencrypted store because the intended one is unavailable
+    ///   is not a fallback this makes quietly.
     public func makeCoreConfiguration(fileStoreDirectory: URL? = nil) -> CoreConfig? {
         try? appleConfiguration(fileStoreDirectory: fileStoreDirectory).makeCoreConfiguration()
     }
@@ -365,13 +366,13 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         }
     }
 
-    /// The transport for this configuration. `nil` means the core's async commands do
-    /// nothing, which is what `com.c15t.backend.mode = none` asks for.
+    /// The transport, or `nil` when disabled or the backend URL is refused.
+    /// The startup path logs configuration refusals before returning `false`.
     public func makeTransport() -> (any C15tTransport)? {
         try? appleConfiguration(fileStoreDirectory: nil).makeTransport()
     }
 
-    private func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
+    fileprivate func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
         let transport: C15tAppleConfiguration.Transport
         switch transportMode {
         case .disabled: transport = .disabled
@@ -440,10 +441,10 @@ public enum C15tReactNativeBootstrap {
         // `autoBootstrap == false` means "the app starts it" whichever door is used.
         guard configuration.autoBootstrap else { return observeInstalledCore() }
         if C15t.current == nil {
-            guard let coreConfiguration = configuration.makeCoreConfiguration(fileStoreDirectory: fileStoreDirectory) else {
-                return false
-            }
             do {
+                let coreConfiguration = try configuration
+                    .appleConfiguration(fileStoreDirectory: fileStoreDirectory)
+                    .makeCoreConfiguration()
                 try C15tApple.install(coreConfiguration)
             } catch {
                 NSLog("%@", "c15t: Apple installation failed: \(error)")

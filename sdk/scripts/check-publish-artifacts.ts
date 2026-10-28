@@ -410,16 +410,20 @@ export const scanPublishedLicenses = function scanPublishedLicenses(
  * tell them apart. The comparison is the one the sync script uses, so the copy is judged by the
  * code that produces it rather than by a second reading of the rules.
  *
- * @param packageDir - The package to read, which is judged only if it vendors a core.
+ * @param packageDir - The package to read. React Native requires both native modules;
+ * other packages are judged only for modules they vendor.
  * @returns Every vendored file that differs from, is missing from, or outlives the core.
  */
 export const scanVendoredNativeSources = function scanVendoredNativeSources(
 	packageDir: string
 ): { path: string; size: number; reason: string }[] {
+	const requiresNativeSources =
+		existsSync(join(packageDir, 'package.json')) &&
+		readManifest(packageDir).name === '@c15t/react-native';
 	return ['C15tCore', 'C15tApple'].flatMap((module) => {
 		const directory = `vendor/${module}`;
 		const vendoredDir = join(packageDir, directory);
-		if (!existsSync(vendoredDir)) {
+		if (!requiresNativeSources && !existsSync(vendoredDir)) {
 			return [];
 		}
 		const sourceDir = join(ROOT, 'native/core-swift/Sources', module);

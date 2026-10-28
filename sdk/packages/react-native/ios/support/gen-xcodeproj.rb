@@ -28,6 +28,7 @@ PRIVACY = 'C15tReactNative/Resources/Privacy.xcprivacy'
 UMBRELLA = 'C15tReactNative/C15tReactNative.h'
 # Relative to this project directory (packages/react-native/ios).
 CORE_PACKAGE = '../../../native/core-swift'
+CORE_PRODUCTS = %w[C15tCore C15tApple].freeze
 
 target = project.new_target(:framework, 'C15tReactNative', :ios, '16.4')
 
@@ -50,7 +51,7 @@ core_reference.relative_path = CORE_PACKAGE
 # `package_references` sits on the root object, the same place `targets` does.
 project.root_object.package_references << core_reference
 
-['C15tCore', 'C15tApple'].each do |product|
+CORE_PRODUCTS.each do |product|
   core_dependency = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
   core_dependency.product_name = product
   core_dependency.package = core_reference
@@ -85,4 +86,4 @@ scheme.add_build_target(target)
 scheme.set_launch_target(target)
 scheme.save_as(project_path, 'C15tReactNative', true)
 
-puts "generated #{project_path} (core package: #{CORE_PACKAGE}, product: #{CORE_PRODUCT})"
+puts "generated #{project_path} (core package: #{CORE_PACKAGE}, products: #{CORE_PRODUCTS.join(', ')})"
