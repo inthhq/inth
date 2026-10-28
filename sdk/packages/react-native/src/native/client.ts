@@ -15,7 +15,10 @@
  *    consent change that does not touch a component cannot rerender it.
  */
 
-import { denyAllSnapshot } from '../lib/deny-all-snapshot';
+import {
+	denyAllSnapshot,
+	INVALID_NATIVE_SNAPSHOT_CODE,
+} from '../lib/deny-all-snapshot';
 import type { ConsentDecision } from '../lib/selectors';
 import {
 	categoryDecision,
@@ -80,7 +83,7 @@ export interface ConsentClient {
 	 * it is safe as a store snapshot and cheap in a render path.
 	 *
 	 * @returns The snapshot the native core holds, or a deny-all snapshot when
-	 *   the payload cannot be parsed and no earlier one exists.
+	 *   the current payload cannot be read.
 	 */
 	getSnapshot: () => ConsentSnapshot;
 	/**
@@ -382,14 +385,25 @@ const isUsableSnapshot = function isUsableSnapshot(
 	}
 
 	const record = candidate as Record<string, unknown>;
+	const permissions = record.effectivePermissions;
 
 	return (
 		typeof record.revision === 'number' &&
 		Number.isFinite(record.revision) &&
 		typeof record.ready === 'boolean' &&
 		typeof record.policyPending === 'boolean' &&
-		typeof record.effectivePermissions === 'object' &&
-		record.effectivePermissions !== null &&
+		typeof permissions === 'object' &&
+		permissions !== null &&
+		'necessary' in permissions &&
+		typeof permissions.necessary === 'boolean' &&
+		'functionality' in permissions &&
+		typeof permissions.functionality === 'boolean' &&
+		'experience' in permissions &&
+		typeof permissions.experience === 'boolean' &&
+		'measurement' in permissions &&
+		typeof permissions.measurement === 'boolean' &&
+		'marketing' in permissions &&
+		typeof permissions.marketing === 'boolean' &&
 		typeof record.promptRequirement === 'object' &&
 		record.promptRequirement !== null
 	);
@@ -554,11 +568,9 @@ export const createConsentClient = function createConsentClient(
 		const parsed = parseObject(raw);
 
 		if (!isUsableSnapshot(parsed)) {
-			// Fail closed: keep the last snapshot the app already rendered
-			// rather than invent one, and deny everything when there is none.
-			snapshot ??= denyAllSnapshot(
+			snapshot = denyAllSnapshot(
 				'getSnapshot() returned text that is not a readable consent snapshot, so every optional category is denied until the native core reports again.',
-				0
+				snapshot?.revision ?? 0
 			);
 
 			return snapshot;
@@ -605,6 +617,7 @@ export const createConsentClient = function createConsentClient(
 			eventName === 'snapshot' &&
 			revision !== null &&
 			snapshot !== null &&
+			snapshot.error?.code !== INVALID_NATIVE_SNAPSHOT_CODE &&
 			revision === snapshot.revision
 		) {
 			return;
