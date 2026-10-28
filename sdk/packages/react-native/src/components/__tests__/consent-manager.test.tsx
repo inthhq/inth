@@ -8,7 +8,7 @@
 
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { flushPromises } from '../../__tests__/helpers/fake-native';
+import { flush, flushPromises } from '../../__tests__/helpers/fake-native';
 import {
 	resetNativeStub,
 	uiState,
@@ -66,14 +66,29 @@ describe.each([
 				})
 			);
 			tap(requireRole(tree.container(), 'switch', 'Werbung'));
-			tap(requireRole(tree.container(), 'button', action));
+			const button = requireRole(tree.container(), 'button', action);
+			flush(() => {
+				button.click();
+				button.click();
+			});
 			await flushPromises();
 
+			expect(tree.fake.commitIntents).toHaveLength(1);
 			expect(onRequestClose).not.toHaveBeenCalled();
 			expect(checked(tree, 'Werbung')).toBe('true');
 			expect(requireRole(tree.container(), 'alert').textContent).toBe(
 				'Your choices could not be saved. Try again.'
 			);
+			expect(uiState.announcements).toContain(
+				'Your choices could not be saved. Try again.'
+			);
+			tap(requireRole(tree.container(), 'button', action));
+			await flushPromises();
+			expect(
+				uiState.announcements.filter(
+					(message) => message === 'Your choices could not be saved. Try again.'
+				)
+			).toHaveLength(2);
 
 			tree.fake.failCommitWith(
 				JSON.stringify({

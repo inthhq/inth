@@ -26,6 +26,7 @@ import {
 	surfaceNode,
 	tap,
 	touchHeight,
+	TRANSLATIONS,
 	translatedSnapshot,
 } from './harness';
 
@@ -129,8 +130,11 @@ describe('ConsentBanner', () => {
 					subjectId: 'sub-1',
 				})
 			);
-			tap(requireRole(tree.container(), 'button', action));
-			tap(requireRole(tree.container(), 'button', action));
+			const button = requireRole(tree.container(), 'button', action);
+			flush(() => {
+				button.click();
+				button.click();
+			});
 			await flushPromises();
 
 			expect(tree.fake.commitIntents).toHaveLength(1);
@@ -138,14 +142,79 @@ describe('ConsentBanner', () => {
 			expect(requireRole(tree.container(), 'alert').textContent).toBe(
 				'Your choices could not be saved. Try again.'
 			);
+			expect(uiState.announcements).toContain(
+				'Your choices could not be saved. Try again.'
+			);
 			expect(
 				requireRole(tree.container(), 'button', action).getAttribute(
 					'aria-disabled'
 				)
 			).not.toBe('true');
+			tap(requireRole(tree.container(), 'button', action));
+			await flushPromises();
+			expect(
+				uiState.announcements.filter(
+					(message) => message === 'Your choices could not be saved. Try again.'
+				)
+			).toHaveLength(2);
 			tree.unmount();
 		}
 	);
+
+	test('does not carry a failed save into a later prompt', async () => {
+		const tree = mountSurface(<ConsentBanner />);
+		tree.fake.failCommitWith(
+			JSON.stringify({ ok: false, queued: false, reason: 'queue-write-failed' })
+		);
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		await flushPromises();
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(1);
+
+		flush(() => {
+			tree.fake.pushSnapshot(
+				translatedSnapshot({ promptRequirement: { kind: 'none' }, revision: 2 })
+			);
+		});
+		await flushPromises();
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+		});
+		await flushPromises();
+
+		expect(tree.text()).toContain('Deine Privatsphaere');
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+		tree.unmount();
+	});
+
+	test('updates a visible failure when native supplies translated retry copy', async () => {
+		const tree = mountSurface(<ConsentBanner />);
+		tree.fake.failCommitWith(JSON.stringify({ ok: false, queued: false }));
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		await flushPromises();
+
+		const translations = {
+			...TRANSLATIONS,
+			translations: {
+				...TRANSLATIONS.translations,
+				common: {
+					...TRANSLATIONS.translations.common,
+					saveError: 'Speichern fehlgeschlagen. Bitte erneut versuchen.',
+				},
+			},
+		};
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ revision: 2, translations }));
+		});
+		await flushPromises();
+
+		expect(requireRole(tree.container(), 'alert').textContent).toBe(
+			translations.translations.common.saveError
+		);
+		expect(uiState.announcements).toContain(
+			translations.translations.common.saveError
+		);
+		tree.unmount();
+	});
 
 	test('reports unreadable commit replies without an unhandled rejection', async () => {
 		const tree = mountSurface(<ConsentBanner />);

@@ -9,7 +9,7 @@
  * what lets `<ConsentBanner />` ship its own manager for free.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -35,6 +35,7 @@ import {
 } from './internal/consent-surface';
 import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
 import type { ConsentCopy } from './internal/copy';
+import { useAnnounceOnOpen } from './internal/use-announce-on-open';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';
@@ -104,12 +105,15 @@ const ConsentDialogContent = ({
 	const { parts, theme } = useConsentSurfaceFrame();
 	const [busy, setBusy] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
+	const pending = useRef(false);
+	useAnnounceOnOpen(saveFailed, copy.saveError);
 
 	const save = async (): Promise<void> => {
-		if (busy) {
+		if (pending.current) {
 			return;
 		}
 
+		pending.current = true;
 		setBusy(true);
 		setSaveFailed(false);
 
@@ -123,6 +127,7 @@ const ConsentDialogContent = ({
 			// Keep the draft available for retry after a bridge failure.
 		}
 
+		pending.current = false;
 		setBusy(false);
 
 		if (written) {
@@ -144,10 +149,11 @@ const ConsentDialogContent = ({
 	 * @returns Nothing.
 	 */
 	const decide = async (choice: 'accept' | 'reject'): Promise<void> => {
-		if (busy) {
+		if (pending.current) {
 			return;
 		}
 
+		pending.current = true;
 		setBusy(true);
 		setSaveFailed(false);
 
@@ -163,6 +169,7 @@ const ConsentDialogContent = ({
 			// Same as a failed save: the sheet stays open with the draft intact.
 		}
 
+		pending.current = false;
 		setBusy(false);
 
 		if (written) {

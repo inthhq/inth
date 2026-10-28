@@ -12,8 +12,11 @@ such as `policy-pending`, `queue-write-failed` or `concurrent-change`.
 
 `ok: true, queued: true` means the choice and its delivery obligation are durable
 locally. The UI can close even when the network is unavailable. Remote delivery
-is a separate outcome. `delivered` is optional because older native builds do not
-include it; its absence does not prove backend acceptance.
+is a separate outcome. `queued` records enqueueing, so `queued: true` can coexist
+with `delivered: true`. It does not identify a currently pending request.
+`delivered` is optional and is absent from some native refusal shapes. iOS
+currently reports `false`. Neither its absence nor `false` undoes local success
+or proves backend rejection. Read delivery events for later outcomes.
 
 The existing React Native dialog and preference center close and reset their
 drafts only for `ok: true`. A refused action or rejected bridge call leaves them
@@ -24,7 +27,10 @@ pending.
 
 The copy resolver accepts `common.saveError` from native translations, with
 "Your choices could not be saved. Try again." as its fallback. This is a mobile
-copy field. It does not change the backend's shared translation schema.
+copy field. It does not change the backend's shared translation schema. Current
+backend bundles omit this key, so every locale uses English until the native
+bundle supplies a translation. Localized retry copy remains part of the
+accessibility and documentation gates in ENG-520 and ENG-522.
 
 These fixes protect the existing preview UI while shared SwiftUI and Compose
 presenters are implemented. They do not satisfy the native stock UI, IAB,

@@ -71,11 +71,14 @@ export interface CommitResult {
 	/** Subject the receipts belong to. */
 	readonly subjectId: string | null;
 	/**
-	 * `true` when the payload was persisted for replay instead of delivered.
-	 * Consent is applied locally either way.
+	 * `true` when native durably enqueued the payload. It may already have been
+	 * delivered by the time this result arrives. Check `ok` for local success.
 	 */
 	readonly queued: boolean;
-	/** Whether native observed backend acceptance before returning. */
+	/**
+	 * Whether native reports backend acceptance before returning. Absent or
+	 * `false` does not undo local success. iOS currently reports `false`.
+	 */
 	readonly delivered?: boolean;
 	/** Present only when `ok` is `false`. */
 	readonly reason?: CommitFailureReason;
