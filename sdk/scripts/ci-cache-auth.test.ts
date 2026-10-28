@@ -45,6 +45,19 @@ describe('CI remote cache authentication', () => {
 			false
 		);
 		expect(authenticates('issue_comment', 'refs/heads/canary')).toBe(false);
+		for (const event of [
+			'push',
+			'workflow_dispatch',
+			'schedule',
+			'pull_request',
+			'workflow_call',
+		]) {
+			for (const branch of ['main', 'canary']) {
+				expect(
+					authenticates(event, `refs/heads/${branch}`, 'inthhq/c15t-private')
+				).toBe(false);
+			}
+		}
 	});
 
 	it('selects a cache policy and revokes the short-lived token after the job', () => {

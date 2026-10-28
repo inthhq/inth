@@ -88,7 +88,7 @@ jobs:
           retention-days: 30
 
       - name: Sync monitor issues
-        if: always()
+        if: always() && github.repository == 'c15t/c15t'
         working-directory: packages/integrations
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

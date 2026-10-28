@@ -254,6 +254,9 @@ describe('CI selection', () => {
 	it('runs the mobile SDK jobs for the package, the kernels, and the mobile bench', () => {
 		for (const file of [
 			'packages/react-native/src/specs/NativeC15t.ts',
+			'packages/react-native/src/specs/__tests__/ios-spec-surface.test.ts',
+			'packages/react-native/scripts/generate-protocol-fixtures.ts',
+			'packages/react-native/package.json',
 			'packages/react-native/android/c15t-react-native/library.gradle',
 			'benchmarks/mobile/src/run.ts',
 		]) {
@@ -278,6 +281,7 @@ describe('CI selection', () => {
 		'native/core-swift/Sources/C15tCore/ConsentCore.swift',
 		'native/core-android/c15t-core/src/main/kotlin/com/c15t/core/C15tKernel.kt',
 		'native/protocol/evaluation-eu-opt-in.json',
+		'native/core-android/c15t-android/src/test/kotlin/com/c15t/android/ConsentGateTest.kt',
 	])('selects the whole graph for the native path %s', (file) => {
 		const result = plan([file]);
 		expect(result.full).toBe(true);

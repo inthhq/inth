@@ -47,12 +47,11 @@ jobs:
           # Extract unique package directories that changed
           PACKAGES=$(echo "$CHANGED_FILES" | grep -E '^packages/[^/]+/' | sed 's|^packages/\([^/]*\).*|\1|' | sort -u | grep -v '^$' || echo "")
 
-          # Filter to only packages that have publishConfig (published packages)
+          # Private packages can also have publishConfig. They must never preview.
           PUBLISHED_PACKAGES=""
           for pkg in $PACKAGES; do
             if [ -f "packages/$pkg/package.json" ]; then
-              # Check if package has publishConfig or is not private
-              if grep -q '"publishConfig"' "packages/$pkg/package.json" || ! grep -q '"private":\s*true' "packages/$pkg/package.json"; then
+              if jq -e '.private == null or .private == false' "packages/$pkg/package.json" > /dev/null; then
                 PUBLISHED_PACKAGES="$PUBLISHED_PACKAGES $pkg"
               fi
             fi
@@ -72,7 +71,9 @@ jobs:
     name: 📦 Deploy Preview Packages
     needs: detect-changed-packages
     if: |
-      (contains(github.event.pull_request.author_association, 'MEMBER') ||
+      github.repository == 'c15t/c15t' &&
+      github.event_name == 'pull_request' &&
+      (github.event.pull_request.author_association == 'MEMBER' ||
        contains(github.event.pull_request.labels.*.name, 'deploy:preview')) &&
       needs.detect-changed-packages.outputs.packages != '[]'
     runs-on: ubuntu-latest
