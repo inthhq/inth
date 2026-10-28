@@ -864,9 +864,7 @@ public final class ConsentCore: @unchecked Sendable {
                 noticeDismissal = plan.acknowledgement ?? noticeDismissal
                 persistedRevision = plan.next.revision
             }
-            if let envelope {
-                config?.storageBus?.write(TcStorageBus.values(for: envelope))
-            }
+            writeTcStorageBus()
 
             publish(persist: false, mutation: mutation)
             events.emit(.saveQueued(subjectId: plan.payload.subjectId))
@@ -1241,6 +1239,7 @@ public final class ConsentCore: @unchecked Sendable {
             // clear's own doc states why.
             wired.bus?.clear()
         }
+        writeTcStorageBus()
         publish(persist: false, mutation: mutation)
         scheduleInit(attempt: 1)
     }
@@ -1278,6 +1277,7 @@ public final class ConsentCore: @unchecked Sendable {
     @discardableResult
     private func hydrate(mutation: MutationPermit) -> ConsentSnapshot {
         guard let config = lock.withLock({ self.config }) else { return snapshot() }
+        config.storageBus?.write(TcStorageBus.detection(config.iab))
 
         let hadRecords = config.store.data(for: StorageKey.snapshot) != nil
             || config.store.data(for: StorageKey.pendingSaves) != nil
@@ -1378,11 +1378,6 @@ public final class ConsentCore: @unchecked Sendable {
             // ``narrowed`` list narrowed is identity -- so this is the whole guarantee
             // rather than a race against the network.
             //
-            // ``rebuildTcStorageBus()`` deliberately does not repeat this. The rows it
-            // projects are the served policy version and the matched rule's model, and a
-            // ``GlobalVendorList/narrowed(toVendorIds:)`` prune leaves both numbers
-            // exactly as served, so the mirror it writes is the same either way; every
-            // write path that does move the mirror goes through the snapshot pruned here.
             if let stored = draft.iab?.gvl {
                 draft.iab = KernelIABState(gvl: stored.narrowed(toVendorIds: config.vendors))
             }
@@ -1411,31 +1406,35 @@ public final class ConsentCore: @unchecked Sendable {
         return restored
     }
 
-    /// Re-derive the `IABTCF_*` bus from the stored envelope.
-    ///
-    /// The repair path, not the normal one. Every publish, reset and hydration
-    /// already keeps the bus in step with the envelope, so this exists for the
-    /// moments outside the core's own writes: somebody cleared the standard
-    /// defaults (the publisher's duty for vestigial values makes that legal),
-    /// or a device is integrating the bus for the first time on top of an
-    /// envelope that was there first. Absent or unreadable stored state clears
-    /// the bus, because the honest mirror of nothing stored is nothing held;
-    /// a core with no bus configured is a no-op.
+    /// Repair vendor storage from current native authority and its validity clock.
+    /// Never restore a raw stored grant or treat the vendor mirror as consent.
     public func rebuildTcStorageBus() {
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
-        let wired = lock.withLock { () -> (store: any ConsentStore, bus: any TcStorageBusWriting)? in
+        writeTcStorageBus()
+    }
+
+    /// The mutation permit orders complete publications; storage runs outside the state lock.
+    private func writeTcStorageBus() {
+        let publication = lock.withLock { () -> (bus: any TcStorageBusWriting, values: [String: TcBusValue])? in
             guard let config, let bus = config.storageBus else { return nil }
-            return (config.store, bus)
+            let saved = committedIAB.flatMap { saved -> IABCommittedConsent? in
+                guard listIsUsableLocked(), resolvedPolicy?.policy.model == .iab,
+                    !currentSnapshot.policyPending,
+                    saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil,
+                    saved.isCurrent(now: config.now(), maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0)
+                else { return nil }
+                return saved
+            }
+            let envelope = StoredEnvelope(
+                snapshot: readableSnapshotLocked(), noticeDismissal: noticeDismissal,
+                policyResolution: policyWire, storedAt: config.now(), iabConsent: saved,
+                lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
+                additionalConsentList: additionalConsentList)
+            return (bus, TcStorageBus.values(for: envelope, configuration: config.iab))
         }
-        guard let wired else { return }
-        let envelope = wired.store.data(for: StorageKey.snapshot)
-            .flatMap(StoredEnvelope.decode)
-        if let envelope {
-            wired.bus.write(TcStorageBus.values(for: envelope))
-        } else {
-            wired.bus.clear()
-        }
+        guard let publication else { return }
+        publication.bus.write(publication.values)
     }
 
     // MARK: - Idle
@@ -1708,7 +1707,7 @@ public final class ConsentCore: @unchecked Sendable {
                 iabListFetchedAt = nil; iabListFromCache = true; iabListOffline = false
             }
         }
-        config.storageBus?.clear()
+        writeTcStorageBus()
         return true
     }
 
@@ -1832,8 +1831,6 @@ public final class ConsentCore: @unchecked Sendable {
         struct Write {
             let envelope: StoredEnvelope
             let queue: PendingSaveQueue
-            let bus: (any TcStorageBusWriting)?
-            let busValues: [String: TcBusValue]
         }
         let pending: Write? = lock.withLock {
             guard let config, let queue, currentSnapshot.revision > persistedRevision else { return nil }
@@ -1850,26 +1847,17 @@ public final class ConsentCore: @unchecked Sendable {
             // Claim the revision before releasing the lock, so two overlapping
             // publishes cannot both decide they are the newest writer.
             persistedRevision = currentSnapshot.revision
-            return Write(
-                envelope: envelope,
-                queue: queue,
-                bus: config.storageBus,
-                busValues: TcStorageBus.values(for: envelope)
-            )
+            return Write(envelope: envelope, queue: queue)
         }
         guard let pending else { return }
         // The write is outside the lock. A failed write leaves the claimed revision
         // alone on purpose: the next mutation writes again, and rolling the claim
         // back would let an older envelope overtake a newer one.
         let committed = pending.queue.persist(pending.envelope)
-        // The bus is a projection of the committed step, so it moves only when
-        // the authoritative write moved: a mirror of state that never landed on
-        // disk is the one thing the bus must never become. A store write that
-        // failed leaves the mirror stale until the commit that succeeds or a
-        // ``rebuildTcStorageBus``, and the next launch's hydrate enforces the
-        // rule either way.
-        if committed {
-            pending.bus?.write(pending.busValues)
+        // Failed invalidation must still remove grants from the vendor mirror.
+        // Recheck the clock after disk IO before publishing any current authority.
+        if committed || pending.envelope.iabConsent == nil {
+            writeTcStorageBus()
         }
     }
 

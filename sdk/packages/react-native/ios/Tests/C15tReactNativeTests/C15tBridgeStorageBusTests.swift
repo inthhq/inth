@@ -6,9 +6,8 @@ import XCTest
 /// The one bus fact this layer owns: a core the bridge installs carries a bus sink
 /// that lands on standard `NSUserDefaults`.
 ///
-/// `TcStorageBusTests` in `native/core-swift` proves the projection fills the two rows
-/// a core can honestly fill, and that `UserDefaultsStorageBus` writes them with the
-/// types the specification's readers use. What no test there can see is the
+/// Core tests prove the complete committed projection and that
+/// `UserDefaultsStorageBus` writes its values with the types the specification's readers use. What no test there can see is the
 /// configuration a real app is actually given, and that is built here -- a bridge that
 /// praised the bus in comments while passing `nil` would leave every one of those
 /// tests green on a device that publishes no key to a single vendor SDK. So this
@@ -32,7 +31,7 @@ import XCTest
 /// bus and the store are separate seams, and this is the bus's test.
 final class C15tBridgeStorageBusTests: XCTestCase {
     /// Out of the specification's table on purpose: `TcStorageBus` names what a wipe may
-    /// touch, and a bus that cleared somebody else's Google key would be a worse bug
+    /// touch, and a bus that cleared somebody else's privacy key would be a worse bug
     /// than one that wrote nothing.
     private let foreignKey = "IABTCF_EnableAdvertiserConsentMode"
 

@@ -1500,3 +1500,14 @@ even when a newer GVL remains current. Stale lists cannot grant. The platform bu
 IABTCF_AddtlConsent as a string and removes it with invalid authority or reset.
 ATT remains a separate permission. RN API and shared UI wiring remain an ENG-511
 acceptance gate after this native foundation integrates.
+
+The complete IABTCF bus is an egress projection of validated native authority.
+Explicit CMP detection is synchronous at bootstrap. Consent values use native
+integer/string types and the exact committed TC vectors. Apple removes TC/AC
+markers first and writes TCString last; Android replaces the complete map in one
+synchronous preferences transaction. Mirror rejection removes owned values and
+can be repaired from the core without reading vendor storage as authority.
+Numbered publisher restriction keys are owned and cleared. Reset removes consent
+rows while configured CMP detection remains. See the spec-linked key/type table
+and reader ordering limits in docs/internal/native-iab-commits.mdx. The real ad SDK
+reference, device latency and power-loss behavior remain separate evidence gates.

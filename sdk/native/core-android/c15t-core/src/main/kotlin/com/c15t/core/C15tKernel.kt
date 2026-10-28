@@ -328,6 +328,7 @@ class C15tKernel(
 		if (!bootstrapped.compareAndSet(false, true)) {
 			return@mutate
 		}
+		store.initializeTcStorageBus(iabConfiguration)
 		val now = clock.nowMillis()
 		val subject = resolveSubject()
 		val envelope = store.readEnvelope()?.takeIf { it.snapshot.subject?.id == subject.id }
@@ -424,6 +425,19 @@ class C15tKernel(
 		mutation.release()
 		background.execute { flushPending() }
 		background.execute { runInit() }
+	}
+
+	/** Restore the vendor mirror from current native authority without reading it as consent. */
+	fun rebuildTcStorageBus() = mutate { _ -> publishCurrentTcStorageBus() }
+
+	/** Capture current authority after durable I/O, then write the mirror off the state lock. */
+	private fun publishCurrentTcStorageBus(allowConsent: Boolean = true) {
+		val envelope = synchronized(mutationLock) {
+			val snapshot = state.get()
+			SnapshotEnvelope(snapshot = snapshot.copy(iab = null),
+				evaluationPolicy = evaluationPolicy, gvl = snapshot.iab?.gvl, iabConsent = iabConsent)
+		}
+		if (allowConsent || envelope.iabConsent == null) store.publishTcStorageBus(envelope)
 	}
 
 	/** `true` once [bootstrap] has run. */
@@ -851,11 +865,13 @@ class C15tKernel(
 				additionalConsentList = additionalConsentList,
 			)
 		}
-		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab))
+		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab, publishBus = false)) {
+			publishCurrentTcStorageBus(allowConsent = false)
 			return@mutate refusedCommit(
 				"queue-write-failed",
 				"The atomic consent decision write failed; nothing was sent",
 			)
+		}
 
 		// The mutation gate owns this revision through the durable write and swap.
 		synchronized(mutationLock) {
@@ -866,6 +882,7 @@ class C15tKernel(
 			installSnapshot(published)
 			acknowledgement?.let { noticeDismissal = it }
 		}
+		publishCurrentTcStorageBus()
 
 		mutation.release()
 
@@ -2039,8 +2056,9 @@ class C15tKernel(
 					lastIabActionAt = lastIabActionAt,
 				)
 		}
-		val written = store.writeEnvelope(envelope)
+		val written = store.writeEnvelope(envelope, publishBus = false)
 		store.flush()
+		publishCurrentTcStorageBus(allowConsent = written)
 		return written
 	}
 
