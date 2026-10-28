@@ -15,7 +15,7 @@ import Network
 /// type only translates `NWPath` into the two words the gate understands.
 ///
 /// Updates arrive on this monitor's own serial queue rather than the main thread, and
-/// what ``C15tReactNativeBootstrap`` hands the callback is ``ConsentCore/flushPending()``,
+/// what ``C15tApple`` hands the callback is ``ConsentCore/flushPending()``,
 /// which is itself a handoff to the core's scheduler. Coming back online therefore costs
 /// no frame, which is what the contract asks of every lifecycle leg.
 public final class C15tReachability: @unchecked Sendable {
@@ -35,7 +35,7 @@ public final class C15tReachability: @unchecked Sendable {
     ///
     /// - Parameter onGained: called once per newly gained network, never for the one that
     ///   was already up at registration. Runs on the monitor's queue.
-    /// - Returns: the handle to keep. Dropping it does not stop the monitor, so the
+    /// - Returns: the handle to keep. Dropping it stops the monitor. The
     ///   caller holds it for as long as the core is running and calls
     ///   ``unregister()`` when it wants the leg off.
     public static func register(onGained: @escaping @Sendable () -> Void) -> C15tReachability {
@@ -57,6 +57,8 @@ public final class C15tReachability: @unchecked Sendable {
         monitor.start(queue: queue)
         return C15tReachability(monitor: monitor)
     }
+
+    deinit { unregister() }
 
     /// Stop listening. Calling this twice, or from two threads, cancels the monitor once.
     public func unregister() {

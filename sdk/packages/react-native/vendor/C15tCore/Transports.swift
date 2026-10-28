@@ -75,10 +75,8 @@ public enum C15tSDK {
         return ids.map(String.init).joined(separator: ",")
     }
 
-    /// Native SDK traffic is the React Native line, which is what the `rn->`
-    /// prefix marks. Bare Swift consumers still report the same line, because the
-    /// backend has no separate bucket for them.
-    public static let versionHeaderValue = "rn->\(version)"
+    /// Requests identify the native core that made them, including standalone hosts.
+    public static let versionHeaderValue = "swift->\(version)"
 
     /// The native protocol revision the JavaScript boundary handshakes against.
     /// A provider that does not recognize it is talking to an embedded native
@@ -548,7 +546,6 @@ public struct HostedTransport: C15tTransport {
 
     public func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
         var headers = jsonHeaders
-        for (name, value) in extraHeaders { headers[name] = value }
         if let language = context.overrides.language, !language.isEmpty {
             headers["accept-language"] = language
         }
@@ -651,6 +648,7 @@ public struct HostedTransport: C15tTransport {
             "content-type": "application/json",
         ]
         for (name, value) in C15tSDK.protocolHeaders { headers[name] = value }
+        for (name, value) in extraHeaders { headers[name] = value }
         return headers
     }
 

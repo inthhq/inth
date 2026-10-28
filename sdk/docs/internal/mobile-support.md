@@ -77,7 +77,9 @@ check both answers.
 The RN package, Swift core and platform modules have explicit release versions.
 Backend request metadata names the native module and version that made the
 request. A standalone Apple request must not claim an RN version. RN's installed
-package version is distinct from the native core version.
+package version is distinct from the native core version. SDK semver is also
+separate from the internal 12-bit IAB CMP version. No version string establishes
+registration or certification.
 
 The current RN/native protocol is 1, with a supported range of 1 through 1.
 `getBootstrap()` reports the embedded native protocol before the provider accepts

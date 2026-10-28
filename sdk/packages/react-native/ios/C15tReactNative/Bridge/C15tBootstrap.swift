@@ -1,3 +1,6 @@
+#if canImport(C15tApple)
+import C15tApple
+#endif
 #if canImport(C15tCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
@@ -345,54 +348,42 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     ///   as a Keychain on a platform without one. Starting with an unencrypted store
     ///   because the intended one is unavailable is not a fallback this makes quietly.
     public func makeCoreConfiguration(fileStoreDirectory: URL? = nil) -> CoreConfig? {
-        guard let store = makeStore(fileStoreDirectory: fileStoreDirectory) else { return nil }
-        return CoreConfig(
-            store: store,
-            transport: makeTransport(),
-            consentCategories: consentCategories,
-            vendors: vendors,
-            overrides: overrides,
-            gpc: gpc,
-            storageBus: UserDefaultsStorageBus()
-        )
+        try? appleConfiguration(fileStoreDirectory: fileStoreDirectory).makeCoreConfiguration()
     }
 
     /// The store for this configuration, or `nil` when the requested one is
     /// unavailable.
     public func makeStore(fileStoreDirectory: URL? = nil) -> (any ConsentStore)? {
+        try? appleStorage(fileStoreDirectory: fileStoreDirectory).makeStore()
+    }
+
+    private func appleStorage(fileStoreDirectory: URL?) -> C15tAppleConfiguration.Storage {
         switch storageMode {
-        case .memory:
-            return InMemoryStore()
-        case .file:
-            if let fileStoreDirectory {
-                return FileStore(directory: fileStoreDirectory)
-            }
-            return try? FileStore(namespace: Bundle.main.bundleIdentifier ?? "com.c15t")
-        case .keychain:
-            #if canImport(Security)
-                return KeychainStore(service: keychainService)
-            #else
-                // No Keychain here. `nil` rather than a plaintext substitute.
-                return nil
-            #endif
+        case .memory: return .memory
+        case .file: return .file(directory: fileStoreDirectory)
+        case .keychain: return .keychain(service: keychainService)
         }
     }
 
     /// The transport for this configuration. `nil` means the core's async commands do
     /// nothing, which is what `com.c15t.backend.mode = none` asks for.
     public func makeTransport() -> (any C15tTransport)? {
+        try? appleConfiguration(fileStoreDirectory: nil).makeTransport()
+    }
+
+    private func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
+        let transport: C15tAppleConfiguration.Transport
         switch transportMode {
-        case .disabled:
-            return nil
-        case .offline:
-            return OfflineTransport.offline()
-        case .hosted:
-            guard let backendURL else { return OfflineTransport.offline() }
-            return HostedTransport(baseURL: backendURL, initURL: initURL, domain: domain)
-        case .selfHosted:
-            guard let backendURL else { return OfflineTransport.offline() }
-            return HostedTransport(baseURL: backendURL, initURL: initURL, domain: domain)
+        case .disabled: transport = .disabled
+        case .offline: transport = .offline
+        case .hosted: transport = backendURL.map(C15tAppleConfiguration.Transport.hosted) ?? .offline
+        case .selfHosted: transport = backendURL.map(C15tAppleConfiguration.Transport.selfHosted) ?? .offline
         }
+        return C15tAppleConfiguration(
+            transport: transport, storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
+            initURL: initURL, domain: domain, consentCategories: consentCategories,
+            vendors: vendors, overrides: overrides, gpc: gpc
+        )
     }
 }
 
@@ -409,89 +400,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
 /// ``start(configuration:)`` or ``install(_:)``, and works against whatever core is
 /// installed afterwards.
 public enum C15tReactNativeBootstrap {
-    // MARK: - Platform lifecycle
-
-    /// The handles for the two lifecycle legs this layer registered, or `nil` when nothing
-    /// armed them.
-    ///
-    /// Held rather than forgotten for the same reason `C15tAndroid` keeps both: the
-    /// registrations are process-wide, so the only way back is the handle they came from,
-    /// and ``shutdown()`` has to be able to reach it.
-    private static let lifecycleLock = NSLock()
-    private static var foregroundObserver: C15tForegroundObserver?
-    private static var reachability: C15tReachability?
-
-    /// Arm the lifecycle legs ``ConsentCore`` cannot see for itself.
-    ///
-    /// Launch belongs to the core: `bootstrap` hydrates and replays before it serves a
-    /// first read. Foreground and reachability need a hook on the process, which is a thing
-    /// a consent kernel is deliberately not allowed to hold, so they are wired here and
-    /// their whole body is the core's own handoff calls.
-    ///
-    /// Idempotent, and called from every path that leaves a core in place, which is what
-    /// lets the launch hook, an explicit `start`, and a host-installed core all reach it
-    /// without agreeing about who owns the registration.
-    private static func armLifecycleObservers() {
-        lifecycleLock.lock()
-        var justCreated: C15tForegroundObserver?
-        if foregroundObserver == nil {
-            let observer = C15tForegroundObserver(onForeground: replayThenRefresh)
-            foregroundObserver = observer
-            justCreated = observer
-        }
-        if reachability == nil {
-            reachability = C15tReachability.register(onGained: replayQueuedSaves)
-        }
-        lifecycleLock.unlock()
-
-        // Outside the lock, and only for the observer this call created: `install()` is
-        // idempotent per instance, so one that already exists has already registered, and a
-        // second `start()` cannot double the replays per activation.
-        justCreated?.install()
-    }
-
-    /// The foreground leg: replay what is owed, then ask whether the policy still says what
-    /// it said. That order is the contract's.
-    ///
-    /// Both calls resolve the running core rather than closing over the one that happened to
-    /// be installing when the observer was armed. A host that tears a core down and installs
-    /// another would otherwise spend every later foreground on a kernel nobody reads any
-    /// more.
-    @Sendable private static func replayThenRefresh() {
-        guard let core = C15t.current else { return }
-        core.flushPending()
-        core.refresh()
-    }
-
-    /// The reachability leg is the replay alone. Policy was served at launch and again at
-    /// the last foreground, and a link that dropped and came back does not change what the
-    /// subject agreed to, so nothing here is worth a second round trip.
-    @Sendable private static func replayQueuedSaves() {
-        C15t.current?.flushPending()
-    }
-
-    /// Stop observing the process, leaving the core and its state alone.
-    ///
-    /// These two legs are the only registrations this layer makes against the app's
-    /// lifetime, so this is the teardown that matches them: the core keeps its snapshot, its
-    /// queue, and its event pump, and simply stops being woken. Calling it twice is
-    /// harmless, and ``start(configuration:)`` or ``install(_:)`` puts the legs back.
-    ///
-    /// A host that drives ``ConsentCore/flushPending()`` and ``ConsentCore/refresh()`` on its
-    /// own schedule is the intended caller. It is the choice Android offers as the
-    /// `observeForeground` flag on `C15tAndroid.install`, spelled here as one call after
-    /// startup rather than as a parameter on every entry point.
-    public static func shutdown() {
-        lifecycleLock.lock()
-        let observer = foregroundObserver
-        let monitor = reachability
-        foregroundObserver = nil
-        reachability = nil
-        lifecycleLock.unlock()
-
-        observer?.uninstall()
-        monitor?.unregister()
-    }
+    /// Stop native lifecycle subscriptions, leaving consent state installed.
+    public static func shutdown() { C15tApple.shutdown() }
 
     /// Start the core from the values in `Info.plist`.
     ///
@@ -533,7 +443,12 @@ public enum C15tReactNativeBootstrap {
             guard let coreConfiguration = configuration.makeCoreConfiguration(fileStoreDirectory: fileStoreDirectory) else {
                 return false
             }
-            C15t.bootstrap(coreConfiguration)
+            do {
+                try C15tApple.install(coreConfiguration)
+            } catch {
+                NSLog("%@", "c15t: Apple installation failed: \(error)")
+                return false
+            }
         }
         return observeInstalledCore()
     }
@@ -547,9 +462,7 @@ public enum C15tReactNativeBootstrap {
     /// - Returns: `true` when `core` is the instance the bridge will use.
     @discardableResult
     public static func install(_ core: ConsentCore) -> Bool {
-        guard C15t.install(core) else { return false }
-        armLifecycleObservers()
-        return true
+        C15tApple.attach(core)
     }
 
     /// Whether a core is installed and started.
@@ -568,7 +481,7 @@ public enum C15tReactNativeBootstrap {
     /// the contract says are never optional.
     private static func observeInstalledCore() -> Bool {
         guard let core = C15t.current else { return false }
-        armLifecycleObservers()
+        _ = C15tApple.attach(core)
         return core.isBootstrapped
     }
 }

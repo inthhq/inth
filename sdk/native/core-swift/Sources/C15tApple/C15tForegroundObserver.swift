@@ -40,7 +40,7 @@ public final class C15tForegroundObserver: @unchecked Sendable {
     private var token: (any NSObjectProtocol)?
 
     /// - Parameters:
-    ///   - onForeground: what to do each time the app comes back. ``C15tReactNativeBootstrap``
+    ///   - onForeground: what to do each time the app comes back. ``C15tApple``
     ///     passes the queue replay and the policy refresh; a test passes a recorder.
     ///   - notification: the name that means the app came back. Overridable so the
     ///     observer can be driven from ``Foundation/NotificationCenter`` in a test that has

@@ -44,7 +44,7 @@ import React
 ///
 @objc(C15tReactNativeModule)
 public final class C15tReactNativeModule: RCTEventEmitter {
-    private let handler = C15tModuleHandler()
+    private let handler = C15tModuleHandler(trackingController: C15tApple.tracking)
 
     /// Held as a property: the core keeps snapshot observers weakly, so somebody has
     /// to own the observer or the callbacks would silently stop.

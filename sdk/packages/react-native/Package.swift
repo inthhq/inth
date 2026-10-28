@@ -10,10 +10,9 @@ import PackageDescription
 // SPM mode). It is not the only way to integrate: the CocoaPods path uses
 // ../C15tReactNative.podspec, which builds the kernel from a generated copy in
 // vendor/C15tCore instead of this path dependency, because a pod cannot name a path in a
-// `s.dependency` and nothing publishes the core. Two module boundaries exist on purpose:
-// here the kernel is its own module, there it is part of the binding. The copy is
-// regenerated from native/core-swift at pack time and the release gate refuses a
-// divergence, so neither path can quietly run a different core from the other.
+// `s.dependency` and nothing publishes the core. SwiftPM separates the core, Apple
+// services and RN bridge; CocoaPods compiles generated native copies into one pod.
+// Both sync scripts run at pack time and artifact checks reject source drift.
 //
 // Two facts shape the layout:
 //
@@ -63,7 +62,7 @@ var targets: [Target] = [
     // compiled and tested outside an app build.
     .target(
         name: "C15tReactNativeBridge",
-        dependencies: [coreProduct],
+        dependencies: [coreProduct, .product(name: "C15tApple", package: corePackageID)],
         path: "ios/C15tReactNative",
         exclude: ["ReactNative"],
         sources: ["Bridge"],

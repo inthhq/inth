@@ -109,6 +109,9 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		);
 		const shipped = files(installed);
 		expect(
+			shipped.some((file) => file.endsWith('vendor/C15tApple/C15tApple.swift'))
+		).toBe(true);
+		expect(
 			shipped.some((file) => /(?:__tests__|\.test\.|\.spec\.)/u.test(file))
 		).toBe(false);
 		const artifacts = shipped.filter((file) =>
