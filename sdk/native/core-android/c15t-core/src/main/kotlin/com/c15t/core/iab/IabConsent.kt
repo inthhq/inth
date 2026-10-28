@@ -124,7 +124,7 @@ internal object IabAuthority {
 		if (previous != null) require(previous.consentVersion in 1 until Int.MAX_VALUE)
 		val createdAt = previous?.createdAt ?: actionAt
 		require(createdAt >= 0 && actionAt >= createdAt)
-		val vendorOrder = vendors.sorted()
+		val vendorOrder = gvl.vendors.keys.sorted()
 		val restrictions =
 			TcPublisherRestrictions(
 				c.publisherRestrictions
