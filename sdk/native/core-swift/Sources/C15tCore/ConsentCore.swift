@@ -514,7 +514,7 @@ public final class ConsentCore: @unchecked Sendable {
             }
 
             var nextIAB: IABCommittedConsent?
-            if resolved.policy.model == .iab {
+            if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil) {
                 if let previous = lastIABActionAt {
                     guard previous < Int64.max else {
                         return .failure(
@@ -1501,7 +1501,6 @@ public final class ConsentCore: @unchecked Sendable {
     }
 
     private func validateIABLocked() {
-        guard config?.iab != nil || committedIAB != nil else { return }
         guard resolvedPolicy?.policy.model == .iab || committedIAB != nil else { return }
         let valid: Bool
         if let saved = committedIAB, let c = config?.iab, saved.configuration == c,

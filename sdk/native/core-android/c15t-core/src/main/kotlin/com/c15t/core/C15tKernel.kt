@@ -594,7 +594,8 @@ class C15tKernel(
 			base = current
 			surfaceAtAction = current.activeUI
 			policy = evaluationPolicy
-			if (policy?.model == com.c15t.core.model.ConsentModel.IAB) {
+			if (policy?.model == ConsentModel.IAB &&
+				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null)) {
 				lastIabActionAt?.let { previous ->
 					if (previous == Long.MAX_VALUE)
 						return refusedCommit(
@@ -1630,7 +1631,6 @@ class C15tKernel(
 	}
 
 	private fun validateIab(snapshot: ConsentSnapshot): ConsentSnapshot {
-		if (iabConfiguration == null && committedIab == null) return snapshot
 		if (evaluationPolicy?.model != com.c15t.core.model.ConsentModel.IAB && committedIab == null)
 			return snapshot
 		val saved = committedIab
