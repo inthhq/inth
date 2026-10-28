@@ -43,7 +43,7 @@ the release-age delay. This check does not launch Metro or a native app.
 | Component | Candidate contract | Evidence still required |
 | --- | --- | --- |
 | React Native | 0.86.x and 0.87.x, New Architecture | Clean packed bare and Expo builds and launches on both platforms |
-| React | 19.2.x | Packed consumer type-check plus device integration |
+| React | `>=19.2.3 <19.3.0` | Packed consumer type-check plus device integration |
 | Expo | SDK 57 with its prescribed RN and React versions, custom native build | Clean prebuild, EAS build and device launch; Expo Go cannot load this SDK |
 | Apple | iOS 16.4 or later; Swift 5.9 language mode or later | Minimum-OS and current-OS device lifecycle, storage and ATT checks |
 | Android | API 24 or later | Minimum/current device checks and compatible Gradle, AGP and Kotlin consumer builds |

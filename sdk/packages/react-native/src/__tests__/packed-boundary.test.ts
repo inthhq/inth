@@ -48,6 +48,14 @@ test('module boundary sees lazy, CommonJS, type and subpath imports', () => {
 });
 
 test('packed runtime, declarations and consumer stay independent of web consent packages', () => {
+	if (
+		!existsSync(join(packageDir, 'dist/index.js')) ||
+		!existsSync(join(packageDir, 'dist-types/index.d.ts'))
+	) {
+		throw new Error(
+			'Build @c15t/react-native and its dependencies before running the packed-boundary test: bun turbo run build --filter=@c15t/react-native'
+		);
+	}
 	const directory = mkdtempSync(join(tmpdir(), 'c15t-packed-boundary-'));
 	try {
 		// This consumer lives outside the workspace. Keep its registry resolution
@@ -91,9 +99,8 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		expect(
 			shipped.some((file) => /(?:__tests__|\.test\.|\.spec\.)/u.test(file))
 		).toBe(false);
-		const artifacts = shipped.filter(
-			(file) =>
-				file.endsWith('.js') || file.endsWith('.cjs') || file.endsWith('.d.ts')
+		const artifacts = shipped.filter((file) =>
+			/\.(?:[cm]?[jt]s|[jt]sx)$/u.test(file)
 		);
 		expect(artifacts.length).toBeGreaterThan(50);
 		for (const file of artifacts) {
@@ -112,7 +119,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			visited.add(path);
 			expect(path).not.toContain('expo-plugin');
 			for (const specifier of moduleReferences(readFileSync(path, 'utf8'))) {
-				expect(specifier).not.toMatch(/expo|^node:/u);
+				expect(specifier).not.toMatch(/^(?:expo(?:$|[-/])|@expo\/|node:)/u);
 				if (specifier.startsWith('.')) {
 					runtime(createRequire(path).resolve(specifier));
 				}
