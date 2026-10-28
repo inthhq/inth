@@ -22,8 +22,10 @@ open with the draft intact and shows an accessible retry message. The banner
 also reports failures and leaves the choice available. The error clears when the
 user retries. Each new presentation starts with fresh error and draft state,
 even when it interrupts an exit animation. Action buttons prevent another commit
-within that presentation while its current action is pending. Retry messages
-use one explicit accessibility announcement path on iOS and Android. VoiceOver
+within that presentation while its current action is pending. A success from an
+earlier presentation cannot reset or close a newly opened dialog or preference
+center. Native code still handles commits pending across different presentations.
+Retry messages use one explicit accessibility announcement path on iOS and Android. VoiceOver
 and TalkBack behavior still requires device validation.
 
 The copy resolver accepts `common.saveError` from native translations, with

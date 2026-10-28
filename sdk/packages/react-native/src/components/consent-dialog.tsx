@@ -9,7 +9,7 @@
  * what lets `<ConsentBanner />` ship its own manager for free.
  */
 
-import { useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -106,6 +106,13 @@ const ConsentDialogContent = ({
 	const [busy, setBusy] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const pending = useRef(false);
+	const mounted = useRef(false);
+	useLayoutEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
 	useAnnounceOnOpen(saveFailed, copy.saveError);
 
 	const save = async (): Promise<void> => {
@@ -130,7 +137,7 @@ const ConsentDialogContent = ({
 		pending.current = false;
 		setBusy(false);
 
-		if (written) {
+		if (written && mounted.current) {
 			selection.reset();
 			onRequestClose();
 		}
@@ -172,7 +179,7 @@ const ConsentDialogContent = ({
 		pending.current = false;
 		setBusy(false);
 
-		if (written) {
+		if (written && mounted.current) {
 			selection.reset();
 			onRequestClose();
 		}

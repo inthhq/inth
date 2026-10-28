@@ -6,6 +6,7 @@
  * subject's edits until save, and the payload is exactly the visible rows.
  */
 
+import { useState } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { flush, flushPromises } from '../../__tests__/helpers/fake-native';
@@ -46,6 +47,72 @@ describe.each([
 	['dialog', ConsentDialog],
 	['preferences', ConsentPreferences],
 ])('%s commit outcomes', (_name, Surface) => {
+	test.each([
+		['Speichern', false],
+		['Alle akzeptieren', false],
+		['Alle ablehnen', false],
+		['Speichern', true],
+		['Alle akzeptieren', true],
+		['Alle ablehnen', true],
+	] as const)(
+		'%s completion cannot close a later presentation, settled exit: %s',
+		async (action, settledExit) => {
+			let resolveFirst!: (result: string) => void;
+			let resolveSecond!: (result: string) => void;
+			const first = new Promise<string>((resolve) => {
+				resolveFirst = resolve;
+			});
+			const second = new Promise<string>((resolve) => {
+				resolveSecond = resolve;
+			});
+			const onRequestClose = vi.fn();
+			const Host = () => {
+				const [open, setOpen] = useState(true);
+				const { ready } = useConsentStatus();
+				return (
+					<Surface
+						onRequestClose={() => {
+							onRequestClose();
+							setOpen(false);
+						}}
+						open={open && ready}
+					/>
+				);
+			};
+			const tree = mountSurface(<Host />);
+			const commit = vi.spyOn(tree.fake, 'commit');
+			commit.mockImplementationOnce(() => first);
+			commit.mockImplementationOnce(() => second);
+			tap(requireRole(tree.container(), 'button', action));
+			flush(() => {
+				tree.fake.pushSnapshot(
+					translatedSnapshot({ ready: false, revision: 2 })
+				);
+			});
+			if (settledExit) {
+				await flushPromises();
+			}
+			flush(() => {
+				tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+			});
+			tap(requireRole(tree.container(), 'switch', 'Werbung'));
+			tap(requireRole(tree.container(), 'button', 'Speichern'));
+			expect(commit).toHaveBeenCalledTimes(2);
+
+			resolveFirst(JSON.stringify({ ok: true, queued: true }));
+			await flushPromises();
+			expect(onRequestClose).not.toHaveBeenCalled();
+			expect(checked(tree, 'Werbung')).toBe('true');
+
+			resolveSecond(JSON.stringify({ ok: false, queued: false }));
+			await flushPromises();
+			expect(onRequestClose).not.toHaveBeenCalled();
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(1);
+			expect(checked(tree, 'Werbung')).toBe('true');
+			tree.unmount();
+		}
+	);
+
 	test('discards a failed save when reopened before exit completes', async () => {
 		const onRequestClose = vi.fn();
 		const LifecycleSurface = () => {
