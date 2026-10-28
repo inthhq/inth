@@ -470,6 +470,9 @@ const context = (
 		'detect-changed-packages': {
 			outputs: { packages: '["react-native","core"]' },
 		},
+		'live-vendor-probes': {
+			outputs: { report_artifact_id: '123' },
+		},
 	},
 });
 
@@ -497,7 +500,7 @@ describe('workflow publication trust', () => {
 			'autofix.yml/autofix',
 			'pr-preview.yml/deploy-preview',
 			'release.yml/publish',
-			'script-vendor-monitor.yml/live-vendor-probes',
+			'script-vendor-monitor.yml/sync-monitor-issues',
 			'sync-canary.yml/sync',
 		]);
 	});
@@ -545,18 +548,13 @@ describe('workflow publication trust', () => {
 						['sync-canary', 'sync'],
 						['autofix', 'autofix'],
 						['pullfrog', 'pullfrog'],
+						['script-vendor-monitor', 'sync-monitor-issues'],
 					]) {
 						expect(
 							permits(readPublicationWorkflow(workflow).jobs[job].if, supplied),
 							`${workflow}.${job} ${event} ${ref}`
 						).toBe(false);
 					}
-					const syncIssues = readPublicationWorkflow(
-						'script-vendor-monitor'
-					).jobs['live-vendor-probes'].steps.find(
-						(step: { name?: string }) => step.name === 'Sync monitor issues'
-					);
-					expect(permits(syncIssues.if, supplied)).toBe(false);
 				}
 			}
 		}
@@ -626,6 +624,12 @@ describe('workflow publication trust', () => {
 			['autofix', 'autofix', 'pull_request', 'refs/pull/5/merge'],
 			['autofix', 'autofix', 'push', 'refs/heads/main'],
 			['pullfrog', 'pullfrog', 'workflow_dispatch', 'refs/heads/canary'],
+			[
+				'script-vendor-monitor',
+				'sync-monitor-issues',
+				'schedule',
+				'refs/heads/canary',
+			],
 		]) {
 			expect(
 				permits(
@@ -634,12 +638,43 @@ describe('workflow publication trust', () => {
 				)
 			).toBe(true);
 		}
-		const syncIssues = readPublicationWorkflow('script-vendor-monitor').jobs[
-			'live-vendor-probes'
-		].steps.find(
-			(step: { name?: string }) => step.name === 'Sync monitor issues'
+	});
+
+	it('keeps vendor probes read-only and syncs issues only after a report upload', () => {
+		const { jobs } = readPublicationWorkflow('script-vendor-monitor');
+		const probes = jobs['live-vendor-probes'];
+		const sync = jobs['sync-monitor-issues'];
+		expect(probes.permissions).toEqual({ contents: 'read' });
+		expect(probes).not.toHaveProperty('if');
+		expect(
+			probes.steps.every(
+				(step: { env?: Record<string, string> }) => !step.env?.GITHUB_TOKEN
+			)
+		).toBe(true);
+		expect(sync.needs).toBe('live-vendor-probes');
+		expect(sync.permissions).toEqual({ contents: 'read', issues: 'write' });
+		const upload = probes.steps.find(
+			(step: { id?: string }) => step.id === 'report'
 		);
-		expect(permits(syncIssues.if, context('c15t/c15t', 'schedule'))).toBe(true);
+		const download = sync.steps.find((step: { uses?: string }) =>
+			step.uses?.startsWith('actions/download-artifact@')
+		);
+		expect(upload.if).toBe('always()');
+		expect(probes.outputs.report_artifact_id).toBe(
+			`\${{ steps.report.outputs.artifact-id }}`
+		);
+		expect(download.with.name).toBe(upload.with.name);
+		expect(download.with.path).toBe('packages/integrations');
+		for (const repository of ['c15t/c15t', 'inthhq/c15t-private']) {
+			for (const artifact of ['', '123']) {
+				const supplied = context(repository, 'schedule');
+				supplied.needs['live-vendor-probes'].outputs.report_artifact_id =
+					artifact;
+				expect(permits(sync.if, supplied)).toBe(
+					repository === 'c15t/c15t' && artifact !== ''
+				);
+			}
+		}
 	});
 
 	it('keeps private validation available through release, PR, dispatch and reusable CI', () => {
@@ -737,7 +772,7 @@ describe('workflow publication trust', () => {
 				.replaceAll(`\${{ github.event.pull_request.head.sha }}`, head)
 				.replaceAll(`\${{ github.event.before }}`, base)
 				.replaceAll(`\${{ github.event.after }}`, head);
-			execFileSync('bash', ['-e', '-o', 'pipefail', '-c', script], {
+			execFileSync('bash', ['-e', '-c', script], {
 				cwd: root,
 				env: { ...process.env, GITHUB_OUTPUT: join(root, 'output') },
 			});
@@ -766,11 +801,10 @@ describe('mobile CI preparation', () => {
 				'#!/bin/sh\ncase " $* " in *" :c15t-android:testDebugUnitTest "*) exit 42;; esac\n'
 			);
 			chmodSync(gradlew, 0o755);
-			const result = spawnSync(
-				'bash',
-				['-e', '-o', 'pipefail', '-c', step.run],
-				{ cwd: root, encoding: 'utf8' }
-			);
+			const result = spawnSync('bash', ['-e', '-c', step.run], {
+				cwd: root,
+				encoding: 'utf8',
+			});
 			expect(result.status, result.stderr).toBe(42);
 		} finally {
 			rmSync(root, { force: true, recursive: true });
@@ -790,19 +824,15 @@ describe('mobile CI preparation', () => {
 				'#!/bin/sh\nif [ "$1" = test ]; then echo "fixture Swift test failed"; exit 42; fi\n'
 			);
 			chmodSync(swift, 0o755);
-			const result = spawnSync(
-				'bash',
-				['-e', '-o', 'pipefail', '-c', step.run],
-				{
-					cwd: root,
-					encoding: 'utf8',
-					env: {
-						...process.env,
-						BENCH_OUTPUT_DIR: join(root, 'reports'),
-						PATH: `${root}:${process.env.PATH}`,
-					},
-				}
-			);
+			const result = spawnSync('bash', ['-e', '-c', step.run], {
+				cwd: root,
+				encoding: 'utf8',
+				env: {
+					...process.env,
+					BENCH_OUTPUT_DIR: join(root, 'reports'),
+					PATH: `${root}:${process.env.PATH}`,
+				},
+			});
 			expect(result.status, result.stderr).toBe(42);
 			expect(
 				readFileSync(join(root, 'reports/swift-core.log'), 'utf8')

@@ -156,7 +156,7 @@ The branch-tip check still rejects superseded commits before Tegami runs.
 | `pr-preview.yml` → `pkg-pr-new publish` | Public repository and PR event required, then member association or `deploy:preview` label. Private packages stay out even if they have `publishConfig.access: public`. |
 | `sync-canary.yml` | Public repository required before branch pushes and sync PR creation. |
 | `autofix.yml` | Public repository required before the formatting action can push. Ordinary formatting checks still run in `ci.yml`. |
-| `script-vendor-monitor.yml` → `manage-issues.ts` | Probes and reports remain available. Issue writes require the public repository, including after a probe failure. |
+| `script-vendor-monitor.yml` → `manage-issues.ts` | Probes and reports use a read-only job. A separate public-only job downloads the report and updates issues, including after a probe failure. |
 | `pullfrog.yml` | Public repository and manual dispatch required before sending code or prompts to the hosted agent. |
 
 The reusable workflows are `ci.yml`, `bundle-analysis.yml`,
@@ -232,29 +232,11 @@ Logging preserves test exit codes. The repository tooling tests inject failed
 native commands to check that the workflow stops; they do not substitute for
 running the native suites on their declared runners.
 
-ENG-523 remains partial preparation. `@c15t/react-native` stays `private: true`,
-outside Tegami's publish graph and PR package previews. Do not remove that block
-based on `CI complete` or the advisory device build report. The mobile delivery
-owner still needs the following evidence before adding a mobile publication gate:
-
-- ENG-517 clean packed Expo and bare RN consumers, built and launched on both
-  platforms with isolated dependencies and verified resources and artifacts.
-- ENG-518 installable EAS builds under `inth-com`, with an embedded bundle,
-  offline cold restart and compatible and incompatible Expo Updates cases.
-- Android instrumentation on a runner with a verified device, including storage,
-  keystore, startup and lifecycle behavior. A task that finds no device must fail.
-- Launched iOS and Android assertions for startup, persistence, withdrawal,
-  native-before-JS gates and full IAB platform-store behavior.
-- The ENG-526 presenter prototype, ENG-528 SwiftUI/UIKit and ENG-531
-  Compose hosts, and ENG-533 RN stock-screen integration. Prove native choices
-  and commits while JS is busy, rejected commits and pending remote delivery,
-  repeated presentation, backgrounding and host/subscription disposal.
-- Versioned RN JS/native and OTA compatibility, physical-device accessibility,
-  leak and performance acceptance, retained failure artifacts and named owners.
-
-Those gates belong to mobile SDK publication. Advisory device work remains
-outside the web release's required completion job. This foundation does not
-provide a launched-app, offline, OTA or native-presenter test.
+`@c15t/react-native` remains private and outside Tegami's publish graph and PR
+package previews. `CI complete` and the advisory device build report do not
+establish mobile release readiness. The workflow does not test launched apps,
+offline restart, OTA compatibility or native presenters. Advisory device work
+remains outside the web release's required completion job.
 
 Autolinking is gated separately from the Android assemblies. Assembling an AAR proves Gradle
 can compile the library; it never asks React Native's CLI whether the library can be found. A
