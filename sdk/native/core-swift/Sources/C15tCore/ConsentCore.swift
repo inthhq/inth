@@ -1167,6 +1167,8 @@ public final class ConsentCore: @unchecked Sendable {
     public func hydrate() -> ConsentSnapshot {
         guard let config = lock.withLock({ self.config }) else { return snapshot() }
 
+        let hadRecords = config.store.data(for: StorageKey.snapshot) != nil
+            || config.store.data(for: StorageKey.pendingSaves) != nil
         // Identity first, on disk, outside the lock.
         let identityRead = SubjectIdentity.loadOrCreate(from: config.store)
         let identity = identityRead.identity
@@ -1183,7 +1185,22 @@ public final class ConsentCore: @unchecked Sendable {
             announceUnusableSubjectId(unusable)
         }
         let envelopeData = config.store.data(for: StorageKey.snapshot)
-        let envelope = envelopeData.flatMap(StoredEnvelope.decode)
+        var envelope = envelopeData.flatMap(StoredEnvelope.decode)
+        let replacementReason = identityRead.replacementReason
+        if replacementReason != nil && hadRecords
+            || envelope.map({ $0.snapshot.subject?.id != identity.id }) == true {
+            config.store.set(nil, for: StorageKey.snapshot)
+            config.store.set(nil, for: StorageKey.pendingSaves)
+            envelope = nil
+            let reason = replacementReason ?? "mismatch"
+            let announce = lock.withLock { identityRecoveryAnnouncements.insert(reason).inserted }
+            if announce {
+                events.emit(.error(CoreErrorInfo(
+                    code: "subject-id-\(reason)",
+                    message: "c15t: the stored subject identity is \(reason). Stored consent and queued saves were discarded; the app asks for consent again."
+                )))
+            }
+        }
 
         let restored = lock.withLock { () -> ConsentSnapshot in
             self.identity = identity
@@ -1333,6 +1350,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// ``hydrate()`` is public and a binding layer can call it again after a store
     /// swap, so the flag lives here rather than relying on bootstrap's once-only guard.
     private var unusableSubjectIdAnnounced = false
+    private var identityRecoveryAnnouncements: Set<String> = []
 
     /// Say once per launch why a returning user is being asked for consent again.
     ///
@@ -2032,6 +2050,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// still open.
     private func canDeliverIAB(_ body: Data) -> Bool {
         let wire = C15tJSON.parse(body)
+        guard wire?["subjectId"]?.stringValue == lock.withLock({ identity?.id }) else { return false }
         let tcString = wire?["tcString"]?.stringValue
         let requiresIAB = wire?["model"]?.stringValue == "iab" || lock.withLock { config?.iab != nil && resolvedPolicy?.policy.model == .iab }
         if tcString == nil && !requiresIAB { return true }

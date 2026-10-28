@@ -182,12 +182,13 @@ class KernelTest {
 					// A permissive stored permission map must not leak while the
 					// policy is still pending.
 					effectivePermissions = ConsentState.ALLOW_ALL,
-					subject = ConsentSubject(id = "subject-1"),
+					subject = ConsentSubject(id = "sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"),
 				),
 			),
 		)
 		val backend = InMemoryKeyValueStore()
 		backend.putSilently(C15tStoreKeys.SNAPSHOT, envelopeJson)
+		backend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"sub_4ZrjtiRsJnoW34Px8dAvhPTKJiWc"}""")
 		val kernel = testKernel(store = C15tStore(backend), clock = clock)
 
 		kernel.bootstrap()

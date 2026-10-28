@@ -212,6 +212,8 @@ class OverrideAndSignalTest {
 		)
 		backend.putSilently(C15tStoreKeys.SNAPSHOT, C15tJson.storage.encodeToString(SnapshotEnvelope.serializer(), envelope))
 
+		backend.putSilently(C15tStoreKeys.SUBJECT, """{"id":"$SUBJECT_ID"}""")
+
 		val kernel = testKernel(store = C15tStore(backend), transport = RecordingTransport().respondInit(initSuccess()))
 		kernel.bootstrap()
 		val signal = kernel.snapshot().privacySignals.gpc

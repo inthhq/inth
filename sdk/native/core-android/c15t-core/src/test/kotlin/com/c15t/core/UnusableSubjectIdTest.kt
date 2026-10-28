@@ -103,6 +103,33 @@ class UnusableSubjectIdTest {
 	}
 
 	@Test
+	fun `missing and corrupt identities discard envelope and queue across restarts`() {
+		for (corrupt in listOf(false, true)) {
+			val install = poisonedInstall()
+			if (corrupt) install.backend.putSilently(C15tStoreKeys.SUBJECT, "not-json")
+			else install.backend.write(C15tStoreKeys.SUBJECT, null)
+			val errors = mutableListOf<KernelError>()
+			val transport = RecordingTransport()
+			val store = C15tStore(install.backend)
+			val core = testKernel(store = store, transport = transport, logger = { errors += it })
+			core.bootstrap()
+			assertNull(core.snapshot().explicitChoice)
+			assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+			assertTrue(store.readPending().isEmpty())
+			assertTrue(transport.saveRequests.isEmpty())
+			val code = if (corrupt) "subject-id-corrupt" else "subject-id-missing"
+			assertEquals(1, errors.count { it.code == code })
+			val identity = core.snapshot().subject?.id
+			core.bootstrap()
+			val restart = testKernel(store = C15tStore(install.backend), transport = RecordingTransport())
+			restart.bootstrap()
+			assertEquals(identity, restart.snapshot().subject?.id)
+			assertNull(restart.snapshot().explicitChoice)
+			assertFalse(restart.isAllowed(ConsentCategory.MARKETING))
+		}
+	}
+
+	@Test
 	fun `discarding the envelope leaves the storage of a first launch`() {
 		// "Records and all" said about storage rather than about a snapshot, because the
 		// discarded launch mints a new id and that is the one field the contract keeps in

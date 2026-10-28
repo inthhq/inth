@@ -94,6 +94,45 @@ final class UnusableSubjectIdTests: XCTestCase {
         XCTAssertEqual(core.snapshot().subject?.id, adopted, "the replacement id is now the stored one")
     }
 
+    func testMissingAndCorruptIdentityDiscardEnvelopeAndQueueOnEveryHydrate() async throws {
+        for corrupt in [false, true] {
+            let install = try await poisonedInstall()
+            install.store.set(corrupt ? Data("not-json".utf8) : nil, for: StorageKey.subject)
+            let backend = StubHTTP()
+            let core = ConsentCore()
+            let log = EventLog()
+            log.start(core)
+            await core.bootstrapAndSettle(Fixture.configured(
+                store: install.store, transport: Fixture.transport(backend), clock: TestClock(Self.now)
+            ))
+            XCTAssertNil(core.snapshot().explicitChoice)
+            XCTAssertFalse(core.isAllowed(.marketing))
+            XCTAssertNil(install.store.data(for: StorageKey.pendingSaves))
+            XCTAssertTrue(backend.recordedSaveRequests.isEmpty)
+            let code = corrupt ? "subject-id-corrupt" : "subject-id-missing"
+            let reported = await log.didEmit(code)
+            XCTAssertTrue(reported)
+            let identity = core.snapshot().subject?.id
+            core.hydrate()
+            await core.waitUntilIdle()
+            XCTAssertEqual(core.snapshot().subject?.id, identity)
+            XCTAssertNil(core.snapshot().explicitChoice)
+            XCTAssertEqual(log.count(code), 1)
+
+            // Public hydrate must enforce the same rule after a running grant.
+            let grant = try await poisonedInstall()
+            install.store.set(grant.store.data(for: StorageKey.snapshot), for: StorageKey.snapshot)
+            install.store.set(grant.queued, for: StorageKey.pendingSaves)
+            install.store.set(corrupt ? Data("{}".utf8) : nil, for: StorageKey.subject)
+            core.hydrate()
+            await core.waitUntilIdle()
+            XCTAssertFalse(core.isAllowed(.marketing))
+            XCTAssertNil(core.snapshot().explicitChoice)
+            XCTAssertNil(install.store.data(for: StorageKey.pendingSaves))
+            XCTAssertTrue(backend.recordedSaveRequests.isEmpty)
+        }
+    }
+
     func testDiscardingTheEnvelopeLeavesTheStorageOfAFirstLaunch() async throws {
         // "Records and all" said about storage rather than about a snapshot, because the
         // discarded launch mints a new id and that is the one field the contract keeps in

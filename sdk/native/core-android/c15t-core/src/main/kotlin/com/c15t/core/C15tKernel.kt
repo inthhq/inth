@@ -186,6 +186,7 @@ class C15tKernel(
 
 	/** Whether `subject-id-unusable` has been reported. One launch, one announcement. */
 	private val unusableSubjectAnnounced = AtomicBoolean(false)
+	private val identityRecoveryAnnouncements = mutableSetOf<String>()
 
 	/**
 	 * GPC as the device and the backend report it, with no override applied.
@@ -224,7 +225,7 @@ class C15tKernel(
 		}
 		val now = clock.nowMillis()
 		val subject = resolveSubject()
-		val envelope = store.readEnvelope()
+		val envelope = store.readEnvelope()?.takeIf { it.snapshot.subject?.id == subject.id }
 
 		storedSnapshotFound = envelope != null
 
@@ -1243,8 +1244,17 @@ class C15tKernel(
 	 * one more rejection of a decision this device has stopped remembering.
 	 */
 	private fun resolveSubject(): ConsentSubject {
-		store.readSubject()?.let { return it }
+		store.readSubject()?.let { subject ->
+			val envelope = store.readEnvelope()
+			if (envelope != null && envelope.snapshot.subject?.id != subject.id) {
+				discardOrphanedIdentityRecords("mismatch")
+			}
+			return subject
+		}
 		store.takeUnusableSubject()?.let(::discardRecordsOfUnusableSubject)
+		store.subjectReplacementReason?.let { reason ->
+			if (store.hasConsentRecords()) discardOrphanedIdentityRecords(reason)
+		}
 		// Owned by c15t and minted by SubjectIdGenerator. Never derived from a hardware
 		// identifier. An id this build wrote is adopted untouched, because minting a
 		// fresh one over an accepted stored id would orphan every record the backend holds
@@ -1252,6 +1262,16 @@ class C15tKernel(
 		val created = ConsentSubject(id = subjectIdGenerator())
 		store.writeSubject(created)
 		return created
+	}
+
+	private fun discardOrphanedIdentityRecords(reason: String) {
+		store.clearConsentState()
+		if (identityRecoveryAnnouncements.add(reason)) {
+			emitError(KernelError(
+				code = "subject-id-$reason",
+				message = "c15t: the stored subject identity is $reason. Stored consent and queued saves were discarded; the app asks for consent again.",
+			))
+		}
 	}
 
 	/**
@@ -1437,6 +1457,7 @@ class C15tKernel(
 	 * is not owed spends no attempt and announces nothing.
 	 */
 	private fun deliverIfOwed(entry: QueuedSave): Delivery? {
+		if (entry.payload.subjectId != state.get().subject?.id) return null
 		val requiresIab =
 			synchronized(mutationLock) {
 				iabConfiguration != null && evaluationPolicy?.model == ConsentModel.IAB

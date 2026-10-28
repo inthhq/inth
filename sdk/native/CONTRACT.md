@@ -1429,3 +1429,15 @@ Read it before changing either `PolicyEvaluator`, or the evaluation scenarios in
 `packages/react-native/scripts/generate-protocol-fixtures.ts`. Permissions and
 `restrictions` are bridge and storage surface: a kernel may not change them to
 match a hunch, and no fixture expectation may be edited to make a core pass.
+
+### Identity recovery during core hydration
+
+Both cores discard the consent envelope and pending saves before adopting a new
+subject when the stored identity is missing or undecodable. They report
+`subject-id-missing` or `subject-id-corrupt` when records were orphaned. An envelope
+whose subject differs from the stored identity also fails closed with
+`subject-id-mismatch`. A fresh install with no records needs no recovery diagnostic.
+Swift applies this rule on every public `hydrate()` call. Kotlin applies it during
+synchronous bootstrap and subsequent subject resolution. Replay checks the current
+subject even for category-only saves. No installer or RN bridge is required for
+these checks, and vendor storage never supplies identity or consent authority.

@@ -68,6 +68,11 @@ class C15tStore(
 	 * two stores gets two honest reads, and neither one should silence the other.
 	 */
 	private var unusableSubject: UnusableSubjectId? = null
+	var subjectReplacementReason: String? = null
+		private set
+
+	fun hasConsentRecords(): Boolean = backend.read(C15tStoreKeys.SNAPSHOT) != null ||
+		backend.read(C15tStoreKeys.PENDING) != null
 
 	/**
 	 * Read the stored subject, or `null` when absent, unparseable, or unusable.
@@ -84,7 +89,14 @@ class C15tStore(
 	 * make that decision invisible.
 	 */
 	fun readSubject(): ConsentSubject? {
-		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer()) ?: return null
+		unusableSubject = null
+		subjectReplacementReason = null
+		val raw = backend.read(C15tStoreKeys.SUBJECT)
+		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer())
+		if (stored == null) {
+			subjectReplacementReason = if (raw == null) "missing" else "corrupt"
+			return null
+		}
 		if (SubjectIdGenerator.isValid(stored.id)) {
 			return stored
 		}
