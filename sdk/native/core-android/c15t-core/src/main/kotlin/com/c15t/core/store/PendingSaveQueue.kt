@@ -3,6 +3,7 @@ package com.c15t.core.store
 import com.c15t.core.model.QueuedSave
 import com.c15t.core.model.SavePayload
 import com.c15t.core.model.isWithdrawal
+import com.c15t.core.model.sameOwner
 import java.util.UUID
 
 /**
@@ -54,6 +55,8 @@ class PendingSaveQueue(
 	 */
 	private val idGenerator: () -> String = { UUID.randomUUID().toString() },
 ) {
+	private val capacity = limit.coerceIn(1, DEFAULT_LIMIT)
+
 	/**
 	 * Persist [payload] as a queued write, and return the entry the caller must hand to
 	 * the transport -- or `null` when the write did not land.
@@ -63,14 +66,14 @@ class PendingSaveQueue(
 	 * a caller that the commit stood when nothing has to deliver it is worse than a
 	 * refusal they can act on. [C15tStore.writePending] is what proves the write.
 	 */
-	fun enqueue(payload: SavePayload, queuedAt: Long): QueuedSave? =
+	fun enqueue(payload: SavePayload, queuedAt: Long, body: String? = null): QueuedSave? =
 		synchronized(store) {
-		val entry = QueuedSave(id = idGenerator(), queuedAt = queuedAt, payload = payload)
-		val current = store.readPending()
+		val entry = QueuedSave(id = idGenerator(), queuedAt = queuedAt, payload = payload, body = body)
+		val current = store.readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
 		// Oldest dropped first, newest kept.
 		val withdrawals = current.filter { it.isWithdrawal() }
-		if (withdrawals.size >= maxOf(1, limit)) return@synchronized null
-		val grants = current.filterNot { it.isWithdrawal() }.takeLast(maxOf(0, limit - withdrawals.size - 1))
+		if (withdrawals.size >= capacity) return@synchronized null
+		val grants = current.filterNot { it.isWithdrawal() }.takeLast(maxOf(0, capacity - withdrawals.size - 1))
 		val next = withdrawals + grants + entry
 		return@synchronized entry.takeIf { store.writePending(next) }
 	}

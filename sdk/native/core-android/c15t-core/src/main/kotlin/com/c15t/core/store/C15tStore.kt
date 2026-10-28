@@ -1,6 +1,7 @@
 package com.c15t.core.store
 
 import com.c15t.core.model.isWithdrawal
+import com.c15t.core.model.sameOwner
 
 import com.c15t.core.SubjectIdGenerator
 import com.c15t.core.model.ConsentSnapshot
@@ -181,9 +182,9 @@ class C15tStore(
 
 	/** Persist a full IAB transaction before publishing any grant. */
 	@Synchronized
-	fun commit(envelope: SnapshotEnvelope, entry: QueuedSave): Boolean {
-		val withdrawals = readPending().filter { it.isWithdrawal() }
-		if (withdrawals.size >= PendingSaveQueue.DEFAULT_LIMIT) return false
+	fun commit(envelope: SnapshotEnvelope, entry: QueuedSave, limit: Int = PendingSaveQueue.DEFAULT_LIMIT): Boolean {
+		val withdrawals = readPending().filter { it.isWithdrawal() && !(entry.isWithdrawal() && it.sameOwner(entry)) }
+		if (withdrawals.size >= limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)) return false
 		return writeAtomic(envelope.copy(pendingSaves = withdrawals + entry))
 	}
 

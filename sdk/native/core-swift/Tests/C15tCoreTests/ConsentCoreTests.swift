@@ -484,9 +484,9 @@ final class ConsentCoreTests: XCTestCase {
         http.setSavesFail(true)
 
         let base = clock.now
-        for index in 0..<25 {
+        for _ in 0..<25 {
             clock.advance(by: 1)
-            core.save(.custom([.measurement: index.isMultiple(of: 2)]))
+            core.save(.custom([.measurement: true]))
         }
         await core.waitUntilIdle()
 

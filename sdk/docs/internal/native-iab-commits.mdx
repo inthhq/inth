@@ -88,11 +88,16 @@ accepted the request. Delivery sends `tcString` and `model: "iab"` through the r
 `givenAt`. Retry and restart reuse the exact saved HTTP bytes, including their
 original domain. Retry bookkeeping updates the same envelope without changing
 the decision or body. Grant entries keep their attempt and retention ceilings.
-Frozen native withdrawals remain owed until delivery, even beyond those ceilings.
-The queue refuses a new action when protected withdrawals fill its capacity.
+Full denials remain owed until delivery, even beyond those ceilings, including
+category withdrawals queued before a switch to IAB. A new full denial supersedes
+older queued actions for exactly the same subject ID, external ID and domain.
+The queue keeps the newest frozen body unchanged. A later grant retains the owed
+denial. Distinct owners never coalesce. If distinct owners fill all 20 slots,
+`queue-write-failed` refuses an action that cannot fit and preserves the stored
+state. Repeating a denial for an existing owner can still replace its slot.
 
-A newer IAB decision supersedes older queued grants. Frozen withdrawals remain
-in action order with their original identity, external ID, domain and exact body.
+A newer IAB decision supersedes older queued grants. Remaining withdrawals keep
+their original identity, external ID, domain and exact body.
 A withdrawal cannot replay an older queued acceptance. Grant delivery checks the
 actual saved body against current TC authority, identity and action time. A full
 withdrawal has no category, purpose, vendor, publisher, special-feature or LI grants
@@ -106,6 +111,16 @@ survives reset and identity changes so a later decision cannot reuse an earlier
 action-time input. This does not establish live backend acceptance or matching
 backend consent IDs. The TC creation day stays unchanged across edits to the same
 consent record; consent version increments per successful decision.
+
+Both cores serialize snapshot mutations through a gate separate from the short
+in-memory state lock. Preparation, revision validation, durable write and state
+publication share that gate. Category actions, identity changes, reset, hydration,
+overrides, notice dismissal and init results use the same serialization. Queue
+settlement edits only its entry under the queue or store lock and preserves the
+latest envelope. Synchronous snapshot, permission, IAB and gate reads remain
+available while a store write blocks. A storage callback may use these reads.
+A refused write leaves the previous envelope and creates no pending body.
+Network delivery runs after releasing the mutation gate.
 
 ## Hydrate and invalidate authority
 
@@ -126,10 +141,17 @@ host has no native CMP configuration. Reject all can still record a pure
 category-only withdrawal when CMP configuration or a GVL is missing. Older SDKs reject envelopes with unknown authority fields and require
 a fresh decision; do not rely on downgrades preserving these choices.
 
+On Swift cold launch, an omitted `CoreConfig.user` restores the external ID from
+the authoritative stored snapshot. An explicitly configured user takes precedence.
+Calling identify with that same stored ID preserves valid consent. Logout stores
+an anonymous identity, so a later launch cannot restore the signed-out account.
+The host supplies external identity; the SDK never derives it from hardware.
+
 Repeating identify with the same external ID and logout while already anonymous
-preserves consent and the queue. Genuine identity transitions and reset atomically
-persist empty consent authority while retaining frozen withdrawals under their
-original delivery owner. The installation subject ID remains unchanged. A failed write keeps the previous
+preserves consent and the queue. Changes to actual IAB authority and reset
+atomically persist empty consent authority while retaining frozen withdrawals
+under their original delivery owner. Under an ordinary category policy, merely
+configuring IAB or retaining an old withdrawal does not change identify behavior. The installation subject ID remains unchanged. A failed write keeps the previous
 identity and consent state and emits `identity-write-failed` or
 `reset-write-failed`. Reset retains app configuration and the installation subject
 ID, then requests a new policy. These operations do not erase backend audit

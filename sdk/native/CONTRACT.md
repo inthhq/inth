@@ -562,8 +562,10 @@ later fact, reported by the delivered event and by the error that replaced it,
 and the depth stays readable.
 
 IAB decisions atomically store the complete decision and pending body in the
-snapshot envelope. Their latest decision supersedes older queued bodies. Identity
-changes and reset persist an empty consent record and queue, retaining an action
+snapshot envelope. Their latest decision supersedes older queued grants. A full
+denial supersedes older queued actions for the same subject ID, external ID and
+domain; other owners' frozen withdrawals remain owed. Identity changes and reset
+persist an empty consent record while retaining frozen withdrawals and an action
 time watermark. Their failure semantics and migration rules are defined in
 `docs/internal/native-iab-commits.mdx`. The legacy category queue below still uses
 its separate protected key.
@@ -572,10 +574,13 @@ Order is what makes the assertion honest. The queue write lands before the
 snapshot moves, and no branch answers committed without a durable entry behind
 it. A save that cannot take on the obligation answers not-ok with the reason and
 leaves the decision where it was, because a decision nothing remembers having to
-deliver is worse than a refusal the caller can act on. Where the write happens
-unlocked, the state move is guarded on the revision the payload was built from:
-if another mutation landed in the meantime, that one stands, the entry is
-withdrawn, and the caller is told to repeat against the current snapshot.
+deliver is worse than a refusal the caller can act on. Every snapshot mutation
+uses a serialization gate covering preparation, revision validation, durable
+write and in-memory publication. The short state lock is released during storage
+I/O, so hot reads and storage callbacks can read the current committed authority.
+No other mutation can intervene between the revision check and its write. A stale
+draft is refused before writing, without adding a pending body. Network work runs
+after releasing the gate.
 
 Every failed send spends an attempt, including the first send of the save that
 queued the body. Without that, an attempt ceiling is reachable only by replays,
@@ -620,7 +625,9 @@ one queued decision.
 Whether to retry is decided by whether the same bytes could ever be accepted.
 The queue replays frozen bytes, so a `400 INPUT_VALIDATION_FAILED` or a contract
 declaration this build cannot speak says the same thing on the eleventh try as on
-the first, and the entry is dropped with the backend's reason named. A `503`, a
+the first. Grant entries are dropped with the backend's reason named. Full
+withdrawals remain owed until delivered or superseded by a newer full denial for
+the same subject ID, external ID and domain. A `503`, a
 timeout, a dropped socket, a rate limit, and `408`/`425` say nothing about the
 body, so the entry keeps its place. `401` and `403` are permanent for a body:
 the queue holds bodies and nothing else, and a credential that comes back later
@@ -647,10 +654,14 @@ core emits `error` and stays deny-all rather than guessing the wire.
 Writes go through a pending queue:
 
 - Persist the `SavePayload` before the request, not after.
-- One payload per explicit action, replayed unchanged. A later init that changes
-  policy must not rewrite a queued payload.
+- Freeze each action's body before sending. A later init must not rewrite it.
+  A full denial supersedes older queued actions for the same frozen owner and
+  domain. A grant never cancels an owed withdrawal.
 - Retry on the next launch, on foreground, and on reachability change.
-- Keep at most the newest 20 payloads, oldest dropped first.
+- Keep at most 20 payloads, dropping the oldest grants when needed. Never evict a
+  distinct owner's owed withdrawal to make room. If those withdrawals fill the
+  queue, refuse actions that cannot fit with `queue-write-failed`. A repeated
+  denial for an existing owner can still replace its slot.
 
 Platform lifecycle
 ------------------

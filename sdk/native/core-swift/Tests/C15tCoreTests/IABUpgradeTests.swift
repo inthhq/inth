@@ -54,11 +54,11 @@ final class IABUpgradeTests: XCTestCase {
         XCTAssertEqual(core.save(.necessary).status, .committed)
         await core.waitUntilIdle()
         XCTAssertEqual(core.pendingSaveCount(), 1, "a refused withdrawal stays owed")
-        let frozen = core.pendingSaveBodies().first
         XCTAssertEqual(core.save(.necessary).status, .committed)
         await core.waitUntilIdle()
         let times = core.pendingSaveBodies().compactMap { C15tJSON.parse($0)?["givenAt"]?.intValue }
-        XCTAssertEqual(times, [vector.now, vector.now + 1])
+        XCTAssertEqual(times, [vector.now + 1])
+        let frozen = core.pendingSaveBodies().first
         core.reset()
         await core.waitUntilIdle()
         XCTAssertTrue(core.pendingSaveBodies().contains { $0 == frozen })

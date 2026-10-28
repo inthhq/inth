@@ -32,9 +32,9 @@ class IabUpgradeTest {
 		core.bootstrap()
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertEquals(1, store.readPending().size, "a refused withdrawal stays owed")
-		val frozen = store.readPending().firstOrNull()?.body
 		assertTrue(core.save(CommitIntent.Necessary).ok)
-		assertEquals(listOf(now, now + 1), store.readPending().map { it.payload.givenAt })
+		assertEquals(listOf(now + 1), store.readPending().map { it.payload.givenAt })
+		val frozen = store.readPending().single().body
 		core.reset()
 		assertTrue(store.readPending().any { it.body == frozen })
 		transport.respondSave(com.c15t.core.transport.SaveOutcome.Delivered)

@@ -196,9 +196,9 @@ final class DeliveryPassExclusivityTests: XCTestCase {
         let staging = await bootstrappedCore()
         http.savesFail = true
         var bodies: [Data] = []
-        for index in 0..<6 {
+        for _ in 0..<6 {
             clock.advance(by: 1)
-            XCTAssertEqual(staging.save(.custom([.measurement: index.isMultiple(of: 2)])).status, .committed)
+            XCTAssertEqual(staging.save(.custom([.measurement: true])).status, .committed)
         }
         await staging.waitUntilIdle()
         bodies = staging.pendingSaveBodies()
@@ -216,9 +216,9 @@ final class DeliveryPassExclusivityTests: XCTestCase {
             initRetry: .disabled,
             flushPendingOnBootstrap: false
         ))
-        for index in 0..<6 {
+        for _ in 0..<6 {
             clock.advance(by: 1)
-            XCTAssertEqual(core.save(.custom([.measurement: !index.isMultiple(of: 2)])).status, .committed)
+            XCTAssertEqual(core.save(.custom([.measurement: true])).status, .committed)
             core.flushPending()
         }
         await core.waitUntilIdle()

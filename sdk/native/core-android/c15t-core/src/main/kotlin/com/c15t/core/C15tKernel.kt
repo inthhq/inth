@@ -99,8 +99,9 @@ private class PassReport(
  * single volatile read with no lock, no disk, and no allocation, which is what lets an
  * ad SDK call them from the main thread while a save is in flight.
  *
- * Mutation paths hold [mutationLock] only while they compute the next snapshot in
- * memory. Persistence and network always happen after the lock is released.
+ * Mutation paths own [commitGate] through preparation, durable writes and publication.
+ * [mutationLock] guards only in-memory state. Network work and snapshot observers
+ * run after releasing the gate; hot reads never acquire it.
  *
  * @param store Typed persistence over the host's storage.
  * @param transport Backend commands; [C15tTransport.NONE] keeps the core local-only.
@@ -167,6 +168,27 @@ class C15tKernel(
 		}
 
 	private val mutationLock = Any()
+	private val commitGate = java.util.concurrent.Semaphore(1)
+	private var needsGrantCleanup = false
+	/** Serialize every mutation through durable write and publication, never hot reads. */
+	private inline fun <Result> mutate(body: (MutationPermit) -> Result): Result {
+		commitGate.acquireUninterruptibly()
+		val permit = MutationPermit { commitGate.release() }
+		try {
+			return body(permit)
+		} finally {
+			permit.release()
+		}
+	}
+
+	private class MutationPermit(private var unlock: (() -> Unit)?) {
+		fun release() {
+			val action = unlock
+			unlock = null
+			action?.invoke()
+		}
+	}
+
 	private val bootstrapped = AtomicBoolean(false)
 
 	/** Validated policy from the last init, guarded by [mutationLock]. */
@@ -229,9 +251,9 @@ class C15tKernel(
 	 * first Activity exists. Everything after the synchronous hydration runs on
 	 * [background], so the caller's thread never waits on the network.
 	 */
-	fun bootstrap() {
+	fun bootstrap() = mutate { mutation ->
 		if (!bootstrapped.compareAndSet(false, true)) {
-			return
+			return@mutate
 		}
 		val now = clock.nowMillis()
 		val subject = resolveSubject()
@@ -303,17 +325,19 @@ class C15tKernel(
 				// after the signal that caused it is gone.
 				privacySignals = signalsFor(hydratedOverrides),
 			)
-			publishPure(
-				validateIab(
-					PolicyEvaluator.evaluate(
-					hydrated,
-					envelope.evaluationPolicy,
-					envelope.noticeDismissal,
-					now,
-					choiceScopeOf(envelope.evaluationPolicy),
+			synchronized(mutationLock) {
+				publishPure(
+					validateIab(
+						PolicyEvaluator.evaluate(
+						hydrated,
+						envelope.evaluationPolicy,
+						envelope.noticeDismissal,
+						now,
+						choiceScopeOf(envelope.evaluationPolicy),
+						)
 					)
 				)
-			)
+			}
 			persist()
 		}
 
@@ -321,6 +345,7 @@ class C15tKernel(
 		// never left the device is on its way before the first prompt is drawn.
 		// Both go through the executor: with TaskExecutor.DIRECT they stay
 		// synchronous, which is what the tests rely on.
+		mutation.release()
 		background.execute { flushPending() }
 		background.execute { runInit() }
 	}
@@ -572,11 +597,12 @@ class C15tKernel(
 	 * stopped it, and `not-bootstrapped` comes from the [C15t] facade in front of this
 	 * kernel.
 	 */
-	fun save(intent: CommitIntent, expectedRevision: Long? = null): CommitResult {
-		// Captured once, before any disk or network call, and reused by every
-		// replay so the backend derives the same consent id.
-		var actionAt = clock.nowMillis()
-		var base: ConsentSnapshot
+	fun save(intent: CommitIntent, expectedRevision: Long? = null): CommitResult =
+		saveAt(intent, expectedRevision, clock.nowMillis())
+
+	private fun saveAt(intent: CommitIntent, expectedRevision: Long?, at: Long): CommitResult = mutate { mutation ->
+		// Capture the action before waiting for another durable mutation.
+		var actionAt = at
 		var published: ConsentSnapshot
 		var policy: EvaluationPolicy?
 		// The surface the subject acted on, read before the commit rewrites it.
@@ -592,17 +618,16 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			if (expectedRevision != null && expectedRevision != current.revision)
-				return refusedCommit(
+				return@mutate refusedCommit(
 					"concurrent-change",
 					"The draft was based on an older consent snapshot",
 				)
-			base = current
 			surfaceAtAction = current.activeUI
 			policy = evaluationPolicy
 			if (policy?.model == ConsentModel.IAB) {
 				lastIabActionAt?.let { previous ->
 					if (previous == Long.MAX_VALUE)
-						return refusedCommit(
+						return@mutate refusedCommit(
 							"invalid-action-time",
 							"The previous action time cannot be advanced",
 						)
@@ -614,7 +639,7 @@ class C15tKernel(
 				val configuration = iabConfiguration
 				val gvl = current.iab?.gvl
 				if (configuration == null || gvl == null)
-					return refusedCommit(
+					return@mutate refusedCommit(
 						"iab-unavailable",
 						"IAB saves require CMP configuration and a disclosed vendor list",
 					)
@@ -624,7 +649,7 @@ class C15tKernel(
 						is CommitIntent.Necessary -> IabChoices()
 						is CommitIntent.Iab -> intent.choices
 						is CommitIntent.Explicit ->
-							return refusedCommit(
+							return@mutate refusedCommit(
 								"iab-choices-required",
 								"Save the complete native IAB draft with category choices",
 							)
@@ -642,13 +667,13 @@ class C15tKernel(
 							committedIab,
 						)
 				} catch (_: IllegalArgumentException) {
-					return refusedCommit(
+					return@mutate refusedCommit(
 						"invalid-iab-choices",
 						"IAB configuration or choices do not match the disclosed list",
 					)
 				}
 			} else if (intent is CommitIntent.Iab) {
-				return refusedCommit("iab-unavailable", "The resolved policy does not use IAB")
+				return@mutate refusedCommit("iab-unavailable", "The resolved policy does not use IAB")
 			}
 			// A bulk action covers the categories the prompt asks about, which is what
 			// `resolveSaveSelection` in `@c15t/core` narrows it to. Before a policy
@@ -724,22 +749,16 @@ class C15tKernel(
 		// the action on disk, and a save that gets no further than here promised nothing.
 		val entry: QueuedSave
 		if (policy?.model == ConsentModel.IAB) {
-			synchronized(mutationLock) {
-				if (state.get() !== base)
-					return refusedCommit(
-						"concurrent-change",
-						"Consent changed while recording this draft",
+			val frozen =
+				com.c15t.core.transport.SaveBodyBuilder.build(
+						payload,
+						config.domain ?: java.net.URI(config.portalUrl).host.orEmpty(),
 					)
-				val frozen =
-					com.c15t.core.transport.SaveBodyBuilder.build(
-							payload,
-							config.domain ?: java.net.URI(config.portalUrl).host.orEmpty(),
-						)
-						.toString()
-				val proposed =
-					QueuedSave(UUID.randomUUID().toString(), actionAt, payload, body = frozen)
-				val envelope =
-					SnapshotEnvelope(
+					.toString()
+			val proposed =
+				QueuedSave(UUID.randomUUID().toString(), actionAt, payload, body = frozen)
+			val envelope = synchronized(mutationLock) {
+				SnapshotEnvelope(
 						snapshot = published.copy(iab = null),
 						evaluationPolicy = policy,
 						noticeDismissal = acknowledgement ?: noticeDismissal,
@@ -747,48 +766,38 @@ class C15tKernel(
 						iabConsent = nextIab,
 						lastIabActionAt = actionAt,
 					)
-				if (!store.commit(envelope, proposed))
-					return refusedCommit(
-						"queue-write-failed",
-						"The atomic IAB decision write failed; nothing was sent",
-					)
+			}
+			if (!store.commit(envelope, proposed, config.maxPendingSaves))
+				return@mutate refusedCommit(
+					"queue-write-failed",
+					"The atomic IAB decision write failed; nothing was sent",
+				)
+			synchronized(mutationLock) {
 				committedIab = nextIab
 				lastIabActionAt = actionAt
 				state.set(published)
 				acknowledgement?.let { noticeDismissal = it }
-				entry = proposed
 			}
+			entry = proposed
 		} else {
-			entry = queue.enqueue(payload, actionAt)
-			?: return refusedCommit(
+			entry = queue.enqueue(payload, actionAt,
+				com.c15t.core.transport.SaveBodyBuilder.build(payload,
+					config.domain ?: java.net.URI(config.portalUrl).host.orEmpty()).toString())
+			?: return@mutate refusedCommit(
 				code = "queue-write-failed",
 				message = "c15t: the pending save could not be persisted, so the decision was " +
 					"not recorded and nothing was sent",
 			)
 
-		// The guarded swap, for the reason given above.
-		val applied = synchronized(mutationLock) {
-			if (state.get() !== base) {
-				false
-			} else {
-				state.set(published)
-				acknowledgement?.let { noticeDismissal = it }
-				true
-			}
-		}
-		if (!applied) {
-			// Withdraw. Replaying this body would deliver a decision the device has already
-			// moved past, and the later mutation carries its own, newer receipts.
-			queue.complete(entry.id)
-			return refusedCommit(
-				code = "concurrent-change",
-				message = "c15t: consent state changed while this save was being recorded, so it " +
-					"was withdrawn. Repeat the action against the current snapshot",
-			)
+		// The mutation gate owns this revision through the durable write and swap.
+		synchronized(mutationLock) {
+			state.set(published)
+			acknowledgement?.let { noticeDismissal = it }
 		}
 		}
 
 		persist()
+		mutation.release()
 
 		// The first send is not joined. What this thread may claim about it is whatever the
 		// atomic holds at this instant and nothing more: `null` behind a pool, and the
@@ -805,7 +814,7 @@ class C15tKernel(
 			delivered = delivered,
 		)
 		notifySnapshot(published)
-		return result
+		result
 	}
 
 	/**
@@ -834,7 +843,7 @@ class C15tKernel(
 	}
 
 	/** Close the first-layer prompt without recording a choice. */
-	fun dismissNotice() {
+	fun dismissNotice() = mutate { mutation ->
 		val now = clock.nowMillis()
 		var published: ConsentSnapshot
 		synchronized(mutationLock) {
@@ -860,6 +869,7 @@ class C15tKernel(
 			state.set(published)
 		}
 		persist()
+		mutation.release()
 		notifySnapshot(published)
 	}
 
@@ -869,9 +879,10 @@ class C15tKernel(
 	}
 
 	/** Attach an external identity to the subject, then refresh. */
-	fun identify(user: KernelUser) {
+	fun identify(user: KernelUser) = mutate { mutation ->
 		val transition = transitionIab(user.externalId, false)
 		if (transition != null) {
+			mutation.release()
 			if (!transition)
 				emitError(
 					KernelError(
@@ -887,7 +898,7 @@ class C15tKernel(
 					runInit()
 				}
 			}
-			return
+			return@mutate
 		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
@@ -907,6 +918,7 @@ class C15tKernel(
 			state.set(published)
 		}
 		persist()
+		mutation.release()
 		notifySnapshot(published)
 		background.execute {
 			transport.identify(subject, user)
@@ -920,9 +932,10 @@ class C15tKernel(
 	 * The c15t subject id stays: it is the installation's identity, not the user's,
 	 * and the records already attached to it stay attributable.
 	 */
-	fun logout() {
+	fun logout() = mutate { mutation ->
 		val transition = transitionIab(null, false)
 		if (transition != null) {
+			mutation.release()
 			if (transition) notifySnapshot(state.get())
 			else
 				emitError(
@@ -931,7 +944,7 @@ class C15tKernel(
 						"Logout consent reset could not be persisted",
 					)
 				)
-			return
+			return@mutate
 		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
@@ -948,6 +961,7 @@ class C15tKernel(
 			state.set(published)
 		}
 		persist()
+		mutation.release()
 		notifySnapshot(published)
 		background.execute { transport.logout(subject) }
 	}
@@ -962,7 +976,7 @@ class C15tKernel(
 	 * others alone. A binding that receives explicit nulls from JavaScript uses the
 	 * replace form after computing the full desired record.
 	 */
-	fun setOverrides(overrides: KernelOverrides, merge: Boolean = true) {
+	fun setOverrides(overrides: KernelOverrides, merge: Boolean = true) = mutate { mutation ->
 		var published: ConsentSnapshot
 		synchronized(mutationLock) {
 			val current = state.get()
@@ -989,6 +1003,7 @@ class C15tKernel(
 			state.set(published)
 		}
 		persist()
+		mutation.release()
 		notifySnapshot(published)
 		refresh()
 	}
@@ -1173,15 +1188,16 @@ class C15tKernel(
 	 * waits for it: the entries still in the queue carry a decision the subject just
 	 * withdrew, and the one already on the wire was a valid decision when it was made.
 	 */
-	fun reset() {
+	fun reset() = mutate { mutation ->
 		val transition = transitionIab(state.get().subject?.externalId, true)
 		if (transition != null) {
+			mutation.release()
 			if (transition) {
 				notifySnapshot(state.get())
 				background.execute { runInit() }
 			} else
 				emitError(KernelError("reset-write-failed", "Consent reset could not be persisted"))
-			return
+			return@mutate
 		}
 		val now = clock.nowMillis()
 		// Identity first, off the lock, because a missing subject is the one case that
@@ -1215,6 +1231,7 @@ class C15tKernel(
 		queue.clear()
 		store.clearConsentState()
 		storedSnapshotFound = false
+		mutation.release()
 		notifySnapshot(published)
 		background.execute { runInit() }
 	}
@@ -1318,9 +1335,15 @@ class C15tKernel(
 				)
 			}
 		val mapped = InitMapper.map(outcome)
+		val (published, emitted) = applyInit(mapped, detected)
+		emitted?.let(::emitError)
+		notifySnapshot(published)
+	}
+
+	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?): Pair<ConsentSnapshot, KernelError?> = mutate { mutation ->
+		var detected = detection
 		var published: ConsentSnapshot
 		var emitted: KernelError?
-
 		synchronized(mutationLock) {
 			val base = state.get()
 			val subject = mapped.subjectId?.let { serverId ->
@@ -1417,8 +1440,8 @@ class C15tKernel(
 		// A resolved subject belongs in protected storage as soon as it is known.
 		published.subject?.let { store.writeSubject(it) }
 		persist()
-		emitted?.let(::emitError)
-		notifySnapshot(published)
+		mutation.release()
+		published to emitted
 	}
 
 	/**
@@ -1644,7 +1667,7 @@ class C15tKernel(
 			} else false
 		if (valid) return snapshot.copy(model = ConsentModel.IAB)
 		committedIab = null
-		queue.discardGrants()
+		needsGrantCleanup = true
 		return PolicyEvaluator.evaluate(
 				snapshot.copy(explicitChoice = null),
 				evaluationPolicy,
@@ -1664,10 +1687,10 @@ class C15tKernel(
 			}
 	}
 
-	private fun transitionIab(externalId: String?, reset: Boolean): Boolean? =
-		synchronized(mutationLock) {
-			if (iabConfiguration == null && committedIab == null &&
-				evaluationPolicy?.model != ConsentModel.IAB && queue.pending().none { it.isWithdrawal() })
+	private fun transitionIab(externalId: String?, reset: Boolean): Boolean? {
+		val owed = reset && queue.pending().any { it.isWithdrawal() }
+		val prepared = synchronized(mutationLock) {
+			if (committedIab == null && evaluationPolicy?.model != ConsentModel.IAB && !owed)
 				return@synchronized null
 			val current = state.get()
 			if (!reset && current.subject?.externalId == externalId) return@synchronized null
@@ -1701,16 +1724,20 @@ class C15tKernel(
 					gvl = if (reset) null else next.iab?.gvl,
 					lastIabActionAt = lastIabActionAt,
 				)
-			if (!store.replace(envelope)) return@synchronized false
+			envelope to next
+		} ?: return null
+		if (!store.replace(prepared.first)) return false
+		synchronized(mutationLock) {
 			committedIab = null
 			noticeDismissal = null
 			if (reset) {
 				evaluationPolicy = null
 				storedSnapshotFound = false
 			}
-			state.set(next)
-			true
+			state.set(prepared.second)
 		}
+		return true
+	}
 
 
 	private fun buildSavePayload(
@@ -1839,6 +1866,10 @@ class C15tKernel(
 
 	/** Persist the published state. Always called with [mutationLock] released. */
 	private fun persist() {
+		val cleanup = synchronized(mutationLock) {
+			needsGrantCleanup.also { needsGrantCleanup = false }
+		}
+		if (cleanup) queue.discardGrants()
 		val envelope = synchronized(mutationLock) {
 				val snapshot = state.get()
 				SnapshotEnvelope(

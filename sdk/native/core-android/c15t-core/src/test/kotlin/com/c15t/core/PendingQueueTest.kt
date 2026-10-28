@@ -96,7 +96,7 @@ class PendingQueueTest {
 		kernel.bootstrap()
 
 		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
-		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false)))
+		kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to false, ConsentCategory.MARKETING to true)))
 
 		assertEquals(2, transport.saveRequests.size, "both commits must be queued, not superseded")
 		val attempted = transport.saveRequests.map { json.encodeToString(it.payload) }

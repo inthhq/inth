@@ -19,14 +19,23 @@ struct PendingSaveEntry: Sendable, Codable, Equatable {
     var retainWithdrawal: Bool? = nil
 
     var isProtectedWithdrawal: Bool {
-        (retainWithdrawal == true || C15tJSON.parse(body)?["tcString"]?.stringValue != nil)
-            && ConsentDelivery.isWithdrawal(body)
+        ConsentDelivery.isWithdrawal(body)
     }
 }
 
 /// A frozen denial remains owed after the local policy or identity changes.
 /// No consent or legitimate-interest grant may use this delivery exception.
 enum ConsentDelivery {
+    /// Compare frozen delivery ownership, never the currently signed-in account.
+    static func sameOwner(_ left: Data, _ right: Data) -> Bool {
+        guard let a = C15tJSON.parse(left), let b = C15tJSON.parse(right),
+            a["subjectId"]?.stringValue != nil, a["domain"]?.stringValue != nil
+        else { return false }
+        return ["subjectId", "externalSubjectId", "domain"].allSatisfy {
+            a[$0]?.stringValue == b[$0]?.stringValue
+        }
+    }
+
     static func isWithdrawal(_ body: Data) -> Bool {
         guard let wire = C15tJSON.parse(body),
             let consents = wire["preferences"]?.objectValue, consents["necessary"]?.boolValue == true,
@@ -153,6 +162,9 @@ final class PendingSaveQueue: @unchecked Sendable {
         let queuedAt = now()
         let wrote = lock.withLock {
             var entries = readEntries()
+            if ConsentDelivery.isWithdrawal(body) {
+                entries.removeAll { ConsentDelivery.sameOwner($0.body, body) }
+            }
             entries.sort { left, right in
                 left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt
             }
@@ -346,7 +358,9 @@ final class PendingSaveQueue: @unchecked Sendable {
                 id: newID(), subjectId: subjectId, actionAt: actionAt,
                 queuedAt: now(), attempts: 0, body: body, retainWithdrawal: true)
             var next = envelope
-            let withdrawals = readEntries().filter { $0.isProtectedWithdrawal }
+            let withdrawals = readEntries().filter {
+                $0.isProtectedWithdrawal && !(entry.isProtectedWithdrawal && ConsentDelivery.sameOwner($0.body, body))
+            }
             guard withdrawals.count < Self.maxEntries else { return nil }
             next.pendingSaves = withdrawals + [entry]
             guard store.encode(next, for: StorageKey.snapshot) else { return nil }

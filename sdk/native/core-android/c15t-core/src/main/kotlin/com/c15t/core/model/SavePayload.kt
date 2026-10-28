@@ -63,6 +63,8 @@ data class QueuedSave(
 
 /** A complete denial owes delivery even after current consent authority expires. */
 internal fun QueuedSave.isWithdrawal(): Boolean {
+	// A legacy category payload has no frozen domain. Do not invent one for an
+	// authority-independent delivery exception.
 	if (body == null && payload.tcString == null && payload.model != ConsentModel.IAB) return false
 	if (ConsentCategory.OPTIONAL.any { payload.consents[it] }) return false
 	val frozen = body
@@ -72,6 +74,9 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
 			wire["givenAt"]?.jsonPrimitive?.longOrNull != payload.givenAt ||
 			wire["tcString"]?.jsonPrimitive?.contentOrNull != payload.tcString) return false
 		val preferences = wire["preferences"] as? JsonObject ?: return false
+		if ((preferences["necessary"] as? JsonPrimitive)?.booleanOrNull != true) return false
+		val ac = (wire["addtlConsent"] as? JsonPrimitive)?.contentOrNull
+		if (ac != null && !ac.startsWith("2~~dv.")) return false
 		if (ConsentCategory.OPTIONAL.any { (preferences[it.wireName] as? JsonPrimitive)?.booleanOrNull == true }) return false
 	}
 	val encoded = payload.tcString ?: return payload.consentAction == ConsentAction.NECESSARY ||
@@ -83,4 +88,14 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
 		c.vendorConsents.ids.isEmpty() && c.vendorLegitimateInterests.ids.isEmpty() && c.specialFeatureOptins.isEmpty() &&
 		(p == null || p.publisherConsents.isEmpty() && p.publisherLegitimateInterests.isEmpty() &&
 			p.publisherCustomConsents.isEmpty() && p.publisherCustomLegitimateInterests.isEmpty())
+}
+
+/** Exact owner of an already frozen delivery obligation. */
+internal fun QueuedSave.sameOwner(other: QueuedSave): Boolean {
+	val left = body?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() } ?: return false
+	val right = other.body?.let { runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull() } ?: return false
+	if (left["subjectId"] == null || left["domain"] == null) return false
+	return listOf("subjectId", "externalSubjectId", "domain").all {
+		(left[it] as? JsonPrimitive)?.contentOrNull == (right[it] as? JsonPrimitive)?.contentOrNull
+	}
 }
