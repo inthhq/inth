@@ -75,7 +75,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.gpc = gpc
     }
 
-    /// Build the native transport. Hosted modes reject non-HTTPS or relative URLs.
+    /// Build the native transport. HTTP is allowed only for exact loopback hosts.
     public func makeTransport(client: any HTTPTransport = URLSession.shared) throws -> (any C15tTransport)? {
         switch transport {
         case let .hosted(url), let .selfHosted(url):
@@ -104,7 +104,7 @@ public struct C15tAppleConfiguration: Sendable {
 /// Installs and hydrates the process-wide engine before returning it to any adapter.
 public enum C15tApple {
     /// Version of the Apple platform module, released with this native source package.
-    public static let version = "3.0.0-alpha.1"
+    public static let version = C15tSDK.version
     /// Optional ATT requests share one process-wide flight across native hosts and RN.
     public static let tracking = C15tTrackingController()
     private static let lock = NSRecursiveLock()
@@ -179,7 +179,12 @@ public enum C15tApple {
     }
 
     static func validate(_ url: URL) throws {
-        guard url.scheme?.lowercased() == "https", let host = url.host, !host.isEmpty,
+        let scheme = url.scheme?.lowercased()
+        let host = url.host?.lowercased()
+        // Foundation versions differ on whether URL.host keeps IPv6 brackets.
+        let loopback = host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
+        guard let host, !host.isEmpty,
+              scheme == "https" || (scheme == "http" && loopback),
               url.user == nil, url.password == nil else {
             throw C15tAppleInstallationError.invalidBackendURL
         }

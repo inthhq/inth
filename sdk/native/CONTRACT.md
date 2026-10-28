@@ -632,8 +632,14 @@ Transports
 
 Same three modes as the web SDK, same backend endpoints, same headers.
 
-    x-c15t-version:            <native sdk version, prefixed rn->
+    x-c15t-version:            swift-><C15tSDK.version> on Swift
+    x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
+
+Kotlin currently reports `rn-><sdkVersion>` from `C15tProtocol.protocolHeaders`
+for every Android host.
+ENG-530 must give standalone Android requests their own module attribution.
+This telemetry difference does not change policy-contract negotiation.
 
 A backend that answers `unsupported-contract` is a hard configuration error. The
 core emits `error` and stays deny-all rather than guessing the wire.
@@ -1117,17 +1123,19 @@ Swift core, as built
 iOS packaging, as built
 -----------------------
 
-A host app integrates two pods, both resolvable from this repository:
+A CocoaPods RN host integrates the binding pod, which carries generated core and
+Apple sources in the same compiled module:
 
     platform :ios, '16.4'
 
-    pod 'C15tCore',         :path => '../native/core-swift'
     pod 'C15tReactNative',  :path => '../packages/react-native'
 
-- `C15tCore.podspec` mirrors `Package.swift`: the iOS 16.4 floor, `Sources/C15tCore`
-  only, and `Resources/Privacy.xcprivacy` in a `C15tCore` resource bundle, the same
-  shape the binding's podspec uses. `C15tCoreBench` is an executable and has no pod
-  product. The app must declare iOS 16.4, which is above RN 0.87's own 15.1 floor.
+- Do not also link `C15tCore` or `C15tApple` separately in that RN process. Host
+  installation imports `C15tReactNative` and uses the types compiled into that
+  module, so RN attaches to the same core and Keychain owner. See
+  `docs/internal/apple-installation.md` for the source-consumer distinction.
+  `C15tCore.podspec` remains a local core-only spec, not a published dependency.
+  The app must declare iOS 16.4, which is above RN 0.87's own 15.1 floor.
 - `packages/react-native/package.json` needs
   `codegenConfig.ios.modules.C15t.className = "C15tReactNativeModule"`, because RN
   0.87 resolves TurboModules through generated `RCTModuleProviders`. Verified by

@@ -67,7 +67,7 @@ final class InstallationTests: XCTestCase {
         for instance in instances.values { XCTAssertTrue(instance === C15t.current) }
     }
 
-    func testTrackingReadsPermissionChangesWithoutChangingConsent() throws {
+    func testTrackingReadsPermissionChangesWithoutChangingConsent() async throws {
         let core = try C15tApple.install(configuration(store: InMemoryStore()))
         let status = TrackingStatus()
         let tracking = C15tTrackingController(
@@ -76,10 +76,62 @@ final class InstallationTests: XCTestCase {
             trackingPrompt: { completion in completion(status.current) },
             trackingExpandedInterfaceAvailable: { false }
         )
-        tracking.request { XCTAssertEqual(try? $0.get().status, .denied) }
+        let denied = expectation(description: "denied authorization returned")
+        tracking.request {
+            XCTAssertEqual(try? $0.get().status, .denied)
+            denied.fulfill()
+        }
+        await fulfillment(of: [denied], timeout: 1)
         status.current = .authorized
-        tracking.request { XCTAssertEqual(try? $0.get().status, .authorized) }
+        let authorized = expectation(description: "changed authorization returned")
+        tracking.request {
+            XCTAssertEqual(try? $0.get().status, .authorized)
+            authorized.fulfill()
+        }
+        await fulfillment(of: [authorized], timeout: 1)
         XCTAssertFalse(core.isAllowed(.marketing))
+    }
+
+    func testNativeSourcePackageSharesOneVersion() {
+        XCTAssertEqual(C15tApple.version, C15tSDK.version)
+    }
+
+    func testHostedModesAcceptOnlyExactHTTPLoopbackHosts() async throws {
+        for backend in ["http://localhost:8787", "http://127.0.0.1:8787", "http://[::1]:8787", "https://consent.example.com"] {
+            for mode in [C15tAppleConfiguration.Transport.hosted(URL(string: backend)!), .selfHosted(URL(string: backend)!)] {
+                let http = try FixtureHTTP()
+                let configured = C15tAppleConfiguration(transport: mode, storage: .memory, initURL: URL(string: backend + "/custom-init"))
+                let native = try XCTUnwrap(configured.makeTransport(client: http))
+                let core = try C15tApple.install(configuration(store: InMemoryStore(), transport: native))
+                XCTAssertTrue(core.isBootstrapped)
+                await core.waitUntilIdle()
+                let requestURL = try XCTUnwrap(http.requests.first?.url)
+                XCTAssertEqual(requestURL.scheme, configured.initURL?.scheme)
+                XCTAssertEqual(requestURL.host, configured.initURL?.host)
+                XCTAssertEqual(requestURL.port, configured.initURL?.port)
+                XCTAssertEqual(requestURL.path, configured.initURL?.path)
+                C15tApple.shutdown()
+                C15t.resetForTests()
+            }
+        }
+    }
+
+    func testNonLoopbackHTTPAndLookalikesRefuseInstallationBeforeStorage() throws {
+        for backend in ["http://invalid.example", "http://localhost.evil.example", "http://localhost.", "http://127.0.0.1.evil.example", "http://127.0.0.2", "http://[::2]", "http://localhost@evil.example", "https://user:password@consent.example.com", "ftp://localhost", "/relative"] {
+            for overrideInit in [false, true] {
+                let store = CountingStore(InMemoryStore())
+                let transport = HostedTransport(
+                    baseURL: URL(string: overrideInit ? "https://consent.example.com" : backend)!,
+                    initURL: overrideInit ? URL(string: backend)! : nil
+                )
+                XCTAssertThrowsError(try C15tApple.install(configuration(store: store, transport: transport)), backend) {
+                    XCTAssertEqual($0 as? C15tAppleInstallationError, .invalidBackendURL)
+                }
+                XCTAssertNil(C15t.current, backend)
+                XCTAssertEqual(store.writes, 0, backend)
+                XCTAssertFalse(C15t.isAllowed(.marketing))
+            }
+        }
     }
 
     func testUnavailableProtectedStorageDoesNotPublishAnEngineAndCanRetry() throws {

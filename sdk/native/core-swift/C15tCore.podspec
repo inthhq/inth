@@ -3,16 +3,18 @@
 #
 #   pod "C15tCore", :path => "../native/core-swift"
 #
-# Everything here mirrors Package.swift. Two products exist there and only one belongs
-# here: C15tCoreBench is an executable for local measurement, and a pod has no way to
-# vend one.
+# This spec vends only C15tCore. Package.swift also vends the Apple platform library
+# and a benchmark executable; neither belongs in this core-only pod.
 #
 # This spec exists for an app inside this repository, whose Podfile points at the
 # directory. It is not what ships: `@c15t/react-native` compiles the kernel from its own
 # generated copy under `packages/react-native/vendor/C15tCore`, because a pod cannot point
 # `s.dependency` at a path and nothing is published here for it to name. Nothing publishes
-# this spec, so `C15T_CORE_POD_VERSION` only sets the version this local pod reports.
-core_version = ENV["C15T_CORE_POD_VERSION"] || "3.0.0-alpha.1"
+# this spec. Read the native source version so the local pod cannot report a different
+# version from its request metadata.
+core_source = File.read(File.join(__dir__, "Sources/C15tCore/Transports.swift"))
+core_version = core_source.match(/public static let version = "([^"]+)"/)&.captures&.first
+raise "C15tSDK.version is missing from Transports.swift" unless core_version
 
 Pod::Spec.new do |s|
   s.name         = "C15tCore"

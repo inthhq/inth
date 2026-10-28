@@ -20,7 +20,10 @@ consumer or device criteria.
 
 Call `C15tApple.install(C15tAppleConfiguration(...))` before starting optional SDKs
 or the RN host. Choose `.hosted(projectURL)` or `.selfHosted(backendURL)`.
-Both require an absolute HTTPS URL. `initURL` overrides init only; consent saves
+Both require an absolute HTTPS URL in production. Development HTTP is accepted
+only for `localhost`, `127.0.0.1` and `[::1]`, matching the Expo plugin. Lookalike
+hosts and other HTTP addresses are refused before installation. `initURL` follows
+the same rule and overrides init only; consent saves
 and identity requests stay on the backend URL. Keychain is the default storage.
 The platform module selects the existing native storage and transport types.
 
@@ -40,6 +43,9 @@ production startup recipe.
 `C15tApple.install(CoreConfig)` supports custom native services and validates their
 storage in the same way. The host owns a custom store's protection and its retry
 policy. `.memory`, `.file` and `.disabled` are explicit development options.
+File writes are atomic on every platform. iOS-family targets also request complete
+file protection; macOS and Mac Catalyst omit that unsupported Data Protection
+option. File storage on macOS is not a protected-storage substitute for Keychain.
 Offline mode retains local choices and undelivered saves but cannot resolve a
 missing policy or deliver remote records. It is not recommended for production
 environments as the only launch transport.
@@ -51,6 +57,12 @@ installed. Keep optional SDKs off and retry installation after protected data
 becomes available. Do not replace Keychain with memory or plaintext storage after
 a failure. Invalid hosted URLs and attachment of an unbootstrapped host engine
 also fail explicitly.
+
+The SwiftUI example retries on protected-data availability and activation. The
+UIKit delegate retries in `applicationProtectedDataDidBecomeAvailable` and
+`applicationDidBecomeActive`. A retry clears the recorded storage error only
+after installation succeeds. Reevaluate native gates before starting optional
+SDKs after recovery. These are compiled examples, not proof of an OS unlock flow.
 
 If the stored subject is absent or unreadable while an envelope or queue survives,
 the installer removes those orphaned items before hydration. It refuses to install
@@ -70,6 +82,25 @@ for an already bootstrapped engine. It refuses a different installed engine.
 No adapter creates a second authoritative consent engine.
 Startup returns `false` and logs configuration or installation failures. The
 optional configuration and transport factories return `nil` for refused settings.
+
+In a CocoaPods RN application, host Swift code must `import C15tReactNative` and
+call that module's public `C15tApple.install`, `C15tApple.tracking`, `C15t.current`
+and `C15tReactNativeBootstrap.install` APIs. The pod compiles the generated core,
+Apple services and bridge into that same module. Do not also link a `C15tCore`
+pod or a separate SwiftPM `C15tCore`/`C15tApple` product into that process. A second
+compiled copy has its own installation singleton and can compete for the same
+Keychain service. Changing the service does not make two consent authorities safe.
+Set the auto-bootstrap opt-out in Info.plist before native host installation.
+`native/core-swift/Examples/AppleInstallation/CocoaPodsHost.swift` shows the
+module imports and attachment ordering for this path.
+
+SwiftPM source consumers import `C15tCore`, `C15tApple` and
+`C15tReactNativeBridge` from the same resolved source package. The RN SwiftPM
+manifest currently supports a local source checkout only, through its default
+path or `C15T_CORE_PATH`. It explicitly refuses `C15T_CORE_VERSION` and
+`C15T_CORE_URL` until a remote native package containing both products exists.
+The npm tarball does not include that workspace SwiftPM manifest. Remote native
+distribution and clean SwiftPM consumers remain release gates.
 
 The Apple module owns foreground and reachability subscriptions. Foreground hands
 queue replay and policy refresh to the core. A newly regained network requests
@@ -91,7 +122,11 @@ Core requests report `x-c15t-version: swift-><C15tSDK.version>`. Platform-create
 hosted transports also report `x-c15t-platform: apple-><C15tApple.version>` on
 init, save and identity requests. These native source versions are independent
 of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of
-CMP registration or certification.
+CMP registration or certification. `C15tSDK.version` in `Transports.swift` is the
+source of truth for the Swift native package. `C15tApple.version` aliases it and
+the local `C15tCore.podspec` reads it directly. The pod no longer accepts an
+independent `C15T_CORE_POD_VERSION`. Tests compare the native module versions;
+request tests verify both header values.
 
 The CocoaPods RN package compiles generated copies of both native modules into
 its existing pod target. SwiftPM keeps `C15tCore`, `C15tApple` and the RN bridge as
@@ -105,5 +140,9 @@ foreground teardown and reattachment, and request headers. Bridge tests cover
 RN attachment and the existing ATT outcomes. None proves iOS protected-data
 behavior on a locked device, reinstall semantics, minimum-OS operation,
 reachability delivery by the OS, an Apple permission sheet, or performance.
+Simulator tests exercise the iOS file-write branch and cold hydration. The
+simulator filesystem does not expose file protection attributes; that assertion
+is a separate physical-device check and is skipped on simulators. Successful
+simulator file I/O does not verify Data Protection or locked-device behavior.
 See `docs/internal/mobile-support.md` for remaining first-release gates. Full TCF
 2.4 and Additional Consent v2 remain required.

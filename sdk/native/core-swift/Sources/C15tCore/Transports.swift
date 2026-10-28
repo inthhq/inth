@@ -9,9 +9,8 @@ import FoundationNetworking
 public enum C15tSDK {
     /// Version of this native core.
     ///
-    /// Kept as a constant rather than generated: this package is not published by
-    /// the monorepo's release tooling, and a stale generated version on a request
-    /// is worse than an honest hand-maintained one.
+    /// Source of truth for the native Swift package, including the Apple platform
+    /// module and local CocoaPods spec. Independent of the RN npm version.
     public static let version = "3.0.0-alpha.1"
 
     /// The `x-c15t-version` header name. Telemetry only: it lets the backend

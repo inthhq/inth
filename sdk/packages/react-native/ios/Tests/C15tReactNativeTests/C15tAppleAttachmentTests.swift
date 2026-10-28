@@ -11,6 +11,18 @@ final class C15tAppleAttachmentTests: XCTestCase {
         super.tearDown()
     }
 
+    func testInfoPlistLoopbackHTTPInstallsBeforeJavaScript() {
+        C15tApple.shutdown()
+        C15t.resetForTests()
+        XCTAssertTrue(C15tReactNativeBootstrap.start(infoPlist: [
+            "com.c15t.backend.mode": "self-hosted",
+            "com.c15t.backend.url": "http://localhost:8787",
+            "com.c15t.storage.mode": "memory"
+        ]))
+        XCTAssertTrue(C15t.current?.isBootstrapped == true)
+        XCTAssertFalse(C15t.isAllowed(.marketing))
+    }
+
     func testInvalidBackendURLLogsTheStartupRefusal() throws {
         C15tApple.shutdown()
         C15t.resetForTests()

@@ -94,6 +94,8 @@ public final class InMemoryStore: ConsentStore, @unchecked Sendable {
 ///
 /// Writes are atomic, so a process killed mid-write cannot leave a half-encoded
 /// envelope that would read as an unparseable policy and deny everything.
+/// iOS-family stores also use complete file protection. macOS has no equivalent
+/// Data Protection write option; hosts should use Keychain for protected consent.
 public final class FileStore: ConsentStore, @unchecked Sendable {
     public enum StoreError: Error {
         case directoryNotWritable(URL)
@@ -149,10 +151,11 @@ public final class FileStore: ConsentStore, @unchecked Sendable {
                     at: directory,
                     withIntermediateDirectories: true
                 )
-                try (data as NSData).write(
-                    to: target,
-                    options: [.atomic, .completeFileProtection]
-                )
+                var options: NSData.WritingOptions = .atomic
+                #if (os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)) && !targetEnvironment(macCatalyst)
+                options.insert(.completeFileProtection)
+                #endif
+                try (data as NSData).write(to: target, options: options)
                 return true
             } catch {
                 return false

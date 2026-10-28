@@ -345,7 +345,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// back.
     ///
     /// - Returns: The config, or `nil` when storage or backend configuration is refused,
-    ///   such as a Keychain on a platform without one or a non-HTTPS backend.
+    ///   such as a Keychain on a platform without one or HTTP outside exact loopback hosts.
     ///   Starting with an unencrypted store because the intended one is unavailable
     ///   is not a fallback this makes quietly.
     public func makeCoreConfiguration(fileStoreDirectory: URL? = nil) -> CoreConfig? {
