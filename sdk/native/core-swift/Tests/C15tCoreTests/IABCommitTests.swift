@@ -117,6 +117,7 @@ final class IABCommitTests: XCTestCase {
         let cold = ConsentCore()
         let http = StubHTTP()
         http.initResponse = HTTPResponse(status: 503, body: Data("{}".utf8))
+        http.setSavesFail(true)
         cold.bootstrap(CoreConfig(store: store, transport: Fixture.transport(http),
             iab: vector.cases[0].configuration, iabListMaxAgeMs: 1000, now: clock.reading,
             initRetry: .disabled, flushPendingOnBootstrap: false))
@@ -129,10 +130,15 @@ final class IABCommitTests: XCTestCase {
         XCTAssertNil(cold.iabConsent())
         XCTAssertNil(cold.openIABDraft())
         XCTAssertFalse(cold.isAllowed(.marketing))
+        XCTAssertFalse(cold.snapshot().effectivePermissions.marketing)
+        XCTAssertEqual(cold.decision(for: .marketing), .denied)
         XCTAssertEqual(cold.save(.all).error?.code, "iab-list-stale")
         cold.refresh()
         await cold.waitUntilIdle()
         XCTAssertEqual(cold.pendingSaveCount(), 0)
+        XCTAssertEqual(cold.save(.necessary).status, .committed)
+        await cold.waitUntilIdle()
+        XCTAssertEqual(cold.pendingSaveCount(), 1)
         let missing = ConsentCore()
         missing.bootstrap(CoreConfig(iab: vector.cases[0].configuration, now: clock.reading))
         XCTAssertEqual(missing.iabStatus().availability, .missing)

@@ -334,7 +334,18 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// The current state. Synchronous, and never touches disk or the network.
     public func snapshot() -> ConsentSnapshot {
-        lock.withLock { currentSnapshot }
+        lock.withLock { readableSnapshotLocked() }
+    }
+
+    private func readableSnapshotLocked() -> ConsentSnapshot {
+        guard resolvedPolicy?.policy.model == .iab else { return currentSnapshot }
+        if listIsUsableLocked(), let saved = committedIAB, let config, let resolvedPolicy,
+            saved.isCurrent(now: config.now(), maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
+            return currentSnapshot
+        }
+        var draft = ConsentSnapshot.Draft(current: currentSnapshot)
+        draft.effectivePermissions = .necessaryOnly
+        return draft.build(revision: currentSnapshot.revision)
     }
 
     /// The vendor list this device last was served, for a host app's own Swift code.
@@ -355,7 +366,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// category, whichever way the eventual default lands.
     public func isAllowed(_ category: ConsentCategory) -> Bool {
         lock.withLock {
-            let state = currentSnapshot
+            let state = readableSnapshotLocked()
             if state.policyPending, category != .necessary {
                 return false
             }
@@ -395,7 +406,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// - Parameter category: The category to answer for, `necessary` included.
     /// - Returns: `.granted`, `.denied`, or `.pending` for the current snapshot.
     public func decision(for category: ConsentCategory) -> ConsentDecision {
-        lock.withLock { ConsentDecision(snapshot: currentSnapshot, category: category) }
+        lock.withLock { ConsentDecision(snapshot: readableSnapshotLocked(), category: category) }
     }
 
 
@@ -424,7 +435,7 @@ public final class ConsentCore: @unchecked Sendable {
         }
         lock.withLock { gateSubscriptions[key] = subscription }
         let allowed = lock.withLock {
-            currentSnapshot.effectivePermissions.value(for: category)
+            readableSnapshotLocked().effectivePermissions.value(for: category)
         }
         onChange(allowed)
         return registration
@@ -475,7 +486,7 @@ public final class ConsentCore: @unchecked Sendable {
         }
         lock.withLock { gateSubscriptions[key] = subscription }
         let current = lock.withLock {
-            ConsentDecision(snapshot: currentSnapshot, category: category)
+            ConsentDecision(snapshot: readableSnapshotLocked(), category: category)
         }
         subscription.deliverInitial(current)
         return registration
@@ -586,7 +597,7 @@ public final class ConsentCore: @unchecked Sendable {
                     code: "invalid-action-time",
                     message: "The clock cannot represent a current, distinct IAB action time."))
             }
-            if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil) {
+            if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil && listIsUsableLocked()) {
                 guard let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else {
                     return .failure(
                         CoreErrorInfo(
@@ -1682,7 +1693,7 @@ public final class ConsentCore: @unchecked Sendable {
         }
         cleanup?.discardGrants()
         if persist { persistEnvelope() }
-        let state = lock.withLock { currentSnapshot }
+        let state = snapshot()
         mutation.release()
         events.emit(.snapshot(revision: state.revision))
         observers.notify(state)

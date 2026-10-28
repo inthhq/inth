@@ -414,7 +414,14 @@ class C15tKernel(
 	 * the same instance until something changes, so a caller can compare by
 	 * identity to decide whether to do work.
 	 */
-	fun snapshot(): ConsentSnapshot = state.get()
+	fun snapshot(): ConsentSnapshot = synchronized(mutationLock) { readableSnapshot(state.get()) }
+
+	private fun readableSnapshot(snapshot: ConsentSnapshot): ConsentSnapshot {
+		if (evaluationPolicy?.model != ConsentModel.IAB) return snapshot
+		val saved = committedIab
+		return if (listIsUsable() && saved != null && saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0))
+			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
+	}
 
 	/**
 	 * The vendor list this device is reading its disclosure out of, or `null` while none has been
@@ -481,10 +488,7 @@ class C15tKernel(
 	 * `necessary` is always true. Every optional category is false while the state
 	 * is not ready or the policy is still pending.
 	 */
-	fun isAllowed(category: ConsentCategory): Boolean = synchronized(mutationLock) {
-		if (category != ConsentCategory.NECESSARY && evaluationPolicy?.model == ConsentModel.IAB &&
-			iabConfiguration != null && !listIsUsable()) false else state.get().isAllowed(category)
-	}
+	fun isAllowed(category: ConsentCategory): Boolean = snapshot().isAllowed(category)
 
 	/**
 	 * Call [onChange] now with the current permission for [category], then again on
@@ -508,7 +512,7 @@ class C15tKernel(
 	): Subscription {
 		val observer: (ConsentSnapshot) -> Unit = { onChange(it.isAllowed(category)) }
 		strongObservers += observer
-		onChange(state.get().isAllowed(category))
+		onChange(isAllowed(category))
 		return Subscription { strongObservers.remove(observer) }
 	}
 
@@ -561,7 +565,7 @@ class C15tKernel(
 		// a change would leave an SDK switched off with nothing left listening, so the
 		// most this ordering can cost is one redundant delivery.
 		strongObservers += observer
-		val current = state.get().decision(category)
+		val current = decision(category)
 		if (lastDelivered.compareAndSet(null, current)) {
 			onDecision(current)
 		}
@@ -576,7 +580,7 @@ class C15tKernel(
 	 * either. Ad SDKs call this from the main thread inside `Application.onCreate`,
 	 * and blocking there is an ANR the store files against the host app.
 	 */
-	fun decision(category: ConsentCategory): ConsentDecision = state.get().decision(category)
+	fun decision(category: ConsentCategory): ConsentDecision = snapshot().decision(category)
 
 	/**
 	 * Whether a decision can be read as an answer: [bootstrap] hydrated a state and
@@ -673,7 +677,7 @@ class C15tKernel(
 					)
 			}
 			if (policy?.model == ConsentModel.IAB &&
-				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null)) {
+				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null && listIsUsable())) {
 				val configuration = iabConfiguration
 				val gvl = current.iab?.gvl
 				if (configuration == null || gvl == null)
@@ -1969,7 +1973,8 @@ class C15tKernel(
 		gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true)
 		)
 
-	private fun notifySnapshot(snapshot: ConsentSnapshot) {
+	private fun notifySnapshot(candidate: ConsentSnapshot) {
+		val snapshot = synchronized(mutationLock) { readableSnapshot(candidate) }
 		for (reference in snapshotObservers) {
 			reference.get()?.invoke(snapshot) ?: snapshotObservers.remove(reference)
 		}

@@ -75,6 +75,7 @@ extension GlobalVendorList {
             specialFeatures: specialFeatures,
             stacks: stacks,
             dataCategories: dataCategories,
+            standardTexts: standardTexts,
             vendors: keptVendors
         )
     }

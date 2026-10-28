@@ -217,7 +217,8 @@ It distinguishes unavailable CMP configuration, missing list, fresh network
 list, cached startup, offline cached list and stale list. This read does not
 serialize the GVL. Offline cached consent remains valid only while both the
 list and choice are within their age limits. Stale lists deny native gates,
-refuse drafts and saves, and require a successful list refresh. Refresh on
+refuse drafts and grants, and require a successful list refresh. Reject all can
+still commit a category-only withdrawal without encoding a stale disclosure. Refresh on
 foreground and connectivity changes. Reopen preferences after refreshing.
 
 This release retains a choice only when CMP and publisher configuration,
