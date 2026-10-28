@@ -59,7 +59,8 @@ androidMavenRepository: {
 
 These are environment variable names, never credential values. Supply both
 values through the supported secure build environment. Gradle reads them at
-execution time and fails if either is absent. The plugin never reads their
+configuration time and fails if either is absent, including during IDE sync or
+tasks such as `clean`. The plugin never reads their
 values into app configuration, generated Gradle files or `extra.c15t`.
 The URL must use HTTPS without embedded credentials, query parameters or a
 fragment. An absolute `file:///...` URL is accepted only for local staging,

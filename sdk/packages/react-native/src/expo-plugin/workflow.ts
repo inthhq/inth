@@ -44,7 +44,10 @@ const isNativeBuildInvocation = function isNativeBuildInvocation(
 	argv: readonly string[]
 ): boolean {
 	const command = argv[2]?.trim();
+	const entry = argv[1]?.replaceAll('\\', '/');
 	return (
+		(entry !== undefined &&
+			/(?:^|\/)(?:eas(?:\.cmd)?|eas-cli\/bin\/run)$/u.test(entry)) ||
 		(command !== undefined &&
 			(NATIVE_COMMAND_TOKENS.has(command) || command.startsWith('run:'))) ||
 		argv.some((token) => token.trim().startsWith('--dev-client'))

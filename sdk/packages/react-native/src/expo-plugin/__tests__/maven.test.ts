@@ -63,7 +63,7 @@ describe('Android Maven repository mod', () => {
 		).rejects.toThrow(/Groovy/u);
 	});
 
-	it('writes exclusive routing and reads credential names only at Gradle execution', async () => {
+	it('writes exclusive routing and reads credential names during Gradle configuration', async () => {
 		const output = await apply();
 		expect(output).toContain('exclusiveContent');
 		expect(output).toContain("filter { includeGroup('com.c15t') }");
