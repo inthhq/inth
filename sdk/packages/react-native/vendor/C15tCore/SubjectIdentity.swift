@@ -33,6 +33,8 @@ struct SubjectIdentityRead: Sendable, Equatable {
     /// the stored envelope as absent too, because a decision attributed to an id nobody
     /// can query is not evidence.
     let unusable: UnusableSubjectId?
+    /// Why a missing or undecodable identity had to be minted.
+    var replacementReason: String? = nil
 }
 
 /// The c15t subject identifier.
@@ -83,8 +85,12 @@ public struct SubjectIdentity: Sendable, Codable, Equatable, Hashable {
         from store: any ConsentStore,
         key: String = StorageKey.subject
     ) -> SubjectIdentityRead {
-        guard let stored = store.decode(StoredSubject.self, for: key) else {
-            return SubjectIdentityRead(identity: mint(into: store, key: key), unusable: nil)
+        let raw = store.data(for: key)
+        guard let raw, let stored = try? C15tJSON.decode(StoredSubject.self, from: raw) else {
+            return SubjectIdentityRead(
+                identity: mint(into: store, key: key), unusable: nil,
+                replacementReason: raw == nil ? "missing" : "corrupt"
+            )
         }
         guard SubjectIdentity.isValid(stored.id) else {
             return SubjectIdentityRead(

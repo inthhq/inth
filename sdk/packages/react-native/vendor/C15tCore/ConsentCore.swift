@@ -483,6 +483,7 @@ public final class ConsentCore: @unchecked Sendable {
             /// The acknowledgement this action records, installed with `next`.
             let acknowledgement: NoticeDismissal?
             let iabConsent: IABCommittedConsent?
+            let atomicIAB: Bool
         }
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
@@ -514,16 +515,15 @@ public final class ConsentCore: @unchecked Sendable {
             }
 
             var nextIAB: IABCommittedConsent?
-            if resolved.policy.model == .iab {
-                if let previous = lastIABActionAt {
-                    guard previous < Int64.max else {
-                        return .failure(
-                            CoreErrorInfo(
-                                code: "invalid-action-time",
-                                message: "The previous action time cannot be advanced."))
-                    }
-                    actionAt = max(actionAt, previous + 1)
+            if resolved.policy.model == .iab, let previous = lastIABActionAt {
+                guard previous < Int64.max else {
+                    return .failure(CoreErrorInfo(
+                        code: "invalid-action-time",
+                        message: "The previous action time cannot be advanced."))
                 }
+                actionAt = max(actionAt, previous + 1)
+            }
+            if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil) {
                 guard let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else {
                     return .failure(
                         CoreErrorInfo(
@@ -610,7 +610,8 @@ public final class ConsentCore: @unchecked Sendable {
             let baseRevision = currentSnapshot.revision
             let next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = storedChoice
-                draft.effectivePermissions = evaluation.permissions
+                draft.effectivePermissions = resolved.policy.model == .iab && nextIAB == nil
+                    ? .necessaryOnly : evaluation.permissions
                 draft.restrictions = evaluation.restrictions
                 draft.promptRequirement = evaluation.promptRequirement
                 draft.nextDeadline = evaluation.nextDeadline
@@ -635,7 +636,7 @@ public final class ConsentCore: @unchecked Sendable {
                 ),
                 choice: choice,
                 confirmed: ConfirmedCoverage(categories: receipts, actionAt: actionAt),
-                consents: evaluation.permissions,
+                consents: next.effectivePermissions,
                 overrides: wireOverrides,
                 user: user,
                 model: nextIAB != nil ? .iab : resolved.policy.model.runtimeModel,
@@ -673,7 +674,8 @@ public final class ConsentCore: @unchecked Sendable {
                         confirmed: receipts
                     ),
                         acknowledgement: acknowledgement,
-                        iabConsent: nextIAB
+                        iabConsent: nextIAB,
+                        atomicIAB: resolved.policy.model == .iab
                 ))
             } catch {
                 return .failure(CoreErrorInfo(
@@ -703,13 +705,14 @@ public final class ConsentCore: @unchecked Sendable {
             // remembers is how duplicates happen and promising something nothing
             // remembers is how decisions go missing.
             let atomicID: String? = lock.withLock {
-                guard plan.iabConsent != nil, currentSnapshot.revision == plan.baseRevision,
+                guard plan.atomicIAB, currentSnapshot.revision == plan.baseRevision,
                     let config
                 else { return nil }
                 let envelope = StoredEnvelope(
                     snapshot: plan.next,
                     noticeDismissal: plan.acknowledgement ?? noticeDismissal,
-                    policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent)
+                    policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent,
+                    lastIABActionAt: actionAt)
                 guard
                     let id = plan.queue.commit(
                         envelope, body: plan.body,
@@ -724,7 +727,7 @@ public final class ConsentCore: @unchecked Sendable {
                 return id
             }
             let queued =
-                plan.iabConsent != nil
+                plan.atomicIAB
                 ? atomicID
                 : plan.queue.enqueue(
                     body: plan.body, subjectId: plan.payload.subjectId,
@@ -751,7 +754,7 @@ public final class ConsentCore: @unchecked Sendable {
             // withdrawn rather than replayed over it, and the caller is told the
             // action did not take.
             let applied = lock.withLock { () -> Bool in
-                if plan.iabConsent != nil { return true }
+                if plan.atomicIAB { return true }
                 guard currentSnapshot.revision == plan.baseRevision else { return false }
                 currentSnapshot = plan.next
                 if let acknowledgement = plan.acknowledgement {
@@ -832,7 +835,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// frozen bytes: `INPUT_VALIDATION_FAILED` on the first try is
     /// `INPUT_VALIDATION_FAILED` on the tenth.
     ///
-    /// A permanently refused body is dropped rather than kept. It is not a lost
+    /// Frozen withdrawals remain queued even after a refusal. Other permanently
+    /// refused bodies are dropped rather than kept. It is not a lost
     /// decision: the subject's choice lives in the stored envelope either way, and
     /// an obligation no producer will ever accept is not worth twenty slots on
     /// every future launch. Dropping one is only survivable if it is announced, so
@@ -844,7 +848,8 @@ public final class ConsentCore: @unchecked Sendable {
         entryID: String,
         subjectId: String
     ) {
-        guard error.isPermanentlyRejected else {
+        let protectedWithdrawal = queue.entries().first { $0.id == entryID }?.isProtectedWithdrawal == true
+        guard error.isPermanentlyRejected && !protectedWithdrawal else {
             // Leave it queued with one attempt spent. The decision is already local
             // and durable; the backend can wait.
             let outcome = queue.recordFailedAttempt(id: entryID)
@@ -1167,6 +1172,8 @@ public final class ConsentCore: @unchecked Sendable {
     public func hydrate() -> ConsentSnapshot {
         guard let config = lock.withLock({ self.config }) else { return snapshot() }
 
+        let hadRecords = config.store.data(for: StorageKey.snapshot) != nil
+            || config.store.data(for: StorageKey.pendingSaves) != nil
         // Identity first, on disk, outside the lock.
         let identityRead = SubjectIdentity.loadOrCreate(from: config.store)
         let identity = identityRead.identity
@@ -1183,7 +1190,22 @@ public final class ConsentCore: @unchecked Sendable {
             announceUnusableSubjectId(unusable)
         }
         let envelopeData = config.store.data(for: StorageKey.snapshot)
-        let envelope = envelopeData.flatMap(StoredEnvelope.decode)
+        var envelope = envelopeData.flatMap(StoredEnvelope.decode)
+        let replacementReason = identityRead.replacementReason
+        if replacementReason != nil && hadRecords
+            || envelope.map({ $0.snapshot.subject?.id != identity.id }) == true {
+            config.store.set(nil, for: StorageKey.snapshot)
+            config.store.set(nil, for: StorageKey.pendingSaves)
+            envelope = nil
+            let reason = replacementReason ?? "mismatch"
+            let announce = lock.withLock { identityRecoveryAnnouncements.insert(reason).inserted }
+            if announce {
+                events.emit(.error(CoreErrorInfo(
+                    code: "subject-id-\(reason)",
+                    message: "c15t: the stored subject identity is \(reason). Stored consent and queued saves were discarded; the app asks for consent again."
+                )))
+            }
+        }
 
         let restored = lock.withLock { () -> ConsentSnapshot in
             self.identity = identity
@@ -1333,6 +1355,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// ``hydrate()`` is public and a binding layer can call it again after a store
     /// swap, so the flag lives here rather than relying on bootstrap's once-only guard.
     private var unusableSubjectIdAnnounced = false
+    private var identityRecoveryAnnouncements: Set<String> = []
 
     /// Say once per launch why a returning user is being asked for consent again.
     ///
@@ -1483,7 +1506,6 @@ public final class ConsentCore: @unchecked Sendable {
     }
 
     private func validateIABLocked() {
-        guard config?.iab != nil || committedIAB != nil else { return }
         guard resolvedPolicy?.policy.model == .iab || committedIAB != nil else { return }
         let valid: Bool
         if let saved = committedIAB, let c = config?.iab, saved.configuration == c,
@@ -1507,7 +1529,7 @@ public final class ConsentCore: @unchecked Sendable {
             var draft = ConsentSnapshot.Draft(current: currentSnapshot)
             draft.explicitChoice = nil
             currentSnapshot = draft.build(revision: currentSnapshot.revision)
-            queue?.clear()
+            queue?.discardGrants()
         }
     }
 
@@ -1515,7 +1537,11 @@ public final class ConsentCore: @unchecked Sendable {
     /// cannot restore an earlier grant on the next launch.
     private func transitionIAB(user nextUser: KernelUser?, reset: Bool) -> Bool? {
         lock.withLock {
-            guard let config, let queue, config.iab != nil || committedIAB != nil else { return nil }
+            guard let config, let queue,
+                config.iab != nil || committedIAB != nil || resolvedPolicy?.policy.model == .iab
+                    || queue.entries().contains(where: { $0.isProtectedWithdrawal })
+            else { return nil }
+            if !reset && user?.externalId == nextUser?.externalId { return nil }
             var next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = nil
                 draft.effectivePermissions = .necessaryOnly
@@ -1532,7 +1558,8 @@ public final class ConsentCore: @unchecked Sendable {
                     resolved, choice: nil, noticeDismissal: nil,
                     gpcActive: gpcSignal.active, now: config.now(), choiceScope: choiceScopeLocked(resolved))
                 next = next.byApplying { draft in
-                    draft.effectivePermissions = e.permissions; draft.promptRequirement = e.promptRequirement
+                    draft.effectivePermissions = resolved.policy.model == .iab ? .necessaryOnly : e.permissions
+                    draft.promptRequirement = e.promptRequirement
                     draft.restrictions = e.restrictions; draft.nextDeadline = e.nextDeadline
                     draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
                 }
@@ -1564,7 +1591,8 @@ public final class ConsentCore: @unchecked Sendable {
             choiceScope: choiceScopeLocked(resolved)
         )
         var draft = ConsentSnapshot.Draft(current: currentSnapshot)
-            draft.effectivePermissions = evaluation.permissions
+            draft.effectivePermissions = resolved.policy.model == .iab && committedIAB == nil
+                ? .necessaryOnly : evaluation.permissions
             draft.restrictions = evaluation.restrictions
             draft.promptRequirement = evaluation.promptRequirement
             draft.nextDeadline = evaluation.nextDeadline
@@ -1827,7 +1855,7 @@ public final class ConsentCore: @unchecked Sendable {
             // back to the full optional set the pending evaluator uses.
             draft.consentCategories = decidedCategories(self.resolvedPolicy)
             currentSnapshot = draft.build(revision: currentSnapshot.revision + 1)
-            if config?.iab != nil || committedIAB != nil { reevaluateLocked(now: nowMs, bumpRevision: false) }
+            if resolvedPolicy?.policy.model == .iab || config?.iab != nil || committedIAB != nil { reevaluateLocked(now: nowMs, bumpRevision: false) }
         }
 
         publish(persist: true)
@@ -2032,6 +2060,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// still open.
     private func canDeliverIAB(_ body: Data) -> Bool {
         let wire = C15tJSON.parse(body)
+        if ConsentDelivery.isWithdrawal(body) { return true }
+        guard wire?["subjectId"]?.stringValue == lock.withLock({ identity?.id }) else { return false }
         let tcString = wire?["tcString"]?.stringValue
         let requiresIAB = wire?["model"]?.stringValue == "iab" || lock.withLock { config?.iab != nil && resolvedPolicy?.policy.model == .iab }
         if tcString == nil && !requiresIAB { return true }

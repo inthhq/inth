@@ -168,7 +168,7 @@ enum IABAuthority {
                 groups.append(restriction)
             }
         }
-        let vendorOrder = vendors.sorted()
+        let vendorOrder = gvl.vendors.values.map(\.id).sorted()
         model.publisherRestrictions = groups.map { restriction in
             var runs: [TcIDRun] = []
             for id in restriction.vendorIds.sorted() {
