@@ -93,7 +93,7 @@ describe('ConsentBanner', () => {
 		tree.unmount();
 	});
 
-	test('accept all and reject all each reach the core once', () => {
+	test('accept all and reject all each reach the core once', async () => {
 		const tree = mountSurface(<ConsentBanner />);
 
 		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
@@ -102,6 +102,7 @@ describe('ConsentBanner', () => {
 		expect(JSON.parse(tree.fake.commitIntents[0] as string)).toEqual({
 			action: 'all',
 		});
+		await flushPromises();
 
 		tap(requireRole(tree.container(), 'button', 'Alle ablehnen'));
 
@@ -109,7 +110,52 @@ describe('ConsentBanner', () => {
 		expect(JSON.parse(tree.fake.commitIntents[1] as string)).toEqual({
 			action: 'necessary',
 		});
+		await flushPromises();
 
+		tree.unmount();
+	});
+
+	test.each(['Alle akzeptieren', 'Alle ablehnen'])(
+		'%s reports a resolved refusal and leaves the choice available',
+		async (action) => {
+			const tree = mountSurface(<ConsentBanner />);
+			tree.fake.failCommitWith(
+				JSON.stringify({
+					confirmed: [],
+					ok: false,
+					queued: false,
+					reason: 'queue-write-failed',
+					revision: null,
+					subjectId: 'sub-1',
+				})
+			);
+			tap(requireRole(tree.container(), 'button', action));
+			tap(requireRole(tree.container(), 'button', action));
+			await flushPromises();
+
+			expect(tree.fake.commitIntents).toHaveLength(1);
+			expect(tree.text()).toContain('Deine Privatsphaere');
+			expect(requireRole(tree.container(), 'alert').textContent).toBe(
+				'Your choices could not be saved. Try again.'
+			);
+			expect(
+				requireRole(tree.container(), 'button', action).getAttribute(
+					'aria-disabled'
+				)
+			).not.toBe('true');
+			tree.unmount();
+		}
+	);
+
+	test('reports unreadable commit replies without an unhandled rejection', async () => {
+		const tree = mountSurface(<ConsentBanner />);
+		tree.fake.failCommitWith('not a commit result');
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		await flushPromises();
+
+		expect(requireRole(tree.container(), 'alert').textContent).toBe(
+			'Your choices could not be saved. Try again.'
+		);
 		tree.unmount();
 	});
 

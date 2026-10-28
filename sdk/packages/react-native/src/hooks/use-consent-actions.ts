@@ -28,8 +28,8 @@ export interface ConsentActions {
 	 * renewing a consent the subject never looked at.
 	 *
 	 * @param consents - Per-category decision.
-	 * @returns What the native core recorded, including `queued` when it was
-	 *   persisted for replay rather than delivered.
+	 * @returns The local commit outcome. Check `ok` before treating the action as
+	 *   saved. `ok: true, queued: true` is durable success awaiting delivery.
 	 */
 	save: (
 		consents?: Readonly<Partial<Record<OptionalConsentCategory, boolean>>>
@@ -37,13 +37,13 @@ export interface ConsentActions {
 	/**
 	 * Grant every category in the policy scope.
 	 *
-	 * @returns What the native core recorded.
+	 * @returns The local commit outcome, including `ok: false` for a refused save.
 	 */
 	acceptAll: () => Promise<CommitResult>;
 	/**
 	 * Grant necessary only.
 	 *
-	 * @returns What the native core recorded.
+	 * @returns The local commit outcome, including `ok: false` for a refused save.
 	 */
 	rejectAll: () => Promise<CommitResult>;
 	/**

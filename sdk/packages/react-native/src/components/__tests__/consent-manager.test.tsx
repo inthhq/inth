@@ -41,6 +41,60 @@ const checked = function checked(
 	);
 };
 
+describe.each([
+	['dialog', ConsentDialog],
+	['preferences', ConsentPreferences],
+])('%s commit outcomes', (_name, Surface) => {
+	test.each(['Speichern', 'Alle akzeptieren', 'Alle ablehnen'])(
+		'%s preserves drafts on a resolved rejection and permits a durable offline retry',
+		async (action) => {
+			const onRequestClose = vi.fn();
+			const tree = mountSurface(
+				<Surface
+					onRequestClose={onRequestClose}
+					open
+				/>
+			);
+			tree.fake.failCommitWith(
+				JSON.stringify({
+					confirmed: [],
+					ok: false,
+					queued: false,
+					reason: 'queue-write-failed',
+					revision: null,
+					subjectId: 'sub-1',
+				})
+			);
+			tap(requireRole(tree.container(), 'switch', 'Werbung'));
+			tap(requireRole(tree.container(), 'button', action));
+			await flushPromises();
+
+			expect(onRequestClose).not.toHaveBeenCalled();
+			expect(checked(tree, 'Werbung')).toBe('true');
+			expect(requireRole(tree.container(), 'alert').textContent).toBe(
+				'Your choices could not be saved. Try again.'
+			);
+
+			tree.fake.failCommitWith(
+				JSON.stringify({
+					confirmed: ['marketing'],
+					delivered: false,
+					ok: true,
+					queued: true,
+					revision: 1,
+					subjectId: 'sub-1',
+				})
+			);
+			tap(requireRole(tree.container(), 'button', action));
+			await flushPromises();
+
+			expect(onRequestClose).toHaveBeenCalledTimes(1);
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+			tree.unmount();
+		}
+	);
+});
+
 /** Open the built-in manager over a given snapshot. */
 const mountDialog = function mountDialog(
 	snapshot = translatedSnapshot(),

@@ -36,10 +36,10 @@ export type CommitIntent =
 	  };
 
 /**
- * Why a commit did not reach the backend.
+ * Why native refused a local commit.
  *
- * `queued` is not a failure: the payload is persisted and replayed, so the
- * snapshot is already correct offline.
+ * Pending delivery is not a refusal. A durable local success carries
+ * `ok: true, queued: true` and can be used offline.
  *
  * `not-bootstrapped` is the native core refusing because no configuration was
  * ever installed, which is a host wiring bug rather than a consent outcome.
@@ -50,7 +50,10 @@ export type CommitFailureReason =
 	| 'invalid-intent'
 	| 'no-subject'
 	| 'not-bootstrapped'
-	| 'queued';
+	| 'policy-pending'
+	| 'encode-failed'
+	| 'queue-write-failed'
+	| 'concurrent-change';
 
 /**
  * Result of `commit(intent)`.
@@ -72,6 +75,8 @@ export interface CommitResult {
 	 * Consent is applied locally either way.
 	 */
 	readonly queued: boolean;
+	/** Whether native observed backend acceptance before returning. */
+	readonly delivered?: boolean;
 	/** Present only when `ok` is `false`. */
 	readonly reason?: CommitFailureReason;
 }

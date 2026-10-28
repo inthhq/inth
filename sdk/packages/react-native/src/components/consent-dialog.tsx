@@ -103,6 +103,7 @@ const ConsentDialogContent = ({
 	const selection = useCategorySelection(rows);
 	const { parts, theme } = useConsentSurfaceFrame();
 	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
 
 	const save = async (): Promise<void> => {
 		if (busy) {
@@ -110,15 +111,16 @@ const ConsentDialogContent = ({
 		}
 
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await actions.save(selection.commitSelection());
-			written = true;
+			written = (await actions.save(selection.commitSelection())).ok;
+			setSaveFailed(!written);
 		} catch {
-			// The core holds the failure on the snapshot and the subject can press
-			// save again, so the dialog stays open with the switches where they are.
+			setSaveFailed(true);
+			// Keep the draft available for retry after a bridge failure.
 		}
 
 		setBusy(false);
@@ -147,13 +149,17 @@ const ConsentDialogContent = ({
 		}
 
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll());
-			written = true;
+			written = (
+				await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll())
+			).ok;
+			setSaveFailed(!written);
 		} catch {
+			setSaveFailed(true);
 			// Same as a failed save: the sheet stays open with the draft intact.
 		}
 
@@ -190,6 +196,15 @@ const ConsentDialogContent = ({
 				))}
 			</ConsentSurfaceBody>
 			<ConsentSurfaceFooter>
+				{saveFailed ? (
+					<Text
+						accessibilityRole="alert"
+						accessibilityLiveRegion="assertive"
+						style={parts.description}
+					>
+						{copy.saveError}
+					</Text>
+				) : null}
 				{/*
 				 * The two decisions share a row in the neutral outline and the action
 				 * that writes the draft takes the accent below them, which is the split

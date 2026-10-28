@@ -96,6 +96,7 @@ const ConsentPreferencesContent = ({
 	const selection = useCategorySelection(rows);
 	const { parts, theme } = useConsentSurfaceFrame();
 	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
 
 	const save = async (): Promise<void> => {
 		if (busy) {
@@ -103,14 +104,16 @@ const ConsentPreferencesContent = ({
 		}
 
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await actions.save(selection.commitSelection());
-			written = true;
+			written = (await actions.save(selection.commitSelection())).ok;
+			setSaveFailed(!written);
 		} catch {
-			// The failure is on the snapshot, and the subject can press save again.
+			setSaveFailed(true);
+			// Keep the draft available for retry after a bridge failure.
 		}
 
 		setBusy(false);
@@ -138,13 +141,17 @@ const ConsentPreferencesContent = ({
 		}
 
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll());
-			written = true;
+			written = (
+				await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll())
+			).ok;
+			setSaveFailed(!written);
 		} catch {
+			setSaveFailed(true);
 			// The centre stays open with the switches where the subject left them.
 		}
 
@@ -181,6 +188,15 @@ const ConsentPreferencesContent = ({
 				))}
 			</ConsentSurfaceBody>
 			<ConsentSurfaceFooter>
+				{saveFailed ? (
+					<Text
+						accessibilityRole="alert"
+						accessibilityLiveRegion="assertive"
+						style={parts.description}
+					>
+						{copy.saveError}
+					</Text>
+				) : null}
 				{/*
 				 * One arrangement for both card surfaces: the two decisions sit in the
 				 * neutral outline and `Save Settings` carries the accent, which is what

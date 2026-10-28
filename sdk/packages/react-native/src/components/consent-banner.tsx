@@ -87,6 +87,26 @@ export const ConsentBanner = ({
 	// which is the opposite of the sheet this component can open.
 	const surface = useConsentStyles({ presentation: 'banner', styles, theme });
 	const [customizing, setCustomizing] = useState(false);
+	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+
+	const decide = async (choice: 'accept' | 'reject'): Promise<void> => {
+		if (busy) {
+			return;
+		}
+
+		setBusy(true);
+		setSaveFailed(false);
+		try {
+			const result = await (choice === 'accept'
+				? actions.acceptAll()
+				: actions.rejectAll());
+			setSaveFailed(!result.ok);
+		} catch {
+			setSaveFailed(true);
+		}
+		setBusy(false);
+	};
 
 	const notice = status.promptRequirement.kind === 'notice';
 	const title = notice ? copy.noticeTitle : copy.bannerTitle;
@@ -137,6 +157,15 @@ export const ConsentBanner = ({
 					<Text style={parts.description}>{description}</Text>
 				</ConsentSurfaceBody>
 				<ConsentSurfaceFooter>
+					{saveFailed ? (
+						<Text
+							accessibilityRole="alert"
+							accessibilityLiveRegion="assertive"
+							style={parts.description}
+						>
+							{copy.saveError}
+						</Text>
+					) : null}
 					{notice ? (
 						<View style={parts.row}>
 							<ConsentButton
@@ -168,25 +197,28 @@ export const ConsentBanner = ({
 							 */}
 							<View style={parts.row}>
 								<ConsentButton
+									disabled={busy}
 									kind="secondary"
 									label={copy.rejectAll}
 									onPress={() => {
-										void actions.rejectAll();
+										void decide('reject');
 									}}
 									parts={parts}
 									style={CONSENT_BUTTON_ROW_ITEM}
 								/>
 								<ConsentButton
+									disabled={busy}
 									kind="secondary"
 									label={copy.acceptAll}
 									onPress={() => {
-										void actions.acceptAll();
+										void decide('accept');
 									}}
 									parts={parts}
 									style={CONSENT_BUTTON_ROW_ITEM}
 								/>
 							</View>
 							<ConsentButton
+								disabled={busy}
 								label={copy.customize}
 								onPress={customize}
 								parts={parts}
