@@ -50,6 +50,12 @@ test('module boundary sees lazy, CommonJS, type and subpath imports', () => {
 test('packed runtime, declarations and consumer stay independent of web consent packages', () => {
 	const directory = mkdtempSync(join(tmpdir(), 'c15t-packed-boundary-'));
 	try {
+		// This consumer lives outside the workspace. Keep its registry resolution
+		// subject to the repository's release-age policy too.
+		writeFileSync(
+			join(directory, 'bunfig.toml'),
+			readFileSync(resolve(packageDir, '../../bunfig.toml'))
+		);
 		// Build first, as in the package CI lane. Pack the allowlist, never the checkout.
 		const archive = join(directory, 'mobile.tgz');
 		execFileSync(

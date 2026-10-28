@@ -72,8 +72,8 @@ Pod::Spec.new do |s|
 
   # The bridging headers (`react/bridging/*.h`) that the generated JSI glue includes moved
   # in React Native 0.87: they were the `ReactCommon/turbomodule/bridging` subspec through
-  # 0.86 and are the standalone `React-bridging` pod from 0.87. This package supports
-  # 0.81 and up, so name whichever one the host app's React Native ships.
+  # 0.86 and are the standalone `React-bridging` pod from 0.87. The candidate range is
+  # 0.86.x and 0.87.x, so name whichever one the host app's React Native ships.
   #
   # The host's copy, not this package's: CocoaPods evaluates a podspec from the podspec's
   # own directory, where `require.resolve` finds the development dependency (0.87) rather

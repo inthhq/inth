@@ -32,6 +32,12 @@ install without another c15t JavaScript package, a backend runtime or a JS TCF
 codec. Keep `@c15t/core`, `@c15t/iab` and `@iabtechlabtcf/core` as development
 conformance oracles. Build, test, docs and Codegen dependencies are allowed.
 
+The packed-consumer boundary test installs the tarball outside the workspace and
+type-checks that consumer. It needs registry access and copies the repository's
+`bunfig.toml`, including `minimumReleaseAge`, into its temporary project. Direct
+consumer versions are pinned; transitive registry resolution can change after
+the release-age delay. This check does not launch Metro or a native app.
+
 ## Candidate versions and release evidence
 
 | Component | Candidate contract | Evidence still required |
