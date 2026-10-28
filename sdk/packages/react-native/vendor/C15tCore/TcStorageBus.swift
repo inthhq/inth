@@ -18,7 +18,8 @@ import Foundation
 // gaps listed next to each reserved key and the report in the PR that added
 // this file.
 //
-// Keys outside the specification table (`IABTCF_AddtlConsent`,
+// The Google `IABTCF_AddtlConsent` extension is owned by this native bus.
+// Other keys outside the specification table (
 // `IABTCF_UseNonStandardStacks`, `IABUSPrivacy_String`,
 // `IABTCF_EnableAdvertiserConsentMode`) belong to other layers or to no
 // specification at all; the bus never writes and never removes them.
@@ -45,6 +46,7 @@ public enum TcStorageBusKeys {
     /// Spec "Number", unsigned int. Reserved: the core owns no CMP ID -- the
     /// ID comes from IAB Europe registration or `/init`, and neither lands in
     /// this build's state.
+    public static let addtlConsent = "IABTCF_AddtlConsent"
     public static let cmpSdkID = "IABTCF_CmpSdkID"
     /// Spec "Number". Reserved: the core owns no CMP version number; the
     /// transport's SDK-version string is a different thing.
@@ -107,6 +109,7 @@ public enum TcStorageBusKeys {
     /// bus clear reaches the specification's keys and nothing a Google, GPP or
     /// USP layer of somebody else's might own instead.
     public static let allNames: [String] = [
+        addtlConsent,
         cmpSdkID,
         cmpSdkVersion,
         policyVersion,
@@ -183,6 +186,10 @@ enum TcStorageBus {
             values[TcStorageBusKeys.gdprApplies] = .number(applies ? 1 : 0)
         }
 
+        if let saved = envelope.iabConsent {
+            values[TcStorageBusKeys.tcString] = .text(saved.tcString)
+            if let ac = saved.addtlConsent { values[TcStorageBusKeys.addtlConsent] = .text(ac) }
+        }
         return values
     }
 

@@ -332,6 +332,8 @@ public struct InitResponse: Sendable, Equatable {
     /// so dropping one must never turn a readable policy into `policyPending` or take a
     /// grant the subject gave back.
     public let gvl: GlobalVendorList?
+    public let adTechProviders: [AdTechProvider]?
+    public let adTechProvidersInvalid: Bool
 
     public init(
         policyResolution: JSONValue? = nil,
@@ -342,7 +344,8 @@ public struct InitResponse: Sendable, Equatable {
         resolvedOverrides: KernelOverridesWire? = nil,
         resolvedPrivacySignals: ResolvedPrivacySignals? = nil,
         records: HydrationRecords? = nil,
-        gvl: GlobalVendorList? = nil
+        gvl: GlobalVendorList? = nil,
+        adTechProviders: [AdTechProvider]? = nil, adTechProvidersInvalid: Bool = false
     ) {
         self.policyResolution = policyResolution
         self.subjectId = subjectId
@@ -353,6 +356,8 @@ public struct InitResponse: Sendable, Equatable {
         self.resolvedPrivacySignals = resolvedPrivacySignals
         self.records = records
         self.gvl = gvl
+        self.adTechProviders = adTechProviders
+        self.adTechProvidersInvalid = adTechProvidersInvalid
     }
 
     /// Read a response body. Anything that is not a JSON object is
@@ -376,7 +381,10 @@ public struct InitResponse: Sendable, Equatable {
                 ResolvedPrivacySignals(gpc: signals["gpc"]?.boolValue)
             },
             records: decodeRecords(parsed["records"]),
-            gvl: GlobalVendorList.read(from: parsed["gvl"])
+            gvl: GlobalVendorList.read(from: parsed["gvl"]),
+            adTechProviders: AdditionalConsent.providers(parsed["adTechProviders"]),
+            adTechProvidersInvalid: parsed["adTechProviders"] != nil && parsed["adTechProviders"] != .null
+                && AdditionalConsent.providers(parsed["adTechProviders"]) == nil
         ))
     }
 

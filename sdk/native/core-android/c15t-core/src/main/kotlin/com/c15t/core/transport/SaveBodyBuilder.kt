@@ -64,7 +64,10 @@ object SaveBodyBuilder {
 		put("type", "cookie_banner")
 		payload.uiSource?.let { put("uiSource", it.wireName) }
 		put("choice", confirmedChoice(payload))
-		payload.tcString?.let { put("tcString", it) }
+        payload.tcString?.let {
+            put("tcString", it)
+            payload.addtlConsent?.let { ac -> put("addtlConsent", ac) }
+        }
 		// The decision assertion goes on flat, not nested, and only when nothing
 		// else already binds the write to a policy revision. `buildDecisionAssertion`
 		// in `@c15t/core` returns nothing whenever a `policySnapshotToken` is

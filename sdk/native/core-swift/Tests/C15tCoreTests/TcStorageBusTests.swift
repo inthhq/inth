@@ -225,7 +225,7 @@ final class TcStorageBusTests: XCTestCase {
         // A stale row from an older projection, and an out-of-table key that
         // belongs to somebody else's layer.
         defaults.set("old-string", forKey: TcStorageBusKeys.tcString)
-        defaults.set("G-1", forKey: "IABTCF_AddtlConsent")
+        defaults.set("G-1", forKey: "IABUSPrivacy_String")
 
         bus.write([
             TcStorageBusKeys.policyVersion: .number(5),
@@ -249,7 +249,7 @@ final class TcStorageBusTests: XCTestCase {
             XCTAssertNil(defaults.object(forKey: name), "\(name) survived the wipe")
         }
         XCTAssertEqual(
-            defaults.string(forKey: "IABTCF_AddtlConsent"),
+            defaults.string(forKey: "IABUSPrivacy_String"),
             "G-1",
             "a bus wipe addresses the spec table, not keys other ecosystems own"
         )

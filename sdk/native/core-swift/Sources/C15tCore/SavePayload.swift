@@ -190,6 +190,7 @@ public struct SavePayload: Sendable, Codable, Equatable {
     /// Equals `confirmed.actionAt`, for backends that read one time.
     public let givenAt: Int64
     public let tcString: String?
+    public let addtlConsent: String?
 
     public init(
         subjectId: String,
@@ -205,7 +206,7 @@ public struct SavePayload: Sendable, Codable, Equatable {
         policySnapshotToken: String?,
         decisionInputs: DecisionInputs?,
         givenAt: Int64,
-        tcString: String? = nil
+        tcString: String? = nil, addtlConsent: String? = nil
     ) {
         self.subjectId = subjectId
         self.subject = subject
@@ -221,6 +222,7 @@ public struct SavePayload: Sendable, Codable, Equatable {
         self.decisionInputs = decisionInputs
         self.givenAt = givenAt
         self.tcString = tcString
+        self.addtlConsent = addtlConsent
     }
 }
 
@@ -272,7 +274,10 @@ enum SubjectPostBodyBuilder {
         if let choice = choiceWire(for: payload) {
             fields["choice"] = choice
         }
-        if let tcString = payload.tcString { fields["tcString"] = .string(tcString) }
+        if let tcString = payload.tcString {
+            fields["tcString"] = .string(tcString)
+            if let ac = payload.addtlConsent { fields["addtlConsent"] = .string(ac) }
+        }
         if let assertion = decisionAssertion(for: payload) {
             for (field, value) in assertion { fields[field] = value }
         }

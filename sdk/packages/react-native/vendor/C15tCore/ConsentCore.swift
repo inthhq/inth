@@ -149,6 +149,7 @@ public final class ConsentCore: @unchecked Sendable {
     private var policyWire: JSONValue?
     private var noticeDismissal: NoticeDismissal?
     private var lastIABActionAt: Int64?
+    private var additionalConsentList: AdditionalConsentList?
     private var iabListFetchedAt: Int64?
     private var iabListFromCache = true
     private var iabListOffline = false
@@ -159,7 +160,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// The last native decision. The bridge does not receive the full draft.
     public func iabConsent() -> IABCommittedConsent? {
         lock.withLock {
-            guard listIsUsableLocked(), let saved = committedIAB, let resolved = resolvedPolicy, resolved.policy.model == .iab,
+            guard listIsUsableLocked(), let saved = committedIAB,
+                saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil, let resolved = resolvedPolicy, resolved.policy.model == .iab,
                 !currentSnapshot.policyPending,
                 let now = config?.now(), saved.isCurrent(now: now, maxAge: resolved.policy.choiceMaxAgeMs)
             else { return nil }
@@ -170,7 +172,8 @@ public final class ConsentCore: @unchecked Sendable {
     public func isIABAllowed(vendorId: Int, purposeId: Int, basis: IABLegalBasis) -> Bool {
         // Read authority and its disclosure under the same lock as the commit.
         lock.withLock {
-            guard listIsUsableLocked(), let saved = committedIAB, let gvl = currentSnapshot.iab?.gvl,
+            guard listIsUsableLocked(), let saved = committedIAB,
+                saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil, let gvl = currentSnapshot.iab?.gvl,
                 let resolved = resolvedPolicy, !currentSnapshot.policyPending,
                 resolved.policy.model == .iab, saved.fingerprint == resolved.choiceFingerprint,
                 let now = config?.now(), saved.isCurrent(now: now, maxAge: resolved.policy.choiceMaxAgeMs)
@@ -194,9 +197,35 @@ public final class ConsentCore: @unchecked Sendable {
                 : gvl == nil ? .missing : !listIsUsableLocked() ? .stale
                 : iabListOffline ? .offline : iabListFromCache ? .cached : .fresh
             return IABLifecycleStatus(availability: availability,
-                requiresConsent: committedIAB?.isCurrent(now: config?.now() ?? 0, maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0) != true || !listIsUsableLocked(),
+                requiresConsent: committedIAB?.isCurrent(now: config?.now() ?? 0, maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0) != true || !listIsUsableLocked() || committedIAB?.adTechProvidersID != nil && currentAdditionalConsentListLocked() == nil,
                 revision: currentSnapshot.revision, vendorListVersion: gvl?.vendorListVersion,
                 policyVersion: gvl?.tcfPolicyVersion)
+        }
+    }
+
+    private func currentAdditionalConsentListLocked() -> AdditionalConsentList? {
+        guard let list = additionalConsentList, let c = config,
+            list.isCurrent(now: c.now(), maxAge: c.iabListMaxAgeMs) else { return nil }
+        return list
+    }
+
+    /// Read ATP disclosures once when opening native preferences, without a JS fetch.
+    public func adTechProviders() -> [AdTechProvider]? {
+        lock.withLock { currentAdditionalConsentListLocked()?.providers }
+    }
+
+    /// Check committed ATP consent without a JS runtime. ATT remains a separate gate.
+    public func isAdTechProviderAllowed(_ id: Int) -> Bool {
+        iabConsent()?.choices.adTechProviderConsents?.contains(id) == true
+    }
+
+    /// Distinguish an unavailable ATP list from a deliberately empty configured list.
+    public func additionalConsentStatus() -> IABListAvailability {
+        lock.withLock {
+            guard config?.iab != nil else { return .unavailable }
+            guard additionalConsentList != nil else { return .missing }
+            guard currentAdditionalConsentListLocked() != nil else { return .stale }
+            return iabListOffline ? .offline : iabListFromCache ? .cached : .fresh
         }
     }
 
@@ -204,7 +233,9 @@ public final class ConsentCore: @unchecked Sendable {
     public func openIABDraft() -> IABDraft? {
         lock.withLock {
             guard config?.iab != nil, resolvedPolicy?.policy.model == .iab,
-                !currentSnapshot.policyPending, listIsUsableLocked() else { return nil }
+                !currentSnapshot.policyPending, listIsUsableLocked(),
+                additionalConsentList?.providers.isEmpty != false || currentAdditionalConsentListLocked() != nil
+            else { return nil }
             return IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
         }
     }
@@ -344,6 +375,7 @@ public final class ConsentCore: @unchecked Sendable {
     private func readableSnapshotLocked() -> ConsentSnapshot {
         guard resolvedPolicy?.policy.model == .iab else { return currentSnapshot }
         if listIsUsableLocked(), let saved = committedIAB, let config, let resolvedPolicy,
+            saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil,
             saved.isCurrent(now: config.now(), maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
             return currentSnapshot
         }
@@ -375,7 +407,7 @@ public final class ConsentCore: @unchecked Sendable {
                 return false
             }
             if category != .necessary, resolvedPolicy?.policy.model == .iab,
-                config?.iab != nil, !listIsUsableLocked() { return false }
+                config?.iab != nil, (!listIsUsableLocked() || committedIAB?.adTechProvidersID != nil && currentAdditionalConsentListLocked() == nil) { return false }
             return state.effectivePermissions.value(for: category)
         }
     }
@@ -613,7 +645,10 @@ public final class ConsentCore: @unchecked Sendable {
                 }
                 let choices: IABChoices
                 switch intent {
-                case .all: choices = IABAuthority.accepting(gvl, configuration: configuration)
+                case .all:
+                    var accepted = IABAuthority.accepting(gvl, configuration: configuration)
+                    accepted.adTechProviderConsents = currentAdditionalConsentListLocked()?.providers.map(\.id)
+                    choices = accepted
                 case .necessary: choices = IABChoices()
                 case let .iab(draft, _): choices = draft
                 case .custom:
@@ -622,11 +657,16 @@ public final class ConsentCore: @unchecked Sendable {
                             code: "iab-choices-required",
                             message: "Save the complete native IAB draft with category choices."))
                 }
+                if intent != .necessary, additionalConsentList?.providers.isEmpty == false,
+                    currentAdditionalConsentListLocked() == nil {
+                    return .failure(CoreErrorInfo(code: "additional-consent-unavailable", message: "Refresh the Google ATP list before saving."))
+                }
                 do {
                     nextIAB = try IABAuthority.build(
                         configuration: configuration, choices: choices,
                         gvl: gvl, subjectId: identity.id, externalId: user?.externalId,
-                        fingerprint: resolved.choiceFingerprint, actionAt: actionAt, previous: committedIAB)
+                        fingerprint: resolved.choiceFingerprint, actionAt: actionAt, previous: committedIAB,
+                        additionalConsentList: currentAdditionalConsentListLocked())
                 } catch let info as CoreErrorInfo { return .failure(info) } catch {
                     return .failure(
                         CoreErrorInfo(code: "invalid-iab-choices", message: "Native IAB validation failed."))
@@ -734,7 +774,7 @@ public final class ConsentCore: @unchecked Sendable {
                     gpc: gpcSignal.active
                 ),
                 givenAt: actionAt,
-                tcString: nextIAB?.tcString
+                tcString: nextIAB?.tcString, addtlConsent: nextIAB?.addtlConsent
             )
 
             do {
@@ -789,7 +829,9 @@ public final class ConsentCore: @unchecked Sendable {
                     noticeDismissal: plan.acknowledgement ?? noticeDismissal,
                     policyResolution: policyWire, storedAt: actionAt,
                     iabConsent: plan.isIAB ? plan.iabConsent : committedIAB,
-                    lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt, iabListFetchedAt: iabListFetchedAt)
+                    lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt,
+                    iabListFetchedAt: iabListFetchedAt,
+                    additionalConsentList: additionalConsentList)
             }
             let queued = envelope.flatMap {
                 plan.queue.commit($0, body: plan.body,
@@ -1289,6 +1331,7 @@ public final class ConsentCore: @unchecked Sendable {
 
             self.policyWire = envelope?.policyResolution
             self.noticeDismissal = envelope?.noticeDismissal
+            self.additionalConsentList = envelope?.additionalConsentList
             self.iabListFetchedAt = envelope?.iabListFetchedAt
             self.committedIAB = envelope?.iabConsent
             let watermark = envelope?.lastIABActionAt ?? envelope?.iabConsent?.actionAt
@@ -1593,9 +1636,11 @@ public final class ConsentCore: @unchecked Sendable {
             let rebuilt = try? IABAuthority.build(
                 configuration: c, choices: saved.choices,
                 gvl: gvl, subjectId: saved.subjectId, externalId: saved.externalId,
-                fingerprint: saved.fingerprint, actionAt: saved.actionAt, previous: saved)
+                fingerprint: saved.fingerprint, actionAt: saved.actionAt, previous: saved,
+                additionalConsentList: currentAdditionalConsentListLocked())
         {
             valid = rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices
+                && rebuilt.addtlConsent == saved.addtlConsent && rebuilt.adTechProvidersID == saved.adTechProvidersID
         } else {
             valid = false
         }
@@ -1649,7 +1694,8 @@ public final class ConsentCore: @unchecked Sendable {
             return StoredEnvelope(
                 snapshot: next, noticeDismissal: nil,
                 policyResolution: reset ? nil : policyWire, storedAt: config.now(),
-                lastIABActionAt: lastIABActionAt, iabListFetchedAt: reset ? nil : iabListFetchedAt)
+                lastIABActionAt: lastIABActionAt, iabListFetchedAt: reset ? nil : iabListFetchedAt,
+                additionalConsentList: reset ? nil : additionalConsentList)
         }
         guard let envelope else { return nil }
         guard queue.replace(envelope) else { return false }
@@ -1658,6 +1704,7 @@ public final class ConsentCore: @unchecked Sendable {
             persistedRevision = envelope.snapshot.revision
             if reset {
                 resolvedPolicy = nil; policyWire = nil; restoredFromStore = false
+                additionalConsentList = nil
                 iabListFetchedAt = nil; iabListFromCache = true; iabListOffline = false
             }
         }
@@ -1728,6 +1775,10 @@ public final class ConsentCore: @unchecked Sendable {
             let (deadline, overflow) = fetched.addingReportingOverflow(config.iabListMaxAgeMs)
             if !overflow, deadline > now { deadlines.append(deadline) }
         }
+        if let list = currentAdditionalConsentListLocked(), !list.providers.isEmpty {
+            let (deadline, overflow) = list.fetchedAt.addingReportingOverflow(config.iabListMaxAgeMs)
+            if !overflow, deadline > now { deadlines.append(deadline) }
+        }
         if let consent, let resolvedPolicy,
             consent.isCurrent(now: now, maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
             let (deadline, overflow) = consent.actionAt.addingReportingOverflow(resolvedPolicy.policy.choiceMaxAgeMs)
@@ -1793,7 +1844,8 @@ public final class ConsentCore: @unchecked Sendable {
                 storedAt: config.now(),
                 iabConsent: committedIAB,
                 lastIABActionAt: lastIABActionAt,
-                iabListFetchedAt: iabListFetchedAt
+                iabListFetchedAt: iabListFetchedAt,
+                additionalConsentList: additionalConsentList
             )
             // Claim the revision before releasing the lock, so two overlapping
             // publishes cannot both decide they are the newest writer.
@@ -1955,6 +2007,11 @@ public final class ConsentCore: @unchecked Sendable {
             // list behind a narrow rendering rule. The header the same scope goes out on
             // is an optimisation in front of this, never the guarantee -- a producer that
             // ignores it and embeds the whole list is answered by the same line.
+            if response.adTechProvidersInvalid {
+                additionalConsentList = nil
+            } else if let providers = response.adTechProviders {
+                additionalConsentList = AdditionalConsentList(providers: providers, fetchedAt: nowMs)
+            }
             if let gvl = response.gvl {
                 iabListFetchedAt = nowMs
                 iabListFromCache = false
@@ -2254,7 +2311,8 @@ public final class ConsentCore: @unchecked Sendable {
         let requiresIAB = wire?["model"]?.stringValue == "iab" || lock.withLock { config?.iab != nil && resolvedPolicy?.policy.model == .iab }
         if tcString == nil && !requiresIAB { return true }
         guard let saved = iabConsent() else { return false }
-        return tcString == saved.tcString && wire?["subjectId"]?.stringValue == saved.subjectId
+        return tcString == saved.tcString && wire?["addtlConsent"]?.stringValue == saved.addtlConsent
+            && wire?["subjectId"]?.stringValue == saved.subjectId
             && wire?["givenAt"]?.intValue == saved.actionAt
             && wire?["externalSubjectId"]?.stringValue == saved.externalId
             && wire?["model"]?.stringValue == "iab"

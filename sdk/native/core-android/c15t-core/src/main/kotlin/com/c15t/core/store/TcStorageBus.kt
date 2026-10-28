@@ -23,7 +23,8 @@ import com.c15t.core.model.PolicyResolution
 // are named next to each reserved key and in the report of the PR that added
 // this file.
 //
-// Keys outside the specification table (`IABTCF_AddtlConsent`,
+// The Google `IABTCF_AddtlConsent` extension is owned by this native bus.
+// Other keys outside the specification table (
 // `IABTCF_UseNonStandardStacks`, `IABUSPrivacy_String`,
 // `IABTCF_EnableAdvertiserConsentMode`) belong to other layers or to no
 // specification at all; the bus never writes and never removes them.
@@ -50,6 +51,7 @@ public sealed interface TcBusValue {
 
 /** The key table, one constant per row of the specification's in-app structure. */
 public object TcStorageBusKeys {
+    public const val ADDTL_CONSENT: String = "IABTCF_AddtlConsent"
 	/** Spec "Number", unsigned int. Reserved: the core owns no CMP ID -- the ID
 	 * comes from IAB Europe registration or `/init`, and neither lands in this
 	 * build's state. */
@@ -130,6 +132,7 @@ public object TcStorageBusKeys {
 	 * deliberately missing -- a bus wipe reaches the specification's keys and
 	 * nothing a Google, GPP or USP layer of somebody else's might own. */
 	public val ALL_NAMES: List<String> = listOf(
+		ADDTL_CONSENT,
 		CMP_SDK_ID,
 		CMP_SDK_VERSION,
 		POLICY_VERSION,
@@ -207,6 +210,10 @@ internal object TcStorageBusProjection {
 			values[TcStorageBusKeys.GDPR_APPLIES] = TcBusValue.NumberValue(if (applies) 1 else 0)
 		}
 
+        envelope.iabConsent?.let { saved ->
+            values[TcStorageBusKeys.TC_STRING] = TcBusValue.TextValue(saved.tcString)
+            saved.addtlConsent?.let { values[TcStorageBusKeys.ADDTL_CONSENT] = TcBusValue.TextValue(it) }
+        }
 		return values
 	}
 }

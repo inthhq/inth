@@ -1490,3 +1490,13 @@ existing choice; any change requires a fresh action and removes obsolete queued
 grants. Custom IAB saves require the revision the draft opened on. TCF 2.4
 standardTexts, including the Features explanation, survive narrowing and storage.
 See docs/internal/native-iab-commits.mdx for refresh and retry behavior.
+Native Additional Consent v2 uses the backend's scoped official ATP disclosures,
+not GVL vendor IDs. A complete native draft carries ATP selections; purposes 1,
+3 and 4 gate every positive ATP signal. The generated addtlConsent, TCF authority
+and exact HTTP body commit together. List content changes require fresh consent;
+missing responses retain only an unexpired cache, empty lists disable AC, and
+malformed lists clear it. The bound ATP cache participates in expiry scheduling
+even when a newer GVL remains current. Stale lists cannot grant. The platform bus owns
+IABTCF_AddtlConsent as a string and removes it with invalid authority or reset.
+ATT remains a separate permission. RN API and shared UI wiring remain an ENG-511
+acceptance gate after this native foundation integrates.

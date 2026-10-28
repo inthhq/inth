@@ -5,8 +5,8 @@ description: Native CMP configuration, complete IAB drafts, atomic persistence, 
 
 The Swift and Kotlin cores own IAB choices and generate TC strings without a JS
 runtime. This contract is for native core and platform implementers. RN commands,
-shared SwiftUI and Compose screens and complete platform key publication,
-and Additional Consent v2 have separate integration work.
+shared SwiftUI and Compose screens and complete platform key publication
+have separate integration work.
 
 ## Configure an approved CMP identity
 
@@ -176,7 +176,8 @@ performance, registry publication or certification. First release still requires
 native UI rendering of TCF 2.4 disclosures, including the preserved
 `standardTexts.features`, approved CMP identity and mobile registration, complete
 typed IABTCF publication before vendor startup, Google App certification and
-AC v2 support. ENG-510 and ENG-511 remain required. The selected native screens and RN adapter must consume this authority
+RN AC v2 API and UI integration. ENG-510 and the RN acceptance gate of ENG-511
+remain required. The selected native screens and RN adapter must consume this authority
 without creating a JS consent or TCF engine.
 
 ## Recover a missing or corrupt subject
@@ -248,3 +249,53 @@ session. Saves require the revision the presenter opened on, so a refresh or
 competing save rejects the old draft with `concurrent-change`. The caller keeps
 the rejected draft for explanation, then reloads a compatible disclosure before
 asking for another action.
+
+## Commit Google Additional Consent v2
+
+The native cores read the backend's configured `adTechProviders` response. The
+backend resolves those IDs from Google's official ATP list and removes providers
+Google no longer lists. ATP IDs are a separate namespace from GVL vendor IDs.
+The response contains each provider's `id`, `name` and `policyUrl`; native readers
+reject duplicate IDs, invalid IDs, empty names and invalid policy URLs as a whole
+list. They keep the disclosed list with its fetch time in the same protected
+record as TCF.
+
+An absent list keeps an unexpired cache without renewing its age. An explicit
+empty array disables AC and invalidates an earlier AC choice. An invalid list
+clears it. Any provider addition, removal, name or policy-link change requires a
+new native decision. `additionalConsentStatus` distinguishes a missing or stale
+list. `adTechProviders` returns current disclosures once for a native presenter.
+The next expiry deadline includes the bound ATP cache. If a response renews the
+GVL but omits ATPs, the older ATP deadline still revokes existing gates, clears
+obsolete queued grants and removes the published AC value without a new read.
+
+Set `adTechProviderConsents` on the complete IAB draft. Native validation rejects
+IDs outside the disclosed ATP list. A selected ATP receives consent only when
+TCF purposes 1, 3 and 4 are all consented. Otherwise it remains disclosed without
+consent. The committed choices expose this normalized result. Read
+`IABCommittedConsent.addtlConsent` or `IabCommittedConsent.addtlConsent` and use
+`isAdTechProviderAllowed` for a synchronous ATP gate. ATT permission stays
+separate and does not change any ATP or TCF choice.
+
+Native encoding follows [Google's AC v2 specification](https://support.google.com/admanager/answer/9681920):
+`2~<consented IDs>~dv.<disclosed IDs without consent>`. IDs sort numerically, and a
+consented provider occurs only in the consented section. For providers 1, 2, 3,
+4 and 10, selecting 1 and 10 produces `2~1.10~dv.2.3.4`. Rejecting all produces
+`2~~dv.1.2.3.4.10`. An empty configured list produces no AC string.
+
+`addtlConsent` travels beside `tcString` in the real native `POST /subjects`
+body. It shares TCF's atomic commit, identity binding, action time, offline replay
+and rejected-write behavior. Retries reuse the exact saved body. A stale ATP
+list cannot authorize another grant. Withdrawal can still commit TCF denials
+without an AC string if the ATP list is stale. The backend clears its AC value
+when it receives a TC string without `addtlConsent`.
+
+The native bus writes `IABTCF_AddtlConsent` as a string into UserDefaults and the
+application-default SharedPreferences. Withdrawal publishes the disclosure-only
+AC string for a current list. Invalid authority, identity changes and reset
+remove it. The complete typed TCF bus and its publication ordering are ENG-510.
+
+This is the ENG-511 native foundation. Typed RN public adapters, compact events
+and IAB UI integration remain a required ENG-511 acceptance gate through ENG-514
+and ENG-533. Native presenters must show every disclosed provider and privacy
+link before a save. This work does not establish Google App or AC v2 approval.
