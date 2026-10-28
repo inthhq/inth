@@ -599,8 +599,7 @@ class C15tKernel(
 			base = current
 			surfaceAtAction = current.activeUI
 			policy = evaluationPolicy
-			if (policy?.model == ConsentModel.IAB &&
-				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null)) {
+			if (policy?.model == ConsentModel.IAB) {
 				lastIabActionAt?.let { previous ->
 					if (previous == Long.MAX_VALUE)
 						return refusedCommit(
@@ -609,6 +608,9 @@ class C15tKernel(
 						)
 					actionAt = maxOf(actionAt, previous + 1)
 				}
+			}
+			if (policy?.model == ConsentModel.IAB &&
+				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null)) {
 				val configuration = iabConfiguration
 				val gvl = current.iab?.gvl
 				if (configuration == null || gvl == null)
@@ -854,6 +856,7 @@ class C15tKernel(
 					!published.policyPending
 			)
 				published = published.copy(model = ConsentModel.IAB)
+			published = validateIab(published)
 			state.set(published)
 		}
 		persist()
@@ -982,6 +985,7 @@ class C15tKernel(
 					!published.policyPending
 			)
 				published = published.copy(model = ConsentModel.IAB)
+			published = validateIab(published)
 			state.set(published)
 		}
 		persist()
@@ -1496,7 +1500,7 @@ class C15tKernel(
 			}
 
 			else -> {
-				val permanent = outcome.isPermanentlyRejected
+				val permanent = outcome.isPermanentlyRejected && !entry.isWithdrawal()
 				val error = if (permanent) {
 					// The producer refused these bytes on their own terms, and frozen bytes
 					// earn the same answer every time, so the entry leaves and the reason is
@@ -1662,11 +1666,13 @@ class C15tKernel(
 
 	private fun transitionIab(externalId: String?, reset: Boolean): Boolean? =
 		synchronized(mutationLock) {
-			if (iabConfiguration == null && committedIab == null) return@synchronized null
+			if (iabConfiguration == null && committedIab == null &&
+				evaluationPolicy?.model != ConsentModel.IAB && queue.pending().none { it.isWithdrawal() })
+				return@synchronized null
 			val current = state.get()
 			if (!reset && current.subject?.externalId == externalId) return@synchronized null
 			val subject = current.subject?.copy(externalId = externalId)
-			val next =
+			val evaluated =
 				if (reset)
 					ConsentSnapshot.denyAll(subject!!, clock.nowMillis())
 						.copy(
@@ -1686,6 +1692,8 @@ class C15tKernel(
 						clock.nowMillis(),
 						choiceScopeOf(evaluationPolicy),
 					)
+			val next = if (evaluationPolicy?.model == ConsentModel.IAB)
+				evaluated.copy(effectivePermissions = ConsentState.DENY_ALL) else evaluated
 			val envelope =
 				SnapshotEnvelope(
 					snapshot = next.copy(iab = null),

@@ -65,8 +65,9 @@ data class QueuedSave(
 internal fun QueuedSave.isWithdrawal(): Boolean {
 	if (body == null && payload.tcString == null && payload.model != ConsentModel.IAB) return false
 	if (ConsentCategory.OPTIONAL.any { payload.consents[it] }) return false
-	if (body != null) {
-		val wire = runCatching { Json.parseToJsonElement(body).jsonObject }.getOrNull() ?: return false
+	val frozen = body
+	if (frozen != null) {
+		val wire = runCatching { Json.parseToJsonElement(frozen).jsonObject }.getOrNull() ?: return false
 		if (wire["subjectId"]?.jsonPrimitive?.contentOrNull != payload.subjectId ||
 			wire["givenAt"]?.jsonPrimitive?.longOrNull != payload.givenAt ||
 			wire["tcString"]?.jsonPrimitive?.contentOrNull != payload.tcString) return false

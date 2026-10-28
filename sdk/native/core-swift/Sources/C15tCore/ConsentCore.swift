@@ -515,16 +515,15 @@ public final class ConsentCore: @unchecked Sendable {
             }
 
             var nextIAB: IABCommittedConsent?
-            if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil) {
-                if let previous = lastIABActionAt {
-                    guard previous < Int64.max else {
-                        return .failure(
-                            CoreErrorInfo(
-                                code: "invalid-action-time",
-                                message: "The previous action time cannot be advanced."))
-                    }
-                    actionAt = max(actionAt, previous + 1)
+            if resolved.policy.model == .iab, let previous = lastIABActionAt {
+                guard previous < Int64.max else {
+                    return .failure(CoreErrorInfo(
+                        code: "invalid-action-time",
+                        message: "The previous action time cannot be advanced."))
                 }
+                actionAt = max(actionAt, previous + 1)
+            }
+            if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil) {
                 guard let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else {
                     return .failure(
                         CoreErrorInfo(
@@ -836,7 +835,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// frozen bytes: `INPUT_VALIDATION_FAILED` on the first try is
     /// `INPUT_VALIDATION_FAILED` on the tenth.
     ///
-    /// A permanently refused body is dropped rather than kept. It is not a lost
+    /// Frozen withdrawals remain queued even after a refusal. Other permanently
+    /// refused bodies are dropped rather than kept. It is not a lost
     /// decision: the subject's choice lives in the stored envelope either way, and
     /// an obligation no producer will ever accept is not worth twenty slots on
     /// every future launch. Dropping one is only survivable if it is announced, so
@@ -848,7 +848,8 @@ public final class ConsentCore: @unchecked Sendable {
         entryID: String,
         subjectId: String
     ) {
-        guard error.isPermanentlyRejected else {
+        let protectedWithdrawal = queue.entries().first { $0.id == entryID }?.isProtectedWithdrawal == true
+        guard error.isPermanentlyRejected && !protectedWithdrawal else {
             // Leave it queued with one attempt spent. The decision is already local
             // and durable; the backend can wait.
             let outcome = queue.recordFailedAttempt(id: entryID)
@@ -1536,7 +1537,10 @@ public final class ConsentCore: @unchecked Sendable {
     /// cannot restore an earlier grant on the next launch.
     private func transitionIAB(user nextUser: KernelUser?, reset: Bool) -> Bool? {
         lock.withLock {
-            guard let config, let queue, config.iab != nil || committedIAB != nil else { return nil }
+            guard let config, let queue,
+                config.iab != nil || committedIAB != nil || resolvedPolicy?.policy.model == .iab
+                    || queue.entries().contains(where: { $0.isProtectedWithdrawal })
+            else { return nil }
             if !reset && user?.externalId == nextUser?.externalId { return nil }
             var next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = nil
@@ -1554,7 +1558,8 @@ public final class ConsentCore: @unchecked Sendable {
                     resolved, choice: nil, noticeDismissal: nil,
                     gpcActive: gpcSignal.active, now: config.now(), choiceScope: choiceScopeLocked(resolved))
                 next = next.byApplying { draft in
-                    draft.effectivePermissions = e.permissions; draft.promptRequirement = e.promptRequirement
+                    draft.effectivePermissions = resolved.policy.model == .iab ? .necessaryOnly : e.permissions
+                    draft.promptRequirement = e.promptRequirement
                     draft.restrictions = e.restrictions; draft.nextDeadline = e.nextDeadline
                     draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
                 }
