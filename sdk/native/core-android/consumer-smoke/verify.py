@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ElementTree
 
 
 def verify_staging(repository, version):
+    """Validate binaries, source archives and API docs in a staged Maven version."""
     for artifact, extension in [('c15t-core', 'jar'), ('c15t-android', 'aar')]:
         directory = repository / 'com/c15t' / artifact / version
         prefix = directory / f'{artifact}-{version}'
@@ -60,6 +61,7 @@ def verify_staging(repository, version):
 
 
 def main():
+    """Build an isolated native or packed RN consumer and record its evidence."""
     parser = argparse.ArgumentParser(description=__doc__)
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--repository', help='Reachable HTTPS Maven repository (remote resolution proof)')
