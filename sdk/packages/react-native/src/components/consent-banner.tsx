@@ -103,7 +103,6 @@ const ConsentBannerActions = ({
 			{saveFailed ? (
 				<Text
 					accessibilityRole="alert"
-					accessibilityLiveRegion="assertive"
 					style={parts.description}
 				>
 					{copy.saveError}

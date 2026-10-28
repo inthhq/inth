@@ -206,7 +206,6 @@ const ConsentDialogContent = ({
 				{saveFailed ? (
 					<Text
 						accessibilityRole="alert"
-						accessibilityLiveRegion="assertive"
 						style={parts.description}
 					>
 						{copy.saveError}

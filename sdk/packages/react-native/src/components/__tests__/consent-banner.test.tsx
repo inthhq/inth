@@ -146,6 +146,9 @@ describe('ConsentBanner', () => {
 				'Your choices could not be saved. Try again.'
 			);
 			expect(
+				requireRole(tree.container(), 'alert').hasAttribute('aria-live')
+			).toBe(false);
+			expect(
 				requireRole(tree.container(), 'button', action).getAttribute(
 					'aria-disabled'
 				)
@@ -161,7 +164,7 @@ describe('ConsentBanner', () => {
 		}
 	);
 
-	test('does not carry a failed save into a later prompt', async () => {
+	test('does not carry a failed save into a prompt reopened during exit', async () => {
 		const tree = mountSurface(<ConsentBanner />);
 		tree.fake.failCommitWith(
 			JSON.stringify({ ok: false, queued: false, reason: 'queue-write-failed' })
@@ -175,7 +178,6 @@ describe('ConsentBanner', () => {
 				translatedSnapshot({ promptRequirement: { kind: 'none' }, revision: 2 })
 			);
 		});
-		await flushPromises();
 		flush(() => {
 			tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
 		});

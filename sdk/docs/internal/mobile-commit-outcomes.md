@@ -3,8 +3,6 @@ title: Mobile consent action outcomes
 description: Handle refused native commits and durable offline success in mobile clients.
 ---
 
-# Mobile consent action outcomes
-
 Check `CommitResult.ok` after awaiting `save`, `acceptAll` or `rejectAll`.
 A resolved promise can carry `ok: false`. That result means the native engine
 refused the action. Keep the draft and offer a retry. `reason` identifies failures
@@ -22,8 +20,11 @@ The existing React Native dialog and preference center close and reset their
 drafts only for `ok: true`. A refused action or rejected bridge call leaves them
 open with the draft intact and shows an accessible retry message. The banner
 also reports failures and leaves the choice available. The error clears when the
-user retries. Action buttons prevent another commit while the current one is
-pending.
+user retries. Each new presentation starts with fresh error and draft state,
+even when it interrupts an exit animation. Action buttons prevent another commit
+within that presentation while its current action is pending. Retry messages
+use one explicit accessibility announcement path on iOS and Android. VoiceOver
+and TalkBack behavior still requires device validation.
 
 The copy resolver accepts `common.saveError` from native translations, with
 "Your choices could not be saved. Try again." as its fallback. This is a mobile

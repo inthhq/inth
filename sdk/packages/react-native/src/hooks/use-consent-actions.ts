@@ -29,7 +29,7 @@ export interface ConsentActions {
 	 *
 	 * @param consents - Per-category decision.
 	 * @returns The local commit outcome. Check `ok` before treating the action as
-	 *   saved. `ok: true, queued: true` is durable success awaiting delivery.
+	 *   saved. `ok: true, queued: true` is durable local success. Delivery is separate.
 	 */
 	save: (
 		consents?: Readonly<Partial<Record<OptionalConsentCategory, boolean>>>

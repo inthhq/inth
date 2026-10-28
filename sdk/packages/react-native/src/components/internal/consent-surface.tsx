@@ -358,7 +358,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		styles;
 	const reducedMotion = useReducedMotion();
 	const drawer = presentation === 'drawer';
-	const { motionStyle, rendered } = usePromptMotion(open, {
+	const { contentKey, motionStyle, rendered } = usePromptMotion(open, {
 		// A page arrives from the trailing edge and every other surface lifts from
 		// below. One reveal and one reduced-motion collapse either way, which is the
 		// reason a drawer is a presentation and not a second sheet component.
@@ -408,7 +408,12 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 			role={presentation === 'banner' ? 'region' : 'dialog'}
 			style={presentation === 'banner' ? parts.banner : parts.sheet}
 		>
-			<FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
+			<FrameContext.Provider
+				key={contentKey}
+				value={frame}
+			>
+				{children}
+			</FrameContext.Provider>
 		</View>
 	);
 

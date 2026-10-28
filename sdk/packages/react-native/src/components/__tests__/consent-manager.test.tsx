@@ -13,6 +13,7 @@ import {
 	resetNativeStub,
 	uiState,
 } from '../../__tests__/helpers/react-native-stub';
+import { useConsentStatus } from '../../hooks/use-consent-status';
 import { resetConsentClient } from '../../native/client';
 import { ConsentDialog } from '../consent-dialog';
 import { ConsentPreferences } from '../consent-preferences';
@@ -45,6 +46,34 @@ describe.each([
 	['dialog', ConsentDialog],
 	['preferences', ConsentPreferences],
 ])('%s commit outcomes', (_name, Surface) => {
+	test('discards a failed save when reopened before exit completes', async () => {
+		const onRequestClose = vi.fn();
+		const LifecycleSurface = () => {
+			const { ready } = useConsentStatus();
+			return (
+				<Surface
+					onRequestClose={onRequestClose}
+					open={ready}
+				/>
+			);
+		};
+		const tree = mountSurface(<LifecycleSurface />);
+		tree.fake.failCommitWith(JSON.stringify({ ok: false, queued: false }));
+		tap(requireRole(tree.container(), 'switch', 'Werbung'));
+		tap(requireRole(tree.container(), 'button', 'Speichern'));
+		await flushPromises();
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(1);
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ ready: false, revision: 2 }));
+		});
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+		});
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+		expect(checked(tree, 'Werbung')).toBe('false');
+		tree.unmount();
+	});
+
 	test.each(['Speichern', 'Alle akzeptieren', 'Alle ablehnen'])(
 		'%s preserves drafts on a resolved rejection and permits a durable offline retry',
 		async (action) => {
@@ -82,6 +111,9 @@ describe.each([
 			expect(uiState.announcements).toContain(
 				'Your choices could not be saved. Try again.'
 			);
+			expect(
+				requireRole(tree.container(), 'alert').hasAttribute('aria-live')
+			).toBe(false);
 			tap(requireRole(tree.container(), 'button', action));
 			await flushPromises();
 			expect(
