@@ -1,5 +1,7 @@
 package com.c15t.core.store
 
+import com.c15t.core.model.isWithdrawal
+
 import com.c15t.core.SubjectIdGenerator
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.ConsentSubject
@@ -179,13 +181,16 @@ class C15tStore(
 
 	/** Persist a full IAB transaction before publishing any grant. */
 	@Synchronized
-	fun commit(envelope: SnapshotEnvelope, entry: QueuedSave): Boolean =
-		writeAtomic(envelope.copy(pendingSaves = listOf(entry)))
+	fun commit(envelope: SnapshotEnvelope, entry: QueuedSave): Boolean {
+		val withdrawals = readPending().filter { it.isWithdrawal() }
+		if (withdrawals.size >= PendingSaveQueue.DEFAULT_LIMIT) return false
+		return writeAtomic(envelope.copy(pendingSaves = withdrawals + entry))
+	}
 
 	/** Atomic empty consent state for reset and identity changes. */
 	@Synchronized
 	fun replace(envelope: SnapshotEnvelope): Boolean =
-		writeAtomic(envelope.copy(pendingSaves = emptyList()))
+		writeAtomic(envelope.copy(pendingSaves = readPending().filter { it.isWithdrawal() }))
 
 	private fun writeAtomic(envelope: SnapshotEnvelope): Boolean {
 		val raw = json.encodeToString(SnapshotEnvelope.serializer(), envelope)

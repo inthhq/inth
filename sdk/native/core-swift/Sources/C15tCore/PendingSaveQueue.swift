@@ -18,6 +18,30 @@ struct PendingSaveEntry: Sendable, Codable, Equatable {
     let body: Data
 }
 
+/// A frozen denial remains owed after the local policy or identity changes.
+/// No consent or legitimate-interest grant may use this delivery exception.
+enum ConsentDelivery {
+    static func isWithdrawal(_ body: Data) -> Bool {
+        guard let wire = C15tJSON.parse(body),
+            let consents = wire["preferences"]?.objectValue, consents["necessary"]?.boolValue == true,
+            ["functionality", "measurement", "experience", "marketing"].allSatisfy({ consents[$0]?.boolValue != true })
+        else { return false }
+        if let ac = wire["addtlConsent"]?.stringValue, !ac.hasPrefix("2~~dv.") { return false }
+        guard let encoded = wire["tcString"]?.stringValue else {
+            return wire["consentAction"]?.stringValue == "necessary"
+                || wire["choice"]?["categories"]?.objectValue.map { !$0.isEmpty && $0.values.allSatisfy { $0["value"]?.boolValue == false } } == true
+        }
+        guard case let .decoded(tc) = TcStringWireReader.read(encoded) else { return false }
+        var vectors = [tc.purposeConsents, tc.purposeLegitimateInterests, tc.vendorConsents,
+            tc.vendorLegitimateInterests, tc.specialFeatureOptIns]
+        if let p = tc.publisherSection {
+            vectors += [p.publisherConsents, p.publisherLegitimateInterests,
+                p.publisherCustomConsents, p.publisherCustomLegitimateInterests]
+        }
+        return vectors.allSatisfy { $0.ids.isEmpty }
+    }
+}
+
 /// What one replay pass did.
 public struct ReplayReport: Sendable, Equatable {
     public let attempted: Int
@@ -135,8 +159,9 @@ final class PendingSaveQueue: @unchecked Sendable {
                 body: body
             ))
             // Newest 20 only, oldest dropped first.
-            if entries.count > Self.maxEntries {
-                entries.removeFirst(entries.count - Self.maxEntries)
+            while entries.count > Self.maxEntries {
+                guard let discard = entries.firstIndex(where: { !ConsentDelivery.isWithdrawal($0.body) && $0.id != id }) else { return false }
+                entries.remove(at: discard)
             }
             return writeEntries(entries)
         }
@@ -173,7 +198,12 @@ final class PendingSaveQueue: @unchecked Sendable {
         lock.withLock { readEntries().contains { $0.id == id } }
     }
 
-    /// Drop every entry, for a subject reset.
+    /// Remove queued grants after authority invalidation, retaining owed withdrawals.
+    func discardGrants() {
+        lock.withLock { _ = writeEntries(readEntries().filter { ConsentDelivery.isWithdrawal($0.body) }) }
+    }
+
+    /// Drop every entry when its stored subject cannot be recovered.
     func clear() {
         lock.withLock { _ = writeEntries([]) }
     }
@@ -200,9 +230,13 @@ final class PendingSaveQueue: @unchecked Sendable {
         return lock.withLock {
             var entries = readEntries()
             guard let index = entries.firstIndex(where: { $0.id == id }) else { return .alreadyGone }
-            entries[index].attempts += 1
+            entries[index].attempts = min(entries[index].attempts, Self.maxAttempts) + 1
             let entry = entries[index]
 
+            if ConsentDelivery.isWithdrawal(entry.body) {
+                _ = writeEntries(entries)
+                return .retrying
+            }
             if entry.attempts >= Self.maxAttempts {
                 entries.remove(at: index)
                 _ = writeEntries(entries)
@@ -306,17 +340,19 @@ final class PendingSaveQueue: @unchecked Sendable {
                 id: newID(), subjectId: subjectId, actionAt: actionAt,
                 queuedAt: now(), attempts: 0, body: body)
             var next = envelope
-            next.pendingSaves = [entry]
+            let withdrawals = readEntries().filter { ConsentDelivery.isWithdrawal($0.body) }
+            guard withdrawals.count < Self.maxEntries else { return nil }
+            next.pendingSaves = withdrawals + [entry]
             guard store.encode(next, for: StorageKey.snapshot) else { return nil }
             return entry.id
         }
     }
 
-    /// Commit a tombstone or identity transition with no retained delivery obligation.
+    /// Commit a tombstone while retaining frozen withdrawals under their original owner.
     func replace(_ envelope: StoredEnvelope) -> Bool {
         lock.withLock {
             var next = envelope
-            next.pendingSaves = []
+            next.pendingSaves = readEntries().filter { ConsentDelivery.isWithdrawal($0.body) }
             return store.encode(next, for: StorageKey.snapshot)
         }
     }

@@ -58,3 +58,16 @@ data class QueuedSave(
 	/** Exact UTF-8 POST body captured for native IAB commits. */
 	val body: String? = null,
 )
+
+/** A complete denial owes delivery even after current consent authority expires. */
+internal fun QueuedSave.isWithdrawal(): Boolean {
+	if (ConsentCategory.OPTIONAL.any { payload.consents[it] }) return false
+	val encoded = payload.tcString ?: return payload.consentAction == ConsentAction.NECESSARY
+	val tc = runCatching { com.c15t.core.tc.TcStringDecoder.decode(encoded) }.getOrNull() ?: return false
+	val c = tc.core
+	val p = tc.publisher
+	return c.purposeConsents.isEmpty() && c.purposeLegitimateInterests.isEmpty() &&
+		c.vendorConsents.ids.isEmpty() && c.vendorLegitimateInterests.ids.isEmpty() && c.specialFeatureOptins.isEmpty() &&
+		(p == null || p.publisherConsents.isEmpty() && p.publisherLegitimateInterests.isEmpty() &&
+			p.publisherCustomConsents.isEmpty() && p.publisherCustomLegitimateInterests.isEmpty())
+}

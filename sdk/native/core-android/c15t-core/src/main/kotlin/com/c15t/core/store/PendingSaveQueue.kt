@@ -2,6 +2,7 @@ package com.c15t.core.store
 
 import com.c15t.core.model.QueuedSave
 import com.c15t.core.model.SavePayload
+import com.c15t.core.model.isWithdrawal
 import java.util.UUID
 
 /**
@@ -67,7 +68,10 @@ class PendingSaveQueue(
 		val entry = QueuedSave(id = idGenerator(), queuedAt = queuedAt, payload = payload)
 		val current = store.readPending()
 		// Oldest dropped first, newest kept.
-		val next = (current + entry).takeLast(maxOf(1, limit))
+		val withdrawals = current.filter { it.isWithdrawal() }
+		if (withdrawals.size >= maxOf(1, limit)) return@synchronized null
+		val grants = current.filterNot { it.isWithdrawal() }.takeLast(maxOf(0, limit - withdrawals.size - 1))
+		val next = withdrawals + grants + entry
 		return@synchronized entry.takeIf { store.writePending(next) }
 	}
 
@@ -131,8 +135,9 @@ class PendingSaveQueue(
 		if (index < 0) {
 			return@synchronized FailedAttempt.AlreadyGone
 		}
-		val entry = current[index].let { it.copy(attempts = it.attempts + 1) }
+		val entry = current[index].let { it.copy(attempts = minOf(it.attempts, MAX_ATTEMPTS) + 1) }
 		val outcome = when {
+			entry.isWithdrawal() -> FailedAttempt.Retrying
 			entry.attempts >= MAX_ATTEMPTS -> FailedAttempt.DroppedAfterAttempts(entry.attempts)
 			entry.queuedAt < cutoff -> FailedAttempt.DroppedAsTooOld(entry.queuedAt)
 			else -> FailedAttempt.Retrying
@@ -150,7 +155,12 @@ class PendingSaveQueue(
 		return@synchronized outcome
 		}
 
-	/** Forget the queue, for a host that wipes consent state. */
+	/** Drop grants after authority invalidation; frozen withdrawals remain owed. */
+	fun discardGrants() = synchronized(store) {
+		store.writePending(store.readPending().filter { it.isWithdrawal() })
+	}
+
+	/** Forget the queue when the stored subject cannot be recovered. */
 	fun clear() = synchronized(store) {
 		store.writePending(emptyList())
 	}

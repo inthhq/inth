@@ -483,6 +483,7 @@ public final class ConsentCore: @unchecked Sendable {
             /// The acknowledgement this action records, installed with `next`.
             let acknowledgement: NoticeDismissal?
             let iabConsent: IABCommittedConsent?
+            let atomicIAB: Bool
         }
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
@@ -673,7 +674,8 @@ public final class ConsentCore: @unchecked Sendable {
                         confirmed: receipts
                     ),
                         acknowledgement: acknowledgement,
-                        iabConsent: nextIAB
+                        iabConsent: nextIAB,
+                        atomicIAB: resolved.policy.model == .iab
                 ))
             } catch {
                 return .failure(CoreErrorInfo(
@@ -703,13 +705,14 @@ public final class ConsentCore: @unchecked Sendable {
             // remembers is how duplicates happen and promising something nothing
             // remembers is how decisions go missing.
             let atomicID: String? = lock.withLock {
-                guard plan.iabConsent != nil, currentSnapshot.revision == plan.baseRevision,
+                guard plan.atomicIAB, currentSnapshot.revision == plan.baseRevision,
                     let config
                 else { return nil }
                 let envelope = StoredEnvelope(
                     snapshot: plan.next,
                     noticeDismissal: plan.acknowledgement ?? noticeDismissal,
-                    policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent)
+                    policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent,
+                    lastIABActionAt: actionAt)
                 guard
                     let id = plan.queue.commit(
                         envelope, body: plan.body,
@@ -724,7 +727,7 @@ public final class ConsentCore: @unchecked Sendable {
                 return id
             }
             let queued =
-                plan.iabConsent != nil
+                plan.atomicIAB
                 ? atomicID
                 : plan.queue.enqueue(
                     body: plan.body, subjectId: plan.payload.subjectId,
@@ -751,7 +754,7 @@ public final class ConsentCore: @unchecked Sendable {
             // withdrawn rather than replayed over it, and the caller is told the
             // action did not take.
             let applied = lock.withLock { () -> Bool in
-                if plan.iabConsent != nil { return true }
+                if plan.atomicIAB { return true }
                 guard currentSnapshot.revision == plan.baseRevision else { return false }
                 currentSnapshot = plan.next
                 if let acknowledgement = plan.acknowledgement {
@@ -1524,7 +1527,7 @@ public final class ConsentCore: @unchecked Sendable {
             var draft = ConsentSnapshot.Draft(current: currentSnapshot)
             draft.explicitChoice = nil
             currentSnapshot = draft.build(revision: currentSnapshot.revision)
-            queue?.clear()
+            queue?.discardGrants()
         }
     }
 
@@ -1533,6 +1536,7 @@ public final class ConsentCore: @unchecked Sendable {
     private func transitionIAB(user nextUser: KernelUser?, reset: Bool) -> Bool? {
         lock.withLock {
             guard let config, let queue, config.iab != nil || committedIAB != nil else { return nil }
+            if !reset && user?.externalId == nextUser?.externalId { return nil }
             var next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = nil
                 draft.effectivePermissions = .necessaryOnly
@@ -2049,6 +2053,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// still open.
     private func canDeliverIAB(_ body: Data) -> Bool {
         let wire = C15tJSON.parse(body)
+        if ConsentDelivery.isWithdrawal(body) { return true }
         guard wire?["subjectId"]?.stringValue == lock.withLock({ identity?.id }) else { return false }
         let tcString = wire?["tcString"]?.stringValue
         let requiresIAB = wire?["model"]?.stringValue == "iab" || lock.withLock { config?.iab != nil && resolvedPolicy?.policy.model == .iab }

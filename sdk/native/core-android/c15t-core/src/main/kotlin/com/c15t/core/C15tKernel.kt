@@ -1,5 +1,7 @@
 package com.c15t.core
 
+import com.c15t.core.model.isWithdrawal
+
 import com.c15t.core.iab.*
 import com.c15t.core.model.ActiveUI
 import com.c15t.core.model.ConfirmedCoverage
@@ -722,7 +724,7 @@ class C15tKernel(
 		// Obligation first, state second. A process that dies at this point already has
 		// the action on disk, and a save that gets no further than here promised nothing.
 		val entry: QueuedSave
-		if (nextIab != null) {
+		if (policy?.model == ConsentModel.IAB) {
 			synchronized(mutationLock) {
 				if (state.get() !== base)
 					return refusedCommit(
@@ -1458,6 +1460,10 @@ class C15tKernel(
 	 * is not owed spends no attempt and announces nothing.
 	 */
 	private fun deliverIfOwed(entry: QueuedSave): Delivery? {
+		if (entry.isWithdrawal()) {
+			if (!queue.isPending(entry.id)) return null
+			return deliver(entry)
+		}
 		if (entry.payload.subjectId != state.get().subject?.id) return null
 		val requiresIab =
 			synchronized(mutationLock) {
@@ -1669,7 +1675,7 @@ class C15tKernel(
 			} else false
 		if (valid) return snapshot.copy(model = ConsentModel.IAB)
 		committedIab = null
-		queue.clear()
+		queue.discardGrants()
 		return PolicyEvaluator.evaluate(
 				snapshot.copy(explicitChoice = null),
 				evaluationPolicy,
@@ -1692,6 +1698,7 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			if (iabConfiguration == null && committedIab == null) return@synchronized null
 			val current = state.get()
+			if (!reset && current.subject?.externalId == externalId) return@synchronized null
 			val subject = current.subject?.copy(externalId = externalId)
 			val next =
 				if (reset)
