@@ -110,6 +110,11 @@ allprojects {
 }
 ```
 
+Expo consumers can use the shipped `androidMavenRepository` plugin prop instead
+of editing generated native files. See [the packed Expo guide](expo-packed-consumer.md).
+The plugin has no default private repository and accepts credential environment
+variable names only.
+
 Keep `com.c15t` exclusive to that repository with `exclusiveContent`, not a
 `content` filter on one Maven repository. A content filter alone still lets
 earlier repositories supply these coordinates. Exclusive routing fails when

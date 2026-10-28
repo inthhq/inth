@@ -86,6 +86,14 @@ them back from `app.config.ts`, and the plugin is idempotent.
 `../../../native/core-swift`, which the binding's podspec needs inside this repository and
 a registry install does not. `C15T_LOCAL_PODS=false` leaves the Podfile alone.
 
+For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
+shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/c15t-private`
+unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
+come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
+plugin adds a Maven repository. See the maintained
+[packed consumer guide](../../../docs/internal/expo-packed-consumer.md) for the
+options, exclusive routing and clean external-consumer checks.
+
 ## Native build status
 
 Verified here: `bun run check-types` is clean, `expo export --platform all` writes

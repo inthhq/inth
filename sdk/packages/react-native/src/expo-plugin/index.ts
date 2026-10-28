@@ -1,7 +1,7 @@
 /**
  * Entry point for `@c15t/react-native/expo-plugin`.
  *
- * Add it to `app.json` and a standard install is done: the native core gets its
+ * Add it to `app.json` with an explicit Android artifact repository: the native core gets its
  * bootstrap config, the launch hook, the Android permission, and the iOS privacy
  * keys, and the same values reach JavaScript through `extra.c15t`.
  *
@@ -10,7 +10,10 @@
  *   "plugins": [
  *     [
  *       "@c15t/react-native/expo-plugin",
- *       { "backendURL": "https://consent.example.com" }
+ *       {
+ *         "backendURL": "https://consent.example.com",
+ *         "androidMavenRepository": { "url": "https://maven.example.com/c15t" }
+ *       }
  *     ]
  *   ]
  * }
@@ -48,3 +51,5 @@ export type {
 } from './params';
 export { TRANSPORT_MODES } from './params';
 export type { WorkflowContext } from './workflow';
+
+export type { C15tAndroidMavenRepository } from './maven';

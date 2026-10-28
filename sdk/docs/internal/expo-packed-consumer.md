@@ -43,12 +43,50 @@ C15T_LOCAL_PODS=false EXPO_PUBLIC_C15T_FAKE_NATIVE=false \
 The packed SDK carries its own Swift sources. Apple installer, pod resolution and
 iOS app acceptance still need the Apple stream's checks.
 
-The generated Android root build declares an exclusive `com.c15t` Maven
-repository using `C15T_MAVEN_URL`, defaulting to the private pilot GitHub Packages
-URL. Supply `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` through the supported
-secure environment. The generated Gradle script reads them at build time; it
-does not embed credentials. The bare RN fixture uses the same repository
-contract. Neither fixture substitutes a native source project.
+The shipped plugin accepts `androidMavenRepository`. It has no default
+repository. The fixture explicitly selects the private pilot GitHub Packages
+URL, or the `C15T_MAVEN_URL` environment override at prebuild time:
+
+```ts
+androidMavenRepository: {
+  url: 'https://maven.pkg.github.com/inthhq/c15t-private',
+  credentials: {
+    usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+    passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
+  },
+}
+```
+
+These are environment variable names, never credential values. Supply both
+values through the supported secure build environment. Gradle reads them at
+execution time and fails if either is absent. The plugin never reads their
+values into app configuration, generated Gradle files or `extra.c15t`.
+The URL must use HTTPS without embedded credentials, query parameters or a
+fragment. An absolute `file:///...` URL is accepted only for local staging,
+without credentials. Never upload that local URL to a cloud builder.
+
+The plugin writes a managed `exclusiveContent` block in Expo's Groovy root
+`build.gradle`. Repeated CNG replaces that block rather than appending copies;
+changing or removing the prop updates or removes it. `com.c15t` resolves only
+from the configured repository. Earlier repositories cannot supply matching
+coordinates, and missing artifacts fail without fallback. Kotlin DSL hosts
+must configure the equivalent settings-owned block themselves. The bare RN
+fixture uses the same exclusive repository contract. Neither fixture substitutes
+a native source project.
+
+For local staging, pass `C15T_MAVEN_URL=file:///absolute/path/maven-staging` to
+both prebuild and Gradle. Prebuild records the explicit URL, so changing the
+environment later requires another prebuild. Run the real host check from the
+consumer directory, without any React Native directory or Codegen override:
+
+```sh
+sh android/gradlew -p android :app:dependencies \
+  --configuration releaseRuntimeClasspath --console=plain
+```
+
+Gradle's dependency report can exit zero with unresolved coordinates. Check its
+output for `FAILED`, then assemble the app. Resolution alone does not prove an
+APK build or launch.
 
 Repeat prebuild with the same inputs and compare the generated Gradle settings,
 root build script and manifest before native assembly. CNG output alone does

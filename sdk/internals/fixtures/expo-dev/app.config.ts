@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import type { C15tPluginProps } from '@c15t/react-native/expo-plugin';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { withPodfile, withProjectBuildGradle } from 'expo/config-plugins';
+import { withPodfile } from 'expo/config-plugins';
 import type { ConfigPlugin } from 'expo/config-plugins';
 
 /**
@@ -43,36 +43,6 @@ const withC15tLocalCorePod: ConfigPlugin = (config) =>
 			(match) => `${match}\n  pod 'C15tCore', :path => '${corePath}'`
 		);
 
-		return cfg;
-	});
-
-/** Configure a binary repository in the generated host; credentials stay in the environment. */
-const withC15tMavenRepository: ConfigPlugin = (config) =>
-	withProjectBuildGradle(config, (cfg) => {
-		if (cfg.modResults.contents.includes('// c15t Maven artifacts')) {
-			return cfg;
-		}
-		cfg.modResults.contents += `
-// c15t Maven artifacts: no native source build is included in the host.
-allprojects {
-  repositories {
-    exclusiveContent {
-      forRepository {
-        maven {
-          url = uri(System.getenv('C15T_MAVEN_URL') ?: 'https://maven.pkg.github.com/inthhq/c15t-private')
-          if (url.scheme == 'https') {
-            credentials {
-              username = System.getenv('C15T_MAVEN_USERNAME')
-              password = System.getenv('C15T_MAVEN_TOKEN')
-            }
-          }
-        }
-      }
-      filter { includeGroup('com.c15t') }
-    }
-  }
-}
-`;
 		return cfg;
 	});
 
@@ -141,7 +111,20 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 您可以随时在设置中更改。`,
 };
 
+const mavenURL =
+	process.env.C15T_MAVEN_URL ??
+	'https://maven.pkg.github.com/inthhq/c15t-private';
+
 const c15tPluginProps: C15tPluginProps = {
+	androidMavenRepository: mavenURL.startsWith('https://')
+		? {
+				credentials: {
+					passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
+					usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+				},
+				url: mavenURL,
+			}
+		: { url: mavenURL },
 	backendURL,
 	// The App Tracking Transparency opt-in. Consent to marketing cookies is not Apple
 	// tracking authorization, so this fixture asks for both: the banner decides what
@@ -173,7 +156,6 @@ type PluginEntry = ConfigPlugin | NonNullable<ExpoConfig['plugins']>[number];
 const plugins: PluginEntry[] = [
 	// Only while this example lives next to the core it builds against.
 	...(process.env.C15T_LOCAL_PODS === 'false' ? [] : [withC15tLocalCorePod]),
-	withC15tMavenRepository,
 	// `expo export` and `expo run:*` both count as a native-build invocation, so
 	// the plugin's Expo Go guard passes on its own. There is no `skipNativeBuildCheck`
 	// here on purpose: this project has no Expo Go path.

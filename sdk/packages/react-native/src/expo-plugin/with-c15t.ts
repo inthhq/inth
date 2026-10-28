@@ -196,7 +196,10 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	next = withProjectBuildGradle(next, (configWithGradle) => ({
 		...configWithGradle,
-		modResults: applyProjectBuildGradle(configWithGradle.modResults),
+		modResults: applyProjectBuildGradle(
+			configWithGradle.modResults,
+			params.androidMavenRepository
+		),
 	}));
 
 	next = withAppBuildGradle(next, (configWithGradle) => {

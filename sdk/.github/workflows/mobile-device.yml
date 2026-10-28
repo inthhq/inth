@@ -203,12 +203,20 @@ jobs:
           C15T_MAVEN_URL: file://${{ github.workspace }}/native/core-android/build/maven-staging
         run: |
           set -ex
-          # `sh` rather than the wrapper path: the two example wrappers do not agree on
-          # the executable bit, and a Gradle launcher is POSIX sh either way.
+          # Invoke the POSIX Gradle launchers with sh on every runner.
           sh internals/fixtures/react-native-bare/android/gradlew -p internals/fixtures/react-native-bare/android assembleDebug
           # CNG regenerates the host repository declaration; neither app includes native source.
           (cd internals/fixtures/expo-dev && bun x expo prebuild --platform android --clean --no-install)
-          if rg 'native/core-android|dependencySubstitution' internals/fixtures/expo-dev/android/settings.gradle; then
+          if grep -Eq 'native/core-android|dependencySubstitution' internals/fixtures/expo-dev/android/settings.gradle; then
+            exit 1
+          fi
+          mkdir -p internals/fixtures/expo-dev/.artifacts
+          sh internals/fixtures/expo-dev/android/gradlew -p internals/fixtures/expo-dev/android \
+            :app:dependencies --configuration debugRuntimeClasspath \
+            > internals/fixtures/expo-dev/.artifacts/android-dependencies.log 2>&1
+          cat internals/fixtures/expo-dev/.artifacts/android-dependencies.log
+          # Gradle's dependencies report exits zero even when coordinates are unresolved.
+          if grep -Eq '(^|[[:space:]])FAILED([[:space:]]|$)' internals/fixtures/expo-dev/.artifacts/android-dependencies.log; then
             exit 1
           fi
           sh internals/fixtures/expo-dev/android/gradlew -p internals/fixtures/expo-dev/android assembleDebug
