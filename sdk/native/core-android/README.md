@@ -71,6 +71,10 @@ that long bounds the wait itself: the core grows no timeout, because whatever nu
 picked would become an answer the policy never gave. Nothing outside the resolved policy
 and the subject's c15t choice moves a category to `GRANTED`.
 
+See the maintained [Android artifact guide](../../docs/internal/android-artifacts.md)
+for versioned Maven preparation, repository configuration and isolated consumer/R8 checks.
+Local staging is not external registry proof.
+
 ## Commands
 
 ```bash

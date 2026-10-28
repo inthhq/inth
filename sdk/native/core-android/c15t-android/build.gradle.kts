@@ -1,4 +1,7 @@
 plugins {
+	`maven-publish`
+	signing
+	id("org.jetbrains.dokka")
 	// AGP 9 compiles Kotlin itself, so there is no separate Kotlin Android plugin to
 	// apply here; adding it collides with the `kotlin` extension AGP registers.
 	alias(libs.plugins.android.library)
@@ -17,6 +20,10 @@ android {
 		// emulator, so `:c15t-android:connectedDebugAndroidTest` is a local gate; see
 		// README.md.
 		testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+	}
+
+	publishing {
+		singleVariant("release") { withSourcesJar() }
 	}
 
 	buildTypes {
@@ -78,4 +85,14 @@ dependencies {
 	androidTestImplementation(libs.androidx.test.core)
 	androidTestImplementation(libs.androidx.test.junit)
 	androidTestImplementation(libs.junit)
+}
+
+apply(from = "../gradle/publishing.gradle")
+
+// Dokka 2.1 does not discover AGP 9's built-in Kotlin source set automatically.
+dokka {
+	dokkaSourceSets.register("main") {
+		sourceRoots.from(file("src/main/kotlin"))
+		classpath.from(configurations.named("releaseCompileClasspath"))
+	}
 }

@@ -1,0 +1,35 @@
+pluginManagement {
+    repositories {
+        google { content { includeGroupAndSubgroups('com.android'); includeGroupAndSubgroups('com.google'); includeGroupAndSubgroups('androidx') } }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google { content { includeGroupAndSubgroups('com.android'); includeGroupAndSubgroups('com.google'); includeGroupAndSubgroups('androidx') } }
+        mavenCentral()
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri(providers.gradleProperty('c15t.repository').get())
+                    if (url.scheme == 'https') {
+                        credentials {
+                            username = System.getenv('C15T_MAVEN_USERNAME')
+                            password = System.getenv('C15T_MAVEN_TOKEN')
+                        }
+                    }
+                }
+            }
+            filter { includeGroup('com.c15t') }
+        }
+    }
+}
+rootProject.name = 'c15t-artifact-consumer'
+include ':headless', ':app'
+if (file('node_modules/@c15t/react-native').isDirectory()) {
+    include ':c15t-react-native'
+    project(':c15t-react-native').projectDir = file('node_modules/@c15t/react-native/android/c15t-react-native')
+}

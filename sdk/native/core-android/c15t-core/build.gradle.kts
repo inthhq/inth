@@ -1,4 +1,7 @@
 plugins {
+	`maven-publish`
+	signing
+	id("org.jetbrains.dokka")
 	alias(libs.plugins.kotlin.jvm)
 	alias(libs.plugins.kotlin.serialization)
 }
@@ -51,3 +54,10 @@ tasks.register<JavaExec>("bench") {
 	// One collector keeps the numbers comparable between runs.
 	jvmArgs = listOf("-XX:+UseSerialGC")
 }
+
+java { withSourcesJar() }
+
+apply(from = "../gradle/publishing.gradle")
+
+// Existing bundle tooling reads this stable build path; Maven still uses versioned filenames.
+tasks.named<Jar>("jar") { archiveFileName.set("c15t-core.jar") }

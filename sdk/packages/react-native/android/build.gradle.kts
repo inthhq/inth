@@ -1,5 +1,5 @@
 // The root of the standalone build started from this directory. settings.gradle.kts owns the
-// wrapper, the included build of native/core-android, and the pinned plugin versions there,
+// wrapper, the native artifact repository, and the pinned plugin versions there,
 // so the root project itself configures nothing, and this file carries no plugin at all.
 //
 // This is not the library's build script, in this build or in anyone else's. React Native

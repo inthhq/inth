@@ -421,18 +421,41 @@ jobs:
         run: |
           set -ex
           cd native/core-android
-          ./gradlew :c15t-core:test :c15t-android:assembleRelease --console=plain
+          ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest \
+            :c15t-core:publishAllPublicationsToStagingRepository \
+            :c15t-android:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
           # The mobile harness invokes Gradle with --offline so a benchmark run never
           # waits on a download. Warm the bench source set here, or the Kotlin rows
           # report not-measured and the summary step fails the run.
           ./gradlew :c15t-core:bench --console=plain -q
+      - name: Pack the RN adapter for the isolated Android consumer
+        if: matrix.kind == 'android-js'
+        working-directory: packages/react-native
+        run: |
+          bun run build
+          bun pm pack --filename "${RUNNER_TEMP}/c15t-react-native.tgz"
+      - name: Resolve staged native binaries in isolated AGP 8 consumers
+        if: matrix.kind == 'android-js'
+        run: |
+          native_version="$(sed -n 's/^c15t.native.version=//p' native/core-android/gradle.properties)"
+          python3 native/core-android/consumer-smoke/verify.py \
+            --staging-repository native/core-android/build/maven-staging \
+            --version "${native_version}" --output "${RUNNER_TEMP}/c15t-android-consumer"
+          python3 native/core-android/consumer-smoke/verify.py \
+            --staging-repository native/core-android/build/maven-staging \
+            --version "${native_version}" --rn-package "${RUNNER_TEMP}/c15t-react-native.tgz" \
+            --output "${RUNNER_TEMP}/c15t-packed-android-consumer"
       - name: Assemble the React Native Android binding
         if: matrix.kind == 'android-js'
+        env:
+          C15T_MAVEN_URL: file://${{ github.workspace }}/native/core-android/build/maven-staging
         run: |
           cd packages/react-native/android
           ./gradlew :c15t-react-native:assembleRelease --console=plain
       - name: Generate the Codegen spec and compile the binding against it
         if: matrix.kind == 'android-js'
+        env:
+          C15T_MAVEN_URL: file://${{ github.workspace }}/native/core-android/build/maven-staging
         # Assembling the AAR proves the bridge compiles against the hand-written stand-in in
         # :c15t-spec. It says nothing about what Codegen emits for src/specs, which is the
         # class that exists at runtime: a stand-in that drifted from generated output still
@@ -481,6 +504,10 @@ jobs:
           include-hidden-files: true
           path: |
             .ci-reports/${{ matrix.report }}/
+            ${{ runner.temp }}/c15t-android-consumer/result.json
+            ${{ runner.temp }}/c15t-android-consumer/consumer/app/build/outputs/
+            ${{ runner.temp }}/c15t-packed-android-consumer/result.json
+            ${{ runner.temp }}/c15t-packed-android-consumer/consumer/app/build/outputs/
             native/core-android/build/reports/
             packages/react-native/android/c15t-react-native/build/reports/
             packages/react-native/coverage/

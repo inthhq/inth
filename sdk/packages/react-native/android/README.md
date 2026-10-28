@@ -13,8 +13,10 @@ took, and reports results as the JSON in `../src/protocol`.
 | `c15t-spec/` | Where the bridge gets a `NativeC15tSpec` to compile against: the hand-written stand-in, or Codegen's own output when asked for it. Never shipped |
 | `codegen/generate-spec.mjs` | The one script that runs `@react-native/codegen` over `../src/specs`, shared by both Gradle builds and the drift check |
 
-The consent engine is not copied here. It is either the included build of
-`native/core-android` or the published `com.c15t` artifacts, selected by a property.
+The consent engine comes from versioned `com.c15t` artifacts. See the maintained
+[artifact preparation and isolated consumer guide](../../../docs/internal/android-artifacts.md)
+for repository credentials, staging and external resolution checks. Local staging does not
+prove that the coordinates can be resolved remotely.
 
 ## Autolinking
 
@@ -47,15 +49,16 @@ frame quietly never gets merged.
 ./gradlew build                                    # assemble + unit tests + lint
 ./gradlew :c15t-react-native:test                  # unit tests only
 ./gradlew :c15t-react-native:assembleRelease       # the AAR
-./gradlew build -Pc15t.core.fromSource=false       # against the published core artifacts
 
 # React Native's own generator, then compile the spec module against its output
 ./gradlew -Pc15t.spec.source=codegen :c15t-spec:assembleRelease
 ```
 
 JDK 17 and an Android SDK are required. `local.properties` holds `sdk.dir` and is gitignored;
-`ANDROID_HOME` works too. AGP 9 is required: the module compiles Kotlin through AGP's built-in
-Kotlin support, which is the AGP React Native 0.87's own Gradle plugin is built against.
+`ANDROID_HOME` works too. The standalone build pins AGP 9.2.1. A host owns its
+AGP/Kotlin versions; AGP 8 hosts apply their Kotlin Android plugin, while AGP 9
+uses built-in Kotlin unless the host opts out. Set `C15T_MAVEN_URL` and the
+repository credentials before running these commands.
 `codegen` mode needs `node` on `PATH` and a `react-native` install to resolve
 `@react-native/codegen` from, which the package's own devDependency satisfies inside this
 repository.
@@ -64,8 +67,7 @@ repository.
 
 | Property | Default | Effect |
 | --- | --- | --- |
-| `c15t.core.fromSource` | `true` | `false` resolves `com.c15t:c15t-core` and `c15t-android` from the repository instead of building `native/core-android` as an included build. This is what a CI or release build wants once the core ships |
-| `c15t.core.version` | package version | The version of those published artifacts |
+| `c15t.core.version` | `3.0.0-alpha.1` | The version of those published artifacts |
 | `c15t.core.group` | `com.c15t` | Their Maven group |
 | `c15t.spec.source` | `auto` | Where `NativeC15tSpec` comes from. `auto` and `stub` compile the hand-written stand-in in `:c15t-spec`. `codegen` runs `@react-native/codegen` over `../src/specs` into `:c15t-spec/build/generated/c15t-spec` and swaps that module's source set to the result, so the build compiles against React Native's real generator output instead of a description of it. In a host app there is no `:c15t-spec` project, so `codegen` generates into the bridge module instead, and `auto` generates there rather than failing. An unrecognised value fails the build |
 | `c15t.reactNativeVersion` | unset | Only for the standalone build. A host app leaves it unset and React Native's root plugin supplies the version, having forced `com.facebook.react:react-android` onto every configuration |
