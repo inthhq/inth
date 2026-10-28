@@ -87,18 +87,24 @@ accepted the request. Delivery sends `tcString` and `model: "iab"` through the r
 `POST /subjects` contract beside category receipts, policy inputs, identity and
 `givenAt`. Retry and restart reuse the exact saved HTTP bytes, including their
 original domain. Retry bookkeeping updates the same envelope without changing
-the decision or body. Existing attempt and retention ceilings still apply.
+the decision or body. Grant entries keep their attempt and retention ceilings.
+Frozen native withdrawals remain owed until delivery, even beyond those ceilings.
+The queue refuses a new action when protected withdrawals fill its capacity.
 
-A newer IAB decision supersedes older queued IAB decisions. A withdrawal therefore
-cannot replay an older queued acceptance. Delivery also checks the actual saved
-body against the current TC string, identity and action time. An already started
+A newer IAB decision supersedes older queued grants. Frozen withdrawals remain
+in action order with their original identity, external ID, domain and exact body.
+A withdrawal cannot replay an older queued acceptance. Grant delivery checks the
+actual saved body against current TC authority, identity and action time. A full
+withdrawal has no category, purpose, vendor, publisher, special-feature or LI grants
+and can be delivered after the current authority expires or changes. An already started
 request may finish after a withdrawal; the core cannot recall a request already
 on the network.
 
 Backend consent IDs include `givenAt`. The core advances IAB action times by at
 least one millisecond, even when the clock repeats. A durable timestamp watermark
 survives reset and identity changes so a later decision cannot reuse an earlier
-submission ID. The TC creation day stays unchanged across edits to the same
+action-time input. This does not establish live backend acceptance or matching
+backend consent IDs. The TC creation day stays unchanged across edits to the same
 consent record; consent version increments per successful decision.
 
 ## Hydrate and invalidate authority
@@ -106,19 +112,24 @@ consent record; consent version increments per successful decision.
 Hydration validates stored IAB choices before exposing authority. It checks CMP
 and publisher configuration, subject and external identity, policy fingerprint,
 GVL and TCF policy versions, expiry and regenerated TC bytes. Invalid or expired
-records lose their grants and pending deliveries. A changed list or configuration
+records lose their grants and pending grant deliveries. Frozen withdrawals keep
+their delivery obligation through expiry, clock skew, GVL, policy, model,
+configuration and fingerprint changes. A changed list or configuration
 currently requires a fresh decision; ENG-509 owns finer retention and refresh
 rules. A cached compatible list can support offline commits. This does not prove
 that the list is fresh enough for release.
 
-Existing category-only envelopes still hydrate for apps without native IAB
-configuration. Enabling native IAB configuration requires a valid native IAB
-record or fresh consent. Category-only backend receipts cannot restore native
-IAB grants. Older SDKs reject envelopes with unknown authority fields and require
+An IAB policy requires valid native authority for every optional category,
+including categories outside a permissive policy scope. Legacy category-only
+envelopes and backend category receipts cannot restore IAB grants, even when the
+host has no native CMP configuration. Reject all can still record a pure
+category-only withdrawal when CMP configuration or a GVL is missing. Older SDKs reject envelopes with unknown authority fields and require
 a fresh decision; do not rely on downgrades preserving these choices.
 
-Identify, logout and reset atomically persist an empty consent state and empty
-pending queue before publishing the transition. A failed write keeps the previous
+Repeating identify with the same external ID and logout while already anonymous
+preserves consent and the queue. Genuine identity transitions and reset atomically
+persist empty consent authority while retaining frozen withdrawals under their
+original delivery owner. The installation subject ID remains unchanged. A failed write keeps the previous
 identity and consent state and emits `identity-write-failed` or
 `reset-write-failed`. Reset retains app configuration and the installation subject
 ID, then requests a new policy. These operations do not erase backend audit
@@ -140,3 +151,28 @@ and mobile registration, complete typed IABTCF publication before vendor startup
 Google App certification and AC v2 support. ENG-509, ENG-510 and ENG-511 remain
 required. The selected native screens and RN adapter must consume this authority
 without creating a JS consent or TCF engine.
+
+## Recover a missing or corrupt subject
+
+Core hydration owns identity recovery, including raw bootstrap and custom-core
+attachment. Missing or undecodable identity with stored records clears the
+consent envelope and queue before exposing any restored choice. It emits
+`subject-id-missing` or `subject-id-corrupt` once per core launch. A mismatched
+envelope emits `subject-id-mismatch`. A normal first launch emits none of these.
+Swift checks every public `hydrate()` call; Kotlin checks bootstrap and subject
+resolution. The installer must keep its storage probe and refusal behavior and
+leave record sanitation to the core so hosts receive these diagnostics.
+
+## Verify native compatibility
+
+The development oracle uses pinned `@iabtechlabtcf/core` 1.5.22. Both native suites
+compare actual bytes for ID gaps, deleted vendors, restriction adjacency,
+three-day and year-long creation/update intervals, a 133-vendor sparse list and
+an excerpt of official TCF 2.4 GVL 182. The excerpt records its source URL and the
+SHA256 of the complete fetched document. These fixtures do not submit any CMP
+identity for certification.
+
+Custom Kotlin stores must implement `writeDurably` and acknowledge their actual
+storage operation. The default refuses without changing data. Memory-cache
+readback cannot establish durability. Power-loss behavior, directory fsync and
+device latency for full-envelope queue I/O remain unproven release gates.
