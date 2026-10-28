@@ -2,6 +2,8 @@ package com.c15t.core.iab
 
 import com.c15t.core.tc.*
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.*
+import java.security.MessageDigest
 
 /** TCF restriction types: 0 disallows, 1 requires consent, 2 requires LI. */
 @Serializable
@@ -49,9 +51,21 @@ data class IabCommittedConsent(
 	val createdAt: Long,
 	val actionAt: Long,
 	val tcString: String,
+	val disclosureID: String? = null,
 )
 
 internal object IabAuthority {
+	fun disclosureID(gvl: GlobalVendorList): String {
+		fun canonical(v: JsonElement): JsonElement = when (v) {
+			is JsonObject -> JsonObject(v.toSortedMap().mapValues { canonical(it.value) })
+			is JsonArray -> JsonArray(v.map { canonical(it) })
+			else -> v
+		}
+		return MessageDigest.getInstance("SHA-256")
+			.digest(canonical(GlobalVendorListJson.toJsonElement(gvl)).toString().toByteArray(Charsets.UTF_8))
+			.joinToString("") { "%02x".format(it) }
+	}
+
 	val neverLI = setOf(1, 3, 4, 5, 6)
 
 	fun build(
@@ -185,6 +199,7 @@ internal object IabAuthority {
 				createdAt,
 				actionAt,
 				string,
+				disclosureID(gvl),
 			)
 			.detached()
 	}
@@ -272,3 +287,15 @@ internal fun IabCommittedConsent.detached(): IabCommittedConsent =
 
 internal fun IabCommittedConsent.isCurrent(now: Long, maxAge: Long): Boolean =
 	now >= 0 && actionAt >= 0 && actionAt - now <= 600_000 && maxOf(0, now - actionAt) < maxAge
+
+/** Compact availability; no GVL serialization is needed for these reads. */
+enum class IabListAvailability { UNAVAILABLE, MISSING, FRESH, CACHED, OFFLINE, STALE }
+data class IabLifecycleStatus(
+	val availability: IabListAvailability,
+	val requiresConsent: Boolean,
+	val revision: Long,
+	val vendorListVersion: Long?,
+	val policyVersion: Long?,
+)
+/** Preferences session bound to the disclosure revision it opened on. */
+data class IabDraft(val revision: Long, val choices: IabChoices)

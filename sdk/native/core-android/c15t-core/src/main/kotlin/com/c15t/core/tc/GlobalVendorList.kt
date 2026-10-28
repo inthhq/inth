@@ -49,6 +49,8 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class GlobalVendorList(
+	@EncodeDefault(EncodeDefault.Mode.NEVER)
+	val standardTexts: GvlStandardTexts? = null,
 	/** Purposes the framework defines, keyed by purpose id. A list without them is refused. */
 	val purposes: Map<Int, GvlLocalizedEntry>,
 	/** Vendor declarations, keyed by vendor id. A list without them is refused. */
@@ -197,4 +199,13 @@ data class GvlVendorUrl(
 data class GvlVendorOverflow(
 	@EncodeDefault(EncodeDefault.Mode.NEVER)
 	val httpGetLimit: Long? = null,
+)
+
+/** TCF 2.4 standard explanations. Kept with the list's disclosure version. */
+@Serializable
+data class GvlStandardTexts(
+	val features: String,
+	val purposes: String? = null,
+	val specialFeatures: String? = null,
+	val specialPurposes: String? = null,
 )

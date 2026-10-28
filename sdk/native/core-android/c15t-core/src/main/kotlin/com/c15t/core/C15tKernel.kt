@@ -138,6 +138,9 @@ class C15tKernel(
 
 	private val state = AtomicReference(ConsentSnapshot.denyAll())
 	private var lastIabActionAt: Long? = null
+	private var iabListFetchedAt: Long? = null
+	private var iabListFromCache = true
+	private var iabListOffline = false
 	private var committedIab: IabCommittedConsent? = null
 	private val iabConfiguration = config.iab?.detached()
 	/** Compact authority is read natively; full drafts do not cross the RN stock UI boundary. */
@@ -146,7 +149,7 @@ class C15tKernel(
 			synchronized(mutationLock) {
 				committedIab
 					?.takeIf { saved ->
-						saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
+						listIsUsable() && saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
 							evaluationPolicy?.model == ConsentModel.IAB &&
 							!state.get().policyPending
 					}
@@ -160,12 +163,41 @@ class C15tKernel(
 			val snapshot = state.get()
 			val gvl = snapshot.iab?.gvl ?: return@synchronized false
 			val policy = evaluationPolicy ?: return@synchronized false
-			!snapshot.policyPending &&
+			listIsUsable() && !snapshot.policyPending &&
 				policy.model == ConsentModel.IAB &&
 				saved.fingerprint == policy.choiceFingerprint &&
 				saved.isCurrent(clock.nowMillis(), policy.choiceMs) &&
 				saved.allows(vendorId, purposeId, basis, gvl)
 		}
+
+	private fun listIsUsable(): Boolean {
+		val fetched = iabListFetchedAt ?: return false
+		val now = clock.nowMillis()
+		return fetched >= 0 && now >= fetched && now - fetched < config.iabListMaxAgeMs
+	}
+
+	fun iabStatus(): IabLifecycleStatus = synchronized(mutationLock) {
+		val gvl = state.get().iab?.gvl
+		val availability = when {
+			iabConfiguration == null -> IabListAvailability.UNAVAILABLE
+			gvl == null -> IabListAvailability.MISSING
+			!listIsUsable() -> IabListAvailability.STALE
+			iabListOffline -> IabListAvailability.OFFLINE
+			iabListFromCache -> IabListAvailability.CACHED
+			else -> IabListAvailability.FRESH
+		}
+		IabLifecycleStatus(availability, committedIab?.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) != true || !listIsUsable(),
+			state.get().revision, gvl?.vendorListVersion, gvl?.tcfPolicyVersion)
+	}
+
+	fun openIabDraft(): IabDraft? = synchronized(mutationLock) {
+		if (iabConfiguration == null || evaluationPolicy?.model != ConsentModel.IAB ||
+			state.get().policyPending || !listIsUsable()) null
+		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
+	}
+
+	fun saveIab(draft: IabDraft, categories: Map<ConsentCategory, Boolean>): CommitResult =
+		save(CommitIntent.Iab(draft.choices, categories), expectedRevision = draft.revision)
 
 	private val mutationLock = Any()
 	private val commitGate = java.util.concurrent.Semaphore(1)
@@ -291,6 +323,7 @@ class C15tKernel(
 			val restored = envelope.snapshot
 			synchronized(mutationLock) {
 				evaluationPolicy = envelope.evaluationPolicy
+				iabListFetchedAt = envelope.iabListFetchedAt
 				committedIab = envelope.iabConsent
 				// A backward clock jump must not let a restart reuse an action time.
 				lastIabActionAt =
@@ -448,7 +481,10 @@ class C15tKernel(
 	 * `necessary` is always true. Every optional category is false while the state
 	 * is not ready or the policy is still pending.
 	 */
-	fun isAllowed(category: ConsentCategory): Boolean = state.get().isAllowed(category)
+	fun isAllowed(category: ConsentCategory): Boolean = synchronized(mutationLock) {
+		if (category != ConsentCategory.NECESSARY && evaluationPolicy?.model == ConsentModel.IAB &&
+			iabConfiguration != null && !listIsUsable()) false else state.get().isAllowed(category)
+	}
 
 	/**
 	 * Call [onChange] now with the current permission for [category], then again on
@@ -617,6 +653,8 @@ class C15tKernel(
 					"concurrent-change",
 					"The draft was based on an older consent snapshot",
 				)
+			if (intent is CommitIntent.Iab && expectedRevision == null)
+				return@mutate refusedCommit("iab-draft-required", "Open a native IAB draft and save its disclosure revision")
 			surfaceAtAction = current.activeUI
 			policy = evaluationPolicy
 			if (policy?.model == ConsentModel.IAB) {
@@ -643,6 +681,7 @@ class C15tKernel(
 						"iab-unavailable",
 						"IAB saves require CMP configuration and a disclosed vendor list",
 					)
+				if (!listIsUsable()) return refusedCommit("iab-list-stale", "Refresh the vendor list before saving")
 				val choices =
 					when (intent) {
 						is CommitIntent.All -> IabAuthority.accepting(gvl, configuration)
@@ -760,6 +799,7 @@ class C15tKernel(
 				gvl = published.iab?.gvl,
 				iabConsent = if (isIab) nextIab else committedIab,
 				lastIabActionAt = if (isIab) actionAt else lastIabActionAt,
+				iabListFetchedAt = iabListFetchedAt,
 			)
 		}
 		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab))
@@ -1363,6 +1403,11 @@ class C15tKernel(
 			//
 			// Inside the latch rather than outside it, because the retained half already went
 			// through this line on the launch that served it, and on the read that hydrated it.
+			iabListOffline = outcome !is TransportOutcome.Success
+			if (mapped.gvl != null) {
+				iabListFetchedAt = clock.nowMillis()
+				iabListFromCache = false
+			}
 			val latchedVendorList = mapped.gvl?.narrowToVendorIds(config.vendors) ?: base.iab?.gvl
 			mapped.resolvedGpcDetection?.let { detected = it }
 			emitted = mapped.error
@@ -1620,7 +1665,7 @@ class C15tKernel(
 		val gvl = snapshot.iab?.gvl
 		val valid =
 			if (
-				saved != null &&
+				listIsUsable() && saved != null &&
 					saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
 					evaluationPolicy?.model == ConsentModel.IAB &&
 					c != null &&
@@ -1630,7 +1675,8 @@ class C15tKernel(
 					saved.externalId == snapshot.subject?.externalId &&
 					saved.fingerprint == evaluationPolicy?.choiceFingerprint &&
 					saved.vendorListVersion.toLong() == gvl.vendorListVersion &&
-					saved.policyVersion.toLong() == gvl.tcfPolicyVersion
+					saved.policyVersion.toLong() == gvl.tcfPolicyVersion &&
+					saved.disclosureID == IabAuthority.disclosureID(gvl)
 			) {
 				try {
 					val rebuilt =
@@ -1707,6 +1753,7 @@ class C15tKernel(
 					evaluationPolicy = if (reset) null else evaluationPolicy,
 					gvl = if (reset) null else next.iab?.gvl,
 					lastIabActionAt = lastIabActionAt,
+					iabListFetchedAt = if (reset) null else iabListFetchedAt,
 				)
 			envelope to next
 		} ?: return null
@@ -1867,6 +1914,7 @@ class C15tKernel(
 				noticeDismissal = noticeDismissal,
 				gvl = snapshot.iab?.gvl,
 					iabConsent = committedIab,
+					iabListFetchedAt = iabListFetchedAt,
 					lastIabActionAt = lastIabActionAt,
 				)
 		}

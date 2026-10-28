@@ -5,7 +5,7 @@ description: Native CMP configuration, complete IAB drafts, atomic persistence, 
 
 The Swift and Kotlin cores own IAB choices and generate TC strings without a JS
 runtime. This contract is for native core and platform implementers. RN commands,
-shared SwiftUI and Compose screens, GVL refresh rules, platform key publication,
+shared SwiftUI and Compose screens and complete platform key publication,
 and Additional Consent v2 have separate integration work.
 
 ## Configure an approved CMP identity
@@ -49,6 +49,8 @@ the committed choices expose that normalized result.
 
 Use Swift `save(.iab(choices, categories: categories), expectedRevision: revision)`
 or Kotlin `save(CommitIntent.Iab(choices, categories), expectedRevision = revision)`.
+Custom IAB saves require a revision and otherwise reject with `iab-draft-required`.
+Prefer `openIABDraft` and `saveIAB` on Swift, or `openIabDraft` and `saveIab` on Kotlin.
 Capture the revision when opening the native draft. A changed revision rejects
 with `concurrent-change`, leaving the current decision intact. The category map
 records the app categories this action confirmed; it is separate from IAB purpose
@@ -133,10 +135,9 @@ and publisher configuration, subject and external identity, policy fingerprint,
 GVL and TCF policy versions, expiry and regenerated TC bytes. Invalid or expired
 records lose their grants and pending grant deliveries. Frozen withdrawals keep
 their delivery obligation through expiry, clock skew, GVL, policy, model,
-configuration and fingerprint changes. A changed list or configuration
-currently requires a fresh decision; ENG-509 owns finer retention and refresh
-rules. A cached compatible list can support offline commits. This does not prove
-that the list is fresh enough for release.
+configuration and fingerprint changes. A changed list or configuration requires
+a fresh decision. The release uses the conservative refresh and retention rules
+below. A compatible list within its age limit can support offline commits.
 
 An IAB policy requires valid native authority for every optional category,
 including categories outside a permissive policy scope. Legacy category-only
@@ -172,10 +173,10 @@ The fixture generator and its Vitest test are development tools only.
 
 This work does not establish device behavior, vendor SDK interoperability,
 performance, registry publication or certification. First release still requires
-TCF 2.4 disclosures, including GVL `standardTexts.features`, approved CMP identity
-and mobile registration, complete typed IABTCF publication before vendor startup,
-Google App certification and AC v2 support. ENG-509, ENG-510 and ENG-511 remain
-required. The selected native screens and RN adapter must consume this authority
+native UI rendering of TCF 2.4 disclosures, including the preserved
+`standardTexts.features`, approved CMP identity and mobile registration, complete
+typed IABTCF publication before vendor startup, Google App certification and
+AC v2 support. ENG-510 and ENG-511 remain required. The selected native screens and RN adapter must consume this authority
 without creating a JS consent or TCF engine.
 
 ## Recover a missing or corrupt subject
@@ -202,3 +203,37 @@ Custom Kotlin stores must implement `writeDurably` and acknowledge their actual
 storage operation. The default refuses without changing data. Memory-cache
 readback cannot establish durability. Power-loss behavior, directory fsync and
 device latency for full-envelope queue I/O remain unproven release gates.
+
+## Refresh disclosures and work offline
+
+A fresh native GVL remains usable for seven days by default. Configure
+`iabListMaxAgeMs` to shorten the limit. Fetch time persists with the authority;
+a successful response without a GVL does not renew it. A future fetch time or
+missing fetch time is stale. An old envelope without disclosure binding needs
+fresh consent.
+
+`iabStatus` returns a small availability record and the list and policy versions.
+It distinguishes unavailable CMP configuration, missing list, fresh network
+list, cached startup, offline cached list and stale list. This read does not
+serialize the GVL. Offline cached consent remains valid only while both the
+list and choice are within their age limits. Stale lists deny native gates,
+refuse drafts and saves, and require a successful list refresh. Refresh on
+foreground and connectivity changes. Reopen preferences after refreshing.
+
+This release retains a choice only when CMP and publisher configuration,
+identity, policy fingerprint, list version, policy version and the complete
+normalized disclosed content all agree. A SHA-256 binding also detects a
+changed disclosure served under the same list number. Any difference clears
+all IAB grants and obsolete queued grants and requests a new decision. This
+includes additions, removals, legal-basis changes, publisher restrictions and
+changed standard explanations. No previous grant extends to a new vendor or
+purpose. The SDK never turns a refresh into a consent action or regenerates an
+old save against new disclosures.
+
+The GVL retains `standardTexts.features` and its other standard explanations
+through narrowing, persistence and native disclosure reads. Fetch the full list
+once when opening a presenter. Use the compact lifecycle record during an open
+session. Saves require the revision the presenter opened on, so a refresh or
+competing save rejects the old draft with `concurrent-change`. The caller keeps
+the rejected draft for explanation, then reloads a compatible disclosure before
+asking for another action.

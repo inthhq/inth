@@ -59,6 +59,8 @@ public struct CoreConfig: @unchecked Sendable {
     public let vendors: [Int]?
     /// Approved CMP identity and publisher settings, required for native IAB commits.
     public let iab: IABConfiguration?
+    /// Maximum age of a fetched GVL. A list-less response never renews this clock.
+    public let iabListMaxAgeMs: Int64
     public let overrides: ConsentOverrides
     public let user: KernelUser?
     /// The Global Privacy Control signal as the host app reports it.
@@ -94,6 +96,7 @@ public struct CoreConfig: @unchecked Sendable {
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
         iab: IABConfiguration? = nil,
+        iabListMaxAgeMs: Int64 = 604_800_000,
         overrides: ConsentOverrides = .default(),
         user: KernelUser? = nil,
         gpc: Bool? = nil,
@@ -107,6 +110,7 @@ public struct CoreConfig: @unchecked Sendable {
         self.consentCategories = consentCategories
         self.vendors = vendors
         self.iab = iab
+        self.iabListMaxAgeMs = max(1, iabListMaxAgeMs)
         self.overrides = overrides
         self.user = user
         self.gpc = gpc
@@ -145,12 +149,15 @@ public final class ConsentCore: @unchecked Sendable {
     private var policyWire: JSONValue?
     private var noticeDismissal: NoticeDismissal?
     private var lastIABActionAt: Int64?
+    private var iabListFetchedAt: Int64?
+    private var iabListFromCache = true
+    private var iabListOffline = false
     private var committedIAB: IABCommittedConsent?
 
     /// The last native decision. The bridge does not receive the full draft.
     public func iabConsent() -> IABCommittedConsent? {
         lock.withLock {
-            guard let saved = committedIAB, let resolved = resolvedPolicy, resolved.policy.model == .iab,
+            guard listIsUsableLocked(), let saved = committedIAB, let resolved = resolvedPolicy, resolved.policy.model == .iab,
                 !currentSnapshot.policyPending,
                 let now = config?.now(), saved.isCurrent(now: now, maxAge: resolved.policy.choiceMaxAgeMs)
             else { return nil }
@@ -161,13 +168,48 @@ public final class ConsentCore: @unchecked Sendable {
     public func isIABAllowed(vendorId: Int, purposeId: Int, basis: IABLegalBasis) -> Bool {
         // Read authority and its disclosure under the same lock as the commit.
         lock.withLock {
-            guard let saved = committedIAB, let gvl = currentSnapshot.iab?.gvl,
+            guard listIsUsableLocked(), let saved = committedIAB, let gvl = currentSnapshot.iab?.gvl,
                 let resolved = resolvedPolicy, !currentSnapshot.policyPending,
                 resolved.policy.model == .iab, saved.fingerprint == resolved.choiceFingerprint,
                 let now = config?.now(), saved.isCurrent(now: now, maxAge: resolved.policy.choiceMaxAgeMs)
             else { return false }
             return saved.allows(vendorId: vendorId, purposeId: purposeId, basis: basis, gvl: gvl)
         }
+    }
+
+    private func listIsUsableLocked() -> Bool {
+        guard let c = config, let fetched = iabListFetchedAt, fetched >= 0,
+            currentSnapshot.iab?.gvl != nil else { return false }
+        let now = c.now()
+        return now >= fetched && now - fetched < c.iabListMaxAgeMs
+    }
+
+    /// List state and disclosure versions without a full-GVL bridge payload.
+    public func iabStatus() -> IABLifecycleStatus {
+        lock.withLock {
+            let gvl = currentSnapshot.iab?.gvl
+            let availability: IABListAvailability = config?.iab == nil ? .unavailable
+                : gvl == nil ? .missing : !listIsUsableLocked() ? .stale
+                : iabListOffline ? .offline : iabListFromCache ? .cached : .fresh
+            return IABLifecycleStatus(availability: availability,
+                requiresConsent: committedIAB?.isCurrent(now: config?.now() ?? 0, maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0) != true || !listIsUsableLocked(),
+                revision: currentSnapshot.revision, vendorListVersion: gvl?.vendorListVersion,
+                policyVersion: gvl?.tcfPolicyVersion)
+        }
+    }
+
+    /// Open a draft on the current disclosed list. Retry after a missing or stale list.
+    public func openIABDraft() -> IABDraft? {
+        lock.withLock {
+            guard config?.iab != nil, resolvedPolicy?.policy.model == .iab,
+                !currentSnapshot.policyPending, listIsUsableLocked() else { return nil }
+            return IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
+        }
+    }
+
+    /// Save against the exact revision shown by a native presenter.
+    public func saveIAB(_ draft: IABDraft, categories: [OptionalConsentCategory: Bool]) -> CommitResult {
+        save(.iab(draft.choices, categories: categories), expectedRevision: draft.revision)
     }
 
     private var user: KernelUser?
@@ -317,6 +359,8 @@ public final class ConsentCore: @unchecked Sendable {
             if state.policyPending, category != .necessary {
                 return false
             }
+            if category != .necessary, resolvedPolicy?.policy.model == .iab,
+                config?.iab != nil, !listIsUsableLocked() { return false }
             return state.effectivePermissions.value(for: category)
         }
     }
@@ -522,6 +566,10 @@ public final class ConsentCore: @unchecked Sendable {
                 ))
             }
 
+            if case .iab = intent, expectedRevision == nil {
+                return .failure(CoreErrorInfo(code: "iab-draft-required",
+                    message: "Open a native IAB draft and save its disclosure revision."))
+            }
             var nextIAB: IABCommittedConsent?
             if resolved.policy.model == .iab, let previous = lastIABActionAt {
                 guard previous < Int64.max else {
@@ -544,6 +592,9 @@ public final class ConsentCore: @unchecked Sendable {
                         CoreErrorInfo(
                             code: "iab-unavailable",
                             message: "IAB saves require CMP configuration and a disclosed vendor list."))
+                }
+                guard listIsUsableLocked() else {
+                    return .failure(CoreErrorInfo(code: "iab-list-stale", message: "Refresh the vendor list before saving."))
                 }
                 let choices: IABChoices
                 switch intent {
@@ -722,7 +773,7 @@ public final class ConsentCore: @unchecked Sendable {
                     noticeDismissal: plan.acknowledgement ?? noticeDismissal,
                     policyResolution: policyWire, storedAt: actionAt,
                     iabConsent: plan.isIAB ? plan.iabConsent : committedIAB,
-                    lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt)
+                    lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt, iabListFetchedAt: iabListFetchedAt)
             }
             let queued = envelope.flatMap {
                 plan.queue.commit($0, body: plan.body,
@@ -1221,6 +1272,7 @@ public final class ConsentCore: @unchecked Sendable {
 
             self.policyWire = envelope?.policyResolution
             self.noticeDismissal = envelope?.noticeDismissal
+            self.iabListFetchedAt = envelope?.iabListFetchedAt
             self.committedIAB = envelope?.iabConsent
             let watermark = envelope?.lastIABActionAt ?? envelope?.iabConsent?.actionAt
             // A backward clock jump must not let a restart reuse an action time.
@@ -1513,11 +1565,12 @@ public final class ConsentCore: @unchecked Sendable {
     private func validateIABLocked() {
         guard resolvedPolicy?.policy.model == .iab || committedIAB != nil else { return }
         let valid: Bool
-        if let saved = committedIAB, let c = config?.iab, saved.configuration == c,
+        if listIsUsableLocked(), let saved = committedIAB, let c = config?.iab, saved.configuration == c,
             let now = config?.now(),
             saved.isCurrent(now: now, maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0),
             let gvl = currentSnapshot.iab?.gvl,
             saved.vendorListVersion == gvl.vendorListVersion, saved.policyVersion == gvl.tcfPolicyVersion,
+            saved.disclosureID == (try? IABAuthority.disclosureID(gvl)),
             saved.subjectId == identity?.id, saved.externalId == user?.externalId,
             resolvedPolicy?.policy.model == .iab, saved.fingerprint == resolvedPolicy?.choiceFingerprint,
             let rebuilt = try? IABAuthority.build(
@@ -1578,7 +1631,7 @@ public final class ConsentCore: @unchecked Sendable {
             return StoredEnvelope(
                 snapshot: next, noticeDismissal: nil,
                 policyResolution: reset ? nil : policyWire, storedAt: config.now(),
-                lastIABActionAt: lastIABActionAt)
+                lastIABActionAt: lastIABActionAt, iabListFetchedAt: reset ? nil : iabListFetchedAt)
         }
         guard let envelope else { return nil }
         guard queue.replace(envelope) else { return false }
@@ -1651,7 +1704,8 @@ public final class ConsentCore: @unchecked Sendable {
                 policyResolution: policyWire,
                 storedAt: config.now(),
                 iabConsent: committedIAB,
-                lastIABActionAt: lastIABActionAt
+                lastIABActionAt: lastIABActionAt,
+                iabListFetchedAt: iabListFetchedAt
             )
             // Claim the revision before releasing the lock, so two overlapping
             // publishes cannot both decide they are the newest writer.
@@ -1813,6 +1867,9 @@ public final class ConsentCore: @unchecked Sendable {
             // is an optimisation in front of this, never the guarantee -- a producer that
             // ignores it and embeds the whole list is answered by the same line.
             if let gvl = response.gvl {
+                iabListFetchedAt = nowMs
+                iabListFromCache = false
+                iabListOffline = false
                 draft.iab = KernelIABState(gvl: gvl.narrowed(toVendorIds: config?.vendors))
             }
 
@@ -1921,6 +1978,13 @@ public final class ConsentCore: @unchecked Sendable {
         attempt: Int,
         retry: InitRetry?
     ) {
+        let changed = lock.withLock {
+            guard config?.iab != nil else { return false }
+            iabListOffline = true
+            reevaluateLocked(now: config?.now() ?? 0)
+            return true
+        }
+        if changed { publish(persist: true) }
         events.emit(.error(error.info))
         // An unsupported contract will not fix itself on a retry: the producer is
         // speaking a wire this build cannot read, and no amount of asking changes

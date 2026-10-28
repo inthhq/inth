@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// A publisher restriction's TCF purpose, type, and vendor IDs. Types are 0 for
 /// not allowed, 1 for require consent, and 2 for require legitimate interest.
@@ -68,11 +69,15 @@ public struct IABCommittedConsent: Sendable, Codable, Equatable {
     public let createdAt: Int64
     public let actionAt: Int64
     public let tcString: String
+    public let disclosureID: String?
 }
 
 // Shared selection rules precede the existing codecs. A draft cannot invent IDs,
 // claim a forbidden LI basis, or overwrite a different list's disclosure.
 enum IABAuthority {
+    static func disclosureID(_ gvl: GlobalVendorList) throws -> String {
+        SHA256.hash(data: try C15tJSON.encode(gvl)).map { String(format: "%02x", $0) }.joined()
+    }
     static let neverLI: Set<Int> = [1, 3, 4, 5, 6]
     static func build(
         configuration c: IABConfiguration, choices requested: IABChoices,
@@ -199,7 +204,7 @@ enum IABAuthority {
             configuration: c, choices: choices, subjectId: subjectId,
             externalId: externalId, fingerprint: fingerprint, vendorListVersion: gvl.vendorListVersion,
             policyVersion: gvl.tcfPolicyVersion, consentVersion: (previous?.consentVersion ?? 0) + 1,
-            createdAt: createdAt, actionAt: actionAt, tcString: tcString)
+            createdAt: createdAt, actionAt: actionAt, tcString: tcString, disclosureID: try disclosureID(gvl))
     }
 
     static func accepting(_ gvl: GlobalVendorList, configuration: IABConfiguration) -> IABChoices {
@@ -251,4 +256,22 @@ extension IABCommittedConsent {
     func isCurrent(now: Int64, maxAge: Int64) -> Bool {
         now >= 0 && actionAt >= 0 && actionAt - now <= 600_000 && max(0, now - actionAt) < maxAge
     }
+}
+
+/// Compact list availability for native presenters. A cached list is usable only within its age limit.
+public enum IABListAvailability: String, Sendable { case unavailable, missing, fresh, cached, offline, stale }
+
+/// A small read that does not serialize or transfer the GVL.
+public struct IABLifecycleStatus: Sendable {
+    public let availability: IABListAvailability
+    public let requiresConsent: Bool
+    public let revision: Int
+    public let vendorListVersion: Int?
+    public let policyVersion: Int?
+}
+
+/// A native preferences session bound to the disclosure revision it opened on.
+public struct IABDraft: Sendable {
+    public let revision: Int
+    public var choices: IABChoices
 }

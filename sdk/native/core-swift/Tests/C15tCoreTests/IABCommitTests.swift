@@ -45,6 +45,106 @@ final class IABCommitTests: XCTestCase {
         return core
     }
 
+    func testSameVersionDisclosureChangeCannotExtendAnExistingGrant() async throws {
+        let vector = try fixture()
+        let http = StubHTTP()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration,
+                                  store: InMemoryStore(), http: http)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
+        var gvl = fields["gvl"]!.objectValue!
+        var vendors = gvl["vendors"]!.objectValue!
+        var vendor = vendors["1"]!.objectValue!
+        vendor["name"] = .string("Changed disclosure on the same version")
+        vendors["1"] = .object(vendor)
+        gvl["vendors"] = .object(vendors)
+        fields["gvl"] = .object(gvl)
+        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertNil(core.iabConsent())
+        XCTAssertFalse(core.isIABAllowed(vendorId: 1, purposeId: 1, basis: .consent))
+        XCTAssertFalse(core.isAllowed(.marketing))
+        XCTAssertEqual(core.pendingSaveCount(), 0)
+    }
+
+    struct LifecycleVector: Decodable {
+        struct Case: Decodable { let id: String; let gvl: GlobalVendorList; let retain: Bool }
+        let gvl: GlobalVendorList
+        let cases: [Case]
+    }
+
+    func testSharedDisclosureLifecycleCasesRejectOpenDraftAndObsoleteReplay() async throws {
+        let source = try fixture()
+        let data = try Data(contentsOf: Self.fixtureURL.deletingLastPathComponent().appendingPathComponent("lifecycle-cases.json"))
+        let lifecycle = try C15tJSON.decode(LifecycleVector.self, from: data)
+        for row in lifecycle.cases {
+            let vector = Vector(invalidChoices: [], invalidConfigurations: [], now: source.now,
+                                gvl: lifecycle.gvl, cases: source.cases)
+            let http = StubHTTP()
+            let store = InMemoryStore()
+            let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store, http: http)
+            XCTAssertEqual(core.iabStatus().availability, .fresh)
+            XCTAssertEqual(core.save(.all).status, .committed)
+            await core.waitUntilIdle()
+            let saved = try XCTUnwrap(core.iabConsent())
+            let draft = try XCTUnwrap(core.openIABDraft())
+            var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
+            fields["gvl"] = C15tJSON.parse(try C15tJSON.encode(row.gvl))!
+            http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+            core.refresh()
+            await core.waitUntilIdle()
+            XCTAssertEqual(core.iabConsent() == saved, row.retain, row.id)
+            XCTAssertEqual(core.pendingSaveCount() > 0, row.retain, row.id)
+            XCTAssertEqual(core.saveIAB(draft, categories: [.marketing: true]).error?.code, "concurrent-change", row.id)
+            XCTAssertEqual(core.globalVendorList()?.standardTexts, row.gvl.standardTexts)
+            let cold = ConsentCore()
+            cold.bootstrap(CoreConfig(store: store, iab: vector.cases[0].configuration,
+                                      now: { vector.now }, flushPendingOnBootstrap: false))
+            XCTAssertEqual(cold.iabConsent() == saved, row.retain, row.id)
+            XCTAssertEqual(cold.iabStatus().availability, .cached)
+        }
+    }
+
+    func testCachedOfflineStaleAndMissingListsDoNotInventConsent() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        let clock = TestClock(vector.now)
+        let cold = ConsentCore()
+        let http = StubHTTP()
+        http.initResponse = HTTPResponse(status: 503, body: Data("{}".utf8))
+        cold.bootstrap(CoreConfig(store: store, transport: Fixture.transport(http),
+            iab: vector.cases[0].configuration, iabListMaxAgeMs: 1000, now: clock.reading,
+            initRetry: .disabled, flushPendingOnBootstrap: false))
+        XCTAssertEqual(cold.iabStatus().availability, .cached)
+        await cold.waitUntilIdle()
+        XCTAssertEqual(cold.iabStatus().availability, .offline)
+        XCTAssertNotNil(cold.openIABDraft())
+        clock.advance(by: 1000)
+        XCTAssertEqual(cold.iabStatus().availability, .stale)
+        XCTAssertNil(cold.iabConsent())
+        XCTAssertNil(cold.openIABDraft())
+        XCTAssertFalse(cold.isAllowed(.marketing))
+        XCTAssertEqual(cold.save(.all).error?.code, "iab-list-stale")
+        cold.refresh()
+        await cold.waitUntilIdle()
+        XCTAssertEqual(cold.pendingSaveCount(), 0)
+        let missing = ConsentCore()
+        missing.bootstrap(CoreConfig(iab: vector.cases[0].configuration, now: clock.reading))
+        XCTAssertEqual(missing.iabStatus().availability, .missing)
+        XCTAssertNil(missing.openIABDraft())
+    }
+
+    func testCustomIABSaveRequiresDisclosureRevision() async throws {
+        let vector = try fixture()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: InMemoryStore())
+        XCTAssertEqual(core.save(.iab(IABChoices(), categories: [:])).error?.code, "iab-draft-required")
+    }
+
     func testCategorySaveCannotClaimIABCommitWithoutConfiguration() async throws {
         let vector = try fixture()
         let core = try await boot(vector, configuration: nil, store: InMemoryStore())
@@ -60,7 +160,7 @@ final class IABCommitTests: XCTestCase {
             let store = InMemoryStore()
             let http = StubHTTP()
             let core = try await boot(vector, configuration: row.configuration, store: store, http: http)
-            let result = core.save(.iab(row.choices, categories: [.marketing: row.id != "reject"]))
+            let result = core.save(.iab(row.choices, categories: [.marketing: row.id != "reject"]), expectedRevision: core.snapshot().revision)
             XCTAssertEqual(result.status, .committed, row.id)
             let committed = try XCTUnwrap(core.iabConsent())
             XCTAssertEqual(committed.tcString, row.tcString, row.id)
@@ -110,7 +210,8 @@ final class IABCommitTests: XCTestCase {
         let vector = try fixture()
         let row = vector.cases[2]
         let first = try await boot(vector, configuration: row.configuration, store: store)
-        XCTAssertEqual(first.save(.iab(row.choices, categories: [.marketing: true])).status, .committed)
+        let firstResult = first.save(.iab(row.choices, categories: [.marketing: true]), expectedRevision: first.snapshot().revision)
+        XCTAssertEqual(firstResult.status, .committed, String(describing: firstResult.error))
         await first.waitUntilIdle()
         let before = try XCTUnwrap(
             store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)?.pendingSaves?.first?.body)
@@ -192,7 +293,7 @@ final class IABCommitTests: XCTestCase {
             vector, configuration: vector.cases[0].configuration, store: InMemoryStore())
         let revision = core.snapshot().revision
         for invalid in vector.invalidChoices {
-            XCTAssertEqual(core.save(.iab(invalid, categories: [:])).error?.code, "invalid-iab-choices")
+            XCTAssertEqual(core.save(.iab(invalid, categories: [:]), expectedRevision: core.snapshot().revision).error?.code, "invalid-iab-choices")
         }
         XCTAssertEqual(core.snapshot().revision, revision)
         XCTAssertEqual(core.pendingSaveCount(), 0)

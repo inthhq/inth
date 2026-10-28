@@ -67,6 +67,70 @@ class IabCommitTest {
 			)
 			.also { it.bootstrap() }
 
+	@Serializable
+	data class LifecycleCase(val id: String, val gvl: GlobalVendorList, val retain: Boolean)
+	@Serializable
+	data class LifecycleVector(val gvl: GlobalVendorList, val cases: List<LifecycleCase>)
+
+	@Test
+	fun `shared disclosure lifecycle cases reject open drafts and obsolete replay`() {
+		val lifecycle = Json { ignoreUnknownKeys = true }.decodeFromString<LifecycleVector>(File(fixtureFile.parentFile, "lifecycle-cases.json").readText())
+		for (row in lifecycle.cases) {
+			val store = C15tStore(InMemoryKeyValueStore())
+			val http = RecordingTransport().respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = GlobalVendorListJson.toJson(lifecycle.gvl))))
+				.respondSave(SaveOutcome.Unavailable("offline"))
+			val core = boot(store, transport = http)
+			assertEquals(IabListAvailability.FRESH, core.iabStatus().availability)
+			assertTrue(core.save(CommitIntent.All).ok)
+			val saved = assertNotNull(core.iabConsent)
+			val draft = assertNotNull(core.openIabDraft())
+			http.respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = GlobalVendorListJson.toJson(row.gvl))))
+			core.refresh()
+			assertEquals(row.retain, core.iabConsent == saved, row.id)
+			assertEquals(row.retain, store.readPending().size > 0, row.id)
+			assertEquals("concurrent-change", core.saveIab(draft, emptyMap()).error?.code, row.id)
+			assertEquals(row.gvl.standardTexts, core.vendorList?.standardTexts)
+			val cold = testKernel(config = config, store = store, clock = FixedClock(vector.now), executor = TaskExecutor { })
+			cold.bootstrap()
+			assertEquals(row.retain, cold.iabConsent == saved, row.id)
+			assertEquals(IabListAvailability.CACHED, cold.iabStatus().availability)
+		}
+	}
+
+	@Test
+	fun `cached offline stale and missing lists cannot invent consent`() {
+		val store = C15tStore(InMemoryKeyValueStore())
+		val first = boot(store)
+		assertTrue(first.save(CommitIntent.All).ok)
+		val clock = FixedClock(vector.now)
+		val tasks = mutableListOf<() -> Unit>()
+		val cold = testKernel(config = config.copy(iabListMaxAgeMs = 1000), store = store,
+			clock = clock, transport = RecordingTransport(), executor = TaskExecutor { tasks += it })
+		cold.bootstrap()
+		assertEquals(IabListAvailability.CACHED, cold.iabStatus().availability)
+		tasks.toList().forEach { it() }; tasks.clear()
+		assertEquals(IabListAvailability.OFFLINE, cold.iabStatus().availability)
+		assertNotNull(cold.openIabDraft())
+		clock.advance(1000)
+		assertEquals(IabListAvailability.STALE, cold.iabStatus().availability)
+		assertNull(cold.iabConsent)
+		assertNull(cold.openIabDraft())
+		assertFalse(cold.isAllowed(ConsentCategory.MARKETING))
+		assertEquals("iab-list-stale", cold.save(CommitIntent.All).error?.code)
+		cold.refresh()
+		tasks.toList().forEach { it() }
+		assertEquals(0, store.readPending().size)
+		val missing = testKernel(config = config, store = C15tStore(InMemoryKeyValueStore()), executor = TaskExecutor { })
+		missing.bootstrap()
+		assertEquals(IabListAvailability.MISSING, missing.iabStatus().availability)
+	}
+
+	@Test
+	fun `custom IAB save requires disclosure revision`() {
+		val core = boot(C15tStore(InMemoryKeyValueStore()))
+		assertEquals("iab-draft-required", core.save(CommitIntent.Iab(IabChoices(), emptyMap())).error?.code)
+	}
+
 	@Test
 	fun `category save cannot claim an IAB commit without CMP configuration`() {
 		val core = boot(C15tStore(InMemoryKeyValueStore()), config.copy(iab = null))
@@ -170,8 +234,7 @@ class IabCommitTest {
 					CommitIntent.Iab(
 						row.choices,
 						mapOf(ConsentCategory.MARKETING to (row.id != "reject")),
-					)
-				)
+					), expectedRevision = core.snapshot().revision)
 			assertTrue(result.ok, row.id)
 			val committed = assertNotNull(core.iabConsent)
 			assertEquals(row.tcString, committed.tcString, row.id)
@@ -212,8 +275,7 @@ class IabCommitTest {
 						CommitIntent.Iab(
 							vector.cases[2].choices,
 							mapOf(ConsentCategory.MARKETING to true),
-						)
-					)
+						), expectedRevision = first.snapshot().revision)
 					.ok
 			)
 			val before = C15tStore(backend).readPending().single().body
@@ -285,7 +347,7 @@ class IabCommitTest {
 		for (choices in vector.invalidChoices) {
 			assertEquals(
 				"invalid-iab-choices",
-				core.save(CommitIntent.Iab(choices, emptyMap())).error?.code,
+				core.save(CommitIntent.Iab(choices, emptyMap()), expectedRevision = core.snapshot().revision).error?.code,
 			)
 		}
 		assertEquals(revision, core.snapshot().revision)
@@ -403,7 +465,7 @@ class IabCommitTest {
 		val purposes = mutableListOf(1, 2)
 		val choices = IabChoices(purposeConsents = purposes, vendorConsents = listOf(1))
 		val core = boot(C15tStore(InMemoryKeyValueStore()))
-		assertTrue(core.save(CommitIntent.Iab(choices, emptyMap())).ok)
+		assertTrue(core.save(CommitIntent.Iab(choices, emptyMap()), expectedRevision = core.snapshot().revision).ok)
 		purposes.clear()
 		val returned = core.iabConsent!!
 		(returned.choices.purposeConsents as MutableList).clear()

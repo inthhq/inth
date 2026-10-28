@@ -25,6 +25,7 @@ import kotlinx.serialization.json.JsonDecoder
 data class SnapshotEnvelope(
 	val snapshot: ConsentSnapshot,
 	@SerialName("lastIABActionAt") val lastIabActionAt: Long? = null,
+	val iabListFetchedAt: Long? = null,
 	val iabConsent: com.c15t.core.iab.IabCommittedConsent? = null,
 	val pendingSaves: List<@Serializable(with = EnvelopeQueuedSaveSerializer::class) QueuedSave>? = null,
 	val evaluationPolicy: EvaluationPolicy? = null,

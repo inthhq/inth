@@ -1475,3 +1475,13 @@ Swift applies this rule on every public `hydrate()` call. Kotlin applies it duri
 synchronous bootstrap and subsequent subject resolution. Replay checks the current
 subject even for category-only saves. No installer or RN bridge is required for
 these checks, and vendor storage never supplies identity or consent authority.
+
+
+Native IAB disclosure lifecycle: fetch time is durable and defaults to a seven-day
+list age limit. No-GVL responses do not renew it. Native lifecycle reads distinguish
+fresh, cached, offline, stale, missing and unconfigured states. Only exact
+configuration, policy, identity and normalized disclosure agreement retains an
+existing choice; any change requires a fresh action and removes obsolete queued
+grants. Custom IAB saves require the revision the draft opened on. TCF 2.4
+standardTexts, including the Features explanation, survive narrowing and storage.
+See docs/internal/native-iab-commits.mdx for refresh and retry behavior.

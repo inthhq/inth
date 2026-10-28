@@ -13,6 +13,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// than mis-reads.
     static let currentVersion = 1
 
+    let iabListFetchedAt: Int64?
     let lastIABActionAt: Int64?
     let iabConsent: IABCommittedConsent?
     var pendingSaves: [PendingSaveEntry]?
@@ -37,8 +38,10 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
         storedAt: Int64,
         iabConsent: IABCommittedConsent? = nil,
         pendingSaves: [PendingSaveEntry]? = nil,
-        lastIABActionAt: Int64? = nil
+        lastIABActionAt: Int64? = nil,
+        iabListFetchedAt: Int64? = nil
     ) {
+        self.iabListFetchedAt = iabListFetchedAt
         self.lastIABActionAt = lastIABActionAt ?? iabConsent?.actionAt
         self.iabConsent = iabConsent
         self.pendingSaves = pendingSaves

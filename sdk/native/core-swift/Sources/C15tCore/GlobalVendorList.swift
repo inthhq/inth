@@ -20,6 +20,21 @@
 // does not declare. A served list therefore carries no key this model has never seen,
 // which is what lets `StoredEnvelope` still give back every key path it read.
 
+/// Standard legal explanations published with TCF 2.4 disclosures.
+public struct GVLStandardTexts: Sendable, Codable, Equatable {
+    public let features: String
+    public let purposes: String?
+    public let specialFeatures: String?
+    public let specialPurposes: String?
+    public init(features: String, purposes: String? = nil, specialFeatures: String? = nil,
+                specialPurposes: String? = nil) {
+        self.features = features
+        self.purposes = purposes
+        self.specialFeatures = specialFeatures
+        self.specialPurposes = specialPurposes
+    }
+}
+
 /// A purpose, special purpose, feature or special feature entry.
 ///
 /// The GVL gives all four the same five fields, so one type stands in for all four
@@ -241,6 +256,7 @@ public struct GlobalVendorList: Sendable, Codable, Equatable {
     public let stacks: [Int: GVLStack]
     /// Optional on the wire, unlike the four collections above.
     public let dataCategories: [Int: GVLDataCategory]?
+    public let standardTexts: GVLStandardTexts?
     public let vendors: [Int: GVLVendor]
 
     public init(
@@ -254,6 +270,7 @@ public struct GlobalVendorList: Sendable, Codable, Equatable {
         specialFeatures: [Int: GVLDefinition] = [:],
         stacks: [Int: GVLStack] = [:],
         dataCategories: [Int: GVLDataCategory]? = nil,
+        standardTexts: GVLStandardTexts? = nil,
         vendors: [Int: GVLVendor] = [:]
     ) {
         self.gvlSpecificationVersion = gvlSpecificationVersion
@@ -266,6 +283,7 @@ public struct GlobalVendorList: Sendable, Codable, Equatable {
         self.specialFeatures = specialFeatures
         self.stacks = stacks
         self.dataCategories = dataCategories
+        self.standardTexts = standardTexts
         self.vendors = vendors
     }
 
@@ -352,6 +370,13 @@ extension GlobalVendorList {
                 )
             },
             dataCategories: dataCategories(fields["dataCategories"]),
+            standardTexts: fields["standardTexts"]?.objectValue.flatMap { texts in
+                texts["features"]?.stringValue.map {
+                    GVLStandardTexts(features: $0, purposes: texts["purposes"]?.stringValue,
+                        specialFeatures: texts["specialFeatures"]?.stringValue,
+                        specialPurposes: texts["specialPurposes"]?.stringValue)
+                }
+            },
             vendors: keyed(fields["vendors"]) { entry, id in
                 GVLVendor(
                     id: id,

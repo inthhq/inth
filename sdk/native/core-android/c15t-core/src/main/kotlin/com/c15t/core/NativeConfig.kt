@@ -63,12 +63,14 @@ data class NativeConfig(
 	val consentCategories: List<ConsentCategory>? = null,
 	val vendors: List<Int>? = null,
 	val iab: com.c15t.core.iab.IabConfiguration? = null,
+	val iabListMaxAgeMs: Long = 604_800_000,
 	val overrides: KernelOverrides = KernelOverrides(),
 	val detectedGpc: Boolean? = null,
 	val extraHeaders: Map<String, String> = emptyMap(),
 	val maxPendingSaves: Int = 20,
 ) {
 	init {
+		require(iabListMaxAgeMs > 0)
 		require(portalUrl.isNotBlank()) { "NativeConfig.portalUrl must not be blank" }
 	}
 }

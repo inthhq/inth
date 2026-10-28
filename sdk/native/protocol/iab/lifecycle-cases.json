@@ -1,0 +1,700 @@
+{
+	"gvl": {
+		"features": {},
+		"gvlSpecificationVersion": 2,
+		"lastUpdated": "2025-09-17T00:00:00Z",
+		"purposes": {
+			"1": {
+				"description": "Purpose 1",
+				"id": 1,
+				"name": "Purpose 1"
+			},
+			"2": {
+				"description": "Purpose 2",
+				"id": 2,
+				"name": "Purpose 2"
+			},
+			"7": {
+				"description": "Purpose 7",
+				"id": 7,
+				"name": "Purpose 7"
+			}
+		},
+		"specialFeatures": {
+			"1": {
+				"description": "Purpose 1",
+				"id": 1,
+				"name": "Purpose 1"
+			}
+		},
+		"specialPurposes": {},
+		"stacks": {},
+		"tcfPolicyVersion": 5,
+		"vendorListVersion": 42,
+		"vendors": {
+			"1": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 1,
+				"legIntPurposes": [2],
+				"name": "Vendor 1",
+				"policyUrl": "https://vendor.example/privacy",
+				"purposes": [1, 2],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			},
+			"2": {
+				"cookieMaxAgeSeconds": 0,
+				"features": [],
+				"flexiblePurposes": [2],
+				"id": 2,
+				"legIntPurposes": [2, 7],
+				"name": "Vendor 2",
+				"policyUrl": "https://vendor.example/privacy",
+				"purposes": [],
+				"specialFeatures": [],
+				"specialPurposes": [],
+				"usesCookies": false,
+				"usesNonCookieAccess": false
+			}
+		},
+		"standardTexts": {
+			"features": "Features explain how vendors process data."
+		}
+	},
+	"cases": [
+		{
+			"id": "identical",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": true
+		},
+		{
+			"id": "list-version",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 43,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "policy-version",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 6,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "new-vendor",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"9": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 9,
+						"legIntPurposes": [2],
+						"name": "New vendor",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "removed-vendor",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "new-purpose-for-existing-vendor",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2, 7],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "legal-basis-change",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "features-explanation-change",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Updated explanation"
+				}
+			},
+			"retain": false
+		},
+		{
+			"id": "purpose-definition-change",
+			"gvl": {
+				"features": {},
+				"gvlSpecificationVersion": 2,
+				"lastUpdated": "2025-09-17T00:00:00Z",
+				"purposes": {
+					"1": {
+						"description": "Updated purpose",
+						"id": 1,
+						"name": "Purpose 1"
+					},
+					"2": {
+						"description": "Purpose 2",
+						"id": 2,
+						"name": "Purpose 2"
+					},
+					"7": {
+						"description": "Purpose 7",
+						"id": 7,
+						"name": "Purpose 7"
+					}
+				},
+				"specialFeatures": {
+					"1": {
+						"description": "Purpose 1",
+						"id": 1,
+						"name": "Purpose 1"
+					}
+				},
+				"specialPurposes": {},
+				"stacks": {},
+				"tcfPolicyVersion": 5,
+				"vendorListVersion": 42,
+				"vendors": {
+					"1": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 1,
+						"legIntPurposes": [2],
+						"name": "Vendor 1",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [1, 2],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					},
+					"2": {
+						"cookieMaxAgeSeconds": 0,
+						"features": [],
+						"flexiblePurposes": [2],
+						"id": 2,
+						"legIntPurposes": [2, 7],
+						"name": "Vendor 2",
+						"policyUrl": "https://vendor.example/privacy",
+						"purposes": [],
+						"specialFeatures": [],
+						"specialPurposes": [],
+						"usesCookies": false,
+						"usesNonCookieAccess": false
+					}
+				},
+				"standardTexts": {
+					"features": "Features explain how vendors process data."
+				}
+			},
+			"retain": false
+		}
+	]
+}
