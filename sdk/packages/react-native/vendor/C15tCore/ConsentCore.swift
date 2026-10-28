@@ -123,8 +123,9 @@ public struct CoreConfig: @unchecked Sendable {
 /// ``isAllowed(_:)`` are synchronous and called from ad SDKs on the main thread.
 /// An actor would turn both into suspending calls, which is exactly what the
 /// contract forbids. Thread safety is one lock over in-memory state, and the
-/// shape of ``Lock/withLock(_:)`` keeps that lock off every disk and network path:
-/// mutations happen under it, I/O happens after it is released.
+/// state lock is held only for in-memory reads and publication. A separate
+/// mutation gate serializes preparation, durable writes and publication. Neither
+/// network work nor snapshot observers hold that gate.
 ///
 /// State is a single immutable ``ConsentSnapshot``. Anything that reads it takes a
 /// copy of a value nobody can change underneath, so there is no torn read and no
@@ -133,6 +134,8 @@ public final class ConsentCore: @unchecked Sendable {
     // MARK: - Mutable state, guarded by `lock`
 
     private let lock = Lock()
+    private let mutationGate = MutationGate()
+    private var needsGrantCleanup = false
     private var currentSnapshot = ConsentSnapshot.coldStart
     private var bootstrapped = false
     private var config: CoreConfig?
@@ -217,6 +220,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// returns already reflects stored consent with no network. The init request is
     /// what happens afterwards.
     public func bootstrap(_ config: CoreConfig) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         let adopted = lock.withLock {
             guard !bootstrapped else { return false }
             bootstrapped = true
@@ -231,7 +236,7 @@ public final class ConsentCore: @unchecked Sendable {
         // would silently orphan the subject id.
         guard adopted else { return }
 
-        hydrate()
+        hydrate(mutation: mutation)
         events.emit(.initialized)
 
         if config.flushPendingOnBootstrap {
@@ -466,6 +471,8 @@ public final class ConsentCore: @unchecked Sendable {
         // Captured first: a save that took 40 ms to build a body must still report
         // the instant the subject acted.
         var actionAt = (lock.withLock { config }?.now ?? Self.wallClock)()
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
 
         struct Planned {
             let payload: SavePayload
@@ -475,8 +482,8 @@ public final class ConsentCore: @unchecked Sendable {
             /// has somewhere to record its obligation, and ``save(_:)`` never has to
             /// answer the question "committed, but stored where".
             let queue: PendingSaveQueue
-            /// The state this action was built on, and the state to install once the
-            /// obligation is on disk. See the guarded apply in the committed branch.
+            /// The revision owned by the mutation gate until the durable write and
+            /// publication finish.
             let baseRevision: Int
             let next: ConsentSnapshot
             let result: CommitResult
@@ -704,27 +711,27 @@ public final class ConsentCore: @unchecked Sendable {
             // sent and never reported committed, because delivering something nothing
             // remembers is how duplicates happen and promising something nothing
             // remembers is how decisions go missing.
-            let atomicID: String? = lock.withLock {
-                guard plan.atomicIAB, currentSnapshot.revision == plan.baseRevision,
-                    let config
-                else { return nil }
-                let envelope = StoredEnvelope(
+            let atomicEnvelope: StoredEnvelope? = lock.withLock {
+                guard plan.atomicIAB, currentSnapshot.revision == plan.baseRevision else { return nil }
+                return StoredEnvelope(
                     snapshot: plan.next,
                     noticeDismissal: plan.acknowledgement ?? noticeDismissal,
                     policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent,
                     lastIABActionAt: actionAt)
-                guard
-                    let id = plan.queue.commit(
-                        envelope, body: plan.body,
-                        subjectId: plan.payload.subjectId, actionAt: actionAt)
-                else { return nil }
-                committedIAB = plan.iabConsent
-                lastIABActionAt = actionAt
-                currentSnapshot = plan.next
-                noticeDismissal = plan.acknowledgement ?? noticeDismissal
-                persistedRevision = plan.next.revision
-                config.storageBus?.write(TcStorageBus.values(for: envelope))
-                return id
+            }
+            let atomicID = atomicEnvelope.flatMap {
+                plan.queue.commit($0, body: plan.body,
+                    subjectId: plan.payload.subjectId, actionAt: actionAt)
+            }
+            if atomicID != nil, let envelope = atomicEnvelope {
+                lock.withLock {
+                    committedIAB = plan.iabConsent
+                    lastIABActionAt = actionAt
+                    currentSnapshot = plan.next
+                    noticeDismissal = plan.acknowledgement ?? noticeDismissal
+                    persistedRevision = plan.next.revision
+                }
+                config?.storageBus?.write(TcStorageBus.values(for: envelope))
             }
             let queued =
                 plan.atomicIAB
@@ -748,37 +755,18 @@ public final class ConsentCore: @unchecked Sendable {
                 )
             }
 
-            // Install the choice the obligation was written for. The guard is what
-            // keeps this atomic across the unlocked queue write: if another mutation
-            // landed while the write was in flight, that one stands, this body is
-            // withdrawn rather than replayed over it, and the caller is told the
-            // action did not take.
-            let applied = lock.withLock { () -> Bool in
-                if plan.atomicIAB { return true }
-                guard currentSnapshot.revision == plan.baseRevision else { return false }
-                currentSnapshot = plan.next
-                if let acknowledgement = plan.acknowledgement {
-                    noticeDismissal = acknowledgement
+            // The mutation gate still owns the prepared revision. No mutation can
+            // intervene between the durable queue write and this publication.
+            if !plan.atomicIAB {
+                lock.withLock {
+                    currentSnapshot = plan.next
+                    if let acknowledgement = plan.acknowledgement {
+                        noticeDismissal = acknowledgement
+                    }
                 }
-                return true
-            }
-            guard applied else {
-                plan.queue.remove(id: queuedID)
-                let info = CoreErrorInfo(
-                    code: "concurrent-change",
-                    message: "Consent state changed while this save was being recorded, so it was withdrawn. Repeat the action against the current snapshot."
-                )
-                events.emit(.error(info))
-                return CommitResult(
-                    status: .rejected,
-                    revision: snapshot().revision,
-                    permissions: snapshot().effectivePermissions,
-                    consentAction: intent.action,
-                    error: info
-                )
             }
 
-            publish(persist: true)
+            publish(persist: true, mutation: mutation)
             events.emit(.saveQueued(subjectId: plan.payload.subjectId))
             let body = plan.body
             let subjectId = plan.payload.subjectId
@@ -902,6 +890,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// Record that the notice was dismissed. Grants nothing: a dismissal is not a
     /// choice, and the optional categories stay wherever the policy left them.
     public func dismissNotice() {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         let at = (lock.withLock { config }?.now ?? Self.wallClock)()
         let changed = lock.withLock { () -> Bool in
             guard let resolved = resolvedPolicy, resolved.policy.prompt == .notice else {
@@ -927,7 +917,7 @@ public final class ConsentCore: @unchecked Sendable {
             return true
         }
         if changed {
-            publish(persist: true)
+            publish(persist: true, mutation: mutation)
         }
     }
 
@@ -940,6 +930,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// Attach an identified user. The c15t subject id does not change: an external
     /// id is a second key on the same subject, not a new subject.
     public func identify(_ user: KernelUser) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         let transition = transitionIAB(user: user, reset: false)
         if transition == false {
             events.emit(
@@ -958,7 +950,7 @@ public final class ConsentCore: @unchecked Sendable {
             }
             return self.identity
         }
-        publish(persist: transition == nil)
+        publish(persist: transition == nil, mutation: mutation)
         guard let identity else { return }
         schedule {
             guard let transport = self.transport else { return }
@@ -976,9 +968,11 @@ public final class ConsentCore: @unchecked Sendable {
     /// subject's decisions belong to the device's subject, not to the account that
     /// happened to be signed in when they were made.
     public func logout() {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         if let changed = transitionIAB(user: nil, reset: false) {
             if changed {
-                publish(persist: false)
+                publish(persist: false, mutation: mutation)
             } else {
                 events.emit(
                     .error(
@@ -995,7 +989,7 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.subject = self.identity.map { $0.snapshot(externalId: nil) }
             }
         }
-        publish(persist: true)
+        publish(persist: true, mutation: mutation)
     }
 
     /// Change the geographic, language, or test context.
@@ -1004,6 +998,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// local re-evaluation happens immediately so a caller sees the override on the
     /// next read; the re-resolve refines it.
     public func setOverrides(_ overrides: ConsentOverrides) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         let changed = lock.withLock { () -> Bool in
             guard self.overrides != overrides else { return false }
             self.overrides = overrides
@@ -1012,7 +1008,7 @@ public final class ConsentCore: @unchecked Sendable {
             return true
         }
         guard changed else { return }
-        publish(persist: true)
+        publish(persist: true, mutation: mutation)
         refresh()
     }
 
@@ -1066,9 +1062,11 @@ public final class ConsentCore: @unchecked Sendable {
     /// waits for it. The entries still queued carry a decision the subject just withdrew,
     /// and the one already on the wire was current when it was made.
     public func reset() {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         if let changed = transitionIAB(user: lock.withLock { user }, reset: true) {
             if changed {
-                publish(persist: false); scheduleInit(attempt: 1)
+                publish(persist: false, mutation: mutation); scheduleInit(attempt: 1)
             } else {
                 events.emit(
                     .error(
@@ -1141,7 +1139,7 @@ public final class ConsentCore: @unchecked Sendable {
             // clear's own doc states why.
             wired.bus?.clear()
         }
-        publish(persist: false)
+        publish(persist: false, mutation: mutation)
         scheduleInit(attempt: 1)
     }
 
@@ -1170,6 +1168,13 @@ public final class ConsentCore: @unchecked Sendable {
     /// morning just because the network is not available yet.
     @discardableResult
     public func hydrate() -> ConsentSnapshot {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
+        return hydrate(mutation: mutation)
+    }
+
+    @discardableResult
+    private func hydrate(mutation: MutationPermit) -> ConsentSnapshot {
         guard let config = lock.withLock({ self.config }) else { return snapshot() }
 
         let hadRecords = config.store.data(for: StorageKey.snapshot) != nil
@@ -1210,6 +1215,12 @@ public final class ConsentCore: @unchecked Sendable {
         let restored = lock.withLock { () -> ConsentSnapshot in
             self.identity = identity
             self.restoredFromStore = envelope != nil
+            // A missing host override restores the last explicitly stored account.
+            // Logout persists nil; installation identity never supplies an account ID.
+            if config.user == nil, self.user == nil,
+                let externalId = envelope?.snapshot.subject?.externalId {
+                self.user = KernelUser(externalId: externalId)
+            }
 
             var draft = ConsentSnapshot.Draft(current: envelope?.snapshot ?? .coldStart)
             draft.subject = identity.snapshot(externalId: self.user?.externalId)
@@ -1289,7 +1300,7 @@ public final class ConsentCore: @unchecked Sendable {
             return currentSnapshot
         }
 
-        publish(persist: true)
+        publish(persist: true, mutation: mutation)
         if let error = restored.error {
             events.emit(.error(error))
         }
@@ -1307,6 +1318,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// the bus, because the honest mirror of nothing stored is nothing held;
     /// a core with no bus configured is a no-op.
     public func rebuildTcStorageBus() {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         let wired = lock.withLock { () -> (store: any ConsentStore, bus: any TcStorageBusWriting)? in
             guard let config, let bus = config.storageBus else { return nil }
             return (config.store, bus)
@@ -1529,18 +1542,18 @@ public final class ConsentCore: @unchecked Sendable {
             var draft = ConsentSnapshot.Draft(current: currentSnapshot)
             draft.explicitChoice = nil
             currentSnapshot = draft.build(revision: currentSnapshot.revision)
-            queue?.discardGrants()
+            needsGrantCleanup = true
         }
     }
 
     /// Identity changes and reset use a durable empty decision, so a failed deletion
     /// cannot restore an earlier grant on the next launch.
     private func transitionIAB(user nextUser: KernelUser?, reset: Bool) -> Bool? {
-        lock.withLock {
-            guard let config, let queue,
-                config.iab != nil || committedIAB != nil || resolvedPolicy?.policy.model == .iab
-                    || queue.entries().contains(where: { $0.isProtectedWithdrawal })
-            else { return nil }
+        guard let wired = lock.withLock({ config.map { ($0, queue) } }), let queue = wired.1 else { return nil }
+        let config = wired.0
+        let owed = reset && queue.entries().contains(where: { $0.isProtectedWithdrawal })
+        let envelope: StoredEnvelope? = lock.withLock {
+            guard committedIAB != nil || resolvedPolicy?.policy.model == .iab || owed else { return nil }
             if !reset && user?.externalId == nextUser?.externalId { return nil }
             var next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = nil
@@ -1564,17 +1577,20 @@ public final class ConsentCore: @unchecked Sendable {
                     draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
                 }
             }
-            let envelope = StoredEnvelope(
+            return StoredEnvelope(
                 snapshot: next, noticeDismissal: nil,
                 policyResolution: reset ? nil : policyWire, storedAt: config.now(),
                 lastIABActionAt: lastIABActionAt)
-            guard queue.replace(envelope) else { return false }
-            currentSnapshot = next; committedIAB = nil; noticeDismissal = nil; user = nextUser
-            persistedRevision = next.revision
-            if reset { resolvedPolicy = nil; policyWire = nil; restoredFromStore = false }
-            config.storageBus?.clear()
-            return true
         }
+        guard let envelope else { return nil }
+        guard queue.replace(envelope) else { return false }
+        lock.withLock {
+            currentSnapshot = envelope.snapshot; committedIAB = nil; noticeDismissal = nil; user = nextUser
+            persistedRevision = envelope.snapshot.revision
+            if reset { resolvedPolicy = nil; policyWire = nil; restoredFromStore = false }
+        }
+        config.storageBus?.clear()
+        return true
     }
 
     /// Re-run the evaluator against the current policy and records. Callers must
@@ -1605,16 +1621,20 @@ public final class ConsentCore: @unchecked Sendable {
         currentSnapshot = draft.build(revision: currentSnapshot.revision + (bumpRevision ? 1 : 0))
     }
 
-    /// Publish the current snapshot to observers, then persist it.
-    ///
-    /// Both halves read the snapshot under the lock and do their work outside it.
-    private func publish(persist: Bool) {
+    /// Complete storage work under the mutation gate, then release it before
+    /// notifying snapshot observers. No storage call holds the state lock.
+    private func publish(persist: Bool, mutation: MutationPermit) {
+        let cleanup = lock.withLock { () -> PendingSaveQueue? in
+            guard needsGrantCleanup else { return nil }
+            needsGrantCleanup = false
+            return queue
+        }
+        cleanup?.discardGrants()
+        if persist { persistEnvelope() }
         let state = lock.withLock { currentSnapshot }
+        mutation.release()
         events.emit(.snapshot(revision: state.revision))
         observers.notify(state)
-        if persist {
-            persistEnvelope()
-        }
     }
 
     /// Write the envelope. Encoding happens under the lock; the write does not.
@@ -1657,11 +1677,7 @@ public final class ConsentCore: @unchecked Sendable {
         // ``rebuildTcStorageBus``, and the next launch's hydrate enforces the
         // rule either way.
         if committed {
-            lock.withLock {
-                if currentSnapshot.revision == pending.envelope.snapshot.revision {
-                    pending.bus?.write(pending.busValues)
-                }
-            }
+            pending.bus?.write(pending.busValues)
         }
     }
 
@@ -1728,6 +1744,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// back to a best guess. Every other field is applied only when present, which is
     /// how the web transport behaves with an omitted field too.
     private func applyInit(_ response: InitResponse) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         lock.withLock {
             let nowMs = (config?.now ?? Self.wallClock)()
 
@@ -1858,7 +1876,7 @@ public final class ConsentCore: @unchecked Sendable {
             if resolvedPolicy?.policy.model == .iab || config?.iab != nil || committedIAB != nil { reevaluateLocked(now: nowMs, bumpRevision: false) }
         }
 
-        publish(persist: true)
+        publish(persist: true, mutation: mutation)
         if let error = snapshot().error {
             events.emit(.error(error))
         }
@@ -1900,6 +1918,8 @@ public final class ConsentCore: @unchecked Sendable {
         // speaking a wire this build cannot read, and no amount of asking changes
         // that. Say it once, stop asking, and stay exactly where the core is.
         if error.code == PolicyFailureReason.unsupportedContract.rawValue {
+            let mutation = mutationGate.acquire()
+            defer { mutation.release() }
             lock.withLock {
                 currentSnapshot = currentSnapshot.byApplying { draft in
                     draft.error = error.info
@@ -1914,7 +1934,7 @@ public final class ConsentCore: @unchecked Sendable {
             // revision would never reach JavaScript, and a relaunch would forget a
             // misconfiguration that has not changed. The pair is the rule: see
             // "Revisions and error writes" in `native/CONTRACT.md`.
-            publish(persist: true)
+            publish(persist: true, mutation: mutation)
             return
         }
 
