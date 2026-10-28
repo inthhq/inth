@@ -243,6 +243,15 @@ final class PendingSaveQueue: @unchecked Sendable {
         onResult: ((PendingSaveEntry, Result<Void, C15tError>) -> Void)? = nil,
         onDrop: ((PendingSaveEntry, C15tError, FailedAttempt) -> Void)? = nil
     ) async -> ReplayReport {
+        await replay(using: transport, shouldDeliver: { _ in true }, onResult: onResult, onDrop: onDrop)
+    }
+
+    func replay(
+        using transport: any C15tTransport,
+        shouldDeliver: (PendingSaveEntry) -> Bool,
+        onResult: ((PendingSaveEntry, Result<Void, C15tError>) -> Void)? = nil,
+        onDrop: ((PendingSaveEntry, C15tError, FailedAttempt) -> Void)? = nil
+    ) async -> ReplayReport {
         let pending = entries()
         guard !pending.isEmpty else { return .empty }
 
@@ -257,7 +266,7 @@ final class PendingSaveQueue: @unchecked Sendable {
             // landed is not this pass's to send: the frozen bytes carry the same
             // consent id, so the backend would dedupe it and the only evidence that it
             // ever happened is one more POST than the subject's decision called for.
-            guard isPending(id: entry.id) else { continue }
+            guard isPending(id: entry.id), shouldDeliver(entry) else { continue }
             attempted += 1
 
             let result = await transport.sendSave(entry.body)
@@ -289,12 +298,52 @@ final class PendingSaveQueue: @unchecked Sendable {
         )
     }
 
+    /// Write the decision and its only pending obligation as one protected item.
+    /// A newer IAB decision supersedes older queued grants for this subject.
+    func commit(_ envelope: StoredEnvelope, body: Data, subjectId: String, actionAt: Int64) -> String? {
+        lock.withLock {
+            let entry = PendingSaveEntry(
+                id: newID(), subjectId: subjectId, actionAt: actionAt,
+                queuedAt: now(), attempts: 0, body: body)
+            var next = envelope
+            next.pendingSaves = [entry]
+            guard store.encode(next, for: StorageKey.snapshot) else { return nil }
+            return entry.id
+        }
+    }
+
+    /// Commit a tombstone or identity transition with no retained delivery obligation.
+    func replace(_ envelope: StoredEnvelope) -> Bool {
+        lock.withLock {
+            var next = envelope
+            next.pendingSaves = []
+            return store.encode(next, for: StorageKey.snapshot)
+        }
+    }
+
+    /// Ordinary publications retain delivery bookkeeping from the atomic record.
+    func persist(_ envelope: StoredEnvelope) -> Bool {
+        lock.withLock {
+            let stored = store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)
+            guard stored == nil || stored!.snapshot.revision <= envelope.snapshot.revision else {
+                return false
+            }
+            var next = envelope
+            next.pendingSaves = stored?.pendingSaves
+            return store.encode(next, for: StorageKey.snapshot)
+        }
+    }
+
     // MARK: - Storage
 
     /// Read without validating every field. Callers get entries the queue itself
     /// wrote; a queue file that does not decode is treated as empty and replaced,
     /// which denies a replay rather than guessing at a body.
     private func readEntries() -> [PendingSaveEntry] {
+        if let raw = store.data(for: StorageKey.snapshot) {
+            guard let envelope = StoredEnvelope.decode(raw) else { return [] }
+            if let pending = envelope.pendingSaves { return pending }
+        }
         guard let data = store.data(for: StorageKey.pendingSaves) else { return [] }
         guard let entries = try? C15tJSON.decode([PendingSaveEntry].self, from: data) else {
             return []
@@ -305,6 +354,12 @@ final class PendingSaveQueue: @unchecked Sendable {
     }
 
     private func writeEntries(_ entries: [PendingSaveEntry]) -> Bool {
+        if let raw = store.data(for: StorageKey.snapshot), var envelope = StoredEnvelope.decode(raw),
+            envelope.pendingSaves != nil
+        {
+            envelope.pendingSaves = entries
+            return store.encode(envelope, for: StorageKey.snapshot)
+        }
         guard !entries.isEmpty else {
             store.set(nil, for: StorageKey.pendingSaves)
             return true

@@ -24,9 +24,9 @@ public protocol ConsentStore: Sendable {
 
     /// Write a key, or remove it when `data` is `nil`.
     ///
-    /// - Returns: whether the write landed. A failed write must not fail the
-    ///   caller's consent action: local state is already committed, and losing a
-    ///   receipt is better than refusing to record the subject's decision.
+    /// Atomically replace the item and wait for durable storage. A failed write
+    /// must preserve the previous item. IAB commits publish only after success.
+    /// - Returns: whether the complete item reached storage.
     @discardableResult
     func set(_ data: Data?, for key: String) -> Bool
 }
