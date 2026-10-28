@@ -244,13 +244,13 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 			false
 		}
 
-		override fun flush() {
-			prefs.edit().apply()
-		}
+	override fun flush() {
+		prefs.edit().apply()
+	}
 
-		private companion object {
-			const val TAG = "c15t"
-		}
+	private companion object {
+		const val TAG = "c15t"
+	}
 }
 
 /**
@@ -276,31 +276,31 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
  * next launch, or through [C15tStore.rebuildTcStorageBus].
  */
 internal class DefaultPreferencesTcStorageBus(context: Context) : TcStorageBusSink {
-		/** Opened once: the default file is process-wide, like the bus it holds. */
-		private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
+	/** Opened once: the default file is process-wide, like the bus it holds. */
+	private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
 
-		override fun write(values: Map<String, TcBusValue>) {
-			try {
-				val editor = prefs.edit()
-				for (key in TcStorageBusKeys.ALL_NAMES) {
-					when (val value = values[key]) {
-						is TcBusValue.NumberValue -> editor.putInt(key, value.value)
-						is TcBusValue.TextValue -> editor.putString(key, value.value)
-						null -> editor.remove(key)
-					}
+	override fun write(values: Map<String, TcBusValue>) {
+		try {
+			val editor = prefs.edit()
+			for (key in TcStorageBusKeys.ALL_NAMES) {
+				when (val value = values[key]) {
+					is TcBusValue.NumberValue -> editor.putInt(key, value.value)
+					is TcBusValue.TextValue -> editor.putString(key, value.value)
+					null -> editor.remove(key)
 				}
-				editor.apply()
-			} catch (error: Throwable) {
-				// Includes a preferences file somebody else left unreadable. The consent
-				// record is in the encrypted store either way; only the mirror is missing.
-				Log.e(TAG, "failed to publish the IABTCF storage bus", error)
 			}
+			editor.apply()
+		} catch (error: Throwable) {
+			// Includes a preferences file somebody else left unreadable. The consent
+			// record is in the encrypted store either way; only the mirror is missing.
+			Log.e(TAG, "failed to publish the IABTCF storage bus", error)
 		}
+	}
 
-		/** Empty the table: a whole-table write that fills nothing. */
-		override fun clear() = write(emptyMap())
+	/** Empty the table: a whole-table write that fills nothing. */
+	override fun clear() = write(emptyMap())
 
-		private companion object {
-			const val TAG = "c15t"
-		}
+	private companion object {
+		const val TAG = "c15t"
+	}
 }
