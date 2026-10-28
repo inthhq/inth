@@ -86,11 +86,13 @@ describe('Expo Go', () => {
 		).toThrowError(/needs a custom native build[\s\S]*Expo Go/u);
 	});
 
-	// Every one of these is a way to be building a real binary, which is all the
-	// check needs to see before it stays out of the way.
+	// Build and configuration commands do not launch Expo Go.
 	it.each([
 		['prebuild', { argv: PREBUILD_ARGV, env: {} }],
 		['eas build', { argv: ['node', 'eas', 'build'], env: EAS_BUILD_ENV }],
+		['eas init', { argv: ['node', 'eas', 'init'], env: {} }],
+		['eas project:init', { argv: ['node', 'eas', 'project:init'], env: {} }],
+		['eas project:info', { argv: ['node', 'eas', 'project:info'], env: {} }],
 		['expo run:ios', { argv: ['node', 'expo', 'run:ios'], env: {} }],
 	])('stays quiet during %s', (_label, context) => {
 		expect(() =>

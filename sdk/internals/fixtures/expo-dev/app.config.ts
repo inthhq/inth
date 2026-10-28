@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import type { C15tPluginProps } from '@c15t/react-native/expo-plugin';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { withPodfile, withSettingsGradle } from 'expo/config-plugins';
+import { withPodfile, withProjectBuildGradle } from 'expo/config-plugins';
 import type { ConfigPlugin } from 'expo/config-plugins';
 
 /**
@@ -46,49 +46,33 @@ const withC15tLocalCorePod: ConfigPlugin = (config) =>
 		return cfg;
 	});
 
-/**
- * Point the generated Android build at the Kotlin consent core checked out here.
- *
- * `@c15t/react-native`'s Android library depends on `com.c15t:c15t-core` and
- * `com.c15t:c15t-android`, and a host app's settings script is where those
- * coordinates resolve. Nothing is published to Maven, so inside the repository the
- * engine is the Gradle project next door, included with a dependency substitution,
- * exactly as `internals/fixtures/react-native-bare/android/settings.gradle` does by hand.
- * Prebuild regenerates `android/`, so the substitution has to come from a config
- * plugin rather than a checked-in file. An app that installs the package from npm
- * gets the published artifacts and must not carry this. `C15T_LOCAL_PODS=false`
- * turns it off along with the Podfile path above.
- *
- * The substitution resolves, but the assemble does not finish yet: an included
- * build shares the host's Android Gradle Plugin and Kotlin, and this app's React
- * Native (0.86, Expo 57) hosts AGP 8.12 on Gradle 9.3.1 with Kotlin 2.1, while
- * `native/core-android` builds with AGP 9.2 on Gradle 9.4.1 with Kotlin 2.2 and
- * uses AGP 9's built-in Kotlin. Raising the wrapper here breaks React Native's
- * own Gradle plugin, which is compiled against Kotlin 2.1. Until the core is
- * published to Maven or builds under AGP 8, the Android assemble of this app runs
- * only from a checkout on React Native 0.87, and CI stops at the prebuild.
- */
-const withC15tLocalCoreGradle: ConfigPlugin = (config) =>
-	withSettingsGradle(config, (cfg) => {
-		const coreDir = path
-			.resolve(__dirname, '..', '..', '..', 'native', 'core-android')
-			.split(path.sep)
-			.join('/');
-
-		if (cfg.modResults.contents.includes('c15t-core')) {
+/** Configure a binary repository in the generated host; credentials stay in the environment. */
+const withC15tMavenRepository: ConfigPlugin = (config) =>
+	withProjectBuildGradle(config, (cfg) => {
+		if (cfg.modResults.contents.includes('// c15t Maven artifacts')) {
 			return cfg;
 		}
-
 		cfg.modResults.contents += `
-// Added by app.config.ts: resolve the c15t Kotlin core from this checkout.
-includeBuild('${coreDir}') {
-  dependencySubstitution {
-    substitute module('com.c15t:c15t-core') using project(':c15t-core')
-    substitute module('com.c15t:c15t-android') using project(':c15t-android')
+// c15t Maven artifacts: no native source build is included in the host.
+allprojects {
+  repositories {
+    exclusiveContent {
+      forRepository {
+        maven {
+          url = uri(System.getenv('C15T_MAVEN_URL') ?: 'https://maven.pkg.github.com/inthhq/c15t-private')
+          if (url.scheme == 'https') {
+            credentials {
+              username = System.getenv('C15T_MAVEN_USERNAME')
+              password = System.getenv('C15T_MAVEN_TOKEN')
+            }
+          }
+        }
+      }
+      filter { includeGroup('com.c15t') }
+    }
   }
 }
 `;
-
 		return cfg;
 	});
 
@@ -188,13 +172,11 @@ type PluginEntry = ConfigPlugin | NonNullable<ExpoConfig['plugins']>[number];
 
 const plugins: PluginEntry[] = [
 	// Only while this example lives next to the core it builds against.
-	...(process.env.C15T_LOCAL_PODS === 'false'
-		? []
-		: [withC15tLocalCorePod, withC15tLocalCoreGradle]),
+	...(process.env.C15T_LOCAL_PODS === 'false' ? [] : [withC15tLocalCorePod]),
+	withC15tMavenRepository,
 	// `expo export` and `expo run:*` both count as a native-build invocation, so
 	// the plugin's Expo Go guard passes on its own. There is no `skipNativeBuildCheck`
-	// here on purpose: this project has no Expo Go path, and a bare `expo config` in
-	// CI should keep saying so.
+	// here on purpose: this project has no Expo Go path.
 	['@c15t/react-native/expo-plugin', c15tPluginProps],
 ];
 
@@ -208,7 +190,9 @@ const c15tExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	...config,
 	name: 'c15t Expo Dev',
 	slug: 'c15t-expo-dev',
+	owner: 'inth-com',
 	version: '1.0.0',
+	runtimeVersion: { policy: 'fingerprint' },
 	orientation: 'portrait',
 	scheme: 'c15texpodev',
 	userInterfaceStyle: 'light',
@@ -227,6 +211,11 @@ const c15tExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	},
 	plugins: plugins as ExpoConfig['plugins'],
 	extra: {
+		...config.extra,
+		eas: {
+			...config.extra?.eas,
+			projectId: 'a4186a8b-fb45-4e42-8a91-c0de020d048a',
+		},
 		c15t: {
 			backendURL,
 			forceFakeNative: !isOff(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE),

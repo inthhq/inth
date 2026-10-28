@@ -20,10 +20,7 @@ export interface WorkflowContext {
 }
 
 /**
- * Commands that either produce a native project or consume one.
- *
- * Everything else that evaluates the config is `expo start`, and `expo start`
- * on a managed project means Expo Go.
+ * Commands that build, export, or configure a native app without launching Expo Go.
  */
 const NATIVE_COMMAND_TOKENS = new Set([
 	'add',
@@ -34,8 +31,11 @@ const NATIVE_COMMAND_TOKENS = new Set([
 	'doctor',
 	'export',
 	'export:embed',
+	'init',
 	'install',
 	'prebuild',
+	'project:init',
+	'project:info',
 	'remove',
 	'run',
 ]);
