@@ -7,7 +7,7 @@
  * pressing save writes nothing at all.
  */
 
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -95,17 +95,10 @@ const ConsentPreferencesContent = ({
 		isConsentCategoryRowsEqual
 	);
 	const selection = useCategorySelection(rows);
-	const { parts, theme } = useConsentSurfaceFrame();
+	const { isCurrentPresentation, parts, theme } = useConsentSurfaceFrame();
 	const [busy, setBusy] = useState(false);
 	const [saveFailed, setSaveFailed] = useState(false);
 	const pending = useRef(false);
-	const mounted = useRef(false);
-	useLayoutEffect(() => {
-		mounted.current = true;
-		return () => {
-			mounted.current = false;
-		};
-	}, []);
 	useAnnounceOnOpen(saveFailed, copy.saveError);
 
 	const save = async (): Promise<void> => {
@@ -130,7 +123,7 @@ const ConsentPreferencesContent = ({
 		pending.current = false;
 		setBusy(false);
 
-		if (written && mounted.current) {
+		if (written && isCurrentPresentation()) {
 			selection.reset();
 			onRequestClose();
 		}
@@ -171,7 +164,7 @@ const ConsentPreferencesContent = ({
 		pending.current = false;
 		setBusy(false);
 
-		if (written && mounted.current) {
+		if (written && isCurrentPresentation()) {
 			selection.reset();
 			onRequestClose();
 		}

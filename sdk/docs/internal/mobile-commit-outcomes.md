@@ -24,7 +24,9 @@ user retries. Each new presentation starts with fresh error and draft state,
 even when it interrupts an exit animation. Action buttons prevent another commit
 within that presentation while its current action is pending. A success from an
 earlier presentation cannot reset or close a newly opened dialog or preference
-center. Native code still handles commits pending across different presentations.
+center. If no new opening has started, a successful action still tells the host
+to close after the content has finished hiding. Native code still handles
+commits pending across different presentations.
 Retry messages use one explicit accessibility announcement path on iOS and Android. VoiceOver
 and TalkBack behavior still requires device validation.
 

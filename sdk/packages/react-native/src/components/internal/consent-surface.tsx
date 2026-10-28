@@ -20,7 +20,14 @@
  * and a full-screen sheet keep its heading below the clock from one source.
  */
 
-import { createContext, useContext, useMemo, useState } from 'react';
+import {
+	createContext,
+	useContext,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import {
 	Animated,
@@ -82,6 +89,8 @@ export type ConsentSurfacePresentation =
 
 /** The layout a surface hands to its own content. */
 export interface ConsentSurfaceFrame {
+	/** Whether this opening has not been superseded by a newer presentation. */
+	readonly isCurrentPresentation: () => boolean;
 	/** Height the body may reach before it scrolls. */
 	readonly maxBodyHeight: number;
 	/** Every restylable part, already merged with the host override. */
@@ -368,6 +377,10 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		exitDuration: theme.motion.exitDuration,
 		reducedMotion,
 	});
+	const currentPresentation = useRef(contentKey);
+	useLayoutEffect(() => {
+		currentPresentation.current = contentKey;
+	}, [contentKey]);
 
 	useAnnounceOnOpen(open, label);
 
@@ -382,8 +395,14 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 	// Memoized so a surface rerender alone does not push every slot down a new
 	// value and rerender content that reads the frame.
 	const frame = useMemo(
-		() => ({ maxBodyHeight, parts, presentation, theme }),
-		[maxBodyHeight, parts, presentation, theme]
+		() => ({
+			isCurrentPresentation: () => currentPresentation.current === contentKey,
+			maxBodyHeight,
+			parts,
+			presentation,
+			theme,
+		}),
+		[contentKey, maxBodyHeight, parts, presentation, theme]
 	);
 
 	if (!rendered) {

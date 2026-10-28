@@ -6,7 +6,7 @@
  * subject's edits until save, and the payload is exactly the visible rows.
  */
 
-import { useState } from 'react';
+import { StrictMode, useState } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { flush, flushPromises } from '../../__tests__/helpers/fake-native';
@@ -47,6 +47,51 @@ describe.each([
 	['dialog', ConsentDialog],
 	['preferences', ConsentPreferences],
 ])('%s commit outcomes', (_name, Surface) => {
+	test.each(['Speichern', 'Alle akzeptieren', 'Alle ablehnen'])(
+		'%s still closes after a settled hide if no newer presentation started',
+		async (action) => {
+			let resolveReply!: (result: string) => void;
+			const reply = new Promise<string>((resolve) => {
+				resolveReply = resolve;
+			});
+			const onRequestClose = vi.fn();
+			const Host = () => {
+				const [open, setOpen] = useState(true);
+				const { ready } = useConsentStatus();
+				return (
+					<Surface
+						onRequestClose={() => {
+							onRequestClose();
+							setOpen(false);
+						}}
+						open={open && ready}
+					/>
+				);
+			};
+			const tree = mountSurface(
+				<StrictMode>
+					<Host />
+				</StrictMode>
+			);
+			vi.spyOn(tree.fake, 'commit').mockImplementationOnce(() => reply);
+			tap(requireRole(tree.container(), 'button', action));
+			flush(() => {
+				tree.fake.pushSnapshot(
+					translatedSnapshot({ ready: false, revision: 2 })
+				);
+			});
+			await flushPromises();
+			resolveReply(JSON.stringify({ ok: true, queued: true }));
+			await flushPromises();
+			expect(onRequestClose).toHaveBeenCalledTimes(1);
+			flush(() => {
+				tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+			});
+			expect(roleNodes(tree.container(), 'dialog')).toHaveLength(0);
+			tree.unmount();
+		}
+	);
+
 	test.each([
 		['Speichern', false],
 		['Alle akzeptieren', false],
@@ -79,7 +124,11 @@ describe.each([
 					/>
 				);
 			};
-			const tree = mountSurface(<Host />);
+			const tree = mountSurface(
+				<StrictMode>
+					<Host />
+				</StrictMode>
+			);
 			const commit = vi.spyOn(tree.fake, 'commit');
 			commit.mockImplementationOnce(() => first);
 			commit.mockImplementationOnce(() => second);
