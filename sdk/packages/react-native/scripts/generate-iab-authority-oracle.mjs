@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 import {
 	GVL,
@@ -54,7 +54,7 @@ const gvlData = {
 	},
 };
 const day = 86_400_000;
-const now = 1_758_100_000_000;
+const now = Date.UTC(2026, 9, 28);
 const make = async (opts) => {
 	const gvl = new GVL(opts.gvl ?? gvlData);
 	await gvl.readyPromise;
@@ -111,7 +111,25 @@ const largerGvl = {
 		),
 	},
 };
+const officialGvl = JSON.parse(
+	readFileSync(
+		new URL(
+			'../../../native/protocol/iab/official-gvl-excerpt.json',
+			import.meta.url
+		),
+		'utf8'
+	)
+).gvl;
 const cases = [
+	{
+		createdDaysAgo: 3,
+		gvl: officialGvl,
+		id: 'official-tcf24-gvl182',
+		purposeConsents: [1, 2, 3, 4, 7, 8, 9, 10],
+		purposeLegitimateInterests: [2, 7, 8, 9, 10],
+		vendorConsents: [1, 9, 755],
+		vendorLegitimateInterests: [9, 755],
+	},
 	{
 		id: 'gap-range',
 		restrictions: [{ purposeId: 2, type: 0, vendorIds: [1, 5] }],
