@@ -91,7 +91,7 @@ pod or a separate SwiftPM `C15tCore`/`C15tApple` product into that process. A se
 compiled copy has its own installation singleton and can compete for the same
 Keychain service. Changing the service does not make two consent authorities safe.
 Set the auto-bootstrap opt-out in Info.plist before native host installation.
-`native/core-swift/Examples/AppleInstallation/CocoaPodsHost.swift` shows the
+`native/core-swift/Examples/AppleInstallation/cocoapods-host.swift` shows the
 module imports and attachment ordering for this path.
 
 SwiftPM source consumers import `C15tCore`, `C15tApple` and
