@@ -42,6 +42,7 @@ public struct IABConfiguration: Sendable, Codable, Equatable {
 /// A complete native draft. Omitted IDs are denied or have no LI signal.
 /// Objections explicitly record withdrawn legitimate interests and cannot overlap LI.
 public struct IABChoices: Sendable, Codable, Equatable {
+    public var adTechProviderConsents: [Int]? = nil
     public var purposeConsents: [Int] = []
     public var purposeLegitimateInterests: [Int] = []
     public var purposeObjections: [Int] = []
@@ -70,6 +71,8 @@ public struct IABCommittedConsent: Sendable, Codable, Equatable {
     public let actionAt: Int64
     public let tcString: String
     public let disclosureID: String?
+    public let addtlConsent: String?
+    public let adTechProvidersID: String?
 }
 
 // Shared selection rules precede the existing codecs. A draft cannot invent IDs,
@@ -84,7 +87,7 @@ enum IABAuthority {
         configuration c: IABConfiguration, choices requested: IABChoices,
         gvl: GlobalVendorList, subjectId: String, externalId: String?,
         fingerprint: String, actionAt: Int64,
-        previous: IABCommittedConsent?
+        previous: IABCommittedConsent?, additionalConsentList: AdditionalConsentList? = nil
     ) throws -> IABCommittedConsent {
         func require(_ condition: Bool) throws {
             if !condition {
@@ -96,6 +99,12 @@ enum IABAuthority {
         func ids(_ values: [Int], within allowed: Set<Int>) throws {
             try require(values.count == Set(values).count && Set(values).isSubset(of: allowed))
         }
+        let providers = additionalConsentList?.providers ?? []
+        let providerIDs = providers.map(\.id)
+        try ids(requested.adTechProviderConsents ?? [], within: Set(providerIDs))
+        let addtlConsent = providers.isEmpty ? nil : try AdditionalConsent.encode(
+            consented: requested.adTechProviderConsents ?? [], disclosed: providerIDs,
+            purposeConsents: requested.purposeConsents)
         let purposes = Set(gvl.purposes.keys.filter { (1...24).contains($0) })
         let vendors = Set(gvl.vendors.values.filter { $0.deletedDate?.isEmpty != false }.map(\.id))
         let features = Set(gvl.specialFeatures.keys.filter { (1...12).contains($0) })
@@ -196,6 +205,10 @@ enum IABAuthority {
                 vendorListVersion: list.vendorListVersion, tcfPolicyVersion: list.tcfPolicyVersion,
                 vendors: list.vendors))
         var choices = requested
+        if !Set([1, 3, 4]).isSubset(of: Set(choices.purposeConsents)), choices.adTechProviderConsents != nil {
+            choices.adTechProviderConsents = []
+        }
+        choices.adTechProviderConsents = choices.adTechProviderConsents?.sorted()
         choices.vendorConsents = shaped.vendorConsents.ids.sorted()
         choices.vendorLegitimateInterests = shaped.vendorLegitimateInterests.ids.sorted()
         guard case .encoded(let tcString) = TcStringEncoder.encode(shaped) else {
@@ -205,7 +218,8 @@ enum IABAuthority {
             configuration: c, choices: choices, subjectId: subjectId,
             externalId: externalId, fingerprint: fingerprint, vendorListVersion: gvl.vendorListVersion,
             policyVersion: gvl.tcfPolicyVersion, consentVersion: (previous?.consentVersion ?? 0) + 1,
-            createdAt: createdAt, actionAt: actionAt, tcString: tcString, disclosureID: try disclosureID(gvl))
+            createdAt: createdAt, actionAt: actionAt, tcString: tcString, disclosureID: try disclosureID(gvl), addtlConsent: addtlConsent,
+            adTechProvidersID: providers.isEmpty ? nil : additionalConsentList?.disclosureID)
     }
 
     static func accepting(_ gvl: GlobalVendorList, configuration: IABConfiguration) -> IABChoices {

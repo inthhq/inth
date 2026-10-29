@@ -1503,3 +1503,24 @@ in progress. These callbacks schedule work without blocking their caller.
 Custom IAB saves require the revision the draft opened on. TCF 2.4
 standardTexts, including the Features explanation, survive narrowing and storage.
 See docs/internal/native-iab-commits.mdx for refresh and retry behavior.
+Native Additional Consent v2 uses the backend's scoped official ATP disclosures,
+not GVL vendor IDs. A complete native draft carries ATP selections; purposes 1,
+3 and 4 gate every positive ATP signal. The generated addtlConsent, TCF authority
+and exact HTTP body commit together. List content changes require fresh consent;
+missing responses retain only an unexpired cache, empty lists disable AC, and
+malformed lists clear it. The bound ATP cache participates in expiry scheduling
+even when a newer GVL remains current. Stale lists cannot grant. The platform bus owns
+IABTCF_AddtlConsent as a string and removes it with invalid authority or reset.
+ATT remains a separate permission. RN API and shared UI wiring remain an ENG-511
+acceptance gate after this native foundation integrates.
+
+The complete IABTCF bus is an egress projection of validated native authority.
+Explicit CMP detection is synchronous at bootstrap. Consent values use native
+integer/string types and the exact committed TC vectors. Apple removes TC/AC
+markers first and writes TCString last; Android replaces the complete map in one
+synchronous preferences transaction. Mirror rejection removes owned values and
+can be repaired from the core without reading vendor storage as authority.
+Numbered publisher restriction keys are owned and cleared. Reset removes consent
+rows while configured CMP detection remains. See the spec-linked key/type table
+and reader ordering limits in docs/internal/native-iab-commits.mdx. The real ad SDK
+reference, device latency and power-loss behavior remain separate evidence gates.

@@ -24,6 +24,7 @@ data class IabConfiguration(
 /** Complete native draft. Absent IDs have no grant; objections cannot overlap LI. */
 @Serializable
 data class IabChoices(
+	val adTechProviderConsents: List<Long>? = null,
 	val purposeConsents: List<Int> = emptyList(),
 	val purposeLegitimateInterests: List<Int> = emptyList(),
 	val purposeObjections: List<Int> = emptyList(),
@@ -52,6 +53,8 @@ data class IabCommittedConsent(
 	val actionAt: Long,
 	val tcString: String,
 	val disclosureID: String? = null,
+	val addtlConsent: String? = null,
+	val adTechProvidersID: String? = null,
 )
 
 internal object IabAuthority {
@@ -78,10 +81,16 @@ internal object IabAuthority {
 		fingerprint: String,
 		actionAt: Long,
 		previous: IabCommittedConsent?,
+		additionalConsentList: AdditionalConsentList? = null,
 	): IabCommittedConsent {
 		fun ids(values: List<Int>, allowed: Set<Int>) {
 			require(values.size == values.toSet().size && allowed.containsAll(values))
 		}
+		val providers = additionalConsentList?.providers.orEmpty()
+		val providerIDs = providers.map { it.id }
+		val selected = requested.adTechProviderConsents.orEmpty()
+		require(selected.size == selected.toSet().size && providerIDs.containsAll(selected))
+		val ac = if (providers.isEmpty()) null else AdditionalConsent.encode(selected, providerIDs, requested.purposeConsents)
 		val list = gvl.toTcVendorList().copy(language = c.consentLanguage)
 		val purposes = gvl.purposes.keys.filter { it in 1..24 }.toSet()
 		val vendors = list.vendors.filterNot { it.isDeleted }.map { it.id }.toSet()
@@ -185,7 +194,9 @@ internal object IabAuthority {
 		val prepared = TcSemanticPreEncoder.prepare(input)
 		val choices =
 			requested.copy(
-				vendorConsents = prepared.vendorConsents.sorted(),
+				adTechProviderConsents = requested.adTechProviderConsents?.let {
+					if (requested.purposeConsents.containsAll(listOf(1, 3, 4))) it.sorted() else emptyList()
+				},				vendorConsents = prepared.vendorConsents.sorted(),
 				vendorLegitimateInterests = prepared.vendorLegitimateInterests.sorted(),
 			)
 		return IabCommittedConsent(
@@ -201,6 +212,7 @@ internal object IabAuthority {
 				actionAt,
 				string,
 				disclosureID(gvl),
+				ac, if (providers.isEmpty()) null else additionalConsentList?.disclosureID,
 			)
 			.detached()
 	}
@@ -270,6 +282,7 @@ internal fun IabConfiguration.detached(): IabConfiguration =
 
 internal fun IabChoices.detached(): IabChoices =
 	copy(
+		adTechProviderConsents = adTechProviderConsents?.toList(),
 		purposeConsents = purposeConsents.toList(),
 		purposeLegitimateInterests = purposeLegitimateInterests.toList(),
 		purposeObjections = purposeObjections.toList(),

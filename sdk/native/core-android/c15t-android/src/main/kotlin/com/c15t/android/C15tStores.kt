@@ -253,32 +253,11 @@ internal class PreferencesStore(private val prefs: SharedPreferences) : KeyValue
 	}
 }
 
-/**
- * The `IABTCF_*` bus over the application-default `SharedPreferences`.
- *
- * [PreferenceManager.getDefaultSharedPreferences] is the entry point the IAB CMP
- * specification names for these keys, and it is deprecated precisely because the
- * ecosystem still reads the file it picks. That is why the call is spelled out here
- * rather than replaced: this class never derives a file name, and a mirror under a
- * c15t-named file is a mirror no vendor SDK opens, which costs the same as shipping
- * no bus at all.
- *
- * One `edit()` transaction carries the whole table. `putInt` writes the spec's
- * Number rows and `putString` its String rows, because those are the accessors
- * vendors call and a mistyped entry does not read across. Every named key the
- * incoming map omits is removed, so a row whose source value the core took back
- * stops answering for it; keys outside the specification table belong to other
- * ecosystems and stay untouched.
- *
- * Nothing here reaches a consent commit as a throw. This is a projection of a record
- * that already stands: [C15tStore.writeEnvelope] has put the encrypted envelope away
- * before the bus moves, and a mirror that failed rebuilds on the next commit, on the
- * next launch, or through [C15tStore.rebuildTcStorageBus].
- */
-internal class DefaultPreferencesTcStorageBus(context: Context) : TcStorageBusSink {
-	/** Opened once: the default file is process-wide, like the bus it holds. */
-	private val prefs = PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
+/** Atomic, typed projection into the application-default preferences vendors read. */
+internal class DefaultPreferencesTcStorageBus(private val prefs: SharedPreferences) : TcStorageBusSink {
+	constructor(context: Context) : this(PreferenceManager.getDefaultSharedPreferences(context.applicationContext))
 
+	@Synchronized
 	override fun write(values: Map<String, TcBusValue>) {
 		try {
 			val editor = prefs.edit()
@@ -289,18 +268,19 @@ internal class DefaultPreferencesTcStorageBus(context: Context) : TcStorageBusSi
 					null -> editor.remove(key)
 				}
 			}
-			editor.apply()
-		} catch (error: Throwable) {
-			// Includes a preferences file somebody else left unreadable. The consent
-			// record is in the encrypted store either way; only the mirror is missing.
+			// One atomic in-memory map replacement, with a disk acknowledgement before return.
+			if (!editor.commit()) throw IOException("SharedPreferences rejected IABTCF publication")
+		} catch (error: Exception) {
+			// commit() can update memory even when its disk write fails. Remove every grant.
+			try {
+				val clear = prefs.edit()
+				TcStorageBusKeys.ALL_NAMES.forEach { clear.remove(it) }
+				clear.commit()
+			} catch (_: Exception) { /* Report the failure; a later publication retries. */ }
 			Log.e(TAG, "failed to publish the IABTCF storage bus", error)
 		}
 	}
 
-	/** Empty the table: a whole-table write that fills nothing. */
 	override fun clear() = write(emptyMap())
-
-	private companion object {
-		const val TAG = "c15t"
-	}
+	private companion object { const val TAG = "c15t" }
 }

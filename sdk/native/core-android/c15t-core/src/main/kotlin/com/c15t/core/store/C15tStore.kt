@@ -65,6 +65,28 @@ class C15tStore(
 	 */
 	private val tcStorageBus: TcStorageBusSink? = null,
 ) {
+	private var busConfiguration: com.c15t.core.iab.IabConfiguration? = null
+
+	/** Signal the explicitly configured CMP before reading records or starting network work. */
+	@Synchronized
+	fun initializeTcStorageBus(configuration: com.c15t.core.iab.IabConfiguration?) {
+		busConfiguration = configuration
+		publishTcStorageBus(null)
+	}
+
+	/** Only the core may supply a live, validated authority for a repair publication. */
+	@Synchronized
+	internal fun publishTcStorageBus(envelope: SnapshotEnvelope?) {
+		val bus = tcStorageBus ?: return
+		try {
+			val values = if (envelope == null) TcStorageBusProjection.detection(busConfiguration)
+				else TcStorageBusProjection.values(envelope, busConfiguration)
+			if (values.isEmpty()) bus.clear() else bus.write(values)
+		} catch (_: Exception) {
+			try { bus.clear() } catch (_: Exception) { /* Next publication retries. */ }
+		}
+	}
+
 	/**
 	 * Set by the read that refused a stored id, cleared when [takeUnusableSubject] hands it
 	 * over. Guarded by the instance rather than by a process flag because a host that runs
@@ -166,35 +188,36 @@ class C15tStore(
 		}
 	}
 
-	/**
-	 * Persist [envelope] so the next cold start answers synchronously.
-	 *
-	 * The `IABTCF_*` bus moves in this same step, because the specification's
-	 * readers must not be able to observe a device whose vendor mirror is ahead
-	 * of, or behind, a decision its own record took back: the projection is a
-	 * pure function of [envelope], published once the envelope bytes have gone
-	 * to the authoritative store. A refused write returns `false` without moving
-	 * the bus. A failed mirror is rebuilt by the next write, the next launch, or
-	 * [rebuildTcStorageBus].
-	 */
+	/** Persist a newer envelope before publishing its vendor mirror. Custom backends must
+	 * explicitly acknowledge durable writes. Mirror failure never rolls back authority. */
+	fun writeEnvelope(envelope: SnapshotEnvelope): Boolean = writeEnvelope(envelope, publishBus = true)
+
 	@Synchronized
-	fun writeEnvelope(envelope: SnapshotEnvelope): Boolean {
+	internal fun writeEnvelope(envelope: SnapshotEnvelope, publishBus: Boolean): Boolean {
 		val old = readEnvelope()
 		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
 		val next = envelope.copy(pendingSaves = old?.pendingSaves)
-		return writeAtomic(next)
+		return writeAtomic(next, publishBus)
 	}
 
 	/**
 	 * Persist the decision and its delivery obligation before publishing either.
 	 * IAB decisions supersede grants; category decisions retain their queue history.
 	 */
-	@Synchronized
 	fun commit(
 		envelope: SnapshotEnvelope,
 		entry: QueuedSave,
 		limit: Int = PendingSaveQueue.DEFAULT_LIMIT,
 		supersedeGrants: Boolean = true,
+	): Boolean = commit(envelope, entry, limit, supersedeGrants, publishBus = true)
+
+	@Synchronized
+	internal fun commit(
+		envelope: SnapshotEnvelope,
+		entry: QueuedSave,
+		limit: Int,
+		supersedeGrants: Boolean,
+		publishBus: Boolean,
 	): Boolean {
 		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
 		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
@@ -202,7 +225,7 @@ class C15tStore(
 		if (withdrawals.size >= capacity) return false
 		val grants = if (supersedeGrants) emptyList() else
 			current.filterNot { it.isWithdrawal() }.takeLast(capacity - withdrawals.size - 1)
-		return writeAtomic(envelope.copy(pendingSaves = withdrawals + grants + entry))
+		return writeAtomic(envelope.copy(pendingSaves = withdrawals + grants + entry), publishBus)
 	}
 
 	/** Atomic empty consent state for reset and identity changes. */
@@ -210,7 +233,7 @@ class C15tStore(
 	fun replace(envelope: SnapshotEnvelope): Boolean =
 		writeAtomic(envelope.copy(pendingSaves = readPending().filter { it.isWithdrawal() }))
 
-	private fun writeAtomic(envelope: SnapshotEnvelope): Boolean {
+	private fun writeAtomic(envelope: SnapshotEnvelope, publishBus: Boolean = true): Boolean {
 		val raw = json.encodeToString(SnapshotEnvelope.serializer(), envelope)
 		val written =
 			try {
@@ -218,13 +241,11 @@ class C15tStore(
 			} catch (_: Exception) {
 				false
 			}
-		if (!written) return false
-		// A failed vendor mirror cannot undo an authoritative transaction.
-		try {
-			tcStorageBus?.write(TcStorageBusProjection.values(envelope))
-		} catch (_: Exception) {
-			/* Rebuilt from authority on the next publication. */
+		if (!written) {
+			if (publishBus && envelope.iabConsent == null) publishTcStorageBus(null)
+			return false
 		}
+		if (publishBus) publishTcStorageBus(envelope)
 		return true
 	}
 
@@ -254,7 +275,9 @@ class C15tStore(
 	@Synchronized
 	fun writePending(entries: List<QueuedSave>): Boolean {
 		val old = readEnvelope()
-		if (old?.pendingSaves != null) return writeAtomic(old.copy(pendingSaves = entries))
+		// Delivery changes no authority and must not republish stored grants whose clock
+		// or disclosure the live core may already have invalidated.
+		if (old?.pendingSaves != null) return writeAtomic(old.copy(pendingSaves = entries), publishBus = false)
 		val raw = queueJson.encodeToString(PendingQueue.serializer(), PendingQueue(entries))
 		backend.write(C15tStoreKeys.PENDING, raw)
 		return readRaw(C15tStoreKeys.PENDING).getOrNull() == raw
@@ -268,29 +291,15 @@ class C15tStore(
 		// Same step, same rule as every other wipe: the keys this core put on
 		// the bus go with the envelope they projected. The wipe addresses the
 		// whole specification table -- [TcStorageBusSink.clear] says why.
-		tcStorageBus?.clear()
+		publishTcStorageBus(null)
 	}
 
-	/**
-	 * Re-derive the `IABTCF_*` bus from the stored envelope.
-	 *
-	 * The repair path, not the normal one: [writeEnvelope], [clearConsentState]
-	 * and a launch that persists already keep the bus in step. This exists for
-	 * the moments outside those writes -- somebody cleared the
-	 * application-default file (the publisher's duty for vestigial values makes
-	 * that legal), or a device integrates the bus on top of an envelope that
-	 * was there first. Absent or unreadable stored state clears the bus,
-	 * because the honest mirror of nothing stored is nothing held; a store
-	 * with no bus configured is a no-op.
-	 */
+	/** Repair metadata only. Use [com.c15t.core.C15tKernel.rebuildTcStorageBus] to restore
+	 * consent rows after current clock, list, configuration and identity validation. */
+	@Synchronized
 	fun rebuildTcStorageBus() {
-		val bus = tcStorageBus ?: return
-		val envelope = readEnvelope()
-		if (envelope != null) {
-			bus.write(TcStorageBusProjection.values(envelope))
-		} else {
-			bus.clear()
-		}
+		// A raw store has no current clock/config/identity validation. Restore metadata only.
+		publishTcStorageBus(readEnvelope()?.copy(iabConsent = null))
 	}
 
 	/** Flush buffered writes to durable storage. */

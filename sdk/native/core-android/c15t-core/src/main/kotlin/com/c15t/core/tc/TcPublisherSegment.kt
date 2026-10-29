@@ -5,8 +5,8 @@ package com.c15t.core.tc
  *
  * The publisher's purposes are its own signal, separate from the framework purposes in the core
  * segment, and a vendor is told not to rely on them unless it has an agreement with the publisher.
- * Mobile decodes them because other CMPs write them; mobile does not author them, because c15t's
- * web codec never populates them and there is nothing on the consent snapshot to put them in.
+ * The native authority authors this section from the complete publisher draft. Decoding also
+ * preserves sections received from other CMPs.
  *
  * Layout, after the 3-bit SegmentType:
  *

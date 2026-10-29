@@ -34,6 +34,7 @@ data class SavePayload(
 	/** Equals `confirmed.actionAt`, for backends that read one time. */
 	val givenAt: Long,
 	val tcString: String? = null,
+    val addtlConsent: String? = null,
 )
 
 /**
@@ -67,12 +68,14 @@ internal fun QueuedSave.isWithdrawal(): Boolean {
 	// authority-independent delivery exception.
 	if (body == null && payload.tcString == null && payload.model != ConsentModel.IAB) return false
 	if (ConsentCategory.OPTIONAL.any { payload.consents[it] }) return false
+	if (payload.addtlConsent?.startsWith("2~~dv.") == false) return false
 	val frozen = body
 	if (frozen != null) {
 		val wire = runCatching { Json.parseToJsonElement(frozen).jsonObject }.getOrNull() ?: return false
 		if (wire["subjectId"]?.jsonPrimitive?.contentOrNull != payload.subjectId ||
 			wire["givenAt"]?.jsonPrimitive?.longOrNull != payload.givenAt ||
-			wire["tcString"]?.jsonPrimitive?.contentOrNull != payload.tcString) return false
+			wire["tcString"]?.jsonPrimitive?.contentOrNull != payload.tcString ||
+			wire["addtlConsent"]?.jsonPrimitive?.contentOrNull != payload.addtlConsent) return false
 		val preferences = wire["preferences"] as? JsonObject ?: return false
 		if ((preferences["necessary"] as? JsonPrimitive)?.booleanOrNull != true) return false
 		val ac = (wire["addtlConsent"] as? JsonPrimitive)?.contentOrNull

@@ -1,5 +1,7 @@
 package com.c15t.core.transport
 
+import com.c15t.core.iab.*
+import kotlinx.serialization.json.JsonNull
 import com.c15t.core.model.ConsentLocation
 import com.c15t.core.model.KernelError
 import com.c15t.core.model.KernelOverrides
@@ -69,6 +71,8 @@ data class MappedInit(
 	 * consent to a subject whose rule resolved fine.
 	 */
 	val gvl: GlobalVendorList? = null,
+    val adTechProviders: List<AdTechProvider>? = null,
+    val adTechProvidersInvalid: Boolean = false,
 	val error: KernelError? = null,
 )
 
@@ -165,7 +169,11 @@ object InitMapper {
 			translationsLanguage = (body?.get("translations") as? JsonObject)?.stringOrNull("language"),
 			policySnapshotToken = body.stringOrNull("policySnapshotToken"),
 			translations = body?.get("translations") as? JsonObject,
-			gvl = GlobalVendorListJson.fromInitBody(body),
+            gvl = GlobalVendorListJson.fromInitBody(body),
+            adTechProviders = AdditionalConsent.providers(body?.get("adTechProviders")),
+            adTechProvidersInvalid = body?.get("adTechProviders")?.let {
+                it != JsonNull && AdditionalConsent.providers(it) == null
+            } ?: false,
 			error = error,
 		)
 	}

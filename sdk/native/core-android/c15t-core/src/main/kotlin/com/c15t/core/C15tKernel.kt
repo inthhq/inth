@@ -146,12 +146,14 @@ class C15tKernel(
 		val requiresIab: Boolean = false,
 		val saved: IabCommittedConsent? = null,
 		val fetchedAt: Long? = null,
+		val additionalConsentFetchedAt: Long? = null,
 		val choiceMs: Long = 0,
 	)
 	private val readView = AtomicReference(ReadView(state.get()))
 	private var deadlineTask: ScheduledFuture<*>? = null
 	private var deadlineGeneration = 0L
 	private var lastIabActionAt: Long? = null
+	private var additionalConsentList: AdditionalConsentList? = null
 	private var iabListFetchedAt: Long? = null
 	private var iabListFromCache = true
 	private var iabListOffline = false
@@ -163,7 +165,7 @@ class C15tKernel(
 			synchronized(mutationLock) {
 				committedIab
 					?.takeIf { saved ->
-						listIsUsable() && saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
+						listIsUsable() && (saved.adTechProvidersID == null || currentAdditionalConsentList() != null) && saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
 							evaluationPolicy?.model == ConsentModel.IAB &&
 							!state.get().policyPending
 					}
@@ -177,7 +179,7 @@ class C15tKernel(
 			val snapshot = state.get()
 			val gvl = snapshot.iab?.gvl ?: return@synchronized false
 			val policy = evaluationPolicy ?: return@synchronized false
-			listIsUsable() && !snapshot.policyPending &&
+			listIsUsable() && (saved.adTechProvidersID == null || currentAdditionalConsentList() != null) && !snapshot.policyPending &&
 				policy.model == ConsentModel.IAB &&
 				saved.fingerprint == policy.choiceFingerprint &&
 				saved.isCurrent(clock.nowMillis(), policy.choiceMs) &&
@@ -200,13 +202,30 @@ class C15tKernel(
 			iabListFromCache -> IabListAvailability.CACHED
 			else -> IabListAvailability.FRESH
 		}
-		IabLifecycleStatus(availability, committedIab?.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) != true || !listIsUsable(),
+		IabLifecycleStatus(availability, committedIab?.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) != true || !listIsUsable() || committedIab?.adTechProvidersID != null && currentAdditionalConsentList() == null,
 			state.get().revision, gvl?.vendorListVersion, gvl?.tcfPolicyVersion)
+	}
+
+	private fun currentAdditionalConsentList() = additionalConsentList?.takeIf {
+		it.isCurrent(clock.nowMillis(), config.iabListMaxAgeMs)
+	}
+	fun adTechProviders(): List<AdTechProvider>? = synchronized(mutationLock) { currentAdditionalConsentList()?.providers?.toList() }
+	fun isAdTechProviderAllowed(id: Long): Boolean = iabConsent?.choices?.adTechProviderConsents?.contains(id) == true
+	fun additionalConsentStatus(): IabListAvailability = synchronized(mutationLock) {
+		when {
+			iabConfiguration == null -> IabListAvailability.UNAVAILABLE
+			additionalConsentList == null -> IabListAvailability.MISSING
+			currentAdditionalConsentList() == null -> IabListAvailability.STALE
+			iabListOffline -> IabListAvailability.OFFLINE
+			iabListFromCache -> IabListAvailability.CACHED
+			else -> IabListAvailability.FRESH
+		}
 	}
 
 	fun openIabDraft(): IabDraft? = synchronized(mutationLock) {
 		if (iabConfiguration == null || evaluationPolicy?.model != ConsentModel.IAB ||
-			state.get().policyPending || state.get().iab?.gvl == null || !listIsUsable()) null
+			state.get().policyPending || state.get().iab?.gvl == null || !listIsUsable() ||
+			additionalConsentList?.providers?.isNotEmpty() == true && currentAdditionalConsentList() == null) null
 		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
 	}
 
@@ -309,6 +328,7 @@ class C15tKernel(
 		if (!bootstrapped.compareAndSet(false, true)) {
 			return@mutate
 		}
+		store.initializeTcStorageBus(iabConfiguration)
 		val now = clock.nowMillis()
 		val subject = resolveSubject()
 		val envelope = store.readEnvelope()?.takeIf { it.snapshot.subject?.id == subject.id }
@@ -337,6 +357,7 @@ class C15tKernel(
 			val restored = envelope.snapshot
 			synchronized(mutationLock) {
 				evaluationPolicy = envelope.evaluationPolicy
+				additionalConsentList = envelope.additionalConsentList
 				iabListFetchedAt = envelope.iabListFetchedAt
 				committedIab = envelope.iabConsent
 				// A backward clock jump must not let a restart reuse an action time.
@@ -406,6 +427,19 @@ class C15tKernel(
 		background.execute { runInit() }
 	}
 
+	/** Restore the vendor mirror from current native authority without reading it as consent. */
+	fun rebuildTcStorageBus() = mutate { _ -> publishCurrentTcStorageBus() }
+
+	/** Capture current authority after durable I/O, then write the mirror off the state lock. */
+	private fun publishCurrentTcStorageBus(allowConsent: Boolean = true) {
+		val envelope = synchronized(mutationLock) {
+			val snapshot = state.get()
+			SnapshotEnvelope(snapshot = snapshot.copy(iab = null),
+				evaluationPolicy = evaluationPolicy, gvl = snapshot.iab?.gvl, iabConsent = iabConsent)
+		}
+		if (allowConsent || envelope.iabConsent == null) store.publishTcStorageBus(envelope)
+	}
+
 	/** `true` once [bootstrap] has run. */
 	val isBootstrapped: Boolean
 		get() = bootstrapped.get()
@@ -433,8 +467,11 @@ class C15tKernel(
 		if (!view.requiresIab) return view.snapshot
 		val now = clock.nowMillis()
 		val fetched = view.fetchedAt
+		val additionalFetched = view.additionalConsentFetchedAt
 		return if (view.snapshot.iab?.gvl != null && fetched != null && fetched >= 0 &&
 			now >= fetched && now - fetched < config.iabListMaxAgeMs &&
+			(view.saved?.adTechProvidersID == null || additionalFetched != null && additionalFetched >= 0 &&
+				now >= additionalFetched && now - additionalFetched < config.iabListMaxAgeMs) &&
 			view.saved?.isCurrent(now, view.choiceMs) == true
 		) view.snapshot else view.denied
 	}
@@ -701,10 +738,11 @@ class C15tKernel(
 						"iab-unavailable",
 						"IAB saves require CMP configuration and a disclosed vendor list",
 					)
-				if (!listIsUsable()) return refusedCommit("iab-list-stale", "Refresh the vendor list before saving")
+				if (!listIsUsable()) return@mutate refusedCommit("iab-list-stale", "Refresh the vendor list before saving")
 				val choices =
 					when (intent) {
-						is CommitIntent.All -> IabAuthority.accepting(gvl, configuration)
+						is CommitIntent.All -> IabAuthority.accepting(gvl, configuration).copy(
+							adTechProviderConsents = currentAdditionalConsentList()?.providers?.map { it.id })
 						is CommitIntent.Necessary -> IabChoices()
 						is CommitIntent.Iab -> intent.choices
 						is CommitIntent.Explicit ->
@@ -713,6 +751,8 @@ class C15tKernel(
 								"Save the complete native IAB draft with category choices",
 							)
 					}
+				if (intent !is CommitIntent.Necessary && additionalConsentList?.providers?.isNotEmpty() == true && currentAdditionalConsentList() == null)
+					return@mutate refusedCommit("additional-consent-unavailable", "Refresh the Google ATP list before saving")
 				try {
 					nextIab =
 						IabAuthority.build(
@@ -724,6 +764,7 @@ class C15tKernel(
 							policy!!.choiceFingerprint,
 							actionAt,
 							committedIab,
+							currentAdditionalConsentList(),
 						)
 				} catch (_: IllegalArgumentException) {
 					return@mutate refusedCommit(
@@ -801,8 +842,9 @@ class C15tKernel(
 		// Built from the snapshot computed above, which is a value: the frozen body is the
 		// one that revision describes, and building it here keeps the subject resolution and
 		// its storage write off the lock, as the class requires.
-		val payload = buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
-				.copy(tcString = nextIab?.tcString)
+		val payload =
+			buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
+				.copy(tcString = nextIab?.tcString, addtlConsent = nextIab?.addtlConsent)
 
 		val isIab = policy?.model == ConsentModel.IAB
 		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
@@ -820,13 +862,16 @@ class C15tKernel(
 				iabConsent = if (isIab) nextIab else committedIab,
 				lastIabActionAt = if (isIab) actionAt else lastIabActionAt,
 				iabListFetchedAt = iabListFetchedAt,
+				additionalConsentList = additionalConsentList,
 			)
 		}
-		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab))
+		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab, publishBus = false)) {
+			publishCurrentTcStorageBus(allowConsent = false)
 			return@mutate refusedCommit(
 				"queue-write-failed",
 				"The atomic consent decision write failed; nothing was sent",
 			)
+		}
 
 		// The mutation gate owns this revision through the durable write and swap.
 		synchronized(mutationLock) {
@@ -837,6 +882,7 @@ class C15tKernel(
 			installSnapshot(published)
 			acknowledgement?.let { noticeDismissal = it }
 		}
+		publishCurrentTcStorageBus()
 
 		mutation.release()
 
@@ -1251,6 +1297,7 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			evaluationPolicy = null
+			additionalConsentList = null
 			iabListFetchedAt = null
 			iabListFromCache = true
 			iabListOffline = false
@@ -1426,6 +1473,8 @@ class C15tKernel(
 			//
 			// Inside the latch rather than outside it, because the retained half already went
 			// through this line on the launch that served it, and on the read that hydrated it.
+			if (mapped.adTechProvidersInvalid) additionalConsentList = null
+			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, clock.nowMillis()) }
 			iabListOffline = !online
 			if (mapped.gvl != null) {
 				iabListFetchedAt = clock.nowMillis()
@@ -1535,7 +1584,8 @@ class C15tKernel(
 					value("subjectId")?.contentOrNull != saved.subjectId ||
 					value("externalSubjectId")?.contentOrNull != saved.externalId ||
 					value("givenAt")?.longOrNull != saved.actionAt ||
-					value("model")?.contentOrNull != "iab"
+					value("model")?.contentOrNull != "iab" ||
+					value("addtlConsent")?.contentOrNull != saved.addtlConsent
 			)
 				return null
 		}
@@ -1717,8 +1767,10 @@ class C15tKernel(
 							saved.fingerprint,
 							saved.actionAt,
 							saved,
+							currentAdditionalConsentList(),
 						)
-					rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices
+					rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices &&
+						rebuilt.addtlConsent == saved.addtlConsent && rebuilt.adTechProvidersID == saved.adTechProvidersID
 				} catch (_: IllegalArgumentException) {
 					false
 				}
@@ -1786,6 +1838,7 @@ class C15tKernel(
 					gvl = if (reset) null else next.iab?.gvl,
 					lastIabActionAt = lastIabActionAt,
 					iabListFetchedAt = if (reset) null else iabListFetchedAt,
+					additionalConsentList = if (reset) null else additionalConsentList,
 				)
 			envelope to next
 		} ?: return null
@@ -1794,6 +1847,7 @@ class C15tKernel(
 			committedIab = null
 			noticeDismissal = null
 			if (reset) {
+				additionalConsentList = null
 				evaluationPolicy = null
 				iabListFetchedAt = null
 				iabListFromCache = true
@@ -1939,6 +1993,7 @@ class C15tKernel(
 		val requiresIab = evaluationPolicy?.model == ConsentModel.IAB
 		val iabDeadline = if (requiresIab) listOfNotNull(
 			iabListFetchedAt?.let { saturatingAdd(it, config.iabListMaxAgeMs) },
+			additionalConsentList?.takeIf { it.providers.isNotEmpty() }?.let { saturatingAdd(it.fetchedAt, config.iabListMaxAgeMs) },
 			committedIab?.let { saturatingAdd(it.actionAt, evaluationPolicy?.choiceMs ?: 0) },
 		).filter { it > now }.minOrNull() else null
 		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline).minOrNull()
@@ -1947,7 +2002,7 @@ class C15tKernel(
 			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
 		state.set(snapshot)
 		readView.set(ReadView(snapshot, denied, requiresIab, committedIab, iabListFetchedAt,
-			evaluationPolicy?.choiceMs ?: 0))
+			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0))
 		if (requiresIab && now >= 0 && deadline != null) {
 			val reference = WeakReference(this)
 			deadlineTask = deadlineScheduler.schedule(
@@ -2000,12 +2055,14 @@ class C15tKernel(
 				noticeDismissal = noticeDismissal,
 				gvl = snapshot.iab?.gvl,
 					iabConsent = committedIab,
+					additionalConsentList = additionalConsentList,
 					iabListFetchedAt = iabListFetchedAt,
 					lastIabActionAt = lastIabActionAt,
 				)
 		}
-		val written = store.writeEnvelope(envelope)
+		val written = store.writeEnvelope(envelope, publishBus = false)
 		store.flush()
+		publishCurrentTcStorageBus(allowConsent = written)
 		return written
 	}
 

@@ -5,8 +5,8 @@ description: Native CMP configuration, complete IAB drafts, atomic persistence, 
 
 The Swift and Kotlin cores own IAB choices and generate TC strings without a JS
 runtime. This contract is for native core and platform implementers. RN commands,
-shared SwiftUI and Compose screens and complete platform key publication,
-and Additional Consent v2 have separate integration work.
+shared SwiftUI and Compose screens and complete platform key publication
+have separate integration work.
 
 ## Configure an approved CMP identity
 
@@ -176,7 +176,8 @@ performance, registry publication or certification. First release still requires
 native UI rendering of TCF 2.4 disclosures, including the preserved
 `standardTexts.features`, approved CMP identity and mobile registration, complete
 typed IABTCF publication before vendor startup, Google App certification and
-AC v2 support. ENG-510 and ENG-511 remain required. The selected native screens and RN adapter must consume this authority
+RN AC v2 API and UI integration. ENG-510 and the RN acceptance gate of ENG-511
+remain required. The selected native screens and RN adapter must consume this authority
 without creating a JS consent or TCF engine.
 
 ## Recover a missing or corrupt subject
@@ -254,3 +255,134 @@ session. Saves require the revision the presenter opened on, so a refresh or
 competing save rejects the old draft with `concurrent-change`. The caller keeps
 the rejected draft for explanation, then reloads a compatible disclosure before
 asking for another action.
+
+## Commit Google Additional Consent v2
+
+The native cores read the backend's configured `adTechProviders` response. The
+backend resolves those IDs from Google's official ATP list and removes providers
+Google no longer lists. ATP IDs are a separate namespace from GVL vendor IDs.
+The response contains each provider's `id`, `name` and `policyUrl`; native readers
+reject duplicate IDs, invalid IDs, empty names and invalid policy URLs as a whole
+list. They keep the disclosed list with its fetch time in the same protected
+record as TCF.
+
+An absent list keeps an unexpired cache without renewing its age. An explicit
+empty array disables AC and invalidates an earlier AC choice. An invalid list
+clears it. Any provider addition, removal, name or policy-link change requires a
+new native decision. `additionalConsentStatus` distinguishes a missing or stale
+list. `adTechProviders` returns current disclosures once for a native presenter.
+The next expiry deadline includes the bound ATP cache. If a response renews the
+GVL but omits ATPs, the older ATP deadline still revokes existing gates, clears
+obsolete queued grants and removes the published AC value without a new read.
+
+Set `adTechProviderConsents` on the complete IAB draft. Native validation rejects
+IDs outside the disclosed ATP list. A selected ATP receives consent only when
+TCF purposes 1, 3 and 4 are all consented. Otherwise it remains disclosed without
+consent. The committed choices expose this normalized result. Read
+`IABCommittedConsent.addtlConsent` or `IabCommittedConsent.addtlConsent` and use
+`isAdTechProviderAllowed` for a synchronous ATP gate. ATT permission stays
+separate and does not change any ATP or TCF choice.
+
+Native encoding follows [Google's AC v2 specification](https://support.google.com/admanager/answer/9681920):
+`2~<consented IDs>~dv.<disclosed IDs without consent>`. IDs sort numerically, and a
+consented provider occurs only in the consented section. For providers 1, 2, 3,
+4 and 10, selecting 1 and 10 produces `2~1.10~dv.2.3.4`. Rejecting all produces
+`2~~dv.1.2.3.4.10`. An empty configured list produces no AC string.
+
+`addtlConsent` travels beside `tcString` in the real native `POST /subjects`
+body. It shares TCF's atomic commit, identity binding, action time, offline replay
+and rejected-write behavior. Retries reuse the exact saved body. A stale ATP
+list cannot authorize another grant. Withdrawal can still commit TCF denials
+without an AC string if the ATP list is stale. The backend clears its AC value
+when it receives a TC string without `addtlConsent`.
+
+The native bus writes `IABTCF_AddtlConsent` as a string into UserDefaults and the
+application-default SharedPreferences. Withdrawal publishes the disclosure-only
+AC string for a current list. Invalid authority, identity changes and reset
+remove it. The complete typed TCF bus and its publication ordering are documented below.
+
+This is the ENG-511 native foundation. Typed RN public adapters, compact events
+and IAB UI integration remain a required ENG-511 acceptance gate through ENG-514
+and ENG-533. Native presenters must show every disclosed provider and privacy
+link before a save. This work does not establish Google App or AC v2 approval.
+
+## Publish the typed vendor storage bus
+
+The cores publish a projection into standard UserDefaults and application-default
+SharedPreferences during synchronous bootstrap, before JS or network work. An
+explicit, valid native `IABConfiguration` supplies CMP detection immediately.
+There is no default CMP ID. Detection does not imply mobile registration or
+Google certification. The configured identity must have the required approval
+before an app ships.
+
+The [IAB CMP API v2 in-app storage table](https://github.com/InteractiveAdvertisingBureau/GDPR-Transparency-and-Consent-Framework/blob/master/TCFv2/IAB%20Tech%20Lab%20-%20CMP%20API%20v2.md#what-is-the-cmp-in-app-internal-structure-for-the-defined-api)
+sets the following contract. Consent rows come from the exact committed TC
+bytes, including shaped vendor vectors. Number means a native integer, read with
+`integer(forKey:)` on Apple and `getInt` on Android. String means a native string.
+
+| Key | Native type | Source |
+| --- | --- | --- |
+| `IABTCF_CmpSdkID` | Number | Explicit configuration at initialization; committed CMP ID after a decision |
+| `IABTCF_CmpSdkVersion` | Number | Explicit configuration; committed numeric CMP version |
+| `IABTCF_PolicyVersion` | Number | Current GVL; committed TCF policy version |
+| `IABTCF_gdprApplies` | Number | Resolved policy, 1 for IAB, 0 otherwise; absent while undetermined |
+| `IABTCF_PublisherCC` | String | Committed publisher country |
+| `IABTCF_PurposeOneTreatment` | Number | Committed flag, currently 0 for authored consent |
+| `IABTCF_UseNonStandardTexts` | Number | Committed flag, currently 0 for authored consent |
+| `IABTCF_TCString` | String | Exact committed TC String |
+| `IABTCF_VendorConsents` | String | Vendor consent bits |
+| `IABTCF_VendorLegitimateInterests` | String | Vendor LI bits |
+| `IABTCF_DisclosedVendors` | String | Disclosed vendor bits |
+| `IABTCF_PurposeConsents` | String | 24 purpose consent bits |
+| `IABTCF_PurposeLegitimateInterests` | String | 24 purpose LI bits |
+| `IABTCF_SpecialFeaturesOptIns` | String | 12 special-feature bits |
+| `IABTCF_PublisherRestrictions{ID}` | String | Restriction types by vendor for that purpose |
+| `IABTCF_PublisherConsent` | String | 24 publisher purpose consent bits, when its segment exists |
+| `IABTCF_PublisherLegitimateInterests` | String | 24 publisher purpose LI bits, when its segment exists |
+| `IABTCF_PublisherCustomPurposesConsents` | String | Declared custom-purpose consent bits |
+| `IABTCF_PublisherCustomPurposesLegitimateInterests` | String | Declared custom-purpose LI bits |
+| `IABTCF_AddtlConsent` | String | Committed [Google AC v2 value](https://support.google.com/admanager/answer/9681920) |
+
+Bit position zero represents ID 1. Vendor widths follow the committed TC
+segments. A vendor consent bit can remain set while a publisher restriction
+disallows one of its purposes. Consumers must combine the relevant purpose,
+vendor and restriction signals. Restriction keys have a numbered suffix.
+Unrestricted positions contain `_`, following the IAB reference
+[`InAppTCData` implementation](https://github.com/InteractiveAdvertisingBureau/iabtcf-es/blob/master/modules/cmpapi/src/response/InAppTCData.ts).
+The obsolete unnumbered prefix and all numbered restriction keys are removed
+when omitted by a replacement publication. Keys outside this table stay intact.
+
+Android replaces the entire map in one `SharedPreferences.Editor.commit()`
+transaction. Apple removes TCString and AC first, writes and checks associated
+values, publishes AC, then publishes TCString last. Apple has no multi-key reader
+transaction. Consumers must observe TCString changes and reread associated
+values. A consumer holding an earlier cached string across an update must discard
+that cached data. Arbitrary concurrent multi-key reads are not an atomic API.
+
+A rejected authoritative commit preserves the previous bus while its authority
+remains current. Publication rechecks authority after durable storage I/O, so an
+expired disclosure cannot publish grant rows. A rejected or partial mirror
+publication removes the owned values and retries on a later
+publication, cold bootstrap or `core.rebuildTcStorageBus()`. Repair uses current
+native authority and its clock, never raw stored grants or vendor values.
+Mirror writes run outside the core state lock. Queue-only replay bookkeeping
+does not republish stored consent rows after current authority has expired.
+Android's raw `C15tStore.rebuildTcStorageBus()` restores metadata only because a
+store cannot validate current authority. If authority invalidation cannot persist,
+the bus still removes its grants. Complete storage failure can also prevent a
+cleanup write; startup refusal and vendor initialization remain host duties.
+
+Withdrawal publishes denied vectors and disclosure-only AC for current lists.
+Reset, identity transitions and policy/list invalidation remove consent rows.
+CMP detection remains while that configured core is installed. Uninstalling a CMP
+requires clearing all its vendor-storage values. Refresh on foreground and
+connectivity changes; a bus read is not a call into the native gate or its clock.
+The SDK does not claim that a suspended process updates preferences at an expiry
+instant.
+
+Shared independent-codec fixtures cover the projected values, including sparse
+IDs, deleted vendors and custom purposes. Platform tests read actual UserDefaults
+and SharedPreferences values, exercise cold restart and write refusal, and repair
+a damaged mirror. These tests do not establish device performance, power-loss
+persistence, interoperability with a real ad SDK or certification. The AdMob
+reference remains the vendor SDK proof gate in ENG-519.
