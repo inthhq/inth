@@ -9,6 +9,8 @@ OUT="${C15T_APP_E2E_OUT:-${APP_DIR}/.artifacts/app-e2e/${PLATFORM}-${RUN_ID}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ ! -e "${OUT}/backend-ready" && ! -e "${OUT}/result.json" ]] || { echo "Use a fresh evidence directory: ${OUT}" >&2; exit 2; }
+mkdir -p "${OUT}/tmp"
+export TMPDIR="${OUT}/tmp/"
 export C15T_APP_E2E=1 C15T_FAKE_NATIVE=0
 BACKEND_PORT="${C15T_APP_E2E_PORT:-39873}"
 export C15T_E2E_URL="http://localhost:${BACKEND_PORT}"
@@ -21,10 +23,11 @@ cleanup() {
   if [[ -n "${VIDEO_PID}" ]]; then
     if [[ "${PLATFORM}" == android ]]; then
       "${ADB}" -s "${DEVICE}" shell pkill -2 screenrecord
+      "${ADB}" -s "${DEVICE}" shell 'for i in 1 2 3 4 5 6 7 8 9 10; do pidof screenrecord >/dev/null || exit 0; sleep 1; done; exit 1'
     else
       kill -INT "${VIDEO_PID}"
     fi
-    wait "${VIDEO_PID}"
+    [[ "${PLATFORM}" == android ]] || wait "${VIDEO_PID}"
   fi
   if [[ -n "${LOG_PID}" ]]; then
     kill "${LOG_PID}"
@@ -41,15 +44,14 @@ cleanup() {
     xcrun simctl delete "${DEVICE}"
   elif [[ "${PLATFORM}" == android ]]; then
     if [[ -n "${DEVICE}" && "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" == device ]]; then
+      "${ADB}" -s "${DEVICE}" logcat -d -v threadtime > "${OUT}/device-final.log" 2>&1
       "${ADB}" -s "${DEVICE}" exec-out screencap -p > "${OUT}/final.png"
+      "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-video.log "${OUT}/video.log"
       "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-app-e2e.mp4 "${OUT}/journey.mp4"
       "${ADB}" -s "${DEVICE}" pull /sdcard/Android/data/com.c15t.bare.e2e/files/evidence "${OUT}/device-evidence"
       "${ADB}" -s "${DEVICE}" emu kill
     elif [[ -n "${EMULATOR_PID}" ]]; then
       kill "${EMULATOR_PID}"
-    fi
-    if [[ -e "${OUT}/test.log" ]]; then
-      cp -R "${APP_DIR}/android/e2e/build/outputs/androidTest-results" "${OUT}/junit"
     fi
     [[ -z "${EMULATOR_PID}" ]] || wait "${EMULATOR_PID}"
     [[ -z "${AVD_NAME}" ]] || "${AVDMANAGER}" delete avd --name "${AVD_NAME}"
@@ -75,6 +77,7 @@ curl -fsS http://127.0.0.1:${BACKEND_PORT}/health > "${OUT}/backend-health.json"
 cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
+git diff --binary > "${OUT}/source.patch"
 bun --version > "${OUT}/bun-version.txt"
 bun turbo run build --filter=@c15t/react-native --filter=@c15t/schema > "${OUT}/dependencies.log" 2>&1
 
@@ -129,7 +132,7 @@ PYRUN
     -resultBundlePath "${OUT}/journey.xcresult" -parallel-testing-enabled NO \
     -maximum-concurrent-test-simulator-destinations 1 \
     -collect-test-diagnostics never \
-    -test-timeouts-enabled YES -default-test-execution-time-allowance 240 \
+    -test-timeouts-enabled YES -default-test-execution-time-allowance 360 \
     CODE_SIGNING_ALLOWED=YES CODE_SIGNING_FOR_SIMULATOR=YES CODE_SIGN_IDENTITY=- > "${OUT}/test.log" 2>&1
 elif [[ "${PLATFORM}" == android ]]; then
   export ANDROID_HOME="${ANDROID_HOME:-${HOME}/Library/Android/sdk}"
@@ -139,7 +142,7 @@ elif [[ "${PLATFORM}" == android ]]; then
   AVD_NAME="c15t-app-e2e-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   PORT="$(python3 -c 'import socket
-for p in range(5600, 5680, 2):
+for p in list(range(5554, 5580, 2)) + [5582, 5584]:
  s=socket.socket()
  try: s.bind(("127.0.0.1",p)); print(p); break
  except OSError: pass
@@ -159,6 +162,9 @@ for p in range(5600, 5680, 2):
   "${ADB}" -s "${DEVICE}" shell getprop ro.build.version.sdk > "${OUT}/device-version.txt"
   "${ADB}" -s "${DEVICE}" shell getprop ro.build.version.release >> "${OUT}/device-version.txt"
   java -version > "${OUT}/toolchain.txt" 2>&1
+  "${ADB}" -s "${DEVICE}" shell settings put system screen_off_timeout 2147483647
+  "${ADB}" -s "${DEVICE}" shell svc power stayon true
+  "${ADB}" -s "${DEVICE}" shell input keyevent 224
   "${ADB}" -s "${DEVICE}" shell input keyevent 82
   "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
   # JS/instrumentation keep a stable device endpoint; only this owned emulator is reversed.
@@ -168,17 +174,23 @@ for p in range(5600, 5680, 2):
     :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
   rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"
-  sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" :app:assembleRelease :e2e:assembleRelease \
+  sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" --refresh-dependencies :app:assembleRelease :e2e:assembleRelease \
     -Pc15t.appE2e=true -Pc15t.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
+  "${ADB}" -s "${DEVICE}" shell input keyevent 224
   "${ADB}" -s "${DEVICE}" logcat -v threadtime > "${OUT}/device.log" 2>&1 &
   LOG_PID=$!
-  "${ADB}" -s "${DEVICE}" shell screenrecord --time-limit 180 /data/local/tmp/c15t-app-e2e.mp4 > "${OUT}/video.log" 2>&1 &
-  VIDEO_PID=$!
-  sleep 1
-  kill -0 "${VIDEO_PID}" || { cat "${OUT}/video.log"; exit 1; }
-  sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" :e2e:connectedReleaseAndroidTest \
-    -Pc15t.appE2e=true -Pc15t.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" \
-    -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true > "${OUT}/test.log" 2>&1
+  "${ADB}" -s "${DEVICE}" shell 'nohup screenrecord --time-limit 180 /data/local/tmp/c15t-app-e2e.mp4 >/data/local/tmp/c15t-video.log 2>&1 </dev/null &'
+  VIDEO_PID=remote
+  "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
+  "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/app/build/outputs/apk/release/app-release.apk" > "${OUT}/install.log" 2>&1
+  "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/e2e/build/outputs/apk/release/e2e-release.apk" >> "${OUT}/install.log" 2>&1
+  instrument_exit=0
+  "${ADB}" -s "${DEVICE}" shell am instrument -w -r \
+    -e class com.c15t.bare.e2e.ConsentJourney \
+    com.c15t.bare.e2e/androidx.test.runner.AndroidJUnitRunner > "${OUT}/test.log" 2>&1 || instrument_exit=$?
+  python3 "${APP_DIR}/scripts/android-instrumentation-result.py" "${OUT}/test.log" "${OUT}/junit/TEST-consent-journey.xml"
+  [[ "${instrument_exit}" == 0 ]] || exit "${instrument_exit}"
+
 else
   echo "Unknown platform: ${PLATFORM}" >&2
   exit 2

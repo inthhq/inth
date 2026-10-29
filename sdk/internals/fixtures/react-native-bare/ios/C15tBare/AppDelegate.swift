@@ -21,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       // The test-only artifact opts out of automatic bootstrap. One protected core owns UI and gates.
       do {
         _ = try C15tApple.install(CoreConfig(store: KeychainStore(service: "com.c15t.bare.e2e"),
-          bundledPolicy: Bundle.main.url(forResource: "c15t-policy", withExtension: "json").map { BundledPolicyResource(contentsOf: $0, endpoint: endpoint + "/api/self-host") },
+          bundledPolicy: Bundle.main.url(forResource: "c15t-policy", withExtension: "json").flatMap { BundledPolicyResource(url: $0, endpoint: endpoint + "/api/self-host") },
           transport: HostedTransport(baseURL: URL(string: endpoint + "/api/self-host")!),
           consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing],
           iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"), storageBus: UserDefaultsStorageBus()))

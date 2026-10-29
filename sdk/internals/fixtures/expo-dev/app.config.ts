@@ -1,8 +1,6 @@
-
 import type { C15tPluginProps } from '@c15t/react-native/expo-plugin';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type { ConfigPlugin } from 'expo/config-plugins';
-
 
 /**
  * Backend and key for the embedded consent core.
@@ -69,9 +67,25 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 };
 
 const c15tPluginProps: C15tPluginProps = {
-	androidMavenRepository: { url: process.env.C15T_MAVEN_URL ?? 'https://maven.pkg.github.com/inthhq/c15t-private' },
-	policyResource: './c15t-policy.json',
+	androidMavenRepository: (process.env.C15T_MAVEN_URL ?? '').startsWith('file:')
+		? { url: process.env.C15T_MAVEN_URL ?? '' }
+		: {
+				credentials: {
+					passwordEnvironmentVariable: 'C15T_MAVEN_TOKEN',
+					usernameEnvironmentVariable: 'C15T_MAVEN_USERNAME',
+				},
+				url:
+					process.env.C15T_MAVEN_URL ??
+					'https://maven.pkg.github.com/inthhq/c15t-private',
+			},
 	backendURL,
+	consentCategories: [
+		'necessary',
+		'functionality',
+		'experience',
+		'measurement',
+		'marketing',
+	],
 	// The App Tracking Transparency opt-in. Consent to marketing cookies is not Apple
 	// tracking authorization, so this fixture asks for both: the banner decides what
 	// c15t may store, and the Apple sheet decides what the advertising identifier is
@@ -85,6 +99,7 @@ const c15tPluginProps: C15tPluginProps = {
 		new URL(backendURL).hostname.endsWith('.inth.app')
 			? 'hosted'
 			: 'selfHosted',
+	policyResource: './c15t-policy.json',
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,

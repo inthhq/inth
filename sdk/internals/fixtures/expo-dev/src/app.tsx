@@ -11,8 +11,13 @@ import {
 	ConsentDialog,
 	ConsentPreferences,
 	useTrackingRequest,
+	useConsentStatus,
+	useConsent,
+	presentConsentPrompt,
+	presentPreferences,
+	onConsentPresenterOutcome,
 } from '@c15t/react-native';
-import { Component, useState } from 'react';
+import { Component, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text as NativeText, View } from 'react-native';
 
@@ -112,7 +117,7 @@ const MissingNativeCore = () => {
 };
 
 /** The app, once a core is attached. */
-export const App = () => {
+const LegacyApp = () => {
 	const { kind } = useConsentSource();
 	const [tab, setTab] = useState<Tab>('home');
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -203,3 +208,51 @@ export const App = () => {
 
 /** Exported for the missing-module case, which cannot render the normal shell. */
 export const UnavailableScreen = MissingNativeCore;
+
+const NativeApp = () => {
+	const snapshot = useConsent();
+	const status = useConsentStatus();
+	const [outcome, setOutcome] = useState('No native decision');
+	useEffect(
+		() =>
+			onConsentPresenterOutcome((value) => setOutcome(JSON.stringify(value))),
+		[]
+	);
+	useEffect(() => {
+		if (!status.policyPending && status.promptRequirement.kind !== 'none') {
+			void presentConsentPrompt('https://c15t.com/privacy');
+		}
+	}, [status.policyPending, status.promptRequirement.kind]);
+	return (
+		<View style={{ flex: 1, gap: 24, padding: 32, paddingTop: 80 }}>
+			<NativeText accessibilityRole="header">
+				c15t Expo native consent
+			</NativeText>
+			<Button
+				label="Privacy settings"
+				onPress={() => {
+					void presentPreferences('https://c15t.com/privacy');
+				}}
+			/>
+			<NativeText testID="fixture.native-state">
+				{JSON.stringify({
+					explicitChoice: snapshot.explicitChoice
+						? Object.fromEntries(
+								Object.entries(snapshot.explicitChoice.categories).map(
+									([category, receipt]) => [category, receipt?.value]
+								)
+							)
+						: null,
+					permissions: snapshot.effectivePermissions,
+					policyPending: snapshot.policyPending,
+					prompt: snapshot.promptRequirement.kind,
+				})}
+			</NativeText>
+			<NativeText testID="fixture.native-outcome">{outcome}</NativeText>
+		</View>
+	);
+};
+export const App = () => {
+	const { kind } = useConsentSource();
+	return kind === 'native' ? <NativeApp /> : <LegacyApp />;
+};

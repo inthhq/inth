@@ -34,6 +34,25 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 			false
 		);
 		await expect(fetch(`${url}/api/self-host/init`)).rejects.toThrow();
+		const frozenBody = '{ "consentAction" : "necessary", "choice" : {} }';
+		await expect(
+			fetch(`${url}/api/self-host/subjects`, {
+				body: frozenBody,
+				method: 'POST',
+			})
+		).rejects.toThrow();
+		const [attempt] = (
+			await readFile(join(out, 'delivery-attempts.jsonl'), 'utf8')
+		)
+			.trim()
+			.split('\n')
+			.map((line) => JSON.parse(line));
+		expect(attempt).toMatchObject({
+			body: JSON.parse(frozenBody),
+			online: false,
+			rawHex: Buffer.from(frozenBody).toString('hex'),
+		});
+
 		expect(
 			(
 				await fetch(`${url}/e2e/network`, {

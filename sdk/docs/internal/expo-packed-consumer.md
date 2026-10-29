@@ -40,8 +40,9 @@ C15T_LOCAL_PODS=false EXPO_PUBLIC_C15T_FAKE_NATIVE=false \
 ```
 
 `C15T_LOCAL_PODS=false` disables the fixture's separate local Apple-core override.
-The packed SDK carries its own Swift sources. Apple installer, pod resolution and
-iOS app acceptance still need the Apple stream's checks.
+The packed SDK carries the shared Swift core, Apple installer and SwiftUI
+presenter sources. Build the generated iOS workspace to verify CocoaPods
+compilation; record runtime acceptance separately.
 
 The shipped plugin accepts `androidMavenRepository`. It has no default
 repository. The fixture explicitly selects the private pilot GitHub Packages
@@ -94,6 +95,28 @@ root build script and manifest before native assembly. CNG output alone does
 not establish successful Android or iOS builds. The local artifact smoke runner
 checks packed RN bridge compilation and R8 separately from full app builds.
 
+## Local packed runtime smoke
+
+After assembling the packed consumer's Release APK, run:
+
+```sh
+python3 internals/fixtures/expo-dev/scripts/packed-launch-android.py \
+  --apk /absolute/path/consumer/android/app/build/outputs/apk/release/app-release.apk \
+  --out /absolute/path/new-evidence-directory
+```
+
+The runner creates and deletes its own Android 36 AVD. It disables Wi-Fi and
+mobile data before launching the hosted-default app, then uses the shared native
+prompt to reject, checks denied gates and the compact outcome, restarts the
+process, and opens restored native preferences. It preserves screenshots,
+accessibility hierarchies, a recording and the APK hash. The bundled demo
+resource must still be valid; do not renew its disclosure dates for this check.
+This smoke does not send a hosted receipt or prove packed iOS runtime behavior.
+
+Use `--refresh-dependencies` when rebuilding against a local staging repository
+whose development coordinates were replaced. Remote published coordinates must
+remain immutable.
+
 ## EAS profiles and remaining gates
 
 The fixture supplies two internal-distribution profiles:
@@ -106,8 +129,8 @@ The fixture supplies two internal-distribution profiles:
 
 Both profiles select the real native runtime and disable the local Apple pod
 override. Configure a reachable test backend as
-`EXPO_PUBLIC_C15T_BACKEND_URL` in each EAS environment; the fixture's local
-backend default is not a cloud test backend. Configure Maven read access and
+`EXPO_PUBLIC_C15T_BACKEND_URL` in each EAS environment. The fixture defaults to
+`https://example-inth.inth.app/`; use an authorized test project for delivery. Configure Maven read access and
 signing credentials through the secure `inth-com` account/CI flow. Keep tokens,
 keys, provisioning profiles and certificates out of the tarball and app config.
 

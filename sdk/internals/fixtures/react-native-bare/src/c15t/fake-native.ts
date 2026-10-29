@@ -406,14 +406,12 @@ class FakeCore {
 				// The emitter is in JavaScript here, so there is nothing to enable
 				// natively. The real module uses this to start and stop emitting.
 			},
+			closeConsentPresenter: () => Promise.resolve(),
 			commit: (intent) => this.commit(intent),
 			dismissNotice: () => {
 				this.dismissNotice();
 			},
-	        presentConsentPrompt: () => Promise.reject(new Error('Native presenter requires native core')),
-        presentPreferences: () => Promise.reject(new Error('Native presenter requires native core')),
-        closeConsentPresenter: () => Promise.resolve(),
-		getBootstrap: () => this.bootstrap(),
+			getBootstrap: () => this.bootstrap(),
 			getSnapshot: () => this.getSnapshot(),
 			// These are the answers the Android bridge gives, verbatim. The fake core
 			// has no platform gate to read, so it reports Android's arm rather than
@@ -428,6 +426,10 @@ class FakeCore {
 				this.logout();
 				await settle();
 			},
+			presentConsentPrompt: () =>
+				Promise.reject(new Error('Native presenter requires native core')),
+			presentPreferences: () =>
+				Promise.reject(new Error('Native presenter requires native core')),
 			refresh: async () => {
 				await this.refresh();
 			},

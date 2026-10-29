@@ -112,22 +112,80 @@ confirmed cached policy and the recorded rejection from the same receipt journey
 not delivery to the public Inth project. Without the test backend, that dedicated
 test skips; the other native app journeys still run.
 
-## Remaining integration work
+## React Native hosts
 
-First-install offline policy is not implemented here. A clean installation
-without network stays policy-pending and denies optional data use. A previously
-cached policy and choice can restart offline. The test fixture's init response
-is never a production fallback. The required bundle must come from a validated
-`/manifest` export, retain original disclosure times, specify binding, locale
-and unknown-geography defaults, exclude identity and grants, load before JS,
-respect newer cached policy and preserve replay ownership. Expired IAB lists
-must keep new optional grants off.
+The private RN package includes the same SwiftUI and Compose presenters. The
+bare RN and Expo examples use these screens when the native core is installed.
+Their explicit fake mode retains the existing JavaScript demo. Headless hooks
+and custom UI remain available.
 
-Native RN hosts, UIKit/View consumers, packed Expo consumers, minimum-OS runs,
-physical-device screen readers, RTL/localized copy, full accessibility audits
-and long-list performance remain separate release checks. The current modules
-are local workspace products; Maven, CocoaPods and packaged RN UI distribution
-are not wired by this prototype. ATT remains separate from consent.
+Subscribe with `onConsentPresenterOutcome` before calling
+`presentConsentPrompt(privacyPolicyURL)` or `presentPreferences(privacyPolicyURL)`.
+The HTTPS privacy-policy URL belongs to your app. A request returns
+`{ sessionId, status }`. Status is `presented`, `already-presented`, or
+`not-required`; the last has a null session ID. A repeated request preserves
+its open draft. `closeConsentPresenter(sessionId)` ignores obsolete IDs,
+requires native confirmation for a dirty draft and refuses close while saving.
+
+Each finished session emits one compact `{ sessionId, kind, revision }` event.
+`committed` means durable local storage succeeded, `acknowledged` means a
+notice was durably dismissed, and `dismissed` records no decision. `unavailable`
+means unresolved settings were closed without a decision. Backend delivery may
+still be queued after a successful local commit. Draft toggles, search and
+navigation stay native. Native controls and gates continue while Hermes is
+busy; JavaScript receives the final event when it resumes. Runtime teardown
+removes its callback without undoing durable native work. A new Android runtime
+can attach to an existing session, whose ViewModelStore survives host activity
+recreation. If Android finishes the consent Activity while retaining the process,
+a repeated request opens that session again with its existing draft. Outcomes are
+runtime events, not a persisted event inbox.
+
+Notice hosts leave the app visible and accept touches outside the native notice.
+The UIKit adapter uses measured SwiftUI notice bounds; the Android adapter adds
+a bottom-sized Compose view to the existing host Activity. Opening settings from the notice uses the same
+native session. A notice acknowledgement grants nothing. If bundled authority
+expires while settings are open, Reject remains available. A changed revision
+still requires an explicit reload before a decision can save; Accept and Save
+remain unavailable until policy refresh.
+
+CocoaPods compiles generated copies of `C15tCore`, `C15tApple` and
+`C15tConsentUI` from the packed RN package. Regenerate with
+`scripts/sync-vendored-core.ts` and `scripts/sync-vendored-apple.ts`; never edit
+vendored sources. Android resolves versioned `c15t-core`, `c15t-android` and
+`c15t-consent-ui` binaries from the configured Maven repository. The Compose
+module publishes Kotlin 2.1 metadata for the Expo 57 consumer. Installing the
+RN binding includes UI code; native headless products do not depend on it.
+Local staging does not authorize remote publication, and the RN package remains
+private.
+
+First-install offline policy uses the same installed core and the validated
+build resource described in [mobile policy resources](../../native/docs/mobile-policy-resources.md).
+The resource carries no subject or grants, retains disclosure dates, and expires.
+Optional gates deny before an explicit choice. The designated hosted example
+and advanced transport APIs remain unchanged. Do not renew the demo resource's
+source dates to make a test pass.
+
+The Release app runner is
+`bun run --cwd internals/fixtures/react-native-bare e2e:ios` or `e2e:android`.
+It creates a fresh task-owned device, embeds a controlled policy resource, and
+uses real native controls for offline accept/reject/custom save, cancellation,
+withdrawal, process-death persistence and exact queued replay. Its IAB step
+blocks Hermes deliberately while exercising native purpose, LI, partner search,
+details and Additional Consent controls, then checks gates before JavaScript
+resumes and one final event afterward. The journey also checks repeated requests,
+obsolete close, backgrounding, Android recreation, notice pass-through and durable
+notice acknowledgement. The runner preserves XCTest/JUnit
+reports, recordings, screenshots and backend/native observations, including
+failed runs. Set `C15T_APP_E2E_PORT` to a free host port and
+`C15T_APP_E2E_OUT` to a new evidence directory. Android reverses device port
+3000 only on the device the runner creates. This proves controlled local
+protocol delivery, not hosted receipt acceptance.
+
+Full validation calls the separate mobile app workflow. It does not participate
+in publishing. Local app evidence does not establish physical-device,
+minimum-OS, screen-reader, RTL, localization or TCF certification coverage.
+Packed Expo runtime acceptance and host-specific gaps must be recorded in the
+integration handoff alongside exact refs and captures.
 
 ## Advanced transport configuration
 

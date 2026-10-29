@@ -76,7 +76,8 @@ class Handler(BaseHTTPRequestHandler):
         body = json.loads(data)
         with lock:
             if self.path == '/e2e/scenario':
-                transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures/iab-init.json').read_text())}
+                fixture = 'notice-init.json' if body.get('kind') == 'notice' else 'iab-init.json'
+                transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures' / fixture).read_text())}
                 self.reply(200, {})
             elif self.path == '/e2e/native':
                 native_state.clear()
@@ -99,6 +100,8 @@ class Handler(BaseHTTPRequestHandler):
                 (args.out / 'native-state.json').write_text(json.dumps({**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block, 'backendOnline': online}, indent=2))
                 self.reply(200, {})
             elif self.path == '/api/self-host/subjects':
+                with (args.out / 'delivery-attempts.jsonl').open('a') as attempts:
+                    attempts.write(json.dumps({'at': time(), 'online': online, 'rawHex': data.hex(), 'body': body}) + '\n')
                 if not online:
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()

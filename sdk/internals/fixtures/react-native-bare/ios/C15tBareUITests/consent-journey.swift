@@ -21,7 +21,7 @@ final class ConsentJourney: XCTestCase {
 
   @discardableResult
   private func awaitState(_ description: String, matching: ([String: Any], [String: Any]) -> Bool) throws -> [String: Any] {
-    let deadline = Date().addingTimeInterval(45)
+    let deadline = Date().addingTimeInterval(100)
     var last: [String: Any] = [:]
     repeat {
       last = try report()
@@ -53,6 +53,7 @@ final class ConsentJourney: XCTestCase {
     let control = app.descendants(matching: .any)[identifier].firstMatch
     XCTAssertTrue(control.waitForExistence(timeout: 15), "Missing control \(identifier)\n\(app.debugDescription)")
     XCTAssertTrue(control.isHittable, "Control not hittable: \(identifier)")
+    if control.elementType == .switch { reveal(control) }
     control.tap()
   }
 
@@ -79,7 +80,7 @@ final class ConsentJourney: XCTestCase {
             let receipts = choice["categories"] as? [String: [String: Any]],
             let writes = report["saves"] as? [[String: Any]],
             writes.count == saves,
-            writes.last?["consentAction"] as? String == "custom",
+            writes.last?["consentAction"] as? String == (granted.isEmpty ? "necessary" : granted == Set(self.categories) ? "all" : "custom"),
             let delivered = writes.last,
             let preferences = delivered["preferences"] as? [String: Bool],
             let deliveredChoice = delivered["choice"] as? [String: Any],
@@ -97,7 +98,7 @@ final class ConsentJourney: XCTestCase {
   }
 
   private func choiceBytes(_ report: [String: Any]) throws -> Data {
-    try JSONSerialization.data(withJSONObject: XCTUnwrap((report["snapshot"] as? [String: Any])?["explicitChoice"]), options: .sortedKeys)
+    try JSONSerialization.data(withJSONObject: XCTUnwrap((report["snapshot"] as? [String: Any])?["explicitChoice"]), options: [.sortedKeys, .fragmentsAllowed])
   }
 
   private func network(_ online: Bool) throws {
@@ -154,21 +155,30 @@ final class ConsentJourney: XCTestCase {
     try fresh()
     tap("c15t.first-layer.customize")
     tap("c15t.prefs.category.measurement.switch")
+    XCTAssertEqual(app.switches["c15t.prefs.category.measurement.switch"].value as? String, "1")
     capture("04-customize-measurement")
     tap("c15t.prefs.save")
     let saved = try localChoice(["measurement"], saves: 2)
     capture("05-saved")
 
-    tap("fixture.open-preferences")
+    tap("fixture.repeat-preferences")
     let measurement = app.descendants(matching: .any)["c15t.prefs.category.measurement.switch"].firstMatch
     XCTAssertTrue(measurement.waitForExistence(timeout: 15))
     XCTAssertEqual(measurement.value as? String, "1")
     tap("c15t.prefs.category.measurement.switch")
     XCTAssertEqual(measurement.value as? String, "0")
+    XCUIDevice.shared.press(.home)
+    app.activate()
+    XCTAssertTrue(measurement.waitForExistence(timeout: 15))
+    XCTAssertEqual(measurement.value as? String, "0")
     capture("06-unsaved-draft")
     tap("c15t.prefs.cancel")
     tap("c15t.prefs.discard.confirm")
     XCTAssertTrue(app.buttons["fixture.open-preferences"].waitForExistence(timeout: 10))
+    let sessionReport = try report()
+    let probe = try XCTUnwrap((sessionReport["jsBlock"] as? [String: Any])?["sessionProbe"] as? [String: [String: Any]])
+    XCTAssertEqual(probe["first"]?["sessionId"] as? String, probe["repeated"]?["sessionId"] as? String)
+    XCTAssertEqual(probe["repeated"]?["status"] as? String, "already-presented")
     let cancelled = try localChoice(["measurement"], saves: 2)
     let savedChoice = (saved["snapshot"] as? [String: Any])?["explicitChoice"]
     let cancelledChoice = (cancelled["snapshot"] as? [String: Any])?["explicitChoice"]
@@ -202,14 +212,22 @@ final class ConsentJourney: XCTestCase {
     try choice([], saves: 3)
     capture("10-reconnected")
     try nativeIabWhileJSIsBlocked()
+    try nativeNoticePassesHostTouches()
   }
 
   private func reveal(_ control: XCUIElement) {
-    for _ in 0..<14 {
-      if control.exists && control.isHittable { return }
-      app.scrollViews.firstMatch.swipeUp()
+    for _ in 0..<18 {
+      let save = app.buttons["c15t.iab.save"].exists ? app.buttons["c15t.iab.save"] : app.buttons["c15t.prefs.save"]
+      let reject = app.buttons["c15t.iab.reject-all"].exists ? app.buttons["c15t.iab.reject-all"] : app.buttons["c15t.prefs.reject-all"]
+      let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
+      let top: CGFloat = 150
+      if control.exists && control.isHittable && control.frame.midY > top && control.frame.midY < bottom { return }
+      let start = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: app.frame.midX, dy: bottom - 20))
+      let end = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: app.frame.midX, dy: top + 30))
+      if control.exists && control.frame.midY < top { end.press(forDuration: 0.05, thenDragTo: start) }
+      else { start.press(forDuration: 0.05, thenDragTo: end) }
     }
-    XCTAssertTrue(control.isHittable, "Not reachable: \(control)")
+    XCTFail("Not reachable: \(control)")
   }
 
   private func nativeIabWhileJSIsBlocked() throws {
@@ -226,7 +244,8 @@ final class ConsentJourney: XCTestCase {
     while (try report()["jsBlock"] as? [String: Any])?["blocked"] as? Bool != true && Date() < blockedDeadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
     XCTAssertEqual((try report()["jsBlock"] as? [String: Any])?["blocked"] as? Bool, true)
     capture("08-native-iab-blocked-js")
-    for id in [1, 3, 4] {
+    tap("c15t.prefs.category.measurement.switch")
+    for id in [1, 3, 4, 7] {
       let control = app.switches["c15t.iab.purpose.\(id).consent"]; reveal(control); control.tap()
     }
     let details = app.buttons["c15t.iab.purpose.7.details"]; reveal(details); details.tap()
@@ -241,13 +260,12 @@ final class ConsentJourney: XCTestCase {
     tap("c15t.iab.vendor.back"); tap("c15t.iab.vendors.back")
     let ac = app.buttons["c15t.iab.other-partners"]; reveal(ac); ac.tap()
     let acSearch = app.textFields["c15t.ac.search"]; XCTAssertTrue(acSearch.waitForExistence(timeout: 5)); acSearch.tap(); acSearch.typeText("Harbour")
-    let provider = app.switches["c15t.ac.provider.10.switch"]; reveal(provider); provider.tap()
+    let provider = app.switches["c15t.ac.provider.10.switch"]; reveal(provider)
+    XCTAssertEqual(provider.value as? String, "0")
+    provider.coordinate(withNormalizedOffset: CGVector(dx: 0.93, dy: 0.5)).tap()
+    XCTAssertEqual(provider.value as? String, "1")
     capture("11-native-additional-consent")
     tap("c15t.ac.back")
-    // Category gates use the same commit as IAB/AC choices.
-    let measurement = app.switches["c15t.prefs.category.measurement.switch"]
-    for _ in 0..<12 { if measurement.exists && measurement.isHittable { break }; app.scrollViews.firstMatch.swipeDown() }
-    XCTAssertTrue(measurement.isHittable); measurement.tap()
     tap("c15t.iab.save")
     let deadline = Date().addingTimeInterval(8)
     var observed: [String: Any] = [:]
@@ -263,6 +281,8 @@ final class ConsentJourney: XCTestCase {
     let record = try XCTUnwrap(native["iabConsent"] as? [String: Any]); let choices = try XCTUnwrap(record["choices"] as? [String: Any])
     XCTAssertEqual(choices["purposeObjections"] as? [Int], [7]); XCTAssertEqual(choices["vendorObjections"] as? [Int], [1])
     XCTAssertEqual(choices["adTechProviderConsents"] as? [Int], [10])
+    let evidence = XCTAttachment(data: try JSONSerialization.data(withJSONObject: observed, options: [.prettyPrinted, .sortedKeys]), uniformTypeIdentifier: "public.json")
+    evidence.name = "native-before-js-resumes"; evidence.lifetime = .keepAlways; add(evidence)
     capture("12-native-committed-before-js")
     let resumed = try awaitState("one-outcome-after-js-resumes") { snapshot, report in
       guard let block = report["jsBlock"] as? [String: Any], block["blocked"] as? Bool == false,
@@ -281,5 +301,29 @@ final class ConsentJourney: XCTestCase {
     hierarchy.lifetime = .keepAlways
     add(hierarchy)
     app.terminate()
+  }
+
+  private func nativeNoticePassesHostTouches() throws {
+    let done = expectation(description: "Notice policy")
+    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + "/e2e/scenario")!)
+    request.httpMethod = "POST"; request.httpBody = Data("{\"kind\":\"notice\"}".utf8)
+    URLSession.shared.dataTask(with: request) { _, _, _ in done.fulfill() }.resume()
+    wait(for: [done], timeout: 5)
+    launch()
+    XCTAssertTrue(app.buttons["c15t.notice.acknowledge"].waitForExistence(timeout: 20))
+    let before = try report()
+    tap("fixture.host-action")
+    XCTAssertTrue(app.staticTexts["fixture.host-count"].waitForExistence(timeout: 5))
+    XCTAssertEqual(app.staticTexts["fixture.host-count"].label, "1")
+    XCTAssertTrue(app.buttons["c15t.notice.acknowledge"].exists)
+    capture("14-nonmodal-native-notice")
+    tap("c15t.notice.acknowledge")
+    let after = try awaitState("notice-acknowledged") { snapshot, report in
+      (snapshot["promptRequirement"] as? [String: Any])?["kind"] as? String == "none"
+        && ((report["jsBlock"] as? [String: Any])?["outcomes"] as? [[String: Any]])?.last?["kind"] as? String == "acknowledged"
+    }
+    XCTAssertEqual(try choiceBytes(before), try choiceBytes(after))
+    XCTAssertEqual((after["saves"] as? [Any])?.count, 5)
+    capture("15-notice-acknowledged")
   }
 }

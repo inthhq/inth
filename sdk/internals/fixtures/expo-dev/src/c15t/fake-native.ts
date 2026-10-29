@@ -392,6 +392,7 @@ class FakeCore {
 				// The emitter is in JavaScript here, so there is nothing to enable
 				// natively. The real module uses this to start and stop emitting.
 			},
+			closeConsentPresenter: () => Promise.resolve(),
 			commit: (intent) => this.commit(intent),
 			dismissNotice: () => {
 				this.dismissNotice();
@@ -411,6 +412,10 @@ class FakeCore {
 				this.logout();
 				await settle();
 			},
+			presentConsentPrompt: () =>
+				Promise.reject(new Error('Native presenter requires native core')),
+			presentPreferences: () =>
+				Promise.reject(new Error('Native presenter requires native core')),
 			refresh: async () => {
 				await this.refresh();
 			},

@@ -28,7 +28,10 @@ required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl'] + [
     f'screens/{name}.png' for name in [
         '01-fresh-prompt', '02-rejected', '03-accepted',
         '04-customize-measurement', '05-saved', '06-unsaved-draft',
-        '07-relaunched-preferences', '08-withdrawn-offline', '09-withdrawal-relaunched', '10-reconnected', 'final-or-failure']]
+        '07-relaunched-preferences', '08-withdrawn-offline', '09-withdrawal-relaunched', '10-reconnected',
+        '08-native-iab-blocked-js', '09-native-partner-search', '10-native-partner-details',
+        '11-native-additional-consent', '12-native-committed-before-js', '13-js-outcome-resumed',
+        '14-nonmodal-native-notice', '15-notice-acknowledged', 'final-or-failure']]
 missing = [name for name in required if not (out / name).is_file() or not (out / name).stat().st_size]
 if not code and (not passed or missing):
     code = 1
