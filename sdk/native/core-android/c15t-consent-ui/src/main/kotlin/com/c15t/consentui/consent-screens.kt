@@ -4,26 +4,57 @@ package com.c15t.consentui
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
@@ -35,115 +66,187 @@ import java.text.Collator
 import java.text.Normalizer
 import java.util.Locale
 
-private val LightColors = lightColorScheme(primary = Color(0xFF335CFF), onPrimary = Color.White,
-    surface = Color(0xFFF2F3F7), surfaceContainerLow = Color.White, surfaceContainerHigh = Color.White,
-    onSurface = Color(0xFF14161F), onSurfaceVariant = Color(0xFF525768), outline = Color(0xFF8A8FA3),
-    error = Color(0xFFB42318), errorContainer = Color(0xFFFDEDEB), onErrorContainer = Color(0xFFB42318))
-private val DarkColors = darkColorScheme(primary = Color(0xFF8CA2FF), onPrimary = Color(0xFF0A1033),
-    surface = Color(0xFF111216), surfaceContainerLow = Color(0xFF1C1D22), surfaceContainerHigh = Color(0xFF23252B),
-    onSurface = Color(0xFFF2F3F7), onSurfaceVariant = Color(0xFFA9AEBF), outline = Color(0xFF6B7083),
-    error = Color(0xFFFF9C8F), errorContainer = Color(0xFF3A1D1A), onErrorContainer = Color(0xFFFF9C8F))
+/** Widest a consent column gets; wider screens centre it. */
+private val ContentWidth = 560.dp
 
-/** Native optional presenter. Put it beside the app's content and retain [presenter] in a ViewModelStore.
+/** Status colours no theme overrides: a stale draft looks the same in every app. */
+private val InfoText = ConsentThemeColor(0x1F3A99, 0xC4D0FF)
+private val InfoBackground = ConsentThemeColor(0xE8ECFA, 0x1E2440)
+
+/**
+ * Native optional presenter. Put it beside the app's content and retain [presenter] in a ViewModelStore.
  * [privacyPolicyUrl] must point to the host's privacy policy. Links open the system browser.
+ * [theme] defaults to [ConsentTheme.current] with the manifest's `<meta-data>` applied.
  */
 @Composable
-fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeModifier: Modifier = Modifier.fillMaxSize()) {
+fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeModifier: Modifier = Modifier.fillMaxSize(), theme: ConsentTheme? = null) {
+    val context = LocalContext.current
+    val resolved = remember(theme) { theme ?: ConsentTheme.resolve(context) }
     val hostView = LocalView.current
     LaunchedEffect(presenter.announcementSequence) {
         if (presenter.announcementSequence > 0) hostView.announceForAccessibility(presenter.announcement)
     }
-    MaterialTheme(colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors) {
-        if (presenter.noticeVisible) {
-            Box(noticeModifier, contentAlignment = Alignment.BottomCenter) {
-                Surface(Modifier.padding(12.dp).semantics { testTagsAsResourceId = true }.testTag("c15t.notice"), shape = RoundedCornerShape(24.dp), tonalElevation = 3.dp) {
-                    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Heading("Your privacy choices", "c15t.notice.title")
-                        Text("You can change how this app uses your data in Privacy settings.")
-                        EqualDecisions {
-                            ActionButton("Got it", "c15t.notice.acknowledge", !presenter.pending) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
-                            ActionButton("Privacy settings", "c15t.notice.settings", !presenter.pending, false) { presenter.presentPreferences() }
-                        }
-                        PolicyLink(privacyPolicyUrl)
-                        presenter.errorMessage?.let { ErrorCallout(it, "c15t.notice.error", presenter::retry) }
-                    }
+    CompositionLocalProvider(LocalConsentTheme provides resolved) {
+        MaterialTheme(colorScheme = resolved.colorScheme()) {
+            if (presenter.noticeVisible) {
+                Box(noticeModifier, contentAlignment = Alignment.BottomCenter) { NoticeCard(presenter, privacyPolicyUrl) }
+            }
+            if (presenter.presentationID != null) ConsentDialog(presenter, privacyPolicyUrl)
+        }
+    }
+}
+
+/** The first layer and what it opens take the whole screen; standing settings do too, with Close. */
+@Composable
+private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String) {
+    val theme = LocalConsentTheme.current
+    var page by rememberSaveable(presenter.presentationID) { mutableStateOf("root") }
+    var purposeFilter by rememberSaveable(presenter.presentationID) { mutableStateOf<Int?>(null) }
+    fun back() {
+        if (presenter.pending) return
+        when {
+            page.startsWith("vendor:") -> page = "vendors"
+            page != "root" -> page = "root"
+            presenter.preferences -> presenter.requestClose()
+            else -> presenter.backFromFirstLayer()
+        }
+    }
+    Dialog(onDismissRequest = ::back, properties = DialogProperties(usePlatformDefaultWidth = false,
+        decorFitsSystemWindows = false, dismissOnClickOutside = false, dismissOnBackPress = true)) {
+        val window = (LocalView.current.parent as? DialogWindowProvider)?.window
+        val dark = isSystemInDarkTheme()
+        SideEffect {
+            window?.let {
+                WindowCompat.getInsetsController(it, it.decorView).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
                 }
             }
         }
-        if (presenter.presentationID != null) {
-            var page by rememberSaveable(presenter.presentationID) { mutableStateOf("root") }
-            var purposeFilter by rememberSaveable(presenter.presentationID) { mutableStateOf<Int?>(null) }
-            fun back() {
-                if (presenter.pending) return
-                when { page.startsWith("vendor:") -> page = "vendors"; page != "root" -> page = "root"
-                    presenter.preferences -> presenter.requestClose(); else -> presenter.backFromFirstLayer() }
+        BackHandler { back() }
+        Box(Modifier.fillMaxSize().background(theme.colors.canvas.color()).semantics {
+            testTagsAsResourceId = true
+            paneTitle = if (presenter.preferences) "Privacy settings" else theme.copy.headline
+        }) {
+            AnimatedContent(targetState = presenter.preferences, label = "consent-layer", transitionSpec = {
+                if (targetState) slideInHorizontally { it / 3 } + fadeIn() togetherWith slideOutHorizontally { -it / 3 } + fadeOut()
+                else slideInHorizontally { -it / 3 } + fadeIn() togetherWith slideOutHorizontally { it / 3 } + fadeOut()
+            }) { settings ->
+                if (settings) SettingsScaffold(presenter, privacyPolicyUrl, page, purposeFilter, ::back,
+                    openPartners = { purpose -> purposeFilter = purpose; page = "vendors" },
+                    openVendor = { page = "vendor:$it" }, openProviders = { page = "providers" }, clearFilter = { purposeFilter = null })
+                else FirstLayerScreen(presenter, privacyPolicyUrl) { presenter.customize(); page = "vendors" }
             }
-            Dialog(onDismissRequest = ::back, properties = DialogProperties(usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false, dismissOnClickOutside = false, dismissOnBackPress = true)) {
-                val window = (LocalView.current.parent as? DialogWindowProvider)?.window
-                val dark = isSystemInDarkTheme()
-                SideEffect {
-                    window?.let {
-                        WindowCompat.getInsetsController(it, it.decorView).apply {
-                            isAppearanceLightStatusBars = !dark
-                            isAppearanceLightNavigationBars = !dark
-                        }
+            if (presenter.confirmDiscard) AlertDialog(onDismissRequest = { presenter.confirmDiscard = false },
+                modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("c15t.prefs.discard"),
+                containerColor = theme.colors.surface.color(), shape = RoundedCornerShape(theme.cornerRadius + 6.dp),
+                title = { Text("Discard changes?") }, text = { Text("Your changes won't be saved.") },
+                confirmButton = { TextButton(onClick = { presenter.discard() }, modifier = Modifier.testTag("c15t.prefs.discard.confirm")) { Text("Discard") } },
+                dismissButton = { TextButton(onClick = { presenter.confirmDiscard = false }, modifier = Modifier.testTag("c15t.prefs.discard.keep")) { Text("Keep editing") } })
+        }
+    }
+}
+
+@Composable
+private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: String, purposeFilter: Int?, back: () -> Unit,
+    openPartners: (Int?) -> Unit, openVendor: (Int) -> Unit, openProviders: () -> Unit, clearFilter: () -> Unit) {
+    val theme = LocalConsentTheme.current
+    val title = when {
+        page == "vendors" -> "IAB partners"
+        page == "providers" -> "Other ad partners"
+        page.startsWith("vendor:") -> p.disclosure?.list?.vendors?.get(page.substringAfter(':').toInt())?.name ?: "Partner"
+        else -> "Privacy settings"
+    }
+    val backTag = when {
+        page == "root" -> "c15t.prefs.cancel"
+        page.startsWith("vendor:") -> "c15t.iab.vendor.back"
+        page == "providers" -> "c15t.ac.back"
+        else -> "c15t.iab.vendors.back"
+    }
+    val close = page == "root" && !p.returnsToFirstLayer
+    Scaffold(modifier = Modifier.fillMaxSize().imePadding(), containerColor = theme.colors.canvas.color(),
+        topBar = {
+            TopAppBar(title = { Heading(title, "c15t.prefs.title", MaterialTheme.typography.titleLarge) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = theme.colors.canvas.color(), titleContentColor = theme.colors.text.color(), navigationIconContentColor = theme.colors.text.color()),
+                navigationIcon = {
+                    IconButton(onClick = back, enabled = !p.pending, modifier = Modifier.testTag(backTag)) {
+                        Icon(if (close) Icons.Outlined.Close else Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = if (close) "Close" else "Back")
+                    }
+                })
+        },
+        bottomBar = { if (page == "root" && (!p.snapshot.policyPending || p.core.bundledPolicyInfo != null)) DecisionFooter(p, first = false) },
+    ) { padding ->
+        val depth = { name: String -> when { name == "root" -> 0; name.startsWith("vendor:") -> 2; else -> 1 } }
+        AnimatedContent(targetState = page, modifier = Modifier.padding(padding), label = "consent-page", transitionSpec = {
+            val forward = depth(targetState) >= depth(initialState)
+            if (forward) slideInHorizontally { it / 3 } + fadeIn() togetherWith slideOutHorizontally { -it / 3 } + fadeOut()
+            else slideInHorizontally { -it / 3 } + fadeIn() togetherWith slideOutHorizontally { it / 3 } + fadeOut()
+        }) { current ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                Box(Modifier.widthIn(max = ContentWidth).fillMaxSize()) {
+                    when {
+                        current == "vendors" -> Vendors(p, purposeFilter, clearFilter, openVendor)
+                        current.startsWith("vendor:") -> Vendor(p, current.substringAfter(':').toInt())
+                        current == "providers" -> Providers(p)
+                        else -> Preferences(p, policyUrl, openPartners, openProviders)
                     }
                 }
-                BackHandler { back() }
-                Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true; paneTitle = if (presenter.preferences) "Privacy settings" else "Choose how this app uses your data" }, contentAlignment = Alignment.BottomCenter) {
-                    if (presenter.preferences || presenter.iab || page != "root") {
-                        Scaffold(modifier = Modifier.fillMaxSize().imePadding(), containerColor = MaterialTheme.colorScheme.surface,
-                            topBar = { TopAppBar(title = { Heading(when { page == "vendors" -> "IAB partners"; page == "providers" -> "Other ad partners"; page.startsWith("vendor:") -> presenter.disclosure?.list?.vendors?.get(page.substringAfter(':').toInt())?.name ?: "Partner"; else -> "Privacy settings" }, "c15t.prefs.title") }, navigationIcon = {
-                                IconButton(onClick = ::back, enabled = !presenter.pending, modifier = Modifier.testTag(if (page == "root") "c15t.prefs.cancel" else if (page.startsWith("vendor:")) "c15t.iab.vendor.back" else if (page == "providers") "c15t.ac.back" else "c15t.iab.vendors.back")) {
-                                    Icon(if (page == "root") Icons.Outlined.Close else Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = if (page == "root") "Close" else "Back")
-                                }
-                            }) },
-                            bottomBar = { if (page == "root" && (!presenter.snapshot.policyPending || presenter.core.bundledPolicyInfo != null)) DecisionFooter(presenter, first = !presenter.preferences) },
-                        ) { padding ->
-                            Box(Modifier.padding(padding)) {
-                                when {
-                                    page == "vendors" -> Vendors(presenter, purposeFilter, { purposeFilter = null }, { page = "vendor:$it" })
-                                    page.startsWith("vendor:") -> Vendor(presenter, page.substringAfter(':').toInt())
-                                    page == "providers" -> Providers(presenter)
-                                    !presenter.preferences -> FirstLayer(presenter, privacyPolicyUrl) { presenter.customize(); page = "vendors" }
-                                    else -> Preferences(presenter, privacyPolicyUrl, { purpose -> purposeFilter = purpose; page = "vendors" }, { page = "providers" })
-                                }
-                            }
-                        }
-                    } else {
-                        BoxWithConstraints(Modifier.fillMaxWidth().widthIn(max = 640.dp).navigationBarsPadding()) {
-                            Surface(shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-                                Column(Modifier.heightIn(max = maxHeight * .95f).fillMaxWidth()) {
-                                    Box(Modifier.weight(1f, fill = false)) { FirstLayer(presenter, privacyPolicyUrl) { presenter.customize(); page = "vendors" } }
-                                    DecisionFooter(presenter, first = true)
-                                }
-                            }
-                        }
-                    }
-                }
-                if (presenter.confirmDiscard) AlertDialog(onDismissRequest = { presenter.confirmDiscard = false },
-                    modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("c15t.prefs.discard"), title = { Text("Discard changes?") }, text = { Text("Your changes won't be saved.") },
-                    confirmButton = { TextButton(onClick = { presenter.discard() }, modifier = Modifier.testTag("c15t.prefs.discard.confirm")) { Text("Discard") } },
-                    dismissButton = { TextButton(onClick = { presenter.confirmDiscard = false }, modifier = Modifier.testTag("c15t.prefs.discard.keep")) { Text("Keep editing") } })
             }
         }
     }
 }
 
-@Composable private fun Heading(text: String, id: String) { Text(text, style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() }.testTag(id)) }
-@Composable private fun Body(text: String) { Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-@Composable private fun SectionTitle(text: String) { Text(text, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(vertical = 16.dp).semantics { heading() }) }
+// MARK: Shared pieces
+
+@Composable private fun Heading(text: String, id: String, style: TextStyle = MaterialTheme.typography.titleLarge) {
+    Text(text, style = style, color = LocalConsentTheme.current.colors.text.color(), modifier = Modifier.semantics { heading() }.testTag(id))
+}
+@Composable private fun Body(text: String, modifier: Modifier = Modifier) {
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = LocalConsentTheme.current.colors.textSecondary.color(), modifier = modifier)
+}
+@Composable private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+    Text(text, style = MaterialTheme.typography.labelLarge, color = LocalConsentTheme.current.colors.textSecondary.color(),
+        modifier = modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp).semantics { heading() })
+}
 @Composable private fun PolicyLink(url: String) = ExternalLink("Privacy policy", url, "c15t.privacy-policy")
 @Composable private fun ExternalLink(text: String, url: String, id: String) {
     val context = LocalContext.current
-    TextButton(onClick = { val uri = Uri.parse(url); if (uri.scheme in listOf("https", "http")) context.startActivity(Intent(Intent.ACTION_VIEW, uri)) }, modifier = Modifier.defaultMinSize(minHeight = 48.dp).testTag(id)) { Text(text) }
+    TextButton(onClick = { val uri = Uri.parse(url); if (uri.scheme in listOf("https", "http")) context.startActivity(Intent(Intent.ACTION_VIEW, uri)) },
+        modifier = Modifier.defaultMinSize(minHeight = 48.dp).testTag(id), contentPadding = PaddingValues(horizontal = 4.dp)) {
+        Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = LocalConsentTheme.current.colors.accent.color())
+    }
 }
-@Composable private fun ActionButton(text: String, id: String, enabled: Boolean, filled: Boolean = true, onClick: () -> Unit) {
-    val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp).testTag(id)
-    if (filled) Button(onClick, modifier, enabled = enabled) { Text(text) }
-    else OutlinedButton(onClick, modifier, enabled = enabled) { Text(text, color = MaterialTheme.colorScheme.onSurface) }
+
+private enum class ButtonVariant { DECISION, ACCENT, QUIET }
+
+/**
+ * The one button shape. [ButtonVariant.DECISION] is Accept all and Reject all, which always share it;
+ * [ButtonVariant.ACCENT] is Save; [ButtonVariant.QUIET] is everything that is not a decision.
+ */
+@Composable private fun ConsentButton(text: String, id: String, enabled: Boolean, variant: ButtonVariant = ButtonVariant.DECISION,
+    progress: Boolean = false, onClick: () -> Unit) {
+    val theme = LocalConsentTheme.current
+    val shape = RoundedCornerShape(theme.cornerRadius)
+    val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).testTag(id)
+    val label: @Composable () -> Unit = {
+        if (progress) CircularProgressIndicator(Modifier.size(20.dp).testTag("c15t.status.progress"), color = LocalContentColor.current, strokeWidth = 2.dp)
+        else Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+    }
+    when (variant) {
+        ButtonVariant.DECISION, ButtonVariant.ACCENT -> {
+            val container = if (variant == ButtonVariant.DECISION) theme.colors.decision.color() else theme.colors.accent.color()
+            val content = if (variant == ButtonVariant.DECISION) theme.colors.onDecision.color() else theme.colors.onAccent.color()
+            Button(onClick, modifier, enabled = enabled, shape = shape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content,
+                    disabledContainerColor = container.copy(alpha = 0.55f), disabledContentColor = content)) { label() }
+        }
+        ButtonVariant.QUIET -> OutlinedButton(onClick, modifier, enabled = enabled, shape = shape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = if (enabled) 0.18f else 0.1f)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = theme.colors.text.color(), disabledContentColor = theme.colors.textSecondary.color())) { label() }
+    }
 }
+
+/** Equal columns when both labels fit at the current font scale; a stack otherwise. */
 @Composable private fun EqualDecisions(content: @Composable () -> Unit) {
     val density = LocalDensity.current
     Layout(content = content, modifier = Modifier.fillMaxWidth()) { children, constraints ->
@@ -152,191 +255,511 @@ fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeMod
         val row = 2 * max + gap <= constraints.maxWidth && density.fontScale < 1.5f
         val width = if (row) (constraints.maxWidth - gap) / 2 else constraints.maxWidth
         val measured = children.map { it.measure(Constraints(minWidth = width, maxWidth = width, maxHeight = constraints.maxHeight)) }
-        val height = if (row) measured.maxOf { it.height } else measured.sumOf { it.height } + gap
+        val height = if (row) (measured.maxOfOrNull { it.height } ?: 0) else measured.sumOf { it.height } + gap * (measured.size - 1).coerceAtLeast(0)
         layout(constraints.maxWidth, height) {
             var y = 0
             measured.forEachIndexed { i, child -> child.placeRelative(if (row) i * (width + gap) else 0, y); if (!row) y += child.height + gap }
         }
     }
 }
+
 @Composable private fun ErrorCallout(message: String, id: String, retry: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Assertive }.testTag(id)) {
+    val theme = LocalConsentTheme.current
+    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(theme.cornerRadius - 2.dp),
+        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Assertive }.testTag(id)) {
         Column(Modifier.padding(12.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error); Text(message, color = MaterialTheme.colorScheme.error) }
-            TextButton(onClick = retry, modifier = Modifier.testTag("$id.retry")) { Text("Try again", color = MaterialTheme.colorScheme.error) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            }
+            TextButton(onClick = retry, modifier = Modifier.testTag("$id.retry")) { Text("Try again", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold) }
         }
     }
 }
-@Composable private fun DecisionFooter(p: ConsentPresenter, first: Boolean) {
-    val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
-    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow, tonalElevation = 3.dp) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (p.stale) ActionButton("Load current settings", "c15t.prefs.stale.reload", !p.pending) { p.loadDraft() }
-            else {
-                p.errorMessage?.let { ErrorCallout(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
-                if (p.snapshot.policyPending) {
-                    ActionButton("Reject all", "$prefix.reject-all", !p.pending, first) { p.commit(ConsentPresenter.Action.REJECT) }
-                } else if (p.listUnavailable) {
-                    Text("Our partner list is out of date. Try again to load it, or reject optional data use.", modifier = Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
-                    EqualDecisions {
-                        ActionButton("Reject all", "$prefix.reject-all", !p.pending, first) { p.commit(ConsentPresenter.Action.REJECT) }
-                        ActionButton("Try again", "$prefix.retry", !p.pending, first) { p.refresh() }
-                    }
-                } else {
-                    EqualDecisions {
-                        ActionButton("Reject all", "$prefix.reject-all", !p.pending, first) { p.commit(ConsentPresenter.Action.REJECT) }
-                        ActionButton("Accept all", "$prefix.accept-all", !p.pending, first) { p.commit(ConsentPresenter.Action.ACCEPT) }
-                    }
-                    if (first) {
-                        ActionButton("Customize", "c15t.first-layer.customize", !p.pending, false) { p.customize() }
-                        Text("Secured by c15t", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.align(Alignment.CenterHorizontally).testTag("c15t.first-layer.branding"))
-                    } else ActionButton("Save choices", "$prefix.save", !p.pending) { p.commit(ConsentPresenter.Action.SAVE) }
-                }
-                if (p.showProgress) CircularProgressIndicator(Modifier.size(20.dp).testTag("c15t.status.progress"))
+
+/** A short status line on a tinted background: why the prompt is back, or that the draft is stale. */
+@Composable private fun InfoCallout(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    val theme = LocalConsentTheme.current
+    Surface(color = InfoBackground.color(), shape = RoundedCornerShape(theme.cornerRadius - 2.dp), modifier = modifier.fillMaxWidth()) {
+        CompositionLocalProvider(LocalContentColor provides InfoText.color()) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                ProvideTextStyle(MaterialTheme.typography.bodyMedium) { content() }
             }
         }
     }
 }
-@Composable private fun FirstLayer(p: ConsentPresenter, policyUrl: String, partners: () -> Unit) {
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(24.dp).testTag("c15t.first-layer"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        when (p.snapshot.promptRequirement.reason?.wireName) {
-            "expired" -> Text("Your earlier choice has expired, so we're asking again.", modifier = Modifier.testTag("c15t.first-layer.reason"))
-            "policy-changed" -> Text("How this app uses data has changed since your last choice, so we're asking again.", modifier = Modifier.testTag("c15t.first-layer.reason"))
+
+@Composable private fun Hairline(modifier: Modifier = Modifier) {
+    HorizontalDivider(modifier, color = LocalConsentTheme.current.colors.text.color().copy(alpha = 0.1f))
+}
+
+/** Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled. */
+@Composable private fun DecisionFooter(p: ConsentPresenter, first: Boolean) {
+    val theme = LocalConsentTheme.current
+    val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
+    val large = LocalDensity.current.fontScale >= 1.5f
+    Surface(color = theme.colors.canvas.color()) {
+        Column(Modifier.fillMaxWidth()) {
+            Hairline()
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (p.stale) ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
+                    else {
+                        p.errorMessage?.let { ErrorCallout(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
+                        if (p.snapshot.policyPending) {
+                            ConsentButton("Reject all", "$prefix.reject-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                        } else if (p.listUnavailable) {
+                            Body("Our partner list is out of date. Try again to load it, or reject optional data use.", Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
+                            EqualDecisions {
+                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                                ConsentButton("Try again", "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
+                            }
+                        } else {
+                            EqualDecisions {
+                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                                ConsentButton("Accept all", "$prefix.accept-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.ACCEPT) }
+                            }
+                            if (first) {
+                                ConsentButton("Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
+                                if (theme.showsBranding && !large) Branding()
+                            } else ConsentButton("Save choices", "$prefix.save", !p.pending, ButtonVariant.ACCENT, progress = p.showProgress) { p.commit(ConsentPresenter.Action.SAVE) }
+                        }
+                    }
+                }
+            }
         }
-        Heading("Choose how this app uses your data", "c15t.first-layer.title")
-        if (p.iab) IabIntro(p, true, partners) else Text("We use data to improve your experience, measure how the app is used and show relevant advertising. You choose which uses to allow. You can change your choice at any time in Privacy settings.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("c15t.first-layer.body"))
-        p.disclosure?.list?.purposes?.toSortedMap()?.forEach { (id, item) -> Text(item.name.orEmpty(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("c15t.first-layer.purpose.$id")); HorizontalDivider() }
-        p.disclosure?.list?.specialFeatures?.toSortedMap()?.forEach { (id, item) -> Text(item.name.orEmpty(), modifier = Modifier.testTag("c15t.first-layer.special-feature.$id")) }
-        PolicyLink(policyUrl)
     }
 }
-@Composable private fun IabIntro(p: ConsentPresenter, first: Boolean, partners: () -> Unit) {
-    Text("We and our partners store and access information on your device and process personal data for the purposes below. Some partners rely on legitimate interest instead of consent. You can object to that and change your choices at any time in Privacy settings.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-    TextButton(onClick = partners, modifier = Modifier.testTag(if (first) "c15t.first-layer.partner-count" else "c15t.iab.partner-count")) { Text("${p.disclosure?.vendors?.size ?: 0} IAB partners") }
+
+@Composable private fun Branding() {
+    Text("Secured by c15t", style = MaterialTheme.typography.labelMedium, color = LocalConsentTheme.current.colors.textSecondary.color(),
+        textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.branding"))
 }
-@Composable private fun ChoiceRow(title: String, description: String, value: Boolean, id: String, enabled: Boolean = true, onChange: (Boolean) -> Unit) {
+
+// MARK: First layer
+
+/**
+ * The first choice. A page of the app, not a panel over it: brand, headline, one sentence,
+ * then the two decisions at equal weight and the path to the details.
+ */
+@Composable private fun FirstLayerScreen(p: ConsentPresenter, policyUrl: String, partners: () -> Unit) {
+    val theme = LocalConsentTheme.current
     val large = LocalDensity.current.fontScale >= 1.5f
-    val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 64.dp).toggleable(value, enabled = enabled, role = Role.Switch, onValueChange = onChange).testTag(id).padding(vertical = 12.dp)
-    val label: @Composable () -> Unit = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(title, style = MaterialTheme.typography.titleMedium); if (description.isNotEmpty()) Body(description) } }
-    if (large) Column(modifier) { label(); Switch(value, null, enabled = enabled) }
-    else Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) { Box(Modifier.weight(1f)) { label() }; Switch(value, null, enabled = enabled) }
+    Scaffold(containerColor = theme.colors.canvas.color(), bottomBar = { DecisionFooter(p, first = true) }) { padding ->
+        Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).testTag("c15t.first-layer"), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                BrandHeader()
+                when (p.snapshot.promptRequirement.reason?.wireName) {
+                    "expired" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("Your earlier choice has expired, so we're asking again.") }
+                    "policy-changed" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("How this app uses data has changed since your last choice, so we're asking again.") }
+                }
+                Heading(theme.copy.headline, "c15t.first-layer.title", headlineStyle(theme))
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(theme.copy.introduction, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.testTag("c15t.first-layer.body"))
+                    Body(if (p.iab) "We and our partners store information on this device for the purposes below. Some partners rely on legitimate interest instead of consent; you can object to that. Change your mind at any time in Privacy settings."
+                        else "You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
+                }
+                if (p.iab) PartnerSummary(p, partners)
+                PolicyLink(policyUrl)
+                if (large && theme.showsBranding) Branding()
+            }
+        }
+    }
 }
+
+@Composable private fun headlineStyle(theme: ConsentTheme): TextStyle = MaterialTheme.typography.headlineLarge.copy(
+    fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.25).sp)
+
+@Composable private fun BrandHeader() {
+    val theme = LocalConsentTheme.current
+    if (theme.brand.markResId == null && theme.brand.name == null) return
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        theme.brand.markResId?.let { id ->
+            val shape = RoundedCornerShape(14.dp)
+            Image(painterResource(id), contentDescription = theme.brand.name, contentScale = ContentScale.Crop,
+                modifier = Modifier.size(56.dp).clip(shape).border(1.dp, Color.Black.copy(alpha = 0.08f), shape))
+        }
+        theme.brand.name?.let { name ->
+            Text(name.uppercase(), style = MaterialTheme.typography.labelLarge, letterSpacing = 1.4.sp, color = theme.colors.accent.color(),
+                modifier = Modifier.testTag("c15t.first-layer.brand"))
+        }
+    }
+}
+
+/** The purposes partners ask for, on a quieter surface so they inform without competing. */
+@Composable private fun PartnerSummary(p: ConsentPresenter, partners: () -> Unit) {
+    val theme = LocalConsentTheme.current
+    val disclosure = p.disclosure ?: return
+    Surface(color = theme.colors.surfaceMuted.color(), shape = RoundedCornerShape(theme.cornerRadius + 2.dp), modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(vertical = 6.dp)) {
+            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color(), modifier = Modifier.weight(1f))
+                TextButton(onClick = partners, modifier = Modifier.testTag("c15t.first-layer.partner-count")) {
+                    Text("${disclosure.vendors.size} IAB partners", style = MaterialTheme.typography.labelLarge, color = theme.colors.accent.color())
+                }
+            }
+            val purposes = disclosure.list.purposes.toSortedMap().entries.toList()
+            val features = disclosure.list.specialFeatures.orEmpty().toSortedMap().entries.toList()
+            purposes.forEach { (id, item) ->
+                Text(item.name.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = theme.colors.text.color(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp).testTag("c15t.first-layer.purpose.$id"))
+                if (id != purposes.last().key || features.isNotEmpty()) Hairline(Modifier.padding(start = 16.dp))
+            }
+            features.forEachIndexed { index, (id, item) ->
+                Text(item.name.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = theme.colors.text.color(),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp).testTag("c15t.first-layer.special-feature.$id"))
+                if (index < features.lastIndex) Hairline(Modifier.padding(start = 16.dp))
+            }
+        }
+    }
+}
+
+// MARK: Notice
+
+@Composable private fun NoticeCard(presenter: ConsentPresenter, privacyPolicyUrl: String) {
+    val theme = LocalConsentTheme.current
+    val shape = RoundedCornerShape(theme.cornerRadius + 6.dp)
+    Surface(Modifier.padding(12.dp).widthIn(max = ContentWidth).semantics { testTagsAsResourceId = true }.testTag("c15t.notice"),
+        shape = shape, color = theme.colors.surface.color(), shadowElevation = 6.dp, border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = 0.1f))) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Heading("How this app uses your data", "c15t.notice.title", MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
+            Body("You can review or change this at any time in Privacy settings.")
+            EqualDecisions {
+                ConsentButton("Got it", "c15t.notice.acknowledge", !presenter.pending, progress = presenter.showProgress) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
+                ConsentButton("Privacy settings", "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
+            }
+            PolicyLink(privacyPolicyUrl)
+            presenter.errorMessage?.let { ErrorCallout(it, "c15t.notice.error", presenter::retry) }
+        }
+    }
+}
+
+// MARK: Grouped rows
+
+/** The inset-grouped card: rows share one surface, with rounded ends and hairlines between. */
+private fun groupShape(index: Int, count: Int, radius: androidx.compose.ui.unit.Dp): Shape {
+    val top = if (index == 0) radius else 0.dp
+    val bottom = if (index == count - 1) radius else 0.dp
+    return RoundedCornerShape(topStart = top, topEnd = top, bottomStart = bottom, bottomEnd = bottom)
+}
+
+@Composable private fun GroupedRow(index: Int, count: Int, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    val theme = LocalConsentTheme.current
+    Surface(color = theme.colors.surface.color(), shape = groupShape(index, count, theme.cornerRadius), modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        Column {
+            content()
+            if (index < count - 1) Hairline(Modifier.padding(start = 16.dp))
+        }
+    }
+}
+
+/** Emit [count] grouped rows as lazy items. */
+private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composable ColumnScope.(Int) -> Unit) {
+    items(count, key = key) { index -> GroupedRow(index, count) { content(index) } }
+}
+
+@Composable private fun RowLabel(title: String, description: String? = null, note: String? = null, modifier: Modifier = Modifier) {
+    val theme = LocalConsentTheme.current
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(title, style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color())
+        if (!description.isNullOrEmpty()) Body(description)
+        if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color())
+    }
+}
+
+@Composable private fun ChoiceRow(title: String, description: String, value: Boolean, id: String, enabled: Boolean = true, note: String? = null, onChange: (Boolean) -> Unit) {
+    val large = LocalDensity.current.fontScale >= 1.5f
+    val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp)
+        .toggleable(value, enabled = enabled, role = Role.Switch, onValueChange = onChange).testTag(id).padding(horizontal = 16.dp, vertical = 12.dp)
+    if (large) Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) { RowLabel(title, description, note); Switch(value, null, enabled = enabled) }
+    else Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        RowLabel(title, description, note, Modifier.weight(1f)); Switch(value, null, enabled = enabled)
+    }
+}
+
+@Composable private fun StatusRow(title: String, description: String?, status: String, statusTag: String, note: String? = null, noteTag: String? = null) {
+    val theme = LocalConsentTheme.current
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            RowLabel(title, description)
+            if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color(), modifier = if (noteTag != null) Modifier.testTag(noteTag) else Modifier)
+        }
+        Text(status, style = MaterialTheme.typography.bodyMedium, color = theme.colors.textSecondary.color(), modifier = Modifier.testTag(statusTag))
+    }
+}
+
 @Composable private fun Category(p: ConsentPresenter, c: ConsentCategory) {
     val title = if (c == ConsentCategory.NECESSARY) "Strictly necessary" else c.wireName.replaceFirstChar { it.titlecase() }
-    val description = when(c) { ConsentCategory.NECESSARY -> "Required for the app to work."; ConsentCategory.FUNCTIONALITY -> "Remember your settings and choices."; ConsentCategory.EXPERIENCE -> "Adapt the app to how you use it."; ConsentCategory.MEASUREMENT -> "Help us understand how the app is used."; ConsentCategory.MARKETING -> "Show advertising relevant to you." }
-    if (c.optional && !p.restricted(c)) ChoiceRow(title, description, p.categories[c] == true, "c15t.prefs.category.${c.wireName}.switch", !p.pending && !p.stale && !p.listUnavailable) { p.setCategory(c, it) }
-    else Column(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium); Body(description)
-        Text(if (c.optional) "Off" else "Always on", modifier = Modifier.testTag("c15t.prefs.category.${c.wireName}.locked"))
-        if (c.optional) Text(if ("gpc" in p.snapshot.restrictions[c.wireName].orEmpty()) "Off because your device sends a Global Privacy Control signal." else "Not offered where you are.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("c15t.prefs.category.${c.wireName}.restricted"))
+    val description = when (c) {
+        ConsentCategory.NECESSARY -> "Required for the app to work."
+        ConsentCategory.FUNCTIONALITY -> "Remember your settings and choices."
+        ConsentCategory.EXPERIENCE -> "Adapt the app to how you use it."
+        ConsentCategory.MEASUREMENT -> "Help us understand how the app is used."
+        ConsentCategory.MARKETING -> "Show advertising relevant to you."
     }
-    HorizontalDivider()
+    if (c.optional && !p.restricted(c)) ChoiceRow(title, description, p.categories[c] == true, "c15t.prefs.category.${c.wireName}.switch", !p.pending && !p.stale && !p.listUnavailable) { p.setCategory(c, it) }
+    else StatusRow(title, description, if (c.optional) "Off" else "Always on", "c15t.prefs.category.${c.wireName}.locked",
+        note = if (c.optional) (if ("gpc" in p.snapshot.restrictions[c.wireName].orEmpty()) "Off because your device sends a Global Privacy Control signal." else "Not offered where you are.") else null,
+        noteTag = if (c.optional) "c15t.prefs.category.${c.wireName}.restricted" else null)
 }
+
+// MARK: Preferences
+
+/** Standing settings in the platform's own voice: grouped cards on the canvas. */
 @Composable private fun Preferences(p: ConsentPresenter, policyUrl: String, partners: (Int?) -> Unit, providers: () -> Unit) {
-    LazyColumn(Modifier.fillMaxSize().testTag(if (p.iab) "c15t.iab" else "c15t.prefs"), contentPadding = PaddingValues(24.dp)) {
+    val theme = LocalConsentTheme.current
+    LazyColumn(Modifier.fillMaxSize().testTag(if (p.iab) "c15t.iab" else "c15t.prefs"), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
         if (p.snapshot.policyPending) {
-            item { Column(Modifier.testTag("c15t.status.unavailable")) { Text("Privacy settings aren't available yet. Connect to the internet and try again."); TextButton(onClick = p::refresh, modifier = Modifier.testTag("c15t.status.unavailable.retry")) { Text("Try again") } } }
-        } else {
-            if (p.stale) item { Column(Modifier.testTag("c15t.prefs.stale")) { Heading("Settings changed while you were editing", "c15t.prefs.stale.title"); Body("Your choices weren't saved. Load the current settings, then choose again.") } }
-            item { if (p.iab) IabIntro(p, false, { partners(null) }) else Body("Choose which kinds of data use you allow. Changes apply on this device as soon as you save."); SectionTitle(if (p.iab) "This app" else "Data use") }
-            items(p.offeredCategories, key = { "category-${it.wireName}" }) { Category(p, it) }
-            p.disclosure?.let { d ->
-                item { SectionTitle("Purposes") }
-                items(d.list.purposes.toSortedMap().entries.toList(), key = { "purpose-${it.key}" }) { (id, item) -> Purpose(p, id, item, { partners(id) }) }
-                item { SectionTitle("Special features") }
-                items(d.list.specialFeatures.orEmpty().toSortedMap().entries.toList(), key = { "special-${it.key}" }) { (id, item) -> ChoiceRow(item.name.orEmpty(), item.description.orEmpty() + " Partners only do this if you turn it on.", id in p.choices.specialFeatureOptIns, "c15t.iab.special-feature.$id.switch", !p.pending && !p.stale && !p.listUnavailable) { on -> p.edit { it.copy(specialFeatureOptIns = it.specialFeatureOptIns.select(id, on)) } } }
-                item { SectionTitle("Special purposes") }
-                items(d.list.specialPurposes.orEmpty().toSortedMap().entries.toList(), key = { "sp-${it.key}" }) { (id,item) -> Definition(item, "c15t.iab.special-purpose.$id") }
-                item { Body(d.list.standardTexts?.specialPurposes.orEmpty()); SectionTitle("Features") }
-                items(d.list.features.orEmpty().toSortedMap().entries.toList(), key = { "feature-${it.key}" }) { (id,item) -> Definition(item, "c15t.iab.feature.$id") }
-                item { Text(d.list.standardTexts?.features.orEmpty(), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("c15t.iab.features-standard-text")) }
-                item { TextButton(onClick = { partners(null) }, modifier = Modifier.fillMaxWidth().testTag("c15t.iab.partners")) { Text("IAB partners · ${d.vendors.size}") } }
-                if (!d.adTechProviders.isNullOrEmpty()) item { TextButton(onClick = providers, modifier = Modifier.fillMaxWidth().testTag("c15t.iab.other-partners")) { Text("Other ad partners · ${d.adTechProviders.orEmpty().size}") } }
+            item {
+                GroupedRow(0, 1) {
+                    Column(Modifier.padding(16.dp).testTag("c15t.status.unavailable"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Privacy settings aren't available yet. Connect to the internet and try again.", color = theme.colors.text.color())
+                        TextButton(onClick = p::refresh, modifier = Modifier.testTag("c15t.status.unavailable.retry")) { Text("Try again") }
+                    }
+                }
             }
-            item { PolicyLink(policyUrl); p.snapshot.explicitChoice?.let { Text("Last changed ${java.text.DateFormat.getDateInstance().format(java.util.Date(it.actionAt))}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("c15t.prefs.last-changed")) } }
+        } else {
+            if (p.stale) item {
+                InfoCallout(Modifier.padding(horizontal = 8.dp, vertical = 8.dp).testTag("c15t.prefs.stale")) {
+                    Text("Settings changed while you were editing", fontWeight = FontWeight.SemiBold, modifier = Modifier.semantics { heading() }.testTag("c15t.prefs.stale.title"))
+                    Text("Your choices weren't saved. Load the current settings, then choose again.")
+                }
+            }
+            item {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (p.iab) {
+                        Body("We and our partners store and access information on your device and process personal data for the purposes below. Some partners rely on legitimate interest instead of consent. You can object to that and change your choices at any time in Privacy settings.")
+                        TextButton(onClick = { partners(null) }, contentPadding = PaddingValues(horizontal = 4.dp), modifier = Modifier.testTag("c15t.iab.partner-count")) {
+                            Text("${p.disclosure?.vendors?.size ?: 0} IAB partners", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+                        }
+                    } else Body("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
+                }
+                SectionLabel(if (p.iab) "This app" else "Data use")
+            }
+            val categories = p.offeredCategories
+            group(categories.size, key = { "category-${categories[it].wireName}" }) { Category(p, categories[it]) }
+            p.disclosure?.let { d ->
+                val purposes = d.list.purposes.toSortedMap().entries.toList()
+                item { SectionLabel("Purposes") }
+                group(purposes.size, key = { "purpose-${purposes[it].key}" }) { Purpose(p, purposes[it].key, purposes[it].value) { partners(purposes[it].key) } }
+                val specials = d.list.specialFeatures.orEmpty().toSortedMap().entries.toList()
+                if (specials.isNotEmpty()) {
+                    item { SectionLabel("Special features") }
+                    group(specials.size, key = { "special-${specials[it].key}" }) { index ->
+                        val (id, item) = specials[index]
+                        ChoiceRow(item.name.orEmpty(), item.description.orEmpty(), id in p.choices.specialFeatureOptIns, "c15t.iab.special-feature.$id.switch",
+                            !p.pending && !p.stale && !p.listUnavailable, note = "Partners only do this if you turn it on.") { on -> p.edit { it.copy(specialFeatureOptIns = it.specialFeatureOptIns.select(id, on)) } }
+                    }
+                }
+                val specialPurposes = d.list.specialPurposes.orEmpty().toSortedMap().entries.toList()
+                if (specialPurposes.isNotEmpty()) {
+                    item { SectionLabel("Special purposes") }
+                    group(specialPurposes.size, key = { "sp-${specialPurposes[it].key}" }) { index -> val (id, item) = specialPurposes[index]; Definition(item, "c15t.iab.special-purpose.$id") }
+                    item { Footnote(d.list.standardTexts?.specialPurposes.orEmpty()) }
+                }
+                val features = d.list.features.orEmpty().toSortedMap().entries.toList()
+                if (features.isNotEmpty()) {
+                    item { SectionLabel("Features") }
+                    group(features.size, key = { "feature-${features[it].key}" }) { index -> val (id, item) = features[index]; Definition(item, "c15t.iab.feature.$id") }
+                }
+                item { Footnote(d.list.standardTexts?.features.orEmpty(), Modifier.testTag("c15t.iab.features-standard-text")) }
+                item { SectionLabel("Partners") }
+                val providerCount = d.adTechProviders.orEmpty().size
+                val rows = if (providerCount > 0) 2 else 1
+                group(rows, key = { "partners-$it" }) { index ->
+                    if (index == 0) NavigationRow("IAB partners", "${d.vendors.size}", "c15t.iab.partners") { partners(null) }
+                    else NavigationRow("Other ad partners", "$providerCount", "c15t.iab.other-partners", providers)
+                }
+            }
+            item {
+                Spacer(Modifier.height(20.dp))
+                GroupedRow(0, 1) {
+                    Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        PolicyLink(policyUrl)
+                        p.snapshot.explicitChoice?.let {
+                            Text("Last changed ${java.text.DateFormat.getDateInstance().format(java.util.Date(it.actionAt))}", style = MaterialTheme.typography.bodySmall,
+                                color = theme.colors.textSecondary.color(), modifier = Modifier.padding(start = 4.dp, bottom = 8.dp).testTag("c15t.prefs.last-changed"))
+                        }
+                    }
+                }
+            }
         }
     }
 }
-@Composable private fun Definition(item: GvlLocalizedEntry, id: String) { Column(Modifier.fillMaxWidth().padding(vertical = 16.dp).testTag(id), verticalArrangement = Arrangement.spacedBy(8.dp)) { Text(item.name.orEmpty(), style = MaterialTheme.typography.titleMedium); Body("No choice"); Body(item.description.orEmpty()) } }
+
+@Composable private fun Footnote(text: String, modifier: Modifier = Modifier) {
+    if (text.isEmpty() && modifier == Modifier) return
+    Text(text, style = MaterialTheme.typography.bodySmall, color = LocalConsentTheme.current.colors.textSecondary.color(), modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+}
+
+@Composable private fun NavigationRow(title: String, value: String, id: String, onClick: () -> Unit) {
+    val theme = LocalConsentTheme.current
+    Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).clickable(onClick = onClick, role = Role.Button).testTag(id).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(title, style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color(), modifier = Modifier.weight(1f))
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = theme.colors.textSecondary.color())
+        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = theme.colors.textSecondary.color(), modifier = Modifier.size(20.dp))
+    }
+}
+
+@Composable private fun Definition(item: GvlLocalizedEntry, id: String) {
+    Column(Modifier.testTag(id)) { StatusRow(item.name.orEmpty(), item.description.orEmpty(), "No choice", "$id.status") }
+}
+
 @Composable private fun Purpose(p: ConsentPresenter, id: Int, item: GvlLocalizedEntry, partners: () -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     val li = p.disclosure?.vendors?.values?.any { id in it.legitimateInterestPurposes } == true
+    val theme = LocalConsentTheme.current
     Column(Modifier.fillMaxWidth().testTag("c15t.iab.purpose.$id")) {
-        ChoiceRow(item.name.orEmpty(), item.description.orEmpty(), id in p.choices.purposeConsents, "c15t.iab.purpose.$id.consent", !p.pending && !p.stale && !p.listUnavailable) { on -> p.edit { it.copy(purposeConsents = it.purposeConsents.select(id, on)) } }
-        Body(if (li) "Asks for consent · Some partners use legitimate interest" else "Asks for consent")
-        TextButton(onClick = { expanded = !expanded }, modifier = Modifier.testTag("c15t.iab.purpose.$id.details").semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }) { Text(if (expanded) "Hide details" else "Details") }
-        if (expanded) {
-            Body(item.descriptionLegal.orEmpty()); item.illustrations.orEmpty().forEach { Body("• $it") }
-            Body("Asks for consent: ${p.disclosure?.vendors?.values?.count { id in it.consentPurposes }} partners. Legitimate interest: ${p.disclosure?.vendors?.values?.count { id in it.legitimateInterestPurposes }} partners.")
-            TextButton(onClick = partners, modifier = Modifier.testTag("c15t.iab.purpose.$id.view-partners")) { Text("View partners") }
-            if (li) ChoiceRow("Legitimate interest", "Some partners claim this legal basis. Turn off to object.", id in p.choices.purposeLegitimateInterests, "c15t.iab.purpose.$id.li", !p.pending && !p.stale && !p.listUnavailable) { on -> p.edit { it.copy(purposeLegitimateInterests = it.purposeLegitimateInterests.select(id,on), purposeObjections = it.purposeObjections.select(id,!on)) } }
+        ChoiceRow(item.name.orEmpty(), item.description.orEmpty(), id in p.choices.purposeConsents, "c15t.iab.purpose.$id.consent", !p.pending && !p.stale && !p.listUnavailable,
+            note = if (li) "Asks for consent · Some partners use legitimate interest" else "Asks for consent") { on -> p.edit { it.copy(purposeConsents = it.purposeConsents.select(id, on)) } }
+        TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.details").semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }) {
+            Text(if (expanded) "Hide details" else "Details", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+            Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.accent.color(), modifier = Modifier.size(18.dp))
         }
-        HorizontalDivider()
+        if (expanded) {
+            Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Body(item.descriptionLegal.orEmpty()); item.illustrations.orEmpty().forEach { Body("• $it") }
+                Body("Asks for consent: ${p.disclosure?.vendors?.values?.count { id in it.consentPurposes }} partners. Legitimate interest: ${p.disclosure?.vendors?.values?.count { id in it.legitimateInterestPurposes }} partners.")
+            }
+            TextButton(onClick = partners, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.view-partners")) {
+                Text("View partners", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+            }
+            if (li) ChoiceRow("Legitimate interest", "", id in p.choices.purposeLegitimateInterests, "c15t.iab.purpose.$id.li", !p.pending && !p.stale && !p.listUnavailable,
+                note = "Some partners claim this legal basis. Turn off to object.") { on -> p.edit { it.copy(purposeLegitimateInterests = it.purposeLegitimateInterests.select(id, on), purposeObjections = it.purposeObjections.select(id, !on)) } }
+        }
     }
 }
+
+// MARK: Partners
+
 private fun String.searchKey() = Normalizer.normalize(this, Normalizer.Form.NFD).replace("\\p{M}+".toRegex(), "").lowercase(Locale.ROOT)
+
+@Composable private fun SearchField(value: String, onChange: (String) -> Unit, label: String, id: String) {
+    val theme = LocalConsentTheme.current
+    OutlinedTextField(value, onChange, label = { Text(label) }, singleLine = true, shape = RoundedCornerShape(theme.cornerRadius),
+        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = theme.colors.textSecondary.color()) },
+        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = theme.colors.surface.color(), unfocusedContainerColor = theme.colors.surface.color(),
+            focusedBorderColor = theme.colors.accent.color(), unfocusedBorderColor = theme.colors.text.color().copy(alpha = 0.18f)),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag(id))
+}
+
+/** On, Partly on, or Off at a glance, beside the chevron into the partner. */
+@Composable private fun StatusTag(status: String, modifier: Modifier = Modifier) {
+    val theme = LocalConsentTheme.current
+    val off = status == "Off"
+    Text(status, style = MaterialTheme.typography.labelMedium, color = if (off) theme.colors.textSecondary.color() else theme.colors.accent.color(),
+        modifier = modifier.background(if (off) theme.colors.surfaceMuted.color() else theme.colors.accent.color().copy(alpha = 0.14f), CircleShape).padding(horizontal = 8.dp, vertical = 4.dp))
+}
+
 @Composable private fun Vendors(p: ConsentPresenter, purpose: Int?, clear: () -> Unit, open: (Int) -> Unit) {
     var search by rememberSaveable { mutableStateOf("") }
     val collator = remember { Collator.getInstance() }
-    val vendors = p.disclosure?.list?.vendors.orEmpty().entries.filter { (id,v) -> id in p.disclosure!!.vendors && v.name.orEmpty().searchKey().contains(search.searchKey()) && (purpose == null || purpose in p.disclosure!!.vendors[id]!!.consentPurposes || purpose in p.disclosure!!.vendors[id]!!.legitimateInterestPurposes) }.sortedWith { a,b -> collator.compare(a.value.name, b.value.name) }
-    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp).testTag("c15t.iab.vendors")) {
-        OutlinedTextField(search, { search = it }, label = { Text("Search partners") }, modifier = Modifier.fillMaxWidth().testTag("c15t.iab.vendors.search"), singleLine = true)
-        if (purpose != null) TextButton(onClick = clear, modifier = Modifier.testTag("c15t.iab.vendors.filter.purpose.clear")) { Text("Purpose: ${p.disclosure?.list?.purposes?.get(purpose)?.name} ×") }
-        LazyColumn {
-            if (vendors.isEmpty()) item { Text("No partners match \"$search\".", modifier = Modifier.padding(vertical = 24.dp).testTag("c15t.iab.vendors.empty")) }
-            items(vendors, key = { it.key }) { (id, v) ->
+    val theme = LocalConsentTheme.current
+    val vendors = p.disclosure?.list?.vendors.orEmpty().entries.filter { (id, v) ->
+        id in p.disclosure!!.vendors && v.name.orEmpty().searchKey().contains(search.searchKey()) &&
+            (purpose == null || purpose in p.disclosure!!.vendors[id]!!.consentPurposes || purpose in p.disclosure!!.vendors[id]!!.legitimateInterestPurposes)
+    }.sortedWith { a, b -> collator.compare(a.value.name, b.value.name) }
+    Column(Modifier.fillMaxSize().testTag("c15t.iab.vendors")) {
+        SearchField(search, { search = it }, "Search partners", "c15t.iab.vendors.search")
+        if (purpose != null) TextButton(onClick = clear, modifier = Modifier.padding(horizontal = 12.dp).testTag("c15t.iab.vendors.filter.purpose.clear")) {
+            Text("Purpose: ${p.disclosure?.list?.purposes?.get(purpose)?.name}", style = MaterialTheme.typography.bodyMedium, color = theme.colors.accent.color())
+            Icon(Icons.Outlined.Clear, contentDescription = "Clear filter", tint = theme.colors.accent.color(), modifier = Modifier.padding(start = 4.dp).size(16.dp))
+        }
+        LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+            if (vendors.isEmpty()) item { Body("No partners match \"$search\".", Modifier.padding(16.dp).testTag("c15t.iab.vendors.empty")) }
+            group(vendors.size, key = { vendors[it].key }) { index ->
+                val (id, v) = vendors[index]
                 val d = p.disclosure!!.vendors[id]!!
-                Column(Modifier.fillMaxWidth().clickable { open(id) }.padding(vertical = 16.dp).testTag("c15t.iab.vendors.vendor.$id"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(v.name.orEmpty(), style = MaterialTheme.typography.titleMedium); Body("${d.consentPurposes.size} purposes · ${d.legitimateInterestPurposes.size} on legitimate interest")
-                    Text(p.partnerStatus(id), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
-                }; HorizontalDivider()
+                Row(Modifier.fillMaxWidth().clickable(role = Role.Button) { open(id) }.testTag("c15t.iab.vendors.vendor.$id").padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(v.name.orEmpty(), style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color())
+                        Text("${d.consentPurposes.size} purposes · ${d.legitimateInterestPurposes.size} on legitimate interest", style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color())
+                    }
+                    StatusTag(p.partnerStatus(id), Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
+                }
             }
         }
     }
 }
+
 @Composable private fun Vendor(p: ConsentPresenter, id: Int) {
     val d = p.disclosure ?: return
     val v = d.list.vendors[id] ?: return
     val projection = d.vendors[id] ?: return
+    val theme = LocalConsentTheme.current
     fun names(ids: List<Int>) = ids.mapNotNull { d.list.purposes[it]?.name }.joinToString(", ")
     val locale = Locale.getDefault().language
     val urls = v.urls.orEmpty().firstOrNull { it.langId == locale } ?: v.urls.orEmpty().firstOrNull { it.langId == "en" } ?: v.urls?.firstOrNull()
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp).testTag("c15t.iab.vendor.$id"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        urls?.privacy?.let { ExternalLink("Privacy policy", it, "c15t.iab.vendor.$id.privacy-link") }
-        urls?.legIntClaim?.let { ExternalLink("Legitimate interest statement", it, "c15t.iab.vendor.$id.li-claim-link") }
-        SectionTitle("Your choices")
-        if (projection.consentPurposes.isNotEmpty()) ChoiceRow("Consent", "For: " + names(projection.consentPurposes), id in p.choices.vendorConsents, "c15t.iab.vendor.$id.consent", !p.pending && !p.stale && !p.listUnavailable) { on -> p.edit { it.copy(vendorConsents = it.vendorConsents.select(id,on)) } }
-        if (projection.legitimateInterestPurposes.isNotEmpty()) ChoiceRow("Legitimate interest", "For: " + names(projection.legitimateInterestPurposes) + ". Turn off to object.", id in p.choices.vendorLegitimateInterests, "c15t.iab.vendor.$id.li", !p.pending && !p.stale && !p.listUnavailable) { on -> p.edit { it.copy(vendorLegitimateInterests = it.vendorLegitimateInterests.select(id,on), vendorObjections = it.vendorObjections.select(id,!on)) } }
-        if (projection.notAllowedPurposes.isNotEmpty()) Text("This app doesn't allow this partner to: " + names(projection.notAllowedPurposes), modifier = Modifier.testTag("c15t.iab.vendor.$id.not-allowed"))
-        SectionTitle("Special purposes"); v.specialPurposes.orEmpty().forEach { Body(d.list.specialPurposes?.get(it.toInt())?.name.orEmpty() + ". No choice.") }
-        SectionTitle("Features"); v.features.orEmpty().forEach { Body(d.list.features?.get(it.toInt())?.name.orEmpty() + ". No choice.") }
-        SectionTitle("Special features"); v.specialFeatures.orEmpty().forEach { Body(d.list.specialFeatures?.get(it.toInt())?.name.orEmpty() + if (it.toInt() in p.choices.specialFeatureOptIns) ": On. Set under Special features." else ": Off. Set under Special features.") }
-        SectionTitle("Data collected"); v.dataCategories.orEmpty().forEach { Body(d.list.dataCategories?.get(it.toInt())?.name.orEmpty()) }
-        SectionTitle("How long data is kept")
-        Column(Modifier.testTag("c15t.iab.vendor.$id.retention")) { v.dataRetention?.let { retention -> retention.purposes.orEmpty().forEach { (purpose,days) -> Body("${names(listOf(purpose.toInt()))}: $days days") }; retention.stdRetention?.let { Body("Standard retention: $it days") } } ?: Body("Not provided by this partner.") }
-        SectionTitle("Device storage")
-        Column(Modifier.testTag("c15t.iab.vendor.$id.storage")) {
-            if (v.usesCookies != true && v.usesNonCookieAccess != true) Body("Doesn't store information on your device.") else {
-                v.cookieMaxAgeSeconds?.let { Body("Stores information on your device for up to ${it / 86400} days.") }
-                Body("Refreshes stored information: ${if (v.cookieRefresh == true) "Yes" else "No"}.")
-                Body("Uses other ways to access your device: ${if (v.usesNonCookieAccess == true) "Yes" else "No"}.")
+    val enabled = !p.pending && !p.stale && !p.listUnavailable
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp).testTag("c15t.iab.vendor.$id")) {
+        val links = listOfNotNull(urls?.privacy?.let { "Privacy policy" to it }, urls?.legIntClaim?.let { "Legitimate interest statement" to it })
+        links.forEachIndexed { index, (label, url) -> GroupedRow(index, links.size) { Box(Modifier.padding(horizontal = 12.dp)) { ExternalLink(label, url, if (index == 0 && label == "Privacy policy") "c15t.iab.vendor.$id.privacy-link" else "c15t.iab.vendor.$id.li-claim-link") } } }
+        SectionLabel("Your choices")
+        val choiceRows = listOfNotNull(
+            if (projection.consentPurposes.isNotEmpty()) "consent" else null,
+            if (projection.legitimateInterestPurposes.isNotEmpty()) "li" else null,
+            if (projection.notAllowedPurposes.isNotEmpty()) "not-allowed" else null)
+        choiceRows.forEachIndexed { index, kind ->
+            GroupedRow(index, choiceRows.size) {
+                when (kind) {
+                    "consent" -> ChoiceRow("Consent", "For: " + names(projection.consentPurposes), id in p.choices.vendorConsents, "c15t.iab.vendor.$id.consent", enabled) { on -> p.edit { it.copy(vendorConsents = it.vendorConsents.select(id, on)) } }
+                    "li" -> ChoiceRow("Legitimate interest", "For: " + names(projection.legitimateInterestPurposes), id in p.choices.vendorLegitimateInterests, "c15t.iab.vendor.$id.li", enabled,
+                        note = "Turn off to object.") { on -> p.edit { it.copy(vendorLegitimateInterests = it.vendorLegitimateInterests.select(id, on), vendorObjections = it.vendorObjections.select(id, !on)) } }
+                    else -> Body("This app doesn't allow this partner to: " + names(projection.notAllowedPurposes), Modifier.padding(16.dp).testTag("c15t.iab.vendor.$id.not-allowed"))
+                }
             }
-            v.deviceStorageDisclosureUrl?.let { ExternalLink("Device storage details", it, "c15t.iab.vendor.$id.storage-link") }
         }
+        @Composable fun plainGroup(title: String, values: List<String>, trailing: (Int) -> String? = { "No choice" }, tag: String? = null) {
+            if (values.isEmpty()) return
+            SectionLabel(title)
+            Column(if (tag != null) Modifier.testTag(tag) else Modifier) {
+                values.forEachIndexed { index, name ->
+                    GroupedRow(index, values.size) {
+                        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Text(name, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.weight(1f))
+                            trailing(index)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color()) }
+                        }
+                    }
+                }
+            }
+        }
+        plainGroup("Special purposes", v.specialPurposes.orEmpty().map { d.list.specialPurposes?.get(it.toInt())?.name.orEmpty() })
+        plainGroup("Features", v.features.orEmpty().map { d.list.features?.get(it.toInt())?.name.orEmpty() })
+        val specials = v.specialFeatures.orEmpty()
+        plainGroup("Special features", specials.map { d.list.specialFeatures?.get(it.toInt())?.name.orEmpty() }, trailing = { index -> if (specials[index].toInt() in p.choices.specialFeatureOptIns) "On" else "Off" })
+        if (specials.isNotEmpty()) Footnote("Set under Special features in Privacy settings.")
+        plainGroup("Data collected", v.dataCategories.orEmpty().map { d.list.dataCategories?.get(it.toInt())?.name.orEmpty() }, trailing = { null })
+        val retention = v.dataRetention
+        val retentionRows = if (retention == null) listOf("Not provided by this partner." to null)
+            else retention.purposes.orEmpty().map { (purpose, days) -> names(listOf(purpose.toInt())) to "$days days" } + listOfNotNull(retention.stdRetention?.let { "Standard retention" to "$it days" })
+        plainGroup("How long data is kept", retentionRows.map { it.first }, trailing = { retentionRows[it].second }, tag = "c15t.iab.vendor.$id.retention")
+        val storageRows = if (v.usesCookies != true && v.usesNonCookieAccess != true) listOf("Doesn't store information on your device." to null)
+            else listOfNotNull(v.cookieMaxAgeSeconds?.let { "Stored for up to" to "${it / 86400} days" }, "Refreshes stored information" to (if (v.cookieRefresh == true) "Yes" else "No"),
+                "Other ways to access your device" to (if (v.usesNonCookieAccess == true) "Yes" else "No"))
+        plainGroup("Device storage", storageRows.map { it.first }, trailing = { storageRows[it].second }, tag = "c15t.iab.vendor.$id.storage")
+        v.deviceStorageDisclosureUrl?.let { Box(Modifier.padding(horizontal = 12.dp)) { ExternalLink("Device storage details", it, "c15t.iab.vendor.$id.storage-link") } }
+        Spacer(Modifier.height(16.dp))
     }
 }
+
 @Composable private fun Providers(p: ConsentPresenter) {
     var search by rememberSaveable { mutableStateOf("") }
     val collator = remember { Collator.getInstance() }
-    val providers = p.disclosure?.adTechProviders.orEmpty().filter { it.name.searchKey().contains(search.searchKey()) }.sortedWith { a,b -> collator.compare(a.name,b.name) }
-    Column(Modifier.fillMaxSize().padding(horizontal = 24.dp).testTag("c15t.ac")) {
-        OutlinedTextField(search, { search = it }, label = { Text("Search other partners") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("c15t.ac.search"))
-        LazyColumn {
-            item { Text("These partners work with Google but aren't in the IAB list. They only use your data if you allow it. Purposes 1, 3 and 4 must also be on.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 16.dp)) }
-            if (providers.isEmpty()) item { Text("No partners match \"$search\".", modifier = Modifier.testTag("c15t.ac.empty")) }
-            items(providers, key = { it.id }) { provider ->
-                ChoiceRow(provider.name, "", provider.id in p.choices.adTechProviderConsents.orEmpty(), "c15t.ac.provider.${provider.id}.switch", !p.pending && !p.stale && !p.listUnavailable) { on -> p.edit { it.copy(adTechProviderConsents = it.adTechProviderConsents.orEmpty().select(provider.id,on)) } }
-                ExternalLink("Privacy policy", provider.policyUrl, "c15t.ac.provider.${provider.id}.privacy-link"); HorizontalDivider()
+    val providers = p.disclosure?.adTechProviders.orEmpty().filter { it.name.searchKey().contains(search.searchKey()) }.sortedWith { a, b -> collator.compare(a.name, b.name) }
+    Column(Modifier.fillMaxSize().testTag("c15t.ac")) {
+        SearchField(search, { search = it }, "Search other partners", "c15t.ac.search")
+        LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+            item { Body("These partners work with Google but aren't in the IAB list. They only use your data if you allow it. Purposes 1, 3 and 4 must also be on.", Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) }
+            if (providers.isEmpty()) item { Body("No partners match \"$search\".", Modifier.padding(16.dp).testTag("c15t.ac.empty")) }
+            group(providers.size, key = { providers[it].id }) { index ->
+                val provider = providers[index]
+                ChoiceRow(provider.name, "", provider.id in p.choices.adTechProviderConsents.orEmpty(), "c15t.ac.provider.${provider.id}.switch", !p.pending && !p.stale && !p.listUnavailable) { on ->
+                    p.edit { it.copy(adTechProviderConsents = it.adTechProviderConsents.orEmpty().select(provider.id, on)) }
+                }
+                Box(Modifier.padding(start = 12.dp, bottom = 4.dp)) { ExternalLink("Privacy policy", provider.policyUrl, "c15t.ac.provider.${provider.id}.privacy-link") }
             }
         }
     }

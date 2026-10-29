@@ -1,0 +1,293 @@
+import Foundation
+#if canImport(SwiftUI) && canImport(UIKit)
+import SwiftUI
+import UIKit
+#endif
+
+/// One colour with a light and a dark value, each an sRGB `0xRRGGBB`.
+public struct ConsentThemeColor: Equatable, Hashable, Sendable {
+    public var light: UInt32
+    public var dark: UInt32
+
+    /// - Parameters:
+    ///   - light: Colour in the light appearance.
+    ///   - dark: Colour in the dark appearance. Defaults to `light`.
+    public init(light: UInt32, dark: UInt32? = nil) {
+        self.light = light
+        self.dark = dark ?? light
+    }
+
+    /// Parse `#RRGGBB`, `RRGGBB`, or `#RRGGBB,#RRGGBB` (light, dark).
+    /// - Returns: `nil` for anything that is not one or two six-digit hex colours.
+    public init?(hex text: String) {
+        let parts = text.split(separator: ",", omittingEmptySubsequences: false).map { ConsentThemeColor.hex($0) }
+        guard parts.count == 1 || parts.count == 2, parts.allSatisfy({ $0 != nil }) else { return nil }
+        self.init(light: parts[0]!, dark: parts.count == 2 ? parts[1]! : nil)
+    }
+
+    private static func hex(_ raw: Substring) -> UInt32? {
+        var text = raw.trimmingCharacters(in: .whitespaces)
+        if text.hasPrefix("#") { text.removeFirst() }
+        guard text.count == 6, let value = UInt32(text, radix: 16) else { return nil }
+        return value
+    }
+
+    #if canImport(SwiftUI) && canImport(UIKit)
+    /// A dynamic colour that follows the trait collection.
+    public var color: Color {
+        let light = light, dark = dark
+        return Color(uiColor: UIColor { traits in
+            UIColor(rgb: traits.userInterfaceStyle == .dark ? dark : light)
+        })
+    }
+    #endif
+}
+
+/// Appearance of the native consent screens. Every value has a c15t default.
+///
+/// Pass one to `c15tConsent(presenter:privacyPolicyURL:theme:)`, set ``current``
+/// once at launch, or declare the same values in `Info.plist` under the
+/// ``InfoPlistKey`` names; plist values override the others so a build
+/// configuration can restyle an app without touching code.
+public struct ConsentTheme: Equatable, Sendable {
+    /// Semantic colours. Components never use a raw value outside this set.
+    public struct Colors: Equatable, Sendable {
+        /// Page background behind every consent screen.
+        public var canvas: ConsentThemeColor
+        /// Cards and list rows that sit on the canvas.
+        public var surface: ConsentThemeColor
+        /// A quieter surface for subordinate content such as the partner purposes list.
+        public var surfaceMuted: ConsentThemeColor
+        /// Primary text.
+        public var text: ConsentThemeColor
+        /// Supporting text and section labels.
+        public var textSecondary: ConsentThemeColor
+        /// Links, switches, the Save button, and the brand eyebrow.
+        public var accent: ConsentThemeColor
+        /// Text on `accent`.
+        public var onAccent: ConsentThemeColor
+        /// Fill of the two decision buttons. Accept all and Reject all always share it.
+        public var decision: ConsentThemeColor
+        /// Text on `decision`.
+        public var onDecision: ConsentThemeColor
+
+        public init(canvas: ConsentThemeColor, surface: ConsentThemeColor, surfaceMuted: ConsentThemeColor,
+            text: ConsentThemeColor, textSecondary: ConsentThemeColor, accent: ConsentThemeColor,
+            onAccent: ConsentThemeColor, decision: ConsentThemeColor, onDecision: ConsentThemeColor) {
+            self.canvas = canvas
+            self.surface = surface
+            self.surfaceMuted = surfaceMuted
+            self.text = text
+            self.textSecondary = textSecondary
+            self.accent = accent
+            self.onAccent = onAccent
+            self.decision = decision
+            self.onDecision = onDecision
+        }
+
+        /// Warm paper, ink decisions, and the c15t blue for links and switches.
+        public static let c15t = Colors(
+            canvas: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411),
+            surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x211D18),
+            surfaceMuted: ConsentThemeColor(light: 0xEFE9DF, dark: 0x2B2620),
+            text: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6),
+            textSecondary: ConsentThemeColor(light: 0x6B655D, dark: 0xA49D93),
+            accent: ConsentThemeColor(light: 0x335CFF, dark: 0x8CA2FF),
+            onAccent: ConsentThemeColor(light: 0xFFFFFF, dark: 0x0A1033),
+            decision: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6),
+            onDecision: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411))
+    }
+
+    /// Typeface of the first-layer headline. Body text always uses the system face.
+    public enum HeadlineFont: Equatable, Sendable {
+        /// New York on Apple platforms.
+        case serif
+        /// SF Rounded.
+        case rounded
+        /// SF Pro.
+        case sansSerif
+        /// A font the app bundles, by PostScript name.
+        case custom(String)
+
+        init(name: String) {
+            switch name.lowercased() {
+            case "serif": self = .serif
+            case "rounded": self = .rounded
+            case "sans", "sans-serif", "sansserif", "system": self = .sansSerif
+            default: self = .custom(name)
+            }
+        }
+    }
+
+    /// The app identity shown above the headline.
+    public struct Brand: Equatable, Sendable {
+        /// Short name shown as an eyebrow above the headline and read with the mark.
+        public var name: String?
+        /// Asset-catalogue image name for the mark. Rendered 48pt square with rounded corners.
+        public var markImageName: String?
+
+        public init(name: String? = nil, markImageName: String? = nil) {
+            self.name = name
+            self.markImageName = markImageName
+        }
+    }
+
+    /// First-layer copy a host may replace. Decision labels are not here on purpose.
+    public struct Copy: Equatable, Sendable {
+        /// The headline. Keep it short: it is set in display type.
+        public var headline: String
+        /// The sentence under the headline. Partner and category details stay native.
+        public var introduction: String
+
+        public init(headline: String, introduction: String) {
+            self.headline = headline
+            self.introduction = introduction
+        }
+
+        public static let c15t = Copy(
+            headline: "Your privacy, your choice.",
+            introduction: "We use data to improve your experience, measure how the app is used and show relevant advertising.")
+    }
+
+    public var colors: Colors
+    /// Corner radius of buttons and cards, in points.
+    public var cornerRadius: CGFloat
+    public var headlineFont: HeadlineFont
+    public var brand: Brand
+    public var copy: Copy
+    /// Whether the small "Secured by c15t" line appears under the first-layer actions.
+    public var showsBranding: Bool
+
+    public init(colors: Colors = .c15t, cornerRadius: CGFloat = 14, headlineFont: HeadlineFont = .serif,
+        brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true) {
+        self.colors = colors
+        self.cornerRadius = cornerRadius
+        self.headlineFont = headlineFont
+        self.brand = brand
+        self.copy = copy
+        self.showsBranding = showsBranding
+    }
+
+    /// The stock c15t appearance.
+    public static let c15t = ConsentTheme()
+
+    /// The theme hosts that present without passing one get. Set it once at launch.
+    @MainActor public static var current = ConsentTheme.c15t
+
+    /// `Info.plist` keys. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark).
+    public enum InfoPlistKey {
+        public static let accent = "com.c15t.consent.accent"
+        public static let onAccent = "com.c15t.consent.onAccent"
+        public static let canvas = "com.c15t.consent.canvas"
+        public static let surface = "com.c15t.consent.surface"
+        public static let surfaceMuted = "com.c15t.consent.surfaceMuted"
+        public static let text = "com.c15t.consent.text"
+        public static let textSecondary = "com.c15t.consent.textSecondary"
+        public static let decision = "com.c15t.consent.decision"
+        public static let onDecision = "com.c15t.consent.onDecision"
+        /// A number of points.
+        public static let cornerRadius = "com.c15t.consent.cornerRadius"
+        /// `serif`, `rounded`, `sans`, or a bundled font's PostScript name.
+        public static let headlineFont = "com.c15t.consent.headlineFont"
+        public static let brandName = "com.c15t.consent.brandName"
+        /// An asset-catalogue image name.
+        public static let brandMark = "com.c15t.consent.brandMark"
+        public static let headline = "com.c15t.consent.headline"
+        public static let introduction = "com.c15t.consent.introduction"
+        /// A Boolean. `false` hides the "Secured by c15t" line.
+        public static let branding = "com.c15t.consent.branding"
+    }
+
+    /// Apply any ``InfoPlistKey`` values in `dictionary` over this theme.
+    /// Unreadable values keep the existing value; a theme never half-applies.
+    public func applying(infoDictionary dictionary: [String: Any]) -> ConsentTheme {
+        var theme = self
+        func color(_ key: String, _ path: WritableKeyPath<Colors, ConsentThemeColor>) {
+            if let text = dictionary[key] as? String, let value = ConsentThemeColor(hex: text) { theme.colors[keyPath: path] = value }
+        }
+        color(InfoPlistKey.accent, \.accent)
+        color(InfoPlistKey.onAccent, \.onAccent)
+        color(InfoPlistKey.canvas, \.canvas)
+        color(InfoPlistKey.surface, \.surface)
+        color(InfoPlistKey.surfaceMuted, \.surfaceMuted)
+        color(InfoPlistKey.text, \.text)
+        color(InfoPlistKey.textSecondary, \.textSecondary)
+        color(InfoPlistKey.decision, \.decision)
+        color(InfoPlistKey.onDecision, \.onDecision)
+        if let radius = dictionary[InfoPlistKey.cornerRadius] as? NSNumber, radius.doubleValue >= 0 {
+            theme.cornerRadius = CGFloat(radius.doubleValue)
+        } else if let text = dictionary[InfoPlistKey.cornerRadius] as? String, let radius = Double(text), radius >= 0 {
+            theme.cornerRadius = CGFloat(radius)
+        }
+        if let name = string(dictionary[InfoPlistKey.headlineFont]) { theme.headlineFont = HeadlineFont(name: name) }
+        if let name = string(dictionary[InfoPlistKey.brandName]) { theme.brand.name = name }
+        if let name = string(dictionary[InfoPlistKey.brandMark]) { theme.brand.markImageName = name }
+        if let text = string(dictionary[InfoPlistKey.headline]) { theme.copy.headline = text }
+        if let text = string(dictionary[InfoPlistKey.introduction]) { theme.copy.introduction = text }
+        if let flag = dictionary[InfoPlistKey.branding] as? Bool { theme.showsBranding = flag }
+        else if let text = string(dictionary[InfoPlistKey.branding])?.lowercased() { theme.showsBranding = !(text == "false" || text == "0" || text == "no") }
+        return theme
+    }
+
+    private func string(_ value: Any?) -> String? {
+        guard let text = (value as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
+        return text
+    }
+
+    /// ``current`` with the bundle's `Info.plist` values applied over it.
+    @MainActor public static func resolved(bundle: Bundle = .main) -> ConsentTheme {
+        current.applying(infoDictionary: bundle.infoDictionary ?? [:])
+    }
+}
+
+#if canImport(SwiftUI) && canImport(UIKit)
+extension UIColor {
+    convenience init(rgb value: UInt32) {
+        self.init(red: CGFloat((value >> 16) & 255) / 255, green: CGFloat((value >> 8) & 255) / 255,
+            blue: CGFloat(value & 255) / 255, alpha: 1)
+    }
+}
+
+extension ConsentTheme.HeadlineFont {
+    /// The display font at the given text style, scaled with Dynamic Type.
+    func font(_ style: Font.TextStyle, weight: Font.Weight) -> Font {
+        switch self {
+        case .serif: return .system(style, design: .serif).weight(weight)
+        case .rounded: return .system(style, design: .rounded).weight(weight)
+        case .sansSerif: return .system(style, design: .default).weight(weight)
+        case .custom(let name):
+            let size = UIFont.preferredFont(forTextStyle: style.uiKit).pointSize
+            return .custom(name, size: size, relativeTo: style).weight(weight)
+        }
+    }
+}
+
+private extension Font.TextStyle {
+    var uiKit: UIFont.TextStyle {
+        switch self {
+        case .largeTitle: return .largeTitle
+        case .title: return .title1
+        case .title2: return .title2
+        case .title3: return .title3
+        case .headline: return .headline
+        case .subheadline: return .subheadline
+        case .callout: return .callout
+        case .footnote: return .footnote
+        case .caption: return .caption1
+        case .caption2: return .caption2
+        default: return .body
+        }
+    }
+}
+
+struct ConsentThemeKey: EnvironmentKey {
+    static let defaultValue = ConsentTheme.c15t
+}
+
+extension EnvironmentValues {
+    var consentTheme: ConsentTheme {
+        get { self[ConsentThemeKey.self] }
+        set { self[ConsentThemeKey.self] = newValue }
+    }
+}
+#endif

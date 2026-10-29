@@ -47,6 +47,8 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
     val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
+    /** Preferences were opened from the first layer, so closing them returns there. */
+    val returnsToFirstLayer get() = fromFirst
     /** Summary of both permitted legal bases in the current draft. */
     fun partnerStatus(id: Int): String = when (disclosure?.vendors?.get(id)?.selectionStatus(id, choices) ?: IabVendorSelectionStatus.OFF) {
         IabVendorSelectionStatus.OFF -> "Off"

@@ -82,6 +82,8 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
     }
     public var isDirty: Bool { categories != seedCategories || choices != seedChoices }
+    /// Preferences were opened from the first layer, so closing them returns there.
+    public var returnsToFirstLayer: Bool { fromFirstLayer }
     public var iab: Bool { snapshot.model == .iab }
     public var listUnavailable: Bool {
         guard iab else { return false }
