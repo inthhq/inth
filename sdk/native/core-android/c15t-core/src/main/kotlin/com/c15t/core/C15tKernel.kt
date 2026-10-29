@@ -149,6 +149,7 @@ class C15tKernel(
 		val fetchedAt: Long? = null,
 		val additionalConsentFetchedAt: Long? = null,
 		val choiceMs: Long = 0,
+		val expired: ConsentSnapshot = snapshot,
 	)
 	private val readView = AtomicReference(ReadView(state.get()))
 	private var deadlineTask: ScheduledFuture<*>? = null
@@ -487,10 +488,7 @@ class C15tKernel(
 	fun snapshot(): ConsentSnapshot {
 		val view = readView.get()
 		view.authority?.let { authority ->
-			if (!authority.isCurrent(config.portalUrl, clock.nowMillis())) return view.snapshot.copy(
-				effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE,
-				error = KernelError("bundled-policy-expired", "Connect to refresh consent policy."))
-
+			if (!authority.isCurrent(config.portalUrl, clock.nowMillis())) return view.expired
 		}
 		if (!view.requiresIab) return view.snapshot
 		val now = clock.nowMillis()
@@ -2012,7 +2010,7 @@ class C15tKernel(
 		installSnapshot(snapshot)
 	}
 
-	/** Cache both time-dependent read answers when state changes, never on a hot read. */
+	/** Cache time-dependent read answers when state changes, never on a hot read. */
 	private fun installSnapshot(candidate: ConsentSnapshot): Unit = synchronized(mutationLock) {
 		deadlineTask?.cancel(false)
 		deadlineTask = null
@@ -2034,9 +2032,12 @@ class C15tKernel(
 		}
 		val denied = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
 			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
+		val expired = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
+			effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE,
+			error = KernelError("bundled-policy-expired", "Connect to refresh consent policy."))
 		state.set(snapshot)
 		readView.set(ReadView(snapshot, bundledPolicyAuthority, denied, requiresIab, committedIab, iabListFetchedAt,
-			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0))
+			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0, expired))
 		if ((requiresIab || bundledPolicyAuthority != null) && now >= 0 && deadline != null) {
 			val reference = WeakReference(this)
 			deadlineTask = deadlineScheduler.schedule(

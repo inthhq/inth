@@ -38,6 +38,18 @@ class BundledPolicyTest {
 		for (change in variants) assertNull(BundledPolicy.resolve(resource(change), endpoint, KernelOverrides(), now))
 		assertNull(BundledPolicy.resolve("corrupt", endpoint, KernelOverrides(), now))
 	}
+	@Test fun `expired bundle reads retain snapshot identity between publications`() {
+		val clock = FixedClock(now)
+		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource()), C15tStore(InMemoryKeyValueStore()), clock).also { it.bootstrap() }
+		val current = core.snapshot()
+		assertSame(current, core.snapshot())
+		clock.advance(604800000)
+		val expired = core.snapshot()
+		assertTrue(expired.policyPending)
+		assertEquals("bundled-policy-expired", expired.error?.code)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+		repeat(100) { assertSame(expired, core.snapshot()) }
+	}
 	@Test fun `cold offline decision survives launch cache preference withdrawal and expiry`() {
 		val store = C15tStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
 		fun boot(raw: String = resource()) = testKernel(NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries), store, clock, RecordingTransport()).also { it.bootstrap() }
