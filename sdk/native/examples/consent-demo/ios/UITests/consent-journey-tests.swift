@@ -52,8 +52,8 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(reject.waitForExistence(timeout: 10)); XCTAssertTrue(accept.isHittable)
         XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
         XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
-        // The default identity is the host app's own name, never a placeholder.
-        XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Consent demo")
+        // The stock header is provider-branded and does not adopt the demo app identity.
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Your brand here")
         capture("ios-first-layer")
         reject.tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
@@ -207,6 +207,7 @@ final class ConsentJourneyTests: XCTestCase {
             let attribution = app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch
             XCTAssertTrue(attribution.exists)
             XCTAssertEqual(attribution.label, "Secured by \(name)")
+            XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Your brand here")
             XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
             XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
             capture("ios-provider-\(value)")
@@ -222,7 +223,7 @@ final class ConsentJourneyTests: XCTestCase {
     func test10IdentityFallsBackToAnInitialAndCanBeHidden() {
         launch(identity: "generic")
         XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10))
-        XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Consent demo")
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Your brand here")
         capture("ios-identity-generic")
         launch(identity: "hidden")
         XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10))

@@ -329,7 +329,7 @@ private struct FirstLayer: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand)) }
+                if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand, provider: theme.branding)) }
                 if let reason = presenter.snapshot.promptRequirement.reason, reason.rawValue != "missing" {
                     InfoCallout {
                         Text(reason.rawValue == "expired" ? "Your earlier choice has expired, so we're asking again." : "How this app uses data has changed since your last choice, so we're asking again.")

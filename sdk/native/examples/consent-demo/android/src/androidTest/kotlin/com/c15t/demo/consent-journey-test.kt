@@ -101,8 +101,8 @@ class ConsentJourneyTest {
         val accept = waitFor("c15t.first-layer.accept-all")
         val r = reject.fetchSemanticsNode().boundsInRoot; val a = accept.fetchSemanticsNode().boundsInRoot
         Assert.assertEquals(r.width,a.width,1f); Assert.assertEquals(r.height,a.height,1f)
-        // The default identity is the host app's own label, never a placeholder.
-        waitFor("c15t.first-layer.brand").assertContentDescriptionEquals("Consent demo")
+        waitFor("c15t.first-layer.brand").assertContentDescriptionEquals("Your brand here")
+        compose.onNodeWithTag("c15t.first-layer.brand-logo.c15t", useUnmergedTree = true).assertIsDisplayed()
         capture("android-first-layer")
         device.pressBack()
         waitFor("fixture.open-preferences").assertIsDisplayed()
@@ -240,6 +240,10 @@ class ConsentJourneyTest {
     @Test fun providerLogosSwapWithoutChangingDecisions() {
         for ((provider, name) in listOf("c15t" to "c15t", "inth" to "Inth", "custom" to "Pantry")) {
             launch(branding = provider)
+            waitFor("c15t.first-layer.brand").assertTextEquals("YOUR BRAND HERE")
+            val headerLogo = if (provider == "custom") "custom" else provider
+            compose.onNodeWithTag("c15t.first-layer.brand-logo.$headerLogo", useUnmergedTree = true).assertIsDisplayed()
+            compose.onNodeWithText("CONSENT DEMO").assertDoesNotExist()
             waitFor("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by $name")
             compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertIsDisplayed()
             val reject = waitFor("c15t.first-layer.reject-all").fetchSemanticsNode().boundsInRoot
@@ -256,7 +260,8 @@ class ConsentJourneyTest {
     }
     @Test fun identityFallsBackToAnInitialAndCanBeHidden() {
         launch(identity = "generic")
-        waitFor("c15t.first-layer.brand").assertContentDescriptionEquals("Consent demo")
+        waitFor("c15t.first-layer.brand").assertContentDescriptionEquals("Your brand here")
+        compose.onNodeWithTag("c15t.first-layer.brand-logo.initial", useUnmergedTree = true).assertIsDisplayed()
         capture("android-identity-generic")
         launch(identity = "hidden")
         waitFor("c15t.first-layer.reject-all")

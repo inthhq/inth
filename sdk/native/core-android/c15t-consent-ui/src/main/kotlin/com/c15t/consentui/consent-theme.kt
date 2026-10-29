@@ -46,7 +46,8 @@ data class ConsentTheme(
     val colors: Colors = Colors.c15t,
     /** Corner radius of buttons and cards. */
     val cornerRadius: Dp = 14.dp,
-    val headlineFont: HeadlineFont = HeadlineFont.Serif,
+    /** The platform system sans by default; hosts may supply another face. */
+    val headlineFont: HeadlineFont = HeadlineFont.SansSerif,
     val brand: Brand = Brand(),
     val copy: Copy = Copy.c15t,
     /** Whether the small "Secured by c15t" line appears under the first-layer actions. */
@@ -97,27 +98,27 @@ data class ConsentTheme(
     sealed interface HeadlineFont {
         /** The device serif, Noto Serif on stock Android. */
         data object Serif : HeadlineFont
-        /** The device sans. Android has no rounded system face, so `rounded` resolves here too. */
+        /** The platform default face. Android has no rounded system face, so `rounded` resolves here too. */
         data object SansSerif : HeadlineFont
         /** A font the app bundles. */
         data class Custom(val fontFamily: FontFamily) : HeadlineFont
 
         val family: FontFamily get() = when (this) {
             Serif -> FontFamily.Serif
-            SansSerif -> FontFamily.SansSerif
+            SansSerif -> FontFamily.Default
             is Custom -> fontFamily
         }
     }
 
     /**
-     * The app identity shown above the headline. By default it is the host app itself: the
-     * application label and launcher icon, resolved at render time without any network.
+     * The replaceable app identity above the headline. The stock header uses the selected
+     * provider logo and "Your brand here" until the host supplies its own name or mark.
      */
     data class Brand(
-        /** Short name shown as an eyebrow above the headline. `null` uses the application label. */
+        /** Short name shown as an eyebrow. `null` uses "Your brand here". */
         val name: String? = null,
-        /** Drawable resource for the mark. `null` uses the launcher icon; an app whose icon cannot
-         * be drawn gets a tile with the name's initial. Rendered 56dp square with the icon mask. */
+        /** Drawable resource for the mark. `null` uses the selected provider logo. An unreadable
+         * explicit mark gets the name's initial. Rendered in a 56dp square tile. */
         val markResId: Int? = null,
         /** `true` shows no identity at all: the headline starts the page. */
         val hidden: Boolean = false,

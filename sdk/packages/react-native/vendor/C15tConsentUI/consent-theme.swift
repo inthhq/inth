@@ -119,13 +119,13 @@ public struct ConsentTheme: Equatable, Sendable {
         }
     }
 
-    /// The app identity shown above the headline. By default it is the host app itself: the
-    /// bundle's display name and primary icon, resolved at render time without any network.
+    /// The identity shown above the headline. Defaults to the selected provider logo and
+    /// "Your brand here". Supply app assets and a name to replace either value.
     public struct Brand: Equatable, Sendable {
-        /// Short name shown as an eyebrow above the headline. `nil` uses the bundle's display name.
+        /// Short name shown as an eyebrow above the headline. `nil` shows "Your brand here".
         public var name: String?
-        /// Asset-catalogue image name for the mark. `nil` uses the app icon; an app without one
-        /// gets a drawn tile with the name's initial. Rendered 56pt square with the icon mask.
+        /// Asset-catalogue image name for the mark. `nil` uses the selected provider logo. A missing explicit
+        /// asset shows a drawn tile with the name's initial. Rendered 56pt square with the icon mask.
         public var markImageName: String?
         /// `true` shows no identity at all: the headline starts the page.
         public var isHidden: Bool
@@ -196,7 +196,7 @@ public struct ConsentTheme: Equatable, Sendable {
     /// Whether the small provider attribution appears under the first-layer actions.
     public var showsBranding: Bool
 
-    public init(colors: Colors = .c15t, cornerRadius: CGFloat = 14, headlineFont: HeadlineFont = .serif,
+    public init(colors: Colors = .c15t, cornerRadius: CGFloat = 14, headlineFont: HeadlineFont = .sansSerif,
         brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true, branding: Branding = .c15t) {
         self.colors = colors
         self.cornerRadius = cornerRadius

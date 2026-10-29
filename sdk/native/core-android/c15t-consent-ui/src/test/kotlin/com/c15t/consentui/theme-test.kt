@@ -151,7 +151,7 @@ class ThemeTest {
 class IdentityTest {
     private val context get() = ApplicationProvider.getApplicationContext<android.content.Context>()
 
-    @Test fun brandDefaultsToTheHostAppAndCanBeHidden() {
+    @Test fun brandDefaultsCanBeCustomizedAndHidden() {
         assertFalse(ConsentTheme.c15t.brand.hidden)
         assertNull(ConsentTheme.c15t.brand.name)
         assertTrue(ConsentTheme.Brand.Hidden.hidden)
@@ -163,13 +163,37 @@ class IdentityTest {
         assertEquals(ConsentTheme.Brand(name = "Pantry"), named.brand)
     }
 
-    @Test fun identityComesFromThePackageUnlessTheBrandNamesIt() {
-        val resolved = HostIdentity.resolve(context, ConsentTheme.Brand())
-        assertTrue(resolved.name.isNotEmpty())
-        assertEquals("Pantry", HostIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry")).name)
-        val missing = HostIdentity.resolve(context, ConsentTheme.Brand(markResId = 1))
-        assertNull(missing.icon); assertNull(missing.markResId)
-        assertEquals("P", HostIdentity.initial("pantry"))
-        assertEquals("", HostIdentity.initial("  "))
+    @Test fun stockIdentityUsesThePlaceholderAndSelectedProvider() {
+        for (provider in listOf(ConsentTheme.Branding.C15t, ConsentTheme.Branding.Inth)) {
+            val resolved = HeaderIdentity.resolve(context, ConsentTheme.Brand(), provider)
+            assertEquals("Your brand here", resolved.name)
+            assertEquals(provider, resolved.provider)
+            assertNull(resolved.markResId)
+        }
+        assertEquals(ConsentTheme.HeadlineFont.SansSerif, ConsentTheme.c15t.headlineFont)
+        assertEquals(androidx.compose.ui.text.font.FontFamily.Default, ConsentTheme.c15t.headlineFont.family)
+    }
+
+    @Test fun explicitBrandMarksAndNamesOverrideTheStockIdentity() {
+        val named = HeaderIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry"), ConsentTheme.Branding.Inth)
+        assertEquals("Pantry", named.name)
+        assertEquals(ConsentTheme.Branding.Inth, named.provider)
+        val marked = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = android.R.drawable.ic_dialog_info), ConsentTheme.Branding.Inth)
+        assertEquals(android.R.drawable.ic_dialog_info, marked.markResId)
+        assertNull(marked.provider)
+        val missing = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = 1), ConsentTheme.Branding.Inth)
+        assertNull(missing.markResId); assertNull(missing.provider)
+        assertEquals("Y", HeaderIdentity.initial(missing.name))
+        assertEquals("P", HeaderIdentity.initial("pantry"))
+        assertEquals("", HeaderIdentity.initial("  "))
+    }
+
+    @Test fun customProvidersUseTheirMarkOrInitial() {
+        val custom = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info))
+        assertEquals(android.R.drawable.ic_dialog_info, custom.markResId)
+        assertEquals("Your brand here", custom.name)
+        val noMark = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example"))
+        assertNull(noMark.markResId); assertNull(noMark.provider)
+        assertEquals("Y", HeaderIdentity.initial(noMark.name))
     }
 }

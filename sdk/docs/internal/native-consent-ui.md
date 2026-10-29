@@ -79,21 +79,21 @@ entry are a large sheet on iOS and a full-screen window with Close on Android,
 because by then the app behind them belongs to the user.
 
 The stock appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
-a serif display headline, and the c15t blue only for links, switches and Save.
+the platform system typeface, and c15t blue only for links, switches and Save.
+Headlines use San Francisco on iOS and the system sans serif on Android; a host
+can still opt into a different headline face.
 Accept all and Reject all are twins: the same fill, size and weight, side by
 side when both labels fit and stacked at accessibility text sizes. Customize is
-outlined. Nothing else on the first layer is filled. Dark mode flips the paper
+outlined. Dark mode flips the paper
 and ink; every colour carries a light and a dark value.
 
-The page opens with the host app's own identity: its launcher icon in a 56pt
-tile with the platform icon mask, and its display name as a tracked eyebrow
-in the accent colour above the headline. Both come from the app bundle or
-package at render time, with no network. An app whose icon cannot be read gets
-a drawn tile with the name's initial instead, so no placeholder name or
-fictional brand can ship. `ConsentTheme.Brand(name:markImageName:)` replaces
-either value with the app's own assets, and `Brand.hidden` (Swift) or
-`Brand.Hidden` (Kotlin) starts the page at the headline. Standing preferences
-show one category group with no heading outside IAB; IAB keeps its "This app",
+The default header shows the selected provider's bundled logo, c15t or Inth,
+in a 56pt tile, with "YOUR BRAND HERE" as the tracked accent eyebrow. It does
+not read the app's display name or launcher icon. `ConsentTheme.Brand` replaces
+the name, mark, or both with explicit app branding. An explicit mark that cannot
+be loaded shows the label's initial instead of silently substituting a logo.
+`Brand.hidden` (Swift) or `Brand.Hidden` (Kotlin) starts the page at the headline.
+Standing preferences show one category group with no heading outside IAB; IAB keeps its "This app",
 "Purposes", "Special features" and partner groups. On preferences, Accept all
 and Reject all are equal outlined buttons and Save is the one filled action.
 
@@ -160,7 +160,8 @@ dark). Android also accepts colour, drawable and font resources.
 | `com.c15t.consent.brandingName` | `com.c15t.consent.BRANDING_NAME` | custom provider name |
 | `com.c15t.consent.brandingMark` | `com.c15t.consent.BRANDING_MARK` | custom provider asset name or drawable |
 
-The provider tag is independent from the app name and mark above the headline.
+The provider tag stays separate from the header. The selected provider also
+supplies the default header logo; explicit app branding overrides that header.
 Use `branding: .inth` in Swift or `branding = ConsentTheme.Branding.Inth` in
 Kotlin to show the bundled Inth logo and name. Both built-in logos are compiled
 vectors, so they render at first launch without downloading an image.
