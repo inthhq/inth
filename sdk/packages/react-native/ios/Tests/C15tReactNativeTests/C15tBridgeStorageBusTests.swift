@@ -34,13 +34,14 @@ final class C15tBridgeStorageBusTests: XCTestCase {
     /// Out of the specification's table on purpose: `TcStorageBus` names what a wipe may
     /// touch, and a bus that cleared somebody else's Google key would be a worse bug
     /// than one that wrote nothing.
-    private let foreignKey = "IABTCF_AddtlConsent"
+    private let foreignKey = "IABTCF_EnableAdvertiserConsentMode"
 
-    /// The three rows seeded here, i.e. every seeded key that the bus does own.
+    /// Every seeded key that the bus owns, including Google's AC extension.
     private let seededSpecKeys: [String] = [
         TcStorageBusKeys.policyVersion,
         TcStorageBusKeys.gdprApplies,
         TcStorageBusKeys.tcString,
+        TcStorageBusKeys.addtlConsent,
     ]
 
     override func setUp() {
@@ -101,6 +102,7 @@ final class C15tBridgeStorageBusTests: XCTestCase {
         defaults.set(3, forKey: TcStorageBusKeys.policyVersion)
         defaults.set(1, forKey: TcStorageBusKeys.gdprApplies)
         defaults.set("CMP-before-c15t", forKey: TcStorageBusKeys.tcString)
+        defaults.set("2~1~dv.", forKey: TcStorageBusKeys.addtlConsent)
         defaults.set("G-1", forKey: foreignKey)
     }
 
