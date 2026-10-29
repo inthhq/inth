@@ -684,37 +684,37 @@ Writes go through a pending queue:
   queue, refuse actions that cannot fit with `queue-write-failed`. A repeated
   denial for an existing owner can still replace its slot.
 
+IAB disclosure bindings use the `gvl-v2:` format. Older projected bindings require
+a fresh decision because their stored lists may have discarded unknown fields.
+
 Platform lifecycle
 ------------------
 
-The core starts no timer of its own, so a platform port owns the three moments where
-a stored answer can have gone stale with nothing asking about it.
+Platform ports own the three lifecycle events that retry delivery and refresh policy.
+The core separately schedules a one-shot deadline for IAB list or consent expiry, so
+existing gates receive denial even while the app remains open.
 
 - **Launch.** Hydrate, then replay the pending queue. Both cores do this inside
   `bootstrap`, before the first read is served.
 - **Foreground.** Replay the pending queue, then refresh policy. A device that spent
   the night offline has a decision waiting to be delivered and possibly a notice that
   has aged out, and an app has no reason to go and ask about either.
-- **Reachability.** Replay the pending queue when the process gains a network it did
-  not already have. Nothing else on this list is worth a round trip for: policy is
-  served fresh at launch and at foreground, and a link that came and went does not
-  change what the subject agreed to.
+- **Reachability.** Replay the pending queue and refresh policy when the process gains
+  a network it did not already have. A recovered connection may be the first opportunity
+  to fetch a missing or stale GVL after an offline launch.
 
 A connectivity callback counts the network already up at registration as the state it
 started in, not as a gain. Replaying there races the launch replay, and a core that
 replays only the first genuine gain leaves a decision queued for the rest of a session
 spent online.
 
-The reachability leg is the one a platform may be denied, and the reason is literal:
-`ACCESS_NETWORK_STATE` on Android and the equivalent monitoring entitlement belong to
-the application, and an SDK that wrote them into every host's manifest would be
-spending the maintainer's privacy surface on the narrowest of the three legs. Where the
-platform refuses the registration, a core logs it once and carries on. Launch and
-foreground are never optional and never need a permission.
+Android reachability requires the host to declare `ACCESS_NETWORK_STATE`. If the
+platform refuses registration, the installer logs it and keeps launch and foreground
+recovery. Apple's `NWPathMonitor` needs no entitlement or manifest key.
 
-Neither core may poll a clock instead. A core that wakes itself on a cadence invents a
-rhythm no policy asked for, and whatever it decides at an arbitrary minute is an answer
-the policy never gave.
+Neither core polls the clock or refreshes on a fixed cadence. An expiry deadline
+reevaluates local authority and notifies gates without fetching policy or recording a
+consent action. A replacement snapshot cancels and reschedules that deadline.
 
 Subject identity
 ----------------

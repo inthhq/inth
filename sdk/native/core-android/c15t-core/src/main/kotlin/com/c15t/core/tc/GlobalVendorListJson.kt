@@ -1,5 +1,17 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package com.c15t.core.tc
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -46,10 +58,10 @@ object GlobalVendorListJson {
 	 * `lastUpdated`, which the acceptance rules above do not require, come back only if the served
 	 * document carried them.
 	 *
-	 * The projection is also the only place the difference can land. The envelope stores a typed
-	 * model and not these bytes, and a typed field holds one value for a served `null` and for a
-	 * missing key; `cookieMaxAgeSeconds` is the only key a real document writes that way, and the
-	 * schema calls it optional, so both readings mean the same thing to every reader on either
+	 * Known fields normalize identically for hashing and disclosure. Unknown fields from loose
+	 * backend objects survive both this projection and the GVL-specific storage serializer. A typed
+	 * nullable still holds one value for a served `null` and for a missing key. Both readings
+	 * mean the same thing to every reader on either
 	 * side. `a served null drops only its own key` grades that collapse and its limits.
 	 *
 	 * The other thing that does not survive is a record shaped so this model cannot name it, and there
@@ -90,7 +102,9 @@ object GlobalVendorListJson {
 			return null
 		}
 		return try {
-			wire.decodeFromJsonElement(GlobalVendorList.serializer(), document)
+			wire.decodeFromJsonElement(GlobalVendorList.generatedSerializer(), document).copy(
+				additionalFields = additionalFields(document, GlobalVendorList.generatedSerializer().descriptor) as? JsonObject
+			)
 		} catch (_: Exception) {
 			// The keys the reference asks for are present and answerable, and something deeper is not
 			// a document: a `purposes` that turned out to be an array, a vendor key that is not a
@@ -133,11 +147,11 @@ object GlobalVendorListJson {
 	 * left out stay out -- see [GlobalVendorList] for why a mobile-only spelling is not on the table.
 	 */
 	fun toJsonElement(vendorList: GlobalVendorList): JsonObject =
-		wire.encodeToJsonElement(GlobalVendorList.serializer(), vendorList) as JsonObject
+		withAdditionalFields(wire.encodeToJsonElement(GlobalVendorList.generatedSerializer(), vendorList), vendorList)
 
 	/** [toJsonElement] as text, for a bridge that forwards a string. */
 	fun toJson(vendorList: GlobalVendorList): String =
-		wire.encodeToString(GlobalVendorList.serializer(), vendorList)
+		toJsonElement(vendorList).toString()
 
 	/** `/init`'s key for the list, which [fromInitBody] reads. */
 	const val GVL_KEY = "gvl"
@@ -180,4 +194,76 @@ object GlobalVendorListJson {
 
 	/** `2^53 - 1`, the largest integer the reference's own check admits. */
 	private const val MAX_SAFE_INTEGER = 9_007_199_254_740_991.0
+}
+
+/** Only the GVL tolerates unknown fields; the surrounding envelope stays strict. */
+internal object GlobalVendorListSerializer : KSerializer<GlobalVendorList> {
+	override val descriptor: SerialDescriptor get() = GlobalVendorList.generatedSerializer().descriptor
+
+	override fun serialize(encoder: Encoder, value: GlobalVendorList) {
+		val output = encoder as JsonEncoder
+		val known = output.json.encodeToJsonElement(GlobalVendorList.generatedSerializer(), value)
+		output.encodeJsonElement(withAdditionalFields(known, value))
+	}
+
+	override fun deserialize(decoder: Decoder): GlobalVendorList {
+		val input = decoder as JsonDecoder
+		return requireNotNull(GlobalVendorListJson.read(input.decodeJsonElement())) { "unreadable stored GVL" }
+	}
+}
+
+private fun withAdditionalFields(known: JsonElement, value: GlobalVendorList): JsonObject {
+	val additional = value.additionalFields ?: return known as JsonObject
+	return mergeAdditional(known, additional, GlobalVendorList.generatedSerializer().descriptor) as JsonObject
+}
+
+/** Extract only fields absent from the typed schema, including nested loose objects. */
+private fun additionalFields(value: JsonElement, descriptor: SerialDescriptor): JsonElement? = when (descriptor.kind) {
+	StructureKind.CLASS -> {
+		val fields = value as? JsonObject
+		fields?.mapNotNull { (key, child) ->
+			val index = descriptor.getElementIndex(key)
+			val extra = if (index == CompositeDecoder.UNKNOWN_NAME) child else additionalFields(child, descriptor.getElementDescriptor(index))
+			extra?.let { key to it }
+		}?.toMap()?.takeIf { it.isNotEmpty() }?.let(::JsonObject)
+	}
+	StructureKind.MAP -> {
+		(value as? JsonObject)?.mapNotNull { (key, child) ->
+			additionalFields(child, descriptor.getElementDescriptor(1))?.let { key to it }
+		}?.toMap()?.takeIf { it.isNotEmpty() }?.let(::JsonObject)
+	}
+	StructureKind.LIST -> {
+		val extra = (value as? JsonArray)?.map { additionalFields(it, descriptor.getElementDescriptor(0)) }
+		extra?.takeIf { fields -> fields.any { it != null } }?.let { JsonArray(it.map { value -> value ?: JsonNull }) }
+	}
+	else -> null
+}
+
+/** Map entries follow the normalized list, so pruned vendors cannot reappear. */
+private fun mergeAdditional(known: JsonElement, extra: JsonElement, descriptor: SerialDescriptor): JsonElement = when (descriptor.kind) {
+	StructureKind.CLASS -> {
+		if (known !is JsonObject || extra !is JsonObject) known
+		else {
+			val fields = known.toMutableMap()
+			extra.forEach { (key, value) ->
+				val index = descriptor.getElementIndex(key)
+				if (index == CompositeDecoder.UNKNOWN_NAME) fields[key] = value
+				else fields[key]?.let { fields[key] = mergeAdditional(it, value, descriptor.getElementDescriptor(index)) }
+			}
+			JsonObject(fields)
+		}
+	}
+	StructureKind.MAP -> {
+		if (known !is JsonObject || extra !is JsonObject) known
+		else JsonObject(known.mapValues { (key, value) ->
+			extra[key]?.let { mergeAdditional(value, it, descriptor.getElementDescriptor(1)) } ?: value
+		})
+	}
+	StructureKind.LIST -> {
+		if (known !is JsonArray || extra !is JsonArray) known
+		else JsonArray(known.mapIndexed { index, value ->
+			extra.getOrNull(index)?.let { mergeAdditional(value, it, descriptor.getElementDescriptor(0)) } ?: value
+		})
+	}
+	else -> known
 }

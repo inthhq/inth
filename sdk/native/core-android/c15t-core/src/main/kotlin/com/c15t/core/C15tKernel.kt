@@ -46,6 +46,9 @@ import java.lang.ref.WeakReference
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.serialization.json.*
@@ -137,6 +140,17 @@ class C15tKernel(
 		?: SubjectIdGenerator(clock = clock)::generate
 
 	private val state = AtomicReference(ConsentSnapshot.denyAll())
+	private data class ReadView(
+		val snapshot: ConsentSnapshot,
+		val denied: ConsentSnapshot = snapshot,
+		val requiresIab: Boolean = false,
+		val saved: IabCommittedConsent? = null,
+		val fetchedAt: Long? = null,
+		val choiceMs: Long = 0,
+	)
+	private val readView = AtomicReference(ReadView(state.get()))
+	private var deadlineTask: ScheduledFuture<*>? = null
+	private var deadlineGeneration = 0L
 	private var lastIabActionAt: Long? = null
 	private var iabListFetchedAt: Long? = null
 	private var iabListFromCache = true
@@ -192,7 +206,7 @@ class C15tKernel(
 
 	fun openIabDraft(): IabDraft? = synchronized(mutationLock) {
 		if (iabConfiguration == null || evaluationPolicy?.model != ConsentModel.IAB ||
-			state.get().policyPending || !listIsUsable()) null
+			state.get().policyPending || state.get().iab?.gvl == null || !listIsUsable()) null
 		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
 	}
 
@@ -411,16 +425,18 @@ class C15tKernel(
 	 * The current snapshot.
 	 *
 	 * Synchronous, allocation-free, and never touches disk or the network. Returns
-	 * the same instance until something changes, so a caller can compare by
-	 * identity to decide whether to do work.
+	 * the same instance until state changes or IAB authority crosses a time boundary,
+	 * so a caller can compare by identity to decide whether to do work.
 	 */
-	fun snapshot(): ConsentSnapshot = synchronized(mutationLock) { readableSnapshot(state.get()) }
-
-	private fun readableSnapshot(snapshot: ConsentSnapshot): ConsentSnapshot {
-		if (evaluationPolicy?.model != ConsentModel.IAB) return snapshot
-		val saved = committedIab
-		return if (listIsUsable() && saved != null && saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0))
-			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
+	fun snapshot(): ConsentSnapshot {
+		val view = readView.get()
+		if (!view.requiresIab) return view.snapshot
+		val now = clock.nowMillis()
+		val fetched = view.fetchedAt
+		return if (view.snapshot.iab?.gvl != null && fetched != null && fetched >= 0 &&
+			now >= fetched && now - fetched < config.iabListMaxAgeMs &&
+			view.saved?.isCurrent(now, view.choiceMs) == true
+		) view.snapshot else view.denied
 	}
 
 	/**
@@ -818,7 +834,7 @@ class C15tKernel(
 				committedIab = nextIab
 				lastIabActionAt = actionAt
 			}
-			state.set(published)
+			installSnapshot(published)
 			acknowledgement?.let { noticeDismissal = it }
 		}
 
@@ -838,7 +854,7 @@ class C15tKernel(
 			queued = true,
 			delivered = delivered,
 		)
-		notifySnapshot(published)
+		notifySnapshot()
 		result
 	}
 
@@ -891,11 +907,11 @@ class C15tKernel(
 			)
 				published = published.copy(model = ConsentModel.IAB)
 			published = validateIab(published)
-			state.set(published)
+			installSnapshot(published)
 		}
 		persist()
 		mutation.release()
-		notifySnapshot(published)
+		notifySnapshot()
 	}
 
 	/** Re-run init: policy, geo, translations, and any server-side subject id. */
@@ -917,7 +933,7 @@ class C15tKernel(
 				)
 			else {
 				val snapshot = state.get()
-				notifySnapshot(snapshot)
+				notifySnapshot()
 				background.execute {
 					transport.identify(snapshot.subject!!, user)
 					runInit()
@@ -940,11 +956,11 @@ class C15tKernel(
 					!published.policyPending
 			)
 				published = published.copy(model = ConsentModel.IAB)
-			state.set(published)
+			installSnapshot(published)
 		}
 		persist()
 		mutation.release()
-		notifySnapshot(published)
+		notifySnapshot()
 		background.execute {
 			transport.identify(subject, user)
 			runInit()
@@ -963,7 +979,7 @@ class C15tKernel(
 			mutation.release()
 			if (transition) {
 				val snapshot = state.get()
-				notifySnapshot(snapshot)
+				notifySnapshot()
 				background.execute { transport.logout(snapshot.subject!!) }
 			}
 			else
@@ -987,11 +1003,11 @@ class C15tKernel(
 					!published.policyPending
 			)
 				published = published.copy(model = ConsentModel.IAB)
-			state.set(published)
+			installSnapshot(published)
 		}
 		persist()
 		mutation.release()
-		notifySnapshot(published)
+		notifySnapshot()
 		background.execute { transport.logout(subject) }
 	}
 
@@ -1029,11 +1045,11 @@ class C15tKernel(
 			)
 				published = published.copy(model = ConsentModel.IAB)
 			published = validateIab(published)
-			state.set(published)
+			installSnapshot(published)
 		}
 		persist()
 		mutation.release()
-		notifySnapshot(published)
+		notifySnapshot()
 		refresh()
 	}
 
@@ -1221,7 +1237,7 @@ class C15tKernel(
 		if (transition != null) {
 			mutation.release()
 			if (transition) {
-				notifySnapshot(state.get())
+				notifySnapshot()
 				background.execute { runInit() }
 			} else
 				emitError(KernelError("reset-write-failed", "Consent reset could not be persisted"))
@@ -1235,6 +1251,9 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			evaluationPolicy = null
+			iabListFetchedAt = null
+			iabListFromCache = true
+			iabListOffline = false
 			committedIab = null
 			noticeDismissal = null
 			published = ConsentSnapshot.denyAll(current.subject ?: resolved, now)
@@ -1254,13 +1273,13 @@ class C15tKernel(
 				overrides = configuredOverrides,
 				privacySignals = signalsFor(configuredOverrides),
 			)
-			state.set(published)
+			installSnapshot(published)
 		}
 		queue.clear()
 		store.clearConsentState()
 		storedSnapshotFound = false
 		mutation.release()
-		notifySnapshot(published)
+		notifySnapshot()
 		background.execute { runInit() }
 	}
 
@@ -1363,12 +1382,12 @@ class C15tKernel(
 				)
 			}
 		val mapped = InitMapper.map(outcome)
-		val (published, emitted) = applyInit(mapped, detected)
+		val (_, emitted) = applyInit(mapped, detected, outcome is TransportOutcome.Success)
 		emitted?.let(::emitError)
-		notifySnapshot(published)
+		notifySnapshot()
 	}
 
-	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?): Pair<ConsentSnapshot, KernelError?> = mutate { mutation ->
+	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean): Pair<ConsentSnapshot, KernelError?> = mutate { mutation ->
 		var detected = detection
 		var published: ConsentSnapshot
 		var emitted: KernelError?
@@ -1407,7 +1426,7 @@ class C15tKernel(
 			//
 			// Inside the latch rather than outside it, because the retained half already went
 			// through this line on the launch that served it, and on the read that hydrated it.
-			iabListOffline = outcome !is TransportOutcome.Success
+			iabListOffline = !online
 			if (mapped.gvl != null) {
 				iabListFetchedAt = clock.nowMillis()
 				iabListFromCache = false
@@ -1467,7 +1486,11 @@ class C15tKernel(
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
 			published = validateIab(published)
-			state.set(published)
+			if (!online && !mapped.policyUnreadable && listIsUsable() &&
+				published.copy(revision = base.revision, evaluatedAt = base.evaluatedAt,
+					error = base.error, nextDeadline = base.nextDeadline) == base
+			) published = published.copy(revision = base.revision)
+			installSnapshot(published)
 		}
 
 		// A resolved subject belongs in protected storage as soon as it is known.
@@ -1767,9 +1790,12 @@ class C15tKernel(
 			noticeDismissal = null
 			if (reset) {
 				evaluationPolicy = null
+				iabListFetchedAt = null
+				iabListFromCache = true
+				iabListOffline = false
 			}
 			storedSnapshotFound = true
-			state.set(prepared.second)
+			installSnapshot(prepared.second)
 		}
 		return true
 	}
@@ -1896,8 +1922,59 @@ class C15tKernel(
 	}
 
 	private fun publishPure(snapshot: ConsentSnapshot) {
-		state.set(snapshot)
+		installSnapshot(snapshot)
 	}
+
+	/** Cache both time-dependent read answers when state changes, never on a hot read. */
+	private fun installSnapshot(candidate: ConsentSnapshot): Unit = synchronized(mutationLock) {
+		deadlineTask?.cancel(false)
+		deadlineTask = null
+		val generation = ++deadlineGeneration
+		val now = clock.nowMillis()
+		val requiresIab = evaluationPolicy?.model == ConsentModel.IAB
+		val iabDeadline = if (requiresIab) listOfNotNull(
+			iabListFetchedAt?.let { saturatingAdd(it, config.iabListMaxAgeMs) },
+			committedIab?.let { saturatingAdd(it.actionAt, evaluationPolicy?.choiceMs ?: 0) },
+		).filter { it > now }.minOrNull() else null
+		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline).minOrNull()
+		val snapshot = if (deadline == candidate.nextDeadline) candidate else candidate.copy(nextDeadline = deadline)
+		val denied = if (!requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
+			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
+		state.set(snapshot)
+		readView.set(ReadView(snapshot, denied, requiresIab, committedIab, iabListFetchedAt,
+			evaluationPolicy?.choiceMs ?: 0))
+		if (requiresIab && now >= 0 && deadline != null) {
+			val reference = WeakReference(this)
+			deadlineTask = deadlineScheduler.schedule(
+				{ reference.get()?.expireIabDeadline(generation, deadline) },
+				deadline - now,
+				TimeUnit.MILLISECONDS,
+			)
+		}
+	}
+
+	private fun expireIabDeadline(generation: Long, deadline: Long): Unit = mutate { mutation ->
+		synchronized(mutationLock) {
+			if (generation != deadlineGeneration) return@synchronized null
+			val expected = state.get()
+			val now = clock.nowMillis()
+			if (now < deadline) {
+				installSnapshot(expected)
+				return@synchronized null
+			}
+			val evaluated = PolicyEvaluator.evaluate(
+				expected.copy(revision = expected.revision + 1), evaluationPolicy, noticeDismissal,
+				now, choiceScopeOf(evaluationPolicy),
+			)
+			validateIab(evaluated).also(::installSnapshot)
+		} ?: return@mutate
+		persist()
+		mutation.release()
+		notifySnapshot()
+	}
+
+	private fun saturatingAdd(left: Long, right: Long): Long =
+		if (left > Long.MAX_VALUE - right) Long.MAX_VALUE else left + right
 
 	/** Persist the published state. Always called with [mutationLock] released. */
 	private fun persist(): Boolean {
@@ -1973,8 +2050,8 @@ class C15tKernel(
 		gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true)
 		)
 
-	private fun notifySnapshot(candidate: ConsentSnapshot) {
-		val snapshot = synchronized(mutationLock) { readableSnapshot(candidate) }
+	private fun notifySnapshot() {
+		val snapshot = snapshot()
 		for (reference in snapshotObservers) {
 			reference.get()?.invoke(snapshot) ?: snapshotObservers.remove(reference)
 		}
@@ -1995,6 +2072,10 @@ class C15tKernel(
 	}
 
 	private companion object {
+		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
+			Thread(runnable, "c15t-deadline").apply { isDaemon = true }
+		}.apply { removeOnCancelPolicy = true }
+
 		/**
 		 * Where init and delivery run for a host that brings no executor of its own.
 		 *

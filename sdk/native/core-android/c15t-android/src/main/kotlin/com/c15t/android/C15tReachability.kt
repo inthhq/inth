@@ -45,7 +45,7 @@ class ReachabilityGate(private val onGained: () -> Unit) {
 }
 
 /**
- * Replays the pending consent queue when the process gains a network it did not have.
+ * Replays pending consent and refreshes policy when the process gains a network.
  *
  * This is the narrowest of the three lifecycle legs and the only one a device can
  * decline. The system service refuses the registration unless the *application* declared
@@ -54,13 +54,9 @@ class ReachabilityGate(private val onGained: () -> Unit) {
  * wake-up. A refusal is therefore logged and the core keeps its launch and foreground
  * replays, which need no permission and are never optional.
  *
- * Callbacks arrive on the thread that registered, which is why [C15tAndroid.install]
- * registers on the main thread. [C15t.flushPending] then runs its pass on the thread that
- * called it -- it hands nothing to the core's executor, and a pass that wins the core's
- * guard here opens its connection on the main thread, where the platform refuses it and the
- * queue answers unreachable. The entries keep their place and the foreground leg, which does
- * run off the main thread, sends them. A host that wants the wake-up itself to fly should
- * drive the replay through [C15tAndroid]'s executor rather than call this one directly.
+ * [C15tAndroid.install] hands queue replay to the core's worker executor and refreshes policy.
+ * The callback never sends a pending body inline, so recovery does not open HTTP on the
+ * main thread. Refresh schedules its own work through the core's executor.
  */
 class C15tReachability private constructor(
 	private val manager: ConnectivityManager,

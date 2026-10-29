@@ -61,7 +61,8 @@ internal object IabAuthority {
 			is JsonArray -> JsonArray(v.map { canonical(it) })
 			else -> v
 		}
-		return MessageDigest.getInstance("SHA-256")
+		// Older unprefixed hashes may have lost disclosure fields in the typed projection.
+		return "gvl-v2:" + MessageDigest.getInstance("SHA-256")
 			.digest(canonical(GlobalVendorListJson.toJsonElement(gvl)).toString().toByteArray(Charsets.UTF_8))
 			.joinToString("") { "%02x".format(it) }
 	}

@@ -76,7 +76,8 @@ public struct IABCommittedConsent: Sendable, Codable, Equatable {
 // claim a forbidden LI basis, or overwrite a different list's disclosure.
 enum IABAuthority {
     static func disclosureID(_ gvl: GlobalVendorList) throws -> String {
-        SHA256.hash(data: try C15tJSON.encode(gvl)).map { String(format: "%02x", $0) }.joined()
+        // Older unprefixed hashes bound only the typed projection, which may have lost disclosure fields.
+        "gvl-v2:" + SHA256.hash(data: try C15tJSON.encode(gvl)).map { String(format: "%02x", $0) }.joined()
     }
     static let neverLI: Set<Int> = [1, 3, 4, 5, 6]
     static func build(

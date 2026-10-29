@@ -89,7 +89,7 @@ there.
 | --- | --- | --- |
 | Launch | `bootstrap` | hydrate, then replay the pending queue |
 | Foreground | `UIApplication.didBecomeActiveNotification` | replay, then `refresh()` |
-| Reachability | a network this process did not already have | replay |
+| Reachability | a network this process did not already have | replay, then `refresh()` |
 
 Both callbacks hand their work to the core's own scheduler rather than running it inline,
 so coming back to the app costs no frame on the main thread.

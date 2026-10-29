@@ -440,7 +440,7 @@ public enum C15tReactNativeBootstrap {
             justCreated = observer
         }
         if reachability == nil {
-            reachability = C15tReachability.register(onGained: replayQueuedSaves)
+            reachability = C15tReachability.register(onGained: replayThenRefresh)
         }
         lifecycleLock.unlock()
 
@@ -450,24 +450,17 @@ public enum C15tReactNativeBootstrap {
         justCreated?.install()
     }
 
-    /// The foreground leg: replay what is owed, then ask whether the policy still says what
-    /// it said. That order is the contract's.
+    /// On foreground or connectivity recovery, replay what is owed and refresh policy.
+    /// A recovered connection may be the first opportunity to fetch a usable vendor list.
     ///
     /// Both calls resolve the running core rather than closing over the one that happened to
     /// be installing when the observer was armed. A host that tears a core down and installs
     /// another would otherwise spend every later foreground on a kernel nobody reads any
     /// more.
-    @Sendable private static func replayThenRefresh() {
+    @Sendable static func replayThenRefresh() {
         guard let core = C15t.current else { return }
         core.flushPending()
         core.refresh()
-    }
-
-    /// The reachability leg is the replay alone. Policy was served at launch and again at
-    /// the last foreground, and a link that dropped and came back does not change what the
-    /// subject agreed to, so nothing here is worth a second round trip.
-    @Sendable private static func replayQueuedSaves() {
-        C15t.current?.flushPending()
     }
 
     /// Stop observing the process, leaving the core and its state alone.

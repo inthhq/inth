@@ -153,6 +153,8 @@ public final class ConsentCore: @unchecked Sendable {
     private var iabListFromCache = true
     private var iabListOffline = false
     private var committedIAB: IABCommittedConsent?
+    private var iabDeadlineTask: Task<Void, Never>?
+    private var iabDeadlineToken: UUID?
 
     /// The last native decision. The bridge does not receive the full draft.
     public func iabConsent() -> IABCommittedConsent? {
@@ -251,6 +253,8 @@ public final class ConsentCore: @unchecked Sendable {
     private let observers = ObserverSet()
 
     public init() {}
+
+    deinit { iabDeadlineTask?.cancel() }
 
     // MARK: - Bootstrap
 
@@ -437,7 +441,7 @@ public final class ConsentCore: @unchecked Sendable {
         let allowed = lock.withLock {
             readableSnapshotLocked().effectivePermissions.value(for: category)
         }
-        onChange(allowed)
+        subscription.deliverInitial(allowed)
         return registration
     }
 
@@ -691,7 +695,8 @@ public final class ConsentCore: @unchecked Sendable {
                     ? .necessaryOnly : evaluation.permissions
                 draft.restrictions = evaluation.restrictions
                 draft.promptRequirement = evaluation.promptRequirement
-                draft.nextDeadline = evaluation.nextDeadline
+                draft.nextDeadline = iabDeadlineLocked(
+                    policyDeadline: evaluation.nextDeadline, consent: nextIAB)
                 draft.evaluatedAt = actionAt
                 draft.model =
                     config?.iab != nil && resolved.policy.model == .iab
@@ -965,7 +970,8 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.promptRequirement = evaluation.promptRequirement
                 draft.effectivePermissions = evaluation.permissions
                 draft.restrictions = evaluation.restrictions
-                draft.nextDeadline = evaluation.nextDeadline
+                draft.nextDeadline = iabDeadlineLocked(
+                    policyDeadline: evaluation.nextDeadline, consent: committedIAB)
                 draft.evaluatedAt = at
                 draft.activeUI = .none
             }
@@ -1635,7 +1641,8 @@ public final class ConsentCore: @unchecked Sendable {
                 var draft = ConsentSnapshot.Draft(current: next)
                 draft.effectivePermissions = resolved.policy.model == .iab ? .necessaryOnly : e.permissions
                 draft.promptRequirement = e.promptRequirement
-                draft.restrictions = e.restrictions; draft.nextDeadline = e.nextDeadline
+                draft.restrictions = e.restrictions
+                draft.nextDeadline = iabDeadlineLocked(policyDeadline: e.nextDeadline, consent: nil)
                 draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
                 next = draft.build(revision: next.revision)
             }
@@ -1649,7 +1656,10 @@ public final class ConsentCore: @unchecked Sendable {
         lock.withLock {
             currentSnapshot = envelope.snapshot; committedIAB = nil; noticeDismissal = nil; user = nextUser
             persistedRevision = envelope.snapshot.revision
-            if reset { resolvedPolicy = nil; policyWire = nil; restoredFromStore = false }
+            if reset {
+                resolvedPolicy = nil; policyWire = nil; restoredFromStore = false
+                iabListFetchedAt = nil; iabListFromCache = true; iabListOffline = false
+            }
         }
         config.storageBus?.clear()
         return true
@@ -1673,7 +1683,8 @@ public final class ConsentCore: @unchecked Sendable {
                 ? .necessaryOnly : evaluation.permissions
             draft.restrictions = evaluation.restrictions
             draft.promptRequirement = evaluation.promptRequirement
-            draft.nextDeadline = evaluation.nextDeadline
+            draft.nextDeadline = iabDeadlineLocked(
+                policyDeadline: evaluation.nextDeadline, consent: committedIAB)
             draft.evaluatedAt = now
         draft.model =
             config?.iab != nil && resolved.policy.model == .iab ? .iab : resolved.policy.model.runtimeModel
@@ -1693,10 +1704,76 @@ public final class ConsentCore: @unchecked Sendable {
         }
         cleanup?.discardGrants()
         if persist { persistEnvelope() }
-        let state = snapshot()
+        let state = lock.withLock {
+            scheduleIABDeadlineLocked()
+            return readableSnapshotLocked()
+        }
         mutation.release()
         events.emit(.snapshot(revision: state.revision))
         observers.notify(state)
+    }
+
+    /// The next IAB authority boundary, including lists whose age is shorter than
+    /// the policy's choice age. A list-less init must not move the fetch boundary.
+    private func iabDeadlineLocked(
+        policyDeadline: Int64?, consent: IABCommittedConsent?
+    ) -> Int64? {
+        guard let config, config.iab != nil, resolvedPolicy?.policy.model == .iab else {
+            return policyDeadline
+        }
+        let now = config.now()
+        var deadlines = [Int64]()
+        if let policyDeadline, policyDeadline > now { deadlines.append(policyDeadline) }
+        if listIsUsableLocked(), let fetched = iabListFetchedAt {
+            let (deadline, overflow) = fetched.addingReportingOverflow(config.iabListMaxAgeMs)
+            if !overflow, deadline > now { deadlines.append(deadline) }
+        }
+        if let consent, let resolvedPolicy,
+            consent.isCurrent(now: now, maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
+            let (deadline, overflow) = consent.actionAt.addingReportingOverflow(resolvedPolicy.policy.choiceMaxAgeMs)
+            if !overflow, deadline > now { deadlines.append(deadline) }
+        }
+        return deadlines.min()
+    }
+
+    /// A sleeping deadline is not network work and must not keep the core alive or
+    /// keep waitUntilIdle waiting for a future consent expiry.
+    private func scheduleIABDeadlineLocked() {
+        iabDeadlineTask?.cancel()
+        iabDeadlineTask = nil
+        iabDeadlineToken = nil
+        guard let config, config.iab != nil, resolvedPolicy?.policy.model == .iab,
+            let deadline = iabDeadlineLocked(
+                policyDeadline: currentSnapshot.nextDeadline, consent: committedIAB)
+        else { return }
+        let now = config.now()
+        guard now >= 0, deadline > now else { return }
+        let token = UUID()
+        iabDeadlineToken = token
+        let delay = min(UInt64(deadline - now), UInt64.max / 1_000_000) * 1_000_000
+        iabDeadlineTask = Task.detached { [weak self] in
+            do { try await Task.sleep(nanoseconds: delay) } catch { return }
+            guard !Task.isCancelled else { return }
+            self?.expireIABDeadline(token: token, deadline: deadline)
+        }
+    }
+
+    private func expireIABDeadline(token: UUID, deadline: Int64) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
+        let changed = lock.withLock {
+            guard iabDeadlineToken == token else { return false }
+            iabDeadlineTask = nil
+            iabDeadlineToken = nil
+            let now = config?.now() ?? 0
+            guard now >= deadline else {
+                scheduleIABDeadlineLocked()
+                return false
+            }
+            reevaluateLocked(now: now)
+            return true
+        }
+        if changed { publish(persist: true, mutation: mutation) }
     }
 
     /// Write the envelope. Encoding happens under the lock; the write does not.
@@ -1811,6 +1888,7 @@ public final class ConsentCore: @unchecked Sendable {
         defer { mutation.release() }
         lock.withLock {
             let nowMs = (config?.now ?? Self.wallClock)()
+            iabListOffline = false
             let incomingPolicy = PolicyWireReader.read(response.policyResolution)
             var acceptsCategoryReceipts = config?.iab == nil
             if case let .resolved(resolved) = incomingPolicy {
@@ -1880,7 +1958,6 @@ public final class ConsentCore: @unchecked Sendable {
             if let gvl = response.gvl {
                 iabListFetchedAt = nowMs
                 iabListFromCache = false
-                iabListOffline = false
                 draft.iab = KernelIABState(gvl: gvl.narrowed(toVendorIds: config?.vendors))
             }
 
@@ -1989,13 +2066,20 @@ public final class ConsentCore: @unchecked Sendable {
         attempt: Int,
         retry: InitRetry?
     ) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
         let changed = lock.withLock {
             guard config?.iab != nil else { return false }
             iabListOffline = true
-            reevaluateLocked(now: config?.now() ?? 0)
+            if let consent = committedIAB, let config, let resolvedPolicy,
+                !listIsUsableLocked()
+                    || !consent.isCurrent(now: config.now(), maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
+                reevaluateLocked(now: config.now())
+            }
             return true
         }
-        if changed { publish(persist: true) }
+        if changed { publish(persist: true, mutation: mutation) }
+        mutation.release()
         events.emit(.error(error.info))
         // An unsupported contract will not fix itself on a retry: the producer is
         // speaking a wire this build cannot read, and no amount of asking changes
@@ -2210,6 +2294,15 @@ public final class ConsentCore: @unchecked Sendable {
         init(category: OptionalConsentCategory, onChange: @escaping @Sendable (Bool) -> Void) {
             self.category = category
             self.onChange = onChange
+        }
+
+        func deliverInitial(_ value: Bool) {
+            let shouldDeliver = stateLock.withLock {
+                guard lastValue == nil else { return false }
+                lastValue = value
+                return true
+            }
+            if shouldDeliver { onChange(value) }
         }
 
         func consentDidChange(_ snapshot: ConsentSnapshot) {

@@ -118,6 +118,24 @@ final class C15tForegroundObserverTests: XCTestCase {
         XCTAssertEqual(http.initCount, initsBefore + 1, "policy was asked about once, not twice")
     }
 
+    func testConnectivityRecoveryReplaysQueuedSaveAndRefreshesPolicy() async {
+        let (core, http) = await armedCore()
+        http.savesFail = true
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.pendingSaveCount(), 1)
+
+        http.savesFail = false
+        let initsBefore = http.initCount
+        let gate = C15tReachabilityGate(onGained: C15tReactNativeBootstrap.replayThenRefresh)
+        gate.onLost()
+        gate.onAvailable()
+        await core.waitUntilIdle()
+
+        XCTAssertEqual(core.pendingSaveCount(), 0)
+        XCTAssertEqual(http.initCount, initsBefore + 1)
+    }
+
     func testASecondStartDoesNotDoubleTheForegroundLeg() async {
         let (core, http) = await armedCore()
 

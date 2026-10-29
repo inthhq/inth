@@ -14,11 +14,10 @@
 // layer reads the JSON this model encodes, and a renamed key is invisible to Swift, to
 // the fixtures, and to a TypeScript type, so it fails on a device and nowhere else.
 //
-// Storing a typed document rather than the raw bytes is safe here for one reason worth
-// naming: `resolveGvl` in `packages/backend/src/http/gvl.ts` validates the upstream
-// document against that schema before it puts it on `/init`, and valibot drops keys it
-// does not declare. A served list therefore carries no key this model has never seen,
-// which is what lets `StoredEnvelope` still give back every key path it read.
+// The backend validates with loose object schemas, so future disclosure fields
+// survive `/init`. Keep those fields alongside the typed values and merge them
+// back into the normalized document for the bridge, storage and authority hash.
+// This tolerance belongs to the GVL, not to the stored consent authority.
 
 /// Standard legal explanations published with TCF 2.4 disclosures.
 public struct GVLStandardTexts: Sendable, Codable, Equatable {
@@ -258,6 +257,8 @@ public struct GlobalVendorList: Sendable, Codable, Equatable {
     public let dataCategories: [Int: GVLDataCategory]?
     public let standardTexts: GVLStandardTexts?
     public let vendors: [Int: GVLVendor]
+    /// Unknown served disclosure fields, grouped under their original key paths.
+    var additionalFields: JSONValue?
 
     public init(
         gvlSpecificationVersion: Int = 0,
@@ -351,7 +352,7 @@ extension GlobalVendorList {
     /// to leave a device with no vendor list at all. That is the split this reader
     /// keeps: strict about whether there is a list, forgiving about what is in it.
     private static func read(fields: [String: JSONValue]) -> GlobalVendorList {
-        GlobalVendorList(
+        var list = GlobalVendorList(
             gvlSpecificationVersion: int(fields["gvlSpecificationVersion"]) ?? 0,
             vendorListVersion: int(fields["vendorListVersion"]) ?? 0,
             tcfPolicyVersion: int(fields["tcfPolicyVersion"]) ?? 0,
@@ -402,6 +403,8 @@ extension GlobalVendorList {
                 )
             }
         )
+        list.additionalFields = GVLDisclosureShape.document.additional(in: .object(fields))
+        return list
     }
 
     /// Data categories, present only when the list publishes them.
@@ -555,6 +558,39 @@ extension GlobalVendorList {
         return read(fields: fields)
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case gvlSpecificationVersion, vendorListVersion, tcfPolicyVersion, lastUpdated
+        case purposes, specialPurposes, features, specialFeatures, stacks
+        case dataCategories, standardTexts, vendors
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        guard let additionalFields else { return try encodeKnown(to: encoder) }
+        let normalized = try C15tJSON.decode(JSONValue.self, from: C15tJSON.encode(KnownFields(list: self)))
+        try GVLDisclosureShape.document.merging(additionalFields, into: normalized).encode(to: encoder)
+    }
+
+    private struct KnownFields: Encodable {
+        let list: GlobalVendorList
+        func encode(to encoder: any Encoder) throws { try list.encodeKnown(to: encoder) }
+    }
+
+    private func encodeKnown(to encoder: any Encoder) throws {
+        var fields = encoder.container(keyedBy: CodingKeys.self)
+        try fields.encode(gvlSpecificationVersion, forKey: .gvlSpecificationVersion)
+        try fields.encode(vendorListVersion, forKey: .vendorListVersion)
+        try fields.encode(tcfPolicyVersion, forKey: .tcfPolicyVersion)
+        try fields.encode(lastUpdated, forKey: .lastUpdated)
+        try fields.encode(purposes, forKey: .purposes)
+        try fields.encode(specialPurposes, forKey: .specialPurposes)
+        try fields.encode(features, forKey: .features)
+        try fields.encode(specialFeatures, forKey: .specialFeatures)
+        try fields.encode(stacks, forKey: .stacks)
+        try fields.encodeIfPresent(dataCategories, forKey: .dataCategories)
+        try fields.encodeIfPresent(standardTexts, forKey: .standardTexts)
+        try fields.encode(vendors, forKey: .vendors)
+    }
+
     public init(from decoder: any Decoder) throws {
         let value = try JSONValue(from: decoder)
         guard let parsed = Self.stored(value) else {
@@ -605,5 +641,89 @@ extension TcVendorList {
                 )
             }
         )
+    }
+}
+
+/// Unknown fields follow loose backend objects; collection membership stays typed.
+private indirect enum GVLDisclosureShape {
+    case leaf
+    case object([String: GVLDisclosureShape])
+    case collection(GVLDisclosureShape)
+    case array(GVLDisclosureShape)
+
+    private static func object(_ names: String, nested: [String: GVLDisclosureShape] = [:]) -> GVLDisclosureShape {
+        .object(Dictionary(uniqueKeysWithValues: names.split(separator: " ").map { (String($0), .leaf) })
+            .merging(nested) { _, nested in nested })
+    }
+
+    static let document: GVLDisclosureShape = {
+        let definition = object("id name description descriptionLegal illustrations")
+        let vendor = object("id name purposes legIntPurposes specialPurposes flexiblePurposes features specialFeatures cookieMaxAgeSeconds cookieRefresh usesCookies usesNonCookieAccess deviceStorageDisclosureUrl dataCategories deletedDate", nested: [
+            "urls": .array(object("langId privacy legIntClaim")),
+            "dataRetention": object("stdRetention purposes specialPurposes"),
+            "overflow": object("httpGetLimit")
+        ])
+        return object("gvlSpecificationVersion vendorListVersion tcfPolicyVersion lastUpdated", nested: [
+            "purposes": .collection(definition), "specialPurposes": .collection(definition),
+            "features": .collection(definition), "specialFeatures": .collection(definition),
+            "stacks": .collection(object("id name description purposes specialFeatures")),
+            "dataCategories": .collection(object("id name description")),
+            "standardTexts": object("features purposes specialFeatures specialPurposes"),
+            "vendors": .collection(vendor)
+        ])
+    }()
+
+    func additional(in value: JSONValue) -> JSONValue? {
+        switch self {
+        case .leaf: return nil
+        case .object(let known):
+            guard let fields = value.objectValue else { return nil }
+            var result: [String: JSONValue] = [:]
+            for (key, value) in fields {
+                if let shape = known[key] { result[key] = shape.additional(in: value) }
+                else { result[key] = value }
+            }
+            return result.isEmpty ? nil : .object(result)
+        case .collection(let shape):
+            var fields = value.objectValue ?? [:]
+            if let items = value.arrayValue {
+                fields = [:]
+                for (index, value) in items.enumerated() {
+                    let id = value["id"]?.intValue.map(String.init) ?? String(index + 1)
+                    fields[id] = value
+                }
+            }
+            let result = fields.compactMapValues { shape.additional(in: $0) }
+            return result.isEmpty ? nil : .object(result)
+        case .array(let shape):
+            guard let items = value.arrayValue else { return nil }
+            let additional = items.map { shape.additional(in: $0) }
+            guard additional.contains(where: { $0 != nil }) else { return nil }
+            return .array(additional.map { $0 ?? .null })
+        }
+    }
+
+    func merging(_ additional: JSONValue, into normalized: JSONValue) -> JSONValue {
+        switch self {
+        case .leaf: return normalized
+        case .object(let known):
+            guard var fields = normalized.objectValue, let extras = additional.objectValue else { return normalized }
+            for (key, value) in extras {
+                if let shape = known[key] {
+                    if let current = fields[key] { fields[key] = shape.merging(value, into: current) }
+                } else { fields[key] = value }
+            }
+            return .object(fields)
+        case .collection(let shape):
+            guard let fields = normalized.objectValue, let extras = additional.objectValue else { return normalized }
+            return .object(fields.reduce(into: [String: JSONValue]()) { result, entry in
+                result[entry.key] = extras[entry.key].map { shape.merging($0, into: entry.value) } ?? entry.value
+            })
+        case .array(let shape):
+            guard let items = normalized.arrayValue, let extras = additional.arrayValue else { return normalized }
+            return .array(items.enumerated().map { index, value in
+                index < extras.count ? shape.merging(extras[index], into: value) : value
+            })
+        }
     }
 }

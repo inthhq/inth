@@ -208,9 +208,13 @@ device latency for full-envelope queue I/O remain unproven release gates.
 
 A fresh native GVL remains usable for seven days by default. Configure
 `iabListMaxAgeMs` to shorten the limit. Fetch time persists with the authority;
-a successful response without a GVL does not renew it. A future fetch time or
+a successful response without a GVL clears offline status but does not renew the
+fetch time. A failed retry against unchanged cached authority preserves an open
+draft's revision. A future fetch time or
 missing fetch time is stale. An old envelope without disclosure binding needs
-fresh consent.
+fresh consent. The `gvl-v2:` binding format also rejects older projected hashes
+on hydration because their stored lists may have discarded disclosure fields.
+Upgrading those records requires a new decision.
 
 `iabStatus` returns a small availability record and the list and policy versions.
 It distinguishes unavailable CMP configuration, missing list, fresh network
@@ -218,8 +222,11 @@ list, cached startup, offline cached list and stale list. This read does not
 serialize the GVL. Offline cached consent remains valid only while both the
 list and choice are within their age limits. Stale lists deny native gates,
 refuse drafts and grants, and require a successful list refresh. Reject all can
-still commit a category-only withdrawal without encoding a stale disclosure. Refresh on
-foreground and connectivity changes. Reopen preferences after refreshing.
+still commit a category-only withdrawal without encoding a stale disclosure. Installed
+foreground and connectivity callbacks replay pending saves and refresh policy. A
+one-shot list or choice deadline publishes denial to existing gates without a
+network request. Repeated Kotlin snapshot reads return the same instance until
+state or authority availability changes. Reopen preferences after refreshing.
 
 This release retains a choice only when CMP and publisher configuration,
 identity, policy fingerprint, list version, policy version and the complete
@@ -232,7 +239,9 @@ purpose. The SDK never turns a refresh into a consent action or regenerates an
 old save against new disclosures.
 
 The GVL retains `standardTexts.features` and its other standard explanations
-through narrowing, persistence and native disclosure reads. Fetch the full list
+and unknown top-level or nested disclosure fields through narrowing, persistence
+and native disclosure reads. Their normalized content participates in the same
+binding. Fetch the full list
 once when opening a presenter. Use the compact lifecycle record during an open
 session. Saves require the revision the presenter opened on, so a refresh or
 competing save rejects the old draft with `concurrent-change`. The caller keeps

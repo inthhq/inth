@@ -30,9 +30,8 @@ import Foundation
 /// contract's own foreground obligation, paid slightly early, and it is cheaper than the
 /// stale notice it prevents.
 ///
-/// No timer belongs anywhere near this. The contract forbids a core that wakes itself on
-/// a cadence, because whatever it decides at an arbitrary minute is an answer the policy
-/// never gave.
+/// This observer does not poll. The core schedules local IAB expiry separately from
+/// foreground and connectivity refreshes.
 public final class C15tForegroundObserver: @unchecked Sendable {
     private let lock = NSLock()
     private let onForeground: @Sendable () -> Void

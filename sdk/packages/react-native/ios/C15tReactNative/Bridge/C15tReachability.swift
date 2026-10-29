@@ -1,7 +1,7 @@
 import Foundation
 import Network
 
-/// Replays the pending consent queue when the process gains a network it did not have.
+/// Replays pending consent and refreshes policy when the process gains a network.
 ///
 /// This is the narrowest of the three lifecycle legs in `native/CONTRACT.md`, and on iOS
 /// the unconditional one. The contract's permission-decline clause is Android-only, and
@@ -15,8 +15,8 @@ import Network
 /// type only translates `NWPath` into the two words the gate understands.
 ///
 /// Updates arrive on this monitor's own serial queue rather than the main thread, and
-/// what ``C15tReactNativeBootstrap`` hands the callback is ``ConsentCore/flushPending()``,
-/// which is itself a handoff to the core's scheduler. Coming back online therefore costs
+/// ``C15tReactNativeBootstrap`` replays pending consent and refreshes policy through
+/// the core's scheduler. Coming back online therefore costs
 /// no frame, which is what the contract asks of every lifecycle leg.
 public final class C15tReachability: @unchecked Sendable {
     private let lock = NSLock()

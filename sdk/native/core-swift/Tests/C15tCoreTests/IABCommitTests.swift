@@ -145,6 +145,145 @@ final class IABCommitTests: XCTestCase {
         XCTAssertNil(missing.openIABDraft())
     }
 
+    func testSuccessfulListlessInitClearsOfflineWithoutRenewingTheList() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let http = StubHTTP()
+        let clock = TestClock(vector.now)
+        let core = try await boot(vector, configuration: vector.cases[0].configuration,
+                                  store: store, http: http, clock: clock)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        http.initResponse = HTTPResponse(status: 503, body: Data("{}".utf8))
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.iabStatus().availability, .offline)
+        clock.advance(by: 10)
+        http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(
+            policy: Fixture.rule(model: "iab")))
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.iabStatus().availability, .fresh)
+        let envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
+        XCTAssertEqual(envelope.iabListFetchedAt, vector.now)
+        XCTAssertNotNil(core.iabConsent())
+    }
+
+    func testFailedInitKeepsAnOpenDraftOnUnchangedUsableDisclosure() async throws {
+        let vector = try fixture()
+        let http = StubHTTP()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration,
+                                  store: InMemoryStore(), http: http)
+        let draft = try XCTUnwrap(core.openIABDraft())
+        let before = core.snapshot()
+        let gates = SendableBox([Bool]())
+        let subscription = core.gate(OptionalConsentCategory.marketing) { value in
+            gates.mutate { $0.append(value) }
+        }
+        http.initResponse = HTTPResponse(status: 503, body: Data("{}".utf8))
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().revision, before.revision)
+        XCTAssertEqual(gates.value, [false])
+        subscription.cancel()
+        XCTAssertEqual(core.iabStatus().availability, .offline)
+        XCTAssertEqual(core.saveIAB(draft, categories: [:]).status, .committed)
+    }
+
+    func testListExpiryNotifiesExistingGatesAndSeedsLateGatesDenied() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let first = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(first.save(.all).status, .committed)
+        await first.waitUntilIdle()
+        let clock = TestClock(vector.now)
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: store, iab: vector.cases[0].configuration,
+                                  iabListMaxAgeMs: 100, now: clock.reading,
+                                  initRetry: .disabled, flushPendingOnBootstrap: false))
+        let booleans = SendableBox([Bool]())
+        let decisions = SendableBox([ConsentDecision]())
+        let expired = expectation(description: "existing gate receives expiry")
+        let decisionExpired = expectation(description: "decision gate receives expiry")
+        let boolGate = core.gate(OptionalConsentCategory.marketing) { allowed in
+            booleans.mutate { $0.append(allowed) }
+            if !allowed { expired.fulfill() }
+        }
+        let decisionGate = core.gate(ConsentCategory.marketing) { decision in
+            decisions.mutate { $0.append(decision) }
+            if decision == .denied { decisionExpired.fulfill() }
+        }
+        XCTAssertEqual(booleans.value, [true])
+        XCTAssertEqual(decisions.value, [.granted])
+        XCTAssertEqual(core.snapshot().nextDeadline, vector.now + 100)
+        clock.advance(by: 100)
+        await fulfillment(of: [expired, decisionExpired], timeout: 1)
+        XCTAssertEqual(booleans.value, [true, false])
+        XCTAssertEqual(decisions.value, [.granted, .denied])
+        XCTAssertFalse(core.snapshot().effectivePermissions.marketing)
+        XCTAssertFalse(core.isAllowed(.marketing))
+        XCTAssertEqual(core.decision(for: .marketing), .denied)
+        let lateBoolean = SendableBox([Bool]())
+        let lateDecision = SendableBox([ConsentDecision]())
+        let lateBoolGate = core.gate(OptionalConsentCategory.marketing) { value in
+            lateBoolean.mutate { $0.append(value) }
+        }
+        let lateDecisionGate = core.gate(ConsentCategory.marketing) { value in
+            lateDecision.mutate { $0.append(value) }
+        }
+        XCTAssertEqual(lateBoolean.value, [false])
+        XCTAssertEqual(lateDecision.value, [.denied])
+        boolGate.cancel()
+        decisionGate.cancel()
+        lateBoolGate.cancel()
+        lateDecisionGate.cancel()
+    }
+
+    func testChoiceExpiryNotifiesGatesBeforeTheListExpires() async throws {
+        let vector = try fixture()
+        let http = StubHTTP()
+        let clock = TestClock(vector.now)
+        let core = try await boot(vector, configuration: vector.cases[0].configuration,
+                                  store: InMemoryStore(), http: http, clock: clock)
+        var fields = C15tJSON.parse(http.initResponse.body)!.objectValue!
+        fields["policyResolution"] = Fixture.matchedResolution(
+            policy: Fixture.rule(model: "iab", choiceMs: 100))
+        http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        let expired = expectation(description: "choice expiry disables an existing gate")
+        let subscription = core.gate(ConsentCategory.marketing) { decision in
+            if decision == .denied { expired.fulfill() }
+        }
+        XCTAssertEqual(core.snapshot().nextDeadline, vector.now + 100)
+        clock.advance(by: 100)
+        await fulfillment(of: [expired], timeout: 1)
+        XCTAssertEqual(core.iabStatus().availability, .fresh)
+        XCTAssertNil(core.iabConsent())
+        XCTAssertEqual(core.decision(for: .marketing), .denied)
+        subscription.cancel()
+    }
+
+    func testADeadlineDoesNotRetainTheCore() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let first = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(first.save(.all).status, .committed)
+        await first.waitUntilIdle()
+        weak var released: ConsentCore?
+        do {
+            let cached = ConsentCore()
+            released = cached
+            cached.bootstrap(CoreConfig(store: store, iab: vector.cases[0].configuration,
+                                        now: { vector.now }, flushPendingOnBootstrap: false))
+            await cached.waitUntilIdle()
+            XCTAssertTrue(cached.isAllowed(.marketing))
+        }
+        XCTAssertNil(released)
+    }
+
     func testCustomIABSaveRequiresDisclosureRevision() async throws {
         let vector = try fixture()
         let core = try await boot(vector, configuration: vector.cases[0].configuration, store: InMemoryStore())
