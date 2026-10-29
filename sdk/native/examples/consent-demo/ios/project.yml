@@ -1,0 +1,55 @@
+name: C15tConsentDemo
+options:
+  deploymentTarget:
+    iOS: '16.4'
+packages:
+  C15tNative:
+    path: ../../../core-swift
+settings:
+  base:
+    SWIFT_VERSION: '5.9'
+    CODE_SIGNING_ALLOWED: NO
+    IPHONEOS_DEPLOYMENT_TARGET: '16.4'
+targets:
+  C15tConsentDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: ../fixtures
+        buildPhase: resources
+    dependencies:
+      - package: C15tNative
+        product: C15tConsentUI
+      - package: C15tNative
+        product: C15tApple
+    info:
+      path: Generated/Info.plist
+      properties:
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  C15tConsentDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: C15tConsentDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uitests
+        GENERATE_INFOPLIST_FILE: YES
+schemes:
+  C15tConsentDemo:
+    build:
+      targets:
+        C15tConsentDemo: all
+        C15tConsentDemoUITests: [test]
+    test:
+      targets: [C15tConsentDemoUITests]

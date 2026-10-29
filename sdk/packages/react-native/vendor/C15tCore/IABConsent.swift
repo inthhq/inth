@@ -245,24 +245,14 @@ extension IABCommittedConsent {
     /// Call through `ConsentCore.isIABAllowed` to include expiry and policy validity.
     func allows(vendorId: Int, purposeId: Int, basis: IABLegalBasis, gvl: GlobalVendorList) -> Bool {
         guard let vendor = gvl.vendor(vendorId), vendor.deletedDate?.isEmpty != false else { return false }
-        let restriction = configuration.publisherRestrictions.first {
-            $0.purposeId == purposeId && $0.vendorIds.contains(vendorId)
-        }?.type
-        if restriction == 0 { return false }
         switch basis {
         case .consent:
-            guard restriction != 2, choices.purposeConsents.contains(purposeId),
-                choices.vendorConsents.contains(vendorId)
-            else { return false }
-            return vendor.purposes.contains(purposeId)
-                || restriction == 1 && vendor.flexiblePurposes.contains(purposeId)
+            return configuration.discloses(vendor, purposeId: purposeId, basis: .consent)
+                && choices.purposeConsents.contains(purposeId) && choices.vendorConsents.contains(vendorId)
         case .legitimateInterest:
-            guard restriction != 1, choices.purposeLegitimateInterests.contains(purposeId),
-                choices.vendorLegitimateInterests.contains(vendorId),
-                !choices.purposeObjections.contains(purposeId), !choices.vendorObjections.contains(vendorId)
-            else { return false }
-            return vendor.legIntPurposes.contains(purposeId)
-                || restriction == 2 && vendor.flexiblePurposes.contains(purposeId)
+            return configuration.discloses(vendor, purposeId: purposeId, basis: .legitimateInterest)
+                && choices.purposeLegitimateInterests.contains(purposeId) && choices.vendorLegitimateInterests.contains(vendorId)
+                && !choices.purposeObjections.contains(purposeId) && !choices.vendorObjections.contains(vendorId)
         }
     }
 }

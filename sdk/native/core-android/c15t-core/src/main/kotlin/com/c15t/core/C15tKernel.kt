@@ -229,6 +229,16 @@ class C15tKernel(
 		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
 	}
 
+    /** Atomically capture the scoped disclosure and a draft on its revision. */
+    fun iabPresentation(): IabPresentation? = synchronized(mutationLock) {
+        val draft = openIabDraft() ?: return@synchronized null
+        val list = snapshot().iab?.gvl?.let { GlobalVendorListJson.read(GlobalVendorListJson.toJsonElement(it)) } ?: return@synchronized null
+        val configuration = iabConfiguration ?: return@synchronized null
+        IabPresentation(draft, list,
+            list.vendors.filterValues { it.deletedDate.isNullOrEmpty() }.mapValues { (id, vendor) -> configuration.disclosure(id, vendor) },
+            currentAdditionalConsentList()?.providers?.toList())
+    }
+
 	fun saveIab(draft: IabDraft, categories: Map<ConsentCategory, Boolean>): CommitResult =
 		save(CommitIntent.Iab(draft.choices, categories), expectedRevision = draft.revision)
 
@@ -929,36 +939,29 @@ class C15tKernel(
 		)
 	}
 
-	/** Close the first-layer prompt without recording a choice. */
-	fun dismissNotice() = mutate { mutation ->
-		val now = clock.nowMillis()
-		var published: ConsentSnapshot
-		synchronized(mutationLock) {
-			val current = state.get()
-			noticeDismissal = NoticeDismissal(
-				dismissedAt = now,
-				fingerprint = evaluationPolicy?.noticeFingerprint ?: "",
-			)
-			published = PolicyEvaluator.evaluate(
-				snapshot = current.copy(revision = current.revision + 1),
-				policy = evaluationPolicy,
-				noticeDismissal = noticeDismissal,
-				now = now,
-				choiceScope = choiceScopeOf(evaluationPolicy),
-			)
-			if (
-				iabConfiguration != null &&
-					evaluationPolicy?.model == ConsentModel.IAB &&
-					!published.policyPending
-			)
-				published = published.copy(model = ConsentModel.IAB)
-			published = validateIab(published)
-			installSnapshot(published)
-		}
-		persist()
-		mutation.release()
-		notifySnapshot()
-	}
+	/** Persist notice acknowledgement without recording a choice. Returns false on storage refusal. */
+    fun dismissNotice(): Boolean = mutate { mutation ->
+        val now = clock.nowMillis()
+        val plan = synchronized(mutationLock) {
+            val policy = evaluationPolicy ?: return@mutate false
+            if (policy.prompt != PolicyPrompt.NOTICE) return@mutate false
+            val dismissal = NoticeDismissal(dismissedAt = now, fingerprint = policy.noticeFingerprint)
+            val next = PolicyEvaluator.evaluate(snapshot = state.get().copy(revision = state.get().revision + 1),
+                policy = policy, noticeDismissal = dismissal, now = now, choiceScope = choiceScopeOf(policy))
+            val envelope = SnapshotEnvelope(snapshot = next.copy(iab = null), evaluationPolicy = policy,
+                noticeDismissal = dismissal, gvl = state.get().iab?.gvl, iabConsent = committedIab,
+                additionalConsentList = additionalConsentList, iabListFetchedAt = iabListFetchedAt, lastIabActionAt = lastIabActionAt)
+            Triple(next, dismissal, envelope)
+        }
+        if (!store.writeEnvelope(plan.third, publishBus = false)) {
+            emitError(KernelError("queue-write-failed", "The notice acknowledgement could not be stored."))
+            return@mutate false
+        }
+        synchronized(mutationLock) { noticeDismissal = plan.second; installSnapshot(plan.first) }
+        mutation.release()
+        notifySnapshot()
+        true
+    }
 
 	/** Re-run init: policy, geo, translations, and any server-side subject id. */
 	fun refresh() {

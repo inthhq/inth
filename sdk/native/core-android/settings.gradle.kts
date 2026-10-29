@@ -26,3 +26,7 @@ rootProject.name = "c15t-native-core-android"
 
 include(":c15t-core")
 include(":c15t-android")
+
+include(":c15t-consent-ui")
+include(":consent-demo")
+project(":consent-demo").projectDir = file("../examples/consent-demo/android")

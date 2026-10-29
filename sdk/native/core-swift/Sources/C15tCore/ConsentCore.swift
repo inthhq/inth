@@ -240,6 +240,20 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
+    /// Capture a native draft and its disclosure atomically. Nil means grants are unavailable.
+    public func iabPresentation() -> IABPresentation? {
+        lock.withLock {
+            guard let configuration = config?.iab, resolvedPolicy?.policy.model == .iab,
+                  !currentSnapshot.policyPending, listIsUsableLocked(), let list = currentSnapshot.iab?.gvl,
+                  additionalConsentList?.providers.isEmpty != false || currentAdditionalConsentListLocked() != nil else { return nil }
+            let draft = IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
+            let vendors = list.vendors.values.filter { $0.deletedDate?.isEmpty != false }
+            return IABPresentation(draft: draft, list: list,
+                vendors: Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, configuration.disclosure(for: $0)) }),
+                adTechProviders: currentAdditionalConsentListLocked()?.providers)
+        }
+    }
+
     /// Save against the exact revision shown by a native presenter.
     public func saveIAB(_ draft: IABDraft, categories: [OptionalConsentCategory: Bool]) -> CommitResult {
         save(.iab(draft.choices, categories: categories), expectedRevision: draft.revision)
@@ -990,37 +1004,45 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// Record that the notice was dismissed. Grants nothing: a dismissal is not a
     /// choice, and the optional categories stay wherever the policy left them.
-    public func dismissNotice() {
+    /// - Returns: True only after durable local storage accepts the acknowledgement.
+    @discardableResult
+    public func dismissNotice() -> Bool {
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         let at = (lock.withLock { config }?.now ?? Self.wallClock)()
-        let changed = lock.withLock { () -> Bool in
-            guard let resolved = resolvedPolicy, resolved.policy.prompt == .notice else {
-                return false
-            }
-            noticeDismissal = NoticeDismissal(dismissedAt: at, fingerprint: resolved.noticeFingerprint)
-            let evaluation = PolicyEvaluator.evaluate(
-                resolved,
-                choice: currentSnapshot.explicitChoice,
-                noticeDismissal: noticeDismissal,
-                gpcActive: gpcSignal.active,
-                now: at,
-                choiceScope: choiceScopeLocked(resolved)
-            )
-            currentSnapshot = currentSnapshot.byApplying { draft in
+        let planned: (ConsentSnapshot, NoticeDismissal, StoredEnvelope, PendingSaveQueue)? = lock.withLock {
+            guard let resolved = resolvedPolicy, resolved.policy.prompt == .notice, let queue else { return nil }
+            let dismissal = NoticeDismissal(dismissedAt: at, fingerprint: resolved.noticeFingerprint)
+            let evaluation = PolicyEvaluator.evaluate(resolved, choice: currentSnapshot.explicitChoice,
+                noticeDismissal: dismissal, gpcActive: gpcSignal.active, now: at,
+                choiceScope: choiceScopeLocked(resolved))
+            let next = currentSnapshot.byApplying { draft in
                 draft.promptRequirement = evaluation.promptRequirement
                 draft.effectivePermissions = evaluation.permissions
                 draft.restrictions = evaluation.restrictions
-                draft.nextDeadline = iabDeadlineLocked(
-                    policyDeadline: evaluation.nextDeadline, consent: committedIAB)
+                draft.nextDeadline = iabDeadlineLocked(policyDeadline: evaluation.nextDeadline, consent: committedIAB)
                 draft.evaluatedAt = at
                 draft.activeUI = .none
             }
-            return true
+            let envelope = StoredEnvelope(snapshot: next, noticeDismissal: dismissal,
+                policyResolution: policyWire, storedAt: at, iabConsent: committedIAB,
+                lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
+                additionalConsentList: additionalConsentList)
+            return (next, dismissal, envelope, queue)
         }
-        if changed {
-            publish(persist: true, mutation: mutation)
+        guard let (next, dismissal, envelope, queue) = planned else { return false }
+        guard queue.persist(envelope) else {
+            mutation.release()
+            events.emit(.error(CoreErrorInfo(code: "queue-write-failed", message: "The notice acknowledgement could not be stored.")))
+            return false
         }
+        lock.withLock {
+            currentSnapshot = next
+            noticeDismissal = dismissal
+            persistedRevision = next.revision
+        }
+        publish(persist: false, mutation: mutation)
+        return true
     }
 
     /// Re-run init. The contract's refresh, called on foreground or after a reachability

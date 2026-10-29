@@ -233,7 +233,7 @@ class StorageBusIntegrationTest {
 		try {
 			backend.armed = true
 			val write = pool.submit<Boolean> {
-				if (intent != null) core.save(intent).ok else { core.dismissNotice(); true }
+				if (intent != null) core.save(intent).ok else { core.setOverrides(KernelOverrides()); true }
 			}
 			assertTrue(backend.entered.await(5, TimeUnit.SECONDS))
 			clock.advance(30_000)
@@ -245,8 +245,8 @@ class StorageBusIntegrationTest {
 			assertNull(core.iabConsent)
 			assertNull(bus.live[TcStorageBusKeys.TC_STRING], "write published authority that expired during its durable write")
 			assertNull(bus.live[TcStorageBusKeys.ADDTL_CONSENT])
-			val frozen = store.readPending().single().body
 			if (intent == CommitIntent.Necessary) {
+				val frozen = store.readPending().single().body
 				http.respondSave(SaveOutcome.Delivered)
 				val sentBefore = http.saveRequests.size
 				assertEquals(1, core.flushPending().delivered)

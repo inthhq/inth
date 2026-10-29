@@ -1,0 +1,186 @@
+package com.c15t.demo
+
+import android.content.Intent
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.test.core.app.ActivityScenario
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.uiautomator.UiDevice
+import org.junit.*
+import org.junit.runner.RunWith
+import java.io.File
+
+@RunWith(AndroidJUnit4::class)
+class ConsentJourneyTest {
+    @get:Rule val compose = createEmptyComposeRule()
+    private var scenario: ActivityScenario<ConsentDemoActivity>? = null
+    private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
+    private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null) {
+        scenario?.close()
+        scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java).putExtra("C15T_FIXTURE_SCENARIO",name)
+            .putExtra("C15T_FIXTURE_RESET",reset).putExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("C15T_FIXTURE_OFFLINE",offline).putExtra("C15T_FIXTURE_BACKEND", backend))
+    }
+    private fun waitFor(id: String): SemanticsNodeInteraction {
+        compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
+        return compose.onNodeWithTag(id)
+    }
+    private fun state(id: String, text: String): SemanticsNodeInteraction {
+        compose.waitUntil(10000) { compose.onAllNodes(hasTestTag(id) and hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        return compose.onNodeWithTag(id)
+    }
+    private fun awaitClosed() {
+        compose.waitUntil(10000) { listOf("c15t.first-layer.accept-all", "c15t.prefs.save", "c15t.iab.save").all { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isEmpty() } }
+    }
+    private fun capture(name: String) {
+        compose.waitForIdle()
+        val folder = File(context.getExternalFilesDir(null),"prototype-evidence").apply { mkdirs() }
+        Assert.assertTrue(device.takeScreenshot(File(folder,"$name.png")))
+        device.dumpWindowHierarchy(File(folder,"$name.xml"))
+    }
+    @After fun close() { scenario?.close() }
+
+    private fun report(): org.json.JSONObject = java.net.URL("http://localhost:3000/e2e/state")
+        .openConnection().apply { connectTimeout = 2000; readTimeout = 2000 }
+        .getInputStream().bufferedReader().use { org.json.JSONObject(it.readText()) }
+
+    private fun assertJsonEqual(expected: org.json.JSONObject, actual: org.json.JSONObject) {
+        Assert.assertEquals(expected.keys().asSequence().toSet(), actual.keys().asSequence().toSet())
+        for (key in expected.keys()) {
+            val value = expected.get(key)
+            if (value is org.json.JSONObject) assertJsonEqual(value, actual.getJSONObject(key))
+            else Assert.assertEquals(key, value, actual.get(key))
+        }
+    }
+    @Test fun realControlsDeliverNativeReceipts() {
+        Assume.assumeTrue("Start the reviewed e2e-backend.py and adb reverse port 3000", runCatching { report() }.isSuccess)
+        launch("protocol-backend", backend = "http://localhost:3000/api/self-host")
+        waitFor("c15t.first-layer.reject-all").performClick()
+        var captured = org.json.JSONObject()
+        compose.waitUntil(15000) {
+            captured = report()
+            captured.optJSONArray("saves")?.length() == 1 && captured.optJSONObject("snapshot")?.optJSONObject("explicitChoice") != null
+        }
+        Assert.assertEquals("native", captured.getString("core"))
+        val snapshot = captured.getJSONObject("snapshot")
+        val receipts = snapshot.getJSONObject("explicitChoice").getJSONObject("categories")
+        val delivered = captured.getJSONArray("saves").getJSONObject(0)
+        val deliveredReceipts = delivered.getJSONObject("choice").getJSONObject("categories")
+        Assert.assertEquals(snapshot.getJSONObject("subject").getString("subjectId"), delivered.getString("subjectId"))
+        for (category in listOf("functionality", "experience", "measurement", "marketing")) {
+            Assert.assertFalse(delivered.getJSONObject("preferences").getBoolean(category))
+            Assert.assertFalse(receipts.getJSONObject(category).getBoolean("value"))
+            val receipt = receipts.getJSONObject(category)
+            val received = deliveredReceipts.getJSONObject(category)
+            assertJsonEqual(receipt, received)
+        }
+        File(context.getExternalFilesDir(null), "native-compose-protocol-receipt.json").writeText(captured.toString(2))
+        launch("protocol-backend", reset = false, backend = "http://localhost:3000/api/self-host")
+        waitFor("fixture.state.explicit-choice").assertTextEquals("recorded")
+        compose.onNodeWithTag("c15t.first-layer.accept-all").assertDoesNotExist()
+    }
+
+    @Test fun equalRejectPersistsAndBackKeepsHostForeground() {
+        launch()
+        val reject = waitFor("c15t.first-layer.reject-all")
+        val accept = waitFor("c15t.first-layer.accept-all")
+        val r = reject.fetchSemanticsNode().boundsInRoot; val a = accept.fetchSemanticsNode().boundsInRoot
+        Assert.assertEquals(r.width,a.width,1f); Assert.assertEquals(r.height,a.height,1f)
+        capture("android-first-layer")
+        device.pressBack()
+        waitFor("fixture.open-preferences").assertIsDisplayed()
+        Assert.assertEquals(context.packageName, device.currentPackageName)
+        compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
+        compose.onNodeWithTag("fixture.open-preferences").performClick()
+        waitFor("c15t.prefs.reject-all").performClick()
+        waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: false")
+        launch(reset = false,offline = true)
+        waitFor("fixture.state.explicit-choice").assertTextEquals("recorded")
+        compose.onNodeWithTag("c15t.first-layer.accept-all").assertDoesNotExist()
+        compose.onNodeWithTag("fixture.state.permission.marketing").assertTextEquals("marketing: false")
+    }
+    @Test fun customSaveRefusalRetryCancelAndRecreate() {
+        launch(fail = true)
+        waitFor("c15t.first-layer.customize").performClick()
+        val measurement = waitFor("c15t.prefs.category.measurement.switch")
+        measurement.performScrollTo().performClick().assertIsOn()
+        capture("android-category-preferences")
+        compose.onNodeWithTag("c15t.prefs.save").performClick()
+        waitFor("c15t.prefs.error.retry").assertIsEnabled()
+        measurement.assertIsOn(); capture("android-save-error")
+        compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
+        state("fixture.state.permission.measurement", "measurement: true").assertTextEquals("measurement: true")
+        waitFor("fixture.open-preferences").performClick()
+        waitFor("c15t.prefs.category.measurement.switch").performScrollTo().assertIsOn().performClick()
+        device.pressBack(); waitFor("c15t.prefs.discard.keep").performClick()
+        compose.onNodeWithTag("c15t.prefs.category.measurement.switch").assertIsOff()
+        device.pressBack(); waitFor("c15t.prefs.discard.confirm").performClick()
+        scenario!!.recreate()
+        state("fixture.state.permission.measurement", "measurement: true").assertTextEquals("measurement: true")
+    }
+    @Test fun iabSearchDetailsObjectionsAndAdditionalConsent() {
+        launch("fresh-online-iab")
+        waitFor("c15t.first-layer.customize"); capture("android-iab-first-layer")
+        compose.onNodeWithTag("c15t.first-layer.customize").performClick()
+        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.purpose.7.consent"))
+        val purpose = waitFor("c15t.iab.purpose.7.consent")
+        purpose.performScrollTo(); capture("android-iab-centre")
+        compose.onNodeWithTag("c15t.iab.purpose.7.details").performScrollTo().performClick()
+        val li = compose.onNodeWithTag("c15t.iab.purpose.7.li")
+        li.performScrollTo().assertIsOff().performClick().performClick().assertIsOff()
+        compose.onNodeWithTag("c15t.iab.purpose.1.li").assertDoesNotExist()
+        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.partners"))
+        compose.onNodeWithTag("c15t.iab.partners").performScrollTo().performClick()
+        waitFor("c15t.iab.vendors.search").performTextInput("elan")
+        waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-partner-search")
+        compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
+        waitFor("c15t.iab.vendor.1.consent").performClick()
+        compose.onNodeWithTag("c15t.iab.vendor.1.li").performScrollTo().assertIsOff().performClick().performClick()
+        capture("android-partner-details")
+        device.pressBack(); device.pressBack()
+        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.features-standard-text"))
+        compose.onNodeWithTag("c15t.iab.features-standard-text").performScrollTo().assertTextContains("Features have no separate choice.", substring = true)
+        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.other-partners"))
+        compose.onNodeWithTag("c15t.iab.other-partners").performScrollTo().performClick()
+        waitFor("c15t.ac.provider.10.switch").performScrollTo().performClick(); capture("android-additional-consent")
+        device.pressBack(); compose.onNodeWithTag("c15t.iab.save").performClick(); awaitClosed()
+        val summary = state("fixture.state.iab", "purposeObjections=[7]")
+        summary.performScrollTo().assertTextContains("purposeObjections=[7]",substring = true).assertTextContains("vendorObjections=[1]",substring = true).assertTextContains("ac=2~~dv.10.20",substring = true)
+    }
+    @Test fun nativeAcceptIncludesAcAndWithdrawsOffline() {
+        launch("fresh-online-iab")
+        waitFor("c15t.first-layer.accept-all").performClick(); awaitClosed()
+        state("fixture.state.iab", "ac=2~10.20~dv.").performScrollTo().assertTextContains("ac=2~10.20~dv.",substring = true)
+        compose.onNodeWithTag("fixture.open-preferences").performScrollTo().performClick()
+        waitFor("c15t.iab.reject-all").performClick(); awaitClosed()
+        waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: false")
+    }
+    @Test fun darkLargeTextKeepsDecisionsEqual() {
+        try {
+            device.executeShellCommand("settings put system font_scale 2.0")
+            device.executeShellCommand("cmd uimode night yes")
+            launch()
+            val r = waitFor("c15t.first-layer.reject-all").fetchSemanticsNode().boundsInRoot
+            val a = waitFor("c15t.first-layer.accept-all").fetchSemanticsNode().boundsInRoot
+            Assert.assertEquals(r.width, a.width, 1f); Assert.assertEquals(r.height, a.height, 1f)
+            compose.onNodeWithTag("c15t.first-layer.reject-all").assertIsDisplayed()
+            compose.onNodeWithTag("c15t.first-layer.accept-all").assertIsDisplayed()
+            capture("android-dark-large-text")
+            compose.onNodeWithTag("c15t.first-layer.reject-all").performClick(); awaitClosed()
+        } finally {
+            device.executeShellCommand("settings put system font_scale 1.0")
+            device.executeShellCommand("cmd uimode night no")
+        }
+    }
+    @Test fun unavailableAndDurableNoticeRefusal() {
+        launch("fresh-offline-none")
+        waitFor("fixture.open-preferences").performClick()
+        waitFor("c15t.status.unavailable.retry"); capture("android-policy-unavailable")
+        launch("fresh-online-notice",fail = true)
+        waitFor("c15t.notice.acknowledge").performClick()
+        waitFor("c15t.notice.error.retry").performClick()
+        compose.waitUntil(5000) { compose.onAllNodesWithTag("c15t.notice.acknowledge").fetchSemanticsNodes().isEmpty() }
+        compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
+    }
+}

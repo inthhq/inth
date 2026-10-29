@@ -58,6 +58,7 @@ expectTypeOf<keyof GlobalVendorList>().toEqualTypeOf<
 	| 'specialFeatures'
 	| 'specialPurposes'
 	| 'stacks'
+	| 'standardTexts'
 	| 'tcfPolicyVersion'
 	| 'vendorListVersion'
 	| 'vendors'
@@ -108,6 +109,9 @@ expectTypeOf<GlobalVendorList['specialPurposes']>().toEqualTypeOf<
 >();
 expectTypeOf<GlobalVendorList['stacks']>().toEqualTypeOf<
 	KernelGlobalVendorList['stacks']
+>();
+expectTypeOf<GlobalVendorList['standardTexts']>().toEqualTypeOf<
+	KernelGlobalVendorList['standardTexts']
 >();
 expectTypeOf<GlobalVendorList['tcfPolicyVersion']>().toEqualTypeOf<
 	KernelGlobalVendorList['tcfPolicyVersion']

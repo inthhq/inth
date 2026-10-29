@@ -251,27 +251,10 @@ internal fun IabCommittedConsent.allows(
 ): Boolean {
 	val vendor = gvl.vendors[vendorId] ?: return false
 	if (!vendor.deletedDate.isNullOrEmpty()) return false
-	val restriction =
-		configuration.publisherRestrictions
-			.firstOrNull { it.purposeId == purposeId && vendorId in it.vendorIds }
-			?.type
-	if (restriction == 0) return false
-	return when (basis) {
-		IabLegalBasis.CONSENT ->
-			restriction != 2 &&
-				purposeId in choices.purposeConsents &&
-				vendorId in choices.vendorConsents &&
-				(purposeId.toLong() in vendor.purposes.orEmpty() ||
-					restriction == 1 && purposeId.toLong() in vendor.flexiblePurposes.orEmpty())
-		IabLegalBasis.LEGITIMATE_INTEREST ->
-			restriction != 1 &&
-				purposeId in choices.purposeLegitimateInterests &&
-				vendorId in choices.vendorLegitimateInterests &&
-				purposeId !in choices.purposeObjections &&
-				vendorId !in choices.vendorObjections &&
-				(purposeId.toLong() in vendor.legIntPurposes.orEmpty() ||
-					restriction == 2 && purposeId.toLong() in vendor.flexiblePurposes.orEmpty())
-	}
+    return when (basis) {
+        IabLegalBasis.CONSENT -> configuration.discloses(vendorId, vendor, purposeId, IabLegalBasis.CONSENT) && purposeId in choices.purposeConsents && vendorId in choices.vendorConsents
+        IabLegalBasis.LEGITIMATE_INTEREST -> configuration.discloses(vendorId, vendor, purposeId, IabLegalBasis.LEGITIMATE_INTEREST) && purposeId in choices.purposeLegitimateInterests && vendorId in choices.vendorLegitimateInterests && purposeId !in choices.purposeObjections && vendorId !in choices.vendorObjections
+    }
 }
 
 internal fun IabConfiguration.detached(): IabConfiguration =
