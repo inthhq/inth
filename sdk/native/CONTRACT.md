@@ -578,6 +578,8 @@ deliver is worse than a refusal the caller can act on. Every snapshot mutation
 uses a serialization gate covering preparation, revision validation, durable
 write and in-memory publication. The short state lock is released during storage
 I/O, so hot reads and storage callbacks can read the current committed authority.
+Host loggers and error observers run after releasing the mutation gate and may
+start another mutation.
 No other mutation can intervene between the revision check and its write. A stale
 draft is refused before writing, without adding a pending body. Network work runs
 after releasing the gate.
@@ -768,7 +770,8 @@ the choice prompt is owed again, the next init re-evaluates, and the banner or d
 returns. A wipe that stops at "deny everything and never ask again" is worse than no
 wipe at all, because the subject cannot undo it. So the rule, stated where a core can
 check it: after `reset()` the device holds no `explicitChoice`, no notice dismissal, no
-policy claim, and no queued save.
+policy claim, and no queued grant. Frozen withdrawals already owed to the backend
+retain their original owner and body until delivered.
 
 What the core publishes, and what it keeps:
 
@@ -803,15 +806,16 @@ the Swift core it stops persistence for the rest of the session, because a write
 revision is not ahead of the last one is refused. Reset moves the current revision by
 one, and the next init continues from there.
 
-For category-only state, the durable effect is a deletion, so reset writes no envelope of
-its own. Configured native IAB instead writes an atomic empty record as described above. The snapshot key goes rather than getting a null written over it, and the queue
-goes the same way, because an empty queue as bytes is not the answer a first launch has.
-What is on disk when `reset()` finishes is the subject id and nothing else. The only
-envelope that appears afterwards is the one the init below writes, which is the envelope a
-first launch writes too, and nothing under it may carry a decision. A core's
-`hasStoredSnapshot` answer moves with the deletion for the reason the unreadable-envelope
-rule gives: a handshake that reports cached consent from a device that just wiped it
-misstates the subject's answer, not the state of the cache.
+For category-only state without an owed frozen withdrawal, reset deletes the
+snapshot and queue keys. Only the subject identity remains until the next init
+writes a fresh policy envelope. `hasStoredSnapshot` is false at this deletion.
+
+For native IAB authority or an owed frozen withdrawal, reset atomically writes
+the cold-start snapshot with no consent authority or policy claim. This envelope
+retains the action-time watermark and any owed frozen withdrawals. It prevents a
+failed deletion from restoring an earlier grant. `hasStoredSnapshot` is true on
+both platforms because the envelope exists; that flag does not assert a consent
+decision, readiness or a grant.
 
 Then it re-runs init, the way bootstrap does. A first launch does not sit at
 `policyPending` once the network answers, and a wipe that stopped at the baseline would
@@ -821,9 +825,9 @@ Re-resolving belongs to the wipe rather than to the caller: a bridge that calls
 `refresh()` after `reset()` hides a core that does not finish its own work, and every
 host would have to be told the order.
 
-Two things a reset does not do. It records nothing, so it sends nothing: there is no
-consent record to make and no queue entry to write, and the backend keeps the records it
-already holds. And it cannot recall a request already on its way. A save a delivery pass
+Reset creates no new consent decision or delivery obligation. Previously owed
+withdrawals may still be delivered, and the backend keeps its audit history.
+Reset also cannot recall a request already on its way. A save a delivery pass
 had handed to the transport may still land after the wipe, and the pass finds its entry
 gone when it settles. The bridge promise resolves once the local state is durable and
 does not wait on that request, because its outcome is not something a caller can act on.

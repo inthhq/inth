@@ -77,6 +77,90 @@ class IabCommitTest {
 	}
 
 	@Test
+	fun `blank domains freeze the same portal host used by HostedTransport`() {
+		for (domain in listOf("", " \t")) {
+			val store = C15tStore(InMemoryKeyValueStore())
+			val core = boot(store, config.copy(domain = domain))
+			assertTrue(core.save(CommitIntent.All).ok)
+			val entry = store.readPending().single()
+			val body = assertNotNull(entry.body)
+			assertEquals("cmp.example.test", Json.parseToJsonElement(body).jsonObject["domain"]?.jsonPrimitive?.content)
+			val client = RecordingHttpClient { HttpResponse(503, emptyMap(), "{}") }
+			HostedTransport(client, config.copy(domain = domain)).save(entry)
+			assertEquals(body, client.requests.single().body)
+		}
+	}
+
+	@Test
+	fun `IAB logout notifies transport only after the durable transition succeeds`() {
+		val backend = FailingBackend()
+		val store = C15tStore(backend)
+		val logouts = mutableListOf<ConsentSubject>()
+		val recorded = transport()
+		val http = object : C15tTransport by recorded {
+			override fun logout(subject: ConsentSubject): TransportOutcome {
+				assertNull(store.readEnvelope()?.snapshot?.subject?.externalId)
+				logouts += subject
+				return TransportOutcome.Success(null, emptyMap())
+			}
+		}
+		val core = testKernel(config, store, FixedClock(vector.now), http)
+		core.bootstrap()
+		core.identify(KernelUser("u1"))
+		assertTrue(core.save(CommitIntent.All).ok)
+		backend.fail = true
+		core.logout()
+		assertEquals("u1", core.snapshot().subject?.externalId)
+		assertTrue(logouts.isEmpty())
+		backend.fail = false
+		core.logout()
+		assertNull(core.snapshot().subject?.externalId)
+		assertEquals(1, logouts.size)
+		assertNull(logouts.single().externalId)
+	}
+
+	@Test
+	fun `backward clock refuses an immediately invalid action without writing`() {
+		val clock = FixedClock(vector.now)
+		val backend = InMemoryKeyValueStore()
+		val core = testKernel(config, C15tStore(backend), clock, transport())
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.All).ok)
+		val bytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		val revision = core.snapshot().revision
+		clock.advance(-600_001)
+		for (intent in listOf(CommitIntent.All, CommitIntent.Necessary)) {
+			val result = core.save(intent)
+			assertFalse(result.ok)
+			assertEquals("invalid-action-time", result.error?.code)
+			assertEquals(revision, core.snapshot().revision)
+			assertEquals(bytes, backend.read(C15tStoreKeys.SNAPSHOT))
+		}
+		val cold = testKernel(config, C15tStore(backend), clock, transport())
+		cold.bootstrap()
+		val coldBytes = backend.read(C15tStoreKeys.SNAPSHOT)
+		assertEquals("invalid-action-time", cold.save(CommitIntent.All).error?.code)
+		assertEquals(coldBytes, backend.read(C15tStoreKeys.SNAPSHOT))
+		clock.advance(600_001)
+		assertTrue(cold.save(CommitIntent.Necessary).ok)
+		assertNotNull(cold.iabConsent)
+	}
+
+	@Test
+	fun `atomic reset reports the retained envelope as stored state`() {
+		val tasks = mutableListOf<() -> Unit>()
+		val store = C15tStore(InMemoryKeyValueStore())
+		val core = testKernel(config, store, FixedClock(vector.now), transport(), TaskExecutor { tasks += it })
+		core.bootstrap()
+		while (tasks.isNotEmpty()) tasks.removeAt(0).invoke()
+		assertTrue(core.save(CommitIntent.All).ok)
+		core.reset()
+		assertNull(core.snapshot().explicitChoice)
+		assertNotNull(store.readEnvelope())
+		assertTrue(core.hasStoredSnapshot)
+	}
+
+	@Test
 	fun `shared choices generate reference strings and exact real HTTP bodies`() {
 		for (row in vector.cases) {
 			val store = C15tStore(InMemoryKeyValueStore())

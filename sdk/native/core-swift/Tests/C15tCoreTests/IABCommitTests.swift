@@ -26,7 +26,7 @@ final class IABCommitTests: XCTestCase {
 
     func boot(
         _ vector: Vector, configuration: IABConfiguration?, store: any ConsentStore,
-        http: StubHTTP = StubHTTP(), user: KernelUser? = nil
+        http: StubHTTP = StubHTTP(), user: KernelUser? = nil, clock: TestClock? = nil
     ) async throws -> ConsentCore {
         let gvl = try C15tJSON.parse(C15tJSON.encode(vector.gvl))!
         var body = Fixture.initBody(
@@ -40,7 +40,7 @@ final class IABCommitTests: XCTestCase {
         core.bootstrap(
             CoreConfig(
                 store: store, transport: Fixture.transport(http), iab: configuration,
-                user: user, now: { vector.now }, initRetry: .disabled, flushPendingOnBootstrap: false))
+                user: user, now: { clock?.now ?? vector.now }, initRetry: .disabled, flushPendingOnBootstrap: false))
         await core.waitUntilIdle()
         return core
     }

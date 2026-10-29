@@ -108,9 +108,13 @@ on the network.
 Backend consent IDs include `givenAt`. The core advances IAB action times by at
 least one millisecond, even when the clock repeats. A durable timestamp watermark
 survives reset and identity changes so a later decision cannot reuse an earlier
-action-time input. This does not establish live backend acceptance or matching
-backend consent IDs. The TC creation day stays unchanged across edits to the same
-consent record; consent version increments per successful decision.
+action-time input. If a backward clock jump would put the next logical action
+more than ten minutes ahead of the wall clock, the save refuses with
+`invalid-action-time` before changing consent or storage. The watermark survives
+restart; the host must correct the clock before retrying. This does not establish
+live backend acceptance or matching backend consent IDs. The TC creation day stays
+unchanged across edits to the same consent record; consent version increments per
+successful decision.
 
 Both cores serialize snapshot mutations through a gate separate from the short
 in-memory state lock. Preparation, revision validation, durable write and state
@@ -120,7 +124,8 @@ settlement edits only its entry under the queue or store lock and preserves the
 latest envelope. Synchronous snapshot, permission, IAB and gate reads remain
 available while a store write blocks. A storage callback may use these reads.
 A refused write leaves the previous envelope and creates no pending body.
-Network delivery runs after releasing the mutation gate.
+Network delivery, host loggers and error observers run after releasing the
+mutation gate.
 
 ## Hydrate and invalidate authority
 

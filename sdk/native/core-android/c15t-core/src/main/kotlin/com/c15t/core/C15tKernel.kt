@@ -169,15 +169,23 @@ class C15tKernel(
 
 	private val mutationLock = Any()
 	private val commitGate = java.util.concurrent.Semaphore(1)
+	private val mutationErrors = ThreadLocal<MutableList<KernelError>>()
 	private var needsGrantCleanup = false
 	/** Serialize every mutation through durable write and publication, never hot reads. */
 	private inline fun <Result> mutate(body: (MutationPermit) -> Result): Result {
 		commitGate.acquireUninterruptibly()
 		val permit = MutationPermit { commitGate.release() }
+		val previousErrors = mutationErrors.get()
+		val errors = mutableListOf<KernelError>()
+		mutationErrors.set(errors)
 		try {
 			return body(permit)
 		} finally {
+			if (previousErrors == null) mutationErrors.remove() else mutationErrors.set(previousErrors)
 			permit.release()
+			// Host loggers and error listeners may reenter a mutation. All state-lock
+			// scopes have unwound and the commit permit is free before they run.
+			for (error in errors) emitError(error)
 		}
 	}
 
@@ -284,9 +292,10 @@ class C15tKernel(
 			synchronized(mutationLock) {
 				evaluationPolicy = envelope.evaluationPolicy
 				committedIab = envelope.iabConsent
+				// A backward clock jump must not let a restart reuse an action time.
 				lastIabActionAt =
 					(envelope.lastIabActionAt ?: envelope.iabConsent?.actionAt)?.takeIf {
-						it >= 0 && now >= 0 && it - now <= 600_000
+						it >= 0
 					}
 				noticeDismissal = envelope.noticeDismissal
 			}
@@ -633,6 +642,11 @@ class C15tKernel(
 						)
 					actionAt = maxOf(actionAt, previous + 1)
 				}
+				if (at < 0 || actionAt < 0 || actionAt - at > 600_000)
+					return@mutate refusedCommit(
+						"invalid-action-time",
+						"The clock cannot represent a current, distinct IAB action time",
+					)
 			}
 			if (policy?.model == ConsentModel.IAB &&
 				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null)) {
@@ -752,7 +766,7 @@ class C15tKernel(
 			val frozen =
 				com.c15t.core.transport.SaveBodyBuilder.build(
 						payload,
-						config.domain ?: java.net.URI(config.portalUrl).host.orEmpty(),
+						config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty(),
 					)
 					.toString()
 			val proposed =
@@ -782,7 +796,7 @@ class C15tKernel(
 		} else {
 			entry = queue.enqueue(payload, actionAt,
 				com.c15t.core.transport.SaveBodyBuilder.build(payload,
-					config.domain ?: java.net.URI(config.portalUrl).host.orEmpty()).toString())
+					config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty()).toString())
 			?: return@mutate refusedCommit(
 				code = "queue-write-failed",
 				message = "c15t: the pending save could not be persisted, so the decision was " +
@@ -936,7 +950,11 @@ class C15tKernel(
 		val transition = transitionIab(null, false)
 		if (transition != null) {
 			mutation.release()
-			if (transition) notifySnapshot(state.get())
+			if (transition) {
+				val snapshot = state.get()
+				notifySnapshot(snapshot)
+				background.execute { transport.logout(snapshot.subject!!) }
+			}
 			else
 				emitError(
 					KernelError(
@@ -1169,10 +1187,10 @@ class C15tKernel(
 	 *   every [gate] in the process holding a decision the device no longer remembers, and
 	 *   restarting the numbering at the cold-start revision would hand each subscriber a
 	 *   snapshot older than the one it holds.
-	 * - Skip the envelope write. Its durable effect is the deletion, so on-disk state after
-	 *   a reset is a subject id and nothing else, which is what a first launch has. That is
-	 *   also the only reason [storedSnapshotFound] moves: reporting cached consent from a
-	 *   device that just wiped it is the claim the unreadable-envelope rule refuses.
+	 * - Remove grants durably. Category-only state without an owed withdrawal is
+	 *   deleted. IAB authority or owed withdrawals require an atomic empty decision
+	 *   envelope retaining the action-time watermark and frozen withdrawal bodies.
+	 *   [hasStoredSnapshot] reports that retained envelope, not a consent grant.
 	 * - Re-run init. A first launch does not sit at `policyPending` once the network
 	 *   answers, and a wipe that stopped at the baseline would leave the app there until
 	 *   the next launch, with the subject withdrawn from everything and nothing asking them
@@ -1184,9 +1202,8 @@ class C15tKernel(
 	 * evaluate.
 	 *
 	 * A save a delivery pass had already handed to the transport can still land after the
-	 * queue is dropped, and the pass finds its entry gone when it settles. Nothing here
-	 * waits for it: the entries still in the queue carry a decision the subject just
-	 * withdrew, and the one already on the wire was a valid decision when it was made.
+	 * queued grants are dropped. Nothing here waits for it. Frozen withdrawals remain
+	 * owed under their original owner; reset creates no new consent decision.
 	 */
 	fun reset() = mutate { mutation ->
 		val transition = transitionIab(state.get().subject?.externalId, true)
@@ -1732,8 +1749,8 @@ class C15tKernel(
 			noticeDismissal = null
 			if (reset) {
 				evaluationPolicy = null
-				storedSnapshotFound = false
 			}
+			storedSnapshotFound = true
 			state.set(prepared.second)
 		}
 		return true
@@ -1946,6 +1963,10 @@ class C15tKernel(
 	}
 
 	private fun emitError(error: KernelError) {
+		mutationErrors.get()?.let {
+			it.add(error)
+			return
+		}
 		logger(error)
 		for (reference in errorObservers) {
 			reference.get()?.invoke(error) ?: errorObservers.remove(reference)

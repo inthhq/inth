@@ -74,8 +74,10 @@ class C15tStore(
 	var subjectReplacementReason: String? = null
 		private set
 
-	fun hasConsentRecords(): Boolean = backend.read(C15tStoreKeys.SNAPSHOT) != null ||
-		backend.read(C15tStoreKeys.PENDING) != null
+	fun hasConsentRecords(): Boolean =
+		listOf(C15tStoreKeys.SNAPSHOT, C15tStoreKeys.PENDING).any { key ->
+			readRaw(key).fold(onSuccess = { it != null }, onFailure = { true })
+		}
 
 	/**
 	 * Read the stored subject, or `null` when absent, unparseable, or unusable.
@@ -94,8 +96,11 @@ class C15tStore(
 	fun readSubject(): ConsentSubject? {
 		unusableSubject = null
 		subjectReplacementReason = null
-		val raw = backend.read(C15tStoreKeys.SUBJECT)
-		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer())
+		val raw = readRaw(C15tStoreKeys.SUBJECT).getOrElse {
+			subjectReplacementReason = "corrupt"
+			return null
+		}
+		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer(), raw = raw)
 		if (stored == null) {
 			subjectReplacementReason = if (raw == null) "missing" else "corrupt"
 			return null
@@ -215,7 +220,8 @@ class C15tStore(
 	@Synchronized
 	fun readPending(): List<QueuedSave> {
 		val envelope = readEnvelope()
-		if (backend.read(C15tStoreKeys.SNAPSHOT) != null && envelope == null) return emptyList()
+		val snapshot = readRaw(C15tStoreKeys.SNAPSHOT).getOrElse { return emptyList() }
+		if (snapshot != null && envelope == null) return emptyList()
 		return envelope?.pendingSaves
 			?: tryDecode(C15tStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
 	}
@@ -239,7 +245,7 @@ class C15tStore(
 		if (old?.pendingSaves != null) return writeAtomic(old.copy(pendingSaves = entries))
 		val raw = queueJson.encodeToString(PendingQueue.serializer(), PendingQueue(entries))
 		backend.write(C15tStoreKeys.PENDING, raw)
-		return backend.read(C15tStoreKeys.PENDING) == raw
+		return readRaw(C15tStoreKeys.PENDING).getOrNull() == raw
 	}
 
 	/** Drop stored consent state, keeping the subject id so identity survives. */
@@ -278,18 +284,21 @@ class C15tStore(
 	/** Flush buffered writes to durable storage. */
 	fun flush() = backend.flush()
 
+	private fun readRaw(key: String): Result<String?> =
+		try {
+			Result.success(backend.read(key))
+		} catch (error: Exception) {
+			onReadFailure(key, error)
+			Result.failure(error)
+		}
+
 	private fun <T : Any> tryDecode(
 		key: String,
 		deserializer: DeserializationStrategy<T>,
 		json: Json = this.json,
+		raw: String? = readRaw(key).getOrNull(),
 		prepare: (String) -> String = { it },
 	): T? {
-		val raw = try {
-			backend.read(key)
-		} catch (error: Exception) {
-			onReadFailure(key, error)
-			return null
-		}
 		if (raw.isNullOrEmpty()) {
 			return null
 		}

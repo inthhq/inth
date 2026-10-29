@@ -1,5 +1,5 @@
 {
-	"source": "https://vendor-list.consensu.org/v3/vendor-list.json",
+	"source": "https://vendor-list.consensu.org/v3/archives/vendor-list-v182.json",
 	"fetchedAt": "2026-10-28",
 	"fullDocumentSHA256": "2101f840e258dbda5c1dcf22740c7c16e06e15b568cd73900f18fc18e7a5348b",
 	"selection": "First 16 vendor entries and Google 755, with original global definitions and declarations. This is a scoped excerpt, not the full GVL.",

@@ -3,6 +3,7 @@ package com.c15t.core
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentSubject
 import com.c15t.core.model.KernelError
+import com.c15t.core.spi.KeyValueStore
 import com.c15t.core.store.C15tJson
 import com.c15t.core.store.C15tStore
 import com.c15t.core.store.C15tStoreKeys
@@ -126,6 +127,32 @@ class UnusableSubjectIdTest {
 			assertEquals(identity, restart.snapshot().subject?.id)
 			assertNull(restart.snapshot().explicitChoice)
 			assertFalse(restart.isAllowed(ConsentCategory.MARKETING))
+		}
+	}
+
+	@Test
+	fun `throwing identity recovery reads report failure and never inherit consent`() {
+		for (unreadable in listOf(C15tStoreKeys.SUBJECT, C15tStoreKeys.SNAPSHOT, C15tStoreKeys.PENDING)) {
+			val install = poisonedInstall()
+			if (unreadable != C15tStoreKeys.SUBJECT) install.backend.write(C15tStoreKeys.SUBJECT, null)
+			if (unreadable == C15tStoreKeys.PENDING) install.backend.write(C15tStoreKeys.SNAPSHOT, null)
+			val failures = mutableListOf<String>()
+			val backend = object : KeyValueStore by install.backend {
+				override fun read(key: String): String? {
+					if (key == unreadable) throw IllegalStateException("storage unavailable")
+					return install.backend.read(key)
+				}
+			}
+			val store = C15tStore(backend, onReadFailure = { key, _ -> failures += key })
+			val transport = RecordingTransport()
+			val core = testKernel(store = store, transport = transport)
+			core.bootstrap()
+			assertTrue(unreadable in failures, "the failed read must be reported: $unreadable")
+			assertNull(core.snapshot().explicitChoice)
+			assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+			assertNotEquals(install.healthyId, core.snapshot().subject?.id)
+			assertTrue(transport.saveRequests.isEmpty())
+			assertTrue(store.readPending().isEmpty())
 		}
 	}
 
