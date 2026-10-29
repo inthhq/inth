@@ -80,6 +80,103 @@ class IabLifecycleTest {
 	}
 
 	@Test
+	fun `list expiry keeps consent dormant until an identical disclosure refreshes`() {
+		val clock = FixedClock(now)
+		val store = C15tStore(InMemoryKeyValueStore())
+		val transport = http()
+		val core = testKernel(config.copy(iabListMaxAgeMs = 100), store, clock, transport)
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.All).ok)
+		val saved = assertNotNull(core.iabConsent)
+		val choice = assertNotNull(core.snapshot().explicitChoice)
+		val queued = store.readPending().single()
+		val expired = CountDownLatch(1)
+		val values = mutableListOf<Boolean>()
+		val gate = core.gate(ConsentCategory.MARKETING) {
+			values += it
+			if (!it) expired.countDown()
+		}
+		clock.advance(100)
+		assertTrue(expired.await(3, TimeUnit.SECONDS))
+		assertNull(core.iabConsent)
+		assertNull(core.openIabDraft())
+		assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+		assertEquals(saved, store.readEnvelope()?.iabConsent)
+		assertEquals(choice, core.snapshot().explicitChoice)
+		val sends = transport.saveRequests.size
+		assertEquals(0, core.flushPending().delivered)
+		assertEquals(sends, transport.saveRequests.size)
+		assertEquals(queued, store.readPending().single())
+		core.refresh()
+		assertEquals(saved, core.iabConsent)
+		assertEquals(choice, core.snapshot().explicitChoice)
+		assertTrue(core.isAllowed(ConsentCategory.MARKETING))
+		assertEquals(listOf(true, false, true), values)
+		assertEquals(queued.body, store.readPending().single().body)
+		transport.respondSave(SaveOutcome.Delivered)
+		assertEquals(1, core.flushPending().delivered)
+		assertEquals(queued.body, transport.saveRequests.last().body)
+		assertTrue(store.readPending().isEmpty())
+		gate.close()
+	}
+
+	@Test
+	fun `stale cold launch keeps source consent and resumes only after a matching refresh`() {
+		for (changed in listOf(false, true)) {
+			val clock = FixedClock(now)
+			val store = C15tStore(InMemoryKeyValueStore())
+			val first = testKernel(config, store, clock, http())
+			first.bootstrap()
+			assertTrue(first.save(CommitIntent.All).ok)
+			val saved = assertNotNull(first.iabConsent)
+			val queued = store.readPending().single()
+			clock.advance(1_000)
+			val transport = RecordingTransport().respondInit(TransportOutcome.NetworkFailure("offline"))
+				.respondSave(SaveOutcome.Unavailable("offline"))
+			val cold = testKernel(config.copy(iabListMaxAgeMs = 1_000), store, clock, transport)
+			cold.bootstrap()
+			assertEquals(IabListAvailability.STALE, cold.iabStatus().availability)
+			assertFalse(cold.isAllowed(ConsentCategory.MARKETING))
+			assertEquals(saved, store.readEnvelope()?.iabConsent)
+			assertEquals(queued, store.readPending().single())
+			assertTrue(transport.saveRequests.isEmpty())
+			val refreshed = if (changed) JsonObject(vector.getValue("gvl").jsonObject +
+				("vendorListVersion" to JsonPrimitive(43))).toString() else gvl
+			transport.respondInit(initSuccess(body = initBody(model = "\"iab\"", gvl = refreshed)))
+			cold.refresh()
+			if (changed) {
+				assertNull(cold.iabConsent)
+				assertNull(cold.snapshot().explicitChoice)
+				assertTrue(store.readPending().isEmpty())
+				assertFalse(cold.isAllowed(ConsentCategory.MARKETING))
+			} else {
+				assertEquals(saved, cold.iabConsent)
+				assertTrue(cold.isAllowed(ConsentCategory.MARKETING))
+				assertEquals(queued.body, store.readPending().single().body)
+			}
+		}
+	}
+
+	@Test
+	fun `choice expiry while the list is stale cannot be revived by an identical refresh`() {
+		val clock = FixedClock(now)
+		val store = C15tStore(InMemoryKeyValueStore())
+		val transport = RecordingTransport().respondInit(
+			initSuccess(body = initBody(model = "\"iab\"", choiceMs = 1_000, gvl = gvl)))
+			.respondSave(SaveOutcome.Unavailable("offline"))
+		val core = testKernel(config.copy(iabListMaxAgeMs = 100), store, clock, transport)
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.All).ok)
+		clock.advance(1_000)
+		core.refresh()
+		assertEquals(IabListAvailability.FRESH, core.iabStatus().availability)
+		assertNull(core.iabConsent)
+		assertNull(core.snapshot().explicitChoice)
+		assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+		assertTrue(store.readPending().isEmpty())
+	}
+
+	@Test
 	fun `invalid backward clock does not turn expiry scheduling into polling`() {
 		val repeatedReads = CountDownLatch(100)
 		val clock = object : Clock {

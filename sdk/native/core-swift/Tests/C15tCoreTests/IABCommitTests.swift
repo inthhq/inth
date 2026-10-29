@@ -135,7 +135,7 @@ final class IABCommitTests: XCTestCase {
         XCTAssertEqual(cold.save(.all).error?.code, "iab-list-stale")
         cold.refresh()
         await cold.waitUntilIdle()
-        XCTAssertEqual(cold.pendingSaveCount(), 0)
+        XCTAssertEqual(cold.pendingSaveCount(), 1, "stale disclosure suspends the queued grant until refresh")
         XCTAssertEqual(cold.save(.necessary).status, .committed)
         await cold.waitUntilIdle()
         XCTAssertEqual(cold.pendingSaveCount(), 1)

@@ -223,8 +223,14 @@ list, cached startup, offline cached list and stale list. This read does not
 serialize the GVL. Offline cached consent remains valid only while both the
 list and choice are within their age limits. Stale lists deny native gates,
 refuse drafts and grants, and require a successful list refresh. Reject all can
-still commit a category-only withdrawal without encoding a stale disclosure. Installed
-foreground and connectivity callbacks replay pending saves and refresh policy. A
+still commit a category-only withdrawal without encoding a stale disclosure.
+List staleness keeps the saved choice and frozen queued grants dormant. An
+identical refreshed disclosure restores them while the choice remains current;
+choice expiry or incompatible disclosure discards them. No grant is delivered
+while its list is stale. Installed foreground and connectivity callbacks finish
+replaying pending saves before refreshing policy. The Swift `replayThenRefresh()`
+call schedules that sequence and joins an existing delivery pass without blocking
+the lifecycle callback. A
 one-shot list or choice deadline publishes denial to existing gates without a
 network request. Repeated Kotlin snapshot reads return the same instance until
 state or authority availability changes. Reopen preferences after refreshing.

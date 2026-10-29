@@ -1487,6 +1487,11 @@ list age limit. No-GVL responses do not renew it. Native lifecycle reads disting
 fresh, cached, offline, stale, missing and unconfigured states. Only exact
 configuration, policy, identity and normalized disclosure agreement retains an
 existing choice; any change requires a fresh action and removes obsolete queued
-grants. Custom IAB saves require the revision the draft opened on. TCF 2.4
+grants. List staleness suspends a compatible choice and queued grants without
+erasing them. Reads, gates and replay deny that authority until an identical list
+refresh restores it; choice expiry still discards it. Foreground and connectivity
+recovery finish replay before refreshing policy, including a delivery pass already
+in progress. These callbacks schedule work without blocking their caller.
+Custom IAB saves require the revision the draft opened on. TCF 2.4
 standardTexts, including the Features explanation, survive narrowing and storage.
 See docs/internal/native-iab-commits.mdx for refresh and retry behavior.

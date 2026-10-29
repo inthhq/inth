@@ -453,14 +453,13 @@ public enum C15tReactNativeBootstrap {
     /// On foreground or connectivity recovery, replay what is owed and refresh policy.
     /// A recovered connection may be the first opportunity to fetch a usable vendor list.
     ///
-    /// Both calls resolve the running core rather than closing over the one that happened to
+    /// Resolve the running core rather than closing over the one that happened to
     /// be installing when the observer was armed. A host that tears a core down and installs
     /// another would otherwise spend every later foreground on a kernel nobody reads any
     /// more.
     @Sendable static func replayThenRefresh() {
         guard let core = C15t.current else { return }
-        core.flushPending()
-        core.refresh()
+        core.replayThenRefresh()
     }
 
     /// Stop observing the process, leaving the core and its state alone.

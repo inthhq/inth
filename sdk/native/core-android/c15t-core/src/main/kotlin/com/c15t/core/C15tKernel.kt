@@ -1693,7 +1693,7 @@ class C15tKernel(
 		val gvl = snapshot.iab?.gvl
 		val valid =
 			if (
-				listIsUsable() && saved != null &&
+				saved != null &&
 					saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
 					evaluationPolicy?.model == ConsentModel.IAB &&
 					c != null &&
@@ -1723,7 +1723,11 @@ class C15tKernel(
 					false
 				}
 			} else false
-		if (valid) return snapshot.copy(model = ConsentModel.IAB)
+		// List age suspends a compatible choice; a matching refresh can resume it.
+		if (valid) return snapshot.copy(
+			model = ConsentModel.IAB,
+			effectivePermissions = if (listIsUsable()) snapshot.effectivePermissions else ConsentState.DENY_ALL,
+		)
 		committedIab = null
 		needsGrantCleanup = true
 		return PolicyEvaluator.evaluate(

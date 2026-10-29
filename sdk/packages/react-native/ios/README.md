@@ -102,7 +102,7 @@ drop. Android's reachability leg can be refused by a missing host permission;
 `NWPathMonitor` needs no entitlement or manifest key, so iOS has no declined branch.
 
 Neither leg polls a clock. `C15tReactNativeBootstrap.shutdown()` takes both back down for
-a host that would rather drive `flushPending()` and `refresh()` on its own schedule; the
+a host that would rather drive `replayThenRefresh()` on its own schedule; the
 core keeps its snapshot, queue, and event pump, and `start()` or `install(_:)` puts the
 legs back.
 

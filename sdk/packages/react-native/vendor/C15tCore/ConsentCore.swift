@@ -240,6 +240,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// read them. See "The pending save queue" in `native/CONTRACT.md`.
     private var deliveryPassInFlight = false
     private var deliveryPassRequested = false
+    private var deliveryPassWaiters: [CheckedContinuation<Bool, Never>] = []
     /// Strong holds on per-category gate subscriptions, keyed by identity. The
     /// observer set itself stays weak, as the contract requires. Holds both gate
     /// flavours: the boolean one ``gate(_:_:)`` and the decision-carrying
@@ -988,6 +989,18 @@ public final class ConsentCore: @unchecked Sendable {
         scheduleInit(attempt: 1)
     }
 
+    /// Replay queued saves before refreshing policy after foreground or connectivity recovery.
+    ///
+    /// Returns after scheduling. If a delivery pass is already running, waits for that
+    /// pass to finish its requested replay before starting init. An unreachable replay
+    /// still permits the refresh to try fetching policy and disclosure.
+    public func replayThenRefresh() {
+        schedule {
+            await self.requestDeliveryPass(ownSend: nil)
+            await self.runInit(attempt: 1)
+        }
+    }
+
     /// Attach an identified user. The c15t subject id does not change: an external
     /// id is a second key on the same subject, not a new subject.
     public func identify(_ user: KernelUser) {
@@ -1078,7 +1091,7 @@ public final class ConsentCore: @unchecked Sendable {
     ///
     /// This is a request for a pass, not a pass of its own. One pass may be in flight
     /// per core, so a call that lands while another pass is sending is answered by
-    /// that pass and returns without starting a second one -- see
+    /// that pass without starting a second one -- see
     /// ``requestDeliveryPass(ownSend:)``. Nothing is weakened about the obligation:
     /// an entry waiting on the running pass is still owed, still counted by
     /// ``pendingSaveCount()``, and still announced by exactly one delivered event.
@@ -1582,7 +1595,7 @@ public final class ConsentCore: @unchecked Sendable {
     private func validateIABLocked() {
         guard resolvedPolicy?.policy.model == .iab || committedIAB != nil else { return }
         let valid: Bool
-        if listIsUsableLocked(), let saved = committedIAB, let c = config?.iab, saved.configuration == c,
+        if let saved = committedIAB, let c = config?.iab, saved.configuration == c,
             let now = config?.now(),
             saved.isCurrent(now: now, maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0),
             let gvl = currentSnapshot.iab?.gvl,
@@ -1679,7 +1692,7 @@ public final class ConsentCore: @unchecked Sendable {
             choiceScope: choiceScopeLocked(resolved)
         )
         var draft = ConsentSnapshot.Draft(current: currentSnapshot)
-            draft.effectivePermissions = resolved.policy.model == .iab && committedIAB == nil
+            draft.effectivePermissions = resolved.policy.model == .iab && (committedIAB == nil || !listIsUsableLocked())
                 ? .necessaryOnly : evaluation.permissions
             draft.restrictions = evaluation.restrictions
             draft.promptRequirement = evaluation.promptRequirement
@@ -2074,7 +2087,16 @@ public final class ConsentCore: @unchecked Sendable {
             if let consent = committedIAB, let config, let resolvedPolicy,
                 !listIsUsableLocked()
                     || !consent.isCurrent(now: config.now(), maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
-                reevaluateLocked(now: config.now())
+                let before = currentSnapshot
+                reevaluateLocked(now: config.now(), bumpRevision: false)
+                var comparison = ConsentSnapshot.Draft(current: currentSnapshot)
+                comparison.evaluatedAt = before.evaluatedAt
+                if comparison.build(revision: before.revision) == before {
+                    currentSnapshot = before
+                    return false
+                }
+                currentSnapshot = ConsentSnapshot.Draft(current: currentSnapshot)
+                    .build(revision: before.revision + 1)
                 return true
             }
             return false
@@ -2140,11 +2162,9 @@ public final class ConsentCore: @unchecked Sendable {
     /// read while a send is open, so the rule is held here rather than left to
     /// whoever happens to call first.
     ///
-    /// A request that finds the core held neither waits nor starts a pass. It records
-    /// itself and returns: ``flushPending()`` reaches here from a lifecycle callback,
-    /// and sitting behind somebody else's network timeout would block it. The pass
-    /// that holds the core answers it by reading the queue again on the way out, which
-    /// is what covers an entry queued after that pass had already read.
+    /// A request that finds the core held joins its completion and records another
+    /// queue read. Only this scheduled async work waits; public lifecycle calls return
+    /// immediately. Joining lets recovery refresh policy after the replay completes.
     ///
     /// - Parameter ownSend: the first send of the entry a save just queued, taken
     ///   before the queue is read, or `nil` for a pass over the whole queue. It goes
@@ -2157,79 +2177,57 @@ public final class ConsentCore: @unchecked Sendable {
         // subject tapped a banner, and attempts end in released entries, so this
         // thread takes that cost on only when somebody actually asked for a pass.
         var owesPass = ownSend == nil
-        var pendingSend = ownSend
+        guard await acquireDeliveryPass() else { return }
+        owesPass = owesPass || takeDeliveryPassRequest()
+
+        if let send = ownSend { await send() }
 
         while true {
-            guard acquireDeliveryPass() else {
-                markDeliveryPassRequested()
-                return
-            }
-            owesPass = owesPass || takeDeliveryPassRequest()
-
             var stoppedForUnreachableTransport = false
-            do {
-                // Handed back in a `defer`, so a pass that ever learns to throw or
-                // cancel mid-flight cannot leave this core locked for the rest of the
-                // launch with every later flush quietly declined.
-                defer { releaseDeliveryPass() }
-
-                if let send = pendingSend {
-                    await send()
-                    pendingSend = nil
-                }
-                if owesPass {
-                    var report = await runDeliveryPass()
-                    // Requests that landed during that read are answered by another
-                    // read, taken before the send, so an entry queued while this pass
-                    // was in the network is delivered now rather than at the next
-                    // launch, foreground, or network change.
-                    //
-                    // An endpoint that could not be reached cancels the extra reads. A
-                    // pass spends an attempt on everything it sends, so reading a dead
-                    // backend twice does not deliver the late entry -- it ages every
-                    // entry behind it toward the ceiling that releases them. The request
-                    // stays recorded for whoever takes the pass next, and the next launch,
-                    // foreground, or reachability change answers it over a connection that
-                    // exists at all.
-                    while !report.transportUnreachable, takeDeliveryPassRequest() {
-                        report = await runDeliveryPass()
-                    }
-                    stoppedForUnreachableTransport = report.transportUnreachable
-                }
+            if owesPass {
+                let report = await runDeliveryPass()
+                stoppedForUnreachableTransport = report.transportUnreachable
             }
 
-            // Read after the hand-back rather than claimed by it, for two reasons. A flush
-            // that arrives between the check and the release would otherwise be declined
-            // and then find the holder already gone, leaving a recorded request with
-            // nobody left to answer it. And a pass giving up on a dead endpoint has to
-            // leave that request where the next caller can still find it.
-            if stoppedForUnreachableTransport || !isDeliveryPassRequested { return }
+            // Claim another read or release ownership atomically, so no request can
+            // land between the final check and completion. A dead endpoint leaves the
+            // request recorded for the next wake without spending another attempt.
+            if finishDeliveryPass(stoppedForUnreachableTransport: stoppedForUnreachableTransport) { return }
             owesPass = true
         }
     }
 
-    /// Take the core for one delivery pass. `false` when a pass already holds it.
-    private func acquireDeliveryPass() -> Bool {
-        lock.withLock {
-            guard !deliveryPassInFlight else { return false }
-            deliveryPassInFlight = true
-            return true
+    /// Take a delivery pass, or await the pass that will cover this request.
+    private func acquireDeliveryPass() async -> Bool {
+        await withCheckedContinuation { continuation in
+            let acquired = lock.withLock {
+                if deliveryPassInFlight {
+                    deliveryPassRequested = true
+                    deliveryPassWaiters.append(continuation)
+                    return false
+                }
+                deliveryPassInFlight = true
+                return true
+            }
+            if acquired { continuation.resume(returning: true) }
         }
     }
 
-    /// Hand the core back. The request flag is left where it is on purpose: whoever
-    /// takes the pass next is the one that claims it.
-    private func releaseDeliveryPass() {
-        lock.withLock { deliveryPassInFlight = false }
-    }
-
-    /// Whether somebody asked for a pass that nobody has claimed yet.
-    private var isDeliveryPassRequested: Bool {
-        lock.withLock { deliveryPassRequested }
-    }
-
-    private func markDeliveryPassRequested() {
-        lock.withLock { deliveryPassRequested = true }
+    /// `false` retains ownership for another requested read; `true` completes all joiners.
+    private func finishDeliveryPass(stoppedForUnreachableTransport: Bool) -> Bool {
+        let completed = lock.withLock { () -> [CheckedContinuation<Bool, Never>]? in
+            if !stoppedForUnreachableTransport, deliveryPassRequested {
+                deliveryPassRequested = false
+                return nil
+            }
+            deliveryPassInFlight = false
+            let waiters = deliveryPassWaiters
+            deliveryPassWaiters = []
+            return waiters
+        }
+        guard let completed else { return false }
+        for waiter in completed { waiter.resume(returning: false) }
+        return true
     }
 
     /// Claim a recorded request, `false` when there is nothing to claim.
