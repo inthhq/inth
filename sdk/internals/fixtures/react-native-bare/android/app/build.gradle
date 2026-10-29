@@ -52,6 +52,9 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
+    if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+        extraPackagerArgs = ["--reset-cache"]
+    }
 }
 
 /**
@@ -78,12 +81,18 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.c15t.bare"
+    if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+        sourceSets.release.manifest.srcFile "src/e2e/AndroidManifest.xml"
+    }
     defaultConfig {
         applicationId "com.c15t.bare"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+            manifestPlaceholders.usesCleartextTraffic = "true"
+        }
     }
     signingConfigs {
         debug {

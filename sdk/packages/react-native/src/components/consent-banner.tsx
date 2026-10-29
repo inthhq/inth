@@ -27,6 +27,7 @@ import {
 	ConsentSurfaceBody,
 	ConsentSurfaceFooter,
 	ConsentSurfaceHeader,
+	ConsentSurfaceTitle,
 } from './internal/consent-surface';
 import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
@@ -126,12 +127,7 @@ export const ConsentBanner = ({
 				styles={surface}
 			>
 				<ConsentSurfaceHeader>
-					<Text
-						accessibilityRole="header"
-						style={parts.title}
-					>
-						{title}
-					</Text>
+					<ConsentSurfaceTitle>{title}</ConsentSurfaceTitle>
 				</ConsentSurfaceHeader>
 				<ConsentSurfaceBody>
 					<Text style={parts.description}>{description}</Text>
@@ -150,6 +146,7 @@ export const ConsentBanner = ({
 							<ConsentButton
 								kind="secondary"
 								label={copy.customize}
+								testID="c15t.notice.settings"
 								onPress={customize}
 								parts={parts}
 								style={CONSENT_BUTTON_ROW_ITEM}
@@ -170,6 +167,7 @@ export const ConsentBanner = ({
 								<ConsentButton
 									kind="secondary"
 									label={copy.rejectAll}
+									testID="c15t.first-layer.reject-all"
 									onPress={() => {
 										void actions.rejectAll();
 									}}
@@ -179,6 +177,7 @@ export const ConsentBanner = ({
 								<ConsentButton
 									kind="secondary"
 									label={copy.acceptAll}
+									testID="c15t.first-layer.accept-all"
 									onPress={() => {
 										void actions.acceptAll();
 									}}
@@ -188,6 +187,7 @@ export const ConsentBanner = ({
 							</View>
 							<ConsentButton
 								label={copy.customize}
+								testID="c15t.first-layer.customize"
 								onPress={customize}
 								parts={parts}
 							/>

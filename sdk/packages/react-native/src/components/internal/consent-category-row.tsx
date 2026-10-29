@@ -148,6 +148,7 @@ export const ConsentCategoryRow = ({
 					parts={parts}
 					theme={theme}
 					value={row.value}
+					testID={`c15t.prefs.category.${row.key}.switch`}
 				/>
 			</Pressable>
 			{open ? (

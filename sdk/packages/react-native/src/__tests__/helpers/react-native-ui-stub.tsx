@@ -494,16 +494,23 @@ interface TextPropsStub extends AccessibilityProps {
 	readonly style?: StyleValue;
 }
 
-export const Text = (props: TextPropsStub): ReactElement =>
-	createElement(
+const renderText = function renderText(
+	props: TextPropsStub,
+	ref: Ref<unknown>
+): ReactElement {
+	return createElement(
 		'span',
 		{
 			...ariaAttributes(props),
 			'data-rn-style': styleAttribute(props.style),
 			onClick: props.onPress,
+			ref,
 		},
 		props.children
 	);
+};
+
+export const Text = forwardRef<unknown, TextPropsStub>(renderText);
 
 /* --------------------------------------------------------------- controls */
 

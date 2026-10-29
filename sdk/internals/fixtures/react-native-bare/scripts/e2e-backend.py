@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""Loopback protocol fixture producer. Never substitutes for either native core."""
+
+import argparse
+import json
+import re
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from threading import Lock
+from time import time
+from urllib.parse import urlsplit
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--out', type=Path, required=True)
+args = parser.parse_args()
+args.out.mkdir(parents=True, exist_ok=True)
+root = Path(__file__).resolve().parents[4]
+transport = json.loads((root / 'native/protocol/evaluation-eu-fresh-install.json').read_text())['input']['transport']
+state = {}
+saves = []
+lock = Lock()
+
+
+class Handler(BaseHTTPRequestHandler):
+    def reply(self, status, body):
+        data = json.dumps(body).encode()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Content-Length', str(len(data)))
+        self.send_header('x-c15t-policy-contract', '1')
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        with lock:
+            if urlsplit(self.path).path == '/api/self-host/init':
+                self.reply(transport['status'], transport['body'])
+            elif self.path == '/e2e/state':
+                self.reply(200, {**state, 'saves': saves})
+            elif self.path == '/health':
+                self.reply(200, {'fixture': 'evaluation-eu-fresh-install'})
+            else:
+                self.reply(404, {'error': 'unexpected route'})
+
+    def do_POST(self):
+        data = self.rfile.read(int(self.headers['Content-Length']))
+        if self.path.startswith('/e2e/artifacts/'):
+            name = self.path.removeprefix('/e2e/artifacts/')
+            if not re.fullmatch(r'[a-z0-9-]+\.(png|xml|json)', name):
+                self.reply(400, {'error': 'invalid artifact name'})
+                return
+            screens = args.out / 'screens'
+            screens.mkdir(exist_ok=True)
+            (screens / name).write_bytes(data)
+            self.reply(200, {})
+            return
+        body = json.loads(data)
+        with lock:
+            if self.path == '/e2e/state':
+                body['snapshot'] = json.loads(body['snapshot']) if body['snapshot'] else None
+                body['bootstrap'] = json.loads(body['bootstrap']) if body.get('bootstrap') else None
+                state.clear()
+                state.update(body)
+                (args.out / 'native-state.json').write_text(json.dumps({**state, 'saves': saves}, indent=2))
+                self.reply(200, {})
+            elif self.path == '/api/self-host/subjects':
+                if self.headers.get('x-c15t-policy-contract') != '1' or not body.get('choice'):
+                    self.reply(400, {'error': 'missing native protocol receipt'})
+                    return
+                saves.append(body)
+                self.reply(200, {})
+            else:
+                self.reply(404, {'error': 'unexpected route'})
+                return
+            with (args.out / 'events.jsonl').open('a') as events:
+                events.write(json.dumps({'at': time(), 'path': self.path, 'body': body}) + '\n')
+
+
+server = ThreadingHTTPServer(('127.0.0.1', 3000), Handler)
+(args.out / 'backend-ready').touch()
+server.serve_forever()

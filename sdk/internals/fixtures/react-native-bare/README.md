@@ -518,6 +518,67 @@ Reinstall:
 Handset detail that changes results: on Android, force-stopping and swiping away are
 different. Use force-stop for a real process death.
 
+## Native app E2E
+
+Run from an installed checkout with Xcode and CocoaPods for iOS, or JDK 17,
+Android SDK 37, NDK 27.1.12297006 and an API 36 system image for Android:
+
+```sh
+bun run --cwd internals/fixtures/react-native-bare e2e:ios
+bun run --cwd internals/fixtures/react-native-bare e2e:android
+```
+
+These commands build Release apps with embedded JavaScript. XCUITest and
+AndroidJUnitRunner with UIAutomator tap the stock consent controls. Each run
+creates and deletes its own simulator or emulator. No shared device is erased.
+Android's test APK runs in a separate process so it can force-stop the real app.
+
+The test backend binds loopback port 3000 and serves the existing
+`native/protocol/evaluation-eu-fresh-install.json` response. The test artifact
+alone uses that endpoint and needs no project credentials. Reference apps and
+consumer setup should use hosted Inth. These tests do not establish the missing
+example project binding. Self-hosted transport remains an advanced option.
+
+`C15T_APP_E2E=1` embeds a fixture-only observer that publishes the real
+TurboModule snapshot to the test backend. The test fails unless the active core
+is native. It checks effective permissions, explicit category receipts, their
+confirmation times and the actual `/subjects` bodies. The fake core cannot
+satisfy these assertions. Demo links only reset scenarios. Reject, Accept,
+Customize, category switches, Save and reopening preferences use visible controls.
+
+The journey checks reject, accept, a measurement-only save, reopening the saved
+switches, cancelling an unsaved measurement draft, and the same receipts after
+terminating and relaunching the process. It requires exactly three delivered
+decisions. The backend stays available during this journey.
+
+Evidence defaults to `.artifacts/app-e2e/<platform>-<run>/`. It includes named
+PNGs, an MP4 recording, native snapshots, captured delivery bodies, device logs,
+build/test logs and a command XML report. iOS also retains the `.xcresult`, its
+test summary and exported attachments. Android retains JUnit XML and UI hierarchy
+XML. Failure cleanup captures the final frame and preserves available evidence.
+Android also uploads each capture to the test backend before APK teardown and
+streams device logs while the test runs.
+Successful runs require all seven journey frames and a non-empty recording.
+`command.xml` records runner failures, including compilation failures; it is not
+a substitute for the native test report.
+
+Set `C15T_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
+settings are `C15T_IOS_RUNTIME`, `C15T_IOS_DEVICE`, `C15T_ANDROID_IMAGE` and
+`C15T_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
+image. CI uses x86_64. A run fails if port 3000 is occupied. Run platforms
+sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
+dispatchable, and has no publication dependency.
+
+This lane does not cover bundled first-install offline policy, IAB or Additional
+Consent screens, native presenters while JavaScript is busy, stale-policy or
+storage refusal, Expo installation, standalone native apps, physical devices or
+the minimum supported OS versions. The current controls are React Native UI.
+SwiftUI and Compose hosts can reuse the protocol producer, native-snapshot and
+receipt assertions, recording wrappers and the `c15t.*` control identifiers once
+those hosts exist. They still need their own app integration and launch tests.
+A native host must publish state without JavaScript, set its app identifier, and
+replace the current scrim dismissal with its Cancel control.
+
 ## Monorepo notes
 
 Two things in `metro.config.js` are consequences of running an app inside a Bun

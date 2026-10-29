@@ -298,11 +298,13 @@ export const Button = ({
 	busy = false,
 	label,
 	onPress,
+	testID,
 	variant = 'primary',
 }: {
 	readonly busy?: boolean;
 	readonly label: string;
 	readonly onPress: () => void;
+	readonly testID?: string;
 	readonly variant?: 'primary' | 'secondary';
 }) => {
 	const { controlMinHeight, parts } = useHostStyles();
@@ -315,6 +317,7 @@ export const Button = ({
 		<Pressable
 			accessibilityLabel={label}
 			accessibilityRole="button"
+			testID={testID}
 			accessibilityState={{ busy, disabled: busy }}
 			disabled={busy}
 			onPress={onPress}

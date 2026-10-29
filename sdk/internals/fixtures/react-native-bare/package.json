@@ -10,6 +10,8 @@
 		"bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output .artifacts/android/index.android.bundle --assets-dest .artifacts/android",
 		"bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output .artifacts/ios/main.jsbundle --assets-dest .artifacts/ios",
 		"check-types": "tsc --noEmit",
+		"e2e:android": "bash scripts/app-e2e.sh android",
+		"e2e:ios": "bash scripts/app-e2e.sh ios",
 		"fmt": "oxfmt .",
 		"ios": "react-native run-ios",
 		"lint": "oxlint App.tsx index.js src",
@@ -36,6 +38,7 @@
 		"@react-native/typescript-config": "0.87.1",
 		"@types/node": "25.5.0",
 		"@types/react": "~19.2.2",
+		"hermes-compiler": "250829098.0.17",
 		"typescript": "7.0.2",
 		"vitest": "4.1.10"
 	},

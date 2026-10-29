@@ -29,6 +29,7 @@ import {
 	Pressable,
 	ScrollView,
 	StyleSheet,
+	Text,
 	View,
 } from 'react-native';
 import type { ViewStyle } from 'react-native';
@@ -46,6 +47,7 @@ import {
 import type { ConsentStyles } from '../theme/use-consent-styles';
 import { useAnnounceOnOpen } from './use-announce-on-open';
 import { useModalA11y } from './use-modal-a11y';
+import type { ModalA11y } from './use-modal-a11y';
 import { usePromptMotion } from './use-prompt-motion';
 import { useReducedMotion } from './use-reduced-motion';
 
@@ -82,6 +84,8 @@ export type ConsentSurfacePresentation =
 
 /** The layout a surface hands to its own content. */
 export interface ConsentSurfaceFrame {
+	/** Accessible title used for initial iOS screen-reader focus. */
+	readonly headingRef: ModalA11y['headingRef'];
 	/** Height the body may reach before it scrolls. */
 	readonly maxBodyHeight: number;
 	/** Every restylable part, already merged with the host override. */
@@ -132,6 +136,29 @@ export const ConsentSurfaceHeader = ({
 	const { parts } = useConsentSurfaceFrame();
 
 	return <View style={parts.header}>{children}</View>;
+};
+
+/**
+ * The accessible title and initial focus target of a consent surface.
+ *
+ * @param props - Title content.
+ * @returns The heading text.
+ */
+export const ConsentSurfaceTitle = ({
+	children,
+}: ConsentSurfaceSlotProps): ReactNode => {
+	const { headingRef, parts } = useConsentSurfaceFrame();
+
+	return (
+		<Text
+			accessible
+			accessibilityRole="header"
+			ref={headingRef}
+			style={parts.title}
+		>
+			{children}
+		</Text>
+	);
 };
 
 /**
@@ -325,6 +352,8 @@ export interface ConsentSurfaceProps {
 	readonly children: ReactNode;
 	/** Label for the tap-outside control. */
 	readonly dismissLabel?: string;
+	/** Platform test identifier for the tap-outside control. */
+	readonly dismissTestID?: string;
 	/** Name of the surface, announced and used as its accessibility label. */
 	readonly label: string;
 	/** Called when the subject dismisses without deciding. */
@@ -348,6 +377,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		branding,
 		children,
 		dismissLabel,
+		dismissTestID,
 		label,
 		onRequestClose,
 		open,
@@ -373,7 +403,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 
 	// A `Modal` already takes the Android back gesture, so asking for it here too
 	// would run the close handler twice.
-	const { containerProps, containerRef } = useModalA11y({
+	const { containerProps, containerRef, headingRef } = useModalA11y({
 		active: open,
 		hardwareBack: presentation === 'banner',
 		onRequestClose,
@@ -382,8 +412,8 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 	// Memoized so a surface rerender alone does not push every slot down a new
 	// value and rerender content that reads the frame.
 	const frame = useMemo(
-		() => ({ maxBodyHeight, parts, presentation, theme }),
-		[maxBodyHeight, parts, presentation, theme]
+		() => ({ headingRef, maxBodyHeight, parts, presentation, theme }),
+		[headingRef, maxBodyHeight, parts, presentation, theme]
 	);
 
 	if (!rendered) {
@@ -437,6 +467,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 				{onRequestClose === undefined ? null : (
 					<Pressable
 						accessibilityLabel={scrimLabel}
+						testID={dismissTestID}
 						accessibilityRole="button"
 						onPress={onRequestClose}
 						style={StyleSheet.absoluteFill}

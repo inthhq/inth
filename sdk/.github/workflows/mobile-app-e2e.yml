@@ -1,0 +1,69 @@
+name: Mobile app E2E
+
+# Kept separate from publication. Call explicitly until the app lane is required.
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+  TURBO_CACHE_POLICY: ${{ vars.TURBO_CACHE_POLICY }}
+
+jobs:
+  ios:
+    name: Release app on iOS Simulator, XCUITest
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: mobile-app-e2e-ios
+      - name: Run real consent controls and record the app
+        run: bun run --cwd internals/fixtures/react-native-bare e2e:ios
+      - name: Upload recordings, native snapshots, XCTest results and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-app-e2e-ios
+          path: |
+            internals/fixtures/react-native-bare/.artifacts/app-e2e/**
+            !internals/fixtures/react-native-bare/.artifacts/app-e2e/**/derived/**
+          if-no-files-found: error
+          retention-days: 7
+
+  android:
+    name: Release app on Android Emulator, UIAutomator
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: mobile-app-e2e-android
+      - name: Prepare the native emulator toolchain
+        run: |
+          echo "JAVA_HOME=${JAVA_HOME_17_X64}" >> "${GITHUB_ENV}"
+          sdkmanager 'platforms;android-37' 'build-tools;37.0.0' 'ndk;27.1.12297006' 'system-images;android-36;google_apis;x86_64' 'emulator'
+          sudo chmod 666 /dev/kvm
+      - name: Run real consent controls and record the app
+        env:
+          C15T_ANDROID_IMAGE: system-images;android-36;google_apis;x86_64
+          C15T_ANDROID_ARCH: x86_64
+        run: bun run --cwd internals/fixtures/react-native-bare e2e:android
+      - name: Upload recordings, native snapshots, JUnit results and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-app-e2e-android
+          path: internals/fixtures/react-native-bare/.artifacts/app-e2e/**
+          if-no-files-found: error
+          retention-days: 7

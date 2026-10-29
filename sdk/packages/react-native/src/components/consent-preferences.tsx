@@ -29,6 +29,7 @@ import {
 	ConsentSurfaceBody,
 	ConsentSurfaceFooter,
 	ConsentSurfaceHeader,
+	ConsentSurfaceTitle,
 	useConsentSurfaceFrame,
 } from './internal/consent-surface';
 import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
@@ -159,12 +160,7 @@ const ConsentPreferencesContent = ({
 	return (
 		<>
 			<ConsentSurfaceHeader>
-				<Text
-					accessibilityRole="header"
-					style={parts.title}
-				>
-					{copy.dialogTitle}
-				</Text>
+				<ConsentSurfaceTitle>{copy.dialogTitle}</ConsentSurfaceTitle>
 				<Text style={parts.description}>{copy.dialogDescription}</Text>
 			</ConsentSurfaceHeader>
 			<ConsentSurfaceBody>
@@ -194,6 +190,7 @@ const ConsentPreferencesContent = ({
 						disabled={busy}
 						kind="secondary"
 						label={copy.rejectAll}
+						testID="c15t.prefs.reject-all"
 						onPress={() => {
 							void decide('reject');
 						}}
@@ -204,6 +201,7 @@ const ConsentPreferencesContent = ({
 						disabled={busy}
 						kind="secondary"
 						label={copy.acceptAll}
+						testID="c15t.prefs.accept-all"
 						onPress={() => {
 							void decide('accept');
 						}}
@@ -214,6 +212,7 @@ const ConsentPreferencesContent = ({
 				<ConsentButton
 					disabled={busy}
 					label={copy.save}
+					testID="c15t.prefs.save"
 					onPress={() => {
 						void save();
 					}}
@@ -268,6 +267,7 @@ export const ConsentPreferences = ({
 		<ConsentSurface
 			branding={branding}
 			dismissLabel={copy.dismiss}
+			dismissTestID="c15t.prefs.cancel"
 			label={copy.preferences}
 			onRequestClose={onRequestClose}
 			open={open}

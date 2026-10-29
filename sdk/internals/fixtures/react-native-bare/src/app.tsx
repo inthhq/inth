@@ -42,6 +42,7 @@ import {
 	useHostStyles,
 } from './components/ui';
 import { useDemoDeepLinks } from './deep-links/use-deep-links';
+import { useE2eObserver } from './e2e-observer';
 import { IAB_DEMO_DISPLAY_MODEL } from './fixtures/iab-display-model';
 import { DiagnosticsScreen } from './screens/diagnostics';
 import { PrivacyScreen } from './screens/privacy';
@@ -231,6 +232,7 @@ const Header = ({
 
 /** The app, once a core is attached. */
 export const App = () => {
+	useE2eObserver();
 	const { appearance, setAppearance } = useAppearance();
 	const actions = useConsentActions();
 	const promptOwed = isStatusPromptOwed(useConsentStatus());

@@ -13,7 +13,12 @@
 import type { ReactElement } from 'react';
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
+import {
+	findNodeHandle,
+	focusState,
+	resetNativeStub,
+	setPlatformOS,
+} from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
 import { ConsentBanner } from '../consent-banner';
 import { ConsentDialog } from '../consent-dialog';
@@ -110,6 +115,42 @@ afterEach(() => {
 });
 
 describe('accessibility roles', () => {
+	test.each(SURFACES)(
+		'%s focuses its accessible heading on iOS without grouping the controls',
+		async (_name, surface) => {
+			const tree = mountSurface(surface());
+			const [heading] = roleNodes(tree.container(), 'header');
+
+			try {
+				await expect.poll(() => focusState.tags.length).toBe(1);
+				expect(focusState.tags).toEqual([findNodeHandle(heading)]);
+				expect(heading?.getAttribute('data-accessible')).toBe('true');
+				expect(
+					surfaceNode(tree.container()).getAttribute('data-accessible')
+				).not.toBe('true');
+			} finally {
+				tree.unmount();
+			}
+		}
+	);
+
+	test.each(SURFACES)(
+		'%s retains its accessible container focus on Android',
+		async (_name, surface) => {
+			setPlatformOS('android');
+			const tree = mountSurface(surface());
+			const container = surfaceNode(tree.container());
+
+			try {
+				await expect.poll(() => focusState.tags.length).toBe(1);
+				expect(focusState.tags).toEqual([findNodeHandle(container)]);
+				expect(container.getAttribute('data-accessible')).toBe('true');
+			} finally {
+				tree.unmount();
+			}
+		}
+	);
+
 	test.each(SURFACES)(
 		'%s names only roles Android can compile',
 		(_name, surface) => {

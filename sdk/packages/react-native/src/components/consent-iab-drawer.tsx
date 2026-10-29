@@ -47,6 +47,7 @@ import {
 	ConsentSurfaceBody,
 	ConsentSurfaceFooter,
 	ConsentSurfaceHeader,
+	ConsentSurfaceTitle,
 	useConsentSurfaceFrame,
 } from './internal/consent-surface';
 import type {
@@ -491,12 +492,7 @@ const ConsentIabDrawerHeader = (): ReactNode => {
 		<ConsentSurfaceHeader>
 			<View style={HEADER_ROW}>
 				<View style={HEADER_COPY}>
-					<Text
-						accessibilityRole="header"
-						style={parts.title}
-					>
-						{copy.title}
-					</Text>
+					<ConsentSurfaceTitle>{copy.title}</ConsentSurfaceTitle>
 					<Text style={parts.description}>{copy.description}</Text>
 				</View>
 				{/*
