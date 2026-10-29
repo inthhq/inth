@@ -305,4 +305,39 @@ final class PresenterTests: XCTestCase {
             return base.set(value, for: key)
         }
     }
+
+    @MainActor func testFailureStaysVisibleWhileARetryIsPending() async throws {
+        let store = RefusingStore()
+        let core = try await boot(store)
+        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        presenter.presentPreferences()
+        presenter.setCategory(.measurement, true)
+        store.refuseNext = true
+        presenter.commit(.save)
+        await settle(presenter)
+        XCTAssertEqual(presenter.errorMessage, "Couldn't save your choices. Nothing changed on this device.")
+        store.refuseNext = true
+        presenter.retry()
+        // The row stays put while the retry runs; only an outcome replaces it, so nothing reflows under the thumb.
+        XCTAssertTrue(presenter.pending)
+        XCTAssertNotNil(presenter.errorCode)
+        await settle(presenter)
+        XCTAssertNotNil(presenter.errorCode)
+        presenter.retry()
+        await settle(presenter)
+        XCTAssertNil(presenter.errorCode)
+        XCTAssertNil(presenter.presentationID)
+        XCTAssertTrue(core.snapshot().effectivePermissions.measurement)
+    }
+
+    @MainActor func testProviderPrerequisitesFollowTheDraftAndNamePurposes() async throws {
+        let (core, _) = try await bootIAB()
+        let presenter = ConsentPresenter(core: core)
+        presenter.customize()
+        XCTAssertFalse(presenter.providerPrerequisitesMet)
+        XCTAssertEqual(presenter.providerPrerequisiteNames, ["Store and access information on a device",
+            "Create profiles for personalised advertising", "Use profiles to select personalised advertising"])
+        for purpose in [1, 3, 4] { presenter.edit(\.purposeConsents, id: purpose, enabled: true) }
+        XCTAssertTrue(presenter.providerPrerequisitesMet)
+    }
 }

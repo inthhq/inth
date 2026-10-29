@@ -106,6 +106,7 @@ class ScreenAccessibilityTest {
             compose.runOnIdle { presenter.commit(ConsentPresenter.Action.REJECT) }
             compose.waitUntil(5_000) { presenter.errorMessage != null }
             compose.onNodeWithTag("c15t.first-layer.error").assertIsDisplayed()
+            compose.onNodeWithTag("c15t.first-layer.error.retry").assertIsDisplayed()
             assertNotNull(presenter.presentationID)
         } finally { Dispatchers.resetMain() }
     }

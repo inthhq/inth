@@ -134,6 +134,8 @@ final class ConsentJourneyTests: XCTestCase {
         let ac = button("c15t.iab.other-partners"); reveal(ac); ac.tap()
         XCTAssertTrue(app.textFields["c15t.ac.search"].waitForExistence(timeout: 3))
         app.switches["c15t.ac.provider.10.switch"].tap(); capture("ios-additional-consent")
+        XCTAssertTrue(app.staticTexts["c15t.ac.intro"].label.contains("Store and access information on a device"))
+        XCTAssertFalse(app.staticTexts["c15t.ac.intro"].label.contains("Purposes 1"))
         button("c15t.ac.back").tap()
         button("c15t.iab.save").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
@@ -160,6 +162,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.notice.acknowledge").waitForExistence(timeout: 10))
         XCTAssertTrue(button("fixture.open-preferences").isHittable)
         button("c15t.notice.acknowledge").tap(); XCTAssertTrue(button("c15t.notice.error.retry").waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["c15t.notice.error"].label, "Couldn't dismiss this notice. Nothing changed on this device.")
         button("c15t.notice.error.retry").tap(); XCTAssertFalse(button("c15t.notice.acknowledge").waitForExistence(timeout: 2))
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "none")
     }
@@ -253,6 +256,40 @@ final class ConsentJourneyTests: XCTestCase {
         capture("ios-identity-hidden")
         button("c15t.first-layer.reject-all").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+    }
+    func test11SaveRefusalStaysCalmInDarkAndAtTheLargestText() {
+        launch(fail: true, appearance: "dark")
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()
+        button("c15t.prefs.save").tap()
+        XCTAssertTrue(button("c15t.prefs.error.retry").waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["c15t.prefs.error"].label, "Couldn't save your choices. Nothing changed on this device.")
+        capture("ios-save-error-dark")
+        button("c15t.prefs.error.retry").tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
+        app.terminate(); launch(fail: true, appearance: "dark", arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()
+        let save = button("c15t.prefs.save")
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        if !save.isHittable { app.scrollViews["c15t.footer"].swipeUp() }
+        save.tap()
+        let retry = button("c15t.prefs.error.retry")
+        XCTAssertTrue(retry.waitForExistence(timeout: 5))
+        capture("ios-save-error-large")
+        // The failure sits at the top of the capped footer. On a 4.7-inch screen the message alone
+        // fills that cap at this size, so the link is a short drag down, never off the screen.
+        let footer = app.scrollViews["c15t.footer"]
+        for _ in 0..<3 where !retry.isHittable && footer.exists {
+            footer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
+                .press(forDuration: 0.1, thenDragTo: footer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)), withVelocity: .slow, thenHoldForDuration: 0.3)
+            capture("ios-save-error-large-scrolled")
+        }
+        XCTAssertTrue(retry.isHittable)
+        XCTAssertGreaterThanOrEqual(retry.frame.height, 44)
+        retry.tap()
+        // The gate only closes on a durable commit; the host's state row is below the fold at this size.
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCTAssertFalse(button("c15t.prefs.save").exists)
     }
 }
 

@@ -168,6 +168,7 @@ class ConsentJourneyTest {
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.other-partners"))
         compose.onNodeWithTag("c15t.iab.other-partners").performScrollTo().performClick()
         waitFor("c15t.ac.provider.10.switch").performScrollTo().performClick(); capture("android-additional-consent")
+        compose.onNodeWithTag("c15t.ac.intro").assertTextContains("Store and access information on a device", substring = true)
         device.pressBack(); compose.onNodeWithTag("c15t.iab.save").performClick(); awaitClosed()
         val summary = state("fixture.state.iab", "purposeObjections=[7]")
         summary.performScrollTo().assertTextContains("purposeObjections=[7]",substring = true).assertTextContains("vendorObjections=[1]",substring = true).assertTextContains("ac=2~~dv.10.20",substring = true)
@@ -282,8 +283,40 @@ class ConsentJourneyTest {
         waitFor("c15t.status.unavailable.retry"); capture("android-policy-unavailable")
         launch("fresh-online-notice",fail = true)
         waitFor("c15t.notice.acknowledge").performClick()
-        waitFor("c15t.notice.error.retry").performClick()
+        waitFor("c15t.notice.error.retry"); compose.onNodeWithText("Couldn't dismiss this notice. Nothing changed on this device.").assertIsDisplayed()
+        compose.onNodeWithTag("c15t.notice.error.retry").performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithTag("c15t.notice.acknowledge").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
+    }
+    @Test fun saveRefusalStaysCalmInDarkAndAtTheLargestText() {
+        try {
+            launch(fail = true)
+            waitFor("c15t.first-layer.customize").performClick()
+            waitFor("c15t.prefs.save").performClick()
+            waitFor("c15t.prefs.error.retry").assertIsDisplayed(); capture("android-save-error-light")
+            compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
+            device.executeShellCommand("cmd uimode night yes")
+            launch(fail = true)
+            waitFor("c15t.first-layer.customize").performClick()
+            waitFor("c15t.prefs.save").performClick()
+            waitFor("c15t.prefs.error.retry").assertIsDisplayed()
+            compose.onNodeWithText("Couldn't save your choices. Nothing changed on this device.").assertIsDisplayed()
+            capture("android-save-error-dark")
+            compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
+            device.executeShellCommand("settings put system font_scale 2.0")
+            launch(fail = true)
+            waitFor("c15t.first-layer.customize").performClick()
+            waitFor("c15t.prefs.save").performScrollTo().performClick()
+            val retry = waitFor("c15t.prefs.error.retry")
+            // The failure sits at the top of the footer, so its retry is in reach without scrolling.
+            retry.assertIsDisplayed()
+            Assert.assertTrue(retry.fetchSemanticsNode().boundsInRoot.height >= 48 * context.resources.displayMetrics.density - 1)
+            capture("android-save-error-large")
+            retry.performClick(); awaitClosed()
+            state("fixture.state.explicit-choice", "recorded")
+        } finally {
+            device.executeShellCommand("settings put system font_scale 1.0")
+            device.executeShellCommand("cmd uimode night no")
+        }
     }
 }

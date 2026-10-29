@@ -19,11 +19,16 @@ import java.util.concurrent.atomic.AtomicLong
 class PresenterTest {
     private class Memory : KeyValueStore {
         @Volatile var refuseNext = false
+        /** When set, the next decision write waits on it, so a test can look at the presenter mid-commit. */
+        @Volatile var holdNext: java.util.concurrent.CountDownLatch? = null
         private val values = java.util.concurrent.ConcurrentHashMap<String, String>()
         override fun read(key: String) = values[key]
         override fun write(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
         override fun writeDurably(key: String, value: String?): Boolean {
-            if (key == "com.c15t.snapshot" && refuseNext) { refuseNext = false; return false }
+            if (key == "com.c15t.snapshot") {
+                holdNext?.let { holdNext = null; it.await(5, TimeUnit.SECONDS) }
+                if (refuseNext) { refuseNext = false; return false }
+            }
             write(key, value); return true
         }
     }
@@ -155,6 +160,41 @@ class PresenterTest {
             ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
             assertFalse(core.snapshot().explicitChoice!!.valueOf(ConsentCategory.MEASUREMENT)!!)
         } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun failureStaysVisibleWhileARetryIsPending() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            val store = Memory()
+            val (core, _) = boot(store)
+            val p = ConsentPresenter(core, automaticPresentation = false)
+            p.presentPreferences()
+            p.edit { it.copy(purposeConsents = listOf(7), vendorConsents = listOf(1)) }
+            store.refuseNext = true
+            p.commit(ConsentPresenter.Action.SAVE)
+            await { !p.pending }
+            assertEquals("Couldn't save your choices. Nothing changed on this device.", p.errorMessage)
+            val hold = java.util.concurrent.CountDownLatch(1)
+            store.holdNext = hold; store.refuseNext = true
+            p.retry()
+            // The row stays put while the retry runs; only an outcome replaces it, so nothing reflows under the thumb.
+            assertTrue(p.pending); assertNotNull(p.errorCode)
+            hold.countDown(); await { !p.pending }
+            assertNotNull(p.errorCode)
+            p.retry(); await { !p.pending }
+            assertNull(p.errorCode); assertNull(p.presentationID)
+            assertTrue(core.isIabAllowed(1, 7, IabLegalBasis.CONSENT))
+        } finally { Dispatchers.resetMain() }
+    }
+    @Test fun providerPrerequisitesFollowTheDraftAndNamePurposes() {
+        val (core, _) = boot()
+        val p = ConsentPresenter(core, automaticPresentation = false)
+        p.presentPreferences()
+        assertFalse(p.providerPrerequisitesMet)
+        assertEquals(listOf("Store and access information on a device", "Create profiles for personalised advertising",
+            "Use profiles to select personalised advertising"), p.providerPrerequisiteNames)
+        p.edit { it.copy(purposeConsents = listOf(1, 3, 4)) }
+        assertTrue(p.providerPrerequisitesMet)
     }
 
     private fun await(condition: () -> Boolean) {
