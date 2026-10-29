@@ -94,13 +94,16 @@ try:
         time.sleep(.25)
     (out / 'network-before-install.txt').write_text(connectivity)
     (out / 'wifi-before-install.txt').write_text(device('shell', 'dumpsys', 'wifi'))
+    settings = device('shell', 'settings', 'list', 'global')
+    (out / 'radio-settings-before-install.txt').write_text(settings)
+    mobile_data = dict(re.findall(r'^(mobile_data\d*)=(.*)$', settings, re.MULTILINE))
     result['networkBeforeFirstLaunch'] = {
         'airplaneMode': True, 'activeDefaultNetwork': None,
         'wifiSetting': device('shell', 'settings', 'get', 'global', 'wifi_on').strip(),
-        'mobileDataSetting': device('shell', 'settings', 'get', 'global', 'mobile_data').strip(),
+        'mobileDataSettings': mobile_data,
     }
     assert result['networkBeforeFirstLaunch']['wifiSetting'] == '0'
-    assert result['networkBeforeFirstLaunch']['mobileDataSetting'] == '0'
+    assert mobile_data and all(value == '0' for value in mobile_data.values())
     device('shell', 'settings', 'put', 'system', 'screen_off_timeout', '2147483647')
     device('shell', 'input', 'keyevent', '224')
     device('shell', 'input', 'keyevent', '82')
