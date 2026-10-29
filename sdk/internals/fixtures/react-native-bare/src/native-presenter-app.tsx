@@ -6,7 +6,10 @@ import {
 	useConsentActions,
 	useConsentStatus,
 } from '@c15t/react-native';
-import type { ConsentPresenterOutcome } from '@c15t/react-native';
+import type {
+	ConsentPresenterOutcome,
+	ConsentPresenterSession,
+} from '@c15t/react-native';
 import { useEffect, useState } from 'react';
 import { Button, Text, View } from 'react-native';
 
@@ -15,6 +18,7 @@ import { useE2eObserver } from './e2e-observer';
 
 const privacyPolicyURL = 'https://c15t.com/privacy';
 const outcomes: ConsentPresenterOutcome[] = [];
+const presentations: ConsentPresenterSession[] = [];
 const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
 
 const requestPresentation = async (
@@ -22,9 +26,10 @@ const requestPresentation = async (
 	onError: (message: string) => void
 ) => {
 	try {
-		await (preferences
+		const presentation = await (preferences
 			? presentPreferences(privacyPolicyURL)
 			: presentConsentPrompt(privacyPolicyURL));
+		presentations.push(presentation);
 	} catch (failure: unknown) {
 		onError(String(failure));
 	}
@@ -68,7 +73,11 @@ export const NativePresenterApp = () => {
 		[]
 	);
 	useEffect(() => {
-		if (status.policyPending || status.promptRequirement.kind === 'none') {
+		if (
+			process.env.C15T_APP_E2E_SCENARIO === 'adapter' ||
+			status.policyPending ||
+			status.promptRequirement.kind === 'none'
+		) {
 			return;
 		}
 		void requestPresentation(false, setError);
@@ -83,14 +92,36 @@ export const NativePresenterApp = () => {
 		});
 	};
 	const blockJS = async () => {
-		await presentPreferences(privacyPolicyURL);
+		const presentation = await presentPreferences(privacyPolicyURL);
 		await fetch(`${endpoint}/e2e/js-block`, {
-			body: JSON.stringify({ blocked: true, outcomesBefore: outcomes.length }),
+			body: JSON.stringify({
+				blocked: true,
+				outcomesBefore: outcomes.length,
+				presentation,
+			}),
 			method: 'POST',
 		});
 		const end = Date.now() + 90000;
 		while (Date.now() < end) {
 			/* Deliberately occupy Hermes for the native acceptance journey. */
+		}
+		await fetch(`${endpoint}/e2e/js-block`, {
+			body: JSON.stringify({ blocked: false }),
+			method: 'POST',
+		});
+	};
+	const blockJSForRecreation = async () => {
+		await fetch(`${endpoint}/e2e/js-block`, {
+			body: JSON.stringify({
+				blocked: true,
+				outcomesBefore: outcomes.length,
+				presentations,
+			}),
+			method: 'POST',
+		});
+		const end = Date.now() + 30000;
+		while (Date.now() < end) {
+			/* The fixture's Activity must recover without JS. */
 		}
 		await fetch(`${endpoint}/e2e/js-block`, {
 			body: JSON.stringify({ blocked: false }),
@@ -103,7 +134,7 @@ export const NativePresenterApp = () => {
 		}
 		const timer = setInterval(() => {
 			void fetch(`${endpoint}/e2e/js-block`, {
-				body: JSON.stringify({ outcomes }),
+				body: JSON.stringify({ outcomes, presentations }),
 				method: 'POST',
 			});
 		}, 500);
@@ -121,7 +152,7 @@ export const NativePresenterApp = () => {
 				testID="fixture.present-prompt"
 				title="Review privacy notice"
 				onPress={() => {
-					void presentConsentPrompt(privacyPolicyURL);
+					void requestPresentation(false, setError);
 				}}
 			/>
 			{process.env.C15T_APP_E2E === '1' ? (
@@ -139,6 +170,13 @@ export const NativePresenterApp = () => {
 						title="Check native session reuse"
 						onPress={() => {
 							void checkSession();
+						}}
+					/>
+					<Button
+						testID="fixture.block-js-recreation"
+						title="Block JS for native Activity recreation"
+						onPress={() => {
+							void blockJSForRecreation();
 						}}
 					/>
 					<Button

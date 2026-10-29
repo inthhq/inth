@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 parser = argparse.ArgumentParser()
 parser.add_argument('--out', type=Path, required=True)
 parser.add_argument('--port', type=int, default=3000)
-parser.add_argument('--scenario', choices=['category', 'iab'], default='category')
+parser.add_argument('--scenario', choices=['category', 'iab', 'expiry', 'adapter'], default='category')
 args = parser.parse_args()
 args.out.mkdir(parents=True, exist_ok=True)
 root = Path(__file__).resolve().parents[4]
@@ -29,6 +29,9 @@ manifest = {'schemaVersion': 2, 'revision': 'app-e2e-offline-policy-1', 'brandin
 state = {}
 native_state = {}
 js_block = {}
+# Fixed fixture times, unrelated to the reference app's disclosure ages.
+control = {'now': 1793232000000, 'expiresAt': 1793232001000,
+           'categories': ['necessary', 'functionality', 'experience', 'measurement', 'marketing']} if args.scenario == 'expiry' else {}
 saves = []
 lock = Lock()
 
@@ -53,6 +56,8 @@ class Handler(BaseHTTPRequestHandler):
                     self.connection.close()
                     return
                 self.reply(transport['status'], transport['body'])
+            elif self.path == '/e2e/control':
+                self.reply(200, control)
             elif self.path == '/e2e/state':
                 self.reply(200, {**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block, 'backendOnline': online})
             elif self.path == '/health':
@@ -75,9 +80,17 @@ class Handler(BaseHTTPRequestHandler):
             return
         body = json.loads(data)
         with lock:
-            if self.path == '/e2e/scenario':
+            if self.path == '/e2e/control':
+                if args.scenario != 'expiry' or set(body) - {'now', 'categories'}:
+                    self.reply(400, {'error': 'fixture controls unavailable'})
+                    return
+                control.update(body)
+                self.reply(200, control)
+            elif self.path == '/e2e/scenario':
                 fixture = 'notice-init.json' if body.get('kind') == 'notice' else 'iab-init.json'
                 transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures' / fixture).read_text())}
+                if body.get('kind') == 'fallback':
+                    transport = {'status': 200, 'body': {'policyResolution': {'version': 1, 'status': 'no-match', 'policy': None}}}
                 self.reply(200, {})
             elif self.path == '/e2e/native':
                 native_state.clear()

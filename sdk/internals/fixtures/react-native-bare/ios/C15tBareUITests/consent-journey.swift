@@ -121,7 +121,101 @@ final class ConsentJourney: XCTestCase {
     }
   }
 
+  private func setControl(_ body: [String: Any]) throws {
+    let done = expectation(description: "Fixture clock and declaration")
+    var request = URLRequest(url: URL(string: ProcessInfo.processInfo.environment["C15T_E2E_URL"]! + "/e2e/control")!)
+    request.httpMethod = "POST"
+    request.httpBody = try JSONSerialization.data(withJSONObject: body)
+    URLSession.shared.dataTask(with: request) { _, response, _ in
+      XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+      done.fulfill()
+    }.resume()
+    wait(for: [done], timeout: 5)
+  }
+
+  private func expiryState(_ name: String, _ matches: ([String: Any], [String: Any]) -> Bool) throws -> [String: Any] {
+    let deadline = Date().addingTimeInterval(30)
+    var last: [String: Any] = [:]
+    repeat {
+      last = try report()
+      if let native = last["native"] as? [String: Any], let snapshot = native["snapshot"] as? [String: Any], matches(snapshot, last) {
+        let evidence = XCTAttachment(data: try JSONSerialization.data(withJSONObject: last, options: [.sortedKeys, .prettyPrinted]), uniformTypeIdentifier: "public.json")
+        evidence.name = name; evidence.lifetime = .keepAlways; add(evidence)
+        return last
+      }
+      RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+    } while Date() < deadline
+    XCTFail("Missing expiry state \(name): \(last)")
+    return last
+  }
+
+  private func expiryJourney() throws {
+    let optional = ["functionality", "experience", "measurement", "marketing"]
+    func receipts(_ snapshot: [String: Any]) -> [String: [String: Any]] { (snapshot["explicitChoice"] as? [String: Any])?["categories"] as? [String: [String: Any]] ?? [:] }
+    func denied(_ snapshot: [String: Any], _ report: [String: Any]) -> Bool {
+      let values = receipts(snapshot)
+      let gates = (report["native"] as? [String: Any])?["gates"] as? [String: Bool] ?? [:]
+      return optional.allSatisfy { values[$0]?["value"] as? Bool == false && gates[$0] == false }
+    }
+    try network(false); launch()
+    try fresh()
+    capture("20-expiry-initial-prompt")
+    tap("c15t.first-layer.accept-all")
+    let all = try expiryState("expiry-earlier-all") { snapshot, _ in optional.allSatisfy { receipts(snapshot)[$0]?["value"] as? Bool == true } }
+    let prior = (all["native"] as? [String: Any])?["process"] as? Int
+    capture("21-expiry-earlier-all")
+    try setControl(["categories": ["necessary", "measurement"]]); launch()
+    try expiryState("expiry-narrowed-offline-relaunch") { snapshot, report in
+      snapshot["consentCategories"] as? [String] == ["necessary", "measurement"] && snapshot["policyPending"] as? Bool == false && (report["native"] as? [String: Any])?["process"] as? Int != prior
+        && optional.allSatisfy { receipts(snapshot)[$0]?["value"] as? Bool == true }
+    }
+    tap("fixture.open-preferences")
+    XCTAssertTrue(app.switches["c15t.prefs.category.measurement.switch"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.switches["c15t.prefs.category.marketing.switch"].exists)
+    capture("22-expiry-narrowed-preferences")
+    tap("c15t.prefs.cancel")
+    try setControl(["now": 1793232001000])
+    try expiryState("expiry-exact-boundary") { snapshot, report in
+      snapshot["policyPending"] as? Bool == true && (report["native"] as? [String: Any])?["clock"] as? Int64 == 1793232001000
+    }
+    tap("fixture.open-preferences")
+    XCTAssertTrue(app.buttons["c15t.status.unavailable.retry"].waitForExistence(timeout: 10))
+    XCTAssertFalse(app.switches["c15t.prefs.category.measurement.switch"].exists)
+    XCTAssertTrue(app.buttons["c15t.prefs.reject-all"].waitForExistence(timeout: 10))
+    XCTAssertTrue(app.buttons["c15t.prefs.reject-all"].isEnabled)
+    XCTAssertFalse(app.buttons["c15t.prefs.accept-all"].exists)
+    XCTAssertFalse(app.buttons["c15t.prefs.save"].exists)
+    capture("23-expiry-reject-only")
+    tap("c15t.prefs.reject-all")
+    let denial = try expiryState("expiry-durable-full-denial", denied)
+    let deniedChoice = try XCTUnwrap(((denial["native"] as? [String: Any])?["snapshot"] as? [String: Any])?["explicitChoice"])
+    let bytes = try JSONSerialization.data(withJSONObject: deniedChoice, options: .sortedKeys)
+    XCTAssertEqual((denial["saves"] as? [Any])?.count, 0)
+    capture("24-expiry-denied")
+    launch()
+    let restored = try expiryState("expiry-denial-after-process-death") { snapshot, report in
+      denied(snapshot, report) && (report["native"] as? [String: Any])?["process"] as? Int != (denial["native"] as? [String: Any])?["process"] as? Int
+    }
+    XCTAssertEqual(bytes, try JSONSerialization.data(withJSONObject: XCTUnwrap(((restored["native"] as? [String: Any])?["snapshot"] as? [String: Any])?["explicitChoice"]), options: .sortedKeys))
+    capture("25-expiry-denial-restored")
+    try network(true); launch()
+    let replayed = try expiryState("expiry-replayed-same-fingerprint", { snapshot, report in denied(snapshot, report) && snapshot["policyPending"] as? Bool == false && (report["saves"] as? [Any])?.count == 1 })
+    let delivered = try XCTUnwrap((replayed["saves"] as? [[String: Any]])?.first)
+    XCTAssertEqual(bytes, try JSONSerialization.data(withJSONObject: XCTUnwrap(delivered["choice"]), options: .sortedKeys))
+    XCTAssertEqual(delivered["consentAction"] as? String, "necessary")
+    capture("26-expiry-replayed")
+    // Widen again to prove removed grants were erased, rather than merely hidden.
+    try setControl(["categories": ["necessary"] + optional]); launch()
+    try expiryState("expiry-wide-refresh-no-resurrection") { snapshot, report in
+      denied(snapshot, report) && (snapshot["consentCategories"] as? [String])?.count == 5 && snapshot["policyPending"] as? Bool == false && (report["saves"] as? [Any])?.count == 1
+    }
+    tap("fixture.open-preferences")
+    XCTAssertEqual(app.switches["c15t.prefs.category.measurement.switch"].value as? String, "0")
+    capture("27-expiry-wide-denial")
+  }
+
   func testConsentJourney() throws {
+    if ProcessInfo.processInfo.environment["C15T_APP_E2E_SCENARIO"] == "expiry" { try expiryJourney(); return }
     try network(false)
     launch()
     try fresh()
@@ -290,6 +384,12 @@ final class ConsentJourney: XCTestCase {
       return outcomes.count == before + 1 && outcomes.last?["kind"] as? String == "committed"
         && (snapshot["effectivePermissions"] as? [String: Bool])?["measurement"] == true
     }
+    let resumedBlock = try XCTUnwrap(resumed["jsBlock"] as? [String: Any])
+    let sessionID = try XCTUnwrap((resumedBlock["presentation"] as? [String: Any])?["sessionId"] as? String)
+    let finalOutcomes = try XCTUnwrap(resumedBlock["outcomes"] as? [[String: Any]])
+    XCTAssertEqual(finalOutcomes.last?["sessionId"] as? String, sessionID)
+    XCTAssertEqual(finalOutcomes.filter { $0["sessionId"] as? String == sessionID }.count, 1)
+    XCTAssertEqual(Set(try XCTUnwrap(finalOutcomes.last).keys), Set(["sessionId", "kind", "revision"]))
     XCTAssertEqual((resumed["saves"] as? [Any])?.count, 5)
     capture("13-js-outcome-resumed")
   }

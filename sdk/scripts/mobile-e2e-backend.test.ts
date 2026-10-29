@@ -71,3 +71,61 @@ it('keeps observer routes reachable while the consent backend is unavailable', a
 		await rm(out, { force: true, recursive: true });
 	}
 });
+
+it('exposes fixed expiry controls only in the expiry fixture', async () => {
+	const out = await mkdtemp(join(tmpdir(), 'c15t-expiry-backend-'));
+	const process = spawn(
+		'python3',
+		[
+			new URL(
+				'../internals/fixtures/react-native-bare/scripts/e2e-backend.py',
+				import.meta.url
+			).pathname,
+			'--port',
+			'0',
+			'--out',
+			out,
+			'--scenario',
+			'expiry',
+		],
+		{ stdio: 'ignore' }
+	);
+	try {
+		await expect
+			.poll(
+				() => readFile(join(out, 'backend-ready'), 'utf8').catch(() => ''),
+				{ timeout: 3000 }
+			)
+			.not.toBe('');
+		const url = `http://127.0.0.1:${await readFile(join(out, 'backend-ready'), 'utf8')}`;
+		const initial = await (await fetch(`${url}/e2e/control`)).json();
+		expect(initial).toMatchObject({
+			now: 1793232000000,
+			expiresAt: 1793232001000,
+		});
+		expect(initial.categories).toEqual([
+			'necessary',
+			'functionality',
+			'experience',
+			'measurement',
+			'marketing',
+		]);
+		const narrowed = {
+			categories: ['necessary', 'measurement'],
+			now: initial.expiresAt,
+		};
+		await fetch(`${url}/e2e/control`, {
+			method: 'POST',
+			body: JSON.stringify(narrowed),
+		});
+		expect(await (await fetch(`${url}/e2e/control`)).json()).toEqual({
+			...narrowed,
+			expiresAt: initial.expiresAt,
+		});
+		await expect(fetch(`${url}/api/self-host/init`)).rejects.toThrow();
+		expect((await (await fetch(`${url}/e2e/state`)).json()).saves).toEqual([]);
+	} finally {
+		process.kill();
+		await rm(out, { force: true, recursive: true });
+	}
+});

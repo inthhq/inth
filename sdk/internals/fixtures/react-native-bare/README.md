@@ -516,12 +516,50 @@ bun run --cwd internals/fixtures/react-native-bare e2e:ios
 bun run --cwd internals/fixtures/react-native-bare e2e:android
 ```
 
+To run the retained bundled-policy expiry scenario on either platform:
+
+```sh
+C15T_APP_E2E_SCENARIO=expiry C15T_APP_E2E_PORT=39883 \
+  bun run --cwd internals/fixtures/react-native-bare e2e:ios
+C15T_APP_E2E_SCENARIO=expiry C15T_APP_E2E_PORT=39884 \
+  bun run --cwd internals/fixtures/react-native-bare e2e:android
+```
+
+This scenario uses a fixed fixture clock and a separate authored policy resource.
+It accepts all four optional categories offline, restarts with only Necessary and
+Measurement declared, advances to the exact bundle expiry, then opens the shared
+native preferences. Accept and Save must be unavailable while Reject remains
+usable. Reject must durably deny all four optional categories, including those
+removed from the declaration. The test kills and relaunches the process, replays
+the exact denial body, refreshes the same policy fingerprint, then widens the
+declaration to prove earlier grants cannot return.
+
+Android also has an adapter regression scenario:
+
+```sh
+C15T_APP_E2E_SCENARIO=adapter C15T_APP_E2E_PORT=39884 \
+  bun run --cwd internals/fixtures/react-native-bare e2e:android
+```
+
+It opens a definitive no-match fallback through the native command and checks
+one compact `committed` event with the returned session ID. It then blocks Hermes
+for 30 seconds and forces a real host Activity recreation through a fixture-only
+intent. The native notice must reattach and acknowledge while JS is blocked,
+without a second presentation command. After JS resumes, exactly one correlated
+`acknowledged` event must arrive and no additional consent receipt may be sent.
+The IAB blocked-JS journey also correlates command and final event IDs.
+
+The clock and declaration controls belong to the loopback E2E artifact. They use
+the native installers' existing dependency injection. The normal app keeps the
+system clock and hosted configuration. This does not test live hosted receipts.
+
 These commands build Release apps with embedded JavaScript. XCUITest and
 AndroidJUnitRunner with UIAutomator tap the stock consent controls. Each run
 creates and deletes its own simulator or emulator. No shared device is erased.
 Android's test APK runs in a separate process so it can force-stop the real app.
 
-The test backend binds loopback port 3108. It exports an authored conservative
+The test backend binds loopback port 39873 by default. Set
+`C15T_APP_E2E_PORT` to an unused port for concurrent runs. It exports an authored conservative
 manifest and serves the existing `native/protocol/evaluation-eu-fresh-install.json`
 response after reconnection. Only the E2E build artifact uses that endpoint and
 resource. The checked-in reference defaults remain the public Inth demo.
@@ -547,7 +585,8 @@ PNGs, an MP4 recording, native snapshots, captured delivery bodies, device logs,
 build/test logs and a command XML report. iOS also retains the `.xcresult`, its
 test summary and exported attachments. Android retains JUnit XML and UI hierarchy
 XML. Failure cleanup captures the final frame and preserves available evidence.
-Android also uploads each capture to the test backend before APK teardown and
+Android records consecutive video segments and joins them so longer journeys
+include the ending beyond screenrecord's time limit. It also uploads each capture to the test backend before APK teardown and
 streams device logs while the test runs.
 Successful runs require all eleven journey frames and a non-empty recording.
 `command.xml` records runner failures, including compilation failures; it is not

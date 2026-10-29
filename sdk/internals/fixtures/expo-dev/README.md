@@ -232,3 +232,40 @@ The tracking card on the Consent tab is the other half: `useTrackingRequest` run
 sheet, the preference centre that Apple's Additional Information button sends the subject
 to, and the second sheet. An Apple yes moves no category by itself, which is the whole
 reason the card prints `useIsTrackingAllowed` beside the arm.
+
+
+## Packed iOS offline acceptance
+
+Run the packed smoke against an existing Simulator Release app and its SDK archive:
+
+```sh
+python3 scripts/packed-launch-ios.py --app /absolute/path/c15tExpoDev.app \
+  --archive /absolute/path/c15t-react-native.tgz --out /absolute/path/new-evidence
+```
+
+The app must retain the designated hosted endpoint and the bundled policy. Build
+with `CODE_SIGNING_ALLOWED=YES CODE_SIGNING_FOR_SIMULATOR=YES CODE_SIGN_IDENTITY=-`
+so Xcode embeds the Simulator application entitlement required by Keychain. An
+unsigned build can compile but fail the native protected-storage probe. The
+runner copies the app, preserves its entitlements when signing, and creates its
+own fresh Simulator. It builds only the external XCUITest runner and a network
+fault library. It does not rebuild the SDK or replace archive sources.
+
+The library loads before app startup and refuses HTTP and HTTPS requests with
+`NSURLErrorNotConnectedToInternet`. The real hosted transport still constructs
+its requests. `network-fault.jsonl` records each refused URL and process ID.
+This is a process-scoped URL loading fault, not device radio isolation or a live
+hosted receipt test. Host networking and other Simulators remain available.
+
+XCUITest taps native Reject, checks the compact outcome and denied permissions,
+kills and relaunches the app, and reopens native preferences with Measurement
+off. Evidence includes screenshots, accessibility trees, the complete MP4,
+native test results, runtime values, and hashes of the archive and app files.
+
+For direct native gate evidence, run `scripts/install-packed-ios-proof.py --consumer
+/absolute/path/consumer` after prebuild and before the Release build, then pass
+`--native-proof` to the smoke runner. This adds a read-only native observer to the
+consumer's AppDelegate. It runs only with the runner's launch environment and
+records the installed core's snapshot plus actual `C15t.isAllowed` values to the
+app sandbox. The smoke requires fresh bundled readings and full denial in both
+processes. The SDK still comes only from the archive.

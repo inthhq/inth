@@ -218,12 +218,155 @@ class ConsentJourney {
             !block.optBoolean("blocked") && outcomes != null && outcomes.length() == block.getInt("outcomesBefore") + 1 &&
                 outcomes.getJSONObject(outcomes.length() - 1).getString("kind") == "committed" && snapshot.getJSONObject("effectivePermissions").getBoolean("measurement")
         }
+        val block = resumed.getJSONObject("jsBlock")
+        val sessionId = block.getJSONObject("presentation").getString("sessionId")
+        val outcomes = block.getJSONArray("outcomes")
+        assertEquals(sessionId, outcomes.getJSONObject(outcomes.length() - 1).getString("sessionId"))
+        assertEquals(1, (0 until outcomes.length()).count { outcomes.getJSONObject(it).getString("sessionId") == sessionId })
+        assertEquals(setOf("sessionId", "kind", "revision"), outcomes.getJSONObject(outcomes.length() - 1).keys().asSequence().toSet())
         assertEquals(5, resumed.getJSONArray("saves").length())
         capture("13-js-outcome-resumed")
     }
 
+    private fun setControl(body: JSONObject) {
+        val connection = URL("http://localhost:3000/e2e/control").openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"; connection.doOutput = true
+        try { connection.outputStream.use { it.write(body.toString().toByteArray()) }; assertEquals(200, connection.responseCode) } finally { connection.disconnect() }
+    }
+
+    private fun expiryState(name: String, matches: (JSONObject, JSONObject) -> Boolean): JSONObject {
+        val deadline = SystemClock.elapsedRealtime() + 30000
+        var last = JSONObject()
+        do {
+            last = report()
+            val snapshot = last.optJSONObject("native")?.optJSONObject("snapshot")
+            if (snapshot != null && matches(snapshot, last)) {
+                File(output, "$name.json").also { it.writeText(last.toString(2)); publish(it) }
+                return last
+            }
+            SystemClock.sleep(200)
+        } while (SystemClock.elapsedRealtime() < deadline)
+        error("Missing expiry state $name: $last")
+    }
+
+    private fun expiryJourney() {
+        val optional = listOf("functionality", "experience", "measurement", "marketing")
+        fun receipts(snapshot: JSONObject) = snapshot.optJSONObject("explicitChoice")?.optJSONObject("categories")
+        fun denied(snapshot: JSONObject, report: JSONObject): Boolean = optional.all {
+            receipts(snapshot)?.optJSONObject(it)?.opt("value") == false && report.getJSONObject("native").getJSONObject("gates").opt(it) == false
+        }
+        network(false); launch(); fresh()
+        capture("20-expiry-initial-prompt")
+        tap("c15t.first-layer.accept-all")
+        val all = expiryState("expiry-earlier-all") { snapshot, _ -> optional.all { receipts(snapshot)?.optJSONObject(it)?.opt("value") == true } }
+        val prior = all.getJSONObject("native").getInt("process")
+        capture("21-expiry-earlier-all")
+        setControl(JSONObject().put("categories", org.json.JSONArray(listOf("necessary", "measurement")))); launch()
+        expiryState("expiry-narrowed-offline-relaunch") { snapshot, report ->
+            snapshot.optJSONArray("consentCategories")?.toString() == "[\"necessary\",\"measurement\"]" && !snapshot.getBoolean("policyPending") && report.getJSONObject("native").getInt("process") != prior && optional.all { receipts(snapshot)?.optJSONObject(it)?.opt("value") == true }
+        }
+        tap("fixture.open-preferences")
+        control("c15t.prefs.category.measurement.switch")
+        assertFalse(device.hasObject(By.res("c15t.prefs.category.marketing.switch")))
+        capture("22-expiry-narrowed-preferences")
+        tap("c15t.prefs.cancel")
+        setControl(JSONObject().put("now", 1793232001000L))
+        expiryState("expiry-exact-boundary") { snapshot, report -> snapshot.getBoolean("policyPending") && report.getJSONObject("native").getLong("clock") == 1793232001000L }
+        tap("fixture.open-preferences")
+        control("c15t.status.unavailable.retry")
+        assertFalse(device.hasObject(By.res("c15t.prefs.category.measurement.switch")))
+        assertTrue(control("c15t.prefs.reject-all").isEnabled)
+        assertFalse(device.hasObject(By.res("c15t.prefs.accept-all")))
+        assertFalse(device.hasObject(By.res("c15t.prefs.save")))
+        capture("23-expiry-reject-only")
+        tap("c15t.prefs.reject-all")
+        val denial = expiryState("expiry-durable-full-denial", ::denied)
+        val frozen = canonical(denial.getJSONObject("native").getJSONObject("snapshot").getJSONObject("explicitChoice"))
+        assertEquals(0, denial.getJSONArray("saves").length())
+        capture("24-expiry-denied")
+        launch()
+        val restored = expiryState("expiry-denial-after-process-death") { snapshot, report -> denied(snapshot, report) && report.getJSONObject("native").getInt("process") != denial.getJSONObject("native").getInt("process") }
+        assertEquals(frozen, canonical(restored.getJSONObject("native").getJSONObject("snapshot").getJSONObject("explicitChoice")))
+        capture("25-expiry-denial-restored")
+        network(true); launch()
+        val replayed = expiryState("expiry-replayed-same-fingerprint") { snapshot, report -> denied(snapshot, report) && !snapshot.getBoolean("policyPending") && report.getJSONArray("saves").length() == 1 }
+        val delivered = replayed.getJSONArray("saves").getJSONObject(0)
+        assertEquals(frozen, canonical(delivered.getJSONObject("choice")))
+        assertEquals("necessary", delivered.getString("consentAction"))
+        capture("26-expiry-replayed")
+        setControl(JSONObject().put("categories", org.json.JSONArray(listOf("necessary") + optional))); launch()
+        expiryState("expiry-wide-refresh-no-resurrection") { snapshot, report -> denied(snapshot, report) && snapshot.getJSONArray("consentCategories").length() == 5 && !snapshot.getBoolean("policyPending") && report.getJSONArray("saves").length() == 1 }
+        tap("fixture.open-preferences")
+        assertFalse(control("c15t.prefs.category.measurement.switch").isChecked)
+        capture("27-expiry-wide-denial")
+    }
+
+    private fun scenario(kind: String) {
+        val connection = URL("http://localhost:3000/e2e/scenario").openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"; connection.doOutput = true
+        try { connection.outputStream.use { it.write(JSONObject().put("kind", kind).toString().toByteArray()) }; assertEquals(200, connection.responseCode) } finally { connection.disconnect() }
+    }
+
+    private fun adapterJourney() {
+        scenario("fallback"); network(true); launch()
+        awaitState("adapter-definitive-no-match") { snapshot, _ -> snapshot.getJSONObject("resolution").getString("status") == "no-match" }
+        tap("fixture.present-prompt")
+        control("c15t.first-layer.reject-all")
+        val opened = awaitState("adapter-fallback-command") { _, report -> report.getJSONObject("jsBlock").optJSONArray("presentations")?.length() == 1 }
+        val fallbackId = opened.getJSONObject("jsBlock").getJSONArray("presentations").getJSONObject(0).getString("sessionId")
+        capture("30-fallback-choice")
+        tap("c15t.first-layer.reject-all")
+        val committed = awaitState("adapter-fallback-committed") { snapshot, report ->
+            !snapshot.isNull("explicitChoice") && report.getJSONArray("saves").length() == 1 && report.getJSONObject("jsBlock").optJSONArray("outcomes")?.length() == 1
+        }
+        val outcome = committed.getJSONObject("jsBlock").getJSONArray("outcomes").getJSONObject(0)
+        assertEquals("committed", outcome.getString("kind"))
+        assertEquals(fallbackId, outcome.getString("sessionId"))
+        assertEquals(setOf("sessionId", "kind", "revision"), outcome.keys().asSequence().toSet())
+        assertEquals("necessary", committed.getJSONArray("saves").getJSONObject(0).getString("consentAction"))
+        capture("31-fallback-compact-commit")
+
+        scenario("notice"); launch()
+        awaitState("adapter-notice-owed") { snapshot, _ -> snapshot.getJSONObject("promptRequirement").getString("kind") == "notice" }
+        tap("fixture.present-prompt")
+        control("c15t.notice.acknowledge")
+        val notice = awaitState("adapter-notice-command") { _, report -> report.getJSONObject("jsBlock").optJSONArray("presentations")?.length() == 1 }
+        val native = notice.getJSONObject("native")
+        val generation = native.getInt("activityGeneration")
+        val process = native.getInt("process")
+        val noticeId = notice.getJSONObject("jsBlock").getJSONArray("presentations").getJSONObject(0).getString("sessionId")
+        val priorChoice = canonical(native.getJSONObject("snapshot").getJSONObject("explicitChoice"))
+        tap("fixture.block-js-recreation")
+        awaitState("adapter-js-blocked") { _, report -> report.getJSONObject("jsBlock").optBoolean("blocked") }
+        device.executeShellCommand("am start -W --ez c15t.fixture.recreate true -n $app/.MainActivity")
+        val recreated = awaitState("adapter-native-activity-recreated") { _, report -> report.getJSONObject("native").getInt("activityGeneration") > generation }
+        assertEquals(process, recreated.getJSONObject("native").getInt("process"))
+        assertTrue(recreated.getJSONObject("jsBlock").getBoolean("blocked"))
+        control("c15t.notice.acknowledge")
+        capture("32-notice-recreated-with-js-blocked")
+        tap("c15t.notice.acknowledge")
+        val acknowledged = awaitState("adapter-native-ack-before-js") { snapshot, _ -> snapshot.getJSONObject("promptRequirement").getString("kind") == "none" }
+        assertTrue(acknowledged.getJSONObject("jsBlock").getBoolean("blocked"))
+        assertEquals(priorChoice, canonical(acknowledged.getJSONObject("native").getJSONObject("snapshot").getJSONObject("explicitChoice")))
+        capture("33-notice-acknowledged-with-js-blocked")
+        val resumed = awaitState("adapter-one-correlated-notice-outcome") { _, report ->
+            val block = report.getJSONObject("jsBlock")
+            !block.optBoolean("blocked") && block.optJSONArray("outcomes")?.length() == 1
+        }
+        val block = resumed.getJSONObject("jsBlock")
+        assertEquals(1, block.getJSONArray("presentations").length())
+        val final = block.getJSONArray("outcomes").getJSONObject(0)
+        assertEquals(noticeId, final.getString("sessionId"))
+        assertEquals("acknowledged", final.getString("kind"))
+        assertEquals(setOf("sessionId", "kind", "revision"), final.keys().asSequence().toSet())
+        assertEquals(1, resumed.getJSONArray("saves").length())
+        capture("34-notice-one-final-outcome")
+    }
+
     @Test
     fun consentJourney() {
+        if (InstrumentationRegistry.getArguments().getString("scenario") == "adapter") { adapterJourney(); return }
+        if (InstrumentationRegistry.getArguments().getString("scenario") == "expiry") { expiryJourney(); return }
         try {
             network(false)
             launch()

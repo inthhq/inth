@@ -9,9 +9,13 @@ OUT="${C15T_APP_E2E_OUT:-${APP_DIR}/.artifacts/app-e2e/${PLATFORM}-${RUN_ID}}"
 mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ ! -e "${OUT}/backend-ready" && ! -e "${OUT}/result.json" ]] || { echo "Use a fresh evidence directory: ${OUT}" >&2; exit 2; }
-mkdir -p "${OUT}/tmp"
-export TMPDIR="${OUT}/tmp/"
+# tsx creates a Unix socket under TMPDIR. Evidence paths can exceed its path limit.
+TASK_TMP="$(mktemp -d /tmp/c15t-app-e2e.XXXXXX)"
+export TMPDIR="${TASK_TMP}/"
+printf '%s\n' "${TASK_TMP}" > "${OUT}/temporary-directory.txt"
 export C15T_APP_E2E=1 C15T_FAKE_NATIVE=0
+export C15T_APP_E2E_SCENARIO="${C15T_APP_E2E_SCENARIO:-category}"
+printf '%s\n' "${C15T_APP_E2E_SCENARIO}" > "${OUT}/scenario.txt"
 BACKEND_PORT="${C15T_APP_E2E_PORT:-39873}"
 export C15T_E2E_URL="http://localhost:${BACKEND_PORT}"
 BACKEND_PID=""; VIDEO_PID=""; LOG_PID=""; DEVICE=""; EMULATOR_PID=""; AVD_NAME=""
@@ -22,6 +26,7 @@ cleanup() {
   set +e
   if [[ -n "${VIDEO_PID}" ]]; then
     if [[ "${PLATFORM}" == android ]]; then
+      "${ADB}" -s "${DEVICE}" shell touch /data/local/tmp/c15t-video-stop
       "${ADB}" -s "${DEVICE}" shell pkill -2 screenrecord
       "${ADB}" -s "${DEVICE}" shell 'for i in 1 2 3 4 5 6 7 8 9 10; do pidof screenrecord >/dev/null || exit 0; sleep 1; done; exit 1'
     else
@@ -47,7 +52,17 @@ cleanup() {
       "${ADB}" -s "${DEVICE}" logcat -d -v threadtime > "${OUT}/device-final.log" 2>&1
       "${ADB}" -s "${DEVICE}" exec-out screencap -p > "${OUT}/final.png"
       "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-video.log "${OUT}/video.log"
-      "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-app-e2e.mp4 "${OUT}/journey.mp4"
+      mkdir -p "${OUT}/video-segments"
+      "${ADB}" -s "${DEVICE}" pull /data/local/tmp/c15t-video-segments/. "${OUT}/video-segments"
+      python3 - "${OUT}" <<'PYVIDEO'
+import pathlib,subprocess,sys
+out=pathlib.Path(sys.argv[1])
+segments=sorted((out/'video-segments').glob('*.mp4'))
+if not segments: raise RuntimeError('No Android recording segments')
+manifest=out/'video-segments/concat.txt'
+manifest.write_text(''.join("file '"+path.name+"'\n" for path in segments))
+subprocess.run(['ffmpeg','-v','error','-f','concat','-safe','0','-i',str(manifest),'-c','copy','-movflags','+faststart',str(out/'journey.mp4')],check=True)
+PYVIDEO
       "${ADB}" -s "${DEVICE}" pull /sdcard/Android/data/com.c15t.bare.e2e/files/evidence "${OUT}/device-evidence"
       "${ADB}" -s "${DEVICE}" emu kill
     elif [[ -n "${EMULATOR_PID}" ]]; then
@@ -58,6 +73,7 @@ cleanup() {
   fi
   [[ -z "${BACKEND_PID}" ]] || { kill "${BACKEND_PID}"; wait "${BACKEND_PID}"; }
   python3 "${APP_DIR}/scripts/e2e-result.py" "${OUT}" "${PLATFORM}" "${result}" || result=1
+  rm -rf "${TASK_TMP}"
   printf 'Mobile app E2E exit %s. Evidence: %s\n' "${result}" "${OUT}"
   exit "${result}"
 }
@@ -116,7 +132,9 @@ for path in pathlib.Path(sys.argv[1]).glob('*.xctestrun'):
  data=plistlib.loads(path.read_bytes())
  def update(value):
   if isinstance(value,dict):
-   if 'TestBundlePath' in value: value.setdefault('EnvironmentVariables',{})['C15T_E2E_URL']=sys.argv[2]
+   if 'TestBundlePath' in value:
+    value.setdefault('EnvironmentVariables',{})['C15T_E2E_URL']=sys.argv[2]
+    value['EnvironmentVariables']['C15T_APP_E2E_SCENARIO']=__import__('os').environ['C15T_APP_E2E_SCENARIO']
    for child in list(value.values()): update(child)
   elif isinstance(value,list):
    for child in value: update(child)
@@ -179,14 +197,24 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   "${ADB}" -s "${DEVICE}" shell input keyevent 224
   "${ADB}" -s "${DEVICE}" logcat -v threadtime > "${OUT}/device.log" 2>&1 &
   LOG_PID=$!
-  "${ADB}" -s "${DEVICE}" shell 'nohup screenrecord --time-limit 180 /data/local/tmp/c15t-app-e2e.mp4 >/data/local/tmp/c15t-video.log 2>&1 </dev/null &'
+  cat > "${OUT}/record-video.sh" <<'SHVIDEO'
+#!/system/bin/sh
+mkdir -p /data/local/tmp/c15t-video-segments
+segment=0
+while [ ! -e /data/local/tmp/c15t-video-stop ]; do
+  screenrecord --time-limit 170 "/data/local/tmp/c15t-video-segments/$(printf '%03d' "$segment").mp4"
+  segment=$((segment + 1))
+done
+SHVIDEO
+  "${ADB}" -s "${DEVICE}" push "${OUT}/record-video.sh" /data/local/tmp/c15t-record-video.sh > "${OUT}/video-start.log" 2>&1
+  "${ADB}" -s "${DEVICE}" shell 'nohup sh /data/local/tmp/c15t-record-video.sh >/data/local/tmp/c15t-video.log 2>&1 </dev/null &'
   VIDEO_PID=remote
   "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
   "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/app/build/outputs/apk/release/app-release.apk" > "${OUT}/install.log" 2>&1
   "${ADB}" -s "${DEVICE}" install -r "${APP_DIR}/android/e2e/build/outputs/apk/release/e2e-release.apk" >> "${OUT}/install.log" 2>&1
   instrument_exit=0
   "${ADB}" -s "${DEVICE}" shell am instrument -w -r \
-    -e class com.c15t.bare.e2e.ConsentJourney \
+    -e scenario "${C15T_APP_E2E_SCENARIO}" -e class com.c15t.bare.e2e.ConsentJourney \
     com.c15t.bare.e2e/androidx.test.runner.AndroidJUnitRunner > "${OUT}/test.log" 2>&1 || instrument_exit=$?
   python3 "${APP_DIR}/scripts/android-instrumentation-result.py" "${OUT}/test.log" "${OUT}/junit/TEST-consent-journey.xml"
   [[ "${instrument_exit}" == 0 ]] || exit "${instrument_exit}"

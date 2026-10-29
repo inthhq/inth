@@ -32,6 +32,15 @@ required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl'] + [
         '08-native-iab-blocked-js', '09-native-partner-search', '10-native-partner-details',
         '11-native-additional-consent', '12-native-committed-before-js', '13-js-outcome-resumed',
         '14-nonmodal-native-notice', '15-notice-acknowledged', 'final-or-failure']]
+if (out / 'scenario.txt').exists() and (out / 'scenario.txt').read_text().strip() == 'expiry':
+    required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl'] + [
+        f'screens/{name}.png' for name in ['20-expiry-initial-prompt', '21-expiry-earlier-all',
+        '22-expiry-narrowed-preferences', '23-expiry-reject-only', '24-expiry-denied',
+        '25-expiry-denial-restored', '26-expiry-replayed', '27-expiry-wide-denial']]
+if (out / 'scenario.txt').exists() and (out / 'scenario.txt').read_text().strip() == 'adapter':
+    required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl'] + [
+        f'screens/{name}.png' for name in ['30-fallback-choice', '31-fallback-compact-commit',
+        '32-notice-recreated-with-js-blocked', '33-notice-acknowledged-with-js-blocked', '34-notice-one-final-outcome']]
 missing = [name for name in required if not (out / name).is_file() or not (out / name).stat().st_size]
 if not code and (not passed or missing):
     code = 1
