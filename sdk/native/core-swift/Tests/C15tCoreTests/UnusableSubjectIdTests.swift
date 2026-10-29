@@ -202,11 +202,14 @@ final class UnusableSubjectIdTests: XCTestCase {
         )
         await first.waitUntilIdle()
 
-        XCTAssertNotNil(store.data(for: StorageKey.snapshot), "the install has to hold a real envelope")
-        let queued = try XCTUnwrap(
-            store.data(for: StorageKey.pendingSaves),
-            "the save never reached the queue, so there is nothing here to refuse to replay"
-        )
+        var envelope = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode))
+        let entries = try XCTUnwrap(envelope.pendingSaves)
+        XCTAssertFalse(entries.isEmpty, "the save has to owe delivery before the identity is poisoned")
+        // Reproduce the separate queue format used by the legacy-id build.
+        let queued = try C15tJSON.encode(entries)
+        envelope.pendingSaves = nil
+        XCTAssertTrue(store.encode(envelope, for: StorageKey.snapshot))
+        XCTAssertTrue(store.set(queued, for: StorageKey.pendingSaves))
         XCTAssertTrue(
             String(decoding: queued, as: UTF8.self).contains(Self.healthyId),
             "the queued body is attributed to the healthy id"

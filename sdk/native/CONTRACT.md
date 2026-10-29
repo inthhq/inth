@@ -526,8 +526,9 @@ from the bytes applied. That identity is the point: there is no partial read, be
 half an envelope answers like a returning user, and a permission assembled out of
 garbage is indistinguishable from one the subject actually gave. It covers:
 
-- a key this build does not model. Swift refuses any key path its own encoder cannot
-  reproduce from the decoded value, which needs no list of names to keep current.
+- a key in the stored consent state that this build does not model. Swift refuses
+  any key path its own encoder cannot reproduce from the decoded value, which
+  needs no list of names to keep current.
   Kotlin's storage codec rejects unknown keys outright. Neither tolerates an unknown
   field and rewrites it away, because that rewrite is the launch where the field
   silently disappears while every number on the snapshot still looks healthy.
@@ -535,6 +536,10 @@ garbage is indistinguishable from one the subject actually gave. It covers:
   one shape most likely to read as valid.
 - a document from before the corrections below: `overrides.test`, or `privacySignals`
   as a boolean `gpc`/`msa` pair.
+
+Pending-save entries tolerate unknown queue fields, both under the legacy key and
+inside `pendingSaves`. Their frozen request bodies still replay unchanged. This
+exception does not relax snapshot, policy or IAB authority decoding.
 
 One retired field is dropped on read instead of refused: the standing privacy
 directive an alpha build stored. Every alpha snapshot wrote `optOutDirectives`, even as
@@ -568,14 +573,21 @@ that the backend has them, which no synchronous call can know. Delivery is a
 later fact, reported by the delivered event and by the error that replaced it,
 and the depth stays readable.
 
-IAB decisions atomically store the complete decision and pending body in the
-snapshot envelope. Their latest decision supersedes older queued grants. A full
-denial supersedes older queued actions for the same subject ID, external ID and
-domain; other owners' frozen withdrawals remain owed. Identity changes and reset
+Every consent save atomically stores the evaluated snapshot and pending body in
+the snapshot envelope before publishing the decision. Category saves retain
+existing delivery obligations under the queue's retention and capacity rules.
+Older category queues under the separate protected key remain readable; the
+next successful save carries their entries into the envelope. A refused envelope
+write preserves the previous decision and queue, publishes no new grant and
+creates no body that a later flush could deliver.
+
+IAB decisions also store the complete IAB record in that envelope. Each new IAB
+decision supersedes older queued grants. A full denial supersedes older queued
+actions for the same subject ID, external ID and domain. Other owners' frozen
+withdrawals remain owed. Identity changes and reset
 persist an empty consent record while retaining frozen withdrawals and an action
 time watermark. Their failure semantics and migration rules are defined in
-`docs/internal/native-iab-commits.mdx`. The legacy category queue below still uses
-its separate protected key.
+`docs/internal/native-iab-commits.mdx`.
 
 Order is what makes the assertion honest. The queue write lands before the
 snapshot moves, and no branch answers committed without a durable entry behind

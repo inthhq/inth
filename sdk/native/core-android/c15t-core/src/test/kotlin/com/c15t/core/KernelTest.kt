@@ -100,7 +100,8 @@ class KernelTest {
 		// been consulted for it: the only request is the one bootstrap schedules
 		// afterwards, and it never blocks the snapshot.
 		assertEquals(1, coldTransport.initRequests.size)
-		assertTrue(coldBackend.events.indexOf("read:${C15tStoreKeys.SNAPSHOT}") < coldBackend.events.indexOf("read:${C15tStoreKeys.PENDING}"))
+		assertTrue(coldBackend.events.none { it == "read:${C15tStoreKeys.PENDING}" },
+			"the atomic envelope already holds its queue")
 	}
 
 	/**

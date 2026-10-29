@@ -350,19 +350,30 @@ final class PendingSaveQueue: @unchecked Sendable {
         )
     }
 
-    /// Write the decision and its only pending obligation as one protected item.
-    /// A newer IAB decision supersedes older queued grants for this subject.
-    func commit(_ envelope: StoredEnvelope, body: Data, subjectId: String, actionAt: Int64) -> String? {
+    /// Write the decision and its pending obligations as one protected item.
+    /// IAB decisions supersede queued grants; category decisions retain their history.
+    func commit(
+        _ envelope: StoredEnvelope, body: Data, subjectId: String, actionAt: Int64,
+        supersedeGrants: Bool = true
+    ) -> String? {
         lock.withLock {
             let entry = PendingSaveEntry(
                 id: newID(), subjectId: subjectId, actionAt: actionAt,
                 queuedAt: now(), attempts: 0, body: body, retainWithdrawal: true)
             var next = envelope
-            let withdrawals = readEntries().filter {
-                $0.isProtectedWithdrawal && !(entry.isProtectedWithdrawal && ConsentDelivery.sameOwner($0.body, body))
+            var entries = readEntries().filter {
+                (!supersedeGrants || $0.isProtectedWithdrawal)
+                    && !(entry.isProtectedWithdrawal && ConsentDelivery.sameOwner($0.body, body))
             }
-            guard withdrawals.count < Self.maxEntries else { return nil }
-            next.pendingSaves = withdrawals + [entry]
+            entries.sort { left, right in
+                left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt
+            }
+            entries.append(entry)
+            while entries.count > Self.maxEntries {
+                guard let discard = entries.firstIndex(where: { !$0.isProtectedWithdrawal && $0.id != entry.id }) else { return nil }
+                entries.remove(at: discard)
+            }
+            next.pendingSaves = entries
             guard store.encode(next, for: StorageKey.snapshot) else { return nil }
             return entry.id
         }

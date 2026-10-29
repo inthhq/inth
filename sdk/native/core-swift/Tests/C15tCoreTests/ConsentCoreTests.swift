@@ -324,10 +324,11 @@ final class ConsentCoreTests: XCTestCase {
         // so the entry cannot be delivered and removed out from under the read.
         let sawQueuedOnDisk = SendableBox(false)
         let observedStore: any ConsentStore = store
-        let queueKey = StorageKey.pendingSaves
         http.holdsSaves = true
-        http.onSave = { _ in
-            sawQueuedOnDisk.value = observedStore.data(for: queueKey) != nil
+        http.onSave = { body in
+            let envelope = observedStore.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)
+            sawQueuedOnDisk.value = envelope?.pendingSaves?.contains { $0.body == body } == true
+                && envelope?.snapshot.explicitChoice != nil
         }
 
         let result = core.save(.all)

@@ -173,24 +173,36 @@ class C15tStore(
 	 * readers must not be able to observe a device whose vendor mirror is ahead
 	 * of, or behind, a decision its own record took back: the projection is a
 	 * pure function of [envelope], published once the envelope bytes have gone
-	 * to the authoritative store. A host [KeyValueStore] reports no write
-	 * failure through this seam; a drop that leaves the mirror one commit stale
-	 * is rebuilt by the next write, the next launch, or [rebuildTcStorageBus].
+	 * to the authoritative store. A refused write returns `false` without moving
+	 * the bus. A failed mirror is rebuilt by the next write, the next launch, or
+	 * [rebuildTcStorageBus].
 	 */
 	@Synchronized
-	fun writeEnvelope(envelope: SnapshotEnvelope) {
+	fun writeEnvelope(envelope: SnapshotEnvelope): Boolean {
 		val old = readEnvelope()
-		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return
+		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
 		val next = envelope.copy(pendingSaves = old?.pendingSaves)
-		writeAtomic(next)
+		return writeAtomic(next)
 	}
 
-	/** Persist a full IAB transaction before publishing any grant. */
+	/**
+	 * Persist the decision and its delivery obligation before publishing either.
+	 * IAB decisions supersede grants; category decisions retain their queue history.
+	 */
 	@Synchronized
-	fun commit(envelope: SnapshotEnvelope, entry: QueuedSave, limit: Int = PendingSaveQueue.DEFAULT_LIMIT): Boolean {
-		val withdrawals = readPending().filter { it.isWithdrawal() && !(entry.isWithdrawal() && it.sameOwner(entry)) }
-		if (withdrawals.size >= limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)) return false
-		return writeAtomic(envelope.copy(pendingSaves = withdrawals + entry))
+	fun commit(
+		envelope: SnapshotEnvelope,
+		entry: QueuedSave,
+		limit: Int = PendingSaveQueue.DEFAULT_LIMIT,
+		supersedeGrants: Boolean = true,
+	): Boolean {
+		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
+		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
+		val withdrawals = current.filter { it.isWithdrawal() }
+		if (withdrawals.size >= capacity) return false
+		val grants = if (supersedeGrants) emptyList() else
+			current.filterNot { it.isWithdrawal() }.takeLast(capacity - withdrawals.size - 1)
+		return writeAtomic(envelope.copy(pendingSaves = withdrawals + grants + entry))
 	}
 
 	/** Atomic empty consent state for reset and identity changes. */

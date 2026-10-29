@@ -571,30 +571,16 @@ class C15tKernel(
 	/**
 	 * Record a consent decision.
 	 *
-	 * Order is the whole contract here. The queue write lands first, the snapshot moves
-	 * second, and no branch answers ok without a durable entry behind it, because
+	 * The snapshot and queued body land in one durable write before state moves, because
 	 * [CommitResult.ok] claims three device-side facts: the receipts are applied, the
 	 * snapshot is stored, and the queue holds the exact bytes that owe delivery. It never
 	 * claims the backend has them, which no synchronous call on this thread could know.
 	 *
 	 * A save that cannot take on the delivery obligation answers not-ok with the reason
-	 * and changes nothing at all -- no snapshot move, no snapshot write, no request, no
-	 * observer callback. A decision nothing remembers having to deliver is worse than a
-	 * refusal the caller can act on.
-	 *
-	 * What makes the two steps atomic is [mutationLock], and it is worth being precise
-	 * about how. [PendingSaveQueue] does its own read-modify-write on [store] and takes no
-	 * lock of ours, so the enqueue deliberately happens *outside* the critical section: a
-	 * disk write must not hold the lock every other mutation path waits on, and must not
-	 * hold it while the store is being read either, which is what would let a slow keychain
-	 * stall a snapshot read. The state move that follows is then taken as a guarded swap:
-	 * still under the lock, the snapshot is installed only if it is the very snapshot this
-	 * body was built from. If another mutation landed during the write, that one stands,
-	 * this body is withdrawn from the queue rather than replayed over it, and the caller is
-	 * told to repeat against the current snapshot. A swap is atomic precisely because the
-	 * reference is only ever replaced inside the lock, so there is no window in which a
-	 * reader or a competing writer sees a queue entry whose snapshot was never installed,
-	 * or an installed snapshot with no entry behind it.
+	 * and leaves the previous decision and queue intact, without a request or snapshot
+	 * callback. [commitGate] serializes preparation, storage and publication while
+	 * [mutationLock] guards only the in-memory swap. Synchronous reads continue serving
+	 * the previous authority until the durable write acknowledges the complete decision.
 	 *
 	 * Delivery is a later fact than any of this. It arrives as a drained queue, or as an
 	 * error event carrying `save-rejected`, `save-undeliverable`, or
@@ -759,58 +745,39 @@ class C15tKernel(
 		val payload = buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
 				.copy(tcString = nextIab?.tcString)
 
-		// Obligation first, state second. A process that dies at this point already has
-		// the action on disk, and a save that gets no further than here promised nothing.
-		val entry: QueuedSave
-		if (policy?.model == ConsentModel.IAB) {
-			val frozen =
-				com.c15t.core.transport.SaveBodyBuilder.build(
-						payload,
-						config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty(),
-					)
-					.toString()
-			val proposed =
-				QueuedSave(UUID.randomUUID().toString(), actionAt, payload, body = frozen)
-			val envelope = synchronized(mutationLock) {
-				SnapshotEnvelope(
-						snapshot = published.copy(iab = null),
-						evaluationPolicy = policy,
-						noticeDismissal = acknowledgement ?: noticeDismissal,
-						gvl = published.iab?.gvl,
-						iabConsent = nextIab,
-						lastIabActionAt = actionAt,
-					)
-			}
-			if (!store.commit(envelope, proposed, config.maxPendingSaves))
-				return@mutate refusedCommit(
-					"queue-write-failed",
-					"The atomic IAB decision write failed; nothing was sent",
-				)
-			synchronized(mutationLock) {
-				committedIab = nextIab
-				lastIabActionAt = actionAt
-				state.set(published)
-				acknowledgement?.let { noticeDismissal = it }
-			}
-			entry = proposed
-		} else {
-			entry = queue.enqueue(payload, actionAt,
-				com.c15t.core.transport.SaveBodyBuilder.build(payload,
-					config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty()).toString())
-			?: return@mutate refusedCommit(
-				code = "queue-write-failed",
-				message = "c15t: the pending save could not be persisted, so the decision was " +
-					"not recorded and nothing was sent",
+		val isIab = policy?.model == ConsentModel.IAB
+		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
+			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty()).toString()
+		val entry = QueuedSave(
+			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
+			actionAt, payload, body = frozen,
+		)
+		val envelope = synchronized(mutationLock) {
+			SnapshotEnvelope(
+				snapshot = published.copy(iab = null),
+				evaluationPolicy = policy,
+				noticeDismissal = acknowledgement ?: noticeDismissal,
+				gvl = published.iab?.gvl,
+				iabConsent = if (isIab) nextIab else committedIab,
+				lastIabActionAt = if (isIab) actionAt else lastIabActionAt,
+			)
+		}
+		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab))
+			return@mutate refusedCommit(
+				"queue-write-failed",
+				"The atomic consent decision write failed; nothing was sent",
 			)
 
 		// The mutation gate owns this revision through the durable write and swap.
 		synchronized(mutationLock) {
+			if (isIab) {
+				committedIab = nextIab
+				lastIabActionAt = actionAt
+			}
 			state.set(published)
 			acknowledgement?.let { noticeDismissal = it }
 		}
-		}
 
-		persist()
 		mutation.release()
 
 		// The first send is not joined. What this thread may claim about it is whatever the
@@ -1882,7 +1849,7 @@ class C15tKernel(
 	}
 
 	/** Persist the published state. Always called with [mutationLock] released. */
-	private fun persist() {
+	private fun persist(): Boolean {
 		val cleanup = synchronized(mutationLock) {
 			needsGrantCleanup.also { needsGrantCleanup = false }
 		}
@@ -1903,8 +1870,9 @@ class C15tKernel(
 					lastIabActionAt = lastIabActionAt,
 				)
 		}
-		store.writeEnvelope(envelope)
+		val written = store.writeEnvelope(envelope)
 		store.flush()
+		return written
 	}
 
 	private fun merge(

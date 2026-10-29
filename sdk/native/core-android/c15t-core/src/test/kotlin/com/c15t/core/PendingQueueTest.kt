@@ -43,13 +43,11 @@ class PendingQueueTest {
 		assertTrue(result.queued)
 
 		val events = timeline.drop(writesBeforeSave)
-		val pendingWrite = events.indexOf("write:${C15tStoreKeys.PENDING}")
 		val snapshotWrite = events.indexOf("write:${C15tStoreKeys.SNAPSHOT}")
 		val networkCall = events.indexOf("network:save")
-		assertTrue(pendingWrite >= 0, "the payload must reach disk, got: $events")
-		assertTrue(snapshotWrite >= 0, "the new permissions must be persisted too")
+		assertTrue(snapshotWrite >= 0, "the decision and payload must reach disk, got: $events")
 		assertTrue(networkCall >= 0, "the transport must be consulted")
-		assertTrue(pendingWrite < networkCall, "the queue write must precede the request, got: $events")
+		assertTrue(snapshotWrite < networkCall, "the atomic write must precede the request, got: $events")
 
 		val queued = transport.saveRequests.single().payload
 		assertEquals(4, queued.confirmed.categories.size)

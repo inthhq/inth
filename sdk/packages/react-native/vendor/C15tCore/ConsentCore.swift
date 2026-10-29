@@ -491,7 +491,7 @@ public final class ConsentCore: @unchecked Sendable {
             /// The acknowledgement this action records, installed with `next`.
             let acknowledgement: NoticeDismissal?
             let iabConsent: IABCommittedConsent?
-            let atomicIAB: Bool
+            let isIAB: Bool
         }
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
@@ -690,7 +690,7 @@ public final class ConsentCore: @unchecked Sendable {
                     ),
                         acknowledgement: acknowledgement,
                         iabConsent: nextIAB,
-                        atomicIAB: resolved.policy.model == .iab
+                        isIAB: resolved.policy.model == .iab
                 ))
             } catch {
                 return .failure(CoreErrorInfo(
@@ -702,6 +702,7 @@ public final class ConsentCore: @unchecked Sendable {
 
         switch prepared {
         case let .failure(info):
+            mutation.release()
             events.emit(.error(info))
             return CommitResult(
                 status: .rejected,
@@ -712,47 +713,29 @@ public final class ConsentCore: @unchecked Sendable {
             )
 
         case let .success(plan):
-            // Obligation first, state second. The queue write is synchronous and
-            // lands before `save` returns, so a process that dies here still has the
-            // action on disk, and nothing is announced until there is a durable
-            // delivery obligation behind it. An entry that failed to persist is never
-            // sent and never reported committed, because delivering something nothing
-            // remembers is how duplicates happen and promising something nothing
-            // remembers is how decisions go missing.
-            let atomicEnvelope: StoredEnvelope? = lock.withLock {
-                guard plan.atomicIAB, currentSnapshot.revision == plan.baseRevision else { return nil }
+            // The decision and owed bytes become durable together before either is
+            // visible to readers or delivery. A failed write leaves both untouched.
+            let envelope: StoredEnvelope? = lock.withLock {
+                guard currentSnapshot.revision == plan.baseRevision else { return nil }
                 return StoredEnvelope(
                     snapshot: plan.next,
                     noticeDismissal: plan.acknowledgement ?? noticeDismissal,
-                    policyResolution: policyWire, storedAt: actionAt, iabConsent: plan.iabConsent,
-                    lastIABActionAt: actionAt)
+                    policyResolution: policyWire, storedAt: actionAt,
+                    iabConsent: plan.isIAB ? plan.iabConsent : committedIAB,
+                    lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt)
             }
-            let atomicID = atomicEnvelope.flatMap {
+            let queued = envelope.flatMap {
                 plan.queue.commit($0, body: plan.body,
-                    subjectId: plan.payload.subjectId, actionAt: actionAt)
+                    subjectId: plan.payload.subjectId, actionAt: actionAt,
+                    supersedeGrants: plan.isIAB)
             }
-            if atomicID != nil, let envelope = atomicEnvelope {
-                lock.withLock {
-                    committedIAB = plan.iabConsent
-                    lastIABActionAt = actionAt
-                    currentSnapshot = plan.next
-                    noticeDismissal = plan.acknowledgement ?? noticeDismissal
-                    persistedRevision = plan.next.revision
-                }
-                config?.storageBus?.write(TcStorageBus.values(for: envelope))
-            }
-            let queued =
-                plan.atomicIAB
-                ? atomicID
-                : plan.queue.enqueue(
-                    body: plan.body, subjectId: plan.payload.subjectId,
-                    actionAt: plan.payload.confirmed.actionAt)
             guard let queuedID = queued else {
                 let changed = lock.withLock { currentSnapshot.revision != plan.baseRevision }
                 let info = CoreErrorInfo(
                     code: changed ? "concurrent-change" : "queue-write-failed",
                     message: "Pending save could not be persisted, so the decision was not recorded and nothing was sent."
                 )
+                mutation.release()
                 events.emit(.error(info))
                 return CommitResult(
                     status: .rejected,
@@ -763,18 +746,20 @@ public final class ConsentCore: @unchecked Sendable {
                 )
             }
 
-            // The mutation gate still owns the prepared revision. No mutation can
-            // intervene between the durable queue write and this publication.
-            if !plan.atomicIAB {
-                lock.withLock {
-                    currentSnapshot = plan.next
-                    if let acknowledgement = plan.acknowledgement {
-                        noticeDismissal = acknowledgement
-                    }
+            lock.withLock {
+                if plan.isIAB {
+                    committedIAB = plan.iabConsent
+                    lastIABActionAt = actionAt
                 }
+                currentSnapshot = plan.next
+                noticeDismissal = plan.acknowledgement ?? noticeDismissal
+                persistedRevision = plan.next.revision
+            }
+            if let envelope {
+                config?.storageBus?.write(TcStorageBus.values(for: envelope))
             }
 
-            publish(persist: true, mutation: mutation)
+            publish(persist: false, mutation: mutation)
             events.emit(.saveQueued(subjectId: plan.payload.subjectId))
             let body = plan.body
             let subjectId = plan.payload.subjectId

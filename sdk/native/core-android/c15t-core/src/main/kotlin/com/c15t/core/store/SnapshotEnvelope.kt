@@ -1,11 +1,16 @@
 package com.c15t.core.store
 
 import com.c15t.core.model.ConsentSnapshot
+import com.c15t.core.model.QueuedSave
 import com.c15t.core.policy.EvaluationPolicy
 import com.c15t.core.policy.NoticeDismissal
 import com.c15t.core.tc.GlobalVendorList
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
 
 /**
  * What gets persisted under `com.c15t.snapshot`.
@@ -21,7 +26,7 @@ data class SnapshotEnvelope(
 	val snapshot: ConsentSnapshot,
 	@SerialName("lastIABActionAt") val lastIabActionAt: Long? = null,
 	val iabConsent: com.c15t.core.iab.IabCommittedConsent? = null,
-	val pendingSaves: List<com.c15t.core.model.QueuedSave>? = null,
+	val pendingSaves: List<@Serializable(with = EnvelopeQueuedSaveSerializer::class) QueuedSave>? = null,
 	val evaluationPolicy: EvaluationPolicy? = null,
 	val noticeDismissal: NoticeDismissal? = null,
 	/**
@@ -54,3 +59,14 @@ data class SnapshotEnvelope(
 	 */
 	val gvl: GlobalVendorList? = null,
 )
+
+/** Keep queue compatibility separate from the envelope's strict consent authority. */
+internal object EnvelopeQueuedSaveSerializer : KSerializer<QueuedSave> {
+	override val descriptor = QueuedSave.serializer().descriptor
+	override fun serialize(encoder: Encoder, value: QueuedSave) =
+		QueuedSave.serializer().serialize(encoder, value)
+	override fun deserialize(decoder: Decoder): QueuedSave {
+		val input = decoder as? JsonDecoder ?: return QueuedSave.serializer().deserialize(decoder)
+		return C15tJson.queue.decodeFromJsonElement(QueuedSave.serializer(), input.decodeJsonElement())
+	}
+}

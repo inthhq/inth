@@ -186,8 +186,12 @@ class OverrideAndSignalTest {
 		kernel.bootstrap()
 		kernel.save(CommitIntent.All)
 
-		val queued = assertNotNull(backend.read(C15tStoreKeys.PENDING))
-		backend.putSilently(C15tStoreKeys.PENDING, queued.replaceFirst("\"overrides\":{", "\"overrides\":{\"test\":\"run-7\","))
+		val raw = assertNotNull(backend.read(C15tStoreKeys.SNAPSHOT))
+		val queuedAt = raw.indexOf("\"pendingSaves\":")
+		assertTrue(queuedAt >= 0)
+		val changedQueue = raw.substring(queuedAt)
+			.replaceFirst("\"overrides\":{", "\"overrides\":{\"test\":\"run-7\",")
+		backend.putSilently(C15tStoreKeys.SNAPSHOT, raw.take(queuedAt) + changedQueue)
 
 		// A queued payload's retired `test` never reached the wire, and its
 		// `decisionInputs.gpc` is spelled the same in both shapes. Dropping a stored

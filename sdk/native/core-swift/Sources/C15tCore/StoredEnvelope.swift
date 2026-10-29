@@ -71,7 +71,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// every number on the snapshot still looks healthy.
     ///
     /// Encoding what was decoded is the check that needs no list of names to keep
-    /// current: every key path in the input has to come back out of the typed value,
+    /// current: every authority key path has to come back out of the typed value,
     /// and a path that does not is a name this build does not have. Refusing the whole
     /// envelope is then the same decision the retired fields already make, and
     /// `native/CONTRACT.md` says why guessing is the wrong half.
@@ -123,6 +123,10 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
                 // that as unknown refuses the whole envelope: a stored choice becomes
                 // nothing stored, on every launch, with nothing on the snapshot to say why.
                 if case .null = item { continue }
+                // Queue entries have always tolerated extra bookkeeping fields.
+                // Their typed decoder still checks known fields, and their frozen
+                // bodies remain opaque bytes rather than consent authority.
+                if keyPath == "pendingSaves" { continue }
                 // Retired directive state this build drops on purpose rather than refuses:
                 // the directive list, and a restriction entry that held nothing but the
                 // directive's reason. See ``RetiredEnvelope/optOutDirectivesKey``.

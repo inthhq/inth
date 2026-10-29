@@ -53,7 +53,7 @@ class SubjectIdentityTest {
 		assertTrue(first.save(CommitIntent.All).queued, "the payload must be waiting in the queue")
 		val originalId = assertNotNull(first.snapshot().subject).id
 		assertTrue(
-			protectedStore.heldKeys.containsAll(setOf(C15tStoreKeys.SNAPSHOT, C15tStoreKeys.PENDING)),
+			protectedStore.heldKeys.contains(C15tStoreKeys.SNAPSHOT),
 			"records live in protected storage while the key works, got ${protectedStore.heldKeys}",
 		)
 		val mintedFirstLaunch = subjectIdsMinted

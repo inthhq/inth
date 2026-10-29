@@ -67,7 +67,9 @@ final class SaveDeliveryTests: XCTestCase {
         let result = core.save(.all)
         XCTAssertEqual(result.status, .committed)
         XCTAssertEqual(core.pendingSaveCount(), 1, "committed means an obligation exists")
-        XCTAssertNotNil(store.data(for: StorageKey.pendingSaves), "and it is on disk")
+        let stored = store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)
+        XCTAssertEqual(stored?.pendingSaves?.count, 1, "the decision and owed body share one durable item")
+        XCTAssertEqual(stored?.snapshot.explicitChoice, core.snapshot().explicitChoice)
 
         http.releaseSaves()
         await core.waitUntilIdle()
@@ -173,7 +175,7 @@ final class SaveDeliveryTests: XCTestCase {
     /// this process's memory and that nothing will ever send, which is a subject's
     /// consent disappearing with no trace left behind.
     func testQueueWriteFailureRefusesTheSaveAndLeavesStateAlone() async {
-        let failing = KeyFailStore(wrapping: store, refuses: StorageKey.pendingSaves)
+        let failing = KeyFailStore(wrapping: store, refuses: StorageKey.snapshot)
         http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution())
         let core = ConsentCore()
         await core.bootstrapAndSettle(Fixture.configured(
