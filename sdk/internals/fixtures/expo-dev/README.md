@@ -59,12 +59,17 @@ URL, run `bun run prebuild` again; a running binary keeps the value it was built
 That the bundle and the binary each carry a copy of the backend URL is a property of
 the design, not a mistake in this example.
 
-For a local backend, `apps/playground` serves one at `/api/self-host`:
+The default is the public example Inth project at
+`https://example-inth.inth.app/`. Replace `EXPO_PUBLIC_C15T_BACKEND_URL` with your
+own Inth URL and configure its policy for your app. The plugin chooses hosted
+mode for Inth domains. Native requests send the policy-contract and SDK-version
+headers; a plain browser GET can return legacy data. Hosted init compatibility
+has been probed, but hosted receipt acceptance has not been verified here.
 
-```sh
-bun run --cwd apps/playground dev:localhost      # http://localhost:3000
-adb reverse tcp:3000 tcp:3000                  # Android emulator -> host
-```
+Advanced self-hosting remains available through the same URL setting and existing
+transport APIs. The local deterministic protocol backend belongs to explicit app
+E2E runs. A clean first launch needs network; bundled first-install offline policy
+is a separate required integration. Cached policies and choices can restart offline.
 
 ## Commands
 

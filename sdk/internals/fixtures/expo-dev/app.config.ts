@@ -63,8 +63,7 @@ includeBuild('${coreDir}') {
  * appear. There is no key to configure either: a project is its backend URL.
  */
 const backendURL =
-	process.env.EXPO_PUBLIC_C15T_BACKEND_URL ??
-	'http://localhost:3000/api/self-host';
+	process.env.EXPO_PUBLIC_C15T_BACKEND_URL ?? 'https://example-inth.inth.app/';
 
 /** Truthy spellings that mean "off"; anything else present means on. */
 const isOff = (value: string | undefined): boolean =>
@@ -127,7 +126,8 @@ const c15tPluginProps: C15tPluginProps = {
 	// core starts looking.
 	mode:
 		new URL(backendURL).hostname === 'c15t.com' ||
-		new URL(backendURL).hostname.endsWith('.c15t.com')
+		new URL(backendURL).hostname.endsWith('.c15t.com') ||
+		new URL(backendURL).hostname.endsWith('.inth.app')
 			? 'hosted'
 			: 'selfHosted',
 	trackingMarkdownUsageDescription,

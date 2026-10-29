@@ -54,7 +54,15 @@ it and inlines every `process.env.C15T_*` read at build time, which is the only 
 value reaches a React Native bundle. A variable already in the real environment wins,
 so `C15T_FAKE_NATIVE=true bun run android` overrides the file.
 
-Point the native core at a backend by editing the two files the core actually reads:
+The reference app defaults to the public example Inth project,
+`https://example-inth.inth.app/`. Use your own Inth project URL and configure its
+policy for your app before using it outside this demo. Native transports send
+policy-contract and SDK-version headers. A plain browser GET can return the legacy
+contract. Only hosted init compatibility has been probed; these instructions do
+not claim hosted receipt acceptance.
+
+To change projects, edit the two files the core reads and match `C15T_BACKEND_URL`
+in `.env`:
 
 - `ios/C15tBare/Info.plist` → `com.c15t.backend.url`, `com.c15t.backend.mode`
 - `android/app/src/main/AndroidManifest.xml` → `com.c15t.PORTAL_URL`
@@ -78,28 +86,17 @@ systems and outside those countries. Per-locale Markdown goes in
 for the identifier is usually linking data across apps, and that key currently says it
 does not. Leave it `false` only if you ask and then never track.
 
-For a local backend, `apps/playground` serves one at `/api/self-host`. It needs a Postgres
-`DATABASE_URL` and starts fine without one, which is the trap: the backend answers `404`,
-the core retries quietly, and the app sits on `policyPending: true` with
-`resolution: unconfigured no policy` and never renders a prompt. Nothing on screen says the
-backend is missing. Point it at the same Postgres CI uses:
+For a self-hosted integration, set those same URLs to your backend and set the iOS
+mode to `selfHosted`. Keep the existing transport APIs. The reviewed app E2E runner
+below explicitly selects its loopback protocol backend and restores configuration
+afterwards. Normal builds use Inth.
+
+Debug Android builds still need Metro forwarding when using a USB-connected device
+or emulator. Select the intended device explicitly:
 
 ```sh
-DATABASE_URL='postgres://postgres:c15t@localhost:5432/c15t' \
-  bun run --cwd apps/playground dev:localhost      # http://localhost:3000
+adb -s <serial> reverse tcp:8081 tcp:8081
 ```
-
-Then forward both ports the app dials. Metro and the backend are two separate connections,
-and `adb reverse` is per device and is dropped when the emulator restarts:
-
-```sh
-adb reverse tcp:8081 tcp:8081                    # Android emulator -> Metro
-adb reverse tcp:3000 tcp:3000                    # Android emulator -> backend
-```
-
-The default `http://localhost:3000/api/self-host` works on the iOS simulator and on
-Android after `adb reverse`. The manifest already allows cleartext on debug builds;
-iOS ships `NSAllowsLocalNetworking`.
 
 ## Drive it from a shell
 
@@ -128,10 +125,9 @@ SIMCTL_CHILD_C15T_DEMO_LINK='c15t-demo://accept' \
   xcrun simctl launch --terminate-running-process <udid> org.reactjs.native.example.C15tBare
 ```
 
-Both platforms want the backend answering before a verb can do anything visible. Check it
-with `curl -s localhost:3000/api/self-host/init`, which should return JSON. When
-`apps/playground` is mid-build that route answers 500 instead, and the app sits on
-`Loading stored consent` with no banner for a verb to act on.
+A first install needs a compatible policy response before the choice controls can
+commit. A cached policy and recorded choice can restart offline. Bundled policy
+for a first-ever offline launch is a separate required feature.
 
 The grammar is `c15t-demo://<verb>[/<argument>][?name=value[&name=value]]`. Quote the URL
 on Android: `?` and `&` belong to the shell otherwise.
