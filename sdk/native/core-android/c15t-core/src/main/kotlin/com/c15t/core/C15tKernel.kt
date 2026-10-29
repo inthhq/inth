@@ -1382,12 +1382,12 @@ class C15tKernel(
 				)
 			}
 		val mapped = InitMapper.map(outcome)
-		val (_, emitted) = applyInit(mapped, detected, outcome is TransportOutcome.Success)
+		val (changed, emitted) = applyInit(mapped, detected, outcome is TransportOutcome.Success)
 		emitted?.let(::emitError)
-		notifySnapshot()
+		if (changed) notifySnapshot()
 	}
 
-	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean): Pair<ConsentSnapshot, KernelError?> = mutate { mutation ->
+	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean): Pair<Boolean, KernelError?> = mutate { mutation ->
 		var detected = detection
 		var published: ConsentSnapshot
 		var emitted: KernelError?
@@ -1486,10 +1486,11 @@ class C15tKernel(
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
 			published = validateIab(published)
-			if (!online && !mapped.policyUnreadable && listIsUsable() &&
+			if (!online && !mapped.policyUnreadable && evaluationPolicy?.model == ConsentModel.IAB &&
+				base.iab?.gvl != null && listIsUsable() &&
 				published.copy(revision = base.revision, evaluatedAt = base.evaluatedAt,
 					error = base.error, nextDeadline = base.nextDeadline) == base
-			) published = published.copy(revision = base.revision)
+			) return@mutate false to emitted
 			installSnapshot(published)
 		}
 
@@ -1497,7 +1498,7 @@ class C15tKernel(
 		published.subject?.let { store.writeSubject(it) }
 		persist()
 		mutation.release()
-		published to emitted
+		true to emitted
 	}
 
 	/**

@@ -210,7 +210,8 @@ A fresh native GVL remains usable for seven days by default. Configure
 `iabListMaxAgeMs` to shorten the limit. Fetch time persists with the authority;
 a successful response without a GVL clears offline status but does not renew the
 fetch time. A failed retry against unchanged cached authority preserves an open
-draft's revision. A future fetch time or
+draft's revision and leaves its snapshot and stored envelope unchanged. Transport
+failures still reach the error stream. A future fetch time or
 missing fetch time is stale. An old envelope without disclosure binding needs
 fresh consent. The `gvl-v2:` binding format also rejects older projected hashes
 on hydration because their stored lists may have discarded disclosure fields.

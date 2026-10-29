@@ -176,6 +176,8 @@ final class IABCommitTests: XCTestCase {
                                   store: InMemoryStore(), http: http)
         let draft = try XCTUnwrap(core.openIABDraft())
         let before = core.snapshot()
+        let observer = IABRetryObserver()
+        let observation = core.onChange(observer)
         let gates = SendableBox([Bool]())
         let subscription = core.gate(OptionalConsentCategory.marketing) { value in
             gates.mutate { $0.append(value) }
@@ -184,6 +186,8 @@ final class IABCommitTests: XCTestCase {
         core.refresh()
         await core.waitUntilIdle()
         XCTAssertEqual(core.snapshot().revision, before.revision)
+        XCTAssertTrue(observer.revisions.value.isEmpty, "An unchanged retry must not publish the same revision")
+        observation.cancel()
         XCTAssertEqual(gates.value, [false])
         subscription.cancel()
         XCTAssertEqual(core.iabStatus().availability, .offline)
@@ -557,5 +561,12 @@ private final class FailingIABStore: ConsentStore, @unchecked Sendable {
     func set(_ data: Data?, for key: String) -> Bool {
         if fail && key == StorageKey.snapshot { return false }
         return inner.set(data, for: key)
+    }
+}
+
+private final class IABRetryObserver: SnapshotObserver, @unchecked Sendable {
+    let revisions = SendableBox([Int]())
+    func consentDidChange(_ snapshot: ConsentSnapshot) {
+        revisions.mutate { $0.append(snapshot.revision) }
     }
 }

@@ -2075,8 +2075,9 @@ public final class ConsentCore: @unchecked Sendable {
                 !listIsUsableLocked()
                     || !consent.isCurrent(now: config.now(), maxAge: resolvedPolicy.policy.choiceMaxAgeMs) {
                 reevaluateLocked(now: config.now())
+                return true
             }
-            return true
+            return false
         }
         if changed { publish(persist: true, mutation: mutation) }
         mutation.release()

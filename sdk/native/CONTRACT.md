@@ -259,8 +259,13 @@ the first draft of this file left open: there is no revision-free write. A core
 that records `unsupported-contract` has committed a change, and that change
 reaches JavaScript on the `snapshot` event, from the observers, in the persisted
 envelope. The paired `error` event is a convenience for a host that wants the
-code without pulling a snapshot. It is never the only route, and nothing may rely
-on it rescuing a snapshot event that was dropped.
+code without pulling a snapshot. For errors recorded in the snapshot, it is never
+the only route and cannot rescue a snapshot event that was dropped.
+
+A transient failed init against unchanged, usable cached IAB authority is not
+folded into snapshot state. Both cores keep the snapshot and envelope unchanged,
+report the attempt through the error stream and update compact offline status.
+The preserved revision lets an open draft finish against the same authority.
 
 That reliance is what makes the pair load-bearing rather than tidy. The pump
 dedups by revision: it drops a `snapshot` event whose revision it has already

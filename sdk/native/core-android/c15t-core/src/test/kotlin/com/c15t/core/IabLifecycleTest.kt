@@ -4,6 +4,7 @@ import com.c15t.core.iab.IabConfiguration
 import com.c15t.core.iab.IabListAvailability
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentDecision
+import com.c15t.core.model.KernelError
 import com.c15t.core.spi.Clock
 import com.c15t.core.spi.TaskExecutor
 import com.c15t.core.store.C15tStore
@@ -105,15 +106,31 @@ class IabLifecycleTest {
 	}
 
 	@Test
-	fun `failed retry with unchanged usable disclosure does not invalidate an open draft`() {
+	fun `failed retry preserves snapshot and draft while reporting transport error`() {
 		val transport = http()
-		val core = testKernel(config, C15tStore(InMemoryKeyValueStore()), FixedClock(now), transport)
+		val clock = FixedClock(now)
+		val store = C15tStore(InMemoryKeyValueStore())
+		val core = testKernel(config, store, clock, transport)
 		core.bootstrap()
 		val draft = assertNotNull(core.openIabDraft())
+		val before = core.snapshot()
+		val stored = store.readEnvelope()
+		val snapshots = mutableListOf<Long>()
+		val snapshotObserver: (com.c15t.core.model.ConsentSnapshot) -> Unit = { snapshots += it.revision }
+		val snapshotSubscription = core.onChange(snapshotObserver)
+		val failures = mutableListOf<KernelError>()
+		val errorObserver: (KernelError) -> Unit = { failures += it }
+		val errorSubscription = core.onError(errorObserver)
 		transport.respondInit(TransportOutcome.NetworkFailure("offline"))
+		clock.advance(1_000)
 		core.refresh()
-		assertEquals(draft.revision, core.snapshot().revision)
-		assertNotNull(core.snapshot().error)
+		assertSame(before, core.snapshot())
+		assertEquals(stored, store.readEnvelope())
+		assertTrue(snapshots.isEmpty(), "Unchanged authority must not publish an unchanged revision")
+		assertEquals(1, failures.size)
+		assertEquals("offline", failures.single().message)
+		snapshotSubscription.close()
+		errorSubscription.close()
 		assertTrue(core.saveIab(draft, emptyMap()).ok)
 	}
 }
