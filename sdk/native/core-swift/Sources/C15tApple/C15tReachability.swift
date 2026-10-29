@@ -1,7 +1,7 @@
 import Foundation
 import Network
 
-/// Replays pending consent and refreshes policy when the process gains a network.
+/// Replays the pending consent queue when the process gains a network it did not have.
 ///
 /// This is the narrowest of the three lifecycle legs in `native/CONTRACT.md`, and on iOS
 /// the unconditional one. The contract's permission-decline clause is Android-only, and
@@ -15,8 +15,8 @@ import Network
 /// type only translates `NWPath` into the two words the gate understands.
 ///
 /// Updates arrive on this monitor's own serial queue rather than the main thread, and
-/// ``C15tReactNativeBootstrap`` replays pending consent and refreshes policy through
-/// the core's scheduler. Coming back online therefore costs
+/// what ``C15tApple`` hands the callback is ``ConsentCore/flushPending()``,
+/// which is itself a handoff to the core's scheduler. Coming back online therefore costs
 /// no frame, which is what the contract asks of every lifecycle leg.
 public final class C15tReachability: @unchecked Sendable {
     private let lock = NSLock()
@@ -35,7 +35,7 @@ public final class C15tReachability: @unchecked Sendable {
     ///
     /// - Parameter onGained: called once per newly gained network, never for the one that
     ///   was already up at registration. Runs on the monitor's queue.
-    /// - Returns: the handle to keep. Dropping it does not stop the monitor, so the
+    /// - Returns: the handle to keep. Dropping it stops the monitor. The
     ///   caller holds it for as long as the core is running and calls
     ///   ``unregister()`` when it wants the leg off.
     public static func register(onGained: @escaping @Sendable () -> Void) -> C15tReachability {
@@ -57,6 +57,8 @@ public final class C15tReachability: @unchecked Sendable {
         monitor.start(queue: queue)
         return C15tReachability(monitor: monitor)
     }
+
+    deinit { unregister() }
 
     /// Stop listening. Calling this twice, or from two threads, cancels the monitor once.
     public func unregister() {

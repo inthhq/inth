@@ -15,10 +15,13 @@ let package = Package(
     ],
     products: [
         .library(name: "C15tCore", targets: ["C15tCore"]),
+        .library(name: "C15tApple", targets: ["C15tApple"]),
         .executable(name: "C15tCoreBench", targets: ["C15tCoreBench"]),
     ],
     targets: [
         .target(name: "C15tCore"),
+        .target(name: "C15tApple", dependencies: ["C15tCore"]),
+        .testTarget(name: "C15tAppleTests", dependencies: ["C15tApple", "C15tCore"]),
         .executableTarget(name: "C15tCoreBench", dependencies: ["C15tCore"]),
         .testTarget(name: "C15tCoreTests", dependencies: ["C15tCore"]),
     ]

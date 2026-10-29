@@ -11,16 +11,23 @@ public enum StorageKey {
     public static let pendingSaves = "com.c15t.pending"
 }
 
-/// Byte storage for the two protected items.
-///
-/// Deliberately untyped: the Keychain, a file, and a dictionary differ mainly in
-/// how they fail, and the core treats all of the failures the same way it treats
-/// unreadable data. Deny. Keeping the protocol at `Data` in means the fail-closed
-/// path has exactly one shape.
+/// A store could not establish whether a key exists.
+public enum ConsentStoreReadError: Error, Equatable, Sendable {
+    case unavailable
+}
+
+/// Byte storage for protected consent and queued saves.
 public protocol ConsentStore: Sendable {
     /// Read a key. `nil` means absent *or* unreadable, and both mean the same
     /// thing to the core: there is nothing to trust here.
     func data(for key: String) -> Data?
+
+    /// Read bytes without conflating an absent item with a storage failure.
+    /// - Returns: The stored bytes, including empty data, or `nil` only when absent.
+    /// - Throws: An error when the store cannot read the item or establish absence.
+    /// Implement this for custom stores used by the Apple installer. The default
+    /// accepts readable bytes but refuses ambiguous `nil` from `data(for:)`.
+    func read(for key: String) throws -> Data?
 
     /// Write a key, or remove it when `data` is `nil`.
     ///
@@ -32,6 +39,11 @@ public protocol ConsentStore: Sendable {
 }
 
 extension ConsentStore {
+    public func read(for key: String) throws -> Data? {
+        guard let data = data(for: key) else { throw ConsentStoreReadError.unavailable }
+        return data
+    }
+
     func decode<T: Decodable>(_ type: T.Type, for key: String) -> T? {
         guard let raw = data(for: key) else { return nil }
         return try? C15tJSON.decode(type, from: raw)
@@ -68,6 +80,10 @@ public final class InMemoryStore: ConsentStore, @unchecked Sendable {
         lock.withLock { values[key] }
     }
 
+    public func read(for key: String) throws -> Data? {
+        data(for: key)
+    }
+
     @discardableResult
     public func set(_ data: Data?, for key: String) -> Bool {
         lock.withLock {
@@ -94,6 +110,8 @@ public final class InMemoryStore: ConsentStore, @unchecked Sendable {
 ///
 /// Writes are atomic, so a process killed mid-write cannot leave a half-encoded
 /// envelope that would read as an unparseable policy and deny everything.
+/// iOS-family stores also use complete file protection. macOS has no equivalent
+/// Data Protection write option; hosts should use Keychain for protected consent.
 public final class FileStore: ConsentStore, @unchecked Sendable {
     public enum StoreError: Error {
         case directoryNotWritable(URL)
@@ -124,11 +142,17 @@ public final class FileStore: ConsentStore, @unchecked Sendable {
     }
 
     public func data(for key: String) -> Data? {
-        lock.withLock {
-            guard let raw = try? Data(contentsOf: url(for: key)), !raw.isEmpty else {
+        guard let raw = try? read(for: key), !raw.isEmpty else { return nil }
+        return raw
+    }
+
+    public func read(for key: String) throws -> Data? {
+        try lock.withLock {
+            do {
+                return try Data(contentsOf: url(for: key))
+            } catch let error as CocoaError where error.code == .fileReadNoSuchFile {
                 return nil
             }
-            return raw
         }
     }
 
@@ -149,10 +173,11 @@ public final class FileStore: ConsentStore, @unchecked Sendable {
                     at: directory,
                     withIntermediateDirectories: true
                 )
-                try (data as NSData).write(
-                    to: target,
-                    options: [.atomic, .completeFileProtection]
-                )
+                var options: NSData.WritingOptions = .atomic
+                #if (os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)) && !targetEnvironment(macCatalyst)
+                options.insert(.completeFileProtection)
+                #endif
+                try (data as NSData).write(to: target, options: options)
                 return true
             } catch {
                 return false
@@ -193,15 +218,21 @@ public final class KeychainStore: ConsentStore, @unchecked Sendable {
     }
 
     public func data(for key: String) -> Data? {
-        lock.withLock {
+        guard let raw = try? read(for: key), !raw.isEmpty else { return nil }
+        return raw
+    }
+
+    public func read(for key: String) throws -> Data? {
+        try lock.withLock {
             var query: [String: Any] = baseQuery(for: key)
             query[kSecMatchLimit as String] = kSecMatchLimitOne
             query[kSecReturnData as String] = true
 
             var item: CFTypeRef?
             let status = SecItemCopyMatching(query as CFDictionary, &item)
-            guard status == errSecSuccess, let data = item as? Data, !data.isEmpty else {
-                return nil
+            if status == errSecItemNotFound { return nil }
+            guard status == errSecSuccess, let data = item as? Data else {
+                throw ConsentStoreReadError.unavailable
             }
             return data
         }

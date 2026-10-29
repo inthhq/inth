@@ -21,6 +21,8 @@ import { fileURLToPath } from 'node:url';
 
 import { expect, test } from 'vitest';
 
+import { isForbiddenModule, moduleReferences } from './helpers/module-boundary';
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, '..');
 
@@ -117,5 +119,14 @@ test('the kernel and the codec stay devDependencies', () => {
 
 	for (const name of FORBIDDEN) {
 		expect(manifest.dependencies?.[name], name).toBeUndefined();
+	}
+});
+
+test('source declarations and lazy imports cannot name web packages either', () => {
+	for (const file of sources) {
+		expect(
+			moduleReferences(readFileSync(file, 'utf8')).filter(isForbiddenModule),
+			file
+		).toEqual([]);
 	}
 });

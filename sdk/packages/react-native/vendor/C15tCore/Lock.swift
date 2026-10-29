@@ -5,9 +5,9 @@ import Foundation
 final class Lock: Sendable {
     private let lock = NSLock()
 
-    func withLock<Result>(_ body: () -> Result) -> Result {
+    func withLock<Result>(_ body: () throws -> Result) rethrows -> Result {
         lock.lock()
         defer { lock.unlock() }
-        return body()
+        return try body()
     }
 }

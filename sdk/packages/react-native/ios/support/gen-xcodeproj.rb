@@ -28,7 +28,7 @@ PRIVACY = 'C15tReactNative/Resources/Privacy.xcprivacy'
 UMBRELLA = 'C15tReactNative/C15tReactNative.h'
 # Relative to this project directory (packages/react-native/ios).
 CORE_PACKAGE = '../../../native/core-swift'
-CORE_PRODUCT = 'C15tCore'
+CORE_PRODUCTS = %w[C15tCore C15tApple].freeze
 
 target = project.new_target(:framework, 'C15tReactNative', :ios, '16.4')
 
@@ -51,10 +51,12 @@ core_reference.relative_path = CORE_PACKAGE
 # `package_references` sits on the root object, the same place `targets` does.
 project.root_object.package_references << core_reference
 
-core_dependency = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
-core_dependency.product_name = CORE_PRODUCT
-core_dependency.package = core_reference
-target.package_product_dependencies << core_dependency
+CORE_PRODUCTS.each do |product|
+  core_dependency = project.new(Xcodeproj::Project::Object::XCSwiftPackageProductDependency)
+  core_dependency.product_name = product
+  core_dependency.package = core_reference
+  target.package_product_dependencies << core_dependency
+end
 
 settings = {
   'SWIFT_VERSION' => '5.9',
@@ -65,8 +67,8 @@ settings = {
   'ENABLE_BITCODE' => 'NO',
   'CODE_SIGNING_ALLOWED' => 'NO',
   'CODE_SIGNING_REQUIRED' => 'NO',
-  # Nothing in this target may reach UIKit or React: the core stays UI-free per
-  # native/CONTRACT.md, and the React-linked half lives behind the podspec.
+  # Apple services own UIKit lifecycle hooks. The core has no UI dependency,
+  # and the React-linked half lives behind the podspec.
   'OTHER_SWIFT_FLAGS' => '$(inherited) -warnings-as-errors',
 }
 
@@ -84,4 +86,4 @@ scheme.add_build_target(target)
 scheme.set_launch_target(target)
 scheme.save_as(project_path, 'C15tReactNative', true)
 
-puts "generated #{project_path} (core package: #{CORE_PACKAGE}, product: #{CORE_PRODUCT})"
+puts "generated #{project_path} (core package: #{CORE_PACKAGE}, products: #{CORE_PRODUCTS.join(', ')})"

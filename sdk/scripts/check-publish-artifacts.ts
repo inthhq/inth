@@ -27,9 +27,6 @@ interface PackResult {
 const ROOT = process.cwd();
 const PACKAGES_DIR = join(ROOT, 'packages');
 
-/** Where a package keeps a generated copy of native sources it compiles itself. */
-const VENDORED_NATIVE_DIR = 'vendor/C15tCore';
-
 /**
  * Path shapes that are wrong anywhere in a tarball, not just under `dist/`.
  *
@@ -413,25 +410,29 @@ export const scanPublishedLicenses = function scanPublishedLicenses(
  * tell them apart. The comparison is the one the sync script uses, so the copy is judged by the
  * code that produces it rather than by a second reading of the rules.
  *
- * @param packageDir - The package to read, which is judged only if it vendors a core.
+ * @param packageDir - The package to read. React Native requires both native modules;
+ * other packages are judged only for modules they vendor.
  * @returns Every vendored file that differs from, is missing from, or outlives the core.
  */
 export const scanVendoredNativeSources = function scanVendoredNativeSources(
 	packageDir: string
 ): { path: string; size: number; reason: string }[] {
-	const vendoredDir = join(packageDir, VENDORED_NATIVE_DIR);
-
-	if (!existsSync(vendoredDir)) {
-		return [];
-	}
-
-	const sourceDir = join(ROOT, 'native', 'core-swift', 'Sources', 'C15tCore');
-
-	return compareTrees(sourceDir, vendoredDir).map((drift) => ({
-		path: `${VENDORED_NATIVE_DIR}/${drift.relativePath}`,
-		reason: `stale vendored native source: ${describeDrift(drift)}`,
-		size: 0,
-	}));
+	const requiresNativeSources =
+		existsSync(join(packageDir, 'package.json')) &&
+		readManifest(packageDir).name === '@c15t/react-native';
+	return ['C15tCore', 'C15tApple'].flatMap((module) => {
+		const directory = `vendor/${module}`;
+		const vendoredDir = join(packageDir, directory);
+		if (!requiresNativeSources && !existsSync(vendoredDir)) {
+			return [];
+		}
+		const sourceDir = join(ROOT, 'native/core-swift/Sources', module);
+		return compareTrees(sourceDir, vendoredDir).map((drift) => ({
+			path: `${directory}/${drift.relativePath}`,
+			reason: `stale vendored native source: ${module === 'C15tCore' ? describeDrift(drift) : 'Run bun scripts/sync-vendored-apple.ts.'}`,
+			size: 0,
+		}));
+	});
 };
 
 /**
@@ -450,20 +451,21 @@ export const scanPackedVendoredSources = function scanPackedVendoredSources(
 	packageDir: string,
 	packedFilePaths: Set<string>
 ): { path: string; size: number; reason: string }[] {
-	const vendoredDir = join(packageDir, VENDORED_NATIVE_DIR);
-
-	if (!existsSync(vendoredDir)) {
-		return [];
-	}
-
-	return listFiles(vendoredDir)
-		.map((relativePath) => `${VENDORED_NATIVE_DIR}/${relativePath}`)
-		.filter((packedPath) => !packedFilePaths.has(packedPath))
-		.map((packedPath) => ({
-			path: packedPath,
-			reason: 'vendored native source is not in the tarball',
-			size: 0,
-		}));
+	return ['C15tCore', 'C15tApple'].flatMap((module) => {
+		const directory = `vendor/${module}`;
+		const vendoredDir = join(packageDir, directory);
+		if (!existsSync(vendoredDir)) {
+			return [];
+		}
+		return listFiles(vendoredDir)
+			.map((relativePath) => `${directory}/${relativePath}`)
+			.filter((packedPath) => !packedFilePaths.has(packedPath))
+			.map((packedPath) => ({
+				path: packedPath,
+				reason: 'vendored native source is not in the tarball',
+				size: 0,
+			}));
+	});
 };
 const scanPackedManifestTargets = function scanPackedManifestTargets(
 	manifest: PackageManifest,

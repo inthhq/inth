@@ -22,7 +22,7 @@ import Foundation
 /// local copy that this call then owns outright.
 public final class C15tTrackingWaiters: @unchecked Sendable {
     private let lock = NSLock()
-    private var waiters: [(Result<C15tTrackingRequestResult, C15tBridgeError>) -> Void] = []
+    private var waiters: [(Result<C15tTrackingRequestResult, C15tTrackingError>) -> Void] = []
 
     /// Add a request to the flight.
     ///
@@ -31,7 +31,7 @@ public final class C15tTrackingWaiters: @unchecked Sendable {
     /// - Returns: `true` when this request owns the flight and its caller must ask Apple;
     ///   `false` when it attached to a call already in flight and must ask for nothing.
     public func acquire(
-        _ completion: @escaping (Result<C15tTrackingRequestResult, C15tBridgeError>) -> Void
+        _ completion: @escaping (Result<C15tTrackingRequestResult, C15tTrackingError>) -> Void
     ) -> Bool {
         lock.lock()
         defer { lock.unlock() }
@@ -41,7 +41,7 @@ public final class C15tTrackingWaiters: @unchecked Sendable {
     }
 
     /// Give one answer to everyone waiting, then open the flight for the next request.
-    public func deliver(_ result: Result<C15tTrackingRequestResult, C15tBridgeError>) {
+    public func deliver(_ result: Result<C15tTrackingRequestResult, C15tTrackingError>) {
         lock.lock()
         let pending = waiters
         waiters = []

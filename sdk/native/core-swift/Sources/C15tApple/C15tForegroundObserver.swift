@@ -12,9 +12,16 @@ import Foundation
 /// delivered and a notice may have aged out, and an app that is merely sitting in memory
 /// has no reason to ask about either until it is opened again.
 ///
-/// The core's `replayThenRefresh()` schedules both operations and starts init only
-/// after replay finishes, including a delivery pass already in progress. The callback
-/// returns immediately while transport work runs on the core's scheduler.
+/// The two things it does are ordered, because the contract orders them: replay the
+/// pending queue, then re-resolve policy. Both are calls whose body is a handoff to the
+/// core's own scheduler, which is the whole reason this observer needs no worker of its
+/// own. The Android observer hands the replay to an executor first, and it has to:
+/// `HttpURLConnection` refuses a connection made from a lifecycle callback, so a replay
+/// run there reports "unreachable" and the queue silently stays queued. Swift's
+/// `ConsentCore/flushPending()` and `ConsentCore/refresh()` return as soon as they have
+/// put the work on a scheduler that is never the caller's thread, so the callback body
+/// here is two returns and costs no frame. A seam to hand these two calls to something
+/// else would be a second scheduler over work that already has one.
 ///
 /// ``didBecomeActive`` rather than `willEnterForeground`: an app resumed from the app
 /// switcher is the case this leg is for, and it arrives as an activation. The cost of
@@ -23,8 +30,9 @@ import Foundation
 /// contract's own foreground obligation, paid slightly early, and it is cheaper than the
 /// stale notice it prevents.
 ///
-/// This observer does not poll. The core schedules local IAB expiry separately from
-/// foreground and connectivity refreshes.
+/// No timer belongs anywhere near this. The contract forbids a core that wakes itself on
+/// a cadence, because whatever it decides at an arbitrary minute is an answer the policy
+/// never gave.
 public final class C15tForegroundObserver: @unchecked Sendable {
     private let lock = NSLock()
     private let onForeground: @Sendable () -> Void
@@ -32,7 +40,7 @@ public final class C15tForegroundObserver: @unchecked Sendable {
     private var token: (any NSObjectProtocol)?
 
     /// - Parameters:
-    ///   - onForeground: what to do each time the app comes back. ``C15tReactNativeBootstrap``
+    ///   - onForeground: what to do each time the app comes back. ``C15tApple``
     ///     passes the queue replay and the policy refresh; a test passes a recorder.
     ///   - notification: the name that means the app came back. Overridable so the
     ///     observer can be driven from ``Foundation/NotificationCenter`` in a test that has

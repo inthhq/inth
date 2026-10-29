@@ -82,9 +82,9 @@ adb reverse tcp:3000 tcp:3000                  # Android emulator -> host
 `ios/` and `android/` are generated and gitignored. Delete them freely; prebuild writes
 them back from `app.config.ts`, and the plugin is idempotent.
 
-`app.config.ts` also adds one Podfile line pointing `C15tCore` at
-`../../../native/core-swift`, which the binding's podspec needs inside this repository and
-a registry install does not. `C15T_LOCAL_PODS=false` leaves the Podfile alone.
+The autolinked `C15tReactNative` pod compiles the generated Swift core and Apple
+services. Do not add a separate `C15tCore` pod to this app. The checkout-only
+`C15T_LOCAL_PODS` flag now controls Android source substitution only.
 
 ## Native build status
 
@@ -189,7 +189,6 @@ ios/c15tExpoDev/Info.plist              NSUserTrackingUsageDescription, NSUserTr
 ios/.../Supporting/de.lproj/InfoPlist.strings   NSUserTrackingMarkdownUsageDescription
 android/.../AndroidManifest.xml         <meta-data android:name="com.c15t.PORTAL_URL" ...>
 android/.../AndroidManifest.xml         com.c15t.reactnative.C15tReactNativeInitializer
-ios/Podfile                             pod 'C15tCore', :path => '.../native/core-swift'
 ```
 
 Android has no mode key; it infers the transport from which keys are present. An absent

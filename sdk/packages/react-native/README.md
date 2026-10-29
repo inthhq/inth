@@ -35,8 +35,8 @@ c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-co
 
 ## Prerequisites
 
-- React Native 0.81 or newer with the New Architecture enabled
-- React 19.1 or newer to render the built-in components
+- React Native 0.86.x or 0.87.x with the New Architecture enabled
+- React 19.2.3 or later, below 19.3.0, to render the built-in components
 - iOS 16.4 or newer, Android `minSdk` 24 and `compileSdk` 36
 - A custom native build: Expo Go cannot load this package's native module, so use a development build
 - A c15t project endpoint, or a self-hosted `@c15t/backend` URL
