@@ -204,6 +204,19 @@ class ConsentJourneyTest {
         } finally { device.executeShellCommand("cmd uimode night no") }
     }
     @Test fun brandThemeKeepsDecisionsEqual() {
+        val colors = PantryBrand.theme.colors
+        fun assertContrast(foreground: com.c15t.consentui.ConsentThemeColor, background: com.c15t.consentui.ConsentThemeColor) {
+            for ((front, back) in listOf(foreground.light to background.light, foreground.dark to background.dark)) {
+                val frontLuminance = android.graphics.Color.luminance(front or 0xFF000000.toInt())
+                val backLuminance = android.graphics.Color.luminance(back or 0xFF000000.toInt())
+                val ratio = (maxOf(frontLuminance, backLuminance) + 0.05f) / (minOf(frontLuminance, backLuminance) + 0.05f)
+                Assert.assertTrue("Brand text contrast $ratio must be at least 4.5:1", ratio >= 4.5f)
+            }
+        }
+        assertContrast(colors.onDecision, colors.decision)
+        assertContrast(colors.onAccent, colors.accent)
+        assertContrast(colors.accent, colors.canvas)
+        assertContrast(colors.accent, colors.surface)
         launch("fresh-online-iab", theme = "brand")
         val reject = waitFor("c15t.first-layer.reject-all"); val accept = waitFor("c15t.first-layer.accept-all")
         waitFor("c15t.first-layer.brand").assertTextEquals("PANTRY")

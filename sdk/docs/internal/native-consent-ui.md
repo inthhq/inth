@@ -113,7 +113,7 @@ content.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: Pa
 ```kotlin
 // 1. Set once in Application.onCreate.
 ConsentTheme.current = ConsentTheme(
-    colors = ConsentTheme.Colors.c15t.copy(accent = ConsentThemeColor(0x009688, 0x4FD1C0)),
+    colors = ConsentTheme.Colors.c15t.copy(accent = ConsentThemeColor(0x00796B, 0x4FD1C0)),
     brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark))
 
 // 2. Pass one to the composable.

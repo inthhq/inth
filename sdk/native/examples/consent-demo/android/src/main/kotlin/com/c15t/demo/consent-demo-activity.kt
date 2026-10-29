@@ -184,8 +184,8 @@ object PantryBrand {
         colors = ConsentTheme.Colors(
             canvas = ConsentThemeColor(0xF3FAF7, 0x0F1A17), surface = ConsentThemeColor(0xFFFFFF, 0x17241F),
             surfaceMuted = ConsentThemeColor(0xE2F1EB, 0x1F3029), text = ConsentThemeColor(0x10201C, 0xEAF4F0),
-            textSecondary = ConsentThemeColor(0x5C7169, 0x9DB3AC), accent = ConsentThemeColor(0x009688, 0x4FD1C0),
-            onAccent = ConsentThemeColor(0xFFFFFF, 0x06302A), decision = ConsentThemeColor(0x009688, 0x4FD1C0),
+            textSecondary = ConsentThemeColor(0x5C7169, 0x9DB3AC), accent = ConsentThemeColor(0x00796B, 0x4FD1C0),
+            onAccent = ConsentThemeColor(0xFFFFFF, 0x06302A), decision = ConsentThemeColor(0x00796B, 0x4FD1C0),
             onDecision = ConsentThemeColor(0xFFFFFF, 0x06302A)),
         cornerRadius = 10.dp,
         headlineFont = ConsentTheme.HeadlineFont.SansSerif,
