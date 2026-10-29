@@ -26,6 +26,8 @@ final class PresenterTests: XCTestCase {
         presenter.presentPreferences()
         presenter.requestClose()
         XCTAssertTrue(presenter.pending)
+        // Only the first action is in flight; the ignored duplicate never becomes the pending one.
+        XCTAssertEqual(presenter.pendingAction, .accept)
         XCTAssertEqual(presenter.presentationID, session)
         XCTAssertFalse(presenter.preferences)
         let entered = await Task.detached { store.entered.wait(timeout: .now() + 5) == .success }.value
@@ -34,6 +36,7 @@ final class PresenterTests: XCTestCase {
         store.resume.signal()
         await settle(presenter)
         XCTAssertFalse(presenter.pending)
+        XCTAssertNil(presenter.pendingAction)
         XCTAssertNil(presenter.presentationID)
         XCTAssertTrue(core.snapshot().effectivePermissions.marketing)
         // Count actual queued decisions, never revision arithmetic.

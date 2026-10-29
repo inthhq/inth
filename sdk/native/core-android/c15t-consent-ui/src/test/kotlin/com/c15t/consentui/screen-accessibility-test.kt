@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
@@ -50,16 +51,49 @@ class ScreenAccessibilityTest {
             store.block = true
             compose.runOnIdle { active.commit(ConsentPresenter.Action.ACCEPT) }
             compose.waitUntil(5_000) { active.showProgress }
+            assertEquals(ConsentPresenter.Action.ACCEPT, active.pendingAction)
+            // Both decisions keep their names and lock; only the pressed one reports progress.
             for ((id, name) in listOf("accept-all" to "Accept all", "reject-all" to "Reject all")) {
                 val semantics = compose.onNodeWithTag("c15t.first-layer.$id").fetchSemanticsNode().config
                 assertEquals(listOf(name), semantics.getOrNull(SemanticsProperties.ContentDescription))
-                assertEquals("Saving choices", semantics.getOrNull(SemanticsProperties.StateDescription))
+                assertEquals(if (id == "accept-all") "Saving choices" else null, semantics.getOrNull(SemanticsProperties.StateDescription))
                 assertTrue(semantics.contains(SemanticsProperties.Disabled))
             }
+            val spinners = compose.onAllNodesWithTag("c15t.status.progress", useUnmergedTree = true).fetchSemanticsNodes()
+            assertEquals(1, spinners.size)
+            val accept = compose.onNodeWithTag("c15t.first-layer.accept-all").fetchSemanticsNode().boundsInRoot
+            assertTrue(spinners.single().boundsInRoot.left >= accept.left && spinners.single().boundsInRoot.right <= accept.right)
         } finally {
             store.release.countDown()
             try { compose.waitUntil(5_000) { presenter?.pending != true } }
             finally { Dispatchers.resetMain() }
+        }
+        assertNull(presenter?.pendingAction)
+    }
+
+    @Test fun lightStockSmallTextReachesFourPointFiveToOne() = assertStockSmallTextContrast(dark = false)
+
+    @Test @Config(qualifiers = "night")
+    fun darkStockSmallTextReachesFourPointFiveToOne() = assertStockSmallTextContrast(dark = true)
+
+    /** The small text the stock theme sets on tinted and muted fills, composited the way it renders. */
+    private fun assertStockSmallTextContrast(dark: Boolean) {
+        val colors = ConsentTheme.Colors.c15t
+        fun argb(color: ConsentThemeColor) = (if (dark) color.dark else color.light) or 0xFF000000.toInt()
+        val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.accent), Math.round(255 * 0.14f)), argb(colors.surface))
+        val pairs = listOf(
+            Triple("status tag text on its tint", argb(colors.statusTagText), tagFill),
+            Triple("off tag text on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)),
+            Triple("partner count on muted surface", argb(colors.text), argb(colors.surfaceMuted)),
+            Triple("section label on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)),
+            Triple("links on canvas", argb(colors.accent), argb(colors.canvas)),
+            Triple("links on surface", argb(colors.accent), argb(colors.surface)),
+            Triple("decision label", argb(colors.onDecision), argb(colors.decision)),
+            Triple("save label", argb(colors.onAccent), argb(colors.accent)),
+        )
+        for ((name, foreground, background) in pairs) {
+            val ratio = ColorUtils.calculateContrast(foreground, background)
+            assertTrue("$name (${if (dark) "dark" else "light"}) was $ratio", ratio >= 4.5)
         }
     }
 

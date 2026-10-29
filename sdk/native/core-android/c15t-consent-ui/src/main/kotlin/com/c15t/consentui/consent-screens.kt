@@ -52,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -222,6 +223,10 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 /**
  * The one button shape. [ButtonVariant.DECISION] is Accept all and Reject all, which always share it;
  * [ButtonVariant.ACCENT] is Save; [ButtonVariant.QUIET] is everything that is not a decision.
+ *
+ * [progress] marks the one action being committed: it keeps its label and full strength and shows
+ * a spinner at its leading edge, while the other, disabled actions fade. The spinner is laid over
+ * the label's row so the label never moves and the equal-width layout never reflows mid-save.
  */
 @Composable private fun ConsentButton(text: String, id: String, enabled: Boolean, variant: ButtonVariant = ButtonVariant.DECISION,
     progress: Boolean = false, onClick: () -> Unit) {
@@ -232,8 +237,11 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
         if (progress) stateDescription = "Saving choices"
     }
     val label: @Composable () -> Unit = {
-        if (progress) CircularProgressIndicator(Modifier.size(20.dp).testTag("c15t.status.progress"), color = LocalContentColor.current, strokeWidth = 2.dp)
-        else Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (progress) CircularProgressIndicator(Modifier.size(20.dp).align(Alignment.CenterStart).testTag("c15t.status.progress"),
+                color = LocalContentColor.current, strokeWidth = 2.dp)
+            Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+        }
     }
     when (variant) {
         ButtonVariant.DECISION, ButtonVariant.ACCENT -> {
@@ -241,11 +249,12 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
             val content = if (variant == ButtonVariant.DECISION) theme.colors.onDecision.color() else theme.colors.onAccent.color()
             Button(onClick, modifier, enabled = enabled, shape = shape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content,
-                    disabledContainerColor = container.copy(alpha = 0.55f), disabledContentColor = content)) { label() }
+                    disabledContainerColor = if (progress) container else container.copy(alpha = 0.55f), disabledContentColor = content)) { label() }
         }
         ButtonVariant.QUIET -> OutlinedButton(onClick, modifier, enabled = enabled, shape = shape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-            border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = if (enabled) 0.18f else 0.1f)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = theme.colors.text.color(), disabledContentColor = theme.colors.textSecondary.color())) { label() }
+            border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = if (enabled || progress) 0.18f else 0.1f)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = theme.colors.text.color(),
+                disabledContentColor = if (progress) theme.colors.text.color() else theme.colors.textSecondary.color())) { label() }
     }
 }
 
@@ -301,6 +310,8 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     val theme = LocalConsentTheme.current
     val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
     val large = LocalDensity.current.fontScale >= 1.5f
+    // Only the pressed action shows progress; the rest are disabled with their labels intact.
+    fun busy(action: ConsentPresenter.Action) = p.showProgress && p.pendingAction == action
     Surface(color = theme.colors.canvas.color()) {
         Column(Modifier.fillMaxWidth()) {
             Hairline()
@@ -312,22 +323,22 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
                         p.errorMessage?.let { ErrorCallout(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
                         val twin = if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
                         if (p.snapshot.policyPending) {
-                            ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                            ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
                         } else if (p.listUnavailable) {
                             Body("Our partner list is out of date. Try again to load it, or reject optional data use.", Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
                             EqualDecisions {
-                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
                                 ConsentButton("Try again", "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
                             }
                         } else {
                             EqualDecisions {
-                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
-                                ConsentButton("Accept all", "$prefix.accept-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.ACCEPT) }
+                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
+                                ConsentButton("Accept all", "$prefix.accept-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.ACCEPT)) { p.commit(ConsentPresenter.Action.ACCEPT) }
                             }
                             if (first) {
                                 ConsentButton("Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
                                 if (theme.showsBranding && !large) Branding()
-                            } else ConsentButton("Save choices", "$prefix.save", !p.pending, ButtonVariant.ACCENT, progress = p.showProgress) { p.commit(ConsentPresenter.Action.SAVE) }
+                            } else ConsentButton("Save choices", "$prefix.save", !p.pending, ButtonVariant.ACCENT, progress = busy(ConsentPresenter.Action.SAVE)) { p.commit(ConsentPresenter.Action.SAVE) }
                         }
                     }
                 }
@@ -369,10 +380,16 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     }
 }
 
+/** Display type breaks balanced, so a two-line headline never leaves one word on its last line. */
 @Composable private fun headlineStyle(theme: ConsentTheme): TextStyle = MaterialTheme.typography.headlineLarge.copy(
-    fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.25).sp)
+    fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.25).sp,
+    lineBreak = LineBreak.Heading)
 
-/** The purposes partners ask for, on a quieter surface so they inform without competing. */
+/**
+ * The purposes partners ask for, on a quieter surface so they inform without competing.
+ * The partner count opens a page inside this one, so it reads as a disclosure in ink with a
+ * chevron rather than a blue link; small blue text does not reach 4.5:1 on the muted surface.
+ */
 @Composable private fun PartnerSummary(p: ConsentPresenter, partners: () -> Unit) {
     val theme = LocalConsentTheme.current
     val disclosure = p.disclosure ?: return
@@ -380,8 +397,11 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
         Column(Modifier.padding(vertical = 6.dp)) {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color(), modifier = Modifier.weight(1f))
-                TextButton(onClick = partners, modifier = Modifier.testTag("c15t.first-layer.partner-count")) {
-                    Text("${disclosure.vendors.size} IAB partners", style = MaterialTheme.typography.labelLarge, color = theme.colors.accent.color())
+                val count = "${disclosure.vendors.size} IAB partners"
+                TextButton(onClick = partners, contentPadding = PaddingValues(start = 8.dp, end = 4.dp),
+                    modifier = Modifier.semantics { contentDescription = count }.testTag("c15t.first-layer.partner-count")) {
+                    Text(count, style = MaterialTheme.typography.labelLarge, color = theme.colors.text.color())
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = theme.colors.textSecondary.color(), modifier = Modifier.size(18.dp))
                 }
             }
             val purposes = disclosure.list.purposes.toSortedMap().entries.toList()
@@ -411,7 +431,8 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
             Heading("How this app uses your data", "c15t.notice.title", MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
             Body("You can review or change this at any time in Privacy settings.")
             EqualDecisions {
-                ConsentButton("Got it", "c15t.notice.acknowledge", !presenter.pending, progress = presenter.showProgress) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
+                ConsentButton("Got it", "c15t.notice.acknowledge", !presenter.pending,
+                    progress = presenter.showProgress && presenter.pendingAction == ConsentPresenter.Action.ACKNOWLEDGE) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
                 ConsentButton("Privacy settings", "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
             }
             PolicyLink(privacyPolicyUrl)
@@ -634,7 +655,7 @@ private fun String.searchKey() = Normalizer.normalize(this, Normalizer.Form.NFD)
 @Composable private fun StatusTag(status: String, modifier: Modifier = Modifier) {
     val theme = LocalConsentTheme.current
     val off = status == "Off"
-    Text(status, style = MaterialTheme.typography.labelMedium, color = if (off) theme.colors.textSecondary.color() else theme.colors.accent.color(),
+    Text(status, style = MaterialTheme.typography.labelMedium, color = if (off) theme.colors.textSecondary.color() else theme.colors.statusTagText.color(),
         modifier = modifier.background(if (off) theme.colors.surfaceMuted.color() else theme.colors.accent.color().copy(alpha = 0.14f), CircleShape).padding(horizontal = 8.dp, vertical = 4.dp))
 }
 

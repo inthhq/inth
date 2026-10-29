@@ -85,11 +85,29 @@ can still opt into a different headline face.
 Accept all and Reject all are twins: the same fill, size and weight, side by
 side when both labels fit and stacked at accessibility text sizes. Customize is
 outlined. Dark mode flips the paper
-and ink; every colour carries a light and a dark value.
+and ink; every colour carries a light and a dark value. The headline wraps
+balanced on both platforms, so a two-line stock or host headline breaks near its
+middle instead of leaving one word on the last line; no line break is written
+into the copy. Partner list, partner detail and Additional Consent pages share
+the same canvas as the first choice and preferences.
+
+While a choice is being saved, the pressed button keeps its label and shows a
+spinner beside it after 400 ms; the other actions dim until the durable write
+finishes. The spinner never replaces a label, so the person can still see which
+decision is being recorded. `ConsentPresenter.pendingAction` names that action
+for hosts that render their own controls.
+
+Small text on tinted fills meets 4.5:1 in the stock theme. The On and Partly on
+partner tags set their text in the accent pulled 30% toward the text colour,
+derived from whatever accent and text a host supplies. The partner count inside
+the first-layer summary card is a disclosure in the text colour with a chevron,
+not a blue link, because the accent alone does not reach 4.5:1 on the muted
+surface at that size.
 
 The default header shows the selected provider's bundled logo, c15t or Inth,
-without a background or border, with "YOUR BRAND HERE" as the tracked accent
-eyebrow. It does not read the app's display name or launcher icon.
+without a background or border, aligned to the same left edge as the headline,
+with "YOUR BRAND HERE" as the tracked accent eyebrow. It does not read the
+app's display name or launcher icon.
 `ConsentTheme.Brand` replaces the name, mark, or both with explicit app branding. An explicit mark that cannot
 be loaded shows the label's initial instead of silently substituting a logo.
 `Brand.hidden` (Swift) or `Brand.Hidden` (Kotlin) starts the page at the headline.

@@ -26,7 +26,10 @@ struct ResolvedIdentity {
 struct IdentityHeader: View {
     let identity: ResolvedIdentity
     @Environment(\.consentTheme) private var theme
-    @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 56
+    /// A host's own image or initial sits in a tile.
+    @ScaledMetric(relativeTo: .largeTitle) private var tileSize: CGFloat = 56
+    /// A bundled provider mark has no tile, so it starts at the text edge like the headline.
+    @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 40
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -38,16 +41,16 @@ struct IdentityHeader: View {
     }
 
     private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: markSize * 0.22, style: .continuous)
+        RoundedRectangle(cornerRadius: tileSize * 0.22, style: .continuous)
     }
 
     @ViewBuilder private var tile: some View {
         if let provider = identity.provider {
             ConsentProviderMark(branding: provider).fill(style: FillStyle(eoFill: true))
-                .foregroundStyle(theme.colors.text.color).padding(markSize / 7)
+                .foregroundStyle(theme.colors.text.color)
                 .frame(width: markSize, height: markSize)
         } else if let icon = identity.icon {
-            Image(uiImage: icon).resizable().scaledToFill().frame(width: markSize, height: markSize)
+            Image(uiImage: icon).resizable().scaledToFill().frame(width: tileSize, height: tileSize)
                 .clipShape(shape).overlay(shape.strokeBorder(.black.opacity(0.08)))
         } else {
             ZStack {
@@ -55,7 +58,7 @@ struct IdentityHeader: View {
                 Text(String(identity.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)).uppercased())
                     .font(theme.headlineFont.font(.title, weight: .semibold))
                     .foregroundStyle(theme.colors.accent.color)
-            }.frame(width: markSize, height: markSize)
+            }.frame(width: tileSize, height: tileSize)
         }
     }
 }

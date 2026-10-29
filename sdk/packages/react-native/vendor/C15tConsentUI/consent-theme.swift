@@ -32,6 +32,24 @@ public struct ConsentThemeColor: Equatable, Hashable, Sendable {
         return value
     }
 
+    /// This colour moved `fraction` of the way toward `other` in each appearance, in sRGB.
+    /// - Parameters:
+    ///   - other: The colour to move toward.
+    ///   - fraction: `0` keeps this colour; `1` is `other`. Values outside `0...1` are clamped.
+    /// - Returns: A colour whose light and dark values are each blended separately.
+    public func blended(toward other: ConsentThemeColor, fraction: Double) -> ConsentThemeColor {
+        ConsentThemeColor(light: Self.mix(light, other.light, fraction), dark: Self.mix(dark, other.dark, fraction))
+    }
+
+    private static func mix(_ from: UInt32, _ to: UInt32, _ fraction: Double) -> UInt32 {
+        let amount = min(max(fraction, 0), 1)
+        func channel(_ shift: UInt32) -> UInt32 {
+            let start = Double((from >> shift) & 255), end = Double((to >> shift) & 255)
+            return UInt32((start + (end - start) * amount).rounded()) << shift
+        }
+        return channel(16) | channel(8) | channel(0)
+    }
+
     #if canImport(SwiftUI) && canImport(UIKit)
     /// A dynamic colour that follows the trait collection.
     public var color: Color {
@@ -84,6 +102,11 @@ public struct ConsentTheme: Equatable, Sendable {
             self.decision = decision
             self.onDecision = onDecision
         }
+
+        /// Text of an On or Partly on status tag. The tag sits on a 14% tint of `accent`, and the
+        /// accent alone does not reach 4.5:1 on its own tint at caption size, so the label is the
+        /// accent pulled toward `text`. Derived, so a host theme gets the same floor for free.
+        var statusTagText: ConsentThemeColor { accent.blended(toward: text, fraction: 0.3) }
 
         /// Warm paper, ink decisions, and the c15t blue for links and switches.
         public static let c15t = Colors(

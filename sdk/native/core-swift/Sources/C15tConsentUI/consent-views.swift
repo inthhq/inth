@@ -15,10 +15,16 @@ private enum StatusColors {
 
 /// The one button shape. `decision` is for Accept all and Reject all, which always share it;
 /// `accent` is for Save; `quiet` is for everything that is not a decision.
+///
+/// `busy` is the one action being committed: it keeps its label and full strength and shows a
+/// spinner at its leading edge, while the other, disabled actions fade. The spinner is an
+/// overlay so the label never moves and the equal-width layout never reflows mid-save.
 private struct ConsentButtonStyle: ButtonStyle {
     enum Variant { case decision, accent, quiet }
     var variant: Variant = .decision
+    var busy = false
     @Environment(\.consentTheme) private var theme
+    @Environment(\.isEnabled) private var isEnabled
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
@@ -28,7 +34,10 @@ private struct ConsentButtonStyle: ButtonStyle {
             .foregroundStyle(foreground)
             .background(background, in: shape)
             .overlay { if variant == .quiet { shape.strokeBorder(theme.colors.text.color.opacity(0.18)) } }
-            .opacity(configuration.isPressed ? 0.85 : 1)
+            .overlay(alignment: .leading) {
+                if busy { ProgressView().tint(foreground).padding(.leading, 16).accessibilityIdentifier("c15t.status.progress") }
+            }
+            .opacity(configuration.isPressed ? 0.85 : isEnabled || busy ? 1 : 0.5)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
@@ -45,6 +54,22 @@ private struct ConsentButtonStyle: ButtonStyle {
         case .accent: theme.colors.accent.color
         case .quiet: Color.clear
         }
+    }
+}
+
+/// Text-only actions: links, retries, partner counts, detail toggles. The label itself is the
+/// whole 44pt target; a frame added outside a button only pads the layout and leaves the hit
+/// area the size of the text.
+private struct TextLinkStyle: ButtonStyle {
+    var font: Font = .subheadline.weight(.medium)
+    /// `nil` is the theme accent.
+    var color: Color? = nil
+    @Environment(\.consentTheme) private var theme
+    @Environment(\.isEnabled) private var isEnabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.font(font).foregroundStyle(color ?? theme.colors.accent.color)
+            .frame(minHeight: 44).contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.6 : isEnabled ? 1 : 0.5)
     }
 }
 
@@ -170,7 +195,9 @@ private struct NoticeCard: View {
             Text("You can review or change this at any time in Privacy settings.")
                 .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
             EqualDecisionLayout {
-                Button("Got it") { presenter.commit(.acknowledge) }.buttonStyle(ConsentButtonStyle()).accessibilityIdentifier("c15t.notice.acknowledge")
+                Button("Got it") { presenter.commit(.acknowledge) }
+                    .buttonStyle(ConsentButtonStyle(busy: presenter.showProgress && presenter.pendingAction == .acknowledge))
+                    .accessibilityIdentifier("c15t.notice.acknowledge")
                 Button("Privacy settings") { presenter.presentPreferences() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.notice.settings")
             }
             PrivacyLink(url: privacyPolicyURL)
@@ -188,8 +215,7 @@ private struct PrivacyLink: View {
     let url: URL
     @Environment(\.consentTheme) private var theme
     var body: some View {
-        Link("Privacy policy", destination: url).font(.subheadline.weight(.medium)).foregroundStyle(theme.colors.accent.color)
-            .frame(minHeight: 44).accessibilityIdentifier("c15t.privacy-policy")
+        Link("Privacy policy", destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.privacy-policy")
     }
 }
 
@@ -201,7 +227,7 @@ private struct ErrorCallout: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Label(message, systemImage: "exclamationmark.circle").fixedSize(horizontal: false, vertical: true).accessibilityIdentifier(id)
-            Button("Try again", action: retry).font(.subheadline.weight(.semibold)).frame(minHeight: 44).accessibilityIdentifier(id + ".retry")
+            Button("Try again", action: retry).buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold), color: StatusColors.error)).accessibilityIdentifier(id + ".retry")
         }
         .font(.subheadline).foregroundStyle(StatusColors.error).padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -268,6 +294,10 @@ private struct ConsentScreen: View {
                     case .providers: ProviderList(presenter: presenter)
                     }
                 }
+                // A pushed page is its own view: the root's canvas and bar colour do not follow it.
+                .background(theme.colors.canvas.color.ignoresSafeArea())
+                .toolbarBackground(theme.colors.canvas.color, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
                 .navigationBarBackButtonHidden()
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
@@ -335,9 +365,11 @@ private struct FirstLayer: View {
                         Text(reason.rawValue == "expired" ? "Your earlier choice has expired, so we're asking again." : "How this app uses data has changed since your last choice, so we're asking again.")
                     }.accessibilityIdentifier("c15t.first-layer.reason")
                 }
-                Text(theme.copy.headline).font(theme.headlineFont.font(.largeTitle, weight: .semibold))
-                    .foregroundStyle(theme.colors.text.color).fixedSize(horizontal: false, vertical: true)
-                    .accessibilityAddTraits(.isHeader).accessibilityIdentifier("c15t.first-layer.title").accessibilityFocused($titleFocused)
+                BalancedTextLayout {
+                    Text(theme.copy.headline).font(theme.headlineFont.font(.largeTitle, weight: .semibold))
+                        .foregroundStyle(theme.colors.text.color).multilineTextAlignment(.leading)
+                        .accessibilityAddTraits(.isHeader).accessibilityIdentifier("c15t.first-layer.title").accessibilityFocused($titleFocused)
+                }
                 VStack(alignment: .leading, spacing: 12) {
                     Text(theme.copy.introduction).font(.body).foregroundStyle(theme.colors.text.color)
                         .accessibilityIdentifier("c15t.first-layer.body")
@@ -362,18 +394,27 @@ private struct FirstLayer: View {
     }
 
     /// The purposes partners ask for, on a quieter surface so they inform without competing.
+    /// The partner count opens a page inside this one, so it reads as a disclosure in ink with a
+    /// chevron rather than a blue link; small blue text does not reach 4.5:1 on the muted surface.
     @ViewBuilder private var partnerSummary: some View {
         if let disclosure = presenter.disclosure {
             let list = disclosure.list
             VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
+                HStack(alignment: .center) {
                     SectionLabel("What partners may do")
                     Spacer()
-                    Button("\(disclosure.vendors.count) IAB partners") {
+                    Button {
                         presenter.customize()
                         path.append(.vendors(nil))
-                    }.font(.footnote.weight(.semibold)).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44)
-                        .accessibilityIdentifier("c15t.first-layer.partner-count")
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text("\(disclosure.vendors.count) IAB partners")
+                            Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(theme.colors.textSecondary.color)
+                        }
+                    }
+                    .buttonStyle(TextLinkStyle(font: .footnote.weight(.semibold), color: theme.colors.text.color))
+                    .accessibilityLabel("\(disclosure.vendors.count) IAB partners")
+                    .accessibilityIdentifier("c15t.first-layer.partner-count")
                 }
                 .padding(.horizontal, 16)
                 ForEach(list.purposes.keys.sorted(), id: \.self) { id in
@@ -472,13 +513,14 @@ private struct DecisionFooter: View {
         .disabled(presenter.pending)
     }
 
+    /// Labels stay put while a commit runs: the pressed action shows progress beside its own
+    /// label, and the others fade as disabled, so the person can still see what is being saved.
     private func decision(_ label: String, _ action: ConsentPresenter.Action) -> some View {
         let suffix: String = switch action { case .accept: "accept-all"; case .reject: "reject-all"; case .save: "save"; case .acknowledge: "acknowledge" }
-        return Button { presenter.commit(action) } label: {
-            if presenter.showProgress { ProgressView().tint(action == .save ? theme.colors.onAccent.color : first ? theme.colors.onDecision.color : theme.colors.text.color).accessibilityIdentifier("c15t.status.progress") }
-            else { Text(label) }
-        }.buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : first ? .decision : .quiet))
-            .accessibilityLabel(label).accessibilityIdentifier(prefix + "." + suffix)
+        let busy = presenter.showProgress && presenter.pendingAction == action
+        return Button(label) { presenter.commit(action) }
+            .buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : first ? .decision : .quiet, busy: busy))
+            .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(prefix + "." + suffix)
     }
 }
 
@@ -495,7 +537,7 @@ private struct PreferencesList: View {
             if presenter.snapshot.policyPending {
                 Section {
                     Text("Privacy settings aren't available yet. Connect to the internet and try again.").foregroundStyle(theme.colors.text.color)
-                    Button("Try again") { presenter.refresh() }.font(.body.weight(.medium)).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44).accessibilityIdentifier("c15t.status.unavailable.retry")
+                    Button("Try again") { presenter.refresh() }.buttonStyle(TextLinkStyle(font: .body.weight(.medium))).accessibilityIdentifier("c15t.status.unavailable.retry")
                 }.listRowBackground(surface)
             } else {
                 if presenter.stale {
@@ -513,7 +555,7 @@ private struct PreferencesList: View {
                         if presenter.iab {
                             Text("We and our partners store and access information on your device and process personal data for the purposes below. Some partners rely on legitimate interest instead of consent. You can object to that and change your choices at any time in Privacy settings.")
                             Button("\(presenter.disclosure?.vendors.count ?? 0) IAB partners") { path.append(.vendors(nil)) }
-                                .font(.subheadline.weight(.semibold)).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44).accessibilityIdentifier("c15t.iab.partner-count")
+                                .buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold))).accessibilityIdentifier("c15t.iab.partner-count")
                         } else {
                             Text("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
                         }
@@ -685,16 +727,16 @@ private struct PurposeRow: View {
                 }.accessibilityIdentifier("c15t.iab.purpose.\(id).consent")
                 Button { expanded.toggle() } label: {
                     Label(expanded ? "Hide details" : "Details", systemImage: expanded ? "chevron.up" : "chevron.down")
-                        .font(.subheadline.weight(.medium)).frame(minHeight: 44)
+                        .labelStyle(TrailingIconLabelStyle())
                 }
-                .buttonStyle(.borderless).accessibilityValue(expanded ? "Expanded" : "Collapsed").accessibilityIdentifier("c15t.iab.purpose.\(id).details")
+                .buttonStyle(TextLinkStyle()).accessibilityValue(expanded ? "Expanded" : "Collapsed").accessibilityIdentifier("c15t.iab.purpose.\(id).details")
                 if expanded {
                     VStack(alignment: .leading, spacing: 8) {
                         if let legal = item.descriptionLegal { Text(legal) }
                         ForEach(item.illustrations, id: \.self) { Text("• " + $0) }
                         Text("Asks for consent: \(disclosure.vendors.values.filter { $0.consentPurposes.contains(id) }.count) partners. Legitimate interest: \(disclosure.vendors.values.filter { $0.legitimateInterestPurposes.contains(id) }.count) partners.").font(.footnote)
                     }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
-                    Button("View partners", action: openPartners).buttonStyle(.borderless).font(.subheadline.weight(.medium)).frame(minHeight: 44).accessibilityIdentifier("c15t.iab.purpose.\(id).view-partners")
+                    Button("View partners", action: openPartners).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.purpose.\(id).view-partners")
                     if li {
                         ConsentToggle(isOn: Binding(get: { presenter.choices.purposeLegitimateInterests.contains(id) }, set: { presenter.editLI(purpose: true, id: id, enabled: $0) })) {
                             RowLabel(title: "Legitimate interest", note: "Some partners claim this legal basis. Turn off to object.")
@@ -727,7 +769,7 @@ private struct StatusTag: View {
     var body: some View {
         let off = status == "Off"
         Text(status).font(.caption.weight(.semibold))
-            .foregroundStyle(off ? theme.colors.textSecondary.color : theme.colors.accent.color)
+            .foregroundStyle(off ? theme.colors.textSecondary.color : theme.colors.statusTagText.color)
             .padding(.horizontal, 8).padding(.vertical, 4)
             .background(off ? theme.colors.surfaceMuted.color : theme.colors.accent.color.opacity(0.14), in: Capsule())
     }
@@ -747,8 +789,8 @@ private struct VendorList: View {
                         self.purpose = nil
                     } label: {
                         Label("Purpose: \(presenter.disclosure?.list.purposes[purpose]?.name ?? "")", systemImage: "xmark.circle.fill")
-                            .labelStyle(TrailingIconLabelStyle()).font(.subheadline.weight(.medium))
-                    }.frame(minHeight: 44).accessibilityIdentifier("c15t.iab.vendors.filter.purpose.clear")
+                            .labelStyle(TrailingIconLabelStyle())
+                    }.buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.vendors.filter.purpose.clear")
                 }
             }.listRowBackground(theme.colors.surface.color)
             let vendors = (presenter.disclosure?.list.vendors.values.filter { vendor in
@@ -811,8 +853,8 @@ private struct VendorDetails: View {
         let language = String(Locale.preferredLanguages.first?.prefix(2) ?? "en")
         let urls = vendor.urls.first { $0.langId.lowercased() == language } ?? vendor.urls.first { $0.langId.lowercased() == "en" } ?? vendor.urls.first
         return Section {
-            if let value = urls?.privacy, let url = URL(string: value) { Link("Privacy policy", destination: url).buttonStyle(.borderless).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44).accessibilityIdentifier("c15t.iab.vendor.\(id).privacy-link") }
-            if let value = urls?.legIntClaim, let url = URL(string: value) { Link("Legitimate interest statement", destination: url).buttonStyle(.borderless).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44).accessibilityIdentifier("c15t.iab.vendor.\(id).li-claim-link") }
+            if let value = urls?.privacy, let url = URL(string: value) { Link("Privacy policy", destination: url).buttonStyle(TextLinkStyle(font: .body)).accessibilityIdentifier("c15t.iab.vendor.\(id).privacy-link") }
+            if let value = urls?.legIntClaim, let url = URL(string: value) { Link("Legitimate interest statement", destination: url).buttonStyle(TextLinkStyle(font: .body)).accessibilityIdentifier("c15t.iab.vendor.\(id).li-claim-link") }
         }.listRowBackground(theme.colors.surface.color)
     }
     private func selections(_ projection: IABVendorDisclosure) -> some View {
@@ -887,7 +929,7 @@ private struct VendorDetails: View {
                 LabeledContent("Refreshes stored information", value: vendor.cookieRefresh ? "Yes" : "No")
                 LabeledContent("Other ways to access your device", value: vendor.usesNonCookieAccess ? "Yes" : "No")
             }
-            if let value = vendor.deviceStorageDisclosureUrl, let url = URL(string: value) { Link("Device storage details", destination: url).buttonStyle(.borderless).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44) }
+            if let value = vendor.deviceStorageDisclosureUrl, let url = URL(string: value) { Link("Device storage details", destination: url).buttonStyle(TextLinkStyle(font: .body)) }
         } header: { SectionLabel("Device storage") }
             .listRowBackground(theme.colors.surface.color)
             .accessibilityIdentifier("c15t.iab.vendor.\(id).storage")
@@ -914,7 +956,7 @@ private struct ProviderList: View {
                             Text(provider.name).font(.body.weight(.semibold)).foregroundStyle(theme.colors.text.color)
                         }.accessibilityIdentifier("c15t.ac.provider.\(provider.id).switch")
                         if let url = URL(string: provider.policyUrl) {
-                            Link("Privacy policy", destination: url).buttonStyle(.borderless).font(.subheadline.weight(.medium)).foregroundStyle(theme.colors.accent.color).frame(minHeight: 44).accessibilityIdentifier("c15t.ac.provider.\(provider.id).privacy-link")
+                            Link("Privacy policy", destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.ac.provider.\(provider.id).privacy-link")
                         }
                     }.disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
                 }

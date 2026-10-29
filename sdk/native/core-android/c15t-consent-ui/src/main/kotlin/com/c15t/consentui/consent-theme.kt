@@ -22,7 +22,24 @@ data class ConsentThemeColor(val light: Int, val dark: Int = light) {
     @Composable @ReadOnlyComposable
     fun color(): Color = Color(0xFF000000L or (if (isSystemInDarkTheme()) dark else light).toLong())
 
+    /**
+     * This colour moved [fraction] of the way toward [other] in each appearance, in sRGB.
+     * `0f` keeps this colour and `1f` is [other]; values outside `0f..1f` are clamped.
+     */
+    fun blended(toward: ConsentThemeColor, fraction: Float): ConsentThemeColor =
+        ConsentThemeColor(mix(light, toward.light, fraction), mix(dark, toward.dark, fraction))
+
     companion object {
+        private fun mix(from: Int, to: Int, fraction: Float): Int {
+            val amount = fraction.coerceIn(0f, 1f)
+            fun channel(shift: Int): Int {
+                val start = (from shr shift) and 255
+                val end = (to shr shift) and 255
+                return Math.round(start + (end - start) * amount) shl shift
+            }
+            return channel(16) or channel(8) or channel(0)
+        }
+
         /** Parse `#RRGGBB`, `RRGGBB`, or `#RRGGBB,#RRGGBB` (light, dark); `null` for anything else. */
         fun parse(text: String): ConsentThemeColor? {
             val parts = text.split(",").map { part ->
@@ -78,6 +95,13 @@ data class ConsentTheme(
         /** Text on [decision]. */
         val onDecision: ConsentThemeColor,
     ) {
+        /**
+         * Text of an On or Partly on status tag. The tag sits on a 14% tint of [accent], and the
+         * accent alone does not reach 4.5:1 on its own tint at label size, so the label is the
+         * accent pulled toward [text]. Derived, so a host theme gets the same floor for free.
+         */
+        internal val statusTagText: ConsentThemeColor get() = accent.blended(toward = text, fraction = 0.3f)
+
         companion object {
             /** Warm paper, ink decisions, and the c15t blue for links and switches. */
             val c15t = Colors(

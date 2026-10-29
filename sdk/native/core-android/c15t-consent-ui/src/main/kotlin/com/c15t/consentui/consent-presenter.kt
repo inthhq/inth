@@ -18,6 +18,9 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
     var presentationID by mutableStateOf<String?>(null); private set
     var preferences by mutableStateOf(false); private set
     var pending by mutableStateOf(false); private set
+    /** The action being committed while [pending], so only its control shows progress. */
+    var pendingAction by mutableStateOf<Action?>(null); private set
+    /** `true` once a commit has taken long enough to deserve a spinner. */
     var showProgress by mutableStateOf(false); private set
     var errorCode by mutableStateOf<String?>(null); private set
     var stale by mutableStateOf(false); private set
@@ -127,7 +130,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         val categoryDraft = categories.toMap()
         val choiceDraft = choices
         val isIab = iab
-        pending = true; showProgress = false; errorCode = null; lastAction = action
+        pending = true; pendingAction = action; showProgress = false; errorCode = null; lastAction = action
         viewModelScope.launch { delay(400); if (pending && presentationID == session) showProgress = true }
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -142,7 +145,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
                     core.save(intent, expectedRevision = revision).let { it.ok to it.error?.code }
                 }
             }
-            pending = false; showProgress = false
+            pending = false; pendingAction = null; showProgress = false
             if (presentationID != session) return@launch
             snapshot = core.snapshot()
             if (result.first) {

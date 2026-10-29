@@ -31,6 +31,14 @@ class ThemeTest {
         assertNull(ConsentThemeColor.parse("#00CCBC,"))
     }
 
+    @Test fun blendMovesEachAppearanceSeparately() {
+        val blended = ConsentThemeColor(0x335CFF, 0x8CA2FF).blended(toward = ConsentThemeColor(0x1E1B17, 0xF3EEE6), fraction = 0.3f)
+        assertEquals(ConsentThemeColor(0x2D49B9, 0xABB9F8), blended)
+        val accent = ConsentThemeColor(0x335CFF)
+        assertEquals(accent, accent.blended(toward = ConsentThemeColor(0x000000), fraction = 0f))
+        assertEquals(ConsentThemeColor(0x000000), accent.blended(toward = ConsentThemeColor(0x000000), fraction = 7f))
+    }
+
     @Test fun manifestValuesOverrideOnlyWhatTheyName() {
         val bundle = Bundle().apply {
             putString(ConsentTheme.Meta.META_ACCENT, "#00CCBC,#7FE6DC")

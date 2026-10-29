@@ -16,6 +16,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     @Published public private(set) var presentationID: UUID?
     @Published public private(set) var preferences = false
     @Published public private(set) var pending = false
+    /// The action being committed while `pending`, so only its control shows progress.
+    @Published public private(set) var pendingAction: Action?
+    /// `true` once a commit has taken long enough to deserve a spinner.
     @Published public private(set) var showProgress = false
     @Published public private(set) var errorCode: String?
     @Published public private(set) var stale = false
@@ -218,6 +221,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         let iabDraft = choices
         let isIAB = iab
         pending = true
+        pendingAction = action
         showProgress = false
         errorCode = nil
         lastIntent = action
@@ -239,6 +243,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
                 return (result.status == .committed, result.error?.code)
             }.value
             pending = false
+            pendingAction = nil
             showProgress = false
             guard presentationID == session else { return }
             snapshot = authority.snapshot()
