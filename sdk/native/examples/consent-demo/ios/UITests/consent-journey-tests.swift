@@ -31,6 +31,10 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("fixture.open-preferences").isHittable)
         button("fixture.open-preferences").tap()
     }
+    /// Scroll until `element` sits between the bar and the pinned footer. Once the element is in
+    /// the hierarchy the drag covers only the distance to the middle of that window and holds at
+    /// the end, so the list cannot coast past it and oscillate; a fixed full-screen flick did
+    /// exactly that on iOS 27.
     func reveal(_ element: XCUIElement) {
         for _ in 0..<18 {
             let save = button("c15t.iab.save").exists ? button("c15t.iab.save") : button("c15t.prefs.save")
@@ -38,10 +42,15 @@ final class ConsentJourneyTests: XCTestCase {
             let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
             let top: CGFloat = 150
             if element.exists, element.isHittable, element.frame.midY > top, element.frame.midY < bottom { return }
-            let start = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: app.frame.midX, dy: bottom - 20))
-            let end = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: app.frame.midX, dy: top + 30))
-            if element.exists, element.frame.midY < top { end.press(forDuration: 0.05, thenDragTo: start) }
-            else { start.press(forDuration: 0.05, thenDragTo: end) }
+            let room = bottom - top - 60
+            let delta = element.exists ? element.frame.midY - (top + bottom) / 2 : room
+            let distance = min(abs(delta), room)
+            let x = app.frame.midX
+            let from = delta > 0 ? bottom - 20 : top + 30
+            let to = delta > 0 ? from - distance : from + distance
+            let start = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: from))
+            let end = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: to))
+            start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTFail("Not reachable: \(element)")
     }
@@ -92,23 +101,35 @@ final class ConsentJourneyTests: XCTestCase {
         launch("fresh-online-iab")
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); capture("ios-iab-first-layer")
         button("c15t.first-layer.customize").tap()
+        // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
+        let storage = app.switches["c15t.iab.purpose.1.consent"]
+        reveal(storage); storage.tap(); XCTAssertEqual(storage.value as? String, "1")
         let purpose = app.switches["c15t.iab.purpose.7.consent"]
         reveal(purpose); capture("ios-iab-centre")
         let details = button("c15t.iab.purpose.7.details"); reveal(details); details.tap()
+        // Text actions size their own 44pt target; a frame outside the button would leave 18pt.
+        let viewPartners = button("c15t.iab.purpose.7.view-partners"); reveal(viewPartners)
+        XCTAssertGreaterThanOrEqual(viewPartners.frame.height, 44)
+        XCTAssertGreaterThanOrEqual(details.frame.height, 44)
         let li = app.switches["c15t.iab.purpose.7.li"]
         reveal(li); XCTAssertEqual(li.value as? String, "0")
         li.tap(); li.tap()
         XCTAssertFalse(app.switches["c15t.iab.purpose.1.li"].exists)
         let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
         let search = app.textFields["c15t.iab.vendors.search"]
-        XCTAssertTrue(search.waitForExistence(timeout: 3)); search.tap(); search.typeText("elan")
+        XCTAssertTrue(search.waitForExistence(timeout: 3)); capture("ios-partner-list")
+        search.tap(); search.typeText("elan")
         XCTAssertTrue(button("c15t.iab.vendors.vendor.1").exists); capture("ios-partner-search")
         button("c15t.iab.vendors.vendor.1").tap()
         let consent = app.switches["c15t.iab.vendor.1.consent"]
         XCTAssertTrue(consent.waitForExistence(timeout: 3)); consent.tap()
         let vendorLI = app.switches["c15t.iab.vendor.1.li"]; XCTAssertEqual(vendorLI.value as? String, "0"); vendorLI.tap(); vendorLI.tap()
         capture("ios-partner-details")
-        button("c15t.iab.vendor.back").tap(); button("c15t.iab.vendors.back").tap()
+        button("c15t.iab.vendor.back").tap()
+        XCTAssertTrue(app.staticTexts["c15t.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts["c15t.iab.vendors.vendor.1.status"].label, "Partly on")
+        capture("ios-partner-status")
+        button("c15t.iab.vendors.back").tap()
         let features = app.staticTexts["c15t.iab.features-standard-text"]; reveal(features); XCTAssertFalse(features.label.isEmpty)
         let ac = button("c15t.iab.other-partners"); reveal(ac); ac.tap()
         XCTAssertTrue(app.textFields["c15t.ac.search"].waitForExistence(timeout: 3))
@@ -154,6 +175,7 @@ final class ConsentJourneyTests: XCTestCase {
         let policy = app.links["c15t.privacy-policy"].exists ? app.links["c15t.privacy-policy"] : app.buttons["c15t.privacy-policy"]
         reveal(policy)
         XCTAssertTrue(policy.isHittable)
+        XCTAssertGreaterThanOrEqual(policy.frame.height, 44)
         capture("ios-dark-large-text-policy")
         XCTAssertTrue(reject.isHittable)
         XCTAssertTrue(accept.isHittable)

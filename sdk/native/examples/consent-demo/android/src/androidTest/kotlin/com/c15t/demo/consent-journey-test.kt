@@ -140,6 +140,9 @@ class ConsentJourneyTest {
         launch("fresh-online-iab")
         waitFor("c15t.first-layer.customize"); capture("android-iab-first-layer")
         compose.onNodeWithTag("c15t.first-layer.customize").performClick()
+        // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
+        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.purpose.1.consent"))
+        compose.onNodeWithTag("c15t.iab.purpose.1.consent").performScrollTo().performClick().assertIsOn()
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.purpose.7.consent"))
         val purpose = waitFor("c15t.iab.purpose.7.consent")
         purpose.performScrollTo(); capture("android-iab-centre")
@@ -155,7 +158,11 @@ class ConsentJourneyTest {
         waitFor("c15t.iab.vendor.1.consent").performClick()
         compose.onNodeWithTag("c15t.iab.vendor.1.li").performScrollTo().assertIsOff().performClick().performClick()
         capture("android-partner-details")
-        device.pressBack(); device.pressBack()
+        device.pressBack()
+        // The tag sits inside the clickable row, which merges its children's semantics.
+        compose.waitUntil(15000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.1.status", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("c15t.iab.vendors.vendor.1.status", useUnmergedTree = true).assertTextEquals("Partly on"); capture("android-partner-status")
+        device.pressBack()
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.features-standard-text"))
         compose.onNodeWithTag("c15t.iab.features-standard-text").performScrollTo().assertTextContains("Features have no separate choice.", substring = true)
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.other-partners"))
