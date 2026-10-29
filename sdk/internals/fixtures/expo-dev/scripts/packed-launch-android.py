@@ -66,7 +66,32 @@ def capture(name):
     with (out / f'{name}.png').open('wb') as file:
         subprocess.run([adb, '-s', serial, 'exec-out', 'screencap', '-p'], stdout=file, check=True)
 
+def network_state(label):
+    connectivity = device('shell', 'dumpsys', 'connectivity')
+    settings = device('shell', 'settings', 'list', 'global')
+    telephony = device('shell', 'dumpsys', 'telephony.registry')
+    for name, content in [('network', connectivity), ('radio-settings', settings), ('telephony', telephony)]:
+        (out / f'{name}-{label}.txt').write_text(content)
+    (out / f'wifi-{label}.txt').write_text(device('shell', 'dumpsys', 'wifi'))
+    return {
+        'airplaneMode': re.search(r'^airplane_mode_on=1$', settings, re.MULTILINE) is not None,
+        'noDefaultNetwork': 'Active default network: none' in connectivity,
+        'wifiDisabled': re.search(r'^wifi_on=0$', settings, re.MULTILINE) is not None,
+        'mobileDataSettings': dict(re.findall(r'^(mobile_data\d*)=(.*)$', settings, re.MULTILINE)),
+        'dataEnabled': re.findall(r'^\s*mIsDataEnabled=(.*)$', telephony, re.MULTILINE),
+        'radioPowerStates': re.findall(r'^\s*mRadioPowerState=(.*)$', telephony, re.MULTILINE),
+    }
+
+def is_offline(state):
+    return (state['airplaneMode'] and state['noDefaultNetwork'] and state['wifiDisabled']
+            and bool(state['mobileDataSettings']) and set(state['mobileDataSettings'].values()) == {'0'}
+            and state['dataEnabled'] == ['false'] and state['radioPowerStates'] == ['0'])
+
 result = {'passed': False, 'sdkInput': 'packed-tarball', 'backend': 'https://example-inth.inth.app/', 'device': serial}
+root = Path(__file__).resolve().parents[4]
+(out / 'source-head.txt').write_text(run(['git', '-C', str(root), 'rev-parse', 'HEAD']))
+(out / 'source.patch').write_text(run(['git', '-C', str(root), 'diff', '--binary']))
+result['harnessSha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 if args.archive:
     result['archive'] = str(args.archive.resolve())
     result['archiveSha256'] = hashlib.sha256(args.archive.read_bytes()).hexdigest()
@@ -80,30 +105,29 @@ try:
         if time.monotonic() > deadline or emulator.poll() is not None:
             raise RuntimeError('Owned AVD did not boot')
         time.sleep(1)
+    # Boot completion can precede the default SIM. Disabling data before it exists is a no-op.
+    deadline = time.monotonic() + 60
+    while True:
+        phone = device('shell', 'dumpsys', 'phone')
+        if re.search(r'mDefaultDataSubId=\d+', phone):
+            break
+        assert time.monotonic() < deadline, 'Owned AVD data subscription did not initialize'
+        time.sleep(.5)
+    (out / 'phone-before-disable.txt').write_text(phone)
     device('shell', 'svc', 'wifi', 'disable')
     device('shell', 'svc', 'data', 'disable')
     device('shell', 'cmd', 'connectivity', 'airplane-mode', 'enable')
     assert device('shell', 'settings', 'get', 'global', 'airplane_mode_on').strip() == '1'
-    # Wait for actual network teardown before the app has ever been installed.
+    # Require actual radio teardown before the app has ever been installed.
     deadline = time.monotonic() + 30
     while True:
-        connectivity = device('shell', 'dumpsys', 'connectivity')
-        if 'Active default network: none' in connectivity:
+        state = network_state('before-install')
+        if is_offline(state):
             break
-        assert time.monotonic() < deadline, 'Owned AVD still has a default network'
+        assert time.monotonic() < deadline, f'Owned AVD is not offline: {state}'
+        device('shell', 'svc', 'data', 'disable')
         time.sleep(.25)
-    (out / 'network-before-install.txt').write_text(connectivity)
-    (out / 'wifi-before-install.txt').write_text(device('shell', 'dumpsys', 'wifi'))
-    settings = device('shell', 'settings', 'list', 'global')
-    (out / 'radio-settings-before-install.txt').write_text(settings)
-    mobile_data = dict(re.findall(r'^(mobile_data\d*)=(.*)$', settings, re.MULTILINE))
-    result['networkBeforeFirstLaunch'] = {
-        'airplaneMode': True, 'activeDefaultNetwork': None,
-        'wifiSetting': device('shell', 'settings', 'get', 'global', 'wifi_on').strip(),
-        'mobileDataSettings': mobile_data,
-    }
-    assert result['networkBeforeFirstLaunch']['wifiSetting'] == '0'
-    assert mobile_data and all(value == '0' for value in mobile_data.values())
+    result['networkBeforeFirstLaunch'] = state
     device('shell', 'settings', 'put', 'system', 'screen_off_timeout', '2147483647')
     device('shell', 'input', 'keyevent', '224')
     device('shell', 'input', 'keyevent', '82')
@@ -134,9 +158,8 @@ try:
     switch = find(lambda node: node.get('resource-id') == 'c15t.prefs.category.measurement.switch')
     assert switch.get('checked') == 'false'
     capture('04-restored-native-preferences')
-    connectivity = device('shell', 'dumpsys', 'connectivity')
-    (out / 'network-after-relaunch.txt').write_text(connectivity)
-    assert 'Active default network: none' in connectivity
+    result['networkAfterRelaunch'] = network_state('after-relaunch')
+    assert is_offline(result['networkAfterRelaunch'])
     result['passed'] = True
 finally:
     if emulator is not None:

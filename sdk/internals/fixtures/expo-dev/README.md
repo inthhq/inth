@@ -271,6 +271,8 @@ app sandbox. The smoke requires fresh bundled readings and full denial in both
 processes. The SDK still comes only from the archive.
 
 The Android packed runner accepts `--archive` to record the SDK input hash. It
-disables radios on its own fresh AVD and waits for `dumpsys connectivity` to show
-no default network before installing the app. It preserves that report, radio
-settings and another connectivity report after relaunch.
+waits for the default SIM to initialize on its own fresh AVD, then disables
+Wi-Fi and data and enables airplane mode. Before installing the app, it requires
+no default network, disabled data and an off cellular radio from the actual
+connectivity and telephony services. It preserves those reports and radio
+settings, and repeats the checks after relaunch.
