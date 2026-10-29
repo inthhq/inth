@@ -271,7 +271,11 @@ class ConsentJourney {
         capture("22-expiry-narrowed-preferences")
         tap("c15t.prefs.cancel")
         setControl(JSONObject().put("now", 1793232001000L))
-        expiryState("expiry-exact-boundary") { snapshot, report -> snapshot.getBoolean("policyPending") && report.getJSONObject("native").getLong("clock") == 1793232001000L }
+        // The injected clock moves before the real deadline worker publishes its revision.
+        expiryState("expiry-exact-boundary") { snapshot, report ->
+            snapshot.getBoolean("policyPending") && report.getJSONObject("native").getLong("clock") == 1793232001000L &&
+                snapshot.getLong("evaluatedAt") == 1793232001000L && snapshot.optLong("nextDeadline", Long.MAX_VALUE) > 1793232001000L
+        }
         tap("fixture.open-preferences")
         control("c15t.status.unavailable.retry")
         assertFalse(device.hasObject(By.res("c15t.prefs.category.measurement.switch")))

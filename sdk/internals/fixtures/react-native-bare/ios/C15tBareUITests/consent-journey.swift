@@ -177,6 +177,8 @@ final class ConsentJourney: XCTestCase {
     try setControl(["now": 1793232001000])
     try expiryState("expiry-exact-boundary") { snapshot, report in
       snapshot["policyPending"] as? Bool == true && (report["native"] as? [String: Any])?["clock"] as? Int64 == 1793232001000
+        && snapshot["evaluatedAt"] as? Int64 == 1793232001000
+        && (snapshot["nextDeadline"] as? Int64 ?? Int64.max) > 1793232001000
     }
     tap("fixture.open-preferences")
     XCTAssertTrue(app.buttons["c15t.status.unavailable.retry"].waitForExistence(timeout: 10))
