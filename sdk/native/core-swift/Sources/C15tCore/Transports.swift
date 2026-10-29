@@ -461,6 +461,10 @@ public struct InitResponse: Sendable, Equatable {
 /// them may hold consent state: the core owns it, and a transport that cached
 /// permissions would be a second kernel.
 public protocol C15tTransport: Sendable {
+    /// Backend that supplies consent policy, used to validate stored bundled authority.
+    /// Custom transports can provide this URL to retain authority without seed bytes.
+    var policyEndpoint: URL? { get }
+
     /// The `domain` field sent on `POST /subjects`.
     var domain: String { get }
 
@@ -481,6 +485,9 @@ public protocol C15tTransport: Sendable {
 }
 
 extension C15tTransport {
+    /// No endpoint is assumed for a custom or offline transport.
+    public var policyEndpoint: URL? { nil }
+
     /// The hosted transport for a c15t cloud project URL.
     ///
     /// The URL comes from the caller's project rather than a compiled-in default:
@@ -530,6 +537,7 @@ extension C15tTransport {
 /// drift.
 public struct HostedTransport: C15tTransport {
     public let baseURL: URL
+    public var policyEndpoint: URL? { baseURL }
     /// Defaults to `${baseURL}/init`, overridable for a same-origin proxy.
     public let initURL: URL
     public let domain: String

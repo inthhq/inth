@@ -28,6 +28,9 @@ public struct CoreConfig: @unchecked Sendable {
     public let store: any ConsentStore
     /// Optional build resource. It never replaces a usable stored policy.
     public let bundledPolicy: BundledPolicyResource?
+    var policyEndpoint: String? {
+        transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
+    }
     /// `nil` makes the async commands no-ops, which is what an embedded or
     /// preview build wants. Use ``C15tTransport/offline()`` instead when the
     /// device is merely unreachable, so saves queue up for later.
@@ -188,7 +191,7 @@ public final class ConsentCore: @unchecked Sendable {
     }
 
     private func listIsUsableLocked() -> Bool {
-        guard bundledPolicyAuthority?.isCurrent(endpoint: config?.bundledPolicy?.endpoint, now: config?.now() ?? -1) != false,
+        guard bundledPolicyAuthority?.isCurrent(endpoint: config?.policyEndpoint, now: config?.now() ?? -1) != false,
             let c = config, let fetched = iabListFetchedAt, fetched >= 0,
             currentSnapshot.iab?.gvl != nil else { return false }
         let now = c.now()
@@ -343,7 +346,8 @@ public final class ConsentCore: @unchecked Sendable {
         guard adopted else { return }
 
         hydrate(mutation: mutation)
-        if snapshot().policyPending, let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()) {
+        if snapshot().policyPending, let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()),
+            selection.authority.isCurrent(endpoint: config.policyEndpoint, now: config.now()) {
             applyPolicyUpdate(selection.response, bundle: selection)
         }
         events.emit(.initialized)
@@ -420,7 +424,7 @@ public final class ConsentCore: @unchecked Sendable {
     private func constrainBundledPolicyLocked(_ snapshot: ConsentSnapshot) -> ConsentSnapshot {
         guard let authority = bundledPolicyAuthority else { return snapshot }
         var draft = ConsentSnapshot.Draft(current: snapshot)
-        guard authority.isCurrent(endpoint: config?.bundledPolicy?.endpoint, now: config?.now() ?? -1) else {
+        guard authority.isCurrent(endpoint: config?.policyEndpoint, now: config?.now() ?? -1) else {
             draft.effectivePermissions = .necessaryOnly
             draft.policyPending = true
             draft.activeUI = .none
@@ -636,9 +640,9 @@ public final class ConsentCore: @unchecked Sendable {
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
             let withdrawingExpiredBundle = intent == .necessary && resolvedPolicy != nil
-                && bundledPolicyAuthority?.hasExpired(endpoint: config?.bundledPolicy?.endpoint, now: wallActionAt) == true
+                && bundledPolicyAuthority?.hasExpired(endpoint: config?.policyEndpoint, now: wallActionAt) == true
             if let authority = bundledPolicyAuthority,
-                !authority.isCurrent(endpoint: config?.bundledPolicy?.endpoint, now: wallActionAt),
+                !authority.isCurrent(endpoint: config?.policyEndpoint, now: wallActionAt),
                 !withdrawingExpiredBundle {
                 return .failure(CoreErrorInfo(code: "bundled-policy-expired", message: "Connect to refresh consent policy."))
             }
@@ -738,9 +742,10 @@ public final class ConsentCore: @unchecked Sendable {
             // A bulk action covers the categories the prompt asks about, which is
             // what `resolveSaveSelection` in `packages/core` narrows it to.
             let choiceScope = choiceScopeLocked(resolved)
+            // Expired-policy rejection also withdraws older grants outside today's scope.
             let receipts = categories(
                 for: intent,
-                scope: choiceScope,
+                scope: withdrawingExpiredBundle ? OptionalConsentCategory.ordered : choiceScope,
                 current: currentSnapshot.explicitChoice
             )
             // With nothing to decide, a bulk action still covers everything the
@@ -749,7 +754,7 @@ public final class ConsentCore: @unchecked Sendable {
             let action: ConsentAction
             switch intent {
             case .all: action = coversShown ? .all : .custom
-            case .necessary: action = coversShown ? .necessary : .custom
+            case .necessary: action = withdrawingExpiredBundle || coversShown ? .necessary : .custom
             case .custom, .iab: action = .custom
             }
 
@@ -1323,7 +1328,8 @@ public final class ConsentCore: @unchecked Sendable {
         }
         writeTcStorageBus()
         publish(persist: false, mutation: mutation)
-        if let config = lock.withLock({ self.config }), let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()) { applyPolicyUpdate(selection.response, bundle: selection) }
+        if let config = lock.withLock({ self.config }), let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()),
+            selection.authority.isCurrent(endpoint: config.policyEndpoint, now: config.now()) { applyPolicyUpdate(selection.response, bundle: selection) }
         scheduleInit(attempt: 1)
     }
 
@@ -1801,7 +1807,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// already hold the lock.
     private func reevaluateLocked(now: Int64, bumpRevision: Bool = true) {
         guard let resolved = resolvedPolicy, !currentSnapshot.policyPending else { return }
-        if let authority = bundledPolicyAuthority, !authority.isCurrent(endpoint: config?.bundledPolicy?.endpoint, now: now) {
+        if let authority = bundledPolicyAuthority, !authority.isCurrent(endpoint: config?.policyEndpoint, now: now) {
             var draft = ConsentSnapshot.Draft(current: constrainBundledPolicyLocked(currentSnapshot))
             draft.nextDeadline = nil
             draft.evaluatedAt = now

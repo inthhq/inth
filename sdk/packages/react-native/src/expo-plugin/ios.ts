@@ -9,6 +9,7 @@ import { IOS_PLIST_KEY } from './constants';
 import { C15tPluginError } from './errors';
 import { IOS_TRANSPORT_MODE } from './params';
 import type { ResolvedC15tParams } from './params';
+import { POLICY_RESOURCE_NAME } from './policy-resource';
 
 /**
  * The `ios.privacyManifests` shape, narrowed to what c15t declares.
@@ -67,7 +68,7 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	};
 
 	if (params.policyResource !== null) {
-		entries[IOS_PLIST_KEY.policyResource] = 'c15t-policy.json';
+		entries[IOS_PLIST_KEY.policyResource] = POLICY_RESOURCE_NAME;
 	}
 	if (params.backendURL !== null) {
 		entries[IOS_PLIST_KEY.backendURL] = params.backendURL;
@@ -193,6 +194,12 @@ export const applyInfoPlist = function applyInfoPlist(
 	infoPlist: InfoPlist
 ): InfoPlist {
 	const next: InfoPlist = { ...infoPlist, ...buildInfoPlistEntries(params) };
+	if (
+		params.policyResource === null &&
+		next[IOS_PLIST_KEY.policyResource] === POLICY_RESOURCE_NAME
+	) {
+		Reflect.deleteProperty(next, IOS_PLIST_KEY.policyResource);
+	}
 
 	const att = params.appTrackingTransparency;
 	if (!att.enabled) {

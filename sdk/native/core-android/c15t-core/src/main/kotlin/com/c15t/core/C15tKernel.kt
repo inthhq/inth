@@ -673,7 +673,7 @@ class C15tKernel(
 	 * process, and a number invented here would become an answer the policy never
 	 * gave.
 	 */
-	fun isReady(): Boolean = state.get().isReady
+	fun isReady(): Boolean = snapshot().isReady
 
 	/** Observe every snapshot change. The lambda is held weakly, per the contract. */
 	fun onChange(observer: (ConsentSnapshot) -> Unit): Subscription {
@@ -817,14 +817,16 @@ class C15tKernel(
 			val choiceScope = choiceScopeOf(policy) ?: fallbackChoiceScope()
 			val intentConsents = when (intent) {
 				is CommitIntent.All -> choiceScope.associateWith { true }
-				is CommitIntent.Necessary -> choiceScope.associateWith { false }
+				// Expired-policy rejection also withdraws older grants outside today's scope.
+				is CommitIntent.Necessary ->
+					(if (withdrawingExpiredBundle) ConsentCategory.OPTIONAL else choiceScope).associateWith { false }
 				is CommitIntent.Explicit -> intent.consents
 					is CommitIntent.Iab -> intent.consents
 				}
 			// With nothing to decide, a bulk action still covers everything the subject
 			// was shown: strictly necessary alone.
 			action = if (
-					(intent is CommitIntent.Explicit || intent is CommitIntent.Iab) ||
+				withdrawingExpiredBundle || intent is CommitIntent.Explicit || intent is CommitIntent.Iab ||
 				choiceScope.size == policyScope.size ||
 				choiceScope.isEmpty()
 			) {

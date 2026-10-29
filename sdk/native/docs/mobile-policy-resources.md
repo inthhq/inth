@@ -55,11 +55,25 @@ subject, receipt, effective permissions, TC string, delivery queue or
 
 A usable stored policy wins over the bundle, including a newer policy downloaded
 by an earlier launch. An expired stored bundle can use a newer valid resource.
+Stored bundled authority stays usable without loading seed bytes again when the
+configured backend URL is unchanged. Swift's `HostedTransport` supplies that URL.
+A custom Swift transport can expose `policyEndpoint`; otherwise it needs the
+matching seed endpoint. Changing or omitting the configured endpoint denies
+retained bundled authority.
+
+Removing Expo's `policyResource` option disables the plugin-owned resource on the
+next prebuild by removing its activation metadata. Prebuild preserves custom
+resource names and unrelated resources. Previously stored policy still follows
+the cache and endpoint rules above.
+
 Wrong-project, corrupt, future-dated, expired or unsupported resources supply no
 authority. Optional gates stay denied and the core keeps trying hosted refresh.
 The expiry also applies after process relaunch and to synchronous native reads.
 Expiry denies optional processing and prevents new grants. A person can still
-Reject all against a retained expired policy. That denial and its frozen delivery
+Reject all against a retained expired policy. This writes false receipts for every
+optional category, including older grants outside the app's current declaration.
+Ordinary saves under current policy still use the declared choice scope.
+That denial and its frozen delivery
 body are stored atomically, replace an older queued grant for the same owner, and
 survive relaunch. Accept, custom saves and IAB drafts require current policy.
 

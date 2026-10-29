@@ -119,7 +119,8 @@ final class BundledPolicyTests: XCTestCase {
         XCTAssertTrue(boot(bundle).snapshot().policyPending)
     }
     func testExpiredCategoryAndIabBundlesAllowDurableWithdrawalWithoutRestoringGrants() async throws {
-        for (name, restartBeforeWithdrawal) in [("parity", false), ("parity", true), ("iab", false), ("iab", true)] {
+        let cases: [(String, Bool, String?)] = [("parity", false, nil), ("parity", true, nil), ("iab", false, nil), ("iab", true, nil), ("parity", true, "US")]
+        for (name, restartBeforeWithdrawal, country) in cases {
             let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
                 .appendingPathComponent("bundled-policy/\(name).json")
             let source = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
@@ -134,15 +135,16 @@ final class BundledPolicyTests: XCTestCase {
             ])))
             let resource = BundledPolicyResource(data: raw, endpoint: endpoint)
             let configuration = try source["configuration"].map { try C15tJSON.decode(IABConfiguration.self, from: XCTUnwrap(C15tJSON.encode($0))) }
-            let selected = try XCTUnwrap(resource.resolve(overrides: .default(), now: startedAt))
+            let overrides = ConsentOverrides(country: country, region: nil, language: "en")
+            let selected = try XCTUnwrap(resource.resolve(overrides: overrides, now: startedAt))
             let store = InMemoryStore(), clock = TestClock(startedAt), http = StubHTTP()
             http.initResponse = HTTPResponse(status: 503)
             http.setSavesFail(true)
-            func boot() async -> ConsentCore {
+            func boot(_ categories: [ConsentCategory]? = ConsentCategory.allCases) async -> ConsentCore {
                 let core = ConsentCore()
                 await core.bootstrapAndSettle(CoreConfig(store: store, bundledPolicy: resource,
-                    transport: Fixture.transport(http), consentCategories: ConsentCategory.allCases,
-                    iab: configuration, now: clock.reading, initRetry: .disabled))
+                    transport: HostedTransport(baseURL: URL(string: endpoint)!, client: http), consentCategories: categories,
+                    iab: configuration, overrides: overrides, now: clock.reading, initRetry: .disabled))
                 return core
             }
             let first = await boot()
@@ -154,7 +156,8 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertTrue(first.isAllowed(.measurement))
             clock.advance(by: 60_001)
             let expired: ConsentCore
-            if restartBeforeWithdrawal { expired = await boot() } else { expired = first }
+            let narrowed: [ConsentCategory]? = country == "US" ? nil : [.necessary, .measurement]
+            if restartBeforeWithdrawal { expired = await boot(narrowed) } else { expired = first }
             XCTAssertTrue(expired.snapshot().policyPending)
             XCTAssertNotEqual(expired.save(.all).status, .committed)
             XCTAssertNotEqual(expired.save(.custom([.measurement: true])).status, .committed)
@@ -165,10 +168,16 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertEqual(queue.entries().count, 1)
             let withdrawal = try XCTUnwrap(queue.entries().first)
             XCTAssertTrue(withdrawal.isProtectedWithdrawal, name)
+            let frozen = try XCTUnwrap(C15tJSON.parse(withdrawal.body))
+            let denied = Dictionary(uniqueKeysWithValues: OptionalConsentCategory.ordered.map { ($0.rawValue, false) })
+            XCTAssertEqual(frozen["choice"]?["categories"]?.objectValue?.compactMapValues { $0["value"]?.boolValue }, denied)
+            for category in OptionalConsentCategory.ordered {
+                XCTAssertEqual(frozen["preferences"]?[category.rawValue]?.boolValue, false)
+            }
             XCTAssertNotEqual(grant.body, withdrawal.body)
             XCTAssertEqual(withdrawal.actionAt, clock.now)
             XCTAssertTrue(expired.snapshot().policyPending)
-            let restored = await boot()
+            let restored = await boot(narrowed)
             XCTAssertEqual(queue.entries().map(\.body), [withdrawal.body])
             for category in OptionalConsentCategory.ordered { XCTAssertFalse(restored.isAllowed(category.category)) }
             let sentBefore = http.recordedSaveRequests.count
@@ -187,6 +196,46 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertFalse(restored.snapshot().policyPending)
             for category in OptionalConsentCategory.ordered { XCTAssertFalse(restored.isAllowed(category.category), name) }
         }
+    }
+
+    func testStoredBundleUsesConfiguredEndpointWithoutSeedResource() async throws {
+        for mode in ["same", "different", "unconfigured"] {
+            let bundle = try resource()
+            let clock = TestClock(try vector["now"]!.intValue!), store = InMemoryStore(), http = StubHTTP()
+            http.initResponse = HTTPResponse(status: 503)
+            http.setSavesFail(true)
+            let hosted = HostedTransport(baseURL: URL(string: bundle.endpoint)!, client: http)
+            let first = ConsentCore()
+            await first.bootstrapAndSettle(CoreConfig(store: store, bundledPolicy: bundle,
+                transport: hosted, now: clock.reading, initRetry: .disabled))
+            XCTAssertEqual(first.save(.all).status, .committed)
+            await first.waitUntilIdle()
+            let next = ConsentCore()
+            let transport: (any C15tTransport)? = mode == "same" ? hosted : mode == "different"
+                ? HostedTransport(baseURL: URL(string: "https://other.example.test")!, client: http) : nil
+            await next.bootstrapAndSettle(CoreConfig(store: store, transport: transport,
+                now: clock.reading, initRetry: .disabled))
+            XCTAssertEqual(next.isReady(), mode == "same", mode)
+            XCTAssertEqual(next.isAllowed(.measurement), mode == "same", mode)
+            XCTAssertEqual(next.save(.necessary).status == .committed, mode == "same", mode)
+        }
+    }
+
+    func testConfiguredEndpointRejectsMismatchedSeedOnBootstrapAndOverrideChange() async throws {
+        let bundle = try resource(), http = StubHTTP()
+        http.initResponse = HTTPResponse(status: 503)
+        let core = ConsentCore()
+        let now = try vector["now"]!.intValue!
+        await core.bootstrapAndSettle(CoreConfig(bundledPolicy: bundle,
+            transport: HostedTransport(baseURL: URL(string: "https://other.example.test")!, client: http),
+            now: { now }, initRetry: .disabled))
+        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertNil(core.bundledPolicyInfo)
+        core.setOverrides(ConsentOverrides(country: "US", region: nil, language: "en"))
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertNil(core.bundledPolicyInfo)
+        XCTAssertNotEqual(core.save(.necessary).status, .committed)
     }
 
     func testOfflineIabDisclosuresUseOriginalDatesAndRefuseMissingOrStaleAuthority() async throws {
@@ -275,7 +324,7 @@ final class BundledPolicyTests: XCTestCase {
         let online = ConsentCore()
         await online.bootstrapAndSettle(
             CoreConfig(
-                store: store, bundledPolicy: bundle, transport: Fixture.transport(http),
+                store: store, bundledPolicy: bundle, transport: HostedTransport(baseURL: URL(string: bundle.endpoint)!, client: http),
                 now: clock.reading, initRetry: .disabled))
         XCTAssertNil(online.bundledPolicyInfo)
         XCTAssertEqual(online.snapshot().explicitChoice, saved)

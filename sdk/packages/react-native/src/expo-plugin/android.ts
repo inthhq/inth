@@ -10,6 +10,7 @@ import {
 } from './constants';
 import { C15tPluginError } from './errors';
 import type { ResolvedC15tParams } from './params';
+import { POLICY_RESOURCE_NAME } from './policy-resource';
 
 /** A `<meta-data>` element, as the manifest is held after `xml2js` parsing. */
 interface ManifestMetaDataEntry {
@@ -62,7 +63,7 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	if (params.policyResource !== null) {
 		pairs.push({
 			name: ANDROID_META.policyResource,
-			value: 'c15t-policy.json',
+			value: POLICY_RESOURCE_NAME,
 		});
 	}
 
@@ -196,6 +197,13 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	ensureInternetPermission(next);
 
 	const application = getMainApplicationOrThrow(next);
+	if (params.policyResource === null && application['meta-data']) {
+		application['meta-data'] = application['meta-data'].filter(
+			(item) =>
+				item.$['android:name'] !== ANDROID_META.policyResource ||
+				item.$['android:value'] !== POLICY_RESOURCE_NAME
+		);
+	}
 
 	for (const pair of buildMetaDataPairs(params)) {
 		AndroidConfig.Manifest.addMetaDataItemToMainApplication(
