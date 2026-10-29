@@ -161,13 +161,39 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			}
 		};
 		dependency(join(installed, 'package.json'));
+		execFileSync(
+			'node',
+			[
+				'--input-type=module',
+				'-e',
+				`
+				import assert from 'node:assert/strict';
+				import { createRequire } from 'node:module';
+				import * as imported from '@c15t/react-native/expo-plugin';
+				const required = createRequire(import.meta.url)('@c15t/react-native/expo-plugin');
+				for (const plugin of [imported, required]) {
+					assert.equal(typeof plugin.default, 'function');
+					const config = plugin.applyParamsOnConfig(
+						{ name: 'Packed consumer', slug: 'packed-consumer' },
+						{ mode: 'offline' },
+						{ argv: ['node', 'expo', 'config'], env: {}, projectRoot: process.cwd() }
+					);
+					assert.equal(config.extra.c15t.mode, 'offline');
+				}
+				`,
+			],
+			{ cwd: directory, stdio: 'pipe' }
+		);
 		writeFileSync(
 			join(directory, 'consumer.ts'),
 			`
 			import { C15tProvider, useIsAllowed, type ConsentSnapshot } from '@c15t/react-native';
+			import withC15t, { type C15tPluginProps } from '@c15t/react-native/expo-plugin';
 			export const provider: typeof C15tProvider = C15tProvider;
 			export const gate: typeof useIsAllowed = useIsAllowed;
 			export type Snapshot = ConsentSnapshot;
+			export const plugin: typeof withC15t = withC15t;
+			export const pluginProps: C15tPluginProps = { mode: 'offline' };
 		`
 		);
 		// RN 0.87's generated declarations have upstream strict errors. Import
