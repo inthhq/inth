@@ -36,10 +36,10 @@ export type CommitIntent =
 	  };
 
 /**
- * Why a commit did not reach the backend.
+ * Why native refused a local commit.
  *
- * `queued` is not a failure: the payload is persisted and replayed, so the
- * snapshot is already correct offline.
+ * Pending delivery is not a refusal. A durable local success carries
+ * `ok: true, queued: true` and can be used offline.
  *
  * `not-bootstrapped` is the native core refusing because no configuration was
  * ever installed, which is a host wiring bug rather than a consent outcome.
@@ -50,7 +50,10 @@ export type CommitFailureReason =
 	| 'invalid-intent'
 	| 'no-subject'
 	| 'not-bootstrapped'
-	| 'queued';
+	| 'policy-pending'
+	| 'encode-failed'
+	| 'queue-write-failed'
+	| 'concurrent-change';
 
 /**
  * Result of `commit(intent)`.
@@ -68,10 +71,15 @@ export interface CommitResult {
 	/** Subject the receipts belong to. */
 	readonly subjectId: string | null;
 	/**
-	 * `true` when the payload was persisted for replay instead of delivered.
-	 * Consent is applied locally either way.
+	 * `true` when native durably enqueued the payload. It may already have been
+	 * delivered by the time this result arrives. Check `ok` for local success.
 	 */
 	readonly queued: boolean;
+	/**
+	 * Whether native reports backend acceptance before returning. Absent or
+	 * `false` does not undo local success. iOS currently reports `false`.
+	 */
+	readonly delivered?: boolean;
 	/** Present only when `ok` is `false`. */
 	readonly reason?: CommitFailureReason;
 }

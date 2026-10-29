@@ -52,6 +52,8 @@ export interface ConsentCopy {
 	readonly rejectAll: string;
 	/** Label that writes the per-category selection. */
 	readonly save: string;
+	/** Retry message after a consent action is rejected. */
+	readonly saveError: string;
 	/**
 	 * Lead-in of the branding tab, which the tab finishes with the brand name.
 	 *
@@ -87,6 +89,7 @@ const ENGLISH: Omit<ConsentCopy, 'categories'> = {
 	preferences: 'Manage preferences',
 	rejectAll: 'Reject All',
 	save: 'Save Settings',
+	saveError: 'Your choices could not be saved. Try again.',
 	securedBy: 'Secured by',
 };
 
@@ -138,6 +141,7 @@ interface CopySource {
 		readonly dismiss?: string | null;
 		readonly rejectAll?: string | null;
 		readonly save?: string | null;
+		readonly saveError?: string | null;
 		readonly securedBy?: string | null;
 	};
 	readonly consentManagerDialog?: TitleDescription;
@@ -224,7 +228,13 @@ const actionCopy = function actionCopy(
 	common: NonNullable<CopySource['common']>
 ): Pick<
 	ConsentCopy,
-	'acceptAll' | 'acknowledge' | 'customize' | 'dismiss' | 'rejectAll' | 'save'
+	| 'acceptAll'
+	| 'acknowledge'
+	| 'customize'
+	| 'dismiss'
+	| 'rejectAll'
+	| 'save'
+	| 'saveError'
 > {
 	return {
 		acceptAll: text(common.acceptAll, ENGLISH.acceptAll),
@@ -233,6 +243,7 @@ const actionCopy = function actionCopy(
 		dismiss: text(common.dismiss, ENGLISH.dismiss),
 		rejectAll: text(common.rejectAll, ENGLISH.rejectAll),
 		save: text(common.save, ENGLISH.save),
+		saveError: text(common.saveError, ENGLISH.saveError),
 	};
 };
 
@@ -289,6 +300,7 @@ export const isConsentCopyEqual = function isConsentCopyEqual(
 		'preferences',
 		'rejectAll',
 		'save',
+		'saveError',
 		'securedBy',
 	] as const) {
 		if (current[key] !== next[key]) {

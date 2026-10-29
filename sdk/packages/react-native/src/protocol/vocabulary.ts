@@ -274,6 +274,8 @@ export interface KernelCommonCopy {
 	dismiss?: string;
 	rejectAll?: string;
 	save?: string;
+	/** Retry message shown and announced when a native consent commit fails. */
+	saveError?: string;
 }
 
 /**

@@ -7,7 +7,7 @@
  * pressing save writes nothing at all.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -34,6 +34,7 @@ import {
 } from './internal/consent-surface';
 import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
 import type { ConsentCopy } from './internal/copy';
+import { useAnnounceOnOpen } from './internal/use-announce-on-open';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';
@@ -48,7 +49,13 @@ export interface ConsentPreferencesProps {
 	 * removing it is the only reason to.
 	 */
 	readonly hideBranding?: boolean;
-	/** Called when the subject closes the centre, saved or not. */
+	/**
+	 * Request closing after dismissal or a successful local save.
+	 * Keep this callback idempotent: a pending save may finish after dismissal.
+	 * A save finishing after unmount or while Activity hides the centre does not
+	 * call it. Keep the centre mounted and control visibility with `open` if the
+	 * host relies on this callback to clear its open state.
+	 */
 	readonly onRequestClose: () => void;
 	/** Whether the centre is open. */
 	readonly open: boolean;
@@ -95,28 +102,35 @@ const ConsentPreferencesContent = ({
 		isConsentCategoryRowsEqual
 	);
 	const selection = useCategorySelection(rows);
-	const { parts, theme } = useConsentSurfaceFrame();
+	const { isCurrentPresentation, parts, theme } = useConsentSurfaceFrame();
 	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const pending = useRef(false);
+	useAnnounceOnOpen(saveFailed, copy.saveError);
 
 	const save = async (): Promise<void> => {
-		if (busy) {
+		if (pending.current) {
 			return;
 		}
 
+		pending.current = true;
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await actions.save(selection.commitSelection());
-			written = true;
+			written = (await actions.save(selection.commitSelection())).ok;
+			setSaveFailed(!written);
 		} catch {
-			// The failure is on the snapshot, and the subject can press save again.
+			setSaveFailed(true);
+			// Keep the draft available for retry after a bridge failure.
 		}
 
+		pending.current = false;
 		setBusy(false);
 
-		if (written) {
+		if (written && isCurrentPresentation()) {
 			selection.reset();
 			onRequestClose();
 		}
@@ -134,24 +148,30 @@ const ConsentPreferencesContent = ({
 	 * @returns Nothing.
 	 */
 	const decide = async (choice: 'accept' | 'reject'): Promise<void> => {
-		if (busy) {
+		if (pending.current) {
 			return;
 		}
 
+		pending.current = true;
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll());
-			written = true;
+			written = (
+				await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll())
+			).ok;
+			setSaveFailed(!written);
 		} catch {
+			setSaveFailed(true);
 			// The centre stays open with the switches where the subject left them.
 		}
 
+		pending.current = false;
 		setBusy(false);
 
-		if (written) {
+		if (written && isCurrentPresentation()) {
 			selection.reset();
 			onRequestClose();
 		}
@@ -177,6 +197,14 @@ const ConsentPreferencesContent = ({
 				))}
 			</ConsentSurfaceBody>
 			<ConsentSurfaceFooter>
+				{saveFailed ? (
+					<Text
+						accessibilityRole="alert"
+						style={parts.description}
+					>
+						{copy.saveError}
+					</Text>
+				) : null}
 				{/*
 				 * One arrangement for both card surfaces: the two decisions sit in the
 				 * neutral outline and `Save Settings` carries the accent, which is what

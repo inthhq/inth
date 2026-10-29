@@ -659,12 +659,17 @@ body, so the entry keeps its place. `401` and `403` are permanent for a body:
 the queue holds bodies and nothing else, and a credential that comes back later
 cannot rescue bytes the producer already refused on its own terms.
 
-The codes for these paths are the same strings in both cores, and the React
-Native boundary names each one: `not-bootstrapped`, `queue-write-failed`,
-`concurrent-change`, `transport-unavailable`, `save-rejected`,
-`save-undeliverable`. Adding one is a contract change, because it reaches
-JavaScript as a typed value, so the union in `packages/react-native/src/protocol`
-and both bridges move with it.
+Commit refusal reasons are `invalid-intent`, `no-subject`, `not-bootstrapped`,
+`policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`.
+These are the values of `CommitResult.reason` when `ok` is false. Delivery
+failures such as `transport-unavailable`, `save-rejected` and
+`save-undeliverable` are error-event codes, not commit refusal reasons.
+
+On success, `queued` records durable enqueueing. It can remain true after
+delivery. `delivered` is optional; iOS currently reports false, and refusal
+shapes can omit it. Neither an absent nor a false delivery field reverses a
+successful local commit. Adding a refusal reason is a contract change, so the
+union in `packages/react-native/src/protocol` and both bridges move with it.
 
 Transports
 ----------

@@ -9,7 +9,7 @@
  * what lets `<ConsentBanner />` ship its own manager for free.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -36,6 +36,7 @@ import {
 } from './internal/consent-surface';
 import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
 import type { ConsentCopy } from './internal/copy';
+import { useAnnounceOnOpen } from './internal/use-announce-on-open';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';
@@ -52,7 +53,13 @@ export interface ConsentDialogProps {
 	readonly hideBranding?: boolean;
 	/** Entry point to the app's own preference centre, rendered when supplied. */
 	readonly onOpenPreferences?: () => void;
-	/** Called when the subject closes the dialog without saving. */
+	/**
+	 * Request closing after dismissal or a successful local save.
+	 * Keep this callback idempotent: a pending save may finish after dismissal.
+	 * A save finishing after unmount or while Activity hides the dialog does not
+	 * call it. Keep the dialog mounted and control visibility with `open` if the
+	 * host relies on this callback to clear its open state.
+	 */
 	readonly onRequestClose: () => void;
 	/** Whether the dialog is open. */
 	readonly open: boolean;
@@ -79,7 +86,7 @@ interface ConsentDialogContentProps {
 	readonly copy: ConsentCopy;
 	/** Entry point to the app's own preference centre. */
 	readonly onOpenPreferences?: () => void;
-	/** Called when the subject closes the dialog without saving. */
+	/** Request closing after dismissal or a successful local save. */
 	readonly onRequestClose: () => void;
 }
 
@@ -102,29 +109,35 @@ const ConsentDialogContent = ({
 		isConsentCategoryRowsEqual
 	);
 	const selection = useCategorySelection(rows);
-	const { parts, theme } = useConsentSurfaceFrame();
+	const { isCurrentPresentation, parts, theme } = useConsentSurfaceFrame();
 	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const pending = useRef(false);
+	useAnnounceOnOpen(saveFailed, copy.saveError);
 
 	const save = async (): Promise<void> => {
-		if (busy) {
+		if (pending.current) {
 			return;
 		}
 
+		pending.current = true;
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await actions.save(selection.commitSelection());
-			written = true;
+			written = (await actions.save(selection.commitSelection())).ok;
+			setSaveFailed(!written);
 		} catch {
-			// The core holds the failure on the snapshot and the subject can press
-			// save again, so the dialog stays open with the switches where they are.
+			setSaveFailed(true);
+			// Keep the draft available for retry after a bridge failure.
 		}
 
+		pending.current = false;
 		setBusy(false);
 
-		if (written) {
+		if (written && isCurrentPresentation()) {
 			selection.reset();
 			onRequestClose();
 		}
@@ -143,24 +156,30 @@ const ConsentDialogContent = ({
 	 * @returns Nothing.
 	 */
 	const decide = async (choice: 'accept' | 'reject'): Promise<void> => {
-		if (busy) {
+		if (pending.current) {
 			return;
 		}
 
+		pending.current = true;
 		setBusy(true);
+		setSaveFailed(false);
 
 		let written = false;
 
 		try {
-			await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll());
-			written = true;
+			written = (
+				await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll())
+			).ok;
+			setSaveFailed(!written);
 		} catch {
+			setSaveFailed(true);
 			// Same as a failed save: the sheet stays open with the draft intact.
 		}
 
+		pending.current = false;
 		setBusy(false);
 
-		if (written) {
+		if (written && isCurrentPresentation()) {
 			selection.reset();
 			onRequestClose();
 		}
@@ -186,6 +205,14 @@ const ConsentDialogContent = ({
 				))}
 			</ConsentSurfaceBody>
 			<ConsentSurfaceFooter>
+				{saveFailed ? (
+					<Text
+						accessibilityRole="alert"
+						style={parts.description}
+					>
+						{copy.saveError}
+					</Text>
+				) : null}
 				{/*
 				 * The two decisions share a row in the neutral outline and the action
 				 * that writes the draft takes the accent below them, which is the split

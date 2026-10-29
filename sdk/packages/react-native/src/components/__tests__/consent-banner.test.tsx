@@ -14,6 +14,7 @@ import {
 	uiState,
 } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
+import type { ConsentSnapshot } from '../../protocol';
 import { ConsentBanner } from '../consent-banner';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
 import { lightTheme } from '../theme/create-consent-theme';
@@ -26,6 +27,7 @@ import {
 	surfaceNode,
 	tap,
 	touchHeight,
+	TRANSLATIONS,
 	translatedSnapshot,
 } from './harness';
 
@@ -93,7 +95,7 @@ describe('ConsentBanner', () => {
 		tree.unmount();
 	});
 
-	test('accept all and reject all each reach the core once', () => {
+	test('accept all and reject all each reach the core once', async () => {
 		const tree = mountSurface(<ConsentBanner />);
 
 		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
@@ -102,6 +104,7 @@ describe('ConsentBanner', () => {
 		expect(JSON.parse(tree.fake.commitIntents[0] as string)).toEqual({
 			action: 'all',
 		});
+		await flushPromises();
 
 		tap(requireRole(tree.container(), 'button', 'Alle ablehnen'));
 
@@ -109,7 +112,227 @@ describe('ConsentBanner', () => {
 		expect(JSON.parse(tree.fake.commitIntents[1] as string)).toEqual({
 			action: 'necessary',
 		});
+		await flushPromises();
 
+		tree.unmount();
+	});
+
+	test.each(['Alle akzeptieren', 'Alle ablehnen'])(
+		'%s reports a resolved refusal and leaves the choice available',
+		async (action) => {
+			const tree = mountSurface(<ConsentBanner />);
+			tree.fake.failCommitWith(
+				JSON.stringify({
+					confirmed: [],
+					ok: false,
+					queued: false,
+					reason: 'queue-write-failed',
+					revision: null,
+					subjectId: 'sub-1',
+				})
+			);
+			const button = requireRole(tree.container(), 'button', action);
+			flush(() => {
+				button.click();
+				button.click();
+			});
+			await flushPromises();
+
+			expect(tree.fake.commitIntents).toHaveLength(1);
+			expect(tree.text()).toContain('Deine Privatsphaere');
+			expect(requireRole(tree.container(), 'alert').textContent).toBe(
+				'Your choices could not be saved. Try again.'
+			);
+			expect(uiState.announcements).toContain(
+				'Your choices could not be saved. Try again.'
+			);
+			expect(
+				requireRole(tree.container(), 'alert').hasAttribute('aria-live')
+			).toBe(false);
+			expect(
+				requireRole(tree.container(), 'button', action).getAttribute(
+					'aria-disabled'
+				)
+			).not.toBe('true');
+			tap(requireRole(tree.container(), 'button', action));
+			await flushPromises();
+			expect(
+				uiState.announcements.filter(
+					(message) => message === 'Your choices could not be saved. Try again.'
+				)
+			).toHaveLength(2);
+			tree.unmount();
+		}
+	);
+
+	test('does not carry a failed save into a prompt reopened during exit', async () => {
+		const tree = mountSurface(<ConsentBanner />);
+		tree.fake.failCommitWith(
+			JSON.stringify({ ok: false, queued: false, reason: 'queue-write-failed' })
+		);
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		await flushPromises();
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(1);
+
+		flush(() => {
+			tree.fake.pushSnapshot(
+				translatedSnapshot({ promptRequirement: { kind: 'none' }, revision: 2 })
+			);
+		});
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ revision: 3 }));
+		});
+		await flushPromises();
+
+		expect(tree.text()).toContain('Deine Privatsphaere');
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+		tree.unmount();
+	});
+
+	test.each<[string, Partial<ConsentSnapshot>]>([
+		['notice', { promptRequirement: { kind: 'notice', reason: 'missing' } }],
+		[
+			'new reason',
+			{ promptRequirement: { kind: 'choice', reason: 'expired' } },
+		],
+		[
+			'new policy',
+			{
+				resolution: {
+					fingerprint: 'new-policy',
+					policyId: 'p2',
+					status: 'matched',
+				},
+			},
+		],
+		['new subject', { subject: { subjectId: 'sub-2' } }],
+	])(
+		'clears a refusal when the visible prompt changes to %s',
+		async (_name, change) => {
+			const tree = mountSurface(<ConsentBanner />);
+			tree.fake.failCommitWith(JSON.stringify({ ok: false, queued: false }));
+			tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+			await flushPromises();
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(1);
+			flush(() => {
+				tree.fake.pushSnapshot(translatedSnapshot({ ...change, revision: 2 }));
+			});
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+			requireRole(tree.container(), 'button', 'Auswahlen');
+			tree.unmount();
+		}
+	);
+
+	test('ignores an earlier choice refusal after a notice replaces it', async () => {
+		let resolveReply!: (result: string) => void;
+		const reply = new Promise<string>((resolve) => {
+			resolveReply = resolve;
+		});
+		const tree = mountSurface(<ConsentBanner />);
+		vi.spyOn(tree.fake, 'commit').mockImplementationOnce(() => reply);
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		flush(() => {
+			tree.fake.pushSnapshot(
+				translatedSnapshot({
+					promptRequirement: { kind: 'notice', reason: 'missing' },
+					revision: 2,
+				})
+			);
+		});
+		resolveReply(JSON.stringify({ ok: false, queued: false }));
+		await flushPromises();
+		expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+		tap(requireRole(tree.container(), 'button', 'Verstanden'));
+		expect(tree.fake.dismissCalls).toBe(1);
+		tree.unmount();
+	});
+
+	test.each([true, false])(
+		'keeps a changed prompt busy until its earlier action finishes, ok: %s',
+		async (ok) => {
+			let resolveReply!: (result: string) => void;
+			const reply = new Promise<string>((resolve) => {
+				resolveReply = resolve;
+			});
+			const tree = mountSurface(<ConsentBanner />);
+			const commit = vi
+				.spyOn(tree.fake, 'commit')
+				.mockImplementationOnce(() => reply);
+			tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+			flush(() => {
+				tree.fake.pushSnapshot(
+					translatedSnapshot({
+						resolution: {
+							fingerprint: 'new-policy',
+							policyId: 'p2',
+							status: 'matched',
+						},
+						revision: 2,
+					})
+				);
+			});
+			const reject = requireRole(tree.container(), 'button', 'Alle ablehnen');
+			expect(reject.getAttribute('aria-disabled')).toBe('true');
+			tap(reject);
+			expect(commit).toHaveBeenCalledTimes(1);
+
+			resolveReply(JSON.stringify({ ok, queued: ok }));
+			await flushPromises();
+			expect(roleNodes(tree.container(), 'alert')).toHaveLength(0);
+			expect(
+				requireRole(tree.container(), 'button', 'Alle ablehnen').getAttribute(
+					'aria-disabled'
+				)
+			).not.toBe('true');
+			tap(requireRole(tree.container(), 'button', 'Alle ablehnen'));
+			await flushPromises();
+			expect(commit).toHaveBeenCalledTimes(2);
+			expect(JSON.parse(tree.fake.commitIntents[0] as string)).toEqual({
+				action: 'necessary',
+			});
+			tree.unmount();
+		}
+	);
+
+	test('updates a visible failure when native supplies translated retry copy', async () => {
+		const tree = mountSurface(<ConsentBanner />);
+		tree.fake.failCommitWith(JSON.stringify({ ok: false, queued: false }));
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		await flushPromises();
+
+		const translations = {
+			...TRANSLATIONS,
+			translations: {
+				...TRANSLATIONS.translations,
+				common: {
+					...TRANSLATIONS.translations.common,
+					saveError: 'Speichern fehlgeschlagen. Bitte erneut versuchen.',
+				},
+			},
+		};
+		flush(() => {
+			tree.fake.pushSnapshot(translatedSnapshot({ revision: 2, translations }));
+		});
+		await flushPromises();
+
+		expect(requireRole(tree.container(), 'alert').textContent).toBe(
+			translations.translations.common.saveError
+		);
+		expect(uiState.announcements).toContain(
+			translations.translations.common.saveError
+		);
+		tree.unmount();
+	});
+
+	test('reports unreadable commit replies without an unhandled rejection', async () => {
+		const tree = mountSurface(<ConsentBanner />);
+		tree.fake.failCommitWith('not a commit result');
+		tap(requireRole(tree.container(), 'button', 'Alle akzeptieren'));
+		await flushPromises();
+
+		expect(requireRole(tree.container(), 'alert').textContent).toBe(
+			'Your choices could not be saved. Try again.'
+		);
 		tree.unmount();
 	});
 
