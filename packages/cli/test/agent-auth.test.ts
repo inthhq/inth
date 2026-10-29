@@ -161,6 +161,52 @@ const signIn = async (f: ReturnType<typeof fixture>) => {
 };
 
 describe("auth.md credentials", () => {
+  it("approves the API server's extended scopes and retains them through token exchange", async () => {
+    const f = fixture();
+    const scopes = requestedAgentScopes(
+      [
+        "support.write",
+        "consent.lifecycle.write",
+        "consent.keys.write",
+        "billing.write",
+        "account.security.read",
+        "account.security.write",
+        "integrations.read",
+        "integrations.write",
+        "account.write",
+        "account.delete",
+        "notifications.write",
+        "notifications.routing.write",
+        "organization-retention.write",
+        "organizations.settings.write",
+        "organizations.delete",
+      ].join(",")
+    );
+    f.replies.push(response({ ...registration, post_claim_scopes: scopes }));
+    await f.auth().start("person@example.com", scopes);
+    f.replies.push(response({ ...tokens, scope: scopes.join(" ") }));
+    expect(JSON.parse(await f.auth().complete())).toMatchObject({
+      scopes,
+      status: "authenticated",
+    });
+    expect(parseAgentState(f.read() ?? "").credentials?.scopes).toEqual(scopes);
+    expect(await f.auth().accessToken()).toBe("access_secret");
+  });
+  it("approves and exchanges chat permissions without requiring read permission for writes", async () => {
+    const f = fixture();
+    const scopes = requestedAgentScopes("agents.write");
+    f.replies.push(response({ ...registration, post_claim_scopes: scopes }));
+    await f.auth().start("person@example.com", scopes);
+    f.replies.push(response({ ...tokens, scope: "agents.write" }));
+    expect(JSON.parse(await f.auth().complete())).toMatchObject({
+      scopes: ["agents.write"],
+      status: "authenticated",
+    });
+    expect(await f.auth().accessToken()).toBe("access_secret");
+    expect(parseAgentState(f.read() ?? "").credentials?.scopes).toEqual([
+      "agents.write",
+    ]);
+  });
   it("uses the complete approval link for initial and retried claims", async () => {
     const f = fixture();
     const complete = `${claim.verification_uri}&user_code=123456`;
@@ -572,6 +618,10 @@ describe("agent command selection", () => {
     expect(requestedAgentScopes()).toEqual(["organizations.read"]);
     expect(requestedAgentScopes("projects.write,projects.write")).toEqual([
       "projects.write",
+    ]);
+    expect(requestedAgentScopes("agents.read,agents.write")).toEqual([
+      "agents.read",
+      "agents.write",
     ]);
     expect(() => requestedAgentScopes("*")).toThrow("scopes");
   });

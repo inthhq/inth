@@ -4,6 +4,8 @@ import type { AccessTokenProvider } from "../../src/agent-types.ts";
 import { apiUrl } from "../../src/api-options.ts";
 import { API_ORIGIN } from "../../src/auth-types.ts";
 import { CliError } from "../../src/cli-error.ts";
+import { downloadAccept, readDownload } from "../../src/download.ts";
+import type { DownloadResult } from "../../src/download.ts";
 import { HttpError } from "../../src/http-error.ts";
 import type { IdentityResponse } from "../../src/identity.ts";
 import {
@@ -84,20 +86,102 @@ export class ApiClient {
     path: string,
     method: string,
     body?: string,
-    organizationId?: string
+    organizationId?: string,
+    accept = "application/json",
+    once = false
   ): Promise<string> {
+    const url = apiUrl(path, organizationId, this.origin);
+    downloadAccept(accept);
     const { response } = await this.request(
-      apiUrl(path, organizationId, this.origin),
+      url,
       this.key ? undefined : await this.auth(),
       undefined,
       body,
-      method
+      method,
+      accept,
+      once
     );
     if (response.status === 204) {
       return "";
     }
     const value = await this.http.json(response, z.json());
     return JSON.stringify(value, null, 2);
+  }
+  async putImage(
+    path: string,
+    bytes: Uint8Array,
+    mediaType: string,
+    organizationId?: string
+  ): Promise<string> {
+    if (this.key) {
+      throw new CliError(
+        "usage_error",
+        "Image writes require a person's approved sign-in."
+      );
+    }
+    const url = apiUrl(path, organizationId, this.origin);
+    const auth = await this.auth();
+    let token = await auth.accessToken();
+    const send = (access: string): Promise<Response> =>
+      this.http.request(
+        url,
+        {
+          body: new Uint8Array(bytes),
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${access}`,
+            "Content-Type": mediaType,
+          },
+          method: "PUT",
+        },
+        Number.POSITIVE_INFINITY,
+        false
+      );
+    let response = await send(token);
+    if (response.status === 401) {
+      await response.body?.cancel();
+      token = await auth.accessToken(token);
+      response = await send(token);
+    }
+    return JSON.stringify(await this.http.json(response, z.json()), null, 2);
+  }
+  async uploadChat(body: string, organizationId?: string): Promise<string> {
+    if (this.key) {
+      throw new CliError(
+        "usage_error",
+        "Chat uploads require a person's approved sign-in."
+      );
+    }
+    const { response } = await this.request(
+      apiUrl("/v1/agent-chat-attachments", organizationId, this.origin),
+      await this.auth(),
+      undefined,
+      body,
+      "POST",
+      "application/json",
+      true
+    );
+    return JSON.stringify(await this.http.json(response, z.json()));
+  }
+  async download(
+    path: string,
+    organizationId?: string,
+    accept = "*/*"
+  ): Promise<DownloadResult> {
+    const url = apiUrl(path, organizationId, this.origin);
+    downloadAccept(accept);
+    const { response } = await this.request(
+      url,
+      this.key ? undefined : await this.auth(),
+      undefined,
+      undefined,
+      "GET",
+      accept
+    );
+    if (!response.ok) {
+      throw await this.http.error(response);
+    }
+    return readDownload(response, accept, this.http.signal);
   }
   organizations(): Promise<Organization[]> {
     return collectOrganizations(async (path) => {
@@ -153,7 +237,9 @@ export class ApiClient {
     auth: AccessTokenProvider | undefined,
     providedToken?: string,
     body?: string,
-    method = body === undefined ? "GET" : "POST"
+    method = body === undefined ? "GET" : "POST",
+    accept = "application/json",
+    once = false
   ): Promise<AuthorizedResponse> {
     let token = providedToken || this.key;
     if (auth && !token) {
@@ -162,33 +248,43 @@ export class ApiClient {
     if (!token) {
       throw new Error("No authentication token available. Run `inth login`.");
     }
-    let response = await this.http.request(url, {
-      body,
-      headers:
-        body === undefined
-          ? { Accept: "application/json", Authorization: `Bearer ${token}` }
-          : {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-      method,
-    });
-    if (response.status === 401 && auth) {
-      await response.body?.cancel();
-      token = await auth.accessToken(token);
-      response = await this.http.request(url, {
+    let response = await this.http.request(
+      url,
+      {
         body,
         headers:
           body === undefined
-            ? { Accept: "application/json", Authorization: `Bearer ${token}` }
+            ? { Accept: accept, Authorization: `Bearer ${token}` }
             : {
-                Accept: "application/json",
+                Accept: accept,
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
               },
         method,
-      });
+      },
+      Number.POSITIVE_INFINITY,
+      once ? false : undefined
+    );
+    if (response.status === 401 && auth) {
+      await response.body?.cancel();
+      token = await auth.accessToken(token);
+      response = await this.http.request(
+        url,
+        {
+          body,
+          headers:
+            body === undefined
+              ? { Accept: accept, Authorization: `Bearer ${token}` }
+              : {
+                  Accept: accept,
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+          method,
+        },
+        Number.POSITIVE_INFINITY,
+        once ? false : undefined
+      );
     }
     return { response, token };
   }

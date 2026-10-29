@@ -31,6 +31,8 @@ import { verifySkills } from "./skills-checks.ts";
 import { verifyTelemetry } from "./telemetry-checks.ts";
 import { verifyTransport } from "./transport-checks.ts";
 import { verifyUpdateCheck } from "./update-checks.ts";
+import { verifyUploads } from "./upload-checks.ts";
+import { verifyWrites } from "./write-checks.ts";
 
 // Native subprocesses must never send production analytics.
 process.env.INTH_TELEMETRY_DISABLED = "1";
@@ -90,6 +92,8 @@ const steps: Step[] = [
     run: () => verifyUpdateCheck(binary, [], "development", false),
   },
   { name: "Help", run: verifyHelp },
+  { name: "Dashboard writes", run: () => verifyWrites(fixture("write-test")) },
+  { name: "File uploads", run: () => verifyUploads(fixture("upload-test")) },
   { name: "Usage errors", run: verifyUsageErrors },
   { name: "Stateless API-key bypass", run: verifyStatelessBypass },
   {

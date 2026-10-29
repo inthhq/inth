@@ -2,7 +2,11 @@ import type { AccessTokenProvider } from "../agent-types.ts";
 import { apiUrl } from "../api-options.ts";
 import { API_ORIGIN } from "../auth-types.ts";
 import type { OAuthResponse } from "../auth-types.ts";
+import { CliError } from "../cli-error.ts";
+import { downloadAccept } from "../download.ts";
+import type { DownloadResult } from "../download.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
+import { safeRequestId } from "../http-error.ts";
 import type { IdentityResponse, MeResponse, UserProfile } from "../identity.ts";
 import {
   collectOrganizations,
@@ -18,14 +22,32 @@ import { telemetryUserId } from "../telemetry.ts";
 import { invalidResponse, responseError } from "./native-protocol.ts";
 
 export interface ApiTransport {
+  putImage?: (
+    url: string,
+    token: string,
+    bytes: Uint8Array,
+    mediaType: string
+  ) => Promise<OAuthResponse>;
+  uploadChat?: (
+    url: string,
+    token: string,
+    body: string
+  ) => Promise<OAuthResponse>;
   get: (url: string, token: string) => Promise<OAuthResponse>;
   send: (
     url: string,
     token: string,
     method: string,
-    body?: string
+    body?: string,
+    accept?: string,
+    once?: boolean
   ) => Promise<OAuthResponse>;
   post: (url: string, token: string, body: string) => Promise<OAuthResponse>;
+  download?: (
+    url: string,
+    token: string,
+    accept?: string
+  ) => Promise<OAuthResponse>;
 }
 export const apiOutput = (response: OAuthResponse): string => {
   diagnosticStep("api_decode");
@@ -75,37 +97,148 @@ export class NativeApi {
     path: string,
     method: string,
     body?: string,
-    organization?: string
+    organization?: string,
+    accept = "application/json",
+    once = false
   ): Promise<OAuthResponse> {
+    const url = apiUrl(path, organization, this.origin);
+    downloadAccept(accept);
     const result = await this.request(
-      apiUrl(path, organization, this.origin),
+      url,
       this.key ? undefined : this.auth(),
       undefined,
       body,
-      method
+      method,
+      accept,
+      false,
+      false,
+      once
     );
     return result.response;
+  }
+  async putImage(
+    path: string,
+    bytes: Uint8Array,
+    mediaType: string,
+    organization?: string
+  ): Promise<OAuthResponse> {
+    if (this.key) {
+      throw new CliError(
+        "usage_error",
+        "Image writes require a person's approved sign-in."
+      );
+    }
+    const sendImage = this.http.putImage;
+    if (!sendImage) {
+      throw new Error("This API transport does not support image bytes.");
+    }
+    const url = apiUrl(path, organization, this.origin);
+    const auth = this.auth();
+    let token = await auth.accessToken(undefined, false);
+    let response = await sendImage(url, token, bytes, mediaType);
+    if (response.status === 401) {
+      token = await auth.accessToken(token, false);
+      response = await sendImage(url, token, bytes, mediaType);
+    }
+    if (!response.ok) {
+      throw await responseError(response);
+    }
+    return response;
+  }
+  async uploadChat(body: string, organization?: string): Promise<string> {
+    if (this.key) {
+      throw new CliError(
+        "usage_error",
+        "Chat uploads require a person's approved sign-in."
+      );
+    }
+    const { response } = await this.request(
+      apiUrl("/v1/agent-chat-attachments", organization, this.origin),
+      this.auth(),
+      undefined,
+      body,
+      "POST",
+      "application/json",
+      false,
+      true
+    );
+    return apiOutput(response);
+  }
+  async download(
+    path: string,
+    organization?: string,
+    accept = "*/*"
+  ): Promise<DownloadResult> {
+    const url = apiUrl(path, organization, this.origin);
+    downloadAccept(accept);
+    const { response } = await this.request(
+      url,
+      this.key ? undefined : this.auth(),
+      undefined,
+      undefined,
+      "GET",
+      accept,
+      true
+    );
+    if (response.bytes === undefined || response.contentType === undefined) {
+      throw invalidResponse(
+        response,
+        "The API transport did not return download bytes."
+      );
+    }
+    return {
+      bytes: response.bytes,
+      contentType: response.contentType,
+      requestId: safeRequestId(response.requestId),
+    };
   }
   private send(
     url: string,
     token: string,
     method: string,
-    body?: string
+    body?: string,
+    accept = "application/json",
+    download = false,
+    upload = false,
+    once = false
   ): Promise<OAuthResponse> {
-    if (method === "GET") {
+    if (upload) {
+      const sendUpload = this.http.uploadChat;
+      if (!sendUpload) {
+        throw new Error("This API transport does not support chat uploads.");
+      }
+      return sendUpload(url, token, body ?? "");
+    }
+    if (download) {
+      const { download: read } = this.http;
+      if (!read) {
+        throw new Error("This API transport does not support downloads.");
+      }
+      return read(url, token, accept);
+    }
+    if (!once && method === "GET" && accept === "application/json") {
       return this.http.get(url, token);
     }
-    if (method === "POST" && body !== undefined) {
+    if (
+      !once &&
+      method === "POST" &&
+      body !== undefined &&
+      accept === "application/json"
+    ) {
       return this.http.post(url, token, body);
     }
-    return this.http.send(url, token, method, body);
+    return this.http.send(url, token, method, body, accept, once);
   }
   private async request(
     url: string,
     auth: AccessTokenProvider | undefined,
     providedToken?: string,
     body?: string,
-    method = body === undefined ? "GET" : "POST"
+    method = body === undefined ? "GET" : "POST",
+    accept = "application/json",
+    download = false,
+    upload = false,
+    once = false
   ): Promise<AuthorizedResponse> {
     let token = providedToken || this.key;
     if (auth && !token) {
@@ -114,10 +247,28 @@ export class NativeApi {
     if (!token) {
       throw new Error("Not signed in. Run inth login.");
     }
-    let response = await this.send(url, token, method, body);
+    let response = await this.send(
+      url,
+      token,
+      method,
+      body,
+      accept,
+      download,
+      upload,
+      once
+    );
     if (response.status === 401 && auth) {
       token = await auth.accessToken(token, false);
-      response = await this.send(url, token, method, body);
+      response = await this.send(
+        url,
+        token,
+        method,
+        body,
+        accept,
+        download,
+        upload,
+        once
+      );
     }
     if (!response.ok) {
       throw await responseError(response);

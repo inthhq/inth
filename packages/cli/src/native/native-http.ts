@@ -2,6 +2,8 @@
 import { setTimeout } from "node:timers/promises";
 
 import type { Clock, OAuthResponse, OAuthTransport } from "../auth-types.ts";
+import { CliError } from "../cli-error.ts";
+import { readDownload } from "../download.ts";
 import { diagnosticStep } from "../error-diagnostics.ts";
 import type { ApiTransport } from "./native-api.ts";
 import { httpDate } from "./native-bindings.ts";
@@ -35,6 +37,11 @@ export const nativeClock = (signal: AbortSignal): Clock => ({
     signal.throwIfAborted();
   },
 });
+const retryComplete = (
+  status: number,
+  attempt: number,
+  enabled: boolean
+): boolean => !enabled || status !== 429 || attempt >= 3;
 const checkedBody = async (response: OAuthResponse): Promise<string> => {
   if (!response.ok) {
     throw await responseError(response);
@@ -50,14 +57,15 @@ const fetchBody = (
   token: string,
   json: boolean,
   method: string,
-  signal: AbortSignal
+  signal: AbortSignal,
+  accept: string
 ): Promise<Response> => {
   if (json && token) {
     return fetch(url, {
       // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Callers validate methods before passing a body.
       body: fields,
       headers: {
-        Accept: "application/json",
+        Accept: accept,
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
@@ -71,7 +79,7 @@ const fetchBody = (
       // eslint-disable-next-line unicorn/no-invalid-fetch-options -- Callers validate methods before passing a body.
       body: fields,
       headers: {
-        Accept: "application/json",
+        Accept: accept,
         "Content-Type": "application/json",
       },
       method,
@@ -88,6 +96,31 @@ const fetchBody = (
     signal,
   });
 };
+const readResponse = async (
+  response: Response,
+  binary: boolean,
+  accept: string,
+  signal: AbortSignal
+): Promise<OAuthResponse> => {
+  if (binary && response.ok) {
+    const download = await readDownload(response, accept, signal);
+    return {
+      body: "",
+      bytes: download.bytes,
+      contentType: download.contentType,
+      ok: response.ok,
+      requestId: download.requestId,
+      status: response.status,
+    };
+  }
+  return {
+    body: await response.text(),
+    ok: response.ok,
+    requestId: response.headers.get("X-Request-Id"),
+    retryAfter: response.headers.get("Retry-After") ?? undefined,
+    status: response.status,
+  };
+};
 export const nativeHttp = (
   signal: AbortSignal,
   clock: Clock,
@@ -99,8 +132,12 @@ export const nativeHttp = (
     deadline: number,
     token: string,
     json = false,
-    method = fields === null ? "GET" : "POST"
+    method = fields === null ? "GET" : "POST",
+    accept = "application/json",
+    binary = false,
+    once = false
   ): Promise<OAuthResponse> => {
+    let waited = 0;
     for (let attempt = 0; ; attempt += 1) {
       diagnosticStep("http_request");
       signal.throwIfAborted();
@@ -114,15 +151,14 @@ export const nativeHttp = (
         signal,
         AbortSignal.timeout(Math.ceil(Math.min(30_000, remaining))),
       ]);
-      let response: Response;
-      let body: string;
+      let result: OAuthResponse;
       try {
-        response =
+        const response =
           fields === null
             ? await fetch(url, {
                 headers: token
                   ? {
-                      Accept: "application/json",
+                      Accept: accept,
                       Authorization: `Bearer ${token}`,
                     }
                   : {},
@@ -130,36 +166,42 @@ export const nativeHttp = (
                 redirect: "error",
                 signal: timeout,
               })
-            : await fetchBody(url, fields, token, json, method, timeout);
+            : await fetchBody(
+                url,
+                fields,
+                token,
+                json,
+                method,
+                timeout,
+                accept
+              );
         diagnosticStep("http_response");
-        body = await response.text();
-      } catch {
+        result = await readResponse(response, binary, accept, timeout);
+      } catch (error) {
         signal.throwIfAborted();
+        if (error instanceof CliError) {
+          throw error;
+        }
+        // eslint-disable-next-line preserve-caught-error -- Upstream errors may contain credentials or response content.
         throw new Error(
           "Could not reach inth. Check your connection and try again."
         );
       }
-      const result: OAuthResponse = {
-        body,
-        ok: response.ok,
-        requestId: response.headers.get("X-Request-Id"),
-        retryAfter: response.headers.get("Retry-After") ?? undefined,
-        status: response.status,
-      };
-      if (!retryRateLimit || result.status !== 429 || attempt >= 3) {
+      if (retryComplete(result.status, attempt, retryRateLimit && !once)) {
         return result;
       }
-      const delay = retryDelay(
-        response.headers.get("Retry-After"),
-        clock.now()
-      );
+      const delay = retryDelay(result.retryAfter ?? null, clock.now());
       if (clock.now() + delay >= deadline) {
         return result;
       }
       if (delay > 2_147_483_647) {
         throw await responseError(result);
       }
+      if (waited + delay > 30_000) {
+        return result;
+      }
       await clock.sleep(delay);
+      waited += delay;
     }
   };
   return {
@@ -182,15 +224,67 @@ export const nativeHttp = (
         throw invalid(response);
       }
     },
+    download: (url, token, accept = "*/*") =>
+      request(
+        url,
+        null,
+        Number.POSITIVE_INFINITY,
+        token,
+        true,
+        "GET",
+        accept,
+        true
+      ),
     error: (response) => responseError(response),
     form: (url, fields, deadline) =>
       request(url, fields.toString(), deadline, ""),
     get: (url, token) => request(url, null, Number.POSITIVE_INFINITY, token),
     post: (url, token, body) =>
       request(url, body, Number.POSITIVE_INFINITY, token, true),
+    putImage: async (url, token, bytes, mediaType) => {
+      signal.throwIfAborted();
+      const timeout = AbortSignal.any([signal, AbortSignal.timeout(30_000)]);
+      try {
+        const response = await fetch(url, {
+          body: new Uint8Array(bytes),
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+            "Content-Type": mediaType,
+          },
+          method: "PUT",
+          redirect: "error",
+          signal: timeout,
+        });
+        return await readResponse(response, false, "application/json", timeout);
+      } catch {
+        signal.throwIfAborted();
+        throw new CliError(
+          "mutation_outcome_unknown",
+          "The image write outcome is unknown. Check the account or organization image before another upload."
+        );
+      }
+    },
     request: (url, deadline) => request(url, null, deadline, ""),
-    send: (url, token, method, body) =>
-      request(url, body ?? null, Number.POSITIVE_INFINITY, token, true, method),
+    send: (
+      url,
+      token,
+      method,
+      body,
+      accept = "application/json",
+      once = false
+    ) =>
+      request(
+        url,
+        body ?? null,
+        Number.POSITIVE_INFINITY,
+        token,
+        true,
+        method,
+        accept,
+        false,
+        once
+      ),
     tokens: async (response, previousRefreshToken) => {
       diagnosticStep("oauth_tokens");
       const body = await checkedBody(response);
@@ -200,5 +294,17 @@ export const nativeHttp = (
         throw invalid(response);
       }
     },
+    uploadChat: (url, token, body) =>
+      request(
+        url,
+        body,
+        Number.POSITIVE_INFINITY,
+        token,
+        true,
+        "POST",
+        "application/json",
+        false,
+        true
+      ),
   };
 };

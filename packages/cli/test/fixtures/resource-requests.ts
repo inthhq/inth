@@ -597,6 +597,6 @@ export const invalidRequests: string[][] = [
     "org_wrong",
   ],
   ["billing", "--limit", "50"],
-  ["api", "/v1/projects", "--method", "PUT"],
+  ["api", "/v1/projects", "--method", "TRACE"],
   ["api", "/v1/projects", "--data", "{}"],
 ];

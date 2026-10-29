@@ -31,10 +31,15 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
   let claims = 0;
   let registrations = 0;
   let retries = 0;
+  let longLimitRequests = 0;
+  let budgetRequests = 0;
+  let boundaryRequests = 0;
   let redirects = 0;
   let hung = 0;
   let deadlineRequests = 0;
   let bearer = 0;
+  let binaryRequests = 0;
+  let binaryRedirects = 0;
   const handlerFailures: string[] = [];
   const handleTelemetryRequest = (
     request: IncomingMessage,
@@ -84,12 +89,100 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
     }
     return true;
   };
+  const handleRateLimitRequest = (
+    request: IncomingMessage,
+    response: ServerResponse
+  ): boolean => {
+    if (request.url === "/rate-limit") {
+      retries += 1;
+      response.writeHead(retries === 1 ? 429 : 200, {
+        "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT",
+      });
+    } else if (request.url === "/rate-limit-long") {
+      longLimitRequests += 1;
+      response.writeHead(429, {
+        "Retry-After": "60",
+        "X-Request-Id": "native-long-limit",
+      });
+    } else if (request.url === "/rate-limit-budget") {
+      budgetRequests += 1;
+      response.writeHead(429, {
+        "Retry-After": budgetRequests === 1 ? "15" : "20",
+      });
+    } else if (request.url === "/rate-limit-boundary") {
+      boundaryRequests += 1;
+      response.writeHead(boundaryRequests === 1 ? 429 : 200, {
+        "Retry-After": "30",
+      });
+    } else {
+      return false;
+    }
+    response.end("{}");
+    return true;
+  };
+  const handleBinaryRequest = (
+    request: IncomingMessage,
+    response: ServerResponse
+  ): boolean => {
+    if (request.url?.startsWith("/binary")) {
+      assert.equal(request.headers.authorization, "Bearer inth_transport_test");
+      assert.equal(request.headers.accept, "image/png");
+      if (request.url === "/binary-redirect") {
+        response.writeHead(302, { Location: "/binary-redirect-target" });
+        response.end();
+        return true;
+      }
+      if (request.url === "/binary-redirect-target") {
+        binaryRedirects += 1;
+      }
+      const headers = {
+        "Content-Type":
+          request.url === "/binary-mismatch" ? "text/html" : "image/png",
+        "X-Request-Id": "native-binary",
+      };
+      if (request.url === "/binary-too-large") {
+        response.writeHead(200, { ...headers, "Content-Length": "134217729" });
+      } else if (request.url === "/binary-truncated") {
+        response.writeHead(200, {
+          ...headers,
+          Connection: "close",
+          "Content-Length": "8",
+        });
+      } else {
+        response.writeHead(200, headers);
+      }
+      binaryRequests += 1;
+      response.write(new Uint8Array([0, 255, 128, 13, 10, 0, 65]));
+      if (request.url !== "/binary-hang") {
+        response.end();
+      }
+      return true;
+    }
+    if (request.url === "/report-v2") {
+      assert.equal(request.headers.authorization, "Bearer inth_transport_test");
+      assert.equal(
+        request.headers.accept,
+        "application/vnd.inth.web-audit+json;version=2"
+      );
+      response.end(
+        '{"success":true,"data":{"version":2,"provenance":["recorded"]}}'
+      );
+      return true;
+    }
+    return false;
+  };
   const handleRequest = (
     request: IncomingMessage,
     response: ServerResponse,
     guard: Guard
   ): void => {
     if (handleTelemetryRequest(request, response, guard)) {
+      return;
+    }
+    if (handleRateLimitRequest(request, response)) {
+      return;
+    }
+    if (handleBinaryRequest(request, response)) {
       return;
     }
     if (request.url?.startsWith("/mutation/")) {
@@ -135,12 +228,6 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
         bearer += 1;
       }
       response.writeHead(bearer === 1 ? 200 : 401);
-      response.end("{}");
-    } else if (request.url === "/rate-limit") {
-      retries += 1;
-      response.writeHead(retries === 1 ? 429 : 200, {
-        "Retry-After": "Wed, 21 Oct 2015 07:28:00 GMT",
-      });
       response.end("{}");
     } else if (request.url === "/redirect") {
       response.writeHead(302, { Location: "/redirect-target" });
@@ -202,6 +289,9 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
     assert.equal(claims, 1);
     assert.equal(registrations, 1);
     assert.equal(retries, 2);
+    assert.equal(longLimitRequests, 1);
+    assert.equal(budgetRequests, 2);
+    assert.equal(boundaryRequests, 2);
     assert.equal(redirects, 0);
     assert.equal(hung, 3);
     // The short approval deadline can expire before the request is sent.
@@ -209,6 +299,8 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
     assert.equal(identityRequests, 2);
     assert.equal(telemetryRequests, 1);
     assert.equal(bearer, 1);
+    assert.equal(binaryRequests, 5);
+    assert.equal(binaryRedirects, 0);
   } finally {
     const closed = once(server, "close");
     server.closeAllConnections();

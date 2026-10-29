@@ -179,7 +179,7 @@ inth auth refresh
 inth logout
 ```
 
-`whoami` checks your identity and granted scopes with the API. `auth status` checks the local credential source without contacting the API. Saved browser sessions refresh automatically when needed. If an older session lacks Code Audit, Inbox, or billing scopes, run `inth login` again to approve them.
+`whoami` checks your identity and granted scopes with the API. `auth status` checks the local credential source without contacting the API. Saved browser sessions refresh automatically when needed. If an older session lacks Code Audit, Inbox, chat, or billing scopes, run `inth login` again to approve them.
 
 ```sh
 # Choose your default organization with the arrow keys.
@@ -290,10 +290,17 @@ Client mappings are adapted from the pinned [add-mcp source](vendor/add-mcp/UPST
 | `inbox list`, `inbox get <id>` | Read findings, optionally filtering the list with `--status` |
 | `inbox update <id> --status <status> --item-version <version>` | Change a finding's status |
 | `inbox github-issue <id>` | Create a GitHub issue for a finding |
+| `chat start --message <text>` | Start an Inth Agent chat in the selected organization |
+| `chat get <id>` | Read a chat and check whether the agent is still answering |
+| `chat send <id> --message <text>` | Send another message to a chat |
 | `vendor list --project <project-id> [--state <state>]`, `vendor get <vendor-id> --project <project-id>` | List vendors seen on a project, or read one with its hosts and what loaded it |
 | `vendor approve <vendor-id> --project <project-id>`, `vendor ignore <vendor-id> --project <project-id>` | Approve or ignore a vendor seen on a project |
 
-List commands return one page. `--limit` defaults to 50 and accepts 1 through 100. Pass the returned cursor unchanged to `--cursor` for the next page.
+List commands return one page. Standard resource lists default to 50 items and accept up to 100. Additional groups include `consent`, `website`, `website-audit`, `account`, `integration`, `notification` and `support`, plus billing details. Their pagination and scopes are in the [resource command guide](docs/cli/commands.md). Pass cursors unchanged with the same filters.
+
+Use `account sessions` and `account devices` to discover security records, and `integration status` to find provider connections and repository configuration. `website-audit cookie-inventory` indexes each target's latest scan and cookie-record path. `billing ledger` pages all retained settled usage with a frozen date window and explicit attribution status. `code-audit quote <scanId>` reads prepared pricing and approval availability without spending. These discovery pages default to 20 items where paginated; full responses remain available through `--json` or `--detail all`.
+
+Named writes cover Consent replacement and lifecycle operations, website configuration, billing, Support messaging, account and organization administration, notifications, integrations and prepared audit approval. Use `billing plan-preview` or `billing credit-preview` with `--save-approval` to save complete reviewed input and pricing before execution. `code-audit quote-approve` requires a pinned quote, checksum, credit cap and stable request UUID. Avatar and logo commands send validated raw image bytes up to 1 MiB. Destructive and recurring actions require confirmation or `--yes` plus all exact preconditions. See the [write command guide](docs/cli/commands.md#how-do-i-change-consent-configuration-and-runtimes).
 
 ```sh
 inth project list --limit 20
@@ -302,10 +309,12 @@ inth region list
 inth project create --name Website --region '<region-id>' \
   --branding inth --trusted-origins '["example.com", "*.example.com"]'
 inth project update prj_123 --name 'Marketing site' --branding c15t
-inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigins":[]}}'
+inth project update prj_123 --data '{"description":null}'
 ```
 
-Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|c15t|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` instead of individual body options for nested fields or explicit null values.
+Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|c15t|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` or `--data-file <path|->` instead of individual body options for nested fields or explicit null values.
+
+An empty `consent.trustedOrigins` array allows every origin. Use an explicit list to restrict origins.
 
 ### Code Audit and Inbox
 
@@ -325,6 +334,28 @@ A scan start can return `starting` with a `preparationId` and `repositoryId`. Ch
 
 Inbox updates require the version from the latest read. Supported statuses are `open`, `accepted`, `dismissed`, and `resolved`. After a version conflict, read the item again before updating it.
 
+### Inth Agent chats
+
+```sh
+inth chat start --organization org_123 --message-file question.txt \
+  --client-message-id 35ad7400-3270-4ea1-9b2b-1b166f37bfd8 --json
+inth chat get '<chat-id>' --json
+inth chat send '<chat-id>' --message 'Explain the proposed fix' \
+  --client-message-id 65c07b5a-2e96-43b0-9c73-feced0a76530 --json
+```
+
+Chat start and send return when the agent accepts a credit-consuming turn. Read `data.data.id` and check the answer with `chat get`; `data.data.status` remains `running` while the agent is answering. Each get reads once.
+
+Use `--message` for text, `--message-file <path|->` for a file or stdin, or a complete JSON body with `--data` or `--data-file <path|->`. Choose one form. Messages accept up to 50,000 characters after trimming. Omitted or empty text needs nonempty `--attachment-ids`. `chat start` also accepts `--inbox-item <id>`. Get and send use the chat ID and reject organization/project overrides.
+
+Choose a UUID v4 client message ID for each new turn and reuse it with the same input after an uncertain failure. When omitted, the CLI generates one and prints the recovery ID to stderr before sending. Cancelling the command does not stop an accepted remote turn.
+
+Chats require a person's connection with `agents.write` for start/send and `agents.read` for replies. A write-only connection can send without transcript content. Existing connections need a new approval to add scopes; refresh cannot add them. See the [chat command guide](docs/cli/commands.md#how-do-i-use-inth-agent-chats).
+
+Upload files separately from chat turns with `inth chat attachment-upload --file policy.pdf --organization org_123 --json`. Discover drafts with `chat attachment-list`, download with `chat attachment-get <aga-id> --output <new-file>`, and discard an unused draft with `chat attachment-discard <aga-id>`. Chat files are capped at 20 MiB each, ten drafts and 40 MiB total. Pass an ordered JSON array with `--attachment-ids '["aga_first"]'` to start/send, or use `attachmentIds` in a complete JSON body. Preserve the exact array and message UUID on retries. A lost upload response is never automatically replayed; list drafts before another attempt.
+
+For Support images and recordings, use `inth support attachment-upload --file recording.webm --organization org_123 --receipt ./upload-receipt.json --json`. Images are capped at 10 MiB and recordings at 100 MiB. Keep the retry UUID and returned `sat_` ID. After an uncertain transfer, use `inth support attachment-finalize sat_123 --organization org_123 --json`; discard an unused upload with `support attachment-discard`. Support writes need an explicitly approved `support.write` connection. Uploads reject stdin and JSON body flags. The [file upload guide](docs/cli/commands.md#how-do-i-upload-and-recover-files) covers MIME types, receipts and recovery.
+
 ### Vendor decisions
 
 `inth vendor list --project <project-id>` lists the vendors scans saw on a project, with their category, state, and vendor ID. Add `--state active` to see only vendors nobody has decided on yet. `inth vendor get <vendor-id> --project <project-id>` shows one vendor's hosts, when it was last seen, how it loaded, such as a script URL or a Google Tag Manager container, and its open Inbox finding.
@@ -343,7 +374,7 @@ Approving a vendor accepts its data sharing and resolves its runtime Inbox findi
 
 Listing and reading vendors needs `projects.read`, which API keys have. Vendor decisions need a person's sign-in with the `vendors.write` scope and an admin or owner role in the project's organization. Organization API keys cannot hold `vendors.write`. Sign-ins from earlier CLI versions lack the scope; run `inth login` again.
 
-Writes run without confirmation prompts. Invitations send email, key rotation replaces the old key, report unlocks spend credits and require an owner, and `inbox github-issue` creates a GitHub issue. Key creation and rotation print the new secret once; save it before closing the terminal. An unresolved GitHub issue send can return 409 and require server reconciliation before another attempt.
+Ordinary updates run immediately. New chat sharing/deletion and website removal require a target-specific confirmation or `--yes`. Invitations send email, key rotation replaces the old key, report unlocks spend credits and require an owner, and `inbox github-issue` creates a GitHub issue. Chat start and send accept credit-consuming agent turns. Key creation and rotation print the new secret once; save it before closing the terminal. An unresolved GitHub issue send can return 409 and require server reconciliation before another attempt.
 
 ## Output and scripting
 
@@ -372,9 +403,12 @@ Piping a command does not switch it to JSON. `--non-interactive` disables prompt
 inth api /v1/me
 inth api /v1/projects --organization org_123 --json
 inth api /v1/projects/prj_123 --method PATCH --data '{"description":null}'
+inth chat attachment-get aga_first --organization org_123 --output ./attachment.bin --json
 ```
 
-Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. An explicit `organizationId` query parameter overrides organization defaults.
+Requests support `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. GET is the default. An explicit `organizationId` query parameter overrides organization defaults.
+
+Use GET with `--output <new-file>` for binary data. It preserves bytes, refuses existing paths and `-`, and enforces a 128 MiB limit. The parent directory must exist. With `--json`, the result contains file metadata in `data`; the bytes go to the file. Requests remain on the trusted API host and refuse redirects.
 
 ## Usage telemetry
 

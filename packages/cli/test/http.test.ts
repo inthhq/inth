@@ -47,6 +47,45 @@ describe("HTTP failures", () => {
     expect(response.status).toBe(429);
     expect(f.clock.waits).toHaveLength(0);
   });
+  it("returns long rate limits without waiting or retrying early", async () => {
+    const f = setup([
+      Response.json(
+        { error: { code: "RATE_LIMITED" } },
+        {
+          headers: { "Retry-After": "60", "X-Request-Id": "long-limit" },
+          status: 429,
+        }
+      ),
+    ]);
+    const response = await f.http.request("https://api.inth.com/v1/projects");
+    expect(response.status).toBe(429);
+    await expect(f.http.json(response, z.json())).rejects.toMatchObject({
+      requestId: "long-limit",
+      status: 429,
+    });
+    expect(f.clock.waits).toEqual([]);
+    expect(f.server.calls).toHaveLength(1);
+  });
+  it("stops when cumulative rate-limit waits would exceed 30 seconds", async () => {
+    const f = setup([
+      new Response(null, { headers: { "Retry-After": "15" }, status: 429 }),
+      new Response(null, { headers: { "Retry-After": "20" }, status: 429 }),
+    ]);
+    const response = await f.http.request("https://api.inth.com/v1/projects");
+    expect(response.status).toBe(429);
+    expect(f.clock.waits).toEqual([15_000]);
+    expect(f.server.calls).toHaveLength(2);
+  });
+  it("can retry when the requested wait exactly fits the budget", async () => {
+    const f = setup([
+      new Response(null, { headers: { "Retry-After": "30" }, status: 429 }),
+      Response.json({ ok: true }),
+    ]);
+    const response = await f.http.request("https://api.inth.com/v1/projects");
+    expect(response.ok).toBe(true);
+    expect(f.clock.waits).toEqual([30_000]);
+    expect(f.server.calls).toHaveLength(2);
+  });
   it("does not print response bodies or terminal escapes", async () => {
     const f = setup([]);
     const error = await f.http.error(

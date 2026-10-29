@@ -4,6 +4,7 @@ import { colorEnabled, textWidth } from "../../src/display.ts";
 import { outputColumns } from "../../src/native/native-bindings.ts";
 import { formatNativeResource } from "../../src/native/native-resource-output.ts";
 import { printResult } from "../../src/output.ts";
+import { v2ReadCases } from "../fixtures/agent-access-v2-reads.ts";
 import {
   billingBody,
   outputCases,
@@ -36,6 +37,16 @@ if (process.argv.includes("--billing") || process.argv.includes("--projects")) {
       );
   printResult(options.json, output, body);
   process.exit(0);
+}
+for (const example of v2ReadCases) {
+  const output = formatNativeResource(
+    parseArguments(example.args),
+    { body: example.body, ok: true, requestId: "v2-output-id", status: 200 },
+    { color: false, columns: 120 }
+  );
+  for (const expected of example.expected) {
+    check(output.includes(expected), `Missing V2 output: ${expected}`);
+  }
 }
 for (const example of outputCases) {
   const output = formatNativeResource(

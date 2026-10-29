@@ -320,6 +320,8 @@ if (fixtures) {
     "agent-test",
     "agent-e2e",
     "transport-test",
+    "upload-test",
+    "write-test",
     "telemetry-test",
     "sentry-test",
     "development-telemetry-test",

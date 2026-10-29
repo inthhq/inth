@@ -26,6 +26,10 @@ Run this command in a background terminal as soon as you have shown the link. It
 
 The default scope is `organizations.read`. Supply a comma-separated subset of the capabilities listed by `inth --help --json`. The server persists that set, shows it during approval and enforces both the granted scopes and the person's current organization role. Write permissions take effect immediately. Permissions to create API keys or spend credits must be requested explicitly; keys created during a session have their own lifetime.
 
+The [resource scope guide](cli/authentication.md) covers Consent, Website Audit, billing details, account settings and Support. These person-only capabilities are unavailable to organization API keys. Check each command's help for its required scopes, organization role and effects before requesting approval.
+
+For Inth Agent chats, request `agents.write` to start/send and `agents.read` to read replies. An existing connection needs to disconnect and sign in again to add these permissions. A new message can spend credits. Save a UUID v4 client message ID and reuse it with identical input after an uncertain failure. The [chat command guide](cli/commands.md#how-do-i-use-inth-agent-chats) covers file/stdin input, acceptance responses and retries.
+
 ## Use the approved credential
 
 ```sh

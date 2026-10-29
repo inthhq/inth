@@ -1,3 +1,5 @@
+import { requireAccessPerson } from "../../src/agent-access-commands.ts";
+import { runV2Write } from "../../src/agent-access-write-runner.ts";
 import type { AgentAuth } from "../../src/agent-auth.ts";
 import { runAgentCommand } from "../../src/agent-commands.ts";
 import {
@@ -6,6 +8,7 @@ import {
 } from "../../src/agent-environment.ts";
 import { parseArguments } from "../../src/arguments.ts";
 import type { CliArguments } from "../../src/arguments.ts";
+import { chatRetryDiagnostic, requireChatPerson } from "../../src/chat.ts";
 import { CliError } from "../../src/cli-error.ts";
 import { selectCommandConnection } from "../../src/connection-selection.ts";
 import { colorEnabled, organizationReference } from "../../src/display.ts";
@@ -14,6 +17,7 @@ import type { OrganizationUI } from "../../src/organizations.ts";
 import {
   chooseOrganization,
   createdOrganizationMessage,
+  terminalText,
 } from "../../src/organizations.ts";
 import {
   printResult,
@@ -21,10 +25,21 @@ import {
   requireInteractiveLogin,
 } from "../../src/output.ts";
 import {
+  approveResource,
+  approvalMessage,
+} from "../../src/resource-approval.ts";
+import {
   buildResourceRequest,
+  optionValue,
   rawApiRequest,
   resourceCommand,
 } from "../../src/resource-commands.ts";
+import {
+  saveResourceDownload,
+  validateDownloadOutput,
+} from "../../src/resource-download.ts";
+import { prepareResourceInput } from "../../src/resource-input.ts";
+import { runResourceUpload } from "../../src/resource-upload.ts";
 import { runSkills } from "../../src/skills.ts";
 import { ApiClient, apiKey } from "./api.ts";
 import type { CredentialStore } from "./auth.ts";
@@ -164,11 +179,79 @@ const runLogout = async (
 const canLogin = (allowed: boolean): boolean =>
   allowed && Boolean(process.stdin.isTTY && process.stdout.isTTY);
 const terminalColumns = (): number => process.stdout.columns || 80;
+const runUploadCommand = async (
+  options: CliArguments,
+  api: ApiClient,
+  context: OrganizationContext,
+  signal: AbortSignal,
+  apiOrigin: string
+): Promise<boolean> => {
+  if (!resourceCommand(options)?.upload) {
+    return false;
+  }
+  const result = await runResourceUpload(
+    options,
+    {
+      execute: (path, method, body, organization) =>
+        api.execute(path, method, body, organization),
+      uploadChat: (body, organization) => api.uploadChat(body, organization),
+    },
+    () => context.resolve(options.organization),
+    signal,
+    apiOrigin
+  );
+  printResult(options.json, result, result);
+  return true;
+};
+
+const runWriteCommand = async (
+  options: CliArguments,
+  api: ApiClient,
+  context: OrganizationContext,
+  signal: AbortSignal
+): Promise<boolean> => {
+  if (!resourceCommand(options)?.writeSchema) {
+    return false;
+  }
+  const request = buildResourceRequest(options);
+  const result = await runV2Write(
+    options,
+    request,
+    api,
+    (organization) => context.resolve(organization),
+    (message) =>
+      organizationUI(
+        signal,
+        !options.json && !options.nonInteractive,
+        message,
+        "Action cancelled."
+      )
+  );
+  printResult(
+    options.json,
+    result.split("\n").map(terminalText).join("\n"),
+    result || "null"
+  );
+  return true;
+};
+const resourceDownloadType = (options: CliArguments): string | undefined =>
+  resourceCommand(options)?.download ??
+  (options.command === "api" && optionValue(options, "output") !== undefined
+    ? "*/*"
+    : undefined);
 const runResourceCommand = async (
   options: CliArguments,
   api: ApiClient,
-  context: OrganizationContext
+  context: OrganizationContext,
+  signal: AbortSignal,
+  apiOrigin: string
 ): Promise<boolean> => {
+  if (await runWriteCommand(options, api, context, signal)) {
+    return true;
+  }
+  if (await runUploadCommand(options, api, context, signal, apiOrigin)) {
+    return true;
+  }
   if (options.command === "org" && options.argument === "create") {
     const created = await api.createOrganization({
       name: options.name ?? "",
@@ -186,11 +269,36 @@ const runResourceCommand = async (
       options.command === "api"
         ? rawApiRequest(options)
         : buildResourceRequest(options);
+    const retry = chatRetryDiagnostic(options);
+    if (retry) {
+      console.error(retry);
+    }
+    const spec = resourceCommand(options);
+    const organization = request.scoped
+      ? await context.resolve(options.organization)
+      : undefined;
+    const binaryType = resourceDownloadType(options);
+    if (binaryType) {
+      const saved = await saveResourceDownload(
+        options,
+        await api.download(request.path, organization, binaryType),
+        signal
+      );
+      printResult(
+        options.json,
+        options.command === "api"
+          ? saved
+          : `Saved download to ${terminalText(optionValue(options, "output") ?? "")}.`,
+        saved
+      );
+      return true;
+    }
     const result = await api.execute(
       request.path,
       request.method,
       request.body,
-      request.scoped ? await context.resolve(options.organization) : undefined
+      organization,
+      spec?.accept
     );
     const message = formatResource(options, result, {
       color: colorEnabled(Boolean(process.stdout.isTTY)),
@@ -268,6 +376,19 @@ export const run = async (
     options.authMode || "agent"
   );
   const key = apiKey(options.token, process.env.INTH_TOKEN);
+  requireChatPerson(options, key);
+  requireAccessPerson(options, key);
+  await prepareResourceInput(options, signal);
+  validateDownloadOutput(options);
+  await approveResource(
+    options,
+    organizationUI(
+      signal,
+      allowInteractive,
+      approvalMessage(options),
+      "Action cancelled."
+    )
+  );
   const directory = agentStateDirectory(stateDirectory(), environment);
   const context = new OrganizationContext(directory, process.cwd());
   await selectCommandConnection(
@@ -315,7 +436,15 @@ export const run = async (
   ) {
     return;
   }
-  if (await runResourceCommand(options, api, context)) {
+  if (
+    await runResourceCommand(
+      options,
+      api,
+      context,
+      signal,
+      environment.apiOrigin
+    )
+  ) {
     return;
   }
   switch (options.command) {

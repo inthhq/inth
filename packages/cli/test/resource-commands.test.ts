@@ -42,6 +42,9 @@ describe("public resource commands", () => {
     const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
     await run([...example.args, "--json"], new AbortController().signal);
     const url = new URL(`https://api.inth.com${example.path}`);
+    if (options.command === "code-audit" && options.argument === "issues") {
+      url.searchParams.set("detail", "full");
+    }
     if (example.scoped) {
       url.searchParams.set("organizationId", "org_default");
     }

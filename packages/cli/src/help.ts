@@ -20,6 +20,7 @@ const groupDescriptions = [
   ["member", "Manage organization members and roles"],
   ["invitation", "Send and manage invitations"],
   ["api-key", "Create, rotate, and revoke API keys"],
+  ["integration", "Discover provider connections and repository settings"],
   ["code-audit", "Scan repositories and read findings"],
   ["inbox", "Review and update Inbox findings"],
   ["vendor", "List, read, approve, or ignore vendors seen on a project"],
@@ -46,12 +47,15 @@ const authenticationDescription = (value: string): string => {
   }
   return "No sign-in required.";
 };
-export const helpCommands = (command = "", action = ""): CommandMetadata[] =>
-  COMMAND_METADATA.filter(
-    (entry) =>
-      (!command || entry.command === command) &&
-      (!action || !entry.action || entry.action === action)
+export const helpCommands = (command = "", action = ""): CommandMetadata[] => {
+  const entries = COMMAND_METADATA.filter(
+    (entry) => !command || entry.command === command
   );
+  if (action && entries.some((entry) => entry.action === action)) {
+    return entries.filter((entry) => entry.action === action);
+  }
+  return entries.filter((entry) => !action || !entry.action);
+};
 const rows = (entries: string[][], columns: number): string[] => {
   const size = Math.max(
     0,
@@ -133,7 +137,7 @@ export const formatHelp = (command = "", action = "", columns = 80): string => {
     if (detail.paginated) {
       lines.push(
         wrapText(
-          "Returns one page. Pass pagination.nextCursor with --cursor for the next page.",
+          "Returns one page. Pass the returned nextCursor unchanged with --cursor for the next page.",
           width
         )
       );

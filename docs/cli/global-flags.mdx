@@ -17,19 +17,28 @@ Use `--json` for structured output, `--non-interactive` to disable prompts, and 
 | `--auth browser\|agent` | Override the selected saved connection |
 | `--organization <id>` | Override the organization for commands that support it |
 
-Flags are command-specific. Use `inth <command> --help` to check whether a flag is accepted. For example, a command that takes a resource ID rejects `--organization`, since the server resolves ownership from the ID.
+Flags are command-specific. Use `inth <command> --help` to check whether a flag is accepted. Most commands that target a resource ID reject `--organization`, since the server resolves ownership from the ID. Billing invoice reads and PDF downloads also accept an organization selector.
 
 Piping output does not select JSON mode. The [automation guide](./automation) describes the JSON envelope, error codes, and exit statuses. Skill installation forwards upstream text output and does not support `--json`; the bundled skill catalog supports `--list --json`.
 
 ## How do I set pagination and JSON request bodies?
 
-Paginated lists accept `--limit` from 1 through 100, defaulting to 50, and an opaque `--cursor`. Values outside the `--limit` range fail argument validation. Each invocation returns one page. Pass `pagination.nextCursor` from the response unchanged when requesting the next page.
+Each list invocation returns one page. Standard resource lists accept `--limit` from 1 through 100 and an opaque `--cursor`. Resource-specific pagination can use a different default or fixed numbered pages. Check the command's help, and pass the returned continuation unchanged with the same organization and filters.
 
-Resource writes with body options accept `--data '<JSON object>'` instead of individual fields, except `org create`. This supports nested fields and explicit null values. Do not combine `--data` with individual body options.
+Resource writes with body options accept `--data '<JSON object>'` or `--data-file <path|->` instead of individual fields, except `org create`. This supports nested fields and explicit null values. Choose one body form.
 
 ```sh
-inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigins":[]}}'
+inth project update prj_123 --data '{"description":null}'
+inth project update prj_123 --data-file project-update.json
 ```
+
+An empty `consent.trustedOrigins` array allows every origin. Use an explicit list to restrict origins.
+
+Only a file flag with `-` reads stdin. Files and stdin must contain UTF-8 text. JSON input is limited to 1 MiB, or 64 KiB for feedback. `--data @file` has no special file meaning. Raw `api` writes also accept `--data-file`.
+
+Chat and Support writes also accept `--message-file <path|->` for message text. `--message -` sends a literal hyphen. See [chat commands](./commands#how-do-i-use-inth-agent-chats) for limits and safe retries.
+
+Binary download commands require `--output <new-file>`. They refuse existing paths and `-`, and enforce a 128 MiB limit. `--json` reports file metadata on stdout. See [download examples](./commands#how-do-i-download-screenshots-invoices-and-support-attachments).
 
 ## How do I call the Inth API directly?
 
@@ -39,9 +48,13 @@ inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigi
 inth api /v1/me
 inth api /v1/projects --organization org_123 --json
 inth api /v1/projects/prj_123 --method PATCH --data '{"description":null}'
+inth api GET /v1/agent-chat-attachments/att_123/content \
+  --output ./attachment.bin --json
 ```
 
-Requests support `GET`, `POST`, `PATCH`, and `DELETE`. GET is the default. Authenticated requests must stay under `https://api.inth.com/v1/`, and redirects are rejected. An explicit `organizationId` query parameter overrides organization defaults.
+Requests support `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. GET is the default. Authenticated requests must stay under `https://api.inth.com/v1/`, and redirects are rejected. An explicit `organizationId` query parameter overrides organization defaults.
+
+Use `api GET <path> --output <new-file>` for binary reads without a named command, including chat attachment paths returned by the API. The existing form `api <path> --method GET --output <new-file>` also works. File output accepts GET only and rejects body input. Without `--output`, raw responses must be JSON. With `--output`, stdout contains JSON file metadata; add `--json` for the versioned CLI envelope. The normal 128 MiB limit and no-overwrite policy apply.
 
 Writes take effect immediately without confirmation prompts. The requested endpoint determines the required scopes and accepted credentials.
 
@@ -57,3 +70,5 @@ Writes take effect immediately without confirmation prompts. The requested endpo
 | `DO_NOT_TRACK`, `DISABLE_TELEMETRY` | Passed through to the upstream skills installer |
 
 For telemetry overrides, empty values, `0`, and `false` do not override the saved preference. See [Telemetry](./telemetry) for exactly what production builds send.
+
+Avatar and organization-logo commands use `--file` for raw image bytes up to 1 MiB. `--data-file` remains JSON input. Financial previews can use `--save-approval <new-file>` to save the exact organization, input and full quote for later review and execution. `--yes` approves the stated effect; it does not replace required confirmation strings, preconditions, UUIDs, rotation overlap or spending limits.

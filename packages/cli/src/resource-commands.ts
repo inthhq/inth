@@ -1,6 +1,16 @@
+import {
+  AGENT_ACCESS_COMMANDS,
+  accessBody,
+  validateAccessOptions,
+  validateInboxUpdate,
+} from "./agent-access-commands.ts";
+import { validateV2ReadOptions } from "./agent-access-v2-reads.ts";
+import { v2WriteBody } from "./agent-access-write-input.ts";
 import type { CliArguments } from "./arguments.ts";
+import { chatBody, validateChatOptions } from "./chat.ts";
 import { CliError } from "./cli-error.ts";
 import { feedbackFieldJson } from "./feedback.ts";
+import { validateAttachmentOptions } from "./upload-commands.ts";
 
 export interface ResourceCommand {
   command: string;
@@ -13,6 +23,34 @@ export interface ResourceCommand {
   required: string[];
   // Fixed JSON body. Commands with one have no body options or --data.
   body?: string;
+  personOnly?: boolean;
+  scopes?: string[];
+  rules?: ResourceInputRule[];
+  defaultLimit?: number;
+  cursorOnly?: boolean;
+  numberedPageMax?: number;
+  approval?: string;
+  accept?: string;
+  download?: string;
+  upload?: boolean;
+  image?: boolean;
+  writeSchema?: string;
+  organizationBody?: boolean;
+  description?: string;
+}
+
+export interface ResourceInputRule {
+  name: string;
+  key: string;
+  type: string;
+  location: string;
+  required: boolean;
+  values?: string[];
+  minimum?: number;
+  maximum?: number;
+  maxItems?: number;
+  defaultValue?: string;
+  description?: string;
 }
 
 const command = (
@@ -174,10 +212,27 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
     "/v1/inbox/:id",
     false,
     false,
-    ["status", "item-version"],
-    ["status", "item-version"]
+    ["status", "item-version", "assignee", "unassign"],
+    ["item-version"]
   ),
   command("inbox", "github-issue", "POST", "/v1/inbox/:id/github-issue"),
+  command("chat", "start", "POST", "/v1/agent-chats", true, false, [
+    "message",
+    "message-file",
+    "inbox-item",
+    "client-message-id",
+    "attachment-ids",
+  ]),
+  command("chat", "get", "GET", "/v1/agent-chats/:id"),
+  command(
+    "chat",
+    "send",
+    "POST",
+    "/v1/agent-chats/:id/messages",
+    false,
+    false,
+    ["message", "message-file", "client-message-id", "attachment-ids"]
+  ),
   command(
     "vendor",
     "list",
@@ -220,6 +275,7 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
     ["project"],
     '{"decision":"ignore"}'
   ),
+  ...AGENT_ACCESS_COMMANDS,
 ];
 
 export const optionValue = (
@@ -237,6 +293,12 @@ export const resourceCommand = (
   );
 
 export const jsonObject = (body: string): string => {
+  if (new TextEncoder().encode(body).byteLength > 1_048_576) {
+    throw new CliError(
+      "usage_error",
+      "JSON input exceeds the 1048576 byte input limit."
+    );
+  }
   try {
     JSON.parse(body);
     if (!body.trim().startsWith("{")) {
@@ -262,11 +324,21 @@ const fieldName = (name: string): string => {
 };
 
 // Whether --data can replace the body options.
-export const acceptsData = (spec: ResourceCommand): boolean =>
-  spec.method !== "GET" &&
-  spec.fields.length > 0 &&
-  spec.body === undefined &&
-  spec.command !== "org";
+export const acceptsData = (spec: ResourceCommand): boolean => {
+  if (spec.writeSchema) {
+    return (
+      !spec.image && spec.writeSchema !== "none" && spec.body === undefined
+    );
+  }
+  return (
+    !spec.upload &&
+    spec.method !== "GET" &&
+    spec.fields.length > 0 &&
+    (!spec.rules || spec.rules.some((rule) => rule.location === "body")) &&
+    spec.body === undefined &&
+    spec.command !== "org"
+  );
+};
 
 // Options that fill a path segment, such as --project in /v1/projects/:project.
 const pathFields = (spec: ResourceCommand): string[] =>
@@ -334,16 +406,31 @@ const validateResourceId = (
     );
   }
 };
+const allowedResourceOption = (spec: ResourceCommand, name: string): boolean =>
+  spec.fields.includes(name) ||
+  (spec.paginated && ["limit", "cursor"].includes(name)) ||
+  (name === "detail" && spec.method === "GET" && !spec.download) ||
+  (["data", "data-file"].includes(name) && acceptsData(spec));
 const validateResourceOptions = (
   options: CliArguments,
   spec: ResourceCommand
 ): void => {
   const data = optionValue(options, "data");
+  const dataFile = optionValue(options, "data-file");
+  if (
+    data !== undefined &&
+    new TextEncoder().encode(data).byteLength > 1_048_576
+  ) {
+    throw new CliError(
+      "usage_error",
+      "JSON input exceeds the 1048576 byte input limit."
+    );
+  }
+  if (data !== undefined && dataFile !== undefined) {
+    throw new CliError("usage_error", "Use --data or --data-file, not both.");
+  }
   for (const entry of options.values) {
-    const allowed =
-      spec.fields.includes(entry.name) ||
-      (spec.paginated && ["limit", "cursor"].includes(entry.name)) ||
-      (entry.name === "data" && acceptsData(spec));
+    const allowed = allowedResourceOption(spec, entry.name);
     if (!allowed) {
       throw new CliError(
         "usage_error",
@@ -351,17 +438,23 @@ const validateResourceOptions = (
       );
     }
     if (
-      data !== undefined &&
+      (data !== undefined || dataFile !== undefined) &&
       spec.fields.includes(entry.name) &&
-      !pathFields(spec).includes(entry.name)
+      !pathFields(spec).includes(entry.name) &&
+      !(
+        spec.writeSchema &&
+        spec.rules?.some(
+          (rule) => rule.name === entry.name && rule.location === "control"
+        )
+      )
     ) {
       throw new CliError(
         "usage_error",
-        "Use --data or individual body options, not both."
+        "Use --data, --data-file, or individual body options, not both."
       );
     }
   }
-  if (data === undefined) {
+  if (data === undefined && dataFile === undefined) {
     for (const name of spec.required) {
       if (!optionValue(options, name)?.trim()) {
         throw new CliError(
@@ -372,35 +465,59 @@ const validateResourceOptions = (
     }
   }
 };
+const addQueryFields = (
+  options: CliArguments,
+  spec: ResourceCommand,
+  query: URLSearchParams
+): void => {
+  for (const name of spec.fields) {
+    if (pathFields(spec).includes(name)) {
+      continue;
+    }
+    const rule = spec.rules?.find((entry) => entry.name === name);
+    if (spec.rules && rule?.location !== "query") {
+      continue;
+    }
+    const value = optionValue(options, name);
+    if (value !== undefined) {
+      query.set(rule?.key ?? fieldName(name), value);
+    }
+  }
+};
 const resourceQuery = (
   options: CliArguments,
   spec: ResourceCommand
 ): string => {
   const query = new URLSearchParams();
   if (spec.paginated) {
-    const limit = optionValue(options, "limit") ?? "50";
+    const limit =
+      optionValue(options, "limit") ?? String(spec.defaultLimit ?? 50);
     if (!/^\d+$/u.test(limit) || Number(limit) < 1 || Number(limit) > 100) {
       throw new CliError(
         "usage_error",
         "--limit must be an integer between 1 and 100."
       );
     }
-    query.set("limit", limit);
+    if (!spec.cursorOnly) {
+      query.set("limit", limit);
+    }
     const cursor = optionValue(options, "cursor");
     if (cursor) {
       query.set("cursor", cursor);
     }
   }
   if (spec.method === "GET") {
-    for (const name of spec.fields) {
-      if (pathFields(spec).includes(name)) {
-        continue;
-      }
-      const value = optionValue(options, name);
-      if (value !== undefined) {
-        query.set(fieldName(name), value);
-      }
-    }
+    addQueryFields(options, spec, query);
+  }
+  if (spec.numberedPageMax && !query.has("page")) {
+    query.set("page", "1");
+  }
+  if (
+    options.command === "code-audit" &&
+    options.argument === "issues" &&
+    (options.json || optionValue(options, "detail") === "all")
+  ) {
+    query.set("detail", "full");
   }
   return query.toString();
 };
@@ -408,11 +525,23 @@ const resourceBody = (
   options: CliArguments,
   spec: ResourceCommand
 ): string | undefined => {
-  if (spec.method === "GET") {
+  if (spec.method === "GET" || spec.upload) {
     return undefined;
   }
   if (spec.body !== undefined) {
     return spec.body;
+  }
+  if (spec.command === "chat" && ["start", "send"].includes(spec.action)) {
+    return chatBody(options);
+  }
+  if (spec.command === "inbox" && spec.action === "update") {
+    return validateInboxUpdate(options);
+  }
+  if (spec.rules) {
+    return accessBody(options, spec);
+  }
+  if (optionValue(options, "data-file") !== undefined) {
+    return undefined;
   }
   const data = optionValue(options, "data");
   if (data !== undefined) {
@@ -453,6 +582,15 @@ export const buildResourceRequest = (
   }
   validateResourceId(options, spec);
   validateResourceOptions(options, spec);
+  if (spec.command === "chat") {
+    validateChatOptions(options);
+  }
+  validateAccessOptions(options, spec);
+  validateV2ReadOptions(options);
+  validateAttachmentOptions(options);
+  if (options.command === "inbox" && options.argument === "update") {
+    validateInboxUpdate(options);
+  }
   const suffix = resourceQuery(options, spec);
   let path = spec.path.split(":id").join(encodeURIComponent(options.id));
   for (const name of pathFields(spec)) {
@@ -461,7 +599,9 @@ export const buildResourceRequest = (
       .join(encodeURIComponent(optionValue(options, name) ?? ""));
   }
   return {
-    body: resourceBody(options, spec),
+    body: spec.writeSchema
+      ? v2WriteBody(options, spec)
+      : resourceBody(options, spec),
     method: spec.method,
     path: path + (suffix ? `?${suffix}` : ""),
     scoped: spec.scoped,
@@ -470,15 +610,37 @@ export const buildResourceRequest = (
 
 export const rawApiRequest = (options: CliArguments): ResourceRequest => {
   const method = (optionValue(options, "method") ?? "GET").toUpperCase();
-  if (!["GET", "POST", "PATCH", "DELETE"].includes(method)) {
+  if (!["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) {
     throw new CliError(
       "usage_error",
-      "--method must be GET, POST, PATCH, or DELETE."
+      "--method must be GET, POST, PUT, PATCH, or DELETE."
     );
   }
   const data = optionValue(options, "data");
-  if (method === "GET" && data !== undefined) {
-    throw new CliError("usage_error", "GET requests do not accept --data.");
+  const dataFile = optionValue(options, "data-file");
+  if (
+    data !== undefined &&
+    new TextEncoder().encode(data).byteLength > 1_048_576
+  ) {
+    throw new CliError(
+      "usage_error",
+      "JSON input exceeds the 1048576 byte input limit."
+    );
+  }
+  if (data !== undefined && dataFile !== undefined) {
+    throw new CliError("usage_error", "Use --data or --data-file, not both.");
+  }
+  if (method === "GET" && (data !== undefined || dataFile !== undefined)) {
+    throw new CliError(
+      "usage_error",
+      "GET requests do not accept body inputs."
+    );
+  }
+  if (optionValue(options, "output") !== undefined && method !== "GET") {
+    throw new CliError(
+      "usage_error",
+      "--output is only available for GET downloads."
+    );
   }
   return {
     body: data === undefined ? undefined : jsonObject(data),

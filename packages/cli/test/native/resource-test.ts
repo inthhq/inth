@@ -1,13 +1,35 @@
 /* eslint-disable require-await -- Scripted HTTP adapters implement asynchronous production contracts. */
 import "../../src/native/native-bindings.ts";
 import "../../src/auth-flow.ts";
+import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+// eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
+import { join } from "node:path";
+
+import { requireAccessPerson } from "../../src/agent-access-commands.ts";
+import { formatAccessResource } from "../../src/agent-access-output.ts";
 import { parseArguments } from "../../src/arguments.ts";
 import type { OAuthResponse } from "../../src/auth-types.ts";
+import { chatRetryDiagnostic, requireChatPerson } from "../../src/chat.ts";
 import { NativeApi, apiOutput } from "../../src/native/native-api.ts";
+import { approveResource } from "../../src/resource-approval.ts";
 import {
   buildResourceRequest,
   rawApiRequest,
 } from "../../src/resource-commands.ts";
+import {
+  saveResourceDownload,
+  validateDownloadOutput,
+} from "../../src/resource-download.ts";
+import {
+  prepareResourceInput,
+  readResourceInput,
+} from "../../src/resource-input.ts";
+import {
+  accessRequestCases,
+  invalidAccessRequests,
+} from "../fixtures/agent-access-requests.ts";
+import { v2ReadCases } from "../fixtures/agent-access-v2-reads.ts";
 import {
   requestCases,
   invalidRequests,
@@ -18,6 +40,141 @@ const check = (condition: boolean, message: string): void => {
     throw new Error(message);
   }
 };
+const { signal } = new AbortController();
+if (process.argv.includes("--chat-stdin-cancel")) {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), 25);
+  let cancelled = false;
+  try {
+    await readResourceInput("-", "message-file", controller.signal);
+  } catch {
+    cancelled = controller.signal.aborted;
+  }
+  check(cancelled, "Pending stdin did not cancel");
+  console.log("Pending chat stdin cancelled.");
+  process.exit(0);
+}
+if (process.argv.includes("--chat-stdin")) {
+  const options = parseArguments(["chat", "start", "--message-file", "-"]);
+  await prepareResourceInput(options, signal);
+  console.log(buildResourceRequest(options).body);
+  process.exit(0);
+}
+const chat = parseArguments([
+  "chat",
+  "start",
+  "--message",
+  "  Cookie question  ",
+]);
+const unprepared = buildResourceRequest(chat);
+check(
+  unprepared.body === '{"message":"Cookie question"}',
+  "Chat parse changed message text"
+);
+check(!chatRetryDiagnostic(chat), "Parsing generated a retry ID");
+await prepareResourceInput(chat, signal);
+const prepared = buildResourceRequest(chat);
+await prepareResourceInput(chat, signal);
+check(
+  buildResourceRequest(chat).body === prepared.body,
+  "Chat retry ID changed"
+);
+check(Boolean(chatRetryDiagnostic(chat)), "Generated retry ID is missing");
+// SAFETY: This fixture exercises the same checked JSON boundary as the production request.
+const chatBody = JSON.parse(prepared.body ?? "") as {
+  message: string;
+  clientMessageId: string;
+};
+check(chatBody.message === "Cookie question", "Prepared message changed");
+check(
+  prepared.body ===
+    `{"message":"Cookie question","clientMessageId":"${chatBody.clientMessageId}"}`,
+  "Absent chat fields leaked into JSON"
+);
+check(
+  /^[\da-f-]{36}$/u.test(chatBody.clientMessageId),
+  "Generated retry ID is invalid"
+);
+const chatJson = parseArguments([
+  "chat",
+  "send",
+  "chat/a?b",
+  "--data",
+  '{"message":" hello ","clientMessageId":"b8dde372-1324-4d2e-a15a-fd3761964299"}',
+]);
+await prepareResourceInput(chatJson, signal);
+check(
+  buildResourceRequest(chatJson).path ===
+    "/v1/agent-chats/chat%2Fa%3Fb/messages",
+  "Chat ID was not encoded"
+);
+check(!chatRetryDiagnostic(chatJson), "Explicit retry ID printed a diagnostic");
+check(
+  buildResourceRequest(chatJson).body ===
+    '{"message":"hello","clientMessageId":"b8dde372-1324-4d2e-a15a-fd3761964299"}',
+  "JSON chat fields were not normalized"
+);
+const chatInbox = parseArguments([
+  "chat",
+  "start",
+  "--data",
+  '{"message":"hello","inboxItemId":"inbox_123"}',
+]);
+await prepareResourceInput(chatInbox, signal);
+check(
+  buildResourceRequest(chatInbox).body ===
+    `{"message":"hello","clientMessageId":"${chatInbox.generatedClientMessageId}","inboxItemId":"inbox_123"}`,
+  "Generated chat JSON lost Inbox context"
+);
+for (const args of [
+  ["chat", "start", "--message", " "],
+  ["chat", "start", "--data", '{"message":null}'],
+  ["chat", "start", "--data", '{"message":"hello","unknown":"value"}'],
+  [
+    "chat",
+    "send",
+    "chat_123",
+    "--message",
+    "hello",
+    "--organization",
+    "org_123",
+  ],
+  ["chat", "start", "--message", "hello", "--client-message-id", "bad-id"],
+]) {
+  let rejected = false;
+  try {
+    parseArguments(args);
+  } catch {
+    rejected = true;
+  }
+  check(rejected, "Accepted invalid chat input");
+}
+let keyRejected = false;
+try {
+  requireChatPerson(chat, "inth_fixture");
+} catch {
+  keyRejected = true;
+}
+check(keyRejected, "Chat accepted an organization API key");
+const inputPath = join(tmpdir(), `inth-chat-input-${process.pid}.txt`);
+try {
+  writeFileSync(inputPath, "東京\nquestion");
+  check(
+    (await readResourceInput(inputPath, "message-file", signal)) ===
+      "東京\nquestion",
+    "File input lost UTF-8"
+  );
+  writeFileSync(inputPath, new Uint8Array([0xc3, 0x28]));
+  let invalidUtf8 = false;
+  try {
+    await readResourceInput(inputPath, "message-file", signal);
+  } catch {
+    invalidUtf8 = true;
+  }
+  check(invalidUtf8, "Accepted invalid UTF-8 input");
+} finally {
+  unlinkSync(inputPath);
+}
 let expectedMethod = "";
 let expectedUrl = "";
 let expectedBody: string | undefined;
@@ -97,6 +254,96 @@ check(
   raw.method === "PATCH" && raw.body === '{"description":null}',
   "Raw mutation changed"
 );
+const binaryPath = join(tmpdir(), `inth-raw-binary-${process.pid}.bin`);
+const binaryOptions = parseArguments([
+  "api",
+  "GET",
+  "/v1/agent-chat-attachments/att_123/content",
+  "--output",
+  binaryPath,
+  "--json",
+]);
+const rawBinary = rawApiRequest(binaryOptions);
+check(
+  rawBinary.method === "GET" &&
+    rawBinary.path === "/v1/agent-chat-attachments/att_123/content" &&
+    rawBinary.body === undefined,
+  "Raw binary GET normalization failed."
+);
+validateDownloadOutput(binaryOptions);
+try {
+  const saved = await saveResourceDownload(
+    binaryOptions,
+    {
+      bytes: new Uint8Array([0, 255, 128, 13, 10, 65]),
+      contentType: "image/png",
+      requestId: "native-raw-binary",
+    },
+    signal
+  );
+  const fileBytes = readFileSync(binaryPath);
+  check(
+    fileBytes.byteLength === 6 &&
+      fileBytes[0] === 0 &&
+      fileBytes[1] === 255 &&
+      fileBytes[2] === 128 &&
+      fileBytes[3] === 13 &&
+      fileBytes[4] === 10 &&
+      fileBytes[5] === 65,
+    "Raw download output changed binary bytes."
+  );
+  // SAFETY: The output helper returns the metadata contract under test.
+  const metadata = JSON.parse(saved) as {
+    bytes: number;
+    contentType: string;
+    path: string;
+    requestId: string;
+  };
+  check(
+    metadata.bytes === 6 &&
+      metadata.path === binaryPath &&
+      metadata.contentType === "image/png" &&
+      metadata.requestId === "native-raw-binary",
+    "Raw download metadata was lost."
+  );
+  let overwriteRejected = false;
+  try {
+    validateDownloadOutput(binaryOptions);
+  } catch {
+    overwriteRejected = true;
+  }
+  check(overwriteRejected, "Raw output validation accepted an existing file.");
+  let replaced = false;
+  try {
+    await saveResourceDownload(
+      binaryOptions,
+      { bytes: new Uint8Array([7]), contentType: "image/png", requestId: null },
+      signal
+    );
+    replaced = true;
+  } catch {
+    /* An existing file must stay intact. */
+  }
+  check(
+    !replaced && readFileSync(binaryPath).byteLength === 6,
+    "Raw download overwrote an existing file."
+  );
+} finally {
+  unlinkSync(binaryPath);
+}
+for (const args of [
+  ["api", "GET", "/v1/file", "--method", "GET", "--output", binaryPath],
+  ["api", "/v1/file", "--method", "POST", "--output", binaryPath],
+  ["api", "GET", "/v1/file", "--data", "{}", "--output", binaryPath],
+]) {
+  let rejected = false;
+  try {
+    parseArguments(args);
+  } catch {
+    rejected = true;
+  }
+  check(rejected, "A raw binary download accepted conflicting inputs.");
+}
 let pages = 0;
 const listing = new NativeApi(
   {
@@ -146,6 +393,118 @@ const organizations = await listing.organizations();
 check(
   organizations.length === 2 && organizations[1]?.id === "org_2",
   "Lost later memberships"
+);
+for (const example of accessRequestCases) {
+  const options = parseArguments(example.args);
+  // eslint-disable-next-line no-await-in-loop -- Native input preparation must preserve each command independently.
+  await prepareResourceInput(options, signal);
+  const request = buildResourceRequest(options);
+  check(request.path === example.path, `Wrong access route: ${request.path}`);
+  check(
+    request.method === example.method && request.body === example.body,
+    "Wrong access request inputs"
+  );
+  let personRequired = false;
+  try {
+    requireAccessPerson(options, "inth_fixture");
+  } catch {
+    personRequired = true;
+  }
+  check(personRequired, "A delegated access command accepted an API key");
+}
+for (const example of v2ReadCases) {
+  const options = parseArguments(example.args);
+  const request = buildResourceRequest(options);
+  check(request.path === example.path, `Wrong V2 read route: ${request.path}`);
+  check(
+    request.method === "GET" && request.body === undefined,
+    "A V2 read gained a request body"
+  );
+  const summary = formatAccessResource(options, example.body) ?? "";
+  for (const expected of example.expected) {
+    check(summary.includes(expected), `Missing V2 read value: ${expected}`);
+  }
+  let personRequired = false;
+  try {
+    requireAccessPerson(options, "inth_fixture");
+  } catch {
+    personRequired = true;
+  }
+  check(
+    personRequired === !["billing", "code-audit"].includes(options.command),
+    "Wrong V2 credential boundary"
+  );
+}
+for (const args of [
+  ["billing", "ledger", "--since", "2026-02-30T00:00:00Z"],
+  [
+    "billing",
+    "ledger",
+    "--since",
+    "2026-10-29T09:00:00-02:00",
+    "--until",
+    "2026-10-29T10:00:00Z",
+  ],
+  ["billing", "ledger", "--product", "consent"],
+  ["integration", "status", "--limit", "20"],
+  ["org", "settings-get", "org_123", "--organization", "org_123"],
+]) {
+  let rejected = false;
+  try {
+    parseArguments(args);
+  } catch {
+    rejected = true;
+  }
+  check(rejected, `Accepted invalid V2 read: ${args.join(" ")}`);
+}
+for (const args of invalidAccessRequests) {
+  let rejected = false;
+  try {
+    parseArguments(args);
+  } catch {
+    rejected = true;
+  }
+  check(rejected, `Accepted invalid delegated input: ${args.join(" ")}`);
+}
+let approvals = 0;
+const confirm = parseArguments([
+  "chat",
+  "share",
+  "chat_123",
+  "--visibility",
+  "organization",
+]);
+await approveResource(confirm, {
+  interactive: true,
+  select: async (entries): Promise<string> => {
+    check(
+      entries.length === 2 && entries[0]?.id === "cancel",
+      "Approval must default to cancellation"
+    );
+    check(
+      Boolean(entries[1]?.slug.includes("chat_123")),
+      "Approval lost explicit target"
+    );
+    approvals += 1;
+    return "confirm";
+  },
+});
+check(approvals === 1, "Irreversible sharing did not ask exactly once");
+const usageSummary = formatAccessResource(
+  parseArguments(["billing", "usage"]),
+  '{"success":true,"data":{"creditUsage":{"items":[],"page":1,"totalPages":2,"periodDays":30}}}'
+);
+check(
+  Boolean(usageSummary?.includes("--page 2")),
+  "Credit usage continuation is missing"
+);
+const writeSummary = formatAccessResource(
+  parseArguments(["website", "policies-set", "target_123", "--urls", "[]"]),
+  '{"success":true,"data":{"unknown":{"retained":true}}}'
+);
+check(
+  Boolean(writeSummary?.includes("retained")),
+  "Human write response lost returned data"
 );
 console.log(
   "Native resource requests, input validation, writes, and organization pagination passed."

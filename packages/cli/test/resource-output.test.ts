@@ -24,6 +24,31 @@ afterEach(() => {
 });
 
 describe("human resource output", () => {
+  it("preserves chat command whitespace and long lines while stripping terminal controls", () => {
+    const command = `\t  echo "two  spaces ${"x".repeat(100)}"`;
+    const text = formatResource(
+      parseArguments(["chat", "get", "chat_123"]),
+      JSON.stringify({
+        data: {
+          id: "chat_123",
+          messages: [
+            {
+              failed: false,
+              id: "message_123",
+              role: "assistant",
+              text: `First\n\n${command}\n\u0007Done\u001B`,
+            },
+          ],
+          status: "idle",
+        },
+        success: true,
+      }),
+      { color: false, columns: 24 }
+    );
+    expect(text).toContain(`First\n\n${command}\nDone`);
+    expect(text).not.toContain("\u0007");
+    expect(text).not.toContain("\u001B");
+  });
   it.each(outputCases)("formats $args without JSON syntax", (example) => {
     const text = formatResource(
       parseArguments(example.args),

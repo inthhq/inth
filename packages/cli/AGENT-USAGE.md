@@ -67,7 +67,7 @@ Failure:
 }
 ```
 
-The envelope is defined in [output.schema.json](output.schema.json). Consumers should branch on `ok` and `error.code`, rather than matching error messages or relying on JSON property order. `error.apiCode` preserves recognized server codes such as `INSUFFICIENT_CREDITS`, `CONFLICT`, and `PLAN_LIMIT_REACHED`; it is null for local errors or unrecognized server codes. `schemaVersion` versions the envelope. Version 2 adds `error.apiCode`; consumers validating version 1 must adopt the version 2 schema. API payloads keep their server-defined shape inside `data`, including server envelopes and pagination fields. A successful HTTP 204 produces `data: null`. The CLI does not automatically follow pagination; request the next page using the returned cursor.
+The envelope is defined in [output.schema.json](output.schema.json). Consumers should branch on `ok` and `error.code`, rather than matching error messages or relying on JSON property order. `error.apiCode` preserves recognized server codes such as `INSUFFICIENT_CREDITS`, `CONFLICT`, and `PLAN_LIMIT_REACHED`; it is null for local errors or unrecognized server codes. `schemaVersion` versions the envelope. Version 2 adds `error.apiCode`; consumers validating version 1 must adopt the version 2 schema. JSON API payloads keep their server-defined shape inside `data`, including server envelopes and pagination fields. A successful HTTP 204 produces `data: null`. The CLI does not automatically follow pagination; request the next page using the returned cursor or `nextPage`. Binary downloads save bytes to `--output` and return file metadata in `data`.
 
 Exit codes are `0` for success, `1` for failure, and `130` for handled cancellation. HTTP failures include `httpStatus` and the sanitized `X-Request-Id` when available. Preserve the request ID for support.
 
@@ -84,6 +84,8 @@ Exit codes are `0` for success, `1` for failure, and `130` for handled cancellat
 | `organization_unavailable` | The requested organization is not in the accessible list |
 | `rate_limited` | HTTP 429 remains after the CLI's bounded Retry-After retries |
 | `invalid_response` | The server returned malformed JSON or an invalid protocol response |
+| `download_too_large` | A binary download exceeds the 128 MiB limit |
+| `file_write_failed` | The download could not be saved to the requested new file |
 | `revocation_failed` | Remote logout could not be confirmed |
 | `http_error` | Another HTTP failure |
 | `credential_store_unavailable` | The system credential store cannot be reached. On Linux, the message names the cause: libsecret is missing, the session bus cannot be reached, or no Secret Service is running. Set `INTH_TOKEN` for headless use |
@@ -98,7 +100,7 @@ Handle unfamiliar error codes as failures. New codes may be added without changi
 
 `org create` requires a saved browser sign-in or an approved, selected connection and explicit `--name` and `--slug` values. API keys are refused before making a request. The success payload keeps the server envelope, so the new ID is at `data.data.id`. Creation does not change the CLI default or directory link. Run `inth switch <slug> --json` to select the new organization. Server validation, slug conflicts, and owner limits return HTTP errors with status and request ID. Network and server failures are not automatically retried; retry the same name and slug within 24 hours to resume creation if billing failed after the organization was saved.
 
-JSON mode does not imply approval or make commands read-only. `switch` and `link` change local defaults, and `logout` revokes the selected session. `org create` creates a server-side organization. The `api` command supports GET, POST, PATCH, and DELETE.
+JSON mode does not imply approval or make commands read-only. `switch` and `link` change local defaults, and `logout` revokes the selected session. `org create` creates a server-side organization. The `api` command supports GET, POST, PUT, PATCH, and DELETE.
 
 ## Feedback
 
@@ -108,21 +110,56 @@ Supply `--category <category>` and `--message <message>`, or use `--data` with t
 
 ## Resource commands
 
-Use `inth --help --json` to discover commands and options. `project`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `vendor`, `billing`, and `region` expose the public REST resources. The [command reference](README.md#public-resource-commands) lists each operation and its required inputs.
+Use `inth --help --json` to discover commands and options. Resource groups include `project`, `consent`, `website`, `website-audit`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `vendor`, `chat`, `billing`, `account`, `integration`, `notification`, `support` and `region`. The [command reference](docs/cli/commands.md) lists operations and required inputs.
 
-Lists return a single page. Read `data.pagination.nextCursor` and pass it to `--cursor`, keeping the same organization and filters. `--limit` defaults to 50 and accepts 1 through 100. Login, switch, and link retrieve all membership pages before choosing an organization.
+Use `account sessions` and `account devices` for separate browser-session and device-grant discovery. `integration status` links to provider installation, repository, project-link policy, Search Console property and domain-proof reads. These pages default to 20 items and return `data.data.items` plus `data.data.nextCursor`. Use discovered internal IDs. `website-audit cookie-inventory` returns a latest-scan index with `cookiesPath`; read actual cookie rows with `website-audit cookies <scanId>`. `billing ledger` covers all retained settled usage with attribution. Keep the same or omitted filters with its cursor so the server preserves the frozen date window. Its `billing.read` access follows existing API-key capabilities and owner permissions. `code-audit quote <scanId>` reads the exact prepared quote and approval availability without spending. Existing API keys lack `code-audit.read`.
 
-Use `--organization` for organization-owned lists and creates. Commands targeting a resource ID resolve ownership on the server and do not accept it. Scan start and scan-request polling use `--repository` instead. Existing local selection files still use `organizationId`; API organization records now use `id`, `name`, and `slug`. `whoami --json` exposes capabilities at `data.data.scopes`.
+Lists return a single page. Standard cursor pages return `data.pagination.nextCursor`; other resources return a continuation inside `data.data`. Keep the same organization and filters when requesting the next page. Check the command's help for accepted pagination flags and defaults. Consent records use `nextPage` and fixed numbered pages. Support history keeps its polling `checkpoint` separate from its terminal `nextCursor`. Login, switch, and link retrieve all membership pages before choosing an organization.
 
-Writes with body options accept explicit flags or `--data '<JSON object>'`. Raw requests support `--method GET|POST|PATCH|DELETE`; GET is the default and cannot carry `--data`. Resource writes execute immediately without prompts. Invitation sends, key rotation, report unlocks, and GitHub issue creation have the effects described in the command reference. Key creation and rotation return the plaintext key at `data.data.key` once. Keep it out of logs.
+Use `--organization` for commands whose help lists it, including organization-owned lists and billing invoice reads. Other commands targeting a resource ID resolve ownership on the server and reject it. Code Audit start and scan-request polling use `--repository` instead. Existing local selection files still use `organizationId`; API organization records now use `id`, `name`, and `slug`. `whoami --json` exposes capabilities at `data.data.scopes`.
+
+Writes with body options accept explicit flags, `--data '<JSON object>'` or `--data-file <path|->`. Raw requests support `--method GET|POST|PUT|PATCH|DELETE`; GET is the default and cannot carry `--data`. Ordinary updates execute immediately. New chat sharing/deletion and website removal require a target-specific terminal confirmation or `--yes`; JSON mode does not approve them. Invitation sends, key rotation, report unlocks and GitHub issue creation have the effects described in the command reference. Key creation and rotation return the plaintext key at `data.data.key` once. Keep it out of logs.
 
 For scan starts, supply a stable `--request-id` to make a manual retry idempotent. A `starting` response contains `data.data.preparationId` and `data.data.repositoryId`; pass them to `code-audit request <preparation-id> --repository <repository-id>`. Each call returns one state. Continue until `started` or `failed`, then use the returned scan ID to read progress or findings.
 
 For Inbox updates, read the item first and pass its `data.data.version` using `--item-version`. Do not retry a version conflict with the old version. Read again and decide whether the intended update still applies. An unresolved GitHub issue send may require server reconciliation before another attempt.
 
+HTTP rate-limit retries honor `Retry-After` with at most three retries and 30 seconds of cumulative waiting per request. If the next delay would exceed that budget, the command returns the rate-limit error without retrying early. Feedback does not retry rate-limit responses.
+
+Binary downloads require an explicit new file path. The parent directory must exist, and existing files are never overwritten. `--output -` is refused. Downloads preserve bytes and accept at most 128 MiB. With `--json`, stdout contains `data.path`, `data.bytes`, `data.contentType` and `data.requestId`.
+
+```sh
+inth website-audit screenshot-get capture_123 --audit scan_123 --output ./capture.png --json
+inth billing invoice-pdf inv_123 --organization org_123 --output ./invoice.pdf --json
+inth support attachment-get sat_123 --output ./recording.webm --json
+inth chat attachment-get aga_first --organization org_123 --output ./attachment.bin --json
+```
+
+Use raw GET downloads for API-returned paths without a named command. `api <path> --method GET --output <new-file>` also works. File output rejects other methods and body inputs. API-host restrictions, redirect refusal and endpoint authorization apply. Without `--json`, raw downloads print JSON metadata without the CLI envelope.
+
 To review a project's vendors, run `inth vendor list --project <project-id> --state active --json` and read each vendor's `id`. `inth vendor get <vendor-id> --project <project-id> --json` returns its `hosts`, `evidence[].loadedBy`, and `inboxItemId`. For a runtime finding, read `data.data.runtimeVendor` from `inth inbox get <id> --json` and pass its `vendorId` and `projectId` to `inth vendor approve <vendor-id> --project <project-id>` or `inth vendor ignore`. Either decision closes the finding, so do not also update it with `inbox update`. Vendor decisions need a person's sign-in and an admin or owner role; API keys are refused. An agent connection must include `vendors.write` in `--scopes`. If an existing agent connection lacks it, disconnect with `inth logout --auth agent --json` and sign in again so the person can approve it.
 
-New browser sign-ins request `code-audit.read`, `code-audit.write`, `inbox.read`, `inbox.write`, `vendors.write`, and `billing.read` alongside the existing scopes. A person must run `inth login` again to grant these scopes to an older sign-in. API keys have fixed capabilities; they can read Inbox, vendors, and billing but cannot use Code Audit, perform Inbox writes, or approve or ignore vendors.
+New browser sign-ins request the current CLI capabilities. A person must run `inth login` again to grant newer scopes to an older sign-in; refresh cannot add them. Agent connections request an explicit subset. The [authentication guide](docs/cli/authentication.md) maps resource tasks to scopes. API keys keep their fixed capabilities and cannot gain person-only scopes.
+
+### File uploads and recovery
+
+Use `chat attachment-upload --file <path>` or `support attachment-upload --file <path>`, with normal organization selection. Files must be local, regular and stable. Binary stdin and JSON body flags are rejected. `--file-name` chooses a display basename; `--media-type` must match a known extension. Generic JSON file input stays capped at 1 MiB.
+
+Chat uploads accept up to 20 MiB each. The server enforces ten drafts and 40 MiB total. Upload returns a ready `aga_` ID. Pass at most ten unique IDs as one ordered JSON array with `--attachment-ids`, or as `attachmentIds` in a complete JSON chat body. A lost chat upload response returns `upload_outcome_unknown`; use `chat attachment-list --organization <id> --json` before another attempt. Do not infer ownership of a concurrent draft from matching name/type/size alone. Discovery and downloads remain available while processing is paused. Use `chat attachment-discard <aga-id>` only for an unused draft.
+
+Support accepts GIF/JPEG/PNG/WebP up to 10 MiB and MP4/MOV/WebM up to 100 MiB, with no PDF creation support. It reserves an intent, PUTs bytes once using its opaque signed grant, then finalizes. No API credentials go to storage. Keep `clientAttachmentId` and the returned `sat_` ID from stderr. Use `--client-attachment-id <uuid>` to replay identical still-pending intent metadata; do not generate a new ID after a conflict. A lost PUT response triggers finalization without another PUT. Recover a known upload with `support attachment-finalize <sat-id>`. Discard explicitly with `support attachment-discard <sat-id>`.
+
+Use `--receipt <new-file>` for private, atomic recovery records written before network. Existing files are never overwritten; receipts contain safe IDs, stages, environment and metadata only. Without a receipt, record stderr IDs for crash recovery. Uploading is separate from message sending. Do not automatically discard after an uncertain message send. Upload/finalize/discard still honor server gates, roles and scopes; Support writes need explicitly approved `support.write`. See the [file upload guide](docs/cli/commands.md#how-do-i-upload-and-recover-files).
+
+### Chat turns and retries
+
+`chat start` and `chat send <id>` need `agents.write`; `chat get <id>` needs `agents.read`. Use a person's connection. Send text with `--message`, `--message-file <path|->`, or a JSON body using `--data` or `--data-file <path|->`. Exactly one input form is accepted. A file flag with `-` reads stdin; a literal `--message -` does not. The trimmed message limit is 50,000 characters. Nonempty `--attachment-ids` permits omitted or empty text.
+
+Supply a fresh UUID v4 `--client-message-id` for each new message, and persist it with the exact message, ordered attachment IDs and organization/chat selectors before sending. Reuse them for an uncertain retry. If the ID is omitted, the CLI generates it once and prints it to stderr before HTTP. Preserve that diagnostic separately from JSON stdout. Do not automatically generate another ID after a conflict.
+
+Start/send can spend credits and return acceptance while the agent continues answering. Read the chat ID at `data.data.id`, then use `chat get` to check `data.data.status` and read `data.data.messages`. Each get reads once. JSON keeps every server field. A write-only connection can send without reading the transcript. Local cancellation does not stop an accepted turn.
+
+`chat start` supports normal organization selection and optional `--inbox-item <id>`. Get/send use the chat ID and reject organization/project overrides. See the [chat command guide](docs/cli/commands.md#how-do-i-use-inth-agent-chats) for examples.
 
 ## Command discovery and MCP setup
 
@@ -142,3 +179,5 @@ inth mcp remove --agent cursor --scope project --json
 Setup and removal require explicit `--agent` and `--scope` in noninteractive mode. Supported clients are `codex`, `claude-code`, `cursor`, `vscode`, `opencode`, `fx`, `antigravity`, `cline`, `cline-cli`, `gemini-cli`, `github-copilot-cli`, `grok-build`, `kilo-code`, `kimi-code`, `kiro-cli`, `mastracode`, `mcporter`, `pi`, `windsurf`, and `zed`. Scope is `project` or `global`; Antigravity, Cline, Cline CLI, and Windsurf require `global`. Listing without an agent defaults to project-capable clients. Use `--scope global` to list every client. fx project setup requires trusting the server in fx, and Pi requires `pi-mcp-adapter`. The result contains each client path, status, and whether a file changed. `--dry-run` does not write files. `connectionVerified: false` distinguishes configuration from authentication and connectivity. Sign-in happens in the MCP client through OAuth; do not supply an organization API key.
 
 Configuration failures use `invalid_config`, `config_conflict`, `config_busy`, or `config_write_failed`. Conflicting and malformed configs are preserved. Native distributions target Apple silicon Macs, Linux arm64/x64, and Windows x64. Use an organization API key for Linux environments without a desktop credential service.
+
+Additional public API operations accept explicit agent scopes for billing writes, account/security changes, integrations, support writes, Consent runtime/key changes and organization settings/deletion. These write permissions are excluded from ordinary browser login. Request only the permissions needed with `inth login --email <email> --scopes <scopes> --json`; the [authentication scope table](./docs/cli/authentication.md) lists them and companion permissions. The raw `api` command can call supported operations without a named wrapper. Server rollout and operational switches still control new writes.

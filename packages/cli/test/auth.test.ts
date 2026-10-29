@@ -37,14 +37,39 @@ describe("device login", () => {
       method: "POST",
       redirect: "error",
     });
-    expect(f.server.calls[1]?.init.body).toBe(
-      new URLSearchParams({
-        client_id: "inth-cli",
-        resource: API_ORIGIN,
-        scope:
-          "openid profile email offline_access organizations.read organizations.write projects.read projects.write members.read members.write api-keys.read api-keys.write code-audit.read code-audit.write inbox.read inbox.write vendors.write billing.read",
-      }).toString()
+    const grant = new URLSearchParams(String(f.server.calls[1]?.init.body));
+    expect(grant.get("client_id")).toBe("inth-cli");
+    expect(grant.get("resource")).toBe(API_ORIGIN);
+    const scopes = grant.get("scope")?.split(" ") ?? [];
+    expect(scopes).toEqual(
+      expect.arrayContaining([
+        "openid",
+        "profile",
+        "email",
+        "offline_access",
+        "agents.read",
+        "agents.write",
+        "account.security.read",
+        "integrations.read",
+      ])
     );
+    for (const scope of [
+      "billing.write",
+      "account.delete",
+      "organizations.delete",
+      "account.security.write",
+      "account.write",
+      "support.write",
+      "consent.lifecycle.write",
+      "consent.keys.write",
+      "integrations.write",
+      "notifications.write",
+      "notifications.routing.write",
+      "organization-retention.write",
+      "organizations.settings.write",
+    ]) {
+      expect(scopes).not.toContain(scope);
+    }
     expect(f.server.calls[2]?.init.body).toBe(
       new URLSearchParams({
         client_id: "inth-cli",

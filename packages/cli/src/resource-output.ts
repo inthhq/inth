@@ -569,6 +569,64 @@ const listSummary = (
   }
   return lines;
 };
+const chatText = (text: string): string =>
+  text
+    .split("\n")
+    .map((part) => part.split("\t").map(terminalText).join("\t"))
+    .join("\n");
+
+const chatSummary = (
+  options: CliArguments,
+  item: ResourceItem,
+  display: DisplayOptions
+): string => {
+  const id = terminalText(item.id ?? options.id);
+  const lines = [
+    heading(
+      options.argument === "get" ? "Inth Agent chat" : "Message accepted",
+      display
+    ),
+    "",
+    ...detailLines(
+      [
+        field("Chat", item.id),
+        field("Title", item.title),
+        field("Status", item.status),
+        field("Organization", item.organizationId),
+        field("Dashboard", item.dashboardUrl),
+      ],
+      display
+    ),
+  ];
+  if (options.argument === "get") {
+    for (const message of item.messages ?? []) {
+      lines.push(
+        "",
+        heading(titleCase(message.role), display),
+        chatText(message.text)
+      );
+      if (message.failed) {
+        lines.push(line("This reply ended without an answer.", display));
+      }
+    }
+    if (
+      item.status !== "running" &&
+      !(item.messages ?? []).some((message) => message.role === "assistant")
+    ) {
+      lines.push("", line("No assistant reply is available yet.", display));
+    }
+    lines.push(
+      "",
+      line("Read the full response and message metadata as JSON:", display),
+      `  inth chat get ${id} --json`
+    );
+  }
+  if (item.status === "running" || options.argument !== "get") {
+    lines.push("", line("Read the reply:", display), `  inth chat get ${id}`);
+  }
+  return lines.join("\n");
+};
+
 export const resourceSummary = (
   options: CliArguments,
   page: ResourcePage,
@@ -578,6 +636,9 @@ export const resourceSummary = (
     return listSummary(options, page, display).join("\n");
   }
   const [item] = page.data;
+  if (options.command === "chat" && item) {
+    return chatSummary(options, item, display);
+  }
   if (options.command === "feedback" && item) {
     return [
       heading(

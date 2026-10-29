@@ -36,6 +36,57 @@ inth login --complete --wait --json
 
 Request only the scopes the task needs. To approve or ignore vendors, add `vendors.write`; an existing agent connection without it must disconnect with `inth logout --auth agent` and sign in again.
 
+For Inth Agent chats, request `agents.read` to read replies and `agents.write` to start chats or send messages. For example:
+
+```sh
+inth login --email user@example.com --scopes organizations.read,agents.read,agents.write --json
+inth login --complete --wait --json
+```
+
+To add permissions to an existing agent connection, disconnect it with `inth logout --auth agent` and sign in again for approval. New browser sign-ins include both chat scopes. Existing browser sign-ins need `inth login` again; refreshing cannot add scopes.
+
+Use these scopes for the additional resource groups. A credential needs every scope listed for its task, and the person must still hold the required organization role.
+
+| Task | Required scopes |
+| --- | --- |
+| Read consent records, analytics and configuration | `projects.read`, `consent.read` |
+| Read consent runtime key metadata | `projects.read`, `consent.keys.read` |
+| Update consent configuration | `projects.read`, `projects.write`, `consent.write` |
+| Read Website Audit targets, scans and evidence | `projects.read`, `website-audit.read` |
+| Manage Website Audit targets or start scans | `projects.read`, `website-audit.write` |
+| Read billing entitlements, credit usage and the retained ledger | `billing.read` |
+| Read invoices, billing profiles and payment method summaries | `billing.details.read` |
+| Read your account profile | `account.read` |
+| Read notification preferences and routing | `notifications.read` |
+| Read provider retention policy | `organization-retention.read` |
+| Read accessible support conversations and attachments | `support.read` |
+| Read your browser sessions and connected devices | `account.security.read` |
+| Read integration accounts, repositories and provider properties | `integrations.read` |
+| Create or reply to support conversations and upload attachments | `support.write` |
+| Update, upgrade or delete a Consent runtime | `projects.read`, `projects.write`, `consent.lifecycle.write` |
+| Create, rotate or revoke Consent runtime keys | `projects.read`, `projects.write`, `consent.keys.write` |
+| Preview or change billing, purchase credits and manage subscriptions | `billing.write` |
+| Revoke your browser sessions or connected devices | `account.security.write` |
+| Connect or sync integrations and change repository settings | `integrations.write` |
+| Update your account profile | `account.write` |
+| Delete your own account | `account.delete` |
+| Update your notification preferences | `notifications.write` |
+| Change organization notification routing | `notifications.routing.write` |
+| Change provider retention policy | `organization-retention.write` |
+| Update organization name, logo or slug | `organizations.settings.write` |
+| Delete an organization you own | `organizations.delete` |
+
+New browser sign-ins request the read scopes above and the permissions for existing management commands, Consent configuration, Website Audit and chats. The additional write scopes for billing, account security, integrations, support, runtime lifecycle and keys, notification preferences and organization settings require an explicitly scoped agent connection. Account and organization deletion permissions also require that explicit approval.
+
+These additional API operations can be called with `inth api` even when they have no named command. For example, request a support write connection with:
+
+```sh
+inth login --email user@example.com --scopes organizations.read,support.read,support.write --json
+inth login --complete --wait --json
+```
+
+For an agent connection, request only the scopes its task needs. Invoice and payment details remain owner-only. Support access preserves private conversations; an organization owner cannot read another person's private conversation. New writes also require the organization's server-side rollout and operational switches to allow them. Granted scopes alone do not enable those writes.
+
 Give the person the returned approval URL and code. Immediately run the completion command in a background terminal so it can finish after approval. `signup --email` uses the same flow for account creation. General API access through this connection requires the scoped auth.md backend deployment; older servers only support `inth auth organizations`.
 
 Successful approval selects the agent connection for subsequent commands. Use `--auth browser` or `--auth agent` to override the saved selection. See [Agents and scripts](./automation) for timeouts, retries, and the output contract.
@@ -49,7 +100,7 @@ inth whoami --json
 inth project list --organization org_123 --json
 ```
 
-API keys can manage projects and read organizations, API keys, Inbox, and billing. They cannot create organizations, manage members or API keys, run Code Audit, update Inbox findings, or approve or ignore vendors. Use a browser session or an approved agent connection with the required scopes for those operations.
+API keys keep their fixed capabilities. They can manage projects and read organizations, API keys, Inbox, the bare `billing` summary and the retained `billing ledger`, subject to server permissions. They cannot create organizations, manage members or API keys, run or read Code Audit, update Inbox findings, approve or ignore vendors, or access Agent chats. The additional Consent, Website Audit, provider billing details, account, integrations, notification, retention and support commands require a person's connection. Use a browser session or an approved agent connection with the required scopes for those operations.
 
 `login` with an API key skips browser login but does not validate the key. Use `whoami` to check access. An explicit agent selection combined with an API key is rejected.
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { formatAccessResource } from "../../src/agent-access-output.ts";
 import type { CliArguments } from "../../src/arguments.ts";
 import { CliError } from "../../src/cli-error.ts";
 import type { DisplayOptions } from "../../src/display.ts";
@@ -98,6 +99,16 @@ const itemSchema = scanSchema.extend({
   lastSeenAt: z.string().optional(),
   lockedCount: z.number().optional(),
   message: z.string().optional(),
+  messages: z
+    .array(
+      z.object({
+        failed: z.boolean(),
+        id: z.string(),
+        role: z.string(),
+        text: z.string(),
+      })
+    )
+    .optional(),
   name: z.string().optional(),
   organizationId: z.string().optional(),
   owner: z.string().optional(),
@@ -148,6 +159,10 @@ export const formatResource = (
 ): string => {
   if (options.json || options.command === "api") {
     return body;
+  }
+  const accessOutput = formatAccessResource(options, body);
+  if (accessOutput !== undefined) {
+    return accessOutput;
   }
   if (!body) {
     return resourceSummary(options, { data: [], success: true }, display);

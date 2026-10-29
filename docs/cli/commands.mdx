@@ -1,9 +1,9 @@
 ---
 title: Manage Inth resources from the CLI
-description: Manage projects, members, invitations, API keys, Code Audit scans, Inbox findings, and vendors.
+description: Manage projects, members, invitations, API keys, Code Audit scans, Inbox findings, vendors, and Inth Agent chats.
 ---
 
-Use `inth project` for consent projects, `inth code-audit` for repository scans, `inth inbox` for findings, and `inth vendor` to list, read, approve, or ignore vendors that scans find. Resource writes take effect immediately. Use a saved sign-in or an API key accepted by the command, and check `inth <command> --help` for required scopes and flags.
+Use `inth project` for consent projects, `inth code-audit` for repository scans, `inth inbox` for findings, and `inth vendor` to list, read, approve, or ignore vendors that scans find. Ordinary resource writes take effect immediately. Destructive, paid and recurring actions require confirmation or `--yes`, plus the exact target and server-required preconditions. Use a saved sign-in or an API key accepted by the command, and check `inth <command> --help` for required scopes and flags.
 
 ## Which command manages each resource?
 
@@ -27,16 +27,21 @@ Use `inth project` for consent projects, `inth code-audit` for repository scans,
 | `code-audit start --repository <id>` | Start a scan of the repository's production branch |
 | `code-audit request <preparation-id> --repository <id>` | Check a delayed scan request |
 | `code-audit get <id>`, `code-audit issues <id>` | Read a scan or its report |
+| `code-audit quote <id>` | Read a prepared full-audit quote and its approval availability |
 | `code-audit unlock <id>` | Spend credits to unlock a report |
 | `inbox list`, `inbox get <id>` | Read findings, optionally filtering the list with `--status` |
 | `inbox update <id> --status <status> --item-version <version>` | Change a finding's status |
 | `inbox github-issue <id>` | Create a GitHub issue for a finding |
+| `chat start --message <text>` | Start an Inth Agent chat in the selected organization |
+| `chat get <id>` | Read a chat and check whether the agent is still answering |
+| `chat send <id> --message <text>` | Send another message to a chat |
+| `chat list`, `chat share <id> --visibility organization`, `chat delete <id>` | Discover chats, share one with the organization, or delete an owned chat |
 | `vendor list --project <project-id> [--state <state>]`, `vendor get <vendor-id> --project <project-id>` | List vendors seen on a project, or read one with its hosts and what loaded it |
 | `vendor approve <vendor-id> --project <project-id>`, `vendor ignore <vendor-id> --project <project-id>` | Approve or ignore a vendor seen on a project |
 
 ## How do I list and configure consent projects?
 
-List commands return one page. `--limit` defaults to 50 and accepts 1 through 100. Pass the returned cursor unchanged to `--cursor` for the next page.
+List commands return one page. Standard resource lists default to 50 items and accept up to 100. The additional resource groups below document their own defaults and continuation fields. Pass cursors unchanged with the same filters.
 
 ```sh
 inth project list --limit 20
@@ -45,10 +50,264 @@ inth region list
 inth project create --name Website --region '<region-id>' \
   --branding inth --trusted-origins '["example.com", "*.example.com"]'
 inth project update prj_123 --name 'Marketing site' --branding c15t
-inth project update prj_123 --data '{"description":null,"consent":{"trustedOrigins":[]}}'
+inth project update prj_123 --data '{"description":null}'
 ```
 
-Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|c15t|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` instead of individual body options for nested fields or explicit null values.
+Replace the example IDs with IDs returned by the API. Project writes accept `--branding inth|c15t|none` and a JSON array for `--trusted-origins`. Use `--data '<JSON object>'` or `--data-file <path|->` instead of individual body options for nested fields or explicit null values.
+
+An empty `consent.trustedOrigins` array allows requests from every origin. Use an explicit list to restrict origins.
+
+## How do I read consent records and runtime configuration?
+
+Every `consent` command takes an explicit `--project <id>`. Use `config-get` for the summary, then read full sections with `translations-get`, `iab-get` or `policies-get`.
+
+```sh
+inth consent config-get --project prj_123 --json
+inth consent translations-get --project prj_123 --json
+inth consent analytics --project prj_123 --range 30d --json
+inth consent records --project prj_123 --page 1 --json
+inth consent lifecycle-get --project prj_123 --json
+inth consent runtime-keys --project prj_123 --limit 50 --json
+```
+
+`overview` and `analytics` accept `--range 24h|3d|7d|30d|90d|1y`, defaulting to `7d`. The returned date range reflects the organization's history entitlement. Records use a fixed page size of 50; use `--query` to search and continue with the returned `nextPage`. Runtime keys use `--cursor` and `--limit`, and return metadata without secret values.
+
+`config-update` and `iab-set` update the corresponding configuration. Use the command's help to inspect accepted fields. Choose individual fields, `--data` or `--data-file` as one body form. New public writes can be unavailable during rollout; the command returns the server's refusal.
+
+## How do I inspect websites and audit evidence?
+
+Use `website list` to discover targets. Add `--project <id>` to filter a project's websites. A target ID then identifies the website for detail and verification reads.
+
+```sh
+inth website list --organization org_123 --limit 25 --json
+inth website get website_123 --json
+inth website verification-get website_123 --json
+inth website-audit list --website website_123 --organization org_123 --json
+inth website-audit get scan_123 --json
+inth website-audit results scan_123 --json
+inth website-audit report scan_123 --json
+inth website-audit cookies scan_123 --limit 25 --json
+inth website-audit cookie-inventory --organization org_123 --project prj_123 --json
+```
+
+Website and scan lists use cursor pages, defaulting to 25 items and accepting up to 100. Cookies belong to the selected scan. Report reads request version 2 so history and provenance remain available. Use JSON output for complete structured evidence, or `--detail all` to expand human output.
+
+`cookie-inventory` discovers the latest retained scan for each target across an organization or project. It returns a `latest-scan-index` with `scanId` and `cookiesPath`, rather than cookie rows. Read each scan's rows with `website-audit cookies <scanId>`. The index defaults to 20 items, accepts up to 100, and continues with `data.data.nextCursor` in CLI JSON output.
+
+`website-audit start`, `website policies-set`, `website verification-check` and `website-audit review` perform the actions described in their help. Starting a scan can consume credits. `website remove` requires a target-specific confirmation or `--yes` and remains subject to server permissions and release controls.
+
+## How do I read billing details and personal settings?
+
+```sh
+inth billing entitlements --organization org_123 --json
+inth billing configuration --organization org_123 --json
+inth billing usage --organization org_123 --page 1 --json
+inth billing ledger --organization org_123 --product code-audit --json
+inth billing invoices --organization org_123 --json
+inth billing invoice-get inv_123 --organization org_123 --json
+inth billing profile-get --organization org_123 --json
+inth billing payment-methods --organization org_123 --limit 20 --json
+inth account get --json
+inth notification get --organization org_123 --json
+inth org retention-get org_123 --json
+inth org settings-get org_123 --json
+```
+
+The additional billing commands require an owner. Provider details also need `billing.details.read`. Payment method reads return summaries without card secrets. Invoice lists use fixed pages of 20 and an opaque cursor. Payment method lists default to 20 items and accept up to 100. Credit usage covers the last 30 days in fixed pages of five, with `--page` from 1 through 1000. Inspect the response's dates to identify the covered period.
+
+`billing ledger` reads all retained settled consumption with `billing.read`, including API-key access allowed by the server. Filter with `--product agent|code-audit|website-audit`, `--since` and `--until`. Dates must be valid ISO 8601 timestamps with timezones. Omit `--since` for all retained history. The ledger defaults to 20 items and accepts up to 100. Read `data.data.items`, `data.data.window` and `data.data.nextCursor` from JSON output. On continuation, keep the same filters or omit them so the server inherits the cursor's frozen window. The CLI never inserts a new date window. Attribution explicitly reports missing, unknown or unavailable evidence. Grants, current balances and pending or released holds are outside settled consumption.
+
+`account get` reads the signed-in person's profile. Notification and retention reads use organization permissions and preserve the saved values even when an update is unavailable.
+
+## How do I discover sessions, integrations and repository policies?
+
+```sh
+inth account sessions --organization org_123 --json
+inth account devices --organization org_123 --json
+inth integration status --organization org_123 --json
+inth integration github-installations --organization org_123 --json
+inth integration github-repositories --organization org_123 --json
+inth integration github-repository-get repo_123 --organization org_123 --json
+inth integration github-project-links repo_123 --organization org_123 --json
+inth integration github-link-policies link_123 --organization org_123 --json
+inth integration search-console-properties --organization org_123 --json
+inth integration domain-proofs --organization org_123 --json
+```
+
+These reads require a person's connection. Sessions and devices need `account.security.read`; integration reads need `integrations.read`. Lists default to 20 items and accept `--limit 1..100` plus an unchanged `--cursor`. Their JSON pages contain `data.data.items` and `data.data.nextCursor`. Integration status and repository detail are unpaginated. IDs for repository and project-link commands are internal IDs returned by discovery.
+
+Browser sessions and connected device grants are separate lists. An OAuth credential has no current browser session, so `currentSessionId` remains null. Search Console properties report whether visibility covers the organization or only the reader's account. Repository project links include policy previews; follow each `policiesNextCursor` with `github-link-policies <linkId>` to read the complete policy list.
+
+## How do I inspect a prepared audit quote?
+
+```sh
+inth code-audit quote scan_123 --organization org_123 --json
+```
+
+This read needs `code-audit.read`. It returns the pinned quote ID, plan checksum, total credits, expiry and approval state. It accepts an optional organization selector and does not spend credits. `approvalAvailability` identifies API, Dashboard or unavailable continuation. Legacy Dashboard-owned runs can still need the returned Dashboard URL. Existing API-key capabilities do not include `code-audit.read`. Use `code-audit quote-approve` with the exact quote, checksum, maximum credits and a stable UUIDv4 request ID.
+
+## How do I read support history?
+
+```sh
+inth support list --organization org_123 --json
+inth support get spc_123 --json
+```
+
+Support lists return up to 50 conversations; each history page contains up to 100 messages. Pass `--cursor` only when the returned `nextCursor` is non-null. A separate `checkpoint` supports polling for new messages after reaching the end. Pass that checkpoint as `--cursor` on a later `support get` to poll. Access follows conversation visibility; organization ownership does not grant access to someone else's private conversation.
+
+## How do I download screenshots, invoices and support attachments?
+
+Use IDs returned by the corresponding reads and an explicit `--output` path. The parent directory must exist, and the file must be new.
+
+```sh
+inth website-audit screenshot-get capture_123 --audit scan_123 \
+  --output ./capture.png --json
+inth billing invoice-pdf inv_123 --organization org_123 \
+  --output ./invoice.pdf --json
+inth support attachment-get sat_123 --output ./recording.webm --json
+inth chat attachment-get aga_first --organization org_123 \
+  --output ./attachment.bin --json
+```
+
+Downloads preserve the response bytes and accept at most 128 MiB. Existing files are never overwritten, and `--output -` is refused. The CLI downloads through the authenticated API host and rejects redirects to storage hosts. Cancelling stops local transfer or file writing and removes an incomplete output file. Raw GET downloads accept paths returned by the API even when no named download command exists. Endpoint scopes and access checks still apply.
+
+With `--json`, stdout contains the normal CLI envelope with download metadata at `data.path`, `data.bytes`, `data.contentType` and `data.requestId`. The bytes go to the file. Choose a filename extension that matches the attachment metadata or returned content type.
+
+## How do I change Consent configuration and runtimes?
+
+`consent translations-set --project <id> --data-file <path|->` replaces the full `i18n` document. `{"i18n":null}` clears it. Profiles contain `translations` keyed by language, with strings or nested string objects. `consent policies-set` replaces the full `policies` array. `{"policies":[]}` clears it. Unknown fields, invalid nested types and overlong documents fail before sign-in. Both replacements require confirmation or `--yes`.
+
+| Command | Required input |
+| --- | --- |
+| `consent lifecycle-update` | `--project`, `--expected-instance-id`, `--expected-backend-version` |
+| `consent lifecycle-upgrade` | The same lifecycle preconditions |
+| `consent runtime-delete` | The same lifecycle preconditions, including with `--yes` |
+| `consent runtime-key-create` | `--project`, `--name`; returns a secret once |
+| `consent runtime-key-revoke <keyId>` | `--project`; revokes immediately |
+| `consent runtime-key-rotate <keyId>` | `--project`, explicit `--overlap-seconds 0..86400`; returns a secret once |
+
+Read preconditions from `consent lifecycle-get`. The CLI never fetches substitute values. Rotation overlap `0` revokes the old key immediately. Update, upgrade, deletion, revocation and rotation require confirmation or `--yes`.
+
+## How do I configure website monitoring?
+
+`website create --data-file target.json --yes` and `website update <targetId> --data-file target.json --yes` take complete target configuration. Specify `projectId`, `origin`, `crawlMode`, `maxDepth`, `maxPages`, `monitoringEnabled`, `policyUrls` and `scheduleCadence`. Update also requires `enabled`. Optional fields include `includeUrls`, `regionProfiles` and a strictly validated `approvedAuditPolicy`.
+
+Monitoring and cadence are explicit. An omitted `approvedAuditPolicy` retains it on update; `null` clears it. Review the approved policy and recurring monitoring effects before confirming. `website search-console-sync --organization <id>` syncs the person's linked Search Console properties. Starting an audit still requires an explicit `--scope free_preview|full_audit`.
+
+## How do I approve billing changes?
+
+Preview a plan or credit purchase, then save the complete approval to a new private file. The file contains the selected organization, matching input, full quote and checkout UUID. Prices use minor currency units. Review `lineItems`, `discount`, `subtotal`, `total`, `currency` and any recurring `nextCycle` amount and renewal date.
+
+```sh
+inth billing credit-preview --organization org_123 --credits 100 \
+  --catalog-version 1 --checkout-attempt-id b8dde372-1324-4d2e-a15a-fd3761964299 \
+  --save-approval credit-approval.json --json
+inth billing credit-purchase --data-file credit-approval.json --yes --json
+```
+
+Use `billing plan-preview` and `billing plan-change` for plans. Preview flags include `--product inth|consent`, `--plan`, `--checkout-attempt-id`, optional `--promotion-code`, and `--billing-interval month|year` for Consent. Structured JSON uses the API's `input` object. Execution takes `input` and the complete `approvedQuote` together through `--data` or `--data-file`. Individual price flags are unavailable. The CLI never previews and approves a replacement quote after a conflict. Keep the saved file unchanged when recovering an uncertain outcome.
+
+| Command | Required input |
+| --- | --- |
+| `billing auto-top-up-set` | Explicit `--enabled true` or `--enabled false` and stable `--request-id`; enabling also requires catalog version, monthly purchase limit, credit quantity and credit threshold |
+| `billing profile-set` | JSON `input` with business name and full address; nullable address fields remain explicit |
+| `billing subscription-cancel` | `--product`, stable `--request-id`, `--confirm-cancellation true` |
+| `billing subscription-uncancel` | `--product`, stable `--request-id` |
+| `billing payment-default` | `--payment-method-id` |
+| `billing payment-remove` | Matching `--payment-method-id` and `--confirm-payment-method-id` |
+| `billing portal` | Selected organization; returns a hosted person URL |
+
+Financial and prepared-audit approval commands resolve organization selection once and put `organizationId` in the JSON body. A conflicting JSON and flag selection is rejected. Select an organization with `--organization`, `inth switch` or `inth link`. Card setup, payment confirmation and GitHub installation return hosted person URLs. The CLI does not collect provider tokens or card details.
+
+## How do I approve a prepared Code Audit quote?
+
+```sh
+inth code-audit quote-approve scan_123 --organization org_123 \
+  --quote-id quote_123 --candidate-plan-checksum exact-checksum \
+  --max-credits 50 --request-id b8dde372-1324-4d2e-a15a-fd3761964299 --yes --json
+```
+
+Use the quote ID and checksum from the previously reviewed `code-audit quote` response. `--max-credits` is a nonnegative safe integer. The CLI sends that exact quote without refreshing it. Only this prepared approval has a spending cap. Existing completed-report unlocks and chat replies have no `maxCredits` cap.
+
+`started` and `already_started` confirm acceptance by the audit workflow. `pending`, `requires_dashboard`, `expired`, `insufficient_credits` and `error` return exit code `2` with the complete response. Follow the returned Dashboard URL where required. Billing `requires_action`, `processing` and `failed` also return `2`. An unresolved result is not completed work.
+
+## How do I send Support messages?
+
+Use `support start` or `support send <conversationId>` with exactly one of `--message`, `--message-file <path|->`, `--data` or `--data-file`. Text must be nonempty and at most 64000 characters. Supply a stable `--client-message-id` UUID. JSON uses `text`, `clientMessageId` and optional `attachmentIds`.
+
+```sh
+inth support send spc_123 --message-file detail.txt \
+  --client-message-id b8dde372-1324-4d2e-a15a-fd3761964299 \
+  --attachment-ids '["sat_123"]' --json
+inth support share spc_123 --visibility organization --yes --json
+inth support close spc_123 --json
+inth support reopen spc_123 --json
+```
+
+Upload attachments separately. Supply at most five unique IDs in the intended order. Reuse the same message UUID, text and ordered attachment IDs after an uncertain send. Sharing requires explicit organization visibility and confirmation or `--yes`.
+
+## How do I administer account, organization and integration settings?
+
+| Command | Input and effect |
+| --- | --- |
+| `account update` | `--name` or explicit `--hide-pii true` or `--hide-pii false`; omitted fields retain their values |
+| `account delete` | Exact current email in `--confirmation` |
+| `account session-revoke <sessionId>` | Revoke one browser session |
+| `account sessions-revoke` | Explicit `--mode all` or `--mode others`; all also requires `--confirmation revoke-all-browser-sessions` |
+| `account device-revoke <deviceId>` | Revoke one connected OAuth device grant |
+| `org settings-update <orgId>` | `--name` |
+| `org slug-update <orgId>` | `--new-slug` and exact `--expected-slug` |
+| `org delete <orgId>` | Exact current slug in `--confirmation` |
+| `org retention-set <orgId>` | `--provider-retention standard` or `--provider-retention strict-zdr`, exact `--expected-version`, stable `--mutation-id` |
+| `notification update` | Explicit `--scope account` or `--scope organization`, `--family`, `--enabled true` or `--enabled false`, `--mode immediate` or `--mode daily` |
+| `notification routing-set` | `--role engineering`, `--role compliance` or `--role legal`, `--configured true` or `--configured false`, JSON `--user-ids`; false requires `[]` |
+| `integration github-install` | Hosted person installation URL |
+| `integration github-sync` | Sync accessible installations |
+| `integration github-installation-sync <id>` | Sync one internal installation ID |
+| `integration github-repository-update <id>` | JSON arrays `--branch-filters` and/or `--ignored-paths`; empty clears, omission retains |
+| `integration github-pull-request-scans-set <id>` | Explicit `--enabled true` or `--enabled false`, optional JSON `--branch-filters` |
+| `integration github-project-link-set <id>` | Internal `--project` ID |
+| `integration github-scheduled-policies-cleanup` | Remove obsolete scheduled policies |
+
+Destructive actions, slug and retention changes, routing replacements, repository linking and recurring PR scans require confirmation or `--yes`. Required preconditions remain mandatory with `--yes`. OAuth has no current browser session; revoking others may require the Dashboard. Use internal tenant-scoped IDs from integration discovery, not GitHub numeric IDs or owner/name strings.
+
+`account avatar-set --file image.png` and `org logo-set <orgId> --file image.png` replace managed images. They send original PNG, JPEG, WebP or GIF bytes up to 1 MiB to the trusted API. Media type must match the signature and known extension. Use `--media-type` for an unknown extension. URLs, stdin and JSON bodies are rejected. `account avatar-remove --yes` and `org logo-remove <orgId> --yes` clear the image.
+
+All new writes require a person's explicitly approved scopes and remain subject to server roles, rollout and operational controls. They are sent once, including on rate limits or server errors. One 401 can trigger a single credential refresh with the identical request. A lost response returns `mutation_outcome_unknown`; check current state and retain any supported retry identity before another action. No write activates release controls.
+
+## How do I upload and recover files?
+
+Upload one local regular file with `--file <path>`. Binary uploads reject stdin, URLs, repeated file flags and `--data` or `--data-file`. The default display name is the path's basename. Use `--file-name` to change it without changing the source file. Names must have 1 through 255 characters with no surrounding whitespace, path separators or control characters. MIME types follow the display filename; `--media-type` must be supported and match any known extension.
+
+```bash
+inth chat attachment-upload --file policy.pdf --organization org_123 --json
+inth chat attachment-list --organization org_123 --json
+inth chat start --organization org_123 --message-file question.txt \
+  --attachment-ids '["aga_first","aga_second"]' \
+  --client-message-id b8dde372-1324-4d2e-a15a-fd3761964299 --json
+inth chat send '<chat-id>' --attachment-ids '["aga_first"]' --json
+inth chat attachment-discard aga_second --organization org_123 --json
+```
+
+Chat uploads accept documents, supported images and validated UTF-8 text, up to 20 MiB each. The server enforces at most ten drafts and 40 MiB total. Uploading returns a ready `aga_` ID without starting a chat or spending an agent turn. Supply at most ten unique IDs as one JSON array. Keep their order. A complete chat JSON body can contain `attachmentIds` with omitted or empty `message`; individual body flags remain exclusive with `--data` and `--data-file`.
+
+Chat upload has no retry key. The CLI sends it once, including on rate limits, server errors and lost responses. An uncertain result returns `upload_outcome_unknown`. Run `chat attachment-list` in the same organization before another attempt. Discovery returns all ready and uploading drafts with no cursor or limit. Concurrent files with matching names, types and sizes cannot be identified conclusively from that metadata. Sent attachments appear in the chat transcript. Discovery and downloads remain available while document processing is paused.
+
+```bash
+inth support attachment-upload --file recording.webm --organization org_123 \
+  --client-attachment-id b8dde372-1324-4d2e-a15a-fd3761964299 \
+  --receipt ./upload-receipt.json --json
+inth support attachment-finalize sat_123 --organization org_123 --json
+inth support attachment-discard sat_123 --organization org_123 --json
+```
+
+Support accepts GIF, JPEG, PNG and WebP images up to 10 MiB, and MP4, MOV and WebM recordings up to 100 MiB. PDF uploads are not accepted. Unknown extensions need an explicit supported `--media-type`. The CLI reserves an upload, sends original bytes once to the signed provider grant, then finalizes through Inth. API credentials stay on the API host. Signed URLs are kept in memory and are never printed or saved.
+
+Keep the `clientAttachmentId` printed to stderr, or supply your own UUID. An explicit retry of a lost intent must use the same UUID, filename, type, size and organization while the reservation remains pending. Changed metadata, expiry, or a ready attachment can conflict; do not replace the UUID to work around that conflict. Once the CLI knows the `sat_` ID, it prints the finalization command. A lost storage response triggers finalization without resending bytes. Repeat `attachment-finalize` after an uncertain finalization result.
+
+`--receipt` exclusively creates a private recovery file before any network request. Existing paths are never overwritten. Updates replace that receipt atomically. It records the stage, API environment, organization, retry UUID, returned attachment ID and file metadata. It contains no file bytes or signed grant. Without a receipt, crash recovery depends on the caller recording stderr recovery IDs. Cancellation stops the local transfer and preserves recovery information; use the explicit discard command only for an unused attachment whose state you have checked. The server expires abandoned reservations and drafts. Neither upload command sends a chat or Support message, and uncertain message sends never trigger automatic discard.
+
+These commands require a person's approved connection. Chat uploads and discards need `agents.write`; discovery and downloads need `agents.read`. Support upload, finalize and discard need explicitly approved `support.write`. Existing API scope, role, ownership, rollout and operational controls remain authoritative. Organization API keys cannot gain these capabilities.
 
 ## How do I set up c15t in my app?
 
@@ -123,6 +382,30 @@ inth inbox update inbox_123 --status resolved --item-version 3
 
 Inbox updates require the version from the latest read. Supported statuses are `open`, `accepted`, `dismissed`, and `resolved`. After a version conflict, read the item again before updating it.
 
+## How do I use Inth Agent chats?
+
+Start a chat with a message, then use the returned chat ID to read the answer or send a follow-up. Starting a chat and sending a message can spend credits. The command returns when the agent accepts the turn; the answer can still be running.
+
+```sh
+inth chat start --organization org_123 --message 'Explain the open findings' \
+  --client-message-id 35ad7400-3270-4ea1-9b2b-1b166f37bfd8 --json
+inth chat get '<chat-id>' --json
+inth chat send '<chat-id>' --message-file follow-up.txt \
+  --client-message-id 65c07b5a-2e96-43b0-9c73-feced0a76530 --json
+```
+
+Use a UUID v4 `--client-message-id` for each new message. Reuse that ID, the same text and the same ordered attachment IDs when retrying an uncertain request. If omitted, the CLI generates one and prints it to stderr before sending. Keep that recovery ID if the command fails. The HTTP request ID is a separate identifier for support.
+
+For multiline text, use `--message-file <path>` or pipe it to `--message-file -`. To supply the complete JSON body, use `--data '<JSON object>'` or `--data-file <path|->`. Choose one input form. The message accepts up to 50,000 characters after trimming. Empty or omitted text needs at least one attachment. `--message -` sends a literal hyphen; only a file flag with `-` reads stdin.
+
+`chat start` also accepts `--inbox-item <id>` to discuss one finding. It uses the normal organization selection unless you supply `--organization`. `chat get` and `chat send` resolve the organization from the chat ID and reject organization or project overrides.
+
+In JSON output, read `data.data.id`, `data.data.status`, and `data.data.messages`. A status of `running` means the agent is still answering; invoke `chat get` again to check. A completed assistant message with `failed: true` ended without an answer. Cancelling the local command does not stop a turn the server has already accepted.
+
+Chats require a person's browser sign-in or approved agent connection. Reading needs `agents.read`; starting and sending need `agents.write`. A write-only connection can send without receiving transcript text. Existing connections need a new approval to add these scopes; refreshing cannot add them. See [authentication](./authentication).
+
+`chat list` returns one cursor page of accessible chats. `chat share <id> --visibility organization` irreversibly shares an owned chat with the organization. `chat delete <id>` permanently deletes an owned chat. Both require one target-specific terminal confirmation or `--yes`. JSON mode does not imply approval. Shared readers can read a chat but cannot send messages, share it or delete it.
+
 ## How do I review a vendor?
 
 `inth vendor list --project <project-id>` lists the vendors scans saw on a project, with their category, state, and vendor ID. Add `--state active` to see only vendors nobody has decided on yet. `inth vendor get <vendor-id> --project <project-id>` shows one vendor's hosts, when it was last seen, how it loaded, such as a script URL or a Google Tag Manager container, and its open Inbox finding.
@@ -164,4 +447,4 @@ Human output shows the ticket reference and whether it was already submitted. Wi
 
 ## Which commands send messages, expose secrets, or spend credits?
 
-Writes run without confirmation prompts. Invitations send email, key rotation replaces the old key, report unlocks spend credits and require an owner, and `inbox github-issue` creates a GitHub issue. Key creation and rotation print the new secret once; save it before closing the terminal. An unresolved GitHub issue send can return 409 and require server reconciliation before another attempt.
+Ordinary updates run immediately. New chat sharing/deletion and website removal require a target-specific confirmation or `--yes`. Invitations send email, key rotation replaces the old key, report unlocks spend credits and require an owner, and `inbox github-issue` creates a GitHub issue. Chat start and send accept credit-consuming agent turns. Key creation and rotation print the new secret once; save it before closing the terminal. An unresolved GitHub issue send can return 409 and require server reconciliation before another attempt.

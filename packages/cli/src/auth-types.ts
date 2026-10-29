@@ -3,7 +3,23 @@ import type { HttpError } from "./http-error.ts";
 export const API_ORIGIN = "https://api.inth.com";
 export const CLIENT_ID = "inth-cli";
 export const DISCOVERY_URL = `${API_ORIGIN}/.well-known/oauth-authorization-server`;
-// Matches the public API capability registry introduced in monorepo PR #1756.
+// These permissions need an explicit scoped agent approval.
+const OPT_IN_CAPABILITIES = [
+  "support.write",
+  "consent.lifecycle.write",
+  "consent.keys.write",
+  "billing.write",
+  "account.security.write",
+  "integrations.write",
+  "account.write",
+  "account.delete",
+  "notifications.write",
+  "notifications.routing.write",
+  "organization-retention.write",
+  "organizations.settings.write",
+  "organizations.delete",
+];
+// Supported scopes match the public API. Browser login keeps the ordinary task permissions.
 export const CAPABILITIES = [
   "organizations.read",
   "organizations.write",
@@ -17,10 +33,25 @@ export const CAPABILITIES = [
   "code-audit.write",
   "inbox.read",
   "inbox.write",
+  "agents.read",
+  "agents.write",
   "vendors.write",
   "billing.read",
+  "billing.details.read",
+  "consent.read",
+  "consent.write",
+  "consent.keys.read",
+  "website-audit.read",
+  "website-audit.write",
+  "account.read",
+  "notifications.read",
+  "organization-retention.read",
+  "support.read",
+  "account.security.read",
+  "integrations.read",
+  ...OPT_IN_CAPABILITIES,
 ];
-export const SCOPE = `openid profile email offline_access ${CAPABILITIES.join(" ")}`;
+export const SCOPE = `openid profile email offline_access ${CAPABILITIES.filter((scope) => !OPT_IN_CAPABILITIES.includes(scope)).join(" ")}`;
 
 export interface Credentials {
   access_token: string;
@@ -76,6 +107,8 @@ export interface OAuthTransport {
 }
 
 export interface OAuthResponse {
+  bytes?: Uint8Array;
+  contentType?: string;
   retryAfter?: string;
   ok: boolean;
   status: number;
