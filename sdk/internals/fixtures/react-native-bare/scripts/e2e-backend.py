@@ -12,11 +12,17 @@ from urllib.parse import urlsplit
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--out', type=Path, required=True)
+parser.add_argument('--port', type=int, default=3000)
+parser.add_argument('--scenario', choices=['category', 'iab'], default='category')
 args = parser.parse_args()
 args.out.mkdir(parents=True, exist_ok=True)
 root = Path(__file__).resolve().parents[4]
 transport = json.loads((root / 'native/protocol/evaluation-eu-fresh-install.json').read_text())['input']['transport']
+if args.scenario == 'iab':
+    transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures/iab-init.json').read_text())}
 state = {}
+native_state = {}
+js_block = {}
 saves = []
 lock = Lock()
 
@@ -36,13 +42,14 @@ class Handler(BaseHTTPRequestHandler):
             if urlsplit(self.path).path == '/api/self-host/init':
                 self.reply(transport['status'], transport['body'])
             elif self.path == '/e2e/state':
-                self.reply(200, {**state, 'saves': saves})
+                self.reply(200, {**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block})
             elif self.path == '/health':
                 self.reply(200, {'fixture': 'evaluation-eu-fresh-install'})
             else:
                 self.reply(404, {'error': 'unexpected route'})
 
     def do_POST(self):
+        global transport
         data = self.rfile.read(int(self.headers['Content-Length']))
         if self.path.startswith('/e2e/artifacts/'):
             name = self.path.removeprefix('/e2e/artifacts/')
@@ -56,12 +63,25 @@ class Handler(BaseHTTPRequestHandler):
             return
         body = json.loads(data)
         with lock:
-            if self.path == '/e2e/state':
+            if self.path == '/e2e/scenario':
+                transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures/iab-init.json').read_text())}
+                self.reply(200, {})
+            elif self.path == '/e2e/native':
+                native_state.clear()
+                native_state.update(body)
+                native_state['observedAt'] = time()
+                (args.out / 'native-observer.json').write_text(json.dumps(body, indent=2))
+                self.reply(200, {})
+            elif self.path == '/e2e/js-block':
+                js_block.update(body)
+                js_block['observedAt'] = time()
+                self.reply(200, {})
+            elif self.path == '/e2e/state':
                 body['snapshot'] = json.loads(body['snapshot']) if body['snapshot'] else None
                 body['bootstrap'] = json.loads(body['bootstrap']) if body.get('bootstrap') else None
                 state.clear()
                 state.update(body)
-                (args.out / 'native-state.json').write_text(json.dumps({**state, 'saves': saves}, indent=2))
+                (args.out / 'native-state.json').write_text(json.dumps({**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block}, indent=2))
                 self.reply(200, {})
             elif self.path == '/api/self-host/subjects':
                 if self.headers.get('x-c15t-policy-contract') != '1' or not body.get('choice'):
@@ -76,6 +96,6 @@ class Handler(BaseHTTPRequestHandler):
                 events.write(json.dumps({'at': time(), 'path': self.path, 'body': body}) + '\n')
 
 
-server = ThreadingHTTPServer(('127.0.0.1', 3000), Handler)
+server = ThreadingHTTPServer(('127.0.0.1', args.port), Handler)
 (args.out / 'backend-ready').touch()
 server.serve_forever()

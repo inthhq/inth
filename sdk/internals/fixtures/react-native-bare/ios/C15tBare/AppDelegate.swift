@@ -1,3 +1,4 @@
+import C15tReactNative
 import UIKit
 import React
 import React_RCTAppDelegate
@@ -6,6 +7,7 @@ import ReactAppDependencyProvider
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
+  private var e2eTimer: DispatchSourceTimer?
 
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
@@ -14,6 +16,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
+       URL(string: endpoint)?.host == "localhost" {
+      // The test-only artifact opts out of automatic bootstrap. One protected core owns UI and gates.
+      do {
+        _ = try C15tApple.install(CoreConfig(store: KeychainStore(service: "com.c15t.bare.e2e"),
+          transport: HostedTransport(baseURL: URL(string: endpoint + "/api/self-host")!),
+          consentCategories: [.necessary, .functionality, .measurement, .marketing],
+          iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"), storageBus: UserDefaultsStorageBus()))
+      } catch { fatalError("E2E protected native installation failed: \(error)") }
+    }
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -29,6 +41,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: demoLaunchOptions(launchOptions)
     )
 
+    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
+       URL(string: endpoint)?.host == "localhost" {
+      let timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "c15t.fixture-observer"))
+      timer.schedule(deadline: .now(), repeating: .milliseconds(500))
+      timer.setEventHandler {
+        guard let snapshot = try? JSONSerialization.jsonObject(with: Data(C15tPayload.snapshot(C15t.snapshot()).utf8)) else { return }
+        let gates = ["functionality": C15t.isAllowed(.functionality), "measurement": C15t.isAllowed(.measurement), "marketing": C15t.isAllowed(.marketing)]
+        let body: [String: Any] = ["snapshot": snapshot, "gates": gates, "source": "native-core", "pendingSaves": C15t.current?.pendingSaveCount() ?? 0, "iabConsent": (C15t.current?.iabConsent()).flatMap { try? JSONSerialization.jsonObject(with: JSONEncoder().encode($0)) } ?? NSNull()]
+        var request = URLRequest(url: URL(string: endpoint + "/e2e/native")!)
+        request.httpMethod = "POST"
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        URLSession.shared.dataTask(with: request).resume()
+      }
+      timer.resume()
+      e2eTimer = timer
+    }
     return true
   }
 

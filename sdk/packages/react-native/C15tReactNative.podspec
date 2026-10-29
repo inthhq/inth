@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
   # The kernel brings no privacy manifest of its own. Its own spec ships one, and it declares the
   # same four keys with the same values as the bundle below, so the copy compiled into this
   # target is described by it.
-  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift"
+  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift", "vendor/C15tConsentUI/**/*.swift"
   s.public_header_files = "ios/C15tReactNative/C15tReactNative.h"
   s.resource_bundle = { "C15tReactNative" => "ios/C15tReactNative/Resources/Privacy.xcprivacy" }
   # `Package.swift` is not in here because it is not in the package: the SPM manifest
@@ -50,7 +50,7 @@ Pod::Spec.new do |s|
   s.requires_arc = true
   s.static_framework = true
 
-  s.frameworks = "Foundation", "Security"
+  s.frameworks = "Foundation", "Security", "SwiftUI", "UIKit"
 
   # RCTEventEmitter, RCTBridgeModule, and the promise blocks.
   s.dependency "React-Core"

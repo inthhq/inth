@@ -48,7 +48,8 @@
 		"android/codegen/generate-spec.mjs",
 		"ios/C15tReactNative",
 		"vendor/C15tCore",
-		"vendor/C15tApple"
+		"vendor/C15tApple",
+		"vendor/C15tConsentUI"
 	],
 	"type": "module",
 	"sideEffects": false,

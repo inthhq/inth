@@ -70,7 +70,7 @@ if includeReact {
         // and the hook that starts the core before React Native initializes.
         .target(
             name: "C15tReactNative",
-            dependencies: ["C15tReactNativeBridge", coreProduct, appleProduct],
+            dependencies: ["C15tReactNativeBridge", coreProduct, appleProduct, .product(name: "C15tConsentUI", package: "C15tCore")],
             path: "ios/C15tReactNative",
             exclude: ["Bridge", "Resources"],
             sources: ["ReactNative"]

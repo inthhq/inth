@@ -10,6 +10,8 @@ mkdir -p "${OUT}"
 OUT="$(cd "${OUT}" && pwd)"
 [[ ! -e "${OUT}/backend-ready" && ! -e "${OUT}/result.json" ]] || { echo "Use a fresh evidence directory: ${OUT}" >&2; exit 2; }
 export C15T_APP_E2E=1 C15T_FAKE_NATIVE=0
+BACKEND_PORT="${C15T_APP_E2E_PORT:-39873}"
+export C15T_E2E_URL="http://localhost:${BACKEND_PORT}"
 BACKEND_PID=""; VIDEO_PID=""; LOG_PID=""; DEVICE=""; EMULATOR_PID=""; AVD_NAME=""
 
 cleanup() {
@@ -59,8 +61,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Binding fails if port 3000 is occupied. Never reuse an unknown backend.
-python3 "${APP_DIR}/scripts/e2e-backend.py" --out "${OUT}" > "${OUT}/backend.log" 2>&1 &
+# Binding fails on an occupied test port. Never reuse an unknown backend.
+python3 "${APP_DIR}/scripts/e2e-backend.py" --out "${OUT}" --port "${BACKEND_PORT}" --scenario "${C15T_APP_E2E_SCENARIO:-category}" > "${OUT}/backend.log" 2>&1 &
 BACKEND_PID=$!
 for attempt in {1..40}; do
   kill -0 "${BACKEND_PID}" || { cat "${OUT}/backend.log"; exit 1; }
@@ -69,7 +71,7 @@ for attempt in {1..40}; do
 done
 kill -0 "${BACKEND_PID}"
 [[ -e "${OUT}/backend-ready" ]]
-curl -fsS http://127.0.0.1:3000/health > "${OUT}/backend-health.json"
+curl -fsS http://127.0.0.1:${BACKEND_PORT}/health > "${OUT}/backend-health.json"
 cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
@@ -96,9 +98,24 @@ if [[ "${PLATFORM}" == ios ]]; then
   # Override the built test artifact, never the reference app's checked-in config.
   APP_PLIST="${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products/Release-iphonesimulator/C15tBare.app/Info.plist"
   /usr/libexec/PlistBuddy -c 'Set :com.c15t.backend.mode selfHosted' "${APP_PLIST}"
-  /usr/libexec/PlistBuddy -c 'Set :com.c15t.backend.url http://localhost:3000/api/self-host' "${APP_PLIST}"
+  /usr/libexec/PlistBuddy -c "Set :com.c15t.backend.url ${C15T_E2E_URL}/api/self-host" "${APP_PLIST}"
+  /usr/libexec/PlistBuddy -c "Add :C15tAppE2EURL string ${C15T_E2E_URL}" "${APP_PLIST}"
+  /usr/libexec/PlistBuddy -c "Set :com.c15t.reactnative.AutoBootstrap false" "${APP_PLIST}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :com.c15t.reactnative.AutoBootstrap bool false" "${APP_PLIST}"
   # Keep the simulator Keychain entitlement after changing the test-only endpoint.
   codesign --force --sign - --preserve-metadata=identifier,entitlements "${APP_PLIST%/Info.plist}" > "${OUT}/signing.log" 2>&1
+  python3 - "${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" "${C15T_E2E_URL}" <<'PYRUN'
+import pathlib,plistlib,sys
+for path in pathlib.Path(sys.argv[1]).glob('*.xctestrun'):
+ data=plistlib.loads(path.read_bytes())
+ def update(value):
+  if isinstance(value,dict):
+   if 'TestBundlePath' in value: value.setdefault('EnvironmentVariables',{})['C15T_E2E_URL']=sys.argv[2]
+   for child in list(value.values()): update(child)
+  elif isinstance(value,list):
+   for child in value: update(child)
+ update(data)
+ path.write_bytes(plistlib.dumps(data))
+PYRUN
   xcrun simctl io "${DEVICE}" recordVideo --codec=h264 "${OUT}/journey.mp4" > "${OUT}/video.log" 2>&1 &
   VIDEO_PID=$!
   xcodebuild test-without-building \
@@ -118,7 +135,7 @@ elif [[ "${PLATFORM}" == android ]]; then
   AVD_NAME="c15t-app-e2e-${RUN_ID}"
   echo no | "${AVDMANAGER}" create avd --name "${AVD_NAME}" --package "${IMAGE}" --device pixel_6 > "${OUT}/avd.log" 2>&1
   PORT="$(python3 -c 'import socket
-for p in range(5580, 5680, 2):
+for p in range(5600, 5680, 2):
  s=socket.socket()
  try: s.bind(("127.0.0.1",p)); print(p); break
  except OSError: pass
@@ -139,7 +156,12 @@ for p in range(5580, 5680, 2):
   "${ADB}" -s "${DEVICE}" shell getprop ro.build.version.release >> "${OUT}/device-version.txt"
   java -version > "${OUT}/toolchain.txt" 2>&1
   "${ADB}" -s "${DEVICE}" shell input keyevent 82
-  "${ADB}" -s "${DEVICE}" reverse tcp:3000 tcp:3000
+  "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
+  # JS/instrumentation keep a stable device endpoint; only this owned emulator is reversed.
+  export C15T_E2E_URL=http://localhost:3000
+  export C15T_MAVEN_URL="file://${REPO_ROOT}/native/core-android/build/maven-staging"
+  sh "${REPO_ROOT}/native/core-android/gradlew" -p "${REPO_ROOT}/native/core-android" --max-workers=4 \
+    :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
   ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
   rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"
   sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" :app:assembleRelease :e2e:assembleRelease \

@@ -1,0 +1,46 @@
+import { onConsentPresenterOutcome, presentConsentPrompt, presentPreferences, useConsentActions, useConsentStatus } from '@c15t/react-native';
+import type { ConsentPresenterOutcome } from '@c15t/react-native';
+import { useEffect, useState } from 'react';
+import { Button, Text, View } from 'react-native';
+import { useDemoDeepLinks } from './deep-links/use-deep-links';
+import { useE2eObserver } from './e2e-observer';
+
+const privacyPolicyURL = 'https://c15t.com/privacy';
+const outcomes: ConsentPresenterOutcome[] = [];
+const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
+
+/** Reference host. All consent controls, drafts and navigation belong to native UI. */
+export const NativePresenterApp = () => {
+    useE2eObserver();
+    const status = useConsentStatus();
+    const actions = useConsentActions();
+    const [latest, setLatest] = useState<ConsentPresenterOutcome>();
+    const [error, setError] = useState('');
+    const open = () => { void presentPreferences(privacyPolicyURL).catch((failure: unknown) => setError(String(failure))); };
+    useDemoDeepLinks({ actions, closeSheets: () => {}, openDialog: open, openIabDrawer: open, openPreferences: open, promptOwed: status.promptRequirement.kind !== 'none', requestTracking: () => Promise.reject(new Error('Use the explicit tracking API')), setAppearance: () => {}, showDiagnostics: () => {} });
+    useEffect(() => onConsentPresenterOutcome((outcome) => { outcomes.push(outcome); setLatest(outcome); }), []);
+    useEffect(() => {
+        if (status.policyPending || status.promptRequirement.kind === 'none') return;
+        void presentConsentPrompt(privacyPolicyURL).catch((failure: unknown) => setError(String(failure)));
+    }, [status.policyPending, status.promptRequirement.kind]);
+    const blockJS = async () => {
+        await presentPreferences(privacyPolicyURL);
+        await fetch(`${endpoint}/e2e/js-block`, { method: 'POST', body: JSON.stringify({ blocked: true, outcomesBefore: outcomes.length }) });
+        const end = Date.now() + 60000;
+        while (Date.now() < end) { /* Deliberately occupy Hermes for the native acceptance journey. */ }
+        await fetch(`${endpoint}/e2e/js-block`, { method: 'POST', body: JSON.stringify({ blocked: false }) });
+    };
+    useEffect(() => {
+        if (process.env.C15T_APP_E2E !== '1') return;
+        const timer = setInterval(() => { void fetch(`${endpoint}/e2e/js-block`, { method: 'POST', body: JSON.stringify({ outcomes }) }); }, 500);
+        return () => clearInterval(timer);
+    }, []);
+    return <View style={{ flex: 1, padding: 32, paddingTop: 80, gap: 24 }}>
+        <Text accessibilityRole="header">c15t native consent</Text>
+        <Button testID="fixture.open-preferences" title="Privacy settings" onPress={open} />
+        <Button testID="fixture.present-prompt" title="Review privacy notice" onPress={() => { void presentConsentPrompt(privacyPolicyURL); }} />
+        {process.env.C15T_APP_E2E === '1' ? <Button testID="fixture.block-js" title="Open native settings and block JS for 60 seconds" onPress={() => { void blockJS(); }} /> : null}
+        <Text testID="fixture.outcome">{latest ? JSON.stringify(latest) : 'No presenter outcome'}</Text>
+        <Text>{error}</Text>
+    </View>;
+};

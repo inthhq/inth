@@ -53,6 +53,7 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     /// Live JavaScript listeners. A snapshot event is only a hint to go and read, so
     /// with no subscriber it is dropped rather than queued.
     private var listenerCount = 0
+    private var consentHost: C15tConsentHost?
 
     public override init() {
         super.init()
@@ -203,10 +204,43 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         }
     }
 
+    @objc(presentConsentPrompt:resolve:reject:)
+    public func presentConsentPrompt(_ privacyPolicyURL: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        presentNative(preferences: false, privacyPolicyURL: privacyPolicyURL, resolve: resolve, reject: reject)
+    }
+
+    @objc(presentPreferences:resolve:reject:)
+    public func presentPreferences(_ privacyPolicyURL: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        presentNative(preferences: true, privacyPolicyURL: privacyPolicyURL, resolve: resolve, reject: reject)
+    }
+
+    private func presentNative(preferences: Bool, privacyPolicyURL: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        followCore()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            let host = self.consentHost ?? C15tConsentHost()
+            self.consentHost = host
+            do {
+                resolve(try host.present(preferences: preferences, privacyPolicyURL: privacyPolicyURL) { [weak self] payload in
+                    self?.publish(event: "onConsentPresenterOutcome", payload: payload)
+                })
+            } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host, installed core and HTTPS privacy-policy URL. \(error)", error) }
+        }
+    }
+
+    @objc(closeConsentPresenter:resolve:reject:)
+    public func closeConsentPresenter(_ sessionId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        DispatchQueue.main.async { [weak self] in
+            self?.consentHost?.close(sessionID: sessionId)
+            resolve(nil)
+        }
+    }
+
     // MARK: - Events
 
     public override func supportedEvents() -> [String]! {
         [
+            "onConsentPresenterOutcome",
             C15tPayload.eventSnapshot,
             C15tPayload.eventError,
             C15tPayload.eventInitialized,
@@ -242,6 +276,7 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     public override func invalidate() {
+        DispatchQueue.main.async { [self] in consentHost?.detach(); consentHost = nil }
         subscriber.detach()
         super.invalidate()
     }

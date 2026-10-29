@@ -427,7 +427,7 @@ export const scanVendoredNativeSources = function scanVendoredNativeSources(
 	const requiresNativeSources =
 		existsSync(join(packageDir, 'package.json')) &&
 		readManifest(packageDir).name === '@c15t/react-native';
-	return ['C15tCore', 'C15tApple'].flatMap((module) => {
+	return ['C15tCore', 'C15tApple', 'C15tConsentUI'].flatMap((module) => {
 		const directory = `vendor/${module}`;
 		const vendoredDir = join(packageDir, directory);
 		if (!requiresNativeSources && !existsSync(vendoredDir)) {
@@ -458,7 +458,7 @@ export const scanPackedVendoredSources = function scanPackedVendoredSources(
 	packageDir: string,
 	packedFilePaths: Set<string>
 ): { path: string; size: number; reason: string }[] {
-	return ['C15tCore', 'C15tApple'].flatMap((module) => {
+	return ['C15tCore', 'C15tApple', 'C15tConsentUI'].flatMap((module) => {
 		const directory = `vendor/${module}`;
 		const vendoredDir = join(packageDir, directory);
 		if (!existsSync(vendoredDir)) {

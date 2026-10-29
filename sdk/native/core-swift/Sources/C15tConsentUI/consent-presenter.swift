@@ -1,4 +1,6 @@
+#if canImport(C15tCore)
 import C15tCore
+#endif
 import Combine
 import Foundation
 
@@ -31,12 +33,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private var suppressedPrompt: String?
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
+    private let automaticPresentation: Bool
 
     public enum Action { case accept, reject, save, acknowledge }
 
     /// Attach to a bootstrapped core. The presenter never installs a second engine.
     /// - Parameter core: Native authority shared by the app's SDK gates.
-    public init(core: ConsentCore) {
+    public init(core: ConsentCore, automaticPresentation: Bool = true) {
+        self.automaticPresentation = automaticPresentation
         self.core = core
         self.snapshot = core.snapshot()
         self.subscription = core.onChange(self)
@@ -62,7 +66,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             if !isDirty { loadDraft() }
             reloadAfterRefresh = false
         }
-        if !next.policyPending, next.promptRequirement.kind == .choice,
+        if automaticPresentation, !next.policyPending, next.promptRequirement.kind == .choice,
            presentationID == nil, suppressedPrompt != promptKey {
             presentationID = UUID()
             preferences = false
@@ -92,11 +96,26 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
 
     /// Open standing privacy settings. A pending action keeps its original presentation.
     public func presentPreferences() {
-        guard !pending else { return }
+        guard !pending, presentationID == nil else { return }
         presentationID = UUID()
         preferences = true
         fromFirstLayer = false
         loadDraft()
+    }
+    /// Open an owed choice prompt. Existing sessions keep their identity and draft.
+    public func presentPrompt() {
+        guard presentationID == nil, !pending else { return }
+        snapshot = core.snapshot()
+        guard !snapshot.policyPending, snapshot.promptRequirement.kind == .choice else { return }
+        presentationID = UUID()
+        preferences = false
+        fromFirstLayer = false
+        loadDraft()
+    }
+    /// Close only the session the host opened. Dirty drafts still require confirmation.
+    public func requestClose(sessionID: UUID) {
+        guard presentationID == sessionID else { return }
+        requestClose()
     }
     public func customize() {
         guard !pending else { return }

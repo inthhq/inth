@@ -42,6 +42,7 @@ import {
 	useHostStyles,
 } from './components/ui';
 import { useDemoDeepLinks } from './deep-links/use-deep-links';
+import { NativePresenterApp } from './native-presenter-app';
 import { useE2eObserver } from './e2e-observer';
 import { IAB_DEMO_DISPLAY_MODEL } from './fixtures/iab-display-model';
 import { DiagnosticsScreen } from './screens/diagnostics';
@@ -231,7 +232,7 @@ const Header = ({
 };
 
 /** The app, once a core is attached. */
-export const App = () => {
+const LegacyApp = () => {
 	useE2eObserver();
 	const { appearance, setAppearance } = useAppearance();
 	const actions = useConsentActions();
@@ -399,3 +400,9 @@ export const App = () => {
 
 /** Exported for the missing-module case, which cannot render the normal shell. */
 export const UnavailableScreen = MissingNativeCore;
+
+export { NativePresenterApp } from './native-presenter-app';
+export const App = () => {
+    const { kind } = useConsentSource();
+    return kind === 'native' ? <NativePresenterApp /> : <LegacyApp />;
+};

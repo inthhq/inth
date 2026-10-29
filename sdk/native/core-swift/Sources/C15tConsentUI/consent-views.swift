@@ -1,5 +1,7 @@
 #if canImport(SwiftUI) && canImport(UIKit)
+#if canImport(C15tCore)
 import C15tCore
+#endif
 import SwiftUI
 import UIKit
 

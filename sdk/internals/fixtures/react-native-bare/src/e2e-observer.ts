@@ -15,7 +15,7 @@ export const useE2eObserver = (): void => {
 		}
 
 		const publish = async (): Promise<void> => {
-			await fetch('http://localhost:3000/e2e/state', {
+			await fetch(`${process.env.C15T_E2E_URL || 'http://localhost:3000'}/e2e/state`, {
 				body: JSON.stringify({
 					bootstrap: kind === 'native' ? getNativeC15t().getBootstrap() : null,
 					core: kind,

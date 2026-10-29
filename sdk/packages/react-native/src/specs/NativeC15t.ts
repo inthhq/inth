@@ -101,6 +101,12 @@ export interface Spec extends TurboModule {
 	 * without saying why; on Android it rejects because there is nothing to ask.
 	 */
 	requestTrackingAuthorization: () => Promise<string>;
+	/** Open the shared native flow. Resolves a JSON PresenterSession, not a decision. */
+	presentConsentPrompt: (privacyPolicyURL: string) => Promise<string>;
+	/** Open standing native preferences on the installed engine. */
+	presentPreferences: (privacyPolicyURL: string) => Promise<string>;
+	/** Request dismissal of the matching session. Pending commits remain locked. */
+	closeConsentPresenter: (sessionId: string) => Promise<void>;
 	/** Register interest in an event; required by the event-emitter spec. */
 	addListener: (eventName: string) => void;
 	/** Report the number of live listeners; required by the emitter spec. */

@@ -191,6 +191,9 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		failCommitWith: (raw: string) => {
 			commitReply = raw;
 		},
+        presentConsentPrompt: () => Promise.reject(new Error('Native presenter requires native core')),
+        presentPreferences: () => Promise.reject(new Error('Native presenter requires native core')),
+        closeConsentPresenter: () => Promise.resolve(),
 		getBootstrap: vi.fn(() => {
 			fake.bootstrapCalls += 1;
 

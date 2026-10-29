@@ -233,6 +233,7 @@ dependencies {
 	// Versioned binaries keep the native producer toolchain out of the host build.
 	implementation "$groupName:c15t-core:$coreVersion"
 	implementation "$groupName:c15t-android:$coreVersion"
+	implementation "$groupName:c15t-consent-ui:$coreVersion"
 
 	implementation 'androidx.startup:startup-runtime:1.1.1'
 

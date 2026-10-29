@@ -13,7 +13,7 @@ import java.util.UUID
 enum class ConsentPresenterOutcome { SAVED, DISMISSED }
 
 /** One host-owned native session. Retain through activity recreation with ViewModelStore. */
-class ConsentPresenter(val core: C15tKernel) : ViewModel() {
+class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: Boolean = true) : ViewModel() {
     var snapshot by mutableStateOf(core.snapshot()); private set
     var presentationID by mutableStateOf<String?>(null); private set
     var preferences by mutableStateOf(false); private set
@@ -61,15 +61,24 @@ class ConsentPresenter(val core: C15tKernel) : ViewModel() {
             if (!dirty) loadDraft()
             reloadAfterRefresh = false
         }
-        if (!next.policyPending && next.promptRequirement.acknowledge && presentationID == null && suppressed != promptKey) {
+        if (automaticPresentation && !next.policyPending && next.promptRequirement.acknowledge && presentationID == null && suppressed != promptKey) {
             presentationID = UUID.randomUUID().toString(); preferences = false; loadDraft()
         }
     }
     /** Open standing privacy settings without replacing an in-flight presentation. */
     fun presentPreferences() {
-        if (pending) return
+        if (pending || presentationID != null) return
         presentationID = UUID.randomUUID().toString(); preferences = true; fromFirst = false; loadDraft()
     }
+    /** Open an owed prompt without replacing an existing draft. */
+    fun presentPrompt() {
+        if (pending || presentationID != null) return
+        snapshot = core.snapshot()
+        if (snapshot.policyPending || !snapshot.promptRequirement.acknowledge) return
+        presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
+    }
+    /** An obsolete host close must never dismiss a newer presentation. */
+    fun requestClose(sessionID: String) { if (presentationID == sessionID) requestClose() }
     fun customize() { if (!pending) { preferences = true; fromFirst = true; loadDraft() } }
     fun loadDraft() {
         if (pending) return

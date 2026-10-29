@@ -410,7 +410,10 @@ class FakeCore {
 			dismissNotice: () => {
 				this.dismissNotice();
 			},
-			getBootstrap: () => this.bootstrap(),
+	        presentConsentPrompt: () => Promise.reject(new Error('Native presenter requires native core')),
+        presentPreferences: () => Promise.reject(new Error('Native presenter requires native core')),
+        closeConsentPresenter: () => Promise.resolve(),
+		getBootstrap: () => this.bootstrap(),
 			getSnapshot: () => this.getSnapshot(),
 			// These are the answers the Android bridge gives, verbatim. The fake core
 			// has no platform gate to read, so it reports Android's arm rather than
