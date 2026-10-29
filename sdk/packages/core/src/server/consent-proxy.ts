@@ -40,7 +40,10 @@ export const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [
  * dropped: `host`, `content-length`, and the hop-by-hop set are wrong for
  * the upstream connection, and unknown headers must not leak through a
  * same-origin route. `cookie` is listed but only forwarded when
- * `cookieNames` names the cookies to send.
+ * `cookieNames` names the cookies to send. `origin` and `sec-fetch-site`
+ * travel together: the backend refuses a write whose `sec-fetch-site` says
+ * cross-site or same-site from an origin outside its `trustedOrigins`, so a
+ * page on another site can't save through this route.
  */
 export const CONSENT_PROXY_DEFAULT_FORWARD_HEADERS: readonly string[] = [
 	'accept',
@@ -50,6 +53,7 @@ export const CONSENT_PROXY_DEFAULT_FORWARD_HEADERS: readonly string[] = [
 	'if-none-match',
 	'origin',
 	'referer',
+	'sec-fetch-site',
 	'user-agent',
 	'sec-gpc',
 	...CONSENT_REQUEST_HEADER_NAMES,

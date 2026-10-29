@@ -1,16 +1,24 @@
 ---
 packages:
   "@c15t/backend": minor
+  "@c15t/core": patch
   "@c15t/node-sdk": patch
   "@c15t/schema": patch
 ---
 
-### Stricter input on subject writes, with opt-in domain and identity limits
+### Origin checks on subject writes, with opt-in domain and identity limits
 
-`POST /subjects` and `PATCH /subjects/:id` accept JSON bodies only. A request
-with another `Content-Type`, or none, gets `415 UNSUPPORTED_MEDIA_TYPE` and
-writes nothing. 2.x backends refused these bodies in their request validators,
-and the c15t clients and `@c15t/node-sdk` send JSON.
+`POST /subjects` and `PATCH /subjects/:id` refuse a browser request from
+another site unless `trustedOrigins` lists its origin. The backend reads the
+`Sec-Fetch-Site` and `Origin` headers the browser adds, and answers a
+`cross-site` or `same-site` request from any other origin with
+`403 ORIGIN_NOT_ALLOWED`, writing nothing. Requests without `Sec-Fetch-Site`,
+such as server calls and `@c15t/node-sdk`, are unchanged. The body is still
+read whatever its `Content-Type`, so a client can send saves without a CORS
+preflight.
+
+The consent proxy behind `/api/c15t` forwards `Sec-Fetch-Site` with `Origin`,
+so the backend checks saves sent through it too.
 
 A save's `domain` must be 1 to 253 characters with no control characters.
 Other values get `400 INPUT_VALIDATION_FAILED`.
