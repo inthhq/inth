@@ -227,7 +227,10 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     progress: Boolean = false, onClick: () -> Unit) {
     val theme = LocalConsentTheme.current
     val shape = RoundedCornerShape(theme.cornerRadius)
-    val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).testTag(id)
+    val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).testTag(id).semantics {
+        contentDescription = text
+        if (progress) stateDescription = "Saving choices"
+    }
     val label: @Composable () -> Unit = {
         if (progress) CircularProgressIndicator(Modifier.size(20.dp).testTag("c15t.status.progress"), color = LocalContentColor.current, strokeWidth = 2.dp)
         else Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
@@ -265,7 +268,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 
 @Composable private fun ErrorCallout(message: String, id: String, retry: () -> Unit) {
     val theme = LocalConsentTheme.current
-    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(theme.cornerRadius - 2.dp),
+    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(theme.calloutRadius),
         modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Assertive }.testTag(id)) {
         Column(Modifier.padding(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -280,7 +283,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 /** A short status line on a tinted background: why the prompt is back, or that the draft is stale. */
 @Composable private fun InfoCallout(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val theme = LocalConsentTheme.current
-    Surface(color = InfoBackground.color(), shape = RoundedCornerShape(theme.cornerRadius - 2.dp), modifier = modifier.fillMaxWidth()) {
+    Surface(color = InfoBackground.color(), shape = RoundedCornerShape(theme.calloutRadius), modifier = modifier.fillMaxWidth()) {
         CompositionLocalProvider(LocalContentColor provides InfoText.color()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ProvideTextStyle(MaterialTheme.typography.bodyMedium) { content() }

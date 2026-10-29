@@ -30,6 +30,8 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     implementation(platform("androidx.compose:compose-bom:2025.08.00"))
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.material:material-icons-core")

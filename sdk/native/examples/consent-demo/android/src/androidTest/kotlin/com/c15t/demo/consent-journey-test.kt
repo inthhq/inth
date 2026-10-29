@@ -45,6 +45,16 @@ class ConsentJourneyTest {
     }
     @After fun close() { scenario?.close() }
 
+    @Test fun compiledManifestThemeColoursResolve() {
+        val testContext = InstrumentationRegistry.getInstrumentation().context
+        val metadata = testContext.packageManager.getApplicationInfo(testContext.packageName,
+            android.content.pm.PackageManager.GET_META_DATA).metaData
+        val theme = com.c15t.consentui.ConsentTheme.c15t.applying(metadata, testContext)
+        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0x009688), theme.colors.accent)
+        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0xFFFFFF), theme.colors.onAccent)
+        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0x009688, 0x4FD1C0), theme.colors.decision)
+    }
+
     private fun report(): org.json.JSONObject = java.net.URL("http://localhost:3000/e2e/state")
         .openConnection().apply { connectTimeout = 2000; readTimeout = 2000 }
         .getInputStream().bufferedReader().use { org.json.JSONObject(it.readText()) }

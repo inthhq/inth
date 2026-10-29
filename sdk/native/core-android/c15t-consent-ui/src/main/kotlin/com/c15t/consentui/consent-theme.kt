@@ -39,8 +39,8 @@ data class ConsentThemeColor(val light: Int, val dark: Int = light) {
  * Appearance of the native consent screens. Every value has a c15t default.
  *
  * Pass one to [C15tConsent], set [current] once in `Application.onCreate`, or declare the
- * same values as `<meta-data>` under the [Meta] names; manifest values override the others
- * so a build flavour can restyle an app without touching code.
+ * same values as `<meta-data>` under the [Meta] names. Manifest values override [current];
+ * an explicit theme passed to [C15tConsent] takes precedence over both.
  */
 data class ConsentTheme(
     val colors: Colors = Colors.c15t,
@@ -52,6 +52,8 @@ data class ConsentTheme(
     /** Whether the small "Secured by c15t" line appears under the first-layer actions. */
     val showsBranding: Boolean = true,
 ) {
+    internal val calloutRadius: Dp get() = (cornerRadius - 2.dp).coerceAtLeast(0.dp)
+
     /** Semantic colours. Components never use a raw value outside this set. */
     data class Colors(
         /** Page background behind every consent screen. */
@@ -161,7 +163,9 @@ data class ConsentTheme(
         @Suppress("DEPRECATION") fun raw(key: String): Any? = bundle.get(key)
         fun text(key: String): String? = raw(key)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
         fun color(key: String, current: ConsentThemeColor): ConsentThemeColor = when (val value = raw(key)) {
-            is Int -> runCatching { ConsentThemeColor(context.getColor(value) and 0xFFFFFF) }.getOrDefault(current)
+            // AAPT stores a literal #RRGGBB as an opaque ARGB integer, not a string.
+            is Int -> if (value ushr 24 == 0xFF) ConsentThemeColor(value and 0xFFFFFF)
+                else runCatching { ConsentThemeColor(context.getColor(value) and 0xFFFFFF) }.getOrDefault(current)
             is String -> ConsentThemeColor.parse(value) ?: current
             else -> current
         }
@@ -172,8 +176,8 @@ data class ConsentTheme(
         }
         val c = colors
         val radius = when (val value = raw(Meta.META_CORNER_RADIUS)) {
-            is Number -> value.toFloat().takeIf { it >= 0 }?.dp
-            is String -> value.trim().toFloatOrNull()?.takeIf { it >= 0 }?.dp
+            is Number -> value.toFloat().takeIf { it.isFinite() && it >= 0 }?.dp
+            is String -> value.trim().toFloatOrNull()?.takeIf { it.isFinite() && it >= 0 }?.dp
             else -> null
         }
         val font = when (val name = text(Meta.META_HEADLINE_FONT)?.lowercase()) {
@@ -208,7 +212,6 @@ data class ConsentTheme(
     @Composable @ReadOnlyComposable
     fun colorScheme(): ColorScheme {
         val dark = isSystemInDarkTheme()
-        val border = colors.text.color().copy(alpha = 0.18f)
         val base = if (dark) darkColorScheme() else lightColorScheme()
         return base.copy(
             primary = colors.accent.color(), onPrimary = colors.onAccent.color(),
@@ -217,7 +220,7 @@ data class ConsentTheme(
             surfaceContainer = colors.surface.color(), surfaceContainerLow = colors.surface.color(),
             surfaceContainerHigh = colors.surface.color(), surfaceContainerHighest = colors.surfaceMuted.color(),
             surfaceVariant = colors.surfaceMuted.color(), onSurfaceVariant = colors.textSecondary.color(),
-            outline = border, outlineVariant = colors.text.color().copy(alpha = 0.1f),
+            outline = colors.textSecondary.color(), outlineVariant = colors.text.color().copy(alpha = 0.1f),
             error = Color(if (dark) 0xFFFF9C8F else 0xFFB42318), errorContainer = Color(if (dark) 0xFF3A1D1A else 0xFFFBEAE7),
             onErrorContainer = Color(if (dark) 0xFFFF9C8F else 0xFFB42318),
         )

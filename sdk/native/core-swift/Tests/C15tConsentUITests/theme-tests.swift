@@ -66,4 +66,18 @@ final class ThemeTests: XCTestCase {
         ConsentTheme.current = ConsentTheme(cornerRadius: 4)
         XCTAssertEqual(ConsentTheme.resolved(bundle: Bundle(for: ThemeTests.self)).cornerRadius, 4)
     }
+
+    func testSquareAndSmallThemesKeepNonnegativeCalloutRadii() {
+        XCTAssertEqual(ConsentTheme(cornerRadius: 0).calloutRadius, 0)
+        XCTAssertEqual(ConsentTheme(cornerRadius: 1).calloutRadius, 0)
+        XCTAssertEqual(ConsentTheme(cornerRadius: 14).calloutRadius, 12)
+    }
+
+    func testMalformedOverridesPreserveHostSettings() {
+        let base = ConsentTheme(cornerRadius: 10, showsBranding: false)
+        for value in ["inf", "NaN"] {
+            XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.cornerRadius: value]), base)
+        }
+        XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: "maybe"]), base)
+    }
 }

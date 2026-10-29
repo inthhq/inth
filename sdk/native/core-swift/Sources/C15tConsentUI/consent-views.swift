@@ -205,7 +205,7 @@ private struct ErrorCallout: View {
         }
         .font(.subheadline).foregroundStyle(StatusColors.error).padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(StatusColors.errorBackground, in: RoundedRectangle(cornerRadius: theme.cornerRadius - 2, style: .continuous))
+        .background(StatusColors.errorBackground, in: RoundedRectangle(cornerRadius: theme.calloutRadius, style: .continuous))
     }
 }
 
@@ -216,7 +216,7 @@ private struct InfoCallout<Content: View>: View {
     var body: some View {
         content.font(.subheadline).foregroundStyle(StatusColors.info).padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(StatusColors.infoBackground, in: RoundedRectangle(cornerRadius: theme.cornerRadius - 2, style: .continuous))
+            .background(StatusColors.infoBackground, in: RoundedRectangle(cornerRadius: theme.calloutRadius, style: .continuous))
     }
 }
 

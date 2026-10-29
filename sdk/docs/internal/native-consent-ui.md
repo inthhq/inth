@@ -95,7 +95,9 @@ shows. Decision labels, category copy and every partner disclosure stay native
 and are not themeable: the theme cannot make Accept louder than Reject, hide a
 decision, or change what a choice means.
 
-Three ways to apply one, in increasing precedence:
+Set a process default, add app-binary overrides, or pass a theme for one presenter.
+App-binary keys override `ConsentTheme.current`. An explicit `theme` argument
+takes precedence over both and uses exactly the values passed by the host.
 
 ```swift
 // 1. Set once at launch; every presenter that does not pass a theme uses it.

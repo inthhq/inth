@@ -47,8 +47,8 @@ public struct ConsentThemeColor: Equatable, Hashable, Sendable {
 ///
 /// Pass one to `c15tConsent(presenter:privacyPolicyURL:theme:)`, set ``current``
 /// once at launch, or declare the same values in `Info.plist` under the
-/// ``InfoPlistKey`` names; plist values override the others so a build
-/// configuration can restyle an app without touching code.
+/// ``InfoPlistKey`` names. Plist values override ``current``; an explicit theme
+/// passed to the root modifier takes precedence over both.
 public struct ConsentTheme: Equatable, Sendable {
     /// Semantic colours. Components never use a raw value outside this set.
     public struct Colors: Equatable, Sendable {
@@ -152,6 +152,7 @@ public struct ConsentTheme: Equatable, Sendable {
     public var colors: Colors
     /// Corner radius of buttons and cards, in points.
     public var cornerRadius: CGFloat
+    var calloutRadius: CGFloat { max(0, cornerRadius - 2) }
     public var headlineFont: HeadlineFont
     public var brand: Brand
     public var copy: Copy
@@ -214,9 +215,9 @@ public struct ConsentTheme: Equatable, Sendable {
         color(InfoPlistKey.textSecondary, \.textSecondary)
         color(InfoPlistKey.decision, \.decision)
         color(InfoPlistKey.onDecision, \.onDecision)
-        if let radius = dictionary[InfoPlistKey.cornerRadius] as? NSNumber, radius.doubleValue >= 0 {
+        if let radius = dictionary[InfoPlistKey.cornerRadius] as? NSNumber, radius.doubleValue.isFinite, radius.doubleValue >= 0 {
             theme.cornerRadius = CGFloat(radius.doubleValue)
-        } else if let text = dictionary[InfoPlistKey.cornerRadius] as? String, let radius = Double(text), radius >= 0 {
+        } else if let text = dictionary[InfoPlistKey.cornerRadius] as? String, let radius = Double(text), radius.isFinite, radius >= 0 {
             theme.cornerRadius = CGFloat(radius)
         }
         if let name = string(dictionary[InfoPlistKey.headlineFont]) { theme.headlineFont = HeadlineFont(name: name) }
@@ -225,7 +226,13 @@ public struct ConsentTheme: Equatable, Sendable {
         if let text = string(dictionary[InfoPlistKey.headline]) { theme.copy.headline = text }
         if let text = string(dictionary[InfoPlistKey.introduction]) { theme.copy.introduction = text }
         if let flag = dictionary[InfoPlistKey.branding] as? Bool { theme.showsBranding = flag }
-        else if let text = string(dictionary[InfoPlistKey.branding])?.lowercased() { theme.showsBranding = !(text == "false" || text == "0" || text == "no") }
+        else if let text = string(dictionary[InfoPlistKey.branding])?.lowercased() {
+            switch text {
+            case "true", "1", "yes": theme.showsBranding = true
+            case "false", "0", "no": theme.showsBranding = false
+            default: break
+            }
+        }
         return theme
     }
 

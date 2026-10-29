@@ -2,6 +2,10 @@ package com.c15t.consentui
 
 import android.os.Bundle
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -79,5 +83,29 @@ class ThemeTest {
             ConsentTheme.current = null
             assertTrue(ConsentTheme.resolve(context) == ConsentTheme.c15t)
         } finally { ConsentTheme.current = previous }
+    }
+
+    @Test fun typedManifestColoursKeepLiteralsAndResolveResources() {
+        val bundle = Bundle().apply {
+            putInt(ConsentTheme.Meta.META_ACCENT, 0xFF009688.toInt())
+            putInt(ConsentTheme.Meta.META_ON_ACCENT, android.R.color.white)
+        }
+        val theme = ConsentTheme.c15t.applying(bundle, context)
+        assertEquals(ConsentThemeColor(0x009688), theme.colors.accent)
+        assertEquals(ConsentThemeColor(0xFFFFFF), theme.colors.onAccent)
+    }
+
+    @Test fun squareAndSmallThemesProduceValidCalloutOutlines() {
+        for (radius in listOf(0.dp, 1.dp, 2.dp, 14.dp)) {
+            RoundedCornerShape(ConsentTheme(cornerRadius = radius).calloutRadius)
+                .createOutline(Size(300f, 120f), LayoutDirection.Ltr, Density(1f))
+        }
+    }
+
+    @Test fun nonFiniteRadiusKeepsTheHostValue() {
+        val base = ConsentTheme(cornerRadius = 10.dp)
+        for (value in listOf("Infinity", "NaN")) {
+            assertEquals(base, base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_CORNER_RADIUS, value) }, context))
+        }
     }
 }
