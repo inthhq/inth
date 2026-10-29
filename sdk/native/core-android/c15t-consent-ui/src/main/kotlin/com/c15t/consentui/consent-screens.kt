@@ -310,18 +310,19 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
                     if (p.stale) ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
                     else {
                         p.errorMessage?.let { ErrorCallout(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
+                        val twin = if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
                         if (p.snapshot.policyPending) {
-                            ConsentButton("Reject all", "$prefix.reject-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                            ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
                         } else if (p.listUnavailable) {
                             Body("Our partner list is out of date. Try again to load it, or reject optional data use.", Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
                             EqualDecisions {
-                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
                                 ConsentButton("Try again", "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
                             }
                         } else {
                             EqualDecisions {
-                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
-                                ConsentButton("Accept all", "$prefix.accept-all", !p.pending, progress = p.showProgress) { p.commit(ConsentPresenter.Action.ACCEPT) }
+                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.REJECT) }
+                                ConsentButton("Accept all", "$prefix.accept-all", !p.pending, twin, progress = p.showProgress) { p.commit(ConsentPresenter.Action.ACCEPT) }
                             }
                             if (first) {
                                 ConsentButton("Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
@@ -348,8 +349,8 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     val large = LocalDensity.current.fontScale >= 1.5f
     Scaffold(containerColor = theme.colors.canvas.color(), bottomBar = { DecisionFooter(p, first = true) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).testTag("c15t.first-layer"), horizontalAlignment = Alignment.CenterHorizontally) {
-            Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                BrandHeader()
+            Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                if (!theme.brand.hidden) IdentityHeader()
                 when (p.snapshot.promptRequirement.reason?.wireName) {
                     "expired" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("Your earlier choice has expired, so we're asking again.") }
                     "policy-changed" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("How this app uses data has changed since your last choice, so we're asking again.") }
@@ -370,22 +371,6 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 
 @Composable private fun headlineStyle(theme: ConsentTheme): TextStyle = MaterialTheme.typography.headlineLarge.copy(
     fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.25).sp)
-
-@Composable private fun BrandHeader() {
-    val theme = LocalConsentTheme.current
-    if (theme.brand.markResId == null && theme.brand.name == null) return
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        theme.brand.markResId?.let { id ->
-            val shape = RoundedCornerShape(14.dp)
-            Image(painterResource(id), contentDescription = theme.brand.name, contentScale = ContentScale.Crop,
-                modifier = Modifier.size(56.dp).clip(shape).border(1.dp, Color.Black.copy(alpha = 0.08f), shape))
-        }
-        theme.brand.name?.let { name ->
-            Text(name.uppercase(), style = MaterialTheme.typography.labelLarge, letterSpacing = 1.4.sp, color = theme.colors.accent.color(),
-                modifier = Modifier.testTag("c15t.first-layer.brand"))
-        }
-    }
-}
 
 /** The purposes partners ask for, on a quieter surface so they inform without competing. */
 @Composable private fun PartnerSummary(p: ConsentPresenter, partners: () -> Unit) {
@@ -535,7 +520,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                         }
                     } else Body("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
                 }
-                SectionLabel(if (p.iab) "This app" else "Data use")
+                if (p.iab) SectionLabel("This app") else Spacer(Modifier.height(12.dp))
             }
             val categories = p.offeredCategories
             group(categories.size, key = { "category-${categories[it].wireName}" }) { Category(p, categories[it]) }

@@ -109,13 +109,24 @@ data class ConsentTheme(
         }
     }
 
-    /** The app identity shown above the headline. */
+    /**
+     * The app identity shown above the headline. By default it is the host app itself: the
+     * application label and launcher icon, resolved at render time without any network.
+     */
     data class Brand(
-        /** Short name shown as an eyebrow above the headline and read with the mark. */
+        /** Short name shown as an eyebrow above the headline. `null` uses the application label. */
         val name: String? = null,
-        /** Drawable resource for the mark. Rendered 56dp square with rounded corners. */
+        /** Drawable resource for the mark. `null` uses the launcher icon; an app whose icon cannot
+         * be drawn gets a tile with the name's initial. Rendered 56dp square with the icon mask. */
         val markResId: Int? = null,
-    )
+        /** `true` shows no identity at all: the headline starts the page. */
+        val hidden: Boolean = false,
+    ) {
+        companion object {
+            /** No app mark or name above the headline. */
+            val Hidden = Brand(hidden = true)
+        }
+    }
 
     /** Provider identity displayed after "Secured by". Built-in marks are bundled vectors. */
     sealed interface Branding {
@@ -156,6 +167,8 @@ data class ConsentTheme(
         const val META_CORNER_RADIUS = "com.c15t.consent.CORNER_RADIUS"
         /** `serif`, `sans`, or a font resource. */
         const val META_HEADLINE_FONT = "com.c15t.consent.HEADLINE_FONT"
+        /** A Boolean. `false` hides the app mark and name above the headline. */
+        const val META_BRAND = "com.c15t.consent.BRAND"
         const val META_BRAND_NAME = "com.c15t.consent.BRAND_NAME"
         /** A drawable resource. */
         const val META_BRAND_MARK = "com.c15t.consent.BRAND_MARK"
@@ -202,12 +215,14 @@ data class ConsentTheme(
             "sans", "sans-serif", "sansserif", "system", "rounded" -> HeadlineFont.SansSerif
             else -> resource(Meta.META_HEADLINE_FONT, "font")?.let { HeadlineFont.Custom(FontFamily(Font(it))) } ?: headlineFont
         }
-        val visible = when (val value = raw(Meta.META_BRANDING)) {
+        fun flag(key: String): Boolean? = when (val value = raw(key)) {
             is Boolean -> value
             is Number -> value.toLong() != 0L
-            is String -> when (value.trim().lowercase()) { "true", "1", "yes" -> true; "false", "0", "no" -> false; else -> showsBranding }
-            else -> showsBranding
+            is String -> when (value.trim().lowercase()) { "true", "1", "yes" -> true; "false", "0", "no" -> false; else -> null }
+            else -> null
         }
+        val visible = flag(Meta.META_BRANDING) ?: showsBranding
+        val identityHidden = flag(Meta.META_BRAND)?.let { !it } ?: brand.hidden
         var provider = when (text(Meta.META_BRANDING_PROVIDER)?.lowercase()) {
             "c15t" -> Branding.C15t
             "inth", "consent" -> Branding.Inth
@@ -229,7 +244,7 @@ data class ConsentTheme(
             ),
             cornerRadius = radius ?: cornerRadius,
             headlineFont = font,
-            brand = Brand(name = text(Meta.META_BRAND_NAME) ?: brand.name, markResId = resource(Meta.META_BRAND_MARK, "drawable") ?: brand.markResId),
+            brand = Brand(name = text(Meta.META_BRAND_NAME) ?: brand.name, markResId = resource(Meta.META_BRAND_MARK, "drawable") ?: brand.markResId, hidden = identityHidden),
             copy = Copy(headline = text(Meta.META_HEADLINE) ?: copy.headline, introduction = text(Meta.META_INTRODUCTION) ?: copy.introduction),
             showsBranding = visible,
             branding = provider,

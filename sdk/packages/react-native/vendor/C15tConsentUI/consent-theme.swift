@@ -119,17 +119,25 @@ public struct ConsentTheme: Equatable, Sendable {
         }
     }
 
-    /// The app identity shown above the headline.
+    /// The app identity shown above the headline. By default it is the host app itself: the
+    /// bundle's display name and primary icon, resolved at render time without any network.
     public struct Brand: Equatable, Sendable {
-        /// Short name shown as an eyebrow above the headline and read with the mark.
+        /// Short name shown as an eyebrow above the headline. `nil` uses the bundle's display name.
         public var name: String?
-        /// Asset-catalogue image name for the mark. Rendered 48pt square with rounded corners.
+        /// Asset-catalogue image name for the mark. `nil` uses the app icon; an app without one
+        /// gets a drawn tile with the name's initial. Rendered 56pt square with the icon mask.
         public var markImageName: String?
+        /// `true` shows no identity at all: the headline starts the page.
+        public var isHidden: Bool
 
-        public init(name: String? = nil, markImageName: String? = nil) {
+        public init(name: String? = nil, markImageName: String? = nil, isHidden: Bool = false) {
             self.name = name
             self.markImageName = markImageName
+            self.isHidden = isHidden
         }
+
+        /// No app mark or name above the headline.
+        public static let hidden = Brand(isHidden: true)
     }
 
     /// Provider identity in the small "Secured by" tag, separate from the app's ``Brand``.
@@ -220,6 +228,8 @@ public struct ConsentTheme: Equatable, Sendable {
         public static let cornerRadius = "com.c15t.consent.cornerRadius"
         /// `serif`, `rounded`, `sans`, or a bundled font's PostScript name.
         public static let headlineFont = "com.c15t.consent.headlineFont"
+        /// A Boolean. `false` hides the app mark and name above the headline.
+        public static let brand = "com.c15t.consent.brand"
         public static let brandName = "com.c15t.consent.brandName"
         /// An asset-catalogue image name.
         public static let brandMark = "com.c15t.consent.brandMark"
@@ -259,6 +269,7 @@ public struct ConsentTheme: Equatable, Sendable {
         if let name = string(dictionary[InfoPlistKey.headlineFont]) { theme.headlineFont = HeadlineFont(name: name) }
         if let name = string(dictionary[InfoPlistKey.brandName]) { theme.brand.name = name }
         if let name = string(dictionary[InfoPlistKey.brandMark]) { theme.brand.markImageName = name }
+        if let flag = flag(dictionary[InfoPlistKey.brand]) { theme.brand.isHidden = !flag }
         if let text = string(dictionary[InfoPlistKey.headline]) { theme.copy.headline = text }
         if let text = string(dictionary[InfoPlistKey.introduction]) { theme.copy.introduction = text }
         if let text = string(dictionary[InfoPlistKey.brandingProvider]), let provider = Branding.provider(text) {
@@ -269,20 +280,23 @@ public struct ConsentTheme: Equatable, Sendable {
         } else if let mark = string(dictionary[InfoPlistKey.brandingMark]), case .custom(let name, _) = theme.branding {
             theme.branding = .custom(name: name, markImageName: mark)
         }
-        if let flag = dictionary[InfoPlistKey.branding] as? Bool { theme.showsBranding = flag }
-        else if let text = string(dictionary[InfoPlistKey.branding])?.lowercased() {
-            switch text {
-            case "true", "1", "yes": theme.showsBranding = true
-            case "false", "0", "no": theme.showsBranding = false
-            default: break
-            }
-        }
+        if let flag = flag(dictionary[InfoPlistKey.branding]) { theme.showsBranding = flag }
         return theme
     }
 
     private func string(_ value: Any?) -> String? {
         guard let text = (value as? String)?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty else { return nil }
         return text
+    }
+
+    /// A plist Boolean, or the spellings a hand-typed value takes. Anything else is unreadable.
+    private func flag(_ value: Any?) -> Bool? {
+        if let flag = value as? Bool { return flag }
+        switch string(value)?.lowercased() {
+        case "true", "1", "yes": return true
+        case "false", "0", "no": return false
+        default: return nil
+        }
     }
 
     /// ``current`` with the bundle's `Info.plist` values applied over it.

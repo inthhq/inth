@@ -113,3 +113,35 @@ final class ThemeTests: XCTestCase {
         XCTAssertFalse(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).showsBranding)
     }
 }
+
+final class IdentityTests: XCTestCase {
+    func testBrandDefaultsToTheHostAppAndCanBeHidden() {
+        XCTAssertFalse(ConsentTheme.c15t.brand.isHidden)
+        XCTAssertNil(ConsentTheme.c15t.brand.name)
+        XCTAssertNil(ConsentTheme.c15t.brand.markImageName)
+        XCTAssertTrue(ConsentTheme.Brand.hidden.isHidden)
+        let hidden = ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: false])
+        XCTAssertTrue(hidden.brand.isHidden)
+        XCTAssertEqual(hidden.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: "yes"]).brand.isHidden, false)
+        XCTAssertEqual(hidden.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brand: "maybe"]).brand.isHidden, true)
+        let named = ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandName: "Pantry"])
+        XCTAssertEqual(named.brand, ConsentTheme.Brand(name: "Pantry"))
+    }
+
+    func testDisplayNamePrefersTheBundleDisplayName() {
+        XCTAssertEqual(HostIdentity.displayName(infoDictionary: ["CFBundleDisplayName": "Consent demo", "CFBundleName": "C15tConsentDemo"], fallback: "process"), "Consent demo")
+        XCTAssertEqual(HostIdentity.displayName(infoDictionary: ["CFBundleDisplayName": "  ", "CFBundleName": "C15tConsentDemo"], fallback: "process"), "C15tConsentDemo")
+        XCTAssertEqual(HostIdentity.displayName(infoDictionary: [:], fallback: "process"), "process")
+        XCTAssertEqual(HostIdentity.initial(of: "pantry"), "P")
+        XCTAssertEqual(HostIdentity.initial(of: "  "), "")
+    }
+
+    func testIconNamesComeFromTheCompiledCatalogueLargestFirst() {
+        let info: [String: Any] = [
+            "CFBundleIcons": ["CFBundlePrimaryIcon": ["CFBundleIconName": "AppIcon", "CFBundleIconFiles": ["AppIcon60x60", "AppIcon76x76"]]],
+            "CFBundleIcons~ipad": ["CFBundlePrimaryIcon": ["CFBundleIconFiles": ["AppIcon76x76", "AppIcon83.5x83.5"]]],
+        ]
+        XCTAssertEqual(HostIdentity.iconImageNames(infoDictionary: info), ["AppIcon", "AppIcon76x76", "AppIcon60x60", "AppIcon83.5x83.5"])
+        XCTAssertEqual(HostIdentity.iconImageNames(infoDictionary: [:]), [])
+    }
+}

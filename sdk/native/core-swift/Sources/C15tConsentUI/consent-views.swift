@@ -325,12 +325,11 @@ private struct FirstLayer: View {
     @Environment(\.consentTheme) private var theme
     @Environment(\.dynamicTypeSize) private var typeSize
     @AccessibilityFocusState private var titleFocused: Bool
-    @ScaledMetric(relativeTo: .largeTitle) private var markSize: CGFloat = 56
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                brandHeader
+                if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand)) }
                 if let reason = presenter.snapshot.promptRequirement.reason, reason.rawValue != "missing" {
                     InfoCallout {
                         Text(reason.rawValue == "expired" ? "Your earlier choice has expired, so we're asking again." : "How this app uses data has changed since your last choice, so we're asking again.")
@@ -351,30 +350,15 @@ private struct FirstLayer: View {
                 PrivacyLink(url: privacyPolicyURL)
                 if typeSize.isAccessibilitySize && theme.showsBranding { Branding() }
             }
-            .padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 16)
+            .padding(.horizontal, 24).padding(.top, 40).padding(.bottom, 16)
             .frame(maxWidth: contentWidth, alignment: .leading).frame(maxWidth: .infinity)
         }
         .scrollBounceBehavior(.basedOnSize)
+        // The first choice is a page with its own top edge; the bar only appears once settings push in.
+        .toolbar(.hidden, for: .navigationBar)
         .accessibilityIdentifier("c15t.first-layer")
         .safeAreaInset(edge: .bottom, spacing: 0) { DecisionFooter(presenter: presenter, first: true, path: $path) }
         .onAppear { titleFocused = true }
-    }
-
-    @ViewBuilder private var brandHeader: some View {
-        if theme.brand.markImageName != nil || theme.brand.name != nil {
-            VStack(alignment: .leading, spacing: 16) {
-                if let mark = theme.brand.markImageName {
-                    Image(mark).resizable().scaledToFill().frame(width: markSize, height: markSize)
-                        .clipShape(RoundedRectangle(cornerRadius: markSize * 0.24, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: markSize * 0.24, style: .continuous).strokeBorder(.black.opacity(0.08)))
-                        .accessibilityLabel(theme.brand.name ?? "").accessibilityHidden(theme.brand.name == nil)
-                }
-                if let name = theme.brand.name {
-                    Text(name.uppercased()).font(.footnote.weight(.semibold)).tracking(1.4)
-                        .foregroundStyle(theme.colors.accent.color).accessibilityIdentifier("c15t.first-layer.brand")
-                }
-            }
-        }
     }
 
     /// The purposes partners ask for, on a quieter surface so they inform without competing.
@@ -491,9 +475,9 @@ private struct DecisionFooter: View {
     private func decision(_ label: String, _ action: ConsentPresenter.Action) -> some View {
         let suffix: String = switch action { case .accept: "accept-all"; case .reject: "reject-all"; case .save: "save"; case .acknowledge: "acknowledge" }
         return Button { presenter.commit(action) } label: {
-            if presenter.showProgress { ProgressView().tint(action == .save ? theme.colors.onAccent.color : theme.colors.onDecision.color).accessibilityIdentifier("c15t.status.progress") }
+            if presenter.showProgress { ProgressView().tint(action == .save ? theme.colors.onAccent.color : first ? theme.colors.onDecision.color : theme.colors.text.color).accessibilityIdentifier("c15t.status.progress") }
             else { Text(label) }
-        }.buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : .decision))
+        }.buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : first ? .decision : .quiet))
             .accessibilityLabel(label).accessibilityIdentifier(prefix + "." + suffix)
     }
 }
@@ -536,7 +520,7 @@ private struct PreferencesList: View {
                     }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 4, trailing: 16))
                 }
                 Section { ForEach(presenter.offeredCategories, id: \.self) { category in CategoryRow(presenter: presenter, category: category) } }
-                    header: { SectionLabel(presenter.iab ? "This app" : "Data use") }
+                    header: { if presenter.iab { SectionLabel("This app") } }
                     .listRowBackground(surface)
                 if presenter.iab, let disclosure = presenter.disclosure {
                     Section { ForEach(disclosure.list.purposes.keys.sorted(), id: \.self) { id in PurposeRow(presenter: presenter, id: id) { path.append(.vendors(id)) } } }

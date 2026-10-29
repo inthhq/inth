@@ -145,3 +145,31 @@ class ThemeTest {
     }
 
 }
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+class IdentityTest {
+    private val context get() = ApplicationProvider.getApplicationContext<android.content.Context>()
+
+    @Test fun brandDefaultsToTheHostAppAndCanBeHidden() {
+        assertFalse(ConsentTheme.c15t.brand.hidden)
+        assertNull(ConsentTheme.c15t.brand.name)
+        assertTrue(ConsentTheme.Brand.Hidden.hidden)
+        val hidden = ConsentTheme.c15t.applying(Bundle().apply { putBoolean(ConsentTheme.Meta.META_BRAND, false) }, context)
+        assertTrue(hidden.brand.hidden)
+        assertFalse(hidden.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRAND, "yes") }, context).brand.hidden)
+        assertTrue(hidden.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRAND, "maybe") }, context).brand.hidden)
+        val named = ConsentTheme.c15t.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRAND_NAME, "Pantry") }, context)
+        assertEquals(ConsentTheme.Brand(name = "Pantry"), named.brand)
+    }
+
+    @Test fun identityComesFromThePackageUnlessTheBrandNamesIt() {
+        val resolved = HostIdentity.resolve(context, ConsentTheme.Brand())
+        assertTrue(resolved.name.isNotEmpty())
+        assertEquals("Pantry", HostIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry")).name)
+        val missing = HostIdentity.resolve(context, ConsentTheme.Brand(markResId = 1))
+        assertNull(missing.icon); assertNull(missing.markResId)
+        assertEquals("P", HostIdentity.initial("pantry"))
+        assertEquals("", HostIdentity.initial("  "))
+    }
+}
