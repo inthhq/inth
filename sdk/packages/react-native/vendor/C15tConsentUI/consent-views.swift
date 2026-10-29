@@ -68,10 +68,16 @@ private enum Destination: Hashable { case vendors(Int?), vendor(Int), providers 
 /// - Parameters:
 ///   - presenter: A host-owned presenter attached to its native engine.
 ///   - privacyPolicyURL: The app's required privacy policy, opened in the system browser.
+///   - onNoticeFrameChange: Optional notice bounds for UIKit hosts that pass touches through outside the notice.
 public extension View {
-    func c15tConsent(presenter: ConsentPresenter, privacyPolicyURL: URL) -> some View {
-        modifier(ConsentPresentationModifier(presenter: presenter, privacyPolicyURL: privacyPolicyURL))
+    func c15tConsent(presenter: ConsentPresenter, privacyPolicyURL: URL, onNoticeFrameChange: ((CGRect) -> Void)? = nil) -> some View {
+        modifier(ConsentPresentationModifier(presenter: presenter, privacyPolicyURL: privacyPolicyURL, onNoticeFrameChange: onNoticeFrameChange))
     }
+}
+
+private struct NoticeFrameKey: PreferenceKey {
+    static let defaultValue = CGRect.zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) { value = nextValue() }
 }
 
 private struct PresentationSession: Identifiable { let id: UUID }
@@ -79,6 +85,7 @@ private struct PresentationSession: Identifiable { let id: UUID }
 private struct ConsentPresentationModifier: ViewModifier {
     @ObservedObject var presenter: ConsentPresenter
     let privacyPolicyURL: URL
+    let onNoticeFrameChange: ((CGRect) -> Void)?
     func body(content: Content) -> some View {
         let sessionID = presenter.presentationID
         content
@@ -96,9 +103,10 @@ private struct ConsentPresentationModifier: ViewModifier {
                     }
                     .padding(20).background(.background, in: RoundedRectangle(cornerRadius: 20))
                     .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(ConsentColors.border))
-                    .padding(8).disabled(presenter.pending).accessibilityElement(children: .contain).accessibilityIdentifier("c15t.notice")
+                    .padding(8).background(GeometryReader { proxy in Color.clear.preference(key: NoticeFrameKey.self, value: proxy.frame(in: .global)) }).disabled(presenter.pending).accessibilityElement(children: .contain).accessibilityIdentifier("c15t.notice")
                 }
             }
+            .onPreferenceChange(NoticeFrameKey.self) { onNoticeFrameChange?($0) }
             .sheet(item: Binding(get: { presenter.presentationID.map { PresentationSession(id: $0) } }, set: { next in
                 if next == nil, presenter.presentationID == sessionID { presenter.requestClose() }
             })) { session in
@@ -305,7 +313,7 @@ private struct ConsentScreen: View {
         }
         .listStyle(.insetGrouped).navigationTitle("Privacy settings").navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier(presenter.iab ? "c15t.iab" : "c15t.prefs")
-        .safeAreaInset(edge: .bottom, spacing: 0) { if !presenter.snapshot.policyPending { footer(first: false) } }
+        .safeAreaInset(edge: .bottom, spacing: 0) { if !presenter.snapshot.policyPending || presenter.core.bundledPolicyInfo != nil { footer(first: false) } }
     }
 
     private func choiceBinding(_ key: WritableKeyPath<IABChoices, [Int]>, _ id: Int) -> Binding<Bool> {
@@ -326,7 +334,9 @@ private struct ConsentScreen: View {
                 Button("Load current settings") { presenter.loadDraft() }.buttonStyle(DecisionStyle()).accessibilityIdentifier("c15t.prefs.stale.reload")
             } else {
                 if let message = presenter.errorMessage { ErrorCallout(message: message, id: (first ? "c15t.first-layer" : "c15t.prefs") + ".error", retry: presenter.retry) }
-                if presenter.listUnavailable {
+                if presenter.snapshot.policyPending {
+                    decision("Reject all", .reject, first: first)
+                } else if presenter.listUnavailable {
                     Text("Our partner list is out of date. Try again to load it, or reject optional data use.").font(.subheadline)
                         .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
                     EqualDecisionLayout {

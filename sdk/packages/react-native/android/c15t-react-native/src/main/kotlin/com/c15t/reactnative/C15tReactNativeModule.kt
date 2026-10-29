@@ -218,7 +218,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			if (activity == null || activity.isFinishing || core == null) {
 				promise.reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active Activity and installed core"); return@runOnUiQueueThread
 			}
-			try { promise.resolve(ConsentHost.present(activity, core, preferences, privacyPolicyURL) { publish("onConsentPresenterOutcome", it) }) }
+			try { promise.resolve(ConsentHost.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish("onConsentPresenterOutcome", it) }) }
 			catch (error: Exception) { promise.reject("C15T_PRESENTER_UNAVAILABLE", error.message, error) }
 		}
 	}
@@ -236,7 +236,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 
 	/** Drop the core subscriptions when React tears this module down. */
 	override fun invalidate() {
-		context.runOnUiQueueThread { ConsentHost.detach() }
+		context.runOnUiQueueThread { ConsentHost.detach(this) }
 		snapshotSubscription?.close()
 		errorSubscription?.close()
 		snapshotSubscription = null

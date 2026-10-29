@@ -1,6 +1,6 @@
 name: Mobile app E2E
 
-# Kept separate from publication. Call explicitly until the app lane is required.
+# Native presenter journeys also run in full validation, separately from publication.
 on:
   workflow_dispatch:
   workflow_call:

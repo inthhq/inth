@@ -390,9 +390,9 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             transport: transport, storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
             initURL: initURL, domain: domain, consentCategories: consentCategories,
             vendors: vendors, overrides: overrides, gpc: gpc,
-            bundledPolicy: bundledPolicyResource.flatMap { name in
+            bundledPolicy: bundledPolicyResource.flatMap { name -> BundledPolicyResource? in
                 guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
-                return BundledPolicyResource(contentsOf: url, endpoint: endpoint)
+                return BundledPolicyResource(url: url, endpoint: endpoint)
             }
         )
     }

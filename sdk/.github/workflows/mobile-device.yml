@@ -196,7 +196,8 @@ jobs:
         working-directory: native/core-android
         run: |
           ./gradlew :c15t-core:publishAllPublicationsToStagingRepository \
-            :c15t-android:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
+            :c15t-android:publishAllPublicationsToStagingRepository \
+            :c15t-consent-ui:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
       - name: Assemble the Android apps against staged binaries
         if: matrix.kind == 'android'
         env:

@@ -6,6 +6,8 @@ import com.c15t.core.spi.*
 import com.c15t.core.store.C15tStore
 import com.c15t.core.transport.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
+import com.c15t.core.model.ConsentCategory
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -16,12 +18,16 @@ import java.util.concurrent.atomic.AtomicLong
 @OptIn(ExperimentalCoroutinesApi::class)
 class PresenterTest {
     private class Memory : KeyValueStore {
+        @Volatile var refuseNext = false
         private val values = java.util.concurrent.ConcurrentHashMap<String, String>()
         override fun read(key: String) = values[key]
         override fun write(key: String, value: String?) { if (value == null) values.remove(key) else values[key] = value }
-        override fun writeDurably(key: String, value: String?): Boolean { write(key, value); return true }
+        override fun writeDurably(key: String, value: String?): Boolean {
+            if (key == "com.c15t.snapshot" && refuseNext) { refuseNext = false; return false }
+            write(key, value); return true
+        }
     }
-    private fun boot(): Pair<C15tKernel, AtomicLong> {
+    private fun boot(store: Memory = Memory()): Pair<C15tKernel, AtomicLong> {
         val now = AtomicLong(System.currentTimeMillis())
         val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()
@@ -30,7 +36,7 @@ class PresenterTest {
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"), iabListMaxAgeMs = 60_000)
-        val core = C15tKernel(config, C15tStore(Memory()), clock = Clock { now.get() },
+        val core = C15tKernel(config, C15tStore(store), clock = Clock { now.get() },
             transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core to now
@@ -95,6 +101,62 @@ class PresenterTest {
             assertEquals("Off", p.partnerStatus(1))
         } finally { Dispatchers.resetMain() }
     }
+    @Test fun refusedWriteKeepsDraftAndRetryEmitsOneOutcome() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            val store = Memory()
+            val (core, _) = boot(store)
+            val p = ConsentPresenter(core, automaticPresentation = false)
+            p.presentPreferences()
+            val session = p.presentationID
+            var outcomes = 0
+            p.onOutcome = { outcomes++ }
+            p.edit { it.copy(purposeConsents = listOf(7), vendorConsents = listOf(1)) }
+            store.refuseNext = true
+            p.commit(ConsentPresenter.Action.SAVE)
+            await { !p.pending }
+            assertNotNull(p.errorCode)
+            assertEquals(session, p.presentationID)
+            assertEquals(listOf(7), p.choices.purposeConsents)
+            assertNull(core.iabConsent)
+            assertEquals(0, outcomes)
+            p.retry()
+            await { !p.pending }
+            assertNull(p.errorCode)
+            assertTrue(core.isIabAllowed(1, 7, IabLegalBasis.CONSENT))
+            assertEquals(1, outcomes)
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun openSettingsCanWithdrawAfterBundledPolicyExpires() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            val vector = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+                .map { File(it, "native/protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
+            val clock = AtomicLong(vector.getValue("now").jsonPrimitive.long)
+            val config = NativeConfig(vector.getValue("endpoint").jsonPrimitive.content,
+                bundledPolicy = vector.getValue("resource").toString(), consentCategories = ConsentCategory.entries)
+            val core = C15tKernel(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
+            core.bootstrap()
+            assertTrue(core.save(CommitIntent.All).ok)
+            val p = ConsentPresenter(core, automaticPresentation = false)
+            p.presentPreferences()
+            val session = p.presentationID
+            clock.addAndGet(604_800_000)
+            assertTrue(core.snapshot().policyPending)
+            p.loadDraft()
+            assertEquals(session, p.presentationID)
+            assertNotNull(core.bundledPolicyInfo)
+            p.commit(ConsentPresenter.Action.REJECT)
+            await { !p.pending }
+            assertNull(p.errorCode)
+            assertNull(p.presentationID)
+            assertTrue(core.snapshot().policyPending)
+            ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+            assertFalse(core.snapshot().explicitChoice!!.valueOf(ConsentCategory.MEASUREMENT)!!)
+        } finally { Dispatchers.resetMain() }
+    }
+
     private fun await(condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
         while (!condition() && System.nanoTime() < deadline) Thread.sleep(10)

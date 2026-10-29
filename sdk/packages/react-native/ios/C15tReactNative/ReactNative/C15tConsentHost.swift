@@ -11,6 +11,7 @@ import UIKit
 @MainActor
 final class C15tConsentHost {
     private var presenter: ConsentPresenter?
+    private var overlay: ConsentPassthroughView?
     private var controller: UIHostingController<AnyView>?
     private var sessionID: String?
     private var outcome: ((String) -> Void)?
@@ -39,18 +40,22 @@ final class C15tConsentHost {
         let notice = !preferences && snapshot.promptRequirement.kind == .notice
         presenter.onOutcome = { [weak self] result in
             guard let self, self.sessionID == id else { return }
-            let kind = result == .dismissed ? (snapshot.policyPending ? "unavailable" : "dismissed") : (notice ? "acknowledged" : "committed")
+            let kind = result == .dismissed ? (presenter.snapshot.policyPending ? "unavailable" : "dismissed") : (notice && !presenter.preferences ? "acknowledged" : "committed")
             let payload = self.encode(["sessionId": id, "kind": kind, "revision": core.snapshot().revision])
             self.detach()
             outcome(payload)
         }
         presenter.onAnnouncement = { UIAccessibility.post(notification: .announcement, argument: $0) }
-        let controller = UIHostingController(rootView: AnyView(Color.clear.c15tConsent(presenter: presenter, privacyPolicyURL: url)))
+        let overlay = ConsentPassthroughView(frame: parent.view.bounds)
+        overlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        let controller = UIHostingController(rootView: AnyView(Color.clear.c15tConsent(presenter: presenter, privacyPolicyURL: url, onNoticeFrameChange: { [weak overlay] in overlay?.noticeFrame = $0 })))
         controller.view.backgroundColor = .clear
         controller.view.frame = parent.view.bounds
         controller.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         parent.addChild(controller)
-        parent.view.addSubview(controller.view)
+        overlay.addSubview(controller.view)
+        parent.view.addSubview(overlay)
+        self.overlay = overlay
         controller.didMove(toParent: parent)
         self.controller = controller
         return encode(["sessionId": id, "status": "presented"])
@@ -58,7 +63,7 @@ final class C15tConsentHost {
 
     func close(sessionID: String) {
         guard self.sessionID == sessionID, let presenter, !presenter.pending else { return }
-        if let id = presenter.presentationID { presenter.requestClose(sessionID: id) }
+        presenter.requestClose()
     }
 
     func detach() {
@@ -69,6 +74,8 @@ final class C15tConsentHost {
         controller?.view.removeFromSuperview()
         controller?.removeFromParent()
         controller = nil
+        overlay?.removeFromSuperview()
+        overlay = nil
         presenter = nil
     }
 
@@ -76,4 +83,13 @@ final class C15tConsentHost {
         String(data: try! JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]), encoding: .utf8)!
     }
     enum HostError: Error { case invalidPrivacyPolicy, noCore, noHost }
+}
+
+/// The notice accepts touches only inside its measured native bounds.
+@MainActor
+private final class ConsentPassthroughView: UIView {
+    var noticeFrame = CGRect.zero
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        noticeFrame.contains(convert(point, to: nil))
+    }
 }

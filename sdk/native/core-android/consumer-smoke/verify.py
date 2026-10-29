@@ -15,7 +15,7 @@ import xml.etree.ElementTree as ElementTree
 
 def verify_staging(repository, version):
     """Validate binaries, source archives and API docs in a staged Maven version."""
-    for artifact, extension in [('c15t-core', 'jar'), ('c15t-android', 'aar')]:
+    for artifact, extension in [('c15t-core', 'jar'), ('c15t-android', 'aar'), ('c15t-consent-ui', 'aar')]:
         directory = repository / 'com/c15t' / artifact / version
         prefix = directory / f'{artifact}-{version}'
         for suffix in [f'.{extension}', '.pom', '.module', '-sources.jar', '-javadoc.jar']:
@@ -48,7 +48,7 @@ def verify_staging(repository, version):
                 entries = archive.namelist()
                 if 'META-INF/proguard/c15t-core.pro' not in entries:
                     raise ValueError('JVM artifact is missing its shrinker rules')
-            elif 'proguard.txt' not in archive.namelist():
+            elif artifact == 'c15t-android' and 'proguard.txt' not in archive.namelist():
                 raise ValueError('Android artifact is missing consumer shrinker rules')
             if extension == 'aar':
                 with zipfile.ZipFile(io.BytesIO(archive.read('classes.jar'))) as classes:

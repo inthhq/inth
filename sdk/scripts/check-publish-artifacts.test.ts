@@ -517,17 +517,20 @@ describe('vendored native sources', () => {
 		expect(scanPackedVendoredSources(packageDir, new Set())).toStrictEqual([]);
 	});
 
-	it.each(['C15tCore', 'C15tApple'])(
+	it.each(['C15tCore', 'C15tApple', 'C15tConsentUI'])(
 		'rejects a missing %s directory before prepack can recreate it',
 		(module) => {
 			const packageDir = vendoredPackage(`missing-${module}`);
 			makeTree(packageDir, {
 				'package.json': JSON.stringify({ name: '@c15t/react-native' }),
 			});
-			const appleSource = join(ROOT, 'native/core-swift/Sources/C15tApple');
-			cpSync(appleSource, join(packageDir, 'vendor/C15tApple'), {
-				recursive: true,
-			});
+			for (const sourceModule of ['C15tApple', 'C15tConsentUI']) {
+				cpSync(
+					join(ROOT, 'native/core-swift/Sources', sourceModule),
+					join(packageDir, 'vendor', sourceModule),
+					{ recursive: true }
+				);
+			}
 			rmSync(join(packageDir, 'vendor', module), { recursive: true });
 
 			const issues = scanVendoredNativeSources(packageDir);
@@ -536,7 +539,7 @@ describe('vendored native sources', () => {
 				issues.every(({ path }) => path.startsWith(`vendor/${module}/`))
 			).toBe(true);
 			expect(issues.map(({ path }) => path)).toContain(
-				`vendor/${module}/${module === 'C15tCore' ? 'ConsentCore.swift' : 'C15tApple.swift'}`
+				`vendor/${module}/${module === 'C15tCore' ? 'ConsentCore.swift' : module === 'C15tApple' ? 'C15tApple.swift' : 'consent-presenter.swift'}`
 			);
 		}
 	);
@@ -617,7 +620,7 @@ describe('vendored native sources', () => {
 				path.startsWith('vendor/C15tCore/')
 			);
 
-			expect(packedVendored).toEqual(
+			expect(packedVendored.sort()).toEqual(
 				vendoredCorePlan()
 					.map((file) => `vendor/C15tCore/${file.relativePath}`)
 					.sort()

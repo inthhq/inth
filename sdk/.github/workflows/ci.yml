@@ -421,9 +421,10 @@ jobs:
         run: |
           set -ex
           cd native/core-android
-          ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest \
+          ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest :c15t-consent-ui:testDebugUnitTest \
             :c15t-core:publishAllPublicationsToStagingRepository \
-            :c15t-android:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
+            :c15t-android:publishAllPublicationsToStagingRepository \
+            :c15t-consent-ui:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
           # The mobile harness invokes Gradle with --offline so a benchmark run never
           # waits on a download. Warm the bench source set here, or the Kotlin rows
           # report not-measured and the summary step fails the run.

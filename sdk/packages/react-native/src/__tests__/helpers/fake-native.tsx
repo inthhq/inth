@@ -178,6 +178,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 	const fake = {
 		addListener: vi.fn(),
 		bootstrapCalls: 0,
+		closeConsentPresenter: () => Promise.resolve(),
 		commit: vi.fn((intent: string) => {
 			fake.commitIntents.push(intent);
 
@@ -191,9 +192,6 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		failCommitWith: (raw: string) => {
 			commitReply = raw;
 		},
-        presentConsentPrompt: () => Promise.reject(new Error('Native presenter requires native core')),
-        presentPreferences: () => Promise.reject(new Error('Native presenter requires native core')),
-        closeConsentPresenter: () => Promise.resolve(),
 		getBootstrap: vi.fn(() => {
 			fake.bootstrapCalls += 1;
 
@@ -222,6 +220,10 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		}),
 		logoutCalls: 0,
 		overrideCalls: [] as string[],
+		presentConsentPrompt: () =>
+			Promise.reject(new Error('Native presenter requires native core')),
+		presentPreferences: () =>
+			Promise.reject(new Error('Native presenter requires native core')),
 		pushSnapshot: (next: ConsentSnapshot) => {
 			snapshot = next;
 

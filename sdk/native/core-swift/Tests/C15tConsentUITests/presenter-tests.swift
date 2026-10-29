@@ -161,9 +161,98 @@ final class PresenterTests: XCTestCase {
         return (core, clock)
     }
 
+    @MainActor func testExplicitHostKeepsDraftAndIgnoresObsoleteClose() async throws {
+        let core = try await boot(InMemoryStore())
+        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        XCTAssertNil(presenter.presentationID)
+        presenter.presentPrompt()
+        let prompt = try XCTUnwrap(presenter.presentationID)
+        presenter.presentPreferences()
+        XCTAssertEqual(presenter.presentationID, prompt)
+        presenter.requestClose(sessionID: prompt)
+        XCTAssertNil(presenter.presentationID)
+        XCTAssertNil(core.snapshot().explicitChoice)
+        presenter.presentPreferences()
+        let settings = try XCTUnwrap(presenter.presentationID)
+        presenter.setCategory(.measurement, true)
+        presenter.presentPrompt()
+        presenter.presentPreferences()
+        presenter.requestClose(sessionID: prompt)
+        XCTAssertEqual(presenter.presentationID, settings)
+        XCTAssertTrue(presenter.isDirty)
+        XCTAssertEqual(presenter.categories[.measurement], true)
+        presenter.requestClose(sessionID: settings)
+        XCTAssertTrue(presenter.confirmDiscard)
+        XCTAssertNotNil(presenter.presentationID)
+        XCTAssertNil(core.snapshot().explicitChoice)
+    }
+
+    @MainActor func testRefusedWriteKeepsDraftAndRetryEmitsOneOutcome() async throws {
+        let store = RefusingStore()
+        let core = try await boot(store)
+        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        presenter.presentPreferences()
+        let session = presenter.presentationID
+        var outcomes = 0
+        presenter.onOutcome = { _ in outcomes += 1 }
+        presenter.setCategory(.measurement, true)
+        store.refuseNext = true
+        presenter.commit(.save)
+        await settle(presenter)
+        XCTAssertNotNil(presenter.errorCode)
+        XCTAssertEqual(presenter.presentationID, session)
+        XCTAssertEqual(presenter.categories[.measurement], true)
+        XCTAssertFalse(core.snapshot().effectivePermissions.measurement)
+        XCTAssertEqual(outcomes, 0)
+        presenter.retry()
+        await settle(presenter)
+        XCTAssertNil(presenter.errorCode)
+        XCTAssertTrue(core.snapshot().effectivePermissions.measurement)
+        XCTAssertEqual(outcomes, 1)
+        XCTAssertEqual(core.pendingSaveCount(), 1)
+    }
+
+    @MainActor func testOpenSettingsCanWithdrawAfterBundledPolicyExpires() async throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let vector = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("protocol/bundled-policy/parity.json"))) as? [String: Any])
+        let resource = try JSONSerialization.data(withJSONObject: XCTUnwrap(vector["resource"]))
+        let clock = AdvancingClock(vector["now"] as! Int64)
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore(), bundledPolicy: BundledPolicyResource(data: resource, endpoint: vector["endpoint"] as! String), consentCategories: ConsentCategory.allCases, now: clock.read, initRetry: .disabled))
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        presenter.presentPreferences()
+        let session = presenter.presentationID
+        clock.advance(604_800_000)
+        XCTAssertTrue(core.snapshot().policyPending)
+        presenter.loadDraft()
+        XCTAssertEqual(presenter.presentationID, session)
+        XCTAssertNotNil(core.bundledPolicyInfo)
+        presenter.commit(.reject)
+        await settle(presenter)
+        XCTAssertNil(presenter.errorCode)
+        XCTAssertNil(presenter.presentationID)
+        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertFalse(core.snapshot().effectivePermissions.measurement)
+        XCTAssertTrue(core.snapshot().explicitChoice?.categories.values.allSatisfy { !$0.value } == true)
+        XCTAssertEqual(core.pendingSaveCount(), 1)
+    }
+
+    private final class RefusingStore: ConsentStore, @unchecked Sendable {
+        let base = InMemoryStore()
+        var refuseNext = false
+        func data(for key: String) -> Data? { base.data(for: key) }
+        func set(_ value: Data?, for key: String) -> Bool {
+            if key == StorageKey.snapshot && refuseNext { refuseNext = false; return false }
+            return base.set(value, for: key)
+        }
+    }
+
     private final class AdvancingClock: @unchecked Sendable {
         private let lock = NSLock()
-        private var value = Int64(Date().timeIntervalSince1970 * 1000)
+        private var value: Int64
+        init(_ value: Int64 = Int64(Date().timeIntervalSince1970 * 1000)) { self.value = value }
         func read() -> Int64 { lock.lock(); defer { lock.unlock() }; return value }
         func advance(_ delta: Int64) { lock.lock(); value += delta; lock.unlock() }
     }

@@ -1,5 +1,6 @@
 plugins {
     `maven-publish`
+    signing
     id("org.jetbrains.dokka")
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.compose)
@@ -9,7 +10,14 @@ android {
     compileSdk = 36
     defaultConfig { minSdk = 24 }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
-    kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
+    kotlin {
+        coreLibrariesVersion = "2.1.20"
+        compilerOptions {
+            apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+            languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
+    }
     buildFeatures { compose = true }
     publishing { singleVariant("release") { withSourcesJar() } }
     testOptions.unitTests.isReturnDefaultValues = true

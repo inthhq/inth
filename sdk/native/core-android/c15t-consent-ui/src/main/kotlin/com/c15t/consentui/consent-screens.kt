@@ -48,14 +48,14 @@ private val DarkColors = darkColorScheme(primary = Color(0xFF8CA2FF), onPrimary 
  * [privacyPolicyUrl] must point to the host's privacy policy. Links open the system browser.
  */
 @Composable
-fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String) {
+fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeModifier: Modifier = Modifier.fillMaxSize()) {
     val hostView = LocalView.current
     LaunchedEffect(presenter.announcementSequence) {
         if (presenter.announcementSequence > 0) hostView.announceForAccessibility(presenter.announcement)
     }
     MaterialTheme(colorScheme = if (isSystemInDarkTheme()) DarkColors else LightColors) {
         if (presenter.noticeVisible) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+            Box(noticeModifier, contentAlignment = Alignment.BottomCenter) {
                 Surface(Modifier.padding(12.dp).semantics { testTagsAsResourceId = true }.testTag("c15t.notice"), shape = RoundedCornerShape(24.dp), tonalElevation = 3.dp) {
                     Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Heading("Your privacy choices", "c15t.notice.title")
@@ -99,7 +99,7 @@ fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String) {
                                     Icon(if (page == "root") Icons.Outlined.Close else Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = if (page == "root") "Close" else "Back")
                                 }
                             }) },
-                            bottomBar = { if (page == "root" && !presenter.snapshot.policyPending) DecisionFooter(presenter, first = !presenter.preferences) },
+                            bottomBar = { if (page == "root" && (!presenter.snapshot.policyPending || presenter.core.bundledPolicyInfo != null)) DecisionFooter(presenter, first = !presenter.preferences) },
                         ) { padding ->
                             Box(Modifier.padding(padding)) {
                                 when {
@@ -123,7 +123,7 @@ fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String) {
                     }
                 }
                 if (presenter.confirmDiscard) AlertDialog(onDismissRequest = { presenter.confirmDiscard = false },
-                    modifier = Modifier.testTag("c15t.prefs.discard"), title = { Text("Discard changes?") }, text = { Text("Your changes won't be saved.") },
+                    modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("c15t.prefs.discard"), title = { Text("Discard changes?") }, text = { Text("Your changes won't be saved.") },
                     confirmButton = { TextButton(onClick = { presenter.discard() }, modifier = Modifier.testTag("c15t.prefs.discard.confirm")) { Text("Discard") } },
                     dismissButton = { TextButton(onClick = { presenter.confirmDiscard = false }, modifier = Modifier.testTag("c15t.prefs.discard.keep")) { Text("Keep editing") } })
             }
@@ -174,7 +174,9 @@ fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String) {
             if (p.stale) ActionButton("Load current settings", "c15t.prefs.stale.reload", !p.pending) { p.loadDraft() }
             else {
                 p.errorMessage?.let { ErrorCallout(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
-                if (p.listUnavailable) {
+                if (p.snapshot.policyPending) {
+                    ActionButton("Reject all", "$prefix.reject-all", !p.pending, first) { p.commit(ConsentPresenter.Action.REJECT) }
+                } else if (p.listUnavailable) {
                     Text("Our partner list is out of date. Try again to load it, or reject optional data use.", modifier = Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
                     EqualDecisions {
                         ActionButton("Reject all", "$prefix.reject-all", !p.pending, first) { p.commit(ConsentPresenter.Action.REJECT) }
