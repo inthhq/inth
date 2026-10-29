@@ -88,9 +88,9 @@ outlined. Dark mode flips the paper
 and ink; every colour carries a light and a dark value.
 
 The default header shows the selected provider's bundled logo, c15t or Inth,
-in a 56pt tile, with "YOUR BRAND HERE" as the tracked accent eyebrow. It does
-not read the app's display name or launcher icon. `ConsentTheme.Brand` replaces
-the name, mark, or both with explicit app branding. An explicit mark that cannot
+without a background or border, with "YOUR BRAND HERE" as the tracked accent
+eyebrow. It does not read the app's display name or launcher icon.
+`ConsentTheme.Brand` replaces the name, mark, or both with explicit app branding. An explicit mark that cannot
 be loaded shows the label's initial instead of silently substituting a logo.
 `Brand.hidden` (Swift) or `Brand.Hidden` (Kotlin) starts the page at the headline.
 Standing preferences show one category group with no heading outside IAB; IAB keeps its "This app",

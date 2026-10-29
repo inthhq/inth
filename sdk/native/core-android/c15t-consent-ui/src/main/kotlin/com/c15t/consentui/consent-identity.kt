@@ -65,7 +65,7 @@ internal data class HeaderIdentity(
                 modifier = tile.border(1.dp, Color.Black.copy(alpha = 0.08f), shape).testTag("c15t.first-layer.brand-logo.custom"))
             identity.provider != null -> {
                 val isInth = identity.provider == ConsentTheme.Branding.Inth
-                Box(tile.background(theme.colors.surfaceMuted.color()).border(1.dp, theme.colors.text.color().copy(alpha = 0.08f), shape)
+                Box(Modifier.size(56.dp)
                     .testTag("c15t.first-layer.brand-logo.${if (isInth) "inth" else "c15t"}"), contentAlignment = Alignment.Center) {
                     Icon(if (isInth) ProviderMarks.inth else ProviderMarks.c15t, contentDescription = null,
                         modifier = Modifier.size(40.dp), tint = theme.colors.text.color())

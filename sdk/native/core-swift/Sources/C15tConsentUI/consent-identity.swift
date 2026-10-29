@@ -43,13 +43,9 @@ struct IdentityHeader: View {
 
     @ViewBuilder private var tile: some View {
         if let provider = identity.provider {
-            ZStack {
-                shape.fill(theme.colors.surfaceMuted.color)
-                ConsentProviderMark(branding: provider).fill(style: FillStyle(eoFill: true))
-                    .foregroundStyle(theme.colors.text.color).padding(markSize / 7)
-            }
-            .frame(width: markSize, height: markSize)
-            .overlay(shape.strokeBorder(theme.colors.textSecondary.color.opacity(0.16)))
+            ConsentProviderMark(branding: provider).fill(style: FillStyle(eoFill: true))
+                .foregroundStyle(theme.colors.text.color).padding(markSize / 7)
+                .frame(width: markSize, height: markSize)
         } else if let icon = identity.icon {
             Image(uiImage: icon).resizable().scaledToFill().frame(width: markSize, height: markSize)
                 .clipShape(shape).overlay(shape.strokeBorder(.black.opacity(0.08)))
