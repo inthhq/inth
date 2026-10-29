@@ -97,6 +97,22 @@ finishes. The spinner never replaces a label, so the person can still see which
 decision is being recorded. `ConsentPresenter.pendingAction` names that action
 for hosts that render their own controls.
 
+A refused durable write keeps the draft and shows one quiet row above the
+actions: a red glyph, the message in the text colour, and a Try again link in
+the accent. It is not a filled card, so it does not outrank the decisions it
+sits beside. The message names what failed, a save or a notice dismissal, and
+says nothing changed on this device; Try again repeats the same intent. The row
+stays while a retry is in flight, so nothing moves under the thumb, and clears
+only on success or a reload. The presenter announces the failure once. Past six
+tenths of the window the pinned footer scrolls, so a failure above three
+stacked buttons at the largest text size cannot push its own actions off a
+short screen.
+
+The Other ad partners page names the purposes Google's Additional Consent
+depends on by the names shown under Purposes, never by number, and says when
+they are off in the current draft, because the core then records every
+provider as off.
+
 Small text on tinted fills meets 4.5:1 in the stock theme. The On and Partly on
 partner tags set their text in the accent pulled 30% toward the text colour,
 derived from whatever accent and text a host supplies. The partner count inside

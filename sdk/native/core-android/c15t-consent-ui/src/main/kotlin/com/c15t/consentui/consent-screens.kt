@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -29,8 +30,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Search
@@ -40,6 +41,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
@@ -275,16 +277,25 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     }
 }
 
-@Composable private fun ErrorCallout(message: String, id: String, retry: () -> Unit) {
+/**
+ * A commit that did not reach durable storage. One red glyph carries the status; the message is
+ * ink and the retry is the same accent link as every other text action, so the row reads as one
+ * quiet line above the actions rather than a second, louder card competing with them. The
+ * presenter announces the failure, so the row is not also a live region.
+ */
+@Composable private fun FailureRow(message: String, id: String, retry: () -> Unit) {
     val theme = LocalConsentTheme.current
-    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = RoundedCornerShape(theme.calloutRadius),
-        modifier = Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Assertive }.testTag(id)) {
-        Column(Modifier.padding(12.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-            }
-            TextButton(onClick = retry, modifier = Modifier.testTag("$id.retry")) { Text("Try again", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold) }
+    // The glyph follows the font scale like the text beside it.
+    val glyph = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.lineHeight.toDp() }
+    Column(Modifier.fillMaxWidth().testTag(id)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The core icon set has no exclamation glyph; its filled Info turned over is one.
+            Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(glyph).rotate(180f))
+            Text(message, color = theme.colors.text.color(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        }
+        TextButton(onClick = retry, contentPadding = PaddingValues(horizontal = 4.dp),
+            modifier = Modifier.padding(start = glyph + 4.dp).defaultMinSize(minHeight = 48.dp).testTag("$id.retry")) {
+            Text("Try again", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = theme.colors.accent.color())
         }
     }
 }
@@ -305,7 +316,11 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     HorizontalDivider(modifier, color = LocalConsentTheme.current.colors.text.color().copy(alpha = 0.1f))
 }
 
-/** Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled. */
+/**
+ * Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled.
+ * Past six tenths of the window the footer scrolls, so at the largest font scale a failure row
+ * above three stacked buttons cannot push its own actions off a short screen.
+ */
 @Composable private fun DecisionFooter(p: ConsentPresenter, first: Boolean) {
     val theme = LocalConsentTheme.current
     val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
@@ -315,12 +330,14 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     Surface(color = theme.colors.canvas.color()) {
         Column(Modifier.fillMaxWidth()) {
             Hairline()
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-                Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp),
+            BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+                // The row's arrival eases the actions down to make room instead of jumping them under the thumb.
+                Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().heightIn(max = maxHeight * 0.6f)
+                    .verticalScroll(rememberScrollState()).testTag("c15t.footer").animateContentSize().padding(horizontal = 24.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (p.stale) ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
                     else {
-                        p.errorMessage?.let { ErrorCallout(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
+                        p.errorMessage?.let { FailureRow(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
                         val twin = if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
                         if (p.snapshot.policyPending) {
                             ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
@@ -436,7 +453,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
                 ConsentButton("Privacy settings", "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
             }
             PolicyLink(privacyPolicyUrl)
-            presenter.errorMessage?.let { ErrorCallout(it, "c15t.notice.error", presenter::retry) }
+            presenter.errorMessage?.let { FailureRow(it, "c15t.notice.error", presenter::retry) }
         }
     }
 }
@@ -758,7 +775,7 @@ private fun String.searchKey() = Normalizer.normalize(this, Normalizer.Form.NFD)
     Column(Modifier.fillMaxSize().testTag("c15t.ac")) {
         SearchField(search, { search = it }, "Search other partners", "c15t.ac.search")
         LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
-            item { Body("These partners work with Google but aren't in the IAB list. They only use your data if you allow it. Purposes 1, 3 and 4 must also be on.", Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) }
+            item { Body(providerIntro(p), Modifier.padding(horizontal = 16.dp, vertical = 8.dp).testTag("c15t.ac.intro")) }
             if (providers.isEmpty()) item { Body("No partners match \"$search\".", Modifier.padding(16.dp).testTag("c15t.ac.empty")) }
             group(providers.size, key = { providers[it].id }) { index ->
                 val provider = providers[index]
@@ -769,4 +786,13 @@ private fun String.searchKey() = Normalizer.normalize(this, Normalizer.Form.NFD)
             }
         }
     }
+}
+
+/** The prerequisite purposes by the names the person saw one page back, never by number. */
+private fun providerIntro(p: ConsentPresenter): String {
+    val names = p.providerPrerequisiteNames
+    val purposes = if (names.size == 3) "these purposes are also on: ${names[0]}, ${names[1]}, and ${names[2]}"
+        else "the purposes for storing information on your device and personalised advertising are also on"
+    val gate = if (p.providerPrerequisitesMet) "" else " Those purposes are off right now, so these partners stay off until you turn them on under Purposes."
+    return "These partners work with Google but aren't in the IAB list. They only use your data if you allow it, and only while $purposes.$gate"
 }

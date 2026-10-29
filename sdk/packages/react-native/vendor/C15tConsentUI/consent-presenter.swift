@@ -103,12 +103,22 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         }
     }
     public var offeredCategories: [ConsentCategory] { snapshot.consentCategories ?? [.necessary] }
+    /// What the last refused commit means for the person; the retry is offered beside it. It stays
+    /// set while a retry is in flight, so the footer does not reflow under the thumb, and clears
+    /// only on success or a reload.
     public var errorMessage: String? {
         guard let errorCode else { return nil }
-        return errorCode == "invalid-action-time"
-            ? "Couldn't save because this device's date and time look wrong. Fix them in Settings, then try again."
-            : "Couldn't save your choices. Nothing changed on this device."
+        if errorCode == "invalid-action-time" {
+            return "Couldn't save because this device's date and time look wrong. Fix them in Settings first."
+        }
+        if case .acknowledge = lastIntent { return "Couldn't dismiss this notice. Nothing changed on this device." }
+        return "Couldn't save your choices. Nothing changed on this device."
     }
+    /// Google's Additional Consent only takes effect while TCF purposes 1, 3 and 4 are consented;
+    /// the core records every provider as off otherwise. The provider page says so in those
+    /// purposes' own names, which is how the person saw them one page back.
+    public var providerPrerequisitesMet: Bool { Set([1, 3, 4]).isSubset(of: Set(choices.purposeConsents)) }
+    public var providerPrerequisiteNames: [String] { [1, 3, 4].compactMap { disclosure?.list.purposes[$0]?.name } }
 
     /// Open standing privacy settings. A pending action keeps its original presentation.
     public func presentPreferences() {
@@ -223,7 +233,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         pending = true
         pendingAction = action
         showProgress = false
-        errorCode = nil
         lastIntent = action
         Task { [weak self] in
             try? await Task.sleep(for: .milliseconds(400))
@@ -248,6 +257,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             guard presentationID == session else { return }
             snapshot = authority.snapshot()
             if outcome.0 {
+                errorCode = nil
                 suppressedPrompt = promptKey
                 presentationID = nil
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }

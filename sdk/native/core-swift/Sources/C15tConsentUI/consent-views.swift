@@ -8,7 +8,6 @@ import UIKit
 /// Status colours no theme overrides: a save failure and a stale draft look the same in every app.
 private enum StatusColors {
     static let error = ConsentThemeColor(light: 0xB42318, dark: 0xFF9C8F).color
-    static let errorBackground = ConsentThemeColor(light: 0xFBEAE7, dark: 0x3A1D1A).color
     static let info = ConsentThemeColor(light: 0x1F3A99, dark: 0xC4D0FF).color
     static let infoBackground = ConsentThemeColor(light: 0xE8ECFA, dark: 0x1E2440).color
 }
@@ -101,6 +100,15 @@ private enum Destination: Hashable { case vendors(Int?), vendor(Int), providers 
 
 /// Widest a consent column gets; wider screens centre it.
 private let contentWidth: CGFloat = 560
+
+private struct ConsentWindowHeightKey: EnvironmentKey { static let defaultValue: CGFloat = 0 }
+private extension EnvironmentValues {
+    /// Height of the consent window, so the pinned footer can cap itself to a share of it.
+    var consentWindowHeight: CGFloat {
+        get { self[ConsentWindowHeightKey.self] }
+        set { self[ConsentWindowHeightKey.self] = newValue }
+    }
+}
 
 /// Add native automatic prompting and standing settings to a SwiftUI root.
 /// - Parameters:
@@ -201,7 +209,7 @@ private struct NoticeCard: View {
                 Button("Privacy settings") { presenter.presentPreferences() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.notice.settings")
             }
             PrivacyLink(url: privacyPolicyURL)
-            if let message = presenter.errorMessage { ErrorCallout(message: message, id: "c15t.notice.error", retry: presenter.retry) }
+            if let message = presenter.errorMessage { FailureRow(message: message, id: "c15t.notice.error", retry: presenter.retry) }
         }
         .padding(20).frame(maxWidth: contentWidth)
         .background(theme.colors.surface.color, in: shape)
@@ -219,19 +227,24 @@ private struct PrivacyLink: View {
     }
 }
 
-private struct ErrorCallout: View {
+/// A commit that did not reach durable storage. One red glyph carries the status; the message
+/// is ink and the retry is the same accent link as every other text action, so the row reads as
+/// one quiet line above the actions rather than a second, louder card competing with them.
+/// The presenter announces the failure, so the row itself stays silent.
+private struct FailureRow: View {
     let message: String
     let id: String
     let retry: () -> Void
     @Environment(\.consentTheme) private var theme
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Label(message, systemImage: "exclamationmark.circle").fixedSize(horizontal: false, vertical: true).accessibilityIdentifier(id)
-            Button("Try again", action: retry).buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold), color: StatusColors.error)).accessibilityIdentifier(id + ".retry")
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "exclamationmark.circle.fill").foregroundStyle(StatusColors.error).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(message).foregroundStyle(theme.colors.text.color).fixedSize(horizontal: false, vertical: true).accessibilityIdentifier(id)
+                Button("Try again", action: retry).buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold))).accessibilityIdentifier(id + ".retry")
+            }
         }
-        .font(.subheadline).foregroundStyle(StatusColors.error).padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(StatusColors.errorBackground, in: RoundedRectangle(cornerRadius: theme.calloutRadius, style: .continuous))
+        .font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -263,19 +276,22 @@ private struct ConsentScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         NavigationStack(path: $path) {
-            ZStack {
-                theme.colors.canvas.color.ignoresSafeArea()
-                if presenter.preferences {
-                    PreferencesList(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
-                        .transition(reduceMotion ? .opacity : .move(edge: .trailing))
-                } else {
-                    FirstLayer(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
-                        .transition(reduceMotion ? .opacity : .asymmetric(
-                            insertion: .move(edge: .leading).combined(with: .opacity),
-                            removal: .move(edge: .leading).combined(with: .opacity)))
+            GeometryReader { window in
+                ZStack {
+                    theme.colors.canvas.color.ignoresSafeArea()
+                    if presenter.preferences {
+                        PreferencesList(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
+                            .transition(reduceMotion ? .opacity : .move(edge: .trailing))
+                    } else {
+                        FirstLayer(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
+                            .transition(reduceMotion ? .opacity : .asymmetric(
+                                insertion: .move(edge: .leading).combined(with: .opacity),
+                                removal: .move(edge: .leading).combined(with: .opacity)))
+                    }
                 }
+                .animation(.easeOut(duration: 0.28), value: presenter.preferences)
+                .environment(\.consentWindowHeight, window.size.height)
             }
-            .animation(.easeOut(duration: 0.28), value: presenter.preferences)
             .toolbar {
                 if presenter.preferences {
                     ToolbarItem(placement: .cancellationAction) {
@@ -468,20 +484,40 @@ private struct Branding: View {
 }
 
 /// Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled.
+/// Past six tenths of the window the footer scrolls, so at the largest text sizes a failure row
+/// above three stacked buttons cannot push its own actions off a short screen.
 private struct DecisionFooter: View {
     @ObservedObject var presenter: ConsentPresenter
     let first: Bool
     @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.consentWindowHeight) private var windowHeight
+    @State private var contentHeight: CGFloat = 0
     private var prefix: String { first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs" }
 
     var body: some View {
+        let cap = windowHeight * 0.6
+        Group {
+            if cap > 0, contentHeight > cap {
+                ScrollView { actions }.scrollBounceBehavior(.basedOnSize).frame(height: cap).accessibilityIdentifier("c15t.footer")
+            } else {
+                actions
+            }
+        }
+        .frame(maxWidth: contentWidth).frame(maxWidth: .infinity)
+        .background(theme.colors.canvas.color.ignoresSafeArea())
+        .overlay(alignment: .top) { Hairline() }
+        .disabled(presenter.pending)
+    }
+
+    private var actions: some View {
         VStack(spacing: 12) {
             if presenter.stale {
                 Button("Load current settings") { presenter.loadDraft() }.buttonStyle(ConsentButtonStyle(variant: .accent)).accessibilityIdentifier("c15t.prefs.stale.reload")
             } else {
-                if let message = presenter.errorMessage { ErrorCallout(message: message, id: (first ? "c15t.first-layer" : "c15t.prefs") + ".error", retry: presenter.retry) }
+                if let message = presenter.errorMessage { FailureRow(message: message, id: (first ? "c15t.first-layer" : "c15t.prefs") + ".error", retry: presenter.retry) }
                 if presenter.snapshot.policyPending {
                     decision("Reject all", .reject)
                 } else if presenter.listUnavailable {
@@ -507,10 +543,9 @@ private struct DecisionFooter: View {
             }
         }
         .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 8)
-        .frame(maxWidth: contentWidth).frame(maxWidth: .infinity)
-        .background(theme.colors.canvas.color.ignoresSafeArea())
-        .overlay(alignment: .top) { Hairline() }
-        .disabled(presenter.pending)
+        // The row fades in and the actions ease down to make room instead of jumping under the thumb.
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: presenter.errorCode)
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { contentHeight = $0 }
     }
 
     /// Labels stay put while a commit runs: the pressed action shows progress beside its own
@@ -940,12 +975,20 @@ private struct ProviderList: View {
     @ObservedObject var presenter: ConsentPresenter
     @State private var search = ""
     @Environment(\.consentTheme) private var theme
+    /// The prerequisite purposes by the names the person saw one page back, never by number.
+    private var intro: String {
+        let names = presenter.providerPrerequisiteNames
+        let purposes = names.count == 3 ? "these purposes are also on: \(names[0]), \(names[1]), and \(names[2])"
+            : "the purposes for storing information on your device and personalised advertising are also on"
+        let gate = presenter.providerPrerequisitesMet ? "" : " Those purposes are off right now, so these partners stay off until you turn them on under Purposes."
+        return "These partners work with Google but aren't in the IAB list. They only use your data if you allow it, and only while \(purposes).\(gate)"
+    }
     var body: some View {
         List {
             Section {
                 SearchField(placeholder: "Search other partners", text: $search, id: "c15t.ac.search")
             } footer: {
-                Text("These partners work with Google but aren't in the IAB list. They only use your data if you allow it. Purposes 1, 3 and 4 must also be on.")
+                Text(intro).accessibilityIdentifier("c15t.ac.intro")
             }.listRowBackground(theme.colors.surface.color)
             let providers = (presenter.disclosure?.adTechProviders ?? []).filter { search.isEmpty || $0.name.localizedStandardContains(search) }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             Section {

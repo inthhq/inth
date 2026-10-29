@@ -59,10 +59,25 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         IabVendorSelectionStatus.ON -> "On"
     }
     val offeredCategories get() = snapshot.consentCategories?.mapNotNull(ConsentCategory::fromWireName) ?: listOf(ConsentCategory.NECESSARY)
+    /**
+     * What the last refused commit means for the person; the retry is offered beside it. Stays set
+     * while a retry is in flight, so the footer does not reflow under the thumb, and clears only on
+     * success or a reload.
+     */
     val errorMessage get() = errorCode?.let {
-        if (it == "invalid-action-time") "Couldn't save because this device's date and time look wrong. Fix them in Settings, then try again."
-        else "Couldn't save your choices. Nothing changed on this device."
+        when {
+            it == "invalid-action-time" -> "Couldn't save because this device's date and time look wrong. Fix them in Settings first."
+            lastAction == Action.ACKNOWLEDGE -> "Couldn't dismiss this notice. Nothing changed on this device."
+            else -> "Couldn't save your choices. Nothing changed on this device."
+        }
     }
+    /**
+     * Google's Additional Consent only takes effect while TCF purposes 1, 3 and 4 are consented; the
+     * core records every provider as off otherwise. The provider page says so in those purposes' own
+     * names, which is how the person saw them one page back.
+     */
+    val providerPrerequisitesMet get() = choices.purposeConsents.containsAll(listOf(1, 3, 4))
+    val providerPrerequisiteNames get() = listOf(1, 3, 4).mapNotNull { disclosure?.list?.purposes?.get(it)?.name }
     private fun receive(next: ConsentSnapshot) {
         if (next.revision < snapshot.revision) return
         val wasPending = snapshot.policyPending
@@ -130,7 +145,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         val categoryDraft = categories.toMap()
         val choiceDraft = choices
         val isIab = iab
-        pending = true; pendingAction = action; showProgress = false; errorCode = null; lastAction = action
+        pending = true; pendingAction = action; showProgress = false; lastAction = action
         viewModelScope.launch { delay(400); if (pending && presentationID == session) showProgress = true }
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
@@ -149,7 +164,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
             if (presentationID != session) return@launch
             snapshot = core.snapshot()
             if (result.first) {
-                suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
             } else {
                 errorCode = result.second ?: "save-rejected"; stale = errorCode == "concurrent-change"
                 announcement = if (stale) "Settings changed while you were editing" else errorMessage.orEmpty()
