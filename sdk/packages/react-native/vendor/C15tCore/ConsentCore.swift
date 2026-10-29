@@ -1761,6 +1761,17 @@ public final class ConsentCore: @unchecked Sendable {
         defer { mutation.release() }
         lock.withLock {
             let nowMs = (config?.now ?? Self.wallClock)()
+            let incomingPolicy = PolicyWireReader.read(response.policyResolution)
+            var acceptsCategoryReceipts = config?.iab == nil
+            if case let .resolved(resolved) = incomingPolicy {
+                self.resolvedPolicy = resolved
+                // Retire the previous IAB category projection before merging
+                // receipts for a non-IAB policy.
+                if resolved.policy.model != .iab {
+                    validateIABLocked()
+                    acceptsCategoryReceipts = true
+                }
+            }
 
             if let detected = response.resolvedPrivacySignals?.gpc {
                 detectedGPC = detected
@@ -1823,13 +1834,12 @@ public final class ConsentCore: @unchecked Sendable {
             // Server-mapped receipts merge in per category, newest wins. A local
             // receipt that has not reached the backend yet is newer than anything
             // the server can say about it, and must survive the round trip.
-            if config?.iab == nil, let records = response.records {
+            if acceptsCategoryReceipts, let records = response.records {
                 draft.explicitChoice = merge(records: records)
             }
 
-            switch PolicyWireReader.read(response.policyResolution) {
+            switch incomingPolicy {
             case let .resolved(resolved):
-                self.resolvedPolicy = resolved
                 policyWire = response.policyResolution
                 draft.policyPending = false
                 // `ready` means the core has been told, not that a file was there to

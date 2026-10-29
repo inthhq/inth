@@ -94,6 +94,13 @@ an IAB commit. The matched resolution retains the policy's `iab` model in both
 cases. The existing bus still projects only policy version and applicability;
 ENG-510 must publish the complete committed authority.
 
+Swift still merges server category and notice receipts when an app configures
+IAB but the incoming policy resolves to a non-IAB model. The newest confirmation
+wins per category. When leaving native IAB, the old category projection is cleared
+before this merge. Under a native IAB policy, server category receipts cannot
+create or replace native authority. An unreadable policy imports no server
+receipts while native IAB is configured.
+
 Layout
 ------
 
