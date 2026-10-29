@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
@@ -52,10 +53,15 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -68,6 +74,9 @@ import com.c15t.core.tc.*
 import java.text.Collator
 import java.text.Normalizer
 import java.util.Locale
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 /** Widest a consent column gets; wider screens centre it. */
 private val ContentWidth = 560.dp
@@ -279,23 +288,46 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 
 /**
  * A commit that did not reach durable storage. One red glyph carries the status; the message is
- * ink and the retry is the same accent link as every other text action, so the row reads as one
- * quiet line above the actions rather than a second, louder card competing with them. The
- * presenter announces the failure, so the row is not also a live region.
+ * ink and Try again follows it in the same text run, in the accent, wrapping like any other word
+ * instead of taking a row of its own. The text reports where the link landed, so an invisible
+ * 48dp control sits over exactly that span: the paragraph never retries, the link always does,
+ * and TalkBack meets the message and the button as two nodes. The presenter announces the
+ * failure, so the row is not also a live region.
  */
-@Composable private fun FailureRow(message: String, id: String, retry: () -> Unit) {
+@Composable private fun FailureRow(message: String, id: String, enabled: Boolean, retry: () -> Unit) {
     val theme = LocalConsentTheme.current
+    val density = LocalDensity.current
+    val style = MaterialTheme.typography.bodyMedium
     // The glyph follows the font scale like the text beside it.
-    val glyph = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.lineHeight.toDp() }
-    Column(Modifier.fillMaxWidth().testTag(id)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            // The core icon set has no exclamation glyph; its filled Info turned over is one.
-            Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(glyph).rotate(180f))
-            Text(message, color = theme.colors.text.color(), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        }
-        TextButton(onClick = retry, contentPadding = PaddingValues(horizontal = 4.dp),
-            modifier = Modifier.padding(start = glyph + 4.dp).defaultMinSize(minHeight = 48.dp).testTag("$id.retry")) {
-            Text("Try again", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = theme.colors.accent.color())
+    val glyph = with(density) { style.lineHeight.toDp() }
+    // A no-break space keeps the label whole; it wraps as one word or not at all.
+    val link = "Try\u00A0again"
+    val accent = theme.colors.accent.color().copy(alpha = if (enabled) 1f else 0.5f)
+    val text = remember(message, accent) {
+        buildAnnotatedString { append(message); append(' '); withStyle(SpanStyle(color = accent, fontWeight = FontWeight.SemiBold)) { append(link) } }
+    }
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    // The 48dp hit area reaches 14dp past the line; the extra bottom padding keeps it out of the next action.
+    Row(Modifier.fillMaxWidth().padding(bottom = 4.dp).testTag(id), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // The core icon set has no exclamation glyph; its filled Info turned over is one.
+        Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(glyph).rotate(180f))
+        Box(Modifier.weight(1f)) {
+            Text(text, color = theme.colors.text.color(), style = style, onTextLayout = { layout = it },
+                modifier = Modifier.semantics { contentDescription = message })
+            layout?.let { result ->
+                val start = message.length + 1
+                val first = result.getBoundingBox(start)
+                val last = result.getBoundingBox(start + link.length - 1)
+                val span = Rect(min(first.left, last.left), min(first.top, last.top), max(first.right, last.right), max(first.bottom, last.bottom))
+                val floor = with(density) { 48.dp.toPx() }
+                val slop = with(density) { 8.dp.toPx() }
+                val width = max(floor, span.width + 2 * slop)
+                val height = max(floor, span.height)
+                Box(Modifier.offset { IntOffset((span.center.x - width / 2).roundToInt(), (span.center.y - height / 2).roundToInt()) }
+                    .size(with(density) { width.toDp() }, with(density) { height.toDp() })
+                    .clickable(enabled = enabled, role = Role.Button, onClick = retry)
+                    .semantics { contentDescription = "Try again" }.testTag("$id.retry"))
+            }
         }
     }
 }
@@ -337,7 +369,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (p.stale) ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
                     else {
-                        p.errorMessage?.let { FailureRow(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", p::retry) }
+                        p.errorMessage?.let { FailureRow(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", !p.pending, p::retry) }
                         val twin = if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
                         if (p.snapshot.policyPending) {
                             ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
@@ -453,7 +485,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
                 ConsentButton("Privacy settings", "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
             }
             PolicyLink(privacyPolicyUrl)
-            presenter.errorMessage?.let { FailureRow(it, "c15t.notice.error", presenter::retry) }
+            presenter.errorMessage?.let { FailureRow(it, "c15t.notice.error", !presenter.pending, presenter::retry) }
         }
     }
 }

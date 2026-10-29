@@ -52,11 +52,14 @@ public struct ConsentThemeColor: Equatable, Hashable, Sendable {
 
     #if canImport(SwiftUI) && canImport(UIKit)
     /// A dynamic colour that follows the trait collection.
-    public var color: Color {
+    public var color: Color { Color(uiColor: uiColor()) }
+
+    /// The same dynamic colour for UIKit, with `alpha` applied in each appearance.
+    func uiColor(alpha: CGFloat = 1) -> UIColor {
         let light = light, dark = dark
-        return Color(uiColor: UIColor { traits in
-            UIColor(rgb: traits.userInterfaceStyle == .dark ? dark : light)
-        })
+        return UIColor { traits in
+            UIColor(rgb: traits.userInterfaceStyle == .dark ? dark : light).withAlphaComponent(alpha)
+        }
     }
     #endif
 }

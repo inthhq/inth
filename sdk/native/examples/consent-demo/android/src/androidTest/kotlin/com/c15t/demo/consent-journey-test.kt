@@ -283,7 +283,7 @@ class ConsentJourneyTest {
         waitFor("c15t.status.unavailable.retry"); capture("android-policy-unavailable")
         launch("fresh-online-notice",fail = true)
         waitFor("c15t.notice.acknowledge").performClick()
-        waitFor("c15t.notice.error.retry"); compose.onNodeWithText("Couldn't dismiss this notice. Nothing changed on this device.").assertIsDisplayed()
+        waitFor("c15t.notice.error.retry"); compose.onNodeWithText("Couldn't dismiss this notice. Nothing changed on this device.", substring = true).assertIsDisplayed()
         compose.onNodeWithTag("c15t.notice.error.retry").performClick()
         compose.waitUntil(5000) { compose.onAllNodesWithTag("c15t.notice.acknowledge").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
@@ -300,7 +300,11 @@ class ConsentJourneyTest {
             waitFor("c15t.first-layer.customize").performClick()
             waitFor("c15t.prefs.save").performClick()
             waitFor("c15t.prefs.error.retry").assertIsDisplayed()
-            compose.onNodeWithText("Couldn't save your choices. Nothing changed on this device.").assertIsDisplayed()
+            compose.onNodeWithText("Couldn't save your choices. Nothing changed on this device.", substring = true).assertIsDisplayed()
+            // Try again follows the message in the same run; its 48dp target stops short of the first decision.
+            val inline = compose.onNodeWithTag("c15t.prefs.error.retry").fetchSemanticsNode().boundsInRoot
+            Assert.assertTrue(inline.height >= 48 * context.resources.displayMetrics.density - 1)
+            Assert.assertTrue(inline.bottom <= compose.onNodeWithTag("c15t.prefs.reject-all").fetchSemanticsNode().boundsInRoot.top + 1f)
             capture("android-save-error-dark")
             compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
             device.executeShellCommand("settings put system font_scale 2.0")
@@ -311,6 +315,7 @@ class ConsentJourneyTest {
             // The failure sits at the top of the footer, so its retry is in reach without scrolling.
             retry.assertIsDisplayed()
             Assert.assertTrue(retry.fetchSemanticsNode().boundsInRoot.height >= 48 * context.resources.displayMetrics.density - 1)
+            Assert.assertTrue(retry.fetchSemanticsNode().boundsInRoot.bottom <= compose.onNodeWithTag("c15t.prefs.reject-all").fetchSemanticsNode().boundsInRoot.top + 1f)
             capture("android-save-error-large")
             retry.performClick(); awaitClosed()
             state("fixture.state.explicit-choice", "recorded")

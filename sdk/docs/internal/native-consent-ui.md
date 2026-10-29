@@ -98,9 +98,11 @@ decision is being recorded. `ConsentPresenter.pendingAction` names that action
 for hosts that render their own controls.
 
 A refused durable write keeps the draft and shows one quiet row above the
-actions: a red glyph, the message in the text colour, and a Try again link in
-the accent. It is not a filled card, so it does not outrank the decisions it
-sits beside. The message names what failed, a save or a notice dismissal, and
+actions: a red glyph, the message in the text colour, and Try again in the
+accent at the end of the same sentence run, wrapping like any other word. The
+link is its own 44pt or 48dp control and its own accessibility element; the
+paragraph itself never retries. It is not a filled card, so it does not
+outrank the decisions it sits beside. The message names what failed, a save or a notice dismissal, and
 says nothing changed on this device; Try again repeats the same intent. The row
 stays while a retry is in flight, so nothing moves under the thumb, and clears
 only on success or a reload. The presenter announces the failure once. Past six

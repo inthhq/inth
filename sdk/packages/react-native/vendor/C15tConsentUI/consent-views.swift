@@ -228,23 +228,117 @@ private struct PrivacyLink: View {
 }
 
 /// A commit that did not reach durable storage. One red glyph carries the status; the message
-/// is ink and the retry is the same accent link as every other text action, so the row reads as
-/// one quiet line above the actions rather than a second, louder card competing with them.
-/// The presenter announces the failure, so the row itself stays silent.
+/// is ink and Try again follows it in the same text run, in the accent, wrapping like any other
+/// word instead of taking a row of its own. One text view draws both and reports where the link
+/// landed, so an invisible 44pt button sits over exactly that span: the paragraph never retries,
+/// the link always does, and VoiceOver meets the message and the button as two elements. The
+/// presenter announces the failure, so the row itself stays silent.
 private struct FailureRow: View {
     let message: String
     let id: String
     let retry: () -> Void
     @Environment(\.consentTheme) private var theme
+    @Environment(\.isEnabled) private var isEnabled
+    @State private var linkRect: CGRect = .zero
+    @State private var pressed = false
+    private static let link = "Try again"
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Image(systemName: "exclamationmark.circle.fill").foregroundStyle(StatusColors.error).accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(message).foregroundStyle(theme.colors.text.color).fixedSize(horizontal: false, vertical: true).accessibilityIdentifier(id)
-                Button("Try again", action: retry).buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold))).accessibilityIdentifier(id + ".retry")
-            }
+        let lineHeight = UIFont.preferredFont(forTextStyle: .subheadline).lineHeight
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.circle.fill").font(.subheadline).foregroundStyle(StatusColors.error)
+                .frame(height: lineHeight).accessibilityHidden(true)
+            InlineLinkText(message: message, link: Self.link, id: id, theme: theme, enabled: isEnabled, pressed: pressed) { linkRect = $0 }
+                .overlay(alignment: .topLeading) {
+                    if linkRect != .zero {
+                        // The hit area grows to 44pt around the span, never into the paragraph's sense: the slop
+                        // only reaches the space before the link and the spacing after the row.
+                        let size = CGSize(width: max(44, linkRect.width + 16), height: max(44, linkRect.height))
+                        Button(action: retry) { Color.clear.contentShape(Rectangle()) }
+                            .buttonStyle(PressReporter(pressed: $pressed))
+                            .frame(width: size.width, height: size.height)
+                            .offset(x: linkRect.midX - size.width / 2, y: linkRect.midY - size.height / 2)
+                            .accessibilityLabel(Self.link).accessibilityIdentifier(id + ".retry")
+                    }
+                }
         }
-        .font(.subheadline).frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Mirrors a button's pressed state into the text that draws its label.
+private struct PressReporter: ButtonStyle {
+    @Binding var pressed: Bool
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.onChange(of: configuration.isPressed) { pressed = $0 }
+    }
+}
+
+/// The failure message and its Try again link in one text run. UIKit lays the text out, so the
+/// link's frame comes from the same line breaks the person sees, at every Dynamic Type size and
+/// in any language. The view is one static-text element labelled with the message alone; the
+/// link is reachable only through the button laid over it.
+private struct InlineLinkText: UIViewRepresentable {
+    let message: String
+    let link: String
+    let id: String
+    let theme: ConsentTheme
+    let enabled: Bool
+    let pressed: Bool
+    let onLinkRect: (CGRect) -> Void
+
+    func makeUIView(context: Context) -> LinkTextView {
+        let view = LinkTextView(usingTextLayoutManager: false)
+        view.isEditable = false
+        view.isSelectable = false
+        view.isScrollEnabled = false
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .clear
+        view.textContainerInset = .zero
+        view.textContainer.lineFragmentPadding = 0
+        view.adjustsFontForContentSizeCategory = true
+        view.isAccessibilityElement = true
+        view.accessibilityTraits = .staticText
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return view
+    }
+
+    func updateUIView(_ view: LinkTextView, context: Context) {
+        let body = UIFont.preferredFont(forTextStyle: .subheadline)
+        let bold = UIFont(descriptor: body.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]]), size: 0)
+        // A no-break space keeps the label whole; it wraps as one word or not at all.
+        let label = link.replacingOccurrences(of: " ", with: "\u{00A0}")
+        let text = NSMutableAttributedString(string: message + " ", attributes: [.font: body, .foregroundColor: theme.colors.text.uiColor()])
+        text.append(NSAttributedString(string: label, attributes: [
+            .font: bold, .foregroundColor: theme.colors.accent.uiColor(alpha: pressed ? 0.6 : enabled ? 1 : 0.5)]))
+        view.attributedText = text
+        view.linkRange = NSRange(location: (message as NSString).length + 1, length: (label as NSString).length)
+        view.accessibilityLabel = message
+        view.accessibilityIdentifier = id
+        view.onLinkRect = onLinkRect
+        view.setNeedsLayout()
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: LinkTextView, context: Context) -> CGSize? {
+        let width = proposal.width ?? UIView.layoutFittingExpandedSize.width
+        let size = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        return CGSize(width: proposal.width ?? size.width, height: size.height)
+    }
+}
+
+private final class LinkTextView: UITextView {
+    var linkRange = NSRange(location: 0, length: 0)
+    var onLinkRect: ((CGRect) -> Void)?
+    private var reported = CGRect.zero
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard linkRange.length > 0, linkRange.location + linkRange.length <= textStorage.length else { return }
+        let glyphs = layoutManager.glyphRange(forCharacterRange: linkRange, actualCharacterRange: nil)
+        var rect = layoutManager.boundingRect(forGlyphRange: glyphs, in: textContainer)
+        rect.origin.x += textContainerInset.left
+        rect.origin.y += textContainerInset.top
+        guard rect != reported else { return }
+        reported = rect
+        DispatchQueue.main.async { [weak self] in self?.onLinkRect?(rect) }
     }
 }
 

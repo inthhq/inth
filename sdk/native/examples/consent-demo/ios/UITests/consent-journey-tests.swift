@@ -162,7 +162,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.notice.acknowledge").waitForExistence(timeout: 10))
         XCTAssertTrue(button("fixture.open-preferences").isHittable)
         button("c15t.notice.acknowledge").tap(); XCTAssertTrue(button("c15t.notice.error.retry").waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["c15t.notice.error"].label, "Couldn't dismiss this notice. Nothing changed on this device.")
+        XCTAssertEqual(app.descendants(matching: .any)["c15t.notice.error"].label, "Couldn't dismiss this notice. Nothing changed on this device.")
         button("c15t.notice.error.retry").tap(); XCTAssertFalse(button("c15t.notice.acknowledge").waitForExistence(timeout: 2))
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "none")
     }
@@ -262,7 +262,11 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()
         button("c15t.prefs.save").tap()
         XCTAssertTrue(button("c15t.prefs.error.retry").waitForExistence(timeout: 5))
-        XCTAssertEqual(app.staticTexts["c15t.prefs.error"].label, "Couldn't save your choices. Nothing changed on this device.")
+        XCTAssertEqual(app.descendants(matching: .any)["c15t.prefs.error"].label, "Couldn't save your choices. Nothing changed on this device.")
+        // Try again follows the message in the same run; its 44pt target stops short of the first decision.
+        let inline = button("c15t.prefs.error.retry")
+        XCTAssertGreaterThanOrEqual(inline.frame.height, 44)
+        XCTAssertLessThanOrEqual(inline.frame.maxY, button("c15t.prefs.reject-all").frame.minY + 0.5)
         capture("ios-save-error-dark")
         button("c15t.prefs.error.retry").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
@@ -286,6 +290,7 @@ final class ConsentJourneyTests: XCTestCase {
         }
         XCTAssertTrue(retry.isHittable)
         XCTAssertGreaterThanOrEqual(retry.frame.height, 44)
+        XCTAssertLessThanOrEqual(retry.frame.maxY, button("c15t.prefs.reject-all").frame.minY + 0.5)
         retry.tap()
         // The gate only closes on a durable commit; the host's state row is below the fold at this size.
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
