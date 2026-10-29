@@ -470,7 +470,8 @@ public final class ConsentCore: @unchecked Sendable {
     public func save(_ intent: CommitIntent, expectedRevision: Int? = nil) -> CommitResult {
         // Captured first: a save that took 40 ms to build a body must still report
         // the instant the subject acted.
-        var actionAt = (lock.withLock { config }?.now ?? Self.wallClock)()
+        let wallActionAt = (lock.withLock { config }?.now ?? Self.wallClock)()
+        var actionAt = wallActionAt
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
 
@@ -529,6 +530,13 @@ public final class ConsentCore: @unchecked Sendable {
                         message: "The previous action time cannot be advanced."))
                 }
                 actionAt = max(actionAt, previous + 1)
+            }
+            if resolved.policy.model == .iab,
+                wallActionAt < 0 || actionAt < 0 || actionAt - wallActionAt > 600_000
+            {
+                return .failure(CoreErrorInfo(
+                    code: "invalid-action-time",
+                    message: "The clock cannot represent a current, distinct IAB action time."))
             }
             if resolved.policy.model == .iab && (intent != .necessary || config?.iab != nil && currentSnapshot.iab?.gvl != nil) {
                 guard let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else {
@@ -1043,10 +1051,10 @@ public final class ConsentCore: @unchecked Sendable {
     ///   revision would hand each subscriber a snapshot older than the one it holds and
     ///   switch persistence off for the session, because ``persistEnvelope()`` refuses a
     ///   write that is not ahead of the last one.
-    /// - Leave no envelope behind. The deletion is the durable effect, so this is the one
-    ///   mutation that publishes without persisting. ``persistedRevision`` and
-    ///   ``restoredFromStore`` go with it: both answer "is consent on disk", and after a
-    ///   wipe the honest answer is no.
+    /// - Remove grants durably. Category-only state without an owed withdrawal is
+    ///   deleted. IAB authority or owed withdrawals require an atomic empty decision
+    ///   envelope retaining the action-time watermark and frozen withdrawal bodies.
+    ///   ``hasStoredSnapshot`` reports that retained envelope, not a consent grant.
     /// - Re-run init. A first launch does not sit at `policyPending` once the network
     ///   answers, and stopping at the baseline would leave the app there until the next
     ///   launch, with the subject withdrawn from everything and nothing asking them to
@@ -1058,9 +1066,8 @@ public final class ConsentCore: @unchecked Sendable {
     /// than the one its app is configured to evaluate.
     ///
     /// A save a delivery pass had already handed to the transport can still land after the
-    /// queue is dropped, and that pass finds its entry gone when it settles. Nothing here
-    /// waits for it. The entries still queued carry a decision the subject just withdrew,
-    /// and the one already on the wire was current when it was made.
+    /// queued grants are dropped. Nothing here waits for it. Frozen withdrawals remain
+    /// owed under their original owner; reset creates no new consent decision.
     public func reset() {
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
@@ -1231,8 +1238,8 @@ public final class ConsentCore: @unchecked Sendable {
             self.noticeDismissal = envelope?.noticeDismissal
             self.committedIAB = envelope?.iabConsent
             let watermark = envelope?.lastIABActionAt ?? envelope?.iabConsent?.actionAt
-            let now = config.now()
-            self.lastIABActionAt = watermark.flatMap { $0 >= 0 && now >= 0 && $0 - now <= 600_000 ? $0 : nil }
+            // A backward clock jump must not let a restart reuse an action time.
+            self.lastIABActionAt = watermark.flatMap { $0 >= 0 ? $0 : nil }
 
             if let wire = envelope?.policyResolution {
                 switch PolicyWireReader.read(wire) {
@@ -1564,18 +1571,24 @@ public final class ConsentCore: @unchecked Sendable {
                     draft.resolution = .pending; draft.policySnapshotToken = nil
                     draft.activeUI = .none; draft.promptRequirement = .none
                     draft.restrictions = [:]; draft.nextDeadline = nil
+                    draft.model = .optIn; draft.location = nil; draft.translations = nil
+                    draft.error = nil; draft.evaluatedAt = config.now()
+                    draft.consentCategories = decidedCategories(nil)
+                    draft.overrides = configuredOverrides
+                    draft.privacySignals = PrivacySignals(gpc: GpcSignal.derive(
+                        override: configuredOverrides.gpc, detected: detectedGPCSignal))
                 }
             }
             if !reset, let resolved = resolvedPolicy {
                 let e = PolicyEvaluator.evaluate(
                     resolved, choice: nil, noticeDismissal: nil,
                     gpcActive: gpcSignal.active, now: config.now(), choiceScope: choiceScopeLocked(resolved))
-                next = next.byApplying { draft in
-                    draft.effectivePermissions = resolved.policy.model == .iab ? .necessaryOnly : e.permissions
-                    draft.promptRequirement = e.promptRequirement
-                    draft.restrictions = e.restrictions; draft.nextDeadline = e.nextDeadline
-                    draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
-                }
+                var draft = ConsentSnapshot.Draft(current: next)
+                draft.effectivePermissions = resolved.policy.model == .iab ? .necessaryOnly : e.permissions
+                draft.promptRequirement = e.promptRequirement
+                draft.restrictions = e.restrictions; draft.nextDeadline = e.nextDeadline
+                draft.activeUI = e.promptRequirement.kind == .none ? ActiveUI.none : .banner
+                next = draft.build(revision: next.revision)
             }
             return StoredEnvelope(
                 snapshot: next, noticeDismissal: nil,
