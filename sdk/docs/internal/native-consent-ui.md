@@ -50,8 +50,10 @@ and Reject all call core intents. Save choices submits the displayed draft with
 its revision. UI callbacks report `saved` only after durable local success;
 backend delivery can remain pending. `dismissed` records no decision. Android
 Back closes only the SDK presenter and keeps the host activity in the foreground.
-The iOS first layer blocks interactive dismissal. Dirty preferences require an
-explicit discard. A pending action locks edits and navigation.
+The first layer is a full-screen page on both platforms; Customize pushes
+settings inside it and Back returns to the first layer. Standing preferences
+opened from the host are a large sheet on iOS with Cancel. Dirty preferences
+require an explicit discard. A pending action locks edits and navigation.
 
 A failed write keeps the draft open. A competing decision produces a stale-draft
 message and an action to load current settings. Necessary and restricted
@@ -67,6 +69,94 @@ Additional Consent partner search and choices, required privacy-policy links,
 notice acknowledgement and standing withdrawal. Accept and Reject share the
 same style and dimensions. Stock copy is English in this prototype.
 
+## Appearance
+
+The first choice is a full-screen page, not a sheet. It cannot be swiped away,
+so it does not look like something that can be. Customize pushes category and
+partner settings inside that page; Back returns to the first choice without
+recording anything. Standing settings opened later from the host's own Privacy
+entry are a large sheet on iOS and a full-screen window with Close on Android,
+because by then the app behind them belongs to the user.
+
+The stock appearance is warm paper (`#F8F4EE` light, `#171411` dark), ink text,
+a serif display headline, and the c15t blue only for links, switches and Save.
+Accept all and Reject all are twins: the same fill, size and weight, side by
+side when both labels fit and stacked at accessibility text sizes. Customize is
+outlined. Nothing else on the first layer is filled. Dark mode flips the paper
+and ink; every colour carries a light and a dark value.
+
+`ConsentTheme` (Swift, `C15tConsentUI`) and `com.c15t.consentui.ConsentTheme`
+(Kotlin) are the one customization surface. Each holds nine semantic colours
+(`canvas`, `surface`, `surfaceMuted`, `text`, `textSecondary`, `accent`,
+`onAccent`, `decision`, `onDecision`), the corner radius, the headline typeface
+(`serif`, `sansSerif`, `rounded` on Apple, or a bundled font), a brand name and
+mark, the headline and introduction copy, and whether the "Secured by c15t" line
+shows. Decision labels, category copy and every partner disclosure stay native
+and are not themeable: the theme cannot make Accept louder than Reject, hide a
+decision, or change what a choice means.
+
+Three ways to apply one, in increasing precedence:
+
+```swift
+// 1. Set once at launch; every presenter that does not pass a theme uses it.
+ConsentTheme.current = ConsentTheme(
+    colors: .c15t, cornerRadius: 10, headlineFont: .rounded,
+    brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
+    copy: ConsentTheme.Copy(headline: "Before you shop.", introduction: "Pantry uses data to remember your basket, measure what works and show offers you might like."))
+
+// 2. Pass one to the root modifier.
+content.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: PantryBrand.theme)
+```
+
+```kotlin
+// 1. Set once in Application.onCreate.
+ConsentTheme.current = ConsentTheme(
+    colors = ConsentTheme.Colors.c15t.copy(accent = ConsentThemeColor(0x009688, 0x4FD1C0)),
+    brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark))
+
+// 2. Pass one to the composable.
+C15tConsent(presenter, policyUrl, theme = PantryBrand.theme)
+```
+
+3. Declare values in the app binary. iOS reads `Info.plist` keys and Android reads
+application `<meta-data>`; both apply over `current`, so a build flavour can
+restyle an app without code. Colours are `#RRGGBB` or `#RRGGBB,#RRGGBB` (light,
+dark). Android also accepts colour, drawable and font resources.
+
+| Info.plist | Android meta-data | Value |
+| --- | --- | --- |
+| `com.c15t.consent.accent` | `com.c15t.consent.ACCENT` | colour |
+| `com.c15t.consent.onAccent` | `com.c15t.consent.ON_ACCENT` | colour |
+| `com.c15t.consent.canvas` | `com.c15t.consent.CANVAS` | colour |
+| `com.c15t.consent.surface` | `com.c15t.consent.SURFACE` | colour |
+| `com.c15t.consent.surfaceMuted` | `com.c15t.consent.SURFACE_MUTED` | colour |
+| `com.c15t.consent.text` | `com.c15t.consent.TEXT` | colour |
+| `com.c15t.consent.textSecondary` | `com.c15t.consent.TEXT_SECONDARY` | colour |
+| `com.c15t.consent.decision` | `com.c15t.consent.DECISION` | colour |
+| `com.c15t.consent.onDecision` | `com.c15t.consent.ON_DECISION` | colour |
+| `com.c15t.consent.cornerRadius` | `com.c15t.consent.CORNER_RADIUS` | points or dp |
+| `com.c15t.consent.headlineFont` | `com.c15t.consent.HEADLINE_FONT` | `serif`, `sans`, `rounded`, or a font |
+| `com.c15t.consent.brandName` | `com.c15t.consent.BRAND_NAME` | text |
+| `com.c15t.consent.brandMark` | `com.c15t.consent.BRAND_MARK` | asset name or drawable |
+| `com.c15t.consent.headline` | `com.c15t.consent.HEADLINE` | text |
+| `com.c15t.consent.introduction` | `com.c15t.consent.INTRODUCTION` | text |
+| `com.c15t.consent.branding` | `com.c15t.consent.BRANDING` | Boolean |
+
+React Native hosts get the same screens through the installed native presenters,
+so a bare app sets `ConsentTheme.current` in its `AppDelegate` or `Application`,
+or declares the keys above in `Info.plist` and `AndroidManifest.xml`. The Expo
+config plugin does not write these keys yet; an Expo app can set the iOS keys
+through `ios.infoPlist` in `app.json` and needs its own small config plugin for
+the Android meta-data. The JavaScript `theme` prop of the built-in React
+components only styles the fake-core demo surfaces and does not reach the native
+screens.
+
+The demo apps carry a sample brand, `PantryBrand`, behind the debug fixture
+switch `C15T_FIXTURE_THEME=brand` (an iOS launch environment value, an Android
+intent extra). It changes the accent, decision fill, radius, headline face, mark
+and copy, and the UI tests check that Accept and Reject stay the same size under
+it.
+
 ## Deterministic app tests
 
 Only debug builds accept `C15T_FIXTURE_SCENARIO`. iOS uses a launch environment
@@ -78,6 +168,7 @@ native core. It deliberately refuses save delivery and writes the latest
 request body to `last-save.json`. This is a controlled protocol peer, not proof
 of a successful hosted receipt.
 
+`C15T_FIXTURE_THEME=brand` applies the sample brand theme described under Appearance.
 `C15T_FIXTURE_RESET=1` clears only the selected scenario's test storage.
 `C15T_FIXTURE_OFFLINE=1` fails init while retaining that storage.
 `C15T_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial
