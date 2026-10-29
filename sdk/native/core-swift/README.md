@@ -93,3 +93,16 @@ never costs a device its identity.
 `C15tCore` resource bundle, and an app that links the kernel still merges it into its own
 `PrivacyInfo.xcprivacy`. The core never reads IDFV, ADID, or any other persistent hardware
 identifier: the subject id is a `sub_` identifier this package generates.
+
+## Native disclosure reads
+
+`iabPresentation()` captures a detached draft and the retained IAB disclosure together.
+Check its `canEdit` flag before offering editing or new grants. An expired list
+remains readable for partner details, but `openIABDraft()` on Swift or
+`openIabDraft()` on Kotlin returns no editable draft until authority is current.
+Saving still checks native policy, list age and revision.
+
+The native presenter preserves unsaved edits while a list refresh runs. If the
+revision changes, the person must load current settings before saving. Partner
+summaries describe consent and legitimate-interest selections as Off, Partly on
+or On. Use the core's gates to decide whether processing is allowed.

@@ -253,17 +253,18 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
-    /// Capture a native draft and its disclosure atomically. Nil means grants are unavailable.
+    /// Capture retained disclosure and a draft atomically. Check `canEdit` before offering grants.
     public func iabPresentation() -> IABPresentation? {
         lock.withLock {
             guard let configuration = config?.iab, resolvedPolicy?.policy.model == .iab,
-                  !currentSnapshot.policyPending, listIsUsableLocked(), let list = currentSnapshot.iab?.gvl,
-                  (bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false) || currentAdditionalConsentListLocked() != nil else { return nil }
+                  let list = currentSnapshot.iab?.gvl else { return nil }
+            let canEdit = !currentSnapshot.policyPending && listIsUsableLocked()
+                && ((bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false) || currentAdditionalConsentListLocked() != nil)
             let draft = IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
             let vendors = list.vendors.values.filter { $0.deletedDate?.isEmpty != false }
-            return IABPresentation(draft: draft, list: list,
+            return IABPresentation(canEdit: canEdit, draft: draft, list: list,
                 vendors: Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, configuration.disclosure(for: $0)) }),
-                adTechProviders: currentAdditionalConsentListLocked()?.providers)
+                adTechProviders: additionalConsentList?.providers)
         }
     }
 

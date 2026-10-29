@@ -86,6 +86,81 @@ final class PresenterTests: XCTestCase {
         XCTAssertNil(core.iabConsent())
     }
 
+    @MainActor func testRetryPreservesDirtyExpiredListDraftUntilExplicitReload() async throws {
+        let (core, clock) = try await bootIAB()
+        let presenter = ConsentPresenter(core: core)
+        presenter.customize()
+        presenter.edit(\.purposeConsents, id: 7, enabled: true)
+        let choices = presenter.choices
+        clock.advance(60_001)
+        XCTAssertTrue(presenter.listUnavailable)
+        presenter.refresh()
+        XCTAssertTrue(presenter.isDirty)
+        XCTAssertEqual(presenter.choices, choices)
+        await core.waitUntilIdle()
+        for _ in 0..<100 {
+            if !presenter.listUnavailable { break }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTAssertFalse(presenter.listUnavailable)
+        XCTAssertTrue(presenter.stale)
+        XCTAssertTrue(presenter.isDirty)
+        XCTAssertEqual(presenter.choices, choices)
+        presenter.loadDraft()
+        XCTAssertFalse(presenter.stale)
+        XCTAssertFalse(presenter.isDirty)
+    }
+
+    @MainActor func testExpiredListReopenKeepsReadablePartnersAndRefusesNewGrants() async throws {
+        let (core, clock) = try await bootIAB()
+        let vendors = try XCTUnwrap(core.iabPresentation()).vendors
+        clock.advance(60_001)
+        let presenter = ConsentPresenter(core: core)
+        presenter.presentPreferences()
+        XCTAssertEqual(presenter.disclosure?.vendors, vendors)
+        XCTAssertEqual(presenter.disclosure?.canEdit, false)
+        XCTAssertTrue(presenter.listUnavailable)
+        XCTAssertNil(core.openIABDraft())
+        XCTAssertNotEqual(core.save(.all).status, .committed)
+        XCTAssertFalse(core.snapshot().effectivePermissions.marketing)
+    }
+
+    @MainActor func testPartnerStatusIncludesSavedLIAndDistinguishesPartialSelection() async throws {
+        let (core, _) = try await bootIAB()
+        let presenter = ConsentPresenter(core: core)
+        presenter.customize()
+        XCTAssertEqual(presenter.partnerStatus(1), "Off")
+        presenter.editLI(purpose: true, id: 7, enabled: true)
+        presenter.editLI(purpose: false, id: 1, enabled: true)
+        presenter.commit(.save)
+        await settle(presenter)
+        XCTAssertNil(presenter.errorCode)
+        XCTAssertTrue(core.isIABAllowed(vendorId: 1, purposeId: 7, basis: .legitimateInterest))
+        presenter.presentPreferences()
+        XCTAssertEqual(presenter.partnerStatus(1), "Partly on")
+        presenter.edit(\.vendorConsents, id: 1, enabled: true)
+        for purpose in [1, 3, 4, 7] { presenter.edit(\.purposeConsents, id: purpose, enabled: true) }
+        XCTAssertEqual(presenter.partnerStatus(1), "On")
+        presenter.edit(\.purposeObjections, id: 7, enabled: true)
+        XCTAssertEqual(presenter.partnerStatus(1), "Partly on")
+        presenter.edit(\.vendorConsents, id: 1, enabled: false)
+        XCTAssertEqual(presenter.partnerStatus(1), "Off")
+    }
+
+    private func bootIAB() async throws -> (ConsentCore, AdvancingClock) {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
+        let clock = AdvancingClock()
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore(),
+            transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body)),
+            iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"),
+            iabListMaxAgeMs: 60_000, now: clock.read, initRetry: .disabled))
+        await core.waitUntilIdle()
+        return (core, clock)
+    }
+
     private final class AdvancingClock: @unchecked Sendable {
         private let lock = NSLock()
         private var value = Int64(Date().timeIntervalSince1970 * 1000)

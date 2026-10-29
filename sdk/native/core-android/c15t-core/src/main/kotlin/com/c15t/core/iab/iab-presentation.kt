@@ -9,14 +9,34 @@ data class IabPresentation(
     val list: GlobalVendorList,
     val vendors: Map<Int, IabVendorDisclosure>,
     val adTechProviders: List<AdTechProvider>?,
+    /** Retained disclosure stays readable when authority no longer permits grants. */
+    val canEdit: Boolean,
 )
+
+/** Summary of the draft's permitted consent and legitimate-interest selections. */
+enum class IabVendorSelectionStatus { OFF, PARTIAL, ON }
 
 /** Declared bases after publisher restrictions, shared with the native gate. */
 data class IabVendorDisclosure(
     val consentPurposes: List<Int>,
     val legitimateInterestPurposes: List<Int>,
     val notAllowedPurposes: List<Int>,
-)
+) {
+    /** Describe selections using projected bases. This does not grant authority. */
+    fun selectionStatus(vendorId: Int, choices: IabChoices): IabVendorSelectionStatus {
+        val consent = consentPurposes.map { vendorId in choices.vendorConsents && it in choices.purposeConsents }
+        val interest = legitimateInterestPurposes.map {
+            vendorId in choices.vendorLegitimateInterests && it in choices.purposeLegitimateInterests &&
+                vendorId !in choices.vendorObjections && it !in choices.purposeObjections
+        }
+        val enabled = consent + interest
+        return when {
+            enabled.none { it } -> IabVendorSelectionStatus.OFF
+            enabled.all { it } -> IabVendorSelectionStatus.ON
+            else -> IabVendorSelectionStatus.PARTIAL
+        }
+    }
+}
 
 /** Project a disclosed vendor without evaluating the subject's choices. */
 fun IabConfiguration.disclosure(id: Int, vendor: GvlVendorEntry): IabVendorDisclosure {

@@ -178,7 +178,7 @@ fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String) {
                     Text("Our partner list is out of date. Try again to load it, or reject optional data use.", modifier = Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
                     EqualDecisions {
                         ActionButton("Reject all", "$prefix.reject-all", !p.pending, first) { p.commit(ConsentPresenter.Action.REJECT) }
-                        ActionButton("Try again", "$prefix.retry", !p.pending, first) { p.refresh(); p.loadDraft() }
+                        ActionButton("Try again", "$prefix.retry", !p.pending, first) { p.refresh() }
                     }
                 } else {
                     EqualDecisions {
@@ -286,7 +286,7 @@ private fun String.searchKey() = Normalizer.normalize(this, Normalizer.Form.NFD)
                 val d = p.disclosure!!.vendors[id]!!
                 Column(Modifier.fillMaxWidth().clickable { open(id) }.padding(vertical = 16.dp).testTag("c15t.iab.vendors.vendor.$id"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(v.name.orEmpty(), style = MaterialTheme.typography.titleMedium); Body("${d.consentPurposes.size} purposes · ${d.legitimateInterestPurposes.size} on legitimate interest")
-                    Text(if (id in p.choices.vendorConsents) "On" else "Off", style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
+                    Text(p.partnerStatus(id), style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
                 }; HorizontalDivider()
             }
         }

@@ -331,7 +331,7 @@ private struct ConsentScreen: View {
                         .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
                     EqualDecisionLayout {
                         decision("Reject all", .reject, first: first)
-                        Button("Try again") { presenter.refresh(); presenter.loadDraft() }.buttonStyle(DecisionStyle(filled: first)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
+                        Button("Try again") { presenter.refresh() }.buttonStyle(DecisionStyle(filled: first)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
                     }
                 } else {
                     EqualDecisionLayout {
@@ -484,7 +484,7 @@ private struct VendorList: View {
                         if let projection = presenter.disclosure?.vendors[vendor.id] {
                             Text("\(projection.consentPurposes.count) purposes · \(projection.legitimateInterestPurposes.count) on legitimate interest").font(.footnote).foregroundStyle(ConsentColors.secondary)
                         }
-                        Text(presenter.choices.vendorConsents.contains(vendor.id) ? "On" : "Off").font(.footnote).accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id).status")
+                        Text(presenter.partnerStatus(vendor.id)).font(.footnote).accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id).status")
                     }.padding(.vertical, 8)
                 }.accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id)")
             }

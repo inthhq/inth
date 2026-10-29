@@ -236,14 +236,16 @@ class C15tKernel(
 		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
 	}
 
-    /** Atomically capture the scoped disclosure and a draft on its revision. */
+    /** Capture retained disclosure and a draft atomically. Check canEdit before offering grants. */
     fun iabPresentation(): IabPresentation? = synchronized(mutationLock) {
-        val draft = openIabDraft() ?: return@synchronized null
-        val list = snapshot().iab?.gvl?.let { GlobalVendorListJson.read(GlobalVendorListJson.toJsonElement(it)) } ?: return@synchronized null
+        if (evaluationPolicy?.model != ConsentModel.IAB) return@synchronized null
+        val editable = openIabDraft()
+        val draft = editable ?: IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
+        val list = state.get().iab?.gvl?.let { GlobalVendorListJson.read(GlobalVendorListJson.toJsonElement(it)) } ?: return@synchronized null
         val configuration = iabConfiguration ?: return@synchronized null
         IabPresentation(draft, list,
             list.vendors.filterValues { it.deletedDate.isNullOrEmpty() }.mapValues { (id, vendor) -> configuration.disclosure(id, vendor) },
-            currentAdditionalConsentList()?.providers?.toList())
+            additionalConsentList?.providers?.toList(), editable != null)
     }
 
 	fun saveIab(draft: IabDraft, categories: Map<ConsentCategory, Boolean>): CommitResult =

@@ -176,3 +176,16 @@ audit records against the same id instead of orphaning the ones already on the b
 Installs that upgraded from the layout where the id sat in the encrypted blob have it
 copied to plain storage on the first read, before anything is written encrypted, and the
 recovery is idempotent.
+
+## Native disclosure reads
+
+`iabPresentation()` captures a detached draft and the retained IAB disclosure together.
+Check its `canEdit` flag before offering editing or new grants. An expired list
+remains readable for partner details, but `openIABDraft()` on Swift or
+`openIabDraft()` on Kotlin returns no editable draft until authority is current.
+Saving still checks native policy, list age and revision.
+
+The native presenter preserves unsaved edits while a list refresh runs. If the
+revision changes, the person must load current settings before saving. Partner
+summaries describe consent and legitimate-interest selections as Off, Partly on
+or On. Use the core's gates to decide whether processing is allowed.

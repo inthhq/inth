@@ -2,17 +2,34 @@ import Foundation
 
 /// Read-only disclosure bound to the same revision as a native draft.
 public struct IABPresentation: Sendable {
+    /// Whether current policy and list authority permit editing and new grants.
+    public let canEdit: Bool
     public let draft: IABDraft
     public let list: GlobalVendorList
     public let vendors: [Int: IABVendorDisclosure]
     public let adTechProviders: [AdTechProvider]?
 }
 
+/// Summary of the draft's permitted consent and legitimate-interest selections.
+public enum IABVendorSelectionStatus: Sendable, Equatable { case off, partial, on }
+
 /// Legal bases after publisher restrictions. Uses the same rule as native gates.
 public struct IABVendorDisclosure: Sendable, Equatable {
     public let consentPurposes: [Int]
     public let legitimateInterestPurposes: [Int]
     public let notAllowedPurposes: [Int]
+
+    /// Summarize selections using the projected legal bases. This does not grant authority.
+    public func selectionStatus(vendorId: Int, choices: IABChoices) -> IABVendorSelectionStatus {
+        let consent = consentPurposes.map { choices.vendorConsents.contains(vendorId) && choices.purposeConsents.contains($0) }
+        let interest = legitimateInterestPurposes.map {
+            choices.vendorLegitimateInterests.contains(vendorId) && choices.purposeLegitimateInterests.contains($0)
+                && !choices.vendorObjections.contains(vendorId) && !choices.purposeObjections.contains($0)
+        }
+        let enabled = consent + interest
+        guard enabled.contains(true) else { return .off }
+        return enabled.allSatisfy { $0 } ? .on : .partial
+    }
 }
 
 extension IABConfiguration {

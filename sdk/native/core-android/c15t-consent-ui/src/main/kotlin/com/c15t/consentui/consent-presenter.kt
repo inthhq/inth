@@ -44,9 +44,15 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
     private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}"
     val iab get() = snapshot.model == ConsentModel.IAB
     val noticeVisible get() = !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
-    val listUnavailable get() = iab && (disclosure == null || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
+    val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
+    /** Summary of both permitted legal bases in the current draft. */
+    fun partnerStatus(id: Int): String = when (disclosure?.vendors?.get(id)?.selectionStatus(id, choices) ?: IabVendorSelectionStatus.OFF) {
+        IabVendorSelectionStatus.OFF -> "Off"
+        IabVendorSelectionStatus.PARTIAL -> "Partly on"
+        IabVendorSelectionStatus.ON -> "On"
+    }
     val offeredCategories get() = snapshot.consentCategories?.mapNotNull(ConsentCategory::fromWireName) ?: listOf(ConsentCategory.NECESSARY)
     val errorMessage get() = errorCode?.let {
         if (it == "invalid-action-time") "Couldn't save because this device's date and time look wrong. Fix them in Settings, then try again."
@@ -56,10 +62,13 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         if (next.revision < snapshot.revision) return
         val wasPending = snapshot.policyPending
         snapshot = next
-        if (presentationID != null && !pending && (!preferences || wasPending && !next.policyPending)) loadDraft()
+        if (presentationID != null && !pending && !dirty && (!preferences || wasPending && !next.policyPending)) loadDraft()
         if (reloadAfterRefresh && !next.policyPending) {
-            if (!dirty) loadDraft()
-            reloadAfterRefresh = false
+            if (dirty) {
+                disclosure = core.iabPresentation()
+                stale = next.revision != baseRevision
+            } else loadDraft()
+            reloadAfterRefresh = listUnavailable
         }
         if (automaticPresentation && !next.policyPending && next.promptRequirement.acknowledge && presentationID == null && suppressed != promptKey) {
             presentationID = UUID.randomUUID().toString(); preferences = false; loadDraft()
@@ -104,7 +113,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
     }
     fun retry() { lastAction?.let(::commit) }
-    fun refresh() { if (!pending) { reloadAfterRefresh = !dirty; viewModelScope.launch(Dispatchers.IO) { core.refresh() } } }
+    fun refresh() { if (!pending) { reloadAfterRefresh = true; viewModelScope.launch(Dispatchers.IO) { core.refresh() } } }
     /** All/necessary go to the core's accepting/withdrawing authority unchanged. */
     fun commit(action: Action) {
         if (pending || stale) return

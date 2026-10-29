@@ -61,10 +61,13 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         guard next.revision >= snapshot.revision else { return }
         let wasPending = snapshot.policyPending
         snapshot = next
-        if presentationID != nil, !pending, (!preferences || wasPending && !next.policyPending) { loadDraft() }
+        if presentationID != nil, !pending, !isDirty, (!preferences || wasPending && !next.policyPending) { loadDraft() }
         if reloadAfterRefresh, !next.policyPending {
-            if !isDirty { loadDraft() }
-            reloadAfterRefresh = false
+            if isDirty {
+                disclosure = core.iabPresentation()
+                stale = next.revision != baseRevision
+            } else { loadDraft() }
+            reloadAfterRefresh = listUnavailable
         }
         if automaticPresentation, !next.policyPending, next.promptRequirement.kind == .choice,
            presentationID == nil, suppressedPrompt != promptKey {
@@ -83,8 +86,16 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     public var listUnavailable: Bool {
         guard iab else { return false }
         let status = core.iabStatus().availability
-        return disclosure == nil || status == .stale || status == .missing || status == .unavailable
+        return disclosure?.canEdit != true || status == .stale || status == .missing || status == .unavailable
             || disclosure?.adTechProviders?.isEmpty == false && core.additionalConsentStatus() == .stale
+    }
+    /// Human-readable summary of both permitted legal bases in the current draft.
+    public func partnerStatus(_ id: Int) -> String {
+        switch disclosure?.vendors[id]?.selectionStatus(vendorId: id, choices: choices) ?? .off {
+        case .off: return "Off"
+        case .partial: return "Partly on"
+        case .on: return "On"
+        }
     }
     public var offeredCategories: [ConsentCategory] { snapshot.consentCategories ?? [.necessary] }
     public var errorMessage: String? {
@@ -186,7 +197,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     }
     public func refresh() {
         guard !pending else { return }
-        reloadAfterRefresh = !isDirty
+        reloadAfterRefresh = true
         core.refresh()
     }
     /// Commit through native intents. Accept and Reject never build selection loops in UI.
