@@ -176,7 +176,57 @@ final class InstallationTests: XCTestCase {
         await cold.waitUntilIdle()
     }
 
-    func testUnreadableSubjectDropsOrphanedGrantAndQueue() async throws {
+    func testTransientSubjectReadFailurePreservesConsentAndCanRetry() async throws {
+        let store = CountingStore(InMemoryStore())
+        let first = try await grantedCore(store: store, keepQueued: true)
+        let subject = first.snapshot().subject
+        let keys = [StorageKey.subject, StorageKey.snapshot, StorageKey.pendingSaves]
+        let original = keys.map { store.data(for: $0) }
+        C15tApple.shutdown()
+        C15t.resetForTests()
+
+        store.failNextRead = StorageKey.subject
+        XCTAssertThrowsError(try C15tApple.install(configuration(store: store))) {
+            XCTAssertEqual($0 as? C15tAppleInstallationError, .protectedStorageUnavailable)
+        }
+        XCTAssertNil(C15t.current)
+        XCTAssertEqual(keys.map { store.data(for: $0) }, original)
+
+        let cold = try C15tApple.install(configuration(store: store))
+        XCTAssertEqual(cold.snapshot().subject, subject)
+        XCTAssertTrue(cold.isAllowed(.marketing))
+        XCTAssertEqual(cold.pendingSaveCount(), 1)
+        await cold.waitUntilIdle()
+    }
+
+    func testOrphanReadFailuresAbortBeforeDeletingAnyRecord() async throws {
+        for failingKey in [StorageKey.snapshot, StorageKey.pendingSaves] {
+            let store = CountingStore(InMemoryStore())
+            _ = try await grantedCore(store: store, keepQueued: true)
+            XCTAssertTrue(store.set(nil, for: StorageKey.subject))
+            let keys = [StorageKey.snapshot, StorageKey.pendingSaves]
+            let original = keys.map { store.data(for: $0) }
+            C15tApple.shutdown()
+            C15t.resetForTests()
+
+            store.failNextRead = failingKey
+            XCTAssertThrowsError(try C15tApple.install(configuration(store: store))) {
+                XCTAssertEqual($0 as? C15tAppleInstallationError, .protectedStorageUnavailable)
+            }
+            XCTAssertNil(C15t.current)
+            XCTAssertEqual(keys.map { store.data(for: $0) }, original)
+
+            let cold = try C15tApple.install(configuration(store: store))
+            XCTAssertFalse(cold.isAllowed(.marketing))
+            XCTAssertNil(cold.snapshot().explicitChoice)
+            XCTAssertEqual(cold.pendingSaveCount(), 0)
+            await cold.waitUntilIdle()
+            C15tApple.shutdown()
+            C15t.resetForTests()
+        }
+    }
+
+    func testMalformedSubjectDropsOrphanedGrantAndQueue() async throws {
         let store = CountingStore(InMemoryStore())
         _ = try await grantedCore(store: store, keepQueued: true)
         store.set(Data("{truncated".utf8), for: StorageKey.subject)
@@ -273,13 +323,23 @@ private final class CountingStore: ConsentStore, @unchecked Sendable {
     var refuseReads = false
     var refuseDeletes = false
     var refuseDeletesExceptProbe = false
+    var failNextRead: String?
     init(_ underlying: any ConsentStore) { self.underlying = underlying }
     var reads: Int { lock.lock(); defer { lock.unlock() }; return counts.reads }
     var writes: Int { lock.lock(); defer { lock.unlock() }; return counts.writes }
     func data(for key: String) -> Data? {
-        lock.lock(); counts.reads += 1; lock.unlock()
-        return refuseReads ? nil : underlying.data(for: key)
+        try? read(for: key)
     }
+    func read(for key: String) throws -> Data? {
+        lock.lock(); counts.reads += 1; lock.unlock()
+        if failNextRead == key {
+            failNextRead = nil
+            throw ReadFailure.unavailable
+        }
+        if refuseReads { throw ReadFailure.unavailable }
+        return try underlying.read(for: key)
+    }
+    private enum ReadFailure: Error { case unavailable }
     @discardableResult
     func set(_ data: Data?, for key: String) -> Bool {
         lock.lock(); counts.writes += 1; lock.unlock()

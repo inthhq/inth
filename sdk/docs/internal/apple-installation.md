@@ -42,7 +42,11 @@ production startup recipe.
 
 `C15tApple.install(CoreConfig)` supports custom native services and validates their
 storage in the same way. The host owns a custom store's protection and its retry
-policy. `.memory`, `.file` and `.disabled` are explicit development options.
+policy. Custom stores must implement `ConsentStore.read(for:)`, returning `nil`
+only for a missing item and throwing on operational read failures. The default
+implementation accepts readable bytes from `data(for:)` but throws on its
+ambiguous `nil`; it cannot establish absence for a fresh custom store.
+`.memory`, `.file` and `.disabled` are explicit development options.
 File writes are atomic on every platform. iOS-family targets also request complete
 file protection; macOS and Mac Catalyst omit that unsupported Data Protection
 option. File storage on macOS is not a protected-storage substitute for Keychain.
@@ -64,10 +68,14 @@ observes `UIApplication.didBecomeActiveNotification`, which also covers scene-ba
 after installation succeeds. Reevaluate native gates before starting optional
 SDKs after recovery. These are compiled examples, not proof of an OS unlock flow.
 
-If the stored subject is absent or unreadable while an envelope or queue survives,
-the installer removes those orphaned items before hydration. It refuses to install
-if removal fails. Consent recorded for an earlier subject cannot become a grant
-for a newly minted identity. A fully removed store starts with unknown consent.
+The installer checks the stored subject with `read(for:)`. If that read fails,
+installation stops without deleting consent or queued saves. Retry after storage
+recovers. If the subject is confirmed absent or its bytes are malformed, the
+installer reads both the envelope and queue before removing those orphaned items.
+A failed read stops cleanup before either item is deleted. A failed deletion also
+refuses installation. Consent recorded for an earlier subject cannot become a
+grant for a newly minted identity. A fully removed store starts with unknown
+consent.
 A valid Keychain identity and its records may survive an application reinstall;
 this increment does not add a reinstall marker or promise that uninstall deletes
 Keychain data.

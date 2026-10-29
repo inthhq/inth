@@ -3,6 +3,22 @@ import Foundation
 import XCTest
 
 final class FileStoreTests: XCTestCase {
+    func testCheckedReadDistinguishesMissingEmptyAndFailedReads() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store: any ConsentStore = FileStore(directory: directory)
+        XCTAssertNil(try store.read(for: StorageKey.subject))
+        XCTAssertTrue(store.set(Data(), for: StorageKey.subject))
+        XCTAssertEqual(try store.read(for: StorageKey.subject), Data())
+        XCTAssertNil(store.data(for: StorageKey.subject))
+
+        let file = try XCTUnwrap(FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil).first)
+        try FileManager.default.removeItem(at: file)
+        try FileManager.default.createDirectory(at: file, withIntermediateDirectories: false)
+        XCTAssertThrowsError(try store.read(for: StorageKey.subject))
+        XCTAssertNil(store.data(for: StorageKey.subject))
+    }
+
     func testReplacementSurvivesReopeningAndDeletionRemovesTheFile() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -38,6 +54,7 @@ final class FileStoreTests: XCTestCase {
         try Data("not a directory".utf8).write(to: path)
         let store = FileStore(directory: path)
         XCTAssertFalse(store.set(Data("refused".utf8), for: StorageKey.snapshot))
+        XCTAssertThrowsError(try store.read(for: StorageKey.snapshot))
         XCTAssertNil(store.data(for: StorageKey.snapshot))
         XCTAssertEqual(try Data(contentsOf: path), Data("not a directory".utf8))
     }

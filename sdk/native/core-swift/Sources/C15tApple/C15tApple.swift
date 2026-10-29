@@ -200,18 +200,24 @@ public enum C15tApple {
         let removed = store.set(nil, for: probeKey)
         guard readable, removed else { throw C15tAppleInstallationError.protectedStorageUnavailable }
 
-        // Missing or unreadable identity cannot lend a previous subject's grant to a new id.
-        // Keep the existing core API; sanitation belongs before its first hydration.
-        let decoded = store.data(for: StorageKey.subject).flatMap {
-            try? JSONDecoder().decode(SubjectIdentity.self, from: $0)
-        }
-        let identity = decoded.flatMap { try? SubjectIdentity(id: $0.id) }
-        if identity == nil {
-            for key in [StorageKey.snapshot, StorageKey.pendingSaves] where store.data(for: key) != nil {
-                guard store.set(nil, for: key) else {
-                    throw C15tAppleInstallationError.protectedStorageUnavailable
+        do {
+            let decoded = try store.read(for: StorageKey.subject).flatMap {
+                try? JSONDecoder().decode(SubjectIdentity.self, from: $0)
+            }
+            let identity = decoded.flatMap { try? SubjectIdentity(id: $0.id) }
+            if identity == nil {
+                // Finish all reads before deleting either orphaned item.
+                let orphaned = try [StorageKey.snapshot, StorageKey.pendingSaves].filter {
+                    try store.read(for: $0) != nil
+                }
+                for key in orphaned {
+                    guard store.set(nil, for: key) else {
+                        throw C15tAppleInstallationError.protectedStorageUnavailable
+                    }
                 }
             }
+        } catch {
+            throw C15tAppleInstallationError.protectedStorageUnavailable
         }
     }
 }
