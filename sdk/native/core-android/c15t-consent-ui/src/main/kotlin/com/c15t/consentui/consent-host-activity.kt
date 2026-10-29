@@ -4,7 +4,9 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
-import android.view.WindowManager
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.activity.ComponentActivity
@@ -22,6 +24,7 @@ object ConsentHost {
         val privacyURL: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean) {
         var activity = WeakReference<ConsentHostActivity>(null)
         var launching = true
+        var noticeView = WeakReference<ComposeView>(null)
     }
     private var active: Session? = null
 
@@ -32,6 +35,10 @@ object ConsentHost {
         active?.let {
             it.owner = WeakReference(owner)
             it.outcome = outcome
+            if (it.notice) {
+                attachNotice(activity, it)
+                return result(it.id, "already-presented")
+            }
             val host = it.activity.get()
             if (!it.launching && (host == null || host.isFinishing || host.isDestroyed)) {
                 it.launching = true
@@ -64,6 +71,7 @@ object ConsentHost {
                     .put("kind", if (value == ConsentPresenterOutcome.DISMISSED) { if (core.snapshot().policyPending) "unavailable" else "dismissed" }
                         else if (session.notice && !presenter.preferences) "acknowledged" else "committed").toString()
                 active = null
+                removeNotice(session)
                 session.activity.get()?.finish()
                 session.outcome?.invoke(payload)
                 session.outcome = null
@@ -71,9 +79,11 @@ object ConsentHost {
             }
         }
         try {
-            activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", id))
+            if (session.notice) attachNotice(activity, session)
+            else activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", id))
         } catch (error: Exception) {
             active = null
+            removeNotice(session)
             presenter.onOutcome = null
             store.clear()
             throw error
@@ -87,16 +97,27 @@ object ConsentHost {
         val session = active?.takeIf { it.id == id } ?: return false
         session.activity = WeakReference(activity)
         session.launching = false
-        if (session.notice) {
-            activity.window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            activity.window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
-            activity.window.setGravity(Gravity.BOTTOM)
-            activity.window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
-        }
-        activity.setContent { C15tConsent(session.presenter, session.privacyURL,
-            noticeModifier = if (session.notice) Modifier.fillMaxWidth() else Modifier) }
+        activity.setContent { C15tConsent(session.presenter, session.privacyURL) }
         return true
+    }
+    private fun attachNotice(activity: Activity, session: Session) {
+        val existing = session.noticeView.get()
+        if (existing?.isAttachedToWindow == true && existing.context === activity) return
+        removeNotice(session)
+        val content = activity.findViewById<ViewGroup>(android.R.id.content)
+        val view = ComposeView(activity)
+        view.setContent { C15tConsent(session.presenter, session.privacyURL, noticeModifier = Modifier.fillMaxWidth()) }
+        content.addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
+        session.noticeView = WeakReference(view)
+        session.launching = false
+    }
+    private fun removeNotice(session: Session) {
+        session.noticeView.get()?.let {
+            (it.parent as? ViewGroup)?.removeView(it)
+            it.disposeComposition()
+        }
+        session.noticeView.clear()
     }
     private fun result(id: String, status: String) = JSONObject().put("sessionId", id).put("status", status).toString()
 }
