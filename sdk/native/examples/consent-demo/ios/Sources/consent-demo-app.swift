@@ -6,7 +6,19 @@ import SwiftUI
 @main
 struct ConsentDemoApp: App {
     @StateObject private var session = DemoSession()
-    var body: some Scene { WindowGroup { DemoRoot(session: session).task { await session.start() } } }
+    var body: some Scene {
+        WindowGroup {
+            DemoRoot(session: session).task { await session.start() }
+                .preferredColorScheme(fixtureAppearance)
+        }
+    }
+    private var fixtureAppearance: ColorScheme? {
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        if env["C15T_FIXTURE_SCENARIO"] != nil, env["C15T_FIXTURE_APPEARANCE"] == "dark" { return .dark }
+        #endif
+        return nil
+    }
 }
 
 @MainActor

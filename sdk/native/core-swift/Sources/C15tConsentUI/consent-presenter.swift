@@ -109,7 +109,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         let current = core.snapshot()
         snapshot = current
         disclosure = core.iabPresentation()
-        baseRevision = disclosure?.draft.revision ?? current.revision
+        baseRevision = current.revision
         choices = disclosure?.draft.choices ?? IABChoices()
         categories = Dictionary(uniqueKeysWithValues: (current.consentCategories ?? [.necessary]).compactMap {
             guard let category = OptionalConsentCategory(rawValue: $0.rawValue) else { return nil }
@@ -213,7 +213,8 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             if outcome.0 {
                 suppressedPrompt = promptKey
                 presentationID = nil
-                onAnnouncement?("Privacy choices saved")
+                if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
+                else { onAnnouncement?("Privacy choices saved") }
                 onOutcome?(.saved)
             } else {
                 errorCode = outcome.1 ?? "save-rejected"

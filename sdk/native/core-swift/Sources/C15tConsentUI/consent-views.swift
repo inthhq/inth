@@ -24,7 +24,7 @@ private enum ConsentColors {
 
 private struct DecisionStyle: ButtonStyle {
     var filled = true
-    @ScaledMetric(relativeTo: .body) private var minimumHeight = 50
+    private let minimumHeight: CGFloat = 50
     func makeBody(configuration: Configuration) -> some View {
         configuration.label.font(.body.weight(.semibold))
             .multilineTextAlignment(.center).padding(.horizontal, 16).padding(.vertical, 12)
@@ -223,6 +223,7 @@ private struct ConsentScreen: View {
                     }
                 }
                 PrivacyLink(url: privacyPolicyURL)
+                if typeSize.isAccessibilitySize { branding }
             }.padding(20)
         }
         .accessibilityIdentifier("c15t.first-layer")
@@ -337,13 +338,17 @@ private struct ConsentScreen: View {
                     }
                     if first {
                         Button("Customize") { presenter.customize() }.buttonStyle(DecisionStyle(filled: false)).accessibilityIdentifier("c15t.first-layer.customize")
-                        Text("Secured by c15t").font(.footnote).foregroundStyle(ConsentColors.secondary).accessibilityIdentifier("c15t.first-layer.branding")
+                        if !typeSize.isAccessibilitySize { branding }
                     } else {
                         decision("Save choices", .save, first: false)
                     }
                 }
             }
         }.padding(.horizontal, 20).padding(.vertical, 12).background(.bar).disabled(presenter.pending)
+    }
+    private var branding: some View {
+        Text("Secured by c15t").font(.footnote).foregroundStyle(ConsentColors.secondary)
+            .accessibilityIdentifier("c15t.first-layer.branding")
     }
     private func decision(_ label: String, _ action: ConsentPresenter.Action, first: Bool) -> some View {
         let suffix: String = switch action { case .accept: "accept-all"; case .reject: "reject-all"; case .save: "save"; case .acknowledge: "acknowledge" }

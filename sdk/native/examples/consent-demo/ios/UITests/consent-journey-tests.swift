@@ -4,10 +4,11 @@ final class ConsentJourneyTests: XCTestCase {
     var app: XCUIApplication!
     override func setUp() { continueAfterFailure = false }
     override func tearDown() { if testRun?.hasSucceeded == false { print(app.debugDescription) } }
-    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, arguments: [String] = []) {
+    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, arguments: [String] = []) {
         app = XCUIApplication()
         app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": reset ? "1" : "0", "C15T_FIXTURE_FAIL_NEXT_WRITE": fail ? "1" : "0", "C15T_FIXTURE_OFFLINE": offline ? "1" : "0"]
         if let backend { app.launchEnvironment["C15T_FIXTURE_BACKEND"] = backend }
+        if let appearance { app.launchEnvironment["C15T_FIXTURE_APPEARANCE"] = appearance }
         app.launchArguments = arguments
         app.launch()
     }
@@ -30,7 +31,7 @@ final class ConsentJourneyTests: XCTestCase {
     func reveal(_ element: XCUIElement) {
         for _ in 0..<18 {
             let save = button("c15t.iab.save").exists ? button("c15t.iab.save") : button("c15t.prefs.save")
-            let reject = button("c15t.iab.reject-all").exists ? button("c15t.iab.reject-all") : button("c15t.prefs.reject-all")
+            let reject = button("c15t.first-layer.reject-all").exists ? button("c15t.first-layer.reject-all") : button("c15t.iab.reject-all").exists ? button("c15t.iab.reject-all") : button("c15t.prefs.reject-all")
             let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
             let top: CGFloat = 150
             if element.exists, element.isHittable, element.frame.midY > top, element.frame.midY < bottom { return }
@@ -136,13 +137,19 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "none")
     }
     func test06DarkLargeTextEqualDecisions() {
-        launch(arguments: ["-AppleInterfaceStyle", "Dark", "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        launch(appearance: "dark", arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
         print(app.debugDescription)
         let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all")
         XCTAssertTrue(reject.waitForExistence(timeout: 10)); XCTAssertTrue(accept.isHittable)
         XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
         XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
         capture("ios-dark-large-text")
+        let policy = app.links["c15t.privacy-policy"]
+        reveal(policy)
+        XCTAssertTrue(policy.isHittable)
+        capture("ios-dark-large-text-policy")
+        XCTAssertTrue(reject.isHittable)
+        XCTAssertTrue(accept.isHittable)
         reject.tap()
     }
 }
@@ -153,7 +160,7 @@ final class ProtocolReceiptTests: XCTestCase {
         let (data, _) = try await URLSession.shared.data(from: URL(string: "http://localhost:3000/e2e/state")!)
         return try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
     }
-    func testRealControlsDeliverNativeReceipts() async throws {
+    @MainActor func testRealControlsDeliverNativeReceipts() async throws {
         guard (try? await report()) != nil else { throw XCTSkip("Start the reviewed e2e-backend.py on port 3000") }
         continueAfterFailure = false
         app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": "protocol-backend", "C15T_FIXTURE_RESET": "1", "C15T_FIXTURE_BACKEND": "http://localhost:3000/api/self-host"]

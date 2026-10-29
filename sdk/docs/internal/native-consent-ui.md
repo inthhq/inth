@@ -82,7 +82,8 @@ of a successful hosted receipt.
 `C15T_FIXTURE_OFFLINE=1` fails init while retaining that storage.
 `C15T_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial
 hydration. On Apple platforms, policy-only startup refreshes do not consume
-this test fault. Android uses Boolean extras for these switches. Normal app launches
+this test fault. Android uses Boolean extras for these switches. iOS debug fixtures also accept
+`C15T_FIXTURE_APPEARANCE=dark` for reproducible native theme captures. Normal app launches
 do not select fixtures or reset state.
 
 XCUITest lives in `ios/UITests/consent-journey-tests.swift`. Run it with the

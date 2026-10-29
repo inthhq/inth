@@ -74,7 +74,7 @@ class ConsentPresenter(val core: C15tKernel) : ViewModel() {
     fun loadDraft() {
         if (pending) return
         snapshot = core.snapshot(); disclosure = core.iabPresentation()
-        baseRevision = disclosure?.draft?.revision ?: snapshot.revision
+        baseRevision = snapshot.revision
         choices = disclosure?.draft?.choices ?: IabChoices()
         categories = offeredCategories.filter { it.optional }.associateWith { snapshot.explicitChoice?.valueOf(it) ?: false }
         seedCategories = categories; seedChoices = choices; errorCode = null; stale = false
@@ -126,7 +126,7 @@ class ConsentPresenter(val core: C15tKernel) : ViewModel() {
             if (presentationID != session) return@launch
             snapshot = core.snapshot()
             if (result.first) {
-                suppressed = promptKey; presentationID = null; announcement = "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
             } else {
                 errorCode = result.second ?: "save-rejected"; stale = errorCode == "concurrent-change"
                 announcement = if (stale) "Settings changed while you were editing" else errorMessage.orEmpty()
