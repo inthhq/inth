@@ -2,10 +2,13 @@ package com.c15t.consentui
 
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
@@ -70,6 +73,33 @@ class ScreenAccessibilityTest {
             compose.waitUntil(5_000) { presenter.errorMessage != null }
             compose.onNodeWithTag("c15t.first-layer.error").assertIsDisplayed()
             assertNotNull(presenter.presentationID)
+        } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun providerTagNamesTheBrandOnceAndSwapsItsLogo() {
+        val provider = mutableStateOf<ConsentTheme.Branding>(ConsentTheme.Branding.C15t)
+        compose.setContent {
+            CompositionLocalProvider(LocalConsentTheme provides ConsentTheme(branding = provider.value)) {
+                ProviderBranding()
+            }
+        }
+        for (branding in listOf(ConsentTheme.Branding.C15t, ConsentTheme.Branding.Inth,
+            ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info))) {
+            compose.runOnIdle { provider.value = branding }
+            compose.onNodeWithTag("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by ${branding.name}")
+            compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertIsDisplayed()
+        }
+        compose.runOnIdle { provider.value = ConsentTheme.Branding.Custom("Example") }
+        compose.onNodeWithTag("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by Example")
+        compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test fun hidingBrandingHidesTheLogoAndNameTogether() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            show(DecisionStore(), ConsentTheme(showsBranding = false, branding = ConsentTheme.Branding.Inth))
+            compose.onNodeWithTag("c15t.first-layer.branding").assertDoesNotExist()
+            compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
         } finally { Dispatchers.resetMain() }
     }
 

@@ -51,6 +51,8 @@ data class ConsentTheme(
     val copy: Copy = Copy.c15t,
     /** Whether the small "Secured by c15t" line appears under the first-layer actions. */
     val showsBranding: Boolean = true,
+    /** Provider identity in the attribution tag, independent of the app [brand]. */
+    val branding: Branding = Branding.C15t,
 ) {
     internal val calloutRadius: Dp get() = (cornerRadius - 2.dp).coerceAtLeast(0.dp)
 
@@ -115,6 +117,15 @@ data class ConsentTheme(
         val markResId: Int? = null,
     )
 
+    /** Provider identity displayed after "Secured by". Built-in marks are bundled vectors. */
+    sealed interface Branding {
+        val name: String
+        data object C15t : Branding { override val name = "c15t" }
+        data object Inth : Branding { override val name = "Inth" }
+        /** An app-bundled logo. A missing logo renders the provider name alone. */
+        data class Custom(override val name: String, val markResId: Int? = null) : Branding
+    }
+
     /** First-layer copy a host may replace. Decision labels are not here on purpose. */
     data class Copy(
         /** The headline. Keep it short: it is set in display type. */
@@ -152,6 +163,11 @@ data class ConsentTheme(
         const val META_INTRODUCTION = "com.c15t.consent.INTRODUCTION"
         /** A Boolean. `false` hides the "Secured by c15t" line. */
         const val META_BRANDING = "com.c15t.consent.BRANDING"
+        /** `c15t`, `inth`, or the legacy `consent` spelling for Inth. */
+        const val META_BRANDING_PROVIDER = "com.c15t.consent.BRANDING_PROVIDER"
+        const val META_BRANDING_NAME = "com.c15t.consent.BRANDING_NAME"
+        /** Drawable resource for a custom provider logo. */
+        const val META_BRANDING_MARK = "com.c15t.consent.BRANDING_MARK"
     }
 
     /**
@@ -186,12 +202,23 @@ data class ConsentTheme(
             "sans", "sans-serif", "sansserif", "system", "rounded" -> HeadlineFont.SansSerif
             else -> resource(Meta.META_HEADLINE_FONT, "font")?.let { HeadlineFont.Custom(FontFamily(Font(it))) } ?: headlineFont
         }
-        val branding = when (val value = raw(Meta.META_BRANDING)) {
+        val visible = when (val value = raw(Meta.META_BRANDING)) {
             is Boolean -> value
             is Number -> value.toLong() != 0L
             is String -> when (value.trim().lowercase()) { "true", "1", "yes" -> true; "false", "0", "no" -> false; else -> showsBranding }
             else -> showsBranding
         }
+        var provider = when (text(Meta.META_BRANDING_PROVIDER)?.lowercase()) {
+            "c15t" -> Branding.C15t
+            "inth", "consent" -> Branding.Inth
+            else -> branding
+        }
+        val providerName = (raw(Meta.META_BRANDING_NAME) as? String)?.trim()?.takeIf { it.isNotEmpty() }
+        val providerMark = resource(Meta.META_BRANDING_MARK, "drawable")?.takeIf { id ->
+            runCatching { context.resources.getResourceTypeName(id) in listOf("drawable", "mipmap") }.getOrDefault(false)
+        }
+        if (providerName != null) provider = Branding.Custom(providerName, providerMark)
+        else if (providerMark != null && provider is Branding.Custom) provider = provider.copy(markResId = providerMark)
         return copy(
             colors = Colors(
                 canvas = color(Meta.META_CANVAS, c.canvas), surface = color(Meta.META_SURFACE, c.surface),
@@ -204,7 +231,8 @@ data class ConsentTheme(
             headlineFont = font,
             brand = Brand(name = text(Meta.META_BRAND_NAME) ?: brand.name, markResId = resource(Meta.META_BRAND_MARK, "drawable") ?: brand.markResId),
             copy = Copy(headline = text(Meta.META_HEADLINE) ?: copy.headline, introduction = text(Meta.META_INTRODUCTION) ?: copy.introduction),
-            showsBranding = branding,
+            showsBranding = visible,
+            branding = provider,
         )
     }
 

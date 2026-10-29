@@ -4,12 +4,13 @@ final class ConsentJourneyTests: XCTestCase {
     var app: XCUIApplication!
     override func setUp() { continueAfterFailure = false }
     override func tearDown() { if testRun?.hasSucceeded == false { print(app.debugDescription) } }
-    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, theme: String? = nil, arguments: [String] = []) {
+    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, theme: String? = nil, branding: String? = nil, arguments: [String] = []) {
         app = XCUIApplication()
         app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": reset ? "1" : "0", "C15T_FIXTURE_FAIL_NEXT_WRITE": fail ? "1" : "0", "C15T_FIXTURE_OFFLINE": offline ? "1" : "0"]
         if let backend { app.launchEnvironment["C15T_FIXTURE_BACKEND"] = backend }
         if let appearance { app.launchEnvironment["C15T_FIXTURE_APPEARANCE"] = appearance }
         if let theme { app.launchEnvironment["C15T_FIXTURE_THEME"] = theme }
+        if let branding { app.launchEnvironment["C15T_FIXTURE_BRANDING"] = branding }
         app.launchArguments = arguments
         app.launch()
     }
@@ -192,6 +193,26 @@ final class ConsentJourneyTests: XCTestCase {
         accept.tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["fixture.state.permission.marketing"].label, "marketing: true")
+    }
+
+    func test09ProviderBrandingCanSwapWithoutChangingDecisions() {
+        for (value, name) in [("c15t", "c15t"), ("inth", "Inth"), ("custom", "Pantry")] {
+            launch(branding: value)
+            let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all")
+            XCTAssertTrue(reject.waitForExistence(timeout: 10))
+            let attribution = app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch
+            XCTAssertTrue(attribution.exists)
+            XCTAssertEqual(attribution.label, "Secured by \(name)")
+            XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
+            XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
+            capture("ios-provider-\(value)")
+            reject.tap()
+            XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+            XCTAssertEqual(app.staticTexts["fixture.state.permission.marketing"].label, "marketing: false")
+        }
+        launch(branding: "hidden")
+        XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10))
+        XCTAssertFalse(app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.exists)
     }
 }
 

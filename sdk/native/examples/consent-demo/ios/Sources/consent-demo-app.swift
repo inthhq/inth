@@ -188,7 +188,16 @@ extension DemoRoot {
     var fixtureTheme: ConsentTheme? {
         #if DEBUG
         let env = ProcessInfo.processInfo.environment
-        if env["C15T_FIXTURE_SCENARIO"] != nil, env["C15T_FIXTURE_THEME"] == "brand" { return PantryBrand.theme }
+        if env["C15T_FIXTURE_SCENARIO"] != nil {
+            var theme = env["C15T_FIXTURE_THEME"] == "brand" ? PantryBrand.theme : ConsentTheme.c15t
+            switch env["C15T_FIXTURE_BRANDING"] {
+            case "inth": theme.branding = .inth
+            case "custom": theme.branding = .custom(name: "Pantry", markImageName: "ConsentDemoMark")
+            case "hidden": theme.showsBranding = false
+            default: break
+            }
+            return theme
+        }
         #endif
         return nil
     }

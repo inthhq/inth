@@ -80,4 +80,36 @@ final class ThemeTests: XCTestCase {
         }
         XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: "maybe"]), base)
     }
+
+    func testProviderBrandingIsSeparateFromAppIdentity() {
+        let base = ConsentTheme(brand: .init(name: "Pantry", markImageName: "PantryMark"))
+        XCTAssertEqual(base.branding, .c15t)
+        XCTAssertEqual(base.branding.name, "c15t")
+        for value in ["inth", "consent", " INTH "] {
+            let theme = base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingProvider: value])
+            XCTAssertEqual(theme.branding, .inth)
+            XCTAssertEqual(theme.branding.name, "Inth")
+            XCTAssertEqual(theme.brand, base.brand)
+            XCTAssertTrue(theme.showsBranding)
+        }
+        let inth = ConsentTheme(branding: .inth)
+        XCTAssertEqual(inth.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingProvider: "other"]), inth)
+        XCTAssertEqual(inth.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingProvider: "c15t"]).branding, .c15t)
+    }
+
+    func testCustomProviderNeverKeepsAnUnrelatedLogo() {
+        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+            ConsentTheme.InfoPlistKey.brandingName: "Example",
+            ConsentTheme.InfoPlistKey.brandingMark: "ExampleLogo",
+        ])
+        XCTAssertEqual(theme.branding, .custom(name: "Example", markImageName: "ExampleLogo"))
+        XCTAssertEqual(ConsentTheme(branding: .inth).applying(infoDictionary: [
+            ConsentTheme.InfoPlistKey.brandingName: "Example",
+        ]).branding, .custom(name: "Example"))
+        XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "NewLogo"]).branding,
+            .custom(name: "Example", markImageName: "NewLogo"))
+        XCTAssertEqual(ConsentTheme.c15t.applying(infoDictionary: [ConsentTheme.InfoPlistKey.brandingMark: "OrphanLogo"]), .c15t)
+        XCTAssertEqual(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).branding, theme.branding)
+        XCTAssertFalse(theme.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: false]).showsBranding)
+    }
 }

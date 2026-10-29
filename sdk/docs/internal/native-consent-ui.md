@@ -90,8 +90,8 @@ and ink; every colour carries a light and a dark value.
 (`canvas`, `surface`, `surfaceMuted`, `text`, `textSecondary`, `accent`,
 `onAccent`, `decision`, `onDecision`), the corner radius, the headline typeface
 (`serif`, `sansSerif`, `rounded` on Apple, or a bundled font), a brand name and
-mark, the headline and introduction copy, and whether the "Secured by c15t" line
-shows. Decision labels, category copy and every partner disclosure stay native
+mark, the headline and introduction copy, and the provider name and logo in the
+"Secured by" tag. The tag uses the bundled c15t logo by default. Decision labels, category copy and every partner disclosure stay native
 and are not themeable: the theme cannot make Accept louder than Reject, hide a
 decision, or change what a choice means.
 
@@ -142,7 +142,36 @@ dark). Android also accepts colour, drawable and font resources.
 | `com.c15t.consent.brandMark` | `com.c15t.consent.BRAND_MARK` | asset name or drawable |
 | `com.c15t.consent.headline` | `com.c15t.consent.HEADLINE` | text |
 | `com.c15t.consent.introduction` | `com.c15t.consent.INTRODUCTION` | text |
-| `com.c15t.consent.branding` | `com.c15t.consent.BRANDING` | Boolean |
+| `com.c15t.consent.branding` | `com.c15t.consent.BRANDING` | Boolean, show or hide the provider tag |
+| `com.c15t.consent.brandingProvider` | `com.c15t.consent.BRANDING_PROVIDER` | `c15t` or `inth`; `consent` also selects Inth |
+| `com.c15t.consent.brandingName` | `com.c15t.consent.BRANDING_NAME` | custom provider name |
+| `com.c15t.consent.brandingMark` | `com.c15t.consent.BRANDING_MARK` | custom provider asset name or drawable |
+
+The provider tag is independent from the app name and mark above the headline.
+Use `branding: .inth` in Swift or `branding = ConsentTheme.Branding.Inth` in
+Kotlin to show the bundled Inth logo and name. Both built-in logos are compiled
+vectors, so they render at first launch without downloading an image.
+
+```swift
+ConsentTheme.current = ConsentTheme(branding: .inth)
+// A different provider can supply an asset from the app's catalogue.
+ConsentTheme.current = ConsentTheme(branding: .custom(name: "Example", markImageName: "ExampleLogo"))
+```
+
+```kotlin
+ConsentTheme.current = ConsentTheme(branding = ConsentTheme.Branding.Inth)
+// A different provider can supply an app drawable.
+ConsentTheme.current = ConsentTheme(branding = ConsentTheme.Branding.Custom(name = "Example", markResId = R.drawable.example_logo))
+```
+
+For binary configuration, set `brandingProvider` / `BRANDING_PROVIDER` to `inth`.
+For a custom provider, set `brandingName` / `BRANDING_NAME` and optionally
+`brandingMark` / `BRANDING_MARK`. A custom name without a logo renders text only;
+it never keeps an unrelated c15t or Inth logo. A custom name takes precedence
+over a built-in provider in the same configuration. Unknown provider values
+preserve the existing theme. `showsBranding = false`, or the existing Boolean
+binary key, hides the whole tag. Its logo is decorative, and accessibility reads
+one label, such as "Secured by Inth". The tag does not change any consent decision.
 
 React Native hosts get the same screens through the installed native presenters,
 so a bare app sets `ConsentTheme.current` in its `AppDelegate` or `Application`,

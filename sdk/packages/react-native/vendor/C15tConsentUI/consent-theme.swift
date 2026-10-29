@@ -132,6 +132,33 @@ public struct ConsentTheme: Equatable, Sendable {
         }
     }
 
+    /// Provider identity in the small "Secured by" tag, separate from the app's ``Brand``.
+    public enum Branding: Equatable, Sendable {
+        /// The bundled c15t mark and name.
+        case c15t
+        /// The bundled Inth mark and name.
+        case inth
+        /// A provider's name and optional image from the app's asset catalogue.
+        case custom(name: String, markImageName: String? = nil)
+
+        /// The provider name displayed and announced with "Secured by".
+        public var name: String {
+            switch self {
+            case .c15t: return "c15t"
+            case .inth: return "Inth"
+            case .custom(let name, _): return name
+            }
+        }
+
+        static func provider(_ value: String) -> Branding? {
+            switch value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+            case "c15t": return .c15t
+            case "inth", "consent": return .inth
+            default: return nil
+            }
+        }
+    }
+
     /// First-layer copy a host may replace. Decision labels are not here on purpose.
     public struct Copy: Equatable, Sendable {
         /// The headline. Keep it short: it is set in display type.
@@ -156,17 +183,20 @@ public struct ConsentTheme: Equatable, Sendable {
     public var headlineFont: HeadlineFont
     public var brand: Brand
     public var copy: Copy
-    /// Whether the small "Secured by c15t" line appears under the first-layer actions.
+    /// Provider name and logo in the attribution tag. The app identity above the headline is ``brand``.
+    public var branding: Branding
+    /// Whether the small provider attribution appears under the first-layer actions.
     public var showsBranding: Bool
 
     public init(colors: Colors = .c15t, cornerRadius: CGFloat = 14, headlineFont: HeadlineFont = .serif,
-        brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true) {
+        brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true, branding: Branding = .c15t) {
         self.colors = colors
         self.cornerRadius = cornerRadius
         self.headlineFont = headlineFont
         self.brand = brand
         self.copy = copy
         self.showsBranding = showsBranding
+        self.branding = branding
     }
 
     /// The stock c15t appearance.
@@ -197,6 +227,12 @@ public struct ConsentTheme: Equatable, Sendable {
         public static let introduction = "com.c15t.consent.introduction"
         /// A Boolean. `false` hides the "Secured by c15t" line.
         public static let branding = "com.c15t.consent.branding"
+        /// `c15t` or `inth`. `consent` is an alias for `inth`.
+        public static let brandingProvider = "com.c15t.consent.brandingProvider"
+        /// Custom provider name, independent from the app's `brandName`.
+        public static let brandingName = "com.c15t.consent.brandingName"
+        /// Custom provider asset-catalogue image name.
+        public static let brandingMark = "com.c15t.consent.brandingMark"
     }
 
     /// Apply any ``InfoPlistKey`` values in `dictionary` over this theme.
@@ -225,6 +261,14 @@ public struct ConsentTheme: Equatable, Sendable {
         if let name = string(dictionary[InfoPlistKey.brandMark]) { theme.brand.markImageName = name }
         if let text = string(dictionary[InfoPlistKey.headline]) { theme.copy.headline = text }
         if let text = string(dictionary[InfoPlistKey.introduction]) { theme.copy.introduction = text }
+        if let text = string(dictionary[InfoPlistKey.brandingProvider]), let provider = Branding.provider(text) {
+            theme.branding = provider
+        }
+        if let name = string(dictionary[InfoPlistKey.brandingName]) {
+            theme.branding = .custom(name: name, markImageName: string(dictionary[InfoPlistKey.brandingMark]))
+        } else if let mark = string(dictionary[InfoPlistKey.brandingMark]), case .custom(let name, _) = theme.branding {
+            theme.branding = .custom(name: name, markImageName: mark)
+        }
         if let flag = dictionary[InfoPlistKey.branding] as? Bool { theme.showsBranding = flag }
         else if let text = string(dictionary[InfoPlistKey.branding])?.lowercased() {
             switch text {

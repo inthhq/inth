@@ -419,8 +419,26 @@ private struct Hairline: View {
 private struct Branding: View {
     @Environment(\.consentTheme) private var theme
     var body: some View {
-        Text("Secured by c15t").font(.caption).foregroundStyle(theme.colors.textSecondary.color)
-            .frame(maxWidth: .infinity, alignment: .trailing).accessibilityIdentifier("c15t.first-layer.branding")
+        HStack(spacing: 6) {
+            Text("Secured by")
+            HStack(spacing: 4) {
+                switch theme.branding {
+                case .c15t, .inth:
+                    ConsentProviderMark(branding: theme.branding).fill(style: FillStyle(eoFill: true))
+                        .frame(width: 15, height: 15).accessibilityHidden(true)
+                case .custom(_, let imageName):
+                    if let imageName {
+                        Image(imageName).resizable().scaledToFit().frame(width: 15, height: 15)
+                            .accessibilityHidden(true)
+                    }
+                }
+                Text(theme.branding.name).fontWeight(.semibold)
+            }
+        }
+        .font(.caption).foregroundStyle(theme.colors.textSecondary.color)
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .accessibilityElement(children: .ignore).accessibilityLabel("Secured by \(theme.branding.name)")
+        .accessibilityIdentifier("c15t.first-layer.branding")
     }
 }
 

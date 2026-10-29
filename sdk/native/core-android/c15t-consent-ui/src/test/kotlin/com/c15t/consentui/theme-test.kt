@@ -108,4 +108,40 @@ class ThemeTest {
             assertEquals(base, base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_CORNER_RADIUS, value) }, context))
         }
     }
+    @Test fun providerBrandingIsIndependentOfTheAppIdentity() {
+        val base = ConsentTheme(brand = ConsentTheme.Brand(name = "Pantry"))
+        assertEquals(ConsentTheme.Branding.C15t, base.branding)
+        for (value in listOf("inth", "consent", " Inth ")) {
+            val result = base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRANDING_PROVIDER, value) }, context)
+            assertEquals(ConsentTheme.Branding.Inth, result.branding)
+            assertEquals(base.brand, result.brand)
+        }
+        val inth = base.copy(branding = ConsentTheme.Branding.Inth)
+        assertEquals(inth, inth.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRANDING_PROVIDER, "unknown") }, context))
+        assertEquals(ConsentTheme.Branding.C15t, inth.applying(Bundle().apply { putString(ConsentTheme.Meta.META_BRANDING_PROVIDER, "c15t") }, context).branding)
+    }
+
+    @Test fun customAttributionNeverKeepsAnUnrelatedProviderLogo() {
+        val base = ConsentTheme(branding = ConsentTheme.Branding.Inth)
+        val nameOnly = Bundle().apply { putString(ConsentTheme.Meta.META_BRANDING_NAME, "Example") }
+        assertEquals(ConsentTheme.Branding.Custom("Example"), base.applying(nameOnly, context).branding)
+        val custom = Bundle(nameOnly).apply { putInt(ConsentTheme.Meta.META_BRANDING_MARK, android.R.drawable.ic_dialog_info) }
+        assertEquals(ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info), base.applying(custom, context).branding)
+        assertTrue(base.applying(custom, context).showsBranding)
+        custom.putBoolean(ConsentTheme.Meta.META_BRANDING, false)
+        assertFalse(base.applying(custom, context).showsBranding)
+    }
+
+    @Test fun orphanAndMalformedProviderMarksKeepBuiltInIdentity() {
+        val markOnly = Bundle().apply { putInt(ConsentTheme.Meta.META_BRANDING_MARK, android.R.drawable.ic_dialog_info) }
+        assertEquals(ConsentTheme.Branding.C15t, ConsentTheme.c15t.applying(markOnly, context).branding)
+        val custom = ConsentTheme(branding = ConsentTheme.Branding.Custom("Example"))
+        assertEquals(ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info), custom.applying(markOnly, context).branding)
+        for (value in listOf(0, -1, 99999)) {
+            val malformed = Bundle().apply { putInt(ConsentTheme.Meta.META_BRANDING_MARK, value) }
+            assertEquals(custom, custom.applying(malformed, context))
+        }
+        assertEquals(custom, custom.applying(Bundle().apply { putInt(ConsentTheme.Meta.META_BRANDING_NAME, 7) }, context))
+    }
+
 }

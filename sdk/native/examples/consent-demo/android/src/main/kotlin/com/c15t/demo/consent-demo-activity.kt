@@ -49,7 +49,14 @@ class ConsentDemoActivity : ComponentActivity() {
                     })
                     Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                         Host(model, presenter)
-                        C15tConsent(presenter, model.policyUrl, theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null)
+                        val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
+                        val providerTheme = when (model.fixtureBranding) {
+                            "inth" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Inth)
+                            "custom" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Custom("Pantry", R.drawable.consent_demo_mark))
+                            "hidden" -> (theme ?: ConsentTheme.c15t).copy(showsBranding = false)
+                            else -> theme
+                        }
+                        C15tConsent(presenter, model.policyUrl, theme = providerTheme)
                     }
                 }
             }
@@ -67,6 +74,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     var fixture by mutableStateOf(false); private set
     /** Debug fixtures can opt into the sample brand theme; normal launches use the stock c15t appearance. */
     var fixtureTheme by mutableStateOf<String?>(null); private set
+    var fixtureBranding by mutableStateOf<String?>(null); private set
     var setupError by mutableStateOf<String?>(null); private set
     private var fixtureStore: C15tStore? = null
     var fault: FaultPreferences? = null
@@ -82,7 +90,10 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         if (started) return
         val context = getApplication<Application>()
         val scenario = if (BuildConfig.DEBUG) intent?.getStringExtra("C15T_FIXTURE_SCENARIO") else null
-        if (scenario != null) fixtureTheme = intent?.getStringExtra("C15T_FIXTURE_THEME")
+        if (scenario != null) {
+            fixtureTheme = intent?.getStringExtra("C15T_FIXTURE_THEME")
+            fixtureBranding = intent?.getStringExtra("C15T_FIXTURE_BRANDING")
+        }
         if (scenario == null && (backend.isNullOrBlank() || privacy.isNullOrBlank())) return
         if (scenario == null) {
             val url = runCatching { URI(backend!!) }.getOrNull()

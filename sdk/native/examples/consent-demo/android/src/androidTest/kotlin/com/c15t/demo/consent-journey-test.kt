@@ -17,11 +17,11 @@ class ConsentJourneyTest {
     private var scenario: ActivityScenario<ConsentDemoActivity>? = null
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null, theme: String? = null) {
+    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null, theme: String? = null, branding: String? = null) {
         scenario?.close()
         scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java).putExtra("C15T_FIXTURE_SCENARIO",name)
             .putExtra("C15T_FIXTURE_RESET",reset).putExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("C15T_FIXTURE_OFFLINE",offline).putExtra("C15T_FIXTURE_BACKEND", backend)
-            .putExtra("C15T_FIXTURE_THEME", theme))
+            .putExtra("C15T_FIXTURE_THEME", theme).putExtra("C15T_FIXTURE_BRANDING", branding))
     }
     private fun waitFor(id: String): SemanticsNodeInteraction {
         compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
@@ -233,6 +233,23 @@ class ConsentJourneyTest {
         waitFor("c15t.prefs.cancel").performClick()
         waitFor("c15t.first-layer.accept-all").performClick(); awaitClosed()
         waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: true")
+    }
+    @Test fun providerLogosSwapWithoutChangingDecisions() {
+        for ((provider, name) in listOf("c15t" to "c15t", "inth" to "Inth", "custom" to "Pantry")) {
+            launch(branding = provider)
+            waitFor("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by $name")
+            compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertIsDisplayed()
+            val reject = waitFor("c15t.first-layer.reject-all").fetchSemanticsNode().boundsInRoot
+            val accept = waitFor("c15t.first-layer.accept-all").fetchSemanticsNode().boundsInRoot
+            Assert.assertEquals(reject.width, accept.width, 1f)
+            Assert.assertEquals(reject.height, accept.height, 1f)
+            capture("android-provider-$provider")
+        }
+        launch(branding = "hidden")
+        waitFor("c15t.first-layer.reject-all")
+        compose.onNodeWithTag("c15t.first-layer.branding").assertDoesNotExist()
+        compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
+        capture("android-provider-hidden")
     }
     @Test fun unavailableAndDurableNoticeRefusal() {
         launch("fresh-offline-none")

@@ -335,10 +335,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     }
 }
 
-@Composable private fun Branding() {
-    Text("Secured by c15t", style = MaterialTheme.typography.labelMedium, color = LocalConsentTheme.current.colors.textSecondary.color(),
-        textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.branding"))
-}
+@Composable private fun Branding() { ProviderBranding() }
 
 // MARK: First layer
 
