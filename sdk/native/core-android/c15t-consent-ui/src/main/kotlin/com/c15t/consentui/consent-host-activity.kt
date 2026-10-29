@@ -1,6 +1,7 @@
 package com.c15t.consentui
 
 import android.app.Activity
+import android.app.Application
 import android.content.Intent
 import android.os.Bundle
 import android.view.Gravity
@@ -25,8 +26,12 @@ object ConsentHost {
         var activity = WeakReference<ConsentHostActivity>(null)
         var launching = true
         var noticeView = WeakReference<ComposeView>(null)
+        var noticeActivity = WeakReference<Activity>(null)
+        var noticeApplication: Application? = null
+        var noticeLifecycle: Application.ActivityLifecycleCallbacks? = null
     }
     private var active: Session? = null
+    private const val NOTICE_SESSION_STATE = "com.c15t.consentui.notice.session"
 
     /** Call on the main thread. Repeated requests reuse the current session and its draft. */
     fun present(activity: Activity, core: C15tKernel, preferences: Boolean, privacyURL: String, owner: Any = activity, outcome: (String) -> Unit): String {
@@ -63,7 +68,7 @@ object ConsentHost {
         })[ConsentPresenter::class.java]
         if (preferences) presenter.presentPreferences() else presenter.presentPrompt()
         val id = presenter.presentationID ?: UUID.randomUUID().toString()
-        val session = Session(id, presenter, store, privacyURL, WeakReference(owner), outcome, !preferences && snapshot.promptRequirement.notice)
+        val session = Session(id, presenter, store, privacyURL, WeakReference(owner), outcome, !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge)
         active = session
         presenter.onOutcome = { value ->
             if (active === session) {
@@ -71,7 +76,7 @@ object ConsentHost {
                     .put("kind", if (value == ConsentPresenterOutcome.DISMISSED) { if (core.snapshot().policyPending) "unavailable" else "dismissed" }
                         else if (session.notice && !presenter.preferences) "acknowledged" else "committed").toString()
                 active = null
-                removeNotice(session)
+                releaseNotice(session)
                 session.activity.get()?.finish()
                 session.outcome?.invoke(payload)
                 session.outcome = null
@@ -83,7 +88,7 @@ object ConsentHost {
             else activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", id))
         } catch (error: Exception) {
             active = null
-            removeNotice(session)
+            releaseNotice(session)
             presenter.onOutcome = null
             store.clear()
             throw error
@@ -104,6 +109,8 @@ object ConsentHost {
         val existing = session.noticeView.get()
         if (existing?.isAttachedToWindow == true && existing.context === activity) return
         removeNotice(session)
+        session.noticeActivity = WeakReference(activity)
+        observeNoticeLifecycle(activity.application, session)
         val content = activity.findViewById<ViewGroup>(android.R.id.content)
         val view = ComposeView(activity)
         view.setContent { C15tConsent(session.presenter, session.privacyURL, noticeModifier = Modifier.fillMaxWidth()) }
@@ -111,6 +118,43 @@ object ConsentHost {
             ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
         session.noticeView = WeakReference(view)
         session.launching = false
+    }
+    private fun observeNoticeLifecycle(application: Application, session: Session) {
+        if (session.noticeLifecycle != null) return
+        val callbacks = object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                if (active === session && savedInstanceState?.getString(NOTICE_SESSION_STATE) == session.id) {
+                    session.noticeActivity = WeakReference(activity)
+                }
+            }
+            override fun onActivityResumed(activity: Activity) {
+                if (active === session && session.noticeActivity.get() === activity) attachNotice(activity, session)
+            }
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
+                if (active === session && session.noticeActivity.get() === activity) {
+                    outState.putString(NOTICE_SESSION_STATE, session.id)
+                }
+            }
+            override fun onActivityDestroyed(activity: Activity) {
+                if (session.noticeActivity.get() === activity) {
+                    removeNotice(session)
+                    session.noticeActivity.clear()
+                }
+            }
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+        }
+        session.noticeApplication = application
+        session.noticeLifecycle = callbacks
+        application.registerActivityLifecycleCallbacks(callbacks)
+    }
+    private fun releaseNotice(session: Session) {
+        session.noticeLifecycle?.let { session.noticeApplication?.unregisterActivityLifecycleCallbacks(it) }
+        session.noticeLifecycle = null
+        session.noticeApplication = null
+        removeNotice(session)
+        session.noticeActivity.clear()
     }
     private fun removeNotice(session: Session) {
         session.noticeView.get()?.let {

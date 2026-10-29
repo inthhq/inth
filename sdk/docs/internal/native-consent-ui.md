@@ -129,9 +129,11 @@ requires native confirmation for a dirty draft and refuses close while saving.
 
 Each finished session emits one compact `{ sessionId, kind, revision }` event.
 `committed` means durable local storage succeeded, `acknowledged` means a
-notice was durably dismissed, and `dismissed` records no decision. `unavailable`
-means unresolved settings were closed without a decision. Backend delivery may
-still be queued after a successful local commit. Draft toggles, search and
+notice was durably dismissed, and `dismissed` records no decision. A definitive
+no-match response uses the fallback choice prompt; its saved decisions emit
+`committed`. `unavailable` means unresolved settings were closed without a
+decision. Backend delivery may still be queued after a successful local commit.
+Draft toggles, search and
 navigation stay native. Native controls and gates continue while Hermes is
 busy; JavaScript receives the final event when it resumes. Runtime teardown
 removes its callback without undoing durable native work. A new Android runtime
@@ -142,10 +144,13 @@ runtime events, not a persisted event inbox.
 
 Notice hosts leave the app visible and accept touches outside the native notice.
 The UIKit adapter uses measured SwiftUI notice bounds; the Android adapter adds
-a bottom-sized Compose view to the existing host Activity. Opening settings from the notice uses the same
-native session. A notice acknowledgement grants nothing. If bundled authority
-expires while settings are open, Reject remains available. A changed revision
-still requires an explicit reload before a decision can save; Accept and Save
+a bottom-sized Compose view to the existing host Activity. Activity recreation
+restores that notice and its native session without another presentation request,
+including while JavaScript is busy. Saved state from an older session cannot
+attach a newer notice to another Activity. Opening settings from the notice uses
+the same native session. A notice acknowledgement grants nothing. If bundled
+authority expires while settings are open, Reject remains available. A changed
+revision still requires an explicit reload before a decision can save; Accept and Save
 remain unavailable until policy refresh.
 
 CocoaPods compiles generated copies of `C15tCore`, `C15tApple` and

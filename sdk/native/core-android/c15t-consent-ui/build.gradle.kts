@@ -21,10 +21,12 @@ android {
     buildFeatures { compose = true }
     publishing { singleVariant("release") { withSourcesJar() } }
     testOptions.unitTests.isReturnDefaultValues = true
+    testOptions.unitTests.isIncludeAndroidResources = true
 }
 dependencies {
     api(project(":c15t-core"))
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
     implementation(platform("androidx.compose:compose-bom:2025.08.00"))
     implementation("androidx.compose.material3:material3")
@@ -41,4 +43,8 @@ dokka {
         sourceRoots.from(file("src/main/kotlin"))
         classpath.from(configurations.named("releaseCompileClasspath"))
     }
+}
+
+tasks.withType<Test>().configureEach {
+    systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
 }
