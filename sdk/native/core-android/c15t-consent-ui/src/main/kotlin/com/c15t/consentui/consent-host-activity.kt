@@ -88,7 +88,8 @@ object ConsentHost {
         session.activity = WeakReference(activity)
         session.launching = false
         if (session.notice) {
-            activity.window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+            activity.window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
             activity.window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
             activity.window.setGravity(Gravity.BOTTOM)
             activity.window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT)
