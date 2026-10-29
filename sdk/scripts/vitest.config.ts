@@ -16,8 +16,31 @@ export default defineConfig({
 	plugins: [
 		{
 			enforce: 'pre',
-			name: 'demo-scripts-without-sveltekit-config',
+			name: 'repository-sources-before-package-builds',
 			resolveId(source, importer) {
+				// The mobile exporter uses built packages in the CLI. Repository
+				// tests run before package builds, so exercise their real sources here.
+				if (source === '../packages/schema/dist/index.js') {
+					return fileURLToPath(
+						new URL('../packages/schema/src/index.ts', import.meta.url)
+					);
+				}
+				if (
+					source === '../packages/translations/dist/index.js' ||
+					source === '@c15t/translations'
+				) {
+					return fileURLToPath(
+						new URL('../packages/translations/src/index.ts', import.meta.url)
+					);
+				}
+				if (source === '@c15t/translations/en') {
+					return fileURLToPath(
+						new URL(
+							'../packages/translations/src/translations/en.ts',
+							import.meta.url
+						)
+					);
+				}
 				// The manifest runtime only imports core's debug emitter at runtime.
 				// Resolve that real implementation without requiring a core build.
 				if (

@@ -1529,3 +1529,19 @@ Numbered publisher restriction keys are owned and cleared. Reset removes consent
 rows while configured CMP detection remains. See the spec-linked key/type table
 and reader ordering limits in docs/internal/native-iab-commits.mdx. The real ad SDK
 reference, device latency and power-loss behavior remain separate evidence gates.
+
+## Build policy fallback
+
+Native bootstrap can resolve an endpoint-bound resource exported from hosted
+`/manifest` before JavaScript starts. A usable stored policy takes precedence.
+See [mobile policy resources](docs/mobile-policy-resources.md) for
+resource version 1, expiry, unknown-geography and disclosure rules.
+
+The resource has no visitor identity, grant, receipt, queue or policy token.
+Its original GVL and ATP timestamps survive storage and relaunch. Expired policy
+authority denies optional gates. Readable disclosure copy remains separate from
+authority to accept a new grant. Hosted refresh and durable replay stay installed.
+
+The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
+`com.c15t.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from
+`policyResource` and copies the exact resource bytes during prebuild.

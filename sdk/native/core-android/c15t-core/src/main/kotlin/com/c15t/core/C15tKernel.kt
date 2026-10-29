@@ -142,6 +142,7 @@ class C15tKernel(
 	private val state = AtomicReference(ConsentSnapshot.denyAll())
 	private data class ReadView(
 		val snapshot: ConsentSnapshot,
+		val authority: BundledPolicyAuthority? = null,
 		val denied: ConsentSnapshot = snapshot,
 		val requiresIab: Boolean = false,
 		val saved: IabCommittedConsent? = null,
@@ -153,6 +154,7 @@ class C15tKernel(
 	private var deadlineTask: ScheduledFuture<*>? = null
 	private var deadlineGeneration = 0L
 	private var lastIabActionAt: Long? = null
+	private var bundledPolicyAuthority: BundledPolicyAuthority? = null
 	private var additionalConsentList: AdditionalConsentList? = null
 	private var iabListFetchedAt: Long? = null
 	private var iabListFromCache = true
@@ -187,6 +189,7 @@ class C15tKernel(
 		}
 
 	private fun listIsUsable(): Boolean {
+		if (bundledPolicyAuthority?.isCurrent(config.portalUrl, clock.nowMillis()) == false) return false
 		val fetched = iabListFetchedAt ?: return false
 		val now = clock.nowMillis()
 		return fetched >= 0 && now >= fetched && now - fetched < config.iabListMaxAgeMs
@@ -209,6 +212,9 @@ class C15tKernel(
 	private fun currentAdditionalConsentList() = additionalConsentList?.takeIf {
 		it.isCurrent(clock.nowMillis(), config.iabListMaxAgeMs)
 	}
+	/** Last readable copy, even when expired. It cannot authorize a new grant. */
+	fun adTechProviderDisclosures(): List<AdTechProvider>? = synchronized(mutationLock) { additionalConsentList?.providers?.toList() }
+	val bundledPolicyInfo: BundledPolicyAuthority? get() = readView.get().authority
 	fun adTechProviders(): List<AdTechProvider>? = synchronized(mutationLock) { currentAdditionalConsentList()?.providers?.toList() }
 	fun isAdTechProviderAllowed(id: Long): Boolean = iabConsent?.choices?.adTechProviderConsents?.contains(id) == true
 	fun additionalConsentStatus(): IabListAvailability = synchronized(mutationLock) {
@@ -225,7 +231,7 @@ class C15tKernel(
 	fun openIabDraft(): IabDraft? = synchronized(mutationLock) {
 		if (iabConfiguration == null || evaluationPolicy?.model != ConsentModel.IAB ||
 			state.get().policyPending || state.get().iab?.gvl == null || !listIsUsable() ||
-			additionalConsentList?.providers?.isNotEmpty() == true && currentAdditionalConsentList() == null) null
+			(bundledPolicyAuthority?.requiresAtp == true || additionalConsentList?.providers?.isNotEmpty() == true) && currentAdditionalConsentList() == null) null
 		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
 	}
 
@@ -367,6 +373,7 @@ class C15tKernel(
 			val restored = envelope.snapshot
 			synchronized(mutationLock) {
 				evaluationPolicy = envelope.evaluationPolicy
+				bundledPolicyAuthority = envelope.bundledPolicyAuthority
 				additionalConsentList = envelope.additionalConsentList
 				iabListFetchedAt = envelope.iabListFetchedAt
 				committedIab = envelope.iabConsent
@@ -433,6 +440,11 @@ class C15tKernel(
 		// Both go through the executor: with TaskExecutor.DIRECT they stay
 		// synchronous, which is what the tests rely on.
 		mutation.release()
+		if (snapshot().policyPending) config.bundledPolicy?.let { resource ->
+			BundledPolicy.resolve(resource, config.portalUrl, config.overrides, clock.nowMillis())?.let { selection ->
+				applyInit(selection.mapped, config.detectedGpc, false, selection)
+			}
+		}
 		background.execute { flushPending() }
 		background.execute { runInit() }
 	}
@@ -444,7 +456,7 @@ class C15tKernel(
 	private fun publishCurrentTcStorageBus(allowConsent: Boolean = true) {
 		val envelope = synchronized(mutationLock) {
 			val snapshot = state.get()
-			SnapshotEnvelope(snapshot = snapshot.copy(iab = null),
+			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority, snapshot = snapshot.copy(iab = null),
 				evaluationPolicy = evaluationPolicy, gvl = snapshot.iab?.gvl, iabConsent = iabConsent)
 		}
 		if (allowConsent || envelope.iabConsent == null) store.publishTcStorageBus(envelope)
@@ -474,6 +486,12 @@ class C15tKernel(
 	 */
 	fun snapshot(): ConsentSnapshot {
 		val view = readView.get()
+		view.authority?.let { authority ->
+			if (!authority.isCurrent(config.portalUrl, clock.nowMillis())) return view.snapshot.copy(
+				effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE,
+				error = KernelError("bundled-policy-expired", "Connect to refresh consent policy."))
+
+		}
 		if (!view.requiresIab) return view.snapshot
 		val now = clock.nowMillis()
 		val fetched = view.fetchedAt
@@ -715,6 +733,10 @@ class C15tKernel(
 
 		synchronized(mutationLock) {
 			val current = state.get()
+			if (bundledPolicyAuthority?.isCurrent(config.portalUrl, at) == false)
+				return@mutate refusedCommit("bundled-policy-expired", "Connect to refresh consent policy.")
+			if (bundledPolicyAuthority?.requiresAtp == true && intent !is CommitIntent.Necessary && currentAdditionalConsentList() == null)
+				return@mutate refusedCommit("additional-consent-list-stale", "Refresh the provider disclosures before saving.")
 			if (expectedRevision != null && expectedRevision != current.revision)
 				return@mutate refusedCommit(
 					"concurrent-change",
@@ -864,7 +886,7 @@ class C15tKernel(
 			actionAt, payload, body = frozen,
 		)
 		val envelope = synchronized(mutationLock) {
-			SnapshotEnvelope(
+			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
 				snapshot = published.copy(iab = null),
 				evaluationPolicy = policy,
 				noticeDismissal = acknowledgement ?: noticeDismissal,
@@ -1300,6 +1322,7 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			evaluationPolicy = null
+			bundledPolicyAuthority = null
 			additionalConsentList = null
 			iabListFetchedAt = null
 			iabListFromCache = true
@@ -1329,6 +1352,7 @@ class C15tKernel(
 		store.clearConsentState()
 		storedSnapshotFound = false
 		mutation.release()
+		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.portalUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
 		notifySnapshot()
 		background.execute { runInit() }
 	}
@@ -1437,12 +1461,13 @@ class C15tKernel(
 		if (changed) notifySnapshot()
 	}
 
-	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean): Pair<Boolean, KernelError?> = mutate { mutation ->
+	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean, bundle: BundledPolicy.Selection? = null): Pair<Boolean, KernelError?> = mutate { mutation ->
 		var detected = detection
 		var published: ConsentSnapshot
 		var emitted: KernelError?
 		synchronized(mutationLock) {
 			val base = state.get()
+			if (online || bundle != null) bundledPolicyAuthority = bundle?.authority
 			val subject = mapped.subjectId?.let { serverId ->
 				base.subject?.copy(id = serverId) ?: ConsentSubject(id = serverId)
 			} ?: base.subject
@@ -1477,11 +1502,11 @@ class C15tKernel(
 			// Inside the latch rather than outside it, because the retained half already went
 			// through this line on the launch that served it, and on the read that hydrated it.
 			if (mapped.adTechProvidersInvalid) additionalConsentList = null
-			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, clock.nowMillis()) }
+			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, if (bundle == null) clock.nowMillis() else bundle.atpFetchedAt ?: -1) }
 			iabListOffline = !online
 			if (mapped.gvl != null) {
-				iabListFetchedAt = clock.nowMillis()
-				iabListFromCache = false
+				iabListFetchedAt = if (bundle == null) clock.nowMillis() else bundle.gvlFetchedAt
+				iabListFromCache = bundle != null
 			}
 			val latchedVendorList = mapped.gvl?.narrowToVendorIds(config.vendors) ?: base.iab?.gvl
 			mapped.resolvedGpcDetection?.let { detected = it }
@@ -1835,7 +1860,7 @@ class C15tKernel(
 			val next = if (evaluationPolicy?.model == ConsentModel.IAB)
 				evaluated.copy(effectivePermissions = ConsentState.DENY_ALL) else evaluated
 			val envelope =
-				SnapshotEnvelope(
+				SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
 					snapshot = next.copy(iab = null),
 					evaluationPolicy = if (reset) null else evaluationPolicy,
 					gvl = if (reset) null else next.iab?.gvl,
@@ -1999,14 +2024,20 @@ class C15tKernel(
 			additionalConsentList?.takeIf { it.providers.isNotEmpty() }?.let { saturatingAdd(it.fetchedAt, config.iabListMaxAgeMs) },
 			committedIab?.let { saturatingAdd(it.actionAt, evaluationPolicy?.choiceMs ?: 0) },
 		).filter { it > now }.minOrNull() else null
-		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline).minOrNull()
-		val snapshot = if (deadline == candidate.nextDeadline) candidate else candidate.copy(nextDeadline = deadline)
-		val denied = if (!requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
+		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline, bundledPolicyAuthority?.expiresAt?.takeIf { it > now }).minOrNull()
+		var snapshot = if (deadline == candidate.nextDeadline) candidate else candidate.copy(nextDeadline = deadline)
+		if (bundledPolicyAuthority?.isCurrent(config.portalUrl, now) == false) snapshot = snapshot.copy(effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
+		if (bundledPolicyAuthority != null) {
+			var permissions = snapshot.effectivePermissions
+			for (category in ConsentCategory.OPTIONAL) if (snapshot.explicitChoice?.consents?.get(category.wireName) != true) permissions = permissions.with(category, false)
+			snapshot = snapshot.copy(effectivePermissions = permissions)
+		}
+		val denied = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
 			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
 		state.set(snapshot)
-		readView.set(ReadView(snapshot, denied, requiresIab, committedIab, iabListFetchedAt,
+		readView.set(ReadView(snapshot, bundledPolicyAuthority, denied, requiresIab, committedIab, iabListFetchedAt,
 			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0))
-		if (requiresIab && now >= 0 && deadline != null) {
+		if ((requiresIab || bundledPolicyAuthority != null) && now >= 0 && deadline != null) {
 			val reference = WeakReference(this)
 			deadlineTask = deadlineScheduler.schedule(
 				{ reference.get()?.expireIabDeadline(generation, deadline) },
@@ -2047,7 +2078,7 @@ class C15tKernel(
 		if (cleanup) queue.discardGrants()
 		val envelope = synchronized(mutationLock) {
 				val snapshot = state.get()
-				SnapshotEnvelope(
+				SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
 				// One copy of the document per write. The envelope's `gvl` key is where the list is
 				// durable -- it is that key a build from before this field existed read, and
 				// [bootstrap] reads it back onto the snapshot -- so the stored snapshot goes with

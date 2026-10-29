@@ -60,6 +60,7 @@ data class SnapshotEnvelope(
 	 * without the subject doing anything. See [com.c15t.core.C15tKernel.vendorList].
 	 */
 	val gvl: GlobalVendorList? = null,
+	val bundledPolicyAuthority: com.c15t.core.BundledPolicyAuthority? = null,
 )
 
 /** Keep queue compatibility separate from the envelope's strict consent authority. */

@@ -14,6 +14,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     static let currentVersion = 1
 
     let additionalConsentList: AdditionalConsentList?
+    let bundledPolicyAuthority: BundledPolicyAuthority?
     let iabListFetchedAt: Int64?
     let lastIABActionAt: Int64?
     let iabConsent: IABCommittedConsent?
@@ -33,6 +34,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     let policyResolution: JSONValue?
 
     init(
+        bundledPolicyAuthority: BundledPolicyAuthority? = nil,
         snapshot: ConsentSnapshot,
         noticeDismissal: NoticeDismissal?,
         policyResolution: JSONValue?,
@@ -44,6 +46,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
         additionalConsentList: AdditionalConsentList? = nil
     ) {
         self.additionalConsentList = additionalConsentList
+        self.bundledPolicyAuthority = bundledPolicyAuthority
         self.iabListFetchedAt = iabListFetchedAt
         self.lastIABActionAt = lastIABActionAt ?? iabConsent?.actionAt
         self.iabConsent = iabConsent

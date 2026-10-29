@@ -68,6 +68,8 @@ data class NativeConfig(
 	val detectedGpc: Boolean? = null,
 	val extraHeaders: Map<String, String> = emptyMap(),
 	val maxPendingSaves: Int = 20,
+	/** Raw build resource, loaded by the Android adapter before JavaScript. */
+	val bundledPolicy: String? = null,
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)
