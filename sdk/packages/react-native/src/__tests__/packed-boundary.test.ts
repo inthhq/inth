@@ -47,6 +47,18 @@ test('module boundary sees lazy, CommonJS, type and subpath imports', () => {
 	expect(isForbiddenModule('react-native')).toBe(false);
 });
 
+test('module boundary sees static require.resolve calls', () => {
+	expect(
+		moduleReferences(`
+			const core = require.resolve('@c15t/core');
+			const codec = require['resolve']('@iabtechlabtcf/core');
+			const other = loader.resolve('@c15t/backend');
+			const cached = require.cache('@c15t/iab');
+			const dynamic = require[resolve]('c15t');
+		`)
+	).toEqual(['@c15t/core', '@iabtechlabtcf/core']);
+});
+
 test('packed runtime, declarations and consumer stay independent of web consent packages', () => {
 	if (
 		!existsSync(join(packageDir, 'dist/index.js')) ||

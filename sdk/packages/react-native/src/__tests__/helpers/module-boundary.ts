@@ -6,6 +6,25 @@ const object = function object(
 	return typeof value === 'object' && value !== null;
 };
 
+const isRequireResolve = function isRequireResolve(
+	callee: Record<string, unknown>
+): boolean {
+	if (
+		callee.type !== 'MemberExpression' ||
+		!object(callee.object) ||
+		callee.object.type !== 'Identifier' ||
+		callee.object.name !== 'require' ||
+		!object(callee.property)
+	) {
+		return false;
+	}
+	return callee.computed
+		? callee.property.type === 'StringLiteral' &&
+				callee.property.value === 'resolve'
+		: callee.property.type === 'Identifier' &&
+				callee.property.name === 'resolve';
+};
+
 /** All external module references, including erased and lazy imports. */
 export const moduleReferences = function moduleReferences(
 	source: string
@@ -29,7 +48,9 @@ export const moduleReferences = function moduleReferences(
 		} else if (
 			node.type === 'CallExpression' &&
 			object(node.callee) &&
-			(node.callee.type === 'Import' || node.callee.name === 'require') &&
+			(node.callee.type === 'Import' ||
+				node.callee.name === 'require' ||
+				isRequireResolve(node.callee)) &&
 			Array.isArray(node.arguments)
 		) {
 			[specifier] = node.arguments;
