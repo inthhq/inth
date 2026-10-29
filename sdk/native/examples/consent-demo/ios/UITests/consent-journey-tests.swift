@@ -4,11 +4,12 @@ final class ConsentJourneyTests: XCTestCase {
     var app: XCUIApplication!
     override func setUp() { continueAfterFailure = false }
     override func tearDown() { if testRun?.hasSucceeded == false { print(app.debugDescription) } }
-    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, arguments: [String] = []) {
+    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, theme: String? = nil, arguments: [String] = []) {
         app = XCUIApplication()
         app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": reset ? "1" : "0", "C15T_FIXTURE_FAIL_NEXT_WRITE": fail ? "1" : "0", "C15T_FIXTURE_OFFLINE": offline ? "1" : "0"]
         if let backend { app.launchEnvironment["C15T_FIXTURE_BACKEND"] = backend }
         if let appearance { app.launchEnvironment["C15T_FIXTURE_APPEARANCE"] = appearance }
+        if let theme { app.launchEnvironment["C15T_FIXTURE_THEME"] = theme }
         app.launchArguments = arguments
         app.launch()
     }
@@ -144,13 +145,53 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
         XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
         capture("ios-dark-large-text")
-        let policy = app.links["c15t.privacy-policy"]
+        // iOS 26 exposes a SwiftUI Link as a button; earlier runtimes as a link.
+        let policy = app.links["c15t.privacy-policy"].exists ? app.links["c15t.privacy-policy"] : app.buttons["c15t.privacy-policy"]
         reveal(policy)
         XCTAssertTrue(policy.isHittable)
         capture("ios-dark-large-text-policy")
         XCTAssertTrue(reject.isHittable)
         XCTAssertTrue(accept.isHittable)
         reject.tap()
+    }
+    func test07CustomizeThenBackReturnsToTheFirstLayer() {
+        launch(appearance: "dark")
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+        capture("ios-dark-first-layer")
+        button("c15t.first-layer.customize").tap()
+        XCTAssertTrue(button("c15t.prefs.save").waitForExistence(timeout: 5))
+        XCTAssertFalse(button("c15t.first-layer.accept-all").exists)
+        capture("ios-dark-preferences")
+        // Back from a first-layer Customize returns to the first layer; it never closes the gate.
+        button("c15t.prefs.cancel").tap()
+        XCTAssertTrue(button("c15t.first-layer.accept-all").waitForExistence(timeout: 5))
+        XCTAssertFalse(button("c15t.prefs.save").exists)
+        XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "none")
+        button("c15t.first-layer.reject-all").tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["fixture.state.permission.marketing"].label, "marketing: false")
+    }
+    func test08BrandThemeKeepsEqualDecisions() {
+        launch("fresh-online-iab", theme: "brand")
+        let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all")
+        XCTAssertTrue(reject.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["c15t.first-layer.brand"].exists)
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.title"].label, "Before you shop.")
+        XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
+        XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
+        capture("ios-brand-first-layer")
+        button("c15t.first-layer.customize").tap()
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))
+        capture("ios-brand-preferences")
+        let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
+        XCTAssertTrue(button("c15t.iab.vendors.vendor.1").waitForExistence(timeout: 5))
+        capture("ios-brand-partners")
+        button("c15t.iab.vendors.back").tap()
+        button("c15t.prefs.cancel").tap()
+        XCTAssertTrue(accept.waitForExistence(timeout: 5))
+        accept.tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["fixture.state.permission.marketing"].label, "marketing: true")
     }
 }
 

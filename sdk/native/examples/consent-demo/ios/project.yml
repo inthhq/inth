@@ -16,6 +16,7 @@ targets:
     platform: iOS
     sources:
       - path: Sources
+      - path: Assets.xcassets
       - path: ../fixtures
         buildPhase: resources
     dependencies:

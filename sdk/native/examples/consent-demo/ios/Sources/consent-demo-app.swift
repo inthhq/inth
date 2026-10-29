@@ -131,7 +131,7 @@ struct DemoRoot: View {
     @State private var policy = ""
     var body: some View {
         if let presenter = session.presenter, let policyURL = session.policyURL {
-            HostState(session: session, presenter: presenter).c15tConsent(presenter: presenter, privacyPolicyURL: policyURL)
+            HostState(session: session, presenter: presenter).c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: fixtureTheme)
         } else {
             NavigationStack {
                 Form {
@@ -181,6 +181,39 @@ struct HostState: View {
             }.navigationTitle("Privacy demo").accessibilityIdentifier("fixture.state")
         }
     }
+}
+
+extension DemoRoot {
+    /// Debug fixtures can opt into the sample brand theme; normal launches use the stock c15t appearance.
+    var fixtureTheme: ConsentTheme? {
+        #if DEBUG
+        let env = ProcessInfo.processInfo.environment
+        if env["C15T_FIXTURE_SCENARIO"] != nil, env["C15T_FIXTURE_THEME"] == "brand" { return PantryBrand.theme }
+        #endif
+        return nil
+    }
+}
+
+/// A fictional grocery app's appearance: a teal accent on mint paper, rounded display type,
+/// and its own mark and headline. Everything here goes through the public theme.
+enum PantryBrand {
+    static let theme = ConsentTheme(
+        colors: ConsentTheme.Colors(
+            canvas: ConsentThemeColor(light: 0xF3FAF7, dark: 0x0F1A17),
+            surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x17241F),
+            surfaceMuted: ConsentThemeColor(light: 0xE2F1EB, dark: 0x1F3029),
+            text: ConsentThemeColor(light: 0x10201C, dark: 0xEAF4F0),
+            textSecondary: ConsentThemeColor(light: 0x5C7169, dark: 0x9DB3AC),
+            accent: ConsentThemeColor(light: 0x009688, dark: 0x4FD1C0),
+            onAccent: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A),
+            decision: ConsentThemeColor(light: 0x009688, dark: 0x4FD1C0),
+            onDecision: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)),
+        cornerRadius: 10,
+        headlineFont: .rounded,
+        brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
+        copy: ConsentTheme.Copy(
+            headline: "Before you shop.",
+            introduction: "Pantry uses data to remember your basket, measure what works and show offers you might like."))
 }
 
 /// Test-only fault at the durable storage boundary. A refusal preserves the prior bytes.

@@ -17,10 +17,11 @@ class ConsentJourneyTest {
     private var scenario: ActivityScenario<ConsentDemoActivity>? = null
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null) {
+    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null, theme: String? = null) {
         scenario?.close()
         scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java).putExtra("C15T_FIXTURE_SCENARIO",name)
-            .putExtra("C15T_FIXTURE_RESET",reset).putExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("C15T_FIXTURE_OFFLINE",offline).putExtra("C15T_FIXTURE_BACKEND", backend))
+            .putExtra("C15T_FIXTURE_RESET",reset).putExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("C15T_FIXTURE_OFFLINE",offline).putExtra("C15T_FIXTURE_BACKEND", backend)
+            .putExtra("C15T_FIXTURE_THEME", theme))
     }
     private fun waitFor(id: String): SemanticsNodeInteraction {
         compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
@@ -35,6 +36,9 @@ class ConsentJourneyTest {
     }
     private fun capture(name: String) {
         compose.waitForIdle()
+        // The consent window fades in through the platform's dialog animation, which the
+        // Compose clock does not cover; a capture taken mid-fade shows the host through it.
+        device.waitForIdle(); android.os.SystemClock.sleep(600)
         val folder = File(context.getExternalFilesDir(null),"prototype-evidence").apply { mkdirs() }
         Assert.assertTrue(device.takeScreenshot(File(folder,"$name.png")))
         device.dumpWindowHierarchy(File(folder,"$name.xml"))
@@ -172,6 +176,40 @@ class ConsentJourneyTest {
             device.executeShellCommand("settings put system font_scale 1.0")
             device.executeShellCommand("cmd uimode night no")
         }
+    }
+    @Test fun customizeThenBackReturnsToTheFirstLayer() {
+        try {
+            device.executeShellCommand("cmd uimode night yes")
+            launch()
+            waitFor("c15t.first-layer.customize"); capture("android-dark-first-layer")
+            compose.onNodeWithTag("c15t.first-layer.customize").performClick()
+            waitFor("c15t.prefs.save"); compose.onNodeWithTag("c15t.first-layer.accept-all").assertDoesNotExist()
+            capture("android-dark-preferences")
+            // Back from a first-layer Customize returns to the first layer; it never closes the gate.
+            compose.onNodeWithTag("c15t.prefs.cancel").performClick()
+            waitFor("c15t.first-layer.accept-all"); compose.onNodeWithTag("c15t.prefs.save").assertDoesNotExist()
+            compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
+            compose.onNodeWithTag("c15t.first-layer.reject-all").performClick(); awaitClosed()
+            waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: false")
+        } finally { device.executeShellCommand("cmd uimode night no") }
+    }
+    @Test fun brandThemeKeepsDecisionsEqual() {
+        launch("fresh-online-iab", theme = "brand")
+        val reject = waitFor("c15t.first-layer.reject-all"); val accept = waitFor("c15t.first-layer.accept-all")
+        waitFor("c15t.first-layer.brand").assertTextEquals("PANTRY")
+        compose.onNodeWithTag("c15t.first-layer.title").assertTextEquals("Before you shop.")
+        val r = reject.fetchSemanticsNode().boundsInRoot; val a = accept.fetchSemanticsNode().boundsInRoot
+        Assert.assertEquals(r.width, a.width, 1f); Assert.assertEquals(r.height, a.height, 1f)
+        capture("android-brand-first-layer")
+        compose.onNodeWithTag("c15t.first-layer.customize").performClick()
+        waitFor("c15t.iab.save"); capture("android-brand-preferences")
+        compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.partners"))
+        compose.onNodeWithTag("c15t.iab.partners").performClick()
+        waitFor("c15t.iab.vendors.vendor.1"); capture("android-brand-partners")
+        device.pressBack()
+        waitFor("c15t.prefs.cancel").performClick()
+        waitFor("c15t.first-layer.accept-all").performClick(); awaitClosed()
+        waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: true")
     }
     @Test fun unavailableAndDurableNoticeRefusal() {
         launch("fresh-offline-none")
