@@ -27,10 +27,6 @@ def prop = { String name ->
 }
 
 String groupName = prop('c15t.core.group') ?: 'com.c15t'
-// Only read when c15t.core.fromSource=false. No com.c15t artifact is on Maven yet and
-// native/core-android publishes nothing, so this names a release that does not exist. It
-// has to be cut from this tree first and this number raised to match: the bridge imports
-// engine classes (SnapshotWire, the decision gate) that no older engine build contains.
 String coreVersion = prop('c15t.core.version') ?: '3.0.0-alpha.1'
 
 // Unset in a host app, where the version is not ours to choose: React Native's root plugin
@@ -68,7 +64,9 @@ List<File> candidateInstalls = [
 	new File(packageRoot, 'node_modules/react-native'),
 	packageRoot.parentFile ? new File(packageRoot.parentFile, 'node_modules/react-native') : null,
 	packageRoot.parentFile?.parentFile ? new File(packageRoot.parentFile.parentFile, 'node_modules/react-native') : null,
+	packageRoot.parentFile?.parentFile ? new File(packageRoot.parentFile.parentFile, 'react-native') : null,
 	new File(rootProject.projectDir, 'node_modules/react-native'),
+	new File(rootProject.projectDir.parentFile, 'node_modules/react-native'),
 	prop('c15t.reactNativeDir') ? file(prop('c15t.reactNativeDir')) : null,
 ].findAll { it != null }
 
@@ -165,17 +163,17 @@ def codegenOutputDir = layout.buildDirectory.dir('generated/source/codegen')
 // org.jetbrains.kotlin:kotlin-gradle-plugin on its root buildscript classpath, and a version
 // on this line would fight it. Built-in Kotlin defaults to on under AGP 9, so anything other
 // than an explicit opt-out means the compiler is already there.
+int agpMajor = extensions.getByName('androidComponents').pluginVersion.major
 String builtInKotlin = (prop('android.builtInKotlin') ?: 'true').toString()
-if (builtInKotlin.equalsIgnoreCase('false') && !project.plugins.hasPlugin('org.jetbrains.kotlin.android')) {
+if ((agpMajor < 9 || builtInKotlin.equalsIgnoreCase('false')) && !project.plugins.hasPlugin('org.jetbrains.kotlin.android')) {
 	try {
 		project.apply plugin: 'org.jetbrains.kotlin.android'
 	} catch (Exception failure) {
 		throw new GradleException(
-			'@c15t/react-native builds its Android bridge in Kotlin, and this build opted out of ' +
-				"AGP's built-in Kotlin (android.builtInKotlin=false) without putting the Kotlin " +
-				'Android plugin on the classpath. The React Native template does: add ' +
-				'org.jetbrains.kotlin:kotlin-gradle-plugin to the root buildscript classpath, or ' +
-				'drop android.builtInKotlin=false. Caused by: ' + failure.message,
+			'@c15t/react-native requires the Kotlin Android plugin on the root buildscript ' +
+				'classpath when using AGP 8 or when AGP 9 built-in Kotlin is disabled. Add ' +
+				'org.jetbrains.kotlin:kotlin-gradle-plugin to the root buildscript classpath. ' +
+				'On AGP 9, enabling built-in Kotlin is also supported. Caused by: ' + failure.message,
 		)
 	}
 
@@ -232,14 +230,11 @@ android {
 }
 
 dependencies {
-	// The consent engine: an included build of native/core-android when c15t.core.fromSource is
-	// true (see settings.gradle.kts), or the published artifacts, which is what an app
-	// installing @c15t/react-native from npm gets.
+	// Versioned binaries keep the native producer toolchain out of the host build.
 	implementation "$groupName:c15t-core:$coreVersion"
 	implementation "$groupName:c15t-android:$coreVersion"
 
 	implementation 'androidx.startup:startup-runtime:1.1.1'
-	compileOnly 'androidx.annotation:annotation:1.10.0'
 
 	// React Native comes from the host app, so it stays out of the published AAR's dependency
 	// list rather than pinning an app to one React Native version.

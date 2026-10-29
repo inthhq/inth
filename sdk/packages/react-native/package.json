@@ -39,6 +39,7 @@
 		"!src/specs/__tests__",
 		"C15tReactNative.podspec",
 		"LICENSE.md",
+		"NOTICE",
 		"react-native.config.js",
 		"android/c15t-react-native/build.gradle.kts",
 		"android/c15t-react-native/consumer-rules.pro",
@@ -78,7 +79,7 @@
 		"fmt": "bun oxfmt .",
 		"generate:fixtures": "tsx scripts/generate-protocol-fixtures.ts",
 		"lint": "bun oxlint ./src",
-		"prepack": "bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
+		"prepack": "bun -e \"for (const name of ['LICENSE.md', 'NOTICE']) await Bun.write(name, Bun.file('../../' + name));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
 		"test": "vitest run --passWithNoTests",
 		"test:coverage": "C15T_COVERAGE_RATCHET=1 vitest run --passWithNoTests && bun scripts/check-coverage-ratchet.ts",
 		"test:watch": "vitest"

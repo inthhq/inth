@@ -91,6 +91,14 @@ The autolinked `C15tReactNative` pod compiles the generated Swift core and Apple
 services. Do not add a separate `C15tCore` pod to this app. The checkout-only
 `C15T_LOCAL_PODS` flag now controls Android source substitution only.
 
+For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
+shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/c15t-private`
+unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
+come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
+plugin adds a Maven repository. See the maintained
+[packed consumer guide](../../../docs/internal/expo-packed-consumer.md) for the
+options, exclusive routing and clean external-consumer checks.
+
 ## Native build status
 
 Verified here: `bun run check-types` is clean, `expo export --platform all` writes

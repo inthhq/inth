@@ -417,6 +417,11 @@ export const hostReadPaths: HostReadPath[] = [
 			"the podspec's `s.license` file, which Apache-2.0 requires to travel with it",
 	},
 	{
+		path: 'NOTICE',
+		readBy:
+			'Apache-2.0 attribution that must accompany the distributed native sources',
+	},
+	{
 		path: 'react-native.config.js',
 		readBy:
 			'both linkers read `dependency.platforms`; Expo reads only `.js` and `.ts`, so a `.cjs` is invisible to it',

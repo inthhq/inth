@@ -3,7 +3,9 @@
 # lockstep with the Android Gradle Plugin minimum, see gradle-wrapper.properties.
 agp = "9.2.1"
 kotlin = "2.2.10"
-kotlinxSerializationJson = "1.11.0"
+# 1.11 carries Kotlin 2.3 metadata, unreadable by Expo 57 / RN 0.86 Kotlin 2.1.
+# Keep the binary API readable by that consumer even though the producer uses AGP 9.
+kotlinxSerializationJson = "1.8.1"
 androidxStartup = "1.1.1"
 androidxLifecycle = "2.10.0"
 androidxAnnotation = "1.10.0"

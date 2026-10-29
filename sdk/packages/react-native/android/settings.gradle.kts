@@ -26,45 +26,26 @@ dependencyResolutionManagement {
 	repositories {
 		google()
 		mavenCentral()
+		providers.environmentVariable("C15T_MAVEN_URL").orNull?.let { repositoryUrl ->
+			exclusiveContent {
+				forRepository {
+					maven {
+						url = uri(repositoryUrl)
+						if (repositoryUrl.startsWith("https://")) {
+							credentials {
+								username = providers.environmentVariable("C15T_MAVEN_USERNAME").orNull
+								password = providers.environmentVariable("C15T_MAVEN_TOKEN").orNull
+							}
+						}
+					}
+				}
+				filter { includeGroup("com.c15t") }
+			}
+		}
 	}
 }
 
 rootProject.name = "c15t-react-native-android"
-
-/**
- * Where the consent engine comes from.
- *
- * `c15t.core.fromSource=true` (the default in this repository) builds against
- * `native/core-android` as an included build, so the bridge is always compiled
- * against the engine that is in the tree next to it and there is no second copy of
- * the source to drift.
- *
- * `false` resolves the published artifacts at `c15t.core.version`, which is the shape an
- * app installing `@c15t/react-native` from npm would get. Nothing builds that way today:
- * `native/core-android` has no publishing config and no `com.c15t` artifact is on Maven,
- * so this repository and CI both build from source. When the engine is published, cut that
- * release from this tree and raise `c15t.core.version` to it before the flag is flipped,
- * because the bridge imports engine classes no older engine build contains.
- */
-val coreFromSource = providers.gradleProperty("c15t.core.fromSource").orNull?.toBoolean() ?: true
-val coreGroup = providers.gradleProperty("c15t.core.group").orNull ?: "com.c15t"
-val coreSourceDir = file(providers.gradleProperty("c15t.core.sourceDir").orNull ?: "../../../native/core-android")
-
-if (coreFromSource) {
-	if (!coreSourceDir.isDirectory) {
-		throw GradleException(
-			"build.gradle.kts: c15t.core.fromSource is true but no Gradle project exists at $coreSourceDir. " +
-				"Point c15t.core.sourceDir at native/core-android, or run with -Pc15t.core.fromSource=false " +
-				"to resolve the published com.c15t artifacts.",
-		)
-	}
-	includeBuild(coreSourceDir) {
-		dependencySubstitution {
-			substitute(module("$coreGroup:c15t-core")).using(project(":c15t-core"))
-			substitute(module("$coreGroup:c15t-android")).using(project(":c15t-android"))
-		}
-	}
-}
 
 include(":c15t-react-native")
 

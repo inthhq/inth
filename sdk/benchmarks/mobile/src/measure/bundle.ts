@@ -19,6 +19,7 @@ import {
 	statSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { findMissingReactImports } from '../support/ensure-react-global';
@@ -310,8 +311,9 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 	const core = exec(
 		'./gradlew',
 		[
-			':c15t-core:jar',
-			':c15t-android:assembleRelease',
+			':c15t-core:publishAllPublicationsToStagingRepository',
+			':c15t-android:publishAllPublicationsToStagingRepository',
+			'--no-configuration-cache',
 			'--console=plain',
 			'-q',
 		],
@@ -331,6 +333,10 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 		[':c15t-react-native:assembleRelease', '--console=plain', '-q'],
 		{
 			cwd: ANDROID_BRIDGE,
+			env: {
+				C15T_MAVEN_URL: pathToFileURL(join(ANDROID_CORE, 'build/maven-staging'))
+					.href,
+			},
 		}
 	);
 	if (bridge.error) {

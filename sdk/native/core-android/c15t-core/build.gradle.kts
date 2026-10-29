@@ -1,4 +1,7 @@
 plugins {
+	`maven-publish`
+	signing
+	id("org.jetbrains.dokka")
 	alias(libs.plugins.kotlin.jvm)
 	alias(libs.plugins.kotlin.serialization)
 }
@@ -6,6 +9,11 @@ plugins {
 // Pure JVM on purpose: nothing in this module may import android.*, so the whole
 // consent engine is testable without an emulator.
 kotlin {
+	coreLibrariesVersion = "2.1.20"
+	compilerOptions {
+		apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+		languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_2_1)
+	}
 	jvmToolchain(17)
 }
 
@@ -51,3 +59,10 @@ tasks.register<JavaExec>("bench") {
 	// One collector keeps the numbers comparable between runs.
 	jvmArgs = listOf("-XX:+UseSerialGC")
 }
+
+java { withSourcesJar() }
+
+apply(from = "../gradle/publishing.gradle")
+
+// Existing bundle tooling reads this stable build path; Maven still uses versioned filenames.
+tasks.named<Jar>("jar") { archiveFileName.set("c15t-core.jar") }
