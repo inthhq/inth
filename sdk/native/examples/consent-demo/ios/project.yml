@@ -34,6 +34,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Consent demo
         INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
         INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
   C15tConsentDemoUITests:

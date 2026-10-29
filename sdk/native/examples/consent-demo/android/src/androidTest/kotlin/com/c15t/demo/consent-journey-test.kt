@@ -17,11 +17,11 @@ class ConsentJourneyTest {
     private var scenario: ActivityScenario<ConsentDemoActivity>? = null
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val device get() = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null, theme: String? = null, branding: String? = null) {
+    private fun launch(name: String = "fresh-online", fail: Boolean = false, reset: Boolean = true, offline: Boolean = false, backend: String? = null, theme: String? = null, branding: String? = null, identity: String? = null) {
         scenario?.close()
         scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java).putExtra("C15T_FIXTURE_SCENARIO",name)
             .putExtra("C15T_FIXTURE_RESET",reset).putExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",fail).putExtra("C15T_FIXTURE_OFFLINE",offline).putExtra("C15T_FIXTURE_BACKEND", backend)
-            .putExtra("C15T_FIXTURE_THEME", theme).putExtra("C15T_FIXTURE_BRANDING", branding))
+            .putExtra("C15T_FIXTURE_THEME", theme).putExtra("C15T_FIXTURE_BRANDING", branding).putExtra("C15T_FIXTURE_IDENTITY", identity))
     }
     private fun waitFor(id: String): SemanticsNodeInteraction {
         compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
@@ -101,6 +101,8 @@ class ConsentJourneyTest {
         val accept = waitFor("c15t.first-layer.accept-all")
         val r = reject.fetchSemanticsNode().boundsInRoot; val a = accept.fetchSemanticsNode().boundsInRoot
         Assert.assertEquals(r.width,a.width,1f); Assert.assertEquals(r.height,a.height,1f)
+        // The default identity is the host app's own label, never a placeholder.
+        waitFor("c15t.first-layer.brand").assertContentDescriptionEquals("Consent demo")
         capture("android-first-layer")
         device.pressBack()
         waitFor("fixture.open-preferences").assertIsDisplayed()
@@ -119,6 +121,7 @@ class ConsentJourneyTest {
         waitFor("c15t.first-layer.customize").performClick()
         val measurement = waitFor("c15t.prefs.category.measurement.switch")
         measurement.performScrollTo().performClick().assertIsOn()
+        compose.onNodeWithText("Data use").assertDoesNotExist()
         capture("android-category-preferences")
         compose.onNodeWithTag("c15t.prefs.save").performClick()
         waitFor("c15t.prefs.error.retry").assertIsEnabled()
@@ -250,6 +253,16 @@ class ConsentJourneyTest {
         compose.onNodeWithTag("c15t.first-layer.branding").assertDoesNotExist()
         compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
         capture("android-provider-hidden")
+    }
+    @Test fun identityFallsBackToAnInitialAndCanBeHidden() {
+        launch(identity = "generic")
+        waitFor("c15t.first-layer.brand").assertContentDescriptionEquals("Consent demo")
+        capture("android-identity-generic")
+        launch(identity = "hidden")
+        waitFor("c15t.first-layer.reject-all")
+        compose.onNodeWithTag("c15t.first-layer.brand").assertDoesNotExist()
+        capture("android-identity-hidden")
+        compose.onNodeWithTag("c15t.first-layer.reject-all").performClick(); awaitClosed()
     }
     @Test fun unavailableAndDurableNoticeRefusal() {
         launch("fresh-offline-none")

@@ -85,6 +85,18 @@ side when both labels fit and stacked at accessibility text sizes. Customize is
 outlined. Nothing else on the first layer is filled. Dark mode flips the paper
 and ink; every colour carries a light and a dark value.
 
+The page opens with the host app's own identity: its launcher icon in a 56pt
+tile with the platform icon mask, and its display name as a tracked eyebrow
+in the accent colour above the headline. Both come from the app bundle or
+package at render time, with no network. An app whose icon cannot be read gets
+a drawn tile with the name's initial instead, so no placeholder name or
+fictional brand can ship. `ConsentTheme.Brand(name:markImageName:)` replaces
+either value with the app's own assets, and `Brand.hidden` (Swift) or
+`Brand.Hidden` (Kotlin) starts the page at the headline. Standing preferences
+show one category group with no heading outside IAB; IAB keeps its "This app",
+"Purposes", "Special features" and partner groups. On preferences, Accept all
+and Reject all are equal outlined buttons and Save is the one filled action.
+
 `ConsentTheme` (Swift, `C15tConsentUI`) and `com.c15t.consentui.ConsentTheme`
 (Kotlin) are the one customization surface. Each holds nine semantic colours
 (`canvas`, `surface`, `surfaceMuted`, `text`, `textSecondary`, `accent`,
@@ -138,6 +150,7 @@ dark). Android also accepts colour, drawable and font resources.
 | `com.c15t.consent.onDecision` | `com.c15t.consent.ON_DECISION` | colour |
 | `com.c15t.consent.cornerRadius` | `com.c15t.consent.CORNER_RADIUS` | points or dp |
 | `com.c15t.consent.headlineFont` | `com.c15t.consent.HEADLINE_FONT` | `serif`, `sans`, `rounded`, or a font |
+| `com.c15t.consent.brand` | `com.c15t.consent.BRAND` | Boolean, show or hide the app identity above the headline |
 | `com.c15t.consent.brandName` | `com.c15t.consent.BRAND_NAME` | text |
 | `com.c15t.consent.brandMark` | `com.c15t.consent.BRAND_MARK` | asset name or drawable |
 | `com.c15t.consent.headline` | `com.c15t.consent.HEADLINE` | text |
@@ -200,6 +213,8 @@ request body to `last-save.json`. This is a controlled protocol peer, not proof
 of a successful hosted receipt.
 
 `C15T_FIXTURE_THEME=brand` applies the sample brand theme described under Appearance.
+`C15T_FIXTURE_IDENTITY=generic` points the app mark at a missing asset to show the drawn
+initial tile; `C15T_FIXTURE_IDENTITY=hidden` starts the page at the headline.
 `C15T_FIXTURE_RESET=1` clears only the selected scenario's test storage.
 `C15T_FIXTURE_OFFLINE=1` fails init while retaining that storage.
 `C15T_FIXTURE_FAIL_NEXT_WRITE=1` arms a durable decision-write refusal after initial

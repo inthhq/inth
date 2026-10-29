@@ -56,7 +56,13 @@ class ConsentDemoActivity : ComponentActivity() {
                             "hidden" -> (theme ?: ConsentTheme.c15t).copy(showsBranding = false)
                             else -> theme
                         }
-                        C15tConsent(presenter, model.policyUrl, theme = providerTheme)
+                        val identityTheme = when (model.fixtureIdentity) {
+                            // A mark resource that cannot draw exercises the initial tile.
+                            "generic" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand(markResId = 0))
+                            "hidden" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand.Hidden)
+                            else -> providerTheme
+                        }
+                        C15tConsent(presenter, model.policyUrl, theme = identityTheme)
                     }
                 }
             }
@@ -75,6 +81,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     /** Debug fixtures can opt into the sample brand theme; normal launches use the stock c15t appearance. */
     var fixtureTheme by mutableStateOf<String?>(null); private set
     var fixtureBranding by mutableStateOf<String?>(null); private set
+    var fixtureIdentity by mutableStateOf<String?>(null); private set
     var setupError by mutableStateOf<String?>(null); private set
     private var fixtureStore: C15tStore? = null
     var fault: FaultPreferences? = null
@@ -93,6 +100,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         if (scenario != null) {
             fixtureTheme = intent?.getStringExtra("C15T_FIXTURE_THEME")
             fixtureBranding = intent?.getStringExtra("C15T_FIXTURE_BRANDING")
+            fixtureIdentity = intent?.getStringExtra("C15T_FIXTURE_IDENTITY")
         }
         if (scenario == null && (backend.isNullOrBlank() || privacy.isNullOrBlank())) return
         if (scenario == null) {

@@ -4,13 +4,14 @@ final class ConsentJourneyTests: XCTestCase {
     var app: XCUIApplication!
     override func setUp() { continueAfterFailure = false }
     override func tearDown() { if testRun?.hasSucceeded == false { print(app.debugDescription) } }
-    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, theme: String? = nil, branding: String? = nil, arguments: [String] = []) {
+    func launch(_ scenario: String = "fresh-online", fail: Bool = false, reset: Bool = true, offline: Bool = false, backend: String? = nil, appearance: String? = nil, theme: String? = nil, branding: String? = nil, identity: String? = nil, arguments: [String] = []) {
         app = XCUIApplication()
         app.launchEnvironment = ["C15T_FIXTURE_SCENARIO": scenario, "C15T_FIXTURE_RESET": reset ? "1" : "0", "C15T_FIXTURE_FAIL_NEXT_WRITE": fail ? "1" : "0", "C15T_FIXTURE_OFFLINE": offline ? "1" : "0"]
         if let backend { app.launchEnvironment["C15T_FIXTURE_BACKEND"] = backend }
         if let appearance { app.launchEnvironment["C15T_FIXTURE_APPEARANCE"] = appearance }
         if let theme { app.launchEnvironment["C15T_FIXTURE_THEME"] = theme }
         if let branding { app.launchEnvironment["C15T_FIXTURE_BRANDING"] = branding }
+        if let identity { app.launchEnvironment["C15T_FIXTURE_IDENTITY"] = identity }
         app.launchArguments = arguments
         app.launch()
     }
@@ -51,6 +52,8 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(reject.waitForExistence(timeout: 10)); XCTAssertTrue(accept.isHittable)
         XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
         XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
+        // The default identity is the host app's own name, never a placeholder.
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Consent demo")
         capture("ios-first-layer")
         reject.tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
@@ -66,6 +69,7 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()
         let measurement = app.switches["c15t.prefs.category.measurement.switch"]
         reveal(measurement); measurement.tap(); XCTAssertEqual(measurement.value as? String, "1")
+        XCTAssertFalse(app.staticTexts["Data use"].exists)
         capture("ios-category-preferences")
         button("c15t.prefs.save").tap()
         XCTAssertTrue(button("c15t.prefs.error.retry").waitForExistence(timeout: 5))
@@ -213,6 +217,19 @@ final class ConsentJourneyTests: XCTestCase {
         launch(branding: "hidden")
         XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10))
         XCTAssertFalse(app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.exists)
+    }
+
+    func test10IdentityFallsBackToAnInitialAndCanBeHidden() {
+        launch(identity: "generic")
+        XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.brand"].label, "Consent demo")
+        capture("ios-identity-generic")
+        launch(identity: "hidden")
+        XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["c15t.first-layer.brand"].exists)
+        capture("ios-identity-hidden")
+        button("c15t.first-layer.reject-all").tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
     }
 }
 

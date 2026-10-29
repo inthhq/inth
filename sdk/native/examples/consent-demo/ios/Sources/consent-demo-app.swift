@@ -196,6 +196,12 @@ extension DemoRoot {
             case "hidden": theme.showsBranding = false
             default: break
             }
+            switch env["C15T_FIXTURE_IDENTITY"] {
+            // A mark that does not exist in the catalogue exercises the drawn initial tile.
+            case "generic": theme.brand = ConsentTheme.Brand(markImageName: "ConsentDemoMissingMark")
+            case "hidden": theme.brand = .hidden
+            default: break
+            }
             return theme
         }
         #endif
