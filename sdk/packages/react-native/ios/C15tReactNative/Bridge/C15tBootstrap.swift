@@ -94,7 +94,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         overrides: ConsentOverrides = .default(),
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
-        gpc: Bool? = nil
+        gpc: Bool? = nil,
+        bundledPolicyResource: String? = nil
     ) {
         self.autoBootstrap = autoBootstrap
         self.transportMode = transportMode
@@ -107,6 +108,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         self.consentCategories = consentCategories
         self.vendors = vendors
         self.gpc = gpc
+        self.bundledPolicyResource = bundledPolicyResource
     }
 
     /// Whether the launch hook should start the core.
@@ -144,6 +146,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// keeps every vendor the producer serves: a host that means no vendors has to say so with a
     /// scope that names none, not by leaving this key out.
     public var vendors: [Int]?
+    /// Filename of an endpoint-bound policy export in the main app bundle.
+    public var bundledPolicyResource: String?
     /// The host app's Global Privacy Control signal, or `nil` when it has none.
     public var gpc: Bool?
 
@@ -167,6 +171,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         /// both platforms is the reason either key is readable at all.
         public static let vendors = "com.c15t.vendors"
         public static let gpc = "com.c15t.gpc"
+        public static let bundledPolicyResource = "com.c15t.policy.resource"
     }
 
     /// A key a host app may still have in `Info.plist` that this build does not model.
@@ -281,7 +286,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             ),
             consentCategories: categories?.isEmpty == true ? nil : categories,
             vendors: declaredVendors(infoPlist[InfoPlistKey.vendors]),
-            gpc: infoPlist[InfoPlistKey.gpc] as? Bool
+            gpc: infoPlist[InfoPlistKey.gpc] as? Bool,
+            bundledPolicyResource: infoPlist[InfoPlistKey.bundledPolicyResource] as? String
         )
     }
 
@@ -383,7 +389,11 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         return C15tAppleConfiguration(
             transport: transport, storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
             initURL: initURL, domain: domain, consentCategories: consentCategories,
-            vendors: vendors, overrides: overrides, gpc: gpc
+            vendors: vendors, overrides: overrides, gpc: gpc,
+            bundledPolicy: bundledPolicyResource.flatMap { name in
+                guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
+                return BundledPolicyResource(contentsOf: url, endpoint: endpoint)
+            }
         )
     }
 }

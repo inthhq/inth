@@ -13,6 +13,7 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		AB0001E8BA67B01D1000EA57 /* consent-journey.swift in Sources */ = {isa = PBXBuildFile; fileRef = E059D9E2BF36BA8B9EA96F76 /* consent-journey.swift */; };
+		B017D1E00000000000000001 /* c15t-policy.json in Resources */ = {isa = PBXBuildFile; fileRef = B017D1E00000000000000002 /* c15t-policy.json */; };
 		EAFE7EC0FC13CA1AF7B1202E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6698F8D90906F61CFEF10D1A /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -38,6 +39,7 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = C15tBare/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = C15tBare/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		9873631E7CB5175899040A7C /* C15tBareUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = C15tBareUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B017D1E00000000000000002 /* c15t-policy.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = "c15t-policy.json"; path = "C15tBare/c15t-policy.json"; sourceTree = "<group>"; };
 		E059D9E2BF36BA8B9EA96F76 /* consent-journey.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "consent-journey.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -66,6 +68,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
+				B017D1E00000000000000002 /* c15t-policy.json */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
@@ -222,6 +225,7 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				B017D1E00000000000000001 /* c15t-policy.json in Resources */,
 				70C9BD220C03CB78352846B9 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

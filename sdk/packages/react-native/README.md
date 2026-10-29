@@ -39,7 +39,7 @@ c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-co
 - React 19.2.3 or later, below 19.3.0, to render the built-in components
 - iOS 16.4 or newer, Android `minSdk` 24 and `compileSdk` 36
 - A custom native build: Expo Go cannot load this package's native module, so use a development build
-- A c15t project endpoint, or a self-hosted `@c15t/backend` URL
+- An Inth hosted project URL, such as https://your-project.inth.app. Advanced self-hosted deployments remain supported.
 
 ## Installation
 
@@ -56,6 +56,8 @@ See the [documentation](https://c15t.com/docs/frameworks/react-native/quickstart
 The native cores own consent state. `bootstrap(config)` runs once from a launch hook, hydrates the stored snapshot from the Keychain or encrypted storage, and answers `snapshot()` synchronously from memory, so a cold start with no connectivity still knows what the user decided.
 
 The React Native layer never recomputes consent. It reads the snapshot, renders the surface the policy asks for, and forwards the user's decision as a commit intent. The native core records the receipts, updates the effective permissions, and queues the backend write.
+
+A build-exported native policy resource can also show the first prompt on a fresh offline install. Expo embeds it through policyResource. Native bootstrap validates endpoint binding and authority expiry, preserves disclosure source dates, and keeps the hosted transport installed for refresh and queued delivery. The repository reference apps use https://example-inth.inth.app/.
 
 ## Gating a feature
 
@@ -109,7 +111,7 @@ Add one plugin entry to `app.json` and the native bootstrap keys, the Android la
   "plugins": [
     [
       "@c15t/react-native/expo-plugin",
-      { "backendURL": "https://consent.example.com" }
+      { "backendURL": "https://your-project.inth.app" }
     ]
   ]
 }

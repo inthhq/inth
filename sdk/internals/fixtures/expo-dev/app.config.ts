@@ -70,6 +70,7 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 
 const c15tPluginProps: C15tPluginProps = {
 	androidMavenRepository: { url: process.env.C15T_MAVEN_URL ?? 'https://maven.pkg.github.com/inthhq/c15t-private' },
+	policyResource: './c15t-policy.json',
 	backendURL,
 	// The App Tracking Transparency opt-in. Consent to marketing cookies is not Apple
 	// tracking authorization, so this fixture asks for both: the banner decides what

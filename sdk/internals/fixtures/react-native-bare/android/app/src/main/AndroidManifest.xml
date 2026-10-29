@@ -26,6 +26,7 @@
              com.c15t.reactnative.AUTO_BOOTSTRAP
                                       false only when the app starts the core
                                       itself before React Native initializes -->
+      <meta-data android:name="com.c15t.POLICY_RESOURCE" android:value="c15t-policy.json" />
       <meta-data
         android:name="com.c15t.PORTAL_URL"
         android:value="https://example-inth.inth.app/" />

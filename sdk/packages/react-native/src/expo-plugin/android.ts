@@ -59,6 +59,12 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	params: ResolvedC15tParams
 ): MetaDataPair[] {
 	const pairs: MetaDataPair[] = [];
+	if (params.policyResource !== null) {
+		pairs.push({
+			name: ANDROID_META.policyResource,
+			value: 'c15t-policy.json',
+		});
+	}
 
 	if (params.backendURL !== null) {
 		pairs.push({ name: ANDROID_META.portalUrl, value: params.backendURL });

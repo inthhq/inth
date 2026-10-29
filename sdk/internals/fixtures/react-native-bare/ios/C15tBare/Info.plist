@@ -72,6 +72,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>com.c15t.policy.resource</key>
+	<string>c15t-policy.json</string>
 	<key>com.c15t.backend.mode</key>
 	<string>hosted</string>
 	<key>com.c15t.backend.url</key>

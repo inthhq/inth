@@ -54,15 +54,15 @@ it and inlines every `process.env.C15T_*` read at build time, which is the only 
 value reaches a React Native bundle. A variable already in the real environment wins,
 so `C15T_FAKE_NATIVE=true bun run android` overrides the file.
 
-The reference app defaults to the public example Inth project,
-`https://example-inth.inth.app/`. Use your own Inth project URL and configure its
-policy for your app before using it outside this demo. Native transports send
-policy-contract and SDK-version headers. A plain browser GET can return the legacy
-contract. Only hosted init compatibility has been probed; these instructions do
-not claim hosted receipt acceptance.
+The app defaults to the public Inth demo, `https://example-inth.inth.app/`.
+It embeds a native policy resource for fresh offline startup. The checked-in demo
+resource expires on 5 November 2026. Re-export it before testing after that date.
+See [mobile policy resources](../../../native/docs/mobile-policy-resources.md)
+for the export command, expiry semantics and native resource configuration.
+No hosted save has been verified against the public demo.
 
-To change projects, edit the two files the core reads and match `C15T_BACKEND_URL`
-in `.env`:
+Use your Inth project URL for your app. Update the JS environment value and
+regenerate the resource when changing endpoints. Point the native core at it by editing the two files the core actually reads:
 
 - `ios/C15tBare/Info.plist` → `com.c15t.backend.url`, `com.c15t.backend.mode`
 - `android/app/src/main/AndroidManifest.xml` → `com.c15t.PORTAL_URL`
@@ -86,17 +86,9 @@ systems and outside those countries. Per-locale Markdown goes in
 for the identifier is usually linking data across apps, and that key currently says it
 does not. Leave it `false` only if you ask and then never track.
 
-For a self-hosted integration, set those same URLs to your backend and set the iOS
-mode to `selfHosted`. Keep the existing transport APIs. The reviewed app E2E runner
-below explicitly selects its loopback protocol backend and restores configuration
-afterwards. Normal builds use Inth.
-
-Debug Android builds still need Metro forwarding when using a USB-connected device
-or emulator. Select the intended device explicitly:
-
-```sh
-adb -s <serial> reverse tcp:8081 tcp:8081
-```
+Advanced self-hosted deployments remain supported by the same transport API.
+The deterministic native E2E lane uses a task-owned loopback backend on port 3108
+and replaces only build artifacts. It does not change these hosted defaults.
 
 ## Drive it from a shell
 
@@ -125,9 +117,9 @@ SIMCTL_CHILD_C15T_DEMO_LINK='c15t-demo://accept' \
   xcrun simctl launch --terminate-running-process <udid> org.reactjs.native.example.C15tBare
 ```
 
-A first install needs a compatible policy response before the choice controls can
-commit. A cached policy and recorded choice can restart offline. Bundled policy
-for a first-ever offline launch is a separate required feature.
+A valid stored or bundled policy lets these verbs operate offline. Without one,
+the app waits for hosted `/init` before it can show a consent prompt. The native
+E2E commands below start their own controlled backend and export their own resource.
 
 The grammar is `c15t-demo://<verb>[/<argument>][?name=value[&name=value]]`. Quote the URL
 on Android: `?` and `&` belong to the shell otherwise.
@@ -187,7 +179,7 @@ Evidence lands in `IOS_JOURNEY_OUT`, which defaults to `/tmp/ios-journey`. `IOS_
 `IOS_JOURNEY_DEVICE`, `IOS_JOURNEY_RUNTIME` and `IOS_JOURNEY_BACKEND` move the device and the
 backend it talks to.
 
-It refuses to start without a policy from `GET /api/self-host/init`. With no backend the core
+Without a usable stored or bundled policy, the core
 resolves nothing and no prompt is ever owed, which looks exactly like a banner that never ships.
 
 Four things it does that are easy to get wrong:
@@ -529,11 +521,11 @@ AndroidJUnitRunner with UIAutomator tap the stock consent controls. Each run
 creates and deletes its own simulator or emulator. No shared device is erased.
 Android's test APK runs in a separate process so it can force-stop the real app.
 
-The test backend binds loopback port 3000 and serves the existing
-`native/protocol/evaluation-eu-fresh-install.json` response. The test artifact
-alone uses that endpoint and needs no project credentials. Reference apps and
-consumer setup should use hosted Inth. These tests do not establish the missing
-example project binding. Self-hosted transport remains an advanced option.
+The test backend binds loopback port 3108. It exports an authored conservative
+manifest and serves the existing `native/protocol/evaluation-eu-fresh-install.json`
+response after reconnection. Only the E2E build artifact uses that endpoint and
+resource. The checked-in reference defaults remain the public Inth demo.
+Self-hosted transport remains an advanced option.
 
 `C15T_APP_E2E=1` embeds a fixture-only observer that publishes the real
 TurboModule snapshot to the test backend. The test fails unless the active core
@@ -542,10 +534,13 @@ confirmation times and the actual `/subjects` bodies. The fake core cannot
 satisfy these assertions. Demo links only reset scenarios. Reject, Accept,
 Customize, category switches, Save and reopening preferences use visible controls.
 
-The journey checks reject, accept, a measurement-only save, reopening the saved
-switches, cancelling an unsaved measurement draft, and the same receipts after
-terminating and relaunching the process. It requires exactly three delivered
-decisions. The backend stays available during this journey.
+The journey starts with a fresh installation and unavailable consent endpoints.
+It verifies unknown country, no policy token, the bundled first prompt and denied
+optional gates. Reject and Accept commit offline, then deliver their exact original
+receipts on reconnect. A measurement-only choice and a cancelled draft survive
+offline process death. Withdrawal denies immediately and survives another restart.
+The final reconnect delivers that exact withdrawal, with no superseded grant or
+duplicate accepted receipt. A second reconnect leaves exactly three deliveries.
 
 Evidence defaults to `.artifacts/app-e2e/<platform>-<run>/`. It includes named
 PNGs, an MP4 recording, native snapshots, captured delivery bodies, device logs,
@@ -554,19 +549,18 @@ test summary and exported attachments. Android retains JUnit XML and UI hierarch
 XML. Failure cleanup captures the final frame and preserves available evidence.
 Android also uploads each capture to the test backend before APK teardown and
 streams device logs while the test runs.
-Successful runs require all seven journey frames and a non-empty recording.
+Successful runs require all eleven journey frames and a non-empty recording.
 `command.xml` records runner failures, including compilation failures; it is not
 a substitute for the native test report.
 
 Set `C15T_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
 settings are `C15T_IOS_RUNTIME`, `C15T_IOS_DEVICE`, `C15T_ANDROID_IMAGE` and
 `C15T_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
-image. CI uses x86_64. A run fails if port 3000 is occupied. Run platforms
+image. CI uses x86_64. A run fails if port 3108 is occupied. Run platforms
 sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
 dispatchable, and has no publication dependency.
 
-This lane does not cover bundled first-install offline policy, IAB or Additional
-Consent screens, native presenters while JavaScript is busy, stale-policy or
+This lane does not cover IAB or Additional Consent screens, native presenters while JavaScript is busy, stale-policy or
 storage refusal, Expo installation, standalone native apps, physical devices or
 the minimum supported OS versions. The current controls are React Native UI.
 SwiftUI and Compose hosts can reuse the protocol producer, native-snapshot and

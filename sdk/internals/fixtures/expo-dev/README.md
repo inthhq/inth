@@ -35,6 +35,13 @@ need the built client to open it.
 
 ## Setup
 
+The default backend is the public Inth demo, `https://example-inth.inth.app/`.
+Use your Inth project URL for your app. The plugin embeds `c15t-policy.json` before
+JavaScript starts; the demo resource expires on 5 November 2026. Regenerate it
+before prebuild when changing the endpoint or renewing its authority.
+See [mobile policy resources](../../../native/docs/mobile-policy-resources.md).
+No hosted save has been verified against the public demo.
+
 ```sh
 bun install                      # from the repository root
 cp .env.example .env
@@ -59,17 +66,8 @@ URL, run `bun run prebuild` again; a running binary keeps the value it was built
 That the bundle and the binary each carry a copy of the backend URL is a property of
 the design, not a mistake in this example.
 
-The default is the public example Inth project at
-`https://example-inth.inth.app/`. Replace `EXPO_PUBLIC_C15T_BACKEND_URL` with your
-own Inth URL and configure its policy for your app. The plugin chooses hosted
-mode for Inth domains. Native requests send the policy-contract and SDK-version
-headers; a plain browser GET can return legacy data. Hosted init compatibility
-has been probed, but hosted receipt acceptance has not been verified here.
-
-Advanced self-hosting remains available through the same URL setting and existing
-transport APIs. The local deterministic protocol backend belongs to explicit app
-E2E runs. A clean first launch needs network; bundled first-install offline policy
-is a separate required integration. Cached policies and choices can restart offline.
+Advanced self-hosted deployments use the same transport contract. Keep the native
+and JavaScript URLs equal and export the resource from that deployment's manifest.
 
 ## Commands
 

@@ -27,6 +27,7 @@ export const ANDROID_META = {
 	forceGpc: 'com.c15t.FORCE_GPC',
 	/** Overrides `${portalUrl}/init` for a proxied init route. */
 	initUrl: 'com.c15t.INIT_URL',
+	policyResource: 'com.c15t.POLICY_RESOURCE',
 	/** c15t backend base URL, the value the core calls `portalUrl`. */
 	portalUrl: 'com.c15t.PORTAL_URL',
 	/**
@@ -53,6 +54,7 @@ export const IOS_PLIST_KEY = {
 	gpc: 'com.c15t.gpc',
 	/** Overrides `${backendURL}/init`, for a proxied init route. */
 	initURL: 'com.c15t.backend.initUrl',
+	policyResource: 'com.c15t.policy.resource',
 	/** One of the iOS bridge's own `TransportMode` raw values. */
 	transportMode: 'com.c15t.backend.mode',
 	/**

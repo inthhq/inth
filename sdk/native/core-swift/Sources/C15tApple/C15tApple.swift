@@ -53,6 +53,7 @@ public struct C15tAppleConfiguration: Sendable {
     public var vendors: [Int]?
     public var overrides: ConsentOverrides
     public var gpc: Bool?
+    public var bundledPolicy: BundledPolicyResource?
 
     /// Choose hosted or self-hosted explicitly. Keychain is the default store.
     public init(
@@ -63,7 +64,8 @@ public struct C15tAppleConfiguration: Sendable {
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
         overrides: ConsentOverrides = .default(),
-        gpc: Bool? = nil
+        gpc: Bool? = nil,
+        bundledPolicy: BundledPolicyResource? = nil
     ) {
         self.transport = transport
         self.storage = storage
@@ -73,6 +75,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.vendors = vendors
         self.overrides = overrides
         self.gpc = gpc
+        self.bundledPolicy = bundledPolicy
     }
 
     /// Build the native transport. HTTP is allowed only for exact loopback hosts.
@@ -94,7 +97,7 @@ public struct C15tAppleConfiguration: Sendable {
     /// Configure one core with protected storage and the native platform key projection.
     public func makeCoreConfiguration() throws -> CoreConfig {
         CoreConfig(
-            store: try storage.makeStore(), transport: try makeTransport(),
+            store: try storage.makeStore(), bundledPolicy: bundledPolicy, transport: try makeTransport(),
             consentCategories: consentCategories, vendors: vendors,
             overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
         )

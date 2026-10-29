@@ -28,6 +28,8 @@ object C15tAndroid {
 	/** Manifest keys the Initializer reads; the app declares these. */
 	const val META_PORTAL_URL = "com.c15t.PORTAL_URL"
 
+	const val META_BUNDLED_POLICY = "com.c15t.POLICY_RESOURCE"
+
 	const val META_INIT_URL = "com.c15t.INIT_URL"
 	const val META_DOMAIN = "com.c15t.DOMAIN"
 
@@ -149,6 +151,10 @@ object C15tAndroid {
 		// core treats them differently when it derives the signal.
 		return NativeConfig(
 			portalUrl = portalUrl,
+			bundledPolicy = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_BUNDLED_POLICY))?.let { name ->
+				try { context.assets.open(name).bufferedReader().use { it.readText() } }
+				catch (error: java.io.IOException) { Log.w(TAG, "Cannot read bundled policy $name", error); null }
+			},
 			initUrl = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_INIT_URL)),
 			domain = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_DOMAIN)),
 			consentCategories = declaredCategories(C15tManifestValue.raw(bundle, META_CATEGORIES)),

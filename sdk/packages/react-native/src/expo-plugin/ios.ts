@@ -66,6 +66,9 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 		[IOS_PLIST_KEY.transportMode]: IOS_TRANSPORT_MODE[params.mode],
 	};
 
+	if (params.policyResource !== null) {
+		entries[IOS_PLIST_KEY.policyResource] = 'c15t-policy.json';
+	}
 	if (params.backendURL !== null) {
 		entries[IOS_PLIST_KEY.backendURL] = params.backendURL;
 	}
