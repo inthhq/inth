@@ -7,6 +7,15 @@ import UIKit
 /// The host app's own name and icon, read from its bundle so the first layer belongs to the
 /// app that shows it. Nothing here is fetched; a bundle without an icon gets a drawn initial.
 public enum HostIdentity {
+    /// Resolve through Foundation so `InfoPlist.strings` supplies the localized app name.
+    static func displayName(bundle: Bundle, fallback: String) -> String {
+        var info: [String: Any] = [:]
+        for key in ["CFBundleDisplayName", "CFBundleName"] {
+            info[key] = bundle.object(forInfoDictionaryKey: key)
+        }
+        return displayName(infoDictionary: info, fallback: fallback)
+    }
+
     /// `CFBundleDisplayName`, else `CFBundleName`, else `fallback`.
     public static func displayName(infoDictionary: [String: Any], fallback: String) -> String {
         for key in ["CFBundleDisplayName", "CFBundleName"] {
@@ -48,7 +57,7 @@ struct ResolvedIdentity {
     ///   - bundle: The host app.
     static func resolve(_ brand: ConsentTheme.Brand, bundle: Bundle = .main) -> ResolvedIdentity {
         let info = bundle.infoDictionary ?? [:]
-        let name = brand.name ?? HostIdentity.displayName(infoDictionary: info, fallback: ProcessInfo.processInfo.processName)
+        let name = brand.name ?? HostIdentity.displayName(bundle: bundle, fallback: ProcessInfo.processInfo.processName)
         if let mark = brand.markImageName {
             // A named mark that is missing shows the initial rather than a silently substituted icon.
             return ResolvedIdentity(name: name, icon: UIImage(named: mark, in: bundle, with: nil) ?? UIImage(named: mark))

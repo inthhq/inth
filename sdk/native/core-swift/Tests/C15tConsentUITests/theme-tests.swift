@@ -136,6 +136,27 @@ final class IdentityTests: XCTestCase {
         XCTAssertEqual(HostIdentity.initial(of: "  "), "")
     }
 
+    func testDisplayNameUsesTheLocalizedBundleValue() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".bundle")
+        let localization = directory.appendingPathComponent("en.lproj")
+        try FileManager.default.createDirectory(at: localization, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let info: [String: Any] = [
+            "CFBundleIdentifier": "com.c15t.identity-test",
+            "CFBundleDevelopmentRegion": "en",
+            "CFBundleLocalizations": ["en"],
+            "CFBundleDisplayName": "InternalAppName",
+            "CFBundleName": "InternalTarget",
+        ]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+            .write(to: directory.appendingPathComponent("Info.plist"))
+        try "\"CFBundleDisplayName\" = \"Localized app name\";\n"
+            .write(to: localization.appendingPathComponent("InfoPlist.strings"), atomically: true, encoding: .utf8)
+        let bundle = try XCTUnwrap(Bundle(url: directory))
+        XCTAssertEqual(bundle.infoDictionary?["CFBundleDisplayName"] as? String, "InternalAppName")
+        XCTAssertEqual(HostIdentity.displayName(bundle: bundle, fallback: "process"), "Localized app name")
+    }
+
     func testIconNamesComeFromTheCompiledCatalogueLargestFirst() {
         let info: [String: Any] = [
             "CFBundleIcons": ["CFBundlePrimaryIcon": ["CFBundleIconName": "AppIcon", "CFBundleIconFiles": ["AppIcon60x60", "AppIcon76x76"]]],
