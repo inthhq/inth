@@ -2,6 +2,7 @@ package com.c15t.core
 
 import com.c15t.core.model.*
 import com.c15t.core.store.C15tStore
+import com.c15t.core.transport.*
 import java.io.File
 import java.security.MessageDigest
 import kotlin.test.*
@@ -71,6 +72,62 @@ class BundledPolicyTest {
 		clock.advance(604800000)
 		assertFalse(restored.isAllowed(ConsentCategory.MEASUREMENT)); assertTrue(restored.snapshot().policyPending)
 		assertFalse(restored.save(CommitIntent.All).ok); assertTrue(boot().snapshot().policyPending)
+	}
+	@Test fun `expired category and IAB bundles allow durable withdrawal without restoring grants`() {
+		for ((name, restartBeforeWithdrawal) in listOf("parity" to false, "parity" to true, "iab" to false, "iab" to true)) {
+			val source = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+				.map { File(it, "native/protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
+			val startedAt = source.getValue("now").jsonPrimitive.long
+			val endpoint = source.getValue("endpoint").jsonPrimitive.content
+			val body = Json.parseToJsonElement(source.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject.toMutableMap()
+			body["expiresAt"] = JsonPrimitive(startedAt + 60_000)
+			val payload = JsonObject(body).toString()
+			val raw = buildJsonObject { put("payload", payload); put("sha256", MessageDigest.getInstance("SHA-256").digest(payload.toByteArray()).joinToString("") { "%02x".format(it) }) }.toString()
+			val configuration = source["configuration"]?.let { Json { ignoreUnknownKeys = true }.decodeFromJsonElement<com.c15t.core.iab.IabConfiguration>(it) }
+			val config = NativeConfig(endpoint, bundledPolicy = raw, iab = configuration, consentCategories = ConsentCategory.entries)
+			val selected = assertNotNull(BundledPolicy.resolve(raw, endpoint, KernelOverrides(), startedAt))
+			val wire = body.getValue("policyPacks").jsonArray.first { it.jsonObject.getValue("policyResolution").jsonObject.getValue("policyId").jsonPrimitive.content == selected.mapped.resolution.policyId }.jsonObject.getValue("policyResolution")
+			val store = C15tStore(InMemoryKeyValueStore())
+			val clock = FixedClock(startedAt)
+			val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
+			fun boot() = testKernel(config, store, clock, transport).also { it.bootstrap() }
+			val first = boot()
+			assertTrue(first.save(CommitIntent.All).ok, name)
+			val grant = store.readPending().single()
+			assertFalse(grant.isWithdrawal())
+			assertTrue(first.isAllowed(ConsentCategory.MEASUREMENT))
+			clock.advance(60_001)
+			val expired = if (restartBeforeWithdrawal) boot() else first
+			assertTrue(expired.snapshot().policyPending)
+			assertFalse(expired.save(CommitIntent.All).ok)
+			assertFalse(expired.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+			val revision = expired.snapshot().revision
+			assertEquals("concurrent-change", expired.save(CommitIntent.Necessary, revision - 1).error?.code)
+			assertTrue(expired.save(CommitIntent.Necessary, revision).ok, name)
+			val withdrawal = store.readPending().single()
+			assertTrue(withdrawal.isWithdrawal(), name)
+			assertNotEquals(grant.body, withdrawal.body)
+			assertEquals(clock.nowMillis(), withdrawal.payload.confirmed.actionAt)
+			assertTrue(expired.snapshot().policyPending)
+			ConsentCategory.OPTIONAL.forEach { assertFalse(expired.isAllowed(it)) }
+			val restored = boot()
+			assertEquals(withdrawal.body, store.readPending().single().body)
+			ConsentCategory.OPTIONAL.forEach { assertFalse(restored.isAllowed(it)) }
+			transport.saveRequests.clear()
+			transport.respondSave(SaveOutcome.Delivered)
+			assertEquals(1, restored.flushPending().delivered)
+			assertEquals(listOf(withdrawal.body), transport.saveRequests.map { it.body })
+			transport.respondInit(TransportOutcome.Success(buildJsonObject {
+				put("policyResolution", wire)
+				val disclosures = body["disclosures"]?.jsonObject
+				disclosures?.get("gvl")?.jsonObject?.get("data")?.let { put("gvl", it) }
+				disclosures?.get("atp")?.jsonObject?.get("providers")?.let { put("adTechProviders", it) }
+			}, emptyMap()))
+			restored.refresh()
+			assertNull(restored.bundledPolicyInfo)
+			assertFalse(restored.snapshot().policyPending)
+			ConsentCategory.OPTIONAL.forEach { assertFalse(restored.isAllowed(it), name) }
+		}
 	}
 	@Test fun `offline IAB preserves source dates and refuses absent stale or future disclosures`() {
 		val v = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }.map { File(it, "native/protocol/bundled-policy/iab.json") }.first { it.exists() }.readText()).jsonObject

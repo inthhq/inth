@@ -13,6 +13,11 @@ public struct BundledPolicyAuthority: Sendable, Codable, Equatable {
         endpoint?.trimmingCharacters(in: CharacterSet(charactersIn: "/")) == self.endpoint
             && issuedAt >= 0 && now >= issuedAt && now < expiresAt && expiresAt > issuedAt
     }
+
+    func hasExpired(endpoint: String?, now: Int64) -> Bool {
+        endpoint?.trimmingCharacters(in: CharacterSet(charactersIn: "/")) == self.endpoint
+            && issuedAt >= 0 && expiresAt > issuedAt && now >= expiresAt
+    }
 }
 
 /// A build export loaded synchronously before JavaScript. The configured endpoint must match.

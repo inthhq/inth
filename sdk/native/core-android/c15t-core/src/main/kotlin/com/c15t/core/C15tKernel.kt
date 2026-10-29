@@ -733,7 +733,9 @@ class C15tKernel(
 
 		synchronized(mutationLock) {
 			val current = state.get()
-			if (bundledPolicyAuthority?.isCurrent(config.portalUrl, at) == false)
+			val withdrawingExpiredBundle = intent is CommitIntent.Necessary && evaluationPolicy != null &&
+				bundledPolicyAuthority?.hasExpired(config.portalUrl, at) == true
+			if (bundledPolicyAuthority?.isCurrent(config.portalUrl, at) == false && !withdrawingExpiredBundle)
 				return@mutate refusedCommit("bundled-policy-expired", "Connect to refresh consent policy.")
 			if (bundledPolicyAuthority?.requiresAtp == true && intent !is CommitIntent.Necessary && currentAdditionalConsentList() == null)
 				return@mutate refusedCommit("additional-consent-list-stale", "Refresh the provider disclosures before saving.")
@@ -866,6 +868,8 @@ class C15tKernel(
 				now = actionAt,
 				choiceScope = choiceScope,
 			)
+			if (withdrawingExpiredBundle) published = published.copy(
+				effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
 		}
 
 		if (nextIab != null) published = published.copy(model = ConsentModel.IAB)

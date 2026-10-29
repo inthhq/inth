@@ -58,6 +58,11 @@ by an earlier launch. An expired stored bundle can use a newer valid resource.
 Wrong-project, corrupt, future-dated, expired or unsupported resources supply no
 authority. Optional gates stay denied and the core keeps trying hosted refresh.
 The expiry also applies after process relaunch and to synchronous native reads.
+Expiry denies optional processing and prevents new grants. A person can still
+Reject all against a retained expired policy. That denial and its frozen delivery
+body are stored atomically, replace an older queued grant for the same owner, and
+survive relaunch. Accept, custom saves and IAB drafts require current policy.
+
 A successful hosted refresh replaces bundle authority and uses normal fingerprint
 and reconsent behavior.
 

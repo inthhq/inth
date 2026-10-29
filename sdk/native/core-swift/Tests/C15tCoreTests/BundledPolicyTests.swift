@@ -118,6 +118,77 @@ final class BundledPolicyTests: XCTestCase {
         XCTAssertNotEqual(restored.save(.all).status, .committed)
         XCTAssertTrue(boot(bundle).snapshot().policyPending)
     }
+    func testExpiredCategoryAndIabBundlesAllowDurableWithdrawalWithoutRestoringGrants() async throws {
+        for (name, restartBeforeWithdrawal) in [("parity", false), ("parity", true), ("iab", false), ("iab", true)] {
+            let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
+                .appendingPathComponent("bundled-policy/\(name).json")
+            let source = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+            let startedAt = source["now"]!.intValue!
+            let endpoint = source["endpoint"]!.stringValue!
+            var body = C15tJSON.parse(Data(source["resource"]!["payload"]!.stringValue!.utf8))!.objectValue!
+            body["expiresAt"] = .integer(startedAt + 60_000)
+            let payload = String(decoding: try XCTUnwrap(C15tJSON.encode(JSONValue.object(body))), as: UTF8.self)
+            let raw = try XCTUnwrap(C15tJSON.encode(JSONValue.object([
+                "payload": .string(payload),
+                "sha256": .string(SHA256.hash(data: Data(payload.utf8)).map { String(format: "%02x", $0) }.joined()),
+            ])))
+            let resource = BundledPolicyResource(data: raw, endpoint: endpoint)
+            let configuration = try source["configuration"].map { try C15tJSON.decode(IABConfiguration.self, from: XCTUnwrap(C15tJSON.encode($0))) }
+            let selected = try XCTUnwrap(resource.resolve(overrides: .default(), now: startedAt))
+            let store = InMemoryStore(), clock = TestClock(startedAt), http = StubHTTP()
+            http.initResponse = HTTPResponse(status: 503)
+            http.setSavesFail(true)
+            func boot() async -> ConsentCore {
+                let core = ConsentCore()
+                await core.bootstrapAndSettle(CoreConfig(store: store, bundledPolicy: resource,
+                    transport: Fixture.transport(http), consentCategories: ConsentCategory.allCases,
+                    iab: configuration, now: clock.reading, initRetry: .disabled))
+                return core
+            }
+            let first = await boot()
+            XCTAssertEqual(first.save(.all).status, .committed, name)
+            await first.waitUntilIdle()
+            let queue = PendingSaveQueue(store: store, now: clock.reading)
+            let grant = try XCTUnwrap(queue.entries().first)
+            XCTAssertFalse(grant.isProtectedWithdrawal)
+            XCTAssertTrue(first.isAllowed(.measurement))
+            clock.advance(by: 60_001)
+            let expired: ConsentCore
+            if restartBeforeWithdrawal { expired = await boot() } else { expired = first }
+            XCTAssertTrue(expired.snapshot().policyPending)
+            XCTAssertNotEqual(expired.save(.all).status, .committed)
+            XCTAssertNotEqual(expired.save(.custom([.measurement: true])).status, .committed)
+            let revision = expired.snapshot().revision
+            XCTAssertEqual(expired.save(.necessary, expectedRevision: revision - 1).error?.code, "concurrent-change")
+            XCTAssertEqual(expired.save(.necessary, expectedRevision: revision).status, .committed, name)
+            await expired.waitUntilIdle()
+            XCTAssertEqual(queue.entries().count, 1)
+            let withdrawal = try XCTUnwrap(queue.entries().first)
+            XCTAssertTrue(withdrawal.isProtectedWithdrawal, name)
+            XCTAssertNotEqual(grant.body, withdrawal.body)
+            XCTAssertEqual(withdrawal.actionAt, clock.now)
+            XCTAssertTrue(expired.snapshot().policyPending)
+            let restored = await boot()
+            XCTAssertEqual(queue.entries().map(\.body), [withdrawal.body])
+            for category in OptionalConsentCategory.ordered { XCTAssertFalse(restored.isAllowed(category.category)) }
+            let sentBefore = http.recordedSaveRequests.count
+            http.setSavesFail(false)
+            restored.flushPending()
+            await restored.waitUntilIdle()
+            XCTAssertTrue(queue.entries().isEmpty)
+            XCTAssertEqual(http.recordedSaveRequests.dropFirst(sentBefore).map(\.body), [withdrawal.body])
+            var online: [String: JSONValue] = ["policyResolution": selected.response.policyResolution!]
+            online["gvl"] = body["disclosures"]?["gvl"]?["data"]
+            online["adTechProviders"] = body["disclosures"]?["atp"]?["providers"]
+            http.initResponse = HTTPResponse(status: 200, headers: ["x-c15t-policy-contract": "1"], body: try XCTUnwrap(C15tJSON.encode(JSONValue.object(online))))
+            restored.refresh()
+            await restored.waitUntilIdle()
+            XCTAssertNil(restored.bundledPolicyInfo)
+            XCTAssertFalse(restored.snapshot().policyPending)
+            for category in OptionalConsentCategory.ordered { XCTAssertFalse(restored.isAllowed(category.category), name) }
+        }
+    }
+
     func testOfflineIabDisclosuresUseOriginalDatesAndRefuseMissingOrStaleAuthority() async throws {
         let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("bundled-policy/iab.json")

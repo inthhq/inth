@@ -635,8 +635,11 @@ public final class ConsentCore: @unchecked Sendable {
         }
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
+            let withdrawingExpiredBundle = intent == .necessary && resolvedPolicy != nil
+                && bundledPolicyAuthority?.hasExpired(endpoint: config?.bundledPolicy?.endpoint, now: wallActionAt) == true
             if let authority = bundledPolicyAuthority,
-                !authority.isCurrent(endpoint: config?.bundledPolicy?.endpoint, now: wallActionAt) {
+                !authority.isCurrent(endpoint: config?.bundledPolicy?.endpoint, now: wallActionAt),
+                !withdrawingExpiredBundle {
                 return .failure(CoreErrorInfo(code: "bundled-policy-expired", message: "Connect to refresh consent policy."))
             }
             if bundledPolicyAuthority?.requiresAtp == true && intent != .necessary && currentAdditionalConsentListLocked() == nil {
@@ -660,7 +663,7 @@ public final class ConsentCore: @unchecked Sendable {
                     message: "No subject identity is available."
                 ))
             }
-            guard let resolved = resolvedPolicy, !currentSnapshot.policyPending else {
+            guard let resolved = resolvedPolicy, !currentSnapshot.policyPending || withdrawingExpiredBundle else {
                 // Without a policy there is no scope, so "accept all" would have to
                 // invent one. Refuse and leave the deny-all snapshot alone.
                 return .failure(CoreErrorInfo(
@@ -787,7 +790,7 @@ public final class ConsentCore: @unchecked Sendable {
             let baseRevision = currentSnapshot.revision
             let next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = storedChoice
-                draft.effectivePermissions = resolved.policy.model == .iab && nextIAB == nil
+                draft.effectivePermissions = withdrawingExpiredBundle || resolved.policy.model == .iab && nextIAB == nil
                     ? .necessaryOnly : evaluation.permissions
                 draft.restrictions = evaluation.restrictions
                 draft.promptRequirement = evaluation.promptRequirement
@@ -803,6 +806,7 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.activeUI = evaluation.promptRequirement.kind == .none
                     ? ActiveUI.none
                     : ActiveUI.banner
+                if withdrawingExpiredBundle { draft.policyPending = true; draft.activeUI = .none }
                 draft.error = nil
             }
             let payload = SavePayload(

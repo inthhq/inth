@@ -23,6 +23,9 @@ data class BundledPolicyAuthority(
 ) {
 	fun isCurrent(endpoint: String, now: Long) = this.endpoint == endpoint.trimEnd('/') &&
 		issuedAt >= 0 && now >= issuedAt && now < expiresAt && expiresAt > issuedAt
+
+	internal fun hasExpired(endpoint: String, now: Long) = this.endpoint == endpoint.trimEnd('/') &&
+		issuedAt >= 0 && expiresAt > issuedAt && now >= expiresAt
 }
 
 /** Reads a build resource before JavaScript. Invalid data never contributes authority. */
