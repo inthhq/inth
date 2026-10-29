@@ -26,7 +26,8 @@ class MainApplication : Application(), ReactApplication {
     if (metadata?.getBoolean("com.c15t.APP_E2E", false) == true) {
       com.c15t.android.C15tAndroid.install(this, com.c15t.core.NativeConfig(
         portalUrl = "http://localhost:3000/api/self-host",
-        consentCategories = listOf(com.c15t.core.model.ConsentCategory.NECESSARY, com.c15t.core.model.ConsentCategory.FUNCTIONALITY, com.c15t.core.model.ConsentCategory.MEASUREMENT, com.c15t.core.model.ConsentCategory.MARKETING),
+        bundledPolicy = assets.open("c15t-policy.json").bufferedReader().use { it.readText() },
+        consentCategories = listOf(com.c15t.core.model.ConsentCategory.NECESSARY, com.c15t.core.model.ConsentCategory.FUNCTIONALITY, com.c15t.core.model.ConsentCategory.EXPERIENCE, com.c15t.core.model.ConsentCategory.MEASUREMENT, com.c15t.core.model.ConsentCategory.MARKETING),
         iab = com.c15t.core.iab.IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB")
       ))
       java.util.Timer("c15t-fixture-observer", true).scheduleAtFixedRate(object : java.util.TimerTask() {
@@ -34,7 +35,7 @@ class MainApplication : Application(), ReactApplication {
           try {
             val snapshot = com.c15t.core.C15t.snapshot()
             val gates = org.json.JSONObject()
-            listOf(com.c15t.core.model.ConsentCategory.FUNCTIONALITY, com.c15t.core.model.ConsentCategory.MEASUREMENT, com.c15t.core.model.ConsentCategory.MARKETING).forEach {
+            listOf(com.c15t.core.model.ConsentCategory.FUNCTIONALITY, com.c15t.core.model.ConsentCategory.EXPERIENCE, com.c15t.core.model.ConsentCategory.MEASUREMENT, com.c15t.core.model.ConsentCategory.MARKETING).forEach {
               gates.put(it.wireName, com.c15t.core.C15t.isAllowed(it))
             }
             val body = org.json.JSONObject().put("source", "native-core").put("gates", gates)

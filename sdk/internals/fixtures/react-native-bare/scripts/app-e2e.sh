@@ -76,8 +76,11 @@ cd "${REPO_ROOT}"
 git rev-parse HEAD > "${OUT}/source-head.txt"
 git diff --stat > "${OUT}/source-diff.txt"
 bun --version > "${OUT}/bun-version.txt"
-bun turbo run build --filter=@c15t/react-native > "${OUT}/dependencies.log" 2>&1
+bun turbo run build --filter=@c15t/react-native --filter=@c15t/schema > "${OUT}/dependencies.log" 2>&1
 
+[[ "${PLATFORM}" != android ]] || export C15T_E2E_URL=http://localhost:3000
+mkdir -p "${OUT}/policy-assets"
+C15T_E2E_BINDING="${C15T_E2E_URL}" C15T_E2E_FETCH="http://localhost:${BACKEND_PORT}" bunx tsx scripts/export-mobile-e2e-policy.ts "${OUT}/policy-assets/c15t-policy.json"
 if [[ "${PLATFORM}" == ios ]]; then
   bun run --cwd "${APP_DIR}" pod-install > "${OUT}/pods.log" 2>&1
   RUNTIME="${C15T_IOS_RUNTIME:-$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; print(next(r["identifier"] for r in json.load(sys.stdin)["runtimes"] if r["isAvailable"] and r["name"].startswith("iOS")))')}"
@@ -101,6 +104,7 @@ if [[ "${PLATFORM}" == ios ]]; then
   /usr/libexec/PlistBuddy -c "Set :com.c15t.backend.url ${C15T_E2E_URL}/api/self-host" "${APP_PLIST}"
   /usr/libexec/PlistBuddy -c "Add :C15tAppE2EURL string ${C15T_E2E_URL}" "${APP_PLIST}"
   /usr/libexec/PlistBuddy -c "Set :com.c15t.reactnative.AutoBootstrap false" "${APP_PLIST}" 2>/dev/null || /usr/libexec/PlistBuddy -c "Add :com.c15t.reactnative.AutoBootstrap bool false" "${APP_PLIST}"
+  cp "${OUT}/policy-assets/c15t-policy.json" "${APP_PLIST%/Info.plist}/c15t-policy.json"
   # Keep the simulator Keychain entitlement after changing the test-only endpoint.
   codesign --force --sign - --preserve-metadata=identifier,entitlements "${APP_PLIST%/Info.plist}" > "${OUT}/signing.log" 2>&1
   python3 - "${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" "${C15T_E2E_URL}" <<'PYRUN'
@@ -118,9 +122,9 @@ for path in pathlib.Path(sys.argv[1]).glob('*.xctestrun'):
 PYRUN
   xcrun simctl io "${DEVICE}" recordVideo --codec=h264 "${OUT}/journey.mp4" > "${OUT}/video.log" 2>&1 &
   VIDEO_PID=$!
+  XCTESTRUN="$(find "${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" -maxdepth 1 -name '*.xctestrun' -print -quit)"
   xcodebuild test-without-building \
-    -workspace "${APP_DIR}/ios/C15tBare.xcworkspace" -scheme C15tBare \
-    -configuration Release -destination "platform=iOS Simulator,id=${DEVICE}" \
+    -xctestrun "${XCTESTRUN}" -destination "platform=iOS Simulator,id=${DEVICE}" \
     -derivedDataPath "${C15T_APP_E2E_DERIVED:-${OUT}/derived}" \
     -resultBundlePath "${OUT}/journey.xcresult" -parallel-testing-enabled NO \
     -maximum-concurrent-test-simulator-destinations 1 \
@@ -165,7 +169,7 @@ for p in range(5600, 5680, 2):
   ARCH="${C15T_ANDROID_ARCH:-arm64-v8a}"
   rm -rf "${APP_DIR}/android/e2e/build/outputs/androidTest-results"
   sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" :app:assembleRelease :e2e:assembleRelease \
-    -Pc15t.appE2e=true -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
+    -Pc15t.appE2e=true -Pc15t.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
   "${ADB}" -s "${DEVICE}" logcat -v threadtime > "${OUT}/device.log" 2>&1 &
   LOG_PID=$!
   "${ADB}" -s "${DEVICE}" shell screenrecord --time-limit 180 /data/local/tmp/c15t-app-e2e.mp4 > "${OUT}/video.log" 2>&1 &
@@ -173,7 +177,7 @@ for p in range(5600, 5680, 2):
   sleep 1
   kill -0 "${VIDEO_PID}" || { cat "${OUT}/video.log"; exit 1; }
   sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" :e2e:connectedReleaseAndroidTest \
-    -Pc15t.appE2e=true -PreactNativeArchitectures="${ARCH}" \
+    -Pc15t.appE2e=true -Pc15t.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" \
     -Pandroid.injected.androidTest.leaveApksInstalledAfterRun=true > "${OUT}/test.log" 2>&1
 else
   echo "Unknown platform: ${PLATFORM}" >&2

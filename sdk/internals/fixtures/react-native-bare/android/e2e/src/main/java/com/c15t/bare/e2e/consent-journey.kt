@@ -93,7 +93,7 @@ class ConsentJourney {
 
     private fun fresh() = awaitState("prompt-owed") { snapshot, _ ->
         snapshot.isNull("explicitChoice") && snapshot.optJSONObject("promptRequirement")?.optString("kind") == "choice" &&
-            categories.all { !snapshot.getJSONObject("effectivePermissions").getBoolean(it) }
+            (categories + "experience").all { !snapshot.getJSONObject("effectivePermissions").getBoolean(it) }
     }
 
     private fun choice(granted: Set<String>, saves: Int) = awaitState("choice-$saves") { snapshot, report ->
@@ -120,6 +120,22 @@ class ConsentJourney {
                     canonical(wireReceipt.getJSONObject("basis")) == canonical(receipt.getJSONObject("basis"))
             }
     }
+
+    private fun network(online: Boolean) {
+        val connection = URL("http://localhost:3000/e2e/network").openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"; connection.doOutput = true
+        try { connection.outputStream.use { it.write(JSONObject().put("online", online).toString().toByteArray()) }; check(connection.responseCode == 200) } finally { connection.disconnect() }
+    }
+
+    private fun localChoice(granted: Set<String>, saves: Int) = awaitState("offline-choice-$saves") { snapshot, report ->
+        val receipts = snapshot.optJSONObject("explicitChoice")?.optJSONObject("categories")
+        val permissions = snapshot.optJSONObject("effectivePermissions")
+        receipts != null && permissions != null && report.getJSONArray("saves").length() == saves && !report.getBoolean("backendOnline") && categories.all {
+            receipts.optJSONObject(it)?.optBoolean("value") == granted.contains(it) && permissions.getBoolean(it) == granted.contains(it)
+        }
+    }
+
+    private fun choiceBytes(report: JSONObject) = canonical(report.getJSONObject("snapshot").getJSONObject("explicitChoice"))
 
     private fun reveal(id: String, down: Boolean = false): UiObject2 {
         repeat(18) {
@@ -188,17 +204,31 @@ class ConsentJourney {
     @Test
     fun consentJourney() {
         try {
+            network(false)
             launch()
             fresh()
+            awaitState("first-install-unknown") { snapshot, report ->
+                snapshot.isNull("policySnapshotToken") && snapshot.getJSONObject("location").isNull("countryCode") && !report.getBoolean("backendOnline") && report.getJSONArray("saves").length() == 0
+            }
+            control("c15t.first-layer.reject-all")
+            control("c15t.first-layer.accept-all")
+            control("c15t.first-layer.customize")
+            device.waitForIdle()
             capture("01-fresh-prompt")
             tap("c15t.first-layer.reject-all")
-            choice(emptySet(), 1)
+            val rejected = localChoice(emptySet(), 0)
+            network(true); launch()
+            assertEquals(choiceBytes(rejected), choiceBytes(choice(emptySet(), 1)))
+            network(false)
             capture("02-rejected")
 
             launch(reset = true)
             fresh()
             tap("c15t.first-layer.accept-all")
-            choice(categories.toSet(), 2)
+            val accepted = localChoice(categories.toSet(), 1)
+            network(true); launch()
+            assertEquals(choiceBytes(accepted), choiceBytes(choice(categories.toSet(), 2)))
+            network(false)
             capture("03-accepted")
 
             launch(reset = true)
@@ -207,7 +237,7 @@ class ConsentJourney {
             tap("c15t.prefs.category.measurement.switch")
             capture("04-customize-measurement")
             tap("c15t.prefs.save")
-            val saved = choice(setOf("measurement"), 3)
+            val saved = localChoice(setOf("measurement"), 2)
             val savedChoice = canonical(saved.getJSONObject("snapshot").getJSONObject("explicitChoice"))
             capture("05-saved")
 
@@ -219,7 +249,7 @@ class ConsentJourney {
             tap("c15t.prefs.cancel")
             tap("c15t.prefs.discard.confirm")
             control("fixture.open-preferences")
-            val cancelled = choice(setOf("measurement"), 3)
+            val cancelled = localChoice(setOf("measurement"), 2)
             assertEquals(savedChoice, canonical(cancelled.getJSONObject("snapshot").getJSONObject("explicitChoice")))
 
             tap("fixture.open-preferences")
@@ -228,12 +258,24 @@ class ConsentJourney {
 
             launch()
             awaitState("new-process") { _, report -> report.optString("session") != saved.getString("session") }
-            val relaunched = choice(setOf("measurement"), 3)
+            val relaunched = localChoice(setOf("measurement"), 2)
             assertEquals(savedChoice, canonical(relaunched.getJSONObject("snapshot").getJSONObject("explicitChoice")))
             tap("fixture.open-preferences")
             assertTrue(control("c15t.prefs.category.measurement.switch").isChecked)
             capture("07-relaunched-preferences")
-            tap("c15t.prefs.cancel")
+            tap("c15t.prefs.reject-all")
+            val withdrawn = localChoice(emptySet(), 2)
+            capture("08-withdrawn-offline")
+            launch()
+            assertEquals(choiceBytes(withdrawn), choiceBytes(localChoice(emptySet(), 2)))
+            capture("09-withdrawal-relaunched")
+            network(true); launch()
+            val replayed = choice(emptySet(), 3)
+            assertEquals(choiceBytes(withdrawn), canonical(replayed.getJSONArray("saves").getJSONObject(2).getJSONObject("choice")))
+            assertEquals(choiceBytes(withdrawn), choiceBytes(replayed))
+            launch()
+            choice(emptySet(), 3)
+            capture("10-reconnected")
             nativeIabWhileJSIsBlocked()
         } finally {
             capture("final-or-failure")

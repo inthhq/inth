@@ -258,7 +258,7 @@ public final class ConsentCore: @unchecked Sendable {
         lock.withLock {
             guard let configuration = config?.iab, resolvedPolicy?.policy.model == .iab,
                   !currentSnapshot.policyPending, listIsUsableLocked(), let list = currentSnapshot.iab?.gvl,
-                  additionalConsentList?.providers.isEmpty != false || currentAdditionalConsentListLocked() != nil else { return nil }
+                  (bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false) || currentAdditionalConsentListLocked() != nil else { return nil }
             let draft = IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
             let vendors = list.vendors.values.filter { $0.deletedDate?.isEmpty != false }
             return IABPresentation(draft: draft, list: list,

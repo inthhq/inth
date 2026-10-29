@@ -67,7 +67,7 @@ final class ConsentJourney: XCTestCase {
       let prompt = snapshot["promptRequirement"] as? [String: Any]
       let permissions = snapshot["effectivePermissions"] as? [String: Bool]
       return snapshot["explicitChoice"] is NSNull && prompt?["kind"] as? String == "choice"
-        && self.categories.allSatisfy { permissions?[$0] == false }
+        && (self.categories + ["experience"]).allSatisfy { permissions?[$0] == false }
     }
   }
 
@@ -96,18 +96,58 @@ final class ConsentJourney: XCTestCase {
     }
   }
 
+  private func choiceBytes(_ report: [String: Any]) throws -> Data {
+    try JSONSerialization.data(withJSONObject: XCTUnwrap((report["snapshot"] as? [String: Any])?["explicitChoice"]), options: .sortedKeys)
+  }
+
+  private func network(_ online: Bool) throws {
+    let done = expectation(description: "Fixture backend availability")
+    var request = URLRequest(url: URL(string: (ProcessInfo.processInfo.environment["C15T_E2E_URL"] ?? "http://localhost:3000") + "/e2e/network")!)
+    request.httpMethod = "POST"
+    request.httpBody = try JSONSerialization.data(withJSONObject: ["online": online])
+    URLSession.shared.dataTask(with: request) { _, _, _ in done.fulfill() }.resume()
+    wait(for: [done], timeout: 5)
+  }
+
+  private func localChoice(_ granted: Set<String>, saves: Int) throws -> [String: Any] {
+    try awaitState("offline-choice-\(saves)") { snapshot, report in
+      guard let choice = snapshot["explicitChoice"] as? [String: Any],
+        let receipts = choice["categories"] as? [String: [String: Any]],
+        let permissions = snapshot["effectivePermissions"] as? [String: Bool],
+        let writes = report["saves"] as? [[String: Any]], writes.count == saves,
+        report["backendOnline"] as? Bool == false else { return false }
+      return self.categories.allSatisfy { receipts[$0]?["value"] as? Bool == granted.contains($0) && permissions[$0] == granted.contains($0) }
+    }
+  }
+
   func testConsentJourney() throws {
+    try network(false)
     launch()
     try fresh()
+    let initial = try awaitState("first-install-unknown") { snapshot, report in
+      snapshot["policySnapshotToken"] as? String == nil
+        && (snapshot["location"] as? [String: Any])?["countryCode"] as? String == nil
+        && report["backendOnline"] as? Bool == false
+        && (report["saves"] as? [Any])?.isEmpty == true
+    }
+    XCTAssertNotNil(initial["snapshot"])
     capture("01-fresh-prompt")
     tap("c15t.first-layer.reject-all")
-    try choice([], saves: 1)
+    let rejected = try localChoice([], saves: 0)
+    try network(true); launch()
+    let deliveredReject = try choice([], saves: 1)
+    XCTAssertEqual(try choiceBytes(rejected), try choiceBytes(deliveredReject))
+    try network(false)
     capture("02-rejected")
 
     launch(reset: true)
     try fresh()
     tap("c15t.first-layer.accept-all")
-    try choice(Set(categories), saves: 2)
+    let accepted = try localChoice(Set(categories), saves: 1)
+    try network(true); launch()
+    let deliveredAccept = try choice(Set(categories), saves: 2)
+    XCTAssertEqual(try choiceBytes(accepted), try choiceBytes(deliveredAccept))
+    try network(false)
     capture("03-accepted")
 
     launch(reset: true)
@@ -116,7 +156,7 @@ final class ConsentJourney: XCTestCase {
     tap("c15t.prefs.category.measurement.switch")
     capture("04-customize-measurement")
     tap("c15t.prefs.save")
-    let saved = try choice(["measurement"], saves: 3)
+    let saved = try localChoice(["measurement"], saves: 2)
     capture("05-saved")
 
     tap("fixture.open-preferences")
@@ -129,7 +169,7 @@ final class ConsentJourney: XCTestCase {
     tap("c15t.prefs.cancel")
     tap("c15t.prefs.discard.confirm")
     XCTAssertTrue(app.buttons["fixture.open-preferences"].waitForExistence(timeout: 10))
-    let cancelled = try choice(["measurement"], saves: 3)
+    let cancelled = try localChoice(["measurement"], saves: 2)
     let savedChoice = (saved["snapshot"] as? [String: Any])?["explicitChoice"]
     let cancelledChoice = (cancelled["snapshot"] as? [String: Any])?["explicitChoice"]
     XCTAssertEqual(try JSONSerialization.data(withJSONObject: XCTUnwrap(savedChoice), options: .sortedKeys), try JSONSerialization.data(withJSONObject: XCTUnwrap(cancelledChoice), options: .sortedKeys))
@@ -140,13 +180,27 @@ final class ConsentJourney: XCTestCase {
 
     launch()
     try awaitState("new-process") { _, report in report["session"] as? String != saved["session"] as? String }
-    let relaunched = try choice(["measurement"], saves: 3)
+    let relaunched = try localChoice(["measurement"], saves: 2)
     let restoredChoice = (relaunched["snapshot"] as? [String: Any])?["explicitChoice"]
     XCTAssertEqual(try JSONSerialization.data(withJSONObject: XCTUnwrap(savedChoice), options: .sortedKeys), try JSONSerialization.data(withJSONObject: XCTUnwrap(restoredChoice), options: .sortedKeys))
     tap("fixture.open-preferences")
     XCTAssertEqual(measurement.value as? String, "1")
     capture("07-relaunched-preferences")
-    tap("c15t.prefs.cancel")
+    tap("c15t.prefs.reject-all")
+    let withdrawn = try localChoice([], saves: 2)
+    capture("08-withdrawn-offline")
+    launch()
+    let restoredWithdrawal = try localChoice([], saves: 2)
+    XCTAssertEqual(try choiceBytes(withdrawn), try choiceBytes(restoredWithdrawal))
+    capture("09-withdrawal-relaunched")
+    try network(true); launch()
+    let replayed = try choice([], saves: 3)
+    let writes = try XCTUnwrap(replayed["saves"] as? [[String: Any]])
+    XCTAssertEqual(try choiceBytes(withdrawn), try JSONSerialization.data(withJSONObject: XCTUnwrap(writes[2]["choice"]), options: .sortedKeys))
+    XCTAssertEqual(try choiceBytes(withdrawn), try choiceBytes(replayed))
+    launch()
+    try choice([], saves: 3)
+    capture("10-reconnected")
     try nativeIabWhileJSIsBlocked()
   }
 

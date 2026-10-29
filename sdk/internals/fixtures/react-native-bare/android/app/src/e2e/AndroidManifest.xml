@@ -8,7 +8,7 @@
         <meta-data android:name="com.c15t.reactnative.AUTO_BOOTSTRAP" android:value="false" />
         <meta-data android:name="com.c15t.APP_E2E" android:value="true" />
         <meta-data android:name="com.c15t.PORTAL_URL"
-            android:value="http://localhost:3000/api/self-host"
+            android:value="http://localhost:3108/api/self-host"
             tools:replace="android:value" />
     </application>
 </manifest>
