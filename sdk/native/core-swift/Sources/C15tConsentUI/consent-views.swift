@@ -75,9 +75,27 @@ public extension View {
     }
 }
 
-private struct NoticeFrameKey: PreferenceKey {
-    static let defaultValue = CGRect.zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) { value = nextValue() }
+private struct NoticeBoundsReporter: UIViewRepresentable {
+    let onChange: ((CGRect) -> Void)?
+    func makeUIView(context: Context) -> NoticeBoundsView {
+        let view = NoticeBoundsView()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+    func updateUIView(_ view: NoticeBoundsView, context: Context) {
+        view.onChange = onChange
+        DispatchQueue.main.async { [weak view] in view?.reportBounds() }
+    }
+}
+
+private final class NoticeBoundsView: UIView {
+    var onChange: ((CGRect) -> Void)?
+    override func layoutSubviews() { super.layoutSubviews(); reportBounds() }
+    override func didMoveToWindow() { super.didMoveToWindow(); reportBounds() }
+    func reportBounds() {
+        guard window != nil, !bounds.isEmpty else { return }
+        onChange?(convert(bounds, to: nil))
+    }
 }
 
 private struct PresentationSession: Identifiable { let id: UUID }
@@ -103,10 +121,9 @@ private struct ConsentPresentationModifier: ViewModifier {
                     }
                     .padding(20).background(.background, in: RoundedRectangle(cornerRadius: 20))
                     .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(ConsentColors.border))
-                    .padding(8).background(GeometryReader { proxy in Color.clear.preference(key: NoticeFrameKey.self, value: proxy.frame(in: .global)) }).disabled(presenter.pending).accessibilityElement(children: .contain).accessibilityIdentifier("c15t.notice")
+                    .padding(8).background(NoticeBoundsReporter(onChange: onNoticeFrameChange)).disabled(presenter.pending).accessibilityElement(children: .contain).accessibilityIdentifier("c15t.notice")
                 }
             }
-            .onPreferenceChange(NoticeFrameKey.self) { onNoticeFrameChange?($0) }
             .sheet(item: Binding(get: { presenter.presentationID.map { PresentationSession(id: $0) } }, set: { next in
                 if next == nil, presenter.presentationID == sessionID { presenter.requestClose() }
             })) { session in

@@ -21,6 +21,7 @@ object ConsentHost {
     private class Session(val id: String, val presenter: ConsentPresenter, val store: ViewModelStore,
         val privacyURL: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean) {
         var activity = WeakReference<ConsentHostActivity>(null)
+        var launching = true
     }
     private var active: Session? = null
 
@@ -32,8 +33,15 @@ object ConsentHost {
             it.owner = WeakReference(owner)
             it.outcome = outcome
             val host = it.activity.get()
-            if (host == null || host.isFinishing || host.isDestroyed)
-                activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", it.id))
+            if (!it.launching && (host == null || host.isFinishing || host.isDestroyed)) {
+                it.launching = true
+                try {
+                    activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", it.id))
+                } catch (error: Exception) {
+                    it.launching = false
+                    throw error
+                }
+            }
             return result(it.id, "already-presented")
         }
         val snapshot = core.snapshot()
@@ -78,6 +86,7 @@ object ConsentHost {
     internal fun attach(activity: ConsentHostActivity, id: String?): Boolean {
         val session = active?.takeIf { it.id == id } ?: return false
         session.activity = WeakReference(activity)
+        session.launching = false
         if (session.notice) {
             activity.window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
             activity.window.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
