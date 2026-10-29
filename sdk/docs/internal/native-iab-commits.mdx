@@ -101,9 +101,8 @@ their original identity, external ID, domain and exact body.
 A withdrawal cannot replay an older queued acceptance. Grant delivery checks the
 actual saved body against current TC authority, identity and action time. A full
 withdrawal has no category, purpose, vendor, publisher, special-feature or LI grants
-and can be delivered after the current authority expires or changes. An already started
-request may finish after a withdrawal; the core cannot recall a request already
-on the network.
+and can be delivered after the current authority expires or changes. A request
+already on the network may finish after a withdrawal; the core cannot recall it.
 
 Backend consent IDs include `givenAt`. The core advances IAB action times by at
 least one millisecond, even when the clock repeats. A durable timestamp watermark
