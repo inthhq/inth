@@ -72,6 +72,9 @@ PYVIDEO
     [[ -z "${AVD_NAME}" ]] || "${AVDMANAGER}" delete avd --name "${AVD_NAME}"
   fi
   [[ -z "${BACKEND_PID}" ]] || { kill "${BACKEND_PID}"; wait "${BACKEND_PID}"; }
+  if [[ "${result}" == 0 && "${C15T_APP_E2E_SCENARIO}" == expiry ]]; then
+    python3 "${APP_DIR}/scripts/verify-expiry.py" "${OUT}" > "${OUT}/expiry-verification.log" 2>&1 || result=1
+  fi
   python3 "${APP_DIR}/scripts/e2e-result.py" "${OUT}" "${PLATFORM}" "${result}" || result=1
   rm -rf "${TASK_TMP}"
   printf 'Mobile app E2E exit %s. Evidence: %s\n' "${result}" "${OUT}"

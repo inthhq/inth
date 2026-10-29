@@ -21,6 +21,11 @@ const outcomes: ConsentPresenterOutcome[] = [];
 const presentations: ConsentPresenterSession[] = [];
 const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
 
+if (process.env.C15T_APP_E2E === '1') {
+	// Activity recreation remounts the React root. Observe the whole JS runtime.
+	onConsentPresenterOutcome((outcome) => outcomes.push(outcome));
+}
+
 const requestPresentation = async (
 	preferences: boolean,
 	onError: (message: string) => void
@@ -30,6 +35,12 @@ const requestPresentation = async (
 			? presentPreferences(privacyPolicyURL)
 			: presentConsentPrompt(privacyPolicyURL));
 		presentations.push(presentation);
+		if (process.env.C15T_APP_E2E === '1') {
+			await fetch(`${endpoint}/e2e/js-block`, {
+				body: JSON.stringify({ presentations }),
+				method: 'POST',
+			});
+		}
 	} catch (failure: unknown) {
 		onError(String(failure));
 	}
@@ -67,7 +78,6 @@ export const NativePresenterApp = () => {
 	useEffect(
 		() =>
 			onConsentPresenterOutcome((outcome) => {
-				outcomes.push(outcome);
 				setLatest(outcome);
 			}),
 		[]

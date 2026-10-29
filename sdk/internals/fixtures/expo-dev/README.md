@@ -269,3 +269,8 @@ consumer's AppDelegate. It runs only with the runner's launch environment and
 records the installed core's snapshot plus actual `C15t.isAllowed` values to the
 app sandbox. The smoke requires fresh bundled readings and full denial in both
 processes. The SDK still comes only from the archive.
+
+The Android packed runner accepts `--archive` to record the SDK input hash. It
+disables radios on its own fresh AVD and waits for `dumpsys connectivity` to show
+no default network before installing the app. It preserves that report, radio
+settings and another connectivity report after relaunch.

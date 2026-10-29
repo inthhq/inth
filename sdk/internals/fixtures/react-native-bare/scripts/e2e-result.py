@@ -33,7 +33,7 @@ required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl'] + [
         '11-native-additional-consent', '12-native-committed-before-js', '13-js-outcome-resumed',
         '14-nonmodal-native-notice', '15-notice-acknowledged', 'final-or-failure']]
 if (out / 'scenario.txt').exists() and (out / 'scenario.txt').read_text().strip() == 'expiry':
-    required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl'] + [
+    required = ['journey.mp4', 'final.png', 'native-state.json', 'events.jsonl', 'expiry-verification.json'] + [
         f'screens/{name}.png' for name in ['20-expiry-initial-prompt', '21-expiry-earlier-all',
         '22-expiry-narrowed-preferences', '23-expiry-reject-only', '24-expiry-denied',
         '25-expiry-denial-restored', '26-expiry-replayed', '27-expiry-wide-denial']]

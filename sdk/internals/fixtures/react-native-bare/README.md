@@ -552,6 +552,10 @@ The IAB blocked-JS journey also correlates command and final event IDs.
 The clock and declaration controls belong to the loopback E2E artifact. They use
 the native installers' existing dependency injection. The normal app keeps the
 system clock and hosted configuration. This does not test live hosted receipts.
+The runner also checks captured raw delivery bodies, exact confirmation times
+and the final fingerprint in `expiry-verification.json`. A failed receipt check
+fails the E2E command. The E2E outcome observer subscribes for the lifetime of
+the JS runtime so Activity recreation cannot interrupt its subscription.
 
 These commands build Release apps with embedded JavaScript. XCUITest and
 AndroidJUnitRunner with UIAutomator tap the stock consent controls. Each run
@@ -588,25 +592,22 @@ XML. Failure cleanup captures the final frame and preserves available evidence.
 Android records consecutive video segments and joins them so longer journeys
 include the ending beyond screenrecord's time limit. It also uploads each capture to the test backend before APK teardown and
 streams device logs while the test runs.
-Successful runs require all eleven journey frames and a non-empty recording.
+Successful runs require the scenario's named frames and a non-empty recording.
 `command.xml` records runner failures, including compilation failures; it is not
 a substitute for the native test report.
 
 Set `C15T_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
 settings are `C15T_IOS_RUNTIME`, `C15T_IOS_DEVICE`, `C15T_ANDROID_IMAGE` and
 `C15T_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
-image. CI uses x86_64. A run fails if port 3108 is occupied. Run platforms
+image. CI uses x86_64. A run fails if its selected backend port is occupied. Run platforms
 sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
 dispatchable, and has no publication dependency.
 
-This lane does not cover IAB or Additional Consent screens, native presenters while JavaScript is busy, stale-policy or
-storage refusal, Expo installation, standalone native apps, physical devices or
-the minimum supported OS versions. The current controls are React Native UI.
-SwiftUI and Compose hosts can reuse the protocol producer, native-snapshot and
-receipt assertions, recording wrappers and the `c15t.*` control identifiers once
-those hosts exist. They still need their own app integration and launch tests.
-A native host must publish state without JavaScript, set its app identifier, and
-replace the current scrim dismissal with its Cancel control.
+The main journey covers shared SwiftUI and Compose presenters, IAB and Additional
+Consent controls, and a native commit while Hermes is blocked. The separate
+expiry scenario covers the retained bundled policy boundary and narrowed
+declarations. Storage refusal, Expo installation, standalone native apps,
+physical devices and minimum supported OS versions need separate acceptance.
 
 ## Monorepo notes
 

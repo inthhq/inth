@@ -14,6 +14,7 @@ import xml.etree.ElementTree as ET
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--apk', type=Path, required=True)
 parser.add_argument('--out', type=Path, required=True)
+parser.add_argument('--archive', type=Path, help='SDK archive used to build this APK')
 args = parser.parse_args()
 out = args.out.resolve()
 out.mkdir(parents=True, exist_ok=False)
@@ -66,6 +67,9 @@ def capture(name):
         subprocess.run([adb, '-s', serial, 'exec-out', 'screencap', '-p'], stdout=file, check=True)
 
 result = {'passed': False, 'sdkInput': 'packed-tarball', 'backend': 'https://example-inth.inth.app/', 'device': serial}
+if args.archive:
+    result['archive'] = str(args.archive.resolve())
+    result['archiveSha256'] = hashlib.sha256(args.archive.read_bytes()).hexdigest()
 try:
     run([manager, 'create', 'avd', '--name', name, '--package', 'system-images;android-36;google_apis;arm64-v8a', '--device', 'pixel_6'], input='no\n')
     with (out / 'emulator.log').open('w') as log:
@@ -80,6 +84,23 @@ try:
     device('shell', 'svc', 'data', 'disable')
     device('shell', 'cmd', 'connectivity', 'airplane-mode', 'enable')
     assert device('shell', 'settings', 'get', 'global', 'airplane_mode_on').strip() == '1'
+    # Wait for actual network teardown before the app has ever been installed.
+    deadline = time.monotonic() + 30
+    while True:
+        connectivity = device('shell', 'dumpsys', 'connectivity')
+        if 'Active default network: none' in connectivity:
+            break
+        assert time.monotonic() < deadline, 'Owned AVD still has a default network'
+        time.sleep(.25)
+    (out / 'network-before-install.txt').write_text(connectivity)
+    (out / 'wifi-before-install.txt').write_text(device('shell', 'dumpsys', 'wifi'))
+    result['networkBeforeFirstLaunch'] = {
+        'airplaneMode': True, 'activeDefaultNetwork': None,
+        'wifiSetting': device('shell', 'settings', 'get', 'global', 'wifi_on').strip(),
+        'mobileDataSetting': device('shell', 'settings', 'get', 'global', 'mobile_data').strip(),
+    }
+    assert result['networkBeforeFirstLaunch']['wifiSetting'] == '0'
+    assert result['networkBeforeFirstLaunch']['mobileDataSetting'] == '0'
     device('shell', 'settings', 'put', 'system', 'screen_off_timeout', '2147483647')
     device('shell', 'input', 'keyevent', '224')
     device('shell', 'input', 'keyevent', '82')
@@ -92,10 +113,13 @@ try:
     state_node = find(lambda node: node.get('resource-id') == 'fixture.native-state' and '"explicitChoice":{' in node.get('text', ''))
     state = json.loads(state_node.get('text'))
     assert state['policyPending'] is False and state['prompt'] == 'none'
+    assert state['permissions']['necessary'] is True
     assert all(not value for category, value in state['permissions'].items() if category != 'necessary')
+    assert all(state['explicitChoice'][category] is False for category in ['functionality', 'experience', 'measurement', 'marketing'])
     outcome = find(lambda node: node.get('resource-id') == 'fixture.native-outcome' and '"kind":"committed"' in node.get('text', ''))
     result['stateAfterReject'] = state
     result['outcome'] = json.loads(outcome.get('text'))
+    assert set(result['outcome']) == {'sessionId', 'kind', 'revision'}
     capture('02-compact-native-outcome')
     device('shell', 'am', 'force-stop', package)
     device('shell', 'am', 'start', '-W', '-n', package + '/.MainActivity')
@@ -107,6 +131,9 @@ try:
     switch = find(lambda node: node.get('resource-id') == 'c15t.prefs.category.measurement.switch')
     assert switch.get('checked') == 'false'
     capture('04-restored-native-preferences')
+    connectivity = device('shell', 'dumpsys', 'connectivity')
+    (out / 'network-after-relaunch.txt').write_text(connectivity)
+    assert 'Active default network: none' in connectivity
     result['passed'] = True
 finally:
     if emulator is not None:
