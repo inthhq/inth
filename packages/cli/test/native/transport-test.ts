@@ -1,6 +1,10 @@
 import { setTimeout } from "node:timers/promises";
 
 import { parseArguments } from "../../src/arguments.ts";
+import type { OAuthResponse } from "../../src/auth-types.ts";
+import { CliError } from "../../src/cli-error.ts";
+import { readDownload } from "../../src/download.ts";
+import { NativeApi } from "../../src/native/native-api.ts";
 import { httpDate } from "../../src/native/native-bindings.ts";
 import {
   nativeClock,
@@ -70,8 +74,172 @@ check(
   rateLimited.status === 200 && waits.join(",") === "3000",
   "HTTP 429 backoff failed."
 );
+const longLimit = await http.request(
+  `${base}/rate-limit-long`,
+  Number.POSITIVE_INFINITY
+);
+check(
+  longLimit.status === 429 &&
+    longLimit.requestId === "native-long-limit" &&
+    waits.join(",") === "3000",
+  "A long rate limit was retried or lost its request ID."
+);
+const cumulativeLimit = await http.request(
+  `${base}/rate-limit-budget`,
+  Number.POSITIVE_INFINITY
+);
+check(
+  cumulativeLimit.status === 429 && waits.join(",") === "3000,15000",
+  "Cumulative rate-limit waits exceeded the budget."
+);
+const boundaryLimit = await http.request(
+  `${base}/rate-limit-boundary`,
+  Number.POSITIVE_INFINITY
+);
+check(
+  boundaryLimit.status === 200 && waits.join(",") === "3000,15000,30000",
+  "A rate-limit wait within the budget was refused."
+);
 const authenticated = await http.get(`${base}/bearer`, "inth_transport_test");
 check(authenticated.status === 200, "Authenticated HTTP request failed.");
+const { download } = http;
+if (!download) {
+  throw new Error("The native transport does not support downloads.");
+}
+const binary = await download(
+  `${base}/binary`,
+  "inth_transport_test",
+  "image/png"
+);
+check(
+  binary.body === "" && binary.contentType === "image/png",
+  "Binary metadata or body handling failed."
+);
+check(
+  binary.bytes?.join(",") === "0,255,128,13,10,0,65",
+  "Download bytes passed through text decoding."
+);
+const { uploadChat } = http;
+if (!uploadChat) {
+  throw new Error("The native transport does not support chat uploads.");
+}
+const slowDownload = download(
+  `${base}/binary-slow`,
+  "inth_transport_test",
+  "image/png"
+);
+const slowUpload = uploadChat(
+  `${base}/upload-slow`,
+  "inth_transport_test",
+  '{"fileName":"notes.txt","data":"QQ=="}'
+);
+const downloaded = await slowDownload;
+const uploaded = await slowUpload;
+check(
+  downloaded.bytes?.join(",") === "0,255,128,13,10,0,65,66,66,66",
+  "A steadily arriving download failed after 30 seconds."
+);
+check(
+  uploaded.body.includes('"aga_ready"'),
+  "A chat upload failed after 30 seconds."
+);
+const report = await http.send(
+  `${base}/report-v2`,
+  "inth_transport_test",
+  "GET",
+  undefined,
+  "application/vnd.inth.web-audit+json;version=2"
+);
+check(
+  report.body.includes('"provenance":["recorded"]'),
+  "Custom JSON Accept did not select version two."
+);
+for (const name of [
+  "binary-mismatch",
+  "binary-too-large",
+  "binary-truncated",
+]) {
+  let rejected = false;
+  try {
+    // eslint-disable-next-line no-await-in-loop -- Each download must fail independently.
+    await download(`${base}/${name}`, "inth_transport_test", "image/png");
+  } catch (error) {
+    rejected = error instanceof CliError && error.requestId === "native-binary";
+  }
+  check(
+    rejected,
+    `Invalid ${name} response was accepted or lost its request ID.`
+  );
+}
+let binaryRedirectRejected = false;
+try {
+  await download(`${base}/binary-redirect`, "inth_transport_test", "image/png");
+} catch {
+  binaryRedirectRejected = true;
+}
+check(binaryRedirectRejected, "A binary redirect was followed.");
+let smallLimitRejected = false;
+try {
+  await readDownload(
+    new Response(new Uint8Array([0, 255, 128, 13, 10])),
+    "*/*",
+    signal,
+    4
+  );
+} catch (error) {
+  smallLimitRejected =
+    error instanceof CliError && error.code === "download_too_large";
+}
+check(smallLimitRejected, "A chunked download exceeded its actual byte limit.");
+let refreshCalls = 0;
+const refreshedDownload = new NativeApi(
+  {
+    download: (_url, token, accept): Promise<OAuthResponse> => {
+      refreshCalls += 1;
+      check(accept === "application/pdf", "A download refresh lost Accept.");
+      if (token === "old-token") {
+        return Promise.resolve({
+          body: '{"error":{"code":"UNAUTHORIZED"}}',
+          ok: false,
+          requestId: "old-request",
+          status: 401,
+        });
+      }
+      check(token === "new-token", "A download refresh used the wrong token.");
+      return Promise.resolve({
+        body: "",
+        bytes: new Uint8Array([0, 255, 128]),
+        contentType: "application/pdf",
+        ok: true,
+        requestId: "refreshed-download",
+        status: 200,
+      });
+    },
+    get: () => {
+      throw new Error("A download used the JSON transport.");
+    },
+    post: () => {
+      throw new Error("A download used the JSON transport.");
+    },
+    send: () => {
+      throw new Error("A download used the JSON transport.");
+    },
+  },
+  () => ({
+    accessToken: (rejected) =>
+      Promise.resolve(rejected ? "new-token" : "old-token"),
+    userInfoEndpoint: () => Promise.resolve("https://api.inth.com/userinfo"),
+  })
+);
+const refreshedBytes = await refreshedDownload.download(
+  "/v1/billing/invoices/in_1/pdf",
+  undefined,
+  "application/pdf"
+);
+check(
+  refreshedBytes.bytes.join(",") === "0,255,128" && refreshCalls === 2,
+  "Native download authentication refresh failed."
+);
 const created = await http.post(
   `${base}/create`,
   "inth_transport_test",
@@ -172,6 +340,28 @@ try {
 }
 await cancelJob;
 check(cancelled, "HTTP cancellation failed.");
+const binaryController = new AbortController();
+const binaryHttp = nativeHttp(
+  binaryController.signal,
+  nativeClock(binaryController.signal)
+);
+const cancelBinary = async (): Promise<void> => {
+  await setTimeout(50);
+  binaryController.abort();
+};
+const binaryCancelJob = cancelBinary();
+let binaryCancelled = false;
+try {
+  const { download: read } = binaryHttp;
+  if (!read) {
+    throw new Error("Missing binary transport.");
+  }
+  await read(`${base}/binary-hang`, "inth_transport_test", "image/png");
+} catch (error) {
+  binaryCancelled = error instanceof Error && error.name === "AbortError";
+}
+await binaryCancelJob;
+check(binaryCancelled, "A pending binary download did not cancel.");
 const sleeper = new AbortController();
 const clock = nativeClock(sleeper.signal);
 const stopSleep = async (): Promise<void> => {

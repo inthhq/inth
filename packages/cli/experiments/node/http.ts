@@ -40,7 +40,7 @@ export const retryDelay = (value: string | null, now: number): number => {
 export class HttpClient {
   readonly clock: Clock;
   private readonly fetcher: Fetch;
-  private readonly signal: AbortSignal;
+  readonly signal: AbortSignal;
   private readonly retryRateLimit: boolean;
   constructor(
     fetcher: Fetch,
@@ -56,8 +56,11 @@ export class HttpClient {
   async request(
     url: string,
     init: RequestInit = {},
-    deadline = Number.POSITIVE_INFINITY
+    deadline = Number.POSITIVE_INFINITY,
+    retryRateLimit = this.retryRateLimit,
+    requestTimeout = 30_000
   ): Promise<Response> {
+    let waited = 0;
     for (let attempt = 0; ; attempt += 1) {
       this.signal.throwIfAborted();
       const remaining = deadline - this.clock.now();
@@ -73,7 +76,7 @@ export class HttpClient {
           redirect: "error",
           signal: AbortSignal.any([
             this.signal,
-            AbortSignal.timeout(Math.ceil(Math.min(30_000, remaining))),
+            AbortSignal.timeout(Math.ceil(Math.min(requestTimeout, remaining))),
           ]),
         });
       } catch {
@@ -82,7 +85,7 @@ export class HttpClient {
           "Could not reach inth. Check your connection and try again."
         );
       }
-      if (!this.retryRateLimit || response.status !== 429 || attempt >= 3) {
+      if (!retryRateLimit || response.status !== 429 || attempt >= 3) {
         return response;
       }
       const delay = retryDelay(
@@ -97,8 +100,12 @@ export class HttpClient {
       if (delay > 2_147_483_647) {
         throw await this.error(response);
       }
+      if (waited + delay > 30_000) {
+        return response;
+      }
       await response.body?.cancel();
       await this.clock.sleep(delay);
+      waited += delay;
     }
   }
   form(

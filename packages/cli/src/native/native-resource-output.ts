@@ -1,3 +1,4 @@
+import { formatAccessResource } from "../agent-access-output.ts";
 import type { CliArguments } from "../arguments.ts";
 import type { OAuthResponse } from "../auth-types.ts";
 import type { DisplayOptions } from "../display.ts";
@@ -11,6 +12,10 @@ export const formatNativeResource = (
   display: DisplayOptions
 ): string => {
   try {
+    const accessOutput = formatAccessResource(options, response.body);
+    if (accessOutput !== undefined) {
+      return accessOutput;
+    }
     if (response.status === 204) {
       return resourceSummary(options, { data: [], success: true }, display);
     }

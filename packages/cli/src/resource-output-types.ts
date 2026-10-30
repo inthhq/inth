@@ -103,6 +103,7 @@ export interface ResourceItem extends ScanDetails {
   lockedCount?: number;
   issues?: FindingDetails[];
   message?: string;
+  messages?: { id: string; role: string; text: string; failed: boolean }[];
   deleted?: boolean;
   updated?: boolean;
 }

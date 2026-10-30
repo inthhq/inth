@@ -3,12 +3,27 @@ import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { binary, run } from "./native-test-support.ts";
+import { binary, fixture, run } from "./native-test-support.ts";
 
 export const verifyHelp = (): void => {
   const help = run(binary, ["--help"], { env: { ...process.env, PATH: "" } });
   assert.match(help.stdout, /auth/u);
   assert.equal(help.stderr, "");
+};
+
+export const verifyExitStatus = (): void => {
+  const pending = run(fixture("exit-test"), ["--version", "--json"], {
+    status: 2,
+  });
+  assert.equal(JSON.parse(pending.stdout).ok, true);
+  assert.equal(pending.stderr, "");
+  const failed = run(fixture("exit-test"), ["unsupported-command", "--json"], {
+    status: 1,
+  });
+  const failure = JSON.parse(failed.stdout);
+  assert.equal(failure.ok, false);
+  assert.equal(failure.error.code, "usage_error");
+  assert.equal(failed.stderr, "");
 };
 
 export const verifyUsageErrors = (): void => {

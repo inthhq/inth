@@ -90,7 +90,7 @@ describe("human help and machine discovery", () => {
     expect(inbox?.options).toContainEqual(
       expect.objectContaining({
         name: "status",
-        required: true,
+        required: false,
         type: "string",
         values: ["open", "accepted", "dismissed", "resolved"],
       })
@@ -138,12 +138,13 @@ describe("human help and machine discovery", () => {
           entry.command === spec.command && entry.action === spec.action
       );
       expect(metadata).toBeDefined();
-      const supported = metadata?.scopes.every((scope) =>
-        keyIdentity.data.scopes.includes(scope)
-      );
-      expect(metadata?.authentication, `${spec.command} ${spec.action}`).toBe(
-        supported ? "browser-or-agent-or-api-key" : "browser-or-agent"
-      );
+      const supported =
+        !spec.personOnly &&
+        metadata?.scopes.every((scope) =>
+          keyIdentity.data.scopes.includes(scope)
+        );
+      const advertised = metadata?.authentication.includes("api-key");
+      expect(advertised, `${spec.command} ${spec.action}`).toBe(supported);
     }
     for (const command of ["member", "invitation"]) {
       expect(formatHelp(command, "list")).toContain(

@@ -110,6 +110,25 @@ await writeFile(
       ffi_format: 3,
       functions: [
         {
+          name: "fileIdentity",
+          params: [
+            "string",
+            "i32",
+            "i32",
+            {
+              callback: {
+                id: "identity",
+                lifetime: "call",
+                params: ["string", { context: "identity" }],
+                returns: "void",
+              },
+            },
+            { context: "identity" },
+          ],
+          returns: "i32",
+          symbol: "inth_file_identity",
+        },
+        {
           name: "productionBuild",
           params: [],
           returns: "i32",
@@ -320,6 +339,9 @@ if (fixtures) {
     "agent-test",
     "agent-e2e",
     "transport-test",
+    "upload-test",
+    "write-test",
+    "exit-test",
     "telemetry-test",
     "sentry-test",
     "development-telemetry-test",
@@ -327,6 +349,7 @@ if (fixtures) {
     "ui-test",
     "output-test",
     "identity-test",
+    "file-identity-test",
     "profile-test",
     "organization-test",
     "resource-test",
@@ -361,6 +384,20 @@ for (const entry of entries) {
   console.log(`Built static Scriptc ${entry.name}.`);
 }
 // Sign before copying compatibility paths so every entry has the same code identity.
+if (fixtures) {
+  run(target.compiler, [
+    ...target.compilerArgs,
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "test/native/file-identity-precision-test.c",
+    "-o",
+    path.join(
+      output,
+      `file-identity-precision-test${target.platform === "win32" ? ".exe" : ""}`
+    ),
+  ]);
+}
 if (fixtures && target.platform === "win32") {
   for (const name of ["windows-console-test", "windows-credentials-test"]) {
     run(target.compiler, [

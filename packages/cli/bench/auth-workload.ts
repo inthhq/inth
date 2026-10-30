@@ -1,6 +1,7 @@
 /* eslint-disable require-await -- The simulated server and clock implement asynchronous production contracts. */
 import type { AuthFlow } from "../src/auth-flow.ts";
 import type { AuthStore, OAuthResponse } from "../src/auth-types.ts";
+import { SCOPE } from "../src/auth-types.ts";
 
 export const check = (condition: boolean, message: string): void => {
   if (!condition) {
@@ -42,8 +43,7 @@ export class AuthScenario {
     if (step === 1) {
       check(
         url === "https://dashboard.example/device" &&
-          fields.get("scope") ===
-            "openid profile email offline_access organizations.read organizations.write projects.read projects.write members.read members.write api-keys.read api-keys.write code-audit.read code-audit.write inbox.read inbox.write vendors.write billing.read",
+          fields.get("scope") === SCOPE,
         "Wrong device request."
       );
       body =

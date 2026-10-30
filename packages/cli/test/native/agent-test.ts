@@ -1,6 +1,7 @@
 /* eslint-disable require-await -- In-memory adapters exercise the compiled asynchronous auth flow. */
 import "../../src/native/native-bindings.ts";
 import { AgentAuth } from "../../src/agent-auth.ts";
+import { requestedAgentScopes } from "../../src/agent-commands.ts";
 import { parseAgentState } from "../../src/agent-protocol.ts";
 import type { AgentHttp, AgentStore } from "../../src/agent-types.ts";
 import { parseArguments } from "../../src/arguments.ts";
@@ -12,6 +13,13 @@ const check = (condition: boolean, message: string): void => {
     throw new Error(message);
   }
 };
+const extendedScopes = requestedAgentScopes(
+  "account.security.read,integrations.read,support.write,consent.lifecycle.write,consent.keys.write,billing.write,account.security.write,integrations.write,account.write,account.delete,notifications.write,notifications.routing.write,organization-retention.write,organizations.settings.write,organizations.delete"
+);
+check(
+  extendedScopes.length === 15,
+  "The API server's extended scopes were rejected."
+);
 const issuer = "https://inth.com/api/auth";
 const login = parseArguments([
   "login",

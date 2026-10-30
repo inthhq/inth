@@ -1,8 +1,11 @@
 /* eslint-disable require-await -- Browser approval implements the shared asynchronous login UI contract. */
+import "./native/native-file-identity.ts";
 import { mkdirSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";
 
+import { requireAccessPerson } from "./agent-access-commands.ts";
+import { runV2Write } from "./agent-access-write-runner.ts";
 import { AgentAuth } from "./agent-auth.ts";
 import { runAgentCommand } from "./agent-commands.ts";
 import { agentEnvironment, agentStateDirectory } from "./agent-environment.ts";
@@ -13,6 +16,7 @@ import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
 import { c15tCodemodsHelp } from "./c15t-codemods.ts";
 import { c15tHelp } from "./c15t.ts";
+import { chatRetryDiagnostic, requireChatPerson } from "./chat.ts";
 import { CliError } from "./cli-error.ts";
 import { selectCommandConnection } from "./connection-selection.ts";
 import { colorEnabled, organizationReference } from "./display.ts";
@@ -49,6 +53,7 @@ import {
 import {
   chooseOrganization,
   createdOrganizationMessage,
+  terminalText,
 } from "./organizations.ts";
 import {
   printResult,
@@ -57,11 +62,19 @@ import {
   requireInteractiveLogin,
 } from "./output.ts";
 import { nativeStateDirectory } from "./platform.ts";
+import { approveResource, approvalMessage } from "./resource-approval.ts";
 import {
   buildResourceRequest,
+  optionValue,
   rawApiRequest,
   resourceCommand,
 } from "./resource-commands.ts";
+import {
+  saveResourceDownload,
+  validateDownloadOutput,
+} from "./resource-download.ts";
+import { prepareResourceInput } from "./resource-input.ts";
+import { runResourceUpload } from "./resource-upload.ts";
 import { agentSandbox, sandboxError } from "./sandbox.ts";
 import { runSkills } from "./skills.ts";
 import {
@@ -250,17 +263,118 @@ const runLocalCommand = async (options: CliArguments): Promise<boolean> => {
 const runResource = async (
   options: CliArguments,
   api: NativeApi,
-  context: NativeContext
+  context: NativeContext,
+  apiOrigin: string
 ): Promise<void> => {
   const request =
     options.command === "api"
       ? rawApiRequest(options)
       : buildResourceRequest(options);
+  const retry = chatRetryDiagnostic(options);
+  if (retry) {
+    console.error(retry);
+  }
+  const spec = resourceCommand(options);
+  if (spec?.writeSchema) {
+    const result = await runV2Write(
+      options,
+      request,
+      {
+        execute: async (
+          path,
+          method,
+          body,
+          organization,
+          accept,
+          once,
+          observeDispatch
+        ) =>
+          apiOutput(
+            await api.execute(
+              path,
+              method,
+              body,
+              organization,
+              accept,
+              once,
+              observeDispatch
+            )
+          ),
+        putImage: async (
+          path,
+          bytes,
+          mediaType,
+          organization,
+          observeDispatch
+        ) =>
+          apiOutput(
+            await api.putImage(
+              path,
+              bytes,
+              mediaType,
+              organization,
+              observeDispatch
+            )
+          ),
+      },
+      (organization) => context.resolve(organization),
+      (message) =>
+        nativeUI(
+          controller.signal,
+          !options.json && !options.nonInteractive,
+          message,
+          false,
+          "Action cancelled."
+        )
+    );
+    const human = result.split("\n").map(terminalText).join("\n");
+    printResult(options.json, human, result || "null");
+    return;
+  }
+  if (spec?.upload) {
+    const result = await runResourceUpload(
+      options,
+      {
+        execute: async (path, method, body, organization) =>
+          apiOutput(await api.execute(path, method, body, organization)),
+        uploadChat: (body, organization) => api.uploadChat(body, organization),
+      },
+      () => context.resolve(options.organization),
+      controller.signal,
+      apiOrigin
+    );
+    printResult(options.json, result, result);
+    return;
+  }
+  const organization = request.scoped
+    ? await context.resolve(options.organization)
+    : undefined;
+  const binaryType =
+    spec?.download ??
+    (options.command === "api" && optionValue(options, "output") !== undefined
+      ? "*/*"
+      : undefined);
+  if (binaryType) {
+    const saved = await saveResourceDownload(
+      options,
+      await api.download(request.path, organization, binaryType),
+      controller.signal
+    );
+    printResult(
+      options.json,
+      options.command === "api"
+        ? saved
+        : `Saved download to ${terminalText(optionValue(options, "output") ?? "")}.`,
+      saved
+    );
+    return;
+  }
   const response = await api.execute(
     request.path,
     request.method,
     request.body,
-    request.scoped ? await context.resolve(options.organization) : undefined
+    organization,
+    spec?.accept
   );
   const output = apiOutput(response);
   diagnosticStep("resource_format");
@@ -335,6 +449,20 @@ const run = async (options: CliArguments): Promise<void> => {
   }
   const allowInteractive = promptsAllowed(options);
   const key = apiKey(options.token, process.env.INTH_TOKEN);
+  requireChatPerson(options, key);
+  requireAccessPerson(options, key);
+  await prepareResourceInput(options, controller.signal);
+  validateDownloadOutput(options);
+  await approveResource(
+    options,
+    nativeUI(
+      controller.signal,
+      allowInteractive,
+      approvalMessage(options),
+      false,
+      "Action cancelled."
+    )
+  );
   const directory = agentStateDirectory(nativeStateDirectory(), environment);
   const context = new NativeContext(directory, process.cwd());
   await selectCommandConnection(
@@ -440,7 +568,7 @@ const run = async (options: CliArguments): Promise<void> => {
       JSON.stringify(identity)
     );
   } else if (options.command === "api" || resourceCommand(options)) {
-    await runResource(options, api, context);
+    await runResource(options, api, context, environment.apiOrigin);
   } else {
     const organizations = await api.organizations();
     const selected = await chooseOrganization(
@@ -644,4 +772,7 @@ if (options && installationId) {
     )
   );
 }
-process.exit(exitCode);
+if (exitCode !== 0) {
+  process.exit(exitCode);
+}
+process.exit();

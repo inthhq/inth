@@ -1,5 +1,7 @@
 /* eslint-disable no-await-in-loop -- Check each configuration output in order. */
 import assert from "node:assert/strict";
+import { spawn, spawnSync } from "node:child_process";
+import { once } from "node:events";
 import { mkdtemp, mkdir, rm, readFile, stat, readdir } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -25,13 +27,49 @@ export const verifyWindowsFixtures = (): void => {
   }
 };
 
-export const verifyResources = (): void => {
+export const verifyResources = async (): Promise<void> => {
   forward("resource-test", 10_000);
   forward("resource-output-test", 10_000);
+  const piped = spawnSync(fixture("resource-test"), ["--chat-stdin"], {
+    encoding: "utf-8",
+    input: "  東京\nquestion  ",
+    timeout: 5000,
+  });
+  assert.ifError(piped.error);
+  assert.equal(piped.status, 0, piped.stderr);
+  assert.deepEqual(
+    z
+      .object({ clientMessageId: z.uuidv4(), message: z.string() })
+      .parse(JSON.parse(piped.stdout)),
+    {
+      clientMessageId: JSON.parse(piped.stdout).clientMessageId,
+      message: "東京\nquestion",
+    }
+  );
+  const pending = spawn(fixture("resource-test"), ["--chat-stdin-cancel"]);
+  let output = "";
+  pending.stdout.setEncoding("utf-8");
+  pending.stdout.on("data", (chunk: string) => {
+    output += chunk;
+  });
+  try {
+    const exited = once(pending, "close", {
+      signal: AbortSignal.timeout(5000),
+    });
+    pending.stdin.write("Input without EOF");
+    const [status] = await exited;
+    assert.equal(status, 0, output);
+    assert.match(output, /Pending chat stdin cancelled/u);
+  } finally {
+    if (pending.exitCode === null) {
+      pending.kill();
+    }
+  }
 };
 
 export const verifyTerminals = (): void => {
   python("test-selector.py", [fixture("ui-test")], 20_000);
+  python("test-write-approval.py", [fixture("write-test")], 30_000);
   python("test-mcp-ui.py", [binary], 20_000);
   python("test-skills-ui.py", [binary], 30_000);
   python("test-c15t-ui.py", [fixture("c15t-test")], 60_000);

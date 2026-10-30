@@ -168,10 +168,22 @@ await runWithCleanup(async () => {
   check(saved !== null, "Login did not persist credentials.");
   check(
     (http.calls[1] ?? "").includes(
-      "scope=openid+profile+email+offline_access+organizations.read+organizations.write+projects.read+projects.write+members.read+members.write+api-keys.read+api-keys.write+code-audit.read+code-audit.write+inbox.read+inbox.write+vendors.write+billing.read"
+      "scope=openid+profile+email+offline_access+organizations.read+organizations.write+projects.read+projects.write+members.read+members.write+api-keys.read+api-keys.write+code-audit.read+code-audit.write+inbox.read+inbox.write+agents.read+agents.write+vendors.write+billing.read+billing.details.read+consent.read+consent.write+consent.keys.read+website-audit.read+website-audit.write+account.read+notifications.read+organization-retention.read+support.read+account.security.read+integrations.read"
     ),
     "Missing requested scopes."
   );
+  for (const scope of [
+    "billing.write",
+    "account.delete",
+    "organizations.delete",
+    "account.security.write",
+    "consent.keys.write",
+  ]) {
+    check(
+      !(http.calls[1] ?? "").includes(scope),
+      "Browser login requested an opt-in scope."
+    );
+  }
   check(
     (http.calls[2] ?? "").includes(
       "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code"

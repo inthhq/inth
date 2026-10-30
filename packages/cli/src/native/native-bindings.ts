@@ -13,6 +13,12 @@ export declare function secretDelete(service: string, account: string): number;
 export declare function lockAcquire(path: string): number;
 export declare function lockRelease(handle: number): number;
 export declare function httpDate(value: string): number;
+export declare function fileIdentity(
+  path: string,
+  descriptor: number,
+  follow: number,
+  receive: (value: string) => void
+): number;
 export declare function removeDirectory(path: string): number;
 export declare function prepareDirectory(path: string): number;
 export declare function openBrowser(url: string): number;

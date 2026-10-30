@@ -1,4 +1,5 @@
 import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { requiresAgentConnection } from "./auth-types.ts";
 import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
@@ -42,6 +43,72 @@ const option = (
 });
 export const OPTION_METADATA: OptionMetadata[] = [
   option(
+    "expected-instance-id",
+    "string",
+    "Exact instance ID from consent lifecycle-get"
+  ),
+  option(
+    "expected-backend-version",
+    "string",
+    "Exact backend version from consent lifecycle-get"
+  ),
+  option(
+    "overlap-seconds",
+    "integer",
+    "Required rotation overlap 0..86400; 0 immediately revokes the old secret"
+  ),
+  option("plan", "string", "Plan"),
+  option("billing-interval", "string", "Billing interval"),
+  option("promotion-code", "string", "Promotion code"),
+  option("checkout-attempt-id", "string", "Checkout attempt id"),
+  option(
+    "save-approval",
+    "string",
+    "Save a new private approval JSON file with exact organization, input and full quote"
+  ),
+  option("catalog-version", "integer", "Catalog version"),
+  option("credits", "integer", "Credits"),
+  option("enabled", "string", "Explicit true or false; never inferred"),
+  option(
+    "monthly-purchase-limit",
+    "integer",
+    "Maximum automatic credit purchases per month"
+  ),
+  option("quantity-credits", "integer", "Quantity credits"),
+  option("threshold-credits", "integer", "Threshold credits"),
+  option("confirm-cancellation", "string", "Confirm cancellation"),
+  option("payment-method-id", "string", "Payment method id"),
+  option("confirm-payment-method-id", "string", "Confirm payment method id"),
+  option("hide-pii", "string", "Hide pii"),
+  option(
+    "confirmation",
+    "string",
+    "Exact server-required email, slug or session revocation phrase; --yes does not replace it"
+  ),
+  option("family", "string", "Family"),
+  option("mode", "string", "Mode"),
+  option("configured", "string", "Configured"),
+  option(
+    "user-ids",
+    "json",
+    "JSON array of current organization member user IDs"
+  ),
+  option("new-slug", "string", "New slug"),
+  option("expected-slug", "string", "Expected slug"),
+  option("mutation-id", "string", "Mutation id"),
+  option("expected-version", "integer", "Exact current retention version"),
+  option("provider-retention", "string", "Provider retention"),
+  option("branch-filters", "json", "Branch filters"),
+  option("ignored-paths", "json", "Ignored paths"),
+  option("quote-id", "string", "Quote id"),
+  option("candidate-plan-checksum", "string", "Candidate plan checksum"),
+  option(
+    "max-credits",
+    "integer",
+    "Maximum credits for prepared quote approval only"
+  ),
+
+  option(
     "json",
     "boolean",
     "Emit one JSON result; disable prompts and browser login"
@@ -79,7 +146,7 @@ export const OPTION_METADATA: OptionMetadata[] = [
   option(
     "yes",
     "boolean",
-    "Confirm sending the email and requested scopes to Inth for approval"
+    "Approve this command's stated action for its explicit target"
   ),
   option("token", "string", "Organization API key; overrides INTH_TOKEN"),
   option("organization", "string", "Organization ID or local default override"),
@@ -94,6 +161,13 @@ export const OPTION_METADATA: OptionMetadata[] = [
   ),
   option("region", "string", "Project region ID from inth region list"),
   option("project", "string", "Project ID"),
+  option("product", "string", "Filter settled credit usage by product", [
+    "agent",
+    "code-audit",
+    "website-audit",
+  ]),
+  option("since", "string", "Inclusive usage start timestamp with timezone"),
+  option("until", "string", "Inclusive usage end timestamp with timezone"),
   option("description", "string", "Project description"),
   option("branding", "string", "Consent branding", ["inth", "c15t", "none"]),
   option(
@@ -121,6 +195,47 @@ export const OPTION_METADATA: OptionMetadata[] = [
     FEEDBACK_SURFACES
   ),
   option("message", "string", "Feedback summary, up to 8000 characters"),
+  option(
+    "message-file",
+    "string",
+    "Read the message from a UTF-8 file, or - for stdin"
+  ),
+  option(
+    "client-message-id",
+    "string",
+    "UUID v4 to reuse when retrying the same chat message"
+  ),
+  option(
+    "file",
+    "string",
+    "One local regular byte file; stdin is not accepted"
+  ),
+  option(
+    "file-name",
+    "string",
+    "Display basename, 1 through 255 characters; no trimming or renaming"
+  ),
+  option(
+    "media-type",
+    "string",
+    "Supported MIME type without parameters; inferred from the display filename"
+  ),
+  option(
+    "client-attachment-id",
+    "string",
+    "UUID to reuse for identical pending Support intent metadata"
+  ),
+  option(
+    "attachment-ids",
+    "json-array",
+    "Ordered JSON array of up to 10 unique aga_ draft IDs"
+  ),
+  option(
+    "receipt",
+    "string",
+    "Private new recovery file; contains IDs and metadata, never signed URLs"
+  ),
+  option("inbox-item", "string", "Inbox item ID the new chat concerns"),
   option("expected", "string", "Expected behavior, up to 2000 characters"),
   option("actual", "string", "Actual behavior, up to 2000 characters"),
   option("reproduction", "string", "Steps to reproduce, up to 4000 characters"),
@@ -137,20 +252,89 @@ export const OPTION_METADATA: OptionMetadata[] = [
   ),
   option(
     "item-version",
-    "integer",
+    "string",
     "Version from the last read of this Inbox item"
   ),
   option(
     "method",
     "string",
     "HTTP request method",
-    ["GET", "POST", "PATCH", "DELETE"],
+    ["GET", "POST", "PUT", "PATCH", "DELETE"],
     "GET"
   ),
   option(
     "data",
     "json-object",
     "JSON body; replaces individual body options, including required fields"
+  ),
+  option(
+    "data-file",
+    "string",
+    "Read a JSON body from a UTF-8 file, or - for stdin"
+  ),
+  option(
+    "detail",
+    "string",
+    "Human output detail; JSON always retains the complete response",
+    ["summary", "all"],
+    "summary"
+  ),
+  option(
+    "page",
+    "integer",
+    "Numbered page; does not auto-fetch later pages",
+    [],
+    "1"
+  ),
+  option("query", "string", "Consent-record search text, up to 256 characters"),
+  option(
+    "range",
+    "string",
+    "Requested analytics range; the response reports plan limits",
+    ["24h", "3d", "7d", "30d", "90d", "1y"],
+    "7d"
+  ),
+  option(
+    "session-duration-minutes",
+    "integer",
+    "Consent session duration in minutes"
+  ),
+  option(
+    "vendor-ids",
+    "json-array",
+    "IAB vendor IDs as a JSON integer array; [] clears the list"
+  ),
+  option(
+    "additional-consent-provider-ids",
+    "json-array",
+    "Google ATP IDs as a JSON positive-integer array; [] clears the list"
+  ),
+  option("website", "string", "Website Audit target ID"),
+  option("finding", "string", "Evidence ID from the Website Audit report"),
+  option("decision", "string", "Evidence review action", [
+    "dismiss",
+    "mark_as_ours",
+    "report_vendor",
+  ]),
+  option(
+    "urls",
+    "json-array",
+    "Policy URLs as a JSON string array; [] clears the list"
+  ),
+  option("visibility", "string", "Chat audience after sharing", [
+    "organization",
+  ]),
+  option("assignee", "string", "Current organization member's user ID"),
+  option(
+    "unassign",
+    "boolean",
+    "Clear the Inbox assignee while preserving omitted status"
+  ),
+  option("audit", "string", "Website Audit scan ID"),
+  option(
+    "output",
+    "string",
+    "Write binary data to a new file; never overwrite an existing path"
   ),
   option("agent", "string", "MCP client to configure", MCP_CLIENTS),
   option("scope", "string", "MCP configuration location", [
@@ -169,6 +353,15 @@ export const OPTION_METADATA: OptionMetadata[] = [
   ),
 ];
 const baseOptions = ["json", "non-interactive", "help", "version"];
+const optionDescription = (item: OptionMetadata, group: string): string => {
+  if (item.name === "request-id" && group === "feedback") {
+    return "Request ID from the failed operation, up to 128 characters";
+  }
+  if (item.name === "message" && group === "chat") {
+    return "Chat message, up to 50000 characters; may be empty with attachments";
+  }
+  return item.description;
+};
 export const commandOptions = (
   names: string[],
   required: string[] = [],
@@ -178,10 +371,7 @@ export const commandOptions = (
     [...baseOptions, ...names].includes(item.name)
   ).map((item) => ({
     defaultValue: item.defaultValue,
-    description:
-      item.name === "request-id" && group === "feedback"
-        ? "Request ID from the failed operation, up to 128 characters"
-        : item.description,
+    description: optionDescription(item, group),
     name: item.name,
     required: required.includes(item.name),
     type: item.type,
@@ -221,13 +411,109 @@ const descriptions = [
   ["code-audit unlock", "Spend credits to unlock a report"],
   ["inbox list", "List Inbox findings"],
   ["inbox get", "Read a finding"],
-  ["inbox update", "Change a finding's status"],
+  ["inbox update", "Change a finding's status or assignee"],
   ["inbox github-issue", "Create a GitHub issue for a finding"],
+  ["chat start", "Start a private Inth Agent chat"],
+  ["chat get", "Read a chat and its latest reply"],
+  ["chat send", "Send a follow-up message to a chat"],
   ["vendor list", "List vendors seen on a project"],
   ["vendor get", "Read a vendor, where it was seen, and how it loaded"],
   ["vendor approve", "Approve a vendor seen on a project"],
   ["vendor ignore", "Ignore a vendor seen on a project"],
 ];
+const attachmentEffects = (spec: ResourceCommand): string[] => {
+  const effects: string[] = [];
+  if (spec.upload) {
+    effects.push(
+      "Reads one bounded local regular file before authentication. --file - and JSON body flags are rejected. Uploading does not send a message.",
+      spec.command === "chat"
+        ? "Up to 20 MiB per file, 10 drafts and 40 MiB total. The server checks content, ownership and readiness. A lost response is not retried; use chat attachment-list, which remains available while processing is paused."
+        : "Images up to 10 MiB or recordings up to 100 MiB. One signed storage PUT with no API credentials or redirects, then finalization. A lost PUT response triggers finalization without another PUT. Record recovery IDs or use --receipt for crash recovery."
+    );
+  }
+  if (spec.command === "chat" && spec.action === "attachment-list") {
+    effects.push(
+      "Returns all pending ready or uploading drafts, at most 10, without pagination. Sent attachments are in the chat transcript. Discovery and downloads stay accessible while processing is paused."
+    );
+  }
+  return effects;
+};
+const discoveryEffects = (spec: ResourceCommand): string[] => {
+  const effects: string[] = [];
+  if (spec.command === "billing" && spec.action === "ledger") {
+    effects.push(
+      "Requires organization owner access. Covers all retained settled consumption with attribution, not grants, balances or pending holds.",
+      "Returns data.items and data.nextCursor. Omitted dates and product inherit the cursor's frozen window; do not add new defaults on continuation."
+    );
+  }
+  if (spec.command === "website-audit" && spec.action === "cookie-inventory") {
+    effects.push(
+      "Returns a latest-scan index with cookiesPath pointers. Read cookie rows with website-audit cookies <scanId>."
+    );
+  }
+  if (spec.command === "code-audit" && spec.action === "quote") {
+    effects.push(
+      "Reads the pinned credit quote without approving or spending. approvalAvailability reports API, Dashboard or unavailable continuation. Existing API-key capabilities do not include code-audit.read."
+    );
+  }
+  if (
+    spec.command === "integration" &&
+    spec.action === "github-project-links"
+  ) {
+    effects.push(
+      "Embedded policy previews have their own policiesNextCursor. Use integration github-link-policies <linkId> to read every policy."
+    );
+  }
+  return effects;
+};
+const writeEffects = (spec: ResourceCommand): string[] => {
+  if (!spec.writeSchema) {
+    return [];
+  }
+  const effects: string[] = [
+    "New writes require explicit approved write scopes and remain subject to server rollout and operational controls.",
+    "Mutations are sent once. Only one authentication refresh after a 401 may resend the identical input. A lost response is an unknown outcome.",
+  ];
+  if (spec.organizationBody) {
+    effects.push(
+      "Organization selection is resolved once and sent in the JSON body, with no organization query fields."
+    );
+  }
+  if (spec.image) {
+    effects.push(
+      "Sends original validated PNG, JPEG, WebP or GIF bytes up to 1 MiB to the trusted API. URLs, stdin, JSON and redirects are rejected."
+    );
+  }
+  if (spec.command === "support" && ["start", "send"].includes(spec.action)) {
+    effects.push(
+      "Requires nonempty text, a caller-stable client message UUID and at most five ordered unique ready attachment IDs. Upload files separately; uploading does not send them."
+    );
+  }
+  if (
+    spec.command === "billing" &&
+    [
+      "plan-preview",
+      "plan-change",
+      "credit-preview",
+      "credit-purchase",
+    ].includes(spec.action)
+  ) {
+    effects.push(
+      "Preview and execution are separate. Save with --save-approval and execute the reviewed file with --data-file. Keep exact input, full quote and checkout UUID. Recurring terms are in nextCycle. Hosted actions require a person; no provider tokens or card details are accepted."
+    );
+  }
+  if (spec.command === "code-audit") {
+    effects.push(
+      "Only this prepared quote approval has a maxCredits cap. Preserve quoteId, candidatePlanChecksum and UUIDv4 requestId. pending, expired, requires_dashboard, insufficient_credits and error return exit code 2, with the full response. Report unlock and chat replies have no cap."
+    );
+  }
+  if (spec.command === "account" && spec.action === "sessions-revoke") {
+    effects.push(
+      "OAuth has no current browser session. mode others may require the Dashboard. mode all requires the exact revoke-all-browser-sessions confirmation even with --yes."
+    );
+  }
+  return effects;
+};
 const resourceEffects = (spec: ResourceCommand): string[] => {
   if (spec.command === "feedback") {
     return [
@@ -240,6 +526,43 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
   }
   const effects =
     spec.method === "GET" ? [] : ["Writes take effect immediately."];
+  if (spec.command === "chat") {
+    effects.push(
+      "Requires a person's approved sign-in. Organization API keys cannot access chats.",
+      "Chat writes need agents.write. Reading the title and transcript also needs agents.read."
+    );
+    if (["start", "send"].includes(spec.action)) {
+      effects.push(
+        "Asks the Inth Agent and can spend organization credits. Returns acceptance; use chat get to read the reply.",
+        "Use --message, --message-file, --data or --data-file, or omit text with nonempty --attachment-ids. Reuse --client-message-id with the same text and ordered attachment IDs when retrying."
+      );
+    }
+  }
+  effects.push(
+    ...attachmentEffects(spec),
+    ...discoveryEffects(spec),
+    ...writeEffects(spec)
+  );
+  if (spec.approval) {
+    effects.push(
+      "Requires one confirmation for the explicit target, or --yes."
+    );
+  }
+  if (spec.command === "chat" && spec.action === "share") {
+    effects.push("Sharing with the organization cannot be undone.");
+  }
+  if (spec.personOnly) {
+    effects.push(
+      requiresAgentConnection(spec.scopes ?? [])
+        ? "Requires a person's explicitly scoped agent connection. Organization API keys and ordinary browser sign-ins cannot use this command."
+        : "Requires a person's approved browser or agent connection. Organization API keys cannot use this command."
+    );
+  }
+  if (spec.download) {
+    effects.push(
+      "Saves at most 128 MiB to an explicit new --output file. Existing files are never overwritten. API credentials are never forwarded to storage hosts."
+    );
+  }
   if (
     spec.command === "code-audit" &&
     ["start", "unlock"].includes(spec.action)
@@ -263,56 +586,275 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
   }
   return effects;
 };
-const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
-  const key = `${spec.command} ${spec.action}`.trim();
-  const write = spec.method !== "GET";
+const resourceFamily = (spec: ResourceCommand): string => {
+  const names = [
+    ["org", "organizations"],
+    ["project", "projects"],
+    ["member", "members"],
+    ["invitation", "members"],
+    ["api-key", "api-keys"],
+    ["chat", "agents"],
+  ];
+  // Vendors are read with the project; decisions have their own scope.
+  if (spec.command === "vendor") {
+    return spec.method === "GET" ? "projects" : "vendors";
+  }
+  return names.find((entry) => entry[0] === spec.command)?.[1] ?? spec.command;
+};
+const discoveryExamples = (spec: ResourceCommand): string[] => {
+  const examples = [
+    [
+      "account sessions",
+      "inth account sessions --organization org_123 --limit 20 --json",
+    ],
+    [
+      "account devices",
+      "inth account devices --organization org_123 --limit 20 --json",
+    ],
+    [
+      "integration status",
+      "inth integration status --organization org_123 --json",
+    ],
+    [
+      "integration github-installations",
+      "inth integration github-installations --organization org_123 --json",
+    ],
+    [
+      "integration github-repositories",
+      "inth integration github-repositories --organization org_123 --json",
+    ],
+    [
+      "integration github-repository-get",
+      "inth integration github-repository-get repo_123 --organization org_123 --json",
+    ],
+    [
+      "integration github-project-links",
+      "inth integration github-project-links repo_123 --organization org_123 --json",
+    ],
+    [
+      "integration github-link-policies",
+      "inth integration github-link-policies link_123 --organization org_123 --json",
+    ],
+    [
+      "integration search-console-properties",
+      "inth integration search-console-properties --organization org_123 --json",
+    ],
+    [
+      "integration domain-proofs",
+      "inth integration domain-proofs --organization org_123 --json",
+    ],
+    [
+      "website-audit cookie-inventory",
+      "inth website-audit cookie-inventory --organization org_123 --project prj_123 --json",
+    ],
+    [
+      "billing ledger",
+      "inth billing ledger --organization org_123 --product code-audit --since 2026-01-01T00:00:00Z --json",
+    ],
+    ["org settings-get", "inth org settings-get org_123 --json"],
+    [
+      "code-audit quote",
+      "inth code-audit quote scan_123 --organization org_123 --json",
+    ],
+  ];
+  const example = examples.find(
+    (entry) => entry[0] === `${spec.command} ${spec.action}`
+  )?.[1];
+  return example ? [example] : [];
+};
+const writeExamples = (spec: ResourceCommand): string[] => {
+  let target = "";
+  if (spec.path.includes(":id")) {
+    target = spec.command === "support" ? " spc_1" : " resource_123";
+  }
+  const project = spec.path.includes(":project") ? " --project prj_123" : "";
+  const confirm = spec.approval ? " --yes" : "";
+  if (spec.image) {
+    return [
+      `inth ${spec.command} ${spec.action}${target} --file image.png --json`,
+    ];
+  }
+  if (acceptsData(spec)) {
+    return [
+      `inth ${spec.command} ${spec.action}${target}${project} --data-file input.json${confirm} --json`,
+    ];
+  }
+  if (spec.action === "share") {
+    return [`inth support share spc_1 --visibility organization --yes --json`];
+  }
+  return [
+    `inth ${spec.command} ${spec.action}${target}${project}${confirm} --json`,
+  ];
+};
+const resourceExamples = (
+  spec: ResourceCommand,
+  invocation: string,
+  usage: string
+): string[] => {
+  if (spec.writeSchema) {
+    return writeExamples(spec);
+  }
+  const discovery = discoveryExamples(spec);
+  if (discovery.length) {
+    return discovery;
+  }
+  if (spec.command === "chat" && spec.action === "attachment-discard") {
+    return [
+      "inth chat attachment-discard aga_first --organization org_123 --json",
+    ];
+  }
+  if (
+    spec.command === "support" &&
+    ["attachment-finalize", "attachment-discard"].includes(spec.action)
+  ) {
+    return [
+      `inth support ${spec.action} sat_123 --organization org_123 --json`,
+    ];
+  }
+  if (spec.upload) {
+    return [
+      spec.command === "chat"
+        ? "inth chat attachment-upload --file policy.pdf --organization org_123 --json"
+        : "inth support attachment-upload --file recording.webm --client-attachment-id b8dde372-1324-4d2e-a15a-fd3761964299 --receipt ./upload-receipt.json --organization org_123 --json",
+    ];
+  }
+  if (spec.command === "chat" && ["start", "send"].includes(spec.action)) {
+    return [
+      `${invocation} --message "Explain this finding"`,
+      `${invocation} --message-file question.txt --json`,
+      `${invocation} --message-file - --json`,
+      `${invocation} --attachment-ids '["aga_first"]' --json`,
+    ];
+  }
+  const writes = [
+    [
+      "consent config-update",
+      "inth consent config-update --project prj_123 --branding inth",
+    ],
+    [
+      "consent iab-set",
+      "inth consent iab-set --project prj_123 --vendor-ids '[42,755]'",
+    ],
+    ["website remove", "inth website remove target_123 --yes"],
+    [
+      "website policies-set",
+      `inth website policies-set target_123 --urls '["https://example.com/privacy"]'`,
+    ],
+    [
+      "website verification-check",
+      "inth website verification-check target_123 --method dns",
+    ],
+    [
+      "website-audit start",
+      "inth website-audit start --website target_123 --request-id b8dde372-1324-4d2e-a15a-fd3761964299 --scope free_preview",
+    ],
+    [
+      "website-audit review",
+      "inth website-audit review scan_123 --finding finding_123 --decision dismiss",
+    ],
+    ["chat share", "inth chat share chat_123 --visibility organization --yes"],
+    ["chat delete", "inth chat delete chat_123 --yes"],
+    [
+      "inbox update",
+      "inth inbox update inbox_123 --item-version 3 --assignee user_123",
+    ],
+  ];
+  const example = writes.find(
+    (entry) => entry[0] === `${spec.command} ${spec.action}`
+  )?.[1];
+  if (example) {
+    return [example, `${example} --json`];
+  }
+  if (spec.download) {
+    let target = "resource_123";
+    if (spec.command === "support") {
+      target = "sat_1";
+    }
+    if (spec.command === "chat") {
+      target = "aga_first";
+    }
+    const extension = spec.command === "billing" ? "pdf" : "bin";
+    const audit = spec.command === "website-audit" ? " --audit scan_123" : "";
+    return [
+      `inth ${spec.command} ${spec.action} ${target}${audit} --output download.${extension} --json`,
+    ];
+  }
+  if (spec.command === "support" && spec.action === "get") {
+    return ["inth support get spc_1 --json"];
+  }
+  return [usage, `${usage} --json`];
+};
+const resourceOptions = (spec: ResourceCommand): OptionMetadata[] => {
   const names = ["token", "auth", ...spec.fields];
+  if (spec.method === "GET" && !spec.download) {
+    names.push("detail");
+  }
   if (spec.scoped) {
     names.push("organization");
   }
   if (spec.paginated) {
-    names.push("limit", "cursor");
+    names.push("cursor", ...(spec.cursorOnly ? [] : ["limit"]));
   }
   if (acceptsData(spec)) {
-    names.push("data");
+    names.push("data", "data-file");
   }
-  let family = spec.command;
-  if (family === "org") {
-    family = "organizations";
-  }
-  if (family === "project") {
-    family = "projects";
-  }
-  if (family === "member" || family === "invitation") {
-    family = "members";
-  }
-  if (family === "api-key") {
-    family = "api-keys";
-  }
-  // Vendors are read with the project; decisions have their own scope.
-  if (family === "vendor") {
-    family = write ? "vendors" : "projects";
-  }
-  const scopes = ["region", "feedback"].includes(spec.command)
-    ? []
-    : [`${family}.${write ? "write" : "read"}`];
+  return commandOptions(names, spec.required, spec.command).map((item) => {
+    const rule = spec.rules?.find((entry) => entry.name === item.name);
+    let defaultValue =
+      item.name === "limit" && spec.defaultLimit
+        ? String(spec.defaultLimit)
+        : item.defaultValue;
+    if (rule) {
+      defaultValue = rule.defaultValue ?? null;
+    }
+    return {
+      ...item,
+      defaultValue,
+      description: rule?.description ?? item.description,
+      values: rule ? (rule.values ?? []) : item.values,
+    };
+  });
+};
+const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
+  const key = `${spec.command} ${spec.action}`.trim();
+  const write = spec.method !== "GET";
+  const family = resourceFamily(spec);
+  const scopes =
+    spec.scopes ??
+    (["region", "feedback"].includes(spec.command)
+      ? []
+      : [`${family}.${write ? "write" : "read"}`]);
   const keyAllowed =
-    ["feedback", "region"].includes(spec.command) ||
-    spec.command === "project" ||
-    (!write &&
-      ["org", "api-key", "inbox", "billing", "vendor"].includes(spec.command));
-  const usage = `inth ${key}${spec.path.includes(":id") ? " <id>" : ""}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;
-  const effects = resourceEffects(spec);
+    !spec.personOnly &&
+    (["feedback", "region"].includes(spec.command) ||
+      spec.command === "project" ||
+      (!write &&
+        ["org", "api-key", "inbox", "billing", "vendor"].includes(
+          spec.command
+        )));
+  const invocation = `inth ${key}${spec.path.includes(":id") ? " <id>" : ""}`;
+  const chatWrite =
+    spec.command === "chat" && ["start", "send"].includes(spec.action);
+  const usage = chatWrite
+    ? `${invocation} [--message <text> | --message-file <path|-> | --data <json> | --data-file <path|->] [--attachment-ids <json-array>]`
+    : `${invocation}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;
+  let authentication = keyAllowed
+    ? "browser-or-agent-or-api-key"
+    : "browser-or-agent";
+  if (requiresAgentConnection(scopes)) {
+    authentication = "agent";
+  }
   return {
     action: spec.action,
-    authentication: keyAllowed
-      ? "browser-or-agent-or-api-key"
-      : "browser-or-agent",
+    authentication,
     command: spec.command,
-    description: descriptions.find((entry) => entry[0] === key)?.[1] ?? key,
-    effects,
-    examples: [usage, `${usage} --json`],
-    options: commandOptions(names, spec.required, spec.command),
+    description:
+      spec.description ??
+      descriptions.find((entry) => entry[0] === key)?.[1] ??
+      key,
+    effects: resourceEffects(spec),
+    examples: resourceExamples(spec, invocation, usage),
+    options: resourceOptions(spec),
     paginated: spec.paginated,
     scopes,
     usage,
@@ -333,6 +875,12 @@ const localExamples = (
   }
   if (command === "update") {
     return ["inth update", "inth update --check", "inth update --check --json"];
+  }
+  if (command === "api") {
+    return [
+      "inth api /v1/me --json",
+      "inth api GET /v1/agent-chat-attachments/aga_first/content --output ./attachment.bin --json",
+    ];
   }
   if (command === "mcp") {
     return [
@@ -608,12 +1156,13 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     "api",
     "",
     "Make a raw API request",
-    ["token", "auth", "organization", "method", "data"],
+    ["token", "auth", "organization", "method", "data", "data-file", "output"],
     "browser-or-agent-or-api-key",
     [
-      "POST, PATCH, and DELETE can change data immediately. Required scopes depend on the endpoint.",
+      "POST, PUT, PATCH, and DELETE can change data immediately. Required scopes depend on the endpoint.",
+      "GET with --output saves at most 128 MiB to a new file without text decoding. Existing files are never overwritten. API paths and redirects remain restricted to the trusted API boundary.",
     ],
-    " <path>"
+    " [GET] <path> [--output <new-file>]"
   ),
   localCommand(
     "switch",

@@ -1,6 +1,8 @@
 import type { AgentEnvironment } from "./agent-environment.ts";
 import type { CliArguments } from "./arguments.ts";
+import { requiresAgentConnection } from "./auth-types.ts";
 import { CliError } from "./cli-error.ts";
+import { resourceCommand } from "./resource-commands.ts";
 
 export const requireAgentCredentialSelection = (
   options: CliArguments,
@@ -52,6 +54,13 @@ export const selectCommandConnection = async (
 ): Promise<void> => {
   options.authMode = await resolveConnection(options, key, read);
   requireAgentCredentialSelection(options, key);
+  const scopes = resourceCommand(options)?.scopes ?? [];
+  if (options.authMode !== "agent" && requiresAgentConnection(scopes)) {
+    throw new CliError(
+      "usage_error",
+      `This command requires an explicitly scoped agent connection. Run inth login --email <email> --scopes ${scopes.join(",")} --json, complete approval, then select --auth agent.`
+    );
+  }
   if (
     environment.apiOrigin !== "https://api.inth.com" &&
     options.authMode !== "agent"

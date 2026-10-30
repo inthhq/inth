@@ -6,7 +6,7 @@
 
 The CLI fetches [OAuth discovery](https://api.inth.com/.well-known/oauth-authorization-server) and uses its device, token, and revocation endpoints. It does not derive those paths from the API origin or assume that the issuer is on the API host.
 
-Device authorization requests use `client_id=inth-cli`, scopes `openid profile email offline_access organizations.read organizations.write projects.read projects.write members.read members.write api-keys.read api-keys.write code-audit.read code-audit.write inbox.read inbox.write vendors.write billing.read`, and `resource=https://api.inth.com`. The CLI prints the user code, opens `verification_uri_complete`, and waits at the advertised interval. `authorization_pending` keeps polling; each `slow_down` adds five seconds to subsequent intervals. Refusal stops login. Expiry asks the person to run `inth login` again, avoiding an unattended loop of new approval sessions. Ctrl+C cancels requests and waits.
+Device authorization requests use `client_id=inth-cli`, the `openid profile email offline_access` scopes plus the CLI's resource capabilities, and `resource=https://api.inth.com`. The [resource scope guide](cli/authentication.md) lists the permissions for each task. The CLI prints the user code, opens `verification_uri_complete`, and waits at the advertised interval. `authorization_pending` keeps polling; each `slow_down` adds five seconds to subsequent intervals. Refusal stops login. Expiry asks the person to run `inth login` again, avoiding an unattended loop of new approval sessions. Ctrl+C cancels requests and waits.
 
 A login rejected with `400 invalid_scope` means the OAuth server refused the requested scopes. Check the deployed `inth-cli` registration and its allowed scopes. Discovery advertising a scope does not mean the client registration allows it. The CLI preserves the saved sign-in on this failure.
 
@@ -16,7 +16,7 @@ Every device-token and refresh request includes the API resource. Saved credenti
 
 Logout sends the refresh token to the discovered revocation endpoint, then clears local credentials. If revocation fails, it still clears local credentials and reports that remote sign-out needs checking in the dashboard. An unavailable OS store is an error; the CLI never falls back to plaintext token files.
 
-All requests reject redirects. Authenticated API requests must stay under `https://api.inth.com/v1/`. Feedback returns HTTP 429 errors immediately without retrying. Other HTTP 429 responses honor `Retry-After` seconds or HTTP dates, with at most three retries. Errors include the response's `X-Request-Id` when available. Raw response bodies and supplied keys are excluded from error messages.
+All requests reject redirects. Authenticated API requests must stay under `https://api.inth.com/v1/`. Feedback returns HTTP 429 errors immediately without retrying. Other HTTP 429 responses honor `Retry-After` seconds or HTTP dates, with at most three retries and 30 seconds of cumulative waiting per request. If the requested delay would exceed that budget, the CLI returns the rate-limit error without retrying early. Errors include the response's `X-Request-Id` when available. Raw response bodies and supplied keys are excluded from error messages.
 
 ## Auth.md credentials
 

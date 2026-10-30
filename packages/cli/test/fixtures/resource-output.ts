@@ -123,6 +123,54 @@ export interface OutputCase {
 }
 export const outputCases: OutputCase[] = [
   {
+    args: ["chat", "start", "--message", "Question"],
+    body: '{"success":true,"data":{"id":"chat_123","status":"running","title":"Question","organizationId":"org_123","dashboardUrl":"https://inth.com/dashboard/chats/chat_123"}}',
+    expected: [
+      "Message accepted",
+      "running",
+      "chat_123",
+      "inth chat get chat_123",
+    ],
+  },
+  {
+    args: ["chat", "get", "chat_123"],
+    body: JSON.stringify({
+      data: {
+        id: "chat_123",
+        messages: [
+          { failed: false, id: "user_123", role: "user", text: "Question" },
+          {
+            failed: false,
+            id: "assistant_123",
+            role: "assistant",
+            text: 'Run these separately:\n\n  echo first\n  echo second\n  echo "two  spaces"\n\nThen check the result.',
+          },
+        ],
+        status: "idle",
+        title: "Question",
+      },
+      success: true,
+    }),
+    expected: [
+      "Inth Agent chat",
+      "idle",
+      "User",
+      "Assistant",
+      'Run these separately:\n\n  echo first\n  echo second\n  echo "two  spaces"\n\nThen check the result.',
+      "inth chat get chat_123 --json",
+    ],
+  },
+  {
+    args: ["chat", "get", "chat_123"],
+    body: '{"success":true,"data":{"id":"chat_123","status":"idle","messages":[{"id":"assistant_123","role":"assistant","text":"","failed":true}]}}',
+    expected: ["This reply ended without an answer."],
+  },
+  {
+    args: ["chat", "get", "chat_123"],
+    body: '{"success":true,"data":{"id":"chat_123","status":"idle","messages":[{"id":"user_123","role":"user","text":"Question","failed":false}]}}',
+    expected: ["No assistant reply is available yet."],
+  },
+  {
     args: [
       "feedback",
       "--category",

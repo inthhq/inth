@@ -27,6 +27,9 @@ export interface CliArguments {
   nonInteractive: boolean;
   help: boolean;
   version: boolean;
+  generatedClientMessageId?: string;
+  preparedImageBytes?: Uint8Array;
+  preparedImageMediaType?: string;
   skillsArguments?: string[];
   skillsBrowse?: boolean;
   skillsSourceExplicit?: boolean;
@@ -39,7 +42,10 @@ const validateCommandOptions = (result: CliArguments): void => {
   const { command } = result;
   for (const entry of result.values) {
     if (
-      !(command === "api" && ["method", "data"].includes(entry.name)) &&
+      !(
+        command === "api" &&
+        ["method", "data", "data-file", "output"].includes(entry.name)
+      ) &&
       !(
         command === "auth" &&
         result.argument === "complete" &&
@@ -61,7 +67,7 @@ const validateCommandOptions = (result: CliArguments): void => {
     if (!result.argument) {
       throw new CliError(
         "usage_error",
-        "Usage: inth api /v1/<path> [--method <method>] [--data <json>]"
+        "Usage: inth api /v1/<path> [--method <method>] [--data <json>], or inth api GET /v1/<path> --output <new-file>"
       );
     }
     rawApiRequest(result);
@@ -327,6 +333,31 @@ const normalizeAccountSignIn = (result: CliArguments): void => {
     result.values.push({ name: "yes", value: "true" });
   }
 };
+const normalizeRawRead = (result: CliArguments, count: number): number => {
+  if (
+    result.command !== "api" ||
+    result.argument.toUpperCase() !== "GET" ||
+    result.help
+  ) {
+    return count;
+  }
+  if (count !== 3 || !result.id) {
+    throw new CliError(
+      "usage_error",
+      "Usage: inth api GET /v1/<path> [--output <new-file>]"
+    );
+  }
+  if (result.values.some((entry) => entry.name === "method")) {
+    throw new CliError(
+      "usage_error",
+      "Use positional GET or --method, not both."
+    );
+  }
+  result.argument = result.id;
+  result.id = "";
+  result.values.push({ name: "method", value: "GET" });
+  return count - 1;
+};
 const setOption = (
   result: CliArguments,
   option: string,
@@ -390,8 +421,8 @@ const consumeOption = (
   const value = equals === -1 ? args[index + 1] : arg.slice(equals + 1);
   if (
     value === undefined ||
-    value.startsWith("--") ||
-    (!value && option !== "description")
+    (value.startsWith("--") && !(option === "message" && equals !== -1)) ||
+    (!value && !["description", "query", "message"].includes(option))
   ) {
     throw new CliError("usage_error", `Provide a value for --${option}.`);
   }
@@ -406,6 +437,7 @@ const SWITCHES = new Set([
   "--complete",
   "--wait",
   "--check",
+  "--unassign",
 ]);
 
 // Commands that parse their own arguments. Returns whether `arg` was one.
@@ -495,6 +527,6 @@ export const parseArguments = (args: string[]): CliArguments => {
   if (result.values.filter((entry) => entry.name === "agent").length > 1) {
     throw new CliError("usage_error", "Use --agent only once.");
   }
-  validateArguments(result, positional.length);
+  validateArguments(result, normalizeRawRead(result, positional.length));
   return result;
 };
