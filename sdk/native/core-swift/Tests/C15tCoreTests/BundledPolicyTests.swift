@@ -118,6 +118,53 @@ final class BundledPolicyTests: XCTestCase {
         XCTAssertNotEqual(restored.save(.all).status, .committed)
         XCTAssertTrue(boot(bundle).snapshot().policyPending)
     }
+    func testNoticeDismissalPreservesBundleExpiryAcrossOfflineRestart() async throws {
+        let clock = TestClock(try vector["now"]!.intValue!)
+        let bundle = try resource { body in
+            body["expiresAt"] = .integer(clock.now + 60_000)
+            var packs = body["policyPacks"]!.arrayValue!
+            let index = packs.firstIndex { $0["policyResolution"]?["policyId"]?.stringValue == "us_permissive" }!
+            var pack = packs[index].objectValue!
+            var wire = pack["policyResolution"]!.objectValue!
+            var policy = wire["policy"]!.objectValue!
+            policy["prompt"] = .string("notice")
+            policy["actions"] = .object([
+                "allowed": .array([.string("dismiss")]),
+                "required": .array([]),
+                "equivalent": .array([]),
+            ])
+            wire["policy"] = .object(policy)
+            pack["policyResolution"] = .object(wire)
+            packs[index] = .object(pack)
+            body["policyPacks"] = .array(packs)
+        }
+        let store = InMemoryStore()
+        func boot() async -> ConsentCore {
+            let core = ConsentCore()
+            await core.bootstrapAndSettle(CoreConfig(
+                store: store, bundledPolicy: bundle, transport: OfflineTransport.offline(),
+                consentCategories: ConsentCategory.allCases,
+                overrides: ConsentOverrides(country: "US", region: nil, language: "en"),
+                now: clock.reading, initRetry: .disabled))
+            return core
+        }
+        let first = await boot()
+        XCTAssertEqual(first.snapshot().promptRequirement.kind, .notice)
+        XCTAssertTrue(first.dismissNotice())
+        XCTAssertNil(first.snapshot().explicitChoice)
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(first.isAllowed(category.category))
+        }
+        clock.advance(by: 60_001)
+        let restored = await boot()
+        XCTAssertTrue(restored.snapshot().policyPending)
+        XCTAssertNil(restored.snapshot().explicitChoice)
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(restored.isAllowed(category.category))
+        }
+        XCTAssertNotEqual(restored.save(.all).status, .committed)
+    }
+
     func testExpiredCategoryAndIabBundlesAllowDurableWithdrawalWithoutRestoringGrants() async throws {
         let cases: [(String, Bool, String?)] = [("parity", false, nil), ("parity", true, nil), ("iab", false, nil), ("iab", true, nil), ("parity", true, "US")]
         for (name, restartBeforeWithdrawal, country) in cases {

@@ -1075,7 +1075,8 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.evaluatedAt = at
                 draft.activeUI = .none
             }
-            let envelope = StoredEnvelope(snapshot: next, noticeDismissal: dismissal,
+            let envelope = StoredEnvelope(bundledPolicyAuthority: bundledPolicyAuthority,
+                snapshot: next, noticeDismissal: dismissal,
                 policyResolution: policyWire, storedAt: at, iabConsent: committedIAB,
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
                 additionalConsentList: additionalConsentList)

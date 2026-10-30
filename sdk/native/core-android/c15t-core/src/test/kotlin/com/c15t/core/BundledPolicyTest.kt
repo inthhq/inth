@@ -75,6 +75,42 @@ class BundledPolicyTest {
 		assertFalse(restored.isAllowed(ConsentCategory.MEASUREMENT)); assertTrue(restored.snapshot().policyPending)
 		assertFalse(restored.save(CommitIntent.All).ok); assertTrue(boot().snapshot().policyPending)
 	}
+	@Test fun `notice dismissal preserves bundle expiry across offline restart`() {
+		val clock = FixedClock(now)
+		val raw = resource { body ->
+			body["expiresAt"] = JsonPrimitive(now + 60_000)
+			body["policyPacks"] = JsonArray(body.getValue("policyPacks").jsonArray.map { pack ->
+				val wire = pack.jsonObject.getValue("policyResolution").jsonObject
+				if (wire.getValue("policyId").jsonPrimitive.content != "us_permissive") pack else {
+					val policy = JsonObject(wire.getValue("policy").jsonObject + mapOf(
+						"prompt" to JsonPrimitive("notice"),
+						"actions" to buildJsonObject {
+							put("allowed", buildJsonArray { add("dismiss") })
+							put("required", buildJsonArray {})
+							put("equivalent", buildJsonArray {})
+						},
+					))
+					JsonObject(pack.jsonObject + ("policyResolution" to JsonObject(wire + ("policy" to policy))))
+				}
+			})
+		}
+		val store = C15tStore(InMemoryKeyValueStore())
+		val config = NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries,
+			overrides = KernelOverrides(country = "US", language = "en"))
+		fun boot() = testKernel(config, store, clock, RecordingTransport()).also { it.bootstrap() }
+		val first = boot()
+		assertTrue(first.snapshot().promptRequirement.notice)
+		assertTrue(first.dismissNotice())
+		assertNull(first.snapshot().explicitChoice)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(first.isAllowed(it)) }
+		clock.advance(60_001)
+		val restored = boot()
+		assertTrue(restored.snapshot().policyPending)
+		assertNull(restored.snapshot().explicitChoice)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(restored.isAllowed(it)) }
+		assertFalse(restored.save(CommitIntent.All).ok)
+	}
+
 	@Test fun `expired category and IAB bundles allow durable withdrawal without restoring grants`() {
 		for ((name, restartBeforeWithdrawal, country) in listOf(Triple("parity", false, null), Triple("parity", true, null), Triple("iab", false, null), Triple("iab", true, null), Triple("parity", true, "US"))) {
 			val source = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }

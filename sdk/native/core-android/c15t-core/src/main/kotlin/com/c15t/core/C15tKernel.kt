@@ -976,7 +976,8 @@ class C15tKernel(
             val dismissal = NoticeDismissal(dismissedAt = now, fingerprint = policy.noticeFingerprint)
             val next = PolicyEvaluator.evaluate(snapshot = state.get().copy(revision = state.get().revision + 1),
                 policy = policy, noticeDismissal = dismissal, now = now, choiceScope = choiceScopeOf(policy))
-            val envelope = SnapshotEnvelope(snapshot = next.copy(iab = null), evaluationPolicy = policy,
+            val envelope = SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
+                snapshot = next.copy(iab = null), evaluationPolicy = policy,
                 noticeDismissal = dismissal, gvl = state.get().iab?.gvl, iabConsent = committedIab,
                 additionalConsentList = additionalConsentList, iabListFetchedAt = iabListFetchedAt, lastIabActionAt = lastIabActionAt)
             Triple(next, dismissal, envelope)
