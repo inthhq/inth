@@ -84,6 +84,63 @@ def manifest(root, exclude=()):
     return sorted(rows, key=lambda row: row['path'])
 
 
+def installed_output(relative, generated_roots):
+    parts = ('node_modules', *Path(relative).parts)
+    return any(len(parts) > len(suffix) and parts[-len(suffix):] == suffix
+               and parts[-len(suffix)-1] == 'node_modules'
+               for suffix in (tuple(Path(name).parts) for name in generated_roots))
+
+
+def installed_manifest(root, *, generated_roots=(), original=()):
+    """Hash physical Bun package files once and bind internal symlink targets.
+
+    Generated roots name package-relative outputs, including in isolated Bun
+    layouts. Only additions there may be ignored; original files stay bound.
+    """
+    root = Path(root)
+    require(root.is_dir() and not root.is_symlink(), f'missing regular dependency tree: {root}')
+    resolved = root.resolve()
+    generated = [tuple(Path(name).parts) for name in generated_roots]
+    require(all(parts and '..' not in parts and not Path(*parts).is_absolute() for parts in generated), 'unsafe dependency output root')
+    originals = {row['path'] for row in original}
+    parents = {parent.as_posix() for name in originals for parent in Path(name).parents}
+    rows, hashed = [], {}
+
+    def walk(directory, output=False):
+        with os.scandir(directory) as entries:
+            for entry in sorted(entries, key=lambda e: e.name):
+                path = Path(entry.path)
+                relative = path.relative_to(root)
+                name = relative.as_posix()
+                if output and name not in originals and name not in parents:
+                    continue
+                parts = ('node_modules', *relative.parts)
+                generated_here = (entry.is_symlink() or entry.is_dir(follow_symlinks=False)) and any(
+                    len(parts) > len(suffix) and parts[-len(suffix):] == suffix
+                    and parts[-len(suffix)-1] == 'node_modules' for suffix in generated)
+                if entry.is_symlink():
+                    require(not generated_here, f'linked dependency output: {relative}')
+                    target = os.readlink(path)
+                    try:
+                        destination = path.resolve(strict=True)
+                    except (OSError, RuntimeError) as error:
+                        raise ValueError(f'broken/cyclic dependency symlink: {relative}') from error
+                    require(not Path(target).is_absolute() and destination.is_relative_to(resolved), f'external dependency symlink: {relative}')
+                    rows.append({'path': name, 'kind': 'symlink', 'target': target})
+                elif entry.is_dir(follow_symlinks=False):
+                    walk(path, output or generated_here)
+                else:
+                    require(entry.is_file(follow_symlinks=False), f'unsupported dependency entry: {relative}')
+                    stat = entry.stat(follow_symlinks=False)
+                    identity = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+                    if identity not in hashed:
+                        hashed[identity] = sha(path)
+                    rows.append({'path': name, 'kind': 'file', 'bytes': stat.st_size,
+                                 'sha256': hashed[identity], 'executable': bool(stat.st_mode & 0o111)})
+    walk(root)
+    return sorted(rows, key=lambda row: row['path'])
+
+
 def bind_files(paths):
     return [{'path': str(Path(p).resolve()), 'sha256': sha(p), 'bytes': Path(p).stat().st_size} for p in paths]
 

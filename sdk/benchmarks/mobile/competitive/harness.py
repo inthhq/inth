@@ -13,11 +13,36 @@ import tarfile
 
 from core import (HERE, VENDORS, PROFILES, DEFAULT_PROFILES, ANDROID_PROFILES, ANDROID_SETTINGS, IOS_SETTINGS, SYMBOLS,
                   apk_measure, app_measure, android_metadata, bind_files, check_settings, check_r8, digest,
-                  manifest, read, require, sha, size_rows, verify_archive, verify_app_manifest, verify_files, write)
+                  installed_manifest, manifest, read, require, sha, size_rows, verify_archive, verify_app_manifest, verify_files, write)
 
 PINS = read(HERE / 'pins.json')
 EXCLUDED = ('node_modules', 'Pods', 'build', '.gradle', '.cxx', '.expo', '.kotlin', '.git')
 WRAPPER_BUILD_OUTPUTS = {name: ('android/c15t-react-native/build',) if name == 'c15t' else ('android/build',) for name in VENDORS if name != 'baseline'}
+# Exact native output locations. JavaScript distributions such as expo/build
+# and transitive packages' build/ directories remain source inputs.
+INSTALLED_BUILD_OUTPUTS = tuple(
+    package + '/' + output
+    for package, outputs in {
+        **{'@c15t/react-native': WRAPPER_BUILD_OUTPUTS['c15t']},
+        **{row['package']: WRAPPER_BUILD_OUTPUTS[row['name']] for row in PINS['wrappers']},
+        **{name: ('android/build', 'android/.cxx') for name in (
+            'expo', 'expo-asset', 'expo-constants', 'expo-dev-client',
+            'expo-dev-launcher', 'expo-dev-menu', 'expo-dev-menu-interface',
+            'expo-file-system', 'expo-font', 'expo-json-utils', 'expo-keep-awake',
+            'expo-manifests', 'expo-modules-core', 'expo-updates-interface', '@expo/log-box')},
+        'react-native': ('ReactAndroid/build', 'ReactAndroid/.cxx', 'ReactAndroid/hermes-engine/build'),
+        '@react-native/gradle-plugin': ('.gradle', '.kotlin', 'settings-plugin/build',
+            'react-native-gradle-plugin/build', 'shared/build', 'shared-testutil/build'),
+        'expo-modules-autolinking': ('android/expo-gradle-plugin/.gradle', 'android/expo-gradle-plugin/.kotlin',
+            'android/expo-gradle-plugin/expo-max-sdk-override-plugin/build',
+            'android/expo-gradle-plugin/expo-autolinking-plugin/build',
+            'android/expo-gradle-plugin/expo-autolinking-settings-plugin/build',
+            'android/expo-gradle-plugin/expo-autolinking-plugin-shared/build'),
+        'expo-dev-launcher': ('android/build', 'expo-dev-launcher-gradle-plugin/.gradle', 'expo-dev-launcher-gradle-plugin/build'),
+        'expo-modules-core': ('android/build', 'android/.cxx', 'expo-module-gradle-plugin/.gradle', 'expo-module-gradle-plugin/build', 'prebuilds/output'),
+        'expo-file-system': ('android/build', 'prebuilds/output'),
+        'expo-font': ('android/build', 'prebuilds/output'),
+    }.items() for output in outputs)
 
 
 def resolve(base, value):
@@ -153,7 +178,7 @@ def download(cfg, url, name, expected):
 
 
 def tenant_source(cfg):
-    # Local config never enters committed fixture files or snapshot provenance.
+    # Tenant values stay external; their generated file hash binds cohort parity.
     defaults = {'c15t': {'privacyUrl': 'https://example.com/privacy'},
                 'onetrust': {'cdn': 'cdn.cookielaw.org', 'appId': 'UNCONFIGURED', 'category': 'C0002'},
                 'didomi': {'apiKey': 'UNCONFIGURED', 'noticeId': 'UNCONFIGURED', 'target': 'cookies'},
@@ -173,6 +198,12 @@ def copy_input(source, destination):
                 and sha(source) == sha(destination), 'shared frozen input changed')
     else:
         shutil.copy2(source, destination)
+
+
+def construction_inputs():
+    """Bind the implementation and fixtures used by prepare and native build."""
+    return {'harnessSha256': sha(HERE / 'harness.py'), 'coreSha256': sha(HERE / 'core.py'),
+            'pinsSha256': sha(HERE / 'pins.json'), 'fixtures': manifest(HERE / 'fixtures')}
 
 
 def prepare(cfg, platform, vendor, runtime=False, profile=None):
@@ -243,10 +274,10 @@ def prepare(cfg, platform, vendor, runtime=False, profile=None):
         invoke(['pod', 'install', '--deployment', '--project-directory=ios'], host, logs / 'pods.log', cfg)
         verify_pods(cfg, host, vendor)
     invoke(['node', 'node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false'], host, logs / 'types.log', cfg)
+    bind_installed(host)
     write(host / 'prepared.json', {'schemaVersion': 1, 'vendor': vendor, 'platform': platform, 'runtime': runtime, 'profile': profile,
                                   'inputs': validate_inputs(cfg), 'files': manifest(host, EXCLUDED),
-                                  'construction': {'harnessSha256': sha(HERE / 'harness.py'), 'coreSha256': sha(HERE / 'core.py'),
-                                                   'pinsSha256': sha(HERE / 'pins.json'), 'fixtures': manifest(HERE / 'fixtures')}})
+                                  'construction': construction_inputs()})
     print('Prepared', host)
 
 
@@ -273,6 +304,13 @@ def prepare_runtime(host, vendor):
 
 
 def verify_installed(cfg, host, vendor, *, before_build=False):
+    binding = host / 'installed-inputs.json'
+    if binding.exists():
+        recorded = read(binding)
+        require(recorded.get('schemaVersion') == 1 and recorded.get('files'), 'invalid installed-source binding')
+        actual = installed_manifest(host / 'node_modules', generated_roots=() if before_build else INSTALLED_BUILD_OUTPUTS,
+                                    original=recorded['files'])
+        require(actual == recorded['files'], 'installed dependency sources changed since prepare')
     for package, version in [('expo', '57.0.22'), ('react-native', '0.86.3'), ('react', '19.2.7')]:
         require(read(host / 'node_modules' / package / 'package.json')['version'] == version, f'installed {package} version mismatch')
     packages = {'c15t': '@c15t/react-native', **{row['name']: row['package'] for row in PINS['wrappers']}}
@@ -284,6 +322,13 @@ def verify_installed(cfg, host, vendor, *, before_build=False):
         archive = (Path(cfg['archive']) if vendor == 'c15t' else host.parent / 'inputs' / next(row['name'] + '-' + row['wrapperVersion'] + '.tgz' for row in PINS['wrappers'] if row['name'] == vendor))
         return verify_archive(archive, host / 'node_modules' / packages[vendor], generated_roots=() if before_build else WRAPPER_BUILD_OUTPUTS[vendor])
     return 0
+
+
+def bind_installed(host):
+    """Create a fresh prebuild binding, never retrofit a historical host."""
+    target = host / 'installed-inputs.json'
+    require(not target.exists() and not target.is_symlink(), 'installed-source binding exists; use a fresh host')
+    write(target, {'schemaVersion': 1, 'files': installed_manifest(host / 'node_modules')})
 
 
 def expo_core_spec(host):
@@ -344,30 +389,50 @@ def host_inputs(host):
     return [row for row in manifest(host, EXCLUDED) if row['path'] != 'prepared.json']
 
 
-def common_inputs(host, platform):
+def common_inputs(host, platform, *, legacy=False):
     paths = ['App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json']
+    if not legacy:
+        paths.append('benchmark-config.ts')
     if platform == 'android':
         paths += ['android/app/src/main/java/com/c15t/expodev/MainApplication.kt',
                   'android/app/src/main/java/com/c15t/expodev/MainActivity.kt', 'android/app/build.gradle', 'android/gradle.properties']
     return {name: sha(host / name) for name in paths}
 
 
-def build(cfg, profile, vendor, runtime=False):
-    platform = 'android' if profile in ANDROID_PROFILES else 'ios'
-    preflight(cfg, platform, tools=True)
-    host = host_for(cfg, platform, vendor, runtime, profile)
-    require(not runtime or profile == 'android-release', 'runtime uses android-release')
+def cohort_inputs(rows, platform, *, legacy=False):
+    """Check current config parity even when old cohort hashes omitted it."""
+    present = [(Path(row['host']) / 'benchmark-config.ts').is_file() for row in rows]
+    require(all(present) or not any(present), 'incomplete benchmark configuration evidence')
+    require(legacy or all(present), 'missing benchmark configuration evidence')
+    current = [common_inputs(Path(row['host']), platform, legacy=not all(present)) for row in rows]
+    require(all(value == current[0] for value in current), 'common host parity mismatch')
+    return common_inputs(Path(rows[0]['host']), platform, legacy=legacy)
+
+
+def verify_prepared(cfg, host, profile, vendor):
     prepared = read(host / 'prepared.json')
+    require(prepared.get('construction') == construction_inputs(), 'construction sources changed since prepare; prepare a fresh host')
     require(prepared.get('profile') in (None, profile) and (profile != 'android-optimized' or prepared.get('profile') == profile), 'prepared host profile mismatch')
     require(prepared['inputs'] == validate_inputs(cfg), 'prepared inputs changed')
     require(host_inputs(host) == [r for r in prepared['files'] if r['path'] != 'prepared.json'], 'host changed since prepare')
+    require((host / 'installed-inputs.json').is_file(), 'missing prebuild installed-source binding; prepare a fresh host')
     verify_installed(cfg, host, vendor, before_build=True)
+
+
+def build(cfg, profile, vendor, runtime=False):
+    platform = 'android' if profile in ANDROID_PROFILES else 'ios'
+    host = host_for(cfg, platform, vendor, runtime, profile)
+    require(not runtime or profile == 'android-release', 'runtime uses android-release')
+    verify_prepared(cfg, host, profile, vendor)
+    preflight(cfg, platform, tools=True)
     if platform == 'ios':
         verify_pods(cfg, host, vendor)
     output = (root_for(cfg) / 'runtime/artifacts' / vendor) if runtime else out_for(cfg, profile, vendor)
     require(not output.exists(), f'build output exists, use a fresh root: {output}')
     output.mkdir(parents=True)
-    write(output / 'build-start.json', {'profile': profile, 'vendor': vendor, 'inputs': validate_inputs(cfg), 'hostInputsSha256': digest(host_inputs(host))})
+    installed_hash = sha(host / 'installed-inputs.json')
+    write(output / 'build-start.json', {'profile': profile, 'vendor': vendor, 'inputs': validate_inputs(cfg), 'hostInputsSha256': digest(host_inputs(host)),
+                                      'installedInputsSha256': installed_hash})
     if platform == 'android':
         extra = {'C15T_RESOLVED_OUT': str(output / 'dependencies.json'), 'C15T_SETTINGS_OUT': str(output / 'settings.json'), 'C15T_COMPILER_IDENTITY_OUT': str(output / 'compiler.json')}
         args = ['sh', 'android/gradlew', '-p', 'android', '--no-daemon', '--max-workers=3', '-PreactNativeArchitectures=arm64-v8a', '-Pandroid.enableMinifyInReleaseBuilds=true', '-Pandroid.enableShrinkResourcesInReleaseBuilds=true', ':app:assembleRelease', 'c15tEvidenceResolvedArtifacts', 'c15tEvidenceBuildSettings', ':app:c15tCompilerIdentity']
@@ -398,8 +463,11 @@ def build(cfg, profile, vendor, runtime=False):
         for command, name in [(['xcrun', 'nm', '-nm', str(binary)], 'symbols.txt'), (['strings', str(binary)], 'strings.txt')]:
             invoke(command, host, output / name, cfg)
         shutil.copy2(host / 'ios/Podfile.lock', output / 'Podfile.lock')
+    require(sha(host / 'installed-inputs.json') == installed_hash, 'installed-source binding changed during build')
+    verify_installed(cfg, host, vendor)
     write(output / 'build-complete.json', {'profile': profile, 'vendor': vendor, 'runtime': runtime,
           'host': str(host), 'hostInputsSha256': digest(host_inputs(host)), 'inputs': validate_inputs(cfg),
+          'installedInputsSha256': installed_hash,
           'commonInputs': common_inputs(host, platform), 'artifacts': manifest(output)})
     print('Built', output)
 
@@ -412,6 +480,8 @@ def descriptor(cfg, profile, vendor):
     require([row for row in manifest(output) if row['path'] != 'build-complete.json'] == complete['artifacts'], 'stale/changed build output')
     host = Path(complete['host'])
     require(digest(host_inputs(host)) == complete['hostInputsSha256'], 'host changed after build')
+    if 'installedInputsSha256' in complete:
+        require(sha(host / 'installed-inputs.json') == complete['installedInputsSha256'], 'installed-source binding changed after build')
     verify_installed(cfg, host, vendor)
     base = {'profile': profile, 'vendor': vendor, 'host': str(host), 'settings': str(output / 'settings.json'), 'commonInputs': complete['commonInputs'], 'buildRecord': str(output / 'build-complete.json')}
     if profile in ANDROID_PROFILES:
@@ -485,12 +555,13 @@ def collect(cfg, retained=None, partial=False):
             continue
         baseline = next((row for row in cohort if row['vendor'] == 'baseline'), None)
         require(baseline, f'missing baseline for {profile}')
-        common = common_inputs(Path(baseline['host']), 'android' if profile in ANDROID_PROFILES else 'ios')
+        platform = 'android' if profile in ANDROID_PROFILES else 'ios'
+        legacy = bool(retained) and not any((Path(row['host']) / 'benchmark-config.ts').exists() for row in cohort)
+        common = cohort_inputs(cohort, platform, legacy=legacy)
         base_settings = read(baseline['settings'])
         cohort_hash = digest({'profile': profile, 'commonInputs': common, 'settings': check_settings(profile, base_settings), 'inputs': validate_inputs(cfg)})
         for row in cohort:
             host = Path(row['host'])
-            require(common_inputs(host, 'android' if profile in ANDROID_PROFILES else 'ios') == common, f'{row["vendor"]} common host parity mismatch')
             value = measure_descriptor(row, cfg)
             check_settings(profile, value['settings'], base_settings)
             if retained:
@@ -508,13 +579,21 @@ def collect(cfg, retained=None, partial=False):
     evidence = {'schemaVersion': 1, 'origin': 'retained-artifacts' if retained else 'fresh-builds', 'complete': not partial, 'profiles': list(selected_profiles(cfg)),
                 'inputs': validate_inputs(cfg), 'pinsSha256': sha(HERE / 'pins.json'), 'measurements': measurements}
     write(root / 'evidence.json', evidence)
-    verify(cfg)
+    verified = verify(cfg)
     print('Collected', len(measurements), 'apps into', root / 'evidence.json')
+    for warning in verified['provenanceWarnings']:
+        print('Provenance:', warning)
 
 
 def verify_archive_for_retained(cfg, row):
     vendor = row['vendor']
     host = Path(row['host'])
+    if row.get('buildRecord'):
+        complete = read(row['buildRecord'])
+        require(digest(host_inputs(host)) == complete['hostInputsSha256'], 'retained host changed after build')
+        if 'installedInputsSha256' in complete:
+            require(sha(host / 'installed-inputs.json') == complete['installedInputsSha256'], 'retained installed-source binding changed')
+            verify_installed(cfg, host, vendor)
     if row['profile'] not in ANDROID_PROFILES:
         verify_pods(cfg, host, vendor)
     if vendor == 'baseline':
@@ -548,25 +627,35 @@ def verify(cfg):
     recalculated = size_rows(checked, complete=evidence['complete'], profiles=evidence.get('profiles', DEFAULT_PROFILES))
     require(recalculated == checked, 'size delta arithmetic changed')
     # Rebuild the cohort proof from real files, rather than trusting its label.
+    warnings = []
     for profile in evidence.get('profiles', DEFAULT_PROFILES):
         group = [r for r in checked if r['profile'] == profile]
         if not group:
             continue
         base = next(r for r in group if r['vendor'] == 'baseline')
-        common = common_inputs(Path(base['descriptor']['host']), 'android' if profile in ANDROID_PROFILES else 'ios')
+        platform = 'android' if profile in ANDROID_PROFILES else 'ios'
+        legacy = not any(Path(f['path']).name == 'benchmark-config.ts' for f in base['commonFiles'])
+        common = cohort_inputs([row['descriptor'] for row in group], platform, legacy=legacy)
+        if legacy:
+            warnings.append(f'{profile}: historical cohort did not bind benchmark-config.ts; tenant configuration at build time is unproven.')
         expected = digest({'profile': profile, 'commonInputs': common, 'settings': check_settings(profile, base['settings']), 'inputs': evidence['inputs']})
         for row in group:
-            require(row['cohort'] == expected and common_inputs(Path(row['descriptor']['host']), 'android' if profile in ANDROID_PROFILES else 'ios') == common, 'forged host parity evidence')
+            host = Path(row['descriptor']['host'])
+            require(row['cohort'] == expected and common_inputs(host, platform, legacy=legacy) == common, 'forged host parity evidence')
+            require(row['commonFiles'] == bind_files(host / name for name in common), 'incomplete common-file binding')
             check_settings(profile, row['settings'], base['settings'])
         if profile in ANDROID_PROFILES:
             require(len({r['signerSha256'] for r in group}) == 1, 'forged signing parity')
-    return evidence
+    if any(not row['descriptor'].get('buildRecord') or not read(row['descriptor']['buildRecord']).get('installedInputsSha256') for row in checked):
+        warnings.append('Historical installed framework and transitive dependency sources were not recorded before building; current files cannot establish that provenance.')
+    return {**evidence, 'provenanceWarnings': warnings}
 
 
 def report(cfg):
     evidence = verify(cfg)
     complete = evidence['complete']
     warnings = [] if complete else ['Incomplete cohort. Do not treat these measurements as a complete benchmark.']
+    warnings += evidence.get('provenanceWarnings', [])
     heading = '# Mobile CMP app bytes' + ('' if complete else ' (incomplete cohort)')
     lines = [heading, '']
     for warning in warnings:
@@ -614,7 +703,10 @@ def main():
     elif args.stage == 'collect':
         collect(cfg, args.retained, args.partial)
     elif args.stage == 'verify':
-        print('Verified', len(verify(cfg)['measurements']), 'app measurements')
+        evidence = verify(cfg)
+        print('Verified', len(evidence['measurements']), 'app measurements')
+        for warning in evidence['provenanceWarnings']:
+            print('Provenance:', warning)
     elif args.stage == 'report':
         report(cfg)
     elif args.stage == 'runtime':

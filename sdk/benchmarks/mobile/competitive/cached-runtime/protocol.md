@@ -74,6 +74,12 @@ R8, actual DEX/Hermes retention and packager source content. No historical build
 sentinel or original-evidence manifest is required. No historical identities or
 cache archives are imported into a fresh run.
 
+The copied tree gets its own `installed-inputs.json` before building. Only the
+parent harness's named native output directories are removed from the copy.
+JavaScript distributions and other dependency sources remain intact and bound.
+Build and verification check all recorded dependency bytes and internal Bun
+symlinks. The generated tenant config also participates in size-cohort parity.
+
 `device` creates and records ownership of a separate rootable API36 arm64 AVD,
 1080x2400, density420, animations1, SwiftShader and 3072MB RAM. `calibrate`
 installs the new APKs, clears their data, exercises real stock rejection controls,
@@ -135,6 +141,8 @@ runner is a maintained derivative of the measured fixtures. It has stricter
 marker/error checks and config-driven setup. These new sources did not produce
 the historical APKs. The snapshot retains measured fixture/APK/source hashes.
 No new native build or timing validates this repository derivative yet.
+Historical replay does not claim the newer prebuild dependency binding or
+tenant-config cohort coverage. Those records cannot be added after measurement.
 
 ## Coverage and UI observations
 

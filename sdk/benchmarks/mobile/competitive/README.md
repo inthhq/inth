@@ -200,6 +200,33 @@ Outputs are `evidence.json`, `report.json` and `report.md` under the configured 
 
 All paths in a retained descriptor are absolute. They can point at any mounted evidence store; no historical home-directory location is required. Installed wrapper source trees must match their exact archives. Extra JavaScript or native source files and symlinks fail verification. After a build, verification permits Gradle's generated output under `android/build`, or `android/c15t-react-native/build` for c15t. Packaged files in those directories still require exact bytes, and symlinks always fail. Prepare and build require the pristine wrapper tree with no generated-output exceptions, so additional sources cannot enter a fresh build. The resulting report contains fresh reads and hashes of the retained app files. Keep this local descriptor outside git.
 
+Fresh preparation also records `installed-inputs.json` before the native build.
+The host hash binds that file. It lists every installed framework and transitive
+dependency file, including JavaScript distributions in `build/`, executable
+bits, and internal relative Bun symlinks. Symlink destinations must exist inside
+the installed tree. Physical files in isolated `.bun` layouts are hashed along
+with their package and executable links. External, broken and cyclic links fail.
+Build checks the full tree before invoking native tools and checks it again
+afterward. Later readers allow additions only at the exact package output paths
+listed in `INSTALLED_BUILD_OUTPUTS`. Files recorded at those paths still require
+their original bytes. The same checks cover size and strict/cached runtime
+builds. Existing hosts without this binding cannot start a new build.
+
+Before type-checking or building a prepared host, the harness also compares its
+recorded construction hashes with the current harness, core reader, pins and
+fixtures. That includes the Gradle evidence scripts and strict runtime fixtures.
+Cached preparation records its own current construction, and its source manifest
+also binds the cached runner and fixtures. Acceptance and sampling scripts do
+not construct size APKs. Their separate evidence checks still apply.
+
+`benchmark-config.ts` is a common cohort input, so tenant changes between vendor
+prepares fail parity. Tenant values remain outside Git. Historical evidence may
+omit this file or the prebuild dependency manifest. Verification preserves its
+original hashes and reports those provenance gaps. If historical tenant config
+files remain available, their current parity is checked too. It does not prove
+their build-time values. Missing historical config is never reconstructed, and
+hashing installed files today cannot supply missing prebuild provenance.
+
 ## Historical strict runtime
 
 The endpoint is `Application.attachBaseContext` to the first decor `OnDraw` after a validated cached-denial Ready layout. It includes RN startup, SDK reads and fixture validation. It excludes pre-attach/zygote work, physical presentation and stock-preferences rendering. Policies and validation work differ, so it does not rank pure consent engines. OS and file caches are warm, but each attempt starts a fresh process.

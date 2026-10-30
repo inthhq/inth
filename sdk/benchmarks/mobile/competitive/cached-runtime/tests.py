@@ -161,6 +161,8 @@ class SetupTests(unittest.TestCase):
                 (host / 'node_modules/expo/build/required.js').write_text('retained')
                 (host / 'node_modules/sdk/android/build').mkdir(parents=True)
                 (host / 'node_modules/sdk/android/build/stale').write_text('excluded')
+                (host / 'node_modules/expo/android/build').mkdir(parents=True)
+                (host / 'node_modules/expo/android/build/stale').write_text('native generated output')
                 pin = next((r for r in runner.host_harness.PINS['wrappers'] if r['name'] == name), None)
                 if pin:
                     archive = host.parent / 'inputs' / (name + '-' + pin['wrapperVersion'] + '.tgz')
@@ -177,10 +179,32 @@ class SetupTests(unittest.TestCase):
                 for directory in ('logs', 'inputs', 'artifacts', 'runtime/inputs', 'runtime/artifacts', 'device/avd', 'calibration', 'offline'):
                     self.assertTrue((base / 'new' / directory).is_dir())
                 self.assertTrue((base / 'new/runtime/c15t-host/node_modules/expo/build/required.js').is_file())
-                self.assertFalse((base / 'new/runtime/c15t-host/node_modules/sdk/android/build').exists())
+                self.assertTrue((base / 'new/runtime/c15t-host/node_modules/sdk/android/build/stale').is_file())
+                self.assertFalse((base / 'new/runtime/c15t-host/node_modules/expo/android/build').exists())
+                for name in NAMES:
+                    host = base / 'new/runtime' / (name + '-host')
+                    self.assertTrue((host / 'installed-inputs.json').is_file())
+                    self.assertIn('installed-inputs.json', {row['path'] for row in runner.read(host / 'prepared.json')['files']})
                 self.assertFalse((base / 'new/artifacts/v3-build-complete.json').exists())
                 with self.assertRaisesRegex(ValueError, 'output exists'):
                     runner.prepare(cfg)
+
+    def test_cached_build_reader_rejects_transitive_source_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            host = root / 'runtime/c15t-host'
+            source = host / 'node_modules/.bun/transitive@1/node_modules/transitive/build/index.js'
+            source.parent.mkdir(parents=True)
+            source.write_text('installed dependency')
+            runner.host_harness.bind_installed(host)
+            output = root / 'runtime/artifacts/c15t'
+            write(output / 'build-complete.json', {'runtime': True, 'profile': 'android-release', 'vendor': 'c15t',
+                'installedInputsSha256': sha(host / 'installed-inputs.json'),
+                'hostInputsSha256': runner.digest(runner.host_harness.host_inputs(host)), 'inputs': {}, 'artifacts': []})
+            source.write_text('modified installed dependency')
+            with patch.object(runner, 'checked_prepared'), patch.object(runner.host_harness, 'validate_inputs', return_value={}):
+                with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                    runner.verify_builds({'output': str(root)})
 
     def test_canonical_schedule_rejects_rehashes_and_source_drift(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -334,7 +358,7 @@ class SetupTests(unittest.TestCase):
             root = Path(tmp)
             (root / 'runtime/artifacts').mkdir(parents=True)
             bindings = {n: {'apkSha256': 'synthetic'} for n in NAMES}
-            with patch.object(runner, 'checked_prepared'), patch.object(runner, 'verify_builds', return_value=bindings), patch.object(runner.host_harness, 'invoke', autospec=True) as invoke, patch.object(runner.host_harness, 'build', autospec=True) as build:
+            with patch.object(runner, 'checked_prepared'), patch.object(runner, 'verify_builds', return_value=bindings), patch.object(runner.host_harness, 'verify_prepared'), patch.object(runner.host_harness, 'invoke', autospec=True) as invoke, patch.object(runner.host_harness, 'build', autospec=True) as build:
                 runner.build({'output': str(root)})
                 self.assertEqual(json.loads((root / 'builds.json').read_text()), bindings)
                 self.assertEqual(invoke.call_count, 4)
@@ -344,6 +368,16 @@ class SetupTests(unittest.TestCase):
                     self.assertEqual(call.kwargs, {'runtime': True})
                 with self.assertRaisesRegex(ValueError, 'already attempted'):
                     runner.build({'output': str(root)})
+
+    def test_cached_build_checks_prepared_sources_before_typecheck(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'runtime/artifacts').mkdir(parents=True)
+            with patch.object(runner, 'checked_prepared'), patch.object(runner.host_harness, 'verify_prepared', side_effect=ValueError('construction sources changed')), patch.object(runner.host_harness, 'invoke') as invoke, patch.object(runner.host_harness, 'build') as build:
+                with self.assertRaisesRegex(ValueError, 'construction sources changed'):
+                    runner.build({'output': str(root)})
+                invoke.assert_not_called()
+                build.assert_not_called()
 
     def test_fresh_prerequisites_revalidate_full_native_proof(self):
         with tempfile.TemporaryDirectory() as tmp:

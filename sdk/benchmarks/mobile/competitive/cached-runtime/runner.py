@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 
 import harness as host_harness
-from core import ANDROID_SETTINGS, apk_measure, check_settings, digest, manifest, read, require, sha, write
+from core import ANDROID_SETTINGS, apk_measure, check_settings, digest, installed_output, manifest, read, require, sha, write
 from device import Device, package
 from parser import NAMES, denial_in_interval, events, parse, snapshots, validate
 from protocol import PROFILE, canonical_schedule, replay_completed, source_manifest, summary, verify_rows, verify_schedule
@@ -101,13 +101,14 @@ def prepare(cfg):
         for directory, dirs, _ in os.walk(host / 'node_modules', followlinks=False):
             for child in list(dirs):
                 path = Path(directory) / child
-                if child in ('build', '.gradle', '.cxx', '.kotlin') and 'android' in path.relative_to(host / 'node_modules').parts[:-1]:
+                if installed_output(path.relative_to(host / 'node_modules'), host_harness.INSTALLED_BUILD_OUTPUTS):
                     require(not path.is_symlink(), 'unexpected linked native build directory')
                     shutil.rmtree(path)
                     dirs.remove(child)
         for link in (host / 'node_modules').rglob('*'):
             if link.is_symlink():
                 require(link.resolve().is_relative_to(host / 'node_modules'), 'external dependency symlink, refusing to build against producer or size host')
+        (host / 'installed-inputs.json').unlink(missing_ok=True)
         if name != 'c15t':
             pin = next(r for r in host_harness.PINS['wrappers'] if r['name'] == name)
             archive = name + '-' + pin['wrapperVersion'] + '.tgz'
@@ -130,8 +131,10 @@ def prepare(cfg):
             require(text.count(before) == 1, 'unexpected generated host source: ' + path.name)
             path.write_text(text.replace(before, after))
         shutil.copy2(HERE / 'fixtures/runtime-benchmark.kt', java / 'runtime-benchmark.kt')
+        host_harness.bind_installed(host)
         prepared = read(host / 'prepared.json')
-        prepared.update(runtime=True, profile='android-release', files=manifest(host, host_harness.EXCLUDED))
+        prepared.update(runtime=True, profile='android-release', files=manifest(host, host_harness.EXCLUDED),
+                        construction=host_harness.construction_inputs())
         write(host / 'prepared.json', prepared)
         construction[name] = {'sizeBuildRecordSha256': sha(descriptors[name]['buildRecord']), 'sizeArtifactSha256': sha(descriptors[name]['artifact']), 'hostInputsSha256': digest(host_harness.host_inputs(host))}
     write(root / 'prepared.json', {'schemaVersion': 1, 'profileId': PROFILE, 'createdUtc': utc(), 'inputs': inputs,
@@ -148,6 +151,7 @@ def verify_builds(cfg):
         output = root / 'runtime/artifacts' / name
         complete = read(output / 'build-complete.json')
         require(complete['runtime'] is True and complete['profile'] == 'android-release' and complete['vendor'] == name, 'wrong runtime build')
+        require(complete.get('installedInputsSha256') == sha(host / 'installed-inputs.json'), 'missing/changed prebuild installed-source binding')
         require(complete['hostInputsSha256'] == digest(host_harness.host_inputs(host)), 'host changed after build')
         require(complete['inputs'] == host_harness.validate_inputs(cfg), 'build inputs changed')
         require([r for r in manifest(output) if r['path'] != 'build-complete.json'] == complete['artifacts'], 'build artifact changed')
@@ -188,6 +192,7 @@ def build(cfg):
     require(not (root / 'builds.json').exists() and not any((root / 'runtime/artifacts').iterdir()), 'build already attempted; use fresh output')
     for name in NAMES:
         host = host_harness.host_for(cfg, 'android', name, runtime=True)
+        host_harness.verify_prepared(cfg, host, 'android-release', name)
         host_harness.invoke(['node', 'node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false'], host, root / 'logs' / (name + '-types.log'), cfg)
         host_harness.build(cfg, 'android-release', name, runtime=True)
     write(root / 'builds.json', verify_builds(cfg))

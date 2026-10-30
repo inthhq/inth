@@ -140,11 +140,12 @@ class RetainedPodTests(unittest.TestCase):
 
 
 class ReportTests(unittest.TestCase):
-    def check_report(self, complete):
+    def check_report(self, complete, provenance=()):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             evidence = {
                 'complete': complete,
+                'provenanceWarnings': list(provenance),
                 'measurements': [{
                     'profile': 'ios-local', 'vendor': 'baseline', 'status': 'measured',
                     'bytes': 100, 'addedBytes': 0, 'artifactSha256': 'a' * 64,
@@ -174,6 +175,12 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(report['warnings'], [])
         self.assertEqual(markdown.splitlines()[0], '# Mobile CMP app bytes')
         self.assertNotIn('incomplete', markdown.lower())
+
+    def test_historical_reports_surface_missing_prebuild_provenance(self):
+        warning = 'Historical dependency sources were not recorded before building.'
+        report, markdown = self.check_report(True, [warning])
+        self.assertEqual(report['warnings'], [warning])
+        self.assertIn(warning, markdown)
 
 
 
@@ -217,6 +224,276 @@ def device_binary(platform=2):
 
 
 class CompetitiveTests(unittest.TestCase):
+    def test_diagnostic_acceptance_uses_optimized_measurement_in_mixed_cohort(self):
+        from acceptance import android
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = root / 'diagnostic/build-complete.json'
+            core.write(record, {'profile': 'android-optimized', 'vendor': 'c15t', 'inputs': {}, 'artifacts': [], 'host': str(root)})
+            core.write(record.parent / 'settings.json', {})
+            measurements = [{'vendor': 'c15t', 'profile': 'ios-local', 'settings': {'selected': 'wrong'}, 'descriptor': {'artifact': 'wrong'}},
+                            {'vendor': 'c15t', 'profile': 'android-optimized', 'settings': {'selected': 'optimized'}, 'descriptor': {'artifact': 'optimized'}}]
+            evidence = {'inputs': {}, 'measurements': measurements}
+            with patch.object(android, 'verify', return_value=evidence), patch.object(android, 'manifest', return_value=[]), patch.object(android, 'verify_installed'), patch.object(android, 'check_r8'), patch.object(android, 'check_settings', side_effect=RuntimeError('stop before native operations')) as checked:
+                with self.assertRaisesRegex(RuntimeError, 'stop before native operations'):
+                    android.run({'output': str(root / 'output')}, 5588, diagnostic_build=record)
+                self.assertEqual(checked.call_args.args[2], {'selected': 'optimized'})
+                evidence['measurements'] = measurements[:1]
+                checked.reset_mock()
+                with self.assertRaisesRegex(ValueError, 'missing measured android-optimized'):
+                    android.run({'output': str(root / 'output')}, 5588, attempt='missing', diagnostic_build=record)
+                checked.assert_not_called()
+
+    def test_dependency_report_rejects_balanced_edits_against_measured_json(self):
+        import runpy
+        import sys
+        root = core.HERE / 'analysis/android-dependencies'
+        script = root / 'scripts/verify.py'
+        with patch.object(sys, 'path', [str(script.parent), *sys.path]):
+            verify_tables = runpy.run_path(str(script))['verify_report_tables']
+        report = (root / 'report.md').read_text()
+        snapshot = core.read(root / 'results.json')
+        verify_tables(report, snapshot['apks'], snapshot['dexEstimateDeltas'])
+        mutations = [
+            report.replace('| DEX | 1,655,577 |', '| DEX | 1,655,576 |').replace('| Hermes bundle | 125,492 |', '| Hermes bundle | 125,493 |'),
+            report.replace('| Compose | 0 | 2,425,795 | 2,425,795 |', '| Compose | 0 | 2,425,796 | 2,425,796 |').replace('| c15t core | 0 | 270,780 | 270,780 |', '| c15t core | 0 | 270,779 | 270,779 |'),
+        ]
+        for changed in mutations:
+            self.assertNotEqual(report, changed)
+            with self.assertRaisesRegex(ValueError, 'report rows differ'):
+                verify_tables(changed, snapshot['apks'], snapshot['dexEstimateDeltas'])
+        changed = copy.deepcopy(snapshot['dexEstimateDeltas'])
+        changed['baselineEstimatedDexBytes'] += 1
+        with self.assertRaisesRegex(ValueError, 'report rows differ'):
+            verify_tables(report, snapshot['apks'], changed)
+
+    def test_dependency_verification_checks_remain_active_under_python_optimization(self):
+        import subprocess
+        import sys
+        script = core.HERE / 'analysis/android-dependencies/scripts/verify.py'
+        code = "import runpy,sys; from pathlib import Path; sys.path.insert(0,str(Path(sys.argv[1]).parent)); runpy.run_path(sys.argv[1])['check'](False,'invalid optimized evidence')"
+        result = subprocess.run([sys.executable, '-O', '-c', code, str(script)], text=True, capture_output=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('invalid optimized evidence', result.stderr)
+
+    def dependency_host(self, root):
+        host = Path(root)
+        for name, version in [('expo', '57.0.22'), ('react-native', '0.86.3'), ('react', '19.2.7')]:
+            core.write(host / 'node_modules' / name / 'package.json', {'version': version})
+        for name in ('expo/build/Expo.fx.js', 'react-native/ReactAndroid/src/main/Host.kt',
+                     'react/index.js', 'transitive/build/index.js'):
+            path = host / 'node_modules' / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('original dependency source')
+        return host
+
+    def test_prebuild_and_later_readers_reject_framework_and_transitive_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            host = self.dependency_host(tmp)
+            harness.bind_installed(host)
+            cfg = {'output': str(host / 'output')}
+            core.write(host / 'prepared.json', {'profile': 'android-release', 'inputs': {}, 'files': harness.host_inputs(host), 'construction': harness.construction_inputs()})
+            original = harness.host_inputs(host)
+            for name in ('expo/build/Expo.fx.js', 'react-native/ReactAndroid/src/main/Host.kt',
+                         'react/index.js', 'transitive/build/index.js'):
+                source = host / 'node_modules' / name
+                source.write_text('modified dependency source')
+                for before in (True, False):
+                    with self.subTest(name=name, before=before), self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                        harness.verify_installed(cfg, host, 'baseline', before_build=before)
+                with patch.object(harness, 'preflight'), patch.object(harness, 'host_for', return_value=host), patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'invoke', side_effect=AssertionError('changed dependency reached native command')) as invoke:
+                    with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                        harness.build(cfg, 'android-release', 'baseline')
+                    invoke.assert_not_called()
+                source.write_text('original dependency source')
+            harness.verify_installed(cfg, host, 'baseline', before_build=True)
+            # The dependency binding itself is part of every existing host reader,
+            # including the strict runtime reader's host hash.
+            (host / 'installed-inputs.json').unlink()
+            self.assertNotEqual(harness.host_inputs(host), original)
+            core.write(host / 'prepared.json', {'profile': 'android-release', 'inputs': {}, 'files': harness.host_inputs(host), 'construction': harness.construction_inputs()})
+            with patch.object(harness, 'preflight'), patch.object(harness, 'host_for', return_value=host), patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'invoke') as invoke:
+                with self.assertRaisesRegex(ValueError, 'missing prebuild installed-source binding'):
+                    harness.build(cfg, 'android-release', 'baseline')
+                invoke.assert_not_called()
+
+    def test_construction_edits_fail_before_size_or_runtime_build_commands(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            checkout = root / 'checkout'
+            checkout.mkdir()
+            names = ('harness.py', 'core.py', 'pins.json', 'fixtures/gradle/android-resolved-artifacts.gradle',
+                     'fixtures/runtime/App.tsx', 'fixtures/adapters/c15t.tsx')
+            for name in names:
+                path = checkout / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes((core.HERE / name).read_bytes())
+            host = self.dependency_host(root / 'host')
+            harness.bind_installed(host)
+            cfg = {'output': str(root / 'output')}
+            with patch.object(harness, 'HERE', checkout), patch.object(harness, 'validate_inputs', return_value={}):
+                construction = harness.construction_inputs()
+                core.write(host / 'prepared.json', {'profile': 'android-release', 'inputs': {},
+                    'files': harness.host_inputs(host), 'construction': construction})
+                harness.verify_prepared(cfg, host, 'android-release', 'baseline')
+                for name in names:
+                    path = checkout / name
+                    original = path.read_bytes()
+                    path.write_bytes(original + b'\nchanged construction input\n')
+                    for profile, runtime_build in [('android-release', False), ('android-optimized', False),
+                                                   ('ios-local', False), ('ios-postprocessed', False), ('android-release', True)]:
+                        with self.subTest(name=name, profile=profile, runtime=runtime_build), patch.object(harness, 'host_for', return_value=host), patch.object(harness, 'invoke') as invoke, patch.object(harness, 'preflight') as preflight:
+                            with self.assertRaisesRegex(ValueError, 'construction sources changed'):
+                                harness.build(cfg, profile, 'baseline', runtime=runtime_build)
+                            invoke.assert_not_called()
+                            preflight.assert_not_called()
+                    path.write_bytes(original)
+
+    def test_dependency_binding_covers_isolated_bun_links_and_file_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            host = self.dependency_host(tmp)
+            modules = host / 'node_modules'
+            source = modules / '.bun/transitive@1/node_modules/transitive/index.js'
+            source.parent.mkdir(parents=True)
+            source.write_text('transitive installed bytes')
+            link = modules / 'linked'
+            link.symlink_to('.bun/transitive@1/node_modules/transitive', target_is_directory=True)
+            binary = modules / '.bin/transitive'
+            binary.parent.mkdir()
+            binary.symlink_to('../linked/index.js')
+            harness.bind_installed(host)
+            harness.verify_installed({}, host, 'baseline', before_build=True)
+            for mutation in ('change', 'delete', 'add', 'mode', 'retarget'):
+                original = source.read_bytes()
+                if mutation == 'change':
+                    source.write_text('different bytes')
+                elif mutation == 'delete':
+                    source.unlink()
+                elif mutation == 'add':
+                    (modules / 'new.js').touch()
+                elif mutation == 'mode':
+                    source.chmod(0o755)
+                else:
+                    binary.unlink()
+                    binary.symlink_to('../react/index.js')
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    harness.verify_installed({}, host, 'baseline')
+                source.write_bytes(original)
+                source.chmod(0o644)
+                (modules / 'new.js').unlink(missing_ok=True)
+                binary.unlink()
+                binary.symlink_to('../linked/index.js')
+            for target in ('../../outside', 'missing', 'linked'):
+                link.unlink()
+                if target == '../../outside':
+                    (host.parent / 'outside').touch()
+                link.symlink_to(target)
+                with self.subTest(target=target), self.assertRaisesRegex(ValueError, 'dependency symlink'):
+                    core.installed_manifest(modules)
+            link.unlink()
+
+    def test_fresh_and_retained_size_readers_check_bound_installed_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            host = self.dependency_host(root / 'host')
+            harness.bind_installed(host)
+            cfg = {'output': str(root)}
+            output = harness.out_for(cfg, 'android-release', 'baseline')
+            record = output / 'build-complete.json'
+            core.write(record, {'runtime': False, 'profile': 'android-release', 'vendor': 'baseline',
+                'host': str(host), 'hostInputsSha256': core.digest(harness.host_inputs(host)),
+                'installedInputsSha256': core.sha(host / 'installed-inputs.json'),
+                'inputs': {}, 'artifacts': [], 'commonInputs': {}})
+            row = {'host': str(host), 'profile': 'android-release', 'vendor': 'baseline', 'buildRecord': str(record)}
+            with patch.object(harness, 'validate_inputs', return_value={}):
+                harness.descriptor(cfg, 'android-release', 'baseline')
+                harness.verify_archive_for_retained(cfg, row)
+                (host / 'node_modules/transitive/build/index.js').write_text('different transitive source')
+                with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                    harness.descriptor(cfg, 'android-release', 'baseline')
+                with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                    harness.verify_archive_for_retained(cfg, row)
+
+    def test_strict_runtime_reader_rejects_bound_dependency_drift(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            host = self.dependency_host(root / 'host')
+            for source, installed in [('App.tsx', 'App.tsx'), ('runtime-types.ts', 'runtime-types.ts'), ('c15t.tsx', 'consent-adapter.tsx')]:
+                (host / installed).write_bytes((core.HERE / 'fixtures/runtime' / source).read_bytes())
+            harness.bind_installed(host)
+            output = root / 'artifacts'
+            output.mkdir()
+            row = {'configured': True}
+            for key, name in [('apk', 'app-release.apk'), ('mapping', 'mapping.txt'), ('dependencies', 'dependencies.json'), ('settings', 'settings.json'),
+                              ('calibrationLog', 'calibration.log'), ('offlineLog', 'offline.log'), ('stockUiScreenshot', 'screen.png'), ('stockUiXml', 'screen.xml'), ('cacheArchive', 'cache.tar')]:
+                path = output / name
+                path.write_text('fixture evidence')
+                row[key] = str(path)
+            row['apkSha256'] = core.sha(row['apk'])
+            record = output / 'build-complete.json'
+            core.write(record, {'runtime': True, 'profile': 'android-release', 'vendor': 'c15t', 'host': str(host),
+                'hostInputsSha256': core.digest(harness.host_inputs(host)), 'inputs': {}, 'artifacts': core.manifest(output)})
+            row['buildRecord'] = str(record)
+            proof, ownership = root / 'network.json', root / 'ownership.json'
+            core.write(proof, {'taskOwnedTcpProbe': {'listenerClosed': True, 'adbReverseRemoved': True}})
+            core.write(ownership, {'taskOwned': True, 'serial': 'emulator-5590', 'avdName': 'fixture'})
+            value = {'networkProof': str(proof), 'ownershipFile': str(ownership), 'device': {'serial': 'emulator-5590', 'avdName': 'fixture'}, 'participants': {'c15t': row}}
+            (host / 'node_modules/transitive/build/index.js').write_text('changed transitive installed source')
+            with patch.object(harness, 'validate_inputs', return_value={}):
+                eligible, statuses, _ = runtime.eligibility({}, value)
+            self.assertEqual(eligible, [])
+            self.assertIn('dependency sources changed', statuses['c15t']['reason'])
+
+    def test_only_named_native_outputs_allow_additions_after_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            host = self.dependency_host(tmp)
+            modules = host / 'node_modules'
+            packaged = modules / 'react-native/ReactAndroid/build/packaged.dat'
+            packaged.parent.mkdir(parents=True)
+            packaged.write_text('published bytes even inside an output directory')
+            harness.bind_installed(host)
+            output = modules / 'react-native/ReactAndroid/build/generated/Native.kt'
+            output.parent.mkdir(parents=True)
+            output.write_text('native output')
+            harness.verify_installed({}, host, 'baseline')
+            with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                harness.verify_installed({}, host, 'baseline', before_build=True)
+            output.unlink()
+            # A named output exception must preserve files present at prepare.
+            packaged.write_text('changed published source')
+            with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                harness.verify_installed({}, host, 'baseline')
+            packaged.write_text('published bytes even inside an output directory')
+            output = modules / 'expo/build/new.js'
+            output.write_text('extra executable dependency')
+            with self.assertRaisesRegex(ValueError, 'dependency sources changed'):
+                harness.verify_installed({}, host, 'baseline')
+
+    def test_generated_tenant_config_is_common_even_for_legacy_rechecks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = []
+            for vendor in ('baseline', 'c15t'):
+                host = Path(tmp) / vendor
+                host.mkdir()
+                for name in ('App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json', 'benchmark-config.ts'):
+                    (host / name).write_text('identical tenant and host')
+                rows.append({'host': str(host)})
+            host = Path(rows[1]['host'])
+            normal = harness.cohort_inputs(rows, 'ios')
+            self.assertIn('benchmark-config.ts', normal)
+            legacy = harness.cohort_inputs(rows, 'ios', legacy=True)
+            self.assertNotIn('benchmark-config.ts', legacy)
+            (host / 'benchmark-config.ts').write_text('changed tenant')
+            self.assertNotEqual(harness.common_inputs(host, 'ios'), normal)
+            for historic in (False, True):
+                with self.subTest(legacy=historic), self.assertRaisesRegex(ValueError, 'parity mismatch'):
+                    harness.cohort_inputs(rows, 'ios', legacy=historic)
+            for row in rows:
+                (Path(row['host']) / 'benchmark-config.ts').unlink()
+            self.assertEqual(harness.cohort_inputs(rows, 'ios', legacy=True), legacy)
+            with self.assertRaisesRegex(ValueError, 'missing benchmark configuration'):
+                harness.cohort_inputs(rows, 'ios')
+
     def test_build_rejects_unpinned_generated_sources_before_gradle_runs(self):
         with tempfile.TemporaryDirectory() as tmp:
             host = Path(tmp)
@@ -236,7 +513,8 @@ class CompetitiveTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'extra installed package file'):
                 harness.verify_installed(cfg, host, 'c15t', before_build=True)
             self.assertEqual(harness.verify_installed(cfg, host, 'c15t'), 1)
-            core.write(host / 'prepared.json', {'profile': 'android-release', 'inputs': {}, 'files': harness.host_inputs(host)})
+            harness.bind_installed(host)
+            core.write(host / 'prepared.json', {'profile': 'android-release', 'inputs': {}, 'files': harness.host_inputs(host), 'construction': harness.construction_inputs()})
             with patch.object(harness, 'preflight'), patch.object(harness, 'host_for', return_value=host), patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'invoke', side_effect=AssertionError('unpinned source reached a build command')) as invoke:
                 with self.assertRaisesRegex(ValueError, 'extra installed package file'):
                     harness.build(cfg, 'android-release', 'c15t')
@@ -642,7 +920,7 @@ class CompetitiveTests(unittest.TestCase):
             for vendor in ['baseline', 'c15t']:
                 host = root / (vendor + '-host')
                 host.mkdir()
-                for name in ['App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json']:
+                for name in ['App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json', 'benchmark-config.ts']:
                     (host / name).write_text('common host input')
                 common = harness.common_inputs(host, 'ios')
                 app = root / (vendor + '.app')
@@ -674,7 +952,7 @@ class CompetitiveTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'forged/stale measurement'):
                     harness.verify(cfg)
                 core.write(root / 'evidence.json', evidence)
-                (root / 'c15t-host/App.tsx').write_text('different mounted app')
+                (root / 'c15t-host/benchmark-config.ts').write_text('different mounted tenant')
                 evidence['measurements'][1]['commonFiles'] = core.bind_files(root / 'c15t-host' / name for name in common)
                 core.write(root / 'evidence.json', evidence)
                 with self.assertRaisesRegex(ValueError, 'parity'):
