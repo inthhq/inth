@@ -173,9 +173,11 @@ export const verifyWrites = async (binary: string): Promise<void> => {
           JSON.parse(await readFile(saved, "utf-8")),
           JSON.parse(v2WriteCases[14]?.body ?? "")
         );
-        const savedInfo = await stat(saved);
-        // eslint-disable-next-line no-bitwise -- Verify the saved financial approval is private.
-        assert.equal(savedInfo.mode & 0o777, 0o600);
+        if (process.platform !== "win32") {
+          const savedInfo = await stat(saved);
+          // eslint-disable-next-line no-bitwise -- Verify private POSIX file permissions.
+          assert.equal(savedInfo.mode & 0o777, 0o600);
+        }
       }
     }
     assert.deepEqual(failures, []);

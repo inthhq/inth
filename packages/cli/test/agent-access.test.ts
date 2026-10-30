@@ -338,7 +338,7 @@ describe("approvals, downloads, and readable help", () => {
           entry.command === spec.command && entry.action === spec.action
       );
       for (const example of metadata?.examples ?? []) {
-        const words = example.match(/'[^']*'|"[^"*]*"|\S+/gu) ?? [];
+        const words = example.match(/'[^']*'|"[^"]*"|\S+/gu) ?? [];
         const args = words
           .slice(1)
           .map((word) => (/^["']/u.test(word) ? word.slice(1, -1) : word));

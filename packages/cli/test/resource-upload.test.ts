@@ -408,9 +408,11 @@ describe("Support upload workflow", () => {
       schemaVersion: 2,
       stage: "ready",
     });
-    const receiptInfo = await stat(receiptPath);
-    // eslint-disable-next-line no-bitwise -- Check the actual private file permissions.
-    expect(receiptInfo.mode & 0o777).toBe(0o600);
+    if (process.platform !== "win32") {
+      const receiptInfo = await stat(receiptPath);
+      // eslint-disable-next-line no-bitwise -- Check the actual private file permissions.
+      expect(receiptInfo.mode & 0o777).toBe(0o600);
+    }
     expect(await readdir(nodePath.dirname(receiptPath))).toEqual([
       "receipt.json",
     ]);
@@ -1083,8 +1085,10 @@ describe("upload receipts", () => {
       attachmentId: "sat_123",
       stage: "reserved",
     });
-    // eslint-disable-next-line no-bitwise -- Check the actual private file permissions.
-    expect(updated.mode & 0o777).toBe(0o600);
+    if (process.platform !== "win32") {
+      // eslint-disable-next-line no-bitwise -- Check the actual private file permissions.
+      expect(updated.mode & 0o777).toBe(0o600);
+    }
   });
 
   it("preserves in-place edits to a receipt before its next update", async () => {

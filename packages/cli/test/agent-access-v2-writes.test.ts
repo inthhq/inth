@@ -211,9 +211,11 @@ describe("named Dashboard writes", () => {
       input: { catalogVersion: 1, checkoutAttemptId: writeUuid, credits: 100 },
       organizationId: "org_123",
     });
-    const info = await stat(path);
-    // eslint-disable-next-line no-bitwise -- Inspect private POSIX file permission bits.
-    expect(info.mode & 0o777).toBe(0o600);
+    if (process.platform !== "win32") {
+      const info = await stat(path);
+      // eslint-disable-next-line no-bitwise -- Inspect private POSIX file permission bits.
+      expect(info.mode & 0o777).toBe(0o600);
+    }
     await invoke(
       ["billing", "credit-purchase", "--data-file", path, "--yes", "--json"],
       signal()
@@ -392,6 +394,33 @@ describe("named Dashboard writes", () => {
       );
       await invoke([...(example?.args ?? []), "--json"], signal());
       expect(process.exitCode).toBe(2);
+    }
+  );
+
+  it.each([
+    {},
+    { status: null },
+    { status: 7 },
+    { status: "future_outcome" },
+    null,
+    [],
+  ])(
+    "preserves an unrecognized mutation result %j for recovery",
+    async (data) => {
+      const captured = person();
+      const payload = { data, success: true };
+      const requests = await fixture((_request, response) =>
+        response.end(JSON.stringify(payload))
+      );
+      const example = v2WriteCases.find(
+        (item) => item.args[1] === "credit-purchase"
+      );
+      await invoke([...(example?.args ?? []), "--json"], signal());
+      expect(process.exitCode).toBe(2);
+      expect(JSON.parse(captured.stdout.mock.lastCall?.[0] ?? "").data).toEqual(
+        payload
+      );
+      expect(requests).toHaveLength(1);
     }
   );
 
@@ -789,6 +818,28 @@ describe("named Dashboard writes", () => {
       expect(captured.access).not.toHaveBeenCalled();
     }
   );
+  it("uploads a WebP whose binary RIFF size contains a UTF-8 sequence", async () => {
+    person();
+    const image = new Uint8Array([
+      82, 73, 70, 70, 195, 169, 0, 0, 87, 69, 66, 80,
+    ]);
+    const requests = await fixture((_request, response) =>
+      response.end('{"success":true,"data":{}}')
+    );
+    await invoke(
+      [
+        "account",
+        "avatar-set",
+        "--file",
+        await file("image.webp", image),
+        "--json",
+      ],
+      signal()
+    );
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.headers["content-type"]).toBe("image/webp");
+    expect(requests[0]?.body).toEqual(Buffer.from(image));
+  });
   it.each(["account", "org"])(
     "requires confirmation for destructive %s JSON writes",
     async (group) => {

@@ -241,5 +241,8 @@ export const chatRetryDiagnostic = (
     return undefined;
   }
   const id = options.generatedClientMessageId;
+  if (value(options, "data") !== undefined) {
+    return `Chat retry ID: ${id}. Set "clientMessageId":"${id}" in the JSON body for --data or --data-file, keeping the same message and ordered attachment IDs when retrying.`;
+  }
   return `Chat retry ID: ${id}. Reuse --client-message-id ${id} with the same message and ordered attachment IDs when retrying.`;
 };

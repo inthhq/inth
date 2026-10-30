@@ -427,6 +427,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     required: ["product", "plan", "checkout-attempt-id"],
     rules: [
       {
+        description: "Product subscription to preview or change",
         key: "input.product",
         location: "body",
         name: "product",
@@ -628,6 +629,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         values: ["true", "false"],
       },
       {
+        description: "Stable UUID for retries of this exact mutation",
         key: "input.requestId",
         location: "body",
         name: "request-id",
@@ -710,6 +712,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     required: ["product", "request-id", "confirm-cancellation"],
     rules: [
       {
+        description: "Product subscription to preview or change",
         key: "input.product",
         location: "body",
         name: "product",
@@ -718,6 +721,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         values: ["consent", "inth"],
       },
       {
+        description: "Stable UUID for retries of this exact mutation",
         key: "input.requestId",
         location: "body",
         name: "request-id",
@@ -760,6 +764,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     required: ["product", "request-id"],
     rules: [
       {
+        description: "Product subscription to preview or change",
         key: "input.product",
         location: "body",
         name: "product",
@@ -768,6 +773,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         values: ["consent", "inth"],
       },
       {
+        description: "Stable UUID for retries of this exact mutation",
         key: "input.requestId",
         location: "body",
         name: "request-id",
@@ -1183,6 +1189,8 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     required: ["scope", "family", "enabled", "mode"],
     rules: [
       {
+        description:
+          "Apply this notification preference to your account or organization",
         key: "scope",
         location: "body",
         name: "scope",
@@ -1243,6 +1251,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     required: ["role", "configured", "user-ids"],
     rules: [
       {
+        description: "Notification recipient function",
         key: "role",
         location: "body",
         name: "role",
@@ -1809,6 +1818,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         values: [],
       },
       {
+        description: "Stable UUID for retries of this exact mutation",
         key: "requestId",
         location: "body",
         name: "request-id",

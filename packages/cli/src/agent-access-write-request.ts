@@ -131,22 +131,12 @@ export const writeResultExitCode = (
   options: CliArguments,
   source: string
 ): number => {
-  if (!resourceCommand(options)?.writeSchema || !source) {
+  if (!resourceCommand(options)?.writeSchema) {
     return 0;
   }
-  const envelope = inputObject(parseInput(source), "API response");
-  const data = inputObject(envelope.data ?? null, "API response data");
-  if (
-    options.command === "code-audit" &&
-    options.argument === "quote-approve"
-  ) {
-    return ["started", "already_started"].includes(
-      inputString(data.status, "Approval status")
-    )
-      ? 0
-      : 2;
-  }
-  if (
+  const quoteApproval =
+    options.command === "code-audit" && options.argument === "quote-approve";
+  const billingMutation =
     options.command === "billing" &&
     [
       "plan-change",
@@ -154,13 +144,18 @@ export const writeResultExitCode = (
       "auto-top-up-set",
       "subscription-cancel",
       "subscription-uncancel",
-    ].includes(options.argument)
-  ) {
-    return ["completed", "already_active"].includes(
-      inputString(data.status, "Billing status")
-    )
-      ? 0
-      : 2;
+    ].includes(options.argument);
+  if (!quoteApproval && !billingMutation) {
+    return 0;
   }
-  return 0;
+  try {
+    const envelope = inputObject(parseInput(source), "API response");
+    const data = inputObject(envelope.data ?? null, "API response data");
+    const completed = quoteApproval
+      ? data.status === "started" || data.status === "already_started"
+      : data.status === "completed" || data.status === "already_active";
+    return completed ? 0 : 2;
+  } catch {
+    return 2;
+  }
 };

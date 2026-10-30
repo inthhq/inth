@@ -405,6 +405,34 @@ describe("file and stdin input", () => {
     ).toBe(clientMessageId);
     expect(chatRetryDiagnostic(options)).toBeUndefined();
   });
+  it.each(["data", "data-file"])(
+    "gives usable JSON retry guidance for --%s",
+    async (option) => {
+      const json = '{"message":"hello"}';
+      const options = parseArguments([
+        "chat",
+        "start",
+        `--${option}`,
+        option === "data" ? json : await file(json),
+      ]);
+      await prepareResourceInput(options, signal());
+      const id = options.generatedClientMessageId;
+      expect(id).toBeTruthy();
+      const diagnostic = chatRetryDiagnostic(options);
+      expect(diagnostic).toContain(`"clientMessageId":"${id}"`);
+      const body = JSON.parse(buildResourceRequest(options).body ?? "");
+      const retry = parseArguments([
+        "chat",
+        "start",
+        "--data",
+        JSON.stringify({ ...body, clientMessageId: id }),
+      ]);
+      await prepareResourceInput(retry, signal());
+      expect(buildResourceRequest(retry)).toEqual(
+        buildResourceRequest(options)
+      );
+    }
+  );
   it("supports JSON files for existing body commands", async () => {
     const path = await file('{"description":null}');
     const options = parseArguments([

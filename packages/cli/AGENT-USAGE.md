@@ -110,7 +110,9 @@ Supply `--category <category>` and `--message <message>`, or use `--data` with t
 
 ## Resource commands
 
-Use `inth --help --json` to discover commands and options. Resource groups include `project`, `consent`, `website`, `website-audit`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `vendor`, `chat`, `billing`, `account`, `integration`, `notification`, `support` and `region`. The [command reference](docs/cli/commands.md) lists operations and required inputs.
+Offline topic files ship in `docs/cli/`; open [AGENTS.md](./AGENTS.md) for the local index.
+
+Use `inth --help --json` to discover commands and options. Resource groups include `project`, `consent`, `website`, `website-audit`, `member`, `invitation`, `api-key`, `code-audit`, `inbox`, `vendor`, `chat`, `billing`, `account`, `integration`, `notification`, `support` and `region`. The [command reference](https://inth.com/docs/cli/commands) lists operations and required inputs.
 
 Use `account sessions` and `account devices` for separate browser-session and device-grant discovery. `integration status` links to provider installation, repository, project-link policy, Search Console property and domain-proof reads. These pages default to 20 items and return `data.data.items` plus `data.data.nextCursor`. Use discovered internal IDs. `website-audit cookie-inventory` returns a latest-scan index with `cookiesPath`; read actual cookie rows with `website-audit cookies <scanId>`. `billing ledger` covers all retained settled usage with attribution. Keep the same or omitted filters with its cursor so the server preserves the frozen date window. Its `billing.read` access follows existing API-key capabilities and owner permissions. `code-audit quote <scanId>` reads the exact prepared quote and approval availability without spending. Existing API keys lack `code-audit.read`.
 
@@ -139,7 +141,7 @@ Use raw GET downloads for API-returned paths without a named command. `api <path
 
 To review a project's vendors, run `inth vendor list --project <project-id> --state active --json` and read each vendor's `id`. `inth vendor get <vendor-id> --project <project-id> --json` returns its `hosts`, `evidence[].loadedBy`, and `inboxItemId`. For a runtime finding, read `data.data.runtimeVendor` from `inth inbox get <id> --json` and pass its `vendorId` and `projectId` to `inth vendor approve <vendor-id> --project <project-id>` or `inth vendor ignore`. Either decision closes the finding, so do not also update it with `inbox update`. Vendor decisions need a person's sign-in and an admin or owner role; API keys are refused. An agent connection must include `vendors.write` in `--scopes`. If an existing agent connection lacks it, disconnect with `inth logout --auth agent --json` and sign in again so the person can approve it.
 
-New browser sign-ins request the current CLI capabilities. A person must run `inth login` again to grant newer scopes to an older sign-in; refresh cannot add them. Agent connections request an explicit subset. The [authentication guide](docs/cli/authentication.md) maps resource tasks to scopes. API keys keep their fixed capabilities and cannot gain person-only scopes.
+New browser sign-ins request the current CLI capabilities. A person must run `inth login` again to grant newer scopes to an older sign-in; refresh cannot add them. Agent connections request an explicit subset. The [authentication guide](https://inth.com/docs/cli/authentication) maps resource tasks to scopes. API keys keep their fixed capabilities and cannot gain person-only scopes.
 
 ### File uploads and recovery
 
@@ -149,7 +151,7 @@ Chat uploads accept up to 20 MiB each. The server enforces ten drafts and 40 MiB
 
 Support accepts GIF/JPEG/PNG/WebP up to 10 MiB and MP4/MOV/WebM up to 100 MiB, with no PDF creation support. It reserves an intent, PUTs bytes once using its opaque signed grant, then finalizes. No API credentials go to storage. Keep `clientAttachmentId` and the returned `sat_` ID from stderr. Use `--client-attachment-id <uuid>` to replay identical still-pending intent metadata; do not generate a new ID after a conflict. A lost PUT response triggers finalization without another PUT. Recover a known upload with `support attachment-finalize <sat-id>`. Discard explicitly with `support attachment-discard <sat-id>`.
 
-Use `--receipt <new-file>` for private, atomic recovery records written before network. Existing files are never overwritten; receipts contain safe IDs, stages, environment and metadata only. Without a receipt, record stderr IDs for crash recovery. Uploading is separate from message sending. Do not automatically discard after an uncertain message send. Upload/finalize/discard still honor server gates, roles and scopes; Support writes need explicitly approved `support.write`. See the [file upload guide](docs/cli/commands.md#how-do-i-upload-and-recover-files).
+Use `--receipt <new-file>` for private, atomic recovery records written before network. Existing files are never overwritten; receipts contain safe IDs, stages, environment and metadata only. Without a receipt, record stderr IDs for crash recovery. Uploading is separate from message sending. Do not automatically discard after an uncertain message send. Upload/finalize/discard still honor server gates, roles and scopes; Support writes need explicitly approved `support.write`. See the [file upload guide](https://inth.com/docs/cli/commands#how-do-i-upload-and-recover-files).
 
 ### Chat turns and retries
 
@@ -159,7 +161,7 @@ Supply a fresh UUID v4 `--client-message-id` for each new message, and persist i
 
 Start/send can spend credits and return acceptance while the agent continues answering. Read the chat ID at `data.data.id`, then use `chat get` to check `data.data.status` and read `data.data.messages`. Each get reads once. JSON keeps every server field. A write-only connection can send without reading the transcript. Local cancellation does not stop an accepted turn.
 
-`chat start` supports normal organization selection and optional `--inbox-item <id>`. Get/send use the chat ID and reject organization/project overrides. See the [chat command guide](docs/cli/commands.md#how-do-i-use-inth-agent-chats) for examples.
+`chat start` supports normal organization selection and optional `--inbox-item <id>`. Get/send use the chat ID and reject organization/project overrides. See the [chat command guide](https://inth.com/docs/cli/commands#how-do-i-use-inth-agent-chats) for examples.
 
 ## Command discovery and MCP setup
 
@@ -180,4 +182,4 @@ Setup and removal require explicit `--agent` and `--scope` in noninteractive mod
 
 Configuration failures use `invalid_config`, `config_conflict`, `config_busy`, or `config_write_failed`. Conflicting and malformed configs are preserved. Native distributions target Apple silicon Macs, Linux arm64/x64, and Windows x64. Use an organization API key for Linux environments without a desktop credential service.
 
-Additional public API operations accept explicit agent scopes for billing writes, account/security changes, integrations, support writes, Consent runtime/key changes and organization settings/deletion. These write permissions are excluded from ordinary browser login. Request only the permissions needed with `inth login --email <email> --scopes <scopes> --json`; the [authentication scope table](./docs/cli/authentication.md) lists them and companion permissions. The raw `api` command can call supported operations without a named wrapper. Server rollout and operational switches still control new writes.
+Additional public API operations accept explicit agent scopes for billing writes, account/security changes, integrations, support writes, Consent runtime/key changes and organization settings/deletion. These write permissions are excluded from ordinary browser login. Request only the permissions needed with `inth login --email <email> --scopes <scopes> --json`; the [authentication scope table](https://inth.com/docs/cli/authentication) lists them and companion permissions. The raw `api` command can call supported operations without a named wrapper. Server rollout and operational switches still control new writes.

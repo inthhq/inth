@@ -113,10 +113,15 @@ export const putSupportFile = async (
   signal.throwIfAborted();
   validateSupportGrant(grant, attachmentId, file.mediaType);
   const stopped = new AbortController();
+  // Keep a bounded budget for recordings on a 128 KiB/s upstream connection.
+  const deadline = Math.max(
+    300_000,
+    Math.ceil(file.sizeBytes / 131_072) * 1000 + 60_000
+  );
   const transfer = AbortSignal.any([
     signal,
     stopped.signal,
-    AbortSignal.timeout(300_000),
+    AbortSignal.timeout(deadline),
   ]);
   try {
     const response = await fetcher(grant.url, {

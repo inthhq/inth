@@ -1,5 +1,11 @@
 import { once } from "node:events";
-import { appendFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  appendFileSync,
+  mkdtempSync,
+  rmSync,
+  truncateSync,
+  writeFileSync,
+} from "node:fs";
 import { createServer } from "node:http";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { tmpdir } from "node:os";
@@ -72,6 +78,8 @@ const localServer = async (
 };
 
 afterEach(async () => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   for (const file of files.splice(0)) {
     file.close();
   }
@@ -345,5 +353,57 @@ describe("isolated signed storage PUT", () => {
       fetcher
     );
     expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it("allows a large recording transfer past five minutes without another PUT", async () => {
+    const directory = mkdtempSync(
+      nodePath.join(tmpdir(), "inth-slow-recording-")
+    );
+    directories.push(directory);
+    const path = nodePath.join(directory, "recording.webm");
+    writeFileSync(path, bytes);
+    truncateSync(path, 104_857_600);
+    const file = await prepareUploadFile(
+      parseArguments(["support", "attachment-upload", "--file", path]),
+      signal()
+    );
+    files.push(file);
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    vi.spyOn(AbortSignal, "timeout").mockImplementation((milliseconds) => {
+      const controller = new AbortController();
+      globalThis.setTimeout(() => controller.abort(), milliseconds);
+      return controller.signal;
+    });
+    let attempts = 0;
+    const result = putSupportFile(
+      file,
+      grant({
+        mediaType: "video/webm",
+        url: signedUrl.replace(".png", ".webm"),
+      }),
+      "sat_123",
+      signal(),
+      (_url, init) => {
+        attempts += 1;
+        const pending = Promise.withResolvers<Response>();
+        const finish = globalThis.setTimeout(
+          () => pending.resolve(new Response(null, { status: 204 })),
+          360_000
+        );
+        init.signal.addEventListener(
+          "abort",
+          () => {
+            globalThis.clearTimeout(finish);
+            pending.reject(init.signal.reason);
+          },
+          { once: true }
+        );
+        return pending.promise;
+      }
+    );
+    const finished = expect(result).resolves.toBeUndefined();
+    await vi.advanceTimersByTimeAsync(360_000);
+    await finished;
+    expect(attempts).toBe(1);
   });
 });

@@ -19,11 +19,15 @@ export const detectedImageType = (bytes: Uint8Array): string => {
   ) {
     return "image/jpeg";
   }
-  const header = new TextDecoder().decode(bytes.subarray(0, 12));
+  const header = new TextDecoder().decode(bytes.subarray(0, 6));
   if (header.startsWith("GIF87a") || header.startsWith("GIF89a")) {
     return "image/gif";
   }
-  if (header.startsWith("RIFF") && header.slice(8, 12) === "WEBP") {
+  if (
+    bytes.length >= 12 &&
+    [82, 73, 70, 70].every((value, index) => bytes[index] === value) &&
+    [87, 69, 66, 80].every((value, index) => bytes[index + 8] === value)
+  ) {
     return "image/webp";
   }
   return "";

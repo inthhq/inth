@@ -107,7 +107,7 @@ export class UploadReceipt {
         path === "-" ||
         !directory.isDirectory() ||
         directory.isSymbolicLink() ||
-        (directory.mode & 0o022) !== 0
+        (process.platform !== "win32" && (directory.mode & 0o022) !== 0)
       ) {
         throw receiptError();
       }
@@ -130,11 +130,11 @@ export class UploadReceipt {
         !current.isFile() ||
         current.isSymbolicLink() ||
         !sameReceipt(current, this.written) ||
-        (current.mode & 0o077) !== 0 ||
+        (process.platform !== "win32" && (current.mode & 0o077) !== 0) ||
         realpathSync(dirname(this.path)) !== this.parent ||
         !directory.isDirectory() ||
         directory.isSymbolicLink() ||
-        (directory.mode & 0o022) !== 0
+        (process.platform !== "win32" && (directory.mode & 0o022) !== 0)
       ) {
         throw receiptError();
       }
