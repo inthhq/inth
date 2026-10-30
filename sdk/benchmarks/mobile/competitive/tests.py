@@ -132,6 +132,28 @@ class RetainedPodTests(unittest.TestCase):
                     'iosDistributions': [{**distribution, 'archiveSha256': core.sha(cached)}]}
             with patch.dict(harness.PINS, pins):
                 harness.verify_archive_for_retained(cfg, row)
+                unverified = root / 'unverified'
+                unverified.mkdir()
+                (unverified / 'source.swift').write_text('unbound source')
+                for name, target in [('Linked.swift', unverified / 'source.swift'), ('Linked.framework', unverified), ('Broken.swift', root / 'missing')]:
+                    with self.subTest(link=name):
+                        link = binary.parent / name
+                        link.symlink_to(target)
+                        try:
+                            with self.assertRaisesRegex(ValueError, 'installed Pod symlink'):
+                                harness.verify_archive_for_retained(cfg, row)
+                        finally:
+                            link.unlink()
+                pod = binary.parent.parent
+                relocated = root / 'relocated-pod'
+                pod.rename(relocated)
+                pod.symlink_to(relocated, target_is_directory=True)
+                try:
+                    with self.subTest(link='Pod root'), self.assertRaisesRegex(ValueError, 'installed Pod symlink'):
+                        harness.verify_archive_for_retained(cfg, row)
+                finally:
+                    pod.unlink()
+                    relocated.rename(pod)
                 lock.write_text(pinned_lock.replace('Didomi-XCFramework (2.53.1)', 'Didomi-XCFramework (2.53.0)'))
                 with self.assertRaisesRegex(ValueError, 'Pod dependency lock changed'):
                     harness.verify_archive_for_retained(cfg, row)

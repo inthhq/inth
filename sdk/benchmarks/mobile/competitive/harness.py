@@ -369,6 +369,10 @@ def verify_pods(cfg, host, vendor):
     for row in PINS['iosDistributions']:
         if owners[row['name']] != vendor:
             continue
+        pod = host / 'ios/Pods' / row['name']
+        require(not pod.is_symlink(), f'installed Pod symlink: {row["name"]}')
+        for entry in pod.rglob('*'):
+            require(not entry.is_symlink(), f'installed Pod symlink: {row["name"]}/{entry.relative_to(pod)}')
         archive = download(cfg, row['downloadUrl'], row['name'] + '-' + row['version'] + ('.zip' if row['downloadUrl'].endswith('.zip') else '.tar.gz'), row['archiveSha256'])
         if archive.suffix == '.zip':
             handle = zipfile.ZipFile(archive)
@@ -378,7 +382,6 @@ def verify_pods(cfg, host, vendor):
             handle = tarfile.open(archive)
             names = [m.name for m in handle if m.isfile()]
             get = lambda name: handle.extractfile(name).read()
-        pod = host / 'ios/Pods' / row['name']
         files = manifest(pod)
         require(files, f'missing installed Pod: {row["name"]}')
         for entry in files:
