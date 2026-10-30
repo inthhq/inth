@@ -10,7 +10,10 @@ import type { CliArguments } from "./arguments.ts";
 import { chatBody, validateChatOptions } from "./chat.ts";
 import { CliError } from "./cli-error.ts";
 import { feedbackFieldJson } from "./feedback.ts";
+import { optionValue } from "./option-value.ts";
 import { validateAttachmentOptions } from "./upload-commands.ts";
+
+export { optionValue } from "./option-value.ts";
 
 export interface ResourceCommand {
   command: string;
@@ -277,12 +280,6 @@ export const RESOURCE_COMMANDS: ResourceCommand[] = [
   ),
   ...AGENT_ACCESS_COMMANDS,
 ];
-
-export const optionValue = (
-  options: CliArguments,
-  name: string
-): string | undefined =>
-  options.values.find((entry) => entry.name === name)?.value;
 
 export const resourceCommand = (
   options: CliArguments

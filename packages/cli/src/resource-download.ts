@@ -1,13 +1,4 @@
-import {
-  closeSync,
-  constants,
-  existsSync,
-  fstatSync,
-  openSync,
-  statSync,
-  writeSync,
-} from "node:fs";
-import type { Stats } from "node:fs";
+import { existsSync, statSync, writeSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { dirname, resolve } from "node:path";
 import { setTimeout } from "node:timers/promises";
@@ -15,8 +6,8 @@ import { setTimeout } from "node:timers/promises";
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
 import type { DownloadResult } from "./download.ts";
-import { removeCreatedFile } from "./file-output-cleanup.ts";
 import { terminalText } from "./organizations.ts";
+import { PrivateOutputFile } from "./private-output-file.ts";
 import { optionValue, resourceCommand } from "./resource-commands.ts";
 
 export const validateDownloadOutput = (options: CliArguments): void => {
@@ -61,22 +52,14 @@ export const saveResourceDownload = async (
 ): Promise<string> => {
   signal.throwIfAborted();
   const path = resolve(optionValue(options, "output") ?? "");
-  let created: Stats | undefined;
-  let complete = false;
   try {
-    const handle = openSync(
-      path,
-      // eslint-disable-next-line no-bitwise -- Scriptc requires inline exclusive-open flags.
-      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,
-      0o600
-    );
+    const output = new PrivateOutputFile(path);
     try {
-      created = fstatSync(handle);
       let offset = 0;
       while (offset < download.bytes.byteLength) {
         signal.throwIfAborted();
         const count = writeSync(
-          handle,
+          output.descriptor,
           download.bytes,
           offset,
           Math.min(65_536, download.bytes.byteLength - offset)
@@ -89,10 +72,10 @@ export const saveResourceDownload = async (
         await setTimeout(0);
       }
       signal.throwIfAborted();
+      output.finish();
     } finally {
-      closeSync(handle);
+      output.dispose();
     }
-    complete = true;
   } catch (error) {
     signal.throwIfAborted();
     if (error instanceof CliError) {
@@ -102,10 +85,6 @@ export const saveResourceDownload = async (
       "file_write_failed",
       "Cannot save the download to --output. Choose a writable new file."
     );
-  } finally {
-    if (created && !complete) {
-      removeCreatedFile(path, created);
-    }
   }
   return JSON.stringify({
     bytes: download.bytes.byteLength,

@@ -8,14 +8,15 @@ import {
   lstatSync,
   openSync,
   realpathSync,
-  writeSync,
 } from "node:fs";
 import type { Stats } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { dirname, resolve } from "node:path";
 
 import { CliError } from "./cli-error.ts";
+import { sameFileSnapshot } from "./file-identity.ts";
 import { removeCreatedFile } from "./file-output-cleanup.ts";
+import { PrivateOutputFile, writeAllSync } from "./private-output-file.ts";
 
 export interface UploadReceiptData {
   schemaVersion: number;
@@ -37,47 +38,20 @@ const receiptError = (): CliError =>
 
 const writeContents = (descriptor: number, data: UploadReceiptData): void => {
   const bytes = new TextEncoder().encode(`${JSON.stringify(data, null, 2)}\n`);
-  let offset = 0;
-  while (offset < bytes.byteLength) {
-    const count = writeSync(
-      descriptor,
-      bytes,
-      offset,
-      bytes.byteLength - offset,
-      offset
-    );
-    if (!count) {
-      throw receiptError();
-    }
-    offset += count;
-  }
+  writeAllSync(descriptor, bytes);
   ftruncateSync(descriptor, bytes.byteLength);
   fsyncSync(descriptor);
 };
 
 const writeReceipt = (path: string, data: UploadReceiptData): Stats => {
-  const descriptor = openSync(
-    path,
-    // eslint-disable-next-line no-bitwise -- Scriptc requires inline exclusive-open flags.
-    constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,
-    0o600
-  );
-  const owned = fstatSync(descriptor);
-  let complete = false;
+  const output = new PrivateOutputFile(path);
   try {
-    let written: Stats;
-    try {
-      writeContents(descriptor, data);
-      written = fstatSync(descriptor);
-    } finally {
-      closeSync(descriptor);
-    }
-    complete = true;
+    writeContents(output.descriptor, data);
+    const written = fstatSync(output.descriptor);
+    output.finish();
     return written;
   } finally {
-    if (!complete) {
-      removeCreatedFile(path, owned);
-    }
+    output.dispose();
   }
 };
 
@@ -92,13 +66,6 @@ const syncDirectory = (path: string): void => {
     closeSync(descriptor);
   }
 };
-const sameReceipt = (current: Stats, expected: Stats): boolean =>
-  current.ino === expected.ino &&
-  current.dev === expected.dev &&
-  current.size === expected.size &&
-  current.mtimeMs === expected.mtimeMs &&
-  current.ctimeMs === expected.ctimeMs;
-
 export class UploadReceipt {
   readonly path: string;
   private written: Stats;
@@ -137,7 +104,7 @@ export class UploadReceipt {
       if (
         !current.isFile() ||
         current.isSymbolicLink() ||
-        !sameReceipt(current, this.written) ||
+        !sameFileSnapshot(current, this.written) ||
         (process.platform !== "win32" && (current.mode & 0o077) !== 0) ||
         realpathSync(dirname(this.path)) !== this.parent ||
         !directory.isDirectory() ||
@@ -152,12 +119,12 @@ export class UploadReceipt {
         constants.O_RDWR | constants.O_NONBLOCK
       );
       const opened = fstatSync(descriptor);
-      if (!opened.isFile() || !sameReceipt(opened, current)) {
+      if (!opened.isFile() || !sameFileSnapshot(opened, current)) {
         throw receiptError();
       }
       writeContents(descriptor, data);
       this.written = fstatSync(descriptor);
-      if (!sameReceipt(lstatSync(this.path), this.written)) {
+      if (!sameFileSnapshot(lstatSync(this.path), this.written)) {
         throw receiptError();
       }
     } catch {

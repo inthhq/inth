@@ -1,3 +1,4 @@
+import { commandInputs } from "./command-definition.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
 
 export const V2_WRITE_COMMANDS: ResourceCommand[] = [
@@ -7,13 +8,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "website",
     description:
       "Create a website target with explicit crawl budget, monitoring and cadence",
-    fields: ["yes"],
     method: "POST",
     paginated: false,
     path: "/v1/website-audit/targets",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -22,7 +21,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["website-audit.write", "projects.read"],
     writeSchema: "WebsiteTargetCreate",
@@ -33,13 +32,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "website",
     description:
       "Replace target configuration; approvedAuditPolicy null clears and omission retains",
-    fields: ["yes"],
     method: "PUT",
     paginated: false,
     path: "/v1/website-audit/targets/:id",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -48,7 +45,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["website-audit.write", "projects.read"],
     writeSchema: "WebsiteTargetUpdate",
@@ -58,13 +55,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "website",
     description: "Sync websites from the linked Search Console account",
-    fields: [],
     method: "POST",
     paginated: false,
     path: "/v1/website-audit/search-console/sync",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: true,
     scopes: ["website-audit.write", "projects.read"],
     writeSchema: "none",
@@ -74,13 +69,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Replace Consent translations",
     command: "consent",
     description: "Replace the full translation document; i18n null clears it",
-    fields: ["project", "yes"],
     method: "PUT",
     paginated: false,
     path: "/v1/projects/:project/consent/configuration/i18n",
     personOnly: true,
-    required: ["project"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -97,7 +90,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentI18nUpdate",
@@ -107,13 +100,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Replace Consent policies",
     command: "consent",
     description: "Replace all Consent policies; an empty array clears them",
-    fields: ["project", "yes"],
     method: "PUT",
     paginated: false,
     path: "/v1/projects/:project/consent/configuration/policies",
     personOnly: true,
-    required: ["project"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -130,7 +121,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentPoliciesUpdate",
@@ -141,18 +132,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "consent",
     description:
       "Update runtime using exact lifecycle instance and backend version",
-    fields: [
-      "project",
-      "expected-instance-id",
-      "expected-backend-version",
-      "yes",
-    ],
     method: "POST",
     paginated: false,
     path: "/v1/projects/:project/consent/lifecycle/update",
     personOnly: true,
-    required: ["project", "expected-instance-id", "expected-backend-version"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -185,7 +169,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.lifecycle.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentLifecycleMutation",
@@ -196,18 +180,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "consent",
     description:
       "Upgrade runtime using exact lifecycle instance and backend version",
-    fields: [
-      "project",
-      "expected-instance-id",
-      "expected-backend-version",
-      "yes",
-    ],
     method: "POST",
     paginated: false,
     path: "/v1/projects/:project/consent/lifecycle/upgrade",
     personOnly: true,
-    required: ["project", "expected-instance-id", "expected-backend-version"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -240,7 +217,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.lifecycle.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentLifecycleMutation",
@@ -250,18 +227,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Delete Consent runtime",
     command: "consent",
     description: "Delete Consent runtime using exact lifecycle preconditions",
-    fields: [
-      "project",
-      "expected-instance-id",
-      "expected-backend-version",
-      "yes",
-    ],
     method: "DELETE",
     paginated: false,
     path: "/v1/projects/:project/consent/runtime",
     personOnly: true,
-    required: ["project", "expected-instance-id", "expected-backend-version"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -294,7 +264,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.lifecycle.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentLifecycleMutation",
@@ -303,13 +273,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     action: "runtime-key-create",
     command: "consent",
     description: "Create a runtime key; its secret is returned once",
-    fields: ["project", "name"],
     method: "POST",
     paginated: false,
     path: "/v1/projects/:project/consent/runtime-keys",
     personOnly: true,
-    required: ["project", "name"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -326,7 +294,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.keys.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentRuntimeKeyCreate",
@@ -336,13 +304,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Revoke Consent runtime key",
     command: "consent",
     description: "Revoke a runtime key immediately",
-    fields: ["project", "yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/projects/:project/consent/runtime-keys/:id",
     personOnly: true,
-    required: ["project"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -359,7 +325,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.keys.write", "projects.read", "projects.write"],
     writeSchema: "none",
@@ -370,13 +336,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "consent",
     description:
       "Rotate a runtime key; explicit overlap 0 revokes immediately; secret returned once",
-    fields: ["project", "overlap-seconds", "yes"],
     method: "POST",
     paginated: false,
     path: "/v1/projects/:project/consent/runtime-keys/:id/rotate",
     personOnly: true,
-    required: ["project", "overlap-seconds"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "path",
@@ -401,7 +365,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["consent.keys.write", "projects.read", "projects.write"],
     writeSchema: "ProjectConsentRuntimeKeyRotate",
@@ -411,21 +375,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "billing",
     description:
       "Preview a plan; save exact input and full quote with --save-approval",
-    fields: [
-      "product",
-      "plan",
-      "billing-interval",
-      "promotion-code",
-      "checkout-attempt-id",
-      "save-approval",
-    ],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/plans/preview",
     personOnly: true,
-    required: ["product", "plan", "checkout-attempt-id"],
-    rules: [
+    ...commandInputs([
       {
         description: "Product subscription to preview or change",
         key: "input.product",
@@ -486,7 +441,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingPlanPreviewInput",
@@ -496,14 +451,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Change paid or recurring subscription",
     command: "billing",
     description: "Execute a reviewed plan approval from --data-file",
-    fields: ["yes"],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/plans/change",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -512,7 +465,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingPlanChangeInput",
@@ -522,19 +475,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "billing",
     description:
       "Preview credits; save exact input and full quote with --save-approval",
-    fields: [
-      "catalog-version",
-      "credits",
-      "checkout-attempt-id",
-      "save-approval",
-    ],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/credits/preview",
     personOnly: true,
-    required: ["catalog-version", "credits", "checkout-attempt-id"],
-    rules: [
+    ...commandInputs([
       {
         key: "input.catalogVersion",
         location: "body",
@@ -567,7 +513,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingCreditPreviewInput",
@@ -577,14 +523,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Purchase organization credits",
     command: "billing",
     description: "Purchase credits using a reviewed approval from --data-file",
-    fields: ["yes"],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/credits/purchase",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -593,7 +537,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingCreditPurchaseInput",
@@ -604,22 +548,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "billing",
     description:
       "Set explicit automatic recurring credit purchases and monthly purchase limit",
-    fields: [
-      "enabled",
-      "request-id",
-      "catalog-version",
-      "monthly-purchase-limit",
-      "quantity-credits",
-      "threshold-credits",
-      "yes",
-    ],
     method: "PUT",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/credit-auto-top-up",
     personOnly: true,
-    required: ["enabled", "request-id"],
-    rules: [
+    ...commandInputs([
       {
         key: "input.enabled",
         location: "body",
@@ -677,7 +611,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingAutoTopUpInput",
@@ -686,14 +620,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     action: "profile-set",
     command: "billing",
     description: "Replace billing business name and complete address from JSON",
-    fields: [],
     method: "PUT",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/profile",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingProfileInput",
@@ -703,14 +635,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Cancel product subscription",
     command: "billing",
     description: "Cancel the selected product subscription",
-    fields: ["product", "request-id", "confirm-cancellation", "yes"],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/subscriptions/cancel",
     personOnly: true,
-    required: ["product", "request-id", "confirm-cancellation"],
-    rules: [
+    ...commandInputs([
       {
         description: "Product subscription to preview or change",
         key: "input.product",
@@ -745,7 +675,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingCancelSubscriptionInput",
@@ -755,14 +685,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Resume recurring product subscription",
     command: "billing",
     description: "Resume the selected recurring product subscription",
-    fields: ["product", "request-id", "yes"],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/subscriptions/uncancel",
     personOnly: true,
-    required: ["product", "request-id"],
-    rules: [
+    ...commandInputs([
       {
         description: "Product subscription to preview or change",
         key: "input.product",
@@ -789,7 +717,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingSubscriptionInput",
@@ -799,14 +727,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Change default payment method",
     command: "billing",
     description: "Select an existing payment method",
-    fields: ["payment-method-id", "yes"],
     method: "PUT",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/payment-methods/default",
     personOnly: true,
-    required: ["payment-method-id"],
-    rules: [
+    ...commandInputs([
       {
         key: "paymentMethodId",
         location: "body",
@@ -823,7 +749,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingDefaultPaymentInput",
@@ -833,14 +759,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Remove payment method",
     command: "billing",
     description: "Remove the exact confirmed payment method",
-    fields: ["payment-method-id", "confirm-payment-method-id", "yes"],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/payment-methods/remove",
     personOnly: true,
-    required: ["payment-method-id", "confirm-payment-method-id"],
-    rules: [
+    ...commandInputs([
       {
         key: "paymentMethodId",
         location: "body",
@@ -865,7 +789,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingRemovePaymentInput",
@@ -875,14 +799,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "billing",
     description:
       "Get the hosted person billing portal; no card or provider tokens accepted",
-    fields: [],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/billing/portal",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: true,
     scopes: ["billing.write"],
     writeSchema: "BillingPortalInput",
@@ -892,13 +814,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "support",
     description:
       "Start a Support conversation with nonempty text and a stable message UUID",
-    fields: ["message", "message-file", "client-message-id", "attachment-ids"],
     method: "POST",
     paginated: false,
     path: "/v1/support/conversations",
     personOnly: true,
-    required: ["client-message-id"],
-    rules: [
+    ...commandInputs([
       {
         key: "text",
         location: "body",
@@ -931,7 +851,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "json",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["support.write"],
     writeSchema: "PublicSupportCreateConversation",
@@ -941,13 +861,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "support",
     description:
       "Send Support text with a stable UUID and ordered attachment IDs",
-    fields: ["message", "message-file", "client-message-id", "attachment-ids"],
     method: "POST",
     paginated: false,
     path: "/v1/support/conversations/:id/messages",
     personOnly: true,
-    required: ["client-message-id"],
-    rules: [
+    ...commandInputs([
       {
         key: "text",
         location: "body",
@@ -980,7 +898,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "json",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["support.write"],
     writeSchema: "PublicSupportSendMessage",
@@ -991,13 +909,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "support",
     description: "Share this conversation with everyone in its organization",
-    fields: ["visibility", "yes"],
     method: "POST",
     paginated: false,
     path: "/v1/support/conversations/:id/share",
     personOnly: true,
-    required: ["visibility"],
-    rules: [
+    ...commandInputs([
       {
         key: "visibility",
         location: "control",
@@ -1014,7 +930,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["support.write"],
     writeSchema: "PublicSupportEmptyBody",
@@ -1024,13 +940,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "support",
     description: "Close this Support conversation",
-    fields: [],
     method: "POST",
     paginated: false,
     path: "/v1/support/conversations/:id/close",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: false,
     scopes: ["support.write"],
     writeSchema: "PublicSupportEmptyBody",
@@ -1040,13 +954,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "support",
     description: "Reopen this Support conversation",
-    fields: [],
     method: "POST",
     paginated: false,
     path: "/v1/support/conversations/:id/reopen",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: false,
     scopes: ["support.write"],
     writeSchema: "PublicSupportEmptyBody",
@@ -1055,13 +967,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     action: "update",
     command: "account",
     description: "Update name or hidePII; omitted fields retain their values",
-    fields: ["name", "hide-pii"],
     method: "PATCH",
     paginated: false,
     path: "/v1/account",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "name",
         location: "body",
@@ -1078,7 +988,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: ["true", "false"],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.write"],
     writeSchema: "AccountUpdate",
@@ -1088,14 +998,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "account",
     description:
       "Replace avatar with validated raw local image bytes up to 1 MiB",
-    fields: ["file", "media-type"],
     image: true,
     method: "PUT",
     paginated: false,
     path: "/v1/account/avatar",
     personOnly: true,
-    required: ["file"],
-    rules: [
+    ...commandInputs([
       {
         key: "file",
         location: "control",
@@ -1112,7 +1020,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.write"],
     writeSchema: "none",
@@ -1122,13 +1030,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Remove account avatar",
     command: "account",
     description: "Remove your avatar and its managed image",
-    fields: ["yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/account/avatar",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -1137,7 +1043,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.write"],
     writeSchema: "none",
@@ -1148,13 +1054,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "account",
     description:
       "Delete your account; exact current email confirmation remains required",
-    fields: ["confirmation", "yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/account",
     personOnly: true,
-    required: ["confirmation"],
-    rules: [
+    ...commandInputs([
       {
         key: "confirmation",
         location: "body",
@@ -1171,7 +1075,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.delete"],
     writeSchema: "AccountDeletion",
@@ -1181,13 +1085,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "notification",
     description:
       "Set an explicit notification family, scope, mode and enabled state",
-    fields: ["scope", "family", "enabled", "mode"],
     method: "PATCH",
     paginated: false,
     path: "/v1/notifications/preferences",
     personOnly: true,
-    required: ["scope", "family", "enabled", "mode"],
-    rules: [
+    ...commandInputs([
       {
         description:
           "Apply this notification preference to your account or organization",
@@ -1232,7 +1134,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: ["immediate", "daily"],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["notifications.write"],
     writeSchema: "NotificationPreferenceUpdate",
@@ -1243,13 +1145,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "notification",
     description:
       "Replace routing member IDs; configured false requires an empty array",
-    fields: ["role", "configured", "user-ids", "yes"],
     method: "PUT",
     paginated: false,
     path: "/v1/notifications/routing",
     personOnly: true,
-    required: ["role", "configured", "user-ids"],
-    rules: [
+    ...commandInputs([
       {
         description: "Notification recipient function",
         key: "role",
@@ -1283,7 +1183,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["notifications.routing.write"],
     writeSchema: "NotificationRoutingUpdate",
@@ -1292,13 +1192,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     action: "settings-update",
     command: "org",
     description: "Change the exact organization name",
-    fields: ["name"],
     method: "PATCH",
     paginated: false,
     path: "/v1/organizations/:id/settings",
     personOnly: true,
-    required: ["name"],
-    rules: [
+    ...commandInputs([
       {
         key: "name",
         location: "body",
@@ -1307,7 +1205,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["organizations.settings.write"],
     writeSchema: "OrganizationSettingsUpdate",
@@ -1317,14 +1215,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "org",
     description:
       "Replace organization logo with raw local image bytes up to 1 MiB",
-    fields: ["file", "media-type"],
     image: true,
     method: "PUT",
     paginated: false,
     path: "/v1/organizations/:id/logo",
     personOnly: true,
-    required: ["file"],
-    rules: [
+    ...commandInputs([
       {
         key: "file",
         location: "control",
@@ -1341,7 +1237,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "string",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["organizations.settings.write"],
     writeSchema: "none",
@@ -1351,13 +1247,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Remove organization logo",
     command: "org",
     description: "Remove organization logo and its managed image",
-    fields: ["yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/organizations/:id/logo",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -1366,7 +1260,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["organizations.settings.write"],
     writeSchema: "none",
@@ -1376,13 +1270,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Rename organization slug",
     command: "org",
     description: "Rename an organization using its expected current slug",
-    fields: ["new-slug", "expected-slug", "yes"],
     method: "POST",
     paginated: false,
     path: "/v1/organizations/:id/slug",
     personOnly: true,
-    required: ["new-slug", "expected-slug"],
-    rules: [
+    ...commandInputs([
       {
         key: "newSlug",
         location: "body",
@@ -1407,7 +1299,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["organizations.settings.write"],
     writeSchema: "OrganizationSlugUpdate",
@@ -1418,13 +1310,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "org",
     description:
       "Delete the exact organization; current slug confirmation remains required",
-    fields: ["confirmation", "yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/organizations/:id",
     personOnly: true,
-    required: ["confirmation"],
-    rules: [
+    ...commandInputs([
       {
         key: "confirmation",
         location: "body",
@@ -1441,7 +1331,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["organizations.delete"],
     writeSchema: "OrganizationDeletion",
@@ -1452,13 +1342,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "org",
     description:
       "Change provider retention using expected version and stable mutation ID",
-    fields: ["mutation-id", "expected-version", "provider-retention", "yes"],
     method: "PATCH",
     paginated: false,
     path: "/v1/organizations/:id/data-controls",
     personOnly: true,
-    required: ["mutation-id", "expected-version", "provider-retention"],
-    rules: [
+    ...commandInputs([
       {
         key: "mutationId",
         location: "body",
@@ -1491,7 +1379,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: false,
     scopes: ["organization-retention.write"],
     writeSchema: "OrganizationRetentionUpdate",
@@ -1501,13 +1389,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "integration",
     description: "Get a hosted person GitHub installation URL",
-    fields: [],
     method: "POST",
     paginated: false,
     path: "/v1/integrations/github/install",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "EmptyIntegrationInput",
@@ -1517,13 +1403,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "integration",
     description: "Sync accessible GitHub installations and repositories",
-    fields: [],
     method: "POST",
     paginated: false,
     path: "/v1/integrations/github/sync",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "EmptyIntegrationInput",
@@ -1533,13 +1417,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "integration",
     description: "Sync one internal installation ID",
-    fields: [],
     method: "POST",
     paginated: false,
     path: "/v1/integrations/github/installations/:id/sync",
     personOnly: true,
-    required: [],
-    rules: [],
+    ...commandInputs([]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "EmptyIntegrationInput",
@@ -1549,13 +1431,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "integration",
     description:
       "Update repository JSON arrays; omission retains and empty arrays clear",
-    fields: ["branch-filters", "ignored-paths"],
     method: "PATCH",
     paginated: false,
     path: "/v1/integrations/github/repositories/:id",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "branchFilters",
         location: "body",
@@ -1572,7 +1452,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "json",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "RepositorySettingsInput",
@@ -1582,13 +1462,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Change recurring pull request scanning",
     command: "integration",
     description: "Set PR scanning explicitly; branch filters are a JSON array",
-    fields: ["enabled", "branch-filters", "yes"],
     method: "PUT",
     paginated: false,
     path: "/v1/integrations/github/repositories/:id/pull-request-scans",
     personOnly: true,
-    required: ["enabled"],
-    rules: [
+    ...commandInputs([
       {
         key: "enabled",
         location: "body",
@@ -1613,7 +1491,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "RepositoryPullRequestsInput",
@@ -1623,13 +1501,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Link repository to project",
     command: "integration",
     description: "Link internal repository and project IDs",
-    fields: ["project", "yes"],
     method: "PUT",
     paginated: false,
     path: "/v1/integrations/github/repositories/:id/project-link",
     personOnly: true,
-    required: ["project"],
-    rules: [
+    ...commandInputs([
       {
         key: "projectId",
         location: "body",
@@ -1646,7 +1522,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "RepositoryLinkInput",
@@ -1657,13 +1533,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     body: "{}",
     command: "integration",
     description: "Clean up obsolete GitHub scheduled policies",
-    fields: ["yes"],
     method: "POST",
     paginated: false,
     path: "/v1/integrations/github/scheduled-policies/cleanup",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -1672,7 +1546,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["integrations.write"],
     writeSchema: "EmptyIntegrationInput",
@@ -1682,13 +1556,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Revoke browser session",
     command: "account",
     description: "Revoke one exact browser session ID",
-    fields: ["yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/account/sessions/:id",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -1697,7 +1569,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.security.write"],
     writeSchema: "none",
@@ -1707,13 +1579,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Revoke selected browser sessions",
     command: "account",
     description: "Revoke browser sessions using explicit all or others mode",
-    fields: ["mode", "confirmation", "yes"],
     method: "POST",
     paginated: false,
     path: "/v1/account/sessions/revoke",
     personOnly: true,
-    required: ["mode"],
-    rules: [
+    ...commandInputs([
       {
         key: "mode",
         location: "body",
@@ -1738,7 +1608,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.security.write"],
     writeSchema: "RevokeAccountSessionsInput",
@@ -1748,13 +1618,11 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     approval: "Revoke connected device",
     command: "account",
     description: "Revoke one exact connected device grant",
-    fields: ["yes"],
     method: "DELETE",
     paginated: false,
     path: "/v1/account/connected-devices/:id",
     personOnly: true,
-    required: [],
-    rules: [
+    ...commandInputs([
       {
         key: "yes",
         location: "control",
@@ -1763,7 +1631,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["account.security.write"],
     writeSchema: "none",
@@ -1774,25 +1642,12 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
     command: "code-audit",
     description:
       "Approve the pinned prepared quote under an explicit credit cap",
-    fields: [
-      "quote-id",
-      "candidate-plan-checksum",
-      "max-credits",
-      "request-id",
-      "yes",
-    ],
     method: "POST",
     organizationBody: true,
     paginated: false,
     path: "/v1/code-audit/scans/:id/quote/approve",
     personOnly: true,
-    required: [
-      "quote-id",
-      "candidate-plan-checksum",
-      "max-credits",
-      "request-id",
-    ],
-    rules: [
+    ...commandInputs([
       {
         key: "quoteId",
         location: "body",
@@ -1834,7 +1689,7 @@ export const V2_WRITE_COMMANDS: ResourceCommand[] = [
         type: "boolean",
         values: [],
       },
-    ],
+    ]),
     scoped: true,
     scopes: ["code-audit.write"],
     writeSchema: "CodeAuditQuoteApprovalInput",

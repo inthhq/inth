@@ -1,12 +1,5 @@
 /* eslint-disable no-await-in-loop -- Read bounded chunks in sequence and yield for cancellation. */
-import {
-  closeSync,
-  constants,
-  fstatSync,
-  openSync,
-  readSync,
-  statSync,
-} from "node:fs";
+import { closeSync, fstatSync, readSync } from "node:fs";
 import type { Stats } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { basename, extname } from "node:path";
@@ -14,9 +7,9 @@ import { setTimeout } from "node:timers/promises";
 
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
-
-const option = (options: CliArguments, name: string): string | undefined =>
-  options.values.find((entry) => entry.name === name)?.value;
+import { sameFileSnapshot } from "./file-identity.ts";
+import { openStableRegularFile } from "./file-input.ts";
+import { optionValue as option } from "./option-value.ts";
 
 const imageType = (extension: string): string | undefined => {
   switch (extension) {
@@ -192,14 +185,7 @@ export class UploadFile {
       throw new CliError("upload_file_closed", "The upload file is closed.");
     }
     const current = fstatSync(this.descriptor);
-    if (
-      !current.isFile() ||
-      current.size !== this.sizeBytes ||
-      current.mtimeMs !== this.opened.mtimeMs ||
-      current.ctimeMs !== this.opened.ctimeMs ||
-      current.dev !== this.opened.dev ||
-      current.ino !== this.opened.ino
-    ) {
+    if (!current.isFile() || !sameFileSnapshot(current, this.opened)) {
       throw changedFile();
     }
   }
@@ -324,28 +310,9 @@ export const prepareUploadFile = async (
     limit = mediaType.startsWith("image/") ? 10_485_760 : 104_857_600;
   }
   try {
-    const before = statSync(path);
-    if (!before.isFile()) {
-      throw new CliError("usage_error", "--file must name a regular file.");
-    }
-    const descriptor = openSync(
-      path,
-      // eslint-disable-next-line no-bitwise -- Keep flags inline for Scriptc and avoid blocking on a replaced FIFO.
-      constants.O_RDONLY | constants.O_NONBLOCK
-    );
+    const { descriptor, info: opened } = openStableRegularFile(path, "file");
     let prepared = false;
     try {
-      const opened = fstatSync(descriptor);
-      if (
-        !opened.isFile() ||
-        opened.dev !== before.dev ||
-        opened.ino !== before.ino
-      ) {
-        throw new CliError(
-          "usage_error",
-          "--file must name a stable regular file."
-        );
-      }
       if (
         !Number.isSafeInteger(opened.size) ||
         opened.size < 1 ||

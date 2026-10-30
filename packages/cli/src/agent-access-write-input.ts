@@ -4,6 +4,7 @@ import {
 } from "./agent-access-write-schemas.ts";
 /* eslint-disable anti-slop/no-runtime-typeof -- Validate CLI JSON and option values at the input boundary. */
 import type { CliArguments } from "./arguments.ts";
+import { optionValue as option } from "./option-value.ts";
 import type { ResourceCommand } from "./resource-commands.ts";
 import {
   inputArray,
@@ -15,8 +16,6 @@ import {
 } from "./write-input.ts";
 import type { InputObject, InputValue } from "./write-input.ts";
 
-const option = (options: CliArguments, name: string): string | undefined =>
-  options.values.find((entry) => entry.name === name)?.value;
 export const validateWriteSchema = (name: string, value: InputValue): void => {
   const schema = WRITE_SCHEMA_NAMES.find((entry) => entry.name === name);
   if (!schema) {

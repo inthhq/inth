@@ -1,18 +1,10 @@
-import {
-  closeSync,
-  constants,
-  fsyncSync,
-  fstatSync,
-  openSync,
-  writeSync,
-} from "node:fs";
-import type { Stats } from "node:fs";
+import { fsyncSync } from "node:fs";
 
 import { validateWriteSchema } from "./agent-access-write-input.ts";
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
-import { removeCreatedFile } from "./file-output-cleanup.ts";
 import { terminalText } from "./organizations.ts";
+import { PrivateOutputFile, writeAllSync } from "./private-output-file.ts";
 import { optionValue } from "./resource-commands.ts";
 import type { ResourceRequest } from "./resource-commands.ts";
 import { inputObject, parseInput } from "./write-input.ts";
@@ -54,42 +46,23 @@ export const saveBillingApproval = (
       : "BillingCreditPurchaseInput",
     approval
   );
-  let created: Stats | undefined;
-  let complete = false;
   try {
-    const fd = openSync(
-      path,
-      // eslint-disable-next-line no-bitwise -- Create a new private file without following a pre-existing symlink; inline for Scriptc.
-      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,
-      0o600
-    );
+    const output = new PrivateOutputFile(path);
     try {
-      created = fstatSync(fd);
       const bytes = new TextEncoder().encode(
         `${JSON.stringify(approval, null, 2)}\n`
       );
-      let offset = 0;
-      while (offset < bytes.byteLength) {
-        const count = writeSync(fd, bytes, offset, bytes.byteLength - offset);
-        if (!count) {
-          throw new Error("Incomplete approval write.");
-        }
-        offset += count;
-      }
-      fsyncSync(fd);
+      writeAllSync(output.descriptor, bytes);
+      fsyncSync(output.descriptor);
+      output.finish();
     } finally {
-      closeSync(fd);
+      output.dispose();
     }
-    complete = true;
   } catch {
     throw new CliError(
       "approval_save_failed",
       "Could not save the billing approval. Use --save-approval with a new writable file path; existing files are never overwritten."
     );
-  } finally {
-    if (created && !complete) {
-      removeCreatedFile(path, created);
-    }
   }
   console.error(
     `Saved full quote and matching input to ${terminalText(path)}. Review it, then run inth billing ${options.argument === "plan-preview" ? "plan-change" : "credit-purchase"} --data-file <that-file> --yes. Prices are minor currency units; nextCycle includes the recurring amount and renewal date. A changed quote requires a new explicit review.`

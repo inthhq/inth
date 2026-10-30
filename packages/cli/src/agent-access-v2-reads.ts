@@ -1,10 +1,12 @@
-/* eslint-disable prefer-named-capture-group -- Scriptc uses indexed regex captures. */
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
+import { commandInputs } from "./command-definition.ts";
+import { optionValue } from "./option-value.ts";
 import type {
   ResourceCommand,
   ResourceInputRule,
 } from "./resource-commands.ts";
+import { parseTimestamp } from "./resource-validation.ts";
 
 const query = (
   name: string,
@@ -39,12 +41,11 @@ const read = (
   command,
   defaultLimit: 20,
   description,
-  fields: rules.map((rule) => rule.name),
+  ...commandInputs(rules),
   method: "GET",
   paginated,
   path,
   personOnly,
-  required: [],
   rules: paginated ? [...rules, query("cursor")] : rules,
   scoped,
   scopes,
@@ -196,31 +197,8 @@ const usage = (message: string): never => {
 };
 
 const dateTime = (value: string, name: string): number => {
-  const match =
-    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/u.exec(
-      value
-    );
-  if (!match) {
-    return usage(`--${name} must be an ISO 8601 timestamp with a timezone.`);
-  }
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-  const days = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  const time = Date.parse(value);
-  if (
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > (days[month - 1] ?? 0) ||
-    Number(match[4]) > 23 ||
-    Number(match[5]) > 59 ||
-    Number(match[6]) > 59 ||
-    Number(match[7] ?? 0) > 23 ||
-    Number(match[8] ?? 0) > 59 ||
-    !Number.isFinite(time)
-  ) {
+  const time = parseTimestamp(value);
+  if (!Number.isFinite(time)) {
     return usage(
       `--${name} must be a valid ISO 8601 timestamp with a timezone.`
     );
@@ -232,8 +210,8 @@ export const validateV2ReadOptions = (options: CliArguments): void => {
   if (options.command !== "billing" || options.argument !== "ledger") {
     return;
   }
-  const since = options.values.find((entry) => entry.name === "since")?.value;
-  const until = options.values.find((entry) => entry.name === "until")?.value;
+  const since = optionValue(options, "since");
+  const until = optionValue(options, "until");
   const start = since === undefined ? undefined : dateTime(since, "since");
   const end = until === undefined ? undefined : dateTime(until, "until");
   if (start !== undefined && end !== undefined && start > end) {

@@ -1,8 +1,7 @@
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
-
-const value = (options: CliArguments, name: string): string | undefined =>
-  options.values.find((entry) => entry.name === name)?.value;
+import { optionValue as value } from "./option-value.ts";
+import { validateResourceId as resourceId } from "./resource-validation.ts";
 
 export interface ChatBody {
   message?: string;
@@ -20,19 +19,6 @@ const messageText = (input: string, hasAttachments = false): string => {
     );
   }
   return message;
-};
-
-const resourceId = (input: string, name: string): void => {
-  if (
-    !input.trim() ||
-    input.length > 255 ||
-    input === "." ||
-    input === ".." ||
-    // eslint-disable-next-line no-control-regex -- Reject terminal controls and whitespace in user-supplied identifiers.
-    /[\u0000-\u0020\u007F]/u.test(input)
-  ) {
-    throw new CliError("usage_error", `${name} must be a resource ID.`);
-  }
 };
 
 const messageId = (input: string): void => {

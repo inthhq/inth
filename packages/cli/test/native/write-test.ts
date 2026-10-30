@@ -2,6 +2,7 @@
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { join } from "node:path";
 
+import { validateWriteSchema } from "../../src/agent-access-write-input.ts";
 import { runV2Write } from "../../src/agent-access-write-runner.ts";
 import type { AccessTokenProvider } from "../../src/agent-types.ts";
 import { parseArguments } from "../../src/arguments.ts";
@@ -12,7 +13,11 @@ import { nativeUI } from "../../src/native/native-ui.ts";
 import type { OrganizationUI } from "../../src/organizations.ts";
 import { buildResourceRequest } from "../../src/resource-commands.ts";
 import { prepareResourceInput } from "../../src/resource-input.ts";
-import { v2WriteCases } from "../fixtures/agent-access-v2-writes.ts";
+import {
+  billingQuote,
+  v2WriteCases,
+  writeUuid,
+} from "../fixtures/agent-access-v2-writes.ts";
 
 const base = process.argv[2] ?? "";
 const directory = process.argv[3] ?? "";
@@ -96,6 +101,34 @@ const fixtureArgs = (index: number): string[] => {
   return args;
 };
 if (scenario === "validation") {
+  for (const startsAt of [
+    "2026-01-01T24:00:00Z",
+    "2024-02-29T23:59:59.1Z",
+    "2024-02-29T23:59:59.12+05:30",
+    "2024-02-29T23:59:59.123456789Z",
+  ]) {
+    let rejected = false;
+    try {
+      validateWriteSchema("BillingPlanChangeInput", {
+        approvedQuote: {
+          ...billingQuote,
+          nextCycle: { startsAt, total: 1200 },
+        },
+        input: {
+          checkoutAttemptId: writeUuid,
+          plan: "starter",
+          product: "inth",
+        },
+      });
+    } catch (error) {
+      rejected = error instanceof CliError && error.code === "usage_error";
+    }
+    if (rejected !== startsAt.includes("T24:")) {
+      throw new Error(
+        `Native billing quote timestamp validation failed: ${startsAt}`
+      );
+    }
+  }
   const invalid = [
     ["org", "settings-update", "org_123", "--name", "a"],
     [

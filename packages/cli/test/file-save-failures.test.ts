@@ -44,6 +44,13 @@ vi.mock("node:fs", async (importOriginal) => {
         throw new Error("EIO: simulated deferred close failure");
       }
     },
+    fstatSync: (descriptor: number) => {
+      if (descriptor === fault.descriptor && fault.operation === "stat") {
+        replaceOutput();
+        throw new Error("EIO: simulated descriptor stat failure");
+      }
+      return actual.fstatSync(descriptor);
+    },
     fsyncSync: (descriptor: number) => {
       if (
         descriptor === fault.directoryDescriptor &&
@@ -195,6 +202,42 @@ afterEach(() => {
     fs.rmSync(directory, { force: true, recursive: true });
   }
 });
+
+it.for(saves)(
+  "closes the $name descriptor when its first stat fails without deleting an unverifiable path",
+  async (test) => {
+    const target = output();
+    fault.operation = "stat";
+    await expect(
+      Promise.resolve().then(() => test.save(target))
+    ).rejects.toMatchObject({ code: test.code });
+    const actual = await vi.importActual<typeof fs>("node:fs");
+    expect(() => actual.fstatSync(fault.descriptor)).toThrow(/EBADF/u);
+    expect(actual.readFileSync(target).byteLength).toBe(0);
+  }
+);
+
+it.for(
+  saves.flatMap((save) =>
+    ["file", "symlink"].map((replacement) => ({ ...save, replacement }))
+  )
+)(
+  "preserves a replacement $replacement when the $name descriptor cannot be identified",
+  async (test, context) => {
+    if (test.replacement === "symlink" && process.platform === "win32") {
+      context.skip();
+    }
+    const target = output();
+    fault.operation = "stat";
+    fault.replacement = test.replacement;
+    await expect(
+      Promise.resolve().then(() => test.save(target))
+    ).rejects.toMatchObject({ code: test.code });
+    const actual = await vi.importActual<typeof fs>("node:fs");
+    expect(() => actual.fstatSync(fault.descriptor)).toThrow(/EBADF/u);
+    expect(actual.readFileSync(target, "utf-8")).toBe("caller data");
+  }
+);
 
 it.for(
   saves.flatMap((save) =>

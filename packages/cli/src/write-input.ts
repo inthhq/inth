@@ -1,6 +1,7 @@
 /* eslint-disable anti-slop/no-runtime-typeof -- Validate untrusted JSON in Node and the native runtime. */
 import { CliError } from "./cli-error.ts";
 import { terminalText } from "./organizations.ts";
+import { parseTimestamp } from "./resource-validation.ts";
 
 export type InputValue =
   | null
@@ -76,22 +77,6 @@ export const inputArray = (
 };
 const invalid = (label: string): string =>
   `${label} does not match the declared input contract.`;
-const dateValid = (value: string): boolean => {
-  if (
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/u.test(
-      value
-    )
-  ) {
-    return false;
-  }
-  const stamp = Date.parse(value);
-  const day = Date.parse(`${value.slice(0, 10)}T00:00:00Z`);
-  return (
-    Number.isFinite(stamp) &&
-    Number.isFinite(day) &&
-    new Date(day).toISOString().slice(0, 10) === value.slice(0, 10)
-  );
-};
 const websiteOriginValid = (value: string): boolean => {
   const trimmed = value.trim();
   const candidate =
@@ -125,7 +110,10 @@ const stringError = (
   if (schema.pattern && !new RegExp(schema.pattern, "u").test(value)) {
     return invalid(label);
   }
-  if (schema.format === "date-time" && !dateValid(value)) {
+  if (
+    schema.format === "date-time" &&
+    !Number.isFinite(parseTimestamp(value))
+  ) {
     return `${label} must be a valid timestamp with timezone.`;
   }
   if (schema.format === "website-origin" && !websiteOriginValid(value)) {

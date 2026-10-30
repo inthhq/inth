@@ -3,15 +3,18 @@ import { V2_WRITE_COMMANDS } from "./agent-access-v2-writes.ts";
 /* eslint-disable anti-slop/no-runtime-typeof -- Check user JSON in Node as well as Scriptc's checked JSON boundary. */
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
+import { commandInputs } from "./command-definition.ts";
+import { optionValue as option } from "./option-value.ts";
 import { terminalText } from "./organizations.ts";
 import type {
   ResourceCommand,
   ResourceInputRule,
 } from "./resource-commands.ts";
+import { validateResourceId as accessId } from "./resource-validation.ts";
 import { UPLOAD_COMMANDS } from "./upload-commands.ts";
 
-const option = (options: CliArguments, name: string): string | undefined =>
-  options.values.find((entry) => entry.name === name)?.value;
+export { validateResourceId as accessId } from "./resource-validation.ts";
+
 const input = (
   name: string,
   key: string,
@@ -59,13 +62,11 @@ const access = (
   action,
   command: group,
   description,
-  fields: rules.map((rule) => rule.name),
+  ...commandInputs(rules),
   method,
   paginated,
   path,
   personOnly: true,
-  required: rules.filter((rule) => rule.required).map((rule) => rule.name),
-  rules,
   scoped,
   scopes,
 });
@@ -588,20 +589,6 @@ export const AGENT_ACCESS_COMMANDS: ResourceCommand[] = [
 
 const usage = (message: string): never => {
   throw new CliError("usage_error", message);
-};
-export const accessId = (value: string, label: string): void => {
-  if (
-    !value ||
-    value.length > 255 ||
-    value === "." ||
-    value === ".." ||
-    value !== terminalText(value) ||
-    /\s/u.test(value)
-  ) {
-    usage(
-      `${label} must be a resource ID without whitespace or terminal controls.`
-    );
-  }
 };
 const parsedString = (source: string): string => {
   // SAFETY: Scriptc checks JSON types; Node checks the value explicitly below.

@@ -505,7 +505,10 @@ for (const example of v2ReadCases) {
   );
 }
 for (const args of [
+  ["chat", "get", "chat_\u0085x"],
+  ["chat", "get", "chat_\u2003x"],
   ["billing", "ledger", "--since", "2026-02-30T00:00:00Z"],
+  ["billing", "ledger", "--since", "2026-01-01T00:00:00.1234567890Z"],
   [
     "billing",
     "ledger",
@@ -524,7 +527,7 @@ for (const args of [
   } catch {
     rejected = true;
   }
-  check(rejected, `Accepted invalid V2 read: ${args.join(" ")}`);
+  check(rejected, `Accepted invalid resource input: ${args.join(" ")}`);
 }
 for (const args of invalidAccessRequests) {
   let rejected = false;
