@@ -14,13 +14,28 @@ const frameworkEntryPoints = [
 	['frameworks/sveltekit/quickstart.md', 'SvelteKit quickstart'],
 	['frameworks/html/quickstart.md', 'HTML quickstart'],
 	['frameworks/javascript/quickstart.md', 'JavaScript quickstart'],
+	[
+		'frameworks/react-native/quickstart.md',
+		'Mobile quickstart and distribution limits',
+	],
+	['frameworks/react-native/expo.md', 'Expo and EAS setup'],
+	['frameworks/react-native/bare.md', 'Bare React Native setup'],
+	['frameworks/react-native/apple.md', 'Standalone Apple setup'],
+	['frameworks/react-native/android.md', 'Standalone Android setup'],
 ] as const;
 
 /** Add setup links that survive each package's filtered documentation bundle. */
 export const withPackageSetupLinks = function withPackageSetupLinks(
-	content: string,
+	originalContent: string,
 	bundledFiles: ReadonlySet<string>
 ): string {
+	let content = originalContent;
+	if (bundledFiles.has('frameworks/react-native/quickstart.md')) {
+		content = content.replace(
+			/## Using these docs\n\n[\s\S]*?(?=\n## )/u,
+			'## Using these docs\n\nThis mobile SDK is a private prerelease. Start with the matching native setup, install one engine before optional SDKs and JavaScript, and check durable local commit results separately from delivery. Registry, cloud-build, device and certification gates remain separate.\n'
+		);
+	}
 	const candidates = bundledFiles.has('frameworks/index.md')
 		? [['frameworks/index.md', 'Choose your framework']]
 		: frameworkEntryPoints;

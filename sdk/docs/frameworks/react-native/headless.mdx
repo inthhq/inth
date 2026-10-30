@@ -1,0 +1,35 @@
+---
+title: Headless hooks
+description: Read native consent through React Native hooks and app-owned UI while keeping startup gates, durable actions and IAB authority native.
+group: frameworks
+---
+
+Headless React Native APIs read the installed native engine. They do not evaluate policy or persist a second consent record in JavaScript. Keep native SDK startup gates even when the app supplies every React control.
+
+## Pick the smallest subscription
+
+| Hook or component | Reads |
+| --- | --- |
+| `useConsent()` | The native snapshot. |
+| `useConsentStatus()` | Readiness, policy pending state and prompt requirement. |
+| `useConsentDecision(category)` | Granted, denied or pending for a category. |
+| `useIsAllowed(category)` | Current effective category permission. |
+| `useConsentSelector(selector, equals?)` | A selected snapshot value with optional equality. |
+| `useC15tBootstrap()` | The native protocol/subject bootstrap payload. |
+| `useConsentActions()` | Stable native command functions. |
+| `useTrackingAuthorization()`, `useIsTrackingAllowed(category)` | Platform authorization and the combined category/platform gate. |
+| `ConsentGate`, `ConsentReady`, `ConsentPrompt` | Render-prop access to gate, readiness or owed-prompt state. |
+
+## Stop collection after withdrawal
+
+This checked example accepts an app-owned SDK start function whose return value stops optional collection. Keep that function stable. Supply cleanup that the real vendor supports; hiding a React element alone does not stop native background work.
+
+<include src="../../shared/examples/react-native-bare/headless-gate.mdx" />
+
+The hooks run after JavaScript has started. Disable automatic native startup and add the [native gate](/docs/frameworks/react-native/native-behaviour) as well.
+
+## Own drafts without inventing authority
+
+Render effective permission separately from explicit choices and notice acknowledgement. Call `save`, `acceptAll` or `rejectAll` only after an explicit user action, and [check the commit result](/docs/frameworks/react-native/usage#inspect-every-local-commit). Keep refused drafts and retry controls accessible.
+
+For IAB, a category map or a served GVL is not a complete vendor decision. The existing React drawer is a disclosure/selection UI; arbitrary selection must be committed through the supported native IAB draft/revision APIs. The current RN actions do not expose a complete per-vendor commit contract. Use native presenters for the complete stock IAB journey rather than inventing a JavaScript commit shape.

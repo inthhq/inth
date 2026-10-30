@@ -1,3 +1,4 @@
+// #region docs:apple-install title="install-consent.swift"
 import C15tApple
 import C15tCore
 import Foundation
@@ -12,3 +13,4 @@ enum InstallConsent {
         ))
     }
 }
+// #endregion docs:apple-install

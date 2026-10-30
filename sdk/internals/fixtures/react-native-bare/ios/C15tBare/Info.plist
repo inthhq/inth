@@ -72,6 +72,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<!-- #region docs:bare-ios-configuration title="Info.plist entries" -->
 	<key>com.c15t.policy.resource</key>
 	<string>c15t-policy.json</string>
 	<key>com.c15t.backend.mode</key>
@@ -89,5 +90,6 @@
 		<string>measurement</string>
 		<string>marketing</string>
 	</array>
+	<!-- #endregion docs:bare-ios-configuration -->
 </dict>
 </plist>

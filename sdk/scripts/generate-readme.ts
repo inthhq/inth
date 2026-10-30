@@ -79,6 +79,8 @@ interface PackageReadmeConfig {
 	docsLink?: string;
 	quickStartLink?: string;
 	showCLIGeneration?: boolean;
+	/** Omit the shared web banner when its assets are not bundled. */
+	showBanner?: boolean;
 	customSections?: Record<string, string>;
 	/** Sections rendered directly after Key Features, before setup steps. */
 	leadSections?: Record<string, string>;
@@ -89,6 +91,8 @@ interface PackageReadmeConfig {
 	showHosting?: boolean | 'lead';
 	/** Set from package.json: true when the published tarball includes AGENTS.md. */
 	shipsAgentDocs?: boolean;
+	/** Set from package.json: private packages have no public npm version badge. */
+	privatePackage?: boolean;
 }
 
 // Helpers
@@ -204,11 +208,15 @@ const baseReadmeTemplate = (rawConfig: PackageReadmeConfig) => {
 	const madeByInthBadgeUrl = `https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?${INTH_BADGE_QUERY}`;
 	const badgeBlock = `<p>
 ${[
-	renderThemeAwareBadge({
-		alt: 'Latest NPM Version',
-		href: npmPackageLink,
-		src: `https://shieldcn.dev/npm/${npmBadgeName}.svg?variant=outline`,
-	}),
+	...(config.privatePackage
+		? []
+		: [
+				renderThemeAwareBadge({
+					alt: 'Latest NPM Version',
+					href: npmPackageLink,
+					src: `https://shieldcn.dev/npm/${npmBadgeName}.svg?variant=outline`,
+				}),
+			]),
 	renderThemeAwareBadge({
 		alt: 'Stars',
 		href: 'https://github.com/c15t/c15t',
@@ -238,14 +246,18 @@ ${[
 </p>`;
 
 	// Build sections
-	const bannerBlock = `<p align="center">
+	const bannerImage =
+		config.showBanner === false
+			? ''
+			: `<p align="center">
   <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=${npmBadgeName}" target="_blank" rel="noopener noreferrer">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/c15t-banner-readme-dark.png">
       <img src="../../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
     </picture>
   </a>
-</p>
+</p>`;
+	const bannerBlock = `${bannerImage}
 
 # ${config.title}
 
@@ -471,6 +483,7 @@ const generateReadmes = async function generateReadmes() {
 
 			// Set package name
 			readmeConfig.packageName = packageJson.name || packageName;
+			readmeConfig.privatePackage = packageJson.private === true;
 
 			readmeConfig.shipsAgentDocs = Array.isArray(packageJson.files)
 				? packageJson.files.includes('AGENTS.md')

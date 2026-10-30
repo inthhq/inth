@@ -1,0 +1,36 @@
+---
+title: Verify mobile consent
+description: Check native startup gates, durable commits, offline recovery, IAB/ATT separation and the real consumer/device evidence required before release.
+group: frameworks
+---
+
+Verify the app's actual native integration before enabling optional SDKs. A visible consent screen and a successful TypeScript compile do not prove startup gating, durable consent or remote delivery.
+
+## Exercise the local contract
+
+1. Start a fresh installation with JavaScript delayed. Optional native SDK collection must remain off before hydration and policy resolution.
+2. Launch offline without a resource. Keep optional gates closed and show a recoverable policy state. Repeat with a valid endpoint-bound bundle and verify the unknown-geography prompt.
+3. Reject optional use offline. Check local commit success, kill the process and relaunch offline. Optional gates must remain closed.
+4. Reconnect. Verify that the retained delivery obligation reaches the intended backend and an earlier queued grant does not replace a withdrawal.
+5. Make storage writes fail. Keep the draft, show a retry and do not announce a saved choice. Recover storage and retry the same user action.
+6. Reopen preferences from top-level settings. Check dirty-draft dismissal, repeated session opens, native back navigation and teardown.
+7. Expire or corrupt the resource and GVL/ATP data. New grants must stay unavailable; offline withdrawal must remain durable.
+8. Identify, log out and reset. Recheck native permissions and IAB signals, keep the expected subject identity and verify owed withdrawals across restart.
+
+## Verify ads and platform permission separately
+
+Check the actual vendor SDK's auto-initialization, requests before consent and collection after withdrawal. Test TCF vendor/purpose/legal-basis gates and Additional Consent provider gates with the exact mediation SDK versions. Inspect platform storage only as one part of that check.
+
+On Apple, test ATT denied, authorized, unavailable/misconfigured and return-from-Settings behavior. Confirm an ATT grant never grants a category and a consent grant never bypasses ATT. Use physical-device evidence for OS permission and protected-data behavior.
+
+## Record the environment and limits
+
+Record package/native versions, protocol, RN/React/Expo versions, OS/device and whether each build came from source, a local tarball or a real registry. Keep clean Expo/EAS, bare RN, standalone Apple and standalone Android consumers separate. A simulator launch cannot prove minimum/current physical-device support or cloud-build access.
+
+Check VoiceOver/TalkBack, larger text, focus, safe areas, keyboard navigation, search and withdrawal without JavaScript. Device lifecycle, key loss, protected-data availability and performance require their own runs.
+
+## Read bundled docs as a consumer
+
+The RN package includes `AGENTS.md`, `SKILL.md` and `docs/frameworks/react-native/*.md`. Tell coding agents in your app to read `node_modules/@c15t/react-native/AGENTS.md` first. The Markdown should retain setup imports, native keys, outcome rules and distribution limits without raw include tags.
+
+The repository checks generation and locally packed contents. Those checks do not publish the package or establish IAB/Google certification, AdMob interoperability, remote registry access or a passing cloud/device matrix.

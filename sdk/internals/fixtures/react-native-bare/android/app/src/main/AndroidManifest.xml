@@ -26,6 +26,7 @@
              com.c15t.reactnative.AUTO_BOOTSTRAP
                                       false only when the app starts the core
                                       itself before React Native initializes -->
+      <!-- #region docs:bare-android-configuration title="AndroidManifest.xml application entries" -->
       <meta-data android:name="com.c15t.POLICY_RESOURCE" android:value="c15t-policy.json" />
       <meta-data
         android:name="com.c15t.PORTAL_URL"
@@ -36,6 +37,7 @@
       <meta-data
         android:name="com.c15t.CATEGORIES"
         android:value="necessary, functionality, measurement, marketing" />
+      <!-- #endregion docs:bare-android-configuration -->
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"

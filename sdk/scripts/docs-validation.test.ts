@@ -61,6 +61,7 @@ test('framework quickstarts resolve inside the host framework group', async () =
 		'sveltekit',
 		'html',
 		'javascript',
+		'react-native',
 	]);
 	for (const framework of frameworks?.children ?? []) {
 		expect(framework.pages[0]).toMatchObject({
@@ -113,7 +114,11 @@ test('framework sidebars follow the shared group template', async () => {
 		const verify = framework.children
 			.find((group) => group.title === 'Verify and troubleshoot')
 			?.pages.map((page) => page.urlPath);
-		expect(verify).toContain('/docs/guides/verify-consent');
+		expect(verify).toContain(
+			framework.slug === 'react-native'
+				? '/docs/frameworks/react-native/verify'
+				: '/docs/guides/verify-consent'
+		);
 	}
 	// Every framework page is reachable from its sidebar.
 	const unlisted = files
@@ -147,17 +152,6 @@ test('c15t install commands select the documented release', async () => {
 		}
 	}
 	expect(wrong).toEqual([]);
-});
-
-// React Native is not published with v3. Drop this check when it ships.
-test('published docs do not mention React Native', async () => {
-	const files = await fg(['**/*.mdx', 'docs.config.ts'], { cwd: docsRoot });
-	const mentions = files.filter((file) =>
-		/react[- ]native|\bExpo\b/iu.test(
-			readFileSync(resolve(docsRoot, file), 'utf8')
-		)
-	);
-	expect(mentions).toEqual([]);
 });
 
 test('installation tabs flatten to usable umbrella-package commands', async () => {
@@ -258,7 +252,10 @@ test('shared framework tabs match the selector and survive Markdown conversion',
 	const frameworks = navigation.groups.find(
 		(group) => group.slug === 'frameworks'
 	);
-	const expected = frameworks?.children.map((group) => group.title);
+	// These tabs register browser scripts and embeds. Native SDKs use native gates.
+	const expected = frameworks?.children
+		.filter((group) => group.slug !== 'react-native')
+		.map((group) => group.title);
 	await Promise.all(
 		['register-scripts', 'consent-embed'].map(async (file) => {
 			const filename = resolve(docsRoot, `shared/integrations/${file}.mdx`);

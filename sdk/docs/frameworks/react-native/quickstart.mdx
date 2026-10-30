@@ -1,0 +1,54 @@
+---
+title: Quickstart
+description: Set up the private c15t mobile prerelease with Inth, Expo or bare React Native, and understand the current distribution limits.
+group: frameworks
+---
+
+Use c15t's native engine to keep optional SDKs gated before JavaScript starts. Start with an [Inth](https://inth.com) hosted project and its authored consent policy. Self-hosted and app-owned native integrations remain available.
+
+## Check availability first
+
+`@c15t/react-native` is **private** in this checkout. These guides describe implemented source APIs for integration work. They do not announce an npm release or a production support commitment. Obtain the matching package tarball and Android native artifacts from the maintainer. A public npm install, Maven download or remote SwiftPM tag is not established by these docs.
+
+Install the supplied tarball from your app directory, replacing this path with the file you received:
+
+```sh
+npm install /absolute/path/to/c15t-react-native.tgz
+```
+
+Keep the tarball or its authorized private package source available to every build worker. Installing JavaScript alone does not make the Android native artifacts reachable.
+
+The package is separate from `c15t`; there is no `c15t/react-native` export. Do not install the web consent engine, `@c15t/iab` or a JavaScript TCF codec into the mobile runtime. The native cores own those decisions.
+
+## Choose a setup
+
+| App | Start here |
+| --- | --- |
+| Expo SDK 57 with a custom development build or EAS | [Expo and EAS](/docs/frameworks/react-native/expo) |
+| Bare React Native with the New Architecture | [Bare React Native](/docs/frameworks/react-native/bare) |
+| SwiftUI or UIKit without React Native | [Standalone Apple](/docs/frameworks/react-native/apple) |
+| Android without React Native | [Standalone Android](/docs/frameworks/react-native/android) |
+
+Candidate floors are RN 0.86.x or 0.87.x, React `>=19.2.3 <19.3.0`, iOS 16.4 and Android API 24 with compile SDK 36. Expo Go and the legacy bridge cannot load this SDK. Read the [compatibility matrix](/docs/frameworks/react-native/platform-support) before changing app versions.
+
+## Prepare your Inth project
+
+Use your project URL, such as `https://your-project.inth.app`, and configure the policy, category scope, languages and privacy-policy URL for this app. Configure the project's allowed origins where the hosted service requires them. The endpoint identifies the project and is public configuration; the mobile SDK takes no secret project key.
+
+The checked reference configuration uses `https://example-inth.inth.app/`. Replace it with your project's URL before shipping. An IAB integration also needs approved CMP settings and current disclosures; the category setup alone does not provide them.
+
+[Export a bundled policy](/docs/frameworks/react-native/offline) if the first prompt must work on a fresh offline installation. Keep the hosted transport for refresh and queued consent delivery.
+
+## Attach JavaScript after native installation
+
+Complete the platform setup first. Mount `PrivacyApp` around your application and pass your HTTPS privacy-policy URL. This example subscribes before requesting the native prompt and leaves a standing privacy-settings entry.
+
+<include src="../../shared/examples/react-native-bare/native-root.mdx" />
+
+`C15tProvider` reads the installed native engine and checks its protocol. It does not install an engine or start vendor SDKs. SwiftUI and Compose own the stock screens, drafts and commits after presentation.
+
+A `presented` session confirms that a screen opened. A `committed` outcome confirms durable local storage, not backend delivery. Read [commands and outcomes](/docs/frameworks/react-native/usage) before adding custom save controls.
+
+## Verify before integration sign-off
+
+Disable vendor auto-start paths, then check a fresh offline launch, consent refusal, durable withdrawal, process restart and preference reopening. Use the [mobile verification checklist](/docs/frameworks/react-native/verify). Clean registry consumers, EAS/cloud builds, device behavior, accessibility and certification require their own evidence. Source examples and local type checks do not prove them.

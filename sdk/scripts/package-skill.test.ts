@@ -32,13 +32,14 @@ test.each(PACKAGE_DOCS_CONFIGS)(
 	}
 );
 
-test('the umbrella bundle covers every framework directory', () => {
+test('the umbrella bundle covers every web framework directory', () => {
 	const umbrella = PACKAGE_DOCS_CONFIGS.find(
 		(config) => config.name === 'c15t'
 	);
 	const files = new Set(fg.sync(umbrella?.include ?? [], { cwd: docsRoot }));
 	const quickstarts = fg.sync('frameworks/*/quickstart.mdx', {
 		cwd: docsRoot,
+		ignore: ['frameworks/react-native/**'],
 	});
 	expect(quickstarts.filter((file) => !files.has(file))).toEqual([]);
 	expect(files).toContain('frameworks/html/quickstart.mdx');
@@ -93,4 +94,27 @@ test('the umbrella skill names the package instead of repeating c15t', () => {
 	expect(skill).toContain('\n# c15t (umbrella package)\n');
 	expect(skill).toContain('with the c15t umbrella package.');
 	expect(skill).not.toContain('c15t with c15t');
+});
+
+test('mobile skills describe native authority and link only bundled mobile guides', () => {
+	const config = PACKAGE_DOCS_CONFIGS.find(
+		(entry) => entry.name === '@c15t/react-native'
+	);
+	expect(config).toBeDefined();
+	if (!config) {
+		throw new Error('Missing mobile bundle');
+	}
+	const files = new Set([
+		'frameworks/react-native/quickstart.md',
+		'frameworks/react-native/offline.md',
+	]);
+	const skill = renderPackageSkill(config.name, config.skill, files);
+	expect(skill).toContain('(./docs/frameworks/react-native/quickstart.md)');
+	expect(skill).toContain('(./docs/frameworks/react-native/offline.md)');
+	expect(skill).not.toContain('(./docs/frameworks/react-native/expo.md)');
+	expect(skill).toContain('private prerelease');
+	expect(skill).toContain('CommitResult.ok');
+	expect(skill).toContain('ATT is separate');
+	expect(skill).not.toContain('choices in the browser');
+	expect(skill).not.toContain('data-c15t-category');
 });

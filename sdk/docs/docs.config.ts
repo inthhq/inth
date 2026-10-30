@@ -841,6 +841,39 @@ export default defineDocsConfig({
 					slug: 'javascript',
 					title: 'JavaScript',
 				},
+				{
+					base: 'react-native',
+					children: [
+						{
+							pages: ['customize', 'headless'],
+							slug: 'customization',
+							title: 'Customization',
+						},
+						{
+							pages: ['usage', 'native-behaviour'],
+							slug: 'consent-api',
+							title: 'Consent API',
+						},
+						{
+							pages: ['configuration', 'offline', 'iab', 'identity'],
+							slug: 'advanced',
+							title: 'Advanced',
+						},
+						{
+							pages: ['apple', 'android', 'platform-support'],
+							slug: 'reference',
+							title: 'Reference',
+						},
+						{
+							pages: ['verify', 'troubleshooting'],
+							slug: 'verify-and-troubleshoot',
+							title: 'Verify and troubleshoot',
+						},
+					],
+					pages: ['quickstart', 'expo', 'bare'],
+					slug: 'react-native',
+					title: 'React Native',
+				},
 			],
 			pages: ['index'],
 			slug: 'frameworks',

@@ -1,0 +1,45 @@
+---
+title: Compatibility and OTA
+description: Check candidate React Native, Expo, Apple and Android versions, native protocol rules and the remaining mobile release gates.
+group: frameworks
+---
+
+The mobile SDK is a private prerelease. These versions are the candidate contract, not proof of production support or a passed device matrix.
+
+## Candidate matrix
+
+| Component | Source contract | Verification still needed for release |
+| --- | --- | --- |
+| React Native | 0.86.x and 0.87.x, New Architecture | Clean packed bare/Expo builds and launches on both platforms. |
+| React | `>=19.2.3 <19.3.0` | Packed consumer types and device integration. |
+| Expo | SDK 57 with its prescribed RN and React versions | Clean prebuild, EAS build and device launch. Expo Go is unsupported. |
+| iOS | 16.4 or later; Swift 5.9 language mode | Minimum/current OS, protected storage, lifecycle and ATT devices. |
+| Android | API 24 or later; compile SDK 36; JDK 17 | Minimum/current devices and compatible consumer Gradle/AGP/Kotlin builds. |
+
+The private Expo reference uses Expo 57.0.22, RN 0.86.3 and React 19.2.7. The package's RN development dependency is 0.87.1. Neither one fixture nor a widened peer range proves a full matrix.
+
+The native Android producer and app consumer use separate toolchains. Native artifacts target the consumer's Kotlin compatibility baseline; loading the producer's AGP into an Expo app is not the installation recipe.
+
+## Check the protocol, not just semver
+
+`getBootstrap()` reports the embedded RN/native protocol. The current protocol is 1, supported range 1 through 1. An incompatible binary produces `C15tProtocolMismatchError` and optional SDKs remain gated. Backend policy-contract negotiation and stored-envelope readability are separate boundaries.
+
+The npm package version, native SDK version and internal IAB CMP version identify different things. Matching version strings do not prove registration or compatibility. An additive native method can be missing even when the protocol number matches; rebuild when the client reports a missing native capability.
+
+Native SDK patch releases can have their own version. The RN adapter currently pins Android native artifacts to `3.0.0-alpha.1`, while the RN manifest is `3.0.0-alpha.2`. Use the artifacts selected by that adapter's build metadata. Do not independently upgrade a native dependency solely because its version appears newer.
+
+## Ship OTA updates to matching binaries
+
+An OTA bundle can change compatible JavaScript. Native APIs, SwiftUI/Compose screens, native themes/assets, permissions, Codegen, storage migrations and native bundled-policy resources require a new binary. Set Expo `runtimeVersion` whenever updates are enabled and validate the actual binary capabilities before rollout.
+
+## Migrate an existing integration
+
+For an existing React-rendered mobile consent screen, install matching native artifacts and keep the single `C15tProvider`. Replace stock screen rendering with the checked native presenter commands, retain a standing privacy entry and remove overlapping consent dialogs. React themes and copy props do not transfer to native `ConsentTheme`; map only the supported native settings and check the localization limits.
+
+For a web or legacy-bridge integration, follow the Expo or bare setup as a native installation. Web cookie storage, script loaders, CSS tokens and `c15t/react` providers do not install this engine. Move optional SDK startup behind native gates before attaching JavaScript. Preserve existing consent storage during an upgrade; reset is an explicit app action, not a routine migration step.
+
+## Know the distribution limits
+
+`private: true` remains on `@c15t/react-native`. The Apple core/platform/UI are source modules in `native/core-swift`; a public remote SwiftPM product/tag has not been established. The RN tarball's CocoaPods path compiles vendored native sources. Android requires reachable versioned core, platform and UI binaries; local Maven staging is not external registry evidence.
+
+Clean standalone native consumers, registry resolution, EAS/cloud builds, device accessibility, release performance, IAB/Google certification and AdMob interoperability are external acceptance gates. These docs and local generation/type checks do not complete them.

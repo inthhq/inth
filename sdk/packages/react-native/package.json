@@ -49,7 +49,10 @@
 		"ios/C15tReactNative",
 		"vendor/C15tCore",
 		"vendor/C15tApple",
-		"vendor/C15tConsentUI"
+		"vendor/C15tConsentUI",
+		"AGENTS.md",
+		"SKILL.md",
+		"docs"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -75,12 +78,13 @@
 	},
 	"scripts": {
 		"build": "rslib build && bun ../../scripts/normalize-dist-types.mjs",
+		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/react-native",
 		"check-types": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "bun oxfmt .",
 		"generate:fixtures": "tsx scripts/generate-protocol-fixtures.ts",
 		"lint": "bun oxlint ./src",
-		"prepack": "bun -e \"for (const name of ['LICENSE.md', 'NOTICE']) await Bun.write(name, Bun.file('../../' + name));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
+		"prepack": "bun run build:docs && bun -e \"for (const name of ['LICENSE.md', 'NOTICE']) await Bun.write(name, Bun.file('../../' + name));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
 		"test": "vitest run --passWithNoTests",
 		"test:coverage": "C15T_COVERAGE_RATCHET=1 vitest run --passWithNoTests && bun scripts/check-coverage-ratchet.ts",
 		"test:watch": "vitest"

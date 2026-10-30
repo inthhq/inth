@@ -331,7 +331,18 @@ const requiredPackedFilesByPackage: Record<string, string[]> = {
 	// The native half has one owner for this list: `scripts/react-native-autolink.ts` says
 	// what a host app opens, and the release gate holds the tarball to it. A named directory
 	// is a directory npm will sweep, so every entry here is a file.
-	'@c15t/react-native': hostReadPaths.map(({ path }) => path),
+	'@c15t/react-native': [
+		...hostReadPaths.map(({ path }) => path),
+		'AGENTS.md',
+		'SKILL.md',
+		'docs/README.md',
+		'docs/frameworks/react-native/quickstart.md',
+		'docs/frameworks/react-native/expo.md',
+		'docs/frameworks/react-native/bare.md',
+		'docs/frameworks/react-native/native-behaviour.md',
+		'docs/frameworks/react-native/offline.md',
+		'docs/frameworks/react-native/iab.md',
+	],
 	'@c15t/scripts': ['AGENTS.md', 'docs/README.md'],
 	'@c15t/ui': [
 		'styles.css',

@@ -1,0 +1,29 @@
+---
+title: Identity, reset and withdrawal
+description: Handle external identity, logout, durable local reset and withdrawal without implying backend erasure or a new c15t subject.
+group: frameworks
+---
+
+Use `identify(externalId)` only after your app knows the external account identity. `logout()` detaches it. These commands do not mean the operating system granted tracking permission.
+
+## Keep identity changes separate from consent
+
+The c15t subject ID and the app's external account ID have different lifetimes. Logging out does not mint a new c15t subject or erase the backend audit trail. Generic category receipts can remain with the subject. Native IAB identity transitions retire existing IAB authority and durably retain withdrawal obligations; do not assume a previous account's vendor grant remains usable.
+
+Wait for the command, then read current native permissions. Keep optional SDKs gated during the transition and handle rejected commands. The RN bridge's simple external-ID API is not proof that a backend's signed identity verification requirements have been configured.
+
+## Withdraw optional use
+
+Use `rejectAll()` for an explicit necessary-only decision. Inspect `CommitResult.ok`; a resolved promise can refuse a local save. Native stock settings retain the draft and show retry on refusal. Local success must take effect without waiting for network delivery.
+
+Native IAB paths may retire earlier grant payloads and queue a durable withdrawal. Do not clear app storage or rewrite platform IAB keys as a shortcut. That can leave an old queued grant or remote record without the withdrawal that supersedes it.
+
+## Reset to a new choice prompt
+
+The RN `actions.reset()` command is the app's local start-over action. It keeps the c15t subject ID and configuration/overrides, clears local consent authority and causes policy to resolve and a choice to be owed again. It is not equivalent to recording reject-all, and it does not delete remote audit records.
+
+In standalone Kotlin, call the installed kernel's `C15t.current?.reset()` for this behavior. The facade's `C15t.reset()` only drops the installed singleton for teardown and leaves persisted consent untouched.
+
+The native implementation preserves required IAB withdrawal obligations atomically when authority exists. Non-IAB local reset can remove undelivered local saves; a request already handed to the network cannot be recalled. Do not promise that reset cancels every in-flight request. If storage refuses a reset, show the failure and keep optional collection off rather than claiming erasure succeeded.
+
+Backend deletion and account-erasure flows remain separate app/server work. An Apple Keychain identity can survive reinstall; uninstall is not a documented consent-reset API.

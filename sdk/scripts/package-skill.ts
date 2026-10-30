@@ -40,6 +40,58 @@ export const renderPackageSkill = function renderPackageSkill(
 	skill: PackageSkill,
 	bundledFiles: ReadonlySet<string>
 ): string {
+	if (packageName === '@c15t/react-native') {
+		const guides = [
+			['quickstart', 'Start here and read the distribution limits'],
+			['expo', 'Expo and EAS'],
+			['bare', 'Bare React Native'],
+			['apple', 'Standalone Apple'],
+			['android', 'Standalone Android'],
+			['native-behaviour', 'Install and gate before JavaScript'],
+			['usage', 'Commands and durable commit results'],
+			['offline', 'Bundled policies and withdrawal'],
+			['iab', 'IAB, Additional Consent and ad SDK gates'],
+			['customize', 'Native screen customization'],
+			['headless', 'Headless hooks'],
+			['platform-support', 'Compatibility and OTA'],
+			['verify', 'Verify the integration'],
+			['troubleshooting', 'Troubleshooting'],
+		]
+			.map(([file, label]) =>
+				link(bundledFiles, `frameworks/react-native/${file}.md`, label ?? '')
+			)
+			.filter(Boolean);
+		return [
+			'---',
+			'name: c15t-react-native',
+			'description: Set up or debug native c15t consent in React Native, Expo, Swift and Kotlin apps. Read the private prerelease distribution limits before installing.',
+			'---',
+			'',
+			'# c15t mobile consent',
+			'',
+			'This package is a private prerelease. The bundled docs describe source APIs, not a production release, verified registry installation or device certification.',
+			'',
+			'## Start here',
+			'',
+			...guides.map((guide) => `- ${guide}`),
+			'',
+			'## Rules',
+			'',
+			'- Use the maintainer-provided private package and native artifacts. Do not invent an npm version, Maven repository, SwiftPM tag or certification claim.',
+			"- Start with the developer's Inth project URL and authored policy. The repository reference apps use https://example-inth.inth.app/. A backend URL is public configuration, not a secret.",
+			'- Install one native engine before optional SDKs and before React Native starts. C15tProvider attaches to it; JavaScript does not bootstrap another engine.',
+			'- Disable vendor auto-initializers. Gate native startup on cached native permissions and reevaluate after withdrawal. React hooks alone cannot gate startup before JavaScript.',
+			'- Check CommitResult.ok. A resolved promise can refuse a commit. ok:true with queued:true is durable local success; it does not prove network delivery.',
+			'- Keep drafts open after refused commits. Never turn a policy refresh, hydration, ATT result or notice acknowledgement into a consent grant.',
+			'- Keep hosted transport when embedding an offline policy. Verify endpoint binding, authority expiry and original disclosure timestamps. Withdrawals must persist without network access.',
+			'- ATT is separate. Marketing consent, a TC String and platform storage keys do not prove AdMob interoperability, Google certification or IAB registration.',
+			'- Prefer native stock presenter commands. Configure their supported themes natively. Use headless hooks or advanced self-hosted APIs when the app owns UI or native services.',
+			'- Match RN, React, Expo and native protocol versions. Native APIs, themes, permissions, Codegen and bundled-policy changes require a new binary.',
+			'',
+			'./AGENTS.md lists every bundled page. Verify real native builds and device journeys separately from JavaScript type checks.',
+			'',
+		].join('\n');
+	}
 	const slug = packageName.replace(/^@/u, '').replace(/\//gu, '-');
 	// The umbrella package is itself named c15t, so "c15t with c15t" says
 	// nothing about which package the skill ships in.
