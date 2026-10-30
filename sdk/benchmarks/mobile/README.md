@@ -106,6 +106,14 @@ contract makes, and a `Source` of `allowance` in the table says so.
 | `react-native-js` | Loads the built `dist/` of `@c15t/react-native` under Node with `react-native` replaced by [`src/support/react-native-stub.ts`](./src/support/react-native-stub.ts) and a TurboModule fake that answers with no network. |
 | `bundle` | JavaScript bytes from `dist/`, iOS bytes from the linked arm64 slice of `C15tCore`, Android bytes from the compiled class bytes of the release artifacts. |
 
+`android_binary_bytes` sums the uncompressed `.class` entries in the Kotlin core,
+Android adapter, Compose consent UI and React Native bridge Release artifacts.
+The build stages all three native libraries before compiling the bridge, so the
+bridge resolves the current consent UI. The row excludes transitive dependencies,
+resources, DEX conversion, R8 shrinking and APK compression. It is a raw artifact
+guard; measuring the size added to a shipped app requires matched Release consumer
+builds with and without the SDK.
+
 A few rows are measured a different way from the warm loops above, because a warm loop
 would measure the wrong thing:
 
