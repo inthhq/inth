@@ -517,7 +517,13 @@ def verify(cfg):
 
 def report(cfg):
     evidence = verify(cfg)
-    lines = ['# Mobile CMP app bytes', '', 'This report counts signed APK files and regular-file lengths in unsigned arm64 .app bundles. It does not estimate store downloads.', '', '| Profile | SDK | App bytes | Added bytes |', '| --- | --- | ---: | ---: |']
+    complete = evidence['complete']
+    warnings = [] if complete else ['Incomplete cohort. Do not treat these measurements as a complete benchmark.']
+    heading = '# Mobile CMP app bytes' + ('' if complete else ' (incomplete cohort)')
+    lines = [heading, '']
+    for warning in warnings:
+        lines += [f'> {warning}', '']
+    lines += ['This report counts signed APK files and regular-file lengths in unsigned arm64 .app bundles. It does not estimate store downloads.', '', '| Profile | SDK | App bytes | Added bytes |', '| --- | --- | ---: | ---: |']
     for row in evidence['measurements']:
         lines.append(f'| {row["profile"]} | {row["vendor"]} | {row["bytes"]:,} | {row["addedBytes"]:,} |')
     lines += ['', 'Runtime results require separate validated raw samples. Size retention does not prove usable tenant configuration. Sourcepoint stock UI uses WebView on both platforms.', '']
@@ -527,7 +533,7 @@ def report(cfg):
     for name, target in cfg.get('extensions', {}).items():
         require(read(target).get('schemaVersion') == 1, f'unsupported extension schema: {name}')
         extensions.append({'name': name, **bind_files([target])[0]})
-    write(root_for(cfg) / 'report.json', {'schemaVersion': 1, 'extensions': extensions, 'evidenceSha256': sha(root_for(cfg) / 'evidence.json'), 'measurements': [{k: r[k] for k in ('profile', 'vendor', 'status', 'bytes', 'addedBytes', 'artifactSha256')} for r in evidence['measurements']]})
+    write(root_for(cfg) / 'report.json', {'schemaVersion': 1, 'complete': complete, 'warnings': warnings, 'extensions': extensions, 'evidenceSha256': sha(root_for(cfg) / 'evidence.json'), 'measurements': [{k: r[k] for k in ('profile', 'vendor', 'status', 'bytes', 'addedBytes', 'artifactSha256')} for r in evidence['measurements']]})
     print(path)
 
 

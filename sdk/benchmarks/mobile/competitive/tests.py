@@ -16,6 +16,44 @@ import harness
 import runtime
 
 
+class ReportTests(unittest.TestCase):
+    def check_report(self, complete):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            evidence = {
+                'complete': complete,
+                'measurements': [{
+                    'profile': 'ios-local', 'vendor': 'baseline', 'status': 'measured',
+                    'bytes': 100, 'addedBytes': 0, 'artifactSha256': 'a' * 64,
+                }],
+            }
+            core.write(root / 'evidence.json', evidence)
+            with patch.object(harness, 'verify', return_value=evidence):
+                harness.report({'output': str(root)})
+            report = core.read(root / 'report.json')
+            markdown = (root / 'report.md').read_text()
+            self.assertIs(report['complete'], complete)
+            self.assertEqual(report['evidenceSha256'], core.sha(root / 'evidence.json'))
+            self.assertEqual(report['measurements'], evidence['measurements'])
+            self.assertIn('| ios-local | baseline | 100 | 0 |', markdown)
+            return report, markdown
+
+    def test_partial_reports_warn_without_opening_source_evidence(self):
+        report, markdown = self.check_report(False)
+        self.assertIn('incomplete cohort', markdown.splitlines()[0].lower())
+        self.assertTrue(report['warnings'])
+        for warning in report['warnings']:
+            self.assertIn(warning, markdown)
+        self.assertIn('Do not treat these measurements as a complete benchmark.', markdown)
+
+    def test_complete_reports_keep_the_flag_without_an_incomplete_warning(self):
+        report, markdown = self.check_report(True)
+        self.assertEqual(report['warnings'], [])
+        self.assertEqual(markdown.splitlines()[0], '# Mobile CMP app bytes')
+        self.assertNotIn('incomplete', markdown.lower())
+
+
+
 def log_event(event):
     return f'10-30 15:47:00.000 {event["pid"]:5d} 9913 I CMP_BENCH: ' + json.dumps(event)
 
