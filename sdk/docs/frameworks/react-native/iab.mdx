@@ -10,7 +10,7 @@ The native cores implement TCF choices, TC Strings, disclosure lifecycle and Goo
 
 An IAB policy needs approved CMP identity and publisher settings, current GVL disclosures and a durable native store. Swift uses `IABConfiguration` on native installation; Kotlin uses `IabConfiguration` on `NativeConfig`. CMP version is the internal TCF field, separate from package/native semver. Never copy a fixture CMP ID into a production app.
 
-The Expo `vendors` prop narrows disclosures. It does not configure an approved CMP identity. The simple category/Expo setup cannot be treated as a complete production IAB recipe. Use the app-owned native installation path until the matching approved configuration and distribution are supplied.
+Turnkey typed RN/Expo IAB bootstrap is deferred from the [first mobile release](/docs/frameworks/react-native/quickstart#first-release-scope). The Expo `vendors` prop narrows disclosures; it does not configure a CMP identity or publisher settings. Use the app-owned native installation path with your approved configuration. The category quickstart and native-injected test fixtures do not supply a production RN/Expo IAB recipe.
 
 The native stock presenters own purpose and partner drafts, legitimate-interest objections, special-feature choices, publisher restrictions and Additional Consent provider controls. They validate the disclosure revision when committing. A category-only `save({ marketing: true })` cannot stand in for a complete vendor decision.
 

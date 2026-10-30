@@ -6,6 +6,8 @@ group: frameworks
 
 Headless React Native APIs read the installed native engine. They do not evaluate policy or persist a second consent record in JavaScript. Keep native SDK startup gates even when the app supplies every React control.
 
+The first release includes these hooks in `@c15t/react-native`; it defers a separate UI-free RN package and shared custom-UI draft API. The installed native package still links the stock SwiftUI or Compose presenter, even when an app renders no stock controls. Standalone Swift and Kotlin core/platform APIs remain available without the stock UI. Read the [first release scope](/docs/frameworks/react-native/quickstart#first-release-scope) before choosing a distribution.
+
 ## Pick the smallest subscription
 
 | Hook or component | Reads |

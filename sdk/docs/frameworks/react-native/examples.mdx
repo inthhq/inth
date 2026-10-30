@@ -21,7 +21,7 @@ Use these source demos to inspect the mobile consent flow before integrating the
 
 The native apps share their existing policy fixtures. The UIKit scheme changes app lifecycle ownership and hosts the same stock SwiftUI screens. It does not supply a separate UIKit consent-control implementation.
 
-The base RN package exposes hooks and category actions through `@c15t/react-native`. The fake-core screens do not prove a production custom UI or a UI-free native dependency graph. A separate headless package or integration needs its own consumer acceptance before replacing these imports. See [headless hooks](/docs/frameworks/react-native/headless) for the current API contract.
+The base RN package exposes hooks and category actions through `@c15t/react-native`. The fake-core screens do not prove a production custom UI or a UI-free native dependency graph. A UI-free RN package and turnkey typed RN/Expo IAB bootstrap are [deferred from the first release](/docs/frameworks/react-native/quickstart#first-release-scope). These demos retain the stock package and label native-injected IAB fixtures separately. See [headless hooks](/docs/frameworks/react-native/headless) for the current API contract.
 
 ## Prepare the checkout
 

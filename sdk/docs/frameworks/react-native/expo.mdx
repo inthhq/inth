@@ -20,6 +20,8 @@ This compile-checked configuration uses the designated reference Inth endpoint. 
 
 The plugin writes native bootstrap metadata, the Android launch initializer and internet permission, iOS privacy declarations and Android SDK floors. RN consumes pinned `com.c15t:c15t-core`, `com.c15t:c15t-android` and the stock UI artifact through the native build. It does not ship a second JavaScript consent engine.
 
+This typed setup covers categories. Typed IAB CMP/publisher bootstrap is [deferred from the first release](/docs/frameworks/react-native/quickstart#first-release-scope); `vendors` only filters disclosures. Use [app-owned native IAB installation](/docs/frameworks/react-native/iab#configure-native-authority-first) when your integration needs IAB authority.
+
 ## Build a custom binary
 
 Run from your Expo app directory after installing the private dependency:

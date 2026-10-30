@@ -69,6 +69,10 @@ Native IAB and Additional Consent APIs do not establish IAB registration, Google
 
 Hosted Inth is the recommended starting point. The existing self-hosted transports, native installation APIs, React components and headless hooks remain available. Browser script-loader and CSS APIs are not native SDK gates.
 
+## First release scope
+
+The first mobile release retains stock native presenters, RN hooks and category commands, app-owned native installation, and standalone Swift/Kotlin core APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB CMP/publisher bootstrap are explicitly deferred. Hooks still link the stock native presenter; `vendors` only filters disclosures. Use app-owned native IAB configuration for that path. See the [first release scope](https://c15t.com/docs/frameworks/react-native/quickstart#first-release-scope) for the required consumer acceptance before these deferred features ship.
+
 ## Docs for AI Agents
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@c15t/react-native/AGENTS.md`. It indexes every guide in `node_modules/@c15t/react-native/docs/`.
