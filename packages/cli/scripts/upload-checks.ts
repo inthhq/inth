@@ -3,7 +3,15 @@ import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
 import { createReadStream } from "node:fs";
-import { mkdtemp, open, readFile, rm, stat, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  open,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
@@ -214,6 +222,14 @@ export const verifyUploads = async (fixture: string): Promise<void> => {
     );
     const receiptPath = path.join(directory, "receipt.json");
     const receipt = JSON.parse(await readFile(receiptPath, "utf-8"));
+    const savedFiles = await readdir(directory);
+    assert.deepEqual(savedFiles.toSorted(), [
+      "document.pdf",
+      "receipt.json",
+      "recording.webm",
+      "selection-true.json",
+      "selection-true.json.original",
+    ]);
     assert.equal(receipt.stage, "ready");
     assert.equal(receipt.attachmentId, "sat_123");
     assert.doesNotMatch(

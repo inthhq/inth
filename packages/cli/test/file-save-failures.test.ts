@@ -12,20 +12,31 @@ import { UploadReceipt } from "../src/upload-receipt.ts";
 import { billingQuote, writeUuid } from "./fixtures/agent-access-v2-writes.ts";
 
 const fault = vi.hoisted(() => ({
+  checkpointDescriptor: -1,
   descriptor: -1,
   directoryDescriptor: -1,
+  once: false,
   operation: "",
+  replaced: false,
   replacement: "",
   target: "",
+  updating: false,
 }));
 
 // eslint-disable-next-line anti-slop/no-module-mocking -- Inject filesystem errors while exercising real exclusive creates, writes, closes and identity-checked cleanup.
 vi.mock("node:fs", async (importOriginal) => {
   const actual = await importOriginal<typeof fs>();
+  const fail = (message: string): never => {
+    if (fault.once) {
+      fault.operation = "";
+    }
+    throw new Error(message);
+  };
   const replaceOutput = () => {
-    if (!fault.replacement) {
+    if (!fault.replacement || fault.replaced) {
       return;
     }
+    fault.replaced = true;
     actual.renameSync(fault.target, `${fault.target}.owned`);
     if (fault.replacement === "symlink") {
       const caller = `${fault.target}.caller`;
@@ -41,7 +52,7 @@ vi.mock("node:fs", async (importOriginal) => {
       actual.closeSync(descriptor);
       if (descriptor === fault.descriptor && fault.operation === "close") {
         replaceOutput();
-        throw new Error("EIO: simulated deferred close failure");
+        fail("EIO: simulated deferred close failure");
       }
     },
     fstatSync: (descriptor: number) => {
@@ -60,14 +71,33 @@ vi.mock("node:fs", async (importOriginal) => {
         throw new Error("EIO: simulated directory sync failure");
       }
       if (descriptor === fault.descriptor && fault.operation === "sync") {
-        throw new Error("EIO: simulated sync failure");
+        fail("EIO: simulated sync failure");
+      }
+      if (
+        descriptor === fault.checkpointDescriptor &&
+        fault.operation === "checkpoint sync"
+      ) {
+        fail("EIO: simulated recovery checkpoint sync failure");
       }
       actual.fsyncSync(descriptor);
+    },
+    ftruncateSync: (descriptor: number, length: number) => {
+      actual.ftruncateSync(descriptor, length);
+      if (descriptor === fault.descriptor && fault.operation === "truncate") {
+        fail("EIO: simulated truncate failure");
+      }
     },
     openSync: (file: fs.PathLike, flags: fs.OpenMode, mode?: fs.Mode) => {
       const descriptor = actual.openSync(file, flags, mode);
       if (file === fault.target) {
         fault.descriptor = descriptor;
+      }
+      if (
+        file !== fault.target &&
+        fault.operation === "checkpoint sync" &&
+        actual.fstatSync(descriptor).isFile()
+      ) {
+        fault.checkpointDescriptor = descriptor;
       }
       if (
         fault.operation === "directory sync" &&
@@ -86,13 +116,14 @@ vi.mock("node:fs", async (importOriginal) => {
     ) => {
       if (descriptor === fault.descriptor && fault.operation === "write") {
         if (offset > 0) {
-          throw new Error("ENOSPC: simulated partial write failure");
+          replaceOutput();
+          fail("ENOSPC: simulated partial write failure");
         }
         return actual.writeSync(
           descriptor,
           bytes,
           offset,
-          Math.min(4, length),
+          fault.updating ? Math.max(1, length - 4) : Math.min(4, length),
           position
         );
       }
@@ -192,16 +223,124 @@ const saves: {
 
 afterEach(() => {
   Object.assign(fault, {
+    checkpointDescriptor: -1,
     descriptor: -1,
     directoryDescriptor: -1,
+    once: false,
     operation: "",
+    replaced: false,
     replacement: "",
     target: "",
+    updating: false,
   });
   for (const directory of directories.splice(0)) {
     fs.rmSync(directory, { force: true, recursive: true });
   }
 });
+
+const reservedReceiptData = () => ({
+  apiOrigin: "https://api.inth.com",
+  attachmentId: "sat_123",
+  clientAttachmentId: writeUuid,
+  fileName: "recording.webm",
+  mediaType: "video/webm",
+  organizationId: "org_123",
+  schemaVersion: 2,
+  sizeBytes: 12,
+  stage: "transfer_unknown",
+});
+
+it.each(["write", "truncate", "sync"])(
+  "restores the committed receipt after a one-time update %s failure and permits retry",
+  (operation) => {
+    const target = output();
+    const data = reservedReceiptData();
+    const receipt = new UploadReceipt(target, data);
+    const previous = fs.readFileSync(target);
+    data.stage = "ready";
+    Object.assign(fault, { once: true, operation, updating: true });
+    expect(() => receipt.update(data)).toThrowError(
+      expect.objectContaining({ code: "receipt_write_failed" })
+    );
+    expect(fs.readFileSync(target)).toEqual(previous);
+    expect(fs.readdirSync(path.dirname(target))).toEqual([
+      path.basename(target),
+    ]);
+    receipt.update(data);
+    expect(JSON.parse(fs.readFileSync(target, "utf-8"))).toEqual(data);
+    expect(() => fs.fstatSync(fault.descriptor)).toThrow(/EBADF/u);
+  }
+);
+
+it.each(["write", "truncate", "sync", "close"])(
+  "keeps a complete private recovery receipt after persistent update %s failure",
+  (operation) => {
+    const target = output();
+    const data = reservedReceiptData();
+    const receipt = new UploadReceipt(target, data);
+    data.stage = "ready";
+    Object.assign(fault, { operation, updating: true });
+    let message = "";
+    try {
+      receipt.update(data);
+    } catch (error) {
+      expect(error).toMatchObject({ code: "receipt_write_failed" });
+      message = String(error);
+    }
+    const copies = fs
+      .readdirSync(path.dirname(target))
+      .filter((entry) => entry !== path.basename(target));
+    expect(copies).toHaveLength(1);
+    const recoveryPath = path.join(path.dirname(target), copies[0] ?? "");
+    expect(message).toContain(JSON.stringify(recoveryPath));
+    expect(JSON.parse(fs.readFileSync(recoveryPath, "utf-8"))).toEqual(data);
+    if (process.platform !== "win32") {
+      // eslint-disable-next-line no-bitwise -- Recovery copies must remain private.
+      expect(fs.statSync(recoveryPath).mode & 0o777).toBe(0o600);
+    }
+    expect(() => fs.fstatSync(fault.descriptor)).toThrow(/EBADF/u);
+    fault.operation = "";
+    receipt.discard();
+    expect(fs.readdirSync(path.dirname(target))).toEqual([]);
+  }
+);
+
+it("leaves the committed receipt untouched when its recovery checkpoint cannot be synced", () => {
+  const target = output();
+  const data = reservedReceiptData();
+  const receipt = new UploadReceipt(target, data);
+  const previous = fs.readFileSync(target);
+  fault.operation = "checkpoint sync";
+  expect(() => receipt.update({ ...data, stage: "ready" })).toThrowError(
+    expect.objectContaining({ code: "receipt_write_failed" })
+  );
+  expect(fs.readFileSync(target)).toEqual(previous);
+  expect(fs.readdirSync(path.dirname(target))).toEqual([path.basename(target)]);
+});
+
+it.for(["file", "symlink"])(
+  "preserves a replacement %s while rolling back a failed receipt update",
+  (replacement, context) => {
+    if (replacement === "symlink" && process.platform === "win32") {
+      context.skip();
+    }
+    const target = output();
+    const data = reservedReceiptData();
+    const receipt = new UploadReceipt(target, data);
+    const previous = fs.readFileSync(target);
+    Object.assign(fault, {
+      once: true,
+      operation: "write",
+      replacement,
+      updating: true,
+    });
+    expect(() => receipt.update({ ...data, stage: "ready" })).toThrowError(
+      expect.objectContaining({ code: "receipt_write_failed" })
+    );
+    expect(fs.readFileSync(target, "utf-8")).toBe("caller data");
+    expect(fs.readFileSync(`${target}.owned`)).toEqual(previous);
+  }
+);
 
 it.for(saves)(
   "closes the $name descriptor when its first stat fails without deleting an unverifiable path",
