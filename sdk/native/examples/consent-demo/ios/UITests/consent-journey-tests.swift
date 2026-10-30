@@ -513,7 +513,12 @@ final class ConsentJourneyTests: XCTestCase {
             auditTolerated[screen, default: 0] += 1
             return auditTolerated[screen]! <= limit
         case .textClipped:
-            return issue.element?.elementType == .textField
+            guard screen == "ax-partner-search-keyboard",
+                  let element = issue.element,
+                  element.elementType == .textField,
+                  element.identifier == "c15t.iab.vendors.search" else { return false }
+            auditTolerated[screen, default: 0] += 1
+            return auditTolerated[screen]! <= 1
         default:
             return false
         }
