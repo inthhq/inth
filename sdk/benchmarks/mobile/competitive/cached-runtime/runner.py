@@ -112,7 +112,7 @@ def prepare(cfg):
             pin = next(r for r in host_harness.PINS['wrappers'] if r['name'] == name)
             archive = name + '-' + pin['wrapperVersion'] + '.tgz'
             host_harness.copy_input(source.parent / 'inputs' / archive, root / 'runtime/inputs' / archive)
-        host_harness.verify_installed(cfg, host, name)
+        host_harness.verify_installed(cfg, host, name, before_build=True)
         for filename in ('App.tsx', 'runtime-types.ts'):
             shutil.copy2(HERE / 'fixtures' / filename, host / filename)
         shutil.copy2(HERE / 'fixtures' / (name + '.tsx'), host / 'consent-adapter.tsx')

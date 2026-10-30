@@ -217,6 +217,31 @@ def device_binary(platform=2):
 
 
 class CompetitiveTests(unittest.TestCase):
+    def test_build_rejects_unpinned_generated_sources_before_gradle_runs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            host = Path(tmp)
+            for name, version in [('expo', '57.0.22'), ('react-native', '0.86.3'), ('react', '19.2.7')]:
+                core.write(host / 'node_modules' / name / 'package.json', {'version': version})
+            installed = host / 'node_modules/@c15t/react-native'
+            installed.mkdir(parents=True)
+            (installed / 'index.js').write_text('pinned source')
+            archive = host / 'wrapper.tgz'
+            with tarfile.open(archive, 'w:gz') as handle:
+                handle.add(installed, arcname='package')
+            cfg = {'archive': str(archive), 'output': str(host / 'output')}
+            self.assertEqual(harness.verify_installed(cfg, host, 'c15t', before_build=True), 1)
+            generated = installed / 'android/c15t-react-native/build/generated/Injected.kt'
+            generated.parent.mkdir(parents=True)
+            generated.write_text('extra generated source must not enter a fresh build')
+            with self.assertRaisesRegex(ValueError, 'extra installed package file'):
+                harness.verify_installed(cfg, host, 'c15t', before_build=True)
+            self.assertEqual(harness.verify_installed(cfg, host, 'c15t'), 1)
+            core.write(host / 'prepared.json', {'profile': 'android-release', 'inputs': {}, 'files': harness.host_inputs(host)})
+            with patch.object(harness, 'preflight'), patch.object(harness, 'host_for', return_value=host), patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'invoke', side_effect=AssertionError('unpinned source reached a build command')) as invoke:
+                with self.assertRaisesRegex(ValueError, 'extra installed package file'):
+                    harness.build(cfg, 'android-release', 'c15t')
+                invoke.assert_not_called()
+
     def test_installed_wrapper_rejects_extra_sources_and_symlinks(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

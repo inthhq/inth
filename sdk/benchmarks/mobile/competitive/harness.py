@@ -209,7 +209,7 @@ def prepare(cfg, platform, vendor, runtime=False, profile=None):
     (host / 'app.json').write_text(json.dumps({'expo': app}, indent=2) + '\n')
     logs = root_for(cfg) / 'logs' / ('runtime' if runtime else ('android-optimized' if profile == 'android-optimized' else platform)) / vendor
     invoke(['bun', 'install', '--frozen-lockfile'], host, logs / 'install.log', cfg)
-    verify_installed(cfg, host, vendor)
+    verify_installed(cfg, host, vendor, before_build=True)
     invoke(['bun', 'x', 'expo', 'prebuild', '--platform', platform, '--no-install'], host, logs / 'prebuild.log', cfg)
     if platform == 'android':
         gradle = host / 'android'
@@ -272,7 +272,7 @@ def prepare_runtime(host, vendor):
     build.write_text(text)
 
 
-def verify_installed(cfg, host, vendor):
+def verify_installed(cfg, host, vendor, *, before_build=False):
     for package, version in [('expo', '57.0.22'), ('react-native', '0.86.3'), ('react', '19.2.7')]:
         require(read(host / 'node_modules' / package / 'package.json')['version'] == version, f'installed {package} version mismatch')
     packages = {'c15t': '@c15t/react-native', **{row['name']: row['package'] for row in PINS['wrappers']}}
@@ -282,7 +282,7 @@ def verify_installed(cfg, host, vendor):
             require(not tree.exists(), f'{name} contaminates {vendor} host')
     if vendor != 'baseline':
         archive = (Path(cfg['archive']) if vendor == 'c15t' else host.parent / 'inputs' / next(row['name'] + '-' + row['wrapperVersion'] + '.tgz' for row in PINS['wrappers'] if row['name'] == vendor))
-        return verify_archive(archive, host / 'node_modules' / packages[vendor], generated_roots=WRAPPER_BUILD_OUTPUTS[vendor])
+        return verify_archive(archive, host / 'node_modules' / packages[vendor], generated_roots=() if before_build else WRAPPER_BUILD_OUTPUTS[vendor])
     return 0
 
 
@@ -361,7 +361,7 @@ def build(cfg, profile, vendor, runtime=False):
     require(prepared.get('profile') in (None, profile) and (profile != 'android-optimized' or prepared.get('profile') == profile), 'prepared host profile mismatch')
     require(prepared['inputs'] == validate_inputs(cfg), 'prepared inputs changed')
     require(host_inputs(host) == [r for r in prepared['files'] if r['path'] != 'prepared.json'], 'host changed since prepare')
-    verify_installed(cfg, host, vendor)
+    verify_installed(cfg, host, vendor, before_build=True)
     if platform == 'ios':
         verify_pods(cfg, host, vendor)
     output = (root_for(cfg) / 'runtime/artifacts' / vendor) if runtime else out_for(cfg, profile, vendor)
