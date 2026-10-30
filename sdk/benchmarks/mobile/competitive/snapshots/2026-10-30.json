@@ -1,0 +1,1049 @@
+{
+	"schemaVersion": 1,
+	"asOf": "2026-10-30",
+	"origin": "completed one-off study; compact sanitized snapshot, not fresh harness output",
+	"source": {
+		"ref": "256e903bfa542c15126e017c10fdfea70f421521",
+		"clean": true,
+		"sourceFilesVerified": 1814,
+		"mavenFilesVerified": 90,
+		"archiveSha256": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+		"coreJarSha256": "f9fbf86009959e3c9c4dfdf8d7c2432f494dc96b5ccda768e42ae3fbde0e5efb",
+		"versions": {
+			"reactNativeArchive": "3.0.0-alpha.2",
+			"iosPod": "3.0.0-alpha.2",
+			"androidMaven": "3.0.0-alpha.1",
+			"hostedProtocol": "3.0.0-alpha.1"
+		}
+	},
+	"pinsFile": "../pins.json",
+	"host": {
+		"expo": "57.0.22",
+		"reactNative": "0.86.3",
+		"react": "19.2.7",
+		"hermes": true,
+		"newArchitecture": true,
+		"expoDevClient": true
+	},
+	"toolchain": {
+		"bun": "1.3.11",
+		"android": {
+			"gradle": "9.3.1",
+			"agp": "8.12.0",
+			"r8": "8.12.14",
+			"java": "17.0.20",
+			"kotlin": "2.1.20",
+			"ndk": "27.1.12297006",
+			"buildTools": "36.0.0",
+			"minSdk": 24,
+			"compileSdk": 36,
+			"targetSdk": 36,
+			"architectures": ["arm64-v8a"],
+			"minify": true,
+			"resourceShrink": true,
+			"matchedSigning": true,
+			"compilerHashes": [
+				{
+					"tool": "gradle-8.12.0.jar",
+					"bytes": 12964711,
+					"sha256": "ac19aabdfb6736ed49697e107ba0d824c6f5078e203f2bce911e8a6bba6d91cb"
+				},
+				{
+					"tool": "builder-8.12.0.jar",
+					"bytes": 15798444,
+					"sha256": "2763db5ef7236c7109412b125610bc9120ac1a59e2ea4c04746f0299284ed663"
+				},
+				{
+					"tool": "kotlin-gradle-plugin-2.1.20-gradle85.jar",
+					"bytes": 30188874,
+					"sha256": "fb016e643b58e0aa2aec89110eaf14e78b3768c157f254345795fd6aa10493eb"
+				},
+				{
+					"tool": "kotlin-compiler-embeddable-2.1.20.jar",
+					"bytes": 56909275,
+					"sha256": "c54a00718c8c0e3ee858bf42771c7f401c5e3c1738861e18e9536371042fa1b3"
+				},
+				{
+					"tool": "java",
+					"bytes": 69600,
+					"sha256": "77ddcbc036c6f6261d2583725018a6a45a2385d5339deea14e53cb8d91086192"
+				},
+				{
+					"tool": "gradle-wrapper.jar",
+					"bytes": 46175,
+					"sha256": "b3a875ddc1f044746e1b1a55f645584505f4a10438c1afea9f15e92a7c42ec13"
+				},
+				{
+					"tool": "clang-18",
+					"bytes": 169510128,
+					"sha256": "fbe84dfae24c22167b678d074d12b1786b7e6750d5087e417abdb8a73752f00d"
+				},
+				{
+					"tool": "aapt2",
+					"bytes": 10682288,
+					"sha256": "a8844d4089b442b034aed8953deee1893253053c900e03141ae7173e3edd8157"
+				},
+				{
+					"tool": "apksigner.jar",
+					"bytes": 1100545,
+					"sha256": "3716d9311e55d2b0918a2fd9d54ba9e406c5f6abeea700b287f11259bc163dec"
+				},
+				{
+					"tool": "hermesc",
+					"bytes": 8866344,
+					"sha256": "459d352c9a3cfdbe9289a167d93f7e30700c6ee591dfee3a4d52dc26eb8548cb"
+				}
+			]
+		},
+		"ios": {
+			"xcode": "27.1",
+			"xcodeBuild": "27A9275",
+			"sdk": "iPhoneOS27.1",
+			"cocoaPods": "1.17.0",
+			"deploymentTarget": "16.4",
+			"architecture": "arm64",
+			"configuration": "Release",
+			"signingAllowed": false,
+			"deadCodeStripping": true,
+			"compilerHashes": [
+				{
+					"tool": "swiftc",
+					"sha256": "c90fc92073e78cd2b3c65efcacf65acfaf4290b02f7a9d301853563b85f4a993",
+					"bytes": 173118384
+				},
+				{
+					"tool": "clang",
+					"sha256": "ee029330bf58ab6e481385f4237cc54602eaa8b81526242e5c5ab5b76e8c5a7e",
+					"bytes": 124676976
+				},
+				{
+					"tool": "ld",
+					"sha256": "809ad9e3c137cdf6d997b4e67dd3dd2589f6bb5de612dc298504e87bc4936c7e",
+					"bytes": 2749664
+				},
+				{
+					"tool": "xcodebuild",
+					"sha256": "d37fbcb4198c2474d847e5d7d4bf8394a1a9443890ad0153a76bc3e1d5576ec1",
+					"bytes": 100736
+				},
+				{
+					"tool": "strip",
+					"sha256": "7602c032cfb201a4a571f0ca580c36746f1c5b0765c7ab111b587d0ad9e9a9c8",
+					"bytes": 285696
+				},
+				{
+					"tool": "dsymutil",
+					"sha256": "783d72a729a78eddb2f0f755ac0a10c0922f2c4123df1ae7518d24a1ce77cf6d",
+					"bytes": 41931680
+				},
+				{
+					"tool": "install_name_tool",
+					"sha256": "b5ddc112eb5aed88d48f7b75eb6943fe679561b76b15ac78f275bfb7de0e0f7a",
+					"bytes": 214272
+				}
+			]
+		}
+	},
+	"measurements": [
+		{
+			"profile": "android-release",
+			"vendor": "baseline",
+			"status": "measured",
+			"bytes": 20779838,
+			"addedBytes": 0,
+			"artifactSha256": "7c17648027c1a862949a3b43a115d9706eae5c37eef6f823c2c6ddb68864ec27",
+			"sdkUniqueDexDestinations": 0,
+			"compressedPayloadBytes": 20565443,
+			"uncompressedPayloadBytes": 24995703
+		},
+		{
+			"profile": "android-release",
+			"vendor": "c15t",
+			"status": "measured",
+			"bytes": 22757384,
+			"addedBytes": 1977546,
+			"artifactSha256": "ebf67241f9c97d5520d542d41063296b2bff259bf84393566bc52ebd8348327f",
+			"sdkUniqueDexDestinations": 726,
+			"compressedPayloadBytes": 22529603,
+			"uncompressedPayloadBytes": 29349107
+		},
+		{
+			"profile": "android-release",
+			"vendor": "onetrust",
+			"status": "measured",
+			"bytes": 21803892,
+			"addedBytes": 1024054,
+			"artifactSha256": "7950d245cb1e9c9d53ca15203a9c437ec6c08e67e561dbcb751721ac4b3d4c8f",
+			"sdkUniqueDexDestinations": 901,
+			"compressedPayloadBytes": 21579657,
+			"uncompressedPayloadBytes": 27315782
+		},
+		{
+			"profile": "android-release",
+			"vendor": "didomi",
+			"status": "measured",
+			"bytes": 25428214,
+			"addedBytes": 4648376,
+			"artifactSha256": "b69955c7f383f713b4ae96a04afbfd29e37a1cad37094b4c9488acba9ae9efe0",
+			"sdkUniqueDexDestinations": 2170,
+			"compressedPayloadBytes": 25178385,
+			"uncompressedPayloadBytes": 34855886
+		},
+		{
+			"profile": "android-release",
+			"vendor": "usercentrics",
+			"status": "measured",
+			"bytes": 21830808,
+			"addedBytes": 1050970,
+			"artifactSha256": "6e2179d7caff0a27a8fc1d39d4f69a9596de2d08953c1527b2a76d2ebfc9f1ff",
+			"sdkUniqueDexDestinations": 1969,
+			"compressedPayloadBytes": 21607378,
+			"uncompressedPayloadBytes": 27525339
+		},
+		{
+			"profile": "android-release",
+			"vendor": "sourcepoint",
+			"status": "measured",
+			"bytes": 21778262,
+			"addedBytes": 998424,
+			"artifactSha256": "73cbbe9036f4859bd21c2c061d5e479031931c8530bdcd36fe41c8ad513412b3",
+			"sdkUniqueDexDestinations": 923,
+			"compressedPayloadBytes": 21563098,
+			"uncompressedPayloadBytes": 27498623
+		},
+		{
+			"profile": "ios-local",
+			"vendor": "baseline",
+			"status": "measured",
+			"bytes": 26754643,
+			"addedBytes": 0,
+			"executableSha256": "303deeac32f09e379c4d5e7714ec02fff73e43347a59b550a79d4fad43e396c8",
+			"appManifestSha256": "de5117258bb3aa53019a7959c87ff01218a60df67b834419daf3bbf573eafe73",
+			"groups": {
+				"executable": 872640,
+				"frameworks": 24417248,
+				"javascript": 1425092,
+				"resources": 39663
+			}
+		},
+		{
+			"profile": "ios-local",
+			"vendor": "c15t",
+			"status": "measured",
+			"bytes": 31881428,
+			"addedBytes": 5126785,
+			"executableSha256": "6c6545e31e15c279a0744044b811a72c1f0896cf6260f721b589ac9beee76666",
+			"appManifestSha256": "845461c0759c25644bc8b0cacda75569c3e035f0920ef6ccecbb80cf8939c277",
+			"groups": {
+				"executable": 5812184,
+				"frameworks": 24417248,
+				"javascript": 1579788,
+				"resources": 72208
+			}
+		},
+		{
+			"profile": "ios-local",
+			"vendor": "onetrust",
+			"status": "measured",
+			"bytes": 31568416,
+			"addedBytes": 4813773,
+			"executableSha256": "546ce276519d42925e08419c85a382cd3dc892cbbdbb16626d2c9ab00206bf6d",
+			"appManifestSha256": "060742429bc1359d05fed27bdc743ff65f52c267608cadc6f55db3f419918c0e",
+			"groups": {
+				"executable": 989440,
+				"frameworks": 29104856,
+				"javascript": 1434457,
+				"resources": 39663
+			}
+		},
+		{
+			"profile": "ios-local",
+			"vendor": "didomi",
+			"status": "measured",
+			"bytes": 34803770,
+			"addedBytes": 8049127,
+			"executableSha256": "e069ebecf6ad503518e43006c4cfd255e5501dfb9e326621dbb9647abaaedd5c",
+			"appManifestSha256": "80ef43b2c79e90dc6f1890532f77b9b3992b59c2d665b2543ed41c0d12dc1449",
+			"groups": {
+				"executable": 1165824,
+				"frameworks": 32146278,
+				"javascript": 1452005,
+				"resources": 39663
+			}
+		},
+		{
+			"profile": "ios-local",
+			"vendor": "usercentrics",
+			"status": "measured",
+			"bytes": 34986947,
+			"addedBytes": 8232304,
+			"executableSha256": "bb75a3f8379be750523f2d2f1c84aacd8bbf7cf2f97f74b5bad014baba9cffd3",
+			"appManifestSha256": "3ae8b8975191c18e60c3a4d0639e1a9b54d7b72e7716bf0f5cb88639e217c33e",
+			"groups": {
+				"executable": 1289184,
+				"frameworks": 31892907,
+				"javascript": 1490641,
+				"resources": 314215
+			}
+		},
+		{
+			"profile": "ios-local",
+			"vendor": "sourcepoint",
+			"status": "measured",
+			"bytes": 44340545,
+			"addedBytes": 17585902,
+			"executableSha256": "ea359f0a700ec2f8a8ec5d8b1d7e755856c1eaef3807ef55f223069d1173496f",
+			"appManifestSha256": "863568e5fe1e65446001b51e1c93e9ae0ecb3d74d3d6485d440656a6c764bd1a",
+			"groups": {
+				"executable": 18382960,
+				"frameworks": 24417248,
+				"javascript": 1432778,
+				"resources": 107559
+			}
+		},
+		{
+			"profile": "ios-postprocessed",
+			"vendor": "baseline",
+			"status": "measured",
+			"bytes": 26342011,
+			"addedBytes": 0,
+			"executableSha256": "5b4937718543b3241be3bde9f7a3b79dfca1eca51ed11ffd2b6346625310f594",
+			"appManifestSha256": "c185d975eb8d03ba6d805cdca98bcdd1203555a9c65d57cef4e44a1d7f63e314",
+			"groups": {
+				"executable": 460008,
+				"frameworks": 24417248,
+				"javascript": 1425092,
+				"resources": 39663
+			}
+		},
+		{
+			"profile": "ios-postprocessed",
+			"vendor": "c15t",
+			"status": "measured",
+			"bytes": 28495116,
+			"addedBytes": 2153105,
+			"executableSha256": "12cb0ce7a481e86a45a3b55edfb3eba5a8af1c5ece5105b110ddc8849bb0b469",
+			"appManifestSha256": "d27822baca8729e578d4a141eb62ea5b92c57c24ea735324f426b9f25666f1e1",
+			"groups": {
+				"executable": 2425872,
+				"frameworks": 24417248,
+				"javascript": 1579788,
+				"resources": 72208
+			}
+		},
+		{
+			"profile": "ios-postprocessed",
+			"vendor": "onetrust",
+			"status": "measured",
+			"bytes": 31098912,
+			"addedBytes": 4756901,
+			"executableSha256": "cecd80d5afa08446a6f4b8b404420eeea5563867cec6b0a53da57998b2d612d8",
+			"appManifestSha256": "4c0a621aca9b65d5c38f60761d181a22b341abcc664f9bfcd2416dbadb13565d",
+			"groups": {
+				"executable": 519936,
+				"frameworks": 29104856,
+				"javascript": 1434457,
+				"resources": 39663
+			}
+		},
+		{
+			"profile": "ios-postprocessed",
+			"vendor": "didomi",
+			"status": "measured",
+			"bytes": 34256690,
+			"addedBytes": 7914679,
+			"executableSha256": "5ac00f71ad3a470641c4b6c2b641aa0bee700249717b8c4dc71242f978a5cb35",
+			"appManifestSha256": "a0cf43e3a638da0d3c0a1e0df86baee1d5fb7ee0bd15997c18b922f936937930",
+			"groups": {
+				"executable": 618744,
+				"frameworks": 32146278,
+				"javascript": 1452005,
+				"resources": 39663
+			}
+		},
+		{
+			"profile": "ios-postprocessed",
+			"vendor": "usercentrics",
+			"status": "measured",
+			"bytes": 34400195,
+			"addedBytes": 8058184,
+			"executableSha256": "d7e5b0d9ef872426587ccffb6d41e66939425e24ff112974c99414fc2de353ed",
+			"appManifestSha256": "ea4bd60e3cfbe7dbbb56ef11833d109e681ec67791b2bece5adf777b2194d8c3",
+			"groups": {
+				"executable": 702432,
+				"frameworks": 31892907,
+				"javascript": 1490641,
+				"resources": 314215
+			}
+		},
+		{
+			"profile": "ios-postprocessed",
+			"vendor": "sourcepoint",
+			"status": "measured",
+			"bytes": 37661033,
+			"addedBytes": 11319022,
+			"executableSha256": "d6d6d07f29fbb51f2ebbbb0c2c3ddc91807a4ddc839f7fdf7673395576d5bbdc",
+			"appManifestSha256": "3649506f3dd70a02ba89c4de2ddb54798b52f5d0b8f48777ab50f34c7a3ea548",
+			"groups": {
+				"executable": 11703448,
+				"frameworks": 24417248,
+				"javascript": 1432778,
+				"resources": 107559
+			}
+		}
+	],
+	"provenance": {
+		"results.json": {
+			"sha256": "0becc32cc887bc97e904e8c72f73328f2f8d06eeaa6f2bd063d93bd2d0f61bf4",
+			"bytes": 548101
+		},
+		"handoff.md": {
+			"sha256": "714522bc4d9e46e0a5cf04131573eba6f4b53776e39e3a6261741b562d1abdd9",
+			"bytes": 11409
+		},
+		"artifact-index.json": {
+			"sha256": "15657a4773a3813285bcb15804dbdf8deff9f6dec5b89e3f9673211c3c07d0d9",
+			"bytes": 585083
+		},
+		"android/results.json": {
+			"sha256": "7ee8e2a37d43277e46955a633afda9e0a3cfcd9d2c60cfe80b3b8d4efc7cf6df",
+			"bytes": 57436
+		},
+		"ios/results.json": {
+			"sha256": "be68174e2a6e7a9b608c090b3f6949b677c72ee14c4264a165ea87364b1392a8",
+			"bytes": 88040
+		},
+		"ios/results-postprocessed.json": {
+			"sha256": "17fd53fa72d1134be72a0012b4533b35885a8c8f39dd84c70e9f9c23f091d3fe",
+			"bytes": 88319
+		},
+		"runtime/results.json": {
+			"sha256": "0224ed8a4650963296d44417344defbc2e3b749ad4141de3e99f12843a623ee8",
+			"bytes": 12720
+		},
+		"android/runtime/schedule.json": {
+			"sha256": "d99ea2d33a6acee9f3bfa317d85045d3343cdebdcbf2dd802e5de18348cf5cff",
+			"bytes": 9383
+		},
+		"android/runtime/sample-results.json": {
+			"sha256": "359bcd8ccf52b4a0dbd39c6b3182600a10c60a405b6d34ed68123ee6298db17a",
+			"bytes": 385959
+		},
+		"audit/results.json": {
+			"sha256": "2a73831737ac6a4f760d92594debd98860be1d59c7a585551860354a15851138",
+			"bytes": 78204
+		}
+	},
+	"runtime": {
+		"metric": "Application.attachBaseContext to first decor OnDraw after validated cached-denial Ready layout",
+		"percentileDefinition": "nearest rank, sorted successful samples at ceil(p*n)-1",
+		"profile": "API36 arm64 emulator, warm OS/file caches, fresh app process, cached explicit denial, offline; includes SDK reads and validation",
+		"summary": {
+			"c15t": {
+				"eligible": false,
+				"ineligibleReason": "Cached explicit denial survived, but configured backend DNS transport error violated error===null. No timing attempts or latency.",
+				"scheduled": 0,
+				"attempted": 0,
+				"valid": 0,
+				"failed": 0,
+				"p50Ms": null,
+				"p95Ms": null,
+				"minMs": null,
+				"maxMs": null,
+				"failureReasons": []
+			},
+			"didomi": {
+				"eligible": true,
+				"ineligibleReason": null,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 336.079208,
+				"p95Ms": 450.258041,
+				"minMs": 229.901417,
+				"maxMs": 487.120084,
+				"failureReasons": []
+			},
+			"usercentrics": {
+				"eligible": true,
+				"ineligibleReason": null,
+				"scheduled": 30,
+				"attempted": 30,
+				"valid": 30,
+				"failed": 0,
+				"p50Ms": 378.531791,
+				"p95Ms": 502.2805,
+				"minMs": 273.896958,
+				"maxMs": 518.386958,
+				"failureReasons": []
+			}
+		},
+		"attempts": [
+			{
+				"attempt": 1,
+				"round": 1,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 351.609667,
+				"fullLogSha256": "b5dd6a3f586921d0c3f0ce446ac295b923578d78da587b561402af4a54987862"
+			},
+			{
+				"attempt": 2,
+				"round": 1,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 518.386958,
+				"fullLogSha256": "e585b9c85c9567eae742da7534e5f11fcf2345c2bafed1b913b8e5327e8ed540"
+			},
+			{
+				"attempt": 3,
+				"round": 2,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 318.676626,
+				"fullLogSha256": "2b735ba337799a01bcc3f44de181e6be596ed2faeac55dc8aac42a3db001b2b1"
+			},
+			{
+				"attempt": 4,
+				"round": 2,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 332.554084,
+				"fullLogSha256": "0b24441369f4f8d0a093256c1a899a34bc2b11251f52337f620097b40ffeb795"
+			},
+			{
+				"attempt": 5,
+				"round": 3,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 302.694458,
+				"fullLogSha256": "4fa85d3d3f479eee65a3bfaaec13b21c6902675fe020ca940f3ac5e50a296d95"
+			},
+			{
+				"attempt": 6,
+				"round": 3,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 325.0075,
+				"fullLogSha256": "58b45602fba87a14ed36023f4e94dc0f37b71515ddca0ec03b57bb2bb524e647"
+			},
+			{
+				"attempt": 7,
+				"round": 4,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 453.683583,
+				"fullLogSha256": "de69d33460e7c30a579324cf6b735866404765c3cd8dd4b4aa8fd901f8f216de"
+			},
+			{
+				"attempt": 8,
+				"round": 4,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 408.215417,
+				"fullLogSha256": "a8671461d6661411edc2e6250cdf616ec8bd1910fd95c6fdaccecfbcdd1c1d2a"
+			},
+			{
+				"attempt": 9,
+				"round": 5,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 329.706583,
+				"fullLogSha256": "d4cf2fe01860da4624087f56bfbd927b7f73fcfa4480c336d31e929fe5f61463"
+			},
+			{
+				"attempt": 10,
+				"round": 5,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 383.549084,
+				"fullLogSha256": "9c22e35cc21d2f8b0dfb75f545b2588ac346b27050c57a307c95cb4fa517b73f"
+			},
+			{
+				"attempt": 11,
+				"round": 6,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 408.502042,
+				"fullLogSha256": "d03e2b652afad172a98a3a85ce5ed43123943a7a55b2813eb2864ffdc7d21b5f"
+			},
+			{
+				"attempt": 12,
+				"round": 6,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 349.964501,
+				"fullLogSha256": "16fe296ff4bc103ff65e1688840ea1eceb9f94c937442c3c65e173fa4ca6192d"
+			},
+			{
+				"attempt": 13,
+				"round": 7,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 259.348125,
+				"fullLogSha256": "14d35e0e2c75e78b02fa1fc93203a7f3ec9592311f54ee121444759eb70fd137"
+			},
+			{
+				"attempt": 14,
+				"round": 7,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 372.458917,
+				"fullLogSha256": "f2af4343cd922e6794819019aca4cb7955df66dadbb56b8e1241cca78dc39f28"
+			},
+			{
+				"attempt": 15,
+				"round": 8,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 370.523125,
+				"fullLogSha256": "5e777db6c7e9e3ce16b5c2fdd482417e350c67f702fd0a9738217edcec8b93f6"
+			},
+			{
+				"attempt": 16,
+				"round": 8,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 378.725042,
+				"fullLogSha256": "cf634c5778abb5c67450bd31c66879e1d1e206f4202b081bfb63c755801b88c1"
+			},
+			{
+				"attempt": 17,
+				"round": 9,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 261.41775,
+				"fullLogSha256": "518987b4c033c175e8299bbb9987c3e3c66f1aa7521ae816e744a278f6554d7b"
+			},
+			{
+				"attempt": 18,
+				"round": 9,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 413.790709,
+				"fullLogSha256": "58bbfdfd1ea8ee23ce9a55166386c20a966b4bfc6cae6c9bcaaaa1136243cc62"
+			},
+			{
+				"attempt": 19,
+				"round": 10,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 375.380667,
+				"fullLogSha256": "dbf28697f61dd58a38edce9c2612208b768ca775b36265298caace5c048b6a38"
+			},
+			{
+				"attempt": 20,
+				"round": 10,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 323.680334,
+				"fullLogSha256": "c23331162a24cab09f50bedf62e72856631d676c0905474f738db461a231572f"
+			},
+			{
+				"attempt": 21,
+				"round": 11,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 336.079208,
+				"fullLogSha256": "987910b7a247e528d5e41cdddab490cca91405e7b94abb99238a6a64b92243e2"
+			},
+			{
+				"attempt": 22,
+				"round": 11,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 273.896958,
+				"fullLogSha256": "58435098fcd2a981ffe3b4c62383217e26afcb724f839cc5a1dce955641cbe8e"
+			},
+			{
+				"attempt": 23,
+				"round": 12,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 407.907792,
+				"fullLogSha256": "40d7186f5b4a6cc7725175f89663e73dee8cb5dd317df1046c1c104b780e32cb"
+			},
+			{
+				"attempt": 24,
+				"round": 12,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 345.391042,
+				"fullLogSha256": "82462a97a0857af38898e0387ad83448be37f395ab4de075b3ed1216bebcfd97"
+			},
+			{
+				"attempt": 25,
+				"round": 13,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 403.608083,
+				"fullLogSha256": "70f01a9126bfd77f529a24a1d7271b6076cf7b81a1ea60010f106d2290788acf"
+			},
+			{
+				"attempt": 26,
+				"round": 13,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 397.500333,
+				"fullLogSha256": "fa0c3c577ca34e2cc6217c4847d6a2c0b1beb309b361d4094b9e81627d700663"
+			},
+			{
+				"attempt": 27,
+				"round": 14,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 378.531791,
+				"fullLogSha256": "532e69ea02388fb80d5dcacda036d8b74caaa3790caec4ee586117f68f704d7a"
+			},
+			{
+				"attempt": 28,
+				"round": 14,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 357.297125,
+				"fullLogSha256": "25119ce8c57d56bf69c1df67eb3ca45dd24a96f328332d2022e3bf74f99ac063"
+			},
+			{
+				"attempt": 29,
+				"round": 15,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 262.366042,
+				"fullLogSha256": "e199e2b7861641ef2a31ffdd72403d6e4093b0bf023b3f9657e1c3f24cf35fa9"
+			},
+			{
+				"attempt": 30,
+				"round": 15,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 277.123292,
+				"fullLogSha256": "ed739442be0f7250a82c70c4032510a152bb349eece93bd9ed56ce35728f6c87"
+			},
+			{
+				"attempt": 31,
+				"round": 16,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 313.311501,
+				"fullLogSha256": "cc7486becccfe6605d9cccf6b5c48d34971c0f774d15ff49a145a51364485da8"
+			},
+			{
+				"attempt": 32,
+				"round": 16,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 397.648334,
+				"fullLogSha256": "c0d39aeb4a756d5c4f59e7f386def1c3a32fe259dd1386f3fca494a0d23c50bd"
+			},
+			{
+				"attempt": 33,
+				"round": 17,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 430.936375,
+				"fullLogSha256": "dc122a750a97591a5525ad9b1de237cab345628e49ac04f775440871fa7e3d93"
+			},
+			{
+				"attempt": 34,
+				"round": 17,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 423.337458,
+				"fullLogSha256": "f87880515de0210fb6ba175f91902d3321ea2a6daa4c5f2ceb72792d0a17355b"
+			},
+			{
+				"attempt": 35,
+				"round": 18,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 405.409584,
+				"fullLogSha256": "77e2b0deeb9b47719854154399d265d655ed854697eae54f3f057210e3ef0815"
+			},
+			{
+				"attempt": 36,
+				"round": 18,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 450.258041,
+				"fullLogSha256": "da1369c47ed1150c94962978b28d015135151cba08c146452d344d66563af4e3"
+			},
+			{
+				"attempt": 37,
+				"round": 19,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 229.901417,
+				"fullLogSha256": "f2424349da21ac23515ecb9ccec64abacf0afce9079664b7c07fa016a52b10e2"
+			},
+			{
+				"attempt": 38,
+				"round": 19,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 335.47425,
+				"fullLogSha256": "b0c8ba9c2fea4d0467335e913c3db67ccb53b537b0951ffb9cb12900f19e5f44"
+			},
+			{
+				"attempt": 39,
+				"round": 20,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 414.549709,
+				"fullLogSha256": "d52766fb746ccb567473203c86e6e4f654b8e8f74889ac8fa66bff327a0e6d4b"
+			},
+			{
+				"attempt": 40,
+				"round": 20,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 258.031125,
+				"fullLogSha256": "0fb9991df32e698cb3fc73ac8ca135b6c2b42d8fd8f3374f2246b5f54ef6b228"
+			},
+			{
+				"attempt": 41,
+				"round": 21,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 269.232167,
+				"fullLogSha256": "067f729f679ec19abed8002080889238e227a1d97d02e4892087d2c6e8d0818b"
+			},
+			{
+				"attempt": 42,
+				"round": 21,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 417.867625,
+				"fullLogSha256": "64d4242fb453cf8fd2ddf2cbab047c74fb8a1c48e3231d4aabf94409d3e56753"
+			},
+			{
+				"attempt": 43,
+				"round": 22,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 423.499667,
+				"fullLogSha256": "ba643481d0ed23a02023967a7592f8d798689e2f15f6a656c308d7503f71e071"
+			},
+			{
+				"attempt": 44,
+				"round": 22,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 367.625167,
+				"fullLogSha256": "a83ebc479d33dcf75d5ab841acf3c5617685976eb9742a4ca6a75d0989a2951a"
+			},
+			{
+				"attempt": 45,
+				"round": 23,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 255.841334,
+				"fullLogSha256": "8f58271f7aba87fd5f30f8fad84187a806838a3a4ed34329f59c245b5d50c6d4"
+			},
+			{
+				"attempt": 46,
+				"round": 23,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 357.321334,
+				"fullLogSha256": "f2d2eb301582372534ed31167991d75725083489ace0815e935f77b1e0e452ed"
+			},
+			{
+				"attempt": 47,
+				"round": 24,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 427.1845,
+				"fullLogSha256": "35e06ac43d986d6b5cd176a530ba19a9ca293b010f8185c281f7aac4e8e509f8"
+			},
+			{
+				"attempt": 48,
+				"round": 24,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 337.343084,
+				"fullLogSha256": "4460b9d3434e061f41e920f438596c50a8bce07bea2cd14521660c5bfd7358b0"
+			},
+			{
+				"attempt": 49,
+				"round": 25,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 434.744958,
+				"fullLogSha256": "8dbbaef68f27f235b01900797645a0078cb74e35e04f43271093f7d152ca621a"
+			},
+			{
+				"attempt": 50,
+				"round": 25,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 301.646834,
+				"fullLogSha256": "82d4c47e35fba5919c80c0180fd3508698daedd0e980efe4dcff83fbaf15fdf2"
+			},
+			{
+				"attempt": 51,
+				"round": 26,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 368.081625,
+				"fullLogSha256": "645366df096a5de037501843b80952891f7bf98d346bf8578e55091e7f98c2ef"
+			},
+			{
+				"attempt": 52,
+				"round": 26,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 297.948917,
+				"fullLogSha256": "299f85e815406aa8711050876c011cd80d89cb76c47f31893bdb3d9e0e5ed5d3"
+			},
+			{
+				"attempt": 53,
+				"round": 27,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 357.146458,
+				"fullLogSha256": "054e3f6241590653e52190d20120fabfb6d795498708bd899ac355818814c726"
+			},
+			{
+				"attempt": 54,
+				"round": 27,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 335.080792,
+				"fullLogSha256": "9d93b91c8f56affb64f650685eb96fe68320fc131a2044e0cccfcd356f14ccc4"
+			},
+			{
+				"attempt": 55,
+				"round": 28,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 435.703542,
+				"fullLogSha256": "8e008d907b2a4055bf8ba741e81ae7e3fc5aaf64f639b4634ed56f8bf7f61750"
+			},
+			{
+				"attempt": 56,
+				"round": 28,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 328.478541,
+				"fullLogSha256": "7307df05d290182ed9c6f6f0face54981741f0ad2cad66ed28da65af26792faa"
+			},
+			{
+				"attempt": 57,
+				"round": 29,
+				"position": 1,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 248.146042,
+				"fullLogSha256": "8bf8b8bdea8afb1ca562d4ddde8e69b7c9f29a0dc1c440afcc1a00c5eac38823"
+			},
+			{
+				"attempt": 58,
+				"round": 29,
+				"position": 2,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 502.2805,
+				"fullLogSha256": "fdca2af21d896d106e17aa5ba211f052a1bf68b961eacf8659bce4b21aed974f"
+			},
+			{
+				"attempt": 59,
+				"round": 30,
+				"position": 1,
+				"participant": "usercentrics",
+				"accepted": true,
+				"elapsedMs": 334.810625,
+				"fullLogSha256": "826f2ea08efde54058772c8b153d44c828a08dd5ed74233e607a99af082fe7b5"
+			},
+			{
+				"attempt": 60,
+				"round": 30,
+				"position": 2,
+				"participant": "didomi",
+				"accepted": true,
+				"elapsedMs": 487.120084,
+				"fullLogSha256": "1fd8a15966b4154b762001b44ded767f9de8035a213215cd993bfa8c6746c82c"
+			}
+		],
+		"unscheduled": {
+			"onetrust": "no verified published App ID/CDN config",
+			"sourcepoint": "no runtime profile measured"
+		},
+		"ecQuiet": {
+			"stoppedDevProcesses": 0,
+			"stoppedContainers": ["MySQL", "Postgres", "ClickHouse"]
+		}
+	},
+	"limitations": [
+		"All contributions are app bytes over matched no-SDK baseline, including wrapper and resolved dependencies. Downloaded JAR/AAR/XCFramework bytes are separate units.",
+		"Unsigned generic arm64 iOS .app regular-file lengths exclude directory blocks, dSYM and symlink lengths. No store download size, app thinning, encrypted IPA or signed installation claim.",
+		"ios-local has DEPLOYMENT_POSTPROCESSING=NO; ios-postprocessed has YES and actual Strip tasks. Both optimize and dead-strip. Rebuild/relink hashes differ, so delta is not proved to be symbol-table removal alone.",
+		"Android baseline and c15t APKs were reused after host/input/archive parity verification. Competitors used fresh generated consumers.",
+		"OneTrust uses official targeted optional ZXing/Ad ID warning suppression and narrow Retrofit generic-signature rule. No SDK keep-all rule, dependency override or vendor patch.",
+		"Public demo policies and target semantics differ. No feature or certification equivalence or pure consent-engine ranking.",
+		"Sourcepoint stock campaign UI uses WebView on Android and iOS. Other renderer internals were not independently classified. consentmanager is a separate unmeasured architecture lane.",
+		"c15t offline explicit measurement denial survived with ready=true and policyPending=false, but DNS transport error violated error===null eligibility. Zero timing attempts, no c15t latency.",
+		"Usercentrics raw signed32 Android history timestamp was preserved and checked modulo 2^32 against the stock rejection interval.",
+		"Runtime excludes pre-attach/zygote startup, physical presentation and stock preferences rendering. Different SDK policy/validation work remains included.",
+		"No iOS runtime, physical phones, battery, idle CPU/memory, network startup, first displayed stock-preferences frame, or full typed RN/Expo IAB result.",
+		"Packet capture was limited, not complete Wi-Fi/HTTPS or decrypted request bodies. Isolation used per-UID IPv4/IPv6 reject rules and same-UID positive/negative controls.",
+		"c15t Swift hosted HTTP400 protocol evidence remained unchanged; no header spoofing.",
+		"Vendor binaries are not redistributed. Public access does not establish redistribution permission."
+	]
+}

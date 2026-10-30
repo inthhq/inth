@@ -1,0 +1,17 @@
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+gradle.projectsEvaluated {
+ rootProject.tasks.register('c15tEvidenceResolvedArtifacts') {
+  doLast {
+   def host = rootProject.project(':app')
+   def cfg = host.configurations.getByName('releaseRuntimeClasspath')
+   def artifacts = cfg.incoming.artifactView { componentFilter { id -> id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier } }.artifacts.artifacts.collect { artifact ->
+    def file = artifact.file
+    [coordinate: artifact.id.componentIdentifier.toString(), file: file.absolutePath, size: file.length(), sha256: MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()]
+   }.sort { a,b -> a.coordinate <=> b.coordinate ?: a.file <=> b.file }
+   def target = new File(System.getenv('C15T_RESOLVED_OUT'))
+   target.parentFile.mkdirs()
+   target.text = JsonOutput.prettyPrint(JsonOutput.toJson(artifacts)) + '\n'
+  }
+ }
+}

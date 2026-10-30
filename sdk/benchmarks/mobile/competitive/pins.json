@@ -1,0 +1,4834 @@
+{
+	"schemaVersion": 1,
+	"sourceRef": "256e903bfa542c15126e017c10fdfea70f421521",
+	"c15t": {
+		"package": "@c15t/react-native",
+		"version": "3.0.0-alpha.2",
+		"androidVersion": "3.0.0-alpha.1",
+		"podVersion": "3.0.0-alpha.2",
+		"archiveSha256": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+		"mavenFiles": [
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-javadoc.jar",
+				"sha256": "328675f88b25121a23a1dd753d596e9c27d5e3d57019a451f2c5302587c0c908",
+				"bytes": 623831
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-javadoc.jar.md5",
+				"sha256": "b1bbf471fc1645fe2b981378c6e618c602c371c9a8d5607e8828603861af01ca",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-javadoc.jar.sha1",
+				"sha256": "b19aa37b61acd94000ac01bd4cb88587a9948ec1c727f165da9245fdf5f66d77",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-javadoc.jar.sha256",
+				"sha256": "897340acc1371558f5ae772a2cf3f10a68a39b234470fe6e09e9627cbf021161",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-javadoc.jar.sha512",
+				"sha256": "e96e2de568f4aecbc7fca0bd24abce56300e0ef6f21476c70b2a6db5f3540d74",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-sources.jar",
+				"sha256": "03ec07845675489f8c83a37c09ef065538314a88924838d745ccef66c26ce74a",
+				"bytes": 21796
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-sources.jar.md5",
+				"sha256": "cee5b8f167f2d2df760587a4474e2c165e048c7b42b685140babb3d786768b83",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-sources.jar.sha1",
+				"sha256": "23c052ddbd031b9bf363e21c7ef13a6093db84b12804742bab4f33d187bd6472",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-sources.jar.sha256",
+				"sha256": "931964be44134fb6e9a578a78bd2ee3dc9d625bd8d285d5e0b0dbfb673155d9c",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1-sources.jar.sha512",
+				"sha256": "e01b77f46618dbe620acafd750e1ceba3609b5f9d4daa696fcadb970e33aa68e",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.aar",
+				"sha256": "6fdaae4a949195530bed7b2190830dd106cf876d44af76672a99afff471a97c5",
+				"bytes": 48466
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.aar.md5",
+				"sha256": "2d12759433ac69091dcf787b672df3409054a481692e4fd57b44866d61beb48f",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.aar.sha1",
+				"sha256": "9a23f3d45a2b9b90af2c3f68bcf5f76893f3badab3c046c34da9c00814da38d9",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.aar.sha256",
+				"sha256": "2c68f35cbe45cad14c7876a99fcd0bc0605d231c43349929146f58089bdccdb4",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.aar.sha512",
+				"sha256": "3e0c8926dc54b73583e69c32249afeaf807390293cf124ceda77ffb5fe2d95f2",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.module",
+				"sha256": "de758f95ac8ac28943db49ce5eb3a8d2b7ac6fb2200c6c9a18a99f1a092ec2d5",
+				"bytes": 3795
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.module.md5",
+				"sha256": "f75fcfe9e634ad8406fd58ecc186cb75b4351a944b199dc4a987c9c44a9071f5",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.module.sha1",
+				"sha256": "3bf5556228c15f67816404e7bb1921927dcf7af2168c082eb061723aca9db56d",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.module.sha256",
+				"sha256": "76b2b6db0c3776a649cb933f15c2941dab0ffb7d794377cf25ac1a2804d835f9",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.module.sha512",
+				"sha256": "948e4cf41aa7a5d4939853d612b578b1ca9049a8dc5d505fd825860298242483",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.pom",
+				"sha256": "4e2f05d1c70ca8568023ac3a368d01f9434098c3b30367b2477e4e908b91f172",
+				"bytes": 2231
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.pom.md5",
+				"sha256": "6489e4cc58f541cfc361dcad92e51045ee6a543b65af9408164ff9a933d5fae2",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.pom.sha1",
+				"sha256": "c59e7bad763f11f5030985c7a52e28d96ba3ab441d07717cc3cbeaf7e5628484",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.pom.sha256",
+				"sha256": "3ddd294f298ff115b75d197884733636c9d1c2662eb7443170b567df9a1bbcf9",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-android/3.0.0-alpha.1/c15t-android-3.0.0-alpha.1.pom.sha512",
+				"sha256": "6bb60ae44d255d97368ee5aba88ead05a81eb7901668b9717f80cf9950e2b8ba",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-android/maven-metadata.xml",
+				"sha256": "3e7086dda5d95f72097a5827d9e939deaa8eb1a7a9698daa9901a21b8b1397cb",
+				"bytes": 351
+			},
+			{
+				"path": "com/c15t/c15t-android/maven-metadata.xml.md5",
+				"sha256": "c5dcbbb0f3a906340d528e56445b31d023b5f06545dab94a671d2ed4713f2686",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-android/maven-metadata.xml.sha1",
+				"sha256": "bbba1c957cc6a75da6a040d68ab6aa554ec3beebc47e22ba58e933d4c36f9fa1",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-android/maven-metadata.xml.sha256",
+				"sha256": "d4ede885cda3b5afb36a5353c65da54b3261fddd742c155a1319ae9eb2f57db7",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-android/maven-metadata.xml.sha512",
+				"sha256": "76a4ca7b12b94864b7dd4f5b271eae86e8abdc6a6c6854814fc417806af637b2",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-javadoc.jar",
+				"sha256": "bbd22dab836ca01f7dfbe485696b8539f4081d10e56813f0ec78f33be930faec",
+				"bytes": 907142
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-javadoc.jar.md5",
+				"sha256": "b1983303bd75317a16ac0bd5f74a6e430f468fc60edbfb5ea48dd5ba96058d1f",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-javadoc.jar.sha1",
+				"sha256": "d773645329f6018ecfee64a0088c65056eb4a2747d755358908e4a4219d0d972",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-javadoc.jar.sha256",
+				"sha256": "418378830238aac92e302f84e3b7570cda314ba3edb6c3b05b16eda7348d71f3",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-javadoc.jar.sha512",
+				"sha256": "3fb84bbba6afe80e3dd6b95421192c1fb263dec334570bf657d828165a076843",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-sources.jar",
+				"sha256": "18bffb070dd1d5c66112e183bc040128eddeed8e1b497a92310539fcebe6b3d8",
+				"bytes": 35216
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-sources.jar.md5",
+				"sha256": "097fce1aa68b9a69bf6a33a612ecf85a48515d4e4e7205c765d1c648848223d3",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-sources.jar.sha1",
+				"sha256": "e42a6931f4abf23bb251055564745eab28ea3f038750bf1e6e4b49cd7bb7b121",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-sources.jar.sha256",
+				"sha256": "0368c120fc82a846727e846242d8d9f713a29ed4ace7e2892bfab393c2bf8088",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1-sources.jar.sha512",
+				"sha256": "73c56c9182dc97ea7de11977e99d3cbf82e128053a2f1f5714d81614bacb936e",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.aar",
+				"sha256": "c288745629b5a31b794f4fb13a576ef2b33b74e7fa6dfbdc6f5bb44ee6f735e0",
+				"bytes": 255133
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.aar.md5",
+				"sha256": "f46a459e344b94af4fc1013b19186bd3c143adac4d42b7fd74a2bc1d74f7ccc5",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.aar.sha1",
+				"sha256": "e1f2f4cc60e954788e914d1eb967ebade03a7e8ecc51c59e916ed98d10ab6112",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.aar.sha256",
+				"sha256": "8f88a9df534a986c8995eb35fa795aab8fae37f65a3e4035867d56e673311e81",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.aar.sha512",
+				"sha256": "6d2103e63cd84f99a2aceb5aa341cd340f343163d9d71370137e15fec509e9cf",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.module",
+				"sha256": "30472db6b94e8e864966bff964d6d6cf9e637448337abd0beeffbf5cce1f1f28",
+				"bytes": 4622
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.module.md5",
+				"sha256": "23c3ae57c95eaff16af26e2c0318f8d4644faa284fed8c5a6a83a82364d99c9b",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.module.sha1",
+				"sha256": "2cf073657b6917468beab44b0978ffc7d0e7937242791cc340e41d165fb2e647",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.module.sha256",
+				"sha256": "60c268eec0ec7769cb5258746274e2b9f8d474ca3fc17db067149103ecc71bbf",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.module.sha512",
+				"sha256": "d45f0eb31cea3dd280542370d6e1bec77f42c313b6c34a7232fd180ca7fad2ab",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.pom",
+				"sha256": "c83f988a9db87b8dd97363071b5dac727e934370697bef8db6bee39fc35745f9",
+				"bytes": 3212
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.pom.md5",
+				"sha256": "5aa19f6ce6440f6820b6487cc1f8e535594682de1933b5b00dc3bfa864c0b896",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.pom.sha1",
+				"sha256": "d9aad7340af733e5c7b6d653f1c907867d169bfdf90ea886056487432d86c75b",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.pom.sha256",
+				"sha256": "d918501623e5dc3943cfbacb0c875ccb4167bb6b95382e854f21574964643e68",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/3.0.0-alpha.1/c15t-consent-ui-3.0.0-alpha.1.pom.sha512",
+				"sha256": "41615a1bb6242cc1f06445ff3b365f33cf40aefb5e025326e822071889680d1a",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/maven-metadata.xml",
+				"sha256": "703356c26733a46ad321be7c4ce7306311959abe018bdbfdb243100e24cd2295",
+				"bytes": 354
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/maven-metadata.xml.md5",
+				"sha256": "9ed32cbbb4b78d4c77715204ed0df22d3323aa330586080d7c5553ea85cea486",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/maven-metadata.xml.sha1",
+				"sha256": "f41dd42cba74982eaab7156dbacc8da51aece0b2a386a2a2462e5654e6bb9602",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/maven-metadata.xml.sha256",
+				"sha256": "93f96b56af4e498336bcc5b58811ef38ac65c9941112d96e19c89522d8521899",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-consent-ui/maven-metadata.xml.sha512",
+				"sha256": "cc52072d436269f658432a1e2ea830b1c2c7a5cef9f7ac0d2812984905f36689",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-javadoc.jar",
+				"sha256": "f7d5a807a8308175a379a496e08e60d2155f45637ec0337a42d1ba59cb4aefe5",
+				"bytes": 3440766
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-javadoc.jar.md5",
+				"sha256": "92387e10df6f6cceff26b4cbac511c65176be083e6c0d3594bb5adea54557dbb",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-javadoc.jar.sha1",
+				"sha256": "34cad4a7a20e4c5e07832779065fa909c24752a9a285e2651a63af1235b879d0",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-javadoc.jar.sha256",
+				"sha256": "279843cd1e436cebf954bc4d09d7320efd2e117310200e47f44b6ea5db343e2c",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-javadoc.jar.sha512",
+				"sha256": "6db40af03695d2f211700cddf84f9573cf44e796f5f89d80c8483600a0139672",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-sources.jar",
+				"sha256": "743d54b2fa44c878e49cce5e123074458d3440bfc5627f1c6df805224b8085b5",
+				"bytes": 163178
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-sources.jar.md5",
+				"sha256": "e1ce27b7e9daccd0b8579f53da4984037eb89f1fa61ab2504aca76bad58760bd",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-sources.jar.sha1",
+				"sha256": "ca3d5a1c9eb5e9f53a7f23175ca17cc920b0548d422f6d77018ac8f1499acf63",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-sources.jar.sha256",
+				"sha256": "2b35d2f7cbb1d39aca6ce8556efcf764548e0d4f59457befa1c50aa770dabeb0",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1-sources.jar.sha512",
+				"sha256": "596d960e08e36add21e000afc254579304c5bb9a27675e4340766f71e636aeda",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.jar",
+				"sha256": "f9fbf86009959e3c9c4dfdf8d7c2432f494dc96b5ccda768e42ae3fbde0e5efb",
+				"bytes": 687175
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.jar.md5",
+				"sha256": "d7c89c8a5974ee0771cc83b8fb5829159afeff3d2cd14ecbbdab4d524f575839",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.jar.sha1",
+				"sha256": "9e1422f1f5637971b4d92e8f220d3ed0066438a0a8a9b4bd57b476114cb8a31c",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.jar.sha256",
+				"sha256": "3b1fe77a7a46189777d9d5f1646e21e626b782efacd79beddb63439b4b80514c",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.jar.sha512",
+				"sha256": "6461406ca413630a88d6893eaa4f88057444226d79e8530cb8831b5be4ed6638",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.module",
+				"sha256": "6babe25a780974cc79e2ef5f8dedda42d6d96a29eb08fc6c5c57cec0017f72d6",
+				"bytes": 3703
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.module.md5",
+				"sha256": "c0fa7d763bd7095b90b3f1ec14de30e711d94e934006558f9a8e1b9c42f3c994",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.module.sha1",
+				"sha256": "cd597d48d5b0c5228ee93f781f67ab78abbcd95d01e714b79df86605b4581c2c",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.module.sha256",
+				"sha256": "12500742e9f5d8850debdeb9a9121aee3d0eb3070c19d4244e2be0c70c3d3afc",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.module.sha512",
+				"sha256": "1395e045e0e26404adf2b9ca93a57d4202b4d184c6ee74dad0114159b2025546",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.pom",
+				"sha256": "d3332d284dbb9f7d2421013d7ae14b058d8bbae11904c960e157ac76b425f5e5",
+				"bytes": 1813
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.pom.md5",
+				"sha256": "a69fd460069cf7c99cb7a3378cc3db2ec196942f806a966c3ae61e2475b40640",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.pom.sha1",
+				"sha256": "9dd81c864c2e83033a5309cd95a87c7fb99d74f30d999aafee23a54f7aca922c",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.pom.sha256",
+				"sha256": "02808e42af96f5b7801c00b250ed6b76da64bbfdf1cd7b7b0e6ce53467eadca8",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-core/3.0.0-alpha.1/c15t-core-3.0.0-alpha.1.pom.sha512",
+				"sha256": "fc5679dafcfde6e2588ba632c955d5dc5ed71b25cfd3e493551f39fc638c3e30",
+				"bytes": 128
+			},
+			{
+				"path": "com/c15t/c15t-core/maven-metadata.xml",
+				"sha256": "0d2313ee3cb223c5eb7a5740fd99b0b3f7f15f0a47101916504e89b0484096df",
+				"bytes": 348
+			},
+			{
+				"path": "com/c15t/c15t-core/maven-metadata.xml.md5",
+				"sha256": "23e1f715f3957ac566019ac8224ba4a5c02d9f24c85a6f1a26a543543f3e9a89",
+				"bytes": 32
+			},
+			{
+				"path": "com/c15t/c15t-core/maven-metadata.xml.sha1",
+				"sha256": "c57e4e61672fedc5d8f80c35c3ce4c98b03dabbe07e2f114c69dc2976a76ac4b",
+				"bytes": 40
+			},
+			{
+				"path": "com/c15t/c15t-core/maven-metadata.xml.sha256",
+				"sha256": "e620a486246207b1798785ac23ca2903aaaa7f024d28869e6d3d34244b054801",
+				"bytes": 64
+			},
+			{
+				"path": "com/c15t/c15t-core/maven-metadata.xml.sha512",
+				"sha256": "5ab247623510dd2e734e8f406588e3e1a8f6f5bf5d0980954578223d56b62cb8",
+				"bytes": 128
+			}
+		]
+	},
+	"wrappers": [
+		{
+			"name": "onetrust",
+			"wrapperVersion": "202609.2.0",
+			"tarball": "https://registry.npmjs.org/react-native-onetrust-cmp/-/react-native-onetrust-cmp-202609.2.0.tgz",
+			"tarballSha256": "01fe8953d90498acb47987c89b93a1cb1aced12491962ec3fe4f79870b6420ed",
+			"package": "react-native-onetrust-cmp"
+		},
+		{
+			"name": "didomi",
+			"wrapperVersion": "2.38.1",
+			"tarball": "https://registry.npmjs.org/@didomi/react-native/-/react-native-2.38.1.tgz",
+			"tarballSha256": "296a88868fbaa345331e74af637b8b9cd26be6fa2aa045cdb3fea9dac30b61ca",
+			"package": "@didomi/react-native"
+		},
+		{
+			"name": "usercentrics",
+			"wrapperVersion": "2.34.0",
+			"tarball": "https://registry.npmjs.org/@usercentrics/react-native-sdk/-/react-native-sdk-2.34.0.tgz",
+			"tarballSha256": "a4e5056754119d50f0c39ad1735a3132cf933924255e6bc5b71a584f947f5b8c",
+			"package": "@usercentrics/react-native-sdk"
+		},
+		{
+			"name": "sourcepoint",
+			"wrapperVersion": "1.0.13",
+			"tarball": "https://registry.npmjs.org/@sourcepoint/react-native-cmp/-/react-native-cmp-1.0.13.tgz",
+			"tarballSha256": "41e8082555be3dfb13db58540b27babd8cf0df506ebeebef192a5d76fdd88f58",
+			"package": "@sourcepoint/react-native-cmp"
+		}
+	],
+	"iosDistributions": [
+		{
+			"name": "Didomi-XCFramework",
+			"version": "2.53.1",
+			"source": {
+				"http": "https://sdk.didomi.io/ios/didomi-ios-sdk-2.53.1-xcframework.zip"
+			},
+			"downloadUrl": "https://sdk.didomi.io/ios/didomi-ios-sdk-2.53.1-xcframework.zip",
+			"archiveBytes": 33256452,
+			"archiveSha256": "d49bf4de0ed6cc2f53ff6bc877def36b60d471304c5f2f83d7ebc4690175d9a0",
+			"podspecSha256": "b8239db7630783e6b52489241df83eacbc2c75dc34e1f6638bf5a7b2fd3046db"
+		},
+		{
+			"name": "OneTrust-CMP-XCFramework",
+			"version": "202609.2.0.0",
+			"source": {
+				"http": "https://sdk.onetrust.io/ot-cmp-sdk/OneTrust-CMP-XCFramework-202609.2.0.zip"
+			},
+			"downloadUrl": "https://sdk.onetrust.io/ot-cmp-sdk/OneTrust-CMP-XCFramework-202609.2.0.zip",
+			"archiveBytes": 6310786,
+			"archiveSha256": "fb74c7ed50b85824932a554a1946ab5bc18f8bd178c019694f9a483bb1dcd6f9",
+			"podspecSha256": "82521ff913bb8b10454bae9af8ab7d60c7c8bf0c57207324a1e2510558689148"
+		},
+		{
+			"name": "SPMobileCore",
+			"version": "0.1.13",
+			"source": {
+				"git": "https://github.com/SourcePointUSA/mobile-core.git",
+				"tag": "0.1.13"
+			},
+			"downloadUrl": "https://codeload.github.com/SourcePointUSA/mobile-core/tar.gz/refs/tags/0.1.13",
+			"archiveBytes": 56363213,
+			"archiveSha256": "7886d9d44aaebd7862b85ad770b9091b3c694d6667c3fd821655a541c4166079",
+			"podspecSha256": "7c6afb115f7f55b2cb6dbdf787558fb90841f826404d9b1debd56c8a63145a2b",
+			"tagResolution": "8a91f212eb1cb9323ce03337b7f0728bf17dac18\trefs/tags/0.1.13\n06e317bc6df4080ab9130db8eac128edbc950cbc\trefs/tags/0.1.13^{}"
+		},
+		{
+			"name": "ConsentViewController",
+			"version": "7.12.7",
+			"source": {
+				"git": "https://github.com/SourcePointUSA/ios-cmp-app.git",
+				"tag": "7.12.7"
+			},
+			"downloadUrl": "https://codeload.github.com/SourcePointUSA/ios-cmp-app/tar.gz/refs/tags/7.12.7",
+			"archiveBytes": 68910021,
+			"archiveSha256": "e52ad26e325d8956d1892460f112c97749f6dbfd1af8f975575f44d3953d6a85",
+			"podspecSha256": "cabb829b3f45cc7c82107bb6a3b29f5919fc7046f5b17c7e5d93c8a0a7c2ccb1",
+			"tagResolution": "fa618e070fcc6e845b52f072403c24a0bfcb0557\trefs/tags/7.12.7\n3b74fc4fd6759abda6de8324eed4dde4edb9d3e3\trefs/tags/7.12.7^{}"
+		},
+		{
+			"name": "Usercentrics",
+			"version": "2.34.0",
+			"source": {
+				"http": "https://bitbucket.org/usercentricscode/usercentrics-spm-sdk/downloads/Usercentrics-2.34.0.xcframework.zip"
+			},
+			"downloadUrl": "https://bitbucket.org/usercentricscode/usercentrics-spm-sdk/downloads/Usercentrics-2.34.0.xcframework.zip",
+			"archiveBytes": 23301421,
+			"archiveSha256": "8981db301c207aba06d3778d44ee8d42b4261587fcd5846a9d9e0831e9337458",
+			"podspecSha256": "fc004b0862b5b71ac3a53cc4f694ecc3c0c1d577893083b95dafde3624dbacc8"
+		},
+		{
+			"name": "UsercentricsUI",
+			"version": "2.34.0",
+			"source": {
+				"http": "https://bitbucket.org/usercentricscode/usercentrics-spm-ui/downloads/UsercentricsUI-2.34.0.xcframework.zip"
+			},
+			"downloadUrl": "https://bitbucket.org/usercentricscode/usercentrics-spm-ui/downloads/UsercentricsUI-2.34.0.xcframework.zip",
+			"archiveBytes": 6176962,
+			"archiveSha256": "1450a6b4bd4a6b513d5acefd209bb0989d9d741ef6ee405ac0a9062208cc4662",
+			"podspecSha256": "af5922ea1b8d00df16e33c35e7a40a5047fbf7e3593d493c49246da7d5cdcfc3"
+		}
+	],
+	"androidArtifacts": {
+		"baseline": [
+			{
+				"coordinate": "androidx.activity:activity:1.8.0",
+				"size": 169615,
+				"sha256": "d3a676709dea04f2a8506e2ae85052fff763db526ac7f16b04de50fdd05b0720"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-experimental:1.4.1",
+				"size": 39841,
+				"sha256": "6bd4c7c7476f8260cd3bdbb81183583e93fc9f790c27dea7dc314181cbf87aa0"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-jvm:1.9.1",
+				"size": 60577,
+				"sha256": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat-resources:1.7.0",
+				"size": 63996,
+				"sha256": "55b6778602680f3c288ce350a2c2d3dd158d97dbffc63476275826655582c388"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat:1.7.0",
+				"size": 1148962,
+				"sha256": "67189713b30a3fab6971713cc5fab1cb7f022bcf648a257563715c91d719d584"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-common:2.2.0",
+				"size": 11657,
+				"sha256": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-runtime:2.2.0",
+				"size": 7577,
+				"sha256": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+			},
+			{
+				"coordinate": "androidx.autofill:autofill:1.3.0",
+				"size": 40850,
+				"sha256": "b5a217cee7724ea42a382965a9b22a330b988d62cb97abe1b1af50e54370c322"
+			},
+			{
+				"coordinate": "androidx.cardview:cardview:1.0.0",
+				"size": 22527,
+				"sha256": "1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7"
+			},
+			{
+				"coordinate": "androidx.collection:collection-jvm:1.4.2",
+				"size": 775789,
+				"sha256": "984ce9bd780055eafb8a105aca3f514686bf7b1b6272ec7c645a98ce40fc7db4"
+			},
+			{
+				"coordinate": "androidx.concurrent:concurrent-futures:1.1.0",
+				"size": 25987,
+				"sha256": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout-core:1.0.0",
+				"size": 433547,
+				"sha256": "496c8c79664bd970c6a6be7a960a20dd157dfc5aa2f18e5b8333767ffbc59911"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout:2.1.0",
+				"size": 470611,
+				"sha256": "a458a7562363bd59c209a7dea847326a0e2b26b37a883dc3e29065a79a1c788b"
+			},
+			{
+				"coordinate": "androidx.coordinatorlayout:coordinatorlayout:1.1.0",
+				"size": 45020,
+				"sha256": "44a9e30abf56af1025c52a0af506fee9c4131aa55efda52f9fd9451211c5e8cb"
+			},
+			{
+				"coordinate": "androidx.core:core-ktx:1.17.0",
+				"size": 172506,
+				"sha256": "4d23190b8623b8abb3c5247a0a7727eca347062d026335c427a09e82711b15f8"
+			},
+			{
+				"coordinate": "androidx.core:core-viewtree:1.0.0",
+				"size": 6980,
+				"sha256": "dc1b678d58ebcf2bfa1587be68ff826694ce3d221251b9ef30d4d4b36297e6de"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+				"size": 10591,
+				"sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564"
+			},
+			{
+				"coordinate": "androidx.customview:customview:1.1.0",
+				"size": 33346,
+				"sha256": "01f76ab043770a97b054046f9815717b82ce0355c02967d16c61981359dc189a"
+			},
+			{
+				"coordinate": "androidx.databinding:viewbinding:8.12.0",
+				"size": 1861,
+				"sha256": "e35f7d95df78f7437e919506ebb10a989d155b44232d9f422a5e3926ccb4861e"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.drawerlayout:drawerlayout:1.1.1",
+				"size": 34591,
+				"sha256": "2c5f0dca378eb78ca2c4403f9889c77daa3059302260f26a07fe9f63c08926fe"
+			},
+			{
+				"coordinate": "androidx.dynamicanimation:dynamicanimation:1.1.0",
+				"size": 39592,
+				"sha256": "9062cc6637136a49ad17f8603c72519052ff9a569e617fc1b6db7086304da88f"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2-views-helper:1.3.0",
+				"size": 22075,
+				"sha256": "9a1351295a4f739df0efe8344adaa9afb34856c3af584d4a9afbec105a45b90b"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2:1.3.0",
+				"size": 143474,
+				"sha256": "2bf23818b23a996ddaa1b5fd5bb32129daff6bbb2dce15166e2fccdd2010b1a5"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-shapes-android:1.0.1",
+				"size": 88037,
+				"sha256": "7171269a4122feabb071768df46d10b362e47ac75fd0aa8dbcafa1f44f61b40c"
+			},
+			{
+				"coordinate": "androidx.interpolator:interpolator:1.0.0",
+				"size": 7669,
+				"sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common:2.6.2",
+				"size": 52314,
+				"sha256": "f34831b6c71cd844e1d35d1be49d5e79447c5ab856346531b1e8676fda7374b1"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.6.2",
+				"size": 11345,
+				"sha256": "2256780a3cff4a1e57fbb3d442557c17dc363ab8af105bcaf5261d8e2d5db949"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.6.2",
+				"size": 18971,
+				"sha256": "67359f609dfc2bf65da1270b23033f856064ec279f058e0a70c715f7c9003031"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-process:2.6.2",
+				"size": 16105,
+				"sha256": "0f33b1bd017f965a6afb2e7bf3e3bd343c624061c1986dea8ba2469d04349437"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime:2.6.2",
+				"size": 21738,
+				"sha256": "4867fd5279742fba8388821930cb2affe06d81a52814e7e41e70392ea0ef887c"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2",
+				"size": 39786,
+				"sha256": "7bc7dcbab17636ec076f12afe4d02671265c389457b1b366b37a0e8cb91e2da0"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.loader:loader:1.0.0",
+				"size": 33445,
+				"sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+			},
+			{
+				"coordinate": "androidx.profileinstaller:profileinstaller:1.3.1",
+				"size": 47619,
+				"sha256": "d0e402ec31f24028a1dc7eb6a0a3f9d9635c1459392cd734396343b73d673948"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+				"size": 2336,
+				"sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate:1.2.1",
+				"size": 20217,
+				"sha256": "21a7d4bcf6bdb94ad7b9283801529300b4fbb8808ca4f191e0cdce6fd8e4705a"
+			},
+			{
+				"coordinate": "androidx.startup:startup-runtime:1.1.1",
+				"size": 19371,
+				"sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3"
+			},
+			{
+				"coordinate": "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+				"size": 36200,
+				"sha256": "2ce7906cd1dea05aec81975db22d54382359c05a21b2527ad848bc60f6b27293"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing-ktx:1.2.0",
+				"size": 6007,
+				"sha256": "c33f9cbd931e6190ca38aa09bf8a7a8a19391d4b0fb7a7605a6b59f2d42580d1"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing:1.2.0",
+				"size": 6060,
+				"sha256": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+			},
+			{
+				"coordinate": "androidx.transition:transition:1.5.0",
+				"size": 181561,
+				"sha256": "0aa66a0ea406d25a1091f96a3b753b4b12e44fdc43b91ec52c17831e9c31f54b"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+				"size": 34496,
+				"sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+				"size": 33236,
+				"sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26"
+			},
+			{
+				"coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+				"size": 31061,
+				"sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+			},
+			{
+				"coordinate": "androidx.viewpager2:viewpager2:1.0.0",
+				"size": 61552,
+				"sha256": "e95c0031d4cc247cd48196c6287e58d2cee54d9c79b85afea7c90920330275af"
+			},
+			{
+				"coordinate": "androidx.viewpager:viewpager:1.0.0",
+				"size": 53513,
+				"sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+			},
+			{
+				"coordinate": "androidx.window:window-core-android:1.5.1",
+				"size": 18778,
+				"sha256": "b289ce85090f1f976569fa92bbac84011f54ba1b21f0ce883655b34c8f9f9eea"
+			},
+			{
+				"coordinate": "androidx.window:window:1.5.1",
+				"size": 485445,
+				"sha256": "3c3061966f012fc22f2e99701f683e82e732435ae2f2a1d5b2f99d82bb7b8864"
+			},
+			{
+				"coordinate": "com.facebook.fbjni:fbjni:0.7.0",
+				"size": 4349156,
+				"sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-base:3.6.0",
+				"size": 58031,
+				"sha256": "8da98f1ef7af49e8885d3b72165a352ba3e19256e633f1a7a98bf9ea647275ad"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-drawable:3.6.0",
+				"size": 97629,
+				"sha256": "3abedaced7cd7b8fa8ed39ed8cfbf7ecc0de2a0b403e0a4f6355becc71000b79"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-gif:3.6.0",
+				"size": 407314,
+				"sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:drawee:3.6.0",
+				"size": 133887,
+				"sha256": "60435519cb76cee78739d928c46aada918f76cb993b75af92ab17e9d746b0277"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fbcore:3.6.0",
+				"size": 144807,
+				"sha256": "6fd98c2b5737ee56a9c90f1c34d87d24e5d3324fd7fc2cca6d6e74b1c0b43ce9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fresco:3.6.0",
+				"size": 35673,
+				"sha256": "db82128c0b0d209b2f48afd84292c5f54b3bfe407b28fa32babfde95914b03f9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-base:3.6.0",
+				"size": 210175,
+				"sha256": "69caad07fe3700b48f3b56662504f9c1235da2e977b8eacd9df251321e9649c6"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-native:3.6.0",
+				"size": 24140,
+				"sha256": "5cbeafb0f7d91c078e256bb1af2981493f37b2a386df43593109d6abef7792d9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-okhttp3:3.6.0",
+				"size": 13935,
+				"sha256": "faa01ed0394a5ec86cfe9c06e106a32179e4fb8378e7aeefde58321594ba6593"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline:3.6.0",
+				"size": 525282,
+				"sha256": "57f04195e5d7273671ce467d0e23c487b3c2c8746ac6257f2a2753cc0771f69f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-ashmem:3.6.0",
+				"size": 4392,
+				"sha256": "0b2b1a8d7d6e5806312c4b7b46a15537e3ad12a7aa9fc3ac262465303082b946"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-java:3.6.0",
+				"size": 4016,
+				"sha256": "4504fdc563e699748b300f3e35279be0918c04981e7ef61f919663dbd69e683f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-native:3.6.0",
+				"size": 4289,
+				"sha256": "cdc0cce108bcab69da2b761eed389e4792f994b03b524bd826316c2932eb0cf8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:middleware:3.6.0",
+				"size": 6534,
+				"sha256": "9661f47cb1156a0a7246819802c9b017ba5170f6ae7abedf31fd2cf662e3dc10"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagefilters:3.6.0",
+				"size": 53565,
+				"sha256": "5044745e85fb35177e8e2b80df82c02a968a6db88affe711e4fb0038924d32bd"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagetranscoder:3.6.0",
+				"size": 836494,
+				"sha256": "0d8f8559617c88763dc75e6005fc60e37bfd6bb20fe5b97a187cabefc2b11a7c"
+			},
+			{
+				"coordinate": "com.facebook.fresco:soloader:3.6.0",
+				"size": 784,
+				"sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-common:3.6.0",
+				"size": 41184,
+				"sha256": "001e310264c8bace79243d16ac03fb60bae7adfc2c4ac0c66b0006c249208ff0"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-core:3.6.0",
+				"size": 15958,
+				"sha256": "b515c69ba120c61ea157e2596ddf3a9226339c0e6acfc96b50bf966149b1c141"
+			},
+			{
+				"coordinate": "com.facebook.fresco:urimod:3.6.0",
+				"size": 16584,
+				"sha256": "54bc0886e579eb0833297492b7d89cb4c613ca95c379bacc41adfe29539a91f7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-options:3.6.0",
+				"size": 35184,
+				"sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-renderer:3.6.0",
+				"size": 23611,
+				"sha256": "0da312cab4ea101d322bb621954753fcadfc2b8fd3eb9d5ccc55f624be0e4bd8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-source:3.6.0",
+				"size": 15368,
+				"sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491"
+			},
+			{
+				"coordinate": "com.facebook.fresco:webpsupport:3.6.0",
+				"size": 844128,
+				"sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf"
+			},
+			{
+				"coordinate": "com.facebook.hermes:hermes-android:250829098.0.17",
+				"size": 81347431,
+				"sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8"
+			},
+			{
+				"coordinate": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+				"size": 20583,
+				"sha256": "caefba935643dc962758a760f1627a402215af034d96c0f484d63b7fddca992f"
+			},
+			{
+				"coordinate": "com.facebook.react:react-android:0.86.3",
+				"size": 168043847,
+				"sha256": "59b66e453d8775a54df66a321c0d5002b98716d68c4bd9edb8e64d7110ff8d28"
+			},
+			{
+				"coordinate": "com.facebook.soloader:annotation:0.12.1",
+				"size": 1562,
+				"sha256": "f6ddd55268bf1824225df7a35ec1b8b33cf98855a6c9c153d189899e5ef4a418"
+			},
+			{
+				"coordinate": "com.facebook.soloader:nativeloader:0.12.1",
+				"size": 3158,
+				"sha256": "971ded86009c0ac56fb2275e128f852e7dcbc41a40cd799688f8a1aebde5195d"
+			},
+			{
+				"coordinate": "com.facebook.soloader:soloader:0.12.1",
+				"size": 120077,
+				"sha256": "5bc6e15d712f90a0a3890d22db0eef5fe89ef3fcb3ae8aa1f8f6a6d99547c892"
+			},
+			{
+				"coordinate": "com.facebook.yoga:proguard-annotations:1.19.0",
+				"size": 1607,
+				"sha256": "fb65f706eea05b5640fb6b93d21d6c41f9e2b4e7a6e6d9f28ce9d2a574474995"
+			},
+			{
+				"coordinate": "com.google.android.material:material:1.13.0",
+				"size": 2500936,
+				"sha256": "6d5e1cbb67c05bcdcbbf84005787dafd354a155f59a4d3800fd45fa7eb3689f5"
+			},
+			{
+				"coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+				"size": 19936,
+				"sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+			},
+			{
+				"coordinate": "com.google.code.gson:gson:2.8.6",
+				"size": 240255,
+				"sha256": "c8fb4839054d280b3033f800d1f5a97de2f028eb8ba2eb458ad287e536f3f25f"
+			},
+			{
+				"coordinate": "com.google.errorprone:error_prone_annotations:2.15.0",
+				"size": 16023,
+				"sha256": "067047714349e7789a5bdbfad9d1c0af9f3a1eb28c55a0ee3f68e682f905c4eb"
+			},
+			{
+				"coordinate": "com.google.guava:listenablefuture:1.0",
+				"size": 3149,
+				"sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069"
+			},
+			{
+				"coordinate": "com.parse.bolts:bolts-tasks:1.4.0",
+				"size": 38092,
+				"sha256": "9bc51e3eca853a9df2fbac62c2317db2c9ea619b95b5531c30440243daaccee2"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-urlconnection:4.9.2",
+				"size": 4890,
+				"sha256": "0e1c39aa89668f9625c9207acd4a8784dc868ad0d5a2011d9e15e0674f3b7d11"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp:4.9.2",
+				"size": 792108,
+				"sha256": "3b2ee1b768c1df28c30d2fe6b38dda4d2c519210e30ca3d27950618c563c92de"
+			},
+			{
+				"coordinate": "com.squareup.okio:okio-jvm:3.16.0",
+				"size": 382591,
+				"sha256": "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-android:0.4.0",
+				"size": 1247244,
+				"sha256": "2778570454ae78026df42ace7168b8a6500f2521a5d497f2ab2fc0f804247826"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-okio-android:0.4.0",
+				"size": 10623,
+				"sha256": "8461ece75b646bfe30f6f53a559c2eac82f745f3575d76648386182ffa7c873d"
+			},
+			{
+				"coordinate": "commons-codec:commons-codec:1.10",
+				"size": 284184,
+				"sha256": "4241dfa94e711d435f29a4604a3e2de5c4aa3c165e23bd066be6fc1fc4309569"
+			},
+			{
+				"coordinate": "commons-io:commons-io:1.4",
+				"size": 109043,
+				"sha256": "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d"
+			},
+			{
+				"coordinate": "expo.modules.asset:expo.modules.asset:57.0.20",
+				"size": 29619,
+				"sha256": "1e71ea20d2ce42ff6ab775611fd7a0bd7f6dbb02af4e8b16c31e3ea1251d3c21"
+			},
+			{
+				"coordinate": "expo.modules.webview:expo.modules.webview:57.0.1",
+				"size": 79547,
+				"sha256": "2d319293dab9a90216f66c1788188656d5960a77f6cb14baaceeaa4eff370b7e"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.filesystem:57.0.7",
+				"size": 693468,
+				"sha256": "3e2b67c2e0b15fd89354be1f282473e954058d89970ea7e91ec0aebb42fd5833"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.font:57.0.4",
+				"size": 29409,
+				"sha256": "d7ea73905f045bfec5b9c40172b9b29f327d7a80a0bf05389d12966d157a1430"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.keepawake:57.0.2",
+				"size": 15770,
+				"sha256": "7f059d9be13ca2b9658a205a61ffa8490a004c7ce83ea9ed76044058237739c4"
+			},
+			{
+				"coordinate": "io.github.lukmccall.pika:pika-api:0.3.2",
+				"size": 31719,
+				"sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e"
+			},
+			{
+				"coordinate": "javax.inject:javax.inject:1",
+				"size": 2497,
+				"sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+			},
+			{
+				"coordinate": "org.brotli:dec:0.1.2",
+				"size": 98115,
+				"sha256": "615c0c3efef990d77831104475fba6a1f7971388691d4bad1471ad84101f6d52"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-annotations-jvm:1.3.72",
+				"size": 2676,
+				"sha256": "3ee3a56dd451e33f8352e0d2803a55ca1b9156d7f8a8e0759bf8e187ff8db24a"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.20",
+				"size": 3081304,
+				"sha256": "419778f2b7a826bad6ee2ca1e4bdebe639ab306d2904fa3ef2a308ecfaab3811"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
+				"size": 945,
+				"sha256": "5343bf795783932e5fa538b0bca05af810bb07213edb9baa770c784068f57867"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+				"size": 969,
+				"sha256": "4198b0eaf090a4f25b6f7e5a59581f4314ba8c9f6cd1d13ee9d348e65ed8f707"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+				"size": 1761444,
+				"sha256": "8836ccffd3585fadda9901244b20d42901d2f3cd581058d8434e2ffabcf3a3e7"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+				"size": 17826,
+				"sha256": "e713f1f874244115a07571065cffa0f24f5e78300e9720fea16de3af1d75fd41"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+				"size": 1479317,
+				"sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+			},
+			{
+				"coordinate": "org.jetbrains:annotations:23.0.0",
+				"size": 29371,
+				"sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+			},
+			{
+				"coordinate": "org.jspecify:jspecify:1.0.0",
+				"size": 3819,
+				"sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+			}
+		],
+		"c15t": [
+			{
+				"coordinate": "androidx.activity:activity-compose:1.11.0",
+				"size": 1057910,
+				"sha256": "03d5232a9371338475a3d9e40cabeb072faab16dd01d94b481c1ebf13535c59a"
+			},
+			{
+				"coordinate": "androidx.activity:activity-ktx:1.11.0",
+				"size": 5744,
+				"sha256": "3663f6811a3c6c0c28f8ba82ba5e9f363f4bc12ee53155794f456d3c5b2acae3"
+			},
+			{
+				"coordinate": "androidx.activity:activity:1.11.0",
+				"size": 221073,
+				"sha256": "26726186b34f90b0fe55bbf0ebbf640ade99915bc35f4cb0153ddcf751499bd3"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-experimental:1.4.1",
+				"size": 39841,
+				"sha256": "6bd4c7c7476f8260cd3bdbb81183583e93fc9f790c27dea7dc314181cbf87aa0"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-jvm:1.9.1",
+				"size": 60577,
+				"sha256": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat-resources:1.7.0",
+				"size": 63996,
+				"sha256": "55b6778602680f3c288ce350a2c2d3dd158d97dbffc63476275826655582c388"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat:1.7.0",
+				"size": 1148962,
+				"sha256": "67189713b30a3fab6971713cc5fab1cb7f022bcf648a257563715c91d719d584"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-common:2.2.0",
+				"size": 11657,
+				"sha256": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-runtime:2.2.0",
+				"size": 7577,
+				"sha256": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+			},
+			{
+				"coordinate": "androidx.autofill:autofill:1.3.0",
+				"size": 40850,
+				"sha256": "b5a217cee7724ea42a382965a9b22a330b988d62cb97abe1b1af50e54370c322"
+			},
+			{
+				"coordinate": "androidx.cardview:cardview:1.0.0",
+				"size": 22527,
+				"sha256": "1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7"
+			},
+			{
+				"coordinate": "androidx.collection:collection-jvm:1.5.0",
+				"size": 877998,
+				"sha256": "70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341"
+			},
+			{
+				"coordinate": "androidx.collection:collection-ktx:1.5.0",
+				"size": 4799,
+				"sha256": "939b4a8697640e77d83e4e8b4c4a9d18f8130198c5961194af8dd9db9dc7c353"
+			},
+			{
+				"coordinate": "androidx.compose.animation:animation-android:1.9.0",
+				"size": 1448016,
+				"sha256": "788eeac00159aaedd97f685067cf2c87cbf114c21746732653970e3055231322"
+			},
+			{
+				"coordinate": "androidx.compose.animation:animation-core-android:1.9.0",
+				"size": 1341412,
+				"sha256": "5f90fa63a7cf526dde0ed37e3b65bd18674989006e4beb6d38056c85364401e0"
+			},
+			{
+				"coordinate": "androidx.compose.foundation:foundation-android:1.9.0",
+				"size": 5154110,
+				"sha256": "691ba463d1e0a5b32d94f0448d692572faadf7a10a9c7460af41b2c430b36782"
+			},
+			{
+				"coordinate": "androidx.compose.foundation:foundation-layout-android:1.9.0",
+				"size": 590371,
+				"sha256": "9354b415148840ccbaf216b53161ff2c55ccbec90a94d3466e5e573b4b41f34e"
+			},
+			{
+				"coordinate": "androidx.compose.material3:material3-android:1.3.2",
+				"size": 4965387,
+				"sha256": "847666d9fc2d4348b6ec76a6a6094f14fb60de631ee4f6992004ec71a4f44336"
+			},
+			{
+				"coordinate": "androidx.compose.material:material-icons-core-android:1.7.8",
+				"size": 823515,
+				"sha256": "332c06b25e662cc417fb087e76b8faa5cb249f4992ffa3360084a3d4ab882284"
+			},
+			{
+				"coordinate": "androidx.compose.material:material-ripple-android:1.9.0",
+				"size": 96342,
+				"sha256": "e09fd2c7e7d11005b07699502f778884b8cb9bf1409b10b0d2ee03cd903ce11a"
+			},
+			{
+				"coordinate": "androidx.compose.runtime:runtime-android:1.9.0",
+				"size": 2455919,
+				"sha256": "6a7036a07bd63778a50d224713a503d11e3a7a42259b5c54a8a46da09d2e5ed7"
+			},
+			{
+				"coordinate": "androidx.compose.runtime:runtime-annotation-android:1.9.0",
+				"size": 9072,
+				"sha256": "3fba9d6be5307d998403038f6dfaa3fedd924c5618cb45a49f56a5bf6282509d"
+			},
+			{
+				"coordinate": "androidx.compose.runtime:runtime-saveable-android:1.9.0",
+				"size": 1032386,
+				"sha256": "26efa54576534271d65c5bdf93c34ee9c89dbeca345873730b8f1ac923da3faa"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-android:1.9.0",
+				"size": 5734820,
+				"sha256": "1393c820e9ae061b58aaddb034003fa9a0e01786928ac628a2e12d2826fbde43"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-geometry-android:1.9.0",
+				"size": 59151,
+				"sha256": "41c5fa42c90fc24b4d656e837f83cefe0410acc7d114ad78c62bac45098ac6a4"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-graphics-android:1.9.0",
+				"size": 1675815,
+				"sha256": "d015cda06cdb03ab5471a63960e424941e5f217e6f87e339abd7ceee3929209a"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-text-android:1.9.0",
+				"size": 802456,
+				"sha256": "2605e2406625ff0338c888937da22c437af653a2f42afadacaad2174717f5e82"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-unit-android:1.9.0",
+				"size": 98887,
+				"sha256": "dbeda1aaea03bbd2da1f4df10180346e32cbe8a58239a24f9b8b8cb24202fd8c"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-util-android:1.9.0",
+				"size": 22837,
+				"sha256": "9376cbd1ddf0655e7105886637ea1451461fcfd3a3ceeecffecceaeebb53410b"
+			},
+			{
+				"coordinate": "androidx.concurrent:concurrent-futures:1.1.0",
+				"size": 25987,
+				"sha256": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout-core:1.0.0",
+				"size": 433547,
+				"sha256": "496c8c79664bd970c6a6be7a960a20dd157dfc5aa2f18e5b8333767ffbc59911"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout:2.1.0",
+				"size": 470611,
+				"sha256": "a458a7562363bd59c209a7dea847326a0e2b26b37a883dc3e29065a79a1c788b"
+			},
+			{
+				"coordinate": "androidx.coordinatorlayout:coordinatorlayout:1.1.0",
+				"size": 45020,
+				"sha256": "44a9e30abf56af1025c52a0af506fee9c4131aa55efda52f9fd9451211c5e8cb"
+			},
+			{
+				"coordinate": "androidx.core:core-ktx:1.17.0",
+				"size": 172506,
+				"sha256": "4d23190b8623b8abb3c5247a0a7727eca347062d026335c427a09e82711b15f8"
+			},
+			{
+				"coordinate": "androidx.core:core-viewtree:1.0.0",
+				"size": 6980,
+				"sha256": "dc1b678d58ebcf2bfa1587be68ff826694ce3d221251b9ef30d4d4b36297e6de"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+				"size": 10591,
+				"sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564"
+			},
+			{
+				"coordinate": "androidx.customview:customview-poolingcontainer:1.0.0",
+				"size": 6608,
+				"sha256": "3584102fc49bf399c56e3b7be4bfe12000c46112320cd8cf85cc0a8f93f3e752"
+			},
+			{
+				"coordinate": "androidx.customview:customview:1.1.0",
+				"size": 33346,
+				"sha256": "01f76ab043770a97b054046f9815717b82ce0355c02967d16c61981359dc189a"
+			},
+			{
+				"coordinate": "androidx.databinding:viewbinding:8.12.0",
+				"size": 1861,
+				"sha256": "e35f7d95df78f7437e919506ebb10a989d155b44232d9f422a5e3926ccb4861e"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.drawerlayout:drawerlayout:1.1.1",
+				"size": 34591,
+				"sha256": "2c5f0dca378eb78ca2c4403f9889c77daa3059302260f26a07fe9f63c08926fe"
+			},
+			{
+				"coordinate": "androidx.dynamicanimation:dynamicanimation:1.1.0",
+				"size": 39592,
+				"sha256": "9062cc6637136a49ad17f8603c72519052ff9a569e617fc1b6db7086304da88f"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2-views-helper:1.4.0",
+				"size": 22560,
+				"sha256": "ed5d3ed772a5fbf0d570f7526f585cd61a180e60f9372584c328a68e2cff3375"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2:1.4.0",
+				"size": 143546,
+				"sha256": "433febd3434a45667176c76a64f3f205ca6335a6b544c5b5d57f25a38a375242"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-path:1.0.1",
+				"size": 39380,
+				"sha256": "8ca4032b6d79b351f0b59ad4b580eddbb9423e1652f7c958830687f1eee2ec03"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-shapes-android:1.0.1",
+				"size": 88037,
+				"sha256": "7171269a4122feabb071768df46d10b362e47ac75fd0aa8dbcafa1f44f61b40c"
+			},
+			{
+				"coordinate": "androidx.interpolator:interpolator:1.0.0",
+				"size": 7669,
+				"sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common-java8:2.10.0",
+				"size": 4839,
+				"sha256": "497dd84de9f2fd46324f25f9a3af032d3a23d087e87af515c4b19435f6d6a651"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common-jvm:2.10.0",
+				"size": 60791,
+				"sha256": "15943082d87bcd78830398fa377f2c8b12643de290d0906ed8e49a2d335ddb54"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core-ktx:2.10.0",
+				"size": 5834,
+				"sha256": "5f18429749a183e19178d8665ae42bf7b6310b50358ae9e0e0cc452afd6e0bc3"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.10.0",
+				"size": 34341,
+				"sha256": "12dd61a9843ccebb4547d3ebe2f6d030ca8f6988d22f8fad19c0af93b4a97e95"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.10.0",
+				"size": 55037,
+				"sha256": "3e8c009fc88da1c52e4ed05a81269d5ac9bd405046f300307f5e3a17e201a6df"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-process:2.10.0",
+				"size": 19845,
+				"sha256": "10bb5bb12773dca11d8343c014cfd17dfb40967d6ece37e8f15d04d8ceb0775c"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime-android:2.10.0",
+				"size": 80161,
+				"sha256": "2193a1573d623f37b20c7d27d1a8f903a72f651cc6f32e5794f85dda744fee75"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime-compose-android:2.10.0",
+				"size": 1051246,
+				"sha256": "46e996d526829596f6db4626169a967f056fde7103507ff596bcd177b73c3675"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime-ktx-android:2.10.0",
+				"size": 5337,
+				"sha256": "871883703339f87284d232cb436e317c6f4af5612d92b43f27c6b13b92109fa7"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-android:2.10.0",
+				"size": 64099,
+				"sha256": "9303287030027ca0b8cf98a748ddeb121ec1bfa1312c0069428e4765bbabce78"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-compose-android:2.10.0",
+				"size": 1025140,
+				"sha256": "225904e54ad5154768630471e108b98e143c261df0c08380ff43ea7e832dad7e"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0",
+				"size": 5812,
+				"sha256": "54295ac86b67886dc0613e38f621c531995d0662005fc763e340e19a90994f84"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate-android:2.10.0",
+				"size": 56701,
+				"sha256": "19404239fa584322c2f81e9659e162bc011b746d29dc950a11d260624d83225e"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.10.0",
+				"size": 4568,
+				"sha256": "4b809cf9eb7323d200504e95921feb777ff080215cadb8237742d5ed0ba5b792"
+			},
+			{
+				"coordinate": "androidx.loader:loader:1.0.0",
+				"size": 33445,
+				"sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+			},
+			{
+				"coordinate": "androidx.profileinstaller:profileinstaller:1.4.0",
+				"size": 53890,
+				"sha256": "d502141fcce902430f62b674c32aecd0f75262e7ee2cd15c74adb617cd13130a"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+				"size": 2336,
+				"sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate-android:1.4.0",
+				"size": 136412,
+				"sha256": "1656ce62cd233d488bdbbd42e533b80b22435b7a690acae6dbe7302392512c14"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate-compose-android:1.4.0",
+				"size": 15893,
+				"sha256": "0f0ae3032d6c6eea834ee22179c8976160d09d841d30e47f53f56b1b3438774b"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate-ktx:1.4.0",
+				"size": 5764,
+				"sha256": "23593939446bc5a154a1e35fddd87b82f19e2adf072207f115bf29a8b431c1d3"
+			},
+			{
+				"coordinate": "androidx.startup:startup-runtime:1.1.1",
+				"size": 19371,
+				"sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3"
+			},
+			{
+				"coordinate": "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+				"size": 36200,
+				"sha256": "2ce7906cd1dea05aec81975db22d54382359c05a21b2527ad848bc60f6b27293"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing-ktx:1.2.0",
+				"size": 6007,
+				"sha256": "c33f9cbd931e6190ca38aa09bf8a7a8a19391d4b0fb7a7605a6b59f2d42580d1"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing:1.2.0",
+				"size": 6060,
+				"sha256": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+			},
+			{
+				"coordinate": "androidx.transition:transition:1.5.0",
+				"size": 181561,
+				"sha256": "0aa66a0ea406d25a1091f96a3b753b4b12e44fdc43b91ec52c17831e9c31f54b"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+				"size": 34496,
+				"sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+				"size": 33236,
+				"sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26"
+			},
+			{
+				"coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+				"size": 31061,
+				"sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+			},
+			{
+				"coordinate": "androidx.viewpager2:viewpager2:1.0.0",
+				"size": 61552,
+				"sha256": "e95c0031d4cc247cd48196c6287e58d2cee54d9c79b85afea7c90920330275af"
+			},
+			{
+				"coordinate": "androidx.viewpager:viewpager:1.0.0",
+				"size": 53513,
+				"sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+			},
+			{
+				"coordinate": "androidx.window:window-core-android:1.5.1",
+				"size": 18778,
+				"sha256": "b289ce85090f1f976569fa92bbac84011f54ba1b21f0ce883655b34c8f9f9eea"
+			},
+			{
+				"coordinate": "androidx.window:window:1.5.1",
+				"size": 485445,
+				"sha256": "3c3061966f012fc22f2e99701f683e82e732435ae2f2a1d5b2f99d82bb7b8864"
+			},
+			{
+				"coordinate": "com.c15t:c15t-android:3.0.0-alpha.1",
+				"size": 48466,
+				"sha256": "6fdaae4a949195530bed7b2190830dd106cf876d44af76672a99afff471a97c5"
+			},
+			{
+				"coordinate": "com.c15t:c15t-consent-ui:3.0.0-alpha.1",
+				"size": 255133,
+				"sha256": "c288745629b5a31b794f4fb13a576ef2b33b74e7fa6dfbdc6f5bb44ee6f735e0"
+			},
+			{
+				"coordinate": "com.c15t:c15t-core:3.0.0-alpha.1",
+				"size": 687175,
+				"sha256": "f9fbf86009959e3c9c4dfdf8d7c2432f494dc96b5ccda768e42ae3fbde0e5efb"
+			},
+			{
+				"coordinate": "com.facebook.fbjni:fbjni:0.7.0",
+				"size": 4349156,
+				"sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-base:3.6.0",
+				"size": 58031,
+				"sha256": "8da98f1ef7af49e8885d3b72165a352ba3e19256e633f1a7a98bf9ea647275ad"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-drawable:3.6.0",
+				"size": 97629,
+				"sha256": "3abedaced7cd7b8fa8ed39ed8cfbf7ecc0de2a0b403e0a4f6355becc71000b79"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-gif:3.6.0",
+				"size": 407314,
+				"sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:drawee:3.6.0",
+				"size": 133887,
+				"sha256": "60435519cb76cee78739d928c46aada918f76cb993b75af92ab17e9d746b0277"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fbcore:3.6.0",
+				"size": 144807,
+				"sha256": "6fd98c2b5737ee56a9c90f1c34d87d24e5d3324fd7fc2cca6d6e74b1c0b43ce9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fresco:3.6.0",
+				"size": 35673,
+				"sha256": "db82128c0b0d209b2f48afd84292c5f54b3bfe407b28fa32babfde95914b03f9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-base:3.6.0",
+				"size": 210175,
+				"sha256": "69caad07fe3700b48f3b56662504f9c1235da2e977b8eacd9df251321e9649c6"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-native:3.6.0",
+				"size": 24140,
+				"sha256": "5cbeafb0f7d91c078e256bb1af2981493f37b2a386df43593109d6abef7792d9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-okhttp3:3.6.0",
+				"size": 13935,
+				"sha256": "faa01ed0394a5ec86cfe9c06e106a32179e4fb8378e7aeefde58321594ba6593"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline:3.6.0",
+				"size": 525282,
+				"sha256": "57f04195e5d7273671ce467d0e23c487b3c2c8746ac6257f2a2753cc0771f69f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-ashmem:3.6.0",
+				"size": 4392,
+				"sha256": "0b2b1a8d7d6e5806312c4b7b46a15537e3ad12a7aa9fc3ac262465303082b946"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-java:3.6.0",
+				"size": 4016,
+				"sha256": "4504fdc563e699748b300f3e35279be0918c04981e7ef61f919663dbd69e683f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-native:3.6.0",
+				"size": 4289,
+				"sha256": "cdc0cce108bcab69da2b761eed389e4792f994b03b524bd826316c2932eb0cf8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:middleware:3.6.0",
+				"size": 6534,
+				"sha256": "9661f47cb1156a0a7246819802c9b017ba5170f6ae7abedf31fd2cf662e3dc10"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagefilters:3.6.0",
+				"size": 53565,
+				"sha256": "5044745e85fb35177e8e2b80df82c02a968a6db88affe711e4fb0038924d32bd"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagetranscoder:3.6.0",
+				"size": 836494,
+				"sha256": "0d8f8559617c88763dc75e6005fc60e37bfd6bb20fe5b97a187cabefc2b11a7c"
+			},
+			{
+				"coordinate": "com.facebook.fresco:soloader:3.6.0",
+				"size": 784,
+				"sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-common:3.6.0",
+				"size": 41184,
+				"sha256": "001e310264c8bace79243d16ac03fb60bae7adfc2c4ac0c66b0006c249208ff0"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-core:3.6.0",
+				"size": 15958,
+				"sha256": "b515c69ba120c61ea157e2596ddf3a9226339c0e6acfc96b50bf966149b1c141"
+			},
+			{
+				"coordinate": "com.facebook.fresco:urimod:3.6.0",
+				"size": 16584,
+				"sha256": "54bc0886e579eb0833297492b7d89cb4c613ca95c379bacc41adfe29539a91f7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-options:3.6.0",
+				"size": 35184,
+				"sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-renderer:3.6.0",
+				"size": 23611,
+				"sha256": "0da312cab4ea101d322bb621954753fcadfc2b8fd3eb9d5ccc55f624be0e4bd8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-source:3.6.0",
+				"size": 15368,
+				"sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491"
+			},
+			{
+				"coordinate": "com.facebook.fresco:webpsupport:3.6.0",
+				"size": 844128,
+				"sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf"
+			},
+			{
+				"coordinate": "com.facebook.hermes:hermes-android:250829098.0.17",
+				"size": 81347431,
+				"sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8"
+			},
+			{
+				"coordinate": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+				"size": 20583,
+				"sha256": "caefba935643dc962758a760f1627a402215af034d96c0f484d63b7fddca992f"
+			},
+			{
+				"coordinate": "com.facebook.react:react-android:0.86.3",
+				"size": 168043847,
+				"sha256": "59b66e453d8775a54df66a321c0d5002b98716d68c4bd9edb8e64d7110ff8d28"
+			},
+			{
+				"coordinate": "com.facebook.soloader:annotation:0.12.1",
+				"size": 1562,
+				"sha256": "f6ddd55268bf1824225df7a35ec1b8b33cf98855a6c9c153d189899e5ef4a418"
+			},
+			{
+				"coordinate": "com.facebook.soloader:nativeloader:0.12.1",
+				"size": 3158,
+				"sha256": "971ded86009c0ac56fb2275e128f852e7dcbc41a40cd799688f8a1aebde5195d"
+			},
+			{
+				"coordinate": "com.facebook.soloader:soloader:0.12.1",
+				"size": 120077,
+				"sha256": "5bc6e15d712f90a0a3890d22db0eef5fe89ef3fcb3ae8aa1f8f6a6d99547c892"
+			},
+			{
+				"coordinate": "com.facebook.yoga:proguard-annotations:1.19.0",
+				"size": 1607,
+				"sha256": "fb65f706eea05b5640fb6b93d21d6c41f9e2b4e7a6e6d9f28ce9d2a574474995"
+			},
+			{
+				"coordinate": "com.google.android.material:material:1.13.0",
+				"size": 2500936,
+				"sha256": "6d5e1cbb67c05bcdcbbf84005787dafd354a155f59a4d3800fd45fa7eb3689f5"
+			},
+			{
+				"coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+				"size": 19936,
+				"sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+			},
+			{
+				"coordinate": "com.google.code.gson:gson:2.8.6",
+				"size": 240255,
+				"sha256": "c8fb4839054d280b3033f800d1f5a97de2f028eb8ba2eb458ad287e536f3f25f"
+			},
+			{
+				"coordinate": "com.google.errorprone:error_prone_annotations:2.15.0",
+				"size": 16023,
+				"sha256": "067047714349e7789a5bdbfad9d1c0af9f3a1eb28c55a0ee3f68e682f905c4eb"
+			},
+			{
+				"coordinate": "com.google.guava:listenablefuture:1.0",
+				"size": 3149,
+				"sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069"
+			},
+			{
+				"coordinate": "com.parse.bolts:bolts-tasks:1.4.0",
+				"size": 38092,
+				"sha256": "9bc51e3eca853a9df2fbac62c2317db2c9ea619b95b5531c30440243daaccee2"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-urlconnection:4.9.2",
+				"size": 4890,
+				"sha256": "0e1c39aa89668f9625c9207acd4a8784dc868ad0d5a2011d9e15e0674f3b7d11"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp:4.9.2",
+				"size": 792108,
+				"sha256": "3b2ee1b768c1df28c30d2fe6b38dda4d2c519210e30ca3d27950618c563c92de"
+			},
+			{
+				"coordinate": "com.squareup.okio:okio-jvm:3.16.0",
+				"size": 382591,
+				"sha256": "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-android:0.4.0",
+				"size": 1247244,
+				"sha256": "2778570454ae78026df42ace7168b8a6500f2521a5d497f2ab2fc0f804247826"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-okio-android:0.4.0",
+				"size": 10623,
+				"sha256": "8461ece75b646bfe30f6f53a559c2eac82f745f3575d76648386182ffa7c873d"
+			},
+			{
+				"coordinate": "commons-codec:commons-codec:1.10",
+				"size": 284184,
+				"sha256": "4241dfa94e711d435f29a4604a3e2de5c4aa3c165e23bd066be6fc1fc4309569"
+			},
+			{
+				"coordinate": "commons-io:commons-io:1.4",
+				"size": 109043,
+				"sha256": "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d"
+			},
+			{
+				"coordinate": "expo.modules.asset:expo.modules.asset:57.0.20",
+				"size": 29619,
+				"sha256": "1e71ea20d2ce42ff6ab775611fd7a0bd7f6dbb02af4e8b16c31e3ea1251d3c21"
+			},
+			{
+				"coordinate": "expo.modules.webview:expo.modules.webview:57.0.1",
+				"size": 79547,
+				"sha256": "2d319293dab9a90216f66c1788188656d5960a77f6cb14baaceeaa4eff370b7e"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.filesystem:57.0.7",
+				"size": 693468,
+				"sha256": "3e2b67c2e0b15fd89354be1f282473e954058d89970ea7e91ec0aebb42fd5833"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.font:57.0.4",
+				"size": 29409,
+				"sha256": "d7ea73905f045bfec5b9c40172b9b29f327d7a80a0bf05389d12966d157a1430"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.keepawake:57.0.2",
+				"size": 15770,
+				"sha256": "7f059d9be13ca2b9658a205a61ffa8490a004c7ce83ea9ed76044058237739c4"
+			},
+			{
+				"coordinate": "io.github.lukmccall.pika:pika-api:0.3.2",
+				"size": 31719,
+				"sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e"
+			},
+			{
+				"coordinate": "javax.inject:javax.inject:1",
+				"size": 2497,
+				"sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+			},
+			{
+				"coordinate": "org.brotli:dec:0.1.2",
+				"size": 98115,
+				"sha256": "615c0c3efef990d77831104475fba6a1f7971388691d4bad1471ad84101f6d52"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-annotations-jvm:1.3.72",
+				"size": 2676,
+				"sha256": "3ee3a56dd451e33f8352e0d2803a55ca1b9156d7f8a8e0759bf8e187ff8db24a"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.20",
+				"size": 3081304,
+				"sha256": "419778f2b7a826bad6ee2ca1e4bdebe639ab306d2904fa3ef2a308ecfaab3811"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
+				"size": 945,
+				"sha256": "5343bf795783932e5fa538b0bca05af810bb07213edb9baa770c784068f57867"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+				"size": 969,
+				"sha256": "4198b0eaf090a4f25b6f7e5a59581f4314ba8c9f6cd1d13ee9d348e65ed8f707"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+				"size": 1761444,
+				"sha256": "8836ccffd3585fadda9901244b20d42901d2f3cd581058d8434e2ffabcf3a3e7"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+				"size": 17826,
+				"sha256": "e713f1f874244115a07571065cffa0f24f5e78300e9720fea16de3af1d75fd41"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+				"size": 1479317,
+				"sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1",
+				"size": 391821,
+				"sha256": "3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1",
+				"size": 276969,
+				"sha256": "8769e5647557e3700919c32d508f5c5dad53c5d8234cd10846354fbcff14aa24"
+			},
+			{
+				"coordinate": "org.jetbrains:annotations:23.0.0",
+				"size": 29371,
+				"sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+			},
+			{
+				"coordinate": "org.jspecify:jspecify:1.0.0",
+				"size": 3819,
+				"sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+			}
+		],
+		"onetrust": [
+			{
+				"coordinate": "androidx.activity:activity-ktx:1.8.0",
+				"size": 24828,
+				"sha256": "bfee12c1c88c3f74954fbf6e6766bc183956f37478b7c024fae7f5b38493d7a5"
+			},
+			{
+				"coordinate": "androidx.activity:activity:1.8.0",
+				"size": 169615,
+				"sha256": "d3a676709dea04f2a8506e2ae85052fff763db526ac7f16b04de50fdd05b0720"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-experimental:1.4.1",
+				"size": 39841,
+				"sha256": "6bd4c7c7476f8260cd3bdbb81183583e93fc9f790c27dea7dc314181cbf87aa0"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-jvm:1.9.1",
+				"size": 60577,
+				"sha256": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat-resources:1.7.0",
+				"size": 63996,
+				"sha256": "55b6778602680f3c288ce350a2c2d3dd158d97dbffc63476275826655582c388"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat:1.7.0",
+				"size": 1148962,
+				"sha256": "67189713b30a3fab6971713cc5fab1cb7f022bcf648a257563715c91d719d584"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-common:2.2.0",
+				"size": 11657,
+				"sha256": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-runtime:2.2.0",
+				"size": 7577,
+				"sha256": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+			},
+			{
+				"coordinate": "androidx.asynclayoutinflater:asynclayoutinflater:1.0.0",
+				"size": 7826,
+				"sha256": "f7eab60c57addd94bb06275832fe7600611beaaae1a1ec597c231956faf96c8b"
+			},
+			{
+				"coordinate": "androidx.autofill:autofill:1.3.0",
+				"size": 40850,
+				"sha256": "b5a217cee7724ea42a382965a9b22a330b988d62cb97abe1b1af50e54370c322"
+			},
+			{
+				"coordinate": "androidx.browser:browser:1.7.0",
+				"size": 222361,
+				"sha256": "e03b6ef8c6d7a148886702abcd2995ee1d4bc0492cac5fc6aa49c472fce06b93"
+			},
+			{
+				"coordinate": "androidx.cardview:cardview:1.0.0",
+				"size": 22527,
+				"sha256": "1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7"
+			},
+			{
+				"coordinate": "androidx.collection:collection-jvm:1.4.2",
+				"size": 775789,
+				"sha256": "984ce9bd780055eafb8a105aca3f514686bf7b1b6272ec7c645a98ce40fc7db4"
+			},
+			{
+				"coordinate": "androidx.collection:collection-ktx:1.4.2",
+				"size": 261,
+				"sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3"
+			},
+			{
+				"coordinate": "androidx.concurrent:concurrent-futures:1.1.0",
+				"size": 25987,
+				"sha256": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout-core:1.0.4",
+				"size": 443912,
+				"sha256": "3e477f4de231e58b25f5a992f3be45e97d332c34a39a9e3e7d4b78ae0ac2256f"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout:2.1.4",
+				"size": 476596,
+				"sha256": "0df714c0b51e54710ebf746eb469d333176bbb3cb29f80775dc3ca4eb3162512"
+			},
+			{
+				"coordinate": "androidx.coordinatorlayout:coordinatorlayout:1.1.0",
+				"size": 45020,
+				"sha256": "44a9e30abf56af1025c52a0af506fee9c4131aa55efda52f9fd9451211c5e8cb"
+			},
+			{
+				"coordinate": "androidx.core:core-ktx:1.17.0",
+				"size": 172506,
+				"sha256": "4d23190b8623b8abb3c5247a0a7727eca347062d026335c427a09e82711b15f8"
+			},
+			{
+				"coordinate": "androidx.core:core-viewtree:1.0.0",
+				"size": 6980,
+				"sha256": "dc1b678d58ebcf2bfa1587be68ff826694ce3d221251b9ef30d4d4b36297e6de"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+				"size": 10591,
+				"sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564"
+			},
+			{
+				"coordinate": "androidx.customview:customview:1.1.0",
+				"size": 33346,
+				"sha256": "01f76ab043770a97b054046f9815717b82ce0355c02967d16c61981359dc189a"
+			},
+			{
+				"coordinate": "androidx.databinding:viewbinding:8.12.0",
+				"size": 1861,
+				"sha256": "e35f7d95df78f7437e919506ebb10a989d155b44232d9f422a5e3926ccb4861e"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.drawerlayout:drawerlayout:1.1.1",
+				"size": 34591,
+				"sha256": "2c5f0dca378eb78ca2c4403f9889c77daa3059302260f26a07fe9f63c08926fe"
+			},
+			{
+				"coordinate": "androidx.dynamicanimation:dynamicanimation:1.1.0",
+				"size": 39592,
+				"sha256": "9062cc6637136a49ad17f8603c72519052ff9a569e617fc1b6db7086304da88f"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2-views-helper:1.3.0",
+				"size": 22075,
+				"sha256": "9a1351295a4f739df0efe8344adaa9afb34856c3af584d4a9afbec105a45b90b"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2:1.3.0",
+				"size": 143474,
+				"sha256": "2bf23818b23a996ddaa1b5fd5bb32129daff6bbb2dce15166e2fccdd2010b1a5"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment-ktx:1.6.2",
+				"size": 30127,
+				"sha256": "460c9036b64da7ce7a066a0cb184e01451cfc44929aa1b62fe0689597f2343f8"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.6.2",
+				"size": 354022,
+				"sha256": "df7ba73f377dbd7ccd28b112afd08d28b60ec2c6bc91ec658609c845442ace08"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.6.2",
+				"size": 354022,
+				"sha256": "df7ba73f377dbd7ccd28b112afd08d28b60ec2c6bc91ec658609c845442ace08"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-shapes-android:1.0.1",
+				"size": 88037,
+				"sha256": "7171269a4122feabb071768df46d10b362e47ac75fd0aa8dbcafa1f44f61b40c"
+			},
+			{
+				"coordinate": "androidx.interpolator:interpolator:1.0.0",
+				"size": 7669,
+				"sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+			},
+			{
+				"coordinate": "androidx.legacy:legacy-support-core-ui:1.0.0",
+				"size": 11309,
+				"sha256": "0d1260c6e7e6a337f875df71b516931e703f716e90889817cd3a20fa5ac3d947"
+			},
+			{
+				"coordinate": "androidx.legacy:legacy-support-core-utils:1.0.0",
+				"size": 4104,
+				"sha256": "a7edcf01d5b52b3034073027bc4775b78a4764bb6202bb91d61c829add8dd1c7"
+			},
+			{
+				"coordinate": "androidx.legacy:legacy-support-v4:1.0.0",
+				"size": 2844,
+				"sha256": "78fec1485f0f388a4749022dd51416857127cd2544ae1c3fd0b16589055480b0"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common:2.7.0",
+				"size": 56617,
+				"sha256": "533ded8ee0645a18f6653da53fe1ec5a15430e7f36a737d45e410531f30f3318"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core-ktx:2.7.0",
+				"size": 20190,
+				"sha256": "a97f4c2191ebdd32f99ac229597bd1a92446b01cd1a088d13494cc05cabf0def"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.7.0",
+				"size": 11311,
+				"sha256": "af8e11b87e030d6e3107ed39adcf01fa10d6259eb15c43cba6e7b4e3ffaedf27"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.7.0",
+				"size": 57786,
+				"sha256": "9affa24c6160dc8cadaac9422d4f714e5009537d0243afc4bc74b5b7cf0de4ad"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.7.0",
+				"size": 57786,
+				"sha256": "9affa24c6160dc8cadaac9422d4f714e5009537d0243afc4bc74b5b7cf0de4ad"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-process:2.7.0",
+				"size": 16079,
+				"sha256": "6fb33d9473a4933da9d98a0b12b606127e80681bd9b90309ccd2c2230863b939"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0",
+				"size": 60544,
+				"sha256": "ef7033b15db27569771c3c0aeb6f92392b5654216195fe74136ea3e108912ad4"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime:2.7.0",
+				"size": 21940,
+				"sha256": "81c6fb1dbb6a3cd7dc827d7b08e1c8142ed3a400a3422441108480e22f8937c4"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-service:2.7.0",
+				"size": 6103,
+				"sha256": "e31bd0e92bd0b31b360448ca5a5b80fc1f63507bb4ee8e9bd300437449d1789b"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0",
+				"size": 4208,
+				"sha256": "b492dbfc85926471367112f6d0e5d2c9991e855c5421ab37399396cc0123e2af"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.7.0",
+				"size": 39363,
+				"sha256": "57c578862e219e360c6957ff0bca6f169707b1e5582d4fa593e284f7f63e33f6"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.7.0",
+				"size": 39819,
+				"sha256": "4e1d92e289920cd7b50e3671b9191bd413407349cda6f602b0285464f41c1c82"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.7.0",
+				"size": 39819,
+				"sha256": "4e1d92e289920cd7b50e3671b9191bd413407349cda6f602b0285464f41c1c82"
+			},
+			{
+				"coordinate": "androidx.loader:loader:1.0.0",
+				"size": 33445,
+				"sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+			},
+			{
+				"coordinate": "androidx.localbroadcastmanager:localbroadcastmanager:1.0.0",
+				"size": 6808,
+				"sha256": "e71c328ceef5c4a7d76f2d86df1b65d65fe2acf868b1a4efd84a3f34336186d8"
+			},
+			{
+				"coordinate": "androidx.media:media:1.0.0",
+				"size": 338761,
+				"sha256": "b23b527b2bac870c4a7451e6982d7132e413e88d7f27dbeb1fc7640a720cd9ee"
+			},
+			{
+				"coordinate": "androidx.print:print:1.0.0",
+				"size": 15782,
+				"sha256": "1d5c7f3135a1bba661fc373fd72e11eb0a4adbb3396787826dd8e4190d5d9edd"
+			},
+			{
+				"coordinate": "androidx.profileinstaller:profileinstaller:1.3.1",
+				"size": 47619,
+				"sha256": "d0e402ec31f24028a1dc7eb6a0a3f9d9635c1459392cd734396343b73d673948"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+				"size": 2336,
+				"sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb"
+			},
+			{
+				"coordinate": "androidx.room:room-common:2.5.0",
+				"size": 60225,
+				"sha256": "0262e2a0e2a2e9c7267b9f7a405847ce636a06c4c16c52976cb68df77866b87d"
+			},
+			{
+				"coordinate": "androidx.room:room-ktx:2.5.0",
+				"size": 36026,
+				"sha256": "10f76df56222534c7bf87c98643d6a0fdb7e9d342396a679c315e11036b045f1"
+			},
+			{
+				"coordinate": "androidx.room:room-runtime:2.5.0",
+				"size": 237004,
+				"sha256": "9882841877a4437f2002ed9d353f757a5452e13b4ab0ebf195c63ccf0e2e0847"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate-ktx:1.2.1",
+				"size": 3375,
+				"sha256": "8553f87e7136c24ec5243560f48f1c32cba56daa77722f89589a5cafcb8f7894"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate:1.2.1",
+				"size": 20217,
+				"sha256": "21a7d4bcf6bdb94ad7b9283801529300b4fbb8808ca4f191e0cdce6fd8e4705a"
+			},
+			{
+				"coordinate": "androidx.slidingpanelayout:slidingpanelayout:1.0.0",
+				"size": 23503,
+				"sha256": "76bffb7cefbf780794d8817002dad1562f3e27c0a9f746d62401c8edb30aeede"
+			},
+			{
+				"coordinate": "androidx.sqlite:sqlite-framework:2.3.0",
+				"size": 32063,
+				"sha256": "8b5bd3acef01ea781a8545bdf710b1c06182417669a1a68cd0ae4a536cdae827"
+			},
+			{
+				"coordinate": "androidx.sqlite:sqlite:2.3.0",
+				"size": 30029,
+				"sha256": "d3d37e2403c523a5cee1983b27a6de7ad8dcbb502f446c3f76fca50ed73ce562"
+			},
+			{
+				"coordinate": "androidx.startup:startup-runtime:1.1.1",
+				"size": 19371,
+				"sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3"
+			},
+			{
+				"coordinate": "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+				"size": 36200,
+				"sha256": "2ce7906cd1dea05aec81975db22d54382359c05a21b2527ad848bc60f6b27293"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing-ktx:1.2.0",
+				"size": 6007,
+				"sha256": "c33f9cbd931e6190ca38aa09bf8a7a8a19391d4b0fb7a7605a6b59f2d42580d1"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing:1.2.0",
+				"size": 6060,
+				"sha256": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+			},
+			{
+				"coordinate": "androidx.transition:transition:1.5.0",
+				"size": 181561,
+				"sha256": "0aa66a0ea406d25a1091f96a3b753b4b12e44fdc43b91ec52c17831e9c31f54b"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+				"size": 34496,
+				"sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+				"size": 33236,
+				"sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26"
+			},
+			{
+				"coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+				"size": 31061,
+				"sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+			},
+			{
+				"coordinate": "androidx.viewpager2:viewpager2:1.0.0",
+				"size": 61552,
+				"sha256": "e95c0031d4cc247cd48196c6287e58d2cee54d9c79b85afea7c90920330275af"
+			},
+			{
+				"coordinate": "androidx.viewpager:viewpager:1.0.0",
+				"size": 53513,
+				"sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+			},
+			{
+				"coordinate": "androidx.window:window-core-android:1.5.1",
+				"size": 18778,
+				"sha256": "b289ce85090f1f976569fa92bbac84011f54ba1b21f0ce883655b34c8f9f9eea"
+			},
+			{
+				"coordinate": "androidx.window:window:1.5.1",
+				"size": 485445,
+				"sha256": "3c3061966f012fc22f2e99701f683e82e732435ae2f2a1d5b2f99d82bb7b8864"
+			},
+			{
+				"coordinate": "androidx.work:work-runtime:2.9.1",
+				"size": 1838630,
+				"sha256": "1be76486b894af179462941a39cab242b00d7235c3aeb4d756f45262b0c2e4a3"
+			},
+			{
+				"coordinate": "com.facebook.fbjni:fbjni:0.7.0",
+				"size": 4349156,
+				"sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-base:3.6.0",
+				"size": 58031,
+				"sha256": "8da98f1ef7af49e8885d3b72165a352ba3e19256e633f1a7a98bf9ea647275ad"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-drawable:3.6.0",
+				"size": 97629,
+				"sha256": "3abedaced7cd7b8fa8ed39ed8cfbf7ecc0de2a0b403e0a4f6355becc71000b79"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-gif:3.6.0",
+				"size": 407314,
+				"sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:drawee:3.6.0",
+				"size": 133887,
+				"sha256": "60435519cb76cee78739d928c46aada918f76cb993b75af92ab17e9d746b0277"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fbcore:3.6.0",
+				"size": 144807,
+				"sha256": "6fd98c2b5737ee56a9c90f1c34d87d24e5d3324fd7fc2cca6d6e74b1c0b43ce9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fresco:3.6.0",
+				"size": 35673,
+				"sha256": "db82128c0b0d209b2f48afd84292c5f54b3bfe407b28fa32babfde95914b03f9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-base:3.6.0",
+				"size": 210175,
+				"sha256": "69caad07fe3700b48f3b56662504f9c1235da2e977b8eacd9df251321e9649c6"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-native:3.6.0",
+				"size": 24140,
+				"sha256": "5cbeafb0f7d91c078e256bb1af2981493f37b2a386df43593109d6abef7792d9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-okhttp3:3.6.0",
+				"size": 13935,
+				"sha256": "faa01ed0394a5ec86cfe9c06e106a32179e4fb8378e7aeefde58321594ba6593"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline:3.6.0",
+				"size": 525282,
+				"sha256": "57f04195e5d7273671ce467d0e23c487b3c2c8746ac6257f2a2753cc0771f69f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-ashmem:3.6.0",
+				"size": 4392,
+				"sha256": "0b2b1a8d7d6e5806312c4b7b46a15537e3ad12a7aa9fc3ac262465303082b946"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-java:3.6.0",
+				"size": 4016,
+				"sha256": "4504fdc563e699748b300f3e35279be0918c04981e7ef61f919663dbd69e683f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-native:3.6.0",
+				"size": 4289,
+				"sha256": "cdc0cce108bcab69da2b761eed389e4792f994b03b524bd826316c2932eb0cf8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:middleware:3.6.0",
+				"size": 6534,
+				"sha256": "9661f47cb1156a0a7246819802c9b017ba5170f6ae7abedf31fd2cf662e3dc10"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagefilters:3.6.0",
+				"size": 53565,
+				"sha256": "5044745e85fb35177e8e2b80df82c02a968a6db88affe711e4fb0038924d32bd"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagetranscoder:3.6.0",
+				"size": 836494,
+				"sha256": "0d8f8559617c88763dc75e6005fc60e37bfd6bb20fe5b97a187cabefc2b11a7c"
+			},
+			{
+				"coordinate": "com.facebook.fresco:soloader:3.6.0",
+				"size": 784,
+				"sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-common:3.6.0",
+				"size": 41184,
+				"sha256": "001e310264c8bace79243d16ac03fb60bae7adfc2c4ac0c66b0006c249208ff0"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-core:3.6.0",
+				"size": 15958,
+				"sha256": "b515c69ba120c61ea157e2596ddf3a9226339c0e6acfc96b50bf966149b1c141"
+			},
+			{
+				"coordinate": "com.facebook.fresco:urimod:3.6.0",
+				"size": 16584,
+				"sha256": "54bc0886e579eb0833297492b7d89cb4c613ca95c379bacc41adfe29539a91f7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-options:3.6.0",
+				"size": 35184,
+				"sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-renderer:3.6.0",
+				"size": 23611,
+				"sha256": "0da312cab4ea101d322bb621954753fcadfc2b8fd3eb9d5ccc55f624be0e4bd8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-source:3.6.0",
+				"size": 15368,
+				"sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491"
+			},
+			{
+				"coordinate": "com.facebook.fresco:webpsupport:3.6.0",
+				"size": 844128,
+				"sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf"
+			},
+			{
+				"coordinate": "com.facebook.hermes:hermes-android:250829098.0.17",
+				"size": 81347431,
+				"sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8"
+			},
+			{
+				"coordinate": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+				"size": 20583,
+				"sha256": "caefba935643dc962758a760f1627a402215af034d96c0f484d63b7fddca992f"
+			},
+			{
+				"coordinate": "com.facebook.react:react-android:0.86.3",
+				"size": 168043847,
+				"sha256": "59b66e453d8775a54df66a321c0d5002b98716d68c4bd9edb8e64d7110ff8d28"
+			},
+			{
+				"coordinate": "com.facebook.soloader:annotation:0.12.1",
+				"size": 1562,
+				"sha256": "f6ddd55268bf1824225df7a35ec1b8b33cf98855a6c9c153d189899e5ef4a418"
+			},
+			{
+				"coordinate": "com.facebook.soloader:nativeloader:0.12.1",
+				"size": 3158,
+				"sha256": "971ded86009c0ac56fb2275e128f852e7dcbc41a40cd799688f8a1aebde5195d"
+			},
+			{
+				"coordinate": "com.facebook.soloader:soloader:0.12.1",
+				"size": 120077,
+				"sha256": "5bc6e15d712f90a0a3890d22db0eef5fe89ef3fcb3ae8aa1f8f6a6d99547c892"
+			},
+			{
+				"coordinate": "com.facebook.yoga:proguard-annotations:1.19.0",
+				"size": 1607,
+				"sha256": "fb65f706eea05b5640fb6b93d21d6c41f9e2b4e7a6e6d9f28ce9d2a574474995"
+			},
+			{
+				"coordinate": "com.github.bumptech.glide:annotations:4.10.0",
+				"size": 3707,
+				"sha256": "9cdc56335efeffe5b7ea5f7c98555451c6ea3c79c2f95f8e4ce2d4f76de226f8"
+			},
+			{
+				"coordinate": "com.github.bumptech.glide:disklrucache:4.10.0",
+				"size": 19879,
+				"sha256": "680856b62f39c9725e2ecdae3eb53bccc06c53c7f639554ae28ddcbaacce0a5f"
+			},
+			{
+				"coordinate": "com.github.bumptech.glide:gifdecoder:4.10.0",
+				"size": 17582,
+				"sha256": "197a1cd5b76855aa02b230c13974e293229b901dc2b96fab4315201e78baa804"
+			},
+			{
+				"coordinate": "com.github.bumptech.glide:glide:4.10.0",
+				"size": 605429,
+				"sha256": "07471967af4c290699feadb587c15671d31aebd95987f9b0b24210abfff1681e"
+			},
+			{
+				"coordinate": "com.google.android.material:material:1.13.0",
+				"size": 2500936,
+				"sha256": "6d5e1cbb67c05bcdcbbf84005787dafd354a155f59a4d3800fd45fa7eb3689f5"
+			},
+			{
+				"coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+				"size": 19936,
+				"sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+			},
+			{
+				"coordinate": "com.google.code.gson:gson:2.8.6",
+				"size": 240255,
+				"sha256": "c8fb4839054d280b3033f800d1f5a97de2f028eb8ba2eb458ad287e536f3f25f"
+			},
+			{
+				"coordinate": "com.google.errorprone:error_prone_annotations:2.15.0",
+				"size": 16023,
+				"sha256": "067047714349e7789a5bdbfad9d1c0af9f3a1eb28c55a0ee3f68e682f905c4eb"
+			},
+			{
+				"coordinate": "com.google.guava:listenablefuture:1.0",
+				"size": 3149,
+				"sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069"
+			},
+			{
+				"coordinate": "com.onetrust.cmp:native-sdk:202609.2.0.0",
+				"size": 1504248,
+				"sha256": "088aac96935a45bcb4be434b195038df501735a69e419a5059595fc40ece2d62"
+			},
+			{
+				"coordinate": "com.parse.bolts:bolts-tasks:1.4.0",
+				"size": 38092,
+				"sha256": "9bc51e3eca853a9df2fbac62c2317db2c9ea619b95b5531c30440243daaccee2"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-urlconnection:4.9.2",
+				"size": 4890,
+				"sha256": "0e1c39aa89668f9625c9207acd4a8784dc868ad0d5a2011d9e15e0674f3b7d11"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp:4.10.0",
+				"size": 782603,
+				"sha256": "7580f14fa1691206e37081ad3f92063b1603b328da0bb316f2fef02e0562e7ec"
+			},
+			{
+				"coordinate": "com.squareup.okio:okio-jvm:3.16.0",
+				"size": 382591,
+				"sha256": "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3"
+			},
+			{
+				"coordinate": "com.squareup.retrofit2:converter-scalars:2.8.1",
+				"size": 13353,
+				"sha256": "590bebd73373faeb6235f89893f65d6d53b523ba397a4e3ae6f1ee9cd8f69718"
+			},
+			{
+				"coordinate": "com.squareup.retrofit2:retrofit:2.8.1",
+				"size": 125955,
+				"sha256": "9f82b212ddd91b04a36d9bd74649a10e689cc86931e422848b454b74d890468b"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-android:0.4.0",
+				"size": 1247244,
+				"sha256": "2778570454ae78026df42ace7168b8a6500f2521a5d497f2ab2fc0f804247826"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-okio-android:0.4.0",
+				"size": 10623,
+				"sha256": "8461ece75b646bfe30f6f53a559c2eac82f745f3575d76648386182ffa7c873d"
+			},
+			{
+				"coordinate": "commons-codec:commons-codec:1.10",
+				"size": 284184,
+				"sha256": "4241dfa94e711d435f29a4604a3e2de5c4aa3c165e23bd066be6fc1fc4309569"
+			},
+			{
+				"coordinate": "commons-io:commons-io:1.4",
+				"size": 109043,
+				"sha256": "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d"
+			},
+			{
+				"coordinate": "expo.modules.asset:expo.modules.asset:57.0.20",
+				"size": 29619,
+				"sha256": "1e71ea20d2ce42ff6ab775611fd7a0bd7f6dbb02af4e8b16c31e3ea1251d3c21"
+			},
+			{
+				"coordinate": "expo.modules.webview:expo.modules.webview:57.0.1",
+				"size": 79547,
+				"sha256": "2d319293dab9a90216f66c1788188656d5960a77f6cb14baaceeaa4eff370b7e"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.filesystem:57.0.7",
+				"size": 693468,
+				"sha256": "3e2b67c2e0b15fd89354be1f282473e954058d89970ea7e91ec0aebb42fd5833"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.font:57.0.4",
+				"size": 29409,
+				"sha256": "d7ea73905f045bfec5b9c40172b9b29f327d7a80a0bf05389d12966d157a1430"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.keepawake:57.0.2",
+				"size": 15770,
+				"sha256": "7f059d9be13ca2b9658a205a61ffa8490a004c7ce83ea9ed76044058237739c4"
+			},
+			{
+				"coordinate": "io.github.lukmccall.pika:pika-api:0.3.2",
+				"size": 31719,
+				"sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e"
+			},
+			{
+				"coordinate": "javax.inject:javax.inject:1",
+				"size": 2497,
+				"sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+			},
+			{
+				"coordinate": "org.brotli:dec:0.1.2",
+				"size": 98115,
+				"sha256": "615c0c3efef990d77831104475fba6a1f7971388691d4bad1471ad84101f6d52"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-annotations-jvm:1.3.72",
+				"size": 2676,
+				"sha256": "3ee3a56dd451e33f8352e0d2803a55ca1b9156d7f8a8e0759bf8e187ff8db24a"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.20",
+				"size": 3081304,
+				"sha256": "419778f2b7a826bad6ee2ca1e4bdebe639ab306d2904fa3ef2a308ecfaab3811"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
+				"size": 945,
+				"sha256": "5343bf795783932e5fa538b0bca05af810bb07213edb9baa770c784068f57867"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+				"size": 969,
+				"sha256": "4198b0eaf090a4f25b6f7e5a59581f4314ba8c9f6cd1d13ee9d348e65ed8f707"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+				"size": 1761444,
+				"sha256": "8836ccffd3585fadda9901244b20d42901d2f3cd581058d8434e2ffabcf3a3e7"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+				"size": 17826,
+				"sha256": "e713f1f874244115a07571065cffa0f24f5e78300e9720fea16de3af1d75fd41"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+				"size": 1479317,
+				"sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+			},
+			{
+				"coordinate": "org.jetbrains:annotations:23.0.0",
+				"size": 29371,
+				"sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+			},
+			{
+				"coordinate": "org.jspecify:jspecify:1.0.0",
+				"size": 3819,
+				"sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+			}
+		],
+		"didomi": [
+			{
+				"coordinate": "androidx.activity:activity-compose:1.9.3",
+				"size": 1139788,
+				"sha256": "0f5098a9e2b173a6c5a48f08251e7e949be12e6ee8b3a587b13b0830f1639297"
+			},
+			{
+				"coordinate": "androidx.activity:activity-ktx:1.9.3",
+				"size": 2130,
+				"sha256": "e2da34f68cac557986280198e5c1546b8a245269b050b1cc90b56916dbf69201"
+			},
+			{
+				"coordinate": "androidx.activity:activity:1.9.3",
+				"size": 214105,
+				"sha256": "7e45d2023dc17d715ffff3dc5792f798642c4ae11c948006b1752ab9edda5707"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-experimental:1.4.1",
+				"size": 39841,
+				"sha256": "6bd4c7c7476f8260cd3bdbb81183583e93fc9f790c27dea7dc314181cbf87aa0"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-jvm:1.9.1",
+				"size": 60577,
+				"sha256": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat-resources:1.7.1",
+				"size": 63997,
+				"sha256": "8e2db31224ca53b108c784da2b361959062716d416b210cfef3d5a3828306df0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat:1.7.1",
+				"size": 1148656,
+				"sha256": "2ad334a323b28046e89b738c77d184cb3dcca32a551ab048851b2fda23a3ba26"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-common:2.2.0",
+				"size": 11657,
+				"sha256": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-runtime:2.2.0",
+				"size": 7577,
+				"sha256": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+			},
+			{
+				"coordinate": "androidx.autofill:autofill:1.3.0",
+				"size": 40850,
+				"sha256": "b5a217cee7724ea42a382965a9b22a330b988d62cb97abe1b1af50e54370c322"
+			},
+			{
+				"coordinate": "androidx.cardview:cardview:1.0.0",
+				"size": 22527,
+				"sha256": "1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7"
+			},
+			{
+				"coordinate": "androidx.collection:collection-jvm:1.4.2",
+				"size": 775789,
+				"sha256": "984ce9bd780055eafb8a105aca3f514686bf7b1b6272ec7c645a98ce40fc7db4"
+			},
+			{
+				"coordinate": "androidx.collection:collection-ktx:1.4.2",
+				"size": 261,
+				"sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3"
+			},
+			{
+				"coordinate": "androidx.compose.animation:animation-android:1.6.6",
+				"size": 1410585,
+				"sha256": "ad3c2226efb38e7d1162da29d14a06b5a0630d4ecbc6de75b9a3d917428aabcc"
+			},
+			{
+				"coordinate": "androidx.compose.animation:animation-core-android:1.6.6",
+				"size": 1463383,
+				"sha256": "fb87465c56cd57c0026605f7b7e6ee0621cc7414d01678ede4fe56b24a2ef091"
+			},
+			{
+				"coordinate": "androidx.compose.foundation:foundation-android:1.6.6",
+				"size": 4432298,
+				"sha256": "7e3f15b70a7ac16395259950ea2de4231816d0fecfe3a55084692cecaa8c2c24"
+			},
+			{
+				"coordinate": "androidx.compose.foundation:foundation-layout-android:1.6.6",
+				"size": 526512,
+				"sha256": "e14b1bceb8e97a9c2bd6fe733d0da25e51bcf588d96199dcf1d06d36e851903b"
+			},
+			{
+				"coordinate": "androidx.compose.material3:material3-android:1.2.1",
+				"size": 4738857,
+				"sha256": "d344e0d73060cde4bbc0ed64146986ca1fae0e0ec953ad9698713edd2bd11600"
+			},
+			{
+				"coordinate": "androidx.compose.material:material-icons-core-android:1.6.6",
+				"size": 823517,
+				"sha256": "084f9f4f03a2da593bcd76fa21c8720543adff17d27d32a29dafe3d2c3a9b794"
+			},
+			{
+				"coordinate": "androidx.compose.material:material-ripple-android:1.6.6",
+				"size": 73206,
+				"sha256": "9d3ae4de1cdecae31c4e5b0cb9adf0bb01ad5525aa8704741c1ebd54c12793ca"
+			},
+			{
+				"coordinate": "androidx.compose.runtime:runtime-android:1.6.6",
+				"size": 2429480,
+				"sha256": "bc9472fd944bd2181781a75eeefb82a2d6114ba15a9398c7874058de99af88ad"
+			},
+			{
+				"coordinate": "androidx.compose.runtime:runtime-saveable-android:1.6.6",
+				"size": 1185053,
+				"sha256": "e5e29f5810a06da7995452f9d60d7f07cf8d0ae88daa8fa379d9568c0346c464"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-android:1.6.6",
+				"size": 4842265,
+				"sha256": "1973b9a1238a436e555268eabbd576ef8b7283a16a0da8780d5fac7c65b75b22"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-geometry-android:1.6.6",
+				"size": 36628,
+				"sha256": "3e5a8177da77ff81fbf877cbc553ea423996e515f516c3d79bb3ac4b78c20b88"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-graphics-android:1.6.6",
+				"size": 1530756,
+				"sha256": "14b15258194174a33c049caa50d6f7e4ea87ecaa39a1ae5411a81bd9573f6d33"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-text-android:1.6.6",
+				"size": 766098,
+				"sha256": "c23a5fbc18169cc97b09c0137200ae1c45cf86286d002d29d6d76d6475a06a02"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-tooling-preview-android:1.6.6",
+				"size": 17210,
+				"sha256": "ea9a308839f87e1845af4662ef3cce2fa6f8cb2bb90c0a415d664a6ca4b3b951"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-unit-android:1.6.6",
+				"size": 84112,
+				"sha256": "05d16f5f755111b0b355bc06a3eaa5fc25ed1dd273f025ead21e7722d21f6d83"
+			},
+			{
+				"coordinate": "androidx.compose.ui:ui-util-android:1.6.6",
+				"size": 13478,
+				"sha256": "f98419bf0bd9cef26bdd17dad40e8308e93ceaaf42f73188fc8d273744687c84"
+			},
+			{
+				"coordinate": "androidx.concurrent:concurrent-futures:1.1.0",
+				"size": 25987,
+				"sha256": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout-core:1.1.1",
+				"size": 585546,
+				"sha256": "3c2054328328831eb6e69b4014f6ef9faa117fd4b811929f3a91d3db375f2c02"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout:2.2.1",
+				"size": 507993,
+				"sha256": "30f8d79b782d283a90f0b6f7369169d9cf560091537fdd6056d1daa9f3033763"
+			},
+			{
+				"coordinate": "androidx.coordinatorlayout:coordinatorlayout:1.1.0",
+				"size": 45020,
+				"sha256": "44a9e30abf56af1025c52a0af506fee9c4131aa55efda52f9fd9451211c5e8cb"
+			},
+			{
+				"coordinate": "androidx.core:core-ktx:1.17.0",
+				"size": 172506,
+				"sha256": "4d23190b8623b8abb3c5247a0a7727eca347062d026335c427a09e82711b15f8"
+			},
+			{
+				"coordinate": "androidx.core:core-viewtree:1.0.0",
+				"size": 6980,
+				"sha256": "dc1b678d58ebcf2bfa1587be68ff826694ce3d221251b9ef30d4d4b36297e6de"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+				"size": 10591,
+				"sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564"
+			},
+			{
+				"coordinate": "androidx.customview:customview-poolingcontainer:1.0.0",
+				"size": 6608,
+				"sha256": "3584102fc49bf399c56e3b7be4bfe12000c46112320cd8cf85cc0a8f93f3e752"
+			},
+			{
+				"coordinate": "androidx.customview:customview:1.1.0",
+				"size": 33346,
+				"sha256": "01f76ab043770a97b054046f9815717b82ce0355c02967d16c61981359dc189a"
+			},
+			{
+				"coordinate": "androidx.databinding:viewbinding:8.13.2",
+				"size": 1860,
+				"sha256": "b9a3ae329638ab623dc1daff2ac07489e0e4dbcf90d77ce2d8759f767cd7a135"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.drawerlayout:drawerlayout:1.1.1",
+				"size": 34591,
+				"sha256": "2c5f0dca378eb78ca2c4403f9889c77daa3059302260f26a07fe9f63c08926fe"
+			},
+			{
+				"coordinate": "androidx.dynamicanimation:dynamicanimation:1.1.0",
+				"size": 39592,
+				"sha256": "9062cc6637136a49ad17f8603c72519052ff9a569e617fc1b6db7086304da88f"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2-views-helper:1.3.0",
+				"size": 22075,
+				"sha256": "9a1351295a4f739df0efe8344adaa9afb34856c3af584d4a9afbec105a45b90b"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2:1.3.0",
+				"size": 143474,
+				"sha256": "2bf23818b23a996ddaa1b5fd5bb32129daff6bbb2dce15166e2fccdd2010b1a5"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment-ktx:1.8.9",
+				"size": 27608,
+				"sha256": "078ad5877b04f4bf7350198579d81f9c8796fa20e46b4ade3f231a370456c5ad"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.8.9",
+				"size": 382986,
+				"sha256": "12de5b89ab6641c1d8da82b63dc816652622b06d2781b949b6fbd2dff9fac492"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-shapes-android:1.0.1",
+				"size": 88037,
+				"sha256": "7171269a4122feabb071768df46d10b362e47ac75fd0aa8dbcafa1f44f61b40c"
+			},
+			{
+				"coordinate": "androidx.interpolator:interpolator:1.0.0",
+				"size": 7669,
+				"sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common-java8:2.6.2",
+				"size": 261,
+				"sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common:2.6.2",
+				"size": 52314,
+				"sha256": "f34831b6c71cd844e1d35d1be49d5e79447c5ab856346531b1e8676fda7374b1"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core-ktx:2.6.2",
+				"size": 20510,
+				"sha256": "9f2c16e33a55ba8d67a3623a55befff2ec80643e3f0a926760df1d957c3f8aef"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.6.2",
+				"size": 11345,
+				"sha256": "2256780a3cff4a1e57fbb3d442557c17dc363ab8af105bcaf5261d8e2d5db949"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.6.2",
+				"size": 18971,
+				"sha256": "67359f609dfc2bf65da1270b23033f856064ec279f058e0a70c715f7c9003031"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-process:2.6.2",
+				"size": 16105,
+				"sha256": "0f33b1bd017f965a6afb2e7bf3e3bd343c624061c1986dea8ba2469d04349437"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2",
+				"size": 61591,
+				"sha256": "28a0b834f40edd52e2f8010bdc3057d2a0cc76aaa5ac9311adb0b9ce919ca9cc"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime:2.6.2",
+				"size": 21738,
+				"sha256": "4867fd5279742fba8388821930cb2affe06d81a52814e7e41e70392ea0ef887c"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2",
+				"size": 4793,
+				"sha256": "7fc0fa234a3321b1f34db5862b17da83d1c62c1bc66ec2fd4f1bb0a771acfabb"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2",
+				"size": 39786,
+				"sha256": "7bc7dcbab17636ec076f12afe4d02671265c389457b1b366b37a0e8cb91e2da0"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.loader:loader:1.0.0",
+				"size": 33445,
+				"sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+			},
+			{
+				"coordinate": "androidx.preference:preference-ktx:1.2.1",
+				"size": 6284,
+				"sha256": "872a5e3e07c0b8d21cb77769ab2f468b209ab6ec08231874401aecfea304a81c"
+			},
+			{
+				"coordinate": "androidx.preference:preference:1.2.1",
+				"size": 257054,
+				"sha256": "40ca8adfdb7effb61facb39bd9ca2e2f3a40d106743b0cd6dc9e21e8bedd4f85"
+			},
+			{
+				"coordinate": "androidx.profileinstaller:profileinstaller:1.4.0",
+				"size": 53890,
+				"sha256": "d502141fcce902430f62b674c32aecd0f75262e7ee2cd15c74adb617cd13130a"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.4.0",
+				"size": 452493,
+				"sha256": "0f32ccaffcda74c3f87f0b4cfe6ae78e8aa4eb3ad7dda4f2edf06eedc947a5cf"
+			},
+			{
+				"coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+				"size": 2336,
+				"sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate-ktx:1.2.1",
+				"size": 3375,
+				"sha256": "8553f87e7136c24ec5243560f48f1c32cba56daa77722f89589a5cafcb8f7894"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate:1.2.1",
+				"size": 20217,
+				"sha256": "21a7d4bcf6bdb94ad7b9283801529300b4fbb8808ca4f191e0cdce6fd8e4705a"
+			},
+			{
+				"coordinate": "androidx.slidingpanelayout:slidingpanelayout:1.2.0",
+				"size": 37999,
+				"sha256": "5f53339be2a4f90a9abea3571dd59e70a8a49e7f15dd82974a3898b4652e8714"
+			},
+			{
+				"coordinate": "androidx.startup:startup-runtime:1.1.1",
+				"size": 19371,
+				"sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3"
+			},
+			{
+				"coordinate": "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+				"size": 36200,
+				"sha256": "2ce7906cd1dea05aec81975db22d54382359c05a21b2527ad848bc60f6b27293"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing-ktx:1.2.0",
+				"size": 6007,
+				"sha256": "c33f9cbd931e6190ca38aa09bf8a7a8a19391d4b0fb7a7605a6b59f2d42580d1"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing:1.2.0",
+				"size": 6060,
+				"sha256": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+			},
+			{
+				"coordinate": "androidx.transition:transition:1.5.0",
+				"size": 181561,
+				"sha256": "0aa66a0ea406d25a1091f96a3b753b4b12e44fdc43b91ec52c17831e9c31f54b"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+				"size": 34496,
+				"sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+				"size": 33236,
+				"sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26"
+			},
+			{
+				"coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+				"size": 31061,
+				"sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+			},
+			{
+				"coordinate": "androidx.viewpager2:viewpager2:1.1.0-beta02",
+				"size": 67159,
+				"sha256": "bafac3ca991ed68a2c7ca6ff352966d200b12e66a342d10f497cb8168f59054a"
+			},
+			{
+				"coordinate": "androidx.viewpager:viewpager:1.0.0",
+				"size": 53513,
+				"sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+			},
+			{
+				"coordinate": "androidx.window:window-core-android:1.5.1",
+				"size": 18778,
+				"sha256": "b289ce85090f1f976569fa92bbac84011f54ba1b21f0ce883655b34c8f9f9eea"
+			},
+			{
+				"coordinate": "androidx.window:window:1.5.1",
+				"size": 485445,
+				"sha256": "3c3061966f012fc22f2e99701f683e82e732435ae2f2a1d5b2f99d82bb7b8864"
+			},
+			{
+				"coordinate": "app.cash.zipline:zipline-android:1.18.0",
+				"size": 1897028,
+				"sha256": "7e75c8286a460c210b7dc2aeec6f1a79a1974a67364d01d54506bc709b0ef5be"
+			},
+			{
+				"coordinate": "com.facebook.fbjni:fbjni:0.7.0",
+				"size": 4349156,
+				"sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-base:3.6.0",
+				"size": 58031,
+				"sha256": "8da98f1ef7af49e8885d3b72165a352ba3e19256e633f1a7a98bf9ea647275ad"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-drawable:3.6.0",
+				"size": 97629,
+				"sha256": "3abedaced7cd7b8fa8ed39ed8cfbf7ecc0de2a0b403e0a4f6355becc71000b79"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-gif:3.6.0",
+				"size": 407314,
+				"sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:drawee:3.6.0",
+				"size": 133887,
+				"sha256": "60435519cb76cee78739d928c46aada918f76cb993b75af92ab17e9d746b0277"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fbcore:3.6.0",
+				"size": 144807,
+				"sha256": "6fd98c2b5737ee56a9c90f1c34d87d24e5d3324fd7fc2cca6d6e74b1c0b43ce9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fresco:3.6.0",
+				"size": 35673,
+				"sha256": "db82128c0b0d209b2f48afd84292c5f54b3bfe407b28fa32babfde95914b03f9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-base:3.6.0",
+				"size": 210175,
+				"sha256": "69caad07fe3700b48f3b56662504f9c1235da2e977b8eacd9df251321e9649c6"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-native:3.6.0",
+				"size": 24140,
+				"sha256": "5cbeafb0f7d91c078e256bb1af2981493f37b2a386df43593109d6abef7792d9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-okhttp3:3.6.0",
+				"size": 13935,
+				"sha256": "faa01ed0394a5ec86cfe9c06e106a32179e4fb8378e7aeefde58321594ba6593"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline:3.6.0",
+				"size": 525282,
+				"sha256": "57f04195e5d7273671ce467d0e23c487b3c2c8746ac6257f2a2753cc0771f69f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-ashmem:3.6.0",
+				"size": 4392,
+				"sha256": "0b2b1a8d7d6e5806312c4b7b46a15537e3ad12a7aa9fc3ac262465303082b946"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-java:3.6.0",
+				"size": 4016,
+				"sha256": "4504fdc563e699748b300f3e35279be0918c04981e7ef61f919663dbd69e683f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-native:3.6.0",
+				"size": 4289,
+				"sha256": "cdc0cce108bcab69da2b761eed389e4792f994b03b524bd826316c2932eb0cf8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:middleware:3.6.0",
+				"size": 6534,
+				"sha256": "9661f47cb1156a0a7246819802c9b017ba5170f6ae7abedf31fd2cf662e3dc10"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagefilters:3.6.0",
+				"size": 53565,
+				"sha256": "5044745e85fb35177e8e2b80df82c02a968a6db88affe711e4fb0038924d32bd"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagetranscoder:3.6.0",
+				"size": 836494,
+				"sha256": "0d8f8559617c88763dc75e6005fc60e37bfd6bb20fe5b97a187cabefc2b11a7c"
+			},
+			{
+				"coordinate": "com.facebook.fresco:soloader:3.6.0",
+				"size": 784,
+				"sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-common:3.6.0",
+				"size": 41184,
+				"sha256": "001e310264c8bace79243d16ac03fb60bae7adfc2c4ac0c66b0006c249208ff0"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-core:3.6.0",
+				"size": 15958,
+				"sha256": "b515c69ba120c61ea157e2596ddf3a9226339c0e6acfc96b50bf966149b1c141"
+			},
+			{
+				"coordinate": "com.facebook.fresco:urimod:3.6.0",
+				"size": 16584,
+				"sha256": "54bc0886e579eb0833297492b7d89cb4c613ca95c379bacc41adfe29539a91f7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-options:3.6.0",
+				"size": 35184,
+				"sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-renderer:3.6.0",
+				"size": 23611,
+				"sha256": "0da312cab4ea101d322bb621954753fcadfc2b8fd3eb9d5ccc55f624be0e4bd8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-source:3.6.0",
+				"size": 15368,
+				"sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491"
+			},
+			{
+				"coordinate": "com.facebook.fresco:webpsupport:3.6.0",
+				"size": 844128,
+				"sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf"
+			},
+			{
+				"coordinate": "com.facebook.hermes:hermes-android:250829098.0.17",
+				"size": 81347431,
+				"sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8"
+			},
+			{
+				"coordinate": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+				"size": 20583,
+				"sha256": "caefba935643dc962758a760f1627a402215af034d96c0f484d63b7fddca992f"
+			},
+			{
+				"coordinate": "com.facebook.react:react-android:0.86.3",
+				"size": 168043847,
+				"sha256": "59b66e453d8775a54df66a321c0d5002b98716d68c4bd9edb8e64d7110ff8d28"
+			},
+			{
+				"coordinate": "com.facebook.soloader:annotation:0.12.1",
+				"size": 1562,
+				"sha256": "f6ddd55268bf1824225df7a35ec1b8b33cf98855a6c9c153d189899e5ef4a418"
+			},
+			{
+				"coordinate": "com.facebook.soloader:nativeloader:0.12.1",
+				"size": 3158,
+				"sha256": "971ded86009c0ac56fb2275e128f852e7dcbc41a40cd799688f8a1aebde5195d"
+			},
+			{
+				"coordinate": "com.facebook.soloader:soloader:0.12.1",
+				"size": 120077,
+				"sha256": "5bc6e15d712f90a0a3890d22db0eef5fe89ef3fcb3ae8aa1f8f6a6d99547c892"
+			},
+			{
+				"coordinate": "com.facebook.yoga:proguard-annotations:1.19.0",
+				"size": 1607,
+				"sha256": "fb65f706eea05b5640fb6b93d21d6c41f9e2b4e7a6e6d9f28ce9d2a574474995"
+			},
+			{
+				"coordinate": "com.google.android.material:material:1.13.0",
+				"size": 2500936,
+				"sha256": "6d5e1cbb67c05bcdcbbf84005787dafd354a155f59a4d3800fd45fa7eb3689f5"
+			},
+			{
+				"coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+				"size": 19936,
+				"sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+			},
+			{
+				"coordinate": "com.google.code.gson:gson:2.14.0",
+				"size": 313604,
+				"sha256": "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f"
+			},
+			{
+				"coordinate": "com.google.errorprone:error_prone_annotations:2.48.0",
+				"size": 20255,
+				"sha256": "b49c5c958316ed67a09c699dda9aa749caf434d51d863dea599ef36a49b9c855"
+			},
+			{
+				"coordinate": "com.google.guava:listenablefuture:1.0",
+				"size": 3149,
+				"sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069"
+			},
+			{
+				"coordinate": "com.google.zxing:core:3.5.4",
+				"size": 610364,
+				"sha256": "71de5d89341b5fcf5dd89da7f44e84d825d0e084cdf3ec77c9abe26b0f0ceb13"
+			},
+			{
+				"coordinate": "com.parse.bolts:bolts-tasks:1.4.0",
+				"size": 38092,
+				"sha256": "9bc51e3eca853a9df2fbac62c2317db2c9ea619b95b5531c30440243daaccee2"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-urlconnection:4.9.2",
+				"size": 4890,
+				"sha256": "0e1c39aa89668f9625c9207acd4a8784dc868ad0d5a2011d9e15e0674f3b7d11"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp:4.9.2",
+				"size": 792108,
+				"sha256": "3b2ee1b768c1df28c30d2fe6b38dda4d2c519210e30ca3d27950618c563c92de"
+			},
+			{
+				"coordinate": "com.squareup.okio:okio-jvm:3.16.0",
+				"size": 382591,
+				"sha256": "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-android:0.4.0",
+				"size": 1247244,
+				"sha256": "2778570454ae78026df42ace7168b8a6500f2521a5d497f2ab2fc0f804247826"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-okio-android:0.4.0",
+				"size": 10623,
+				"sha256": "8461ece75b646bfe30f6f53a559c2eac82f745f3575d76648386182ffa7c873d"
+			},
+			{
+				"coordinate": "commons-codec:commons-codec:1.10",
+				"size": 284184,
+				"sha256": "4241dfa94e711d435f29a4604a3e2de5c4aa3c165e23bd066be6fc1fc4309569"
+			},
+			{
+				"coordinate": "commons-io:commons-io:1.4",
+				"size": 109043,
+				"sha256": "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d"
+			},
+			{
+				"coordinate": "expo.modules.asset:expo.modules.asset:57.0.20",
+				"size": 29619,
+				"sha256": "1e71ea20d2ce42ff6ab775611fd7a0bd7f6dbb02af4e8b16c31e3ea1251d3c21"
+			},
+			{
+				"coordinate": "expo.modules.webview:expo.modules.webview:57.0.1",
+				"size": 79547,
+				"sha256": "2d319293dab9a90216f66c1788188656d5960a77f6cb14baaceeaa4eff370b7e"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.filesystem:57.0.7",
+				"size": 693468,
+				"sha256": "3e2b67c2e0b15fd89354be1f282473e954058d89970ea7e91ec0aebb42fd5833"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.font:57.0.4",
+				"size": 29409,
+				"sha256": "d7ea73905f045bfec5b9c40172b9b29f327d7a80a0bf05389d12966d157a1430"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.keepawake:57.0.2",
+				"size": 15770,
+				"sha256": "7f059d9be13ca2b9658a205a61ffa8490a004c7ce83ea9ed76044058237739c4"
+			},
+			{
+				"coordinate": "io.didomi.sdk:android:2.53.0",
+				"size": 3578434,
+				"sha256": "03f394639b5c2a003e43d9c3f0af42584ab7f3e525ab0dbf453cac21b035ef88"
+			},
+			{
+				"coordinate": "io.github.lukmccall.pika:pika-api:0.3.2",
+				"size": 31719,
+				"sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e"
+			},
+			{
+				"coordinate": "javax.inject:javax.inject:1",
+				"size": 2497,
+				"sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+			},
+			{
+				"coordinate": "org.brotli:dec:0.1.2",
+				"size": 98115,
+				"sha256": "615c0c3efef990d77831104475fba6a1f7971388691d4bad1471ad84101f6d52"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-android-extensions-runtime:1.9.23",
+				"size": 9709,
+				"sha256": "f069f878f0fce34a5b811164ebb3c06a20d15b10611593d29d5b4b0e855e02df"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-annotations-jvm:1.3.72",
+				"size": 2676,
+				"sha256": "3ee3a56dd451e33f8352e0d2803a55ca1b9156d7f8a8e0759bf8e187ff8db24a"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.9.23",
+				"size": 7000,
+				"sha256": "d081879993ed592db33329c32db3091dfe6841b258dab77b8205da6951a37c69"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.20",
+				"size": 3081304,
+				"sha256": "419778f2b7a826bad6ee2ca1e4bdebe639ab306d2904fa3ef2a308ecfaab3811"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
+				"size": 945,
+				"sha256": "5343bf795783932e5fa538b0bca05af810bb07213edb9baa770c784068f57867"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+				"size": 969,
+				"sha256": "4198b0eaf090a4f25b6f7e5a59581f4314ba8c9f6cd1d13ee9d348e65ed8f707"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+				"size": 1761444,
+				"sha256": "8836ccffd3585fadda9901244b20d42901d2f3cd581058d8434e2ffabcf3a3e7"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+				"size": 17826,
+				"sha256": "e713f1f874244115a07571065cffa0f24f5e78300e9720fea16de3af1d75fd41"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+				"size": 1479317,
+				"sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3",
+				"size": 390987,
+				"sha256": "f0adde45864144475385cf4aa7e0b7feb27f61fcf9472665ed98cc971b06b1eb"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.7.3",
+				"size": 270553,
+				"sha256": "b1e9138499ed8d20375edda3f2b1c95f3103a258eff6af9edc5ea07100f2b29c"
+			},
+			{
+				"coordinate": "org.jetbrains:annotations:23.0.0",
+				"size": 29371,
+				"sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+			},
+			{
+				"coordinate": "org.jspecify:jspecify:1.0.0",
+				"size": 3819,
+				"sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+			}
+		],
+		"usercentrics": [
+			{
+				"coordinate": "androidx.activity:activity-ktx:1.8.0",
+				"size": 24828,
+				"sha256": "bfee12c1c88c3f74954fbf6e6766bc183956f37478b7c024fae7f5b38493d7a5"
+			},
+			{
+				"coordinate": "androidx.activity:activity:1.8.0",
+				"size": 169615,
+				"sha256": "d3a676709dea04f2a8506e2ae85052fff763db526ac7f16b04de50fdd05b0720"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-experimental:1.4.1",
+				"size": 39841,
+				"sha256": "6bd4c7c7476f8260cd3bdbb81183583e93fc9f790c27dea7dc314181cbf87aa0"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-jvm:1.9.1",
+				"size": 60577,
+				"sha256": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat-resources:1.7.0",
+				"size": 63996,
+				"sha256": "55b6778602680f3c288ce350a2c2d3dd158d97dbffc63476275826655582c388"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat:1.7.0",
+				"size": 1148962,
+				"sha256": "67189713b30a3fab6971713cc5fab1cb7f022bcf648a257563715c91d719d584"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-common:2.2.0",
+				"size": 11657,
+				"sha256": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-runtime:2.2.0",
+				"size": 7577,
+				"sha256": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+			},
+			{
+				"coordinate": "androidx.autofill:autofill:1.3.0",
+				"size": 40850,
+				"sha256": "b5a217cee7724ea42a382965a9b22a330b988d62cb97abe1b1af50e54370c322"
+			},
+			{
+				"coordinate": "androidx.cardview:cardview:1.0.0",
+				"size": 22527,
+				"sha256": "1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7"
+			},
+			{
+				"coordinate": "androidx.collection:collection-jvm:1.4.2",
+				"size": 775789,
+				"sha256": "984ce9bd780055eafb8a105aca3f514686bf7b1b6272ec7c645a98ce40fc7db4"
+			},
+			{
+				"coordinate": "androidx.concurrent:concurrent-futures:1.1.0",
+				"size": 25987,
+				"sha256": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout-core:1.0.4",
+				"size": 443912,
+				"sha256": "3e477f4de231e58b25f5a992f3be45e97d332c34a39a9e3e7d4b78ae0ac2256f"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout:2.1.4",
+				"size": 476596,
+				"sha256": "0df714c0b51e54710ebf746eb469d333176bbb3cb29f80775dc3ca4eb3162512"
+			},
+			{
+				"coordinate": "androidx.coordinatorlayout:coordinatorlayout:1.1.0",
+				"size": 45020,
+				"sha256": "44a9e30abf56af1025c52a0af506fee9c4131aa55efda52f9fd9451211c5e8cb"
+			},
+			{
+				"coordinate": "androidx.core:core-ktx:1.17.0",
+				"size": 172506,
+				"sha256": "4d23190b8623b8abb3c5247a0a7727eca347062d026335c427a09e82711b15f8"
+			},
+			{
+				"coordinate": "androidx.core:core-viewtree:1.0.0",
+				"size": 6980,
+				"sha256": "dc1b678d58ebcf2bfa1587be68ff826694ce3d221251b9ef30d4d4b36297e6de"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+				"size": 10591,
+				"sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564"
+			},
+			{
+				"coordinate": "androidx.customview:customview:1.1.0",
+				"size": 33346,
+				"sha256": "01f76ab043770a97b054046f9815717b82ce0355c02967d16c61981359dc189a"
+			},
+			{
+				"coordinate": "androidx.databinding:viewbinding:8.12.0",
+				"size": 1861,
+				"sha256": "e35f7d95df78f7437e919506ebb10a989d155b44232d9f422a5e3926ccb4861e"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.drawerlayout:drawerlayout:1.1.1",
+				"size": 34591,
+				"sha256": "2c5f0dca378eb78ca2c4403f9889c77daa3059302260f26a07fe9f63c08926fe"
+			},
+			{
+				"coordinate": "androidx.dynamicanimation:dynamicanimation:1.1.0",
+				"size": 39592,
+				"sha256": "9062cc6637136a49ad17f8603c72519052ff9a569e617fc1b6db7086304da88f"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2-views-helper:1.3.0",
+				"size": 22075,
+				"sha256": "9a1351295a4f739df0efe8344adaa9afb34856c3af584d4a9afbec105a45b90b"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2:1.3.0",
+				"size": 143474,
+				"sha256": "2bf23818b23a996ddaa1b5fd5bb32129daff6bbb2dce15166e2fccdd2010b1a5"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-shapes-android:1.0.1",
+				"size": 88037,
+				"sha256": "7171269a4122feabb071768df46d10b362e47ac75fd0aa8dbcafa1f44f61b40c"
+			},
+			{
+				"coordinate": "androidx.interpolator:interpolator:1.0.0",
+				"size": 7669,
+				"sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common:2.6.2",
+				"size": 52314,
+				"sha256": "f34831b6c71cd844e1d35d1be49d5e79447c5ab856346531b1e8676fda7374b1"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.6.2",
+				"size": 11345,
+				"sha256": "2256780a3cff4a1e57fbb3d442557c17dc363ab8af105bcaf5261d8e2d5db949"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.6.2",
+				"size": 18971,
+				"sha256": "67359f609dfc2bf65da1270b23033f856064ec279f058e0a70c715f7c9003031"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-process:2.6.2",
+				"size": 16105,
+				"sha256": "0f33b1bd017f965a6afb2e7bf3e3bd343c624061c1986dea8ba2469d04349437"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime-ktx:2.6.2",
+				"size": 61591,
+				"sha256": "28a0b834f40edd52e2f8010bdc3057d2a0cc76aaa5ac9311adb0b9ce919ca9cc"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime:2.6.2",
+				"size": 21738,
+				"sha256": "4867fd5279742fba8388821930cb2affe06d81a52814e7e41e70392ea0ef887c"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2",
+				"size": 4793,
+				"sha256": "7fc0fa234a3321b1f34db5862b17da83d1c62c1bc66ec2fd4f1bb0a771acfabb"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2",
+				"size": 39786,
+				"sha256": "7bc7dcbab17636ec076f12afe4d02671265c389457b1b366b37a0e8cb91e2da0"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.loader:loader:1.0.0",
+				"size": 33445,
+				"sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+			},
+			{
+				"coordinate": "androidx.profileinstaller:profileinstaller:1.3.1",
+				"size": 47619,
+				"sha256": "d0e402ec31f24028a1dc7eb6a0a3f9d9635c1459392cd734396343b73d673948"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+				"size": 2336,
+				"sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate-ktx:1.2.1",
+				"size": 3375,
+				"sha256": "8553f87e7136c24ec5243560f48f1c32cba56daa77722f89589a5cafcb8f7894"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate:1.2.1",
+				"size": 20217,
+				"sha256": "21a7d4bcf6bdb94ad7b9283801529300b4fbb8808ca4f191e0cdce6fd8e4705a"
+			},
+			{
+				"coordinate": "androidx.startup:startup-runtime:1.1.1",
+				"size": 19371,
+				"sha256": "e0a6329a371262fe4c450372b70fdaf33b769ef6917094723787cfce896b1dd3"
+			},
+			{
+				"coordinate": "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+				"size": 36200,
+				"sha256": "2ce7906cd1dea05aec81975db22d54382359c05a21b2527ad848bc60f6b27293"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing-ktx:1.2.0",
+				"size": 6007,
+				"sha256": "c33f9cbd931e6190ca38aa09bf8a7a8a19391d4b0fb7a7605a6b59f2d42580d1"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing:1.2.0",
+				"size": 6060,
+				"sha256": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+			},
+			{
+				"coordinate": "androidx.transition:transition:1.5.0",
+				"size": 181561,
+				"sha256": "0aa66a0ea406d25a1091f96a3b753b4b12e44fdc43b91ec52c17831e9c31f54b"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+				"size": 34496,
+				"sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+				"size": 33236,
+				"sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26"
+			},
+			{
+				"coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+				"size": 31061,
+				"sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+			},
+			{
+				"coordinate": "androidx.viewpager2:viewpager2:1.0.0",
+				"size": 61552,
+				"sha256": "e95c0031d4cc247cd48196c6287e58d2cee54d9c79b85afea7c90920330275af"
+			},
+			{
+				"coordinate": "androidx.viewpager:viewpager:1.0.0",
+				"size": 53513,
+				"sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+			},
+			{
+				"coordinate": "androidx.window:window-core-android:1.5.1",
+				"size": 18778,
+				"sha256": "b289ce85090f1f976569fa92bbac84011f54ba1b21f0ce883655b34c8f9f9eea"
+			},
+			{
+				"coordinate": "androidx.window:window:1.5.1",
+				"size": 485445,
+				"sha256": "3c3061966f012fc22f2e99701f683e82e732435ae2f2a1d5b2f99d82bb7b8864"
+			},
+			{
+				"coordinate": "com.facebook.fbjni:fbjni:0.7.0",
+				"size": 4349156,
+				"sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-base:3.6.0",
+				"size": 58031,
+				"sha256": "8da98f1ef7af49e8885d3b72165a352ba3e19256e633f1a7a98bf9ea647275ad"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-drawable:3.6.0",
+				"size": 97629,
+				"sha256": "3abedaced7cd7b8fa8ed39ed8cfbf7ecc0de2a0b403e0a4f6355becc71000b79"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-gif:3.6.0",
+				"size": 407314,
+				"sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:drawee:3.6.0",
+				"size": 133887,
+				"sha256": "60435519cb76cee78739d928c46aada918f76cb993b75af92ab17e9d746b0277"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fbcore:3.6.0",
+				"size": 144807,
+				"sha256": "6fd98c2b5737ee56a9c90f1c34d87d24e5d3324fd7fc2cca6d6e74b1c0b43ce9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fresco:3.6.0",
+				"size": 35673,
+				"sha256": "db82128c0b0d209b2f48afd84292c5f54b3bfe407b28fa32babfde95914b03f9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-base:3.6.0",
+				"size": 210175,
+				"sha256": "69caad07fe3700b48f3b56662504f9c1235da2e977b8eacd9df251321e9649c6"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-native:3.6.0",
+				"size": 24140,
+				"sha256": "5cbeafb0f7d91c078e256bb1af2981493f37b2a386df43593109d6abef7792d9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-okhttp3:3.6.0",
+				"size": 13935,
+				"sha256": "faa01ed0394a5ec86cfe9c06e106a32179e4fb8378e7aeefde58321594ba6593"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline:3.6.0",
+				"size": 525282,
+				"sha256": "57f04195e5d7273671ce467d0e23c487b3c2c8746ac6257f2a2753cc0771f69f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-ashmem:3.6.0",
+				"size": 4392,
+				"sha256": "0b2b1a8d7d6e5806312c4b7b46a15537e3ad12a7aa9fc3ac262465303082b946"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-java:3.6.0",
+				"size": 4016,
+				"sha256": "4504fdc563e699748b300f3e35279be0918c04981e7ef61f919663dbd69e683f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-native:3.6.0",
+				"size": 4289,
+				"sha256": "cdc0cce108bcab69da2b761eed389e4792f994b03b524bd826316c2932eb0cf8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:middleware:3.6.0",
+				"size": 6534,
+				"sha256": "9661f47cb1156a0a7246819802c9b017ba5170f6ae7abedf31fd2cf662e3dc10"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagefilters:3.6.0",
+				"size": 53565,
+				"sha256": "5044745e85fb35177e8e2b80df82c02a968a6db88affe711e4fb0038924d32bd"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagetranscoder:3.6.0",
+				"size": 836494,
+				"sha256": "0d8f8559617c88763dc75e6005fc60e37bfd6bb20fe5b97a187cabefc2b11a7c"
+			},
+			{
+				"coordinate": "com.facebook.fresco:soloader:3.6.0",
+				"size": 784,
+				"sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-common:3.6.0",
+				"size": 41184,
+				"sha256": "001e310264c8bace79243d16ac03fb60bae7adfc2c4ac0c66b0006c249208ff0"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-core:3.6.0",
+				"size": 15958,
+				"sha256": "b515c69ba120c61ea157e2596ddf3a9226339c0e6acfc96b50bf966149b1c141"
+			},
+			{
+				"coordinate": "com.facebook.fresco:urimod:3.6.0",
+				"size": 16584,
+				"sha256": "54bc0886e579eb0833297492b7d89cb4c613ca95c379bacc41adfe29539a91f7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-options:3.6.0",
+				"size": 35184,
+				"sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-renderer:3.6.0",
+				"size": 23611,
+				"sha256": "0da312cab4ea101d322bb621954753fcadfc2b8fd3eb9d5ccc55f624be0e4bd8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-source:3.6.0",
+				"size": 15368,
+				"sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491"
+			},
+			{
+				"coordinate": "com.facebook.fresco:webpsupport:3.6.0",
+				"size": 844128,
+				"sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf"
+			},
+			{
+				"coordinate": "com.facebook.hermes:hermes-android:250829098.0.17",
+				"size": 81347431,
+				"sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8"
+			},
+			{
+				"coordinate": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+				"size": 20583,
+				"sha256": "caefba935643dc962758a760f1627a402215af034d96c0f484d63b7fddca992f"
+			},
+			{
+				"coordinate": "com.facebook.react:react-android:0.86.3",
+				"size": 168043847,
+				"sha256": "59b66e453d8775a54df66a321c0d5002b98716d68c4bd9edb8e64d7110ff8d28"
+			},
+			{
+				"coordinate": "com.facebook.soloader:annotation:0.12.1",
+				"size": 1562,
+				"sha256": "f6ddd55268bf1824225df7a35ec1b8b33cf98855a6c9c153d189899e5ef4a418"
+			},
+			{
+				"coordinate": "com.facebook.soloader:nativeloader:0.12.1",
+				"size": 3158,
+				"sha256": "971ded86009c0ac56fb2275e128f852e7dcbc41a40cd799688f8a1aebde5195d"
+			},
+			{
+				"coordinate": "com.facebook.soloader:soloader:0.12.1",
+				"size": 120077,
+				"sha256": "5bc6e15d712f90a0a3890d22db0eef5fe89ef3fcb3ae8aa1f8f6a6d99547c892"
+			},
+			{
+				"coordinate": "com.facebook.yoga:proguard-annotations:1.19.0",
+				"size": 1607,
+				"sha256": "fb65f706eea05b5640fb6b93d21d6c41f9e2b4e7a6e6d9f28ce9d2a574474995"
+			},
+			{
+				"coordinate": "com.google.android.flexbox:flexbox:3.0.0",
+				"size": 80074,
+				"sha256": "5e19500486fd7c8e2e8c7aad6bbba9c8d0ada7057c6b32b9b5c61439814e7574"
+			},
+			{
+				"coordinate": "com.google.android.material:material:1.13.0",
+				"size": 2500936,
+				"sha256": "6d5e1cbb67c05bcdcbbf84005787dafd354a155f59a4d3800fd45fa7eb3689f5"
+			},
+			{
+				"coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+				"size": 19936,
+				"sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+			},
+			{
+				"coordinate": "com.google.code.gson:gson:2.8.6",
+				"size": 240255,
+				"sha256": "c8fb4839054d280b3033f800d1f5a97de2f028eb8ba2eb458ad287e536f3f25f"
+			},
+			{
+				"coordinate": "com.google.errorprone:error_prone_annotations:2.15.0",
+				"size": 16023,
+				"sha256": "067047714349e7789a5bdbfad9d1c0af9f3a1eb28c55a0ee3f68e682f905c4eb"
+			},
+			{
+				"coordinate": "com.google.guava:listenablefuture:1.0",
+				"size": 3149,
+				"sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069"
+			},
+			{
+				"coordinate": "com.parse.bolts:bolts-tasks:1.4.0",
+				"size": 38092,
+				"sha256": "9bc51e3eca853a9df2fbac62c2317db2c9ea619b95b5531c30440243daaccee2"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-urlconnection:4.9.2",
+				"size": 4890,
+				"sha256": "0e1c39aa89668f9625c9207acd4a8784dc868ad0d5a2011d9e15e0674f3b7d11"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp:4.9.2",
+				"size": 792108,
+				"sha256": "3b2ee1b768c1df28c30d2fe6b38dda4d2c519210e30ca3d27950618c563c92de"
+			},
+			{
+				"coordinate": "com.squareup.okio:okio-jvm:3.16.0",
+				"size": 382591,
+				"sha256": "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-android:0.4.0",
+				"size": 1247244,
+				"sha256": "2778570454ae78026df42ace7168b8a6500f2521a5d497f2ab2fc0f804247826"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-okio-android:0.4.0",
+				"size": 10623,
+				"sha256": "8461ece75b646bfe30f6f53a559c2eac82f745f3575d76648386182ffa7c873d"
+			},
+			{
+				"coordinate": "com.usercentrics.sdk:usercentrics-android:2.34.0",
+				"size": 2737167,
+				"sha256": "588f2faea82054a1f4b508f5e71127f28155f8977e48d82a7c69b75a722c1a49"
+			},
+			{
+				"coordinate": "com.usercentrics.sdk:usercentrics-ui:2.34.0",
+				"size": 965203,
+				"sha256": "9f3aa9769a15462dafeb70eb231026989177bcf6b27280735caefd64e45e11b8"
+			},
+			{
+				"coordinate": "commons-codec:commons-codec:1.10",
+				"size": 284184,
+				"sha256": "4241dfa94e711d435f29a4604a3e2de5c4aa3c165e23bd066be6fc1fc4309569"
+			},
+			{
+				"coordinate": "commons-io:commons-io:1.4",
+				"size": 109043,
+				"sha256": "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d"
+			},
+			{
+				"coordinate": "expo.modules.asset:expo.modules.asset:57.0.20",
+				"size": 29619,
+				"sha256": "1e71ea20d2ce42ff6ab775611fd7a0bd7f6dbb02af4e8b16c31e3ea1251d3c21"
+			},
+			{
+				"coordinate": "expo.modules.webview:expo.modules.webview:57.0.1",
+				"size": 79547,
+				"sha256": "2d319293dab9a90216f66c1788188656d5960a77f6cb14baaceeaa4eff370b7e"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.filesystem:57.0.7",
+				"size": 693468,
+				"sha256": "3e2b67c2e0b15fd89354be1f282473e954058d89970ea7e91ec0aebb42fd5833"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.font:57.0.4",
+				"size": 29409,
+				"sha256": "d7ea73905f045bfec5b9c40172b9b29f327d7a80a0bf05389d12966d157a1430"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.keepawake:57.0.2",
+				"size": 15770,
+				"sha256": "7f059d9be13ca2b9658a205a61ffa8490a004c7ce83ea9ed76044058237739c4"
+			},
+			{
+				"coordinate": "io.github.lukmccall.pika:pika-api:0.3.2",
+				"size": 31719,
+				"sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e"
+			},
+			{
+				"coordinate": "io.sentry:sentry:8.17.0",
+				"size": 1072735,
+				"sha256": "8cd70b24471c8c7aad8309bdec8f93706487d982a712343f02a8067f4735a6e3"
+			},
+			{
+				"coordinate": "javax.inject:javax.inject:1",
+				"size": 2497,
+				"sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+			},
+			{
+				"coordinate": "org.brotli:dec:0.1.2",
+				"size": 98115,
+				"sha256": "615c0c3efef990d77831104475fba6a1f7971388691d4bad1471ad84101f6d52"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-android-extensions-runtime:1.9.23",
+				"size": 9709,
+				"sha256": "f069f878f0fce34a5b811164ebb3c06a20d15b10611593d29d5b4b0e855e02df"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-annotations-jvm:1.3.72",
+				"size": 2676,
+				"sha256": "3ee3a56dd451e33f8352e0d2803a55ca1b9156d7f8a8e0759bf8e187ff8db24a"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-parcelize-runtime:1.9.23",
+				"size": 7000,
+				"sha256": "d081879993ed592db33329c32db3091dfe6841b258dab77b8205da6951a37c69"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.20",
+				"size": 3081304,
+				"sha256": "419778f2b7a826bad6ee2ca1e4bdebe639ab306d2904fa3ef2a308ecfaab3811"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
+				"size": 945,
+				"sha256": "5343bf795783932e5fa538b0bca05af810bb07213edb9baa770c784068f57867"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+				"size": 969,
+				"sha256": "4198b0eaf090a4f25b6f7e5a59581f4314ba8c9f6cd1d13ee9d348e65ed8f707"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+				"size": 1761444,
+				"sha256": "8836ccffd3585fadda9901244b20d42901d2f3cd581058d8434e2ffabcf3a3e7"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+				"size": 17826,
+				"sha256": "e713f1f874244115a07571065cffa0f24f5e78300e9720fea16de3af1d75fd41"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+				"size": 1479317,
+				"sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.1",
+				"size": 391429,
+				"sha256": "eba7f1c854296e4ce1418fb01360f8f10c5683e7c45aa3472018417a067636f3"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.4.1",
+				"size": 230125,
+				"sha256": "af604c46737121d4225fdb60ef0e17766a3c94b7c1c9ef76b4e3a5c7733d557e"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-properties-jvm:1.4.1",
+				"size": 17718,
+				"sha256": "494061494bd7eec6665d33ef402f7ad5ad5e0fc4536682caa4fafff12796956a"
+			},
+			{
+				"coordinate": "org.jetbrains:annotations:23.0.0",
+				"size": 29371,
+				"sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+			},
+			{
+				"coordinate": "org.jspecify:jspecify:1.0.0",
+				"size": 3819,
+				"sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+			}
+		],
+		"sourcepoint": [
+			{
+				"coordinate": "androidx.activity:activity:1.8.0",
+				"size": 169615,
+				"sha256": "d3a676709dea04f2a8506e2ae85052fff763db526ac7f16b04de50fdd05b0720"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-experimental:1.4.1",
+				"size": 39841,
+				"sha256": "6bd4c7c7476f8260cd3bdbb81183583e93fc9f790c27dea7dc314181cbf87aa0"
+			},
+			{
+				"coordinate": "androidx.annotation:annotation-jvm:1.9.1",
+				"size": 60577,
+				"sha256": "1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat-resources:1.7.0",
+				"size": 63996,
+				"sha256": "55b6778602680f3c288ce350a2c2d3dd158d97dbffc63476275826655582c388"
+			},
+			{
+				"coordinate": "androidx.appcompat:appcompat:1.7.0",
+				"size": 1148962,
+				"sha256": "67189713b30a3fab6971713cc5fab1cb7f022bcf648a257563715c91d719d584"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-common:2.2.0",
+				"size": 11657,
+				"sha256": "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41"
+			},
+			{
+				"coordinate": "androidx.arch.core:core-runtime:2.2.0",
+				"size": 7577,
+				"sha256": "a1be5e0caa2b07623862af6ae21b3ab0718123245184d0e30dea81b53f990a47"
+			},
+			{
+				"coordinate": "androidx.autofill:autofill:1.3.0",
+				"size": 40850,
+				"sha256": "b5a217cee7724ea42a382965a9b22a330b988d62cb97abe1b1af50e54370c322"
+			},
+			{
+				"coordinate": "androidx.cardview:cardview:1.0.0",
+				"size": 22527,
+				"sha256": "1193c04c22a3d6b5946dae9f4e8c59d6adde6a71b6bd5d87fb99d82dda1afec7"
+			},
+			{
+				"coordinate": "androidx.collection:collection-jvm:1.4.2",
+				"size": 775789,
+				"sha256": "984ce9bd780055eafb8a105aca3f514686bf7b1b6272ec7c645a98ce40fc7db4"
+			},
+			{
+				"coordinate": "androidx.concurrent:concurrent-futures:1.1.0",
+				"size": 25987,
+				"sha256": "0ce067c514a0d1049d1bebdf709e344ed3266fe9744275682937cdcb13334e9e"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout-core:1.0.0",
+				"size": 433547,
+				"sha256": "496c8c79664bd970c6a6be7a960a20dd157dfc5aa2f18e5b8333767ffbc59911"
+			},
+			{
+				"coordinate": "androidx.constraintlayout:constraintlayout:2.1.0",
+				"size": 470611,
+				"sha256": "a458a7562363bd59c209a7dea847326a0e2b26b37a883dc3e29065a79a1c788b"
+			},
+			{
+				"coordinate": "androidx.coordinatorlayout:coordinatorlayout:1.1.0",
+				"size": 45020,
+				"sha256": "44a9e30abf56af1025c52a0af506fee9c4131aa55efda52f9fd9451211c5e8cb"
+			},
+			{
+				"coordinate": "androidx.core:core-ktx:1.17.0",
+				"size": 172506,
+				"sha256": "4d23190b8623b8abb3c5247a0a7727eca347062d026335c427a09e82711b15f8"
+			},
+			{
+				"coordinate": "androidx.core:core-viewtree:1.0.0",
+				"size": 6980,
+				"sha256": "dc1b678d58ebcf2bfa1587be68ff826694ce3d221251b9ef30d4d4b36297e6de"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.core:core:1.17.0",
+				"size": 1409473,
+				"sha256": "e1bd22bbcf5cee3a992dedb7d2d3c3b31c9f761c01e56d00ea443c8aaa981182"
+			},
+			{
+				"coordinate": "androidx.cursoradapter:cursoradapter:1.0.0",
+				"size": 10591,
+				"sha256": "a81c8fe78815fa47df5b749deb52727ad11f9397da58b16017f4eb2c11e28564"
+			},
+			{
+				"coordinate": "androidx.customview:customview:1.1.0",
+				"size": 33346,
+				"sha256": "01f76ab043770a97b054046f9815717b82ce0355c02967d16c61981359dc189a"
+			},
+			{
+				"coordinate": "androidx.databinding:viewbinding:8.12.0",
+				"size": 1861,
+				"sha256": "e35f7d95df78f7437e919506ebb10a989d155b44232d9f422a5e3926ccb4861e"
+			},
+			{
+				"coordinate": "androidx.documentfile:documentfile:1.1.0",
+				"size": 17070,
+				"sha256": "684e0ffcb21a660c939d1bb814521f42c4bd74816f4a117291fe6a101cf3a822"
+			},
+			{
+				"coordinate": "androidx.drawerlayout:drawerlayout:1.1.1",
+				"size": 34591,
+				"sha256": "2c5f0dca378eb78ca2c4403f9889c77daa3059302260f26a07fe9f63c08926fe"
+			},
+			{
+				"coordinate": "androidx.dynamicanimation:dynamicanimation:1.1.0",
+				"size": 39592,
+				"sha256": "9062cc6637136a49ad17f8603c72519052ff9a569e617fc1b6db7086304da88f"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2-views-helper:1.3.0",
+				"size": 22075,
+				"sha256": "9a1351295a4f739df0efe8344adaa9afb34856c3af584d4a9afbec105a45b90b"
+			},
+			{
+				"coordinate": "androidx.emoji2:emoji2:1.3.0",
+				"size": 143474,
+				"sha256": "2bf23818b23a996ddaa1b5fd5bb32129daff6bbb2dce15166e2fccdd2010b1a5"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.fragment:fragment:1.5.4",
+				"size": 337572,
+				"sha256": "bc3c2431dda42e94bb9511c587eae890d276e4aafe393a8da7b00169186dafde"
+			},
+			{
+				"coordinate": "androidx.graphics:graphics-shapes-android:1.0.1",
+				"size": 88037,
+				"sha256": "7171269a4122feabb071768df46d10b362e47ac75fd0aa8dbcafa1f44f61b40c"
+			},
+			{
+				"coordinate": "androidx.interpolator:interpolator:1.0.0",
+				"size": 7669,
+				"sha256": "33193135a64fe21fa2c35eec6688f1a76e512606c0fc83dc1b689e37add7732a"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-common:2.6.2",
+				"size": 52314,
+				"sha256": "f34831b6c71cd844e1d35d1be49d5e79447c5ab856346531b1e8676fda7374b1"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata-core:2.6.2",
+				"size": 11345,
+				"sha256": "2256780a3cff4a1e57fbb3d442557c17dc363ab8af105bcaf5261d8e2d5db949"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-livedata:2.6.2",
+				"size": 18971,
+				"sha256": "67359f609dfc2bf65da1270b23033f856064ec279f058e0a70c715f7c9003031"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-process:2.6.2",
+				"size": 16105,
+				"sha256": "0f33b1bd017f965a6afb2e7bf3e3bd343c624061c1986dea8ba2469d04349437"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-runtime:2.6.2",
+				"size": 21738,
+				"sha256": "4867fd5279742fba8388821930cb2affe06d81a52814e7e41e70392ea0ef887c"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.6.2",
+				"size": 39786,
+				"sha256": "7bc7dcbab17636ec076f12afe4d02671265c389457b1b366b37a0e8cb91e2da0"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.lifecycle:lifecycle-viewmodel:2.6.2",
+				"size": 39793,
+				"sha256": "e4ff4338999e1c6c9c724719f5d4aa7dd61bf6f545d5256a27a9d375df9f2330"
+			},
+			{
+				"coordinate": "androidx.loader:loader:1.0.0",
+				"size": 33445,
+				"sha256": "11f735cb3b55c458d470bed9e25254375b518b4b1bad6926783a7026db0f5025"
+			},
+			{
+				"coordinate": "androidx.profileinstaller:profileinstaller:1.3.1",
+				"size": 47619,
+				"sha256": "d0e402ec31f24028a1dc7eb6a0a3f9d9635c1459392cd734396343b73d673948"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.recyclerview:recyclerview:1.2.1",
+				"size": 393328,
+				"sha256": "a1ea0329ee6d938305dfd0f8ce5c48dea2aac14e5606d23e7fb60afcfb655d6e"
+			},
+			{
+				"coordinate": "androidx.resourceinspection:resourceinspection-annotation:1.0.1",
+				"size": 2336,
+				"sha256": "8cff870ec6fb31db48a52f4a792335b4bf8de07e03bd37823181526433ccd5cb"
+			},
+			{
+				"coordinate": "androidx.savedstate:savedstate:1.2.1",
+				"size": 20217,
+				"sha256": "21a7d4bcf6bdb94ad7b9283801529300b4fbb8808ca4f191e0cdce6fd8e4705a"
+			},
+			{
+				"coordinate": "androidx.startup:startup-runtime:1.2.0",
+				"size": 24073,
+				"sha256": "f51d361d17b30b09cfb9e2aebf301d113f99437cbf462a066092795fb60eddd2"
+			},
+			{
+				"coordinate": "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0",
+				"size": 36200,
+				"sha256": "2ce7906cd1dea05aec81975db22d54382359c05a21b2527ad848bc60f6b27293"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing-ktx:1.2.0",
+				"size": 6007,
+				"sha256": "c33f9cbd931e6190ca38aa09bf8a7a8a19391d4b0fb7a7605a6b59f2d42580d1"
+			},
+			{
+				"coordinate": "androidx.tracing:tracing:1.2.0",
+				"size": 6060,
+				"sha256": "6faa90390d1fdbf0adb9a99bf99de67b94c6c6f35aea9510593a9d17973736a2"
+			},
+			{
+				"coordinate": "androidx.transition:transition:1.5.0",
+				"size": 181561,
+				"sha256": "0aa66a0ea406d25a1091f96a3b753b4b12e44fdc43b91ec52c17831e9c31f54b"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable-animated:1.1.0",
+				"size": 34496,
+				"sha256": "76da2c502371d9c38054df5e2b248d00da87809ed058f3363eae87ce5e2403f8"
+			},
+			{
+				"coordinate": "androidx.vectordrawable:vectordrawable:1.1.0",
+				"size": 33236,
+				"sha256": "46fd633ac01b49b7fcabc263bf098c5a8b9e9a69774d234edcca04fb02df8e26"
+			},
+			{
+				"coordinate": "androidx.versionedparcelable:versionedparcelable:1.1.1",
+				"size": 31061,
+				"sha256": "57e8d93260d18d5b9007c9eed3c64ad159de90c8609ebfc74a347cbd514535a4"
+			},
+			{
+				"coordinate": "androidx.viewpager2:viewpager2:1.0.0",
+				"size": 61552,
+				"sha256": "e95c0031d4cc247cd48196c6287e58d2cee54d9c79b85afea7c90920330275af"
+			},
+			{
+				"coordinate": "androidx.viewpager:viewpager:1.0.0",
+				"size": 53513,
+				"sha256": "147af4e14a1984010d8f155e5e19d781f03c1d70dfed02a8e0d18428b8fc8682"
+			},
+			{
+				"coordinate": "androidx.window:window-core-android:1.5.1",
+				"size": 18778,
+				"sha256": "b289ce85090f1f976569fa92bbac84011f54ba1b21f0ce883655b34c8f9f9eea"
+			},
+			{
+				"coordinate": "androidx.window:window:1.5.1",
+				"size": 485445,
+				"sha256": "3c3061966f012fc22f2e99701f683e82e732435ae2f2a1d5b2f99d82bb7b8864"
+			},
+			{
+				"coordinate": "com.facebook.fbjni:fbjni:0.7.0",
+				"size": 4349156,
+				"sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-base:3.6.0",
+				"size": 58031,
+				"sha256": "8da98f1ef7af49e8885d3b72165a352ba3e19256e633f1a7a98bf9ea647275ad"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-drawable:3.6.0",
+				"size": 97629,
+				"sha256": "3abedaced7cd7b8fa8ed39ed8cfbf7ecc0de2a0b403e0a4f6355becc71000b79"
+			},
+			{
+				"coordinate": "com.facebook.fresco:animated-gif:3.6.0",
+				"size": 407314,
+				"sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:drawee:3.6.0",
+				"size": 133887,
+				"sha256": "60435519cb76cee78739d928c46aada918f76cb993b75af92ab17e9d746b0277"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fbcore:3.6.0",
+				"size": 144807,
+				"sha256": "6fd98c2b5737ee56a9c90f1c34d87d24e5d3324fd7fc2cca6d6e74b1c0b43ce9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:fresco:3.6.0",
+				"size": 35673,
+				"sha256": "db82128c0b0d209b2f48afd84292c5f54b3bfe407b28fa32babfde95914b03f9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-base:3.6.0",
+				"size": 210175,
+				"sha256": "69caad07fe3700b48f3b56662504f9c1235da2e977b8eacd9df251321e9649c6"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-native:3.6.0",
+				"size": 24140,
+				"sha256": "5cbeafb0f7d91c078e256bb1af2981493f37b2a386df43593109d6abef7792d9"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline-okhttp3:3.6.0",
+				"size": 13935,
+				"sha256": "faa01ed0394a5ec86cfe9c06e106a32179e4fb8378e7aeefde58321594ba6593"
+			},
+			{
+				"coordinate": "com.facebook.fresco:imagepipeline:3.6.0",
+				"size": 525282,
+				"sha256": "57f04195e5d7273671ce467d0e23c487b3c2c8746ac6257f2a2753cc0771f69f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-ashmem:3.6.0",
+				"size": 4392,
+				"sha256": "0b2b1a8d7d6e5806312c4b7b46a15537e3ad12a7aa9fc3ac262465303082b946"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-java:3.6.0",
+				"size": 4016,
+				"sha256": "4504fdc563e699748b300f3e35279be0918c04981e7ef61f919663dbd69e683f"
+			},
+			{
+				"coordinate": "com.facebook.fresco:memory-type-native:3.6.0",
+				"size": 4289,
+				"sha256": "cdc0cce108bcab69da2b761eed389e4792f994b03b524bd826316c2932eb0cf8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:middleware:3.6.0",
+				"size": 6534,
+				"sha256": "9661f47cb1156a0a7246819802c9b017ba5170f6ae7abedf31fd2cf662e3dc10"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagefilters:3.6.0",
+				"size": 53565,
+				"sha256": "5044745e85fb35177e8e2b80df82c02a968a6db88affe711e4fb0038924d32bd"
+			},
+			{
+				"coordinate": "com.facebook.fresco:nativeimagetranscoder:3.6.0",
+				"size": 836494,
+				"sha256": "0d8f8559617c88763dc75e6005fc60e37bfd6bb20fe5b97a187cabefc2b11a7c"
+			},
+			{
+				"coordinate": "com.facebook.fresco:soloader:3.6.0",
+				"size": 784,
+				"sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-common:3.6.0",
+				"size": 41184,
+				"sha256": "001e310264c8bace79243d16ac03fb60bae7adfc2c4ac0c66b0006c249208ff0"
+			},
+			{
+				"coordinate": "com.facebook.fresco:ui-core:3.6.0",
+				"size": 15958,
+				"sha256": "b515c69ba120c61ea157e2596ddf3a9226339c0e6acfc96b50bf966149b1c141"
+			},
+			{
+				"coordinate": "com.facebook.fresco:urimod:3.6.0",
+				"size": 16584,
+				"sha256": "54bc0886e579eb0833297492b7d89cb4c613ca95c379bacc41adfe29539a91f7"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-options:3.6.0",
+				"size": 35184,
+				"sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-renderer:3.6.0",
+				"size": 23611,
+				"sha256": "0da312cab4ea101d322bb621954753fcadfc2b8fd3eb9d5ccc55f624be0e4bd8"
+			},
+			{
+				"coordinate": "com.facebook.fresco:vito-source:3.6.0",
+				"size": 15368,
+				"sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491"
+			},
+			{
+				"coordinate": "com.facebook.fresco:webpsupport:3.6.0",
+				"size": 844128,
+				"sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf"
+			},
+			{
+				"coordinate": "com.facebook.hermes:hermes-android:250829098.0.17",
+				"size": 81347431,
+				"sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8"
+			},
+			{
+				"coordinate": "com.facebook.infer.annotation:infer-annotation:0.18.0",
+				"size": 20583,
+				"sha256": "caefba935643dc962758a760f1627a402215af034d96c0f484d63b7fddca992f"
+			},
+			{
+				"coordinate": "com.facebook.react:react-android:0.86.3",
+				"size": 168043847,
+				"sha256": "59b66e453d8775a54df66a321c0d5002b98716d68c4bd9edb8e64d7110ff8d28"
+			},
+			{
+				"coordinate": "com.facebook.soloader:annotation:0.12.1",
+				"size": 1562,
+				"sha256": "f6ddd55268bf1824225df7a35ec1b8b33cf98855a6c9c153d189899e5ef4a418"
+			},
+			{
+				"coordinate": "com.facebook.soloader:nativeloader:0.12.1",
+				"size": 3158,
+				"sha256": "971ded86009c0ac56fb2275e128f852e7dcbc41a40cd799688f8a1aebde5195d"
+			},
+			{
+				"coordinate": "com.facebook.soloader:soloader:0.12.1",
+				"size": 120077,
+				"sha256": "5bc6e15d712f90a0a3890d22db0eef5fe89ef3fcb3ae8aa1f8f6a6d99547c892"
+			},
+			{
+				"coordinate": "com.facebook.yoga:proguard-annotations:1.19.0",
+				"size": 1607,
+				"sha256": "fb65f706eea05b5640fb6b93d21d6c41f9e2b4e7a6e6d9f28ce9d2a574474995"
+			},
+			{
+				"coordinate": "com.google.android.material:material:1.13.0",
+				"size": 2500936,
+				"sha256": "6d5e1cbb67c05bcdcbbf84005787dafd354a155f59a4d3800fd45fa7eb3689f5"
+			},
+			{
+				"coordinate": "com.google.code.findbugs:jsr305:3.0.2",
+				"size": 19936,
+				"sha256": "766ad2a0783f2687962c8ad74ceecc38a28b9f72a2d085ee438b7813e928d0c7"
+			},
+			{
+				"coordinate": "com.google.code.gson:gson:2.8.6",
+				"size": 240255,
+				"sha256": "c8fb4839054d280b3033f800d1f5a97de2f028eb8ba2eb458ad287e536f3f25f"
+			},
+			{
+				"coordinate": "com.google.errorprone:error_prone_annotations:2.15.0",
+				"size": 16023,
+				"sha256": "067047714349e7789a5bdbfad9d1c0af9f3a1eb28c55a0ee3f68e682f905c4eb"
+			},
+			{
+				"coordinate": "com.google.guava:listenablefuture:1.0",
+				"size": 3149,
+				"sha256": "e4ad7607e5c0477c6f890ef26a49cb8d1bb4dffb650bab4502afee64644e3069"
+			},
+			{
+				"coordinate": "com.parse.bolts:bolts-tasks:1.4.0",
+				"size": 38092,
+				"sha256": "9bc51e3eca853a9df2fbac62c2317db2c9ea619b95b5531c30440243daaccee2"
+			},
+			{
+				"coordinate": "com.russhwolf:multiplatform-settings-android:1.3.0",
+				"size": 43074,
+				"sha256": "fd9e1bdb4afee5e21123f19fb554f9ce3b7a6209f4510718617734e61cfacc91"
+			},
+			{
+				"coordinate": "com.russhwolf:multiplatform-settings-no-arg-android:1.3.0",
+				"size": 4186,
+				"sha256": "ee1c391973bd36b3b29bae0678e9b29a8454d5d48e271119f05f1bd6877a9276"
+			},
+			{
+				"coordinate": "com.russhwolf:multiplatform-settings-test-android:1.3.0",
+				"size": 11150,
+				"sha256": "421bf2a5ffb46672f74a48b370ec77edaa869f2ea7b15efa56f88c8a1210e643"
+			},
+			{
+				"coordinate": "com.sourcepoint.cmplibrary:cmplibrary:7.15.10",
+				"size": 463908,
+				"sha256": "24bfd11d29bd6dae4ea5d9ef82218593f75512e483d82e8e874c055480f0b560"
+			},
+			{
+				"coordinate": "com.sourcepoint:core-android:0.1.13",
+				"size": 1037041,
+				"sha256": "faf04a662d5170e6daf10e3482015ea53d135ea42e54942320970fac9293524b"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-sse:4.12.0",
+				"size": 13065,
+				"sha256": "bff4fbcaef7aac2d910d4ff46dafaa4e6d15da127df6bac97216da46943a7d4c"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp-urlconnection:4.9.2",
+				"size": 4890,
+				"sha256": "0e1c39aa89668f9625c9207acd4a8784dc868ad0d5a2011d9e15e0674f3b7d11"
+			},
+			{
+				"coordinate": "com.squareup.okhttp3:okhttp:4.12.0",
+				"size": 789531,
+				"sha256": "b1050081b14bb7a3a7e55a4d3ef01b5dcfabc453b4573a4fc019767191d5f4e0"
+			},
+			{
+				"coordinate": "com.squareup.okio:okio-jvm:3.16.0",
+				"size": 382591,
+				"sha256": "c737c035ca675187bf11a67ddb9581954bf0d5ca9f3e048e838b3267cf32b5c3"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-android:0.4.0",
+				"size": 1247244,
+				"sha256": "2778570454ae78026df42ace7168b8a6500f2521a5d497f2ab2fc0f804247826"
+			},
+			{
+				"coordinate": "com.squareup.zstd:zstd-kmp-okio-android:0.4.0",
+				"size": 10623,
+				"sha256": "8461ece75b646bfe30f6f53a559c2eac82f745f3575d76648386182ffa7c873d"
+			},
+			{
+				"coordinate": "commons-codec:commons-codec:1.10",
+				"size": 284184,
+				"sha256": "4241dfa94e711d435f29a4604a3e2de5c4aa3c165e23bd066be6fc1fc4309569"
+			},
+			{
+				"coordinate": "commons-io:commons-io:1.4",
+				"size": 109043,
+				"sha256": "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d"
+			},
+			{
+				"coordinate": "expo.modules.asset:expo.modules.asset:57.0.20",
+				"size": 29619,
+				"sha256": "1e71ea20d2ce42ff6ab775611fd7a0bd7f6dbb02af4e8b16c31e3ea1251d3c21"
+			},
+			{
+				"coordinate": "expo.modules.webview:expo.modules.webview:57.0.1",
+				"size": 79547,
+				"sha256": "2d319293dab9a90216f66c1788188656d5960a77f6cb14baaceeaa4eff370b7e"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.filesystem:57.0.7",
+				"size": 693468,
+				"sha256": "3e2b67c2e0b15fd89354be1f282473e954058d89970ea7e91ec0aebb42fd5833"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.font:57.0.4",
+				"size": 29409,
+				"sha256": "d7ea73905f045bfec5b9c40172b9b29f327d7a80a0bf05389d12966d157a1430"
+			},
+			{
+				"coordinate": "host.exp.exponent:expo.modules.keepawake:57.0.2",
+				"size": 15770,
+				"sha256": "7f059d9be13ca2b9658a205a61ffa8490a004c7ce83ea9ed76044058237739c4"
+			},
+			{
+				"coordinate": "io.github.lukmccall.pika:pika-api:0.3.2",
+				"size": 31719,
+				"sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e"
+			},
+			{
+				"coordinate": "io.ktor:ktor-client-content-negotiation-jvm:3.2.2",
+				"size": 26427,
+				"sha256": "a1c10e9e5d640f6b70b3d1964dac3128c6a3d42ed5868777db6d7e7ba3171106"
+			},
+			{
+				"coordinate": "io.ktor:ktor-client-core-jvm:3.2.2",
+				"size": 842979,
+				"sha256": "8f842f35014be4017e525d91a6a19f60b46b4b051eac8a580861b37e46d52b27"
+			},
+			{
+				"coordinate": "io.ktor:ktor-client-logging-jvm:3.2.2",
+				"size": 103119,
+				"sha256": "9341c42812e86e532f7bfdfc7b9a20639e70e19b2b1340b546da2812bbfabd3b"
+			},
+			{
+				"coordinate": "io.ktor:ktor-client-okhttp-jvm:3.2.2",
+				"size": 62970,
+				"sha256": "c5284d66892bee7ef6e0e4e65ade14ffbea25c80e2f8577c2171618955ba27fe"
+			},
+			{
+				"coordinate": "io.ktor:ktor-events-jvm:3.2.2",
+				"size": 6390,
+				"sha256": "ec7fcfc2904cf8607343c3b1f2e00339801a96d40e336c34cad1268e905688ec"
+			},
+			{
+				"coordinate": "io.ktor:ktor-http-cio-jvm:3.2.2",
+				"size": 124376,
+				"sha256": "415ab6cfd86226bf4fbe8b877e774fbd784fb7c548b3ebfa574eb8d5742a6721"
+			},
+			{
+				"coordinate": "io.ktor:ktor-http-jvm:3.2.2",
+				"size": 410084,
+				"sha256": "265b04f888e3a4d47ed17b3b9dfc4c5e8ceab1059b66c514bf1e58a83e5e00fe"
+			},
+			{
+				"coordinate": "io.ktor:ktor-io-jvm:3.2.2",
+				"size": 283032,
+				"sha256": "ba7feed604987b4561dfa60093e726380348bf167d30d74bc00664ea0fbf64de"
+			},
+			{
+				"coordinate": "io.ktor:ktor-network-jvm:3.2.2",
+				"size": 195726,
+				"sha256": "b40e01c11aa2285b1de905fb2284e8ad8e0a650b8df011cb0455acead80dc6c5"
+			},
+			{
+				"coordinate": "io.ktor:ktor-serialization-jvm:3.2.2",
+				"size": 22059,
+				"sha256": "576671d09177d1371e95841e86345ba3de2cd3cb73374c0be00de9bb3443da64"
+			},
+			{
+				"coordinate": "io.ktor:ktor-serialization-kotlinx-json-jvm:3.2.2",
+				"size": 27881,
+				"sha256": "1e8b2f988209091469e9323cf74a243fee19e655acc1b2f4f1da72ebca2e48dc"
+			},
+			{
+				"coordinate": "io.ktor:ktor-serialization-kotlinx-jvm:3.2.2",
+				"size": 33092,
+				"sha256": "11f11626f49d23b304f1e7aac8c58149ae642a16b384c75bd5bcbc636aa6a49a"
+			},
+			{
+				"coordinate": "io.ktor:ktor-sse-jvm:3.2.2",
+				"size": 8388,
+				"sha256": "58e1001cc837e4f080df2cc5decc9d154b6bef84cc8864284d5d4c5197a0236c"
+			},
+			{
+				"coordinate": "io.ktor:ktor-utils-jvm:3.2.2",
+				"size": 339141,
+				"sha256": "280a7abd74f30ea05dc66d058a8bb8342ea99dc59108f0c6b652ad2d3b2a9ccc"
+			},
+			{
+				"coordinate": "io.ktor:ktor-websocket-serialization-jvm:3.2.2",
+				"size": 7008,
+				"sha256": "7a107b48e4dee4547dffade3b3e5e2a7361473c80719f9112dbd175070a14fef"
+			},
+			{
+				"coordinate": "io.ktor:ktor-websockets-jvm:3.2.2",
+				"size": 167924,
+				"sha256": "f89708be6b0257df119752f7564203a93643d15f1c61cd8208f22586c6276cae"
+			},
+			{
+				"coordinate": "javax.inject:javax.inject:1",
+				"size": 2497,
+				"sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+			},
+			{
+				"coordinate": "org.brotli:dec:0.1.2",
+				"size": 98115,
+				"sha256": "615c0c3efef990d77831104475fba6a1f7971388691d4bad1471ad84101f6d52"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-annotations-jvm:1.3.72",
+				"size": 2676,
+				"sha256": "3ee3a56dd451e33f8352e0d2803a55ca1b9156d7f8a8e0759bf8e187ff8db24a"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.1.20",
+				"size": 3081304,
+				"sha256": "419778f2b7a826bad6ee2ca1e4bdebe639ab306d2904fa3ef2a308ecfaab3811"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
+				"size": 945,
+				"sha256": "5343bf795783932e5fa538b0bca05af810bb07213edb9baa770c784068f57867"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22",
+				"size": 969,
+				"sha256": "4198b0eaf090a4f25b6f7e5a59581f4314ba8c9f6cd1d13ee9d348e65ed8f707"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.2.20",
+				"size": 1761444,
+				"sha256": "8836ccffd3585fadda9901244b20d42901d2f3cd581058d8434e2ffabcf3a3e7"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2",
+				"size": 17826,
+				"sha256": "e713f1f874244115a07571065cffa0f24f5e78300e9720fea16de3af1d75fd41"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.10.2",
+				"size": 1479317,
+				"sha256": "5ca175b38df331fd64155b35cd8cae1251fa9ee369709b36d42e0a288ccce3fd"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.10.2",
+				"size": 4383,
+				"sha256": "d65dee3cafa6f7bfaefedb493fc68b5c63abe750734fb8af92fac7a0d3101457"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.2",
+				"size": 675271,
+				"sha256": "102764921129e1e44a74f408b7a0b8dac6d1892c6042e0e48f8bdbbbf78c6d2e"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm:0.7.0",
+				"size": 22690,
+				"sha256": "ea38a66b0ff46ed82dded9e81d2dce70e5fbe03bd6cc52b4fc8869381dea7b7d"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-io-core-jvm:0.7.0",
+				"size": 151554,
+				"sha256": "6ededc9be4d878aea80c7dd609f91bfc47fcd3d36cc91fd0f3f328fbd6656c8f"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1",
+				"size": 391821,
+				"sha256": "3565b6d4d789bf70683c45566944287fc1d8dc75c23d98bd87d01059cc76f2b3"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-json-io-jvm:1.8.1",
+				"size": 6925,
+				"sha256": "ab5ec8ea48815197c46a7df9f418a62791fe91cda5023b941ce4de872d810cc1"
+			},
+			{
+				"coordinate": "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.8.1",
+				"size": 276969,
+				"sha256": "8769e5647557e3700919c32d508f5c5dad53c5d8234cd10846354fbcff14aa24"
+			},
+			{
+				"coordinate": "org.jetbrains:annotations:23.0.0",
+				"size": 29371,
+				"sha256": "7b0f19724082cbfcbc66e5abea2b9bc92cf08a1ea11e191933ed43801eb3cd05"
+			},
+			{
+				"coordinate": "org.jspecify:jspecify:1.0.0",
+				"size": 3819,
+				"sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
+			},
+			{
+				"coordinate": "org.slf4j:slf4j-api:2.0.17",
+				"size": 69908,
+				"sha256": "7b751d952061954d5abfed7181c1f645d336091b679891591d63329c622eb832"
+			}
+		]
+	}
+}
