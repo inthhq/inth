@@ -351,7 +351,7 @@ class CompetitiveTests(unittest.TestCase):
 
     def test_dependency_binding_covers_isolated_bun_links_and_file_changes(self):
         with tempfile.TemporaryDirectory() as tmp:
-            host = self.dependency_host(tmp)
+            host = self.dependency_host(Path(tmp) / 'host')
             modules = host / 'node_modules'
             source = modules / '.bun/transitive@1/node_modules/transitive/index.js'
             source.parent.mkdir(parents=True)
