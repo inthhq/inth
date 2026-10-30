@@ -374,22 +374,32 @@ def verify_pods(cfg, host, vendor):
         for entry in pod.rglob('*'):
             require(not entry.is_symlink(), f'installed Pod symlink: {row["name"]}/{entry.relative_to(pod)}')
         archive = download(cfg, row['downloadUrl'], row['name'] + '-' + row['version'] + ('.zip' if row['downloadUrl'].endswith('.zip') else '.tar.gz'), row['archiveSha256'])
-        if archive.suffix == '.zip':
-            handle = zipfile.ZipFile(archive)
-            names = [n for n in handle.namelist() if not n.endswith('/')]
-            get = handle.read
-        else:
-            handle = tarfile.open(archive)
-            names = [m.name for m in handle if m.isfile()]
-            get = lambda name: handle.extractfile(name).read()
-        files = manifest(pod)
-        require(files, f'missing installed Pod: {row["name"]}')
-        for entry in files:
-            name = entry['path']
-            candidates = [n for n in names if n == name or n.endswith('/' + name)]
+        with (zipfile.ZipFile(archive) if archive.suffix == '.zip' else tarfile.open(archive)) as handle:
+            if archive.suffix == '.zip':
+                names = [n for n in handle.namelist() if not n.endswith('/')]
+                get = handle.read
+            else:
+                names = [m.name for m in handle if m.isfile()]
+                get = lambda name: handle.extractfile(name).read()
+            require(len(names) == len(set(names)), f'duplicate Pod distribution path: {row["name"]}')
+            selection = row.get('installedSelection', {})
+            prefix = selection.get('archiveRoot', '')
+            require(all(name.startswith(prefix) for name in names), f'Pod distribution root changed: {row["name"]}')
             import hashlib
-            require(any(hashlib.sha256(get(n)).hexdigest() == entry['sha256'] for n in candidates), f'installed Pod differs from exact distribution: {row["name"]}/{name}')
-        handle.close()
+            if selection:
+                spec = selection['podspec']
+                require(hashlib.sha256(get(prefix + spec['path'])).hexdigest() == spec['sha256'], f'Pod selection Podspec changed: {row["name"]}')
+            matches = lambda name, paths: any(name.startswith(path) if not path or path.endswith('/') else name == path for path in paths)
+            # Git archives include example apps; pinned Podspec rules retain the installed subset.
+            expected = {name[len(prefix):]: name for name in names
+                        if matches(name[len(prefix):], selection.get('include', ['']))
+                        and not matches(name[len(prefix):], selection.get('exclude', []))}
+            files = manifest(pod)
+            require(files, f'missing installed Pod: {row["name"]}')
+            require({entry['path'] for entry in files} == set(expected), f'installed Pod file set changed: {row["name"]}')
+            for entry in files:
+                data = get(expected[entry['path']])
+                require(len(data) == entry['bytes'] and hashlib.sha256(data).hexdigest() == entry['sha256'], f'installed Pod differs from exact distribution: {row["name"]}/{entry["path"]}')
 
 
 def host_inputs(host):

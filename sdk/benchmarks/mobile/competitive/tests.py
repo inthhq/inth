@@ -122,9 +122,12 @@ class RetainedPodTests(unittest.TestCase):
             binary = host / 'ios/Pods/Didomi-XCFramework/Didomi.framework/Didomi'
             binary.parent.mkdir(parents=True)
             binary.write_bytes(b'pinned native distribution')
+            resource = binary.with_name('Info.plist')
+            resource.write_bytes(b'pinned native resource')
             cached = root / 'Didomi-XCFramework-2.53.1.zip'
             with zipfile.ZipFile(cached, 'w') as handle:
                 handle.writestr('Didomi.framework/Didomi', binary.read_bytes())
+                handle.writestr('Didomi.framework/Info.plist', resource.read_bytes())
             distribution = next(pin for pin in harness.PINS['iosDistributions'] if pin['name'] == 'Didomi-XCFramework')
             cfg = {'output': str(root / 'output'), 'downloadCache': str(root)}
             row = {'profile': 'ios-local', 'vendor': 'didomi', 'host': str(host), 'wrapperArchive': str(archive)}
@@ -132,6 +135,20 @@ class RetainedPodTests(unittest.TestCase):
                     'iosDistributions': [{**distribution, 'archiveSha256': core.sha(cached)}]}
             with patch.dict(harness.PINS, pins):
                 harness.verify_archive_for_retained(cfg, row)
+                contents = resource.read_bytes()
+                resource.unlink()
+                try:
+                    with self.assertRaisesRegex(ValueError, 'installed Pod file set changed'):
+                        harness.verify_archive_for_retained(cfg, row)
+                finally:
+                    resource.write_bytes(contents)
+                extra = binary.parent / 'extra-resource'
+                extra.write_bytes(contents)
+                try:
+                    with self.assertRaisesRegex(ValueError, 'installed Pod file set changed'):
+                        harness.verify_archive_for_retained(cfg, row)
+                finally:
+                    extra.unlink()
                 unverified = root / 'unverified'
                 unverified.mkdir()
                 (unverified / 'source.swift').write_text('unbound source')
@@ -161,6 +178,67 @@ class RetainedPodTests(unittest.TestCase):
                 binary.write_bytes(b'a different native SDK build')
                 with self.assertRaisesRegex(ValueError, 'installed Pod differs from exact distribution'):
                     harness.verify_archive_for_retained(cfg, row)
+
+    def test_source_pod_pruning_requires_exact_paths_and_podspec(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            host = root / 'host'
+            core.write(host / 'ios/Pods/Local Podspecs/ExpoModulesCore.podspec.json', harness.expo_core_spec(host))
+            (host / 'ios/Podfile.lock').write_text(harness.expected_pod_lock(host, 'sourcepoint'))
+            source = root / 'source'
+            members = {'LICENSE': b'license', 'README.md': b'readme', 'SPMobileCore.podspec': b'pinned source selection',
+                       'SPMobileCore.xcframework/Info.plist': b'correct metadata',
+                       'SPMobileCore.xcframework/Excluded/unused': b'excluded platform',
+                       'Example/SPMobileCore.xcframework/Info.plist': b'example metadata'}
+            for name, data in members.items():
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
+            archive = root / 'SPMobileCore-0.1.13.tar.gz'
+
+            def write_archive(duplicate=False):
+                with tarfile.open(archive, 'w:gz') as handle:
+                    for name in members:
+                        handle.add(source / name, arcname='repo-1/' + name)
+                    if duplicate:
+                        handle.add(source / 'LICENSE', arcname='repo-1/LICENSE')
+
+            write_archive()
+            distribution = next(pin for pin in harness.PINS['iosDistributions'] if pin['name'] == 'SPMobileCore')
+            selection = {'archiveRoot': 'repo-1/', 'include': ['LICENSE', 'README.md', 'SPMobileCore.xcframework/'],
+                         'exclude': ['SPMobileCore.xcframework/Excluded/'],
+                         'podspec': {'path': 'SPMobileCore.podspec', 'sha256': core.sha(source / 'SPMobileCore.podspec')}}
+            pin = {**distribution, 'archiveSha256': core.sha(archive), 'installedSelection': selection}
+            pod = host / 'ios/Pods/SPMobileCore'
+            for name in ('LICENSE', 'README.md', 'SPMobileCore.xcframework/Info.plist'):
+                path = pod / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(members[name])
+            cfg = {'output': str(root / 'output'), 'downloadCache': str(root)}
+            with patch.dict(harness.PINS, {'iosDistributions': [pin]}):
+                harness.verify_pods(cfg, host, 'sourcepoint')
+                readme = pod / 'README.md'
+                readme.unlink()
+                with self.assertRaisesRegex(ValueError, 'installed Pod file set changed'):
+                    harness.verify_pods(cfg, host, 'sourcepoint')
+                readme.write_bytes(members['README.md'])
+                extra = pod / 'SPMobileCore.podspec'
+                extra.write_bytes(members['SPMobileCore.podspec'])
+                with self.assertRaisesRegex(ValueError, 'installed Pod file set changed'):
+                    harness.verify_pods(cfg, host, 'sourcepoint')
+                extra.unlink()
+                metadata = pod / 'SPMobileCore.xcframework/Info.plist'
+                metadata.write_bytes(members['Example/SPMobileCore.xcframework/Info.plist'])
+                with self.assertRaisesRegex(ValueError, 'installed Pod differs from exact distribution'):
+                    harness.verify_pods(cfg, host, 'sourcepoint')
+                metadata.write_bytes(members['SPMobileCore.xcframework/Info.plist'])
+                with patch.dict(selection['podspec'], {'sha256': '0' * 64}):
+                    with self.assertRaisesRegex(ValueError, 'Pod selection Podspec changed'):
+                        harness.verify_pods(cfg, host, 'sourcepoint')
+                write_archive(duplicate=True)
+                pin['archiveSha256'] = core.sha(archive)
+                with self.assertRaisesRegex(ValueError, 'duplicate Pod distribution path'):
+                    harness.verify_pods(cfg, host, 'sourcepoint')
 
 
 class ReportTests(unittest.TestCase):
@@ -296,7 +374,7 @@ class CompetitiveTests(unittest.TestCase):
         import sys
         script = core.HERE / 'analysis/android-dependencies/scripts/verify.py'
         code = "import runpy,sys; from pathlib import Path; sys.path.insert(0,str(Path(sys.argv[1]).parent)); runpy.run_path(sys.argv[1])['check'](False,'invalid optimized evidence')"
-        result = subprocess.run([sys.executable, '-O', '-c', code, str(script)], text=True, capture_output=True)
+        result = subprocess.run([sys.executable, '-O', '-c', code, str(script)], text=True, capture_output=True, timeout=30)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('invalid optimized evidence', result.stderr)
 
@@ -833,7 +911,7 @@ class CompetitiveTests(unittest.TestCase):
             for stage, extra in [('prepare', []), ('build', []), ('runtime', ['--action', 'sample'])]:
                 with self.subTest(stage=stage):
                     args = [stage, '--config', str(path), *extra]
-                    result = subprocess.run([sys.executable, str(core.HERE / 'harness.py'), *args], cwd=caller, capture_output=True, text=True)
+                    result = subprocess.run([sys.executable, str(core.HERE / 'harness.py'), *args], cwd=caller, capture_output=True, text=True, timeout=30)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     self.assertEqual(core.read(runner.with_suffix('.call.json')),
                                      ['cmp-' + stage, sys.executable, str(core.HERE / 'harness.py'), *args, '--locked'])

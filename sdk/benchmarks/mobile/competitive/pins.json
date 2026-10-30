@@ -524,7 +524,16 @@
 			"archiveBytes": 56363213,
 			"archiveSha256": "7886d9d44aaebd7862b85ad770b9091b3c694d6667c3fd821655a541c4166079",
 			"podspecSha256": "7c6afb115f7f55b2cb6dbdf787558fb90841f826404d9b1debd56c8a63145a2b",
-			"tagResolution": "8a91f212eb1cb9323ce03337b7f0728bf17dac18\trefs/tags/0.1.13\n06e317bc6df4080ab9130db8eac128edbc950cbc\trefs/tags/0.1.13^{}"
+			"tagResolution": "8a91f212eb1cb9323ce03337b7f0728bf17dac18\trefs/tags/0.1.13\n06e317bc6df4080ab9130db8eac128edbc950cbc\trefs/tags/0.1.13^{}",
+			"installedSelection": {
+				"archiveRoot": "mobile-core-0.1.13/",
+				"include": ["LICENSE", "README.md", "SPMobileCore.xcframework/"],
+				"exclude": [],
+				"podspec": {
+					"path": "SPMobileCore.podspec",
+					"sha256": "cb95b17f777850b17f11db42086709d663031c8b786f35c8034d774a13d6979a"
+				}
+			}
 		},
 		{
 			"name": "ConsentViewController",
@@ -537,7 +546,21 @@
 			"archiveBytes": 68910021,
 			"archiveSha256": "e52ad26e325d8956d1892460f112c97749f6dbfd1af8f975575f44d3953d6a85",
 			"podspecSha256": "cabb829b3f45cc7c82107bb6a3b29f5919fc7046f5b17c7e5d93c8a0a7c2ccb1",
-			"tagResolution": "fa618e070fcc6e845b52f072403c24a0bfcb0557\trefs/tags/7.12.7\n3b74fc4fd6759abda6de8324eed4dde4edb9d3e3\trefs/tags/7.12.7^{}"
+			"tagResolution": "fa618e070fcc6e845b52f072403c24a0bfcb0557\trefs/tags/7.12.7\n3b74fc4fd6759abda6de8324eed4dde4edb9d3e3\trefs/tags/7.12.7^{}",
+			"installedSelection": {
+				"archiveRoot": "ios-cmp-app-7.12.7/",
+				"include": [
+					"LICENSE",
+					"README.md",
+					"ConsentViewController/Classes/",
+					"ConsentViewController/Assets/"
+				],
+				"exclude": ["ConsentViewController/Classes/Views/tvOS/"],
+				"podspec": {
+					"path": "ConsentViewController.podspec",
+					"sha256": "15351735cdd5759145637335ff3b4c8c5fcf53a50b3751a63ca4ef4b4e84a16a"
+				}
+			}
 		},
 		{
 			"name": "Usercentrics",
