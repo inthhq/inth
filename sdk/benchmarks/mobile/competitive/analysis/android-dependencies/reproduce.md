@@ -69,8 +69,10 @@ and support a new location. The static APK/DEX analysis does not resolve Maven.
 
 The original 27-file portable manifest was verified before incorporation.
 [source-manifest.json](source-manifest.json) retains its hash and the exact
-hashes of the incorporated original scripts and report. Full per-class
-ownership, ZIP-entry lists, resolved graphs, temporary dumps and build logs
+hashes of the incorporated scripts and report. Maintained scripts also retain
+their original source hashes. Their checks remain active under Python
+optimization. The verifier compares each report row with the measured JSON.
+Full per-class ownership, ZIP-entry lists, resolved graphs, temporary dumps and build logs
 remain external. The commands regenerate those supporting reports in `OUTPUT`.
 The original verification's Maven manifest hash covers the JSON file bytes;
 the fresh harness hashes its canonical file records. Both verify the same 90

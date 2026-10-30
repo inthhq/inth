@@ -46,6 +46,11 @@ FAMILIES = [
 ]
 
 
+def check(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
 def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -82,7 +87,7 @@ def read_dex(raw):
     catches, debug data, strings, IDs, annotations, and alignment. No compressed
     attribution follows from these counts.
     """
-    assert raw.startswith(b'dex\n')
+    check(raw.startswith(b'dex\n'), 'invalid DEX header')
     u32 = lambda offset: struct.unpack_from('<I', raw, offset)[0]
 
     def uleb(offset):
@@ -125,7 +130,7 @@ def read_dex(raw):
                 if code_offset:
                     code_offsets.add(code_offset)
             instruction_bytes = sum(2 * u32(code + 12) for code in code_offsets)
-        assert not owned_code_offsets & code_offsets, 'Shared DEX code item needs explicit attribution'
+        check(not owned_code_offsets & code_offsets, 'Shared DEX code item needs explicit attribution')
         owned_code_offsets.update(code_offsets)
         classes[descriptor] = {'instructionBytes': instruction_bytes, 'codeItems': len(code_offsets)}
     return classes
@@ -150,7 +155,7 @@ def apk(apk_path):
             }
             if group == 'dex':
                 dex = read_dex(raw)
-                assert not descriptors.keys() & dex.keys(), 'Duplicate DEX class definition'
+                check(not descriptors.keys() & dex.keys(), 'Duplicate DEX class definition')
                 descriptors.update(dex)
     payload = sum(value['compressedBytes'] for value in groups.values())
     return {
@@ -171,7 +176,7 @@ def analyzer_packages(path):
         value = {'definedMethods': int(parts[0].split()[-1]),
                  'referencedMethods': int(parts[1]), 'estimatedDexBytes': int(parts[2])}
         (packages if parts[0].startswith('P ') else classes)[parts[3]] = value
-    assert '<TOTAL>' in packages
+    check('<TOTAL>' in packages, 'APK Analyzer total is missing')
     return packages, classes
 
 
@@ -222,7 +227,7 @@ def dependency_delta(base_rows, rows):
     base = {row['coordinate']: row for row in base_rows}
     current = {row['coordinate']: row for row in rows}
     shared = sorted(base.keys() & current.keys())
-    assert all(base[coordinate]['sha256'] == current[coordinate]['sha256'] for coordinate in shared)
+    check(all(base[coordinate]['sha256'] == current[coordinate]['sha256'] for coordinate in shared), 'shared native artifact hashes differ')
     added = sorted(current.keys() - base.keys())
     removed = sorted(base.keys() - current.keys())
     replacements = []
@@ -270,7 +275,7 @@ def main():
                           'sha256': sha(path), 'bytes': path.stat().st_size})
         summary, entries, descriptors = apk(apk_path)
         for field in ['apkBytes', 'apkSha256', 'dexClasses', 'groups', 'zipAndSigningOverheadBytes']:
-            assert summary[field] == expected[name][field], (name, field)
+            check(summary[field] == expected[name][field], (name, field))
         package_file = raw_output / f'{name}-dex-packages.tsv'
         if args.run_apkanalyzer:
             analyzer = args.apkanalyzer or Path(os.environ['ANDROID_HOME']) / 'cmdline-tools/latest/bin/apkanalyzer'
@@ -281,7 +286,7 @@ def main():
         packages, classes = analyzer_packages(package_file)
         all_packages[name] = packages
         summary['addedApkBytes'] = summary['apkBytes'] - expected['baseline']['apkBytes']
-        assert summary['addedApkBytes'] == expected[name]['addedApkBytes']
+        check(summary['addedApkBytes'] == expected[name]['addedApkBytes'], 'added APK bytes differ from frozen measurement')
         summary['apkanalyzerEstimate'] = packages['<TOTAL>']
         summary['packageEstimates'] = {package: packages.get(package, {
             'estimatedDexBytes': 0, 'definedMethods': 0, 'referencedMethods': 0}) for package in PACKAGES}
@@ -299,7 +304,7 @@ def main():
                     for field in ['compressedBytes', 'uncompressedBytes']}
             for group in sorted(summary['groups'].keys() | baseline['groups'].keys())}
         summary['zipAndSigningOverheadDelta'] = summary['zipAndSigningOverheadBytes'] - baseline['zipAndSigningOverheadBytes']
-        assert sum(row['compressedBytes'] for row in summary['groupDeltasFromBaseline'].values()) + summary['zipAndSigningOverheadDelta'] == summary['addedApkBytes']
+        check(sum(row['compressedBytes'] for row in summary['groupDeltasFromBaseline'].values()) + summary['zipAndSigningOverheadDelta'] == summary['addedApkBytes'], 'compressed APK groups do not sum to added bytes')
     changed = []
     base_entries = all_entries['baseline']
     current_entries = all_entries['c15t']
@@ -402,7 +407,7 @@ def main():
                        'c15tEstimatedDexBytes': new, 'deltaEstimatedDexBytes': new - old})
     deltas.append({'package': 'all-other-original-packages',
                    'deltaEstimatedDexBytes': dex_estimate_growth - sum(row['deltaEstimatedDexBytes'] for row in deltas)})
-    assert sum(row['deltaEstimatedDexBytes'] for row in deltas) == dex_estimate_growth
+    check(sum(row['deltaEstimatedDexBytes'] for row in deltas) == dex_estimate_growth, 'estimated DEX categories do not sum to growth')
     write(output / 'dex-estimate-deltas.json', {
         'unit': 'APK Analyzer estimated DEX bytes, not compressed APK bytes',
         'categoriesDisjoint': True, 'growthEstimatedDexBytes': dex_estimate_growth,

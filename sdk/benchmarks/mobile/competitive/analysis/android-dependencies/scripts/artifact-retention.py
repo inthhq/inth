@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import zipfile
 
-from analyze import analyzer_packages, write
+from analyze import check, analyzer_packages, write
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--evidence', required=True, type=Path)
@@ -32,7 +32,7 @@ for row in rows:
         continue
     seen.add(identity)
     frozen = android / 'inputs/native' / (row['sha256'] + '-' + Path(row['file']).name)
-    assert hashlib.sha256(frozen.read_bytes()).hexdigest() == row['sha256']
+    check(hashlib.sha256(frozen.read_bytes()).hexdigest() == row['sha256'], 'frozen native artifact hash differs')
     artifact_hashes[row['coordinate']].add(row['sha256'])
     with zipfile.ZipFile(frozen) as archive:
         if frozen.name.endswith('.aar'):
@@ -60,7 +60,7 @@ for coordinate in inventory:
     }
 for name, data in classes.items():
     destination = mapping.get(name, name)
-    assert 'L' + destination.replace('.', '/') + ';' in defined, name
+    check('L' + destination.replace('.', '/') + ';' in defined, name)
     possible = owners.get(name, set())
     heuristic = False
     if not possible and '$$' in name:
@@ -78,7 +78,7 @@ for row in artifacts:
     row['combinedEstimatedDexBytes'] = row['estimatedDexBytesDirectClassInventory'] + row['estimatedDexBytesGeneratedOwnerHeuristic']
 total = sum(row['combinedEstimatedDexBytes'] for row in artifacts) + sum(row['estimatedDexBytes'] for row in unattributed)
 class_sum = sum(data['estimatedDexBytes'] for data in classes.values())
-assert total == class_sum
+check(total == class_sum, 'instruction ownership total differs from class sum')
 write(output / 'artifact-retention.json', {
     'unit': 'APK Analyzer uncompressed estimated DEX bytes. Direct class membership and heuristic synthetic ownership are separate. No compressed APK savings are claimed.',
     'artifacts': artifacts, 'unattributedClasses': unattributed,

@@ -10,7 +10,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
 
-from analyze import sha, write
+from analyze import check, sha, write
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--evidence', required=True, type=Path)
@@ -33,7 +33,7 @@ for vendor in ['baseline', 'c15t']:
         match = re.match(r'\s+resource 0x[0-9a-f]+ ([^ ]+)', line)
         if match:
             current = match[1]
-            assert current not in resources, ('Duplicate resource name', current)
+            check(current not in resources, ('Duplicate resource name', current))
             resources[current] = []
         elif current and re.match(r'\s+\([^)]*\)', line):
             resources[current].append(line.strip())
@@ -46,7 +46,7 @@ for row in json.loads((android / 'c15t-resolved-artifacts.json').read_text()):
         continue
     seen.add(row['sha256'])
     frozen = android / 'inputs/native' / (row['sha256'] + '-' + Path(row['file']).name)
-    assert sha(frozen) == row['sha256']
+    check(sha(frozen) == row['sha256'], 'frozen resource artifact hash differs')
     with zipfile.ZipFile(frozen) as archive:
         for name in archive.namelist():
             if not re.match(r'res/values[^/]*/[^/]+\.xml$', name):
@@ -59,7 +59,7 @@ for row in json.loads((android / 'c15t-resolved-artifacts.json').read_text()):
 base, current = names['baseline'], names['c15t']
 added = sorted(current.keys() - base.keys())
 removed = sorted(base.keys() - current.keys())
-assert not removed
+check(not removed, 'baseline resources were removed')
 write(output / 'resource-analysis.json', {
     'method': 'Names and configuration rows in final aapt2 resource-table dumps. Origin is a matching definition in frozen AAR values XML, not a compressed byte attribution.',
     'baselineResourceNames': len(base), 'c15tResourceNames': len(current),

@@ -5,7 +5,7 @@ from collections import deque
 import json
 from pathlib import Path
 
-from analyze import write
+from analyze import check, write
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--evidence', required=True, type=Path)
@@ -20,7 +20,7 @@ for name in ['baseline', 'c15t']:
     recorded = json.loads((android / f'{name}-resolved-artifacts.json').read_text())
     old = sorted((row['coordinate'], row['sha256']) for row in recorded)
     current = sorted((row['coordinate'], row['sha256']) for row in graph['artifacts'])
-    assert old == current, (name, 'Resolved artifact identity differs from measured APK inputs', set(old) ^ set(current))
+    check(old == current, (name, 'Resolved artifact identity differs from measured APK inputs', set(old) ^ set(current)))
     graphs[name] = graph
     checks[name] = {'resolvedArtifactRows': len(current), 'everyArtifactCoordinateAndHashMatchesFrozenMeasuredInputs': True,
                     'components': len(graph['components']), 'gradleVersion': graph['gradleVersion']}
