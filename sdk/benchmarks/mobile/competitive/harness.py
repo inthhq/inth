@@ -165,6 +165,15 @@ def tenant_source(cfg):
     return 'export const benchmarkConfig = ' + json.dumps(defaults, indent=2) + ';\n'
 
 
+def copy_input(source, destination):
+    """Reuse a verified shared frozen input without rewriting read-only files."""
+    if destination.exists():
+        require(destination.is_file() and not destination.is_symlink()
+                and sha(source) == sha(destination), 'shared frozen input changed')
+    else:
+        shutil.copy2(source, destination)
+
+
 def prepare(cfg, platform, vendor, runtime=False, profile=None):
     preflight(cfg, platform, tools=True)
     require(profile is None or (platform == 'android' and profile in ANDROID_PROFILES), 'prepare --profile is only for Android size profiles')
@@ -177,12 +186,12 @@ def prepare(cfg, platform, vendor, runtime=False, profile=None):
     host.mkdir(parents=True)
     inputs = host.parent / 'inputs'
     inputs.mkdir(exist_ok=True)
-    shutil.copy2(cfg['archive'], inputs / 'c15t.tgz')
+    copy_input(cfg['archive'], inputs / 'c15t.tgz')
     for row in PINS['wrappers']:
         if row['name'] != vendor:
             continue
         archive = download(cfg, row['tarball'], row['name'] + '-' + row['wrapperVersion'] + '.tgz', row['tarballSha256'])
-        shutil.copy2(archive, inputs / archive.name)
+        copy_input(archive, inputs / archive.name)
     for name in ('App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json'):
         shutil.copy2(HERE / 'fixtures/common' / name, host / name)
     for source, target in [(vendor + '.json', 'package.json'), (vendor + '.lock', 'bun.lock')]:

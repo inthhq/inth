@@ -309,6 +309,26 @@ class CompetitiveTests(unittest.TestCase):
         self.assertNotEqual(old, new)
         self.assertEqual(old, Path('/temporary/run/android/c15t-host'))
 
+    def test_frozen_shared_archive_can_prepare_more_than_one_host(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / 'frozen.tgz'
+            target = Path(tmp) / 'shared.tgz'
+            source.write_bytes(b'archive bytes')
+            source.chmod(0o444)
+            try:
+                harness.copy_input(source, target)
+                harness.copy_input(source, target)
+                self.assertEqual(target.read_bytes(), source.read_bytes())
+                self.assertEqual(target.stat().st_mode & 0o222, 0)
+                target.chmod(0o644)
+                target.write_bytes(b'changed input')
+                with self.assertRaisesRegex(ValueError, 'frozen input changed'):
+                    harness.copy_input(source, target)
+            finally:
+                source.chmod(0o644)
+                if target.exists():
+                    target.chmod(0o644)
+
     def test_analysis_snapshot_keeps_byte_units_and_sums_separate(self):
         snapshot = core.read(core.HERE / 'analysis/android-dependencies/results.json')
         self.assertEqual(snapshot['profile']['name'], 'android-release')
