@@ -1,13 +1,13 @@
 /* eslint-disable no-await-in-loop -- Read bounded chunks in sequence and yield for cancellation. */
-import { closeSync, fstatSync, readSync } from "node:fs";
-import type { Stats } from "node:fs";
+import { closeSync, readSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { basename, extname } from "node:path";
 import { setTimeout } from "node:timers/promises";
 
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
-import { sameFileSnapshot } from "./file-identity.ts";
+import { descriptorFileSnapshot, sameFileSnapshot } from "./file-identity.ts";
+import type { FileSnapshot } from "./file-identity.ts";
 import { openStableRegularFile } from "./file-input.ts";
 import { optionValue as option } from "./option-value.ts";
 
@@ -156,13 +156,13 @@ export class UploadFile {
   readonly mediaType: string;
   readonly sizeBytes: number;
   private readonly descriptor: number;
-  private readonly opened: Stats;
+  private readonly opened: FileSnapshot;
   private closed = false;
   private started = false;
 
   constructor(
     descriptor: number,
-    opened: Stats,
+    opened: FileSnapshot,
     fileName: string,
     mediaType: string
   ) {
@@ -170,7 +170,7 @@ export class UploadFile {
     this.opened = opened;
     this.fileName = fileName;
     this.mediaType = mediaType;
-    this.sizeBytes = opened.size;
+    this.sizeBytes = opened.info.size;
   }
 
   close(): void {
@@ -184,8 +184,8 @@ export class UploadFile {
     if (this.closed) {
       throw new CliError("upload_file_closed", "The upload file is closed.");
     }
-    const current = fstatSync(this.descriptor);
-    if (!current.isFile() || !sameFileSnapshot(current, this.opened)) {
+    const current = descriptorFileSnapshot(this.descriptor);
+    if (!current.info.isFile() || !sameFileSnapshot(current, this.opened)) {
       throw changedFile();
     }
   }
@@ -310,13 +310,16 @@ export const prepareUploadFile = async (
     limit = mediaType.startsWith("image/") ? 10_485_760 : 104_857_600;
   }
   try {
-    const { descriptor, info: opened } = openStableRegularFile(path, "file");
+    const { descriptor, snapshot: opened } = openStableRegularFile(
+      path,
+      "file"
+    );
     let prepared = false;
     try {
       if (
-        !Number.isSafeInteger(opened.size) ||
-        opened.size < 1 ||
-        opened.size > limit
+        !Number.isSafeInteger(opened.info.size) ||
+        opened.info.size < 1 ||
+        opened.info.size > limit
       ) {
         throw new CliError(
           "usage_error",

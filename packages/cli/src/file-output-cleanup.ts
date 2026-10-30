@@ -1,12 +1,14 @@
-import { lstatSync, unlinkSync } from "node:fs";
-import type { Stats } from "node:fs";
+import { unlinkSync } from "node:fs";
 
-import { sameFileIdentity } from "./file-identity.ts";
+import { pathFileIdentity } from "./file-identity.ts";
+import type { FileSnapshot } from "./file-identity.ts";
 
-export const removeCreatedFile = (path: string, created: Stats): void => {
+export const removeCreatedFile = (
+  path: string,
+  created: FileSnapshot
+): void => {
   try {
-    const current = lstatSync(path);
-    if (sameFileIdentity(current, created)) {
+    if (pathFileIdentity(path, false) === created.identity) {
       unlinkSync(path);
     }
   } catch (error) {

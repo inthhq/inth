@@ -20,6 +20,7 @@ fs.openSync = (path, flags, mode) => {
 };
 syncBuiltinESMExports();
 
+await import("../../experiments/node/file-identity.ts");
 const { readResourceInput } = await import("../../src/resource-input.ts");
 try {
   const text = await readResourceInput(

@@ -1,6 +1,7 @@
-import { closeSync, constants, fstatSync, openSync, writeSync } from "node:fs";
-import type { Stats } from "node:fs";
+import { closeSync, constants, openSync, writeSync } from "node:fs";
 
+import { descriptorFileSnapshot } from "./file-identity.ts";
+import type { FileSnapshot } from "./file-identity.ts";
 import { removeCreatedFile } from "./file-output-cleanup.ts";
 
 export const writeAllSync = (descriptor: number, bytes: Uint8Array): void => {
@@ -22,7 +23,7 @@ export const writeAllSync = (descriptor: number, bytes: Uint8Array): void => {
 
 export class PrivateOutputFile {
   readonly descriptor: number;
-  private readonly created: Stats;
+  private readonly created: FileSnapshot;
   private readonly path: string;
   private closed = false;
   private complete = false;
@@ -36,7 +37,7 @@ export class PrivateOutputFile {
       0o600
     );
     try {
-      this.created = fstatSync(this.descriptor);
+      this.created = descriptorFileSnapshot(this.descriptor);
     } catch (error) {
       // Without a descriptor identity, the path cannot be safely removed.
       closeSync(this.descriptor);

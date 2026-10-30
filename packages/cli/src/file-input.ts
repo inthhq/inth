@@ -1,12 +1,16 @@
-import { closeSync, constants, fstatSync, openSync, statSync } from "node:fs";
-import type { Stats } from "node:fs";
+import { closeSync, constants, openSync } from "node:fs";
 
 import { CliError } from "./cli-error.ts";
-import { sameFileIdentity } from "./file-identity.ts";
+import {
+  descriptorFileSnapshot,
+  pathFileSnapshot,
+  sameFileIdentity,
+} from "./file-identity.ts";
+import type { FileSnapshot } from "./file-identity.ts";
 
 interface StableFile {
   descriptor: number;
-  info: Stats;
+  snapshot: FileSnapshot;
 }
 
 export const openStableRegularFile = (
@@ -14,8 +18,8 @@ export const openStableRegularFile = (
   option: string,
   allowStdin = false
 ): StableFile => {
-  const selected = statSync(path);
-  if (!selected.isFile()) {
+  const selected = pathFileSnapshot(path);
+  if (!selected.info.isFile()) {
     throw new CliError(
       "usage_error",
       `--${option} must name a regular file${allowStdin ? ", or - for stdin." : "."}`
@@ -28,15 +32,15 @@ export const openStableRegularFile = (
   );
   let accepted = false;
   try {
-    const info = fstatSync(descriptor);
-    if (!info.isFile() || !sameFileIdentity(info, selected)) {
+    const snapshot = descriptorFileSnapshot(descriptor);
+    if (!snapshot.info.isFile() || !sameFileIdentity(snapshot, selected)) {
       throw new CliError(
         "usage_error",
         `--${option} must name a stable regular file.`
       );
     }
     accepted = true;
-    return { descriptor, info };
+    return { descriptor, snapshot };
   } finally {
     if (!accepted) {
       closeSync(descriptor);

@@ -3,18 +3,21 @@ import {
   closeSync,
   constants,
   fsyncSync,
-  fstatSync,
   ftruncateSync,
   lstatSync,
   openSync,
   realpathSync,
 } from "node:fs";
-import type { Stats } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { dirname, resolve } from "node:path";
 
 import { CliError } from "./cli-error.ts";
-import { sameFileSnapshot } from "./file-identity.ts";
+import {
+  descriptorFileSnapshot,
+  pathFileSnapshot,
+  sameFileSnapshot,
+} from "./file-identity.ts";
+import type { FileSnapshot } from "./file-identity.ts";
 import { removeCreatedFile } from "./file-output-cleanup.ts";
 import { PrivateOutputFile, writeAllSync } from "./private-output-file.ts";
 
@@ -43,11 +46,11 @@ const writeContents = (descriptor: number, data: UploadReceiptData): void => {
   fsyncSync(descriptor);
 };
 
-const writeReceipt = (path: string, data: UploadReceiptData): Stats => {
+const writeReceipt = (path: string, data: UploadReceiptData): FileSnapshot => {
   const output = new PrivateOutputFile(path);
   try {
     writeContents(output.descriptor, data);
-    const written = fstatSync(output.descriptor);
+    const written = descriptorFileSnapshot(output.descriptor);
     output.finish();
     return written;
   } finally {
@@ -68,11 +71,11 @@ const syncDirectory = (path: string): void => {
 };
 export class UploadReceipt {
   readonly path: string;
-  private written: Stats;
+  private written: FileSnapshot;
   private readonly parent: string;
   constructor(path: string, data: UploadReceiptData) {
     this.path = resolve(path);
-    let created: Stats | undefined;
+    let created: FileSnapshot | undefined;
     try {
       this.parent = realpathSync(dirname(this.path));
       const directory = lstatSync(dirname(this.path));
@@ -98,14 +101,14 @@ export class UploadReceipt {
   update(data: UploadReceiptData): void {
     let descriptor = -1;
     try {
-      const current = lstatSync(this.path);
+      const current = pathFileSnapshot(this.path, false);
       const directory = lstatSync(dirname(this.path));
       // eslint-disable-next-line no-bitwise -- Only update the private receipt this operation created.
       if (
-        !current.isFile() ||
-        current.isSymbolicLink() ||
+        !current.info.isFile() ||
+        current.info.isSymbolicLink() ||
         !sameFileSnapshot(current, this.written) ||
-        (process.platform !== "win32" && (current.mode & 0o077) !== 0) ||
+        (process.platform !== "win32" && (current.info.mode & 0o077) !== 0) ||
         realpathSync(dirname(this.path)) !== this.parent ||
         !directory.isDirectory() ||
         directory.isSymbolicLink() ||
@@ -118,13 +121,13 @@ export class UploadReceipt {
         // eslint-disable-next-line no-bitwise -- Refuse a substituted FIFO without blocking or truncating it.
         constants.O_RDWR | constants.O_NONBLOCK
       );
-      const opened = fstatSync(descriptor);
-      if (!opened.isFile() || !sameFileSnapshot(opened, current)) {
+      const opened = descriptorFileSnapshot(descriptor);
+      if (!opened.info.isFile() || !sameFileSnapshot(opened, current)) {
         throw receiptError();
       }
       writeContents(descriptor, data);
-      this.written = fstatSync(descriptor);
-      if (!sameFileSnapshot(lstatSync(this.path), this.written)) {
+      this.written = descriptorFileSnapshot(descriptor);
+      if (!sameFileSnapshot(pathFileSnapshot(this.path, false), this.written)) {
         throw receiptError();
       }
     } catch {

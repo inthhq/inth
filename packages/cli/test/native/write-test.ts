@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop -- Exercise native mutations and their fixtures in order. */
+import "../../src/native/native-file-identity.ts";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { join } from "node:path";
 

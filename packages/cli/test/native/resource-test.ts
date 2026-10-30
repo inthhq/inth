@@ -1,4 +1,5 @@
 /* eslint-disable require-await -- Scripted HTTP adapters implement asynchronous production contracts. */
+import "../../src/native/native-file-identity.ts";
 import "../../src/native/native-bindings.ts";
 import "../../src/auth-flow.ts";
 import {

@@ -78,7 +78,7 @@ export const nativeTarget = (
     sources = ["native-windows", "native-terminal-windows", "native-date"];
     systemLibraries = ["advapi32", "shell32", "bcrypt"];
   }
-  sources.push("native-url");
+  sources.push("native-url", "native-file-identity");
   return {
     arch,
     compiler: cc === "zigcc" ? "zig" : "clang",

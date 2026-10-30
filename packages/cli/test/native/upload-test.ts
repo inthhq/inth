@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop -- Native fixture operations share one transport and run sequentially. */
+import "../../src/native/native-file-identity.ts";
 import { setTimeout } from "node:timers/promises";
 
 import { parseArguments } from "../../src/arguments.ts";

@@ -36,7 +36,7 @@ fs.renameSync = (source, destination) => {
 };
 fs.fstatSync = new Proxy(fs.fstatSync, {
   apply(target, _receiver, args) {
-    const current = target(args[0]);
+    const current = target(args[0], args[1]);
     if (armed && args[0] === descriptor) {
       replace();
     }
@@ -45,6 +45,7 @@ fs.fstatSync = new Proxy(fs.fstatSync, {
 });
 syncBuiltinESMExports();
 
+await import("../../experiments/node/file-identity.ts");
 const { UploadReceipt } = await import("../../src/upload-receipt.ts");
 const data = {
   apiOrigin: "https://api.inth.com",

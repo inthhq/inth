@@ -11,6 +11,7 @@ import {
   verifyStatelessBypass,
   verifyUsageErrors,
 } from "./command-checks.ts";
+import { verifyFileIdentity } from "./file-identity-checks.ts";
 import {
   verifyCliState,
   verifyFixtureSuites,
@@ -94,6 +95,14 @@ const steps: Step[] = [
   },
   { name: "Help", run: verifyHelp },
   { name: "Command exit statuses", run: verifyExitStatus },
+  {
+    name: "Exact file identity",
+    run: () =>
+      verifyFileIdentity(
+        fixture("file-identity-test"),
+        fixture("file-identity-precision-test")
+      ),
+  },
   { name: "Dashboard writes", run: () => verifyWrites(fixture("write-test")) },
   { name: "File uploads", run: () => verifyUploads(fixture("upload-test")) },
   { name: "Usage errors", run: verifyUsageErrors },

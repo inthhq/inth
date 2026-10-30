@@ -1,4 +1,5 @@
 /* eslint-disable require-await -- Browser approval implements the shared asynchronous login UI contract. */
+import "./native/native-file-identity.ts";
 import { mkdirSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { dirname, join } from "node:path";

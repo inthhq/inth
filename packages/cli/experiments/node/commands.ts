@@ -1,3 +1,4 @@
+import "./file-identity.ts";
 import { requireAccessPerson } from "../../src/agent-access-commands.ts";
 import { runV2Write } from "../../src/agent-access-write-runner.ts";
 import type { AgentAuth } from "../../src/agent-auth.ts";

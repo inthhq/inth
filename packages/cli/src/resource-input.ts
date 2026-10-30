@@ -72,13 +72,13 @@ export const readResourceInput = async (
     if (path === "-") {
       return await readStdin(option, limit, signal);
     }
-    const { descriptor: handle, info } = openStableRegularFile(
+    const { descriptor: handle, snapshot } = openStableRegularFile(
       path,
       option,
       true
     );
     try {
-      if (info.size > limit) {
+      if (snapshot.info.size > limit) {
         throw tooLarge(option, limit);
       }
       const decoder = new TextDecoder("utf-8", { fatal: true });
