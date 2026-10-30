@@ -62,6 +62,8 @@ xcodebuild build -project /tmp/c15t-consent-demo/C15tConsentDemo.xcodeproj \
 
 Open the generated project in Xcode and run `C15tUIKitDemo` on your own simulator. Select `C15tConsentDemo` for the SwiftUI app lifecycle. Both use `ConsentDemoContent` and `DemoSession`; installation, observation, drafts and persistence stay in one implementation. The [standalone Apple guide](/docs/frameworks/react-native/apple) explains the public installer and ownership boundaries.
 
+Keep simulator code signing enabled. The project uses ad-hoc signing without a developer account so the hosted installer's Keychain check can succeed. Local fixture modes use file storage and do not verify Keychain access.
+
 To launch the built UIKit app from a shell, replace `<task-owned-udid>` with the identifier of a simulator you created for this run:
 
 ```sh

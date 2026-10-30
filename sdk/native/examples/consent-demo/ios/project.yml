@@ -8,7 +8,7 @@ packages:
 settings:
   base:
     SWIFT_VERSION: '5.9'
-    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGN_IDENTITY[sdk=iphonesimulator*]: '-'
     IPHONEOS_DEPLOYMENT_TARGET: '16.4'
 targets:
   C15tConsentDemo:

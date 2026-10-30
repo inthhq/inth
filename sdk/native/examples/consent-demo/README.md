@@ -11,5 +11,9 @@ is the existing `:consent-demo` Gradle app. Debug builds offer Category, Notice,
 and IAB TCF and Additional Consent modes on the setup screen. Release builds
 require hosted setup and exclude the fixture picker.
 
+Keep simulator code signing enabled. The project uses ad-hoc simulator signing
+without a developer account. Hosted setup checks Keychain access during
+installation; the local file-backed fixtures do not exercise that check.
+
 The JSON fixtures under `fixtures/` are local protocol inputs with a test CMP
 identity. They are not production policy or live hosted acceptance.

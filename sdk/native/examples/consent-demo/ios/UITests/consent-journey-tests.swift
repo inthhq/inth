@@ -97,6 +97,25 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(summary.contains("ac=2~10.20~dv."), summary)
         capture("ios-demo-picker-iab-commit")
     }
+    func test21HostedSetupInstallsProtectedStorage() {
+        app = XCUIApplication()
+        app.launch()
+        let backend = app.textFields["Inth project URL"]
+        XCTAssertTrue(backend.waitForExistence(timeout: 5))
+        backend.tap()
+        let previous = backend.value as? String ?? ""
+        backend.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: previous.count))
+        backend.typeText("https://c15t-hosted-setup.invalid")
+        let privacy = app.textFields["Privacy policy URL"]
+        privacy.tap()
+        privacy.typeText("https://example.com/privacy")
+        button("Connect").tap()
+        // Installation probes the real Keychain before policy fetching. The reserved
+        // backend cannot resolve, so this proves storage setup, not hosted delivery.
+        let installed = app.staticTexts["Inth hosted project"].waitForExistence(timeout: 15)
+        capture("ios-hosted-protected-storage")
+        XCTAssertTrue(installed, app.debugDescription)
+    }
     func test01EqualDecisionsAndRejectPersistOffline() {
         launch()
         print(app.debugDescription)
