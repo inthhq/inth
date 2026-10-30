@@ -911,41 +911,45 @@ class CompetitiveTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'signature'):
             core.android_metadata('failed', badge)
 
+    def retained_ios_measurements(self, root):
+        rows = []
+        for vendor in ['baseline', 'c15t']:
+            host = root / (vendor + '-host')
+            host.mkdir()
+            for name in ['App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json', 'benchmark-config.ts']:
+                (host / name).write_text('common host input')
+            common = harness.common_inputs(host, 'ios')
+            app = root / (vendor + '.app')
+            app.mkdir()
+            (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'com.c15t.expodev', 'CFBundleExecutable': 'Host', 'DTPlatformName': 'iphoneos', 'CFBundleSupportedPlatforms': ['iPhoneOS']}))
+            (app / 'Host').write_bytes(device_binary())
+            (app / 'main.jsbundle').write_bytes(bytes.fromhex('c61fbc03') + (b'presentPreferences' if vendor == 'c15t' else b'control'))
+            symbols = root / (vendor + '-symbols.txt')
+            symbols.write_text('C15tReactNativeModule snapshot presentPreferences' if vendor == 'c15t' else 'host')
+            linkmap = root / (vendor + '.map')
+            linkmap.write_text('unit-test-link-map')
+            settings = root / (vendor + '-settings.json')
+            core.write(settings, {**core.IOS_SETTINGS, 'DEPLOYMENT_POSTPROCESSING': 'NO'})
+            desc = {'profile': 'ios-local', 'vendor': vendor, 'host': str(host), 'artifact': str(app), 'symbols': [str(symbols)], 'maps': [str(linkmap)], 'settings': str(settings)}
+            app_manifest = root / (vendor + '-files.json')
+            core.write(app_manifest, [{'kind': 'file', **f} for f in core.manifest(app)])
+            desc.update(appFileManifest=str(app_manifest), expectedAppManifestSha256=core.sha(app_manifest))
+            measured = harness.measure_descriptor(desc, {})
+            cohort = core.digest({'profile': 'ios-local', 'commonInputs': common, 'settings': core.check_settings('ios-local', measured['settings']), 'inputs': {}})
+            rows.append({**measured, 'profile': 'ios-local', 'vendor': vendor, 'status': 'measured', 'cohort': cohort, 'descriptor': desc, 'commonFiles': core.bind_files(host / name for name in common)})
+        return rows
+
     def test_verifier_recomputes_app_bytes_and_host_parity(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             cfg = {'output': str(root)}
-            common = {}
-            rows = []
-            for vendor in ['baseline', 'c15t']:
-                host = root / (vendor + '-host')
-                host.mkdir()
-                for name in ['App.tsx', 'index.ts', 'metro.config.js', 'tsconfig.json', 'benchmark-config.ts']:
-                    (host / name).write_text('common host input')
-                common = harness.common_inputs(host, 'ios')
-                app = root / (vendor + '.app')
-                app.mkdir()
-                (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'com.c15t.expodev', 'CFBundleExecutable': 'Host', 'DTPlatformName': 'iphoneos', 'CFBundleSupportedPlatforms': ['iPhoneOS']}))
-                (app / 'Host').write_bytes(device_binary())
-                (app / 'main.jsbundle').write_bytes(bytes.fromhex('c61fbc03') + (b'presentPreferences' if vendor == 'c15t' else b'control'))
-                symbols = root / (vendor + '-symbols.txt')
-                symbols.write_text('C15tReactNativeModule snapshot presentPreferences' if vendor == 'c15t' else 'host')
-                linkmap = root / (vendor + '.map')
-                linkmap.write_text('unit-test-link-map')
-                settings = root / (vendor + '-settings.json')
-                core.write(settings, {**core.IOS_SETTINGS, 'DEPLOYMENT_POSTPROCESSING': 'NO'})
-                desc = {'profile': 'ios-local', 'vendor': vendor, 'host': str(host), 'artifact': str(app), 'symbols': [str(symbols)], 'maps': [str(linkmap)], 'settings': str(settings)}
-                app_manifest = root / (vendor + '-files.json')
-                core.write(app_manifest, [{'kind': 'file', **f} for f in core.manifest(app)])
-                desc.update(appFileManifest=str(app_manifest), expectedAppManifestSha256=core.sha(app_manifest))
-                measured = harness.measure_descriptor(desc, cfg)
-                cohort = core.digest({'profile': 'ios-local', 'commonInputs': common, 'settings': core.check_settings('ios-local', measured['settings']), 'inputs': {}})
-                rows.append({**measured, 'profile': 'ios-local', 'vendor': vendor, 'status': 'measured', 'cohort': cohort, 'descriptor': desc, 'commonFiles': core.bind_files(host / name for name in common)})
+            rows = self.retained_ios_measurements(root)
+            common = harness.common_inputs(root / 'baseline-host', 'ios')
             rows = core.size_rows(rows, complete=False)
             evidence = {'schemaVersion': 1, 'origin': 'retained-artifacts', 'inputs': {}, 'pinsSha256': core.sha(core.HERE / 'pins.json'), 'complete': False, 'measurements': rows}
             core.write(root / 'evidence.json', evidence)
             with patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'verify_archive_for_retained'):
-                harness.verify(cfg)
+                self.assertTrue(any('tenant configuration at build time is unproven' in warning for warning in harness.verify(cfg)['provenanceWarnings']))
                 forged = copy.deepcopy(evidence)
                 forged['measurements'][1]['bytes'] = 1
                 core.write(root / 'evidence.json', forged)
@@ -957,6 +961,37 @@ class CompetitiveTests(unittest.TestCase):
                 core.write(root / 'evidence.json', evidence)
                 with self.assertRaisesRegex(ValueError, 'parity'):
                     harness.verify(cfg)
+
+    def test_retained_recollection_preserves_missing_tenant_provenance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            measurements = self.retained_ios_measurements(root)
+            descriptors = [{**row['descriptor'], 'expectedArtifactSha256': row['artifactSha256']} for row in measurements]
+            retained = root / 'retained.json'
+            with patch.object(harness, 'preflight'), patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'verify_archive_for_retained'):
+                for original in ('absent', 'legacy', 'recorded'):
+                    apps = copy.deepcopy(descriptors)
+                    if original != 'absent':
+                        for row in apps:
+                            record = root / (row['vendor'] + '-' + original + '-build.json')
+                            common = harness.common_inputs(Path(row['host']), 'ios', legacy=original == 'legacy')
+                            core.write(record, {'commonInputs': common})
+                            row['buildRecord'] = str(record)
+                    core.write(retained, {'schemaVersion': 1, 'origin': 'retained-artifacts', 'apps': apps})
+                    cfg = {'output': str(root / original), 'sizeProfiles': ['ios-local']}
+                    harness.collect(cfg, retained=retained, partial=True)
+                    verified = harness.verify(cfg)
+                    missing = original != 'recorded'
+                    self.assertEqual(any('tenant configuration at build time is unproven' in warning for warning in verified['provenanceWarnings']), missing)
+                    names = {Path(row['path']).name for row in verified['measurements'][0]['commonFiles']}
+                    self.assertEqual('benchmark-config.ts' in names, not missing)
+                    harness.report(cfg)
+                    self.assertEqual('tenant configuration at build time is unproven' in (Path(cfg['output']) / 'report.md').read_text(), missing)
+                    self.assertEqual(any('tenant configuration at build time is unproven' in warning for warning in core.read(Path(cfg['output']) / 'report.json')['warnings']), missing)
+                core.write(retained, {'schemaVersion': 1, 'origin': 'retained-artifacts', 'apps': descriptors})
+                (root / 'c15t-host/benchmark-config.ts').write_text('different current tenant')
+                with self.assertRaisesRegex(ValueError, 'parity mismatch'):
+                    harness.collect({'output': str(root / 'different'), 'sizeProfiles': ['ios-local']}, retained=retained, partial=True)
 
     def test_recorded_snapshot_has_all_18_measurements(self):
         snapshot = core.read(core.HERE / 'snapshots/2026-10-30.json')

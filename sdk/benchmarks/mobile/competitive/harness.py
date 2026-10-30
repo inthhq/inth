@@ -409,6 +409,11 @@ def cohort_inputs(rows, platform, *, legacy=False):
     return common_inputs(Path(rows[0]['host']), platform, legacy=legacy)
 
 
+def recorded_tenant_config(row):
+    record = row.get('buildRecord')
+    return bool(record and read(record).get('commonInputs', {}).get('benchmark-config.ts'))
+
+
 def verify_prepared(cfg, host, profile, vendor):
     prepared = read(host / 'prepared.json')
     require(prepared.get('construction') == construction_inputs(), 'construction sources changed since prepare; prepare a fresh host')
@@ -556,7 +561,7 @@ def collect(cfg, retained=None, partial=False):
         baseline = next((row for row in cohort if row['vendor'] == 'baseline'), None)
         require(baseline, f'missing baseline for {profile}')
         platform = 'android' if profile in ANDROID_PROFILES else 'ios'
-        legacy = bool(retained) and not any((Path(row['host']) / 'benchmark-config.ts').exists() for row in cohort)
+        legacy = bool(retained) and not all(recorded_tenant_config(row) for row in cohort)
         common = cohort_inputs(cohort, platform, legacy=legacy)
         base_settings = read(baseline['settings'])
         cohort_hash = digest({'profile': profile, 'commonInputs': common, 'settings': check_settings(profile, base_settings), 'inputs': validate_inputs(cfg)})
@@ -636,7 +641,7 @@ def verify(cfg):
         platform = 'android' if profile in ANDROID_PROFILES else 'ios'
         legacy = not any(Path(f['path']).name == 'benchmark-config.ts' for f in base['commonFiles'])
         common = cohort_inputs([row['descriptor'] for row in group], platform, legacy=legacy)
-        if legacy:
+        if legacy or not all(recorded_tenant_config(row['descriptor']) for row in group):
             warnings.append(f'{profile}: historical cohort did not bind benchmark-config.ts; tenant configuration at build time is unproven.')
         expected = digest({'profile': profile, 'commonInputs': common, 'settings': check_settings(profile, base['settings']), 'inputs': evidence['inputs']})
         for row in group:

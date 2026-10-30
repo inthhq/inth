@@ -224,8 +224,10 @@ prepares fail parity. Tenant values remain outside Git. Historical evidence may
 omit this file or the prebuild dependency manifest. Verification preserves its
 original hashes and reports those provenance gaps. If historical tenant config
 files remain available, their current parity is checked too. It does not prove
-their build-time values. Missing historical config is never reconstructed, and
-hashing installed files today cannot supply missing prebuild provenance.
+their build-time values. Recollection checks the original build record for
+tenant-config coverage; a config file present today cannot remove the warning.
+Missing historical config is never reconstructed. Hashing installed files today
+cannot supply missing prebuild provenance.
 
 ## Historical strict runtime
 
