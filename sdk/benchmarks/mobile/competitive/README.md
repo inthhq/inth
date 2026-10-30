@@ -21,6 +21,27 @@ obfuscation and resource shrinking are enabled. The opt-in `android-optimized`
 profile selects `proguard-android-optimize.txt` for every participant and uses a
 new matched baseline. Neither profile replaces or relabels the other.
 
+The [optimized snapshot](snapshots/2026-10-30-android-optimized.json) records a
+fresh six-app cohort with the same pinned SDK inputs and stock size adapters.
+The instrumented c15t attempt is excluded; c15t was rebuilt with its clean
+adapter. Actual source, resource, signing, toolchain and dependency checks
+allow the other five fresh APKs to share that matched cohort.
+
+| SDK | `android-optimized` signed APK bytes | Added over optimized baseline |
+| --- | ---: | ---: |
+| Baseline | 20,046,042 | 0 |
+| c15t | 21,434,838 | 1,388,796 |
+| OneTrust | 20,956,682 | 910,640 |
+| Didomi | 24,302,160 | 4,256,118 |
+| Usercentrics | 20,868,630 | 822,588 |
+| Sourcepoint | 20,909,572 | 863,530 |
+
+Each profile has its own baseline. Fresh host paths and JavaScript fixtures
+differ from the historical cohort, so subtracting the two cohorts does not
+isolate an optimizer-only saving on identical app inputs. Both cohorts retain
+stock SDK integrations. No runtime speed or feature-equivalence result follows
+from these APK lengths.
+
 The [dependency attribution](analysis/android-dependencies/report.md) explains
 the historical Android cost. c15t adds 1,977,546 signed APK bytes, including
 1,655,577 compressed DEX bytes. Compose accounts for 2,425,795 of 3,228,300
@@ -119,23 +140,53 @@ classes, so those counts are not original source-class counts.
 
 For untimed acceptance, run the entire command under the shared lock. It
 creates its own API36 arm64 AVD, checks the port is unused, retains UI XML,
-screenshots, logcat, native consent states and command results, then stops only
-that emulator before returning. It needs the installed
+screenshots, logcat, native preferences and command results, then stops only
+that emulator before returning. Cleanup checks process exit, closed emulator
+ports and a disconnected ADB transport. ADB can retain a stale offline row.
+It needs the installed
 `system-images;android-36;google_apis;arm64-v8a` image. The local config must
 supply the official vendor sample configurations or verified tenant values.
 
 ```sh
 python3 /path/to/shared/with-native-lock.py optimized-stock-ui \
   python3 benchmarks/mobile/competitive/acceptance/android.py \
-  --config /path/to/optimized.json --port 5592
+  --config /path/to/optimized.json --port 5584
 ```
 
 c15t starts offline with IPv4/IPv6 UID rejection rules, opens its native
 preferences, records a real Reject All choice and repeats a fresh process
-launch with that denial. Any offline backend error remains in the captured
-state. This acceptance is not runtime-timing eligibility. Other configured
+launch with that denial. The stock preferences expose a `Last changed` label
+only for a saved explicit choice. Acceptance checks that label and the denied
+measurement switch after restarting, alongside the RN host's Ready and denied
+gate text. Encrypted snapshot files remain external; no key is exported.
+The stock fixture does not expose internal `error` or `policyPending` fields.
+This acceptance is not runtime-timing eligibility. Other configured
 vendors retain stock-UI observations; OneTrust stays compile-only without a
 verified App ID. No phone or speed result follows from this check.
+
+An optional `--diagnostic-build /path/to/separate/build-complete.json` reads an
+exact native choice timestamp after the clean APK's own restart checks. This
+requires an externally retained diagnostic APK with the same frozen SDK,
+native dependencies, optimizing profile, signing key and package. The script
+checks those inputs, updates that task app without clearing its data, reads
+the diagnostic state, then restores the clean APK. It checks the recorded
+choice time against the device-clock interval around the clean APK's Reject
+All action after reading an actual Ready diagnostic state. That second APK is
+excluded from size totals. Its diagnostic
+state does not establish the clean fixture's internal error fields. The
+default UI acceptance needs no diagnostic marker or historical diagnostic APK.
+Nonzero auxiliary log-capture results remain in the command records and
+acceptance summary. UI and saved-choice checks still need actual observations.
+
+The recorded clean-APK run passed cold-offline initialization, native
+preferences, Reject All and a fresh offline restart with all four optional
+switches denied. The separate diagnostic read confirmed an explicit choice
+timestamp within the clean app's rejection interval. It also reported a
+transport error while offline, so this result does not qualify c15t for the
+cached-denial runtime lane. Didomi rendered its consent notice, Usercentrics
+rendered Privacy Settings, and Sourcepoint rendered its GDPR campaign UI.
+Sourcepoint's host still showed Starting. These vendor observations do not
+establish durable choices or successful readiness for every vendor.
 
 Outputs are `evidence.json`, `report.json` and `report.md` under the configured output root. Logs, APKs, `.app`, downloads, keys, caches and tenant config remain external. `extensions` can map names to external schemaVersion1 JSON files, such as Android dependency attribution or separately verified runtime results. Report records their paths and hashes without adding archive bytes to app contribution.
 

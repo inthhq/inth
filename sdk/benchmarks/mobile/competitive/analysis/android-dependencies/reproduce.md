@@ -13,6 +13,12 @@ and are not the fresh size-build runner. Use [the harness](../../README.md) for
 fresh builds. No binary evidence, copied host trees or full dependency graphs
 are stored in git.
 
+The original report is preserved byte for byte. Its references to
+`graph-paths.json`, `dependency-resolution.json` and other supporting JSON
+mean the generated files in `OUTPUT`. The commands below recreate them;
+they are not additional committed inputs. The committed `results.json`
+contains the compact findings and source hashes.
+
 Run from this directory. Set `EVIDENCE` to the competitive evidence root, which
 contains `android/`, `ACCEPTANCE` to the original acceptance root containing
 `inputs/`, and `OUTPUT` to a new external writable directory. Set `ANDROID_HOME`
@@ -55,8 +61,17 @@ does not assemble an APK. A rerun needs a fresh output directory or an explicit
 SHA256, including duplicate rows, must match the frozen inputs before the
 graph can support the report.
 
+The frozen c15t host records an absolute local Maven repository URI in its
+Gradle file. Graph capture preserves that file, so its recorded repository
+location must still be available. Changing `EVIDENCE` alone does not relocate
+that host. Fresh harness builds take the Maven path from the external config
+and support a new location. The static APK/DEX analysis does not resolve Maven.
+
 The original 27-file portable manifest was verified before incorporation.
 [source-manifest.json](source-manifest.json) retains its hash and the exact
 hashes of the incorporated original scripts and report. Full per-class
 ownership, ZIP-entry lists, resolved graphs, temporary dumps and build logs
 remain external. The commands regenerate those supporting reports in `OUTPUT`.
+The original verification's Maven manifest hash covers the JSON file bytes;
+the fresh harness hashes its canonical file records. Both verify the same 90
+Maven files individually.

@@ -1,4 +1,29 @@
 {
+	"analysisTools": {
+		"androidCommandLineToolsVersion": "22.0",
+		"tools": [
+			{
+				"bytes": 5765,
+				"sha256": "b549ff6c84f22e1339e1bc88854747a3867522e8f9d7676b5809f3372fcdae57",
+				"tool": "apkanalyzer-launcher"
+			},
+			{
+				"bytes": 4329,
+				"sha256": "a41766a6bf679feae9d8c65cfead8ba7573bd7762feedd808715a72a808328b2",
+				"tool": "apkanalyzer-classpath.jar"
+			},
+			{
+				"bytes": 10682288,
+				"sha256": "a8844d4089b442b034aed8953deee1893253053c900e03141ae7173e3edd8157",
+				"tool": "aapt2"
+			},
+			{
+				"bytes": 86,
+				"sha256": "166bcdfe54f73296b09e5e6aa6d96b9a752b78b418c56e9f3f3a13c15fac74e5",
+				"tool": "command-line-tools-source.properties"
+			}
+		]
+	},
 	"apks": {
 		"baseline": {
 			"addedApkBytes": 0,
@@ -524,6 +549,24 @@
 		"instructions": "Exact code_item instruction lengths from final APK DEX, grouped by original R8 class family. Excludes metadata, headers, shared pools and compression.",
 		"packageEstimates": "APK Analyzer defined-only estimates after deobfuscating actual APK DEX with its R8 map. They exclude some shared DEX structures. Nested packages overlap their parent. They are not compressed APK contributions.",
 		"removedClasses": "Fully removed original classes from usage.txt. A retained class can still have removed members."
+	},
+	"originalVerification": {
+		"apksVerified": 6,
+		"counterfactualSizeBuilds": 0,
+		"disjointInstructionSums": true,
+		"frozenMavenFilesVerified": 90,
+		"inputHashesRechecked": 36,
+		"markdownTableSums": true,
+		"mavenManifestSha256": "954bfe9c382ddf9c89db8b14f4dc85e172e521dd913b50ea9bb84024578f3d59",
+		"passed": true,
+		"producerGitClean": true,
+		"producerHead": "256e903bfa542c15126e017c10fdfea70f421521",
+		"producerSourceFilesVerified": 1814,
+		"resolvedGraphArtifactHashEquality": true,
+		"rnArchiveSha256Verified": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+		"runtimeSampling": false,
+		"sizeGroupSums": true,
+		"sourceManifestSha256": "fb9c798bd8459bc7c736d43f7d3f2b7f0a54c90413a6bf8026213c592d2765ff"
 	},
 	"producer": {
 		"androidMavenVersion": "3.0.0-alpha.1",

@@ -355,6 +355,11 @@ class CompetitiveTests(unittest.TestCase):
                 stream.write('-dontshrink\n')
             with self.assertRaisesRegex(ValueError, 'shrinking/obfuscation'):
                 core.check_r8('android-optimized', config, mapping)
+            optimized = '# The proguard configuration file for the following section is /temporary/proguard-android-optimize.txt-8.12.0\n'
+            for mutation in ['-dontoptimize\n', '-dontobfuscate\n', '# The proguard configuration file for the following section is /temporary/proguard-android.txt-8.12.0\n']:
+                config.write_text(optimized + mutation)
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    core.check_r8('android-optimized', config, mapping)
 
     def test_optimized_profile_is_explicit_and_complete_with_six_apps(self):
         self.assertEqual(harness.selected_profiles({}), core.DEFAULT_PROFILES)
@@ -412,16 +417,30 @@ class CompetitiveTests(unittest.TestCase):
             path = core.HERE / 'analysis/android-dependencies' / record['path']
             self.assertEqual(core.sha(path), record['sha256'])
 
-    def test_untimed_acceptance_requires_real_choice_after_restart(self):
-        from acceptance.android import snapshots, denied
-        state = {'ready': True, 'policyPending': False, 'effectivePermissions': {'measurement': False}}
+    def test_untimed_acceptance_requires_saved_choice_not_default_off(self):
+        import xml.etree.ElementTree as ET
+        from acceptance.android import native_preferences, denied
+        tree = ET.fromstring('<hierarchy><node resource-id="c15t.prefs.category.measurement.switch" checkable="true" checked="false"/></hierarchy>')
+        state = native_preferences(tree)
         self.assertFalse(denied(state))
-        state['explicitChoice'] = {'categories': {'measurement': {'value': False, 'confirmedAt': 123}}}
+        ET.SubElement(tree, 'node', {'resource-id': 'c15t.prefs.last-changed', 'text': 'Last changed Oct 30, 2026'})
+        state = native_preferences(tree)
         self.assertTrue(denied(state))
-        self.assertFalse(denied({**state, 'policyPending': True}))
-        log = 'ReactNativeJS: CMP_SIZE_C15T_STATE ' + json.dumps(state)
-        self.assertEqual(snapshots(log), [state])
-        self.assertEqual(snapshots('CMP_SIZE_C15T_STATE {truncated'), [])
+        self.assertFalse(denied({**state, 'categories': {'measurement': True}}))
+        self.assertFalse(denied({'lastChanged': state['lastChanged'], 'categories': {}}))
+        tree.find('node').set('checkable', 'false')
+        self.assertFalse(denied(native_preferences(tree)))
+
+    def test_emulator_cleanup_accepts_stale_offline_rows_only_after_real_shutdown(self):
+        from acceptance.android import emulator_stopped
+        stopped = {'stoppedBeforeLockRelease': True, 'emulatorPortsClosed': True,
+                   'adbDisconnected': True, 'serialStateAfterStop': 'offline'}
+        self.assertTrue(emulator_stopped(stopped))
+        self.assertTrue(emulator_stopped({**stopped, 'serialStateAfterStop': 'absent'}))
+        for mutation in [{'stoppedBeforeLockRelease': False}, {'emulatorPortsClosed': False},
+                         {'adbDisconnected': False}, {'serialStateAfterStop': 'device'}]:
+            with self.subTest(mutation=mutation):
+                self.assertFalse(emulator_stopped({**stopped, **mutation}))
 
     def test_relative_config_resolves_from_file_not_cwd(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -613,6 +632,33 @@ class CompetitiveTests(unittest.TestCase):
         self.assertEqual(len(rows), 18)
         self.assertEqual(snapshot['runtime']['summary']['c15t']['scheduled'], 0)
         self.assertIsNone(snapshot['runtime']['summary']['c15t']['p50Ms'])
+
+    def test_optimized_snapshot_binds_clean_acceptance_to_its_six_app_cohort(self):
+        snapshot = core.read(core.HERE / 'snapshots/2026-10-30-android-optimized.json')
+        self.assertTrue(snapshot['complete'])
+        self.assertEqual(snapshot['profile'], 'android-optimized')
+        rows = [{**row, 'cohort': row['profile']} for row in snapshot['measurements']]
+        self.assertEqual(core.size_rows(rows, profiles=('android-optimized',)), rows)
+        self.assertEqual({row['vendor'] for row in rows}, set(core.VENDORS))
+        baseline = next(row for row in rows if row['vendor'] == 'baseline')
+        for row in rows:
+            self.assertTrue(row['r8']['optimizationEnabled'])
+            self.assertEqual(row['r8']['defaultFile'], 'proguard-android-optimize.txt')
+            self.assertEqual(row['addedBytes'], row['bytes'] - baseline['bytes'])
+            self.assertEqual(sum(group['compressedBytes'] for group in row['groups'].values())
+                             + row['zipAndSigningOverheadBytes'], row['bytes'])
+            self.assertNotIn(row['artifactSha256'], snapshot['excludedArtifacts'])
+        acceptance = snapshot['acceptance']
+        c15t = next(row for row in rows if row['vendor'] == 'c15t')
+        self.assertEqual(acceptance['c15t']['installedApkSha256'], c15t['artifactSha256'])
+        self.assertTrue(acceptance['c15t']['durableDenial'])
+        self.assertTrue(acceptance['c15t']['freshProcess'])
+        self.assertTrue(acceptance['c15t']['choiceTimestampMatchesCleanApkRejection'])
+        self.assertTrue(acceptance['emulator']['stoppedBeforeLockRelease'])
+        self.assertTrue(acceptance['emulator']['emulatorPortsClosed'])
+        self.assertTrue(acceptance['emulator']['adbDisconnected'])
+        self.assertIn(acceptance['emulator']['serialStateAfterStop'], ('absent', 'offline'))
+        self.assertIn(acceptance['c15t']['diagnosticApkSha256'], snapshot['excludedArtifacts'])
 
 
 if __name__ == '__main__':
