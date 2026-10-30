@@ -1,7 +1,13 @@
 /* eslint-disable require-await -- Scripted HTTP adapters implement asynchronous production contracts. */
 import "../../src/native/native-bindings.ts";
 import "../../src/auth-flow.ts";
-import { readFileSync, writeFileSync, unlinkSync } from "node:fs";
+import {
+  existsSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+  unlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { join } from "node:path";
@@ -330,6 +336,50 @@ try {
   );
 } finally {
   unlinkSync(binaryPath);
+}
+for (const replacement of [false, true]) {
+  const movedPath = `${binaryPath}.partial`;
+  const controller = new AbortController();
+  const reason = new Error("Download stopped");
+  const saving = saveResourceDownload(
+    binaryOptions,
+    {
+      bytes: new Uint8Array(1_048_576),
+      contentType: "image/png",
+      requestId: null,
+    },
+    controller.signal
+  );
+  try {
+    renameSync(binaryPath, movedPath);
+    if (replacement) {
+      writeFileSync(binaryPath, "keep me");
+    }
+    controller.abort(reason);
+    let cancelled = false;
+    try {
+      // eslint-disable-next-line no-await-in-loop -- Each race reuses the same output paths after cleanup.
+      await saving;
+    } catch (error) {
+      cancelled = error === reason;
+    }
+    check(cancelled, "Download cleanup lost the cancellation reason.");
+    check(
+      readFileSync(movedPath).byteLength === 65_536,
+      "Download cleanup changed the moved partial file."
+    );
+    check(
+      replacement
+        ? readFileSync(binaryPath, "utf-8") === "keep me"
+        : !existsSync(binaryPath),
+      "Download cleanup changed the replacement path."
+    );
+  } finally {
+    if (existsSync(binaryPath)) {
+      unlinkSync(binaryPath);
+    }
+    unlinkSync(movedPath);
+  }
 }
 for (const args of [
   ["api", "GET", "/v1/file", "--method", "GET", "--output", binaryPath],

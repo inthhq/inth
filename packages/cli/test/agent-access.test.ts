@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync, renameSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdtemp, readFile, readlink, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import nodePath from "node:path";
 
@@ -306,6 +306,52 @@ describe("approvals, downloads, and readable help", () => {
     ).rejects.toMatchObject({ code: "file_write_failed" });
     expect(await readFile(output, "utf-8")).toBe("keep me");
   });
+  it.each(
+    process.platform === "win32"
+      ? ["file", "missing"]
+      : ["file", "missing", "symlink"]
+  )(
+    "preserves a %s path after an interrupted download is moved",
+    async (replacement) => {
+      const output = nodePath.join(await directory(), "download.bin");
+      const moved = `${output}.partial`;
+      const options = parseArguments([
+        "support",
+        "attachment-get",
+        "sat_1",
+        "--output",
+        output,
+      ]);
+      const controller = new AbortController();
+      const reason = new Error("Download stopped");
+      const saving = saveResourceDownload(
+        options,
+        {
+          bytes: new Uint8Array(1_048_576),
+          contentType: "video/webm",
+          requestId: null,
+        },
+        controller.signal
+      );
+      renameSync(output, moved);
+      if (replacement === "file") {
+        writeFileSync(output, "keep me");
+      } else if (replacement === "symlink") {
+        symlinkSync(moved, output);
+      }
+      controller.abort(reason);
+      await expect(saving).rejects.toBe(reason);
+      const movedBytes = await readFile(moved);
+      expect(movedBytes.byteLength).toBe(65_536);
+      if (replacement === "file") {
+        expect(await readFile(output, "utf-8")).toBe("keep me");
+      } else if (replacement === "symlink") {
+        expect(await readlink(output)).toBe(moved);
+      } else {
+        expect(existsSync(output)).toBe(false);
+      }
+    }
+  );
   it.each(["-", "bad\nfile"])("rejects unsafe binary output %j", (output) => {
     expect(() =>
       validateDownloadOutput(

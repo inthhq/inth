@@ -2,11 +2,14 @@ import {
   closeSync,
   constants,
   existsSync,
+  fstatSync,
+  lstatSync,
   openSync,
   statSync,
   unlinkSync,
   writeSync,
 } from "node:fs";
+import type { Stats } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named path imports.
 import { dirname, resolve } from "node:path";
 import { setTimeout } from "node:timers/promises";
@@ -52,6 +55,20 @@ export const validateDownloadOutput = (options: CliArguments): void => {
   }
 };
 
+const removePartialDownload = (path: string, created: Stats): void => {
+  try {
+    const current = lstatSync(path);
+    if (current.ino === created.ino && current.dev === created.dev) {
+      unlinkSync(path);
+    }
+  } catch (error) {
+    // Scriptc filesystem errors carry errno in the message prefix.
+    if (!(error instanceof Error && error.message.startsWith("ENOENT:"))) {
+      throw error;
+    }
+  }
+};
+
 export const saveResourceDownload = async (
   options: CliArguments,
   download: DownloadResult,
@@ -59,7 +76,7 @@ export const saveResourceDownload = async (
 ): Promise<string> => {
   signal.throwIfAborted();
   const path = resolve(optionValue(options, "output") ?? "");
-  let created = false;
+  let created: Stats | undefined;
   let complete = false;
   try {
     const handle = openSync(
@@ -68,8 +85,8 @@ export const saveResourceDownload = async (
       constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL,
       0o600
     );
-    created = true;
     try {
+      created = fstatSync(handle);
       let offset = 0;
       while (offset < download.bytes.byteLength) {
         signal.throwIfAborted();
@@ -102,7 +119,7 @@ export const saveResourceDownload = async (
     );
   } finally {
     if (created && !complete) {
-      unlinkSync(path);
+      removePartialDownload(path, created);
     }
   }
   return JSON.stringify({
