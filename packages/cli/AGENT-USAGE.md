@@ -69,7 +69,7 @@ Failure:
 
 The envelope is defined in [output.schema.json](output.schema.json). Consumers should branch on `ok` and `error.code`, rather than matching error messages or relying on JSON property order. `error.apiCode` preserves recognized server codes such as `INSUFFICIENT_CREDITS`, `CONFLICT`, and `PLAN_LIMIT_REACHED`; it is null for local errors or unrecognized server codes. `schemaVersion` versions the envelope. Version 2 adds `error.apiCode`; consumers validating version 1 must adopt the version 2 schema. JSON API payloads keep their server-defined shape inside `data`, including server envelopes and pagination fields. A successful HTTP 204 produces `data: null`. The CLI does not automatically follow pagination; request the next page using the returned cursor or `nextPage`. Binary downloads save bytes to `--output` and return file metadata in `data`.
 
-Exit codes are `0` for success, `1` for failure, and `130` for handled cancellation. HTTP failures include `httpStatus` and the sanitized `X-Request-Id` when available. Preserve the request ID for support.
+Exit codes are `0` for success, `1` for failure, `2` when a billing mutation or audit quote approval has not confirmed completion, and `130` for handled cancellation. Code `2` preserves the API response, including statuses such as `processing`, `requires_action`, or an unrecognized status. Inspect the returned mutation status before treating the action as complete. HTTP failures include `httpStatus` and the sanitized `X-Request-Id` when available. Preserve the request ID for support.
 
 | Error code | Meaning |
 | --- | --- |
