@@ -5,6 +5,7 @@ import {
   writeResultExitCode,
   writeRetryDiagnostic,
 } from "./agent-access-write-request.ts";
+import type { RequestDispatchObserver } from "./agent-types.ts";
 import type { CliArguments } from "./arguments.ts";
 import { saveBillingApproval } from "./billing-approval.ts";
 import { CliError } from "./cli-error.ts";
@@ -20,13 +21,15 @@ export interface WriteApi {
     body?: string,
     organization?: string,
     accept?: string,
-    once?: boolean
+    once?: boolean,
+    observeDispatch?: RequestDispatchObserver
   ) => Promise<string>;
   putImage: (
     path: string,
     bytes: Uint8Array,
     mediaType: string,
-    organization?: string
+    organization?: string,
+    observeDispatch?: RequestDispatchObserver
   ) => Promise<string>;
 }
 export const runV2Write = async (
@@ -48,6 +51,10 @@ export const runV2Write = async (
     console.error(diagnostic);
   }
   let output: string;
+  let dispatched = false;
+  const observeDispatch: RequestDispatchObserver = (started) => {
+    dispatched = started;
+  };
   try {
     if (resourceCommand(options)?.image) {
       const bytes = options.preparedImageBytes;
@@ -62,7 +69,8 @@ export const runV2Write = async (
         selected.request.path,
         bytes,
         mediaType,
-        selected.organization
+        selected.organization,
+        observeDispatch
       );
     } else {
       output = await api.execute(
@@ -71,10 +79,14 @@ export const runV2Write = async (
         selected.request.body,
         selected.organization,
         "application/json",
-        true
+        true,
+        observeDispatch
       );
     }
   } catch (error) {
+    if (!dispatched) {
+      throw error;
+    }
     throw writeOutcomeError(error);
   }
   saveBillingApproval(options, selected.request, output);

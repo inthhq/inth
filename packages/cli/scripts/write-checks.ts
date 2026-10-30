@@ -17,7 +17,7 @@ const caseIndex = (scenario: string, count: number): number => {
   if (scenario === "approval") {
     return 13 + count;
   }
-  if (scenario === "refresh") {
+  if (scenario.startsWith("refresh")) {
     return 22;
   }
   if (scenario.startsWith("image")) {
@@ -87,7 +87,7 @@ export const verifyWrites = async (binary: string): Promise<void> => {
         response.end("{}");
         return;
       }
-      if (scenario === "lost") {
+      if (scenario.endsWith("lost")) {
         response.destroy();
         return;
       }
@@ -120,6 +120,14 @@ export const verifyWrites = async (binary: string): Promise<void> => {
       "approval",
       "refresh",
       "image-refresh",
+      "auth-missing",
+      "auth-discovery",
+      "refresh-auth",
+      "image-auth-missing",
+      "image-auth-discovery",
+      "image-refresh-auth",
+      "refresh-lost",
+      "image-refresh-lost",
       "rate",
       "lost",
       "image-rate",
@@ -162,6 +170,13 @@ export const verifyWrites = async (binary: string): Promise<void> => {
         expectedCount = 50;
       } else if (name === "validation") {
         expectedCount = 0;
+      } else if (
+        name.endsWith("auth-missing") ||
+        name.endsWith("auth-discovery")
+      ) {
+        expectedCount = 0;
+      } else if (name.endsWith("refresh-auth")) {
+        expectedCount = 1;
       } else if (name.includes("refresh") || name === "approval") {
         expectedCount = 2;
       }

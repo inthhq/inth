@@ -43,6 +43,15 @@ let authorizations = 0;
 const auth: AccessTokenProvider = {
   accessToken: () => {
     authorizations += 1;
+    if (
+      scenario.endsWith("auth-missing") ||
+      (scenario.endsWith("refresh-auth") && authorizations === 2)
+    ) {
+      throw new CliError("authentication_required", "Sign in first.");
+    }
+    if (scenario.endsWith("auth-discovery")) {
+      throw new Error("Authorization discovery unavailable.");
+    }
     return Promise.resolve(
       authorizations === 1 ? "native-write-token" : "native-refreshed-token"
     );
@@ -69,12 +78,36 @@ const run = async (args: string[]): Promise<string> => {
     options,
     buildResourceRequest(options),
     {
-      execute: async (path, method, body, organization, accept, once) =>
+      execute: async (
+        path,
+        method,
+        body,
+        organization,
+        accept,
+        once,
+        observeDispatch
+      ) =>
         apiOutput(
-          await api.execute(path, method, body, organization, accept, once)
+          await api.execute(
+            path,
+            method,
+            body,
+            organization,
+            accept,
+            once,
+            observeDispatch
+          )
         ),
-      putImage: async (path, bytes, mediaType, organization) =>
-        apiOutput(await api.putImage(path, bytes, mediaType, organization)),
+      putImage: async (path, bytes, mediaType, organization, observeDispatch) =>
+        apiOutput(
+          await api.putImage(
+            path,
+            bytes,
+            mediaType,
+            organization,
+            observeDispatch
+          )
+        ),
     },
     (organization?: string): Promise<string | undefined> => {
       resolutions += 1;
@@ -258,7 +291,7 @@ if (scenario === "validation") {
   }
 } else {
   let index = 40;
-  if (scenario === "refresh") {
+  if (scenario.startsWith("refresh")) {
     index = 22;
   }
   if (scenario.startsWith("image")) {
@@ -267,7 +300,29 @@ if (scenario === "validation") {
   if (scenario === "pending") {
     index = 49;
   }
-  if (["rate", "lost", "image-rate", "image-redirect"].includes(scenario)) {
+  if (
+    scenario.endsWith("auth-missing") ||
+    scenario.endsWith("auth-discovery") ||
+    scenario.endsWith("refresh-auth")
+  ) {
+    let caught = false;
+    try {
+      await run(fixtureArgs(index));
+    } catch (error) {
+      caught = scenario.endsWith("auth-discovery")
+        ? error instanceof Error &&
+          error.message === "Authorization discovery unavailable."
+        : error instanceof CliError && error.code === "authentication_required";
+    }
+    if (!caught) {
+      throw new Error(
+        "A credential failure lost its original error before dispatch."
+      );
+    }
+  } else if (
+    scenario.endsWith("lost") ||
+    ["rate", "image-rate", "image-redirect"].includes(scenario)
+  ) {
     let caught = false;
     try {
       await run(fixtureArgs(index));

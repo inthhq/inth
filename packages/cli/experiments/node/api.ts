@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import type { AccessTokenProvider } from "../../src/agent-types.ts";
+import type {
+  AccessTokenProvider,
+  RequestDispatchObserver,
+} from "../../src/agent-types.ts";
 import { apiUrl } from "../../src/api-options.ts";
 import { API_ORIGIN } from "../../src/auth-types.ts";
 import { CliError } from "../../src/cli-error.ts";
@@ -88,7 +91,8 @@ export class ApiClient {
     body?: string,
     organizationId?: string,
     accept = "application/json",
-    once = false
+    once = false,
+    observeDispatch?: RequestDispatchObserver
   ): Promise<string> {
     const url = apiUrl(path, organizationId, this.origin);
     downloadAccept(accept);
@@ -99,7 +103,9 @@ export class ApiClient {
       body,
       method,
       accept,
-      once
+      once,
+      30_000,
+      observeDispatch
     );
     if (response.status === 204) {
       return "";
@@ -111,7 +117,8 @@ export class ApiClient {
     path: string,
     bytes: Uint8Array,
     mediaType: string,
-    organizationId?: string
+    organizationId?: string,
+    observeDispatch?: RequestDispatchObserver
   ): Promise<string> {
     if (this.key) {
       throw new CliError(
@@ -122,8 +129,9 @@ export class ApiClient {
     const url = apiUrl(path, organizationId, this.origin);
     const auth = await this.auth();
     let token = await auth.accessToken();
-    const send = (access: string): Promise<Response> =>
-      this.http.request(
+    const send = (access: string): Promise<Response> => {
+      observeDispatch?.(true);
+      return this.http.request(
         url,
         {
           body: new Uint8Array(bytes),
@@ -137,8 +145,11 @@ export class ApiClient {
         Number.POSITIVE_INFINITY,
         false
       );
+    };
     let response = await send(token);
     if (response.status === 401) {
+      // A 401 confirms that this attempt did not run the mutation.
+      observeDispatch?.(false);
       await response.body?.cancel();
       token = await auth.accessToken(token);
       response = await send(token);
@@ -243,7 +254,8 @@ export class ApiClient {
     method = body === undefined ? "GET" : "POST",
     accept = "application/json",
     once = false,
-    requestTimeout = 30_000
+    requestTimeout = 30_000,
+    observeDispatch?: RequestDispatchObserver
   ): Promise<AuthorizedResponse> {
     let token = providedToken || this.key;
     if (auth && !token) {
@@ -252,6 +264,7 @@ export class ApiClient {
     if (!token) {
       throw new Error("No authentication token available. Run `inth login`.");
     }
+    observeDispatch?.(true);
     let response = await this.http.request(
       url,
       {
@@ -271,8 +284,11 @@ export class ApiClient {
       requestTimeout
     );
     if (response.status === 401 && auth) {
+      // A 401 confirms that this attempt did not run the mutation.
+      observeDispatch?.(false);
       await response.body?.cancel();
       token = await auth.accessToken(token);
+      observeDispatch?.(true);
       response = await this.http.request(
         url,
         {

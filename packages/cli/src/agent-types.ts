@@ -84,3 +84,6 @@ export interface AccessTokenProvider {
   ) => Promise<string>;
   userInfoEndpoint: () => Promise<string | undefined>;
 }
+
+// False marks a confirmed 401 refusal before refreshing credentials for another attempt.
+export type RequestDispatchObserver = (dispatched: boolean) => void;

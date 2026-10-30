@@ -272,7 +272,7 @@ Destructive actions, slug and retention changes, routing replacements, repositor
 
 `account avatar-set --file image.png` and `org logo-set <orgId> --file image.png` replace managed images. They send original PNG, JPEG, WebP or GIF bytes up to 1 MiB to the trusted API. Media type must match the signature and known extension. Use `--media-type` for an unknown extension. URLs, stdin and JSON bodies are rejected. `account avatar-remove --yes` and `org logo-remove <orgId> --yes` clear the image.
 
-All new writes require a person's explicitly approved scopes and remain subject to server roles, rollout and operational controls. They are sent once, including on rate limits or server errors. One 401 can trigger a single credential refresh with the identical request. A lost response returns `mutation_outcome_unknown`; check current state and retain any supported retry identity before another action. No write activates release controls.
+All new writes require a person's explicitly approved scopes and remain subject to server roles, rollout and operational controls. They are sent once, including on rate limits or server errors. One 401 can trigger a single credential refresh with the identical request. Credential failures before sending, or during refresh after a 401 refusal, retain their original errors and sign-in guidance. A lost response returns `mutation_outcome_unknown`; check current state and retain any supported retry identity before another action. No write activates release controls.
 
 ## How do I upload and recover files?
 

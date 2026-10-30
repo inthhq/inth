@@ -15,6 +15,8 @@ import { OrganizationContext } from "../experiments/node/state.ts";
 import { runV2Write } from "../src/agent-access-write-runner.ts";
 import { AgentAuth } from "../src/agent-auth.ts";
 import { parseArguments } from "../src/arguments.ts";
+import { CliError } from "../src/cli-error.ts";
+import { HttpError } from "../src/http-error.ts";
 import { buildResourceRequest } from "../src/resource-commands.ts";
 import { prepareResourceInput } from "../src/resource-input.ts";
 import {
@@ -118,6 +120,68 @@ afterEach(async () => {
   vi.unstubAllEnvs();
 });
 describe("named Dashboard writes", () => {
+  it.each(
+    ["json", "image"].flatMap((kind) =>
+      ["initial", "refresh"].flatMap((phase) =>
+        [
+          new CliError("authentication_required", "Sign in first."),
+          new Error("Authorization discovery unavailable."),
+          new HttpError(503, "SERVICE_UNAVAILABLE", "auth-unavailable"),
+        ].map((error) => ({ error, kind, phase }))
+      )
+    )
+  )(
+    "preserves $phase authentication failure for a $kind write: $error.message",
+    async ({ error, kind, phase }) => {
+      const captured = person();
+      captured.access.mockReset();
+      if (phase === "refresh") {
+        captured.access.mockResolvedValueOnce("old-token");
+      }
+      captured.access.mockRejectedValue(error);
+      const requests = await fixture((_request, response) => {
+        response.writeHead(401);
+        response.end('{"error":{"code":"UNAUTHORIZED"}}');
+      });
+      const args =
+        kind === "image"
+          ? ["account", "avatar-set", "--file", await file("image.png", png)]
+          : ["integration", "github-sync"];
+      await expect(invoke([...args, "--json"], signal())).rejects.toBe(error);
+      expect(requests).toHaveLength(phase === "refresh" ? 1 : 0);
+      expect(captured.stdout).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each(["json", "image"])(
+    "reports a lost $kind response after a 401 refresh as unknown",
+    async (kind) => {
+      const captured = person();
+      captured.access
+        .mockResolvedValueOnce("old-token")
+        .mockResolvedValueOnce("new-token");
+      const requests = await fixture((_request, response, count) => {
+        if (count === 1) {
+          response.writeHead(401);
+          response.end('{"error":{"code":"UNAUTHORIZED"}}');
+        } else {
+          response.destroy();
+        }
+      });
+      const args =
+        kind === "image"
+          ? ["account", "avatar-set", "--file", await file("image.png", png)]
+          : ["integration", "github-sync"];
+      await expect(invoke([...args, "--json"], signal())).rejects.toMatchObject(
+        {
+          code: "mutation_outcome_unknown",
+        }
+      );
+      expect(requests).toHaveLength(2);
+      expect(requests[1]?.headers.authorization).toBe("Bearer new-token");
+    }
+  );
+
   it.each(
     v2WriteCases
       .filter((example) =>

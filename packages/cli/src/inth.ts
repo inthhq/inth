@@ -280,12 +280,42 @@ const runResource = async (
       options,
       request,
       {
-        execute: async (path, method, body, organization, accept, once) =>
+        execute: async (
+          path,
+          method,
+          body,
+          organization,
+          accept,
+          once,
+          observeDispatch
+        ) =>
           apiOutput(
-            await api.execute(path, method, body, organization, accept, once)
+            await api.execute(
+              path,
+              method,
+              body,
+              organization,
+              accept,
+              once,
+              observeDispatch
+            )
           ),
-        putImage: async (path, bytes, mediaType, organization) =>
-          apiOutput(await api.putImage(path, bytes, mediaType, organization)),
+        putImage: async (
+          path,
+          bytes,
+          mediaType,
+          organization,
+          observeDispatch
+        ) =>
+          apiOutput(
+            await api.putImage(
+              path,
+              bytes,
+              mediaType,
+              organization,
+              observeDispatch
+            )
+          ),
       },
       (organization) => context.resolve(organization),
       (message) =>

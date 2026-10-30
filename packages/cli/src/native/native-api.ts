@@ -1,4 +1,7 @@
-import type { AccessTokenProvider } from "../agent-types.ts";
+import type {
+  AccessTokenProvider,
+  RequestDispatchObserver,
+} from "../agent-types.ts";
 import { apiUrl } from "../api-options.ts";
 import { API_ORIGIN } from "../auth-types.ts";
 import type { OAuthResponse } from "../auth-types.ts";
@@ -99,7 +102,8 @@ export class NativeApi {
     body?: string,
     organization?: string,
     accept = "application/json",
-    once = false
+    once = false,
+    observeDispatch?: RequestDispatchObserver
   ): Promise<OAuthResponse> {
     const url = apiUrl(path, organization, this.origin);
     downloadAccept(accept);
@@ -112,7 +116,8 @@ export class NativeApi {
       accept,
       false,
       false,
-      once
+      once,
+      observeDispatch
     );
     return result.response;
   }
@@ -120,7 +125,8 @@ export class NativeApi {
     path: string,
     bytes: Uint8Array,
     mediaType: string,
-    organization?: string
+    organization?: string,
+    observeDispatch?: RequestDispatchObserver
   ): Promise<OAuthResponse> {
     if (this.key) {
       throw new CliError(
@@ -135,9 +141,13 @@ export class NativeApi {
     const url = apiUrl(path, organization, this.origin);
     const auth = this.auth();
     let token = await auth.accessToken(undefined, false);
+    observeDispatch?.(true);
     let response = await sendImage(url, token, bytes, mediaType);
     if (response.status === 401) {
+      // A 401 confirms that this attempt did not run the mutation.
+      observeDispatch?.(false);
       token = await auth.accessToken(token, false);
+      observeDispatch?.(true);
       response = await sendImage(url, token, bytes, mediaType);
     }
     if (!response.ok) {
@@ -238,7 +248,8 @@ export class NativeApi {
     accept = "application/json",
     download = false,
     upload = false,
-    once = false
+    once = false,
+    observeDispatch?: RequestDispatchObserver
   ): Promise<AuthorizedResponse> {
     let token = providedToken || this.key;
     if (auth && !token) {
@@ -247,6 +258,7 @@ export class NativeApi {
     if (!token) {
       throw new Error("Not signed in. Run inth login.");
     }
+    observeDispatch?.(true);
     let response = await this.send(
       url,
       token,
@@ -258,7 +270,10 @@ export class NativeApi {
       once
     );
     if (response.status === 401 && auth) {
+      // A 401 confirms that this attempt did not run the mutation.
+      observeDispatch?.(false);
       token = await auth.accessToken(token, false);
+      observeDispatch?.(true);
       response = await this.send(
         url,
         token,
