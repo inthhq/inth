@@ -93,7 +93,7 @@ def preflight(cfg, platform=None, tools=False):
     require(sys.version_info >= (3, 9), 'Python 3.9+ required')
     if tools:
         env = environment(cfg)
-        for command in ['bun', 'node'] + (['xcodebuild', 'xcrun', 'pod'] if platform == 'ios' else ['java']):
+        for command in ['bun', 'node'] + (['xcodebuild', 'xcrun', 'pod'] if platform == 'ios' else []):
             require(shutil.which(command, path=env.get('PATH')), f'missing tool: {command}')
         require(subprocess.check_output(['bun', '--version'], text=True).strip() == '1.3.11', 'Bun 1.3.11 required')
         if platform == 'android':

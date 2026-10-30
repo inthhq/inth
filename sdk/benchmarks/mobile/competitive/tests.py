@@ -16,6 +16,38 @@ import harness
 import runtime
 
 
+class PreflightTests(unittest.TestCase):
+    def test_android_uses_java_home_without_java_on_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            tools = root / 'tools'
+            tools.mkdir()
+            for name, source in [('bun', '#!/bin/sh\necho 1.3.11\n'), ('node', '#!/bin/sh\nexit 0\n')]:
+                tool = tools / name
+                tool.write_text(source)
+                tool.chmod(0o755)
+            sdk = root / 'android-sdk'
+            signer = sdk / 'build-tools/36.0.0/apksigner'
+            signer.parent.mkdir(parents=True)
+            signer.touch()
+            jdk = root / 'java home'
+            java = jdk / 'bin/java'
+            java.parent.mkdir(parents=True)
+            java.write_text('#!/bin/sh\necho \'openjdk version "17.0.20"\' >&2\n')
+            java.chmod(0o755)
+            cfg = {'androidSdk': str(sdk), 'nativeLockRunner': ['lock-runner']}
+            inputs = {'validated': True}
+            with patch.dict(os.environ, {'PATH': str(tools), 'JAVA_HOME': str(jdk)}), patch.object(harness, 'validate_inputs', return_value=inputs):
+                for java_config in [{}, {'javaHome': str(jdk)}]:
+                    with self.subTest(java_config=java_config):
+                        self.assertEqual(harness.preflight({**cfg, **java_config}, 'android', tools=True), inputs)
+                with self.assertRaisesRegex(ValueError, 'set javaHome or JAVA_HOME'):
+                    harness.preflight({**cfg, 'javaHome': str(root / 'missing')}, 'android', tools=True)
+                java.write_text('#!/bin/sh\necho \'openjdk version "17.0.19"\' >&2\n')
+                with self.assertRaisesRegex(ValueError, 'Java 17.0.20 required'):
+                    harness.preflight(cfg, 'android', tools=True)
+
+
 class ReportTests(unittest.TestCase):
     def check_report(self, complete):
         with tempfile.TemporaryDirectory() as tmp:
