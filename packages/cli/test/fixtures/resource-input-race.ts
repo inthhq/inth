@@ -9,9 +9,12 @@ if (!input || !replacement || !option) {
 }
 
 const open = fs.openSync;
+let substituted = false;
 fs.openSync = (path, flags, mode) => {
   if (path === input) {
+    fs.unlinkSync(input);
     fs.renameSync(replacement, input);
+    substituted = true;
   }
   return open(path, flags, mode);
 };
@@ -29,6 +32,8 @@ try {
   console.log(
     JSON.stringify({
       code: error instanceof CliError ? error.code : "probe_error",
+      message: error instanceof Error ? error.message : "Unknown input error",
+      substituted,
     })
   );
 }

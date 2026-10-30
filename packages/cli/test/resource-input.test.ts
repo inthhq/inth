@@ -50,7 +50,11 @@ describe("text input path replacement", () => {
       const result = readDuringReplacement(input, replacement, option);
       expect(result.error).toBeUndefined();
       expect(result.status).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual({ code: "usage_error" });
+      expect(JSON.parse(result.stdout)).toEqual({
+        code: "usage_error",
+        message: `--${option} must name a stable regular file.`,
+        substituted: true,
+      });
     }
   );
 
@@ -64,7 +68,11 @@ describe("text input path replacement", () => {
       const result = readDuringReplacement(input, replacement, "data-file");
       expect(result.error).toBeUndefined();
       expect(result.status).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual({ code: "usage_error" });
+      expect(JSON.parse(result.stdout)).toEqual({
+        code: "usage_error",
+        message: "--data-file must name a stable regular file.",
+        substituted: true,
+      });
     }
   );
 
@@ -76,7 +84,11 @@ describe("text input path replacement", () => {
       const result = readDuringReplacement(input, replacement, "message-file");
       expect(result.error).toBeUndefined();
       expect(result.status).toBe(0);
-      expect(JSON.parse(result.stdout)).toEqual({ code: "usage_error" });
+      expect(JSON.parse(result.stdout)).toEqual({
+        code: "usage_error",
+        message: "--message-file must name a stable regular file.",
+        substituted: true,
+      });
     },
     15_000
   );
