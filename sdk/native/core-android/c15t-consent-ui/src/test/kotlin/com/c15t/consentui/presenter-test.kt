@@ -47,7 +47,8 @@ class PresenterTest {
         return core to now
     }
     @Test fun retryPreservesDirtyExpiredListDraftUntilExplicitReload() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        val mainDispatcher = StandardTestDispatcher()
+        Dispatchers.setMain(mainDispatcher)
         try {
             val (core, clock) = boot()
             val p = ConsentPresenter(core)
@@ -56,10 +57,15 @@ class PresenterTest {
             val choices = p.choices
             clock.addAndGet(60_001)
             assertTrue(p.listUnavailable)
+            val revision = p.snapshot.revision
             p.refresh()
             assertTrue(p.dirty)
             assertEquals(choices, p.choices)
-            await { !p.listUnavailable }
+            // Observe the completed main-thread update, not the core's earlier list refresh.
+            await {
+                mainDispatcher.scheduler.runCurrent()
+                p.snapshot.revision > revision && !p.listUnavailable
+            }
             assertTrue(p.stale)
             assertTrue(p.dirty)
             assertEquals(choices, p.choices)
