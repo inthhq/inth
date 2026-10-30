@@ -9,6 +9,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -167,12 +169,23 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
 
 @Composable private fun Setup(model: DemoModel) {
     var backend by remember { mutableStateOf("https://example-inth.inth.app/") }; var privacy by remember { mutableStateOf("") }
-    Column(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Connect an Inth project", style = MaterialTheme.typography.headlineSmall)
         Text("Use the example Inth project or your own project, and enter your app's privacy policy URL.")
         OutlinedTextField(backend, { backend = it }, label = { Text("Inth project URL") })
         OutlinedTextField(privacy, { privacy = it }, label = { Text("Privacy policy URL") })
         Button(onClick = { model.start(backend = backend, privacy = privacy) }) { Text("Connect") }
+        if (BuildConfig.DEBUG) {
+            Text("Local policy fixtures", style = MaterialTheme.typography.titleMedium)
+            Text("No hosted project is contacted. IAB uses a test CMP identity and sample disclosures. Restart the app to choose another mode.")
+            listOf("category", "notice", "iab").forEach { mode ->
+                Button(onClick = {
+                    model.start(Intent().putExtra("C15T_FIXTURE_SCENARIO", "demo-$mode"))
+                }, modifier = Modifier.testTag("demo.mode.$mode")) {
+                    Text(if (mode == "iab") "IAB TCF and Additional Consent" else mode.replaceFirstChar { it.uppercase() })
+                }
+            }
+        }
         model.setupError?.let { Text(it) }
     }
 }

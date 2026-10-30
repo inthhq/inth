@@ -1,10 +1,16 @@
 # c15t React Native fixture (Expo development build)
 
-The same fixture as [internals/fixtures/react-native-bare](../react-native-bare), inside an Expo
-SDK 57 project that gets its native consent core from the
-`@c15t/react-native/expo-plugin`. Screens, buttons, fake core, and checks are identical
-so that a difference between the two apps points at the native wiring and not at the
-consent code.
+See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
+current native modes, setup commands and the limits of IAB and hosted coverage.
+
+An Expo SDK 57 custom native build for `@c15t/react-native`. Normal native mode
+requests the stock SwiftUI or Compose presenter and displays native state and
+outcomes. The labelled fake mode uses a separate React shell. It shares some
+fixture helpers with bare RN; the apps are not identical consumer journeys.
+
+The typed plugin config covers category setup. It does not install a complete
+IAB CMP identity or prove Additional Consent authoring. Use the native local
+IAB modes in the demo index for that fixture coverage.
 
 ## Expo Go will not run this app
 

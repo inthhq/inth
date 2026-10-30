@@ -81,6 +81,22 @@ final class ConsentJourneyTests: XCTestCase {
         for _ in 0..<6 where !(row.exists && row.isHittable) { app.swipeUp() }
         return row
     }
+    func test00LocalIabModeStartsFromTheSetupScreen() {
+        app = XCUIApplication()
+        app.launchEnvironment = ["C15T_FIXTURE_RESET": "1"]
+        app.launch()
+        let mode = button("demo.mode.iab")
+        reveal(mode)
+        XCTAssertTrue(mode.isHittable)
+        mode.tap()
+        let accept = button("c15t.first-layer.accept-all")
+        XCTAssertTrue(accept.waitForExistence(timeout: 10))
+        accept.tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        let summary = hostState("fixture.state.iab").label
+        XCTAssertTrue(summary.contains("ac=2~10.20~dv."), summary)
+        capture("ios-demo-picker-iab-commit")
+    }
     func test01EqualDecisionsAndRejectPersistOffline() {
         launch()
         print(app.debugDescription)

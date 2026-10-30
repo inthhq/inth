@@ -870,7 +870,7 @@ export default defineDocsConfig({
 							title: 'Verify and troubleshoot',
 						},
 					],
-					pages: ['quickstart', 'expo', 'bare'],
+					pages: ['quickstart', 'examples', 'expo', 'bare'],
 					slug: 'react-native',
 					title: 'React Native',
 				},

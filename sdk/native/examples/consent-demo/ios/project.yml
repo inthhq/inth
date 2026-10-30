@@ -37,6 +37,50 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: Consent demo
         INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
         INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  C15tUIKitDemo:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+        excludes: [consent-demo-entry.swift]
+      - path: UIKit
+      - path: Assets.xcassets
+      - path: ../fixtures
+        buildPhase: resources
+    dependencies:
+      - package: C15tNative
+        product: C15tConsentUI
+      - package: C15tNative
+        product: C15tApple
+    info:
+      path: Generated/UIKit-Info.plist
+      properties:
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Consent demo
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).ConsentDemoSceneDelegate
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uikit
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Consent UIKit demo
+        INFOPLIST_KEY_C15tBackendURL: $(C15T_BACKEND_URL)
+        INFOPLIST_KEY_C15tPrivacyPolicyURL: $(C15T_PRIVACY_POLICY_URL)
+  C15tUIKitDemoUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [UITests]
+    dependencies:
+      - target: C15tUIKitDemo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.c15t.prototype.consent.uikit.uitests
+        GENERATE_INFOPLIST_FILE: YES
   C15tConsentDemoUITests:
     type: bundle.ui-testing
     platform: iOS
@@ -55,3 +99,10 @@ schemes:
         C15tConsentDemoUITests: [test]
     test:
       targets: [C15tConsentDemoUITests]
+  C15tUIKitDemo:
+    build:
+      targets:
+        C15tUIKitDemo: all
+        C15tUIKitDemoUITests: [test]
+    test:
+      targets: [C15tUIKitDemoUITests]

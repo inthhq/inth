@@ -3,14 +3,11 @@ import C15tCore
 import C15tConsentUI
 import SwiftUI
 
-@main
-struct ConsentDemoApp: App {
+struct ConsentDemoContent: View {
     @StateObject private var session = DemoSession()
-    var body: some Scene {
-        WindowGroup {
-            DemoRoot(session: session).task { await session.start() }
-                .preferredColorScheme(fixtureAppearance)
-        }
+    var body: some View {
+        DemoRoot(session: session).task { await session.start() }
+            .preferredColorScheme(fixtureAppearance)
     }
     private var fixtureAppearance: ColorScheme? {
         #if DEBUG
@@ -38,15 +35,19 @@ final class DemoSession: ObservableObject, SnapshotObserver {
     private var started = false
     private var reportURL: URL?
     private let launchID = UUID().uuidString
-    var fixture: Bool { ProcessInfo.processInfo.environment["C15T_FIXTURE_SCENARIO"] != nil }
+    @Published private(set) var fixture = false
+    @Published private(set) var starting = false
 
-    func start(url: String? = nil, policy: String? = nil) async {
-        guard !started else { return }
+    func start(url: String? = nil, policy: String? = nil, localScenario: String? = nil) async {
+        guard !started && !starting else { return }
+        starting = true
+        defer { starting = false }
         let env = ProcessInfo.processInfo.environment
         do {
             let core: ConsentCore
-            if let scenario = env["C15T_FIXTURE_SCENARIO"] {
+            if let scenario = localScenario ?? env["C15T_FIXTURE_SCENARIO"] {
                 #if DEBUG
+                fixture = true
                 let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("prototype-" + scenario)
                 if env["C15T_FIXTURE_RESET"] == "1" { try await Task.detached { if FileManager.default.fileExists(atPath: folder.path) { try FileManager.default.removeItem(at: folder) } }.value }
                 let fault = await Task.detached { FaultStore(base: FileStore(directory: folder)) }.value
@@ -141,8 +142,18 @@ struct DemoRoot: View {
                         TextField("Privacy policy URL", text: $policy).textInputAutocapitalization(.never).keyboardType(.URL)
                         Button("Connect") { Task { await session.start(url: backend, policy: policy) } }
                     }
+                    #if DEBUG
+                    Section("Local policy fixtures") {
+                        Text("No hosted project is contacted. IAB uses a test CMP identity and sample disclosures. Restart the app to choose another mode.")
+                        ForEach(["category", "notice", "iab"], id: \.self) { mode in
+                            Button(mode == "iab" ? "IAB TCF and Additional Consent" : mode.capitalized) {
+                                Task { await session.start(localScenario: "demo-" + mode) }
+                            }.accessibilityIdentifier("demo.mode." + mode)
+                        }
+                    }
+                    #endif
                     if let error = session.setupError { Text(error) }
-                }.navigationTitle("Consent prototype")
+                }.disabled(session.starting).navigationTitle("Consent prototype")
             }
         }
     }

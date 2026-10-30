@@ -74,6 +74,16 @@ class ConsentJourneyTest {
     }
     @After fun close() { scenario?.close() }
 
+    @Test fun localIabModeStartsFromTheSetupScreen() {
+        context.getSharedPreferences("prototype-demo-iab", 0).edit().clear().commit()
+        scenario = ActivityScenario.launch(Intent(context, ConsentDemoActivity::class.java))
+        waitFor("demo.mode.iab").performScrollTo().performClick()
+        waitFor("c15t.first-layer.accept-all").performClick()
+        awaitClosed()
+        state("fixture.state.iab", "ac=2~10.20~dv.")
+        capture("android-demo-picker-iab-commit")
+    }
+
     @Test fun compiledManifestThemeColoursResolve() {
         val testContext = InstrumentationRegistry.getInstrumentation().context
         val metadata = testContext.packageManager.getApplicationInfo(testContext.packageName,

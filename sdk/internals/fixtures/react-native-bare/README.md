@@ -1,16 +1,24 @@
 # c15t React Native fixture (bare)
 
-A bare React Native 0.87 app on the New Architecture, wired to `@c15t/react-native`.
-It opens as an app: a privacy screen with one action, the banner and sheets the package
-draws over it, and a Diagnostics tab that starts closed and holds everything the kernel
-reports. The harness buttons that drive every action a subject can take live there, next
-to the snapshot, rather than on the first thing a viewer sees.
+See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
+current native modes, setup commands and the limits of IAB and hosted coverage.
 
-It is a test fixture for the SDK in this repository. The chrome reads its colours, steps,
-and control heights from the package's own theme so the host screens and the consent
-surfaces are visibly one design, but nothing here is a starter kit.
+A bare React Native 0.87.1 app on the New Architecture. Normal native mode runs
+`src/native-presenter-app.tsx`, which requests the stock SwiftUI or Compose
+presenter through the public package entry point. Privacy settings reopens the
+native preference center, and the host displays presenter outcomes.
 
-## What it exercises
+`C15T_FAKE_NATIVE=true` selects the older React shell and diagnostics with a
+JavaScript fake. Its IAB drawer stores a display selection in React state, not a
+native vendor commit. That shell is a UI fixture, not a production headless app.
+The E2E runner's IAB mode instead installs a test CMP configuration in native
+code before RN attaches. It does not prove typed RN IAB configuration.
+
+The sections below retain historical fixture notes and runner details. Use the
+mobile demo index for the current coverage boundaries; old run reports do not
+verify a new SDK revision.
+
+## Fixture code and historical exercises
 
 - `C15tProvider` and the protocol handshake against the Swift/Kotlin core in the
   binary, with the mismatch error surfaced on screen instead of a red box.
@@ -271,13 +279,13 @@ To get back to a first-install prompt:
 ```sh
 adb uninstall com.c15t.bare                                          # Android: enough
 xcrun simctl uninstall <udid> org.reactjs.native.example.C15tBare     # iOS: not enough
-xcrun simctl reset <udid>                                             # iOS: this part matters
+xcrun simctl erase <task-owned-udid>                                  # destroys this simulator's data
 ```
 
 Uninstalling is not enough on iOS. The core keeps the subject id and the stored envelope in
 the Keychain, and Keychain items outlive an app uninstall, so a reinstall comes back as a
 returning user holding the previous decision and no prompt is owed. Use a simulator that has
-never run the build, or `xcrun simctl reset`. Android keeps both in app-private storage, so
+never run the build. Erase only a disposable simulator you own. Android keeps both in app-private storage, so
 `adb uninstall` really does give a clean install.
 
 ## Commands
@@ -299,24 +307,24 @@ The native build setup is maintained in each platform directory.
 - iOS: the first run needs `bun run pod-install`. The autolinked `C15tReactNative`
   pod compiles its generated Swift core and Apple services. Do not add a separate
   `C15tCore` pod. The deployment target is 16.4.
-- Android: `android/settings.gradle` includes `../../../../native/core-android` and
-  substitutes `com.c15t:c15t-core` and `com.c15t:c15t-android` into that build, because
-  the autolinked library depends on those coordinates and a host app's settings script
-  is what resolves them. Pass `-Pc15t.core.fromSource=false` to resolve published
-  artifacts instead. JDK 17 and an Android SDK are required; set `ANDROID_HOME` or write
-  `sdk.dir` into `android/local.properties`.
+- Android: the host resolves versioned `com.c15t` artifacts from its configured
+  exclusive Maven repository. `settings.gradle` does not include the native
+  producer or substitute its source. Set `C15T_MAVEN_URL` to an available private
+  repository or explicit local staging URL; HTTPS resolution also needs the
+  build environment's credentials. JDK 17 and the SDK levels in `android/build.gradle`
+  are required. Set `ANDROID_HOME` or `sdk.dir` in `android/local.properties`.
 
 `xcode-select -p` points at `/Applications/Xcode.app/Contents/Developer` here, so no
 `DEVELOPER_DIR` override is needed for `pod install` or `xcodebuild`. Where it points at
 Command Line Tools instead, CocoaPods reads an empty `xcodebuild -version`, and every Xcode
 invocation needs `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
-## Native build status
+## Historical native build status
 
 Verified here: `bun run check-types` is clean, `bun run bundle` writes a release bundle
 for both platforms, `pod install` completes, and the Android app gets through Gradle
 configuration. Both platforms have been built, installed and launched;
-[Device run](#device-run) says what each one proved and what it still cannot.
+[Historical device run](#historical-device-run) says what each one proved and what it still cannot.
 
 iOS resolves. `pod install` from `ios/` prints:
 
@@ -364,7 +372,7 @@ Two more notes for anyone building natively from a checkout:
   isolated install layout does not link a package that only `react-native` depends on into
   this directory, so the `includeBuild` would not resolve.
 
-## Device run
+## Historical device run
 
 iPhone 17 Pro on iOS 26.4, built by `xcodebuild` against `C15tBare.xcworkspace`, installed
 with `simctl`, talking to `apps/playground` serving `@c15t/backend` at
