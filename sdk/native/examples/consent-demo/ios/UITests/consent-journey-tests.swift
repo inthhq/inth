@@ -442,6 +442,276 @@ final class ConsentJourneyTests: XCTestCase {
         let summary = hostState("fixture.state.iab").label
         XCTAssertTrue(summary.contains("vendors=[1]"), summary)
     }
+    // MARK: - Accessibility: automated audit and AX reading order (not VoiceOver)
+
+    /// The accessibility element tree as XCTest sees it, in hierarchy order, written beside the
+    /// captures so the reading order, names, roles and values can be read on the host.
+    func dumpAccessibility(_ name: String) {
+        guard let snapshot = try? app.snapshot() else { return }
+        var rows: [[String: Any]] = []
+        func walk(_ node: XCUIElementSnapshot, depth: Int) {
+            let frame = node.frame
+            let interesting = !node.label.isEmpty || !node.identifier.isEmpty || [.button, .switch, .textField, .searchField, .link, .staticText, .toggle, .image].contains(node.elementType)
+            if interesting {
+                rows.append(["depth": depth, "type": node.elementType.rawValue, "id": node.identifier, "label": node.label, "value": node.value.map { String(describing: $0) } ?? "", "enabled": node.isEnabled, "frame": [Int(frame.minX), Int(frame.minY), Int(frame.width), Int(frame.height)]])
+            }
+            for child in node.children { walk(child, depth: depth + 1) }
+        }
+        walk(snapshot, depth: 0)
+        guard let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"], let data = try? JSONSerialization.data(withJSONObject: rows, options: [.prettyPrinted]) else { return }
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        try? data.write(to: URL(fileURLWithPath: dir).appendingPathComponent("ax-" + name + ".json"))
+    }
+    /// Xcode's accessibility audit over the current screen. Every finding is printed and written beside the
+    /// captures. The three findings the accessibility review traced to the OS rather than the product are
+    /// recognised by their geometry (see `documentedAuditFalsePositive`) and tolerated; anything else fails.
+    /// `C15T_AUDIT_STRICT=1` in the runner's environment fails on the documented ones too. `keepingState`
+    /// drops the Dynamic Type audit, which switches the content size and back and so rebuilds the page: it is
+    /// left out where the page's state must survive the audit, and run on the other screens of the same test.
+    func audit(_ name: String, keepingState: Bool = false) {
+        capture(name); dumpAccessibility(name)
+        guard #available(iOS 17.0, *) else { return }
+        let strict = ProcessInfo.processInfo.environment["C15T_AUDIT_STRICT"] == "1"
+        var issues: [String] = [], unexplained: [String] = []
+        do {
+            try app.performAccessibilityAudit(for: keepingState ? XCUIAccessibilityAuditType.all.subtracting(.dynamicType) : .all) { issue in
+                let line = "\(issue.auditType.rawValue): \(issue.compactDescription) | \(issue.detailedDescription) [\(issue.element.map { "\($0.elementType.rawValue) id=\($0.identifier) label=\($0.label) frame=\($0.frame)" } ?? "no element")]"
+                issues.append(line)
+                // Returning true tells XCTest the finding is handled; anything else it records as a failure itself.
+                let tolerated = !strict && self.documentedAuditFalsePositive(issue, screen: name)
+                if !tolerated { unexplained.append(line) }
+                return tolerated
+            }
+        } catch { unexplained.append("audit threw: \(error)") }
+        print("ax-audit \(name) issues=\(issues.count) unexplained=\(unexplained.count)")
+        for issue in issues { print("ax-audit \(name) \(issue)") }
+        if let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"] {
+            try? issues.joined(separator: "\n").write(to: URL(fileURLWithPath: dir).appendingPathComponent("audit-" + name + ".txt"), atomically: true, encoding: .utf8)
+        }
+        XCTAssertTrue(unexplained.isEmpty, "accessibility audit \(name): \(unexplained.joined(separator: "; "))")
+    }
+    /// Findings of the iOS 27 audit that the accessibility review checked against the product and traced to
+    /// the OS. The audit reports the first two on `SwiftUI.AccessibilityNode` with no element, so they can
+    /// only be matched by screen and category, and only in the numbers the review documented:
+    /// - one hit-region finding on a first layer with the provider attribution showing: "Secured by c15t" is
+    ///   a labelled, static attribution with no action that the audit treats as a control
+    ///   (`test17FirstLayerHitRegionAuditIsolation` isolates it: hidden attribution, clean audit);
+    /// - up to three contrast findings on the IAB preferences and one on the AX5 save error: text under the
+    ///   pinned footer or beyond the window, where the audit samples the footer's pixels instead of the
+    ///   text's; every theme pair computes at or above 4.66:1 (`a11y/pixel-contrast.py` in the review);
+    /// - "may be clipped" on the UIKit search field, whose text is whole at the largest size in the captures.
+    /// A finding with an element, a different screen, or a higher count fails the test.
+    @available(iOS 17.0, *)
+    func documentedAuditFalsePositive(_ issue: XCUIAccessibilityAuditIssue, screen: String) -> Bool {
+        switch issue.auditType {
+        case .hitRegion:
+            guard issue.element == nil, screen.hasSuffix("first-layer") else { return false }
+            auditTolerated[screen, default: 0] += 1
+            return auditTolerated[screen]! <= 1 && app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.exists
+        case .contrast:
+            guard issue.element == nil, let limit = ["ax-iab-preferences": 3, "ax-ax5-save-error": 1][screen] else { return false }
+            auditTolerated[screen, default: 0] += 1
+            return auditTolerated[screen]! <= limit
+        case .textClipped:
+            return issue.element?.elementType == .textField
+        default:
+            return false
+        }
+    }
+    var auditTolerated: [String: Int] = [:]
+    /// Every element with a label, ordered as the hierarchy exposes it. Used for duplicate and name checks.
+    func labelled() -> [(type: XCUIElement.ElementType, id: String, label: String)] {
+        guard let snapshot = try? app.snapshot() else { return [] }
+        var out: [(XCUIElement.ElementType, String, String)] = []
+        func walk(_ node: XCUIElementSnapshot) {
+            if !node.label.isEmpty && node.frame.height > 0 { out.append((node.elementType, node.identifier, node.label)) }
+            for child in node.children { walk(child) }
+        }
+        walk(snapshot); return out
+    }
+    func assertNamed(_ element: XCUIElement, _ what: String) {
+        XCTAssertTrue(element.exists, what)
+        XCTAssertFalse(element.label.isEmpty, "\(what) has no accessible name")
+    }
+    func test14AccessibilityAuditAtDefaultSize() {
+        continueAfterFailure = true
+        launch(fail: true)
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+        // Names, roles and states on the first layer.
+        for id in ["c15t.first-layer.reject-all", "c15t.first-layer.accept-all", "c15t.first-layer.customize"] { assertNamed(button(id), id) }
+        XCTAssertEqual(button("c15t.first-layer.reject-all").label, "Reject all")
+        XCTAssertEqual(button("c15t.first-layer.accept-all").label, "Accept all")
+        XCTAssertEqual(app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.label, "Secured by c15t")
+        // The brand mark is decorative: the brand name is announced once, not once per image.
+        let brandLabels = labelled().filter { $0.label == "Your brand here" }
+        XCTAssertEqual(brandLabels.count, 1, "brand announced \(brandLabels.count) times: \(brandLabels)")
+        audit("ax-first-layer")
+        button("c15t.first-layer.customize").tap()
+        XCTAssertTrue(button("c15t.prefs.save").waitForExistence(timeout: 5))
+        let measurement = app.switches["c15t.prefs.category.measurement.switch"]
+        reveal(measurement)
+        // Switch rows carry their category name and state.
+        XCTAssertTrue(measurement.label.contains("Measurement"), measurement.label)
+        XCTAssertEqual(measurement.value as? String, "0")
+        let locked = app.descendants(matching: .any)["c15t.prefs.category.necessary.locked"].firstMatch
+        XCTAssertTrue(locked.label.contains("Strictly necessary") && locked.label.contains("Always on"), locked.label)
+        // Opened from the first layer, the bar's leading action goes back to it and is named so.
+        XCTAssertEqual(button("c15t.prefs.cancel").label, "Back")
+        audit("ax-preferences")
+        measurement.tap()
+        button("c15t.prefs.save").tap()
+        XCTAssertTrue(button("c15t.prefs.error.retry").waitForExistence(timeout: 5))
+        // The failure is two elements: the message, then the retry button, named Try again.
+        let message = app.descendants(matching: .any)["c15t.prefs.error"].firstMatch
+        XCTAssertEqual(message.label, "Couldn't save your choices. Nothing changed on this device.")
+        XCTAssertEqual(button("c15t.prefs.error.retry").label, "Try again")
+        let messageLabels = labelled().filter { $0.label.contains("Couldn't save your choices") }
+        XCTAssertEqual(messageLabels.count, 1, "failure message exposed \(messageLabels.count) times")
+        audit("ax-save-error", keepingState: true)
+        button("c15t.prefs.error.retry").tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+    }
+    func test15AccessibilityAuditIabPartnerSearchAndLargestText() {
+        continueAfterFailure = true
+        launch("fresh-online-iab")
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+        XCTAssertTrue(button("c15t.first-layer.partner-count").label.range(of: #"^\d+ IAB partners$"#, options: .regularExpression) != nil, button("c15t.first-layer.partner-count").label)
+        audit("ax-iab-first-layer")
+        button("c15t.first-layer.customize").tap()
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))
+        let details = button("c15t.iab.purpose.7.details"); reveal(details)
+        XCTAssertEqual(details.value as? String, "Collapsed"); details.tap(); XCTAssertEqual(details.value as? String, "Expanded")
+        audit("ax-iab-preferences")
+        let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
+        let search = app.textFields["c15t.iab.vendors.search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 3))
+        XCTAssertEqual(button("c15t.iab.vendors.back").label, "Back")
+        search.tap(); search.typeText("elan")
+        XCTAssertTrue(button("c15t.iab.vendors.vendor.1").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.keyboards.firstMatch.exists)
+        audit("ax-partner-search-keyboard")
+        // The audit can give the keyboard up; the result row is reachable either way.
+        button("c15t.iab.vendors.vendor.1").tap()
+        XCTAssertTrue(app.switches["c15t.iab.vendor.1.consent"].waitForExistence(timeout: 3))
+        audit("ax-partner-details")
+        // Largest accessibility size: the audit covers dynamic type and hit regions on the page layout.
+        app.terminate(); launch(fail: true, arguments: Self.ax5)
+        let customize = button("c15t.first-layer.customize")
+        XCTAssertTrue(customize.waitForExistence(timeout: 10))
+        audit("ax-ax5-first-layer")
+        reveal(customize); customize.tap()
+        let save = button("c15t.prefs.save")
+        XCTAssertTrue(save.waitForExistence(timeout: 5)); save.tap()
+        let retry = button("c15t.prefs.error.retry")
+        XCTAssertTrue(retry.waitForExistence(timeout: 5)); waitHittable(retry)
+        XCTAssertEqual(retry.label, "Try again")
+        audit("ax-ax5-save-error", keepingState: true)
+        // Even without the Dynamic Type category the audit has activated this row's retry on iOS 27 at this
+        // size (the save completed during the audit). The retry journey at this size is test11's; here the
+        // end state only has to be consistent: the retry still works, or the audit's activation saved.
+        if retry.exists { retry.tap() } else { print("ax-audit ax-ax5-save-error activated the retry during the audit") }
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+    }
+    /// Drives VoiceOver itself when the simulator has it on (C15T_VOICEOVER=1 in the runner's
+    /// environment): a single tap moves the cursor, a right flick steps through the reading order,
+    /// a double tap activates. The cursor is captured after every step; the caption panel, when
+    /// on, prints the spoken text inside the capture.
+    func test16VoiceOverReadingOrderAndFocusAfterFailure() throws {
+        guard ProcessInfo.processInfo.environment["C15T_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
+        continueAfterFailure = true
+        launch(fail: true)
+        // VoiceOver's own first-run gestures sheet sits over the app on a fresh simulator; its OK is
+        // focused with one tap and activated with a double tap, like any control under VoiceOver.
+        let sheetOK = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["OK"]
+        if sheetOK.waitForExistence(timeout: 3) { capture("vo-gestures-sheet"); sheetOK.tap(); usleep(600_000); sheetOK.doubleTap(); sleep(1) }
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+        sleep(2); capture("vo-00-first-layer-arrival")
+        for step in 1...9 { app.swipeRight(); usleep(900_000); capture(String(format: "vo-%02d-first-layer-next", step)) }
+        button("c15t.first-layer.customize").tap(); usleep(800_000); capture("vo-10-customize-focused")
+        button("c15t.first-layer.customize").doubleTap()
+        XCTAssertTrue(button("c15t.prefs.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-11-preferences-arrival")
+        // Arrival is the introduction; the title and Back sit one flick to the left of it.
+        app.swipeLeft(); usleep(900_000); capture("vo-11a-preferences-previous")
+        app.swipeRight(); usleep(900_000); capture("vo-11b-preferences-back-to-arrival")
+        for step in 12...17 { app.swipeRight(); usleep(900_000); capture(String(format: "vo-%02d-preferences-next", step)) }
+        button("c15t.prefs.save").tap(); usleep(800_000); capture("vo-18-save-focused")
+        button("c15t.prefs.save").doubleTap()
+        XCTAssertTrue(button("c15t.prefs.error.retry").waitForExistence(timeout: 5)); sleep(2)
+        capture("vo-19-after-failure")
+        app.swipeLeft(); usleep(900_000); capture("vo-20-after-failure-previous")
+        app.swipeRight(); usleep(900_000); capture("vo-21-after-failure-next")
+        app.swipeRight(); usleep(900_000); capture("vo-22-after-failure-next")
+        button("c15t.prefs.error.retry").tap(); usleep(800_000); capture("vo-23-retry-focused")
+        button("c15t.prefs.error.retry").doubleTap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5)); sleep(1); capture("vo-24-saved")
+    }
+    /// VoiceOver on the failure row alone: where the cursor goes when the save is refused, what a finger
+    /// on the word Try again meets after the cursor has been moved away from it, and that a double tap
+    /// there retries. Captures only; the cursor is read on the host. C15T_VOICEOVER_AX5=1 runs it at the
+    /// largest accessibility size, where the row sits in the page and Customize is reached by flicking.
+    func test19VoiceOverFailureRowTouch() throws {
+        guard ProcessInfo.processInfo.environment["C15T_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
+        continueAfterFailure = true
+        let ax5 = ProcessInfo.processInfo.environment["C15T_VOICEOVER_AX5"] == "1"
+        launch(fail: true, arguments: ax5 ? Self.ax5 : [])
+        let sheetOK = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["OK"]
+        if sheetOK.waitForExistence(timeout: 3) { sheetOK.tap(); usleep(600_000); sheetOK.doubleTap(); sleep(1) }
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); sleep(1)
+        if ax5 {
+            // Customize is at the end of a long page: back to the first element, seven flicks forward, which
+            // scrolls it into view, then a double tap on it.
+            for _ in 0..<12 { app.swipeLeft(); usleep(500_000) }
+            for _ in 0..<7 { app.swipeRight(); usleep(700_000) }
+            capture("vo-fail-ax5-customize-focused"); button("c15t.first-layer.customize").doubleTap()
+        } else {
+            button("c15t.first-layer.customize").tap(); usleep(800_000); button("c15t.first-layer.customize").doubleTap()
+        }
+        XCTAssertTrue(button("c15t.prefs.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-fail-00-preferences-arrival")
+        button("c15t.prefs.save").tap(); usleep(800_000); button("c15t.prefs.save").doubleTap()
+        let retry = button("c15t.prefs.error.retry")
+        XCTAssertTrue(retry.waitForExistence(timeout: 5)); sleep(2); capture("vo-fail-01-after-failure")
+        app.swipeRight(); usleep(900_000); capture("vo-fail-02-next")
+        app.swipeLeft(); usleep(900_000); capture("vo-fail-03-previous")
+        waitHittable(retry); retry.tap(); usleep(900_000); capture("vo-fail-04-try-again-touched")
+        retry.doubleTap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5)); sleep(1); capture("vo-fail-05-saved")
+    }
+    /// VoiceOver on the IAB preferences: arrival after Customize, then the partner page the introduction
+    /// opens, where the platform's own push decides the landing. Captures only; the cursor is read on the host.
+    func test18VoiceOverIabPreferencesAndPushedPage() throws {
+        guard ProcessInfo.processInfo.environment["C15T_VOICEOVER"] == "1" else { throw XCTSkip("VoiceOver is not on for this run") }
+        continueAfterFailure = true
+        launch("fresh-online-iab")
+        let sheetOK = XCUIApplication(bundleIdentifier: "com.apple.springboard").buttons["OK"]
+        if sheetOK.waitForExistence(timeout: 3) { sheetOK.tap(); usleep(600_000); sheetOK.doubleTap(); sleep(1) }
+        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); sleep(1)
+        button("c15t.first-layer.customize").tap(); usleep(800_000); button("c15t.first-layer.customize").doubleTap()
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-00-preferences-arrival")
+        app.swipeRight(); usleep(900_000); capture("vo-iab-01-preferences-next")
+        let partners = button("c15t.iab.partner-count")
+        partners.tap(); usleep(800_000); capture("vo-iab-02-partner-count-focused")
+        partners.doubleTap()
+        XCTAssertTrue(app.textFields["c15t.iab.vendors.search"].waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-03-partners-arrival")
+        for step in 4...6 { app.swipeRight(); usleep(900_000); capture(String(format: "vo-iab-%02d-partners-next", step)) }
+        button("c15t.iab.vendors.back").tap(); usleep(800_000); button("c15t.iab.vendors.back").doubleTap()
+        XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-07-back-to-preferences")
+    }
+    /// Isolates the first-layer hit-region finding, which Xcode's audit reports without naming the node:
+    /// the same audit with the provider attribution hidden, the brand hidden, and both.
+    func test17FirstLayerHitRegionAuditIsolation() throws {
+        guard ProcessInfo.processInfo.environment["C15T_AUDIT_EXPLORATORY"] == "1" else { throw XCTSkip("exploratory audit isolation; set C15T_AUDIT_EXPLORATORY=1") }
+        continueAfterFailure = true
+        guard #available(iOS 17.0, *) else { return }
+        for (name, branding, identity) in [("stock", nil, nil), ("no-branding", "hidden", nil), ("no-identity", nil, "hidden"), ("neither", "hidden", "hidden")] as [(String, String?, String?)] {
+            launch(branding: branding, identity: identity)
+            XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+            var issues: [String] = []
+            do { try app.performAccessibilityAudit(for: [.hitRegion]) { issue in issues.append(issue.detailedDescription); return false } } catch { issues.append("threw: \(error)") }
+            print("ax-hit-region \(name) issues=\(issues.count) \(issues)")
+            capture("ax-hit-\(name)")
+            app.terminate()
+        }
+    }
 }
 
 final class ProtocolReceiptTests: XCTestCase {

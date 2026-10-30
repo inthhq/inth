@@ -152,6 +152,36 @@ private final class NoticeBoundsView: UIView {
 
 private struct PresentationSession: Identifiable { let id: UUID }
 
+/// A refused commit asks the failure row to take VoiceOver focus. Each request is numbered; the
+/// row that is on screen, now or once the page has scrolled it in, answers the newest one and marks
+/// it handled, so a row the list recycles later does not take the cursor again. If no row answers
+/// in time the message is announced instead.
+fileprivate final class FailureFocus: ObservableObject {
+    @Published private(set) var request = 0
+    private(set) var handled = 0
+    func post(fallback: String) {
+        request += 1
+        let number = request
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self, self.handled < number else { return }
+            UIAccessibility.post(notification: .announcement, argument: fallback)
+        }
+    }
+    /// The row takes the newest request if it has not been taken; true when it should focus.
+    func claim() -> Bool {
+        guard handled < request else { return false }
+        handled = request
+        return true
+    }
+}
+private struct FailureFocusKey: EnvironmentKey { static let defaultValue = FailureFocus() }
+extension EnvironmentValues {
+    fileprivate var failureFocus: FailureFocus {
+        get { self[FailureFocusKey.self] }
+        set { self[FailureFocusKey.self] = newValue }
+    }
+}
+
 /// The first layer and anything it opens takes the whole screen: it is a gate, and a sheet that
 /// cannot be swiped away promises a dismissal it does not offer. Standing preferences opened
 /// later are a sheet, because then the app behind them is the user's and they can leave.
@@ -160,6 +190,7 @@ private struct ConsentPresentationModifier: ViewModifier {
     let privacyPolicyURL: URL
     let theme: ConsentTheme
     let onNoticeFrameChange: ((CGRect) -> Void)?
+    @State private var failureFocus = FailureFocus()
 
     private var standingPreferences: Bool { presenter.preferences && !presenter.returnsToFirstLayer }
     private func session(fullScreen: Bool) -> Binding<PresentationSession?> {
@@ -175,20 +206,27 @@ private struct ConsentPresentationModifier: ViewModifier {
                 if presenter.noticeVisible {
                     NoticeCard(presenter: presenter, privacyPolicyURL: privacyPolicyURL)
                         .padding(12).background(NoticeBoundsReporter(onChange: onNoticeFrameChange))
-                        .environment(\.consentTheme, theme)
+                        .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus)
                 }
             }
             .fullScreenCover(item: session(fullScreen: true)) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
-                    .environment(\.consentTheme, theme)
+                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus)
             }
             .sheet(item: session(fullScreen: false)) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
-                    .environment(\.consentTheme, theme)
+                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus)
                     .presentationDetents([.large]).presentationDragIndicator(.hidden)
             }
             .onAppear {
-                presenter.onAnnouncement = { UIAccessibility.post(notification: .announcement, argument: $0) }
+                presenter.onAnnouncement = { [failureFocus] text in
+                    // A refused commit shows its message in the failure row. VoiceOver is moved onto that
+                    // row instead of hearing a detached announcement: the message is spoken once, from the
+                    // element, with Try again the next flick to the right. Successes close the screen and
+                    // the stale draft shows a callout, so those keep the announcement.
+                    if presenter.errorCode != nil, !presenter.stale { failureFocus.post(fallback: text) }
+                    else { UIAccessibility.post(notification: .announcement, argument: text) }
+                }
             }
     }
 }
@@ -233,17 +271,25 @@ private struct PrivacyLink: View {
 /// is ink and Try again follows it in the same text run, in the accent, wrapping like any other
 /// word instead of taking a row of its own. One text view draws both and reports where the link
 /// landed, so an invisible 44pt button sits over exactly that span: the paragraph never retries,
-/// the link always does, and VoiceOver meets the message and the button as two elements. The
-/// presenter announces the failure, so the row itself stays silent.
+/// the link always does. To VoiceOver the text view is two elements of its own, the message as
+/// static text and then the link as a button over the span, so a finger on the word meets Try
+/// again and a flick reads the message first. When the failure arrives the row moves VoiceOver's
+/// cursor onto the message, so it is heard once, from the element, with Try again one flick on.
 private struct FailureRow: View {
     let message: String
     let id: String
     let retry: () -> Void
     @Environment(\.consentTheme) private var theme
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.failureFocus) private var failureFocus
+    @State private var messageElement: UIView?
     @State private var linkRect: CGRect = .zero
     @State private var pressed = false
     private static let link = "Try again"
+    private func takeFocus() {
+        guard let messageElement, failureFocus.claim() else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { UIAccessibility.post(notification: .layoutChanged, argument: messageElement) }
+    }
     var body: some View {
         let lineHeight = UIFont.preferredFont(forTextStyle: .subheadline).lineHeight
         HStack(alignment: .top, spacing: 8) {
@@ -252,7 +298,8 @@ private struct FailureRow: View {
             Image(systemName: "exclamationmark.circle.fill").font(.subheadline).foregroundStyle(StatusColors.error)
                 .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .frame(height: lineHeight).accessibilityHidden(true)
-            InlineLinkText(message: message, link: Self.link, id: id, theme: theme, enabled: isEnabled, pressed: pressed) { linkRect = $0 }
+            InlineLinkText(message: message, link: Self.link, id: id, theme: theme, enabled: isEnabled, pressed: pressed, retry: retry,
+                           onMessageElement: { messageElement = $0 }) { linkRect = $0 }
                 .overlay(alignment: .topLeading) {
                     if linkRect != .zero {
                         // The hit area grows to 44pt around the span, never into the paragraph's sense: the slop
@@ -262,11 +309,14 @@ private struct FailureRow: View {
                             .buttonStyle(PressReporter(pressed: $pressed))
                             .frame(width: size.width, height: size.height)
                             .offset(x: linkRect.midX - size.width / 2, y: linkRect.midY - size.height / 2)
-                            .accessibilityLabel(Self.link).accessibilityIdentifier(id + ".retry")
+                            // The text view exposes the link to VoiceOver; this button is the touch target only.
+                            .accessibilityHidden(true)
                     }
                 }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: messageElement == nil) { _ in takeFocus() }
+        .onReceive(failureFocus.$request) { _ in takeFocus() }
     }
 }
 
@@ -280,8 +330,8 @@ private struct PressReporter: ButtonStyle {
 
 /// The failure message and its Try again link in one text run. UIKit lays the text out, so the
 /// link's frame comes from the same line breaks the person sees, at every Dynamic Type size and
-/// in any language. The view is one static-text element labelled with the message alone; the
-/// link is reachable only through the button laid over it.
+/// in any language. The view is no accessibility element itself: it holds two, the message as
+/// static text and the link as a button over the span.
 private struct InlineLinkText: UIViewRepresentable {
     let message: String
     let link: String
@@ -289,10 +339,13 @@ private struct InlineLinkText: UIViewRepresentable {
     let theme: ConsentTheme
     let enabled: Bool
     let pressed: Bool
+    let retry: () -> Void
+    let onMessageElement: (UIView) -> Void
     let onLinkRect: (CGRect) -> Void
 
-    func makeUIView(context: Context) -> LinkTextView {
-        let view = LinkTextView(usingTextLayoutManager: false)
+    func makeUIView(context: Context) -> LinkTextHost {
+        let host = LinkTextHost()
+        let view = host.textView
         view.isEditable = false
         view.isSelectable = false
         view.isScrollEnabled = false
@@ -301,13 +354,13 @@ private struct InlineLinkText: UIViewRepresentable {
         view.textContainerInset = .zero
         view.textContainer.lineFragmentPadding = 0
         view.adjustsFontForContentSizeCategory = true
-        view.isAccessibilityElement = true
-        view.accessibilityTraits = .staticText
         view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        return view
+        DispatchQueue.main.async { onMessageElement(host.messageElement) }
+        return host
     }
 
-    func updateUIView(_ view: LinkTextView, context: Context) {
+    func updateUIView(_ host: LinkTextHost, context: Context) {
+        let view = host.textView
         let body = UIFont.preferredFont(forTextStyle: .subheadline)
         let bold = UIFont(descriptor: body.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]]), size: 0)
         // A no-break space keeps the label whole; it wraps as one word or not at all.
@@ -317,23 +370,100 @@ private struct InlineLinkText: UIViewRepresentable {
             .font: bold, .foregroundColor: theme.colors.accent.uiColor(alpha: pressed ? 0.6 : enabled ? 1 : 0.5)]))
         view.attributedText = text
         view.linkRange = NSRange(location: (message as NSString).length + 1, length: (label as NSString).length)
-        view.accessibilityLabel = message
-        view.accessibilityIdentifier = id
+        host.messageElement.accessibilityLabel = message
+        host.messageElement.accessibilityIdentifier = id
+        host.linkElement.accessibilityLabel = link
+        host.linkElement.accessibilityIdentifier = id + ".retry"
+        host.linkElement.accessibilityTraits = enabled ? .button : [.button, .notEnabled]
+        host.linkElement.activate = enabled ? retry : nil
         view.onLinkRect = onLinkRect
         view.setNeedsLayout()
+        host.setNeedsLayout()
     }
 
-    func sizeThatFits(_ proposal: ProposedViewSize, uiView: LinkTextView, context: Context) -> CGSize? {
+    func sizeThatFits(_ proposal: ProposedViewSize, uiView: LinkTextHost, context: Context) -> CGSize? {
         let width = proposal.width ?? UIView.layoutFittingExpandedSize.width
-        let size = uiView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+        let size = uiView.textView.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
         return CGSize(width: proposal.width ?? size.width, height: size.height)
+    }
+}
+
+/// A plain view around the text view, so the two accessibility regions are ordinary siblings of
+/// it rather than children of a text view, whose accessibility has rules of its own.
+private final class LinkTextHost: UIView {
+    let textView = LinkTextView()
+    let messageElement = AccessibilityRegion(traits: .staticText)
+    let linkElement = AccessibilityRegion(traits: .button)
+    init() {
+        super.init(frame: .zero)
+        isAccessibilityElement = false
+        backgroundColor = .clear
+        addSubview(textView)
+        addSubview(messageElement)
+        addSubview(linkElement)
+        textView.onLinkBox = { [weak self] box, shape in
+            self?.linkElement.frame = box
+            self?.messageElement.shape = shape
+        }
+    }
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        textView.frame = bounds
+        messageElement.frame = bounds
+    }
+}
+
+/// An accessibility element with no drawing and no touch handling of its own: a region of the
+/// text view that VoiceOver can land on, read and activate.
+private final class AccessibilityRegion: UIView {
+    var activate: (() -> Void)?
+    /// The region's shape in its own coordinates, when it is not its whole frame: the paragraph's
+    /// lines with the link cut out, so a finger on the link is outside the paragraph.
+    var shape: UIBezierPath? { didSet { accessibilityPath = nil } }
+    override var accessibilityPath: UIBezierPath? {
+        get { shape.map { UIAccessibility.convertToScreenCoordinates($0, in: self) } }
+        set { super.accessibilityPath = newValue }
+    }
+    init(traits: UIAccessibilityTraits) {
+        super.init(frame: .zero)
+        isAccessibilityElement = true
+        accessibilityTraits = traits
+        isUserInteractionEnabled = false
+        backgroundColor = .clear
+    }
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+    override func accessibilityActivate() -> Bool {
+        guard let activate else { return false }
+        activate()
+        return true
     }
 }
 
 private final class LinkTextView: UITextView {
     var linkRange = NSRange(location: 0, length: 0)
     var onLinkRect: ((CGRect) -> Void)?
+    /// The link's 44pt box and the paragraph's shape without it, for the host's accessibility regions.
+    var onLinkBox: ((CGRect, UIBezierPath) -> Void)?
     private var reported = CGRect.zero
+    /// A TextKit 1 stack, built by hand: `layoutSubviews` reads glyph rects from the layout manager,
+    /// and only the designated initialiser runs this class's own setup. UIKit's
+    /// `init(usingTextLayoutManager:)` convenience path does not, and leaves the regions unmade.
+    convenience init() {
+        let storage = NSTextStorage()
+        let layout = NSLayoutManager()
+        let container = NSTextContainer(size: .zero)
+        container.widthTracksTextView = true
+        layout.addTextContainer(container)
+        storage.addLayoutManager(layout)
+        self.init(frame: .zero, textContainer: container)
+    }
+    override init(frame: CGRect, textContainer: NSTextContainer?) {
+        super.init(frame: frame, textContainer: textContainer)
+        isAccessibilityElement = false
+        accessibilityElementsHidden = true
+    }
+    @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
     override func layoutSubviews() {
         super.layoutSubviews()
         guard linkRange.length > 0, linkRange.location + linkRange.length <= textStorage.length else { return }
@@ -341,6 +471,20 @@ private final class LinkTextView: UITextView {
         var rect = layoutManager.boundingRect(forGlyphRange: glyphs, in: textContainer)
         rect.origin.x += textContainerInset.left
         rect.origin.y += textContainerInset.top
+        let size = CGSize(width: max(44, rect.width + 16), height: max(44, rect.height))
+        let box = CGRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height)
+        // The paragraph's shape is its lines, less the link and a little air around it.
+        let cut = rect.insetBy(dx: -4, dy: -2)
+        let shape = UIBezierPath()
+        layoutManager.enumerateLineFragments(forGlyphRange: NSRange(location: 0, length: layoutManager.numberOfGlyphs)) { [textContainerInset] _, used, _, _, _ in
+            let line = used.offsetBy(dx: textContainerInset.left, dy: textContainerInset.top)
+            guard line.intersects(cut) else { shape.append(UIBezierPath(rect: line)); return }
+            let left = CGRect(x: line.minX, y: line.minY, width: max(0, cut.minX - line.minX), height: line.height)
+            let right = CGRect(x: cut.maxX, y: line.minY, width: max(0, line.maxX - cut.maxX), height: line.height)
+            if left.width > 0 { shape.append(UIBezierPath(rect: left)) }
+            if right.width > 0 { shape.append(UIBezierPath(rect: right)) }
+        }
+        onLinkBox?(box, shape)
         guard rect != reported else { return }
         reported = rect
         DispatchQueue.main.async { [weak self] in self?.onLinkRect?(rect) }
@@ -729,6 +873,8 @@ private struct PreferencesList: View {
     private var surface: Color { theme.colors.surface.color }
     /// Insets for the decision rows at accessibility sizes: the buttons meet the cards' edges.
     private let decisionInsets = EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16)
+    @AccessibilityFocusState private var introFocused: Bool
+    @State private var arrived = false
 
     var body: some View {
         let page = typeSize.actionsInPage
@@ -737,6 +883,7 @@ private struct PreferencesList: View {
             if presenter.snapshot.policyPending {
                 Section {
                     Text("Privacy settings aren't available yet. Connect to the internet and try again.").foregroundStyle(theme.colors.text.color)
+                        .accessibilityFocused($introFocused)
                     Button("Try again") { presenter.refresh() }.buttonStyle(TextLinkStyle(font: .body.weight(.medium))).accessibilityIdentifier("c15t.status.unavailable.retry")
                 }.listRowBackground(surface)
             } else {
@@ -754,10 +901,12 @@ private struct PreferencesList: View {
                     VStack(alignment: .leading, spacing: 8) {
                         if presenter.iab {
                             Text("We and our partners store and access information on your device and process personal data for the purposes below. Some partners rely on legitimate interest instead of consent. You can object to that and change your choices at any time in Privacy settings.")
+                                .accessibilityFocused($introFocused)
                             Button("\(presenter.disclosure?.vendors.count ?? 0) IAB partners") { path.append(.vendors(nil)) }
                                 .buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold))).accessibilityIdentifier("c15t.iab.partner-count")
                         } else {
                             Text("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
+                                .accessibilityFocused($introFocused)
                         }
                     }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 4, trailing: 16))
                 }
@@ -817,6 +966,16 @@ private struct PreferencesList: View {
                 Section { DecisionGroup(presenter: presenter, first: false, part: .pinnedStatus, path: $path).id(DecisionGroup.errorID(first: false)) }
                     .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
             }
+          }
+          .onAppear {
+              // When the first layer slides out, VoiceOver keeps its cursor where it was, which is the
+              // footer, and forward flicks end there. Arrival is the introduction instead: the title and
+              // Back are one flick to the left, the first switch one to the right. Once per session, so
+              // coming back from a partner page does not take the cursor off the row that opened it.
+              guard !arrived else { return }
+              arrived = true
+              introFocused = true
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { introFocused = true }
           }
           .onChange(of: presenter.errorCode) { code in
               guard code != nil, page else { return }

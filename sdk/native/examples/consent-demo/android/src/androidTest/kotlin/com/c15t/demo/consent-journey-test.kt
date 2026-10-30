@@ -355,6 +355,38 @@ class ConsentJourneyTest {
         compose.waitUntil(5000) { compose.onAllNodesWithTag("c15t.notice.acknowledge").fetchSemanticsNodes().isEmpty() }
         compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
     }
+    // Accessibility: names, roles and states in the semantics tree (AX inspection, not TalkBack).
+    private fun role(role: androidx.compose.ui.semantics.Role) = SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, role)
+    private fun heading() = SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.Heading)
+    @Test fun accessibilityNamesRolesAndStates() {
+        launch(fail = true)
+        waitFor("c15t.first-layer.title").assert(heading())
+        for ((tag, name) in listOf("c15t.first-layer.reject-all" to "Reject all", "c15t.first-layer.accept-all" to "Accept all", "c15t.first-layer.customize" to "Customize")) {
+            waitFor(tag).assertHasClickAction().assertContentDescriptionEquals(name)
+        }
+        // The brand is announced once; the mark beside it is decorative.
+        compose.onAllNodes(hasContentDescription("Your brand here") or hasText("Your brand here")).assertCountEquals(1)
+        waitFor("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by c15t")
+        capture("android-ax-first-layer")
+        compose.onNodeWithTag("c15t.first-layer.customize").performClick()
+        waitFor("c15t.prefs.title").assert(heading()).assertTextEquals("Privacy settings")
+        // Opened from the first layer, the leading action goes back to it and is named so.
+        compose.onNodeWithTag("c15t.prefs.cancel").assertContentDescriptionEquals("Back")
+        val measurement = scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch")
+        measurement.assert(role(androidx.compose.ui.semantics.Role.Switch)).assertIsOff().assertTextContains("Measurement", substring = true)
+        measurement.performClick().assertIsOn()
+        capture("android-ax-preferences")
+        compose.onNodeWithTag("c15t.prefs.save").assertContentDescriptionEquals("Save choices").performClick()
+        val retry = waitFor("c15t.prefs.error.retry")
+        retry.assert(role(androidx.compose.ui.semantics.Role.Button)).assertHasClickAction().assertContentDescriptionEquals("Try again")
+        // The failure is two nodes: the message once, then the retry.
+        compose.onAllNodesWithContentDescription("Couldn't save your choices. Nothing changed on this device.").assertCountEquals(1)
+        capture("android-ax-save-error")
+        retry.performClick(); awaitClosed()
+        state("fixture.state.permission.measurement", "measurement: true")
+    }
+    // Live TalkBack traversal is `TalkBackJourneyTest` (talkback-journey-test.kt): it needs a UiAutomation that
+    // does not suppress other accessibility services, which the Compose rule's connection does.
     @Test fun saveRefusalStaysCalmInDarkAndAtTheLargestText() {
         try {
             launch(fail = true)
