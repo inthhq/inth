@@ -16,10 +16,16 @@ final class ConsentJourneyTests: XCTestCase {
         app.launch()
     }
     func capture(_ name: String) {
-        let attachment = XCTAttachment(screenshot: app.screenshot())
+        let screenshot = app.screenshot()
+        let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = name
         attachment.lifetime = .keepAlways
         add(attachment)
+        // A copy outside the result bundle, so the evidence does not depend on xcodebuild finalising it.
+        if let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"] {
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: dir).appendingPathComponent(name + ".png"))
+        }
     }
     func button(_ id: String) -> XCUIElement { app.buttons[id] }
     func openStandingPreferences() {
@@ -31,19 +37,27 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("fixture.open-preferences").isHittable)
         button("fixture.open-preferences").tap()
     }
-    /// Scroll until `element` sits between the bar and the pinned footer. Once the element is in
-    /// the hierarchy the drag covers only the distance to the middle of that window and holds at
-    /// the end, so the list cannot coast past it and oscillate; a fixed full-screen flick did
-    /// exactly that on iOS 27.
+    static let ax2 = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL"]
+    static let ax5 = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
+    static let xxxl = ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryXXXL"]
+    /// The pinned footer, when the page has one. Decisions that sit in the page are not it.
+    var footer: XCUIElement { app.otherElements["c15t.footer"] }
+    /// Scroll the page until `element` sits between the bar and whatever is pinned below: the
+    /// footer, or the keyboard. Once the element is in the hierarchy the drag covers only the
+    /// distance to the middle of that window and holds at the end, so the list cannot coast past
+    /// it and oscillate; a fixed full-screen flick did exactly that on iOS 27. Only the page is
+    /// ever dragged: a control that needs a second scrolling region to reach is a failure.
     func reveal(_ element: XCUIElement) {
-        for _ in 0..<18 {
-            let save = button("c15t.iab.save").exists ? button("c15t.iab.save") : button("c15t.prefs.save")
-            let reject = button("c15t.first-layer.reject-all").exists ? button("c15t.first-layer.reject-all") : button("c15t.iab.reject-all").exists ? button("c15t.iab.reject-all") : button("c15t.prefs.reject-all")
-            let bottom = reject.exists ? reject.frame.minY - 12 : save.exists ? save.frame.minY - 12 : app.frame.maxY - 40
+        // Forty page-height drags: at the largest size on a 4.7-inch screen the IAB list runs to several thousand points.
+        for _ in 0..<40 {
+            let keyboard = app.keyboards.firstMatch
+            let bottom = keyboard.exists ? keyboard.frame.minY - 12 : footer.exists && footer.frame.minY > 150 ? footer.frame.minY - 12 : app.frame.maxY - 40
             let top: CGFloat = 150
-            if element.exists, element.isHittable, element.frame.midY > top, element.frame.midY < bottom { return }
+            // A row the list has not realised yet can exist with an empty frame; treat it as still ahead.
+            let realised = element.exists && element.frame.height > 0
+            if realised, element.isHittable, element.frame.midY > top, element.frame.midY < bottom { return }
             let room = bottom - top - 60
-            let delta = element.exists ? element.frame.midY - (top + bottom) / 2 : room
+            let delta = realised ? element.frame.midY - (top + bottom) / 2 : room
             let distance = min(abs(delta), room)
             let x = app.frame.midX
             let from = delta > 0 ? bottom - 20 : top + 30
@@ -53,6 +67,17 @@ final class ConsentJourneyTests: XCTestCase {
             start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
         }
         XCTFail("Not reachable: \(element)")
+    }
+    /// Waits for the page's own scroll to bring `element` into reach; no drag is sent.
+    func waitHittable(_ element: XCUIElement, timeout: TimeInterval = 5) {
+        expectation(for: NSPredicate(format: "isHittable == true"), evaluatedWith: element)
+        waitForExpectations(timeout: timeout)
+    }
+    /// Scrolls the host's own list until a state row is visible.
+    func hostState(_ id: String) -> XCUIElement {
+        let row = app.staticTexts[id]
+        for _ in 0..<6 where !(row.exists && row.isHittable) { app.swipeUp() }
+        return row
     }
     func test01EqualDecisionsAndRejectPersistOffline() {
         launch()
@@ -88,6 +113,8 @@ final class ConsentJourneyTests: XCTestCase {
         }
         print("row-frame necessary \(app.descendants(matching: .any)["c15t.prefs.category.necessary.locked"].firstMatch.frame)")
         print("cell-frames \(app.cells.allElementsBoundByIndex.map(\.frame))")
+        // Below accessibility sizes the footer is pinned and never a scroll view of its own.
+        XCTAssertTrue(footer.exists); XCTAssertFalse(app.scrollViews["c15t.footer"].exists)
         XCTAssertEqual(app.cells.firstMatch.frame.minX, button("c15t.prefs.save").frame.minX, accuracy: 0.5)
         XCTAssertEqual(app.cells.firstMatch.frame.maxX, button("c15t.prefs.save").frame.maxX, accuracy: 0.5)
         button("c15t.prefs.save").tap()
@@ -177,12 +204,12 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "none")
     }
     func test06DarkLargeTextEqualDecisions() {
-        launch(appearance: "dark", arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
+        launch(appearance: "dark", arguments: Self.ax5)
         print(app.debugDescription)
-        let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all")
-        XCTAssertTrue(reject.waitForExistence(timeout: 10)); XCTAssertTrue(accept.isHittable)
-        XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
-        XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
+        let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all"), customize = button("c15t.first-layer.customize")
+        XCTAssertTrue(reject.waitForExistence(timeout: 10))
+        // At accessibility sizes there is no footer: the decisions follow the text in the one scrolling page.
+        XCTAssertFalse(footer.exists); XCTAssertFalse(app.scrollViews["c15t.footer"].exists)
         capture("ios-dark-large-text")
         // iOS 26 exposes a SwiftUI Link as a button; earlier runtimes as a link.
         let policy = app.links["c15t.privacy-policy"].exists ? app.links["c15t.privacy-policy"] : app.buttons["c15t.privacy-policy"]
@@ -190,9 +217,18 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(policy.isHittable)
         XCTAssertGreaterThanOrEqual(policy.frame.height, 44)
         capture("ios-dark-large-text-policy")
-        XCTAssertTrue(reject.isHittable)
-        XCTAssertTrue(accept.isHittable)
-        reject.tap()
+        reveal(reject); XCTAssertTrue(reject.isHittable)
+        XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
+        XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
+        // Stacked, in that order, and never overlapping.
+        XCTAssertLessThanOrEqual(reject.frame.maxY, accept.frame.minY + 0.5)
+        capture("ios-dark-large-text-decisions")
+        reveal(customize); XCTAssertTrue(customize.isHittable)
+        XCTAssertLessThanOrEqual(accept.frame.maxY, customize.frame.minY + 0.5)
+        XCTAssertTrue(app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.exists)
+        reveal(reject); reject.tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCTAssertEqual(hostState("fixture.state.permission.marketing").label, "marketing: false")
     }
     func test07CustomizeThenBackReturnsToTheFirstLayer() {
         launch(appearance: "dark")
@@ -281,30 +317,127 @@ final class ConsentJourneyTests: XCTestCase {
         button("c15t.prefs.error.retry").tap()
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
-        app.terminate(); launch(fail: true, appearance: "dark", arguments: ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"])
-        XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()
-        let save = button("c15t.prefs.save")
-        XCTAssertTrue(save.waitForExistence(timeout: 5))
-        if !save.isHittable { app.scrollViews["c15t.footer"].swipeUp() }
-        save.tap()
-        let retry = button("c15t.prefs.error.retry")
-        XCTAssertTrue(retry.waitForExistence(timeout: 5))
-        capture("ios-save-error-large")
-        // The failure sits at the top of the capped footer. On a 4.7-inch screen the message alone
-        // fills that cap at this size, so the link is a short drag down, never off the screen.
-        let footer = app.scrollViews["c15t.footer"]
-        for _ in 0..<3 where !retry.isHittable && footer.exists {
-            footer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
-                .press(forDuration: 0.1, thenDragTo: footer.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)), withVelocity: .slow, thenHoldForDuration: 0.3)
-            capture("ios-save-error-large-scrolled")
+        for (name, size) in [("ax2", Self.ax2), ("ax5", Self.ax5)] {
+            app.terminate(); launch(fail: true, appearance: "dark", arguments: size)
+            let customize = button("c15t.first-layer.customize")
+            XCTAssertTrue(customize.waitForExistence(timeout: 10)); reveal(customize); customize.tap()
+            let save = button("c15t.prefs.save")
+            XCTAssertTrue(save.waitForExistence(timeout: 5))
+            // One compact pinned action, Save alone, with no scroll of its own, leaving most of the window to the page.
+            XCTAssertTrue(footer.exists); XCTAssertFalse(app.scrollViews["c15t.footer"].exists)
+            XCTAssertTrue(save.isHittable)
+            XCTAssertGreaterThanOrEqual(footer.frame.minY, app.frame.height * 0.7, "footer top \(footer.frame.minY) of \(app.frame.height)")
+            // Reject all and Accept all sit in the page after the introduction, equal and stacked.
+            let reject = button("c15t.prefs.reject-all"), accept = button("c15t.prefs.accept-all")
+            reveal(reject); XCTAssertTrue(reject.isHittable)
+            XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
+            XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
+            XCTAssertLessThanOrEqual(reject.frame.maxY, accept.frame.minY + 0.5)
+            capture("ios-\(name)-preferences")
+            // Read and change a later setting by ordinary scrolling, then save from the pinned bar.
+            let measurement = app.switches["c15t.prefs.category.measurement.switch"]
+            reveal(measurement); measurement.tap(); XCTAssertEqual(measurement.value as? String, "1")
+            capture("ios-\(name)-measurement")
+            XCTAssertTrue(save.isHittable); save.tap()
+            let retry = button("c15t.prefs.error.retry")
+            XCTAssertTrue(retry.waitForExistence(timeout: 5))
+            // The page scrolls to the failure by itself: the whole message and Try again sit above the pinned Save.
+            waitHittable(retry)
+            let message = app.descendants(matching: .any)["c15t.prefs.error"].firstMatch
+            print("failure-frames \(name) window \(app.frame) message \(message.frame) retry \(retry.frame) footer \(footer.frame) save \(save.frame)")
+            XCTAssertEqual(message.label, "Couldn't save your choices. Nothing changed on this device.")
+            // Wholly between the bar and the pinned Save: on the SE at the largest size that is 76pt to 486pt of 667.
+            XCTAssertGreaterThanOrEqual(message.frame.minY, app.navigationBars.firstMatch.frame.maxY - 0.5)
+            XCTAssertLessThanOrEqual(message.frame.maxY, footer.frame.minY + 0.5)
+            XCTAssertGreaterThanOrEqual(retry.frame.height, 44)
+            XCTAssertLessThanOrEqual(retry.frame.maxY, footer.frame.minY + 0.5)
+            XCTAssertFalse(retry.frame.intersects(save.frame))
+            capture("ios-\(name)-save-error")
+            // The draft is kept: scroll back up to the changed row (the list recycles it at this size), then return to the failure.
+            reveal(measurement); XCTAssertEqual(measurement.value as? String, "1")
+            reveal(retry); retry.tap()
+            // The gate only closes on a durable commit.
+            XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+            XCTAssertFalse(button("c15t.prefs.save").exists)
+            XCTAssertEqual(hostState("fixture.state.permission.measurement").label, "measurement: true")
+            XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
         }
-        XCTAssertTrue(retry.isHittable)
-        XCTAssertGreaterThanOrEqual(retry.frame.height, 44)
+    }
+    func test12LargestNonAccessibilitySizeKeepsThePinnedFooter() {
+        launch(fail: true, arguments: Self.xxxl)
+        let reject = button("c15t.first-layer.reject-all"), accept = button("c15t.first-layer.accept-all")
+        XCTAssertTrue(reject.waitForExistence(timeout: 10))
+        // The last non-accessibility size keeps the pinned footer, still not a scroll view, within half the window.
+        XCTAssertTrue(footer.exists); XCTAssertFalse(app.scrollViews["c15t.footer"].exists)
+        XCTAssertTrue(reject.isHittable); XCTAssertTrue(accept.isHittable)
+        XCTAssertLessThanOrEqual(footer.frame.height, app.frame.height * 0.5)
+        capture("ios-xxxl-first-layer")
+        button("c15t.first-layer.customize").tap()
+        let save = button("c15t.prefs.save")
+        XCTAssertTrue(save.waitForExistence(timeout: 5)); save.tap()
+        let retry = button("c15t.prefs.error.retry")
+        XCTAssertTrue(retry.waitForExistence(timeout: 5)); XCTAssertTrue(retry.isHittable)
+        XCTAssertFalse(app.scrollViews["c15t.footer"].exists)
+        XCTAssertLessThanOrEqual(footer.frame.height, app.frame.height * 0.5)
         XCTAssertLessThanOrEqual(retry.frame.maxY, button("c15t.prefs.reject-all").frame.minY + 0.5)
+        capture("ios-xxxl-save-error")
         retry.tap()
-        // The gate only closes on a durable commit; the host's state row is below the fold at this size.
         XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
-        XCTAssertFalse(button("c15t.prefs.save").exists)
+        XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
+    }
+    func test13LargestTextIabNavigationSearchAndSave() {
+        launch("fresh-online-iab", arguments: Self.ax5)
+        let customize = button("c15t.first-layer.customize")
+        XCTAssertTrue(customize.waitForExistence(timeout: 10))
+        XCTAssertFalse(footer.exists)
+        let count = button("c15t.first-layer.partner-count")
+        reveal(count); XCTAssertTrue(count.isHittable); XCTAssertGreaterThanOrEqual(count.frame.height, 44)
+        capture("ios-ax5-iab-first-layer")
+        reveal(customize); customize.tap()
+        let save = button("c15t.iab.save")
+        XCTAssertTrue(save.waitForExistence(timeout: 5)); XCTAssertTrue(save.isHittable)
+        XCTAssertFalse(app.scrollViews["c15t.footer"].exists)
+        XCTAssertGreaterThanOrEqual(footer.frame.minY, app.frame.height * 0.7)
+        let reject = button("c15t.iab.reject-all"), accept = button("c15t.iab.accept-all")
+        reveal(reject); XCTAssertTrue(reject.isHittable)
+        XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
+        XCTAssertLessThanOrEqual(reject.frame.maxY, accept.frame.minY + 0.5)
+        capture("ios-ax5-iab-preferences")
+        let purpose = app.switches["c15t.iab.purpose.7.consent"]
+        reveal(purpose); purpose.tap(); XCTAssertEqual(purpose.value as? String, "1")
+        let details = button("c15t.iab.purpose.7.details"); reveal(details); details.tap()
+        let viewPartners = button("c15t.iab.purpose.7.view-partners"); reveal(viewPartners)
+        XCTAssertGreaterThanOrEqual(viewPartners.frame.height, 44)
+        capture("ios-ax5-iab-purpose-details")
+        viewPartners.tap()
+        let search = app.textFields["c15t.iab.vendors.search"]
+        XCTAssertTrue(search.waitForExistence(timeout: 3))
+        XCTAssertTrue(button("c15t.iab.vendors.filter.purpose.clear").exists)
+        capture("ios-ax5-partner-list")
+        search.tap(); search.typeText("elan")
+        let vendor = button("c15t.iab.vendors.vendor.1")
+        XCTAssertTrue(vendor.waitForExistence(timeout: 3))
+        capture("ios-ax5-partner-search")
+        // Return puts the keyboard away; the result row is then reached like any other row.
+        search.typeText("\n")
+        reveal(vendor); vendor.tap()
+        let consent = app.switches["c15t.iab.vendor.1.consent"]
+        XCTAssertTrue(consent.waitForExistence(timeout: 3)); reveal(consent); consent.tap()
+        XCTAssertEqual(consent.value as? String, "1")
+        capture("ios-ax5-partner-details")
+        button("c15t.iab.vendor.back").tap()
+        XCTAssertTrue(app.staticTexts["c15t.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
+        button("c15t.iab.vendors.back").tap()
+        let ac = button("c15t.iab.other-partners"); reveal(ac); ac.tap()
+        XCTAssertTrue(app.textFields["c15t.ac.search"].waitForExistence(timeout: 3))
+        let provider = app.switches["c15t.ac.provider.10.switch"]
+        reveal(provider); provider.tap(); XCTAssertEqual(provider.value as? String, "1")
+        capture("ios-ax5-additional-consent")
+        button("c15t.ac.back").tap()
+        XCTAssertTrue(save.waitForExistence(timeout: 3)); XCTAssertTrue(save.isHittable); save.tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        let summary = hostState("fixture.state.iab").label
+        XCTAssertTrue(summary.contains("vendors=[1]"), summary)
     }
 }
 

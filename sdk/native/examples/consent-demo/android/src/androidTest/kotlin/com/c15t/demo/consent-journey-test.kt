@@ -34,6 +34,18 @@ class ConsentJourneyTest {
     private fun awaitClosed() {
         compose.waitUntil(10000) { listOf("c15t.first-layer.accept-all", "c15t.prefs.save", "c15t.iab.save").all { compose.onAllNodesWithTag(it).fetchSemanticsNodes().isEmpty() } }
     }
+    /** The preferences page composes rows lazily; scroll the page itself until the row exists. */
+    private fun scrollPage(page: String, id: String): SemanticsNodeInteraction {
+        waitFor(page); compose.onNodeWithTag(page).performScrollToNode(hasTestTag(id))
+        return compose.onNodeWithTag(id)
+    }
+    /** Unclipped geometry: boundsInRoot is clipped to the viewport, so a row scrolled out of view would report nothing. */
+    private fun bounds(id: String): androidx.compose.ui.geometry.Rect {
+        val node = compose.onNodeWithTag(id).fetchSemanticsNode()
+        return androidx.compose.ui.geometry.Rect(node.positionInRoot, androidx.compose.ui.geometry.Size(node.size.width.toFloat(), node.size.height.toFloat()))
+    }
+    private val screenHeight get() = context.resources.displayMetrics.heightPixels.toFloat()
+    private val density get() = context.resources.displayMetrics.density
     private fun capture(name: String) {
         compose.waitForIdle()
         // The consent window fades in through the platform's dialog animation, which the
@@ -119,9 +131,11 @@ class ConsentJourneyTest {
     @Test fun customSaveRefusalRetryCancelAndRecreate() {
         launch(fail = true)
         waitFor("c15t.first-layer.customize").performClick()
-        val measurement = waitFor("c15t.prefs.category.measurement.switch")
-        measurement.performScrollTo().performClick().assertIsOn()
+        val measurement = scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch")
+        measurement.performClick().assertIsOn()
         compose.onNodeWithText("Data use").assertDoesNotExist()
+        // Below accessibility sizes the footer is pinned and never a scroll view of its own.
+        compose.onAllNodes(hasTestTag("c15t.footer") and hasScrollAction()).assertCountEquals(0)
         capture("android-category-preferences")
         // The footer shares the cards' edges on preferences.
         val card = measurement.fetchSemanticsNode().boundsInRoot
@@ -133,7 +147,7 @@ class ConsentJourneyTest {
         compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
         state("fixture.state.permission.measurement", "measurement: true").assertTextEquals("measurement: true")
         waitFor("fixture.open-preferences").performClick()
-        waitFor("c15t.prefs.category.measurement.switch").performScrollTo().assertIsOn().performClick()
+        scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch").assertIsOn().performClick()
         device.pressBack(); waitFor("c15t.prefs.discard.keep").performClick()
         compose.onNodeWithTag("c15t.prefs.category.measurement.switch").assertIsOff()
         device.pressBack(); waitFor("c15t.prefs.discard.confirm").performClick()
@@ -200,6 +214,55 @@ class ConsentJourneyTest {
         } finally {
             device.executeShellCommand("settings put system font_scale 1.0")
             device.executeShellCommand("cmd uimode night no")
+        }
+    }
+    @Test fun largestTextIabNavigationSearchAndSave() {
+        try {
+            device.executeShellCommand("settings put system font_scale 2.0")
+            launch("fresh-online-iab")
+            val customize = waitFor("c15t.first-layer.customize")
+            // No footer at accessibility sizes: the decisions and the partner count follow the text in the page.
+            compose.onAllNodesWithTag("c15t.footer").assertCountEquals(0)
+            compose.onNodeWithTag("c15t.first-layer.partner-count").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithTag("c15t.first-layer.reject-all").performScrollTo().assertIsDisplayed()
+            val r = bounds("c15t.first-layer.reject-all"); val a = bounds("c15t.first-layer.accept-all")
+            Assert.assertEquals(r.width, a.width, 1f); Assert.assertTrue(r.bottom <= a.top + 1f)
+            capture("android-2.0-iab-first-layer")
+            customize.performScrollTo().performClick()
+            val save = waitFor("c15t.iab.save")
+            save.assertIsDisplayed()
+            compose.onAllNodes(hasTestTag("c15t.footer") and hasScrollAction()).assertCountEquals(0)
+            Assert.assertTrue(bounds("c15t.footer").top >= screenHeight * 0.7f)
+            scrollPage("c15t.iab", "c15t.iab.reject-all").assertIsDisplayed()
+            capture("android-2.0-iab-preferences")
+            scrollPage("c15t.iab", "c15t.iab.purpose.7.consent").performClick().assertIsOn()
+            scrollPage("c15t.iab", "c15t.iab.purpose.7.details").performClick()
+            scrollPage("c15t.iab", "c15t.iab.purpose.7.view-partners").assertIsDisplayed()
+            capture("android-2.0-iab-purpose-details")
+            compose.onNodeWithTag("c15t.iab.purpose.7.view-partners").performClick()
+            waitFor("c15t.iab.vendors.filter.purpose.clear").assertIsDisplayed()
+            capture("android-2.0-partner-list")
+            waitFor("c15t.iab.vendors.search").performTextInput("elan")
+            waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-2.0-partner-search")
+            compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
+            waitFor("c15t.iab.vendor.1.consent").performScrollTo().performClick().assertIsOn()
+            capture("android-2.0-partner-details")
+            device.pressBack()
+            compose.waitUntil(15000) { compose.onAllNodesWithTag("c15t.iab.vendors.vendor.1.status", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+            device.pressBack()
+            scrollPage("c15t.iab", "c15t.iab.other-partners").performClick()
+            waitFor("c15t.ac.search")
+            // The provider list is lazy and its intro fills the screen at this size; scroll the list itself.
+            compose.onNode(hasAnyAncestor(hasTestTag("c15t.ac")) and hasScrollToIndexAction()).performScrollToNode(hasTestTag("c15t.ac.provider.10.switch"))
+            compose.onNodeWithTag("c15t.ac.provider.10.switch").performClick().assertIsOn()
+            capture("android-2.0-additional-consent")
+            device.pressBack()
+            waitFor("c15t.iab.save").assertIsDisplayed().performClick(); awaitClosed()
+            // The host's state list is lazy too; at this size its IAB row is below the fold on a short screen.
+            waitFor("fixture.state").performScrollToNode(hasTestTag("fixture.state.iab"))
+            state("fixture.state.iab", "vendors=[1]").assertTextContains("vendors=[1]", substring = true)
+        } finally {
+            device.executeShellCommand("settings put system font_scale 1.0")
         }
     }
     @Test fun customizeThenBackReturnsToTheFirstLayer() {
@@ -311,18 +374,57 @@ class ConsentJourneyTest {
             Assert.assertTrue(inline.bottom <= compose.onNodeWithTag("c15t.prefs.reject-all").fetchSemanticsNode().boundsInRoot.top + 1f)
             capture("android-save-error-dark")
             compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
-            device.executeShellCommand("settings put system font_scale 2.0")
-            launch(fail = true)
-            waitFor("c15t.first-layer.customize").performClick()
-            waitFor("c15t.prefs.save").performScrollTo().performClick()
-            val retry = waitFor("c15t.prefs.error.retry")
-            // The failure sits at the top of the footer, so its retry is in reach without scrolling.
-            retry.assertIsDisplayed()
-            Assert.assertTrue(retry.fetchSemanticsNode().boundsInRoot.height >= 48 * context.resources.displayMetrics.density - 1)
-            Assert.assertTrue(retry.fetchSemanticsNode().boundsInRoot.bottom <= compose.onNodeWithTag("c15t.prefs.reject-all").fetchSemanticsNode().boundsInRoot.top + 1f)
-            capture("android-save-error-large")
-            retry.performClick(); awaitClosed()
-            state("fixture.state.explicit-choice", "recorded")
+            for (scale in listOf("1.3", "2.0")) {
+                val page = scale.toFloat() >= 1.5f
+                device.executeShellCommand("settings put system font_scale $scale")
+                launch(fail = true)
+                val customize = waitFor("c15t.first-layer.customize")
+                if (page) customize.performScrollTo()
+                customize.performClick()
+                val save = waitFor("c15t.prefs.save")
+                // The footer never scrolls on its own, at any size.
+                compose.onAllNodes(hasTestTag("c15t.footer") and hasScrollAction()).assertCountEquals(0)
+                save.assertIsDisplayed()
+                if (page) {
+                    // One compact pinned action, Save alone, leaving most of the window to the page.
+                    Assert.assertTrue("footer top ${bounds("c15t.footer").top} of $screenHeight", bounds("c15t.footer").top >= screenHeight * 0.7f)
+                    // Reject all and Accept all sit in the page after the introduction, equal and stacked.
+                    scrollPage("c15t.prefs", "c15t.prefs.reject-all").assertIsDisplayed()
+                    val r = bounds("c15t.prefs.reject-all"); val a = bounds("c15t.prefs.accept-all")
+                    Assert.assertEquals(r.width, a.width, 1f); Assert.assertEquals(r.height, a.height, 1f)
+                    Assert.assertTrue(r.bottom <= a.top + 1f)
+                } else {
+                    Assert.assertTrue("footer top ${bounds("c15t.footer").top} of $screenHeight", bounds("c15t.footer").top >= screenHeight * 0.55f)
+                }
+                capture("android-$scale-preferences")
+                // Read and change a later setting by ordinary scrolling, then save from the pinned bar.
+                scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch").performClick().assertIsOn()
+                capture("android-$scale-measurement")
+                compose.onNodeWithTag("c15t.prefs.save").assertIsDisplayed().performClick()
+                val retry = waitFor("c15t.prefs.error.retry")
+                // The page scrolls to the failure by itself: the whole message and Try again sit above the pinned Save.
+                compose.waitForIdle()
+                retry.assertIsDisplayed()
+                compose.onNodeWithText("Couldn't save your choices. Nothing changed on this device.", substring = true).assertIsDisplayed()
+                // In the page the row ends above the pinned Save; in a pinned footer it ends above Reject all. Either way it is wholly on screen.
+                val message = bounds("c15t.prefs.error"); val target = bounds("c15t.prefs.error.retry")
+                val limit = if (page) bounds("c15t.footer").top else bounds("c15t.prefs.reject-all").top
+                Assert.assertTrue("message $message limit $limit", message.top >= 0f && message.bottom <= limit + 1f)
+                Assert.assertTrue(target.height >= 48 * density - 1)
+                Assert.assertTrue("retry $target limit $limit", target.bottom <= limit + 1f && target.bottom <= screenHeight)
+                capture("android-$scale-save-error")
+                if (page) {
+                    // Text size changes while the failure is up: the draft, the failure and its retry survive the recreation.
+                    device.executeShellCommand("settings put system font_scale 1.3")
+                    waitFor("c15t.prefs.error.retry")
+                    scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch").assertIsOn()
+                    compose.onNodeWithTag("c15t.prefs.error.retry").assertIsDisplayed()
+                    capture("android-resized-save-error")
+                }
+                compose.onNodeWithTag("c15t.prefs.error.retry").performClick(); awaitClosed()
+                state("fixture.state.explicit-choice", "recorded")
+                state("fixture.state.permission.measurement", "measurement: true")
+            }
         } finally {
             device.executeShellCommand("settings put system font_scale 1.0")
             device.executeShellCommand("cmd uimode night no")

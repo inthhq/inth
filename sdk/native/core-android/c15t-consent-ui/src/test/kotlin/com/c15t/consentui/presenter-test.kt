@@ -127,6 +127,8 @@ class PresenterTest {
             p.commit(ConsentPresenter.Action.SAVE)
             await { !p.pending }
             assertNotNull(p.errorCode)
+            // The failed action is named, so a page can show the failure beside the control that failed.
+            assertEquals(ConsentPresenter.Action.SAVE, p.failedAction)
             assertEquals(session, p.presentationID)
             assertEquals(listOf(7), p.choices.purposeConsents)
             assertNull(core.iabConsent)
@@ -134,6 +136,7 @@ class PresenterTest {
             p.retry()
             await { !p.pending }
             assertNull(p.errorCode)
+            assertNull(p.failedAction)
             assertTrue(core.isIabAllowed(1, 7, IabLegalBasis.CONSENT))
             assertEquals(1, outcomes)
         } finally { Dispatchers.resetMain() }

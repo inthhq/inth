@@ -203,6 +203,8 @@ final class PresenterTests: XCTestCase {
         presenter.commit(.save)
         await settle(presenter)
         XCTAssertNotNil(presenter.errorCode)
+        // The failed action is named, so a page can show the failure beside the control that failed.
+        XCTAssertEqual(presenter.failedAction, .save)
         XCTAssertEqual(presenter.presentationID, session)
         XCTAssertEqual(presenter.categories[.measurement], true)
         XCTAssertFalse(core.snapshot().effectivePermissions.measurement)
@@ -210,6 +212,7 @@ final class PresenterTests: XCTestCase {
         presenter.retry()
         await settle(presenter)
         XCTAssertNil(presenter.errorCode)
+        XCTAssertNil(presenter.failedAction)
         XCTAssertTrue(core.snapshot().effectivePermissions.measurement)
         XCTAssertEqual(outcomes, 1)
         XCTAssertEqual(core.pendingSaveCount(), 1)
