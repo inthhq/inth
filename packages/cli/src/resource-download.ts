@@ -3,10 +3,8 @@ import {
   constants,
   existsSync,
   fstatSync,
-  lstatSync,
   openSync,
   statSync,
-  unlinkSync,
   writeSync,
 } from "node:fs";
 import type { Stats } from "node:fs";
@@ -17,6 +15,7 @@ import { setTimeout } from "node:timers/promises";
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
 import type { DownloadResult } from "./download.ts";
+import { removeCreatedFile } from "./file-output-cleanup.ts";
 import { terminalText } from "./organizations.ts";
 import { optionValue, resourceCommand } from "./resource-commands.ts";
 
@@ -55,20 +54,6 @@ export const validateDownloadOutput = (options: CliArguments): void => {
   }
 };
 
-const removePartialDownload = (path: string, created: Stats): void => {
-  try {
-    const current = lstatSync(path);
-    if (current.ino === created.ino && current.dev === created.dev) {
-      unlinkSync(path);
-    }
-  } catch (error) {
-    // Scriptc filesystem errors carry errno in the message prefix.
-    if (!(error instanceof Error && error.message.startsWith("ENOENT:"))) {
-      throw error;
-    }
-  }
-};
-
 export const saveResourceDownload = async (
   options: CliArguments,
   download: DownloadResult,
@@ -104,10 +89,10 @@ export const saveResourceDownload = async (
         await setTimeout(0);
       }
       signal.throwIfAborted();
-      complete = true;
     } finally {
       closeSync(handle);
     }
+    complete = true;
   } catch (error) {
     signal.throwIfAborted();
     if (error instanceof CliError) {
@@ -119,7 +104,7 @@ export const saveResourceDownload = async (
     );
   } finally {
     if (created && !complete) {
-      removePartialDownload(path, created);
+      removeCreatedFile(path, created);
     }
   }
   return JSON.stringify({

@@ -8,7 +8,6 @@ import {
   lstatSync,
   openSync,
   realpathSync,
-  unlinkSync,
   writeSync,
 } from "node:fs";
 import type { Stats } from "node:fs";
@@ -16,6 +15,7 @@ import type { Stats } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 import { CliError } from "./cli-error.ts";
+import { removeCreatedFile } from "./file-output-cleanup.ts";
 
 export interface UploadReceiptData {
   schemaVersion: number;
@@ -65,17 +65,18 @@ const writeReceipt = (path: string, data: UploadReceiptData): Stats => {
   const owned = fstatSync(descriptor);
   let complete = false;
   try {
-    writeContents(descriptor, data);
-    const written = fstatSync(descriptor);
+    let written: Stats;
+    try {
+      writeContents(descriptor, data);
+      written = fstatSync(descriptor);
+    } finally {
+      closeSync(descriptor);
+    }
     complete = true;
     return written;
   } finally {
-    closeSync(descriptor);
     if (!complete) {
-      const current = lstatSync(path);
-      if (current.ino === owned.ino && current.dev === owned.dev) {
-        unlinkSync(path);
-      }
+      removeCreatedFile(path, owned);
     }
   }
 };

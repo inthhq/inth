@@ -1,8 +1,17 @@
-import { closeSync, constants, fsyncSync, openSync, writeSync } from "node:fs";
+import {
+  closeSync,
+  constants,
+  fsyncSync,
+  fstatSync,
+  openSync,
+  writeSync,
+} from "node:fs";
+import type { Stats } from "node:fs";
 
 import { validateWriteSchema } from "./agent-access-write-input.ts";
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
+import { removeCreatedFile } from "./file-output-cleanup.ts";
 import { terminalText } from "./organizations.ts";
 import { optionValue } from "./resource-commands.ts";
 import type { ResourceRequest } from "./resource-commands.ts";
@@ -45,6 +54,8 @@ export const saveBillingApproval = (
       : "BillingCreditPurchaseInput",
     approval
   );
+  let created: Stats | undefined;
+  let complete = false;
   try {
     const fd = openSync(
       path,
@@ -53,6 +64,7 @@ export const saveBillingApproval = (
       0o600
     );
     try {
+      created = fstatSync(fd);
       const bytes = new TextEncoder().encode(
         `${JSON.stringify(approval, null, 2)}\n`
       );
@@ -68,11 +80,16 @@ export const saveBillingApproval = (
     } finally {
       closeSync(fd);
     }
+    complete = true;
   } catch {
     throw new CliError(
       "approval_save_failed",
       "Could not save the billing approval. Use --save-approval with a new writable file path; existing files are never overwritten."
     );
+  } finally {
+    if (created && !complete) {
+      removeCreatedFile(path, created);
+    }
   }
   console.error(
     `Saved full quote and matching input to ${terminalText(path)}. Review it, then run inth billing ${options.argument === "plan-preview" ? "plan-change" : "credit-purchase"} --data-file <that-file> --yes. Prices are minor currency units; nextCycle includes the recurring amount and renewal date. A changed quote requires a new explicit review.`
