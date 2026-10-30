@@ -17,6 +17,47 @@ import harness
 import runtime
 
 
+class RuntimeScheduleTests(unittest.TestCase):
+    def test_sampling_and_verification_reject_edited_frozen_schedule(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'runtime'
+            root.mkdir()
+            cfg = {'output': tmp}
+            value = {'participants': {'didomi': {}}, 'device': {'serial': 'emulator-5590', 'avdName': 'test', 'fingerprint': 'fixture'}}
+            calibration = root / 'calibration.log'
+            calibration.write_text(valid_log(pid=41))
+            statuses = {'didomi': {**runtime.parse(calibration.read_text(), 'didomi'), 'eligible': True, 'previousPid': 41}}
+            files = core.bind_files([calibration])
+            with patch.object(runtime, 'inputs', return_value=value), patch.object(runtime, 'eligibility', return_value=(['didomi'], statuses, files)):
+                with patch.object(runtime, 'live_device'):
+                    runtime.run(cfg, 'schedule')
+                path = root / 'schedule.json'
+                original = core.read(path)
+                self.assertEqual(original['attempts'], runtime.attempts(['didomi']))
+                rows = []
+                for attempt in original['attempts']:
+                    log = root / (str(attempt['attempt']) + '.log')
+                    log.write_text(valid_log(pid=41 + attempt['attempt']))
+                    parsed = runtime.parse(log.read_text(), 'didomi')
+                    rows.append({**attempt, **parsed, 'allParticipantPidsAfterStop': {'didomi': []}, 'launchExit': 0, 'completedWithinDeadline': True, 'livePids': [str(parsed['pid'])], 'log': str(log), 'files': core.bind_files([log])})
+                core.write(root / 'samples.json', {'scheduleSha256': core.sha(path), 'rows': rows})
+                runtime.run(cfg, 'verify')
+                self.assertEqual(core.read(root / 'results.json')['summary']['didomi']['valid'], 30)
+                mutations = [{'attempts': original['attempts'][:1]}, {'attempts': list(reversed(original['attempts']))},
+                             {'cooldownSeconds': 0}, {'deadlineSeconds': 300}, {'settleSeconds': 0},
+                             {'endpoint': 'another endpoint'}, {'schemaVersion': 2}, {'participants': ['c15t']},
+                             {'device': {**value['device'], 'serial': 'emulator-5592'}}]
+                for mutation in mutations:
+                    core.write(path, {**original, **mutation})
+                    samples = rows[:1] if mutation.get('attempts') == original['attempts'][:1] else rows
+                    core.write(root / 'samples.json', {'scheduleSha256': core.sha(path), 'rows': samples})
+                    for action in ['sample', 'verify']:
+                        with self.subTest(mutation=mutation, action=action), patch.object(runtime, 'live_device', side_effect=AssertionError('edited schedule reached a device operation')):
+                            with self.assertRaisesRegex(ValueError, 'fixed profile'):
+                                runtime.run(cfg, action)
+                self.assertFalse((root / 'samples').exists())
+
+
 class PreflightTests(unittest.TestCase):
     def test_android_uses_java_home_without_java_on_path(self):
         with tempfile.TemporaryDirectory() as tmp:

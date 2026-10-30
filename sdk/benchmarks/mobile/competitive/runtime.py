@@ -249,6 +249,13 @@ def verify_samples(schedule, rows):
     return summary
 
 
+def frozen_schedule(value, eligible, statuses, files):
+    return {'schemaVersion': 1, 'endpoint': ENDPOINT, 'attempts': attempts(eligible),
+            'eligibility': statuses, 'files': files, 'device': value['device'],
+            'participants': list(value['participants']), 'cooldownSeconds': 1,
+            'deadlineSeconds': 30, 'settleSeconds': 10}
+
+
 def run(cfg, action):
     root = Path(cfg['output']) / 'runtime'
     value = inputs(cfg)
@@ -260,12 +267,12 @@ def run(cfg, action):
         require(eligible, 'no eligible runtime participants')
         require(not (root / 'schedule.json').exists(), 'runtime schedule already frozen')
         live_device(cfg, value, statuses)
-        write(root / 'schedule.json', {'schemaVersion': 1, 'endpoint': ENDPOINT, 'attempts': attempts(eligible), 'eligibility': statuses, 'files': files, 'device': value['device'], 'participants': list(value['participants']), 'cooldownSeconds': 1, 'deadlineSeconds': 30, 'settleSeconds': 10})
+        write(root / 'schedule.json', frozen_schedule(value, eligible, statuses, files))
         return
     schedule_path = root / 'schedule.json'
     schedule = read(schedule_path)
+    require(digest(schedule) == digest(frozen_schedule(value, eligible, statuses, files)), 'runtime schedule differs from fixed profile')
     verify_files(schedule['files'])
-    require(schedule['eligibility'] == statuses, 'runtime eligibility changed after scheduling')
     if action == 'verify':
         samples = read(root / 'samples.json')
         require(samples['scheduleSha256'] == sha(schedule_path), 'sample/schedule hash mismatch')
