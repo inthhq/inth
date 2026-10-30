@@ -1,0 +1,16 @@
+{
+	"schemaVersion": 1,
+	"sizeConfig": "../size/config.json",
+	"output": "./fresh-cached-run-001",
+	"producer": "../frozen-producer",
+	"device": {
+		"avdName": "cmp_cached_run_001",
+		"port": 5602
+	},
+	"stockUi": {
+		"didomi": { "rejectLabels": ["Disagree & Close"] },
+		"c15t": { "rejectLabels": ["Reject All"] },
+		"usercentrics": { "rejectLabels": ["Deny all"] },
+		"sourcepoint": { "rejectLabels": ["Reject All"] }
+	}
+}
