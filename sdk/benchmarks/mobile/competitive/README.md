@@ -78,6 +78,8 @@ Supply `archive`, `maven`, `policy` and `backendUrl` from your own frozen c15t i
 
 Set `nativeLockRunner` to a command array for the coordinator's shared exclusive lock wrapper. The runner passes it a label followed by the complete command. Every prepare/build and runtime sampling stage uses that wrapper. All agents on the host must use the same wrapper and lock. A standalone run can use `competitive/with-native-lock.py`; `CMP_NATIVE_LOCK` selects its global lock file. Runtime keeps the lock across `ec quiet`, settling and the entire schedule. Do not run uncoordinated native builds beside timed samples.
 
+Prefix relative paths in `nativeLockRunner` with `./` or `../` to resolve them against the config file. Bare executable names such as `python3` use `PATH`; flags stay unchanged.
+
 ```sh
 bun run --cwd benchmarks/mobile competitive:plan --config /path/to/run.json
 bun run --cwd benchmarks/mobile competitive:preflight --config /path/to/run.json --platform android

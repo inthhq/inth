@@ -57,6 +57,10 @@ def config(path):
     for key in ['output', 'archive', 'maven', 'policy', 'downloadCache', 'androidSdk', 'javaHome', 'gradleHome', 'deviceRoot']:
         if value.get(key):
             value[key] = str(resolve(path.parent, value[key]))
+    if 'nativeLockRunner' in value:
+        runner = value['nativeLockRunner']
+        require(isinstance(runner, list) and runner and all(isinstance(entry, str) and entry for entry in runner), 'nativeLockRunner must be a command array')
+        value['nativeLockRunner'] = [str(resolve(path.parent, entry)) if entry.startswith('.') else entry for entry in runner]
     value.setdefault('output', str(path.parent / '.competitive-output'))
     root = Path(value['output'])
     repo = HERE.parents[2]

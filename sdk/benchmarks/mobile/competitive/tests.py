@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import plistlib
 import struct
+import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -784,13 +786,36 @@ class CompetitiveTests(unittest.TestCase):
     def test_relative_config_resolves_from_file_not_cwd(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'config.json'
-            core.write(path, {'schemaVersion': 1, 'output': 'out with spaces', 'archive': 'inputs/archive.tgz', 'maven': 'inputs/maven'})
+            core.write(path, {'schemaVersion': 1, 'output': 'out with spaces', 'archive': 'inputs/archive.tgz', 'maven': 'inputs/maven',
+                              'nativeLockRunner': ['python3', '-u', './with-native-lock.py']})
             cfg = harness.config(path)
             self.assertEqual(cfg['archive'], str((Path(tmp) / 'inputs/archive.tgz').resolve()))
             self.assertEqual(cfg['output'], str((Path(tmp) / 'out with spaces').resolve()))
+            self.assertEqual(cfg['nativeLockRunner'], ['python3', '-u', str((Path(tmp) / 'with-native-lock.py').resolve())])
             core.write(path, {'schemaVersion': 1, 'output': str(core.HERE)})
             with self.assertRaisesRegex(ValueError, 'outside'):
                 harness.config(path)
+
+    def test_native_lock_runner_dispatches_from_another_working_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp).resolve()
+            directory = root / 'external config'
+            directory.mkdir()
+            caller = root / 'caller'
+            caller.mkdir()
+            runner = directory / 'with native lock.py'
+            runner.write_text("import json, sys\nfrom pathlib import Path\nPath(__file__).with_suffix('.call.json').write_text(json.dumps(sys.argv[1:]))\n")
+            path = directory / 'config.json'
+            core.write(path, {'schemaVersion': 1, 'output': './out',
+                              'nativeLockRunner': [sys.executable, '-u', './with native lock.py']})
+            for stage, extra in [('prepare', []), ('build', []), ('runtime', ['--action', 'sample'])]:
+                with self.subTest(stage=stage):
+                    args = [stage, '--config', str(path), *extra]
+                    result = subprocess.run([sys.executable, str(core.HERE / 'harness.py'), *args], cwd=caller, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(core.read(runner.with_suffix('.call.json')),
+                                     ['cmp-' + stage, sys.executable, str(core.HERE / 'harness.py'), *args, '--locked'])
+            self.assertFalse((directory / 'out').exists())
 
     def test_no_private_paths_in_durable_inputs(self):
         for path in core.HERE.rglob('*'):
