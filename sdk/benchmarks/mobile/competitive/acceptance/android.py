@@ -34,8 +34,10 @@ def native_preferences(tree):
 
 
 def denied(state):
-    return bool(state.get('lastChanged') and state.get('categories', {}).get('measurement') is False
-                and all(value is False for value in state['categories'].values()))
+    categories = state.get('categories', {})
+    return bool(state.get('lastChanged')
+                and set(categories) == {'functionality', 'experience', 'measurement', 'marketing'}
+                and all(value is False for value in categories.values()))
 
 
 def emulator_stopped(ownership):

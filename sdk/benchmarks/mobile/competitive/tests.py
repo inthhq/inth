@@ -754,12 +754,18 @@ class CompetitiveTests(unittest.TestCase):
         import xml.etree.ElementTree as ET
         from acceptance.android import native_preferences, denied
         tree = ET.fromstring('<hierarchy><node resource-id="c15t.prefs.category.measurement.switch" checkable="true" checked="false"/></hierarchy>')
+        for name in ('functionality', 'experience', 'marketing'):
+            ET.SubElement(tree, 'node', {'resource-id': 'c15t.prefs.category.' + name + '.switch', 'checkable': 'true', 'checked': 'false'})
         state = native_preferences(tree)
         self.assertFalse(denied(state))
         ET.SubElement(tree, 'node', {'resource-id': 'c15t.prefs.last-changed', 'text': 'Last changed Oct 30, 2026'})
         state = native_preferences(tree)
         self.assertTrue(denied(state))
-        self.assertFalse(denied({**state, 'categories': {'measurement': True}}))
+        for name in state['categories']:
+            with self.subTest(category=name):
+                self.assertFalse(denied({**state, 'categories': {key: value for key, value in state['categories'].items() if key != name}}))
+                self.assertFalse(denied({**state, 'categories': {**state['categories'], name: True}}))
+        self.assertFalse(denied({**state, 'categories': {**state['categories'], 'unexpected': False}}))
         self.assertFalse(denied({'lastChanged': state['lastChanged'], 'categories': {}}))
         tree.find('node').set('checkable', 'false')
         self.assertFalse(denied(native_preferences(tree)))

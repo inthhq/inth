@@ -156,9 +156,10 @@ python3 /path/to/shared/with-native-lock.py optimized-stock-ui \
 c15t starts offline with IPv4/IPv6 UID rejection rules, opens its native
 preferences, records a real Reject All choice and repeats a fresh process
 launch with that denial. The stock preferences expose a `Last changed` label
-only for a saved explicit choice. Acceptance checks that label and the denied
-measurement switch after restarting, alongside the RN host's Ready and denied
-gate text. Encrypted snapshot files remain external; no key is exported.
+only for a saved explicit choice. Acceptance requires exactly the functionality,
+experience, measurement and marketing switches, all denied, alongside that
+label after restarting and the RN host's Ready and denied gate text. Encrypted
+snapshot files remain external; no key is exported.
 The stock fixture does not expose internal `error` or `policyPending` fields.
 This acceptance is not runtime-timing eligibility. Other configured
 vendors retain stock-UI observations; OneTrust stays compile-only without a
@@ -183,7 +184,7 @@ preferences, Reject All and a fresh offline restart with all four optional
 switches denied. The separate diagnostic read confirmed an explicit choice
 timestamp within the clean app's rejection interval. It also reported a
 transport error while offline, so this result does not qualify c15t for the
-cached-denial runtime lane. Didomi rendered its consent notice, Usercentrics
+historical strict runtime lane. Didomi rendered its consent notice, Usercentrics
 rendered Privacy Settings, and Sourcepoint rendered its GDPR campaign UI.
 Sourcepoint's host still showed Starting. These vendor observations do not
 establish durable choices or successful readiness for every vendor.
