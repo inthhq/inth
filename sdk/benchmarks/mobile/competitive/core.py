@@ -12,7 +12,9 @@ import zipfile
 
 HERE = Path(__file__).resolve().parent
 VENDORS = ('baseline', 'c15t', 'onetrust', 'didomi', 'usercentrics', 'sourcepoint')
-PROFILES = ('android-release', 'ios-local', 'ios-postprocessed')
+DEFAULT_PROFILES = ('android-release', 'ios-local', 'ios-postprocessed')
+ANDROID_PROFILES = ('android-release', 'android-optimized')
+PROFILES = (*DEFAULT_PROFILES, 'android-optimized')
 PREFIXES = {
     'c15t': ('com.c15t.core.', 'com.c15t.android.', 'com.c15t.consentui.', 'com.c15t.reactnative.'),
     'onetrust': ('com.onetrust.',), 'didomi': ('io.didomi.',),
@@ -153,11 +155,15 @@ def apk_measure(apk, mapping, vendor):
                 require(name.startswith('lib/arm64-v8a/'), f'non-arm64 native library: {name}')
     require(classes, 'APK lacks DEX classes')
     retained = {}
+    retention = {}
     if vendor != 'baseline':
         mapping_text = Path(mapping).read_text()
         mapped = dict(re.findall(r'^([^ #\s].*) -> ([^\s]+):$', mapping_text, re.M))
         retained = {a: b for a, b in mapped.items() if a.startswith(PREFIXES[vendor]) and 'L' + b.replace('.', '/') + ';' in classes}
         require(retained, f'no retained {vendor} R8 destinations in actual DEX')
+        retention = {prefix: len({destination for original, destination in retained.items() if original.startswith(prefix)})
+                     for prefix in PREFIXES[vendor]}
+        require(all(retention.values()), f'{vendor} native SDK/bridge/presenter family absent from DEX/mapping')
         # The mounted stock action must also survive JS compilation.
         require(SYMBOLS[vendor][-1].encode() in bundle, f'{vendor} stock action absent from Hermes')
     else:
@@ -167,7 +173,8 @@ def apk_measure(apk, mapping, vendor):
     return {'bytes': Path(apk).stat().st_size, 'artifactSha256': sha(apk), 'groups': groups,
             'compressedPayloadBytes': compressed, 'zipAndSigningOverheadBytes': Path(apk).stat().st_size - compressed,
             'uncompressedPayloadBytes': sum(row['uncompressedBytes'] for row in groups.values()),
-            'sdkUniqueDexDestinations': len(set(retained.values())), 'dexClasses': len(classes)}
+            'sdkUniqueDexDestinations': len(set(retained.values())), 'sdkRetention': retention,
+            'dexClasses': len(classes)}
 
 
 def device_macho(data):
@@ -227,24 +234,52 @@ def app_measure(app, symbols, maps, vendor):
             'appManifestSha256': digest(files), 'groups': groups, 'fileCount': len(files)}
 
 
+def check_r8(profile, configuration, mapping):
+    """Read R8's merged output, never infer optimizer state from a profile label."""
+    require(profile in ANDROID_PROFILES, 'expected Android profile')
+    text = Path(configuration).read_text()
+    directives = {line.split('#', 1)[0].strip().split()[0]
+                  for line in text.splitlines() if line.split('#', 1)[0].strip()}
+    require('-dontshrink' not in directives and '-dontobfuscate' not in directives,
+            'R8 shrinking/obfuscation disabled in merged configuration')
+    optimized = '-dontoptimize' not in directives
+    require(optimized == (profile == 'android-optimized'),
+            f'{profile} optimizer mismatch in actual merged R8 configuration')
+    default = 'proguard-android-optimize.txt' if optimized else 'proguard-android.txt'
+    sections = re.findall(r'^# The proguard configuration file for the following section is (.+)$', text, re.M)
+    require(any(re.search(r'/' + re.escape(default) + r'(?:-8\.12\.0)?$', section) for section in sections),
+            f'missing merged R8 default file evidence: {default}')
+    other = 'proguard-android.txt' if optimized else 'proguard-android-optimize.txt'
+    require(not any(re.search(r'/' + re.escape(other) + r'(?:-8\.12\.0)?$', section) for section in sections),
+            'mixed R8 default files in merged configuration')
+    with Path(mapping).open() as stream:
+        header = stream.read(200)
+    require('# compiler: R8\n' in header and '# compiler_version: 8.12.14\n' in header
+            and '# min_api: 24\n' in header, 'unexpected actual R8 compiler/min API')
+    return {'optimizationEnabled': optimized, 'shrinkingEnabled': True,
+            'obfuscationEnabled': True, 'defaultFile': default, 'version': '8.12.14',
+            'configurationSha256': sha(configuration)}
+
+
 def check_settings(profile, settings, baseline=None):
     require(profile in PROFILES, f'unsupported profile: {profile}')
-    expected = dict(ANDROID_SETTINGS if profile == 'android-release' else IOS_SETTINGS)
-    if profile != 'android-release':
+    expected = dict(ANDROID_SETTINGS if profile in ANDROID_PROFILES else IOS_SETTINGS)
+    if profile not in ANDROID_PROFILES:
         expected['DEPLOYMENT_POSTPROCESSING'] = 'YES' if profile == 'ios-postprocessed' else 'NO'
     for key, value in expected.items():
         require(settings.get(key) == value and type(settings.get(key)) is type(value), f'{profile} setting mismatch: {key}: {settings.get(key)!r}, expected {value!r}')
-    if baseline is not None and profile == 'android-release':
+    if baseline is not None and profile in ANDROID_PROFILES:
         for key in ['signingStoreSha256', 'signingAlias']:
             require(settings.get(key) and settings[key] == baseline.get(key), f'unmatched signing: {key}')
     return {key: settings[key] for key in expected}
 
 
-def size_rows(measurements, complete=True):
+def size_rows(measurements, complete=True, profiles=DEFAULT_PROFILES):
     require(len({(row['profile'], row['vendor']) for row in measurements}) == len(measurements), 'duplicate app measurement')
     indexed = {(row['profile'], row['vendor']): row for row in measurements}
     if complete:
-        require(set(indexed) == {(p, v) for p in PROFILES for v in VENDORS}, 'expected all 18 app measurements')
+        require(profiles and len(set(profiles)) == len(profiles) and set(profiles) <= set(PROFILES), 'unsupported profile selection')
+        require(set(indexed) == {(p, v) for p in profiles for v in VENDORS}, f'expected all {len(profiles) * len(VENDORS)} app measurements for selected profiles')
     rows = []
     for row in measurements:
         require(row['profile'] in PROFILES and row['vendor'] in VENDORS, 'unsupported measurement')

@@ -1,0 +1,52 @@
+{
+	"schemaVersion": 1,
+	"manifestSha256": "28f563724c12fe7883eb1dc209cd302c153077c0827d59c7be40a4508c3a9fb8",
+	"verifiedFiles": 27,
+	"files": [
+		{
+			"path": "report.md",
+			"bytes": 9927,
+			"sha256": "81a7c8082480a556630e0a8534ca53c83627c2a33bbe0b5a91e7421a44b0f3ac"
+		},
+		{
+			"path": "scripts/analyze.py",
+			"bytes": 22894,
+			"sha256": "31778aa5ece839fde0ea18b7f9e1996aae60e46e0ac2153cf8bc7c2c4466fad3"
+		},
+		{
+			"path": "scripts/artifact-retention.py",
+			"bytes": 4633,
+			"sha256": "0b4660eba240847ca0a941668e4b305abaf4a543a4f2fbc46ddd3ed72c9a0cae"
+		},
+		{
+			"path": "scripts/capture-graph.py",
+			"bytes": 3189,
+			"sha256": "c4fd96e2c3cb04f06483d91bd1b6419fc26791c79df46739a011155a08514720"
+		},
+		{
+			"path": "scripts/resource-analysis.py",
+			"bytes": 3404,
+			"sha256": "167c38dec9d2e549f1bbe22d5acce15543d4b68f27b6c061c89d9632a3d589d7"
+		},
+		{
+			"path": "scripts/summarize-graphs.py",
+			"bytes": 3341,
+			"sha256": "b1e3fe70665d8c72c312e041b05c79036ce2277bc9dce6dcc0fd6a8fab8164e3"
+		},
+		{
+			"path": "scripts/tool-hashes.py",
+			"bytes": 1278,
+			"sha256": "014ef455ba4f0c63a507b2e7e41b47c435785460f88edcb2009c680215e57431"
+		},
+		{
+			"path": "scripts/verify.py",
+			"bytes": 4987,
+			"sha256": "1342a243fdc567089b0fa1a73b4e7048a3927ba3811863fcd7914823b30b1715"
+		},
+		{
+			"path": "scripts/dependency-graph.gradle",
+			"bytes": 2390,
+			"sha256": "c4803dbe3f0ef9cdd2f3945742cf0d4c770d3587bb8fb4377380ed2d0f7caf6d"
+		}
+	]
+}

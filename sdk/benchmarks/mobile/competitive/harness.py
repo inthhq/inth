@@ -11,8 +11,8 @@ import urllib.request
 import zipfile
 import tarfile
 
-from core import (HERE, VENDORS, PROFILES, ANDROID_SETTINGS, IOS_SETTINGS, SYMBOLS,
-                  apk_measure, app_measure, android_metadata, bind_files, check_settings, digest,
+from core import (HERE, VENDORS, PROFILES, DEFAULT_PROFILES, ANDROID_PROFILES, ANDROID_SETTINGS, IOS_SETTINGS, SYMBOLS,
+                  apk_measure, app_measure, android_metadata, bind_files, check_settings, check_r8, digest,
                   manifest, read, require, sha, size_rows, verify_archive, verify_app_manifest, verify_files, write)
 
 PINS = read(HERE / 'pins.json')
@@ -36,8 +36,16 @@ def config(path):
     repo = HERE.parents[2]
     require(root != repo and root not in HERE.parents and not root.is_relative_to(repo), 'output must be outside the repository')
     value['extensions'] = {name: str(resolve(path.parent, target)) for name, target in value.get('extensions', {}).items()}
+    selected_profiles(value)
     value['_config'] = str(path)
     return value
+
+
+def selected_profiles(cfg):
+    profiles = cfg.get('sizeProfiles', list(DEFAULT_PROFILES))
+    require(isinstance(profiles, list) and profiles and len(set(profiles)) == len(profiles)
+            and set(profiles) <= set(PROFILES), 'invalid sizeProfiles selection')
+    return tuple(profiles)
 
 
 def environment(cfg):
@@ -70,8 +78,9 @@ def root_for(cfg):
     return Path(cfg['output'])
 
 
-def host_for(cfg, platform, vendor, runtime=False):
-    return root_for(cfg) / ('runtime' if runtime else platform) / (vendor + '-host')
+def host_for(cfg, platform, vendor, runtime=False, profile=None):
+    lane = 'android-optimized' if profile == 'android-optimized' else platform
+    return root_for(cfg) / ('runtime' if runtime else lane) / (vendor + '-host')
 
 
 def out_for(cfg, profile, vendor):
@@ -121,7 +130,7 @@ def lock_command(cfg, stage, args):
 def plan(cfg):
     inputs = preflight(cfg)
     rows = []
-    for profile in PROFILES:
+    for profile in selected_profiles(cfg):
         for vendor in VENDORS:
             rows.append({'profile': profile, 'vendor': vendor, 'artifactDirectory': str(out_for(cfg, profile, vendor))})
     return {'schemaVersion': 1, 'inputs': inputs, 'measurements': rows, 'runtime': {
@@ -155,12 +164,14 @@ def tenant_source(cfg):
     return 'export const benchmarkConfig = ' + json.dumps(defaults, indent=2) + ';\n'
 
 
-def prepare(cfg, platform, vendor, runtime=False):
+def prepare(cfg, platform, vendor, runtime=False, profile=None):
     preflight(cfg, platform, tools=True)
+    require(profile is None or (platform == 'android' and profile in ANDROID_PROFILES), 'prepare --profile is only for Android size profiles')
+    require(not runtime or profile in (None, 'android-release'), 'runtime uses the original android-release profile')
     require(not runtime or (platform == 'android' and vendor in ('c15t', 'didomi', 'usercentrics')), 'unsupported runtime app')
     if vendor == 'c15t':
         require(cfg.get('policy') and cfg.get('backendUrl'), 'c15t needs policy and backendUrl, never substitute a fabricated policy')
-    host = host_for(cfg, platform, vendor, runtime)
+    host = host_for(cfg, platform, vendor, runtime, profile)
     require(not host.exists(), f'host exists, use a fresh output root: {host}')
     host.mkdir(parents=True)
     inputs = host.parent / 'inputs'
@@ -185,13 +196,18 @@ def prepare(cfg, platform, vendor, runtime=False):
         app['plugins'] = [['@c15t/react-native/expo-plugin', {'mode': 'hosted', 'backendURL': cfg['backendUrl'],
             'consentCategories': ['necessary', 'functionality', 'experience', 'measurement', 'marketing'], 'policyResource': './c15t-policy.json'}]]
     (host / 'app.json').write_text(json.dumps({'expo': app}, indent=2) + '\n')
-    logs = root_for(cfg) / 'logs' / ('runtime' if runtime else platform) / vendor
+    logs = root_for(cfg) / 'logs' / ('runtime' if runtime else ('android-optimized' if profile == 'android-optimized' else platform)) / vendor
     invoke(['bun', 'install', '--frozen-lockfile'], host, logs / 'install.log', cfg)
     verify_installed(cfg, host, vendor)
     invoke(['bun', 'x', 'expo', 'prebuild', '--platform', platform, '--no-install'], host, logs / 'prebuild.log', cfg)
     if platform == 'android':
         gradle = host / 'android'
         # Host-only profile settings. No vendor files or consumer rules are patched.
+        if profile == 'android-optimized':
+            app_build = gradle / 'app/build.gradle'
+            original = app_build.read_text()
+            require(original.count('getDefaultProguardFile("proguard-android.txt")') == 1, 'unexpected generated ProGuard defaults')
+            app_build.write_text(original.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")'))
         with (gradle / 'gradle.properties').open('a') as stream:
             stream.write('\nandroid.minSdkVersion=24\nandroid.compileSdkVersion=36\nandroid.targetSdkVersion=36\nandroid.buildToolsVersion=36.0.0\nandroid.kotlinVersion=2.1.20\n')
         wrapper = gradle / 'gradle/wrapper/gradle-wrapper.properties'
@@ -216,8 +232,10 @@ def prepare(cfg, platform, vendor, runtime=False):
         invoke(['pod', 'install', '--deployment', '--project-directory=ios'], host, logs / 'pods.log', cfg)
         verify_pods(cfg, host, vendor)
     invoke(['node', 'node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false'], host, logs / 'types.log', cfg)
-    write(host / 'prepared.json', {'schemaVersion': 1, 'vendor': vendor, 'platform': platform, 'runtime': runtime,
-                                  'inputs': validate_inputs(cfg), 'files': manifest(host, EXCLUDED)})
+    write(host / 'prepared.json', {'schemaVersion': 1, 'vendor': vendor, 'platform': platform, 'runtime': runtime, 'profile': profile,
+                                  'inputs': validate_inputs(cfg), 'files': manifest(host, EXCLUDED),
+                                  'construction': {'harnessSha256': sha(HERE / 'harness.py'), 'coreSha256': sha(HERE / 'core.py'),
+                                                   'pinsSha256': sha(HERE / 'pins.json'), 'fixtures': manifest(HERE / 'fixtures')}})
     print('Prepared', host)
 
 
@@ -324,10 +342,12 @@ def common_inputs(host, platform):
 
 
 def build(cfg, profile, vendor, runtime=False):
-    platform = 'android' if profile == 'android-release' else 'ios'
+    platform = 'android' if profile in ANDROID_PROFILES else 'ios'
     preflight(cfg, platform, tools=True)
-    host = host_for(cfg, platform, vendor, runtime)
+    host = host_for(cfg, platform, vendor, runtime, profile)
+    require(not runtime or profile == 'android-release', 'runtime uses android-release')
     prepared = read(host / 'prepared.json')
+    require(prepared.get('profile') in (None, profile) and (profile != 'android-optimized' or prepared.get('profile') == profile), 'prepared host profile mismatch')
     require(prepared['inputs'] == validate_inputs(cfg), 'prepared inputs changed')
     require(host_inputs(host) == [r for r in prepared['files'] if r['path'] != 'prepared.json'], 'host changed since prepare')
     verify_installed(cfg, host, vendor)
@@ -339,12 +359,15 @@ def build(cfg, profile, vendor, runtime=False):
     write(output / 'build-start.json', {'profile': profile, 'vendor': vendor, 'inputs': validate_inputs(cfg), 'hostInputsSha256': digest(host_inputs(host))})
     if platform == 'android':
         extra = {'C15T_RESOLVED_OUT': str(output / 'dependencies.json'), 'C15T_SETTINGS_OUT': str(output / 'settings.json'), 'C15T_COMPILER_IDENTITY_OUT': str(output / 'compiler.json')}
-        args = ['sh', 'android/gradlew', '-p', 'android', '--max-workers=3', '-PreactNativeArchitectures=arm64-v8a', '-Pandroid.enableMinifyInReleaseBuilds=true', '-Pandroid.enableShrinkResourcesInReleaseBuilds=true', ':app:assembleRelease', 'c15tEvidenceResolvedArtifacts', 'c15tEvidenceBuildSettings', ':app:c15tCompilerIdentity']
+        args = ['sh', 'android/gradlew', '-p', 'android', '--no-daemon', '--max-workers=3', '-PreactNativeArchitectures=arm64-v8a', '-Pandroid.enableMinifyInReleaseBuilds=true', '-Pandroid.enableShrinkResourcesInReleaseBuilds=true', ':app:assembleRelease', 'c15tEvidenceResolvedArtifacts', 'c15tEvidenceBuildSettings', ':app:c15tCompilerIdentity']
         for name in ('android-resolved-artifacts.gradle', 'android-build-settings.gradle', 'compiler-identity.gradle'):
             args += ['-I', str(HERE / 'fixtures/gradle' / name)]
         invoke(args + ['--console=plain'], host, output / 'build.log', cfg, extra)
         shutil.copy2(host / 'android/app/build/outputs/apk/release/app-release.apk', output / 'app-release.apk')
-        shutil.copy2(host / 'android/app/build/outputs/mapping/release/mapping.txt', output / 'mapping.txt')
+        r8 = host / 'android/app/build/outputs/mapping/release'
+        for name in ('mapping.txt', 'configuration.txt', 'usage.txt', 'seeds.txt'):
+            shutil.copy2(r8 / name, output / name)
+        check_r8(profile, output / 'configuration.txt', output / 'mapping.txt')
         sdk = Path(environment(cfg)['ANDROID_HOME'])
         invoke([sdk / 'build-tools/36.0.0/apksigner', 'verify', '--verbose', '--print-certs', output / 'app-release.apk'], host, output / 'signing.txt', cfg)
         invoke([sdk / 'build-tools/36.0.0/aapt2', 'dump', 'badging', output / 'app-release.apk'], host, output / 'badging.txt', cfg)
@@ -380,8 +403,12 @@ def descriptor(cfg, profile, vendor):
     require(digest(host_inputs(host)) == complete['hostInputsSha256'], 'host changed after build')
     verify_installed(cfg, host, vendor)
     base = {'profile': profile, 'vendor': vendor, 'host': str(host), 'settings': str(output / 'settings.json'), 'commonInputs': complete['commonInputs'], 'buildRecord': str(output / 'build-complete.json')}
-    if profile == 'android-release':
-        return {**base, 'artifact': str(output / 'app-release.apk'), 'mapping': str(output / 'mapping.txt'), 'dependencies': str(output / 'dependencies.json'), 'signing': str(output / 'signing.txt'), 'badging': str(output / 'badging.txt')}
+    if profile in ANDROID_PROFILES:
+        configuration = output / 'configuration.txt'
+        if not configuration.exists():
+            # Earlier harness builds retained this real output in their host.
+            configuration = host / 'android/app/build/outputs/mapping/release/configuration.txt'
+        return {**base, 'artifact': str(output / 'app-release.apk'), 'mapping': str(output / 'mapping.txt'), 'r8Configuration': str(configuration), 'compiler': str(output / 'compiler.json'), 'dependencies': str(output / 'dependencies.json'), 'signing': str(output / 'signing.txt'), 'badging': str(output / 'badging.txt')}
     return {**base, 'artifact': str(output / 'c15tSizeHost.app'), 'symbols': [str(output / 'symbols.txt'), str(output / 'strings.txt')], 'maps': [str(p) for p in output.glob('*.map')]}
 
 
@@ -391,7 +418,13 @@ def measure_descriptor(row, cfg):
     settings = read(row['settings'])
     check_settings(profile, settings)
     files = [row['settings']]
-    if profile == 'android-release':
+    if profile in ANDROID_PROFILES:
+        r8 = check_r8(profile, row['r8Configuration'], row['mapping'])
+        if row.get('compiler'):
+            compiler = read(row['compiler'])
+            require(compiler.get('kotlinPluginSources') and all('/kotlin-gradle-plugin/2.1.20/' in source['location'] for source in compiler['kotlinPluginSources']), 'Kotlin plugin differs from 2.1.20')
+            require(any('org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.20' in c['components'] for c in compiler['compilerConfigurations']), 'Kotlin compiler differs from 2.1.20')
+            files.append(row['compiler'])
         deps = read(row['dependencies'])
         require(sorted([{k: v for k, v in d.items() if k in ('coordinate', 'size', 'sha256')} for d in deps], key=lambda d: (d['coordinate'], d['sha256'])) == sorted(PINS['androidArtifacts'][vendor], key=lambda d: (d['coordinate'], d['sha256'])), f'{vendor} resolved native artifact graph/hash differs')
         signer = android_metadata(Path(row['signing']).read_text(), Path(row['badging']).read_text())
@@ -404,7 +437,8 @@ def measure_descriptor(row, cfg):
         require(android_metadata(actual_signing, actual_badging) == signer, 'actual signer differs from retained certificate proof')
         value = apk_measure(row['artifact'], row['mapping'], vendor)
         value['signerSha256'] = signer
-        files += [row[k] for k in ('artifact', 'mapping', 'dependencies', 'signing', 'badging')]
+        value['r8'] = r8
+        files += [row[k] for k in ('artifact', 'mapping', 'r8Configuration', 'dependencies', 'signing', 'badging')]
     else:
         if row.get('appFileManifest'):
             verify_app_manifest(row['artifact'], row['appFileManifest'], row['expectedAppManifestSha256'])
@@ -425,41 +459,42 @@ def collect(cfg, retained=None, partial=False):
         source = read(retained)
         require(source.get('schemaVersion') == 1 and source.get('origin') == 'retained-artifacts', 'unsupported retained descriptor')
         descriptors = source['apps']
+        require(all(row['profile'] in selected_profiles(cfg) for row in descriptors), 'retained descriptor profile outside sizeProfiles selection')
     else:
         descriptors = []
-        for profile in PROFILES:
+        for profile in selected_profiles(cfg):
             for vendor in VENDORS:
                 if partial and not (out_for(cfg, profile, vendor) / 'build-complete.json').exists():
                     continue
                 descriptors.append(descriptor(cfg, profile, vendor))
     measurements = []
-    for profile in PROFILES:
+    for profile in selected_profiles(cfg):
         cohort = [row for row in descriptors if row['profile'] == profile]
         if not cohort:
             continue
         baseline = next((row for row in cohort if row['vendor'] == 'baseline'), None)
         require(baseline, f'missing baseline for {profile}')
-        common = common_inputs(Path(baseline['host']), 'android' if profile == 'android-release' else 'ios')
+        common = common_inputs(Path(baseline['host']), 'android' if profile in ANDROID_PROFILES else 'ios')
         base_settings = read(baseline['settings'])
         cohort_hash = digest({'profile': profile, 'commonInputs': common, 'settings': check_settings(profile, base_settings), 'inputs': validate_inputs(cfg)})
         for row in cohort:
             host = Path(row['host'])
-            require(common_inputs(host, 'android' if profile == 'android-release' else 'ios') == common, f'{row["vendor"]} common host parity mismatch')
+            require(common_inputs(host, 'android' if profile in ANDROID_PROFILES else 'ios') == common, f'{row["vendor"]} common host parity mismatch')
             value = measure_descriptor(row, cfg)
             check_settings(profile, value['settings'], base_settings)
             if retained:
                 # Import requires an independently supplied artifact hash, never copied numeric results.
                 require(value['artifactSha256'] == row.get('expectedArtifactSha256'), 'retained artifact hash mismatch')
-                require(profile == 'android-release' or row.get('appFileManifest'), 'retained iOS import requires frozen app-file manifest')
+                require(profile in ANDROID_PROFILES or row.get('appFileManifest'), 'retained iOS import requires frozen app-file manifest')
                 verify_archive_for_retained(cfg, row)
             common_files = bind_files(host / name for name in common)
             measurements.append({**value, 'profile': profile, 'vendor': row['vendor'], 'status': 'measured', 'cohort': cohort_hash,
                                  'descriptor': row, 'commonFiles': common_files})
-        if profile == 'android-release':
+        if profile in ANDROID_PROFILES:
             signers = {row['signerSha256'] for row in measurements if row['profile'] == profile}
             require(len(signers) == 1, 'actual APK signing certificate mismatch')
-    measurements = size_rows(measurements, complete=not partial)
-    evidence = {'schemaVersion': 1, 'origin': 'retained-artifacts' if retained else 'fresh-builds', 'complete': not partial,
+    measurements = size_rows(measurements, complete=not partial, profiles=selected_profiles(cfg))
+    evidence = {'schemaVersion': 1, 'origin': 'retained-artifacts' if retained else 'fresh-builds', 'complete': not partial, 'profiles': list(selected_profiles(cfg)),
                 'inputs': validate_inputs(cfg), 'pinsSha256': sha(HERE / 'pins.json'), 'measurements': measurements}
     write(root / 'evidence.json', evidence)
     verify(cfg)
@@ -489,7 +524,7 @@ def verify(cfg):
         verify_files(row['files'])
         verify_files(row['commonFiles'])
         if evidence['origin'] == 'retained-artifacts':
-            require(row['profile'] == 'android-release' or row['descriptor'].get('appFileManifest'), 'missing frozen iOS app manifest')
+            require(row['profile'] in ANDROID_PROFILES or row['descriptor'].get('appFileManifest'), 'missing frozen iOS app manifest')
             verify_archive_for_retained(cfg, row['descriptor'])
         else:
             require(descriptor(cfg, row['profile'], row['vendor']) == row['descriptor'], 'stale build descriptor')
@@ -497,20 +532,20 @@ def verify(cfg):
         for key in actual:
             require(actual[key] == row[key], f'forged/stale measurement: {row["vendor"]}/{key}')
         checked.append(row)
-    recalculated = size_rows(checked, complete=evidence['complete'])
+    recalculated = size_rows(checked, complete=evidence['complete'], profiles=evidence.get('profiles', DEFAULT_PROFILES))
     require(recalculated == checked, 'size delta arithmetic changed')
     # Rebuild the cohort proof from real files, rather than trusting its label.
-    for profile in PROFILES:
+    for profile in evidence.get('profiles', DEFAULT_PROFILES):
         group = [r for r in checked if r['profile'] == profile]
         if not group:
             continue
         base = next(r for r in group if r['vendor'] == 'baseline')
-        common = common_inputs(Path(base['descriptor']['host']), 'android' if profile == 'android-release' else 'ios')
+        common = common_inputs(Path(base['descriptor']['host']), 'android' if profile in ANDROID_PROFILES else 'ios')
         expected = digest({'profile': profile, 'commonInputs': common, 'settings': check_settings(profile, base['settings']), 'inputs': evidence['inputs']})
         for row in group:
-            require(row['cohort'] == expected and common_inputs(Path(row['descriptor']['host']), 'android' if profile == 'android-release' else 'ios') == common, 'forged host parity evidence')
+            require(row['cohort'] == expected and common_inputs(Path(row['descriptor']['host']), 'android' if profile in ANDROID_PROFILES else 'ios') == common, 'forged host parity evidence')
             check_settings(profile, row['settings'], base['settings'])
-        if profile == 'android-release':
+        if profile in ANDROID_PROFILES:
             require(len({r['signerSha256'] for r in group}) == 1, 'forged signing parity')
     return evidence
 
@@ -559,7 +594,7 @@ def main():
         print(json.dumps(plan(cfg) if args.stage == 'plan' else preflight(cfg, args.platform, tools=bool(args.platform)), indent=2))
     elif args.stage == 'prepare':
         require(args.platform and args.vendor, 'prepare requires --platform and --vendor')
-        prepare(cfg, args.platform, args.vendor, args.runtime_build)
+        prepare(cfg, args.platform, args.vendor, args.runtime_build, args.profile)
     elif args.stage == 'build':
         require(args.profile and args.vendor, 'build requires --profile and --vendor')
         build(cfg, args.profile, args.vendor, args.runtime_build)

@@ -15,6 +15,20 @@ The [2026-10-30 snapshot](snapshots/2026-10-30.json) contains all 18 app measure
 
 These are local build contributions over each profile's control. Downloaded JAR, AAR, npm or XCFramework lengths are different units. The iOS profiles are not App Store downloads, app thinning, encrypted IPAs or signed installs. They exclude directory blocks, symlink lengths and dSYM. Sourcepoint's stock campaign UI uses WebView on both platforms. This study does not establish feature or certification equivalence.
 
+The historical Android profile is `android-release`. Its actual merged R8
+configuration contains `-dontoptimize`, from `proguard-android.txt`. Shrinking,
+obfuscation and resource shrinking are enabled. The opt-in `android-optimized`
+profile selects `proguard-android-optimize.txt` for every participant and uses a
+new matched baseline. Neither profile replaces or relabels the other.
+
+The [dependency attribution](analysis/android-dependencies/report.md) explains
+the historical Android cost. c15t adds 1,977,546 signed APK bytes, including
+1,655,577 compressed DEX bytes. Compose accounts for 2,425,795 of 3,228,300
+APK Analyzer estimated DEX growth bytes. Those estimates are not compressed
+savings. The [compact snapshot](analysis/android-dependencies/results.json) and
+[analysis commands](analysis/android-dependencies/reproduce.md) keep direct ZIP
+costs, DEX estimates and exact instruction bytes separate.
+
 ## Pinned inputs
 
 [pins.json](pins.json) records exact wrapper tarball URLs and SHA256, every frozen c15t Maven file, resolved Android artifact coordinates and hashes, and official iOS distribution URLs and hashes. Text lock fixtures pin each host's full npm graph and iOS Pod graph. No vendor binaries, SDK patches, local policy, subjects or credentials belong in git.
@@ -77,6 +91,51 @@ bun run --cwd benchmarks/mobile competitive:report --config /path/to/run.json
 
 Collect requires all 18 apps. An explicit `--partial` permits a smoke cohort, which still needs a baseline for every selected profile and remains marked incomplete. It checks native host parity, settings, matched signing, exact Android native dependency hashes, actual retained R8 destinations in DEX, iOS native symbol/link-map evidence and stock-action identifiers in Hermes. iOS bundle metadata and executable/framework Mach-O platform commands must identify device binaries, since arm64 alone also describes Simulator builds. Baselines must contain no SDK native classes/symbols. Verify hashes the real files and reruns the readers and arithmetic. Editing a result number or copying a cohort label cannot bypass those checks. Manifests bind evidence against accidental changes; they are not signed attestations against a malicious machine owner.
 
+By default the selected profiles remain `android-release`, `ios-local` and
+`ios-postprocessed`, exactly 18 apps. To measure only the optimizing experiment,
+set `"sizeProfiles": ["android-optimized"]` in a fresh external config. Collect
+then requires exactly six apps. Explicitly selecting all four profiles requires
+24 apps. Prepare Android with the same explicit profile as its build:
+
+```sh
+bun run --cwd benchmarks/mobile competitive:prepare --config /path/to/optimized.json --platform android --profile android-optimized --vendor baseline
+bun run --cwd benchmarks/mobile competitive:build --config /path/to/optimized.json --profile android-optimized --vendor baseline
+```
+
+Repeat for all five SDKs, then collect, verify and report using that config.
+The optimized hosts live in a separate directory and are generated from the
+same frozen locks. The only native host profile change is the default ProGuard
+file. The c15t size adapter logs a compact native snapshot for untimed
+acceptance. That fixture change also applies to fresh `android-release` builds.
+
+Both Android profiles retain R8's actual merged `configuration.txt`, mapping,
+usage and seeds. Collection reads the directives, checks the selected default
+file and actual R8 compiler version, and rejects disabled shrinking,
+obfuscation or the wrong optimizer state. A copied profile label or matching
+`minifyEnabled` setting cannot substitute for that output. Family destination
+counts come from actual DEX plus mapping; R8 may merge or inline original
+classes, so those counts are not original source-class counts.
+
+For untimed acceptance, run the entire command under the shared lock. It
+creates its own API36 arm64 AVD, checks the port is unused, retains UI XML,
+screenshots, logcat, native consent states and command results, then stops only
+that emulator before returning. It needs the installed
+`system-images;android-36;google_apis;arm64-v8a` image. The local config must
+supply the official vendor sample configurations or verified tenant values.
+
+```sh
+python3 /path/to/shared/with-native-lock.py optimized-stock-ui \
+  python3 benchmarks/mobile/competitive/acceptance/android.py \
+  --config /path/to/optimized.json --port 5592
+```
+
+c15t starts offline with IPv4/IPv6 UID rejection rules, opens its native
+preferences, records a real Reject All choice and repeats a fresh process
+launch with that denial. Any offline backend error remains in the captured
+state. This acceptance is not runtime-timing eligibility. Other configured
+vendors retain stock-UI observations; OneTrust stays compile-only without a
+verified App ID. No phone or speed result follows from this check.
+
 Outputs are `evidence.json`, `report.json` and `report.md` under the configured output root. Logs, APKs, `.app`, downloads, keys, caches and tenant config remain external. `extensions` can map names to external schemaVersion1 JSON files, such as Android dependency attribution or separately verified runtime results. Report records their paths and hashes without adding archive bytes to app contribution.
 
 ## Recollect retained artifacts
@@ -84,7 +143,7 @@ Outputs are `evidence.json`, `report.json` and `report.md` under the configured 
 `competitive:collect --retained /path/to/artifacts.json` reads actual existing artifacts without rebuilding or writing into them. It still needs the c15t archive/Maven config and Android build-tools. It does not import reported byte totals. The descriptor has `schemaVersion: 1`, `origin: "retained-artifacts"` and an `apps` array with one row per app/profile:
 
 - Common fields are `profile`, `vendor`, `host`, `artifact`, `settings`, `expectedArtifactSha256` and, for competitors, `wrapperArchive`. Paths identify actual retained files and host trees, never a producer checkout.
-- Android adds `mapping`, `dependencies`, `signing` and `badging`. `artifact` is the signed APK and its expected hash is the APK SHA256.
+- Android adds `mapping`, `r8Configuration`, `dependencies`, `signing` and `badging`. `r8Configuration` must point to the actual merged R8 output, including for historical recollection. An optional `compiler` points to the recorded Kotlin compiler identity. Fresh builds always record it. `artifact` is the signed APK and its expected hash is the APK SHA256.
 - iOS adds `symbols` and `maps` arrays, `appFileManifest` and its `expectedAppManifestSha256`. The frozen manifest must list every actual regular app file with `kind: "file"`, `path`, `bytes` and `sha256`. `symbols` includes retained `nm` and executable `strings` output. `artifact` is the `.app` directory and its expected hash is the executable SHA256.
 
 All paths in a retained descriptor are absolute. They can point at any mounted evidence store; no historical home-directory location is required. Every wrapper archive-installed file is compared to its exact archive before collection. The resulting report contains fresh reads and hashes of the retained app files. Keep this local descriptor outside git.

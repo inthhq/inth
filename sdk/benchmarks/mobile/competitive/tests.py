@@ -219,6 +219,73 @@ class CompetitiveTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'minifyEnabled'):
             core.check_settings('android-release', {**settings, 'minifyEnabled': False})
 
+    def test_optimizer_profiles_read_merged_r8_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            mapping = root / 'mapping.txt'
+            mapping.write_text('# compiler: R8\n# compiler_version: 8.12.14\n# min_api: 24\n')
+            config = root / 'configuration.txt'
+            for profile, default, directive in [
+                ('android-release', 'proguard-android.txt', '-dontoptimize\n'),
+                ('android-optimized', 'proguard-android-optimize.txt', '# -dontoptimize is only a comment\n'),
+            ]:
+                config.write_text(f'# The proguard configuration file for the following section is /temporary/{default}-8.12.0\n' + directive)
+                self.assertEqual(core.check_r8(profile, config, mapping)['optimizationEnabled'], profile == 'android-optimized')
+                other = next(p for p in core.ANDROID_PROFILES if p != profile)
+                with self.assertRaisesRegex(ValueError, 'optimizer mismatch'):
+                    core.check_r8(other, config, mapping)
+            with config.open('a') as stream:
+                stream.write('-dontshrink\n')
+            with self.assertRaisesRegex(ValueError, 'shrinking/obfuscation'):
+                core.check_r8('android-optimized', config, mapping)
+
+    def test_optimized_profile_is_explicit_and_complete_with_six_apps(self):
+        self.assertEqual(harness.selected_profiles({}), core.DEFAULT_PROFILES)
+        self.assertEqual(len(harness.selected_profiles({})) * len(core.VENDORS), 18)
+        rows = [{'profile': 'android-optimized', 'vendor': vendor, 'status': 'measured', 'bytes': 100, 'cohort': 'new'} for vendor in core.VENDORS]
+        self.assertEqual(len(core.size_rows(rows, profiles=('android-optimized',))), 6)
+        with self.assertRaisesRegex(ValueError, '18'):
+            core.size_rows(rows)
+        with self.assertRaisesRegex(ValueError, '6'):
+            core.size_rows(rows[:-1], profiles=('android-optimized',))
+        mixed = [{**row, 'profile': 'android-release'} if row['vendor'] == 'baseline' else row for row in rows]
+        with self.assertRaisesRegex(ValueError, 'baseline'):
+            core.size_rows(mixed, complete=False)
+
+    def test_optimized_host_does_not_reuse_original_host(self):
+        cfg = {'output': '/temporary/run'}
+        old = harness.host_for(cfg, 'android', 'c15t')
+        new = harness.host_for(cfg, 'android', 'c15t', profile='android-optimized')
+        self.assertNotEqual(old, new)
+        self.assertEqual(old, Path('/temporary/run/android/c15t-host'))
+
+    def test_analysis_snapshot_keeps_byte_units_and_sums_separate(self):
+        snapshot = core.read(core.HERE / 'analysis/android-dependencies/results.json')
+        self.assertEqual(snapshot['profile']['name'], 'android-release')
+        findings = snapshot['findings']
+        self.assertEqual(findings['c15tAddedSignedApkBytes'], 1977546)
+        self.assertEqual(findings['c15tCompressedDexGrowthBytes'], 1655577)
+        self.assertEqual(findings['composeEstimatedDexBytes'], 2425795)
+        self.assertNotEqual(findings['composeEstimatedDexBytes'], findings['c15tCompressedDexGrowthBytes'])
+        for app in snapshot['apks'].values():
+            self.assertEqual(sum(group['compressedBytes'] for group in app['groupDeltasFromBaseline'].values())
+                             + app['zipAndSigningOverheadDelta'], app['addedApkBytes'])
+        source = core.read(core.HERE / 'analysis/android-dependencies/source-manifest.json')
+        for record in source['files']:
+            path = core.HERE / 'analysis/android-dependencies' / record['path']
+            self.assertEqual(core.sha(path), record['sha256'])
+
+    def test_untimed_acceptance_requires_real_choice_after_restart(self):
+        from acceptance.android import snapshots, denied
+        state = {'ready': True, 'policyPending': False, 'effectivePermissions': {'measurement': False}}
+        self.assertFalse(denied(state))
+        state['explicitChoice'] = {'categories': {'measurement': {'value': False, 'confirmedAt': 123}}}
+        self.assertTrue(denied(state))
+        self.assertFalse(denied({**state, 'policyPending': True}))
+        log = 'ReactNativeJS: CMP_SIZE_C15T_STATE ' + json.dumps(state)
+        self.assertEqual(snapshots(log), [state])
+        self.assertEqual(snapshots('CMP_SIZE_C15T_STATE {truncated'), [])
+
     def test_relative_config_resolves_from_file_not_cwd(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'config.json'

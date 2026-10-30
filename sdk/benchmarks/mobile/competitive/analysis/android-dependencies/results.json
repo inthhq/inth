@@ -1,0 +1,557 @@
+{
+	"apks": {
+		"baseline": {
+			"addedApkBytes": 0,
+			"apkBytes": 20779838,
+			"apkSha256": "7c17648027c1a862949a3b43a115d9706eae5c37eef6f823c2c6ddb68864ec27",
+			"groupDeltasFromBaseline": {
+				"dex": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				},
+				"hermesBundle": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				},
+				"manifest": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				},
+				"nativeLibraries": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				},
+				"other": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				},
+				"resources": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				}
+			},
+			"zipAndSigningOverheadDelta": 0
+		},
+		"c15t": {
+			"addedApkBytes": 1977546,
+			"apkBytes": 22757384,
+			"apkSha256": "ebf67241f9c97d5520d542d41063296b2bff259bf84393566bc52ebd8348327f",
+			"groupDeltasFromBaseline": {
+				"c15tPolicy": {
+					"compressedBytes": 3711,
+					"uncompressedBytes": 29817
+				},
+				"dex": {
+					"compressedBytes": 1655577,
+					"uncompressedBytes": 3968080
+				},
+				"hermesBundle": {
+					"compressedBytes": 125492,
+					"uncompressedBytes": 125492
+				},
+				"manifest": {
+					"compressedBytes": 280,
+					"uncompressedBytes": 1080
+				},
+				"nativeLibraries": {
+					"compressedBytes": 35672,
+					"uncompressedBytes": 35672
+				},
+				"other": {
+					"compressedBytes": 34039,
+					"uncompressedBytes": 82631
+				},
+				"resources": {
+					"compressedBytes": 109389,
+					"uncompressedBytes": 110632
+				}
+			},
+			"zipAndSigningOverheadDelta": 13386
+		},
+		"didomi": {
+			"addedApkBytes": 4648376,
+			"apkBytes": 25428214,
+			"apkSha256": "b69955c7f383f713b4ae96a04afbfd29e37a1cad37094b4c9488acba9ae9efe0",
+			"groupDeltasFromBaseline": {
+				"dex": {
+					"compressedBytes": 1738774,
+					"uncompressedBytes": 4481740
+				},
+				"hermesBundle": {
+					"compressedBytes": 22616,
+					"uncompressedBytes": 22616
+				},
+				"manifest": {
+					"compressedBytes": 200,
+					"uncompressedBytes": 904
+				},
+				"nativeLibraries": {
+					"compressedBytes": 905384,
+					"uncompressedBytes": 905384
+				},
+				"other": {
+					"compressedBytes": 665204,
+					"uncompressedBytes": 3031943
+				},
+				"resources": {
+					"compressedBytes": 1280764,
+					"uncompressedBytes": 1417596
+				}
+			},
+			"zipAndSigningOverheadDelta": 35434
+		},
+		"onetrust": {
+			"addedApkBytes": 1024054,
+			"apkBytes": 21803892,
+			"apkSha256": "7950d245cb1e9c9d53ca15203a9c437ec6c08e67e561dbcb751721ac4b3d4c8f",
+			"groupDeltasFromBaseline": {
+				"dex": {
+					"compressedBytes": 758420,
+					"uncompressedBytes": 1867208
+				},
+				"hermesBundle": {
+					"compressedBytes": 8208,
+					"uncompressedBytes": 8208
+				},
+				"manifest": {
+					"compressedBytes": 1117,
+					"uncompressedBytes": 6668
+				},
+				"nativeLibraries": {
+					"compressedBytes": 0,
+					"uncompressedBytes": 0
+				},
+				"other": {
+					"compressedBytes": -13,
+					"uncompressedBytes": -134
+				},
+				"resources": {
+					"compressedBytes": 246482,
+					"uncompressedBytes": 438129
+				}
+			},
+			"zipAndSigningOverheadDelta": 9840
+		},
+		"sourcepoint": {
+			"addedApkBytes": 998424,
+			"apkBytes": 21778262,
+			"apkSha256": "73cbbe9036f4859bd21c2c061d5e479031931c8530bdcd36fe41c8ad513412b3",
+			"groupDeltasFromBaseline": {
+				"dex": {
+					"compressedBytes": 769210,
+					"uncompressedBytes": 2237220
+				},
+				"hermesBundle": {
+					"compressedBytes": 6412,
+					"uncompressedBytes": 6412
+				},
+				"manifest": {
+					"compressedBytes": 109,
+					"uncompressedBytes": 592
+				},
+				"nativeLibraries": {
+					"compressedBytes": 73424,
+					"uncompressedBytes": 73424
+				},
+				"other": {
+					"compressedBytes": 5516,
+					"uncompressedBytes": 8708
+				},
+				"resources": {
+					"compressedBytes": 142984,
+					"uncompressedBytes": 176564
+				}
+			},
+			"zipAndSigningOverheadDelta": 769
+		},
+		"usercentrics": {
+			"addedApkBytes": 1050970,
+			"apkBytes": 21830808,
+			"apkSha256": "6e2179d7caff0a27a8fc1d39d4f69a9596de2d08953c1527b2a76d2ebfc9f1ff",
+			"groupDeltasFromBaseline": {
+				"dex": {
+					"compressedBytes": 892060,
+					"uncompressedBytes": 2351728
+				},
+				"hermesBundle": {
+					"compressedBytes": 54460,
+					"uncompressedBytes": 54460
+				},
+				"manifest": {
+					"compressedBytes": 32,
+					"uncompressedBytes": 164
+				},
+				"nativeLibraries": {
+					"compressedBytes": 36968,
+					"uncompressedBytes": 36968
+				},
+				"other": {
+					"compressedBytes": 411,
+					"uncompressedBytes": 444
+				},
+				"resources": {
+					"compressedBytes": 58004,
+					"uncompressedBytes": 85872
+				}
+			},
+			"zipAndSigningOverheadDelta": 9035
+		}
+	},
+	"c15tSignedApkDifferenceFromVendorBytes": {
+		"didomi": -2670830,
+		"onetrust": 953492,
+		"sourcepoint": 979122,
+		"usercentrics": 926576
+	},
+	"dependencyGraphChecks": {
+		"baseline": {
+			"components": 136,
+			"everyArtifactCoordinateAndHashMatchesFrozenMeasuredInputs": true,
+			"gradleVersion": "9.3.1",
+			"resolvedArtifactRows": 118
+		},
+		"c15t": {
+			"components": 201,
+			"everyArtifactCoordinateAndHashMatchesFrozenMeasuredInputs": true,
+			"gradleVersion": "9.3.1",
+			"resolvedArtifactRows": 152
+		}
+	},
+	"dexEstimateDeltas": {
+		"baselineEstimatedDexBytes": 5275213,
+		"c15tEstimatedDexBytes": 8503513,
+		"categories": [
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 2425795,
+				"deltaEstimatedDexBytes": 2425795,
+				"package": "androidx.compose"
+			},
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 270780,
+				"deltaEstimatedDexBytes": 270780,
+				"package": "com.c15t.core"
+			},
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 169909,
+				"deltaEstimatedDexBytes": 169909,
+				"package": "com.c15t.consentui"
+			},
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 14381,
+				"deltaEstimatedDexBytes": 14381,
+				"package": "com.c15t.android"
+			},
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 12732,
+				"deltaEstimatedDexBytes": 12732,
+				"package": "com.c15t.reactnative"
+			},
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 134335,
+				"deltaEstimatedDexBytes": 134335,
+				"package": "kotlinx.serialization"
+			},
+			{
+				"baselineEstimatedDexBytes": 90108,
+				"c15tEstimatedDexBytes": 160861,
+				"deltaEstimatedDexBytes": 70753,
+				"package": "kotlinx.coroutines"
+			},
+			{
+				"baselineEstimatedDexBytes": 1290702,
+				"c15tEstimatedDexBytes": 1328233,
+				"deltaEstimatedDexBytes": 37531,
+				"package": "kotlin"
+			},
+			{
+				"baselineEstimatedDexBytes": 22815,
+				"c15tEstimatedDexBytes": 29291,
+				"deltaEstimatedDexBytes": 6476,
+				"package": "androidx.activity"
+			},
+			{
+				"baselineEstimatedDexBytes": 29098,
+				"c15tEstimatedDexBytes": 38935,
+				"deltaEstimatedDexBytes": 9837,
+				"package": "androidx.lifecycle"
+			},
+			{
+				"baselineEstimatedDexBytes": 3995,
+				"c15tEstimatedDexBytes": 7240,
+				"deltaEstimatedDexBytes": 3245,
+				"package": "androidx.savedstate"
+			},
+			{
+				"baselineEstimatedDexBytes": 26928,
+				"c15tEstimatedDexBytes": 86905,
+				"deltaEstimatedDexBytes": 59977,
+				"package": "androidx.collection"
+			},
+			{
+				"baselineEstimatedDexBytes": 32294,
+				"c15tEstimatedDexBytes": 33374,
+				"deltaEstimatedDexBytes": 1080,
+				"package": "androidx.emoji2"
+			},
+			{
+				"baselineEstimatedDexBytes": 17915,
+				"c15tEstimatedDexBytes": 18286,
+				"deltaEstimatedDexBytes": 371,
+				"package": "androidx.profileinstaller"
+			},
+			{
+				"baselineEstimatedDexBytes": 0,
+				"c15tEstimatedDexBytes": 568,
+				"deltaEstimatedDexBytes": 568,
+				"package": "androidx.graphics"
+			},
+			{
+				"deltaEstimatedDexBytes": 10530,
+				"package": "all-other-original-packages"
+			}
+		],
+		"categoriesDisjoint": true,
+		"growthEstimatedDexBytes": 3228300,
+		"unit": "APK Analyzer estimated DEX bytes, not compressed APK bytes"
+	},
+	"findings": {
+		"c15tAddedSignedApkBytes": 1977546,
+		"c15tCompressedDexGrowthBytes": 1655577,
+		"c15tEstimatedDexGrowthBytes": 3228300,
+		"composeEstimatedDexBytes": 2425795,
+		"composeExactInstructionBytes": 1260260,
+		"composeShareOfEstimatedDexGrowth": 0.7514156057367655,
+		"compressedClassAttribution": "Unmeasured. R8 changes reachability and DEX layout and APK compression operates on entire DEX entries.",
+		"compressedDexShareOfAddedApk": 0.8371876052440752,
+		"exactInstructionByteGrowth": 1714682,
+		"mainCause": "The stock presenter retains Compose UI, text, foundation, runtime, Material 3 and animation in a host with no Compose baseline. The RN bridge always depends on the presenter and retains its methods; the presenter Activity is a manifest root.",
+		"nativeApkBuilds": 0,
+		"runtimeSamples": 0,
+		"sdkSourceChanged": false
+	},
+	"inputHashes": [
+		{
+			"bytes": 20779838,
+			"input": "android/baseline-artifacts/app-release.apk",
+			"sha256": "7c17648027c1a862949a3b43a115d9706eae5c37eef6f823c2c6ddb68864ec27"
+		},
+		{
+			"bytes": 21924384,
+			"input": "android/baseline-artifacts/r8/mapping.txt",
+			"sha256": "4d7b3b86601afce299f97a89e7c44a2c716b862a650889c6557a23f6c3c82609"
+		},
+		{
+			"bytes": 2431177,
+			"input": "android/baseline-artifacts/r8/usage.txt",
+			"sha256": "f4355ab805eb36c6df4f1bae53f94ff2099077e89965a5bd4fcda5813c02b248"
+		},
+		{
+			"bytes": 888849,
+			"input": "android/baseline-artifacts/r8/seeds.txt",
+			"sha256": "fba5cdfdbcaada6e2d2783ee5d6bafcdb676381a226c2f93e1b0016ecc657a9f"
+		},
+		{
+			"bytes": 46537,
+			"input": "android/baseline-artifacts/r8/configuration.txt",
+			"sha256": "e478e3a6d624e9b7066bb6112ddce99832b87d6e76b72b9120c138707694b602"
+		},
+		{
+			"bytes": 42918,
+			"input": "android/baseline-resolved-artifacts.json",
+			"sha256": "8caca0b1fa143063dcec76f44af8003153d65daad2fde63ec61ed3f23f544c26"
+		},
+		{
+			"bytes": 22757384,
+			"input": "android/c15t-artifacts/app-release.apk",
+			"sha256": "ebf67241f9c97d5520d542d41063296b2bff259bf84393566bc52ebd8348327f"
+		},
+		{
+			"bytes": 36858570,
+			"input": "android/c15t-artifacts/r8/mapping.txt",
+			"sha256": "bac8996fa7f840efe29b99146b374fe9d5e728f91c022bbcbf3199e46143fcbd"
+		},
+		{
+			"bytes": 4061337,
+			"input": "android/c15t-artifacts/r8/usage.txt",
+			"sha256": "8a7687f1c6ddbd815bf19bacc20f290d4dc9e6b68086d54c3bfa4d8465ead307"
+		},
+		{
+			"bytes": 950594,
+			"input": "android/c15t-artifacts/r8/seeds.txt",
+			"sha256": "1e7669dfd5dc8f511d33364b5795ac5e768b186b80bc0f6c67d1102b66cb452c"
+		},
+		{
+			"bytes": 77451,
+			"input": "android/c15t-artifacts/r8/configuration.txt",
+			"sha256": "13ba1330b5d4bca8aeffaa8854134e7451f644b923fc25fd651e63fff452d851"
+		},
+		{
+			"bytes": 55894,
+			"input": "android/c15t-resolved-artifacts.json",
+			"sha256": "4fe9d1c51baf12e337037b40aca2fa45cd6812669227155f35984d1fd289eca6"
+		},
+		{
+			"bytes": 21803892,
+			"input": "android/onetrust-artifacts/app-release.apk",
+			"sha256": "7950d245cb1e9c9d53ca15203a9c437ec6c08e67e561dbcb751721ac4b3d4c8f"
+		},
+		{
+			"bytes": 28848623,
+			"input": "android/onetrust-artifacts/r8/mapping.txt",
+			"sha256": "9154f7a72dd9d6a975b20f56a67386769d0346090f510526dc16384c47c86726"
+		},
+		{
+			"bytes": 2920479,
+			"input": "android/onetrust-artifacts/r8/usage.txt",
+			"sha256": "3269d8aa6b9734c0e593867b711593c4e510388b30e549f4453484147f39c2e6"
+		},
+		{
+			"bytes": 1045149,
+			"input": "android/onetrust-artifacts/r8/seeds.txt",
+			"sha256": "d9132826301e12f1a27e14670a345de0aa04c2163adc029abd01e0a1a8153584"
+		},
+		{
+			"bytes": 55124,
+			"input": "android/onetrust-artifacts/r8/configuration.txt",
+			"sha256": "e35c6549c5235650b9e11cb6d3b5e63253dd96b9955ececaa8317c23f6aa0543"
+		},
+		{
+			"bytes": 54462,
+			"input": "android/onetrust-resolved-artifacts.json",
+			"sha256": "75321a3c6c7bdf91f812d8990e65d918744330870aecf7a05c5b4958ee0cc800"
+		},
+		{
+			"bytes": 25428214,
+			"input": "android/didomi-artifacts/app-release.apk",
+			"sha256": "b69955c7f383f713b4ae96a04afbfd29e37a1cad37094b4c9488acba9ae9efe0"
+		},
+		{
+			"bytes": 32906925,
+			"input": "android/didomi-artifacts/r8/mapping.txt",
+			"sha256": "c737d7700efd63d21ae3f04749ed5186ec1bfbb512becb1a37a4ecf5e0362736"
+		},
+		{
+			"bytes": 3684299,
+			"input": "android/didomi-artifacts/r8/usage.txt",
+			"sha256": "c4855006e4c312afc337b7c8917b396813584183c003baaa81616b201fe47ed2"
+		},
+		{
+			"bytes": 2272404,
+			"input": "android/didomi-artifacts/r8/seeds.txt",
+			"sha256": "612f979d36bdc37cae5081bc5d4a84031463e7748519b0f36b4cca178a3a6c73"
+		},
+		{
+			"bytes": 65080,
+			"input": "android/didomi-artifacts/r8/configuration.txt",
+			"sha256": "7c86ee04da361780ecf1349aeb5eee831fdfe6dd9b63af9167003f4b8332272b"
+		},
+		{
+			"bytes": 55765,
+			"input": "android/didomi-resolved-artifacts.json",
+			"sha256": "80df0d9a052f9802422a6f8e8dcdbb41ec3ea3e8bce57771a8418e8e66cd7d0e"
+		},
+		{
+			"bytes": 21830808,
+			"input": "android/usercentrics-artifacts/app-release.apk",
+			"sha256": "6e2179d7caff0a27a8fc1d39d4f69a9596de2d08953c1527b2a76d2ebfc9f1ff"
+		},
+		{
+			"bytes": 27785598,
+			"input": "android/usercentrics-artifacts/r8/mapping.txt",
+			"sha256": "4522a43fe00951d35334730361ab396e53583ced33d791334db27ef7638916b8"
+		},
+		{
+			"bytes": 2986662,
+			"input": "android/usercentrics-artifacts/r8/usage.txt",
+			"sha256": "9ff103eef713ef7efe29d5f73bbc53519487efc99b7331919ae23ec38a895535"
+		},
+		{
+			"bytes": 1352822,
+			"input": "android/usercentrics-artifacts/r8/seeds.txt",
+			"sha256": "1f023249e3b9b13857a506048f54099b8cbb428cc0632592bcb1edbd6b7ad5d2"
+		},
+		{
+			"bytes": 54923,
+			"input": "android/usercentrics-artifacts/r8/configuration.txt",
+			"sha256": "e6a1e4b0958c817dc7d769bcbb94318b174ede7791eacfcf1421b46fbbf13168"
+		},
+		{
+			"bytes": 47881,
+			"input": "android/usercentrics-resolved-artifacts.json",
+			"sha256": "add123e674fc9605c03bcc16ab2cfe1bce829fa7f00a3f14864acd20d4a10b75"
+		},
+		{
+			"bytes": 21778262,
+			"input": "android/sourcepoint-artifacts/app-release.apk",
+			"sha256": "73cbbe9036f4859bd21c2c061d5e479031931c8530bdcd36fe41c8ad513412b3"
+		},
+		{
+			"bytes": 26612232,
+			"input": "android/sourcepoint-artifacts/r8/mapping.txt",
+			"sha256": "f352998527e767d634eb5307fd5188a2113dc605a8ec3adea0325def9620a4fb"
+		},
+		{
+			"bytes": 2772481,
+			"input": "android/sourcepoint-artifacts/r8/usage.txt",
+			"sha256": "1728d1a8ee3b57320c5dd2c3c342ae6c0c26357fde846c629126e3941dad9a08"
+		},
+		{
+			"bytes": 2246304,
+			"input": "android/sourcepoint-artifacts/r8/seeds.txt",
+			"sha256": "afae67c55342620c80b58d654a2d70e64e751b38eaecf0ef5e6c67124a35fb7b"
+		},
+		{
+			"bytes": 54540,
+			"input": "android/sourcepoint-artifacts/r8/configuration.txt",
+			"sha256": "9a49d55153c62cd204a905d7bcb3cc799add18b2bd826fe2892b27b04999116f"
+		},
+		{
+			"bytes": 54069,
+			"input": "android/sourcepoint-resolved-artifacts.json",
+			"sha256": "b7f249872bcdaa40259a21d5f682c8f7e1c03db5dcd2c4e16ea9ebbac1209057"
+		}
+	],
+	"method": {
+		"dependencyReplacement": "Normal Gradle selection. Matching baseline coordinates have matching artifact hashes. An artifact dependency does not imply all its classes ship.",
+		"diagnostics": "No counterfactual APK size build. Static final-DEX retention settles the main cause. No claimed byte saving from deleting or replacing a library.",
+		"directApkBytes": "Signed file length. Group compressed-byte deltas plus ZIP/signing overhead delta exactly equal addedApkBytes.",
+		"instructions": "Exact code_item instruction lengths from final APK DEX, grouped by original R8 class family. Excludes metadata, headers, shared pools and compression.",
+		"packageEstimates": "APK Analyzer defined-only estimates after deobfuscating actual APK DEX with its R8 map. They exclude some shared DEX structures. Nested packages overlap their parent. They are not compressed APK contributions.",
+		"removedClasses": "Fully removed original classes from usage.txt. A retained class can still have removed members."
+	},
+	"producer": {
+		"androidMavenVersion": "3.0.0-alpha.1",
+		"gitHead": "256e903bfa542c15126e017c10fdfea70f421521",
+		"nativeCoreJarSha256": "f9fbf86009959e3c9c4dfdf8d7c2432f494dc96b5ccda768e42ae3fbde0e5efb",
+		"rnTarballSha256": "4d92e2c3377cf2059a905335c62c037de9a0cc9a46df42d474a3c5b2dc7a65bd",
+		"rnVersion": "3.0.0-alpha.2"
+	},
+	"profile": {
+		"abi": "arm64-v8a",
+		"agp": "8.12.0",
+		"compileAndTargetSdk": 36,
+		"gradle": "9.3.1",
+		"hostR8OptimizationDisabled": true,
+		"minSdk": 24,
+		"name": "android-release",
+		"r8": "8.12.14",
+		"resourceShrinking": true,
+		"stockIntegrationUnchanged": true
+	},
+	"retainedC15tDexDestinations": {
+		"c15t-android": 37,
+		"c15t-core": 393,
+		"c15t-presenter": 272,
+		"c15t-rn-bridge": 24,
+		"compose": 4650
+	},
+	"schemaVersion": 1,
+	"snapshotKind": "compact historical dependency attribution; full calculations are generated locally",
+	"sourceResultsSha256": "4210d1b7224ae5d5a4cbf4b67410be51944a593b919964358af55d7ebbc7bcd6"
+}
