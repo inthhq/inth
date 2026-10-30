@@ -608,8 +608,9 @@ private struct DecisionGroup: View {
     static func errorID(first: Bool) -> String { (first ? "c15t.first-layer" : "c15t.prefs") + ".error" }
     /// The one action a compact footer keeps at accessibility sizes, if any.
     static func pinnedAction(_ presenter: ConsentPresenter) -> ConsentPresenter.Action? {
-        if presenter.stale || presenter.listUnavailable { return nil }
-        return presenter.snapshot.policyPending ? .reject : .save
+        if presenter.stale { return nil }
+        if presenter.snapshot.policyPending { return .reject }
+        return presenter.listUnavailable ? nil : .save
     }
     static func showsPinned(_ presenter: ConsentPresenter) -> Bool { presenter.stale || pinnedAction(presenter) != nil }
     static func showsShortcuts(_ presenter: ConsentPresenter) -> Bool { !presenter.stale && !presenter.snapshot.policyPending }
@@ -811,10 +812,10 @@ private struct PreferencesList: View {
                             .font(.footnote).foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.prefs.last-changed")
                     }
                 }.listRowBackground(surface)
-                if page, DecisionGroup.showsPinnedStatus(presenter) {
-                    Section { DecisionGroup(presenter: presenter, first: false, part: .pinnedStatus, path: $path).id(DecisionGroup.errorID(first: false)) }
-                        .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
-                }
+            }
+            if page, DecisionGroup.showsPinnedStatus(presenter) {
+                Section { DecisionGroup(presenter: presenter, first: false, part: .pinnedStatus, path: $path).id(DecisionGroup.errorID(first: false)) }
+                    .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
             }
           }
           .onChange(of: presenter.errorCode) { code in

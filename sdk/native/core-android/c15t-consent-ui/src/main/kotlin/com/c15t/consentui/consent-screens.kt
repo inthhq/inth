@@ -376,7 +376,7 @@ private enum class DecisionPart { ALL, SHORTCUTS, PINNED, PINNED_STATUS }
 
 /** The one action a compact footer keeps at accessibility sizes, if any. */
 private fun pinnedAction(p: ConsentPresenter): ConsentPresenter.Action? =
-    if (p.stale || p.listUnavailable) null else if (p.snapshot.policyPending) ConsentPresenter.Action.REJECT else ConsentPresenter.Action.SAVE
+    if (p.stale) null else if (p.snapshot.policyPending) ConsentPresenter.Action.REJECT else if (p.listUnavailable) null else ConsentPresenter.Action.SAVE
 private fun showsPinned(p: ConsentPresenter) = p.stale || pinnedAction(p) != null
 private fun showsShortcuts(p: ConsentPresenter) = !p.stale && !p.snapshot.policyPending
 private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction != null && p.failedAction == pinnedAction(p)
@@ -711,8 +711,8 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                     }
                 }
             }
-            if (page && showsPinnedStatus(p)) item { DecisionGroup(p, first = false, DecisionPart.PINNED_STATUS, Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp)) }
         }
+        if (page && showsPinnedStatus(p)) item { DecisionGroup(p, first = false, DecisionPart.PINNED_STATUS, Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp)) }
     }
 }
 

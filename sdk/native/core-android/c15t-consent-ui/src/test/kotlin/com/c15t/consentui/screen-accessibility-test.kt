@@ -12,10 +12,14 @@ import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.c15t.core.C15tKernel
+import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
+import com.c15t.core.iab.IabConfiguration
+import com.c15t.core.model.ConsentCategory
 import com.c15t.core.spi.*
 import com.c15t.core.store.C15tStore
 import com.c15t.core.transport.HostedTransport
@@ -23,16 +27,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.serialization.json.*
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.LooperMode
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -109,6 +116,44 @@ class ScreenAccessibilityTest {
             compose.onNodeWithTag("c15t.first-layer.error.retry").assertIsDisplayed()
             assertNotNull(presenter.presentationID)
         } finally { Dispatchers.resetMain() }
+    }
+
+    @Test fun expiredCategoryBundleWithdrawalKeepsRetryAtLargeText() = expiredBundleWithdrawal("parity")
+
+    @Test fun expiredIabBundleWithdrawalKeepsRetryAtLargeText() = expiredBundleWithdrawal("iab")
+
+    private fun expiredBundleWithdrawal(name: String) {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            RuntimeEnvironment.setFontScale(2f)
+            val source = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+                .map { File(it, "native/protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
+            val clock = AtomicLong(source.getValue("now").jsonPrimitive.long)
+            val configuration = source["configuration"]?.let { Json { ignoreUnknownKeys = true }.decodeFromJsonElement<IabConfiguration>(it) }
+            val config = NativeConfig(source.getValue("endpoint").jsonPrimitive.content,
+                bundledPolicy = source.getValue("resource").toString(), iab = configuration, consentCategories = ConsentCategory.entries)
+            val store = DecisionStore()
+            val core = C15tKernel(config, C15tStore(store), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
+            core.bootstrap()
+            assertTrue(core.save(CommitIntent.All).ok)
+            val payload = Json.parseToJsonElement(source.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
+            clock.set(payload.getValue("expiresAt").jsonPrimitive.long + 1)
+            val presenter = ConsentPresenter(core, automaticPresentation = false)
+            presenter.presentPreferences()
+            assertTrue(presenter.snapshot.policyPending)
+            compose.setContent {
+                C15tConsent(presenter, "https://app.test/privacy")
+            }
+            val prefix = if (presenter.iab) "c15t.iab" else "c15t.prefs"
+            compose.onNodeWithTag("$prefix.reject-all").assertIsDisplayed()
+            store.refuseNext = true
+            compose.onNodeWithTag("$prefix.reject-all").performClick()
+            compose.waitUntil(5_000) { presenter.errorMessage != null }
+            compose.onNodeWithTag("c15t.prefs.error.retry").assertIsDisplayed().performClick()
+            compose.waitUntil(5_000) { presenter.presentationID == null }
+            assertTrue(core.snapshot().policyPending)
+            ConsentCategory.OPTIONAL.forEach { assertFalse(core.snapshot().explicitChoice!!.valueOf(it)!!) }
+        } finally { RuntimeEnvironment.setFontScale(1f); Dispatchers.resetMain() }
     }
 
     @Test fun providerTagNamesTheBrandOnceAndSwapsItsLogo() {
