@@ -361,8 +361,9 @@ final class ConsentJourneyTests: XCTestCase {
             // The gate only closes on a durable commit.
             XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
             XCTAssertFalse(button("c15t.prefs.save").exists)
+            // The host list is lazy too; read its rows in page order.
+            XCTAssertEqual(hostState("fixture.state.explicit-choice").label, "recorded")
             XCTAssertEqual(hostState("fixture.state.permission.measurement").label, "measurement: true")
-            XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
         }
     }
     func test12LargestNonAccessibilitySizeKeepsThePinnedFooter() {
