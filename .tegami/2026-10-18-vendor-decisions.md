@@ -1,6 +1,6 @@
 ---
 packages:
-  "group:inth": minor
+  "group:inth": patch
 ---
 
 ### Review vendors seen on a project
