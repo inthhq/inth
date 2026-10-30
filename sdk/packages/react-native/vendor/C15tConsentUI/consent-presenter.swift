@@ -21,6 +21,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     /// `true` once a commit has taken long enough to deserve a spinner.
     @Published public private(set) var showProgress = false
     @Published public private(set) var errorCode: String?
+    /// The action behind `errorCode`, so a page can show the failure beside the control that
+    /// failed; `nil` whenever there is no error.
+    @Published public private(set) var failedAction: Action?
     @Published public private(set) var stale = false
     @Published public private(set) var categories: [OptionalConsentCategory: Bool] = [:]
     @Published public private(set) var choices = IABChoices()
@@ -77,6 +80,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             presentationID = UUID()
             preferences = false
             errorCode = nil
+            failedAction = nil
             loadDraft()
         }
     }
@@ -163,6 +167,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         seedCategories = categories
         seedChoices = choices
         errorCode = nil
+        failedAction = nil
         stale = false
     }
     public func setCategory(_ category: OptionalConsentCategory, _ value: Bool) {
@@ -258,6 +263,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             snapshot = authority.snapshot()
             if outcome.0 {
                 errorCode = nil
+                failedAction = nil
                 suppressedPrompt = promptKey
                 presentationID = nil
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
@@ -265,6 +271,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
                 onOutcome?(.saved)
             } else {
                 errorCode = outcome.1 ?? "save-rejected"
+                failedAction = action
                 stale = errorCode == "concurrent-change"
                 onAnnouncement?(stale ? "Settings changed while you were editing" : errorMessage ?? "Couldn't save your choices.")
             }

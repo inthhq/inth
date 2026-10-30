@@ -101,13 +101,15 @@ private enum Destination: Hashable { case vendors(Int?), vendor(Int), providers 
 /// Widest a consent column gets; wider screens centre it.
 private let contentWidth: CGFloat = 560
 
-private struct ConsentWindowHeightKey: EnvironmentKey { static let defaultValue: CGFloat = 0 }
-private extension EnvironmentValues {
-    /// Height of the consent window, so the pinned footer can cap itself to a share of it.
-    var consentWindowHeight: CGFloat {
-        get { self[ConsentWindowHeightKey.self] }
-        set { self[ConsentWindowHeightKey.self] = newValue }
-    }
+/// Where the decisions live. Below the accessibility text sizes they are a pinned footer. From
+/// the first accessibility size on, three stacked buttons and a failure row would take most of
+/// a short window and need a scroll of their own, so the first layer puts the whole group in
+/// the page after the text, and preferences keep one compact pinned action while Reject all and
+/// Accept all sit in the page after the introduction. The trigger is the platform's own size
+/// class, not a measured height: a layout that changed structure the moment a failure row
+/// appeared would move the actions under the thumb.
+private extension DynamicTypeSize {
+    var actionsInPage: Bool { isAccessibilitySize }
 }
 
 /// Add native automatic prompting and standing settings to a SwiftUI root.
@@ -245,7 +247,10 @@ private struct FailureRow: View {
     var body: some View {
         let lineHeight = UIFont.preferredFont(forTextStyle: .subheadline).lineHeight
         HStack(alignment: .top, spacing: 8) {
+            // The glyph follows the text up to the largest non-accessibility size and then holds, so the
+            // message keeps its column width where every point of it is lines of text.
             Image(systemName: "exclamationmark.circle.fill").font(.subheadline).foregroundStyle(StatusColors.error)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .frame(height: lineHeight).accessibilityHidden(true)
             InlineLinkText(message: message, link: Self.link, id: id, theme: theme, enabled: isEnabled, pressed: pressed) { linkRect = $0 }
                 .overlay(alignment: .topLeading) {
@@ -370,22 +375,19 @@ private struct ConsentScreen: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         NavigationStack(path: $path) {
-            GeometryReader { window in
-                ZStack {
-                    theme.colors.canvas.color.ignoresSafeArea()
-                    if presenter.preferences {
-                        PreferencesList(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
-                            .transition(reduceMotion ? .opacity : .move(edge: .trailing))
-                    } else {
-                        FirstLayer(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
-                            .transition(reduceMotion ? .opacity : .asymmetric(
-                                insertion: .move(edge: .leading).combined(with: .opacity),
-                                removal: .move(edge: .leading).combined(with: .opacity)))
-                    }
+            ZStack {
+                theme.colors.canvas.color.ignoresSafeArea()
+                if presenter.preferences {
+                    PreferencesList(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
+                        .transition(reduceMotion ? .opacity : .move(edge: .trailing))
+                } else {
+                    FirstLayer(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
+                        .transition(reduceMotion ? .opacity : .asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)))
                 }
-                .animation(.easeOut(duration: 0.28), value: presenter.preferences)
-                .environment(\.consentWindowHeight, window.size.height)
             }
+            .animation(.easeOut(duration: 0.28), value: presenter.preferences)
             .toolbar {
                 if presenter.preferences {
                     ToolbarItem(placement: .cancellationAction) {
@@ -464,10 +466,13 @@ private struct FirstLayer: View {
     @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AccessibilityFocusState private var titleFocused: Bool
 
     var body: some View {
-        ScrollView {
+        let page = typeSize.actionsInPage
+        ScrollViewReader { proxy in
+          ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand, provider: theme.branding)) }
                 if let reason = presenter.snapshot.promptRequirement.reason, reason.rawValue != "missing" {
@@ -490,12 +495,20 @@ private struct FirstLayer: View {
                 }
                 if presenter.iab { partnerSummary }
                 PrivacyLink(url: privacyPolicyURL)
-                if typeSize.isAccessibilitySize && theme.showsBranding { Branding() }
+                // At accessibility sizes the decisions follow the text they decide on.
+                if page { DecisionGroup(presenter: presenter, first: true, part: .all, path: $path).padding(.top, 4).id(DecisionGroup.errorID(first: true)) }
             }
             .padding(.horizontal, 24).padding(.top, 40).padding(.bottom, 16)
             .frame(maxWidth: contentWidth, alignment: .leading).frame(maxWidth: .infinity)
+          }
+          .scrollBounceBehavior(.basedOnSize)
+          .onChange(of: presenter.errorCode) { code in
+              guard code != nil, page else { return }
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                  withAnimation(reduceMotion ? nil : .easeOut(duration: 0.25)) { proxy.scrollTo(DecisionGroup.errorID(first: true), anchor: nil) }
+              }
+          }
         }
-        .scrollBounceBehavior(.basedOnSize)
         // The first choice is a page with its own top edge; the bar only appears once settings push in.
         .toolbar(.hidden, for: .navigationBar)
         .accessibilityIdentifier("c15t.first-layer")
@@ -509,24 +522,25 @@ private struct FirstLayer: View {
     @ViewBuilder private var partnerSummary: some View {
         if let disclosure = presenter.disclosure {
             let list = disclosure.list
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(alignment: .center) {
-                    SectionLabel("What partners may do")
-                    Spacer()
-                    Button {
-                        presenter.customize()
-                        path.append(.vendors(nil))
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text("\(disclosure.vendors.count) IAB partners")
-                            Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(theme.colors.textSecondary.color)
-                        }
-                    }
-                    .buttonStyle(TextLinkStyle(font: .footnote.weight(.semibold), color: theme.colors.text.color))
-                    .accessibilityLabel("\(disclosure.vendors.count) IAB partners")
-                    .accessibilityIdentifier("c15t.first-layer.partner-count")
+            let count = Button {
+                presenter.customize()
+                path.append(.vendors(nil))
+            } label: {
+                HStack(spacing: 4) {
+                    Text("\(disclosure.vendors.count) IAB partners")
+                    Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(theme.colors.textSecondary.color)
                 }
-                .padding(.horizontal, 16)
+            }
+            .buttonStyle(TextLinkStyle(font: .footnote.weight(.semibold), color: theme.colors.text.color))
+            .accessibilityLabel("\(disclosure.vendors.count) IAB partners")
+            .accessibilityIdentifier("c15t.first-layer.partner-count")
+            VStack(alignment: .leading, spacing: 0) {
+                // The label and the count share a line until accessibility sizes, where they stack.
+                if typeSize.actionsInPage {
+                    VStack(alignment: .leading, spacing: 0) { SectionLabel("What partners may do"); count }.padding(.horizontal, 16)
+                } else {
+                    HStack(alignment: .center) { SectionLabel("What partners may do"); Spacer(); count }.padding(.horizontal, 16)
+                }
                 ForEach(list.purposes.keys.sorted(), id: \.self) { id in
                     Text(list.purposes[id]?.name ?? "").font(.subheadline).foregroundStyle(theme.colors.text.color)
                         .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 10)
@@ -577,69 +591,86 @@ private struct Branding: View {
     }
 }
 
-/// Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled.
-/// Past six tenths of the window the footer scrolls, so at the largest text sizes a failure row
-/// above three stacked buttons cannot push its own actions off a short screen.
-private struct DecisionFooter: View {
+/// The decision controls and the failure row beside them, in one of four cuts. `all` is the
+/// whole group: the pinned footer below accessibility sizes, the end of the first layer's page
+/// at them. The other three are the accessibility-size cuts of preferences: `shortcuts` after
+/// the introduction, `pinned` in the compact footer, `pinnedStatus` as the page's last row, so
+/// a failure sits beside the control that failed rather than in a tray that grows past the window.
+private struct DecisionGroup: View {
+    enum Part { case all, shortcuts, pinned, pinnedStatus }
     @ObservedObject var presenter: ConsentPresenter
     let first: Bool
+    let part: Part
     @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
-    @Environment(\.dynamicTypeSize) private var typeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.consentWindowHeight) private var windowHeight
-    @State private var contentHeight: CGFloat = 0
     private var prefix: String { first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs" }
 
+    static func errorID(first: Bool) -> String { (first ? "c15t.first-layer" : "c15t.prefs") + ".error" }
+    /// The one action a compact footer keeps at accessibility sizes, if any.
+    static func pinnedAction(_ presenter: ConsentPresenter) -> ConsentPresenter.Action? {
+        if presenter.stale || presenter.listUnavailable { return nil }
+        return presenter.snapshot.policyPending ? .reject : .save
+    }
+    static func showsPinned(_ presenter: ConsentPresenter) -> Bool { presenter.stale || pinnedAction(presenter) != nil }
+    static func showsShortcuts(_ presenter: ConsentPresenter) -> Bool { !presenter.stale && !presenter.snapshot.policyPending }
+    static func showsPinnedStatus(_ presenter: ConsentPresenter) -> Bool {
+        !presenter.stale && presenter.failedAction != nil && presenter.failedAction == pinnedAction(presenter)
+    }
+
     var body: some View {
-        let cap = windowHeight * 0.6
-        Group {
-            if cap > 0, contentHeight > cap {
-                ScrollView { actions }.scrollBounceBehavior(.basedOnSize).frame(height: cap).accessibilityIdentifier("c15t.footer")
-            } else {
-                actions
+        VStack(spacing: 12) {
+            switch part {
+            case .all:
+                if presenter.stale { reload } else {
+                    failure
+                    decisions
+                }
+            case .pinned:
+                if presenter.stale { reload }
+                else if let action = Self.pinnedAction(presenter) { decision(action == .save ? "Save choices" : "Reject all", action) }
+            case .shortcuts:
+                if Self.showsShortcuts(presenter) {
+                    if presenter.failedAction != Self.pinnedAction(presenter) { failure }
+                    decisions
+                }
+            case .pinnedStatus:
+                if Self.showsPinnedStatus(presenter) { failure }
             }
         }
-        .frame(maxWidth: contentWidth).frame(maxWidth: .infinity)
-        .background(theme.colors.canvas.color.ignoresSafeArea())
-        .overlay(alignment: .top) { Hairline() }
         .disabled(presenter.pending)
     }
 
-    private var actions: some View {
-        VStack(spacing: 12) {
-            if presenter.stale {
-                Button("Load current settings") { presenter.loadDraft() }.buttonStyle(ConsentButtonStyle(variant: .accent)).accessibilityIdentifier("c15t.prefs.stale.reload")
-            } else {
-                if let message = presenter.errorMessage { FailureRow(message: message, id: (first ? "c15t.first-layer" : "c15t.prefs") + ".error", retry: presenter.retry) }
-                if presenter.snapshot.policyPending {
-                    decision("Reject all", .reject)
-                } else if presenter.listUnavailable {
-                    Text("Our partner list is out of date. Try again to load it, or reject optional data use.")
-                        .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
-                    EqualDecisionLayout {
-                        decision("Reject all", .reject)
-                        Button("Try again") { presenter.refresh() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
-                    }
-                } else {
-                    EqualDecisionLayout {
-                        decision("Reject all", .reject)
-                        decision("Accept all", .accept)
-                    }
-                    if first {
-                        Button("Customize") { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.first-layer.customize")
-                        if !typeSize.isAccessibilitySize && theme.showsBranding { Branding() }
-                    } else {
-                        decision("Save choices", .save)
-                    }
-                }
+    private var reload: some View {
+        Button("Load current settings") { presenter.loadDraft() }.buttonStyle(ConsentButtonStyle(variant: .accent)).accessibilityIdentifier("c15t.prefs.stale.reload")
+    }
+    @ViewBuilder private var failure: some View {
+        if let message = presenter.errorMessage {
+            FailureRow(message: message, id: Self.errorID(first: first), retry: presenter.retry)
+        }
+    }
+    @ViewBuilder private var decisions: some View {
+        if presenter.snapshot.policyPending {
+            decision("Reject all", .reject)
+        } else if presenter.listUnavailable {
+            Text("Our partner list is out of date. Try again to load it, or reject optional data use.")
+                .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
+            EqualDecisionLayout {
+                decision("Reject all", .reject)
+                Button("Try again") { presenter.refresh() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
+            }
+        } else {
+            EqualDecisionLayout {
+                decision("Reject all", .reject)
+                decision("Accept all", .accept)
+            }
+            if first {
+                Button("Customize") { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.first-layer.customize")
+                if theme.showsBranding { Branding() }
+            } else if part == .all {
+                decision("Save choices", .save)
             }
         }
-        .padding(.horizontal, first ? 24 : 16).padding(.top, 12).padding(.bottom, 8)
-        // The row fades in and the actions ease down to make room instead of jumping under the thumb.
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: presenter.errorCode)
-        .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { contentHeight = $0 }
     }
 
     /// Labels stay put while a commit runs: the pressed action shows progress beside its own
@@ -650,6 +681,32 @@ private struct DecisionFooter: View {
         return Button(label) { presenter.commit(action) }
             .buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : first ? .decision : .quiet, busy: busy))
             .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(prefix + "." + suffix)
+    }
+}
+
+/// Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled.
+/// At accessibility sizes the first layer has no footer and preferences keep one compact action,
+/// so the bar never needs a scroll of its own.
+private struct DecisionFooter: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let first: Bool
+    @Binding var path: [Destination]
+    @Environment(\.consentTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        let page = typeSize.actionsInPage
+        if !page || (!first && DecisionGroup.showsPinned(presenter)) {
+            DecisionGroup(presenter: presenter, first: first, part: page ? .pinned : .all, path: $path)
+                .padding(.horizontal, first ? 24 : 16).padding(.top, 12).padding(.bottom, 8)
+                // The row fades in and the actions ease down to make room instead of jumping under the thumb.
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: presenter.errorCode)
+                .frame(maxWidth: contentWidth).frame(maxWidth: .infinity)
+                .background(theme.colors.canvas.color.ignoresSafeArea())
+                .overlay(alignment: .top) { Hairline() }
+                .accessibilityElement(children: .contain).accessibilityIdentifier("c15t.footer")
+        }
     }
 }
 
@@ -666,10 +723,16 @@ private struct PreferencesList: View {
     let privacyPolicyURL: URL
     @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var surface: Color { theme.colors.surface.color }
+    /// Insets for the decision rows at accessibility sizes: the buttons meet the cards' edges.
+    private let decisionInsets = EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16)
 
     var body: some View {
-        List {
+        let page = typeSize.actionsInPage
+        ScrollViewReader { proxy in
+          List {
             if presenter.snapshot.policyPending {
                 Section {
                     Text("Privacy settings aren't available yet. Connect to the internet and try again.").foregroundStyle(theme.colors.text.color)
@@ -696,6 +759,10 @@ private struct PreferencesList: View {
                             Text("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
                         }
                     }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 4, trailing: 16))
+                }
+                if page, DecisionGroup.showsShortcuts(presenter) {
+                    Section { DecisionGroup(presenter: presenter, first: false, part: .shortcuts, path: $path).id("c15t.prefs.shortcuts") }
+                        .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
                 }
                 Section { ForEach(presenter.offeredCategories, id: \.self) { category in CategoryRow(presenter: presenter, category: category) } }
                     header: { if presenter.iab { SectionLabel("This app") } }
@@ -744,7 +811,21 @@ private struct PreferencesList: View {
                             .font(.footnote).foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.prefs.last-changed")
                     }
                 }.listRowBackground(surface)
+                if page, DecisionGroup.showsPinnedStatus(presenter) {
+                    Section { DecisionGroup(presenter: presenter, first: false, part: .pinnedStatus, path: $path).id(DecisionGroup.errorID(first: false)) }
+                        .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
+                }
             }
+          }
+          .onChange(of: presenter.errorCode) { code in
+              guard code != nil, page else { return }
+              let last = DecisionGroup.showsPinnedStatus(presenter)
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                  withAnimation(reduceMotion ? nil : .easeOut(duration: 0.25)) {
+                      proxy.scrollTo(last ? DecisionGroup.errorID(first: false) : "c15t.prefs.shortcuts", anchor: last ? .bottom : nil)
+                  }
+              }
+          }
         }
         .listStyle(.insetGrouped).scrollContentBackground(.hidden).modifier(SectionSpacing())
         .foregroundStyle(theme.colors.text.color)

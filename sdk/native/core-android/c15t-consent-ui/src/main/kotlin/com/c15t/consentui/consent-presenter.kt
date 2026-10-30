@@ -23,6 +23,8 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
     /** `true` once a commit has taken long enough to deserve a spinner. */
     var showProgress by mutableStateOf(false); private set
     var errorCode by mutableStateOf<String?>(null); private set
+    /** The action behind [errorCode], so a page can show the failure beside the control that failed; null whenever there is no error. */
+    var failedAction by mutableStateOf<Action?>(null); private set
     var stale by mutableStateOf(false); private set
     var categories by mutableStateOf<Map<ConsentCategory, Boolean>>(emptyMap()); private set
     var choices by mutableStateOf(IabChoices()); private set
@@ -115,7 +117,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         baseRevision = snapshot.revision
         choices = disclosure?.draft?.choices ?: IabChoices()
         categories = offeredCategories.filter { it.optional }.associateWith { snapshot.explicitChoice?.valueOf(it) ?: false }
-        seedCategories = categories; seedChoices = choices; errorCode = null; stale = false
+        seedCategories = categories; seedChoices = choices; errorCode = null; failedAction = null; stale = false
     }
     fun restricted(category: ConsentCategory): Boolean = snapshot.restrictions[category.wireName].orEmpty().any { it == "gpc" || it == "strict-scope" }
     fun setCategory(category: ConsentCategory, enabled: Boolean) { if (!pending && !stale && !restricted(category)) categories = categories + (category to enabled) }
@@ -164,9 +166,9 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
             if (presentationID != session) return@launch
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
             } else {
-                errorCode = result.second ?: "save-rejected"; stale = errorCode == "concurrent-change"
+                errorCode = result.second ?: "save-rejected"; failedAction = action; stale = errorCode == "concurrent-change"
                 announcement = if (stale) "Settings changed while you were editing" else errorMessage.orEmpty()
             }
             announcementSequence += 1

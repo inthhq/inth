@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
@@ -67,6 +70,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
+import androidx.compose.runtime.withFrameNanos
 import androidx.core.view.WindowCompat
 import com.c15t.core.iab.*
 import com.c15t.core.model.*
@@ -307,8 +311,11 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
         buildAnnotatedString { append(message); append(' '); withStyle(SpanStyle(color = accent, fontWeight = FontWeight.SemiBold)) { append(link) } }
     }
     var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    // Inside a scrolling page the row brings itself into view when it arrives; a pinned footer ignores this.
+    val requester = remember { BringIntoViewRequester() }
+    LaunchedEffect(Unit) { requester.bringIntoView() }
     // The 48dp hit area reaches 14dp past the line; the extra bottom padding keeps it out of the next action.
-    Row(Modifier.fillMaxWidth().padding(bottom = 4.dp).testTag(id), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.fillMaxWidth().bringIntoViewRequester(requester).padding(bottom = 4.dp).testTag(id), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         // The core icon set has no exclamation glyph; its filled Info turned over is one.
         Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(glyph).rotate(180f))
         Box(Modifier.weight(1f)) {
@@ -349,49 +356,94 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 }
 
 /**
+ * Where the decisions live. Below font scale 1.5 they are a pinned footer. From there on, three
+ * stacked buttons and a failure row would take most of a short window and need a scroll of their
+ * own, so the first layer puts the whole group in the page after the text, and preferences keep
+ * one compact pinned action while Reject all and Accept all sit in the page after the
+ * introduction. The trigger is the font scale, not a measured height: a layout that changed
+ * structure the moment a failure row appeared would move the actions under the thumb.
+ */
+@Composable private fun actionsInPage(): Boolean = LocalDensity.current.fontScale >= 1.5f
+
+/**
+ * [ALL] is the whole group: the pinned footer below accessibility sizes, the end of the first
+ * layer's page at them. The other three are the accessibility-size cuts of preferences:
+ * [SHORTCUTS] after the introduction, [PINNED] in the compact footer, [PINNED_STATUS] as the
+ * page's last row, so a failure sits beside the control that failed rather than in a tray that
+ * grows past the window.
+ */
+private enum class DecisionPart { ALL, SHORTCUTS, PINNED, PINNED_STATUS }
+
+/** The one action a compact footer keeps at accessibility sizes, if any. */
+private fun pinnedAction(p: ConsentPresenter): ConsentPresenter.Action? =
+    if (p.stale || p.listUnavailable) null else if (p.snapshot.policyPending) ConsentPresenter.Action.REJECT else ConsentPresenter.Action.SAVE
+private fun showsPinned(p: ConsentPresenter) = p.stale || pinnedAction(p) != null
+private fun showsShortcuts(p: ConsentPresenter) = !p.stale && !p.snapshot.policyPending
+private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction != null && p.failedAction == pinnedAction(p)
+
+/** The decision controls and the failure row beside them, in one of the [DecisionPart] cuts. */
+@Composable private fun DecisionGroup(p: ConsentPresenter, first: Boolean, part: DecisionPart, modifier: Modifier = Modifier) {
+    val theme = LocalConsentTheme.current
+    val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
+    val errorId = (if (first) "c15t.first-layer" else "c15t.prefs") + ".error"
+    // Only the pressed action shows progress; the rest are disabled with their labels intact.
+    fun busy(action: ConsentPresenter.Action) = p.showProgress && p.pendingAction == action
+    @Composable fun reload() = ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
+    @Composable fun failure() { p.errorMessage?.let { FailureRow(it, errorId, !p.pending, p::retry) } }
+    /** Labels stay put while a commit runs: the pressed action shows progress beside its own label. */
+    @Composable fun decision(label: String, action: ConsentPresenter.Action) {
+        val suffix = when (action) { ConsentPresenter.Action.ACCEPT -> "accept-all"; ConsentPresenter.Action.REJECT -> "reject-all"; ConsentPresenter.Action.SAVE -> "save"; ConsentPresenter.Action.ACKNOWLEDGE -> "acknowledge" }
+        val variant = if (action == ConsentPresenter.Action.SAVE) ButtonVariant.ACCENT else if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
+        ConsentButton(label, "$prefix.$suffix", !p.pending, variant, progress = busy(action)) { p.commit(action) }
+    }
+    @Composable fun decisions() {
+        if (p.snapshot.policyPending) {
+            decision("Reject all", ConsentPresenter.Action.REJECT)
+        } else if (p.listUnavailable) {
+            Body("Our partner list is out of date. Try again to load it, or reject optional data use.", Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
+            EqualDecisions {
+                decision("Reject all", ConsentPresenter.Action.REJECT)
+                ConsentButton("Try again", "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
+            }
+        } else {
+            EqualDecisions {
+                decision("Reject all", ConsentPresenter.Action.REJECT)
+                decision("Accept all", ConsentPresenter.Action.ACCEPT)
+            }
+            if (first) {
+                ConsentButton("Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
+                if (theme.showsBranding) Branding()
+            } else if (part == DecisionPart.ALL) decision("Save choices", ConsentPresenter.Action.SAVE)
+        }
+    }
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        when (part) {
+            DecisionPart.ALL -> if (p.stale) reload() else { failure(); decisions() }
+            DecisionPart.PINNED -> if (p.stale) reload() else pinnedAction(p)?.let { decision(if (it == ConsentPresenter.Action.SAVE) "Save choices" else "Reject all", it) }
+            DecisionPart.SHORTCUTS -> if (showsShortcuts(p)) { if (p.failedAction != pinnedAction(p)) failure(); decisions() }
+            DecisionPart.PINNED_STATUS -> if (showsPinnedStatus(p)) failure()
+        }
+    }
+}
+
+/**
  * Pinned actions. Accept all and Reject all are twins; Save is the accent; nothing else is filled.
- * Past six tenths of the window the footer scrolls, so at the largest font scale a failure row
- * above three stacked buttons cannot push its own actions off a short screen.
+ * At accessibility sizes the first layer has no footer and preferences keep one compact action,
+ * so the bar never needs a scroll of its own.
  */
 @Composable private fun DecisionFooter(p: ConsentPresenter, first: Boolean) {
     val theme = LocalConsentTheme.current
-    val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
-    val large = LocalDensity.current.fontScale >= 1.5f
-    // Only the pressed action shows progress; the rest are disabled with their labels intact.
-    fun busy(action: ConsentPresenter.Action) = p.showProgress && p.pendingAction == action
+    val page = actionsInPage()
+    if (page && (first || !showsPinned(p))) return
     Surface(color = theme.colors.canvas.color()) {
         Column(Modifier.fillMaxWidth()) {
             Hairline()
-            BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                 // The row's arrival eases the actions down to make room instead of jumping them under the thumb.
-                Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().heightIn(max = maxHeight * 0.6f)
-                    // Edges follow the page: 24dp on the first layer, 16dp on preferences to meet the cards.
-                    .verticalScroll(rememberScrollState()).testTag("c15t.footer").animateContentSize().padding(horizontal = if (first) 24.dp else 16.dp, vertical = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (p.stale) ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
-                    else {
-                        p.errorMessage?.let { FailureRow(it, (if (first) "c15t.first-layer" else "c15t.prefs") + ".error", !p.pending, p::retry) }
-                        val twin = if (first) ButtonVariant.DECISION else ButtonVariant.QUIET
-                        if (p.snapshot.policyPending) {
-                            ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
-                        } else if (p.listUnavailable) {
-                            Body("Our partner list is out of date. Try again to load it, or reject optional data use.", Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
-                            EqualDecisions {
-                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
-                                ConsentButton("Try again", "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
-                            }
-                        } else {
-                            EqualDecisions {
-                                ConsentButton("Reject all", "$prefix.reject-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.REJECT)) { p.commit(ConsentPresenter.Action.REJECT) }
-                                ConsentButton("Accept all", "$prefix.accept-all", !p.pending, twin, progress = busy(ConsentPresenter.Action.ACCEPT)) { p.commit(ConsentPresenter.Action.ACCEPT) }
-                            }
-                            if (first) {
-                                ConsentButton("Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
-                                if (theme.showsBranding && !large) Branding()
-                            } else ConsentButton("Save choices", "$prefix.save", !p.pending, ButtonVariant.ACCENT, progress = busy(ConsentPresenter.Action.SAVE)) { p.commit(ConsentPresenter.Action.SAVE) }
-                        }
-                    }
-                }
+                // Edges follow the page: 24dp on the first layer, 16dp on preferences to meet the cards.
+                DecisionGroup(p, first, if (page) DecisionPart.PINNED else DecisionPart.ALL,
+                    Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().testTag("c15t.footer").animateContentSize()
+                        .padding(horizontal = if (first) 24.dp else 16.dp, vertical = 12.dp))
             }
         }
     }
@@ -407,7 +459,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
  */
 @Composable private fun FirstLayerScreen(p: ConsentPresenter, policyUrl: String, partners: () -> Unit) {
     val theme = LocalConsentTheme.current
-    val large = LocalDensity.current.fontScale >= 1.5f
+    val page = actionsInPage()
     Scaffold(containerColor = theme.colors.canvas.color(), bottomBar = { DecisionFooter(p, first = true) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).testTag("c15t.first-layer"), horizontalAlignment = Alignment.CenterHorizontally) {
             Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
@@ -424,7 +476,8 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
                 }
                 if (p.iab) PartnerSummary(p, partners)
                 PolicyLink(policyUrl)
-                if (large && theme.showsBranding) Branding()
+                // At accessibility sizes the decisions follow the text they decide on.
+                if (page) DecisionGroup(p, first = true, DecisionPart.ALL, Modifier.padding(top = 4.dp))
             }
         }
     }
@@ -445,14 +498,21 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     val disclosure = p.disclosure ?: return
     Surface(color = theme.colors.surfaceMuted.color(), shape = RoundedCornerShape(theme.cornerRadius + 2.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(vertical = 6.dp)) {
-            Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color(), modifier = Modifier.weight(1f))
-                val count = "${disclosure.vendors.size} IAB partners"
+            val count = "${disclosure.vendors.size} IAB partners"
+            val countButton: @Composable () -> Unit = {
                 TextButton(onClick = partners, contentPadding = PaddingValues(start = 8.dp, end = 4.dp),
                     modifier = Modifier.semantics { contentDescription = count }.testTag("c15t.first-layer.partner-count")) {
                     Text(count, style = MaterialTheme.typography.labelLarge, color = theme.colors.text.color())
                     Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = theme.colors.textSecondary.color(), modifier = Modifier.size(18.dp))
                 }
+            }
+            // The label and the count share a line until accessibility sizes, where they stack.
+            if (actionsInPage()) Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp)) {
+                Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color())
+                Box(Modifier.offset(x = (-8).dp)) { countButton() }
+            } else Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color(), modifier = Modifier.weight(1f))
+                countButton()
             }
             val purposes = disclosure.list.purposes.toSortedMap().entries.toList()
             val features = disclosure.list.specialFeatures.orEmpty().toSortedMap().entries.toList()
@@ -565,7 +625,17 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 /** Standing settings in the platform's own voice: grouped cards on the canvas. */
 @Composable private fun Preferences(p: ConsentPresenter, policyUrl: String, partners: (Int?) -> Unit, providers: () -> Unit) {
     val theme = LocalConsentTheme.current
-    LazyColumn(Modifier.fillMaxSize().testTag(if (p.iab) "c15t.iab" else "c15t.prefs"), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+    val page = actionsInPage()
+    val list = rememberLazyListState()
+    // A failure beside the pinned action is the page's last row, which a long list may not have
+    // composed yet; scroll there once the new rows have been laid out.
+    LaunchedEffect(p.errorCode) {
+        if (page && p.errorCode != null && showsPinnedStatus(p)) {
+            repeat(2) { withFrameNanos {} }
+            list.animateScrollToItem((list.layoutInfo.totalItemsCount - 1).coerceAtLeast(0))
+        }
+    }
+    LazyColumn(Modifier.fillMaxSize().testTag(if (p.iab) "c15t.iab" else "c15t.prefs"), state = list, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
         if (p.snapshot.policyPending) {
             item {
                 GroupedRow(0, 1) {
@@ -591,8 +661,9 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                         }
                     } else Body("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
                 }
-                if (p.iab) SectionLabel("This app") else Spacer(Modifier.height(12.dp))
             }
+            if (page && showsShortcuts(p)) item { DecisionGroup(p, first = false, DecisionPart.SHORTCUTS, Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp)) }
+            item { if (p.iab) SectionLabel("This app") else Spacer(Modifier.height(12.dp)) }
             val categories = p.offeredCategories
             group(categories.size, key = { "category-${categories[it].wireName}" }) { Category(p, categories[it]) }
             p.disclosure?.let { d ->
@@ -640,6 +711,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                     }
                 }
             }
+            if (page && showsPinnedStatus(p)) item { DecisionGroup(p, first = false, DecisionPart.PINNED_STATUS, Modifier.padding(start = 8.dp, end = 8.dp, top = 16.dp)) }
         }
     }
 }

@@ -85,7 +85,25 @@ can still opt into a different headline face.
 Accept all and Reject all are twins: the same fill, size and weight, side by
 side when both labels fit and stacked at accessibility text sizes. Customize is
 outlined. Dark mode flips the paper
-and ink; every colour carries a light and a dark value. The headline wraps
+and ink; every colour carries a light and a dark value.
+
+Below the accessibility text sizes the decisions are a pinned footer. From the
+first accessibility size on iOS (`isAccessibilitySize`) and font scale 1.5 on
+Android, three stacked buttons and a failure row would take most of a short
+window and need a scroll of their own, so the structure changes and the type
+does not: the first layer has no footer, and Reject all, Accept all, Customize
+and the provider tag follow the text in the one scrolling page. Preferences keep
+one compact pinned action, Save, or Load current settings for a stale draft, or
+Reject all while policy is pending, and put Reject all and Accept all in the
+page straight after the introduction, equal and stacked. A failure row sits
+beside the control that failed: above the shortcuts, or as the page's last row
+above the pinned Save, and the page scrolls to it. `ConsentPresenter.failedAction`
+names that control. The trigger is the platform's own size class rather than a
+measured height, because a layout that changed structure the moment a failure
+row appeared would move the actions under the thumb. The footer is never a
+scroll view of its own at any size. The demo journeys hold this on an iPhone SE
+and a 360x640dp emulator at the largest supported sizes, reaching every control
+by scrolling the page. The headline wraps
 balanced on both platforms, so a two-line stock or host headline breaks near its
 middle instead of leaving one word on the last line; no line break is written
 into the copy. Partner list, partner detail and Additional Consent pages share
@@ -105,10 +123,7 @@ paragraph itself never retries. It is not a filled card, so it does not
 outrank the decisions it sits beside. The message names what failed, a save or a notice dismissal, and
 says nothing changed on this device; Try again repeats the same intent. The row
 stays while a retry is in flight, so nothing moves under the thumb, and clears
-only on success or a reload. The presenter announces the failure once. Past six
-tenths of the window the pinned footer scrolls, so a failure above three
-stacked buttons at the largest text size cannot push its own actions off a
-short screen.
+only on success or a reload. The presenter announces the failure once.
 
 The Other ad partners page names the purposes Google's Additional Consent
 depends on by the names shown under Purposes, never by number, and says when
