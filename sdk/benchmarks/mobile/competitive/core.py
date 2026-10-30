@@ -96,19 +96,34 @@ def verify_files(rows):
         require(path.stat().st_size == row['bytes'] and sha(path) == row['sha256'], f'changed evidence: {path}')
 
 
-def verify_archive(archive, installed):
-    """Compare every packaged regular file, including native sources, after install."""
-    count = 0
+def verify_archive(archive, installed, *, generated_roots=()):
+    """Require the exact package tree apart from named native build outputs."""
+    installed = Path(installed)
+    expected = set()
+    generated = tuple(Path(root) for root in generated_roots)
+    require(all(not root.is_absolute() and '..' not in root.parts for root in generated), 'unsafe generated-output root')
     with tarfile.open(archive) as handle:
         for member in handle:
             relative = Path(member.name)
             require(relative.parts and relative.parts[0] == 'package' and '..' not in relative.parts, 'unsafe npm archive member')
             if member.isfile():
-                target = Path(installed) / Path(*relative.parts[1:])
+                name = Path(*relative.parts[1:])
+                require(name not in expected, 'duplicate npm archive file')
+                expected.add(name)
+                target = installed / name
                 require(target.is_file() and not target.is_symlink() and target.read_bytes() == handle.extractfile(member).read(), f'archive-installed mismatch: {relative}')
-                count += 1
-    require(count > 0, 'empty npm archive')
-    return count
+            else:
+                require(member.isdir(), 'unsupported npm archive member')
+    require(expected, 'empty npm archive')
+    for directory, dirs, files in os.walk(installed, followlinks=False):
+        for name in dirs + files:
+            target = Path(directory) / name
+            relative = target.relative_to(installed)
+            require(not target.is_symlink(), f'installed package symlink: {relative}')
+            if target.is_dir():
+                continue
+            require(target.is_file() and (relative in expected or any(relative.is_relative_to(root) for root in generated)), f'extra installed package file: {relative}')
+    return len(expected)
 
 
 def dex_classes(data):

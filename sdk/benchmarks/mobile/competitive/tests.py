@@ -217,6 +217,36 @@ def device_binary(platform=2):
 
 
 class CompetitiveTests(unittest.TestCase):
+    def test_installed_wrapper_rejects_extra_sources_and_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            installed = root / 'package'
+            installed.mkdir()
+            (installed / 'index.js').write_text('export const pinned = true;')
+            archive = root / 'wrapper.tgz'
+            with tarfile.open(archive, 'w:gz') as handle:
+                handle.add(installed, arcname='package')
+            self.assertEqual(core.verify_archive(archive, installed), 1)
+            for relative in ('unlisted.js', 'dist/unlisted.js', 'android/src/main/Injected.kt', 'build/unlisted.js'):
+                path = installed / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('unpinned source')
+                with self.subTest(relative=relative), self.assertRaisesRegex(ValueError, 'extra installed package file'):
+                    core.verify_archive(archive, installed, generated_roots=('android/build',))
+                path.unlink()
+            generated = installed / 'android/build/generated/Generated.kt'
+            generated.parent.mkdir(parents=True)
+            generated.write_text('native build output')
+            with self.assertRaisesRegex(ValueError, 'extra installed package file'):
+                core.verify_archive(archive, installed)
+            self.assertEqual(core.verify_archive(archive, installed, generated_roots=('android/build',)), 1)
+            for relative, target in (('alias.js', 'index.js'), ('linked-source', 'android'), ('android/build/alias', '../../index.js')):
+                link = installed / relative
+                link.symlink_to(target)
+                with self.subTest(link=relative), self.assertRaisesRegex(ValueError, 'installed package symlink'):
+                    core.verify_archive(archive, installed, generated_roots=('android/build',))
+                link.unlink()
+
     def test_size_readers_reject_acceptance_or_runtime_instrumentation(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

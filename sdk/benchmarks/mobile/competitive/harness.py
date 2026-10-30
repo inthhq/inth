@@ -17,6 +17,7 @@ from core import (HERE, VENDORS, PROFILES, DEFAULT_PROFILES, ANDROID_PROFILES, A
 
 PINS = read(HERE / 'pins.json')
 EXCLUDED = ('node_modules', 'Pods', 'build', '.gradle', '.cxx', '.expo', '.kotlin', '.git')
+WRAPPER_BUILD_OUTPUTS = {name: ('android/c15t-react-native/build',) if name == 'c15t' else ('android/build',) for name in VENDORS if name != 'baseline'}
 
 
 def resolve(base, value):
@@ -281,7 +282,7 @@ def verify_installed(cfg, host, vendor):
             require(not tree.exists(), f'{name} contaminates {vendor} host')
     if vendor != 'baseline':
         archive = (Path(cfg['archive']) if vendor == 'c15t' else host.parent / 'inputs' / next(row['name'] + '-' + row['wrapperVersion'] + '.tgz' for row in PINS['wrappers'] if row['name'] == vendor))
-        return verify_archive(archive, host / 'node_modules' / packages[vendor])
+        return verify_archive(archive, host / 'node_modules' / packages[vendor], generated_roots=WRAPPER_BUILD_OUTPUTS[vendor])
     return 0
 
 
@@ -525,7 +526,7 @@ def verify_archive_for_retained(cfg, row):
         pin = next(r for r in PINS['wrappers'] if r['name'] == vendor)
         archive = Path(row['wrapperArchive'])
         require(sha(archive) == pin['tarballSha256'], 'retained wrapper archive hash mismatch')
-    verify_archive(archive, host / 'node_modules' / package)
+    verify_archive(archive, host / 'node_modules' / package, generated_roots=WRAPPER_BUILD_OUTPUTS[vendor])
 
 
 def verify(cfg):
