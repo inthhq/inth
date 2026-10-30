@@ -135,7 +135,8 @@ export const nativeHttp = (
     method = fields === null ? "GET" : "POST",
     accept = "application/json",
     binary = false,
-    once = false
+    once = false,
+    requestTimeout = 30_000
   ): Promise<OAuthResponse> => {
     let waited = 0;
     for (let attempt = 0; ; attempt += 1) {
@@ -149,7 +150,7 @@ export const nativeHttp = (
       }
       const timeout = AbortSignal.any([
         signal,
-        AbortSignal.timeout(Math.ceil(Math.min(30_000, remaining))),
+        AbortSignal.timeout(Math.ceil(Math.min(requestTimeout, remaining))),
       ]);
       let result: OAuthResponse;
       try {
@@ -233,7 +234,9 @@ export const nativeHttp = (
         true,
         "GET",
         accept,
-        true
+        true,
+        false,
+        300_000
       ),
     error: (response) => responseError(response),
     form: (url, fields, deadline) =>
@@ -304,7 +307,8 @@ export const nativeHttp = (
         "POST",
         "application/json",
         false,
-        true
+        true,
+        300_000
       ),
   };
 };

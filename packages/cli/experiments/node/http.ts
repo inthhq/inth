@@ -57,7 +57,8 @@ export class HttpClient {
     url: string,
     init: RequestInit = {},
     deadline = Number.POSITIVE_INFINITY,
-    retryRateLimit = this.retryRateLimit
+    retryRateLimit = this.retryRateLimit,
+    requestTimeout = 30_000
   ): Promise<Response> {
     let waited = 0;
     for (let attempt = 0; ; attempt += 1) {
@@ -75,7 +76,7 @@ export class HttpClient {
           redirect: "error",
           signal: AbortSignal.any([
             this.signal,
-            AbortSignal.timeout(Math.ceil(Math.min(30_000, remaining))),
+            AbortSignal.timeout(Math.ceil(Math.min(requestTimeout, remaining))),
           ]),
         });
       } catch {

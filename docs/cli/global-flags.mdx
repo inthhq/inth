@@ -52,7 +52,7 @@ inth api GET /v1/agent-chat-attachments/att_123/content \
   --output ./attachment.bin --json
 ```
 
-Requests support `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. GET is the default. Authenticated requests must stay under `https://api.inth.com/v1/`, and redirects are rejected. An explicit `organizationId` query parameter overrides organization defaults.
+Requests support `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. GET is the default. Authenticated requests must stay under `https://api.inth.com/v1/`, and redirects are rejected. Raw requests do not use the saved or directory-linked organization. Pass `--organization` or an `organizationId` query parameter only when the endpoint accepts that selector. Resource IDs resolve their own organization.
 
 Use `api GET <path> --output <new-file>` for binary reads without a named command, including chat attachment paths returned by the API. The existing form `api <path> --method GET --output <new-file>` also works. File output accepts GET only and rejects body input. Without `--output`, raw responses must be JSON. With `--output`, stdout contains JSON file metadata; add `--json` for the versioned CLI envelope. The normal 128 MiB limit and no-overwrite policy apply.
 

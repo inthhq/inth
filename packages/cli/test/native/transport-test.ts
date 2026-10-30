@@ -119,6 +119,30 @@ check(
   binary.bytes?.join(",") === "0,255,128,13,10,0,65",
   "Download bytes passed through text decoding."
 );
+const { uploadChat } = http;
+if (!uploadChat) {
+  throw new Error("The native transport does not support chat uploads.");
+}
+const slowDownload = download(
+  `${base}/binary-slow`,
+  "inth_transport_test",
+  "image/png"
+);
+const slowUpload = uploadChat(
+  `${base}/upload-slow`,
+  "inth_transport_test",
+  '{"fileName":"notes.txt","data":"QQ=="}'
+);
+const downloaded = await slowDownload;
+const uploaded = await slowUpload;
+check(
+  downloaded.bytes?.join(",") === "0,255,128,13,10,0,65,66,66,66",
+  "A steadily arriving download failed after 30 seconds."
+);
+check(
+  uploaded.body.includes('"aga_ready"'),
+  "A chat upload failed after 30 seconds."
+);
 const report = await http.send(
   `${base}/report-v2`,
   "inth_transport_test",

@@ -54,6 +54,7 @@ export const UPLOAD_COMMANDS: ResourceCommand[] = [
     ),
     download: "*/*",
     required: ["output"],
+    scoped: false,
   },
   attachment(
     "chat",

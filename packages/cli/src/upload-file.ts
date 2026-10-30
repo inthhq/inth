@@ -113,7 +113,8 @@ const fileType = (
   hint: string | undefined,
   support: boolean
 ): string => {
-  const inferred = inferredType(fileName, support);
+  const inferred =
+    inferredType(fileName, support) ?? (support ? undefined : "text/plain");
   const normalized = hint?.trim().toLowerCase();
   const mediaType = normalized ?? inferred ?? (support ? "" : "text/plain");
   if (

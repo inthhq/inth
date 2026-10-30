@@ -35,7 +35,7 @@ inth link acme
 inth project list --organization org_123
 ```
 
-Commands targeting a resource ID resolve ownership on the server and reject `--organization`. Scan starts use `--repository`. Organization and region commands do not use the local default. For raw API calls, an explicit `organizationId` in the URL query takes precedence over organization defaults.
+Commands targeting a resource ID resolve ownership on the server and reject `--organization`. Scan starts use `--repository`. Organization and region commands do not use the local default. Raw requests do not use the saved or directory-linked organization. Pass `--organization` or an `organizationId` query parameter only when the endpoint accepts that selector. Resource IDs resolve their own organization.
 
 ## How do I create an organization?
 

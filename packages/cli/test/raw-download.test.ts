@@ -277,12 +277,12 @@ describe("raw API binary downloads", () => {
     await expect(reading).rejects.toMatchObject({ name: "AbortError" });
     await expect(readFile(path)).rejects.toMatchObject({ code: "ENOENT" });
   });
-  it("keeps JSON reads and existing raw mutations unchanged", () => {
+  it("builds raw JSON reads and mutations without an implicit organization", () => {
     expect(rawApiRequest(parseArguments(["api", "GET", "/v1/me"]))).toEqual({
       body: undefined,
       method: "GET",
       path: "/v1/me",
-      scoped: true,
+      scoped: false,
     });
     expect(
       rawApiRequest(
@@ -299,7 +299,7 @@ describe("raw API binary downloads", () => {
       body: '{"description":null}',
       method: "PATCH",
       path: "/v1/projects/prj_123",
-      scoped: true,
+      scoped: false,
     });
   });
 });

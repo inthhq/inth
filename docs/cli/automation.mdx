@@ -26,7 +26,7 @@ Supplying an API key skips device login, but `login` does not validate the key a
 
 Browser sign-ins also include an optional `data.profile` object from OAuth UserInfo with `sub`, `name`, and `email`; organization keys do not have a person's profile.
 
-`--non-interactive` also disables prompts and browser login while keeping human-readable output. When several organizations are available, provide an ID or slug to `switch` or `link`. An API request can specify `--organization` to override linked project and user defaults. An explicit `organizationId` in the API URL query takes precedence over those defaults.
+`--non-interactive` also disables prompts and browser login while keeping human-readable output. When several organizations are available, provide an ID or slug to `switch` or `link`. Raw requests do not use the saved or directory-linked organization. Pass `--organization` or an `organizationId` query parameter only when the endpoint accepts that selector. Resource IDs resolve their own organization.
 
 ## How does an agent sign in or create an account?
 
@@ -153,9 +153,9 @@ New browser sign-ins request the current CLI capabilities. A person must run `in
 JSON output keeps every field returned by the server. A response marked `dataCompleteness: "summary"` points to a separate full configuration read. For example:
 
 ```sh
-inth api /v1/projects/prj_123/consent/configuration/i18n --json
+inth consent translations-get --project prj_123 --json
 inth api '/v1/code-audit/scans/scan_123/issues?detail=full' --json
-inth api '/v1/projects/prj_123/consent/records?page=1' --json
+inth consent records --project prj_123 --page 1 --json
 ```
 
 Replace the IDs with those returned by discovery commands. Consent records use numbered pages with a fixed page size. Continue with `data.data.nextPage` until it is null; do not invent a cursor or a limit for that endpoint.

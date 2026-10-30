@@ -165,8 +165,7 @@ inth website-audit screenshot-get capture_123 --audit scan_123 \
 inth billing invoice-pdf inv_123 --organization org_123 \
   --output ./invoice.pdf --json
 inth support attachment-get sat_123 --output ./recording.webm --json
-inth chat attachment-get aga_first --organization org_123 \
-  --output ./attachment.bin --json
+inth chat attachment-get aga_first --output ./attachment.bin --json
 ```
 
 Downloads preserve the response bytes and accept at most 128 MiB. Existing files are never overwritten, and `--output -` is refused. The CLI downloads through the authenticated API host and rejects redirects to storage hosts. Cancelling stops local transfer or file writing and removes an incomplete output file. Raw GET downloads accept paths returned by the API even when no named download command exists. Endpoint scopes and access checks still apply.

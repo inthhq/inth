@@ -646,6 +646,6 @@ export const rawApiRequest = (options: CliArguments): ResourceRequest => {
     body: data === undefined ? undefined : jsonObject(data),
     method,
     path: options.argument,
-    scoped: true,
+    scoped: options.organization !== undefined,
   };
 };

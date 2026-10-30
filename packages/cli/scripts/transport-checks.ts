@@ -40,6 +40,7 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
   let bearer = 0;
   let binaryRequests = 0;
   let binaryRedirects = 0;
+  let slowUploads = 0;
   const handlerFailures: string[] = [];
   const handleTelemetryRequest = (
     request: IncomingMessage,
@@ -153,6 +154,18 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
       }
       binaryRequests += 1;
       response.write(new Uint8Array([0, 255, 128, 13, 10, 0, 65]));
+      if (request.url === "/binary-slow") {
+        const progress = setInterval(
+          () => response.write(new Uint8Array([66])),
+          10_000
+        );
+        const finish = setTimeout(() => response.end(), 32_000);
+        response.once("close", () => {
+          clearInterval(progress);
+          clearTimeout(finish);
+        });
+        return true;
+      }
       if (request.url !== "/binary-hang") {
         response.end();
       }
@@ -176,6 +189,20 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
     response: ServerResponse,
     guard: Guard
   ): void => {
+    if (request.url === "/upload-slow") {
+      slowUploads += 1;
+      assert.equal(request.method, "POST");
+      assert.equal(request.headers.authorization, "Bearer inth_transport_test");
+      readBody(request, guard, (body) => {
+        assert.equal(JSON.parse(body).fileName, "notes.txt");
+        const finish = setTimeout(
+          () => response.end('{"success":true,"data":{"id":"aga_ready"}}'),
+          32_000
+        );
+        response.once("close", () => clearTimeout(finish));
+      });
+      return;
+    }
     if (handleTelemetryRequest(request, response, guard)) {
       return;
     }
@@ -277,7 +304,7 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
     const child = spawn(
       fixture,
       [`http://127.0.0.1:${port}`, path.join(identityDirectory, "state")],
-      { stdio: "inherit", timeout: 8000 }
+      { stdio: "inherit", timeout: 45_000 }
     );
     const [status] = await once(child, "exit");
     assert.deepEqual(
@@ -299,7 +326,8 @@ export const verifyTransport = async (fixture: string): Promise<void> => {
     assert.equal(identityRequests, 2);
     assert.equal(telemetryRequests, 1);
     assert.equal(bearer, 1);
-    assert.equal(binaryRequests, 5);
+    assert.equal(binaryRequests, 6);
+    assert.equal(slowUploads, 1);
     assert.equal(binaryRedirects, 0);
   } finally {
     const closed = once(server, "close");

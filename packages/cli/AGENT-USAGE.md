@@ -19,7 +19,7 @@ inth link org_123 --json
 
 Authenticate through an existing browser sign-in or an organization API key in `INTH_TOKEN`. A person runs `inth login` interactively once; subsequent API requests can use that stored session and refresh it automatically. `--json` never opens a browser or asks a question. `login --json` without an email or API key fails before starting a device grant, even in a terminal. JSON and non-interactive commands never check for updates or print update notices. `inth update --check --json` reports `currentVersion`, `latestVersion`, `updateAvailable`, `installMethod`, and `updateCommand`. Supplying an API key skips device login, but `login` does not validate the key against the server. Use `inth whoami --json` to check access and read the principal, scopes, and memberships from `/v1/me`. Browser sign-ins also include an optional `data.profile` object from OAuth UserInfo with `sub`, `name`, and `email`; organization keys do not have a person’s profile.
 
-`--non-interactive` also disables prompts and browser login while keeping human-readable output. When several organizations are available, provide an ID or slug to `switch` or `link`. An API request can specify `--organization` to override linked project and user defaults. An explicit `organizationId` in the API URL query takes precedence over those defaults.
+`--non-interactive` also disables prompts and browser login while keeping human-readable output. When several organizations are available, provide an ID or slug to `switch` or `link`. Raw requests do not use the saved or directory-linked organization. Pass `--organization` or an `organizationId` query parameter only when the endpoint accepts that selector. Resource IDs resolve their own organization.
 
 ## Sign in or create an account
 
@@ -132,7 +132,7 @@ Binary downloads require an explicit new file path. The parent directory must ex
 inth website-audit screenshot-get capture_123 --audit scan_123 --output ./capture.png --json
 inth billing invoice-pdf inv_123 --organization org_123 --output ./invoice.pdf --json
 inth support attachment-get sat_123 --output ./recording.webm --json
-inth chat attachment-get aga_first --organization org_123 --output ./attachment.bin --json
+inth chat attachment-get aga_first --output ./attachment.bin --json
 ```
 
 Use raw GET downloads for API-returned paths without a named command. `api <path> --method GET --output <new-file>` also works. File output rejects other methods and body inputs. API-host restrictions, redirect refusal and endpoint authorization apply. Without `--json`, raw downloads print JSON metadata without the CLI envelope.

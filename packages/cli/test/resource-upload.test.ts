@@ -916,8 +916,8 @@ describe("upload command validation and discovery", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it("downloads chat bytes through the protected API route to a new file", async () => {
-    person();
+  it("downloads chat bytes by attachment ID independently of the saved organization", async () => {
+    const selected = person();
     const output = capture();
     const path = nodePath.join(await directory(), "saved.bin");
     const requests = await fixture((_request, response) => {
@@ -934,8 +934,6 @@ describe("upload command validation and discovery", () => {
         "aga_first",
         "--output",
         path,
-        "--organization",
-        "org_123",
         "--auth",
         "agent",
         "--json",
@@ -947,6 +945,8 @@ describe("upload command validation and discovery", () => {
       "/v1/agent-chat-attachments/aga_first/content"
     );
     expect(requests[0]?.headers.authorization).toBe("Bearer person-token");
+    expect(requests[0]?.url.searchParams.has("organizationId")).toBe(false);
+    expect(selected.organization).not.toHaveBeenCalled();
     expect(
       JSON.parse(output.stdout.mock.calls[0]?.[0] ?? "").data
     ).toMatchObject({

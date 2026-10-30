@@ -403,10 +403,10 @@ Piping a command does not switch it to JSON. `--non-interactive` disables prompt
 inth api /v1/me
 inth api /v1/projects --organization org_123 --json
 inth api /v1/projects/prj_123 --method PATCH --data '{"description":null}'
-inth chat attachment-get aga_first --organization org_123 --output ./attachment.bin --json
+inth chat attachment-get aga_first --output ./attachment.bin --json
 ```
 
-Requests support `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. GET is the default. An explicit `organizationId` query parameter overrides organization defaults.
+Requests support `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`. GET is the default. Raw requests do not use the saved or directory-linked organization. Pass `--organization` or an `organizationId` query parameter only when the endpoint accepts that selector. Resource IDs resolve their own organization.
 
 Use GET with `--output <new-file>` for binary data. It preserves bytes, refuses existing paths and `-`, and enforces a 128 MiB limit. The parent directory must exist. With `--json`, the result contains file metadata in `data`; the bytes go to the file. Requests remain on the trusted API host and refuse redirects.
 

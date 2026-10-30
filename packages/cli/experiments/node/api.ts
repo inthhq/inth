@@ -159,7 +159,8 @@ export class ApiClient {
       body,
       "POST",
       "application/json",
-      true
+      true,
+      300_000
     );
     return JSON.stringify(await this.http.json(response, z.json()));
   }
@@ -176,7 +177,9 @@ export class ApiClient {
       undefined,
       undefined,
       "GET",
-      accept
+      accept,
+      false,
+      300_000
     );
     if (!response.ok) {
       throw await this.http.error(response);
@@ -239,7 +242,8 @@ export class ApiClient {
     body?: string,
     method = body === undefined ? "GET" : "POST",
     accept = "application/json",
-    once = false
+    once = false,
+    requestTimeout = 30_000
   ): Promise<AuthorizedResponse> {
     let token = providedToken || this.key;
     if (auth && !token) {
@@ -263,7 +267,8 @@ export class ApiClient {
         method,
       },
       Number.POSITIVE_INFINITY,
-      once ? false : undefined
+      once ? false : undefined,
+      requestTimeout
     );
     if (response.status === 401 && auth) {
       await response.body?.cancel();
@@ -283,7 +288,8 @@ export class ApiClient {
           method,
         },
         Number.POSITIVE_INFINITY,
-        once ? false : undefined
+        once ? false : undefined,
+        requestTimeout
       );
     }
     return { response, token };

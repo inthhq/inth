@@ -20,6 +20,32 @@ afterEach(() => {
 });
 
 describe("public resource commands", () => {
+  it.each([
+    ["/v1/projects/prj_123/consent/configuration/i18n", []],
+    ["/v1/projects", ["--organization", "org_explicit"]],
+  ])("uses only explicit tenant selectors for raw %s", async (path, flags) => {
+    vi.stubEnv("INTH_TOKEN", "inth_fixture");
+    vi.spyOn(OrganizationContext.prototype, "resolve").mockImplementation(
+      (organization) => Promise.resolve(organization ?? "org_saved")
+    );
+    vi.stubGlobal("fetch", (url: string) => {
+      const selected = new URL(url).searchParams.get("organizationId");
+      return Promise.resolve(
+        selected === (flags.length ? "org_explicit" : null)
+          ? Response.json({ data: { selected }, success: true })
+          : Response.json(
+              { error: { code: "INVALID_PAYLOAD" } },
+              { status: 400 }
+            )
+      );
+    });
+    const stdout = vi.spyOn(console, "log").mockImplementation(() => {});
+    await run(["api", path, ...flags, "--json"], new AbortController().signal);
+    expect(JSON.parse(stdout.mock.lastCall?.[0] ?? "")).toMatchObject({
+      data: { data: { selected: flags.length ? "org_explicit" : null } },
+      ok: true,
+    });
+  });
   it.each(requestCases)("routes $args to $method $path", async (example) => {
     const options = parseArguments(example.args);
     expect(buildResourceRequest(options)).toEqual({
