@@ -463,26 +463,39 @@ final class ConsentJourneyTests: XCTestCase {
         try? data.write(to: URL(fileURLWithPath: dir).appendingPathComponent("ax-" + name + ".json"))
     }
     /// Xcode's accessibility audit over the current screen. Every finding is printed and written beside the
-    /// captures. The three findings the accessibility review traced to the OS rather than the product are
+    /// captures. The findings the accessibility review traced to the OS rather than the product are
     /// recognised by their geometry (see `documentedAuditFalsePositive`) and tolerated; anything else fails.
-    /// `C15T_AUDIT_STRICT=1` in the runner's environment fails on the documented ones too. `keepingState`
-    /// drops the Dynamic Type audit, which switches the content size and back and so rebuilds the page: it is
-    /// left out where the page's state must survive the audit, and run on the other screens of the same test.
+    /// `C15T_AUDIT_STRICT=1` in the runner's environment fails on the documented ones too.
+    ///
+    /// Contrast runs first, in a call of its own; the other categories then run together as they always did.
+    /// The contrast category samples the pixels inside each text's frame, and two other categories move the
+    /// page under it when they share its call: text-clipped scrolls the list about a thousand points, to a
+    /// position that differs between runs, and Dynamic Type switches the content size up and back, which
+    /// rebuilds the list. The sample then comes from one scroll position and the frame from another, and text
+    /// that measures 5.76:1 or 17:1 on the capture ("IAB partners", 2026-10-30) is reported as failing. Alone
+    /// on the settled screen, contrast has only ever reported text under the bar or the footer
+    /// (`test20IabPreferencesContrastAuditIsolation`). The other categories keep one call: run after a
+    /// separate Dynamic Type pass, text-clipped reports clipping that the combined call never did.
+    /// `keepingState` leaves Dynamic Type out where the page's state must survive the audit; it is run on the
+    /// other screens of the same test.
     func audit(_ name: String, keepingState: Bool = false) {
         capture(name); dumpAccessibility(name)
         guard #available(iOS 17.0, *) else { return }
         let strict = ProcessInfo.processInfo.environment["C15T_AUDIT_STRICT"] == "1"
         var issues: [String] = [], unexplained: [String] = []
-        do {
-            try app.performAccessibilityAudit(for: keepingState ? XCUIAccessibilityAuditType.all.subtracting(.dynamicType) : .all) { issue in
-                let line = "\(issue.auditType.rawValue): \(issue.compactDescription) | \(issue.detailedDescription) [\(issue.element.map { "\($0.elementType.rawValue) id=\($0.identifier) label=\($0.label) frame=\($0.frame)" } ?? "no element")]"
-                issues.append(line)
-                // Returning true tells XCTest the finding is handled; anything else it records as a failure itself.
-                let tolerated = !strict && self.documentedAuditFalsePositive(issue, screen: name)
-                if !tolerated { unexplained.append(line) }
-                return tolerated
-            }
-        } catch { unexplained.append("audit threw: \(error)") }
+        let rest: XCUIAccessibilityAuditType = keepingState ? .all.subtracting([.contrast, .dynamicType]) : .all.subtracting(.contrast)
+        for types in [[.contrast], rest] as [XCUIAccessibilityAuditType] {
+            do {
+                try app.performAccessibilityAudit(for: types) { issue in
+                    let line = "\(issue.auditType.rawValue): \(issue.compactDescription) | \(issue.detailedDescription) [\(issue.element.map { "\($0.elementType.rawValue) id=\($0.identifier) label=\($0.label) frame=\($0.frame)" } ?? "no element")]"
+                    issues.append(line)
+                    // Returning true tells XCTest the finding is handled; anything else it records as a failure itself.
+                    let tolerated = !strict && self.documentedAuditFalsePositive(issue, screen: name)
+                    if !tolerated { unexplained.append(line) }
+                    return tolerated
+                }
+            } catch { unexplained.append("audit threw: \(error)") }
+        }
         print("ax-audit \(name) issues=\(issues.count) unexplained=\(unexplained.count)")
         for issue in issues { print("ax-audit \(name) \(issue)") }
         if let dir = ProcessInfo.processInfo.environment["C15T_CAPTURE_DIR"] {
@@ -491,16 +504,20 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(unexplained.isEmpty, "accessibility audit \(name): \(unexplained.joined(separator: "; "))")
     }
     /// Findings of the iOS 27 audit that the accessibility review checked against the product and traced to
-    /// the OS. The audit reports the first two on `SwiftUI.AccessibilityNode` with no element, so they can
-    /// only be matched by screen and category, and only in the numbers the review documented:
+    /// the OS:
     /// - one hit-region finding on a first layer with the provider attribution showing: "Secured by c15t" is
-    ///   a labelled, static attribution with no action that the audit treats as a control
+    ///   a labelled, static attribution with no action that the audit treats as a control. Reported with no
+    ///   element, so matched by screen and category and counted once
     ///   (`test17FirstLayerHitRegionAuditIsolation` isolates it: hidden attribution, clean audit);
-    /// - up to three contrast findings on the IAB preferences and one on the AX5 save error: text under the
-    ///   pinned footer or beyond the window, where the audit samples the footer's pixels instead of the
-    ///   text's; every theme pair computes at or above 4.66:1 (`a11y/pixel-contrast.py` in the review);
+    /// - contrast on text whose frame runs under the navigation bar or the pinned footer (or the keyboard):
+    ///   the audit samples the pixels in the frame, and there the bar's blur or the footer's canvas covers
+    ///   the text. Matched by the element's frame against the visible window, so a finding on text that is
+    ///   wholly visible fails. Every theme pair computes at or above 4.66:1 (`a11y/pixel-contrast.py` in the
+    ///   review), and text the audit has flagged while wholly visible measured 5.76:1 and 17:1 on the capture;
+    /// - one contrast finding on the AX5 save error with no element: text beyond the window, where there is
+    ///   no pinned footer and the frame cannot be read;
     /// - "may be clipped" on the UIKit search field, whose text is whole at the largest size in the captures.
-    /// A finding with an element, a different screen, or a higher count fails the test.
+    /// A finding of another kind, on another screen, or on a visible element fails the test.
     @available(iOS 17.0, *)
     func documentedAuditFalsePositive(_ issue: XCUIAccessibilityAuditIssue, screen: String) -> Bool {
         switch issue.auditType {
@@ -509,9 +526,18 @@ final class ConsentJourneyTests: XCTestCase {
             auditTolerated[screen, default: 0] += 1
             return auditTolerated[screen]! <= 1 && app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.exists
         case .contrast:
-            guard issue.element == nil, let limit = ["ax-iab-preferences": 3, "ax-ax5-save-error": 1][screen] else { return false }
-            auditTolerated[screen, default: 0] += 1
-            return auditTolerated[screen]! <= limit
+            guard let element = issue.element else {
+                guard screen == "ax-ax5-save-error" else { return false }
+                auditTolerated[screen, default: 0] += 1
+                return auditTolerated[screen]! <= 1
+            }
+            let frame = element.frame, window = visibleWindow
+            let covered = !window.contains(frame)
+            auditTolerated[screen + ".contrast", default: 0] += 1
+            // The pixels at the moment of the report, so a finding can be measured on the host (region-contrast.py in the review).
+            capture("\(screen)-contrast-\(auditTolerated[screen + ".contrast"]!)")
+            print("ax-audit \(screen) contrast element frame=\(frame) window=\(window) \(covered ? "runs under the bar, footer or keyboard" : "wholly visible")")
+            return covered
         case .textClipped:
             guard screen == "ax-partner-search-keyboard",
                   let element = issue.element,
@@ -524,6 +550,15 @@ final class ConsentJourneyTests: XCTestCase {
         }
     }
     var auditTolerated: [String: Int] = [:]
+    /// The part of the screen where page content is not covered: below the navigation bar and above the
+    /// pinned footer or the keyboard, whichever is present.
+    var visibleWindow: CGRect {
+        let bar = app.navigationBars.firstMatch
+        let top = bar.exists ? bar.frame.maxY : 0
+        let keyboard = app.keyboards.firstMatch
+        let bottom = keyboard.exists ? keyboard.frame.minY : footer.exists && footer.frame.minY > 150 ? footer.frame.minY : app.frame.maxY
+        return CGRect(x: app.frame.minX, y: top, width: app.frame.width, height: bottom - top)
+    }
     /// Every element with a label, ordered as the hierarchy exposes it. Used for duplicate and name checks.
     func labelled() -> [(type: XCUIElement.ElementType, id: String, label: String)] {
         guard let snapshot = try? app.snapshot() else { return [] }
@@ -700,6 +735,52 @@ final class ConsentJourneyTests: XCTestCase {
         for step in 4...6 { app.swipeRight(); usleep(900_000); capture(String(format: "vo-iab-%02d-partners-next", step)) }
         button("c15t.iab.vendors.back").tap(); usleep(800_000); button("c15t.iab.vendors.back").doubleTap()
         XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5)); sleep(2); capture("vo-iab-07-back-to-preferences")
+    }
+    /// Diagnostic behind the pass order in `audit`: from the state test15 audits as ax-iab-preferences, runs the
+    /// categories one at a time and in combinations, printing the findings and the position of the "IAB
+    /// partners" row after each, and capturing the screen when a contrast finding names an element, so the
+    /// finding can be measured against pixels. Exploratory, like test17.
+    func test20IabPreferencesContrastAuditIsolation() throws {
+        guard ProcessInfo.processInfo.environment["C15T_AUDIT_EXPLORATORY"] == "1" else { throw XCTSkip("exploratory audit isolation; set C15T_AUDIT_EXPLORATORY=1") }
+        continueAfterFailure = true
+        guard #available(iOS 17.0, *) else { return }
+        let rounds = Int(ProcessInfo.processInfo.environment["C15T_AUDIT_ROUNDS"] ?? "") ?? 2
+        func frames(_ tag: String) {
+            let partners = app.staticTexts["IAB partners"].firstMatch
+            let row = button("c15t.iab.partners")
+            print("ax-diag \(tag) footer=\(footer.exists ? "\(footer.frame)" : "none") partnersText=\(partners.exists ? "\(partners.frame)" : "absent") partnersRow=\(row.exists ? "\(row.frame)" : "absent")")
+        }
+        func run(_ types: XCUIAccessibilityAuditType, _ tag: String) {
+            var n = 0
+            do {
+                try app.performAccessibilityAudit(for: types) { issue in
+                    n += 1
+                    let desc = issue.element.map { "\($0.elementType.rawValue) id=\($0.identifier) label=\($0.label) frame=\($0.frame)" } ?? "no element"
+                    print("ax-diag \(tag) issue \(n): \(issue.auditType.rawValue) \(issue.compactDescription) [\(desc)]")
+                    if issue.auditType == .contrast, issue.element != nil { self.capture("\(tag)-issue-\(n)"); frames("\(tag)-issue-\(n)") }
+                    return true
+                }
+            } catch { print("ax-diag \(tag) threw \(error)") }
+            print("ax-diag \(tag) issues=\(n)")
+            capture("\(tag)-after"); dumpAccessibility("\(tag)-after"); frames("\(tag)-after")
+        }
+        for round in 1...rounds {
+            launch("fresh-online-iab")
+            XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
+            button("c15t.first-layer.customize").tap()
+            XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))
+            let details = button("c15t.iab.purpose.7.details"); reveal(details); details.tap()
+            XCTAssertEqual(details.value as? String, "Expanded")
+            let r = "diag-r\(round)"
+            capture("\(r)-00-before"); dumpAccessibility("\(r)-00-before"); frames("\(r)-00-before")
+            let sequence: [(XCUIAccessibilityAuditType, String)] = [
+                (.contrast, "contrast"), (.elementDetection, "element-detection"), (.hitRegion, "hit-region"),
+                (.sufficientElementDescription, "description"), (.textClipped, "text-clipped"), (.trait, "trait"),
+                (.contrast, "contrast-after-static"), (.all.subtracting(.dynamicType), "static-all"),
+                (.contrast, "contrast-after-static-all"), (.dynamicType, "dynamic-type"), (.contrast, "contrast-after-dynamic-type")]
+            for (index, step) in sequence.enumerated() { run(step.0, String(format: "%@-%02d-%@", r, index + 1, step.1)) }
+            app.terminate()
+        }
     }
     /// Isolates the first-layer hit-region finding, which Xcode's audit reports without naming the node:
     /// the same audit with the provider attribution hidden, the brand hidden, and both.
