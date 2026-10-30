@@ -3,6 +3,14 @@ package com.c15t.consentui
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.text.Editable
+import android.text.InputType
+import android.text.TextWatcher
+import android.util.TypedValue
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
@@ -17,6 +25,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -48,10 +58,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFontFamilyResolver
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -61,23 +75,29 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontSynthesis
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.runtime.withFrameNanos
 import androidx.core.view.WindowCompat
+import androidx.core.widget.TextViewCompat
 import com.c15t.core.iab.*
 import com.c15t.core.model.*
 import com.c15t.core.tc.*
 import java.text.Collator
 import java.text.Normalizer
 import java.util.Locale
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -764,13 +784,107 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 
 private fun String.searchKey() = Normalizer.normalize(this, Normalizer.Form.NFD).replace("\\p{M}+".toRegex(), "").lowercase(Locale.ROOT)
 
+private class SearchFieldLayout {
+    var field: LayoutCoordinates? = null
+    var content: LayoutCoordinates? = null
+    var editor: EditText? = null
+
+    fun updatePadding() {
+        val field = field?.takeIf { it.isAttached } ?: return
+        val content = content?.takeIf { it.isAttached } ?: return
+        val bounds = field.localBoundingBoxOf(content, clipBounds = false)
+        editor?.setPadding(bounds.left.roundToInt(), bounds.top.roundToInt(),
+            (field.size.width - bounds.right).roundToInt(), (field.size.height - bounds.bottom).roundToInt())
+    }
+}
+
 @Composable private fun SearchField(value: String, onChange: (String) -> Unit, label: String, id: String) {
     val theme = LocalConsentTheme.current
-    OutlinedTextField(value, onChange, label = { Text(label) }, singleLine = true, shape = RoundedCornerShape(theme.cornerRadius),
-        leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = theme.colors.textSecondary.color()) },
-        colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = theme.colors.surface.color(), unfocusedContainerColor = theme.colors.surface.color(),
-            focusedBorderColor = theme.colors.accent.color(), unfocusedBorderColor = theme.colors.text.color().copy(alpha = 0.18f)),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag(id))
+    val currentValue by rememberUpdatedState(value)
+    val currentChange by rememberUpdatedState(onChange)
+    val interactions = remember { MutableInteractionSource() }
+    var focus by remember { mutableStateOf<FocusInteraction.Focus?>(null) }
+    val scope = rememberCoroutineScope()
+    val hostView = LocalView.current
+    val layout = remember { SearchFieldLayout() }
+    val style = MaterialTheme.typography.bodyLarge
+    val typeface = LocalFontFamilyResolver.current.resolve(style.fontFamily, style.fontWeight ?: FontWeight.Normal,
+        style.fontStyle ?: FontStyle.Normal, style.fontSynthesis ?: FontSynthesis.All).value as android.graphics.Typeface
+    val ink = theme.colors.text.color().toArgb()
+    val accent = theme.colors.accent.color().toArgb()
+    val selection = theme.colors.accent.color().copy(alpha = 0.4f).toArgb()
+    val colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = theme.colors.surface.color(), unfocusedContainerColor = theme.colors.surface.color(),
+        focusedBorderColor = theme.colors.accent.color(), unfocusedBorderColor = theme.colors.text.color().copy(alpha = 0.18f))
+    val lineHeight = with(LocalDensity.current) { style.lineHeight.roundToPx() }
+    val contentHeight = with(LocalDensity.current) { style.lineHeight.toDp() }
+    val labelPadding = with(LocalDensity.current) { MaterialTheme.typography.bodySmall.lineHeight.toDp() / 2 }
+    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag(id)
+        .padding(top = labelPadding)
+        .defaultMinSize(minWidth = OutlinedTextFieldDefaults.MinWidth, minHeight = OutlinedTextFieldDefaults.MinHeight)
+        .onGloballyPositioned { layout.field = it; layout.updatePadding() }) {
+        OutlinedTextFieldDefaults.DecorationBox(value = value, singleLine = true, enabled = true,
+            visualTransformation = VisualTransformation.None, interactionSource = interactions,
+            label = { Text(label, modifier = Modifier.clearAndSetSemantics {}) },
+            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = theme.colors.textSecondary.color()) },
+            colors = colors,
+            container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = false, interactionSource = interactions,
+                colors = colors,
+                shape = RoundedCornerShape(theme.cornerRadius)) },
+            innerTextField = {
+                Spacer(Modifier.fillMaxWidth().height(contentHeight).onGloballyPositioned {
+                    layout.content = it; layout.updatePadding()
+                })
+            })
+        // Material measures the text insets; the native editor keeps the whole field tappable and editable.
+        AndroidView(modifier = Modifier.matchParentSize(), factory = { context ->
+            EditText(context).apply {
+                layout.editor = this
+                tag = id
+                background = null
+                minimumWidth = 0; minimumHeight = 0
+                setPadding(0, 0, 0, 0)
+                includeFontPadding = false
+                gravity = android.view.Gravity.START or android.view.Gravity.CENTER_VERTICAL
+                setSingleLine(true)
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_AUTO_CORRECT
+                imeOptions = EditorInfo.IME_ACTION_DONE
+                isSaveEnabled = false
+                setHintTextColor(android.graphics.Color.TRANSPARENT)
+                addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                    override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) = Unit
+                    override fun afterTextChanged(text: Editable?) {
+                        val next = text.toString()
+                        if (next != currentValue) currentChange(next)
+                    }
+                })
+                setOnFocusChangeListener { _, focused ->
+                    scope.launch {
+                        if (focused) FocusInteraction.Focus().also { focus = it; interactions.emit(it) }
+                        else focus?.let { interactions.emit(FocusInteraction.Unfocus(it)); focus = null }
+                    }
+                }
+            }
+        }, onReset = null, onRelease = { edit ->
+            edit.context.getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(hostView.windowToken, 0)
+            edit.clearFocus()
+            layout.editor = null
+        }, update = { edit ->
+            if (edit.text.toString() != value) {
+                edit.setText(value)
+                edit.setSelection(value.length)
+            }
+            edit.hint = label
+            edit.typeface = typeface
+            edit.setTextSize(TypedValue.COMPLEX_UNIT_SP, style.fontSize.value)
+            edit.letterSpacing = style.letterSpacing.value / style.fontSize.value
+            TextViewCompat.setLineHeight(edit, lineHeight)
+            edit.setTextColor(ink)
+            edit.highlightColor = selection
+            if (Build.VERSION.SDK_INT >= 29) edit.textCursorDrawable?.mutate()?.setTint(accent)
+            layout.updatePadding()
+        })
+    }
 }
 
 /** On, Partly on, or Off at a glance, beside the chevron into the partner. */

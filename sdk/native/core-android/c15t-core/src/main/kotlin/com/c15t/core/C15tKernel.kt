@@ -256,7 +256,7 @@ class C15tKernel(
 	private val mutationErrors = ThreadLocal<MutableList<KernelError>>()
 	private var needsGrantCleanup = false
 	/** Serialize every mutation through durable write and publication, never hot reads. */
-	private inline fun <Result> mutate(body: (MutationPermit) -> Result): Result {
+	private fun <Result> mutate(body: (MutationPermit) -> Result): Result {
 		commitGate.acquireUninterruptibly()
 		val permit = MutationPermit { commitGate.release() }
 		val previousErrors = mutationErrors.get()

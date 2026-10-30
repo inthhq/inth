@@ -7,6 +7,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.UiDevice
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.UiObject2
+import androidx.test.uiautomator.Until
 import org.junit.*
 import org.junit.runner.RunWith
 import java.io.File
@@ -26,6 +29,20 @@ class ConsentJourneyTest {
     private fun waitFor(id: String): SemanticsNodeInteraction {
         compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
         return compose.onNodeWithTag(id)
+    }
+    private fun nativeSearch(id: String): UiObject2 {
+        waitFor(id)
+        val edit = device.wait(Until.findObject(By.clazz("android.widget.EditText")), 10_000)
+        Assert.assertNotNull("Native search field is missing", edit)
+        Assert.assertEquals(1, device.findObjects(By.clazz("android.widget.EditText")).size)
+        return edit!!
+    }
+    private fun enterSearch(id: String, text: String) {
+        val edit = nativeSearch(id)
+        edit.click()
+        edit.text = text
+        compose.waitForIdle()
+        if (text.isNotEmpty()) Assert.assertEquals(text, edit.text)
     }
     private fun state(id: String, text: String): SemanticsNodeInteraction {
         compose.waitUntil(10000) { compose.onAllNodes(hasTestTag(id) and hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty() }
@@ -154,6 +171,49 @@ class ConsentJourneyTest {
         scenario!!.recreate()
         state("fixture.state.permission.measurement", "measurement: true").assertTextEquals("measurement: true")
     }
+    @Test fun nativePartnerSearchSupportsAccessibleEditingAndFiltering() {
+        launch("fresh-online-iab")
+        waitFor("c15t.first-layer.customize").performClick()
+        scrollPage("c15t.iab", "c15t.iab.partners").performClick()
+        val id = "c15t.iab.vendors.search"
+        val edit = nativeSearch(id)
+        Assert.assertTrue(edit.isFocusable)
+        Assert.assertFalse("Search must not take focus before it is touched", edit.isFocused)
+        capture("android-native-search-unfocused")
+        val density = InstrumentationRegistry.getInstrumentation().targetContext.resources.displayMetrics.density
+        val field = edit.visibleBounds
+        Assert.assertTrue("Search needs a full-height native touch target", field.height() >= 48 * density)
+        device.click(field.left + (4 * density).toInt(), field.centerY())
+        compose.waitUntil(5_000) { device.findObject(By.clazz("android.widget.EditText"))?.isFocused == true }
+        device.pressBack()
+        fun findEdit(node: android.view.accessibility.AccessibilityNodeInfo?): android.view.accessibility.AccessibilityNodeInfo? {
+            if (node == null || node.className?.toString() == "android.widget.EditText") return node
+            for (index in 0 until node.childCount) findEdit(node.getChild(index))?.let { return it }
+            return null
+        }
+        val accessible = findEdit(InstrumentationRegistry.getInstrumentation().uiAutomation.rootInActiveWindow)
+        Assert.assertNotNull("Search must expose the real editable accessibility node", accessible)
+        Assert.assertTrue(accessible!!.isEditable)
+        if (android.os.Build.VERSION.SDK_INT >= 26) Assert.assertEquals("Search partners", accessible.hintText?.toString())
+
+        enterSearch(id, "no-matching-partner")
+        waitFor("c15t.iab.vendors.empty").assertIsDisplayed()
+        enterSearch(id, "elan")
+        capture("android-native-search-filtered")
+        waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed()
+        compose.onNodeWithTag("c15t.iab.vendors.vendor.2").assertDoesNotExist()
+        device.pressKeyCode(android.view.KeyEvent.KEYCODE_MOVE_END)
+        device.pressKeyCode(android.view.KeyEvent.KEYCODE_DEL)
+        compose.waitUntil(5_000) { device.findObject(By.clazz("android.widget.EditText"))?.text == "ela" }
+        device.pressKeyCode(android.view.KeyEvent.KEYCODE_N)
+        compose.waitUntil(5_000) { device.findObject(By.clazz("android.widget.EditText"))?.text == "elan" }
+        enterSearch(id, "")
+        waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed()
+        waitFor("c15t.iab.vendors.vendor.2").assertIsDisplayed()
+        device.pressBack()
+        waitFor(id).assertIsDisplayed()
+    }
+
     @Test fun iabSearchDetailsObjectionsAndAdditionalConsent() {
         launch("fresh-online-iab")
         waitFor("c15t.first-layer.customize"); capture("android-iab-first-layer")
@@ -170,7 +230,7 @@ class ConsentJourneyTest {
         compose.onNodeWithTag("c15t.iab.purpose.1.li").assertDoesNotExist()
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.partners"))
         compose.onNodeWithTag("c15t.iab.partners").performScrollTo().performClick()
-        waitFor("c15t.iab.vendors.search").performTextInput("elan")
+        enterSearch("c15t.iab.vendors.search", "elan")
         waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-partner-search")
         compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
         waitFor("c15t.iab.vendor.1.consent").performClick()
@@ -185,6 +245,10 @@ class ConsentJourneyTest {
         compose.onNodeWithTag("c15t.iab.features-standard-text").performScrollTo().assertTextContains("Features have no separate choice.", substring = true)
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.other-partners"))
         compose.onNodeWithTag("c15t.iab.other-partners").performScrollTo().performClick()
+        enterSearch("c15t.ac.search", "no-matching-partner")
+        waitFor("c15t.ac.empty").assertIsDisplayed()
+        enterSearch("c15t.ac.search", "")
+        device.pressBack()
         waitFor("c15t.ac.provider.10.switch").performScrollTo().performClick(); capture("android-additional-consent")
         compose.onNodeWithTag("c15t.ac.intro").assertTextContains("Store and access information on a device", substring = true)
         device.pressBack(); compose.onNodeWithTag("c15t.iab.save").performClick(); awaitClosed()
@@ -242,7 +306,7 @@ class ConsentJourneyTest {
             compose.onNodeWithTag("c15t.iab.purpose.7.view-partners").performClick()
             waitFor("c15t.iab.vendors.filter.purpose.clear").assertIsDisplayed()
             capture("android-2.0-partner-list")
-            waitFor("c15t.iab.vendors.search").performTextInput("elan")
+            enterSearch("c15t.iab.vendors.search", "elan")
             waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-2.0-partner-search")
             compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
             waitFor("c15t.iab.vendor.1.consent").performScrollTo().performClick().assertIsOn()
