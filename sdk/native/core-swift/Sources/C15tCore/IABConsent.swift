@@ -183,11 +183,10 @@ enum IABAuthority {
                 groups.append(restriction)
             }
         }
-        let vendorOrder = gvl.vendors.values.map(\.id).sorted()
         model.publisherRestrictions = groups.map { restriction in
             var runs: [TcIDRun] = []
             for id in restriction.vendorIds.sorted() {
-                if let last = runs.last, vendorOrder.first(where: { $0 > last.end }) == id {
+                if let last = runs.last, id == last.end + 1 {
                     runs[runs.count - 1] = TcIDRun(start: last.start, end: id, isRange: true)
                 } else {
                     runs.append(TcIDRun(start: id, end: id, isRange: false))

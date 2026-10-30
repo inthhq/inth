@@ -148,7 +148,6 @@ internal object IabAuthority {
 		if (previous != null) require(previous.consentVersion in 1 until Int.MAX_VALUE)
 		val createdAt = previous?.createdAt ?: actionAt
 		require(createdAt >= 0 && actionAt >= createdAt)
-		val vendorOrder = gvl.vendors.keys.sorted()
 		val restrictions =
 			TcPublisherRestrictions(
 				c.publisherRestrictions
@@ -157,7 +156,7 @@ internal object IabAuthority {
 						val runs = mutableListOf<TcIdRange>()
 						for (id in entries.flatMap { it.vendorIds }.sorted()) {
 							val last = runs.lastOrNull()
-							if (last != null && vendorOrder.firstOrNull { it > last.end } == id)
+							if (last != null && id == last.end + 1)
 								runs[runs.lastIndex] = TcIdRange(last.start, id)
 							else runs += TcIdRange(id, id)
 						}
