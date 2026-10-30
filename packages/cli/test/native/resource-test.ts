@@ -337,7 +337,10 @@ try {
 } finally {
   unlinkSync(binaryPath);
 }
-for (const replacement of [false, true]) {
+// Scriptc's Windows CRT opens do not share delete access for renaming open files.
+const interruptedDownloads =
+  process.platform === "win32" ? ["cancel"] : ["cancel", "missing", "file"];
+for (const replacement of interruptedDownloads) {
   const movedPath = `${binaryPath}.partial`;
   const controller = new AbortController();
   const reason = new Error("Download stopped");
@@ -350,35 +353,51 @@ for (const replacement of [false, true]) {
     },
     controller.signal
   );
+  const waitForCancellation = async (): Promise<boolean> => {
+    try {
+      await saving;
+      return false;
+    } catch (error) {
+      return error === reason;
+    }
+  };
+  const cancelled = waitForCancellation();
   try {
-    renameSync(binaryPath, movedPath);
-    if (replacement) {
-      writeFileSync(binaryPath, "keep me");
+    check(
+      readFileSync(binaryPath).byteLength === 65_536,
+      "Interrupted download did not write its first chunk."
+    );
+    if (replacement !== "cancel") {
+      renameSync(binaryPath, movedPath);
+      if (replacement === "file") {
+        writeFileSync(binaryPath, "keep me");
+      }
     }
     controller.abort(reason);
-    let cancelled = false;
-    try {
-      // eslint-disable-next-line no-await-in-loop -- Each race reuses the same output paths after cleanup.
-      await saving;
-    } catch (error) {
-      cancelled = error === reason;
+    // eslint-disable-next-line no-await-in-loop -- Each interruption reuses the same output paths after cleanup.
+    check(await cancelled, "Download cleanup lost the cancellation reason.");
+    if (replacement !== "cancel") {
+      check(
+        readFileSync(movedPath).byteLength === 65_536,
+        "Download cleanup changed the moved partial file."
+      );
     }
-    check(cancelled, "Download cleanup lost the cancellation reason.");
     check(
-      readFileSync(movedPath).byteLength === 65_536,
-      "Download cleanup changed the moved partial file."
-    );
-    check(
-      replacement
+      replacement === "file"
         ? readFileSync(binaryPath, "utf-8") === "keep me"
         : !existsSync(binaryPath),
       "Download cleanup changed the replacement path."
     );
   } finally {
+    controller.abort(reason);
+    // eslint-disable-next-line no-await-in-loop -- Close the download before cleaning up, including failed race setup.
+    await cancelled;
     if (existsSync(binaryPath)) {
       unlinkSync(binaryPath);
     }
-    unlinkSync(movedPath);
+    if (existsSync(movedPath)) {
+      unlinkSync(movedPath);
+    }
   }
 }
 for (const args of [

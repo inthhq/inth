@@ -333,22 +333,27 @@ describe("approvals, downloads, and readable help", () => {
         },
         controller.signal
       );
-      renameSync(output, moved);
-      if (replacement === "file") {
-        writeFileSync(output, "keep me");
-      } else if (replacement === "symlink") {
-        symlinkSync(moved, output);
-      }
-      controller.abort(reason);
-      await expect(saving).rejects.toBe(reason);
-      const movedBytes = await readFile(moved);
-      expect(movedBytes.byteLength).toBe(65_536);
-      if (replacement === "file") {
-        expect(await readFile(output, "utf-8")).toBe("keep me");
-      } else if (replacement === "symlink") {
-        expect(await readlink(output)).toBe(moved);
-      } else {
-        expect(existsSync(output)).toBe(false);
+      try {
+        renameSync(output, moved);
+        if (replacement === "file") {
+          writeFileSync(output, "keep me");
+        } else if (replacement === "symlink") {
+          symlinkSync(moved, output);
+        }
+        controller.abort(reason);
+        await expect(saving).rejects.toBe(reason);
+        const movedBytes = await readFile(moved);
+        expect(movedBytes.byteLength).toBe(65_536);
+        if (replacement === "file") {
+          expect(await readFile(output, "utf-8")).toBe("keep me");
+        } else if (replacement === "symlink") {
+          expect(await readlink(output)).toBe(moved);
+        } else {
+          expect(existsSync(output)).toBe(false);
+        }
+      } finally {
+        controller.abort(reason);
+        await Promise.allSettled([saving]);
       }
     }
   );
