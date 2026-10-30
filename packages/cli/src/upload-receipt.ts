@@ -1,14 +1,13 @@
 /* eslint-disable no-bitwise -- Filesystem flags and private mode checks use bit masks. */
-import { randomUUID } from "node:crypto";
 import {
   closeSync,
   constants,
   fsyncSync,
   fstatSync,
+  ftruncateSync,
   lstatSync,
   openSync,
   realpathSync,
-  renameSync,
   unlinkSync,
   writeSync,
 } from "node:fs";
@@ -36,7 +35,27 @@ const receiptError = (): CliError =>
     "Cannot safely write --receipt. Choose a new file in a private writable directory. Keep the recovery IDs printed to stderr."
   );
 
-const writeReceipt = (path: string, data: UploadReceiptData): void => {
+const writeContents = (descriptor: number, data: UploadReceiptData): void => {
+  const bytes = new TextEncoder().encode(`${JSON.stringify(data, null, 2)}\n`);
+  let offset = 0;
+  while (offset < bytes.byteLength) {
+    const count = writeSync(
+      descriptor,
+      bytes,
+      offset,
+      bytes.byteLength - offset,
+      offset
+    );
+    if (!count) {
+      throw receiptError();
+    }
+    offset += count;
+  }
+  ftruncateSync(descriptor, bytes.byteLength);
+  fsyncSync(descriptor);
+};
+
+const writeReceipt = (path: string, data: UploadReceiptData): Stats => {
   const descriptor = openSync(
     path,
     // eslint-disable-next-line no-bitwise -- Scriptc requires inline exclusive-open flags.
@@ -46,24 +65,10 @@ const writeReceipt = (path: string, data: UploadReceiptData): void => {
   const owned = fstatSync(descriptor);
   let complete = false;
   try {
-    const bytes = new TextEncoder().encode(
-      `${JSON.stringify(data, null, 2)}\n`
-    );
-    let offset = 0;
-    while (offset < bytes.byteLength) {
-      const count = writeSync(
-        descriptor,
-        bytes,
-        offset,
-        bytes.byteLength - offset
-      );
-      if (!count) {
-        throw receiptError();
-      }
-      offset += count;
-    }
-    fsyncSync(descriptor);
+    writeContents(descriptor, data);
+    const written = fstatSync(descriptor);
     complete = true;
+    return written;
   } finally {
     closeSync(descriptor);
     if (!complete) {
@@ -111,21 +116,18 @@ export class UploadReceipt {
       ) {
         throw receiptError();
       }
-      writeReceipt(this.path, data);
+      this.written = writeReceipt(this.path, data);
       syncDirectory(this.parent);
-      const created = lstatSync(this.path);
-      this.written = created;
     } catch {
       throw receiptError();
     }
   }
   update(data: UploadReceiptData): void {
-    const temporary = `${this.path}.${randomUUID()}.tmp`;
-    let created = false;
+    let descriptor = -1;
     try {
       const current = lstatSync(this.path);
       const directory = lstatSync(dirname(this.path));
-      // eslint-disable-next-line no-bitwise -- Only replace the private receipt this operation created.
+      // eslint-disable-next-line no-bitwise -- Only update the private receipt this operation created.
       if (
         !current.isFile() ||
         current.isSymbolicLink() ||
@@ -138,21 +140,25 @@ export class UploadReceipt {
       ) {
         throw receiptError();
       }
-      writeReceipt(temporary, data);
-      created = true;
-      const verified = lstatSync(this.path);
-      if (!sameReceipt(verified, current)) {
+      descriptor = openSync(
+        this.path,
+        // eslint-disable-next-line no-bitwise -- Refuse a substituted FIFO without blocking or truncating it.
+        constants.O_RDWR | constants.O_NONBLOCK
+      );
+      const opened = fstatSync(descriptor);
+      if (!opened.isFile() || !sameReceipt(opened, current)) {
         throw receiptError();
       }
-      renameSync(temporary, this.path);
-      created = false;
-      syncDirectory(this.parent);
-      this.written = lstatSync(this.path);
+      writeContents(descriptor, data);
+      this.written = fstatSync(descriptor);
+      if (!sameReceipt(lstatSync(this.path), this.written)) {
+        throw receiptError();
+      }
     } catch {
       throw receiptError();
     } finally {
-      if (created) {
-        unlinkSync(temporary);
+      if (descriptor !== -1) {
+        closeSync(descriptor);
       }
     }
   }

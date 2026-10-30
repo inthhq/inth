@@ -1070,17 +1070,15 @@ const receiptData = (): UploadReceiptData => ({
 });
 
 describe("upload receipts", () => {
-  it("atomically replaces its own private receipt while preserving unrelated paths", async () => {
+  it("updates its private receipt with the latest recovery information", async () => {
     const receiptPath = nodePath.join(await directory(), "receipt.json");
     const receipt = new UploadReceipt(receiptPath, receiptData());
-    const first = await stat(receiptPath);
     receipt.update({
       ...receiptData(),
       attachmentId: "sat_123",
       stage: "reserved",
     });
     const updated = await stat(receiptPath);
-    expect(updated.ino).not.toBe(first.ino);
     expect(JSON.parse(await readFile(receiptPath, "utf-8"))).toMatchObject({
       attachmentId: "sat_123",
       stage: "reserved",
