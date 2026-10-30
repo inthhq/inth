@@ -160,7 +160,7 @@ The branch-tip check still rejects superseded commits before Tegami runs.
 | `pullfrog.yml` | Public repository and manual dispatch required before sending code or prompts to the hosted agent. |
 
 The reusable workflows are `ci.yml`, `bundle-analysis.yml`,
-`benchmark-regression.yml` and `mobile-device.yml`. They build, test and upload
+`benchmark-regression.yml`, `mobile-app-e2e.yml` and `mobile-device.yml`. They build, test and upload
 run artifacts; none calls a publication workflow. Their shared setup action
 already restricts the Vercel remote-cache exchange to `c15t/c15t` and trusted
 events and refs. A cache token only grants remote-cache access. Package-doc

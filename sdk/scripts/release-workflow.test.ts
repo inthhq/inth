@@ -730,6 +730,7 @@ describe('workflow publication trust', () => {
 			'benchmark-regression.yml',
 			'bundle-analysis.yml',
 			'ci.yml',
+			'mobile-app-e2e.yml',
 			'mobile-device.yml',
 		]);
 	});
