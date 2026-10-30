@@ -254,10 +254,14 @@ export const runResourceUpload = async (
       receiptPath === undefined
         ? undefined
         : new UploadReceipt(receiptPath, state);
-    const organization = await selectedOrganization(api, resolveOrganization);
-    state.organizationId = organization;
-    if (receipt) {
-      receipt.update(state);
+    let organization: string;
+    try {
+      organization = await selectedOrganization(api, resolveOrganization);
+      state.organizationId = organization;
+      updateReceipt(receipt, state);
+    } catch (error) {
+      receipt?.discard();
+      throw error;
     }
     console.error(
       `Support upload retry ID: ${clientAttachmentId}. Reuse --client-attachment-id ${clientAttachmentId} with the identical file name, media type, size and organization while the intent remains pending.`

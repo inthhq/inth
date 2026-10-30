@@ -138,4 +138,7 @@ export class UploadReceipt {
       }
     }
   }
+  discard(): void {
+    removeCreatedFile(this.path, this.written);
+  }
 }

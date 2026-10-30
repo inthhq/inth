@@ -1,8 +1,10 @@
 /* eslint-disable no-await-in-loop -- Native fixture operations share one transport and run sequentially. */
 import "../../src/native/native-file-identity.ts";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { setTimeout } from "node:timers/promises";
 
 import { parseArguments } from "../../src/arguments.ts";
+import { CliError } from "../../src/cli-error.ts";
 import { NativeApi } from "../../src/native/native-api.ts";
 import { nativeClock, nativeHttp } from "../../src/native/native-http.ts";
 import { buildResourceRequest } from "../../src/resource-commands.ts";
@@ -59,6 +61,41 @@ const uploadApi = {
   uploadChat: (body: string, organization?: string) =>
     api.uploadChat(body, organization),
 };
+for (const replaced of [false, true]) {
+  const receiptPath = `${directory}/selection-${replaced}.json`;
+  let refused = false;
+  try {
+    await runResourceUpload(
+      parseArguments([
+        "support",
+        "attachment-upload",
+        "--file",
+        `${directory}/recording.webm`,
+        "--receipt",
+        receiptPath,
+      ]),
+      uploadApi,
+      () => {
+        if (replaced) {
+          renameSync(receiptPath, `${receiptPath}.original`);
+          writeFileSync(receiptPath, "replacement receipt");
+        }
+        throw new CliError("usage_error", "Organization selection failed.");
+      },
+      signal,
+      "https://api.inth.com"
+    );
+  } catch (error) {
+    refused = error instanceof CliError && error.code === "usage_error";
+  }
+  check(refused, "Native organization selection lost its original failure.");
+  check(
+    replaced
+      ? readFileSync(receiptPath, "utf-8") === "replacement receipt"
+      : !existsSync(receiptPath),
+    "Native organization selection did not safely clean up its receipt."
+  );
+}
 let replayBody = "";
 for (const source of [
   '{"attachmentIds":["aga_second","aga_first"]}',

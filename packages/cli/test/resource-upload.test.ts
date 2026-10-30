@@ -3,6 +3,7 @@ import {
   mkdtemp,
   readFile,
   readdir,
+  rename,
   rm,
   stat,
   symlink,
@@ -891,6 +892,74 @@ describe("upload command validation and discovery", () => {
     expect(selected.access).not.toHaveBeenCalled();
     expect(fetcher).not.toHaveBeenCalled();
     expect(await readFile(receiptPath, "utf-8")).toBe("unrelated data");
+  });
+
+  it.each(["authentication", "discovery"])(
+    "removes the prepared receipt after organization %s fails so the path can be reused",
+    async (phase) => {
+      const selected = person();
+      selected.organization.mockImplementation(async () => {});
+      if (phase === "authentication") {
+        selected.access.mockRejectedValue(
+          new CliError("authentication_required", "Sign in first.")
+        );
+      }
+      const requests = await fixture((_request, response) =>
+        reply(response, { error: { code: "FORBIDDEN" } }, 403)
+      );
+      const path = await file();
+      const receiptPath = nodePath.join(await directory(), "retry.json");
+      const input = [
+        "support",
+        "attachment-upload",
+        "--file",
+        path,
+        "--receipt",
+        receiptPath,
+        "--auth",
+        "agent",
+        "--json",
+      ];
+      const failure =
+        phase === "authentication"
+          ? { code: "authentication_required" }
+          : { apiCode: "FORBIDDEN", status: 403 };
+      await expect(run(input, signal())).rejects.toMatchObject(failure);
+      await expect(stat(receiptPath)).rejects.toMatchObject({ code: "ENOENT" });
+      await expect(run(input, signal())).rejects.toMatchObject(failure);
+      await expect(stat(receiptPath)).rejects.toMatchObject({ code: "ENOENT" });
+      expect(
+        requests.map((request) => [request.method, request.url.pathname])
+      ).toEqual(
+        phase === "authentication"
+          ? []
+          : [
+              ["GET", "/v1/me"],
+              ["GET", "/v1/me"],
+            ]
+      );
+    }
+  );
+
+  it("preserves a replacement receipt when local organization selection fails", async () => {
+    const selected = person();
+    const path = await file();
+    const receiptPath = nodePath.join(await directory(), "replacement.json");
+    selected.organization.mockImplementation(async () => {
+      await rename(receiptPath, `${receiptPath}.original`);
+      await writeFile(receiptPath, "replacement file", { mode: 0o600 });
+      throw new CliError("usage_error", "Organization selection failed.");
+    });
+    await expect(
+      run(args("support", path, ["--receipt", receiptPath]), signal())
+    ).rejects.toMatchObject({ code: "usage_error" });
+    expect(await readFile(receiptPath, "utf-8")).toBe("replacement file");
+    expect(
+      JSON.parse(await readFile(`${receiptPath}.original`, "utf-8"))
+    ).toMatchObject({
+      stage: "prepared",
+    });
+    expect(selected.access).not.toHaveBeenCalled();
   });
 
   it("rejects an existing download path without overwriting or making an HTTP request", async () => {
