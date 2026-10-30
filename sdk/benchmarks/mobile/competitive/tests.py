@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import plistlib
 import struct
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -30,6 +31,8 @@ class PreflightTests(unittest.TestCase):
             signer = sdk / 'build-tools/36.0.0/apksigner'
             signer.parent.mkdir(parents=True)
             signer.touch()
+            badging = signer.with_name('aapt2')
+            badging.touch()
             jdk = root / 'java home'
             java = jdk / 'bin/java'
             java.parent.mkdir(parents=True)
@@ -41,11 +44,58 @@ class PreflightTests(unittest.TestCase):
                 for java_config in [{}, {'javaHome': str(jdk)}]:
                     with self.subTest(java_config=java_config):
                         self.assertEqual(harness.preflight({**cfg, **java_config}, 'android', tools=True), inputs)
+                for tool in [signer, badging]:
+                    with self.subTest(missing_tool=tool.name):
+                        tool.unlink()
+                        try:
+                            with self.assertRaisesRegex(ValueError, 'missing'):
+                                harness.preflight(cfg, 'android', tools=True)
+                        finally:
+                            tool.touch()
                 with self.assertRaisesRegex(ValueError, 'set javaHome or JAVA_HOME'):
                     harness.preflight({**cfg, 'javaHome': str(root / 'missing')}, 'android', tools=True)
                 java.write_text('#!/bin/sh\necho \'openjdk version "17.0.19"\' >&2\n')
                 with self.assertRaisesRegex(ValueError, 'Java 17.0.20 required'):
                     harness.preflight(cfg, 'android', tools=True)
+
+
+class RetainedPodTests(unittest.TestCase):
+    def test_retained_ios_checks_native_lock_and_distribution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            host = root / 'host'
+            wrapper = next(pin for pin in harness.PINS['wrappers'] if pin['name'] == 'didomi')
+            package = host / 'node_modules' / wrapper['package']
+            package.mkdir(parents=True)
+            (package / 'package.json').write_text('{"version":"test-wrapper"}')
+            archive = root / 'wrapper.tgz'
+            with tarfile.open(archive, 'w:gz') as handle:
+                handle.add(package / 'package.json', arcname='package/package.json')
+            spec = host / 'ios/Pods/Local Podspecs/ExpoModulesCore.podspec.json'
+            core.write(spec, harness.expo_core_spec(host))
+            lock = host / 'ios/Podfile.lock'
+            pinned_lock = harness.expected_pod_lock(host, 'didomi')
+            lock.write_text(pinned_lock)
+            binary = host / 'ios/Pods/Didomi-XCFramework/Didomi.framework/Didomi'
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b'pinned native distribution')
+            cached = root / 'Didomi-XCFramework-2.53.1.zip'
+            with zipfile.ZipFile(cached, 'w') as handle:
+                handle.writestr('Didomi.framework/Didomi', binary.read_bytes())
+            distribution = next(pin for pin in harness.PINS['iosDistributions'] if pin['name'] == 'Didomi-XCFramework')
+            cfg = {'output': str(root / 'output'), 'downloadCache': str(root)}
+            row = {'profile': 'ios-local', 'vendor': 'didomi', 'host': str(host), 'wrapperArchive': str(archive)}
+            pins = {'wrappers': [{**wrapper, 'tarballSha256': core.sha(archive)}],
+                    'iosDistributions': [{**distribution, 'archiveSha256': core.sha(cached)}]}
+            with patch.dict(harness.PINS, pins):
+                harness.verify_archive_for_retained(cfg, row)
+                lock.write_text(pinned_lock.replace('Didomi-XCFramework (2.53.1)', 'Didomi-XCFramework (2.53.0)'))
+                with self.assertRaisesRegex(ValueError, 'Pod dependency lock changed'):
+                    harness.verify_archive_for_retained(cfg, row)
+                lock.write_text(pinned_lock)
+                binary.write_bytes(b'a different native SDK build')
+                with self.assertRaisesRegex(ValueError, 'installed Pod differs from exact distribution'):
+                    harness.verify_archive_for_retained(cfg, row)
 
 
 class ReportTests(unittest.TestCase):

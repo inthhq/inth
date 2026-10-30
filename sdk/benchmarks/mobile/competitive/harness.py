@@ -107,7 +107,8 @@ def preflight(cfg, platform=None, tools=False):
         require(subprocess.check_output(['bun', '--version'], text=True).strip() == '1.3.11', 'Bun 1.3.11 required')
         if platform == 'android':
             sdk = Path(env.get('ANDROID_HOME', ''))
-            require((sdk / 'build-tools/36.0.0/apksigner').is_file(), 'Android build-tools 36.0.0 missing')
+            for name in ('apksigner', 'aapt2'):
+                require((sdk / 'build-tools/36.0.0' / name).is_file(), f'Android build-tools 36.0.0 missing: {name}')
             java = Path(env.get('JAVA_HOME', '')) / 'bin/java'
             require(java.is_file(), 'set javaHome or JAVA_HOME for Java 17.0.20')
             version = subprocess.run([str(java), '-version'], capture_output=True, text=True, check=True).stderr
@@ -503,9 +504,11 @@ def collect(cfg, retained=None, partial=False):
 
 def verify_archive_for_retained(cfg, row):
     vendor = row['vendor']
+    host = Path(row['host'])
+    if row['profile'] not in ANDROID_PROFILES:
+        verify_pods(cfg, host, vendor)
     if vendor == 'baseline':
         return
-    host = Path(row['host'])
     package = '@c15t/react-native' if vendor == 'c15t' else next(r['package'] for r in PINS['wrappers'] if r['name'] == vendor)
     if vendor == 'c15t':
         archive = Path(cfg['archive'])
