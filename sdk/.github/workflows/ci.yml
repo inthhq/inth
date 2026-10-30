@@ -403,19 +403,21 @@ jobs:
       - name: Build and test the Swift core
         if: matrix.kind == 'ios-toolchain'
         run: |
-          set -ex
+          set -euxo pipefail
+          mkdir -p "$BENCH_OUTPUT_DIR"
           swift build --package-path native/core-swift
-          swift test --package-path native/core-swift
+          swift test --package-path native/core-swift --xunit-output "$BENCH_OUTPUT_DIR/swift-core.xml" 2>&1 | tee "$BENCH_OUTPUT_DIR/swift-core.log"
       # A separate step so the failing check names the layer that broke.
       - name: Build and test the binding's wire layer
         if: matrix.kind == 'ios-toolchain'
         run: |
-          set -ex
+          set -euxo pipefail
+          mkdir -p "$BENCH_OUTPUT_DIR"
           # The binding's React-free half, which is where every wire-format decision
           # lives. The TurboModule itself needs a host app, so it is built by the mobile
           # device group instead.
           swift build --package-path packages/react-native
-          swift test --package-path packages/react-native
+          swift test --package-path packages/react-native --xunit-output "$BENCH_OUTPUT_DIR/swift-binding.xml" 2>&1 | tee "$BENCH_OUTPUT_DIR/swift-binding.log"
       - name: Test the Kotlin core and assemble the Android library
         if: matrix.kind == 'android-js'
         run: |
@@ -489,6 +491,29 @@ jobs:
         # that app's build before a single task runs. This asks the CLI from the bare example
         # app's own install, which is the cheapest place that answer exists.
         run: bun scripts/react-native-autolink.ts
+      - name: Verify built mobile exports and packed dependency boundary
+        if: matrix.kind == 'android-js'
+        working-directory: packages/react-native
+        run: |
+          bun ../../scripts/verify-package-artifacts.ts
+          bun - <<'TS'
+          import { scanKernelFreePackage } from '../../scripts/check-publish-artifacts.ts';
+          import { readManifest } from '../../scripts/manifest-utils.ts';
+          import { withPackedPackage } from '../../scripts/react-native-autolink.ts';
+
+          withPackedPackage((packed) => {
+            const issues = scanKernelFreePackage(
+              packed.installedDir,
+              '@c15t/react-native',
+              readManifest(packed.installedDir),
+              new Set(packed.paths)
+            );
+            if (issues.length) {
+              console.error(JSON.stringify(issues, null, 2));
+              process.exitCode = 1;
+            }
+          });
+          TS
       - name: Measure the mobile budgets
         run: bun run --cwd benchmarks/mobile bench:ci
       # The harness already failed the job above if a measured number broke a ceiling.
@@ -509,8 +534,10 @@ jobs:
             ${{ runner.temp }}/c15t-android-consumer/consumer/app/build/outputs/
             ${{ runner.temp }}/c15t-packed-android-consumer/result.json
             ${{ runner.temp }}/c15t-packed-android-consumer/consumer/app/build/outputs/
-            native/core-android/build/reports/
+            native/core-android/**/build/reports/
+            native/core-android/**/build/test-results/
             packages/react-native/android/c15t-react-native/build/reports/
+            packages/react-native/android/c15t-spec/build/generated/c15t-spec/
             packages/react-native/coverage/
           if-no-files-found: ignore
           retention-days: 7

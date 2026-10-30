@@ -143,6 +143,39 @@ actual publication's `prepack` checks still run.
 Pushes to `main` and `canary` start `release.yml`. A push opens or updates
 the branch's version PR, and merging that PR publishes.
 
+Publication jobs require the literal repository identity `c15t/c15t`. A private
+copy can run validation without running upstream publication or write automation.
+`release.yml` runs its checks in private copies even when a manual caller sets
+`skip_tests`. Its publish job accepts only public `main` or `canary` refs on a
+push or manual dispatch, after successful checks or the existing manual bypass.
+The branch-tip check still rejects superseded commits before Tegami runs.
+
+| Workflow path | External effect and guard |
+| --- | --- |
+| `release.yml` → `bun run tegami ci` | Public repository, release ref and event guard covers npm publication, GitHub releases, tags, version commits and PRs. Tegami targets `c15t/c15t` explicitly. |
+| `pr-preview.yml` → `pkg-pr-new publish` | Public repository and PR event required, then member association or `deploy:preview` label. Private packages stay out even if they have `publishConfig.access: public`. |
+| `sync-canary.yml` | Public repository required before branch pushes and sync PR creation. |
+| `autofix.yml` | Public repository required before the formatting action can push. Ordinary formatting checks still run in `ci.yml`. |
+| `script-vendor-monitor.yml` → `manage-issues.ts` | Probes and reports use a read-only job. A separate public-only job downloads the report and updates issues, including after a probe failure. |
+| `pullfrog.yml` | Public repository and manual dispatch required before sending code or prompts to the hosted agent. |
+
+The reusable workflows are `ci.yml`, `bundle-analysis.yml`,
+`benchmark-regression.yml` and `mobile-device.yml`. They build, test and upload
+run artifacts; none calls a publication workflow. Their shared setup action
+already restricts the Vercel remote-cache exchange to `c15t/c15t` and trusted
+events and refs. A cache token only grants remote-cache access. Package-doc
+generation runs `build:docs`, not `setup:docs` or `vercel-build`; there is no
+docs deployment or EAS publication action in these workflow paths. These guards
+do not control hosting integrations configured outside GitHub workflows or
+manual release commands run outside Actions.
+
+`scripts/release-workflow.test.ts` evaluates the actual workflow conditions
+against private, fork and public event contexts. It executes the preview detector
+against a temporary Git repository and verifies that the real Tegami graph
+excludes React Native. `scripts/ci-cache-auth.test.ts` checks that private callers
+cannot authenticate to the public remote cache. These tests make no registry
+writes. Workflow syntax validation alone is not publication evidence.
+
 Release checks for consecutive runs overlap. Only
 the publish job waits for the previous release on the same branch. Once it gets
 its turn, a publish job whose commit is no longer the branch tip skips
@@ -181,12 +214,29 @@ Gradle and CocoaPods, and use GitHub-hosted runners only. Files under `native/` 
 still widen to a full run.
 
 The Android kernel's instrumented suite in `src/androidTest` runs on a booted
-emulator and belongs to neither group. Neither Android leg can host it: both are
-`ubuntu-latest`, which exposes no KVM, and a connected run that finds no device
-answers as a pass rather than a skip. Until a runner with nested virtualization
-or a device cloud is wired up, that suite is a local and pre-release gate, run
+emulator and belongs to neither group. Neither Android leg currently boots an
+emulator or verifies device readiness. A library assembly does not run those
+tests. Until a verified emulator or device runner is wired up, that suite is a
+local and pre-release gate, run
 before any change to storage, keystore, launch, or lifecycle, as
 `native/core-android/README.md` describes.
+
+The required mobile SDK lane also runs `:c15t-android:testDebugUnitTest` for the
+Android-free platform helpers and verifies the built RN manifest targets.
+The same lane packs RN locally and runs the existing dependency scanner against
+that tarball, so a bundled or declared JavaScript consent kernel fails CI even
+while RN remains private. Packing skips lifecycle scripts and uploads nothing.
+Swift test output and xUnit reports, per-module Gradle reports and test results,
+and generated Android Codegen sources travel with the mobile evidence artifact.
+Logging preserves test exit codes. The repository tooling tests inject failed
+native commands to check that the workflow stops; they do not substitute for
+running the native suites on their declared runners.
+
+`@c15t/react-native` remains private and outside Tegami's publish graph and PR
+package previews. `CI complete` and the advisory device build report do not
+establish mobile release readiness. The workflow does not test launched apps,
+offline restart, OTA compatibility or native presenters. Advisory device work
+remains outside the web release's required completion job.
 
 Autolinking is gated separately from the Android assemblies. Assembling an AAR proves Gradle
 can compile the library; it never asks React Native's CLI whether the library can be found. A

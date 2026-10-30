@@ -11,6 +11,7 @@ permissions: {}
 jobs:
   sync:
     name: Create PR to sync Main to Canary
+    if: github.repository == 'c15t/c15t'
     runs-on: ubuntu-latest
     permissions:
       contents: write
