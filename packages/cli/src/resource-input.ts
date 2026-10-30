@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
-import { closeSync, fstatSync, openSync, readSync, statSync } from "node:fs";
+import {
+  closeSync,
+  constants,
+  fstatSync,
+  openSync,
+  readSync,
+  statSync,
+} from "node:fs";
 import { setTimeout } from "node:timers/promises";
 
 import type { CliArguments } from "./arguments.ts";
@@ -71,19 +78,28 @@ export const readResourceInput = async (
     if (path === "-") {
       return await readStdin(option, limit, signal);
     }
-    if (!statSync(path).isFile()) {
+    const before = statSync(path);
+    if (!before.isFile()) {
       throw new CliError(
         "usage_error",
         `--${option} must name a regular file, or - for stdin.`
       );
     }
-    const handle = openSync(path, "r");
+    const handle = openSync(
+      path,
+      // eslint-disable-next-line no-bitwise -- Do not block if the checked path becomes a FIFO.
+      constants.O_RDONLY | constants.O_NONBLOCK
+    );
     try {
       const info = fstatSync(handle);
-      if (!info.isFile()) {
+      if (
+        !info.isFile() ||
+        info.dev !== before.dev ||
+        info.ino !== before.ino
+      ) {
         throw new CliError(
           "usage_error",
-          `--${option} must name a regular file.`
+          `--${option} must name a stable regular file.`
         );
       }
       if (info.size > limit) {
