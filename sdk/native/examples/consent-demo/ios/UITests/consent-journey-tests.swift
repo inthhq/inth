@@ -47,7 +47,9 @@ final class ConsentJourneyTests: XCTestCase {
     /// distance to the middle of that window and holds at the end, so the list cannot coast past
     /// it and oscillate; a fixed full-screen flick did exactly that on iOS 27. Only the page is
     /// ever dragged: a control that needs a second scrolling region to reach is a failure.
-    func reveal(_ element: XCUIElement) {
+    /// `backwards` says the element lies earlier in the page than the current position; a row the
+    /// list has recycled cannot say which way it is.
+    func reveal(_ element: XCUIElement, backwards: Bool = false) {
         // Forty page-height drags: at the largest size on a 4.7-inch screen the IAB list runs to several thousand points.
         for _ in 0..<40 {
             let keyboard = app.keyboards.firstMatch
@@ -57,7 +59,7 @@ final class ConsentJourneyTests: XCTestCase {
             let realised = element.exists && element.frame.height > 0
             if realised, element.isHittable, element.frame.midY > top, element.frame.midY < bottom { return }
             let room = bottom - top - 60
-            let delta = realised ? element.frame.midY - (top + bottom) / 2 : room
+            let delta = realised ? element.frame.midY - (top + bottom) / 2 : backwards ? -room : room
             let distance = min(abs(delta), room)
             let x = app.frame.midX
             let from = delta > 0 ? bottom - 20 : top + 30
@@ -354,7 +356,7 @@ final class ConsentJourneyTests: XCTestCase {
             XCTAssertFalse(retry.frame.intersects(save.frame))
             capture("ios-\(name)-save-error")
             // The draft is kept: scroll back up to the changed row (the list recycles it at this size), then return to the failure.
-            reveal(measurement); XCTAssertEqual(measurement.value as? String, "1")
+            reveal(measurement, backwards: true); XCTAssertEqual(measurement.value as? String, "1")
             reveal(retry); retry.tap()
             // The gate only closes on a durable commit.
             XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
