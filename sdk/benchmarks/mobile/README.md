@@ -114,6 +114,12 @@ resources, DEX conversion, R8 shrinking and APK compression. It is a raw artifac
 guard; measuring the size added to a shipped app requires matched Release consumer
 builds with and without the SDK.
 
+The raw-class allowance is 2.5 MiB. Its [2026-10-30 calibration](./snapshots/android-raw-classes-2026-10-30.json)
+records 2,385,975 B across the four artifacts, leaving 235,465 B of headroom.
+The previous 1.5 MiB allowance used a 1,281,139 B baseline from before the stock
+presenter and later native additions. This recalibration changes the code-growth
+guard only; it does not claim an APK reduction or a performance result.
+
 A few rows are measured a different way from the warm loops above, because a warm loop
 would measure the wrong thing:
 

@@ -6,8 +6,10 @@
 
 import { describe, expect, it } from 'vitest';
 
+import androidCalibration from '../../snapshots/android-raw-classes-2026-10-30.json';
 import { loadBudgets } from '../budgets';
-import { ROWS } from '../rows';
+import { buildCheck, verdict } from '../report';
+import { makeRow, ROWS } from '../rows';
 
 const file = loadBudgets();
 
@@ -42,6 +44,31 @@ describe('budgets.json', () => {
 				/CONTRACT\.md states/iu
 			);
 		}
+	});
+
+	it('accepts the complete Android calibration and rejects ten percent growth', () => {
+		const measured = androidCalibration.artifacts.reduce(
+			(total, artifact) => total + artifact.rawClassBytes,
+			0
+		);
+		expect(measured).toBe(androidCalibration.totalRawClassBytes);
+		const current = makeRow(ROWS.androidBinary, file.budgets, {
+			value: measured,
+		});
+		expect(verdict(current)).toBe('pass');
+		expect(buildCheck([current], true)).toMatchObject({
+			enforced: true,
+			ok: true,
+		});
+
+		const regression = makeRow(ROWS.androidBinary, file.budgets, {
+			value: Math.ceil(measured * 1.1),
+		});
+		expect(verdict(regression)).toBe('FAIL');
+		expect(buildCheck([regression], true)).toMatchObject({
+			enforced: true,
+			ok: false,
+		});
 	});
 
 	it('carries a sampling plan with room for warmup', () => {
