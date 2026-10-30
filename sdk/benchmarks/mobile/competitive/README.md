@@ -203,6 +203,10 @@ Outputs are `evidence.json`, `report.json` and `report.md` under the configured 
 
 All paths in a retained descriptor are absolute. They can point at any mounted evidence store; no historical home-directory location is required. Installed wrapper source trees must match their exact archives. Extra JavaScript or native source files and symlinks fail verification. After a build, verification permits Gradle's generated output under `android/build`, or `android/c15t-react-native/build` for c15t. Packaged files in those directories still require exact bytes, and symlinks always fail. Prepare and build require the pristine wrapper tree with no generated-output exceptions, so additional sources cannot enter a fresh build. The resulting report contains fresh reads and hashes of the retained app files. Keep this local descriptor outside git.
 
+Native host manifests reject symlinked roots, files and directories, including
+broken links, outside the excluded dependency and build-output directories.
+Linked native sources cannot escape the prepared and prebuild hashes.
+
 Fresh preparation also records `installed-inputs.json` before the native build.
 The host hash binds that file. It lists every installed framework and transitive
 dependency file, including JavaScript distributions in `build/`, executable

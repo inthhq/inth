@@ -74,12 +74,16 @@ def digest(value):
 
 def manifest(root, exclude=()):
     root = Path(root)
+    require(not root.is_symlink(), f'manifest symlink: {root}')
     rows = []
     for directory, dirs, files in os.walk(root, followlinks=False):
         dirs[:] = sorted(d for d in dirs if d not in exclude)
+        for name in dirs + files:
+            path = Path(directory) / name
+            require(not path.is_symlink(), f'manifest symlink: {path}')
         for name in sorted(files):
             path = Path(directory) / name
-            if path.is_file() and not path.is_symlink():
+            if path.is_file():
                 rows.append({'path': path.relative_to(root).as_posix(), 'bytes': path.stat().st_size, 'sha256': sha(path)})
     return sorted(rows, key=lambda row: row['path'])
 

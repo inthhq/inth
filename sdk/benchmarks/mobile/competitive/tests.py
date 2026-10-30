@@ -451,6 +451,35 @@ class CompetitiveTests(unittest.TestCase):
                             preflight.assert_not_called()
                     path.write_bytes(original)
 
+    def test_native_host_links_fail_before_build_tools(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            host = self.dependency_host(root / 'host')
+            harness.bind_installed(host)
+            outside = root / 'external-sources'
+            outside.mkdir()
+            source = outside / 'Extra.kt'
+            source.write_text('unbound native source')
+            cfg = {'output': str(root / 'output')}
+            for profile, name, target in [('android-release', 'android/app/src/main/java/Extra.kt', source),
+                                          ('android-release', 'android/app/src/main/java/linked', outside),
+                                          ('ios-local', 'ios/Extra.swift', source),
+                                          ('ios-local', 'ios/linked', outside),
+                                          ('ios-local', 'ios/broken.swift', root / 'missing')]:
+                with self.subTest(profile=profile, link=name):
+                    link = host / name
+                    link.parent.mkdir(parents=True, exist_ok=True)
+                    core.write(host / 'prepared.json', {'profile': profile, 'inputs': {}, 'files': harness.host_inputs(host), 'construction': harness.construction_inputs()})
+                    link.symlink_to(target)
+                    try:
+                        with patch.object(harness, 'host_for', return_value=host), patch.object(harness, 'validate_inputs', return_value={}), patch.object(harness, 'preflight', side_effect=AssertionError('linked host reached native tools')) as preflight, patch.object(harness, 'invoke') as invoke:
+                            with self.assertRaisesRegex(ValueError, 'manifest symlink'):
+                                harness.build(cfg, profile, 'baseline')
+                            preflight.assert_not_called()
+                            invoke.assert_not_called()
+                    finally:
+                        link.unlink()
+
     def test_dependency_binding_covers_isolated_bun_links_and_file_changes(self):
         with tempfile.TemporaryDirectory() as tmp:
             host = self.dependency_host(Path(tmp) / 'host')
@@ -923,13 +952,31 @@ class CompetitiveTests(unittest.TestCase):
                 continue
             self.assertNotIn('/Users/', path.read_text(), str(path))
 
-    def test_manifest_excludes_symlink_lengths_and_directory_blocks(self):
+    def test_manifest_hashes_regular_files_and_rejects_nonexcluded_links(self):
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
+            root = Path(tmp) / 'host'
+            root.mkdir()
             (root / 'file').write_bytes(b'abc')
             (root / 'directory').mkdir()
-            (root / 'alias').symlink_to('file')
             self.assertEqual(sum(row['bytes'] for row in core.manifest(root)), 3)
+            for target in ('file', 'directory', 'missing'):
+                with self.subTest(target=target):
+                    link = root / 'alias'
+                    link.symlink_to(target)
+                    try:
+                        with self.assertRaisesRegex(ValueError, 'manifest symlink'):
+                            core.manifest(root)
+                    finally:
+                        link.unlink()
+            alias = Path(tmp) / 'alias'
+            alias.symlink_to(root, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, 'manifest symlink'):
+                core.manifest(alias)
+            excluded = root / 'node_modules'
+            excluded.mkdir()
+            (excluded / 'package').symlink_to(root / 'directory', target_is_directory=True)
+            (root / 'build').symlink_to(root / 'directory', target_is_directory=True)
+            self.assertEqual(sum(row['bytes'] for row in core.manifest(root, harness.EXCLUDED)), 3)
 
     def test_apk_bytes_keep_zip_overhead_separate_from_payload(self):
         with tempfile.TemporaryDirectory() as tmp:
