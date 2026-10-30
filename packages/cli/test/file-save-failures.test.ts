@@ -13,6 +13,7 @@ import { billingQuote, writeUuid } from "./fixtures/agent-access-v2-writes.ts";
 
 const fault = vi.hoisted(() => ({
   descriptor: -1,
+  directoryDescriptor: -1,
   operation: "",
   replacement: "",
   target: "",
@@ -21,25 +22,36 @@ const fault = vi.hoisted(() => ({
 // eslint-disable-next-line anti-slop/no-module-mocking -- Inject filesystem errors while exercising real exclusive creates, writes, closes and identity-checked cleanup.
 vi.mock("node:fs", async (importOriginal) => {
   const actual = await importOriginal<typeof fs>();
+  const replaceOutput = () => {
+    if (!fault.replacement) {
+      return;
+    }
+    actual.renameSync(fault.target, `${fault.target}.owned`);
+    if (fault.replacement === "symlink") {
+      const caller = `${fault.target}.caller`;
+      actual.writeFileSync(caller, "caller data");
+      actual.symlinkSync(caller, fault.target);
+    } else {
+      actual.writeFileSync(fault.target, "caller data");
+    }
+  };
   return {
     ...actual,
     closeSync: (descriptor: number) => {
       actual.closeSync(descriptor);
       if (descriptor === fault.descriptor && fault.operation === "close") {
-        if (fault.replacement) {
-          actual.renameSync(fault.target, `${fault.target}.owned`);
-          if (fault.replacement === "symlink") {
-            const caller = `${fault.target}.caller`;
-            actual.writeFileSync(caller, "caller data");
-            actual.symlinkSync(caller, fault.target);
-          } else {
-            actual.writeFileSync(fault.target, "caller data");
-          }
-        }
+        replaceOutput();
         throw new Error("EIO: simulated deferred close failure");
       }
     },
     fsyncSync: (descriptor: number) => {
+      if (
+        descriptor === fault.directoryDescriptor &&
+        fault.operation === "directory sync"
+      ) {
+        replaceOutput();
+        throw new Error("EIO: simulated directory sync failure");
+      }
       if (descriptor === fault.descriptor && fault.operation === "sync") {
         throw new Error("EIO: simulated sync failure");
       }
@@ -49,6 +61,12 @@ vi.mock("node:fs", async (importOriginal) => {
       const descriptor = actual.openSync(file, flags, mode);
       if (file === fault.target) {
         fault.descriptor = descriptor;
+      }
+      if (
+        fault.operation === "directory sync" &&
+        actual.fstatSync(descriptor).isDirectory()
+      ) {
+        fault.directoryDescriptor = descriptor;
       }
       return descriptor;
     },
@@ -148,7 +166,7 @@ const saves: {
   {
     code: "receipt_write_failed",
     name: "new receipt",
-    operations: ["write", "sync", "close"],
+    operations: ["write", "sync", "close", "directory sync"],
     save: (target) => {
       const receipt = new UploadReceipt(target, {
         apiOrigin: "https://api.inth.com",
@@ -168,6 +186,7 @@ const saves: {
 afterEach(() => {
   Object.assign(fault, {
     descriptor: -1,
+    directoryDescriptor: -1,
     operation: "",
     replacement: "",
     target: "",
@@ -183,7 +202,10 @@ it.for(
   )
 )(
   "removes an unsuccessful $name after a $operation error and permits retry",
-  async (test) => {
+  async (test, context) => {
+    if (test.operation === "directory sync" && process.platform === "win32") {
+      context.skip();
+    }
     const target = output();
     fault.operation = test.operation;
     await expect(
@@ -198,16 +220,29 @@ it.for(
 
 it.for(
   saves.flatMap((save) =>
-    ["file", "symlink"].map((replacement) => ({ ...save, replacement }))
+    save.operations
+      .filter(
+        (operation) => operation === "close" || operation === "directory sync"
+      )
+      .flatMap((operation) =>
+        ["file", "symlink"].map((replacement) => ({
+          ...save,
+          operation,
+          replacement,
+        }))
+      )
   )
 )(
-  "preserves a replacement $replacement after a $name close error",
+  "preserves a replacement $replacement after a $name $operation error",
   async (test, context) => {
-    if (test.replacement === "symlink" && process.platform === "win32") {
+    if (
+      (test.replacement === "symlink" || test.operation === "directory sync") &&
+      process.platform === "win32"
+    ) {
       context.skip();
     }
     const target = output();
-    fault.operation = "close";
+    fault.operation = test.operation;
     fault.replacement = test.replacement;
     await expect(
       Promise.resolve().then(() => test.save(target))

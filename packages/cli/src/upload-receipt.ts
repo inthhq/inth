@@ -105,6 +105,7 @@ export class UploadReceipt {
   private readonly parent: string;
   constructor(path: string, data: UploadReceiptData) {
     this.path = resolve(path);
+    let created: Stats | undefined;
     try {
       this.parent = realpathSync(dirname(this.path));
       const directory = lstatSync(dirname(this.path));
@@ -117,9 +118,13 @@ export class UploadReceipt {
       ) {
         throw receiptError();
       }
-      this.written = writeReceipt(this.path, data);
+      created = writeReceipt(this.path, data);
+      this.written = created;
       syncDirectory(this.parent);
     } catch {
+      if (created) {
+        removeCreatedFile(this.path, created);
+      }
       throw receiptError();
     }
   }
