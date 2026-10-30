@@ -169,7 +169,7 @@ const measureCommitAck = async function measureCommitAck(
 		// eslint-disable-next-line no-await-in-loop
 		const result = await client.commit({ action: 'all' });
 		const elapsed = (nowNs() - startedAt) / 1e6;
-		if (!result.ok && result.reason !== 'queued') {
+		if (!result.ok) {
 			throw new Error(
 				`commit did not acknowledge: ${result.reason ?? 'unknown'}`
 			);

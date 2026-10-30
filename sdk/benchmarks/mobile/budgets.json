@@ -153,7 +153,7 @@
 			"max": 1572864,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Bytes the Kotlin core plus the bridge add to an Android app, measured as the uncompressed class bytes of the release artifacts. Measured 1,281,139 B with the TCF disclosure, the served vendor list slot, and the IABTCF bus in the core; 1.5 MiB is the ceiling."
+			"note": "Uncompressed class bytes of the first-party core, Android adapter, Compose consent UI and RN bridge Release artifacts, before DEX, R8 or compression and excluding transitive dependencies. The unchanged 1.5 MiB ceiling was calibrated against 1,281,139 B before the stock UI and later native additions. Matched Release consumer builds are needed to measure app-size contribution."
 		},
 		"js_hydrate_envelope_ms": {
 			"max": 3,

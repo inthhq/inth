@@ -120,7 +120,7 @@ export const ROWS = {
 	androidBinary: {
 		budgetKey: 'android_binary_bytes',
 		id: 'android_binary_bytes',
-		label: 'Android class bytes added to the app',
+		label: 'Android raw class bytes',
 		surface: 'bundle',
 		unit: 'bytes',
 	},
