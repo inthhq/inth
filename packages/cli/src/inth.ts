@@ -741,4 +741,7 @@ if (options && installationId) {
     )
   );
 }
-process.exit(exitCode);
+if (exitCode !== 0) {
+  process.exit(exitCode);
+}
+process.exit();

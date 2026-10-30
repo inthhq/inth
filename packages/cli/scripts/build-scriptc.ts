@@ -322,6 +322,7 @@ if (fixtures) {
     "transport-test",
     "upload-test",
     "write-test",
+    "exit-test",
     "telemetry-test",
     "sentry-test",
     "development-telemetry-test",

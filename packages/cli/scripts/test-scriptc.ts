@@ -6,6 +6,7 @@ import { performance } from "node:perf_hooks";
 
 import { verifyC15t } from "./c15t-checks.ts";
 import {
+  verifyExitStatus,
   verifyHelp,
   verifyStatelessBypass,
   verifyUsageErrors,
@@ -92,6 +93,7 @@ const steps: Step[] = [
     run: () => verifyUpdateCheck(binary, [], "development", false),
   },
   { name: "Help", run: verifyHelp },
+  { name: "Command exit statuses", run: verifyExitStatus },
   { name: "Dashboard writes", run: () => verifyWrites(fixture("write-test")) },
   { name: "File uploads", run: () => verifyUploads(fixture("upload-test")) },
   { name: "Usage errors", run: verifyUsageErrors },
