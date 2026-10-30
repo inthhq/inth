@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import re
+import signal
 import socket
 import subprocess
 import threading
@@ -77,22 +78,41 @@ class Device:
         command = [str(self.sdk / 'emulator/emulator'), '-avd', avd, '-port', str(self.spec['port']), '-no-window', '-no-snapshot', '-no-audio', '-no-boot-anim', '-gpu', 'swiftshader', '-memory', '3072', '-netdelay', 'none', '-netspeed', 'full']
         with (self.root / 'device/emulator.log').open('wb') as stream:
             process = subprocess.Popen(command, env=env, stdout=stream, stderr=subprocess.STDOUT, start_new_session=True)
-        write(self.root / 'device/ownership.json', {'taskOwned': True, 'serial': self.serial, 'avdName': avd, 'avdHome': env['ANDROID_AVD_HOME'], 'pid': process.pid, 'command': command})
-        self.call(['wait-for-device'], timeout=120)
-        deadline = time.monotonic() + 120
-        while self.text(['shell', 'getprop', 'sys.boot_completed']) != '1':
-            require(time.monotonic() < deadline, 'boot deadline exceeded')
-            time.sleep(1)
-        self.call(['root'])
-        self.call(['wait-for-device'], timeout=60)
-        require(self.text(['shell', 'id', '-u']) == '0', 'rootable task emulator required')
-        for args in (['shell', 'wm', 'size', '1080x2400'], ['shell', 'wm', 'density', '420'],
-                     *[['shell', 'settings', 'put', 'global', key, '1'] for key in ('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale')],
-                     ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP'], ['shell', 'wm', 'dismiss-keyguard']):
-            self.call(args)
-        fingerprint = self.fingerprint()
-        require(fingerprint['ro.product.cpu.abi'] == 'arm64-v8a' and fingerprint['ro.build.version.sdk'] == '36', 'wrong system image')
-        write(self.root / 'device/fingerprint.json', fingerprint)
+        try:
+            write(self.root / 'device/ownership.json', {'taskOwned': True, 'serial': self.serial, 'avdName': avd, 'avdHome': env['ANDROID_AVD_HOME'], 'pid': process.pid, 'command': command})
+            self.call(['wait-for-device'], timeout=120)
+            deadline = time.monotonic() + 120
+            while self.text(['shell', 'getprop', 'sys.boot_completed']) != '1':
+                require(time.monotonic() < deadline, 'boot deadline exceeded')
+                time.sleep(1)
+            self.call(['root'])
+            self.call(['wait-for-device'], timeout=60)
+            require(self.text(['shell', 'id', '-u']) == '0', 'rootable task emulator required')
+            for args in (['shell', 'wm', 'size', '1080x2400'], ['shell', 'wm', 'density', '420'],
+                         *[['shell', 'settings', 'put', 'global', key, '1'] for key in ('window_animation_scale', 'transition_animation_scale', 'animator_duration_scale')],
+                         ['shell', 'input', 'keyevent', 'KEYCODE_WAKEUP'], ['shell', 'wm', 'dismiss-keyguard']):
+                self.call(args)
+            fingerprint = self.fingerprint()
+            require(fingerprint['ro.product.cpu.abi'] == 'arm64-v8a' and fingerprint['ro.build.version.sdk'] == '36', 'wrong system image')
+            write(self.root / 'device/fingerprint.json', fingerprint)
+        except BaseException:
+            # This session is ours even when boot fails before an ADB fingerprint exists.
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                pass
+            finally:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait(timeout=10)
+            write(self.root / 'device/create-failure.json', {'ownedProcessId': process.pid, 'exitCode': process.returncode, 'processStopped': True})
+            raise
 
     def installed(self, name):
         remote = self.text(['shell', 'pm', 'path', package(name)])
@@ -250,4 +270,25 @@ class Device:
                 self.installed(name)
                 self.call(['shell', 'am', 'force-stop', package(name)])
         self.call(['emu', 'kill'])
-        write(self.root / 'cleanup.json', {'stoppedSerial': self.serial, 'avdRetained': True, 'otherDevicesTouched': False})
+        self.call(['wait-for-disconnect'], timeout=30)
+        ownership = read(self.root / 'device/ownership.json')
+        deadline = time.monotonic() + 30
+        while True:
+            devices = subprocess.check_output([str(self.adb_path), 'devices'], text=True)
+            state = next((line.split()[1] for line in devices.splitlines() if line.split() and line.split()[0] == self.serial), 'absent')
+            ports_closed = []
+            for port in (self.spec['port'], self.spec['port'] + 1):
+                with socket.socket() as probe:
+                    ports_closed.append(probe.connect_ex(('127.0.0.1', port)) != 0)
+            try:
+                os.kill(ownership['pid'], 0)
+                process_stopped = False
+            except ProcessLookupError:
+                process_stopped = True
+            stopped = process_stopped and all(ports_closed) and state in ('absent', 'offline')
+            if stopped:
+                break
+            require(time.monotonic() < deadline, 'owned emulator has not stopped; no cleanup success recorded')
+            time.sleep(.2)
+        write(self.root / 'cleanup.json', {'stoppedSerial': self.serial, 'avdRetained': True, 'otherDevicesTouched': False,
+              'processStopped': True, 'emulatorPortsClosed': True, 'adbDisconnected': True, 'serialStateAfterStop': state})

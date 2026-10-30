@@ -11,6 +11,8 @@
 		"check-types": "tsc --noEmit",
 		"competitive": "python3 competitive/harness.py",
 		"competitive:build": "python3 competitive/harness.py build",
+		"competitive:cached-runtime": "python3 competitive/cached-runtime/runner.py",
+		"competitive:cached-runtime:test": "python3 competitive/cached-runtime/tests.py",
 		"competitive:collect": "python3 competitive/harness.py collect",
 		"competitive:plan": "python3 competitive/harness.py plan",
 		"competitive:preflight": "python3 competitive/harness.py preflight",

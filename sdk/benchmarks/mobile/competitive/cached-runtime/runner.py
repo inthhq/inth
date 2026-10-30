@@ -368,7 +368,7 @@ def verify(cfg):
     return {'profileId': PROFILE, 'summary': actual, 'rawLogsReplayed': len(reported['rows'])}
 
 
-NATIVE = ('build', 'device', 'calibrate', 'preflight', 'sample', 'cleanup')
+NATIVE = ('prepare', 'build', 'device', 'calibrate', 'preflight', 'sample', 'cleanup')
 
 
 def main():

@@ -93,7 +93,8 @@ rejects altered, reordered, shortened or rehashed schedules. Eligible adapters
 use the same transport rule, clock, host and endpoint definitions. Ineligible
 cells stay explicit. No failed sample is replaced, resumed or selected away.
 
-Every native/device command acquires the configured shared exclusive lock.
+Preparation and every native/device command acquire the configured shared
+exclusive lock.
 Sampling holds it before `ec quiet`, throughout settling and the complete cohort.
 Quiet output is retained and printed, including any stopped containers. Other
 study builds must use that same lock. Dedicated host idleness is not guaranteed.
@@ -101,7 +102,10 @@ Fresh expiry checks use the actual device clock captured during each attempt.
 Replay uses the bound capture epoch rather than the reviewer's wall clock.
 Raw failures and exposed transport errors remain. Percentiles use nearest rank,
 `sorted[ceil(p*n)-1]`, conditional on valid samples, with failure counts retained.
-`cleanup` checks ownership and stops only this emulator; it retains the AVD.
+`cleanup` checks ownership and stops only this emulator. It verifies process
+exit, closed emulator ports and disconnected ADB transport before recording
+success. It retains the AVD. If device creation fails before its fingerprint
+exists, the creator stops its own process group without requiring ADB.
 
 ## Offline verification
 

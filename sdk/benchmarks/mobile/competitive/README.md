@@ -200,7 +200,7 @@ Outputs are `evidence.json`, `report.json` and `report.md` under the configured 
 
 All paths in a retained descriptor are absolute. They can point at any mounted evidence store; no historical home-directory location is required. Every wrapper archive-installed file is compared to its exact archive before collection. The resulting report contains fresh reads and hashes of the retained app files. Keep this local descriptor outside git.
 
-## Runtime
+## Historical strict runtime
 
 The endpoint is `Application.attachBaseContext` to the first decor `OnDraw` after a validated cached-denial Ready layout. It includes RN startup, SDK reads and fixture validation. It excludes pre-attach/zygote work, physical presentation and stock-preferences rendering. Policies and validation work differ, so it does not rank pure consent engines. OS and file caches are warm, but each attempt starts a fresh process.
 
@@ -229,6 +229,45 @@ bun run --cwd benchmarks/mobile competitive:runtime --config /path/to/run.json -
 Preflight reports unavailable/error configurations as blocked. Schedule freezes input hashes and 30 attempts per eligible SDK, rotating order each round. Sample holds the shared native lock, runs and records `ec quiet`, waits ten seconds, then force-stops all participating task apps before each attempt. It retains every attempt, including failures and timeouts, with no replacement or timing-based exclusion. A complete accepted sample needs a fresh PID, ordered matching native attach/layout/draw markers, exact nanosecond arithmetic and one complete post-draw payload matching the frozen denial. Verify reparses raw logs and rejects invented elapsed values, missing chunks, stale PIDs and incomplete schedules. Both percentiles use nearest rank, `ceil(p*n)-1`, over valid samples, with scheduled/valid/failed counts alongside. No valid samples means null latency.
 
 The historical run scheduled Didomi and Usercentrics 30 times each, all valid. Their p50/p95 were 336.079/450.258ms and 378.532/502.281ms. c15t's denial survived offline, but its configured backend produced a DNS transport error. That violated eligibility, so it had zero scheduled attempts and no latency. OneTrust lacked verified App ID/CDN configuration. No iOS, phone, battery, idle-memory, network-startup or first displayed SDK-preferences-frame result follows from these measurements.
+
+## Cached policy runtime follow-up
+
+The separate [cached-policy protocol](cached-runtime/protocol.md) permits
+recognized offline refresh transport failures when the exact saved denial and
+all exposed policy, applicability and expiry gates remain valid. It provides
+fresh cold and same-process warm sampling for c15t, Didomi, Usercentrics and
+Sourcepoint. This does not change the historical strict profile above.
+
+The [cached-runtime snapshot](snapshots/2026-10-30-cached-runtime.json) records
+240 valid observations, 30 cold and 30 warm per SDK. These are configured-app
+CPU draw endpoints, including wrapper reads and different demo policies.
+They do not rank consent engines or measure physical display presentation.
+Sourcepoint additionally depends on a read-only check of its pinned private
+cache schema. Offline campaign completion remains unsupported.
+
+Copy [the external configuration example](cached-runtime/config.example.json)
+and follow the protocol's prepare, build, device, stock-rejection calibration,
+offline preflight, freeze, sample, verify and cleanup commands. The package
+commands expose the same runner and offline tests:
+
+```sh
+bun run --cwd benchmarks/mobile competitive:cached-runtime --help
+bun run --cwd benchmarks/mobile competitive:cached-runtime replay --evidence "$CACHED_EVIDENCE"
+bun run --cwd benchmarks/mobile competitive:cached-runtime:test
+```
+
+Replay checks all 240 saved observations against their immutable capture
+epochs, raw logs, native markers, decisions and percentiles. The maintained
+runner fixes fresh-output setup and binds canonical schedules before device
+work. Its sources are a derivative of the measured fixtures. The new native
+fixtures have source API/type checks but have not had a fresh native build or
+timing run; they did not produce the historical APKs.
+
+UI timing remains an incomplete continuous-window study, with 87 valid and
+three failed scenarios retained as segmented descriptive observations. No
+maintained UI timing command is included. OneTrust runtime needs a verified
+published mobile App ID and matching CDN configuration. iOS runtime and
+physical-phone measurements remain unmeasured.
 
 ## Checks and scope
 

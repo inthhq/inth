@@ -12,3 +12,13 @@ test('competitive artifact and runtime acceptance rules', () => {
 	expect(result.error).toBeUndefined();
 	expect(result.status, result.stdout + result.stderr).toBe(0);
 });
+
+test('cached runtime protocol and replay rules', () => {
+	const result = spawnSync(
+		'python3',
+		[resolve(import.meta.dirname, '../../competitive/cached-runtime/tests.py')],
+		{ encoding: 'utf8' }
+	);
+	expect(result.error).toBeUndefined();
+	expect(result.status, result.stdout + result.stderr).toBe(0);
+});

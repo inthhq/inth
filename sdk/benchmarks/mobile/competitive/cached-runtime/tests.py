@@ -247,14 +247,61 @@ class SetupTests(unittest.TestCase):
 
     def test_native_dispatch_uses_configured_lock_before_work(self):
         cfg = {'output': '/synthetic-output', 'nativeLockRunner': ['python3', '/synthetic-lock.py']}
-        with patch.object(sys, 'argv', ['runner.py', 'sample', '--config', 'synthetic.json']), patch.object(runner, 'config', return_value=cfg), patch.object(runner.subprocess, 'call', return_value=0) as call, patch.object(runner, 'sample', side_effect=AssertionError('native work outside lock')):
-            with self.assertRaises(SystemExit) as ended:
-                runner.main()
-            self.assertEqual(ended.exception.code, 0)
-            command = call.call_args.args[0]
-            self.assertEqual(command[:3], ['python3', '/synthetic-lock.py', 'cmp-cached-sample'])
-            self.assertEqual(command[-2], '--lock-token')
-            self.assertEqual(command[-1], call.call_args.kwargs['env']['CMP_CACHED_LOCK_TOKEN'])
+        for stage in ('prepare', 'sample'):
+            with self.subTest(stage=stage), patch.object(sys, 'argv', ['runner.py', stage, '--config', 'synthetic.json']), patch.object(runner, 'config', return_value=cfg), patch.object(runner.subprocess, 'call', return_value=0) as call, patch.object(runner, stage, side_effect=AssertionError('native work outside lock')):
+                with self.assertRaises(SystemExit) as ended:
+                    runner.main()
+                self.assertEqual(ended.exception.code, 0)
+                command = call.call_args.args[0]
+                self.assertEqual(command[:3], ['python3', '/synthetic-lock.py', 'cmp-cached-' + stage])
+                self.assertEqual(command[-2], '--lock-token')
+                self.assertEqual(command[-1], call.call_args.kwargs['env']['CMP_CACHED_LOCK_TOKEN'])
+
+    def test_failed_device_boot_stops_its_created_process_without_fingerprint(self):
+        import device as device_module
+        popen = subprocess.Popen
+        children = []
+        def start(*args, **kwargs):
+            child = popen([sys.executable, '-c', 'import time; time.sleep(60)'], start_new_session=True)
+            children.append(child)
+            return child
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'device/avd').mkdir(parents=True)
+            device = runner.Device({'output': str(root), 'androidSdk': str(root / 'sdk'), 'device': {'avdName': 'cmp_synthetic', 'port': 5602}})
+            try:
+                with patch.object(device_module.subprocess, 'check_output', return_value='List of devices attached\n'), patch.object(device_module.socket, 'socket'), patch.object(device_module.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')), patch.object(device_module.subprocess, 'Popen', side_effect=start), patch.object(device, 'call', side_effect=ValueError('simulated boot failure')):
+                    with self.assertRaisesRegex(ValueError, 'simulated boot failure'):
+                        device.create()
+                self.assertIsNotNone(children[0].poll())
+                self.assertFalse((root / 'device/fingerprint.json').exists())
+                result = json.loads((root / 'device/create-failure.json').read_text())
+                self.assertEqual(result['ownedProcessId'], children[0].pid)
+                self.assertTrue(result['processStopped'])
+            finally:
+                for child in children:
+                    if child.poll() is None:
+                        child.kill()
+                    child.wait(timeout=5)
+
+    def test_cleanup_requires_process_exit_ports_closed_and_disconnected_transport(self):
+        import device as device_module
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            device = runner.Device({'output': str(root), 'androidSdk': str(root / 'sdk'), 'device': {'avdName': 'cmp_synthetic', 'port': 5602}})
+            write(root / 'device/ownership.json', {'pid': 123})
+            for state in ('absent', 'offline', 'device'):
+                for open_port in (False, True):
+                    with self.subTest(state=state, open_port=open_port), patch.object(device, 'owned'), patch.object(device, 'call', return_value=subprocess.CompletedProcess([], 0, b'', b'')), patch.object(device_module.subprocess, 'check_output', return_value='List of devices attached\n' + ('' if state == 'absent' else device.serial + '\t' + state + '\n')), patch.object(device_module.socket, 'socket') as socket, patch.object(device_module.os, 'kill', side_effect=ProcessLookupError), patch.object(device_module.time, 'monotonic', side_effect=[0, 31]):
+                        socket.return_value.__enter__.return_value.connect_ex.return_value = 0 if open_port else 1
+                        if not open_port and state in ('absent', 'offline'):
+                            device.cleanup()
+                            self.assertTrue(json.loads((root / 'cleanup.json').read_text())['processStopped'])
+                            (root / 'cleanup.json').unlink()
+                        else:
+                            with self.assertRaisesRegex(ValueError, 'has not stopped'):
+                                device.cleanup()
+                            self.assertFalse((root / 'cleanup.json').exists())
 
     def test_output_must_be_disjoint_from_all_inputs(self):
         self.assertFalse(runner.disjoint(Path('/study'), Path('/study/producer')))
