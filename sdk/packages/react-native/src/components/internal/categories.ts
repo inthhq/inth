@@ -68,9 +68,8 @@ const scopeFor = function scopeFor(
 /**
  * Build the rows for one snapshot.
  *
- * A restricted category reads off and locked: the core has already decided that
- * no grant may apply, and a switch the subject is allowed to move but that
- * changes nothing is a lie about what the button does.
+ * Policy and privacy-signal restrictions lock a category off. A previous denial
+ * stays editable so the subject can change their choice.
  *
  * @param snapshot - Snapshot to read.
  * @returns One row per category in scope, copy resolved.
@@ -90,7 +89,8 @@ export const buildConsentCategoryRows = function buildConsentCategoryRows(
 		}
 
 		const restrictions = snapshot.restrictions[key];
-		const restricted = restrictions !== undefined && restrictions.length > 0;
+		const restricted =
+			restrictions?.some((reason) => reason !== 'explicit-denial') ?? false;
 
 		return {
 			description,
