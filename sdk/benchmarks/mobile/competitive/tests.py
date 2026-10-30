@@ -176,6 +176,32 @@ def device_binary(platform=2):
 
 
 class CompetitiveTests(unittest.TestCase):
+    def test_size_readers_reject_acceptance_or_runtime_instrumentation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app = root / 'Host.app'
+            app.mkdir()
+            (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'com.c15t.expodev', 'CFBundleExecutable': 'Host', 'DTPlatformName': 'iphoneos', 'CFBundleSupportedPlatforms': ['iPhoneOS']}))
+            (app / 'Host').write_bytes(device_binary())
+            apk = root / 'host.apk'
+            for marker in [b'', b'CMP_SIZE_C15T_STATE', b'CMP_BENCH']:
+                bundle = bytes.fromhex('c61fbc03') + marker
+                (app / 'main.jsbundle').write_bytes(bundle)
+                with zipfile.ZipFile(apk, 'w') as archive:
+                    archive.writestr('AndroidManifest.xml', b'manifest')
+                    archive.writestr('classes.dex', tiny_dex())
+                    archive.writestr('assets/index.android.bundle', bundle)
+                readers = [lambda: core.app_measure(app, [], [], 'baseline'),
+                           lambda: core.apk_measure(apk, None, 'baseline')]
+                for reader in readers:
+                    with self.subTest(marker=marker, reader=reader):
+                        if marker:
+                            with self.assertRaisesRegex(ValueError, 'instrumentation in size artifact'):
+                                reader()
+                        else:
+                            self.assertGreater(reader()['bytes'], 0)
+                self.assertGreater(core.apk_measure(apk, None, 'baseline', for_size=False)['bytes'], 0)
+
     def test_ios_device_reader_rejects_arm64_simulator_load_command(self):
         core.device_macho(device_binary())
         with self.assertRaisesRegex(ValueError, 'device binary'):

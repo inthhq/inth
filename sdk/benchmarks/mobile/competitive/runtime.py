@@ -163,7 +163,7 @@ def eligibility(cfg, value):
             for source, installed in [('App.tsx', 'App.tsx'), ('runtime-types.ts', 'runtime-types.ts'), (vendor + '.tsx', 'consent-adapter.tsx')]:
                 require(sha(host / installed) == sha(HERE / 'fixtures/runtime' / source), 'runtime fixture source binding mismatch')
             verify_installed(cfg, host, vendor)
-            expected_classes = apk_measure(row['apk'], row['mapping'], vendor)
+            expected_classes = apk_measure(row['apk'], row['mapping'], vendor, for_size=False)
             require(expected_classes['sdkUniqueDexDestinations'] > 0, 'runtime APK lacks native SDK')
             settings = read(row['settings'])
             require(settings['applicationId'] == 'com.c15t.expodev.benchmark.' + vendor, 'runtime application ID mismatch')

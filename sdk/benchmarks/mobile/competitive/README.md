@@ -105,8 +105,9 @@ bun run --cwd benchmarks/mobile competitive:build --config /path/to/optimized.js
 Repeat for all five SDKs, then collect, verify and report using that config.
 The optimized hosts live in a separate directory and are generated from the
 same frozen locks. The only native host profile change is the default ProGuard
-file. The c15t size adapter logs a compact native snapshot for untimed
-acceptance. That fixture change also applies to fresh `android-release` builds.
+file. Size adapters contain stock integration code without acceptance logging.
+Size readers reject acceptance and runtime diagnostic markers in Hermes, while
+the separate runtime reader permits its own instrumentation.
 
 Both Android profiles retain R8's actual merged `configuration.txt`, mapping,
 usage and seeds. Collection reads the directives, checks the selected default

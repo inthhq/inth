@@ -126,7 +126,7 @@ def dex_classes(data):
     return {types[u32(u32(100) + index * 32)] for index in range(u32(96))}
 
 
-def apk_measure(apk, mapping, vendor):
+def apk_measure(apk, mapping, vendor, *, for_size=True):
     require(vendor in VENDORS, f'unsupported app: {vendor}')
     groups = {}
     classes = set()
@@ -137,6 +137,8 @@ def apk_measure(apk, mapping, vendor):
         require('AndroidManifest.xml' in names, 'APK lacks Android manifest')
         bundle = archive.read('assets/index.android.bundle')
         require(bundle[:4] == bytes.fromhex('c61fbc03'), 'APK bundle is not Hermes')
+        if for_size:
+            require(b'CMP_SIZE_C15T_STATE' not in bundle and b'CMP_BENCH' not in bundle, 'acceptance/runtime instrumentation in size artifact')
         for item in archive.infolist():
             if item.is_dir():
                 continue
@@ -212,6 +214,7 @@ def app_measure(app, symbols, maps, vendor):
     device_macho(data)
     bundle = (app / 'main.jsbundle').read_bytes()
     require(bundle[:4] == bytes.fromhex('c61fbc03'), 'iOS bundle is not Hermes')
+    require(b'CMP_SIZE_C15T_STATE' not in bundle and b'CMP_BENCH' not in bundle, 'acceptance/runtime instrumentation in size artifact')
     files = manifest(app)
     groups = {'executable': 0, 'frameworks': 0, 'javascript': 0, 'resources': 0}
     for row in files:
