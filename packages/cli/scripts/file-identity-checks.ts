@@ -34,9 +34,11 @@ export const verifyFileIdentity = (
   assert.equal(new Set(tokens).size, identities.length);
   const directory = mkdtempSync(path.join(tmpdir(), "inth-file-identity-"));
   try {
-    const source = path.join(directory, "document-🍋.txt");
+    const source = path.join(directory, "document.txt");
+    const unicode = path.join(directory, "document-🍋.txt");
     const replacement = path.join(directory, "replacement.txt");
     writeFileSync(source, "original file");
+    writeFileSync(unicode, "unicode file");
     writeFileSync(replacement, "other file");
     const initial = token(statSync(source, { bigint: true }));
     const other = token(statSync(replacement, { bigint: true }));
@@ -66,7 +68,13 @@ export const verifyFileIdentity = (
     const danglingIdentity = dangling
       ? token(lstatSync(dangling, { bigint: true }))
       : "";
-    const result = run(fixture, [source, replacement, symlink, dangling]);
+    const result = run(fixture, [
+      source,
+      replacement,
+      unicode,
+      symlink,
+      dangling,
+    ]);
     assert.deepEqual(JSON.parse(result.stdout), {
       afterRename: initial,
       danglingIdentity,
@@ -77,6 +85,7 @@ export const verifyFileIdentity = (
       opened: initial,
       other,
       replaced: other,
+      unicodeIdentity: token(statSync(unicode, { bigint: true })),
     });
     console.log(
       "Native file identity preserves uint64 precision and matches Node BigInt stats for paths, descriptors, replacements and symlinks."

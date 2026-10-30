@@ -2,13 +2,14 @@ import { closeSync, openSync, renameSync } from "node:fs";
 
 import { nativeFileIdentity } from "../../src/native/native-file-identity.ts";
 
-const [source, replacement, symlink = "", dangling = ""] =
+const [source, replacement, unicode, symlink = "", dangling = ""] =
   process.argv.slice(2);
-if (!source || !replacement) {
-  throw new Error("Expected source and replacement file paths.");
+if (!source || !replacement || !unicode) {
+  throw new Error("Expected source, replacement and Unicode file paths.");
 }
 const initial = nativeFileIdentity(source, -1, true);
 const other = nativeFileIdentity(replacement, -1, true);
+const unicodeIdentity = nativeFileIdentity(unicode, -1, true);
 const descriptor = openSync(source, "r");
 let opened = "";
 let afterRename = "";
@@ -55,5 +56,6 @@ console.log(
     opened,
     other,
     replaced: nativeFileIdentity(source, -1, true),
+    unicodeIdentity,
   })
 );
