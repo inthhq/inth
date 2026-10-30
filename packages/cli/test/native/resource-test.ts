@@ -15,12 +15,17 @@ import { join } from "node:path";
 
 import { requireAccessPerson } from "../../src/agent-access-commands.ts";
 import { formatAccessResource } from "../../src/agent-access-output.ts";
+import { productionAgentEnvironment } from "../../src/agent-environment.ts";
 import { parseArguments } from "../../src/arguments.ts";
+import { SCOPE } from "../../src/auth-types.ts";
 import type { OAuthResponse } from "../../src/auth-types.ts";
 import { chatRetryDiagnostic, requireChatPerson } from "../../src/chat.ts";
+import { CliError } from "../../src/cli-error.ts";
+import { selectCommandConnection } from "../../src/connection-selection.ts";
 import { NativeApi, apiOutput } from "../../src/native/native-api.ts";
 import { approveResource } from "../../src/resource-approval.ts";
 import {
+  RESOURCE_COMMANDS,
   buildResourceRequest,
   rawApiRequest,
 } from "../../src/resource-commands.ts";
@@ -48,6 +53,39 @@ const check = (condition: boolean, message: string): void => {
   }
 };
 const { signal } = new AbortController();
+const browserScopes = SCOPE.split(" ");
+for (const spec of RESOURCE_COMMANDS) {
+  if (!spec.scopes?.length) {
+    continue;
+  }
+  const needsApproval = spec.scopes.some(
+    (scope) => !browserScopes.includes(scope)
+  );
+  for (const selected of ["browser", "agent"]) {
+    const options = parseArguments([spec.command, spec.action, "--help"]);
+    let refused = false;
+    let failure = "";
+    try {
+      // eslint-disable-next-line no-await-in-loop -- Check each command and connection with isolated mutable options.
+      await selectCommandConnection(
+        options,
+        undefined,
+        (): Promise<string | undefined> => Promise.resolve(selected),
+        productionAgentEnvironment
+      );
+    } catch (error) {
+      if (!(error instanceof CliError) || error.code !== "usage_error") {
+        throw error;
+      }
+      refused = true;
+      failure = error.message;
+    }
+    check(
+      refused === (needsApproval && selected === "browser"),
+      `Incorrect credential support for ${spec.command} ${spec.action}: selected=${selected}, needsApproval=${needsApproval}, refused=${refused}, failure=${failure}.`
+    );
+  }
+}
 if (process.argv.includes("--chat-stdin-cancel")) {
   const controller = new AbortController();
   setTimeout(() => controller.abort(), 25);

@@ -77,7 +77,7 @@ Exit codes are `0` for success, `1` for failure, `2` when a billing mutation or 
 | `interaction_required` | Browser approval or an organization choice needs a person or an explicit argument |
 | `authentication_required` | No saved credentials, HTTP 401, or a revoked or expired refresh token |
 | `invalid_scope` | The OAuth server refused the requested login scopes. Check the deployed `inth-cli` registration and allowed scopes |
-| `insufficient_scope` | The token lacks a required capability. Run interactive `inth login` again for a browser session; API keys cannot gain capabilities |
+| `insufficient_scope` | The token lacks a required capability. Check command help and approve a new connection with those scopes. Opt-in writes require scoped agent sign-in; API keys cannot gain capabilities |
 | `access_denied` | HTTP 403 or refused device approval |
 | `authentication_expired` | Device approval expired |
 | `organization_required` | No organizations are available |
@@ -182,4 +182,4 @@ Setup and removal require explicit `--agent` and `--scope` in noninteractive mod
 
 Configuration failures use `invalid_config`, `config_conflict`, `config_busy`, or `config_write_failed`. Conflicting and malformed configs are preserved. Native distributions target Apple silicon Macs, Linux arm64/x64, and Windows x64. Use an organization API key for Linux environments without a desktop credential service.
 
-Additional public API operations accept explicit agent scopes for billing writes, account/security changes, integrations, support writes, Consent runtime/key changes and organization settings/deletion. These write permissions are excluded from ordinary browser login. Request only the permissions needed with `inth login --email <email> --scopes <scopes> --json`; the [authentication scope table](https://inth.com/docs/cli/authentication) lists them and companion permissions. The raw `api` command can call supported operations without a named wrapper. Server rollout and operational switches still control new writes.
+Additional public API operations accept explicit agent scopes for billing writes, account/security changes, integrations, support writes, Consent runtime/key changes and organization settings/deletion. These write permissions are excluded from ordinary browser login. Command help marks their named operations with `authentication: "agent"`. A selected browser connection fails locally before credential access or HTTP, with a scoped sign-in command. Use the saved approved agent connection or select it with `--auth agent`. Request only the permissions needed with `inth login --email <email> --scopes <scopes> --json`; the [authentication scope table](https://inth.com/docs/cli/authentication) lists them and companion permissions. The raw `api` command can call supported operations without a named wrapper. Server rollout and operational switches still control new writes.

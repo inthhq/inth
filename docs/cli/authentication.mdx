@@ -78,6 +78,8 @@ Use these scopes for the additional resource groups. A credential needs every sc
 
 New browser sign-ins request the read scopes above and the permissions for existing management commands, Consent configuration, Website Audit and chats. The additional write scopes for billing, account security, integrations, support, runtime lifecycle and keys, notification preferences and organization settings require an explicitly scoped agent connection. Account and organization deletion permissions also require that explicit approval.
 
+Command help marks these named operations with `authentication: "agent"`. If a browser connection is selected, the CLI stops before reading credentials or making an API request and prints the scoped sign-in command. A saved agent connection is used automatically; `--auth agent` selects it explicitly. The server still checks its approved scopes.
+
 These additional API operations can be called with `inth api` even when they have no named command. For example, request a support write connection with:
 
 ```sh

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { Auth } from "../experiments/node/auth.ts";
 import { API_ORIGIN, DISCOVERY_URL } from "../experiments/node/protocol.ts";
+import { COMMAND_METADATA } from "../src/command-metadata.ts";
 import {
   MemoryStore,
   credentials,
@@ -41,6 +42,11 @@ describe("device login", () => {
     expect(grant.get("client_id")).toBe("inth-cli");
     expect(grant.get("resource")).toBe(API_ORIGIN);
     const scopes = grant.get("scope")?.split(" ") ?? [];
+    for (const command of COMMAND_METADATA) {
+      if (command.scopes.some((scope) => !scopes.includes(scope))) {
+        expect(command.authentication, command.usage).toBe("agent");
+      }
+    }
     expect(scopes).toEqual(
       expect.arrayContaining([
         "openid",

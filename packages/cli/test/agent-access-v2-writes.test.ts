@@ -8,6 +8,7 @@ import nodePath from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiClient } from "../experiments/node/api.ts";
+import { Auth } from "../experiments/node/auth.ts";
 import { run as runCommand } from "../experiments/node/commands.ts";
 import { HttpClient, systemClock } from "../experiments/node/http.ts";
 import { OrganizationContext } from "../experiments/node/state.ts";
@@ -117,6 +118,85 @@ afterEach(async () => {
   vi.unstubAllEnvs();
 });
 describe("named Dashboard writes", () => {
+  it.each(
+    v2WriteCases
+      .filter((example) =>
+        ["support start", "billing plan-preview", "account delete"].includes(
+          example.args.slice(0, 2).join(" ")
+        )
+      )
+      .flatMap((example) =>
+        ["explicit", "saved", "default"].map((selection) => ({
+          ...example,
+          selection,
+        }))
+      )
+  )(
+    "refuses a $selection browser connection for $path before credentials or HTTP",
+    async (example) => {
+      const captured = person();
+      const browser = vi
+        .spyOn(Auth.prototype, "accessToken")
+        .mockResolvedValue("browser-token");
+      vi.spyOn(
+        OrganizationContext.prototype,
+        "selectedConnection"
+      ).mockResolvedValue(
+        example.selection === "saved" ? "browser" : undefined
+      );
+      const fetcher = vi.fn().mockResolvedValue(new Response(example.response));
+      vi.stubGlobal("fetch", fetcher);
+      await expect(
+        runCommand(
+          [
+            ...example.args,
+            ...(example.selection === "explicit" ? ["--auth", "browser"] : []),
+            "--json",
+          ],
+          signal()
+        )
+      ).rejects.toMatchObject({
+        code: "usage_error",
+        message: expect.stringContaining("--scopes"),
+      });
+      expect(browser).not.toHaveBeenCalled();
+      expect(captured.access).not.toHaveBeenCalled();
+      expect(fetcher).not.toHaveBeenCalled();
+    }
+  );
+
+  it("uses the selected approved agent connection for opt-in writes", async () => {
+    const captured = person();
+    vi.spyOn(
+      OrganizationContext.prototype,
+      "selectedConnection"
+    ).mockResolvedValue("agent");
+    const requests = await fixture((_request, response) => {
+      response.setHeader("Content-Type", "application/json");
+      response.end('{"success":true,"data":{"id":"spc_123"}}');
+    });
+    await runCommand(
+      [
+        "support",
+        "start",
+        "--message",
+        "Please help",
+        "--client-message-id",
+        writeUuid,
+        "--json",
+      ],
+      signal()
+    );
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.headers.authorization).toBe(
+      "Bearer fixture-person-token"
+    );
+    expect(JSON.parse(captured.stdout.mock.lastCall?.[0] ?? "")).toMatchObject({
+      data: { data: { id: "spc_123" } },
+      ok: true,
+    });
+  });
+
   it.each(v2WriteCases)(
     "executes $method $path through the parser and HTTP transport",
     async (example) => {

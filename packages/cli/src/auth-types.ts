@@ -53,6 +53,9 @@ export const CAPABILITIES = [
 ];
 export const SCOPE = `openid profile email offline_access ${CAPABILITIES.filter((scope) => !OPT_IN_CAPABILITIES.includes(scope)).join(" ")}`;
 
+export const requiresAgentConnection = (scopes: string[]): boolean =>
+  scopes.some((scope) => OPT_IN_CAPABILITIES.includes(scope));
+
 export interface Credentials {
   access_token: string;
   refresh_token: string;

@@ -143,9 +143,8 @@ describe("human help and machine discovery", () => {
         metadata?.scopes.every((scope) =>
           keyIdentity.data.scopes.includes(scope)
         );
-      expect(metadata?.authentication, `${spec.command} ${spec.action}`).toBe(
-        supported ? "browser-or-agent-or-api-key" : "browser-or-agent"
-      );
+      const advertised = metadata?.authentication.includes("api-key");
+      expect(advertised, `${spec.command} ${spec.action}`).toBe(supported);
     }
     for (const command of ["member", "invitation"]) {
       expect(formatHelp(command, "list")).toContain(

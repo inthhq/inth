@@ -1,4 +1,5 @@
 import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { requiresAgentConnection } from "./auth-types.ts";
 import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
 import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
@@ -552,7 +553,9 @@ const resourceEffects = (spec: ResourceCommand): string[] => {
   }
   if (spec.personOnly) {
     effects.push(
-      "Requires a person's approved browser or agent connection. Organization API keys cannot use this command."
+      requiresAgentConnection(spec.scopes ?? [])
+        ? "Requires a person's explicitly scoped agent connection. Organization API keys and ordinary browser sign-ins cannot use this command."
+        : "Requires a person's approved browser or agent connection. Organization API keys cannot use this command."
     );
   }
   if (spec.download) {
@@ -835,11 +838,15 @@ const resourceMetadata = (spec: ResourceCommand): CommandMetadata => {
   const usage = chatWrite
     ? `${invocation} [--message <text> | --message-file <path|-> | --data <json> | --data-file <path|->] [--attachment-ids <json-array>]`
     : `${invocation}${spec.required.map((name) => ` --${name} <${name}>`).join("")}`;
+  let authentication = keyAllowed
+    ? "browser-or-agent-or-api-key"
+    : "browser-or-agent";
+  if (requiresAgentConnection(scopes)) {
+    authentication = "agent";
+  }
   return {
     action: spec.action,
-    authentication: keyAllowed
-      ? "browser-or-agent-or-api-key"
-      : "browser-or-agent",
+    authentication,
     command: spec.command,
     description:
       spec.description ??

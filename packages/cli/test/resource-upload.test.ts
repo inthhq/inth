@@ -775,7 +775,9 @@ describe("upload command validation and discovery", () => {
       const command = COMMAND_METADATA.find(
         (entry) => entry.command === group && entry.action === action
       );
-      expect(command?.authentication).toBe("browser-or-agent");
+      expect(command?.authentication).toBe(
+        group === "support" ? "agent" : "browser-or-agent"
+      );
     }
   );
 
