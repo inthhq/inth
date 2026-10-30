@@ -131,7 +131,10 @@ be loaded shows the label's initial instead of silently substituting a logo.
 `Brand.hidden` (Swift) or `Brand.Hidden` (Kotlin) starts the page at the headline.
 Standing preferences show one category group with no heading outside IAB; IAB keeps its "This app",
 "Purposes", "Special features" and partner groups. On preferences, Accept all
-and Reject all are equal outlined buttons and Save is the one filled action.
+and Reject all are equal outlined buttons and Save is the one filled action,
+and the footer shares the cards' 16pt edges; the first layer keeps its 24pt
+page margin. List rows rely on the platform's own cell insets with a 44pt
+minimum target, and on iOS 17 and later sections sit 24pt apart.
 
 `ConsentTheme` (Swift, `C15tConsentUI`) and `com.c15t.consentui.ConsentTheme`
 (Kotlin) are the one customization surface. Each holds nine semantic colours

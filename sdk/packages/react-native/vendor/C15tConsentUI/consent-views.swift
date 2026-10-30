@@ -636,7 +636,7 @@ private struct DecisionFooter: View {
                 }
             }
         }
-        .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 8)
+        .padding(.horizontal, first ? 24 : 16).padding(.top, 12).padding(.bottom, 8)
         // The row fades in and the actions ease down to make room instead of jumping under the thumb.
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: presenter.errorCode)
         .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { contentHeight = $0 }
@@ -650,6 +650,13 @@ private struct DecisionFooter: View {
         return Button(label) { presenter.commit(action) }
             .buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : first ? .decision : .quiet, busy: busy))
             .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(prefix + "." + suffix)
+    }
+}
+
+/// Sections sit 24pt apart where the platform lets a list say so; iOS 16 keeps its default.
+private struct SectionSpacing: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) { content.listSectionSpacing(24) } else { content }
     }
 }
 
@@ -739,7 +746,7 @@ private struct PreferencesList: View {
                 }.listRowBackground(surface)
             }
         }
-        .listStyle(.insetGrouped).scrollContentBackground(.hidden)
+        .listStyle(.insetGrouped).scrollContentBackground(.hidden).modifier(SectionSpacing())
         .foregroundStyle(theme.colors.text.color)
         .navigationTitle("Privacy settings").navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier(presenter.iab ? "c15t.iab" : "c15t.prefs")
@@ -781,7 +788,7 @@ private struct ConsentToggle<Label: View>: View {
         Toggle(isOn: $isOn) {
             label.frame(minHeight: 44).contentShape(Rectangle())
                 .onTapGesture { isOn.toggle() }
-        }.frame(minHeight: 44).tint(theme.colors.accent.color).padding(.vertical, 6)
+        }.frame(minHeight: 44).tint(theme.colors.accent.color)
     }
 }
 private extension ConsentToggle where Label == Text {
@@ -820,7 +827,7 @@ private struct CategoryRow: View {
                     Text(category == .necessary ? "Always on" : "Off").font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                         .accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).locked")
                 }
-                .padding(.vertical, 10)
+                .frame(minHeight: 44)
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier(restricted ? "c15t.prefs.category.\(category.rawValue).restricted" : "c15t.prefs.category.\(category.rawValue).locked")
             }

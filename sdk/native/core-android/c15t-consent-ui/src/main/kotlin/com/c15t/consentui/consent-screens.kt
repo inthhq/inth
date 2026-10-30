@@ -365,7 +365,8 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
             BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
                 // The row's arrival eases the actions down to make room instead of jumping them under the thumb.
                 Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().heightIn(max = maxHeight * 0.6f)
-                    .verticalScroll(rememberScrollState()).testTag("c15t.footer").animateContentSize().padding(horizontal = 24.dp, vertical = 12.dp),
+                    // Edges follow the page: 24dp on the first layer, 16dp on preferences to meet the cards.
+                    .verticalScroll(rememberScrollState()).testTag("c15t.footer").animateContentSize().padding(horizontal = if (first) 24.dp else 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (p.stale) ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
                     else {

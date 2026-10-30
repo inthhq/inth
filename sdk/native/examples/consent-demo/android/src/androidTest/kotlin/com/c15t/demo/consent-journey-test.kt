@@ -123,6 +123,10 @@ class ConsentJourneyTest {
         measurement.performScrollTo().performClick().assertIsOn()
         compose.onNodeWithText("Data use").assertDoesNotExist()
         capture("android-category-preferences")
+        // The footer shares the cards' edges on preferences.
+        val card = measurement.fetchSemanticsNode().boundsInRoot
+        val save = compose.onNodeWithTag("c15t.prefs.save").fetchSemanticsNode().boundsInRoot
+        Assert.assertEquals(card.left, save.left, 1f); Assert.assertEquals(card.right, save.right, 1f)
         compose.onNodeWithTag("c15t.prefs.save").performClick()
         waitFor("c15t.prefs.error.retry").assertIsEnabled()
         measurement.assertIsOn(); capture("android-save-error")

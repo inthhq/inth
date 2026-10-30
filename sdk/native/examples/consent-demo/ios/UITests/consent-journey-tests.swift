@@ -80,6 +80,16 @@ final class ConsentJourneyTests: XCTestCase {
         reveal(measurement); measurement.tap(); XCTAssertEqual(measurement.value as? String, "1")
         XCTAssertFalse(app.staticTexts["Data use"].exists)
         capture("ios-category-preferences")
+        // Rows keep a 44pt target without their own padding, and the footer shares the cards' edges.
+        for id in ["experience", "functionality", "marketing", "measurement"] {
+            let row = app.switches["c15t.prefs.category.\(id).switch"]
+            XCTAssertGreaterThanOrEqual(row.frame.height, 44, id)
+            print("row-frame \(id) \(row.frame)")
+        }
+        print("row-frame necessary \(app.descendants(matching: .any)["c15t.prefs.category.necessary.locked"].firstMatch.frame)")
+        print("cell-frames \(app.cells.allElementsBoundByIndex.map(\.frame))")
+        XCTAssertEqual(app.cells.firstMatch.frame.minX, button("c15t.prefs.save").frame.minX, accuracy: 0.5)
+        XCTAssertEqual(app.cells.firstMatch.frame.maxX, button("c15t.prefs.save").frame.maxX, accuracy: 0.5)
         button("c15t.prefs.save").tap()
         XCTAssertTrue(button("c15t.prefs.error.retry").waitForExistence(timeout: 5))
         XCTAssertEqual(measurement.value as? String, "1")
