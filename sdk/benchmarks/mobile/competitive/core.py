@@ -100,6 +100,7 @@ def installed_manifest(root, *, generated_roots=(), original=()):
     root = Path(root)
     require(root.is_dir() and not root.is_symlink(), f'missing regular dependency tree: {root}')
     resolved = root.resolve()
+    generated_roots = tuple(generated_roots)
     generated = [tuple(Path(name).parts) for name in generated_roots]
     require(all(parts and '..' not in parts and not Path(*parts).is_absolute() for parts in generated), 'unsafe dependency output root')
     originals = {row['path'] for row in original}
@@ -114,10 +115,7 @@ def installed_manifest(root, *, generated_roots=(), original=()):
                 name = relative.as_posix()
                 if output and name not in originals and name not in parents:
                     continue
-                parts = ('node_modules', *relative.parts)
-                generated_here = (entry.is_symlink() or entry.is_dir(follow_symlinks=False)) and any(
-                    len(parts) > len(suffix) and parts[-len(suffix):] == suffix
-                    and parts[-len(suffix)-1] == 'node_modules' for suffix in generated)
+                generated_here = (entry.is_symlink() or entry.is_dir(follow_symlinks=False)) and installed_output(relative, generated_roots)
                 if entry.is_symlink():
                     require(not generated_here, f'linked dependency output: {relative}')
                     target = os.readlink(path)

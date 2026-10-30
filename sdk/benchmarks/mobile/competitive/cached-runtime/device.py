@@ -187,11 +187,11 @@ class Device:
                         denial_in_interval(name, proof, first, last)
                         row.update(accepted=True, pid=found[0]['pid'], capturedEpochMs=captured, rejectionWallClockInterval={'beforeMs': first, 'afterMs': last}, actions=actions, snapshot=found[0]['payload'], **proof)
                         break
-                    except (ValueError, KeyError, TypeError):
+                    except (ValueError, KeyError, TypeError, IndexError, OverflowError):
                         if time.monotonic() >= deadline:
                             raise
                         time.sleep(.2)
-            except (ValueError, OSError, subprocess.SubprocessError, ET.ParseError) as error:
+            except (ValueError, KeyError, TypeError, IndexError, OverflowError, OSError, subprocess.SubprocessError, ET.ParseError) as error:
                 row['reason'] = str(error)
             finally:
                 self.stop()

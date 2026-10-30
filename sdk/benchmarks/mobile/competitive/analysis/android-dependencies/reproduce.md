@@ -22,7 +22,8 @@ contains the compact findings and source hashes.
 Run from this directory. Set `EVIDENCE` to the competitive evidence root, which
 contains `android/`, `ACCEPTANCE` to the original acceptance root containing
 `inputs/`, and `OUTPUT` to a new external writable directory. Set `ANDROID_HOME`
-and `JAVA_HOME` to the matched toolchains. Supply `NATIVE_LOCK` as the absolute
+and `JAVA_HOME` to the matched toolchains. Set `PRODUCER` to a clean checkout of
+the source commit recorded in the snapshot. Supply `NATIVE_LOCK` as the absolute
 path to the coordinator's shared lock wrapper. Heavy APK audits must also use
 that lock when they share a machine with runtime sampling.
 

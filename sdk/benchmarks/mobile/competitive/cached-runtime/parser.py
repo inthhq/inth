@@ -81,7 +81,7 @@ def validate(name, payload, captured_epoch_ms, calibration=None, settings=None):
         for error in raw['refreshErrors']:
             require(error == {'name': 'NoInternetConnection', 'description': 'No Internet connection.'}, 'unknown Sourcepoint error class')
             errors.append(error)
-        denial = {'uuid': gdpr['uuid'], 'euconsent': gdpr['euconsent'], 'createdDate': gdpr.get('createdDate'), 'expirationDate': gdpr['expirationDate'], 'vendor': vendor, 'purpose': purpose, 'grant': grant, 'cachedPolicy': meta, 'cachedExpirationDate': web['expirationDate']}
+        denial = {'uuid': gdpr['uuid'], 'euconsent': gdpr['euconsent'], 'createdDate': gdpr.get('createdDate'), 'expirationDate': gdpr.get('expirationDate'), 'vendor': vendor, 'purpose': purpose, 'grant': grant, 'cachedPolicy': meta, 'cachedExpirationDate': web['expirationDate']}
     if calibration is not None:
         require(target == calibration['targetId'] and denial == calibration['denial'], 'wrong saved decision')
     return {'targetId': target, 'denial': denial, 'refreshErrors': errors}

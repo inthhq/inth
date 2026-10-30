@@ -3,7 +3,9 @@
 import argparse
 import copy
 import datetime
+import itertools
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -13,8 +15,9 @@ from unittest.mock import patch
 
 sys.dont_write_bytecode = True
 import runner
-from core import sha, write
-from parser import NAMES, denial_in_interval, parse, validate
+import device as device_module
+from core import read, sha, write
+from parser import NAMES, denial_in_interval, parse, snapshots, validate
 from protocol import attempts, canonical_schedule, replay_completed, verify_rows, verify_schedule
 
 CAPTURE = 946684800000  # 2000-01-01, long before the reviewer's current date.
@@ -68,6 +71,31 @@ def log(rows):
 
 
 class ParserTests(unittest.TestCase):
+    def test_sourcepoint_omitted_public_expiry_keeps_cached_authority(self):
+        data = payload('sourcepoint')
+        calibration = validate('sourcepoint', data, CAPTURE)
+        del data['raw']['userData']['gdpr']['expirationDate']
+        result = parse(log(marker_rows(data)), 'sourcepoint', calibration, captured_epoch_ms=CAPTURE)
+        self.assertTrue(result['accepted'], result['reason'])
+        self.assertIsNone(result['denial']['expirationDate'])
+        cache = data['raw']['cacheEvidence']['gdpr']['consents']
+        web = json.loads(cache['webConsentPayload'])
+        web['expirationDate'] = date(CAPTURE - 1)
+        cache['webConsentPayload'] = json.dumps(web)
+        self.assertFalse(parse(log(marker_rows(data)), 'sourcepoint', captured_epoch_ms=CAPTURE)['accepted'])
+        data = payload('sourcepoint')
+        data['raw']['userData']['gdpr']['expirationDate'] = date(CAPTURE - 1)
+        self.assertFalse(parse(log(marker_rows(data)), 'sourcepoint', captured_epoch_ms=CAPTURE)['accepted'])
+
+    def test_multibyte_and_nested_json_snapshot_parts_reassemble_exactly(self):
+        data = payload('sourcepoint')
+        data['raw']['transportStress'] = '\"\\\n測試🧪' * 2500
+        text = json.dumps(data, ensure_ascii=False)
+        pieces = [text[offset:offset + 1733] for offset in range(0, len(text), 1733)]
+        rows = [{'event': 'SNAPSHOT', 'pid': 42, 'sequence': 1, 'part': index, 'parts': len(pieces), 'body': piece}
+                for index, piece in enumerate(pieces)]
+        self.assertEqual(snapshots(rows), [{'pid': 42, 'sequence': 1, 'payload': data}])
+
     def test_complete_positive_controls_all_adapters_and_profiles(self):
         for name in NAMES:
             data = payload(name)
@@ -146,6 +174,36 @@ class ParserTests(unittest.TestCase):
 
 
 class SetupTests(unittest.TestCase):
+    def test_calibration_records_validation_errors_and_continues(self):
+        for error_type in (ValueError, KeyError, TypeError, IndexError, OverflowError):
+            with self.subTest(error=error_type.__name__), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'calibration').mkdir()
+                write(root / 'builds.json', {n: {'apk': n + '.apk'} for n in NAMES})
+                dev = device_module.Device({'output': tmp, 'device': {'port': 5602}, 'androidSdk': '/synthetic-sdk', 'tenants': {n: {} for n in NAMES}})
+                active = {}
+
+                def launch(name):
+                    active['name'] = name
+                    return subprocess.CompletedProcess([], 0)
+
+                def text(args):
+                    data = {**payload(active['name']), 'kind': 'diagnostic'}
+                    return log([{'event': 'SNAPSHOT', 'pid': 42, 'sequence': 1, 'part': 0, 'parts': 1, 'body': json.dumps(data)}])
+
+                def check(name, *args, **kwargs):
+                    if name == NAMES[0]:
+                        raise error_type('invalid SDK state')
+                    return validate(name, *args, **kwargs)
+
+                with patch.object(dev, 'owned'), patch.object(dev, 'call'), patch.object(dev, 'installed'), patch.object(dev, 'stop'), patch.object(dev, 'launch', side_effect=launch), patch.object(dev, 'tap', return_value={}), patch.object(dev, 'tree'), patch.object(dev, 'epoch_ms', return_value=CAPTURE), patch.object(dev, 'text', side_effect=text), patch.object(device_module, 'validate', side_effect=check), patch.object(device_module, 'denial_in_interval'), patch.object(device_module.time, 'sleep'), patch.object(device_module.time, 'monotonic', side_effect=itertools.count(0, 11)):
+                    dev.calibrate()
+                rows = [read(root / 'calibration' / n / 'result.json') for n in NAMES]
+                self.assertFalse(rows[0]['accepted'])
+                self.assertIn('invalid SDK state', rows[0]['reason'])
+                self.assertTrue(all(row['accepted'] for row in rows[1:]))
+                self.assertTrue(all(row['timingSample'] is False for row in rows))
+
     def test_fresh_prepare_creates_all_prerequisites_and_refuses_reuse(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
@@ -414,6 +472,64 @@ class SetupTests(unittest.TestCase):
                 runner.verify_prerequisites({'output': str(root), 'tenants': {'c15t': {}}})
 
 
+def check_snapshot_transport(path):
+    """Compile and execute the fixture's snapshot method with a desktop JSON JVM."""
+    cfg = json.loads(path.read_text())
+    resolve = lambda value: str((path.parent / value).resolve())
+    java = resolve(cfg['java']) if '/' in cfg['java'] else cfg['java']
+    compiler = os.pathsep.join(resolve(value) for value in cfg['compilerClasspath'])
+    runtime = os.pathsep.join(resolve(value) for value in cfg['runtimeClasspath'])
+    source = (runner.HERE / 'fixtures/runtime-benchmark.kt').read_text()
+    signature = '  fun snapshot(payload: String) {'
+    snapshot = signature + source.split(signature, 1)[1].split('\n}\n\nclass BenchmarkPackage', 1)[0]
+    helper = source.split('private object SnapshotLog {', 1)
+    helper = 'private object SnapshotLog {' + helper[1].split('\nobject BenchmarkClock', 1)[0] if len(helper) == 2 else ''
+    with tempfile.TemporaryDirectory(prefix='cmp-snapshot-jvm-') as tmp:
+        root = Path(tmp)
+        kotlin = root / 'SnapshotTransport.kt'
+        kotlin.write_text('''import org.json.JSONObject
+object Process { fun myPid() = 2147483647 }
+object Log { fun i(tag: String, body: String): Int { println(body); return 0 } }
+''' + helper + '\nclass SnapshotTransport { private var sequence = 2147483630\n' + snapshot + '''
+}
+fun main(args: Array<String>) {
+  val module = SnapshotTransport()
+  args.forEach { module.snapshot(java.io.File(it).readText()) }
+}
+''')
+        classes = root / 'classes'
+        subprocess.run([java, '-cp', compiler, 'org.jetbrains.kotlin.cli.jvm.K2JVMCompiler', '-no-stdlib', '-no-reflect',
+                        '-jvm-target', '17', '-classpath', runtime, '-d', str(classes), str(kotlin)], check=True, timeout=120)
+        data = payload('sourcepoint')
+        data['raw']['transportStress'] = '\"\\\n測試🧪' * 20000
+        cases = [json.dumps(data, ensure_ascii=False),
+                 json.dumps({'webConsentPayload': json.dumps({'nested': '\"\\' * 20000})}),
+                 json.dumps({'unicode': '🧪測試' * 20000}, ensure_ascii=False)]
+        paths = []
+        for index, text in enumerate(cases):
+            target = root / (str(index) + '.json')
+            target.write_text(text)
+            paths.append(str(target))
+        result = subprocess.run([java, '-cp', str(classes) + os.pathsep + runtime, 'SnapshotTransportKt', *paths],
+                                check=True, capture_output=True, text=True, timeout=60)
+        records = [json.loads(line) for line in result.stdout.splitlines()]
+        maximum = 0
+        for line in result.stdout.splitlines():
+            utf16 = line.encode('utf-16-le')
+            units = [int.from_bytes(utf16[index:index + 2], 'little') for index in range(0, len(utf16), 2)]
+            modified = sum(2 if unit == 0 else 1 if unit < 0x80 else 2 if unit < 0x800 else 3 for unit in units)
+            standard = len(line.encode('utf-8'))
+            entry = 1 + len('CMP_BENCH'.encode()) + 1 + max(modified, standard) + 1
+            maximum = max(maximum, entry)
+        if maximum > 4068:
+            raise AssertionError('snapshot log entry exceeds 4068 bytes: ' + str(maximum))
+        decoded = snapshots(records)
+        if [record['payload'] for record in decoded] != [json.loads(text) for text in cases]:
+            raise AssertionError('snapshot transport changed the original payload')
+        print(json.dumps({'snapshotTransport': 'passed', 'cases': len(cases), 'records': len(records), 'maximumLogPayloadBytes': maximum,
+                          'fixtureSha256': sha(runner.HERE / 'fixtures/runtime-benchmark.kt')}))
+
+
 def typecheck(hosts):
     fixtures = runner.HERE / 'fixtures'
     tenants = {'didomi': {'apiKey': 'synthetic', 'noticeId': 'synthetic', 'target': 'cookies'},
@@ -437,9 +553,12 @@ if __name__ == '__main__':
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument('--typecheck-hosts', type=Path, help='directory containing the four pinned <sdk>-host/node_modules trees; reads only')
     cli.add_argument('--replay', type=Path, help='read-only completed external evidence root')
+    cli.add_argument('--snapshot-jvm-config', type=Path, help='external JSON with java, compilerClasspath and runtimeClasspath for the Kotlin snapshot transport check')
     args, remaining = cli.parse_known_args()
     if args.typecheck_hosts:
         typecheck(args.typecheck_hosts.resolve())
     if args.replay:
         print(json.dumps(replay_completed(args.replay.resolve()), indent=2))
+    if args.snapshot_jvm_config:
+        check_snapshot_transport(args.snapshot_jvm_config.resolve())
     unittest.main(argv=[sys.argv[0], *remaining])

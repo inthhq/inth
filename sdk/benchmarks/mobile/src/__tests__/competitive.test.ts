@@ -3,22 +3,38 @@ import { resolve } from 'node:path';
 
 import { expect, test } from 'vitest';
 
-test('competitive artifact and runtime acceptance rules', () => {
-	const result = spawnSync(
-		'python3',
-		[resolve(import.meta.dirname, '../../competitive/tests.py')],
-		{ encoding: 'utf8' }
-	);
-	expect(result.error).toBeUndefined();
-	expect(result.status, result.stdout + result.stderr).toBe(0);
-});
+const pythonTimeoutMs = 120_000;
+const testTimeoutMs = pythonTimeoutMs + 5_000;
 
-test('cached runtime protocol and replay rules', () => {
-	const result = spawnSync(
-		'python3',
-		[resolve(import.meta.dirname, '../../competitive/cached-runtime/tests.py')],
-		{ encoding: 'utf8' }
-	);
-	expect(result.error).toBeUndefined();
-	expect(result.status, result.stdout + result.stderr).toBe(0);
-});
+test(
+	'competitive artifact and runtime acceptance rules',
+	() => {
+		const result = spawnSync(
+			'python3',
+			[resolve(import.meta.dirname, '../../competitive/tests.py')],
+			{ encoding: 'utf8', timeout: pythonTimeoutMs }
+		);
+		expect(result.error).toBeUndefined();
+		expect(result.status, result.stdout + result.stderr).toBe(0);
+	},
+	testTimeoutMs
+);
+
+test(
+	'cached runtime protocol and replay rules',
+	() => {
+		const result = spawnSync(
+			'python3',
+			[
+				resolve(
+					import.meta.dirname,
+					'../../competitive/cached-runtime/tests.py'
+				),
+			],
+			{ encoding: 'utf8', timeout: pythonTimeoutMs }
+		);
+		expect(result.error).toBeUndefined();
+		expect(result.status, result.stdout + result.stderr).toBe(0);
+	},
+	testTimeoutMs
+);

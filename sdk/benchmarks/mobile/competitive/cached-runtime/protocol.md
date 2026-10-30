@@ -15,6 +15,10 @@ after layout of the common validated Ready view. The warm metric starts at
 The clock is `SystemClock.elapsedRealtimeNanos`. Neither endpoint proves a
 physically presented frame. Wrapper work and demo policies differ.
 
+Snapshot chunks fit the logger's 4,068-byte payload limit after JSON escaping,
+including priority, tag, terminators and JNI modified UTF-8. Chunk boundaries
+preserve surrogate pairs, and the parser requires every part exactly once.
+
 c15t must expose a matched policy, future deadline, explicit denial receipt and
 denied effective `measurement` permission. Its only accepted non-null error has
 code `transport` and a recognized offline connection message. Didomi must expose
@@ -28,7 +32,8 @@ Sourcepoint proves cached GDPR decision availability at the last delivered
 policy. Public `getUserData` must match the actual read-only `sp.state` cache's
 UUID, consent string, creation date and denied vendor/purpose. The cached web
 payload must have future expiry and matching grants. Known policy-change dates
-must precede the choice. The only accepted exposed refresh error is exactly
+must precede the choice. Public expiry may be omitted; when exposed it must
+also be in the future. The only accepted exposed refresh error is exactly
 `NoInternetConnection` / `No Internet connection.` This depends on the pinned
 private cache schema. Offline campaign completion and privacy-manager readiness
 are unsupported. It is not a faster replacement for a campaign callback.
@@ -85,6 +90,7 @@ symlinks. The generated tenant config also participates in size-cohort parity.
 installs the new APKs, clears their data, exercises real stock rejection controls,
 and retains screenshots, XML, full snapshots and device action-clock brackets.
 Changed or missing controls fail calibration; adjust config and use a new output.
+Validation failures are recorded per SDK so the remaining SDKs still calibrate.
 `preflight` verifies persistence across process restart and matched warm reopen.
 It uses a task TCP listener with same-UID positive and negative controls, disables
 network interfaces and installs per-UID IPv4/IPv6 rejection rules on this AVD.
@@ -133,6 +139,14 @@ To include source API checks against existing pinned host installations, append
 the four `<sdk>-host/node_modules` trees. Checks use temporary source copies and
 read those installations without building or starting devices. The test command
 also accepts `--replay "$CACHED_EVIDENCE"` to run the bound historical audit.
+
+The optional `--snapshot-jvm-config /path/to/jvm.json` check compiles and runs
+the fixture's snapshot method with logging stand-ins. The external JSON sets
+`java`, `compilerClasspath` and `runtimeClasspath`; classpaths are arrays of JAR
+paths resolved from that file. Use JDK17, Kotlin2.1.20 and a desktop Android
+`org.json` implementation. The check verifies encoded record sizes and exact
+reconstruction of nested JSON and Unicode payloads. It does not build an
+Android app or exercise the device logger.
 
 Replay pins the historical artifact index, schedule, sample metadata and raw
 hashes. It validates consent deadlines at each immutable `finishedUtc` sample
