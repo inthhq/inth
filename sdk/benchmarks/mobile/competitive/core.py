@@ -170,22 +170,49 @@ def apk_measure(apk, mapping, vendor):
             'sdkUniqueDexDestinations': len(set(retained.values())), 'dexClasses': len(classes)}
 
 
+def device_macho(data):
+    require(len(data) >= 32 and data[:4] == b'\xcf\xfa\xed\xfe' and struct.unpack_from('<I', data, 4)[0] == 0x100000c, 'expected thin arm64 Mach-O')
+    count, command_bytes = struct.unpack_from('<II', data, 16)
+    end = 32 + command_bytes
+    require(end <= len(data), 'truncated Mach-O load commands')
+    offset = 32
+    platforms = []
+    legacy_ios = False
+    for _ in range(count):
+        require(offset + 8 <= end, 'missing Mach-O load command')
+        command, size = struct.unpack_from('<II', data, offset)
+        require(size >= 8 and offset + size <= end, 'invalid Mach-O load command')
+        if command == 0x32:
+            require(size >= 24, 'truncated LC_BUILD_VERSION')
+            platforms.append(struct.unpack_from('<I', data, offset + 8)[0])
+        elif command == 0x25:
+            require(size >= 16, 'truncated LC_VERSION_MIN_IPHONEOS')
+            legacy_ios = True
+        offset += size
+    require(offset == end and (platforms == [2] or (not platforms and legacy_ios)), 'Mach-O is not an iOS device binary')
+
+
 def app_measure(app, symbols, maps, vendor):
     app = Path(app)
     require(app.is_dir() and app.suffix == '.app' and not app.is_symlink(), f'missing regular .app: {app}')
     info = plistlib.loads((app / 'Info.plist').read_bytes())
     require(info['CFBundleIdentifier'] == 'com.c15t.expodev', 'unexpected bundle identifier')
+    require(info.get('DTPlatformName') == 'iphoneos' and info.get('CFBundleSupportedPlatforms') == ['iPhoneOS'], 'expected iOS device app, not simulator')
     executable = info['CFBundleExecutable']
     require(Path(executable).name == executable, 'invalid executable path')
     binary = app / executable
     data = binary.read_bytes()
-    require(data[:4] == b'\xcf\xfa\xed\xfe' and struct.unpack_from('<I', data, 4)[0] == 0x100000c, 'expected thin arm64 Mach-O')
+    device_macho(data)
     bundle = (app / 'main.jsbundle').read_bytes()
     require(bundle[:4] == bytes.fromhex('c61fbc03'), 'iOS bundle is not Hermes')
     files = manifest(app)
     groups = {'executable': 0, 'frameworks': 0, 'javascript': 0, 'resources': 0}
     for row in files:
         name = row['path']
+        if name.startswith('Frameworks/'):
+            embedded = (app / name).read_bytes()
+            if embedded[:4] in (b'\xcf\xfa\xed\xfe', b'\xfe\xed\xfa\xcf', b'\xce\xfa\xed\xfe', b'\xfe\xed\xfa\xce', b'\xca\xfe\xba\xbe', b'\xbe\xba\xfe\xca', b'\xca\xfe\xba\xbf', b'\xbf\xba\xfe\xca'):
+                device_macho(embedded)
         group = 'executable' if name == executable else 'frameworks' if name.startswith('Frameworks/') else 'javascript' if name == 'main.jsbundle' else 'resources'
         groups[group] += row['bytes']
     haystack = '\n'.join(Path(path).read_text(errors='replace') for path in [*symbols, *maps])

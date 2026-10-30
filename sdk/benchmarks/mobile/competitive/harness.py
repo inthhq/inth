@@ -212,7 +212,7 @@ def prepare(cfg, platform, vendor, runtime=False):
         if runtime:
             prepare_runtime(host, vendor)
     else:
-        shutil.copy2(HERE / 'fixtures/locks/ios' / (vendor + '.Podfile.lock'), host / 'ios/Podfile.lock')
+        (host / 'ios/Podfile.lock').write_text(expected_pod_lock(host, vendor))
         invoke(['pod', 'install', '--deployment', '--project-directory=ios'], host, logs / 'pods.log', cfg)
         verify_pods(cfg, host, vendor)
     invoke(['node', 'node_modules/typescript/bin/tsc', '--noEmit', '--pretty', 'false'], host, logs / 'types.log', cfg)
@@ -257,10 +257,36 @@ def verify_installed(cfg, host, vendor):
     return 0
 
 
+def expo_core_spec(host):
+    import json
+    template = (HERE / 'fixtures/locks/ios/expo-modules-core.podspec.json').read_text()
+    spec = json.loads(template.replace('__BENCHMARK_HOST__', json.dumps(str(host))[1:-1]))
+    spec['source']['http'] = (host / 'node_modules/expo-modules-core/prebuilds/output/debug/xcframeworks/ExpoModulesCore.tar.gz').as_uri()
+    return spec
+
+
+def podspec_checksum(spec):
+    import hashlib
+    import json
+    # CocoaPods 1.17 hashes the stored pretty JSON, including its final newline.
+    return hashlib.sha1((json.dumps(spec, indent=2, ensure_ascii=False) + '\n').encode()).hexdigest()
+
+
+def expected_pod_lock(host, vendor):
+    import re
+    checksum = podspec_checksum(expo_core_spec(host))
+    require(re.fullmatch(r'[a-f0-9]{40}', checksum), 'invalid CocoaPods spec checksum')
+    text = (HERE / 'fixtures/locks/ios' / (vendor + '.Podfile.lock')).read_text()
+    text, count = re.subn(r'^  ExpoModulesCore: [a-f0-9]{40}$', '  ExpoModulesCore: ' + checksum, text, flags=re.M)
+    require(count == 1, 'missing unique ExpoModulesCore lock checksum')
+    return text
+
+
 def verify_pods(cfg, host, vendor):
     lock = (host / 'ios/Podfile.lock').read_text()
-    expected = (HERE / 'fixtures/locks/ios' / (vendor + '.Podfile.lock')).read_text()
+    expected = expected_pod_lock(host, vendor)
     require(lock == expected, 'Pod dependency lock changed')
+    require(read(host / 'ios/Pods/Local Podspecs/ExpoModulesCore.podspec.json') == expo_core_spec(host), 'ExpoModulesCore Podspec changed beyond its local archive path')
     owners = {'Didomi-XCFramework': 'didomi', 'OneTrust-CMP-XCFramework': 'onetrust', 'Usercentrics': 'usercentrics', 'UsercentricsUI': 'usercentrics', 'SPMobileCore': 'sourcepoint', 'ConsentViewController': 'sourcepoint'}
     for row in PINS['iosDistributions']:
         if owners[row['name']] != vendor:

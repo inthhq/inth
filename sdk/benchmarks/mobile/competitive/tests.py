@@ -51,7 +51,70 @@ def tiny_dex():
     return bytes(data)
 
 
+def device_binary(platform=2):
+    return struct.pack('<8I', 0xfeedfacf, 0x100000c, 0, 2, 1, 24, 0, 0) + struct.pack('<6I', 0x32, 24, platform, 0x100400, 0x1b0100, 0)
+
+
 class CompetitiveTests(unittest.TestCase):
+    def test_ios_device_reader_rejects_arm64_simulator_load_command(self):
+        core.device_macho(device_binary())
+        with self.assertRaisesRegex(ValueError, 'device binary'):
+            core.device_macho(device_binary(7))
+        with self.assertRaisesRegex(ValueError, 'truncated'):
+            core.device_macho(device_binary()[:40])
+
+    def test_app_reader_checks_metadata_executable_and_framework_platforms(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp) / 'Host.app'
+            app.mkdir()
+            info = {'CFBundleIdentifier': 'com.c15t.expodev', 'CFBundleExecutable': 'Host', 'DTPlatformName': 'iphoneos', 'CFBundleSupportedPlatforms': ['iPhoneOS']}
+            (app / 'Info.plist').write_bytes(plistlib.dumps(info))
+            (app / 'Host').write_bytes(device_binary())
+            (app / 'main.jsbundle').write_bytes(bytes.fromhex('c61fbc03'))
+            core.app_measure(app, [], [], 'baseline')
+            (app / 'Info.plist').write_bytes(plistlib.dumps({**info, 'DTPlatformName': 'iphonesimulator'}))
+            with self.assertRaisesRegex(ValueError, 'device app'):
+                core.app_measure(app, [], [], 'baseline')
+            (app / 'Info.plist').write_bytes(plistlib.dumps(info))
+            (app / 'Host').write_bytes(device_binary(7))
+            with self.assertRaisesRegex(ValueError, 'device binary'):
+                core.app_measure(app, [], [], 'baseline')
+            (app / 'Host').write_bytes(device_binary())
+            framework = app / 'Frameworks/Dependency.framework/Dependency'
+            framework.parent.mkdir(parents=True)
+            framework.write_bytes(device_binary(7))
+            with self.assertRaisesRegex(ValueError, 'device binary'):
+                core.app_measure(app, [], [], 'baseline')
+
+    def test_runtime_artifacts_must_belong_to_bound_build(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            row = {}
+            names = {'apk': 'app-release.apk', 'mapping': 'mapping.txt', 'dependencies': 'dependencies.json', 'settings': 'settings.json'}
+            for key, name in names.items():
+                p = root / name
+                p.write_bytes(name.encode())
+                row[key] = str(p)
+            build = {'artifacts': core.manifest(root)}
+            runtime.bind_runtime_artifacts(row, build)
+            for key in names:
+                swapped = root / ('unrelated-' + names[key])
+                swapped.write_bytes(b'another build')
+                with self.subTest(key=key), self.assertRaisesRegex(ValueError, 'differs from its build record'):
+                    runtime.bind_runtime_artifacts({**row, key: str(swapped)}, build)
+
+    def test_only_path_dependent_expo_checksum_is_relocated(self):
+        host = Path('/temporary/host with spaces and "quotes"')
+        spec = harness.expo_core_spec(host)
+        self.assertIn('host%20with%20spaces', spec['source']['http'])
+        self.assertIn(str(host), spec['prepare_command'])
+        original = (core.HERE / 'fixtures/locks/ios/baseline.Podfile.lock').read_text()
+        with patch.object(harness, 'podspec_checksum', return_value='a' * 40):
+            relocated = harness.expected_pod_lock(host, 'baseline')
+        before, after = original.splitlines(), relocated.splitlines()
+        self.assertEqual(len(before), len(after))
+        self.assertEqual([(a, b) for a, b in zip(before, after) if a != b], [(next(line for line in before if line.startswith('  ExpoModulesCore: ')), '  ExpoModulesCore: ' + 'a' * 40)])
+
     def test_size_arithmetic_includes_negative_deltas(self):
         rows = [{'profile': 'ios-local', 'vendor': v, 'status': 'measured', 'bytes': b, 'cohort': 'same'} for v, b in [('baseline', 100), ('c15t', 90)]]
         self.assertEqual(core.size_rows(rows, complete=False)[1]['addedBytes'], -10)
@@ -236,8 +299,8 @@ class CompetitiveTests(unittest.TestCase):
                 common = harness.common_inputs(host, 'ios')
                 app = root / (vendor + '.app')
                 app.mkdir()
-                (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'com.c15t.expodev', 'CFBundleExecutable': 'Host'}))
-                (app / 'Host').write_bytes(b'\xcf\xfa\xed\xfe' + struct.pack('<I', 0x100000c) + b'unit-test-binary')
+                (app / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': 'com.c15t.expodev', 'CFBundleExecutable': 'Host', 'DTPlatformName': 'iphoneos', 'CFBundleSupportedPlatforms': ['iPhoneOS']}))
+                (app / 'Host').write_bytes(device_binary())
                 (app / 'main.jsbundle').write_bytes(bytes.fromhex('c61fbc03') + (b'presentPreferences' if vendor == 'c15t' else b'control'))
                 symbols = root / (vendor + '-symbols.txt')
                 symbols.write_text('C15tReactNativeModule snapshot presentPreferences' if vendor == 'c15t' else 'host')

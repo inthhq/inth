@@ -126,6 +126,14 @@ def inputs(cfg):
     return value
 
 
+def bind_runtime_artifacts(row, build):
+    artifacts = {entry['path']: entry for entry in build['artifacts']}
+    require(len(artifacts) == len(build['artifacts']), 'duplicate runtime build artifact')
+    for key, name in [('apk', 'app-release.apk'), ('mapping', 'mapping.txt'), ('dependencies', 'dependencies.json'), ('settings', 'settings.json')]:
+        expected = artifacts.get(name)
+        require(expected is not None and Path(row[key]).stat().st_size == expected['bytes'] and sha(row[key]) == expected['sha256'], f'runtime {key} differs from its build record')
+
+
 def eligibility(cfg, value):
     eligible = []
     statuses = {}
@@ -151,6 +159,7 @@ def eligibility(cfg, value):
             require(digest(host_inputs(host)) == build['hostInputsSha256'], 'runtime host changed after build')
             require(build['inputs'] == validate_inputs(cfg), 'runtime producer inputs changed')
             require([f for f in manifest(Path(row['buildRecord']).parent) if f['path'] != 'build-complete.json'] == build['artifacts'], 'runtime build artifacts changed')
+            bind_runtime_artifacts(row, build)
             for source, installed in [('App.tsx', 'App.tsx'), ('runtime-types.ts', 'runtime-types.ts'), (vendor + '.tsx', 'consent-adapter.tsx')]:
                 require(sha(host / installed) == sha(HERE / 'fixtures/runtime' / source), 'runtime fixture source binding mismatch')
             verify_installed(cfg, host, vendor)
