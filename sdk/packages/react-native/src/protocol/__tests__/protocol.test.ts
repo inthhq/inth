@@ -371,7 +371,7 @@ describe('protocol fixtures', () => {
 		}
 	});
 
-	test('every snapshot is exactly the mobile shape with iab reserved', () => {
+	test('category-only fixtures use the mobile shape without IAB authority', () => {
 		const snapshots = allSnapshots();
 		expect(snapshots.length).toBeGreaterThan(0);
 		for (const snapshot of snapshots) {

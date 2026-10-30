@@ -144,7 +144,7 @@ expectTypeOf<KernelUser>().toEqualTypeOf<KernelUserType>();
 // The two places the mobile type is deliberately narrower or wider than the
 // kernel's. Both are projections of the kernel type rather than independent
 // declarations, so a kernel that moves moves them too.
-expectTypeOf<NativeModel>().toEqualTypeOf<Exclude<KernelModelType, 'iab'>>();
+expectTypeOf<NativeModel>().toEqualTypeOf<KernelModelType>();
 expectTypeOf<
 	Wire<NativeOverrides>
 >().toEqualTypeOf<NativeOverridesFromKernel>();

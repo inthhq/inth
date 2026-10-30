@@ -155,6 +155,14 @@ describe('snapshot reads', () => {
 		expect(fake.snapshotCalls).toBe(calls);
 	});
 
+	test('retains the model and permissions in a native IAB snapshot', () => {
+		const snapshot = buildSnapshot({ model: 'iab', revision: 7 });
+		const { client } = makeClient({ snapshot });
+
+		expect(client.getSnapshot()).toEqual(snapshot);
+		expect(client.getSnapshot().error).toBeNull();
+	});
+
 	test('does not pull for a revision it already holds', () => {
 		const { client, fake } = makeClient();
 

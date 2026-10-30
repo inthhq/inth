@@ -90,26 +90,18 @@ export const POLICY_MODELS = ['opt-in', 'opt-out', 'iab', 'none'] as const;
 /**
  * The consent models a native core may report.
  *
- * `iab` is absent because no core names it in a snapshot. Both cores read the
- * wire value and evaluate it, and both report `opt-in` while running one,
- * following `deriveModel` in `packages/core/src/policy.ts`: a rule earns the name
- * `iab` only from an installed `@c15t/iab`, and a device has no CMP ID, no vendor
- * vector, and no `IABTCF_*` bus to back that name. The vendor list `/init` serves
- * is a different thing and a device does hold one -- see the `iab` slot in
- * `./snapshot` and the document in `./gvl` -- because naming a partner in a
- * disclosure is not a permission model.
+ * Configured native IAB authority can publish `iab`. The category evaluator
+ * can report `opt-in` for an IAB policy without usable authority. Neither model
+ * alone grants permission.
  */
-export const NATIVE_MODELS = ['opt-in', 'opt-out', 'none'] as const;
+export const NATIVE_MODELS = ['opt-in', 'opt-out', 'iab', 'none'] as const;
 
 /**
  * Permission model the policy enforces, in the kernel's whole vocabulary.
  *
  * {@link POLICY_MODELS} verbatim, which is the kernel's `Model` union and is
- * pinned to it by `__tests__/vocabulary.type-test.ts`. `iab` is a model a device
- * reads and evaluates but never reports; see {@link NATIVE_MODELS}. It stays in
- * this union so the save payload keeps the exact shape the kernel builds and the
- * protocol fixtures pin, while {@link NativeModel} stays the narrower thing a
- * snapshot may carry.
+ * pinned to it by `__tests__/vocabulary.type-test.ts`. Native snapshots and save
+ * payloads can carry all four values; see {@link NATIVE_MODELS}.
  */
 export type KernelModel = (typeof POLICY_MODELS)[number];
 

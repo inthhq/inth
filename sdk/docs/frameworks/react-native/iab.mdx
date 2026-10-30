@@ -14,6 +14,8 @@ The Expo `vendors` prop narrows disclosures. It does not configure an approved C
 
 The native stock presenters own purpose and partner drafts, legitimate-interest objections, special-feature choices, publisher restrictions and Additional Consent provider controls. They validate the disclosure revision when committing. A category-only `save({ marketing: true })` cannot stand in for a complete vendor decision.
 
+React Native snapshots can report `model: 'iab'`. Their `iab` object carries the GVL disclosure only; it does not expose the committed TC String or vendor vectors. Read native IAB authority and gates before enabling an ad SDK. The model name alone is not permission.
+
 ## Keep GVL and provider data current
 
 Native `openIABDraft`, `iabPresentation`, `iabStatus` and `iabConsent` APIs expose native draft and authority state. Kotlin follows its native `Iab` naming. `isIABAllowed` on Swift and `isIabAllowed` on Kotlin include current policy/list validity when checking vendor, purpose and legal basis. Read the installed declarations for the exact signatures.
