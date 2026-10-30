@@ -1,0 +1,103 @@
+import C15tApple
+import C15tConsentUI
+import C15tCore
+import Combine
+import Foundation
+
+@MainActor
+final class AppConsentModel: ObservableObject, SnapshotObserver {
+    @Published private(set) var snapshot: ConsentSnapshot?
+    @Published private(set) var presenter: ConsentPresenter?
+    @Published private(set) var installationError: Error?
+    @Published private(set) var queuedSaves = 0
+    @Published private(set) var deliveryMessage = "No delivery attempt observed this launch."
+    @Published private(set) var eventCount = 0
+    private(set) var core: ConsentCore?
+    let measurement = MeasurementService()
+    private let makeCore: () throws -> ConsentCore
+    private let stockUI: Bool
+    private var observation: ConsentSubscription?
+    private var measurementGate: ConsentSubscription?
+    private var eventsTask: Task<Void, Never>?
+
+    init(stockUI: Bool, makeCore: @escaping () throws -> ConsentCore) {
+        self.stockUI = stockUI
+        self.makeCore = makeCore
+        install()
+    }
+
+    var ready: Bool { snapshot.map { $0.ready && !$0.policyPending } ?? false }
+    var decision: ConsentDecision { core?.decision(for: .measurement) ?? .pending }
+
+    func retryProtectedStorage() {
+        guard installationError as? C15tAppleInstallationError == .protectedStorageUnavailable else { return }
+        install()
+    }
+
+    private func install() {
+        guard core == nil else { return }
+        do {
+            let installed = try makeCore()
+            core = installed
+            installationError = nil
+            // #region docs:swiftui-observe title="Sources/app-consent-model.swift"
+            observation = installed.onChange(self)
+            receive(installed.snapshot())
+            measurementGate = installed.gate(ConsentCategory.measurement) { [measurement] decision in
+                // The callback can run on any queue. This service synchronizes its own state.
+                measurement.apply(decision)
+            }
+            // #endregion docs:swiftui-observe
+            if stockUI { presenter = ConsentPresenter(core: installed) }
+            let events = installed.eventStream
+            eventsTask = Task { [weak self] in
+                for await event in events {
+                    guard !Task.isCancelled else { break }
+                    self?.receive(event)
+                }
+            }
+        } catch {
+            installationError = error
+            measurement.stop()
+        }
+    }
+
+    // #region docs:swiftui-snapshot title="Sources/app-consent-model.swift"
+    nonisolated func consentDidChange(_ snapshot: ConsentSnapshot) {
+        Task { @MainActor [weak self] in
+            // Read current state on arrival, rather than publishing an older queued callback.
+            guard let self, let core = self.core else { return }
+            self.receive(core.snapshot())
+        }
+    }
+    // #endregion docs:swiftui-snapshot
+
+    private func receive(_ snapshot: ConsentSnapshot) {
+        self.snapshot = snapshot
+        queuedSaves = core?.pendingSaveCount() ?? 0
+    }
+
+    private func receive(_ event: CoreEvent) {
+        switch event {
+        case .saveQueued: deliveryMessage = "Saved on this device. Delivery is queued."
+        case .saveDelivered: deliveryMessage = "A consent record reached the backend."
+        case .saveReplayed(_, let ok):
+            deliveryMessage = ok ? "A queued consent record reached the backend." : "Delivery retry failed. Check the queue and transport error."
+        case .error(let error): deliveryMessage = "Transport or storage error: \(error.code)."
+        case .initialized, .snapshot: break
+        }
+        if let core { receive(core.snapshot()) }
+    }
+
+    func recordTap() {
+        guard let core else { return }
+        eventCount = measurement.recordTap(core: core)
+    }
+
+    deinit {
+        observation?.cancel()
+        measurementGate?.cancel()
+        eventsTask?.cancel()
+        measurement.stop()
+    }
+}

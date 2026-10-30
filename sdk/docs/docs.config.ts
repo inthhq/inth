@@ -860,7 +860,7 @@ export default defineDocsConfig({
 							title: 'Advanced',
 						},
 						{
-							pages: ['apple', 'android', 'platform-support'],
+							pages: ['apple', 'swiftui', 'android', 'platform-support'],
 							slug: 'reference',
 							title: 'Reference',
 						},
