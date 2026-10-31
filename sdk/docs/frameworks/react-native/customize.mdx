@@ -37,6 +37,8 @@ The shortened entries in this table share the full prefix in their first cell. C
 
 App identity and provider attribution are separate settings. `c15t` and `inth` are built-in provider names/marks; custom attribution uses a provider name and optional native asset. Verify contrast, larger text, keyboard/screen-reader focus, safe areas and dismiss behavior on each supported platform.
 
+On iOS 27.1 or later, the stock native prompt can place compact provider attribution in the system's vertical side column, aligned with Customize. It uses the window's layout and reserved regions, without checking the device model. Attribution stays below Customize when the column has too little room, a system region occupies that space, or an accessibility text size is active. Builds using older SwiftUI SDKs keep the inline layout. This also applies to the shared native presenter opened from React Native; the separate React-rendered components keep their own layouts.
+
 ## Check copy and localization separately
 
 Native `ConsentTheme.Copy` supports the first-layer headline and introduction. It is not a complete localization dictionary. The current stock native navigation, action labels and category explanations contain English strings. Changing a policy language or exporting multiple resource languages does not translate all of that UI.

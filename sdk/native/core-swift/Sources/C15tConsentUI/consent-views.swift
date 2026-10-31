@@ -657,6 +657,7 @@ private struct FirstLayer: View {
         .toolbar(.hidden, for: .navigationBar)
         .accessibilityIdentifier("c15t.first-layer")
         .safeAreaInset(edge: .bottom, spacing: 0) { DecisionFooter(presenter: presenter, first: true, path: $path) }
+        .modifier(SideBrandingPlacement(enabled: theme.showsBranding && !presenter.snapshot.policyPending && !presenter.listUnavailable))
         .onAppear { titleFocused = true }
     }
 
@@ -709,24 +710,49 @@ private struct Hairline: View {
     var body: some View { Rectangle().fill(theme.colors.text.color.opacity(0.1)).frame(height: 1 / UIScreen.main.scale) }
 }
 
+private struct CustomizeAnchorKey: PreferenceKey {
+    static let defaultValue: Anchor<CGRect>? = nil
+    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
+        value = nextValue() ?? value
+    }
+}
+
+private struct BrandingInSideColumnKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+private extension EnvironmentValues {
+    var brandingInSideColumn: Bool {
+        get { self[BrandingInSideColumnKey.self] }
+        set { self[BrandingInSideColumnKey.self] = newValue }
+    }
+}
+
+private struct ProviderSignature: View {
+    @Environment(\.consentTheme) private var theme
+    var body: some View {
+        HStack(spacing: 4) {
+            switch theme.branding {
+            case .c15t, .inth:
+                ConsentProviderMark(branding: theme.branding).fill(style: FillStyle(eoFill: true))
+                    .frame(width: 15, height: 15).accessibilityHidden(true)
+            case .custom(_, let imageName):
+                if let imageName {
+                    Image(imageName).resizable().scaledToFit().frame(width: 15, height: 15)
+                        .accessibilityHidden(true)
+                }
+            }
+            Text(theme.branding.name).fontWeight(.semibold)
+        }
+    }
+}
+
 private struct Branding: View {
     @Environment(\.consentTheme) private var theme
     var body: some View {
         HStack(spacing: 6) {
             Text("Secured by")
-            HStack(spacing: 4) {
-                switch theme.branding {
-                case .c15t, .inth:
-                    ConsentProviderMark(branding: theme.branding).fill(style: FillStyle(eoFill: true))
-                        .frame(width: 15, height: 15).accessibilityHidden(true)
-                case .custom(_, let imageName):
-                    if let imageName {
-                        Image(imageName).resizable().scaledToFit().frame(width: 15, height: 15)
-                            .accessibilityHidden(true)
-                    }
-                }
-                Text(theme.branding.name).fontWeight(.semibold)
-            }
+            ProviderSignature()
         }
         .font(.caption).foregroundStyle(theme.colors.textSecondary.color)
         .frame(maxWidth: .infinity, alignment: .trailing)
@@ -734,6 +760,91 @@ private struct Branding: View {
         .accessibilityIdentifier("c15t.first-layer.branding")
     }
 }
+
+private struct CompactBranding: View {
+    @Environment(\.consentTheme) private var theme
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("Secured by").font(.caption2)
+            ProviderSignature().font(.caption)
+        }
+        .foregroundStyle(theme.colors.textSecondary.color)
+        .fixedSize()
+        .accessibilityElement(children: .ignore).accessibilityLabel("Secured by \(theme.branding.name)")
+        .accessibilityIdentifier("c15t.first-layer.branding")
+    }
+}
+
+private struct SideBrandingPlacement: ViewModifier {
+    let enabled: Bool
+    func body(content: Content) -> some View {
+        #if canImport(SwiftUI, _version: 8.1)
+        if #available(iOS 27.1, *) {
+            content.modifier(VerticalBrandingPlacement(enabled: enabled))
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+}
+
+#if canImport(SwiftUI, _version: 8.1)
+@available(iOS 27.1, *)
+private struct VerticalBrandingPlacement: ViewModifier {
+    let enabled: Bool
+    @Environment(\.toolbarVerticalEdge) private var edge
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.layoutDirection) private var layoutDirection
+    @State private var contentFrame: CGRect = .zero
+    @State private var brandSize: CGSize = .zero
+    @State private var showSide = false
+
+    func body(content: Content) -> some View {
+        if enabled && edge != nil && !typeSize.isAccessibilitySize {
+            content
+                .environment(\.brandingInSideColumn, showSide)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { contentFrame = $0 }
+                .overlayPreferenceValue(CustomizeAnchorKey.self) { anchor in
+                    GeometryReader { geometry in
+                        let bounds = CGRect(origin: .zero, size: geometry.size)
+                        let origin = geometry.frame(in: .global).origin
+                        let safe = contentFrame.offsetBy(dx: -origin.x, dy: -origin.y)
+                        let button = anchor.map { geometry[$0] } ?? .zero
+                        let reserved = geometry.reservedRegions(kind: .occlusion, layoutDirectionBehavior: .fixed)
+                            + geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed)
+                        let onLeft = (edge == .leading) == (layoutDirection == .leftToRight)
+                        let candidate = anchor != nil
+                            ? SideBrandingFrame.resolve(canvas: bounds, content: safe, anchor: button,
+                                size: brandSize, onLeft: onLeft, reserved: reserved.map(\.frame))
+                            : nil
+                        let fits = candidate != nil
+                        ZStack(alignment: .topLeading) {
+                            Color.clear
+                            if let candidate {
+                                // Reserved regions use physical coordinates; position mirrors in RTL.
+                                let x = layoutDirection == .rightToLeft ? bounds.width - candidate.midX : candidate.midX
+                                CompactBranding().position(x: x, y: candidate.midY)
+                            }
+                        }
+                        .onAppear { showSide = fits }
+                        .onChange(of: fits) { showSide = $0 }
+                    }
+                    .allowsHitTesting(false)
+                    .ignoresSafeArea(.container, edges: .horizontal)
+                }
+                .overlay(alignment: .topLeading) {
+                    CompactBranding().hidden().accessibilityHidden(true)
+                        .onGeometryChange(for: CGSize.self) { $0.size } action: { brandSize = $0 }
+                }
+        } else {
+            content
+        }
+    }
+}
+
+#endif
 
 /// The decision controls and the failure row beside them, in one of four cuts. `all` is the
 /// whole group: the pinned footer below accessibility sizes, the end of the first layer's page
@@ -747,6 +858,7 @@ private struct DecisionGroup: View {
     let part: Part
     @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
+    @Environment(\.brandingInSideColumn) private var brandingInSideColumn
     private var prefix: String { first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs" }
 
     static func errorID(first: Bool) -> String { (first ? "c15t.first-layer" : "c15t.prefs") + ".error" }
@@ -811,7 +923,15 @@ private struct DecisionGroup: View {
             }
             if first {
                 Button("Customize") { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.first-layer.customize")
-                if theme.showsBranding { Branding() }
+                    .anchorPreference(key: CustomizeAnchorKey.self, value: .bounds) { $0 }
+                if theme.showsBranding {
+                    // Keep Customize stationary when a reserved region changes the attribution placement.
+                    if brandingInSideColumn {
+                        Branding().hidden().accessibilityHidden(true)
+                    } else {
+                        Branding()
+                    }
+                }
             } else if part == .all {
                 decision("Save choices", .save)
             }
