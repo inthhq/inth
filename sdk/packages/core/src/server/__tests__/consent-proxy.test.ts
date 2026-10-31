@@ -175,6 +175,23 @@ describe('forwardConsentRequest', () => {
 		expect(answer.headers.get('cache-control')).toBeNull();
 	});
 
+	test('forwards the page origin with its fetch site', async () => {
+		const { calls, response } = forward('subjects', {
+			body: '{}',
+			headers: {
+				origin: 'https://other.example',
+				'sec-fetch-site': 'cross-site',
+			},
+			method: 'POST',
+		});
+		await response;
+
+		// Together they let the backend refuse a save another site sent here.
+		const headers = calls[0]?.init.headers;
+		expect(headers?.get('origin')).toBe('https://other.example');
+		expect(headers?.get('sec-fetch-site')).toBe('cross-site');
+	});
+
 	test('scopes cookies to cookieNames and marks the response no-store', async () => {
 		const { calls, response } = forward('subjects', {
 			headers: { cookie: 'session=abc; tenant=acme' },
