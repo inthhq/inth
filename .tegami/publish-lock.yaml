@@ -1,43 +1,35 @@
 core:changelogs:
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Include the installation ID and install method in usage events\n\nUsage events now include the random installation ID as `installation_id`, including events from signed-in users, so installations can be counted separately from people. Signed-in events still use the Inth user ID as their identity, and the installation ID is now linked to it.\n\nEvents also include `install_method`, the same check `inth update` uses to choose how to update: `standalone` for the install script's executable, a package manager for global installations, `temporary` for `npx`, `pnpm dlx`, or `bunx`, or `project` for a project dependency.\n"
-    filename: 2026-10-07-telemetry-installation-id.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Review vendors seen on a project\n\n`inth vendor list --project <project-id>` lists the vendors scans saw on a project, with their category, state, and vendor ID. `--state active` shows only vendors nobody has decided on yet. `inth vendor get <vendor-id> --project <project-id>` shows a vendor's hosts, when it was last seen, what loaded it, and its open Inbox finding. Both work with API keys.\n\n`inth vendor approve <vendor-id> --project <project-id>` accepts a vendor seen on a project and resolves its runtime Inbox finding. `inth vendor ignore` ignores the vendor and dismisses the finding. Both print the vendor's name, its new state, and the finding they closed.\n\n`inth inbox get` now shows the vendor behind a runtime finding: its name, vendor ID, project ID, state, and what loaded it, such as a script URL or a Google Tag Manager container.\n\nBrowser sign-ins now request `vendors.write`. Run `inth login` again to approve vendors from an existing sign-in. Organization API keys cannot make vendor decisions.\n"
+    filename: 2026-10-18-vendor-decisions.md
     v: 0.0.0
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Point the c15t setup guide at v3\n\nThe bundled `docs/c15t-setup.md` now sets up c15t v3: the `c15t` package with framework subpaths, `@c15t/integrations` for vendor helpers, exact versions resolved from the `alpha` dist-tag, and links to v3.c15t.com. Apps on c15t v2 are pointed at the upgrade guide. The guide previously linked v2 quickstarts, so agents following it installed c15t v2.\n"
-    filename: 2026-10-09-c15t-v3-setup-docs.md
-    v: 0.0.0
-  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Set up c15t without an experimental flag\n\n`inth c15t` is available by default and appears in CLI help, including JSON command discovery. The generator now uses `@c15t/cli@3.0.0`, writes the v3 framework quickstart files, and installs `c15t@3`. Existing `.env` files stay intact, with instructions for adding or replacing the backend URL assignment. Agent setup prompts use the latest v3 integration guidance.\n\nThe setup picker recommends a coding agent first, or a prompt to paste into your agent when none is installed. Help and docs recommend this path to adapt the integration to an existing app and verify consent in a browser. Scaffolding remains available as an explicit choice. Agent prompts keep existing c15t installations on their current major unless the user requests an upgrade.\n\nFor existing HTML pages, scaffold only recommends missing inserts. A page that already loads c15t's script receives instructions for adding the preferences link without loading c15t twice.\n\nHTML scaffolding works without `package.json`. JSON scaffold plans expose file paths and existence flags while keeping existing file contents private.\n\nNext.js scaffolding keeps routes in the active `app`, `pages`, `src/app`, or `src/pages` directory. Existing Next.js config files stay intact, with instructions for wrapping their current options in `withConsentManifest`.\n\nNext.js quickstart entry points do not assume an app stylesheet or path alias. Astro autodetection defaults to static output; use `--framework astro` for the server template.\n\nNext.js scaffolding preserves existing JavaScript and TypeScript entry filenames and gives integration instructions without creating competing routes. SvelteKit scaffolds include the adapter imported by the generated Vite config, preserving its declared version or selecting one for the app's SvelteKit major.\n\nReact scaffolding uses the default export from Vite's conventional `src/App` component. HTML sites without `package.json` can scaffold on filesystems that do not support hard links, using an exclusive copy and a recovery record while preserving competing files.\n\nSvelteKit scaffolding checks for stable Kit 2.63+ or 3.x before writing files or creating a project. Older apps receive upgrade guidance without changes to their config or package versions.\n\nNext.js Pages Router scaffolding follows literal `pageExtensions` lists, including custom JavaScript and TypeScript suffixes. Nuxt 3 scaffolding uses its root app component and preserves existing config filenames. Computed source paths and unverified SvelteKit ranges receive guidance before file creation.\n\nWhen a backend variable already exists in `.env`, scaffold tells you to replace its assignment instead of adding a duplicate. The file and unrelated values stay private and unchanged.\n"
-    filename: 2026-10-12-c15t-setup.md
+  - content: "---\npackages:\n  group:inth:\n    type: patch\n---\n\n### Upgrade c15t apps to v3 with `inth c15t codemods`\n\n`inth c15t codemods` runs the c15t v2 to v3 codemods. Name the codemods to run, and add `--dry-run` to preview the changes first. `--list` prints them in the order they run. It needs no sign-in or Inth project.\n\nIts output matches `c15t codemods` from `@c15t/cli@3.1.0`, with one exception: offline mode stays as it is, with a `TODO(c15t v3)` comment to finish by hand.\n"
+    filename: 2026-10-20-c15t-codemods.md
     v: 0.0.0
 core:packages:
   - changelogIds:
-      - 2026-10-07-telemetry-installation-id.md
-      - 2026-10-09-c15t-v3-setup-docs.md
-      - 2026-10-12-c15t-setup.md
+      - 2026-10-18-vendor-decisions.md
+      - 2026-10-20-c15t-codemods.md
     id: npm:@inth/cli-darwin-arm64
     updated: true
   - changelogIds:
-      - 2026-10-07-telemetry-installation-id.md
-      - 2026-10-09-c15t-v3-setup-docs.md
-      - 2026-10-12-c15t-setup.md
+      - 2026-10-18-vendor-decisions.md
+      - 2026-10-20-c15t-codemods.md
     id: npm:@inth/cli-linux-arm64
     updated: true
   - changelogIds:
-      - 2026-10-07-telemetry-installation-id.md
-      - 2026-10-09-c15t-v3-setup-docs.md
-      - 2026-10-12-c15t-setup.md
+      - 2026-10-18-vendor-decisions.md
+      - 2026-10-20-c15t-codemods.md
     id: npm:@inth/cli-linux-x64
     updated: true
   - changelogIds:
-      - 2026-10-07-telemetry-installation-id.md
-      - 2026-10-09-c15t-v3-setup-docs.md
-      - 2026-10-12-c15t-setup.md
-    id: npm:@inth/cli-win32-x64
+      - 2026-10-18-vendor-decisions.md
+      - 2026-10-20-c15t-codemods.md
+    id: npm:@inth/cli
     updated: true
   - changelogIds:
-      - 2026-10-07-telemetry-installation-id.md
-      - 2026-10-09-c15t-v3-setup-docs.md
-      - 2026-10-12-c15t-setup.md
-    id: npm:@inth/cli
+      - 2026-10-18-vendor-decisions.md
+      - 2026-10-20-c15t-codemods.md
+    id: npm:@inth/cli-win32-x64
     updated: true
 npm:packages:
   - distTag: latest
@@ -47,6 +39,6 @@ npm:packages:
   - distTag: latest
     id: npm:@inth/cli-linux-x64
   - distTag: latest
-    id: npm:@inth/cli-win32-x64
-  - distTag: latest
     id: npm:@inth/cli
+  - distTag: latest
+    id: npm:@inth/cli-win32-x64
