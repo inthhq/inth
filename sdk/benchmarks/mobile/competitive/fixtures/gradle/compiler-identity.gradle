@@ -1,0 +1,21 @@
+import groovy.json.JsonOutput
+gradle.projectsEvaluated {
+ def appProject = rootProject.findProject(':app')
+ if (appProject == null) return
+ appProject.tasks.register('c15tCompilerIdentity') {
+  doLast {
+   def app = rootProject.project(':app')
+   def plugin = app.plugins.findPlugin('org.jetbrains.kotlin.android')
+   def sources = []
+   for (def type = plugin.class; type != null; type = type.superclass) {
+    def location = type.protectionDomain?.codeSource?.location?.toString()
+    if (location) sources.add([type: type.name, location: location])
+   }
+   def compilerConfigurations = app.configurations.findAll { it.canBeResolved && it.name.toLowerCase().contains('kotlincompiler') }.collect { configuration ->
+    [name: configuration.name, components: configuration.incoming.resolutionResult.allComponents.collect { it.moduleVersion?.toString() }.findAll { it != null }.sort()]
+   }
+   def result = [kotlinPluginSources: sources, compilerConfigurations: compilerConfigurations]
+   new File(System.getenv('C15T_COMPILER_IDENTITY_OUT')).text = JsonOutput.prettyPrint(JsonOutput.toJson(result))
+  }
+ }
+}
