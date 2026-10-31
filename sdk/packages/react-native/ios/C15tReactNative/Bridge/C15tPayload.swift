@@ -1,3 +1,6 @@
+#if canImport(C15tApple)
+import C15tApple
+#endif
 #if canImport(C15tCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional

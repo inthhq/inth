@@ -27,7 +27,7 @@ import kotlin.test.assertTrue
  */
 class SaveOrderingTest {
 	@Test
-	fun `the queue write lands before the snapshot moves`() {
+	fun `the decision and obligation are durable before the request`() {
 		val timeline = mutableListOf<String>()
 		val backend = InMemoryKeyValueStore(eventLog = timeline)
 		val transport = RecordingTransport(timeline).respondSave(SaveOutcome.Delivered)
@@ -42,20 +42,14 @@ class SaveOrderingTest {
 
 		assertTrue(result.ok)
 		val events = timeline.drop(from)
-		val pendingWrite = events.indexOf("write:${C15tStoreKeys.PENDING}")
 		val snapshotWrite = events.indexOf("write:${C15tStoreKeys.SNAPSHOT}")
 		val network = events.indexOf("network:save")
-		assertTrue(pendingWrite >= 0, "the obligation must reach disk, got: $events")
-		assertTrue(snapshotWrite >= 0, "the snapshot must be persisted, got: $events")
-		assertTrue(
-			pendingWrite < snapshotWrite,
-			"a snapshot may only move once something is obliged to deliver it, got: $events",
-		)
-		assertTrue(pendingWrite < network, "the request must follow the write, got: $events")
+		assertTrue(snapshotWrite >= 0, "the atomic decision must be persisted, got: $events")
+		assertTrue(snapshotWrite < network, "the request must follow the write, got: $events")
 	}
 
 	@Test
-	fun `a save that cannot write the queue is refused and changes nothing`() {
+	fun `a store without durable acknowledgement cannot commit a decision`() {
 		val backend = VanishingKeyValueStore(C15tStoreKeys.PENDING)
 		val store = C15tStore(backend)
 		val transport = RecordingTransport().respondSave(SaveOutcome.Delivered)
@@ -66,6 +60,7 @@ class SaveOrderingTest {
 		transport.respondInit(initSuccess())
 		kernel.bootstrap()
 		val before = kernel.snapshot()
+		val from = backend.events.size
 
 		val result = kernel.save(CommitIntent.All)
 
@@ -82,11 +77,9 @@ class SaveOrderingTest {
 		assertEquals("queue-write-failed", errors.map { it.code }.firstOrNull())
 		// Bootstrap stores a snapshot of its own, so the claim is about this save: no
 		// snapshot write may follow the refused commit.
-		val from = backend.events.indexOf("write:${C15tStoreKeys.PENDING}")
-		assertTrue(from >= 0, "the queue write was attempted, and lost")
 		assertTrue(
 			backend.events.withIndex().none { (at, event) ->
-				at > from && event == "write:${C15tStoreKeys.SNAPSHOT}"
+				at >= from && event == "write:${C15tStoreKeys.SNAPSHOT}"
 			},
 			"a refusal must not rewrite the stored decision, got: ${backend.events.drop(from)}",
 		)
@@ -94,10 +87,7 @@ class SaveOrderingTest {
 
 	@Test
 	fun `a refusal writes no snapshot`() {
-		val timeline = mutableListOf<String>()
-		// The pending key fails while the snapshot key still works, so this test can only
-		// pass by declining to store a snapshot -- a store that lost everything would hide
-		// the difference between "refused" and "refused, then wrote over the old decision".
+		// This store implements only legacy writes, so no atomic decision is acknowledged.
 		val backend = VanishingKeyValueStore(C15tStoreKeys.PENDING)
 		val store = C15tStore(backend)
 		val kernel = testKernel(store = store)

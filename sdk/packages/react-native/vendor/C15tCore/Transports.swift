@@ -9,9 +9,8 @@ import FoundationNetworking
 public enum C15tSDK {
     /// Version of this native core.
     ///
-    /// Kept as a constant rather than generated: this package is not published by
-    /// the monorepo's release tooling, and a stale generated version on a request
-    /// is worse than an honest hand-maintained one.
+    /// Source of truth for the native Swift package, including the Apple platform
+    /// module and local CocoaPods spec. Independent of the RN npm version.
     public static let version = "3.0.0-alpha.1"
 
     /// The `x-c15t-version` header name. Telemetry only: it lets the backend
@@ -75,10 +74,8 @@ public enum C15tSDK {
         return ids.map(String.init).joined(separator: ",")
     }
 
-    /// Native SDK traffic is the React Native line, which is what the `rn->`
-    /// prefix marks. Bare Swift consumers still report the same line, because the
-    /// backend has no separate bucket for them.
-    public static let versionHeaderValue = "rn->\(version)"
+    /// Requests identify the native core that made them, including standalone hosts.
+    public static let versionHeaderValue = "swift->\(version)"
 
     /// The native protocol revision the JavaScript boundary handshakes against.
     /// A provider that does not recognize it is talking to an embedded native
@@ -332,6 +329,8 @@ public struct InitResponse: Sendable, Equatable {
     /// so dropping one must never turn a readable policy into `policyPending` or take a
     /// grant the subject gave back.
     public let gvl: GlobalVendorList?
+    public let adTechProviders: [AdTechProvider]?
+    public let adTechProvidersInvalid: Bool
 
     public init(
         policyResolution: JSONValue? = nil,
@@ -342,7 +341,8 @@ public struct InitResponse: Sendable, Equatable {
         resolvedOverrides: KernelOverridesWire? = nil,
         resolvedPrivacySignals: ResolvedPrivacySignals? = nil,
         records: HydrationRecords? = nil,
-        gvl: GlobalVendorList? = nil
+        gvl: GlobalVendorList? = nil,
+        adTechProviders: [AdTechProvider]? = nil, adTechProvidersInvalid: Bool = false
     ) {
         self.policyResolution = policyResolution
         self.subjectId = subjectId
@@ -353,6 +353,8 @@ public struct InitResponse: Sendable, Equatable {
         self.resolvedPrivacySignals = resolvedPrivacySignals
         self.records = records
         self.gvl = gvl
+        self.adTechProviders = adTechProviders
+        self.adTechProvidersInvalid = adTechProvidersInvalid
     }
 
     /// Read a response body. Anything that is not a JSON object is
@@ -376,7 +378,10 @@ public struct InitResponse: Sendable, Equatable {
                 ResolvedPrivacySignals(gpc: signals["gpc"]?.boolValue)
             },
             records: decodeRecords(parsed["records"]),
-            gvl: GlobalVendorList.read(from: parsed["gvl"])
+            gvl: GlobalVendorList.read(from: parsed["gvl"]),
+            adTechProviders: AdditionalConsent.providers(parsed["adTechProviders"]),
+            adTechProvidersInvalid: parsed["adTechProviders"] != nil && parsed["adTechProviders"] != .null
+                && AdditionalConsent.providers(parsed["adTechProviders"]) == nil
         ))
     }
 
@@ -456,6 +461,10 @@ public struct InitResponse: Sendable, Equatable {
 /// them may hold consent state: the core owns it, and a transport that cached
 /// permissions would be a second kernel.
 public protocol C15tTransport: Sendable {
+    /// Backend that supplies consent policy, used to validate stored bundled authority.
+    /// Custom transports can provide this URL to retain authority without seed bytes.
+    var policyEndpoint: URL? { get }
+
     /// The `domain` field sent on `POST /subjects`.
     var domain: String { get }
 
@@ -476,6 +485,9 @@ public protocol C15tTransport: Sendable {
 }
 
 extension C15tTransport {
+    /// No endpoint is assumed for a custom or offline transport.
+    public var policyEndpoint: URL? { nil }
+
     /// The hosted transport for a c15t cloud project URL.
     ///
     /// The URL comes from the caller's project rather than a compiled-in default:
@@ -525,6 +537,7 @@ extension C15tTransport {
 /// drift.
 public struct HostedTransport: C15tTransport {
     public let baseURL: URL
+    public var policyEndpoint: URL? { baseURL }
     /// Defaults to `${baseURL}/init`, overridable for a same-origin proxy.
     public let initURL: URL
     public let domain: String
@@ -548,7 +561,6 @@ public struct HostedTransport: C15tTransport {
 
     public func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
         var headers = jsonHeaders
-        for (name, value) in extraHeaders { headers[name] = value }
         if let language = context.overrides.language, !language.isEmpty {
             headers["accept-language"] = language
         }
@@ -651,6 +663,7 @@ public struct HostedTransport: C15tTransport {
             "content-type": "application/json",
         ]
         for (name, value) in C15tSDK.protocolHeaders { headers[name] = value }
+        for (name, value) in extraHeaders { headers[name] = value }
         return headers
     }
 

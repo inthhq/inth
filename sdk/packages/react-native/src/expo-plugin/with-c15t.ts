@@ -1,6 +1,9 @@
+import { join } from 'node:path';
+
 import {
 	IOSConfig,
 	withAndroidManifest,
+	withDangerousMod,
 	withAppBuildGradle,
 	withInfoPlist,
 	withMainApplication,
@@ -24,6 +27,11 @@ import type {
 	C15tProviderTransportKind,
 	ResolvedC15tParams,
 } from './params';
+import {
+	embedPolicyResource,
+	androidPolicyDestination,
+	POLICY_RESOURCE_NAME,
+} from './policy-resource';
 import {
 	assertUpdatesCannotOutrunTheBinary,
 	buildProtocolInfo,
@@ -189,6 +197,48 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		});
 	}
 
+	if (params.policyResource !== null) {
+		const source = params.policyResource;
+		next = withXcodeProject(next, async (cfg) => {
+			if (cfg.modRequest.introspect) {
+				return cfg;
+			}
+			const name =
+				cfg.modRequest.projectName ??
+				IOSConfig.XcodeUtils.getHackyProjectName(
+					cfg.modRequest.projectRoot,
+					cfg
+				);
+			await embedPolicyResource(
+				cfg.modRequest.projectRoot,
+				source,
+				params.backendURL,
+				join(cfg.modRequest.platformProjectRoot, name, POLICY_RESOURCE_NAME)
+			);
+			if (!cfg.modResults.hasFile(`${name}/${POLICY_RESOURCE_NAME}`)) {
+				cfg.modResults = IOSConfig.XcodeUtils.addResourceFileToGroup({
+					filepath: `${name}/${POLICY_RESOURCE_NAME}`,
+					groupName: name,
+					isBuildFile: true,
+					project: cfg.modResults,
+				});
+			}
+			return cfg;
+		});
+		next = withDangerousMod(next, [
+			'android',
+			async (cfg) => {
+				await embedPolicyResource(
+					cfg.modRequest.projectRoot,
+					source,
+					params.backendURL,
+					androidPolicyDestination(cfg.modRequest.projectRoot)
+				);
+				return cfg;
+			},
+		]);
+	}
+
 	next = withAndroidManifest(next, (configWithManifest) => ({
 		...configWithManifest,
 		modResults: applyAndroidManifest(params, configWithManifest.modResults),
@@ -196,7 +246,10 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	next = withProjectBuildGradle(next, (configWithGradle) => ({
 		...configWithGradle,
-		modResults: applyProjectBuildGradle(configWithGradle.modResults),
+		modResults: applyProjectBuildGradle(
+			configWithGradle.modResults,
+			params.androidMavenRepository
+		),
 	}));
 
 	next = withAppBuildGradle(next, (configWithGradle) => {

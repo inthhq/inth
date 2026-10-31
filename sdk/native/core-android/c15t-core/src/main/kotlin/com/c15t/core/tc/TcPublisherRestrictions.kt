@@ -77,6 +77,23 @@ class TcPublisherRestrictions(
 	val isEmpty: Boolean
 		get() = restrictions.isEmpty()
 
+	/** Write restrictions collected by the native authority. */
+	internal fun write(writer: BitWriter) {
+		writer.appendInt(restrictions.size.toLong(), NUM_RESTRICTIONS_BITS)
+		restrictions.forEach { r ->
+			require(r.purposeId in 1..24 && r.restrictionTypeValue in 0..2)
+			writer.appendInt(r.purposeId.toLong(), PURPOSE_ID_BITS)
+			writer.appendInt(r.restrictionTypeValue.toLong(), RESTRICTION_TYPE_BITS)
+			writer.appendInt(r.ranges.size.toLong(), NUM_ENTRIES_BITS)
+			r.ranges.forEach { range ->
+				require(range.start in 1..65535 && range.end in range.start..65535)
+				writer.appendFlag(range.start != range.end)
+				writer.appendInt(range.start.toLong(), VENDOR_ID_BITS)
+				if (range.start != range.end) writer.appendInt(range.end.toLong(), VENDOR_ID_BITS)
+			}
+		}
+	}
+
 	companion object {
 		/** `BitLength.numRestrictions`. */
 		const val NUM_RESTRICTIONS_BITS = 12

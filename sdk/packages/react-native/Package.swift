@@ -10,10 +10,9 @@ import PackageDescription
 // SPM mode). It is not the only way to integrate: the CocoaPods path uses
 // ../C15tReactNative.podspec, which builds the kernel from a generated copy in
 // vendor/C15tCore instead of this path dependency, because a pod cannot name a path in a
-// `s.dependency` and nothing publishes the core. Two module boundaries exist on purpose:
-// here the kernel is its own module, there it is part of the binding. The copy is
-// regenerated from native/core-swift at pack time and the release gate refuses a
-// divergence, so neither path can quietly run a different core from the other.
+// `s.dependency` and nothing publishes the core. SwiftPM separates the core, Apple
+// services and RN bridge; CocoaPods compiles generated native copies into one pod.
+// Both sync scripts run at pack time and artifact checks reject source drift.
 //
 // Two facts shape the layout:
 //
@@ -32,30 +31,20 @@ import PackageDescription
 //                           protocol. Without it the product is the bridge layer only.
 //   C15T_CORE_PATH=<path>   Where native/core-swift lives, when the checkout layout
 //                           differs. Defaults to ../../native/core-swift.
-//   C15T_CORE_VERSION=<v>   Escape hatch for the published core: resolve C15tCore at
-//                           this version from C15T_CORE_URL instead of the repo path.
-//   C15T_CORE_URL=<url>     Repository the published core resolves from. Defaults to
-//                           the public c15t repository.
+// Remote version/URL resolution is not supported until the native source package
+// publishes both C15tCore and C15tApple. Use C15T_CORE_PATH for private source builds.
 let env = ProcessInfo.processInfo.environment
 
 let corePath = env["C15T_CORE_PATH"] ?? "../../native/core-swift"
-let coreVersion = env["C15T_CORE_VERSION"]
-let coreURL = env["C15T_CORE_URL"] ?? "https://github.com/c15t/c15t.git"
 let includeReact = env["C15T_SPM_INCLUDE_RN"] == "1"
 
-// The identity the product reference must use: the pinned name for the repo path,
-// and the repository name for the published-version escape hatch. They deliberately
-// differ, so a manifest cannot silently mix the two.
-let corePackageID = coreVersion == nil ? "C15tCore" : "c15t"
+if env["C15T_CORE_VERSION"] != nil || env["C15T_CORE_URL"] != nil {
+    fatalError("C15T_CORE_VERSION and C15T_CORE_URL are unsupported: no remote C15tCore/C15tApple source package is published. Unset them and use C15T_CORE_PATH for private source builds.")
+}
 
-let coreDependency: [Package.Dependency] = {
-    if let coreVersion {
-        return [.package(url: coreURL, from: Version(coreVersion)!)]
-    }
-    return [.package(name: "C15tCore", path: corePath)]
-}()
-
-let coreProduct = Target.Dependency.product(name: "C15tCore", package: corePackageID)
+let coreDependency: [Package.Dependency] = [.package(name: "C15tCore", path: corePath)]
+let coreProduct = Target.Dependency.product(name: "C15tCore", package: "C15tCore")
+let appleProduct = Target.Dependency.product(name: "C15tApple", package: "C15tCore")
 
 var targets: [Target] = [
     // The wire boundary: encoders, decoders, the event pump, and the launch
@@ -63,7 +52,7 @@ var targets: [Target] = [
     // compiled and tested outside an app build.
     .target(
         name: "C15tReactNativeBridge",
-        dependencies: [coreProduct],
+        dependencies: [coreProduct, appleProduct],
         path: "ios/C15tReactNative",
         exclude: ["ReactNative"],
         sources: ["Bridge"],
@@ -81,7 +70,7 @@ if includeReact {
         // and the hook that starts the core before React Native initializes.
         .target(
             name: "C15tReactNative",
-            dependencies: ["C15tReactNativeBridge", coreProduct],
+            dependencies: ["C15tReactNativeBridge", coreProduct, appleProduct, .product(name: "C15tConsentUI", package: "C15tCore")],
             path: "ios/C15tReactNative",
             exclude: ["Bridge", "Resources"],
             sources: ["ReactNative"]

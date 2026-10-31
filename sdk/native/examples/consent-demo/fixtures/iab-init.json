@@ -1,0 +1,316 @@
+{
+  "location": {
+    "countryCode": "GB",
+    "regionCode": "ENG"
+  },
+  "policySnapshotToken": "fixture-token",
+  "policyResolution": {
+    "version": 1,
+    "status": "matched",
+    "policyId": "prototype-policy",
+    "matchedBy": "country",
+    "fingerprints": {
+      "policy": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "choice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    "policy": {
+      "id": "prototype-policy",
+      "model": "iab",
+      "prompt": "choice",
+      "scope": [
+        "functionality",
+        "experience",
+        "measurement",
+        "marketing"
+      ],
+      "scopeMode": "strict",
+      "preselectedCategories": [],
+      "actions": {
+        "allowed": [
+          "accept",
+          "customize",
+          "reject"
+        ],
+        "required": [
+          "accept",
+          "reject"
+        ],
+        "equivalent": [
+          [
+            "accept",
+            "reject"
+          ]
+        ]
+      },
+      "rights": [
+        "disclosure",
+        "preferences"
+      ],
+      "validity": {
+        "choiceMs": 31536000000,
+        "noticeMs": 31536000000
+      },
+      "privacySignals": {
+        "gpc": {
+          "denyCategories": [
+            "marketing"
+          ]
+        }
+      },
+      "proof": {
+        "storeIp": false,
+        "storeUserAgent": false,
+        "storeLanguage": true
+      },
+      "copyRevision": null
+    }
+  },
+  "gvl": {
+    "features": {
+      "1": {
+        "id": 1,
+        "name": "Match and combine data from other sources",
+        "description": "Partners may combine data for the purposes you allow.",
+        "descriptionLegal": "Partners may combine data for the purposes you allow.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      }
+    },
+    "gvlSpecificationVersion": 2,
+    "lastUpdated": "2025-09-17T00:00:00Z",
+    "purposes": {
+      "1": {
+        "id": 1,
+        "name": "Store and access information on a device",
+        "description": "Partners can store and read information on your device.",
+        "descriptionLegal": "Partners can store and read information on your device.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      },
+      "3": {
+        "id": 3,
+        "name": "Create profiles for personalised advertising",
+        "description": "Partners can use activity to build an advertising profile.",
+        "descriptionLegal": "Partners can use activity to build an advertising profile.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      },
+      "4": {
+        "id": 4,
+        "name": "Use profiles to select personalised advertising",
+        "description": "Partners can use your profile to choose advertising.",
+        "descriptionLegal": "Partners can use your profile to choose advertising.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      },
+      "7": {
+        "id": 7,
+        "name": "Measure advertising performance",
+        "description": "Partners can measure whether advertising reaches its audience.",
+        "descriptionLegal": "Partners can measure whether advertising reaches its audience.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      }
+    },
+    "specialFeatures": {
+      "1": {
+        "id": 1,
+        "name": "Use precise geolocation data",
+        "description": "Partners can use precise location only if you allow it.",
+        "descriptionLegal": "Partners can use precise location only if you allow it.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      }
+    },
+    "specialPurposes": {
+      "1": {
+        "id": 1,
+        "name": "Ensure security and prevent fraud",
+        "description": "Partners can check for fraudulent or harmful activity.",
+        "descriptionLegal": "Partners can check for fraudulent or harmful activity.",
+        "illustrations": [
+          "This use applies only to the choices you allow."
+        ]
+      }
+    },
+    "stacks": {},
+    "tcfPolicyVersion": 5,
+    "vendorListVersion": 42,
+    "vendors": {
+      "1": {
+        "id": 1,
+        "name": "Élan Analytics",
+        "purposes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "legIntPurposes": [
+          7
+        ],
+        "flexiblePurposes": [
+          7
+        ],
+        "specialPurposes": [
+          1
+        ],
+        "features": [
+          1
+        ],
+        "specialFeatures": [
+          1
+        ],
+        "cookieMaxAgeSeconds": 31536000,
+        "cookieRefresh": true,
+        "usesCookies": true,
+        "usesNonCookieAccess": false,
+        "dataCategories": [
+          1
+        ],
+        "urls": [
+          {
+            "langId": "en",
+            "privacy": "https://example.test/privacy",
+            "legIntClaim": "https://example.test/interest"
+          }
+        ],
+        "dataRetention": {
+          "stdRetention": 365,
+          "purposes": {
+            "7": 90
+          },
+          "specialPurposes": {
+            "1": 30
+          }
+        }
+      },
+      "2": {
+        "id": 2,
+        "name": "Northstar Media",
+        "purposes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "legIntPurposes": [
+          7
+        ],
+        "flexiblePurposes": [
+          7
+        ],
+        "specialPurposes": [
+          1
+        ],
+        "features": [
+          1
+        ],
+        "specialFeatures": [
+          1
+        ],
+        "cookieMaxAgeSeconds": 31536000,
+        "cookieRefresh": true,
+        "usesCookies": true,
+        "usesNonCookieAccess": false,
+        "dataCategories": [
+          1
+        ],
+        "urls": [
+          {
+            "langId": "en",
+            "privacy": "https://example.test/privacy",
+            "legIntClaim": "https://example.test/interest"
+          }
+        ],
+        "dataRetention": {
+          "stdRetention": 365,
+          "purposes": {
+            "7": 90
+          },
+          "specialPurposes": {
+            "1": 30
+          }
+        }
+      },
+      "3": {
+        "id": 3,
+        "name": "River Advertising",
+        "purposes": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "legIntPurposes": [
+          7
+        ],
+        "flexiblePurposes": [
+          7
+        ],
+        "specialPurposes": [
+          1
+        ],
+        "features": [
+          1
+        ],
+        "specialFeatures": [
+          1
+        ],
+        "cookieMaxAgeSeconds": 31536000,
+        "cookieRefresh": true,
+        "usesCookies": true,
+        "usesNonCookieAccess": false,
+        "dataCategories": [
+          1
+        ],
+        "urls": [
+          {
+            "langId": "en",
+            "privacy": "https://example.test/privacy",
+            "legIntClaim": "https://example.test/interest"
+          }
+        ],
+        "dataRetention": {
+          "stdRetention": 365,
+          "purposes": {
+            "7": 90
+          },
+          "specialPurposes": {
+            "1": 30
+          }
+        }
+      }
+    },
+    "standardTexts": {
+      "features": "Partners may use these features for the purposes you allow. Features have no separate choice.",
+      "specialPurposes": "These uses are needed for security and service delivery."
+    },
+    "dataCategories": {
+      "1": {
+        "id": 1,
+        "name": "Device information",
+        "description": "Information about the device."
+      }
+    }
+  },
+  "adTechProviders": [
+    {
+      "id": 10,
+      "name": "Harbour Ads",
+      "policyUrl": "https://example.test/privacy"
+    },
+    {
+      "id": 20,
+      "name": "Cedar Measurement",
+      "policyUrl": "https://example.test/privacy"
+    }
+  ]
+}

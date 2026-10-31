@@ -1,0 +1,44 @@
+---
+title: Bare React Native
+description: Wire native bootstrap keys, CocoaPods, Maven artifacts and the shared consent provider in a bare React Native app.
+group: frameworks
+---
+
+Install the private `@c15t/react-native` artifact into a New Architecture RN app. Use an Inth project and policy first. Self-hosted transport uses the same protocol; app-owned native startup remains available when you need custom services.
+
+## Link the matching native artifacts
+
+Use the candidate versions in the [support matrix](/docs/frameworks/react-native/platform-support). On iOS, RN autolinking finds `C15tReactNative.podspec`. Run your app's normal CocoaPods install, then rebuild the native app:
+
+```sh
+cd ios
+bundle exec pod install
+```
+
+The pod compiles the packaged native core, Apple services and SwiftUI screens into `C15tReactNative`. Do not also link a separate `C15tCore` or `C15tApple` pod/SwiftPM product into the same process.
+
+On Android, make the matching native Maven repository reachable by the app's Gradle build. The RN adapter pins native version `3.0.0-alpha.1`; the RN package version is separate. The maintainer must supply the required core, platform and optional UI artifacts. [Android setup](/docs/frameworks/react-native/android) explains the modules and distribution limits. Autolinking compiles the RN bridge against these binaries. Do not include the native producer's Gradle build in the consumer app.
+
+## Configure iOS before launch
+
+Merge these entries into your app's `Info.plist`. They come from the reference app; replace the endpoint and adjust categories to your authored policy.
+
+<include src="../../shared/examples/react-native-bare/bare-ios-configuration.mdx" />
+
+The resource entry assumes `c15t-policy.json` is in the app target's Copy Bundle Resources. Follow the [policy export guide](/docs/frameworks/react-native/offline), or omit that entry when you are not embedding a policy. Keep ATS enabled for production HTTPS endpoints.
+
+The packaged constructor bootstraps before the React host. An app that installs the engine itself must set `com.c15t.reactnative.AutoBootstrap` to `false`, install through the public APIs in `C15tReactNative`, then attach with `C15tReactNativeBootstrap.install(core)`. See [Apple host ownership](/docs/frameworks/react-native/apple).
+
+## Configure Android before launch
+
+Keep `android.permission.INTERNET` on the manifest. Merge these entries inside `<application>`:
+
+<include src="../../shared/examples/react-native-bare/bare-android-configuration.mdx" />
+
+Put the exported policy in `android/app/src/main/assets/c15t-policy.json`, or omit its metadata when unused. The library's AndroidX Startup initializer hydrates consent before the first Activity and JavaScript frame. Inspect the merged manifest; a vendor's own initializer can run before your React code. If the app owns installation, disable `com.c15t.reactnative.AUTO_BOOTSTRAP` and install before starting RN. Preserve one native authority.
+
+`ACCESS_NETWORK_STATE` enables the native reconnect observer when declared. Without it, launch and foreground retries still run. Optional SDKs must stay gated throughout storage or policy failures.
+
+## Attach the shared root and gate SDKs
+
+Mount the [checked provider and presenter example](/docs/frameworks/react-native/quickstart#attach-javascript-after-native-installation). `C15tProvider` attaches; it does not accept backend configuration. Native SDKs need [native gates before JavaScript](/docs/frameworks/react-native/native-behaviour), plus cleanup or supported disable controls after withdrawal. Verify both platforms with a real native rebuild.

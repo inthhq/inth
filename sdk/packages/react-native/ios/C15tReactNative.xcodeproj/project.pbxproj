@@ -8,16 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		0B8E75C55777139A1E7F9180 /* C15tReactNative.h in Headers */ = {isa = PBXBuildFile; fileRef = 02657EDE7566EC0C9C28820D /* C15tReactNative.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		19CD654373BA0D71F6809620 /* C15tTrackingGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD6639F33B56E4576000103 /* C15tTrackingGate.swift */; };
 		1A8368B2EEF6EA6590F2478F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DE04AE370EA0EBC1C3C380B /* Foundation.framework */; };
 		1BB46FB9FCD909A39BBDA14B /* C15tBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56B42FB6BF9791EA4303AB09 /* C15tBootstrap.swift */; };
 		35750351FE89BAF3F1EB5C27 /* C15tModuleHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0BDE2D0586BDC9577A54A36 /* C15tModuleHandler.swift */; };
-		5BB15341AD503F9B6A506D74 /* C15tReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A938BF0945641031AB1418 /* C15tReachability.swift */; };
-		63D2DB992ED3DCE8F5CD6C61 /* C15tForegroundObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5E0C4AFC6659E99F8B74971 /* C15tForegroundObserver.swift */; };
-		64D412E185D080A4F054BA83 /* C15tTrackingWaiters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E2D72B550AF98CA914C880D /* C15tTrackingWaiters.swift */; };
-		7981FD20D8A9EF12352DE9E2 /* C15tReachabilityGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 465A14C2FF01F28B7668BC18 /* C15tReachabilityGate.swift */; };
 		8A24547931CB7026C9B9AAF3 /* C15tPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66424A16F6E0E887FBD64064 /* C15tPayload.swift */; };
-		DF2F01BF0A21D89840BFFC9A /* C15tTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4AACD5A07E3BA56AB4A4AA7 /* C15tTracking.swift */; };
+		90705F34B15B0D3C1DD9D44D /* C15tAppleExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102D9489C55AA6EFBB516E33 /* C15tAppleExports.swift */; };
 		E3538833DD7FDC45EF89EEDE /* Privacy.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 08621522B93E3C069865D1A6 /* Privacy.xcprivacy */; };
 		F2818F96AA986AA1E1F48638 /* C15tChangePump.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD852D8DE2D6C302D75FE2D2 /* C15tChangePump.swift */; };
 /* End PBXBuildFile section */
@@ -25,17 +20,12 @@
 /* Begin PBXFileReference section */
 		02657EDE7566EC0C9C28820D /* C15tReactNative.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = C15tReactNative.h; path = C15tReactNative/C15tReactNative.h; sourceTree = "<group>"; };
 		08621522B93E3C069865D1A6 /* Privacy.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = Privacy.xcprivacy; path = C15tReactNative/Resources/Privacy.xcprivacy; sourceTree = "<group>"; };
-		0AD6639F33B56E4576000103 /* C15tTrackingGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tTrackingGate.swift; path = C15tReactNative/Bridge/C15tTrackingGate.swift; sourceTree = "<group>"; };
+		102D9489C55AA6EFBB516E33 /* C15tAppleExports.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tAppleExports.swift; path = C15tReactNative/Bridge/C15tAppleExports.swift; sourceTree = "<group>"; };
 		34013A5A51F3B2F8A0DB8C9A /* C15tReactNative.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = C15tReactNative.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		465A14C2FF01F28B7668BC18 /* C15tReachabilityGate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tReachabilityGate.swift; path = C15tReactNative/Bridge/C15tReachabilityGate.swift; sourceTree = "<group>"; };
 		56B42FB6BF9791EA4303AB09 /* C15tBootstrap.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tBootstrap.swift; path = C15tReactNative/Bridge/C15tBootstrap.swift; sourceTree = "<group>"; };
-		5E2D72B550AF98CA914C880D /* C15tTrackingWaiters.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tTrackingWaiters.swift; path = C15tReactNative/Bridge/C15tTrackingWaiters.swift; sourceTree = "<group>"; };
 		66424A16F6E0E887FBD64064 /* C15tPayload.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tPayload.swift; path = C15tReactNative/Bridge/C15tPayload.swift; sourceTree = "<group>"; };
 		7DE04AE370EA0EBC1C3C380B /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		B0BDE2D0586BDC9577A54A36 /* C15tModuleHandler.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tModuleHandler.swift; path = C15tReactNative/Bridge/C15tModuleHandler.swift; sourceTree = "<group>"; };
-		E4AACD5A07E3BA56AB4A4AA7 /* C15tTracking.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tTracking.swift; path = C15tReactNative/Bridge/C15tTracking.swift; sourceTree = "<group>"; };
-		F0A938BF0945641031AB1418 /* C15tReachability.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tReachability.swift; path = C15tReactNative/Bridge/C15tReachability.swift; sourceTree = "<group>"; };
-		F5E0C4AFC6659E99F8B74971 /* C15tForegroundObserver.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tForegroundObserver.swift; path = C15tReactNative/Bridge/C15tForegroundObserver.swift; sourceTree = "<group>"; };
 		FD852D8DE2D6C302D75FE2D2 /* C15tChangePump.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = C15tChangePump.swift; path = C15tReactNative/Bridge/C15tChangePump.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -83,14 +73,9 @@
 			children = (
 				56B42FB6BF9791EA4303AB09 /* C15tBootstrap.swift */,
 				FD852D8DE2D6C302D75FE2D2 /* C15tChangePump.swift */,
-				F5E0C4AFC6659E99F8B74971 /* C15tForegroundObserver.swift */,
 				B0BDE2D0586BDC9577A54A36 /* C15tModuleHandler.swift */,
 				66424A16F6E0E887FBD64064 /* C15tPayload.swift */,
-				F0A938BF0945641031AB1418 /* C15tReachability.swift */,
-				465A14C2FF01F28B7668BC18 /* C15tReachabilityGate.swift */,
-				E4AACD5A07E3BA56AB4A4AA7 /* C15tTracking.swift */,
-				0AD6639F33B56E4576000103 /* C15tTrackingGate.swift */,
-				5E2D72B550AF98CA914C880D /* C15tTrackingWaiters.swift */,
+				102D9489C55AA6EFBB516E33 /* C15tAppleExports.swift */,
 			);
 			name = Bridge;
 			sourceTree = "<group>";
@@ -149,6 +134,7 @@
 			name = C15tReactNative;
 			packageProductDependencies = (
 				746A185CEF3F9CA4204EC581 /* C15tCore */,
+				06D5E96686401BBA048E78F1 /* C15tApple */,
 			);
 			productName = C15tReactNative;
 			productReference = 34013A5A51F3B2F8A0DB8C9A /* C15tReactNative.framework */;
@@ -204,14 +190,9 @@
 			files = (
 				1BB46FB9FCD909A39BBDA14B /* C15tBootstrap.swift in Sources */,
 				F2818F96AA986AA1E1F48638 /* C15tChangePump.swift in Sources */,
-				63D2DB992ED3DCE8F5CD6C61 /* C15tForegroundObserver.swift in Sources */,
 				35750351FE89BAF3F1EB5C27 /* C15tModuleHandler.swift in Sources */,
 				8A24547931CB7026C9B9AAF3 /* C15tPayload.swift in Sources */,
-				5BB15341AD503F9B6A506D74 /* C15tReachability.swift in Sources */,
-				7981FD20D8A9EF12352DE9E2 /* C15tReachabilityGate.swift in Sources */,
-				DF2F01BF0A21D89840BFFC9A /* C15tTracking.swift in Sources */,
-				19CD654373BA0D71F6809620 /* C15tTrackingGate.swift in Sources */,
-				64D412E185D080A4F054BA83 /* C15tTrackingWaiters.swift in Sources */,
+				90705F34B15B0D3C1DD9D44D /* C15tAppleExports.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -435,6 +416,11 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		06D5E96686401BBA048E78F1 /* C15tApple */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F8DF1D036C1E64196F553FA9 /* XCLocalSwiftPackageReference "core-swift" */;
+			productName = C15tApple;
+		};
 		746A185CEF3F9CA4204EC581 /* C15tCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F8DF1D036C1E64196F553FA9 /* XCLocalSwiftPackageReference "core-swift" */;

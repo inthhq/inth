@@ -1,0 +1,37 @@
+---
+title: Standalone Android
+description: Install the Kotlin core and Android services before SDK startup, add optional Compose screens, and configure versioned private artifact resolution.
+group: frameworks
+---
+
+Android apps can use `c15t-core` and `c15t-android` without RN, Expo or a JavaScript runtime. Add optional `c15t-consent-ui` only when you need Compose stock screens. The native modules are private prerelease artifacts; obtain a versioned repository and access from the maintainer.
+
+## Resolve the native modules
+
+The candidate native coordinates use group `com.c15t` and version `3.0.0-alpha.1`. `c15t-core` is a JVM JAR. `c15t-android` is the platform AAR and exposes core types. `c15t-consent-ui` owns Compose presentation. Use the same native version for these artifacts, independently of RN npm semver.
+
+Configure the supplied Maven repository in the host's dependency resolution and obtain credentials through your build system. Do not embed repository tokens in the manifest or app. A local staging directory, a source composite build or a successful producer build does not prove remote registry resolution.
+
+Consumer floors are API 24, compile SDK 36 and JDK 17. Keep the host's compatible Gradle, Android Gradle Plugin and Kotlin versions; do not load the native producer's plugin build into an Expo/RN app. See the [candidate matrix](/docs/frameworks/react-native/platform-support).
+
+## Install before SDK startup
+
+This source example compiles with the native demo. Call it before optional vendor startup and use the cached gate before enabling measurement. Replace the designated reference endpoint with your own Inth project URL.
+
+<include src="../../shared/examples/native/examples/consent-demo/android-install.mdx" />
+
+`C15tAndroid.install` selects platform storage, HTTP transport and foreground/reachability services, then hydrates the native authority. Do not create a second kernel for UI or RN. Manifest-based startup through `C15tInitializer` is an alternative when the app supplies `com.c15t.PORTAL_URL` and its configuration metadata.
+
+Disable vendor auto-initializers that can run before your installation and gate. Keep `android.permission.INTERNET`. `ACCESS_NETWORK_STATE` enables reconnect observation; launch and foreground retry remain available when it is absent. Treat storage and policy errors as closed optional gates and inspect native errors.
+
+## Keep gates current
+
+`C15t.decision` distinguishes pending, denied and granted. `gate` and `gateDecision` provide native subscriptions; close the handle when its owner ends. Stop or reconfigure optional collection when the gate closes. A startup-only check does not cover withdrawal.
+
+For app-owned storage/transport or IAB settings, use `NativeConfig` and the existing platform installer. `portalUrl` identifies hosted Inth or a backend implementing the same protocol. A build-exported resource uses `bundledPolicy`, or the platform's `com.c15t.POLICY_RESOURCE` assets entry. Keep transport available for refresh and durable queue replay.
+
+## Add Compose screens deliberately
+
+Retrieve the installed kernel through `C15t.current`, which is null before bootstrap. Retain `ConsentPresenter` with that kernel in a lifecycle-owned ViewModel and render `C15tConsent` in a Compose host with your privacy-policy URL. The presenter owns drafts, saves, search and reopening. Use `ConsentTheme` for [supported native customization](/docs/frameworks/react-native/customize).
+
+The standalone platform AAR does not require stock UI. RN's packaged host adds its UI dependency because its presenter commands need it. Neither path establishes Google/AdMob interoperability or certification.

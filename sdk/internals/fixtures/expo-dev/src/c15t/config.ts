@@ -46,10 +46,13 @@ export interface FixtureConfig {
 	readonly sampleIntervalMs: number;
 }
 
-const LOCAL_BACKEND = 'http://localhost:3000/api/self-host';
+const EXAMPLE_INTH_BACKEND = 'https://example-inth.inth.app/';
 
 export const config: FixtureConfig = {
-	backendURL: text(process.env.EXPO_PUBLIC_C15T_BACKEND_URL, LOCAL_BACKEND),
+	backendURL: text(
+		process.env.EXPO_PUBLIC_C15T_BACKEND_URL,
+		EXAMPLE_INTH_BACKEND
+	),
 	forceFakeNative: readFlag(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE) ?? false,
 	sampleIntervalMs: asNumber(
 		process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS,

@@ -39,14 +39,9 @@ struct TcEncodeProblem: Error {
 /// - `RangeEntry` lists are re-written entry for entry, preserving each
 ///   `IsARange` flag. Grouping adjacent IDs instead would merge two singles written
 ///   next to each other into one range and change the bytes.
-/// - `publisherRestrictions` and `purposeOneTreatment` reach the wire only because a
-///   decode put them in the model. Nothing here can synthesize them from c15t
-///   consent state, and it should not try: c15t does not populate either field
-///   (`packages/iab/src/tcf/tc-string.ts` sets neither), and `@iabtechlabtcf/core`
-///   cannot encode restrictions at all without a GVL attached. A layer that wanted
-///   to emit them needs the publisher's own restriction choices, which c15t collects
-///   nowhere on any platform; the list `/init` serves says what a vendor declared, not
-///   what a publisher restricted it to.
+/// - Publisher restrictions can come from a decoded string or from the native
+///   IAB authority after validation against the disclosed GVL.
+
 enum TcStringEncoder {
     static func encode(_ string: TcString) -> TcStringEncodeOutcome {
         do {

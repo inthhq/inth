@@ -1,0 +1,45 @@
+---
+title: Configuration
+description: Configure Inth transport, native resource binding, categories, vendor scope, overrides and app-owned mobile installation.
+group: frameworks
+---
+
+Use the Inth project URL in native build configuration. The React Native provider reads configuration from the installed native engine; it has no web-style `options` or transport prop.
+
+## Choose the transport owner
+
+| Mode | Native behavior |
+| --- | --- |
+| `hosted` | Recommended. Uses an Inth project URL for policy resolution and consent/identity transport. |
+| `selfHosted` | Uses the same protocol against an app-owned backend. Keep the required HTTPS endpoint and native storage. |
+| `offline` | Local choices and queued obligations without remote audit delivery. It cannot fetch a missing policy. Not recommended for production environments as the only launch transport. |
+| `custom` | The app installs native services itself. Expo defaults auto-bootstrap off for this mode; the host must install before SDK/RN startup. |
+
+`initURL` overrides policy initialization only. Consent saves and identity requests still use `backendURL`. URLs are public binary configuration; do not embed credentials. Use HTTPS in production. The plugin and Apple installer allow development HTTP only on literal loopback hosts.
+
+## Configure Expo or bare metadata
+
+| Expo plugin option | iOS key | Android metadata |
+| --- | --- | --- |
+| `backendURL` | `com.c15t.backend.url` | `com.c15t.PORTAL_URL` |
+| `initURL` | `com.c15t.backend.initUrl` | `com.c15t.INIT_URL` |
+| `domain` | `com.c15t.backend.domain` | `com.c15t.DOMAIN` |
+| `consentCategories` | `com.c15t.categories`, string array | `com.c15t.CATEGORIES`, comma-separated |
+| `vendors` | `com.c15t.vendors` | `com.c15t.VENDORS`, comma-separated |
+| `policyResource` | `com.c15t.policy.resource` | `com.c15t.POLICY_RESOURCE` |
+| `forceGPC` | `com.c15t.gpc` | `com.c15t.FORCE_GPC` |
+| `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
+
+The plugin translates mode spelling per platform. Do not invent an Android transport-mode metadata key. `androidMavenRepository` configures build-time binary resolution, not consent transport.
+
+Categories are `necessary`, `functionality`, `experience`, `measurement` and `marketing`. The declaration narrows the optional policy scope; it does not grant it. Omission declares no app scope, so the policy decides what is offered. An empty plugin array is refused. Vendor IDs narrow served disclosures; they do not create IAB grants or CMP configuration.
+
+## Preview policy inputs
+
+Use `setOverrides` for country, region, language or GPC QA. `privacySignals.gpc.active` is the effective GPC answer, distinct from detected and overridden values. No mobile user-agent flag is implied. A forced GPC denial is never an invented grant. Remove QA overrides before shipping.
+
+## Use custom native services deliberately
+
+Apple exposes `C15tApple.install(C15tAppleConfiguration)` and an advanced `CoreConfig` installation path. Android exposes `C15tAndroid.install(context, NativeConfig, ...)`. Custom stores and transports are app-owned contracts, not configuration accepted by `C15tProvider`.
+
+IAB CMP/publisher settings belong to native configuration. The documented Expo props expose vendor scope, not a complete IAB installation. Read the [IAB prerequisites and limits](/docs/frameworks/react-native/iab) before choosing a host-owned setup.

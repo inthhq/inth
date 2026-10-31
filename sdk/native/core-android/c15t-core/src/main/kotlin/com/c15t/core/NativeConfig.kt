@@ -38,19 +38,21 @@ import com.c15t.core.transport.C15tProtocol
  * scoped anything with an empty drawer under a consent the subject can still give, so a
  * host that means no vendors has to say so somewhere other than here.
  *
- * Ids the served document does not carry buy nothing, so an out-of-range or
- * publisher-custom id costs nothing, and the framework half of the document -- purposes,
- * features, stacks, and both version numbers -- is never moved by a scope.
- * @property overrides Developer overrides applied before the first init, so a
- * staged build can pin country, region, language, or GPC.
- * @property detectedGpc The GPC signal the device reports, or `null` when it has
- * none. There is no user-agent GPC flag to read natively, so this has to come
- * from wherever the signal actually lives: a WebView's
- * `isGlobalPrivacyControlEnabled`, an equivalent Android check, or the React
- * Native layer. `null` means "no signal", which is not the same answer as
- * `false`. An app override on [overrides] wins over this.
- * @property extraHeaders Extra request headers, for a deployment that needs its
- * own auth or tenant header.
+ * Ids the served document does not carry buy nothing, so an out-of-range or publisher-custom id
+ * costs nothing, and the framework half of the document -- purposes, features, stacks, and both
+ * version numbers -- is never moved by a scope.
+ *
+ * @property iab Approved CMP identity and publisher settings. Required to commit under an IAB
+ *   policy.
+ * @property overrides Developer overrides applied before the first init, so a staged build can pin
+ *   country, region, language, or GPC.
+ * @property detectedGpc The GPC signal the device reports, or `null` when it has none. There is no
+ *   user-agent GPC flag to read natively, so this has to come from wherever the signal actually
+ *   lives: a WebView's `isGlobalPrivacyControlEnabled`, an equivalent Android check, or the React
+ *   Native layer. `null` means "no signal", which is not the same answer as `false`. An app
+ *   override on [overrides] wins over this.
+ * @property extraHeaders Extra request headers, for a deployment that needs its own auth or tenant
+ *   header.
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
  */
 data class NativeConfig(
@@ -60,12 +62,17 @@ data class NativeConfig(
 	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
 	val consentCategories: List<ConsentCategory>? = null,
 	val vendors: List<Int>? = null,
+	val iab: com.c15t.core.iab.IabConfiguration? = null,
+	val iabListMaxAgeMs: Long = 604_800_000,
 	val overrides: KernelOverrides = KernelOverrides(),
 	val detectedGpc: Boolean? = null,
 	val extraHeaders: Map<String, String> = emptyMap(),
 	val maxPendingSaves: Int = 20,
+	/** Raw build resource, loaded by the Android adapter before JavaScript. */
+	val bundledPolicy: String? = null,
 ) {
 	init {
+		require(iabListMaxAgeMs > 0)
 		require(portalUrl.isNotBlank()) { "NativeConfig.portalUrl must not be blank" }
 	}
 }

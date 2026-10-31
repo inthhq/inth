@@ -29,21 +29,11 @@ import type {
 /**
  * Consent model enforced on device.
  *
- * `iab` is excluded because no native core reports it. Both cores read the wire value
- * and evaluate it now -- an in-scope category stays denied until a current choice grants
- * it, which is what `defaultPermission` in `packages/core/src/consent-record/evaluate.ts`
- * does for `iab` and for `opt-in` alike -- and both then report `opt-in`, copied from
- * `deriveModel` in `packages/core/src/policy.ts`, which names a rule `iab` only once
- * `@c15t/iab` is installed. A device has nothing to install there: no registered CMP ID
- * to sign a TC String, no per-vendor vector, no `IABTCF_*` bus. Answering `iab` would
- * advertise the vendor-side record that `NativeIABState` does not carry.
- *
- * Reading a served vendor list is a different question, and {@link
- * NativeIABState} answers it: a device may hold the list `/init` embedded while
- * the model it evaluates is `opt-in`, because the list is disclosure, not a
- * permission rule.
+ * Native IAB authority can report `iab`. An IAB policy without usable native
+ * authority can still report `opt-in` for category evaluation. Read effective
+ * permissions and native vendor gates rather than treating the model as a grant.
  */
-export type NativeModel = Exclude<KernelModel, 'iab'>;
+export type NativeModel = KernelModel;
 
 /**
  * Explainability half of the policy resolution, as carried on the snapshot.
@@ -103,14 +93,10 @@ export interface NativeSnapshotError {
 /**
  * The IAB half of a snapshot.
  *
- * Mirrors `KernelIABState` in `@c15t/core` on `gvl` alone. The kernel's other
- * members -- `authority`, `enabled`, `cmpId`, `tcString`, `gvlReference`,
- * `customVendors`, and the per-vendor and per-purpose vectors -- are IAB runtime
- * state a device does not own yet, and an absent key says that plainly where
- * `enabled: false` would claim an answer about a module that is not there.
- * Swift's `KernelIABState` makes the same cut for the same reason and encodes
- * `gvl` always present, so a reader never confuses "no list served" with "no
- * answer given". The document behind the name is `./gvl`.
+ * This React Native snapshot projection carries the GVL disclosure only.
+ * CMP configuration, committed TC Strings and purpose/vendor vectors remain in
+ * native authority; their absence here does not mean the native core lacks them.
+ * Use native IAB APIs and gates for consent decisions. Holding a GVL is not a grant.
  */
 export interface NativeIABState {
 	/** Global Vendor List (IAB-registered vendors + purposes), or `null`. */

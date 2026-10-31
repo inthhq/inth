@@ -55,19 +55,11 @@ const VENDOR_LIST_KEYS = [
 	'specialFeatures',
 	'specialPurposes',
 	'stacks',
+	'standardTexts',
 	'tcfPolicyVersion',
 	'vendorListVersion',
 	'vendors',
 ];
-
-/**
- * Top-level names the schema carries and the native cores do not read yet.
- *
- * `standardTexts` arrived with TCF 2.4. The web must show it by 23 October 2026;
- * native apps have until 23 February 2027, so the Swift and Kotlin lists are
- * compared against {@link VENDOR_LIST_KEYS} without it until they ingest it.
- */
-const WEB_ONLY_VENDOR_LIST_KEYS = ['standardTexts'];
 
 /** The collections that share the purpose shape, which is four of the five. */
 const DEFINITION_KEYS = [
@@ -355,7 +347,7 @@ describe('the vendor-list name sets', () => {
 describe('the schema writes these names', () => {
 	test('the document itself', () => {
 		expect(sorted(schemaKeys(SCHEMA, 'globalVendorListSchema'))).toEqual(
-			sorted([...VENDOR_LIST_KEYS, ...WEB_ONLY_VENDOR_LIST_KEYS])
+			VENDOR_LIST_KEYS
 		);
 	});
 

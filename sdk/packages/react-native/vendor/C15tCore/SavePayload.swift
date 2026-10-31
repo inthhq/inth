@@ -17,6 +17,8 @@ public enum CommitIntent: Sendable, Equatable {
     /// left exactly as they were: a partial save must not renew or clear a
     /// category the subject did not touch.
     case custom([OptionalConsentCategory: Bool])
+    /// Complete native IAB draft and the categories confirmed by this action.
+    case iab(IABChoices, categories: [OptionalConsentCategory: Bool])
 }
 
 /// The local outcome of ``ConsentCore/save(_:)``.
@@ -187,6 +189,8 @@ public struct SavePayload: Sendable, Codable, Equatable {
     public let decisionInputs: DecisionInputs?
     /// Equals `confirmed.actionAt`, for backends that read one time.
     public let givenAt: Int64
+    public let tcString: String?
+    public let addtlConsent: String?
 
     public init(
         subjectId: String,
@@ -201,7 +205,8 @@ public struct SavePayload: Sendable, Codable, Equatable {
         consentAction: ConsentAction,
         policySnapshotToken: String?,
         decisionInputs: DecisionInputs?,
-        givenAt: Int64
+        givenAt: Int64,
+        tcString: String? = nil, addtlConsent: String? = nil
     ) {
         self.subjectId = subjectId
         self.subject = subject
@@ -216,6 +221,8 @@ public struct SavePayload: Sendable, Codable, Equatable {
         self.policySnapshotToken = policySnapshotToken
         self.decisionInputs = decisionInputs
         self.givenAt = givenAt
+        self.tcString = tcString
+        self.addtlConsent = addtlConsent
     }
 }
 
@@ -267,20 +274,10 @@ enum SubjectPostBodyBuilder {
         if let choice = choiceWire(for: payload) {
             fields["choice"] = choice
         }
-        // No `tcString`, and not because an `iab` rule is unreadable -- it is read and
-        // evaluated now. A TC String is a legal record a vendor reads, and it opens with a
-        // CMP ID IAB Europe assigned to somebody. Nothing here holds one: the web takes it
-        // from configuration or from `/init` (`packages/iab/src/tcf/cmp-defaults.ts` refuses
-        // to default it, because a placeholder names a provider that is not us), this build
-        // reads neither, and a save carries category receipts rather than the per-vendor
-        // vectors the rest of the string would assert. `@c15t/core` is in the same position
-        // with its IAB module absent: `payload.tcString` is null and the key stays off the
-        // body. Encoding one is the additive change the `iab` slot is reserved for.
-
-        // The decision assertion goes on flat, not nested, and only when nothing
-        // else already binds the write to a policy revision. `buildDecisionAssertion`
-        // in `@c15t/core` returns nothing whenever a `policySnapshotToken` is
-        // present, because the token is the stronger claim.
+        if let tcString = payload.tcString {
+            fields["tcString"] = .string(tcString)
+            if let ac = payload.addtlConsent { fields["addtlConsent"] = .string(ac) }
+        }
         if let assertion = decisionAssertion(for: payload) {
             for (field, value) in assertion { fields[field] = value }
         }

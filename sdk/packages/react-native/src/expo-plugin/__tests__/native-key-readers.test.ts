@@ -71,6 +71,7 @@ const EVERY_KEY_PROPS = {
 	forceGPC: true,
 	initURL: 'https://app.example.com/api/consent/init',
 	mode: 'custom',
+	policyResource: './c15t-policy.json',
 	vendors: [8, 42, 755],
 } as const;
 

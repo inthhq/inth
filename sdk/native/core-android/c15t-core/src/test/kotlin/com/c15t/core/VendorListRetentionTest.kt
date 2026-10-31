@@ -144,7 +144,7 @@ class VendorListRetentionTest {
 		// The upgrade itself: those same bytes, a kernel that never saw the `/init` that served them,
 		// and a network that stays shut.
 		val cold = testKernel(
-			store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to raw))),
+			store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to raw, C15tStoreKeys.SUBJECT to assertNotNull(backend.read(C15tStoreKeys.SUBJECT))))),
 			transport = RecordingTransport(),
 		)
 		cold.bootstrap()
@@ -163,7 +163,7 @@ class VendorListRetentionTest {
 	@Test
 	fun `a list stored inside the snapshot is read without the envelope key`() {
 		val kernel = testKernel(
-			store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to bytesWithListInsideTheSnapshot()))),
+			store = C15tStore(InMemoryKeyValueStore(mapOf(C15tStoreKeys.SNAPSHOT to bytesWithListInsideTheSnapshot(), C15tStoreKeys.SUBJECT to """{"id":"${subjectIdForSequence(1)}"}"""))),
 			transport = RecordingTransport(),
 		)
 		kernel.bootstrap()

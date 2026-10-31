@@ -1,0 +1,48 @@
+---
+title: Native screens and customization
+description: Use the shared SwiftUI and Compose stock consent screens and configure the native theme, brand, copy and attribution settings they actually support.
+group: frameworks
+---
+
+Use `presentConsentPrompt` and `presentPreferences` for the shared stock screens. SwiftUI and Compose own draft state, navigation, search, validation and storage work. Consent interaction can continue while JavaScript is busy.
+
+## Keep the standing privacy entry
+
+Put a privacy-settings action in the app's top-level settings. It must reopen preferences after the initial prompt is gone. The [checked root](/docs/frameworks/react-native/quickstart#attach-javascript-after-native-installation) demonstrates that entry and the compact outcome subscription.
+
+Stock native screens support category choices, IAB purpose and partner details, search, Additional Consent providers, required disclosures, discard confirmation and refused-save retry. A missing privacy-policy URL or unavailable authority is a setup error; do not replace required disclosures with generic copy.
+
+## Keep app navigation outside the presenter
+
+The bridge opens a native presentation above the React host. It does not accept React children, a React Navigation route or an inline native preference-view component. Keep app navigation and the standing privacy-settings entry in React; let the native presenter own its consent pages. The existing React `ConsentPreferences` component is a separate React-rendered option, not an embedded SwiftUI/Compose screen.
+
+## Configure the native theme
+
+Both native UI modules expose `ConsentTheme`. Set the native current theme before presentation, or use its supported `Info.plist`/Android metadata readers. JavaScript presenter commands accept the privacy-policy URL only; they do not accept a React `style` or `theme` object. The Expo consent plugin does not expose the native theme as a prop. Apply native build configuration through your app's own native files or config plugin.
+
+| Setting | iOS `Info.plist` | Android application metadata |
+| --- | --- | --- |
+| Accent / text on accent | `com.c15t.consent.accent`, `com.c15t.consent.onAccent` | `com.c15t.consent.ACCENT`, `com.c15t.consent.ON_ACCENT` |
+| Background / cards / muted cards | `com.c15t.consent.canvas`, `.surface`, `.surfaceMuted` | `com.c15t.consent.CANVAS`, `.SURFACE`, `.SURFACE_MUTED` |
+| Main / secondary text | `com.c15t.consent.text`, `.textSecondary` | `com.c15t.consent.TEXT`, `.TEXT_SECONDARY` |
+| Decision fill / label | `com.c15t.consent.decision`, `.onDecision` | `com.c15t.consent.DECISION`, `.ON_DECISION` |
+| Corner radius | `com.c15t.consent.cornerRadius`, points | `com.c15t.consent.CORNER_RADIUS`, dp |
+| Headline font | `com.c15t.consent.headlineFont` | `com.c15t.consent.HEADLINE_FONT` |
+| App name / logo | `com.c15t.consent.brandName`, `.brandMark` | `com.c15t.consent.BRAND_NAME`, `.BRAND_MARK` |
+| Hide app identity | `com.c15t.consent.brand: false` | `com.c15t.consent.BRAND: false` |
+| Headline / introductory copy | `com.c15t.consent.headline`, `.introduction` | `com.c15t.consent.HEADLINE`, `.INTRODUCTION` |
+| Provider attribution | `com.c15t.consent.branding`, `.brandingProvider`, `.brandingName`, `.brandingMark` | `com.c15t.consent.BRANDING`, `.BRANDING_PROVIDER`, `.BRANDING_NAME`, `.BRANDING_MARK` |
+
+The shortened entries in this table share the full prefix in their first cell. Colors accept `#RRGGBB` or a comma-separated light,dark pair. iOS logo values name bundled image assets; Android uses drawable resources. Body type remains the system face. Android maps `rounded` to the system sans face. The accept and reject controls share the decision treatment; decision labels are not replaceable first-layer copy.
+
+App identity and provider attribution are separate settings. `c15t` and `inth` are built-in provider names/marks; custom attribution uses a provider name and optional native asset. Verify contrast, larger text, keyboard/screen-reader focus, safe areas and dismiss behavior on each supported platform.
+
+## Check copy and localization separately
+
+Native `ConsentTheme.Copy` supports the first-layer headline and introduction. It is not a complete localization dictionary. The current stock native navigation, action labels and category explanations contain English strings. Changing a policy language or exporting multiple resource languages does not translate all of that UI.
+
+GVL descriptions and vendor policy links can use available device-language disclosures, with fallback. ATT usage text has its own native localization configuration. For a fully app-localized React interface, use the existing React component copy props or headless controls, and retain native authority and startup gates. Do not promise a fully localized stock native journey until every required string is supported and verified.
+
+## Use existing React components deliberately
+
+The RN package also exports `ConsentBanner`, `ConsentDialog`, `ConsentPreferences`, `ConsentIabDrawer` and React theme helpers. Those are existing React-rendered components with separate props. Their themes do not style native presenter screens. Prefer the shared native presenters for stock UI, and use [headless hooks](/docs/frameworks/react-native/headless) when the app owns its React UI. Use each component's declared props; web CSS and token APIs do not style these mobile components.

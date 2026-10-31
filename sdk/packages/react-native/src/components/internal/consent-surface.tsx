@@ -20,7 +20,15 @@
  * and a full-screen sheet keep its heading below the clock from one source.
  */
 
-import { createContext, useContext, useMemo, useState } from 'react';
+import {
+	createContext,
+	useContext,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import {
 	Animated,
@@ -29,6 +37,7 @@ import {
 	Pressable,
 	ScrollView,
 	StyleSheet,
+	Text,
 	View,
 } from 'react-native';
 import type { ViewStyle } from 'react-native';
@@ -46,6 +55,7 @@ import {
 import type { ConsentStyles } from '../theme/use-consent-styles';
 import { useAnnounceOnOpen } from './use-announce-on-open';
 import { useModalA11y } from './use-modal-a11y';
+import type { ModalA11y } from './use-modal-a11y';
 import { usePromptMotion } from './use-prompt-motion';
 import { useReducedMotion } from './use-reduced-motion';
 
@@ -82,6 +92,10 @@ export type ConsentSurfacePresentation =
 
 /** The layout a surface hands to its own content. */
 export interface ConsentSurfaceFrame {
+	/** Accessible title used for initial iOS screen-reader focus. */
+	readonly headingRef: ModalA11y['headingRef'];
+	/** Whether this opening has not been superseded by a newer presentation. */
+	readonly isCurrentPresentation: () => boolean;
 	/** Height the body may reach before it scrolls. */
 	readonly maxBodyHeight: number;
 	/** Every restylable part, already merged with the host override. */
@@ -132,6 +146,29 @@ export const ConsentSurfaceHeader = ({
 	const { parts } = useConsentSurfaceFrame();
 
 	return <View style={parts.header}>{children}</View>;
+};
+
+/**
+ * The accessible title and initial focus target of a consent surface.
+ *
+ * @param props - Title content.
+ * @returns The heading text.
+ */
+export const ConsentSurfaceTitle = ({
+	children,
+}: ConsentSurfaceSlotProps): ReactNode => {
+	const { headingRef, parts } = useConsentSurfaceFrame();
+
+	return (
+		<Text
+			accessible
+			accessibilityRole="header"
+			ref={headingRef}
+			style={parts.title}
+		>
+			{children}
+		</Text>
+	);
 };
 
 /**
@@ -325,9 +362,11 @@ export interface ConsentSurfaceProps {
 	readonly children: ReactNode;
 	/** Label for the tap-outside control. */
 	readonly dismissLabel?: string;
+	/** Platform test identifier for the tap-outside control. */
+	readonly dismissTestID?: string;
 	/** Name of the surface, announced and used as its accessibility label. */
 	readonly label: string;
-	/** Called when the subject dismisses without deciding. */
+	/** Request closing after dismissal or a successful local save. */
 	readonly onRequestClose?: () => void;
 	/** Whether the surface should be showing. */
 	readonly open: boolean;
@@ -348,6 +387,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		branding,
 		children,
 		dismissLabel,
+		dismissTestID,
 		label,
 		onRequestClose,
 		open,
@@ -358,7 +398,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		styles;
 	const reducedMotion = useReducedMotion();
 	const drawer = presentation === 'drawer';
-	const { motionStyle, rendered } = usePromptMotion(open, {
+	const { contentKey, motionStyle, rendered } = usePromptMotion(open, {
 		// A page arrives from the trailing edge and every other surface lifts from
 		// below. One reveal and one reduced-motion collapse either way, which is the
 		// reason a drawer is a presentation and not a second sheet component.
@@ -368,12 +408,25 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 		exitDuration: theme.motion.exitDuration,
 		reducedMotion,
 	});
+	const currentPresentation = useRef(contentKey);
+	const mounted = useRef(true);
+	// Passive cleanup preserves completions while Suspense hides this surface.
+	// Activity also runs this cleanup, so completions received while hidden stop.
+	useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
+	useLayoutEffect(() => {
+		currentPresentation.current = contentKey;
+	}, [contentKey]);
 
 	useAnnounceOnOpen(open, label);
 
 	// A `Modal` already takes the Android back gesture, so asking for it here too
 	// would run the close handler twice.
-	const { containerProps, containerRef } = useModalA11y({
+	const { containerProps, containerRef, headingRef } = useModalA11y({
 		active: open,
 		hardwareBack: presentation === 'banner',
 		onRequestClose,
@@ -382,8 +435,16 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 	// Memoized so a surface rerender alone does not push every slot down a new
 	// value and rerender content that reads the frame.
 	const frame = useMemo(
-		() => ({ maxBodyHeight, parts, presentation, theme }),
-		[maxBodyHeight, parts, presentation, theme]
+		() => ({
+			headingRef,
+			isCurrentPresentation: () =>
+				mounted.current && currentPresentation.current === contentKey,
+			maxBodyHeight,
+			parts,
+			presentation,
+			theme,
+		}),
+		[headingRef, contentKey, maxBodyHeight, parts, presentation, theme]
 	);
 
 	if (!rendered) {
@@ -408,7 +469,12 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 			role={presentation === 'banner' ? 'region' : 'dialog'}
 			style={presentation === 'banner' ? parts.banner : parts.sheet}
 		>
-			<FrameContext.Provider value={frame}>{children}</FrameContext.Provider>
+			<FrameContext.Provider
+				key={contentKey}
+				value={frame}
+			>
+				{children}
+			</FrameContext.Provider>
 		</View>
 	);
 
@@ -437,6 +503,7 @@ export const ConsentSurface = (props: ConsentSurfaceProps) => {
 				{onRequestClose === undefined ? null : (
 					<Pressable
 						accessibilityLabel={scrimLabel}
+						testID={dismissTestID}
 						accessibilityRole="button"
 						onPress={onRequestClose}
 						style={StyleSheet.absoluteFill}

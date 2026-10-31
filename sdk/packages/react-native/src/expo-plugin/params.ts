@@ -5,6 +5,8 @@ import {
 } from './constants';
 import type { C15tConsentCategoryId } from './constants';
 import { C15tPluginError } from './errors';
+import { resolveAndroidMavenRepository } from './maven';
+import type { C15tAndroidMavenRepository } from './maven';
 
 /**
  * Transport the embedded core should run.
@@ -80,6 +82,10 @@ export const PROVIDER_TRANSPORT_MODE: Record<
  * one. See `native/CONTRACT.md`.
  */
 export interface C15tPluginProps {
+	/** Explicit binary repository. Omit only when the host configures Maven itself. There is no default repository. */
+	androidMavenRepository?: C15tAndroidMavenRepository;
+	/** Path to a build-exported native policy JSON, relative to the Expo project. */
+	policyResource?: string;
 	/**
 	 * c15t backend base URL, without a trailing slash.
 	 *
@@ -230,6 +236,9 @@ export interface C15tPluginProps {
 
 /** Validated parameters, with defaults applied. */
 export interface ResolvedC15tParams {
+	/** Validated build-only repository. Never copied into extra.c15t or native runtime configuration. */
+	readonly androidMavenRepository: C15tAndroidMavenRepository | null;
+	readonly policyResource: string | null;
 	/** Transport the embedded core should run. */
 	readonly mode: C15tTransportMode;
 	/** {@link mode} as the JavaScript provider spells it. */
@@ -714,6 +723,9 @@ export const resolveParams = function resolveParams(
 	}
 
 	return {
+		androidMavenRepository: resolveAndroidMavenRepository(
+			props.androidMavenRepository
+		),
 		appTrackingTransparency: att,
 		autoBootstrap: props.autoBootstrap ?? mode !== 'custom',
 		backendHost,
@@ -723,6 +735,10 @@ export const resolveParams = function resolveParams(
 		forceGPC: props.forceGPC ?? false,
 		initURL,
 		mode,
+		policyResource: normalizeOptionalText(
+			props.policyResource,
+			'policyResource'
+		),
 		privacyTrackingDomains,
 		providerMode: PROVIDER_TRANSPORT_MODE[mode],
 		skipNativeBuildCheck: props.skipNativeBuildCheck ?? false,

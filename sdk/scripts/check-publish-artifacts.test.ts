@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import {
 	appendFileSync,
+	cpSync,
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
@@ -247,6 +248,7 @@ describe('the files allowlist against a build tree', () => {
 			].join('\n'),
 			'C15tReactNative.podspec': 'Pod::Spec.new do |s|\nend\n',
 			'LICENSE.md': 'Apache-2.0',
+			NOTICE: 'Copyright Consent Management Inc',
 			'android/.gradle/9.0/checksums.lock': 'binary\n',
 			'android/c15t-react-native/build.gradle.kts': 'plugins {\n}\n',
 			'android/c15t-react-native/build/outputs/aar/a.aar': 'binary\n',
@@ -357,6 +359,28 @@ describe('the files allowlist against a build tree', () => {
 });
 
 describe('published license copies', () => {
+	it('accepts root NOTICE attribution and rejects a modified copy', () => {
+		const packageDir = mkdtempSync(join(tmpdir(), 'c15t-notice-'));
+		try {
+			const notice = readFileSync(join(ROOT, 'NOTICE'), 'utf8');
+			makeTree(packageDir, { NOTICE: notice });
+			expect(
+				scanPublishedLicenses(packageDir, new Set(['NOTICE']))
+			).toStrictEqual([]);
+			makeTree(packageDir, { NOTICE: `${notice}modified` });
+			expect(
+				scanPublishedLicenses(packageDir, new Set(['NOTICE']))
+			).toMatchObject([
+				{
+					path: 'NOTICE',
+					reason: 'NOTICE copy differs from the repository attribution',
+				},
+			]);
+		} finally {
+			rmSync(packageDir, { force: true, recursive: true });
+		}
+	});
+
 	const workDir = mkdtempSync(join(tmpdir(), 'c15t-license-'));
 
 	afterAll(() => {
@@ -493,6 +517,33 @@ describe('vendored native sources', () => {
 		expect(scanPackedVendoredSources(packageDir, new Set())).toStrictEqual([]);
 	});
 
+	it.each(['C15tCore', 'C15tApple', 'C15tConsentUI'])(
+		'rejects a missing %s directory before prepack can recreate it',
+		(module) => {
+			const packageDir = vendoredPackage(`missing-${module}`);
+			makeTree(packageDir, {
+				'package.json': JSON.stringify({ name: '@c15t/react-native' }),
+			});
+			for (const sourceModule of ['C15tApple', 'C15tConsentUI']) {
+				cpSync(
+					join(ROOT, 'native/core-swift/Sources', sourceModule),
+					join(packageDir, 'vendor', sourceModule),
+					{ recursive: true }
+				);
+			}
+			rmSync(join(packageDir, 'vendor', module), { recursive: true });
+
+			const issues = scanVendoredNativeSources(packageDir);
+			expect(issues.length).toBeGreaterThan(0);
+			expect(
+				issues.every(({ path }) => path.startsWith(`vendor/${module}/`))
+			).toBe(true);
+			expect(issues.map(({ path }) => path)).toContain(
+				`vendor/${module}/${module === 'C15tCore' ? 'ConsentCore.swift' : module === 'C15tApple' ? 'C15tApple.swift' : 'consent-presenter.swift'}`
+			);
+		}
+	);
+
 	it('accepts a copy that matches native/core-swift', () => {
 		expect(scanVendoredNativeSources(vendoredPackage('clean'))).toStrictEqual(
 			[]
@@ -569,7 +620,7 @@ describe('vendored native sources', () => {
 				path.startsWith('vendor/C15tCore/')
 			);
 
-			expect(packedVendored).toEqual(
+			expect(packedVendored.sort()).toEqual(
 				vendoredCorePlan()
 					.map((file) => `vendor/C15tCore/${file.relativePath}`)
 					.sort()

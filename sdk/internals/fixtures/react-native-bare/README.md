@@ -1,16 +1,24 @@
 # c15t React Native fixture (bare)
 
-A bare React Native 0.87 app on the New Architecture, wired to `@c15t/react-native`.
-It opens as an app: a privacy screen with one action, the banner and sheets the package
-draws over it, and a Diagnostics tab that starts closed and holds everything the kernel
-reports. The harness buttons that drive every action a subject can take live there, next
-to the snapshot, rather than on the first thing a viewer sees.
+See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
+current native modes, setup commands and the limits of IAB and hosted coverage.
 
-It is a test fixture for the SDK in this repository. The chrome reads its colours, steps,
-and control heights from the package's own theme so the host screens and the consent
-surfaces are visibly one design, but nothing here is a starter kit.
+A bare React Native 0.87.1 app on the New Architecture. Normal native mode runs
+`src/native-presenter-app.tsx`, which requests the stock SwiftUI or Compose
+presenter through the public package entry point. Privacy settings reopens the
+native preference center, and the host displays presenter outcomes.
 
-## What it exercises
+`C15T_FAKE_NATIVE=true` selects the older React shell and diagnostics with a
+JavaScript fake. Its IAB drawer stores a display selection in React state, not a
+native vendor commit. That shell is a UI fixture, not a production headless app.
+The E2E runner's IAB mode instead installs a test CMP configuration in native
+code before RN attaches. It does not prove typed RN IAB configuration.
+
+The sections below retain historical fixture notes and runner details. Use the
+mobile demo index for the current coverage boundaries; old run reports do not
+verify a new SDK revision.
+
+## Fixture code and historical exercises
 
 - `C15tProvider` and the protocol handshake against the Swift/Kotlin core in the
   binary, with the mismatch error surfaced on screen instead of a red box.
@@ -54,7 +62,15 @@ it and inlines every `process.env.C15T_*` read at build time, which is the only 
 value reaches a React Native bundle. A variable already in the real environment wins,
 so `C15T_FAKE_NATIVE=true bun run android` overrides the file.
 
-Point the native core at a backend by editing the two files the core actually reads:
+The app defaults to the public Inth demo, `https://example-inth.inth.app/`.
+It embeds a native policy resource for fresh offline startup. The checked-in demo
+resource expires on 5 November 2026. Re-export it before testing after that date.
+See [mobile policy resources](../../../native/docs/mobile-policy-resources.md)
+for the export command, expiry semantics and native resource configuration.
+No hosted save has been verified against the public demo.
+
+Use your Inth project URL for your app. Update the JS environment value and
+regenerate the resource when changing endpoints. Point the native core at it by editing the two files the core actually reads:
 
 - `ios/C15tBare/Info.plist` → `com.c15t.backend.url`, `com.c15t.backend.mode`
 - `android/app/src/main/AndroidManifest.xml` → `com.c15t.PORTAL_URL`
@@ -78,28 +94,9 @@ systems and outside those countries. Per-locale Markdown goes in
 for the identifier is usually linking data across apps, and that key currently says it
 does not. Leave it `false` only if you ask and then never track.
 
-For a local backend, `apps/playground` serves one at `/api/self-host`. It needs a Postgres
-`DATABASE_URL` and starts fine without one, which is the trap: the backend answers `404`,
-the core retries quietly, and the app sits on `policyPending: true` with
-`resolution: unconfigured no policy` and never renders a prompt. Nothing on screen says the
-backend is missing. Point it at the same Postgres CI uses:
-
-```sh
-DATABASE_URL='postgres://postgres:c15t@localhost:5432/c15t' \
-  bun run --cwd apps/playground dev:localhost      # http://localhost:3000
-```
-
-Then forward both ports the app dials. Metro and the backend are two separate connections,
-and `adb reverse` is per device and is dropped when the emulator restarts:
-
-```sh
-adb reverse tcp:8081 tcp:8081                    # Android emulator -> Metro
-adb reverse tcp:3000 tcp:3000                    # Android emulator -> backend
-```
-
-The default `http://localhost:3000/api/self-host` works on the iOS simulator and on
-Android after `adb reverse`. The manifest already allows cleartext on debug builds;
-iOS ships `NSAllowsLocalNetworking`.
+Advanced self-hosted deployments remain supported by the same transport API.
+The deterministic native E2E lane uses a task-owned loopback backend on port 3108
+and replaces only build artifacts. It does not change these hosted defaults.
 
 ## Drive it from a shell
 
@@ -128,10 +125,9 @@ SIMCTL_CHILD_C15T_DEMO_LINK='c15t-demo://accept' \
   xcrun simctl launch --terminate-running-process <udid> org.reactjs.native.example.C15tBare
 ```
 
-Both platforms want the backend answering before a verb can do anything visible. Check it
-with `curl -s localhost:3000/api/self-host/init`, which should return JSON. When
-`apps/playground` is mid-build that route answers 500 instead, and the app sits on
-`Loading stored consent` with no banner for a verb to act on.
+A valid stored or bundled policy lets these verbs operate offline. Without one,
+the app waits for hosted `/init` before it can show a consent prompt. The native
+E2E commands below start their own controlled backend and export their own resource.
 
 The grammar is `c15t-demo://<verb>[/<argument>][?name=value[&name=value]]`. Quote the URL
 on Android: `?` and `&` belong to the shell otherwise.
@@ -191,7 +187,7 @@ Evidence lands in `IOS_JOURNEY_OUT`, which defaults to `/tmp/ios-journey`. `IOS_
 `IOS_JOURNEY_DEVICE`, `IOS_JOURNEY_RUNTIME` and `IOS_JOURNEY_BACKEND` move the device and the
 backend it talks to.
 
-It refuses to start without a policy from `GET /api/self-host/init`. With no backend the core
+Without a usable stored or bundled policy, the core
 resolves nothing and no prompt is ever owed, which looks exactly like a banner that never ships.
 
 Four things it does that are easy to get wrong:
@@ -283,13 +279,13 @@ To get back to a first-install prompt:
 ```sh
 adb uninstall com.c15t.bare                                          # Android: enough
 xcrun simctl uninstall <udid> org.reactjs.native.example.C15tBare     # iOS: not enough
-xcrun simctl reset <udid>                                             # iOS: this part matters
+xcrun simctl erase <task-owned-udid>                                  # destroys this simulator's data
 ```
 
 Uninstalling is not enough on iOS. The core keeps the subject id and the stored envelope in
 the Keychain, and Keychain items outlive an app uninstall, so a reinstall comes back as a
 returning user holding the previous decision and no prompt is owed. Use a simulator that has
-never run the build, or `xcrun simctl reset`. Android keeps both in app-private storage, so
+never run the build. Erase only a disposable simulator you own. Android keeps both in app-private storage, so
 `adb uninstall` really does give a clean install.
 
 ## Commands
@@ -306,32 +302,29 @@ Run them from this directory, or from the root with `bun run --cwd internals/fix
 | `bun run check-types` | `tsc --noEmit` |
 | `bun run lint` / `bun run fmt` | Oxlint and Oxfmt, from the repo presets |
 
-Both native cores are built from this repository rather than resolved from a package
-registry, and both need one line of wiring an app outside the monorepo would not carry.
-Neither is c15t behaviour; both are marked in the file.
+The native build setup is maintained in each platform directory.
 
-- iOS: the first run needs `bun run pod-install`. The Podfile adds `pod 'C15tCore',
-  :path => '../../../../native/core-swift'` and sets the deployment target to 16.4, which is
-  the core's floor and above RN's. `@c15t/react-native`'s own pod is autolinked. Build
-  against the published pod with `C15T_LOCAL_PODS=false`.
-- Android: `android/settings.gradle` includes `../../../../native/core-android` and
-  substitutes `com.c15t:c15t-core` and `com.c15t:c15t-android` into that build, because
-  the autolinked library depends on those coordinates and a host app's settings script
-  is what resolves them. Pass `-Pc15t.core.fromSource=false` to resolve published
-  artifacts instead. JDK 17 and an Android SDK are required; set `ANDROID_HOME` or write
-  `sdk.dir` into `android/local.properties`.
+- iOS: the first run needs `bun run pod-install`. The autolinked `C15tReactNative`
+  pod compiles its generated Swift core and Apple services. Do not add a separate
+  `C15tCore` pod. The deployment target is 16.4.
+- Android: the host resolves versioned `com.c15t` artifacts from its configured
+  exclusive Maven repository. `settings.gradle` does not include the native
+  producer or substitute its source. Set `C15T_MAVEN_URL` to an available private
+  repository or explicit local staging URL; HTTPS resolution also needs the
+  build environment's credentials. JDK 17 and the SDK levels in `android/build.gradle`
+  are required. Set `ANDROID_HOME` or `sdk.dir` in `android/local.properties`.
 
 `xcode-select -p` points at `/Applications/Xcode.app/Contents/Developer` here, so no
 `DEVELOPER_DIR` override is needed for `pod install` or `xcodebuild`. Where it points at
 Command Line Tools instead, CocoaPods reads an empty `xcodebuild -version`, and every Xcode
 invocation needs `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
-## Native build status
+## Historical native build status
 
 Verified here: `bun run check-types` is clean, `bun run bundle` writes a release bundle
 for both platforms, `pod install` completes, and the Android app gets through Gradle
 configuration. Both platforms have been built, installed and launched;
-[Device run](#device-run) says what each one proved and what it still cannot.
+[Historical device run](#historical-device-run) says what each one proved and what it still cannot.
 
 iOS resolves. `pod install` from `ios/` prints:
 
@@ -379,7 +372,7 @@ Two more notes for anyone building natively from a checkout:
   isolated install layout does not link a package that only `react-native` depends on into
   this directory, so the `includeBuild` would not resolve.
 
-## Device run
+## Historical device run
 
 iPhone 17 Pro on iOS 26.4, built by `xcodebuild` against `C15tBare.xcworkspace`, installed
 with `simctl`, talking to `apps/playground` serving `@c15t/backend` at
@@ -520,6 +513,109 @@ Reinstall:
 
 Handset detail that changes results: on Android, force-stopping and swiping away are
 different. Use force-stop for a real process death.
+
+## Native app E2E
+
+Run from an installed checkout with Xcode and CocoaPods for iOS, or JDK 17,
+Android SDK 37, NDK 27.1.12297006 and an API 36 system image for Android:
+
+```sh
+bun run --cwd internals/fixtures/react-native-bare e2e:ios
+bun run --cwd internals/fixtures/react-native-bare e2e:android
+```
+
+To run the retained bundled-policy expiry scenario on either platform:
+
+```sh
+C15T_APP_E2E_SCENARIO=expiry C15T_APP_E2E_PORT=39883 \
+  bun run --cwd internals/fixtures/react-native-bare e2e:ios
+C15T_APP_E2E_SCENARIO=expiry C15T_APP_E2E_PORT=39884 \
+  bun run --cwd internals/fixtures/react-native-bare e2e:android
+```
+
+This scenario uses a fixed fixture clock and a separate authored policy resource.
+It accepts all four optional categories offline, restarts with only Necessary and
+Measurement declared, advances to the exact bundle expiry, then opens the shared
+native preferences. Accept and Save must be unavailable while Reject remains
+usable. Reject must durably deny all four optional categories, including those
+removed from the declaration. The test kills and relaunches the process, replays
+the exact denial body, refreshes the same policy fingerprint, then widens the
+declaration to prove earlier grants cannot return.
+
+Android also has an adapter regression scenario:
+
+```sh
+C15T_APP_E2E_SCENARIO=adapter C15T_APP_E2E_PORT=39884 \
+  bun run --cwd internals/fixtures/react-native-bare e2e:android
+```
+
+It opens a definitive no-match fallback through the native command and checks
+one compact `committed` event with the returned session ID. It then blocks Hermes
+for 30 seconds and forces a real host Activity recreation through a fixture-only
+intent. The native notice must reattach and acknowledge while JS is blocked,
+without a second presentation command. After JS resumes, exactly one correlated
+`acknowledged` event must arrive and no additional consent receipt may be sent.
+The IAB blocked-JS journey also correlates command and final event IDs.
+
+The clock and declaration controls belong to the loopback E2E artifact. They use
+the native installers' existing dependency injection. The normal app keeps the
+system clock and hosted configuration. This does not test live hosted receipts.
+The runner also checks captured raw delivery bodies, exact confirmation times
+and the final fingerprint in `expiry-verification.json`. A failed receipt check
+fails the E2E command. The E2E outcome observer subscribes for the lifetime of
+the JS runtime so Activity recreation cannot interrupt its subscription.
+
+These commands build Release apps with embedded JavaScript. XCUITest and
+AndroidJUnitRunner with UIAutomator tap the stock consent controls. Each run
+creates and deletes its own simulator or emulator. No shared device is erased.
+Android's test APK runs in a separate process so it can force-stop the real app.
+
+The test backend binds loopback port 39873 by default. Set
+`C15T_APP_E2E_PORT` to an unused port for concurrent runs. It exports an authored conservative
+manifest and serves the existing `native/protocol/evaluation-eu-fresh-install.json`
+response after reconnection. Only the E2E build artifact uses that endpoint and
+resource. The checked-in reference defaults remain the public Inth demo.
+Self-hosted transport remains an advanced option.
+
+`C15T_APP_E2E=1` embeds a fixture-only observer that publishes the real
+TurboModule snapshot to the test backend. The test fails unless the active core
+is native. It checks effective permissions, explicit category receipts, their
+confirmation times and the actual `/subjects` bodies. The fake core cannot
+satisfy these assertions. Demo links only reset scenarios. Reject, Accept,
+Customize, category switches, Save and reopening preferences use visible controls.
+
+The journey starts with a fresh installation and unavailable consent endpoints.
+It verifies unknown country, no policy token, the bundled first prompt and denied
+optional gates. Reject and Accept commit offline, then deliver their exact original
+receipts on reconnect. A measurement-only choice and a cancelled draft survive
+offline process death. Withdrawal denies immediately and survives another restart.
+The final reconnect delivers that exact withdrawal, with no superseded grant or
+duplicate accepted receipt. A second reconnect leaves exactly three deliveries.
+
+Evidence defaults to `.artifacts/app-e2e/<platform>-<run>/`. It includes named
+PNGs, an MP4 recording, native snapshots, captured delivery bodies, device logs,
+build/test logs and a command XML report. iOS also retains the `.xcresult`, its
+test summary and exported attachments. Android retains JUnit XML and UI hierarchy
+XML. Failure cleanup captures the final frame and preserves available evidence.
+Android records consecutive video segments and joins them so longer journeys
+include the ending beyond screenrecord's time limit. It also uploads each capture to the test backend before APK teardown and
+streams device logs while the test runs.
+Successful runs require the scenario's named frames and a non-empty recording.
+`command.xml` records runner failures, including compilation failures; it is not
+a substitute for the native test report.
+
+Set `C15T_APP_E2E_OUT` to a fresh absolute evidence directory. Optional device
+settings are `C15T_IOS_RUNTIME`, `C15T_IOS_DEVICE`, `C15T_ANDROID_IMAGE` and
+`C15T_ANDROID_ARCH`. Android defaults to an installed API 36 Google APIs arm64
+image. CI uses x86_64. A run fails if its selected backend port is occupied. Run platforms
+sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
+dispatchable, and has no publication dependency.
+
+The main journey covers shared SwiftUI and Compose presenters, IAB and Additional
+Consent controls, and a native commit while Hermes is blocked. The separate
+expiry scenario covers the retained bundled policy boundary and narrowed
+declarations. Storage refusal, Expo installation, standalone native apps,
+physical devices and minimum supported OS versions need separate acceptance.
 
 ## Monorepo notes
 

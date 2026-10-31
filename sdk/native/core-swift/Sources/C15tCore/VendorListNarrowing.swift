@@ -64,7 +64,7 @@ extension GlobalVendorList {
         // Field by field because every field on this type is a `let`. An entry here is how
         // a field added to ``GlobalVendorList`` reaches a narrowed list; leaving one out
         // quietly hands the dialog a default instead of what the backend served.
-        return GlobalVendorList(
+        var narrowed = GlobalVendorList(
             gvlSpecificationVersion: gvlSpecificationVersion,
             vendorListVersion: vendorListVersion,
             tcfPolicyVersion: tcfPolicyVersion,
@@ -75,7 +75,16 @@ extension GlobalVendorList {
             specialFeatures: specialFeatures,
             stacks: stacks,
             dataCategories: dataCategories,
+            standardTexts: standardTexts,
             vendors: keptVendors
         )
+        if var additional = additionalFields?.objectValue {
+            if let vendorFields = additional["vendors"]?.objectValue {
+                let kept = vendorFields.filter { Int($0.key).map(allowed.contains) ?? false }
+                additional["vendors"] = kept.isEmpty ? nil : .object(kept)
+            }
+            narrowed.additionalFields = additional.isEmpty ? nil : .object(additional)
+        }
+        return narrowed
     }
 }

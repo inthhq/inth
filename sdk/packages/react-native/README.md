@@ -1,16 +1,6 @@
-<p align="center">
-  <a href="https://c15t.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40c15t%2Freact-native" target="_blank" rel="noopener noreferrer">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="../../docs/assets/c15t-banner-readme-dark.png">
-      <img src="../../docs/assets/c15t-banner-readme-light.png" alt="c15t: the open standard for cookie banners">
-    </picture>
-  </a>
-</p>
-
-# @c15t/react-native: React Native Consent Management
+# @c15t/react-native: native consent for mobile
 
 <p>
-<a href="https://www.npmjs.com/package/@c15t/react-native"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/npm/%40c15t%2Freact-native.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/npm/%40c15t%2Freact-native.svg?variant=outline&mode=light" alt="Latest NPM Version"></picture></a>
 <a href="https://github.com/c15t/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&mode=light" alt="Stars"></picture></a>
 <a href="https://github.com/c15t/c15t/blob/main/LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&mode=light" alt="License"></picture></a>
 <a href="https://c15t.link/discord"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=light" alt="Discord"></picture></a>
@@ -18,104 +8,76 @@
 <a href="https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40c15t%2Freact-native"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=dark"><img src="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=light" alt="Made by Inth"></picture></a>
 </p>
 
-Consent management for iOS and Android apps. The consent engine runs natively, so consent state survives cold starts, works offline, and is readable from native ad SDKs, while the React Native layer renders banners and preference centers from the same snapshot.
+Private prerelease for React Native, Expo development builds and native iOS/Android integration. One native engine owns policy, durable choices and SDK gates before JavaScript starts. SwiftUI and Compose provide the shared stock consent screens.
 
 c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
 
 ## Key Features
 
-- Native consent kernel on iOS (Swift) and Android (Kotlin), with no second kernel in JavaScript
-- Same policy resolution, save payloads, and storage envelope as the c15t web SDK, pinned by shared protocol fixtures
-- New Architecture TurboModule with Codegen types, no legacy bridge
-- Synchronous consent reads for ad SDK gates, with no network or disk access on the main thread
-- Offline consent queue: every action is persisted before the request and replayed on launch, foreground, or reconnect
-- Global Privacy Control honored as a denial, never invented as a grant
-- Geographic, region, and language overrides for policy preview and QA
-- A wipe that returns the device to the state a first launch boots with, with the subject id kept so the audit history stays intact
+- Native Swift and Kotlin consent authority, durable records and synchronous SDK gates before JavaScript
+- Shared SwiftUI and Compose presenters with native drafts, IAB disclosures, search and standing preferences
+- Durable local commit outcomes and queued delivery, including offline withdrawal
+- Build-exported endpoint-bound policies for first-install offline prompts, with explicit authority expiry
+- Headless React Native hooks and commands, separate ATT authorization and app-owned native installation
 
 ## Prerequisites
 
-- React Native 0.81 or newer with the New Architecture enabled
-- React 19.1 or newer to render the built-in components
+- React Native 0.86.x or 0.87.x with the New Architecture enabled
+- React 19.2.3 or later, below 19.3.0, to render the built-in components
 - iOS 16.4 or newer, Android `minSdk` 24 and `compileSdk` 36
 - A custom native build: Expo Go cannot load this package's native module, so use a development build
-- A c15t project endpoint, or a self-hosted `@c15t/backend` URL
+- An Inth hosted project URL, such as https://your-project.inth.app. Advanced self-hosted deployments remain supported.
 
 ## Installation
 
-```bash
-pnpm add @c15t/react-native
-```
+This package is still `private: true`. Obtain the matching package tarball and native artifacts from the maintainer. Public npm, Maven and remote SwiftPM installation, cloud builds and device acceptance are not established by this checkout.
 
 ## Documentation
 
 See the [documentation](https://c15t.com/docs/frameworks/react-native/quickstart) for guides, API reference, and examples.
 
-## How it works
+## Native setup before JavaScript
 
-The native cores own consent state. `bootstrap(config)` runs once from a launch hook, hydrates the stored snapshot from the Keychain or encrypted storage, and answers `snapshot()` synchronously from memory, so a cold start with no connectivity still knows what the user decided.
+Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `C15tProvider` attaches to that engine and checks the protocol. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.
 
-The React Native layer never recomputes consent. It reads the snapshot, renders the surface the policy asks for, and forwards the user's decision as a commit intent. The native core records the receipts, updates the effective permissions, and queues the backend write.
+## Local success and delivery
 
-## Gating a feature
-
-Consent checks are synchronous reads of the effective permission map, which is what makes them safe to call from an ad SDK initializer.
-
-```ts
-if (isAllowed('measurement')) {
-  enableAnalytics();
-}
-```
-
-While the policy is still resolving, or before the stored snapshot has hydrated, every optional category reads `false`. Nothing has to opt in to that behavior.
-
-## Gating a tracking feature
-
-Tracking needs two yeses. `useIsTrackingAllowed(category)` is true only when c15t consent is granted for that category and the platform puts no bar in front of it, which on iOS means App Tracking Transparency is authorized. A platform authorization is not consent: nothing an operating system reports turns a `denied` or `pending` category on. Read the platform half on its own with `useTrackingAuthorization()`, and ask for it with `requestTrackingAuthorization()` on the actions object, which is a prompt you own the timing of rather than something the SDK decides to show.
-
-## Running the tests
-
-Three commands, run from this package directory:
-
-```bash
-bun run test src/hooks   # one subset, coverage off: nothing but real failures
-bun run test:watch       # rerun on change
-bun run test:coverage    # whole package, coverage floors enforced
-```
-
-`test` runs whatever you name with coverage switched off, from a single file to the whole package. The floors are package-wide, so a subset can never reach them, and a threshold report over four files describes the filter rather than the code.
-
-CI runs `test` with no filter. That collects coverage and fails below the floors in `vitest.config.ts`, so the ratchet holds there. `test:coverage` is the same gate run on purpose: it always collects coverage, and it prints one line per file below the floor instead of a row for every file. Raise the floors as coverage improves; never lower them.
-
-Type checks and lint stay separate: `bun turbo run test check-types lint --filter=@c15t/react-native`.
+Check `CommitResult.ok` after `save`, `acceptAll` or `rejectAll`. A resolved promise can refuse a commit. `ok: true, queued: true` means durable local success; it does not prove backend delivery. Keep refused drafts and retry controls. Stock native presenter outcomes report durable commits separately from presentation and dismissal.
 
 ## Guides
 
-Every guide lives in the [React Native docs](https://c15t.com/docs/frameworks/react-native/quickstart):
+Use the version-matched Markdown under `docs/frameworks/react-native/` or the [public docs source routes](https://c15t.com/docs/frameworks/react-native/quickstart):
 
-- [Quickstart](https://c15t.com/docs/frameworks/react-native/quickstart): install, configure the native bootstrap keys, and render the first banner on bare React Native or Expo
-- [Usage](https://c15t.com/docs/frameworks/react-native/usage): the provider, the hooks, the built-in banner, dialog and preference center, the headless path, and wiping consent back to a first launch
-- [Configuration](https://c15t.com/docs/frameworks/react-native/configuration): iOS and Android bootstrap keys, transport modes, overrides, and the privacy signal shape
-- [Native behaviour](https://c15t.com/docs/frameworks/react-native/native-behaviour): startup order, hydration, fail-closed storage, and gating a native analytics SDK
-- [Platform support](https://c15t.com/docs/frameworks/react-native/platform-support): version floors, the protocol handshake, and what is not supported
-- [Troubleshooting](https://c15t.com/docs/frameworks/react-native/troubleshooting): not-bootstrapped reads, protocol mismatches, retired keys, and native build problems
+- [Quickstart and availability](https://c15t.com/docs/frameworks/react-native/quickstart)
+- [Expo and EAS](https://c15t.com/docs/frameworks/react-native/expo)
+- [Bare React Native](https://c15t.com/docs/frameworks/react-native/bare)
+- [Commands and outcomes](https://c15t.com/docs/frameworks/react-native/usage)
+- [Native startup and gates](https://c15t.com/docs/frameworks/react-native/native-behaviour)
+- [Offline policies and withdrawal](https://c15t.com/docs/frameworks/react-native/offline)
+- [IAB, Additional Consent, ATT and ads](https://c15t.com/docs/frameworks/react-native/iab)
+- [Identity and reset](https://c15t.com/docs/frameworks/react-native/identity)
+- [Native customization](https://c15t.com/docs/frameworks/react-native/customize) and [headless hooks](https://c15t.com/docs/frameworks/react-native/headless)
+- [Standalone Apple](https://c15t.com/docs/frameworks/react-native/apple) and [Android](https://c15t.com/docs/frameworks/react-native/android)
+- [Configuration](https://c15t.com/docs/frameworks/react-native/configuration), [compatibility and OTA](https://c15t.com/docs/frameworks/react-native/platform-support)
+- [Verification](https://c15t.com/docs/frameworks/react-native/verify) and [troubleshooting](https://c15t.com/docs/frameworks/react-native/troubleshooting)
 
-## Expo
+## IAB and ads
 
-Add one plugin entry to `app.json` and the native bootstrap keys, the Android launch hook and permission, and the iOS privacy declarations are all written for you:
+Native IAB and Additional Consent APIs do not establish IAB registration, Google certification or AdMob interoperability. Vendor scope alone is not approved CMP configuration. ATT is a separate platform permission and never grants consent. Keep an ad integration disabled until its actual SDK, policy and certification requirements are verified.
 
-```json
-{
-  "plugins": [
-    [
-      "@c15t/react-native/expo-plugin",
-      { "backendURL": "https://consent.example.com" }
-    ]
-  ]
-}
-```
+## Self-hosted and headless integration
 
-Expo Go cannot run this package: it ships a custom native module, and Expo Go contains only the modules the Expo team compiled. Build a development build with `npx expo prebuild` and `npx expo run:ios` or `npx expo run:android`. Set `runtimeVersion` whenever `updates.url` is set, because an over-the-air bundle cannot outrun the embedded native protocol.
+Hosted Inth is the recommended starting point. The existing self-hosted transports, native installation APIs, React components and headless hooks remain available. Browser script-loader and CSS APIs are not native SDK gates.
+
+## First release scope
+
+The first mobile release retains stock native presenters, RN hooks and category commands, app-owned native installation, and standalone Swift/Kotlin core APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB CMP/publisher bootstrap are explicitly deferred. Hooks still link the stock native presenter; `vendors` only filters disclosures. Use app-owned native IAB configuration for that path. See the [first release scope](https://c15t.com/docs/frameworks/react-native/quickstart#first-release-scope) for the required consumer acceptance before these deferred features ship.
+
+## Docs for AI Agents
+
+This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@c15t/react-native/AGENTS.md`. It indexes every guide in `node_modules/@c15t/react-native/docs/`.
+
+On the web, every page of the [c15t docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
 
 ## Support
 

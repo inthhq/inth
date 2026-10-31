@@ -287,7 +287,9 @@ class ProtocolFixtureTest {
 		val run = makeRun(entry, fixtureInput)
 		run.kernel.bootstrap()
 		val expected = fixture["expected"]?.jsonObject?.get("snapshot") ?: fail("${id(entry)}: no expected.snapshot")
-		record(id(entry), "expected.snapshot", expected, SnapshotWire.toJsonElement(run.kernel.snapshot()))
+		// Native IAB requires authority even outside a permissive category scope.
+		val nativeExpected = json.parseToJsonElement(File(directory, "iab/missing-authority-expectations.json").readText()).jsonObject["snapshots"]!!.jsonObject[id(entry)]
+		record(id(entry), "expected.snapshot", nativeExpected ?: expected, SnapshotWire.toJsonElement(run.kernel.snapshot()))
 	}
 
 	private fun runSaveBody(directory: File, entry: JsonObject) {

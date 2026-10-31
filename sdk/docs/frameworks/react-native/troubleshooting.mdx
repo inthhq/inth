@@ -1,0 +1,28 @@
+---
+title: Troubleshooting
+description: Diagnose missing mobile native modules, protocol mismatches, policy-resource errors, refused saves, private Maven access and stale IAB authority.
+group: frameworks
+---
+
+Keep optional SDKs gated while diagnosing a native consent failure. Report the native error and the actual package, protocol and platform versions; do not turn unavailable state into consent.
+
+| Symptom | Check and action |
+| --- | --- |
+| `NativeC15tUnavailableError` | Expo Go and web cannot load the module. Install the private native package, prebuild/link and rebuild a custom binary. Restarting Metro cannot add native code. |
+| `C15tProtocolMismatchError` | The JS/native handshake is incompatible. Match package and binary capabilities and rebuild; review the Expo runtime version before OTA. |
+| A missing tracking, reset or presenter method | The binary predates an additive API even if protocol 1 matches. Build a matching binary. |
+| `not-bootstrapped` or optional permissions remain pending | Inspect native launch configuration, constructor/initializer wiring, merged manifest and protected-storage availability. A provider does not bootstrap native services. |
+| Android cannot resolve `com.c15t` | Configure the maintainer-provided versioned Maven repository and build-time access. There is no plugin default repository and local staging is not a cloud upload. |
+| CocoaPods cannot find native sources | Inspect the installed package files and autolinking. Do not add a second core pod or point at a monorepo-only relative path. |
+| Expo config refuses `updates.url` | Add an appropriate `runtimeVersion` or disable updates. Never remove the guard to send JS to incompatible binaries. |
+| First offline launch has no prompt | Check that the policy resource was exported, embedded, endpoint-bound and current. Offline transport alone cannot fetch a missing policy. |
+| `bundled-policy-expired` | Connect to refresh authority and rebuild a current resource for the next binary. Do not extend disclosure source dates. Keep withdrawal available. |
+| `queue-write-failed` or rejected save | Preserve the draft. Fix protected storage, then retry. Awaiting the promise is not proof of `ok: true`. |
+| `concurrent-change` or stale IAB draft | Reload current native disclosures and revision, then ask the person to review again. Do not silently save a draft under a different list. |
+| Missing/stale GVL or provider list | Refresh authoritative disclosures. A bundled timestamp is not current merely because it was copied into a new build. |
+| IAB refusal despite categories being present | Supply approved native CMP/publisher configuration and valid disclosures. Vendor scope and category grants are insufficient. |
+| ATT request fails | Check the usage description and native capability. Android does not implement an ATT prompt. Platform authorization stays separate from consent. |
+| Vendor requests happen before consent | Disable the vendor's own initializer/plugin and gate native startup. A React component cannot undo earlier native requests. |
+| React theme changes do not affect the native screen | Configure native `ConsentTheme` or its supported native metadata. Presenter commands do not take React theme props. |
+
+Use the [verification checklist](/docs/frameworks/react-native/verify) after recovery. Capture any unverified registry, cloud-build, device or certification step as an external handoff; do not report it as passed because local source tests succeeded.

@@ -324,10 +324,11 @@ final class ConsentCoreTests: XCTestCase {
         // so the entry cannot be delivered and removed out from under the read.
         let sawQueuedOnDisk = SendableBox(false)
         let observedStore: any ConsentStore = store
-        let queueKey = StorageKey.pendingSaves
         http.holdsSaves = true
-        http.onSave = { _ in
-            sawQueuedOnDisk.value = observedStore.data(for: queueKey) != nil
+        http.onSave = { body in
+            let envelope = observedStore.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)
+            sawQueuedOnDisk.value = envelope?.pendingSaves?.contains { $0.body == body } == true
+                && envelope?.snapshot.explicitChoice != nil
         }
 
         let result = core.save(.all)
@@ -484,9 +485,9 @@ final class ConsentCoreTests: XCTestCase {
         http.setSavesFail(true)
 
         let base = clock.now
-        for index in 0..<25 {
+        for _ in 0..<25 {
             clock.advance(by: 1)
-            core.save(.custom([.measurement: index.isMultiple(of: 2)]))
+            core.save(.custom([.measurement: true]))
         }
         await core.waitUntilIdle()
 
@@ -547,7 +548,7 @@ final class ConsentCoreTests: XCTestCase {
             + http.recordedIdentityRequests
         XCTAssertGreaterThanOrEqual(requests.count, 3)
         for request in requests {
-            XCTAssertEqual(request.headers[C15tSDK.versionHeader], "rn->\(C15tSDK.version)")
+            XCTAssertEqual(request.headers[C15tSDK.versionHeader], "swift->\(C15tSDK.version)")
             XCTAssertEqual(
                 request.headers[C15tSDK.policyContractHeader],
                 String(c15tPolicyContractVersion)
@@ -653,17 +654,12 @@ final class ConsentCoreTests: XCTestCase {
             XCTAssertEqual(core.decision(for: category.category), .denied)
         }
 
-        core.save(.custom([.marketing: true]))
+        let result = core.save(.custom([.marketing: true]))
         await core.waitUntilIdle()
-        XCTAssertTrue(core.isAllowed(.marketing), "the subject's own grant is what opens it")
-        XCTAssertFalse(core.isAllowed(.measurement), "and only what they granted")
-        XCTAssertEqual(core.snapshot().model, .optIn)
-        XCTAssertEqual(core.decision(for: .marketing), .granted)
-
-        // The write carries the reported model, not the rule's name, which is what the
-        // kernel puts in `model` for the same situation.
-        let body = http.recordedSaveRequests.last?.body ?? Data()
-        XCTAssertEqual(C15tJSON.parse(body)?["model"]?.stringValue, "opt-in")
+        XCTAssertEqual(result.status, .rejected)
+        XCTAssertEqual(result.error?.code, "iab-unavailable")
+        XCTAssertFalse(core.isAllowed(.marketing))
+        XCTAssertTrue(http.recordedSaveRequests.isEmpty)
 
         // A relaunch reads the same rule out of the stored envelope and reaches the same
         // answer, so the projection is not a thing only a fresh init gets right. The
@@ -684,7 +680,7 @@ final class ConsentCoreTests: XCTestCase {
         ))
         XCTAssertEqual(relaunched.snapshot().model, .optIn)
         XCTAssertEqual(relaunched.snapshot().resolution.policyId, "de-tcf")
-        XCTAssertTrue(relaunched.isAllowed(.marketing))
+        XCTAssertFalse(relaunched.isAllowed(.marketing))
     }
 
     /// Two rules an IAB policy cannot be, both straight out of `@c15t/schema`:

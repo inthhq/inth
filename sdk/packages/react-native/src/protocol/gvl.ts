@@ -243,6 +243,13 @@ export interface GlobalVendorList {
 	specialFeatures: Record<string, GVLSpecialFeature>;
 	specialPurposes: Record<string, GVLSpecialPurpose>;
 	stacks: Record<string, GVLStack>;
+	/** IAB disclosure copy carried by both native cores. */
+	standardTexts?: {
+		features: string;
+		purposes?: string;
+		specialFeatures?: string;
+		specialPurposes?: string;
+	};
 	/** The policy revision this list was published under, into `TcfPolicyVersion`. */
 	tcfPolicyVersion: number;
 	/** Which vendor list this is, into the TC String's `VendorListVersion`. */

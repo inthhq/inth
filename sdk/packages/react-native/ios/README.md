@@ -2,7 +2,8 @@
 
 The iOS half of `@c15t/react-native`: a Codegen TurboModule in Swift over the pure
 Swift consent core at [`native/core-swift`](../../native/core-swift). New Architecture
-only. No UI here; every surface lives in JavaScript.
+only. Shared native SwiftUI presentation remains future work; see the maintained
+private support contract in `docs/internal/mobile-support.md`.
 
 ## Layout
 
@@ -89,7 +90,7 @@ there.
 | --- | --- | --- |
 | Launch | `bootstrap` | hydrate, then replay the pending queue |
 | Foreground | `UIApplication.didBecomeActiveNotification` | replay, then `refresh()` |
-| Reachability | a network this process did not already have | replay |
+| Reachability | a network this process did not already have | replay, then `refresh()` |
 
 Both callbacks hand their work to the core's own scheduler rather than running it inline,
 so coming back to the app costs no frame on the main thread.
@@ -102,7 +103,7 @@ drop. Android's reachability leg can be refused by a missing host permission;
 `NWPathMonitor` needs no entitlement or manifest key, so iOS has no declined branch.
 
 Neither leg polls a clock. `C15tReactNativeBootstrap.shutdown()` takes both back down for
-a host that would rather drive `flushPending()` and `refresh()` on its own schedule; the
+a host that would rather drive `replayThenRefresh()` on its own schedule; the
 core keeps its snapshot, queue, and event pump, and `start()` or `install(_:)` puts the
 legs back.
 
@@ -146,19 +147,20 @@ so an installed app had no kernel to build.
 platform :ios, '16.4' # above RN 0.87's own floor
 ```
 
-Inside this repository an app resolves the same sources through a path, and the example
-Podfiles still carry `pod 'C15tCore', :path => '../native/core-swift'`. That line is no
-longer needed: the binding compiles its own copy, and the extra pod now only builds a second
-copy of the kernel that the app links without asking for it.
+Host Swift code in a CocoaPods RN app imports `C15tReactNative` and installs through
+the `C15tApple` types compiled into that module. Do not add a separate `C15tCore`
+pod or SwiftPM product: it creates another installation singleton and Keychain
+owner. See `docs/internal/apple-installation.md` and its CocoaPods host example.
 
-SPM (`RCTUseSPM`, Expo's SPM mode) keeps the kernel as its own module. `Package.swift` is
-unchanged by the vendoring, so a later Swift Package Manager release of the core is
-unaffected; only the CocoaPods path compiles the copy, into the binding's module. The bridge
-serves both through `#if canImport(C15tCore)` around the import.
+The workspace SPM manifest keeps core and Apple services as separate products from
+the same local source package. Only the CocoaPods path compiles the generated
+copies into the binding's module. The npm tarball does not ship this workspace
+SPM manifest. Remote version/URL resolution is explicitly refused until a native
+package containing both products is published.
 
 ```sh
-# SPM: escape hatches for a published core instead of the repo path
-C15T_CORE_VERSION=3.0.0 C15T_CORE_URL=https://github.com/c15t/c15t.git
+# SPM: private source checkout when the default repo-relative path differs
+C15T_CORE_PATH=/absolute/path/to/native/core-swift swift build --package-path packages/react-native
 # Also build the React-linked target (needs a host app vending React's headers)
 C15T_SPM_INCLUDE_RN=1 swift build --package-path packages/react-native
 ```

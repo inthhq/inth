@@ -1,3 +1,6 @@
+#if canImport(C15tApple)
+import C15tApple
+#endif
 #if canImport(C15tCore)
 // SwiftPM builds the consent kernel as its own module. CocoaPods compiles the vendored
 // copy into this module instead, where the import would fail, so it is conditional
@@ -139,7 +142,7 @@ public struct C15tModuleHandler {
     ///
     /// A reference box because this handler is a struct, and the state has to outlive the
     /// copy that a second caller sees.
-    public let trackingWaiters = C15tTrackingWaiters()
+    public let trackingController: C15tTrackingController
 
     public init(
         startCore: @escaping @Sendable () -> Bool = { C15tReactNativeBootstrap.start() },
@@ -157,7 +160,8 @@ public struct C15tModuleHandler {
                 additionalInformationSelected: additionalInformationSelected,
                 completion: completion
             )
-        }
+        },
+        trackingController: C15tTrackingController? = nil
     ) {
         self.startCore = startCore
         self.trackingPlatformStatus = trackingPlatformStatus
@@ -165,6 +169,13 @@ public struct C15tModuleHandler {
         self.trackingPrompt = trackingPrompt
         self.trackingExpandedInterfaceAvailable = trackingExpandedInterfaceAvailable
         self.trackingExpandedPrompt = trackingExpandedPrompt
+        self.trackingController = trackingController ?? C15tTrackingController(
+            trackingPlatformStatus: trackingPlatformStatus,
+            trackingPromptStringPresent: trackingPromptStringPresent,
+            trackingPrompt: trackingPrompt,
+            trackingExpandedInterfaceAvailable: trackingExpandedInterfaceAvailable,
+            trackingExpandedPrompt: trackingExpandedPrompt
+        )
     }
 
     /// The `getBootstrap()` payload.
@@ -214,75 +225,9 @@ public struct C15tModuleHandler {
     public func requestTrackingAuthorization(
         _ completion: @escaping (Result<C15tTrackingRequestResult, C15tBridgeError>) -> Void
     ) {
-        switch C15tTrackingGate.request(
-            platform: trackingPlatformStatus(),
-            promptStringPresent: trackingPromptStringPresent(),
-            expandedInterfaceAvailable: trackingExpandedInterfaceAvailable()
-        ) {
-        case let .answered(status):
-            // Nothing was asked, so nothing is reported about a call: `restricted` is a
-            // device policy that has already answered, and an arm this request never
-            // requested a sheet for should not carry one.
-            completion(
-                .success(
-                    C15tTrackingRequestResult(
-                        status: status,
-                        stage: .final,
-                        presentation: nil
-                    )
-                )
-            )
-        case let .refused(refusal):
-            completion(.failure(refusal == .noPromptString ? .trackingNotConfigured : .trackingUnsupported))
-        case let .prompt(presentation):
-            guard trackingWaiters.acquire(completion) else { return }
-            askApple(presentation: presentation)
+        trackingController.request { result in
+            completion(result.mapError { $0 == .notConfigured ? .trackingNotConfigured : .trackingUnsupported })
         }
-    }
-
-    /// Make the Apple call the gate chose, and answer everyone attached to this flight.
-    ///
-    /// The expanded request is tried first when the gate asked for it, and a refusal to make
-    /// that call is not a failure: it means the runtime would not answer for the capability
-    /// a moment ago, and ``trackingPrompt`` is available on every system this package
-    /// supports. Falling back there is the difference between a subject who is asked
-    /// slightly less richly and a request that hangs with nobody coming back.
-    ///
-    /// The flag, and not a captured `var`, carries the Additional Information tap because
-    /// Apple runs that closure after this function has returned and on a thread it chooses.
-    private func askApple(presentation: C15tTrackingPresentation) {
-        let additionalInformationSelected = C15tTrackingFlag()
-
-        // The call that ran arrives as an argument rather than being read off the gate's
-        // choice, because the two can differ: an expanded request that the runtime declined
-        // mid-flight finishes through the plain call, and a payload that still said
-        // `expanded` would describe an attempt rather than what happened. The distinction is
-        // the only thing a host has for telling "Apple had the expanded sheet and chose not
-        // to use it" apart from "this binary never asked for it".
-        let deliver: (C15tTrackingPresentation, C15tTrackingPlatformStatus?) -> Void = { [trackingWaiters] ran, answered in
-            let result = C15tTrackingGate.requestResult(
-                platform: answered,
-                presentation: ran,
-                additionalInformationSelected: additionalInformationSelected.isSet
-            )
-            // ATT was there when the gate checked and has nothing to report now. That is not
-            // an answer, and `unsupported` would read as permission, so it is a failure.
-            trackingWaiters.deliver(
-                result.map { Result<C15tTrackingRequestResult, C15tBridgeError>.success($0) }
-                    ?? .failure(.trackingUnsupported)
-            )
-        }
-
-        if presentation == .expanded,
-           trackingExpandedPrompt(
-               true,
-               { additionalInformationSelected.set() },
-               { deliver(.expanded, $0) }
-           ) {
-            return
-        }
-
-        trackingPrompt { deliver(.standard, $0) }
     }
 
     /// Apply a consent action, returning the `CommitResult` payload.

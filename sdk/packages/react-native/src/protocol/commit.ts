@@ -36,10 +36,10 @@ export type CommitIntent =
 	  };
 
 /**
- * Why a commit did not reach the backend.
+ * Why native refused a local commit.
  *
- * `queued` is not a failure: the payload is persisted and replayed, so the
- * snapshot is already correct offline.
+ * Pending delivery is not a refusal. A durable local success carries
+ * `ok: true, queued: true` and can be used offline.
  *
  * `not-bootstrapped` is the native core refusing because no configuration was
  * ever installed, which is a host wiring bug rather than a consent outcome.
@@ -50,7 +50,10 @@ export type CommitFailureReason =
 	| 'invalid-intent'
 	| 'no-subject'
 	| 'not-bootstrapped'
-	| 'queued';
+	| 'policy-pending'
+	| 'encode-failed'
+	| 'queue-write-failed'
+	| 'concurrent-change';
 
 /**
  * Result of `commit(intent)`.
@@ -68,10 +71,15 @@ export interface CommitResult {
 	/** Subject the receipts belong to. */
 	readonly subjectId: string | null;
 	/**
-	 * `true` when the payload was persisted for replay instead of delivered.
-	 * Consent is applied locally either way.
+	 * `true` when native durably enqueued the payload. It may already have been
+	 * delivered by the time this result arrives. Check `ok` for local success.
 	 */
 	readonly queued: boolean;
+	/**
+	 * Whether native reports backend acceptance before returning. Absent or
+	 * `false` does not undo local success. iOS currently reports `false`.
+	 */
+	readonly delivered?: boolean;
 	/** Present only when `ok` is `false`. */
 	readonly reason?: CommitFailureReason;
 }
@@ -154,23 +162,14 @@ export interface SavePayload {
 		gpc: boolean;
 	};
 	/**
-	 * TC string emitted by an IAB module.
-	 *
-	 * Always absent on device, and not because an `iab` rule is unreadable -- both
-	 * cores read and evaluate one now. A TC String opens with a CMP ID IAB Europe
-	 * assigned, and a device holds no registered one: it reads neither `cmpId` nor
-	 * the per-vendor vectors the rest of the string would assert, and
-	 * `@c15t/iab/src/tcf/cmp-defaults.ts` refuses to default an ID rather than name a
-	 * provider that is not c15t. The kernel leaves the key off the body in the same
-	 * position, with its IAB module absent, so the field is carried to keep this the
-	 * body the kernel and the fixtures describe. Adding the device-side value is the
-	 * additive change the `iab` snapshot slot is reserved for.
+	 * TC String captured by a committed native IAB action. Requires configured
+	 * CMP identity and valid native disclosure authority. Category-only actions
+	 * do not produce one. Queued delivery retains the committed string.
 	 */
 	tcString?: string | null;
 	/**
-	 * Google Additional Consent string sent with `tcString`. Always absent on
-	 * device, for the same reason as `tcString`; carried so the body stays the
-	 * one the kernel describes.
+	 * Google Additional Consent v2 string sent with `tcString` when the native
+	 * action includes configured provider disclosures and consent authority.
 	 */
 	addtlConsent?: string;
 	/** Equals `confirmed.actionAt`. Kept for backends that read one time. */
@@ -193,10 +192,9 @@ export interface SavePayload {
 		acknowledgedDiagnostics: boolean;
 	};
 	/**
-	 * Granted flag for every declared vendor after this action. Present only
-	 * when vendors are declared; a narrowed replay drops it. The native cores
-	 * declare no vendors yet, so they never write it; it is carried so the body
-	 * stays the one the kernel describes.
+	 * Web custom-vendor receipt, retained in the shared payload vocabulary.
+	 * Native cores do not emit this field. Native TCF vendor choices are encoded
+	 * in `tcString`.
 	 */
 	vendorChoice?: {
 		version: 1;

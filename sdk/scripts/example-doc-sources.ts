@@ -24,6 +24,8 @@ export const exampleRoots = [
 	'internals/next-compat',
 	'apps',
 	'benchmarks/tailwind-matrix',
+	'native/core-swift/Examples',
+	'native/examples',
 ] as const;
 
 /** Where generated snippets are written, relative to the repository root. */
@@ -118,12 +120,16 @@ const languages: Record<string, string> = {
 	'.js': 'js',
 	'.json': 'json',
 	'.jsx': 'jsx',
+	'.kt': 'kotlin',
 	'.mjs': 'js',
+	'.plist': 'xml',
 	'.sh': 'sh',
 	'.svelte': 'svelte',
+	'.swift': 'swift',
 	'.ts': 'ts',
 	'.tsx': 'tsx',
 	'.vue': 'vue',
+	'.xml': 'xml',
 };
 
 /** Returns the fence language for a source file. */
@@ -140,6 +146,12 @@ export const languageFor = (source: string): string => {
 
 /** Returns the example app directory that owns a source file. */
 export const appFor = (source: string): string => {
+	const native = source.match(
+		/^native\/(?:core-swift\/Examples|examples)\/[^/]+\//u
+	)?.[0];
+	if (native) {
+		return native.slice(0, -1);
+	}
 	const [root, name] = source.split('/');
 	if (root === 'examples' && name) {
 		return `examples/${name}`;
@@ -177,6 +189,8 @@ const destinationFor = (app: string, name: string): string => {
 		prefix = app.slice('internals/doc-snippets/'.length);
 	} else if (app.startsWith('apps/')) {
 		prefix = app.slice('apps/'.length);
+	} else if (app.startsWith('native/')) {
+		prefix = app.replace('/Examples/', '/');
 	} else if (app.startsWith('benchmarks/tailwind-matrix/')) {
 		const [version, framework] = app
 			.slice('benchmarks/tailwind-matrix/'.length)

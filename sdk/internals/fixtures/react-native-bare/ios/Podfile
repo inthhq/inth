@@ -19,14 +19,8 @@ end
 target 'C15tBare' do
   config = use_native_modules!
 
-  # The consent kernel is a pod of its own, so an app outside this repository pulls
-  # the published one and needs nothing here. Inside the monorepo both pods are
-  # checked out next to this app, and pointing at the directories is what lets the
-  # example run against unreleased code. Set C15T_CORE_POD_VERSION to a published
-  # version and C15T_LOCAL_PODS=false to build against the registry instead.
-  if ENV['C15T_LOCAL_PODS'] != 'false'
-    pod 'C15tCore', :path => '../../../../native/core-swift'
-  end
+  # C15tReactNative carries its core and Apple services. Autolink that one pod;
+  # a separate C15tCore pod would create a second consent authority in this process.
 
   use_react_native!(
     :path => config[:reactNativePath],

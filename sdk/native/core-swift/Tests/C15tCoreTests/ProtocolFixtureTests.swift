@@ -462,10 +462,13 @@ final class ProtocolFixtureTests: XCTestCase {
         }
         let run = try makeRun(entry: entry, input: input)
         await run.core.bootstrapAndSettle(run.config)
+        // Native IAB authority is stricter than the generic web category evaluator.
+        let nativeIABExpected = C15tJSON.parse(try Data(contentsOf:
+            IABCommitTests.fixtureURL.deletingLastPathComponent().appendingPathComponent("missing-authority-expectations.json")))?["snapshots"]?[entry.id]
         record(
             for: entry,
             path: "expected.snapshot",
-            expected: expected,
+            expected: nativeIABExpected ?? expected,
             actual: try snapshotJSON(run.core)
         )
     }
@@ -668,8 +671,13 @@ final class ProtocolFixtureTests: XCTestCase {
             }
             // The policy wire stays out of the envelope on purpose: the fixture feeds
             // the policy through the transport, which is what a relaunch does.
+            var seededDraft = ConsentSnapshot.Draft(current: seeded)
+            seededDraft.subject = SubjectSnapshot(
+                id: try XCTUnwrap(input["storedRecords"]?["subject"]?["subjectId"]?.stringValue),
+                externalId: nil
+            )
             let envelope = StoredEnvelope(
-                snapshot: seeded,
+                snapshot: seededDraft.build(revision: seeded.revision),
                 noticeDismissal: dismissal,
                 policyResolution: nil,
                 storedAt: now

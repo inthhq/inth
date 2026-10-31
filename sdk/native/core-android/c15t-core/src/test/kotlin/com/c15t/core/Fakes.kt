@@ -34,6 +34,12 @@ class InMemoryKeyValueStore(
 	val keys: Set<String>
 		get() = data.keys.toSet()
 
+	// This fake's dictionary is its complete storage, with no buffered writes.
+	override fun writeDurably(key: String, value: String?): Boolean {
+		write(key, value)
+		return true
+	}
+
 	override fun read(key: String): String? {
 		eventLog += "read:$key"
 		return data[key]

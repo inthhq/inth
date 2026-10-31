@@ -29,6 +29,14 @@ interface KeyValueStore {
 	 */
 	fun keys(): Set<String> = emptySet()
 
+	/**
+	 * Atomically replace one key and acknowledge durable storage. A false result must
+	 * preserve the previous durable value. Implementations must opt in and return the
+	 * storage operation's result. Reading a memory cache after [write] proves nothing.
+	 * The default refuses without mutating storage.
+	 */
+	fun writeDurably(key: String, value: String?): Boolean = false
+
 	/** Push buffered writes to durable storage. Optional. */
 	fun flush() = Unit
 }

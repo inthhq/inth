@@ -1,10 +1,16 @@
 # c15t React Native fixture (Expo development build)
 
-The same fixture as [internals/fixtures/react-native-bare](../react-native-bare), inside an Expo
-SDK 57 project that gets its native consent core from the
-`@c15t/react-native/expo-plugin`. Screens, buttons, fake core, and checks are identical
-so that a difference between the two apps points at the native wiring and not at the
-consent code.
+See the [mobile demo index](../../../docs/frameworks/react-native/examples.mdx) for
+current native modes, setup commands and the limits of IAB and hosted coverage.
+
+An Expo SDK 57 custom native build for `@c15t/react-native`. Normal native mode
+requests the stock SwiftUI or Compose presenter and displays native state and
+outcomes. The labelled fake mode uses a separate React shell. It shares some
+fixture helpers with bare RN; the apps are not identical consumer journeys.
+
+The typed plugin config covers category setup. It does not install a complete
+IAB CMP identity or prove Additional Consent authoring. Use the native local
+IAB modes in the demo index for that fixture coverage.
 
 ## Expo Go will not run this app
 
@@ -35,6 +41,13 @@ need the built client to open it.
 
 ## Setup
 
+The default backend is the public Inth demo, `https://example-inth.inth.app/`.
+Use your Inth project URL for your app. The plugin embeds `c15t-policy.json` before
+JavaScript starts; the demo resource expires on 5 November 2026. Regenerate it
+before prebuild when changing the endpoint or renewing its authority.
+See [mobile policy resources](../../../native/docs/mobile-policy-resources.md).
+No hosted save has been verified against the public demo.
+
 ```sh
 bun install                      # from the repository root
 cp .env.example .env
@@ -59,12 +72,8 @@ URL, run `bun run prebuild` again; a running binary keeps the value it was built
 That the bundle and the binary each carry a copy of the backend URL is a property of
 the design, not a mistake in this example.
 
-For a local backend, `apps/playground` serves one at `/api/self-host`:
-
-```sh
-bun run --cwd apps/playground dev:localhost      # http://localhost:3000
-adb reverse tcp:3000 tcp:3000                  # Android emulator -> host
-```
+Advanced self-hosted deployments use the same transport contract. Keep the native
+and JavaScript URLs equal and export the resource from that deployment's manifest.
 
 ## Commands
 
@@ -82,9 +91,17 @@ adb reverse tcp:3000 tcp:3000                  # Android emulator -> host
 `ios/` and `android/` are generated and gitignored. Delete them freely; prebuild writes
 them back from `app.config.ts`, and the plugin is idempotent.
 
-`app.config.ts` also adds one Podfile line pointing `C15tCore` at
-`../../../native/core-swift`, which the binding's podspec needs inside this repository and
-a registry install does not. `C15T_LOCAL_PODS=false` leaves the Podfile alone.
+The autolinked `C15tReactNative` pod compiles the generated Swift core and Apple
+services. Do not add a separate `C15tCore` pod to this app. The checkout-only
+`C15T_LOCAL_PODS` flag now controls Android source substitution only.
+
+For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
+shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/c15t-private`
+unless `C15T_MAVEN_URL` supplies a staging URL at prebuild time. HTTPS credentials
+come from `C15T_MAVEN_USERNAME` and `C15T_MAVEN_TOKEN` when Gradle runs. No fixture
+plugin adds a Maven repository. See the maintained
+[packed consumer guide](../../../docs/internal/expo-packed-consumer.md) for the
+options, exclusive routing and clean external-consumer checks.
 
 ## Native build status
 
@@ -189,7 +206,6 @@ ios/c15tExpoDev/Info.plist              NSUserTrackingUsageDescription, NSUserTr
 ios/.../Supporting/de.lproj/InfoPlist.strings   NSUserTrackingMarkdownUsageDescription
 android/.../AndroidManifest.xml         <meta-data android:name="com.c15t.PORTAL_URL" ...>
 android/.../AndroidManifest.xml         com.c15t.reactnative.C15tReactNativeInitializer
-ios/Podfile                             pod 'C15tCore', :path => '.../native/core-swift'
 ```
 
 Android has no mode key; it infers the transport from which keys are present. An absent
@@ -222,3 +238,47 @@ The tracking card on the Consent tab is the other half: `useTrackingRequest` run
 sheet, the preference centre that Apple's Additional Information button sends the subject
 to, and the second sheet. An Apple yes moves no category by itself, which is the whole
 reason the card prints `useIsTrackingAllowed` beside the arm.
+
+
+## Packed iOS offline acceptance
+
+Run the packed smoke against an existing Simulator Release app and its SDK archive:
+
+```sh
+python3 scripts/packed-launch-ios.py --app /absolute/path/c15tExpoDev.app \
+  --archive /absolute/path/c15t-react-native.tgz --out /absolute/path/new-evidence
+```
+
+The app must retain the designated hosted endpoint and the bundled policy. Build
+with `CODE_SIGNING_ALLOWED=YES CODE_SIGNING_FOR_SIMULATOR=YES CODE_SIGN_IDENTITY=-`
+so Xcode embeds the Simulator application entitlement required by Keychain. An
+unsigned build can compile but fail the native protected-storage probe. The
+runner copies the app, preserves its entitlements when signing, and creates its
+own fresh Simulator. It builds only the external XCUITest runner and a network
+fault library. It does not rebuild the SDK or replace archive sources.
+
+The library loads before app startup and refuses HTTP and HTTPS requests with
+`NSURLErrorNotConnectedToInternet`. The real hosted transport still constructs
+its requests. `network-fault.jsonl` records each refused URL and process ID.
+This is a process-scoped URL loading fault, not device radio isolation or a live
+hosted receipt test. Host networking and other Simulators remain available.
+
+XCUITest taps native Reject, checks the compact outcome and denied permissions,
+kills and relaunches the app, and reopens native preferences with Measurement
+off. Evidence includes screenshots, accessibility trees, the complete MP4,
+native test results, runtime values, and hashes of the archive and app files.
+
+For direct native gate evidence, run `scripts/install-packed-ios-proof.py --consumer
+/absolute/path/consumer` after prebuild and before the Release build, then pass
+`--native-proof` to the smoke runner. This adds a read-only native observer to the
+consumer's AppDelegate. It runs only with the runner's launch environment and
+records the installed core's snapshot plus actual `C15t.isAllowed` values to the
+app sandbox. The smoke requires fresh bundled readings and full denial in both
+processes. The SDK still comes only from the archive.
+
+The Android packed runner accepts `--archive` to record the SDK input hash. It
+waits for the default SIM to initialize on its own fresh AVD, then disables
+Wi-Fi and data and enables airplane mode. Before installing the app, it requires
+no default network, disabled data and an off cellular radio from the actual
+connectivity and telephony services. It preserves those reports and radio
+settings, and repeats the checks after relaunch.

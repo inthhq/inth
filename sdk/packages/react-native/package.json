@@ -39,6 +39,7 @@
 		"!src/specs/__tests__",
 		"C15tReactNative.podspec",
 		"LICENSE.md",
+		"NOTICE",
 		"react-native.config.js",
 		"android/c15t-react-native/build.gradle.kts",
 		"android/c15t-react-native/consumer-rules.pro",
@@ -46,7 +47,12 @@
 		"android/c15t-react-native/src/main",
 		"android/codegen/generate-spec.mjs",
 		"ios/C15tReactNative",
-		"vendor/C15tCore"
+		"vendor/C15tCore",
+		"vendor/C15tApple",
+		"vendor/C15tConsentUI",
+		"AGENTS.md",
+		"SKILL.md",
+		"docs"
 	],
 	"type": "module",
 	"sideEffects": false,
@@ -72,12 +78,13 @@
 	},
 	"scripts": {
 		"build": "rslib build && bun ../../scripts/normalize-dist-types.mjs",
+		"build:docs": "bun ../../scripts/generate-package-docs.ts @c15t/react-native",
 		"check-types": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "bun oxfmt .",
 		"generate:fixtures": "tsx scripts/generate-protocol-fixtures.ts",
 		"lint": "bun oxlint ./src",
-		"prepack": "bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/verify-package-artifacts.ts",
+		"prepack": "bun run build:docs && bun -e \"for (const name of ['LICENSE.md', 'NOTICE']) await Bun.write(name, Bun.file('../../' + name));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
 		"test": "vitest run --passWithNoTests",
 		"test:coverage": "C15T_COVERAGE_RATCHET=1 vitest run --passWithNoTests && bun scripts/check-coverage-ratchet.ts",
 		"test:watch": "vitest"
@@ -86,6 +93,7 @@
 		"@expo/config-plugins": "57.0.9"
 	},
 	"devDependencies": {
+		"@babel/parser": "7.28.5",
 		"@c15t/core": "workspace:*",
 		"@c15t/iab": "workspace:*",
 		"@c15t/typescript-config": "workspace:*",
@@ -100,8 +108,8 @@
 		"typescript": "7.0.2"
 	},
 	"peerDependencies": {
-		"react": ">=19.1.0",
-		"react-native": ">=0.81.0"
+		"react": ">=19.2.3 <19.3.0",
+		"react-native": ">=0.86.0 <0.88.0"
 	},
 	"peerDependenciesMeta": {
 		"react": {

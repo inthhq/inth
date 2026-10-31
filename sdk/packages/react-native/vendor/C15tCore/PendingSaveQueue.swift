@@ -16,6 +16,45 @@ struct PendingSaveEntry: Sendable, Codable, Equatable {
     let queuedAt: Int64
     var attempts: Int
     let body: Data
+    var retainWithdrawal: Bool? = nil
+
+    var isProtectedWithdrawal: Bool {
+        ConsentDelivery.isWithdrawal(body)
+    }
+}
+
+/// A frozen denial remains owed after the local policy or identity changes.
+/// No consent or legitimate-interest grant may use this delivery exception.
+enum ConsentDelivery {
+    /// Compare frozen delivery ownership, never the currently signed-in account.
+    static func sameOwner(_ left: Data, _ right: Data) -> Bool {
+        guard let a = C15tJSON.parse(left), let b = C15tJSON.parse(right),
+            a["subjectId"]?.stringValue != nil, a["domain"]?.stringValue != nil
+        else { return false }
+        return ["subjectId", "externalSubjectId", "domain"].allSatisfy {
+            a[$0]?.stringValue == b[$0]?.stringValue
+        }
+    }
+
+    static func isWithdrawal(_ body: Data) -> Bool {
+        guard let wire = C15tJSON.parse(body),
+            let consents = wire["preferences"]?.objectValue, consents["necessary"]?.boolValue == true,
+            ["functionality", "measurement", "experience", "marketing"].allSatisfy({ consents[$0]?.boolValue != true })
+        else { return false }
+        if let ac = wire["addtlConsent"]?.stringValue, !ac.hasPrefix("2~~dv.") { return false }
+        guard let encoded = wire["tcString"]?.stringValue else {
+            return wire["consentAction"]?.stringValue == "necessary"
+                || wire["choice"]?["categories"]?.objectValue.map { !$0.isEmpty && $0.values.allSatisfy { $0["value"]?.boolValue == false } } == true
+        }
+        guard case let .decoded(tc) = TcStringWireReader.read(encoded) else { return false }
+        var vectors = [tc.purposeConsents, tc.purposeLegitimateInterests, tc.vendorConsents,
+            tc.vendorLegitimateInterests, tc.specialFeatureOptIns]
+        if let p = tc.publisherSection {
+            vectors += [p.publisherConsents, p.publisherLegitimateInterests,
+                p.publisherCustomConsents, p.publisherCustomLegitimateInterests]
+        }
+        return vectors.allSatisfy { $0.ids.isEmpty }
+    }
 }
 
 /// What one replay pass did.
@@ -123,6 +162,9 @@ final class PendingSaveQueue: @unchecked Sendable {
         let queuedAt = now()
         let wrote = lock.withLock {
             var entries = readEntries()
+            if ConsentDelivery.isWithdrawal(body) {
+                entries.removeAll { ConsentDelivery.sameOwner($0.body, body) }
+            }
             entries.sort { left, right in
                 left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt
             }
@@ -135,8 +177,9 @@ final class PendingSaveQueue: @unchecked Sendable {
                 body: body
             ))
             // Newest 20 only, oldest dropped first.
-            if entries.count > Self.maxEntries {
-                entries.removeFirst(entries.count - Self.maxEntries)
+            while entries.count > Self.maxEntries {
+                guard let discard = entries.firstIndex(where: { !$0.isProtectedWithdrawal && $0.id != id }) else { return false }
+                entries.remove(at: discard)
             }
             return writeEntries(entries)
         }
@@ -173,7 +216,12 @@ final class PendingSaveQueue: @unchecked Sendable {
         lock.withLock { readEntries().contains { $0.id == id } }
     }
 
-    /// Drop every entry, for a subject reset.
+    /// Remove queued grants after authority invalidation, retaining owed withdrawals.
+    func discardGrants() {
+        lock.withLock { _ = writeEntries(readEntries().filter { $0.isProtectedWithdrawal }) }
+    }
+
+    /// Drop every entry when its stored subject cannot be recovered.
     func clear() {
         lock.withLock { _ = writeEntries([]) }
     }
@@ -200,9 +248,13 @@ final class PendingSaveQueue: @unchecked Sendable {
         return lock.withLock {
             var entries = readEntries()
             guard let index = entries.firstIndex(where: { $0.id == id }) else { return .alreadyGone }
-            entries[index].attempts += 1
+            entries[index].attempts = min(entries[index].attempts, Self.maxAttempts) + 1
             let entry = entries[index]
 
+            if entry.isProtectedWithdrawal {
+                _ = writeEntries(entries)
+                return .retrying
+            }
             if entry.attempts >= Self.maxAttempts {
                 entries.remove(at: index)
                 _ = writeEntries(entries)
@@ -243,6 +295,15 @@ final class PendingSaveQueue: @unchecked Sendable {
         onResult: ((PendingSaveEntry, Result<Void, C15tError>) -> Void)? = nil,
         onDrop: ((PendingSaveEntry, C15tError, FailedAttempt) -> Void)? = nil
     ) async -> ReplayReport {
+        await replay(using: transport, shouldDeliver: { _ in true }, onResult: onResult, onDrop: onDrop)
+    }
+
+    func replay(
+        using transport: any C15tTransport,
+        shouldDeliver: (PendingSaveEntry) -> Bool,
+        onResult: ((PendingSaveEntry, Result<Void, C15tError>) -> Void)? = nil,
+        onDrop: ((PendingSaveEntry, C15tError, FailedAttempt) -> Void)? = nil
+    ) async -> ReplayReport {
         let pending = entries()
         guard !pending.isEmpty else { return .empty }
 
@@ -257,7 +318,7 @@ final class PendingSaveQueue: @unchecked Sendable {
             // landed is not this pass's to send: the frozen bytes carry the same
             // consent id, so the backend would dedupe it and the only evidence that it
             // ever happened is one more POST than the subject's decision called for.
-            guard isPending(id: entry.id) else { continue }
+            guard isPending(id: entry.id), shouldDeliver(entry) else { continue }
             attempted += 1
 
             let result = await transport.sendSave(entry.body)
@@ -289,12 +350,67 @@ final class PendingSaveQueue: @unchecked Sendable {
         )
     }
 
+    /// Write the decision and its pending obligations as one protected item.
+    /// IAB decisions supersede queued grants; category decisions retain their history.
+    func commit(
+        _ envelope: StoredEnvelope, body: Data, subjectId: String, actionAt: Int64,
+        supersedeGrants: Bool = true
+    ) -> String? {
+        lock.withLock {
+            let entry = PendingSaveEntry(
+                id: newID(), subjectId: subjectId, actionAt: actionAt,
+                queuedAt: now(), attempts: 0, body: body, retainWithdrawal: true)
+            var next = envelope
+            var entries = readEntries().filter {
+                (!supersedeGrants || $0.isProtectedWithdrawal)
+                    && !(entry.isProtectedWithdrawal && ConsentDelivery.sameOwner($0.body, body))
+            }
+            entries.sort { left, right in
+                left.actionAt == right.actionAt ? left.queuedAt < right.queuedAt : left.actionAt < right.actionAt
+            }
+            entries.append(entry)
+            while entries.count > Self.maxEntries {
+                guard let discard = entries.firstIndex(where: { !$0.isProtectedWithdrawal && $0.id != entry.id }) else { return nil }
+                entries.remove(at: discard)
+            }
+            next.pendingSaves = entries
+            guard store.encode(next, for: StorageKey.snapshot) else { return nil }
+            return entry.id
+        }
+    }
+
+    /// Commit a tombstone while retaining frozen withdrawals under their original owner.
+    func replace(_ envelope: StoredEnvelope) -> Bool {
+        lock.withLock {
+            var next = envelope
+            next.pendingSaves = readEntries().filter { $0.isProtectedWithdrawal }
+            return store.encode(next, for: StorageKey.snapshot)
+        }
+    }
+
+    /// Ordinary publications retain delivery bookkeeping from the atomic record.
+    func persist(_ envelope: StoredEnvelope) -> Bool {
+        lock.withLock {
+            let stored = store.data(for: StorageKey.snapshot).flatMap(StoredEnvelope.decode)
+            guard stored == nil || stored!.snapshot.revision <= envelope.snapshot.revision else {
+                return false
+            }
+            var next = envelope
+            next.pendingSaves = stored?.pendingSaves
+            return store.encode(next, for: StorageKey.snapshot)
+        }
+    }
+
     // MARK: - Storage
 
     /// Read without validating every field. Callers get entries the queue itself
     /// wrote; a queue file that does not decode is treated as empty and replaced,
     /// which denies a replay rather than guessing at a body.
     private func readEntries() -> [PendingSaveEntry] {
+        if let raw = store.data(for: StorageKey.snapshot) {
+            guard let envelope = StoredEnvelope.decode(raw) else { return [] }
+            if let pending = envelope.pendingSaves { return pending }
+        }
         guard let data = store.data(for: StorageKey.pendingSaves) else { return [] }
         guard let entries = try? C15tJSON.decode([PendingSaveEntry].self, from: data) else {
             return []
@@ -305,6 +421,12 @@ final class PendingSaveQueue: @unchecked Sendable {
     }
 
     private func writeEntries(_ entries: [PendingSaveEntry]) -> Bool {
+        if let raw = store.data(for: StorageKey.snapshot), var envelope = StoredEnvelope.decode(raw),
+            envelope.pendingSaves != nil
+        {
+            envelope.pendingSaves = entries
+            return store.encode(envelope, for: StorageKey.snapshot)
+        }
         guard !entries.isEmpty else {
             store.set(nil, for: StorageKey.pendingSaves)
             return true

@@ -76,6 +76,74 @@ afterAll(() => {
 });
 
 describe('Expo Go', () => {
+	it.each(['init', 'project:init', 'build', 'run:ios', 'eas'])(
+		'refuses Expo Go when the project directory is named %s',
+		(directory) => {
+			expect(() =>
+				applyParamsOnConfig(fixtureConfig(), PROPS, {
+					argv: ['node', 'expo', 'start', directory, '--go'],
+					env: {},
+					projectRoot: emptyProjectRoot,
+				})
+			).toThrowError(/needs a custom native build[\s\S]*Expo Go/u);
+		}
+	);
+
+	it.each([
+		'build:configure',
+		'update:configure',
+		'update',
+		'submit',
+		'credentials',
+		'env:pull',
+	])('accepts EAS %s without generated native projects', (command) => {
+		expect(() =>
+			applyParamsOnConfig(fixtureConfig(), PROPS, {
+				argv: ['node', '/usr/local/bin/eas', command],
+				env: {},
+				projectRoot: emptyProjectRoot,
+			})
+		).not.toThrowError();
+	});
+
+	it.each([
+		'eas',
+		'/app/node_modules/eas-cli/bin/run',
+		'C:\\app\\node_modules\\eas-cli\\bin\\run',
+		'C:\\app\\node_modules\\.bin\\eas.cmd',
+	])('recognizes EAS configuration through %s', (entry) => {
+		expect(() =>
+			applyParamsOnConfig(fixtureConfig(), PROPS, {
+				argv: ['node', entry, 'build:configure'],
+				env: {},
+				projectRoot: emptyProjectRoot,
+			})
+		).not.toThrowError();
+	});
+
+	it.each([
+		'/apps/eas/node_modules/.bin/expo',
+		'/apps/eas-cli/bin/run-preview',
+	])('does not mistake an Expo Go launch through %s for EAS', (entry) => {
+		expect(() =>
+			applyParamsOnConfig(fixtureConfig(), PROPS, {
+				argv: ['node', entry, 'start', '--go'],
+				env: {},
+				projectRoot: emptyProjectRoot,
+			})
+		).toThrowError(/needs a custom native build/u);
+	});
+
+	it('accepts an explicit development client after the project directory', () => {
+		expect(() =>
+			applyParamsOnConfig(fixtureConfig(), PROPS, {
+				argv: ['node', 'expo', 'start', 'app', '--dev-client'],
+				env: {},
+				projectRoot: emptyProjectRoot,
+			})
+		).not.toThrowError();
+	});
+
 	it('refuses a project whose only launch target is Expo Go', () => {
 		expect(() =>
 			applyParamsOnConfig(fixtureConfig(), PROPS, {
@@ -86,11 +154,13 @@ describe('Expo Go', () => {
 		).toThrowError(/needs a custom native build[\s\S]*Expo Go/u);
 	});
 
-	// Every one of these is a way to be building a real binary, which is all the
-	// check needs to see before it stays out of the way.
+	// Build and configuration commands do not launch Expo Go.
 	it.each([
 		['prebuild', { argv: PREBUILD_ARGV, env: {} }],
 		['eas build', { argv: ['node', 'eas', 'build'], env: EAS_BUILD_ENV }],
+		['eas init', { argv: ['node', 'eas', 'init'], env: {} }],
+		['eas project:init', { argv: ['node', 'eas', 'project:init'], env: {} }],
+		['eas project:info', { argv: ['node', 'eas', 'project:info'], env: {} }],
 		['expo run:ios', { argv: ['node', 'expo', 'run:ios'], env: {} }],
 	])('stays quiet during %s', (_label, context) => {
 		expect(() =>

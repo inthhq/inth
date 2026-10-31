@@ -80,8 +80,17 @@ public abstract class NativeC15tSpec extends ReactContextBaseJavaModule implemen
 	public abstract void requestTrackingAuthorization(Promise promise);
 
 	@ReactMethod
+	public abstract void presentConsentPrompt(String privacyPolicyURL, Promise promise);
+	@ReactMethod
+	public abstract void presentPreferences(String privacyPolicyURL, Promise promise);
+	@ReactMethod
+	public abstract void closeConsentPresenter(String sessionId, Promise promise);
+
+
+	@ReactMethod
 	public abstract void addListener(String eventName);
 
 	@ReactMethod
 	public abstract void removeListeners(double count);
+
 }

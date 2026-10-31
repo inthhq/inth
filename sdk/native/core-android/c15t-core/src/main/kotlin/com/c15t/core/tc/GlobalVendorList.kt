@@ -4,7 +4,10 @@ package com.c15t.core.tc
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KeepGeneratedSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonObject
 
 /**
  * The IAB Global Vendor List, in the shape c15t's backend embeds under `/init`'s `gvl` key.
@@ -36,8 +39,9 @@ import kotlinx.serialization.Serializable
  * often as they are present, and the web reads them with `|| []` instead of inventing a value.
  * Reading an absent one as an empty list or a zero would put a claim into the document that
  * `v.optional(...)` never asked for, and this body goes to JavaScript unchanged, so every such field
- * is a nullable that [GlobalVendorListJson.toJsonElement] drops while it is null. A round trip
- * therefore returns the keys that went in, which is the claim
+ * is a nullable that [GlobalVendorListJson.toJsonElement] drops while it is null. Unknown fields
+ * from loose backend objects survive separately and merge into the normalized document for
+ * disclosure, storage and hashing. A round trip returns the keys that went in, which is the claim
  * `served body round trips key for key` in `GlobalVendorListShapeTest` checks. The one key that
  * comes back absent instead of `null` is a key the document itself wrote as `null`: a typed field
  * cannot hold that apart from an absent key, and `v.optional(...)` means the two are the same
@@ -47,8 +51,11 @@ import kotlinx.serialization.Serializable
  * the document. The legal-basis reading lives on [TcVendorList], and the
  * acceptance rules live on [GlobalVendorListJson.fromInitBody].
  */
-@Serializable
+@KeepGeneratedSerializer
+@Serializable(with = GlobalVendorListSerializer::class)
 data class GlobalVendorList(
+	@EncodeDefault(EncodeDefault.Mode.NEVER)
+	val standardTexts: GvlStandardTexts? = null,
 	/** Purposes the framework defines, keyed by purpose id. A list without them is refused. */
 	val purposes: Map<Int, GvlLocalizedEntry>,
 	/** Vendor declarations, keyed by vendor id. A list without them is refused. */
@@ -71,6 +78,9 @@ data class GlobalVendorList(
 	val specialPurposes: Map<Int, GvlLocalizedEntry>? = null,
 	@EncodeDefault(EncodeDefault.Mode.NEVER)
 	val stacks: Map<Int, GvlStack>? = null,
+	/** Unknown served disclosure fields, kept under their original key paths. */
+	@Transient
+	internal val additionalFields: JsonObject? = null,
 ) {
 	/**
 	 * The vendor [id] names, or null when this list does not carry it.
@@ -197,4 +207,13 @@ data class GvlVendorUrl(
 data class GvlVendorOverflow(
 	@EncodeDefault(EncodeDefault.Mode.NEVER)
 	val httpGetLimit: Long? = null,
+)
+
+/** TCF 2.4 standard explanations. Kept with the list's disclosure version. */
+@Serializable
+data class GvlStandardTexts(
+	val features: String,
+	val purposes: String? = null,
+	val specialFeatures: String? = null,
+	val specialPurposes: String? = null,
 )

@@ -28,6 +28,8 @@ object C15tAndroid {
 	/** Manifest keys the Initializer reads; the app declares these. */
 	const val META_PORTAL_URL = "com.c15t.PORTAL_URL"
 
+	const val META_BUNDLED_POLICY = "com.c15t.POLICY_RESOURCE"
+
 	const val META_INIT_URL = "com.c15t.INIT_URL"
 	const val META_DOMAIN = "com.c15t.DOMAIN"
 
@@ -60,7 +62,7 @@ object C15tAndroid {
 	 * @param observeForeground register the process-foreground observer that replays
 	 * the offline queue. Turn it off only if the host drives [C15t.flushPending] and
 	 * [C15t.refresh] itself.
-	 * @param observeReachability also replay the queue when the process gains a network.
+	 * @param observeReachability replay the queue and refresh policy when connectivity returns.
 	 * This one needs `android.permission.ACCESS_NETWORK_STATE`, which belongs to the
 	 * host: without it the registration is refused and c15t carries on with the launch
 	 * and foreground replays, so declaring it buys a faster retry rather than correctness.
@@ -102,10 +104,15 @@ object C15tAndroid {
 		if (observeReachability && reachability == null) {
 			onMainThread {
 				if (reachability == null) {
-					reachability = C15tReachability.register(appContext) { C15t.flushPending() }
+					reachability = C15tReachability.register(appContext) { onNetworkGained(executor) }
 				}
 			}
 		}
+	}
+
+	internal fun onNetworkGained(executor: TaskExecutor) {
+		executor.execute { C15t.flushPending() }
+		C15t.refresh()
 	}
 
 	/**
@@ -144,6 +151,10 @@ object C15tAndroid {
 		// core treats them differently when it derives the signal.
 		return NativeConfig(
 			portalUrl = portalUrl,
+			bundledPolicy = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_BUNDLED_POLICY))?.let { name ->
+				try { context.assets.open(name).bufferedReader().use { it.readText() } }
+				catch (error: java.io.IOException) { Log.w(TAG, "Cannot read bundled policy $name", error); null }
+			},
 			initUrl = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_INIT_URL)),
 			domain = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_DOMAIN)),
 			consentCategories = declaredCategories(C15tManifestValue.raw(bundle, META_CATEGORIES)),

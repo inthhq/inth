@@ -132,6 +132,6 @@ class DeviceStorageBusTest {
 		/** A value `getInt` cannot produce, so an absent row reads as itself. */
 		const val ABSENT = -1
 
-		const val FOREIGN_KEY = "IABTCF_AddtlConsent"
+		const val FOREIGN_KEY = "IABUSPrivacy_String"
 	}
 }

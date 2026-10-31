@@ -37,6 +37,7 @@ import type {
 } from '@c15t/core';
 import { expectTypeOf } from 'vitest';
 
+import type { KernelCommonCopy } from '../../index';
 import type { KernelUser, NativeSavePayload } from '../commit';
 import type { NativeOverrides } from '../overrides';
 import type { ConsentSnapshot, NativeModel } from '../snapshot';
@@ -105,8 +106,26 @@ expectTypeOf<ExplicitChoice>().toEqualTypeOf<KernelExplicitChoice>();
 expectTypeOf<ConsentSubject>().toEqualTypeOf<KernelConsentSubject>();
 expectTypeOf<LocationResponse>().toEqualTypeOf<KernelLocationResponse>();
 
-// The translation bundle, which the native cores carry through untouched.
-expectTypeOf<KernelTranslations>().toEqualTypeOf<KernelTranslationsType>();
+// Mobile adds retry copy; the rest of the transported bundle matches the kernel.
+expectTypeOf<Omit<KernelTranslations, 'translations'>>().toEqualTypeOf<
+	Omit<KernelTranslationsType, 'translations'>
+>();
+expectTypeOf<
+	Omit<KernelTranslations['translations'], 'common'>
+>().toEqualTypeOf<Omit<KernelTranslationsType['translations'], 'common'>>();
+expectTypeOf<Omit<KernelCommonCopy, 'saveError'>>().toEqualTypeOf<
+	KernelTranslationsType['translations']['common']
+>();
+
+const retryCopy: KernelCommonCopy = {
+	saveError: 'Your choices could not be saved. Try again.',
+};
+expectTypeOf(retryCopy.saveError).toEqualTypeOf<string | undefined>();
+expectTypeOf<
+	NonNullable<
+		ConsentSnapshot['translations']
+	>['translations']['common']['saveError']
+>().toEqualTypeOf<string | undefined>();
 
 // The save body. The pending queue replays it verbatim, so a field the kernel grew
 // and this type did not is a write the backend reads as absent, with nothing failing
@@ -125,7 +144,7 @@ expectTypeOf<KernelUser>().toEqualTypeOf<KernelUserType>();
 // The two places the mobile type is deliberately narrower or wider than the
 // kernel's. Both are projections of the kernel type rather than independent
 // declarations, so a kernel that moves moves them too.
-expectTypeOf<NativeModel>().toEqualTypeOf<Exclude<KernelModelType, 'iab'>>();
+expectTypeOf<NativeModel>().toEqualTypeOf<KernelModelType>();
 expectTypeOf<
 	Wire<NativeOverrides>
 >().toEqualTypeOf<NativeOverridesFromKernel>();

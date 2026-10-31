@@ -32,7 +32,8 @@ jobs:
   # `ci.yml` as the workflow and npm rejects the token.
   checks:
     name: Checks
-    if: github.repository == 'c15t/c15t' && !(github.event_name == 'workflow_dispatch' && inputs.skip_tests)
+    # Private copies still validate. Only public release runs may bypass checks.
+    if: github.repository != 'c15t/c15t' || !(github.event_name == 'workflow_dispatch' && inputs.skip_tests)
     permissions:
       contents: read
       actions: read
@@ -58,7 +59,7 @@ jobs:
       id-token: write # Required for OIDC trusted publishing with npm (bypasses 2FA requirement)
 
     if: >-
-      !cancelled() && github.repository == 'c15t/c15t' && (needs.checks.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.skip_tests && needs.checks.result == 'skipped'))
+      !cancelled() && github.repository == 'c15t/c15t' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/canary') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (needs.checks.result == 'success' || (github.event_name == 'workflow_dispatch' && inputs.skip_tests && needs.checks.result == 'skipped'))
     steps:
       - name: Check out code
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5

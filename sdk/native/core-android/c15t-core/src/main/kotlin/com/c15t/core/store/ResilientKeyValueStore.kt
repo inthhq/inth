@@ -82,6 +82,21 @@ class ResilientKeyValueStore(
 		fallback.write(key, value)
 	}
 
+	override fun writeDurably(key: String, value: String?): Boolean {
+		if (degraded) return fallback.writeDurably(key, value)
+		return try {
+			primary.writeDurably(key, value)
+		} catch (error: Exception) {
+			if (!KeyLoss.isKeyUnavailable(error)) {
+				reportWriteFailure(error)
+				false
+			} else {
+				degrade(error)
+				fallback.writeDurably(key, value)
+			}
+		}
+	}
+
 	override fun flush() {
 		try {
 			if (degraded) fallback.flush() else primary.flush()

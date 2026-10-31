@@ -1,5 +1,8 @@
 package com.c15t.core.store
 
+import com.c15t.core.model.isWithdrawal
+import com.c15t.core.model.sameOwner
+
 import com.c15t.core.SubjectIdGenerator
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.ConsentSubject
@@ -62,12 +65,41 @@ class C15tStore(
 	 */
 	private val tcStorageBus: TcStorageBusSink? = null,
 ) {
+	private var busConfiguration: com.c15t.core.iab.IabConfiguration? = null
+
+	/** Signal the explicitly configured CMP before reading records or starting network work. */
+	@Synchronized
+	fun initializeTcStorageBus(configuration: com.c15t.core.iab.IabConfiguration?) {
+		busConfiguration = configuration
+		publishTcStorageBus(null)
+	}
+
+	/** Only the core may supply a live, validated authority for a repair publication. */
+	@Synchronized
+	internal fun publishTcStorageBus(envelope: SnapshotEnvelope?) {
+		val bus = tcStorageBus ?: return
+		try {
+			val values = if (envelope == null) TcStorageBusProjection.detection(busConfiguration)
+				else TcStorageBusProjection.values(envelope, busConfiguration)
+			if (values.isEmpty()) bus.clear() else bus.write(values)
+		} catch (_: Exception) {
+			try { bus.clear() } catch (_: Exception) { /* Next publication retries. */ }
+		}
+	}
+
 	/**
 	 * Set by the read that refused a stored id, cleared when [takeUnusableSubject] hands it
 	 * over. Guarded by the instance rather than by a process flag because a host that runs
 	 * two stores gets two honest reads, and neither one should silence the other.
 	 */
 	private var unusableSubject: UnusableSubjectId? = null
+	var subjectReplacementReason: String? = null
+		private set
+
+	fun hasConsentRecords(): Boolean =
+		listOf(C15tStoreKeys.SNAPSHOT, C15tStoreKeys.PENDING).any { key ->
+			readRaw(key).fold(onSuccess = { it != null }, onFailure = { true })
+		}
 
 	/**
 	 * Read the stored subject, or `null` when absent, unparseable, or unusable.
@@ -84,7 +116,17 @@ class C15tStore(
 	 * make that decision invisible.
 	 */
 	fun readSubject(): ConsentSubject? {
-		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer()) ?: return null
+		unusableSubject = null
+		subjectReplacementReason = null
+		val raw = readRaw(C15tStoreKeys.SUBJECT).getOrElse {
+			subjectReplacementReason = "corrupt"
+			return null
+		}
+		val stored = tryDecode(C15tStoreKeys.SUBJECT, ConsentSubject.serializer(), raw = raw)
+		if (stored == null) {
+			subjectReplacementReason = if (raw == null) "missing" else "corrupt"
+			return null
+		}
 		if (SubjectIdGenerator.isValid(stored.id)) {
 			return stored
 		}
@@ -146,25 +188,76 @@ class C15tStore(
 		}
 	}
 
+	/** Persist a newer envelope before publishing its vendor mirror. Custom backends must
+	 * explicitly acknowledge durable writes. Mirror failure never rolls back authority. */
+	fun writeEnvelope(envelope: SnapshotEnvelope): Boolean = writeEnvelope(envelope, publishBus = true)
+
+	@Synchronized
+	internal fun writeEnvelope(envelope: SnapshotEnvelope, publishBus: Boolean): Boolean {
+		val old = readEnvelope()
+		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
+		val next = envelope.copy(pendingSaves = old?.pendingSaves)
+		return writeAtomic(next, publishBus)
+	}
+
 	/**
-	 * Persist [envelope] so the next cold start answers synchronously.
-	 *
-	 * The `IABTCF_*` bus moves in this same step, because the specification's
-	 * readers must not be able to observe a device whose vendor mirror is ahead
-	 * of, or behind, a decision its own record took back: the projection is a
-	 * pure function of [envelope], published once the envelope bytes have gone
-	 * to the authoritative store. A host [KeyValueStore] reports no write
-	 * failure through this seam; a drop that leaves the mirror one commit stale
-	 * is rebuilt by the next write, the next launch, or [rebuildTcStorageBus].
+	 * Persist the decision and its delivery obligation before publishing either.
+	 * IAB decisions supersede grants; category decisions retain their queue history.
 	 */
-	fun writeEnvelope(envelope: SnapshotEnvelope) {
-		backend.write(C15tStoreKeys.SNAPSHOT, json.encodeToString(SnapshotEnvelope.serializer(), envelope))
-		tcStorageBus?.write(TcStorageBusProjection.values(envelope))
+	fun commit(
+		envelope: SnapshotEnvelope,
+		entry: QueuedSave,
+		limit: Int = PendingSaveQueue.DEFAULT_LIMIT,
+		supersedeGrants: Boolean = true,
+	): Boolean = commit(envelope, entry, limit, supersedeGrants, publishBus = true)
+
+	@Synchronized
+	internal fun commit(
+		envelope: SnapshotEnvelope,
+		entry: QueuedSave,
+		limit: Int,
+		supersedeGrants: Boolean,
+		publishBus: Boolean,
+	): Boolean {
+		val capacity = limit.coerceIn(1, PendingSaveQueue.DEFAULT_LIMIT)
+		val current = readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
+		val withdrawals = current.filter { it.isWithdrawal() }
+		if (withdrawals.size >= capacity) return false
+		val grants = if (supersedeGrants) emptyList() else
+			current.filterNot { it.isWithdrawal() }.takeLast(capacity - withdrawals.size - 1)
+		return writeAtomic(envelope.copy(pendingSaves = withdrawals + grants + entry), publishBus)
+	}
+
+	/** Atomic empty consent state for reset and identity changes. */
+	@Synchronized
+	fun replace(envelope: SnapshotEnvelope): Boolean =
+		writeAtomic(envelope.copy(pendingSaves = readPending().filter { it.isWithdrawal() }))
+
+	private fun writeAtomic(envelope: SnapshotEnvelope, publishBus: Boolean = true): Boolean {
+		val raw = json.encodeToString(SnapshotEnvelope.serializer(), envelope)
+		val written =
+			try {
+				backend.writeDurably(C15tStoreKeys.SNAPSHOT, raw)
+			} catch (_: Exception) {
+				false
+			}
+		if (!written) {
+			if (publishBus && envelope.iabConsent == null) publishTcStorageBus(null)
+			return false
+		}
+		if (publishBus) publishTcStorageBus(envelope)
+		return true
 	}
 
 	/** Read the offline write queue; an unparseable queue reads as empty. */
-	fun readPending(): List<QueuedSave> =
-		tryDecode(C15tStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
+	@Synchronized
+	fun readPending(): List<QueuedSave> {
+		val envelope = readEnvelope()
+		val snapshot = readRaw(C15tStoreKeys.SNAPSHOT).getOrElse { return emptyList() }
+		if (snapshot != null && envelope == null) return emptyList()
+		return envelope?.pendingSaves
+			?: tryDecode(C15tStoreKeys.PENDING, PendingQueue.serializer(), queueJson)?.entries ?: emptyList()
+	}
 
 	/**
 	 * Replace the whole offline write queue, and report whether the bytes came back.
@@ -176,14 +269,18 @@ class C15tStore(
 	 * wrote from a queue that quietly did not, which is the difference between a save that
 	 * owes delivery and a save that only believes it does.
 	 *
-	 * Comparison is on the plaintext that went in, not on the stored blob: an encrypted
-	 * store returns ciphertext, and it is the round trip through decryption that is being
-	 * proven.
+	 * Comparison is on the plaintext that went in, not on the stored blob: an encrypted store
+	 * returns ciphertext, and it is the round trip through decryption that is being proven.
 	 */
+	@Synchronized
 	fun writePending(entries: List<QueuedSave>): Boolean {
+		val old = readEnvelope()
+		// Delivery changes no authority and must not republish stored grants whose clock
+		// or disclosure the live core may already have invalidated.
+		if (old?.pendingSaves != null) return writeAtomic(old.copy(pendingSaves = entries), publishBus = false)
 		val raw = queueJson.encodeToString(PendingQueue.serializer(), PendingQueue(entries))
 		backend.write(C15tStoreKeys.PENDING, raw)
-		return backend.read(C15tStoreKeys.PENDING) == raw
+		return readRaw(C15tStoreKeys.PENDING).getOrNull() == raw
 	}
 
 	/** Drop stored consent state, keeping the subject id so identity survives. */
@@ -194,46 +291,35 @@ class C15tStore(
 		// Same step, same rule as every other wipe: the keys this core put on
 		// the bus go with the envelope they projected. The wipe addresses the
 		// whole specification table -- [TcStorageBusSink.clear] says why.
-		tcStorageBus?.clear()
+		publishTcStorageBus(null)
 	}
 
-	/**
-	 * Re-derive the `IABTCF_*` bus from the stored envelope.
-	 *
-	 * The repair path, not the normal one: [writeEnvelope], [clearConsentState]
-	 * and a launch that persists already keep the bus in step. This exists for
-	 * the moments outside those writes -- somebody cleared the
-	 * application-default file (the publisher's duty for vestigial values makes
-	 * that legal), or a device integrates the bus on top of an envelope that
-	 * was there first. Absent or unreadable stored state clears the bus,
-	 * because the honest mirror of nothing stored is nothing held; a store
-	 * with no bus configured is a no-op.
-	 */
+	/** Repair metadata only. Use [com.c15t.core.C15tKernel.rebuildTcStorageBus] to restore
+	 * consent rows after current clock, list, configuration and identity validation. */
+	@Synchronized
 	fun rebuildTcStorageBus() {
-		val bus = tcStorageBus ?: return
-		val envelope = readEnvelope()
-		if (envelope != null) {
-			bus.write(TcStorageBusProjection.values(envelope))
-		} else {
-			bus.clear()
-		}
+		// A raw store has no current clock/config/identity validation. Restore metadata only.
+		publishTcStorageBus(readEnvelope()?.copy(iabConsent = null))
 	}
 
 	/** Flush buffered writes to durable storage. */
 	fun flush() = backend.flush()
 
+	private fun readRaw(key: String): Result<String?> =
+		try {
+			Result.success(backend.read(key))
+		} catch (error: Exception) {
+			onReadFailure(key, error)
+			Result.failure(error)
+		}
+
 	private fun <T : Any> tryDecode(
 		key: String,
 		deserializer: DeserializationStrategy<T>,
 		json: Json = this.json,
+		raw: String? = readRaw(key).getOrNull(),
 		prepare: (String) -> String = { it },
 	): T? {
-		val raw = try {
-			backend.read(key)
-		} catch (error: Exception) {
-			onReadFailure(key, error)
-			return null
-		}
 		if (raw.isNullOrEmpty()) {
 			return null
 		}

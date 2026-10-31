@@ -155,6 +155,14 @@ describe('snapshot reads', () => {
 		expect(fake.snapshotCalls).toBe(calls);
 	});
 
+	test('retains the model and permissions in a native IAB snapshot', () => {
+		const snapshot = buildSnapshot({ model: 'iab', revision: 7 });
+		const { client } = makeClient({ snapshot });
+
+		expect(client.getSnapshot()).toEqual(snapshot);
+		expect(client.getSnapshot().error).toBeNull();
+	});
+
 	test('does not pull for a revision it already holds', () => {
 		const { client, fake } = makeClient();
 
@@ -256,14 +264,73 @@ describe('snapshot reads', () => {
 		expect(snapshot.effectivePermissions.marketing).toBe(false);
 	});
 
-	test('keeps the last readable snapshot when a later one breaks', () => {
+	test.each([false, true])(
+		'revokes cached grants after an unreadable snapshot, subscribed=%s',
+		(subscribed) => {
+			const granted = buildSnapshot({
+				effectivePermissions: {
+					experience: true,
+					functionality: true,
+					marketing: true,
+					measurement: true,
+					necessary: true,
+				},
+				revision: 7,
+			});
+			const { client, fake } = makeClient({ snapshot: granted });
+			const good = client.getSnapshot();
+			const changed = vi.fn();
+			const stop = subscribed
+				? client.subscribe(
+						(state) => state.effectivePermissions.marketing,
+						changed
+					)
+				: () => {};
+
+			expect(client.isAllowed('marketing')).toBe(true);
+			fake.pushUnreadableSnapshot('not json at all');
+
+			const failed = client.getSnapshot();
+			expect(client.isAllowed('marketing')).toBe(false);
+			expect(client.isTrackingAllowed('marketing')).toBe(false);
+			expect(client.decision('marketing')).toBe('pending');
+			expect(failed.error?.code).toBe('invalid-native-snapshot');
+			expect(failed.revision).toBe(7);
+			expect(failed.ready).toBe(false);
+			expect(client.getSnapshot()).toBe(failed);
+			expect(good.effectivePermissions.marketing).toBe(true);
+			expect(changed).toHaveBeenCalledTimes(subscribed ? 1 : 0);
+
+			// A repaired native payload can retain the last valid revision.
+			fake.pushSnapshot(granted);
+			expect(client.isAllowed('marketing')).toBe(true);
+			expect(client.getSnapshot().error).toBeNull();
+			expect(changed).toHaveBeenCalledTimes(subscribed ? 2 : 0);
+			stop();
+		}
+	);
+
+	test('rejects a snapshot with malformed permission values', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const { client, fake } = makeClient();
-
 		const good = client.getSnapshot();
+		fake.pushUnreadableSnapshot(
+			JSON.stringify({
+				...good,
+				effectivePermissions: {
+					...good.effectivePermissions,
+					marketing: true,
+					measurement: 'true',
+				},
+			})
+		);
 
-		fake.pushUnreadableSnapshot('not json at all');
-
-		expect(client.getSnapshot()).toBe(good);
+		expect(client.isAllowed('marketing')).toBe(false);
+		expect(client.getSnapshot().error?.code).toBe('invalid-native-snapshot');
+		expect(warn).toHaveBeenCalledWith(expect.any(String), [
+			'effectivePermissions.measurement: expected a boolean, found string',
+		]);
+		warn.mockRestore();
 	});
 });
 
@@ -308,9 +375,7 @@ describe('wire drift', () => {
 			readonly string[],
 		];
 
-		expect(message).toContain(
-			'does not use the key names this package declares'
-		);
+		expect(message).toContain('does not match the declared wire shape');
 		expect(problems).toContain(
 			'location.countryCode: required here, absent from the payload'
 		);

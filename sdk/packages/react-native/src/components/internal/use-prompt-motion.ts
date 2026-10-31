@@ -2,8 +2,8 @@
  * Enter and exit motion for a consent surface.
  *
  * The animation lives on one `Animated.Value` driven by the native driver, so a
- * frame costs no React render: state moves twice at most, once to mount the
- * surface and once to unmount it after the exit finishes. Under reduced motion
+ * frame costs no React render. Each opening gets fresh content, even if the
+ * preceding exit has not finished. Under reduced motion
  * the same code path runs with a one-millisecond duration, which keeps a single
  * reveal implementation rather than a second render branch.
  */
@@ -19,6 +19,8 @@ export type AnimatedViewStyle = Animated.AnimatedProps<ViewProps>['style'];
 export interface PromptMotion {
 	/** Whether the surface is in the tree at all. */
 	readonly rendered: boolean;
+	/** Identifies each opening, including one that interrupts an exit. */
+	readonly contentKey: number;
 	/** Style to apply to the animated container. */
 	readonly motionStyle: AnimatedViewStyle;
 }
@@ -97,6 +99,11 @@ export const usePromptMotion = function usePromptMotion(
 	// and one instance has to survive every re-render underneath it.
 	const progress = useMemo(() => new Animated.Value(0), []);
 	const [mounted, setMounted] = useState(open);
+	const [cycle, setCycle] = useState({ key: 0, open });
+
+	if (cycle.open !== open) {
+		setCycle({ key: open ? cycle.key + 1 : cycle.key, open });
+	}
 
 	// Whether the surface is on its way out. Written from the effect only, and
 	// read from the animation callback, which is the only place a surface is
@@ -157,5 +164,5 @@ export const usePromptMotion = function usePromptMotion(
 		transform: [axis === 'x' ? { translateX: travel } : { translateY: travel }],
 	};
 
-	return { motionStyle, rendered: mounted };
+	return { contentKey: cycle.key, motionStyle, rendered: mounted };
 };

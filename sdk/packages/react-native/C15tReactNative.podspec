@@ -2,8 +2,8 @@ require "json"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
-# The consent kernel is compiled from `vendor/C15tCore`, a generated copy of
-# `native/core-swift/Sources/C15tCore` written by `scripts/sync-vendored-core.ts`.
+# The native core and Apple services compile from generated source copies under
+# vendor/C15tCore and vendor/C15tApple. Their sync scripts keep native/core-swift authoritative.
 #
 # This spec used to declare `s.dependency "C15tCore"`. That resolved here only because the
 # example Podfiles write `pod "C15tCore", :path => "../native/core-swift"`; CocoaPods cannot
@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
   # The kernel brings no privacy manifest of its own. Its own spec ships one, and it declares the
   # same four keys with the same values as the bundle below, so the copy compiled into this
   # target is described by it.
-  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift"
+  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift", "vendor/C15tConsentUI/**/*.swift"
   s.public_header_files = "ios/C15tReactNative/C15tReactNative.h"
   s.resource_bundle = { "C15tReactNative" => "ios/C15tReactNative/Resources/Privacy.xcprivacy" }
   # `Package.swift` is not in here because it is not in the package: the SPM manifest
@@ -50,7 +50,7 @@ Pod::Spec.new do |s|
   s.requires_arc = true
   s.static_framework = true
 
-  s.frameworks = "Foundation", "Security"
+  s.frameworks = "Foundation", "Security", "SwiftUI", "UIKit"
 
   # RCTEventEmitter, RCTBridgeModule, and the promise blocks.
   s.dependency "React-Core"
@@ -72,8 +72,8 @@ Pod::Spec.new do |s|
 
   # The bridging headers (`react/bridging/*.h`) that the generated JSI glue includes moved
   # in React Native 0.87: they were the `ReactCommon/turbomodule/bridging` subspec through
-  # 0.86 and are the standalone `React-bridging` pod from 0.87. This package supports
-  # 0.81 and up, so name whichever one the host app's React Native ships.
+  # 0.86 and are the standalone `React-bridging` pod from 0.87. The candidate range is
+  # 0.86.x and 0.87.x, so name whichever one the host app's React Native ships.
   #
   # The host's copy, not this package's: CocoaPods evaluates a podspec from the podspec's
   # own directory, where `require.resolve` finds the development dependency (0.87) rather

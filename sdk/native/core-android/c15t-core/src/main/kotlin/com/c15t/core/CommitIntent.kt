@@ -10,6 +10,12 @@ import com.c15t.core.model.ConsentCategory
  * explicit per-category map.
  */
 sealed class CommitIntent {
+	/** Complete native IAB draft with category choices. */
+	data class Iab(
+		val choices: com.c15t.core.iab.IabChoices,
+		val consents: Map<ConsentCategory, Boolean>,
+	) : CommitIntent()
+
 	/** Accept every optional category. */
 	data object All : CommitIntent() {
 		/** The consent map this intent writes. */
@@ -33,7 +39,8 @@ sealed class CommitIntent {
 		get() = when (this) {
 			is All -> ConsentAction.ALL
 			is Necessary -> ConsentAction.NECESSARY
-			is Explicit -> ConsentAction.CUSTOM
+			is Explicit,
+				is Iab -> ConsentAction.CUSTOM
 		}
 
 	/** The category values this intent writes. */
@@ -42,5 +49,6 @@ sealed class CommitIntent {
 			is All -> All.consents
 			is Necessary -> Necessary.consents
 			is Explicit -> consents
-		}
+				is Iab -> consents
+			}
 }

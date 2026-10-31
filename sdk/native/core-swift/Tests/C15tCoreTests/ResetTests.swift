@@ -163,7 +163,7 @@ final class ResetTests: XCTestCase {
         XCTAssertEqual(core.save(.all).status, .committed)
         await http.waitUntilSaveRequests(1)
         XCTAssertNotNil(store.data(for: StorageKey.snapshot))
-        XCTAssertNotNil(store.data(for: StorageKey.pendingSaves), "the write has to still be owed to prove anything")
+        XCTAssertEqual(core.pendingSaveCount(), 1, "the write has to still be owed to prove anything")
         let subjectBytes = store.data(for: StorageKey.subject)
         XCTAssertNotNil(subjectBytes)
 

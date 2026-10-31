@@ -1,0 +1,111 @@
+// Shared by the headless JVM and Android publications. Remote publication is opt-in.
+def nativeVersion = providers.gradleProperty('c15t.native.version').get()
+def artifactName = project.name
+group = 'com.c15t'
+version = nativeVersion
+
+publishing {
+	repositories {
+		maven {
+			name = 'staging'
+			url = rootProject.layout.buildDirectory.dir('maven-staging')
+		}
+		if (providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true') {
+			maven {
+				name = 'privateGitHub'
+				url = uri('https://maven.pkg.github.com/inthhq/c15t-private')
+				credentials {
+					username = providers.environmentVariable('C15T_MAVEN_USERNAME').orNull
+					password = providers.environmentVariable('C15T_MAVEN_TOKEN').orNull
+				}
+			}
+		}
+	}
+}
+
+def apiDocs = tasks.register('apiDocsJar', Jar) {
+	dependsOn 'dokkaGeneratePublicationHtml'
+	archiveClassifier = 'javadoc'
+	from layout.buildDirectory.dir('dokka/html')
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
+tasks.withType(Jar).configureEach {
+	from(rootProject.file('../../LICENSE.md')) { into "META-INF/licenses/com.c15t/${artifactName}"; rename { 'LICENSE' } }
+	from(rootProject.file('../../NOTICE')) { into "META-INF/licenses/com.c15t/${artifactName}" }
+	manifest.attributes('Implementation-Version': nativeVersion, 'Implementation-Vendor': 'c15t')
+}
+
+def metadata = tasks.register('generateNativeMetadata') {
+	def output = layout.buildDirectory.file("generated/native-metadata/META-INF/c15t/${artifactName}.properties")
+	inputs.property('nativeVersion', nativeVersion)
+	inputs.property('artifact', artifactName)
+	outputs.file(output)
+	doLast {
+		output.get().asFile.with {
+			parentFile.mkdirs()
+			text = "group=com.c15t\nartifact=${artifactName}\nversion=${nativeVersion}\nprotocol=1\n"
+		}
+	}
+}
+
+if (project.name == 'c15t-core') {
+	sourceSets.main.resources.srcDir(layout.buildDirectory.dir('generated/native-metadata'))
+	tasks.named('processResources') { dependsOn metadata }
+	tasks.named('sourcesJar') { dependsOn metadata }
+} else {
+	android.sourceSets.main.resources.srcDir(layout.buildDirectory.dir('generated/native-metadata').get().asFile)
+	android.sourceSets.main.resources.srcDir(layout.buildDirectory.dir('license-resources').get().asFile)
+	def license = tasks.register('copyNativeLicense', Copy) {
+		from(rootProject.file('../../LICENSE.md')) { rename { 'LICENSE' } }
+		from(rootProject.file('../../NOTICE'))
+		into layout.buildDirectory.dir("license-resources/META-INF/licenses/com.c15t/${artifactName}")
+	}
+	tasks.named('preBuild') { dependsOn metadata, license }
+}
+
+afterEvaluate {
+	publishing.publications {
+		register('release', MavenPublication) {
+			from components.getByName(project.name == 'c15t-core' ? 'java' : 'release')
+			artifact apiDocs
+			pom {
+				name = project.name
+				description = project.name == 'c15t-core' ?
+					'Headless c15t consent and IAB engine for the JVM.' :
+					(project.name == 'c15t-consent-ui' ? 'Optional native Compose consent presenter for c15t.' : 'Android persistence, transport and lifecycle services for c15t. No UI dependency.')
+				url = 'https://c15t.com'
+				licenses {
+					license {
+						name = 'Apache License, Version 2.0'
+						url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+						distribution = 'repo'
+					}
+				}
+				developers { developer { id = 'c15t'; name = 'c15t'; url = 'https://c15t.com' } }
+				scm {
+					url = 'https://github.com/inthhq/c15t-private'
+					connection = 'scm:git:https://github.com/inthhq/c15t-private.git'
+				}
+			}
+		}
+	}
+	if (providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true') {
+		def signingKey = providers.environmentVariable('C15T_MAVEN_SIGNING_KEY').orNull
+		def signingPassword = providers.environmentVariable('C15T_MAVEN_SIGNING_PASSWORD').orNull
+		if (!signingKey || !signingPassword || !System.getenv('C15T_MAVEN_USERNAME') || !System.getenv('C15T_MAVEN_TOKEN')) {
+			throw new GradleException('Private Maven publication requires repository credentials and an in-memory signing key/password from the secure release environment.')
+		}
+		signing {
+			useInMemoryPgpKeys(signingKey, signingPassword)
+			sign publishing.publications
+		}
+	}
+}
+
+tasks.withType(PublishToMavenRepository).configureEach {
+	dependsOn rootProject.tasks.named('verifyNativeVersion')
+}

@@ -90,6 +90,8 @@ export interface ConsentSwitchProps {
 	readonly geometry?: ConsentSwitchGeometry;
 	/** Announced as the control's name, which is the category it decides. */
 	readonly label: string;
+	/** Stable locator for the category control. */
+	readonly testID?: string;
 	/** Parts in force for this surface, including the track geometry. */
 	readonly parts: ConsentResolvedParts;
 	/** Theme, for the track and thumb colours. */
@@ -116,6 +118,7 @@ export const ConsentSwitch = ({
 	label,
 	onValueChange,
 	parts,
+	testID,
 	theme,
 	value,
 }: ConsentSwitchProps): ReactNode => {
@@ -205,6 +208,7 @@ export const ConsentSwitch = ({
 				onValueChange(!value);
 			}}
 			style={HIT_BOX}
+			testID={testID}
 		>
 			<View
 				style={[

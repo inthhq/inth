@@ -59,6 +59,18 @@ const umbrellaFrameworks = [
 
 export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
+		include: ['frameworks/react-native/**/*.mdx'],
+		name: '@c15t/react-native',
+		outDir: 'packages/react-native',
+		skill: {
+			install: 'the maintainer-provided private @c15t/react-native tarball',
+			topic:
+				'the project uses React Native, Expo development builds, Swift or Kotlin native consent',
+		},
+		summary:
+			'Private mobile prerelease: Expo and bare React Native setup, native SDK gates, durable offline choices, native presenters, IAB, Apple and Android installation. Distribution and device acceptance remain release gates.',
+	},
+	{
 		include: [
 			'concepts/**/*.mdx',
 			'guides/**/*.mdx',

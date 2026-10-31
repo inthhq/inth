@@ -150,10 +150,10 @@
 			"note": "TurboModule binding bytes on iOS. 256 KiB is the ceiling for a Codegen spec, a JSON marshalling layer, and an event emitter, with no consent logic in it."
 		},
 		"android_binary_bytes": {
-			"max": 1572864,
+			"max": 2621440,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Bytes the Kotlin core plus the bridge add to an Android app, measured as the uncompressed class bytes of the release artifacts. Measured 1,281,139 B with the TCF disclosure, the served vendor list slot, and the IABTCF bus in the core; 1.5 MiB is the ceiling."
+			"note": "Uncompressed class bytes of the first-party core, Android adapter, Compose consent UI and RN bridge Release artifacts, before DEX, R8 or compression and excluding transitive dependencies. The complete 2026-10-30 baseline at 3f8d67426 measures 2,385,975 B; snapshots/android-raw-classes-2026-10-30.json records component bytes and artifact hashes. The 2.5 MiB ceiling leaves 235,465 B, or 9.9%, for code growth. This replaces the pre-presenter 1.5 MiB allowance calibrated against 1,281,139 B. Matched Release consumer builds measure app-size contribution separately."
 		},
 		"js_hydrate_envelope_ms": {
 			"max": 3,

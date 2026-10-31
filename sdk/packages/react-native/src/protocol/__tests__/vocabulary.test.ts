@@ -345,15 +345,8 @@ describe('the mobile tables against the JavaScript kernel', () => {
 		).toEqual([...OPTIONAL_CONSENT_CATEGORIES]);
 	});
 
-	test('the models a core reports are the readable four, minus the one a core cannot back', () => {
-		// Reading `iab` and reporting it are different promises: a core evaluates an
-		// IAB rule and publishes `opt-in` until something gives it a vendor-side
-		// record. `deriveModel` in `packages/core/src/policy.ts` is the same rule, and
-		// POLICY_MODELS is pinned to the kernel's model union by the type test.
-		expect(POLICY_MODELS.filter((model) => model !== 'iab')).toEqual([
-			...NATIVE_MODELS,
-		]);
-		expect(NATIVE_MODELS.length).toBe(POLICY_MODELS.length - 1);
+	test('native snapshots support every declared policy model, including IAB authority', () => {
+		expect(NATIVE_MODELS).toEqual(POLICY_MODELS);
 	});
 });
 
@@ -443,8 +436,6 @@ describe('the Swift core declares the same vocabulary', () => {
 	});
 
 	test('models, every one the wire can carry', () => {
-		// Both cores read all four now. The set that reaches a snapshot is narrower,
-		// and that difference is the reported model, not the readable one.
 		expect(swiftStringEnumValues(SWIFT_VOCABULARY, 'ConsentModel')).toEqual([
 			...POLICY_MODELS,
 		]);

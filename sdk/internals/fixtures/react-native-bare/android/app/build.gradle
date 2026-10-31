@@ -52,6 +52,9 @@ react {
 
     /* Autolinking */
     autolinkLibrariesWithApp()
+    if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+        extraPackagerArgs = ["--reset-cache"]
+    }
 }
 
 /**
@@ -78,12 +81,18 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.c15t.bare"
+    if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+        sourceSets.release.manifest.srcFile "src/e2e/AndroidManifest.xml"
+    }
     defaultConfig {
         applicationId "com.c15t.bare"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+        if (providers.gradleProperty("c15t.appE2e").getOrElse("false").toBoolean()) {
+            manifestPlaceholders.usesCleartextTraffic = "true"
+        }
     }
     signingConfigs {
         debug {
@@ -108,6 +117,10 @@ android {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation("com.c15t:c15t-core:3.0.0-alpha.1")
+    implementation("com.c15t:c15t-android:3.0.0-alpha.1")
+
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
@@ -115,5 +128,17 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+if (providers.gradleProperty("c15t.appE2e").orNull == "true") {
+    android.sourceSets.main.assets.srcDirs = [providers.gradleProperty("c15t.policyAssets").get()]
+}
+
+// Babel embeds these values. Gradle otherwise reuses a bundle built without
+// the observer when switching between a normal Release build and app E2E.
+tasks.matching { it.name == "createBundleReleaseJsAndAssets" }.configureEach {
+    ["C15T_APP_E2E", "C15T_FAKE_NATIVE", "C15T_BACKEND_URL", "C15T_SAMPLE_INTERVAL_MS", "C15T_E2E_URL", "C15T_APP_E2E_SCENARIO"].each { name ->
+        inputs.property(name, providers.environmentVariable(name).getOrElse(""))
     }
 }

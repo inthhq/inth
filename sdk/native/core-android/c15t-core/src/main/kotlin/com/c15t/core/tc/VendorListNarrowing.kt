@@ -36,7 +36,13 @@ fun GlobalVendorList.narrowToVendorIds(vendorIds: Collection<Int>?): GlobalVendo
 		return this
 	}
 	val allowed = vendorIds.toSet()
-	return copy(vendors = vendors.filterKeys { id -> id in allowed })
+	val additional = additionalFields?.toMutableMap()?.also { fields ->
+		(fields[VENDORS_KEY] as? JsonObject)?.let { vendors ->
+			val kept = vendors.filterKeys { it.toIntOrNull() in allowed }
+			if (kept.isEmpty()) fields.remove(VENDORS_KEY) else fields[VENDORS_KEY] = JsonObject(kept)
+		}
+	}?.takeIf { it.isNotEmpty() }?.let(::JsonObject)
+	return copy(vendors = vendors.filterKeys { id -> id in allowed }, additionalFields = additional)
 }
 
 /**

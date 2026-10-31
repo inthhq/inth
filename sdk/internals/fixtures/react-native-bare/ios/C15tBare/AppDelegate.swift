@@ -1,3 +1,4 @@
+import C15tReactNative
 import UIKit
 import React
 import React_RCTAppDelegate
@@ -6,6 +7,8 @@ import ReactAppDependencyProvider
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
+  private var e2eTimer: DispatchSourceTimer?
+  private let e2eClock = FixtureClock()
 
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
@@ -14,6 +17,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
+       URL(string: endpoint)?.host == "localhost" {
+      let control = fixtureControl(endpoint)
+      if let now = control["now"] as? Int64 { e2eClock.set(now) }
+      let declared = (control["categories"] as? [String])?.compactMap(ConsentCategory.init(rawValue:)) ?? [.necessary, .functionality, .experience, .measurement, .marketing]
+      // The test-only artifact opts out of automatic bootstrap. One protected core owns UI and gates.
+      do {
+        _ = try C15tApple.install(CoreConfig(store: KeychainStore(service: "com.c15t.bare.e2e"),
+          bundledPolicy: Bundle.main.url(forResource: "c15t-policy", withExtension: "json").flatMap { BundledPolicyResource(url: $0, endpoint: endpoint + "/api/self-host") },
+          transport: HostedTransport(baseURL: URL(string: endpoint + "/api/self-host")!),
+          consentCategories: declared,
+          iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"), now: e2eClock.read, storageBus: UserDefaultsStorageBus()))
+      } catch { fatalError("E2E protected native installation failed: \(error)") }
+    }
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
@@ -29,6 +46,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: demoLaunchOptions(launchOptions)
     )
 
+    if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
+       URL(string: endpoint)?.host == "localhost" {
+      let timer = DispatchSource.makeTimerSource(queue: DispatchQueue(label: "c15t.fixture-observer"))
+      timer.schedule(deadline: .now(), repeating: .milliseconds(500))
+      timer.setEventHandler { [self] in
+        let control = fixtureControl(endpoint)
+        if let now = control["now"] as? Int64 { e2eClock.set(now) }
+        guard let snapshot = try? JSONSerialization.jsonObject(with: Data(C15tPayload.snapshot(C15t.snapshot()).utf8)) else { return }
+        let gates = ["experience": C15t.isAllowed(.experience), "functionality": C15t.isAllowed(.functionality), "measurement": C15t.isAllowed(.measurement), "marketing": C15t.isAllowed(.marketing)]
+        let body: [String: Any] = ["snapshot": snapshot, "gates": gates, "process": ProcessInfo.processInfo.processIdentifier, "clock": e2eClock.read(), "control": control, "source": "native-core", "pendingSaves": C15t.current?.pendingSaveCount() ?? 0, "iabConsent": (C15t.current?.iabConsent()).flatMap { try? JSONSerialization.jsonObject(with: JSONEncoder().encode($0)) } ?? NSNull()]
+        var request = URLRequest(url: URL(string: endpoint + "/e2e/native")!)
+        request.httpMethod = "POST"
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        URLSession.shared.dataTask(with: request).resume()
+      }
+      timer.resume()
+      e2eTimer = timer
+    }
     return true
   }
 
@@ -79,4 +115,25 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
+}
+
+// Available only to the artifact with C15tAppE2EURL set to loopback by the runner.
+private final class FixtureClock: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value: Int64?
+  func set(_ now: Int64) { lock.lock(); value = now; lock.unlock() }
+  func read() -> Int64 { lock.lock(); defer { lock.unlock() }; return value ?? Int64(Date().timeIntervalSince1970 * 1000) }
+}
+
+private func fixtureControl(_ endpoint: String) -> [String: Any] {
+  let done = DispatchSemaphore(value: 0)
+  var body: [String: Any] = [:]
+  var request = URLRequest(url: URL(string: endpoint + "/e2e/control")!)
+  request.timeoutInterval = 2
+  URLSession.shared.dataTask(with: request) { data, _, _ in
+    if let data { body = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:] }
+    done.signal()
+  }.resume()
+  _ = done.wait(timeout: .now() + 3)
+  return body
 }

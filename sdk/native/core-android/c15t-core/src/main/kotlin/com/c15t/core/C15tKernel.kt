@@ -1,19 +1,24 @@
 package com.c15t.core
 
+import com.c15t.core.model.isWithdrawal
+import com.c15t.core.model.ConsentState
+
+import com.c15t.core.iab.*
 import com.c15t.core.model.ActiveUI
+import com.c15t.core.model.ConfirmedCoverage
 import com.c15t.core.model.ConsentAction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentDecision
+import com.c15t.core.model.ConsentModel
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelError
-import com.c15t.core.model.KernelOverrides
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.ConfirmedCoverage
 import com.c15t.core.model.DecisionInputs
 import com.c15t.core.model.ExplicitChoice
 import com.c15t.core.model.GpcSignal
+import com.c15t.core.model.KernelError
 import com.c15t.core.model.KernelIabState
+import com.c15t.core.model.KernelOverrides
+import com.c15t.core.model.KernelUser
 import com.c15t.core.model.PrivacySignals
 import com.c15t.core.model.QueuedSave
 import com.c15t.core.model.SavePayload
@@ -32,18 +37,21 @@ import com.c15t.core.tc.GlobalVendorList
 import com.c15t.core.tc.GlobalVendorListJson
 import com.c15t.core.tc.narrowToVendorIds
 import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.MappedInit
 import com.c15t.core.transport.InitContext
 import com.c15t.core.transport.InitMapper
+import com.c15t.core.transport.MappedInit
 import com.c15t.core.transport.SaveOutcome
 import com.c15t.core.transport.TransportOutcome
-import kotlinx.serialization.json.JsonObject
 import java.lang.ref.WeakReference
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlinx.serialization.json.*
 
 /**
  * The answer of one send of a queued body.
@@ -94,8 +102,9 @@ private class PassReport(
  * single volatile read with no lock, no disk, and no allocation, which is what lets an
  * ad SDK call them from the main thread while a save is in flight.
  *
- * Mutation paths hold [mutationLock] only while they compute the next snapshot in
- * memory. Persistence and network always happen after the lock is released.
+ * Mutation paths own [commitGate] through preparation, durable writes and publication.
+ * [mutationLock] guards only in-memory state. Network work and snapshot observers
+ * run after releasing the gate; hot reads never acquire it.
  *
  * @param store Typed persistence over the host's storage.
  * @param transport Backend commands; [C15tTransport.NONE] keeps the core local-only.
@@ -131,7 +140,147 @@ class C15tKernel(
 		?: SubjectIdGenerator(clock = clock)::generate
 
 	private val state = AtomicReference(ConsentSnapshot.denyAll())
+	private data class ReadView(
+		val snapshot: ConsentSnapshot,
+		val authority: BundledPolicyAuthority? = null,
+		val denied: ConsentSnapshot = snapshot,
+		val requiresIab: Boolean = false,
+		val saved: IabCommittedConsent? = null,
+		val fetchedAt: Long? = null,
+		val additionalConsentFetchedAt: Long? = null,
+		val choiceMs: Long = 0,
+		val expired: ConsentSnapshot = snapshot,
+	)
+	private val readView = AtomicReference(ReadView(state.get()))
+	private var deadlineTask: ScheduledFuture<*>? = null
+	private var deadlineGeneration = 0L
+	private var lastIabActionAt: Long? = null
+	private var bundledPolicyAuthority: BundledPolicyAuthority? = null
+	private var additionalConsentList: AdditionalConsentList? = null
+	private var iabListFetchedAt: Long? = null
+	private var iabListFromCache = true
+	private var iabListOffline = false
+	private var committedIab: IabCommittedConsent? = null
+	private val iabConfiguration = config.iab?.detached()
+	/** Compact authority is read natively; full drafts do not cross the RN stock UI boundary. */
+	val iabConsent: IabCommittedConsent?
+		get() =
+			synchronized(mutationLock) {
+				committedIab
+					?.takeIf { saved ->
+						listIsUsable() && (saved.adTechProvidersID == null || currentAdditionalConsentList() != null) && saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
+							evaluationPolicy?.model == ConsentModel.IAB &&
+							!state.get().policyPending
+					}
+					?.detached()
+			}
+
+	/** Check a vendor and purpose together from native authority, before JS starts. */
+	fun isIabAllowed(vendorId: Int, purposeId: Int, basis: IabLegalBasis): Boolean =
+		synchronized(mutationLock) {
+			val saved = committedIab ?: return@synchronized false
+			val snapshot = state.get()
+			val gvl = snapshot.iab?.gvl ?: return@synchronized false
+			val policy = evaluationPolicy ?: return@synchronized false
+			listIsUsable() && (saved.adTechProvidersID == null || currentAdditionalConsentList() != null) && !snapshot.policyPending &&
+				policy.model == ConsentModel.IAB &&
+				saved.fingerprint == policy.choiceFingerprint &&
+				saved.isCurrent(clock.nowMillis(), policy.choiceMs) &&
+				saved.allows(vendorId, purposeId, basis, gvl)
+		}
+
+	private fun listIsUsable(): Boolean {
+		if (bundledPolicyAuthority?.isCurrent(config.portalUrl, clock.nowMillis()) == false) return false
+		val fetched = iabListFetchedAt ?: return false
+		val now = clock.nowMillis()
+		return fetched >= 0 && now >= fetched && now - fetched < config.iabListMaxAgeMs
+	}
+
+	fun iabStatus(): IabLifecycleStatus = synchronized(mutationLock) {
+		val gvl = state.get().iab?.gvl
+		val availability = when {
+			iabConfiguration == null -> IabListAvailability.UNAVAILABLE
+			gvl == null -> IabListAvailability.MISSING
+			!listIsUsable() -> IabListAvailability.STALE
+			iabListOffline -> IabListAvailability.OFFLINE
+			iabListFromCache -> IabListAvailability.CACHED
+			else -> IabListAvailability.FRESH
+		}
+		IabLifecycleStatus(availability, committedIab?.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) != true || !listIsUsable() || committedIab?.adTechProvidersID != null && currentAdditionalConsentList() == null,
+			state.get().revision, gvl?.vendorListVersion, gvl?.tcfPolicyVersion)
+	}
+
+	private fun currentAdditionalConsentList() = additionalConsentList?.takeIf {
+		it.isCurrent(clock.nowMillis(), config.iabListMaxAgeMs)
+	}
+	/** Last readable copy, even when expired. It cannot authorize a new grant. */
+	fun adTechProviderDisclosures(): List<AdTechProvider>? = synchronized(mutationLock) { additionalConsentList?.providers?.toList() }
+	val bundledPolicyInfo: BundledPolicyAuthority? get() = readView.get().authority
+	fun adTechProviders(): List<AdTechProvider>? = synchronized(mutationLock) { currentAdditionalConsentList()?.providers?.toList() }
+	fun isAdTechProviderAllowed(id: Long): Boolean = iabConsent?.choices?.adTechProviderConsents?.contains(id) == true
+	fun additionalConsentStatus(): IabListAvailability = synchronized(mutationLock) {
+		when {
+			iabConfiguration == null -> IabListAvailability.UNAVAILABLE
+			additionalConsentList == null -> IabListAvailability.MISSING
+			currentAdditionalConsentList() == null -> IabListAvailability.STALE
+			iabListOffline -> IabListAvailability.OFFLINE
+			iabListFromCache -> IabListAvailability.CACHED
+			else -> IabListAvailability.FRESH
+		}
+	}
+
+	fun openIabDraft(): IabDraft? = synchronized(mutationLock) {
+		if (iabConfiguration == null || evaluationPolicy?.model != ConsentModel.IAB ||
+			state.get().policyPending || state.get().iab?.gvl == null || !listIsUsable() ||
+			(bundledPolicyAuthority?.requiresAtp == true || additionalConsentList?.providers?.isNotEmpty() == true) && currentAdditionalConsentList() == null) null
+		else IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
+	}
+
+    /** Capture retained disclosure and a draft atomically. Check canEdit before offering grants. */
+    fun iabPresentation(): IabPresentation? = synchronized(mutationLock) {
+        if (evaluationPolicy?.model != ConsentModel.IAB) return@synchronized null
+        val editable = openIabDraft()
+        val draft = editable ?: IabDraft(state.get().revision, committedIab?.choices?.detached() ?: IabChoices())
+        val list = state.get().iab?.gvl?.let { GlobalVendorListJson.read(GlobalVendorListJson.toJsonElement(it)) } ?: return@synchronized null
+        val configuration = iabConfiguration ?: return@synchronized null
+        IabPresentation(draft, list,
+            list.vendors.filterValues { it.deletedDate.isNullOrEmpty() }.mapValues { (id, vendor) -> configuration.disclosure(id, vendor) },
+            additionalConsentList?.providers?.toList(), editable != null)
+    }
+
+	fun saveIab(draft: IabDraft, categories: Map<ConsentCategory, Boolean>): CommitResult =
+		save(CommitIntent.Iab(draft.choices, categories), expectedRevision = draft.revision)
+
 	private val mutationLock = Any()
+	private val commitGate = java.util.concurrent.Semaphore(1)
+	private val mutationErrors = ThreadLocal<MutableList<KernelError>>()
+	private var needsGrantCleanup = false
+	/** Serialize every mutation through durable write and publication, never hot reads. */
+	private fun <Result> mutate(body: (MutationPermit) -> Result): Result {
+		commitGate.acquireUninterruptibly()
+		val permit = MutationPermit { commitGate.release() }
+		val previousErrors = mutationErrors.get()
+		val errors = mutableListOf<KernelError>()
+		mutationErrors.set(errors)
+		try {
+			return body(permit)
+		} finally {
+			if (previousErrors == null) mutationErrors.remove() else mutationErrors.set(previousErrors)
+			permit.release()
+			// Host loggers and error listeners may reenter a mutation. All state-lock
+			// scopes have unwound and the commit permit is free before they run.
+			for (error in errors) emitError(error)
+		}
+	}
+
+	private class MutationPermit(private var unlock: (() -> Unit)?) {
+		fun release() {
+			val action = unlock
+			unlock = null
+			action?.invoke()
+		}
+	}
+
 	private val bootstrapped = AtomicBoolean(false)
 
 	/** Validated policy from the last init, guarded by [mutationLock]. */
@@ -159,6 +308,7 @@ class C15tKernel(
 
 	/** Whether `subject-id-unusable` has been reported. One launch, one announcement. */
 	private val unusableSubjectAnnounced = AtomicBoolean(false)
+	private val identityRecoveryAnnouncements = mutableSetOf<String>()
 
 	/**
 	 * GPC as the device and the backend report it, with no override applied.
@@ -193,13 +343,14 @@ class C15tKernel(
 	 * first Activity exists. Everything after the synchronous hydration runs on
 	 * [background], so the caller's thread never waits on the network.
 	 */
-	fun bootstrap() {
+	fun bootstrap() = mutate { mutation ->
 		if (!bootstrapped.compareAndSet(false, true)) {
-			return
+			return@mutate
 		}
+		store.initializeTcStorageBus(iabConfiguration)
 		val now = clock.nowMillis()
 		val subject = resolveSubject()
-		val envelope = store.readEnvelope()
+		val envelope = store.readEnvelope()?.takeIf { it.snapshot.subject?.id == subject.id }
 
 		storedSnapshotFound = envelope != null
 
@@ -209,8 +360,9 @@ class C15tKernel(
 			// First launch, or a payload this build cannot read: deny-all until an
 			// init resolves, with ready false so a host can tell the two apart.
 			publishPure(
-				ConsentSnapshot.denyAll(subject, now).copy(
-					consentCategories = decidedCategories(null),
+				ConsentSnapshot.denyAll(subject, now)
+					.copy(
+						consentCategories = decidedCategories(null),
 					overrides = config.overrides,
 					privacySignals = signalsFor(config.overrides),
 				)
@@ -224,6 +376,15 @@ class C15tKernel(
 			val restored = envelope.snapshot
 			synchronized(mutationLock) {
 				evaluationPolicy = envelope.evaluationPolicy
+				bundledPolicyAuthority = envelope.bundledPolicyAuthority
+				additionalConsentList = envelope.additionalConsentList
+				iabListFetchedAt = envelope.iabListFetchedAt
+				committedIab = envelope.iabConsent
+				// A backward clock jump must not let a restart reuse an action time.
+				lastIabActionAt =
+					(envelope.lastIabActionAt ?: envelope.iabConsent?.actionAt)?.takeIf {
+						it >= 0
+					}
 				noticeDismissal = envelope.noticeDismissal
 			}
 			val hydratedOverrides = merge(restored.overrides, config.overrides)
@@ -261,15 +422,19 @@ class C15tKernel(
 				// after the signal that caused it is gone.
 				privacySignals = signalsFor(hydratedOverrides),
 			)
-			publishPure(
-				PolicyEvaluator.evaluate(
-					hydrated,
-					envelope.evaluationPolicy,
-					envelope.noticeDismissal,
-					now,
-					choiceScopeOf(envelope.evaluationPolicy),
-				),
-			)
+			synchronized(mutationLock) {
+				publishPure(
+					validateIab(
+						PolicyEvaluator.evaluate(
+						hydrated,
+						envelope.evaluationPolicy,
+						envelope.noticeDismissal,
+						now,
+						choiceScopeOf(envelope.evaluationPolicy),
+						)
+					)
+				)
+			}
 			persist()
 		}
 
@@ -277,8 +442,27 @@ class C15tKernel(
 		// never left the device is on its way before the first prompt is drawn.
 		// Both go through the executor: with TaskExecutor.DIRECT they stay
 		// synchronous, which is what the tests rely on.
+		mutation.release()
+		if (snapshot().policyPending) config.bundledPolicy?.let { resource ->
+			BundledPolicy.resolve(resource, config.portalUrl, config.overrides, clock.nowMillis())?.let { selection ->
+				applyInit(selection.mapped, config.detectedGpc, false, selection)
+			}
+		}
 		background.execute { flushPending() }
 		background.execute { runInit() }
+	}
+
+	/** Restore the vendor mirror from current native authority without reading it as consent. */
+	fun rebuildTcStorageBus() = mutate { _ -> publishCurrentTcStorageBus() }
+
+	/** Capture current authority after durable I/O, then write the mirror off the state lock. */
+	private fun publishCurrentTcStorageBus(allowConsent: Boolean = true) {
+		val envelope = synchronized(mutationLock) {
+			val snapshot = state.get()
+			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority, snapshot = snapshot.copy(iab = null),
+				evaluationPolicy = evaluationPolicy, gvl = snapshot.iab?.gvl, iabConsent = iabConsent)
+		}
+		if (allowConsent || envelope.iabConsent == null) store.publishTcStorageBus(envelope)
 	}
 
 	/** `true` once [bootstrap] has run. */
@@ -300,10 +484,25 @@ class C15tKernel(
 	 * The current snapshot.
 	 *
 	 * Synchronous, allocation-free, and never touches disk or the network. Returns
-	 * the same instance until something changes, so a caller can compare by
-	 * identity to decide whether to do work.
+	 * the same instance until state changes or IAB authority crosses a time boundary,
+	 * so a caller can compare by identity to decide whether to do work.
 	 */
-	fun snapshot(): ConsentSnapshot = state.get()
+	fun snapshot(): ConsentSnapshot {
+		val view = readView.get()
+		view.authority?.let { authority ->
+			if (!authority.isCurrent(config.portalUrl, clock.nowMillis())) return view.expired
+		}
+		if (!view.requiresIab) return view.snapshot
+		val now = clock.nowMillis()
+		val fetched = view.fetchedAt
+		val additionalFetched = view.additionalConsentFetchedAt
+		return if (view.snapshot.iab?.gvl != null && fetched != null && fetched >= 0 &&
+			now >= fetched && now - fetched < config.iabListMaxAgeMs &&
+			(view.saved?.adTechProvidersID == null || additionalFetched != null && additionalFetched >= 0 &&
+				now >= additionalFetched && now - additionalFetched < config.iabListMaxAgeMs) &&
+			view.saved?.isCurrent(now, view.choiceMs) == true
+		) view.snapshot else view.denied
+	}
 
 	/**
 	 * The vendor list this device is reading its disclosure out of, or `null` while none has been
@@ -370,7 +569,7 @@ class C15tKernel(
 	 * `necessary` is always true. Every optional category is false while the state
 	 * is not ready or the policy is still pending.
 	 */
-	fun isAllowed(category: ConsentCategory): Boolean = state.get().isAllowed(category)
+	fun isAllowed(category: ConsentCategory): Boolean = snapshot().isAllowed(category)
 
 	/**
 	 * Call [onChange] now with the current permission for [category], then again on
@@ -394,7 +593,7 @@ class C15tKernel(
 	): Subscription {
 		val observer: (ConsentSnapshot) -> Unit = { onChange(it.isAllowed(category)) }
 		strongObservers += observer
-		onChange(state.get().isAllowed(category))
+		onChange(isAllowed(category))
 		return Subscription { strongObservers.remove(observer) }
 	}
 
@@ -447,7 +646,7 @@ class C15tKernel(
 		// a change would leave an SDK switched off with nothing left listening, so the
 		// most this ordering can cost is one redundant delivery.
 		strongObservers += observer
-		val current = state.get().decision(category)
+		val current = decision(category)
 		if (lastDelivered.compareAndSet(null, current)) {
 			onDecision(current)
 		}
@@ -462,7 +661,7 @@ class C15tKernel(
 	 * either. Ad SDKs call this from the main thread inside `Application.onCreate`,
 	 * and blocking there is an ANR the store files against the host app.
 	 */
-	fun decision(category: ConsentCategory): ConsentDecision = state.get().decision(category)
+	fun decision(category: ConsentCategory): ConsentDecision = snapshot().decision(category)
 
 	/**
 	 * Whether a decision can be read as an answer: [bootstrap] hydrated a state and
@@ -474,7 +673,7 @@ class C15tKernel(
 	 * process, and a number invented here would become an answer the policy never
 	 * gave.
 	 */
-	fun isReady(): Boolean = state.get().isReady
+	fun isReady(): Boolean = snapshot().isReady
 
 	/** Observe every snapshot change. The lambda is held weakly, per the contract. */
 	fun onChange(observer: (ConsentSnapshot) -> Unit): Subscription {
@@ -493,30 +692,16 @@ class C15tKernel(
 	/**
 	 * Record a consent decision.
 	 *
-	 * Order is the whole contract here. The queue write lands first, the snapshot moves
-	 * second, and no branch answers ok without a durable entry behind it, because
+	 * The snapshot and queued body land in one durable write before state moves, because
 	 * [CommitResult.ok] claims three device-side facts: the receipts are applied, the
 	 * snapshot is stored, and the queue holds the exact bytes that owe delivery. It never
 	 * claims the backend has them, which no synchronous call on this thread could know.
 	 *
 	 * A save that cannot take on the delivery obligation answers not-ok with the reason
-	 * and changes nothing at all -- no snapshot move, no snapshot write, no request, no
-	 * observer callback. A decision nothing remembers having to deliver is worse than a
-	 * refusal the caller can act on.
-	 *
-	 * What makes the two steps atomic is [mutationLock], and it is worth being precise
-	 * about how. [PendingSaveQueue] does its own read-modify-write on [store] and takes no
-	 * lock of ours, so the enqueue deliberately happens *outside* the critical section: a
-	 * disk write must not hold the lock every other mutation path waits on, and must not
-	 * hold it while the store is being read either, which is what would let a slow keychain
-	 * stall a snapshot read. The state move that follows is then taken as a guarded swap:
-	 * still under the lock, the snapshot is installed only if it is the very snapshot this
-	 * body was built from. If another mutation landed during the write, that one stands,
-	 * this body is withdrawn from the queue rather than replayed over it, and the caller is
-	 * told to repeat against the current snapshot. A swap is atomic precisely because the
-	 * reference is only ever replaced inside the lock, so there is no window in which a
-	 * reader or a competing writer sees a queue entry whose snapshot was never installed,
-	 * or an installed snapshot with no entry behind it.
+	 * and leaves the previous decision and queue intact, without a request or snapshot
+	 * callback. [commitGate] serializes preparation, storage and publication while
+	 * [mutationLock] guards only the in-memory swap. Synchronous reads continue serving
+	 * the previous authority until the durable write acknowledges the complete decision.
 	 *
 	 * Delivery is a later fact than any of this. It arrives as a drained queue, or as an
 	 * error event carrying `save-rejected`, `save-undeliverable`, or
@@ -528,11 +713,12 @@ class C15tKernel(
 	 * stopped it, and `not-bootstrapped` comes from the [C15t] facade in front of this
 	 * kernel.
 	 */
-	fun save(intent: CommitIntent): CommitResult {
-		// Captured once, before any disk or network call, and reused by every
-		// replay so the backend derives the same consent id.
-		val actionAt = clock.nowMillis()
-		var base: ConsentSnapshot
+	fun save(intent: CommitIntent, expectedRevision: Long? = null): CommitResult =
+		saveAt(intent, expectedRevision, clock.nowMillis())
+
+	private fun saveAt(intent: CommitIntent, expectedRevision: Long?, at: Long): CommitResult = mutate { mutation ->
+		// Capture the action before waiting for another durable mutation.
+		var actionAt = at
 		var published: ConsentSnapshot
 		var policy: EvaluationPolicy?
 		// The surface the subject acted on, read before the commit rewrites it.
@@ -543,12 +729,86 @@ class C15tKernel(
 		var action: ConsentAction
 		var confirmed: Map<String, Boolean>
 		var acknowledgement: NoticeDismissal?
+		var nextIab: IabCommittedConsent? = null
 
 		synchronized(mutationLock) {
 			val current = state.get()
-			base = current
+			val withdrawingExpiredBundle = intent is CommitIntent.Necessary && evaluationPolicy != null &&
+				bundledPolicyAuthority?.hasExpired(config.portalUrl, at) == true
+			if (bundledPolicyAuthority?.isCurrent(config.portalUrl, at) == false && !withdrawingExpiredBundle)
+				return@mutate refusedCommit("bundled-policy-expired", "Connect to refresh consent policy.")
+			if (bundledPolicyAuthority?.requiresAtp == true && intent !is CommitIntent.Necessary && currentAdditionalConsentList() == null)
+				return@mutate refusedCommit("additional-consent-list-stale", "Refresh the provider disclosures before saving.")
+			if (expectedRevision != null && expectedRevision != current.revision)
+				return@mutate refusedCommit(
+					"concurrent-change",
+					"The draft was based on an older consent snapshot",
+				)
+			if (intent is CommitIntent.Iab && expectedRevision == null)
+				return@mutate refusedCommit("iab-draft-required", "Open a native IAB draft and save its disclosure revision")
 			surfaceAtAction = current.activeUI
 			policy = evaluationPolicy
+			if (policy?.model == ConsentModel.IAB) {
+				lastIabActionAt?.let { previous ->
+					if (previous == Long.MAX_VALUE)
+						return@mutate refusedCommit(
+							"invalid-action-time",
+							"The previous action time cannot be advanced",
+						)
+					actionAt = maxOf(actionAt, previous + 1)
+				}
+				if (at < 0 || actionAt < 0 || actionAt - at > 600_000)
+					return@mutate refusedCommit(
+						"invalid-action-time",
+						"The clock cannot represent a current, distinct IAB action time",
+					)
+			}
+			if (policy?.model == ConsentModel.IAB &&
+				(intent !is CommitIntent.Necessary || iabConfiguration != null && current.iab?.gvl != null && listIsUsable())) {
+				val configuration = iabConfiguration
+				val gvl = current.iab?.gvl
+				if (configuration == null || gvl == null)
+					return@mutate refusedCommit(
+						"iab-unavailable",
+						"IAB saves require CMP configuration and a disclosed vendor list",
+					)
+				if (!listIsUsable()) return@mutate refusedCommit("iab-list-stale", "Refresh the vendor list before saving")
+				val choices =
+					when (intent) {
+						is CommitIntent.All -> IabAuthority.accepting(gvl, configuration).copy(
+							adTechProviderConsents = currentAdditionalConsentList()?.providers?.map { it.id })
+						is CommitIntent.Necessary -> IabChoices()
+						is CommitIntent.Iab -> intent.choices
+						is CommitIntent.Explicit ->
+							return@mutate refusedCommit(
+								"iab-choices-required",
+								"Save the complete native IAB draft with category choices",
+							)
+					}
+				if (intent !is CommitIntent.Necessary && additionalConsentList?.providers?.isNotEmpty() == true && currentAdditionalConsentList() == null)
+					return@mutate refusedCommit("additional-consent-unavailable", "Refresh the Google ATP list before saving")
+				try {
+					nextIab =
+						IabAuthority.build(
+							configuration,
+							choices,
+							gvl,
+							current.subject!!.id,
+							current.subject.externalId,
+							policy!!.choiceFingerprint,
+							actionAt,
+							committedIab,
+							currentAdditionalConsentList(),
+						)
+				} catch (_: IllegalArgumentException) {
+					return@mutate refusedCommit(
+						"invalid-iab-choices",
+						"IAB configuration or choices do not match the disclosed list",
+					)
+				}
+			} else if (intent is CommitIntent.Iab) {
+				return@mutate refusedCommit("iab-unavailable", "The resolved policy does not use IAB")
+			}
 			// A bulk action covers the categories the prompt asks about, which is what
 			// `resolveSaveSelection` in `@c15t/core` narrows it to. Before a policy
 			// resolves that is the safe fallback rule's: every optional category,
@@ -557,13 +817,16 @@ class C15tKernel(
 			val choiceScope = choiceScopeOf(policy) ?: fallbackChoiceScope()
 			val intentConsents = when (intent) {
 				is CommitIntent.All -> choiceScope.associateWith { true }
-				is CommitIntent.Necessary -> choiceScope.associateWith { false }
+				// Expired-policy rejection also withdraws older grants outside today's scope.
+				is CommitIntent.Necessary ->
+					(if (withdrawingExpiredBundle) ConsentCategory.OPTIONAL else choiceScope).associateWith { false }
 				is CommitIntent.Explicit -> intent.consents
-			}
+					is CommitIntent.Iab -> intent.consents
+				}
 			// With nothing to decide, a bulk action still covers everything the subject
 			// was shown: strictly necessary alone.
 			action = if (
-				intent is CommitIntent.Explicit ||
+				withdrawingExpiredBundle || intent is CommitIntent.Explicit || intent is CommitIntent.Iab ||
 				choiceScope.size == policyScope.size ||
 				choiceScope.isEmpty()
 			) {
@@ -607,44 +870,59 @@ class C15tKernel(
 				now = actionAt,
 				choiceScope = choiceScope,
 			)
+			if (withdrawingExpiredBundle) published = published.copy(
+				effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
 		}
+
+		if (nextIab != null) published = published.copy(model = ConsentModel.IAB)
+		else if (policy?.model == ConsentModel.IAB) published = published.copy(effectivePermissions = ConsentState.DENY_ALL)
 
 		// Built from the snapshot computed above, which is a value: the frozen body is the
 		// one that revision describes, and building it here keeps the subject resolution and
 		// its storage write off the lock, as the class requires.
-		val payload = buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
+		val payload =
+			buildSavePayload(published, policy, action, confirmed, actionAt, surfaceAtAction)
+				.copy(tcString = nextIab?.tcString, addtlConsent = nextIab?.addtlConsent)
 
-		// Obligation first, state second. A process that dies at this point already has
-		// the action on disk, and a save that gets no further than here promised nothing.
-		val entry = queue.enqueue(payload, actionAt)
-			?: return refusedCommit(
-				code = "queue-write-failed",
-				message = "c15t: the pending save could not be persisted, so the decision was " +
-					"not recorded and nothing was sent",
+		val isIab = policy?.model == ConsentModel.IAB
+		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
+			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty()).toString()
+		val entry = QueuedSave(
+			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
+			actionAt, payload, body = frozen,
+		)
+		val envelope = synchronized(mutationLock) {
+			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
+				snapshot = published.copy(iab = null),
+				evaluationPolicy = policy,
+				noticeDismissal = acknowledgement ?: noticeDismissal,
+				gvl = published.iab?.gvl,
+				iabConsent = if (isIab) nextIab else committedIab,
+				lastIabActionAt = if (isIab) actionAt else lastIabActionAt,
+				iabListFetchedAt = iabListFetchedAt,
+				additionalConsentList = additionalConsentList,
 			)
+		}
+		if (!store.commit(envelope, entry, config.maxPendingSaves, supersedeGrants = isIab, publishBus = false)) {
+			publishCurrentTcStorageBus(allowConsent = false)
+			return@mutate refusedCommit(
+				"queue-write-failed",
+				"The atomic consent decision write failed; nothing was sent",
+			)
+		}
 
-		// The guarded swap, for the reason given above.
-		val applied = synchronized(mutationLock) {
-			if (state.get() !== base) {
-				false
-			} else {
-				state.set(published)
-				acknowledgement?.let { noticeDismissal = it }
-				true
+		// The mutation gate owns this revision through the durable write and swap.
+		synchronized(mutationLock) {
+			if (isIab) {
+				committedIab = nextIab
+				lastIabActionAt = actionAt
 			}
+			installSnapshot(published)
+			acknowledgement?.let { noticeDismissal = it }
 		}
-		if (!applied) {
-			// Withdraw. Replaying this body would deliver a decision the device has already
-			// moved past, and the later mutation carries its own, newer receipts.
-			queue.complete(entry.id)
-			return refusedCommit(
-				code = "concurrent-change",
-				message = "c15t: consent state changed while this save was being recorded, so it " +
-					"was withdrawn. Repeat the action against the current snapshot",
-			)
-		}
+		publishCurrentTcStorageBus()
 
-		persist()
+		mutation.release()
 
 		// The first send is not joined. What this thread may claim about it is whatever the
 		// atomic holds at this instant and nothing more: `null` behind a pool, and the
@@ -660,8 +938,8 @@ class C15tKernel(
 			queued = true,
 			delivered = delivered,
 		)
-		notifySnapshot(published)
-		return result
+		notifySnapshot()
+		result
 	}
 
 	/**
@@ -689,28 +967,30 @@ class C15tKernel(
 		)
 	}
 
-	/** Close the first-layer prompt without recording a choice. */
-	fun dismissNotice() {
-		val now = clock.nowMillis()
-		var published: ConsentSnapshot
-		synchronized(mutationLock) {
-			val current = state.get()
-			noticeDismissal = NoticeDismissal(
-				dismissedAt = now,
-				fingerprint = evaluationPolicy?.noticeFingerprint ?: "",
-			)
-			published = PolicyEvaluator.evaluate(
-				snapshot = current.copy(revision = current.revision + 1),
-				policy = evaluationPolicy,
-				noticeDismissal = noticeDismissal,
-				now = now,
-				choiceScope = choiceScopeOf(evaluationPolicy),
-			)
-			state.set(published)
-		}
-		persist()
-		notifySnapshot(published)
-	}
+	/** Persist notice acknowledgement without recording a choice. Returns false on storage refusal. */
+    fun dismissNotice(): Boolean = mutate { mutation ->
+        val now = clock.nowMillis()
+        val plan = synchronized(mutationLock) {
+            val policy = evaluationPolicy ?: return@mutate false
+            if (policy.prompt != PolicyPrompt.NOTICE) return@mutate false
+            val dismissal = NoticeDismissal(dismissedAt = now, fingerprint = policy.noticeFingerprint)
+            val next = PolicyEvaluator.evaluate(snapshot = state.get().copy(revision = state.get().revision + 1),
+                policy = policy, noticeDismissal = dismissal, now = now, choiceScope = choiceScopeOf(policy))
+            val envelope = SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
+                snapshot = next.copy(iab = null), evaluationPolicy = policy,
+                noticeDismissal = dismissal, gvl = state.get().iab?.gvl, iabConsent = committedIab,
+                additionalConsentList = additionalConsentList, iabListFetchedAt = iabListFetchedAt, lastIabActionAt = lastIabActionAt)
+            Triple(next, dismissal, envelope)
+        }
+        if (!store.writeEnvelope(plan.third, publishBus = false)) {
+            emitError(KernelError("queue-write-failed", "The notice acknowledgement could not be stored."))
+            return@mutate false
+        }
+        synchronized(mutationLock) { noticeDismissal = plan.second; installSnapshot(plan.first) }
+        mutation.release()
+        notifySnapshot()
+        true
+    }
 
 	/** Re-run init: policy, geo, translations, and any server-side subject id. */
 	fun refresh() {
@@ -718,7 +998,27 @@ class C15tKernel(
 	}
 
 	/** Attach an external identity to the subject, then refresh. */
-	fun identify(user: KernelUser) {
+	fun identify(user: KernelUser) = mutate { mutation ->
+		val transition = transitionIab(user.externalId, false)
+		if (transition != null) {
+			mutation.release()
+			if (!transition)
+				emitError(
+					KernelError(
+						"identity-write-failed",
+						"Identity consent reset could not be persisted",
+					)
+				)
+			else {
+				val snapshot = state.get()
+				notifySnapshot()
+				background.execute {
+					transport.identify(snapshot.subject!!, user)
+					runInit()
+				}
+			}
+			return@mutate
+		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
 		synchronized(mutationLock) {
@@ -726,14 +1026,19 @@ class C15tKernel(
 			subject = (current.subject ?: ConsentSubject(subjectIdGenerator())).let {
 				it.copy(externalId = user.externalId)
 			}
-			published = current.copy(
-				subject = subject,
-				revision = current.revision + 1,
+			published = current.copy(subject = subject,
+				revision = current.revision + 1)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
 			)
-			state.set(published)
+				published = published.copy(model = ConsentModel.IAB)
+			installSnapshot(published)
 		}
 		persist()
-		notifySnapshot(published)
+		mutation.release()
+		notifySnapshot()
 		background.execute {
 			transport.identify(subject, user)
 			runInit()
@@ -746,17 +1051,41 @@ class C15tKernel(
 	 * The c15t subject id stays: it is the installation's identity, not the user's,
 	 * and the records already attached to it stay attributable.
 	 */
-	fun logout() {
+	fun logout() = mutate { mutation ->
+		val transition = transitionIab(null, false)
+		if (transition != null) {
+			mutation.release()
+			if (transition) {
+				val snapshot = state.get()
+				notifySnapshot()
+				background.execute { transport.logout(snapshot.subject!!) }
+			}
+			else
+				emitError(
+					KernelError(
+						"identity-write-failed",
+						"Logout consent reset could not be persisted",
+					)
+				)
+			return@mutate
+		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
 		synchronized(mutationLock) {
 			val current = state.get()
 			subject = (current.subject ?: ConsentSubject(subjectIdGenerator())).copy(externalId = null)
 			published = current.copy(subject = subject, revision = current.revision + 1)
-			state.set(published)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
+			)
+				published = published.copy(model = ConsentModel.IAB)
+			installSnapshot(published)
 		}
 		persist()
-		notifySnapshot(published)
+		mutation.release()
+		notifySnapshot()
 		background.execute { transport.logout(subject) }
 	}
 
@@ -770,7 +1099,7 @@ class C15tKernel(
 	 * others alone. A binding that receives explicit nulls from JavaScript uses the
 	 * replace form after computing the full desired record.
 	 */
-	fun setOverrides(overrides: KernelOverrides, merge: Boolean = true) {
+	fun setOverrides(overrides: KernelOverrides, merge: Boolean = true) = mutate { mutation ->
 		var published: ConsentSnapshot
 		synchronized(mutationLock) {
 			val current = state.get()
@@ -787,10 +1116,18 @@ class C15tKernel(
 				now = clock.nowMillis(),
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
-			state.set(published)
+			if (
+				iabConfiguration != null &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					!published.policyPending
+			)
+				published = published.copy(model = ConsentModel.IAB)
+			published = validateIab(published)
+			installSnapshot(published)
 		}
 		persist()
-		notifySnapshot(published)
+		mutation.release()
+		notifySnapshot()
 		refresh()
 	}
 
@@ -955,10 +1292,10 @@ class C15tKernel(
 	 *   every [gate] in the process holding a decision the device no longer remembers, and
 	 *   restarting the numbering at the cold-start revision would hand each subscriber a
 	 *   snapshot older than the one it holds.
-	 * - Skip the envelope write. Its durable effect is the deletion, so on-disk state after
-	 *   a reset is a subject id and nothing else, which is what a first launch has. That is
-	 *   also the only reason [storedSnapshotFound] moves: reporting cached consent from a
-	 *   device that just wiped it is the claim the unreadable-envelope rule refuses.
+	 * - Remove grants durably. Category-only state without an owed withdrawal is
+	 *   deleted. IAB authority or owed withdrawals require an atomic empty decision
+	 *   envelope retaining the action-time watermark and frozen withdrawal bodies.
+	 *   [hasStoredSnapshot] reports that retained envelope, not a consent grant.
 	 * - Re-run init. A first launch does not sit at `policyPending` once the network
 	 *   answers, and a wipe that stopped at the baseline would leave the app there until
 	 *   the next launch, with the subject withdrawn from everything and nothing asking them
@@ -970,11 +1307,20 @@ class C15tKernel(
 	 * evaluate.
 	 *
 	 * A save a delivery pass had already handed to the transport can still land after the
-	 * queue is dropped, and the pass finds its entry gone when it settles. Nothing here
-	 * waits for it: the entries still in the queue carry a decision the subject just
-	 * withdrew, and the one already on the wire was a valid decision when it was made.
+	 * queued grants are dropped. Nothing here waits for it. Frozen withdrawals remain
+	 * owed under their original owner; reset creates no new consent decision.
 	 */
-	fun reset() {
+	fun reset() = mutate { mutation ->
+		val transition = transitionIab(state.get().subject?.externalId, true)
+		if (transition != null) {
+			mutation.release()
+			if (transition) {
+				notifySnapshot()
+				background.execute { runInit() }
+			} else
+				emitError(KernelError("reset-write-failed", "Consent reset could not be persisted"))
+			return@mutate
+		}
 		val now = clock.nowMillis()
 		// Identity first, off the lock, because a missing subject is the one case that
 		// reaches storage. A subject this launch already answers with is reused untouched.
@@ -983,8 +1329,15 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			evaluationPolicy = null
+			bundledPolicyAuthority = null
+			additionalConsentList = null
+			iabListFetchedAt = null
+			iabListFromCache = true
+			iabListOffline = false
+			committedIab = null
 			noticeDismissal = null
-			published = ConsentSnapshot.denyAll(current.subject ?: resolved, now).copy(
+			published = ConsentSnapshot.denyAll(current.subject ?: resolved, now)
+					.copy(
 				// The list goes with the policy. Not because a wipe has anything to hide -- the list
 				// is a public document -- but because a wipe is a device no longer showing anybody a
 				// disclosure, so the claim the latch exists to protect has been withdrawn with it.
@@ -1000,12 +1353,14 @@ class C15tKernel(
 				overrides = configuredOverrides,
 				privacySignals = signalsFor(configuredOverrides),
 			)
-			state.set(published)
+			installSnapshot(published)
 		}
 		queue.clear()
 		store.clearConsentState()
 		storedSnapshotFound = false
-		notifySnapshot(published)
+		mutation.release()
+		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.portalUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
+		notifySnapshot()
 		background.execute { runInit() }
 	}
 
@@ -1025,8 +1380,17 @@ class C15tKernel(
 	 * them buys one more rejection of a decision this device has stopped remembering.
 	 */
 	private fun resolveSubject(): ConsentSubject {
-		store.readSubject()?.let { return it }
+		store.readSubject()?.let { subject ->
+			val envelope = store.readEnvelope()
+			if (envelope != null && envelope.snapshot.subject?.id != subject.id) {
+				discardOrphanedIdentityRecords("mismatch")
+			}
+			return subject
+		}
 		store.takeUnusableSubject()?.let(::discardRecordsOfUnusableSubject)
+		store.subjectReplacementReason?.let { reason ->
+			if (store.hasConsentRecords()) discardOrphanedIdentityRecords(reason)
+		}
 		// Owned by c15t and minted by SubjectIdGenerator. Never derived from a hardware
 		// identifier. An id this build wrote is adopted untouched, because minting a
 		// fresh one over an accepted stored id would orphan every record the backend holds
@@ -1034,6 +1398,16 @@ class C15tKernel(
 		val created = ConsentSubject(id = subjectIdGenerator())
 		store.writeSubject(created)
 		return created
+	}
+
+	private fun discardOrphanedIdentityRecords(reason: String) {
+		store.clearConsentState()
+		if (identityRecoveryAnnouncements.add(reason)) {
+			emitError(KernelError(
+				code = "subject-id-$reason",
+				message = "c15t: the stored subject identity is $reason. Stored consent and queued saves were discarded; the app asks for consent again.",
+			))
+		}
 	}
 
 	/**
@@ -1075,19 +1449,32 @@ class C15tKernel(
 				InitContext(
 					overrides = current.overrides,
 					subject = current.subject,
-					gpc = GpcSignal.derive(override = current.overrides.gpc, detected = detected == true).active,
-					vendors = config.vendors,
+					gpc =
+							GpcSignal.derive(
+									override = current.overrides.gpc, detected = detected == true,
+								)
+								.active,
+						vendors = config.vendors,
 				)
 			)
 		} catch (error: Exception) {
-			TransportOutcome.NetworkFailure("c15t transport: ${error.message ?: error.javaClass.simpleName}")
-		}
+				TransportOutcome.NetworkFailure(
+					"c15t transport: ${error.message ?: error.javaClass.simpleName}"
+				)
+			}
 		val mapped = InitMapper.map(outcome)
+		val (changed, emitted) = applyInit(mapped, detected, outcome is TransportOutcome.Success)
+		emitted?.let(::emitError)
+		if (changed) notifySnapshot()
+	}
+
+	private fun applyInit(mapped: com.c15t.core.transport.MappedInit, detection: Boolean?, online: Boolean, bundle: BundledPolicy.Selection? = null): Pair<Boolean, KernelError?> = mutate { mutation ->
+		var detected = detection
 		var published: ConsentSnapshot
 		var emitted: KernelError?
-
 		synchronized(mutationLock) {
 			val base = state.get()
+			if (online || bundle != null) bundledPolicyAuthority = bundle?.authority
 			val subject = mapped.subjectId?.let { serverId ->
 				base.subject?.copy(id = serverId) ?: ConsentSubject(id = serverId)
 			} ?: base.subject
@@ -1121,6 +1508,13 @@ class C15tKernel(
 			//
 			// Inside the latch rather than outside it, because the retained half already went
 			// through this line on the launch that served it, and on the read that hydrated it.
+			if (mapped.adTechProvidersInvalid) additionalConsentList = null
+			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, if (bundle == null) clock.nowMillis() else bundle.atpFetchedAt ?: -1) }
+			iabListOffline = !online
+			if (mapped.gvl != null) {
+				iabListFetchedAt = if (bundle == null) clock.nowMillis() else bundle.gvlFetchedAt
+				iabListFromCache = bundle != null
+			}
 			val latchedVendorList = mapped.gvl?.narrowToVendorIds(config.vendors) ?: base.iab?.gvl
 			mapped.resolvedGpcDetection?.let { detected = it }
 			emitted = mapped.error
@@ -1175,14 +1569,20 @@ class C15tKernel(
 				now = clock.nowMillis(),
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
-			state.set(published)
+			published = validateIab(published)
+			if (!online && !mapped.policyUnreadable && evaluationPolicy?.model == ConsentModel.IAB &&
+				base.iab?.gvl != null && listIsUsable() &&
+				published.copy(revision = base.revision, evaluatedAt = base.evaluatedAt,
+					error = base.error, nextDeadline = base.nextDeadline) == base
+			) return@mutate false to emitted
+			installSnapshot(published)
 		}
 
 		// A resolved subject belongs in protected storage as soon as it is known.
 		published.subject?.let { store.writeSubject(it) }
 		persist()
-		emitted?.let(::emitError)
-		notifySnapshot(published)
+		mutation.release()
+		true to emitted
 	}
 
 	/**
@@ -1195,6 +1595,35 @@ class C15tKernel(
 	 * entry that is not owed spends no attempt and announces nothing.
 	 */
 	private fun deliverIfOwed(entry: QueuedSave): Delivery? {
+		if (entry.isWithdrawal()) {
+			if (!queue.isPending(entry.id)) return null
+			return deliver(entry)
+		}
+		if (entry.payload.subjectId != state.get().subject?.id) return null
+		val requiresIab =
+			synchronized(mutationLock) {
+				iabConfiguration != null && evaluationPolicy?.model == ConsentModel.IAB
+			}
+		if (
+			entry.payload.tcString != null || entry.payload.model == ConsentModel.IAB || requiresIab
+		) {
+			val saved = iabConsent ?: return null
+			val body =
+				entry.body?.let {
+					runCatching { Json.parseToJsonElement(it).jsonObject }.getOrNull()
+				} ?: return null
+			fun value(key: String) = body[key] as? JsonPrimitive
+			if (
+				entry.payload.tcString != saved.tcString ||
+					value("tcString")?.contentOrNull != saved.tcString ||
+					value("subjectId")?.contentOrNull != saved.subjectId ||
+					value("externalSubjectId")?.contentOrNull != saved.externalId ||
+					value("givenAt")?.longOrNull != saved.actionAt ||
+					value("model")?.contentOrNull != "iab" ||
+					value("addtlConsent")?.contentOrNull != saved.addtlConsent
+			)
+				return null
+		}
 		if (!queue.isPending(entry.id)) {
 			return null
 		}
@@ -1236,7 +1665,7 @@ class C15tKernel(
 			}
 
 			else -> {
-				val permanent = outcome.isPermanentlyRejected
+				val permanent = outcome.isPermanentlyRejected && !entry.isWithdrawal()
 				val error = if (permanent) {
 					// The producer refused these bytes on their own terms, and frozen bytes
 					// earn the same answer every time, so the entry leaves and the reason is
@@ -1332,14 +1761,137 @@ class C15tKernel(
 					"day retention window"
 
 			FailedAttempt.Retrying,
-			FailedAttempt.AlreadyGone,
-			-> "it left the queue unaccepted"
+				FailedAttempt.AlreadyGone -> "it left the queue unaccepted"
 		}
 		return KernelError(
 			code = "save-undeliverable",
 			message = "c15t: a queued consent save for ${entry.payload.subjectId} was dropped " +
 				"because $reason. Last backend answer: $outcome",
 		)
+	}
+
+	private fun validateIab(snapshot: ConsentSnapshot): ConsentSnapshot {
+		if (evaluationPolicy?.model != com.c15t.core.model.ConsentModel.IAB && committedIab == null)
+			return snapshot
+		val saved = committedIab
+		val c = iabConfiguration
+		val gvl = snapshot.iab?.gvl
+		val valid =
+			if (
+				saved != null &&
+					saved.isCurrent(clock.nowMillis(), evaluationPolicy?.choiceMs ?: 0) &&
+					evaluationPolicy?.model == ConsentModel.IAB &&
+					c != null &&
+					gvl != null &&
+					saved.configuration == c &&
+					saved.subjectId == snapshot.subject?.id &&
+					saved.externalId == snapshot.subject?.externalId &&
+					saved.fingerprint == evaluationPolicy?.choiceFingerprint &&
+					saved.vendorListVersion.toLong() == gvl.vendorListVersion &&
+					saved.policyVersion.toLong() == gvl.tcfPolicyVersion &&
+					saved.disclosureID == IabAuthority.disclosureID(gvl)
+			) {
+				try {
+					val rebuilt =
+						IabAuthority.build(
+							c,
+							saved.choices,
+							gvl,
+							saved.subjectId,
+							saved.externalId,
+							saved.fingerprint,
+							saved.actionAt,
+							saved,
+							currentAdditionalConsentList(),
+						)
+					rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices &&
+						rebuilt.addtlConsent == saved.addtlConsent && rebuilt.adTechProvidersID == saved.adTechProvidersID
+				} catch (_: IllegalArgumentException) {
+					false
+				}
+			} else false
+		// List age suspends a compatible choice; a matching refresh can resume it.
+		if (valid) return snapshot.copy(
+			model = ConsentModel.IAB,
+			effectivePermissions = if (listIsUsable()) snapshot.effectivePermissions else ConsentState.DENY_ALL,
+		)
+		committedIab = null
+		needsGrantCleanup = true
+		return PolicyEvaluator.evaluate(
+				snapshot.copy(explicitChoice = null),
+				evaluationPolicy,
+				noticeDismissal,
+				clock.nowMillis(),
+				choiceScopeOf(evaluationPolicy),
+			)
+			.let { evaluated ->
+				val it = if (evaluationPolicy?.model == ConsentModel.IAB) evaluated.copy(effectivePermissions = ConsentState.DENY_ALL) else evaluated
+				if (
+					iabConfiguration != null &&
+						evaluationPolicy?.model == ConsentModel.IAB &&
+						!it.policyPending
+				)
+					it.copy(model = ConsentModel.IAB)
+				else it
+			}
+	}
+
+	private fun transitionIab(externalId: String?, reset: Boolean): Boolean? {
+		val owed = reset && queue.pending().any { it.isWithdrawal() }
+		val prepared = synchronized(mutationLock) {
+			if (committedIab == null && evaluationPolicy?.model != ConsentModel.IAB && !owed)
+				return@synchronized null
+			val current = state.get()
+			if (!reset && current.subject?.externalId == externalId) return@synchronized null
+			val subject = current.subject?.copy(externalId = externalId)
+			val evaluated =
+				if (reset)
+					ConsentSnapshot.denyAll(subject!!, clock.nowMillis())
+						.copy(
+							revision = current.revision + 1,
+							overrides = configuredOverrides,
+							consentCategories = decidedCategories(null),
+						)
+				else
+					PolicyEvaluator.evaluate(
+						current.copy(
+							subject = subject,
+							explicitChoice = null,
+							revision = current.revision + 1,
+						),
+						evaluationPolicy,
+						null,
+						clock.nowMillis(),
+						choiceScopeOf(evaluationPolicy),
+					)
+			val next = if (evaluationPolicy?.model == ConsentModel.IAB)
+				evaluated.copy(effectivePermissions = ConsentState.DENY_ALL) else evaluated
+			val envelope =
+				SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
+					snapshot = next.copy(iab = null),
+					evaluationPolicy = if (reset) null else evaluationPolicy,
+					gvl = if (reset) null else next.iab?.gvl,
+					lastIabActionAt = lastIabActionAt,
+					iabListFetchedAt = if (reset) null else iabListFetchedAt,
+					additionalConsentList = if (reset) null else additionalConsentList,
+				)
+			envelope to next
+		} ?: return null
+		if (!store.replace(prepared.first)) return false
+		synchronized(mutationLock) {
+			committedIab = null
+			noticeDismissal = null
+			if (reset) {
+				additionalConsentList = null
+				evaluationPolicy = null
+				iabListFetchedAt = null
+				iabListFromCache = true
+				iabListOffline = false
+			}
+			storedSnapshotFound = true
+			installSnapshot(prepared.second)
+		}
+		return true
 	}
 
 
@@ -1464,14 +2016,79 @@ class C15tKernel(
 	}
 
 	private fun publishPure(snapshot: ConsentSnapshot) {
-		state.set(snapshot)
+		installSnapshot(snapshot)
 	}
 
+	/** Cache time-dependent read answers when state changes, never on a hot read. */
+	private fun installSnapshot(candidate: ConsentSnapshot): Unit = synchronized(mutationLock) {
+		deadlineTask?.cancel(false)
+		deadlineTask = null
+		val generation = ++deadlineGeneration
+		val now = clock.nowMillis()
+		val requiresIab = evaluationPolicy?.model == ConsentModel.IAB
+		val iabDeadline = if (requiresIab) listOfNotNull(
+			iabListFetchedAt?.let { saturatingAdd(it, config.iabListMaxAgeMs) },
+			additionalConsentList?.takeIf { it.providers.isNotEmpty() }?.let { saturatingAdd(it.fetchedAt, config.iabListMaxAgeMs) },
+			committedIab?.let { saturatingAdd(it.actionAt, evaluationPolicy?.choiceMs ?: 0) },
+		).filter { it > now }.minOrNull() else null
+		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline, bundledPolicyAuthority?.expiresAt?.takeIf { it > now }).minOrNull()
+		var snapshot = if (deadline == candidate.nextDeadline) candidate else candidate.copy(nextDeadline = deadline)
+		if (bundledPolicyAuthority?.isCurrent(config.portalUrl, now) == false) snapshot = snapshot.copy(effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
+		if (bundledPolicyAuthority != null) {
+			var permissions = snapshot.effectivePermissions
+			for (category in ConsentCategory.OPTIONAL) if (snapshot.explicitChoice?.consents?.get(category.wireName) != true) permissions = permissions.with(category, false)
+			snapshot = snapshot.copy(effectivePermissions = permissions)
+		}
+		val denied = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
+			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
+		val expired = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
+			effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE,
+			error = KernelError("bundled-policy-expired", "Connect to refresh consent policy."))
+		state.set(snapshot)
+		readView.set(ReadView(snapshot, bundledPolicyAuthority, denied, requiresIab, committedIab, iabListFetchedAt,
+			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0, expired))
+		if ((requiresIab || bundledPolicyAuthority != null) && now >= 0 && deadline != null) {
+			val reference = WeakReference(this)
+			deadlineTask = deadlineScheduler.schedule(
+				{ reference.get()?.expireIabDeadline(generation, deadline) },
+				deadline - now,
+				TimeUnit.MILLISECONDS,
+			)
+		}
+	}
+
+	private fun expireIabDeadline(generation: Long, deadline: Long): Unit = mutate { mutation ->
+		synchronized(mutationLock) {
+			if (generation != deadlineGeneration) return@synchronized null
+			val expected = state.get()
+			val now = clock.nowMillis()
+			if (now < deadline) {
+				installSnapshot(expected)
+				return@synchronized null
+			}
+			val evaluated = PolicyEvaluator.evaluate(
+				expected.copy(revision = expected.revision + 1), evaluationPolicy, noticeDismissal,
+				now, choiceScopeOf(evaluationPolicy),
+			)
+			validateIab(evaluated).also(::installSnapshot)
+		} ?: return@mutate
+		persist()
+		mutation.release()
+		notifySnapshot()
+	}
+
+	private fun saturatingAdd(left: Long, right: Long): Long =
+		if (left > Long.MAX_VALUE - right) Long.MAX_VALUE else left + right
+
 	/** Persist the published state. Always called with [mutationLock] released. */
-	private fun persist() {
-		val snapshot = state.get()
+	private fun persist(): Boolean {
+		val cleanup = synchronized(mutationLock) {
+			needsGrantCleanup.also { needsGrantCleanup = false }
+		}
+		if (cleanup) queue.discardGrants()
 		val envelope = synchronized(mutationLock) {
-			SnapshotEnvelope(
+				val snapshot = state.get()
+				SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
 				// One copy of the document per write. The envelope's `gvl` key is where the list is
 				// durable -- it is that key a build from before this field existed read, and
 				// [bootstrap] reads it back onto the snapshot -- so the stored snapshot goes with
@@ -1481,10 +2098,16 @@ class C15tKernel(
 				evaluationPolicy = evaluationPolicy,
 				noticeDismissal = noticeDismissal,
 				gvl = snapshot.iab?.gvl,
-			)
+					iabConsent = committedIab,
+					additionalConsentList = additionalConsentList,
+					iabListFetchedAt = iabListFetchedAt,
+					lastIabActionAt = lastIabActionAt,
+				)
 		}
-		store.writeEnvelope(envelope)
+		val written = store.writeEnvelope(envelope, publishBus = false)
 		store.flush()
+		publishCurrentTcStorageBus(allowConsent = written)
+		return written
 	}
 
 	private fun merge(
@@ -1508,10 +2131,8 @@ class C15tKernel(
 	 * what the app pinned, and `gpc` is the app's own because `/init` serves a
 	 * detection rather than an override.
 	 */
-	private fun resolvedOverrides(
-		base: KernelOverrides,
-		mapped: MappedInit,
-	): KernelOverrides = KernelOverrides(
+	private fun resolvedOverrides(base: KernelOverrides,
+		mapped: MappedInit): KernelOverrides = KernelOverrides(
 		country = mapped.resolvedOverrides?.country
 			?: mapped.location?.country
 			?: base.country,
@@ -1532,10 +2153,11 @@ class C15tKernel(
 		overrides: KernelOverrides,
 		detected: Boolean? = detectedGpc,
 	): PrivacySignals = PrivacySignals(
-		gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true),
-	)
+		gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true)
+		)
 
-	private fun notifySnapshot(snapshot: ConsentSnapshot) {
+	private fun notifySnapshot() {
+		val snapshot = snapshot()
 		for (reference in snapshotObservers) {
 			reference.get()?.invoke(snapshot) ?: snapshotObservers.remove(reference)
 		}
@@ -1545,6 +2167,10 @@ class C15tKernel(
 	}
 
 	private fun emitError(error: KernelError) {
+		mutationErrors.get()?.let {
+			it.add(error)
+			return
+		}
 		logger(error)
 		for (reference in errorObservers) {
 			reference.get()?.invoke(error) ?: errorObservers.remove(reference)
@@ -1552,6 +2178,10 @@ class C15tKernel(
 	}
 
 	private companion object {
+		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
+			Thread(runnable, "c15t-deadline").apply { isDaemon = true }
+		}.apply { removeOnCancelPolicy = true }
+
 		/**
 		 * Where init and delivery run for a host that brings no executor of its own.
 		 *

@@ -113,6 +113,7 @@ export const PrivacyScreen = ({
 
 			<Button
 				label={preferencesLabel(snapshot)}
+				testID="fixture.open-preferences"
 				onPress={onOpenPreferences}
 			/>
 

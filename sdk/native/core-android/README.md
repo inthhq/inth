@@ -71,6 +71,10 @@ that long bounds the wait itself: the core grows no timeout, because whatever nu
 picked would become an answer the policy never gave. Nothing outside the resolved policy
 and the subject's c15t choice moves a category to `GRANTED`.
 
+See the maintained [Android artifact guide](../../docs/internal/android-artifacts.md)
+for versioned Maven preparation, repository configuration and isolated consumer/R8 checks.
+Local staging is not external registry proof.
+
 ## Commands
 
 ```bash
@@ -172,3 +176,16 @@ audit records against the same id instead of orphaning the ones already on the b
 Installs that upgraded from the layout where the id sat in the encrypted blob have it
 copied to plain storage on the first read, before anything is written encrypted, and the
 recovery is idempotent.
+
+## Native disclosure reads
+
+`iabPresentation()` captures a detached draft and the retained IAB disclosure together.
+Check its `canEdit` flag before offering editing or new grants. An expired list
+remains readable for partner details, but `openIABDraft()` on Swift or
+`openIabDraft()` on Kotlin returns no editable draft until authority is current.
+Saving still checks native policy, list age and revision.
+
+The native presenter preserves unsaved edits while a list refresh runs. If the
+revision changes, the person must load current settings before saving. Partner
+summaries describe consent and legitimate-interest selections as Off, Partly on
+or On. Use the core's gates to decide whether processing is allowed.

@@ -2,10 +2,11 @@
  * Shipped bytes: JavaScript, iOS, and Android.
  *
  * JavaScript is measured from the published artifact, the way the consumer bundle
- * job measures the web packages. Native is measured as the bytes the engine adds
- * to an app binary: the linked `__TEXT` plus `__DATA` of the arm64 iOS slice, and
- * the compiled class bytes of the Android artifacts. A baseline app carries none
- * of those, so the artifact size is the delta.
+ * job measures the web packages. Native measures `__TEXT` plus `__DATA` of the
+ * arm64 iOS object and uncompressed class bytes of the first-party Android
+ * artifacts. These are artifact sizes. A Release consumer comparison is needed
+ * to measure the effect of dependency resolution, DEX conversion, shrinking and
+ * compression on an app.
  *
  * A build this machine cannot run leaves its row `not-measured` with the reason.
  */
@@ -19,6 +20,7 @@ import {
 	statSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { findMissingReactImports } from '../support/ensure-react-global';
@@ -28,8 +30,6 @@ import { REPO_ROOT } from './native';
 const PACKAGE_DIR = resolve(REPO_ROOT, 'packages', 'react-native');
 const DIST_DIR = join(PACKAGE_DIR, 'dist');
 const SWIFT_PACKAGE = resolve(REPO_ROOT, 'native', 'core-swift');
-const ANDROID_CORE = resolve(REPO_ROOT, 'native', 'core-android');
-const ANDROID_BRIDGE = join(PACKAGE_DIR, 'android');
 const XCODE_DEVELOPER_DIR = '/Applications/Xcode.app/Contents/Developer';
 const SCRATCH = resolve(REPO_ROOT, '.benchmarks', 'mobile-native');
 
@@ -51,6 +51,7 @@ export interface BundleResult {
 	iosBinaryBytes: BundleMetric;
 	/** The TurboModule binding, which needs a pod install to compile. */
 	iosBindingBytes: BundleMetric;
+	/** Raw class bytes of the core, Android adapter, Compose UI and RN bridge. */
 	androidBinaryBytes: BundleMetric;
 	/** Built files that use a `React` global without importing it. */
 	jsxGlobalReferenceFiles: BundleMetric;
@@ -294,11 +295,21 @@ const measureIosBindingBytes = function measureIosBindingBytes(): BundleMetric {
 /**
  * Build the Android artifacts and read their compiled class bytes.
  *
- * @returns The measured delta, or the reason the row is empty.
+ * @param repoRoot - Repository containing the native producers and RN bridge.
+ * @returns Raw class bytes, or the reason the row is empty.
  */
-const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
-	const bridgeWrapper = join(ANDROID_BRIDGE, 'gradlew');
-	const coreWrapper = join(ANDROID_CORE, 'gradlew');
+export const measureAndroidBytes = function measureAndroidBytes(
+	repoRoot = REPO_ROOT
+): BundleMetric {
+	const androidCore = resolve(repoRoot, 'native', 'core-android');
+	const androidBridge = resolve(
+		repoRoot,
+		'packages',
+		'react-native',
+		'android'
+	);
+	const bridgeWrapper = join(androidBridge, 'gradlew');
+	const coreWrapper = join(androidCore, 'gradlew');
 
 	if (!existsSync(bridgeWrapper) || !existsSync(coreWrapper)) {
 		return {
@@ -310,13 +321,15 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 	const core = exec(
 		'./gradlew',
 		[
-			':c15t-core:jar',
-			':c15t-android:assembleRelease',
+			':c15t-core:publishAllPublicationsToStagingRepository',
+			':c15t-android:publishAllPublicationsToStagingRepository',
+			':c15t-consent-ui:publishAllPublicationsToStagingRepository',
+			'--no-configuration-cache',
 			'--console=plain',
 			'-q',
 		],
 		{
-			cwd: ANDROID_CORE,
+			cwd: androidCore,
 		}
 	);
 	if (core.error) {
@@ -330,7 +343,11 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 		'./gradlew',
 		[':c15t-react-native:assembleRelease', '--console=plain', '-q'],
 		{
-			cwd: ANDROID_BRIDGE,
+			cwd: androidBridge,
+			env: {
+				C15T_MAVEN_URL: pathToFileURL(join(androidCore, 'build/maven-staging'))
+					.href,
+			},
 		}
 	);
 	if (bridge.error) {
@@ -344,14 +361,14 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 		[
 			'core jar',
 			jarClassBytes(
-				join(ANDROID_CORE, 'c15t-core', 'build', 'libs', 'c15t-core.jar')
+				join(androidCore, 'c15t-core', 'build', 'libs', 'c15t-core.jar')
 			),
 		],
 		[
 			'android aar',
 			aarClassBytes(
 				join(
-					ANDROID_CORE,
+					androidCore,
 					'c15t-android',
 					'build',
 					'outputs',
@@ -362,10 +379,24 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 			),
 		],
 		[
+			'consent UI aar',
+			aarClassBytes(
+				join(
+					androidCore,
+					'c15t-consent-ui',
+					'build',
+					'outputs',
+					'aar',
+					'c15t-consent-ui-release.aar'
+				),
+				'consent-ui-aar'
+			),
+		],
+		[
 			'bridge aar',
 			aarClassBytes(
 				join(
-					ANDROID_BRIDGE,
+					androidBridge,
 					'c15t-react-native',
 					'build',
 					'outputs',
@@ -395,7 +426,7 @@ const measureAndroidBytes = function measureAndroidBytes(): BundleMetric {
 	}
 
 	return {
-		detail: 'core jar + android aar + bridge aar, uncompressed class bytes',
+		detail: `${pieces.map(([label, bytes]) => `${label}: ${bytes} B`).join('; ')}; raw class bytes before DEX conversion, R8 or compression; excludes transitive dependencies`,
 		value: total,
 	};
 };

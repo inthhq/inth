@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   pullfrog:
+    if: github.repository == 'c15t/c15t' && github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       id-token: write

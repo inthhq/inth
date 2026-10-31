@@ -1,0 +1,18 @@
+{/* Generated from native/core-swift/Examples/swiftui-consent/Sources/headless-preferences.swift (docs:swiftui-draft) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="Sources/headless-preferences.swift"
+struct CategoryDraft {
+    let revision: Int
+    var measurement: Bool
+
+    init(snapshot: ConsentSnapshot) {
+        revision = snapshot.revision
+        // Seed from the recorded choice, never from effective permissions.
+        measurement = snapshot.explicitChoice?.categories[.measurement]?.value ?? false
+    }
+
+    func commit(to core: ConsentCore) -> CommitResult {
+        core.save(.custom([.measurement: measurement]), expectedRevision: revision)
+    }
+}
+```

@@ -14,7 +14,10 @@ import { describe, expect, test } from 'vitest';
 
 import { buildSnapshot } from '../../../__tests__/helpers/fake-native';
 import type { ConsentSnapshot } from '../../../protocol';
-import type { AllConsentNames } from '../../../protocol/vocabulary';
+import type {
+	AllConsentNames,
+	RestrictionReason,
+} from '../../../protocol/vocabulary';
 import { buildConsentCategoryRows } from '../categories';
 
 const listedKeys = function listedKeys(
@@ -24,6 +27,67 @@ const listedKeys = function listedKeys(
 };
 
 describe('buildConsentCategoryRows', () => {
+	test('keeps a previous denial editable and necessary consent locked on', () => {
+		const rows = buildConsentCategoryRows(
+			buildSnapshot({
+				consentCategories: ['necessary', 'measurement'],
+				explicitChoice: {
+					categories: {
+						measurement: {
+							basis: { fingerprint: 'policy', kind: 'choice-v1' },
+							confirmedAt: 1_770_000_000_000,
+							value: false,
+						},
+					},
+					version: 3,
+				},
+				restrictions: { measurement: ['explicit-denial'] },
+			})
+		);
+
+		expect(rows).toEqual([
+			expect.objectContaining({
+				disabled: true,
+				key: 'necessary',
+				value: true,
+			}),
+			expect.objectContaining({
+				disabled: false,
+				key: 'measurement',
+				value: false,
+			}),
+		]);
+	});
+
+	const hardRestrictions: readonly RestrictionReason[] = [
+		'gpc',
+		'strict-scope',
+	];
+	test.each(hardRestrictions)(
+		'keeps %s locked with or without a prior denial',
+		(reason) => {
+			const restrictions: readonly (readonly RestrictionReason[])[] = [
+				[reason],
+				['explicit-denial', reason],
+			];
+			for (const reasons of restrictions) {
+				const rows = buildConsentCategoryRows(
+					buildSnapshot({
+						consentCategories: ['measurement'],
+						restrictions: { measurement: reasons },
+					})
+				);
+				expect(rows).toEqual([
+					expect.objectContaining({
+						disabled: true,
+						key: 'measurement',
+						value: false,
+					}),
+				]);
+			}
+		}
+	);
+
 	test('lists the categories the core decided, necessary first', () => {
 		const snapshot = buildSnapshot({
 			consentCategories: [

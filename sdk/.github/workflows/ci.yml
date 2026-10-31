@@ -403,36 +403,62 @@ jobs:
       - name: Build and test the Swift core
         if: matrix.kind == 'ios-toolchain'
         run: |
-          set -ex
+          set -euxo pipefail
+          mkdir -p "$BENCH_OUTPUT_DIR"
           swift build --package-path native/core-swift
-          swift test --package-path native/core-swift
+          swift test --package-path native/core-swift --xunit-output "$BENCH_OUTPUT_DIR/swift-core.xml" 2>&1 | tee "$BENCH_OUTPUT_DIR/swift-core.log"
       # A separate step so the failing check names the layer that broke.
       - name: Build and test the binding's wire layer
         if: matrix.kind == 'ios-toolchain'
         run: |
-          set -ex
+          set -euxo pipefail
+          mkdir -p "$BENCH_OUTPUT_DIR"
           # The binding's React-free half, which is where every wire-format decision
           # lives. The TurboModule itself needs a host app, so it is built by the mobile
           # device group instead.
           swift build --package-path packages/react-native
-          swift test --package-path packages/react-native
+          swift test --package-path packages/react-native --xunit-output "$BENCH_OUTPUT_DIR/swift-binding.xml" 2>&1 | tee "$BENCH_OUTPUT_DIR/swift-binding.log"
       - name: Test the Kotlin core and assemble the Android library
         if: matrix.kind == 'android-js'
         run: |
           set -ex
           cd native/core-android
-          ./gradlew :c15t-core:test :c15t-android:assembleRelease --console=plain
+          ./gradlew :c15t-core:test :c15t-android:testDebugUnitTest :c15t-consent-ui:testDebugUnitTest \
+            :c15t-core:publishAllPublicationsToStagingRepository \
+            :c15t-android:publishAllPublicationsToStagingRepository \
+            :c15t-consent-ui:publishAllPublicationsToStagingRepository --no-configuration-cache --console=plain
           # The mobile harness invokes Gradle with --offline so a benchmark run never
           # waits on a download. Warm the bench source set here, or the Kotlin rows
           # report not-measured and the summary step fails the run.
           ./gradlew :c15t-core:bench --console=plain -q
+      - name: Pack the RN adapter for the isolated Android consumer
+        if: matrix.kind == 'android-js'
+        working-directory: packages/react-native
+        run: |
+          bun run build
+          bun pm pack --filename "${RUNNER_TEMP}/c15t-react-native.tgz"
+      - name: Resolve staged native binaries in isolated AGP 8 consumers
+        if: matrix.kind == 'android-js'
+        run: |
+          native_version="$(sed -n 's/^c15t.native.version=//p' native/core-android/gradle.properties)"
+          python3 native/core-android/consumer-smoke/verify.py \
+            --staging-repository native/core-android/build/maven-staging \
+            --version "${native_version}" --output "${RUNNER_TEMP}/c15t-android-consumer"
+          python3 native/core-android/consumer-smoke/verify.py \
+            --staging-repository native/core-android/build/maven-staging \
+            --version "${native_version}" --rn-package "${RUNNER_TEMP}/c15t-react-native.tgz" \
+            --output "${RUNNER_TEMP}/c15t-packed-android-consumer"
       - name: Assemble the React Native Android binding
         if: matrix.kind == 'android-js'
+        env:
+          C15T_MAVEN_URL: file://${{ github.workspace }}/native/core-android/build/maven-staging
         run: |
           cd packages/react-native/android
           ./gradlew :c15t-react-native:assembleRelease --console=plain
       - name: Generate the Codegen spec and compile the binding against it
         if: matrix.kind == 'android-js'
+        env:
+          C15T_MAVEN_URL: file://${{ github.workspace }}/native/core-android/build/maven-staging
         # Assembling the AAR proves the bridge compiles against the hand-written stand-in in
         # :c15t-spec. It says nothing about what Codegen emits for src/specs, which is the
         # class that exists at runtime: a stand-in that drifted from generated output still
@@ -465,6 +491,29 @@ jobs:
         # that app's build before a single task runs. This asks the CLI from the bare example
         # app's own install, which is the cheapest place that answer exists.
         run: bun scripts/react-native-autolink.ts
+      - name: Verify built mobile exports and packed dependency boundary
+        if: matrix.kind == 'android-js'
+        working-directory: packages/react-native
+        run: |
+          bun ../../scripts/verify-package-artifacts.ts
+          bun - <<'TS'
+          import { scanKernelFreePackage } from '../../scripts/check-publish-artifacts.ts';
+          import { readManifest } from '../../scripts/manifest-utils.ts';
+          import { withPackedPackage } from '../../scripts/react-native-autolink.ts';
+
+          withPackedPackage((packed) => {
+            const issues = scanKernelFreePackage(
+              packed.installedDir,
+              '@c15t/react-native',
+              readManifest(packed.installedDir),
+              new Set(packed.paths)
+            );
+            if (issues.length) {
+              console.error(JSON.stringify(issues, null, 2));
+              process.exitCode = 1;
+            }
+          });
+          TS
       - name: Measure the mobile budgets
         run: bun run --cwd benchmarks/mobile bench:ci
       # The harness already failed the job above if a measured number broke a ceiling.
@@ -481,8 +530,14 @@ jobs:
           include-hidden-files: true
           path: |
             .ci-reports/${{ matrix.report }}/
-            native/core-android/build/reports/
+            ${{ runner.temp }}/c15t-android-consumer/result.json
+            ${{ runner.temp }}/c15t-android-consumer/consumer/app/build/outputs/
+            ${{ runner.temp }}/c15t-packed-android-consumer/result.json
+            ${{ runner.temp }}/c15t-packed-android-consumer/consumer/app/build/outputs/
+            native/core-android/**/build/reports/
+            native/core-android/**/build/test-results/
             packages/react-native/android/c15t-react-native/build/reports/
+            packages/react-native/android/c15t-spec/build/generated/c15t-spec/
             packages/react-native/coverage/
           if-no-files-found: ignore
           retention-days: 7

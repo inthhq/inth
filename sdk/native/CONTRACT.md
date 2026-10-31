@@ -36,13 +36,17 @@ own:
                     evaluation answers, and where it still differs from the web
                     kernel, is the three paragraphs below plus
                     `docs/internal/evaluator-parity.md`.
-    TC string       still out of scope, and with it the bus rows that encode
-                    from it: no CMP identity and no purpose or vendor vectors
-                    exist in the cores yet, whatever model matched. Saving a
-                    `tcString` beside a decision is not implemented either.
-                    Every spec-table key is named in TcStorageBus.swift /
-                    TcStorageBus.kt; the rows that stay absent name their
-                    missing field there.
+    TC string       explicit native CMP/publisher configuration and complete IAB
+                    choices feed the existing native codecs. Choices, TC bytes,
+                    consent version and exact pending HTTP body commit together
+                    in the protected envelope before publication. Configuration
+                    is required to commit under an IAB policy; fixture CMP IDs
+                    are never production defaults. Complete IABTCF publication,
+                    GVL lifecycle, TCF 2.4 disclosures and AC v2 remain separate
+                    required release work.
+
+`docs/internal/native-iab-commits.mdx` defines the native commit, migration,
+withdrawal and delivery contract, including the storage adapter requirements.
 
 `docs/internal/tcf-mobile.md` records the sources behind all of that, including
 the Keychain-versus-shared-defaults trade-off the bus forces.
@@ -83,17 +87,19 @@ an `iab` case added to it inherits exactly what `opt-in` already did; divergence
 in `docs/internal/evaluator-parity.md` owns the fix, and it flips both models in
 both kernels on one measured fixture rather than carving an exception for IAB.
 
-The model a device reports is not the model a device evaluates. `deriveModel` in
-`packages/core/src/policy.ts` runs an IAB rule as `iab` only once `@c15t/iab` is
-installed, and a device has nothing to install there: no registered `cmpId`, no
-per-vendor vector, no TC String. So both cores publish `opt-in` for the `model`
-of a snapshot running an IAB rule, and both send `model: "opt-in"` on
-the write that follows it, while `resolution` keeps naming the IAB policy that
-matched. The rule's own model does move one byte: `IABTCF_gdprApplies` reads the
-stored rule, the way `packages/iab` does, so an IAB rule puts `1` on the bus where
-every other model puts `0`. Reporting `iab` on the snapshot would additionally
-promise the per-vendor vectors that slot's other members name, and the core has
-none.
+With native IAB configuration, an IAB policy reports `model: "iab"` and saves
+native-generated `tcString` bytes. Without that configuration, the legacy
+category-only snapshot reports `opt-in`; IAB saves reject rather than claiming
+an IAB commit. The matched resolution retains the policy's `iab` model in both
+cases. The existing bus still projects only policy version and applicability;
+ENG-510 must publish the complete committed authority.
+
+Swift still merges server category and notice receipts when an app configures
+IAB but the incoming policy resolves to a non-IAB model. The newest confirmation
+wins per category. When leaving native IAB, the old category projection is cleared
+before this merge. Under a native IAB policy, server category receipts cannot
+create or replace native authority. An unreadable policy imports no server
+receipts while native IAB is configured.
 
 Layout
 ------
@@ -137,7 +143,7 @@ mobile, minus IAB:
     revision: number                  // monotonic, bumps on every mutation
     policyPending: boolean            // true until the first init resolves
     ready: boolean                    // false until hydrate() completed or the first init resolved
-    model: 'opt-in' | 'opt-out' | 'none'   // the reported model; an IAB rule reports `opt-in`
+    model: 'opt-in' | 'opt-out' | 'none' | 'iab' // configured native IAB reports `iab`
     activeUI: 'none' | 'banner' | 'dialog' | null
     effectivePermissions: { necessary, functionality, experience, measurement, marketing }  // all boolean
     consentCategories: string[] | null
@@ -253,8 +259,13 @@ the first draft of this file left open: there is no revision-free write. A core
 that records `unsupported-contract` has committed a change, and that change
 reaches JavaScript on the `snapshot` event, from the observers, in the persisted
 envelope. The paired `error` event is a convenience for a host that wants the
-code without pulling a snapshot. It is never the only route, and nothing may rely
-on it rescuing a snapshot event that was dropped.
+code without pulling a snapshot. For errors recorded in the snapshot, it is never
+the only route and cannot rescue a snapshot event that was dropped.
+
+A transient failed init against unchanged, usable cached IAB authority is not
+folded into snapshot state. Both cores keep the snapshot and envelope unchanged,
+report the attempt through the error stream and update compact offline status.
+The preserved revision lets an open draft finish against the same authority.
 
 That reliance is what makes the pair load-bearing rather than tidy. The pump
 dedups by revision: it drops a `snapshot` event whose revision it has already
@@ -520,8 +531,9 @@ from the bytes applied. That identity is the point: there is no partial read, be
 half an envelope answers like a returning user, and a permission assembled out of
 garbage is indistinguishable from one the subject actually gave. It covers:
 
-- a key this build does not model. Swift refuses any key path its own encoder cannot
-  reproduce from the decoded value, which needs no list of names to keep current.
+- a key in the stored consent state that this build does not model. Swift refuses
+  any key path its own encoder cannot reproduce from the decoded value, which
+  needs no list of names to keep current.
   Kotlin's storage codec rejects unknown keys outright. Neither tolerates an unknown
   field and rewrites it away, because that rewrite is the launch where the field
   silently disappears while every number on the snapshot still looks healthy.
@@ -529,6 +541,10 @@ garbage is indistinguishable from one the subject actually gave. It covers:
   one shape most likely to read as valid.
 - a document from before the corrections below: `overrides.test`, or `privacySignals`
   as a boolean `gpc`/`msa` pair.
+
+Pending-save entries tolerate unknown queue fields, both under the legacy key and
+inside `pendingSaves`. Their frozen request bodies still replay unchanged. This
+exception does not relax snapshot, policy or IAB authority decoding.
 
 One retired field is dropped on read instead of refused: the standing privacy
 directive an alpha build stored. Every alpha snapshot wrote `optOutDirectives`, even as
@@ -562,14 +578,35 @@ that the backend has them, which no synchronous call can know. Delivery is a
 later fact, reported by the delivered event and by the error that replaced it,
 and the depth stays readable.
 
+Every consent save atomically stores the evaluated snapshot and pending body in
+the snapshot envelope before publishing the decision. Category saves retain
+existing delivery obligations under the queue's retention and capacity rules.
+Older category queues under the separate protected key remain readable; the
+next successful save carries their entries into the envelope. A refused envelope
+write preserves the previous decision and queue, publishes no new grant and
+creates no body that a later flush could deliver.
+
+IAB decisions also store the complete IAB record in that envelope. Each new IAB
+decision supersedes older queued grants. A full denial supersedes older queued
+actions for the same subject ID, external ID and domain. Other owners' frozen
+withdrawals remain owed. Identity changes and reset
+persist an empty consent record while retaining frozen withdrawals and an action
+time watermark. Their failure semantics and migration rules are defined in
+`docs/internal/native-iab-commits.mdx`.
+
 Order is what makes the assertion honest. The queue write lands before the
 snapshot moves, and no branch answers committed without a durable entry behind
 it. A save that cannot take on the obligation answers not-ok with the reason and
 leaves the decision where it was, because a decision nothing remembers having to
-deliver is worse than a refusal the caller can act on. Where the write happens
-unlocked, the state move is guarded on the revision the payload was built from:
-if another mutation landed in the meantime, that one stands, the entry is
-withdrawn, and the caller is told to repeat against the current snapshot.
+deliver is worse than a refusal the caller can act on. Every snapshot mutation
+uses a serialization gate covering preparation, revision validation, durable
+write and in-memory publication. The short state lock is released during storage
+I/O, so hot reads and storage callbacks can read the current committed authority.
+Host loggers and error observers run after releasing the mutation gate and may
+start another mutation.
+No other mutation can intervene between the revision check and its write. A stale
+draft is refused before writing, without adding a pending body. Network work runs
+after releasing the gate.
 
 Every failed send spends an attempt, including the first send of the save that
 queued the body. Without that, an attempt ceiling is reachable only by replays,
@@ -614,26 +651,39 @@ one queued decision.
 Whether to retry is decided by whether the same bytes could ever be accepted.
 The queue replays frozen bytes, so a `400 INPUT_VALIDATION_FAILED` or a contract
 declaration this build cannot speak says the same thing on the eleventh try as on
-the first, and the entry is dropped with the backend's reason named. A `503`, a
+the first. Grant entries are dropped with the backend's reason named. Full
+withdrawals remain owed until delivered or superseded by a newer full denial for
+the same subject ID, external ID and domain. A `503`, a
 timeout, a dropped socket, a rate limit, and `408`/`425` say nothing about the
 body, so the entry keeps its place. `401` and `403` are permanent for a body:
 the queue holds bodies and nothing else, and a credential that comes back later
 cannot rescue bytes the producer already refused on its own terms.
 
-The codes for these paths are the same strings in both cores, and the React
-Native boundary names each one: `not-bootstrapped`, `queue-write-failed`,
-`concurrent-change`, `transport-unavailable`, `save-rejected`,
-`save-undeliverable`. Adding one is a contract change, because it reaches
-JavaScript as a typed value, so the union in `packages/react-native/src/protocol`
-and both bridges move with it.
+Commit refusal reasons are `invalid-intent`, `no-subject`, `not-bootstrapped`,
+`policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`.
+These are the values of `CommitResult.reason` when `ok` is false. Delivery
+failures such as `transport-unavailable`, `save-rejected` and
+`save-undeliverable` are error-event codes, not commit refusal reasons.
+
+On success, `queued` records durable enqueueing. It can remain true after
+delivery. `delivered` is optional; iOS currently reports false, and refusal
+shapes can omit it. Neither an absent nor a false delivery field reverses a
+successful local commit. Adding a refusal reason is a contract change, so the
+union in `packages/react-native/src/protocol` and both bridges move with it.
 
 Transports
 ----------
 
 Same three modes as the web SDK, same backend endpoints, same headers.
 
-    x-c15t-version:            <native sdk version, prefixed rn->
+    x-c15t-version:            swift-><C15tSDK.version> on Swift
+    x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
+
+Kotlin currently reports `rn-><sdkVersion>` from `C15tProtocol.protocolHeaders`
+for every Android host.
+ENG-530 must give standalone Android requests their own module attribution.
+This telemetry difference does not change policy-contract negotiation.
 
 A backend that answers `unsupported-contract` is a hard configuration error. The
 core emits `error` and stays deny-all rather than guessing the wire.
@@ -641,42 +691,46 @@ core emits `error` and stays deny-all rather than guessing the wire.
 Writes go through a pending queue:
 
 - Persist the `SavePayload` before the request, not after.
-- One payload per explicit action, replayed unchanged. A later init that changes
-  policy must not rewrite a queued payload.
+- Freeze each action's body before sending. A later init must not rewrite it.
+  A full denial supersedes older queued actions for the same frozen owner and
+  domain. A grant never cancels an owed withdrawal.
 - Retry on the next launch, on foreground, and on reachability change.
-- Keep at most the newest 20 payloads, oldest dropped first.
+- Keep at most 20 payloads, dropping the oldest grants when needed. Never evict a
+  distinct owner's owed withdrawal to make room. If those withdrawals fill the
+  queue, refuse actions that cannot fit with `queue-write-failed`. A repeated
+  denial for an existing owner can still replace its slot.
+
+IAB disclosure bindings use the `gvl-v2:` format. Older projected bindings require
+a fresh decision because their stored lists may have discarded unknown fields.
 
 Platform lifecycle
 ------------------
 
-The core starts no timer of its own, so a platform port owns the three moments where
-a stored answer can have gone stale with nothing asking about it.
+Platform ports own the three lifecycle events that retry delivery and refresh policy.
+The core separately schedules a one-shot deadline for IAB list or consent expiry, so
+existing gates receive denial even while the app remains open.
 
 - **Launch.** Hydrate, then replay the pending queue. Both cores do this inside
   `bootstrap`, before the first read is served.
 - **Foreground.** Replay the pending queue, then refresh policy. A device that spent
   the night offline has a decision waiting to be delivered and possibly a notice that
   has aged out, and an app has no reason to go and ask about either.
-- **Reachability.** Replay the pending queue when the process gains a network it did
-  not already have. Nothing else on this list is worth a round trip for: policy is
-  served fresh at launch and at foreground, and a link that came and went does not
-  change what the subject agreed to.
+- **Reachability.** Replay the pending queue and refresh policy when the process gains
+  a network it did not already have. A recovered connection may be the first opportunity
+  to fetch a missing or stale GVL after an offline launch.
 
 A connectivity callback counts the network already up at registration as the state it
 started in, not as a gain. Replaying there races the launch replay, and a core that
 replays only the first genuine gain leaves a decision queued for the rest of a session
 spent online.
 
-The reachability leg is the one a platform may be denied, and the reason is literal:
-`ACCESS_NETWORK_STATE` on Android and the equivalent monitoring entitlement belong to
-the application, and an SDK that wrote them into every host's manifest would be
-spending the maintainer's privacy surface on the narrowest of the three legs. Where the
-platform refuses the registration, a core logs it once and carries on. Launch and
-foreground are never optional and never need a permission.
+Android reachability requires the host to declare `ACCESS_NETWORK_STATE`. If the
+platform refuses registration, the installer logs it and keeps launch and foreground
+recovery. Apple's `NWPathMonitor` needs no entitlement or manifest key.
 
-Neither core may poll a clock instead. A core that wakes itself on a cadence invents a
-rhythm no policy asked for, and whatever it decides at an arbitrary minute is an answer
-the policy never gave.
+Neither core polls the clock or refreshes on a fixed cadence. An expiry deadline
+reevaluates local authority and notifies gates without fetching policy or recording a
+consent action. A replacement snapshot cancels and reschedules that deadline.
 
 Subject identity
 ----------------
@@ -751,7 +805,8 @@ the choice prompt is owed again, the next init re-evaluates, and the banner or d
 returns. A wipe that stops at "deny everything and never ask again" is worse than no
 wipe at all, because the subject cannot undo it. So the rule, stated where a core can
 check it: after `reset()` the device holds no `explicitChoice`, no notice dismissal, no
-policy claim, and no queued save.
+policy claim, and no queued grant. Frozen withdrawals already owed to the backend
+retain their original owner and body until delivered.
 
 What the core publishes, and what it keeps:
 
@@ -786,15 +841,16 @@ the Swift core it stops persistence for the rest of the session, because a write
 revision is not ahead of the last one is refused. Reset moves the current revision by
 one, and the next init continues from there.
 
-It is the one mutation whose own durable effect is a deletion, so it writes no envelope of
-its own. The snapshot key goes rather than getting a null written over it, and the queue
-goes the same way, because an empty queue as bytes is not the answer a first launch has.
-What is on disk when `reset()` finishes is the subject id and nothing else. The only
-envelope that appears afterwards is the one the init below writes, which is the envelope a
-first launch writes too, and nothing under it may carry a decision. A core's
-`hasStoredSnapshot` answer moves with the deletion for the reason the unreadable-envelope
-rule gives: a handshake that reports cached consent from a device that just wiped it
-misstates the subject's answer, not the state of the cache.
+For category-only state without an owed frozen withdrawal, reset deletes the
+snapshot and queue keys. Only the subject identity remains until the next init
+writes a fresh policy envelope. `hasStoredSnapshot` is false at this deletion.
+
+For native IAB authority or an owed frozen withdrawal, reset atomically writes
+the cold-start snapshot with no consent authority or policy claim. This envelope
+retains the action-time watermark and any owed frozen withdrawals. It prevents a
+failed deletion from restoring an earlier grant. `hasStoredSnapshot` is true on
+both platforms because the envelope exists; that flag does not assert a consent
+decision, readiness or a grant.
 
 Then it re-runs init, the way bootstrap does. A first launch does not sit at
 `policyPending` once the network answers, and a wipe that stopped at the baseline would
@@ -804,9 +860,9 @@ Re-resolving belongs to the wipe rather than to the caller: a bridge that calls
 `refresh()` after `reset()` hides a core that does not finish its own work, and every
 host would have to be told the order.
 
-Two things a reset does not do. It records nothing, so it sends nothing: there is no
-consent record to make and no queue entry to write, and the backend keeps the records it
-already holds. And it cannot recall a request already on its way. A save a delivery pass
+Reset creates no new consent decision or delivery obligation. Previously owed
+withdrawals may still be delivered, and the backend keeps its audit history.
+Reset also cannot recall a request already on its way. A save a delivery pass
 had handed to the transport may still land after the wipe, and the pass finds its entry
 gone when it settles. The bridge promise resolves once the local state is durable and
 does not wait on that request, because its outcome is not something a caller can act on.
@@ -1117,17 +1173,19 @@ Swift core, as built
 iOS packaging, as built
 -----------------------
 
-A host app integrates two pods, both resolvable from this repository:
+A CocoaPods RN host integrates the binding pod, which carries generated core and
+Apple sources in the same compiled module:
 
     platform :ios, '16.4'
 
-    pod 'C15tCore',         :path => '../native/core-swift'
     pod 'C15tReactNative',  :path => '../packages/react-native'
 
-- `C15tCore.podspec` mirrors `Package.swift`: the iOS 16.4 floor, `Sources/C15tCore`
-  only, and `Resources/Privacy.xcprivacy` in a `C15tCore` resource bundle, the same
-  shape the binding's podspec uses. `C15tCoreBench` is an executable and has no pod
-  product. The app must declare iOS 16.4, which is above RN 0.87's own 15.1 floor.
+- Do not also link `C15tCore` or `C15tApple` separately in that RN process. Host
+  installation imports `C15tReactNative` and uses the types compiled into that
+  module, so RN attaches to the same core and Keychain owner. See
+  `docs/internal/apple-installation.md` for the source-consumer distinction.
+  `C15tCore.podspec` remains a local core-only spec, not a published dependency.
+  The app must declare iOS 16.4, which is above RN 0.87's own 15.1 floor.
 - `packages/react-native/package.json` needs
   `codegenConfig.ios.modules.C15t.className = "C15tReactNativeModule"`, because RN
   0.87 resolves TurboModules through generated `RCTModuleProviders`. Verified by
@@ -1423,3 +1481,67 @@ Read it before changing either `PolicyEvaluator`, or the evaluation scenarios in
 `packages/react-native/scripts/generate-protocol-fixtures.ts`. Permissions and
 `restrictions` are bridge and storage surface: a kernel may not change them to
 match a hunch, and no fixture expectation may be edited to make a core pass.
+
+### Identity recovery during core hydration
+
+Both cores discard the consent envelope and pending saves before adopting a new
+subject when the stored identity is missing or undecodable. They report
+`subject-id-missing` or `subject-id-corrupt` when records were orphaned. An envelope
+whose subject differs from the stored identity also fails closed with
+`subject-id-mismatch`. A fresh install with no records needs no recovery diagnostic.
+Swift applies this rule on every public `hydrate()` call. Kotlin applies it during
+synchronous bootstrap and subsequent subject resolution. Replay checks the current
+subject even for category-only saves. No installer or RN bridge is required for
+these checks, and vendor storage never supplies identity or consent authority.
+
+
+Native IAB disclosure lifecycle: fetch time is durable and defaults to a seven-day
+list age limit. No-GVL responses do not renew it. Native lifecycle reads distinguish
+fresh, cached, offline, stale, missing and unconfigured states. Only exact
+configuration, policy, identity and normalized disclosure agreement retains an
+existing choice; any change requires a fresh action and removes obsolete queued
+grants. List staleness suspends a compatible choice and queued grants without
+erasing them. Reads, gates and replay deny that authority until an identical list
+refresh restores it; choice expiry still discards it. Foreground and connectivity
+recovery finish replay before refreshing policy, including a delivery pass already
+in progress. These callbacks schedule work without blocking their caller.
+Custom IAB saves require the revision the draft opened on. TCF 2.4
+standardTexts, including the Features explanation, survive narrowing and storage.
+See docs/internal/native-iab-commits.mdx for refresh and retry behavior.
+Native Additional Consent v2 uses the backend's scoped official ATP disclosures,
+not GVL vendor IDs. A complete native draft carries ATP selections; purposes 1,
+3 and 4 gate every positive ATP signal. The generated addtlConsent, TCF authority
+and exact HTTP body commit together. List content changes require fresh consent;
+missing responses retain only an unexpired cache, empty lists disable AC, and
+malformed lists clear it. The bound ATP cache participates in expiry scheduling
+even when a newer GVL remains current. Stale lists cannot grant. The platform bus owns
+IABTCF_AddtlConsent as a string and removes it with invalid authority or reset.
+ATT remains a separate permission. RN API and shared UI wiring remain an ENG-511
+acceptance gate after this native foundation integrates.
+
+The complete IABTCF bus is an egress projection of validated native authority.
+Explicit CMP detection is synchronous at bootstrap. Consent values use native
+integer/string types and the exact committed TC vectors. Apple removes TC/AC
+markers first and writes TCString last; Android replaces the complete map in one
+synchronous preferences transaction. Mirror rejection removes owned values and
+can be repaired from the core without reading vendor storage as authority.
+Numbered publisher restriction keys are owned and cleared. Reset removes consent
+rows while configured CMP detection remains. See the spec-linked key/type table
+and reader ordering limits in docs/internal/native-iab-commits.mdx. The real ad SDK
+reference, device latency and power-loss behavior remain separate evidence gates.
+
+## Build policy fallback
+
+Native bootstrap can resolve an endpoint-bound resource exported from hosted
+`/manifest` before JavaScript starts. A usable stored policy takes precedence.
+See [mobile policy resources](docs/mobile-policy-resources.md) for
+resource version 1, expiry, unknown-geography and disclosure rules.
+
+The resource has no visitor identity, grant, receipt, queue or policy token.
+Its original GVL and ATP timestamps survive storage and relaunch. Expired policy
+authority denies optional gates. Readable disclosure copy remains separate from
+authority to accept a new grant. Hosted refresh and durable replay stay installed.
+
+The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
+`com.c15t.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from
+`policyResource` and copies the exact resource bytes during prebuild.

@@ -1422,6 +1422,7 @@
         "@react-native/typescript-config": "0.87.1",
         "@types/node": "25.5.0",
         "@types/react": "~19.2.2",
+        "hermes-compiler": "250829098.0.17",
         "typescript": "7.0.2",
         "vitest": "4.1.10",
       },
@@ -2025,6 +2026,7 @@
         "@expo/config-plugins": "57.0.9",
       },
       "devDependencies": {
+        "@babel/parser": "7.28.5",
         "@c15t/core": "workspace:*",
         "@c15t/iab": "workspace:*",
         "@c15t/typescript-config": "workspace:*",
@@ -2039,8 +2041,8 @@
         "typescript": "7.0.2",
       },
       "peerDependencies": {
-        "react": ">=19.1.0",
-        "react-native": ">=0.81.0",
+        "react": ">=19.2.3 <19.3.0",
+        "react-native": ">=0.86.0 <0.88.0",
       },
       "optionalPeers": [
         "react",

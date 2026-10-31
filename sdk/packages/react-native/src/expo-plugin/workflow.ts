@@ -20,10 +20,7 @@ export interface WorkflowContext {
 }
 
 /**
- * Commands that either produce a native project or consume one.
- *
- * Everything else that evaluates the config is `expo start`, and `expo start`
- * on a managed project means Expo Go.
+ * Commands that build, export, or configure a native app without launching Expo Go.
  */
 const NATIVE_COMMAND_TOKENS = new Set([
 	'add',
@@ -34,8 +31,11 @@ const NATIVE_COMMAND_TOKENS = new Set([
 	'doctor',
 	'export',
 	'export:embed',
+	'init',
 	'install',
 	'prebuild',
+	'project:init',
+	'project:info',
 	'remove',
 	'run',
 ]);
@@ -43,14 +43,15 @@ const NATIVE_COMMAND_TOKENS = new Set([
 const isNativeBuildInvocation = function isNativeBuildInvocation(
 	argv: readonly string[]
 ): boolean {
-	return argv.some((token) => {
-		const value = token.trim();
-		return (
-			NATIVE_COMMAND_TOKENS.has(value) ||
-			value.startsWith('run:') ||
-			value.startsWith('--dev-client')
-		);
-	});
+	const command = argv[2]?.trim();
+	const entry = argv[1]?.replaceAll('\\', '/');
+	return (
+		(entry !== undefined &&
+			/(?:^|\/)(?:eas(?:\.cmd)?|eas-cli\/bin\/run)$/u.test(entry)) ||
+		(command !== undefined &&
+			(NATIVE_COMMAND_TOKENS.has(command) || command.startsWith('run:'))) ||
+		argv.some((token) => token.trim().startsWith('--dev-client'))
+	);
 };
 
 const isEasBuild = function isEasBuild(

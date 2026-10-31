@@ -1,0 +1,45 @@
+---
+title: Commands and outcomes
+description: Use the React Native consent commands, inspect durable CommitResult outcomes, and handle native presenter sessions without equating them with delivery.
+group: frameworks
+---
+
+Use `useConsentActions()` for category choices and app commands under `C15tProvider`. Only a person's explicit action records a choice. Mounting a provider, loading policy or acknowledging a notice does not record optional consent.
+
+## Inspect every local commit
+
+`save`, `acceptAll` and `rejectAll` return `Promise<CommitResult>`. A resolved promise can contain `ok: false`. Preserve the draft and offer a retry until `ok` is true.
+
+<include src="../../shared/examples/react-native-bare/commit-results.mdx" />
+
+| Result | Meaning |
+| --- | --- |
+| `ok: true` | Native applied and durably stored the local action. |
+| `queued: true` | Native durably enqueued its delivery obligation. This is not a live pending-request count. |
+| `delivered: true` | Native reported backend acceptance before returning. It can coexist with `queued: true`. |
+| Missing or false `delivered` | Local success still stands. iOS currently reports false. Read later native delivery events for transport outcomes. |
+| `ok: false` | Native refused the action; inspect `reason`, keep the draft and retry after the cause is resolved. |
+| Rejected promise | The bridge or native command failed. Do not display a saved confirmation. |
+
+Refusals include `policy-pending`, `queue-write-failed`, `concurrent-change` and invalid intents. Native IAB and resource validation can report additional actionable errors. A later network failure does not roll back a durable local withdrawal.
+
+## Choose a command
+
+| API | Behavior |
+| --- | --- |
+| `save(consents)` | Saves the optional categories supplied. Omitted categories keep their receipts. This is not an arbitrary IAB vendor-draft API. |
+| `acceptAll()` | Accepts the resolved policy scope through native validation. |
+| `rejectAll()` | Records necessary-only choice and withdraws optional use. |
+| `dismissNotice()` | Acknowledges a notice locally; does not send a consent save. |
+| `refresh()` | Re-resolves policy and retries native delivery. It is not a consent action. |
+| `setOverrides(overrides)` | Changes QA geography, language or GPC inputs. Omitted fields stay; explicit null clears them. It creates no grant. |
+| `identify(externalId)`, `logout()`, `reset()` | Change identity or local consent as described in [identity and reset](/docs/frameworks/react-native/identity). |
+| `requestTrackingAuthorization()` | Explicitly requests the separate platform authorization where supported. |
+
+## Use native presenter sessions
+
+`presentConsentPrompt(privacyPolicyURL)` opens an owed native prompt. `presentPreferences(privacyPolicyURL)` opens standing settings even when no prompt is owed. Both resolve to `sessionId` and `status`, which is `presented`, `already-presented` or `not-required`. The last status has a null session ID.
+
+Subscribe with `onConsentPresenterOutcome(listener)` before presenting and remove the subscription on teardown. Outcomes are `committed`, `acknowledged`, `dismissed` or `unavailable`, with a session ID and snapshot revision. A committed outcome means durable local storage. Draft toggles do not cross the bridge as consent events.
+
+`closeConsentPresenter(sessionId)` requests closure of that session. Obsolete IDs do nothing, dirty drafts require native confirmation and pending saves cannot be closed. Repeated opens reuse the current native session. Do not render an additional React consent dialog over the native presenter.

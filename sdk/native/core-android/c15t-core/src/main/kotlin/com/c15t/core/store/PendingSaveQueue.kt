@@ -2,6 +2,8 @@ package com.c15t.core.store
 
 import com.c15t.core.model.QueuedSave
 import com.c15t.core.model.SavePayload
+import com.c15t.core.model.isWithdrawal
+import com.c15t.core.model.sameOwner
 import java.util.UUID
 
 /**
@@ -53,6 +55,8 @@ class PendingSaveQueue(
 	 */
 	private val idGenerator: () -> String = { UUID.randomUUID().toString() },
 ) {
+	private val capacity = limit.coerceIn(1, DEFAULT_LIMIT)
+
 	/**
 	 * Persist [payload] as a queued write, and return the entry the caller must hand to
 	 * the transport -- or `null` when the write did not land.
@@ -62,12 +66,16 @@ class PendingSaveQueue(
 	 * a caller that the commit stood when nothing has to deliver it is worse than a
 	 * refusal they can act on. [C15tStore.writePending] is what proves the write.
 	 */
-	fun enqueue(payload: SavePayload, queuedAt: Long): QueuedSave? {
-		val entry = QueuedSave(id = idGenerator(), queuedAt = queuedAt, payload = payload)
-		val current = store.readPending()
+	fun enqueue(payload: SavePayload, queuedAt: Long, body: String? = null): QueuedSave? =
+		synchronized(store) {
+		val entry = QueuedSave(id = idGenerator(), queuedAt = queuedAt, payload = payload, body = body)
+		val current = store.readPending().filterNot { entry.isWithdrawal() && it.sameOwner(entry) }
 		// Oldest dropped first, newest kept.
-		val next = (current + entry).takeLast(maxOf(1, limit))
-		return entry.takeIf { store.writePending(next) }
+		val withdrawals = current.filter { it.isWithdrawal() }
+		if (withdrawals.size >= capacity) return@synchronized null
+		val grants = current.filterNot { it.isWithdrawal() }.takeLast(maxOf(0, capacity - withdrawals.size - 1))
+		val next = withdrawals + grants + entry
+		return@synchronized entry.takeIf { store.writePending(next) }
 	}
 
 	/** Everything still waiting, oldest first. */
@@ -93,14 +101,15 @@ class PendingSaveQueue(
 	 * `false` means the removal did not persist, so the caller must keep the obligation
 	 * rather than report a delivery no storage remembers.
 	 */
-	fun complete(id: String): Boolean {
+	fun complete(id: String): Boolean =
+		synchronized(store) {
 		val current = store.readPending()
 		val next = current.filterNot { it.id == id }
 		if (next.size == current.size) {
-			return true
+			return@synchronized true
+			}
+			return@synchronized store.writePending(next)
 		}
-		return store.writePending(next)
-	}
 
 	/**
 	 * Account for a delivery attempt that did not land.
@@ -121,18 +130,17 @@ class PendingSaveQueue(
 	 * entry that went stale are two different things to debug, and the caller gets one
 	 * error event to say it in.
 	 */
-	fun recordFailedAttempt(
-		id: String,
-		now: Long,
-	): FailedAttempt {
+	fun recordFailedAttempt(id: String, now: Long): FailedAttempt =
+		synchronized(store) {
 		val cutoff = now - MAX_AGE_MS
 		val current = store.readPending()
 		val index = current.indexOfFirst { it.id == id }
 		if (index < 0) {
-			return FailedAttempt.AlreadyGone
+			return@synchronized FailedAttempt.AlreadyGone
 		}
-		val entry = current[index].let { it.copy(attempts = it.attempts + 1) }
+		val entry = current[index].let { it.copy(attempts = minOf(it.attempts, MAX_ATTEMPTS) + 1) }
 		val outcome = when {
+			entry.isWithdrawal() -> FailedAttempt.Retrying
 			entry.attempts >= MAX_ATTEMPTS -> FailedAttempt.DroppedAfterAttempts(entry.attempts)
 			entry.queuedAt < cutoff -> FailedAttempt.DroppedAsTooOld(entry.queuedAt)
 			else -> FailedAttempt.Retrying
@@ -147,11 +155,16 @@ class PendingSaveQueue(
 		// looser than they look: the answer here describes this decision, not the
 		// durability of the bookkeeping behind it.
 		store.writePending(next)
-		return outcome
+		return@synchronized outcome
+		}
+
+	/** Drop grants after authority invalidation; frozen withdrawals remain owed. */
+	fun discardGrants() = synchronized(store) {
+		store.writePending(store.readPending().filter { it.isWithdrawal() })
 	}
 
-	/** Forget the queue, for a host that wipes consent state. */
-	fun clear() {
+	/** Forget the queue when the stored subject cannot be recovered. */
+	fun clear() = synchronized(store) {
 		store.writePending(emptyList())
 	}
 

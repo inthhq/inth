@@ -13,6 +13,12 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// than mis-reads.
     static let currentVersion = 1
 
+    let additionalConsentList: AdditionalConsentList?
+    let bundledPolicyAuthority: BundledPolicyAuthority?
+    let iabListFetchedAt: Int64?
+    let lastIABActionAt: Int64?
+    let iabConsent: IABCommittedConsent?
+    var pendingSaves: [PendingSaveEntry]?
     let version: Int
     /// Epoch milliseconds of the write, for diagnostics and for the
     /// newest-writer-wins check when persisting.
@@ -28,11 +34,23 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     let policyResolution: JSONValue?
 
     init(
+        bundledPolicyAuthority: BundledPolicyAuthority? = nil,
         snapshot: ConsentSnapshot,
         noticeDismissal: NoticeDismissal?,
         policyResolution: JSONValue?,
-        storedAt: Int64
+        storedAt: Int64,
+        iabConsent: IABCommittedConsent? = nil,
+        pendingSaves: [PendingSaveEntry]? = nil,
+        lastIABActionAt: Int64? = nil,
+        iabListFetchedAt: Int64? = nil,
+        additionalConsentList: AdditionalConsentList? = nil
     ) {
+        self.additionalConsentList = additionalConsentList
+        self.bundledPolicyAuthority = bundledPolicyAuthority
+        self.iabListFetchedAt = iabListFetchedAt
+        self.lastIABActionAt = lastIABActionAt ?? iabConsent?.actionAt
+        self.iabConsent = iabConsent
+        self.pendingSaves = pendingSaves
         self.version = Self.currentVersion
         self.storedAt = storedAt
         self.snapshot = snapshot
@@ -62,7 +80,7 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
     /// every number on the snapshot still looks healthy.
     ///
     /// Encoding what was decoded is the check that needs no list of names to keep
-    /// current: every key path in the input has to come back out of the typed value,
+    /// current: every authority key path has to come back out of the typed value,
     /// and a path that does not is a name this build does not have. Refusing the whole
     /// envelope is then the same decision the retired fields already make, and
     /// `native/CONTRACT.md` says why guessing is the wrong half.
@@ -114,6 +132,10 @@ struct StoredEnvelope: Sendable, Codable, Equatable {
                 // that as unknown refuses the whole envelope: a stored choice becomes
                 // nothing stored, on every launch, with nothing on the snapshot to say why.
                 if case .null = item { continue }
+                // Queue entries have always tolerated extra bookkeeping fields.
+                // Their typed decoder still checks known fields, and their frozen
+                // bodies remain opaque bytes rather than consent authority.
+                if keyPath == "pendingSaves" { continue }
                 // Retired directive state this build drops on purpose rather than refuses:
                 // the directive list, and a restriction entry that held nothing but the
                 // directive's reason. See ``RetiredEnvelope/optOutDirectivesKey``.

@@ -15,7 +15,10 @@
  *    consent change that does not touch a component cannot rerender it.
  */
 
-import { denyAllSnapshot } from '../lib/deny-all-snapshot';
+import {
+	denyAllSnapshot,
+	INVALID_NATIVE_SNAPSHOT_CODE,
+} from '../lib/deny-all-snapshot';
 import type { ConsentDecision } from '../lib/selectors';
 import {
 	categoryDecision,
@@ -41,6 +44,7 @@ import type {
 	TrackingRequestPayload,
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
+import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -76,11 +80,11 @@ export interface ConsentClient {
 	/**
 	 * Read the current snapshot.
 	 *
-	 * Repeated calls on unchanged state return the identical frozen object, so
+	 * Repeated calls on unchanged state return the identical cached object, so
 	 * it is safe as a store snapshot and cheap in a render path.
 	 *
 	 * @returns The snapshot the native core holds, or a deny-all snapshot when
-	 *   the payload cannot be parsed and no earlier one exists.
+	 *   the current payload cannot be read.
 	 */
 	getSnapshot: () => ConsentSnapshot;
 	/**
@@ -362,7 +366,7 @@ const warnSnapshotDrift = function warnSnapshotDrift(
 
 	seen.value = signature;
 	console.warn(
-		'c15t ConsentClient: the native snapshot does not use the key names this package declares. Consent state may read as missing.',
+		'c15t ConsentClient: the native snapshot does not match the declared wire shape. Consent state may read as missing.',
 		problems
 	);
 };
@@ -382,14 +386,19 @@ const isUsableSnapshot = function isUsableSnapshot(
 	}
 
 	const record = candidate as Record<string, unknown>;
+	const permissions = record.effectivePermissions;
 
 	return (
 		typeof record.revision === 'number' &&
 		Number.isFinite(record.revision) &&
 		typeof record.ready === 'boolean' &&
 		typeof record.policyPending === 'boolean' &&
-		typeof record.effectivePermissions === 'object' &&
-		record.effectivePermissions !== null &&
+		typeof permissions === 'object' &&
+		permissions !== null &&
+		CONSENT_CATEGORIES.every(
+			(category) =>
+				typeof (permissions as Record<string, unknown>)[category] === 'boolean'
+		) &&
 		typeof record.promptRequirement === 'object' &&
 		record.promptRequirement !== null
 	);
@@ -552,23 +561,36 @@ export const createConsentClient = function createConsentClient(
 		rawSnapshot = raw;
 
 		const parsed = parseObject(raw);
+		if (typeof parsed === 'object' && parsed !== null) {
+			const problems = describeSnapshotWireDrift(parsed, {
+				allowUnknownKeys: true,
+			});
+			const permissions = (parsed as Record<string, unknown>)
+				.effectivePermissions;
+			const values =
+				typeof permissions === 'object' && permissions !== null
+					? (permissions as Record<string, unknown>)
+					: {};
+			for (const category of CONSENT_CATEGORIES) {
+				if (typeof values[category] !== 'boolean') {
+					problems.push(
+						`effectivePermissions.${category}: expected a boolean, found ${typeof values[category]}`
+					);
+				}
+			}
+			warnSnapshotDrift(problems, drift);
+		}
 
 		if (!isUsableSnapshot(parsed)) {
-			// Fail closed: keep the last snapshot the app already rendered
-			// rather than invent one, and deny everything when there is none.
-			snapshot ??= denyAllSnapshot(
+			snapshot = denyAllSnapshot(
 				'getSnapshot() returned text that is not a readable consent snapshot, so every optional category is denied until the native core reports again.',
-				0
+				snapshot?.revision ?? 0
 			);
 
 			return snapshot;
 		}
 
 		snapshot = parsed;
-		warnSnapshotDrift(
-			describeSnapshotWireDrift(parsed, { allowUnknownKeys: true }),
-			drift
-		);
 
 		return snapshot;
 	};
@@ -605,6 +627,7 @@ export const createConsentClient = function createConsentClient(
 			eventName === 'snapshot' &&
 			revision !== null &&
 			snapshot !== null &&
+			snapshot.error?.code !== INVALID_NATIVE_SNAPSHOT_CODE &&
 			revision === snapshot.revision
 		) {
 			return;

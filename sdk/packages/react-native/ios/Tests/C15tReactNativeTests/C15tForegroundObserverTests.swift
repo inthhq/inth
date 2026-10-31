@@ -118,6 +118,38 @@ final class C15tForegroundObserverTests: XCTestCase {
         XCTAssertEqual(http.initCount, initsBefore + 1, "policy was asked about once, not twice")
     }
 
+    func testConnectivityRecoveryReplaysQueuedSaveAndRefreshesPolicy() async {
+        let (core, http) = await armedCore()
+        http.savesFail = true
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.pendingSaveCount(), 1)
+
+        http.savesFail = false
+        let initsBefore = http.initCount
+        let gate = C15tReachabilityGate(onGained: C15tReactNativeBootstrap.replayThenRefresh)
+        gate.onLost()
+        gate.onAvailable()
+        await core.waitUntilIdle()
+
+        XCTAssertEqual(core.pendingSaveCount(), 0)
+        XCTAssertEqual(http.initCount, initsBefore + 1)
+    }
+
+    func testForegroundRefreshWaitsForReplayCompletion() async {
+        await assertRefreshWaitsForReplay(joinExistingPass: false) {
+            NotificationCenter.default.post(name: C15tForegroundObserver.didBecomeActive, object: nil)
+        }
+    }
+
+    func testConnectivityRefreshWaitsForAnExistingReplay() async {
+        let gate = C15tReachabilityGate(onGained: C15tReactNativeBootstrap.replayThenRefresh)
+        gate.onLost()
+        await assertRefreshWaitsForReplay(joinExistingPass: true) {
+            gate.onAvailable()
+        }
+    }
+
     func testASecondStartDoesNotDoubleTheForegroundLeg() async {
         let (core, http) = await armedCore()
 
@@ -156,6 +188,125 @@ final class C15tForegroundObserverTests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    private func assertRefreshWaitsForReplay(
+        joinExistingPass: Bool,
+        trigger: @escaping @Sendable () -> Void,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        let http = HeldReplayTransport()
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore(), transport: http, initRetry: .disabled))
+        await core.waitUntilIdle()
+        XCTAssertTrue(C15tReactNativeBootstrap.install(core), file: file, line: line)
+        XCTAssertEqual(core.save(.all).status, .committed, file: file, line: line)
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.pendingSaveCount(), 1, file: file, line: line)
+
+        let replayStarted = expectation(description: "queued replay reached the transport")
+        let prematureRefresh = expectation(description: "refresh cannot start before replay finishes")
+        prematureRefresh.isInverted = true
+        http.holdReplay(started: replayStarted, refresh: prematureRefresh)
+        defer { http.releaseReplay() }
+        if joinExistingPass {
+            core.flushPending()
+            await fulfillment(of: [replayStarted], timeout: 2)
+        }
+
+        let callbackReturned = expectation(description: "lifecycle callback returns while replay is held")
+        Task.detached {
+            trigger()
+            callbackReturned.fulfill()
+        }
+        await fulfillment(of: [callbackReturned], timeout: 2)
+        if !joinExistingPass {
+            await fulfillment(of: [replayStarted], timeout: 2)
+        }
+        await fulfillment(of: [prematureRefresh], timeout: 0.1)
+
+        http.releaseReplay()
+        let completed = expectation(description: "replay and subsequent refresh finish")
+        Task {
+            await core.waitUntilIdle()
+            completed.fulfill()
+        }
+        await fulfillment(of: [completed], timeout: 2)
+        XCTAssertEqual(http.recoveryCalls, ["save-start", "save-finish", "init"], file: file, line: line)
+        XCTAssertEqual(core.pendingSaveCount(), 0, file: file, line: line)
+    }
+
+    private final class HeldReplayTransport: C15tTransport, @unchecked Sendable {
+        let domain = "held-replay"
+        private let lock = NSLock()
+        private var replayStarted: XCTestExpectation?
+        private var refreshStarted: XCTestExpectation?
+        private var release: CheckedContinuation<Void, Never>?
+        private var released = false
+        private var recovering = false
+        private var calls: [String] = []
+
+        var recoveryCalls: [String] {
+            lock.lock()
+            defer { lock.unlock() }
+            return calls
+        }
+
+        func holdReplay(started: XCTestExpectation, refresh: XCTestExpectation) {
+            lock.lock()
+            recovering = true
+            replayStarted = started
+            refreshStarted = refresh
+            lock.unlock()
+        }
+
+        func releaseReplay() {
+            lock.lock()
+            released = true
+            let continuation = release
+            release = nil
+            refreshStarted = nil
+            lock.unlock()
+            continuation?.resume()
+        }
+
+        func performInit(_ context: InitContext) async -> Result<InitResponse, C15tError> {
+            let premature = lock.withLock {
+                if recovering { calls.append("init") }
+                return refreshStarted
+            }
+            premature?.fulfill()
+            return .success(InitResponse(policyResolution: RecordingTransport.unconfiguredResolution))
+        }
+
+        func sendSave(_ body: Data) async -> Result<Void, C15tError> {
+            let recovering = lock.withLock {
+                if self.recovering { calls.append("save-start") }
+                return self.recovering
+            }
+            guard recovering else { return .failure(.offline) }
+            await withCheckedContinuation { continuation in
+                lock.lock()
+                let alreadyReleased = released
+                if !alreadyReleased { release = continuation }
+                let started = replayStarted
+                replayStarted = nil
+                lock.unlock()
+                started?.fulfill()
+                if alreadyReleased { continuation.resume() }
+            }
+            lock.withLock { calls.append("save-finish") }
+            return .success(())
+        }
+
+        func patchIdentity(
+            subjectId: String,
+            externalId: String,
+            identityProvider: String?
+        ) async -> Result<Void, C15tError> {
+            .success(())
+        }
+    }
 
     /// A core that started, answered one init, and was adopted through the bridge's own
     /// install path, which is the call that arms the lifecycle legs.

@@ -19,3 +19,23 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Versioned native artifacts are resolved by the host, without a composite source build.
+allprojects {
+    repositories {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri(System.getenv('C15T_MAVEN_URL') ?: 'https://maven.pkg.github.com/inthhq/c15t-private')
+                    if (url.scheme == 'https') {
+                        credentials {
+                            username = System.getenv('C15T_MAVEN_USERNAME')
+                            password = System.getenv('C15T_MAVEN_TOKEN')
+                        }
+                    }
+                }
+            }
+            filter { includeGroup('com.c15t') }
+        }
+    }
+}

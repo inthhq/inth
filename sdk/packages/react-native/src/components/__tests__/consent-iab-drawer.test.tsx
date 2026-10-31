@@ -20,6 +20,8 @@ import { completeGVL } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
 import { flushPromises } from '../../__tests__/helpers/fake-native';
 import {
 	animationState,
+	findNodeHandle,
+	focusState,
 	resetNativeStub,
 	setReduceMotion,
 } from '../../__tests__/helpers/react-native-stub';
@@ -203,6 +205,19 @@ const travelAxis = function travelAxis(
 };
 
 describe('the drawer as a page', () => {
+	test('iOS initially focuses the accessible drawer heading', async () => {
+		const tree = mountDrawer();
+		const [heading] = roleNodes(tree.container(), 'header');
+
+		try {
+			await expect.poll(() => focusState.tags.length).toBe(1);
+			expect(focusState.tags).toEqual([findNodeHandle(heading)]);
+			expect(heading?.getAttribute('data-accessible')).toBe('true');
+		} finally {
+			tree.unmount();
+		}
+	});
+
 	test('is not in the tree while it is closed', () => {
 		const tree = mountDrawer(false);
 

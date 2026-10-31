@@ -497,6 +497,8 @@ class DeliveryPassExclusivityTest {
 		private val delegate: InMemoryKeyValueStore,
 	) : KeyValueStore {
 		override fun read(key: String): String? = synchronized(delegate) { delegate.read(key) }
+		override fun writeDurably(key: String, value: String?): Boolean =
+			synchronized(delegate) { delegate.writeDurably(key, value) }
 
 		override fun write(
 			key: String,

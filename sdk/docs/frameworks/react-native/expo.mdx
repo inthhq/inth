@@ -1,0 +1,52 @@
+---
+title: Expo and EAS
+description: Configure the c15t native module in Expo SDK 57 development builds and prepare EAS and OTA inputs without assuming artifact publication.
+group: frameworks
+---
+
+Use the config plugin in an Expo SDK 57 custom native build. Expo Go cannot load the c15t TurboModule. Hosted Inth is the recommended transport; `selfHosted`, `offline` and app-owned `custom` installation are [explicit alternatives](/docs/frameworks/react-native/configuration).
+
+## Obtain the private artifacts
+
+Get the RN package tarball and the matching versioned Android artifacts from the maintainer. Add that tarball as an app dependency using your package manager's local-file support. Do not substitute an unverified public npm version.
+
+The plugin has no default Maven repository. The example names the private pilot repository from source and build-time credential environment variables. Repository access and uploaded artifacts must be arranged separately. A file-based repository on your computer is not available to EAS workers.
+
+## Configure the plugin
+
+This compile-checked configuration uses the designated reference Inth endpoint. Replace it with your own project URL. Put the [build-exported policy](/docs/frameworks/react-native/offline) at `c15t-policy.json` beside this config before prebuild, or omit `policyResource` when fresh offline prompting is not required.
+
+<include src="../../shared/examples/expo-dev/expo-config.mdx" />
+
+The plugin writes native bootstrap metadata, the Android launch initializer and internet permission, iOS privacy declarations and Android SDK floors. RN consumes pinned `com.c15t:c15t-core`, `com.c15t:c15t-android` and the stock UI artifact through the native build. It does not ship a second JavaScript consent engine.
+
+This typed setup covers categories. Typed IAB CMP/publisher bootstrap is [deferred from the first release](/docs/frameworks/react-native/quickstart#first-release-scope); `vendors` only filters disclosures. Use [app-owned native IAB installation](/docs/frameworks/react-native/iab#configure-native-authority-first) when your integration needs IAB authority.
+
+## Build a custom binary
+
+Run from your Expo app directory after installing the private dependency:
+
+```sh
+npx expo prebuild
+npx expo run:ios
+npx expo run:android
+```
+
+For EAS, configure a development build profile and make the private npm/tarball input and Maven credentials available to the remote build. Then use your configured profile:
+
+```sh
+npx eas-cli build --profile development --platform ios
+npx eas-cli build --profile development --platform android
+```
+
+These are consumer build commands, not evidence that a cloud build has passed. Keep credentials in the build service's secret storage, never in `app.config.ts` or plugin values. Build-time Maven credentials are distinct from the public Inth project URL.
+
+Mount the [shared RN root](/docs/frameworks/react-native/quickstart#attach-javascript-after-native-installation) after native setup. The stock prompt should use native controls and the privacy-settings button should reopen it.
+
+## Keep ATT explicit
+
+Only enable `enableAppTrackingTransparency` if your app needs tracking authorization. Supply an app-specific `trackingUsageDescription`; the plugin refuses to invent one. `skAdNetworkIdentifiers`, `privacyTrackingDomains`, optional Markdown usage copy and localized Markdown copy configure native declarations. They do not grant consent or trigger a prompt. Call the [tracking API](/docs/frameworks/react-native/iab#keep-att-separate) after your own explanation.
+
+## Pair OTA updates with binaries
+
+When `updates.url` is enabled, the plugin requires `runtimeVersion`. The fingerprint policy in the checked config derives it from native inputs. New native APIs, permissions, UI themes, Codegen or embedded policy resources require a new binary. An OTA JavaScript bundle cannot supply them. See [compatibility and OTA](/docs/frameworks/react-native/platform-support).
