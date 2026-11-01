@@ -126,7 +126,7 @@ presentation and Settings changes still need on-device verification.
 
 ## Versions and validation limits
 
-Core requests report `x-c15t-version: swift-><C15tSDK.version>`. Platform-created
+Core requests report `x-c15t-version: <C15tSDK.version>`. Platform-created
 hosted transports also report `x-c15t-platform: apple-><C15tApple.version>` on
 init, save and identity requests. These native source versions are independent
 of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of

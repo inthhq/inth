@@ -676,14 +676,19 @@ Transports
 
 Same three modes as the web SDK, same backend endpoints, same headers.
 
-    x-c15t-version:            swift-><C15tSDK.version> on Swift
+    x-c15t-version:            <C15tSDK.version> on Swift
     x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
 
 Kotlin currently reports `rn-><sdkVersion>` from `C15tProtocol.protocolHeaders`
 for every Android host.
 ENG-530 must give standalone Android requests their own module attribution.
-This telemetry difference does not change policy-contract negotiation.
+
+Swift sends the unprefixed semantic version, matching the web header format.
+Apple-created transports report their module separately in `x-c15t-platform`.
+Hosted gateways can reject unknown platform prefixes in `x-c15t-version`, so
+platform attribution must not be prepended to the Swift version.
+The policy-contract header remains the capability declaration.
 
 A backend that answers `unsupported-contract` is a hard configuration error. The
 core emits `error` and stays deny-all rather than guessing the wire.

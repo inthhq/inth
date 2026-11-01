@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiObject2
@@ -29,6 +31,18 @@ class ConsentJourneyTest {
     private fun waitFor(id: String): SemanticsNodeInteraction {
         compose.waitUntil(15000) { compose.onAllNodesWithTag(id).fetchSemanticsNodes().isNotEmpty() }
         return compose.onNodeWithTag(id)
+    }
+    private fun waitForFontScaleRecreation(previous: ConsentDemoActivity, fontScale: Float) {
+        // The retry tag also exists in the old dialog. Do not query semantics while it is being replaced.
+        compose.waitUntil(15000) {
+            compose.runOnUiThread {
+                val current = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .filterIsInstance<ConsentDemoActivity>().singleOrNull()
+                previous.isDestroyed && previous.lifecycle.currentState == androidx.lifecycle.Lifecycle.State.DESTROYED &&
+                    current != null && current !== previous &&
+                    kotlin.math.abs(current.resources.configuration.fontScale - fontScale) < 0.001f
+            }
+        }
     }
     private fun nativeSearch(id: String): UiObject2 {
         waitFor(id)
@@ -521,7 +535,10 @@ class ConsentJourneyTest {
                 capture("android-$scale-save-error")
                 if (page) {
                     // Text size changes while the failure is up: the draft, the failure and its retry survive the recreation.
+                    lateinit var beforeResize: ConsentDemoActivity
+                    scenario!!.onActivity { beforeResize = it }
                     device.executeShellCommand("settings put system font_scale 1.3")
+                    waitForFontScaleRecreation(beforeResize, 1.3f)
                     waitFor("c15t.prefs.error.retry")
                     scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch").assertIsOn()
                     compose.onNodeWithTag("c15t.prefs.error.retry").assertIsDisplayed()

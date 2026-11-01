@@ -710,21 +710,23 @@ private struct Hairline: View {
     var body: some View { Rectangle().fill(theme.colors.text.color.opacity(0.1)).frame(height: 1 / UIScreen.main.scale) }
 }
 
-private struct CustomizeAnchorKey: PreferenceKey {
-    static let defaultValue: Anchor<CGRect>? = nil
-    static func reduce(value: inout Anchor<CGRect>?, nextValue: () -> Anchor<CGRect>?) {
-        value = nextValue() ?? value
+private enum BrandingAnchor { case customize, inline }
+
+private struct BrandingAnchorsKey: PreferenceKey {
+    static let defaultValue: [BrandingAnchor: Anchor<CGRect>] = [:]
+    static func reduce(value: inout [BrandingAnchor: Anchor<CGRect>], nextValue: () -> [BrandingAnchor: Anchor<CGRect>]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, next in next })
     }
 }
 
-private struct BrandingInSideColumnKey: EnvironmentKey {
+private struct BrandingInOverlayKey: EnvironmentKey {
     static let defaultValue = false
 }
 
 private extension EnvironmentValues {
-    var brandingInSideColumn: Bool {
-        get { self[BrandingInSideColumnKey.self] }
-        set { self[BrandingInSideColumnKey.self] = newValue }
+    var brandingInOverlay: Bool {
+        get { self[BrandingInOverlayKey.self] }
+        set { self[BrandingInOverlayKey.self] = newValue }
     }
 }
 
@@ -799,37 +801,38 @@ private struct VerticalBrandingPlacement: ViewModifier {
     @Environment(\.layoutDirection) private var layoutDirection
     @State private var contentFrame: CGRect = .zero
     @State private var brandSize: CGSize = .zero
-    @State private var showSide = false
 
     func body(content: Content) -> some View {
         if enabled && edge != nil && !typeSize.isAccessibilitySize {
             content
-                .environment(\.brandingInSideColumn, showSide)
+                .environment(\.brandingInOverlay, true)
                 .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { contentFrame = $0 }
-                .overlayPreferenceValue(CustomizeAnchorKey.self) { anchor in
+                .overlayPreferenceValue(BrandingAnchorsKey.self) { anchors in
                     GeometryReader { geometry in
                         let bounds = CGRect(origin: .zero, size: geometry.size)
                         let origin = geometry.frame(in: .global).origin
                         let safe = contentFrame.offsetBy(dx: -origin.x, dy: -origin.y)
-                        let button = anchor.map { geometry[$0] } ?? .zero
+                        let button = anchors[.customize].map { geometry[$0] } ?? .zero
                         let reserved = geometry.reservedRegions(kind: .occlusion, layoutDirectionBehavior: .fixed)
                             + geometry.reservedRegions(kind: .division, layoutDirectionBehavior: .fixed)
                         let onLeft = (edge == .leading) == (layoutDirection == .leftToRight)
-                        let candidate = anchor != nil
+                        let candidate = anchors[.customize] != nil
                             ? SideBrandingFrame.resolve(canvas: bounds, content: safe, anchor: button,
                                 size: brandSize, onLeft: onLeft, reserved: reserved.map(\.frame))
                             : nil
-                        let fits = candidate != nil
                         ZStack(alignment: .topLeading) {
                             Color.clear
                             if let candidate {
                                 // Reserved regions use physical coordinates; position mirrors in RTL.
                                 let x = layoutDirection == .rightToLeft ? bounds.width - candidate.midX : candidate.midX
                                 CompactBranding().position(x: x, y: candidate.midY)
+                            } else if let anchor = anchors[.inline] {
+                                let slot = geometry[anchor]
+                                let x = layoutDirection == .rightToLeft ? bounds.width - slot.midX : slot.midX
+                                Branding().frame(width: slot.width, height: slot.height)
+                                    .position(x: x, y: slot.midY)
                             }
                         }
-                        .onAppear { showSide = fits }
-                        .onChange(of: fits) { showSide = $0 }
                     }
                     .allowsHitTesting(false)
                     .ignoresSafeArea(.container, edges: .horizontal)
@@ -858,7 +861,7 @@ private struct DecisionGroup: View {
     let part: Part
     @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
-    @Environment(\.brandingInSideColumn) private var brandingInSideColumn
+    @Environment(\.brandingInOverlay) private var brandingInOverlay
     private var prefix: String { first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs" }
 
     static func errorID(first: Bool) -> String { (first ? "c15t.first-layer" : "c15t.prefs") + ".error" }
@@ -923,11 +926,12 @@ private struct DecisionGroup: View {
             }
             if first {
                 Button("Customize") { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.first-layer.customize")
-                    .anchorPreference(key: CustomizeAnchorKey.self, value: .bounds) { $0 }
+                    .anchorPreference(key: BrandingAnchorsKey.self, value: .bounds) { [.customize: $0] }
                 if theme.showsBranding {
-                    // Keep Customize stationary when a reserved region changes the attribution placement.
-                    if brandingInSideColumn {
+                    // One overlay owns both placements; the placeholder keeps Customize stationary.
+                    if brandingInOverlay {
                         Branding().hidden().accessibilityHidden(true)
+                            .anchorPreference(key: BrandingAnchorsKey.self, value: .bounds) { [.inline: $0] }
                     } else {
                         Branding()
                     }
@@ -982,6 +986,23 @@ private struct SectionSpacing: ViewModifier {
     }
 }
 
+/// Unboxed rows meet the card grid. On iOS 26 the section must extend past the
+/// text, or the inset-grouped corner mask clips the first and last lines.
+private struct PreferencesUnboxedSection: ViewModifier {
+    let top: CGFloat
+    let bottom: CGFloat
+    func body(content: Content) -> some View {
+        let section = content.listRowBackground(Color.clear)
+            .listRowSeparator(.hidden).listSectionSeparator(.hidden)
+        if #available(iOS 26, *) {
+            section.listSectionMargins(.horizontal, 0)
+                .listRowInsets(EdgeInsets(top: top, leading: 16, bottom: bottom, trailing: 16))
+        } else {
+            section.listRowInsets(EdgeInsets(top: top, leading: 0, bottom: bottom, trailing: 0))
+        }
+    }
+}
+
 /// Standing settings in the platform's own voice: an inset grouped list on the canvas.
 private struct PreferencesList: View {
     @ObservedObject var presenter: ConsentPresenter
@@ -991,8 +1012,6 @@ private struct PreferencesList: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var surface: Color { theme.colors.surface.color }
-    /// Insets for the decision rows at accessibility sizes: the buttons meet the cards' edges.
-    private let decisionInsets = EdgeInsets(top: 4, leading: 16, bottom: 8, trailing: 16)
     @AccessibilityFocusState private var introFocused: Bool
     @State private var arrived = false
 
@@ -1028,11 +1047,11 @@ private struct PreferencesList: View {
                             Text("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
                                 .accessibilityFocused($introFocused)
                         }
-                    }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 4, trailing: 16))
-                }
+                    }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+                }.modifier(PreferencesUnboxedSection(top: 0, bottom: 4))
                 if page, DecisionGroup.showsShortcuts(presenter) {
                     Section { DecisionGroup(presenter: presenter, first: false, part: .shortcuts, path: $path).id("c15t.prefs.shortcuts") }
-                        .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
+                        .modifier(PreferencesUnboxedSection(top: 4, bottom: 8))
                 }
                 Section { ForEach(presenter.offeredCategories, id: \.self) { category in CategoryRow(presenter: presenter, category: category) } }
                     header: { if presenter.iab { SectionLabel("This app") } }
@@ -1084,7 +1103,7 @@ private struct PreferencesList: View {
             }
             if page, DecisionGroup.showsPinnedStatus(presenter) {
                 Section { DecisionGroup(presenter: presenter, first: false, part: .pinnedStatus, path: $path).id(DecisionGroup.errorID(first: false)) }
-                    .listRowInsets(decisionInsets).listRowBackground(Color.clear).listRowSeparator(.hidden)
+                    .modifier(PreferencesUnboxedSection(top: 4, bottom: 8))
             }
           }
           .onAppear {
@@ -1158,6 +1177,22 @@ private extension ConsentToggle where Label == Text {
     }
 }
 
+private struct ReadOnlyStatusRow<Label: View, Status: View>: View {
+    let label: Label
+    let status: Status
+    @Environment(\.dynamicTypeSize) private var typeSize
+    var body: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 12))
+        layout {
+            label
+            if !typeSize.isAccessibilitySize { Spacer(minLength: 0) }
+            status
+        }
+    }
+}
+
 private struct CategoryRow: View {
     @ObservedObject var presenter: ConsentPresenter
     let category: ConsentCategory
@@ -1181,13 +1216,12 @@ private struct CategoryRow: View {
                     RowLabel(title: title, description: description)
                 }.accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).switch")
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    RowLabel(title: title, description: description,
-                        note: optional.flatMap { optional in restricted ? (presenter.snapshot.restrictions[optional]?.contains(.gpc) == true ? "Off because your device sends a Global Privacy Control signal." : "Not offered where you are.") : nil })
-                    Spacer(minLength: 0)
-                    Text(category == .necessary ? "Always on" : "Off").font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+                ReadOnlyStatusRow(
+                    label: RowLabel(title: title, description: description,
+                        note: optional.flatMap { optional in restricted ? (presenter.snapshot.restrictions[optional]?.contains(.gpc) == true ? "Off because your device sends a Global Privacy Control signal." : "Not offered where you are.") : nil }),
+                    status: Text(category == .necessary ? "Always on" : "Off").font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                         .accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).locked")
-                }
+                )
                 .frame(minHeight: 44)
                 .accessibilityElement(children: .combine)
                 .accessibilityIdentifier(restricted ? "c15t.prefs.category.\(category.rawValue).restricted" : "c15t.prefs.category.\(category.rawValue).locked")
@@ -1200,11 +1234,9 @@ private struct ReadOnlyDefinition: View {
     let item: GVLDefinition
     @Environment(\.consentTheme) private var theme
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            RowLabel(title: item.name, description: item.description)
-            Spacer(minLength: 0)
-            Text("No choice").font(.footnote).foregroundStyle(theme.colors.textSecondary.color)
-        }.padding(.vertical, 10)
+        ReadOnlyStatusRow(label: RowLabel(title: item.name, description: item.description),
+            status: Text("No choice").font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
+            .padding(.vertical, 10)
     }
 }
 
@@ -1375,11 +1407,8 @@ private struct VendorDetails: View {
             .disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
     }
     private func noChoice(_ name: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text(name)
-            Spacer(minLength: 0)
-            Text("No choice").font(.footnote).foregroundStyle(theme.colors.textSecondary.color)
-        }
+        ReadOnlyStatusRow(label: Text(name),
+            status: Text("No choice").font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
     }
     @ViewBuilder private func otherDisclosures(_ vendor: GVLVendor, _ list: GlobalVendorList) -> some View {
         if !vendor.specialPurposes.isEmpty {
@@ -1393,11 +1422,8 @@ private struct VendorDetails: View {
         if !vendor.specialFeatures.isEmpty {
             Section {
                 ForEach(vendor.specialFeatures, id: \.self) { feature in
-                    HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        Text(list.specialFeatures[feature]?.name ?? "")
-                        Spacer(minLength: 0)
-                        Text(presenter.choices.specialFeatureOptIns.contains(feature) ? "On" : "Off").font(.footnote).foregroundStyle(theme.colors.textSecondary.color)
-                    }
+                    ReadOnlyStatusRow(label: Text(list.specialFeatures[feature]?.name ?? ""),
+                        status: Text(presenter.choices.specialFeatureOptIns.contains(feature) ? "On" : "Off").font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
                 }
             } header: { SectionLabel("Special features") } footer: { Text("Set under Special features in Privacy settings.") }
                 .listRowBackground(theme.colors.surface.color)

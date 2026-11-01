@@ -74,8 +74,8 @@ public enum C15tSDK {
         return ids.map(String.init).joined(separator: ",")
     }
 
-    /// Requests identify the native core that made them, including standalone hosts.
-    public static let versionHeaderValue = "swift->\(version)"
+    /// Unprefixed semantic version accepted by hosted gateways, matching the web format.
+    public static let versionHeaderValue = version
 
     /// The native protocol revision the JavaScript boundary handshakes against.
     /// A provider that does not recognize it is talking to an embedded native

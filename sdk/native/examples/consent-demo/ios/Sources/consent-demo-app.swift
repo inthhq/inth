@@ -204,6 +204,7 @@ extension DemoRoot {
             switch env["C15T_FIXTURE_BRANDING"] {
             case "inth": theme.branding = .inth
             case "custom": theme.branding = .custom(name: "Pantry", markImageName: "ConsentDemoMark")
+            case "wide-custom": theme.branding = .custom(name: "Example Privacy Platform")
             case "hidden": theme.showsBranding = false
             default: break
             }
