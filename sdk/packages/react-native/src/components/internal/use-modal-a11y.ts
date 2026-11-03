@@ -14,7 +14,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import type { ComponentRef, Ref, RefObject } from 'react';
+import type { ComponentRef, RefObject } from 'react';
 import { AccessibilityInfo, findNodeHandle, Platform } from 'react-native';
 import type { Text, View } from 'react-native';
 
@@ -23,15 +23,10 @@ import { useHardwareBack } from './use-hardware-back';
 /**
  * What a `View` ref actually holds.
  *
- * React Native types the instance but does not export the name, so it comes off
- * the component's own props rather than being written out.
+ * Derive it from the component so class-based and function-based React Native
+ * View declarations both keep the correct native instance.
  */
-export type SurfaceInstance =
-	NonNullable<React.ComponentProps<typeof View>['ref']> extends Ref<
-		infer InstanceType
-	>
-		? InstanceType
-		: never;
+export type SurfaceInstance = ComponentRef<typeof View>;
 
 /** What {@link useModalA11y} hands a surface. */
 export interface ModalA11y {

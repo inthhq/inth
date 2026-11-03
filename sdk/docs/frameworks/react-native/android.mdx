@@ -16,7 +16,12 @@ The candidate native coordinates use group `com.c15t` and version `3.0.0-alpha.1
 
 Configure the supplied Maven repository in the host's dependency resolution and obtain credentials through your build system. Do not embed repository tokens in the manifest or app. A local staging directory, a source composite build or a successful producer build does not prove remote registry resolution.
 
-Consumer floors are API 24, compile SDK 36 and JDK 17. Keep the host's compatible Gradle, Android Gradle Plugin and Kotlin versions; do not load the native producer's plugin build into an Expo/RN app. See the [candidate matrix](/docs/frameworks/react-native/platform-support).
+Consumer floors are API 24, compile SDK 36 and JDK 17. RN 0.87, RN 0.88 and
+Expo 58 require compile SDK 37. Use the higher requirement of c15t and your
+host; a newer compile SDK does not raise the minimum Android version on which
+the app can run. Keep the host's compatible Gradle, Android Gradle Plugin and
+Kotlin versions; do not load the native producer's plugin build into an
+Expo/RN app. See the [candidate matrix](/docs/frameworks/react-native/platform-support).
 
 ## Install before SDK startup
 

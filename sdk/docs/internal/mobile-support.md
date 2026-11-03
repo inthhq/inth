@@ -42,17 +42,50 @@ the release-age delay. This check does not launch Metro or a native app.
 
 | Component | Candidate contract | Evidence still required |
 | --- | --- | --- |
-| React Native | 0.86.x and 0.87.x, New Architecture | Clean packed bare and Expo builds and launches on both platforms |
-| React | `>=19.2.3 <19.3.0` | Packed consumer type-check plus device integration |
-| Expo | SDK 57 with its prescribed RN and React versions, custom native build | Clean prebuild, EAS build and device launch; Expo Go cannot load this SDK |
+| React Native | 0.83.x through 0.88.x, New Architecture | Clean packed bare and Expo builds and launches on both platforms |
+| React | `>=19.2.0 <19.4.0`, paired with the host's RN or Expo release | Packed consumer type-check plus device integration |
+| Expo | SDK 55 through 58 with their prescribed RN and React versions, custom native build | Clean prebuild, EAS build and device launch; Expo Go cannot load this SDK |
 | Apple | iOS 16.4 or later; Swift 5.9 language mode or later | Minimum-OS and current-OS device lifecycle, storage and ATT checks |
 | Android | API 24 or later | Minimum/current device checks and compatible Gradle, AGP and Kotlin consumer builds |
 
 The former open-ended RN `>=0.81` declaration did not have matrix evidence.
-The peer range now limits candidates to the two RN minor versions above. Native
-core tests run without RN or Expo. macOS SwiftPM tests do not prove an iOS
-minimum deployment target or an on-device permission flow. Android artifact
+The current peer range is bounded at `>=0.83.0 <0.89.0`. Exact RN, React and
+Expo versions are pinned in `scripts/mobile-compatibility.json`; each admitted
+RN minor has a matrix cell. The check installs a packed SDK outside the
+workspace, checks its consumer and maintained source types, runs the host's
+Android and iOS Codegen, and runs Expo Continuous Native Generation where
+applicable. Passing those checks does not prove a full native app build or a
+device journey for that cell.
+
+Android consumers keep API 24 and JDK 17. Compile SDK 36 is the native minimum;
+RN 0.87, RN 0.88 and Expo 58 need 37. The host owns compatible Gradle, Android
+Gradle Plugin and Kotlin versions. The native producer build must not select
+those versions for an app. The Expo plugin sets the iOS app and CocoaPods
+deployment targets to at least 16.4, including Expo 55 templates whose default
+is 15.1, and preserves higher host targets. Bare RN apps set that minimum
+themselves.
+
+Native core tests run without RN or Expo. macOS SwiftPM tests do not prove an
+iOS minimum deployment target or an on-device permission flow. Android artifact
 publication and toolchain compatibility remain release blockers.
+
+## Upstream maintenance and compatibility policy
+
+For new apps, target RN 0.88 with React 19.3, or Expo 58, and complete native
+build and device acceptance before shipping. Keep older matrix versions usable
+for existing apps. As of November 3, 2026, RN 0.87 and 0.88 are active upstream,
+RN 0.86 is at End of Cycle, and RN 0.83 through 0.85 are unsupported upstream.
+Expo 55 and 56 are not listed as deprecated by Expo. Their compatibility work
+does not imply that upstream RN maintains those versions. Review the official
+[RN status](https://reactnative.dev/releases/overview) and
+[Expo upgrade guide](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/)
+when changing the matrix.
+
+Review the matrix with every stable RN and Expo release. Pin and exercise a
+new pairing before widening peers. Announce framework removals and OS minimum
+increases before making them, and ship them in a c15t major release. An upstream
+End of Cycle or unsupported label prompts a review; it does not silently remove
+c15t compatibility from an existing release. Retain New Architecture only.
 
 ## Launch transport modes
 

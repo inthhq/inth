@@ -1,0 +1,50 @@
+[
+	{
+		"id": "expo-55",
+		"expo": "55.0.32",
+		"expoTemplate": "55.0.44",
+		"reactNative": "0.83.10",
+		"react": "19.2.0",
+		"compileSdk": 36
+	},
+	{
+		"id": "rn-84",
+		"expo": null,
+		"expoTemplate": null,
+		"reactNative": "0.84.1",
+		"react": "19.2.7",
+		"compileSdk": 36
+	},
+	{
+		"id": "expo-56",
+		"expo": "56.0.24",
+		"expoTemplate": "56.0.38",
+		"reactNative": "0.85.3",
+		"react": "19.2.3",
+		"compileSdk": 36
+	},
+	{
+		"id": "expo-57",
+		"expo": "57.0.31",
+		"expoTemplate": "57.0.33",
+		"reactNative": "0.86.3",
+		"react": "19.2.3",
+		"compileSdk": 36
+	},
+	{
+		"id": "rn-87",
+		"expo": null,
+		"expoTemplate": null,
+		"reactNative": "0.87.1",
+		"react": "19.2.7",
+		"compileSdk": 37
+	},
+	{
+		"id": "expo-58",
+		"expo": "58.0.22",
+		"expoTemplate": "58.0.31",
+		"reactNative": "0.88.1",
+		"react": "19.3.0",
+		"compileSdk": 37
+	}
+]

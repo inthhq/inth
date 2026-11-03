@@ -58,6 +58,7 @@ jobs:
       performance: ${{ steps.plan.outputs.performance }}
       baseRef: ${{ steps.plan.outputs.baseRef }}
       mobile: ${{ steps.plan.outputs.mobile }}
+      mobileCompatibility: ${{ steps.plan.outputs.mobileCompatibility }}
       mobileBrowserOrDevice: ${{ steps.plan.outputs.mobileBrowserOrDevice }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
@@ -456,6 +457,13 @@ jobs:
         run: |
           cd packages/react-native/android
           ./gradlew :c15t-react-native:assembleRelease --console=plain
+      - name: Compile oldest and current packed React Native consumers
+        if: matrix.kind == 'android-js'
+        run: |
+          for cell in expo-55 expo-58; do
+            bun scripts/mobile-compatibility.ts --cell "${cell}" --android \
+              --output "${RUNNER_TEMP}/c15t-packed-${cell}"
+          done
       - name: Generate the Codegen spec and compile the binding against it
         if: matrix.kind == 'android-js'
         env:
@@ -535,6 +543,9 @@ jobs:
             ${{ runner.temp }}/c15t-android-consumer/consumer/app/build/outputs/
             ${{ runner.temp }}/c15t-packed-android-consumer/result.json
             ${{ runner.temp }}/c15t-packed-android-consumer/consumer/app/build/outputs/
+            ${{ runner.temp }}/c15t-packed-expo-*/*.log
+            ${{ runner.temp }}/c15t-packed-expo-*/result.json
+            ${{ runner.temp }}/c15t-packed-expo-*/android/result.json
             native/core-android/**/build/reports/
             native/core-android/**/build/test-results/
             packages/react-native/android/c15t-react-native/build/reports/
@@ -547,6 +558,41 @@ jobs:
         if: github.event_name != 'pull_request'
         with:
           scope: mobile-${{ matrix.kind }}
+
+  mobileCompatibility:
+    permissions:
+      contents: read
+      id-token: write
+    name: Mobile compatibility (${{ matrix.cell }})
+    needs: [repository, build]
+    if: needs.repository.outputs.mobileCompatibility == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: [expo-55, rn-84, expo-56, expo-57, rn-87, expo-58]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          built: true
+          cache-scope: mobile-compatibility-${{ matrix.cell }}
+      - name: Check packed types, SDK source types, Codegen and Expo prebuild
+        run: bun scripts/mobile-compatibility.ts --cell "${{ matrix.cell }}" --output "${RUNNER_TEMP}/mobile-compatibility"
+      - name: Save compatibility evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-compatibility-${{ matrix.cell }}
+          path: |
+            ${{ runner.temp }}/mobile-compatibility/*.log
+            ${{ runner.temp }}/mobile-compatibility/result.json
+            ${{ runner.temp }}/mobile-compatibility/consumer/ios/Podfile.properties.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Native app builds remain visible on PRs and full validation. Release pushes
   # run the advisory workflow independently so publishing cannot wait for it.
@@ -595,6 +641,7 @@ jobs:
         backend,
         browser,
         mobile,
+        mobileCompatibility,
         bundle,
         performance,
       ]

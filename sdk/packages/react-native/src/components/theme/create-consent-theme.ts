@@ -201,7 +201,7 @@ export type ConsentColorScheme = (typeof CONSENT_COLOR_SCHEMES)[number];
  * @returns The scheme to build styles from.
  */
 export const resolveConsentColorScheme = function resolveConsentColorScheme(
-	scheme: ConsentColorScheme | null | undefined
+	scheme: ConsentColorScheme | 'unspecified' | null | undefined
 ): ConsentColorScheme {
 	return scheme === 'dark' ? 'dark' : 'light';
 };

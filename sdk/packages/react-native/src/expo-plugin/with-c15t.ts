@@ -20,6 +20,7 @@ import {
 	applyInfoPlist,
 	applyLocalizedMarkdownDescriptions,
 	buildPrivacyManifestDeclarations,
+	withIosDeploymentTargetFloor,
 } from './ios';
 import { resolveParams } from './params';
 import type {
@@ -159,6 +160,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	};
 
 	next = applyPrivacyDeclarations(next, params);
+	next = withIosDeploymentTargetFloor(next);
 
 	next = withInfoPlist(next, (configWithPlist) => ({
 		...configWithPlist,

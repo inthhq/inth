@@ -2,14 +2,73 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { IOSConfig } from '@expo/config-plugins';
-import type { InfoPlist, XcodeProject } from '@expo/config-plugins';
+import {
+	IOSConfig,
+	withPodfileProperties,
+	withXcodeProject,
+} from '@expo/config-plugins';
+import type {
+	ConfigPlugin,
+	InfoPlist,
+	XcodeProject,
+} from '@expo/config-plugins';
 
 import { IOS_PLIST_KEY } from './constants';
 import { C15tPluginError } from './errors';
 import { IOS_TRANSPORT_MODE } from './params';
 import type { ResolvedC15tParams } from './params';
 import { POLICY_RESOURCE_NAME } from './policy-resource';
+
+const minimumDeploymentTarget = (
+	value: string | undefined,
+	minimum = '16.4'
+): string => {
+	const target = value?.replaceAll('"', '');
+	const [major = 0, minor = 0, patch = 0] =
+		target?.split('.').map(Number) ?? [];
+	const [minimumMajor = 0, minimumMinor = 0, minimumPatch = 0] = minimum
+		.split('.')
+		.map(Number);
+	return major > minimumMajor ||
+		(major === minimumMajor &&
+			(minor > minimumMinor ||
+				(minor === minimumMinor && patch >= minimumPatch)))
+		? (target ?? minimum)
+		: minimum;
+};
+
+/** Keep Expo's app and CocoaPods targets at the native SDK's iOS minimum. */
+export const withIosDeploymentTargetFloor: ConfigPlugin = (config) => {
+	const minimum = minimumDeploymentTarget(config.ios?.deploymentTarget);
+	const next = withPodfileProperties(config, (cfg) => ({
+		...cfg,
+		modResults: {
+			...cfg.modResults,
+			'ios.deploymentTarget': minimumDeploymentTarget(
+				cfg.modResults['ios.deploymentTarget'],
+				minimum
+			),
+		},
+	}));
+	return withXcodeProject(next, (cfg) => {
+		const [, target] = IOSConfig.Target.findFirstNativeTarget(cfg.modResults);
+		const configurations = IOSConfig.XcodeUtils.getBuildConfigurationsForListId(
+			cfg.modResults,
+			target.buildConfigurationList
+		);
+		for (const [, configuration] of configurations) {
+			const current = configuration.buildSettings.IPHONEOS_DEPLOYMENT_TARGET;
+			IOSConfig.DeploymentTarget.setDeploymentTargetForBuildConfiguration(
+				configuration,
+				minimumDeploymentTarget(
+					typeof current === 'string' ? current : undefined,
+					minimum
+				)
+			);
+		}
+		return cfg;
+	});
+};
 
 /**
  * The `ios.privacyManifests` shape, narrowed to what c15t declares.

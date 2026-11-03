@@ -342,8 +342,12 @@ describe('the Markdown prompt in each locale bundle', () => {
 		expect(existsSync(tableOf(root, 'de'))).toBe(false);
 	});
 
-	it('never registers the project when nothing is localized', () => {
-		expect(applyToFixture(ATT_PROPS).mods?.ios?.xcodeproj).toBeUndefined();
+	it('adds no resources when nothing is localized', async () => {
+		const root = scratchProject();
+		const project = IOSConfig.XcodeUtils.getPbxproj(root);
+		const resources = sectionOf(project.writeSync(), 'PBXBuildFile');
+		const written = await runXcodeMod(applyToFixture(ATT_PROPS), root, project);
+		expect(sectionOf(written.writeSync(), 'PBXBuildFile')).toBe(resources);
 	});
 });
 
@@ -430,15 +434,17 @@ describe('making the locales one the app claims to speak', () => {
 		expect(regions.slice(0, 2)).toStrictEqual(['en', 'Base']);
 	});
 
-	it('claims nothing and touches no project when no locale was named', async () => {
+	it('preserves the host regions when no locale was named', async () => {
 		const config = applyToFixture(ATT_PROPS);
 
 		const applied = await runInfoPlist(config);
 		expect(applied.ios?.infoPlist).not.toHaveProperty('CFBundleLocalizations');
 
-		// With no mod registered the project file is never opened, which is the
-		// only honest way knownRegions stays exactly as the host left it.
-		expect(config.mods?.ios?.xcodeproj).toBeUndefined();
+		const root = scratchProject();
+		const project = IOSConfig.XcodeUtils.getPbxproj(root);
+		const regions = knownRegionsOf(project.writeSync());
+		const written = await runXcodeMod(config, root, project);
+		expect(knownRegionsOf(written.writeSync())).toStrictEqual(regions);
 	});
 
 	it('claims a base Markdown prompt alone without a locale list', async () => {

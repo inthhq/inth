@@ -234,6 +234,7 @@ describe('release validation', () => {
 						'backend',
 						'browser',
 						'mobile',
+						'mobileCompatibility',
 						'bundle',
 						'performance',
 					],
@@ -384,31 +385,46 @@ describe('release validation', () => {
 		});
 	});
 
-	it.each(['repository', 'build', 'packages', 'backend', 'browser', 'bundle'])(
+	it.each([
+		'repository',
+		'build',
+		'packages',
+		'backend',
+		'browser',
+		'mobile',
+		'mobileCompatibility',
+		'bundle',
+	])(
 		'blocks failed or cancelled %s checks when release benchmarks are skipped',
 		(job) => {
-			const script = execFileSync(
-				'bun',
-				[
-					'-e',
-					'console.log(Bun.YAML.parse(await Bun.stdin.text()).jobs.complete.steps[0].run)',
-				],
-				{
-					encoding: 'utf8',
-					input: readFileSync(
-						new URL('../.github/workflows/ci.yml', import.meta.url),
-						'utf8'
-					),
-				}
+			const complete = JSON.parse(
+				execFileSync(
+					'bun',
+					[
+						'-e',
+						'console.log(JSON.stringify(Bun.YAML.parse(await Bun.stdin.text()).jobs.complete))',
+					],
+					{
+						encoding: 'utf8',
+						input: readFileSync(
+							new URL('../.github/workflows/ci.yml', import.meta.url),
+							'utf8'
+						),
+					}
+				)
 			);
 			for (const result of ['success', 'skipped', 'failure', 'cancelled']) {
-				const run = spawnSync('bash', ['-e', '-c', script], {
+				const run = spawnSync('bash', ['-e', '-c', complete.steps[0].run], {
 					env: {
 						...process.env,
-						RESULTS: JSON.stringify({
-							[job]: { result },
-							performance: { result: 'skipped' },
-						}),
+						RESULTS: JSON.stringify(
+							Object.fromEntries(
+								complete.needs.map((dependency: string) => [
+									dependency,
+									{ result: dependency === job ? result : 'skipped' },
+								])
+							)
+						),
 					},
 				});
 				expect(run.error).toBeUndefined();

@@ -370,6 +370,7 @@ export const createCiPlan = function createCiPlan(
 		journeys,
 		mobile,
 		mobileBrowserOrDevice,
+		mobileCompatibility: mobile || affected.has('@c15t/react-native'),
 		parity,
 		performance: selected.some(
 			(workspace) =>
@@ -407,6 +408,7 @@ export const ciSchedulingOutputs = (plan: CiPlan) => ({
 	integrations: plan.integrations,
 	mobile: plan.mobile,
 	mobileBrowserOrDevice: plan.mobileBrowserOrDevice,
+	mobileCompatibility: plan.mobileCompatibility,
 	packageChecks:
 		plan.tests.length + plan.types.length + plan.testTypes.length > 0,
 	performance: plan.performance,

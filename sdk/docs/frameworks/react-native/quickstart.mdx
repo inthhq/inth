@@ -12,11 +12,16 @@ SDK can check them before JavaScript starts.
 ## Before you start
 
 You need a React Native app with the New Architecture enabled, or an Expo SDK
-57 app with a custom native build. Expo Go cannot load the native module.
-The current integration targets RN 0.86.x or 0.87.x, React
-`>=19.2.3 <19.3.0`, iOS 16.4 and Android API 24 or later. Check
+55 through 58 app with a custom native build. Expo Go cannot load the native
+module. The current integration targets RN 0.83.x through 0.88.x, React
+`>=19.2.0 <19.4.0`, iOS 16.4 and Android API 24 or later. Use the React version
+your RN or Expo release prescribes. Check
 [compatibility](/docs/frameworks/react-native/platform-support) if you are
 upgrading an existing app.
+
+For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify the native
+build and consent journeys before shipping. Older pairings remain available
+for existing apps; c15t compatibility does not extend upstream maintenance.
 
 The mobile SDK is currently a private prerelease. Obtain the package tarball
 and access to its matching Android Maven artifacts from your maintainer.

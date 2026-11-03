@@ -22,10 +22,10 @@ c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-co
 
 ## Prerequisites
 
-- React Native 0.86.x or 0.87.x with the New Architecture enabled
-- React 19.2.3 or later, below 19.3.0, to render the built-in components
-- iOS 16.4 or newer, Android `minSdk` 24 and `compileSdk` 36
-- A custom native build: Expo Go cannot load this package's native module, so use a development build
+- React Native 0.83.x through 0.88.x with the New Architecture enabled
+- React >=19.2.0 <19.4.0, using the version prescribed by your React Native or Expo release
+- iOS 16.4 or newer and Android `minSdk` 24. Android needs JDK 17 and `compileSdk` 36, or 37 for RN 0.87, RN 0.88 and Expo 58
+- Expo SDK 55 through 58 requires a custom native build. Expo Go cannot load this package's native module
 - An Inth hosted project URL, such as https://your-project.inth.app. Advanced self-hosted deployments remain supported.
 
 ## Installation
@@ -35,6 +35,10 @@ The mobile SDK is a private prerelease. Obtain the package tarball and its match
 ## Documentation
 
 See the [documentation](https://c15t.com/docs/frameworks/react-native/quickstart) for guides, API reference, and examples.
+
+## Compatibility and updates
+
+For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify native builds and consent journeys before shipping. Older matrix versions remain compatibility targets for existing apps; c15t compatibility does not extend upstream maintenance. The Expo plugin raises the iOS deployment target to at least 16.4 and preserves higher targets. Compatibility checks cover packed types, maintained source types, Codegen and Expo prebuild; they do not establish native runtime acceptance for every version. We review each stable RN and Expo release, announce removals, and raise compatibility floors in a c15t major release. See [compatibility and updates](https://c15t.com/docs/frameworks/react-native/platform-support).
 
 ## Native setup before JavaScript
 

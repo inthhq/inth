@@ -5,12 +5,20 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
 from urllib.parse import urlparse
 import zipfile
 import xml.etree.ElementTree as ElementTree
+
+
+def exact_package_version(value):
+    """Keep every compatibility result bound to an exact installed package version."""
+    if not re.fullmatch(r'\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?', value):
+        raise argparse.ArgumentTypeError('must be an exact package version, such as 0.86.3')
+    return value
 
 
 def verify_staging(repository, version):
@@ -68,8 +76,16 @@ def main():
     source.add_argument('--staging-repository', type=Path, help='Local staging only; never remote resolution proof')
     parser.add_argument('--version', required=True)
     parser.add_argument('--rn-package', type=Path, help='Packed RN tarball; adds the real bridge and Codegen to the build')
+    parser.add_argument('--react-native-version', type=exact_package_version, default='0.86.3',
+                        help='Exact host React Native version for a packed RN consumer (default: 0.86.3)')
+    parser.add_argument('--react-version', type=exact_package_version, default='19.2.7',
+                        help='Exact host React version for a packed RN consumer (default: 19.2.7)')
+    parser.add_argument('--compile-sdk', type=int, default=36,
+                        help='Host compileSdkVersion; minSdk stays 24 (default: 36)')
     parser.add_argument('--output', type=Path, help='New directory outside the repository; retained for evidence')
     args = parser.parse_args()
+    if args.compile_sdk < 36:
+        parser.error('--compile-sdk must be at least 36 for the staged native artifacts')
     fixture = Path(__file__).resolve().parent
     root = fixture.parents[2]
     output = args.output.resolve() if args.output else Path(tempfile.mkdtemp(prefix='c15t-android-consumer-'))
@@ -108,19 +124,34 @@ def main():
         commands.append(command)
         subprocess.run(command, cwd=cwd, env=env, check=True)
 
+    react_native_version = None
+    react_version = None
     if args.rn_package:
         tarball = args.rn_package.resolve()
         (consumer / 'package.json').write_text(json.dumps({
             'name': 'c15t-packed-android-consumer', 'private': True,
-            'dependencies': {'@c15t/react-native': f'file:{tarball}', 'react-native': '0.86.3', 'react': '19.2.7'}
+            'dependencies': {'@c15t/react-native': f'file:{tarball}',
+                             'react-native': args.react_native_version, 'react': args.react_version}
         }, indent=2))
         run(['bun', 'install', '--ignore-scripts'])
         packed = consumer / 'node_modules/@c15t/react-native'
         if packed.is_symlink():
             raise ValueError('RN package must be an installed tarball, not a workspace link')
+        installed = {}
+        for name, expected in [('react-native', args.react_native_version), ('react', args.react_version)]:
+            version = json.loads((consumer / 'node_modules' / name / 'package.json').read_text())['version']
+            if version != expected:
+                raise ValueError(f'Installed {name} {version}, expected {expected}')
+            installed[name] = version
+        react_native_version = installed['react-native']
+        react_version = installed['react']
+    host_properties = [f'-PcompileSdkVersion={args.compile_sdk}']
+    if react_native_version:
+        # Both app and bridge use the version that was actually installed for Codegen.
+        host_properties.append(f'-Pc15t.reactNativeVersion={react_native_version}')
     run(['./gradlew', '--no-daemon', '--no-build-cache', '--no-configuration-cache', '--console=plain',
          f'-Pc15t.repository={repository_url}', f'-Pc15t.core.version={args.version}',
-         ':headless:test', ':app:assembleRelease'], cwd=android)
+         *host_properties, ':headless:test', ':app:assembleRelease'], cwd=android)
     apk = android / 'app/build/outputs/apk/release/app-release-unsigned.apk'
     mapping = android / 'app/build/outputs/mapping/release/mapping.txt'
     if not apk.is_file() or not mapping.is_file() or not mapping.stat().st_size:
@@ -130,10 +161,13 @@ def main():
     if initializer not in manifest.read_text():
         raise ValueError('The artifact lost its pre-JS startup initializer')
     result = {'proof': proof, 'version': args.version, 'packedRN': bool(args.rn_package),
-              'toolchain': {'agp': '8.12.0', 'kotlin': '2.1.20', 'gradle': '9.3.1', 'minSdk': 24},
+              'toolchain': {'agp': '8.12.0', 'kotlin': '2.1.20', 'gradle': '9.3.1',
+                            'compileSdk': args.compile_sdk, 'minSdk': 24},
               'apk': str(apk), 'mapping': str(mapping), 'commands': commands,
               'notVerified': ['app launch', 'device behavior', 'certification', 'EAS', 'signed native release']}
     if args.rn_package:
+        result['reactNativeVersion'] = react_native_version
+        result['reactVersion'] = react_version
         spec = packed / 'android/c15t-react-native/build/generated/source/codegen/java/com/c15t/reactnative/NativeC15tSpec.java'
         if not spec.is_file():
             raise ValueError('Normal auto-detection did not generate NativeC15tSpec')

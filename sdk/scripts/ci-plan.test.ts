@@ -21,6 +21,22 @@ const workspaces = readWorkspaces(repository);
 const plan = (files: string[]) => createCiPlan(files, workspaces);
 
 describe('CI selection', () => {
+	it.each([
+		'packages/react-native/src/provider/c15t-provider.tsx',
+		'packages/react-native/package.json',
+		'scripts/mobile-compatibility.json',
+	])('checks older and current mobile hosts when %s changes', (file) => {
+		expect(ciSchedulingOutputs(plan([file])).mobileCompatibility).toBe(true);
+	});
+
+	it('keeps mobile compatibility checks out of docs-only changes', () => {
+		expect(
+			ciSchedulingOutputs(
+				plan(['docs/frameworks/react-native/platform-support.mdx'])
+			).mobileCompatibility
+		).toBe(false);
+	});
+
 	it('installs Chromium for integrations-only runtime tests', () => {
 		const result = plan([
 			'packages/integrations/src/vendors/analytics/default-com.ts',

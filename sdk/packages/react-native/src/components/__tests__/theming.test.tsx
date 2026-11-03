@@ -204,6 +204,7 @@ describe('theme', () => {
 	test('an unset scheme reads light', () => {
 		expect(resolveConsentColorScheme(null)).toBe('light');
 		expect(resolveConsentColorScheme(undefined)).toBe('light');
+		expect(resolveConsentColorScheme('unspecified')).toBe('light');
 		expect(resolveConsentColorScheme('light')).toBe('light');
 		expect(resolveConsentColorScheme('dark')).toBe('dark');
 		expect(createConsentTheme().colors.surface).toBe('#FFFFFF');

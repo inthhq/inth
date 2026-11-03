@@ -8,8 +8,11 @@ The c15t config plugin writes your Inth project and consent settings into the
 native app at build time. You then use the same provider, hooks and native
 consent screens as a bare React Native app.
 
-Use Expo SDK 57 and a development build or standalone app. Expo Go cannot load
-this native module.
+Use Expo SDK 55 through 58 and a development build or standalone app. Keep the
+React Native and React versions prescribed by that Expo release. For a new
+app, target Expo 58 and verify its native build and consent journeys before
+shipping. Expo Go cannot load this native module. See the
+[version pairings and acceptance limits](/docs/frameworks/react-native/platform-support).
 
 ## Install the package
 
@@ -55,6 +58,12 @@ The plugin configures native launch metadata, Android startup and internet
 permission, SDK floors and iOS privacy declarations. The native engine owns
 policy resolution and storage. You do not pass a backend URL to
 `C15tProvider` in JavaScript.
+
+The plugin raises the iOS deployment target to 16.4 when needed and preserves
+a higher target. This includes Expo 55, whose default target is 15.1. Android
+still requires API 24 or later. Use compile SDK 36 for Expo 55 through 57 and
+37 for Expo 58, with JDK 17 and the host's compatible Gradle, Android Gradle
+Plugin and Kotlin setup. Do not lower a higher host SDK setting.
 
 ## Add the React root
 
