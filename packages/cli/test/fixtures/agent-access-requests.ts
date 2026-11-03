@@ -76,6 +76,19 @@ export const accessRequestCases: AccessRequestCase[] = [
   {
     args: [
       "consent",
+      "config-update",
+      "--project",
+      "prj_123",
+      "--minimum-c15t-major",
+      "3",
+    ],
+    body: '{"minimumC15tMajor":3}',
+    method: "PATCH",
+    path: "/v1/projects/prj_123/consent",
+  },
+  {
+    args: [
+      "consent",
       "iab-set",
       "--project",
       "prj_123",
@@ -265,6 +278,14 @@ export const invalidAccessRequests: string[][] = [
     "prj_123",
     "--session-duration-minutes",
     "61",
+  ],
+  [
+    "consent",
+    "config-update",
+    "--project",
+    "prj_123",
+    "--minimum-c15t-major",
+    "1",
   ],
   [
     "consent",
