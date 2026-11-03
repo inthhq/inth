@@ -1,0 +1,50 @@
+// #region docs:swift-consent-root title="ConsentRoot.swift"
+import C15tConsentUI
+import SwiftUI
+import UIKit
+
+struct ConsentRoot: View {
+    @ObservedObject var consent: ConsentModel
+    let privacyPolicyURL: URL
+    var theme: ConsentTheme? = nil
+
+    var body: some View {
+        Group {
+            if let presenter = consent.presenter {
+                content.c15tConsent(presenter: presenter, privacyPolicyURL: privacyPolicyURL, theme: theme)
+            } else {
+                content
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataDidBecomeAvailableNotification)) { _ in
+            consent.retryProtectedStorage()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            consent.retryProtectedStorage()
+        }
+    }
+
+    private var content: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text(consent.isReady ? "Privacy choices ready" : "Loading privacy choices")
+                Text(consent.measurementAllowed ? "Measurement allowed" : "Measurement off")
+                Button("Privacy settings") { consent.presenter?.presentPreferences() }
+                    .disabled(!consent.isReady)
+                Button("Retry policy connection") { consent.core?.refresh() }
+                    .disabled(consent.core == nil)
+                if consent.installationError != nil {
+                    Text(consent.storageCanRetry
+                        ? "Privacy settings are unavailable. Unlock your device and retry."
+                        : "Privacy settings could not start. Check this app's consent configuration.")
+                    if consent.storageCanRetry {
+                        Button("Retry") { consent.retryProtectedStorage() }
+                    }
+                }
+            }
+            .padding()
+            .navigationTitle("My app")
+        }
+    }
+}
+// #endregion docs:swift-consent-root

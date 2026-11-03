@@ -274,6 +274,10 @@ describe('region extraction', () => {
 	});
 
 	test('names fence languages from file names', () => {
+		expect(languageFor('examples/android/settings.gradle.kts')).toBe('kotlin');
+		expect(languageFor('examples/react-native/android/build.gradle')).toBe(
+			'groovy'
+		);
 		expect(languageFor('internals/fixtures/nuxt/.env.example')).toBe('dotenv');
 		expect(
 			languageFor('internals/fixtures/astro-demo/src/pages/index.astro')

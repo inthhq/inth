@@ -59,7 +59,18 @@ const umbrellaFrameworks = [
 
 export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
-		include: ['frameworks/react-native/**/*.mdx'],
+		include: [
+			'frameworks/react-native/**/*.mdx',
+			'frameworks/swift/**/*.mdx',
+			'frameworks/android/**/*.mdx',
+			'guides/mobile-*.mdx',
+			'integrations/overview.mdx',
+			'integrations/firebase-analytics.mdx',
+			'integrations/posthog.mdx',
+			'integrations/mixpanel-analytics.mdx',
+			'integrations/amplitude.mdx',
+			'integrations/sentry.mdx',
+		],
 		name: '@c15t/react-native',
 		outDir: 'packages/react-native',
 		skill: {
@@ -68,12 +79,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 				'the project uses React Native, Expo development builds, Swift or Kotlin native consent',
 		},
 		summary:
-			'Private mobile prerelease: Expo and bare React Native setup, native SDK gates, durable offline choices, native presenters, IAB, Apple and Android installation. Distribution and device acceptance remain release gates.',
+			'Build consent into React Native, Expo, SwiftUI, UIKit and Android apps. Follow a platform quickstart, keep optional SDKs behind consent gates, customize native screens or supply your own UI.',
 	},
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/javascript/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
@@ -92,7 +103,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/react/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
@@ -110,7 +121,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/next/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
@@ -129,7 +140,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/vue/**/*.mdx',
 			'frameworks/nuxt/**/*.mdx',
 			'customization/**/*.mdx',
@@ -148,7 +159,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/svelte/**/*.mdx',
 			'frameworks/sveltekit/**/*.mdx',
 			'customization/**/*.mdx',
@@ -167,7 +178,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/astro/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
@@ -185,7 +196,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/tanstack-start/**/*.mdx',
 			'customization/**/*.mdx',
 			'integrations/**/*.mdx',
@@ -203,7 +214,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/index.mdx',
 			...umbrellaFrameworks,
 			'customization/**/*.mdx',
@@ -221,7 +232,11 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'c15t v3 framework integration and consent management. Install c15t and use its framework subpaths; adapters and add-ons absent from its exports use separate packages.',
 	},
 	{
-		include: ['concepts/**/*.mdx', 'guides/**/*.mdx', 'self-host/**/*.mdx'],
+		include: [
+			'concepts/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
+			'self-host/**/*.mdx',
+		],
 		name: '@c15t/backend',
 		outDir: 'packages/backend',
 		skill: {
@@ -235,7 +250,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		include: [
 			'frameworks/*/upgrade-v3.mdx',
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/*/scripts.mdx',
 			'frameworks/*/embeds.mdx',
 			'frameworks/*/network-blocker.mdx',
@@ -256,7 +271,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 		include: [
 			'frameworks/*/upgrade-v3.mdx',
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/*/scripts.mdx',
 			'frameworks/*/embeds.mdx',
 			'frameworks/*/network-blocker.mdx',
@@ -279,7 +294,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	{
 		include: [
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'frameworks/html/**/*.mdx',
 			'frameworks/javascript/**/*.mdx',
 			'integrations/**/*.mdx',
@@ -300,7 +315,7 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			'frameworks/*/upgrade-v3.mdx',
 			'self-host/upgrade-v3.mdx',
 			'concepts/**/*.mdx',
-			'guides/**/*.mdx',
+			'guides/**/!(mobile-*).mdx',
 			'cli/**/*.mdx',
 		],
 		name: '@c15t/cli',

@@ -1,0 +1,25 @@
+{/* Generated from native/core-swift/Examples/AppleInstallation/Integrations/mixpanel.swift (docs:swift-mixpanel-binding) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="MixpanelOwner.swift"
+import C15tApple
+import C15tCore
+
+final class MixpanelOwner {
+    private let consent: MixpanelIntegration
+
+    init(
+        core: ConsentCore,
+        optInTracking: @escaping @Sendable () -> Void,
+        optOutTracking: @escaping @Sendable () -> Void
+    ) {
+        consent = MixpanelIntegration(
+            core: core,
+            optInTracking: optInTracking,
+            optOutTracking: optOutTracking
+        )
+    }
+
+    func stop() { consent.cancel() }
+    func syncAfterCompletedReset() { consent.sync() }
+}
+```

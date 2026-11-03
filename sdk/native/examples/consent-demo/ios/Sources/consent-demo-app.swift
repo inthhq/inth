@@ -37,10 +37,17 @@ final class DemoSession: ObservableObject, SnapshotObserver {
     private let launchID = UUID().uuidString
     @Published private(set) var fixture = false
     @Published private(set) var starting = false
+    @Published private(set) var reviewProfile: IABReviewProfile?
+    @Published private(set) var reviewReport = ""
+    @Published private(set) var reviewJSON = ""
+    @Published private(set) var resettingReview = false
+    @Published private(set) var reviewReconnect = false
+    @Published private(set) var consentUIEnabled = true
 
-    func start(url: String? = nil, policy: String? = nil, localScenario: String? = nil) async {
+    func start(url: String? = nil, policy: String? = nil, localScenario: String? = nil, review: IABReviewProfile? = nil, inspectBeforeShowingConsent: Bool = false) async {
         guard !started && !starting else { return }
         starting = true
+        setupError = nil
         defer { starting = false }
         let env = ProcessInfo.processInfo.environment
         do {
@@ -77,13 +84,32 @@ final class DemoSession: ObservableObject, SnapshotObserver {
                 throw DemoError.missingFixture
                 #endif
             } else {
-                let raw = url ?? Bundle.main.object(forInfoDictionaryKey: "C15tBackendURL") as? String ?? ""
-                let privacy = policy ?? Bundle.main.object(forInfoDictionaryKey: "C15tPrivacyPolicyURL") as? String ?? ""
-                guard let backend = URL(string: raw), backend.scheme == "https", backend.host != nil,
-                    let policyURL = URL(string: privacy), policyURL.scheme == "https", policyURL.host != nil else { return }
-                self.policyURL = policyURL
-                let config = C15tAppleConfiguration(transport: .hosted(backend), consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing])
-                core = try await Task.detached { try C15tApple.install(config) }.value
+                let savedReview = url == nil && policy == nil ? IABReviewProfile.load() : nil
+                if let review = review ?? savedReview {
+                    let service = (Bundle.main.bundleIdentifier ?? "com.c15t.prototype.consent") + ".iab-review"
+                    core = try await Task.detached {
+                        let platform = C15tAppleConfiguration(transport: .hosted(review.backendURL), storage: .keychain(service: service))
+                        return try C15tApple.install(CoreConfig(
+                            store: platform.storage.makeStore(), transport: platform.makeTransport(),
+                            consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing],
+                            vendors: review.vendorIDs,
+                            iab: IABConfiguration(cmpId: review.cmpId, cmpVersion: review.cmpVersion, publisherCountryCode: review.publisherCountry),
+                            storageBus: UserDefaultsStorageBus()))
+                    }.value
+                    self.policyURL = review.privacyPolicyURL
+                    reviewProfile = review
+                    try review.save()
+                    reviewReconnect = true
+                    consentUIEnabled = !inspectBeforeShowingConsent
+                } else {
+                    let raw = url ?? Bundle.main.object(forInfoDictionaryKey: "C15tBackendURL") as? String ?? ""
+                    let privacy = policy ?? Bundle.main.object(forInfoDictionaryKey: "C15tPrivacyPolicyURL") as? String ?? ""
+                    guard let backend = URL(string: raw), backend.scheme == "https", backend.host != nil,
+                        let policyURL = URL(string: privacy), policyURL.scheme == "https", policyURL.host != nil else { return }
+                    self.policyURL = policyURL
+                    let config = C15tAppleConfiguration(transport: .hosted(backend), consentCategories: [.necessary, .functionality, .experience, .measurement, .marketing])
+                    core = try await Task.detached { try C15tApple.install(config) }.value
+                }
             }
             started = true
             observer = core.onChange(self)
@@ -122,6 +148,55 @@ final class DemoSession: ObservableObject, SnapshotObserver {
             }
         }
     }
+    func refreshReviewDiagnostics() {
+        guard let profile = reviewProfile, let core = presenter?.core else { return }
+        let capturedAtMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let current = core.snapshot()
+        let committed = core.iabConsent()
+        let loadedGoogle = current.iab?.gvl?.vendor(755)
+        let google = loadedGoogle.map { vendor in
+            IABReviewGoogleVendor(id: vendor.id, name: vendor.name, deleted: vendor.isDeleted,
+                purposes: vendor.purposes, legIntPurposes: vendor.legIntPurposes, flexiblePurposes: vendor.flexiblePurposes)
+        }
+        let providers = core.adTechProviderDisclosures()?.map { provider in
+            IABReviewAdTechProvider(id: provider.id, name: provider.name, policyUrl: provider.policyUrl)
+        }
+        let info = Bundle.main.infoDictionary ?? [:]
+        let report = IABReviewReport(capturedAtMs: capturedAtMs, profile: profile, sdkVersion: C15tApple.version,
+            appID: Bundle.main.bundleIdentifier ?? "unspecified",
+            appVersion: info["CFBundleShortVersionString"] as? String ?? "unspecified",
+            appBuild: info["CFBundleVersion"] as? String ?? "unspecified",
+            operatingSystem: ProcessInfo.processInfo.operatingSystemVersionString,
+            model: current.model.rawValue, policyPending: current.policyPending,
+            disclosedGVLVersion: current.iab?.gvl?.vendorListVersion,
+            disclosedPolicyVersion: current.iab?.gvl?.tcfPolicyVersion,
+            committedTCString: committed?.tcString, committedAdditionalConsent: committed?.addtlConsent,
+            committedGVLVersion: committed?.vendorListVersion,
+            committedPolicyVersion: committed?.policyVersion,
+            iabStatus: core.iabStatus().availability.rawValue, googleVendor: google,
+            additionalConsentStatus: core.additionalConsentStatus().rawValue, adTechProviders: providers,
+            storage: IABReviewStorageEntry.read(from: .standard, keys: TcStorageBusKeys.allNames))
+        do {
+            let json = try report.json()
+            reviewReport = report.text
+            reviewJSON = json
+            setupError = nil
+        } catch { setupError = "The diagnostic report could not be encoded: \(error.localizedDescription)" }
+    }
+    func resetReviewConsent() async {
+        guard reviewProfile != nil, let core = presenter?.core, !resettingReview else { return }
+        resettingReview = true
+        defer { resettingReview = false }
+        await Task.detached { core.reset() }.value
+        refresh(core)
+    }
+    func forgetReviewSetup() {
+        IABReviewProfile.forget()
+        reviewReconnect = false
+    }
+    func showConsentScreen() {
+        consentUIEnabled = true
+    }
     deinit { observer?.cancel(); events?.cancel() }
     enum DemoError: Error { case missingFixture }
 }
@@ -130,9 +205,20 @@ struct DemoRoot: View {
     @ObservedObject var session: DemoSession
     @State private var backend = "https://example-inth.inth.app/"
     @State private var policy = ""
+    @State private var iabReview = false
+    @State private var cmpId = ""
+    @State private var cmpVersion = ""
+    @State private var publisherCountry = ""
+    @State private var vendorIDs = ""
+    @State private var inspectBeforeShowingConsent = false
     var body: some View {
         if let presenter = session.presenter, let policyURL = session.policyURL {
-            HostState(session: session, presenter: presenter).c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: fixtureTheme)
+            let host = HostState(session: session, presenter: presenter)
+            if session.consentUIEnabled {
+                host.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: fixtureTheme)
+            } else {
+                host
+            }
         } else {
             NavigationStack {
                 Form {
@@ -140,7 +226,26 @@ struct DemoRoot: View {
                         Text("Use the example Inth project or your own project, and enter your app's privacy policy URL.")
                         TextField("Inth project URL", text: $backend).textInputAutocapitalization(.never).keyboardType(.URL)
                         TextField("Privacy policy URL", text: $policy).textInputAutocapitalization(.never).keyboardType(.URL)
-                        Button("Connect") { Task { await session.start(url: backend, policy: policy) } }
+                        Toggle("IAB review mode", isOn: $iabReview).accessibilityIdentifier("review.mode")
+                        if iabReview {
+                            Text("Use your supplied CMP identity and a project configured for IAB. The example project has no IAB policy. These fields validate format only; they do not verify registration or certification.")
+                            TextField("CMP ID", text: $cmpId).keyboardType(.numberPad).accessibilityIdentifier("review.cmp-id")
+                            TextField("CMP version", text: $cmpVersion).keyboardType(.numberPad).accessibilityIdentifier("review.cmp-version")
+                            Text("CMP version is the internal CMP version from 0 to 4095, separate from the SDK version.").font(.caption)
+                            TextField("Publisher country", text: $publisherCountry).textInputAutocapitalization(.characters).autocorrectionDisabled().accessibilityIdentifier("review.publisher-country")
+                            TextField("Vendor IDs, optional", text: $vendorIDs).keyboardType(.numbersAndPunctuation).accessibilityIdentifier("review.vendor-ids")
+                            Text("Enter comma-separated vendor IDs or leave empty to keep the backend-served list. Empty does not mean zero vendors. Successful review setup is saved on this device and reconnects on launch. Consent uses an app-specific review Keychain service.").font(.caption)
+                            Toggle("Inspect before showing consent", isOn: $inspectBeforeShowingConsent).accessibilityIdentifier("review.inspect-before-consent")
+                            Text("Review diagnostics before any consent action. Policy resolution and protected storage still start normally. This option applies only to this launch.").font(.caption)
+                        }
+                        Button("Connect") {
+                            Task {
+                                do {
+                                    let review = iabReview ? try IABReviewProfile(backend: backend, privacyPolicy: policy, cmpId: cmpId, cmpVersion: cmpVersion, publisherCountry: publisherCountry, vendorIDs: vendorIDs) : nil
+                                    await session.start(url: backend, policy: policy, review: review, inspectBeforeShowingConsent: iabReview && inspectBeforeShowingConsent)
+                                } catch { session.setupError = error.localizedDescription }
+                            }
+                        }
                     }
                     #if DEBUG
                     Section("Local policy fixtures") {
@@ -162,13 +267,28 @@ struct DemoRoot: View {
 struct HostState: View {
     @ObservedObject var session: DemoSession
     @ObservedObject var presenter: ConsentPresenter
+    @State private var confirmReviewReset = false
     var body: some View {
         NavigationStack {
             List {
                 Section {
                     Text(session.fixture ? "Local protocol fixture" : "Inth hosted project").font(.headline)
                     Text("Native consent prototype").font(.subheadline)
-                    Button("Privacy settings") { presenter.presentPreferences() }.frame(minHeight: 44).accessibilityIdentifier("fixture.open-preferences")
+                    Button("Privacy settings") { presenter.presentPreferences() }.frame(minHeight: 44).disabled(!session.consentUIEnabled).accessibilityIdentifier("fixture.open-preferences")
+                }
+                if session.reviewProfile != nil {
+                    Section("IAB review") {
+                        Text("Hosted IAB review mode. Registration and certification must be verified separately.")
+                        if !session.snapshot.policyPending && session.snapshot.model != .iab {
+                            Text("This project did not resolve an IAB policy. Its current screens and category choices do not demonstrate an IAB consent flow.")
+                        }
+                        NavigationLink("Review diagnostics") { IABReviewDiagnosticsView(session: session) }.accessibilityIdentifier("review.open-diagnostics")
+                        if !session.consentUIEnabled {
+                            Button("Show consent screen") { session.showConsentScreen() }.accessibilityIdentifier("review.show-consent")
+                        }
+                        Button("Reset review consent", role: .destructive) { confirmReviewReset = true }.disabled(session.resettingReview).accessibilityIdentifier("review.reset")
+                        Text("Reset clears consent and reloads policy. The subject and saved review setup are retained.").font(.caption)
+                    }
                 }
                 if session.fixture {
                     Section("Native authority") {
@@ -190,7 +310,42 @@ struct HostState: View {
                     }
                 }
             }.navigationTitle("Privacy demo").accessibilityIdentifier("fixture.state")
+                .confirmationDialog("Reset review consent?", isPresented: $confirmReviewReset, titleVisibility: .visible) {
+                    Button("Reset consent", role: .destructive) { Task { await session.resetReviewConsent() } }
+                } message: {
+                    Text("This clears the current consent decision and reloads policy. It keeps the same subject and review setup. It does not erase other Keychain items.")
+                }
         }
+    }
+}
+
+struct IABReviewDiagnosticsView: View {
+    @ObservedObject var session: DemoSession
+    var body: some View {
+        List {
+            Section {
+                Text("This snapshot reads the core TC String and actual platform storage separately. Refresh after a choice or policy change. Missing or mismatched keys are shown as observed. The report contains no subject IDs, external IDs or receipts.")
+                Button("Refresh diagnostics") { session.refreshReviewDiagnostics() }
+                ShareLink(item: session.reviewReport) { Label("Share or copy report", systemImage: "square.and.arrow.up") }.accessibilityIdentifier("review.share-report")
+                ShareLink(item: session.reviewJSON) { Label("Share diagnostic JSON", systemImage: "square.and.arrow.up") }.disabled(session.reviewJSON.isEmpty).accessibilityIdentifier("review.share-json")
+                if let error = session.setupError { Text(error).foregroundStyle(.red) }
+                if !session.consentUIEnabled {
+                    Text("The stock presenter is waiting for inspection. Native policy resolution and protected storage are active.")
+                    Button("Show consent screen") { session.showConsentScreen() }.accessibilityIdentifier("review.show-consent")
+                }
+            }
+            Section("Review report") {
+                Text(session.reviewReport).font(.system(.caption, design: .monospaced)).textSelection(.enabled).accessibilityIdentifier("review.report")
+            }
+            Section("Saved setup") {
+                if session.reviewReconnect {
+                    Button("Stop reconnecting on launch") { session.forgetReviewSetup() }
+                    Text("This removes only the saved review configuration. Current consent and this session stay active. Restart the app to choose another mode.").font(.caption)
+                } else {
+                    Text("Automatic reconnect is off. Restart the app to choose another mode.")
+                }
+            }
+        }.navigationTitle("IAB diagnostics").onAppear { session.refreshReviewDiagnostics() }
     }
 }
 

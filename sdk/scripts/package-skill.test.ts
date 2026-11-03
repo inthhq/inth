@@ -39,7 +39,11 @@ test('the umbrella bundle covers every web framework directory', () => {
 	const files = new Set(fg.sync(umbrella?.include ?? [], { cwd: docsRoot }));
 	const quickstarts = fg.sync('frameworks/*/quickstart.mdx', {
 		cwd: docsRoot,
-		ignore: ['frameworks/react-native/**'],
+		ignore: [
+			'frameworks/react-native/**',
+			'frameworks/swift/**',
+			'frameworks/android/**',
+		],
 	});
 	expect(quickstarts.filter((file) => !files.has(file))).toEqual([]);
 	expect(files).toContain('frameworks/html/quickstart.mdx');

@@ -2,6 +2,7 @@
 package com.c15t.demo
 
 import android.app.Application
+import android.content.ClipData
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,12 +10,15 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
@@ -43,6 +47,7 @@ class ConsentDemoActivity : ComponentActivity() {
             MaterialTheme {
                 val core = model.core
                 if (core == null) Setup(model)
+                else if (model.consentPresentationDeferred) ReviewDiagnostics(model, onClose = model::showConsentScreen)
                 else {
                     val presenter: ConsentPresenter = viewModel(factory = object : ViewModelProvider.Factory {
                         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -85,6 +90,14 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     var fixtureBranding by mutableStateOf<String?>(null); private set
     var fixtureIdentity by mutableStateOf<String?>(null); private set
     var setupError by mutableStateOf<String?>(null); private set
+    private var reviewCapture by mutableStateOf<TcfReviewCapture?>(null)
+    val reviewReport: String get() = reviewCapture?.text ?: ""
+    val reviewReportJson: String get() = reviewCapture?.json ?: ""
+    var reviewing by mutableStateOf(false); private set
+    var reviewSetupSaved by mutableStateOf(false); private set
+    var showReviewDiagnostics by mutableStateOf(false); private set
+    var consentPresentationDeferred by mutableStateOf(false); private set
+    private var reviewProfile: TcfReviewProfile? = null
     private var fixtureStore: C15tStore? = null
     var fault: FaultPreferences? = null
     var http: FixtureHttp? = null
@@ -95,21 +108,31 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     private val observer: (ConsentSnapshot) -> Unit = { viewModelScope.launch { update() } }
     private val errorObserver: (KernelError) -> Unit = { e -> viewModelScope.launch { lastError = e.code; update() } }
     private var errors: Subscription? = null
-    fun start(intent: Intent? = null, backend: String? = null, privacy: String? = null) {
+    internal fun start(intent: Intent? = null, backend: String? = null, privacy: String? = null, review: TcfReviewProfile? = null, inspectBeforeConsent: Boolean = false) {
         if (started) return
         val context = getApplication<Application>()
         val scenario = if (BuildConfig.DEBUG) intent?.getStringExtra("C15T_FIXTURE_SCENARIO") else null
+        val profile = try {
+            review ?: if (scenario == null && backend == null && privacy == null) TcfReviewProfile.restore(reviewPreferences().all) else null
+        } catch (error: IllegalArgumentException) {
+            setupError = error.message; return
+        } catch (error: IllegalStateException) {
+            setupError = error.message; return
+        }
+        val hostedBackend = profile?.backend ?: backend
+        val hostedPrivacy = profile?.privacy ?: privacy
         if (scenario != null) {
             fixtureTheme = intent?.getStringExtra("C15T_FIXTURE_THEME")
             fixtureBranding = intent?.getStringExtra("C15T_FIXTURE_BRANDING")
             fixtureIdentity = intent?.getStringExtra("C15T_FIXTURE_IDENTITY")
         }
-        if (scenario == null && (backend.isNullOrBlank() || privacy.isNullOrBlank())) return
+        if (scenario == null && (hostedBackend.isNullOrBlank() || hostedPrivacy.isNullOrBlank())) return
         if (scenario == null) {
-            val url = runCatching { URI(backend!!) }.getOrNull()
-            val policy = runCatching { URI(privacy!!) }.getOrNull()
+            val url = runCatching { URI(hostedBackend!!) }.getOrNull()
+            val policy = runCatching { URI(hostedPrivacy!!) }.getOrNull()
             if (url?.scheme != "https" || url.host == null || policy?.scheme != "https" || policy.host == null) { setupError = "Enter an HTTPS Inth project URL and privacy policy URL."; return }
         }
+        setupError = null
         started = true
         viewModelScope.launch {
             try {
@@ -139,13 +162,23 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         store.failNext.set(intent?.getBooleanExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",false) == true)
                         kernel
                     } else {
-                        val config = NativeConfig(portalUrl = backend!!, consentCategories = ConsentCategory.entries)
+                        val config = profile?.nativeConfig() ?: NativeConfig(portalUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
                         C15tAndroid.install(context, config)
-                        policyUrl = privacy!!
+                        policyUrl = hostedPrivacy!!
+                        if (profile != null) {
+                            reviewSetupSaved = reviewPreferences().edit().apply {
+                                clear()
+                                profile.storedValues().forEach { (key, value) -> putString(key, value) }
+                            }.commit()
+                        }
                         requireNotNull(C15t.current)
                     }
                 }
                 core = engine
+                reviewProfile = profile
+                reviewing = profile != null
+                consentPresentationDeferred = profile != null && inspectBeforeConsent
+                if (consentPresentationDeferred) openReviewDiagnostics()
                 subscription = engine.onChange(observer); errors = engine.onError(errorObserver)
                 update()
             } catch (error: Exception) { setupError = error.message; started = false }
@@ -164,17 +197,87 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { pending = withContext(Dispatchers.IO) { fixtureStore?.readPending()?.size ?: 0 } }
         iabSummary = engine.iabConsent?.let { "purposes=${it.choices.purposeConsents}; purposeLI=${it.choices.purposeLegitimateInterests}; purposeObjections=${it.choices.purposeObjections}; vendors=${it.choices.vendorConsents}; vendorObjections=${it.choices.vendorObjections}; ac=${it.addtlConsent}" } ?: "none"
     }
+    fun connectReview(backend: String, privacy: String, cmpId: String, cmpVersion: String, country: String, vendors: String, inspectBeforeConsent: Boolean) {
+        try {
+            start(review = TcfReviewProfile.parse(backend, privacy, cmpId, cmpVersion, country, vendors), inspectBeforeConsent = inspectBeforeConsent)
+        } catch (error: IllegalArgumentException) { setupError = error.message }
+    }
+    @Suppress("DEPRECATION")
+    fun refreshReviewReport() {
+        val profile = reviewProfile ?: return
+        val engine = core ?: return
+        val capturedAt = System.currentTimeMillis()
+        val currentSnapshot = engine.snapshot()
+        val authority = engine.iabConsent
+        val listStatus = engine.iabStatus().availability
+        val acStatus = engine.additionalConsentStatus()
+        val providers = engine.adTechProviderDisclosures()
+        val platformValues = android.preference.PreferenceManager.getDefaultSharedPreferences(getApplication<Application>()).all
+        reviewCapture = captureTcfReview(profile,
+            TcfReviewBuild(BuildConfig.APPLICATION_ID, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE.toString(), BuildConfig.BUILD_TYPE, C15tProtocol.DEFAULT_SDK_VERSION),
+            currentSnapshot, authority, listStatus, acStatus, providers, platformValues,
+            capturedAt, lastError)
+    }
+    fun resetReviewConsent() {
+        if (!reviewing) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { core?.reset() }
+            update()
+            refreshReviewReport()
+        }
+    }
+    fun forgetReviewSetup() {
+        viewModelScope.launch {
+            val cleared = withContext(Dispatchers.IO) { reviewPreferences().edit().clear().commit() }
+            if (cleared) reviewSetupSaved = false
+            else setupError = "The saved review setup could not be removed."
+        }
+    }
+    fun openReviewDiagnostics() {
+        refreshReviewReport()
+        showReviewDiagnostics = true
+    }
+    fun showConsentScreen() {
+        consentPresentationDeferred = false
+        showReviewDiagnostics = false
+    }
+    private fun reviewPreferences() = getApplication<Application>().getSharedPreferences("c15t.tcf-review-setup", 0)
     override fun onCleared() { subscription?.close(); errors?.close() }
 }
 
 @Composable private fun Setup(model: DemoModel) {
     var backend by remember { mutableStateOf("https://example-inth.inth.app/") }; var privacy by remember { mutableStateOf("") }
+    var review by remember { mutableStateOf(false) }
+    var cmpId by remember { mutableStateOf("") }; var cmpVersion by remember { mutableStateOf("") }
+    var country by remember { mutableStateOf("") }; var vendors by remember { mutableStateOf("") }
+    var inspectBeforeConsent by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text("Connect an Inth project", style = MaterialTheme.typography.headlineSmall)
         Text("Use the example Inth project or your own project, and enter your app's privacy policy URL.")
         OutlinedTextField(backend, { backend = it }, label = { Text("Inth project URL") })
         OutlinedTextField(privacy, { privacy = it }, label = { Text("Privacy policy URL") })
-        Button(onClick = { model.start(backend = backend, privacy = privacy) }) { Text("Connect") }
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Text("Hosted IAB TCF review", modifier = Modifier.weight(1f))
+            Switch(checked = review, onCheckedChange = { review = it }, modifier = Modifier.testTag("review.mode").semantics { contentDescription = "Hosted IAB TCF review" })
+        }
+        if (review) {
+            Text("Use the CMP identity assigned for this review and an Inth project that serves an IAB policy. This app checks field ranges, not registration or certification. Setup is saved in this app for process-restart checks.")
+            OutlinedTextField(cmpId, { cmpId = it }, label = { Text("Assigned CMP ID") }, modifier = Modifier.testTag("review.cmp-id"))
+            OutlinedTextField(cmpVersion, { cmpVersion = it }, label = { Text("Internal CMP version") }, modifier = Modifier.testTag("review.cmp-version"))
+            OutlinedTextField(country, { country = it }, label = { Text("Publisher country, uppercase") }, modifier = Modifier.testTag("review.country"))
+            OutlinedTextField(vendors, { vendors = it }, label = { Text("Vendor IDs, optional comma-separated scope") })
+            Text("An empty vendor scope uses the entire list served by the project. Consent language is EN.")
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("Inspect before showing consent", modifier = Modifier.weight(1f))
+                Switch(checked = inspectBeforeConsent, onCheckedChange = { inspectBeforeConsent = it }, modifier = Modifier.testTag("review.inspect-first").semantics { contentDescription = "Inspect before showing consent" })
+            }
+            Text("Inspection starts the same native core and reads its platform signals. The consent screen waits for Show consent screen. No choice is made by this option.")
+        }
+        Button(onClick = {
+            if (review) model.connectReview(backend, privacy, cmpId, cmpVersion, country, vendors, inspectBeforeConsent)
+            else model.start(backend = backend, privacy = privacy)
+        }) { Text("Connect") }
+        TextButton(onClick = model::forgetReviewSetup) { Text("Forget saved review setup") }
         if (BuildConfig.DEBUG) {
             Text("Local policy fixtures", style = MaterialTheme.typography.titleMedium)
             Text("No hosted project is contacted. IAB uses a test CMP identity and sample disclosures. Restart the app to choose another mode.")
@@ -190,21 +293,58 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     }
 }
 @Composable private fun Host(model: DemoModel, presenter: ConsentPresenter) {
-    LazyColumn(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp).testTag("fixture.state"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        item { Text("Privacy demo", style = MaterialTheme.typography.headlineMedium); Text(if (model.fixture) "Local protocol fixture" else "Inth hosted project") }
-        item { Button(onClick = presenter::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
-        if (model.fixture) {
-            item { Text(if (model.snapshot.promptRequirement.acknowledge) "choice" else if (model.snapshot.promptRequirement.notice) "notice" else "none", modifier = Modifier.testTag("fixture.state.prompt")) }
-            item { Text("${model.snapshot.policyPending}", modifier = Modifier.testTag("fixture.state.policy-pending")) }
-            item { Text(if (model.snapshot.explicitChoice == null) "none" else "recorded", modifier = Modifier.testTag("fixture.state.explicit-choice")) }
-            items(ConsentCategory.OPTIONAL.size) { i -> val c = ConsentCategory.OPTIONAL[i]; Text("${c.wireName}: ${model.snapshot.effectivePermissions[c]}", modifier = Modifier.testTag("fixture.state.permission.${c.wireName}")) }
-            item { Text("${model.pending}", modifier = Modifier.testTag("fixture.state.pending-saves")) }
-            item { Text(model.iabSummary, modifier = Modifier.testTag("fixture.state.iab")) }
-            item { Text(model.lastError, modifier = Modifier.testTag("fixture.state.last-error")) }
-            item { Button(onClick = { model.fault?.failNext?.set(true) }, modifier = Modifier.testTag("fixture.fail-next-write")) { Text("Refuse next storage write") } }
-            item { Button(onClick = { model.http?.offline = false; model.core?.refresh() }, modifier = Modifier.testTag("fixture.reconnect")) { Text("Reconnect") } }
+    if (model.showReviewDiagnostics) {
+        ReviewDiagnostics(model, onClose = model::showConsentScreen)
+    } else {
+        LazyColumn(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp).testTag("fixture.state"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            item { Text("Privacy demo", style = MaterialTheme.typography.headlineMedium); Text(if (model.fixture) "Local protocol fixture" else "Inth hosted project") }
+            item { Button(onClick = presenter::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
+            if (model.reviewing) {
+                item { Text("Hosted IAB TCF review. This is a preparation app, not a certification result.") }
+                if (model.snapshot.ready && !model.snapshot.policyPending && model.snapshot.model != ConsentModel.IAB) {
+                    item { Text("The project resolved ${model.snapshot.model}, not an IAB policy. Configure the project's IAB policy before review.", color = MaterialTheme.colorScheme.error) }
+                }
+                item { Button(onClick = model::openReviewDiagnostics, modifier = Modifier.testTag("review.diagnostics")) { Text("TCF review diagnostics") } }
+            }
+            if (model.fixture) {
+                item { Text(if (model.snapshot.promptRequirement.acknowledge) "choice" else if (model.snapshot.promptRequirement.notice) "notice" else "none", modifier = Modifier.testTag("fixture.state.prompt")) }
+                item { Text("${model.snapshot.policyPending}", modifier = Modifier.testTag("fixture.state.policy-pending")) }
+                item { Text(if (model.snapshot.explicitChoice == null) "none" else "recorded", modifier = Modifier.testTag("fixture.state.explicit-choice")) }
+                items(ConsentCategory.OPTIONAL.size) { i -> val c = ConsentCategory.OPTIONAL[i]; Text("${c.wireName}: ${model.snapshot.effectivePermissions[c]}", modifier = Modifier.testTag("fixture.state.permission.${c.wireName}")) }
+                item { Text("${model.pending}", modifier = Modifier.testTag("fixture.state.pending-saves")) }
+                item { Text(model.iabSummary, modifier = Modifier.testTag("fixture.state.iab")) }
+                item { Text(model.lastError, modifier = Modifier.testTag("fixture.state.last-error")) }
+                item { Button(onClick = { model.fault?.failNext?.set(true) }, modifier = Modifier.testTag("fixture.fail-next-write")) { Text("Refuse next storage write") } }
+                item { Button(onClick = { model.http?.offline = false; model.core?.refresh() }, modifier = Modifier.testTag("fixture.reconnect")) { Text("Reconnect") } }
+            }
         }
     }
+}
+
+@Composable private fun ReviewDiagnostics(model: DemoModel, onClose: () -> Unit) {
+    val clipboard = LocalClipboard.current
+    val scope = rememberCoroutineScope()
+    var confirmReset by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text("TCF review diagnostics", style = MaterialTheme.typography.headlineSmall)
+        Text("Core, disclosure status and platform storage are separate reads. Refresh after each decision. Text and JSON copy the same observation, including TC and AC strings, but no subject ID, external ID or receipt.")
+        Button(onClick = onClose) { Text(if (model.consentPresentationDeferred) "Show consent screen" else "Back to demo") }
+        Button(onClick = model::refreshReviewReport) { Text("Refresh report") }
+        Button(onClick = { scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("c15t TCF review", model.reviewReport))) } }) { Text("Copy report") }
+        Button(onClick = { scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("c15t mobile evidence JSON", model.reviewReportJson))) } }, modifier = Modifier.testTag("review.copy-json")) { Text("Copy JSON") }
+        Button(onClick = { confirmReset = true }) { Text("Reset consent") }
+        Text(if (model.reviewSetupSaved) "Review setup reconnects on relaunch." else "Review setup is not saved. Enter it again after relaunch.")
+        TextButton(onClick = model::forgetReviewSetup) { Text("Forget setup for next launch") }
+        model.setupError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        SelectionContainer { Text(model.reviewReport, modifier = Modifier.testTag("review.report"), style = MaterialTheme.typography.bodySmall) }
+    }
+    if (confirmReset) AlertDialog(
+        onDismissRequest = { confirmReset = false },
+        title = { Text("Reset consent for this app?") },
+        text = { Text("This clears the current consent and refreshes the policy. The subject identity and saved review setup remain. It creates no new consent choice and is not a substitute for withdrawal.") },
+        confirmButton = { TextButton(onClick = { confirmReset = false; model.resetReviewConsent() }) { Text("Reset consent") } },
+        dismissButton = { TextButton(onClick = { confirmReset = false }) { Text("Cancel") } },
+    )
 }
 
 /**

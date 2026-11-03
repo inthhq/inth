@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/sentry-replay-integration.ts (docs:rn-sentry-replay-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="sentry-replay-consent.ts"
+import { connectSentryReplay } from '@c15t/react-native/integrations';
+import type {
+	ConsentIntegration,
+	SentryReplayClient,
+} from '@c15t/react-native/integrations';
+
+export const connectAppSentryReplay = (
+	replay: SentryReplayClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectSentryReplay(replay, { onError });
+```

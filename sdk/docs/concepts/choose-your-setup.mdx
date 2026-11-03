@@ -39,9 +39,26 @@ to the alternatives it rules out.
 Solid has no c15t adapter. Use the [headless runtime](/docs/frameworks/javascript/headless#use-c15t-with-solid)
 and subscribe to it from your components.
 
+## Building a native mobile app
+
+Mobile apps use the native Swift or Kotlin consent engine, including when
+React Native supplies the app's UI. Install it before optional native SDKs
+start, then add the stock screens or your own controls.
+
+| Your app | Guide |
+| --- | --- |
+| SwiftUI | [Swift quickstart](/docs/frameworks/swift/quickstart) |
+| UIKit | [UIKit setup](/docs/frameworks/swift/uikit) |
+| Kotlin and Compose | [Android quickstart](/docs/frameworks/android/quickstart) |
+| React Native | [React Native quickstart](/docs/frameworks/react-native/quickstart) |
+| Expo custom native build | [Expo setup](/docs/frameworks/react-native/expo) |
+
+The mobile SDKs are private prereleases. [Mobile availability](/docs/guides/mobile-status)
+explains artifact access and current release scope.
+
 ## Decide who runs the consent backend
 
-The backend supplies policies and stores consent records. Every setup above
+The backend supplies policies and stores consent records. Every web setup above
 works with each option; only the URL changes.
 
 | Option | Use it when |

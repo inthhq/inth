@@ -1,10 +1,14 @@
 ---
-title: Standalone Android
-description: Install the Kotlin core and Android services before SDK startup, add optional Compose screens, and configure versioned private artifact resolution.
+title: Android native dependencies
+description: Resolve the native artifacts used by React Native and understand which Android module owns consent, platform services and presentation.
 group: frameworks
 ---
 
-Android apps can use `c15t-core` and `c15t-android` without RN, Expo or a JavaScript runtime. Add optional `c15t-consent-ui` only when you need Compose stock screens. The native modules are private prerelease artifacts; obtain a versioned repository and access from the maintainer.
+The RN Android adapter resolves versioned native artifacts. The consent core
+owns policy and choices, Android services own platform integration, and the
+Compose module provides stock screens. Follow [bare setup](/docs/frameworks/react-native/bare)
+or [Expo setup](/docs/frameworks/react-native/expo) for the app configuration.
+For a standalone Kotlin app, choose Android in the [framework list](/docs/frameworks).
 
 ## Resolve the native modules
 

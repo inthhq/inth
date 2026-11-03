@@ -1,0 +1,53 @@
+Account identity, consent and operating-system tracking permission have
+different lifetimes. Use the native engine's commands to change consent so
+its stored decision, platform signals and delivery queue stay consistent.
+
+## Link an app account
+
+Call `identify(externalId)` after your app knows the signed-in account, and
+`logout()` when it signs out. Await the operation and recheck current native
+gates before resuming optional collection. Keep any backend identity
+verification requirements configured separately.
+
+The c15t subject identifies the consent record. An external ID links that
+subject to an app account. Logout detaches the account; it does not create a
+new subject or delete the backend audit trail. Category receipts can remain
+with the subject. IAB identity transitions retire existing authority and
+retain the withdrawal obligations needed for it.
+
+## Withdraw optional consent
+
+Use `rejectAll()` for the visitor's explicit refusal or withdrawal. Check the
+result before showing a saved confirmation. React Native uses
+`CommitResult.ok`; Swift uses the commit status, and Kotlin exposes its
+native commit result. Stock presenters keep drafts and retry controls open
+when storage refuses a save.
+
+Withdrawal takes effect locally even while offline. The engine retains its
+delivery obligation. Do not delete app storage, clear the queue or rewrite
+IAB keys instead of recording the withdrawal.
+
+## Reset to a new prompt
+
+Reset invalidates local consent so policy resolves again and the app can ask
+for a new choice. It retains the subject and configuration. It does not mean
+reject-all, account erasure or deletion of remote records.
+
+| Integration | Consent reset |
+| --- | --- |
+| React Native | `useConsentActions().reset()` |
+| Swift | `reset()` on the installed `ConsentCore` |
+| Kotlin | `reset()` on the installed kernel, available as `C15t.current` |
+
+Kotlin's static `C15t.reset()` is teardown of the process singleton. It leaves
+persisted consent intact and is not the consent-reset command.
+
+The engine retains required IAB withdrawal obligations when resetting existing
+authority. A request already sent to the network cannot be recalled. If
+storage refuses the reset, report the error and keep optional collection off.
+
+## Handle deletion separately
+
+Backend deletion and account erasure belong in your app and server workflow.
+Reset does not perform them. On Apple platforms, Keychain records can survive
+app removal, so uninstalling is not a reliable reset procedure.

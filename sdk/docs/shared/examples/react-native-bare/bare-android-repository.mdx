@@ -1,0 +1,22 @@
+{/* Generated from internals/fixtures/react-native-bare/android/build.gradle (docs:bare-android-repository) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```groovy title="android/build.gradle"
+allprojects {
+    repositories {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri(System.getenv('C15T_MAVEN_URL') ?: 'https://maven.pkg.github.com/inthhq/c15t-private')
+                    if (url.scheme == 'https') {
+                        credentials {
+                            username = System.getenv('C15T_MAVEN_USERNAME')
+                            password = System.getenv('C15T_MAVEN_TOKEN')
+                        }
+                    }
+                }
+            }
+            filter { includeGroup('com.c15t') }
+        }
+    }
+}
+```

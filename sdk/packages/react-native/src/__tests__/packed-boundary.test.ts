@@ -113,6 +113,11 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		).toBe(true);
 		expect(
 			shipped.some((file) =>
+				file.endsWith('vendor/C15tApple/analytics-integrations.swift')
+			)
+		).toBe(true);
+		expect(
+			shipped.some((file) =>
 				file.endsWith('vendor/C15tConsentUI/consent-views.swift')
 			)
 		).toBe(true);
@@ -140,6 +145,9 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			expect(path).not.toContain('expo-plugin');
 			for (const specifier of moduleReferences(readFileSync(path, 'utf8'))) {
 				expect(specifier).not.toMatch(/^(?:expo(?:$|[-/])|@expo\/|node:)/u);
+				expect(specifier).not.toMatch(
+					/^(?:posthog-react-native|@react-native-firebase(?:\/|$)|firebase(?:\/|$))/u
+				);
 				if (specifier.startsWith('.')) {
 					runtime(createRequire(path).resolve(specifier));
 				}
@@ -149,6 +157,9 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			manifest.exports['.']['react-native']
 		);
 		runtime(resolve(installed, manifest['react-native']));
+		runtime(
+			resolve(installed, manifest.exports['./integrations']['react-native'])
+		);
 		expect(visited.size).toBeGreaterThan(20);
 		// Resolve the actual installed transitive production graph, including optional deps.
 		const dependencies = new Set<string>();
@@ -209,11 +220,17 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			`
 			import { C15tProvider, useIsAllowed, type ConsentSnapshot } from '@c15t/react-native';
 			import withC15t, { type C15tPluginProps } from '@c15t/react-native/expo-plugin';
+			import { connectAmplitude, connectFirebaseAnalytics, connectMixpanel, connectPostHog, connectSentryReplay } from '@c15t/react-native/integrations';
 			export const provider: typeof C15tProvider = C15tProvider;
 			export const gate: typeof useIsAllowed = useIsAllowed;
 			export type Snapshot = ConsentSnapshot;
 			export const plugin: typeof withC15t = withC15t;
 			export const pluginProps: C15tPluginProps = { mode: 'offline' };
+			export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
+			export const posthog: typeof connectPostHog = connectPostHog;
+			export const amplitude: typeof connectAmplitude = connectAmplitude;
+			export const mixpanel: typeof connectMixpanel = connectMixpanel;
+			export const sentryReplay: typeof connectSentryReplay = connectSentryReplay;
 		`
 		);
 		// RN 0.87's generated declarations have upstream strict errors. Import
@@ -298,6 +315,12 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 			'AGENTS.md',
 			'SKILL.md',
 			'docs/README.md',
+			'docs/integrations/overview.md',
+			'docs/integrations/firebase-analytics.md',
+			'docs/integrations/posthog.md',
+			'docs/integrations/amplitude.md',
+			'docs/integrations/mixpanel-analytics.md',
+			'docs/integrations/sentry.md',
 			...topics.map((topic) => `docs/frameworks/react-native/${topic}.md`),
 		]) {
 			expect(archiveFiles).toContain(`package/${path}`);
@@ -307,7 +330,7 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 				encoding: 'utf8',
 			});
 		expect(read('package.json')).toContain('"private": true');
-		expect(read('README.md')).toContain('private: true');
+		expect(read('README.md')).toContain('private prerelease');
 		expect(read('README.md')).not.toContain('Latest NPM Version');
 		const localImages = [
 			...read('README.md').matchAll(/(?:src|srcset)="(?<target>[^"]+)"/gu),

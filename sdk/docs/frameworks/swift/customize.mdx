@@ -1,0 +1,93 @@
+---
+title: Customize
+description: Set the app identity, light and dark colors, first-layer copy and provider attribution on c15t's native SwiftUI consent screens.
+group: frameworks
+---
+
+Use `ConsentTheme` to match the stock screens to your app. The same theme
+works in a SwiftUI app and in a UIKit-hosted presenter. It changes native
+appearance while the presenter continues to own drafts, saving and navigation.
+
+## Set your app's theme
+
+Create `AppConsentTheme.swift` in your app target. This example gives the
+consent screen your app's name and asset, changes the accent in both
+appearances, and uses Inth provider attribution:
+
+<include src="../../shared/examples/native/core-swift/AppleInstallation/swift-app-theme.mdx" />
+
+Replace `My app` with your app name and add an image named `AppPrivacyMark`
+to the app's asset catalog, or use the name of an existing asset. The
+introduction should describe your app's actual purposes. This copy example
+assumes both measurement and marketing are in scope.
+
+Pass the theme to `ConsentRoot` from the [quickstart](/docs/frameworks/swift/quickstart):
+
+<include src="../../shared/examples/native/core-swift/AppleInstallation/swift-themed-root.mdx" />
+
+The root passes it to `.c15tConsent(presenter:privacyPolicyURL:theme:)`.
+Your accent applies to switches, links and Save. Accept all and Reject all
+keep the same `decision` fill and `onDecision` label treatment.
+
+## Choose what to change
+
+| Setting | Use it for |
+| --- | --- |
+| `brand.name`, `brand.markImageName` | Your app's identity above the headline |
+| `brand = .hidden` | Removing that app identity block |
+| `copy.headline`, `copy.introduction` | First-layer wording |
+| `colors.canvas`, `surface`, `surfaceMuted` | Page, cards and subordinate content |
+| `colors.text`, `textSecondary` | Primary and supporting text |
+| `colors.accent`, `onAccent` | Links, switches and the Save action |
+| `colors.decision`, `onDecision` | Both Accept all and Reject all |
+| `cornerRadius` | Card and control shape |
+| `headlineFont` | System sans, serif, rounded or a bundled custom headline font |
+| `branding` | `.c15t`, `.inth` or `.custom(name:markImageName:)` provider attribution |
+| `showsBranding` | Visibility of the provider attribution |
+
+`ConsentThemeColor` takes sRGB `0xRRGGBB` values for `light` and `dark`.
+Omitting `dark` uses the light value in both appearances. Keep text legible
+against every surface. The SDK does not certify a custom palette's contrast.
+
+App identity and provider attribution have separate purposes. Hiding the app
+identity with `.hidden` does not hide the small provider mark beside or below
+the first-layer controls.
+
+## Configure appearance without changing view code
+
+When no explicit theme is passed, the presenter uses `ConsentTheme.current`
+with supported `Info.plist` values applied. Set `current` once during app
+startup, before constructing the consent root. An explicit modifier theme has
+priority over both.
+
+| `Info.plist` key | Value |
+| --- | --- |
+| `com.c15t.consent.brandName` | Your app's name |
+| `com.c15t.consent.brandMark` | Image asset name |
+| `com.c15t.consent.accent` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for light,dark |
+| `com.c15t.consent.onAccent` | Label color using the same format |
+| `com.c15t.consent.headline` | First-layer headline |
+| `com.c15t.consent.introduction` | First-layer introduction |
+| `com.c15t.consent.brandingProvider` | `c15t` or `inth` |
+| `com.c15t.consent.branding` | Boolean controlling provider attribution |
+
+Use a native Boolean for `branding`, rather than the string `"false"`.
+Other color and shape keys are declared in `ConsentTheme.InfoPlistKey`.
+
+## Account for language and screen size
+
+The stock native action labels, navigation and category explanations currently
+use English. `ConsentTheme.Copy` changes the headline and introduction; it
+does not provide a complete localization dictionary. Changing the requested
+policy language does not translate all native UI strings.
+
+The presenter follows Dynamic Type, safe areas and window geometry. On
+supported iOS layouts with enough side-column space, compact attribution can
+sit beside the actions. It falls back inline when that area is unavailable
+or accessibility text needs more room. No device-model check is required.
+
+Test light and dark appearance, the largest text sizes, narrow and wide windows,
+and VoiceOver after changing the theme. Keep Accept and Reject equally
+prominent and Privacy settings reachable after either choice. If the layout
+itself needs different controls, use
+[app-owned UI](/docs/frameworks/swift/headless).

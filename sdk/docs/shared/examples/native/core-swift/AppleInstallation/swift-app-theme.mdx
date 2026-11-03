@@ -1,0 +1,23 @@
+{/* Generated from native/core-swift/Examples/AppleInstallation/Quickstart/app-consent-theme.swift (docs:swift-app-theme) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="AppConsentTheme.swift"
+import C15tConsentUI
+import SwiftUI
+
+enum AppConsentTheme {
+    static var value: ConsentTheme {
+        var theme = ConsentTheme.c15t
+        theme.brand = .init(name: "My app", markImageName: "AppPrivacyMark")
+        theme.copy = .init(
+            headline: "Your privacy choices",
+            introduction: "Choose whether this app may measure usage and personalize marketing. You can change your choices in Privacy settings."
+        )
+        theme.colors.accent = ConsentThemeColor(light: 0x2255CC, dark: 0xADC6FF)
+        theme.colors.onAccent = ConsentThemeColor(light: 0xFFFFFF, dark: 0x10234D)
+        theme.headlineFont = .sansSerif
+        theme.cornerRadius = 16
+        theme.branding = .inth
+        return theme
+    }
+}
+```

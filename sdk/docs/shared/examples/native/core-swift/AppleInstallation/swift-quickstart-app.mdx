@@ -1,0 +1,22 @@
+{/* Generated from native/core-swift/Examples/AppleInstallation/Quickstart/swiftui-quickstart.swift (docs:swift-quickstart-app) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```swift title="MyApp.swift"
+import SwiftUI
+
+@main
+@MainActor
+struct MyApp: App {
+    @StateObject private var consent = ConsentModel(
+        backendURL: URL(string: "https://your-project.inth.app")!
+    )
+
+    var body: some Scene {
+        WindowGroup {
+            ConsentRoot(
+                consent: consent,
+                privacyPolicyURL: URL(string: "https://example.com/privacy")!
+            )
+        }
+    }
+}
+```

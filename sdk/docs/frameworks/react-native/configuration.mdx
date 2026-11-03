@@ -1,25 +1,64 @@
 ---
 title: Configuration
-description: Configure Inth transport, native resource binding, categories, vendor scope, overrides and app-owned mobile installation.
+description: Configure the React Native project's backend, category scope, native startup, policy resources and Expo build options.
 group: frameworks
 ---
 
-Use the Inth project URL in native build configuration. The React Native provider reads configuration from the installed native engine; it has no web-style `options` or transport prop.
+Configure the consent engine in the native app before React starts. Expo uses
+the config plugin; bare RN uses native metadata. `C15tProvider` reads the
+installed engine and has no backend or policy-options prop.
 
-## Choose the transport owner
+## Choose where policy and records live
 
-| Mode | Native behavior |
+Hosted Inth is the standard setup. Use the HTTPS project URL from your Inth
+dashboard. A self-hosted deployment implements the same backend protocol.
+App-owned native installation is available for custom services.
+
+| `mode` | Behavior |
 | --- | --- |
-| `hosted` | Recommended. Uses an Inth project URL for policy resolution and consent/identity transport. |
-| `selfHosted` | Uses the same protocol against an app-owned backend. Keep the required HTTPS endpoint and native storage. |
-| `offline` | Local choices and queued obligations without remote audit delivery. It cannot fetch a missing policy. Not recommended for production environments as the only launch transport. |
-| `custom` | The app installs native services itself. Expo defaults auto-bootstrap off for this mode; the host must install before SDK/RN startup. |
+| `hosted` | Resolve policy and deliver records through your Inth project. |
+| `selfHosted` | Use the same protocol against your own backend. |
+| `offline` | Keep local choices and pending obligations without remote delivery. It cannot fetch a missing policy. Not recommended for production environments as the only launch transport. |
+| `custom` | Your app installs native services before RN starts. Expo defaults automatic bootstrap off in this mode. |
 
-`initURL` overrides policy initialization only. Consent saves and identity requests still use `backendURL`. URLs are public binary configuration; do not embed credentials. Use HTTPS in production. The plugin and Apple installer allow development HTTP only on literal loopback hosts.
+`initURL` changes policy initialization only. Consent saves and identity
+requests still use `backendURL`. The URL is public binary configuration;
+keep credentials out of it.
 
-## Configure Expo or bare metadata
+## Set Expo options
 
-| Expo plugin option | iOS key | Android metadata |
+Use the [complete Expo configuration](/docs/frameworks/react-native/expo#configure-the-plugin)
+for a working `app.config.ts`. The plugin accepts:
+
+| Option | Purpose |
+| --- | --- |
+| `backendURL` | Public backend URL. Required except in offline mode. |
+| `mode` | Transport and installation mode. |
+| `initURL` | Optional policy-initialization URL override. |
+| `domain` | Domain value sent with subject writes. |
+| `consentCategories` | Optional app category declaration. |
+| `vendors` | Optional IAB disclosure scope. |
+| `policyResource` | Build-exported policy JSON, relative to the Expo project. |
+| `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
+| `autoBootstrap` | Whether native launch installs the engine. Defaults to true except for custom mode. |
+| `forceGPC` | GPC input for a staged or test build. |
+| `enableAppTrackingTransparency` | Enable Apple's tracking-authorization declarations. Defaults to false. |
+| `trackingUsageDescription` | App-specific plain-text ATT explanation, required when ATT is enabled. |
+| `trackingMarkdownUsageDescription` | Optional expanded ATT copy on supported Apple systems. |
+| `trackingMarkdownUsageDescriptionLocalizations` | Locale-to-copy map for that expanded description. |
+| `skAdNetworkIdentifiers` | Native SKAdNetwork declarations when ATT is enabled. |
+| `privacyTrackingDomains` | Native tracking-domain declarations when ATT is enabled. |
+
+Repository settings affect dependency resolution during the build. They do
+not select the consent backend. Store repository credentials in the build
+environment; the plugin accepts their environment-variable names, not their
+values.
+
+## Set bare RN metadata
+
+Use these keys when configuring the same engine without Expo:
+
+| Expo option | iOS `Info.plist` key | Android application metadata |
 | --- | --- | --- |
 | `backendURL` | `com.c15t.backend.url` | `com.c15t.PORTAL_URL` |
 | `initURL` | `com.c15t.backend.initUrl` | `com.c15t.INIT_URL` |
@@ -30,16 +69,51 @@ Use the Inth project URL in native build configuration. The React Native provide
 | `forceGPC` | `com.c15t.gpc` | `com.c15t.FORCE_GPC` |
 | `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
 
-The plugin translates mode spelling per platform. Do not invent an Android transport-mode metadata key. `androidMavenRepository` configures build-time binary resolution, not consent transport.
+The iOS transport mode uses `com.c15t.backend.mode`. Android derives transport
+from the supplied native configuration; there is no matching Android mode
+metadata key. Follow [bare setup](/docs/frameworks/react-native/bare) for the
+full file context and linking steps.
 
-Categories are `necessary`, `functionality`, `experience`, `measurement` and `marketing`. The declaration narrows the optional policy scope; it does not grant it. Omission declares no app scope, so the policy decides what is offered. An empty plugin array is refused. Vendor IDs narrow served disclosures; they do not create IAB grants or CMP configuration.
+## Declare the categories your app uses
 
-## Preview policy inputs
+Category IDs are `necessary`, `functionality`, `experience`, `measurement` and
+`marketing`. The app declaration and the resolved policy determine the offered
+scope. A declaration narrows scope; it never grants permission.
 
-Use `setOverrides` for country, region, language or GPC QA. `privacySignals.gpc.active` is the effective GPC answer, distinct from detected and overridden values. No mobile user-agent flag is implied. A forced GPC denial is never an invented grant. Remove QA overrides before shipping.
+Omit `consentCategories` to use the policy's scope rules. An empty plugin array
+is refused because an empty declaration would be ambiguous. Always read the
+resolved `snapshot.consentCategories` when building your own category list.
 
-## Use custom native services deliberately
+Vendor IDs similarly narrow the served IAB disclosures. Omit `vendors` to keep
+the served list. It must be nonempty when supplied. Vendor scope does not
+install CMP/publisher identity or grant a vendor. See
+[IAB setup](/docs/guides/mobile-iab).
 
-Apple exposes `C15tApple.install(C15tAppleConfiguration)` and an advanced `CoreConfig` installation path. Android exposes `C15tAndroid.install(context, NativeConfig, ...)`. Custom stores and transports are app-owned contracts, not configuration accepted by `C15tProvider`.
+## Preview a regional policy
 
-IAB CMP/publisher settings belong to native configuration. The documented Expo props expose vendor scope, not a complete IAB installation. Read the [IAB prerequisites and limits](/docs/frameworks/react-native/iab) before choosing a host-owned setup.
+`useConsentActions().setOverrides` accepts `country`, `region`, `language` and
+`gpc`. Use these in a debug menu to exercise your policy rules. Omitted values
+stay as they are; explicit null clears country, region or GPC overrides.
+
+Overrides change policy inputs without recording a choice. The effective GPC
+answer is `snapshot.privacySignals.gpc.active`; the detected and overridden
+values remain separate. Remove test overrides before shipping.
+
+## Add a policy for offline startup
+
+A valid bundled policy lets a fresh installation resolve a conservative
+choice while disconnected. Set `policyResource` in Expo or the corresponding
+native metadata, and retain hosted transport for refresh and queued delivery.
+[Offline policies](/docs/guides/mobile-offline) explains export, embedding,
+expiry and updates.
+
+## Let your app install the engine
+
+Use `autoBootstrap: false` when your app owns native installation. Install
+once, before RN and optional SDK startup, then attach the RN adapter to that
+engine. Custom stores and transports are native integration contracts.
+
+The [native startup guide](/docs/frameworks/react-native/native-behaviour)
+explains ordering and protected-storage recovery. Use
+[mobile IAB setup](/docs/guides/mobile-iab) when your native configuration also
+needs CMP and publisher settings.

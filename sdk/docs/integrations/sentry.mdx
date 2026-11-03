@@ -1,11 +1,18 @@
 ---
 title: Sentry
-description: Configure Sentry's CDN or your own SDK with consent for error monitoring, Session Replay and user data.
-seoTitle: Sentry and Session Replay consent with c15t
-seoDescription: Keep Sentry error reports free of user data, and load Session Replay only with measurement consent. Set it up with the c15t sentry helper.
+description: Configure consent for Sentry error monitoring, user data and Session Replay on the web, and manual replay in Swift, Kotlin, React Native and Expo.
+seoTitle: Sentry consent for web and mobile with c15t
+seoDescription: Connect Sentry and Session Replay to c15t on the web, Swift, Android and React Native. Keep native replay permission separate from crash reporting.
 icon: sentry
 group: integrations
 ---
+
+Use the [web integration](#web) for Sentry error monitoring, user data and
+Session Replay. In [Swift, Android, React Native and Expo apps](#mobile), the
+bundled helper controls manual Session Replay only. Your app keeps ownership
+of native crash reporting, profiling and user-data configuration.
+
+## Web
 
 With a `dsn` and the default `loadMode`, the c15t `sentry` helper loads the
 Sentry CDN bundle on every page, before the visitor chooses. Sentry reports
@@ -15,7 +22,7 @@ Session Replay also waits until `measurement` has consent. It stops after the
 visitor withdraws consent. With `loadMode: 'after-consent'`, Sentry runs only
 while `measurement` has consent.
 
-## Configure Sentry
+### Configure Sentry
 
 Remove any existing Sentry Loader Script or CDN tags, then add this configuration.
 Errors run before consent by default; Replay and SDK data collection wait for
@@ -32,9 +39,11 @@ consent when a Replay sample rate is above 0.
 CDN URLs need an exact release version. Keep the default to use its integrity
 hash, or set `version` to an exact release in the supported SDK range below.
 
-<include src="../shared/integrations/register-scripts.mdx" />
+### Register the scripts
 
-## Use your own Sentry SDK
+<include src="../shared/integrations/register-scripts.mdx#registration" />
+
+### Use your own Sentry SDK
 
 The supported browser SDK range is `^10.67.0 || ^11.0.0`, including framework
 SDKs built on those versions. Version 10.67.0 added Replay's
@@ -82,7 +91,7 @@ Vite split dynamically imported Replay into its own chunk; esbuild and Bun keep
 it in the main bundle. A main-bundle `Sentry.replayIntegration` reference through
 `import * as Sentry` also prevents the split.
 
-### If Sentry already initializes independently
+#### If Sentry already initializes independently
 
 c15t applies filters once it finds the client; it cannot retract earlier data.
 For startup protection, disable collection and remove event users in your own
@@ -118,7 +127,7 @@ To restore event users, check effective c15t permission in `beforeSend`. Wait
 until the adapter is registered before assigning scope users or capturing logs
 and metrics.
 
-## Options
+### Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
@@ -140,7 +149,7 @@ and metrics.
 Replay's category is registered only with an SDK `replay.load` function or
 enabled CDN Replay with a positive sample rate.
 
-## Loading and revocation
+### Loading and revocation
 
 | `loadMode` | When Sentry runs | On withdrawal without a reload |
 | --- | --- | --- |
@@ -165,7 +174,7 @@ URL paths remain diagnostics, so keep sensitive values out of them.
 The vendor slug is `sentry`. Turning it off denies Replay and PII, plus errors
 in `'after-consent'` mode. See [vendor consent](/docs/integrations/overview#vendor-switches-and-cookie-cleanup).
 
-### Shared clients and configuration changes
+#### Shared clients and configuration changes
 
 Keep callback functions stable across renders. Equal options and callbacks
 reuse the SDK bundle and active recording. Changed CDN options initialize a
@@ -178,14 +187,14 @@ downloads. Final removal denies PII and stops Replay, and also disables errors
 in `'after-consent'` mode. An app-initiated `Sentry.close()` stays closed after
 a grant. Separate clients have separate permissions.
 
-## Content security policy
+### Content security policy
 
 Allow `worker-src blob:` for Replay and your ingest or tunnel endpoint in
 `connect-src`. CDN mode also needs `https://browser.sentry-cdn.com` in
 `script-src`. The loader or provider's `nonce` applies to both CDN bundles;
 a per-script nonce overrides it.
 
-## Verify Sentry
+### Verify Sentry
 
 Test in a private window with an opt-in policy and
 `replaysSessionSampleRate: 1`. Filter DevTools Network by `sentry`.
@@ -200,3 +209,170 @@ Test in a private window with an opt-in policy and
 
 See the [consent verification guide](/docs/guides/verify-consent) for
 navigation, expiry and hosting checks.
+
+## Mobile
+
+Use the bundled Sentry Replay helper to start recording while the chosen native
+category is allowed and stop it when permission is pending or denied. This
+integration controls Session Replay only. Your app configures crash reporting,
+profiling, user identifiers and other Sentry products separately.
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. Your app installs Sentry. No Sentry dependency
+is added by c15t.
+
+### Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart. Include
+the chosen optional category in both the native configuration and your Inth
+policy. The helper defaults to `measurement`. This is effective category
+permission, which can follow policy defaults. If replay requires a separate
+explicit choice in your app, use a policy and UI that capture that choice before
+connecting it. See [mobile availability](/docs/guides/mobile-status) for SDK access.
+
+Use a Sentry SDK with manual replay start and stop APIs. The checked mappings
+use Sentry Cocoa 9.32.0, Android 8.62.0 and React Native 8.33.0. These examples
+do not target older SDKs without manual controls.
+
+Android Replay requires API 26 or later, even though c15t itself supports API
+24\. Do not treat a successfully initialized Sentry client on an older device
+as proof that replay can record there.
+
+Set both session and error replay sample rates to zero before initializing
+Sentry, including any native initialization before JavaScript. Leaving error
+sampling enabled can buffer screen data before consent. Add the replay module
+following Sentry's platform instructions and retain its default masking until
+you have tested your app's sensitive screens.
+
+### Connect Swift
+
+Add this owner to your app target:
+
+<include src="../shared/examples/native/core-swift/AppleInstallation/swift-sentry-replay-binding.mdx" />
+
+In your existing Sentry setup, set
+`options.sessionReplay.sessionSampleRate = 0` and
+`options.sessionReplay.onErrorSampleRate = 0`. After Sentry and c15t are
+installed, retain this owner on your app's service owner:
+
+{/* example: fragment */}
+
+```swift
+import Sentry
+
+let replayOwner = SentryReplayOwner(
+    core: core,
+    start: { SentrySDK.replay.start() },
+    stop: { SentrySDK.replay.stop() }
+)
+```
+
+`core` is the installed `ConsentCore`. Pass direct vendor calls. The helper
+serializes their submission; Sentry's internal work can finish asynchronously.
+Call `stop()` on the owner for final teardown.
+
+### Connect Android
+
+Add this function to your app, replacing the sample package name:
+
+<include src="../shared/examples/native/examples/consent-demo/android-sentry-replay-integration.mdx" />
+
+In the existing Sentry setup, set
+`options.sessionReplay.sessionSampleRate = 0.0` and
+`options.sessionReplay.onErrorSampleRate = 0.0`. After installing both SDKs,
+connect the manual controls:
+
+{/* example: fragment */}
+
+```kotlin
+import io.sentry.Sentry
+
+val replayConsent = connectAppSentryReplay(
+	start = { Sentry.replay().start() },
+	stop = { Sentry.replay().stop() },
+	onError = ::reportReplayError,
+)
+```
+
+Keep the helper on an application or service owner. The native core keeps
+applying consent until you call `close()`, even if the app drops the handle. The error handler must
+work with replay disabled and must not throw. Automatic callback failures go
+to `onError`. Construction, `sync()` and `close()` can throw to their caller.
+Use `close()` for final service teardown.
+
+### Connect React Native or Expo
+
+Set `replaysSessionSampleRate: 0` and `replaysOnErrorSampleRate: 0` in your
+existing Sentry configuration. Configure the mobile replay integration using
+[Sentry's manual control instructions](https://docs.sentry.io/platforms/react-native/session-replay/#manual-control).
+Keep the mobile replay option `avoidForegroundResumeHang` disabled in this
+recipe. In the checked SDK, that experimental workaround can restart buffering
+on foreground independently of the consent-controlled stop command.
+If your app initializes Sentry natively first, disable native replay sampling
+there too. Expo needs a build containing both SDKs; Expo Go cannot provide
+c15t's native engine.
+
+Copy this function into `sentry-replay-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-sentry-replay-integration.mdx" />
+
+After Sentry initialization, connect the active replay instance:
+
+{/* example: fragment */}
+
+```ts
+import * as Sentry from '@sentry/react-native';
+
+const replay = Sentry.getReplay();
+if (!replay) {
+	throw new Error('Configure Sentry Session Replay before connecting c15t.');
+}
+const replayConsent = connectAppSentryReplay(replay, reportReplayError);
+await replayConsent.ready;
+```
+
+Retain the connection for the replay service's lifetime. `ready` waits for
+the supplied calls to return; a `void` vendor method can still have pending
+native work. `stop()` returns a promise in the checked Sentry RN SDK, so
+withdrawal updates and `disconnect()` await that promise. Handle errors
+through `onError` and at the returned promise's call site.
+
+### Keep recording aligned with the vendor lifecycle
+
+Use the Swift owner's `syncAfterReset()`, Kotlin's `sync()` or
+`await replayConsent.sync()` after an app-owned vendor reset or reinitialization. Sentry can
+also stop a manually started replay when it starts a new app session. With
+sampling disabled, it may then remain stopped even though c15t permission is
+still granted. Reapply permission after the vendor's session transition.
+This keeps consent authoritative without turning automatic replay sampling on.
+
+For final teardown, use the Swift owner's `stop()`, Kotlin's `close()` or
+`await replayConsent.disconnect()`. Do not close an app-wide connection on
+screen navigation or Activity rotation.
+
+### Understand what stopping does
+
+Sentry can send a final recorded segment when stopping a full-session replay.
+Stopping does not guarantee that unsent data is discarded or that all network
+traffic ends. The helper submits stop; it does not call `flush()`, delete
+historical recordings or change crash reporting configuration.
+
+Masking and permission are separate. Test the actual screen content in your
+app, including native views and sensitive input screens. A successful consent
+test does not prove that Sentry's masking works for every rendered component.
+
+### Verify your app
+
+With both sample rates zero, launch pending and then refuse permission. Confirm
+no replay starts or buffers. Grant permission, record a deliberate screen
+transition, withdraw and confirm new capture stops. Inspect the final segment
+separately from later capture. Test background and foreground transitions,
+vendor reinitialization, reconnection and teardown. Confirm the configured
+crash-reporting behavior remains unchanged.
+
+The helper tests cover native permission and callback ordering. Vendor consumer
+checks validate the mappings, rather than your app's capture or network behavior.
+Complete [mobile verification](/docs/guides/mobile-verify) with the exact Sentry
+build and lifecycle your app ships.

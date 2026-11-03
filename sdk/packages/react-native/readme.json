@@ -1,12 +1,12 @@
 {
 	"title": "@c15t/react-native: native consent for mobile",
-	"description": "Private prerelease for React Native, Expo development builds and native iOS/Android integration. One native engine owns policy, durable choices and SDK gates before JavaScript starts. SwiftUI and Compose provide the shared stock consent screens.",
+	"description": "Native consent screens, saved privacy choices and SDK gates for React Native and Expo. SwiftUI renders iOS consent screens and Compose renders Android screens. Optional native SDKs can read permission before JavaScript starts.",
 	"features": [
-		"Native Swift and Kotlin consent authority, durable records and synchronous SDK gates before JavaScript",
-		"Shared SwiftUI and Compose presenters with native drafts, IAB disclosures, search and standing preferences",
-		"Durable local commit outcomes and queued delivery, including offline withdrawal",
-		"Build-exported endpoint-bound policies for first-install offline prompts, with explicit authority expiry",
-		"Headless React Native hooks and commands, separate ATT authorization and app-owned native installation"
+		"Native consent prompts and a preference center that can be reopened from app settings",
+		"Hooks and category commands for app-owned React Native controls",
+		"Consent gates that stay current after grants and withdrawals",
+		"Protected saved choices and queued delivery when the app is offline",
+		"Native IAB purpose and partner choices, Additional Consent and separate ATT handling"
 	],
 	"prerequisites": [
 		"React Native 0.86.x or 0.87.x with the New Architecture enabled",
@@ -16,7 +16,7 @@
 		"An Inth hosted project URL, such as https://your-project.inth.app. Advanced self-hosted deployments remain supported."
 	],
 	"manualInstallation": [
-		"This package is still `private: true`. Obtain the matching package tarball and native artifacts from the maintainer. Public npm, Maven and remote SwiftPM installation, cloud builds and device acceptance are not established by this checkout."
+		"The mobile SDK is a private prerelease. Obtain the package tarball and its matching Android artifacts from the maintainer, then follow the [React Native quickstart](https://c15t.com/docs/frameworks/react-native/quickstart) or [Expo setup](https://c15t.com/docs/frameworks/react-native/expo). [Mobile availability](https://c15t.com/docs/guides/mobile-status) records distribution and first-release scope."
 	],
 	"docsLink": "https://c15t.com/docs/frameworks/react-native/quickstart",
 	"showCLIGeneration": false,
@@ -24,9 +24,9 @@
 	"customSections": {
 		"Native setup before JavaScript": "Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `C15tProvider` attaches to that engine and checks the protocol. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.",
 		"Local success and delivery": "Check `CommitResult.ok` after `save`, `acceptAll` or `rejectAll`. A resolved promise can refuse a commit. `ok: true, queued: true` means durable local success; it does not prove backend delivery. Keep refused drafts and retry controls. Stock native presenter outcomes report durable commits separately from presentation and dismissal.",
-		"Guides": "Use the version-matched Markdown under `docs/frameworks/react-native/` or the [public docs source routes](https://c15t.com/docs/frameworks/react-native/quickstart):\n\n- [Quickstart and availability](https://c15t.com/docs/frameworks/react-native/quickstart)\n- [Expo and EAS](https://c15t.com/docs/frameworks/react-native/expo)\n- [Bare React Native](https://c15t.com/docs/frameworks/react-native/bare)\n- [Commands and outcomes](https://c15t.com/docs/frameworks/react-native/usage)\n- [Native startup and gates](https://c15t.com/docs/frameworks/react-native/native-behaviour)\n- [Offline policies and withdrawal](https://c15t.com/docs/frameworks/react-native/offline)\n- [IAB, Additional Consent, ATT and ads](https://c15t.com/docs/frameworks/react-native/iab)\n- [Identity and reset](https://c15t.com/docs/frameworks/react-native/identity)\n- [Native customization](https://c15t.com/docs/frameworks/react-native/customize) and [headless hooks](https://c15t.com/docs/frameworks/react-native/headless)\n- [Standalone Apple](https://c15t.com/docs/frameworks/react-native/apple) and [Android](https://c15t.com/docs/frameworks/react-native/android)\n- [Configuration](https://c15t.com/docs/frameworks/react-native/configuration), [compatibility and OTA](https://c15t.com/docs/frameworks/react-native/platform-support)\n- [Verification](https://c15t.com/docs/frameworks/react-native/verify) and [troubleshooting](https://c15t.com/docs/frameworks/react-native/troubleshooting)",
+		"Guides": "Start with the guide for your app. The package also includes version-matched Markdown under `docs/` for offline reading.\n\n- [React Native quickstart](https://c15t.com/docs/frameworks/react-native/quickstart)\n- [Expo and EAS](https://c15t.com/docs/frameworks/react-native/expo)\n- [Bare React Native](https://c15t.com/docs/frameworks/react-native/bare)\n- [Build your own UI](https://c15t.com/docs/frameworks/react-native/headless)\n- [Customize native screens](https://c15t.com/docs/frameworks/react-native/customize)\n- [Commands and outcomes](https://c15t.com/docs/frameworks/react-native/usage)\n- [Native SDK gates](https://c15t.com/docs/frameworks/react-native/native-behaviour)\n- [SwiftUI quickstart and UIKit](https://c15t.com/docs/frameworks/swift/quickstart)\n- [Kotlin Android quickstart](https://c15t.com/docs/frameworks/android/quickstart)\n- [Mobile SDK integrations](https://c15t.com/docs/integrations/overview#mobile-sdks)\n- [Offline consent](https://c15t.com/docs/guides/mobile-offline)\n- [IAB and advertising](https://c15t.com/docs/guides/mobile-iab)\n- [Verify mobile consent](https://c15t.com/docs/guides/mobile-verify)",
 		"IAB and ads": "Native IAB and Additional Consent APIs do not establish IAB registration, Google certification or AdMob interoperability. Vendor scope alone is not approved CMP configuration. ATT is a separate platform permission and never grants consent. Keep an ad integration disabled until its actual SDK, policy and certification requirements are verified.",
 		"Self-hosted and headless integration": "Hosted Inth is the recommended starting point. The existing self-hosted transports, native installation APIs, React components and headless hooks remain available. Browser script-loader and CSS APIs are not native SDK gates.",
-		"First release scope": "The first mobile release retains stock native presenters, RN hooks and category commands, app-owned native installation, and standalone Swift/Kotlin core APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB CMP/publisher bootstrap are explicitly deferred. Hooks still link the stock native presenter; `vendors` only filters disclosures. Use app-owned native IAB configuration for that path. See the [first release scope](https://c15t.com/docs/frameworks/react-native/quickstart#first-release-scope) for the required consumer acceptance before these deferred features ship."
+		"First release scope": "The first release includes native presenters, RN hooks and category commands, app-owned native installation and standalone Swift/Kotlin APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB bootstrap are deferred. See [mobile availability](https://c15t.com/docs/guides/mobile-status) for the supported integration paths."
 	}
 }

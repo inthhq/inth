@@ -1,0 +1,129 @@
+---
+title: Configuration
+description: Configure the Android project URL, category scope, startup metadata, policy refresh and identity without starting a second consent engine.
+group: frameworks
+---
+
+Pass `NativeConfig` to `C15tAndroid.install` once during app startup. The
+[quickstart](/docs/frameworks/android/quickstart) uses hosted Inth policy and
+Android's default storage and lifecycle services.
+
+## Choose the backend
+
+`portalUrl` is the public HTTPS URL of your Inth project. A self-hosted backend
+can use the same configuration if it implements the c15t native policy and save
+protocol. An `initUrl` changes only policy initialization; consent saves still
+use `portalUrl`.
+
+The installer handles HTTP transport, foreground refresh and reconnect retry.
+Keep those services enabled when embedding an
+[offline policy](/docs/guides/mobile-offline), so saved choices can be delivered
+and policy can refresh when the app reconnects.
+
+## Set the categories your app uses
+
+The quickstart declares necessary, measurement and marketing. The available
+`ConsentCategory` values are:
+
+| Value | Use |
+| --- | --- |
+| `NECESSARY` | Required app functions. Always permitted. |
+| `FUNCTIONALITY` | Optional functionality. |
+| `EXPERIENCE` | Optional experience features. |
+| `MEASUREMENT` | Analytics and usage measurement. |
+| `MARKETING` | Advertising and marketing features. |
+
+`consentCategories` declares your app's scope. The resolved policy still
+controls what is offered and permitted. Declaring measurement does not grant it.
+
+When scope is absent or empty, strict policies offer their full scope;
+permissive policies offer necessary-only scope with an acknowledgement prompt.
+Use an explicit list when the app integrates known optional categories.
+
+## Use manifest startup instead
+
+For category consent with default platform services, the bundled AndroidX
+Startup initializer can install c15t before the first Activity. In that setup,
+provide application metadata instead of the quickstart's explicit
+`installConsent` call:
+
+{/* example: fragment */}
+
+```xml title="app/src/main/AndroidManifest.xml"
+<application>
+	<meta-data android:name="com.c15t.PORTAL_URL" android:value="https://your-project.inth.app" />
+	<meta-data android:name="com.c15t.CATEGORIES" android:value="necessary,measurement,marketing" />
+</application>
+```
+
+Change the project URL before building. The library manifest supplies the c15t
+initializer registration. With no usable project URL, the initializer leaves
+c15t inactive and optional gates closed.
+
+Use explicit installation when the app supplies IAB identity, custom transport
+or other app-owned configuration. Repeated installation retains the first
+engine; it does not update its configuration. Remove only c15t's initializer
+metadata if you need to suppress automatic installation, preserving other
+AndroidX Startup users:
+
+{/* example: fragment */}
+
+```xml title="app/src/main/AndroidManifest.xml"
+<provider
+	android:name="androidx.startup.InitializationProvider"
+	android:authorities="${applicationId}.androidx-startup"
+	tools:node="merge">
+	<meta-data android:name="com.c15t.android.C15tInitializer" tools:node="remove" />
+</provider>
+```
+
+Declare `xmlns:tools="http://schemas.android.com/tools"` on the manifest root
+when using this override. Disabling c15t's initializer does not disable vendor
+initializers. Configure each optional SDK's startup separately.
+
+## Native configuration reference
+
+| Setting | Purpose |
+| --- | --- |
+| `portalUrl` | Required project/backend URL. |
+| `initUrl` | Optional initialization URL override. |
+| `domain` | Domain reported with consent records; defaults to the project URL's host. |
+| `consentCategories` | App category scope. |
+| `vendors` | Optional IAB vendor scope. Absent or empty keeps the served list. |
+| `iab` | Registered CMP identity and publisher settings for an IAB policy. |
+| `iabListMaxAgeMs` | Maximum age of IAB disclosures, seven days by default. |
+| `bundledPolicy` | Exported policy resource for offline startup. |
+| `overrides` | Country, region, language or GPC inputs for controlled QA. |
+| `detectedGpc` | A GPC signal supplied by a real platform integration. |
+| `extraHeaders` | App-owned transport headers. |
+| `maxPendingSaves` | Durable delivery queue limit, up to 20. |
+
+The corresponding manifest keys are `com.c15t.PORTAL_URL`, `INIT_URL`, `DOMAIN`,
+`CATEGORIES` and `POLICY_RESOURCE`, with the same `com.c15t.` prefix. The policy
+resource names a file in app assets. Native configuration supports more options
+than manifest startup.
+
+## Handle identity and reset
+
+`C15t.identify(KernelUser(...))` associates the installation with your app's
+external account. `C15t.logout()` detaches that identity. Neither creates a new
+c15t subject or deletes the backend audit trail. Recheck current gates after
+identity changes; IAB authority may be retired and a new choice required.
+
+For an explicit withdrawal, save `CommitIntent.Necessary` and inspect the commit
+result. For a start-over control, call the installed kernel's
+`C15t.current?.reset()`. This resets local consent and resolves policy again.
+`C15t.reset()` only drops the singleton for teardown and leaves persisted
+consent unchanged. Neither operation is a backend account-deletion API.
+
+## Handle a policy or storage failure
+
+`C15t.decision(category)` distinguishes `PENDING`, `DENIED` and `GRANTED`.
+Keep optional collection off while policy or storage is unavailable. Let the
+person continue using necessary app functions and offer retry where appropriate.
+
+Listen for native errors using a retained `onError` callback. Do not replace a
+failed durable save with an in-memory success message. See
+[headless saves](/docs/frameworks/android/headless#save-a-category-form) for
+the result contract and [mobile verification](/docs/guides/mobile-verify) for
+failure and recovery checks.

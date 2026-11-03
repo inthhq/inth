@@ -1,0 +1,71 @@
+Run these checks on the app binary you intend to deliver, connected to your
+Inth project. Use the native platform's logs and the vendor's actual requests
+to check collection. A banner on screen only verifies presentation.
+
+## Check the first consent journey
+
+Choose a region whose policy asks for optional consent. Use the engine's
+reset command for a new prompt, or a dedicated fresh test installation.
+
+| Action | Expected result |
+| --- | --- |
+| Launch before any choice | The prompt appears; optional SDKs stay off until policy and permission allow them |
+| Reject all | The prompt closes; optional collection stays off |
+| Stop and relaunch the app | The refusal remains and the first layer stays closed |
+| Open Privacy settings | Saved controls match the refusal |
+| Allow measurement and save | The measurement gate opens; the intended SDK starts once |
+| Turn measurement off and save | Its supported stop or reconfiguration API runs; optional collection stops |
+
+For React Native and Expo, repeat startup with JavaScript delayed. Native
+auto-initializers must not start optional collection while JS is loading.
+Repeat with the final release binary as well as a development build.
+
+## Check failures and recovery
+
+1. Launch a fresh app offline without a bundled policy. The app stays usable
+   and optional gates remain closed while policy is unavailable.
+2. Repeat with a valid [bundled policy](/docs/guides/mobile-offline). The
+   first prompt works without a network connection.
+3. Reject offline, stop the process and relaunch offline. The refusal remains.
+4. Reconnect and verify the queued record reaches the backend. Match the
+   receipt to the action rather than treating a queued result as delivery.
+5. Make protected storage unavailable. Saving fails visibly, the draft stays
+   open and no saved confirmation appears. Recover storage and retry.
+6. Expire or corrupt bundled policy and disclosure data. New grants remain
+   unavailable, while withdrawal stays possible.
+
+Exercise identity changes and reset separately using the
+[identity guide](/docs/guides/mobile-identity). On Apple devices, check
+protected-data availability and ATT with the actual OS permission UI.
+
+## Check IAB integrations
+
+For apps using [IAB](/docs/guides/mobile-iab), verify purpose, vendor,
+legitimate-interest, special-feature and Additional Consent choices against
+decoded TC Strings and actual typed platform storage. Cover granular save,
+accept-all, reject-all, withdrawal, restrictions, expiry and process restart.
+
+Test the real ad or mediation SDK's reads and network behavior with your exact
+versions. A decodable TC String does not prove that another SDK consumed it.
+
+## Check accessibility and layout
+
+Use VoiceOver on iOS and TalkBack on Android. Traverse the complete first
+layer, preferences, partner details, errors and withdrawal path. Check that
+focus enters the presentation and returns to the opening control on dismissal.
+
+Repeat at the largest text setting, in dark appearance, in both reading
+directions you support, and on small and wide windows. Confirm Accept and
+Reject have equal treatment, labels remain readable and every action stays
+reachable. Test folding and resizing while the screen is open if your app
+supports those transitions.
+
+## Record what passed
+
+Keep app and SDK versions, source revision, binary hash, signing identity,
+backend policy version, device and OS with the result. Separate simulator,
+physical-device and cloud-build evidence. Check minimum and current supported
+OS versions, plus clean installs from the package source you will distribute.
+
+Certification submissions have additional reviewer instructions. See
+[mobile availability](/docs/guides/mobile-status) for current release scope.

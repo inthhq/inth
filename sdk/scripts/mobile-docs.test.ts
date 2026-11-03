@@ -38,12 +38,27 @@ test('advertised mobile README guides have public source pages', () => {
 	);
 	const routes = [
 		...source.matchAll(
-			/https:\/\/c15t\.com\/docs\/(?<route>frameworks\/react-native\/[a-z-]+)/gu
+			/https:\/\/c15t\.com\/docs\/(?<route>(?:frameworks|guides|integrations)\/[a-z-/]+)/gu
 		),
 	];
-	expect(routes.length).toBeGreaterThanOrEqual(topics.length);
+	expect(routes.map((match) => match.groups?.route)).toEqual(
+		expect.arrayContaining([
+			'frameworks/react-native/quickstart',
+			'frameworks/react-native/expo',
+			'frameworks/swift/quickstart',
+			'frameworks/android/quickstart',
+			'guides/mobile-iab',
+			'guides/mobile-verify',
+			'integrations/overview',
+		])
+	);
 	const pages = new Set(
-		fg.sync('frameworks/react-native/*.mdx', { cwd: resolve(root, 'docs') })
+		fg.sync(
+			['frameworks/**/*.mdx', 'guides/**/*.mdx', 'integrations/**/*.mdx'],
+			{
+				cwd: resolve(root, 'docs'),
+			}
+		)
 	);
 	for (const route of routes) {
 		expect(pages).toContain(`${route.groups?.route}.mdx`);
@@ -61,12 +76,34 @@ test('the mobile bundle covers every public mobile guide and advertises native s
 	for (const topic of topics) {
 		expect(included).toContain(`frameworks/react-native/${topic}.mdx`);
 	}
+	for (const guide of [
+		'frameworks/swift/quickstart.mdx',
+		'frameworks/swift/uikit.mdx',
+		'frameworks/android/quickstart.mdx',
+		'guides/mobile-iab.mdx',
+		'guides/mobile-verify.mdx',
+		'integrations/overview.mdx',
+		'integrations/firebase-analytics.mdx',
+		'integrations/posthog.mdx',
+		'integrations/mixpanel-analytics.mdx',
+		'integrations/amplitude.mdx',
+		'integrations/sentry.mdx',
+	]) {
+		expect(included).toContain(guide);
+	}
 	const setup = withPackageSetupLinks(
 		'# Mobile\n',
-		new Set(topics.map((topic) => `frameworks/react-native/${topic}.md`))
+		new Set(included.map((file) => file.replace(/\.mdx$/u, '.md')))
 	);
-	for (const topic of ['quickstart', 'expo', 'bare', 'apple', 'android']) {
-		expect(setup).toContain(`./docs/frameworks/react-native/${topic}.md`);
+	for (const file of [
+		'frameworks/react-native/quickstart.md',
+		'frameworks/react-native/expo.md',
+		'frameworks/react-native/bare.md',
+		'frameworks/swift/quickstart.md',
+		'frameworks/swift/uikit.md',
+		'frameworks/android/quickstart.md',
+	]) {
+		expect(setup).toContain(`./docs/${file}`);
 	}
 });
 

@@ -1,0 +1,103 @@
+---
+title: Native gates and custom UI
+description: Subscribe to native consent before optional SDK startup and save app-owned SwiftUI category drafts with revision checks and retry behavior.
+group: frameworks
+---
+
+Use the native core directly when your app owns its consent controls. The core
+still resolves policy, stores choices, validates drafts and queues delivery.
+Your UI reads that authority and saves explicit actions to it.
+
+For an app that never renders the stock screens, link `C15tCore` and
+`C15tApple` and omit `C15tConsentUI`. Keep the same protected installation as
+the [quickstart](/docs/frameworks/swift/quickstart). The quickstart's
+`ConsentModel` includes a stock presenter, so replace that presentation
+ownership with your own observable model when dropping the UI product.
+
+## Keep SDK gates current
+
+`isAllowed(.measurement)` is a cached Boolean read. Use
+`decision(for: .measurement)` when you need to distinguish `.pending` from
+`.denied`. Both keep optional work off until it is permitted.
+
+For a service that must start and stop as permission changes, retain a decision
+gate for the service's lifetime. This is the registration used by the runnable
+SwiftUI example:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-observe.mdx" />
+
+The example's `measurement` property is a thread-safe `MeasurementService`.
+It starts collecting only on `.granted` and stops on `.pending` or `.denied`.
+The gate delivers the current decision when it registers and then delivers
+changes. Retain its `ConsentSubscription`, and call `cancel()` when the
+service's owner goes away.
+
+Callbacks can run on any queue. Marshal UI updates to the main actor, as the
+sample does here:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-snapshot.mdx" />
+
+Use your vendor's supported disable, stop or reset API on withdrawal. The
+sample counter is local and makes no network requests; adapt the gate to the
+real SDK you use. Disable that SDK's own automatic initializer before relying
+on a consent gate.
+
+## Start a draft from recorded choices
+
+The current permission can differ from a recorded choice under a regional
+policy. Seed a form from `snapshot.explicitChoice`, then capture the snapshot
+revision your form is editing:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-draft.mdx" />
+
+The sample form's Measurement switch edits `draft.measurement`. Changing the
+switch changes only the draft. No native choice is recorded until Save or
+Reject is pressed.
+
+Enable editing only after the core is ready, the category is in the resolved
+scope and restrictions allow it. The sample also refuses IAB editing because
+a category switch cannot represent a complete vendor decision.
+
+## Save without losing refused drafts
+
+The runnable form commits on a worker and keeps the form open unless the
+native result is `.committed`:
+
+<include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-save.mdx" />
+
+`expectedRevision` prevents an older draft from overwriting a newer choice or
+policy. On `concurrent-change`, keep the edits visible and ask the person to
+reload current settings. On a storage error, retain the draft and show Retry.
+Disable duplicate saves and dismissal while a save is running.
+
+A committed result means durable local success. Observe `eventStream` for
+`.saveDelivered` or `.saveReplayed` when your app needs to report backend
+delivery separately. A network failure does not reverse a stored withdrawal.
+
+## Run the complete custom form
+
+Open `native/core-swift/Examples/swiftui-consent` using its README, add
+`--headless` to the scheme's Run arguments, and launch it. This mode creates
+no `ConsentPresenter` and mounts no `.c15tConsent` modifier. Its
+`Sources/headless-preferences.swift` contains the complete form behind the
+snippets above, including readiness, restrictions, retry and reload handling.
+
+The example project links the UI product to support its separate stock mode.
+An app that ships only its own UI can remove that product and its imports.
+Its engine and platform services remain the same.
+
+## Own the complete consent flow
+
+Your custom UI also owns policy-specific disclosures, accept and reject
+actions, accessible save errors, localization and unsaved-edit confirmation.
+Keep a standing Privacy settings action after the initial choice.
+
+For IAB, use the stock presenter or implement the native IAB
+draft/disclosure contract. A call to `save(.custom(...))` cannot replace a
+purpose, vendor and legal-basis decision. Follow
+[IAB and advertising](/docs/guides/mobile-iab) before adding custom IAB
+controls.
+
+Verify refusal, grant, withdrawal, concurrent changes and relaunch with your
+real optional SDKs. [Mobile verification](/docs/guides/mobile-verify) gives the
+remaining app checks.

@@ -21,6 +21,7 @@ buildscript {
 apply plugin: "com.facebook.react.rootproject"
 
 // Versioned native artifacts are resolved by the host, without a composite source build.
+// #region docs:bare-android-repository title="android/build.gradle"
 allprojects {
     repositories {
         exclusiveContent {
@@ -39,3 +40,4 @@ allprojects {
         }
     }
 }
+// #endregion docs:bare-android-repository

@@ -1,108 +1,102 @@
-# c15t native core (Swift)
+# c15t for Swift
 
-`C15tCore` is the consent kernel behind `@c15t/react-native` on Apple platforms. It owns
-consent state on the device: the snapshot model, policy evaluation, gated reads,
-persistence, the offline write queue, and subject identity.
-[`../CONTRACT.md`](../CONTRACT.md) is the shared model; this package implements it in
-Swift, and `../core-android` implements it in Kotlin against the same fixtures.
+Native consent management for SwiftUI and UIKit apps. c15t resolves your Inth
+project's policy, stores choices on the device, presents consent screens and
+provides synchronous gates for optional SDKs. It also powers the Apple side of
+`@c15t/react-native`.
 
-IAB TCF here is the wire, not the flow: TC Strings decode and encode
-byte-for-byte against the shared fixtures in `../protocol`, the vendor list `/init`
-served is kept and only that list ever reaches the device, and `snapshot.iab`
-carries it as `{ gvl }`. A wire model of `iab` is read and evaluated, with the web
-kernel's default: nothing in scope is granted until a choice says so, and the snapshot
-reports `opt-in` while it runs. What is still not wired is the vendor-side record -- no
-`tcString` is saved with a decision. The `IABTCF_*` bus is written by the
-bridge's own install path rather than by an option here. See
-`../CONTRACT.md`.
+Start with the [Swift quickstart](../../docs/frameworks/swift/quickstart.mdx).
+It names the files to add to your app, shows the stock consent presenter and
+keeps a Privacy settings action available after the first choice.
 
-Depends on Foundation and Security only. No UIKit, no AppKit, no React Native, no Expo,
-which is what lets the same sources serve SwiftPM, CocoaPods (`C15tCore.podspec`), an app
-extension, and a `swift test` run on macOS. The React Native bindings live in
-`../../packages/react-native` and are the only target allowed to import this one and
-React at the same time.
+## Products
 
-## Commands
+The root `Package.swift` names the package `c15t` and exports these products:
 
-```bash
-export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-swift build                              # the library and the bench executable
-swift test                               # the whole suite, including the protocol fixtures
-swift run C15tCoreBench                  # measured numbers against the contract budgets
+| Product | Purpose |
+| --- | --- |
+| `C15tCore` | Policy evaluation, consent and IAB authority, durable records, queued saves and cached gates |
+| `C15tApple` | Protected Keychain installation, HTTP transport, lifecycle/reachability handling and optional ATT orchestration |
+| `C15tConsentUI` | Optional SwiftUI prompt, settings, native drafts and disclosure screens |
+
+SwiftUI and UIKit consent UI requires iOS 16.4 or later. The core and platform
+products do not depend on React Native, Expo or a JavaScript runtime. Apps with
+their own UI can omit `C15tConsentUI`.
+
+These are currently private source artifacts. In Xcode, add the authorized
+checkout's root as a local Swift package. A separate Swift repository is not
+required. See [mobile availability](../../docs/guides/mobile-status.mdx) for
+distribution and release status.
+
+## Guides and examples
+
+- [SwiftUI quickstart](../../docs/frameworks/swift/quickstart.mdx)
+- [UIKit integration](../../docs/frameworks/swift/uikit.mdx)
+- [Native gates and custom UI](../../docs/frameworks/swift/headless.mdx)
+- [Colors, identity and copy](../../docs/frameworks/swift/customize.mdx)
+- [IAB and advertising](../../docs/guides/mobile-iab.mdx)
+- [Offline startup and persistence](../../docs/guides/mobile-offline.mdx)
+- [App verification](../../docs/guides/mobile-verify.mdx)
+
+`Examples/AppleInstallation/Quickstart` contains the quickstart's checked source
+files. Select either the SwiftUI or UIKit entry point, not both. The
+[runnable SwiftUI example](Examples/swiftui-consent/README.md) also has a custom
+category form, unavailable-policy mode and delivery status. The maintained
+[native consent demo](../examples/consent-demo/README.md) includes SwiftUI,
+UIKit and IAB review modes.
+
+## Consent before optional SDK startup
+
+Call `C15tApple.install` before starting optional SDKs. It verifies protected
+storage and hydrates the process's single core before returning. A fresh
+installation remains pending until a usable policy is available.
+
+`isAllowed`, `decision(for:)`, `snapshot` and `isReady` read cached native
+state. They do not fetch a policy or wait for storage. Keep a `gate`
+subscription for integrations that must stop after withdrawal, and cancel its
+handle when the owner goes away. Snapshot and gate callbacks can arrive on any
+queue; UI updates belong on the main actor.
+
+Category writes use native `CommitIntent` values. Save with an expected
+snapshot revision when editing a draft, and keep refused drafts available for
+retry. Local `.committed` success is separate from backend delivery.
+
+## IAB and platform signals
+
+The core owns native IAB drafts, revision-bound commits, TC Strings, vendor and
+purpose choices, legitimate-interest objections, publisher restrictions and
+Google Additional Consent v2. A committed IAB decision is stored with its
+policy and disclosure authority and included in consent-save payloads.
+
+`iabPresentation()` returns retained disclosures with a detached draft and
+editing status. New grants require current valid authority; an expired list can
+remain readable for partner details. Use native vendor/purpose/provider gates
+before advertising work. A category Boolean or a served vendor list is not a
+complete IAB decision.
+
+The Apple installer projects vendor-readable `IABTCF_*` values to standard
+UserDefaults while the protected native record remains authoritative. Custom
+installation must supply its platform storage bus explicitly. IAB registration,
+mobile validation and Google App certification remain separate requirements.
+
+## Build and test
+
+From the repository root:
+
+```sh
+swift build
+swift test
 ```
 
-`Tests/C15tCoreTests/ProtocolFixtureTests.swift` runs every fixture in
-`../protocol/index.json`, so a wire-format change here has to agree with the TypeScript
-kernel and the Kotlin core before it merges.
+The nested package also exposes the benchmark executable:
 
-## Public surface
+```sh
+swift run --package-path native/core-swift C15tCoreBench
+```
 
-`C15t` is the process-wide install point (`install`, `bootstrap`, `current`), so an
-`AppDelegate` and the bridge share one kernel instead of starting two over one Keychain.
-Everything below is on `ConsentCore`, and `C15t` forwards the synchronous reads.
+The shared fixtures in `native/protocol` check wire behavior across Swift,
+Kotlin and TypeScript. Package tests do not replace the iOS app journeys in the
+verification guide.
 
-| Read | Answer |
-| --- | --- |
-| `snapshot()` | The whole state, synchronously. |
-| `isAllowed(_:)` | Boolean permission for one category. `false` covers a refusal and an unresolved policy alike. |
-| `decision(for:)` | `granted`, `denied`, or `pending` for one category, for a host app's own SDK code. |
-| `isReady()` | Hydrated, and the first init resolved a readable policy. |
-| `gate(_:_)` | Boolean gate on one category: fires now and on every change. Used by the bridge. |
-| `gate(_:_:)` (decision) | Same, carrying `ConsentDecision`, so a `pending` category keeps listening. |
-| `onChange(_:)` | Snapshot observer, held weakly. |
-| `eventStream` | `CoreEvent`s as an `AsyncStream`. |
-
-Writes are `save(_:)`, `dismissNotice()`, `refresh()`, `identify(_:)`, `logout()`,
-`setOverrides(_:)`, and `flushPending()`. `bootstrap(_:)` is idempotent and safe from any
-launch hook, and hydrates synchronously so the first `snapshot()` after it already
-reflects stored consent with no network.
-
-### Hot path
-
-`snapshot()`, `isAllowed(_:)`, `decision(for:)`, and `isReady()` are one read of the
-in-memory `ConsentSnapshot` behind `Lock`. No disk, no network, and the lock is never held
-across either, which `Lock.withLock`'s synchronous closure makes unrepresentable. Ad SDKs
-call them from `applicationDidFinishLaunching`, where a block is a watchdog kill billed to
-the host app.
-
-`decision(for:)` derives from the snapshot and nothing else: `necessary` is `granted`;
-while `ready` is false or `policyPending` is true every optional category is `pending`;
-otherwise the effective permission decides. `ready` means the core has been told rather
-than that a file existed: it comes from hydration restoring an envelope or from the first
-init resolving, and a failed init leaves it low. No platform authorization participates. ATT
-granted with consent refused is `denied`, and the identifier stays unavailable.
-`pending` carries no timeout: a device that never reaches its backend stays `pending`, and
-a core that picked a deadline would be inventing an answer the policy never gave.
-
-### Fail closed
-
-Anything this build cannot read is indistinguishable from a fresh install: `policyPending`
-true, every optional category `false`, and nothing from those bytes applied. That covers an
-unreadable policy resolution, an unknown category, a producer on another policy contract,
-and a stored envelope this build cannot decode. The subject id survives all of them.
-
-## Storage
-
-The host chooses one of `KeychainStore`, `FileStore`, or `InMemoryStore` by picking a
-storage mode; the core has no default store, and a binding that cannot build the one it was
-asked for stays inactive rather than substituting a plaintext file. Both protected items go
-through `StorageKey`, and the subject id has its own item, so losing a consent envelope
-never costs a device its identity.
-
-`Sources/C15tCore/Resources/PrivacyInfo.xcprivacy` declares the privacy practices. It ships in the
-`C15tCore` resource bundle, and an app that links the kernel still merges it into its own
-`PrivacyInfo.xcprivacy`. The core never reads IDFV, ADID, or any other persistent hardware
-identifier: the subject id is a `sub_` identifier this package generates.
-
-## Native disclosure reads
-
-`iabPresentation()` captures a detached draft and the retained IAB disclosure together.
-Check its `canEdit` flag before offering editing or new grants. An expired list
-remains readable for partner details, but `openIABDraft()` on Swift or
-`openIabDraft()` on Kotlin returns no editable draft until authority is current.
-Saving still checks native policy, list age and revision.
-
-The native presenter preserves unsaved edits while a list refresh runs. If the
-revision changes, the person must load current settings before saving. Partner
-summaries describe consent and legitimate-interest selections as Off, Partly on
-or On. Use the core's gates to decide whether processing is allowed.
+`Sources/C15tCore/Resources/PrivacyInfo.xcprivacy` ships as a SwiftPM resource.
+Review the app's final privacy manifest along with the other SDKs it embeds.

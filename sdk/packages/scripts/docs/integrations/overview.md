@@ -1,8 +1,7 @@
 ---
 title: Integrations
-description: Find all c15t integrations for analytics, tag managers,
-  advertising, experimentation and personalization, email and SMS, chat and
-  embedded content.
+description: Find c15t integrations for web and mobile analytics, tag managers,
+  advertising, experimentation, email, chat and embedded content.
 seoTitle: Cookie consent integrations for analytics and ads | c15t
 seoDescription: Connect analytics, ad pixels, chat widgets and embeds to your
   cookie banner. c15t has helpers for Google Tag Manager, Meta Pixel, PostHog,
@@ -10,9 +9,13 @@ seoDescription: Connect analytics, ad pixels, chat widgets and embeds to your
 group: integrations
 ---
 
+Find a vendor below for its web and mobile setup. Browser script helpers live in
+`@c15t/integrations`; [mobile SDK helpers](#mobile-sdks) ship in the existing
+Swift, Android and React Native packages.
+
 ## Choose an integration
 
-Each vendor helper in `@c15t/integrations` returns a script configuration that you
+Each web vendor helper in `@c15t/integrations` returns a script configuration that you
 register with your c15t provider. Importing a helper installs nothing on its
 own. Set up consent with your [framework quickstart](https://c15t.com/docs/frameworks) first,
 then follow the vendor guide.
@@ -27,7 +30,8 @@ then follow the vendor guide.
 `@c15t/integrations` is a separate package. Keep importing c15t itself from `c15t`,
 for example `c15t/react` or `c15t/next`.
 
-The Loading behavior column shows when each helper requests the vendor. Most
+The web tables below list script helpers. Their Loading behavior column shows
+when each helper requests the vendor. Most
 wait for the category to be allowed. A few load on every page and pass the
 permission to the vendor's own consent API, so the browser contacts the vendor
 before a choice.
@@ -253,3 +257,118 @@ history.
 Use [custom integrations](./building-integrations.md) for a
 vendor without a helper, or an SDK your app already loads. Test every
 integration with the [consent verification guide](../guides/verify-consent.md).
+
+## Mobile SDKs
+
+c15t's mobile packages include consent helpers for Firebase Analytics, PostHog,
+Mixpanel, Amplitude and Sentry Session Replay.
+Install the vendor's SDK in your app, then connect it to the native consent engine.
+The helpers add no vendor dependencies and do not change your consent UI.
+
+### Choose a mobile integration
+
+| Service                                          | Mobile support                                                                                                                                  | Guide                                                                                  |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Firebase Analytics                               | Bundled analytics-only helper for Swift, Kotlin and RN/Expo. Advertising consent stays denied.                                                  | [Firebase Analytics](./firebase-analytics.md)                                          |
+| PostHog                                          | Bundled capture-permission helper for Swift, Kotlin and RN/Expo. Other PostHog products need separate configuration.                            | [PostHog](./posthog.md#mobile)                                                         |
+| Mixpanel                                         | Bundled tracking-command helper for Swift, Kotlin and RN/Expo. Queue and identity behavior differs by platform.                                 | [Mixpanel](./mixpanel-analytics.md#mobile)                                             |
+| Amplitude Analytics                              | Bundled opt-out helper for RN/Expo. Native Swift and Kotlin support is deferred; older queued events and other products need separate handling. | [Amplitude](./amplitude.md#mobile)                                                     |
+| Sentry Session Replay                            | Bundled manual recording helper for Swift, Kotlin and RN/Expo. Crash reporting remains app-configured.                                          | [Sentry Replay](./sentry.md#mobile)                                                    |
+| Other analytics SDKs                             | App-owned wiring through native subscriptions or React hooks.                                                                                   | [Native startup gates](https://c15t.com/docs/frameworks/react-native/native-behaviour) |
+| IAB-aware advertising SDKs                       | Standard native TCF and Additional Consent signals, plus vendor and purpose gates. Verify each SDK and mediation configuration.                 | [Mobile IAB](https://c15t.com/docs/guides/mobile-iab)                                  |
+| GTM, gtag.js, browser pixels and website widgets | The existing web helpers operate in a browser. Use the vendor's mobile SDK where one exists.                                                    | [Web integrations](./building-integrations.md)                                         |
+
+These helpers ship in the existing `C15tApple`, `c15t-android` and
+`@c15t/react-native` packages. RN imports use
+`@c15t/react-native/integrations`. Install only the vendor SDKs your app uses.
+
+### Install consent before optional SDKs
+
+Complete your [Swift](https://c15t.com/docs/frameworks/swift/quickstart),
+[Android](https://c15t.com/docs/frameworks/android/quickstart) or
+[React Native](https://c15t.com/docs/frameworks/react-native/quickstart) quickstart first.
+Use the same installed engine for the consent screens and the integrations.
+
+A helper immediately forwards the current effective category permission and
+keeps listening for changes. Pending and denied permissions turn collection off.
+A grant enables the covered work. Effective permission can follow a regional
+policy default; it does not always mean the person pressed Accept.
+
+Keep the connection for the app's analytics lifetime. Do not recreate it on every
+render or close it when an Activity rotates. Swift uses `cancel()`, Kotlin uses
+`close()` and RN uses `disconnect()` to detach and disable collection. Call
+`sync()` after a vendor reset to reapply current permission.
+
+### Account for native startup
+
+Firebase and PostHog persist their own collection settings. A disabled build
+default can be overridden by a grant from an earlier app launch. Configure vendor
+startup before relying on the helper. For an SDK that starts before JavaScript,
+use the Swift or Kotlin helper at native startup too. A React hook or JS
+connection cannot prevent an earlier native initializer from collecting.
+
+For a strict pre-permission startup, defer vendor construction or configuration
+until a native gate permits it. The vendor guides explain the remaining
+startup and background-work limits. The helpers do not intercept requests,
+delete data already sent or control every product in a vendor's SDK.
+
+For integrations whose vendor methods return `void`, the helper can confirm
+command submission rather than native completion. Mixpanel's Swift SDK and
+Sentry's native replay controls queue work internally. Their guides state the
+remaining limits. RN promises wait for the supplied calls; they cannot create
+a completion signal that a vendor method does not provide.
+
+### Destination routers and other mobile SDKs
+
+Segment and RudderStack do not have bundled mobile adapters in this release.
+Their destinations need category mappings, cloud routing and device-mode
+configuration. A single `measurement` switch cannot cover a destination that
+also uses data for advertising.
+
+Segment's current RN consent plugin allows unmapped destinations and can replay
+events queued before its consent plugin starts. RudderStack's newer native
+consent-management APIs do not match its current RN bridge. A custom integration
+must prove destination startup, event creation, queue handling and withdrawal
+for the specific SDK versions it uses. Follow
+[Segment's consent configuration](https://www.twilio.com/docs/segment/privacy/consent-management/configure-consent-management)
+or [RudderStack's native consent setup](https://www.rudderstack.com/docs/sources/event-streams/sdks/client-side-features/consent-management/setup/)
+with c15t's native gates. Do not substitute the web script helpers.
+
+Support, messaging and advertising SDKs need their own app integration. Keep
+support availability separate from optional marketing tracking. Native IAB
+signals, ATT and notification permissions are separate from category permission.
+Neither a browser pixel nor an analytics helper supplies those authorizations.
+
+### Handle vendor failures
+
+RN requires `onError` for background updates. Await `ready` before using the
+connection, and await `sync()` or `disconnect()` when their completion matters.
+Calls are serialized so an older asynchronous grant cannot become the final
+state after a completed withdrawal update.
+
+Kotlin requires an error handler for vendor failures during consent notifications.
+The error handler must not throw. Its constructor, explicit `sync()` and `close()`
+can throw to their caller. Swift
+callbacks are synchronous and nonthrowing. On both native platforms, call the
+vendor APIs directly in the callbacks; dispatching them asynchronously can reorder
+grants and withdrawals.
+
+If an RN error reporter throws or rejects, c15t logs that reporter failure to
+the console while preserving the vendor rejection for the caller. Android logs
+ordinary exceptions from its reporter and continues notifying other integrations.
+
+If the vendor rejects a disable operation, report and retry the failure. c15t's
+stored refusal remains authoritative, but the app cannot claim that vendor
+collection stopped until its API succeeds. Keep optional app-side event calls
+behind the current permission too.
+
+### Verify the actual vendor
+
+Check fresh installation, a saved grant on relaunch, refusal, later grant,
+withdrawal and reset. Inspect the vendor's real event and request behavior.
+The helper tests cover consent propagation and lifecycle ordering; they do not
+certify a third-party SDK or prove that every background request stops.
+
+Advertising needs the appropriate vendor, purpose, legal basis and platform
+authorization. These analytics helpers are not AdMob adapters or a replacement
+for [mobile IAB setup](https://c15t.com/docs/guides/mobile-iab).

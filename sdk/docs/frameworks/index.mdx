@@ -1,6 +1,6 @@
 ---
 title: Frameworks
-description: c15t setup guides for Next.js, TanStack Start, React, Nuxt, Vue, Astro, Svelte, SvelteKit, plain HTML, JavaScript and the private React Native prerelease.
+description: Choose a c15t setup guide for your web framework, React Native, Expo, SwiftUI, UIKit or Kotlin Android app.
 group: frameworks
 ---
 
@@ -18,7 +18,9 @@ group: frameworks
 | SvelteKit | `c15t/svelte` | [SvelteKit quickstart](/docs/frameworks/sveltekit/quickstart) |
 | HTML, a CMS, a page builder or a static site generator | `@c15t/browser` from a script tag | [HTML quickstart](/docs/frameworks/html/quickstart) |
 | JavaScript with a bundler, or your own UI | `@c15t/browser`, or `c15t` (`c15t/runtime`) | [JavaScript quickstart](/docs/frameworks/javascript/quickstart) |
-| React Native or Expo development builds | Private `@c15t/react-native` | [Mobile quickstart and distribution limits](/docs/frameworks/react-native/quickstart) |
+| React Native or Expo development builds | `@c15t/react-native` | [React Native quickstart](/docs/frameworks/react-native/quickstart) |
+| SwiftUI or UIKit | Swift package `c15t` | [Swift quickstart](/docs/frameworks/swift/quickstart) |
+| Kotlin Android | `com.c15t` native artifacts | [Android quickstart](/docs/frameworks/android/quickstart) |
 
 Not sure which setup your rendering mode needs? [Choose your setup](/docs/concepts/choose-your-setup)
 maps each app shape, such as a Next.js static export or a prerendered SvelteKit
@@ -36,8 +38,9 @@ HTML pages and the
 stock UI in JavaScript use `@c15t/browser`. Vendor script helpers are a separate
 install, `@c15t/integrations`, in every framework.
 
-The mobile package is separate from `c15t`. It is private and has no supported
-public installation yet. Read the mobile quickstart before requesting artifacts.
+Mobile SDKs use native consent engines and have their own installation paths.
+They are currently private prereleases. [Mobile availability](/docs/guides/mobile-status)
+explains how to obtain the matching Swift, Maven and RN artifacts.
 
 ## After the quickstart
 

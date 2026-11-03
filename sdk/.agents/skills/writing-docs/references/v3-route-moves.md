@@ -106,3 +106,9 @@ links land on the framework list. Do not mention React Native, Expo or
 | `/docs/integrations/other-chat-and-support` | `/docs/integrations/overview#chat-and-support` | Split back into vendor guides: `ada`, `gorgias` and `zendesk` |
 | `/docs/integrations/other-email-and-sms` | `/docs/integrations/overview#email-and-sms` | Split back into vendor guides: `attentive`, `customer-io`, `insider`, `marketo` and `salesforce-pardot` |
 | `/docs/integrations/other-ads-and-pixels` | `/docs/integrations/overview#ads-and-pixels` | Split back into vendor guides: `adroll`, `liveintent`, `the-trade-desk` and `vector` |
+| `/docs/guides/mobile-firebase-analytics` | `/docs/integrations/firebase-analytics` | Unpublished mobile draft consolidated into the canonical integration page |
+| `/docs/guides/mobile-posthog` | `/docs/integrations/posthog#mobile` | Unpublished mobile draft consolidated into the canonical integration page |
+| `/docs/guides/mobile-mixpanel` | `/docs/integrations/mixpanel-analytics#mobile` | Unpublished mobile draft consolidated into the canonical integration page |
+| `/docs/guides/mobile-amplitude` | `/docs/integrations/amplitude#mobile` | Unpublished mobile draft consolidated into the canonical integration page |
+| `/docs/guides/mobile-sentry-replay` | `/docs/integrations/sentry#mobile` | Unpublished mobile draft consolidated into the canonical integration page |
+| `/docs/guides/mobile-integrations` | `/docs/integrations/overview#mobile-sdks` | Unpublished mobile draft consolidated into the canonical integration page |

@@ -1,11 +1,18 @@
 ---
 title: PostHog
-description: Load PostHog before or after measurement consent with the c15t posthog helper, choose its cookieless behavior, turn off PostHog modules you do not use, and sync consent with an SDK you already initialize.
-seoTitle: PostHog cookie consent with c15t
-seoDescription: Opt PostHog out without measurement consent, with cookieless capture or a full wait for consent. Set it up with the c15t posthog helper.
+description: Connect PostHog to c15t permissions on the web, Swift, Kotlin, React Native and Expo, with startup, capture and withdrawal handling.
+seoTitle: PostHog consent for web and mobile with c15t
+seoDescription: Gate PostHog capture with c15t permissions in web and mobile apps. Configure startup, opt-in, withdrawal and reset using your analytics SDK.
 icon: posthog
 group: integrations
 ---
+
+Connect PostHog capture to c15t permission on [the web](#web) or in
+[Swift, Android, React Native and Expo apps](#mobile). Web setup uses
+`@c15t/integrations/posthog`. Mobile helpers ship inside the existing c15t
+platform packages and connect your app's configured PostHog client.
+
+## Web
 
 By default, the c15t `posthog` helper loads PostHog's `array.js` on every page,
 before the visitor chooses. While `measurement` has no consent, the helper calls
@@ -14,7 +21,7 @@ before the visitor chooses. While `measurement` has no consent, the helper calls
 `cookieless_mode: 'on_reject'` changes PostHog to cookieless capture after an
 opt-out. To wait for consent before the load, set `loadMode: 'after-consent'`.
 
-## Configure PostHog
+### Configure PostHog
 
 Use the project token that starts with `phc_`, and the region of your PostHog
 project. This example waits for measurement permission before requesting the
@@ -39,9 +46,11 @@ The helper initializes PostHog itself. Remove any `posthog-js` initializer,
 framework plugin or array snippet that also does, or follow
 [use an existing PostHog SDK](#use-an-existing-posthog-sdk) instead.
 
-<include src="../shared/integrations/register-scripts.mdx" />
+### Register the scripts
 
-## Options
+<include src="../shared/integrations/register-scripts.mdx#registration" />
+
+### Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
@@ -58,7 +67,7 @@ framework plugin or array snippet that also does, or follow
 | `features.featureFlags` | Unset, follows the project | `false` sets `advanced_disable_feature_flags: true` and stops `/flags` requests. |
 | `initOptions` | `{ cookieless_mode: 'on_reject', defaults: '2026-01-30' }` | Options passed to `posthog.init`, merged over the defaults and `features`. The helper sets `api_host` and `ui_host` after your values, so change hosts with the options above. |
 
-## Loading and revocation
+### Loading and revocation
 
 | `loadMode` | When PostHog loads | Consent sync |
 | --- | --- | --- |
@@ -82,7 +91,7 @@ project; see
 Set `cookieless_mode: 'never'`, as in the example, if a refusal must stop
 capture.
 
-## Turn off features you do not use
+### Turn off features you do not use
 
 After `array.js` loads, PostHog reads your `posthog.init` options and the
 project's remote config, then decides which extra modules to download and
@@ -130,7 +139,7 @@ config includes a `surveys` value, even when surveys are off in the project.
 `capture_performance` value in `initOptions` replaces the whole object that
 `webVitals` builds.
 
-### Avoid PostHog's option traps
+#### Avoid PostHog's option traps
 
 These rules also apply when you pass PostHog options yourself, in
 `initOptions` or in your own `posthog.init`:
@@ -156,7 +165,7 @@ Product tours (`product-tours.js`, about 36 KB) and exception autocapture
 on. To keep them off whatever the project says, pass
 `disable_product_tours: true` or `capture_exceptions: false` in `initOptions`.
 
-## Guard your own capture calls
+### Guard your own capture calls
 
 Events your code sends need their own permission check. The `posthog` global
 exists before the SDK loads, so its presence does not mean measurement is
@@ -172,7 +181,7 @@ export function trackSignupStarted(measurementAllowed: boolean) {
 Pass the current measurement permission from your framework, for example
 `useConsent('measurement')` in React.
 
-## Use an existing PostHog SDK
+### Use an existing PostHog SDK
 
 If your app already initializes `posthog-js`, keep that setup and register a
 callback-only script instead of the helper. Initialize the SDK with
@@ -216,14 +225,14 @@ do not use, pass the PostHog options from
 [turn off features you do not use](#turn-off-features-you-do-not-use) to your
 own `posthog.init`, for example `disable_surveys: true`.
 
-## Measure opt-in rate
+### Measure opt-in rate
 
 If you run a banner experiment, the backend already counts visitors and
 choices per arm. To see the arm in PostHog as well, forward the `onSurfaceShown` and
 `onChoiceRecorded` callbacks, which carry `experiment: { id, arm }`. See
 [banner experiments](/docs/guides/banner-experiments#send-the-events-to-your-own-analytics-too).
 
-## Verify PostHog
+### Verify PostHog
 
 These checks assume `loadMode: 'after-consent'` from the example. After you
 allow measurement, `array.js` loads and capture requests to your API host
@@ -240,3 +249,226 @@ and none of the modules you turned off, such as `surveys.js` or
 `dead-clicks-autocapture.js`.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />
+
+## Mobile
+
+Use the bundled PostHog helper to keep event capture in sync with a native
+c15t category. It opts the configured client in when permission is granted,
+and out while permission is pending, denied or the integration is closed.
+
+The helper ships inside `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. Your app installs and configures PostHog
+separately. There is no additional c15t integration package.
+
+### Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart. Include
+`measurement` in the Inth policy and native category configuration, or choose
+another optional category that covers the events you collect.
+
+Install PostHog using its [iOS](https://posthog.com/docs/libraries/ios),
+[Android](https://posthog.com/docs/libraries/android) or
+[React Native](https://posthog.com/docs/libraries/react-native) guide. This
+page connects the same configured client your app uses for capture. c15t's
+mobile packages remain a private prerelease; see
+[mobile availability](/docs/guides/mobile-status) for access.
+
+Keep session replay, surveys, automatic error capture and lifecycle capture
+disabled in the initial analytics setup. Each product needs its own scope,
+configuration and verification. This category helper does not provide IAB
+vendor permission, an advertising integration or Apple ATT authorization.
+
+### Choose when PostHog can start
+
+For capture disabled by default, use `optOut = true` in native PostHog
+configuration or `defaultOptIn: false` in React Native. Persisted earlier
+opt-ins can override defaults, so reconcile current c15t authority on every
+launch before relying on capture permission.
+
+Opt-out controls event capture. It does not establish that PostHog makes no
+requests. Remote configuration and some `/flags` requests are independent of
+analytics opt-out. Disabling preloaded feature flags does not establish a
+zero-request startup, and deprecated remote-config switches in current SDKs
+do not turn remote configuration off.
+
+If your app requires no PostHog traffic before permission, defer constructing
+or setting up its client until the current native category grants it. Keep a
+c15t gate alive to perform that first setup when permission changes. Once the
+client exists, connect the helper below to manage capture and withdrawal.
+Implement and test that deferred-start path in the app; the helper accepts
+an already configured client and does not construct it for you.
+
+For native SDKs, put the first setup behind a
+[native startup gate](/docs/frameworks/react-native/native-behaviour). React
+hooks cannot prevent a native SDK that has already initialized. For Expo,
+install PostHog using its Expo instructions and rebuild the app's native
+binary. c15t does not add the vendor module or its configuration, and Expo Go
+does not load c15t's native engine.
+
+### Connect a Swift app
+
+Create `PostHogOwner.swift` in your app target:
+
+<include src="../shared/examples/native/core-swift/AppleInstallation/swift-posthog-binding.mdx" />
+
+After your app has installed c15t and configured PostHog, construct the owner
+with the client's supported APIs. Retain `posthogOwner` on the app's service
+owner:
+
+{/* example: fragment */}
+
+```swift
+import PostHog
+
+let posthogOwner = PostHogOwner(
+    core: core,
+    optIn: { PostHogSDK.shared.optIn() },
+    optOut: { PostHogSDK.shared.optOut() }
+)
+```
+
+`core` is the `ConsentCore` returned by installation. The helper immediately
+applies current permission. Calls run synchronously on the registering thread
+or native consent notification thread and are serialized per helper. Pass
+the direct vendor calls; independently dispatched tasks can reorder opt-in
+and withdrawal.
+
+The owner uses `measurement`. If your events belong to another optional
+category, pass that category to its `PostHogIntegration` initializer. Retain
+one owner for the client lifetime. Releasing it cancels observation and opts
+out of capture.
+
+### Connect an Android app
+
+Copy this helper into your app's Kotlin source directory, replacing the
+sample package name with your own:
+
+<include src="../shared/examples/native/examples/consent-demo/android-posthog-integration.mdx" />
+
+Call it after native installation and the permitted PostHog setup. This
+fragment uses PostHog's shared client:
+
+{/* example: fragment */}
+
+```kotlin
+import com.posthog.PostHog
+
+val posthogConsent = connectAppPostHog(
+	optIn = { PostHog.optIn() },
+	optOut = { PostHog.optOut() },
+	onError = ::reportAnalyticsError,
+)
+```
+
+Retain `posthogConsent` on your application or service owner. The native core keeps
+applying consent until you call `close()`, even if the app drops the handle. Do not close an
+app-wide integration each time an Activity rotates. The required `onError`
+receives automatic vendor-update exceptions; use an error handler that works
+while analytics capture is off and does not throw. Construction, `sync()` and `close()` can also
+throw to their caller, so handle failures at those call sites.
+
+Callbacks run synchronously and are serialized per helper. If your app uses
+a separate PostHog client instance, bind that instance's opt-in/out methods
+instead of the shared singleton.
+
+### Connect React Native or Expo
+
+Copy this connection function into `posthog-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-posthog-integration.mdx" />
+
+Pass the app's configured PostHog client. In your existing asynchronous
+startup function, retain the returned connection and await its first update:
+
+{/* example: fragment */}
+
+```ts
+const posthogConsent = connectAppPostHog(posthog, reportAnalyticsError);
+await posthogConsent.ready;
+```
+
+`posthog` is the existing `PostHog` instance. The connection invokes methods
+on that instance, preserving their receiver. Use one app-lifetime connection
+for it. Await `ready` before capture that depends on the connection's first
+permission update.
+
+For a newly constructed RN client, these options disable the automatic
+analytics products used outside this recipe:
+
+{/* example: fragment */}
+
+```ts
+import { PostHog } from 'posthog-react-native';
+
+const posthog = new PostHog('YOUR_POSTHOG_PROJECT_TOKEN', {
+	host: 'https://eu.i.posthog.com',
+	defaultOptIn: false,
+	preloadFeatureFlags: false,
+	disableRemoteFeatureFlags: true,
+	enableSessionReplay: false,
+	captureAppLifecycleEvents: false,
+	disableSurveys: true,
+});
+```
+
+Replace the token and EU ingest host with your project's settings. If you need the
+strict startup path described earlier, construct this client only after
+permission allows it. These options still do not promise that remote
+configuration makes no requests. Mounting a PostHog provider with its own
+token-based initialization can create a second client; give it the existing
+client instead, following PostHog's provider instructions.
+
+The connection awaits each opt-in/out operation. If permission closes during
+an asynchronous opt-in, it reconciles to opt-out. PostHog does not expose a
+way to cancel a vendor operation already submitted, so withdrawal is not an
+instantaneous network cancellation.
+
+Supply a required `onError` handler. It receives initial and later vendor
+failures. The promises from `ready`, `sync()` and `disconnect()` also reject
+on failure; handle those at their call sites. If PostHog's own opt-out fails,
+you cannot assume capture is disabled.
+
+### Reapply permission after reset
+
+PostHog's own reset can change its capture settings while c15t's saved choice
+stays unchanged. After the reset completes, use `syncAfterReset()` on the
+Swift owner, `sync()` on the Kotlin helper or
+`await posthogConsent.sync()` in React Native. This reapplies current native
+permission without recording another consent choice.
+
+For final service teardown, use the Swift owner's `stop()`, Kotlin's
+`close()` or `await posthogConsent.disconnect()` in React Native. These
+detach c15t observation and request opt-out. Keep their lifetime attached to
+the service, rather than a short-lived settings screen.
+
+Opt-out does not delete historical events. Previously queued native events
+can still be delivered, and requests already sent cannot be retracted.
+Configure retention and data deletion through PostHog's supported controls
+when your app needs them.
+
+### Check the integration
+
+Use the real client and build configuration your app ships:
+
+1. Launch with no saved choice. Confirm capture remains opted out while
+   native permission is pending and after Reject all.
+2. Grant measurement. Confirm the connected client opts in, then capture a
+   deliberate test event.
+3. Withdraw measurement. Confirm the client opts out and newly captured
+   events are refused.
+4. Terminate and relaunch after grant and refusal. Check persisted PostHog
+   settings and native startup before JavaScript.
+5. Reset the vendor client, call `sync()` and confirm that current permission
+   is reapplied without recording a new choice.
+6. Exercise error handling and teardown. Inspect configuration traffic and
+   old queued events separately from new event capture.
+
+The helper tests exercise consent changes, reset, teardown and callback
+ordering. The RN client contract was type-checked with PostHog RN 4.85.1;
+native API review used iOS 3.93.1 and Android 3.75.0. This is source and type
+validation. It does not establish real-device capture, startup traffic or
+withdrawal behavior for your app. Complete
+[mobile verification](/docs/guides/mobile-verify) with its actual vendor
+versions and launch path before relying on those behaviors.

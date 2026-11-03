@@ -1,0 +1,154 @@
+---
+title: Quickstart
+description: Add native consent screens and a permanent privacy-settings entry to a Kotlin Android app, with optional SDKs gated before startup.
+group: frameworks
+---
+
+This guide adds c15t to a Kotlin app with Jetpack Compose. The Android engine
+stores choices on the device, loads policy from Inth, and exposes consent to
+native SDKs before any JavaScript runs. Compose supplies the consent screens.
+
+## Before you start
+
+Use Android API 24 or later, compile SDK 36 and JDK 17. Keep the Gradle, Android
+Gradle Plugin, Kotlin and Compose configuration that already works in your app.
+
+You need an [Inth project](https://inth.com), its HTTPS project URL and your
+app's privacy-policy URL. In Inth, configure the regions and categories your
+app needs. Include `measurement` if you plan to gate analytics with it.
+
+The Android SDK is currently a private prerelease. Obtain the versioned Maven
+repository and matching artifacts from the maintainer. The current native
+version is `3.0.0-alpha.1`. See [mobile availability](/docs/guides/mobile-status)
+for distribution and release scope.
+
+## Add the dependencies
+
+In `settings.gradle.kts`, add the supplied repository inside your existing
+`dependencyResolutionManagement.repositories` block. This keeps `com.c15t`
+resolution in one repository. The repository can be an HTTPS URL or an absolute
+path to a supplied Maven directory.
+
+{/* example: fragment */}
+
+```kotlin title="settings.gradle.kts"
+exclusiveContent {
+	forRepository {
+		maven {
+			url = uri(providers.gradleProperty("c15t.repository").get())
+			if (url.scheme == "https") {
+				credentials {
+					username = providers.environmentVariable("C15T_MAVEN_USERNAME").orNull
+					password = providers.environmentVariable("C15T_MAVEN_TOKEN").orNull
+				}
+			}
+		}
+	}
+	filter { includeGroup("com.c15t") }
+}
+```
+
+Set `c15t.repository` in your user Gradle properties or build-worker
+configuration. For an authenticated repository, supply its credentials through
+the two environment variables. Build workers need access to the same artifacts.
+
+Add the platform and UI modules to your app's dependencies:
+
+{/* example: fragment */}
+
+```kotlin title="app/build.gradle.kts"
+implementation("com.c15t:c15t-android:3.0.0-alpha.1")
+implementation("com.c15t:c15t-consent-ui:3.0.0-alpha.1")
+implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+```
+
+`c15t-android` brings in the consent core. `c15t-consent-ui` adds Compose
+presentation. This guide assumes your app already uses `activity-compose`,
+Material 3 and the Compose compiler plugin. For an app with its own UI, follow
+[headless integration](/docs/frameworks/android/headless) and omit the UI module.
+
+## Install once and mount the screens
+
+Create `ConsentApplication.kt` in your app's source directory. The checked
+example below includes the Application and Activity classes in one file. Change
+the package name to your app's package, replace `https://your-project.inth.app`
+with the URL from Inth, and set your real privacy-policy URL.
+
+<include src="../../shared/examples/native/examples/consent-demo/android-quickstart.mdx" />
+
+`C15tAndroid.install` selects Android persistence and transport, hydrates saved
+choices, and starts policy resolution. It also owns foreground and reconnect
+refresh. Install before optional SDK startup. Disable analytics and advertising
+SDK auto-initializers that can collect before `Application.onCreate`.
+
+The presenter is a `ViewModel`, so rotation keeps its draft. It automatically
+shows an owed choice when policy is ready. Keep `C15tConsent` mounted alongside
+your app content, and put the **Privacy settings** button in your real settings
+screen so it remains reachable after the initial banner closes.
+
+Register the classes and permissions in your existing manifest. Keep your
+app's theme, icons and launch intent filter. Replace `com.c15t.demo` with the
+package name you used in the Kotlin file:
+
+{/* example: fragment */}
+
+```xml title="app/src/main/AndroidManifest.xml"
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+<application android:name="com.c15t.demo.ConsentApplication">
+	<activity android:name="com.c15t.demo.ConsentActivity" android:exported="true" />
+</application>
+```
+
+Internet access is needed for hosted policy and delivery. Network-state access
+lets c15t retry when connectivity returns; launch and foreground retries still
+work without it.
+
+## Gate analytics
+
+Consent screens record choices. Each optional SDK still needs an integration
+that starts or enables collection only while its category is allowed, then stops
+collection after withdrawal. Use the retained
+[measurement gate](/docs/frameworks/android/headless#keep-analytics-in-sync)
+for that lifecycle. A one-time startup read does not cover later changes.
+
+## Check that it works
+
+Build and launch the app against a policy that asks for a choice.
+
+1. On a fresh installation, the consent screen appears and optional analytics
+   stays off.
+2. Choose **Reject all**, then close and relaunch the app. The prompt stays
+   closed and analytics stays off.
+3. Open **Privacy settings**, enable Analytics and save. Your analytics
+   integration can now enable collection.
+4. Reopen settings and turn Analytics off. Collection stops, including after
+   another process restart.
+5. Repeat the refusal and restart while offline. The choice persists locally;
+   delivery retries after reconnecting.
+
+If the screen never appears, check the project URL, resolved policy and
+`C15t.isReady()`. A policy that needs no choice will not force a banner. A fresh
+offline app needs an [embedded policy](/docs/guides/mobile-offline) to show its
+first prompt.
+
+## Next steps
+
+- [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks) with bundled Firebase
+  Analytics and PostHog helpers.
+
+- [Configuration](/docs/frameworks/android/configuration) for scope, native
+  startup metadata and identity.
+
+- [Customize](/docs/frameworks/android/customize) for app identity, colors and
+  copy.
+
+- [Headless integration](/docs/frameworks/android/headless) for your own
+  screens and native SDK gates.
+
+- [IAB and advertising](/docs/guides/mobile-iab) for purpose/vendor authority,
+  Additional Consent and ads-SDK integration.
+
+- [Verify mobile consent](/docs/guides/mobile-verify) for the complete app
+  acceptance checklist.

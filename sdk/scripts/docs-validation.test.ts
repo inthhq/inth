@@ -62,6 +62,8 @@ test('framework quickstarts resolve inside the host framework group', async () =
 		'html',
 		'javascript',
 		'react-native',
+		'swift',
+		'android',
 	]);
 	for (const framework of frameworks?.children ?? []) {
 		expect(framework.pages[0]).toMatchObject({
@@ -93,6 +95,12 @@ test('framework sidebars follow the shared group template', async () => {
 	);
 	const files = await fg('frameworks/*/**/*.mdx', { cwd: docsRoot });
 	const listed = new Set<string>();
+	for (const slug of ['react-native', 'swift', 'android']) {
+		const framework = frameworks?.children.find((group) => group.slug === slug);
+		expect(framework?.pages.map((page) => page.urlPath)).toContain(
+			'/docs/guides/mobile-status'
+		);
+	}
 	for (const framework of frameworks?.children ?? []) {
 		const titles = framework.children.map((group) => group.title);
 		expect(titles).toEqual(
@@ -114,11 +122,13 @@ test('framework sidebars follow the shared group template', async () => {
 		const verify = framework.children
 			.find((group) => group.title === 'Verify and troubleshoot')
 			?.pages.map((page) => page.urlPath);
-		expect(verify).toContain(
-			framework.slug === 'react-native'
-				? '/docs/frameworks/react-native/verify'
-				: '/docs/guides/verify-consent'
-		);
+		let verifyRoute = '/docs/guides/verify-consent';
+		if (['swift', 'android'].includes(framework.slug)) {
+			verifyRoute = '/docs/guides/mobile-verify';
+		} else if (framework.slug === 'react-native') {
+			verifyRoute = '/docs/frameworks/react-native/verify';
+		}
+		expect(verify).toContain(verifyRoute);
 	}
 	// Every framework page is reachable from its sidebar.
 	const unlisted = files
@@ -167,7 +177,7 @@ test('installation tabs flatten to usable umbrella-package commands', async () =
 	expect(markdown).not.toContain('package-install');
 });
 
-test('integration navigation covers every vendor helper, both embeds and Shopify', async () => {
+test('integration navigation covers web and mobile vendors, embeds and Shopify', async () => {
 	const navigation = await resolveDocsNavigation({
 		groups: docsConfig.groups,
 		nav: docsConfig.navigation,
@@ -197,6 +207,7 @@ test('integration navigation covers every vendor helper, both embeds and Shopify
 	).toEqual([]);
 	const expectedRoutes = [
 		...vendors,
+		'firebase-analytics',
 		'google-maps',
 		'youtube',
 		'shopify',
@@ -254,7 +265,9 @@ test('shared framework tabs match the selector and survive Markdown conversion',
 	);
 	// These tabs register browser scripts and embeds. Native SDKs use native gates.
 	const expected = frameworks?.children
-		.filter((group) => group.slug !== 'react-native')
+		.filter(
+			(group) => !['react-native', 'swift', 'android'].includes(group.slug)
+		)
 		.map((group) => group.title);
 	await Promise.all(
 		['register-scripts', 'consent-embed'].map(async (file) => {

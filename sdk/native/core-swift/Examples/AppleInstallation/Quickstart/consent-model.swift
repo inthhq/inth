@@ -1,0 +1,57 @@
+// #region docs:swift-consent-model title="ConsentModel.swift"
+import C15tApple
+import C15tConsentUI
+import C15tCore
+import Combine
+import Foundation
+
+@MainActor
+final class ConsentModel: ObservableObject, SnapshotObserver {
+    @Published private(set) var snapshot: ConsentSnapshot?
+    @Published private(set) var presenter: ConsentPresenter?
+    @Published private(set) var installationError: Error?
+    private(set) var core: ConsentCore?
+    private let backendURL: URL
+    private var observation: ConsentSubscription?
+
+    init(backendURL: URL) {
+        self.backendURL = backendURL
+        install()
+    }
+
+    var isReady: Bool { snapshot.map { $0.ready && !$0.policyPending } ?? false }
+    var measurementAllowed: Bool { core?.isAllowed(.measurement) ?? false }
+    var storageCanRetry: Bool { installationError as? C15tAppleInstallationError == .protectedStorageUnavailable }
+
+    func retryProtectedStorage() {
+        guard storageCanRetry else { return }
+        install()
+    }
+
+    private func install() {
+        guard core == nil else { return }
+        do {
+            let installed = try C15tApple.install(C15tAppleConfiguration(
+                transport: .hosted(backendURL),
+                consentCategories: [.necessary, .measurement, .marketing]
+            ))
+            core = installed
+            observation = installed.onChange(self)
+            snapshot = installed.snapshot()
+            presenter = ConsentPresenter(core: installed)
+            installationError = nil
+        } catch {
+            installationError = error
+        }
+    }
+
+    nonisolated func consentDidChange(_ snapshot: ConsentSnapshot) {
+        Task { @MainActor [weak self] in
+            guard let self, let core = self.core else { return }
+            self.snapshot = core.snapshot()
+        }
+    }
+
+    deinit { observation?.cancel() }
+}
+// #endregion docs:swift-consent-model

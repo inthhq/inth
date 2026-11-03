@@ -42,11 +42,11 @@ export const renderPackageSkill = function renderPackageSkill(
 ): string {
 	if (packageName === '@c15t/react-native') {
 		const guides = [
-			['quickstart', 'Start here and read the distribution limits'],
+			['quickstart', 'React Native quickstart'],
 			['expo', 'Expo and EAS'],
 			['bare', 'Bare React Native'],
-			['apple', 'Standalone Apple'],
-			['android', 'Standalone Android'],
+			['apple', 'iOS native installation in RN'],
+			['android', 'Android native dependencies in RN'],
 			['native-behaviour', 'Install and gate before JavaScript'],
 			['usage', 'Commands and durable commit results'],
 			['offline', 'Bundled policies and withdrawal'],
@@ -61,6 +61,15 @@ export const renderPackageSkill = function renderPackageSkill(
 				link(bundledFiles, `frameworks/react-native/${file}.md`, label ?? '')
 			)
 			.filter(Boolean);
+		const nativeGuides = [
+			['frameworks/swift/quickstart.md', 'SwiftUI quickstart'],
+			['frameworks/swift/uikit.md', 'UIKit setup'],
+			['frameworks/android/quickstart.md', 'Android quickstart'],
+			['guides/mobile-iab.md', 'Native IAB setup'],
+			['guides/mobile-status.md', 'Mobile availability and release scope'],
+		]
+			.map(([file, label]) => link(bundledFiles, file ?? '', label ?? ''))
+			.filter(Boolean);
 		return [
 			'---',
 			'name: c15t-react-native',
@@ -74,6 +83,7 @@ export const renderPackageSkill = function renderPackageSkill(
 			'## Start here',
 			'',
 			...guides.map((guide) => `- ${guide}`),
+			...nativeGuides.map((guide) => `- ${guide}`),
 			'',
 			'## Rules',
 			'',

@@ -1,50 +1,10 @@
 ---
-title: Offline policies and withdrawal
-description: Export and bind a native policy resource for first-install offline prompts, enforce expiry, and retain durable withdrawal and delivery obligations.
+title: Offline consent
+description: Restore saved choices offline and bundle policy for fresh React Native and Expo installations.
 group: frameworks
 ---
 
-Bundle a build-exported policy when the app must explain consent on a fresh installation without connectivity. Keep Inth hosted transport for refresh and queued saves. A resource supplies policy authority; it does not grant consent.
+Saved native choices survive offline relaunches. Add a bundled policy when a
+fresh installation also needs to show its first prompt without connectivity.
 
-## Export an authored policy
-
-The repository currently provides a build-time exporter at `scripts/export-mobile-policy.ts`. It is not an installed mobile-package CLI. From an authorized source checkout, build its schema/translations dependencies, then run:
-
-```sh
-bun turbo run build --filter=@c15t/schema --filter=@c15t/translations
-bunx tsx scripts/export-mobile-policy.ts \
-  --endpoint https://your-project.inth.app \
-  --out /absolute/path/to/app/c15t-policy.json \
-  --expires-at 2027-01-01T00:00:00.000Z \
-  --languages en,de
-```
-
-Choose an explicit future expiry for your release rather than copying this sample date. The exporter reads the public `/manifest` with policy-contract header 1, not visitor-specific `/init` state. The manifest must author an opt-in or IAB choice fallback for unknown geography with no preselected optional categories. If there is no conservative fallback, export fails.
-
-For a scoped IAB app, pass `--vendors` with its comma-separated vendor IDs. IAB export requires GVL data and every configured Additional Consent provider disclosure with original source dates. Re-exporting must not refresh an old list's source timestamp.
-
-The designated demo endpoint has a conservative fallback and no IAB configuration. Its policy export cannot prove hosted IAB or Additional Consent saves.
-
-## Embed and bind the resource
-
-Expo uses `policyResource: './c15t-policy.json'` in the [checked config](/docs/frameworks/react-native/expo#configure-the-plugin). Bare iOS adds the JSON to Copy Bundle Resources and names it with `com.c15t.policy.resource`. Bare Android puts it in app assets and names it with `com.c15t.POLICY_RESOURCE`. Standalone platform installers also accept native bundled-policy configuration.
-
-Native loading checks the schema, SHA-256 integrity, endpoint binding and authority dates. The resource contains tenant and manifest revision metadata. Treat it as a public app artifact, never a place for secrets. The hash detects byte mismatch; it is not a signature or proof of external approval. Configure the same hosted endpoint at export and startup.
-
-With no usable network, a valid bundle can supply the unknown-geography policy and disclosures so the first prompt works. Missing, corrupt, mismatched or expired authority must not create an optional grant. A bundled prompt is not evidence that the native artifact resolved from a registry or that the app ran on a device.
-
-## Expire authority without losing withdrawal
-
-A bundle's authority expiry and its disclosure source freshness are separate checks. Once authority expires, connect to refresh before requesting new grants. Keep a clear retry path for unavailable or stale GVL/ATP data.
-
-The default native disclosure maximum age is seven days, measured from the original source date. A list already six days old at build time has at most one day of new offline grant authority. Copying it into another binary does not renew that authority. Device language selects copy; it does not establish geography.
-
-Reject-all and withdrawal must remain possible without network access, including after bundle expiry. Native commits persist the local denial and its delivery obligation. On restart optional gates must remain closed; reconnect must not replay an earlier grant over the withdrawal. Check `CommitResult.ok` before confirming the action. A storage refusal keeps the draft and retry visible.
-
-A reset is not a backend deletion. IAB authority can require a durable empty decision and queued withdrawal rather than dropping the queue. Read [identity and reset](/docs/frameworks/react-native/identity) before implementing a start-over button.
-
-## Refresh the next binary
-
-Regenerate policy resources during release preparation when policy, languages or disclosure scope changes. Keep the chosen expiry and original disclosure timestamps reviewable. A resource embedded in the native app changes the binary; do not assume a JavaScript OTA update replaces it.
-
-Verify a fresh offline installation, expired authority, withdrawal, restart and reconnect with the [mobile checklist](/docs/frameworks/react-native/verify).
+<include src="../../shared/mobile/offline.mdx" />

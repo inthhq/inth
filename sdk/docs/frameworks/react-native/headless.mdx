@@ -1,37 +1,134 @@
 ---
-title: Headless hooks
-description: Read native consent through React Native hooks and app-owned UI while keeping startup gates, durable actions and IAB authority native.
+title: Build your own UI
+description: Use native consent hooks and category commands in your own React Native controls, with saving, errors and SDK cleanup.
 group: frameworks
 ---
 
-Headless React Native APIs read the installed native engine. They do not evaluate policy or persist a second consent record in JavaScript. Keep native SDK startup gates even when the app supplies every React control.
+Use the headless APIs when consent needs to fit your app's settings screen,
+onboarding or design system. React renders your controls, while the native
+engine keeps the policy, saved choices and SDK permissions.
 
-The first release includes these hooks in `@c15t/react-native`; it defers a separate UI-free RN package and shared custom-UI draft API. The installed native package still links the stock SwiftUI or Compose presenter, even when an app renders no stock controls. Standalone Swift and Kotlin core/platform APIs remain available without the stock UI. Read the [first release scope](/docs/frameworks/react-native/quickstart#first-release-scope) before choosing a distribution.
+## Start with the same native setup
 
-## Pick the smallest subscription
+Complete [Expo](/docs/frameworks/react-native/expo) or
+[bare RN setup](/docs/frameworks/react-native/bare), then keep one
+`C15tProvider` above your app. You can omit the quickstart's `PrivacyEntry` if
+your app owns both the initial prompt and the standing settings screen.
+Without `PrivacyEntry`, your custom flow is responsible for showing an owed
+prompt and keeping preferences reachable.
 
-| Hook or component | Reads |
-| --- | --- |
-| `useConsent()` | The native snapshot. |
-| `useConsentStatus()` | Readiness, policy pending state and prompt requirement. |
-| `useConsentDecision(category)` | Granted, denied or pending for a category. |
-| `useIsAllowed(category)` | Current effective category permission. |
-| `useConsentSelector(selector, equals?)` | A selected snapshot value with optional equality. |
-| `useC15tBootstrap()` | The native protocol/subject bootstrap payload. |
-| `useConsentActions()` | Stable native command functions. |
-| `useTrackingAuthorization()`, `useIsTrackingAllowed(category)` | Platform authorization and the combined category/platform gate. |
-| `ConsentGate`, `ConsentReady`, `ConsentPrompt` | Render-prop access to gate, readiness or owed-prompt state. |
+Headless hooks are included in `@c15t/react-native`. The package still links
+the stock native UI. A separate UI-free RN distribution is deferred; see
+[mobile availability](/docs/guides/mobile-status).
 
-## Stop collection after withdrawal
+## Read one permission
 
-This checked example accepts an app-owned SDK start function whose return value stops optional collection. Keep that function stable. Supply cleanup that the real vendor supports; hiding a React element alone does not stop native background work.
+For a feature that only needs measurement permission, use
+`useIsAllowed('measurement')`. It returns `false` while policy is unresolved
+and whenever that category is denied. The component subscribes to that
+permission, so unrelated snapshot changes do not rerender it.
+
+Use `useConsentDecision('measurement')` when your interface needs to distinguish
+`pending` from `denied`. Both keep optional collection off.
+
+## Add an app-owned setting
+
+This category-policy example saves each Analytics switch change immediately.
+Place it under the provider in your settings screen:
+
+<include src="../../shared/examples/react-native-bare/category-preferences.mdx" />
+
+The switch reads the native effective permission. It does not optimistically
+show a grant before storage succeeds. A save failure leaves the previous
+native value visible and explains the error. An explicit prior refusal does
+not disable the switch; enforced restrictions such as GPC can.
+
+Only a category in the resolved scope appears. The example changes
+`measurement` alone, so it does not renew unrelated category choices. For a
+form that collects a long-lived draft and saves several categories together,
+use the stock native preferences screen until the shared custom-draft
+contract is available.
+
+Effective permission is different from an explicit saved choice. An opt-out
+policy may allow a category before anyone uses the switch. Read
+`snapshot.explicitChoice` when you need to display whether a choice was
+recorded. Do not submit a save merely because the initial effective value is
+true.
+
+Use this form with category policies. A TCF purpose/vendor decision needs the
+native IAB draft and disclosure checks described under
+[IAB setup](/docs/guides/mobile-iab).
+
+## Handle accept, reject and save failures
+
+Use `useConsentActions()` for explicit button actions. `save`, `acceptAll` and
+`rejectAll` return a local `CommitResult`; check `ok` before dismissing your
+form. This reusable Reject button keeps a retry path on failure:
+
+<include src="../../shared/examples/react-native-bare/commit-results.mdx" />
+
+Use `onSaved` to close your app-owned screen after durable local success.
+Pending network delivery does not require leaving the form open. Read
+[commands and outcomes](/docs/frameworks/react-native/usage) for the result
+fields and presenter APIs.
+
+## Show your own first prompt
+
+`ConsentPrompt` calls its child only while a resolved policy requires an
+interaction. The child receives `activeUI`, `promptRequirement` and `actions`.
+Use `promptRequirement.kind` to distinguish a consent `choice` from a
+`notice`; the `none` case renders the fallback.
+
+For a category choice, wire your Accept, Reject and Save controls to the
+corresponding actions and handle their results as above. For a notice,
+`dismissNotice()` records acknowledgement. It does not record an optional
+consent grant. Keep the policy disclosures and your privacy-policy link in the
+custom prompt.
+
+Use `ConsentReady` around UI that needs a resolved policy. Its fallback renders
+until `ready` is true and `policyPending` is false. It does not need to wrap the
+whole app; necessary features can remain usable while consent is loading.
+
+## Start and stop optional SDK work
+
+For a React-owned SDK integration, subscribe to the permission and return
+cleanup when it is granted:
 
 <include src="../../shared/examples/react-native-bare/headless-gate.mdx" />
 
-The hooks run after JavaScript has started. Disable automatic native startup and add the [native gate](/docs/frameworks/react-native/native-behaviour) as well.
+Keep `start` stable, for example as a module-level function. Its cleanup must
+stop or disable collection using the vendor's supported API. A hook cannot
+reverse a native initializer that ran before JavaScript; disable that path
+and use [native startup gates](/docs/frameworks/react-native/native-behaviour)
+as well.
 
-## Own drafts without inventing authority
+The tracking variant combines category permission with platform authorization.
+It is for features that require both. It does not ask for authorization.
 
-Render effective permission separately from explicit choices and notice acknowledgement. Call `save`, `acceptAll` or `rejectAll` only after an explicit user action, and [check the commit result](/docs/frameworks/react-native/usage#inspect-every-local-commit). Keep refused drafts and retry controls accessible.
+## Choose a subscription
 
-For IAB, a category map or a served GVL is not a complete vendor decision. The existing React drawer is a disclosure/selection UI; arbitrary selection must be committed through the supported native IAB draft/revision APIs. The current RN actions do not expose a complete per-vendor commit contract. Use native presenters for the complete stock IAB journey rather than inventing a JavaScript commit shape.
+| API | Use it for |
+| --- | --- |
+| `useIsAllowed(category)` | One effective permission. |
+| `useConsentDecision(category)` | A permission with `pending`, `denied` and `granted` states. |
+| `useConsentStatus()` | Readiness, pending policy, active UI and owed prompt. |
+| `useConsentSelector(selector, equals?)` | A custom snapshot slice with optional equality. |
+| `useConsent()` | A screen that needs several snapshot fields, such as scope and restrictions. |
+| `useConsentActions()` | Stable native category and lifecycle commands. |
+| `useC15tBootstrap()` | The native protocol and subject bootstrap payload. |
+| `ConsentGate` | Render-prop content for an allowed category, with an optional fallback. |
+| `ConsentReady` | Render-prop content after native readiness and policy resolution. |
+| `ConsentPrompt` | Your initial prompt while an interaction is owed. |
+| `useTrackingAuthorization()` | The separate platform tracking status. |
+| `useIsTrackingAllowed(category)` | A category permission combined with platform tracking authorization. |
+
+## Check the custom flow
+
+Test both a fresh prompt and reopened settings. Confirm that a refused save
+keeps the control's old value, a successful change survives relaunch, and
+withdrawal stops optional work. Test larger text, focus, labels and error
+announcements as part of your app's accessibility checks.
+
+For IAB, prefer the native presenter for the complete stock flow. The RN
+snapshot's served GVL is disclosure data; it does not provide a complete
+per-vendor commit API or the committed TC String.

@@ -1,45 +1,10 @@
 ---
 title: IAB, Additional Consent and ads
-description: Understand native TCF and Additional Consent prerequisites, separate ATT, and gate ad SDKs without claiming certification or interoperability.
+description: Configure native TCF authority, present purposes and partners, and keep advertising SDKs behind the correct consent gates.
 group: frameworks
 ---
 
-The native cores implement TCF choices, TC Strings, disclosure lifecycle and Google Additional Consent v2. These source APIs do not establish IAB registration, CMP certification, Google approval or AdMob interoperability. The mobile package remains a private prerelease.
+Use the native IAB engine for vendor decisions. React Native attaches to that
+engine; category commands alone cannot create a complete IAB choice.
 
-## Configure native authority first
-
-An IAB policy needs approved CMP identity and publisher settings, current GVL disclosures and a durable native store. Swift uses `IABConfiguration` on native installation; Kotlin uses `IabConfiguration` on `NativeConfig`. CMP version is the internal TCF field, separate from package/native semver. Never copy a fixture CMP ID into a production app.
-
-Turnkey typed RN/Expo IAB bootstrap is deferred from the [first mobile release](/docs/frameworks/react-native/quickstart#first-release-scope). The Expo `vendors` prop narrows disclosures; it does not configure a CMP identity or publisher settings. Use the app-owned native installation path with your approved configuration. The category quickstart and native-injected test fixtures do not supply a production RN/Expo IAB recipe.
-
-The native stock presenters own purpose and partner drafts, legitimate-interest objections, special-feature choices, publisher restrictions and Additional Consent provider controls. They validate the disclosure revision when committing. A category-only `save({ marketing: true })` cannot stand in for a complete vendor decision.
-
-React Native snapshots can report `model: 'iab'`. Their `iab` object carries the GVL disclosure only; it does not expose the committed TC String or vendor vectors. Read native IAB authority and gates before enabling an ad SDK. The model name alone is not permission.
-
-## Keep GVL and provider data current
-
-Native `openIABDraft`, `iabPresentation`, `iabStatus` and `iabConsent` APIs expose native draft and authority state. Kotlin follows its native `Iab` naming. `isIABAllowed` on Swift and `isIabAllowed` on Kotlin include current policy/list validity when checking vendor, purpose and legal basis. Read the installed declarations for the exact signatures.
-
-Additional Consent uses the configured provider disclosures, not arbitrary IDs. Swift exposes `adTechProviderDisclosures`, `adTechProviders`, `isAdTechProviderAllowed` and `additionalConsentStatus`; Android has native equivalents. The native UI explains that provider consent depends on TCF purposes 1, 3 and 4. Missing, stale or invalid authority cannot grant a provider.
-
-A [bundled policy](/docs/frameworks/react-native/offline) can carry GVL and ATP disclosures, preserving source dates and authority expiry. Retain refresh and durable withdrawal while offline.
-
-## Read storage signals as signals
-
-The native bus includes `IABTCF_TCString`, `IABTCF_gdprApplies`, purpose/vendor consent and legitimate-interest fields, and `IABTCF_AddtlConsent` for Additional Consent.
-
-Native platform adapters mirror IAB signals into standard iOS defaults and Android application-default preferences for SDK readers. The protected native record remains the consent authority. Do not set `IABTCF_*` or Additional Consent keys manually to bypass native validation. The presence of keys or a decodable TC String does not establish consumer interoperability or a certified CMP.
-
-Reset, identity changes, expiry and withdrawal can invalidate authority and storage signals. Integrations must recheck the native gate instead of keeping an old TC String in JavaScript state.
-
-## Keep ATT separate
-
-`useTrackingAuthorization()` reads the platform answer. `useIsTrackingAllowed(category)` combines c15t category consent with platform permission. `requestTrackingAuthorization()` is explicit; it never runs merely because consent changed. iOS requires the usage description. Android has no ATT request and the command rejects as unsupported; the tracking status is `not-required` there.
-
-ATT denial cannot be repaired by a c15t grant. ATT authorization cannot grant a category, vendor, purpose or Additional Consent provider. Handle unavailable authorization methods by rebuilding the binary, not by treating the missing API as permission.
-
-## Gate AdMob or another ad SDK
-
-Disable the ad SDK's automatic initialization when it can collect before consent. Before initialization or an ad request, check the current native consent categories, the relevant vendor/purpose/provider authority and ATT when the feature requires tracking. Keep a standing privacy-settings action and stop or reconfigure optional collection after withdrawal using that SDK's supported controls.
-
-No AdMob adapter or UMP replacement is demonstrated by these docs. Do not initialize an ads SDK just because `marketing` is true, or claim personalized, non-personalized or limited ads are allowed from that one flag. Google/AdMob acceptance, mediation reads, applicable policy and CMP certification require separate verification with the actual SDK versions and devices. Until those gates are met, keep the ad integration disabled.
+<include src="../../shared/mobile/iab.mdx" />

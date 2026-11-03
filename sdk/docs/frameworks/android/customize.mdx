@@ -1,0 +1,110 @@
+---
+title: Customize
+description: Set the Android consent screens' colors, app identity, headline and provider attribution through the native ConsentTheme API.
+group: frameworks
+---
+
+Pass a `ConsentTheme` to `C15tConsent` to match your app's visual identity.
+The native presenter keeps responsibility for drafts, navigation and saves.
+Start with the [quickstart](/docs/frameworks/android/quickstart) so the same
+screens can be reopened from app settings.
+
+## Choose what to change
+
+| Change | Native setting |
+| --- | --- |
+| App name and logo above the headline | `brand` |
+| Headline and introductory copy | `copy` |
+| Colors in light and dark mode | `colors` |
+| Card and button corners | `cornerRadius` |
+| Headline typeface | `headlineFont` |
+| Provider name in the attribution | `branding` |
+| Entirely app-owned controls | [Headless integration](/docs/frameworks/android/headless) |
+
+## Add your brand
+
+The following theme gives a fictional Pantry app teal links and switches,
+10dp corners, its own logo and a short headline. The light/dark color pairs
+keep the same theme usable in either system appearance.
+
+Create `consent-theme.kt` in your app, using your own package name:
+
+<include src="../../shared/examples/native/examples/consent-demo/android-brand-theme.mdx" />
+
+Put your logo in the app's drawable resources. In the quickstart's
+`C15tConsent` call, pass the theme as its `theme` argument. This is a change
+to that call, using your own drawable name:
+
+{/* example: fragment */}
+
+```kotlin
+C15tConsent(
+	presenter,
+	"https://your-app.example/privacy",
+	theme = pantryConsentTheme(R.drawable.your_app_mark),
+)
+```
+
+Import your app's generated `R` class if the file is outside its namespace.
+The logo appears in the app-identity tile. An unreadable explicit resource falls
+back to the name's initial. `ConsentTheme.Brand.Hidden` removes the app-identity
+area so the headline starts the screen.
+
+## Keep decision buttons equal
+
+`colors.decision` and `colors.onDecision` control the fill and label of both
+Accept all and Reject all. They intentionally share one treatment. The example
+changes `accent` while keeping the stock decision colors.
+
+When replacing colors, check text contrast for every affected state in both
+appearances. Check the screen at the largest system font scale as well. A
+theme value is not a contrast guarantee.
+
+`HeadlineFont.SansSerif` and `HeadlineFont.Serif` select system faces.
+`HeadlineFont.Custom` accepts a bundled Compose `FontFamily`. Body copy keeps
+the system face and the person's text scaling.
+
+## Separate app identity from attribution
+
+`brand` identifies the app. `branding` identifies the consent provider in the
+attribution beneath the actions. The built-in providers are
+`ConsentTheme.Branding.C15t` and `.Inth`. A custom provider uses
+`Branding.Custom(name, markResId)`; its mark is optional. `showsBranding = false`
+hides that attribution.
+
+Changing provider attribution does not replace the app's identity. Set `brand`
+when you want your app's own name and logo above the headline.
+
+## Set a default through application metadata
+
+An explicit `theme` argument takes precedence over the global
+`ConsentTheme.current` and application metadata. Metadata is useful when the
+same native presenter is opened through a wrapper.
+
+| Metadata key | Value |
+| --- | --- |
+| `com.c15t.consent.ACCENT`, `ON_ACCENT` | `#RRGGBB`, or a comma-separated light,dark pair. |
+| `com.c15t.consent.CANVAS`, `SURFACE`, `SURFACE_MUTED` | Screen and card colors. |
+| `com.c15t.consent.TEXT`, `TEXT_SECONDARY` | Main and secondary text colors. |
+| `com.c15t.consent.DECISION`, `ON_DECISION` | Shared Accept/Reject colors. |
+| `com.c15t.consent.CORNER_RADIUS` | Radius in dp. |
+| `com.c15t.consent.HEADLINE_FONT` | `sans`, `serif` or `rounded`; Android maps `rounded` to sans. |
+| `com.c15t.consent.BRAND_NAME`, `BRAND_MARK` | App name and drawable resource. |
+| `com.c15t.consent.BRAND` | `false` hides app identity. |
+| `com.c15t.consent.HEADLINE`, `INTRODUCTION` | First-layer copy. |
+| `com.c15t.consent.BRANDING_PROVIDER` | `c15t` or `inth`. |
+| `com.c15t.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable. |
+| `com.c15t.consent.BRANDING` | `false` hides provider attribution. |
+
+Keys shortened within a row retain the `com.c15t.consent.` prefix.
+
+## Know which copy stays native
+
+`ConsentTheme.Copy` replaces the first-layer headline and introduction. It is
+not a localization dictionary. Current stock navigation, decision labels and
+category explanations use English strings. Setting a policy language or
+embedding several policy languages does not translate those controls.
+
+IAB purpose and vendor disclosures come from the served authoritative data.
+Keep that copy and required policy links intact. Use the
+[IAB guide](/docs/guides/mobile-iab) when reviewing an advertising flow.

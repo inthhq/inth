@@ -17,3 +17,17 @@ installation; the local file-backed fixtures do not exercise that check.
 
 The JSON fixtures under `fixtures/` are local protocol inputs with a test CMP
 identity. They are not production policy or live hosted acceptance.
+
+For IAB mobile validation, use the hosted IAB review mode with the identity
+authorized for the review and a real IAB policy. Its diagnostics read the actual
+platform `IABTCF_*` values separately from core authority. See the
+[mobile TCF validation guide](../../../docs/internal/mobile-tcf-validation.md)
+for setup, evidence journeys and submission questions. Neither the fixtures nor
+the review app establish certification.
+
+For Google publisher App certification, the same hosts export diagnostic JSON
+with actual platform storage, loaded Google vendor 755 and Additional Consent
+disclosures. Follow the [Google mobile certification guide](../../../docs/internal/mobile-google-certification.md)
+for exports, local checks and submission preparation. The shared web-demo
+project currently serves category policies and needs an IAB policy before it
+can supply hosted certification evidence.

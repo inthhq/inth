@@ -1,33 +1,85 @@
 ---
 title: Native startup and SDK gates
-description: Install and hydrate consent before React Native or optional SDKs start, then read native cached gates and handle recovery and withdrawal.
+description: Install consent before React Native starts, prevent optional native SDK auto-start and react to later grants and withdrawals.
 group: frameworks
 ---
 
-Install and hydrate one native engine before starting optional analytics or advertising SDKs. JavaScript may arrive later. A React hook cannot prevent a native SDK's launch initializer from running.
+A native analytics or advertising SDK can start before React mounts. Put its
+startup behind a native consent gate. Use React hooks for work that starts
+in React, and native subscriptions for work whose lifetime belongs to iOS or
+Android.
 
-## Own startup ordering
+## Install before JavaScript starts
 
-Expo's plugin and bare RN bootstrap hooks configure the native engine. Standalone apps call [Apple installation](/docs/frameworks/react-native/apple) or [Android installation](/docs/frameworks/react-native/android). `C15tProvider` attaches to that engine after startup and checks the RN/native protocol.
+The Expo plugin and bare RN configuration install the engine through native
+launch hooks. By the time `C15tProvider` attaches, that engine has restored
+saved choices and started resolving policy. The provider checks the native
+protocol; it does not create another consent engine.
 
-Disable each vendor's manifest, app-delegate or automatic startup integration when it can collect optional data before your consent gate. Check the vendor's actual startup behavior. The SDK does not intercept arbitrary native network calls.
+| Setup | Native configuration belongs in |
+| --- | --- |
+| Expo | The c15t config plugin, followed by prebuild and a native rebuild |
+| Bare RN, iOS | The app target's `Info.plist`, or app-owned native installation |
+| Bare RN, Android | Application metadata and the launch initializer, or app-owned installation |
 
-## Read the native cached answer
+Follow [Expo](/docs/frameworks/react-native/expo) or
+[bare setup](/docs/frameworks/react-native/bare) before adding SDK gates.
+Disable the vendor's automatic collection and launch hooks. Check its manifest
+initializers, app-delegate setup and config plugins. c15t does not intercept
+arbitrary native network requests.
 
-Apple exposes `C15t.isAllowed(.measurement)` and `C15t.decision(for: .measurement)`. Android exposes `C15t.isAllowed(ConsentCategory.MEASUREMENT)` and `C15t.decision(ConsentCategory.MEASUREMENT)`. These reads use cached native state without network or storage work on the calling thread.
+## Read the cached native gate
 
-`necessary` is always permitted. Optional categories return false while unhydrated, unresolved, denied or otherwise invalid. Decision reads distinguish pending from denied. Pending does not promise that the network will eventually answer. Keep optional collection off and let the app continue with its necessary functions.
+| Platform | Boolean permission | Decision |
+| --- | --- | --- |
+| Swift | `C15t.isAllowed(.measurement)` | `C15t.decision(for: .measurement)` |
+| Kotlin | `C15t.isAllowed(ConsentCategory.MEASUREMENT)` | `C15t.decision(ConsentCategory.MEASUREMENT)` |
 
-Retain an `onChange` subscription or native gate subscription for as long as the vendor integration lives. Reevaluate after grants, withdrawals, identity changes, expiry, foreground and recovery. Cancel subscriptions when their owner goes away. A one-time startup check cannot implement withdrawal.
+These reads use in-memory native state. They perform no disk or network work
+on the calling thread. The decision distinguishes pending, denied and granted.
+Keep collection off for pending and denied. A fresh app can remain pending
+while it waits for policy; let necessary app features continue working.
 
-## Recover from protected storage failures
+Effective permission can follow a regional policy default before the person
+records a choice. Read recorded choice separately when your app reports what
+the person explicitly selected.
 
-Apple's installer validates protected storage and hydrates synchronously. `protectedStorageUnavailable` means no new engine was installed. Keep optional SDKs off and retry after protected data becomes available. Do not switch to memory or plaintext storage to make startup succeed.
+## Subscribe for the integration's lifetime
 
-Android installs platform persistence and background transport through `C15tAndroid`. Treat storage read/write failures as unavailable authority. Inspect the native error and keep optional gates closed. Test key loss and OS lifecycle behavior on devices; a mocked storage test does not prove OS protection.
+Retain the Swift gate subscription or Android `gate`/`gateDecision` handle in
+the owner of your optional SDK integration. Register after installation and
+use the initial delivered permission to configure collection. Apply later
+changes through the vendor's supported enable, disable or shutdown API.
 
-## Separate local state from transport
+Close the subscription when that integration ends. Do not tie an app-wide
+analytics gate to a short-lived React component or an Activity that rotates.
+Marshal UI work to the platform's main thread because native callbacks can
+arrive on a worker.
 
-Native consent commits persist locally before the transport attempts delivery. Launch, foreground and reconnect can replay queued saves. Keep the hosted transport even when using a bundled policy. See [durable outcomes](/docs/frameworks/react-native/usage) and [offline authority](/docs/frameworks/react-native/offline).
+A single launch-time check misses withdrawal. The subscription must also cover
+policy changes, identity changes, foreground refresh and recovery.
 
-ATT is a second gate for tracking features on Apple. It never grants a c15t category. An advertising integration must also check the current [IAB or provider-specific permission](/docs/frameworks/react-native/iab), when that is its legal basis.
+## Handle unavailable storage
+
+Apple's installer checks Keychain before installing the engine. If it reports
+`protectedStorageUnavailable`, keep optional SDKs off and retry when protected
+data becomes available or the app activates. Retry the protected installation;
+do not replace its store with memory or a plaintext file.
+
+On Android, treat storage read and write errors as unavailable authority. Keep
+failed saves visible and retry after storage recovers. Do not turn an absent
+record into a grant.
+
+## Keep collection and delivery separate
+
+A native commit stores a choice locally before attempting delivery. Launch,
+foreground and reconnect can replay queued saves. A network failure after
+local withdrawal must not reenable collection.
+
+[Commands and outcomes](/docs/frameworks/react-native/usage) explains which
+result confirms a local save. [Offline consent](/docs/guides/mobile-offline)
+covers fresh offline prompting and retained delivery.
+
+Advertising also needs the relevant vendor/purpose/provider permission.
+Apple tracking features may need ATT as another independent gate. Follow
+[IAB and ads](/docs/guides/mobile-iab) for those checks.

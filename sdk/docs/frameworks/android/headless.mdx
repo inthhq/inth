@@ -1,0 +1,106 @@
+---
+title: Headless integration
+description: Use the Android consent engine with your own UI, keep native analytics gates current and save category choices with revision checks.
+group: frameworks
+---
+
+Your app can use c15t's Android engine without its Compose consent screens.
+Install `c15t-android`, which includes the core, and omit `c15t-consent-ui`.
+The same native engine owns policy, persistence and optional SDK permissions.
+
+## Install before optional SDKs
+
+Follow the dependency and installation steps in the
+[quickstart](/docs/frameworks/android/quickstart), using only the platform
+artifact. Call `C15tAndroid.install` before the optional SDK integrations you
+control. Disable vendor auto-initializers that run before your app's launch code.
+
+An app with its own UI is responsible for the consent flow, disclosures,
+accessible controls, failed-save recovery and a permanent privacy-settings entry.
+For IAB, use complete native drafts and current disclosures. A category form
+does not record purpose or vendor choices.
+
+## Read the current permission
+
+`C15t.isAllowed(ConsentCategory.MEASUREMENT)` returns the effective permission
+now. It is a synchronous memory read. A false value covers both a refusal and
+an unresolved policy.
+
+Use `C15t.decision(ConsentCategory.MEASUREMENT)` when those states affect your UI:
+
+| Decision | What the integration should do |
+| --- | --- |
+| `PENDING` | Keep collection off while authority is unresolved. |
+| `DENIED` | Keep collection off. |
+| `GRANTED` | Enable only the work covered by that category. |
+
+A permission can follow a policy default before anyone records a choice.
+Read `snapshot.explicitChoice` when the app needs to distinguish a recorded
+answer from the effective policy permission.
+
+## Keep analytics in sync
+
+Retain a gate for the lifetime of the analytics integration. It immediately
+reports the current permission and continues reporting changes, including
+withdrawal and policy changes.
+
+Create `MeasurementConsentGate.kt`. This helper forwards collection changes
+onto the main thread:
+
+<include src="../../shared/examples/native/examples/consent-demo/android-measurement-gate.mdx" />
+
+Construct `MeasurementConsentGate` after installation and pass your vendor's
+supported collection-enable/disable function as `setCollectionEnabled`. Keep
+the handle in the owner of that vendor integration. Call `close()` when that
+owner ends; do not close an app-wide gate whenever an Activity rotates.
+
+The vendor must start with collection disabled. If it has no supported method
+to stop collection, design the integration around its supported shutdown or
+recreation behavior before enabling it. c15t does not intercept its network
+traffic or cancel work it already sent.
+
+For more than a boolean, use `gateDecision`. Snapshot observers registered with
+`onChange` are weakly held; retain the callback as well as its subscription.
+Callbacks can arrive on a worker thread, so marshal UI updates to the main
+thread.
+
+## Save a category form
+
+Read `C15t.current` after installation and keep its snapshot revision when you
+create a draft. Seed editable controls from `snapshot.explicitChoice`, keeping
+unrecorded choices distinct from effective policy defaults.
+
+Create `save-measurement-choice.kt` and call its helper only after the person
+chooses Save:
+
+<include src="../../shared/examples/native/examples/consent-demo/android-category-save.mdx" />
+
+This example changes measurement only. Omitted categories retain their previous
+receipts. Use `CommitIntent.All` for Accept all or `CommitIntent.Necessary` for
+Reject all and withdrawal. Show those as deliberate user actions.
+
+Inspect the returned `CommitResult`:
+
+| Result | UI behavior |
+| --- | --- |
+| `ok == true` | Confirm the choice was saved on this device. |
+| `ok == false` | Keep the form and show `error`; do not dismiss as saved. |
+| `error?.code == "concurrent-change"` | Ask the person to reload current settings and review the draft again. |
+| `queued == true` | Delivery is durable and can retry after reconnect. |
+| `delivered == false` | Do not claim the backend received the choice. Local success can still be true. |
+
+Run saves off the main thread because durable storage is part of the commit.
+Disable repeated submission while a save is pending. Announce failures to
+TalkBack and keep retry reachable.
+
+## Use IAB authority for advertising
+
+Native `iabPresentation()` exposes retained disclosures and a revision-bound
+draft. `canEdit` says whether new edits are currently allowed. A read-only
+disclosure list may still be shown when grant authority is stale.
+
+Commit a complete IAB draft through the native API and preserve its expected
+revision. Use native vendor/purpose/legal-basis and Additional Consent gates
+before an ads SDK starts. Neither `marketing == true` nor a TC String's
+presence is enough. Follow [mobile IAB setup](/docs/guides/mobile-iab) for that
+integration.

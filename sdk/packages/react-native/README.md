@@ -8,17 +8,17 @@
 <a href="https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40c15t%2Freact-native"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=dark"><img src="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=light" alt="Made by Inth"></picture></a>
 </p>
 
-Private prerelease for React Native, Expo development builds and native iOS/Android integration. One native engine owns policy, durable choices and SDK gates before JavaScript starts. SwiftUI and Compose provide the shared stock consent screens.
+Native consent screens, saved privacy choices and SDK gates for React Native and Expo. SwiftUI renders iOS consent screens and Compose renders Android screens. Optional native SDKs can read permission before JavaScript starts.
 
 c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-compliance/c15t/), including expo.dev, zed.dev, unkey.dev, mintlify.com, and sazabi.com.
 
 ## Key Features
 
-- Native Swift and Kotlin consent authority, durable records and synchronous SDK gates before JavaScript
-- Shared SwiftUI and Compose presenters with native drafts, IAB disclosures, search and standing preferences
-- Durable local commit outcomes and queued delivery, including offline withdrawal
-- Build-exported endpoint-bound policies for first-install offline prompts, with explicit authority expiry
-- Headless React Native hooks and commands, separate ATT authorization and app-owned native installation
+- Native consent prompts and a preference center that can be reopened from app settings
+- Hooks and category commands for app-owned React Native controls
+- Consent gates that stay current after grants and withdrawals
+- Protected saved choices and queued delivery when the app is offline
+- Native IAB purpose and partner choices, Additional Consent and separate ATT handling
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ c15t is used by [2,100+ sites](https://www.wappalyzer.com/technologies/cookie-co
 
 ## Installation
 
-This package is still `private: true`. Obtain the matching package tarball and native artifacts from the maintainer. Public npm, Maven and remote SwiftPM installation, cloud builds and device acceptance are not established by this checkout.
+The mobile SDK is a private prerelease. Obtain the package tarball and its matching Android artifacts from the maintainer, then follow the [React Native quickstart](https://c15t.com/docs/frameworks/react-native/quickstart) or [Expo setup](https://c15t.com/docs/frameworks/react-native/expo). [Mobile availability](https://c15t.com/docs/guides/mobile-status) records distribution and first-release scope.
 
 ## Documentation
 
@@ -46,20 +46,21 @@ Check `CommitResult.ok` after `save`, `acceptAll` or `rejectAll`. A resolved pro
 
 ## Guides
 
-Use the version-matched Markdown under `docs/frameworks/react-native/` or the [public docs source routes](https://c15t.com/docs/frameworks/react-native/quickstart):
+Start with the guide for your app. The package also includes version-matched Markdown under `docs/` for offline reading.
 
-- [Quickstart and availability](https://c15t.com/docs/frameworks/react-native/quickstart)
+- [React Native quickstart](https://c15t.com/docs/frameworks/react-native/quickstart)
 - [Expo and EAS](https://c15t.com/docs/frameworks/react-native/expo)
 - [Bare React Native](https://c15t.com/docs/frameworks/react-native/bare)
+- [Build your own UI](https://c15t.com/docs/frameworks/react-native/headless)
+- [Customize native screens](https://c15t.com/docs/frameworks/react-native/customize)
 - [Commands and outcomes](https://c15t.com/docs/frameworks/react-native/usage)
-- [Native startup and gates](https://c15t.com/docs/frameworks/react-native/native-behaviour)
-- [Offline policies and withdrawal](https://c15t.com/docs/frameworks/react-native/offline)
-- [IAB, Additional Consent, ATT and ads](https://c15t.com/docs/frameworks/react-native/iab)
-- [Identity and reset](https://c15t.com/docs/frameworks/react-native/identity)
-- [Native customization](https://c15t.com/docs/frameworks/react-native/customize) and [headless hooks](https://c15t.com/docs/frameworks/react-native/headless)
-- [Standalone Apple](https://c15t.com/docs/frameworks/react-native/apple) and [Android](https://c15t.com/docs/frameworks/react-native/android)
-- [Configuration](https://c15t.com/docs/frameworks/react-native/configuration), [compatibility and OTA](https://c15t.com/docs/frameworks/react-native/platform-support)
-- [Verification](https://c15t.com/docs/frameworks/react-native/verify) and [troubleshooting](https://c15t.com/docs/frameworks/react-native/troubleshooting)
+- [Native SDK gates](https://c15t.com/docs/frameworks/react-native/native-behaviour)
+- [SwiftUI quickstart and UIKit](https://c15t.com/docs/frameworks/swift/quickstart)
+- [Kotlin Android quickstart](https://c15t.com/docs/frameworks/android/quickstart)
+- [Mobile SDK integrations](https://c15t.com/docs/integrations/overview#mobile-sdks)
+- [Offline consent](https://c15t.com/docs/guides/mobile-offline)
+- [IAB and advertising](https://c15t.com/docs/guides/mobile-iab)
+- [Verify mobile consent](https://c15t.com/docs/guides/mobile-verify)
 
 ## IAB and ads
 
@@ -71,7 +72,7 @@ Hosted Inth is the recommended starting point. The existing self-hosted transpor
 
 ## First release scope
 
-The first mobile release retains stock native presenters, RN hooks and category commands, app-owned native installation, and standalone Swift/Kotlin core APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB CMP/publisher bootstrap are explicitly deferred. Hooks still link the stock native presenter; `vendors` only filters disclosures. Use app-owned native IAB configuration for that path. See the [first release scope](https://c15t.com/docs/frameworks/react-native/quickstart#first-release-scope) for the required consumer acceptance before these deferred features ship.
+The first release includes native presenters, RN hooks and category commands, app-owned native installation and standalone Swift/Kotlin APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB bootstrap are deferred. See [mobile availability](https://c15t.com/docs/guides/mobile-status) for the supported integration paths.
 
 ## Docs for AI Agents
 

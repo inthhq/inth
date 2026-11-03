@@ -1,4 +1,4 @@
-// #region docs:native-root title="App.tsx"
+// #region docs:native-root title="setup.tsx"
 import {
 	C15tProvider,
 	onConsentPresenterOutcome,

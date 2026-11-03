@@ -2,7 +2,7 @@ plugins { alias(libs.plugins.android.application); alias(libs.plugins.kotlin.com
 android {
     namespace = "com.c15t.prototype"
     compileSdk = 36
-    defaultConfig { applicationId = "com.c15t.prototype.consent"; minSdk = 24; targetSdk = 36; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
+    defaultConfig { applicationId = "com.c15t.prototype.consent"; versionCode = 1; versionName = "1.0"; minSdk = 24; targetSdk = 36; testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlin { compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) } }
     buildFeatures { compose = true; buildConfig = true }
@@ -14,6 +14,7 @@ dependencies {
     implementation("androidx.compose.material3:material3"); implementation("androidx.activity:activity-compose:1.11.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    testImplementation(libs.junit)
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.08.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

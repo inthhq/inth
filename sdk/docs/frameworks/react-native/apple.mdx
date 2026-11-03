@@ -1,10 +1,13 @@
 ---
-title: Standalone Apple
-description: Install the existing Swift native core and Apple services before SDK startup, use SwiftUI screens, and keep CocoaPods RN ownership separate.
+title: iOS native installation
+description: Understand the Swift products included in a React Native app and attach RN to an app-owned native installation.
 group: frameworks
 ---
 
-SwiftUI and UIKit apps can use `C15tApple` without React Native, Expo or JavaScript. The local Swift package at `native/core-swift` exports `C15tCore`, `C15tApple` and optional `C15tConsentUI`. These are private source artifacts. Do not invent a remote SwiftPM release URL or tag.
+The React Native package includes the Swift consent engine, Apple platform
+services and SwiftUI presenter in its CocoaPods target. This page covers that
+native ownership and app-owned installation in an RN app. For a standalone
+SwiftUI or UIKit app, choose Swift in the [framework list](/docs/frameworks).
 
 ## Resolve the source products
 
@@ -32,7 +35,10 @@ Retain one `ConsentPresenter(core:)` on the main actor and apply the `.c15tConse
 
 Import only `C15tReactNative` for host-owned installation in a CocoaPods RN app. Set `com.c15t.reactnative.AutoBootstrap` to false, call that module's `C15tApple.install`, then `C15tReactNativeBootstrap.install(core)` before RN starts. Do not also link separately compiled core/platform products, which would create competing singleton authorities.
 
-The RN workspace `Package.swift` supports a local core path, optionally `C15T_CORE_PATH`. It refuses `C15T_CORE_VERSION` and `C15T_CORE_URL` while remote native distribution is unavailable. That workspace manifest is not included in the npm tarball.
+The monorepo root also has a Swift package named `c15t` for standalone apps.
+It exports `C15tCore`, `C15tApple` and `C15tConsentUI`. An RN CocoaPods app
+already compiles those sources inside `C15tReactNative`; linking separate
+copies would create competing process authorities.
 
 ## Use ATT and custom services separately
 

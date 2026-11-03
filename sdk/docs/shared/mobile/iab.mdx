@@ -1,0 +1,118 @@
+## Prepare your Inth project
+
+Configure an IAB policy for the regions where the app will use TCF. The policy
+must serve the current Global Vendor List and the disclosures for every
+Additional Consent provider you intend to offer. A category policy with a
+`marketing` toggle does not supply those vendor choices.
+
+Use the CMP identity and internal CMP version supplied for your deployment.
+The internal CMP version is separate from your app version and SDK version.
+Set the publisher's two-letter country code and keep the consent language
+consistent with the disclosure text the app displays.
+
+For Google's publisher App review, include Google vendor 755 and the intended
+Additional Consent providers. The shared example project at
+`https://example-inth.inth.app/` currently serves category policies. Configure
+its IAB policy before using it for a hosted IAB run.
+
+## Install IAB configuration natively
+
+Install the native engine once, before presenting consent or starting an ad
+SDK. Use the same engine for the presenter and all gates.
+
+### Swift
+
+This helper installs the core with Apple transport, protected storage and the
+standard UserDefaults signal bus. Pass your approved deployment settings; the
+function deliberately has no sample CMP identity.
+
+<include src="../examples/native/core-swift/AppleInstallation/swift-iab-config.mdx" />
+
+### Kotlin
+
+Pass `IabConfiguration` through `NativeConfig` to the Android platform
+installer:
+
+<include src="../examples/native/examples/consent-demo/android-iab-config.mdx" />
+
+Pass the returned configuration to `C15tAndroid.install(context, config)`
+instead of the category-only configuration in the Android quickstart.
+
+### React Native and Expo
+
+Use an app-owned native installation for IAB, then attach the RN adapter to
+that engine. Turn automatic bootstrap off so it does not install a category
+engine first. Typed RN/Expo IAB bootstrap is deferred from the first release.
+The plugin's `vendors` option only narrows disclosures; it does not set CMP
+identity or publisher configuration.
+
+## Present the consent flow
+
+Use the native presenter from your platform quickstart. The stock IAB flow
+handles purpose and partner choices, legitimate-interest objections, special
+features, publisher restrictions and Additional Consent providers.
+
+The visitor can open Customize, inspect purpose details, search partners and
+read their disclosures before saving. Keep a Privacy settings action in the
+app after the first layer closes so the visitor can change or withdraw their
+choice.
+
+Draft changes are not consent. A successful save validates the current
+disclosures and stores the decision locally. If the list changed while the
+visitor was editing, keep the draft visible and ask them to review the current
+list. Network delivery can complete later.
+
+## Gate the actual ad integration
+
+Disable the ad SDK's automatic startup. Before initialization or an ad request,
+check the current native permission for the vendor, purpose and legal basis
+that integration uses. Swift exposes `isIABAllowed`; Kotlin exposes
+`isIabAllowed`. Additional Consent integrations use
+`isAdTechProviderAllowed`. Keep the subscription alive so withdrawal stops or
+reconfigures collection through the vendor's supported API.
+
+TCF consent, legitimate interest, special-feature opt-in and Additional
+Consent are distinct answers. Additional Consent providers depend on consent
+for TCF purposes 1, 3 and 4. A category grant or the existence of a TC String
+does not replace these checks.
+
+## Inspect platform signals
+
+The platform adapters mirror committed signals into standard UserDefaults on
+iOS and application-default SharedPreferences on Android. Other SDKs read
+these stores. The protected native record remains the consent authority.
+
+| Signal | Meaning |
+| --- | --- |
+| `IABTCF_TCString` | Encoded native TCF decision |
+| `IABTCF_gdprApplies` | The platform integer describing applicability |
+| Purpose and vendor consent fields | Consent vectors for the committed decision |
+| Purpose and vendor LI fields | Legitimate-interest vectors, separate from consent |
+| `IABTCF_AddtlConsent` | Additional Consent v2 provider decision |
+
+Inspect actual stored values after save, withdrawal and relaunch. Do not
+write these keys manually or cache their values as permanent permission in
+JavaScript. Reset, identity changes and expired disclosures can invalidate
+authority. The native gate accounts for that validity.
+
+## Keep ATT separate
+
+On iOS, ATT authorizes platform tracking. Request it explicitly only if your
+app needs it, with your app-specific usage description. An ATT grant does not
+grant a c15t category or vendor, and a c15t grant does not bypass ATT denial.
+Android has no ATT prompt.
+
+In RN, `useTrackingAuthorization()` reads ATT status and
+`useIsTrackingAllowed(category)` combines it with category permission. Those
+hooks do not replace IAB vendor and purpose checks.
+
+## Check the complete integration
+
+Use the [mobile verification checklist](/docs/guides/mobile-verify) with the
+actual ad SDK and mediation versions. Check fresh startup, rejection, granular
+save, accept-all, withdrawal and process restart. Verify visible choices
+against platform storage and decoded TC Strings.
+
+No AdMob adapter or UMP replacement is provided by this guide. Google App
+certification and IAB mobile validation remain separate requirements. See
+[mobile availability](/docs/guides/mobile-status) before planning a rollout.

@@ -1,28 +1,163 @@
 ---
 title: Troubleshooting
-description: Diagnose missing mobile native modules, protocol mismatches, policy-resource errors, refused saves, private Maven access and stale IAB authority.
+description: Fix React Native linking, native startup, policy loading, refused saves and consent-screen configuration problems.
 group: frameworks
 ---
 
-Keep optional SDKs gated while diagnosing a native consent failure. Report the native error and the actual package, protocol and platform versions; do not turn unavailable state into consent.
+Start with the native error and the step that failed: dependency resolution,
+app startup, policy resolution, presentation or saving. Keep optional SDKs off
+while the consent engine is unavailable.
 
-| Symptom | Check and action |
+## The native module is unavailable
+
+`NativeC15tUnavailableError` means the installed app cannot supply the c15t
+native module.
+
+1. Use a custom native build. Expo Go and a web target cannot load it.
+2. Confirm `@c15t/react-native` is installed in the app project.
+3. For Expo, run prebuild after configuring the plugin. For bare iOS, run the
+   app's pod-install command.
+4. Rebuild and reinstall the native app.
+
+Restarting Metro changes JavaScript only. It cannot add the missing module or
+a newer native method. Check [Expo setup](/docs/frameworks/react-native/expo)
+or [bare setup](/docs/frameworks/react-native/bare) for the linking steps.
+
+## Android cannot resolve `com.c15t`
+
+Check the repository URL and the version requested by the RN adapter in the
+Gradle error. The mobile prerelease requires matching versioned native
+artifacts; the plugin has no default Maven repository.
+
+- Configure the supplied repository in your app's dependency resolution.
+- Provide the build-time credentials expected by that repository.
+- Make those inputs available to the cloud worker as well as your local shell.
+- Keep core, platform and UI on the versions selected by the adapter.
+
+A local file repository is useful for a local build, but EAS cannot read a
+directory on your computer. Use the
+[bare repository block](/docs/frameworks/react-native/bare#set-up-android)
+or [Expo repository settings](/docs/frameworks/react-native/expo#configure-the-plugin).
+
+## CocoaPods cannot find the native sources
+
+Run pod installation after adding the package, then build the generated
+workspace. Inspect the installed tarball and RN autolinking output if the
+pod still points to missing files.
+
+The RN pod compiles the vendored Swift sources inside the package. It should
+not point to a sibling monorepo checkout. Do not add a second standalone
+`C15tCore` or `C15tApple` product to repair RN linking.
+
+## Hooks say the provider is missing
+
+Mount one `C15tProvider` above every component that calls a consent hook. Keep
+it above app navigation, including a settings screen that opens later. The
+[quickstart root](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings)
+shows the file layout.
+
+The provider attaches to the native engine. Adding it does not replace the
+native backend configuration.
+
+## The prompt never appears
+
+Check `useConsentStatus()` and the current snapshot:
+
+| State | Check |
 | --- | --- |
-| `NativeC15tUnavailableError` | Expo Go and web cannot load the module. Install the private native package, prebuild/link and rebuild a custom binary. Restarting Metro cannot add native code. |
-| `C15tProtocolMismatchError` | The JS/native handshake is incompatible. Match package and binary capabilities and rebuild; review the Expo runtime version before OTA. |
-| A missing tracking, reset or presenter method | The binary predates an additive API even if protocol 1 matches. Build a matching binary. |
-| `not-bootstrapped` or optional permissions remain pending | Inspect native launch configuration, constructor/initializer wiring, merged manifest and protected-storage availability. A provider does not bootstrap native services. |
-| Android cannot resolve `com.c15t` | Configure the maintainer-provided versioned Maven repository and build-time access. There is no plugin default repository and local staging is not a cloud upload. |
-| CocoaPods cannot find native sources | Inspect the installed package files and autolinking. Do not add a second core pod or point at a monorepo-only relative path. |
-| Expo config refuses `updates.url` | Add an appropriate `runtimeVersion` or disable updates. Never remove the guard to send JS to incompatible binaries. |
-| First offline launch has no prompt | Check that the policy resource was exported, embedded, endpoint-bound and current. Offline transport alone cannot fetch a missing policy. |
-| `bundled-policy-expired` | Connect to refresh authority and rebuild a current resource for the next binary. Do not extend disclosure source dates. Keep withdrawal available. |
-| `queue-write-failed` or rejected save | Preserve the draft. Fix protected storage, then retry. Awaiting the promise is not proof of `ok: true`. |
-| `concurrent-change` or stale IAB draft | Reload current native disclosures and revision, then ask the person to review again. Do not silently save a draft under a different list. |
-| Missing/stale GVL or provider list | Refresh authoritative disclosures. A bundled timestamp is not current merely because it was copied into a new build. |
-| IAB refusal despite categories being present | Supply approved native CMP/publisher configuration and valid disclosures. Vendor scope and category grants are insufficient. |
-| ATT request fails | Check the usage description and native capability. Android does not implement an ATT prompt. Platform authorization stays separate from consent. |
-| Vendor requests happen before consent | Disable the vendor's own initializer/plugin and gate native startup. A React component cannot undo earlier native requests. |
-| React theme changes do not affect the native screen | Configure native `ConsentTheme` or its supported native metadata. Presenter commands do not take React theme props. |
+| `ready` is false | Native hydration has not completed. Inspect protected-storage and installation errors. |
+| `policyPending` is true | Check the backend URL, network result and embedded policy resource. |
+| `promptRequirement.kind` is `none` | No interaction is owed. A valid saved choice or a nonprompting policy can make this expected. Use Privacy settings to reopen preferences. |
+| A choice is owed but no screen opens | Confirm the prompt effect is mounted, inspect the presenter command error and supply an HTTPS privacy-policy URL. |
 
-Use the [verification checklist](/docs/frameworks/react-native/verify) after recovery. Capture any unverified registry, cloud-build, device or certification step as an external handoff; do not report it as passed because local source tests succeeded.
+A `not-bootstrapped` error usually means native installation was disabled or
+never configured. Check launch metadata and `autoBootstrap` before adding
+manual initialization. Keep one installed engine.
+
+On iOS, `protectedStorageUnavailable` means installation could not access
+protected storage. Retry after protected data becomes available or the app
+activates, as described in [native startup](/docs/frameworks/react-native/native-behaviour).
+Do not replace protected storage with an in-memory store.
+
+## The app reports a protocol mismatch or missing method
+
+`C15tProtocolMismatchError` means the JavaScript/native handshake is
+incompatible. Install the matching package and rebuild the native binary.
+Check the Expo runtime version before distributing another OTA update.
+
+A missing tracking, reset or presenter method also needs a matching binary,
+even if the protocol number has not changed. See
+[compatibility and OTA](/docs/frameworks/react-native/platform-support).
+
+## A save resolves but the choice is unchanged
+
+Inspect `CommitResult.ok` and `reason`. Awaiting the command only confirms it
+returned a result.
+
+| Reason | Recovery |
+| --- | --- |
+| `policy-pending` | Resolve policy before requesting a new grant. |
+| `queue-write-failed` | Recover durable storage, keep the form open and retry. |
+| `concurrent-change` | Reload the current policy/disclosures and let the person review the choice again. |
+| Invalid intent or unavailable IAB authority | Check the command's scope and use the supported native flow. |
+
+Preserve the draft on refusal and display an actionable error. A successful
+local save can remain queued while offline; it does not need to be repeated
+because the network is unavailable. [Commands and outcomes](/docs/frameworks/react-native/usage)
+explains local success and delivery.
+
+## The first offline launch has no prompt
+
+Offline transport cannot fetch a missing policy. Export a policy resource,
+embed it in the native binary and configure the matching resource key.
+Check its endpoint binding, integrity and expiry.
+
+An expired or corrupt resource cannot create a new optional grant. Reconnect
+to refresh authority and prepare a current resource for the next binary.
+Keep withdrawal available. Follow [offline policies](/docs/guides/mobile-offline).
+
+## IAB choices are unavailable
+
+The category configuration and `vendors` option do not install a CMP identity
+or publisher configuration. Use [native IAB setup](/docs/guides/mobile-iab),
+current GVL data and the intended Additional Consent disclosures.
+
+For a stale draft or disclosure list, refresh and ask the person to review
+again. Do not replace the TC String or platform `IABTCF_*` keys manually.
+
+## An SDK sends requests before consent
+
+Disable that vendor's automatic native initializer or plugin, then gate its
+startup using the native consent answer. A React effect runs too late to
+stop a native initializer that already collected data.
+
+Keep a subscription that also disables collection after withdrawal. Test the
+actual vendor's supported start and stop controls; hiding its React wrapper
+alone is not sufficient. See [native SDK gates](/docs/frameworks/react-native/native-behaviour).
+
+## Theme changes do not appear
+
+The native presenter uses native `ConsentTheme` settings. React theme props
+style only the React-rendered components. Apply the
+[native theme keys](/docs/frameworks/react-native/customize) and rebuild.
+For Expo, preserve those keys through an app-owned config plugin if prebuild
+regenerates your native files.
+
+## An ATT request fails
+
+Check the iOS usage description and the installed binary's tracking
+capability. The request is explicit and separate from category consent.
+Android has no Apple tracking prompt and reports the request as unsupported.
+[ATT and ads](/docs/frameworks/react-native/iab#keep-att-separate) explains
+which gate to use.
+
+## Expo refuses `updates.url`
+
+Configure a compatible `runtimeVersion` before enabling updates. Use a new
+native binary when the update needs a changed native API, permission, theme
+or policy resource. Removing the runtime check would send JavaScript to apps
+that may not contain those capabilities.
+
+After fixing the failure, repeat the affected journey and check that refusal,
+reopening and withdrawal still work. The
+[mobile verification guide](/docs/guides/mobile-verify) covers the full flow.

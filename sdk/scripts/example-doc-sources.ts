@@ -116,11 +116,13 @@ const withoutHiddenLines = (
 const languages: Record<string, string> = {
 	'.astro': 'astro',
 	'.css': 'css',
+	'.gradle': 'groovy',
 	'.html': 'html',
 	'.js': 'js',
 	'.json': 'json',
 	'.jsx': 'jsx',
 	'.kt': 'kotlin',
+	'.kts': 'kotlin',
 	'.mjs': 'js',
 	'.plist': 'xml',
 	'.sh': 'sh',

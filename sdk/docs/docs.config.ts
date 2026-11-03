@@ -870,9 +870,86 @@ export default defineDocsConfig({
 							title: 'Verify and troubleshoot',
 						},
 					],
-					pages: ['quickstart', 'examples', 'expo', 'bare'],
+					pages: [
+						'quickstart',
+						'/guides/mobile-status',
+						'examples',
+						'expo',
+						'bare',
+						'/integrations/overview',
+					],
 					slug: 'react-native',
 					title: 'React Native',
+				},
+				{
+					base: 'swift',
+					children: [
+						{
+							pages: ['customize', 'headless'],
+							slug: 'customization',
+							title: 'Customization',
+						},
+						{
+							pages: [
+								'/guides/mobile-iab',
+								'/guides/mobile-offline',
+								'/guides/mobile-identity',
+							],
+							slug: 'advanced',
+							title: 'Advanced',
+						},
+						{
+							pages: [
+								'/guides/mobile-verify',
+								'/guides/mobile-troubleshooting',
+							],
+							slug: 'verify-and-troubleshoot',
+							title: 'Verify and troubleshoot',
+						},
+					],
+					pages: [
+						'quickstart',
+						'/guides/mobile-status',
+						'uikit',
+						'/integrations/overview',
+					],
+					slug: 'swift',
+					title: 'Swift',
+				},
+				{
+					base: 'android',
+					children: [
+						{
+							pages: ['customize', 'headless'],
+							slug: 'customization',
+							title: 'Customization',
+						},
+						{
+							pages: [
+								'/guides/mobile-iab',
+								'/guides/mobile-offline',
+								'/guides/mobile-identity',
+							],
+							slug: 'advanced',
+							title: 'Advanced',
+						},
+						{
+							pages: [
+								'/guides/mobile-verify',
+								'/guides/mobile-troubleshooting',
+							],
+							slug: 'verify-and-troubleshoot',
+							title: 'Verify and troubleshoot',
+						},
+					],
+					pages: [
+						'quickstart',
+						'/guides/mobile-status',
+						'configuration',
+						'/integrations/overview',
+					],
+					slug: 'android',
+					title: 'Android',
 				},
 			],
 			pages: ['index'],
@@ -896,6 +973,7 @@ export default defineDocsConfig({
 					pages: [
 						'gainsight-px',
 						'google-tag',
+						'firebase-analytics',
 						'oracle-eloqua',
 						'fullstory',
 						'ahrefs-analytics',

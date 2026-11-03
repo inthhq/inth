@@ -1,0 +1,83 @@
+## Choose the offline behavior you need
+
+Saved choices already survive a process restart without a network connection.
+The native engine restores its protected record before returning from
+installation. Optional SDKs stay off while authority is unresolved or invalid.
+
+A fresh installation has no saved policy. Bundle an exported policy if that
+first launch must explain consent without connectivity. Keep hosted transport
+configured so the app can refresh policy and deliver queued records when it
+reconnects. Offline-only transport cannot fetch a missing policy or deliver
+records and is not recommended for production environments as the only
+transport.
+
+## Export the policy
+
+From an authorized source checkout, build the exporter's dependencies and
+export your project's public manifest:
+
+```sh
+bun turbo run build --filter=@c15t/schema --filter=@c15t/translations
+bunx tsx scripts/export-mobile-policy.ts \
+  --endpoint https://your-project.inth.app \
+  --out /absolute/path/to/app/c15t-policy.json \
+  --expires-at 2027-01-01T00:00:00.000Z \
+  --languages en,de
+```
+
+Replace the URL, output path, languages and expiry. Choose a future expiry
+for your release; the example date is not a recommended lifetime. This
+exporter is currently a repository tool, not an installed RN command.
+
+The manifest needs a conservative opt-in or IAB fallback for unknown
+geography, with no preselected optional categories. Export fails when that
+fallback is absent. For a scoped IAB app, supply `--vendors` with the
+comma-separated vendor IDs. Export also needs the GVL and all configured
+Additional Consent provider disclosures.
+
+## Include the resource in the app
+
+| App | Where the JSON goes | Configuration |
+| --- | --- | --- |
+| Swift | The app target's Copy Bundle Resources | Load `BundledPolicyResource` and pass it as `bundledPolicy` during installation |
+| Bare RN, iOS | The app target's Copy Bundle Resources | `com.c15t.policy.resource` names the bundled resource |
+| Kotlin or bare RN, Android | `app/src/main/assets/c15t-policy.json` | `com.c15t.POLICY_RESOURCE` names the asset for automatic installation |
+| Expo | Beside your app config, or another source path | Set `policyResource` in the c15t config plugin and rebuild |
+
+For app-owned Android installation, read the asset JSON and pass it as
+`NativeConfig.bundledPolicy`. Keep the same backend endpoint at export and
+startup. Native loading validates the resource schema, integrity, endpoint
+binding and authority dates.
+
+The JSON is a public app artifact. Put no secrets in it. Its SHA-256 checks
+byte integrity; it is not a signature or an external approval.
+
+## Keep expiry and withdrawal separate
+
+Once bundled authority expires, connect and refresh before requesting a new
+grant. Disclosure freshness has a separate deadline, measured from the
+original GVL or provider-list source date. The default maximum age is seven
+days. Copying an old list into a new app build does not renew it.
+
+Rejection and withdrawal remain available without connectivity. Confirm local
+commit success before dismissing app-owned settings. The native engine stores
+the denial and its delivery obligation together. A later transport failure
+does not undo that withdrawal.
+
+On reconnect, queued records must not restore an earlier grant over a newer
+withdrawal. Do not clear the queue or edit platform IAB keys to recover from a
+delivery failure. See [identity and reset](/docs/guides/mobile-identity) for
+the difference between withdrawal and starting over.
+
+## Check that it works
+
+1. Install a build with a valid bundled policy and launch it offline with no
+   previous choice. The prompt appears and optional SDKs stay off.
+2. Reject, stop the app and relaunch offline. The saved refusal remains.
+3. Reconnect. Confirm delivery at the configured backend.
+4. Repeat with an expired or mismatched bundle. Optional SDKs stay off and the
+   app offers recovery rather than creating a grant.
+
+Changing the bundled resource changes the native binary. Re-export during
+release preparation and build a new binary; a JavaScript OTA update does not
+replace the native resource.
