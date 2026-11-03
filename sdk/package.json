@@ -53,7 +53,7 @@
 		"generate:umbrella": "bun scripts/generate-umbrella-exports.ts",
 		"knip": "knip",
 		"lint": "turbo run lint && bun run lint:repo && bun run lint:testids",
-		"lint:docs": "bunx remark ./docs --ext mdx --output --use remark-mdx --use remark-frontmatter --use remark-preset-lint-recommended --use remark-preset-lint-consistent",
+		"lint:docs": "bunx remark ./docs --ext mdx --output --use remark-mdx --use remark-frontmatter --use remark-preset-lint-recommended --use remark-preset-lint-consistent --use ./scripts/remark-lint-canonical-integrations.mjs",
 		"lint:fix": "turbo run lint -- --fix && bun run lint:repo -- --fix",
 		"lint:repo": "oxlint .",
 		"lint:testids": "bun internals/conformance/src/lint/testid-lint.ts",

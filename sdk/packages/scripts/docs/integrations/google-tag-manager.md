@@ -9,6 +9,8 @@ seoDescription: Set Google Consent Mode v2 defaults before your GTM container
   googleTagManager helper.
 icon: google-tag-manager
 group: integrations
+integrationAliases:
+  - GTM
 ---
 
 The c15t `googleTagManager` helper loads your Google Tag Manager container,

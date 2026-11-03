@@ -13,8 +13,20 @@ import docsConfig from '../docs/docs.config';
 import umbrellaPackage from '../packages/c15t/package.json';
 import scriptsPackage from '../packages/integrations/package.json';
 import { builtInScriptIntegrations } from '../packages/integrations/src/registry';
+import { createCanonicalIntegrationCheck } from './remark-lint-canonical-integrations.mjs';
 
 const docsRoot = fileURLToPath(new URL('../docs', import.meta.url));
+
+test('vendor setup stays on one canonical integration page across platforms', async () => {
+	const check = createCanonicalIntegrationCheck(docsRoot);
+	const files = await fg('**/*.mdx', { cwd: docsRoot });
+	const duplicates = files.flatMap((file) => {
+		const path = resolve(docsRoot, file);
+		const issue = check(path, readFileSync(path, 'utf8'));
+		return issue ? [{ file, ...issue }] : [];
+	});
+	expect(duplicates).toEqual([]);
+});
 
 test('documented umbrella imports exist in the package export map', async () => {
 	const exports = Object.keys(umbrellaPackage.exports);

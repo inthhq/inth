@@ -9,6 +9,13 @@ seoDescription: Send Google Consent Mode v2 signals before gtag.js runs. c15t
   ad_personalization.
 icon: google-analytics
 group: integrations
+integrationAliases:
+  - GA4
+  - Google Analytics
+  - Google Analytics 4
+  - Google Ads
+  - gtag
+  - gtag.js
 ---
 
 The c15t `gtag` helper loads Google's gtag.js for Google Analytics or Google
