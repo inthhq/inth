@@ -14,7 +14,7 @@
 # version from its request metadata.
 core_source = File.read(File.join(__dir__, "Sources/C15tCore/Transports.swift"))
 core_version = core_source.match(/public static let version = "([^"]+)"/)&.captures&.first
-raise "C15tSDK.version is missing from Transports.swift" unless core_version
+raise "c15t.version is missing from Transports.swift" unless core_version
 
 Pod::Spec.new do |s|
   s.name         = "C15tCore"
@@ -38,7 +38,7 @@ Pod::Spec.new do |s|
   # Same shape as the binding's podspec. A static-library consumer reads the manifest
   # from this bundle, and an app that links the kernel still has to merge it into its
   # own PrivacyInfo.xcprivacy.
-  s.resource_bundles = { "C15tCore" => ["Resources/Privacy.xcprivacy"] }
+  s.resource_bundles = { "C15tCore" => ["Sources/C15tCore/Resources/PrivacyInfo.xcprivacy"] }
   s.preserve_paths   = "Package.swift", "Sources", "Resources"
 
   # The iOS floor the package declares, so a pod build cannot compile against a lower

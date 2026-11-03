@@ -424,6 +424,15 @@ const workflows = new URL('../.github/workflows/', import.meta.url);
 const readPublicationWorkflow = (name: string) =>
 	parse(readFileSync(new URL(`${name}.yml`, workflows), 'utf8'));
 
+// GitHub's implicit bash shell omits pipefail; explicit `shell: bash` adds it.
+const bashStepArguments = (step: { run: string; shell?: string }) => [
+	...(step.shell === 'bash'
+		? ['--noprofile', '--norc', '-e', '-o', 'pipefail']
+		: ['-e']),
+	'-c',
+	step.run,
+];
+
 // These workflow conditions use boolean operators shared by Actions and JS.
 // Translate Actions property syntax; do not copy the guard into the test.
 const permits = (
@@ -477,6 +486,364 @@ const context = (
 });
 
 describe('workflow publication trust', () => {
+	it.each([
+		{ command: 'run tegami:mobile publish\n', current: false, lock: true },
+		{ command: '', current: false, lock: false },
+		{ command: 'run tegami:mobile ci\n', current: true, lock: true },
+		{ command: 'run tegami:mobile ci\n', current: true, lock: false },
+		{
+			command: `scripts/recover-mobile-release.ts ${'a'.repeat(40)}\n`,
+			current: false,
+			lock: true,
+			sourceCommit: 'a'.repeat(40),
+		},
+		{
+			command: `scripts/recover-mobile-release.ts ${'a'.repeat(40)}\n`,
+			current: true,
+			lock: true,
+			sourceCommit: 'a'.repeat(40),
+		},
+	])(
+		'finishes an existing native lock at its exact commit, current $current lock $lock',
+		({ current, lock, command, sourceCommit = '' }) => {
+			const native = readPublicationWorkflow('release-mobile');
+			const publish = native.jobs.release.steps.find(
+				(step: { name?: string }) =>
+					step.name === 'Version or publish native packages'
+			);
+			const root = mkdtempSync(join(tmpdir(), 'native-release-tip-'));
+			try {
+				for (const [name, content] of [
+					[
+						'git',
+						'#!/bin/sh\n[ "$GIT_CONFIG_COUNT" = 1 ] || exit 2\n[ "$GIT_CONFIG_KEY_0" = http.https://github.com/.extraheader ] || exit 2\n[ "$GIT_CONFIG_VALUE_0" = "AUTHORIZATION: basic $EXPECTED_AUTHORIZATION" ] || exit 2\nprintf "%s\\n" "$BRANCH_TIP"\n',
+					],
+					['bun', '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\n'],
+				] as const) {
+					writeFileSync(join(root, name), content);
+					chmodSync(join(root, name), 0o755);
+				}
+				if (lock) {
+					mkdirSync(join(root, '.tegami/mobile'), { recursive: true });
+					writeFileSync(join(root, '.tegami/mobile/publish-lock.yaml'), '');
+				}
+				const recorded = join(root, 'commands');
+				writeFileSync(recorded, '');
+				const result = spawnSync('bash', bashStepArguments(publish), {
+					cwd: root,
+					encoding: 'utf8',
+					env: {
+						...process.env,
+						BRANCH_TIP: current ? 'release-commit' : 'newer-commit',
+						COMMAND_LOG: recorded,
+						EXPECTED_AUTHORIZATION: Buffer.from(
+							'x-access-token:workflow-token-fixture'
+						).toString('base64'),
+						GITHUB_REF: 'refs/heads/canary',
+						GITHUB_SHA: 'release-commit',
+						GITHUB_TOKEN: 'workflow-token-fixture',
+						NATIVE_SOURCE_COMMIT: sourceCommit,
+						PATH: `${root}:${process.env.PATH}`,
+						REPOSITORY_URL: 'https://github.com/c15t/c15t',
+					},
+				});
+				expect(result.error).toBeUndefined();
+				expect(result.status, result.stderr).toBe(0);
+				expect(readFileSync(recorded, 'utf8')).toBe(command);
+			} finally {
+				rmSync(root, { force: true, recursive: true });
+			}
+		}
+	);
+
+	it('runs native release checks after every release-branch push so the branch tip can finish a pending lock', () => {
+		const native = readPublicationWorkflow('release-mobile');
+		expect(native.on.push).toEqual({ branches: ['main', 'canary'] });
+	});
+
+	it.each([
+		{
+			attempt: 1,
+			confirmed: '3.1.0-canary.2',
+			event: 'push',
+			expected: '',
+			failed: '',
+		},
+		{
+			attempt: 1,
+			confirmed: '',
+			event: 'workflow_dispatch',
+			expected: '',
+			failed: '',
+		},
+		{
+			attempt: 1,
+			confirmed: '3.1.0-canary.2',
+			event: 'workflow_dispatch',
+			expected: '3.1.0-canary.2',
+			failed: '',
+		},
+		{
+			attempt: 2,
+			confirmed: '3.1.0-canary.2',
+			event: 'workflow_dispatch',
+			expected: '',
+			failed: '',
+		},
+		{
+			attempt: 1,
+			confirmed: '',
+			event: 'workflow_dispatch',
+			expected: '3.1.0-canary.2',
+			failed: '3.1.0-canary.2',
+		},
+		{
+			attempt: 2,
+			confirmed: '',
+			event: 'workflow_dispatch',
+			expected: '',
+			failed: '3.1.0-canary.2',
+		},
+	])(
+		'authorizes a new Maven upload only on a fresh confirmed dispatch, $event attempt $attempt',
+		({ event, attempt, confirmed, failed, expected }) => {
+			const native = readPublicationWorkflow('release-mobile');
+			const publish = native.jobs.release.steps.find(
+				(step: { name?: string }) =>
+					step.name === 'Version or publish native packages'
+			);
+			const expression = publish.env.C15T_MAVEN_NEW_UPLOAD_VERSION;
+			expect(expression).toBeTypeOf('string');
+			const supplied = {
+				github: { event_name: event, run_attempt: String(attempt) },
+				inputs: {
+					discard_failed_maven_version: failed,
+					new_maven_upload_version: confirmed,
+				},
+			};
+			expect(runInNewContext(expression.slice(3, -2), supplied)).toBe(expected);
+			const discard = native.jobs.release.steps.find(
+				(step: { name?: string }) =>
+					step.name === 'Discard a failed Central deployment state'
+			);
+			expect(permits(discard.if, supplied)).toBe(
+				event === 'workflow_dispatch' && attempt === 1 && failed !== ''
+			);
+		}
+	);
+
+	it('limits native publisher credentials to the publish and explicit recovery steps', () => {
+		const native = readPublicationWorkflow('release-mobile');
+		const exposures = Object.entries(native.jobs).flatMap(([id, value]) => {
+			const job = value as {
+				env?: Record<string, unknown>;
+				steps?: { name?: string; env?: Record<string, unknown> }[];
+			};
+			return [
+				...Object.keys(job.env ?? {})
+					.filter((name) =>
+						/C15T_(?:SWIFT_TOKEN|CENTRAL_|MAVEN_SIGNING_)/u.test(name)
+					)
+					.map((name) => `${id}/${name}`),
+				...(job.steps ?? []).flatMap((step) =>
+					Object.keys(step.env ?? {})
+						.filter((name) =>
+							/C15T_(?:SWIFT_TOKEN|CENTRAL_|MAVEN_SIGNING_)/u.test(name)
+						)
+						.map((name) => `${step.name}/${name}`)
+				),
+			];
+		});
+		expect(exposures.sort()).toEqual([
+			'Discard a failed Central deployment state/C15T_CENTRAL_TOKEN',
+			'Discard a failed Central deployment state/C15T_CENTRAL_USERNAME',
+			'Version or publish native packages/C15T_CENTRAL_TOKEN',
+			'Version or publish native packages/C15T_CENTRAL_USERNAME',
+			'Version or publish native packages/C15T_MAVEN_SIGNING_KEY',
+			'Version or publish native packages/C15T_MAVEN_SIGNING_PASSWORD',
+		]);
+	});
+
+	it('restores same-repository retry state when a newer fork artifact uses the same branch name', () => {
+		const native = readPublicationWorkflow('release-mobile');
+		const restore = native.jobs.release.steps.find(
+			(step: { name?: string }) => step.name === 'Restore Central retry state'
+		);
+		const root = mkdtempSync(join(tmpdir(), 'native-release-restore-'));
+		try {
+			writeFileSync(
+				join(root, 'gh'),
+				`#!/bin/sh
+case "$1:$2" in
+  api:*/actions/artifacts*) printf '%s' "$ARTIFACTS_JSON" ;;
+  api:*/actions/runs/*) printf '%s' "$RUN_JSON" ;;
+  run:download) printf '%s' "$3" > "$RECORDED_DOWNLOAD" ;;
+  *) exit 2 ;;
+esac
+`
+			);
+			chmodSync(join(root, 'gh'), 0o755);
+			const artifact = (id: number, repository: number, created: string) => ({
+				created_at: created,
+				expired: false,
+				workflow_run: {
+					head_branch: 'canary',
+					head_repository_id: repository,
+					id,
+				},
+			});
+			const result = spawnSync('bash', bashStepArguments(restore), {
+				encoding: 'utf8',
+				env: {
+					...process.env,
+					ARTIFACTS_JSON: JSON.stringify({
+						artifacts: [
+							artifact(20, 2, '2026-11-01T02:00:00Z'),
+							artifact(10, 1, '2026-11-01T01:00:00Z'),
+						],
+					}),
+					C15T_NATIVE_STATE_DIR: join(root, 'state'),
+					GITHUB_REF_NAME: 'canary',
+					GITHUB_REPOSITORY: 'c15t/c15t',
+					GITHUB_REPOSITORY_ID: '1',
+					PATH: `${root}:${process.env.PATH}`,
+					PREVIOUS_RUN_ID: '',
+					RECORDED_DOWNLOAD: join(root, 'selected'),
+					RUN_JSON: JSON.stringify({
+						event: 'push',
+						head_branch: 'canary',
+						head_repository: { full_name: 'c15t/c15t' },
+						path: '.github/workflows/release-mobile.yml',
+					}),
+				},
+			});
+			expect(result.error).toBeUndefined();
+			expect(result.status, result.stderr).toBe(0);
+			expect(readFileSync(join(root, 'selected'), 'utf8')).toBe('10');
+		} finally {
+			rmSync(root, { force: true, recursive: true });
+		}
+	});
+
+	it.each([0, 1])(
+		'retry snapshot eligibility reflects artifact lookup exit %s',
+		(exit) => {
+			const native = readPublicationWorkflow('release-mobile');
+			const restore = native.jobs.release.steps.find(
+				(step: { id?: string }) => step.id === 'restore_state'
+			);
+			const root = mkdtempSync(join(tmpdir(), 'native-release-lookup-'));
+			try {
+				writeFileSync(
+					join(root, 'gh'),
+					`#!/bin/sh\nprintf '%s' '{"artifacts":[]}'\nexit ${exit}\n`
+				);
+				chmodSync(join(root, 'gh'), 0o755);
+				const result = spawnSync('bash', bashStepArguments(restore), {
+					encoding: 'utf8',
+					env: {
+						...process.env,
+						C15T_NATIVE_STATE_DIR: join(root, 'state'),
+						GITHUB_REF_NAME: 'canary',
+						GITHUB_REPOSITORY: 'c15t/c15t',
+						GITHUB_REPOSITORY_ID: '1',
+						PATH: `${root}:${process.env.PATH}`,
+						PREVIOUS_RUN_ID: '',
+					},
+				});
+				expect(result.error).toBeUndefined();
+				expect(result.status, result.stderr).toBe(exit);
+				for (const step of native.jobs.release.steps.filter(
+					(candidate: { name?: string }) =>
+						candidate.name === 'Remove completed Central retry files' ||
+						candidate.name ===
+							'Retain Central retry state and the exact signed bundle'
+				)) {
+					expect(
+						permits(step.if, {
+							steps: {
+								restore_state: {
+									outcome: result.status === 0 ? 'success' : 'failure',
+								},
+							},
+						})
+					).toBe(exit === 0);
+				}
+			} finally {
+				rmSync(root, { force: true, recursive: true });
+			}
+		}
+	);
+
+	it.each([0, 1])(
+		'retains an empty retry snapshot even when cleanup exits %s',
+		(exit) => {
+			const native = readPublicationWorkflow('release-mobile');
+			const cleanup = native.jobs.release.steps.find(
+				(step: { name?: string }) =>
+					step.name === 'Remove completed Central retry files'
+			);
+			const upload = native.jobs.release.steps.find(
+				(step: { name?: string }) =>
+					step.name === 'Retain Central retry state and the exact signed bundle'
+			);
+			const root = mkdtempSync(join(tmpdir(), 'native-release-retention-'));
+			try {
+				writeFileSync(join(root, 'bun'), `#!/bin/sh\nexit ${exit}\n`);
+				chmodSync(join(root, 'bun'), 0o755);
+				const state = join(root, 'state');
+				const result = spawnSync('bash', bashStepArguments(cleanup), {
+					encoding: 'utf8',
+					env: {
+						...process.env,
+						C15T_NATIVE_STATE_DIR: state,
+						GITHUB_RUN_ATTEMPT: '1',
+						GITHUB_RUN_ID: '123',
+						PATH: `${root}:${process.env.PATH}`,
+					},
+				});
+				expect(result.status, result.stderr).toBe(exit);
+				expect(readdirSync(state)).toEqual(['snapshot.txt']);
+				expect(readFileSync(join(state, 'snapshot.txt'), 'utf8')).toBe(
+					'123:1\n'
+				);
+				expect(upload.with.path).toContain(
+					'/mobile-release-state/snapshot.txt'
+				);
+				expect(upload.with['if-no-files-found']).toBe('error');
+				for (const step of [cleanup, upload]) {
+					for (const outcome of ['success', 'failure', 'cancelled']) {
+						expect(
+							permits(step.if, { steps: { restore_state: { outcome } } })
+						).toBe(outcome === 'success');
+					}
+				}
+			} finally {
+				rmSync(root, { force: true, recursive: true });
+			}
+		}
+	);
+
+	it('requires successful CI and the protected environment for native publication', () => {
+		const native = readPublicationWorkflow('release-mobile');
+		expect(native.jobs.release.steps[0].with).toMatchObject({
+			'persist-credentials': false,
+		});
+		expect(native.jobs.release).toMatchObject({
+			environment: 'mobile-release',
+			needs: 'checks',
+			'runs-on': 'macos-15',
+		});
+		for (const event of ['push', 'workflow_dispatch']) {
+			for (const ref of ['refs/heads/main', 'refs/heads/canary']) {
+				const supplied = context('c15t/c15t', event, ref);
+				expect(permits(native.jobs.release.if, supplied)).toBe(true);
+				supplied.needs.checks.result = 'failure';
+				expect(permits(native.jobs.release.if, supplied)).toBe(false);
+			}
+		}
+	});
+
 	it('accounts for every workflow job with repository write permission', () => {
 		const writers: string[] = [];
 		for (const file of readdirSync(workflows).filter((name) =>
@@ -499,6 +866,7 @@ describe('workflow publication trust', () => {
 		expect(writers.sort()).toEqual([
 			'autofix.yml/autofix',
 			'pr-preview.yml/deploy-preview',
+			'release-mobile.yml/release',
 			'release.yml/publish',
 			'script-vendor-monitor.yml/sync-monitor-issues',
 			'sync-canary.yml/sync',
@@ -544,6 +912,7 @@ describe('workflow publication trust', () => {
 					const supplied = context(repository, event, ref);
 					for (const [workflow, job] of [
 						['release', 'publish'],
+						['release-mobile', 'release'],
 						['pr-preview', 'deploy-preview'],
 						['sync-canary', 'sync'],
 						['autofix', 'autofix'],

@@ -107,7 +107,7 @@ public struct C15tAppleConfiguration: Sendable {
 /// Installs and hydrates the process-wide engine before returning it to any adapter.
 public enum C15tApple {
     /// Version of the Apple platform module, released with this native source package.
-    public static let version = C15tSDK.version
+    public static let version = c15t.version
     /// Optional ATT requests share one process-wide flight across native hosts and RN.
     public static let tracking = C15tTrackingController()
     private static let lock = NSRecursiveLock()

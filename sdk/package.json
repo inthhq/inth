@@ -63,6 +63,7 @@
 		"repro:tw3-css": "bun scripts/repro-tw3-css-entrypoints.ts",
 		"setup:docs": "tsx scripts/setup-docs.ts",
 		"tegami": "bun scripts/tegami.ts",
+		"tegami:mobile": "bun scripts/tegami-mobile.ts",
 		"test": "bun scripts/run-affected-tests.ts",
 		"test:full": "turbo run test",
 		"test:parity": "turbo run test:parity --filter=@c15t/parity-runner",

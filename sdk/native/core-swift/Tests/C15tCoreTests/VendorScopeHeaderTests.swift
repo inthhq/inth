@@ -32,16 +32,16 @@ final class VendorScopeHeaderTests: XCTestCase {
 
     func testADeclaredScopeTravelsDeduplicatedAndAscending() {
         XCTAssertEqual(
-            C15tSDK.vendorScopeHeaderValue([755, 8, 42]),
+            c15t.vendorScopeHeaderValue([755, 8, 42]),
             "8,42,755",
             "ascending, whatever order the host wrote the list in"
         )
         XCTAssertEqual(
-            C15tSDK.vendorScopeHeaderValue([42, 8, 755, 8, 42]),
+            c15t.vendorScopeHeaderValue([42, 8, 755, 8, 42]),
             "8,42,755",
             "a partner named twice is one partner"
         )
-        XCTAssertEqual(C15tSDK.vendorScopeHeaderValue([7]), "7", "one id is still a scope")
+        XCTAssertEqual(c15t.vendorScopeHeaderValue([7]), "7", "one id is still a scope")
     }
 
     /// No scope declared, no header sent -- in both notations.
@@ -51,8 +51,8 @@ final class VendorScopeHeaderTests: XCTestCase {
     /// parameter for an empty list either, so a header carrying an empty value would be a third thing
     /// a producer has to keep a rule for.
     func testAnUndeclaredOrEmptyScopeSendsNoHeader() {
-        XCTAssertNil(C15tSDK.vendorScopeHeaderValue(nil), "no declaration")
-        XCTAssertNil(C15tSDK.vendorScopeHeaderValue([]), "an empty list is the same no-declaration")
+        XCTAssertNil(c15t.vendorScopeHeaderValue(nil), "no declaration")
+        XCTAssertNil(c15t.vendorScopeHeaderValue([]), "an empty list is the same no-declaration")
     }
 
     /// Past the request-line ceiling the scope is not named at all, and the cap is the one web uses.
@@ -65,18 +65,18 @@ final class VendorScopeHeaderTests: XCTestCase {
     /// carries the promise. The boundary is graded on both sides, because an off-by-one here is a
     /// publisher silently under-scoped on every request.
     func testAScopeAboveTheRequestLineCeilingSendsNoHeader() {
-        let atCap = Array(1 ... C15tSDK.maxVendorScopeHeaderIds)
+        let atCap = Array(1 ... c15t.maxVendorScopeHeaderIds)
         XCTAssertEqual(
-            C15tSDK.vendorScopeHeaderValue(atCap),
+            c15t.vendorScopeHeaderValue(atCap),
             atCap.map(String.init).joined(separator: ","),
             "exactly at the ceiling the scope still travels"
         )
         XCTAssertNil(
-            C15tSDK.vendorScopeHeaderValue(atCap + [5_001]),
+            c15t.vendorScopeHeaderValue(atCap + [5_001]),
             "one id past the ceiling and nothing about the scope goes on the request line"
         )
         // The vectors lane's own over-cap publisher: 609 declared ids against a 54-vendor document.
-        XCTAssertNil(C15tSDK.vendorScopeHeaderValue(Array(1 ... 609)), "the 609-id vector sends no header")
+        XCTAssertNil(c15t.vendorScopeHeaderValue(Array(1 ... 609)), "the 609-id vector sends no header")
     }
 
     // MARK: - The request
@@ -97,7 +97,7 @@ final class VendorScopeHeaderTests: XCTestCase {
         await core.waitUntilIdle()
 
         let request = try? XCTUnwrap(http.recordedInitRequests.first)
-        XCTAssertEqual(request?.headers[C15tSDK.vendorScopeHeader], "8,42,755")
+        XCTAssertEqual(request?.headers[c15t.vendorScopeHeader], "8,42,755")
     }
 
     /// Nothing on the request when the host declared nothing, and nothing above the ceiling.
@@ -119,7 +119,7 @@ final class VendorScopeHeaderTests: XCTestCase {
 
             let request = try? XCTUnwrap(http.recordedInitRequests.first)
             XCTAssertNil(
-                request?.headers[C15tSDK.vendorScopeHeader],
+                request?.headers[c15t.vendorScopeHeader],
                 "a declaration of \(declared.map { "\($0.count)" } ?? "no list") ids must not reach the request line"
             )
         }

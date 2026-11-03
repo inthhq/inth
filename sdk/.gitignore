@@ -28,6 +28,8 @@ coverage
 .vercel
 
 # Build Outputs
+/.build/
+/.swiftpm/
 .next/
 out/
 build

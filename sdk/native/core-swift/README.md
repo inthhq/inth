@@ -89,7 +89,7 @@ asked for stays inactive rather than substituting a plaintext file. Both protect
 through `StorageKey`, and the subject id has its own item, so losing a consent envelope
 never costs a device its identity.
 
-`Resources/Privacy.xcprivacy` declares the collected identifiers. It ships in the
+`Sources/C15tCore/Resources/PrivacyInfo.xcprivacy` declares the privacy practices. It ships in the
 `C15tCore` resource bundle, and an app that links the kernel still merges it into its own
 `PrivacyInfo.xcprivacy`. The core never reads IDFV, ADID, or any other persistent hardware
 identifier: the subject id is a `sub_` identifier this package generates.

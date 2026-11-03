@@ -141,7 +141,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// app is going to prune anyway.
     ///
     /// The prune is the promise and the header is the saving, so an over-long declaration that
-    /// ``C15tSDK/maxVendorScopeHeaderIds`` will not fit on a request line still produces a device
+    /// ``c15t/maxVendorScopeHeaderIds`` will not fit on a request line still produces a device
     /// that discloses only these ids. `nil` and an empty declaration both mean "no scope", which
     /// keeps every vendor the producer serves: a host that means no vendors has to say so with a
     /// scope that names none, not by leaving this key out.

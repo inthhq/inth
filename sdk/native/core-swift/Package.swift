@@ -20,7 +20,7 @@ let package = Package(
         .executable(name: "C15tCoreBench", targets: ["C15tCoreBench"]),
     ],
     targets: [
-        .target(name: "C15tCore"),
+        .target(name: "C15tCore", resources: [.copy("Resources/PrivacyInfo.xcprivacy")]),
         .target(name: "C15tApple", dependencies: ["C15tCore"]),
         .target(name: "C15tConsentUI", dependencies: ["C15tCore"]),
         .testTarget(name: "C15tConsentUITests", dependencies: ["C15tConsentUI", "C15tCore"]),

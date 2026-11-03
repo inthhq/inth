@@ -548,9 +548,9 @@ final class ConsentCoreTests: XCTestCase {
             + http.recordedIdentityRequests
         XCTAssertGreaterThanOrEqual(requests.count, 3)
         for request in requests {
-            XCTAssertEqual(request.headers[C15tSDK.versionHeader], C15tSDK.version)
+            XCTAssertEqual(request.headers[c15t.versionHeader], c15t.version)
             XCTAssertEqual(
-                request.headers[C15tSDK.policyContractHeader],
+                request.headers[c15t.policyContractHeader],
                 String(c15tPolicyContractVersion)
             )
         }

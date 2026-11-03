@@ -93,7 +93,7 @@ final class InstallationTests: XCTestCase {
     }
 
     func testNativeSourcePackageSharesOneVersion() {
-        XCTAssertEqual(C15tApple.version, C15tSDK.version)
+        XCTAssertEqual(C15tApple.version, c15t.version)
     }
 
     func testHostedModesAcceptOnlyExactHTTPLoopbackHosts() async throws {
@@ -283,7 +283,7 @@ final class InstallationTests: XCTestCase {
             XCTAssertEqual(http.requests.count, 3)
             XCTAssertEqual(http.requests.first?.url, configured.initURL)
             for request in http.requests {
-                XCTAssertEqual(request.headers[C15tSDK.versionHeader], C15tSDK.version)
+                XCTAssertEqual(request.headers[c15t.versionHeader], c15t.version)
                 XCTAssertEqual(request.headers["x-c15t-platform"], "apple->\(C15tApple.version)")
                 XCTAssertFalse(request.headers.values.contains { $0.hasPrefix("rn->") })
             }

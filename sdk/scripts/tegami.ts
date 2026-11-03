@@ -24,6 +24,8 @@ import { createCli } from 'tegami/cli';
 import { github } from 'tegami/plugins/github';
 import { NpmPackage } from 'tegami/providers/npm';
 
+import { checkReactNativeMavenPublication } from './publish-mobile';
+
 /** Linked packages align only when selected by a change or dependency update. */
 export const linkedPackages = new Set([
 	'c15t',
@@ -169,7 +171,7 @@ const releaseChecks = function releaseChecks(
 	const planBranches = new WeakMap<PublishPlan, string>();
 	const baselines = new WeakMap<Draft, Map<string, string | undefined>>();
 	return {
-		beforePublishAll({ plan }) {
+		async beforePublishAll({ plan }) {
 			if (planBranches.get(plan) !== branch) {
 				throw new Error(
 					`Publish lock does not belong to ${branch}. Publish it on its original branch first.`
@@ -186,6 +188,9 @@ const releaseChecks = function releaseChecks(
 			const packages = plan.getPackagesToPublish();
 			if (plan.options.dryRun || packages.length === 0) {
 				return;
+			}
+			if (packages.some((pkg) => pkg.name === '@c15t/react-native')) {
+				await checkReactNativeMavenPublication(this.cwd);
 			}
 			// ^build brings in forward dependencies; unrelated libraries stay out.
 			execFileSync(

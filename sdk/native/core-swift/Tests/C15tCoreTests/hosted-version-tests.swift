@@ -28,12 +28,12 @@ final class HostedVersionTests: XCTestCase {
 private struct SemverOnlyGateway: HTTPTransport {
     func send(_ request: HTTPRequest) async throws -> HTTPResponse {
         // Hosted gateways accept the SDK version separately from platform attribution.
-        guard request.headers[C15tSDK.versionHeader] == C15tSDK.version else {
+        guard request.headers[c15t.versionHeader] == c15t.version else {
             return HTTPResponse(status: 400, body: Data("Version not supported".utf8))
         }
         return HTTPResponse(
             status: 200,
-            headers: [C15tSDK.policyContractHeader: "1"],
+            headers: [c15t.policyContractHeader: "1"],
             body: Data("{}".utf8))
     }
 }

@@ -384,10 +384,11 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
+            .build
             native/core-swift/.build
             packages/react-native/.build
             ~/Library/Caches/org.swift.swiftpm
-          key: swiftpm-${{ runner.os }}-${{ hashFiles('native/core-swift/Package.swift', 'native/core-swift/Sources/**/*.swift', 'packages/react-native/Package.swift') }}
+          key: swiftpm-${{ runner.os }}-${{ hashFiles('Package.swift', 'native/core-swift/Package.swift', 'native/core-swift/Sources/**/*.swift', 'packages/react-native/Package.swift') }}
       - name: Cache Gradle
         # Both legs, because the harness measures Android class bytes on the iOS leg too:
         # it builds the two Gradle projects as part of the `bundle` surface. Without this
@@ -405,8 +406,8 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p "$BENCH_OUTPUT_DIR"
-          swift build --package-path native/core-swift
-          swift test --package-path native/core-swift --xunit-output "$BENCH_OUTPUT_DIR/swift-core.xml" 2>&1 | tee "$BENCH_OUTPUT_DIR/swift-core.log"
+          swift build --package-path .
+          swift test --package-path . --xunit-output "$BENCH_OUTPUT_DIR/swift-core.xml" 2>&1 | tee "$BENCH_OUTPUT_DIR/swift-core.log"
       # A separate step so the failing check names the layer that broke.
       - name: Build and test the binding's wire layer
         if: matrix.kind == 'ios-toolchain'

@@ -278,6 +278,7 @@ describe('CI selection', () => {
 		expect(result.mobileBrowserOrDevice).toBe(false);
 	});
 	it.each([
+		'Package.swift',
 		'native/core-swift/Sources/C15tCore/ConsentCore.swift',
 		'native/core-android/c15t-core/src/main/kotlin/com/c15t/core/C15tKernel.kt',
 		'native/protocol/evaluation-eu-opt-in.json',

@@ -4,12 +4,14 @@ title: Android artifact preparation and consumer checks
 
 # Android artifact preparation and consumer checks
 
-The Android RN adapter consumes `com.c15t:c15t-core` and
-`com.c15t:c15t-android` at one pinned native version. It does not include the
+The Android RN adapter consumes `com.c15t:c15t-core`,
+`com.c15t:c15t-android` and `com.c15t:c15t-consent-ui` at one pinned native version. It does not include the
 native Gradle build in an app's build. The producer can use AGP 9 without
 loading that plugin into Expo 57 / RN 0.86's AGP 8.12 host.
 
-These tasks prepare a private pilot. Staging files locally does not complete
+These tasks stage files locally. The public release target is Maven Central;
+the private GitHub Packages pilot remains available for private consumers.
+Staging files locally does not complete
 ENG-513: a clean consumer must still resolve an uploaded, versioned artifact
 from a reachable repository. No public Maven, npm, app-store or signed native
 release runs as part of this check.
@@ -22,9 +24,10 @@ release runs as part of this check.
 - `c15t-android` is an AAR. It adds Android persistence, transport, startup and
   lifecycle services and exports the core as an API dependency. It has no stock
   UI dependency.
+- `c15t-consent-ui` is the optional stock Compose UI AAR. Native headless apps
+  can use the core and platform artifacts without installing it.
 - The packed RN adapter compiles its bridge with the host's Kotlin plugin and
-  consumes both binaries. Stock Compose UI belongs in a separate optional
-  artifact; consuming the platform AAR must not install it.
+  consumes all three binaries to provide its stock presenter.
 
 The native producer uses JDK 17, AGP 9.2.1 and Kotlin 2.2.10. The isolated
 consumer uses Gradle 9.3.1, AGP 8.12.0 and Kotlin 2.1.20, matching the Expo 57 /
@@ -49,10 +52,11 @@ native/core-android/gradlew -p native/core-android \
   :c15t-core:test :c15t-android:testDebugUnitTest \
   :c15t-core:publishAllPublicationsToStagingRepository \
   :c15t-android:publishAllPublicationsToStagingRepository \
+  :c15t-consent-ui:publishAllPublicationsToStagingRepository \
   --no-configuration-cache
 ```
 
-Both coordinates are written under `native/core-android/build/maven-staging`.
+All three coordinates are written under `native/core-android/build/maven-staging`.
 Each publication includes Maven POM and Gradle module metadata, sources and
 Dokka HTML API documentation in the `javadoc` classifier. The JAR/AAR contains
 Apache 2.0 license text, the root NOTICE attribution and native version metadata. JVM shrinker rules ship
@@ -132,6 +136,13 @@ all four secure values: `C15T_MAVEN_USERNAME`, `C15T_MAVEN_TOKEN`,
 publications. No signing material is read from the checkout. This preparation
 does not authorize running those tasks or establish that credentials,
 permissions, package visibility or signatures have been validated.
+
+For public Maven Central releases, use the separate
+[native Tegami flow](mobile-releases.md). `C15T_MAVEN_CENTRAL=true` signs the
+local staging publications and selects public SCM metadata; it does not upload
+them. The release verifier checks the signed bundle before Central upload and
+retains the deployment ID for retries. The private GitHub pilot remains a
+separate opt-in target.
 
 ## Repeat isolated resolution and R8
 

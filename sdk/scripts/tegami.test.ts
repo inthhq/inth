@@ -127,6 +127,30 @@ describe('release channels', () => {
 	});
 });
 
+it('blocks RN npm publication until its pinned native artifacts exist on Maven Central', async () => {
+	const root = fixture([
+		{ name: '@c15t/react-native', version: '3.0.0-alpha.2' },
+	]);
+	write(
+		root,
+		'packages/react-native/android/c15t-react-native/library.gradle',
+		"String coreVersion = prop('c15t.core.version') ?: '3.0.0-canary.0'\n"
+	);
+	change(root, { '@c15t/react-native': 'patch' });
+	await (await release(root).draft()).apply();
+	const request = vi.fn(() =>
+		Promise.resolve(new Response('', { status: 404 }))
+	);
+	vi.stubGlobal('fetch', request);
+	await expect(release(root).publish()).rejects.toThrow(/Maven Central/u);
+	expect(
+		request.mock.calls.some((call: unknown[]) =>
+			String(call[0]).includes('repo.maven.apache.org')
+		)
+	).toBe(true);
+	expect(existsSync(join(root, 'packages/react-native/dist'))).toBe(false);
+});
+
 describe('linked and independent versioning', () => {
 	it('aligns selected packages with the highest linked canary and bumps dependents', async () => {
 		const root = fixture([

@@ -676,7 +676,7 @@ Transports
 
 Same three modes as the web SDK, same backend endpoints, same headers.
 
-    x-c15t-version:            <C15tSDK.version> on Swift
+    x-c15t-version:            <c15t.version> on Swift
     x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
 

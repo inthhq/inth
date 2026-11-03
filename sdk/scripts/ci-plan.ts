@@ -74,7 +74,7 @@ export const isStarterPath = function isStarterPath(path: string): boolean {
 export const isMobileNativePath = function isMobileNativePath(
 	path: string
 ): boolean {
-	return path.startsWith('native/');
+	return path === 'Package.swift' || path.startsWith('native/');
 };
 
 /**

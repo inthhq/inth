@@ -82,18 +82,18 @@ final class ProtocolFixtureTests: XCTestCase {
         )
         XCTAssertEqual(
             index.protocolVersion,
-            C15tSDK.protocolVersion,
-            "index.json is protocol \(index.protocolVersion); this build speaks \(C15tSDK.protocolVersion). Rebuild or regenerate, do not compare across versions."
+            c15t.protocolVersion,
+            "index.json is protocol \(index.protocolVersion); this build speaks \(c15t.protocolVersion). Rebuild or regenerate, do not compare across versions."
         )
         XCTAssertEqual(
             index.policyContractHeader.name,
-            C15tSDK.policyContractHeader,
+            c15t.policyContractHeader,
             "the fixture index declares a different contract header than this build sends"
         )
         XCTAssertEqual(
             index.policyContractHeader.value,
-            C15tSDK.protocolHeaders[C15tSDK.policyContractHeader],
-            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(C15tSDK.protocolHeaders[C15tSDK.policyContractHeader] ?? "nothing")"
+            c15t.protocolHeaders[c15t.policyContractHeader],
+            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(c15t.protocolHeaders[c15t.policyContractHeader] ?? "nothing")"
         )
         for entry in index.fixtures {
             XCTAssertEqual(
@@ -119,7 +119,7 @@ final class ProtocolFixtureTests: XCTestCase {
         var ran: [String] = []
 
         // The vendor-scope vectors are graded by `VendorListScopeTests`, for the same reason the
-        // TC Strings have their own file: narrowing a vendor list is not something `C15tSDK` does
+        // TC Strings have their own file: narrowing a vendor list is not something `c15t` does
         // on a kernel call, so this runner has no action to replay against them. What it can prove
         // is the handoff -- the file that grades them reaches exactly the entries this index lists,
         // which is what turns the branch below into accounting rather than an excuse.
@@ -1225,10 +1225,10 @@ final class ProtocolFixtureTests: XCTestCase {
         guard let parsed = C15tJSON.parse(data) else {
             throw Failure.unsupported(fixture: entry.id, detail: "\(entry.file) is not JSON")
         }
-        guard parsed["protocolVersion"]?.intValue == Int64(C15tSDK.protocolVersion) else {
+        guard parsed["protocolVersion"]?.intValue == Int64(c15t.protocolVersion) else {
             throw Failure.unsupported(
                 fixture: entry.id,
-                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(C15tSDK.protocolVersion)"
+                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(c15t.protocolVersion)"
             )
         }
         return parsed

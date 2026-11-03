@@ -1,6 +1,11 @@
 // Shared by the headless JVM and Android publications. Remote publication is opt-in.
 def nativeVersion = providers.gradleProperty('c15t.native.version').get()
 def artifactName = project.name
+def centralPublication = providers.environmentVariable('C15T_MAVEN_CENTRAL').orNull == 'true'
+def privatePublication = providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true'
+if (centralPublication && privatePublication) {
+	throw new GradleException('Choose Maven Central or the private pilot publication, not both.')
+}
 group = 'com.c15t'
 version = nativeVersion
 
@@ -10,7 +15,7 @@ publishing {
 			name = 'staging'
 			url = rootProject.layout.buildDirectory.dir('maven-staging')
 		}
-		if (providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true') {
+		if (privatePublication) {
 			maven {
 				name = 'privateGitHub'
 				url = uri('https://maven.pkg.github.com/inthhq/c15t-private')
@@ -87,17 +92,23 @@ afterEvaluate {
 				}
 				developers { developer { id = 'c15t'; name = 'c15t'; url = 'https://c15t.com' } }
 				scm {
-					url = 'https://github.com/inthhq/c15t-private'
-					connection = 'scm:git:https://github.com/inthhq/c15t-private.git'
+					url = centralPublication ? 'https://github.com/c15t/c15t' : 'https://github.com/inthhq/c15t-private'
+					connection = centralPublication ? 'scm:git:https://github.com/c15t/c15t.git' : 'scm:git:https://github.com/inthhq/c15t-private.git'
+					if (centralPublication) {
+						developerConnection = 'scm:git:ssh://git@github.com/c15t/c15t.git'
+					}
 				}
 			}
 		}
 	}
-	if (providers.environmentVariable('C15T_MAVEN_PUBLISH').orNull == 'true') {
+	if (centralPublication || privatePublication) {
 		def signingKey = providers.environmentVariable('C15T_MAVEN_SIGNING_KEY').orNull
 		def signingPassword = providers.environmentVariable('C15T_MAVEN_SIGNING_PASSWORD').orNull
-		if (!signingKey || !signingPassword || !System.getenv('C15T_MAVEN_USERNAME') || !System.getenv('C15T_MAVEN_TOKEN')) {
-			throw new GradleException('Private Maven publication requires repository credentials and an in-memory signing key/password from the secure release environment.')
+		if (!signingKey || !signingPassword) {
+			throw new GradleException('Signed Maven publication requires an in-memory signing key/password from the secure release environment.')
+		}
+		if (privatePublication && (!System.getenv('C15T_MAVEN_USERNAME') || !System.getenv('C15T_MAVEN_TOKEN'))) {
+			throw new GradleException('Private Maven publication requires repository credentials from the secure release environment.')
 		}
 		signing {
 			useInMemoryPgpKeys(signingKey, signingPassword)

@@ -5,6 +5,14 @@ The workflow filename, GitHub-hosted publishing runner, `id-token: write`, and
 npm provenance remain in place for existing npm trusted publishers. No npm
 token or trusted-publisher reconfiguration is needed for existing packages.
 
+Standalone Swift and Android releases use `bun run tegami:mobile` and their
+own notes in `.tegami/mobile/`. They do not change the npm publish lock or
+trusted-publisher workflow. SwiftPM installs from the monorepo's root
+`Package.swift` and plain semver tags. Android uses Maven Central and prefixed
+`c15t-android@<version>` tags. Their versions remain independent of npm.
+See [the native release guide](../docs/internal/mobile-releases.md) for
+credentials, private testing, retry state and first-release prerequisites.
+
 ## Add release notes
 
 Use Bun 1.3.11 and Node.js 24 or later for release tooling. On a feature branch,
