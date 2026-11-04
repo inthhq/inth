@@ -611,6 +611,29 @@ image. CI uses x86_64. A run fails if its selected backend port is occupied. Run
 sequentially. `.github/workflows/mobile-app-e2e.yml` is callable and manually
 dispatchable, and has no publication dependency.
 
+### Real vendor SDKs
+
+The E2E build starts the real PostHog, Mixpanel, Amplitude, Sentry Session Replay
+and Firebase Analytics SDKs (`src/vendors/real-sdks.ts`) and connects each one
+through the documented `connect*` helper. They send to the loopback backend,
+which mounts `scripts/vendor_capture.py`; the keys and the Firebase project in
+`GoogleService-Info.plist` and `google-services.json` are placeholders. Each
+launch sends a startup probe before the prompt, and `fixture.vendor-probe` sends
+another. A probe is one event through every SDK, then a flush.
+
+The category journey checks five steps against `/captured`: a fresh install and a
+refusal send no user data, a measurement grant delivers the probe event (Sentry:
+replay segments), a withdrawal stops every vendor after in-flight uploads settle,
+and a relaunch keeps the refusal. Firebase cannot be redirected, so
+`scripts/verify-vendor-firebase.py` checks collection state, `analytics_storage`
+and the probe event against Firebase's own log. Evidence lands in
+`vendor-steps.jsonl`, `vendor-probes.json`, `vendor-requests.json` and
+`vendor-firebase.json`.
+
+On Android, Mixpanel sends to the emulator host alias `10.0.2.2`: its SDK treats a
+host that resolves to loopback as ad-blocked and sends nothing. The iOS Podfile
+links pods as dynamic frameworks because React Native Firebase requires it.
+
 The main journey covers shared SwiftUI and Compose presenters, IAB and Additional
 Consent controls, and a native commit while Hermes is blocked. The separate
 expiry scenario covers the retained bundled policy boundary and narrowed

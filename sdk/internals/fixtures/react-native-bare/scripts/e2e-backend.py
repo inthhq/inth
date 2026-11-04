@@ -5,6 +5,7 @@ import argparse
 import json
 import re
 import socket
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Lock
@@ -18,6 +19,12 @@ parser.add_argument('--scenario', choices=['category', 'iab', 'expiry', 'adapter
 args = parser.parse_args()
 args.out.mkdir(parents=True, exist_ok=True)
 root = Path(__file__).resolve().parents[4]
+sys.path.insert(0, str(root / 'scripts'))
+from vendor_capture import VendorCapture, read_body  # noqa: E402
+
+# Real vendor SDKs in the app send here; the journeys read /captured.
+capture = VendorCapture(args.out)
+vendor_probes = []
 transport = json.loads((root / 'native/protocol/evaluation-eu-fresh-install.json').read_text())['input']['transport']
 if args.scenario == 'iab':
     transport = {'status': 200, 'body': json.loads((root / 'native/examples/consent-demo/fixtures/iab-init.json').read_text())}
@@ -37,6 +44,23 @@ lock = Lock()
 
 
 class Handler(BaseHTTPRequestHandler):
+    def vendor(self, body=b''):
+        """Serve /vendor/* and /captured*, or return False for the fixture routes."""
+        result = capture.handle(self.command, self.path, self.headers, body)
+        if result is None:
+            return False
+        status, content_type, data = result
+        self.send_response(status)
+        self.send_header('Content-Type', content_type)
+        self.send_header('Content-Length', str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+        return True
+
+    def do_PUT(self):
+        if not self.vendor(read_body(self)):
+            self.reply(404, {'error': 'unexpected route'})
+
     def reply(self, status, body):
         data = json.dumps(body).encode()
         self.send_response(status)
@@ -47,6 +71,8 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_GET(self):
+        if self.vendor():
+            return
         with lock:
             if urlsplit(self.path).path == '/api/self-host/manifest':
                 self.reply(200, manifest)
@@ -59,7 +85,7 @@ class Handler(BaseHTTPRequestHandler):
             elif self.path == '/e2e/control':
                 self.reply(200, control)
             elif self.path == '/e2e/state':
-                self.reply(200, {**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block, 'backendOnline': online})
+                self.reply(200, {**state, 'saves': saves, 'native': native_state, 'jsBlock': js_block, 'backendOnline': online, 'vendorProbes': vendor_probes})
             elif self.path == '/health':
                 self.reply(200, {'fixture': 'evaluation-eu-fresh-install'})
             else:
@@ -67,7 +93,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         global transport, online
-        data = self.rfile.read(int(self.headers['Content-Length']))
+        data = read_body(self)
+        if self.vendor(data):
+            return
         if self.path.startswith('/e2e/artifacts/'):
             name = self.path.removeprefix('/e2e/artifacts/')
             if not re.fullmatch(r'[a-z0-9-]+\.(png|xml|json)', name):
@@ -97,6 +125,16 @@ class Handler(BaseHTTPRequestHandler):
                 native_state.update(body)
                 native_state['observedAt'] = time()
                 (args.out / 'native-observer.json').write_text(json.dumps(body, indent=2))
+                self.reply(200, {})
+            elif self.path == '/e2e/vendor-probe':
+                body['receivedAt'] = time()
+                vendor_probes.append(body)
+                (args.out / 'vendor-probes.json').write_text(json.dumps(vendor_probes, indent=2))
+                self.reply(200, {'count': len(vendor_probes)})
+            elif self.path == '/e2e/vendor-step':
+                # The journey's verdict per step, read by verify-vendor-firebase.py.
+                with (args.out / 'vendor-steps.jsonl').open('a') as steps:
+                    steps.write(json.dumps({**body, 'at': time()}) + '\n')
                 self.reply(200, {})
             elif self.path == '/e2e/js-block':
                 js_block.update(body)

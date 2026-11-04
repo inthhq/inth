@@ -17,6 +17,9 @@ import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
+/** Longer than Sentry's 5-second replay upload interval. */
+private const val VENDOR_QUIET_MS = 6000L
+
 @RunWith(AndroidJUnit4::class)
 class ConsentJourney {
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
@@ -70,6 +73,122 @@ class ConsentJourney {
             SystemClock.sleep(250)
         } while (SystemClock.elapsedRealtime() < deadline)
         error("Timed out waiting for $name. Native report: $last")
+    }
+
+    // Real vendor SDKs. Firebase cannot be redirected and is checked from its log.
+    private val trafficVendors = listOf("posthog", "mixpanel", "amplitude", "sentry")
+
+    private fun fetchJson(path: String, body: JSONObject? = null): JSONObject {
+        val connection = URL("http://localhost:3000$path").openConnection() as HttpURLConnection
+        connection.connectTimeout = 5000
+        connection.readTimeout = 5000
+        try {
+            if (body != null) {
+                connection.requestMethod = "POST"; connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.outputStream.use { it.write(body.toString().toByteArray()) }
+            }
+            return JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+        } finally { connection.disconnect() }
+    }
+
+    private fun vendorProbes() = report().optJSONArray("vendorProbes") ?: org.json.JSONArray()
+
+    private fun rows(array: org.json.JSONArray) = (0 until array.length()).map { array.getJSONObject(it) }
+
+    /** Capture requests after [since]. Sentry counts only replay items, the part c15t controls. */
+    private fun governedCapture(since: Int): Pair<Int, List<JSONObject>> {
+        val captured = fetchJson("/captured?kind=capture&since=$since")
+        val governed = rows(captured.getJSONArray("requests")).filter { row ->
+            val items = row.getJSONArray("items")
+            row.getString("vendor") != "sentry" || (0 until items.length()).any { items.getString(it).startsWith("replay_") }
+        }
+        return captured.getInt("last") to governed
+    }
+
+    private fun counts(rows: List<JSONObject>) = JSONObject().also { counts ->
+        trafficVendors.forEach { vendor -> counts.put(vendor, rows.count { it.getString("vendor") == vendor }) }
+    }
+
+    /** Wait for the probe the app reports after [count] earlier ones. Each SDK must accept the calls. */
+    private fun awaitVendorProbe(after: Int, reason: String): JSONObject {
+        val deadline = SystemClock.elapsedRealtime() + 60000
+        do {
+            val probe = rows(vendorProbes()).drop(after).firstOrNull { it.optString("reason") == reason }
+            if (probe != null) {
+                assertTrue("Vendor SDKs did not start: $probe", probe.optBoolean("started"))
+                assertEquals("Vendor SDK errors: $probe", 0, probe.optJSONObject("errors")?.length() ?: 0)
+                return probe
+            }
+            SystemClock.sleep(250)
+        } while (SystemClock.elapsedRealtime() < deadline)
+        error("No $reason vendor probe after $after")
+    }
+
+    private fun sendVendorProbe(): JSONObject {
+        val count = vendorProbes().length()
+        tap("fixture.vendor-probe")
+        return awaitVendorProbe(count, "button")
+    }
+
+    private fun recordVendorStep(step: String, probe: JSONObject, granted: Boolean, since: Int, rows: List<JSONObject>, extra: JSONObject = JSONObject()) {
+        val body = JSONObject().put("step", step).put("probe", probe.optString("name")).put("granted", granted)
+            .put("since", since).put("counts", counts(rows)).put("requests", org.json.JSONArray(rows))
+        extra.keys().forEach { body.put(it, extra.get(it)) }
+        fetchJson("/e2e/vendor-step", body)
+        File(output, "$step.json").also { it.writeText(body.toString(2)); publish(it) }
+    }
+
+    /**
+     * No vendor may send user data after [since]. An absence needs a window: Mixpanel's
+     * native flush returns before its upload, and Sentry uploads replay every 5 seconds.
+     */
+    private fun assertVendorsSilent(step: String, since: Int, probe: JSONObject, extra: JSONObject = JSONObject()) {
+        val until = SystemClock.elapsedRealtime() + 8000
+        var observed = governedCapture(since)
+        while (observed.second.isEmpty() && SystemClock.elapsedRealtime() < until) {
+            SystemClock.sleep(500)
+            observed = governedCapture(since)
+        }
+        recordVendorStep(step, probe, false, since, observed.second, extra)
+        assertTrue("$step: vendors sent user data without consent: ${observed.second}", observed.second.isEmpty())
+    }
+
+    /** Every SDK sends the probe event, and Sentry uploads replay, once measurement is granted. */
+    private fun assertVendorsCapture(step: String, since: Int, probe: JSONObject) {
+        val name = probe.getString("name")
+        fun sent(rows: List<JSONObject>, vendor: String) = rows.any { row ->
+            row.getString("vendor") == vendor && (vendor == "sentry" || row.getJSONArray("events").toString().contains("\"$name\""))
+        }
+        val deadline = SystemClock.elapsedRealtime() + 60000
+        var observed = governedCapture(since)
+        while (!trafficVendors.all { sent(observed.second, it) } && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(500)
+            observed = governedCapture(since)
+        }
+        recordVendorStep(step, probe, true, since, observed.second)
+        trafficVendors.forEach { vendor ->
+            assertTrue("$step: $vendor sent no ${if (vendor == "sentry") "replay" else name} after granting measurement: ${observed.second}", sent(observed.second, vendor))
+        }
+    }
+
+    /**
+     * Withdrawal may finish uploads already in flight; Sentry documents a final replay
+     * segment after stop and uploads replay every 5 seconds. Wait until vendor traffic
+     * has been quiet for longer than that interval ([VENDOR_QUIET_MS]).
+     */
+    private fun vendorTrafficSettles(after: Int): Pair<Int, List<JSONObject>> {
+        val deadline = SystemClock.elapsedRealtime() + 30000
+        var observed = governedCapture(after)
+        var quietSince = SystemClock.elapsedRealtime()
+        var seen = observed.second.size
+        while (SystemClock.elapsedRealtime() - quietSince < VENDOR_QUIET_MS && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(500)
+            observed = governedCapture(after)
+            if (observed.second.size != seen) { seen = observed.second.size; quietSince = SystemClock.elapsedRealtime() }
+        }
+        assertTrue("Vendor traffic did not stop after withdrawal: ${observed.second}", SystemClock.elapsedRealtime() - quietSince >= VENDOR_QUIET_MS)
+        return observed
     }
 
     private fun control(id: String): UiObject2 =
@@ -399,6 +518,8 @@ class ConsentJourney {
             network(false)
             launch()
             fresh()
+            // Vendor step 1: a fresh install sends nothing, including the launch probe.
+            assertVendorsSilent("vendor-1-fresh-install", 0, awaitVendorProbe(0, "startup"))
             awaitState("first-install-unknown") { snapshot, report ->
                 snapshot.isNull("policySnapshotToken") && snapshot.getJSONObject("location").isNull("countryCode") && !report.getBoolean("backendOnline") && report.getJSONArray("saves").length() == 0
             }
@@ -409,6 +530,9 @@ class ConsentJourney {
             capture("01-fresh-prompt")
             tap("c15t.first-layer.reject-all")
             val rejected = localChoice(emptySet(), 0)
+            // Vendor step 2: a refusal keeps every vendor silent.
+            val rejectSeq = governedCapture(0).first
+            assertVendorsSilent("vendor-2-reject-all", rejectSeq, sendVendorProbe())
             network(true); launch()
             assertEquals(choiceBytes(rejected), choiceBytes(choice(emptySet(), 1)))
             network(false)
@@ -432,6 +556,9 @@ class ConsentJourney {
             val saved = localChoice(setOf("measurement"), 2)
             val savedChoice = canonical(saved.getJSONObject("snapshot").getJSONObject("explicitChoice"))
             capture("05-saved")
+            // Vendor step 3: measurement is the category every helper defaults to.
+            val grantSeq = governedCapture(0).first
+            assertVendorsCapture("vendor-3-grant-measurement", grantSeq, sendVendorProbe())
 
             tap("fixture.repeat-preferences")
             assertTrue("Saved switch is checked", control("c15t.prefs.category.measurement.switch").isChecked)
@@ -469,8 +596,14 @@ class ConsentJourney {
             tap("c15t.prefs.reject-all")
             val withdrawn = localChoice(emptySet(), 2)
             capture("08-withdrawn-offline")
+            // Vendor step 4: after in-flight uploads settle, a withdrawal stops every vendor.
+            val (withdrawSeq, inFlight) = vendorTrafficSettles(governedCapture(0).first)
+            assertVendorsSilent("vendor-4-withdraw", withdrawSeq, sendVendorProbe(), JSONObject().put("inFlightAfterWithdrawal", org.json.JSONArray(inFlight)))
+            val probesBeforeRelaunch = vendorProbes().length()
             launch()
             assertEquals(choiceBytes(withdrawn), choiceBytes(localChoice(emptySet(), 2)))
+            // Vendor step 5: the saved refusal holds across a relaunch.
+            assertVendorsSilent("vendor-5-relaunch-refused", withdrawSeq, awaitVendorProbe(probesBeforeRelaunch, "startup"))
             capture("09-withdrawal-relaunched")
             network(true); launch()
             val replayed = choice(emptySet(), 3)

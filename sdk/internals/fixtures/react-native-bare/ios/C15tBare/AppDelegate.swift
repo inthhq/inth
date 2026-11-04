@@ -1,4 +1,5 @@
 import C15tReactNative
+import FirebaseCore
 import UIKit
 import React
 import React_RCTAppDelegate
@@ -17,6 +18,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // firebase.json keeps collection off and every consent type denied until c15t
+    // grants measurement. The Firebase project in GoogleService-Info.plist is fake.
+    FirebaseApp.configure()
     if let endpoint = Bundle.main.object(forInfoDictionaryKey: "C15tAppE2EURL") as? String,
        URL(string: endpoint)?.host == "localhost" {
       let control = fixtureControl(endpoint)

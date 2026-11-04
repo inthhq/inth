@@ -18,7 +18,7 @@ export C15T_APP_E2E_SCENARIO="${C15T_APP_E2E_SCENARIO:-category}"
 printf '%s\n' "${C15T_APP_E2E_SCENARIO}" > "${OUT}/scenario.txt"
 BACKEND_PORT="${C15T_APP_E2E_PORT:-39873}"
 export C15T_E2E_URL="http://localhost:${BACKEND_PORT}"
-BACKEND_PID=""; VIDEO_PID=""; LOG_PID=""; DEVICE=""; EMULATOR_PID=""; AVD_NAME=""
+BACKEND_PID=""; VIDEO_PID=""; LOG_PID=""; FIREBASE_LOG_PID=""; DEVICE=""; EMULATOR_PID=""; AVD_NAME=""
 
 cleanup() {
   result=$?
@@ -37,6 +37,10 @@ cleanup() {
   if [[ -n "${LOG_PID}" ]]; then
     kill "${LOG_PID}"
     wait "${LOG_PID}"
+  fi
+  if [[ -n "${FIREBASE_LOG_PID}" ]]; then
+    kill "${FIREBASE_LOG_PID}"
+    wait "${FIREBASE_LOG_PID}"
   fi
   if [[ "${PLATFORM}" == ios && -n "${DEVICE}" ]]; then
     xcrun simctl io "${DEVICE}" screenshot "${OUT}/final.png"
@@ -74,6 +78,10 @@ PYVIDEO
   [[ -z "${BACKEND_PID}" ]] || { kill "${BACKEND_PID}"; wait "${BACKEND_PID}"; }
   if [[ "${result}" == 0 && "${C15T_APP_E2E_SCENARIO}" == expiry ]]; then
     python3 "${APP_DIR}/scripts/verify-expiry.py" "${OUT}" > "${OUT}/expiry-verification.log" 2>&1 || result=1
+  fi
+  # The journey records each vendor step; Firebase is checked against its own log.
+  if [[ -s "${OUT}/vendor-steps.jsonl" ]]; then
+    python3 "${APP_DIR}/scripts/verify-vendor-firebase.py" "${OUT}" "${PLATFORM}" > "${OUT}/vendor-firebase-verification.log" 2>&1 || result=1
   fi
   python3 "${APP_DIR}/scripts/e2e-result.py" "${OUT}" "${PLATFORM}" "${result}" || result=1
   rm -rf "${TASK_TMP}"
@@ -144,6 +152,10 @@ for path in pathlib.Path(sys.argv[1]).glob('*.xctestrun'):
  update(data)
  path.write_bytes(plistlib.dumps(data))
 PYRUN
+  # Firebase cannot be redirected; its debug log (the journey launches with
+  # -FIRDebugEnabled -FIRAnalyticsDebugEnabled) is the evidence for its consent state.
+  xcrun simctl spawn "${DEVICE}" log stream --level debug --style compact --predicate 'process == "C15tBare"' > "${OUT}/app-stream.log" 2>&1 &
+  LOG_PID=$!
   xcrun simctl io "${DEVICE}" recordVideo --codec=h264 "${OUT}/journey.mp4" > "${OUT}/video.log" 2>&1 &
   VIDEO_PID=$!
   XCTESTRUN="$(find "${C15T_APP_E2E_DERIVED:-${OUT}/derived}/Build/Products" -maxdepth 1 -name '*.xctestrun' -print -quit)"
@@ -190,6 +202,9 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
   # JS/instrumentation keep a stable device endpoint; only this owned emulator is reversed.
   export C15T_E2E_URL=http://localhost:3000
+  # Mixpanel's Android SDK sends nothing to a host that resolves to loopback, so it
+  # reaches the same backend through the emulator's alias for the host machine.
+  export C15T_E2E_MIXPANEL_URL="http://10.0.2.2:${BACKEND_PORT}"
   export C15T_MAVEN_URL="file://${REPO_ROOT}/native/core-android/build/maven-staging"
   sh "${REPO_ROOT}/native/core-android/gradlew" -p "${REPO_ROOT}/native/core-android" --max-workers=4 \
     :c15t-core:publishAllPublicationsToStagingRepository :c15t-android:publishAllPublicationsToStagingRepository :c15t-consent-ui:publishAllPublicationsToStagingRepository > "${OUT}/native-artifacts.log" 2>&1
@@ -198,8 +213,14 @@ for p in list(range(5554, 5580, 2)) + [5582, 5584]:
   sh "${APP_DIR}/android/gradlew" -p "${APP_DIR}/android" --refresh-dependencies :app:assembleRelease :e2e:assembleRelease \
     -Pc15t.appE2e=true -Pc15t.policyAssets="${OUT}/policy-assets" -PreactNativeArchitectures="${ARCH}" > "${OUT}/build.log" 2>&1
   "${ADB}" -s "${DEVICE}" shell input keyevent 224
+  # Firebase cannot be redirected; its verbose log is the evidence for its consent state.
+  "${ADB}" -s "${DEVICE}" shell setprop log.tag.FA VERBOSE
+  "${ADB}" -s "${DEVICE}" shell setprop log.tag.FA-SVC VERBOSE
   "${ADB}" -s "${DEVICE}" logcat -v threadtime > "${OUT}/device.log" 2>&1 &
   LOG_PID=$!
+  # Epoch timestamps line Firebase's state up with the probe times the app reports.
+  "${ADB}" -s "${DEVICE}" logcat -v epoch -s FA:V FA-SVC:V > "${OUT}/firebase.log" 2>&1 &
+  FIREBASE_LOG_PID=$!
   cat > "${OUT}/record-video.sh" <<'SHVIDEO'
 #!/system/bin/sh
 mkdir -p /data/local/tmp/c15t-video-segments

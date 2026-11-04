@@ -38,7 +38,14 @@
 
 // Last, because it declares a class whose superclass and block types come from the two
 // headers above.
+// Pods built as frameworks (`use_frameworks!`, which React Native Firebase and Expo's
+// useFrameworks require) expose the Swift interface under the module name; static
+// libraries expose it as a plain header.
+#if __has_include(<C15tReactNative/C15tReactNative-Swift.h>)
+#import <C15tReactNative/C15tReactNative-Swift.h>
+#else
 #import "C15tReactNative-Swift.h"
+#endif
 
 /*
  * The conformance and the JavaScript name, both of which have to live in ObjC++.

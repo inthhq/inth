@@ -10,11 +10,11 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, '16.4'
 prepare_react_native_project!
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# React Native Firebase resolves the Firebase SDK through Swift Package Manager and
+# rejects static pod linkage, so this fixture links every pod as a dynamic framework.
+linkage = ENV['USE_FRAMEWORKS'] || 'dynamic'
+Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+use_frameworks! :linkage => linkage.to_sym
 
 target 'C15tBare' do
   config = use_native_modules!
@@ -35,5 +35,15 @@ target 'C15tBare' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+    # Resource bundle targets keep their pod's own floor, such as async-storage's
+    # 13.4, which current Xcode refuses to build. Lift every pod to the app's floor.
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build|
+        floor = build.build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+        if floor && Gem::Version.new(floor) < Gem::Version.new('16.4')
+          build.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.4'
+        end
+      end
+    end
   end
 end

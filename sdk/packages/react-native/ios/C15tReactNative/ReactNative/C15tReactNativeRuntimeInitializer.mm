@@ -40,7 +40,14 @@
 // imports the Swift interface needs this; the class below does not use it itself.
 #import <React/RCTEventEmitter.h>
 
+// Pods built as frameworks (`use_frameworks!`, which React Native Firebase and Expo's
+// useFrameworks require) expose the Swift interface under the module name; static
+// libraries expose it as a plain header.
+#if __has_include(<C15tReactNative/C15tReactNative-Swift.h>)
+#import <C15tReactNative/C15tReactNative-Swift.h>
+#else
 #import "C15tReactNative-Swift.h"
+#endif
 
 @interface C15tReactNativeEarlyStart : NSObject
 @end

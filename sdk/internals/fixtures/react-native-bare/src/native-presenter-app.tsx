@@ -15,6 +15,7 @@ import { Button, Text, View } from 'react-native';
 
 import { useDemoDeepLinks } from './deep-links/use-deep-links';
 import { useE2eObserver } from './e2e-observer';
+import { useE2eVendorProbe } from './vendors/e2e-vendor-probe';
 
 const privacyPolicyURL = 'https://c15t.com/privacy';
 const outcomes: ConsentPresenterOutcome[] = [];
@@ -49,6 +50,8 @@ const requestPresentation = async (
 /** Reference host. All consent controls, drafts and navigation belong to native UI. */
 export const NativePresenterApp = () => {
 	useE2eObserver();
+	const vendors = useE2eVendorProbe();
+	const handleVendorProbe = vendors.probe;
 	const status = useConsentStatus();
 	const actions = useConsentActions();
 	const [latest, setLatest] = useState<ConsentPresenterOutcome>();
@@ -83,15 +86,23 @@ export const NativePresenterApp = () => {
 		[]
 	);
 	useEffect(() => {
+		// E2E sends the startup vendor probe first: the prompt's Android Activity
+		// pauses JavaScript timers, and the probe shows what an app that tracks at
+		// launch sends before any decision.
 		if (
 			process.env.C15T_APP_E2E_SCENARIO === 'adapter' ||
+			!vendors.startupSettled ||
 			status.policyPending ||
 			status.promptRequirement.kind === 'none'
 		) {
 			return;
 		}
 		void requestPresentation(false, setError);
-	}, [status.policyPending, status.promptRequirement.kind]);
+	}, [
+		status.policyPending,
+		status.promptRequirement.kind,
+		vendors.startupSettled,
+	]);
 	const checkSession = async () => {
 		const first = await presentPreferences(privacyPolicyURL);
 		const repeated = await presentPreferences(privacyPolicyURL);
@@ -167,6 +178,11 @@ export const NativePresenterApp = () => {
 			/>
 			{process.env.C15T_APP_E2E === '1' ? (
 				<View style={{ gap: 16 }}>
+					<Button
+						testID="fixture.vendor-probe"
+						title="Send a vendor probe"
+						onPress={handleVendorProbe}
+					/>
 					<Button
 						testID="fixture.host-action"
 						title="Host action"
