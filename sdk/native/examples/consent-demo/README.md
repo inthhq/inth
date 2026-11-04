@@ -31,3 +31,32 @@ disclosures. Follow the [Google mobile certification guide](../../../docs/intern
 for exports, local checks and submission preparation. The shared web-demo
 project currently serves category policies and needs an IAB policy before it
 can supply hosted certification evidence.
+
+## Real vendor SDKs
+
+The iOS demo links PostHog, Mixpanel, Sentry and Firebase Analytics, pinned in
+`ios/project.yml`. They start only in a Debug fixture launch that sets
+`C15T_VENDOR_BASE`, so the demo behaves as before for everyone else.
+`ios/VendorSDKs/vendor-sdk-harness.swift` configures each SDK with collection
+off, binds it to the measurement category through the c15t Swift helpers, and
+adds Probe vendors and Flush buttons above the consent screens.
+
+```sh
+bash native/examples/consent-demo/ios/run-vendor-e2e.sh
+```
+
+The runner starts `scripts/vendor_capture.py`, points PostHog, Mixpanel and
+Sentry at it, and runs `VendorSDKTests` in both schemes on its own
+`c15t-ios-vendors` simulator, which it erases first. The test probes before any
+decision, after Reject all, after granting measurement, after withdrawing it
+in Privacy settings, and after a relaunch. It expects capture traffic only
+after the grant. Firebase cannot be redirected, so it runs against the fake
+project in `ios/VendorSDKs/GoogleService-Info.plist`, and
+`scripts/vendor-firebase-log.py` checks collection, `analytics_storage` and
+the probe event in its debug log. Network errors to Google are expected.
+
+After a withdrawal, PostHog still sends events it queued while consent was
+granted, such as the `$screen` event from opening Privacy settings. The test
+flushes those and records them as in-flight evidence before it probes.
+Evidence lands in `ios/.artifacts/vendor-e2e/`: `vendor-requests.json`,
+`firebase-evidence.json`, the device log and an `.xcresult` per scheme.

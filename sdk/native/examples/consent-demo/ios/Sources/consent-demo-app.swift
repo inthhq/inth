@@ -35,6 +35,9 @@ final class DemoSession: ObservableObject, SnapshotObserver {
     private var started = false
     private var reportURL: URL?
     private let launchID = UUID().uuidString
+    #if DEBUG
+    private var vendors: VendorSDKHarness?
+    #endif
     @Published private(set) var fixture = false
     @Published private(set) var starting = false
     @Published private(set) var reviewProfile: IABReviewProfile?
@@ -80,6 +83,11 @@ final class DemoSession: ObservableObject, SnapshotObserver {
                 self.transport = http
                 self.policyURL = URL(string: "https://example.test/privacy")
                 fault.failNext = env["C15T_FIXTURE_FAIL_NEXT_WRITE"] == "1"
+                // Real vendor SDKs start only when run-vendor-e2e.sh passes its capture server.
+                if let vendors = VendorSDKHarness.fromEnvironment() {
+                    vendors.start(core: core)
+                    self.vendors = vendors
+                }
                 #else
                 throw DemoError.missingFixture
                 #endif

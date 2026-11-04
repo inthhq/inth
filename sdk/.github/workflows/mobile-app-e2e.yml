@@ -41,3 +41,76 @@ jobs:
             !internals/fixtures/react-native-bare/.artifacts/app-e2e/**/derived/**
           if-no-files-found: error
           retention-days: 7
+
+  ios-vendor-sdks:
+    name: Real vendor SDKs follow consent on iOS Simulator
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'macos-latest' || 'depot-macos-latest' }}
+    timeout-minutes: 60
+    env:
+      # Same acceptance list as mobile-device.yml and ci.yml.
+      C15T_XCODE_VERSIONS: '27 26'
+      C15T_VENDOR_E2E_OUT: native/examples/consent-demo/ios/.artifacts/vendor-e2e/ci
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: mobile-app-e2e-ios-vendors
+      - name: Select the pinned Xcode
+        run: |
+          target=""
+          for version in ${C15T_XCODE_VERSIONS}; do
+            # Newest point release of this major first; the glob sorts lexically, so
+            # take the last match. A missing major expands to no matches at all.
+            for candidate in /Applications/Xcode_${version}*.app /Applications/Xcode-${version}*.app; do
+              if [ -d "${candidate}/Contents/Developer" ]; then
+                target="${candidate}"
+              fi
+            done
+            if [ -n "${target}" ]; then
+              break
+            fi
+          done
+          if [ -z "${target}" ] && [ -d /Applications/Xcode.app/Contents/Developer ]; then
+            target=/Applications/Xcode.app
+          fi
+          if [ -z "${target}" ]; then
+            echo "No Xcode ${C15T_XCODE_VERSIONS} in /Applications. This runner has:" >&2
+            ls /Applications >&2
+            exit 1
+          fi
+          if [ "${target}" != "/Applications/Xcode.app" ] && [ ! -e /Applications/Xcode.app ]; then
+            sudo ln -s "${target}" /Applications/Xcode.app
+          fi
+          echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "${GITHUB_ENV}"
+          xcodebuild -version
+          accepted="$(printf '%s' "${C15T_XCODE_VERSIONS}" | tr ' ' '|')"
+          xcodebuild -version | head -n 1 | grep -qE "^Xcode (${accepted})[. ]" || {
+            echo "Expected Xcode ${C15T_XCODE_VERSIONS}, found the version above." >&2
+            exit 1
+          }
+      - name: Install XcodeGen
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_NO_INSTALL_CLEANUP: '1'
+        run: command -v xcodegen || brew install xcodegen
+      # Firebase's package graph takes minutes to clone; the pins live in project.yml.
+      - name: Cache vendor SDK packages
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/Library/Caches/c15t-ios-vendor-sdks/SourcePackages
+          key: ios-vendor-sdks-${{ runner.os }}-${{ hashFiles('native/examples/consent-demo/ios/project.yml') }}
+      - name: Run PostHog, Mixpanel, Sentry Replay and Firebase against the c15t helpers
+        run: bash native/examples/consent-demo/ios/run-vendor-e2e.sh
+      - name: Upload vendor requests, Firebase log evidence and XCTest results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-app-e2e-ios-vendor-sdks
+          path: native/examples/consent-demo/ios/.artifacts/vendor-e2e/ci/**
+          if-no-files-found: error
+          retention-days: 7

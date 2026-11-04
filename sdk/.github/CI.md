@@ -18,6 +18,7 @@ benchmark should reuse an existing group unless it proves a different contract.
 | Runtime comparisons | Public operation costs, policy resolution, script lifecycle; full browser metrics in separate canary runs and full validation | Routine microbench runs |
 | Mobile SDK | Swift and Kotlin kernel builds and tests, both Android assemblies, the binding's autolinking as a host app resolves it, the mobile JS boundary, mobile budgets and their required-row contract | Example app builds |
 | Mobile device builds (advisory) | Expo config-plugin resolution, CocoaPods resolution and the two example apps built for iOS and Android | A second native unit-test run |
+| iOS vendor SDKs (full validation) | Real PostHog, Mixpanel, Sentry Replay and Firebase Analytics in the iOS demo follow the measurement decision through the c15t Swift helpers: request capture for the first three, Firebase's debug log for the last | Helper logic, which the Swift unit tests cover with fakes |
 
 ## Selection and local commands
 
@@ -96,6 +97,8 @@ bun scripts/ci-mobile-bench-report.ts --kind ios-toolchain --report-dir .ci-repo
 # Android instrumented suite, needs a booted emulator, so it is local-only
 JAVA_HOME=$(/usr/libexec/java_home -v 17) ANDROID_HOME=$HOME/Library/Android/sdk \
   sh native/core-android/gradlew -p native/core-android :c15t-android:connectedDebugAndroidTest --no-build-cache
+# Real vendor SDKs against the Swift helpers; needs Xcode, XcodeGen and a simulator runtime
+bash native/examples/consent-demo/ios/run-vendor-e2e.sh
 ```
 
 `internals/consent-observers` is an ordinary package test with a different

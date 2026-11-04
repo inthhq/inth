@@ -15,7 +15,7 @@ interface Source {
 	buildPhase?: string;
 }
 interface DemoProject {
-	packages: Record<string, { path: string }>;
+	packages: Record<string, { path?: string; url?: string }>;
 	targets: Record<
 		string,
 		{
@@ -46,7 +46,10 @@ const project = Bun.YAML.parse(
 	readFileSync(resolve(import.meta.dir, 'project.yml'), 'utf8')
 ) as DemoProject;
 for (const dependency of Object.values(project.packages)) {
-	dependency.path = resolve(import.meta.dir, dependency.path);
+	// Remote vendor packages carry a URL and a pinned version instead.
+	if (dependency.path) {
+		dependency.path = resolve(import.meta.dir, dependency.path);
+	}
 }
 for (const target of Object.values(project.targets)) {
 	target.sources = target.sources.map((source) => {

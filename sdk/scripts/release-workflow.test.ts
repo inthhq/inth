@@ -1172,6 +1172,33 @@ esac
 });
 
 describe('mobile CI preparation', () => {
+	it('selects the same pinned Xcode in every iOS job', () => {
+		interface Job {
+			env?: Record<string, string>;
+			steps?: { name?: string; run?: string }[];
+		}
+		const selections = [
+			['ci', 'mobile'],
+			['mobile-device', 'device'],
+			['mobile-app-e2e', 'ios-vendor-sdks'],
+		].map(([file, name]) => {
+			const job: Job = readPublicationWorkflow(file).jobs[name];
+			const step = job.steps?.find(
+				(entry) => entry.name === 'Select the pinned Xcode'
+			);
+			// Comments may differ between copies; the commands may not.
+			const commands = step?.run
+				?.split('\n')
+				.filter((line) => !line.trim().startsWith('#'))
+				.join('\n');
+			return { run: commands, versions: job.env?.C15T_XCODE_VERSIONS };
+		});
+		expect(selections[0].run).toContain('C15T_XCODE_VERSIONS');
+		for (const selection of selections.slice(1)) {
+			expect(selection).toEqual(selections[0]);
+		}
+	});
+
 	it('fails the Android lane when the Android helper unit suite fails', () => {
 		const step = readPublicationWorkflow('ci').jobs.mobile.steps.find(
 			(entry: { name?: string }) =>
