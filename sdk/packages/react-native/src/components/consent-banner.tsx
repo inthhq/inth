@@ -154,7 +154,7 @@ const ConsentBannerActions = ({
 							disabled={busy}
 							kind="secondary"
 							testID="c15t.first-layer.reject-all"
-						label={copy.rejectAll}
+							label={copy.rejectAll}
 							onPress={() => {
 								void decide('reject');
 							}}
@@ -165,7 +165,7 @@ const ConsentBannerActions = ({
 							disabled={busy}
 							kind="secondary"
 							testID="c15t.first-layer.accept-all"
-						label={copy.acceptAll}
+							label={copy.acceptAll}
 							onPress={() => {
 								void decide('accept');
 							}}

@@ -25,5 +25,14 @@ export type {
 	NativeEventSubscription,
 	NativeEventsLike,
 } from './module';
-export { closeConsentPresenter, onConsentPresenterOutcome, parseConsentPresenterOutcome, presentConsentPrompt, presentPreferences } from './presenter';
-export type { ConsentPresenterOutcome, ConsentPresenterSession } from './presenter';
+export {
+	closeConsentPresenter,
+	onConsentPresenterOutcome,
+	parseConsentPresenterOutcome,
+	presentConsentPrompt,
+	presentPreferences,
+} from './presenter';
+export type {
+	ConsentPresenterOutcome,
+	ConsentPresenterSession,
+} from './presenter';

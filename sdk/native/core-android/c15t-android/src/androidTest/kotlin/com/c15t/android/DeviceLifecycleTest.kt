@@ -58,8 +58,7 @@ class DeviceLifecycleTest {
 		val subjectId = requireSubjectId()
 		assertTrue("the offline commit itself succeeds", C15t.save(CommitIntent.All).ok)
 
-		val waiting = queuedSaveFor(context, subjectId)
-		assertNotNull("and it is waiting on the device", waiting)
+		val waiting = requireNotNull(queuedSaveFor(context, subjectId)) { "and it is waiting on the device" }
 
 		// The replay this test wants is the one arriving in the foreground causes, so the
 		// process has to leave it first: a previous test's Activity may still be holding it
@@ -68,10 +67,11 @@ class DeviceLifecycleTest {
 		backend.online = true
 		val foreground = ActivityScenario.launch(C15tForegroundHostActivity::class.java)
 		try {
-			awaitSettled("the foreground arrival to replay the queue") { backend.accepted().contains(waiting) }
+			awaitSettled("the foreground arrival to replay the queue") { backend.deliveriesOf(waiting) > 0 }
 			awaitSettled("the replayed write to leave the device queue") {
 				queuedSaveFor(context, subjectId) == null
 			}
+			assertEquals("the replay sends the queued write once", 1, backend.deliveriesOf(waiting))
 		} finally {
 			foreground.close()
 		}

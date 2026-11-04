@@ -1,5 +1,6 @@
-import { AndroidConfig } from '@expo/config-plugins';
+import type { AndroidConfig } from '@expo/config-plugins';
 
+import { androidConfig } from './config-plugins';
 import {
 	ANDROID_INITIALIZER,
 	ANDROID_INTERNET_PERMISSION,
@@ -106,7 +107,7 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 const getMainApplicationOrThrow = function getMainApplicationOrThrow(
 	manifest: AndroidConfig.Manifest.AndroidManifest
 ): ManifestApplicationWithProviders {
-	const application = AndroidConfig.Manifest.getMainApplication(manifest);
+	const application = androidConfig.Manifest.getMainApplication(manifest);
 	if (application === null) {
 		throw new C15tPluginError(
 			'AndroidManifest.xml has no <application android:name="...MainApplication">, ' +
@@ -122,9 +123,9 @@ const getMainApplicationOrThrow = function getMainApplicationOrThrow(
 const ensureInternetPermission = function ensureInternetPermission(
 	manifest: AndroidConfig.Manifest.AndroidManifest
 ): void {
-	const requested = AndroidConfig.Permissions.getPermissions(manifest);
+	const requested = androidConfig.Permissions.getPermissions(manifest);
 	if (!requested.includes(ANDROID_INTERNET_PERMISSION)) {
-		AndroidConfig.Permissions.addPermission(
+		androidConfig.Permissions.addPermission(
 			manifest,
 			ANDROID_INTERNET_PERMISSION
 		);
@@ -192,7 +193,7 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	params: ResolvedC15tParams,
 	manifest: AndroidConfig.Manifest.AndroidManifest
 ): AndroidConfig.Manifest.AndroidManifest {
-	const next = AndroidConfig.Manifest.ensureToolsAvailable(manifest);
+	const next = androidConfig.Manifest.ensureToolsAvailable(manifest);
 
 	ensureInternetPermission(next);
 
@@ -206,7 +207,7 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	}
 
 	for (const pair of buildMetaDataPairs(params)) {
-		AndroidConfig.Manifest.addMetaDataItemToMainApplication(
+		androidConfig.Manifest.addMetaDataItemToMainApplication(
 			application,
 			pair.name,
 			pair.value

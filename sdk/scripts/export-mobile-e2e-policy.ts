@@ -10,6 +10,10 @@ await writeFile(
 	output,
 	await exportMobilePolicy({
 		endpoint: `${process.env.C15T_E2E_BINDING ?? 'http://localhost:3108'}/api/self-host`,
+		expiresAt:
+			process.env.C15T_APP_E2E_SCENARIO === 'expiry'
+				? 1793232001000
+				: Date.now() + 86400000,
 		fetch: (input, init) =>
 			fetch(
 				String(input).replace(
@@ -18,10 +22,6 @@ await writeFile(
 				),
 				init
 			),
-		expiresAt:
-			process.env.C15T_APP_E2E_SCENARIO === 'expiry'
-				? 1793232001000
-				: Date.now() + 86400000,
 		now:
 			process.env.C15T_APP_E2E_SCENARIO === 'expiry'
 				? 1793232000000

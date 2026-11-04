@@ -1,62 +1,47 @@
 {
-  "location": {
-    "countryCode": "GB",
-    "regionCode": "ENG"
-  },
-  "policySnapshotToken": "fixture-token",
-  "policyResolution": {
-    "version": 1,
-    "status": "matched",
-    "policyId": "prototype-policy",
-    "matchedBy": "country",
-    "fingerprints": {
-      "policy": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
-      "choice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-    },
-    "policy": {
-      "id": "prototype-policy",
-      "model": "opt-out",
-      "prompt": "notice",
-      "scope": [
-        "functionality",
-        "experience",
-        "measurement",
-        "marketing"
-      ],
-      "scopeMode": "strict",
-      "preselectedCategories": [],
-      "actions": {
-        "allowed": [
-          "dismiss"
-        ],
-        "required": [
-          "dismiss"
-        ],
-        "equivalent": []
-      },
-      "rights": [
-        "disclosure",
-        "preferences",
-        "opt-out"
-      ],
-      "validity": {
-        "choiceMs": 31536000000,
-        "noticeMs": 31536000000
-      },
-      "privacySignals": {
-        "gpc": {
-          "denyCategories": [
-            "marketing"
-          ]
-        }
-      },
-      "proof": {
-        "storeIp": false,
-        "storeUserAgent": false,
-        "storeLanguage": true
-      },
-      "copyRevision": null
-    }
-  }
+	"location": {
+		"countryCode": "GB",
+		"regionCode": "ENG"
+	},
+	"policySnapshotToken": "fixture-token",
+	"policyResolution": {
+		"version": 1,
+		"status": "matched",
+		"policyId": "prototype-policy",
+		"matchedBy": "country",
+		"fingerprints": {
+			"policy": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+			"choice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			"notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+		},
+		"policy": {
+			"id": "prototype-policy",
+			"model": "opt-out",
+			"prompt": "notice",
+			"scope": ["functionality", "experience", "measurement", "marketing"],
+			"scopeMode": "strict",
+			"preselectedCategories": [],
+			"actions": {
+				"allowed": ["dismiss"],
+				"required": ["dismiss"],
+				"equivalent": []
+			},
+			"rights": ["disclosure", "preferences", "opt-out"],
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 31536000000
+			},
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": ["marketing"]
+				}
+			},
+			"proof": {
+				"storeIp": false,
+				"storeUserAgent": false,
+				"storeLanguage": true
+			},
+			"copyRevision": null
+		}
+	}
 }

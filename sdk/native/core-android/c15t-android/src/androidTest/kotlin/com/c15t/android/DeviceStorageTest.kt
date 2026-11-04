@@ -54,9 +54,7 @@ class DeviceStorageTest {
 		assertTrue("the payload is persisted before anything goes on the wire", commit.queued)
 		assertFalse("and this device has no network", commit.delivered)
 
-		val waiting = queuedSaveFor(context, subjectId)
-		assertNotNull("the write waits in the device's own queue", waiting)
-		val queued = requireNotNull(waiting)
+		val queued = requireNotNull(queuedSaveFor(context, subjectId)) { "the write waits in the device's own queue" }
 		val recorded = C15t.snapshot().explicitChoice
 		assertNotNull("the subject's choice is on the snapshot", recorded)
 		val choice = requireNotNull(recorded)
@@ -80,16 +78,23 @@ class DeviceStorageTest {
 		assertTrue("hydration found the stored envelope", C15t.hasStoredSnapshot)
 		assertEquals("the installation keeps its identity", subjectId, requireSubjectId())
 		assertEquals("the choice comes back as it was committed", choice, C15t.snapshot().explicitChoice)
+
+		// Bootstrap queued a launch retry, and this device is still offline, so that retry is
+		// refused. Wait for it to be answered: a flush asked for while it is still sending is
+		// answered by that pass (native/CONTRACT.md, "The pending save queue"), and a refused
+		// pass does not read the queue again, so asking early would test the guard instead.
+		awaitCoreWorker()
 		assertEquals(
-			"the queue survives a teardown unchanged, so a later init cannot rewrite it",
-			queued,
-			queuedSaveFor(context, subjectId),
+			"the queue survives a teardown and a refused launch retry, so a later init cannot rewrite it",
+			queued.asSent(),
+			queuedSaveFor(context, subjectId)?.asSent(),
 		)
 
-		// The launch-retry leg on real storage: the same payload, delivered unchanged.
+		// The retry leg on real storage: the same payload, delivered unchanged.
 		relaunch.online = true
-		C15t.flushPending()
-		awaitSettled("the relaunch to deliver the queued write unchanged") { relaunch.accepted().contains(queued) }
+		val flush = C15t.flushPending()
+		assertEquals("the retry delivers the one queued write", 1, flush.delivered)
+		assertEquals("unchanged, and once", 1, relaunch.deliveriesOf(queued))
 		assertNull("a delivered write leaves the device queue", queuedSaveFor(context, subjectId))
 	}
 
@@ -114,7 +119,13 @@ class DeviceStorageTest {
 		val after = C15tStores.create(context)
 		assertNull("blobs under a dead key read as nothing stored", after.readEnvelope())
 
-		C15t.bootstrap(deviceConfig(), after, transport = DeviceBackend(initiallyOnline = true))
+		// On the worker `install` uses, so the teardown that waits for it also waits for this core.
+		C15t.bootstrap(
+			deviceConfig(),
+			after,
+			transport = DeviceBackend(initiallyOnline = true),
+			executor = C15tAndroid.worker,
+		)
 
 		assertEquals("identity lives where a key reset cannot reach it", subjectId, requireSubjectId())
 		assertFalse("and the relaunch mints nothing new", C15t.hasStoredSnapshot)

@@ -7,8 +7,8 @@ test('the packed bridge requests the produced native artifact version by default
 		new URL('../native/core-android/gradle.properties', import.meta.url),
 		'utf8'
 	)
-		.match(/^c15t\.native\.version=(.+)$/mu)?.[1]
-		?.trim();
+		.match(/^c15t\.native\.version=(?<version>.+)$/mu)
+		?.groups?.version?.trim();
 	const consumer = readFileSync(
 		new URL(
 			'../packages/react-native/android/c15t-react-native/library.gradle',
@@ -16,8 +16,8 @@ test('the packed bridge requests the produced native artifact version by default
 		),
 		'utf8'
 	).match(
-		/String coreVersion = prop\('c15t\.core\.version'\) \?: '([^']+)'/u
-	)?.[1];
+		/String coreVersion = prop\('c15t\.core\.version'\) \?: '(?<version>[^']+)'/u
+	)?.groups?.version;
 	expect(producer).toMatch(/^\d+\.\d+\.\d+(?:-[\w.]+)?$/u);
 	expect(consumer).toBe(producer);
 });

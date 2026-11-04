@@ -52,6 +52,14 @@ object C15tAndroid {
 	}
 
 	/**
+	 * The worker every core [install] starts runs its init and delivery on.
+	 *
+	 * Internal so an instrumented test that bootstraps a core by hand can put it on the same
+	 * worker, where [awaitWorkerIdle] reaches its work.
+	 */
+	internal val worker = TaskExecutor { task -> background.execute(task) }
+
+	/**
 	 * Build the platform capabilities, install them, and start the core.
 	 *
 	 * Idempotent through [C15t.bootstrap], so it is safe to call from both an
@@ -82,7 +90,7 @@ object C15tAndroid {
 
 		// One executor for both the core and the observer registered below, so the launch
 		// replay and the foreground replay cannot deliver the same queued entry twice.
-		val executor = TaskExecutor { task -> background.execute(task) }
+		val executor = worker
 
 		C15t.bootstrap(
 			config = config,
@@ -108,6 +116,18 @@ object C15tAndroid {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Block until every task already handed to the shared worker has run.
+	 *
+	 * [C15t.reset] drops a kernel without cancelling the init and replay it queued here, and
+	 * that work still writes to the same files. A test that installs the next core straight
+	 * after a reset waits on this first, so the dropped core cannot land a write in the next
+	 * test's store.
+	 */
+	internal fun awaitWorkerIdle() {
+		background.submit {}.get()
 	}
 
 	internal fun onNetworkGained(executor: TaskExecutor) {

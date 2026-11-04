@@ -1,0 +1,103 @@
+# Android suites that need a booted emulator. They run on Depot CI because its
+# sandboxes expose /dev/kvm; Depot's GitHub Actions runners do not, so these
+# jobs cannot live in .github/workflows next to the rest of CI.
+#
+# `uses: ./.github/actions/setup` resolves to .depot/actions/setup, a symlink
+# back to the shared action.
+name: Android emulator
+
+on:
+  pull_request:
+    paths:
+      - 'packages/react-native/**'
+      - 'packages/core/**'
+      - 'native/**'
+      - 'internals/fixtures/react-native-bare/**'
+      # The RN journey exports its policy with these scripts and packages.
+      - 'scripts/export-mobile-e2e-policy.ts'
+      - 'scripts/export-mobile-policy.ts'
+      - 'packages/iab/**'
+      - 'packages/schema/**'
+      - 'packages/translations/**'
+      - 'scripts/ci-android-emulator.sh'
+      - '.depot/**'
+      - '.github/actions/setup/**'
+      - 'bun.lock'
+  push:
+    branches: ['canary']
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request replaces its run. Every other run,
+# including `depot ci run` from a working tree, gets its own group, so
+# parallel manual runs never cancel each other.
+concurrency:
+  group: android-emulator-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  C15T_ANDROID_IMAGE: system-images;android-36;google_apis;x86_64
+  C15T_ANDROID_ARCH: x86_64
+
+jobs:
+  native:
+    name: Native instrumented suites (kernel and consent demo)
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - name: Prepare the Android toolchain
+        run: bash .depot/android-toolchain.sh
+      - name: Boot the emulator
+        run: bash scripts/ci-android-emulator.sh start
+      - name: Android kernel instrumented suite
+        run: sh native/core-android/gradlew -p native/core-android --no-build-cache :c15t-android:connectedDebugAndroidTest
+      - name: Consent demo journeys
+        if: ${{ !cancelled() }}
+        run: sh native/core-android/gradlew -p native/core-android --no-build-cache :consent-demo:connectedDebugAndroidTest
+      - name: Stop the emulator
+        if: always()
+        run: bash scripts/ci-android-emulator.sh stop
+      - name: Upload test reports and emulator logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: android-native-instrumented
+          path: |
+            native/core-android/c15t-android/build/reports/androidTests/**
+            native/core-android/c15t-android/build/outputs/androidTest-results/**
+            native/examples/consent-demo/android/build/reports/androidTests/**
+            native/examples/consent-demo/android/build/outputs/androidTest-results/**
+            ${{ runner.temp }}/android-emulator/*.log
+          if-no-files-found: warn
+          retention-days: 7
+
+  react-native:
+    name: Release RN app on Android Emulator, UIAutomator
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: mobile-app-e2e-android
+      - name: Prepare the Android toolchain
+        run: bash .depot/android-toolchain.sh
+      - name: Run real consent controls and record the app
+        run: bun run --cwd internals/fixtures/react-native-bare e2e:android
+      - name: Upload recordings, native snapshots, JUnit results and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-app-e2e-android
+          path: internals/fixtures/react-native-bare/.artifacts/app-e2e/**
+          if-no-files-found: error
+          retention-days: 7

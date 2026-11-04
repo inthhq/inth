@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 
 import {
-	IOSConfig,
 	withAndroidManifest,
 	withDangerousMod,
 	withAppBuildGradle,
@@ -14,6 +13,7 @@ import {
 import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
 
 import { applyAndroidManifest } from './android';
+import { iosConfig } from './config-plugins';
 import { EXTRA_KEY } from './constants';
 import { applyAppBuildGradle, applyProjectBuildGradle } from './gradle';
 import {
@@ -189,7 +189,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 					project: configWithProject.modResults,
 					projectName:
 						configWithProject.modRequest.projectName ??
-						IOSConfig.XcodeUtils.getHackyProjectName(
+						iosConfig.XcodeUtils.getHackyProjectName(
 							projectRoot,
 							configWithProject
 						),
@@ -207,7 +207,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 			}
 			const name =
 				cfg.modRequest.projectName ??
-				IOSConfig.XcodeUtils.getHackyProjectName(
+				iosConfig.XcodeUtils.getHackyProjectName(
 					cfg.modRequest.projectRoot,
 					cfg
 				);
@@ -218,7 +218,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 				join(cfg.modRequest.platformProjectRoot, name, POLICY_RESOURCE_NAME)
 			);
 			if (!cfg.modResults.hasFile(`${name}/${POLICY_RESOURCE_NAME}`)) {
-				cfg.modResults = IOSConfig.XcodeUtils.addResourceFileToGroup({
+				cfg.modResults = iosConfig.XcodeUtils.addResourceFileToGroup({
 					filepath: `${name}/${POLICY_RESOURCE_NAME}`,
 					groupName: name,
 					isBuildFile: true,

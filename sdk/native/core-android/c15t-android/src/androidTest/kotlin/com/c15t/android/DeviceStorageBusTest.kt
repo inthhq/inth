@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.c15t.core.SubjectIdGenerator
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.ConsentSubject
 import com.c15t.core.store.SnapshotEnvelope
@@ -68,7 +69,11 @@ class DeviceStorageBusTest {
 		// composition `C15tAndroid.install` opens. This commit is the assertion that the
 		// installed store has somewhere to put the bus, before a kernel is in the room.
 		val store = C15tStores.create(context)
-		store.writeEnvelope(envelopeWithVendorList(tcfPolicyVersion = 5))
+		// The envelope belongs to this installation. One keyed to any other subject id is an
+		// orphan, and bootstrap discards it, bus and all, before it could be re-published.
+		val subject = store.readSubject()
+			?: ConsentSubject(id = SubjectIdGenerator.generate()).also(store::writeSubject)
+		store.writeEnvelope(envelopeWithVendorList(subject, tcfPolicyVersion = 5))
 		store.flush()
 		assertEquals(
 			"the store an install builds publishes the row whose value it holds",
@@ -111,9 +116,12 @@ class DeviceStorageBusTest {
 	private fun defaultPreferences(context: Context): SharedPreferences =
 		PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
 
-	/** An envelope carrying a served vendor list and no resolved policy. */
-	private fun envelopeWithVendorList(tcfPolicyVersion: Long) = SnapshotEnvelope(
-		snapshot = ConsentSnapshot.denyAll(ConsentSubject(id = "sub_buswire"), now = 0L),
+	/** An envelope for [subject] carrying a served vendor list and no resolved policy. */
+	private fun envelopeWithVendorList(
+		subject: ConsentSubject,
+		tcfPolicyVersion: Long,
+	) = SnapshotEnvelope(
+		snapshot = ConsentSnapshot.denyAll(subject, now = 0L),
 		gvl = GlobalVendorList(
 			purposes = emptyMap(),
 			vendors = emptyMap(),

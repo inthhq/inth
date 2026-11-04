@@ -42,10 +42,26 @@ internal fun deviceConfig(): NativeConfig = NativeConfig(portalUrl = "https://co
  *
  * [C15t] is process-wide and the runner reuses one process for the whole suite, so a kernel
  * left installed would answer the next test's reads from the previous test's store.
+ *
+ * Dropping the kernel is not enough on its own. Its launch replay and init are still queued on
+ * the shared worker, and when they run they persist into the same files. A test that ends a
+ * few milliseconds after `install` leaves that work for the next test, whose own writes then
+ * race it for the same blob, so this waits for the worker as well as the main thread.
  */
 internal fun uninstallCore() {
 	C15t.reset()
 	awaitMainThread()
+	awaitCoreWorker()
+}
+
+/**
+ * Run to the end of the core's worker queue.
+ *
+ * Bootstrap, saves and lifecycle replays all hand their sends to one worker, so a no-op that
+ * has come back means every send queued before it has been answered.
+ */
+internal fun awaitCoreWorker() {
+	C15tAndroid.awaitWorkerIdle()
 }
 
 /**
@@ -131,6 +147,17 @@ internal fun queuedSaveFor(
 ): QueuedSave? = C15tStores.create(context).readPending().lastOrNull { it.payload.subjectId == subjectId }
 
 /**
+ * The write as the backend receives it.
+ *
+ * [QueuedSave.attempts] is the queue's own count of refused sends. It never reaches the wire,
+ * and it moves each time an offline send is refused, so a copy read before one of those
+ * refusals differs from the delivered one by that count alone. Whether the refusal lands
+ * before or after the test reads the queue is down to how fast the worker runs. "Delivered
+ * unchanged" is a claim about the id and the bytes, and this keeps exactly those.
+ */
+internal fun QueuedSave.asSent(): QueuedSave = copy(attempts = 0)
+
+/**
  * The backend, with the emulator's connectivity taken out of the assertion.
  *
  * No consent assertion in this suite may depend on a network, so the test states whether the
@@ -187,6 +214,9 @@ internal class DeviceBackend(
 
 	/** Writes this backend took, oldest first. */
 	fun accepted(): List<QueuedSave> = synchronized(lock) { acceptedWrites.toList() }
+
+	/** How many times this backend took [write], compared as it goes on the wire. */
+	fun deliveriesOf(write: QueuedSave): Int = accepted().count { it.asSent() == write.asSent() }
 
 	/** Every thread a save call ran on, which is what the main-thread claim is read from. */
 	fun saveCallers(): List<Thread> = synchronized(lock) { saveCallers.toList() }

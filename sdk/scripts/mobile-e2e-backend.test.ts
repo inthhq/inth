@@ -100,8 +100,8 @@ it('exposes fixed expiry controls only in the expiry fixture', async () => {
 		const url = `http://127.0.0.1:${await readFile(join(out, 'backend-ready'), 'utf8')}`;
 		const initial = await (await fetch(`${url}/e2e/control`)).json();
 		expect(initial).toMatchObject({
-			now: 1793232000000,
 			expiresAt: 1793232001000,
+			now: 1793232000000,
 		});
 		expect(initial.categories).toEqual([
 			'necessary',
@@ -115,8 +115,8 @@ it('exposes fixed expiry controls only in the expiry fixture', async () => {
 			now: initial.expiresAt,
 		};
 		await fetch(`${url}/e2e/control`, {
-			method: 'POST',
 			body: JSON.stringify(narrowed),
+			method: 'POST',
 		});
 		expect(await (await fetch(`${url}/e2e/control`)).json()).toEqual({
 			...narrowed,

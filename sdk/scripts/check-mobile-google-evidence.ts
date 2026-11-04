@@ -1044,6 +1044,21 @@ export const runEvidenceCLI = async function runEvidenceCLI(
 	}
 };
 
+/**
+ * Read all of stdin as text.
+ *
+ * Opening `/dev/stdin` fails with ENXIO on Linux when stdin is a socket, which
+ * is what Node's `spawnSync({ input })` provides. Reading the stream works for
+ * pipes, sockets and files alike.
+ */
+const readStdin = async (): Promise<string> => {
+	const chunks: Buffer[] = [];
+	for await (const chunk of process.stdin) {
+		chunks.push(Buffer.from(chunk));
+	}
+	return Buffer.concat(chunks).toString('utf8');
+};
+
 if (
 	process.argv[1] &&
 	import.meta.url === pathToFileURL(process.argv[1]).href
@@ -1051,6 +1066,6 @@ if (
 	process.exitCode = await runEvidenceCLI(process.argv.slice(2), {
 		error: (message) => process.stderr.write(`${message}\n`),
 		out: (message) => process.stdout.write(`${message}\n`),
-		read: (path) => readFile(path === '-' ? '/dev/stdin' : path, 'utf8'),
+		read: (path) => (path === '-' ? readStdin() : readFile(path, 'utf8')),
 	});
 }

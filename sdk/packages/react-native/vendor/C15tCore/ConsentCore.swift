@@ -1747,7 +1747,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// Identity changes and reset use a durable empty decision, so a failed deletion
     /// cannot restore an earlier grant on the next launch.
     private func transitionIAB(user nextUser: KernelUser?, reset: Bool) -> Bool? {
-        guard let wired = lock.withLock({ config.map { ($0, queue) } }), let queue = wired.1 else { return nil }
+        guard let wired = lock.withLock({ self.config.map { ($0, self.queue) } }), let queue = wired.1 else { return nil }
         let config = wired.0
         let owed = reset && queue.entries().contains(where: { $0.isProtectedWithdrawal })
         let envelope: StoredEnvelope? = lock.withLock {

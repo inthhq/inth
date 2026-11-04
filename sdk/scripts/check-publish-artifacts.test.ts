@@ -538,8 +538,13 @@ describe('vendored native sources', () => {
 			expect(
 				issues.every(({ path }) => path.startsWith(`vendor/${module}/`))
 			).toBe(true);
+			const entries: Record<string, string> = {
+				C15tApple: 'C15tApple.swift',
+				C15tCore: 'ConsentCore.swift',
+			};
+			const entry = entries[module] ?? 'consent-presenter.swift';
 			expect(issues.map(({ path }) => path)).toContain(
-				`vendor/${module}/${module === 'C15tCore' ? 'ConsentCore.swift' : module === 'C15tApple' ? 'C15tApple.swift' : 'consent-presenter.swift'}`
+				`vendor/${module}/${entry}`
 			);
 		}
 	);

@@ -1,5 +1,6 @@
 package com.c15t.bare.e2e
 
+import android.os.Build
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -157,15 +158,38 @@ class ConsentJourney {
         error("Not reachable: $id")
     }
 
+    /**
+     * The switch state the app reports now, not the one UiAutomation cached.
+     *
+     * Compose sends accessibility events only while a real service such as TalkBack is on,
+     * and leaves UiAutomator out on purpose, so nothing tells UiAutomation's node cache that
+     * a Compose row changed. Platform events usually clear it anyway, but not while the native
+     * search editor is on screen: the cache kept serving the old state there. TalkBack gets
+     * Compose's events and reads the new state, so this drops the cache rather than trusting it.
+     */
+    private fun isChecked(id: String): Boolean? {
+        if (Build.VERSION.SDK_INT >= 34) InstrumentationRegistry.getInstrumentation().uiAutomation.clearCache()
+        return device.findObject(By.res(id))?.isChecked
+    }
+
     private fun setChecked(id: String, checked: Boolean) {
-        val row = reveal(id)
+        reveal(id)
         device.waitForIdle()
-        if (row.isChecked != checked) {
+        if (isChecked(id) != checked) {
             // The shared row exposes one switch node. Tap its visible thumb.
             val bounds = control(id).visibleBounds
             device.click(bounds.right - bounds.width() / 16, bounds.centerY())
         }
-        assertTrue("$id becomes $checked", device.wait(Until.hasObject(By.res(id).checked(checked)), 5000))
+        val deadline = SystemClock.elapsedRealtime() + 5000
+        while (isChecked(id) != checked && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
+        assertEquals("$id becomes $checked", checked, isChecked(id))
+    }
+
+    /** The tag sits on the Compose field. The text belongs to the native editor inside it. */
+    private fun search(id: String, text: String) {
+        val editor = control(id).findObject(By.clazz("android.widget.EditText")) ?: error("No editor in $id")
+        editor.text = text
+        assertTrue("$id filters by $text", device.wait(Until.hasObject(By.res(id).hasDescendant(By.clazz("android.widget.EditText").text(text))), 5000))
     }
 
     private fun nativeIabWhileJSIsBlocked() {
@@ -185,7 +209,7 @@ class ConsentJourney {
         reveal("c15t.iab.purpose.7.details").click()
         setChecked("c15t.iab.purpose.7.li", true); setChecked("c15t.iab.purpose.7.li", false)
         reveal("c15t.iab.partners").click()
-        control("c15t.iab.vendors.search").text = "elan"
+        search("c15t.iab.vendors.search", "elan")
         capture("09-native-partner-search")
         tap("c15t.iab.vendors.vendor.1")
         setChecked("c15t.iab.vendor.1.consent", true)
@@ -193,7 +217,7 @@ class ConsentJourney {
         capture("10-native-partner-details")
         device.pressBack(); device.pressBack()
         reveal("c15t.iab.other-partners").click()
-        control("c15t.ac.search").text = "Harbour"
+        search("c15t.ac.search", "Harbour")
         capture("before-additional-consent-toggle")
         setChecked("c15t.ac.provider.10.switch", true)
         capture("11-native-additional-consent")

@@ -167,5 +167,14 @@ export type { ConsentSafeAreaInsets } from './provider';
 // resolve the TurboModule at import time, which only works inside a React
 // Native runtime with the New Architecture enabled.
 export type { Spec as NativeC15tSpec } from './specs/NativeC15t';
-export { closeConsentPresenter, onConsentPresenterOutcome, parseConsentPresenterOutcome, presentConsentPrompt, presentPreferences } from './native/presenter';
-export type { ConsentPresenterOutcome, ConsentPresenterSession } from './native/presenter';
+export {
+	closeConsentPresenter,
+	onConsentPresenterOutcome,
+	parseConsentPresenterOutcome,
+	presentConsentPrompt,
+	presentPreferences,
+} from './native/presenter';
+export type {
+	ConsentPresenterOutcome,
+	ConsentPresenterSession,
+} from './native/presenter';

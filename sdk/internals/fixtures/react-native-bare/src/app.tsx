@@ -42,9 +42,9 @@ import {
 	useHostStyles,
 } from './components/ui';
 import { useDemoDeepLinks } from './deep-links/use-deep-links';
-import { NativePresenterApp } from './native-presenter-app';
 import { useE2eObserver } from './e2e-observer';
 import { IAB_DEMO_DISPLAY_MODEL } from './fixtures/iab-display-model';
+import { NativePresenterApp } from './native-presenter-app';
 import { DiagnosticsScreen } from './screens/diagnostics';
 import { PrivacyScreen } from './screens/privacy';
 import { APPEARANCE_LABELS, APPEARANCES, surfaceTheme } from './theme';
@@ -403,6 +403,6 @@ export const UnavailableScreen = MissingNativeCore;
 
 export { NativePresenterApp } from './native-presenter-app';
 export const App = () => {
-    const { kind } = useConsentSource();
-    return kind === 'native' ? <NativePresenterApp /> : <LegacyApp />;
+	const { kind } = useConsentSource();
+	return kind === 'native' ? <NativePresenterApp /> : <LegacyApp />;
 };

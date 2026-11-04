@@ -2,17 +2,14 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import {
-	IOSConfig,
-	withPodfileProperties,
-	withXcodeProject,
-} from '@expo/config-plugins';
+import { withPodfileProperties, withXcodeProject } from '@expo/config-plugins';
 import type {
 	ConfigPlugin,
 	InfoPlist,
 	XcodeProject,
 } from '@expo/config-plugins';
 
+import { iosConfig } from './config-plugins';
 import { IOS_PLIST_KEY } from './constants';
 import { C15tPluginError } from './errors';
 import { IOS_TRANSPORT_MODE } from './params';
@@ -51,14 +48,14 @@ export const withIosDeploymentTargetFloor: ConfigPlugin = (config) => {
 		},
 	}));
 	return withXcodeProject(next, (cfg) => {
-		const [, target] = IOSConfig.Target.findFirstNativeTarget(cfg.modResults);
-		const configurations = IOSConfig.XcodeUtils.getBuildConfigurationsForListId(
+		const [, target] = iosConfig.Target.findFirstNativeTarget(cfg.modResults);
+		const configurations = iosConfig.XcodeUtils.getBuildConfigurationsForListId(
 			cfg.modResults,
 			target.buildConfigurationList
 		);
 		for (const [, configuration] of configurations) {
 			const current = configuration.buildSettings.IPHONEOS_DEPLOYMENT_TARGET;
-			IOSConfig.DeploymentTarget.setDeploymentTargetForBuildConfiguration(
+			iosConfig.DeploymentTarget.setDeploymentTargetForBuildConfiguration(
 				configuration,
 				minimumDeploymentTarget(
 					typeof current === 'string' ? current : undefined,
@@ -481,7 +478,7 @@ export const applyLocalizedMarkdownDescriptions =
 
 		for (const { locale } of localizations) {
 			const groupName = `${projectName}/Supporting/${locale}.lproj`;
-			const group = IOSConfig.XcodeUtils.ensureGroupRecursively(
+			const group = iosConfig.XcodeUtils.ensureGroupRecursively(
 				nextProject,
 				groupName
 			);
@@ -491,7 +488,7 @@ export const applyLocalizedMarkdownDescriptions =
 						child.comment === INFO_PLIST_STRINGS_FILE
 				)
 			) {
-				nextProject = IOSConfig.XcodeUtils.addResourceFileToGroup({
+				nextProject = iosConfig.XcodeUtils.addResourceFileToGroup({
 					filepath: `${locale}.lproj/${INFO_PLIST_STRINGS_FILE}`,
 					groupName,
 					isBuildFile: true,
