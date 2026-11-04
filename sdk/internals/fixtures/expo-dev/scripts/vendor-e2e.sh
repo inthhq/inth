@@ -91,6 +91,79 @@ PYVIDEO
 }
 trap cleanup EXIT
 
+# An Android step failed: say why, then show what adb and the host saw, so a lost
+# emulator or adb connection is not just a bare exit status.
+android_failed() {
+  set +e
+  {
+    printf '%s\n' "$1"
+    echo '--- adb devices'
+    "${ADB}" devices -l
+    if kill -0 "${EMULATOR_PID}" 2>/dev/null; then
+      echo "--- emulator ${EMULATOR_PID} is still running"
+    else
+      wait "${EMULATOR_PID}"
+      echo "--- emulator ${EMULATOR_PID} exited with status $? (above 128 is 128 + the signal)"
+      EMULATOR_PID=""
+    fi
+    echo "--- last 40 lines of ${OUT}/emulator.log"
+    tail -n 40 "${OUT}/emulator.log"
+    echo "--- last 40 lines of the guest log, ${OUT}/emulator-logcat.log"
+    tail -n 40 "${OUT}/emulator-logcat.log"
+    if [[ -n "${EMULATOR_PID}" ]]; then
+      # Evidence only: the run still fails. Does an offline device come back?
+      "${ADB}" reconnect offline
+      for attempt in {1..10}; do
+        [[ "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" != device ]] || break
+        sleep 1
+      done
+      echo "--- after adb reconnect offline and ${attempt} s: $("${ADB}" -s "${DEVICE}" get-state 2>&1)"
+    fi
+    echo '--- memory'
+    free -m 2>/dev/null || vm_stat
+    sudo -n dmesg 2>/dev/null | grep -iE 'out of memory|killed process|oom' | tail -n 20
+  } >&2
+  exit 1
+}
+
+# Both streams start from the device's log buffer, so a restarted stream loses nothing.
+start_log_streams() {
+  "${ADB}" -s "${DEVICE}" logcat -v threadtime > "${OUT}/device.log" 2>&1 &
+  LOG_PID=$!
+  # Epoch timestamps line Firebase's state up with the probe times the app reports.
+  "${ADB}" -s "${DEVICE}" logcat -v epoch -s FA:V FA-SVC:V > "${OUT}/firebase.log" 2>&1 &
+  FIREBASE_LOG_PID=$!
+}
+
+install_apk() {
+  "${ADB}" -s "${DEVICE}" install -r "${APP}/android/app/build/outputs/apk/release/app-release.apk" > "${OUT}/install-apk.log" 2>&1
+}
+
+# On Depot CI the emulator's adb connection sometimes drops right after boot, about
+# one job in ten: adb still lists the device, but offline, and the install fails.
+# The cause is unknown; memory, crashes, guest init and log streaming are ruled out.
+# `adb reconnect offline` brings the device back in about 2 s. Recover once, say so
+# as a CI warning and in adb-recovered.txt, and fail as before if that does not work.
+recover_offline_device() {
+  [[ "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" == offline ]] || return 1
+  echo "::warning title=Android emulator went offline (${LABEL})::adb lost the emulator before the install. Reconnecting and retrying the install once."
+  printf '%s adb lost the emulator before the install; reconnecting\n' "$(date -u +%FT%TZ)" >> "${OUT}/adb-recovered.txt"
+  "${ADB}" reconnect offline > /dev/null 2>&1 || true
+  for _ in {1..30}; do
+    [[ "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" != device ]] || break
+    sleep 1
+  done
+  [[ "$("${ADB}" -s "${DEVICE}" get-state 2>/dev/null)" == device ]] || return 1
+  # The new connection has no reverse port and ended the log streams; restore both.
+  "${ADB}" -s "${DEVICE}" reverse tcp:3000 "tcp:${BACKEND_PORT}"
+  for pid in "${LOG_PID}" "${FIREBASE_LOG_PID}"; do
+    kill "${pid}" 2>/dev/null || true
+    wait "${pid}" 2>/dev/null || true
+  done
+  start_log_streams
+  printf '%s device back online; retrying the install\n' "$(date -u +%FT%TZ)" >> "${OUT}/adb-recovered.txt"
+}
+
 # With DEVELOPER_DIR set, python3 runs the selected Xcode's interpreter, whose first
 # launch on a fresh machine can be slow. Record it and bound it so a stuck launch
 # fails clearly instead of looking like a backend that never started.
@@ -270,15 +343,19 @@ for p in range(5560, 5586, 2):
  finally: s.close()')"
   DEVICE="emulator-${PORT}"
   printf '%s\n' "${DEVICE}" > "${OUT}/device-id.txt"
-  "${ANDROID_HOME}/emulator/emulator" -avd "${AVD_NAME}" -port "${PORT}" -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect > "${OUT}/emulator.log" 2>&1 &
+  # The emulator writes the guest log itself, so it survives a lost adb connection.
+  "${ANDROID_HOME}/emulator/emulator" -avd "${AVD_NAME}" -port "${PORT}" -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect \
+    -logcat "*:v" -logcat-output "${OUT}/emulator-logcat.log" > "${OUT}/emulator.log" 2>&1 &
   EMULATOR_PID=$!
-  "${ADB}" -s "${DEVICE}" wait-for-device
+  # Poll rather than `adb wait-for-device`, which never returns if the emulator exits.
+  STARTED="${SECONDS}"
   for attempt in {1..240}; do
-    [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed | tr -d '\r')" != 1 ]] || break
-    kill -0 "${EMULATOR_PID}"
+    kill -0 "${EMULATOR_PID}" 2>/dev/null || android_failed "The emulator exited before it finished booting."
+    [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" != 1 ]] || break
     sleep 1
   done
-  [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed | tr -d '\r')" == 1 ]]
+  [[ "$("${ADB}" -s "${DEVICE}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == 1 ]] \
+    || android_failed "The emulator did not finish booting after $(( SECONDS - STARTED )) s."
   "${ADB}" -s "${DEVICE}" shell getprop ro.build.version.sdk > "${OUT}/device-version.txt"
   java -version > "${OUT}/toolchain.txt" 2>&1
   "${ADB}" -s "${DEVICE}" shell settings put system screen_off_timeout 2147483647
@@ -292,11 +369,7 @@ for p in range(5560, 5586, 2):
   # Firebase cannot be redirected; its verbose log is the evidence for its consent state.
   "${ADB}" -s "${DEVICE}" shell setprop log.tag.FA VERBOSE
   "${ADB}" -s "${DEVICE}" shell setprop log.tag.FA-SVC VERBOSE
-  "${ADB}" -s "${DEVICE}" logcat -v threadtime > "${OUT}/device.log" 2>&1 &
-  LOG_PID=$!
-  # Epoch timestamps line Firebase's state up with the probe times the app reports.
-  "${ADB}" -s "${DEVICE}" logcat -v epoch -s FA:V FA-SVC:V > "${OUT}/firebase.log" 2>&1 &
-  FIREBASE_LOG_PID=$!
+  start_log_streams
   cat > "${OUT}/record-video.sh" <<'SHVIDEO'
 #!/system/bin/sh
 mkdir -p /data/local/tmp/c15t-video-segments
@@ -309,7 +382,8 @@ SHVIDEO
   "${ADB}" -s "${DEVICE}" push "${OUT}/record-video.sh" /data/local/tmp/c15t-record-video.sh > "${OUT}/video-start.log" 2>&1
   "${ADB}" -s "${DEVICE}" shell 'nohup sh /data/local/tmp/c15t-record-video.sh >/data/local/tmp/c15t-video.log 2>&1 </dev/null &'
   VIDEO_PID=remote
-  "${ADB}" -s "${DEVICE}" install -r "${APP}/android/app/build/outputs/apk/release/app-release.apk" > "${OUT}/install-apk.log" 2>&1
+  install_apk || { recover_offline_device && install_apk; } \
+    || android_failed "adb install failed: $(tail -n 1 "${OUT}/install-apk.log")"
   ANDROID_HOME="${ANDROID_HOME}" python3 "${APP_DIR}/scripts/vendor-journey-android.py" \
     --serial "${DEVICE}" --backend "http://127.0.0.1:${BACKEND_PORT}" --out "${OUT}" > "${OUT}/test.log" 2>&1
 fi
