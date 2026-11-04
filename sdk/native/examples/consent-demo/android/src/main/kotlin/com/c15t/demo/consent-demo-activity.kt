@@ -163,7 +163,11 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         fault = store; http = peer
                         policyUrl = "https://example.test/privacy"
                         store.failNext.set(intent?.getBooleanExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",false) == true)
-                        val vendors = VendorSdkRequest(intent?.getStringExtra(VendorSdkRequest.CAPTURE_EXTRA), intent?.getBooleanExtra(VendorSdkRequest.FIREBASE_EXTRA, false) == true)
+                        val vendors = VendorSdkRequest(
+                            intent?.getStringExtra(VendorSdkRequest.CAPTURE_EXTRA),
+                            intent?.getBooleanExtra(VendorSdkRequest.FIREBASE_EXTRA, false) == true,
+                            PostHogLive.from(intent?.getStringExtra(VendorSdkRequest.POSTHOG_LIVE_HOST_EXTRA), intent?.getStringExtra(VendorSdkRequest.POSTHOG_LIVE_KEY_EXTRA), intent?.getStringExtra(VendorSdkRequest.POSTHOG_LIVE_RUN_ID_EXTRA)),
+                        )
                         vendorProbe = connectVendorSdks(context, kernel, vendors) { e -> viewModelScope.launch { lastError = "vendor: ${e.message}" } }
                         kernel
                     } else {

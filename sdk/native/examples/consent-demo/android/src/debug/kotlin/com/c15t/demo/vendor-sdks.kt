@@ -19,9 +19,10 @@ import com.posthog.android.PostHogAndroid
 import com.posthog.android.PostHogAndroidConfig
 import io.sentry.Sentry
 import io.sentry.android.core.SentryAndroid
+import java.io.File
 import java.net.URI
 
-/** Fake credentials. Nothing here reaches a real vendor project. */
+/** Fake credentials. Only [PostHogLive] runs reach a real vendor project. */
 private const val POSTHOG_KEY = "phc_c15t_consent_demo_fake_key"
 private const val MIXPANEL_TOKEN = "c15t-consent-demo-fake-token"
 private const val PROBE_EVENT = "c15t_probe"
@@ -36,27 +37,18 @@ private const val EMULATOR_HOST = "10.0.2.2"
  */
 private object VendorSdks {
 	private var captureBase: String? = null
+	private var posthogLive: PostHogLive? = null
 	var mixpanel: MixpanelAPI? = null; private set
 	var firebase: FirebaseAnalytics? = null; private set
 
 	@Synchronized fun startNetworkVendors(context: Context, base: String) {
+		check(posthogLive == null) { "PostHog already points at a live project" }
 		if (captureBase != null) {
 			check(captureBase == base) { "Vendor SDKs already point at $captureBase" }
 			return
 		}
 		val appContext = context.applicationContext
-		PostHogAndroid.setup(appContext, PostHogAndroidConfig(POSTHOG_KEY, "$base/vendor/posthog").apply {
-			optOut = true
-			captureApplicationLifecycleEvents = false
-			captureDeepLinks = false
-			captureScreenViews = false
-			capturePushNotificationSubscriptions = false
-			capturePushNotificationOpened = false
-			sessionReplay = false
-			preloadFeatureFlags = false
-			remoteConfig = false
-			debug = true
-		})
+		PostHogAndroid.setup(appContext, posthogConfig(POSTHOG_KEY, "$base/vendor/posthog", debug = true))
 		val uri = URI(base)
 		// Mixpanel treats a loopback server as an ad blocker and never flushes, so it
 		// reaches the same capture server through the emulator's alias for the host.
@@ -72,6 +64,37 @@ private object VendorSdks {
 		captureBase = base
 	}
 
+	/**
+	 * Start PostHog alone against a real project. Its debug log stays off, so
+	 * the project key never reaches logcat. `run_id` is a super property, so
+	 * events the SDK sends on its own carry it too.
+	 */
+	@Synchronized fun startPostHogLive(context: Context, live: PostHogLive) {
+		check(captureBase == null) { "PostHog already points at the capture server" }
+		if (posthogLive != null) {
+			check(posthogLive == live) { "PostHog already points at run ${posthogLive?.runId}" }
+			return
+		}
+		// flushAt = 1 sends each event as soon as it is queued. With the default
+		// batch of 20, a probe waits for the 30 s flush timer instead.
+		PostHogAndroid.setup(context.applicationContext, posthogConfig(live.key, live.host, debug = false).apply { flushAt = 1 })
+		PostHog.register("run_id", live.runId)
+		posthogLive = live
+	}
+
+	private fun posthogConfig(key: String, host: String, debug: Boolean) = PostHogAndroidConfig(key, host).apply {
+		optOut = true
+		captureApplicationLifecycleEvents = false
+		captureDeepLinks = false
+		captureScreenViews = false
+		capturePushNotificationSubscriptions = false
+		capturePushNotificationOpened = false
+		sessionReplay = false
+		preloadFeatureFlags = false
+		remoteConfig = false
+		this.debug = debug
+	}
+
 	@Synchronized fun startFirebase(context: Context): FirebaseAnalytics {
 		firebase?.let { return it }
 		val appContext = context.applicationContext
@@ -82,6 +105,31 @@ private object VendorSdks {
 		}
 		return FirebaseAnalytics.getInstance(appContext).also { firebase = it }
 	}
+}
+
+/**
+ * Live PostHog state for `RealVendorSdkTest`, which runs in the app process.
+ * The test names the journey step before each probe.
+ */
+object PostHogLiveProbe {
+	/** Step name the next live probe carries, such as `granted`. */
+	@Volatile var step: String = "unset"
+
+	/** PostHog's own opt-out state, read from the SDK. */
+	val optedOut: Boolean get() = PostHog.isOptOut()
+
+	/** The anonymous distinct id PostHog sends with every event. */
+	val distinctId: String get() = PostHog.distinctId()
+
+	/** Ask PostHog to send what it has queued. It sends queued events even when opted out. */
+	fun flush() = PostHog.flush()
+
+	/**
+	 * Events still on disk in PostHog's queue. PostHog deletes a batch once the
+	 * host accepts it, or rejects it for good, so zero means nothing is waiting.
+	 */
+	fun queued(context: Context): Int =
+		File(context.cacheDir, "posthog-disk-queue").walkTopDown().count { it.isFile }
 }
 
 internal fun connectVendorSdks(context: Context, core: C15tKernel, request: VendorSdkRequest, onError: (Exception) -> Unit): VendorProbe? {
@@ -96,6 +144,11 @@ internal fun connectVendorSdks(context: Context, core: C15tKernel, request: Vend
 			helpers += MixpanelIntegration(core = core, optInTracking = { mixpanel.optInTracking() }, optOutTracking = { mixpanel.optOutTracking() }, onError = onError)
 			helpers += SentryReplayIntegration(core = core, start = { Sentry.replay().start() }, stop = { Sentry.replay().stop() }, onError = onError)
 			vendors += listOf("posthog", "mixpanel", "sentry")
+		}
+		request.posthogLive?.let { live ->
+			VendorSdks.startPostHogLive(context, live)
+			helpers += PostHogIntegration(core = core, optIn = { PostHog.optIn() }, optOut = { PostHog.optOut() }, onError = onError)
+			vendors += "posthog-live"
 		}
 		if (request.firebase) {
 			val analytics = VendorSdks.startFirebase(context)
@@ -125,6 +178,10 @@ internal fun connectVendorSdks(context: Context, core: C15tKernel, request: Vend
 				}
 				// Replay has no event to send. Flushing delivers any segment recorded so far.
 				Sentry.flush(5_000)
+			}
+			request.posthogLive?.let { live ->
+				PostHog.capture(PROBE_EVENT, properties = mapOf("step" to PostHogLiveProbe.step, "run_id" to live.runId, "probe" to label))
+				PostHog.flush()
 			}
 			VendorSdks.firebase?.takeIf { request.firebase }?.logEvent(PROBE_EVENT, Bundle().apply { putString("step", label) })
 		}

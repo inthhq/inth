@@ -39,6 +39,23 @@ import java.net.URL
  *
  * "Relaunch" recreates the activity, core and helpers in the same process. The
  * vendor SDK singletons survive, as the test process is the app process.
+ *
+ * The live check sends PostHog, and only PostHog, to a real project instead.
+ * It runs only when given a host and key, and is the only test that can run in
+ * that process, because PostHog starts once per process:
+ *
+ * ```
+ * gradlew :consent-demo:connectedDebugAndroidTest \
+ *   -Pandroid.testInstrumentationRunnerArguments.class=com.c15t.demo.RealVendorSdkTest#posthogLiveFollowsConsent \
+ *   -Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveHost=https://eu.i.posthog.com \
+ *   -Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveKey=$POSTHOG_E2E_PROJECT_KEY \
+ *   -Pandroid.testInstrumentationRunnerArguments.c15tPostHogLiveRunId=<unique id>
+ * ```
+ *
+ * It cannot see PostHog's traffic. It drives the same journey, waits after
+ * each probe until PostHog's disk queue is empty, and logs the run id and each
+ * step's expected outcome under [EVIDENCE_TAG]. Query the project for that run
+ * id afterwards; see the demo README.
  */
 @RunWith(AndroidJUnit4::class)
 class RealVendorSdkTest {
@@ -217,6 +234,7 @@ class RealVendorSdkTest {
 	}
 
 	@Test fun posthogMixpanelAndSentryReplayFollowConsent() {
+		Assume.assumeTrue("PostHog points at a live project in this run", live == null)
 		val base = captureBase
 		Assume.assumeTrue("Start scripts/vendor_capture.py, adb reverse its port and pass c15tVendorCapture", base != null)
 		val extras: Intent.() -> Unit = { putExtra(VendorSdkRequest.CAPTURE_EXTRA, base) }
@@ -239,6 +257,84 @@ class RealVendorSdkTest {
 		waitFor("fixture.state.explicit-choice").assertTextEquals("recorded")
 		awaitPermission("measurement", false)
 		assertNoNetworkCapture("5-relaunch-refused", from = beforeRelaunch)
+	}
+
+	// endregion
+
+	// region PostHog against a real project
+
+	private val live: PostHogLive? by lazy {
+		val arguments = InstrumentationRegistry.getArguments()
+		val host = arguments.getString("c15tPostHogLiveHost")?.takeIf { it.isNotBlank() }
+		val key = arguments.getString("c15tPostHogLiveKey")?.takeIf { it.isNotBlank() }
+		if ((host == null) != (key == null)) Assert.fail("Pass both c15tPostHogLiveHost and c15tPostHogLiveKey, or neither")
+		val runId = arguments.getString("c15tPostHogLiveRunId")?.takeIf { it.isNotBlank() } ?: java.util.UUID.randomUUID().toString()
+		PostHogLive.from(host, key, runId)
+	}
+
+	private val liveSteps = JSONArray()
+
+	/**
+	 * Wait until PostHog's disk queue is empty, flushing as it goes. Without
+	 * this, an event queued late in the journey dies with the test process.
+	 */
+	private fun drainLiveQueue(): Int {
+		// PostHog writes the event to its queue on its own thread.
+		SystemClock.sleep(LIVE_QUEUE_WRITE_MS)
+		val deadline = SystemClock.uptimeMillis() + LIVE_DRAIN_MS
+		var queued = PostHogLiveProbe.queued(context)
+		while (queued > 0 && SystemClock.uptimeMillis() < deadline) {
+			PostHogLiveProbe.flush()
+			SystemClock.sleep(LIVE_FLUSH_POLL_MS)
+			queued = PostHogLiveProbe.queued(context)
+		}
+		return queued
+	}
+
+	/**
+	 * Tag the next probe with [step], check PostHog's own opt-out state, probe,
+	 * then wait until PostHog has sent everything it queued.
+	 */
+	private fun liveProbe(live: PostHogLive, step: String, expected: Boolean) {
+		Assert.assertEquals("$step: PostHog opt-out", !expected, PostHogLiveProbe.optedOut)
+		PostHogLiveProbe.step = step
+		probe()
+		val left = drainLiveQueue()
+		val outcome = if (expected) "present" else "absent"
+		liveSteps.put(JSONObject().put("step", step).put("expected", outcome).put("sdk_opted_out", PostHogLiveProbe.optedOut).put("queued_after", left))
+		Log.i(EVIDENCE_TAG, "posthog-live run_id=${live.runId} step=$step expected=$outcome queued_after=$left")
+		Assert.assertEquals("$step: PostHog events still queued after ${LIVE_DRAIN_MS} ms", 0, left)
+	}
+
+	@Test fun posthogLiveFollowsConsent() {
+		val live = live
+		Assume.assumeTrue("Pass c15tPostHogLiveHost and c15tPostHogLiveKey to send to a real PostHog project", live != null)
+		checkNotNull(live)
+		val extras: Intent.() -> Unit = {
+			putExtra(VendorSdkRequest.POSTHOG_LIVE_HOST_EXTRA, live.host)
+			putExtra(VendorSdkRequest.POSTHOG_LIVE_KEY_EXTRA, live.key)
+			putExtra(VendorSdkRequest.POSTHOG_LIVE_RUN_ID_EXTRA, live.runId)
+		}
+		Log.i(EVIDENCE_TAG, "posthog-live run_id=${live.runId} host=${live.host} event=$PROBE_EVENT")
+		freshThenReject("vendor-sdks-posthog-live", extras) { label ->
+			liveProbe(live, if (label == "1-fresh") "fresh" else "rejected", expected = false)
+		}
+		setMeasurement(on = true)
+		liveProbe(live, "granted", expected = true)
+		setMeasurement(on = false)
+		liveProbe(live, "withdrawn", expected = false)
+		launch("vendor-sdks-posthog-live", reset = false, extras)
+		waitFor("fixture.state.explicit-choice").assertTextEquals("recorded")
+		awaitPermission("measurement", false)
+		liveProbe(live, "relaunched", expected = false)
+		Assert.assertEquals("PostHog events still queued at the end", 0, drainLiveQueue())
+		val evidence = JSONObject()
+			.put("run_id", live.runId)
+			.put("host", live.host)
+			.put("event", PROBE_EVENT)
+			.put("distinct_id", PostHogLiveProbe.distinctId)
+			.put("steps", liveSteps)
+		Log.i(EVIDENCE_TAG, "posthog-live evidence $evidence")
 	}
 
 	// endregion
@@ -342,5 +438,9 @@ class RealVendorSdkTest {
 		const val QUIET_WINDOW_MS = 10_000L
 		const val SETTLE_MS = 6_000L
 		const val CAPTURE_TIMEOUT_MS = 45_000L
+		/** Longer than PostHog's 30 s flush timer. */
+		const val LIVE_DRAIN_MS = 40_000L
+		const val LIVE_FLUSH_POLL_MS = 1_000L
+		const val LIVE_QUEUE_WRITE_MS = 2_000L
 	}
 }

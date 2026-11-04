@@ -20,6 +20,7 @@ benchmark should reuse an existing group unless it proves a different contract.
 | Mobile device builds (advisory) | Expo config-plugin resolution, CocoaPods resolution and the two example apps built for iOS and Android | A second native unit-test run |
 | iOS vendor SDKs (full validation) | Real PostHog, Mixpanel, Sentry Replay and Firebase Analytics in the iOS demo follow the measurement decision through the c15t Swift helpers: request capture for the first three, Firebase's debug log for the last | Helper logic, which the Swift unit tests cover with fakes |
 | Expo vendor SDKs (full validation) | Real PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase Analytics in Release Expo apps follow consent through the RN helpers: the fixture's Expo 57 build and the expo-55 and expo-58 packed consumers, on iOS (GitHub Actions) and Android (Depot CI) | Expo cells between the two ends, which only get the packed type, Codegen and prebuild checks |
+| Live PostHog (manual, Depot) | `android-posthog-live.yml` sends the Android demo's PostHog events to a real project. A maintainer then queries the run id; see the [consent demo README](../native/examples/consent-demo/README.md#live-posthog-check-android) | Capture-server journeys, which cover every vendor on each run |
 
 ## Selection and local commands
 

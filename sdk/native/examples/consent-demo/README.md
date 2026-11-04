@@ -60,3 +60,72 @@ granted, such as the `$screen` event from opening Privacy settings. The test
 flushes those and records them as in-flight evidence before it probes.
 Evidence lands in `ios/.artifacts/vendor-e2e/`: `vendor-requests.json`,
 `firebase-evidence.json`, the device log and an `.xcresult` per scheme.
+
+## Live PostHog check (Android)
+
+The other vendor journeys stop at a local capture server. One manual check
+sends the Android demo's PostHog events to a real project, "events-sdk e2e"
+(project 305107 in the Inth organization, EU Cloud), and checks the project
+afterwards.
+
+`RealVendorSdkTest#posthogLiveFollowsConsent` runs only when it gets a host
+and project key. It starts PostHog alone, with its debug log off, and registers
+a `run_id` super property so every event the SDK sends carries it. It then
+drives the usual journey and sends one `c15t_probe` event per step, tagged
+`step=fresh|rejected|granted|withdrawn|relaunched`, and flushes after each
+probe. The test checks PostHog's own opt-out state at each step, but it cannot
+see the traffic. It logs the run id, the expected outcome per step and the
+anonymous `distinct_id` under the `c15t-vendor-evidence` logcat tag.
+
+Run it by dispatching the Depot CI workflow on `canary`:
+
+```sh
+depot ci dispatch --org YOUR_DEPOT_ORG_ID --repo inthhq/c15t-private \
+  --workflow android-posthog-live.yml --ref canary
+```
+
+The key is the Depot CI secret `POSTHOG_E2E_PROJECT_KEY`. Its variant applies
+only to this repository, the `canary` branch and this workflow file, so pull
+request branches never receive it, and Depot CI does not run pull requests
+from forks. The workflow has only a manual trigger, and its job refuses every
+`pull_request` event. The same name is a GitHub Actions secret, which GitHub
+withholds from fork pull requests.
+
+`depot ci run` from a working tree resolves only organization-wide and
+repository-wide variants, so it cannot read this key. To try changes before
+they reach `canary`, an organization owner can add a repository-wide variant,
+run the job, and remove the variant afterwards:
+
+```sh
+git add -A   # depot ci run uploads tracked files only
+depot ci run --workflow .depot/workflows/android-posthog-live.yml \
+  --job posthog-live --org YOUR_DEPOT_ORG_ID --follow
+```
+
+The run id appears in the job log, the step summary and the
+`android-posthog-live-<run_id>` artifact. Its `evidence.json` lists each step,
+the expected outcome, PostHog's own opt-out state and the anonymous
+`distinct_id`.
+
+CI cannot query PostHog, so check the run by hand once ingestion catches up,
+usually within a few minutes. Open the
+[SQL editor for project 305107](https://eu.posthog.com/project/305107/sql) and
+run:
+
+```sql
+SELECT event, properties.step AS step, count() AS n, min(timestamp) AS first
+FROM events
+WHERE properties.run_id = '<run_id>'
+  AND timestamp > now() - INTERVAL 7 DAY
+GROUP BY event, step
+ORDER BY first
+```
+
+Through Executor's PostHog tools, `execute-sql` reads the account's current
+project, and `switch-project` does not carry over to the next call. Make
+305107 the current project first, either in the PostHog project switcher or
+with `user-settings-update` (`set_current_team`), and switch back afterwards.
+
+A passing run has one `c15t_probe` row with `step=granted`, and no rows with
+`fresh`, `rejected`, `withdrawn` or `relaunched`. Treat any other event as a
+failure until you have explained it.
