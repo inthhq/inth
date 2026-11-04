@@ -20,4 +20,11 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestImplementation(libs.androidx.test.runner); androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+    // Real vendor SDKs for the consent journeys in RealVendorSdkTest. Debug only,
+    // so release builds of the demo carry none of them; src/release has a stub.
+    // Never add these to c15t-core, c15t-android or c15t-consent-ui.
+    debugImplementation("com.posthog:posthog-android:3.75.0")
+    debugImplementation("com.mixpanel.android:mixpanel-android:8.12.0")
+    debugImplementation("io.sentry:sentry-android:8.62.0")
+    debugImplementation("com.google.firebase:firebase-analytics:23.2.0")
 }

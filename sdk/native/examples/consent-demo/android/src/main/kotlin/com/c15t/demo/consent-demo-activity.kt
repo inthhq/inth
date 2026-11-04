@@ -90,6 +90,9 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
     var fixtureBranding by mutableStateOf<String?>(null); private set
     var fixtureIdentity by mutableStateOf<String?>(null); private set
     var setupError by mutableStateOf<String?>(null); private set
+    /** Debug launches can bind real vendor SDKs to the fixture core. */
+    var vendorProbe by mutableStateOf<VendorProbe?>(null); private set
+    var vendorProbes by mutableIntStateOf(0); private set
     private var reviewCapture by mutableStateOf<TcfReviewCapture?>(null)
     val reviewReport: String get() = reviewCapture?.text ?: ""
     val reviewReportJson: String get() = reviewCapture?.json ?: ""
@@ -160,6 +163,8 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         fault = store; http = peer
                         policyUrl = "https://example.test/privacy"
                         store.failNext.set(intent?.getBooleanExtra("C15T_FIXTURE_FAIL_NEXT_WRITE",false) == true)
+                        val vendors = VendorSdkRequest(intent?.getStringExtra(VendorSdkRequest.CAPTURE_EXTRA), intent?.getBooleanExtra(VendorSdkRequest.FIREBASE_EXTRA, false) == true)
+                        vendorProbe = connectVendorSdks(context, kernel, vendors) { e -> viewModelScope.launch { lastError = "vendor: ${e.message}" } }
                         kernel
                     } else {
                         val config = profile?.nativeConfig() ?: NativeConfig(portalUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
@@ -241,8 +246,16 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         consentPresentationDeferred = false
         showReviewDiagnostics = false
     }
+    /** Send one probe event through every wired vendor SDK and flush it. */
+    fun probeVendors() {
+        val probe = vendorProbe ?: return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { probe.probe("probe-${vendorProbes + 1}") }
+            vendorProbes++
+        }
+    }
     private fun reviewPreferences() = getApplication<Application>().getSharedPreferences("c15t.tcf-review-setup", 0)
-    override fun onCleared() { subscription?.close(); errors?.close() }
+    override fun onCleared() { subscription?.close(); errors?.close(); vendorProbe?.close() }
 }
 
 @Composable private fun Setup(model: DemoModel) {
@@ -316,6 +329,10 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                 item { Text(model.lastError, modifier = Modifier.testTag("fixture.state.last-error")) }
                 item { Button(onClick = { model.fault?.failNext?.set(true) }, modifier = Modifier.testTag("fixture.fail-next-write")) { Text("Refuse next storage write") } }
                 item { Button(onClick = { model.http?.offline = false; model.core?.refresh() }, modifier = Modifier.testTag("fixture.reconnect")) { Text("Reconnect") } }
+                model.vendorProbe?.let { probe ->
+                    item { Button(onClick = model::probeVendors, modifier = Modifier.testTag("fixture.vendor-probe")) { Text("Send vendor probe") } }
+                    item { Text("${probe.vendors.joinToString()}: ${model.vendorProbes} probes sent", modifier = Modifier.testTag("fixture.vendor-probe.status")) }
+                }
             }
         }
     }

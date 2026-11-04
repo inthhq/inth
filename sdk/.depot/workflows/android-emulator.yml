@@ -20,6 +20,7 @@ on:
       - 'packages/schema/**'
       - 'packages/translations/**'
       - 'scripts/ci-android-emulator.sh'
+      - 'scripts/vendor_capture.py'
       - '.depot/**'
       - '.github/actions/setup/**'
       - 'bun.lock'
@@ -58,9 +59,21 @@ jobs:
         run: bash scripts/ci-android-emulator.sh start
       - name: Android kernel instrumented suite
         run: sh native/core-android/gradlew -p native/core-android --no-build-cache :c15t-android:connectedDebugAndroidTest
+      # RealVendorSdkTest points PostHog, Mixpanel and Sentry at this server.
+      # The app reaches it as localhost through adb reverse, and Mixpanel, which
+      # refuses loopback hosts, as 10.0.2.2, the emulator's alias for this machine.
+      - name: Start the vendor capture server
+        if: ${{ !cancelled() }}
+        run: |
+          out="${RUNNER_TEMP}/vendor-capture"
+          mkdir -p "${out}"
+          nohup python3 scripts/vendor_capture.py --port 39874 --out "${out}" > "${out}/server.log" 2>&1 &
+          for _ in $(seq 1 50); do [[ -f "${out}/vendor-capture-ready" ]] && break; sleep 0.2; done
+          curl -fsS http://localhost:39874/health
+          adb reverse tcp:39874 tcp:39874
       - name: Consent demo journeys
         if: ${{ !cancelled() }}
-        run: sh native/core-android/gradlew -p native/core-android --no-build-cache :consent-demo:connectedDebugAndroidTest
+        run: sh native/core-android/gradlew -p native/core-android --no-build-cache :consent-demo:connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.c15tVendorCapture=http://localhost:39874
       - name: Stop the emulator
         if: always()
         run: bash scripts/ci-android-emulator.sh stop
@@ -75,6 +88,8 @@ jobs:
             native/examples/consent-demo/android/build/reports/androidTests/**
             native/examples/consent-demo/android/build/outputs/androidTest-results/**
             ${{ runner.temp }}/android-emulator/*.log
+            ${{ runner.temp }}/vendor-capture/vendor-requests.json
+            ${{ runner.temp }}/vendor-capture/server.log
           if-no-files-found: warn
           retention-days: 7
 
