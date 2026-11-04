@@ -9,6 +9,9 @@ Firebase cannot be pointed at the capture server, so the journey's vendor steps
   refused  Firebase never logs the probe event as logged, and at probe time
            collection is disabled and analytics_storage is denied.
 
+"At probe time" is the latest state logged before the probe starts, or, when
+Firebase has logged none yet, the first one logged within 2 seconds after.
+
 Probe times come from vendor-probes.json (device epoch ms). iOS reads the
 simulator's `log stream` (host clock, local time). Firebase's iOS debug log has
 no consent line, so analytics_storage comes from the consent_settings_3p value
@@ -31,6 +34,8 @@ probes = {probe['name']: probe for probe in json.loads((out / 'vendor-probes.jso
 
 COLLECTION = re.compile(r'(?:analytics collection|measurement enabled)\D{0,40}?(?P<state>enabled|disabled|true|false)', re.I)
 STORAGE = re.compile(r'analytics_storage\W{0,6}(?P<state>granted|denied|true|false|1|0)\b', re.I)
+# Seconds after a probe starts in which a state Firebase logs still counts for it.
+LOG_GRACE_S = 2.0
 # iOS: 'Logging event: …' and 'Event logged. …'; Android: 'Logging event (FE): …'.
 LOGGED = re.compile(r'Logging event|Event logged', re.I)
 
@@ -89,10 +94,13 @@ for step in steps:
     logged = [text for text in mentions if LOGGED.search(text)]
     # Read the state Firebase held when it handled the probe. Before each probe
     # the journey re-syncs every integration, and the Firebase helper turns
-    # collection off before applying consent, then on again. Firebase logs those
-    # changes on its own thread, so they can straddle the probe's start. A logged
-    # probe marks the moment Firebase accepted it; otherwise use the start.
-    at = next((when for when, text in lines if name in text and LOGGED.search(text)), probe['startedAt'] / 1000)
+    # collection off before applying consent, then on again. Firebase logs
+    # settings on its own thread, so they can land a moment after the probe
+    # starts. A logged probe marks the moment Firebase accepted it. Otherwise
+    # take the latest state up to LOG_GRACE_S after the start: a refused probe
+    # that Firebase had in fact accepted already fails the event check.
+    logged_at = next((when for when, text in lines if name in text and LOGGED.search(text)), None)
+    at = logged_at if logged_at is not None else probe['startedAt'] / 1000 + LOG_GRACE_S
     collection = latest(lines, at, COLLECTION)
     storage = latest(lines, at, STORAGE)
     want_on = {'enabled', 'true', 'granted', '1'}

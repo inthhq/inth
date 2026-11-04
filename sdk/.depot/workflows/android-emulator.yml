@@ -13,6 +13,8 @@ on:
       - 'packages/core/**'
       - 'native/**'
       - 'internals/fixtures/react-native-bare/**'
+      - 'internals/fixtures/expo-dev/**'
+      - 'scripts/mobile-compatibility.json'
       # The RN journey exports its policy with these scripts and packages.
       - 'scripts/export-mobile-e2e-policy.ts'
       - 'scripts/export-mobile-policy.ts'
@@ -114,5 +116,38 @@ jobs:
         with:
           name: mobile-app-e2e-android
           path: internals/fixtures/react-native-bare/.artifacts/app-e2e/**
+          if-no-files-found: error
+          retention-days: 7
+
+  expo-vendor-sdks:
+    name: Expo ${{ matrix.cell }} with real vendor SDKs on Android Emulator
+    runs-on: depot-ubuntu-24.04-8
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        # The fixture's own Expo 57 build, and the oldest and newest Expo cells of
+        # scripts/mobile-compatibility.json as packed consumers.
+        cell: [fixture, expo-55, expo-58]
+    env:
+      C15T_EXPO_CELL: ${{ matrix.cell != 'fixture' && matrix.cell || '' }}
+      C15T_APP_E2E_OUT: ${{ github.workspace }}/.ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup
+        with:
+          cache-scope: mobile-app-e2e-expo-android-${{ matrix.cell }}
+      - name: Prepare the Android toolchain
+        run: bash .depot/android-toolchain.sh
+      - name: Run PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase through the consent journey
+        run: bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
+      - name: Upload vendor requests, Firebase log evidence and UIAutomator frames
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mobile-app-e2e-expo-${{ matrix.cell }}-android
+          path: .ci-reports/expo-vendor-e2e/${{ matrix.cell }}-android/**
           if-no-files-found: error
           retention-days: 7

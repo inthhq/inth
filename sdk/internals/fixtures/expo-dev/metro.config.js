@@ -2,6 +2,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { getDefaultConfig } = require('expo/metro-config');
 
+const { vendorSources, withVendorSources } = require('./metro-vendor-sources');
+
 /**
  * The workspace root, three levels up.
  *
@@ -76,7 +78,13 @@ const blockedPaths = [
 	`${workspaceRoot}/\\.repos/.*`,
 	`${workspaceRoot}/docs/.*`,
 	`${workspaceRoot}/native/.*`,
-	...siblingWorkspaces(siblingGroups).map((dir) => `${dir}/.*`),
+	// The bare fixture stays blocked except for `src`. The crawler tests the
+	// directory itself without a trailing slash. See metro-vendor-sources.js.
+	...siblingWorkspaces(siblingGroups).map((dir) =>
+		dir === path.dirname(vendorSources)
+			? `${dir}/(?!src(?:/|$)).*`
+			: `${dir}/.*`
+	),
 	`${workspaceRoot}/packages/[^/]+/(\\.turbo|coverage|dist-types)/.*`,
 ];
 
@@ -117,7 +125,7 @@ const baseConfig = getDefaultConfig(__dirname);
  *
  * @type {import('expo/metro-config').MetroConfig}
  */
-module.exports = {
+module.exports = withVendorSources({
 	...baseConfig,
 	resolver: {
 		...baseConfig.resolver,
@@ -129,4 +137,4 @@ module.exports = {
 		},
 	},
 	watchFolders: [workspaceRoot, ...(baseConfig.watchFolders ?? [])],
-};
+});

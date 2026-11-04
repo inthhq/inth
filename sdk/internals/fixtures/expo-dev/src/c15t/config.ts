@@ -44,6 +44,18 @@ export interface FixtureConfig {
 	readonly forceFakeNative: boolean;
 	/** Period of the fake core's `isAllowed` sampler, in milliseconds. */
 	readonly sampleIntervalMs: number;
+	/**
+	 * App E2E only: start the real vendor SDKs against the loopback E2E backend
+	 * and render the vendor journey host instead of the shell. See
+	 * `scripts/vendor-e2e.sh`.
+	 */
+	readonly e2e: {
+		readonly enabled: boolean;
+		/** E2E backend origin. Vendor traffic goes to its capture routes. */
+		readonly endpoint: string;
+		/** Mixpanel's origin. Android needs the emulator's host alias. */
+		readonly mixpanelEndpoint: string;
+	};
 }
 
 const EXAMPLE_INTH_BACKEND = 'https://example-inth.inth.app/';
@@ -53,6 +65,17 @@ export const config: FixtureConfig = {
 		process.env.EXPO_PUBLIC_C15T_BACKEND_URL,
 		EXAMPLE_INTH_BACKEND
 	),
+	e2e: {
+		enabled: process.env.EXPO_PUBLIC_C15T_APP_E2E === '1',
+		endpoint: text(
+			process.env.EXPO_PUBLIC_C15T_E2E_URL,
+			'http://localhost:3000'
+		),
+		mixpanelEndpoint: text(
+			process.env.EXPO_PUBLIC_C15T_E2E_MIXPANEL_URL,
+			text(process.env.EXPO_PUBLIC_C15T_E2E_URL, 'http://localhost:3000')
+		),
+	},
 	forceFakeNative: readFlag(process.env.EXPO_PUBLIC_C15T_FAKE_NATIVE) ?? false,
 	sampleIntervalMs: asNumber(
 		process.env.EXPO_PUBLIC_C15T_SAMPLE_INTERVAL_MS,

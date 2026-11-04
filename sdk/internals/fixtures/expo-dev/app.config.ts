@@ -1,6 +1,7 @@
 import type { C15tPluginProps } from '@c15t/react-native/expo-plugin';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type { ConfigPlugin } from 'expo/config-plugins';
+import expoPackage from 'expo/package.json';
 
 /**
  * Backend and key for the embedded consent core.
@@ -19,6 +20,20 @@ const backendURL =
 /** Truthy spellings that mean "off"; anything else present means on. */
 const isOff = (value: string | undefined): boolean =>
 	['0', 'false', 'no', 'off'].includes((value ?? '').toLowerCase());
+
+/**
+ * App E2E build: the real vendor SDKs start and every request goes to the
+ * loopback E2E backend over plain HTTP. `scripts/vendor-e2e.sh` sets this, the
+ * backend URL and `C15T_E2E_POLICY`, the policy resource it exported from that
+ * backend. Normal builds keep the hosted demo and the committed resource.
+ */
+const appE2e = process.env.EXPO_PUBLIC_C15T_APP_E2E === '1';
+
+/**
+ * The installed Expo SDK. A packed consumer from
+ * `scripts/prepare-packed-consumer.py --cell` runs this config on another SDK.
+ */
+const expoSdk = Number(expoPackage.version.split('.')[0]);
 
 /**
  * The prompt Apple draws, compiled into the binary at prebuild.
@@ -99,7 +114,7 @@ const c15tPluginProps: C15tPluginProps = {
 		new URL(backendURL).hostname.endsWith('.inth.app')
 			? 'hosted'
 			: 'selfHosted',
-	policyResource: './c15t-policy.json',
+	policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json',
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,
@@ -122,6 +137,31 @@ const plugins: PluginEntry[] = [
 	// here on purpose: this project has no Expo Go path, and a bare `expo config` in
 	// CI should keep saying so.
 	['@c15t/react-native/expo-plugin', c15tPluginProps],
+	// The vendor SDKs the c15t integrations control. They are always linked and
+	// start only in an App E2E build (`src/e2e/vendor-journey-app.tsx`).
+	[
+		'expo-build-properties',
+		{
+			// Plain HTTP reaches only the loopback E2E backend.
+			android: { usesCleartextTraffic: appE2e },
+			ios: {
+				// Expo SDK 55 links a precompiled React Native core that pods built as
+				// dynamic frameworks cannot link against (`RCTRegisterModule` is
+				// undefined), so React Native builds from source there. SDK 57 links
+				// the precompiled core.
+				buildReactNativeFromSource: expoSdk < 57,
+				// React Native Firebase resolves the Firebase SDK through Swift
+				// Package Manager and refuses static linkage.
+				useFrameworks: 'dynamic',
+			},
+		},
+	],
+	'@react-native-firebase/app',
+	'@react-native-firebase/analytics',
+	// No Sentry project: nothing uploads source maps or debug symbols.
+	['@sentry/react-native/expo', { disableAutoUpload: true }],
+	// c15t's 16.4 floor for every pod, as the bare fixture's Podfile sets it.
+	['./plugins/with-pod-deployment-floor', { floor: '16.4' }],
 ];
 
 /**
@@ -146,9 +186,12 @@ const c15tExpoConfig = ({ config }: ConfigContext): ExpoConfig => ({
 	// TurboModule has no legacy-bridge fallback.
 	ios: {
 		bundleIdentifier: 'com.c15t.expodev',
+		// Placeholder Firebase project; firebase.json keeps collection off.
+		googleServicesFile: './vendors/GoogleService-Info.plist',
 		supportsTablet: true,
 	},
 	android: {
+		googleServicesFile: './vendors/google-services.json',
 		package: 'com.c15t.expodev',
 	},
 	plugins: plugins as ExpoConfig['plugins'],

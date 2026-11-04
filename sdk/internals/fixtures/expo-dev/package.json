@@ -12,17 +12,26 @@
 		"fmt": "oxfmt .",
 		"ios": "expo run:ios",
 		"ios:release": "expo run:ios --configuration Release",
-		"lint": "oxlint App.tsx index.ts src app.config.ts metro.config.js",
+		"lint": "oxlint App.tsx index.ts src app.config.ts metro.config.js metro-vendor-sources.js plugins",
 		"prebuild": "expo prebuild --clean",
 		"start": "expo start --dev-client"
 	},
 	"dependencies": {
+		"@amplitude/analytics-react-native": "1.13.0",
 		"@c15t/react-native": "workspace:*",
+		"@react-native-async-storage/async-storage": "2.2.0",
+		"@react-native-firebase/analytics": "27.1.0",
+		"@react-native-firebase/app": "27.1.0",
+		"@sentry/react-native": "8.33.0",
 		"expo": "57.0.22",
+		"expo-build-properties": "57.0.22",
 		"expo-constants": "57.0.18",
 		"expo-dev-client": "57.0.19",
+		"mixpanel-react-native": "4.0.0",
+		"posthog-react-native": "4.85.1",
 		"react": "19.2.7",
-		"react-native": "0.86.3"
+		"react-native": "0.86.3",
+		"react-native-get-random-values": "1.11.0"
 	},
 	"devDependencies": {
 		"@babel/runtime": "^7.25.0",

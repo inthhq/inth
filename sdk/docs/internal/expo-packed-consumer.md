@@ -31,6 +31,16 @@ path. Its `.easignore` keeps the tarball in the uploaded build input and exclude
 local environment files. Metro uses Expo's normal resolver in the packed app.
 No producer checkout path is needed on a cloud builder.
 
+Add `--cell expo-55` (or another Expo cell in `scripts/mobile-compatibility.json`
+that has `expoPackages` pins) to
+take that cell's Expo, React Native and React, and its `expoPackages` pins for
+the fixture's other Expo packages, instead of the fixture's versions. The pins
+are exact because `expo install` picks the newest patch at run time, which the
+three-day release-age gate in `bunfig.toml` can refuse. The helper also
+copies the bare fixture's vendor code that the E2E host imports.
+`internals/fixtures/expo-dev/scripts/vendor-e2e.sh` does all of this when
+`C15T_EXPO_CELL` is set.
+
 In that consumer directory:
 
 ```sh

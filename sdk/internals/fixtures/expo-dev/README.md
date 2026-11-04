@@ -103,6 +103,69 @@ plugin adds a Maven repository. See the maintained
 [packed consumer guide](../../../docs/internal/expo-packed-consumer.md) for the
 options, exclusive routing and clean external-consumer checks.
 
+## Real vendor SDKs
+
+The app links the real PostHog, Mixpanel, Amplitude, Sentry Session Replay and
+Firebase Analytics SDKs through config plugins in `app.config.ts`:
+`@react-native-firebase/app` and `analytics`, `@sentry/react-native/expo` with
+uploads off, and `expo-build-properties` for dynamic frameworks, which React
+Native Firebase needs on iOS. The placeholder Firebase project is in `vendors/`,
+and `firebase.json` keeps collection and every consent type off until c15t
+grants them. Normal builds link the SDKs and never start them.
+
+An E2E build (`EXPO_PUBLIC_C15T_APP_E2E=1`) renders `src/e2e/vendor-journey-app.tsx`
+instead of the shell. It starts the SDKs with the bare fixture's code in
+`react-native-bare/src/vendors`, imported unchanged, so both apps prove the same
+helpers. `metro-vendor-sources.js` lets Metro read those files and resolves their
+packages from this app, so the bundle never picks up the bare app's React Native.
+
+```sh
+bash scripts/vendor-e2e.sh ios
+bash scripts/vendor-e2e.sh android
+C15T_EXPO_CELL=expo-55 bash scripts/vendor-e2e.sh ios
+```
+
+The runner builds a Release app with the bundle inside the binary and the bare
+fixture's loopback backend and capture server. It creates its own Simulator or
+AVD and deletes it after the run. Without `C15T_EXPO_CELL` it builds this fixture in place.
+With `expo-55` or `expo-58` it packs `@c15t/react-native` and uses
+`scripts/prepare-packed-consumer.py --cell` to make a consumer outside the
+checkout. That consumer takes Expo, React Native, React and the other Expo packages
+(`expoPackages`) from that cell of `scripts/mobile-compatibility.json`. The vendor SDKs keep this fixture's pins in every cell. The committed
+versions here do not change.
+
+iOS runs `scripts/vendor-journey.swift` as an external XCUITest bundle. Android
+runs `scripts/vendor-journey-android.py`, which drives UIAutomator over adb, so it
+does not depend on each SDK's Gradle setup. Both take the bare fixture's vendor
+steps: a fresh install and Reject all send no user data, a measurement grant
+delivers the probe event (Sentry: replay segments), a withdrawal stops every
+vendor once in-flight uploads settle, and a relaunch keeps the refusal.
+`react-native-bare/scripts/verify-vendor-firebase.py` checks Firebase against its
+own log. `summary.md` in the evidence directory lists each vendor's capture count
+per step and the installed versions.
+
+Things that differ from the bare fixture:
+
+- Expo SDK 55 leaves async-storage's resource bundle target at iOS 13.4, which
+  Xcode 27 refuses to build. `plugins/with-pod-deployment-floor.js` lifts every
+  pod to 16.4 at the end of `post_install`, as the bare Podfile does by hand.
+  SDK 57 raises resource bundles itself.
+- The generated app does not adopt the UIScene lifecycle. iOS 27 stops such an
+  app at launch when it is built with the iOS 27 SDK, so the runner picks the
+  oldest installed iOS runtime, as the bare runner does. CI builds with Xcode 26.
+- Expo SDK 55 links a precompiled React Native core that dynamic framework pods
+  cannot link against (`RCTRegisterModule` is undefined), so `app.config.ts`
+  builds React Native from source below SDK 57.
+- React Native Firebase 27 does not compile on Android against React Native 0.83:
+  its Kotlin passes `String?` where 0.83's `Promise.reject` takes `String`. The
+  expo-55 cell pins 26.4.0 through `vendorPackages` in
+  `scripts/mobile-compatibility.json`. Every other cell and this fixture use 27.1.0.
+- Expo SDK 55's CLI reads `tsconfig.json` through `ts.sys`, which the TypeScript 7
+  native port this fixture uses does not have, so bundling stops before Metro
+  starts. The expo-55 cell pins TypeScript 5.9.3 through `devPackages`.
+- Android Mixpanel uses the emulator host alias `10.0.2.2`, and PostHog gets
+  AsyncStorage as `customStorage`, for the same reasons as in the bare fixture.
+
 ## Native build status
 
 Verified here: `bun run check-types` is clean, `expo export --platform all` writes

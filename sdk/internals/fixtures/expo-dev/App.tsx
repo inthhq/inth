@@ -10,18 +10,22 @@
 import { StatusBar } from 'react-native';
 
 import { App as Shell, UnavailableScreen } from './src/app';
+import { config } from './src/c15t/config';
 import {
 	ConsentSourceProvider,
 	useConsentSource,
 } from './src/c15t/consent-source';
+import { VendorJourneyApp } from './src/e2e/vendor-journey-app';
 
 const Root = () => {
 	const { nativeError } = useConsentSource();
+	// App E2E builds only: real vendor SDKs under the native presenter.
+	const Host = config.e2e.enabled ? VendorJourneyApp : Shell;
 
 	return (
 		<>
 			<StatusBar barStyle="dark-content" />
-			{nativeError === null ? <Shell /> : <UnavailableScreen />}
+			{nativeError === null ? <Host /> : <UnavailableScreen />}
 		</>
 	);
 };

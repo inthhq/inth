@@ -1181,6 +1181,7 @@ describe('mobile CI preparation', () => {
 			['ci', 'mobile'],
 			['mobile-device', 'device'],
 			['mobile-app-e2e', 'ios-vendor-sdks'],
+			['mobile-app-e2e', 'expo-ios-vendor-sdks'],
 		].map(([file, name]) => {
 			const job: Job = readPublicationWorkflow(file).jobs[name];
 			const step = job.steps?.find(

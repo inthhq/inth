@@ -21,6 +21,12 @@ const privacyPolicyURL = 'https://c15t.com/privacy';
 const outcomes: ConsentPresenterOutcome[] = [];
 const presentations: ConsentPresenterSession[] = [];
 const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
+const vendorProbeSettings = {
+	enabled: process.env.C15T_APP_E2E === '1',
+	endpoint,
+	// Android sets the emulator's host alias; Mixpanel refuses loopback hosts there.
+	mixpanelEndpoint: process.env.C15T_E2E_MIXPANEL_URL || endpoint,
+};
 
 if (process.env.C15T_APP_E2E === '1') {
 	// Activity recreation remounts the React root. Observe the whole JS runtime.
@@ -50,7 +56,7 @@ const requestPresentation = async (
 /** Reference host. All consent controls, drafts and navigation belong to native UI. */
 export const NativePresenterApp = () => {
 	useE2eObserver();
-	const vendors = useE2eVendorProbe();
+	const vendors = useE2eVendorProbe(vendorProbeSettings);
 	const handleVendorProbe = vendors.probe;
 	const status = useConsentStatus();
 	const actions = useConsentActions();

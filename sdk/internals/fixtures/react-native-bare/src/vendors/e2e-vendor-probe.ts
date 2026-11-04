@@ -1,6 +1,10 @@
 /**
  * App E2E only: start the real vendor SDKs and report each probe to the backend.
  *
+ * Shared with the Expo fixture, which imports this file. Each app passes its own
+ * {@link E2eVendorProbeSettings}, because bare RN and Expo inline different
+ * environment variables into the bundle.
+ *
  * Every launch sends one startup probe once the c15t connections have applied
  * their first state, before the consent prompt is presented. That covers a fresh
  * install and a relaunch with a saved refusal, and on Android it runs before the
@@ -19,11 +23,22 @@ import type {
 	VendorProbeResult,
 } from './real-sdks';
 
-const enabled = process.env.C15T_APP_E2E === '1';
-const endpoint = process.env.C15T_E2E_URL || 'http://localhost:3000';
-// Android sets the emulator's host alias; Mixpanel refuses loopback hosts there.
-const mixpanelEndpoint = process.env.C15T_E2E_MIXPANEL_URL || endpoint;
+/** Where the E2E backend is, and whether this build runs the vendor probe at all. */
+export interface E2eVendorProbeSettings {
+	/** Only E2E builds start the vendor SDKs. */
+	readonly enabled: boolean;
+	/** E2E backend origin, such as `http://localhost:3000`. */
+	readonly endpoint: string;
+	/**
+	 * Origin for Mixpanel only. Android passes the emulator's host alias, because
+	 * Mixpanel refuses loopback hosts there. Defaults to `endpoint`.
+	 */
+	readonly mixpanelEndpoint?: string;
+}
+
 const session = `${Date.now()}-${Math.random()}`;
+// The settings of the first caller, kept for the life of the JavaScript runtime.
+let endpoint = 'http://localhost:3000';
 
 type ProbeReason = 'startup' | 'button';
 
@@ -67,12 +82,14 @@ const runProbe = async (reason: ProbeReason): Promise<void> => {
 	});
 };
 
-const startVendors = async (): Promise<RealVendorSdks | null> => {
+const startVendors = async (
+	settings: E2eVendorProbeSettings
+): Promise<RealVendorSdks | null> => {
 	try {
 		return await startRealVendorSdks({
-			baseUrl: endpoint,
+			baseUrl: settings.endpoint,
 			logging: true,
-			mixpanelBaseUrl: mixpanelEndpoint,
+			mixpanelBaseUrl: settings.mixpanelEndpoint ?? settings.endpoint,
 			onError: (vendor, error) => {
 				integrationErrors[vendor] =
 					error instanceof Error ? error.message : String(error);
@@ -88,9 +105,10 @@ const startVendors = async (): Promise<RealVendorSdks | null> => {
 let startup: Promise<void> | undefined;
 
 /** Start the SDKs and send the startup probe, once per JavaScript runtime. */
-const startOnce = (): Promise<void> => {
+const startOnce = (settings: E2eVendorProbeSettings): Promise<void> => {
 	if (startup === undefined) {
-		sdks = startVendors();
+		({ endpoint } = settings);
+		sdks = startVendors(settings);
 		startup = runProbe('startup');
 	}
 	return startup;
@@ -99,23 +117,27 @@ const startOnce = (): Promise<void> => {
 /**
  * Start the vendors and the startup probe in an E2E build.
  *
+ * @param settings - The E2E backend, from the app's build-time configuration.
  * @returns Whether the startup probe has been reported, which outside E2E is
  *   always true, and a function that sends one more probe.
  */
-export const useE2eVendorProbe = (): {
+export const useE2eVendorProbe = (
+	settings: E2eVendorProbeSettings
+): {
 	readonly probe: () => void;
 	readonly startupSettled: boolean;
 } => {
-	const [startupSettled, setStartupSettled] = useState(!enabled);
+	const [startupSettled, setStartupSettled] = useState(!settings.enabled);
 
+	// Pass a module constant: the SDKs start once per JavaScript runtime.
 	useEffect(() => {
-		if (!enabled) {
+		if (!settings.enabled) {
 			return;
 		}
 		let mounted = true;
 		const settle = async (): Promise<void> => {
 			try {
-				await startOnce();
+				await startOnce(settings);
 			} catch (error: unknown) {
 				// The journey reads the missing report; the prompt must still appear.
 				console.error('E2E vendor startup probe', error);
@@ -128,7 +150,7 @@ export const useE2eVendorProbe = (): {
 		return () => {
 			mounted = false;
 		};
-	}, []);
+	}, [settings]);
 
 	const probe = useCallback(() => {
 		void runProbe('button');

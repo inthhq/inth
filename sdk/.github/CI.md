@@ -19,6 +19,7 @@ benchmark should reuse an existing group unless it proves a different contract.
 | Mobile SDK | Swift and Kotlin kernel builds and tests, both Android assemblies, the binding's autolinking as a host app resolves it, the mobile JS boundary, mobile budgets and their required-row contract | Example app builds |
 | Mobile device builds (advisory) | Expo config-plugin resolution, CocoaPods resolution and the two example apps built for iOS and Android | A second native unit-test run |
 | iOS vendor SDKs (full validation) | Real PostHog, Mixpanel, Sentry Replay and Firebase Analytics in the iOS demo follow the measurement decision through the c15t Swift helpers: request capture for the first three, Firebase's debug log for the last | Helper logic, which the Swift unit tests cover with fakes |
+| Expo vendor SDKs (full validation) | Real PostHog, Mixpanel, Amplitude, Sentry Replay and Firebase Analytics in Release Expo apps follow consent through the RN helpers: the fixture's Expo 57 build and the expo-55 and expo-58 packed consumers, on iOS (GitHub Actions) and Android (Depot CI) | Expo cells between the two ends, which only get the packed type, Codegen and prebuild checks |
 
 ## Selection and local commands
 
@@ -99,6 +100,9 @@ JAVA_HOME=$(/usr/libexec/java_home -v 17) ANDROID_HOME=$HOME/Library/Android/sdk
   sh native/core-android/gradlew -p native/core-android :c15t-android:connectedDebugAndroidTest --no-build-cache
 # Real vendor SDKs against the Swift helpers; needs Xcode, XcodeGen and a simulator runtime
 bash native/examples/consent-demo/ios/run-vendor-e2e.sh
+# Real vendor SDKs in Expo Release apps; C15T_EXPO_CELL=expo-55 or expo-58 builds that cell
+bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh ios
+bash internals/fixtures/expo-dev/scripts/vendor-e2e.sh android
 ```
 
 `internals/consent-observers` is an ordinary package test with a different
