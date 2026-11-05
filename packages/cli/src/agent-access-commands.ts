@@ -199,6 +199,14 @@ export const AGENT_ACCESS_COMMANDS: ResourceCommand[] = [
         "none",
       ]),
       input(
+        "minimum-c15t-major",
+        "minimumC15tMajor",
+        "integer",
+        "body",
+        false,
+        ["2", "3"]
+      ),
+      input(
         "session-duration-minutes",
         "sessionDurationMinutes",
         "integer",

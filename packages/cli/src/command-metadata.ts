@@ -295,6 +295,12 @@ export const OPTION_METADATA: OptionMetadata[] = [
     "7d"
   ),
   option(
+    "minimum-c15t-major",
+    "integer",
+    "Oldest c15t major the project serves; 3 refuses c15t 2.x sites, which stop loading the banner until they update",
+    ["2", "3"]
+  ),
+  option(
     "session-duration-minutes",
     "integer",
     "Consent session duration in minutes"
