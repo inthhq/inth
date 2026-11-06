@@ -23,6 +23,11 @@ final class IABAuthorityOracleTests: XCTestCase {
         let cases: [Case]
     }
 
+    // TCF-CHECK: T6
+    // TCF-CHECK: T8
+    // TCF-CHECK: T10
+    // TCF-CHECK: T11
+    // TCF-CHECK: T13
     func testNativeMatchesReferenceOnGapsDeletedVendorsAndDays() throws {
         let oracle = try C15tJSON.decode(
             Oracle.self,
@@ -49,6 +54,14 @@ final class IABAuthorityOracleTests: XCTestCase {
                     configuration: configuration, choices: choices, gvl: row.gvl ?? oracle.gvl, subjectId: "sub_x",
                     externalId: nil, fingerprint: "f", actionAt: oracle.now, previous: previous)
                 XCTAssertEqual(built.tcString, row.tcString, row.id)
+                // A decision first saved days earlier still writes Created == LastUpdated.
+                guard case let .decoded(tc) = TcStringWireReader.read(built.tcString) else {
+                    XCTFail("\(row.id): undecodable")
+                    continue
+                }
+                XCTAssertEqual(tc.created, tc.lastUpdated, row.id)
+                XCTAssertEqual(tc.lastUpdated.timeIntervalSince1970, Double(oracle.now / 86_400_000 * 86_400), row.id)
+                if row.createdDaysAgo != nil { XCTAssertLessThan(built.createdAt, built.actionAt, row.id) }
             } catch {
                 XCTFail("\(row.id): \(error)")
             }

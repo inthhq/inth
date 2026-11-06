@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Cenimy Twoją prywatność',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Twoje wybory są przechowywane na tym urządzeniu, w standardowym magazynie ustawień aplikacji pod kluczami IABTCF, przez maksymalnie {days} dni. Okres przechowywania jest odnawiany, gdy zaktualizujesz swoje wybory.',
+			description:
+				'My i nasi {partnerCount} partnerzy przechowujemy i/lub uzyskujemy dostęp do informacji na urządzeniu oraz przetwarzamy dane osobowe, takie jak unikalne identyfikatory i dane dotyczące przeglądania, w tej aplikacji, aby:',
+			legitimateInterestExplanation:
+				'Niektórzy partnerzy przetwarzają dane osobowe, takie jak unikalne identyfikatory i dane dotyczące przeglądania, na podstawie swojego uzasadnionego interesu, zamiast prosić o zgodę. Dotyczy to tylko tej aplikacji. Masz prawo sprzeciwić się temu przetwarzaniu w odniesieniu do każdego celu i każdego partnera.',
+			scopeServiceSpecific:
+				'Twoja zgoda dotyczy tylko tej aplikacji i nie wpływa na inne usługi.',
+			withdraw:
+				'W każdej chwili możesz zmienić swoje wybory lub wycofać zgodę w Ustawieniach prywatności w tej aplikacji.',
+		},
 		banner: {
 			andMore: 'I {count} więcej...',
 			description:

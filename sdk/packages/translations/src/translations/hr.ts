@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Cijenimo vašu privatnost',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Vaši izbori pohranjuju se na ovom uređaju, u standardnoj pohrani postavki aplikacije pod ključevima IABTCF, najdulje {days} dana. Trajanje pohrane obnavlja se kada ažurirate svoje izbore.',
+			description:
+				'Mi i naših {partnerCount} partnera pohranjujemo i/ili pristupamo informacijama na vašem uređaju i obrađujemo osobne podatke, kao što su jedinstveni identifikatori i podaci o pregledavanju, za ovu aplikaciju, kako bismo:',
+			legitimateInterestExplanation:
+				'Neki partneri obrađuju osobne podatke, kao što su jedinstveni identifikatori i podaci o pregledavanju, na temelju svog legitimnog interesa umjesto da traže privolu. To se odnosi samo na ovu aplikaciju. Imate pravo prigovora na ovu obradu za svaku svrhu i svakog partnera.',
+			scopeServiceSpecific:
+				'Vaš pristanak odnosi se samo na ovu aplikaciju i neće utjecati na druge usluge.',
+			withdraw:
+				'Svoje izbore možete promijeniti ili povući privolu u bilo kojem trenutku u Postavkama privatnosti u ovoj aplikaciji.',
+		},
 		banner: {
 			andMore: 'I još {count}...',
 			description:

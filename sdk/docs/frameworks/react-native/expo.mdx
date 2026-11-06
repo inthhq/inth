@@ -163,7 +163,16 @@ an advertising SDK.
 
 ## IAB integrations
 
-The plugin's typed configuration covers category consent. `vendors` narrows
-the disclosed vendor list; it does not set the CMP identity or publisher
-settings. Turnkey typed RN/Expo IAB bootstrap is deferred. Use the
-[app-owned native IAB path](/docs/guides/mobile-iab) for that setup.
+Set the plugin's `iab` option to turn on IAB TCF. It takes your registered
+`cmpId`, your `cmpVersion`, the `publisherCountryCode` and an optional
+`consentScreen`. Prebuild fails with a clear message when a value is missing or
+out of range. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
+lists the ranges and native keys.
+
+On Android, `iab` needs a hosted mode with a `backendURL`. Android has no
+offline mode, so Android prebuild fails if you combine `iab` with
+`mode: 'offline'`, even with a `backendURL`. iOS supports offline IAB.
+
+`vendors` narrows the disclosed vendor list; it does not turn IAB on. For
+publisher restrictions or custom purposes, use the
+[app-owned native IAB path](/docs/guides/mobile-iab).

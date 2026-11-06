@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Respeitamos a sua privacidade',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'As suas escolhas são armazenadas neste dispositivo, no armazenamento de definições padrão da aplicação com chaves IABTCF, durante um máximo de {days} dias. O período de armazenamento é renovado quando atualizar as suas escolhas.',
+			description:
+				'Nós e os nossos {partnerCount} parceiros armazenamos e/ou acedemos a informações num dispositivo e processamos dados pessoais, tais como identificadores únicos e informações de navegação, para esta aplicação, para:',
+			legitimateInterestExplanation:
+				'Alguns parceiros processam dados pessoais, tais como identificadores únicos e informações de navegação, com base no seu interesse legítimo em vez de pedirem o seu consentimento. Isto aplica-se apenas a esta aplicação. Tem o direito de se opor a este processamento para cada finalidade e cada parceiro.',
+			scopeServiceSpecific:
+				'O seu consentimento aplica-se apenas a esta aplicação e não afetará outros serviços.',
+			withdraw:
+				'Pode alterar as suas escolhas ou retirar o seu consentimento a qualquer momento nas Configurações de privacidade desta aplicação.',
+		},
 		banner: {
 			andMore: 'E mais {count}...',
 			description:

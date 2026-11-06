@@ -61,6 +61,16 @@ export const translations: CompleteTranslations = {
 		title: '我们重视您的隐私',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'您的选择存储在本设备上应用的标准设置存储中，使用 IABTCF 键，最长保存 {days} 天。当您更新选择时，存储期限会重新计算。',
+			description:
+				'我们和我们的 {partnerCount} 个合作伙伴在您的设备上存储和/或访问信息，并为本应用处理个人数据（如唯一标识符和浏览数据），以便：',
+			legitimateInterestExplanation:
+				'某些合作伙伴基于其正当利益处理个人数据（如唯一标识符和浏览数据），而不是征求您的同意。这仅适用于本应用。您有权针对每个目的和每个合作伙伴反对这种处理。',
+			scopeServiceSpecific: '您的同意仅适用于本应用，不会影响其他服务。',
+			withdraw: '您可以随时在本应用的隐私设置中更改您的选择或撤回您的同意。',
+		},
 		banner: {
 			andMore: '还有 {count} 个...',
 			description:

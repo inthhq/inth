@@ -267,7 +267,12 @@ public final class ConsentCore: @unchecked Sendable {
             let vendors = list.vendors.values.filter { $0.deletedDate?.isEmpty != false }
             return IABPresentation(canEdit: canEdit, draft: draft, list: list,
                 vendors: Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, configuration.disclosure(for: $0)) }),
-                adTechProviders: additionalConsentList?.providers)
+                adTechProviders: additionalConsentList?.providers,
+                // A saved decision stops counting, and leaves the storage bus, once the
+                // choice validity passes (`isCurrent`, `writeTcStorageBus`).
+                consentStorageMaxDays: IABPresentation.days(ms: resolvedPolicy?.policy.choiceMaxAgeMs),
+                // The language the TC String declares, so screen copy and signals agree.
+                language: configuration.consentLanguage)
         }
     }
 

@@ -12,6 +12,8 @@ import com.c15t.core.transport.*
 import kotlin.test.*
 
 class FullStorageBusTest {
+	// TCF-CHECK: T3
+	// TCF-CHECK: T4
 	@Test fun `independent oracle matches every typed projection row`() {
 		val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
 			.map { File(it, "native/protocol/iab/storage-bus-cases.json") }.first { it.exists() }

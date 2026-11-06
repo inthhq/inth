@@ -50,19 +50,18 @@ are verified. Do not substitute a similarly named public package.
 The implementation includes native category consent, notice acknowledgement,
 TCF choices, Additional Consent v2, protected platform storage, SDK gates,
 offline policy resources and SwiftUI/Compose presenters. The RN adapter exposes
-category commands, hooks and native presenter sessions. The Expo plugin
-configures category startup during native builds.
+category commands, hooks and native presenter sessions. The Expo plugin and
+bare RN metadata configure category startup and IAB CMP identity and publisher
+country during native builds.
 
-Two integrations are deferred from the first release:
+A separate RN distribution that excludes the stock native UI, together with a
+shared custom-UI draft API, is deferred from the first release. RN apps that
+need IAB publisher restrictions or custom purposes still use app-owned native
+installation.
 
-- A separate RN distribution that excludes the stock native UI, together with
-  a shared custom-UI draft API.
-- Turnkey typed RN/Expo configuration for IAB CMP identity and publisher
-  settings. IAB currently needs app-owned native installation.
-
-The [IAB guide](/docs/guides/mobile-iab) explains that native setup. Use the
-stock presenter for a complete IAB flow rather than building vendor decisions
-from the category API.
+The [IAB guide](/docs/guides/mobile-iab) explains both setups. Use the stock
+presenter for a complete IAB flow rather than building vendor decisions from
+the category API.
 
 ## Certification and production rollout
 

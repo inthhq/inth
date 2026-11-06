@@ -91,8 +91,8 @@ final class PreferencesAlignmentTests: XCTestCase {
 
     private func reveal(_ element: XCUIElement, save: XCUIElement? = nil, backwards: Bool = false) {
         for _ in 0..<30 {
-            let top = app.navigationBars["Privacy settings"].exists
-                ? app.navigationBars["Privacy settings"].frame.maxY + 8 : app.frame.minY + 100
+            let top = app.navigationBars["Privacy Settings"].exists
+                ? app.navigationBars["Privacy Settings"].frame.maxY + 8 : app.frame.minY + 100
             let bottom: CGFloat
             if let save, save.exists {
                 let footer = app.otherElements["c15t.footer"]

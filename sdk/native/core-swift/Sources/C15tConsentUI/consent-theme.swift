@@ -329,6 +329,63 @@ public struct ConsentTheme: Equatable, Sendable {
     @MainActor public static func resolved(bundle: Bundle = .main) -> ConsentTheme {
         current.applying(infoDictionary: bundle.infoDictionary ?? [:])
     }
+
+    /// IAB TCF policy wants each primary first-layer action at 5:1 text contrast or more.
+    static let minimumDecisionContrast = 5.0
+
+    /// WCAG 2 contrast ratio of two sRGB `0xRRGGBB` colours, from 1 to 21.
+    static func contrastRatio(_ first: UInt32, _ second: UInt32) -> Double {
+        func luminance(_ rgb: UInt32) -> Double {
+            func channel(_ shift: UInt32) -> Double {
+                let value = Double((rgb >> shift) & 255) / 255
+                return value <= 0.03928 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+        }
+        let (a, b) = (luminance(first), luminance(second))
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    }
+
+    /// The lower of the light and dark decision-label contrasts.
+    var decisionContrast: Double {
+        min(Self.contrastRatio(colors.onDecision.light, colors.decision.light),
+            Self.contrastRatio(colors.onDecision.dark, colors.decision.dark))
+    }
+
+    /// This theme, or this theme with the stock decision colours when the host's fall under 5:1
+    /// in either appearance. Accept all and Reject all share these colours, so both stay readable.
+    /// - Parameter report: Told once per process when a fallback happens.
+    func withReadableDecisions(report: (String) -> Void = DecisionContrastLog.reportOnce) -> ConsentTheme {
+        let ratio = decisionContrast
+        guard ratio < Self.minimumDecisionContrast else { return self }
+        var theme = self
+        theme.colors.decision = Colors.c15t.decision
+        theme.colors.onDecision = Colors.c15t.onDecision
+        report(String(format: "c15t: decision colours reach %.2f:1, under the 5:1 IAB TCF minimum. Using the stock decision colours.", ratio))
+        return theme
+    }
+}
+
+/// Logs a decision-contrast fallback once per process, not once per presentation.
+enum DecisionContrastLog {
+    static let reportOnce = once { NSLog("%@", $0) }
+
+    /// Wraps `log` so only its first call gets through.
+    static func once(_ log: @escaping @Sendable (String) -> Void) -> @Sendable (String) -> Void {
+        let flag = OnceFlag()
+        return { message in if flag.claim() { log(message) } }
+    }
+
+    private final class OnceFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        func claim() -> Bool {
+            lock.lock(); defer { lock.unlock() }
+            if done { return false }
+            done = true
+            return true
+        }
+    }
 }
 
 #if canImport(SwiftUI) && canImport(UIKit)
@@ -371,6 +428,11 @@ private extension Font.TextStyle {
     }
 }
 
+/// The shared IAB copy for the views below, in the served list's language.
+struct IABCopyKey: EnvironmentKey {
+    static let defaultValue = IABCopy.forLanguage("en")
+}
+
 struct ConsentThemeKey: EnvironmentKey {
     static let defaultValue = ConsentTheme.c15t
 }
@@ -379,6 +441,10 @@ extension EnvironmentValues {
     var consentTheme: ConsentTheme {
         get { self[ConsentThemeKey.self] }
         set { self[ConsentThemeKey.self] = newValue }
+    }
+    var iabCopy: IABCopy {
+        get { self[IABCopyKey.self] }
+        set { self[IABCopyKey.self] = newValue }
     }
 }
 #endif

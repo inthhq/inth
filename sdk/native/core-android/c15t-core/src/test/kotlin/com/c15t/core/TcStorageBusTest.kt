@@ -107,6 +107,7 @@ class TcStorageBusTest {
 
 	// -- 1. Projection --------------------------------------------------------
 
+	// TCF-CHECK: T1
 	@Test
 	fun coldStartEnvelopeProjectsNoRows() {
 		assertEquals(emptyMap(), TcStorageBusProjection.values(envelope()))

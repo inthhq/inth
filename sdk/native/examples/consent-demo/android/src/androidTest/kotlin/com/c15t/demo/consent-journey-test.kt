@@ -241,6 +241,13 @@ class ConsentJourneyTest {
     @Test fun iabSearchDetailsObjectionsAndAdditionalConsent() {
         launch("fresh-online-iab")
         waitFor("c15t.first-layer.customize"); capture("android-iab-first-layer")
+        // The IAB disclosure always shows, and Back never closes the first layer without a decision.
+        compose.onNodeWithTag("c15t.first-layer.description").performScrollTo().assertTextContains("partners store and/or access", substring = true)
+        compose.onNodeWithTag("c15t.first-layer.scope").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("c15t.first-layer.withdraw").performScrollTo().assertIsDisplayed()
+        device.pressBack()
+        waitFor("c15t.first-layer.customize").assertIsDisplayed()
+        compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
         compose.onNodeWithTag("c15t.first-layer.customize").performClick()
         // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.purpose.1.consent"))
@@ -250,7 +257,7 @@ class ConsentJourneyTest {
         purpose.performScrollTo(); capture("android-iab-centre")
         compose.onNodeWithTag("c15t.iab.purpose.7.details").performScrollTo().performClick()
         val li = compose.onNodeWithTag("c15t.iab.purpose.7.li")
-        li.performScrollTo().assertIsOff().performClick().performClick().assertIsOff()
+        li.performScrollTo().assertIsOn().performClick().assertIsOff() // Starts not objected to; one tap objects.
         compose.onNodeWithTag("c15t.iab.purpose.1.li").assertDoesNotExist()
         compose.onNodeWithTag("c15t.iab").performScrollToNode(hasTestTag("c15t.iab.partners"))
         compose.onNodeWithTag("c15t.iab.partners").performScrollTo().performClick()
@@ -258,7 +265,7 @@ class ConsentJourneyTest {
         waitFor("c15t.iab.vendors.vendor.1").assertIsDisplayed(); capture("android-partner-search")
         compose.onNodeWithTag("c15t.iab.vendors.vendor.1").performClick()
         waitFor("c15t.iab.vendor.1.consent").performClick()
-        compose.onNodeWithTag("c15t.iab.vendor.1.li").performScrollTo().assertIsOff().performClick().performClick()
+        compose.onNodeWithTag("c15t.iab.vendor.1.li").performScrollTo().assertIsOn().performClick().assertIsOff()
         capture("android-partner-details")
         device.pressBack()
         // The tag sits inside the clickable row, which merges its children's semantics.
@@ -274,7 +281,7 @@ class ConsentJourneyTest {
         enterSearch("c15t.ac.search", "")
         device.pressBack()
         waitFor("c15t.ac.provider.10.switch").performScrollTo().performClick(); capture("android-additional-consent")
-        compose.onNodeWithTag("c15t.ac.intro").assertTextContains("Store and access information on a device", substring = true)
+        compose.onNodeWithTag("c15t.ac.intro").assertTextContains("Google works with these ad tech providers", substring = true)
         device.pressBack(); compose.onNodeWithTag("c15t.iab.save").performClick(); awaitClosed()
         val summary = state("fixture.state.iab", "purposeObjections=[7]")
         summary.performScrollTo().assertTextContains("purposeObjections=[7]",substring = true).assertTextContains("vendorObjections=[1]",substring = true).assertTextContains("ac=2~~dv.10.20",substring = true)
@@ -457,7 +464,7 @@ class ConsentJourneyTest {
         waitFor("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by c15t")
         capture("android-ax-first-layer")
         compose.onNodeWithTag("c15t.first-layer.customize").performClick()
-        waitFor("c15t.prefs.title").assert(heading()).assertTextEquals("Privacy settings")
+        waitFor("c15t.prefs.title").assert(heading()).assertTextEquals("Privacy Settings")
         // Opened from the first layer, the leading action goes back to it and is named so.
         compose.onNodeWithTag("c15t.prefs.cancel").assertContentDescriptionEquals("Back")
         val measurement = scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch")

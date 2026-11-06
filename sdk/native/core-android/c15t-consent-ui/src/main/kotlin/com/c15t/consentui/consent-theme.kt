@@ -15,6 +15,8 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.max
+import kotlin.math.min
 
 /** One colour with a light and a dark value, each an sRGB `0xRRGGBB`. */
 data class ConsentThemeColor(val light: Int, val dark: Int = light) {
@@ -90,9 +92,12 @@ data class ConsentTheme(
         val accent: ConsentThemeColor,
         /** Text on [accent]. */
         val onAccent: ConsentThemeColor,
-        /** Fill of the two decision buttons. Accept all and Reject all always share it. */
+        /**
+         * Fill of the two decision buttons. Accept all and Reject all always share it. In an
+         * appearance where it and [onDecision] are below 5:1 contrast, the stock pair is used.
+         */
         val decision: ConsentThemeColor,
-        /** Text on [decision]. */
+        /** Text on [decision]. Needs at least 5:1 contrast with it; see [decision]. */
         val onDecision: ConsentThemeColor,
     ) {
         /**
@@ -294,7 +299,48 @@ data class ConsentTheme(
         )
     }
 
+    /**
+     * This theme with decision colours that keep Accept all and Reject all readable. IAB TCF
+     * policy asks for at least 5:1 text contrast on the first layer's two primary actions, so an
+     * appearance whose [Colors.decision] and [Colors.onDecision] fall below that gets the stock
+     * pair for that appearance instead. The first fallback in a process is logged once.
+     */
+    internal fun withReadableDecisions(): ConsentTheme {
+        val stock = Colors.c15t
+        val light = contrastRatio(colors.decision.light, colors.onDecision.light) >= DECISION_CONTRAST_FLOOR
+        val dark = contrastRatio(colors.decision.dark, colors.onDecision.dark) >= DECISION_CONTRAST_FLOOR
+        if (light && dark) return this
+        if (decisionContrastWarned.compareAndSet(false, true)) {
+            android.util.Log.w(LOG_TAG, "Decision colours are below $DECISION_CONTRAST_FLOOR:1 contrast in " +
+                listOfNotNull(if (light) null else "light", if (dark) null else "dark").joinToString(" and ") +
+                " appearance; using the stock decision colours there.")
+        }
+        fun pick(host: ConsentThemeColor, fallback: ConsentThemeColor) =
+            ConsentThemeColor(if (light) host.light else fallback.light, if (dark) host.dark else fallback.dark)
+        return copy(colors = colors.copy(decision = pick(colors.decision, stock.decision), onDecision = pick(colors.onDecision, stock.onDecision)))
+    }
+
     companion object {
+        /** IAB TCF policy's minimum text contrast for the first layer's two primary actions. */
+        internal const val DECISION_CONTRAST_FLOOR = 5.0
+        internal const val LOG_TAG = "C15tConsent"
+        /** Set after the first decision-colour fallback is logged; tests reset it. */
+        internal val decisionContrastWarned = java.util.concurrent.atomic.AtomicBoolean(false)
+
+        /** WCAG 2 contrast ratio between two opaque sRGB `0xRRGGBB` colours, from 1 to 21. */
+        internal fun contrastRatio(first: Int, second: Int): Double {
+            fun luminance(rgb: Int): Double {
+                fun channel(shift: Int): Double {
+                    val value = ((rgb shr shift) and 255) / 255.0
+                    return if (value <= 0.03928) value / 12.92 else Math.pow((value + 0.055) / 1.055, 2.4)
+                }
+                return 0.2126 * channel(16) + 0.7152 * channel(8) + 0.0722 * channel(0)
+            }
+            val a = luminance(first)
+            val b = luminance(second)
+            return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+        }
+
         /** The stock c15t appearance. */
         val c15t = ConsentTheme()
 

@@ -70,6 +70,8 @@ package struct TcVendorDeclaration: Sendable, Equatable {
 /// live list carries. This is a value carrying those scalars plus the per-vendor
 /// declarations, not a GVL object: nothing here fetches, parses or caches a list.
 package struct TcVendorList: Sendable, Equatable {
+    /// `GVL.DEFAULT_LANGUAGE` in the reference. A served list carries no language and is English.
+    package static let defaultLanguage = "EN"
     package let language: String
     package let vendorListVersion: Int
     package let tcfPolicyVersion: Int

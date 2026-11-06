@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Napprezzaw il-privatezza tiegħek',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'L-għażliet tiegħek huma maħżuna fuq dan l-apparat, fil-ħażna standard tas-settings tal-app taħt ċwievet IABTCF, għal mhux aktar minn {days} jum. Il-perjodu tal-ħażna jiġġedded meta taġġorna l-għażliet tiegħek.',
+			description:
+				'Aħna u l-{partnerCount} sieħeb tagħna naħżnu u/jew naċċessaw informazzjoni fuq apparat u nipproċessaw data personali, bħal identifikaturi uniċi u data tal-browsing, għal din l-app, biex:',
+			legitimateInterestExplanation:
+				'Xi sħab jipproċessaw data personali, bħal identifikaturi uniċi u data tal-browsing, abbażi tal-interess leġittimu tagħhom minflok ma jitolbu l-kunsens. Dan japplika biss għal din l-app. Għandek id-dritt li toġġezzjona għal dan il-proċessar għal kull skop u għal kull sieħeb.',
+			scopeServiceSpecific:
+				'Il-kunsens tiegħek japplika biss għal din l-app u ma jaffettwax servizzi oħra.',
+			withdraw:
+				'Tista’ tibdel l-għażliet tiegħek jew tirtira l-kunsens tiegħek fi kwalunkwe ħin minn Settings tal-privatezza f’din l-app.',
+		},
 		banner: {
 			andMore: 'U {count} oħra...',
 			description:

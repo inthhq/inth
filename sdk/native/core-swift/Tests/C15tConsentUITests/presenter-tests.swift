@@ -132,6 +132,9 @@ final class PresenterTests: XCTestCase {
         let (core, _) = try await bootIAB()
         let presenter = ConsentPresenter(core: core)
         presenter.customize()
+        // A first-time user's legitimate interest starts not objected to.
+        XCTAssertEqual(presenter.partnerStatus(1), "Partly on")
+        presenter.editLI(purpose: false, id: 1, enabled: false)
         XCTAssertEqual(presenter.partnerStatus(1), "Off")
         presenter.editLI(purpose: true, id: 7, enabled: true)
         presenter.editLI(purpose: false, id: 1, enabled: true)

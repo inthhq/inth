@@ -49,6 +49,7 @@ data class IabCommittedConsent(
 	val vendorListVersion: Int,
 	val policyVersion: Int,
 	val consentVersion: Int,
+	/** When the first decision in this chain was saved. Record only: the TC String's Created and LastUpdated both carry [actionAt]'s UTC day. */
 	val createdAt: Long,
 	val actionAt: Long,
 	val tcString: String,
@@ -146,6 +147,9 @@ internal object IabAuthority {
 			}
 		}
 		if (previous != null) require(previous.consentVersion in 1 until Int.MAX_VALUE)
+		// `createdAt` keeps the first decision's time for the record. It never reaches the string:
+		// TCF requires Created and LastUpdated to hold the same day, and the web build sets both to
+		// the confirmation day (`packages/iab/src/tcf/tc-string.ts`).
 		val createdAt = previous?.createdAt ?: actionAt
 		require(createdAt >= 0 && actionAt >= createdAt)
 		val restrictions =
@@ -171,7 +175,6 @@ internal object IabAuthority {
 				consentScreen = c.consentScreen,
 				publisherCountryCode = c.publisherCountryCode,
 				confirmedAtMillis = actionAt,
-				createdAtMillis = createdAt,
 				vendorList = list,
 				purposeConsents = requested.purposeConsents,
 				purposeLegitimateInterests = requested.purposeLegitimateInterests,

@@ -25,6 +25,14 @@ export const ANDROID_META = {
 	domain: 'com.c15t.DOMAIN',
 	/** Staged-build switch that forces GPC on. */
 	forceGpc: 'com.c15t.FORCE_GPC',
+	/** Registered IAB CMP ID, read by `C15tAndroid.declaredIab`. */
+	iabCmpId: 'com.c15t.IAB_CMP_ID',
+	/** CMP version, required with the CMP ID. */
+	iabCmpVersion: 'com.c15t.IAB_CMP_VERSION',
+	/** Optional TCF consent screen number. */
+	iabConsentScreen: 'com.c15t.IAB_CONSENT_SCREEN',
+	/** Two-letter publisher country code, required with the CMP ID. */
+	iabPublisherCountryCode: 'com.c15t.IAB_PUBLISHER_COUNTRY_CODE',
 	/** Overrides `${portalUrl}/init` for a proxied init route. */
 	initUrl: 'com.c15t.INIT_URL',
 	policyResource: 'com.c15t.POLICY_RESOURCE',
@@ -52,6 +60,14 @@ export const IOS_PLIST_KEY = {
 	domain: 'com.c15t.backend.domain',
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
 	gpc: 'com.c15t.gpc',
+	/** Registered IAB CMP ID, as a plist integer. */
+	iabCmpId: 'com.c15t.iab.cmpId',
+	/** CMP version, as a plist integer. */
+	iabCmpVersion: 'com.c15t.iab.cmpVersion',
+	/** Optional TCF consent screen number, as a plist integer. */
+	iabConsentScreen: 'com.c15t.iab.consentScreen',
+	/** Two-letter publisher country code. */
+	iabPublisherCountryCode: 'com.c15t.iab.publisherCountryCode',
 	/** Overrides `${backendURL}/init`, for a proxied init route. */
 	initURL: 'com.c15t.backend.initUrl',
 	policyResource: 'com.c15t.policy.resource',
@@ -148,3 +164,19 @@ export const SK_AD_NETWORK_IDENTIFIER_PATTERN =
  * `pt_BR`, `Base`) and refuses everything that is not a single flat token.
  */
 export const LOCALE_TAG_PATTERN = /^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/u;
+
+/** Every AndroidManifest meta-data name the plugin writes for IAB TCF. */
+export const ANDROID_IAB_META_KEYS: readonly string[] = [
+	ANDROID_META.iabCmpId,
+	ANDROID_META.iabCmpVersion,
+	ANDROID_META.iabConsentScreen,
+	ANDROID_META.iabPublisherCountryCode,
+];
+
+/** Every Info.plist key the plugin writes for IAB TCF. */
+export const IOS_IAB_PLIST_KEYS: readonly string[] = [
+	IOS_PLIST_KEY.iabCmpId,
+	IOS_PLIST_KEY.iabCmpVersion,
+	IOS_PLIST_KEY.iabConsentScreen,
+	IOS_PLIST_KEY.iabPublisherCountryCode,
+];

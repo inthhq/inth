@@ -174,7 +174,22 @@ final class ConsentJourneyTests: XCTestCase {
     func test03IabSearchRestrictionObjectionAndAcCommit() {
         launch("fresh-online-iab")
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); capture("ios-iab-first-layer")
+        // The IAB first layer: description with the partner count, the purpose summary, then
+        // legitimate interest, scope and withdrawal, all from the IAB copy.
+        let description = app.staticTexts["c15t.first-layer.iab-description"]
+        XCTAssertTrue(description.label.contains("We and our 5 partners store and/or access information on your device"), description.label)
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.summary.0"].label, "Store and access information on a device")
+        XCTAssertFalse(app.staticTexts["c15t.first-layer.summary.more"].exists)
+        XCTAssertTrue(app.staticTexts["c15t.first-layer.legitimate-interest"].label.contains("right to object"))
+        XCTAssertEqual(app.staticTexts["c15t.first-layer.scope"].label, "Your consent applies only to this app and will not affect other services.")
+        let withdraw = app.staticTexts["c15t.first-layer.withdraw"]; reveal(withdraw)
+        XCTAssertTrue(withdraw.label.contains("withdraw your consent at any time"))
+        XCTAssertEqual(button("c15t.first-layer.reject-all").label, "Reject All")
+        XCTAssertEqual(button("c15t.first-layer.accept-all").label, "Accept All")
+        capture("ios-iab-first-layer-disclosures")
         button("c15t.first-layer.customize").tap()
+        let explanation = app.staticTexts["c15t.iab.legitimate-interest-explanation"]
+        XCTAssertTrue(explanation.waitForExistence(timeout: 5)); XCTAssertTrue(explanation.label.contains("right to object"))
         // One purpose consent on, so a partner consent later shows as Partly on rather than Off.
         let storage = app.switches["c15t.iab.purpose.1.consent"]
         reveal(storage); storage.tap(); XCTAssertEqual(storage.value as? String, "1")
@@ -186,8 +201,8 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(viewPartners.frame.height, 44)
         XCTAssertGreaterThanOrEqual(details.frame.height, 44)
         let li = app.switches["c15t.iab.purpose.7.li"]
-        reveal(li); XCTAssertEqual(li.value as? String, "0")
-        li.tap(); li.tap()
+        reveal(li); XCTAssertEqual(li.value as? String, "1") // Starts not objected to; one tap objects.
+        li.tap(); XCTAssertEqual(li.value as? String, "0")
         XCTAssertFalse(app.switches["c15t.iab.purpose.1.li"].exists)
         let partners = button("c15t.iab.partners"); reveal(partners); partners.tap()
         let search = app.textFields["c15t.iab.vendors.search"]
@@ -197,7 +212,7 @@ final class ConsentJourneyTests: XCTestCase {
         button("c15t.iab.vendors.vendor.1").tap()
         let consent = app.switches["c15t.iab.vendor.1.consent"]
         XCTAssertTrue(consent.waitForExistence(timeout: 3)); consent.tap()
-        let vendorLI = app.switches["c15t.iab.vendor.1.li"]; XCTAssertEqual(vendorLI.value as? String, "0"); vendorLI.tap(); vendorLI.tap()
+        let vendorLI = app.switches["c15t.iab.vendor.1.li"]; XCTAssertEqual(vendorLI.value as? String, "1"); vendorLI.tap(); XCTAssertEqual(vendorLI.value as? String, "0")
         capture("ios-partner-details")
         button("c15t.iab.vendor.back").tap()
         XCTAssertTrue(app.staticTexts["c15t.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
@@ -205,10 +220,16 @@ final class ConsentJourneyTests: XCTestCase {
         capture("ios-partner-status")
         button("c15t.iab.vendors.back").tap()
         let features = app.staticTexts["c15t.iab.features-standard-text"]; reveal(features); XCTAssertFalse(features.label.isEmpty)
-        let ac = button("c15t.iab.other-partners"); reveal(ac); ac.tap()
+        let ac0 = button("c15t.iab.other-partners")
+        let consentStorage = app.staticTexts["c15t.iab.consent-storage"]; reveal(consentStorage)
+        XCTAssertTrue(consentStorage.label.contains("for up to 365 days"), consentStorage.label)
+        capture("ios-iab-consent-storage")
+        reveal(ac0, backwards: true)
+        ac0.tap()
         XCTAssertTrue(app.textFields["c15t.ac.search"].waitForExistence(timeout: 3))
         app.switches["c15t.ac.provider.10.switch"].tap(); capture("ios-additional-consent")
-        XCTAssertTrue(app.staticTexts["c15t.ac.intro"].label.contains("Store and access information on a device"))
+        // The web's notice, from the shared copy, and no purpose numbers.
+        XCTAssertTrue(app.staticTexts["c15t.ac.intro"].label.contains("Google works with these ad tech providers"))
         XCTAssertFalse(app.staticTexts["c15t.ac.intro"].label.contains("Purposes 1"))
         button("c15t.ac.back").tap()
         button("c15t.iab.save").tap()
@@ -466,6 +487,10 @@ final class ConsentJourneyTests: XCTestCase {
         button("c15t.iab.vendor.back").tap()
         XCTAssertTrue(app.staticTexts["c15t.iab.vendors.vendor.1.status"].waitForExistence(timeout: 3))
         button("c15t.iab.vendors.back").tap()
+        // The special-feature title scales with the rest of the page; test15 tolerates the audit's Dynamic
+        // Type finding on this row on that basis. It is about 20pt tall at the default size.
+        let feature = app.switches["c15t.iab.special-feature.1.switch"]; reveal(feature)
+        XCTAssertGreaterThan(feature.staticTexts.firstMatch.frame.height, 60, "special-feature title does not scale")
         let ac = button("c15t.iab.other-partners"); reveal(ac); ac.tap()
         XCTAssertTrue(app.textFields["c15t.ac.search"].waitForExistence(timeout: 3))
         let provider = app.switches["c15t.ac.provider.10.switch"]
@@ -551,7 +576,15 @@ final class ConsentJourneyTests: XCTestCase {
     ///   review), and text the audit has flagged while wholly visible measured 5.76:1 and 17:1 on the capture;
     /// - one contrast finding on the AX5 save error with no element: text beyond the window, where there is
     ///   no pinned footer and the frame cannot be read;
-    /// - "may be clipped" on the UIKit search field, whose text is whole at the largest size in the captures.
+    /// - "may be clipped" on the UIKit search field, whose text is whole at the largest size in the captures;
+    /// - Dynamic Type "partially unsupported" on the special-feature row of the IAB preferences, which this
+    ///   audit starts with just under the footer. The audit steps the content size while the list keeps its
+    ///   offset in points, so the rows above grow and push this row off the screen before the larger sizes
+    ///   are measured (the run's screen recording shows it). The row uses the same text styles as every
+    ///   other row and scales: at the largest size its title is 249pt tall against 20pt
+    ///   (`test13LargestTextIabNavigationSearchAndSave` checks this). Started elsewhere, the audit gives
+    ///   other rows the same finding: with the list at its top it names "This app" and "Strictly necessary".
+    ///   Matched by the element's frame against that row's switch and its Details control.
     /// A finding of another kind, on another screen, or on a visible element fails the test.
     @available(iOS 17.0, *)
     func documentedAuditFalsePositive(_ issue: XCUIAccessibilityAuditIssue, screen: String) -> Bool {
@@ -580,6 +613,10 @@ final class ConsentJourneyTests: XCTestCase {
                   element.identifier == "c15t.iab.vendors.search" else { return false }
             auditTolerated[screen, default: 0] += 1
             return auditTolerated[screen]! <= 1
+        case .dynamicType:
+            guard screen == "ax-iab-preferences", let element = issue.element else { return false }
+            let row = [app.switches["c15t.iab.special-feature.1.switch"], button("c15t.iab.special-feature.1.details")]
+            return row.contains { $0.exists && $0.frame.insetBy(dx: -1, dy: -1).contains(element.frame) }
         default:
             return false
         }
@@ -650,7 +687,7 @@ final class ConsentJourneyTests: XCTestCase {
         continueAfterFailure = true
         launch("fresh-online-iab")
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
-        XCTAssertTrue(button("c15t.first-layer.partner-count").label.range(of: #"^\d+ IAB partners$"#, options: .regularExpression) != nil, button("c15t.first-layer.partner-count").label)
+        XCTAssertTrue(button("c15t.first-layer.partner-count").label.range(of: #"^\d+ partners$"#, options: .regularExpression) != nil, button("c15t.first-layer.partner-count").label)
         audit("ax-iab-first-layer")
         button("c15t.first-layer.customize").tap()
         XCTAssertTrue(button("c15t.iab.save").waitForExistence(timeout: 5))

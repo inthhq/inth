@@ -68,7 +68,7 @@ Start with the guide for your app. The package also includes version-matched Mar
 
 ## IAB and ads
 
-Native IAB and Additional Consent APIs do not establish IAB registration, Google certification or AdMob interoperability. Vendor scope alone is not approved CMP configuration. ATT is a separate platform permission and never grants consent. Keep an ad integration disabled until its actual SDK, policy and certification requirements are verified.
+Native IAB and Additional Consent APIs do not establish IAB registration, Google certification or AdMob interoperability. Vendor scope alone is not approved CMP configuration: set the Expo plugin's `iab` option, or the matching native metadata in bare RN, with your registered CMP ID, CMP version and publisher country code. There is no default CMP ID. ATT is a separate platform permission and never grants consent. Keep an ad integration disabled until its actual SDK, policy and certification requirements are verified.
 
 ## Self-hosted and headless integration
 
@@ -76,7 +76,7 @@ Hosted Inth is the recommended starting point. The existing self-hosted transpor
 
 ## First release scope
 
-The first release includes native presenters, RN hooks and category commands, app-owned native installation and standalone Swift/Kotlin APIs. A separate UI-free RN package and turnkey typed RN/Expo IAB bootstrap are deferred. See [mobile availability](https://c15t.com/docs/guides/mobile-status) for the supported integration paths.
+The first release includes native presenters, RN hooks and category commands, app-owned native installation, IAB CMP settings through the Expo plugin or native metadata, and standalone Swift/Kotlin APIs. A separate UI-free RN package is deferred. See [mobile availability](https://c15t.com/docs/guides/mobile-status) for the supported integration paths.
 
 ## Docs for AI Agents
 

@@ -144,27 +144,87 @@ final class ContrastTests: XCTestCase {
         XCTAssertEqual(accent.blended(toward: ConsentThemeColor(light: 0x000000), fraction: 7), ConsentThemeColor(light: 0x000000))
     }
 
-    /// The small text the stock theme sets on tinted and muted fills, in both appearances.
+    /// The small text the stock theme sets on tinted and muted fills, in both appearances. The
+    /// decision labels are held to IAB's 5:1 for the first layer's primary actions.
+    // TCF-CHECK: P11
     func testStockSmallTextReachesFourPointFiveToOne() {
         let colors = ConsentTheme.Colors.c15t
         for dark in [false, true] {
             func value(_ color: ConsentThemeColor) -> UInt32 { dark ? color.dark : color.light }
             let tagFill = composite(value(colors.accent), alpha: 0.14, over: value(colors.surface))
-            let pairs: [(String, UInt32, UInt32)] = [
-                ("status tag text on its tint", value(colors.statusTagText), tagFill),
-                ("off tag text on muted surface", value(colors.textSecondary), value(colors.surfaceMuted)),
-                ("partner count on muted surface", value(colors.text), value(colors.surfaceMuted)),
-                ("section label on muted surface", value(colors.textSecondary), value(colors.surfaceMuted)),
-                ("links on canvas", value(colors.accent), value(colors.canvas)),
-                ("links on surface", value(colors.accent), value(colors.surface)),
-                ("decision label", value(colors.onDecision), value(colors.decision)),
-                ("save label", value(colors.onAccent), value(colors.accent)),
+            let pairs: [(String, UInt32, UInt32, Double)] = [
+                ("status tag text on its tint", value(colors.statusTagText), tagFill, 4.5),
+                ("off tag text on muted surface", value(colors.textSecondary), value(colors.surfaceMuted), 4.5),
+                ("partner count on muted surface", value(colors.text), value(colors.surfaceMuted), 4.5),
+                ("section label on muted surface", value(colors.textSecondary), value(colors.surfaceMuted), 4.5),
+                ("links on canvas", value(colors.accent), value(colors.canvas), 4.5),
+                ("links on surface", value(colors.accent), value(colors.surface), 4.5),
+                ("decision label", value(colors.onDecision), value(colors.decision), 5),
+                ("customize label on canvas", value(colors.text), value(colors.canvas), 5),
+                ("save label", value(colors.onAccent), value(colors.accent), 4.5),
             ]
-            for (name, foreground, background) in pairs {
+            for (name, foreground, background, minimum) in pairs {
                 let ratio = contrast(foreground, background)
-                XCTAssertGreaterThanOrEqual(ratio, 4.5, "\(name) (\(dark ? "dark" : "light")) was \(ratio)")
+                XCTAssertGreaterThanOrEqual(ratio, minimum, "\(name) (\(dark ? "dark" : "light")) was \(ratio)")
+                XCTAssertEqual(ConsentTheme.contrastRatio(foreground, background), ratio, accuracy: 1e-9)
             }
         }
+    }
+}
+
+/// A host theme can't push the first layer's primary actions under IAB's 5:1.
+final class DecisionContrastGuardTests: XCTestCase {
+    // TCF-CHECK: P11
+    func testLowContrastHostDecisionColoursFallBackToStock() {
+        var host = ConsentTheme(cornerRadius: 6)
+        host.colors.accent = ConsentThemeColor(light: 0x00796B)
+        // 2.2:1 in light, fine in dark: one weak appearance is enough to fall back.
+        host.colors.decision = ConsentThemeColor(light: 0x8A8A8A, dark: 0x000000)
+        host.colors.onDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0xFFFFFF)
+        XCTAssertLessThan(host.decisionContrast, 5)
+        var reports: [String] = []
+        let guarded = host.withReadableDecisions { reports.append($0) }
+        XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
+        XCTAssertEqual(guarded.colors.onDecision, ConsentTheme.Colors.c15t.onDecision)
+        XCTAssertGreaterThanOrEqual(guarded.decisionContrast, 5)
+        // Only the decision colours change.
+        XCTAssertEqual(guarded.colors.accent, host.colors.accent)
+        XCTAssertEqual(guarded.cornerRadius, 6)
+        XCTAssertEqual(reports.count, 1)
+        XCTAssertTrue(reports[0].contains("5:1"), reports[0])
+    }
+
+    // TCF-CHECK: P11
+    func testInfoPlistDecisionOverridesAreGuardedToo() {
+        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+            ConsentTheme.InfoPlistKey.decision: "#777777",
+            ConsentTheme.InfoPlistKey.onDecision: "#888888",
+        ])
+        XCTAssertEqual(theme.colors.decision, ConsentThemeColor(light: 0x777777))
+        let guarded = theme.withReadableDecisions { _ in }
+        XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
+        XCTAssertEqual(guarded.colors.onDecision, ConsentTheme.Colors.c15t.onDecision)
+    }
+
+    // TCF-CHECK: P11
+    func testReadableHostDecisionColoursAreKept() {
+        var host = ConsentTheme.c15t
+        // The demo's brand theme: teal decisions at 5.3:1 light and 7:1 dark.
+        host.colors.decision = ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0)
+        host.colors.onDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)
+        var reports = 0
+        XCTAssertEqual(host.withReadableDecisions { _ in reports += 1 }, host)
+        XCTAssertEqual(ConsentTheme.c15t.withReadableDecisions { _ in reports += 1 }, .c15t)
+        XCTAssertEqual(reports, 0)
+    }
+
+    func testFallbackIsLoggedOncePerProcess() {
+        final class Lines: @unchecked Sendable { var values: [String] = [] }
+        let lines = Lines()
+        let report = DecisionContrastLog.once { lines.values.append($0) }
+        report("first")
+        report("second")
+        XCTAssertEqual(lines.values, ["first"])
     }
 }
 

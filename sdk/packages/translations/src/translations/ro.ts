@@ -68,6 +68,18 @@ export const translations: CompleteTranslations = {
 		title: 'Prețuim confidențialitatea ta',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Alegerile tale sunt stocate pe acest dispozitiv, în spațiul standard de stocare a setărilor aplicației, sub chei IABTCF, timp de cel mult {days} zile. Durata de stocare se reînnoiește atunci când îți actualizezi alegerile.',
+			description:
+				'Noi și cei {partnerCount} parteneri ai noștri stocăm și/sau accesăm informații pe dispozitivul tău și procesăm date personale, cum ar fi identificatori unici și date de navigare, pentru această aplicație, pentru:',
+			legitimateInterestExplanation:
+				'Unii parteneri procesează date personale, cum ar fi identificatori unici și date de navigare, pe baza interesului lor legitim, în loc să îți ceară consimțământul. Acest lucru se aplică doar acestei aplicații. Ai dreptul de a te opune acestei procesări pentru fiecare scop și fiecare partener.',
+			scopeServiceSpecific:
+				'Consimțământul tău se aplică doar acestei aplicații și nu va afecta alte servicii.',
+			withdraw:
+				'Îți poți modifica alegerile sau îți poți retrage consimțământul în orice moment din Setări de confidențialitate în această aplicație.',
+		},
 		banner: {
 			andMore: 'Și încă {count}...',
 			description:

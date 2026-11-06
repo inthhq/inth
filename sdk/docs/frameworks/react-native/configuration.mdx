@@ -38,6 +38,7 @@ for a working `app.config.ts`. The plugin accepts:
 | `domain` | Domain value sent with subject writes. |
 | `consentCategories` | Optional app category declaration. |
 | `vendors` | Optional IAB disclosure scope. |
+| `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
 | `policyResource` | Build-exported policy JSON, relative to the Expo project. |
 | `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
 | `autoBootstrap` | Whether native launch installs the engine. Defaults to true except for custom mode. |
@@ -67,6 +68,7 @@ Use these keys when configuring the same engine without Expo:
 | `vendors` | `com.c15t.vendors` | `com.c15t.VENDORS`, comma-separated |
 | `policyResource` | `com.c15t.policy.resource` | `com.c15t.POLICY_RESOURCE` |
 | `forceGPC` | `com.c15t.gpc` | `com.c15t.FORCE_GPC` |
+| `iab` | `com.c15t.iab.*`, see below | `com.c15t.IAB_*`, see below |
 | `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
 
 The iOS transport mode uses `com.c15t.backend.mode`. Android derives transport
@@ -86,8 +88,32 @@ resolved `snapshot.consentCategories` when building your own category list.
 
 Vendor IDs similarly narrow the served IAB disclosures. Omit `vendors` to keep
 the served list. It must be nonempty when supplied. Vendor scope does not
-install CMP/publisher identity or grant a vendor. See
-[IAB setup](/docs/guides/mobile-iab).
+install CMP/publisher identity or grant a vendor. Use `iab` for that.
+
+## Turn on IAB TCF
+
+Set the `iab` plugin option in Expo, or the matching native metadata in bare
+RN. Native startup then installs the engine with IAB TCF on. It writes
+`IABTCF_CmpSdkID` and `IABTCF_CmpSdkVersion` at launch, and the stock native
+presenter can save IAB choices. Leave `iab` out to keep IAB TCF off.
+
+| Expo `iab` field | iOS `Info.plist` key | Android metadata | Value |
+| --- | --- | --- | --- |
+| `cmpId` | `com.c15t.iab.cmpId`, integer | `com.c15t.IAB_CMP_ID` | Required. The CMP ID IAB Europe registered for your CMP, 2 to 4095. There is no default. |
+| `cmpVersion` | `com.c15t.iab.cmpVersion`, integer | `com.c15t.IAB_CMP_VERSION` | Required. Your internal CMP version, 0 to 4095. |
+| `publisherCountryCode` | `com.c15t.iab.publisherCountryCode` | `com.c15t.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two letters, such as `DE`. |
+| `consentScreen` | `com.c15t.iab.consentScreen`, integer | `com.c15t.IAB_CONSENT_SCREEN` | Optional. 0 to 63. Defaults to 1. |
+
+The Expo plugin stops prebuild when a value is missing or out of range. Native
+startup checks the same ranges. If any `iab` key is present but the set is
+incomplete or out of range, startup logs an error and starts the engine
+without IAB TCF. Category consent still works, no CMP ID is written, and IAB
+saves fail with `iab-unavailable` until you fix the values.
+
+Your Inth project must also serve an IAB policy for the regions where TCF
+applies. Rebuild the native app after changing these values. Apps that need
+publisher restrictions or custom purposes still install the engine
+themselves; see [IAB setup](/docs/guides/mobile-iab).
 
 ## Preview a regional policy
 
@@ -115,5 +141,5 @@ engine. Custom stores and transports are native integration contracts.
 
 The [native startup guide](/docs/frameworks/react-native/native-behaviour)
 explains ordering and protected-storage recovery. Use
-[mobile IAB setup](/docs/guides/mobile-iab) when your native configuration also
+[mobile IAB setup](/docs/guides/mobile-iab) when your native installation also
 needs CMP and publisher settings.

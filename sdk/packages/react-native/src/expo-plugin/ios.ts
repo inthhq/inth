@@ -10,7 +10,7 @@ import type {
 } from '@expo/config-plugins';
 
 import { iosConfig } from './config-plugins';
-import { IOS_PLIST_KEY } from './constants';
+import { IOS_IAB_PLIST_KEYS, IOS_PLIST_KEY } from './constants';
 import { C15tPluginError } from './errors';
 import { IOS_TRANSPORT_MODE } from './params';
 import type { ResolvedC15tParams } from './params';
@@ -118,8 +118,8 @@ const CF_BUNDLE_LOCALIZATIONS_KEY = 'CFBundleLocalizations';
  */
 export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	params: ResolvedC15tParams
-): Record<string, string | boolean | string[]> {
-	const entries: Record<string, string | boolean | string[]> = {
+): Record<string, string | number | boolean | string[]> {
+	const entries: Record<string, string | number | boolean | string[]> = {
 		[IOS_PLIST_KEY.transportMode]: IOS_TRANSPORT_MODE[params.mode],
 	};
 
@@ -147,6 +147,17 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	// answer; the cores prune whatever they are served down to these ids either way.
 	if (params.vendors.length > 0) {
 		entries[IOS_PLIST_KEY.vendors] = params.vendors.join(',');
+	}
+	// Plist integers, which the bridge's `declaredIAB` reads. Absent keys leave
+	// IAB TCF off.
+	if (params.iab !== null) {
+		entries[IOS_PLIST_KEY.iabCmpId] = params.iab.cmpId;
+		entries[IOS_PLIST_KEY.iabCmpVersion] = params.iab.cmpVersion;
+		entries[IOS_PLIST_KEY.iabPublisherCountryCode] =
+			params.iab.publisherCountryCode;
+		if (params.iab.consentScreen !== null) {
+			entries[IOS_PLIST_KEY.iabConsentScreen] = params.iab.consentScreen;
+		}
 	}
 	if (params.forceGPC) {
 		entries[IOS_PLIST_KEY.gpc] = true;
@@ -249,7 +260,13 @@ export const applyInfoPlist = function applyInfoPlist(
 	params: ResolvedC15tParams,
 	infoPlist: InfoPlist
 ): InfoPlist {
-	const next: InfoPlist = { ...infoPlist, ...buildInfoPlistEntries(params) };
+	const next: InfoPlist = { ...infoPlist };
+	// The plugin owns every IAB key. Clear them first, so a removed `iab`
+	// option or `consentScreen` leaves no earlier CMP identity behind.
+	for (const key of IOS_IAB_PLIST_KEYS) {
+		Reflect.deleteProperty(next, key);
+	}
+	Object.assign(next, buildInfoPlistEntries(params));
 	if (
 		params.policyResource === null &&
 		next[IOS_PLIST_KEY.policyResource] === POLICY_RESOURCE_NAME

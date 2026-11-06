@@ -78,29 +78,35 @@ class ScreenAccessibilityTest {
         assertNull(presenter?.pendingAction)
     }
 
+    // TCF-CHECK: P11
     @Test fun lightStockSmallTextReachesFourPointFiveToOne() = assertStockSmallTextContrast(dark = false)
 
+    // TCF-CHECK: P11
     @Test @Config(qualifiers = "night")
     fun darkStockSmallTextReachesFourPointFiveToOne() = assertStockSmallTextContrast(dark = true)
 
-    /** The small text the stock theme sets on tinted and muted fills, composited the way it renders. */
+    /**
+     * The small text the stock theme sets on tinted and muted fills, composited the way it renders.
+     * Accept all and Reject all need 5:1, the IAB TCF floor for the first layer's primary actions.
+     */
     private fun assertStockSmallTextContrast(dark: Boolean) {
         val colors = ConsentTheme.Colors.c15t
         fun argb(color: ConsentThemeColor) = (if (dark) color.dark else color.light) or 0xFF000000.toInt()
         val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.accent), Math.round(255 * 0.14f)), argb(colors.surface))
         val pairs = listOf(
-            Triple("status tag text on its tint", argb(colors.statusTagText), tagFill),
-            Triple("off tag text on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)),
-            Triple("partner count on muted surface", argb(colors.text), argb(colors.surfaceMuted)),
-            Triple("section label on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)),
-            Triple("links on canvas", argb(colors.accent), argb(colors.canvas)),
-            Triple("links on surface", argb(colors.accent), argb(colors.surface)),
-            Triple("decision label", argb(colors.onDecision), argb(colors.decision)),
-            Triple("save label", argb(colors.onAccent), argb(colors.accent)),
+            Triple("status tag text on its tint", argb(colors.statusTagText), tagFill) to 4.5,
+            Triple("off tag text on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)) to 4.5,
+            Triple("summary text on muted surface", argb(colors.text), argb(colors.surfaceMuted)) to 4.5,
+            Triple("section label on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)) to 4.5,
+            Triple("links on canvas", argb(colors.accent), argb(colors.canvas)) to 4.5,
+            Triple("links on surface", argb(colors.accent), argb(colors.surface)) to 4.5,
+            Triple("decision label", argb(colors.onDecision), argb(colors.decision)) to ConsentTheme.DECISION_CONTRAST_FLOOR,
+            Triple("save label", argb(colors.onAccent), argb(colors.accent)) to 4.5,
         )
-        for ((name, foreground, background) in pairs) {
+        for ((pair, floor) in pairs) {
+            val (name, foreground, background) = pair
             val ratio = ColorUtils.calculateContrast(foreground, background)
-            assertTrue("$name (${if (dark) "dark" else "light"}) was $ratio", ratio >= 4.5)
+            assertTrue("$name (${if (dark) "dark" else "light"}) was $ratio, needs $floor", ratio >= floor)
         }
     }
 

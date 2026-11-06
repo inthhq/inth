@@ -2,6 +2,7 @@ import type { AndroidConfig } from '@expo/config-plugins';
 
 import { androidConfig } from './config-plugins';
 import {
+	ANDROID_IAB_META_KEYS,
 	ANDROID_INITIALIZER,
 	ANDROID_INTERNET_PERMISSION,
 	ANDROID_META,
@@ -93,6 +94,37 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 			name: ANDROID_META.vendors,
 			value: params.vendors.join(','),
 		});
+	}
+	// `C15tAndroid.declaredIab` reads these. Absent keys leave IAB TCF off.
+	if (params.iab !== null) {
+		// Android has no offline mode: without a portal URL `C15tAndroid.configFrom`
+		// installs no core, so no IABTCF_* signals or IAB screens, and with one the
+		// bootstrap builds a hosted transport, so the "offline" build goes online.
+		if (params.mode === 'offline') {
+			throw new C15tPluginError(
+				"iab can't use mode 'offline' on Android: the Android core either " +
+					'starts with a backend, and sends records, or does not start at ' +
+					'all. Use a hosted mode with backendURL, or build iOS only for ' +
+					'offline IAB.'
+			);
+		}
+		pairs.push(
+			{ name: ANDROID_META.iabCmpId, value: String(params.iab.cmpId) },
+			{
+				name: ANDROID_META.iabCmpVersion,
+				value: String(params.iab.cmpVersion),
+			},
+			{
+				name: ANDROID_META.iabPublisherCountryCode,
+				value: params.iab.publisherCountryCode,
+			}
+		);
+		if (params.iab.consentScreen !== null) {
+			pairs.push({
+				name: ANDROID_META.iabConsentScreen,
+				value: String(params.iab.consentScreen),
+			});
+		}
 	}
 	if (params.forceGPC) {
 		pairs.push({ name: ANDROID_META.forceGpc, value: 'true' });
@@ -198,6 +230,13 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	ensureInternetPermission(next);
 
 	const application = getMainApplicationOrThrow(next);
+	// The plugin owns every IAB entry. Clear them first, so a removed `iab`
+	// option or `consentScreen` leaves no earlier CMP identity behind.
+	if (application['meta-data']) {
+		application['meta-data'] = application['meta-data'].filter(
+			(item) => !ANDROID_IAB_META_KEYS.includes(item.$['android:name'])
+		);
+	}
 	if (params.policyResource === null && application['meta-data']) {
 		application['meta-data'] = application['meta-data'].filter(
 			(item) =>

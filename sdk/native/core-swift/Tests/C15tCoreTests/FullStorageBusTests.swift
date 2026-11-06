@@ -3,6 +3,8 @@ import XCTest
 @testable import C15tCore
 
 final class FullStorageBusTests: XCTestCase {
+    // TCF-CHECK: T3
+    // TCF-CHECK: T4
     func testIndependentOracleRowsReachActualDefaultsWithNativeTypes() throws {
         let data = try Data(contentsOf: IABCommitTests.fixtureURL.deletingLastPathComponent().appendingPathComponent("storage-bus-cases.json"))
         let rows = try XCTUnwrap(C15tJSON.parse(data)?["cases"]?.arrayValue)

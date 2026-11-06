@@ -28,14 +28,15 @@ package com.c15t.core.tc
  * valid. See [TcSemanticPreEncoder].
  *
  * @property confirmedAtMillis When the user decided, in epoch milliseconds. Both date fields in the
- * string are this floored to a UTC day, which is what the format carries.
+ * string are this floored to a UTC day, which is what the format carries. There is no separate
+ * creation time: TCF requires Created and LastUpdated to hold the same value, and `tc-string.ts`
+ * sets both to the confirmation day.
  */
 data class TcConsentInput(
 	val cmpId: Int,
 	val confirmedAtMillis: Long,
 	val vendorList: TcVendorList,
 	val cmpVersion: Int = 0,
-	val createdAtMillis: Long = confirmedAtMillis,
 	val publisherRestrictions: TcPublisherRestrictions = TcPublisherRestrictions.EMPTY,
 	val publisher: TcPublisherSegment =
 		TcPublisherSegment(emptyList(), emptyList(), 0, emptyList(), emptyList()),
@@ -102,7 +103,7 @@ object TcStringEncoder {
 		val day = utcDayDeciseconds(input.confirmedAtMillis)
 		val core = TcCoreSegment(
 			version = TcCoreSegment.SUPPORTED_VERSION,
-			createdDeciseconds = utcDayDeciseconds(input.createdAtMillis),
+			createdDeciseconds = day,
 			lastUpdatedDeciseconds = day,
 			cmpId = input.cmpId,
 			cmpVersion = input.cmpVersion,

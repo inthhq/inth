@@ -627,7 +627,7 @@ extension TcVendorList {
     /// - Parameter gvl: the list `/init` served, already past the accept gate.
     package init(gvl: GlobalVendorList) {
         self.init(
-            language: "EN",
+            language: TcVendorList.defaultLanguage,
             vendorListVersion: gvl.vendorListVersion,
             tcfPolicyVersion: gvl.tcfPolicyVersion,
             vendors: gvl.vendors.values.map { vendor in

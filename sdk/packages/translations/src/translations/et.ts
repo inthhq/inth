@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Hindame teie privaatsust',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Teie valikud salvestatakse selles seadmes rakenduse tavapärasesse seadete salvestusruumi IABTCF-võtmete all kuni {days} päevaks. Salvestusaeg algab uuesti, kui oma valikuid uuendate.',
+			description:
+				'Meie ja meie {partnerCount} partnerit salvestavad ja/või pääsevad ligi teie seadmes olevatele andmetele ning töötlevad isikuandmeid, nagu unikaalsed identifikaatorid ja sirvimisandmed, selle rakenduse jaoks, et:',
+			legitimateInterestExplanation:
+				'Mõned partnerid töötlevad isikuandmeid, nagu unikaalsed identifikaatorid ja sirvimisandmed, oma õigustatud huvi alusel, selle asemel et nõusolekut küsida. See kehtib ainult selle rakenduse kohta. Teil on õigus sellele töötlemisele vastu vaielda iga eesmärgi ja iga partneri puhul.',
+			scopeServiceSpecific:
+				'Teie nõusolek kehtib ainult sellele rakendusele ega mõjuta teisi teenuseid.',
+			withdraw:
+				'Saate oma valikuid igal ajal muuta või nõusoleku tagasi võtta selle rakenduse jaotises Privaatsusseaded.',
+		},
 		banner: {
 			andMore: 'Ja veel {count}...',
 			description:

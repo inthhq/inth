@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Tugaimid luach do do phríobháideachas',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Stóráiltear do roghanna ar an ngléas seo, i stóras caighdeánach socruithe na haipe faoi eochracha IABTCF, ar feadh suas le {days} lá. Athnuachantar an tréimhse stórála nuair a nuashonraíonn tú do roghanna.',
+			description:
+				'Stórálaimid agus/nó faighimid rochtain ar fhaisnéis ar do ghléas, muid féin agus ár {partnerCount} comhpháirtí, agus próiseálaimid sonraí pearsanta, amhail aitheantóirí uathúla agus sonraí brabhsála, don aip seo, chun:',
+			legitimateInterestExplanation:
+				'Próiseálann roinnt comhpháirtithe sonraí pearsanta, amhail aitheantóirí uathúla agus sonraí brabhsála, ar bhonn a leasa dhlisteanaigh in ionad toiliú a iarraidh. Baineann sé seo leis an aip seo amháin. Tá an ceart agat cur in aghaidh an phróiseála seo do gach cuspóir agus do gach comhpháirtí.',
+			scopeServiceSpecific:
+				'Baineann do thoiliú leis an aip seo amháin agus ní dhéanfaidh sé difear do sheirbhísí eile.',
+			withdraw:
+				'Is féidir leat do roghanna a athrú nó do thoiliú a tharraingt siar am ar bith ó Socruithe príobháideachais san aip seo.',
+		},
 		banner: {
 			andMore: 'Agus {count} eile...',
 			description:

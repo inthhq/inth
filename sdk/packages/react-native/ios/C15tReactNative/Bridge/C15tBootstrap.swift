@@ -95,7 +95,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
         gpc: Bool? = nil,
-        bundledPolicyResource: String? = nil
+        bundledPolicyResource: String? = nil,
+        iab: IABConfiguration? = nil
     ) {
         self.autoBootstrap = autoBootstrap
         self.transportMode = transportMode
@@ -109,6 +110,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         self.vendors = vendors
         self.gpc = gpc
         self.bundledPolicyResource = bundledPolicyResource
+        self.iab = iab
     }
 
     /// Whether the launch hook should start the core.
@@ -150,6 +152,13 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     public var bundledPolicyResource: String?
     /// The host app's Global Privacy Control signal, or `nil` when it has none.
     public var gpc: Bool?
+    /// Registered CMP identity and publisher settings, or `nil` to leave IAB TCF off.
+    ///
+    /// Read from the `com.c15t.iab.*` keys. The core writes `IABTCF_CmpSdkID` and
+    /// `IABTCF_CmpSdkVersion` from it at startup. There is no default CMP ID: a
+    /// declaration without one, or with any value out of range, leaves this `nil`
+    /// and ``iabIssue(in:)`` explains why.
+    public var iab: IABConfiguration?
 
     /// Keys read out of `Info.plist`. All optional.
     public enum InfoPlistKey {
@@ -172,6 +181,14 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let vendors = "com.c15t.vendors"
         public static let gpc = "com.c15t.gpc"
         public static let bundledPolicyResource = "com.c15t.policy.resource"
+        /// IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.iab.*` key is present.
+        public static let iabCmpId = "com.c15t.iab.cmpId"
+        /// Your CMP version, 0 to 4095. Required with ``iabCmpId``.
+        public static let iabCmpVersion = "com.c15t.iab.cmpVersion"
+        /// Two-letter publisher country code. Required with ``iabCmpId``.
+        public static let iabPublisherCountryCode = "com.c15t.iab.publisherCountryCode"
+        /// Optional consent screen number, 0 to 63. The core's default is 1.
+        public static let iabConsentScreen = "com.c15t.iab.consentScreen"
     }
 
     /// A key a host app may still have in `Info.plist` that this build does not model.
@@ -287,8 +304,92 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             consentCategories: categories?.isEmpty == true ? nil : categories,
             vendors: declaredVendors(infoPlist[InfoPlistKey.vendors]),
             gpc: infoPlist[InfoPlistKey.gpc] as? Bool,
-            bundledPolicyResource: infoPlist[InfoPlistKey.bundledPolicyResource] as? String
+            bundledPolicyResource: infoPlist[InfoPlistKey.bundledPolicyResource] as? String,
+            iab: (try? declaredIAB(in: infoPlist).get()).flatMap { $0 }.map { declared in
+                // The backend serves disclosures in `language`; the TC String and the screens
+                // declare the same one. Codes TCF can't carry keep the default EN.
+                var configuration = declared
+                if let code = iabConsentLanguage(language) { configuration.consentLanguage = code }
+                return configuration
+            }
         )
+    }
+
+    /// A language tag as a TCF consent language: its primary subtag in two uppercase letters, or
+    /// `nil` when it has no two-letter form.
+    static func iabConsentLanguage(_ tag: String) -> String? {
+        let primary = tag.split(whereSeparator: { $0 == "-" || $0 == "_" }).first.map(String.init) ?? ""
+        guard primary.count == 2, primary.unicodeScalars.allSatisfy({ ("a"..."z").contains($0) || ("A"..."Z").contains($0) }) else { return nil }
+        return primary.uppercased()
+    }
+
+    /// Every `com.c15t.iab.*` key this build reads.
+    static let iabKeys = [
+        InfoPlistKey.iabCmpId, InfoPlistKey.iabCmpVersion,
+        InfoPlistKey.iabPublisherCountryCode, InfoPlistKey.iabConsentScreen,
+    ]
+
+    /// Read the IAB settings a host declared.
+    ///
+    /// No `com.c15t.iab.*` key means IAB stays off. Once any of them is present, CMP ID,
+    /// CMP version and publisher country code are all required and must be in range. A
+    /// declaration that fails is refused whole, so the core never writes a CMP ID the
+    /// publisher did not register.
+    ///
+    /// - Returns: The configuration, `nil` when nothing is declared, or the reason the
+    ///   declaration was refused.
+    public static func declaredIAB(in infoPlist: [String: Any]) -> Result<IABConfiguration?, C15tBridgeError> {
+        guard iabKeys.contains(where: { infoPlist[$0] != nil }) else { return .success(nil) }
+        func refuse(_ reason: String) -> Result<IABConfiguration?, C15tBridgeError> {
+            .failure(C15tBridgeError(
+                code: "C15T_CONFIGURATION_IAB_INVALID",
+                message: "Info.plist IAB settings were refused: \(reason) The consent core starts "
+                    + "without IAB TCF, so no IABTCF_CmpSdkID is written and IAB saves fail until "
+                    + "the com.c15t.iab.* keys are fixed."
+            ))
+        }
+        guard let cmpId = declaredInteger(infoPlist[InfoPlistKey.iabCmpId]) else {
+            return refuse("\(InfoPlistKey.iabCmpId) must be your registered CMP ID, a whole number.")
+        }
+        guard let cmpVersion = declaredInteger(infoPlist[InfoPlistKey.iabCmpVersion]) else {
+            return refuse("\(InfoPlistKey.iabCmpVersion) must be a whole number.")
+        }
+        guard let country = (infoPlist[InfoPlistKey.iabPublisherCountryCode] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines).uppercased(), !country.isEmpty else {
+            return refuse("\(InfoPlistKey.iabPublisherCountryCode) must be a two-letter country code.")
+        }
+        var consentScreen = 1
+        if let raw = infoPlist[InfoPlistKey.iabConsentScreen] {
+            guard let screen = declaredInteger(raw) else {
+                return refuse("\(InfoPlistKey.iabConsentScreen) must be a whole number.")
+            }
+            consentScreen = screen
+        }
+        let configuration = IABConfiguration(
+            cmpId: cmpId, cmpVersion: cmpVersion,
+            publisherCountryCode: country, consentScreen: consentScreen
+        )
+        if let issue = C15tApple.iabIssue(configuration) { return refuse(issue) }
+        return .success(configuration)
+    }
+
+    /// The reason the declared IAB settings were refused, or `nil`.
+    public static func iabIssue(in infoPlist: [String: Any]) -> C15tBridgeError? {
+        if case let .failure(issue) = declaredIAB(in: infoPlist) { return issue }
+        return nil
+    }
+
+    /// A whole number from a plist `integer` or a digit string. Booleans and fractions are refused.
+    private static func declaredInteger(_ raw: Any?) -> Int? {
+        switch raw {
+        case let number as NSNumber:
+            guard CFGetTypeID(number) != CFBooleanGetTypeID() else { return nil }
+            return Int(exactly: number.doubleValue)
+        case let text as String:
+            return Int(text.trimmingCharacters(in: .whitespacesAndNewlines))
+        default:
+            return nil
+        }
     }
 
     /// Parse a declared vendor scope out of an `Info.plist` entry.
@@ -393,7 +494,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             bundledPolicy: bundledPolicyResource.flatMap { name -> BundledPolicyResource? in
                 guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
                 return BundledPolicyResource(url: url, endpoint: endpoint)
-            }
+            },
+            iab: iab
         )
     }
 }
@@ -438,6 +540,12 @@ public enum C15tReactNativeBootstrap {
         if C15t.current == nil, let issue = C15tBridgeConfiguration.retirementIssue(in: infoPlist) {
             NSLog("%@", "c15t: \(issue.message)")
             return false
+        }
+
+        // Refuse IAB, not the whole core: category consent still works, and no CMP ID
+        // reaches the IABTCF_* keys that the publisher did not declare correctly.
+        if C15t.current == nil, let issue = C15tBridgeConfiguration.iabIssue(in: infoPlist) {
+            NSLog("%@", "c15t: \(issue.message)")
         }
 
         return start(configuration: configuration, fileStoreDirectory: fileStoreDirectory)

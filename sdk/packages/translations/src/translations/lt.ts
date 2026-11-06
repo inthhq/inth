@@ -68,6 +68,18 @@ export const translations: CompleteTranslations = {
 		title: 'Mes vertiname jūsų privatumą',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Jūsų pasirinkimai saugomi šiame įrenginyje, standartinėje programėlės nustatymų saugykloje su IABTCF raktais, ne ilgiau kaip {days} d. Kai atnaujinate savo pasirinkimus, saugojimo trukmė skaičiuojama iš naujo.',
+			description:
+				'Mes ir mūsų {partnerCount} partneriai saugome ir (arba) pasiekiame informaciją jūsų įrenginyje ir tvarkome asmens duomenis, tokius kaip unikalūs identifikatoriai ir naršymo duomenys, šioje programėlėje, kad galėtume:',
+			legitimateInterestExplanation:
+				'Kai kurie partneriai tvarko asmens duomenis, tokius kaip unikalūs identifikatoriai ir naršymo duomenys, remdamiesi savo teisėtu interesu, užuot prašę sutikimo. Tai taikoma tik šiai programėlei. Jūs turite teisę nesutikti su tokiu tvarkymu dėl kiekvieno tikslo ir kiekvieno partnerio.',
+			scopeServiceSpecific:
+				'Jūsų sutikimas taikomas tik šiai programėlei ir neturės įtakos kitoms paslaugoms.',
+			withdraw:
+				'Savo pasirinkimus galite bet kada pakeisti arba atšaukti sutikimą šios programėlės skiltyje Privatumo nustatymai.',
+		},
 		banner: {
 			andMore: 'Ir dar {count}...',
 			description:

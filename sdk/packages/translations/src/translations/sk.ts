@@ -68,6 +68,18 @@ export const translations: CompleteTranslations = {
 		title: 'Vážime si vaše súkromie',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Vaše voľby sú uložené v tomto zariadení, v štandardnom úložisku nastavení aplikácie pod kľúčmi IABTCF, najviac {days} dní. Doba uloženia sa obnoví, keď aktualizujete svoje voľby.',
+			description:
+				'My a naši {partnerCount} partneri ukladáme a/alebo pristupujeme k informáciám vo vašom zariadení a spracúvame osobné údaje, ako sú jedinečné identifikátory a údaje o prehliadaní, pre túto aplikáciu s cieľom:',
+			legitimateInterestExplanation:
+				'Niektorí partneri spracúvajú osobné údaje, ako sú jedinečné identifikátory a údaje o prehliadaní, na základe svojho oprávneného záujmu namiesto toho, aby žiadali o súhlas. Týka sa to len tejto aplikácie. Máte právo vzniesť námietku proti tomuto spracúvaniu pre každý účel a každého partnera.',
+			scopeServiceSpecific:
+				'Váš súhlas platí len pre túto aplikáciu a neovplyvní iné služby.',
+			withdraw:
+				'Svoje voľby môžete kedykoľvek zmeniť alebo odvolať svoj súhlas v Nastaveniach súkromia v tejto aplikácii.',
+		},
 		banner: {
 			andMore: 'A ďalších {count}...',
 			description:

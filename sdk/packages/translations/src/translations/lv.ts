@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Mēs novērtējam jūsu privātumu',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Jūsu izvēle tiek glabāta šajā ierīcē, lietotnes standarta iestatījumu krātuvē zem IABTCF atslēgām, līdz {days} dienām. Glabāšanas ilgums tiek atjaunots, kad jūs atjaunināt savu izvēli.',
+			description:
+				'Mēs un mūsu {partnerCount} partneri uzglabājam un/vai piekļūstam informācijai jūsu ierīcē un apstrādājam personas datus, piemēram, unikālus identifikatorus un pārlūkošanas datus, šai lietotnei, lai:',
+			legitimateInterestExplanation:
+				'Daži partneri apstrādā personas datus, piemēram, unikālus identifikatorus un pārlūkošanas datus, pamatojoties uz savām leģitīmajām interesēm, nevis lūdzot piekrišanu. Tas attiecas tikai uz šo lietotni. Jums ir tiesības iebilst pret šo apstrādi attiecībā uz katru nolūku un katru partneri.',
+			scopeServiceSpecific:
+				'Jūsu piekrišana attiecas tikai uz šo lietotni un neietekmēs citus pakalpojumus.',
+			withdraw:
+				'Jūs jebkurā laikā varat mainīt savu izvēli vai atsaukt piekrišanu šīs lietotnes sadaļā Privātuma iestatījumi.',
+		},
 		banner: {
 			andMore: 'Un vēl {count}...',
 			description:

@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'We value your privacy',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				"Your choices are stored on this device, in the app's standard settings storage under IABTCF keys, for up to {days} days. The storage duration is refreshed when you update your choices.",
+			description:
+				'We and our {partnerCount} partners store and/or access information on your device and process personal data, such as unique identifiers and browsing data, for this app, to:',
+			legitimateInterestExplanation:
+				'Some partners process personal data, such as unique identifiers and browsing data, on the basis of their legitimate interest instead of asking for consent. This applies only to this app. You have the right to object to this processing for each purpose and each partner.',
+			scopeServiceSpecific:
+				'Your consent applies only to this app and will not affect other services.',
+			withdraw:
+				'You can change your choices or withdraw your consent at any time from Privacy settings in this app.',
+		},
 		banner: {
 			andMore: 'And {count} more...',
 			description:

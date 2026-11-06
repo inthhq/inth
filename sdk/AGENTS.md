@@ -102,6 +102,8 @@ Conventions not enforced by tooling (hold new code to these; older code has exce
 | `README.md` in packages that have a `readme.json` | `bun run generate:readmes` | that package's `readme.json` |
 | `packages/*/src/version.ts` | `genversion` via each package's `prebuild` | package.json version |
 | `packages/cli/src/generate/version.ts` | `packages/cli/scripts/write-version.ts` via `prebuild`, `pretest`, and `check-types` | package.json version |
+| `native/core-swift/Sources/C15tConsentUI/generated/iab-copy.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/iab-copy.kt` and `.../resources/.../generated/iab-copy.json` | `bun run generate:native-iab-copy` | `iab` copy in `packages/translations` |
+| `native/protocol/iab/banner-summary-*.json` | `bun scripts/generate-iab-banner-summary-fixtures.ts` | web `resolveIABBannerSummary` in `packages/core` |
 | `dist/`, `dist-types/`, `coverage/` | builds/tests | — |
 | `.docs/` | `bun run setup:docs` (private docs-site template; maintainers only) | — |
 
@@ -183,4 +185,5 @@ Create an issue before starting feature work; features/refactors/architecture ch
 - `bunfig.toml` delays newly published npm versions by 3 days (`minimumReleaseAge`) — a just-released dependency version won't resolve.
 - Root scripts intentionally mix runners (`bun`, `bunx`, `tsx`) — copy the existing script's invocation style rather than "fixing" it.
 - `scripts/check-publish-artifacts.ts` fails the release if test/snapshot/mock artifacts leak into the publish tarball; keep test files under `__tests__/` or `*.test.*` patterns so rslib excludes them.
+- Native IAB TCF UI and signals must keep passing IAB Europe's non-web CMP checks, listed in `native/protocol/iab/tcf-policy-checks.json`. Each check needs a Swift and a Kotlin test carrying `// TCF-CHECK: <id>`, or `bun run test:scripts` fails. Change IAB copy in `packages/translations` (`iab.app`, `iab.banner`, and `src/native-app-labels.ts` for labels only the native screens show), never as literals in the native views.
 - The docs site app is a private template; external contributors edit `docs/**/*.mdx` only and preview via the PR's docs preview action.

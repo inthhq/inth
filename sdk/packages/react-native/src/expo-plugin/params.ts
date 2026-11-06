@@ -74,6 +74,38 @@ export const PROVIDER_TRANSPORT_MODE: Record<
 };
 
 /**
+ * IAB TCF settings for the embedded cores.
+ *
+ * Setting these turns IAB TCF on: the core writes `IABTCF_CmpSdkID` and
+ * `IABTCF_CmpSdkVersion` at startup and can commit IAB choices. There is no
+ * default CMP ID, so `cmpId` must be the ID IAB Europe registered for your CMP.
+ */
+export interface C15tIabPluginProps {
+	/** Registered CMP ID, a whole number from 2 to 4095. */
+	cmpId: number;
+	/** Your CMP version, a whole number from 0 to 4095. */
+	cmpVersion: number;
+	/** Two-letter country code of the publisher, such as `DE`. */
+	publisherCountryCode: string;
+	/**
+	 * TCF consent screen number, a whole number from 0 to 63.
+	 *
+	 * @defaultValue 1
+	 */
+	consentScreen?: number;
+}
+
+/** Validated IAB settings. */
+export interface ResolvedC15tIabParams {
+	readonly cmpId: number;
+	readonly cmpVersion: number;
+	/** Uppercase two-letter code. */
+	readonly publisherCountryCode: string;
+	/** `null` keeps the core's default of 1 and writes no key. */
+	readonly consentScreen: number | null;
+}
+
+/**
  * Parameters accepted by `@c15t/react-native/expo-plugin` in `app.json`.
  *
  * Everything here is published inside the app binary, so nothing here may be a
@@ -124,6 +156,13 @@ export interface C15tPluginProps {
 	 * purpose 7 means. Omit it to disclose every vendor the backend serves.
 	 */
 	vendors?: readonly number[];
+	/**
+	 * IAB TCF CMP identity and publisher settings.
+	 *
+	 * Omit it to leave IAB TCF off. `vendors` only narrows disclosures and does
+	 * not turn IAB on.
+	 */
+	iab?: C15tIabPluginProps;
 	/**
 	 * Transport mode.
 	 *
@@ -269,6 +308,8 @@ export interface ResolvedC15tParams {
 	 * backend that ignores the declaration still cannot widen the drawer.
 	 */
 	readonly vendors: readonly number[];
+	/** IAB settings, or `null` when IAB TCF stays off. */
+	readonly iab: ResolvedC15tIabParams | null;
 	/** App Tracking Transparency opt-in, resolved. */
 	readonly appTrackingTransparency: {
 		readonly enabled: boolean;
@@ -478,6 +519,77 @@ const normalizeVendors = function normalizeVendors(
 		);
 	}
 	return [...new Set(vendors)];
+};
+
+const isWholeNumberIn = function isWholeNumberIn(
+	value: unknown,
+	min: number,
+	max: number
+): value is number {
+	return (
+		typeof value === 'number' &&
+		Number.isInteger(value) &&
+		value >= min &&
+		value <= max
+	);
+};
+
+/**
+ * Validate the IAB settings.
+ *
+ * The ranges are the ones both cores enforce before they write a CMP ID or
+ * encode a TC String. Refusing here keeps a wrong CMP ID out of the binary.
+ */
+const normalizeIab = function normalizeIab(
+	iab: C15tIabPluginProps | undefined
+): ResolvedC15tIabParams | null {
+	if (iab === undefined) {
+		return null;
+	}
+	if (iab === null || typeof iab !== 'object') {
+		throw new C15tPluginError(
+			'iab must be an object such as { "cmpId": 123, "cmpVersion": 1, ' +
+				'"publisherCountryCode": "DE" }. Omit it to leave IAB TCF off.'
+		);
+	}
+	if (!isWholeNumberIn(iab.cmpId, 2, 4095)) {
+		throw new C15tPluginError(
+			`iab.cmpId must be the CMP ID IAB Europe registered for your CMP, a ` +
+				`whole number from 2 to 4095. There is no default. Got ` +
+				`${JSON.stringify(iab.cmpId)}.`
+		);
+	}
+	if (!isWholeNumberIn(iab.cmpVersion, 0, 4095)) {
+		throw new C15tPluginError(
+			`iab.cmpVersion must be a whole number from 0 to 4095. Got ` +
+				`${JSON.stringify(iab.cmpVersion)}.`
+		);
+	}
+	const country =
+		typeof iab.publisherCountryCode === 'string'
+			? iab.publisherCountryCode.trim().toUpperCase()
+			: '';
+	if (!/^[A-Z]{2}$/u.test(country)) {
+		throw new C15tPluginError(
+			`iab.publisherCountryCode must be a two-letter country code such as ` +
+				`"DE". Got ${JSON.stringify(iab.publisherCountryCode)}.`
+		);
+	}
+	if (
+		iab.consentScreen !== undefined &&
+		!isWholeNumberIn(iab.consentScreen, 0, 63)
+	) {
+		throw new C15tPluginError(
+			`iab.consentScreen must be a whole number from 0 to 63. Got ` +
+				`${JSON.stringify(iab.consentScreen)}.`
+		);
+	}
+	return {
+		cmpId: iab.cmpId,
+		cmpVersion: iab.cmpVersion,
+		consentScreen: iab.consentScreen ?? null,
+		publisherCountryCode: country,
+	};
 };
 
 /**
@@ -733,6 +845,7 @@ export const resolveParams = function resolveParams(
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
 		forceGPC: props.forceGPC ?? false,
+		iab: normalizeIab(props.iab),
 		initURL,
 		mode,
 		policyResource: normalizeOptionalText(

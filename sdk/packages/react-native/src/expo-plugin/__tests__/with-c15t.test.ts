@@ -149,6 +149,60 @@ describe('withC15t standard install', () => {
 		});
 	});
 
+	it('writes IAB settings to both platforms', async () => {
+		const config = applyToFixture({
+			...STANDARD_PROPS,
+			iab: {
+				cmpId: 1234,
+				cmpVersion: 7,
+				consentScreen: 3,
+				publisherCountryCode: 'de',
+			},
+		});
+
+		const applied = await runInfoPlist(config);
+		// Plist integers, so the bridge reads them as numbers.
+		expect(applied.ios?.infoPlist).toStrictEqual({
+			ITSAppUsesNonExemptEncryption: false,
+			'com.c15t.backend.mode': 'hosted',
+			'com.c15t.backend.url': BACKEND,
+			'com.c15t.iab.cmpId': 1234,
+			'com.c15t.iab.cmpVersion': 7,
+			'com.c15t.iab.consentScreen': 3,
+			'com.c15t.iab.publisherCountryCode': 'DE',
+		});
+
+		const manifestApplied = await runMod(
+			config,
+			'android',
+			'manifest',
+			await readFixtureManifest()
+		);
+		const metaData = applicationOf(
+			manifestApplied.modResults as AndroidConfig.Manifest.AndroidManifest
+		)['meta-data'];
+		for (const [name, value] of [
+			['com.c15t.IAB_CMP_ID', '1234'],
+			['com.c15t.IAB_CMP_VERSION', '7'],
+			['com.c15t.IAB_CONSENT_SCREEN', '3'],
+			['com.c15t.IAB_PUBLISHER_COUNTRY_CODE', 'DE'],
+		]) {
+			expect(metaData).toContainEqual({
+				$: { 'android:name': name, 'android:value': value },
+			});
+		}
+	});
+
+	it('writes no consent screen key when the core default applies', async () => {
+		const config = applyToFixture({
+			...STANDARD_PROPS,
+			iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' },
+		});
+		const plist = (await runInfoPlist(config)).ios?.infoPlist ?? {};
+		expect(plist['com.c15t.iab.cmpId']).toBe(1234);
+		expect(plist).not.toHaveProperty('com.c15t.iab.consentScreen');
+	});
+
 	it('writes a declared category scope to both platforms', async () => {
 		// The same declaration, spelled the way each reader wants it: a plist
 		// array on iOS, a comma-separated meta-data value on Android. The

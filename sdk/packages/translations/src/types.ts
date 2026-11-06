@@ -229,7 +229,30 @@ export interface IABCommonTranslations {
 	customPartner: string;
 }
 
+/**
+ * IAB copy for native mobile apps, where the web copy's "website" and
+ * cookie wording does not apply. The c15t iOS and Android SDKs read it
+ * through generated files (`scripts/generate-native-iab-copy.ts`).
+ */
+export interface IABAppTranslations {
+	/** Use {partnerCount} placeholder to insert the partner count. */
+	description: string;
+	/** Consent scope for a service-specific app. */
+	scopeServiceSpecific: string;
+	/** Tells the user how and where to withdraw consent in the app. */
+	withdraw: string;
+	/** Explains legitimate interest and the right to object. */
+	legitimateInterestExplanation: string;
+	/** Use {days} placeholder for the storage duration in days. */
+	consentStorage: string;
+}
+
 export interface IABTranslations {
+	/**
+	 * Copy for native mobile apps. Optional so custom translation objects
+	 * keep compiling; every built-in language provides it.
+	 */
+	app?: IABAppTranslations;
 	banner: IABBannerTranslations;
 	preferenceCenter: IABPreferenceCenterTranslations;
 	common: IABCommonTranslations;

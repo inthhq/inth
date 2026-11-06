@@ -98,13 +98,48 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         return disclosure?.canEdit != true || status == .stale || status == .missing || status == .unavailable
             || disclosure?.adTechProviders?.isEmpty == false && core.additionalConsentStatus() == .stale
     }
-    /// Human-readable summary of both permitted legal bases in the current draft.
+    /// Whether a partner's permitted legal bases are off, partly on or on in the current draft.
+    public func partnerSelection(_ id: Int) -> IABVendorSelectionStatus {
+        disclosure?.vendors[id]?.selectionStatus(vendorId: id, choices: choices) ?? .off
+    }
+    /// Human-readable summary of both permitted legal bases in the current draft, from the shared copy.
     public func partnerStatus(_ id: Int) -> String {
-        switch disclosure?.vendors[id]?.selectionStatus(vendorId: id, choices: choices) ?? .off {
-        case .off: return "Off"
-        case .partial: return "Partly on"
-        case .on: return "On"
+        switch partnerSelection(id) {
+        case .off: return iabCopy.appOff
+        case .partial: return iabCopy.appPartlyOn
+        case .on: return iabCopy.appOn
         }
+    }
+    /// How the open session is shown: the first layer, and preferences opened from it, cover
+    /// the screen; standing preferences are a sheet. `nil` while nothing is open.
+    var presentationStyle: ConsentPresentationStyle? {
+        guard presentationID != nil else { return nil }
+        return preferences && !fromFirstLayer ? .sheet : .fullScreen
+    }
+    /// Only a clean standing preferences sheet may be swiped away. The first layer never can.
+    var allowsInteractiveDismiss: Bool { preferences && !isDirty && !pending }
+    /// The IAB first layer's required sentences. `nil` outside IAB mode or before a list loads.
+    var iabFirstLayer: IABFirstLayerContent? { iab ? disclosure.map(IABFirstLayerContent.init) : nil }
+    /// The IAB preferences content. `nil` outside IAB mode or before a list loads.
+    var iabPreferences: IABPreferencesContent? { iab ? disclosure.map(IABPreferencesContent.init) : nil }
+    /// One partner's page, or `nil` when the partner is not in the current disclosure.
+    func iabVendor(_ id: Int) -> IABVendorContent? {
+        let language = String(Locale.preferredLanguages.first?.prefix(2) ?? "en")
+        return disclosure.flatMap { IABVendorContent($0, id: id, language: language) }
+    }
+    /// The shared IAB copy in the served list's language.
+    var iabCopy: IABCopy { IABCopy.forLanguage(disclosure?.language ?? "en") }
+    /// "Last changed" with the date in the copy's language, not the device's.
+    func lastChanged(at epochMs: Int64) -> String {
+        let copy = iabCopy
+        let date = Date(timeIntervalSince1970: Double(epochMs) / 1000)
+            .formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(Locale(identifier: copy.language)))
+        return copy.format(copy.appLastChanged, ["date": date])
+    }
+    /// Button labels: the IAB copy in IAB mode, the stock labels otherwise.
+    var decisionLabels: DecisionLabels {
+        guard iab, let disclosure else { return .standard }
+        return DecisionLabels(copy: IABCopy.forLanguage(disclosure.language))
     }
     public var offeredCategories: [ConsentCategory] { snapshot.consentCategories ?? [.necessary] }
     /// What the last refused commit means for the person; the retry is offered beside it. It stays
@@ -159,7 +194,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         snapshot = current
         disclosure = core.iabPresentation()
         baseRevision = current.revision
-        choices = disclosure?.draft.choices ?? IABChoices()
+        // No IAB decision yet: no choice at all, or a usable list with no saved IAB decision. A
+        // list that can't be edited hides the saved decision, so it never counts as first time.
+        choices = disclosure.map { Self.initialChoices($0, firstTime: current.explicitChoice == nil || ($0.canEdit && core.iabConsent() == nil)) } ?? IABChoices()
         categories = Dictionary(uniqueKeysWithValues: (current.consentCategories ?? [.necessary]).compactMap {
             guard let category = OptionalConsentCategory(rawValue: $0.rawValue) else { return nil }
             return (category, current.explicitChoice?.categories[category]?.value ?? false)
@@ -169,6 +206,16 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         errorCode = nil
         failedAction = nil
         stale = false
+    }
+    /// A first-time user starts with every consent off and legitimate interest not objected to,
+    /// as on the web: legitimate interest needs no opt-in, and the user objects with its switch.
+    static func initialChoices(_ presentation: IABPresentation, firstTime: Bool) -> IABChoices {
+        var choices = presentation.draft.choices
+        guard firstTime, choices == IABChoices() else { return choices }
+        let claims = presentation.vendors.filter { !$0.value.legitimateInterestPurposes.isEmpty }
+        choices.vendorLegitimateInterests = claims.keys.sorted()
+        choices.purposeLegitimateInterests = Set(claims.values.flatMap(\.legitimateInterestPurposes)).sorted()
+        return choices
     }
     public func setCategory(_ category: OptionalConsentCategory, _ value: Bool) {
         guard !pending, !stale, !isRestricted(category) else { return }
@@ -273,7 +320,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
                 errorCode = outcome.1 ?? "save-rejected"
                 failedAction = action
                 stale = errorCode == "concurrent-change"
-                onAnnouncement?(stale ? "Settings changed while you were editing" : errorMessage ?? "Couldn't save your choices.")
+                onAnnouncement?(stale ? iabCopy.appSettingsChanged : errorMessage ?? "Couldn't save your choices.")
             }
         }
     }

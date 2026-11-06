@@ -26,6 +26,7 @@ import kotlin.test.assertTrue
  * max id still counted the dropped vendor.
  */
 class TcSemanticPreEncoderTest {
+	// TCF-CHECK: T9
 	@Test
 	fun `legitimate interest is never written for purposes 1, 3, 4, 5 or 6`() {
 		val written = encodeWith(purposeLI = (1..PURPOSE_COUNT).toList())
@@ -68,6 +69,7 @@ class TcSemanticPreEncoderTest {
 		assertEquals(encodeWith(vendorConsents = listOf(ANNOUNCED), vendorLI = listOf(ANNOUNCED)), written)
 	}
 
+	// TCF-CHECK: T12
 	@Test
 	fun `a vendor withdrawn from the list loses both signals`() {
 		// deletedDate is what a withdrawn vendor carries. The reference tests the field for

@@ -68,6 +68,18 @@ export const translations: CompleteTranslations = {
 		title: 'Értékeljük az adatvédelmet',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Választásait ezen az eszközön tároljuk, az alkalmazás szokásos beállítás-tárolójában IABTCF kulcsok alatt, legfeljebb {days} napig. A tárolási időtartam megújul, amikor Ön frissíti a választásait.',
+			description:
+				'Mi és a(z) {partnerCount} partnerünk információkat tárolunk az Ön eszközén és/vagy érünk el azokhoz, valamint személyes adatokat, például egyedi azonosítókat és böngészési adatokat dolgozunk fel ebben az alkalmazásban a következő célokból:',
+			legitimateInterestExplanation:
+				'Néhány partner a jogos érdekére hivatkozva dolgoz fel személyes adatokat, például egyedi azonosítókat és böngészési adatokat, ahelyett hogy hozzájárulást kérne. Ez csak erre az alkalmazásra vonatkozik. Önnek joga van tiltakozni ez ellen az adatkezelés ellen minden egyes cél és minden egyes partner esetében.',
+			scopeServiceSpecific:
+				'Az Ön hozzájárulása csak erre az alkalmazásra vonatkozik, és nem érinti más szolgáltatásokat.',
+			withdraw:
+				'Választásait bármikor módosíthatja, vagy visszavonhatja hozzájárulását az alkalmazás Adatvédelmi beállítások menüjében.',
+		},
 		banner: {
 			andMore: 'És még {count}...',
 			description:

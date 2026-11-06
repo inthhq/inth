@@ -67,6 +67,8 @@ public struct IABCommittedConsent: Sendable, Codable, Equatable {
     public let vendorListVersion: Int
     public let policyVersion: Int
     public let consentVersion: Int
+    /// When the first decision in this chain was saved. Record only: the TC String's
+    /// Created and LastUpdated both carry ``actionAt``'s UTC day.
     public let createdAt: Int64
     public let actionAt: Int64
     public let tcString: String
@@ -155,13 +157,16 @@ enum IABAuthority {
             }
         }
         if let previous { try require(previous.consentVersion > 0 && previous.consentVersion < Int.max) }
+        // `createdAt` keeps the first decision's time for the record. It never reaches the
+        // string: TCF requires Created and LastUpdated to hold the same day, and the web build
+        // sets both to the confirmation day (`packages/iab/src/tcf/tc-string.ts`).
         let createdAt = previous?.createdAt ?? actionAt
         try require(createdAt >= 0 && actionAt >= createdAt)
-        func day(_ ms: Int64) -> Date { Date(timeIntervalSince1970: Double(ms / 86_400_000 * 86_400)) }
+        let actionDay = Date(timeIntervalSince1970: Double(actionAt / 86_400_000 * 86_400))
         var model = TcConsentModel(
-            created: day(createdAt), lastUpdated: day(actionAt),
+            created: actionDay, lastUpdated: actionDay,
             cmpId: c.cmpId, cmpVersion: c.cmpVersion, consentScreen: c.consentScreen,
-            consentLanguage: "EN", publisherCountryCode: c.publisherCountryCode, isServiceSpecific: true)
+            consentLanguage: c.consentLanguage, publisherCountryCode: c.publisherCountryCode, isServiceSpecific: true)
         model.purposeConsents = Set(requested.purposeConsents)
         model.purposeLegitimateInterests = Set(requested.purposeLegitimateInterests)
         model.vendorConsents = Set(requested.vendorConsents)

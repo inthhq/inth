@@ -35,6 +35,7 @@ import com.c15t.core.store.SnapshotEnvelope
 import com.c15t.core.store.UnusableSubjectId
 import com.c15t.core.tc.GlobalVendorList
 import com.c15t.core.tc.GlobalVendorListJson
+import com.c15t.core.tc.TcVendorList
 import com.c15t.core.tc.narrowToVendorIds
 import com.c15t.core.transport.C15tTransport
 import com.c15t.core.transport.InitContext
@@ -245,7 +246,12 @@ class C15tKernel(
         val configuration = iabConfiguration ?: return@synchronized null
         IabPresentation(draft, list,
             list.vendors.filterValues { it.deletedDate.isNullOrEmpty() }.mapValues { (id, vendor) -> configuration.disclosure(id, vendor) },
-            additionalConsentList?.providers?.toList(), editable != null)
+            additionalConsentList?.providers?.toList(), editable != null,
+            // A saved decision stops counting, and leaves the storage bus, once the choice
+            // validity passes (`isCurrent`, the TC storage bus projection).
+            consentStorageMaxDays = IabPresentation.days(evaluationPolicy?.choiceMs),
+            // The language the TC String declares, so screen copy and signals agree.
+            language = configuration.consentLanguage)
     }
 
 	fun saveIab(draft: IabDraft, categories: Map<ConsentCategory, Boolean>): CommitResult =

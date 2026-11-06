@@ -40,11 +40,18 @@ instead of the category-only configuration in the Android quickstart.
 
 ### React Native and Expo
 
-Use an app-owned native installation for IAB, then attach the RN adapter to
-that engine. Turn automatic bootstrap off so it does not install a category
-engine first. Typed RN/Expo IAB bootstrap is deferred from the first release.
-The plugin's `vendors` option only narrows disclosures; it does not set CMP
-identity or publisher configuration.
+Expo apps set the plugin's `iab` option with `cmpId`, `cmpVersion`,
+`publisherCountryCode` and an optional `consentScreen`. Bare RN apps set the
+matching `com.c15t.iab.*` `Info.plist` keys and `com.c15t.IAB_*` Android
+metadata. Automatic startup then installs the engine with IAB TCF on and
+writes the CMP ID and version to the platform signal store. There is no
+default CMP ID. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
+lists the keys, ranges and what happens when a value is invalid.
+
+The plugin's `vendors` option only narrows disclosures; it does not turn IAB
+on. For publisher restrictions or custom purposes, turn automatic startup off,
+install the engine natively with the Swift or Kotlin configuration above, then
+attach the RN adapter to that engine.
 
 ## Present the consent flow
 

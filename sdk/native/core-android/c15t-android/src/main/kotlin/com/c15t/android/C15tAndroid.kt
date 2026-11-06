@@ -7,12 +7,14 @@ import android.os.Looper
 import android.util.Log
 import com.c15t.core.C15t
 import com.c15t.core.NativeConfig
+import com.c15t.core.iab.IabConfiguration
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.KernelError
 import com.c15t.core.spi.Clock
 import com.c15t.core.spi.TaskExecutor
 import com.c15t.core.transport.C15tTransport
 import com.c15t.core.transport.HostedTransport
+import java.util.Locale
 import java.util.concurrent.Executors
 
 /**
@@ -161,27 +163,115 @@ object C15tAndroid {
 			null
 		} ?: return null
 
+		return configFrom(
+			read = { key -> C15tManifestValue.raw(bundle, key) },
+			readAsset = { name ->
+				try { context.assets.open(name).bufferedReader().use { it.readText() } }
+				catch (error: java.io.IOException) { Log.w(TAG, "Cannot read bundled policy $name", error); null }
+			},
+		)
+	}
+
+	/**
+	 * Build the configuration from raw meta-data values, so the mapping is testable
+	 * without a device.
+	 *
+	 * @param read returns the raw bundle entry for a key, typically `bundle.get(key)`.
+	 * @param readAsset returns the text of a bundled asset, or `null` when it is unreadable.
+	 */
+	internal fun configFrom(read: (String) -> Any?, readAsset: (String) -> String?): NativeConfig? {
 		// Every value goes through `C15tManifestValue`, which reads whichever type the
 		// manifest parser chose. A hand-edited manifest and an Expo-generated one do not
 		// arrive as the same Java type, and a reader that names one of them honours only
 		// the app that happened to spell it that way.
-		val portalUrl = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_PORTAL_URL))
-			?: return null
+		val portalUrl = C15tManifestValue.string(read(META_PORTAL_URL)) ?: return null
 		// Absent stays absent. `false` is an answer and a missing key is not, and the
 		// core treats them differently when it derives the signal.
 		return NativeConfig(
 			portalUrl = portalUrl,
-			bundledPolicy = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_BUNDLED_POLICY))?.let { name ->
-				try { context.assets.open(name).bufferedReader().use { it.readText() } }
-				catch (error: java.io.IOException) { Log.w(TAG, "Cannot read bundled policy $name", error); null }
+			bundledPolicy = C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
+			initUrl = C15tManifestValue.string(read(META_INIT_URL)),
+			domain = C15tManifestValue.string(read(META_DOMAIN)),
+			consentCategories = declaredCategories(read(META_CATEGORIES)),
+			vendors = declaredVendors(read(META_VENDORS)),
+			iab = when (val declared = declaredIab(read)) {
+				is DeclaredIab.Valid -> declared.configuration
+				is DeclaredIab.Invalid -> {
+					// Refuse IAB, not the whole core: category consent still works, and no
+					// CMP ID reaches IABTCF_* that the publisher did not declare correctly.
+					Log.e(TAG, "IAB meta-data refused: ${declared.reason} c15t starts without IAB TCF, " +
+						"so no IABTCF_CmpSdkID is written and IAB saves fail until the com.c15t.IAB_* keys are fixed.")
+					null
+				}
+				DeclaredIab.None -> null
 			},
-			initUrl = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_INIT_URL)),
-			domain = C15tManifestValue.string(C15tManifestValue.raw(bundle, META_DOMAIN)),
-			consentCategories = declaredCategories(C15tManifestValue.raw(bundle, META_CATEGORIES)),
-			vendors = declaredVendors(C15tManifestValue.raw(bundle, META_VENDORS)),
-			detectedGpc = C15tManifestValue.boolean(C15tManifestValue.raw(bundle, META_GPC)),
+			detectedGpc = C15tManifestValue.boolean(read(META_GPC)),
 		)
 	}
+
+	/** The outcome of reading the `com.c15t.IAB_*` meta-data. */
+	internal sealed interface DeclaredIab {
+		/** No IAB key is declared, so IAB TCF stays off. */
+		data object None : DeclaredIab
+
+		data class Valid(val configuration: IabConfiguration) : DeclaredIab
+
+		/** Something was declared, but not a usable CMP identity. */
+		data class Invalid(val reason: String) : DeclaredIab
+	}
+
+	/**
+	 * Read the IAB settings a host declared.
+	 *
+	 * No `com.c15t.IAB_*` key means IAB stays off. Once any of them is present, CMP ID,
+	 * CMP version and publisher country code are all required and must be in the ranges
+	 * the core enforces. A declaration that fails is refused whole, so the core never
+	 * writes a CMP ID the publisher did not register. There is no default CMP ID.
+	 *
+	 * @param read returns the raw bundle entry for a key, typically `bundle.get(key)`.
+	 */
+	internal fun declaredIab(read: (String) -> Any?): DeclaredIab {
+		val keys = listOf(META_IAB_CMP_ID, META_IAB_CMP_VERSION, META_IAB_PUBLISHER_COUNTRY_CODE, META_IAB_CONSENT_SCREEN)
+		if (keys.all { read(it) == null }) return DeclaredIab.None
+		fun integer(key: String): Int? = C15tManifestValue.string(read(key))?.toIntOrNull()
+
+		val cmpId = integer(META_IAB_CMP_ID)
+		if (cmpId == null || cmpId !in 2..4095) {
+			return DeclaredIab.Invalid("$META_IAB_CMP_ID must be your registered CMP ID, a whole number from 2 to 4095.")
+		}
+		val cmpVersion = integer(META_IAB_CMP_VERSION)
+		if (cmpVersion == null || cmpVersion !in 0..4095) {
+			return DeclaredIab.Invalid("$META_IAB_CMP_VERSION must be a whole number from 0 to 4095.")
+		}
+		val country = C15tManifestValue.string(read(META_IAB_PUBLISHER_COUNTRY_CODE))?.uppercase(Locale.ROOT)
+		if (country == null || country.length != 2 || !country.all { it in 'A'..'Z' }) {
+			return DeclaredIab.Invalid("$META_IAB_PUBLISHER_COUNTRY_CODE must be a two-letter country code.")
+		}
+		val consentScreen = if (read(META_IAB_CONSENT_SCREEN) == null) 1 else integer(META_IAB_CONSENT_SCREEN)
+		if (consentScreen == null || consentScreen !in 0..63) {
+			return DeclaredIab.Invalid("$META_IAB_CONSENT_SCREEN must be a whole number from 0 to 63.")
+		}
+		return DeclaredIab.Valid(
+			IabConfiguration(
+				cmpId = cmpId,
+				cmpVersion = cmpVersion,
+				publisherCountryCode = country,
+				consentScreen = consentScreen,
+			),
+		)
+	}
+
+	/** IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.IAB_*` key is present. */
+	const val META_IAB_CMP_ID = "com.c15t.IAB_CMP_ID"
+
+	/** Your CMP version, 0 to 4095. Required with [META_IAB_CMP_ID]. */
+	const val META_IAB_CMP_VERSION = "com.c15t.IAB_CMP_VERSION"
+
+	/** Two-letter publisher country code. Required with [META_IAB_CMP_ID]. */
+	const val META_IAB_PUBLISHER_COUNTRY_CODE = "com.c15t.IAB_PUBLISHER_COUNTRY_CODE"
+
+	/** Optional consent screen number, 0 to 63. The core's default is 1. */
+	const val META_IAB_CONSENT_SCREEN = "com.c15t.IAB_CONSENT_SCREEN"
 
 	/**
 	 * Parse a declared category scope from manifest text.

@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Nou respekte vi prive ou',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Nou estoke chwa ou yo sou aparèy sa a, nan estokaj paramèt estanda aplikasyon an anba kle IABTCF, pandan jiska {days} jou. Dire estokaj la rekòmanse lè ou mete chwa ou yo ajou.',
+			description:
+				'Nou menm ak {partnerCount} patnè nou yo estoke enfòmasyon sou aparèy ou epi/oswa jwenn aksè ak enfòmasyon sa yo, epi nou trete done pèsonèl, tankou idantifyan inik ak done navigasyon, pou aplikasyon sa a, pou nou ka:',
+			legitimateInterestExplanation:
+				'Kèk patnè trete done pèsonèl, tankou idantifyan inik ak done navigasyon, sou baz enterè lejitim yo olye yo mande konsantman ou. Sa aplike sèlman pou aplikasyon sa a. Ou gen dwa opoze ou ak tretman sa a pou chak objektif ak pou chak patnè.',
+			scopeServiceSpecific:
+				'Konsantman ou aplike sèlman pou aplikasyon sa a, li p ap afekte lòt sèvis.',
+			withdraw:
+				'Ou ka chanje chwa ou yo oswa retire konsantman ou nenpòt ki lè nan Paramèt konfidansyalite nan aplikasyon sa a.',
+		},
 		banner: {
 			andMore: 'Ak {count} lòt...',
 			description:

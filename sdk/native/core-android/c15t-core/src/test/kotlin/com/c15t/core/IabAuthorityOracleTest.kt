@@ -14,6 +14,11 @@ class IabAuthorityOracleTest {
 		val purposeConsents: List<Int> = emptyList(), val purposeLegitimateInterests: List<Int> = emptyList(),
 		val vendorConsents: List<Int> = emptyList(), val vendorLegitimateInterests: List<Int> = emptyList())
 	@Serializable data class Oracle(val gvl: GlobalVendorList, val now: Long, val cases: List<Case>)
+	// TCF-CHECK: T6
+	// TCF-CHECK: T8
+	// TCF-CHECK: T10
+	// TCF-CHECK: T11
+	// TCF-CHECK: T13
 	@Test fun `actual native bytes match the independent reference on every vector`() {
 		val file = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
 			.map { File(it, "native/protocol/iab/authority-oracle.json") }.first { it.exists() }
@@ -27,6 +32,11 @@ class IabAuthorityOracleTest {
 			val previous = row.createdDaysAgo?.let { IabAuthority.build(config, IabChoices(), gvl, "sub_x", null, "f", oracle.now - it * 86_400_000, null) }
 			val built = IabAuthority.build(config, choices, gvl, "sub_x", null, "f", oracle.now, previous)
 			assertEquals(row.tcString, built.tcString, row.id)
+			// A decision first saved days earlier still writes Created == LastUpdated.
+			val core = TcStringDecoder.decode(built.tcString).core
+			assertEquals(core.lastUpdatedDeciseconds, core.createdDeciseconds, row.id)
+			assertEquals(Math.floorDiv(oracle.now, 86_400_000L) * 864_000L, core.lastUpdatedDeciseconds, row.id)
+			if (row.createdDaysAgo != null) assertTrue(built.createdAt < built.actionAt, row.id)
 		}
 	}
 }

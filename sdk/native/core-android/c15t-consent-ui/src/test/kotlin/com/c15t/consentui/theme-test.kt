@@ -10,11 +10,13 @@ import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -101,6 +103,41 @@ class ThemeTest {
         val theme = ConsentTheme.c15t.applying(bundle, context)
         assertEquals(ConsentThemeColor(0x009688), theme.colors.accent)
         assertEquals(ConsentThemeColor(0xFFFFFF), theme.colors.onAccent)
+    }
+
+    // TCF-CHECK: P11
+    @Test fun lowContrastDecisionColoursFallBackToStockPerAppearanceAndLogOnce() {
+        ConsentTheme.decisionContrastWarned.set(false)
+        ShadowLog.reset()
+        val stock = ConsentTheme.Colors.c15t
+        // A manifest DECISION near the stock light text: fine in dark, unreadable in light.
+        val bundle = Bundle().apply {
+            putString(ConsentTheme.Meta.META_DECISION, "#C8C2B8,#1E1B17")
+            putString(ConsentTheme.Meta.META_ON_DECISION, "#F8F4EE,#F8F4EE")
+        }
+        val host = ConsentTheme.c15t.applying(bundle, context)
+        val guarded = host.withReadableDecisions()
+        assertEquals(ConsentThemeColor(stock.decision.light, 0x1E1B17), guarded.colors.decision)
+        assertEquals(ConsentThemeColor(stock.onDecision.light, 0xF8F4EE), guarded.colors.onDecision)
+        for (dark in listOf(false, true)) {
+            val pick = { color: ConsentThemeColor -> if (dark) color.dark else color.light }
+            val ratio = ConsentTheme.contrastRatio(pick(guarded.colors.decision), pick(guarded.colors.onDecision))
+            assertTrue("decision label (${if (dark) "dark" else "light"}) was $ratio", ratio >= 5.0)
+        }
+        // Only the decision pair changes, and a passing theme is returned as it is.
+        assertEquals(host.colors.copy(decision = guarded.colors.decision, onDecision = guarded.colors.onDecision), guarded.colors)
+        assertSame(ConsentTheme.c15t, ConsentTheme.c15t.withReadableDecisions())
+        // A host ConsentTheme gets the same floor, and the warning is logged once per process.
+        val code = ConsentTheme(colors = stock.copy(decision = ConsentThemeColor(0x335CFF), onDecision = ConsentThemeColor(0x8CA2FF))).withReadableDecisions()
+        assertEquals(stock.decision, code.colors.decision)
+        assertEquals(stock.onDecision, code.colors.onDecision)
+        assertEquals(1, ShadowLog.getLogsForTag(ConsentTheme.LOG_TAG).size)
+    }
+
+    @Test fun contrastRatioMatchesWcag() {
+        assertEquals(21.0, ConsentTheme.contrastRatio(0x000000, 0xFFFFFF), 0.01)
+        assertEquals(1.0, ConsentTheme.contrastRatio(0x777777, 0x777777), 0.001)
+        assertEquals(4.48, ConsentTheme.contrastRatio(0x777777, 0xFFFFFF), 0.01)
     }
 
     @Test fun squareAndSmallThemesProduceValidCalloutOutlines() {

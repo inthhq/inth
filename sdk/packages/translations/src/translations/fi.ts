@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Arvostamme yksityisyyttäsi',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Valintasi tallennetaan tähän laitteeseen sovelluksen tavalliseen asetustallennustilaan IABTCF-avainten alle enintään {days} päiväksi. Säilytysaika alkaa alusta, kun päivität valintojasi.',
+			description:
+				'Me ja {partnerCount} kumppaniamme tallennamme ja/tai käytämme tietoja laitteellasi ja käsittelemme henkilötietoja, kuten yksilöllisiä tunnisteita ja selaustietoja, tässä sovelluksessa seuraaviin tarkoituksiin:',
+			legitimateInterestExplanation:
+				'Jotkut kumppanit käsittelevät henkilötietoja, kuten yksilöllisiä tunnisteita ja selaustietoja, oikeutetun etunsa perusteella pyytämättä suostumusta. Tämä koskee vain tätä sovellusta. Sinulla on oikeus vastustaa tätä käsittelyä jokaisen käyttötarkoituksen ja jokaisen kumppanin osalta.',
+			scopeServiceSpecific:
+				'Suostumuksesi koskee vain tätä sovellusta eikä vaikuta muihin palveluihin.',
+			withdraw:
+				'Voit muuttaa valintojasi tai peruuttaa suostumuksesi milloin tahansa tämän sovelluksen Tietosuoja-asetuksista.',
+		},
 		banner: {
 			andMore: 'Ja {count} muuta...',
 			description:

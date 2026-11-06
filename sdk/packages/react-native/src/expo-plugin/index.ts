@@ -43,10 +43,12 @@ export { withC15t } from './with-c15t';
 export { applyParamsOnConfig, type C15tExtraConfig } from './with-c15t';
 export { C15tPluginError } from './errors';
 export type {
+	C15tIabPluginProps,
 	C15tPluginProps,
 	C15tProviderTransportKind,
 	C15tTrackingMarkdownLocalization,
 	C15tTransportMode,
+	ResolvedC15tIabParams,
 	ResolvedC15tParams,
 } from './params';
 export { TRANSPORT_MODES } from './params';

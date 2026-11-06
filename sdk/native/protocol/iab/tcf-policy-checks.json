@@ -1,0 +1,223 @@
+[
+	{
+		"id": "T1",
+		"title": "Are consent signals in the TC String created after affirmative action by the user?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T2",
+		"title": "If a 'Reject All' option is provided in the UI, when the user clicks it, are all consent signals for purposes and vendors set to 'off'?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T3",
+		"title": "Does the CMP update the applicable IABTCF_* values after a change of users' choices made in the CMP UI?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T4",
+		"title": "Did the CMP store pre-parsed TC data as well as the TC String using the structure defined by the technical specifications?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T5",
+		"title": "Is the CMP registered?",
+		"platforms": [],
+		"note": "CMP registration is a business fact, not something the SDK can test."
+	},
+	{
+		"id": "T6",
+		"title": "Is the GVL version format correct?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T7",
+		"title": "Is the current or penultimate version of the GVL being used?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T8",
+		"title": "Is the max Vendor ID less than or equal to the highest ID in the GVL?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T9",
+		"title": "Are purposes 1, 3, 4, 5 and 6 set to 'no' for legitimate interest? (optional)",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T10",
+		"title": "Do the Created and LastUpdated fields have the same value?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T11",
+		"title": "Are the Created and LastUpdated timestamps imprecise?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T12",
+		"title": "Are all vendor signals for deleted vendors set to 0?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "T13",
+		"title": "Does the TC String include the disclosedVendors segment? (optional)",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P1",
+		"title": "Is the UI prominently displayed, covering most of the website content?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P2",
+		"title": "Is the UI displayed separately from other information such as terms and conditions or the privacy policy?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P3",
+		"title": "Does the 1st layer provide information about the storage and access of information from the user's device by the publisher and third-party vendors?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P4",
+		"title": "Does the 1st layer provide information about the processing of personal data by the publisher and third-party vendors?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P5",
+		"title": "Does the 1st layer provide an example of personal data processed?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P6",
+		"title": "Is there a direct link to the list of third parties in the 1st layer?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P7",
+		"title": "Does the 1st layer provide information about the Purposes and/or Stacks and Special Features used by third parties?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P8",
+		"title": "Does the 1st layer provide information about the scope of the consent choice (service-specific or group-specific)?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P9",
+		"title": "Does the 1st layer inform the user that they can withdraw consent at any time and how to do so?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P10",
+		"title": "Are there calls to action in the 1st layer to express consent (e.g. \"Accept\") and customise choices (e.g. \"Manage options\")?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P11",
+		"title": "Do the two primary calls to action on the 1st layer have matching text treatment (font, size, style) and each a minimum 5:1 contrast ratio?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P12",
+		"title": "Does the 1st layer show the number of third-party Vendors?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P13",
+		"title": "If the 1st layer uses modified Stack descriptions, is the UseNonStandardTexts flag set to 1?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P14",
+		"title": "Does the UI show Purposes and Features with their standard names or Stacks, and wherever Features are shown, their standard explanations and no user controls? (optional)",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P15",
+		"title": "Can users review the standard user-friendly texts and illustrations for Purposes and Features?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P16",
+		"title": "If the UI includes non-TCF Vendors, are they presented separately?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P17",
+		"title": "Does the UI provide information about third-party Vendors processing personal data based on legitimate interest (if any)?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P18",
+		"title": "Does the UI advise the user of their right to object to processing based on legitimate interest (if any)?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P19",
+		"title": "Can the user review the list of Vendors, their Purposes, Special Purposes, Features, Special Features, Legal Bases and privacy policy link, and make granular choices per Purpose and per Vendor?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P20",
+		"title": "Does the 2nd layer allow granular opt-in choices per Special Feature?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P21",
+		"title": "Are user choices set to 'off' by default? (screenshot as a first-time user)",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P22",
+		"title": "If any Vendor uses legitimate interest, does the 2nd layer specify the nature of processed information and its scope?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P23",
+		"title": "If any Vendor uses legitimate interest, does the 2nd layer allow objection per Purpose and per Vendor?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P25",
+		"title": "Does the secondary layer show the number of Vendors seeking consent or relying on LI for each Purpose?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P26",
+		"title": "Does the secondary layer let users access Vendors' information about their legitimate interest at stake?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P27",
+		"title": "Does the secondary layer show Vendors' retention periods?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P28",
+		"title": "Does the secondary layer disclose the categories of data collected and/or held by Vendors?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P29",
+		"title": "If the 2nd layer uses modified or extra illustrations for Purposes, is the flag set to 1? (Purpose 1 and Special Purpose illustrations may not be modified)",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P30",
+		"title": "Does the secondary layer disclose how the TC String is stored and the maximum device storage duration?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P31",
+		"title": "Can the user resurface the CMP UI easily (for apps, from the app's top-level settings)?",
+		"platforms": ["swift", "kotlin"]
+	},
+	{
+		"id": "P32",
+		"title": "Can the user withdraw consent as easily as they gave it (a \"withdraw all\" equivalent to \"accept all\")?",
+		"platforms": ["swift", "kotlin"]
+	}
+]

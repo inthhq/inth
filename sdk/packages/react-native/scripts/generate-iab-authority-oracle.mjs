@@ -66,10 +66,11 @@ const make = async (opts) => {
 		isServiceSpecific: true,
 		publisherCountryCode: 'GB',
 	});
-	m.created = new Date(
-		Math.floor((now - (opts.createdDaysAgo ?? 0) * day) / day) * day
-	);
+	// TCF requires Created == LastUpdated, both the confirmation day, as
+	// `packages/iab/src/tcf/tc-string.ts` writes. `createdDaysAgo` only tells
+	// the native tests to save an earlier decision first; it never moves Created.
 	m.lastUpdated = new Date(Math.floor(now / day) * day);
+	m.created = m.lastUpdated;
 	for (const k of [
 		'purposeConsents',
 		'purposeLegitimateInterests',

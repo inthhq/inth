@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Rydym yn gwerthfawrogi eich preifatrwydd',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Mae eich dewisiadau’n cael eu storio ar y ddyfais hon, yn storfa gosodiadau safonol yr ap o dan allweddi IABTCF, am hyd at {days} diwrnod. Mae’r cyfnod storio’n cael ei adnewyddu pan fyddwch yn diweddaru eich dewisiadau.',
+			description:
+				'Rydym ni a’n {partnerCount} partner yn storio a/neu’n cyrchu gwybodaeth ar eich dyfais ac yn prosesu data personol, megis dynodwyr unigryw a data pori, ar gyfer yr ap hwn, er mwyn:',
+			legitimateInterestExplanation:
+				'Mae rhai partneriaid yn prosesu data personol, megis dynodwyr unigryw a data pori, ar sail eu buddiant cyfreithlon yn hytrach na gofyn am gydsyniad. Mae hyn yn berthnasol i’r ap hwn yn unig. Mae gennych hawl i wrthwynebu’r prosesu hwn ar gyfer pob diben a phob partner.',
+			scopeServiceSpecific:
+				'Mae eich caniatâd yn berthnasol i’r ap hwn yn unig ac ni fydd yn effeithio ar wasanaethau eraill.',
+			withdraw:
+				'Gallwch newid eich dewisiadau neu dynnu eich cydsyniad yn ôl unrhyw bryd o Gosodiadau preifatrwydd yn yr ap hwn.',
+		},
 		banner: {
 			andMore: 'Ac {count} arall...',
 			description:

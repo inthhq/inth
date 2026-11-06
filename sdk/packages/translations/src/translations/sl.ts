@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Cenimo vašo zasebnost',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Vaše izbire so shranjene v tej napravi, v standardni shrambi nastavitev aplikacije pod ključi IABTCF, največ {days} dni. Obdobje hrambe se obnovi, ko posodobite svoje izbire.',
+			description:
+				'Mi in naših {partnerCount} partnerjev shranjujemo in/ali dostopamo do informacij na vaši napravi ter obdelujemo osebne podatke, kot so edinstveni identifikatorji in podatki o brskanju, za to aplikacijo, da bi:',
+			legitimateInterestExplanation:
+				'Nekateri partnerji obdelujejo osebne podatke, kot so edinstveni identifikatorji in podatki o brskanju, na podlagi svojega zakonitega interesa, namesto da bi prosili za soglasje. To velja samo za to aplikacijo. Imate pravico do ugovora tej obdelavi za vsak namen in vsakega partnerja.',
+			scopeServiceSpecific:
+				'Vaše soglasje velja samo za to aplikacijo in ne bo vplivalo na druge storitve.',
+			withdraw:
+				'Svoje izbire lahko kadar koli spremenite ali prekličete soglasje v Nastavitvah zasebnosti v tej aplikaciji.',
+		},
 		banner: {
 			andMore: 'In še {count}...',
 			description:

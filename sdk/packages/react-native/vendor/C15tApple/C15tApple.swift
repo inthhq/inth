@@ -6,6 +6,8 @@ import Foundation
 /// Installation failures leave optional SDKs gated. Retry after protected data is available.
 public enum C15tAppleInstallationError: Error, Equatable, Sendable {
     case invalidBackendURL
+    /// The IAB settings are outside the TCF ranges. No CMP ID is written for them.
+    case invalidIABConfiguration
     case protectedStorageUnavailable
     case unbootstrappedCore
 }
@@ -54,6 +56,12 @@ public struct C15tAppleConfiguration: Sendable {
     public var overrides: ConsentOverrides
     public var gpc: Bool?
     public var bundledPolicy: BundledPolicyResource?
+    /// Registered CMP identity and publisher settings. `nil` turns IAB TCF off.
+    ///
+    /// With a value, the installed core writes `IABTCF_CmpSdkID` and
+    /// `IABTCF_CmpSdkVersion` to standard `UserDefaults` at startup and can commit
+    /// IAB choices. There is no default CMP ID.
+    public var iab: IABConfiguration?
 
     /// Choose hosted or self-hosted explicitly. Keychain is the default store.
     public init(
@@ -65,7 +73,8 @@ public struct C15tAppleConfiguration: Sendable {
         vendors: [Int]? = nil,
         overrides: ConsentOverrides = .default(),
         gpc: Bool? = nil,
-        bundledPolicy: BundledPolicyResource? = nil
+        bundledPolicy: BundledPolicyResource? = nil,
+        iab: IABConfiguration? = nil
     ) {
         self.transport = transport
         self.storage = storage
@@ -76,6 +85,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.overrides = overrides
         self.gpc = gpc
         self.bundledPolicy = bundledPolicy
+        self.iab = iab
     }
 
     /// Build the native transport. HTTP is allowed only for exact loopback hosts.
@@ -95,10 +105,15 @@ public struct C15tAppleConfiguration: Sendable {
     }
 
     /// Configure one core with protected storage and the native platform key projection.
+    /// - Throws: ``C15tAppleInstallationError/invalidIABConfiguration`` when ``iab`` is out of range,
+    ///   before any store or transport is built.
     public func makeCoreConfiguration() throws -> CoreConfig {
-        CoreConfig(
+        if let iab, C15tApple.iabIssue(iab) != nil {
+            throw C15tAppleInstallationError.invalidIABConfiguration
+        }
+        return CoreConfig(
             store: try storage.makeStore(), bundledPolicy: bundledPolicy, transport: try makeTransport(),
-            consentCategories: consentCategories, vendors: vendors,
+            consentCategories: consentCategories, vendors: vendors, iab: iab,
             overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
         )
     }
@@ -178,6 +193,37 @@ public enum C15tApple {
         if reachability == nil {
             reachability = C15tReachability.register(onGained: { C15t.current?.replayThenRefresh() })
         }
+    }
+
+    /// Explain why `configuration` cannot be used for IAB TCF, or return `nil` when it can.
+    ///
+    /// These are the ranges the core enforces before it writes a CMP ID or encodes a
+    /// TC String: CMP ID 2 to 4095, CMP version 0 to 4095, consent screen 0 to 63 and
+    /// two uppercase letters for the publisher country and consent language.
+    /// - Returns: A sentence naming the first invalid field, or `nil`.
+    public static func iabIssue(_ configuration: IABConfiguration) -> String? {
+        func letters(_ value: String) -> Bool {
+            value.utf8.count == 2 && value.utf8.allSatisfy { (65...90).contains($0) }
+        }
+        if !(2...4095).contains(configuration.cmpId) {
+            return "CMP ID \(configuration.cmpId) is outside 2 to 4095. Use the ID IAB Europe registered for your CMP."
+        }
+        if !(0...4095).contains(configuration.cmpVersion) {
+            return "CMP version \(configuration.cmpVersion) is outside 0 to 4095."
+        }
+        if !letters(configuration.publisherCountryCode) {
+            return "Publisher country code \"\(configuration.publisherCountryCode)\" is not two uppercase letters."
+        }
+        if !(0...63).contains(configuration.consentScreen) {
+            return "Consent screen \(configuration.consentScreen) is outside 0 to 63."
+        }
+        if !letters(configuration.consentLanguage) {
+            return "Consent language \"\(configuration.consentLanguage)\" is not two uppercase letters."
+        }
+        if !(0...63).contains(configuration.numCustomPurposes) {
+            return "Custom purpose count \(configuration.numCustomPurposes) is outside 0 to 63."
+        }
+        return nil
     }
 
     static func validate(_ url: URL) throws {

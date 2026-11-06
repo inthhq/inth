@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Vi verdsetter ditt personvern',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Valgene dine lagres på denne enheten, i appens standard lagring for innstillinger under IABTCF-nøkler, i opptil {days} dager. Lagringsperioden fornyes når du oppdaterer valgene dine.',
+			description:
+				'Vi og våre {partnerCount} partnere lagrer og/eller har tilgang til informasjon på enheten din og behandler personopplysninger, som unike identifikatorer og nettleserdata, for denne appen, for å:',
+			legitimateInterestExplanation:
+				'Noen partnere behandler personopplysninger, som unike identifikatorer og nettleserdata, på grunnlag av sin legitime interesse i stedet for å be om samtykke. Dette gjelder bare for denne appen. Du har rett til å protestere mot denne behandlingen for hvert formål og hver partner.',
+			scopeServiceSpecific:
+				'Samtykket ditt gjelder bare for denne appen og påvirker ikke andre tjenester.',
+			withdraw:
+				'Du kan når som helst endre valgene dine eller trekke tilbake samtykket ditt under Personverninnstillinger i denne appen.',
+		},
 		banner: {
 			andMore: 'Og {count} til...',
 			description:

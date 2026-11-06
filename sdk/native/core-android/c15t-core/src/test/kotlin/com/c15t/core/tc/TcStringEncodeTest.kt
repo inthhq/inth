@@ -26,6 +26,10 @@ import kotlin.test.assertTrue
 class TcStringEncodeTest {
 	private val fixtures = TcStringFixtures.load()
 
+	// TCF-CHECK: T8
+	// TCF-CHECK: T11
+	// TCF-CHECK: T12
+	// TCF-CHECK: T13
 	@Test
 	fun `every encode-graded fixture comes back byte for byte`() {
 		encodeGraded().forEach { fixture ->

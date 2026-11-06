@@ -35,7 +35,7 @@ final class ReadOnlyLayoutTests: XCTestCase {
         let row = app.descendants(matching: .any)["c15t.prefs.category.\(category).\(suffix)"].firstMatch
         for _ in 0..<20 where !row.exists {
             let window = app.frame
-            let top = app.navigationBars["Privacy settings"].frame.maxY
+            let top = app.navigationBars["Privacy Settings"].frame.maxY
             let bottom = save.frame.minY - 20
             print("gpc-reveal viewport top=\(top) bottom=\(bottom) save=\(save.frame)")
             let start = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: window.midX, dy: bottom))

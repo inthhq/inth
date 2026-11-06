@@ -1,5 +1,8 @@
 package com.c15t.core
 
+import com.c15t.core.store.C15tStoreKeys
+import com.c15t.core.store.TcStorageBusKeys
+import com.c15t.core.tc.TcStringDecoder
 import com.c15t.core.model.isWithdrawal
 
 import com.c15t.core.iab.*
@@ -97,6 +100,7 @@ class IabCommitTest {
 		}
 	}
 
+	// TCF-CHECK: T7
 	@Test
 	fun `cached offline stale and missing lists cannot invent consent`() {
 		val store = C15tStore(InMemoryKeyValueStore())
@@ -322,6 +326,47 @@ class IabCommitTest {
 		assertTrue(store.readPending().isEmpty())
 	}
 
+	// TCF-CHECK: T10
+	@Test
+	fun `a stored TC String with unequal dates is dropped on launch`() {
+		val backend = InMemoryKeyValueStore()
+		val core = boot(C15tStore(backend))
+		assertTrue(core.save(CommitIntent.All).ok)
+		val saved = core.iabConsent!!.tcString
+		// An earlier build wrote Created a day before LastUpdated.
+		val older = movingCreated(saved, days = -1)
+		assertEquals(TcStringDecoder.decode(saved).core.createdDeciseconds, TcStringDecoder.decode(saved).core.lastUpdatedDeciseconds)
+		assertTrue(TcStringDecoder.decode(older).core.createdDeciseconds != TcStringDecoder.decode(older).core.lastUpdatedDeciseconds)
+		val stored = backend.read(C15tStoreKeys.SNAPSHOT)!!
+		assertTrue(saved in stored)
+		backend.write(C15tStoreKeys.SNAPSHOT, stored.replace(saved, older))
+
+		val bus = RecordingTcStorageBus()
+		val restored = boot(C15tStore(backend = backend, tcStorageBus = bus))
+		assertNull(restored.iabConsent, "a T10-invalid string must not survive launch")
+		assertNull(restored.snapshot().explicitChoice, "the person is asked again")
+		assertNull(bus.live[TcStorageBusKeys.TC_STRING])
+	}
+
+	/** The core segment with Created moved by whole days, as an older encoder wrote it. */
+	private fun movingCreated(tcString: String, days: Long): String {
+		val parts = tcString.split('.')
+		val bytes = java.util.Base64.getUrlDecoder().decode(parts[0])
+		fun bit(i: Int) = (bytes[i / 8].toInt() shr (7 - i % 8)) and 1
+		fun setBit(i: Int, on: Boolean) {
+			val mask = 1 shl (7 - i % 8)
+			bytes[i / 8] = (if (on) bytes[i / 8].toInt() or mask else bytes[i / 8].toInt() and mask.inv()).toByte()
+		}
+		// Version 6 bits, then Created 36 bits in deciseconds.
+		var created = (0 until 36).fold(0L) { value, i -> (value shl 1) or bit(6 + i).toLong() }
+		created += days * 864_000L
+		for (i in 0 until 36) setBit(6 + i, (created shr (35 - i)) and 1L == 1L)
+		val core = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
+		return (listOf(core) + parts.drop(1)).joinToString(".")
+	}
+
+	// TCF-CHECK: T2
+	// TCF-CHECK: T3
 	@Test
 	fun `withdrawal replaces queued grants and survives restart`() {
 		val store = C15tStore(InMemoryKeyValueStore())

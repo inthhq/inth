@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Valoramos tu privacidad',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Tus opciones se almacenan en este dispositivo, en el almacenamiento de configuración estándar de la aplicación bajo claves IABTCF, durante un máximo de {days} días. La duración del almacenamiento se renueva cuando actualizas tus opciones.',
+			description:
+				'Nosotros y nuestros {partnerCount} socios almacenamos y/o accedemos a información en tu dispositivo y procesamos datos personales, como identificadores únicos y datos de navegación, para esta aplicación, con el fin de:',
+			legitimateInterestExplanation:
+				'Algunos socios procesan datos personales, como identificadores únicos y datos de navegación, basándose en su interés legítimo en lugar de pedir tu consentimiento. Esto se aplica solo a esta aplicación. Tienes derecho a oponerte a este procesamiento para cada finalidad y cada socio.',
+			scopeServiceSpecific:
+				'Tu consentimiento se aplica solo a esta aplicación y no afectará a otros servicios.',
+			withdraw:
+				'Puedes cambiar tus opciones o retirar tu consentimiento en cualquier momento desde Configuración de privacidad en esta aplicación.',
+		},
 		banner: {
 			andMore: 'Y {count} más...',
 			description:

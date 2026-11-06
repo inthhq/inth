@@ -19,8 +19,7 @@ private enum StatusColors {
 /// spinner at its leading edge, while the other, disabled actions fade. The spinner is an
 /// overlay so the label never moves and the equal-width layout never reflows mid-save.
 private struct ConsentButtonStyle: ButtonStyle {
-    enum Variant { case decision, accent, quiet }
-    var variant: Variant = .decision
+    var variant: DecisionStyle = .decision
     var busy = false
     @Environment(\.consentTheme) private var theme
     @Environment(\.isEnabled) private var isEnabled
@@ -123,7 +122,7 @@ public extension View {
     func c15tConsent(presenter: ConsentPresenter, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
         onNoticeFrameChange: ((CGRect) -> Void)? = nil) -> some View {
         modifier(ConsentPresentationModifier(presenter: presenter, privacyPolicyURL: privacyPolicyURL,
-            theme: theme ?? ConsentTheme.resolved(), onNoticeFrameChange: onNoticeFrameChange))
+            theme: (theme ?? ConsentTheme.resolved()).withReadableDecisions(), onNoticeFrameChange: onNoticeFrameChange))
     }
 }
 
@@ -192,11 +191,11 @@ private struct ConsentPresentationModifier: ViewModifier {
     let onNoticeFrameChange: ((CGRect) -> Void)?
     @State private var failureFocus = FailureFocus()
 
-    private var standingPreferences: Bool { presenter.preferences && !presenter.returnsToFirstLayer }
     private func session(fullScreen: Bool) -> Binding<PresentationSession?> {
         let current = presenter.presentationID
+        let style = presenter.presentationStyle
         return Binding(
-            get: { current.flatMap { fullScreen != standingPreferences ? PresentationSession(id: $0) : nil } },
+            get: { current.flatMap { style == (fullScreen ? .fullScreen : .sheet) ? PresentationSession(id: $0) : nil } },
             set: { next in if next == nil, presenter.presentationID == current { presenter.requestClose() } })
     }
 
@@ -206,16 +205,16 @@ private struct ConsentPresentationModifier: ViewModifier {
                 if presenter.noticeVisible {
                     NoticeCard(presenter: presenter, privacyPolicyURL: privacyPolicyURL)
                         .padding(12).background(NoticeBoundsReporter(onChange: onNoticeFrameChange))
-                        .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus)
+                        .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy)
                 }
             }
             .fullScreenCover(item: session(fullScreen: true)) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
-                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus)
+                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy)
             }
             .sheet(item: session(fullScreen: false)) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
-                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus)
+                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy)
                     .presentationDetents([.large]).presentationDragIndicator(.hidden)
             }
             .onAppear {
@@ -262,8 +261,9 @@ private struct NoticeCard: View {
 private struct PrivacyLink: View {
     let url: URL
     @Environment(\.consentTheme) private var theme
+    @Environment(\.iabCopy) private var copy
     var body: some View {
-        Link("Privacy policy", destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.privacy-policy")
+        Link(copy.preferenceCenterVendorListPrivacyPolicy, destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.privacy-policy")
     }
 }
 
@@ -282,10 +282,10 @@ private struct FailureRow: View {
     @Environment(\.consentTheme) private var theme
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.failureFocus) private var failureFocus
+    @Environment(\.iabCopy) private var copy
     @State private var messageElement: UIView?
-    @State private var linkRect: CGRect = .zero
+    @State private var linkRects: [CGRect] = []
     @State private var pressed = false
-    private static let link = "Try again"
     private func takeFocus() {
         guard let messageElement, failureFocus.claim() else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { UIAccessibility.post(notification: .layoutChanged, argument: messageElement) }
@@ -298,17 +298,19 @@ private struct FailureRow: View {
             Image(systemName: "exclamationmark.circle.fill").font(.subheadline).foregroundStyle(StatusColors.error)
                 .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 .frame(height: lineHeight).accessibilityHidden(true)
-            InlineLinkText(message: message, link: Self.link, id: id, theme: theme, enabled: isEnabled, pressed: pressed, retry: retry,
-                           onMessageElement: { messageElement = $0 }) { linkRect = $0 }
+            InlineLinkText(message: message, link: copy.appTryAgain, id: id, theme: theme, enabled: isEnabled, pressed: pressed, retry: retry,
+                           onMessageElement: { messageElement = $0 }) { linkRects = $0 }
                 .overlay(alignment: .topLeading) {
-                    if linkRect != .zero {
+                    // One target per line the link occupies, so a long translation that wraps never
+                    // puts a button over the message text between its two pieces.
+                    ForEach(Array(linkRects.enumerated()), id: \.offset) { _, rect in
                         // The hit area grows to 44pt around the span, never into the paragraph's sense: the slop
                         // only reaches the space before the link and the spacing after the row.
-                        let size = CGSize(width: max(44, linkRect.width + 16), height: max(44, linkRect.height))
+                        let size = CGSize(width: max(44, rect.width + 16), height: max(44, rect.height))
                         Button(action: retry) { Color.clear.contentShape(Rectangle()) }
                             .buttonStyle(PressReporter(pressed: $pressed))
                             .frame(width: size.width, height: size.height)
-                            .offset(x: linkRect.midX - size.width / 2, y: linkRect.midY - size.height / 2)
+                            .offset(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2)
                             // The text view exposes the link to VoiceOver; this button is the touch target only.
                             .accessibilityHidden(true)
                     }
@@ -341,7 +343,7 @@ private struct InlineLinkText: UIViewRepresentable {
     let pressed: Bool
     let retry: () -> Void
     let onMessageElement: (UIView) -> Void
-    let onLinkRect: (CGRect) -> Void
+    let onLinkRect: ([CGRect]) -> Void
 
     func makeUIView(context: Context) -> LinkTextHost {
         let host = LinkTextHost()
@@ -401,8 +403,9 @@ private final class LinkTextHost: UIView {
         addSubview(textView)
         addSubview(messageElement)
         addSubview(linkElement)
-        textView.onLinkBox = { [weak self] box, shape in
+        textView.onLinkBox = { [weak self] box, linkShape, shape in
             self?.linkElement.frame = box
+            self?.linkElement.shape = linkShape
             self?.messageElement.shape = shape
         }
     }
@@ -442,10 +445,11 @@ private final class AccessibilityRegion: UIView {
 
 private final class LinkTextView: UITextView {
     var linkRange = NSRange(location: 0, length: 0)
-    var onLinkRect: ((CGRect) -> Void)?
-    /// The link's 44pt box and the paragraph's shape without it, for the host's accessibility regions.
-    var onLinkBox: ((CGRect, UIBezierPath) -> Void)?
-    private var reported = CGRect.zero
+    var onLinkRect: (([CGRect]) -> Void)?
+    /// The link's 44pt box, its per-line shape inside that box, and the paragraph's shape without it,
+    /// for the host's accessibility regions.
+    var onLinkBox: ((CGRect, UIBezierPath, UIBezierPath) -> Void)?
+    private var reported: [CGRect] = []
     /// A TextKit 1 stack, built by hand: `layoutSubviews` reads glyph rects from the layout manager,
     /// and only the designated initialiser runs this class's own setup. UIKit's
     /// `init(usingTextLayoutManager:)` convenience path does not, and leaves the regions unmade.
@@ -468,26 +472,35 @@ private final class LinkTextView: UITextView {
         super.layoutSubviews()
         guard linkRange.length > 0, linkRange.location + linkRange.length <= textStorage.length else { return }
         let glyphs = layoutManager.glyphRange(forCharacterRange: linkRange, actualCharacterRange: nil)
-        var rect = layoutManager.boundingRect(forGlyphRange: glyphs, in: textContainer)
-        rect.origin.x += textContainerInset.left
-        rect.origin.y += textContainerInset.top
-        let size = CGSize(width: max(44, rect.width + 16), height: max(44, rect.height))
-        let box = CGRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height)
-        // The paragraph's shape is its lines, less the link and a little air around it.
-        let cut = rect.insetBy(dx: -4, dy: -2)
+        // One rect per line the link occupies. A no-break label can still wrap glyph by glyph when
+        // a translation is longer than the line, and one enclosing rect would then cover the message.
+        var rects: [CGRect] = []
+        layoutManager.enumerateEnclosingRects(forGlyphRange: glyphs, withinSelectedGlyphRange: NSRange(location: NSNotFound, length: 0), in: textContainer) { rect, _ in
+            rects.append(rect.offsetBy(dx: self.textContainerInset.left, dy: self.textContainerInset.top))
+        }
+        guard !rects.isEmpty else { return }
+        let boxes = rects.map { rect -> CGRect in
+            let size = CGSize(width: max(44, rect.width + 16), height: max(44, rect.height))
+            return CGRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height)
+        }
+        let box = boxes.dropFirst().reduce(boxes[0]) { $0.union($1) }
+        let linkShape = UIBezierPath()
+        for target in boxes { linkShape.append(UIBezierPath(rect: target.offsetBy(dx: -box.minX, dy: -box.minY))) }
+        // The paragraph's shape is its lines, less each piece of the link and a little air around it.
+        let cuts = rects.map { $0.insetBy(dx: -4, dy: -2) }
         let shape = UIBezierPath()
         layoutManager.enumerateLineFragments(forGlyphRange: NSRange(location: 0, length: layoutManager.numberOfGlyphs)) { [textContainerInset] _, used, _, _, _ in
             let line = used.offsetBy(dx: textContainerInset.left, dy: textContainerInset.top)
-            guard line.intersects(cut) else { shape.append(UIBezierPath(rect: line)); return }
+            guard let cut = cuts.first(where: { line.intersects($0) }) else { shape.append(UIBezierPath(rect: line)); return }
             let left = CGRect(x: line.minX, y: line.minY, width: max(0, cut.minX - line.minX), height: line.height)
             let right = CGRect(x: cut.maxX, y: line.minY, width: max(0, line.maxX - cut.maxX), height: line.height)
             if left.width > 0 { shape.append(UIBezierPath(rect: left)) }
             if right.width > 0 { shape.append(UIBezierPath(rect: right)) }
         }
-        onLinkBox?(box, shape)
-        guard rect != reported else { return }
-        reported = rect
-        DispatchQueue.main.async { [weak self] in self?.onLinkRect?(rect) }
+        onLinkBox?(box, linkShape, shape)
+        guard rects != reported else { return }
+        reported = rects
+        DispatchQueue.main.async { [weak self] in self?.onLinkRect?(rects) }
     }
 }
 
@@ -536,8 +549,8 @@ private struct ConsentScreen: View {
                 if presenter.preferences {
                     ToolbarItem(placement: .cancellationAction) {
                         Button { presenter.requestClose() } label: {
-                            if presenter.returnsToFirstLayer { Label("Back", systemImage: "chevron.backward").frame(minHeight: 44) }
-                            else { Text("Cancel") }
+                            if presenter.returnsToFirstLayer { Label(presenter.iabCopy.appBack, systemImage: "chevron.backward").frame(minHeight: 44) }
+                            else { Text(presenter.iabCopy.appCancel) }
                         }.disabled(presenter.pending).accessibilityIdentifier("c15t.prefs.cancel")
                     }
                 }
@@ -558,7 +571,7 @@ private struct ConsentScreen: View {
                 .toolbar {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button { if !path.isEmpty { path.removeLast() } } label: {
-                            Label("Back", systemImage: "chevron.backward").frame(minHeight: 44)
+                            Label(presenter.iabCopy.appBack, systemImage: "chevron.backward").frame(minHeight: 44)
                         }.disabled(presenter.pending).accessibilityIdentifier(backIdentifier(destination))
                     }
                 }
@@ -567,7 +580,7 @@ private struct ConsentScreen: View {
             .toolbarBackground(.visible, for: .navigationBar)
         }
         .tint(theme.colors.accent.color)
-        .interactiveDismissDisabled(!presenter.preferences || presenter.isDirty || presenter.pending)
+        .interactiveDismissDisabled(!presenter.allowsInteractiveDismiss)
         .accessibilityHidden(presenter.confirmDiscard)
         .overlay { if presenter.confirmDiscard { DiscardConfirmation(presenter: presenter) } }
     }
@@ -588,11 +601,11 @@ private struct DiscardConfirmation: View {
         ZStack {
             Color.black.opacity(0.32).ignoresSafeArea().accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 16) {
-                Text("Discard changes?").font(.headline).foregroundStyle(theme.colors.text.color).accessibilityAddTraits(.isHeader)
-                Text("Your changes won't be saved.").foregroundStyle(theme.colors.textSecondary.color)
-                Button("Keep editing") { presenter.confirmDiscard = false }
+                Text(presenter.iabCopy.appDiscardChangesTitle).font(.headline).foregroundStyle(theme.colors.text.color).accessibilityAddTraits(.isHeader)
+                Text(presenter.iabCopy.appDiscardChangesDetail).foregroundStyle(theme.colors.textSecondary.color)
+                Button(presenter.iabCopy.appKeepEditing) { presenter.confirmDiscard = false }
                     .buttonStyle(ConsentButtonStyle()).accessibilityIdentifier("c15t.prefs.discard.keep")
-                Button("Discard changes", role: .destructive) { presenter.discard() }
+                Button(presenter.iabCopy.appDiscardChanges, role: .destructive) { presenter.discard() }
                     .buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.prefs.discard.confirm")
             }
             .padding(24).background(theme.colors.surface.color, in: RoundedRectangle(cornerRadius: theme.cornerRadius + 6, style: .continuous))
@@ -629,15 +642,15 @@ private struct FirstLayer: View {
                         .foregroundStyle(theme.colors.text.color).multilineTextAlignment(.leading)
                         .accessibilityAddTraits(.isHeader).accessibilityIdentifier("c15t.first-layer.title").accessibilityFocused($titleFocused)
                 }
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(theme.copy.introduction).font(.body).foregroundStyle(theme.colors.text.color)
-                        .accessibilityIdentifier("c15t.first-layer.body")
-                    Text(presenter.iab
-                        ? "We and our partners store information on this device for the purposes below. Some partners rely on legitimate interest instead of consent; you can object to that. Change your mind at any time in Privacy settings."
-                        : "You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
+                Text(theme.copy.introduction).font(.body).foregroundStyle(theme.colors.text.color)
+                    .accessibilityIdentifier("c15t.first-layer.body")
+                // The IAB sentences come from the IAB copy, never from the host theme.
+                if let content = presenter.iabFirstLayer {
+                    iabDisclosure(content)
+                } else {
+                    Text("You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
                         .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                 }
-                if presenter.iab { partnerSummary }
                 PrivacyLink(url: privacyPolicyURL)
                 // At accessibility sizes the decisions follow the text they decide on.
                 if page { DecisionGroup(presenter: presenter, first: true, part: .all, path: $path).padding(.top, 4).id(DecisionGroup.errorID(first: true)) }
@@ -661,47 +674,65 @@ private struct FirstLayer: View {
         .onAppear { titleFocused = true }
     }
 
-    /// The purposes partners ask for, on a quieter surface so they inform without competing.
-    /// The partner count opens a page inside this one, so it reads as a disclosure in ink with a
-    /// chevron rather than a blue link; small blue text does not reach 4.5:1 on the muted surface.
-    @ViewBuilder private var partnerSummary: some View {
-        if let disclosure = presenter.disclosure {
-            let list = disclosure.list
-            let count = Button {
-                presenter.customize()
-                path.append(.vendors(nil))
-            } label: {
+    private func openPartners() {
+        presenter.customize()
+        path.append(.vendors(nil))
+    }
+
+    /// The description with its partners link inline, as on the web. The link opens the partner
+    /// list; the button under the summary opens the same list with a full-size target.
+    private func description(_ content: IABFirstLayerContent) -> AttributedString {
+        var text = AttributedString(content.descriptionLead)
+        var link = AttributedString(content.partnersLink)
+        link.link = URL(string: "c15t-partners:list")
+        link.font = .subheadline.weight(.semibold)
+        link.underlineStyle = .single
+        text += link
+        text += AttributedString(content.descriptionTail)
+        return text
+    }
+
+    /// The web prompt's order: description and partners link, the purpose summary on a quieter
+    /// surface, then legitimate interest, scope and withdrawal.
+    @ViewBuilder private func iabDisclosure(_ content: IABFirstLayerContent) -> some View {
+        Text(description(content)).font(.subheadline).foregroundStyle(theme.colors.text.color)
+            .tint(theme.colors.accent.color)
+            .environment(\.openURL, OpenURLAction { _ in openPartners(); return .handled })
+            .accessibilityIdentifier("c15t.first-layer.iab-description")
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Array(content.summaryItems.enumerated()), id: \.offset) { index, item in
+                Text(item).font(.subheadline).foregroundStyle(theme.colors.text.color)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 10)
+                    .accessibilityIdentifier("c15t.first-layer.summary.\(index)")
+                Hairline().padding(.leading, 16)
+            }
+            if let more = content.moreItems {
+                Text(more).font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 10)
+                    .accessibilityIdentifier("c15t.first-layer.summary.more")
+                Hairline().padding(.leading, 16)
+            }
+            // Ink with a chevron, not a blue link: small blue text doesn't reach 4.5:1 on the muted surface.
+            Button(action: openPartners) {
                 HStack(spacing: 4) {
-                    Text("\(disclosure.vendors.count) IAB partners")
+                    Text(content.partnersLink)
                     Image(systemName: "chevron.forward").font(.caption2.weight(.bold)).foregroundStyle(theme.colors.textSecondary.color)
                 }
             }
             .buttonStyle(TextLinkStyle(font: .footnote.weight(.semibold), color: theme.colors.text.color))
-            .accessibilityLabel("\(disclosure.vendors.count) IAB partners")
+            .accessibilityLabel(content.partnersLink)
             .accessibilityIdentifier("c15t.first-layer.partner-count")
-            VStack(alignment: .leading, spacing: 0) {
-                // The label and the count share a line until accessibility sizes, where they stack.
-                if typeSize.actionsInPage {
-                    VStack(alignment: .leading, spacing: 0) { SectionLabel("What partners may do"); count }.padding(.horizontal, 16)
-                } else {
-                    HStack(alignment: .center) { SectionLabel("What partners may do"); Spacer(); count }.padding(.horizontal, 16)
-                }
-                ForEach(list.purposes.keys.sorted(), id: \.self) { id in
-                    Text(list.purposes[id]?.name ?? "").font(.subheadline).foregroundStyle(theme.colors.text.color)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 10)
-                        .accessibilityIdentifier("c15t.first-layer.purpose.\(id)")
-                    Hairline().padding(.leading, 16)
-                }
-                ForEach(list.specialFeatures.keys.sorted(), id: \.self) { id in
-                    Text(list.specialFeatures[id]?.name ?? "").font(.subheadline).foregroundStyle(theme.colors.text.color)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.vertical, 10)
-                        .accessibilityIdentifier("c15t.first-layer.special-feature.\(id)")
-                    if id != list.specialFeatures.keys.sorted().last { Hairline().padding(.leading, 16) }
-                }
-            }
-            .padding(.vertical, 6)
-            .background(theme.colors.surfaceMuted.color, in: RoundedRectangle(cornerRadius: theme.cornerRadius + 2, style: .continuous))
+            .padding(.horizontal, 16)
         }
+        .padding(.vertical, 6)
+        .background(theme.colors.surfaceMuted.color, in: RoundedRectangle(cornerRadius: theme.cornerRadius + 2, style: .continuous))
+        VStack(alignment: .leading, spacing: 12) {
+            Text(content.legitimateInterestNotice).accessibilityIdentifier("c15t.first-layer.legitimate-interest")
+            Text(content.scope).accessibilityIdentifier("c15t.first-layer.scope")
+            Text(content.withdraw).accessibilityIdentifier("c15t.first-layer.withdraw")
+        }
+        .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -887,7 +918,10 @@ private struct DecisionGroup: View {
                 }
             case .pinned:
                 if presenter.stale { reload }
-                else if let action = Self.pinnedAction(presenter) { decision(action == .save ? "Save choices" : "Reject all", action) }
+                else if let action = Self.pinnedAction(presenter) {
+                    let labels = presenter.decisionLabels
+                    decision(action == .save ? labels.save : labels.rejectAll, action)
+                }
             case .shortcuts:
                 if Self.showsShortcuts(presenter) {
                     if presenter.failedAction != Self.pinnedAction(presenter) { failure }
@@ -901,7 +935,7 @@ private struct DecisionGroup: View {
     }
 
     private var reload: some View {
-        Button("Load current settings") { presenter.loadDraft() }.buttonStyle(ConsentButtonStyle(variant: .accent)).accessibilityIdentifier("c15t.prefs.stale.reload")
+        Button(presenter.iabCopy.appLoadCurrentSettings) { presenter.loadDraft() }.buttonStyle(ConsentButtonStyle(variant: .accent)).accessibilityIdentifier("c15t.prefs.stale.reload")
     }
     @ViewBuilder private var failure: some View {
         if let message = presenter.errorMessage {
@@ -909,23 +943,24 @@ private struct DecisionGroup: View {
         }
     }
     @ViewBuilder private var decisions: some View {
+        let labels = presenter.decisionLabels
         if presenter.snapshot.policyPending {
-            decision("Reject all", .reject)
+            decision(labels.rejectAll, .reject)
         } else if presenter.listUnavailable {
-            Text("Our partner list is out of date. Try again to load it, or reject optional data use.")
+            Text(presenter.iabCopy.appListOutdated)
                 .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).frame(maxWidth: .infinity, alignment: .leading)
                 .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
             EqualDecisionLayout {
-                decision("Reject all", .reject)
-                Button("Try again") { presenter.refresh() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
+                decision(labels.rejectAll, .reject)
+                Button(presenter.iabCopy.appTryAgain) { presenter.refresh() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
             }
         } else {
+            let plan = DecisionPlan.rows(first: first, labels: labels)
             EqualDecisionLayout {
-                decision("Reject all", .reject)
-                decision("Accept all", .accept)
+                ForEach(plan.pair, id: \.label) { control in decision(control) }
             }
             if first {
-                Button("Customize") { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.first-layer.customize")
+                decision(plan.next)
                     .anchorPreference(key: BrandingAnchorsKey.self, value: .bounds) { [.customize: $0] }
                 if theme.showsBranding {
                     // One overlay owns both placements; the placeholder keeps Customize stationary.
@@ -937,18 +972,28 @@ private struct DecisionGroup: View {
                     }
                 }
             } else if part == .all {
-                decision("Save choices", .save)
+                decision(plan.next)
             }
+        }
+    }
+
+    @ViewBuilder private func decision(_ control: DecisionControl) -> some View {
+        switch control.kind {
+        case .reject: decision(control.label, .reject, style: control.style)
+        case .accept: decision(control.label, .accept, style: control.style)
+        case .save: decision(control.label, .save, style: control.style)
+        case .customize:
+            Button(control.label) { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: control.style)).accessibilityIdentifier("c15t.first-layer.customize")
         }
     }
 
     /// Labels stay put while a commit runs: the pressed action shows progress beside its own
     /// label, and the others fade as disabled, so the person can still see what is being saved.
-    private func decision(_ label: String, _ action: ConsentPresenter.Action) -> some View {
+    private func decision(_ label: String, _ action: ConsentPresenter.Action, style: DecisionStyle? = nil) -> some View {
         let suffix: String = switch action { case .accept: "accept-all"; case .reject: "reject-all"; case .save: "save"; case .acknowledge: "acknowledge" }
         let busy = presenter.showProgress && presenter.pendingAction == action
         return Button(label) { presenter.commit(action) }
-            .buttonStyle(ConsentButtonStyle(variant: action == .save ? .accent : first ? .decision : .quiet, busy: busy))
+            .buttonStyle(ConsentButtonStyle(variant: style ?? (action == .save ? .accent : first ? .decision : .quiet), busy: busy))
             .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(prefix + "." + suffix)
     }
 }
@@ -1017,21 +1062,22 @@ private struct PreferencesList: View {
 
     var body: some View {
         let page = typeSize.actionsInPage
+        let content = presenter.iabPreferences
         ScrollViewReader { proxy in
           List {
             if presenter.snapshot.policyPending {
                 Section {
-                    Text("Privacy settings aren't available yet. Connect to the internet and try again.").foregroundStyle(theme.colors.text.color)
+                    Text(presenter.iabCopy.appPreferencesUnavailable).foregroundStyle(theme.colors.text.color)
                         .accessibilityFocused($introFocused)
-                    Button("Try again") { presenter.refresh() }.buttonStyle(TextLinkStyle(font: .body.weight(.medium))).accessibilityIdentifier("c15t.status.unavailable.retry")
+                    Button(presenter.iabCopy.appTryAgain) { presenter.refresh() }.buttonStyle(TextLinkStyle(font: .body.weight(.medium))).accessibilityIdentifier("c15t.status.unavailable.retry")
                 }.listRowBackground(surface)
             } else {
                 if presenter.stale {
                     Section {
                         InfoCallout {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Settings changed while you were editing").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
-                                Text("Your choices weren't saved. Load the current settings, then choose again.")
+                                Text(presenter.iabCopy.appSettingsChanged).font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                                Text(presenter.iabCopy.appSettingsChangedDetail)
                             }
                         }.listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
                     }.accessibilityIdentifier("c15t.prefs.stale")
@@ -1039,9 +1085,12 @@ private struct PreferencesList: View {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         if presenter.iab {
-                            Text("We and our partners store and access information on your device and process personal data for the purposes below. Some partners rely on legitimate interest instead of consent. You can object to that and change your choices at any time in Privacy settings.")
+                            Text(presenter.iabCopy.appPreferencesIntro)
                                 .accessibilityFocused($introFocused)
-                            Button("\(presenter.disclosure?.vendors.count ?? 0) IAB partners") { path.append(.vendors(nil)) }
+                            if let explanation = content?.legitimateInterestExplanation {
+                                Text(explanation).accessibilityIdentifier("c15t.iab.legitimate-interest-explanation")
+                            }
+                            Button(presenter.iabCopy.format(presenter.iabCopy.appIabPartnerCount, ["count": String(presenter.disclosure?.vendors.count ?? 0)])) { path.append(.vendors(nil)) }
                                 .buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold))).accessibilityIdentifier("c15t.iab.partner-count")
                         } else {
                             Text("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
@@ -1054,49 +1103,56 @@ private struct PreferencesList: View {
                         .modifier(PreferencesUnboxedSection(top: 4, bottom: 8))
                 }
                 Section { ForEach(presenter.offeredCategories, id: \.self) { category in CategoryRow(presenter: presenter, category: category) } }
-                    header: { if presenter.iab { SectionLabel("This app") } }
+                    header: { if presenter.iab { SectionLabel(presenter.iabCopy.appThisApp) } }
                     .listRowBackground(surface)
-                if presenter.iab, let disclosure = presenter.disclosure {
-                    Section { ForEach(disclosure.list.purposes.keys.sorted(), id: \.self) { id in PurposeRow(presenter: presenter, id: id) { path.append(.vendors(id)) } } }
-                        header: { SectionLabel("Purposes") }
-                        .listRowBackground(surface)
+                if let content, let disclosure = presenter.disclosure {
                     Section {
-                        ForEach(disclosure.list.specialFeatures.keys.sorted(), id: \.self) { id in
-                            if let item = disclosure.list.specialFeatures[id] {
-                                ConsentToggle(isOn: choiceBinding(\.specialFeatureOptIns, id)) {
-                                    RowLabel(title: item.name, description: item.description, note: "Partners only do this if you turn it on.")
-                                }.accessibilityIdentifier("c15t.iab.special-feature.\(id).switch")
+                        ForEach(content.purposes) { purpose in
+                            PurposeRow(presenter: presenter, content: purpose, rightToObject: content.rightToObject) { path.append(.vendors(purpose.id)) }
+                        }
+                    } header: { SectionLabel(presenter.iabCopy.preferenceCenterVendorListPurposes) }
+                        .listRowBackground(surface)
+                    if !content.specialFeatures.isEmpty {
+                        Section {
+                            ForEach(content.specialFeatures) { item in SpecialFeatureRow(presenter: presenter, item: item) }
+                        } header: { SectionLabel(presenter.iabCopy.preferenceCenterVendorListSpecialFeatures) }
+                            .listRowBackground(surface)
+                    }
+                    if !content.specialPurposes.isEmpty {
+                        Section {
+                            ForEach(content.specialPurposes) { item in
+                                ReadOnlyDefinition(item: item, id: "c15t.iab.special-purpose.\(item.id)")
                             }
-                        }
-                    } header: { SectionLabel("Special features") }
-                        .listRowBackground(surface)
-                    Section {
-                        ForEach(disclosure.list.specialPurposes.keys.sorted(), id: \.self) { id in
-                            if let item = disclosure.list.specialPurposes[id] { ReadOnlyDefinition(item: item).accessibilityIdentifier("c15t.iab.special-purpose.\(id)") }
-                        }
-                    } header: { SectionLabel("Special purposes") } footer: { Text(disclosure.list.standardTexts?.specialPurposes ?? "") }
-                        .listRowBackground(surface)
-                    Section {
-                        ForEach(disclosure.list.features.keys.sorted(), id: \.self) { id in
-                            if let item = disclosure.list.features[id] { ReadOnlyDefinition(item: item).accessibilityIdentifier("c15t.iab.feature.\(id)") }
-                        }
-                    } header: { SectionLabel("Features") } footer: { Text(disclosure.list.standardTexts?.features ?? "").accessibilityIdentifier("c15t.iab.features-standard-text") }
-                        .listRowBackground(surface)
+                        } header: { SectionLabel(presenter.iabCopy.preferenceCenterVendorListSpecialPurposes) } footer: { Text(disclosure.list.standardTexts?.specialPurposes ?? "") }
+                            .listRowBackground(surface)
+                    }
+                    if !content.features.isEmpty {
+                        Section {
+                            ForEach(content.features) { item in
+                                ReadOnlyDefinition(item: item, id: "c15t.iab.feature.\(item.id)")
+                            }
+                        } header: { SectionLabel(presenter.iabCopy.preferenceCenterFeaturesTitle) } footer: { Text(content.featuresStandardText).accessibilityIdentifier("c15t.iab.features-standard-text") }
+                            .listRowBackground(surface)
+                    }
                     Section {
                         NavigationLink(value: Destination.vendors(nil)) {
-                            LabeledContent("IAB partners", value: "\(disclosure.vendors.count)")
+                            LabeledContent(presenter.iabCopy.appIabPartners, value: "\(content.iabPartnerCount)")
                         }.frame(minHeight: 44).accessibilityIdentifier("c15t.iab.partners")
-                        if let providers = disclosure.adTechProviders, !providers.isEmpty {
-                            NavigationLink(value: Destination.providers) { LabeledContent("Other ad partners", value: "\(providers.count)") }
+                        if content.otherPartnerCount > 0 {
+                            NavigationLink(value: Destination.providers) { LabeledContent(presenter.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, value: "\(content.otherPartnerCount)") }
                                 .frame(minHeight: 44).accessibilityIdentifier("c15t.iab.other-partners")
                         }
-                    } header: { SectionLabel("Partners") }
+                    } header: { SectionLabel(presenter.iabCopy.appPartners) }
                         .listRowBackground(surface)
                 }
                 Section {
                     PrivacyLink(url: privacyPolicyURL)
+                    if let storage = content?.consentStorage {
+                        Text(storage).font(.footnote).foregroundStyle(theme.colors.textSecondary.color)
+                            .accessibilityIdentifier("c15t.iab.consent-storage")
+                    }
                     if let changed = presenter.snapshot.explicitChoice?.categories.values.map(\.confirmedAt).max() {
-                        Text("Last changed \(Date(timeIntervalSince1970: Double(changed) / 1000).formatted(date: .abbreviated, time: .omitted))")
+                        Text(presenter.lastChanged(at: changed))
                             .font(.footnote).foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.prefs.last-changed")
                     }
                 }.listRowBackground(surface)
@@ -1128,16 +1184,13 @@ private struct PreferencesList: View {
         }
         .listStyle(.insetGrouped).scrollContentBackground(.hidden).modifier(SectionSpacing())
         .foregroundStyle(theme.colors.text.color)
-        .navigationTitle("Privacy settings").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(presenter.iabCopy.preferenceCenterTitle).navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier(presenter.iab ? "c15t.iab" : "c15t.prefs")
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if !presenter.snapshot.policyPending || presenter.core.bundledPolicyInfo != nil { DecisionFooter(presenter: presenter, first: false, path: $path) }
         }
     }
 
-    private func choiceBinding(_ key: WritableKeyPath<IABChoices, [Int]>, _ id: Int) -> Binding<Bool> {
-        Binding(get: { presenter.choices[keyPath: key].contains(id) }, set: { presenter.edit(key, id: id, enabled: $0) })
-    }
 }
 
 /// A title, its one-line description, and an optional footnote; the label half of every row.
@@ -1151,7 +1204,7 @@ private struct RowLabel: View {
             Text(title).font(.body.weight(.semibold)).foregroundStyle(theme.colors.text.color)
             if let description, !description.isEmpty { Text(description).font(.subheadline).foregroundStyle(theme.colors.textSecondary.color) }
             if let note { Text(note).font(.footnote).foregroundStyle(theme.colors.textSecondary.color) }
-        }
+        }.fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -1219,7 +1272,7 @@ private struct CategoryRow: View {
                 ReadOnlyStatusRow(
                     label: RowLabel(title: title, description: description,
                         note: optional.flatMap { optional in restricted ? (presenter.snapshot.restrictions[optional]?.contains(.gpc) == true ? "Off because your device sends a Global Privacy Control signal." : "Not offered where you are.") : nil }),
-                    status: Text(category == .necessary ? "Always on" : "Off").font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+                    status: Text(category == .necessary ? presenter.iabCopy.appAlwaysOn : presenter.iabCopy.appOff).font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                         .accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).locked")
                 )
                 .frame(minHeight: 44)
@@ -1230,50 +1283,99 @@ private struct CategoryRow: View {
     }
 }
 
-private struct ReadOnlyDefinition: View {
-    let item: GVLDefinition
+/// Legal text and the GVL's standard illustrations behind one Details control, for every kind
+/// of definition: purposes, special purposes, features and special features.
+private struct DefinitionDetails<Extra: View>: View {
+    let item: IABDefinitionContent
+    let id: String
+    let extra: Extra
+    @State private var expanded = false
     @Environment(\.consentTheme) private var theme
+    @Environment(\.iabCopy) private var copy
+    init(item: IABDefinitionContent, id: String, @ViewBuilder extra: () -> Extra) {
+        self.item = item
+        self.id = id
+        self.extra = extra()
+    }
     var body: some View {
-        ReadOnlyStatusRow(label: RowLabel(title: item.name, description: item.description),
-            status: Text("No choice").font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
-            .padding(.vertical, 10)
+        VStack(alignment: .leading, spacing: 8) {
+            Button { expanded.toggle() } label: {
+                Label(expanded ? copy.appHideDetails : copy.appDetails, systemImage: expanded ? "chevron.up" : "chevron.down")
+                    .labelStyle(TrailingIconLabelStyle())
+            }
+            .buttonStyle(TextLinkStyle()).accessibilityValue(expanded ? copy.appExpanded : copy.appCollapsed).accessibilityIdentifier(id + ".details")
+            if expanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    if let legal = item.descriptionLegal, !legal.isEmpty { Text(legal) }
+                    ForEach(item.illustrations, id: \.self) { Text("• " + $0) }
+                }
+                .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+                // Expanded text takes its full height; a list row otherwise truncates it to a line.
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityElement(children: .combine).accessibilityIdentifier(id + ".illustrations")
+                extra
+            }
+        }
+    }
+}
+private extension DefinitionDetails where Extra == EmptyView {
+    init(item: IABDefinitionContent, id: String) { self.init(item: item, id: id) { EmptyView() } }
+}
+
+private struct ReadOnlyDefinition: View {
+    let item: IABDefinitionContent
+    let id: String
+    @Environment(\.consentTheme) private var theme
+    @Environment(\.iabCopy) private var copy
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ReadOnlyStatusRow(label: RowLabel(title: item.name, description: item.description),
+                status: Text(copy.appNoChoice).font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
+                .accessibilityElement(children: .combine).accessibilityIdentifier(id)
+            if item.hasDetails { DefinitionDetails(item: item, id: id) }
+        }.padding(.vertical, 10)
     }
 }
 
 private struct PurposeRow: View {
     @ObservedObject var presenter: ConsentPresenter
-    let id: Int
+    let content: IABPurposeContent
+    let rightToObject: String
     let openPartners: () -> Void
-    @State private var expanded = false
     @Environment(\.consentTheme) private var theme
+    private var copy: IABCopy { presenter.iabCopy }
     var body: some View {
-        if let disclosure = presenter.disclosure, let item = disclosure.list.purposes[id] {
-            let li = disclosure.vendors.values.contains { $0.legitimateInterestPurposes.contains(id) }
-            VStack(alignment: .leading, spacing: 8) {
-                ConsentToggle(isOn: Binding(get: { presenter.choices.purposeConsents.contains(id) }, set: { presenter.edit(\.purposeConsents, id: id, enabled: $0) })) {
-                    RowLabel(title: item.name, description: item.description,
-                        note: li ? "Asks for consent · Some partners use legitimate interest" : "Asks for consent")
-                }.accessibilityIdentifier("c15t.iab.purpose.\(id).consent")
-                Button { expanded.toggle() } label: {
-                    Label(expanded ? "Hide details" : "Details", systemImage: expanded ? "chevron.up" : "chevron.down")
-                        .labelStyle(TrailingIconLabelStyle())
+        let id = content.id
+        VStack(alignment: .leading, spacing: 8) {
+            // The partner counts sit on the collapsed row, not behind Details.
+            ConsentToggle(isOn: Binding(get: { presenter.choices.purposeConsents.contains(id) }, set: { presenter.edit(\.purposeConsents, id: id, enabled: $0) })) {
+                RowLabel(title: content.definition.name, description: content.definition.description, note: content.partnerCounts)
+            }.accessibilityIdentifier("c15t.iab.purpose.\(id).consent")
+            DefinitionDetails(item: content.definition, id: "c15t.iab.purpose.\(id)") {
+                Button(copy.appViewPartners, action: openPartners).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.purpose.\(id).view-partners")
+                if content.offersObjection {
+                    ConsentToggle(isOn: Binding(get: { presenter.choices.purposeLegitimateInterests.contains(id) }, set: { presenter.editLI(purpose: true, id: id, enabled: $0) })) {
+                        RowLabel(title: copy.preferenceCenterPurposeItemLegitimateInterest, note: rightToObject + " " + copy.appTurnOffToObject)
+                    }.accessibilityIdentifier("c15t.iab.purpose.\(id).li")
                 }
-                .buttonStyle(TextLinkStyle()).accessibilityValue(expanded ? "Expanded" : "Collapsed").accessibilityIdentifier("c15t.iab.purpose.\(id).details")
-                if expanded {
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let legal = item.descriptionLegal { Text(legal) }
-                        ForEach(item.illustrations, id: \.self) { Text("• " + $0) }
-                        Text("Asks for consent: \(disclosure.vendors.values.filter { $0.consentPurposes.contains(id) }.count) partners. Legitimate interest: \(disclosure.vendors.values.filter { $0.legitimateInterestPurposes.contains(id) }.count) partners.").font(.footnote)
-                    }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
-                    Button("View partners", action: openPartners).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.purpose.\(id).view-partners")
-                    if li {
-                        ConsentToggle(isOn: Binding(get: { presenter.choices.purposeLegitimateInterests.contains(id) }, set: { presenter.editLI(purpose: true, id: id, enabled: $0) })) {
-                            RowLabel(title: "Legitimate interest", note: "Some partners claim this legal basis. Turn off to object.")
-                        }.accessibilityIdentifier("c15t.iab.purpose.\(id).li")
-                    }
-                }
-            }.padding(.vertical, 4).disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
-        }
+            }
+        }.padding(.vertical, 4).disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+    }
+}
+
+/// One opt-in per special feature, with its standard texts and illustrations behind Details.
+private struct SpecialFeatureRow: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let item: IABDefinitionContent
+    private var copy: IABCopy { presenter.iabCopy }
+    var body: some View {
+        let id = item.id
+        VStack(alignment: .leading, spacing: 8) {
+            ConsentToggle(isOn: Binding(get: { presenter.choices.specialFeatureOptIns.contains(id) }, set: { presenter.edit(\.specialFeatureOptIns, id: id, enabled: $0) })) {
+                RowLabel(title: item.name, description: item.description, note: copy.appSpecialFeatureOptIn)
+            }.accessibilityIdentifier("c15t.iab.special-feature.\(id).switch")
+            DefinitionDetails(item: item, id: "c15t.iab.special-feature.\(id)")
+        }.padding(.vertical, 4).disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
     }
 }
 
@@ -1294,9 +1396,9 @@ private struct SearchField: View {
 /// On, Partly on, or Off at a glance, beside the chevron into the partner.
 private struct StatusTag: View {
     let status: String
+    let off: Bool
     @Environment(\.consentTheme) private var theme
     var body: some View {
-        let off = status == "Off"
         Text(status).font(.caption.weight(.semibold))
             .foregroundStyle(off ? theme.colors.textSecondary.color : theme.colors.statusTagText.color)
             .padding(.horizontal, 8).padding(.vertical, 4)
@@ -1312,12 +1414,12 @@ private struct VendorList: View {
     var body: some View {
         List {
             Section {
-                SearchField(placeholder: "Search partners", text: $search, id: "c15t.iab.vendors.search")
+                SearchField(placeholder: presenter.iabCopy.appSearchPartners, text: $search, id: "c15t.iab.vendors.search")
                 if let purpose {
                     Button {
                         self.purpose = nil
                     } label: {
-                        Label("Purpose: \(presenter.disclosure?.list.purposes[purpose]?.name ?? "")", systemImage: "xmark.circle.fill")
+                        Label(presenter.iabCopy.format(presenter.iabCopy.appPurposeFilter, ["purpose": presenter.disclosure?.list.purposes[purpose]?.name ?? ""]), systemImage: "xmark.circle.fill")
                             .labelStyle(TrailingIconLabelStyle())
                     }.buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.iab.vendors.filter.purpose.clear")
                 }
@@ -1328,7 +1430,7 @@ private struct VendorList: View {
             } ?? []).sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             Section {
                 if vendors.isEmpty {
-                    Text("No partners match \"\(search)\".").foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.iab.vendors.empty")
+                    Text(presenter.iabCopy.format(presenter.iabCopy.appNoPartnersMatch, ["search": search])).foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.iab.vendors.empty")
                 }
                 ForEach(vendors, id: \.id) { vendor in
                     NavigationLink(value: Destination.vendor(vendor.id)) {
@@ -1336,18 +1438,27 @@ private struct VendorList: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(vendor.name).font(.body.weight(.semibold)).foregroundStyle(theme.colors.text.color)
                                 if let projection = presenter.disclosure?.vendors[vendor.id] {
-                                    Text("\(projection.consentPurposes.count) purposes · \(projection.legitimateInterestPurposes.count) on legitimate interest").font(.footnote).foregroundStyle(theme.colors.textSecondary.color)
+                                    Text(presenter.iabCopy.format(presenter.iabCopy.appVendorPurposeSummary, ["purposes": String(projection.consentPurposes.count), "legitimateInterest": String(projection.legitimateInterestPurposes.count)])).font(.footnote).foregroundStyle(theme.colors.textSecondary.color)
                                 }
                             }
                             Spacer(minLength: 0)
-                            StatusTag(status: presenter.partnerStatus(vendor.id)).accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id).status")
+                            StatusTag(status: presenter.partnerStatus(vendor.id), off: presenter.partnerSelection(vendor.id) == .off).accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id).status")
                         }.padding(.vertical, 6)
                     }.accessibilityIdentifier("c15t.iab.vendors.vendor.\(vendor.id)")
                 }
             }.listRowBackground(theme.colors.surface.color)
+            // The first layer's partner count includes these, so the list it opens leads to them,
+            // on their own page apart from IAB partners.
+            if purpose.map(adTechProviderPurposeIds.contains) ?? true, search.isEmpty, let providers = presenter.disclosure?.adTechProviders, !providers.isEmpty {
+                Section {
+                    NavigationLink(value: Destination.providers) { LabeledContent(presenter.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, value: "\(providers.count)") }
+                        .frame(minHeight: 44).accessibilityIdentifier("c15t.iab.vendors.other-partners")
+                } footer: { Text(presenter.iabCopy.preferenceCenterVendorListAdTechProvidersNotice) }
+                    .listRowBackground(theme.colors.surface.color)
+            }
         }
         .listStyle(.insetGrouped).scrollContentBackground(.hidden)
-        .navigationTitle("IAB partners").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(presenter.iabCopy.appIabPartners).navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.immediately).accessibilityIdentifier("c15t.iab.vendors")
     }
 }
@@ -1362,98 +1473,93 @@ private struct VendorDetails: View {
     @ObservedObject var presenter: ConsentPresenter
     let id: Int
     @Environment(\.consentTheme) private var theme
-    private func names(_ ids: [Int]) -> String { ids.compactMap { presenter.disclosure?.list.purposes[$0]?.name }.joined(separator: ", ") }
+    private var copy: IABCopy { presenter.iabCopy }
     var body: some View {
         List {
-            if let disclosure = presenter.disclosure, let vendor = disclosure.list.vendors[id], let projection = disclosure.vendors[id] {
+            if let vendor = presenter.iabVendor(id) {
                 links(vendor)
-                selections(projection)
-                otherDisclosures(vendor, disclosure.list)
+                selections(vendor)
+                otherDisclosures(vendor)
                 retention(vendor)
                 storage(vendor)
             }
         }
         .listStyle(.insetGrouped).scrollContentBackground(.hidden)
         .foregroundStyle(theme.colors.text.color)
-        .navigationTitle(presenter.disclosure?.list.vendors[id]?.name ?? "Partner").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(presenter.disclosure?.list.vendors[id]?.name ?? presenter.iabCopy.appPartner).navigationBarTitleDisplayMode(.inline)
         .accessibilityIdentifier("c15t.iab.vendor.\(id)")
     }
-    private func links(_ vendor: GVLVendor) -> some View {
-        let language = String(Locale.preferredLanguages.first?.prefix(2) ?? "en")
-        let urls = vendor.urls.first { $0.langId.lowercased() == language } ?? vendor.urls.first { $0.langId.lowercased() == "en" } ?? vendor.urls.first
-        return Section {
-            if let value = urls?.privacy, let url = URL(string: value) { Link("Privacy policy", destination: url).buttonStyle(TextLinkStyle(font: .body)).accessibilityIdentifier("c15t.iab.vendor.\(id).privacy-link") }
-            if let value = urls?.legIntClaim, let url = URL(string: value) { Link("Legitimate interest statement", destination: url).buttonStyle(TextLinkStyle(font: .body)).accessibilityIdentifier("c15t.iab.vendor.\(id).li-claim-link") }
+    private func links(_ vendor: IABVendorContent) -> some View {
+        Section {
+            if let url = vendor.privacyPolicy { Link(copy.preferenceCenterVendorListPrivacyPolicy, destination: url).buttonStyle(TextLinkStyle(font: .body)).accessibilityIdentifier("c15t.iab.vendor.\(id).privacy-link") }
+            if let url = vendor.legitimateInterestClaim { Link(copy.appLegitimateInterestStatement, destination: url).buttonStyle(TextLinkStyle(font: .body)).accessibilityIdentifier("c15t.iab.vendor.\(id).li-claim-link") }
         }.listRowBackground(theme.colors.surface.color)
     }
-    private func selections(_ projection: IABVendorDisclosure) -> some View {
+    private func selections(_ vendor: IABVendorContent) -> some View {
         Section {
-            if !projection.consentPurposes.isEmpty {
+            if !vendor.consentPurposes.isEmpty {
                 ConsentToggle(isOn: Binding(get: { presenter.choices.vendorConsents.contains(id) }, set: { presenter.edit(\.vendorConsents, id: id, enabled: $0) })) {
-                    RowLabel(title: "Consent", description: "For: " + names(projection.consentPurposes))
+                    RowLabel(title: copy.appConsent, description: vendor.consentPurposes.joined(separator: ", "))
                 }.accessibilityIdentifier("c15t.iab.vendor.\(id).consent")
             }
-            if !projection.legitimateInterestPurposes.isEmpty {
+            if !vendor.legitimateInterestPurposes.isEmpty {
                 ConsentToggle(isOn: Binding(get: { presenter.choices.vendorLegitimateInterests.contains(id) }, set: { presenter.editLI(purpose: false, id: id, enabled: $0) })) {
-                    RowLabel(title: "Legitimate interest", description: "For: " + names(projection.legitimateInterestPurposes), note: "Turn off to object.")
+                    RowLabel(title: copy.preferenceCenterPurposeItemLegitimateInterest, description: vendor.legitimateInterestPurposes.joined(separator: ", "), note: copy.appTurnOffToObject)
                 }.accessibilityIdentifier("c15t.iab.vendor.\(id).li")
             }
-            if !projection.notAllowedPurposes.isEmpty {
-                Text("This app doesn't allow this partner to: " + names(projection.notAllowedPurposes)).font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
+            if !vendor.notAllowedPurposes.isEmpty {
+                Text(copy.format(copy.appNotAllowedPurposes, ["purposes": vendor.notAllowedPurposes.joined(separator: ", ")])).font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                     .accessibilityIdentifier("c15t.iab.vendor.\(id).not-allowed")
             }
-        } header: { SectionLabel("Your choices") }
+        } header: { SectionLabel(copy.appYourChoices) }
             .listRowBackground(theme.colors.surface.color)
             .disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
     }
     private func noChoice(_ name: String) -> some View {
         ReadOnlyStatusRow(label: Text(name),
-            status: Text("No choice").font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
+            status: Text(copy.appNoChoice).font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
     }
-    @ViewBuilder private func otherDisclosures(_ vendor: GVLVendor, _ list: GlobalVendorList) -> some View {
+    @ViewBuilder private func otherDisclosures(_ vendor: IABVendorContent) -> some View {
         if !vendor.specialPurposes.isEmpty {
-            Section { ForEach(vendor.specialPurposes, id: \.self) { noChoice(list.specialPurposes[$0]?.name ?? "") } } header: { SectionLabel("Special purposes") }
+            Section { ForEach(vendor.specialPurposes, id: \.self) { noChoice($0) } } header: { SectionLabel(copy.preferenceCenterVendorListSpecialPurposes) }
                 .listRowBackground(theme.colors.surface.color)
         }
         if !vendor.features.isEmpty {
-            Section { ForEach(vendor.features, id: \.self) { noChoice(list.features[$0]?.name ?? "") } } header: { SectionLabel("Features") }
-                .listRowBackground(theme.colors.surface.color)
-        }
-        if !vendor.specialFeatures.isEmpty {
             Section {
-                ForEach(vendor.specialFeatures, id: \.self) { feature in
-                    ReadOnlyStatusRow(label: Text(list.specialFeatures[feature]?.name ?? ""),
-                        status: Text(presenter.choices.specialFeatureOptIns.contains(feature) ? "On" : "Off").font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
-                }
-            } header: { SectionLabel("Special features") } footer: { Text("Set under Special features in Privacy settings.") }
+                ForEach(vendor.features) { item in ReadOnlyDefinition(item: item, id: "c15t.iab.vendor.\(vendor.id).feature.\(item.id)") }
+            } header: { SectionLabel(copy.preferenceCenterFeaturesTitle) } footer: {
+                Text(vendor.featuresStandardText).accessibilityIdentifier("c15t.iab.vendor.\(vendor.id).features-standard-text")
+            }
                 .listRowBackground(theme.colors.surface.color)
         }
-        if let categories = vendor.dataCategories, !categories.isEmpty {
-            Section { ForEach(categories, id: \.self) { Text(list.dataCategories?[$0]?.name ?? "") } } header: { SectionLabel("Data collected") }
+        if !vendor.specialFeatureIds.isEmpty {
+            Section {
+                ForEach(Array(zip(vendor.specialFeatureIds, vendor.specialFeatures)), id: \.0) { feature, name in
+                    ReadOnlyStatusRow(label: Text(name),
+                        status: Text(presenter.choices.specialFeatureOptIns.contains(feature) ? copy.appOn : copy.appOff).font(.footnote).foregroundStyle(theme.colors.textSecondary.color))
+                }
+            } header: { SectionLabel(copy.preferenceCenterVendorListSpecialFeatures) } footer: { Text(copy.appSpecialFeaturesElsewhere) }
+                .listRowBackground(theme.colors.surface.color)
+        }
+        if !vendor.dataCategories.isEmpty {
+            Section { ForEach(vendor.dataCategories, id: \.self) { Text($0) } } header: { SectionLabel(copy.appDataCollected) }
                 .listRowBackground(theme.colors.surface.color)
         }
     }
-    private func retention(_ vendor: GVLVendor) -> some View {
+    private func retention(_ vendor: IABVendorContent) -> some View {
         Section {
-            if let retention = vendor.dataRetention {
-                ForEach(retention.purposes.keys.sorted(), id: \.self) { purpose in
-                    LabeledContent(names([purpose]), value: "\(retention.purposes[purpose] ?? 0) days")
-                }
-                if let days = retention.stdRetention { LabeledContent("Standard retention", value: "\(days) days") }
-            } else { Text("Not provided by this partner.").foregroundStyle(theme.colors.textSecondary.color) }
-        } header: { SectionLabel("How long data is kept") }
+            if vendor.retention.isEmpty { Text(copy.appRetentionNotProvided).foregroundStyle(theme.colors.textSecondary.color) }
+            ForEach(Array(vendor.retention.enumerated()), id: \.offset) { _, row in LabeledContent(row.label, value: row.value) }
+        } header: { SectionLabel(copy.appRetentionTitle) }
             .listRowBackground(theme.colors.surface.color)
             .accessibilityIdentifier("c15t.iab.vendor.\(id).retention")
     }
-    private func storage(_ vendor: GVLVendor) -> some View {
+    private func storage(_ vendor: IABVendorContent) -> some View {
         Section {
-            if !vendor.usesCookies && !vendor.usesNonCookieAccess { Text("Doesn't store information on your device.") } else {
-                if let seconds = vendor.cookieMaxAgeSeconds { LabeledContent("Stored for up to", value: "\(seconds / 86400) days") }
-                LabeledContent("Refreshes stored information", value: vendor.cookieRefresh ? "Yes" : "No")
-                LabeledContent("Other ways to access your device", value: vendor.usesNonCookieAccess ? "Yes" : "No")
-            }
-            if let value = vendor.deviceStorageDisclosureUrl, let url = URL(string: value) { Link("Device storage details", destination: url).buttonStyle(TextLinkStyle(font: .body)) }
-        } header: { SectionLabel("Device storage") }
+            if !vendor.storesOnDevice { Text(copy.appNoDeviceStorage) }
+            ForEach(Array(vendor.storage.enumerated()), id: \.offset) { _, row in LabeledContent(row.label, value: row.value) }
+            if let url = vendor.storageDisclosure { Link(copy.appDeviceStorageDetails, destination: url).buttonStyle(TextLinkStyle(font: .body)) }
+        } header: { SectionLabel(copy.appDeviceStorage) }
             .listRowBackground(theme.colors.surface.color)
             .accessibilityIdentifier("c15t.iab.vendor.\(id).storage")
     }
@@ -1463,38 +1569,36 @@ private struct ProviderList: View {
     @ObservedObject var presenter: ConsentPresenter
     @State private var search = ""
     @Environment(\.consentTheme) private var theme
-    /// The prerequisite purposes by the names the person saw one page back, never by number.
+    /// The web's notice, plus why the providers stay off while their purposes are.
     private var intro: String {
-        let names = presenter.providerPrerequisiteNames
-        let purposes = names.count == 3 ? "these purposes are also on: \(names[0]), \(names[1]), and \(names[2])"
-            : "the purposes for storing information on your device and personalised advertising are also on"
-        let gate = presenter.providerPrerequisitesMet ? "" : " Those purposes are off right now, so these partners stay off until you turn them on under Purposes."
-        return "These partners work with Google but aren't in the IAB list. They only use your data if you allow it, and only while \(purposes).\(gate)"
+        let copy = presenter.iabCopy
+        let notice = copy.preferenceCenterVendorListAdTechProvidersNotice
+        return presenter.providerPrerequisitesMet ? notice : notice + " " + copy.appProvidersOff
     }
     var body: some View {
         List {
             Section {
-                SearchField(placeholder: "Search other partners", text: $search, id: "c15t.ac.search")
+                SearchField(placeholder: presenter.iabCopy.appSearchOtherPartners, text: $search, id: "c15t.ac.search")
             } footer: {
                 Text(intro).accessibilityIdentifier("c15t.ac.intro")
             }.listRowBackground(theme.colors.surface.color)
             let providers = (presenter.disclosure?.adTechProviders ?? []).filter { search.isEmpty || $0.name.localizedStandardContains(search) }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
             Section {
-                if providers.isEmpty { Text("No partners match \"\(search)\".").foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.ac.empty") }
+                if providers.isEmpty { Text(presenter.iabCopy.format(presenter.iabCopy.appNoPartnersMatch, ["search": search])).foregroundStyle(theme.colors.textSecondary.color).accessibilityIdentifier("c15t.ac.empty") }
                 ForEach(providers, id: \.id) { provider in
                     VStack(alignment: .leading, spacing: 0) {
                         ConsentToggle(isOn: Binding(get: { presenter.choices.adTechProviderConsents?.contains(provider.id) == true }, set: { presenter.editProvider(id: provider.id, enabled: $0) })) {
                             Text(provider.name).font(.body.weight(.semibold)).foregroundStyle(theme.colors.text.color)
                         }.accessibilityIdentifier("c15t.ac.provider.\(provider.id).switch")
                         if let url = URL(string: provider.policyUrl) {
-                            Link("Privacy policy", destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.ac.provider.\(provider.id).privacy-link")
+                            Link(presenter.iabCopy.preferenceCenterVendorListPrivacyPolicy, destination: url).buttonStyle(TextLinkStyle()).accessibilityIdentifier("c15t.ac.provider.\(provider.id).privacy-link")
                         }
                     }.disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
                 }
             }.listRowBackground(theme.colors.surface.color)
         }
         .listStyle(.insetGrouped).scrollContentBackground(.hidden)
-        .navigationTitle("Other ad partners").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle(presenter.iabCopy.preferenceCenterVendorListAdTechProvidersHeading).navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.immediately).accessibilityIdentifier("c15t.ac")
     }
 }

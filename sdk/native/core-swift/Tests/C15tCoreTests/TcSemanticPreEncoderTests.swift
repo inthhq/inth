@@ -181,6 +181,7 @@ final class TcSemanticPreEncoderTests: XCTestCase {
 
     /// The same rule over a `deletedDate` that has not come due: the field exists, so the
     /// vendor is withdrawn, and the date is not compared to a clock anywhere.
+    // TCF-CHECK: T12
     func testAVendorWithdrewOnADateThatHasPassed() throws {
         try assertPruned(
             model(consents: [30], legitimateInterests: [30]),
@@ -367,6 +368,7 @@ final class TcSemanticPreEncoderTests: XCTestCase {
     /// publisher legitimate interest, so they are cleared before every version 2 encode.
     /// These are the model's own vectors, not the vendor ones, and they clear over a
     /// served list exactly as they do over a hand-in one.
+    // TCF-CHECK: T9
     func testThePurposesWithoutALegitimateInterestBasisAreCleared() throws {
         let shaped = try shape(model(legitimateInterests: [11]))
         XCTAssertEqual(

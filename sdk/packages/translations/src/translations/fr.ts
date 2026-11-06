@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Nous respectons votre vie privée',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				"Vos choix sont stockés sur cet appareil, dans l'espace de stockage standard des paramètres de l'application sous des clés IABTCF, pendant {days} jours au maximum. La durée de stockage est renouvelée lorsque vous mettez à jour vos choix.",
+			description:
+				'Nous et nos {partnerCount} partenaires stockons et/ou accédons à des informations sur votre appareil et traitons des données personnelles, telles que des identifiants uniques et des données de navigation, pour cette application, afin de :',
+			legitimateInterestExplanation:
+				"Certains partenaires traitent des données personnelles, telles que des identifiants uniques et des données de navigation, sur la base de leur intérêt légitime au lieu de demander votre consentement. Cela s'applique uniquement à cette application. Vous avez le droit de vous opposer à ce traitement pour chaque finalité et chaque partenaire.",
+			scopeServiceSpecific:
+				"Votre consentement s'applique uniquement à cette application et n'affecte pas d'autres services.",
+			withdraw:
+				'Vous pouvez modifier vos choix ou retirer votre consentement à tout moment depuis les Paramètres de confidentialité de cette application.',
+		},
 		banner: {
 			andMore: 'Et {count} de plus...',
 			description:

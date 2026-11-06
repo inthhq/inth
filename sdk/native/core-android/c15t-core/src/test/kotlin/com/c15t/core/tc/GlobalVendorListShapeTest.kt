@@ -124,6 +124,7 @@ class GlobalVendorListShapeTest {
 	 * of the wrong shape costs the whole list, which is where this core is stricter than the web.
 	 * That difference is graded two tests below instead of being left out of this list.
 	 */
+	// TCF-CHECK: T6
 	@Test
 	fun `a list the web would throw away is refused`() {
 		fun without(key: String) = served.excluding(key)

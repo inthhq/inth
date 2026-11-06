@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Gizliliğinize önem veriyoruz',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Seçimleriniz bu cihazda, uygulamanın standart ayar depolama alanında IABTCF anahtarları altında en fazla {days} gün boyunca saklanır. Seçimlerinizi güncellediğinizde saklama süresi yenilenir.',
+			description:
+				'Biz ve {partnerCount} iş ortağımız, bu uygulama için aşağıdaki amaçlarla cihazınızda bilgi depolarız ve/veya bu bilgilere erişiriz, benzersiz tanımlayıcılar ve gezinme verileri gibi kişisel verileri işleriz:',
+			legitimateInterestExplanation:
+				'Bazı iş ortakları, rıza istemek yerine meşru menfaatlerine dayanarak benzersiz tanımlayıcılar ve gezinme verileri gibi kişisel verileri işler. Bu yalnızca bu uygulama için geçerlidir. Her amaç ve her iş ortağı için bu işlemeye itiraz etme hakkına sahipsiniz.',
+			scopeServiceSpecific:
+				'Rızanız yalnızca bu uygulama için geçerlidir ve diğer hizmetleri etkilemez.',
+			withdraw:
+				'Seçimlerinizi bu uygulamadaki Gizlilik Ayarları bölümünden dilediğiniz zaman değiştirebilir veya rızanızı geri çekebilirsiniz.',
+		},
 		banner: {
 			andMore: 've {count} tane daha...',
 			description:

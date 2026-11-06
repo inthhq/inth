@@ -69,6 +69,12 @@ const EVERY_KEY_PROPS = {
 	consentCategories: ['necessary', 'functionality', 'measurement', 'marketing'],
 	domain: 'app.example.com',
 	forceGPC: true,
+	iab: {
+		cmpId: 1234,
+		cmpVersion: 7,
+		consentScreen: 3,
+		publisherCountryCode: 'DE',
+	},
 	initURL: 'https://app.example.com/api/consent/init',
 	mode: 'custom',
 	policyResource: './c15t-policy.json',

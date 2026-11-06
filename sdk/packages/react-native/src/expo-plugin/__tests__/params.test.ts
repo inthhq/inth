@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { C15tPluginError } from '../errors';
 import { TRANSPORT_MODES, resolveParams } from '../params';
+import type { C15tIabPluginProps } from '../params';
 
 const BACKEND = 'https://consent.example.com';
 
@@ -129,6 +130,83 @@ describe('resolveParams', () => {
 		expect(() =>
 			resolveParams({ backendURL: BACKEND, vendors: [42, 0, -3, 7.5] })
 		).toThrowError(/invalid: 0, -3, 7\.5/u);
+	});
+
+	it('leaves IAB off when no iab settings are given', () => {
+		expect(resolveParams({ backendURL: BACKEND }).iab).toBeNull();
+	});
+
+	it('resolves IAB settings and uppercases the country code', () => {
+		expect(
+			resolveParams({
+				backendURL: BACKEND,
+				iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: ' de ' },
+			}).iab
+		).toStrictEqual({
+			cmpId: 1234,
+			cmpVersion: 7,
+			consentScreen: null,
+			publisherCountryCode: 'DE',
+		});
+		expect(
+			resolveParams({
+				backendURL: BACKEND,
+				iab: {
+					cmpId: 4095,
+					cmpVersion: 0,
+					consentScreen: 0,
+					publisherCountryCode: 'GB',
+				},
+			}).iab?.consentScreen
+		).toBe(0);
+	});
+
+	it.each([
+		[
+			{ cmpVersion: 1, publisherCountryCode: 'DE' },
+			/iab\.cmpId .*There is no default/u,
+		],
+		[{ cmpId: 1, cmpVersion: 1, publisherCountryCode: 'DE' }, /iab\.cmpId/u],
+		[{ cmpId: 4096, cmpVersion: 1, publisherCountryCode: 'DE' }, /iab\.cmpId/u],
+		[{ cmpId: 12.5, cmpVersion: 1, publisherCountryCode: 'DE' }, /iab\.cmpId/u],
+		[
+			{ cmpId: '1234', cmpVersion: 1, publisherCountryCode: 'DE' },
+			/iab\.cmpId/u,
+		],
+		[{ cmpId: 1234, publisherCountryCode: 'DE' }, /iab\.cmpVersion/u],
+		[
+			{ cmpId: 1234, cmpVersion: -1, publisherCountryCode: 'DE' },
+			/iab\.cmpVersion/u,
+		],
+		[
+			{ cmpId: 1234, cmpVersion: 4096, publisherCountryCode: 'DE' },
+			/iab\.cmpVersion/u,
+		],
+		[{ cmpId: 1234, cmpVersion: 1 }, /iab\.publisherCountryCode/u],
+		[
+			{ cmpId: 1234, cmpVersion: 1, publisherCountryCode: 'DEU' },
+			/iab\.publisherCountryCode/u,
+		],
+		[
+			{ cmpId: 1234, cmpVersion: 1, publisherCountryCode: 'D1' },
+			/iab\.publisherCountryCode/u,
+		],
+		[
+			{
+				cmpId: 1234,
+				cmpVersion: 1,
+				consentScreen: 64,
+				publisherCountryCode: 'DE',
+			},
+			/iab\.consentScreen/u,
+		],
+	])('refuses IAB settings %j at prebuild', (iab, message) => {
+		expect(() =>
+			resolveParams({
+				backendURL: BACKEND,
+				iab: iab as unknown as C15tIabPluginProps,
+			})
+		).toThrowError(message);
 	});
 
 	it('refuses a domain with a space in it', () => {

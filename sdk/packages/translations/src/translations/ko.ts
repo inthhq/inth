@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: '귀하의 개인정보를 소중히 여깁니다',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'귀하의 선택 사항은 이 기기의 앱 표준 설정 저장소에 IABTCF 키로 최대 {days}일 동안 저장됩니다. 선택 사항을 변경하면 저장 기간이 갱신됩니다.',
+			description:
+				'당사와 {partnerCount}개 파트너는 이 앱에서 다음 목적을 위해 귀하의 기기에 정보를 저장하거나 액세스하고, 고유 식별자 및 브라우징 데이터와 같은 개인정보를 처리합니다:',
+			legitimateInterestExplanation:
+				'일부 파트너는 동의를 요청하는 대신 정당한 이익에 근거하여 고유 식별자 및 브라우징 데이터와 같은 개인정보를 처리합니다. 이는 이 앱에만 적용됩니다. 귀하는 각 목적 및 각 파트너별로 이러한 처리에 이의를 제기할 권리가 있습니다.',
+			scopeServiceSpecific:
+				'귀하의 동의는 이 앱에만 적용되며 다른 서비스에는 영향을 주지 않습니다.',
+			withdraw:
+				'이 앱의 개인정보 보호 설정에서 언제든지 선택 사항을 변경하거나 동의를 철회할 수 있습니다.',
+		},
 		banner: {
 			andMore: '그 외 {count}개...',
 			description:

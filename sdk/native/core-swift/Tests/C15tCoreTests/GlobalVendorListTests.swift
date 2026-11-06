@@ -121,6 +121,7 @@ final class GlobalVendorListTests: XCTestCase {
     /// The accept rule from `fetch-gvl.ts`: a document that fails it is thrown away, and
     /// the core reads the field as absent. Everything on this table has to land in the
     /// same place as no `gvl` key at all.
+    // TCF-CHECK: T6
     func testAListTheAcceptRuleRefusesReadsAsAbsent() throws {
         let complete = try XCTUnwrap(Fixture.gvlDocument(vendors: [Fixture.gvlVendor(8)]))
         var cases: [(String, JSONValue?)] = [

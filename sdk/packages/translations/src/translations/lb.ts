@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Mir schätzen Är Privatsphär',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Är Wiel gëtt op dësem Apparat gespäichert, am Standard-Astellungsspäicher vun der App ënner IABTCF-Schlësselen, fir maximal {days} Deeg. D’Späicherdauer gëtt erneiert, wann Dir Är Wiel aktualiséiert.',
+			description:
+				'Mir an eis {partnerCount} Partner späicheren an/oder gräifen op Informatiounen op Ärem Apparat zou a veraarbechten perséinlech Daten, wéi eenzegaarteg Identifizéierer a Browserdaten, fir dës App, fir:',
+			legitimateInterestExplanation:
+				'E puer Partner veraarbechten perséinlech Daten, wéi eenzegaarteg Identifizéierer a Browserdaten, op Basis vun hirem berechtegten Interessi, amplaz no Ärer Zoustëmmung ze froen. Dat gëllt nëmme fir dës App. Dir hutt d’Recht, géint dës Veraarbechtung fir all Zweck a fir all Partner ze protestéieren.',
+			scopeServiceSpecific:
+				'Är Zoustëmmung gëllt nëmme fir dës App a wäert aner Servicer net beaflossen.',
+			withdraw:
+				'Dir kënnt Är Wiel zu all Moment änneren oder Är Zoustëmmung zréckzéien, an de Privatsphär Astellungen vun dëser App.',
+		},
 		banner: {
 			andMore: 'An nach {count}...',
 			description:

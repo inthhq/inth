@@ -3,6 +3,7 @@ package com.c15t.consentui
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.c15t.consentui.generated.IabCopy
 import com.c15t.core.*
 import com.c15t.core.iab.*
 import com.c15t.core.model.*
@@ -52,13 +53,21 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
     val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
+    /** IAB copy in the list's language, English until a disclosure is loaded. Hosts cannot replace it. */
+    internal val iabCopy: IabCopy get() = IabCopy.forLanguage(disclosure?.language ?: "en")
+    /** "Last changed" with the date in the copy's language, not the device's. */
+    internal fun lastChanged(epochMs: Long): String {
+        val copy = iabCopy
+        val date = java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale.forLanguageTag(copy.language)).format(java.util.Date(epochMs))
+        return copy.format(copy.appLastChanged, mapOf("date" to date))
+    }
     /** Preferences were opened from the first layer, so closing them returns there. */
     val returnsToFirstLayer get() = fromFirst
     /** Summary of both permitted legal bases in the current draft. */
     fun partnerStatus(id: Int): String = when (disclosure?.vendors?.get(id)?.selectionStatus(id, choices) ?: IabVendorSelectionStatus.OFF) {
-        IabVendorSelectionStatus.OFF -> "Off"
-        IabVendorSelectionStatus.PARTIAL -> "Partly on"
-        IabVendorSelectionStatus.ON -> "On"
+        IabVendorSelectionStatus.OFF -> iabCopy.appOff
+        IabVendorSelectionStatus.PARTIAL -> iabCopy.appPartlyOn
+        IabVendorSelectionStatus.ON -> iabCopy.appOn
     }
     val offeredCategories get() = snapshot.consentCategories?.mapNotNull(ConsentCategory::fromWireName) ?: listOf(ConsentCategory.NECESSARY)
     /**
@@ -115,9 +124,21 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         if (pending) return
         snapshot = core.snapshot(); disclosure = core.iabPresentation()
         baseRevision = snapshot.revision
-        choices = disclosure?.draft?.choices ?: IabChoices()
+        // No IAB decision yet: no choice at all, or a usable list with no saved IAB decision. A
+        // list that can't be edited hides the saved decision, so it never counts as first time.
+        choices = disclosure?.let { initialChoices(it, firstTime = snapshot.explicitChoice == null || (it.canEdit && core.iabConsent == null)) } ?: IabChoices()
         categories = offeredCategories.filter { it.optional }.associateWith { snapshot.explicitChoice?.valueOf(it) ?: false }
         seedCategories = categories; seedChoices = choices; errorCode = null; failedAction = null; stale = false
+    }
+    /**
+     * A first-time user starts with every consent off and legitimate interest not objected to,
+     * as on the web: legitimate interest needs no opt-in, and the user objects with its switch.
+     */
+    internal fun initialChoices(presentation: IabPresentation, firstTime: Boolean): IabChoices {
+        val draft = presentation.draft.choices
+        if (!firstTime || draft != IabChoices()) return draft
+        val claims = presentation.vendors.filterValues { it.legitimateInterestPurposes.isNotEmpty() }
+        return draft.copy(vendorLegitimateInterests = claims.keys.sorted(), purposeLegitimateInterests = claims.values.flatMap { it.legitimateInterestPurposes }.toSortedSet().toList())
     }
     fun restricted(category: ConsentCategory): Boolean = snapshot.restrictions[category.wireName].orEmpty().any { it == "gpc" || it == "strict-scope" }
     fun setCategory(category: ConsentCategory, enabled: Boolean) { if (!pending && !stale && !restricted(category)) categories = categories + (category to enabled) }
@@ -129,9 +150,12 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
         if (fromFirst) { preferences = false; fromFirst = false; loadDraft() }
         else { suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED) }
     }
-    /** System Back from the first layer dismisses this SDK window, never the activity. */
+    /**
+     * System Back from the first layer. An IAB first layer waits for a decision, so Back does
+     * nothing there; otherwise it dismisses this SDK window, never the activity.
+     */
     fun backFromFirstLayer() {
-        if (pending) return
+        if (pending || iab) return
         suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
     }
     fun retry() { lastAction?.let(::commit) }
@@ -169,7 +193,7 @@ class ConsentPresenter(val core: C15tKernel, private val automaticPresentation: 
                 errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
             } else {
                 errorCode = result.second ?: "save-rejected"; failedAction = action; stale = errorCode == "concurrent-change"
-                announcement = if (stale) "Settings changed while you were editing" else errorMessage.orEmpty()
+                announcement = if (stale) iabCopy.appSettingsChanged else errorMessage.orEmpty()
             }
             announcementSequence += 1
         }

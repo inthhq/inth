@@ -91,6 +91,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.runtime.withFrameNanos
 import androidx.core.view.WindowCompat
 import androidx.core.widget.TextViewCompat
+import com.c15t.consentui.generated.IabCopy
 import com.c15t.core.iab.*
 import com.c15t.core.model.*
 import com.c15t.core.tc.*
@@ -117,7 +118,7 @@ private val InfoBackground = ConsentThemeColor(0xE8ECFA, 0x1E2440)
 @Composable
 fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeModifier: Modifier = Modifier.fillMaxSize(), theme: ConsentTheme? = null) {
     val context = LocalContext.current
-    val resolved = remember(theme) { theme ?: ConsentTheme.resolve(context) }
+    val resolved = remember(theme) { (theme ?: ConsentTheme.resolve(context)).withReadableDecisions() }
     val hostView = LocalView.current
     LaunchedEffect(presenter.announcementSequence) {
         if (presenter.announcementSequence > 0) hostView.announceForAccessibility(presenter.announcement)
@@ -162,7 +163,7 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
         BackHandler { back() }
         Box(Modifier.fillMaxSize().background(theme.colors.canvas.color()).semantics {
             testTagsAsResourceId = true
-            paneTitle = if (presenter.preferences) "Privacy settings" else theme.copy.headline
+            paneTitle = if (presenter.preferences) presenter.iabCopy.preferenceCenterTitle else theme.copy.headline
         }) {
             AnimatedContent(targetState = presenter.preferences, label = "consent-layer", transitionSpec = {
                 if (targetState) slideInHorizontally { it / 3 } + fadeIn() togetherWith slideOutHorizontally { -it / 3 } + fadeOut()
@@ -176,9 +177,9 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
             if (presenter.confirmDiscard) AlertDialog(onDismissRequest = { presenter.confirmDiscard = false },
                 modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("c15t.prefs.discard"),
                 containerColor = theme.colors.surface.color(), shape = RoundedCornerShape(theme.cornerRadius + 6.dp),
-                title = { Text("Discard changes?") }, text = { Text("Your changes won't be saved.") },
-                confirmButton = { TextButton(onClick = { presenter.discard() }, modifier = Modifier.testTag("c15t.prefs.discard.confirm")) { Text("Discard") } },
-                dismissButton = { TextButton(onClick = { presenter.confirmDiscard = false }, modifier = Modifier.testTag("c15t.prefs.discard.keep")) { Text("Keep editing") } })
+                title = { Text(presenter.iabCopy.appDiscardChangesTitle) }, text = { Text(presenter.iabCopy.appDiscardChangesDetail) },
+                confirmButton = { TextButton(onClick = { presenter.discard() }, modifier = Modifier.testTag("c15t.prefs.discard.confirm")) { Text(presenter.iabCopy.appDiscardChanges) } },
+                dismissButton = { TextButton(onClick = { presenter.confirmDiscard = false }, modifier = Modifier.testTag("c15t.prefs.discard.keep")) { Text(presenter.iabCopy.appKeepEditing) } })
         }
     }
 }
@@ -188,10 +189,10 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
     openPartners: (Int?) -> Unit, openVendor: (Int) -> Unit, openProviders: () -> Unit, clearFilter: () -> Unit) {
     val theme = LocalConsentTheme.current
     val title = when {
-        page == "vendors" -> "IAB partners"
-        page == "providers" -> "Other ad partners"
-        page.startsWith("vendor:") -> p.disclosure?.list?.vendors?.get(page.substringAfter(':').toInt())?.name ?: "Partner"
-        else -> "Privacy settings"
+        page == "vendors" -> p.iabCopy.appIabPartners
+        page == "providers" -> p.iabCopy.preferenceCenterVendorListAdTechProvidersHeading
+        page.startsWith("vendor:") -> p.disclosure?.list?.vendors?.get(page.substringAfter(':').toInt())?.name ?: p.iabCopy.appPartner
+        else -> p.iabCopy.preferenceCenterTitle
     }
     val backTag = when {
         page == "root" -> "c15t.prefs.cancel"
@@ -206,7 +207,7 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = theme.colors.canvas.color(), titleContentColor = theme.colors.text.color(), navigationIconContentColor = theme.colors.text.color()),
                 navigationIcon = {
                     IconButton(onClick = back, enabled = !p.pending, modifier = Modifier.testTag(backTag)) {
-                        Icon(if (close) Icons.Outlined.Close else Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = if (close) "Close" else "Back")
+                        Icon(if (close) Icons.Outlined.Close else Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = if (close) p.iabCopy.appClose else p.iabCopy.appBack)
                     }
                 })
         },
@@ -221,7 +222,7 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                 Box(Modifier.widthIn(max = ContentWidth).fillMaxSize()) {
                     when {
-                        current == "vendors" -> Vendors(p, purposeFilter, clearFilter, openVendor)
+                        current == "vendors" -> Vendors(p, purposeFilter, clearFilter, openVendor, openProviders)
                         current.startsWith("vendor:") -> Vendor(p, current.substringAfter(':').toInt())
                         current == "providers" -> Providers(p)
                         else -> Preferences(p, policyUrl, openPartners, openProviders)
@@ -244,7 +245,7 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
     Text(text, style = MaterialTheme.typography.labelLarge, color = LocalConsentTheme.current.colors.textSecondary.color(),
         modifier = modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp).semantics { heading() })
 }
-@Composable private fun PolicyLink(url: String) = ExternalLink("Privacy policy", url, "c15t.privacy-policy")
+@Composable private fun PolicyLink(url: String, copy: IabCopy) = ExternalLink(copy.preferenceCenterVendorListPrivacyPolicy, url, "c15t.privacy-policy")
 @Composable private fun ExternalLink(text: String, url: String, id: String) {
     val context = LocalContext.current
     TextButton(onClick = { val uri = Uri.parse(url); if (uri.scheme in listOf("https", "http")) context.startActivity(Intent(Intent.ACTION_VIEW, uri)) },
@@ -318,19 +319,18 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
  * and TalkBack meets the message and the button as two nodes. The presenter announces the
  * failure, so the row is not also a live region.
  */
-@Composable private fun FailureRow(message: String, id: String, enabled: Boolean, retry: () -> Unit) {
+@Composable private fun FailureRow(message: String, id: String, enabled: Boolean, retryLabel: String, retry: () -> Unit) {
     val theme = LocalConsentTheme.current
     val density = LocalDensity.current
     val style = MaterialTheme.typography.bodyMedium
     // The glyph follows the font scale like the text beside it.
     val glyph = with(density) { style.lineHeight.toDp() }
     // A no-break space keeps the label whole; it wraps as one word or not at all.
-    val link = "Try\u00A0again"
+    val link = retryLabel.replace(' ', '\u00A0')
     val accent = theme.colors.accent.color().copy(alpha = if (enabled) 1f else 0.5f)
-    val text = remember(message, accent) {
+    val text = remember(message, accent, link) {
         buildAnnotatedString { append(message); append(' '); withStyle(SpanStyle(color = accent, fontWeight = FontWeight.SemiBold)) { append(link) } }
     }
-    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
     // Inside a scrolling page the row brings itself into view when it arrives; a pinned footer ignores this.
     val requester = remember { BringIntoViewRequester() }
     LaunchedEffect(Unit) { requester.bringIntoView() }
@@ -338,23 +338,53 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     Row(Modifier.fillMaxWidth().bringIntoViewRequester(requester).padding(bottom = 4.dp).testTag(id), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         // The core icon set has no exclamation glyph; its filled Info turned over is one.
         Icon(Icons.Filled.Info, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(glyph).rotate(180f))
-        Box(Modifier.weight(1f)) {
-            Text(text, color = theme.colors.text.color(), style = style, onTextLayout = { layout = it },
-                modifier = Modifier.semantics { contentDescription = message })
-            layout?.let { result ->
-                val start = message.length + 1
-                val first = result.getBoundingBox(start)
-                val last = result.getBoundingBox(start + link.length - 1)
-                val span = Rect(min(first.left, last.left), min(first.top, last.top), max(first.right, last.right), max(first.bottom, last.bottom))
-                val floor = with(density) { 48.dp.toPx() }
-                val slop = with(density) { 8.dp.toPx() }
-                val width = max(floor, span.width + 2 * slop)
-                val height = max(floor, span.height)
-                Box(Modifier.offset { IntOffset((span.center.x - width / 2).roundToInt(), (span.center.y - height / 2).roundToInt()) }
+        InlineActionText(text, message.length + 1 until text.length, retryLabel, "$id.retry", enabled, theme.colors.text.color(), style,
+            Modifier.weight(1f), paragraphDescription = message, onClick = retry)
+    }
+}
+
+/**
+ * A paragraph with one tappable span. The text reports where the span landed, so an invisible
+ * control of at least 48dp sits over each line of that span: the paragraph never acts, the span
+ * always does, and TalkBack meets the paragraph and the control ([label], tagged [id]) as two
+ * nodes. A span that wraps gets one hit region per line; only the first is announced.
+ */
+@Composable private fun InlineActionText(text: androidx.compose.ui.text.AnnotatedString, span: IntRange, label: String, id: String, enabled: Boolean,
+    color: Color, style: TextStyle, modifier: Modifier = Modifier, textModifier: Modifier = Modifier, paragraphDescription: String? = null, onClick: () -> Unit) {
+    val density = LocalDensity.current
+    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+    Box(modifier) {
+        Text(text, color = color, style = style, onTextLayout = { layout = it },
+            modifier = textModifier.semantics { if (paragraphDescription != null) contentDescription = paragraphDescription })
+        layout?.let { result ->
+            val floor = with(density) { 48.dp.toPx() }
+            val slop = with(density) { 8.dp.toPx() }
+            inlineSpanLineBounds(result, span).forEachIndexed { line, bounds ->
+                val width = max(floor, bounds.width + 2 * slop)
+                val height = max(floor, bounds.height)
+                val announced = if (line == 0) Modifier.semantics { contentDescription = label }.testTag(id)
+                    else Modifier.clearAndSetSemantics { testTag = "$id.line.$line" }
+                Box(Modifier.offset { IntOffset((bounds.center.x - width / 2).roundToInt(), (bounds.center.y - height / 2).roundToInt()) }
                     .size(with(density) { width.toDp() }, with(density) { height.toDp() })
-                    .clickable(enabled = enabled, role = Role.Button, onClick = retry)
-                    .semantics { contentDescription = "Try again" }.testTag("$id.retry"))
+                    .then(announced)
+                    .clickable(enabled = enabled, role = Role.Button, onClick = onClick))
             }
+        }
+    }
+}
+
+/**
+ * The glyph bounds of [span] on each line it occupies, so a wrapped span never claims the
+ * paragraph text between its first and last glyph.
+ */
+internal fun inlineSpanLineBounds(layout: TextLayoutResult, span: IntRange): List<Rect> {
+    if (span.isEmpty()) return emptyList()
+    return (layout.getLineForOffset(span.first)..layout.getLineForOffset(span.last)).mapNotNull { line ->
+        val start = max(span.first, layout.getLineStart(line))
+        val end = min(span.last, layout.getLineEnd(line, visibleEnd = true) - 1)
+        if (end < start) return@mapNotNull null
+        (start..end).map(layout::getBoundingBox).reduce { a, b ->
+            Rect(min(a.left, b.left), min(a.top, b.top), max(a.right, b.right), max(a.bottom, b.bottom))
         }
     }
 }
@@ -406,10 +436,14 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     val theme = LocalConsentTheme.current
     val prefix = if (first) "c15t.first-layer" else if (p.iab) "c15t.iab" else "c15t.prefs"
     val errorId = (if (first) "c15t.first-layer" else "c15t.prefs") + ".error"
+    // IAB labels come from the generated translations, as on the web; the category UI keeps its own.
+    val rejectAll = if (p.iab) p.iabCopy.commonRejectAll else "Reject all"
+    val acceptAll = if (p.iab) p.iabCopy.commonAcceptAll else "Accept all"
+    val save = if (p.iab) p.iabCopy.commonSaveSettings else "Save choices"
     // Only the pressed action shows progress; the rest are disabled with their labels intact.
     fun busy(action: ConsentPresenter.Action) = p.showProgress && p.pendingAction == action
-    @Composable fun reload() = ConsentButton("Load current settings", "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
-    @Composable fun failure() { p.errorMessage?.let { FailureRow(it, errorId, !p.pending, p::retry) } }
+    @Composable fun reload() = ConsentButton(p.iabCopy.appLoadCurrentSettings, "c15t.prefs.stale.reload", !p.pending, ButtonVariant.ACCENT) { p.loadDraft() }
+    @Composable fun failure() { p.errorMessage?.let { FailureRow(it, errorId, !p.pending, p.iabCopy.appTryAgain, p::retry) } }
     /** Labels stay put while a commit runs: the pressed action shows progress beside its own label. */
     @Composable fun decision(label: String, action: ConsentPresenter.Action) {
         val suffix = when (action) { ConsentPresenter.Action.ACCEPT -> "accept-all"; ConsentPresenter.Action.REJECT -> "reject-all"; ConsentPresenter.Action.SAVE -> "save"; ConsentPresenter.Action.ACKNOWLEDGE -> "acknowledge" }
@@ -418,28 +452,28 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     }
     @Composable fun decisions() {
         if (p.snapshot.policyPending) {
-            decision("Reject all", ConsentPresenter.Action.REJECT)
+            decision(rejectAll, ConsentPresenter.Action.REJECT)
         } else if (p.listUnavailable) {
-            Body("Our partner list is out of date. Try again to load it, or reject optional data use.", Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
+            Body(p.iabCopy.appListOutdated, Modifier.testTag(if (first) "c15t.first-layer.list-stale" else "c15t.iab.list-stale"))
             EqualDecisions {
-                decision("Reject all", ConsentPresenter.Action.REJECT)
-                ConsentButton("Try again", "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
+                decision(rejectAll, ConsentPresenter.Action.REJECT)
+                ConsentButton(p.iabCopy.appTryAgain, "$prefix.retry", !p.pending, ButtonVariant.QUIET) { p.refresh() }
             }
         } else {
             EqualDecisions {
-                decision("Reject all", ConsentPresenter.Action.REJECT)
-                decision("Accept all", ConsentPresenter.Action.ACCEPT)
+                decision(rejectAll, ConsentPresenter.Action.REJECT)
+                decision(acceptAll, ConsentPresenter.Action.ACCEPT)
             }
             if (first) {
-                ConsentButton("Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
+                ConsentButton(if (p.iab) p.iabCopy.commonCustomize else "Customize", "c15t.first-layer.customize", !p.pending, ButtonVariant.QUIET) { p.customize() }
                 if (theme.showsBranding) Branding()
-            } else if (part == DecisionPart.ALL) decision("Save choices", ConsentPresenter.Action.SAVE)
+            } else if (part == DecisionPart.ALL) decision(save, ConsentPresenter.Action.SAVE)
         }
     }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         when (part) {
             DecisionPart.ALL -> if (p.stale) reload() else { failure(); decisions() }
-            DecisionPart.PINNED -> if (p.stale) reload() else pinnedAction(p)?.let { decision(if (it == ConsentPresenter.Action.SAVE) "Save choices" else "Reject all", it) }
+            DecisionPart.PINNED -> if (p.stale) reload() else pinnedAction(p)?.let { decision(if (it == ConsentPresenter.Action.SAVE) save else rejectAll, it) }
             DecisionPart.SHORTCUTS -> if (showsShortcuts(p)) { if (p.failedAction != pinnedAction(p)) failure(); decisions() }
             DecisionPart.PINNED_STATUS -> if (showsPinnedStatus(p)) failure()
         }
@@ -474,8 +508,8 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
 // MARK: First layer
 
 /**
- * The first choice. A page of the app, not a panel over it: brand, headline, one sentence,
- * then the two decisions at equal weight and the path to the details.
+ * The first choice. A page of the app, not a panel over it: brand, headline, one sentence (in
+ * IAB mode, the full IAB disclosure), then the two decisions at equal weight and the path to the details.
  */
 @Composable private fun FirstLayerScreen(p: ConsentPresenter, policyUrl: String, partners: () -> Unit) {
     val theme = LocalConsentTheme.current
@@ -491,11 +525,10 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
                 Heading(theme.copy.headline, "c15t.first-layer.title", headlineStyle(theme))
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(theme.copy.introduction, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.testTag("c15t.first-layer.body"))
-                    Body(if (p.iab) "We and our partners store information on this device for the purposes below. Some partners rely on legitimate interest instead of consent; you can object to that. Change your mind at any time in Privacy settings."
-                        else "You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
+                    if (!p.iab) Body("You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
                 }
-                if (p.iab) PartnerSummary(p, partners)
-                PolicyLink(policyUrl)
+                if (p.iab) IabFirstLayer(p, partners)
+                PolicyLink(policyUrl, p.iabCopy)
                 // At accessibility sizes the decisions follow the text they decide on.
                 if (page) DecisionGroup(p, first = true, DecisionPart.ALL, Modifier.padding(top = 4.dp))
             }
@@ -509,44 +542,44 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     lineBreak = LineBreak.Heading)
 
 /**
- * The purposes partners ask for, on a quieter surface so they inform without competing.
- * The partner count opens a page inside this one, so it reads as a disclosure in ink with a
- * chevron rather than a blue link; small blue text does not reach 4.5:1 on the muted surface.
+ * The IAB disclosure, as the web prompt gives it: what partners store, access and process with
+ * the partner count as the way into the list, the purposes and stacks they use, then legitimate
+ * interest, scope and withdrawal. Always shown in IAB mode, under any host copy.
  */
-@Composable private fun PartnerSummary(p: ConsentPresenter, partners: () -> Unit) {
+@Composable private fun IabFirstLayer(p: ConsentPresenter, partners: () -> Unit) {
     val theme = LocalConsentTheme.current
-    val disclosure = p.disclosure ?: return
-    Surface(color = theme.colors.surfaceMuted.color(), shape = RoundedCornerShape(theme.cornerRadius + 2.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(vertical = 6.dp)) {
-            val count = "${disclosure.vendors.size} IAB partners"
-            val countButton: @Composable () -> Unit = {
-                TextButton(onClick = partners, contentPadding = PaddingValues(start = 8.dp, end = 4.dp),
-                    modifier = Modifier.semantics { contentDescription = count }.testTag("c15t.first-layer.partner-count")) {
-                    Text(count, style = MaterialTheme.typography.labelLarge, color = theme.colors.text.color())
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = theme.colors.textSecondary.color(), modifier = Modifier.size(18.dp))
+    val copy = p.iabCopy
+    val text = p.disclosure?.let { IabFirstLayerText.resolve(copy, it.bannerSummary) }
+    Column(Modifier.fillMaxWidth().testTag("c15t.first-layer.iab"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (text != null) {
+            val accent = theme.colors.accent.color()
+            val description = remember(text, accent) {
+                buildAnnotatedString {
+                    append(text.description)
+                    addStyle(SpanStyle(color = accent, fontWeight = FontWeight.SemiBold), text.partnersLink.first, text.partnersLink.last + 1)
                 }
             }
-            // The label and the count share a line until accessibility sizes, where they stack.
-            if (actionsInPage()) Column(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp)) {
-                Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color())
-                Box(Modifier.offset(x = (-8).dp)) { countButton() }
-            } else Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("What partners may do", style = MaterialTheme.typography.labelLarge, color = theme.colors.textSecondary.color(), modifier = Modifier.weight(1f))
-                countButton()
-            }
-            val purposes = disclosure.list.purposes.toSortedMap().entries.toList()
-            val features = disclosure.list.specialFeatures.orEmpty().toSortedMap().entries.toList()
-            purposes.forEach { (id, item) ->
-                Text(item.name.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = theme.colors.text.color(),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp).testTag("c15t.first-layer.purpose.$id"))
-                if (id != purposes.last().key || features.isNotEmpty()) Hairline(Modifier.padding(start = 16.dp))
-            }
-            features.forEachIndexed { index, (id, item) ->
-                Text(item.name.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = theme.colors.text.color(),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp).testTag("c15t.first-layer.special-feature.$id"))
-                if (index < features.lastIndex) Hairline(Modifier.padding(start = 16.dp))
+            InlineActionText(description, text.partnersLink, text.partnersLabel, "c15t.first-layer.partner-count", !p.pending,
+                theme.colors.textSecondary.color(), MaterialTheme.typography.bodyMedium, Modifier.fillMaxWidth(),
+                textModifier = Modifier.testTag("c15t.first-layer.description"), onClick = partners)
+            // The purposes partners ask for, on a quieter surface so they inform without competing.
+            Surface(color = theme.colors.surfaceMuted.color(), shape = RoundedCornerShape(theme.cornerRadius + 2.dp), modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.summary")) {
+                Column(Modifier.padding(vertical = 6.dp)) {
+                    val more = (p.disclosure?.bannerSummary?.remainingCount ?: 0) > 0
+                    text.summary.forEachIndexed { index, name ->
+                        val last = index == text.summary.lastIndex
+                        Text(name, style = MaterialTheme.typography.bodyMedium,
+                            color = if (more && last) theme.colors.textSecondary.color() else theme.colors.text.color(),
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
+                                .testTag(if (more && last) "c15t.first-layer.summary.more" else "c15t.first-layer.summary.item.$index"))
+                        if (!last) Hairline(Modifier.padding(start = 16.dp))
+                    }
+                }
             }
         }
+        Body(copy.bannerLegitimateInterestNotice, Modifier.testTag("c15t.first-layer.legitimate-interest"))
+        Body(copy.appScopeServiceSpecific, Modifier.testTag("c15t.first-layer.scope"))
+        Body(copy.appWithdraw, Modifier.testTag("c15t.first-layer.withdraw"))
     }
 }
 
@@ -565,8 +598,8 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
                     progress = presenter.showProgress && presenter.pendingAction == ConsentPresenter.Action.ACKNOWLEDGE) { presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE) }
                 ConsentButton("Privacy settings", "c15t.notice.settings", !presenter.pending, ButtonVariant.QUIET) { presenter.presentPreferences() }
             }
-            PolicyLink(privacyPolicyUrl)
-            presenter.errorMessage?.let { FailureRow(it, "c15t.notice.error", !presenter.pending, presenter::retry) }
+            PolicyLink(privacyPolicyUrl, presenter.iabCopy)
+            presenter.errorMessage?.let { FailureRow(it, "c15t.notice.error", !presenter.pending, presenter.iabCopy.appTryAgain, presenter::retry) }
         }
     }
 }
@@ -635,7 +668,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
         ConsentCategory.MARKETING -> "Show advertising relevant to you."
     }
     if (c.optional && !p.restricted(c)) ChoiceRow(title, description, p.categories[c] == true, "c15t.prefs.category.${c.wireName}.switch", !p.pending && !p.stale && !p.listUnavailable) { p.setCategory(c, it) }
-    else StatusRow(title, description, if (c.optional) "Off" else "Always on", "c15t.prefs.category.${c.wireName}.locked",
+    else StatusRow(title, description, if (c.optional) p.iabCopy.appOff else p.iabCopy.appAlwaysOn, "c15t.prefs.category.${c.wireName}.locked",
         note = if (c.optional) (if ("gpc" in p.snapshot.restrictions[c.wireName].orEmpty()) "Off because your device sends a Global Privacy Control signal." else "Not offered where you are.") else null,
         noteTag = if (c.optional) "c15t.prefs.category.${c.wireName}.restricted" else null)
 }
@@ -660,72 +693,84 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
             item {
                 GroupedRow(0, 1) {
                     Column(Modifier.padding(16.dp).testTag("c15t.status.unavailable"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Privacy settings aren't available yet. Connect to the internet and try again.", color = theme.colors.text.color())
-                        TextButton(onClick = p::refresh, modifier = Modifier.testTag("c15t.status.unavailable.retry")) { Text("Try again") }
+                        Text(p.iabCopy.appPreferencesUnavailable, color = theme.colors.text.color())
+                        TextButton(onClick = p::refresh, modifier = Modifier.testTag("c15t.status.unavailable.retry")) { Text(p.iabCopy.appTryAgain) }
                     }
                 }
             }
         } else {
             if (p.stale) item {
                 InfoCallout(Modifier.padding(horizontal = 8.dp, vertical = 8.dp).testTag("c15t.prefs.stale")) {
-                    Text("Settings changed while you were editing", fontWeight = FontWeight.SemiBold, modifier = Modifier.semantics { heading() }.testTag("c15t.prefs.stale.title"))
-                    Text("Your choices weren't saved. Load the current settings, then choose again.")
+                    Text(p.iabCopy.appSettingsChanged, fontWeight = FontWeight.SemiBold, modifier = Modifier.semantics { heading() }.testTag("c15t.prefs.stale.title"))
+                    Text(p.iabCopy.appSettingsChangedDetail)
                 }
             }
             item {
                 Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (p.iab) {
-                        Body("We and our partners store and access information on your device and process personal data for the purposes below. Some partners rely on legitimate interest instead of consent. You can object to that and change your choices at any time in Privacy settings.")
+                        Body(p.iabCopy.appPreferencesIntro)
                         TextButton(onClick = { partners(null) }, contentPadding = PaddingValues(horizontal = 4.dp), modifier = Modifier.testTag("c15t.iab.partner-count")) {
-                            Text("${p.disclosure?.vendors?.size ?: 0} IAB partners", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+                            Text(p.iabCopy.format(p.iabCopy.appIabPartnerCount, mapOf("count" to "${p.disclosure?.vendors?.size ?: 0}")), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
                         }
                     } else Body("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
                 }
             }
             if (page && showsShortcuts(p)) item { DecisionGroup(p, first = false, DecisionPart.SHORTCUTS, Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp)) }
-            item { if (p.iab) SectionLabel("This app") else Spacer(Modifier.height(12.dp)) }
+            item { if (p.iab) SectionLabel(p.iabCopy.appThisApp) else Spacer(Modifier.height(12.dp)) }
             val categories = p.offeredCategories
             group(categories.size, key = { "category-${categories[it].wireName}" }) { Category(p, categories[it]) }
             p.disclosure?.let { d ->
-                val purposes = d.list.purposes.toSortedMap().entries.toList()
-                item { SectionLabel("Purposes") }
+                val copy = p.iabCopy
+                // Only what this app's partners declare, as the web panel lists it.
+                val declaredPurposes = d.declaredPurposeIds.toSet()
+                val purposes = d.list.purposes.toSortedMap().entries.filter { it.key in declaredPurposes }
+                item { SectionLabel(copy.preferenceCenterVendorListPurposes) }
                 group(purposes.size, key = { "purpose-${purposes[it].key}" }) { Purpose(p, purposes[it].key, purposes[it].value) { partners(purposes[it].key) } }
-                val specials = d.list.specialFeatures.orEmpty().toSortedMap().entries.toList()
+                val declaredSpecials = d.declaredSpecialFeatureIds.toSet()
+                val specials = d.list.specialFeatures.orEmpty().toSortedMap().entries.filter { it.key in declaredSpecials }
                 if (specials.isNotEmpty()) {
-                    item { SectionLabel("Special features") }
+                    item { SectionLabel(copy.preferenceCenterVendorListSpecialFeatures) }
                     group(specials.size, key = { "special-${specials[it].key}" }) { index ->
                         val (id, item) = specials[index]
                         ChoiceRow(item.name.orEmpty(), item.description.orEmpty(), id in p.choices.specialFeatureOptIns, "c15t.iab.special-feature.$id.switch",
-                            !p.pending && !p.stale && !p.listUnavailable, note = "Partners only do this if you turn it on.") { on -> p.edit { it.copy(specialFeatureOptIns = it.specialFeatureOptIns.select(id, on)) } }
+                            !p.pending && !p.stale && !p.listUnavailable, note = copy.appSpecialFeatureOptIn) { on -> p.edit { it.copy(specialFeatureOptIns = it.specialFeatureOptIns.select(id, on)) } }
+                        Examples(item.illustrations, "c15t.iab.special-feature.$id", copy)
                     }
                 }
-                val specialPurposes = d.list.specialPurposes.orEmpty().toSortedMap().entries.toList()
+                val active = d.vendors.keys.mapNotNull { d.list.vendors[it] }
+                val usedSpecialPurposes = active.flatMap { it.specialPurposes.orEmpty() }.map { it.toInt() }.toSet()
+                val specialPurposes = d.list.specialPurposes.orEmpty().toSortedMap().entries.filter { it.key in usedSpecialPurposes }
                 if (specialPurposes.isNotEmpty()) {
-                    item { SectionLabel("Special purposes") }
-                    group(specialPurposes.size, key = { "sp-${specialPurposes[it].key}" }) { index -> val (id, item) = specialPurposes[index]; Definition(item, "c15t.iab.special-purpose.$id") }
+                    item { SectionLabel(copy.preferenceCenterVendorListSpecialPurposes) }
+                    group(specialPurposes.size, key = { "sp-${specialPurposes[it].key}" }) { index -> val (id, item) = specialPurposes[index]; Definition(item, "c15t.iab.special-purpose.$id", copy) }
                     item { Footnote(d.list.standardTexts?.specialPurposes.orEmpty()) }
                 }
-                val features = d.list.features.orEmpty().toSortedMap().entries.toList()
+                val usedFeatures = active.flatMap { it.features.orEmpty() }.map { it.toInt() }.toSet()
+                val features = d.list.features.orEmpty().toSortedMap().entries.filter { it.key in usedFeatures }
                 if (features.isNotEmpty()) {
-                    item { SectionLabel("Features") }
-                    group(features.size, key = { "feature-${features[it].key}" }) { index -> val (id, item) = features[index]; Definition(item, "c15t.iab.feature.$id") }
+                    item { SectionLabel(copy.preferenceCenterFeaturesTitle) }
+                    group(features.size, key = { "feature-${features[it].key}" }) { index -> val (id, item) = features[index]; Definition(item, "c15t.iab.feature.$id", copy) }
+                    item { Footnote(featuresExplanation(d.list, copy), Modifier.testTag("c15t.iab.features-standard-text")) }
                 }
-                item { Footnote(d.list.standardTexts?.features.orEmpty(), Modifier.testTag("c15t.iab.features-standard-text")) }
-                item { SectionLabel("Partners") }
+                item { SectionLabel(copy.appPartners) }
                 val providerCount = d.adTechProviders.orEmpty().size
                 val rows = if (providerCount > 0) 2 else 1
                 group(rows, key = { "partners-$it" }) { index ->
-                    if (index == 0) NavigationRow("IAB partners", "${d.vendors.size}", "c15t.iab.partners") { partners(null) }
-                    else NavigationRow("Other ad partners", "$providerCount", "c15t.iab.other-partners", providers)
+                    if (index == 0) NavigationRow(copy.appIabPartners, "${d.vendors.size}", "c15t.iab.partners") { partners(null) }
+                    else NavigationRow(p.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, "$providerCount", "c15t.iab.other-partners", providers)
+                }
+                // Where the TC String lives and for how long, which IAB asks the second layer to say.
+                d.consentStorageMaxDays?.let { days ->
+                    item { Footnote(copy.format(copy.appConsentStorage, mapOf("days" to "$days")), Modifier.padding(top = 12.dp).testTag("c15t.iab.consent-storage")) }
                 }
             }
             item {
                 Spacer(Modifier.height(20.dp))
                 GroupedRow(0, 1) {
                     Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-                        PolicyLink(policyUrl)
+                        PolicyLink(policyUrl, p.iabCopy)
                         p.snapshot.explicitChoice?.let {
-                            Text("Last changed ${java.text.DateFormat.getDateInstance().format(java.util.Date(it.actionAt))}", style = MaterialTheme.typography.bodySmall,
+                            Text(p.lastChanged(it.actionAt), style = MaterialTheme.typography.bodySmall,
                                 color = theme.colors.textSecondary.color(), modifier = Modifier.padding(start = 4.dp, bottom = 8.dp).testTag("c15t.prefs.last-changed"))
                         }
                     }
@@ -751,31 +796,75 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
     }
 }
 
-@Composable private fun Definition(item: GvlLocalizedEntry, id: String) {
-    Column(Modifier.testTag(id)) { StatusRow(item.name.orEmpty(), item.description.orEmpty(), "No choice", "$id.status") }
+@Composable private fun Definition(item: GvlLocalizedEntry, id: String, copy: IabCopy) {
+    Column(Modifier.testTag(id)) {
+        StatusRow(item.name.orEmpty(), item.description.orEmpty(), copy.appNoChoice, "$id.status")
+        Examples(item.illustrations, id, copy)
+    }
 }
+
+/**
+ * The vendor list's standard Features text, or the translated standard text when the list has
+ * none. TCF policy check 14 requires it wherever Features are shown.
+ */
+private fun featuresExplanation(list: GlobalVendorList, copy: IabCopy): String =
+    list.standardTexts?.features?.takeIf { it.isNotEmpty() } ?: copy.preferenceCenterFeaturesDescription
+
+/** The list's standard illustrations for one item, verbatim, behind an "Examples (N)" toggle. */
+@Composable private fun Examples(illustrations: List<String>?, id: String, copy: IabCopy) {
+    val label = copy.preferenceCenterPurposeItemExamples
+    if (illustrations.isNullOrEmpty()) return
+    val theme = LocalConsentTheme.current
+    var expanded by rememberSaveable(id) { mutableStateOf(false) }
+    TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(start = 4.dp).testTag("$id.examples").semantics { stateDescription = if (expanded) copy.appExpanded else copy.appCollapsed }) {
+        Text("$label (${illustrations.size})", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+        Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.accent.color(), modifier = Modifier.size(18.dp))
+    }
+    if (expanded) Illustrations(illustrations, "$id.illustrations", Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
+}
+
+@Composable private fun Illustrations(illustrations: List<String>, id: String, modifier: Modifier = Modifier) {
+    if (illustrations.isEmpty()) return
+    Column(modifier.testTag(id), verticalArrangement = Arrangement.spacedBy(8.dp)) { illustrations.forEach { Body("\u2022 $it") } }
+}
+
+/** The purposes Google needs consent to before an ad tech provider counts its consent. */
+private val adTechProviderPurposeIds = setOf(1, 3, 4)
+
 
 @Composable private fun Purpose(p: ConsentPresenter, id: Int, item: GvlLocalizedEntry, partners: () -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val li = p.disclosure?.vendors?.values?.any { id in it.legitimateInterestPurposes } == true
+    val vendors = p.disclosure?.vendors?.values.orEmpty()
+    // Google ad tech providers need consent to purposes 1, 3 and 4, as the web counts them.
+    val providerCount = if (id in adTechProviderPurposeIds) p.disclosure?.adTechProviders.orEmpty().size else 0
+    val consentCount = vendors.count { id in it.consentPurposes } + providerCount
+    val liCount = vendors.count { id in it.legitimateInterestPurposes }
+    val li = liCount > 0
     val theme = LocalConsentTheme.current
+    // How many partners ask, on the row itself rather than only behind Details. Zero is
+    // shown too, so an absent count never reads as an omitted one.
+    // In the web's words, from the shared IAB copy.
+    val copy = p.iabCopy
+    fun partners(count: Int) = copy.format(copy.preferenceCenterPurposeItemPartners, mapOf("count" to "$count"))
+    val note = "${copy.preferenceCenterPurposeItemWithYourPermission}: ${partners(consentCount)} \u00B7 ${copy.preferenceCenterPurposeItemLegitimateInterest}: ${partners(liCount)}"
     Column(Modifier.fillMaxWidth().testTag("c15t.iab.purpose.$id")) {
         ChoiceRow(item.name.orEmpty(), item.description.orEmpty(), id in p.choices.purposeConsents, "c15t.iab.purpose.$id.consent", !p.pending && !p.stale && !p.listUnavailable,
-            note = if (li) "Asks for consent · Some partners use legitimate interest" else "Asks for consent") { on -> p.edit { it.copy(purposeConsents = it.purposeConsents.select(id, on)) } }
-        TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.details").semantics { stateDescription = if (expanded) "Expanded" else "Collapsed" }) {
-            Text(if (expanded) "Hide details" else "Details", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+            note = note) { on -> p.edit { it.copy(purposeConsents = it.purposeConsents.select(id, on)) } }
+        TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.details").semantics { stateDescription = if (expanded) copy.appExpanded else copy.appCollapsed }) {
+            Text(if (expanded) copy.appHideDetails else copy.appDetails, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
             Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.accent.color(), modifier = Modifier.size(18.dp))
         }
         if (expanded) {
             Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Body(item.descriptionLegal.orEmpty()); item.illustrations.orEmpty().forEach { Body("• $it") }
-                Body("Asks for consent: ${p.disclosure?.vendors?.values?.count { id in it.consentPurposes }} partners. Legitimate interest: ${p.disclosure?.vendors?.values?.count { id in it.legitimateInterestPurposes }} partners.")
+                Body(item.descriptionLegal.orEmpty())
+                Illustrations(item.illustrations.orEmpty(), "c15t.iab.purpose.$id.illustrations")
+                if (li) Body(p.iabCopy.appLegitimateInterestExplanation, Modifier.testTag("c15t.iab.purpose.$id.li-explanation"))
             }
             TextButton(onClick = partners, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.view-partners")) {
-                Text("View partners", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+                Text(copy.appViewPartners, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
             }
-            if (li) ChoiceRow("Legitimate interest", "", id in p.choices.purposeLegitimateInterests, "c15t.iab.purpose.$id.li", !p.pending && !p.stale && !p.listUnavailable,
-                note = "Some partners claim this legal basis. Turn off to object.") { on -> p.edit { it.copy(purposeLegitimateInterests = it.purposeLegitimateInterests.select(id, on), purposeObjections = it.purposeObjections.select(id, !on)) } }
+            if (li) ChoiceRow(copy.preferenceCenterPurposeItemLegitimateInterest, "", id in p.choices.purposeLegitimateInterests, "c15t.iab.purpose.$id.li", !p.pending && !p.stale && !p.listUnavailable,
+                note = copy.preferenceCenterPurposeItemRightToObject + " " + copy.appTurnOffToObject) { on -> p.edit { it.copy(purposeLegitimateInterests = it.purposeLegitimateInterests.select(id, on), purposeObjections = it.purposeObjections.select(id, !on)) } }
         }
     }
 }
@@ -888,14 +977,13 @@ private class SearchFieldLayout {
 }
 
 /** On, Partly on, or Off at a glance, beside the chevron into the partner. */
-@Composable private fun StatusTag(status: String, modifier: Modifier = Modifier) {
+@Composable private fun StatusTag(status: String, off: Boolean, modifier: Modifier = Modifier) {
     val theme = LocalConsentTheme.current
-    val off = status == "Off"
     Text(status, style = MaterialTheme.typography.labelMedium, color = if (off) theme.colors.textSecondary.color() else theme.colors.statusTagText.color(),
         modifier = modifier.background(if (off) theme.colors.surfaceMuted.color() else theme.colors.accent.color().copy(alpha = 0.14f), CircleShape).padding(horizontal = 8.dp, vertical = 4.dp))
 }
 
-@Composable private fun Vendors(p: ConsentPresenter, purpose: Int?, clear: () -> Unit, open: (Int) -> Unit) {
+@Composable private fun Vendors(p: ConsentPresenter, purpose: Int?, clear: () -> Unit, open: (Int) -> Unit, openProviders: () -> Unit) {
     var search by rememberSaveable { mutableStateOf("") }
     val collator = remember { Collator.getInstance() }
     val theme = LocalConsentTheme.current
@@ -904,13 +992,13 @@ private class SearchFieldLayout {
             (purpose == null || purpose in p.disclosure!!.vendors[id]!!.consentPurposes || purpose in p.disclosure!!.vendors[id]!!.legitimateInterestPurposes)
     }.sortedWith { a, b -> collator.compare(a.value.name, b.value.name) }
     Column(Modifier.fillMaxSize().testTag("c15t.iab.vendors")) {
-        SearchField(search, { search = it }, "Search partners", "c15t.iab.vendors.search")
+        SearchField(search, { search = it }, p.iabCopy.appSearchPartners, "c15t.iab.vendors.search")
         if (purpose != null) TextButton(onClick = clear, modifier = Modifier.padding(horizontal = 12.dp).testTag("c15t.iab.vendors.filter.purpose.clear")) {
-            Text("Purpose: ${p.disclosure?.list?.purposes?.get(purpose)?.name}", style = MaterialTheme.typography.bodyMedium, color = theme.colors.accent.color())
-            Icon(Icons.Outlined.Clear, contentDescription = "Clear filter", tint = theme.colors.accent.color(), modifier = Modifier.padding(start = 4.dp).size(16.dp))
+            Text(p.iabCopy.format(p.iabCopy.appPurposeFilter, mapOf("purpose" to p.disclosure?.list?.purposes?.get(purpose)?.name.orEmpty())), style = MaterialTheme.typography.bodyMedium, color = theme.colors.accent.color())
+            Icon(Icons.Outlined.Clear, contentDescription = p.iabCopy.commonClearSelection, tint = theme.colors.accent.color(), modifier = Modifier.padding(start = 4.dp).size(16.dp))
         }
         LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
-            if (vendors.isEmpty()) item { Body("No partners match \"$search\".", Modifier.padding(16.dp).testTag("c15t.iab.vendors.empty")) }
+            if (vendors.isEmpty()) item { Body(p.iabCopy.format(p.iabCopy.appNoPartnersMatch, mapOf("search" to search)), Modifier.padding(16.dp).testTag("c15t.iab.vendors.empty")) }
             group(vendors.size, key = { vendors[it].key }) { index ->
                 val (id, v) = vendors[index]
                 val d = p.disclosure!!.vendors[id]!!
@@ -918,10 +1006,20 @@ private class SearchFieldLayout {
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(v.name.orEmpty(), style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color())
-                        Text("${d.consentPurposes.size} purposes · ${d.legitimateInterestPurposes.size} on legitimate interest", style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color())
+                        Text(p.iabCopy.format(p.iabCopy.appVendorPurposeSummary, mapOf("purposes" to "${d.consentPurposes.size}", "legitimateInterest" to "${d.legitimateInterestPurposes.size}")), style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color())
                     }
-                    StatusTag(p.partnerStatus(id), Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
+                    StatusTag(p.partnerStatus(id), p.disclosure?.vendors?.get(id)?.selectionStatus(id, p.choices) != IabVendorSelectionStatus.PARTIAL && p.disclosure?.vendors?.get(id)?.selectionStatus(id, p.choices) != IabVendorSelectionStatus.ON, Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
                 }
+            }
+            // The first layer's partner count includes these, so the list it opens leads to them,
+            // on their own page apart from IAB partners.
+            val providerCount = p.disclosure?.adTechProviders.orEmpty().size
+            if ((purpose == null || purpose in adTechProviderPurposeIds) && search.isEmpty() && providerCount > 0) {
+                item { Spacer(Modifier.height(16.dp)) }
+                group(1, key = { "other-partners" }) {
+                    NavigationRow(p.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, "$providerCount", "c15t.iab.vendors.other-partners", openProviders)
+                }
+                item { Footnote(p.iabCopy.preferenceCenterVendorListAdTechProvidersNotice) }
             }
         }
     }
@@ -932,14 +1030,15 @@ private class SearchFieldLayout {
     val v = d.list.vendors[id] ?: return
     val projection = d.vendors[id] ?: return
     val theme = LocalConsentTheme.current
+    val copy = p.iabCopy
     fun names(ids: List<Int>) = ids.mapNotNull { d.list.purposes[it]?.name }.joinToString(", ")
     val locale = Locale.getDefault().language
     val urls = v.urls.orEmpty().firstOrNull { it.langId == locale } ?: v.urls.orEmpty().firstOrNull { it.langId == "en" } ?: v.urls?.firstOrNull()
     val enabled = !p.pending && !p.stale && !p.listUnavailable
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 8.dp, vertical = 8.dp).testTag("c15t.iab.vendor.$id")) {
-        val links = listOfNotNull(urls?.privacy?.let { "Privacy policy" to it }, urls?.legIntClaim?.let { "Legitimate interest statement" to it })
-        links.forEachIndexed { index, (label, url) -> GroupedRow(index, links.size) { Box(Modifier.padding(horizontal = 12.dp)) { ExternalLink(label, url, if (index == 0 && label == "Privacy policy") "c15t.iab.vendor.$id.privacy-link" else "c15t.iab.vendor.$id.li-claim-link") } } }
-        SectionLabel("Your choices")
+        val links = listOfNotNull(urls?.privacy?.let { copy.preferenceCenterVendorListPrivacyPolicy to it }, urls?.legIntClaim?.let { copy.appLegitimateInterestStatement to it })
+        links.forEachIndexed { index, (label, url) -> GroupedRow(index, links.size) { Box(Modifier.padding(horizontal = 12.dp)) { ExternalLink(label, url, if (index == 0 && label == copy.preferenceCenterVendorListPrivacyPolicy) "c15t.iab.vendor.$id.privacy-link" else "c15t.iab.vendor.$id.li-claim-link") } } }
+        SectionLabel(copy.appYourChoices)
         val choiceRows = listOfNotNull(
             if (projection.consentPurposes.isNotEmpty()) "consent" else null,
             if (projection.legitimateInterestPurposes.isNotEmpty()) "li" else null,
@@ -947,14 +1046,15 @@ private class SearchFieldLayout {
         choiceRows.forEachIndexed { index, kind ->
             GroupedRow(index, choiceRows.size) {
                 when (kind) {
-                    "consent" -> ChoiceRow("Consent", "For: " + names(projection.consentPurposes), id in p.choices.vendorConsents, "c15t.iab.vendor.$id.consent", enabled) { on -> p.edit { it.copy(vendorConsents = it.vendorConsents.select(id, on)) } }
-                    "li" -> ChoiceRow("Legitimate interest", "For: " + names(projection.legitimateInterestPurposes), id in p.choices.vendorLegitimateInterests, "c15t.iab.vendor.$id.li", enabled,
-                        note = "Turn off to object.") { on -> p.edit { it.copy(vendorLegitimateInterests = it.vendorLegitimateInterests.select(id, on), vendorObjections = it.vendorObjections.select(id, !on)) } }
-                    else -> Body("This app doesn't allow this partner to: " + names(projection.notAllowedPurposes), Modifier.padding(16.dp).testTag("c15t.iab.vendor.$id.not-allowed"))
+                    "consent" -> ChoiceRow(copy.appConsent, names(projection.consentPurposes), id in p.choices.vendorConsents, "c15t.iab.vendor.$id.consent", enabled) { on -> p.edit { it.copy(vendorConsents = it.vendorConsents.select(id, on)) } }
+                    "li" -> ChoiceRow(copy.preferenceCenterPurposeItemLegitimateInterest, names(projection.legitimateInterestPurposes), id in p.choices.vendorLegitimateInterests, "c15t.iab.vendor.$id.li", enabled,
+                        note = copy.appTurnOffToObject) { on -> p.edit { it.copy(vendorLegitimateInterests = it.vendorLegitimateInterests.select(id, on), vendorObjections = it.vendorObjections.select(id, !on)) } }
+                    else -> Body(copy.format(copy.appNotAllowedPurposes, mapOf("purposes" to names(projection.notAllowedPurposes))), Modifier.padding(16.dp).testTag("c15t.iab.vendor.$id.not-allowed"))
                 }
             }
         }
-        @Composable fun plainGroup(title: String, values: List<String>, trailing: (Int) -> String? = { "No choice" }, tag: String? = null) {
+        if (projection.legitimateInterestPurposes.isNotEmpty()) Footnote(p.iabCopy.appLegitimateInterestExplanation, Modifier.testTag("c15t.iab.vendor.$id.li-explanation"))
+        @Composable fun plainGroup(title: String, values: List<String>, trailing: (Int) -> String? = { copy.appNoChoice }, tag: String? = null) {
             if (values.isEmpty()) return
             SectionLabel(title)
             Column(if (tag != null) Modifier.testTag(tag) else Modifier) {
@@ -968,21 +1068,31 @@ private class SearchFieldLayout {
                 }
             }
         }
-        plainGroup("Special purposes", v.specialPurposes.orEmpty().map { d.list.specialPurposes?.get(it.toInt())?.name.orEmpty() })
-        plainGroup("Features", v.features.orEmpty().map { d.list.features?.get(it.toInt())?.name.orEmpty() })
+        plainGroup(copy.preferenceCenterVendorListSpecialPurposes, v.specialPurposes.orEmpty().map { d.list.specialPurposes?.get(it.toInt())?.name.orEmpty() })
+        // Features are read-only, with their standard texts and illustrations and the standard explanation.
+        val features = v.features.orEmpty().mapNotNull { feature -> d.list.features?.get(feature.toInt())?.let { feature.toInt() to it } }
+        if (features.isNotEmpty()) {
+            SectionLabel(copy.preferenceCenterFeaturesTitle)
+            features.forEachIndexed { index, (feature, item) ->
+                GroupedRow(index, features.size) { Definition(item, "c15t.iab.vendor.$id.feature.$feature", p.iabCopy) }
+            }
+            Footnote(featuresExplanation(d.list, p.iabCopy), Modifier.testTag("c15t.iab.vendor.$id.features-standard-text"))
+        }
         val specials = v.specialFeatures.orEmpty()
-        plainGroup("Special features", specials.map { d.list.specialFeatures?.get(it.toInt())?.name.orEmpty() }, trailing = { index -> if (specials[index].toInt() in p.choices.specialFeatureOptIns) "On" else "Off" })
-        if (specials.isNotEmpty()) Footnote("Set under Special features in Privacy settings.")
-        plainGroup("Data collected", v.dataCategories.orEmpty().map { d.list.dataCategories?.get(it.toInt())?.name.orEmpty() }, trailing = { null })
+        plainGroup(copy.preferenceCenterVendorListSpecialFeatures, specials.map { d.list.specialFeatures?.get(it.toInt())?.name.orEmpty() }, trailing = { index -> if (specials[index].toInt() in p.choices.specialFeatureOptIns) copy.appOn else copy.appOff })
+        if (specials.isNotEmpty()) Footnote(copy.appSpecialFeaturesElsewhere)
+        plainGroup(copy.appDataCollected, v.dataCategories.orEmpty().map { d.list.dataCategories?.get(it.toInt())?.name.orEmpty() }, trailing = { null })
         val retention = v.dataRetention
-        val retentionRows = if (retention == null) listOf("Not provided by this partner." to null)
-            else retention.purposes.orEmpty().map { (purpose, days) -> names(listOf(purpose.toInt())) to "$days days" } + listOfNotNull(retention.stdRetention?.let { "Standard retention" to "$it days" })
-        plainGroup("How long data is kept", retentionRows.map { it.first }, trailing = { retentionRows[it].second }, tag = "c15t.iab.vendor.$id.retention")
-        val storageRows = if (v.usesCookies != true && v.usesNonCookieAccess != true) listOf("Doesn't store information on your device." to null)
-            else listOfNotNull(v.cookieMaxAgeSeconds?.let { "Stored for up to" to "${it / 86400} days" }, "Refreshes stored information" to (if (v.cookieRefresh == true) "Yes" else "No"),
-                "Other ways to access your device" to (if (v.usesNonCookieAccess == true) "Yes" else "No"))
-        plainGroup("Device storage", storageRows.map { it.first }, trailing = { storageRows[it].second }, tag = "c15t.iab.vendor.$id.storage")
-        v.deviceStorageDisclosureUrl?.let { Box(Modifier.padding(horizontal = 12.dp)) { ExternalLink("Device storage details", it, "c15t.iab.vendor.$id.storage-link") } }
+        val retentionRows = if (retention == null) listOf(copy.appRetentionNotProvided to null)
+            else retention.purposes.orEmpty().map { (purpose, days) -> names(listOf(purpose.toInt())) to dayCount(days.toLong(), copy) } +
+                retention.specialPurposes.orEmpty().map { (purpose, days) -> (d.list.specialPurposes?.get(purpose.toIntOrNull() ?: -1)?.name ?: "$purpose") to dayCount(days.toLong(), copy) } +
+                listOfNotNull(retention.stdRetention?.let { copy.appStandardRetention to dayCount(it.toLong(), copy) })
+        plainGroup(copy.appRetentionTitle, retentionRows.map { it.first }, trailing = { retentionRows[it].second }, tag = "c15t.iab.vendor.$id.retention")
+        val storageRows = if (v.usesCookies != true && v.usesNonCookieAccess != true) listOf(copy.appNoDeviceStorage to null)
+            else listOfNotNull(v.cookieMaxAgeSeconds?.let { copy.appStoredForUpTo to storageDuration(it, copy) }, copy.appRefreshesStoredInformation to (if (v.cookieRefresh == true) copy.appYes else copy.appNo),
+                copy.appOtherDeviceAccess to (if (v.usesNonCookieAccess == true) copy.appYes else copy.appNo))
+        plainGroup(copy.appDeviceStorage, storageRows.map { it.first }, trailing = { storageRows[it].second }, tag = "c15t.iab.vendor.$id.storage")
+        v.deviceStorageDisclosureUrl?.let { Box(Modifier.padding(horizontal = 12.dp)) { ExternalLink(copy.appDeviceStorageDetails, it, "c15t.iab.vendor.$id.storage-link") } }
         Spacer(Modifier.height(16.dp))
     }
 }
@@ -992,26 +1102,23 @@ private class SearchFieldLayout {
     val collator = remember { Collator.getInstance() }
     val providers = p.disclosure?.adTechProviders.orEmpty().filter { it.name.searchKey().contains(search.searchKey()) }.sortedWith { a, b -> collator.compare(a.name, b.name) }
     Column(Modifier.fillMaxSize().testTag("c15t.ac")) {
-        SearchField(search, { search = it }, "Search other partners", "c15t.ac.search")
+        SearchField(search, { search = it }, p.iabCopy.appSearchOtherPartners, "c15t.ac.search")
         LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
             item { Body(providerIntro(p), Modifier.padding(horizontal = 16.dp, vertical = 8.dp).testTag("c15t.ac.intro")) }
-            if (providers.isEmpty()) item { Body("No partners match \"$search\".", Modifier.padding(16.dp).testTag("c15t.ac.empty")) }
+            if (providers.isEmpty()) item { Body(p.iabCopy.format(p.iabCopy.appNoPartnersMatch, mapOf("search" to search)), Modifier.padding(16.dp).testTag("c15t.ac.empty")) }
             group(providers.size, key = { providers[it].id }) { index ->
                 val provider = providers[index]
                 ChoiceRow(provider.name, "", provider.id in p.choices.adTechProviderConsents.orEmpty(), "c15t.ac.provider.${provider.id}.switch", !p.pending && !p.stale && !p.listUnavailable) { on ->
                     p.edit { it.copy(adTechProviderConsents = it.adTechProviderConsents.orEmpty().select(provider.id, on)) }
                 }
-                Box(Modifier.padding(start = 12.dp, bottom = 4.dp)) { ExternalLink("Privacy policy", provider.policyUrl, "c15t.ac.provider.${provider.id}.privacy-link") }
+                Box(Modifier.padding(start = 12.dp, bottom = 4.dp)) { ExternalLink(p.iabCopy.preferenceCenterVendorListPrivacyPolicy, provider.policyUrl, "c15t.ac.provider.${provider.id}.privacy-link") }
             }
         }
     }
 }
 
-/** The prerequisite purposes by the names the person saw one page back, never by number. */
+/** The web's notice, plus why the providers stay off while their purposes are. */
 private fun providerIntro(p: ConsentPresenter): String {
-    val names = p.providerPrerequisiteNames
-    val purposes = if (names.size == 3) "these purposes are also on: ${names[0]}, ${names[1]}, and ${names[2]}"
-        else "the purposes for storing information on your device and personalised advertising are also on"
-    val gate = if (p.providerPrerequisitesMet) "" else " Those purposes are off right now, so these partners stay off until you turn them on under Purposes."
-    return "These partners work with Google but aren't in the IAB list. They only use your data if you allow it, and only while $purposes.$gate"
+    val notice = p.iabCopy.preferenceCenterVendorListAdTechProvidersNotice
+    return if (p.providerPrerequisitesMet) notice else notice + " " + p.iabCopy.appProvidersOff
 }

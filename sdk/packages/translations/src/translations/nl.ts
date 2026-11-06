@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Wij hechten waarde aan uw privacy',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Uw keuzes worden op dit apparaat opgeslagen, in de standaardopslag voor instellingen van de app onder IABTCF-sleutels, voor maximaal {days} dagen. De bewaartermijn gaat opnieuw in wanneer u uw keuzes aanpast.',
+			description:
+				'Wij en onze {partnerCount} partners slaan informatie op een apparaat op en/of openen deze en verwerken persoonlijke gegevens, zoals unieke identificatoren en browsegegevens, voor deze app, om:',
+			legitimateInterestExplanation:
+				'Sommige partners verwerken persoonlijke gegevens, zoals unieke identificatoren en browsegegevens, op basis van hun gerechtvaardigd belang in plaats van om toestemming te vragen. Dit geldt alleen voor deze app. U heeft het recht om bezwaar te maken tegen deze verwerking per doel en per partner.',
+			scopeServiceSpecific:
+				'Uw toestemming geldt alleen voor deze app en heeft geen invloed op andere diensten.',
+			withdraw:
+				'U kunt uw keuzes op elk moment wijzigen of uw toestemming intrekken via Privacy-instellingen in deze app.',
+		},
 		banner: {
 			andMore: 'En nog {count}...',
 			description:

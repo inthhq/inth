@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Chúng tôi tôn trọng quyền riêng tư của bạn',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Lựa chọn của bạn được lưu trên thiết bị này, trong bộ nhớ cài đặt tiêu chuẩn của ứng dụng dưới các khóa IABTCF, tối đa {days} ngày. Thời hạn lưu trữ được gia hạn khi bạn cập nhật lựa chọn của mình.',
+			description:
+				'Chúng tôi và {partnerCount} đối tác lưu trữ và/hoặc truy cập thông tin trên thiết bị của bạn, đồng thời xử lý dữ liệu cá nhân như mã định danh duy nhất và dữ liệu duyệt web cho ứng dụng này, nhằm:',
+			legitimateInterestExplanation:
+				'Một số đối tác xử lý dữ liệu cá nhân như mã định danh duy nhất và dữ liệu duyệt web dựa trên lợi ích hợp pháp của họ thay vì yêu cầu sự đồng ý. Điều này chỉ áp dụng cho ứng dụng này. Bạn có quyền phản đối việc xử lý này đối với từng mục đích và từng đối tác.',
+			scopeServiceSpecific:
+				'Sự đồng ý của bạn chỉ áp dụng cho ứng dụng này và không ảnh hưởng đến các dịch vụ khác.',
+			withdraw:
+				'Bạn có thể thay đổi lựa chọn hoặc rút lại sự đồng ý bất cứ lúc nào trong Cài đặt quyền riêng tư của ứng dụng này.',
+		},
 		banner: {
 			andMore: 'Và {count} mục khác...',
 			description:

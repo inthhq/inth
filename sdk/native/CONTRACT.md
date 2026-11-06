@@ -22,11 +22,14 @@ own:
                     makeCoreConfiguration on iOS -- with no flag and no host
                     step, because the readers are somebody else's SDK inside the
                     host process and never ask first; a host that wants no bus
-                    installs a configured core itself. Rows written today: IABTCF_PolicyVersion (the
-                    stored list's tcfPolicyVersion) and IABTCF_gdprApplies
-                    (the matched rule's model tested against `iab`, mirroring
-                    packages/iab, so 1 under an IAB rule and 0 under every
-                    other model). The bus is never read back; the Keychain and
+                    installs a configured core itself. Rows written: the full
+                    CMP API v2 in-app table (TcStorageBusKeys in
+                    TcStorageBus.swift / TcStorageBus.kt), every consent row
+                    decoded from the committed TC bytes, plus
+                    IABTCF_AddtlConsent. IABTCF_CmpSdkID and CmpSdkVersion need
+                    IAB configuration; IABTCF_gdprApplies is 1 under an IAB
+                    rule and 0 under every other model, mirroring
+                    packages/iab. The bus is never read back; the Keychain and
                     the encrypted noBackupFilesDir store stay authoritative.
                     reset() and every envelope discard clear the table, and
                     the projection rebuilds from stored bytes alone.
@@ -41,9 +44,16 @@ own:
                     consent version and exact pending HTTP body commit together
                     in the protected envelope before publication. Configuration
                     is required to commit under an IAB policy; fixture CMP IDs
-                    are never production defaults. Complete IABTCF publication,
-                    GVL lifecycle, TCF 2.4 disclosures and AC v2 remain separate
-                    required release work.
+                    are never production defaults. Created and LastUpdated are
+                    always the same day. GVL lifecycle, TCF 2.4 disclosures and
+                    AC v2 remain separate required release work.
+    TCF checks      native/protocol/iab/tcf-policy-checks.json lists IAB
+                    Europe's non-web CMP checks. Every check needs a Swift and a
+                    Kotlin test marked `// TCF-CHECK: <id>`;
+                    scripts/tcf-policy-checks.test.ts fails otherwise. IAB UI
+                    copy comes from `iab.app` and `iab.banner` in
+                    @c15t/translations through the generated IABCopy /
+                    IabCopy tables (`bun run generate:native-iab-copy`).
 
 `docs/internal/native-iab-commits.mdx` defines the native commit, migration,
 withdrawal and delivery contract, including the storage adapter requirements.

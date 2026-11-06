@@ -114,6 +114,10 @@ final class ProtocolFixtureTests: XCTestCase {
         )
     }
 
+    // TCF-CHECK: T8
+    // TCF-CHECK: T11
+    // TCF-CHECK: T12
+    // TCF-CHECK: T13
     func testEveryFixtureMatchesTheKernel() async throws {
         let index = try loadIndex()
         var ran: [String] = []

@@ -136,9 +136,11 @@ describes the expected results.
 
 ## When your app owns native installation
 
-Keep automatic bootstrap for the standard setup. If your app needs custom
-storage, transport or IAB configuration, disable it and install the engine
-before RN starts:
+Keep automatic bootstrap for the standard setup. It also covers IAB CMP
+identity and publisher country through the keys in
+[Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf).
+If your app needs custom storage, transport or IAB publisher restrictions,
+disable it and install the engine before RN starts:
 
 - iOS uses `com.c15t.reactnative.AutoBootstrap: false`. Install through the
   APIs in `C15tReactNative`, then attach the core with
@@ -146,5 +148,5 @@ before RN starts:
 - Android uses `com.c15t.reactnative.AUTO_BOOTSTRAP: false`. Install through
   the Android platform API before starting the React host.
 
-Use [IAB setup](/docs/guides/mobile-iab) for CMP and publisher configuration.
-A vendor-scope list alone does not install that authority.
+Use [IAB setup](/docs/guides/mobile-iab) for native CMP and publisher
+configuration. A vendor-scope list alone does not install that authority.

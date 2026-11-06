@@ -96,6 +96,9 @@ class PresenterTest {
             val (core, _) = boot()
             val p = ConsentPresenter(core)
             p.customize()
+            // A first-time user's legitimate interest starts not objected to.
+            assertEquals("Partly on", p.partnerStatus(1))
+            p.edit { IabChoices() }
             assertEquals("Off", p.partnerStatus(1))
             p.edit { it.copy(purposeLegitimateInterests = listOf(7), vendorLegitimateInterests = listOf(1)) }
             p.commit(ConsentPresenter.Action.SAVE)

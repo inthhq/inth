@@ -26,7 +26,8 @@ final class IABCommitTests: XCTestCase {
 
     func boot(
         _ vector: Vector, configuration: IABConfiguration?, store: any ConsentStore,
-        http: StubHTTP = StubHTTP(), user: KernelUser? = nil, clock: TestClock? = nil
+        http: StubHTTP = StubHTTP(), user: KernelUser? = nil, clock: TestClock? = nil,
+        bus: (any TcStorageBusWriting)? = nil
     ) async throws -> ConsentCore {
         let gvl = try C15tJSON.parse(C15tJSON.encode(vector.gvl))!
         var body = Fixture.initBody(
@@ -40,7 +41,7 @@ final class IABCommitTests: XCTestCase {
         core.bootstrap(
             CoreConfig(
                 store: store, transport: Fixture.transport(http), iab: configuration,
-                user: user, now: { clock?.now ?? vector.now }, initRetry: .disabled, flushPendingOnBootstrap: false))
+                user: user, now: { clock?.now ?? vector.now }, initRetry: .disabled, flushPendingOnBootstrap: false, storageBus: bus))
         await core.waitUntilIdle()
         return core
     }
@@ -107,6 +108,7 @@ final class IABCommitTests: XCTestCase {
         }
     }
 
+    // TCF-CHECK: T7
     func testCachedOfflineStaleAndMissingListsDoNotInventConsent() async throws {
         let vector = try fixture()
         let store = InMemoryStore()
@@ -410,6 +412,61 @@ final class IABCommitTests: XCTestCase {
         XCTAssertEqual(core.iabConsent(), authority)
         XCTAssertEqual(store.data(for: StorageKey.snapshot), bytes)
         XCTAssertEqual(core.pendingSaveCount(), 1)
+    }
+
+    // TCF-CHECK: T2
+    // TCF-CHECK: T3
+    // TCF-CHECK: T10
+    func testAStoredTcStringWithUnequalDatesIsDroppedOnLaunch() async throws {
+        let vector = try fixture()
+        let store = InMemoryStore()
+        let core = try await boot(vector, configuration: vector.cases[0].configuration, store: store)
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        // An earlier build wrote Created a day before LastUpdated.
+        let saved = try XCTUnwrap(core.iabConsent()?.tcString)
+        let older = try XCTUnwrap(Self.movingCreated(saved, byDays: -1))
+        guard case let .decoded(before) = TcStringWireReader.read(saved),
+              case let .decoded(after) = TcStringWireReader.read(older) else { return XCTFail("unreadable TC String") }
+        XCTAssertEqual(before.created, before.lastUpdated)
+        XCTAssertNotEqual(after.created, after.lastUpdated)
+        let stored = try XCTUnwrap(store.data(for: StorageKey.snapshot).flatMap { String(data: $0, encoding: .utf8) })
+        XCTAssertTrue(stored.contains(saved))
+        XCTAssertTrue(store.set(Data(stored.replacingOccurrences(of: saved, with: older).utf8), for: StorageKey.snapshot))
+
+        let bus = RecordingBus()
+        let restored = try await boot(vector, configuration: vector.cases[0].configuration, store: store, bus: bus)
+        XCTAssertNil(restored.iabConsent(), "a T10-invalid string must not survive launch")
+        XCTAssertNil(restored.snapshot().explicitChoice, "the person is asked again")
+        XCTAssertNil(bus.live[TcStorageBusKeys.tcString])
+        XCTAssertFalse(bus.ops.contains { if case let .write(values) = $0 { return values[TcStorageBusKeys.tcString] == .text(older) }; return false })
+    }
+
+    /// The core segment with Created moved by whole days, as an older encoder wrote it.
+    static func movingCreated(_ tcString: String, byDays days: Int64) -> String? {
+        let parts = tcString.split(separator: ".", omittingEmptySubsequences: false)
+        guard let core = parts.first else { return nil }
+        var base64 = core.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while base64.count % 4 != 0 { base64 += "=" }
+        guard var bytes = Data(base64Encoded: base64).map(Array.init) else { return nil }
+        func read(_ offset: Int, _ width: Int) -> Int64 {
+            (0..<width).reduce(Int64(0)) { value, i in
+                let bit = offset + i
+                return value << 1 | Int64((bytes[bit / 8] >> (7 - bit % 8)) & 1)
+            }
+        }
+        func write(_ value: Int64, _ offset: Int, _ width: Int) {
+            for i in 0..<width {
+                let bit = offset + i, on = (value >> Int64(width - 1 - i)) & 1 == 1
+                bytes[bit / 8] = on ? bytes[bit / 8] | (1 << (7 - bit % 8)) : bytes[bit / 8] & ~(1 << (7 - bit % 8))
+            }
+        }
+        // Version 6 bits, then Created 36 bits in deciseconds.
+        write(read(6, 36) + days * 864_000, 6, 36)
+        let encoded = Data(bytes).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        return ([encoded] + parts.dropFirst().map(String.init)).joined(separator: ".")
     }
 
     func testWithdrawalSupersedesQueuedGrantAndSurvivesRestart() async throws {

@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Kami menghargai privasi anda',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Pilihan anda disimpan pada peranti ini, dalam storan tetapan standard aplikasi di bawah kunci IABTCF, sehingga {days} hari. Tempoh penyimpanan dimulakan semula apabila anda mengemas kini pilihan anda.',
+			description:
+				'Kami dan {partnerCount} rakan kongsi kami menyimpan dan/atau mengakses maklumat pada peranti anda serta memproses data peribadi, seperti pengecam unik dan data pelayaran, untuk aplikasi ini, bagi tujuan:',
+			legitimateInterestExplanation:
+				'Sesetengah rakan kongsi memproses data peribadi, seperti pengecam unik dan data pelayaran, atas dasar kepentingan sah mereka dan bukannya meminta persetujuan. Ini hanya terpakai bagi aplikasi ini. Anda berhak membantah pemprosesan ini bagi setiap tujuan dan setiap rakan kongsi.',
+			scopeServiceSpecific:
+				'Persetujuan anda hanya terpakai bagi aplikasi ini dan tidak akan menjejaskan perkhidmatan lain.',
+			withdraw:
+				'Anda boleh menukar pilihan anda atau menarik balik persetujuan anda pada bila-bila masa daripada Tetapan Privasi dalam aplikasi ini.',
+		},
 		banner: {
 			andMore: 'Dan {count} lagi...',
 			description:

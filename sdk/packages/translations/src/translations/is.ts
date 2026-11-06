@@ -66,6 +66,18 @@ export const translations: CompleteTranslations = {
 		title: 'Við metum friðhelgi þína',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Val þitt er geymt á þessu tæki, í hefðbundinni stillingageymslu forritsins undir IABTCF-lyklum, í allt að {days} daga. Geymslutíminn endurnýjast þegar þú uppfærir val þitt.',
+			description:
+				'Við og {partnerCount} samstarfsaðilar okkar geymum og/eða höfum aðgang að upplýsingum á tækinu þínu og vinnum persónuupplýsingar, svo sem einstök auðkenni og vafraupplýsingar, fyrir þetta forrit, til að:',
+			legitimateInterestExplanation:
+				'Sumir samstarfsaðilar vinna persónuupplýsingar, svo sem einstök auðkenni og vafraupplýsingar, á grundvelli lögmætra hagsmuna sinna í stað þess að biðja um samþykki. Þetta gildir aðeins fyrir þetta forrit. Þú átt rétt á að andmæla þessari vinnslu fyrir hvern tilgang og hvern samstarfsaðila.',
+			scopeServiceSpecific:
+				'Samþykki þitt gildir aðeins fyrir þetta forrit og hefur ekki áhrif á aðrar þjónustur.',
+			withdraw:
+				'Þú getur breytt vali þínu eða dregið samþykki þitt til baka hvenær sem er í Persónuverndastillingum í þessu forriti.',
+		},
 		banner: {
 			andMore: 'Og {count} til viðbótar...',
 			description:

@@ -48,6 +48,7 @@
 		"fmt": "oxfmt .",
 		"fmt:check": "oxfmt . --check",
 		"fmt:docs": "bun scripts/format-docs-code.ts && bunx remark ./docs --ext mdx --output --use remark-mdx --use remark-frontmatter --use remark-preset-lint-recommended --use remark-preset-lint-consistent",
+		"generate:native-iab-copy": "bun scripts/generate-native-iab-copy.ts",
 		"generate:package-docs": "bun scripts/generate-package-docs.ts",
 		"generate:readmes": "tsx scripts/generate-readme.ts",
 		"generate:umbrella": "bun scripts/generate-umbrella-exports.ts",

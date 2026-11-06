@@ -76,13 +76,13 @@ object C15tReactNativeBootstrap {
 	 * Pin the device language unless the app declared one.
 	 *
 	 * The protocol resolves translations to exactly one language, so the native side
-	 * supplies the locale rather than leaving it for JavaScript to guess.
+	 * supplies the locale rather than leaving it for JavaScript to guess. The backend
+	 * serves IAB disclosures in that language, so the TC String and the screens
+	 * declare it too.
 	 */
-	private fun NativeConfig.withDeviceLanguage(): NativeConfig {
-		if (!overrides.language.isNullOrBlank()) {
-			return this
-		}
-		val language = Locale.getDefault().language.takeIf { it.isNotBlank() } ?: C15tPayload.DEFAULT_LANGUAGE
+	internal fun NativeConfig.withDeviceLanguage(deviceLanguage: String = Locale.getDefault().language): NativeConfig {
+		val language = overrides.language?.takeIf { it.isNotBlank() }
+			?: deviceLanguage.takeIf { it.isNotBlank() } ?: C15tPayload.DEFAULT_LANGUAGE
 		return copy(
 			overrides = KernelOverrides(
 				country = overrides.country,
@@ -90,6 +90,11 @@ object C15tReactNativeBootstrap {
 				language = language,
 				gpc = overrides.gpc,
 			),
+			iab = iab?.let { declared -> iabConsentLanguage(language)?.let { declared.copy(consentLanguage = it) } ?: declared },
 		)
 	}
+
+	/** A language tag as a TCF consent language: two uppercase letters, or null when it has none. */
+	internal fun iabConsentLanguage(tag: String): String? =
+		tag.split('-', '_').first().takeIf { it.length == 2 && it.all { c -> c in 'a'..'z' || c in 'A'..'Z' } }?.uppercase()
 }

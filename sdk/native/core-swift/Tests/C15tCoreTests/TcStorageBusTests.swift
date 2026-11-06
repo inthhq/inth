@@ -90,6 +90,7 @@ final class TcStorageBusTests: XCTestCase {
 
     // MARK: 1. Projection
 
+    // TCF-CHECK: T1
     func testColdStartEnvelopeProjectsNoRows() {
         XCTAssertEqual(TcStorageBus.values(for: envelope()), [:])
     }
@@ -214,6 +215,7 @@ final class TcStorageBusTests: XCTestCase {
 
     // MARK: 2. The standard NSUserDefaults conformance
 
+    // TCF-CHECK: T4
     func testUserDefaultsBusWritesTheTypesTheSpecTableGives() throws {
         let suiteName = "com.c15t.core.bus.tests-\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suiteName) else {

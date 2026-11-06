@@ -67,6 +67,18 @@ export const translations: CompleteTranslations = {
 		title: 'Nus stimain vossa sfera privata',
 	},
 	iab: {
+		app: {
+			consentStorage:
+				'Vossas tschernas vegnan memorisadas sin quest apparat, en la memoria da configuraziun standard da l’app sut clavs IABTCF, per maximalmain {days} dis. La durada da memorisaziun vegn renovada, cur che vus actualisais vossas tschernas.',
+			description:
+				'Nus ed noss {partnerCount} partunaris memorisain e/u accessain ad infurmaziuns sin voss apparat e processain datas persunalas, sco identificaturs unics e datas da navigaziun, per questa app, per:',
+			legitimateInterestExplanation:
+				'Intgins partunaris processan datas persunalas, sco identificaturs unics e datas da navigaziun, sin basa da lur interess legitim, empè da dumandar voss consentiment. Quai vala be per questa app. Vus avais il dretg da far opposiziun cunter quest processament per mintga intent e per mintga partunari.',
+			scopeServiceSpecific:
+				'Voss consent vala be per questa app e na pertutga betg auters servetschs.',
+			withdraw:
+				'Vus pudais midar vossas tschernas u revocar voss consentiment en mintga mument en las Configuraziuns da la sfera privata da questa app.',
+		},
 		banner: {
 			andMore: 'Ed anc {count}...',
 			description:
