@@ -90,7 +90,7 @@ inth website-audit cookies scan_123 --limit 25 --json
 inth website-audit cookie-inventory --organization org_123 --project prj_123 --json
 ```
 
-Website and scan lists use cursor pages, defaulting to 25 items and accepting up to 100. Cookies belong to the selected scan. Report reads request version 2 so history and provenance remain available. Use JSON output for complete structured evidence, or `--detail all` to expand human output.
+Website and scan lists use cursor pages, defaulting to 25 items and accepting up to 100. Cookies belong to the selected scan. Report reads request version 2 so the comparison with the previous scan is available. Use JSON output for complete structured evidence, or `--detail all` to expand human output.
 
 `cookie-inventory` discovers the latest retained scan for each target across an organization or project. It returns a `latest-scan-index` with `scanId` and `cookiesPath`, rather than cookie rows. Read each scan's rows with `website-audit cookies <scanId>`. The index defaults to 20 items, accepts up to 100, and continues with `data.data.nextCursor` in CLI JSON output.
 
@@ -189,7 +189,7 @@ Read preconditions from `consent lifecycle-get`. The CLI never fetches substitut
 
 ## How do I configure website monitoring?
 
-`website create --data-file target.json --yes` and `website update <targetId> --data-file target.json --yes` take complete target configuration. Specify `projectId`, `origin`, `crawlMode`, `maxDepth`, `maxPages`, `monitoringEnabled`, `policyUrls` and `scheduleCadence`. Update also requires `enabled`. Optional fields include `includeUrls`, `regionProfiles` and a strictly validated `approvedAuditPolicy`.
+`website create --data-file target.json --yes` and `website update <targetId> --data-file target.json --yes` take complete target configuration. Specify `projectId`, `origin`, `crawlMode`, `maxDepth`, `maxPages`, `monitoringEnabled`, `policyUrls` and `scheduleCadence`. Update also requires `enabled`. Optional fields include `includeUrls`, `regionProfiles` and `approvedAuditPolicy`. The CLI checks that the policy is a JSON object or `null` and the API checks its fields.
 
 Monitoring and cadence are explicit. An omitted `approvedAuditPolicy` retains it on update; `null` clears it. Review the approved policy and recurring monitoring effects before confirming. `website search-console-sync --organization <id>` syncs the person's linked Search Console properties. Starting an audit still requires an explicit `--scope free_preview|full_audit`.
 

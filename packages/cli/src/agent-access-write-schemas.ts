@@ -1,6 +1,7 @@
 import type { InputSchema } from "./write-input.ts";
 
 // Public API v2 write contracts, including refinements from the shared input codecs.
+// approvedAuditPolicy is checked as a JSON object; the API validates its contents.
 export const WRITE_SCHEMAS: InputSchema[] = [
   {},
   {
@@ -15,43 +16,43 @@ export const WRITE_SCHEMAS: InputSchema[] = [
       },
       {
         key: "crawlMode",
-        schema: 170,
+        schema: 9,
       },
       {
         key: "includeUrls",
-        schema: 171,
+        schema: 10,
       },
       {
         key: "maxDepth",
-        schema: 172,
+        schema: 11,
       },
       {
         key: "maxPages",
-        schema: 173,
+        schema: 12,
       },
       {
         key: "monitoringEnabled",
-        schema: 18,
+        schema: 6,
       },
       {
         key: "origin",
-        schema: 174,
+        schema: 13,
       },
       {
         key: "policyUrls",
-        schema: 171,
+        schema: 10,
       },
       {
         key: "projectId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "regionProfiles",
-        schema: 175,
+        schema: 14,
       },
       {
         key: "scheduleCadence",
-        schema: 177,
+        schema: 16,
       },
     ],
     required: [
@@ -67,1057 +68,21 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "object",
   },
   {
-    choices: [4, 16],
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "version",
-        schema: 5,
-      },
-      {
-        key: "revision",
-        schema: 6,
-      },
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "approvedAt",
-        schema: 8,
-      },
-      {
-        key: "approvalReference",
-        schema: 9,
-      },
-      {
-        key: "cookies",
-        schema: 10,
-      },
-      {
-        key: "collections",
-        schema: 46,
-      },
-      {
-        key: "storage",
-        schema: 67,
-      },
-      {
-        key: "withdrawal",
-        schema: 78,
-      },
-      {
-        key: "googleInitialization",
-        schema: 81,
-      },
-      {
-        key: "auditExpectations",
-        schema: 101,
-      },
-      {
-        key: "selectedActivity",
-        schema: 120,
-      },
-      {
-        key: "choiceInterface",
-        schema: 124,
-      },
-      {
-        key: "refusalPersistence",
-        schema: 127,
-      },
-      {
-        key: "tcf",
-        schema: 130,
-      },
-      {
-        key: "usPrivacy",
-        schema: 148,
-      },
-    ],
-    required: [
-      "version",
-      "revision",
-      "origin",
-      "approvedAt",
-      "approvalReference",
-      "cookies",
-    ],
-    type: "object",
-  },
-  {
-    enumJson: ["1"],
-    type: "number",
-  },
-  {
-    maxLength: 200,
-    minLength: 1,
-    type: "string",
+    choices: [178, 5],
   },
   {
     minLength: 1,
-    type: "string",
-  },
-  {
-    minLength: 1,
-    pattern: "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,3})?Z$",
-    type: "string",
-  },
-  {
-    maxLength: 1000,
-    minLength: 1,
-    type: "string",
-  },
-  {
-    items: 11,
-    maxItems: 500,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "name",
-        schema: 12,
-      },
-      {
-        key: "ownerHost",
-        schema: 13,
-      },
-      {
-        key: "partitionKey",
-        schema: 14,
-      },
-      {
-        key: "maxRemainingSeconds",
-        schema: 17,
-      },
-      {
-        key: "sessionOnly",
-        schema: 18,
-      },
-      {
-        key: "security",
-        schema: 19,
-      },
-      {
-        key: "priorConsent",
-        schema: 22,
-      },
-      {
-        key: "afterWithdrawal",
-        schema: 33,
-      },
-      {
-        key: "afterRefusal",
-        schema: 34,
-      },
-      {
-        key: "embeddedDocument",
-        schema: 43,
-      },
-      {
-        key: "refreshApproval",
-        schema: 45,
-      },
-    ],
-    required: ["name", "ownerHost", "partitionKey"],
-    type: "object",
-  },
-  {
-    maxLength: 256,
-    minLength: 1,
-    type: "string",
-  },
-  {
-    maxLength: 253,
-    minLength: 1,
-    pattern: "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$",
-    type: "string",
-  },
-  {
-    choices: [15, 16],
-  },
-  {
-    maxLength: 2048,
     type: "string",
   },
   {
     type: "null",
   },
   {
-    minimum: 0,
-    type: "number",
-  },
-  {
     type: "boolean",
   },
   {
-    additional: 1,
-    properties: [
-      {
-        key: "secure",
-        schema: 18,
-      },
-      {
-        key: "httpOnly",
-        schema: 18,
-      },
-      {
-        key: "sameSite",
-        schema: 20,
-      },
-      {
-        key: "domain",
-        schema: 13,
-      },
-      {
-        key: "path",
-        schema: 21,
-      },
-      {
-        key: "hostOnly",
-        schema: 18,
-      },
-      {
-        key: "partitioned",
-        schema: 18,
-      },
-    ],
-    type: "object",
-  },
-  {
-    enumJson: ['"Strict"', '"Lax"', '"None"'],
-    type: "string",
-  },
-  {
     maxLength: 1024,
     minLength: 1,
-    pattern: "^\\/",
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "purpose",
-        schema: 23,
-      },
-      {
-        key: "path",
-        schema: 21,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "requirement",
-        schema: 26,
-      },
-    ],
-    required: ["purpose", "path", "countries", "requirement"],
-    type: "object",
-  },
-  {
-    enumJson: ['"advertising"', '"measurement"'],
-    type: "string",
-  },
-  {
-    items: 25,
-    maxItems: 250,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    pattern: "^[A-Z]{2}$",
-    type: "string",
-  },
-  {
-    choices: [27, 29, 31],
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 28,
-      },
-    ],
-    required: ["kind"],
-    type: "object",
-  },
-  {
-    enumJson: ['"required"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 30,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["kind", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"exempt"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 32,
-      },
-    ],
-    required: ["kind"],
-    type: "object",
-  },
-  {
-    enumJson: ['"unresolved"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "removal",
-        schema: 28,
-      },
-      {
-        key: "purposeId",
-        schema: 6,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["removal", "purposeId", "reference"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "role",
-        schema: 35,
-      },
-      {
-        key: "documentScope",
-        schema: 36,
-      },
-      {
-        key: "purposeId",
-        schema: 6,
-      },
-      {
-        key: "channels",
-        schema: 37,
-      },
-      {
-        key: "transmission",
-        schema: 39,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["role", "documentScope", "purposeId", "channels", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"identifier"'],
-    type: "string",
-  },
-  {
-    enumJson: ['"root"'],
-    type: "string",
-  },
-  {
-    items: 38,
-    maxItems: 2,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    enumJson: ['"cookie_read"', '"cookie_header"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 40,
-      },
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "path",
-        schema: 41,
-      },
-      {
-        key: "method",
-        schema: 42,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["kind", "origin", "path", "method", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"cookie_header"'],
-    type: "string",
-  },
-  {
-    maxLength: 1024,
-    minLength: 1,
-    pattern: "^\\/(?!\\/)[^?#]*$",
-    type: "string",
-  },
-  {
-    enumJson: ['"GET"', '"POST"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "url",
-        schema: 7,
-      },
-      {
-        key: "reference",
-        schema: 44,
-      },
-    ],
-    required: ["url", "reference"],
-    type: "object",
-  },
-  {
-    maxLength: 512,
-    minLength: 1,
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["reference"],
-    type: "object",
-  },
-  {
-    items: 47,
-    maxItems: 500,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "vendor",
-        schema: 48,
-      },
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "path",
-        schema: 41,
-      },
-      {
-        key: "method",
-        schema: 42,
-      },
-      {
-        key: "initiatorUrl",
-        schema: 7,
-      },
-      {
-        key: "purpose",
-        schema: 23,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "requirement",
-        schema: 26,
-      },
-      {
-        key: "payloadFields",
-        schema: 49,
-      },
-      {
-        key: "replayProbe",
-        schema: 50,
-      },
-      {
-        key: "embeddedDocument",
-        schema: 53,
-      },
-      {
-        key: "identifyingSignal",
-        schema: 55,
-      },
-      {
-        key: "afterWithdrawal",
-        schema: 57,
-      },
-      {
-        key: "proxyRouting",
-        schema: 58,
-      },
-    ],
-    required: [
-      "vendor",
-      "origin",
-      "path",
-      "method",
-      "initiatorUrl",
-      "purpose",
-      "countries",
-      "requirement",
-      "payloadFields",
-    ],
-    type: "object",
-  },
-  {
-    enumJson: [
-      '"google-analytics"',
-      '"posthog"',
-      '"plausible"',
-      '"databuddy"',
-      '"linkedin-insight-tag"',
-      '"x-pixel"',
-      '"custom"',
-    ],
-    type: "string",
-  },
-  {
-    items: 6,
-    maxItems: 100,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "eventType",
-        schema: 51,
-      },
-      {
-        key: "markerField",
-        schema: 6,
-      },
-      {
-        key: "purposeId",
-        schema: 6,
-      },
-      {
-        key: "permittedBehaviour",
-        schema: 52,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: [
-      "eventType",
-      "markerField",
-      "purposeId",
-      "permittedBehaviour",
-      "reference",
-    ],
-    type: "object",
-  },
-  {
-    pattern: "^inth-audit-[a-z0-9-]{1,80}$",
-    type: "string",
-  },
-  {
-    enumJson: ['"discard_denied_events"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "url",
-        schema: 7,
-      },
-      {
-        key: "source",
-        schema: 54,
-      },
-      {
-        key: "reference",
-        schema: 44,
-      },
-    ],
-    required: ["url", "source", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"script"', '"parser"', '"document"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 56,
-      },
-      {
-        key: "source",
-        schema: 54,
-      },
-      {
-        key: "fields",
-        schema: 49,
-      },
-      {
-        key: "reference",
-        schema: 44,
-      },
-    ],
-    required: ["kind", "source", "fields", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"pixel"', '"fingerprint"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "purposeId",
-        schema: 6,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["purposeId", "reference"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 59,
-      },
-      {
-        key: "forwarding",
-        schema: 60,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "revision",
-        schema: 6,
-      },
-      {
-        key: "digest",
-        schema: 61,
-      },
-      {
-        key: "observedAt",
-        schema: 8,
-      },
-      {
-        key: "validUntil",
-        schema: 8,
-      },
-      {
-        key: "recipient",
-        schema: 62,
-      },
-      {
-        key: "fields",
-        schema: 64,
-      },
-      {
-        key: "cnameChain",
-        schema: 66,
-      },
-    ],
-    required: [
-      "kind",
-      "forwarding",
-      "reference",
-      "revision",
-      "digest",
-      "observedAt",
-      "validUntil",
-      "recipient",
-      "fields",
-    ],
-    type: "object",
-  },
-  {
-    enumJson: ['"server_proxy"', '"cname"'],
-    type: "string",
-  },
-  {
-    enumJson: ['"unconditional"', '"conditional"'],
-    type: "string",
-  },
-  {
-    pattern: "^[a-f0-9]{64}$",
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "path",
-        schema: 41,
-      },
-      {
-        key: "relationship",
-        schema: 63,
-      },
-      {
-        key: "method",
-        schema: 42,
-      },
-    ],
-    required: ["origin", "path", "relationship", "method"],
-    type: "object",
-  },
-  {
-    enumJson: ['"third_party"', '"first_party"', '"unresolved"'],
-    type: "string",
-  },
-  {
-    items: 65,
-    maxItems: 100,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "source",
-        schema: 6,
-      },
-      {
-        key: "destination",
-        schema: 6,
-      },
-    ],
-    required: ["source", "destination"],
-    type: "object",
-  },
-  {
-    items: 13,
-    maxItems: 16,
-    minItems: 2,
-    type: "array",
-  },
-  {
-    items: 68,
-    maxItems: 500,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "mechanism",
-        schema: 69,
-      },
-      {
-        key: "accessScope",
-        schema: 70,
-      },
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "key",
-        schema: 71,
-      },
-      {
-        key: "database",
-        schema: 72,
-      },
-      {
-        key: "store",
-        schema: 72,
-      },
-      {
-        key: "purpose",
-        schema: 23,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "requirement",
-        schema: 26,
-      },
-      {
-        key: "embeddedDocument",
-        schema: 43,
-      },
-      {
-        key: "afterRefusal",
-        schema: 73,
-      },
-    ],
-    required: [
-      "mechanism",
-      "accessScope",
-      "origin",
-      "key",
-      "database",
-      "store",
-      "purpose",
-      "countries",
-      "requirement",
-    ],
-    type: "object",
-  },
-  {
-    enumJson: ['"local"', '"session"', '"indexeddb"', '"cache"'],
-    type: "string",
-  },
-  {
-    enumJson: ['"document-native-methods"'],
-    type: "string",
-  },
-  {
-    maxLength: 1024,
-    minLength: 1,
-    type: "string",
-  },
-  {
-    choices: [12, 16],
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "role",
-        schema: 35,
-      },
-      {
-        key: "documentScope",
-        schema: 36,
-      },
-      {
-        key: "purposeId",
-        schema: 6,
-      },
-      {
-        key: "channels",
-        schema: 74,
-      },
-      {
-        key: "transmission",
-        schema: 76,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["role", "documentScope", "purposeId", "channels", "reference"],
-    type: "object",
-  },
-  {
-    items: 75,
-    maxItems: 4,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    enumJson: [
-      '"native_read"',
-      '"transmission"',
-      '"property_read"',
-      '"worker"',
-    ],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 77,
-      },
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "path",
-        schema: 41,
-      },
-      {
-        key: "parameter",
-        schema: 6,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["kind", "origin", "path", "parameter", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"fetch_get_query"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "route",
-        schema: 79,
-      },
-    ],
-    required: ["reference", "countries"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "selector",
-        schema: 44,
-      },
-      {
-        key: "label",
-        schema: 80,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["reference"],
-    type: "object",
-  },
-  {
-    maxLength: 120,
-    minLength: 1,
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "transport",
-        schema: 82,
-      },
-      {
-        key: "dataLayerName",
-        schema: 83,
-      },
-      {
-        key: "requiredDefault",
-        schema: 84,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "consentTypes",
-        schema: 85,
-      },
-      {
-        key: "defaultStates",
-        schema: 87,
-      },
-      {
-        key: "choiceStates",
-        schema: 91,
-      },
-      {
-        key: "categoryMapping",
-        schema: 94,
-      },
-      {
-        key: "adsDataRedaction",
-        schema: 98,
-      },
-      {
-        key: "implementationMode",
-        schema: 99,
-      },
-    ],
-    required: [
-      "reference",
-      "transport",
-      "dataLayerName",
-      "requiredDefault",
-      "countries",
-      "consentTypes",
-    ],
-    type: "object",
-  },
-  {
-    enumJson: ['"native_data_layer_push"'],
-    type: "string",
-  },
-  {
-    enumJson: ['"dataLayer"'],
     type: "string",
   },
   {
@@ -1125,966 +90,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "boolean",
   },
   {
-    items: 86,
-    maxItems: 4,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    enumJson: [
-      '"ad_storage"',
-      '"analytics_storage"',
-      '"ad_user_data"',
-      '"ad_personalization"',
-    ],
-    type: "string",
-  },
-  {
-    items: 88,
-    maxItems: 7,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "type",
-        schema: 89,
-      },
-      {
-        key: "state",
-        schema: 90,
-      },
-    ],
-    required: ["type", "state"],
-    type: "object",
-  },
-  {
-    enumJson: [
-      '"ad_storage"',
-      '"analytics_storage"',
-      '"ad_user_data"',
-      '"ad_personalization"',
-      '"functionality_storage"',
-      '"personalization_storage"',
-      '"security_storage"',
-    ],
-    type: "string",
-  },
-  {
-    enumJson: ['"denied"', '"granted"'],
-    type: "string",
-  },
-  {
-    items: 92,
-    maxItems: 5,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "choice",
-        schema: 93,
-      },
-      {
-        key: "updateRequired",
-        schema: 18,
-      },
-      {
-        key: "states",
-        schema: 87,
-      },
-    ],
-    required: ["choice", "updateRequired", "states"],
-    type: "object",
-  },
-  {
-    enumJson: [
-      '"accept_all"',
-      '"reject_all"',
-      '"accept_measurement_only"',
-      '"accept_functionality_only"',
-      '"accept_marketing_only"',
-    ],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "categories",
-        schema: 95,
-      },
-    ],
-    required: ["reference", "categories"],
-    type: "object",
-  },
-  {
-    items: 96,
-    maxItems: 32,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "categoryId",
-        schema: 6,
-      },
-      {
-        key: "consentTypes",
-        schema: 97,
-      },
-    ],
-    required: ["categoryId", "consentTypes"],
-    type: "object",
-  },
-  {
-    items: 89,
-    maxItems: 7,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "required",
-        schema: 84,
-      },
-    ],
-    required: ["reference", "required"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "mode",
-        schema: 100,
-      },
-    ],
-    required: ["reference", "mode"],
-    type: "object",
-  },
-  {
-    enumJson: ['"basic"', '"advanced"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "regionalBanner",
-        schema: 102,
-      },
-      {
-        key: "noticeAtCollection",
-        schema: 105,
-      },
-      {
-        key: "consentStorageScope",
-        schema: 106,
-      },
-      {
-        key: "statisticalException",
-        schema: 108,
-      },
-      {
-        key: "disclosedVendors",
-        schema: 110,
-      },
-      {
-        key: "cmpMaintenance",
-        schema: 113,
-      },
-      {
-        key: "downstreamAssurance",
-        schema: 115,
-      },
-      {
-        key: "instrumentedEvidence",
-        schema: 117,
-      },
-    ],
-    type: "object",
-  },
-  {
-    items: 103,
-    maxItems: 50,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "banner",
-        schema: 104,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["countries", "banner", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"required"', '"not_expected"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "notice",
-        schema: 79,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["countries", "notice", "reference"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "scope",
-        schema: 107,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["scope", "countries", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"host_only"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "purposeIds",
-        schema: 109,
-      },
-      {
-        key: "notice",
-        schema: 79,
-      },
-      {
-        key: "objection",
-        schema: 79,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["countries", "purposeIds", "notice", "objection", "reference"],
-    type: "object",
-  },
-  {
-    items: 6,
-    maxItems: 32,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "vendors",
-        schema: 111,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["vendors", "reference"],
-    type: "object",
-  },
-  {
-    items: 112,
-    maxItems: 500,
-    type: "array",
-  },
-  {
-    pattern: "^[a-z0-9][a-z0-9-]{0,99}$",
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "platform",
-        schema: 112,
-      },
-      {
-        key: "minimumVersion",
-        schema: 114,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["platform", "minimumVersion", "reference"],
-    type: "object",
-  },
-  {
-    pattern: "^\\d{1,4}\\.\\d{1,4}\\.\\d{1,4}$",
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "recipients",
-        schema: 116,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["recipients", "reference"],
-    type: "object",
-  },
-  {
-    items: 7,
-    maxItems: 100,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "rules",
-        schema: 118,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["rules", "reference"],
-    type: "object",
-  },
-  {
-    items: 119,
-    maxItems: 8,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    enumJson: [
-      '"N06"',
-      '"D10"',
-      '"D13"',
-      '"X01"',
-      '"X04"',
-      '"X06"',
-      '"X07"',
-      '"X08"',
-    ],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "categories",
-        schema: 121,
-      },
-    ],
-    required: ["reference", "countries", "categories"],
-    type: "object",
-  },
-  {
-    items: 122,
-    maxItems: 50,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "categoryId",
-        schema: 6,
-      },
-      {
-        key: "collection",
-        schema: 84,
-      },
-      {
-        key: "cookies",
-        schema: 123,
-      },
-    ],
-    required: ["categoryId"],
-    type: "object",
-  },
-  {
-    items: 12,
-    maxItems: 100,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "affirmativeOptIn",
-        schema: 84,
-      },
-      {
-        key: "privacyNoticeUrl",
-        schema: 125,
-      },
-      {
-        key: "accessibility",
-        schema: 126,
-      },
-      {
-        key: "acceptAllOffered",
-        schema: 84,
-      },
-    ],
-    required: ["reference", "countries"],
-    type: "object",
-  },
-  {
-    maxLength: 2048,
-    minLength: 1,
-    type: "string",
-  },
-  {
-    enumJson: ['"wcag_2_1_aa"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "scopes",
-        schema: 128,
-      },
-    ],
-    required: ["reference", "countries", "scopes"],
-    type: "object",
-  },
-  {
-    items: 129,
-    maxItems: 2,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    enumJson: ['"reload"', '"same_session_return"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "countries",
-        schema: 24,
-      },
-      {
-        key: "choices",
-        schema: 131,
-      },
-      {
-        key: "publisherRestrictions",
-        schema: 141,
-      },
-      {
-        key: "consentModeMapping",
-        schema: 145,
-      },
-    ],
-    required: ["reference", "countries"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "acceptAll",
-        schema: 132,
-      },
-      {
-        key: "rejectAll",
-        schema: 139,
-      },
-    ],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "purposeConsents",
-        schema: 133,
-      },
-      {
-        key: "vendorConsents",
-        schema: 135,
-      },
-      {
-        key: "specialFeatureOptins",
-        schema: 137,
-      },
-    ],
-    required: ["purposeConsents", "vendorConsents", "specialFeatureOptins"],
-    type: "object",
-  },
-  {
-    items: 134,
-    maxItems: 24,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    maximum: 24,
-    minimum: 1,
-    type: "integer",
-  },
-  {
-    items: 136,
-    maxItems: 65_535,
-    type: "array",
-  },
-  {
-    maximum: 65_535,
-    minimum: 1,
-    type: "integer",
-  },
-  {
-    items: 138,
-    maxItems: 12,
-    type: "array",
-  },
-  {
-    maximum: 12,
-    minimum: 1,
-    type: "integer",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "allowedPurposeConsents",
-        schema: 140,
-      },
-      {
-        key: "allowedVendorConsents",
-        schema: 135,
-      },
-      {
-        key: "allowedSpecialFeatureOptins",
-        schema: 137,
-      },
-    ],
-    required: [
-      "allowedPurposeConsents",
-      "allowedVendorConsents",
-      "allowedSpecialFeatureOptins",
-    ],
-    type: "object",
-  },
-  {
-    items: 134,
-    maxItems: 24,
-    type: "array",
-  },
-  {
-    items: 142,
-    maxItems: 64,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "purposeId",
-        schema: 134,
-      },
-      {
-        key: "restrictionType",
-        schema: 143,
-      },
-      {
-        key: "vendorIds",
-        schema: 144,
-      },
-    ],
-    required: ["purposeId", "restrictionType", "vendorIds"],
-    type: "object",
-  },
-  {
-    enumJson: ["0", "1", "2"],
-    type: "number",
-  },
-  {
-    items: 136,
-    maxItems: 65_535,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "transport",
-        schema: 82,
-      },
-      {
-        key: "dataLayerName",
-        schema: 83,
-      },
-      {
-        key: "types",
-        schema: 146,
-      },
-    ],
-    required: ["reference", "transport", "dataLayerName", "types"],
-    type: "object",
-  },
-  {
-    items: 147,
-    maxItems: 4,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "type",
-        schema: 89,
-      },
-      {
-        key: "purposeConsents",
-        schema: 133,
-      },
-    ],
-    required: ["type", "purposeConsents"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "reference",
-        schema: 9,
-      },
-      {
-        key: "subdivisions",
-        schema: 149,
-      },
-      {
-        key: "optOutChoice",
-        schema: 151,
-      },
-      {
-        key: "gpp",
-        schema: 152,
-      },
-      {
-        key: "usp",
-        schema: 158,
-      },
-      {
-        key: "saleSharing",
-        schema: 159,
-      },
-      {
-        key: "optOutRoute",
-        schema: 163,
-      },
-    ],
-    required: ["reference", "subdivisions"],
-    type: "object",
-  },
-  {
-    items: 150,
-    maxItems: 60,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    pattern: "^US-[A-Z]{2}$",
-    type: "string",
-  },
-  {
-    enumJson: ['"saved_rejection"'],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "sections",
-        schema: 153,
-      },
-      {
-        key: "optOutFields",
-        schema: 156,
-      },
-    ],
-    required: ["sections", "optOutFields"],
-    type: "object",
-  },
-  {
-    items: 154,
-    maxItems: 6,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "api",
-        schema: 155,
-      },
-      {
-        key: "subdivisions",
-        schema: 149,
-      },
-    ],
-    required: ["api", "subdivisions"],
-    type: "object",
-  },
-  {
-    enumJson: ['"usnat"', '"usca"', '"usva"', '"usco"', '"usut"', '"usct"'],
-    type: "string",
-  },
-  {
-    items: 157,
-    maxItems: 3,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    enumJson: [
-      '"SaleOptOut"',
-      '"SharingOptOut"',
-      '"TargetedAdvertisingOptOut"',
-    ],
-    type: "string",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "optOutFlag",
-        schema: 28,
-      },
-    ],
-    required: ["optOutFlag"],
-    type: "object",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "transports",
-        schema: 160,
-      },
-    ],
-    required: ["transports"],
-    type: "object",
-  },
-  {
-    items: 161,
-    maxItems: 100,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "origin",
-        schema: 7,
-      },
-      {
-        key: "path",
-        schema: 41,
-      },
-      {
-        key: "method",
-        schema: 42,
-      },
-      {
-        key: "activity",
-        schema: 162,
-      },
-      {
-        key: "reference",
-        schema: 9,
-      },
-    ],
-    required: ["origin", "path", "method", "activity", "reference"],
-    type: "object",
-  },
-  {
-    enumJson: ['"sale"', '"sharing"', '"targeted_advertising"'],
-    type: "string",
-  },
-  {
-    choices: [164, 168],
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 165,
-      },
-      {
-        key: "label",
-        schema: 166,
-      },
-      {
-        key: "pages",
-        schema: 167,
-      },
-    ],
-    required: ["kind", "label"],
-    type: "object",
-  },
-  {
-    enumJson: ['"consent_manager"'],
-    type: "string",
-  },
-  {
-    enumJson: [
-      '"Do Not Sell or Share My Personal Information"',
-      '"Do Not Sell My Personal Information"',
-      '"Do Not Share My Personal Information"',
-      '"Your Privacy Choices"',
-      '"Your California Privacy Choices"',
-    ],
-    type: "string",
-  },
-  {
-    items: 41,
-    maxItems: 50,
-    minItems: 1,
-    type: "array",
-  },
-  {
-    additional: 1,
-    properties: [
-      {
-        key: "kind",
-        schema: 169,
-      },
-      {
-        key: "label",
-        schema: 166,
-      },
-      {
-        key: "path",
-        schema: 41,
-      },
-      {
-        key: "pages",
-        schema: 167,
-      },
-    ],
-    required: ["kind", "label", "path"],
-    type: "object",
-  },
-  {
-    enumJson: ['"page"'],
-    type: "string",
-  },
-  {
     enumJson: ['"mixed"', '"domain"', '"sitemap"', '"explicit_urls"'],
     type: "string",
   },
   {
-    items: 7,
+    items: 4,
     type: "array",
   },
   {
@@ -2101,7 +111,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    items: 176,
+    items: 15,
     type: "array",
   },
   {
@@ -2127,47 +137,47 @@ export const WRITE_SCHEMAS: InputSchema[] = [
       },
       {
         key: "crawlMode",
-        schema: 170,
+        schema: 9,
       },
       {
         key: "includeUrls",
-        schema: 171,
+        schema: 10,
       },
       {
         key: "maxDepth",
-        schema: 172,
+        schema: 11,
       },
       {
         key: "maxPages",
-        schema: 173,
+        schema: 12,
       },
       {
         key: "monitoringEnabled",
-        schema: 18,
+        schema: 6,
       },
       {
         key: "origin",
-        schema: 174,
+        schema: 13,
       },
       {
         key: "policyUrls",
-        schema: 171,
+        schema: 10,
       },
       {
         key: "projectId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "regionProfiles",
-        schema: 175,
+        schema: 14,
       },
       {
         key: "scheduleCadence",
-        schema: 177,
+        schema: 16,
       },
       {
         key: "enabled",
-        schema: 18,
+        schema: 6,
       },
     ],
     required: [
@@ -2188,25 +198,25 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "i18n",
-        schema: 180,
+        schema: 19,
       },
     ],
     required: ["i18n"],
     type: "object",
   },
   {
-    choices: [181, 16],
+    choices: [20, 5],
   },
   {
     additional: 1,
     properties: [
       {
         key: "defaultProfile",
-        schema: 182,
+        schema: 21,
       },
       {
         key: "messages",
-        schema: 183,
+        schema: 22,
       },
     ],
     type: "object",
@@ -2216,7 +226,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    additional: 184,
+    additional: 23,
     keyMax: 128,
     type: "object",
   },
@@ -2225,11 +235,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "fallbackLanguage",
-        schema: 185,
+        schema: 24,
       },
       {
         key: "translations",
-        schema: 186,
+        schema: 25,
       },
     ],
     required: ["translations"],
@@ -2240,171 +250,171 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    additional: 187,
+    additional: 26,
     keyMax: 32,
     type: "object",
   },
   {
-    choices: [188, 189],
+    choices: [27, 28],
   },
   {
     maxLength: 20_000,
     type: "string",
   },
   {
-    additional: 190,
+    additional: 29,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 191],
+    choices: [27, 30],
   },
   {
-    additional: 192,
+    additional: 31,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 193],
+    choices: [27, 32],
   },
   {
-    additional: 194,
+    additional: 33,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 195],
+    choices: [27, 34],
   },
   {
-    additional: 196,
+    additional: 35,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 197],
+    choices: [27, 36],
   },
   {
-    additional: 198,
+    additional: 37,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 199],
+    choices: [27, 38],
   },
   {
-    additional: 200,
+    additional: 39,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 201],
+    choices: [27, 40],
   },
   {
-    additional: 202,
+    additional: 41,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 203],
+    choices: [27, 42],
   },
   {
-    additional: 204,
+    additional: 43,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 205],
+    choices: [27, 44],
   },
   {
-    additional: 206,
+    additional: 45,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 207],
+    choices: [27, 46],
   },
   {
-    additional: 208,
+    additional: 47,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 209],
+    choices: [27, 48],
   },
   {
-    additional: 210,
+    additional: 49,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 211],
+    choices: [27, 50],
   },
   {
-    additional: 212,
+    additional: 51,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 213],
+    choices: [27, 52],
   },
   {
-    additional: 214,
+    additional: 53,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 215],
+    choices: [27, 54],
   },
   {
-    additional: 216,
+    additional: 55,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 217],
+    choices: [27, 56],
   },
   {
-    additional: 218,
+    additional: 57,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 219],
+    choices: [27, 58],
   },
   {
-    additional: 220,
+    additional: 59,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 221],
+    choices: [27, 60],
   },
   {
-    additional: 222,
+    additional: 61,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 223],
+    choices: [27, 62],
   },
   {
-    additional: 224,
+    additional: 63,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 225],
+    choices: [27, 64],
   },
   {
-    additional: 226,
+    additional: 65,
     keyMax: 128,
     type: "object",
   },
   {
-    choices: [188, 227],
+    choices: [27, 66],
   },
   {
-    additional: 188,
+    additional: 27,
     keyMax: 128,
     type: "object",
   },
@@ -2413,14 +423,14 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "policies",
-        schema: 229,
+        schema: 68,
       },
     ],
     required: ["policies"],
     type: "object",
   },
   {
-    items: 230,
+    items: 69,
     maxItems: 100,
     type: "array",
   },
@@ -2429,82 +439,82 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "review",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "legacyMaterial",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "model",
-        schema: 236,
+        schema: 75,
       },
       {
         key: "prompt",
-        schema: 237,
+        schema: 76,
       },
       {
         key: "categories",
-        schema: 238,
+        schema: 77,
       },
       {
         key: "scopeMode",
-        schema: 239,
+        schema: 78,
       },
       {
         key: "preselectedCategories",
-        schema: 238,
+        schema: 77,
       },
       {
         key: "actions",
-        schema: 240,
+        schema: 79,
       },
       {
         key: "rights",
-        schema: 242,
+        schema: 81,
       },
       {
         key: "validity",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "privacySignals",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "copyRevision",
-        schema: 233,
+        schema: 72,
       },
       {
         key: "consent",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "id",
-        schema: 244,
+        schema: 83,
       },
       {
         key: "i18n",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "match",
-        schema: 245,
+        schema: 84,
       },
       {
         key: "proof",
-        schema: 231,
+        schema: 70,
       },
       {
         key: "ui",
-        schema: 231,
+        schema: 70,
       },
     ],
     required: ["id", "match"],
     type: "object",
   },
   {
-    choices: [18, 232, 233, 16, 234, 235],
+    choices: [6, 71, 72, 5, 73, 74],
   },
   {
     type: "number",
@@ -2513,11 +523,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    items: 231,
+    items: 70,
     type: "array",
   },
   {
-    additional: 231,
+    additional: 70,
     type: "object",
   },
   {
@@ -2529,7 +539,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    items: 233,
+    items: 72,
     type: "array",
   },
   {
@@ -2537,7 +547,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    items: 241,
+    items: 80,
     type: "array",
   },
   {
@@ -2545,7 +555,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    items: 243,
+    items: 82,
     type: "array",
   },
   {
@@ -2559,7 +569,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    additional: 231,
+    additional: 70,
     keyMax: 128,
     type: "object",
   },
@@ -2568,11 +578,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "expectedInstanceId",
-        schema: 247,
+        schema: 86,
       },
       {
         key: "expectedBackendVersion",
-        schema: 248,
+        schema: 87,
       },
     ],
     required: ["expectedInstanceId", "expectedBackendVersion"],
@@ -2595,7 +605,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "name",
-        schema: 250,
+        schema: 89,
       },
     ],
     required: ["name"],
@@ -2613,7 +623,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "overlapSeconds",
-        schema: 252,
+        schema: 91,
       },
     ],
     required: ["overlapSeconds"],
@@ -2629,37 +639,37 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 254,
+        schema: 93,
       },
     ],
     required: ["input"],
     type: "object",
   },
   {
-    choices: [255, 259],
+    choices: [94, 98],
   },
   {
     additional: 1,
     properties: [
       {
         key: "checkoutAttemptId",
-        schema: 256,
+        schema: 95,
       },
       {
         key: "promotionCode",
-        schema: 233,
+        schema: 72,
       },
       {
         key: "plan",
-        schema: 257,
+        schema: 96,
       },
       {
         key: "product",
-        schema: 258,
+        schema: 97,
       },
     ],
     required: ["checkoutAttemptId", "plan", "product"],
@@ -2694,23 +704,23 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "billingInterval",
-        schema: 260,
+        schema: 99,
       },
       {
         key: "checkoutAttemptId",
-        schema: 256,
+        schema: 95,
       },
       {
         key: "plan",
-        schema: 261,
+        schema: 100,
       },
       {
         key: "product",
-        schema: 262,
+        schema: 101,
       },
       {
         key: "promotionCode",
-        schema: 233,
+        schema: 72,
       },
     ],
     required: ["billingInterval", "checkoutAttemptId", "plan", "product"],
@@ -2733,15 +743,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 254,
+        schema: 93,
       },
       {
         key: "approvedQuote",
-        schema: 264,
+        schema: 103,
       },
     ],
     required: ["input", "approvedQuote"],
@@ -2752,27 +762,27 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "currency",
-        schema: 265,
+        schema: 104,
       },
       {
         key: "discount",
-        schema: 266,
+        schema: 105,
       },
       {
         key: "lineItems",
-        schema: 269,
+        schema: 108,
       },
       {
         key: "nextCycle",
-        schema: 272,
+        schema: 111,
       },
       {
         key: "subtotal",
-        schema: 271,
+        schema: 110,
       },
       {
         key: "total",
-        schema: 172,
+        schema: 11,
       },
     ],
     required: ["currency", "lineItems", "nextCycle", "subtotal", "total"],
@@ -2785,28 +795,28 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    choices: [267, 16],
+    choices: [106, 5],
   },
   {
     additional: 1,
     properties: [
       {
         key: "amount",
-        schema: 172,
+        schema: 11,
       },
       {
         key: "label",
-        schema: 268,
+        schema: 107,
       },
     ],
     required: ["amount", "label"],
     type: "object",
   },
   {
-    choices: [233, 16],
+    choices: [72, 5],
   },
   {
-    items: 270,
+    items: 109,
     maxItems: 100,
     type: "array",
   },
@@ -2815,15 +825,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "amount",
-        schema: 271,
+        schema: 110,
       },
       {
         key: "description",
-        schema: 268,
+        schema: 107,
       },
       {
         key: "label",
-        schema: 233,
+        schema: 72,
       },
     ],
     required: ["amount", "description", "label"],
@@ -2833,18 +843,18 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "integer",
   },
   {
-    choices: [273, 16],
+    choices: [112, 5],
   },
   {
     additional: 1,
     properties: [
       {
         key: "startsAt",
-        schema: 274,
+        schema: 113,
       },
       {
         key: "total",
-        schema: 172,
+        schema: 11,
       },
     ],
     required: ["startsAt", "total"],
@@ -2859,11 +869,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 276,
+        schema: 115,
       },
     ],
     required: ["input"],
@@ -2874,15 +884,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "checkoutAttemptId",
-        schema: 256,
+        schema: 95,
       },
       {
         key: "catalogVersion",
-        schema: 173,
+        schema: 12,
       },
       {
         key: "credits",
-        schema: 173,
+        schema: 12,
       },
     ],
     required: ["checkoutAttemptId", "catalogVersion", "credits"],
@@ -2893,15 +903,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 276,
+        schema: 115,
       },
       {
         key: "approvedQuote",
-        schema: 264,
+        schema: 103,
       },
     ],
     required: ["input", "approvedQuote"],
@@ -2912,45 +922,45 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 279,
+        schema: 118,
       },
     ],
     required: ["input"],
     type: "object",
   },
   {
-    choices: [280, 281],
+    choices: [119, 120],
   },
   {
     additional: 1,
     properties: [
       {
         key: "catalogVersion",
-        schema: 173,
+        schema: 12,
       },
       {
         key: "enabled",
-        schema: 84,
+        schema: 8,
       },
       {
         key: "monthlyPurchaseLimit",
-        schema: 173,
+        schema: 12,
       },
       {
         key: "quantityCredits",
-        schema: 173,
+        schema: 12,
       },
       {
         key: "requestId",
-        schema: 256,
+        schema: 95,
       },
       {
         key: "thresholdCredits",
-        schema: 173,
+        schema: 12,
       },
     ],
     required: [
@@ -2968,11 +978,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "enabled",
-        schema: 282,
+        schema: 121,
       },
       {
         key: "requestId",
-        schema: 256,
+        schema: 95,
       },
     ],
     required: ["enabled", "requestId"],
@@ -2987,11 +997,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 284,
+        schema: 123,
       },
     ],
     required: ["input"],
@@ -3002,11 +1012,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "address",
-        schema: 285,
+        schema: 124,
       },
       {
         key: "businessName",
-        schema: 291,
+        schema: 130,
       },
     ],
     required: ["address", "businessName"],
@@ -3017,34 +1027,34 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "city",
-        schema: 286,
+        schema: 125,
       },
       {
         key: "country",
-        schema: 288,
+        schema: 127,
       },
       {
         key: "line1",
-        schema: 289,
+        schema: 128,
       },
       {
         key: "line2",
-        schema: 286,
+        schema: 125,
       },
       {
         key: "postalCode",
-        schema: 290,
+        schema: 129,
       },
       {
         key: "state",
-        schema: 286,
+        schema: 125,
       },
     ],
     required: ["city", "country", "line1", "line2", "postalCode", "state"],
     type: "object",
   },
   {
-    choices: [287, 16],
+    choices: [126, 5],
   },
   {
     maxLength: 255,
@@ -3060,7 +1070,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    choices: [185, 16],
+    choices: [24, 5],
   },
   {
     maxLength: 150,
@@ -3072,15 +1082,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 293,
+        schema: 132,
       },
       {
         key: "confirmCancellation",
-        schema: 84,
+        schema: 8,
       },
     ],
     required: ["input", "confirmCancellation"],
@@ -3091,11 +1101,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "product",
-        schema: 294,
+        schema: 133,
       },
       {
         key: "requestId",
-        schema: 256,
+        schema: 95,
       },
     ],
     required: ["product", "requestId"],
@@ -3110,11 +1120,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "input",
-        schema: 293,
+        schema: 132,
       },
     ],
     required: ["input"],
@@ -3125,11 +1135,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "paymentMethodId",
-        schema: 297,
+        schema: 136,
       },
     ],
     required: ["paymentMethodId"],
@@ -3145,15 +1155,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
       {
         key: "paymentMethodId",
-        schema: 297,
+        schema: 136,
       },
       {
         key: "confirmPaymentMethodId",
-        schema: 297,
+        schema: 136,
       },
     ],
     required: ["paymentMethodId", "confirmPaymentMethodId"],
@@ -3164,28 +1174,28 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 7,
+        schema: 4,
       },
     ],
     type: "object",
   },
   {
-    choices: [301],
+    choices: [140],
   },
   {
     additional: 1,
     properties: [
       {
         key: "clientMessageId",
-        schema: 302,
+        schema: 141,
       },
       {
         key: "text",
-        schema: 233,
+        schema: 72,
       },
       {
         key: "attachmentIds",
-        schema: 303,
+        schema: 142,
       },
     ],
     required: ["clientMessageId", "text"],
@@ -3198,10 +1208,10 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    choices: [304, 16],
+    choices: [143, 5],
   },
   {
-    items: 305,
+    items: 144,
     maxItems: 5,
     type: "array",
   },
@@ -3215,15 +1225,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "clientMessageId",
-        schema: 302,
+        schema: 141,
       },
       {
         key: "text",
-        schema: 233,
+        schema: 72,
       },
       {
         key: "attachmentIds",
-        schema: 303,
+        schema: 142,
       },
     ],
     required: ["clientMessageId", "text"],
@@ -3239,11 +1249,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "hidePII",
-        schema: 18,
+        schema: 6,
       },
       {
         key: "name",
-        schema: 309,
+        schema: 148,
       },
     ],
     type: "object",
@@ -3259,7 +1269,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "confirmation",
-        schema: 311,
+        schema: 150,
       },
     ],
     required: ["confirmation"],
@@ -3275,19 +1285,19 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "scope",
-        schema: 313,
+        schema: 152,
       },
       {
         key: "family",
-        schema: 314,
+        schema: 153,
       },
       {
         key: "enabled",
-        schema: 18,
+        schema: 6,
       },
       {
         key: "mode",
-        schema: 315,
+        schema: 154,
       },
     ],
     required: ["scope", "family", "enabled", "mode"],
@@ -3320,15 +1330,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "role",
-        schema: 317,
+        schema: 156,
       },
       {
         key: "configured",
-        schema: 18,
+        schema: 6,
       },
       {
         key: "userIds",
-        schema: 318,
+        schema: 157,
       },
     ],
     required: ["role", "configured", "userIds"],
@@ -3339,7 +1349,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     type: "string",
   },
   {
-    items: 297,
+    items: 136,
     maxItems: 500,
     type: "array",
   },
@@ -3348,7 +1358,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "name",
-        schema: 337,
+        schema: 176,
       },
     ],
     required: ["name"],
@@ -3359,11 +1369,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "newSlug",
-        schema: 321,
+        schema: 160,
       },
       {
         key: "expectedSlug",
-        schema: 321,
+        schema: 160,
       },
     ],
     required: ["newSlug", "expectedSlug"],
@@ -3380,7 +1390,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "confirmation",
-        schema: 297,
+        schema: 136,
       },
     ],
     required: ["confirmation"],
@@ -3391,15 +1401,15 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "mutationId",
-        schema: 309,
+        schema: 148,
       },
       {
         key: "expectedVersion",
-        schema: 324,
+        schema: 163,
       },
       {
         key: "providerRetention",
-        schema: 325,
+        schema: 164,
       },
     ],
     required: ["mutationId", "expectedVersion", "providerRetention"],
@@ -3424,17 +1434,17 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "branchFilters",
-        schema: 328,
+        schema: 167,
       },
       {
         key: "ignoredPaths",
-        schema: 328,
+        schema: 167,
       },
     ],
     type: "object",
   },
   {
-    items: 338,
+    items: 177,
     maxItems: 100,
     type: "array",
   },
@@ -3443,11 +1453,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "enabled",
-        schema: 18,
+        schema: 6,
       },
       {
         key: "branchFilters",
-        schema: 328,
+        schema: 167,
       },
     ],
     required: ["enabled"],
@@ -3458,7 +1468,7 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "projectId",
-        schema: 297,
+        schema: 136,
       },
     ],
     required: ["projectId"],
@@ -3469,11 +1479,11 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "mode",
-        schema: 332,
+        schema: 171,
       },
       {
         key: "confirmation",
-        schema: 333,
+        schema: 172,
       },
     ],
     required: ["mode"],
@@ -3492,23 +1502,23 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "organizationId",
-        schema: 297,
+        schema: 136,
       },
       {
         key: "quoteId",
-        schema: 297,
+        schema: 136,
       },
       {
         key: "candidatePlanChecksum",
-        schema: 71,
+        schema: 7,
       },
       {
         key: "maxCredits",
-        schema: 324,
+        schema: 163,
       },
       {
         key: "requestId",
-        schema: 335,
+        schema: 174,
       },
     ],
     required: ["quoteId", "candidatePlanChecksum", "maxCredits", "requestId"],
@@ -3524,27 +1534,27 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     properties: [
       {
         key: "currency",
-        schema: 265,
+        schema: 104,
       },
       {
         key: "discount",
-        schema: 266,
+        schema: 105,
       },
       {
         key: "lineItems",
-        schema: 269,
+        schema: 108,
       },
       {
         key: "nextCycle",
-        schema: 272,
+        schema: 111,
       },
       {
         key: "subtotal",
-        schema: 271,
+        schema: 110,
       },
       {
         key: "total",
-        schema: 172,
+        schema: 11,
       },
     ],
     required: ["currency", "lineItems", "nextCycle", "subtotal", "total"],
@@ -3562,6 +1572,9 @@ export const WRITE_SCHEMAS: InputSchema[] = [
     trim: true,
     type: "string",
   },
+  {
+    type: "object",
+  },
 ];
 
 export const WRITE_SCHEMA_NAMES: { name: string; schema: number }[] = [
@@ -3571,142 +1584,142 @@ export const WRITE_SCHEMA_NAMES: { name: string; schema: number }[] = [
   },
   {
     name: "WebsiteTargetUpdate",
-    schema: 178,
+    schema: 17,
   },
   {
     name: "ProjectConsentI18nUpdate",
-    schema: 179,
+    schema: 18,
   },
   {
     name: "ProjectConsentPoliciesUpdate",
-    schema: 228,
+    schema: 67,
   },
   {
     name: "ProjectConsentLifecycleMutation",
-    schema: 246,
+    schema: 85,
   },
   {
     name: "ProjectConsentRuntimeKeyCreate",
-    schema: 249,
+    schema: 88,
   },
   {
     name: "ProjectConsentRuntimeKeyRotate",
-    schema: 251,
+    schema: 90,
   },
   {
     name: "BillingPlanPreviewInput",
-    schema: 253,
+    schema: 92,
   },
   {
     name: "BillingPlanChangeInput",
-    schema: 263,
+    schema: 102,
   },
   {
     name: "BillingCreditPreviewInput",
-    schema: 275,
+    schema: 114,
   },
   {
     name: "BillingCreditPurchaseInput",
-    schema: 277,
+    schema: 116,
   },
   {
     name: "BillingAutoTopUpInput",
-    schema: 278,
+    schema: 117,
   },
   {
     name: "BillingProfileInput",
-    schema: 283,
+    schema: 122,
   },
   {
     name: "BillingCancelSubscriptionInput",
-    schema: 292,
+    schema: 131,
   },
   {
     name: "BillingSubscriptionInput",
-    schema: 295,
+    schema: 134,
   },
   {
     name: "BillingDefaultPaymentInput",
-    schema: 296,
+    schema: 135,
   },
   {
     name: "BillingRemovePaymentInput",
-    schema: 298,
+    schema: 137,
   },
   {
     name: "BillingPortalInput",
-    schema: 299,
+    schema: 138,
   },
   {
     name: "PublicSupportCreateConversation",
-    schema: 300,
+    schema: 139,
   },
   {
     name: "PublicSupportSendMessage",
-    schema: 306,
+    schema: 145,
   },
   {
     name: "PublicSupportEmptyBody",
-    schema: 307,
+    schema: 146,
   },
   {
     name: "AccountUpdate",
-    schema: 308,
+    schema: 147,
   },
   {
     name: "AccountDeletion",
-    schema: 310,
+    schema: 149,
   },
   {
     name: "NotificationPreferenceUpdate",
-    schema: 312,
+    schema: 151,
   },
   {
     name: "NotificationRoutingUpdate",
-    schema: 316,
+    schema: 155,
   },
   {
     name: "OrganizationSettingsUpdate",
-    schema: 319,
+    schema: 158,
   },
   {
     name: "OrganizationSlugUpdate",
-    schema: 320,
+    schema: 159,
   },
   {
     name: "OrganizationDeletion",
-    schema: 322,
+    schema: 161,
   },
   {
     name: "OrganizationRetentionUpdate",
-    schema: 323,
+    schema: 162,
   },
   {
     name: "EmptyIntegrationInput",
-    schema: 326,
+    schema: 165,
   },
   {
     name: "RepositorySettingsInput",
-    schema: 327,
+    schema: 166,
   },
   {
     name: "RepositoryPullRequestsInput",
-    schema: 329,
+    schema: 168,
   },
   {
     name: "RepositoryLinkInput",
-    schema: 330,
+    schema: 169,
   },
   {
     name: "RevokeAccountSessionsInput",
-    schema: 331,
+    schema: 170,
   },
   {
     name: "CodeAuditQuoteApprovalInput",
-    schema: 334,
+    schema: 173,
   },
   {
     name: "BillingQuote",
-    schema: 336,
+    schema: 175,
   },
 ];
