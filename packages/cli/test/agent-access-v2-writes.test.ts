@@ -833,25 +833,31 @@ describe("named Dashboard writes", () => {
       ])
     ).toThrow();
   });
-  it("sends an approved audit policy unchanged for the API to validate", () => {
-    const approvedAuditPolicy = {
-      cookies: [{ extra: true, name: "a" }],
-      revision: "v1",
-      version: 1,
-    };
-    const request = buildResourceRequest(
-      parseArguments([
-        "website",
-        "create",
-        "--data",
-        JSON.stringify({ ...websiteInput, approvedAuditPolicy }),
-        "--yes",
-      ])
-    );
-    expect(JSON.parse(request.body ?? "{}").approvedAuditPolicy).toEqual(
-      approvedAuditPolicy
-    );
-  });
+  it.each([
+    { action: ["create"], extra: {} },
+    { action: ["update", "target_123"], extra: { enabled: true } },
+  ])(
+    "sends an approved audit policy unchanged on website $action.0",
+    ({ action, extra }) => {
+      const approvedAuditPolicy = {
+        cookies: [{ extra: true, name: "a" }],
+        revision: "v1",
+        version: 1,
+      };
+      const request = buildResourceRequest(
+        parseArguments([
+          "website",
+          ...action,
+          "--data",
+          JSON.stringify({ ...websiteInput, ...extra, approvedAuditPolicy }),
+          "--yes",
+        ])
+      );
+      expect(JSON.parse(request.body ?? "{}").approvedAuditPolicy).toEqual(
+        approvedAuditPolicy
+      );
+    }
+  );
   it.each(["review-1", ["review-1"], 1])(
     "rejects an approved audit policy that is not an object: %j",
     (approvedAuditPolicy) => {
