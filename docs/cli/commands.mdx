@@ -90,7 +90,7 @@ inth website-audit cookies scan_123 --limit 25 --json
 inth website-audit cookie-inventory --organization org_123 --project prj_123 --json
 ```
 
-Website and scan lists use cursor pages, defaulting to 25 items and accepting up to 100. Cookies belong to the selected scan. Report reads request version 2 so history and provenance remain available. Use JSON output for complete structured evidence, or `--detail all` to expand human output.
+Website and scan lists use cursor pages, defaulting to 25 items and accepting up to 100. Cookies belong to the selected scan. Report reads request version 2 so the comparison with the previous scan is available. Use JSON output for complete structured evidence, or `--detail all` to expand human output.
 
 `cookie-inventory` discovers the latest retained scan for each target across an organization or project. It returns a `latest-scan-index` with `scanId` and `cookiesPath`, rather than cookie rows. Read each scan's rows with `website-audit cookies <scanId>`. The index defaults to 20 items, accepts up to 100, and continues with `data.data.nextCursor` in CLI JSON output.
 

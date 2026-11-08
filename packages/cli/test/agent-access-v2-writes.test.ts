@@ -858,6 +858,23 @@ describe("named Dashboard writes", () => {
       );
     }
   );
+  it("sends a null audit policy so website update clears it", () => {
+    const request = buildResourceRequest(
+      parseArguments([
+        "website",
+        "update",
+        "target_123",
+        "--data",
+        JSON.stringify({
+          ...websiteInput,
+          approvedAuditPolicy: null,
+          enabled: true,
+        }),
+        "--yes",
+      ])
+    );
+    expect(JSON.parse(request.body ?? "{}").approvedAuditPolicy).toBeNull();
+  });
   it.each(["review-1", ["review-1"], 1])(
     "rejects an approved audit policy that is not an object: %j",
     (approvedAuditPolicy) => {
