@@ -23,7 +23,9 @@
 		"./script-timing": "./src/script-timing.ts",
 		"./stylesheet-overlap": "./src/stylesheet-overlap.ts",
 		"./visit-definitions": "./src/visit-definitions.ts",
-		"./visit-metrics": "./src/visit-metrics.ts"
+		"./visit-metrics": "./src/visit-metrics.ts",
+		"./consent-gate": "./src/consent-gate.ts",
+		"./consent-gate-page": "./src/consent-gate-page.ts"
 	},
 	"scripts": {
 		"bench": "echo 'no-op'",

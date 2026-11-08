@@ -5,6 +5,7 @@ import type { ConsentSnapshot } from '@c15t/core';
 
 import type { ConsentDialogOptions } from '../types';
 import type { createDialog as createDialogNow } from './dialog';
+import { importDialog } from './dialog-import';
 import type { Surface, SurfaceContext } from './surface';
 
 // Safari has no requestIdleCallback; a short delay after load stands in.
@@ -15,14 +16,11 @@ type DialogFactory = typeof createDialogNow;
 let loading: Promise<DialogFactory> | undefined;
 
 const loadDialog = function loadDialog(): Promise<DialogFactory> {
-	loading ??= import('./dialog').then(
-		({ createDialog: create }) => create,
-		(error: unknown) => {
-			// A failed chunk load retries on the next open.
-			loading = undefined;
-			throw error;
-		}
-	);
+	loading ??= importDialog().catch((error: unknown) => {
+		// A failed chunk load retries on the next open.
+		loading = undefined;
+		throw error;
+	});
 	return loading;
 };
 
@@ -64,8 +62,9 @@ const warmWhenIdle = function warmWhenIdle(): void {
  * bundler users, so a page that only shows the banner never downloads
  * them. The chunk starts loading in idle time once a banner or the trigger
  * is on screen, and at the latest when the dialog opens; the dialog then
- * renders the newest snapshot. The script-tag builds replace this module
- * with `./dialog` at build time, so `c15t.js` stays one file.
+ * renders the newest snapshot. `c15t.hosted.js` loads `c15t.dialog.js` the
+ * same way (`./dialog-import-script.ts`); the other script-tag builds
+ * replace this module with `./dialog` at build time and stay one file.
  *
  * @param ctx - The mount context.
  * @param options - Dialog options.

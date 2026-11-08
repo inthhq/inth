@@ -3,16 +3,22 @@
  * receipts before installing authority; ordinary gates never load a codec.
  */
 
-import { evaluateConsentRecord } from '../consent-record/evaluate';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
-import { isProductionBuild } from '../libs/is-production';
 import type { PublisherRestriction } from '../options/iab-tcf';
 import type { ConsentSnapshot } from '../types';
+import {
+	deniedVendorIds,
+	evaluateCategoryGate,
+	getEffectiveGateState,
+	isVendorDenied,
+} from './category-gate';
+import { vendorAllowedUnder } from './vendor-allowed';
 
 export type { HasCondition };
 export { extractConsentNamesFromCondition, has };
+export { deniedVendorIds, getEffectiveGateState, isVendorDenied };
 
 /**
  * IAB-specific consent shape — the subset of the kernel's `iab` slice
@@ -253,79 +259,6 @@ export interface ConsentGate<
 	vendor?: string;
 }
 
-/**
- * Ids the subject turned off that a gate should honor, or `null` when
- * nothing is denied. Only a vendor currently declared and not `disabled`
- * counts: for anything else the visitor has no switch to grant it again, so
- * a denial recorded earlier would block it with no way back short of a bulk
- * action. A vendor removed from every declaration therefore follows its
- * category again, the same as one never declared.
- * @param snapshot - Immutable kernel snapshot.
- * @returns Denied vendor ids, or `null`.
- */
-export const deniedVendorIds = function deniedVendorIds(
-	snapshot: Pick<ConsentSnapshot, 'vendorChoice' | 'vendors'>
-): ReadonlySet<string> | null {
-	const denied = snapshot.vendorChoice?.denied;
-	if (!denied || denied.length === 0) {
-		return null;
-	}
-	const toggleable = new Set<string>();
-	for (const vendor of snapshot.vendors?.declared ?? []) {
-		if (vendor.disabled !== true) {
-			toggleable.add(vendor.id);
-		}
-	}
-	const ids = new Set<string>();
-	for (const id of denied) {
-		if (toggleable.has(id)) {
-			ids.add(id);
-		}
-	}
-	return ids.size > 0 ? ids : null;
-};
-
-/**
- * Whether the subject turned a vendor off. Unknown ids are granted: a
- * denial only counts for a vendor the subject can still see and switch.
- * @param snapshot - Immutable kernel snapshot.
- * @param vendor - Vendor slug.
- * @returns `true` while the vendor is denied.
- */
-export const isVendorDenied = function isVendorDenied(
-	snapshot: Pick<ConsentSnapshot, 'vendorChoice' | 'vendors'>,
-	vendor: string
-): boolean {
-	return deniedVendorIds(snapshot)?.has(vendor) ?? false;
-};
-
-/**
- * Reads permissions at the gate's clock without changing the kernel.
- * Reuses evaluated fields until the next semantic deadline.
- * @param snapshot - Immutable kernel snapshot.
- * @param now - Current epoch milliseconds.
- * @returns Effective category permissions and independent restrictions.
- */
-export const getEffectiveGateState = function getEffectiveGateState(
-	snapshot: ConsentSnapshot,
-	now = Date.now()
-): Pick<ConsentSnapshot, 'effectivePermissions' | 'restrictions'> {
-	if (snapshot.nextDeadline === null || now < snapshot.nextDeadline) {
-		return snapshot;
-	}
-	const evaluation = evaluateConsentRecord({
-		choice: snapshot.explicitChoice,
-		gpc: snapshot.privacySignals.gpc.active,
-		noticeDismissal: snapshot.noticeDismissal,
-		now,
-		policy: snapshot.evaluationPolicy,
-	});
-	return {
-		effectivePermissions: evaluation.permissions,
-		restrictions: evaluation.restrictions,
-	};
-};
-
 /** The target vendor's entry in the loaded vendor list, if any. */
 const vendorDeclaration = function vendorDeclaration(
 	snapshot: ConsentSnapshot,
@@ -382,7 +315,6 @@ export const evaluateConsent = function evaluateConsent<
 	snapshot: ConsentSnapshot,
 	now = Date.now()
 ): boolean {
-	const effective = getEffectiveGateState(snapshot, now);
 	const hasIABFields =
 		target.vendorId !== undefined ||
 		target.iabPurposes?.length ||
@@ -398,6 +330,7 @@ export const evaluateConsent = function evaluateConsent<
 		if (!authority || !hasCurrentIABAuthority(snapshot, now)) {
 			return false;
 		}
+		const effective = getEffectiveGateState(snapshot, now);
 		const declaration = vendorDeclaration(snapshot, target.vendorId);
 		const ignoreRefusal = usesOnlyLegitimateInterest(
 			target,
@@ -419,26 +352,7 @@ export const evaluateConsent = function evaluateConsent<
 		return hasIABConsent(target, authority, declaration);
 	}
 
-	const allowed = has(target.category, effective.effectivePermissions);
-	if (!allowed || target.vendor === undefined || snapshot.model === 'iab') {
-		return allowed;
-	}
-	return !isVendorDenied(snapshot, target.vendor);
-};
-
-/** Undeclared vendor ids already warned about, so each warns once. */
-const warnedUndeclaredVendors = new Set<string>();
-
-const warnUndeclaredVendor = function warnUndeclaredVendor(
-	vendorId: string
-): void {
-	if (isProductionBuild() || warnedUndeclaredVendors.has(vendorId)) {
-		return;
-	}
-	warnedUndeclaredVendors.add(vendorId);
-	console.warn(
-		`[c15t] Vendor "${vendorId}" is not declared, so it reads as not allowed. Add { id: '${vendorId}', category: ... } to the vendors option, or put vendor: '${vendorId}' on the script that loads it.`
-	);
+	return evaluateCategoryGate(target, snapshot, now);
 };
 
 /**
@@ -474,21 +388,9 @@ export const isVendorAllowed = function isVendorAllowed(
 	vendorId: string,
 	now = Date.now()
 ): boolean {
-	const vendor = snapshot.vendors?.declared.find(
-		(entry) => entry.id === vendorId
+	return vendorAllowedUnder(
+		snapshot,
+		vendorId,
+		() => getEffectiveGateState(snapshot, now).effectivePermissions
 	);
-	if (!vendor) {
-		if (!snapshot.policyPending) {
-			warnUndeclaredVendor(vendorId);
-		}
-		return false;
-	}
-	if (snapshot.model !== 'iab' && isVendorDenied(snapshot, vendorId)) {
-		return false;
-	}
-	try {
-		return evaluateConsent({ category: vendor.category }, snapshot, now);
-	} catch {
-		return false;
-	}
 };

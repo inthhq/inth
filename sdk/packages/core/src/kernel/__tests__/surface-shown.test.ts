@@ -104,6 +104,40 @@ describe('surface:shown', () => {
 		expect(kernel.getSnapshot().surfaceShownAt.banner).toBe(NOW + 500);
 	});
 
+	test('an impression a stand-in recorded is kept, not stamped or shown again', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 500);
+		const save = vi.fn().mockResolvedValue({ ok: true });
+		const kernel = createConsentKernel({
+			consentCategories: ['marketing', 'measurement'],
+			initialPolicyResolution: matchedResolution(
+				optInRule({ categories: ['marketing', 'measurement'] })
+			),
+			// An init script painted the banner before this kernel.
+			initialSurfaceShownAt: { banner: NOW + 100 },
+			now: NOW,
+			transport: { save },
+		});
+		disposers.push(kernel.dispose);
+		const shown: SurfaceShown[] = [];
+		kernel.events.on('surface:shown', (event) => shown.push(event));
+		expect(kernel.getSnapshot().surfaceShownAt).toEqual({
+			banner: NOW + 100,
+			dialog: null,
+		});
+
+		kernel.markLive();
+		expect(shown).toHaveLength(0);
+		expect(kernel.getSnapshot().surfaceShownAt.banner).toBe(NOW + 100);
+
+		// The decision is timed from the stand-in's impression.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 900);
+		await kernel.commands.save('all');
+		expect(save.mock.calls[0]?.[0]).toMatchObject({
+			timeToDecisionMs: 800,
+			uiSource: 'banner',
+		});
+	});
+
 	test('a dialog hidden by save and restored is one impression', async () => {
 		vi.spyOn(Date, 'now').mockReturnValue(NOW + 500);
 		const { kernel, shown } = setup();

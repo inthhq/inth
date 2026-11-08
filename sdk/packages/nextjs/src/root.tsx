@@ -3,273 +3,187 @@
 /**
  * Client root for the Next.js adapter.
  *
- * Receives the visitor's `ConsentState` from a Server Component and forwards
- * it to the React provider as `options.prefetch`. Kernel creation,
- * persistence, init, and module wiring live in `@c15t/react`.
+ * The consent engine (kernel, persistence, provider runtime) is not in the
+ * first-load chunk: `./root-engine` holds it and loads with `import()`.
+ *
+ * - The server renders the whole root (`EagerConsentRoot`): the banner, its
+ *   styles and the scripts the server starts are in the first HTML, as
+ *   before, plus the snapshots the page rendered from.
+ * - The browser renders the page at once, with c15t's hooks reading those
+ *   snapshots. Hook actions ask for the engine and run when it attaches.
+ * - When the visitor still has to choose and nothing optional is granted,
+ *   nothing the engine does can show before a tap, so it loads after the
+ *   page's priority images, or at the first input on the banner. Otherwise
+ *   it loads at once.
+ * - A root the shell cannot stand in for (an experiment, a network blocker,
+ *   `enabled: false`, no server state) waits for the engine before it
+ *   hydrates, as a statically imported root would.
  */
-import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
-import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
-import { resolveStreamedInit } from '@c15t/core/runtime/streamed-init';
 import userConfig from '@c15t/nextjs/user-config';
-import { ConsentProvider } from '@c15t/react/provider';
-import type { ConsentProviderOptions } from '@c15t/react/provider';
-import * as React from 'react';
-import { Suspense, useState } from 'react';
-import type { ReactNode } from 'react';
+import {
+	DeferredConsentShell,
+	canDeferEngine,
+	iabProviderLoaded,
+	learnEngineChunks,
+	read,
+	readConsentBoot,
+	record,
+	rootNeedsEngine,
+	scriptsNeedEngine,
+} from '@c15t/react/deferred';
+import type {
+	ConsentBoot,
+	DeferredCommitConfig,
+	Recorded,
+} from '@c15t/react/deferred';
+import { useState } from 'react';
 
-import { createClientMode } from './client-mode';
-import type { ConsentConfig } from './config';
-import { readBackendURLFromEnv } from './config';
-import type { ConsentClientOptions, ConsentState } from './types';
+import { engineNow } from '#engine-now';
 
-export interface ConsentRootProps extends ConsentClientOptions {
-	/**
-	 * The visitor's resolved consent state, produced server-side by
-	 * `resolveConsent()` from `c15t/next/server` or `withConsentProps()`
-	 * from `c15t/next/pages`. Serializable JSON; a promise is fine, the
-	 * provider awaits it. Without it the browser resolves consent itself.
-	 */
-	state?: ConsentState | Promise<ConsentState>;
+import type * as RootEngine from './root-engine';
+import { mergeOptions } from './root-options';
+import type { ConsentRootProps } from './root-options';
 
-	/**
-	 * The config to use instead of `c15t.config.ts`. Only for a root the
-	 * file can't reach, such as one in a test or a package: a Server
-	 * Component can't pass it, because it may hold functions.
-	 */
-	config?: ConsentConfig;
+export type { ConsentRootProps } from './root-options';
 
-	children?: ReactNode;
+type EngineModule = typeof RootEngine;
+
+let engineModule: Recorded<EngineModule> | undefined;
+
+/** The engine's module, loading once. */
+const loadEngine = (): Recorded<EngineModule> => {
+	if (engineNow) {
+		// Outside browser bundles the engine is already in: a server render
+		// reads it without suspending.
+		engineModule ??= Object.assign(Promise.resolve(engineNow), {
+			status: 'fulfilled' as const,
+			value: engineNow,
+		});
+		return engineModule;
+	}
+	// In the browser, records the engine's chunk URLs, which the server
+	// preloads for a later visitor it must serve at once.
+	engineModule ??= record(
+		typeof document === 'undefined'
+			? import('./root-engine')
+			: learnEngineChunks(() => import('./root-engine'))
+	);
+	return engineModule;
+};
+
+/**
+ * Loads `ConsentRoot`'s engine now. A root that must render its engine at
+ * once (a client-only render, or one the shell cannot stand in for) then
+ * renders without suspending. Tests use it before a synchronous render.
+ *
+ * @returns The engine's module.
+ * @internal
+ */
+export const preloadConsentRoot = (): Promise<EngineModule> => loadEngine();
+
+if (typeof document === 'undefined') {
+	// A server render finds it loaded instead of suspending the page.
+	loadEngine();
+} else {
+	// A visitor the engine must serve at once: start the download as soon
+	// as this chunk runs, ahead of hydration.
+	const boot = readConsentBoot();
+	if (boot && !canDeferEngine(boot.r ?? boot.s)) {
+		loadEngine();
+	}
 }
 
-/**
- * Bundlers replace `process.env.NODE_ENV` at build time, so production
- * bundles drop the warning behind it.
- */
-declare const process: { env: { NODE_ENV?: string } };
+type Plan =
+	| { kind: 'eager' }
+	| { kind: 'shell'; boot: ConsentBoot; defer: boolean };
 
-let warnedMissingConfig = false;
-
-const warnMissingConfig = function warnMissingConfig(): void {
-	if (warnedMissingConfig) {
-		return;
-	}
-	warnedMissingConfig = true;
-	console.warn(
-		'[c15t] ConsentRoot found no config. Export `defineConsentConfig()` as the default export of c15t.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.'
-	);
-};
-
-/**
- * The transport for the config's mode, or for `options.mode`.
- *
- * @throws {Error} When the mode needs a backend URL and neither the config
- * nor `NEXT_PUBLIC_C15T_BACKEND_URL` (or `NEXT_PUBLIC_INTH_PROJECT_URL`)
- * sets one.
- */
-const createMode = function createMode(
-	config: ConsentConfig | undefined,
-	options: ConsentClientOptions['options']
-) {
-	// The config carries the backend URL, route prefix and `proxy`.
-	return createClientMode(
-		options?.mode ?? config?.mode,
-		config ?? { backendURL: readBackendURLFromEnv() }
-	);
-};
-
-type RootOptions = ConsentClientOptions['options'];
-
-/**
- * `options` from props over the config's, one key at a time, and
- * `callbacks` one callback at a time, so `options={{ nonce }}` keeps the
- * config's callbacks and other options.
- */
-const mergeOptions = function mergeOptions(
-	config: RootOptions,
-	props: RootOptions
-): RootOptions {
-	if (!(config && props)) {
-		return props ?? config;
+/** How the browser renders this root, decided at its first render. */
+const planRoot = function planRoot(
+	merged: ConsentRootProps & { options?: ConsentRootProps['options'] }
+): Plan {
+	const boot = readConsentBoot();
+	const { state } = merged;
+	const snapshot = boot && (boot.r ?? boot.s);
+	if (
+		!snapshot ||
+		state === undefined ||
+		rootNeedsEngine(merged) ||
+		// IAB state lives in `IABProvider`'s handle on the engine's kernel,
+		// which a stand-in cannot serve.
+		snapshot.model === 'iab' ||
+		iabProviderLoaded()
+	) {
+		return { kind: 'eager' };
 	}
 	return {
-		...config,
-		...props,
-		callbacks: { ...config.callbacks, ...props.callbacks },
+		boot: boot as ConsentBoot,
+		// A script the loader may run now would wait for the trigger.
+		defer:
+			canDeferEngine(snapshot) &&
+			!scriptsNeedEngine(
+				merged.scripts,
+				snapshot,
+				merged.scriptLoader?.serverStart !== false
+			),
+		kind: 'shell',
 	};
 };
 
-type ScriptServerStartModule = typeof ScriptServerStart;
-
-/** A promise that keeps its result where React 18 reads it on a retry. */
-type Recorded<Value> = Promise<Value> & {
-	status?: 'fulfilled';
-	value?: Value;
-};
-
-/** `promise`, which must not reject, recording its result on itself. */
-const record = function record<Value>(
-	promise: Promise<Value>
-): Recorded<Value> {
-	const holder: { recorded?: Recorded<Value> } = {};
-	const recorded: Recorded<Value> = (async () => {
-		const value = await promise;
-		// Set by now: the await above yields.
-		if (holder.recorded) {
-			holder.recorded.status = 'fulfilled';
-			holder.recorded.value = value;
-		}
-		return value;
-	})();
-	holder.recorded = recorded;
-	return recorded;
-};
-
-const loadScriptServerStart = function loadScriptServerStart(): Recorded<
-	ScriptServerStartModule | undefined
-> {
-	return record(
-		(async () => {
-			try {
-				return await import('@c15t/core/runtime/script-server-start');
-			} catch {
-				return undefined;
-			}
-		})()
-	);
-};
-
-let scriptServerStartModule:
-	| Recorded<ScriptServerStartModule | undefined>
-	| undefined;
-let retriedScriptServerStart:
-	| Recorded<ScriptServerStartModule | undefined>
-	| undefined;
-
 /**
- * Loaded on the server only, so no browser chunk requests it. A failed
- * import skips the server start and retries on the side for later renders.
+ * What a banner choice tapped before the engine loads is recorded with, so
+ * it needs no engine (see `@c15t/react/deferred`). None when the engine has
+ * to record it: persistence off, or a consent source.
  */
-const importScriptServerStart = function importScriptServerStart(): Recorded<
-	ScriptServerStartModule | undefined
-> {
-	const loaded = scriptServerStartModule;
-	if (loaded?.status === 'fulfilled' && !loaded.value) {
-		// Every render gets the failed load until the retry settles. On
-		// React 18 a render that waited for the load calls again, and a
-		// pending import there would suspend it again.
-		retriedScriptServerStart ??= loadScriptServerStart();
-		if (retriedScriptServerStart.status !== 'fulfilled') {
-			return loaded;
-		}
-		scriptServerStartModule = retriedScriptServerStart;
-		retriedScriptServerStart = undefined;
+const commitConfig = function commitConfig(
+	merged: ConsentRootProps
+): DeferredCommitConfig | undefined {
+	const { options, persistence, scriptLoader, scripts } = merged;
+	if (persistence === false || options?.consentSource) {
+		return undefined;
 	}
-	scriptServerStartModule ??= loadScriptServerStart();
-	return scriptServerStartModule;
+	return {
+		callbacks: options?.callbacks,
+		nonce: options?.nonce,
+		onDebug: scriptLoader?.onDebug,
+		scripts,
+		storageConfig:
+			(typeof persistence === 'object'
+				? persistence.storageConfig
+				: undefined) ?? options?.storageConfig,
+	};
 };
 
-const settledStates = new WeakMap<
-	Promise<ConsentState>,
-	Recorded<ConsentState | undefined>
->();
-
-/**
- * `state` with a rejection as `undefined`: the provider falls back to its
- * transport then, and the server start has nothing to start. One promise
- * per input, so `use` sees the same value on a retry.
- */
-const settledState = function settledState(
-	state: Promise<ConsentState>
-): Recorded<ConsentState | undefined> {
-	let settled = settledStates.get(state);
-	if (!settled) {
-		settled = record(
-			(async () => {
-				try {
-					return await state;
-				} catch {
-					return undefined;
-				}
-			})()
-		);
-		settledStates.set(state, settled);
+const ClientConsentRoot = (props: ConsentRootProps) => {
+	const config = props.config ?? userConfig;
+	const merged = {
+		...config,
+		...props,
+		options: mergeOptions(config?.options, props.options),
+	};
+	// oxlint-disable-next-line react/hook-use-state -- Decided once, at mount.
+	const [plan] = useState(() => planRoot(merged));
+	if (plan.kind === 'eager') {
+		const { EagerConsentRoot } = read(loadEngine());
+		return <EagerConsentRoot {...props} />;
 	}
-	return settled;
-};
-
-/** React 19's `use`, absent from the React 18 a Pages Router app may run. */
-const { use } = React as {
-	use?: <Value>(value: Promise<Value>) => Value;
-};
-
-/**
- * `use` where React has it. React 18 suspends on a thrown promise and
- * reads its recorded result on the retry.
- */
-const read = function read<Value>(promise: Recorded<Value>): Value {
-	if (use) {
-		// oxlint-disable-next-line react-hooks/rules-of-hooks -- `read` is `use` with a React 18 fallback, so it keeps `use`'s rules: render only, conditions allowed.
-		return use(promise);
-	}
-	if (promise.status === 'fulfilled') {
-		return promise.value as Value;
-	}
-	throw promise;
-};
-
-/**
- * Starts the scripts the server's consent state already lets run. An
- * inline script runs the setup of each one with a `serverStart` and
- * inserts it before hydration, and the loader adopts it. In the browser
- * it only hydrates the inline script.
- *
- * Neither the vendor scripts nor the loader's chunk get a
- * `<link rel="preload">`. On a throttled mobile profile, vendor preloads
- * delayed the page's own chunks and hydration by about 100 ms, and a
- * preload of the loader's chunk delayed first paint by about 36 ms. The
- * vendor scripts gained under 200 ms, and the loader's chunk 9 ms.
- *
- * It suspends on a streamed state inside its own boundary, so the rest of
- * the page streams without it. `resolveConsent()` marks the render
- * request-time, so the inline script never lands in prerendered HTML.
- */
-const ServerScriptStart = ({
-	options,
-}: {
-	options: ConsentProviderOptions;
-}): ReactNode => {
-	if (typeof document !== 'undefined') {
-		// Hydrates the server's start script without running or replacing it.
-		return (
-			<script
-				// oxlint-disable-next-line react/no-danger -- Empty: keeps the server's script.
-				dangerouslySetInnerHTML={{ __html: '' }}
-				suppressHydrationWarning
-			/>
-		);
-	}
-	const { prefetch } = options;
-	const state =
-		typeof (prefetch as PromiseLike<unknown> | undefined)?.then === 'function'
-			? read(settledState(prefetch as Promise<ConsentState>))
-			: (prefetch as ConsentState | undefined);
-	const module = read(importScriptServerStart());
-	// A failed import still renders the empty script the browser hydrates.
-	const code = module?.serverScriptStart({
-		...(options as unknown as Parameters<
-			ScriptServerStartModule['serverScriptStart']
-		>[0]),
-		prefetch: state,
-	});
 	return (
-		// Runs a granted vendor's setup and inserts its tag before the page
-		// hydrates. The script loader adopts the tag.
-		<script
-			// oxlint-disable-next-line react/no-danger -- c15t's own code; serverScriptStart escapes `<` in every value.
-			dangerouslySetInnerHTML={{ __html: code ?? '' }}
-			nonce={options.nonce}
-			suppressHydrationWarning
-		/>
+		<DeferredConsentShell
+			boot={plan.boot}
+			commit={commitConfig(merged)}
+			defer={plan.defer}
+			loadEngine={loadEngine}
+			options={merged.options ?? {}}
+			prefetch={merged.state}
+			renderEngine={(engine: EngineModule, attach, committed) => (
+				<engine.DeferredEngineRoot
+					{...props}
+					attach={attach}
+					committed={committed}
+				/>
+			)}
+		>
+			{props.children}
+		</DeferredConsentShell>
 	);
 };
 
@@ -280,6 +194,11 @@ const ServerScriptStart = ({
  *
  * Props win over the config's browser options of the same name. `options`
  * merges one key at a time, and `options.callbacks` one callback at a time.
+ *
+ * The consent engine loads after the page. Components under the root that
+ * call c15t's hooks render from the server's consent state until then, and
+ * their actions run once it has loaded. For a visitor the banner asks to
+ * choose, it loads after the page's priority images, or at the first tap.
  *
  * @throws {Error} When `manifest()` or `hosted()` has no backend URL: no
  * `c15t.config.ts` sets one and neither `NEXT_PUBLIC_C15T_BACKEND_URL` nor
@@ -308,72 +227,9 @@ const ServerScriptStart = ({
  * ```
  */
 export const ConsentRoot = (props: ConsentRootProps) => {
-	// Read at render, not at module top level: `c15t.config.ts` imports
-	// `c15t/next`, so the browser graph has a cycle through this module.
-	const config = props.config ?? userConfig;
-	if (
-		process.env.NODE_ENV !== 'production' &&
-		!config &&
-		!props.options?.mode
-	) {
-		warnMissingConfig();
+	if (typeof document === 'undefined') {
+		const { EagerConsentRoot } = read(loadEngine());
+		return <EagerConsentRoot {...props} />;
 	}
-	const {
-		children,
-		clearOnRevocation,
-		networkBlocker,
-		options,
-		persistence,
-		scriptLoader,
-		scripts,
-		state,
-		vendors,
-	} = {
-		...config,
-		...props,
-		options: mergeOptions(config?.options, props.options),
-	};
-	// Initial-only, like the provider's own `mode`. A new one on every
-	// render would make each rerender load the runtime's update module.
-	const [mode, setMode] = useState(() => createMode(config, options));
-	void setMode;
-
-	const providerOptions: ConsentProviderOptions = {
-		...options,
-		__debugPkg: '@c15t/nextjs',
-		// A returning visitor's state often lets a script run. Start the
-		// script loader's download during the first render, not after
-		// hydration, a round trip later.
-		__preloadScriptLoader: preloadScriptLoaderWith,
-		// `state` is often a promise the server streams in. Apply it
-		// with code from the first-load chunk: loading that code after
-		// hydration would hold the banner back by a round trip.
-		__resolveStreamedInit: resolveStreamedInit,
-		clearOnRevocation,
-		journey: options?.journey ?? config?.journey,
-		mode,
-		networkBlocker,
-		persistence,
-		prefetch: state,
-		scriptLoader,
-		scripts,
-		vendors,
-	};
-
-	return (
-		<ConsentProvider options={providerOptions}>
-			{children}
-			{/* After the page: an inline script waits for the stylesheets,
-			so ahead of the content it would hold back first paint. Without
-			`state` there is nothing to start, and a static page keeps its
-			HTML free of inline scripts. */}
-			{scripts?.length &&
-			state !== undefined &&
-			scriptLoader?.serverStart !== false ? (
-				<Suspense fallback={null}>
-					<ServerScriptStart options={providerOptions} />
-				</Suspense>
-			) : null}
-		</ConsentProvider>
-	);
+	return <ClientConsentRoot {...props} />;
 };

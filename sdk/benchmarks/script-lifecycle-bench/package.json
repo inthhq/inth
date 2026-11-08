@@ -5,6 +5,7 @@
 	"scripts": {
 		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-lifecycle bunx tsx scripts/run-bench.ts",
 		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/script-lifecycle bunx tsx scripts/run-bench.ts",
+		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate bunx tsx scripts/run-gate.ts",
 		"bench:nightly": "BENCH_ITERATIONS=15 BENCH_OUTPUT_DIR=../../.benchmarks/nightly/script-lifecycle bunx tsx scripts/run-bench.ts",
 		"bench:script-count": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-count bunx tsx scripts/run-script-count-bench.ts",
 		"build": "next build",

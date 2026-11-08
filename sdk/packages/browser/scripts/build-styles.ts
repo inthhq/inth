@@ -117,6 +117,64 @@ const main = async function main(): Promise<void> {
 			rendered
 		)
 	);
+	// The init script (`c15t.js`) renders only the banner before the engine
+	// loads, so it carries only the tokens and the button and banner rules:
+	// `@c15t/ui`'s per-surface sheets, each an exact subset of the full
+	// sheet above. The engine swaps in the full sheet when it takes over.
+	const bannerSheets = await Promise.all(
+		['tokens', 'button', 'banner'].map(async (name) => {
+			const module = (await import(`@c15t/ui/styles/sheets/${name}`)) as {
+				css: string;
+			};
+			return module.css;
+		})
+	);
+	const bannerClasses = {
+		actions: classes.actions,
+		banner: classes.banner,
+		branding: classes.branding,
+		button: classes.button,
+		legalLinks: classes.legalLinks,
+	};
+	// The banner renders only these classes, its branding only as the
+	// banner tag, and sets `data-context` only to `banner`: the branding
+	// sheet's dialog and manager rules cannot match it.
+	const bannerRendered = collectClassNames([bannerClasses]);
+	bannerRendered.delete(classes.branding.brandingTagDialog);
+	const bannerStylesheet = compactStylesheet(
+		pruneStylesheet(
+			bannerSheets.join('\n'),
+			bannerRendered,
+			(selector) => !/data-context=["']?(?:dialog|manager)/u.test(selector)
+		)
+	);
+	await writeFile(
+		join(outputDir, 'banner-styles.ts'),
+		`${banner}\n// The banner's share of styles.ts, for the init script (rslib.config.ts swaps it in).\nexport const stylesheet: string = ${JSON.stringify(bannerStylesheet)};\n\nexport const classes = ${JSON.stringify(bannerClasses, null, '\t')} as unknown as typeof import('./styles').classes;\n`
+	);
+	// What the init script's root still lacks for the dialog it opens from
+	// `c15t.dialog.js` before the engine: the dialog and preference-widget
+	// rules (`@c15t/ui`'s dialog sheet) and the branding and legal-link rules
+	// the banner sheet drops for the dialog. No rule repeats one of the
+	// banner sheet's, so inserted after it no override changes order.
+	const { css: dialogSheet } =
+		(await import('@c15t/ui/styles/sheets/dialog')) as { css: string };
+	const dialogStylesheet = compactStylesheet(
+		[
+			pruneStylesheet(
+				bannerSheets[2] ?? '',
+				rendered,
+				(selector) =>
+					/data-context=["']?(?:dialog|manager)/u.test(selector) ||
+					selector.includes(classes.branding.brandingTagDialog ?? '\0')
+			),
+			pruneStylesheet(dialogSheet, rendered),
+		].join('\n')
+	);
+	await writeFile(
+		join(outputDir, 'dialog-styles.ts'),
+		`${banner}\n// The dialog's rules the banner's share of styles.ts lacks, for c15t.dialog.js.\nexport const stylesheet: string = ${JSON.stringify(dialogStylesheet)};\n`
+	);
 	await writeFile(
 		join(outputDir, 'iab-styles.ts'),
 		`${banner}\nexport const stylesheet: string = ${JSON.stringify(iabStylesheet)};\nexport const classes = ${JSON.stringify(iabClasses, null, '\t')} as const;\n`

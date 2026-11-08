@@ -12,9 +12,16 @@ shares it. There is no provider to wrap your components in.
 `c15t/astro/client` is how browser code reaches that runtime.
 
 `getConsentClient()` returns the page's client, or `null` on the server and
-before the runtime starts. The runtime starts from a module script, and module
-scripts run in document order, so a script of yours can run first. Try again
-on `DOMContentLoaded`, which fires after every module script has run:
+before the page script starts it. The page script is a module script, and
+module scripts run in document order, so a script of yours can run first. Try
+again on `DOMContentLoaded`, which fires after every module script has run.
+
+The consent engine behind the client can load after the page (see
+[when the consent engine loads](/docs/frameworks/astro/rendering#know-when-the-consent-engine-loads)).
+The client exists before it: it answers reads from the consent state the
+server rendered the page with, and records a banner choice at once. On a page
+that renders no c15t component, `getConsentClient()` returns `null` until the
+engine has loaded:
 
 <include src="../../shared/examples/astro/consent-video.mdx" />
 
@@ -46,7 +53,8 @@ choice at all. Gate code on `effectivePermissions`. See
 | `subscribe(listener)` | An unsubscribe function. `listener` receives every new snapshot. Before the runtime starts, it returns a no-op |
 
 The client has the same two methods, `client.getConsent()` and
-`client.subscribe(listener)`, which never return `null`.
+`client.subscribe(listener)`, which never return `null`. Listeners added
+before the consent engine loads keep receiving snapshots after it has.
 
 The snapshot fields you are most likely to read:
 
@@ -158,7 +166,8 @@ The client exposes two properties for advanced use:
 
 | Member | Holds |
 | --- | --- |
-| `client.runtime` | The underlying consent runtime. Pass it to a React, Vue or Svelte island. See [your own islands](/docs/frameworks/astro/islands#use-consent-in-your-own-islands) |
+| `client.runtime` | The underlying consent runtime. Pass it to a React, Vue or Svelte island. See [your own islands](/docs/frameworks/astro/islands#use-consent-in-your-own-islands). `undefined` until `client.ready` resolves |
+| `client.ready` | A promise that resolves once the consent engine has loaded and `client.runtime` is set. Awaiting it does not load the engine |
 | `client.options` | The integration options as the browser received them |
 
 `client.runtime.kernel.events.on(type, listener)` subscribes to individual
@@ -205,8 +214,9 @@ only while their consent allows it. Create it once at module level:
 
 <include src="../../shared/examples/astro/analytics-events.mdx" />
 
-Events sent while consent is denied are dropped, not queued. Calls before the
-integration starts are dropped too. For single-page-app pageviews with
+Events sent while consent is denied are dropped, not queued. Calls made after
+the page script ran but before the consent engine loaded are sent once it has.
+Calls before the page script ran are dropped. For single-page-app pageviews with
 `ClientRouter`, pass `pageviews` and send one on each `astro:page-load`:
 
 {/* example: fragment */}

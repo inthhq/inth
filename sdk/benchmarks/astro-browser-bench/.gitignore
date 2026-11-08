@@ -5,3 +5,5 @@ node_modules
 /.astro
 /.turbo
 /dist-scripts
+/dist-gate
+/dist-gate-baseline

@@ -14,6 +14,7 @@ import {
 	NOW,
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
+import { deferConsent } from '../defer';
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
 
@@ -116,7 +117,18 @@ test('renders no inline script when the app turns the server start off', async (
 	const html = await new Response(stream).text();
 
 	expect(html).toContain('<main id="page">Page</main>');
-	expect(html).not.toContain('<script');
+	// Only the boot data a deferred root reads, which never runs, and the
+	// engine preload a returning visitor gets.
+	const scripts = [
+		...html.matchAll(/<script(?<attributes>[^>]*)>(?<body>[^<]*)<\/script>/gu),
+	];
+	expect(
+		scripts.filter(
+			({ groups }) =>
+				!groups?.attributes?.includes('type="application/json"') &&
+				!groups?.body?.includes('c15t-engine-chunks')
+		)
+	).toEqual([]);
 });
 
 test('renders the empty script the browser hydrates when the start module fails to load', async () => {
@@ -144,7 +156,9 @@ test('renders the empty script the browser hydrates when the start module fails 
 		const html = await new Response(stream).text();
 
 		expect(onError).not.toHaveBeenCalled();
-		expect(html).toMatch(/<\/main><!--\$--><script[^>]*><\/script>/u);
+		expect(html).toMatch(
+			/<\/main><!--\$--><script data-c15t-boot[^>]*>[^<]*<\/script>(?<preload><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>)<script[^>]*><\/script>/u
+		);
 		expect(html).not.toContain(JSON.stringify(pixel.src));
 	} finally {
 		vi.doUnmock('@c15t/core/runtime/script-server-start');
@@ -215,7 +229,9 @@ test('finishes the render on React 18 when the start module fails to load', asyn
 		await stream.allReady;
 		const html = await new Response(stream).text();
 
-		expect(html).toMatch(/<\/main><!--\$--><script[^>]*><\/script>/u);
+		expect(html).toMatch(
+			/<\/main><!--\$--><script data-c15t-boot[^>]*>[^<]*<\/script>(?<preload><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>)<script[^>]*><\/script>/u
+		);
 	} finally {
 		vi.doUnmock('@c15t/core/runtime/script-server-start');
 		vi.doUnmock('react');
@@ -264,7 +280,9 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 
 		expect(pages).toHaveLength(2);
 		for (const html of pages) {
-			expect(html).toMatch(/<\/main><!--\$--><script[^>]*><\/script>/u);
+			expect(html).toMatch(
+				/<\/main><!--\$--><script data-c15t-boot[^>]*>[^<]*<\/script>(?<preload><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>)<script[^>]*><\/script>/u
+			);
 		}
 	} finally {
 		release();
@@ -272,4 +290,33 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		vi.doUnmock('react');
 		vi.resetModules();
 	}
+});
+
+test('a deferred consent island keeps the server start script', async () => {
+	// `deferConsent` delays the browser's chunks, not the server render, so
+	// a returning visitor's granted scripts still start at parse time.
+	await render();
+	const Island = deferConsent(() =>
+		Promise.resolve({
+			default: ({ state }: { state: ConsentRootProps['state'] }) => (
+				<ConsentRoot
+					options={{ mode: custom({ init: () => Promise.resolve({}) }) }}
+					scripts={[pixel]}
+					state={state}
+				/>
+			),
+		})
+	);
+	const stream = await renderToReadableStream(
+		<>
+			<main id="page">Page</main>
+			<Island state={grantedState()} />
+		</>
+	);
+	await stream.allReady;
+	const html = await new Response(stream).text();
+
+	expect(html.indexOf(JSON.stringify(pixel.src))).toBeGreaterThan(
+		html.indexOf('</main>')
+	);
 });

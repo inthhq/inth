@@ -23,7 +23,7 @@
 	import { portal } from '../actions/portal';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import { holdIdleDialogWarming, warmDialog } from '../dialog-warming';
-	import { FIRST_PAINT_SHEETS } from '../surface-styles';
+	import { TRIGGER_SHEETS } from '../surface-styles';
 	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import C15TIconOnly from './icons/c15-t-icon-only.svelte';
 	import ConsentIconOnly from './icons/consent-icon-only.svelte';
@@ -410,7 +410,7 @@
 	<div use:portal>
 		<!-- Inside the portal: the block must stay one node, or removing it
 		     would walk from where it was to where the portal moved it. -->
-		<SurfaceStyles sheets={FIRST_PAINT_SHEETS} />
+		<SurfaceStyles sheets={TRIGGER_SHEETS} />
 		{#if showToolbar}
 			<div
 				bind:this={toolbarElement}

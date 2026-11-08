@@ -30,10 +30,12 @@
  *   `C15T_BENCH_PROFILE` — the condition the browser benches ran under, which
  *   their expected keys carry; 200 ms and `none` by default
  */
+import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { resolveBenchConditionFromEnv } from './src/browser';
+import { applyGateAcceptedShift } from './src/budgets';
 import {
 	budgetIdentity,
 	describeBudgetDifference,
@@ -264,6 +266,38 @@ const applyDialogCssTarballAllowance = (
 	};
 };
 
+const ancestry = new Map<string, boolean | undefined>();
+
+/**
+ * Whether `base` contains `commit`, from `git merge-base --is-ancestor`;
+ * `undefined` when the base is unknown or git cannot tell (a missing
+ * object in a shallow clone, say).
+ */
+const baseIncludesCommit = function baseIncludesCommit(
+	commit: string,
+	base: string | undefined
+): boolean | undefined {
+	if (!base || base === 'unknown') {
+		return undefined;
+	}
+	const key = `${commit}..${base}`;
+	if (!ancestry.has(key)) {
+		let included: boolean | undefined;
+		try {
+			execFileSync('git', ['merge-base', '--is-ancestor', commit, base], {
+				stdio: 'ignore',
+			});
+			included = true;
+		} catch (error) {
+			// Exit 1: not an ancestor. Anything else: git could not tell.
+			included =
+				(error as { status?: number }).status === 1 ? false : undefined;
+		}
+		ancestry.set(key, included);
+	}
+	return ancestry.get(key);
+};
+
 const evaluateBudgets = function evaluateBudgets(
 	headResult: BenchmarkResult,
 	baseResult: BenchmarkResult | undefined,
@@ -283,7 +317,8 @@ const evaluateBudgets = function evaluateBudgets(
 				return evaluateArmBudget(budget, headMetric, armResults, baseKey);
 			}
 			const evaluate =
-				headResult.suite === 'browser-runtime'
+				headResult.suite === 'browser-runtime' ||
+				headResult.suite === 'consent-gate'
 					? evaluateBrowserTimingBudget
 					: evaluateBudget;
 			const result = evaluate(
@@ -291,6 +326,16 @@ const evaluateBudgets = function evaluateBudgets(
 				headMetric,
 				indexedBaseMetrics.get(budget.metric)
 			);
+			if (headResult.suite === 'consent-gate') {
+				const target = headResult.metadata?.target;
+				return applyGateAcceptedShift(
+					typeof target === 'string' ? target : undefined,
+					budget,
+					result,
+					headMetric?.median,
+					(commit) => baseIncludesCommit(commit, baseResult?.commitSha)
+				);
+			}
 			return applyDialogCssTarballAllowance(
 				budget,
 				result,
@@ -348,12 +393,21 @@ const checkDefinitions = function checkDefinitions(
 			.filter(inProfile)
 			.map((budget) => [budgetIdentity(budget), budget])
 	);
-	const expectedIdentities = new Set<string>();
+	const expectedIdentities = new Set(entry.budgets.map(budgetIdentity));
 	for (const expected of entry.budgets) {
 		const identity = budgetIdentity(expected);
-		expectedIdentities.add(identity);
 		const label = `${entry.key}#${identity}`;
-		const actual = defined.get(identity);
+		// A ceiling and a relative budget on one metric have different
+		// identities, so a budget whose comparator was swapped is found by
+		// metric and reported as a mismatch rather than as missing.
+		const actual =
+			defined.get(identity) ??
+			[...defined.entries()].find(
+				([definedIdentity, budget]) =>
+					!expectedIdentities.has(definedIdentity) &&
+					budget.metric === expected.metric &&
+					budget.baseArm === expected.baseArm
+			)?.[1];
 		if (!actual) {
 			check.missingDefinitions.push(label);
 			check.failures.push(

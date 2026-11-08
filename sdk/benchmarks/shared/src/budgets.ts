@@ -1,5 +1,5 @@
 import type { PolicyBenchFixture } from './policy-fixtures';
-import type { MetricBudget } from './schema';
+import type { MetricBudget, MetricBudgetResult } from './schema';
 
 /**
  * v3 budget constants for `c15t`, `@c15t/react`, and `@c15t/nextjs`.
@@ -249,6 +249,56 @@ const ALL_LANGUAGE_ENTRIES = new Set(['manifest-transport']);
 const CLIENT_MODE_BUNDLES_TARBALL_BYTES = 56_320;
 const CLIENT_MODE_BUNDLES_TARBALL_PERCENT = 18;
 
+/**
+ * The deferred engine (#51). In a browser bundle `ConsentProvider` is a
+ * shell that renders at once and loads the engine (the kernel, persistence,
+ * the transports and the provider itself) through `import()`; the shell can
+ * commit an Accept or Reject and open the stock dialog before the engine
+ * arrives. Measured on #51 against canary at a4bb264f7, after the IAB
+ * banner stopped carrying the `first-paint` sheet next to the banner's
+ * sheets and the trigger's sheet moved into the trigger's chunk:
+ *
+ * - `provider`: first load 57,712 → 29,854 bytes gzip. The engine leaves it
+ *   as 48 KB of deferred chunks, which cost about as much as they did
+ *   inside the first load, and the shell's own code (shell, deferred
+ *   kernel, instant commit, trigger routing, about 12 KB) takes its place.
+ *   The dialog group (the stock dialog, the preference widget, the trigger
+ *   and the `dialog`, `banner`, `button`, `trigger` and `tokens` sheets,
+ *   46 KB) was emitted but unreachable on the base and is reachable now,
+ *   through the shell's early dialog, so it counts in the total as well as
+ *   in the emitted bytes. Emitted deferred +53,089; initial plus reachable
+ *   deferred +70,488.
+ * - `ordinary-react`: first load 89,264 → 84,220. The engine's chunks, the
+ *   commit chunk, the engine host and the snapshot reader add to the
+ *   deferred bytes, and the engine split into twenty chunks compresses
+ *   worse than it did in two. Emitted +25,218; total +20,174.
+ * - `iab-lazy`: first load 85,573 → 83,930. Emitted +26,524; total +28,940.
+ *
+ * Each entry carries the measured growth past the bands and the style
+ * allowances above, once; the entries go when the change is on the base
+ * branch.
+ */
+const DEFERRED_ENGINE_GZIP_BYTES: Record<
+	string,
+	{ deferred: number; total: number }
+> = {
+	'iab-lazy': { deferred: 2048, total: 4096 },
+	'ordinary-react': { deferred: 7680, total: 2560 },
+	provider: { deferred: 26_624, total: 53_248 },
+};
+
+/**
+ * The same change in the `@c15t/react` tarball: the `deferred/` modules
+ * (shell, deferred kernel, commit path, engine host, registry, session,
+ * surfaces and their types), `static-banner` and the presentation hooks.
+ * 27,111 packed bytes (15.44%) over the base tarball of 175,651 bytes,
+ * measured on #51 against canary at a4bb264f7. The react tarball budget
+ * carries them once, in bytes and as a share of that tarball, and returns to
+ * its previous limits after the change is on the base branch.
+ */
+const DEFERRED_ROOT_TARBALL_BYTES = 12_288;
+const DEFERRED_ROOT_TARBALL_PERCENT = 6;
+
 export const bundleBudgets: MetricBudget[] = [
 	{
 		comparator: 'delta-bytes-lte',
@@ -305,10 +355,10 @@ export const artifactBudgets: MetricBudget[] = [
 	{
 		comparator: 'absolute-and-percent-lte',
 		description:
-			'React package tarball growth, excluding bundled docs, must stay below 15kB and 10%.',
+			'React package tarball growth, excluding bundled docs, must stay below 15kB and 10%, plus the deferred root allowance.',
 		metric: '@c15t/react',
-		secondaryThreshold: 10,
-		threshold: 15360,
+		secondaryThreshold: 10 + DEFERRED_ROOT_TARBALL_PERCENT,
+		threshold: 15360 + DEFERRED_ROOT_TARBALL_BYTES,
 	},
 	{
 		comparator: 'absolute-and-percent-lte',
@@ -1282,6 +1332,10 @@ export const bundleEntryBudgets = function bundleEntryBudgets(
 	const allLanguageCopy = ALL_LANGUAGE_ENTRIES.has(scenario)
 		? ADDITIONAL_CONSENT_COPY_GZIP_BYTES + ASIA_LANGUAGES_GZIP_BYTES
 		: 0;
+	const deferredEngine = DEFERRED_ENGINE_GZIP_BYTES[scenario] ?? {
+		deferred: 0,
+		total: 0,
+	};
 	return [
 		{
 			comparator: 'delta-bytes-lte',
@@ -1301,26 +1355,323 @@ export const bundleEntryBudgets = function bundleEntryBudgets(
 			// growth that is not offset by a smaller first load.
 			comparator: 'delta-bytes-lte',
 			description:
-				'Deferred emitted JavaScript may grow by at most 12 KiB gzip, plus the ordinary or IAB styles and the browser language chunks emitted by this entry.',
+				'Deferred emitted JavaScript may grow by at most 12 KiB gzip, plus the ordinary or IAB styles, the browser language chunks emitted by this entry and the deferred engine allowance.',
 			metric: 'lazyGzip',
 			threshold:
 				12_288 +
 				surfaceStyles.deferred +
 				additionalDeferredStyles +
-				languageChunks,
+				languageChunks +
+				deferredEngine.deferred,
 		},
 		{
 			comparator: 'delta-bytes-lte',
 			description:
-				'Initial plus reachable deferred JavaScript may grow by at most 3 KiB gzip, plus the ordinary or IAB style allowance and the Additional Consent copy and new languages for entries that bundle every language.',
+				'Initial plus reachable deferred JavaScript may grow by at most 3 KiB gzip, plus the ordinary or IAB style allowance, the Additional Consent copy and new languages for entries that bundle every language and the deferred engine allowance.',
 			metric: 'gzipSize',
 			threshold:
 				3072 +
 				allLanguageCopy +
 				surfaceStyles.initial +
 				surfaceStyles.deferred +
-				additionalDeferredStyles,
+				additionalDeferredStyles +
+				deferredEngine.total,
 		},
 		...(scenario === 'ordinary-react' ? importBoundaryBudgets : []),
+	];
+};
+
+/**
+ * Frameworks and the script tag the consent gate measures, one result each.
+ * See `consent-gate.ts` for the page, profile and metric definitions.
+ */
+export const consentGateTargets = [
+	'react',
+	'nextjs',
+	'nuxt',
+	'astro',
+	'sveltekit',
+	'tanstack-start',
+	'script-tag',
+] as const;
+
+export type ConsentGateTarget = (typeof consentGateTargets)[number];
+
+/**
+ * Consent gate thresholds. Relative budgets use `absolute-or-percent-lte`:
+ * a metric fails only when its median grows by more than the absolute band
+ * *and* by more than the percentage, and (through
+ * `evaluateBrowserTimingBudget`) only when the 99% lower bound on that growth
+ * still breaks the limit.
+ *
+ * Bands come from three base-vs-base runs of the whole gate (perf-release
+ * `cc9745eb2` on both arms, 12 iterations per arm, an M1 Pro shared with
+ * other builds). The largest median move per metric across all seven
+ * targets: LCP delta 20 ms, banner 14 ms, consent-effective and dismissed
+ * 8 ms (13%), input-to-next-paint 8 ms (one Event Timing quantum), scripts
+ * complete 11 ms (3%), preferences 14 ms (3%). Each absolute band is about
+ * 2.5 times that, and tap bands are at least three 8 ms Event Timing quanta.
+ * The percentages sit just above the largest relative move, because on a
+ * slow base they decide: React's banner renders at about 2.7 s, where a
+ * 10% band let a 200 ms main-thread block through. None of the three runs
+ * would have failed any of these bands.
+ */
+const GATE_LCP_DELTA_NOISE_MS = 50;
+const GATE_BANNER_NOISE_MS = 50;
+const GATE_BANNER_NOISE_PERCENT = 3;
+const GATE_TAP_NOISE_MS = 25;
+const GATE_TAP_NOISE_PERCENT = 20;
+const GATE_SCRIPTS_NOISE_MS = 25;
+const GATE_SCRIPTS_NOISE_PERCENT = 5;
+const GATE_PREFERENCES_NOISE_MS = 60;
+const GATE_PREFERENCES_NOISE_PERCENT = 5;
+
+/** CookieBench's release rule: nothing a tap starts may take over 1,000 ms. */
+const GATE_TAP_CEILING_MS = 1000;
+
+/**
+ * Known exceptions to {@link GATE_TAP_CEILING_MS}, each a measured miss on
+ * the base that the gate must not hide or fail every run on. None today:
+ * Astro's Customize dialog, the last one, now opens before its consent
+ * engine loads and takes the 1,000 ms rule.
+ */
+const gateTapCeilingExceptionsMs: Partial<Record<ConsentGateTarget, number>> =
+	{};
+
+/**
+ * Absolute `banner.visible` ceilings for server-rendered frameworks, whose
+ * banner is in the first HTML. Round 8 CookieBench medians at the same
+ * mobile profile were 222 to 275 ms (Next.js 238, Nuxt 245, Astro 254,
+ * SvelteKit 222, TanStack Start 275); the ceiling leaves room for slower CI
+ * runners and the gate page's own differences, and still fails a banner that
+ * waits for client JavaScript (about 1,000 ms or more at this profile).
+ * React here is client-rendered inside Next.js, and the script tag injects
+ * its banner from JavaScript, so neither has a server-rendered bar.
+ */
+const gateBannerCeilingMs: Partial<Record<ConsentGateTarget, number>> = {
+	astro: 600,
+	nextjs: 600,
+	nuxt: 600,
+	sveltekit: 600,
+	'tanstack-start': 600,
+};
+
+/**
+ * A relative gate budget the base cannot meet yet, accepted for a known
+ * reason until the change behind it reaches the base.
+ */
+export interface GateAcceptedShift {
+	/**
+	 * The commit that made the shift. While the base revision does not
+	 * contain it, the metric is judged against {@link expectedMs}; once the
+	 * base contains it, the entry is ignored and the relative band applies.
+	 */
+	untilBaseIncludes: string;
+	/** The head median the change was measured at, in ms. */
+	expectedMs: number;
+}
+
+/**
+ * The perf-release merge (all six fix branches). Remove the entries below
+ * once `perf-release` is on canary.
+ */
+const PERF_RELEASE_COMMIT = '7cff17a0b49e76b5afa2301f16ca9be69eb9b149';
+
+/**
+ * Accepted shifts, by target and metric.
+ *
+ * `preferencesVisibleMs`: perf-release defers the consent engine and the
+ * dialog, so a Customize tap now downloads dialog code that canary's eager
+ * page had already loaded. After the fixes it measures Next.js 530, Nuxt
+ * 658 (846 on the Rolldown 1.1 bench), TanStack Start 757, Astro 930 and
+ * the script tag 403 ms, against canary 416, 453, 430, 1,161 and 69 ms.
+ * Every one stays under the 1,000 ms tap rule, which still applies; the
+ * relative band against canary would fail the release. React (386 vs 424)
+ * and SvelteKit (about 460 vs 447) need no entry. `expectedMs` sits about
+ * 30 ms above each measurement (Nuxt above the Rolldown 1.1 figure).
+ */
+export const gateAcceptedShifts: Partial<
+	Record<ConsentGateTarget, Partial<Record<string, GateAcceptedShift>>>
+> = {
+	astro: {
+		preferencesVisibleMs: {
+			expectedMs: 960,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	nextjs: {
+		preferencesVisibleMs: {
+			expectedMs: 560,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	nuxt: {
+		preferencesVisibleMs: {
+			expectedMs: 870,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	'script-tag': {
+		preferencesVisibleMs: {
+			expectedMs: 430,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+	'tanstack-start': {
+		preferencesVisibleMs: {
+			expectedMs: 790,
+			untilBaseIncludes: PERF_RELEASE_COMMIT,
+		},
+	},
+};
+
+/**
+ * Applies {@link gateAcceptedShifts} to a failed relative gate budget.
+ *
+ * While the base does not contain the entry's commit, the budget passes
+ * when the head median is within the budget's band of `expectedMs` (the
+ * larger of the absolute band and the percentage of `expectedMs`). The
+ * absolute ceilings are separate budgets and still apply. When the base
+ * contains the commit, or that cannot be told, the result stands.
+ *
+ * @param target - The gate target the result measured.
+ * @param budget - The budget definition.
+ * @param result - The evaluated result.
+ * @param headMedian - The head median of the budget's metric.
+ * @param baseIncludes - Whether the base revision contains a commit;
+ * `undefined` when unknown.
+ * @param shifts - The accepted shifts (for tests).
+ * @returns The result, passed under the accepted shift when it applies.
+ */
+export const applyGateAcceptedShift = function applyGateAcceptedShift(
+	target: string | undefined,
+	budget: MetricBudget,
+	result: MetricBudgetResult,
+	headMedian: number | undefined,
+	baseIncludes: (commit: string) => boolean | undefined,
+	shifts: typeof gateAcceptedShifts = gateAcceptedShifts
+): MetricBudgetResult {
+	const shift = target
+		? shifts[target as ConsentGateTarget]?.[budget.metric]
+		: undefined;
+	if (
+		!shift ||
+		result.pass ||
+		(result.status ?? 'evaluated') !== 'evaluated' ||
+		budget.comparator !== 'absolute-or-percent-lte' ||
+		typeof headMedian !== 'number'
+	) {
+		return result;
+	}
+	const included = baseIncludes(shift.untilBaseIncludes);
+	const commit = shift.untilBaseIncludes.slice(0, 9);
+	if (included !== false) {
+		return included === true
+			? result
+			: {
+					...result,
+					message: `${result.message}; accepted shift not applied: cannot tell whether the base contains ${commit}`,
+				};
+	}
+	const band = Math.max(
+		budget.threshold,
+		(shift.expectedMs * (budget.secondaryThreshold ?? 0)) / 100
+	);
+	const limit = shift.expectedMs + band;
+	const pass = headMedian <= limit;
+	return {
+		...result,
+		message: `${result.message}; accepted shift until the base contains ${commit}: head median ${headMedian.toFixed(2)} ms ${pass ? 'within' : 'above'} ${shift.expectedMs} ms + ${band.toFixed(2)} ms`,
+		pass,
+	};
+};
+
+const relativeGateBudget = function relativeGateBudget(
+	metric: string,
+	threshold: number,
+	percent: number,
+	description: string
+): MetricBudget {
+	return {
+		comparator: 'absolute-or-percent-lte',
+		description,
+		metric,
+		secondaryThreshold: percent,
+		threshold,
+	};
+};
+
+/**
+ * Budgets every consent gate result carries. All of them fail the gate.
+ *
+ * @param target - Framework or script tag the result measured.
+ */
+export const consentGateBudgets = function consentGateBudgets(
+	target: ConsentGateTarget
+): MetricBudget[] {
+	const ceiling = gateBannerCeilingMs[target];
+	const tapCeiling = gateTapCeilingExceptionsMs[target];
+	return [
+		{
+			comparator: 'absolute-or-percent-lte',
+			description: `page.lcp delta over the no-CMP control may not grow by more than ${GATE_LCP_DELTA_NOISE_MS} ms, the base-vs-base noise band of the paired delta. At 200 KB/s that is about 10 KB more before the hero.`,
+			metric: 'lcpDeltaMs',
+			threshold: GATE_LCP_DELTA_NOISE_MS,
+		},
+		relativeGateBudget(
+			'bannerVisibleMs',
+			GATE_BANNER_NOISE_MS,
+			GATE_BANNER_NOISE_PERCENT,
+			'banner.visible may not grow beyond the base-vs-base noise band.'
+		),
+		...(ceiling === undefined
+			? []
+			: [
+					{
+						comparator: 'absolute-lte' as const,
+						description: `banner.visible for a server-rendered banner at the mobile profile stays under ${ceiling} ms (round 8 CookieBench medians 222 to 275 ms).`,
+						metric: 'bannerVisibleMs',
+						threshold: ceiling,
+					},
+				]),
+		relativeGateBudget(
+			'consentEffectiveMs',
+			GATE_TAP_NOISE_MS,
+			GATE_TAP_NOISE_PERCENT,
+			'action.consent-effective after Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'dismissedMs',
+			GATE_TAP_NOISE_MS,
+			GATE_TAP_NOISE_PERCENT,
+			'action.dismissed after Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'inputToNextPaintMs',
+			GATE_TAP_NOISE_MS,
+			GATE_TAP_NOISE_PERCENT,
+			'action.input-to-next-paint of Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'scriptsCompleteMs',
+			GATE_SCRIPTS_NOISE_MS,
+			GATE_SCRIPTS_NOISE_PERCENT,
+			'action.scripts-complete after Accept may not grow beyond the noise band.'
+		),
+		relativeGateBudget(
+			'preferencesVisibleMs',
+			GATE_PREFERENCES_NOISE_MS,
+			GATE_PREFERENCES_NOISE_PERCENT,
+			'action.preferences-visible after Customize may not grow beyond the noise band.'
+		),
+		{
+			comparator: 'absolute-lte',
+			description:
+				tapCeiling === undefined
+					? `No tap may take over ${GATE_TAP_CEILING_MS} ms to take effect, dismiss, paint, run its scripts or open the dialog (CookieBench release rule), judged on the median iteration's slowest tap metric.`
+					: `Known exception to the ${GATE_TAP_CEILING_MS} ms tap rule: the slowest tap metric (preferences-visible) already measures above it on the base, so it is held under ${tapCeiling} ms until the fix lands.`,
+			metric: 'slowestTapMs',
+			threshold: tapCeiling ?? GATE_TAP_CEILING_MS,
+		},
 	];
 };

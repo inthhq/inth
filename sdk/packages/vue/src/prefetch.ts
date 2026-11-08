@@ -9,6 +9,7 @@ export interface ClientManifestChunk {
 	assets?: string[];
 	css?: string[];
 	dynamicImports?: string[];
+	file?: string;
 	imports?: string[];
 	isDynamicEntry?: boolean;
 	isEntry?: boolean;
@@ -256,4 +257,113 @@ export const preloadBrowserResolver = function preloadBrowserResolver(
 	isConsentFile: (file: string) => boolean
 ): void {
 	preloadWithEntry(manifest, srcDir, isConsentFile, BROWSER_RESOLVER_SOURCE);
+};
+
+/** The Nuxt plugin's consent engine chunk (`runtime/deferred/engine.ts`). */
+const ENGINE_SOURCES = [
+	'/dist/runtime/deferred/engine.js',
+	'/src/runtime/deferred/engine.ts',
+];
+
+/**
+ * The client manifest key `runtime/deferred/boot.ts` names. Kept equal by a
+ * test.
+ */
+export const DEFERRED_ENGINE_MANIFEST_KEY = 'c15t:deferred-engine';
+
+/**
+ * Name the engine chunk under a key the server render knows.
+ *
+ * The plugin loads the engine with a dynamic import. A server render whose
+ * visitor needs it at once (a returning visitor, IAB, an experiment) adds
+ * {@link DEFERRED_ENGINE_MANIFEST_KEY} to the request's modules, and Nuxt
+ * preloads the chunk and its imports with the entry; a deferred visitor's
+ * HTML does not. The source path the manifest keys the chunk by depends on
+ * the install, so the module copies its entry under a fixed key. With
+ * `ssr: false` no page renders on the server, so every page preloads the
+ * engine and the banner with the entry instead.
+ *
+ * Call it after {@link stopPrefetchingConsentChunks}.
+ *
+ * @param manifest - Nuxt's client manifest, edited in place.
+ * @param srcDir - The directory manifest sources are relative to.
+ * @param isConsentFile - Whether a file belongs to a c15t package.
+ * @param ssr - Nuxt's `ssr` option.
+ * @internal
+ */
+export const preloadDeferredEngine = function preloadDeferredEngine(
+	manifest: Record<string, ClientManifestChunk>,
+	srcDir: string,
+	isConsentFile: (file: string) => boolean,
+	ssr: boolean
+): void {
+	const source = ENGINE_SOURCES.find((candidate) =>
+		Object.values(manifest).some(
+			(chunk) =>
+				chunk.isDynamicEntry &&
+				chunk.src?.endsWith(candidate) &&
+				isConsentFile(resolve(srcDir, chunk.src))
+		)
+	);
+	if (!source) {
+		return;
+	}
+	const [key, chunk] = Object.entries(manifest).find(
+		([, entry]) => entry.isDynamicEntry && entry.src?.endsWith(source)
+	) as [string, ClientManifestChunk];
+	manifest[DEFERRED_ENGINE_MANIFEST_KEY] = {
+		...chunk,
+		isDynamicEntry: false,
+		prefetch: false,
+		src: undefined,
+	};
+	if (!ssr) {
+		preloadWithEntry(manifest, srcDir, isConsentFile, BANNER_SOURCE);
+		for (const entry of Object.values(manifest)) {
+			if (entry.isEntry && !entry.imports?.includes(key)) {
+				entry.imports = [...(entry.imports ?? []), key];
+			}
+		}
+	}
+};
+
+/**
+ * Drop the entry from the `imports` of chunks the entry itself imports
+ * statically. Rolldown can list the entry there for a chunk that only loads
+ * on demand from it, such as the c15t chunk group (`chunk-group.ts`), which
+ * makes a cycle. Nuxt's renderer reads a cycle's far end as having no
+ * dependencies, so the page would stop preloading the c15t chunk and the
+ * browser would fetch it only after parsing the entry. The entry loads
+ * first anyway, so the edge only ever repeated a preload.
+ *
+ * @param manifest - Nuxt's client manifest, edited in place.
+ * @internal
+ */
+export const breakEntryImportCycles = function breakEntryImportCycles(
+	manifest: Record<string, ClientManifestChunk>
+): void {
+	for (const [entry, chunk] of Object.entries(manifest)) {
+		if (!chunk.isEntry) {
+			continue;
+		}
+		const reached = new Set<string>();
+		const visit = (key: string): void => {
+			if (key === entry || reached.has(key)) {
+				return;
+			}
+			reached.add(key);
+			for (const dependency of manifest[key]?.imports ?? []) {
+				visit(dependency);
+			}
+		};
+		for (const dependency of chunk.imports ?? []) {
+			visit(dependency);
+		}
+		for (const key of reached) {
+			const imported = manifest[key];
+			if (imported?.imports?.includes(entry)) {
+				imported.imports = imported.imports.filter((id) => id !== entry);
+			}
+		}
+	}
 };

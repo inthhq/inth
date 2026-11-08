@@ -299,13 +299,32 @@ const withSetCookie = function withSetCookie<
  * });
  * ```
  *
+ * A server function can list it too. It then normalizes the inputs and
+ * passes `context.consent` to the handler, and returns the function's
+ * result unchanged. It sets no subject cookie there: a server function has
+ * no response of its own while a page renders. Register it in
+ * `src/start.ts` for the cookie.
+ *
+ * @example
+ * ```ts
+ * export const getConsentState = createServerFn({ method: 'GET' })
+ *   .middleware([consentRequestMiddleware()])
+ *   .handler(createConsentStateHandler());
+ * ```
+ *
  * @param options - Overrides and header-normalization behavior.
  * @returns A TanStack Start request middleware.
  */
 export const consentRequestMiddleware = function consentRequestMiddleware(
 	options: ConsentRequestMiddlewareOptions = {}
 ) {
-	return createMiddleware().server(async ({ next, request }) => {
+	return createMiddleware().server(async (input) => {
+		const { next, request } = input;
+		// Request middleware gets the request's `pathname`; a server function
+		// that lists this middleware runs it without one, and its `next()`
+		// resolves to the function's result, not a response.
+		const onRequest =
+			typeof (input as { pathname?: unknown }).pathname === 'string';
 		const inputs: ConsentRequestInputs = extractConsentRequestInputs(
 			request.headers,
 			{
@@ -318,7 +337,11 @@ export const consentRequestMiddleware = function consentRequestMiddleware(
 		if (options.normalizeHeaders !== false) {
 			writeNormalizedHeaders(request.headers, inputs, options.language);
 		}
+		// A server function has no response to put the cookie on. A subject
+		// ID minted here would reach the server render but never the browser,
+		// so it leaves the ID to the cookie, or to the browser.
 		const subject =
+			!onRequest ||
 			options.subjectCookie === false ||
 			isConsentRoute(
 				new URL(request.url).pathname,
@@ -334,10 +357,12 @@ export const consentRequestMiddleware = function consentRequestMiddleware(
 		if (subject?.setCookie) {
 			rememberSubjectCookieHeader(request, subject.cookie);
 		}
+		const context = { consent: inputs } satisfies ConsentRequestContext;
+		if (!onRequest) {
+			return next({ context });
+		}
 		return withSetCookie(
-			await next({
-				context: { consent: inputs } satisfies ConsentRequestContext,
-			}),
+			await next({ context }),
 			subject?.setCookie?.header,
 			request
 		);

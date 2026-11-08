@@ -6,12 +6,12 @@ import {
 } from '@c15t/ui/theme';
 
 import type { ConsentConfig } from './config';
+import { TOKENS_STYLE_ID } from './tokens-style-id';
 
 /** The config fields {@link generateTokensCSS} reads besides `tokens`. */
 export type TokensCSSOptions = Pick<ConsentConfig, 'colorScheme' | 'theme'>;
 
-/** `id` of the `<style>` element that carries the `tokens` CSS variables. */
-export const TOKENS_STYLE_ID = 'c15t-css-vars';
+export { TOKENS_STYLE_ID };
 
 /**
  * The stock dark palette under the `.dark` and `.c15t-dark` selectors.

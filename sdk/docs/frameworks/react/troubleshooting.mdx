@@ -76,8 +76,8 @@ covers the options.
 ## The banner has no styles
 
 **Check.** In DevTools Elements, the banner has classes but no rules apply.
-Look for c15t's `<style>` element: `<style data-href="c15t-first-paint">` in
-`<head>` on React 19, or `<style data-c15t-styles>` next to the banner on
+Look for c15t's `<style>` element: `<style data-href="c15t-tokens c15t-button c15t-banner">`
+in `<head>` on React 19, or `<style data-c15t-styles>` next to the banner on
 React 18 or with a `nonce`. Check the console for a Content Security Policy
 error.
 

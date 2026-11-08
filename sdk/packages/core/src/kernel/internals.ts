@@ -54,6 +54,12 @@ export interface InternalKernel extends ConsentKernel {
 	 * first save after page load is stored before it is sent.
 	 */
 	holdSaves: (until: Promise<unknown>) => void;
+	/**
+	 * Send the saves queued in the outbox now, as after a completed init.
+	 * A deferred root calls it when its engine starts after a banner tap
+	 * that queued its save without a kernel. Does nothing once disposed.
+	 */
+	replaySaves: () => void;
 	readonly events: ConsentKernel['events'] & {
 		/** Announce an event the kernel did not produce itself. */
 		emit: (event: KernelEvent) => void;

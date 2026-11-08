@@ -8,9 +8,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	artifactBudgets,
+	consentGateBudgets,
 	coreRuntimeBudgets,
 	coreRuntimeCoverageBudgets,
 	coreRuntimeV3Budgets,
+	gateAcceptedShifts,
 } from './budgets';
 import { expectedBenchmarkResults } from './expected-results';
 import type {
@@ -604,4 +606,84 @@ it('uses sample uncertainty for browser timings while retaining confirmed regres
 	const regressed = compare(Array<number>(30).fill(160));
 	expect(regressed.code).not.toBe(0);
 	expect(summaryOf(regressed).budgets.failed).toBeGreaterThan(0);
+});
+
+describe('consent gate accepted shifts', () => {
+	const shift = gateAcceptedShifts.nextjs?.preferencesVisibleMs;
+	const readCommit = (revision: string): string | undefined => {
+		try {
+			return execFileSync(
+				'git',
+				['rev-parse', '--verify', `${revision}^{commit}`],
+				{
+					encoding: 'utf8',
+					stdio: ['ignore', 'pipe', 'ignore'],
+				}
+			).trim();
+		} catch {
+			return undefined;
+		}
+	};
+	// The commit itself contains it; its first parent does not. A shallow
+	// clone may lack them.
+	const including = shift ? readCommit(shift.untilBaseIncludes) : undefined;
+	const lacking = shift
+		? readCommit(`${shift.untilBaseIncludes}^1`)
+		: undefined;
+	const pkg = '@c15t/nextjs-browser-bench';
+	const scenario = 'consent-gate:latency-200ms';
+	const gateResult = (
+		preferencesMs: number,
+		commitSha: string
+	): BenchmarkResult => ({
+		...makeResult(scenario, {}, consentGateBudgets('nextjs'), commitSha),
+		framework: 'nextjs',
+		metadata: { target: 'nextjs' },
+		metrics: consentGateBudgets('nextjs').map((budget) =>
+			summarizeMetric(
+				budget.metric,
+				'ms',
+				Array<number>(12).fill(
+					['preferencesVisibleMs', 'slowestTapMs'].includes(budget.metric)
+						? preferencesMs
+						: 100
+				)
+			)
+		),
+		package: pkg,
+		suite: 'consent-gate',
+	});
+	const compare = (base: string, headPreferencesMs: number) =>
+		runCompare({
+			BENCHMARK_ARM_MAP: emptyArmMap(),
+			BENCHMARK_BASE_DIR: writeResults([gateResult(416, base)]),
+			BENCHMARK_EXPECTED_PACKAGES: pkg,
+			BENCHMARK_EXPECTED_SUITES: 'consent-gate',
+			BENCHMARK_HEAD_DIR: writeResults([gateResult(headPreferencesMs, 'head')]),
+			BENCHMARK_PROFILE: 'regression',
+		});
+
+	it.skipIf(!(including && lacking))(
+		'judges Customize against the accepted value until the base contains the commit',
+		() => {
+			expect.assert(including && lacking);
+			// 540 ms is 124 ms over the base, beyond the 60 ms band, and within
+			// 560 ms + 60 ms.
+			const before = compare(lacking, 540);
+			const preferences = before.comparison?.results[0]?.budgets.find(
+				(entry) =>
+					entry.metric === 'preferencesVisibleMs' &&
+					entry.comparator === 'absolute-or-percent-lte'
+			);
+			expect(preferences?.message).toContain('accepted shift');
+			expect(before.code).toBe(0);
+			expect(summaryOf(before).budgets.failed).toBe(0);
+			expect(compare(lacking, 640).code).not.toBe(0);
+			const after = compare(including, 540);
+			expect(after.code).not.toBe(0);
+			expect(summaryOf(after).failures.join('\n')).toContain(
+				'preferencesVisibleMs'
+			);
+		}
+	);
 });

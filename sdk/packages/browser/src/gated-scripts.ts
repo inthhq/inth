@@ -1,5 +1,6 @@
-import { allConsentNames, evaluateConsent } from '@c15t/core';
+import { allConsentNames } from '@c15t/core';
 import type { AllConsentNames, ConsentSnapshot, VendorOwner } from '@c15t/core';
+import { evaluateCategoryGate } from '@c15t/core/surface-actions/plain-scripts';
 
 /** Attribute that names the category an inert `<script>` waits on. */
 export const CATEGORY_ATTRIBUTE = 'data-c15t-category';
@@ -100,7 +101,7 @@ const isAllowed = function isAllowed(
 		element.setAttribute(ACTIVATED_ATTRIBUTE, 'invalid');
 		return false;
 	}
-	return evaluateConsent(
+	return evaluateCategoryGate(
 		{
 			category: category as AllConsentNames,
 			vendor: element.getAttribute(VENDOR_ATTRIBUTE) || undefined,
@@ -134,6 +135,26 @@ const trackPendingScript = (script: HTMLScriptElement): PendingScript => {
 	script.addEventListener('load', settled);
 	script.addEventListener('error', settled);
 	return pending;
+};
+
+/**
+ * The categories the page's tags offer: those of the inert `elements`, and
+ * of tags that already ran. The init script (`c15t.js`) may have started
+ * some before the client that scans.
+ */
+const offeredCategories = function offeredCategories(
+	root: ParentNode,
+	elements: readonly HTMLScriptElement[]
+): AllConsentNames[] {
+	const ran = root.querySelectorAll<HTMLScriptElement>(
+		`script[${CATEGORY_ATTRIBUTE}][${ACTIVATED_ATTRIBUTE}="true"]`
+	);
+	return [...ran, ...elements].flatMap((element) => {
+		const category = element.getAttribute(
+			CATEGORY_ATTRIBUTE
+		) as AllConsentNames;
+		return allConsentNames.includes(category) ? [category] : [];
+	});
 };
 
 /** A client's script queue, cancelled when that client is disposed. */
@@ -205,17 +226,11 @@ export const createGatedScriptActivator = function createGatedScriptActivator(
 			const selector = `script[type="text/plain"][${CATEGORY_ATTRIBUTE}]:not([${ACTIVATED_ATTRIBUTE}])`;
 			// Untrusted tags are marked, so each is refused (and reported) once
 			// and cannot add a category to the UI.
+			const scope = root ?? document;
 			const elements = Array.from(
-				(root ?? document).querySelectorAll<HTMLScriptElement>(selector)
+				scope.querySelectorAll<HTMLScriptElement>(selector)
 			).filter((element) => isTrusted(element, nonce));
-			registerCategories?.(
-				elements.flatMap((element) => {
-					const category = element.getAttribute(
-						CATEGORY_ATTRIBUTE
-					) as AllConsentNames;
-					return allConsentNames.includes(category) ? [category] : [];
-				})
-			);
+			registerCategories?.(offeredCategories(scope, elements));
 			let namedNewVendor = false;
 			for (const element of elements) {
 				const category = element.getAttribute(

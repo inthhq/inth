@@ -4,9 +4,12 @@
  * names one `'use client'` module for the quickstart components, plus the
  * config helpers as plain functions.
  */
-import { ConsentBanner } from '@c15t/react/components/consent-banner';
 import { ConsentDialogLink } from '@c15t/react/components/consent-dialog-link';
-import { ConsentDialog } from '@c15t/react/consent-dialog';
+// The banner and dialog whose code loads with ConsentRoot's engine.
+import {
+	DeferredConsentBanner as ConsentBanner,
+	DeferredConsentDialog as ConsentDialog,
+} from '@c15t/react/deferred';
 import { describe, expect, test } from 'vitest';
 
 import packageJson from '../../package.json';

@@ -76,8 +76,10 @@ export const createServerGeneratedPlugin =
 		};
 	};
 
-/** The `@c15t/core` module each on-demand chunk starts from. */
+/** The module each on-demand chunk starts from. */
 const CHUNK_MODULES: Readonly<Record<PreloadChunkName, RegExp>> = {
+	engine:
+		/[\\/](?:@c15t[\\/]svelte|packages[\\/]svelte)[\\/](?:dist|src[\\/]lib)[\\/]deferred[\\/]engine\.[cm]?[jt]s$/u,
 	'loader-and-blocker':
 		/[\\/](?:@c15t[\\/]core|packages[\\/]core)[\\/](?:dist|src)[\\/]modules[\\/]loader-and-blocker\.[cm]?[jt]s$/u,
 };
@@ -136,7 +138,10 @@ export const resolveChunkHrefs = function resolveChunkHrefs(
 	bundle: Record<string, { type: string }>,
 	base: string
 ): Record<PreloadChunkName, string> {
-	const hrefs: Record<PreloadChunkName, string> = { 'loader-and-blocker': '' };
+	const hrefs: Record<PreloadChunkName, string> = {
+		engine: '',
+		'loader-and-blocker': '',
+	};
 	for (const output of Object.values(bundle)) {
 		if (output.type !== 'chunk') {
 			continue;
@@ -260,6 +265,120 @@ export const createModulePreloadPlugin =
 	};
 
 /**
+ * The small `@c15t/core` and `@c15t/ui` modules that `ConsentRoot`'s
+ * first-load code shares with the consent engine: the consent, vendor,
+ * experiment and policy helpers the surfaces read, and what records a tap
+ * before the engine.
+ *
+ * Only modules the first load imports belong here: the group puts every
+ * module it matches in the first-load chunk. The surfaces read vendors and
+ * experiments through `vendor-listing`, `vendor-allowed`, `vendor-denial`
+ * and `experiment-presentation`, so `vendors`, `experiment`, `modules/has`
+ * and the record evaluator stay with the engine.
+ *
+ * Vite's preload helper joins them: the first load's dynamic imports use
+ * it, and it rode in this chunk before through `experiment`. On its own
+ * it costs the page one more request.
+ */
+const FIRST_LOAD_SHARED =
+	/^\0vite[\\/]preload-helper\.js$|[\\/]node_modules[\\/]@c15t[\\/](?:core[\\/]dist[\\/](?:libs[\\/](?:has|experiment-presentation|vendor-listing|policy-actions|is-production|storage-keys|generate-subject-id)|consent[\\/]consent-types|modules[\\/]vendor-(?:allowed|denial)|consent-record[\\/]types|surface-actions[\\/]instant-commit|derive-surface)|ui[\\/]dist[\\/]utils[\\/]text-direction)\.js$/u;
+
+/** The slice of Rolldown's output options {@link FirstLoadChunkPlugin} edits. */
+interface OutputOptionsLike {
+	advancedChunks?: unknown;
+	codeSplitting?: boolean | { groups?: unknown[] };
+	inlineDynamicImports?: boolean;
+	manualChunks?: unknown;
+}
+
+/**
+ * What the plugin returns: the app's options with the group added.
+ * `inlineDynamicImports` is there so the type fits Rollup's
+ * `OutputOptions`, whose keys are all optional.
+ */
+interface ChunkedOutputOptions {
+	codeSplitting: { groups: unknown[] };
+	inlineDynamicImports?: boolean;
+}
+
+/**
+ * The plugin context the hook reads. `watchMode`, which Rollup's and
+ * Rolldown's `meta` both have, lets Rollup's context fit the type.
+ */
+interface OutputHookContext {
+	environment?: { name: string };
+	meta: { rolldownVersion?: string; watchMode: boolean };
+}
+
+/** The plugin that puts c15t's shared first-load modules in one chunk. */
+export interface FirstLoadChunkPlugin {
+	apply: 'build';
+	name: string;
+	outputOptions: (
+		this: OutputHookContext,
+		options: OutputOptionsLike
+	) => ChunkedOutputOptions | undefined;
+}
+
+/**
+ * Puts the small c15t modules that `ConsentRoot`'s first-load code shares
+ * with the consent engine into one chunk, in the browser build of a Vite
+ * that bundles with Rolldown (Vite 8).
+ *
+ * Rolldown gives each set of modules that the same chunks import a chunk
+ * of its own. The engine, the commit path and the dialog each share a
+ * different few of those modules with the page, so without this the page
+ * fetches about a dozen c15t files of a few hundred bytes, each with its
+ * own request and headers. Every module in the group already loads with a
+ * page that renders `ConsentRoot`, so the page loads no more code, and the
+ * on-demand chunks import from the merged one. Rollup (Vite 7 and earlier)
+ * places a module its importer has loaded already, so the plugin leaves
+ * it alone. It does nothing when the app sets `manualChunks` or
+ * `advancedChunks`, or turns code splitting off; groups the app sets in
+ * `codeSplitting` come first.
+ *
+ * {@link consentManifest} includes it.
+ *
+ * @returns The Vite plugin.
+ * @internal
+ */
+export const createFirstLoadChunkPlugin =
+	function createFirstLoadChunkPlugin(): FirstLoadChunkPlugin {
+		return {
+			apply: 'build',
+			name: 'c15t:first-load-chunk',
+			outputOptions(options) {
+				const { codeSplitting } = options;
+				if (
+					this.environment?.name !== 'client' ||
+					!this.meta.rolldownVersion ||
+					options.manualChunks !== undefined ||
+					options.advancedChunks !== undefined ||
+					options.inlineDynamicImports === true ||
+					codeSplitting === false
+				) {
+					return undefined;
+				}
+				const settings = typeof codeSplitting === 'object' ? codeSplitting : {};
+				return {
+					...options,
+					codeSplitting: {
+						...settings,
+						groups: [
+							...(settings.groups ?? []),
+							{
+								debugName: 'c15t',
+								name: 'c15t',
+								test: FIRST_LOAD_SHARED,
+							},
+						],
+					},
+				};
+			},
+		};
+	};
+
+/**
  * Serves the deployment's consent manifest and backend URL as the virtual
  * module `@c15t/core/generated` (also `c15t/generated`). Import `snapshot`
  * from it; no file is written into the app. `vite build` fetches the
@@ -287,7 +406,9 @@ export const createModulePreloadPlugin =
  * In a SvelteKit build it also writes the URL of the on-demand chunk that
  * holds the script loader and the network blocker into the server output,
  * so `c15tHandle` adds a `<link rel="modulepreload">` for it to every page
- * whose provider has `scripts` or blocker rules.
+ * whose provider has `scripts` or blocker rules. With Vite 8 it puts the
+ * small modules c15t's first-load code shares with the consent engine into
+ * one chunk ({@link createFirstLoadChunkPlugin}).
  *
  * @param options - Backend URL, `onBuildError` and `source`. Appends
  * `/manifest`.
@@ -305,7 +426,12 @@ export const createModulePreloadPlugin =
  */
 export const consentManifest = (
 	options: ConsentManifestPluginOptions = {}
-): [ConsentManifestPlugin, ModulePreloadPlugin, ServerGeneratedPlugin] => [
+): [
+	ConsentManifestPlugin,
+	ModulePreloadPlugin,
+	ServerGeneratedPlugin,
+	FirstLoadChunkPlugin,
+] => [
 	createConsentManifestPlugin(options, {
 		// A Svelte single-page app only: SvelteKit resolves on the server.
 		adviseHostedForLocation: true,
@@ -322,4 +448,5 @@ export const consentManifest = (
 	}),
 	createModulePreloadPlugin(),
 	createServerGeneratedPlugin(),
+	createFirstLoadChunkPlugin(),
 ];

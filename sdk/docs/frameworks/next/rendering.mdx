@@ -295,6 +295,14 @@ banner at once. When the banner hydrates and the runtime has started, c15t
 records the choice with the time of the tap, saves it and loads the scripts it
 allows; Customize opens the dialog.
 
+While `ConsentRoot` waits to load its consent engine, the banner cannot hydrate.
+In that time the script also keeps presses on those buttons (`pointerdown`,
+`pointerup`, `mousedown`, `mouseup`, `touchstart` and `touchend`) from reaching
+listeners on the page, as it does for the `click`. React would otherwise try to
+hydrate the banner at each press, in the same task as the tap. Once the engine
+has rendered, presses reach the page again. Hover and focus events are not
+affected.
+
 A tap made on a banner for one model or prompt is dropped when the browser
 resolves another, and the banner shows again. A banner you build from hooks
 has no inline script, so a tap before hydration does nothing there, and a

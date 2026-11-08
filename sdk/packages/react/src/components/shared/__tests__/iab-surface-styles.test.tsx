@@ -102,7 +102,9 @@ describe('IAB styles without CSS imports', () => {
 			parsed.querySelector('[data-testid="iab-consent-banner-root"]')
 		).not.toBeNull();
 		expect(styleIds(parsed)).toEqual([
-			'c15t-first-paint',
+			'c15t-tokens',
+			'c15t-button',
+			'c15t-banner',
 			'c15t-iab-first-paint',
 		]);
 		for (const style of parsed.querySelectorAll('style[data-c15t-styles]')) {
@@ -148,7 +150,9 @@ describe('IAB styles without CSS imports', () => {
 				.element(screen.getByTestId('iab-consent-dialog-root'))
 				.toBeInTheDocument();
 			expect(styleIds()).toEqual([
-				'c15t-first-paint',
+				'c15t-tokens',
+				'c15t-button',
+				'c15t-banner',
 				'c15t-iab-first-paint',
 				'c15t-dialog',
 				'c15t-iab-dialog',
@@ -185,13 +189,20 @@ describe('IAB styles without CSS imports', () => {
 			[...document.head.querySelectorAll('style[data-precedence="c15t"]')].map(
 				(style) => style.getAttribute('data-href')
 			);
-		expect(hoistedIds()).toEqual(['c15t-first-paint', 'c15t-iab-first-paint']);
+		expect(hoistedIds()).toEqual([
+			'c15t-tokens',
+			'c15t-button',
+			'c15t-banner',
+			'c15t-iab-first-paint',
+		]);
 		await screen.getByTestId('iab-consent-banner-customize-button').click();
 		await expect
 			.element(screen.getByTestId('iab-consent-dialog-root'))
 			.toBeInTheDocument();
 		expect(hoistedIds()).toEqual([
-			'c15t-first-paint',
+			'c15t-tokens',
+			'c15t-button',
+			'c15t-banner',
 			'c15t-iab-first-paint',
 			'c15t-dialog',
 			'c15t-iab-dialog',

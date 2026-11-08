@@ -3,7 +3,12 @@
 import type * as C15tCoreTypes from '@c15t/core';
 import type { PromptPosition, PromptVariant } from '@c15t/core';
 import styles from '@c15t/ui/styles/components/consent-banner';
-import { forwardRef as createForwardRef, useMemo } from 'react';
+import {
+	forwardRef as createForwardRef,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+} from 'react';
 import type { CSSProperties, FC, HTMLAttributes, ReactNode } from 'react';
 
 import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui';
@@ -24,12 +29,13 @@ import { useUIConfig } from '~/ui-config-context';
 import { defaultTranslationConfig } from '~/utils/default-translation-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { FIRST_PAINT_SHEETS } from '../../shared/first-paint-sheets';
+import { BANNER_SHEETS } from '../../shared/first-paint-sheets';
 import { StreamedConsentSurface } from '../../shared/streamed-surface';
 import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
+import { removeStaticBanner } from '../static-banner-shell';
 import {
 	ConsentBannerSurfaceContext,
 	useConsentBannerSurface,
@@ -39,6 +45,10 @@ import { EarlyTapScript } from './early-tap-script';
 import { Overlay } from './overlay';
 
 const DEFAULT_MODELS: C15tCoreTypes.Model[] = ['opt-in', 'opt-out'];
+
+/** A layout effect in the browser; nothing to run on the server. */
+const useBrowserLayoutEffect =
+	typeof document === 'undefined' ? useEffect : useLayoutEffect;
 
 /**
  * The banner renders in its visible state and shows on its first frame.
@@ -280,14 +290,22 @@ const ConsentBannerRootChildren = createForwardRef<
 		// and the current model matches. Without a policy nothing renders.
 		// Mounted on every page, so a banner the browser shows later finds
 		// its sheet loaded.
-		const sheetsReady = useSurfaceSheetsReady(FIRST_PAINT_SHEETS, noStyle);
+		const sheetsReady = useSurfaceSheetsReady(BANNER_SHEETS, noStyle);
 		const shouldShowBanner =
 			sheetsReady &&
 			hasConsentUI &&
 			activeUI === 'banner' &&
 			models.includes(model);
-		// A banner that arrives after the page painted fades in.
+		// A banner that arrives after the page painted fades in, unless it
+		// replaces the static banner from `index.html`.
 		const lateEntry = useLateEntry(shouldShowBanner) && !disableAnimation;
+		// Before the browser paints this banner, so the two never show
+		// together and never leave a frame with neither.
+		useBrowserLayoutEffect(() => {
+			if (shouldShowBanner) {
+				removeStaticBanner();
+			}
+		}, [shouldShowBanner]);
 		const contentStyle = mergeSlotProps(components?.banner?.root, {
 			baseClassName: styles.root,
 			className: className || forwardedClassName,
@@ -306,7 +324,7 @@ const ConsentBannerRootChildren = createForwardRef<
 				{/* Before the buttons, so a tap on them is never missed. */}
 				<EarlyTapScript />
 				<SurfaceStyles
-					sheets={FIRST_PAINT_SHEETS}
+					sheets={BANNER_SHEETS}
 					noStyle={noStyle}
 				/>
 				<Overlay />

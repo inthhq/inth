@@ -37,6 +37,9 @@ export default mergeConfig(
 			// oxlint-disable-next-line sort-keys -- Vite resolves aliases in declaration order, so subpaths must precede package roots.
 			alias: {
 				'~': resolve(__dirname, './src'),
+				// The browser build; the node project overrides it with the
+				// server's, which imports the engine statically.
+				'#engine-now': resolve(__dirname, './src/engine-now-browser.ts'),
 				'@c15t/nextjs/generated-manifest': resolve(
 					__dirname,
 					'./src/generated-manifest.ts'
@@ -101,6 +104,18 @@ export default mergeConfig(
 					__dirname,
 					'../core/src/modules/window-debug/index.ts'
 				),
+				'@c15t/core/transports/hosted-factory': resolve(
+					__dirname,
+					'../core/src/transports/hosted-factory.ts'
+				),
+				'@c15t/core/runtime/deferred-boot': resolve(
+					__dirname,
+					'../core/src/runtime/deferred-boot.ts'
+				),
+				'@c15t/core/runtime/deferred-snapshot': resolve(
+					__dirname,
+					'../core/src/runtime/deferred-snapshot.ts'
+				),
 				'@c15t/core/transports/manifest-cache': resolve(
 					__dirname,
 					'../core/src/transports/manifest-cache.ts'
@@ -121,6 +136,18 @@ export default mergeConfig(
 				'@c15t/core/server': resolve(__dirname, '../core/src/server/index.ts'),
 				'@c15t/core/build': resolve(__dirname, '../core/src/build.ts'),
 				'@c15t/core/static': resolve(__dirname, '../core/src/static.ts'),
+				'@c15t/core/surface-actions/early-commit': resolve(
+					__dirname,
+					'../core/src/surface-actions/early-commit.ts'
+				),
+				'@c15t/core/surface-actions/instant-commit': resolve(
+					__dirname,
+					'../core/src/surface-actions/instant-commit.ts'
+				),
+				'@c15t/core/surface-actions/plain-scripts': resolve(
+					__dirname,
+					'../core/src/surface-actions/plain-scripts.ts'
+				),
 				'@c15t/core/surface-actions': resolve(
 					__dirname,
 					'../core/src/surface-actions/index.ts'
@@ -158,6 +185,14 @@ export default mergeConfig(
 				'@c15t/react/gpp': resolve(__dirname, '../react/dist/gpp.js'),
 				'@c15t/react/iab': resolve(__dirname, '../react/dist/iab.js'),
 				'@c15t/react/provider': resolve(__dirname, '../react/dist/provider.js'),
+				'@c15t/react/deferred/engine': resolve(
+					__dirname,
+					'../react/dist/deferred/engine.js'
+				),
+				'@c15t/react/deferred': resolve(
+					__dirname,
+					'../react/dist/deferred/index.js'
+				),
 				'@c15t/react/hooks': resolve(__dirname, '../react/dist/hooks.js'),
 				'@c15t/react/module-hooks': resolve(
 					__dirname,
@@ -209,13 +244,21 @@ export default mergeConfig(
 			projects: [
 				{
 					extends: true,
+					resolve: {
+						alias: {
+							'#engine-now': resolve(__dirname, './src/engine-now.ts'),
+						},
+					},
 					test: {
 						environment: 'node',
 						include: [
 							'src/__tests__/build.test.ts',
 							'src/__tests__/config.test.ts',
+							'src/__tests__/defer-server.test.tsx',
 							'src/__tests__/proxy.test.ts',
+							'src/__tests__/root-engine-preload.test.tsx',
 							'src/__tests__/root-server-start.test.tsx',
+							'src/__tests__/root-sync-render.test.tsx',
 						],
 						name: 'node',
 					},
@@ -232,8 +275,11 @@ export default mergeConfig(
 						exclude: [
 							'src/__tests__/build.test.ts',
 							'src/__tests__/config.test.ts',
+							'src/__tests__/defer-server.test.tsx',
 							'src/__tests__/proxy.test.ts',
+							'src/__tests__/root-engine-preload.test.tsx',
 							'src/__tests__/root-server-start.test.tsx',
+							'src/__tests__/root-sync-render.test.tsx',
 						],
 						include: [
 							'src/**/*.test.tsx',
@@ -242,6 +288,9 @@ export default mergeConfig(
 							'src/**/*.spec.ts',
 						],
 						name: 'browser',
+						// `ConsentRoot` loads its engine with `import()`; tests that
+						// render it synchronously need it loaded first.
+						setupFiles: ['./src/__tests__/setup-browser.ts'],
 					},
 				},
 			],

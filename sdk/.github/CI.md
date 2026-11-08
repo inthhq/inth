@@ -16,6 +16,7 @@ benchmark should reuse an existing group unless it proves a different contract.
 | CSS compatibility | Tailwind 3 important overrides, Tailwind 4 layers, plain CSS, the Tailwind 3 and 4 framework matrix | Runtime performance suites |
 | Consumer bundles | Initial/deferred JS, CSS, compressed sizes, import boundaries and tarballs | Per-package Rsdoctor comments |
 | Runtime comparisons | Public operation costs, policy resolution, script lifecycle; full browser metrics in separate canary runs and full validation | Routine microbench runs |
+| Consent gate | CookieBench-equivalent LCP delta, banner visibility, consent-effective, gated scripts and Customize timings at the throttled mobile profile, per framework and the script tag | The unthrottled browser-runtime suites |
 | Mobile SDK | Swift and Kotlin kernel builds and tests, both Android assemblies, the binding's autolinking as a host app resolves it, the mobile JS boundary, mobile budgets and their required-row contract | Example app builds |
 | Mobile device builds (advisory) | Expo config-plugin resolution, CocoaPods resolution and the two example apps built for iOS and Android | A second native unit-test run |
 | iOS vendor SDKs (full validation) | Real PostHog, Mixpanel, Sentry Replay and Firebase Analytics in the iOS demo follow the measurement decision through the c15t Swift helpers: request capture for the first three, Firebase's debug log for the last | Helper logic, which the Swift unit tests cover with fakes |
@@ -314,6 +315,27 @@ request after 200 ms on both revisions. Jobs upload separate reports and keep
 running if another package fails. Failures fail the benchmark workflow and
 preserve its summaries and artifacts without blocking publishing. GitHub activates schedules only once the workflow is on
 the default branch.
+The consent gate (`gate` mode) runs in the same workflow, with one job per
+framework plus the script tag: `gate-react-browser-bench`, ...,
+`gate-script-lifecycle-bench`. Each job measures CookieBench's metrics at its
+mobile profile on a gate page and a no-CMP control page. It measures base and
+head in two alternating rounds of six iterations each and fails on any
+budget in `consentGateBudgets()`. Pull requests run only the targets whose
+bench the change reaches: `scripts/ci-plan.ts` emits them as the `gate`
+output (for example `react,nextjs,tanstack-start`), and `ci.yml` passes them
+as `gate_targets`. A change to `@c15t/core`, `@c15t/ui` or the gate harness
+runs all seven. A change to `@c15t/vue` runs Nuxt and Astro, and a change to
+`@c15t/browser` runs the script tag. Pushes to `canary`, the nightly run and
+full validation run every target. Manual runs accept `mode: gate` and a
+`gate_targets` list. To run the same comparison locally, use
+`bun run bench:gate [--base <rev>] [--package <bench>]`; see
+[the consent gate](../benchmarks/README.md#consent-gate).
+`gateAcceptedShifts` judges a few relative budgets against a measured value
+until the base contains the commit that moved them; the compare step needs
+the full history (`fetch-depth: 0`) to tell. The current entries cover
+Customize timings for perf-release and are removed once `perf-release` is on
+canary ([accepted shifts](../benchmarks/README.md#accepted-shifts)).
+
 Repository branch-protection settings must require `CI complete` when replacing
 the old required checks.
 

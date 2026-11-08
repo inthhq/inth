@@ -1,12 +1,8 @@
-import type { StorageConfig } from '@c15t/core';
-import type { ConsentMode } from '@c15t/core/modes';
-import { readStoredRecordsFromCookieHeader } from '@c15t/core/modules/persistence';
-import { clientMode } from '@c15t/core/runtime/client-mode';
+import type { HydrationRecords, StorageConfig } from '@c15t/core';
 import type { RequestConsentState } from '@c15t/core/server';
 import { defu } from 'defu';
-import { computed, markRaw, toRaw, watch } from 'vue';
+import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
 
-import clientManifestSnapshot from '#c15t/client-manifest-snapshot';
 import {
 	defineNuxtPlugin,
 	showError,
@@ -25,14 +21,12 @@ import {
 	buildColorSchemeScript,
 	COLOR_SCHEME_SCRIPT_KEY,
 } from './color-scheme';
-import { consentConfigKey } from './composables/config';
-import type { ConsentConfig } from './config';
-import {
-	createVueConsentKernelContext,
-	INIT_HEADER_NAMES,
-	pickAllowedInitHeaders,
-	provideVueConsentContext,
-} from './kernel';
+import { loadConsentBanner } from './components/lazy-surfaces';
+import type { NuxtConsentBoot } from './deferred/boot';
+import type { NuxtEngineInput } from './deferred/engine';
+import { isDeferredBannerModule } from './deferred/lazy-modules';
+import { createDeferredContext } from './deferred/shell';
+import { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from './kernel';
 import {
 	readNuxtMode,
@@ -40,9 +34,13 @@ import {
 	resolvesOnServer,
 } from './nuxt-mode';
 import type { NuxtConsentModeConfig } from './nuxt-mode';
+import { provideVueConsentContext } from './provide';
 import type { NuxtConsentRequest } from './server-consent';
 import { isSharedNuxtRender } from './shared-render';
-import { generateTokensCSS, TOKENS_STYLE_ID } from './theme-tokens';
+import { TOKENS_STYLE_ID } from './tokens-style-id';
+import { consentConfigKey } from './utils/symbols';
+
+export { withClientData } from './client-data';
 
 /**
  * Development only: after the first init, warn when the `/init` request the
@@ -65,36 +63,6 @@ const warnUnusedInitPrefetch = function warnUnusedInitPrefetch(
 			);
 		}
 	});
-};
-
-/**
- * The mode the browser runs: browser resolution gets the snapshot the
- * build bundled for it, and `hosted()` forwards the consent headers the
- * server read from the request (a CDN's country, for example) to `/init`.
- *
- * As in every single-page app, a policy that depends on a location that
- * neither `inputs` nor `geoURL` supplies is resolved by the backend's
- * `/init`, never as an unknown location: that could apply another
- * region's rules.
- *
- * @param mode - The mode from `nuxt.config.ts`.
- * @param headers - Consent headers the server read from the request.
- * @returns The mode for `clientMode()`.
- * @internal
- */
-export const withClientData = function withClientData(
-	mode: ConsentMode,
-	headers: Record<string, string>
-): ConsentMode {
-	if (mode.type === 'manifest' && mode.resolve === 'browser') {
-		return clientManifestSnapshot && !mode.snapshot
-			? { ...mode, snapshot: clientManifestSnapshot, source: undefined }
-			: mode;
-	}
-	if (mode.type === 'hosted' && Object.keys(headers).length > 0) {
-		return { ...mode, headers: { ...headers, ...mode.headers } };
-	}
-	return mode;
 };
 
 /**
@@ -188,8 +156,8 @@ const withSubjectCookie = async function withSubjectCookie(
 
 /**
  * Whether this plugin run is the server render. Nuxt replaces
- * `import.meta.server` at build time, so the client build drops the server
- * branch; elsewhere (unit tests) a missing `window` decides.
+ * `import.meta.server` at build time; elsewhere (unit tests) a missing
+ * `window` decides.
  * @returns `true` on the server.
  * @internal
  */
@@ -200,6 +168,66 @@ const rendersOnServer = function rendersOnServer(): boolean {
 	);
 };
 
+/**
+ * `false` in Nuxt's client build, where `import.meta.server` is `false`:
+ * written into each server branch's condition so the build drops the
+ * branch and the server-only code it reaches.
+ */
+const SERVER_BUILD = (import.meta as ImportMeta & { server?: boolean }).server;
+
+/** The part of Nuxt's SSR context this plugin edits. */
+interface NuxtSSRModules {
+	modules?: Set<string>;
+	'~lazyHydratedModules'?: Set<string>;
+}
+
+/**
+ * Server only: which c15t chunks the page's HTML preloads.
+ *
+ * A deferred visitor's browser loads the engine, which brings the stock
+ * banner, after the page's priority images (`deferred/shell.ts`): the
+ * banner's components are marked the way Nuxt marks lazily hydrated ones,
+ * so the HTML still inlines their styles but no longer preloads their
+ * chunks. Any other visitor's browser loads the engine as the app starts,
+ * so the HTML preloads it with its imports (`DEFERRED_ENGINE_MANIFEST_KEY`,
+ * which the module adds to the client manifest).
+ *
+ * @param nuxtApp - The Nuxt app; only a real server render has an SSR context.
+ * @param deferred - Whether the browser defers the engine.
+ * @param engineKey - The engine's client manifest key.
+ */
+const markEnginePreload = function markEnginePreload(
+	nuxtApp: {
+		ssrContext?: NuxtSSRModules;
+		hook: (
+			name: 'app:rendered',
+			run: (rendered: { ssrContext?: NuxtSSRModules }) => void
+		) => unknown;
+	},
+	deferred: boolean,
+	engineKey: string
+): void {
+	const { ssrContext } = nuxtApp;
+	if (!ssrContext) {
+		return;
+	}
+	if (!deferred) {
+		ssrContext.modules ??= new Set();
+		ssrContext.modules.add(engineKey);
+		return;
+	}
+	nuxtApp.hook('app:rendered', ({ ssrContext: rendered = ssrContext }) => {
+		rendered['~lazyHydratedModules'] ??= new Set();
+		const lazy = rendered['~lazyHydratedModules'];
+		for (const id of rendered.modules ?? []) {
+			if (isDeferredBannerModule(id)) {
+				lazy.add(id);
+			}
+		}
+	});
+};
+
+// oxlint-disable-next-line complexity -- One plugin: config, server resolution, and the browser's deferred or eager start.
 export default defineNuxtPlugin(async (nuxtApp) => {
 	const appConfig = useAppConfig();
 	const runtimeConfig = useRuntimeConfig();
@@ -231,16 +259,31 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// them too. The color scheme script sets `c15t-dark` in `<head>`, before
 	// the server-rendered banner paints. Registered before the first await,
 	// while the Nuxt context is still current.
+	//
+	// The CSS itself is generated by `theme-tokens.ts`, loaded on demand: a
+	// browser that hydrates server HTML keeps the server's element as it is
+	// (the head leaves an element no entry claims alone) and loads the
+	// generator only when the config changes.
+	const tokensCSS = shallowRef<string>();
+	const renderTokens = async (): Promise<void> => {
+		const { generateTokensCSS } = await import('./theme-tokens');
+		const { colorScheme, theme, tokens } = config.value;
+		tokensCSS.value = generateTokensCSS(tokens, { colorScheme, theme });
+	};
 	useHead(
 		computed(() => {
-			const { colorScheme, nonce, theme, tokens } = config.value;
-			const style: Record<string, string> = {
-				id: TOKENS_STYLE_ID,
-				innerHTML: generateTokensCSS(tokens, { colorScheme, theme }),
-				key: TOKENS_STYLE_ID,
-			};
-			if (nonce) {
-				style.nonce = nonce;
+			const { colorScheme, nonce } = config.value;
+			const styles: Record<string, string>[] = [];
+			if (tokensCSS.value !== undefined) {
+				const style: Record<string, string> = {
+					id: TOKENS_STYLE_ID,
+					innerHTML: tokensCSS.value,
+					key: TOKENS_STYLE_ID,
+				};
+				if (nonce) {
+					style.nonce = nonce;
+				}
+				styles.push(style);
 			}
 			const script: { innerHTML: string; key: string; nonce?: string }[] = [];
 			const scriptSource = buildColorSchemeScript(colorScheme);
@@ -254,7 +297,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 				}
 				script.push(tag);
 			}
-			return { script, style: [style] };
+			return { script, style: styles };
 		})
 	);
 	// The client keeps the class right after the first paint: it follows
@@ -285,15 +328,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const headers = requestHeaders.value;
 	const onServer = rendersOnServer();
 	const readsRecords = !(config.value.consentSource || shared);
-	// The server fills it in below, once the visitor has a subject ID.
-	const initialRecords = useNuxtState('c15t:records', () =>
-		readsRecords && !onServer
-			? readStoredRecordsFromCookieHeader(
-					document.cookie,
-					config.value.storageConfig,
-					Date.now()
-				)
-			: undefined
+	// The server fills it in below, once the visitor has a subject ID. The
+	// browser reads the cookie itself only when the payload has none, in
+	// the engine (`deferred/engine.ts`).
+	const initialRecords = useNuxtState<HydrationRecords | undefined>(
+		'c15t:records',
+		() => undefined
 	);
 
 	// The render resolves the visitor's consent once, on the server, and the
@@ -303,9 +343,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		'c15t:consent',
 		() => undefined
 	);
+	// The snapshot the server rendered with, when the browser may start from
+	// it and load the consent engine after the page (`deferred/shell.ts`).
+	const boot = useNuxtState<NuxtConsentBoot | undefined>(
+		'c15t:boot',
+		() => undefined
+	);
 	// Read before the first await, while the Nuxt context is current.
 	const request =
-		onServer && readsRecords
+		SERVER_BUILD !== false && onServer && readsRecords
 			? await withSubjectCookie(
 					nuxtApp,
 					{
@@ -316,7 +362,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 					config.value.storageConfig
 				)
 			: undefined;
-	if (request) {
+	if (SERVER_BUILD !== false && request) {
+		const { readStoredRecordsFromCookieHeader } =
+			await import('@c15t/core/modules/persistence');
 		initialRecords.value = readStoredRecordsFromCookieHeader(
 			request.headers.cookie,
 			config.value.storageConfig,
@@ -355,29 +403,78 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
 	nuxtApp.vueApp.provide(consentConfigKey, config);
 
+	const onIABUnavailable = (error: Error) => {
+		// The error page alone writes nothing to the console.
+		console.error(error);
+		void nuxtApp.runWithContext(() => showError(error));
+	};
+	const engineInput = (): NuxtEngineInput => ({
+		config: config.value as RuntimeConsentConfig,
+		headers,
+		initialRecords: initialRecords.value
+			? toRaw(initialRecords.value)
+			: undefined,
+		mode,
+		onIABUnavailable,
+		prefetchState: hasPrefetch ? prefetch : undefined,
+		readsRecords,
+		routePrefix,
+	});
+
 	// One runtime per app. Payload state is deep-reactive; the kernel gets
 	// the plain objects. An `iab` policy without `iab` throws from here when
 	// the server resolved it, and Nuxt renders its error page. A policy the
 	// browser resolves (`ssr: false`, a prerendered page) shows the same
 	// error page from the client.
-	const context = createVueConsentKernelContext({
-		config: config.value as ConsentConfig,
-		headers,
-		host: 'nuxt',
-		initialRecords: initialRecords.value
-			? toRaw(initialRecords.value)
-			: undefined,
-		mode: clientMode(withClientData(mode, headers), {
-			backendURL: config.value.backendURL,
-			routePrefix,
-		}),
-		onIABUnavailable: (error) => {
-			// The error page alone writes nothing to the console.
-			console.error(error);
-			void nuxtApp.runWithContext(() => showError(error));
-		},
-		prefetchState: hasPrefetch ? prefetch : undefined,
-	});
+	let context: VueConsentKernelContext;
+	if (SERVER_BUILD !== false && onServer) {
+		await renderTokens();
+		const { createNuxtEngineContext } = await import('./deferred/engine');
+		context = createNuxtEngineContext({
+			...engineInput(),
+			readsRecords: false,
+		});
+		// A visitor resolved for this request, who still has to choose and
+		// whose accept or reject the browser can record without the engine,
+		// starts from the server's snapshot; the engine loads after the page.
+		const { canDeferEngine, DEFERRED_ENGINE_MANIFEST_KEY } =
+			await import('./deferred/boot');
+		const snapshot = context.kernel.getSnapshot();
+		if (request && hasPrefetch && canDeferEngine(snapshot, config.value)) {
+			boot.value = markRaw({ s: snapshot });
+		}
+		markEnginePreload(
+			nuxtApp as unknown as Parameters<typeof markEnginePreload>[0],
+			Boolean(boot.value),
+			DEFERRED_ENGINE_MANIFEST_KEY
+		);
+	} else {
+		if (!nuxtApp.payload.serverRendered) {
+			// No server HTML carries the tokens: they are in the head before
+			// the app mounts.
+			await renderTokens();
+		}
+		const bootState = boot.value ? toRaw(boot.value) : undefined;
+		if (bootState && nuxtApp.payload.serverRendered) {
+			context = createDeferredContext({
+				config: () => config.value as RuntimeConsentConfig,
+				loadEngine: async () => {
+					// The stock banner hydrates once the engine is in: one round
+					// trip for both.
+					const [{ createNuxtEngineContext }] = await Promise.all([
+						import('./deferred/engine'),
+						loadConsentBanner(),
+					]);
+					return (committed) =>
+						createNuxtEngineContext({ ...engineInput(), committed });
+				},
+				snapshot: toRaw(bootState.s),
+			});
+		} else {
+			const { createNuxtEngineContext } = await import('./deferred/engine');
+			context = createNuxtEngineContext(engineInput());
+		}
+	}
 	provideVueConsentContext(nuxtApp.vueApp, context);
 
 	if (typeof window !== 'undefined') {
@@ -397,7 +494,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		}
 		// App config can change at runtime (`updateAppConfig`, HMR). The
 		// runtime applies what changed.
-		watch(config, (next) => context.update(next as RuntimeConsentConfig));
+		watch(config, (next) => {
+			context.update(next as RuntimeConsentConfig);
+			void renderTokens();
+		});
 	}
 	nuxtApp.vueApp.onUnmount(() => {
 		context.dispose();

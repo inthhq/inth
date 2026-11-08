@@ -335,6 +335,14 @@ runtime. In a SvelteKit build the plugin also writes the URL of the chunk
 that holds the script loader and the network blocker, which `c15tHandle`
 preloads.
 
+With Vite 8, which bundles with Rolldown, the plugin also puts the small c15t
+modules that `ConsentRoot`'s first load shares with the consent engine into
+one chunk named `c15t`. Rolldown would otherwise give each of them a file of
+its own, about a dozen requests of a few hundred bytes each. The page loads
+the same code in fewer files. The plugin leaves the chunks alone when your
+config sets `manualChunks` or `advancedChunks` or turns code splitting off,
+and it adds its group after any `codeSplitting.groups` of yours.
+
 Server code that needs the manifest itself, such as a `resolveConsent` call,
 imports `snapshot` and `backendURL` from `@c15t/core/generated`. Without the
 plugin, that module still resolves and exports `undefined` for both. It ships

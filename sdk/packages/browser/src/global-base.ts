@@ -17,6 +17,15 @@ import {
 import type { CreateConsentClientContext } from './client-base';
 import { createDeferred } from './deferred';
 import type { PublishDevToolsLauncher } from './devtools-mount';
+import {
+	adoptBoot,
+	adoptedBoot,
+	releaseBoot,
+	sendInitCommit,
+	withInitPrefetch,
+} from './init/adopt';
+import { readBoot } from './init/boot';
+import { recordPendingTap } from './init/pending-tap';
 import type {
 	ConsentClient,
 	ConsentClientEventMap,
@@ -155,6 +164,9 @@ export interface C15tGlobalBase {
 	dispose: () => void;
 }
 
+/** Takeovers of an init script's stand-in still waiting on its `/init`. */
+const takeovers = new WeakMap<C15tGlobalBase, Promise<void>>();
+
 type GlobalWindow = Window & {
 	[GLOBAL_NAME]?: C15tGlobalBase | QueuedCall[] | unknown;
 };
@@ -218,9 +230,21 @@ const runQueued = async function runQueued(
 ): Promise<void> {
 	const [method, ...args] = call;
 	const fn = (api as unknown as Record<string, unknown>)[method];
+	// The init script's stand-in waits on some calls' results.
+	const { settle } = call as QueuedCall & {
+		settle?: (result: unknown, failed?: boolean) => void;
+	};
 	try {
-		await (fn as (...params: unknown[]) => unknown).apply(api, args);
+		const result = await (fn as (...params: unknown[]) => unknown).apply(
+			api,
+			args
+		);
+		settle?.(result);
 	} catch (error) {
+		if (settle) {
+			settle(error, true);
+			return;
+		}
 		reportQueuedFailure(call, error);
 	}
 };
@@ -362,6 +386,24 @@ export const installGlobal = function installGlobal<Api extends C15tGlobalBase>(
 	}
 	const target = window as GlobalWindow;
 	const existing = target[GLOBAL_NAME];
+	const boot = readBoot();
+	if (boot) {
+		// The init script's stand-in: take over its calls, banner and choice,
+		// once it has read its `/init` answer for this client to start from.
+		const takeOver = (): void => {
+			target[GLOBAL_NAME] = api;
+			adoptBoot(boot);
+			boot.attach(api);
+			replayQueue(api, boot.calls.splice(0));
+		};
+		if (boot.settled) {
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Install stays synchronous.
+			takeovers.set(api, boot.settled.then(takeOver));
+		} else {
+			takeOver();
+		}
+		return api;
+	}
 	if (
 		existing !== null &&
 		typeof existing === 'object' &&
@@ -401,8 +443,10 @@ export const createGlobalWith = function createGlobalWith(
 ): C15tGlobalBase {
 	// `currentScript` points at this bundle only while it is executing.
 	// Manual init may run in another script or an event callback later.
+	// Loaded by the init script, the options are on the init script's tag.
 	const script =
-		typeof document === 'undefined' ? null : document.currentScript;
+		readBoot()?.script ??
+		(typeof document === 'undefined' ? null : document.currentScript);
 	const explicitMode = script?.getAttribute('data-mode');
 	if (
 		supportedMode &&
@@ -465,6 +509,7 @@ export const createGlobalWith = function createGlobalWith(
 			api.devtools = null;
 			cancelActions(api);
 			client?.dispose();
+			releaseBoot();
 			// Keep queued defaults for re-init, including backend-injected
 			// manifests and URLs that are not present on the script tag.
 			client = null;
@@ -485,7 +530,9 @@ export const createGlobalWith = function createGlobalWith(
 				return client;
 			}
 			const configs = options ? [...queuedConfig, options] : queuedConfig;
-			const resolved = configs.reduce(mergeClientOptions, scriptOptions);
+			const resolved = withInitPrefetch(
+				configs.reduce(mergeClientOptions, scriptOptions)
+			);
 			const created = createClient(resolved, clientContext);
 			// A synchronous ready listener can dispose and replace the deferred.
 			const initializingClientReady = clientReady;
@@ -495,6 +542,12 @@ export const createGlobalWith = function createGlobalWith(
 			}
 			pendingListeners.clear();
 			created.start();
+			sendInitCommit(created.kernel);
+			// A tap on an earlier page's init-script banner that was never
+			// stored. A tap on this page's is the init script's to finish.
+			if (!adoptedBoot()?.commit) {
+				recordPendingTap(created);
+			}
 			initializingClientReady.resolve(created);
 			return created;
 		},
@@ -576,8 +629,20 @@ export const autoInit = function autoInit(
 	if (typeof document === 'undefined') {
 		return null;
 	}
-	const { manual } = readPageOptions(document.currentScript);
-	if (manual || api.client) {
+	const waiting = takeovers.get(api);
+	if (waiting) {
+		// oxlint-disable-next-line promise/prefer-await-to-then -- Returns synchronously.
+		void waiting.then(() => {
+			takeovers.delete(api);
+			autoInit(api);
+		});
+		return null;
+	}
+	const boot = adoptedBoot();
+	const { manual } = readPageOptions(boot?.script ?? document.currentScript);
+	// A stand-in the page disposed before the engine arrived: the page
+	// calls `init()` itself when it wants a client again.
+	if (manual || api.client || boot?.disposed) {
 		return api.client;
 	}
 	return api.init();

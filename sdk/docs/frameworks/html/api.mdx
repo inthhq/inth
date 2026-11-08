@@ -80,7 +80,11 @@ visitor's country:
 
 `init()` reads the original tag's attributes even if the tag has since been
 removed, layers queued `config` calls and its own options on top, starts the
-client and returns it. A second call returns the same client. Until `init()`,
+client and returns it. Called on `c15t.js` before `c15t.hosted.js` has
+loaded, it returns a stand-in with the client's methods instead, and
+`c15t.onInit()` hands you the client once it exists; see
+[how c15t.js loads c15t.hosted.js](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
+A second call returns the same client. Until `init()`,
 queued actions and `subscribe` wait, and direct calls to methods that read or
 change consent throw `call c15t.init() first`.
 

@@ -39,15 +39,32 @@ export const useEventDispatcher = function useEventDispatcher(
 			'c15t: useEventDispatcher() needs <ConsentProvider> from @c15t/react.'
 		);
 	}
-	const { runtime } = services;
 	const latest = useCommittedRef(options);
+	// The provider's services object can change (the `enabled` toggle);
+	// the dispatcher keeps its identity and reads the latest one.
+	const current = useCommittedRef(services);
 	return useMemo(() => {
-		const current = () => getEventDispatcher(runtime, latest.current);
-		return {
-			pageview: (path) => current().pageview(path),
-			track: (event, properties) => current().track(event, properties),
+		// Read the runtime when sending: under a deferred root it is set
+		// once the engine attaches.
+		const send = (deliver: (dispatcher: EventDispatcher) => void): void => {
+			const live = current.current;
+			if (live.runtime) {
+				deliver(getEventDispatcher(live.runtime, latest.current));
+				return;
+			}
+			// Delivered, in order, once the engine attached. Waiting does not
+			// load it: until then the visitor has granted nothing optional.
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Fire and forget, like the dispatcher.
+			void live.ready?.then(() => {
+				deliver(getEventDispatcher(current.current.runtime, latest.current));
+			});
 		};
-	}, [latest, runtime]);
+		return {
+			pageview: (path) => send((dispatcher) => dispatcher.pageview(path)),
+			track: (event, properties) =>
+				send((dispatcher) => dispatcher.track(event, properties)),
+		};
+	}, [current, latest]);
 };
 
 export type { EventDispatcher, EventProperties } from '@c15t/core/events';

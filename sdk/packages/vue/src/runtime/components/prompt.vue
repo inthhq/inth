@@ -85,14 +85,15 @@ const transitionStyles = bannerStyles as Record<string, string>;
 
 // A tap on the server-rendered banner before this component hydrated is
 // held by the inline script. From here the banner's own handlers work: stop
-// the script and record the tap once the runtime has started.
-const { runtime } = useConsentKernelContext();
+// the script and record the tap once the runtime has started. The runtime
+// is read when asked: under the deferred context it attaches later.
+const context = useConsentKernelContext();
 // The plugin provides the runtime config, which carries the CSP nonce.
 const nonce = computed(() => (config.value as RuntimeConsentConfig).nonce);
 let stopEarlyTaps: (() => void) | undefined;
 onMounted(() => {
 	stopEarlyTaps = replayEarlyConsentTaps(kernel, {
-		started: () => runtime.started,
+		started: () => context.runtime?.started ?? false,
 	});
 });
 onBeforeUnmount(() => stopEarlyTaps?.());

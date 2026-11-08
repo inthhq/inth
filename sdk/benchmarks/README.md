@@ -201,6 +201,143 @@ and invariants. `BENCHMARK_PROFILE=release`, the default for `bench:compare`,
 also requires historical v2 improvement targets and their real v2 artifacts.
 An ordinary v3 PR does not claim to revalidate the v2 targets.
 
+## Consent gate
+
+The consent gate keeps a change from slowing what CookieBench judges a
+release on: LCP cost, banner visibility, consent taking effect, gated scripts
+running, and the Customize dialog. Every framework bench and the script tag
+serve the same two routes:
+
+- a gate page: CookieBench's article (`article-workload-v1` markup and CSS)
+  with a 477 KB hero (`fetchpriority="high"`), the stock c15t banner and
+  dialog set up the way CookieBench's fixture for that framework sets them up,
+  and two gated scripts (one `measurement`, one `marketing`);
+- a control page: the same article with no consent library in its module
+  graph.
+
+`benchmarks/shared/src/consent-gate.ts` runs them behind a proxy
+(`consent-gate-proxy.ts`) that serves the hero and the gated scripts and
+gzips anything the framework server left uncompressed, so every framework
+loads the same bytes besides its own. The hero is generated at run time
+(`consent-gate-assets.ts`), so the repository carries no binary.
+
+Each iteration is four visits, each in a fresh browser context at
+CookieBench's `mobile-article-v1` profile through CDP: 390x844 at DPR 3,
+4x CPU slowdown, 200 KB/s down, 93.75 KB/s up, 150 ms latency. The visits
+are the control to its LCP, the gate page to its LCP, the gate page through
+an Accept tap, and the gate page through a Customize tap. Taps happen once
+`html[data-consent-ready="true"]` matches, as in CookieBench. The order
+alternates between iterations. The page observer (`consent-gate-observer.ts`)
+is adapted from CookieBench's `browser-observer.ts`, so each metric means
+what CookieBench's does:
+
+| Metric | CookieBench name | Measured from, to |
+| --- | --- | --- |
+| `lcpDeltaMs` | page.lcp delta | gate page LCP minus control LCP, paired per iteration |
+| `bannerVisibleMs` | banner.visible | navigation, first frame with a rendered banner footprint |
+| `consentEffectiveMs` | action.consent-effective | Accept `pointerdown`, first frame the public snapshot grants both categories |
+| `dismissedMs` | action.dismissed | Accept `pointerdown`, first frame with no banner footprint or blocking overlay |
+| `inputToNextPaintMs` | action.input-to-next-paint | longest Event Timing entry of the Accept interaction; 16 ms floor (shorter entries are not reported) |
+| `scriptsCompleteMs` | action.scripts-complete | Accept `pointerdown`, the last gated script executing |
+| `preferencesVisibleMs` | action.preferences-visible | Customize `pointerdown`, first frame the dialog has a footprint |
+| `slowestTapMs` | the 1,000 ms rule | largest of the five tap metrics in one iteration |
+
+`lcpMs`, `controlLcpMs`, `fcpMs` and `controlFcpMs` are reported too, without budgets.
+
+Results use suite `consent-gate` and scenario `consent-gate:latency-200ms`.
+The script tag reports under `@c15t/script-lifecycle-bench`, and Nuxt
+reports under `@c15t/vue`. `consentGateBudgets()` in `shared/src/budgets.ts`
+holds the budgets and their rationale. All of them fail the gate:
+
+- relative budgets on every metric, `absolute-or-percent-lte`, evaluated
+  with the 99% confidence bound described under the CI comparisons. A
+  metric fails only when its median grows past both the absolute band and
+  the percentage, and the lower bound on that growth confirms it;
+- `slowestTapMs` at most 1,000 ms (median iteration), for every target.
+  Astro's former 1,300 ms exception is gone: its Customize dialog now opens
+  before the consent engine loads;
+- `bannerVisibleMs` at most 600 ms for the server-rendered frameworks
+  (Next.js, Nuxt, Astro, SvelteKit, TanStack Start). Round 8 CookieBench
+  medians were 222 to 275 ms.
+
+### Accepted shifts
+
+`gateAcceptedShifts` in `shared/src/budgets.ts` lists relative budgets the
+base cannot meet yet for a known reason. Each entry names a target, a
+metric, the commit that made the shift (`untilBaseIncludes`) and the head
+median it was measured at (`expectedMs`). The compare step
+(`shared/run-compare.ts`) checks the base revision with
+`git merge-base --is-ancestor`:
+
+- while the base does not contain the commit, the relative budget passes
+  when the head median is at most `expectedMs` plus the band (the larger of
+  the absolute band and the percentage of `expectedMs`);
+- once the base contains it, the entry is ignored and the normal band
+  applies;
+- when git cannot tell (a shallow clone, an unknown base), the entry does
+  not apply.
+
+The absolute budgets, such as the 1,000 ms tap rule, apply either way.
+
+Today's entries cover `preferencesVisibleMs` for perf-release. Deferring the
+consent engine means a Customize tap downloads dialog code that canary's
+eager page had already loaded:
+
+| Target | Canary | perf-release | `expectedMs` |
+| --- | ---: | ---: | ---: |
+| Next.js | 416 ms | 530 ms | 560 ms |
+| Nuxt | 453 ms | 658 ms (846 ms on the Rolldown 1.1 bench) | 870 ms |
+| TanStack Start | 430 ms | 757 ms | 790 ms |
+| Astro | 1,161 ms | 930 ms | 960 ms |
+| Script tag | 69 ms | 403 ms | 430 ms |
+
+React (386 ms against 424 ms) and SvelteKit (about 460 ms against 447 ms)
+need no entry. Remove these entries once `perf-release` is on canary. The
+check relies on the perf-release merge commit reaching canary as an
+ancestor, so merge it rather than squash it.
+
+The bands come from three base-vs-base runs of the whole gate (perf-release
+`cc9745eb2` on both arms, 12 iterations per arm, on an M1 Pro shared with
+other builds; 1-minute load medians 4.5, 10 and 6). The largest median move
+of any target in any run:
+
+| Metric | Largest base-vs-base move | Band (absolute, and percent) |
+| --- | ---: | ---: |
+| `lcpDeltaMs` | 20 ms | 50 ms |
+| `bannerVisibleMs` | 14 ms (0.5%) | 50 ms and 3% |
+| `consentEffectiveMs`, `dismissedMs` | 8 ms (13%) | 25 ms and 20% |
+| `inputToNextPaintMs` | 8 ms (one Event Timing quantum) | 25 ms and 20% |
+| `scriptsCompleteMs` | 11 ms (3%) | 25 ms and 5% |
+| `preferencesVisibleMs` | 14 ms (3%) | 60 ms and 5% |
+
+Measuring one target takes 280 to 380 s on that machine (React, whose
+banner renders after hydration, is the slowest). A CI job adds the base
+checkout's install and builds on top of that.
+
+Run it locally before pushing. The command measures base and head in two
+alternating rounds, 12 iterations per arm, and prints the table CI writes
+to its step summary:
+
+```sh
+bun run bench:gate                          # head vs origin/canary, every target
+bun run bench:gate --base origin/canary --package @c15t/nuxt-browser-bench
+```
+
+`--base` defaults to `origin/canary` for the gate (`BENCHMARK_BASE_REF`
+also works). `--package` takes the hosting bench's name. One target takes
+about 4 to 7 minutes on an idle machine. Throttled timings are only as
+quiet as the machine, so close other heavy work before you trust a local
+failure.
+
+To measure one bench's gate without a comparison, run
+`bun run --cwd benchmarks/<bench> bench:gate`, with `C15T_BENCH_ITERATIONS`
+setting the number of iterations. To add a target, give its bench gate and
+control routes built from `@c15t/benchmarking/consent-gate-page`, plus a
+`scripts/run-gate.ts` that calls `runConsentGate`. Then add the target to
+`consentGateTargets` (budgets), `consentGatePackages` (expected results),
+`gateTargetPackages` (`scripts/benchmark-plan.ts`) and the selection in
+`scripts/ci-plan.ts`.
+
 ## Outputs
 
 Benchmark tasks write machine-readable JSON to:

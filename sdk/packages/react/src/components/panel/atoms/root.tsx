@@ -24,7 +24,7 @@ import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useScrollLock } from '~/hooks/use-scroll-lock';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import { useTheme } from '~/hooks/use-theme';
-import { useTranslationLanguage } from '~/kernel-selector';
+import { useTranslationLanguage } from '~/hooks/use-translation-language';
 import type { CSSPropertiesWithVars } from '~/types/theme';
 import { useUIConfig } from '~/ui-config-context';
 import { cnExt as cn } from '~/utils/cn';

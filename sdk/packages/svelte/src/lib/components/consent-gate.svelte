@@ -7,7 +7,7 @@
 	import { onMount } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { FIRST_PAINT_SHEETS } from '../surface-styles';
+	import { CONSENT_GATE_SHEETS } from '../surface-styles';
 	import { resolveComponentStyles, toStyleAttribute } from '../utils';
 	import ConsentButton from './action-button.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
@@ -120,7 +120,7 @@
 	{:else}
 		<!-- Default placeholder -->
 		<SurfaceStyles
-			sheets={FIRST_PAINT_SHEETS}
+			sheets={CONSENT_GATE_SHEETS}
 			{noStyle}
 		/>
 		<div

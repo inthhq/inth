@@ -19,6 +19,12 @@
  * policy, so the browser renders the banner from the same model once its
  * init resolves.
  *
+ * Beside the config it leaves the snapshot it rendered from in a
+ * `data-c15t-boot` data block. The page script reads it and, for a visitor
+ * who still has to choose, loads the consent engine after the page; an
+ * inline script ahead of the markup then records a tap that lands before
+ * the page script runs.
+ *
  * ```astro
  * ---
  * import ConsentBanner from '@c15t/astro/components/consent-banner.astro';
@@ -30,8 +36,11 @@ import { applyExperimentAssignment, applyExperimentTheme } from '@c15t/core';
 import {
 	buildBannerRevealScript,
 	buildColorSchemeScript,
+	buildLocalsBootJSON,
 	buildThemeCSS,
 	buildConfigJSON,
+	canDeferEngine,
+	EARLY_CONSENT_TAP_SCRIPT,
 	markConfigEmitted,
 	PROMPT_SLOT_ATTRIBUTE,
 	promptClassNames,
@@ -114,6 +123,23 @@ const model = resolvePromptModel({
 	snapshot,
 	theme,
 });
+// Records a tap that lands before the page script runs, for a banner whose
+// engine may load after the page. A server island is inserted after the
+// page script ran, and the script would then hold the banner's clicks with
+// nothing to release them, so it gets none.
+const earlyTaps =
+	inlineStyles &&
+	shouldRender &&
+	!hidden &&
+	c15t.shouldShowBanner &&
+	!c15t.prerendered &&
+	canDeferEngine(
+		snapshot,
+		c15t.options,
+		model.blocking,
+		Date.now(),
+		c15t.config
+	);
 ---
 
 {
@@ -127,7 +153,7 @@ const model = resolvePromptModel({
 	)
 }
 
-{inlineStyles && <ComponentStyles nonce={nonce} />}
+{inlineStyles && <ComponentStyles force={shouldRender} nonce={nonce} />}
 
 {
 	themeCSS && (
@@ -143,6 +169,29 @@ const model = resolvePromptModel({
 			data-c15t-config
 			nonce={nonce}
 			set:html={buildConfigJSON(c15t.config)}
+		/>
+	)
+}
+
+{
+	emitConfig && (
+		<script
+			is:inline
+			type="application/json"
+			data-c15t-boot
+			nonce={nonce}
+			set:html={buildLocalsBootJSON(c15t)}
+		/>
+	)
+}
+
+{
+	earlyTaps && (
+		<script
+			is:inline
+			data-c15t-inline
+			nonce={nonce}
+			set:html={EARLY_CONSENT_TAP_SCRIPT}
 		/>
 	)
 }

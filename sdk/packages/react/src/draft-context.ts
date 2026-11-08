@@ -13,8 +13,8 @@ import { saveConsentSurface } from '@c15t/core/surface-actions';
 import { createContext, useCallback, useContext } from 'react';
 
 import { KernelContext, ProviderServicesContext } from './context';
-import { useResolvedPresentation } from './hooks';
 import { useCommittedRef } from './hooks/use-committed-ref';
+import { useResolvedPresentation } from './hooks/use-resolved-presentation';
 
 /**
  * The draft a `ConsentDraftProvider` shares. Here, apart from the draft

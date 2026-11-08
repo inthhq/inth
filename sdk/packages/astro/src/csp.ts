@@ -9,7 +9,8 @@
  *
  * What c15t inlines is either static for a given set of options, or data:
  *
- * - the colour-scheme script, the banner reveal scripts, the first-paint
+ * - the colour-scheme script, the banner reveal scripts, the early-tap
+ *   script a banner whose engine loads after the page runs, the first-paint
  *   stylesheet, the theme stylesheet (one per experiment arm) and the
  *   inline `scripts` entries
  *   the loader injects depend only on the integration options, so their
@@ -34,6 +35,7 @@ import {
 	buildBannerRevealScript,
 	buildColorSchemeScript,
 	buildThemeCSS,
+	EARLY_CONSENT_TAP_SCRIPT,
 } from './server';
 import type { C15tBrowserCsp, C15tResolvedOptions } from './types';
 
@@ -66,6 +68,7 @@ export const buildInlineCodeHashes = async function buildInlineCodeHashes(
 		buildColorSchemeScript(options.colorScheme),
 		buildBannerRevealScript(options.storageConfig, 'consent-banner'),
 		buildBannerRevealScript(options.storageConfig, 'iab-consent-banner'),
+		EARLY_CONSENT_TAP_SCRIPT,
 		// The loader injects an inline `scripts` entry with exactly this text.
 		...(options.scripts ?? []).map((script) => script.textContent ?? ''),
 	].filter(Boolean);

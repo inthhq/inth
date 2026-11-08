@@ -89,6 +89,21 @@
 			"import": "./dist/surface-actions/index.js",
 			"default": "./dist/surface-actions/index.js"
 		},
+		"./surface-actions/early-commit": {
+			"types": "./dist-types/surface-actions/early-commit.d.ts",
+			"import": "./dist/surface-actions/early-commit.js",
+			"default": "./dist/surface-actions/early-commit.js"
+		},
+		"./surface-actions/instant-commit": {
+			"types": "./dist-types/surface-actions/instant-commit.d.ts",
+			"import": "./dist/surface-actions/instant-commit.js",
+			"default": "./dist/surface-actions/instant-commit.js"
+		},
+		"./surface-actions/plain-scripts": {
+			"types": "./dist-types/surface-actions/plain-scripts.d.ts",
+			"import": "./dist/surface-actions/plain-scripts.js",
+			"default": "./dist/surface-actions/plain-scripts.js"
+		},
 		"./consent-categories": {
 			"types": "./dist-types/consent-record/types.d.ts",
 			"import": "./dist/consent-categories.js",
@@ -98,6 +113,11 @@
 			"types": "./dist-types/transports/index.d.ts",
 			"import": "./dist/transports.js",
 			"default": "./dist/transports.js"
+		},
+		"./transports/hosted-factory": {
+			"types": "./dist-types/transports/hosted-factory.d.ts",
+			"import": "./dist/transports/hosted-factory.js",
+			"default": "./dist/transports/hosted-factory.js"
 		},
 		"./transports/manifest": {
 			"types": "./dist-types/transports/manifest.d.ts",
@@ -183,6 +203,21 @@
 			"types": "./dist-types/runtime/client-mode.d.ts",
 			"import": "./dist/runtime/client-mode.js",
 			"default": "./dist/runtime/client-mode.js"
+		},
+		"./runtime/deferred-boot": {
+			"types": "./dist-types/runtime/deferred-boot.d.ts",
+			"import": "./dist/runtime/deferred-boot.js",
+			"default": "./dist/runtime/deferred-boot.js"
+		},
+		"./runtime/deferred-snapshot": {
+			"types": "./dist-types/runtime/deferred-snapshot.d.ts",
+			"import": "./dist/runtime/deferred-snapshot.js",
+			"default": "./dist/runtime/deferred-snapshot.js"
+		},
+		"./runtime/save-preload": {
+			"types": "./dist-types/runtime/save-preload.d.ts",
+			"import": "./dist/runtime/save-preload.js",
+			"default": "./dist/runtime/save-preload.js"
 		},
 		"./runtime/controls": {
 			"types": "./dist-types/runtime/controls.d.ts",

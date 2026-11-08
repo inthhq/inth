@@ -2,7 +2,7 @@
 
 import { getTextDirection } from '@c15t/ui/utils';
 
-import { useTranslationLanguage } from '~/kernel-selector';
+import { useTranslationLanguage } from '~/hooks/use-translation-language';
 
 /**
  * The text direction of the language c15t shows consent copy in, for a

@@ -158,19 +158,36 @@ describe('Next.js build-time manifest', () => {
 			...Object.fromEntries(specifiers.map((name) => [`${name}$`, server])),
 			existing: '/existing.js',
 		});
+		// The server HTML holds these sheets: browsers load each one only
+		// for a surface they render first.
+		const sheets = [
+			'first-paint',
+			'tokens',
+			'button',
+			'banner',
+			'trigger',
+			'consent-gate',
+		];
 		expect(aliasFor(false)).toEqual({
 			...Object.fromEntries(specifiers.map((name) => [`${name}$`, browser])),
-			// The server HTML holds the first-paint sheet: browsers load it
-			// only for a surface they render first.
-			'@c15t/ui/styles/sheets/first-paint$': expect.stringMatching(
-				/first-paint-deferred\.js$/u
+			...Object.fromEntries(
+				sheets.map((name) => [
+					`@c15t/ui/styles/sheets/${name}$`,
+					expect.stringMatching(
+						new RegExp(`sheets/${name}-deferred\\.js$`, 'u')
+					),
+				])
 			),
 			existing: '/existing.js',
 		});
-		expect(turbopackAlias['@c15t/ui/styles/sheets/first-paint']).toEqual({
-			browser: expect.stringMatching(/first-paint-deferred\.js$/u),
-			default: expect.stringMatching(/sheets\/first-paint\.js$/u),
-		});
+		for (const name of sheets) {
+			expect(turbopackAlias[`@c15t/ui/styles/sheets/${name}`]).toEqual({
+				browser: expect.stringMatching(
+					new RegExp(`sheets/${name}-deferred\\.js$`, 'u')
+				),
+				default: expect.stringMatching(new RegExp(`sheets/${name}\\.js$`, 'u')),
+			});
+		}
 		expect(userWebpack).toHaveBeenCalledTimes(2);
 	});
 

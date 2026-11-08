@@ -109,6 +109,6 @@ test('displayedCategories lists the scope in the display order, not the policy o
 		'marketing',
 	]);
 	expect(draft.displayedCategories.value).toEqual(
-		context.runtime.consentCategories
+		context.runtime?.consentCategories
 	);
 });

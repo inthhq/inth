@@ -7,6 +7,7 @@ import type {
 } from '@c15t/core/modules/persistence';
 import { useEffect, useRef, useState } from 'react';
 
+import { deferredModules } from '../deferred/registry';
 import { useRequiredKernel } from './shared';
 
 export type UsePersistenceOptions = Omit<PersistenceOptions, 'kernel'>;
@@ -27,16 +28,34 @@ export const usePersistence = function usePersistence(
 	}));
 	void setHandle;
 	useEffect(() => {
-		const created = createPersistence({
-			kernel,
-			now: options.now,
-			skipHydration: options.skipHydration,
-			storageConfig: options.storageConfig,
-			sync: options.sync,
-		});
-		current.current = created;
+		let created: PersistenceHandle | null = null;
+		let disposed = false;
+		const create = () => {
+			created = createPersistence({
+				kernel,
+				now: options.now,
+				skipHydration: options.skipHydration,
+				storageConfig: options.storageConfig,
+				sync: options.sync,
+			});
+			current.current = created;
+		};
+		// A deferred root's stand-in has no records to hydrate into before
+		// its engine attaches. Wait for it, without loading it.
+		const engine = deferredModules(kernel);
+		if (engine) {
+			// oxlint-disable-next-line promise/prefer-await-to-then -- An effect cannot await.
+			void engine.then(() => {
+				if (!disposed) {
+					create();
+				}
+			});
+		} else {
+			create();
+		}
 		return () => {
-			created.dispose();
+			disposed = true;
+			created?.dispose();
 			current.current = null;
 		};
 	}, [

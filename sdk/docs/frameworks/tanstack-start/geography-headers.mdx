@@ -52,6 +52,16 @@ middleware:
 - and gives a visitor with no subject ID one, in the `c15t-sid` cookie. See
   [Set the subject ID on the server](#set-the-subject-id-on-the-server).
 
+You can also list it on one server function, such as the one that resolves
+the consent state:
+
+<include src="../../shared/examples/tanstack-start/server-function-middleware.mdx" />
+
+There it reads and writes the headers and sets `context.consent` the same way,
+and returns the function's result unchanged. It sets no `c15t-sid` cookie,
+because a server function called while a page renders has no response of its
+own. Register it in `src/start.ts` for the cookie.
+
 Some runtimes hand middleware a request whose headers cannot change. The
 middleware also keeps the values for that request, and the c15t helpers read
 them from there first, so they still see the location. Pass

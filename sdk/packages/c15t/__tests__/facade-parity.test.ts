@@ -75,6 +75,7 @@ const EXPECTED_ESM_FAILURES = new Set<string>([
 	'./svelte',
 	'./svelte/headless',
 	'./svelte/devtools',
+	'./svelte/dialog-panel',
 	'./svelte/kit',
 	// The vue plugin/runtime entries need a Nuxt/Vite context (`#imports`)
 	// or the `.vue` SFC pipeline.

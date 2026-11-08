@@ -8,10 +8,14 @@
 // - `ssr` resolves `svelte`/`node` and gets server-compiled components, which
 //   is what `render()` from `svelte/server` needs. Files ending in
 //   `.ssr.test.ts` run here.
+// - `browser` runs files ending in `.browser.test.ts` in headless Chromium,
+//   for behaviour jsdom has no layout for, such as which elements can take
+//   focus.
 import { resolve } from 'node:path';
 
 import { baseConfig } from '@c15t/vitest-config/base';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
+import { playwright } from '@vitest/browser-playwright';
 import { transformWithEsbuild } from 'vite';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
@@ -69,6 +73,10 @@ const workspaceAliases = [
 	{
 		find: '@c15t/core/runtime/on-demand',
 		replacement: resolve(__dirname, '../core/src/runtime/on-demand.ts'),
+	},
+	{
+		find: '@c15t/core/runtime/save-preload',
+		replacement: resolve(__dirname, '../core/src/runtime/save-preload.ts'),
 	},
 	{
 		find: '@c15t/core/runtime/script-server-start',
@@ -135,6 +143,21 @@ const workspaceAliases = [
 		find: '@c15t/core/server',
 		replacement: resolve(__dirname, '../core/src/server/index.ts'),
 	},
+	// The deferred root's subpaths, before their prefixes.
+	{
+		find: '@c15t/core/surface-actions/early-commit',
+		replacement: resolve(
+			__dirname,
+			'../core/src/surface-actions/early-commit.ts'
+		),
+	},
+	{
+		find: '@c15t/core/surface-actions/instant-commit',
+		replacement: resolve(
+			__dirname,
+			'../core/src/surface-actions/instant-commit.ts'
+		),
+	},
 	{
 		find: '@c15t/core/surface-actions',
 		replacement: resolve(__dirname, '../core/src/surface-actions/index.ts'),
@@ -177,6 +200,7 @@ const workspaceAliases = [
 ];
 
 const SSR_TEST_GLOB = 'src/**/*.ssr.test.ts';
+const BROWSER_TEST_GLOB = 'src/**/*.browser.test.ts';
 
 export default mergeConfig(
 	baseConfig,
@@ -211,12 +235,22 @@ export default mergeConfig(
 						},
 					],
 					resolve: {
-						alias: workspaceAliases,
+						alias: [
+							// The package's `imports` map, by the build each project runs.
+							{
+								find: '#server-root',
+								replacement: resolve(
+									__dirname,
+									'src/lib/deferred/server-root-browser.ts'
+								),
+							},
+							...workspaceAliases,
+						],
 						conditions: ['browser'],
 					},
 					test: {
 						environment: 'jsdom',
-						exclude: [SSR_TEST_GLOB],
+						exclude: [SSR_TEST_GLOB, BROWSER_TEST_GLOB],
 						include: [
 							'src/**/*.test.ts',
 							'src/**/*.test.svelte.ts',
@@ -230,13 +264,55 @@ export default mergeConfig(
 				{
 					plugins: [svelte()],
 					resolve: {
-						alias: workspaceAliases,
+						alias: [
+							{
+								find: '#server-root',
+								replacement: resolve(
+									__dirname,
+									'src/lib/deferred/server-root.ts'
+								),
+							},
+							...workspaceAliases,
+						],
 						conditions: ['svelte', 'node'],
 					},
 					test: {
 						environment: 'node',
 						include: [SSR_TEST_GLOB],
 						name: 'ssr',
+					},
+				},
+				{
+					optimizeDeps: {
+						// What the surfaces import through the aliased core source.
+						// Left to discovery, Vite pre-bundles them on first sight
+						// mid-run and reloads the page, which leaves the test with
+						// two Svelte runtimes; a cold CI cache hits this every run.
+						include: ['base-x', 'esm-env', 'valibot'],
+					},
+					plugins: [svelte()],
+					resolve: {
+						alias: [
+							{
+								find: '#server-root',
+								replacement: resolve(
+									__dirname,
+									'src/lib/deferred/server-root-browser.ts'
+								),
+							},
+							...workspaceAliases,
+						],
+						conditions: ['browser'],
+					},
+					test: {
+						browser: {
+							enabled: true,
+							headless: true,
+							instances: [{ browser: 'chromium' }],
+							provider: playwright(),
+						},
+						include: [BROWSER_TEST_GLOB],
+						name: 'browser',
 					},
 				},
 			],

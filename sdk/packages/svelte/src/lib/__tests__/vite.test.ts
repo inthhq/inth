@@ -30,6 +30,10 @@ const CLIENT_BUNDLE = {
 		`${CORE}/network-blocker/blocker.js`,
 		`${CORE}/loader-and-blocker.js`,
 	]),
+	'_app/immutable/chunks/e.js': chunk('_app/immutable/chunks/e.js', [
+		'/app/node_modules/@c15t/svelte/dist/deferred/engine.js',
+		'/app/node_modules/@c15t/svelte/dist/owned-runtime.js',
+	]),
 	'_app/immutable/entry/app.js': chunk(
 		'_app/immutable/entry/app.js',
 		[`${CORE}/script-loader/tools.js`],
@@ -139,8 +143,9 @@ describe('location advice', () => {
 });
 
 describe('resolveChunkHrefs', () => {
-	test('finds the loader-and-blocker chunk under the served base', () => {
+	test('finds the loader-and-blocker and engine chunks under the served base', () => {
 		expect(resolveChunkHrefs(CLIENT_BUNDLE, '/docs')).toEqual({
+			engine: '/docs/_app/immutable/chunks/e.js',
 			'loader-and-blocker': '/docs/_app/immutable/chunks/a.js',
 		});
 	});
@@ -158,6 +163,7 @@ describe('resolveChunkHrefs', () => {
 			),
 		};
 		expect(resolveChunkHrefs(bundle, '')).toEqual({
+			engine: '',
 			'loader-and-blocker': '',
 		});
 	});
@@ -197,6 +203,7 @@ describe('consentManifest module preload', () => {
 		await plugin.writeBundle.call({}, {}, CLIENT_BUNDLE);
 		expect(await readFile(file, 'utf8')).toBe(
 			`const hrefs = ${JSON.stringify({
+				engine: '/_app/immutable/chunks/e.js',
 				'loader-and-blocker': '/_app/immutable/chunks/a.js',
 			})};`
 		);
@@ -346,5 +353,81 @@ describe('Svelte backend URL variables', () => {
 			{ backendURL: 'https://option.example.com' }
 		);
 		expect(backendURL).toBe('https://option.example.com');
+	});
+});
+
+describe('consentManifest first-load chunk', () => {
+	const plugin = () => consentManifest()[3];
+	const ROLLDOWN = {
+		environment: { name: 'client' },
+		meta: { rolldownVersion: '1.0.0', watchMode: false },
+	};
+	interface Group {
+		name: string;
+		test: RegExp;
+	}
+	const groupsOf = (options: unknown): Group[] =>
+		(options as { codeSplitting: { groups: Group[] } }).codeSplitting.groups;
+
+	test("groups the modules ConsentRoot's first load shares with the engine", () => {
+		const options = plugin().outputOptions.call(ROLLDOWN, {
+			codeSplitting: { groups: [{ name: 'app', test: /x/u }] },
+		});
+		const groups = groupsOf(options);
+
+		expect(groups.map((group) => group.name)).toEqual(['app', 'c15t']);
+		const { test: matches } = groups[1] as Group;
+		for (const id of [
+			'/app/node_modules/@c15t/core/dist/libs/vendor-listing.js',
+			'/app/node_modules/@c15t/core/dist/libs/experiment-presentation.js',
+			'/app/node_modules/@c15t/core/dist/modules/vendor-allowed.js',
+			'/app/node_modules/@c15t/core/dist/surface-actions/instant-commit.js',
+			'C:\\app\\node_modules\\@c15t\\ui\\dist\\utils\\text-direction.js',
+			'\0vite/preload-helper.js',
+		]) {
+			expect(matches.test(id)).toBe(true);
+		}
+		// The engine, the commit path and other packages stay where they are.
+		// The group puts every module it matches in the first-load chunk, so
+		// the vendor resolution, experiment assignment, record evaluation and
+		// cookie writes the engine shares with the commit path stay out.
+		for (const id of [
+			'/app/node_modules/@c15t/core/dist/kernel/index.js',
+			'/app/node_modules/@c15t/core/dist/modules/persistence/index.js',
+			'/app/node_modules/@c15t/core/dist/libs/vendors.js',
+			'/app/node_modules/@c15t/core/dist/libs/experiment.js',
+			'/app/node_modules/@c15t/core/dist/libs/experiment-storage.js',
+			'/app/node_modules/@c15t/core/dist/libs/cookie/operations.js',
+			'/app/node_modules/@c15t/core/dist/modules/has.js',
+			'/app/node_modules/@c15t/core/dist/consent-record/evaluate.js',
+			'/app/node_modules/@c15t/svelte/dist/deferred/commit.js',
+			'/app/node_modules/other/dist/libs/vendors.js',
+			'/app/node_modules/other/vite/preload-helper.js',
+		]) {
+			expect(matches.test(id)).toBe(false);
+		}
+	});
+
+	test('leaves Rollup, the server build and an app that chunks by hand alone', () => {
+		expect(
+			plugin().outputOptions.call(
+				{ environment: { name: 'client' }, meta: { watchMode: false } },
+				{}
+			)
+		).toBeUndefined();
+		expect(
+			plugin().outputOptions.call(
+				{ ...ROLLDOWN, environment: { name: 'ssr' } },
+				{}
+			)
+		).toBeUndefined();
+		for (const options of [
+			{ manualChunks: () => null },
+			{ advancedChunks: {} },
+			{ codeSplitting: false },
+			{ inlineDynamicImports: true },
+		]) {
+			expect(plugin().outputOptions.call(ROLLDOWN, options)).toBeUndefined();
+		}
 	});
 });

@@ -46,3 +46,4 @@ export {
 	showConsentSurface,
 } from './rules';
 export { saveConsentSurface } from './save';
+export { isSnapshotVendorAllowed } from '../modules/vendor-allowed';

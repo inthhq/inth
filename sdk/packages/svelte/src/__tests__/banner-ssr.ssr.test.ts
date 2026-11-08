@@ -8,6 +8,7 @@ import { createConsentKernel, offline } from '@c15t/core';
  * would hand it client-compiled output, which throws `effect_orphan`.
  */
 import type { ConsentPresentation, KernelConfig } from '@c15t/core';
+import { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
 import { resolvePolicyRules } from '@c15t/schema/types';
 import bannerStyles from '@c15t/ui/styles/components/consent-banner';
 import { render } from 'svelte/server';
@@ -109,8 +110,26 @@ describe('consent banner SSR', () => {
 		});
 
 		expect(head).toContain(
-			'<meta name="c15t-styles" content="c15t-first-paint nonce=page-nonce"'
+			'<meta name="c15t-styles" content="c15t-tokens c15t-button c15t-banner nonce=page-nonce"'
 		);
+	});
+
+	test('puts the early-tap script before the banner, with the nonce', () => {
+		const { body } = render(BannerFixture, {
+			props: {
+				options: {
+					...buildOptions({ initialPolicyResolution: BANNER_POLICY }),
+					nonce: 'page-nonce',
+				},
+			},
+		});
+
+		const script = body.indexOf(
+			'<script data-c15t-early-tap nonce="page-nonce">'
+		);
+		expect(script).toBeGreaterThan(-1);
+		expect(body).toContain(EARLY_CONSENT_TAP_SCRIPT);
+		expect(script).toBeLessThan(body.indexOf('consent-banner-root'));
 	});
 
 	test('names no stylesheet with `styles: false`', () => {

@@ -602,6 +602,14 @@ export type {
 } from './banner/iab-prompt-model';
 export { joinClasses, resolvePromptModel } from './banner/prompt-model';
 export {
+	buildConsentBootJSON,
+	buildLocalsBootJSON,
+	canDeferEngine,
+} from './banner/deferred-boot';
+// The inline script that records banner taps before the page script runs,
+// for a banner whose engine loads after the page.
+export { EARLY_CONSENT_TAP_SCRIPT } from '@c15t/core/surface-actions';
+export {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
 } from './banner/slot';

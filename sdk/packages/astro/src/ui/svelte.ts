@@ -26,13 +26,26 @@ import { requireDialogSurface } from './adapter';
 import { closeDialogSurface } from './close-dialog';
 import { buildProviderProps } from './provider-props';
 
+/** Svelte's runtime, loaded on demand like the island. */
+const loadSvelte = () => import('svelte');
+
+/** The island module: the component, and Svelte's mount functions. */
+interface SvelteSurface {
+	default: unknown;
+	mount?: Awaited<ReturnType<typeof loadSvelte>>['mount'];
+	unmount?: Awaited<ReturnType<typeof loadSvelte>>['unmount'];
+}
+
 /** The Svelte 5 dialog surface implementation. */
 export const svelteDialogAdapter: ConsentDialogAdapter = {
 	async mount(context: ConsentDialogContext): Promise<ConsentDialogHandle> {
-		const [{ mount, unmount }, surface] = await Promise.all([
-			import('svelte'),
-			requireDialogSurface('svelte')(),
-		]);
+		const surface = (await requireDialogSurface('svelte')()) as SvelteSurface;
+		// The built-in island exports Svelte's `mount`; a surface registered
+		// by hand may not.
+		const { mount, unmount } =
+			surface.mount && surface.unmount
+				? { mount: surface.mount, unmount: surface.unmount }
+				: await loadSvelte();
 
 		const component = mount(surface.default as never, {
 			props: {
@@ -57,6 +70,9 @@ export const svelteDialogAdapter: ConsentDialogAdapter = {
 	name: 'svelte',
 
 	async preload() {
-		await Promise.all([import('svelte'), requireDialogSurface('svelte')()]);
+		const surface = (await requireDialogSurface('svelte')()) as SvelteSurface;
+		if (!(surface.mount && surface.unmount)) {
+			await loadSvelte();
+		}
 	},
 };

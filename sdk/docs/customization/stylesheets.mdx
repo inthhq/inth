@@ -38,11 +38,22 @@ default tokens, every c15t CSS variable, and the rules for the banner, the
 floating trigger and the `ConsentGate` placeholder. The dialog sheet holds the
 preference dialog's and the preference widget's rules.
 
-In React, Next.js and TanStack Start, `ConsentBanner`, `ConsentDialogTrigger`
-and the default `ConsentGate` placeholder render the first-paint sheet.
-`ConsentDialog` and `ConsentWidget` render it plus the dialog sheet. The
-dialog sheet ships with the dialog's lazily loaded code, so it is not part of
-the first page load. A server-rendered banner puts its rules in the HTML.
+In React, Next.js, TanStack Start, Svelte and SvelteKit, each surface renders
+only its part of the first-paint sheet, so a server-rendered page carries the
+rules of the surfaces it shows and no others:
+
+| Surface | Sheets |
+| --- | --- |
+| `ConsentBanner` | `c15t-tokens`, `c15t-button`, `c15t-banner` |
+| `ConsentDialogTrigger` | `c15t-tokens`, `c15t-trigger` |
+| Default `ConsentGate` placeholder | `c15t-tokens`, `c15t-button`, `c15t-consent-gate` |
+| `ConsentDialog`, `ConsentWidget` | the banner's sheets, then `c15t-dialog` (Svelte adds `c15t-primitives`) |
+
+`c15t-tokens` holds the default theme tokens. Each other sheet holds its
+surface's rules and the c15t variables those rules read. The dialog sheet
+ships with the dialog's lazily loaded code, so it is not part of the first
+page load. A server-rendered banner puts its rules in the HTML. The trigger
+renders in the browser only and loads its sheet when it first shows.
 
 `IABConsentBanner` also delivers the IAB variables and banner rules.
 `IABConsentDialog` adds the IAB dialog rules when it opens, including the
@@ -54,7 +65,8 @@ arrives. This prevents the centered card from moving as the browser parses
 its remaining content, without waiting for hydration.
 
 - In React 19, React moves the elements into `<head>` and renders each sheet
-  once per page, as `<style data-precedence="c15t" data-href="c15t-first-paint">`.
+  once per page. Server-rendered sheets share one element, such as
+  `<style data-precedence="c15t" data-href="c15t-tokens c15t-button c15t-banner">`.
 - In React 18, the elements render in place, next to the surface.
 - In React 19 with the provider's `nonce` option set, they also render in
   place and carry the nonce. React drops the nonce of a style it moves to
@@ -62,12 +74,16 @@ its remaining content, without waiting for hydration.
 
 In Svelte, each stock surface inserts the sheets it uses into `<head>` as
 `<style data-c15t-styles="…">`, once per page, before its own elements
-render. The elements stay after the surface unmounts. The Svelte dialog's
+render. The elements stay after the surface unmounts. The banner's, trigger's
+and `ConsentGate`'s sheets load in their own small chunks when the page lacks
+them, and the surfaces stay hidden until they arrive. The Svelte dialog's
 sheets, its rules and the primitives, load with the dialog's code.
 
 On a server-rendered SvelteKit page, the banner leaves a
 `<meta name="c15t-styles">` marker, and `c15tHandle` from `c15t/svelte/kit`
-writes the sheets into the HTML `<head>` as `<style>` elements. The banner is
+writes the sheets into the HTML `<head>` as `<style>` elements: on a first
+visit `c15t-tokens`, `c15t-button` and `c15t-banner`, and for a returning
+visitor with a server-rendered trigger `c15t-tokens` and `c15t-trigger`. The banner is
 styled before hydration with no stylesheet request. Without `c15tHandle` in
 `src/hooks.server.ts`, a server-rendered banner shows unstyled until
 hydration. The [SvelteKit quickstart](/docs/frameworks/sveltekit/quickstart)
@@ -274,8 +290,8 @@ themselves.
 
 1. Open DevTools Network, clear site data and reload. No c15t stylesheet
    request appears before the first paint. In the HTML or the Elements panel,
-   `<head>` holds c15t's rules: `<style data-href="c15t-first-paint">` in
-   React 19, or a `<style data-c15t-styles>` element in Svelte, SvelteKit
+   `<head>` holds c15t's rules: `<style data-href="c15t-tokens c15t-button c15t-banner">`
+   in React 19, or a `<style data-c15t-styles>` element in Svelte, SvelteKit
    and Astro. In React 18, or with a `nonce`, the `<style>` sits next to the
    banner instead.
 2. Open the preference dialog. It is styled on its first frame. Opening it

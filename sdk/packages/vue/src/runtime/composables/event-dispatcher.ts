@@ -30,11 +30,28 @@ import { useConsentKernelContext } from './kernel';
 export const useEventDispatcher = function useEventDispatcher(
 	options: MaybeRefOrGetter<RuntimeEventDispatcherOptions> = {}
 ): EventDispatcher {
-	const { runtime } = useConsentKernelContext();
-	const current = () => getEventDispatcher(runtime, toValue(options));
+	const context = useConsentKernelContext();
+	// Read the runtime when sending: under the Nuxt plugin's deferred
+	// context it is set once the engine attaches.
+	const send = (deliver: (dispatcher: EventDispatcher) => void): void => {
+		const { runtime } = context;
+		if (runtime) {
+			deliver(getEventDispatcher(runtime, toValue(options)));
+			return;
+		}
+		// Delivered, in order, once the engine attached. Waiting does not
+		// load it: until then the visitor has granted nothing optional.
+		// oxlint-disable-next-line promise/prefer-await-to-then -- Fire and forget, like the dispatcher.
+		void context.ready.then(() => {
+			if (context.runtime) {
+				deliver(getEventDispatcher(context.runtime, toValue(options)));
+			}
+		});
+	};
 	return {
-		pageview: (path) => current().pageview(path),
-		track: (event, properties) => current().track(event, properties),
+		pageview: (path) => send((dispatcher) => dispatcher.pageview(path)),
+		track: (event, properties) =>
+			send((dispatcher) => dispatcher.track(event, properties)),
 	};
 };
 

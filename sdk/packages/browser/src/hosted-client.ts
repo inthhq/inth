@@ -3,6 +3,7 @@ import type { ProviderTransportFactory } from '@c15t/core';
 
 import { createConsentClientWith } from './client-base';
 import type { CreateConsentClientContext } from './client-base';
+import { readHostedMarker } from './init/hosted-marker';
 import type { ConsentClient, ScriptTagClientOptions } from './types';
 
 const defaultHostedFactory = function defaultHostedFactory(
@@ -50,10 +51,16 @@ export const createHostedConsentClient = function createHostedConsentClient(
 	) {
 		throw new Error('@c15t/browser/hosted: only hosted mode is supported.');
 	}
-	const factory =
-		typeof mode === 'function'
-			? mode
-			: defaultHostedFactory(options.backendURL);
+	// `c15t.hosted()` called on the init script's stand-in.
+	const marked = readHostedMarker(mode);
+	let factory: ProviderTransportFactory;
+	if (marked) {
+		factory = hosted(marked);
+	} else if (typeof mode === 'function') {
+		factory = mode;
+	} else {
+		factory = defaultHostedFactory(options.backendURL);
+	}
 	return createConsentClientWith(
 		options,
 		{ factory, name: 'hosted' },

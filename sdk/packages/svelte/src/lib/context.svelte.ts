@@ -3,10 +3,8 @@ import {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
-	defaultTranslationConfig,
 	deniedVendorIds,
 	has as evaluateHas,
-	isVendorAllowed,
 	resolveConsentPresentation,
 	vendorsListedUnder,
 } from '@c15t/core';
@@ -33,6 +31,7 @@ import type { ConsentRuntime } from '@c15t/core/runtime';
 import {
 	hasConsentPreferences,
 	hasConsentUI,
+	isSnapshotVendorAllowed,
 	saveConsentSurface,
 	showConsentSurface,
 } from '@c15t/core/surface-actions';
@@ -40,6 +39,7 @@ import type { Theme, UIOptions } from '@c15t/ui/theme';
 import { getContext, setContext } from 'svelte';
 
 import type { DialogPreload } from './dialog-warming';
+import { registeredDefaultTranslations } from './translation-defaults';
 import type { ConsentManagerOptions } from './types';
 
 const CONSENT_CONTEXT_KEY = Symbol('c15t-v3-consent');
@@ -245,19 +245,29 @@ export interface ConsentControllerOptions {
 	runtime: ConsentRuntime;
 }
 
+/** Before any engine registered the defaults: no languages yet. */
+const NO_DEFAULTS: TranslationConfig = {
+	defaultLanguage: 'en',
+	disableAutoLanguageSwitch: false,
+	translations: {},
+};
+
 const toTranslationConfig = function toTranslationConfig(
 	snapshot: ConsentSnapshot
 ): TranslationConfig {
+	// The English defaults join once an engine has registered them; before
+	// `ConsentRoot`'s engine loads, the snapshot's bundle is complete.
+	const defaults = registeredDefaultTranslations() ?? NO_DEFAULTS;
 	const resolved = snapshot.translations;
 	if (!resolved) {
-		return defaultTranslationConfig;
+		return defaults;
 	}
 
 	return {
-		...defaultTranslationConfig,
+		...defaults,
 		defaultLanguage: resolved.language,
 		translations: {
-			...defaultTranslationConfig.translations,
+			...defaults.translations,
 			[resolved.language]: resolved.translations,
 		},
 	};
@@ -348,8 +358,9 @@ const createConsentState = function createConsentState(
 			);
 		},
 		isVendorAllowed(vendorId: string) {
-			const snapshot = getSnapshotLocal();
-			return isVendorAllowed(snapshot, vendorId, snapshot.evaluatedAt);
+			// At the snapshot's own clock, as before: core's
+			// `isVendorAllowed(snapshot, vendorId, snapshot.evaluatedAt)`.
+			return isSnapshotVendorAllowed(getSnapshotLocal(), vendorId);
 		},
 		dismissNotice() {
 			return getKernel().commands.dismissNotice();

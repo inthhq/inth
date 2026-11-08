@@ -1,17 +1,26 @@
 /**
- * `dist/c15t.js`, the default hosted one-tag install.
+ * `dist/c15t.hosted.js`, the engine and stock UI behind `c15t.js`.
  *
- * Installs `window.c15t`, then initialises from the script tag's `data-*`
- * attributes and any queued `config` calls unless the tag carries
- * `data-manual`.
+ * Loaded by the init script (`c15t.js`, `./cdn-init.ts`), it replaces the
+ * init script's stand-in `window.c15t`, replays the calls made to it,
+ * takes over its banner and starts from any choice it recorded. Loaded on
+ * its own, it installs `window.c15t` and initialises from its own tag's
+ * `data-*` attributes and queued `config` calls, as a one-file install.
+ * Either way it initialises unless the tag carries `data-manual`. The
+ * preference centre is `c15t.dialog.js`, which it loads when it first
+ * needs it (`../ui/dialog-import-script.ts`).
  */
 
 import { publishDevToolsLauncher } from '@c15t/ui/utils/devtools-launcher';
 
 import { autoInit, installGlobal } from '../global-base';
 import { createHostedGlobal } from '../hosted-global';
+import { shareLocks } from '../ui/locks';
 import { mountConsentUI } from '../ui/mount';
 
+// `c15t.dialog.js` locks scrolling through this file's count, the one its
+// banner uses, from here on.
+shareLocks();
 const api = installGlobal(
 	createHostedGlobal({
 		mountUI: mountConsentUI,

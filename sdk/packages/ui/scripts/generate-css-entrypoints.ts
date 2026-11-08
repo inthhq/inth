@@ -25,8 +25,11 @@
  * | `styles/primitives.css` | rules for the `@c15t/ui/styles/primitives` class maps | Svelte's `styles.css` and hosts that render those class maps |
  * | `iab/styles.css`, `iab/styles.tw3.css` | IAB variables and rules only | the app, next to `styles.css` |
  * | `styles/dialog.css`, `styles/dialog.js` | nothing; kept so existing imports resolve | — |
- * | `styles/sheets/first-paint.js` | `styles.css` up to its dialog rules, as a string | React and Svelte surfaces, which render it as a `<style>` |
- * | `styles/sheets/dialog.js`, `styles/sheets/dialog.css` | the dialog and preference-widget rules, as a string and as a file | the dialog and widget, with their lazy code; Astro links the file when the dialog opens |
+ * | `styles/sheets/first-paint.js` | `styles.css` up to its dialog rules, as a string | Svelte surfaces, IAB banners and Astro, which render it as a `<style>` |
+ * | `styles/sheets/tokens.js` | the default theme tokens, as a string | React surfaces, before their own sheet |
+ * | `styles/sheets/{button,banner,trigger,consent-gate}.js` | one surface's rules and the component variables they read, as a string (see `SURFACE_SHEETS`) | React surfaces |
+ * | `styles/sheets/*-deferred.js` | the same `id` as the sheet it names, no text, and a `load()` for it | browser bundles of server-rendered apps (the Next.js adapter aliases them) |
+ * | `styles/sheets/dialog.js`, `styles/sheets/dialog.css` | the dialog and preference-widget rules and the component variables they read, as a string and as a file | the dialog and widget, with their lazy code; Astro links the file when the dialog opens |
  * | `styles/sheets/primitives.js` | `styles/primitives.css`, as a string | the Svelte dialog |
  * | `styles/sheets/iab-first-paint.js` | IAB variables and banner rules, as a string | IAB banners and standalone dialogs |
  * | `styles/sheets/iab-dialog.js`, `styles/sheets/iab-dialog.css` | IAB dialog rules, as a string and file | IAB dialogs, with their lazy code; Astro links the file before opening |
@@ -36,8 +39,9 @@
  * rules reach the page through component-rendered styles or a stylesheet
  * the app imports itself.
  *
- * Every variable stays in `styles.css`, so later sheets only add rules and
- * never re-declare a variable a host has overridden.
+ * Every variable stays in `styles.css`. The sheets declare variables on
+ * `:where(:root)`, below any host override, so a sheet that lands later and
+ * repeats a declaration changes nothing.
  */
 import {
 	existsSync,
@@ -50,6 +54,9 @@ import {
 } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { parse } from 'postcss';
+import type { AtRule, Rule } from 'postcss';
+
 import { defaultTheme, generateDefaultThemeCSS } from '../src/theme/utils';
 import {
 	DIALOG_COMPONENTS,
@@ -58,6 +65,7 @@ import {
 	IAB_FIRST_PAINT_COMPONENTS,
 	IAB_PREFIX,
 	LAYER_ORDER,
+	SURFACE_SHEETS,
 } from './stylesheet-parts';
 
 const DIST_DIR = join(import.meta.dirname, '..', 'dist');
@@ -170,6 +178,21 @@ if (missing.length > 0) {
 		`generate-css-entrypoints: scripts/stylesheet-parts.ts lists ${missing.join(
 			', '
 		)}, which dist/styles/components does not contain`
+	);
+}
+
+const surfaceSheetNames = Object.values(SURFACE_SHEETS).flat();
+const surfaceSheetProblems = [
+	...surfaceSheetNames.filter(
+		(name, index) => surfaceSheetNames.indexOf(name) !== index
+	),
+	...[...firstPaintNames].filter(
+		(name) => !(surfaceSheetNames as string[]).includes(name)
+	),
+];
+if (surfaceSheetProblems.length > 0) {
+	throw new Error(
+		`generate-css-entrypoints: SURFACE_SHEETS in scripts/stylesheet-parts.ts must list each FIRST_PAINT_COMPONENTS entry once (check ${surfaceSheetProblems.join(', ')})`
 	);
 }
 
@@ -476,7 +499,9 @@ const nonIab = collectCssParts(
 			path: join(PRIMITIVES_DIR, `${name}.module.css`),
 		})),
 		...NON_IAB_COMPONENTS.map((name) => ({
-			group: dialogNames.has(name) ? 'dialog' : 'first-paint',
+			// First-paint rules are grouped per component, so each surface
+			// sheet can take its own.
+			group: dialogNames.has(name) ? 'dialog' : name,
 			label: `components/${name}`,
 			path: join(COMPONENTS_DIR, `${name}.css`),
 		})),
@@ -484,10 +509,21 @@ const nonIab = collectCssParts(
 	seenUnlayered
 );
 const rootCss = nonIab.rootParts.join('\n\n');
+/** First-paint component rules, in the order `styles.css` holds them. */
+const firstPaintRulesOf = (components: readonly string[]): string[] =>
+	NON_IAB_COMPONENTS.filter((name) => components.includes(name)).flatMap(
+		(name) => nonIab.ruleParts.get(name) ?? []
+	);
+const firstPaintRules = firstPaintRulesOf([...firstPaintNames]);
+if (firstPaintRules.length === 0) {
+	throw new Error(
+		'generate-css-entrypoints: no component rules collected for styles.css'
+	);
+}
 // The dialog's rules follow the first-paint rules, the order the cascade had
 // while they shipped in a stylesheet of their own that loaded later.
 const componentRules = [
-	...rulesFor(nonIab.ruleParts, 'first-paint', 'styles.css'),
+	...firstPaintRules,
 	...rulesFor(nonIab.ruleParts, 'dialog', 'styles.css'),
 ];
 
@@ -534,6 +570,101 @@ writeDist(
 	])
 );
 
+/** Every custom property a stylesheet text reads through `var()`. */
+const readVariables = (css: string): Set<string> =>
+	new Set(
+		[...css.matchAll(/var\(\s*(?<name>--[\w-]+)/gu)].map(
+			(match) => match.groups?.name ?? ''
+		)
+	);
+
+/** Each variable's declared values across `rootCss`, media overrides too. */
+const variableValues = new Map<string, string[]>();
+parse(rootCss).walkDecls(/^--/u, (declaration) => {
+	const values = variableValues.get(declaration.prop) ?? [];
+	values.push(declaration.value);
+	variableValues.set(declaration.prop, values);
+});
+
+/**
+ * The part of `rootCss` a block of component rules needs: the variables the
+ * rules read, the variables those read in turn, and the `@keyframes` any of
+ * them name. Declarations keep their selectors, values and order, so the
+ * result is a subset of `rootCss`. Theme tokens come from the `tokens`
+ * sheet, not from here.
+ */
+const variablesFor = function variablesFor(rules: string): string {
+	const needed = new Set<string>();
+	const pending = [...readVariables(rules)];
+	while (pending.length > 0) {
+		const name = pending.pop() as string;
+		if (needed.has(name)) {
+			continue;
+		}
+		needed.add(name);
+		for (const value of variableValues.get(name) ?? []) {
+			pending.push(...readVariables(value));
+		}
+	}
+	const root = parse(yieldToAppRoot(rootCss));
+	const usedText = [
+		rules,
+		...[...needed].flatMap((name) => variableValues.get(name) ?? []),
+	].join('\n');
+	root.walkAtRules('keyframes', (atRule: AtRule) => {
+		const name = atRule.params.trim();
+		if (!new RegExp(`(?<![\\w-])${name}(?![\\w-])`, 'u').test(usedText)) {
+			atRule.remove();
+		}
+	});
+	root.walkDecls(/^--/u, (declaration) => {
+		if (!needed.has(declaration.prop)) {
+			declaration.remove();
+		}
+	});
+	root.walkRules((rule: Rule) => {
+		if (rule.nodes.length === 0) {
+			rule.remove();
+		}
+	});
+	root.walkAtRules((atRule: AtRule) => {
+		if (atRule.nodes && atRule.nodes.length === 0) {
+			atRule.remove();
+		}
+	});
+	return root.toString().trim();
+};
+
+/**
+ * Write `dist/styles/sheets/<name>-deferred.js`: the same `id` as `<name>`
+ * and no text, with a `load()` that imports it. The Next.js adapter aliases
+ * `<name>` to it in browser bundles, where the server-rendered HTML already
+ * holds the sheet, so the text ships once.
+ */
+const writeDeferredSheet = function writeDeferredSheet(name: string): void {
+	writeDist(
+		`styles/sheets/${name}-deferred.js`,
+		[
+			`export const id = ${JSON.stringify(`c15t-${name}`)};`,
+			'export const css = "";',
+			`export const load = () => import(${JSON.stringify(`./${name}.js`)}).then((sheet) => sheet.css);`,
+			'',
+		].join('\n')
+	);
+	writeFileSync(
+		join(TYPES_DIR, 'styles', 'sheets', `${name}-deferred.d.ts`),
+		[
+			'/** Identifies the stylesheet, so a page renders it once. */',
+			'export declare const id: string;',
+			'/** Empty: the text loads through `load`. */',
+			'export declare const css: string;',
+			'/** Loads the stylesheet text. */',
+			'export declare const load: () => Promise<string>;',
+			'',
+		].join('\n')
+	);
+};
+
 // dist/styles/sheets/*.js — the same rules as `styles.css` and
 // `styles/primitives.css`, as strings, for components that render their own
 // `<style>` instead of asking the app to import a stylesheet. A stylesheet
@@ -543,44 +674,64 @@ writeDist(
 //
 // `first-paint` holds what `styles.css` holds up to its dialog rules, so a
 // banner, trigger or ConsentGate needs nothing else. `dialog` holds the
-// dialog and preference-widget rules, and `primitives` the primitive rules
-// the Svelte dialog renders. Concatenated in that order they apply exactly
-// what `styles.css` and `styles/primitives.css` apply.
+// dialog and preference-widget rules and the variables they read, and
+// `primitives` the primitive rules the Svelte dialog renders. Concatenated
+// in that order they apply exactly what `styles.css` and
+// `styles/primitives.css` apply; the variables `dialog` repeats from
+// `first-paint` are identical declarations.
 writeSheet(
 	'first-paint',
 	[
 		LAYER_ORDER,
 		yieldToAppRoot(DEFAULT_THEME_CSS),
 		yieldToAppRoot(rootCss),
-		`@layer components{${rulesFor(nonIab.ruleParts, 'first-paint', 'styles/sheets/first-paint.js').join('\n')}}`,
+		`@layer components{${firstPaintRules.join('\n')}}`,
 	].join('\n')
 );
-// `first-paint-deferred` has the same `id` and no text: it loads
-// `first-paint` when asked. The Next.js adapter aliases `first-paint` to it in
-// browser bundles, where the server-rendered HTML already holds the sheet, so
-// the text ships once.
-writeDist(
-	'styles/sheets/first-paint-deferred.js',
-	[
-		'export const id = "c15t-first-paint";',
-		'export const css = "";',
-		'export const load = () => import("./first-paint.js").then((sheet) => sheet.css);',
-		'',
-	].join('\n')
+writeDeferredSheet('first-paint');
+
+// `tokens` and the surface sheets split `first-paint` for React: a page
+// carries the tokens and the sheets of the surfaces it renders, nothing
+// else. The server HTML of a fresh visit holds `tokens`, `button` and
+// `banner`, not the trigger's or the ConsentGate's rules, nor the variables
+// only the dialog reads. Each first-paint rule sits in one surface sheet,
+// and each sheet keeps the order `first-paint` gives its rules.
+writeSheet(
+	'tokens',
+	[LAYER_ORDER, yieldToAppRoot(DEFAULT_THEME_CSS)].join('\n')
 );
-writeFileSync(
-	join(TYPES_DIR, 'styles', 'sheets', 'first-paint-deferred.d.ts'),
-	[
-		'/** Identifies the stylesheet, so a page renders it once. */',
-		'export declare const id: string;',
-		'/** Empty: the text loads through `load`. */',
-		'export declare const css: string;',
-		'/** Loads the stylesheet text. */',
-		'export declare const load: () => Promise<string>;',
-		'',
-	].join('\n')
+writeDeferredSheet('tokens');
+for (const [name, components] of Object.entries(SURFACE_SHEETS)) {
+	const rules = firstPaintRulesOf(components);
+	if (rules.length === 0) {
+		throw new Error(
+			`generate-css-entrypoints: no component rules collected for styles/sheets/${name}.js`
+		);
+	}
+	writeSheet(
+		name,
+		[
+			LAYER_ORDER,
+			variablesFor(rules.join('\n')),
+			`@layer components{${rules.join('\n')}}`,
+		]
+			.filter(Boolean)
+			.join('\n')
+	);
+	writeDeferredSheet(name);
+}
+const dialogRules = rulesFor(
+	nonIab.ruleParts,
+	'dialog',
+	'styles/sheets/dialog.js'
 );
-const dialogSheet = `${LAYER_ORDER}\n@layer components{${rulesFor(nonIab.ruleParts, 'dialog', 'styles/sheets/dialog.js').join('\n')}}`;
+const dialogSheet = [
+	LAYER_ORDER,
+	variablesFor(dialogRules.join('\n')),
+	`@layer components{${dialogRules.join('\n')}}`,
+]
+	.filter(Boolean)
+	.join('\n');
 // The same rules as a file, for hosts that link the dialog's rules when it
 // opens instead of carrying them in its code (Astro).
 writeDist('styles/sheets/dialog.css', `${writeSheet('dialog', dialogSheet)}\n`);

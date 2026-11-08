@@ -10,6 +10,8 @@
  * @internal
  */
 export { ConsentRoot } from './root';
-export { ConsentBanner } from '@c15t/react/components/consent-banner';
-export { ConsentDialog } from '@c15t/react/consent-dialog';
+export {
+	DeferredConsentBanner as ConsentBanner,
+	DeferredConsentDialog as ConsentDialog,
+} from '@c15t/react/deferred';
 export { ConsentDialogLink } from '@c15t/react/components/consent-dialog-link';

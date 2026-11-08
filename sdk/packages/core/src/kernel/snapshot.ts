@@ -411,7 +411,9 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 		restrictions: evaluation.restrictions,
 		revision: 0,
 		subject,
-		surfaceShownAt: UNSHOWN_SURFACES,
+		surfaceShownAt: config.initialSurfaceShownAt
+			? { ...UNSHOWN_SURFACES, ...config.initialSurfaceShownAt }
+			: UNSHOWN_SURFACES,
 		translations: config.initialTranslations
 			? applyTranslationOverrides(
 					{ ...config.initialTranslations },

@@ -268,10 +268,13 @@ subject ID, so keep them out of shared caches. Prerendered pages hold neither:
 `loadConsent` returns no visitor state while SvelteKit prerenders.
 
 `c15tHandle` also writes a server-rendered banner's rules into the HTML
-`<head>` as `<style>` elements, so the banner is styled before hydration.
-Without it, a server-rendered banner shows unstyled until the page hydrates,
-unless `ConsentRoot` sets `styles={false}` and the app imports
-`c15t/svelte/styles.css`.
+`<head>` as `<style>` elements, so the banner is styled before hydration. A
+first visit's page holds only the banner's rules and the theme tokens, not the
+trigger's, `ConsentGate`'s or the dialog's. The
+browser's JavaScript does not carry those rules again: the components find
+them in the page. Without the handle, the components load the rules in the
+browser and stay hidden until they arrive, unless `ConsentRoot` sets
+`styles={false}` and the app imports `c15t/svelte/styles.css`.
 
 When the visitor's consent already allows some `scripts` entries, through a
 stored choice or a policy that asks for none, `c15tHandle` adds an inline script
@@ -364,9 +367,9 @@ URL, and the backend must allow your site's origin.
 
 With `export const ssr = false` in the root `+layout.ts` and a server
 adapter, the quickstart works unchanged. The root layout's server load still
-runs for each navigation, so `ConsentRoot` starts from a resolved policy;
-there is no server HTML, so the banner appears once the page has rendered in
-the browser.
+runs for each navigation, so `ConsentRoot` starts from a resolved policy.
+There is no server HTML to start from, so `ConsentRoot` renders its children
+once the consent engine has loaded, and the banner appears with them.
 
 With a static SPA fallback page and no server, no server load runs. Delete
 `+layout.server.ts` and the c15t handle, and render `ConsentProvider` with a
@@ -391,10 +394,56 @@ of `state`.
 
 ## Taps before hydration
 
-A banner in the server HTML shows before the page's JavaScript runs. A tap on
-it in that gap does nothing: the button has no handler yet, so the banner
-stays up and no choice is saved. The React and Vue banners hold such a tap and
-replay it after hydration; the SvelteKit banner does not.
+A banner in the server HTML shows before the page's JavaScript runs. The
+banner puts a small inline `<script>` ahead of its markup that holds a tap on
+Accept all, Reject all, Customize or the notice's acknowledge button in that
+gap. Accept and Reject hide the banner at once. When the banner hydrates, it
+records the held choice at the time of the tap, through the same path as a tap
+after hydration: before the consent engine loads, the allowed `scripts` start
+and the record is stored at once. A held Customize opens the dialog. If the
+policy that resolves is not the one the banner showed, the tap is dropped and
+the banner shows again. The React and Vue banners do the same.
+
+The script needs no configuration; see the
+[Content Security Policy guide](./content-security-policy#allow-the-banners-tap-script)
+for a nonce-based policy.
+
+## When the consent engine loads
+
+For a visitor the server render asks to choose, the browser's first load
+holds no consent engine. The server render of `ConsentRoot` leaves the consent
+state it rendered with in the HTML, after the page's content. The browser
+hydrates from it, so `getConsentKernel()`, `getSnapshot()` and the other
+getters return it at once. The engine loads at the first of these:
+
+- every `<img fetchpriority="high">` on the page has loaded or failed (the
+  window `load` event when there is none)
+- the first pointer press, key press or scroll outside the banner
+- page code calls something only the engine answers, such as
+  `kernel.set.overrides()` or `clearRecords()`
+- 10 seconds after hydration
+
+The page then preloads neither the engine nor the script loader. An Accept all
+or Reject all tapped before the engine loads takes effect in the tap's own
+task: the consent state the getters return changes, and the `scripts` entries
+the choice allows start, if they are a plain `src` with element attributes. A
+moment later c15t stores the consent record, queues the save and calls
+`onChoiceRecorded` and `onPermissionsChanged`. The engine then loads, starts
+from that record and sends the save. It records nothing a second time.
+Customize opens the dialog without the engine, and a save from the dialog
+takes the same path. Once the engine has loaded, the code that stores and
+sends a choice loads in idle time, so a later tap downloads only the scripts
+it allows.
+
+The browser loads the engine as the page starts, and the server render
+preloads it, for everyone else: a returning visitor, a policy with a notice
+prompt or a privacy signal, IAB, an experiment, a `consentSource`, `gpp`, a
+`networkBlocker`, `enabled: false`, `persistence: false`, or a `scripts` entry
+that may run now and does not start from the HTML. Prerendered pages load it
+as the page starts too, since their HTML is no one visitor's.
+
+`ConsentProvider` loads its engine with the page, as before. Use `ConsentRoot`
+in a SvelteKit root layout to get the deferred start.
 
 ## Resolve consent in other server code
 

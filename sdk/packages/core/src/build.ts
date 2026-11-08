@@ -5,12 +5,26 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { ConsentManifest } from '@c15t/schema/types';
 
+import { createDialogChunkPlugin } from './build-dialog-chunk';
+import type { DialogChunkPlugin } from './build-dialog-chunk';
+import {
+	clientBannerPath,
+	deferredSheetSpecifier,
+	findPageBanner,
+	injectStaticBanner,
+	loadStaticBannerRenderer,
+	renderStaticBannerHtml,
+	renderStaticBannerSheets,
+} from './build-static-banner';
+import type { StaticBannerChunk } from './build-static-banner';
 import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import type { PrefetchOptions } from './libs/prefetch/types';
 import { loadStaticManifest } from './server/static-manifest';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
 
 export type { ConsentManifest } from '@c15t/schema/types';
+export { createDialogChunkPlugin } from './build-dialog-chunk';
+export type { DialogChunkPlugin } from './build-dialog-chunk';
 
 const resolveBuildManifestURL = (
 	options: {
@@ -501,6 +515,33 @@ export interface ConsentManifestPluginOptions extends ManifestBuildOptions {
 	 * @default true
 	 */
 	initPrefetch?: boolean | InitPrefetchOptions;
+	/**
+	 * Puts `@c15t/react`'s stock banner in `index.html`, so it shows as soon
+	 * as the `initPrefetch` request answers instead of after the app's
+	 * JavaScript has run.
+	 *
+	 * `vite build` reads the manifest and renders the banner of its first
+	 * choice policy, in the page's `<html lang>` (else English), hidden. The
+	 * `/init` script then shows it when the answer names the same policy,
+	 * language, branding and copy, and the visitor has no stored choice;
+	 * otherwise the page removes it. `<ConsentBanner />` takes its place when
+	 * it renders. A tap on it before then hides it and is recorded once the
+	 * app has loaded.
+	 *
+	 * The banner's stylesheets move from the JavaScript into `index.html`
+	 * for every page whose entry imports `ConsentBanner`, banner or not.
+	 *
+	 * Only a production build of a page whose entry imports `ConsentBanner`
+	 * from `@c15t/react` or `c15t/react` gets it, and only with the
+	 * `initPrefetch` script. A failed manifest fetch leaves the banner out
+	 * with a warning; it never fails the build. The build cannot read the
+	 * provider's options, so set `false` when the app's banner differs from
+	 * the stock one at first render: `i18n` messages, `legalLinks`, a
+	 * `theme`, `components` slots, banner props, or a banner of its own.
+	 *
+	 * @default true
+	 */
+	staticBanner?: boolean;
 }
 
 /** Options of the inline `/init` script `initPrefetch` adds. */
@@ -677,6 +718,7 @@ export const writeManifestCacheModule = async (
 
 /** The slice of Vite's resolved config the manifest plugin reads. */
 export interface ManifestPluginConfig {
+	build?: ConsentManifestUserConfig['build'];
 	command?: 'build' | 'serve';
 	env?: Record<string, unknown>;
 	envDir?: string | false;
@@ -691,6 +733,171 @@ export interface ManifestPluginContext {
 	environment?: { config?: { consumer?: 'client' | 'server' } };
 }
 
+/** What the plugin's `config` hook reads from Vite's plugin context. */
+export interface ConsentManifestConfigContext {
+	meta?: { rolldownVersion?: string };
+}
+
+/** The build options the `config` hook reads, of the app or an environment. */
+export interface ConsentManifestBuildConfig {
+	ssr?: unknown;
+	rolldownOptions?: { input?: unknown; output?: unknown };
+	rollupOptions?: { input?: unknown; output?: unknown };
+}
+
+/** The slice of the app's Vite config the `config` hook reads. */
+export interface ConsentManifestUserConfig {
+	build?: ConsentManifestBuildConfig;
+	/**
+	 * Vite's Environment API: the client and the server build share this
+	 * config, as Nuxt 5 (and Nuxt 4 with `compatibilityVersion: 5`) builds.
+	 */
+	environments?: Record<
+		string,
+		{ build?: ConsentManifestBuildConfig } | undefined
+	>;
+}
+
+/**
+ * Whether a build's entries include an HTML page: Vite's default
+ * `index.html`, or an `.html` input. A build without one, such as a backend
+ * that renders its own pages around the bundle, has no `index.html` to put
+ * the banner's stylesheets in.
+ */
+const buildsHtml = function buildsHtml(
+	config: ConsentManifestUserConfig | undefined
+): boolean {
+	const input =
+		config?.build?.rolldownOptions?.input ??
+		config?.build?.rollupOptions?.input;
+	if (input === undefined) {
+		return true;
+	}
+	const entries =
+		typeof input === 'object' && input !== null && !Array.isArray(input)
+			? Object.values(input)
+			: [input].flat();
+	return entries.some(
+		(entry) => typeof entry === 'string' && /\.html?$/iu.test(entry)
+	);
+};
+
+/** A Rolldown code-splitting group. */
+export interface ConsentChunkGroup {
+	name: string;
+	test: RegExp;
+	tags: string[];
+	entriesAware: boolean;
+	includeDependenciesRecursively: boolean;
+}
+
+/** Every c15t package under `node_modules`, whatever the package manager. */
+const C15T_MODULE = /[\\/]node_modules[\\/](?:@c15t|c15t)[\\/]/u;
+
+/**
+ * Puts the c15t modules a page's entry imports statically into one chunk.
+ * Rolldown otherwise splits the modules a page shares with c15t's lazy
+ * chunks into many small ones, and each costs a request: on a slow mobile
+ * connection with a warm cache, a revalidation round trip apiece before the
+ * page renders. Only modules c15t ships; their dependencies (React) stay
+ * where Rolldown puts them, so a page without c15t loads none of it. One
+ * chunk for every entry (`entriesAware` would count c15t's lazy chunks as
+ * entries and split it again): an app with several entries that use
+ * different parts of c15t loads all of them on each.
+ */
+export const CONSENT_CHUNK_GROUP: ConsentChunkGroup = {
+	entriesAware: false,
+	includeDependenciesRecursively: false,
+	name: 'c15t',
+	tags: ['$initial'],
+	test: C15T_MODULE,
+};
+
+/** Rolldown versions whose groups take `tags` (tested with 1.2). */
+const groupsTakeTags = function groupsTakeTags(version: string | undefined) {
+	const [major = 0, minor = 0] = (version ?? '').split('.').map(Number);
+	return major > 1 || (major === 1 && minor >= 2);
+};
+
+/**
+ * Whether to add {@link CONSENT_CHUNK_GROUP}: a client build on a Rolldown
+ * that supports it, whose app sets no chunking of its own. Setting
+ * `codeSplitting`, `advancedChunks` or `manualChunks` opts out.
+ */
+export const shouldGroupConsentChunks = function shouldGroupConsentChunks(
+	context: ConsentManifestConfigContext | undefined,
+	config: ConsentManifestUserConfig | undefined,
+	env: { isSsrBuild?: boolean } | undefined
+): boolean {
+	if (env?.isSsrBuild || config?.build?.ssr) {
+		return false;
+	}
+	if (!groupsTakeTags(context?.meta?.rolldownVersion)) {
+		return false;
+	}
+	// The app's chunking, and the client environment's in a shared config.
+	const outputs = [config?.build, config?.environments?.client?.build].flatMap(
+		(build) => [build?.rolldownOptions?.output, build?.rollupOptions?.output]
+	);
+	return !outputs.some(
+		(output) =>
+			typeof output === 'object' &&
+			output !== null &&
+			('codeSplitting' in output ||
+				'advancedChunks' in output ||
+				'manualChunks' in output)
+	);
+};
+
+/** The build options {@link consentChunkGroupsConfig} sets. */
+export interface ConsentChunkGroupsBuild {
+	rolldownOptions: {
+		output: { codeSplitting: { groups: ConsentChunkGroup[] } };
+	};
+	/**
+	 * Never set. Vite 6 and 7 have no `rolldownOptions`; a key their
+	 * `build` options share keeps the plugin assignable to them.
+	 */
+	rollupOptions?: undefined;
+}
+
+/** The Vite config {@link consentChunkGroupsConfig} returns. */
+export interface ConsentChunkGroupsConfig {
+	build?: ConsentChunkGroupsBuild;
+	environments?: { client: { build: ConsentChunkGroupsBuild } };
+}
+
+/**
+ * The Vite config that adds `groups` to the browser build's code splitting.
+ *
+ * With Vite's Environment API the client and the server build share one
+ * config, and a plugin's `config` hook runs once for both. Nuxt 5, and Nuxt
+ * 4 with `compatibilityVersion: 5`, build that way, and `addVitePlugin`'s
+ * `server: false` scopes only the per-environment hooks. A top-level
+ * `build` reaches the server build there, where the groups take the style
+ * chunks Nuxt emits for its server render; Rolldown then leaves those
+ * chunks' file names unresolved and Nitro fails on an import of
+ * `preferences-styles-3.mjs-!~{031}~.js`. So a config that declares
+ * `environments` gets the groups on its `client` environment, and a build
+ * of its own gets them on `build`.
+ *
+ * @param config - The app's Vite config, as the `config` hook receives it.
+ * @param groups - The groups, in priority order.
+ * @returns The config slice for the hook to return.
+ * @internal
+ */
+export const consentChunkGroupsConfig = function consentChunkGroupsConfig(
+	config: ConsentManifestUserConfig | undefined,
+	groups: ConsentChunkGroup[]
+): ConsentChunkGroupsConfig {
+	const build: ConsentChunkGroupsBuild = {
+		rolldownOptions: { output: { codeSplitting: { groups } } },
+	};
+	return config?.environments
+		? { environments: { client: { build } } }
+		: { build };
+};
+
 /**
  * The Vite plugin each `consentManifest()` returns, typed structurally so it
  * fits the `plugins` array of every supported Vite version.
@@ -698,9 +905,20 @@ export interface ManifestPluginContext {
 export interface ConsentManifestPlugin {
 	apply: (config: unknown, environment: { isPreview?: boolean }) => boolean;
 	buildStart: () => void;
-	config: () => {
+	/**
+	 * `this` is Vite's plugin context, which differs between Vite versions, or
+	 * nothing when called directly; the hook reads it as
+	 * {@link ConsentManifestConfigContext}.
+	 */
+	config: (
+		this: unknown,
+		config?: ConsentManifestUserConfig,
+		env?: { isSsrBuild?: boolean }
+	) => {
 		optimizeDeps: { exclude: string[] };
 		ssr: { noExternal: string[] };
+		build?: ConsentChunkGroupsBuild;
+		environments?: ConsentChunkGroupsConfig['environments'];
 	};
 	configResolved: (config: ManifestPluginConfig) => void;
 	enforce: 'pre';
@@ -710,9 +928,44 @@ export interface ConsentManifestPlugin {
 		options?: { ssr?: boolean }
 	) => Promise<string | undefined>;
 	name: string;
+	/**
+	 * Puts the stock dialog's on-demand code in one chunk in a Rolldown
+	 * browser build ({@link createDialogChunkPlugin}).
+	 */
+	options: DialogChunkPlugin['options'];
+	outputOptions: DialogChunkPlugin['outputOptions'];
 	renderChunk: (code: string) => Promise<{ code: string; map: null } | null>;
-	resolveId: (id: string) => string | undefined;
-	transformIndexHtml: (html: string) => string | undefined;
+	/**
+	 * `this` is Vite's plugin context, or nothing when called directly; the
+	 * hook reads it as {@link ManifestPluginResolveContext}.
+	 */
+	resolveId: (
+		this: unknown,
+		id: string,
+		importer?: string,
+		options?: { ssr?: boolean }
+	) => Promise<string | undefined> | string | undefined;
+	transformIndexHtml: (
+		html: string,
+		context?: ManifestHtmlContext
+	) => Promise<string | undefined>;
+}
+
+/** The slice of a Vite plugin context `resolveId` reads. */
+export interface ManifestPluginResolveContext extends ManifestPluginContext {
+	resolve?: (
+		id: string,
+		importer?: string,
+		options?: { skipSelf?: boolean }
+	) => Promise<{ id: string } | null>;
+}
+
+/** The slice of Vite's `transformIndexHtml` context the plugin reads. */
+export interface ManifestHtmlContext {
+	/** The page's entry chunk; set in `vite build` only. */
+	chunk?: StaticBannerChunk;
+	/** Every output, by file name; set in `vite build` only. */
+	bundle?: Readonly<Record<string, StaticBannerChunk>>;
 }
 
 /**
@@ -834,7 +1087,10 @@ export const createConsentManifestPlugin = (
 	let missingURLReported = false;
 	let bundlesSnapshot = false;
 	let prefetchSkipReported = false;
+	let htmlInput = true;
 	const runtimeOnly = options.source === 'runtime';
+	// The stock dialog's on-demand code in a few files (Vite 8).
+	const dialogChunks = createDialogChunkPlugin();
 	const command = (): ManifestBuildCommand =>
 		resolved?.command === 'serve' ? 'dev' : 'build';
 	const logger = (): ManifestBuildLogger =>
@@ -948,6 +1204,91 @@ export const createConsentManifestPlugin = (
 		}
 		return `${script}\n${html}`;
 	};
+	/**
+	 * Whether this build puts the stock banner's stylesheets in its pages,
+	 * and so gives `@c15t/react` the sheets' deferred modules: a production
+	 * client build of HTML pages that get the `/init` script.
+	 */
+	const staticBannerOn = (): boolean => {
+		const { initPrefetch = true } = options;
+		return (
+			options.staticBanner !== false &&
+			command() === 'build' &&
+			!serverRendered &&
+			htmlInput &&
+			Boolean(initPrefetch) &&
+			Boolean(backendURL) &&
+			!runtimeOnly
+		);
+	};
+	let manifestForBanner: Promise<ConsentManifest | undefined> | undefined;
+	const loadManifestForBanner = (): Promise<ConsentManifest | undefined> => {
+		const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
+		manifestForBanner ??= (async () => {
+			try {
+				return await loadBuildManifest(
+					{
+						backendURL,
+						fetch:
+							fetchImpl &&
+							((input, init) =>
+								fetchImpl(input, {
+									...init,
+									signal: AbortSignal.timeout(BUILD_MANIFEST_TIMEOUT_MS),
+								})),
+					},
+					defaults.label
+				);
+			} catch (error) {
+				logger().warn(
+					`staticBanner: could not fetch the consent manifest (${describeFailure(error, defaults.label)}), so index.html gets no static banner. The app renders its banner as before.`
+				);
+				return undefined;
+			}
+		})();
+		return manifestForBanner;
+	};
+	/**
+	 * Adds the banner's stylesheets to a page whose entry imports the stock
+	 * banner, and the banner itself when the page got the `/init` script.
+	 */
+	const addStaticBanner = async (
+		html: string,
+		context: ManifestHtmlContext | undefined,
+		prefetched: boolean
+	): Promise<string | undefined> => {
+		const { bundle, chunk } = context ?? {};
+		if (!(chunk && bundle && staticBannerOn())) {
+			return undefined;
+		}
+		const reactRoot = findPageBanner(chunk, bundle);
+		const renderer = reactRoot
+			? await loadStaticBannerRenderer(reactRoot)
+			: undefined;
+		if (!renderer) {
+			return undefined;
+		}
+		const manifest = prefetched ? await loadManifestForBanner() : undefined;
+		const language =
+			/<html\s[^>]*\blang=["']?[a-z]{2,3}/iu
+				.exec(html)?.[0]
+				.slice(-3)
+				.replace(/^[^a-z]/iu, '')
+				.toLowerCase() ?? 'en';
+		const banner = manifest
+			? renderStaticBannerHtml(renderer, manifest, {
+					language,
+					storageKey:
+						typeof options.initPrefetch === 'object'
+							? options.initPrefetch.storageKey
+							: undefined,
+				})
+			: undefined;
+		return injectStaticBanner(html, {
+			banner: banner?.html,
+			sheets: renderStaticBannerSheets(renderer.STATIC_BANNER_SHEETS),
+		});
+	};
 	return {
 		apply: (_config: unknown, environment: { isPreview?: boolean }) =>
 			!environment.isPreview,
@@ -955,12 +1296,32 @@ export const createConsentManifestPlugin = (
 			// `vite build --watch` reuses the plugin: each rebuild decides anew.
 			bundlesSnapshot = false;
 		},
-		config: () => ({
-			optimizeDeps: { exclude: [...GENERATED_MODULE_IDS] },
-			ssr: { noExternal: [...GENERATED_IMPORTERS] },
-		}),
+		config(this, userConfig, env) {
+			const base = {
+				optimizeDeps: { exclude: [...GENERATED_MODULE_IDS] },
+				ssr: { noExternal: [...GENERATED_IMPORTERS] },
+			};
+			// Server-rendered adapters keep their framework's chunking.
+			if (
+				defaults.serverRendered ||
+				!shouldGroupConsentChunks(
+					this as ConsentManifestConfigContext | undefined,
+					userConfig,
+					env
+				)
+			) {
+				return base;
+			}
+			return {
+				...base,
+				...consentChunkGroupsConfig(userConfig, [CONSENT_CHUNK_GROUP]),
+			};
+		},
 		configResolved: (config: ManifestPluginConfig) => {
 			resolved = config;
+			// The resolved inputs, after every plugin's `config` hook: a
+			// framework plugin that builds its own entries sets them there.
+			htmlInput = !config.build?.ssr && buildsHtml(config);
 			// An unknown `onBuildError` is a setup mistake: report it now, not
 			// only when a bundle reads the snapshot.
 			resolveManifestBuildErrorMode(
@@ -1051,6 +1412,8 @@ export const createConsentManifestPlugin = (
 			return lines.join('\n');
 		},
 		name: 'c15t:consent-manifest',
+		options: dialogChunks.options,
+		outputOptions: dialogChunks.outputOptions,
 		async renderChunk(code: string) {
 			const readsSnapshot = code.includes(PLACEHOLDERS.snapshot);
 			const readsBackendURL = code.includes(PLACEHOLDERS.backendURL);
@@ -1085,11 +1448,52 @@ export const createConsentManifestPlugin = (
 			}
 			return { code: rendered, map: null };
 		},
-		resolveId: (id: string): string | undefined =>
-			(GENERATED_MODULE_IDS as readonly string[]).includes(id)
-				? VIRTUAL_GENERATED_ID
-				: undefined,
-		transformIndexHtml: addPrefetchScript,
+		resolveId(
+			this: unknown,
+			id: string,
+			importer?: string,
+			resolveOptions?: { ssr?: boolean }
+		): Promise<string | undefined> | string | undefined {
+			if ((GENERATED_MODULE_IDS as readonly string[]).includes(id)) {
+				return VIRTUAL_GENERATED_ID;
+			}
+			const context = this as ManifestPluginResolveContext | undefined;
+			const clientBanner = clientBannerPath(id, importer);
+			if (
+				clientBanner &&
+				staticBannerOn() &&
+				!resolveOptions?.ssr &&
+				context?.environment?.config?.consumer !== 'server'
+			) {
+				// Pages with the static banner load the stock banner's code
+				// after the page's own.
+				return clientBanner;
+			}
+			const deferred = deferredSheetSpecifier(id, importer);
+			if (
+				!(deferred && context?.resolve && staticBannerOn()) ||
+				resolveOptions?.ssr ||
+				context.environment?.config?.consumer === 'server'
+			) {
+				return undefined;
+			}
+			// A `@c15t/ui` without the deferred module keeps the sheet's text.
+			return (async () =>
+				(await context.resolve?.(deferred, importer, { skipSelf: true }))
+					?.id)();
+		},
+		async transformIndexHtml(
+			html: string,
+			context?: ManifestHtmlContext
+		): Promise<string | undefined> {
+			const prefetched = addPrefetchScript(html);
+			const withBanner = await addStaticBanner(
+				prefetched ?? html,
+				context,
+				prefetched !== undefined
+			);
+			return withBanner ?? prefetched;
+		},
 	};
 };
 

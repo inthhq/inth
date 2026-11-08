@@ -36,6 +36,13 @@ export default mergeConfig(
 		resolve: {
 			alias: Object.fromEntries([
 				['~', resolve(__dirname, './src')],
+				// The suite renders the provider itself, on the server and in
+				// the browser; the client root has tests of its own.
+				['#consent-provider', resolve(__dirname, './src/provider.tsx')],
+				[
+					'#consent-banner',
+					resolve(__dirname, './src/components/prompt/index.ts'),
+				],
 				// The showcase uses the React hooks re-exported by the Next adapter.
 				['c15t/next', resolve(__dirname, './src/index.ts')],
 				// Astro's source island must share this test suite's React contexts
@@ -91,12 +98,36 @@ export default mergeConfig(
 					resolve(__dirname, '../core/src/runtime/provider.ts'),
 				],
 				[
+					'@c15t/core/runtime/deferred-boot',
+					resolve(__dirname, '../core/src/runtime/deferred-boot.ts'),
+				],
+				[
+					'@c15t/core/runtime/deferred-snapshot',
+					resolve(__dirname, '../core/src/runtime/deferred-snapshot.ts'),
+				],
+				[
+					'@c15t/core/transports/hosted-factory',
+					resolve(__dirname, '../core/src/transports/hosted-factory.ts'),
+				],
+				[
 					'@c15t/core/runtime',
 					resolve(__dirname, '../core/src/runtime/index.ts'),
 				],
 				[
 					'@c15t/core/server',
 					resolve(__dirname, '../core/src/server/index.ts'),
+				],
+				[
+					'@c15t/core/surface-actions/early-commit',
+					resolve(__dirname, '../core/src/surface-actions/early-commit.ts'),
+				],
+				[
+					'@c15t/core/surface-actions/instant-commit',
+					resolve(__dirname, '../core/src/surface-actions/instant-commit.ts'),
+				],
+				[
+					'@c15t/core/surface-actions/plain-scripts',
+					resolve(__dirname, '../core/src/surface-actions/plain-scripts.ts'),
 				],
 				[
 					'@c15t/core/surface-actions',
@@ -109,6 +140,12 @@ export default mergeConfig(
 				[
 					'@c15t/core/transports/manifest-browser',
 					resolve(__dirname, '../core/src/transports/manifest-browser.ts'),
+				],
+				// After the `@c15t/core/transports/*` entries above: aliases match
+				// by prefix, in order.
+				[
+					'@c15t/core/transports',
+					resolve(__dirname, '../core/src/transports/index.ts'),
 				],
 				['@c15t/core', resolve(__dirname, '../core/src/index.ts')],
 				['@c15t/schema/types', resolve(__dirname, '../schema/src/types.ts')],

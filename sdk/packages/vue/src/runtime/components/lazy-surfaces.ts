@@ -15,7 +15,18 @@
  * tax was ~345-530ms; the weight was parse/hydration
  * of surfaces most visitors never see.
  */
-import { defineAsyncComponent } from 'vue';
+import { defineAsyncComponent, defineComponent, h, provide } from 'vue';
+import type { Component } from 'vue';
+
+import { useConsentKernelContext } from '../composables/kernel';
+import type { ConsentBannerView } from '../kernel';
+import {
+	symbolActiveUI,
+	symbolConsent,
+	symbolInit,
+	symbolKernelContext,
+	symbolSnapshot,
+} from '../utils/symbols';
 
 export const LazyConsentManager = defineAsyncComponent(
 	() => import('./manager.vue')
@@ -35,17 +46,78 @@ export const LazyIabConsentDialog = defineAsyncComponent(
  * those rules into preloads. The browser applies them with the chunk,
  * before a banner it renders itself appears.
  */
+/**
+ * The banner chunk. Vite's preload helper waits for the chunk's
+ * stylesheets only in the first `import()` that asks for them: keep this
+ * the only caller. The Nuxt plugin calls it with the consent engine's
+ * import, so both download together.
+ *
+ * @internal
+ */
+export const loadConsentBanner = () => import('./prompt.vue');
+
 export const LazyConsentBanner = defineAsyncComponent({
 	// The root renders the banner component on every page (it decides its
 	// own visibility), so the chunk starts loading with the app's first
-	// render, not after `/init`. Vite's preload helper waits for the
-	// chunk's stylesheets only in the first `import()` that asks for them:
-	// keep this the only caller.
-	loader: () => import('./prompt.vue'),
+	// render, not after `/init`.
+	loader: loadConsentBanner,
 	// Outside Nuxt's root `<Suspense>`: the app mounts and hydrates without
 	// waiting for the banner chunk and its stylesheets. Server-rendered
 	// banner markup hydrates once the chunk arrives.
 	suspensible: false,
+});
+
+/** The banner a deferred context renders, one per view. */
+const deferredBanners = new WeakMap<ConsentBannerView, Component>();
+
+/**
+ * The banner under the Nuxt plugin's deferred context: its chunk loads
+ * once the consent engine attached (the engine's chunk brings it), and it
+ * hydrates against the server's snapshot, then reads the live one.
+ */
+const deferredBanner = function deferredBanner(
+	view: ConsentBannerView
+): Component {
+	let banner = deferredBanners.get(view);
+	if (!banner) {
+		banner = defineAsyncComponent({
+			hydrate: (hydrate) => {
+				hydrate();
+				view.hydrated();
+			},
+			loader: async () => {
+				await view.ready;
+				return loadConsentBanner();
+			},
+			suspensible: false,
+		});
+		deferredBanners.set(view, banner);
+	}
+	return banner;
+};
+
+/**
+ * Renders the stock banner for `ConsentRoot`. Under a deferred context
+ * the banner and its children read the context's banner view, so a choice
+ * made before the banner hydrated does not change what it hydrates.
+ *
+ * @internal
+ */
+export const ConsentBannerHost = defineComponent({
+	name: 'ConsentBannerHost',
+	setup() {
+		const view = useConsentKernelContext().bannerView;
+		if (!view) {
+			return () => h(LazyConsentBanner);
+		}
+		provide(symbolKernelContext, view.context);
+		provide(symbolSnapshot, view.snapshot);
+		provide(symbolInit, view.init);
+		provide(symbolActiveUI, view.activeUI);
+		provide(symbolConsent, view.storedConsent);
+		const banner = deferredBanner(view);
+		return () => h(banner);
+	},
 });
 
 /**

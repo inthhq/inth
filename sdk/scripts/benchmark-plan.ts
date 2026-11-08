@@ -1,5 +1,21 @@
 const quickPackages = ['@c15t/core-benchmarks', '@c15t/script-lifecycle-bench'];
 
+/**
+ * The bench that hosts each consent gate target. The script tag has no
+ * framework bench, so the script-lifecycle bench serves its page.
+ */
+export const gateTargetPackages = {
+	astro: '@c15t/astro-browser-bench',
+	nextjs: '@c15t/nextjs-browser-bench',
+	nuxt: '@c15t/nuxt-browser-bench',
+	react: '@c15t/react-browser-bench',
+	'script-tag': '@c15t/script-lifecycle-bench',
+	sveltekit: '@c15t/sveltekit-browser-bench',
+	'tanstack-start': '@c15t/tanstack-start-browser-bench',
+} as const;
+
+export type GateTarget = keyof typeof gateTargetPackages;
+
 const profiles: Record<string, { packages: string[]; suites: string[] }> = {
 	bundle: {
 		packages: ['@c15t/next-bundle-bench'],
@@ -26,6 +42,11 @@ const profiles: Record<string, { packages: string[]; suites: string[] }> = {
 			'script-lifecycle',
 			'browser-runtime',
 		],
+	},
+	// CookieBench-equivalent load and tap timings, one job per framework.
+	gate: {
+		packages: Object.values(gateTargetPackages),
+		suites: ['consent-gate'],
 	},
 	quick: {
 		packages: quickPackages,
@@ -77,10 +98,23 @@ export interface BenchmarkShard {
 	skip: string[];
 }
 
-/** The runners a profile is measured on, one or more per package. */
+/**
+ * The runners a profile is measured on, one or more per package. Gate jobs
+ * share packages with the runtime profiles, so their ids carry a `gate-`
+ * prefix and their artifacts never collide in one workflow run.
+ */
 export const createBenchmarkShards = function createBenchmarkShards(
-	packages: string[]
+	packages: string[],
+	mode?: string
 ): BenchmarkShard[] {
+	if (mode === 'gate') {
+		return packages.map((name) => ({
+			id: `gate-${name.replace('@c15t/', '')}`,
+			only: [],
+			package: name,
+			skip: [],
+		}));
+	}
 	return packages.flatMap(
 		(name) =>
 			(Object.hasOwn(shards, name) ? shards[name] : undefined)?.map(
@@ -88,6 +122,35 @@ export const createBenchmarkShards = function createBenchmarkShards(
 			) ?? [
 				{ id: name.replace('@c15t/', ''), only: [], package: name, skip: [] },
 			]
+	);
+};
+
+/**
+ * Resolve the gate targets a run measures: `all`, `none`, or a comma list
+ * of target names such as `react,nuxt`. CI passes the targets
+ * `scripts/ci-plan.ts` selected; unknown names fail.
+ *
+ * @returns The selected hosting packages, in profile order.
+ */
+export const selectGatePackages = function selectGatePackages(
+	targets: string
+): string[] {
+	const value = targets.trim();
+	if (value === '' || value === 'none') {
+		return [];
+	}
+	if (value === 'all') {
+		return Object.values(gateTargetPackages);
+	}
+	const names = value.split(',').map((name) => name.trim());
+	const unknown = names.filter(
+		(name) => !Object.hasOwn(gateTargetPackages, name)
+	);
+	if (unknown.length) {
+		throw new Error(`Unknown consent gate target: ${unknown.join(', ')}`);
+	}
+	return Object.values(gateTargetPackages).filter((name) =>
+		names.some((target) => gateTargetPackages[target as GateTarget] === name)
 	);
 };
 
@@ -103,7 +166,7 @@ export const createBenchmarkPlan = function createBenchmarkPlan(
 	if (!profile) {
 		throw new Error(`Unknown benchmark mode: ${mode}`);
 	}
-	const shard = createBenchmarkShards(profile.packages).find(
+	const shard = createBenchmarkShards(profile.packages, mode).find(
 		(entry) => entry.id === selector
 	);
 	if (
@@ -127,14 +190,41 @@ export const createBenchmarkPlan = function createBenchmarkPlan(
 	};
 };
 
+/**
+ * Matrix entries for one or more modes. `gate` runs only the targets in
+ * `gateTargets`; the other modes run their whole profile.
+ */
+export const createBenchmarkMatrix = function createBenchmarkMatrix(
+	modes: string[],
+	gateTargets = 'all'
+): { id: string; package: string; mode: string }[] {
+	return modes.flatMap((mode) => {
+		const { packages } = createBenchmarkPlan(mode);
+		const selected =
+			mode === 'gate'
+				? packages.filter((name) =>
+						selectGatePackages(gateTargets).includes(name)
+					)
+				: packages;
+		return createBenchmarkShards(selected, mode).map(
+			({ id, package: name }) => ({
+				id,
+				mode,
+				package: name,
+			})
+		);
+	});
+};
+
 if (import.meta.main) {
-	const { packages } = createBenchmarkPlan(process.argv[2] ?? 'quick');
+	// `quick`, `full,gate`, ...; BENCHMARK_GATE_TARGETS narrows `gate`.
+	const modes = (process.argv[2] ?? 'quick').split(',').filter(Boolean);
 	process.stdout.write(
 		JSON.stringify({
-			include: createBenchmarkShards(packages).map(({ id, package: name }) => ({
-				id,
-				package: name,
-			})),
+			include: createBenchmarkMatrix(
+				modes,
+				process.env.BENCHMARK_GATE_TARGETS || 'all'
+			),
 		})
 	);
 }

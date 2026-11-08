@@ -13,6 +13,7 @@ export default defineNuxtPlugin({
 		const getRuntimeConfig = useRuntimeConfig;
 		const route = getRoute();
 		const c15t = getRuntimeConfig().public.c15t as {
+			consentCategories?: string[];
 			mode?: Record<string, unknown>;
 		};
 		const built = c15t.mode ?? { type: 'manifest' };
@@ -24,6 +25,10 @@ export default defineNuxtPlugin({
 				inputs: { country: 'DE', language: 'en', region: 'BE' },
 				resolve: 'browser',
 			};
+		} else if (route.path === '/gate') {
+			// The consent gate mirrors CookieBench's Nuxt fixture: the built
+			// manifest() mode with server resolution and three categories.
+			c15t.consentCategories = ['necessary', 'measurement', 'marketing'];
 		} else if (route.path !== '/ssr-manifest') {
 			c15t.mode = { type: 'hosted' };
 		}

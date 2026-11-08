@@ -56,6 +56,7 @@ jobs:
       testBrowsers: ${{ steps.plan.outputs.testBrowsers }}
       bundle: ${{ steps.plan.outputs.bundle }}
       performance: ${{ steps.plan.outputs.performance }}
+      gate: ${{ steps.plan.outputs.gate }}
       baseRef: ${{ steps.plan.outputs.baseRef }}
       mobile: ${{ steps.plan.outputs.mobile }}
       mobileCompatibility: ${{ steps.plan.outputs.mobileCompatibility }}
@@ -629,6 +630,8 @@ jobs:
       base_ref: ${{ github.event.pull_request.base.sha || 'HEAD^' }}
       built: true
       mode: ${{ github.event_name != 'pull_request' && 'full' || 'quick' }}
+      # The consent gate frameworks whose bench a change reaches.
+      gate_targets: ${{ needs.repository.outputs.gate || 'none' }}
 
   complete:
     name: CI complete

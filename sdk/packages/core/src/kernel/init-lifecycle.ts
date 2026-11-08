@@ -392,6 +392,8 @@ export interface InitLifecycle {
 	init: () => Promise<InitResult>;
 	/** See `InternalKernel.adoptInit`. */
 	adopt: (response: InitResponse, afterStart: boolean) => void;
+	/** See `InternalKernel.replaySaves`. */
+	replaySaves: () => void;
 	/**
 	 * Mark the lifecycle started and arm the deadline timer. The first call
 	 * reads the browser's GPC signal. Re-arms the timer after `dispose()`.
@@ -796,6 +798,7 @@ export const createInitLifecycle = function createInitLifecycle({
 		dispose,
 		init,
 		refresh,
+		replaySaves,
 		retryWhenOnline,
 		start,
 	};

@@ -201,12 +201,71 @@ On a prerendered page, local mode resolves the policy at build time because
 it needs no request. The banner is in the HTML but hidden, and a small inline
 script shows it in the first paint to visitors with nothing stored.
 
-## Taps before hydration
+## Know when the consent engine loads
 
-A banner in the server HTML shows before the page's JavaScript runs. A tap on
-it in that gap does nothing: the button has no handler yet, so the banner
-stays up and no choice is saved. The React and Vue banners hold such a tap and
-replay it after hydration; the Astro banner does not.
+The `c15t()` integration keeps c15t's consent engine out of the page's
+first-load JavaScript. The engine is the code that stores consent, saves
+choices, runs the script loader and mounts the dialog. The first load carries a
+small page script instead: the banner's click handler and the code that
+records a banner choice.
+
+`<ConsentScript />` and the banners write the consent state the server
+rendered the page from next to the config, in a
+`<script type="application/json" data-c15t-boot>` data block. Until the engine
+loads, `getConsentClient()`, `getConsent()` and `subscribe()` answer from that
+state. `client.runtime` is `undefined` until `client.ready` resolves.
+
+When the engine loads depends on the visitor:
+
+| Visitor | Engine loads |
+| --- | --- |
+| The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, the preference dialog is on screen, a banner choice was recorded, or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
+| Any other visitor, such as a returning visitor with consent | As soon as the page script runs. |
+
+On a slow connection the engine would otherwise share bandwidth with the
+page's largest image and delay Largest Contentful Paint. The browser stops
+measuring that paint at the first input or scroll, so loading the engine then
+costs it nothing.
+
+The page script loads the engine at once for a notice or opt-out prompt, a
+privacy signal such as Global Privacy Control, an IAB policy, an `experiment`,
+`gpp`, a `networkBlocker`, a blocking banner, declared vendors, a `scripts`
+entry that may run before any choice (`alwaysLoad`, or a category that is
+allowed), an inline script gated on `necessary`, a `consentSource` from the
+client entrypoint, and a page opened at `#c15t-preferences`. It also does on a
+page every visitor shares, such as a prerendered one, on a page whose banner
+is a server island, and on a page that shows no banner.
+
+A tap on the banner before the engine loads does not wait for it:
+
+- **Accept or Reject** takes effect while the browser is still handling the
+  tap. The banner hides, `subscribe()` listeners hear the new state, and the
+  plain `scripts` entries the choice allows (a `src` with no callbacks, vendor
+  or IAB fields) are inserted, so their requests start at the tap. A small
+  chunk requested one task later stores the consent record, queues the save
+  for your backend, calls `onChoiceRecorded` and `onPermissionsChanged` and
+  runs the inline scripts the choice allows. The scripts ask for their files
+  first: over HTTP/1.1 a browser opens at most six connections to a host, and
+  the page's own downloads may hold most of them. Then the engine loads. It
+  starts from the stored choice, sends the queued save and records nothing a
+  second time. `client.acceptAll()`, `client.rejectAll()` and `client.save()`
+  take the same path. Once the priority images are in, the chunk downloads
+  at idle, so a later tap usually finds it cached.
+- **Customize** downloads the dialog alone and opens it on the state the
+  page already has. The engine loads once the dialog is on screen and takes
+  it over. A save from the dialog waits for the engine. This needs the
+  Svelte dialog (`ui: 'svelte'`); with `ui: 'react'` or `ui: 'vue'`,
+  Customize starts the engine and every chunk of the dialog at the same time
+  and opens the dialog once they are in. Pointing at or focusing Customize
+  starts the dialog's download.
+
+The banner also runs a small inline script ahead of its markup. It records a
+tap that lands before the page script has run and hides the banner, and the
+page script applies the tap when it starts.
+
+For a visitor the server shows no banner, such as one with a stored choice,
+the page carries neither the early-tap script nor the banner's first-paint
+stylesheet. Opening the dialog on that page adds the stylesheet first.
 
 ## Check the rendering path
 

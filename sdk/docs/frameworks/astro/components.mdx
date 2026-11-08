@@ -36,7 +36,9 @@ own path.
 ## How much JavaScript each component ships
 
 The banners and the link are plain `.astro` markup and ship no framework
-JavaScript. One small shared script turns their buttons into consent actions.
+JavaScript. One small shared script turns their buttons into consent actions
+and records a banner choice before the consent engine loads. See
+[when the consent engine loads](/docs/frameworks/astro/rendering#know-when-the-consent-engine-loads).
 The dialogs are islands in the framework the integration's `ui` option names,
 and they download only when a visitor first reaches for one. See
 [Dialog islands and your own islands](/docs/frameworks/astro/islands).

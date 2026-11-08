@@ -29,6 +29,28 @@ export const FIRST_PAINT_COMPONENTS = [
 ] as const;
 
 /**
+ * The first-paint components split by the surface that renders them, one
+ * `styles/sheets/<name>.js` each. Every first-paint component sits in
+ * exactly one sheet, so no rule reaches the page twice: a repeated rule
+ * would re-apply after rules that override it whenever its sheet is
+ * inserted later. The button has a sheet of its own because the banner, the
+ * ConsentGate and the dialog all render it. The trigger renders none of the
+ * others (its logo is a bare SVG).
+ *
+ * Each sheet carries the component variables its rules read. The theme
+ * tokens ride in the `tokens` sheet, which every surface renders first.
+ */
+export const SURFACE_SHEETS = {
+	banner: ['branding', 'consent-actions', 'legal-links', 'prompt'],
+	button: ['button'],
+	'consent-gate': ['consent-gate'],
+	trigger: ['panel-trigger'],
+} as const satisfies Record<
+	string,
+	readonly (typeof FIRST_PAINT_COMPONENTS)[number][]
+>;
+
+/**
  * Rendered only inside the consent dialog or the preference widget. Their
  * rules follow the first-paint rules in `styles.css`.
  */

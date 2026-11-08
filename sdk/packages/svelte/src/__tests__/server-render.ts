@@ -113,6 +113,13 @@ export const renderSsr = (
 ): Promise<SsrRenderResult> =>
 	send({ fixture, props }) as Promise<SsrRenderResult>;
 
+/** A server render of `ConsentRoot` (`fixtures/consent-root-fixture.svelte`). */
+export const renderRootSsr = (props: Record<string, unknown>) =>
+	send({ fixture: 'consent-root', props }) as Promise<{
+		body: string;
+		head: string;
+	}>;
+
 /** Boot the worker and load the fixtures so no test pays for it. */
 export const warmSsrWorker = async (): Promise<void> => {
 	await send({ warm: true });

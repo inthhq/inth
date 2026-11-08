@@ -4,8 +4,9 @@ import type { AllConsentNames, Translations } from '@c15t/core';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { useRegisterConsentCategories, useSetActiveUI } from '../hooks';
+import { useCategoryAllowed } from '../hooks/use-category-allowed';
 import { useIsHydrated } from '../hooks/use-is-hydrated';
-import { useCategoryAllowed, useKernelSelector } from '../kernel-selector';
+import { useKernelSelector } from '../kernel-selector';
 import { useTranslations } from './use-translations';
 
 /**

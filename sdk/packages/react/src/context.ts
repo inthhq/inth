@@ -25,8 +25,18 @@ export interface ProviderServices {
 	getConsentCategories: () => readonly AllConsentNames[];
 	/** Whether the runtime has started: records hydrated, prefetch adopted. */
 	isStarted: () => boolean;
-	/** The runtime the provider renders, owned or borrowed. */
+	/**
+	 * The runtime the provider renders, owned or borrowed. Under a deferred
+	 * root it is `undefined` until the engine attaches; see `ready`.
+	 */
 	runtime: ConsentRuntime;
+	/**
+	 * Settles once `runtime` is set, under a deferred root whose engine has
+	 * not attached yet. Absent under a provider.
+	 *
+	 * @internal
+	 */
+	ready?: Promise<void>;
 	/**
 	 * Store a language override and load its copy: init runs again on the
 	 * provider's own kernel while it is enabled, and a borrowed runtime

@@ -1,10 +1,50 @@
 /**
  * Hosted mode for the React provider: core's `hosted()`, with the backend
  * URL the build integration read as the default.
+ *
+ * The factory is the one core's `hosted()` returns, but the transport is
+ * built by whatever the provider's module provided: the provider loads
+ * with the consent engine, so a page that defers the engine does not
+ * download the hosted transport with its first-load JavaScript.
  */
-import { hosted as coreHosted } from '@c15t/core';
-import type { HostedModeFactory, HostedModeOptions } from '@c15t/core';
+import type {
+	HostedModeFactory,
+	HostedModeOptions,
+	KernelTransport,
+} from '@c15t/core';
 import { backendURL as builtBackendURL } from '@c15t/core/generated';
+import { createHostedModeFactory } from '@c15t/core/transports/hosted-factory';
+
+import { providedHostedTransport } from './hosted-slot';
+import type { BuildHostedTransport } from './hosted-slot';
+
+/**
+ * A transport that loads the hosted one on first use, for a runtime built
+ * before any provider module loaded (a runtime created outside the
+ * provider with this `hosted()`).
+ */
+const lazyHostedTransport: BuildHostedTransport = (options) => {
+	let loading: Promise<KernelTransport> | undefined;
+	const load = (): Promise<KernelTransport> => {
+		loading ??= (async () =>
+			(await import('@c15t/core/transports')).createHostedTransport(options))();
+		return loading;
+	};
+	return {
+		identify: async (user, subjectId) =>
+			(await load()).identify?.(user, subjectId),
+		init: async (context) =>
+			(await load()).init?.(context) as ReturnType<
+				NonNullable<KernelTransport['init']>
+			>,
+		loadSubjectRecord: async (subjectId) =>
+			(await (await load()).loadSubjectRecord?.(subjectId)) ?? null,
+		save: async (payload, context) =>
+			(await load()).save?.(payload, context) as ReturnType<
+				NonNullable<KernelTransport['save']>
+			>,
+	};
+};
 
 /**
  * Bundlers replace `process.env.NODE_ENV` at build time, so production
@@ -46,7 +86,9 @@ export const hostedWithBuild = function hostedWithBuild(
 			}`
 		);
 	}
-	return coreHosted({ ...options, backendURL });
+	return createHostedModeFactory({ ...options, backendURL }, (transport) =>
+		(providedHostedTransport() ?? lazyHostedTransport)(transport)
+	);
 };
 
 /**

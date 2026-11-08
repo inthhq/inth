@@ -22,7 +22,7 @@
  * backend reads it as that input.
  */
 
-import { POLICY_CONTRACT_HEADER } from './policy-resolution-wire';
+import { POLICY_CONTRACT_HEADER } from './policy-contract';
 import { appendSearchParams } from './search-params';
 import {
 	CONSENT_EXPERIMENT_HEADER,

@@ -64,7 +64,7 @@ bun run dev                                          # apps/playground + watch-b
 bun run --cwd apps/playground dev:localhost         # plain `next dev` (no portless/https)
 ```
 
-Browser tests (react, nextjs, tanstack-start) need Chromium: `bunx playwright@1.58.2 install`.
+Browser tests (react, nextjs, tanstack-start, svelte) need Chromium: `bunx playwright@1.58.2 install`.
 
 `check-types` and `test` depend on `build` in `turbo.json` — if types look stale or imports of workspace packages fail, build first.
 
@@ -143,6 +143,14 @@ report through Actions summaries and artifacts. Coverage reports show changed
 instrumented lines and branches. Bundle and runtime comparisons fail on
 missing measurements. These workflows do not post PR comments. Superseded PR
 runs are cancelled.
+
+The consent gate measures CookieBench's release metrics (LCP delta over a
+no-CMP control, banner.visible, consent-effective, scripts-complete,
+preferences-visible) per framework at the throttled mobile profile. It runs
+the frameworks a PR's change reaches, and every framework on `canary` pushes
+and nightly. It fails on budgets in `consentGateBudgets()`. Run
+`bun run bench:gate --base origin/canary` before pushing runtime changes;
+see `benchmarks/README.md#consent-gate`.
 
 Browser groups own example acceptance, supported Next router/build contracts,
 framework parity and Storybook interactions, SSR consent journeys, and CSS

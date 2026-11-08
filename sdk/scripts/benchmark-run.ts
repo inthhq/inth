@@ -31,6 +31,7 @@ import {
 } from './benchmark-rounds';
 import type { BenchmarkArm } from './benchmark-rounds';
 import { runCommand } from './browser-process';
+import { readWorkspaces } from './ci-plan';
 import { installBrowsers } from './install-browsers';
 
 const mode = process.argv[2] ?? 'quick';
@@ -49,13 +50,20 @@ const readFlag = function readFlag(name: string): string | undefined {
 const backendLatencyMs = resolveBenchBackendLatencyMs(readFlag, process.env);
 // CI passes the matrix id, which names a shard of a package split across
 // runners; locally, BENCHMARK_PACKAGE selects a whole package.
+// `--package` picks one package locally, like BENCHMARK_PACKAGE.
 const { expectedPackages, only, packages, skip, suites } = createBenchmarkPlan(
 	mode,
-	process.env.BENCHMARK_SHARD || process.env.BENCHMARK_PACKAGE
+	process.env.BENCHMARK_SHARD ||
+		readFlag('--package') ||
+		process.env.BENCHMARK_PACKAGE
 );
 const root = process.cwd();
+// The consent gate is usually run locally before a push, so it compares
+// with canary unless told otherwise; CI always passes BENCHMARK_BASE_REF.
 const { baseSha, headSha } = resolveBenchmarkRevisions(
-	process.env.BENCHMARK_BASE_REF || 'HEAD^'
+	readFlag('--base') ||
+		process.env.BENCHMARK_BASE_REF ||
+		(mode === 'gate' ? 'origin/canary' : 'HEAD^')
 );
 const directory = mkdtempSync(join(tmpdir(), 'c15t-benchmark-'));
 const base = join(directory, 'base');
@@ -68,7 +76,13 @@ mkdirSync(report, { recursive: true });
 // comparison. Bundle and example payload sizes do not drift, so one pass
 // is enough.
 const rounds = benchmarkRoundsForMode(mode);
-const iterations = iterationsPerRound(mode === 'quick' ? 15 : 30, rounds);
+// Each gate iteration is four throttled page visits (several seconds each).
+// Twelve per arm is the smallest count at which the 99% median bound in
+// `timing-confidence.ts` uses the second-lowest and second-highest samples,
+// so one load spike in either arm cannot hide a regression; at ten it
+// compares head's minimum with base's maximum.
+const totalIterations = { gate: 12, quick: 15 }[mode] ?? 30;
+const iterations = iterationsPerRound(totalIterations, rounds);
 const env = {
 	...process.env,
 	BENCHMARK_BASE_SHA: baseSha,
@@ -118,6 +132,34 @@ const measure = async function measure(
 			],
 			{ cwd: root, env: { ...env, GITHUB_SHA: sha } }
 		);
+	} else if (mode === 'gate') {
+		// The overlay brings each bench's `bench:gate` script to the base, but
+		// not the root turbo.json, so build through the `build` task every
+		// revision has and call the script directly.
+		await runCommand(
+			[
+				'bun',
+				'turbo',
+				'run',
+				'build',
+				'--output-logs=errors-only',
+				...packages.map((name) => `--filter=${name}`),
+			],
+			{ cwd, env: { ...env, GITHUB_SHA: sha } }
+		);
+		for (const name of packages) {
+			const benchDirectory = readWorkspaces(cwd).find(
+				(workspace) => workspace.name === name
+			)?.directory;
+			if (!benchDirectory) {
+				throw new Error(`No workspace named ${name} in ${cwd}`);
+			}
+			// oxlint-disable-next-line no-await-in-loop -- Benches must not overlap on one runner.
+			await runCommand(['bun', 'run', 'bench:gate'], {
+				cwd: join(cwd, benchDirectory),
+				env: { ...env, GITHUB_SHA: sha },
+			});
+		}
 	} else {
 		await runCommand(
 			[
@@ -214,6 +256,10 @@ try {
 	});
 } finally {
 	const summary = join(report, 'compare/comparison.md');
+	if (!process.env.GITHUB_ACTIONS && existsSync(summary)) {
+		// Locally, print the table CI puts in the step summary.
+		process.stdout.write(`\n${readFileSync(summary, 'utf8')}\n`);
+	}
 	if (process.env.GITHUB_STEP_SUMMARY) {
 		appendFileSync(
 			process.env.GITHUB_STEP_SUMMARY,

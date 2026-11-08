@@ -171,11 +171,16 @@ and preferences UI. These examples do not create a second consent provider.
           if (this.dispose) return;
           const client = getConsentClient();
           if (!client) return;
-          this.dispose = mountConsentEmbed(
-            this,
-            client.runtime.kernel,
-            () => { void client.openDialog(); },
-          );
+          // The runtime loads after the page for a visitor the banner asks
+          // to choose; `client.ready` resolves once it is set.
+          void client.ready.then(() => {
+            if (this.dispose || !client.runtime) return;
+            this.dispose = mountConsentEmbed(
+              this,
+              client.runtime.kernel,
+              () => { void client.openDialog(); },
+            );
+          });
         };
 
         connectedCallback() {

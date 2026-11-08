@@ -114,7 +114,7 @@ describe('bench condition in result keys', () => {
 		).toEqual({ backendLatencyMs: 0, profile: 'mobile' });
 	});
 
-	it('expects browser-runtime keys under the run condition and leaves other suites alone', () => {
+	it('expects browser-runtime and consent gate keys under the run condition and leaves other suites alone', () => {
 		const zero = expectedBenchmarkResultsFor({
 			backendLatencyMs: 0,
 			profile: 'none',
@@ -132,9 +132,19 @@ describe('bench condition in result keys', () => {
 		for (const key of browserKeys(expectedBenchmarkResults)) {
 			expect(key).toMatch(/:profile-none:latency-200ms:browser-runtime$/u);
 		}
+		// The consent gate always runs CookieBench's mobile profile, so its
+		// key carries only the latency.
+		expect(
+			zero
+				.filter((entry) => entry.suite === 'consent-gate')
+				.map((entry) => entry.key)
+		).toContain('@c15t/vue:consent-gate:latency-0ms:consent-gate');
 		const others = (results: typeof zero) =>
 			results
-				.filter((entry) => entry.suite !== 'browser-runtime')
+				.filter(
+					(entry) =>
+						entry.suite !== 'browser-runtime' && entry.suite !== 'consent-gate'
+				)
 				.map((entry) => entry.key);
 		expect(others(zero)).toEqual(others(expectedBenchmarkResults));
 	});

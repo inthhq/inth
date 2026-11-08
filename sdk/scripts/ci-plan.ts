@@ -288,6 +288,42 @@ export const createCiPlan = function createCiPlan(
 	if (affected.has('@c15t/fixture-acceptance')) {
 		journeys.splice(0, journeys.length, 'nextjs', 'nuxt', 'sveltekit');
 	}
+	// Consent gate targets: a framework runs when its bench is affected, which
+	// follows its adapter, core, ui and the shared harness through the graph.
+	// The script tag has no bench of its own (script-lifecycle-bench hosts its
+	// page), so it follows @c15t/browser and direct edits to its host or the
+	// harness rather than the host's React dependency.
+	const gateBenches: Record<string, string> = {
+		'benchmarks/astro-browser-bench': 'astro',
+		'benchmarks/nextjs-browser-bench': 'nextjs',
+		'benchmarks/nuxt-browser-bench': 'nuxt',
+		'benchmarks/react-browser-bench': 'react',
+		'benchmarks/sveltekit-browser-bench': 'sveltekit',
+		'benchmarks/tanstack-start-browser-bench': 'tanstack-start',
+	};
+	const gateOrder = [
+		'react',
+		'nextjs',
+		'nuxt',
+		'astro',
+		'sveltekit',
+		'tanstack-start',
+		'script-tag',
+	];
+	const gateSelected = new Set(
+		selected
+			.map((workspace) => gateBenches[workspace.directory])
+			.filter((target) => target !== undefined)
+	);
+	if (
+		full ||
+		affected.has('@c15t/browser') ||
+		owners.has('@c15t/script-lifecycle-bench') ||
+		owners.has('@c15t/benchmarking')
+	) {
+		gateSelected.add('script-tag');
+	}
+	const gate = gateOrder.filter((target) => gateSelected.has(target));
 	const compat = selected
 		.filter((workspace) => workspace.scripts['test:compat'])
 		.map((workspace) => workspace.name.replace('@c15t/next-compat-', ''));
@@ -366,6 +402,7 @@ export const createCiPlan = function createCiPlan(
 		docs: full || files.some(isDocumentation),
 		examples,
 		full,
+		gate,
 		integrations,
 		journeys,
 		mobile,
@@ -384,6 +421,7 @@ export const createCiPlan = function createCiPlan(
 				'@c15t/react',
 				'@c15t/nextjs',
 				'@c15t/tanstack-start',
+				'@c15t/svelte',
 				'@c15t/browser',
 				'@c15t/integrations',
 			].includes(name)
@@ -405,6 +443,8 @@ export const ciSchedulingOutputs = (plan: CiPlan) => ({
 	build: plan.build.length > 0,
 	bundle: plan.bundle,
 	docs: plan.docs,
+	// Target names such as `react,nuxt`, never workspace names.
+	gate: plan.gate.join(','),
 	integrations: plan.integrations,
 	mobile: plan.mobile,
 	mobileBrowserOrDevice: plan.mobileBrowserOrDevice,

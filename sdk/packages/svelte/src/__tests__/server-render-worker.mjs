@@ -18,6 +18,12 @@ const server = await createServer({
 	configFile: false,
 	logLevel: 'silent',
 	plugins: [svelte()],
+	// The package's `imports` map, as a server build resolves it.
+	resolve: {
+		alias: {
+			'#server-root': resolve('src/lib/deferred/server-root.ts'),
+		},
+	},
 	root: process.cwd(),
 	server: { hmr: false, middlewareMode: true },
 	ssr: {
@@ -30,7 +36,10 @@ const module = await server.ssrLoadModule(
 	resolve('src/__tests__/server-entry.ts')
 );
 
-const render = ({ fixture, props }) => module.renderFixture(props, fixture);
+const render = ({ fixture, props }) =>
+	fixture === 'consent-root'
+		? module.renderRoot(props)
+		: module.renderFixture(props, fixture);
 
 if (process.argv[2]) {
 	try {

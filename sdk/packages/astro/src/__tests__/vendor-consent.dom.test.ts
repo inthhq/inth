@@ -11,6 +11,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { activateGatedScripts } from '../browser/inline-scripts';
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
+import type { AstroEngineClient } from '../client-types';
 import { resolveOptions } from '../integration';
 import { offline as offlineMode } from '../mode';
 import type { C15tAstroOptions } from '../types';
@@ -77,7 +78,7 @@ afterEach(async () => {
 const start = function start(
 	options: C15tAstroOptions = OPTIONS,
 	{ resolved = true } = {}
-): AstroConsentClient {
+): AstroEngineClient {
 	if (resolved) {
 		// The server resolved the policy, as it does for a rendered page.
 		(window as unknown as Record<string, unknown>).__c15tAstroConfig = {

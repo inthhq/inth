@@ -44,6 +44,13 @@ const hostedScript = async function hostedScript(): Promise<string> {
 	return `(function(c){window.c15t=window.c15t||[];Array.isArray(window.c15t)?window.c15t.unshift(["config",c]):window.c15t.config(c)})(${config});\n${bundle}`;
 };
 
+// `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
+// `c15t.dialog.js`, with or without the hash query the backend adds.
+const scriptPartURL = new RegExp(
+	`^${placeholderBackendURL.replaceAll('.', '\\.')}/c15t\\.(?:hosted|commit|records|dialog)\\.js(?:\\?.*)?$`,
+	'u'
+);
+
 // The same migration the starter runs on a development start, applied to
 // the PostgreSQL database a production server requires.
 const migrate = `
@@ -156,6 +163,14 @@ for (const target of selectedStarterTargets()) {
 			await context.route(hostedScriptURL, async (route) => {
 				await route.fulfill({
 					body: await hostedScript(),
+					contentType: 'text/javascript; charset=utf-8',
+				});
+			});
+			// The files `c15t.js` loads next, which the backend serves as built.
+			await context.route(scriptPartURL, async (route) => {
+				const file = new URL(route.request().url()).pathname.slice(1);
+				await route.fulfill({
+					body: await readFile(join(browserDist, file), 'utf8'),
 					contentType: 'text/javascript; charset=utf-8',
 				});
 			});

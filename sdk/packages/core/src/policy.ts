@@ -16,12 +16,10 @@ import { safeFallbackPolicyInput } from '@c15t/schema/types';
 import { createEvaluationPolicy } from './consent-record/evaluation-policy';
 import type {
 	EvaluationPolicy,
-	ExplicitChoice,
 	OptionalConsentCategory,
 } from './consent-record/types';
 import type { AllConsentNames } from './consent/consent-types';
 import { deepFreeze } from './libs/freeze-data';
-import type { KernelModel } from './types';
 
 /** Rule plus fingerprints the evaluator runs on. */
 export interface EffectivePolicy {
@@ -164,66 +162,12 @@ export const buildEvaluationPolicy = function buildEvaluationPolicy(
 	return projectEvaluationPolicy(effective, consentCategories);
 };
 
-/**
- * Runtime model. An IAB rule only runs as `iab` when the IAB module is
- * enabled; otherwise its categories behave as opt-in, which is what the
- * evaluator already does for the `iab` model.
- */
-export const deriveModel = function deriveModel(
-	rule: ResolvedPolicyRule,
-	iabEnabled: boolean
-): KernelModel {
-	if (rule.model === 'iab') {
-		return iabEnabled ? 'iab' : 'opt-in';
-	}
-	return rule.model;
-};
-
-/** Values a form would present before any restriction is applied. */
-export type PresentedSelection = Partial<
-	Record<OptionalConsentCategory, boolean>
->;
-
-/**
- * The selection a no-input `save()` confirms for the active scope: the
- * staged draft value, else the explicit value, else the model's displayed
- * default (allowed under opt-out, preselected under opt-in and IAB). It is
- * deliberately not the effective permission, which may be masked by GPC or
- * an expired grant.
- */
-export const presentedSelection = function presentedSelection(
-	rule: ResolvedPolicyRule,
-	draft: PresentedSelection | null,
-	choice: ExplicitChoice | null
-): PresentedSelection {
-	const selection: PresentedSelection = {};
-	for (const category of rule.scope) {
-		const staged = draft?.[category];
-		if (typeof staged === 'boolean') {
-			selection[category] = staged;
-			continue;
-		}
-		const decision = choice?.categories[category];
-		if (decision) {
-			selection[category] = decision.value;
-			continue;
-		}
-		selection[category] =
-			rule.model === 'opt-out' || rule.model === 'none'
-				? true
-				: rule.preselectedCategories.includes(category);
-	}
-	return selection;
-};
-
-/** Every category in the active scope set to one value. */
-export const scopeSelection = function scopeSelection(
-	rule: ResolvedPolicyRule,
-	value: boolean
-): PresentedSelection {
-	const selection: PresentedSelection = {};
-	for (const category of rule.scope) {
-		selection[category] = value;
-	}
-	return selection;
-};
+// Kept here for existing importers; they live apart so the commit path
+// (`surface-actions/early-commit.ts`) can use them without the policy
+// resolution code.
+export {
+	deriveModel,
+	presentedSelection,
+	scopeSelection,
+} from './policy-choice';
+export type { PresentedSelection } from './policy-choice';

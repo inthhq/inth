@@ -1,6 +1,10 @@
 import { existsSync, realpathSync } from 'node:fs';
 
-import { loadManifestForBuild, readBuildEnv } from '@c15t/core/build';
+import {
+	createDialogChunkPlugin,
+	loadManifestForBuild,
+	readBuildEnv,
+} from '@c15t/core/build';
 import type { ConsentMode } from '@c15t/core/modes';
 import { isIABConfigured } from '@c15t/core/runtime';
 import { normalizeRoutePrefix } from '@c15t/core/server';
@@ -22,13 +26,16 @@ import {
 import type { Nuxt, NuxtModule } from '@nuxt/schema';
 import { defu } from 'defu';
 import { joinURL } from 'ufo';
+import type { Plugin as VitePlugin } from 'vite';
 
+import { consentPackageDirs, groupConsentChunks } from './chunk-group';
 import { readComposableExports } from './composable-exports';
 import type { C15tNuxtConfig, ModuleOptions } from './nuxt-options';
 import {
+	breakEntryImportCycles,
 	createPackageCheck,
-	preloadConsentBanner,
 	preloadBrowserResolver,
+	preloadDeferredEngine,
 	stopPrefetchingConsentChunks,
 } from './prefetch';
 import {
@@ -634,6 +641,25 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			dev: false,
 			server: false,
 		});
+		// A Customize tap before the engine fetches the dialog in a few files.
+		// The plugin is typed structurally to fit every Vite version; this
+		// Nuxt's own Vite types ask for their `Plugin`.
+		addVitePlugin(() => createDialogChunkPlugin() as unknown as VitePlugin, {
+			dev: false,
+			server: false,
+		});
+		// One chunk for the c15t code the first load runs, not one request
+		// per module the consent engine shares with it. These groups come
+		// from the `config` hook, so they precede the dialog group above,
+		// which `outputOptions` appends: a module both match stays in the
+		// first-load or `c15t-config` chunk.
+		addVitePlugin(
+			() => groupConsentChunks(consentPackageDirs(import.meta.url)),
+			{
+				dev: false,
+				server: false,
+			}
+		);
 
 		// c15t loads what a page needs when it needs it; Nuxt would prefetch
 		// every lazy c15t chunk on every page, and each finished download
@@ -648,6 +674,7 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		const browserResolve =
 			mode.type === 'manifest' && mode.resolve === 'browser';
 		nuxt.hook('build:manifest', (manifest) => {
+			breakEntryImportCycles(manifest);
 			const isConsentFile = createPackageCheck();
 			stopPrefetchingConsentChunks(
 				manifest,
@@ -661,7 +688,14 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 				nuxt.options.features.inlineStyles,
 				isConsentFile
 			);
-			preloadConsentBanner(manifest, nuxt.options.srcDir, isConsentFile);
+			// The banner comes with the consent engine, whose preload the
+			// server decides per visitor (`runtime/plugin.nuxt.ts`).
+			preloadDeferredEngine(
+				manifest,
+				nuxt.options.srcDir,
+				isConsentFile,
+				nuxt.options.ssr !== false
+			);
 			if (browserResolve) {
 				preloadBrowserResolver(manifest, nuxt.options.srcDir, isConsentFile);
 			}

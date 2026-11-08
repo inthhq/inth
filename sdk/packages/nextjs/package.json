@@ -72,6 +72,15 @@
 	],
 	"main": "./dist/index.js",
 	"types": "./dist-types/index.d.ts",
+	"imports": {
+		"#engine-now": {
+			"types": "./dist-types/engine-now.d.ts",
+			"edge-light": "./dist/engine-now.js",
+			"workerd": "./dist/engine-now.js",
+			"browser": "./dist/engine-now-browser.js",
+			"default": "./dist/engine-now.js"
+		}
+	},
 	"exports": {
 		"./styles.css": "./dist/styles.css",
 		"./styles.tw3.css": "./dist/styles.tw3.css",
@@ -137,6 +146,11 @@
 			"types": "./dist-types/build.d.ts",
 			"import": "./dist/build.js",
 			"default": "./dist/build.js"
+		},
+		"./defer": {
+			"types": "./dist-types/defer.d.ts",
+			"import": "./dist/defer.js",
+			"default": "./dist/defer.js"
 		},
 		"./generated-manifest": {
 			"types": "./dist-types/generated-manifest.d.ts",

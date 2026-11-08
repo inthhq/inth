@@ -1061,7 +1061,7 @@ describe('IAB is opt-in', () => {
 			).toBeUndefined();
 
 			// A later answer for the same policy does not report it again.
-			await context.runtime.reinit();
+			await context.runtime?.reinit();
 			await flushPromises();
 			expect(errors).toHaveLength(1);
 		} finally {

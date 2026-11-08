@@ -89,7 +89,11 @@ preferences. Put it where visitors look for privacy settings, such as the
 footer.
 
 There is no stylesheet to import. Each component adds the rules it uses to
-`<head>` when it first renders. With Tailwind CSS 3, import
+`<head>` when it first renders: the banner its own rules and the theme
+tokens, the trigger and `ConsentGate` theirs. They load in small chunks of
+their own, and the components stay hidden until they arrive. A server-rendered
+SvelteKit page has the banner's rules in its HTML already, so the browser loads
+nothing more. With Tailwind CSS 3, import
 `c15t/svelte/styles.css` yourself and pass `styles={false}` to the provider;
 see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 

@@ -17,6 +17,7 @@ import {
 	tanstackBrowserBudgetsForScenario,
 	bundleEntryBudgets,
 	artifactBudgets,
+	consentGateBudgets,
 	bundleBudgets,
 	coreRuntimeBudgets,
 	coreRuntimeCoverageBudgets,
@@ -27,6 +28,7 @@ import {
 	reactBrowserBudgetsForScenario,
 	scriptLifecycleBudgetsForMetric,
 } from './budgets';
+import type { ConsentGateTarget } from './budgets';
 import {
 	EXAMPLES_PAYLOAD_PACKAGE,
 	examplesPayloadBudgetsFor,
@@ -49,11 +51,20 @@ export interface ExpectedBenchmarkResult {
 	budgets: MetricBudget[];
 }
 
-/** Identity of a budget within one result: metric plus base arm. */
+/**
+ * Identity of a budget within one result: metric, base arm, and whether it
+ * is an absolute ceiling. A metric can carry one relative budget and one
+ * `absolute-lte` ceiling, for example a banner time that must not grow over
+ * its base and must also stay under a fixed limit.
+ */
 export const budgetIdentity = function budgetIdentity(
-	budget: Pick<MetricBudget, 'metric' | 'baseArm'>
+	budget: Pick<MetricBudget, 'metric' | 'baseArm' | 'comparator'>
 ): string {
-	return budget.baseArm ? `${budget.metric}@${budget.baseArm}` : budget.metric;
+	const metric =
+		budget.comparator === 'absolute-lte'
+			? `${budget.metric} (ceiling)`
+			: budget.metric;
+	return budget.baseArm ? `${metric}@${budget.baseArm}` : metric;
 };
 
 /**
@@ -174,6 +185,21 @@ const bundleRouteBudget = function bundleRouteBudget(
 	scenario: string
 ): MetricBudget[] {
 	return bundleBudgets.filter((budget) => budget.metric === scenario);
+};
+
+/**
+ * The package each consent gate target reports under. Nuxt results use the
+ * Vue adapter's name like its other results; the script tag is hosted by the
+ * script-lifecycle bench.
+ */
+export const consentGatePackages: Record<ConsentGateTarget, string> = {
+	astro: '@c15t/astro-browser-bench',
+	nextjs: '@c15t/nextjs-browser-bench',
+	nuxt: '@c15t/vue',
+	react: '@c15t/react-browser-bench',
+	'script-tag': '@c15t/script-lifecycle-bench',
+	sveltekit: '@c15t/sveltekit-browser-bench',
+	'tanstack-start': '@c15t/tanstack-start-browser-bench',
 };
 
 /** The condition `scripts/benchmark-run.ts` measures by default. */
@@ -307,6 +333,16 @@ export const expectedBenchmarkResultsFor = function expectedBenchmarkResultsFor(
 				scenario,
 				'bundle',
 				bundleEntryBudgets(scenario)
+			)
+		),
+		...(
+			Object.entries(consentGatePackages) as [ConsentGateTarget, string][]
+		).map(([target, pkg]) =>
+			expect(
+				pkg,
+				`consent-gate:latency-${condition.backendLatencyMs}ms`,
+				'consent-gate',
+				consentGateBudgets(target)
 			)
 		),
 		...examplesPayloadExamples.map((example) =>

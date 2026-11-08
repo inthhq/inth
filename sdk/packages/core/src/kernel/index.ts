@@ -150,6 +150,7 @@ export const createKernel = function createKernel(
 		hydrate: records.hydrate,
 		markLive: runtime.markLive,
 		refresh: lifecycle.refresh,
+		replaySaves: lifecycle.replaySaves,
 		set: {
 			...buildSetters(runtime, config),
 			draft: choice.draft,

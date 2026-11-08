@@ -49,6 +49,12 @@ describe('CI selection', () => {
 		});
 	});
 
+	it('installs Chromium for the Svelte package tests', () => {
+		const result = plan(['packages/svelte/src/lib/surface-styles.ts']);
+		expect(result).toMatchObject({ full: false, testBrowsers: true });
+		expect(result.tests).toContain('@c15t/svelte');
+	});
+
 	it.each([
 		'docs/integrations/default-com.mdx',
 		'packages/node-sdk/src/index.ts',
@@ -351,6 +357,47 @@ describe('CI selection', () => {
 			mobileBrowserOrDevice: false,
 			tests: [],
 		});
+	});
+});
+
+describe('consent gate selection', () => {
+	it('measures every framework and the script tag when core changes', () => {
+		expect(plan(['packages/core/src/kernel.ts']).gate).toEqual([
+			'react',
+			'nextjs',
+			'nuxt',
+			'astro',
+			'sveltekit',
+			'tanstack-start',
+			'script-tag',
+		]);
+	});
+	it('measures only the frameworks an adapter change reaches', () => {
+		const vue = plan(['packages/vue/src/index.ts']).gate;
+		expect(vue).toContain('nuxt');
+		expect(vue).not.toContain('react');
+		expect(vue).not.toContain('script-tag');
+		const svelte = plan(['packages/svelte/src/index.ts']).gate;
+		expect(svelte).toEqual(expect.arrayContaining(['astro', 'sveltekit']));
+		expect(svelte).not.toContain('nextjs');
+	});
+	it('measures the script tag for @c15t/browser but not for React alone', () => {
+		expect(plan(['packages/browser/src/index.ts']).gate).toContain(
+			'script-tag'
+		);
+		const react = plan(['packages/react/src/index.ts']).gate;
+		expect(react).toEqual(
+			expect.arrayContaining(['react', 'nextjs', 'tanstack-start'])
+		);
+		expect(react).not.toContain('script-tag');
+	});
+	it('measures every target when the gate harness changes', () => {
+		expect(plan(['benchmarks/shared/src/consent-gate.ts']).gate).toHaveLength(
+			7
+		);
+	});
+	it('runs no gate for documentation', () => {
+		expect(plan(['docs/guide.mdx']).gate).toEqual([]);
 	});
 });
 

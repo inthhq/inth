@@ -17,6 +17,7 @@ import {
 	buildColorSchemeScript,
 	buildThemeCSS,
 	buildConfigJSON,
+	buildLocalsBootJSON,
 	markConfigEmitted,
 } from '@c15t/astro/server';
 import ComponentStyles from './component-styles.astro';
@@ -70,6 +71,18 @@ const themeCSS = shouldEmit
 			data-c15t-config
 			nonce={c15t.nonce}
 			set:html={buildConfigJSON(c15t.config)}
+		/>
+	)
+}
+
+{
+	shouldEmit && (
+		<script
+			is:inline
+			type="application/json"
+			data-c15t-boot
+			nonce={c15t.nonce}
+			set:html={buildLocalsBootJSON(c15t)}
 		/>
 	)
 }

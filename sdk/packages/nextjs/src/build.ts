@@ -76,35 +76,61 @@ const GENERATED_IMPORTERS = ['c15t', '@c15t/core', '@c15t/nextjs'];
 type WebpackConfigFunction = NonNullable<NextConfig['webpack']>;
 
 /**
- * The first-paint sheet the banner, trigger and ConsentGate render. A
- * server-rendered page already holds its text in a `<style>`, so browser
- * bundles get {@link DEFERRED_FIRST_PAINT_SHEET}, which loads the text only
- * when a surface renders first in the browser.
+ * The sheets server-rendered surfaces put in the HTML: `tokens`, `button`,
+ * `banner`, `trigger` and `consent-gate` (the banner, the IAB banner, the
+ * trigger and the ConsentGate), and `first-paint`, which earlier
+ * `@c15t/react` releases rendered for the IAB banner. A server-rendered page already
+ * holds their text in `<style>` elements, so browser bundles get each
+ * sheet's `-deferred` module, with the same `id` and a `load()` that fetches
+ * the text only when a surface renders first in the browser.
  */
-const FIRST_PAINT_SHEET = '@c15t/ui/styles/sheets/first-paint';
-const DEFERRED_FIRST_PAINT_SHEET =
-	'@c15t/ui/styles/sheets/first-paint-deferred';
+const SERVER_RENDERED_SHEETS = [
+	'first-paint',
+	'tokens',
+	'button',
+	'banner',
+	'trigger',
+	'consent-gate',
+] as const;
+const SHEETS_PREFIX = '@c15t/ui/styles/sheets/';
+
+interface SheetFiles {
+	/** The sheet's specifier, as `@c15t/react` imports it. */
+	specifier: string;
+	eager: string;
+	deferred: string;
+}
 
 /**
- * Both sheet modules as files, resolved the way `@c15t/react` resolves them,
- * or `undefined` when the installed `@c15t/ui` has no deferred sheet.
+ * Each sheet module and its deferred twin as files, resolved the way
+ * `@c15t/react` resolves them. A sheet the installed `@c15t/ui` lacks, or
+ * has no deferred twin for, is left out.
  */
-const resolveFirstPaintSheets = function resolveFirstPaintSheets():
-	| { eager: string; deferred: string }
-	| undefined {
+const resolveSheetFiles = function resolveSheetFiles(): SheetFiles[] {
+	let fromReact: ReturnType<typeof createRequire>;
 	try {
 		// From this package: an isolated install links `@c15t/react` here and
 		// `@c15t/ui` beside `@c15t/react`, not at the project root.
-		const fromReact = createRequire(
+		fromReact = createRequire(
 			createRequire(import.meta.url).resolve('@c15t/react')
 		);
-		return {
-			deferred: fromReact.resolve(DEFERRED_FIRST_PAINT_SHEET),
-			eager: fromReact.resolve(FIRST_PAINT_SHEET),
-		};
 	} catch {
-		return undefined;
+		return [];
 	}
+	return SERVER_RENDERED_SHEETS.flatMap((name) => {
+		const specifier = `${SHEETS_PREFIX}${name}`;
+		try {
+			return [
+				{
+					deferred: fromReact.resolve(`${specifier}-deferred`),
+					eager: fromReact.resolve(specifier),
+					specifier,
+				},
+			];
+		} catch {
+			return [];
+		}
+	});
 };
 
 /** The app's `c15t.config.*` at the project root, or `undefined`. */
@@ -303,11 +329,11 @@ const withConsentAliases = function withConsentAliases(
 	if (userConfigFile) {
 		turbopackAliases[USER_CONFIG_SPECIFIER] = fromProject(userConfigFile);
 	}
-	const firstPaintSheets = resolveFirstPaintSheets();
-	if (firstPaintSheets) {
-		turbopackAliases[FIRST_PAINT_SHEET] = {
-			browser: fromProject(firstPaintSheets.deferred),
-			default: fromProject(firstPaintSheets.eager),
+	const sheetFiles = resolveSheetFiles();
+	for (const sheet of sheetFiles) {
+		turbopackAliases[sheet.specifier] = {
+			browser: fromProject(sheet.deferred),
+			default: fromProject(sheet.eager),
 		};
 	}
 	const userWebpack = config.webpack ?? undefined;
@@ -322,8 +348,10 @@ const withConsentAliases = function withConsentAliases(
 		if (userConfigFile) {
 			aliases[`${USER_CONFIG_SPECIFIER}$`] = userConfigFile;
 		}
-		if (firstPaintSheets && !context.isServer) {
-			aliases[`${FIRST_PAINT_SHEET}$`] = firstPaintSheets.deferred;
+		if (!context.isServer) {
+			for (const sheet of sheetFiles) {
+				aliases[`${sheet.specifier}$`] = sheet.deferred;
+			}
 		}
 		resolved.resolve ??= {};
 		resolved.resolve.alias = { ...resolved.resolve.alias, ...aliases };

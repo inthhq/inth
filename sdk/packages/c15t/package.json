@@ -74,6 +74,21 @@
 			"import": "./shims/surface-actions.js",
 			"default": "./shims/surface-actions.js"
 		},
+		"./surface-actions/early-commit": {
+			"types": "./shims/surface-actions/early-commit.d.ts",
+			"import": "./shims/surface-actions/early-commit.js",
+			"default": "./shims/surface-actions/early-commit.js"
+		},
+		"./surface-actions/instant-commit": {
+			"types": "./shims/surface-actions/instant-commit.d.ts",
+			"import": "./shims/surface-actions/instant-commit.js",
+			"default": "./shims/surface-actions/instant-commit.js"
+		},
+		"./surface-actions/plain-scripts": {
+			"types": "./shims/surface-actions/plain-scripts.d.ts",
+			"import": "./shims/surface-actions/plain-scripts.js",
+			"default": "./shims/surface-actions/plain-scripts.js"
+		},
 		"./consent-categories": {
 			"types": "./shims/consent-categories.d.ts",
 			"import": "./shims/consent-categories.js",
@@ -83,6 +98,11 @@
 			"types": "./shims/transports.d.ts",
 			"import": "./shims/transports.js",
 			"default": "./shims/transports.js"
+		},
+		"./transports/hosted-factory": {
+			"types": "./shims/transports/hosted-factory.d.ts",
+			"import": "./shims/transports/hosted-factory.js",
+			"default": "./shims/transports/hosted-factory.js"
 		},
 		"./transports/manifest": {
 			"types": "./shims/transports/manifest.d.ts",
@@ -169,6 +189,21 @@
 			"import": "./shims/runtime/client-mode.js",
 			"default": "./shims/runtime/client-mode.js"
 		},
+		"./runtime/deferred-boot": {
+			"types": "./shims/runtime/deferred-boot.d.ts",
+			"import": "./shims/runtime/deferred-boot.js",
+			"default": "./shims/runtime/deferred-boot.js"
+		},
+		"./runtime/deferred-snapshot": {
+			"types": "./shims/runtime/deferred-snapshot.d.ts",
+			"import": "./shims/runtime/deferred-snapshot.js",
+			"default": "./shims/runtime/deferred-snapshot.js"
+		},
+		"./runtime/save-preload": {
+			"types": "./shims/runtime/save-preload.d.ts",
+			"import": "./shims/runtime/save-preload.js",
+			"default": "./shims/runtime/save-preload.js"
+		},
 		"./runtime/controls": {
 			"types": "./shims/runtime/controls.d.ts",
 			"import": "./shims/runtime/controls.js",
@@ -219,6 +254,16 @@
 			"import": "./shims/react/provider.js",
 			"default": "./shims/react/provider.js"
 		},
+		"./react/deferred": {
+			"types": "./shims/react/deferred.d.ts",
+			"import": "./shims/react/deferred.js",
+			"default": "./shims/react/deferred.js"
+		},
+		"./react/deferred/engine": {
+			"types": "./shims/react/deferred/engine.d.ts",
+			"import": "./shims/react/deferred/engine.js",
+			"default": "./shims/react/deferred/engine.js"
+		},
 		"./react/hooks": {
 			"types": "./shims/react/hooks.d.ts",
 			"import": "./shims/react/hooks.js",
@@ -263,6 +308,11 @@
 			"types": "./shims/react/prompt.d.ts",
 			"import": "./shims/react/prompt.js",
 			"default": "./shims/react/prompt.js"
+		},
+		"./react/static-banner": {
+			"types": "./shims/react/static-banner.d.ts",
+			"import": "./shims/react/static-banner.js",
+			"default": "./shims/react/static-banner.js"
 		},
 		"./react/consent-dialog": {
 			"types": "./shims/react/panel.d.ts",
@@ -441,6 +491,11 @@
 			"types": "./shims/next/build.d.ts",
 			"import": "./shims/next/build.js",
 			"default": "./shims/next/build.js"
+		},
+		"./next/defer": {
+			"types": "./shims/next/defer.d.ts",
+			"import": "./shims/next/defer.js",
+			"default": "./shims/next/defer.js"
 		},
 		"./tanstack-start/styles.css": "./dist/tanstack-start/styles.css",
 		"./tanstack-start/styles.tw3.css": "./dist/tanstack-start/styles.tw3.css",
@@ -699,6 +754,11 @@
 			"types": "./shims/svelte/devtools.d.ts",
 			"svelte": "./shims/svelte/devtools.js",
 			"default": "./shims/svelte/devtools.js"
+		},
+		"./svelte/dialog-panel": {
+			"types": "./shims/svelte/dialog-panel.d.ts",
+			"svelte": "./shims/svelte/dialog-panel.js",
+			"default": "./shims/svelte/dialog-panel.js"
 		},
 		"./svelte/kit": {
 			"types": "./shims/svelte/kit.d.ts",

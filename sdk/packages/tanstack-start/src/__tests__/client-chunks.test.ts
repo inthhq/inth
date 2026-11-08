@@ -8,22 +8,27 @@
  * route's chunk only while its chunk graph has no static cycle, and its
  * cycle check counts every import record, used or not. One unused
  * re-export (`@c15t/ui/utils/dom` re-exporting `setupColorScheme`) was
- * enough to split every shared module into its own file: when it was
- * dropped, this fixture's provider route went from 15 first-load files to
- * 10, and its root route from 16 to 11.
+ * enough to split every shared module into its own file.
  *
- * `ConsentRoot` brings the code that applies a streamed state with it, so
- * the banner doesn't wait for one more request after hydration. Here the
- * provider route loads that code on demand, so Rolldown gives it a chunk
- * of its own (and one for its runtime helpers) that the root route loads
- * first: 10 files there. An app whose routes all use `ConsentRoot` keeps it
- * in the root's chunk.
+ * `ConsentRoot` loads its engine with `import()`: the first-load files
+ * hold the deferred shell, the banner's tap path and the boot-data reader.
+ * The engine chunk brings the code that applies a streamed state with it,
+ * so a streamed banner doesn't wait for one more request after the engine.
+ * Both routes here mount a deferred root, so the small modules the shell
+ * shares with the engine, the commit path and the other route each get a
+ * file of their own: 12 files, about 13 KB after Brotli. An app whose
+ * routes all use `ConsentRoot` loads 9.
  */
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { brotliCompressSync } from 'node:zlib';
 
+import { createDialogChunkPlugin } from '@c15t/core/build';
 import { build } from 'vite';
 import { describe, expect, test } from 'vitest';
+
+const rootEngineModule = /tanstack-start\/dist\/root-engine\.js$/u;
+const dialogModule = /react\/dist\/deferred\/dialog\.js$/u;
 
 const packageRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -42,6 +47,12 @@ export default () => h(ConsentRoot, { state: { backendURL: '/api/c15t' } }, h(Co
 interface FirstLoad {
 	files: string[];
 	modules: string[];
+	/** Brotli bytes of the first-load files. */
+	brotli: number;
+	/** Modules the root's engine chunk loads with it. */
+	engineModules: string[];
+	/** Files opening the dialog fetches that the first load did not. */
+	dialogFiles: string[];
 }
 
 /**
@@ -49,7 +60,8 @@ interface FirstLoad {
  * first, with the modules in them.
  */
 const routeFirstLoad = async function routeFirstLoad(
-	route: string
+	route: string,
+	groupDialog = false
 ): Promise<FirstLoad> {
 	const result = await build({
 		build: {
@@ -71,6 +83,8 @@ const routeFirstLoad = async function routeFirstLoad(
 				name: 'fixture',
 				resolveId: (id) => (id.startsWith('fixture:') ? `\0${id}` : undefined),
 			},
+			// What `consentManifest()` adds to a browser build.
+			...(groupDialog ? [createDialogChunkPlugin()] : []),
 		],
 		publicDir: false,
 		resolve: {
@@ -97,21 +111,43 @@ const routeFirstLoad = async function routeFirstLoad(
 	if (!routeChunk) {
 		throw new Error(`no chunk for ${route}`);
 	}
-	const firstLoad = new Set<string>();
-	const pending = [routeChunk.fileName];
-	for (let file = pending.pop(); file; file = pending.pop()) {
-		if (!firstLoad.has(file)) {
-			firstLoad.add(file);
-			pending.push(
-				...(chunks.get(file)?.imports ?? []).filter((dep) => chunks.has(dep))
-			);
+	/** `file` and every file it imports statically. */
+	const closure = (file: string): Set<string> => {
+		const loaded = new Set<string>();
+		const pending = [file];
+		for (let next = pending.pop(); next; next = pending.pop()) {
+			if (!loaded.has(next)) {
+				loaded.add(next);
+				pending.push(
+					...(chunks.get(next)?.imports ?? []).filter((dep) => chunks.has(dep))
+				);
+			}
 		}
-	}
+		return loaded;
+	};
+	const modulesOf = (files: Iterable<string>): string[] =>
+		[...files].flatMap((file) => Object.keys(chunks.get(file)?.modules ?? {}));
+	const firstLoad = closure(routeChunk.fileName);
+	const engineChunk = [...chunks.values()].find((chunk) =>
+		Object.keys(chunk.modules).some((id) => rootEngineModule.test(id))
+	);
+	const dialogChunk = [...chunks.values()].find((chunk) =>
+		Object.keys(chunk.modules).some((id) => dialogModule.test(id))
+	);
 	return {
-		files: [...firstLoad].sort(),
-		modules: [...firstLoad].flatMap((file) =>
-			Object.keys(chunks.get(file)?.modules ?? {})
+		brotli: [...firstLoad].reduce(
+			(total, file) =>
+				total + brotliCompressSync(chunks.get(file)?.code ?? '').length,
+			0
 		),
+		dialogFiles: dialogChunk
+			? [...closure(dialogChunk.fileName)].filter(
+					(file) => !firstLoad.has(file)
+				)
+			: [],
+		engineModules: engineChunk ? modulesOf(closure(engineChunk.fileName)) : [],
+		files: [...firstLoad].sort(),
+		modules: modulesOf(firstLoad),
 	};
 };
 
@@ -131,26 +167,36 @@ const deferredModules = [
 
 describe('TanStack Start client chunks', () => {
 	test.each([
-		['root-route', 10],
-		['provider-route', 9],
+		['root-route', 12],
+		['provider-route', 22],
 	])(
 		'a %s loads at most %i files first',
 		async (route, bound) => {
-			// The route, the app entry, the provider chunk and five chunks of
-			// helpers Rolldown still keeps apart: it checks each helper before
-			// the shared module that imports it, and never revisits it. The
-			// root route adds the streamed-state resolver and its helpers.
-			// English base copy is a chunk of its own too: the languages the
-			// root's browser resolver loads on demand import it.
+			// The route, the app entry, and the small modules the deferred
+			// shell shares with lazy chunks (the engine, the commit path, the
+			// stock surfaces) and with the other route. The provider route
+			// also builds the banner's snapshot from the inline prefetch
+			// before its engine loads, so it loads the policy and copy code.
 			const { files } = await routeFirstLoad(route);
 			expect(files.length, files.join('\n')).toBeLessThanOrEqual(bound);
 		},
 		60_000
 	);
 
-	test('a root route applies a streamed state with code it loads first', async () => {
-		const { modules } = await routeFirstLoad('root-route');
-		expect(modules.some((id) => streamedInitModule.test(id))).toBe(true);
+	test('a root route loads its engine on demand', async () => {
+		const { brotli, modules } = await routeFirstLoad('root-route');
+		expect(modules.some((id) => rootEngineModule.test(id))).toBe(false);
+		expect(modules.some((id) => id.endsWith('react/dist/provider.js'))).toBe(
+			false
+		);
+		// About 16 KB unminified; the engine's chunk group is several times that.
+		expect(brotli).toBeLessThanOrEqual(17_000);
+	}, 60_000);
+
+	test('a root route applies a streamed state with code its engine brings', async () => {
+		const { engineModules, modules } = await routeFirstLoad('root-route');
+		expect(modules.some((id) => streamedInitModule.test(id))).toBe(false);
+		expect(engineModules.some((id) => streamedInitModule.test(id))).toBe(true);
 	}, 60_000);
 
 	test('a root route loads no init path, policy pack or resolver first', async () => {
@@ -159,6 +205,20 @@ describe('TanStack Start client chunks', () => {
 			deferredModules.some((pattern) => pattern.test(id))
 		);
 		expect(initPaths).toEqual([]);
+	}, 60_000);
+
+	test("consentManifest()'s dialog group leaves the first load as it is and opens the dialog in fewer files", async () => {
+		const plain = await routeFirstLoad('root-route');
+		const grouped = await routeFirstLoad('root-route', true);
+		expect(grouped.modules.toSorted()).toEqual(plain.modules.toSorted());
+		expect(grouped.files.length).toBeLessThanOrEqual(plain.files.length);
+		// This fixture's two routes set up c15t differently, so the dialog
+		// shares code with each in its own way; an app with one setup gets
+		// fewer files still.
+		expect(
+			grouped.dialogFiles.length,
+			`${plain.dialogFiles.length} files before:\n${grouped.dialogFiles.join('\n')}`
+		).toBeLessThan(plain.dialogFiles.length);
 	}, 60_000);
 
 	test('a provider route leaves that code to load on demand', async () => {

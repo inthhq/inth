@@ -9,6 +9,7 @@
  */
 
 import { compareCanonical } from './canonical-order';
+import { POLICY_CONTRACT_VERSION } from './policy-contract';
 import type {
 	PolicyOptionalCategory,
 	PolicyPromptAction,
@@ -27,15 +28,12 @@ import {
 } from './policy-rule-invariants';
 import type { PolicyMatchedBy } from './policy-runtime';
 
-/** Version of the policy wire contract this package produces and reads. */
-export const POLICY_CONTRACT_VERSION = 1;
-
-/**
- * Request header a client sends to declare the policy contract version it can
- * represent. `x-c15t-version` stays a telemetry header and is never used to
- * guess policy support.
- */
-export const POLICY_CONTRACT_HEADER = 'x-c15t-policy-contract';
+// In a module of their own, so code that only names the contract, such as
+// the `/init` request a page sends first, does not carry the wire reader.
+export {
+	POLICY_CONTRACT_HEADER,
+	POLICY_CONTRACT_VERSION,
+} from './policy-contract';
 
 /** Why a resolution failed. */
 export type PolicyResolutionFailure =

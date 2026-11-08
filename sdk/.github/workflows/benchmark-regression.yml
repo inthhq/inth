@@ -13,6 +13,11 @@ on:
       mode:
         type: string
         default: quick
+      # Consent gate targets (`react,nuxt`, `all` or `none`); CI passes the
+      # ones scripts/ci-plan.ts selected.
+      gate_targets:
+        type: string
+        default: all
       built:
         type: boolean
         default: false
@@ -24,8 +29,11 @@ on:
       mode:
         description: Runtime coverage
         type: choice
-        options: [full, quick]
+        options: [full, quick, gate]
         default: full
+      gate_targets:
+        description: Consent gate targets (all, none, or e.g. react,nuxt)
+        default: all
 
 permissions:
   contents: read
@@ -59,8 +67,14 @@ jobs:
         env:
           BENCHMARK_BASE_REF: ${{ inputs.base_ref || 'HEAD^' }}
           BENCHMARK_MODE: ${{ inputs.mode || 'full' }}
+          # Pushes and the nightly schedule have no inputs and run every target.
+          BENCHMARK_GATE_TARGETS: ${{ inputs.gate_targets || 'all' }}
         run: |
-          matrix=$(bun scripts/benchmark-plan.ts "$BENCHMARK_MODE")
+          modes="$BENCHMARK_MODE"
+          if [ "$BENCHMARK_MODE" != gate ] && [ "$BENCHMARK_GATE_TARGETS" != none ]; then
+            modes="$modes,gate"
+          fi
+          matrix=$(bun scripts/benchmark-plan.ts "$modes")
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
           bun scripts/benchmark-revisions.ts >> "$GITHUB_OUTPUT"
 
@@ -88,7 +102,7 @@ jobs:
       - name: Measure base and head in alternating rounds
         env:
           BENCHMARK_BASE_REF: ${{ needs.plan.outputs.base_sha }}
-          BENCHMARK_MODE: ${{ inputs.mode || 'full' }}
+          BENCHMARK_MODE: ${{ matrix.mode }}
           BENCHMARK_PACKAGE: ${{ matrix.package }}
           BENCHMARK_SHARD: ${{ matrix.id }}
         run: bun scripts/benchmark-run.ts "$BENCHMARK_MODE"

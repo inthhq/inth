@@ -14,8 +14,9 @@ import type {
 	ConsentWidgetCompoundComponent,
 	ConsentWidgetProps,
 } from './components/preferences';
-import { FIRST_PAINT_SHEETS } from './components/shared/first-paint-sheets';
+import { BANNER_SHEETS } from './components/shared/first-paint-sheets';
 import { preloadSurfaceSheets } from './components/shared/surface-styles';
+import { importDialog } from './deferred/trigger';
 import { useActiveUI } from './hooks';
 import { createDeferredModule } from './utils/deferred-module';
 
@@ -23,12 +24,14 @@ type AnyComponent = ComponentType<Record<string, unknown>>;
 
 // Vite derives chunk names from these paths. Keep them neutral so URL filters
 // do not block the UI. Each module is shared by its default and compound exports.
-// A deferred first-paint sheet the page lacks loads beside the dialog's
-// code, not after it. The dialog waits for it before opening, so a failed
-// sheet load leaves the module usable.
-const dialogModule = createDeferredModule(() => {
-	void preloadSurfaceSheets(FIRST_PAINT_SHEETS);
-	return import('./components/panel');
+// The banner's sheets, which the dialog renders under its own, load beside
+// the dialog's code when the page lacks them (a visitor who saw no banner). The dialog waits for it before opening, so a failed
+// sheet load leaves the module usable. The panel loads through the deferred
+// root's dialog chunk (`importDialog`), so a warmed dialog and an early one
+// share one download.
+const dialogModule = createDeferredModule(async () => {
+	void preloadSurfaceSheets(BANNER_SHEETS);
+	return (await importDialog()).panel;
 });
 const widgetModule = createDeferredModule(
 	() => import('./components/preferences')

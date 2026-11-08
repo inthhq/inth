@@ -198,7 +198,9 @@ and easing tokens.
 
 `ConsentScript`, or the first consent component on a layout without it,
 inlines base and configured IAB banner rules once per page as `<style>`
-elements. No c15t stylesheet holds back the first paint. When a visitor
+elements. No c15t stylesheet holds back the first paint. A page the server
+shows no banner, such as a returning visitor's, leaves the base rules out, and
+the browser adds them when the dialog opens. When a visitor
 first reaches for a dialog, c15t links its rules and waits for them before
 mounting the surface. Svelte also loads its primitives stylesheet. The IAB
 panel's rules load only when the IAB dialog opens.

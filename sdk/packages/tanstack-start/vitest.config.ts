@@ -8,6 +8,9 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 // oxlint-disable-next-line sort-keys -- Vite resolves aliases in declaration order, so subpaths must precede package roots.
 const alias = {
 	'~': resolve(__dirname, './src'),
+	// The browser build; the node project overrides it with the server's,
+	// which imports the engine statically.
+	'#engine-now': resolve(__dirname, './src/engine-now-browser.ts'),
 	'@c15t/core/modules/clear-on-revocation': resolve(
 		__dirname,
 		'../core/src/modules/clear-on-revocation/index.ts'
@@ -36,6 +39,34 @@ const alias = {
 		__dirname,
 		'../core/src/modules/window-debug/index.ts'
 	),
+	'@c15t/core/runtime/deferred-boot': resolve(
+		__dirname,
+		'../core/src/runtime/deferred-boot.ts'
+	),
+	'@c15t/core/runtime/deferred-snapshot': resolve(
+		__dirname,
+		'../core/src/runtime/deferred-snapshot.ts'
+	),
+	'@c15t/core/surface-actions/early-commit': resolve(
+		__dirname,
+		'../core/src/surface-actions/early-commit.ts'
+	),
+	'@c15t/core/surface-actions/instant-commit': resolve(
+		__dirname,
+		'../core/src/surface-actions/instant-commit.ts'
+	),
+	'@c15t/core/surface-actions/plain-scripts': resolve(
+		__dirname,
+		'../core/src/surface-actions/plain-scripts.ts'
+	),
+	'@c15t/core/transports/hosted-factory': resolve(
+		__dirname,
+		'../core/src/transports/hosted-factory.ts'
+	),
+	'@c15t/core/transports/manifest-browser': resolve(
+		__dirname,
+		'../core/src/transports/manifest-browser.ts'
+	),
 	'@c15t/core/transports/manifest-cache': resolve(
 		__dirname,
 		'../core/src/transports/manifest-cache.ts'
@@ -43,6 +74,10 @@ const alias = {
 	'@c15t/core/transports/manifest': resolve(
 		__dirname,
 		'../core/src/transports/manifest.ts'
+	),
+	'@c15t/core/transports': resolve(
+		__dirname,
+		'../core/src/transports/index.ts'
 	),
 	'@c15t/core/consent-record': resolve(
 		__dirname,
@@ -88,6 +123,11 @@ const alias = {
 	'@c15t/core/generated': resolve(__dirname, '../core/src/generated.ts'),
 	'@c15t/core/modes': resolve(__dirname, '../core/src/modes.ts'),
 	'@c15t/core': resolve(__dirname, '../core/src/index.ts'),
+	'@c15t/react/deferred/engine': resolve(
+		__dirname,
+		'../react/dist/deferred/engine.js'
+	),
+	'@c15t/react/deferred': resolve(__dirname, '../react/dist/deferred/index.js'),
 	'@c15t/react/context': resolve(__dirname, '../react/dist/context.js'),
 	'@c15t/react/gpp': resolve(__dirname, '../react/dist/gpp.js'),
 	'@c15t/react/iab': resolve(__dirname, '../react/dist/iab.js'),
@@ -178,9 +218,17 @@ export default mergeConfig(
 			projects: [
 				{
 					extends: true,
+					resolve: {
+						alias: {
+							'#engine-now': resolve(__dirname, './src/engine-now.ts'),
+						},
+					},
 					test: {
 						environment: 'node',
-						include: ['src/**/*.test.ts'],
+						include: [
+							'src/**/*.test.ts',
+							'src/__tests__/root-sync-render.test.tsx',
+						],
 						name: 'node',
 					},
 				},
@@ -193,8 +241,10 @@ export default mergeConfig(
 							instances: [{ browser: 'chromium' }],
 							provider: playwright(),
 						},
+						exclude: ['src/__tests__/root-sync-render.test.tsx'],
 						include: ['src/**/*.test.tsx'],
 						name: 'browser',
+						setupFiles: ['./src/__tests__/setup-browser.ts'],
 					},
 				},
 			],

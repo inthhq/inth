@@ -238,9 +238,15 @@ export const consentTypes: ConsentType[] = [
  * @see {@link consentTypes} for the full consent configurations
  * @public
  */
-export const allConsentNames = consentTypes.map(
-	(consent) => consent.name
-) as AllConsentNames[];
+// A literal, not `consentTypes.map(...)`, so code that only needs the
+// names does not carry the descriptions. A test keeps the two in step.
+export const allConsentNames: AllConsentNames[] = [
+	'necessary',
+	'functionality',
+	'measurement',
+	'experience',
+	'marketing',
+];
 
 /**
  * The categories a preference surface lists: `necessary` plus the scope, in

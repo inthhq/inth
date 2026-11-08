@@ -1,7 +1,14 @@
 import { hosted } from '@c15t/core';
 import { createConsentRuntime } from '@c15t/core/runtime';
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
-import { createApp, createSSRApp, defineComponent, h, toValue } from 'vue';
+import {
+	createApp,
+	createSSRApp,
+	defineComponent,
+	h,
+	reactive,
+	toValue,
+} from 'vue';
 import type { App } from 'vue';
 
 import { c15tVue, generateTokensCSS } from './test-plugin';
@@ -10,6 +17,8 @@ import type { C15tVuePluginOptions } from './test-plugin';
 const nuxt = vi.hoisted(() => ({
 	appConfig: {} as Record<string, unknown>,
 	head: [] as unknown[],
+	/** A reactive app config, as Nuxt's is; read instead of `appConfig`. */
+	liveAppConfig: undefined as { c15t: Record<string, unknown> } | undefined,
 	runtimeConfig: {} as Record<string, unknown>,
 	state: new Map<string, unknown>(),
 }));
@@ -18,7 +27,7 @@ vi.mock('#imports', async () => {
 	const { shallowRef: makeRef } = await import('vue');
 	return {
 		defineNuxtPlugin: (plugin: unknown) => plugin,
-		useAppConfig: () => ({ c15t: nuxt.appConfig }),
+		useAppConfig: () => nuxt.liveAppConfig ?? { c15t: nuxt.appConfig },
 		useHead: (input: unknown) => {
 			nuxt.head.push(input);
 		},
@@ -44,7 +53,7 @@ vi.mock('#imports', async () => {
 
 type NuxtPlugin = (app: {
 	hook: (name: string, callback: () => void) => void;
-	payload: { prerenderedAt?: number };
+	payload: { prerenderedAt?: number; serverRendered?: boolean };
 	vueApp: App;
 }) => Promise<void>;
 
@@ -123,6 +132,7 @@ afterEach(() => {
 	mounted.clear();
 	vi.unstubAllGlobals();
 	nuxt.appConfig = {};
+	nuxt.liveAppConfig = undefined;
 	nuxt.runtimeConfig = {};
 	nuxt.head.length = 0;
 	nuxt.state.clear();
@@ -354,5 +364,45 @@ describe('the Nuxt plugin applies colorScheme', () => {
 		const app = createSSRApp(defineComponent({ setup: () => () => h('main') }));
 		await plugin({ hook: () => undefined, payload: {}, vueApp: app });
 		expect(isDark()).toBe(true);
+	});
+});
+
+describe('the Nuxt plugin token styles in the browser', () => {
+	const startClient = async (serverRendered: boolean) => {
+		stubSystemScheme(false);
+		failingFetch();
+		const app = createSSRApp(defineComponent({ setup: () => () => h('main') }));
+		apps.add(app);
+		await plugin({
+			hook: () => undefined,
+			payload: { serverRendered },
+			vueApp: app,
+		});
+		return () => toValue(nuxt.head[0]) as NuxtHead;
+	};
+
+	test('a page hydrating server HTML leaves the server element as it is', async () => {
+		const head = await startClient(true);
+		// The head leaves an element no entry names alone.
+		expect(head().style).toEqual([]);
+	});
+
+	test('a page without server HTML has the tokens before it mounts', async () => {
+		const head = await startClient(false);
+		expect(head().style?.[0]).toEqual(
+			expect.objectContaining({
+				id: 'c15t-css-vars',
+				innerHTML: expect.stringContaining('--c15t-primary:'),
+			})
+		);
+	});
+
+	test('a config change on a hydrated page writes the new tokens', async () => {
+		nuxt.liveAppConfig = reactive({ c15t: {} });
+		const head = await startClient(true);
+		nuxt.liveAppConfig.c15t = { tokens: { 'c15t-primary': '#2f6f4e' } };
+		await vi.waitFor(() => {
+			expect(head().style?.[0]?.innerHTML).toContain('--c15t-primary:#2f6f4e;');
+		});
 	});
 });

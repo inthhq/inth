@@ -36,6 +36,7 @@ import {
 	buildColorSchemeScript,
 	buildThemeCSS,
 	buildConfigJSON,
+	buildLocalsBootJSON,
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	iabPromptClassNames,
 	markConfigEmitted,
@@ -128,6 +129,18 @@ const hidden = c15t.prerendered && !force;
 			data-c15t-config
 			nonce={c15t.nonce}
 			set:html={buildConfigJSON(c15t.config)}
+		/>
+	)
+}
+
+{
+	emitConfig && (
+		<script
+			is:inline
+			type="application/json"
+			data-c15t-boot
+			nonce={c15t.nonce}
+			set:html={buildLocalsBootJSON(c15t)}
 		/>
 	)
 }

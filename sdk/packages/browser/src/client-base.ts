@@ -39,6 +39,7 @@ import { createDeferred } from './deferred';
 import type { PublishDevToolsLauncher } from './devtools-mount';
 import { createGatedScriptActivator } from './gated-scripts';
 import { hasDecided } from './has-decided';
+import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 import type {
 	ConsentClient,
 	ConsentClientEventMap,
@@ -50,11 +51,7 @@ import type {
 	ConsentUIOptions,
 } from './types';
 
-/** Attribute a page element can carry to drive the client on click. */
-export const ACTION_ATTRIBUTE = 'data-c15t-action';
-
-/** Link fragment that opens the preference centre, matching `@c15t/astro`. */
-export const PREFERENCES_HASH = '#c15t-preferences';
+export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 
 /** Values `data-c15t-action` accepts. */
 export type PageAction =

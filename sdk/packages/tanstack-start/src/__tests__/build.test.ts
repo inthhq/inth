@@ -283,3 +283,59 @@ describe('TanStack Start backend URL variables', () => {
 		expect(backendURL).toBe('https://option.example.com');
 	});
 });
+
+describe('TanStack Start first-paint sheets', () => {
+	const importer =
+		'/app/node_modules/.pnpm/@c15t+react@3/node_modules/@c15t/react/dist/components/prompt/atoms/root.js';
+	/** What `consentManifest()` resolves `id` to in one Vite environment. */
+	const resolveSheet = async (
+		id: string,
+		consumer: 'client' | 'server',
+		from = importer
+	) => {
+		const resolve = vi.fn((specifier: string) =>
+			Promise.resolve({ id: `/resolved/${specifier}` })
+		);
+		const result = await consentManifest().resolveId.call(
+			{ environment: { config: { consumer } }, resolve },
+			id,
+			from
+		);
+		return { resolve, result };
+	};
+
+	test('the browser loads the banner sheets the server already inlined', async () => {
+		const names = ['tokens', 'button', 'banner'];
+		const resolved = await Promise.all(
+			names.map((name) =>
+				resolveSheet(`@c15t/ui/styles/sheets/${name}`, 'client')
+			)
+		);
+		expect(resolved.map(({ result }) => result)).toEqual(
+			names.map((name) => `/resolved/@c15t/ui/styles/sheets/${name}-deferred`)
+		);
+	});
+
+	test('the server keeps the sheet text it inlines', async () => {
+		const { resolve, result } = await resolveSheet(
+			'@c15t/ui/styles/sheets/banner',
+			'server'
+		);
+		expect(result).toBeUndefined();
+		expect(resolve).not.toHaveBeenCalled();
+	});
+
+	test('sheets no server render inlines keep their text', async () => {
+		const dialog = await resolveSheet(
+			'@c15t/ui/styles/sheets/dialog',
+			'client'
+		);
+		expect(dialog.result).toBeUndefined();
+		const ownImport = await resolveSheet(
+			'@c15t/ui/styles/sheets/banner',
+			'client',
+			'/app/src/theme.ts'
+		);
+		expect(ownImport.result).toBeUndefined();
+	});
+});

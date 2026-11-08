@@ -50,7 +50,8 @@ Your own React, Vue or Svelte islands can read consent with their adapter's
 hooks. Give the adapter the page's runtime, from
 `getConsentClient()?.runtime`, instead of letting it create a second one. A
 second runtime would keep its own copy of consent and fall out of step with
-the banner.
+the banner. The runtime can load after the page, so wait for `client.ready`
+when `runtime` is not set yet.
 
 This React island shows whether measurement is allowed and opens the
 preference dialog:

@@ -89,6 +89,19 @@ const runSetup = async function runSetup(
 	return { calls, integration };
 };
 
+/** The `virtual:c15t/engine` module setup serves to the build. */
+const engineSource = function engineSource(calls: SetupCalls): string {
+	const [config] = calls.updateConfig.mock.calls[0] as [
+		{
+			vite: {
+				plugins: { name: string; load?: (id: string) => string | undefined }[];
+			};
+		},
+	];
+	const plugin = config.vite.plugins.find(({ name }) => name === 'c15t:engine');
+	return plugin?.load?.('\0virtual:c15t/engine') ?? '';
+};
+
 /** Run setup, then return `astro:config:done` to call, the way Astro does. */
 const runDone = async function runDone(
 	options: C15tAstroOptions,
@@ -896,7 +909,19 @@ describe('astro:config:setup', () => {
 		expect(stage).toBe('page');
 		expect(code).toContain("import options from 'virtual:c15t/options'");
 		expect(code).toContain(`from ${specifier('@c15t/astro/client')}`);
-		expect(code).toContain('boot(options);');
+		expect(code).toContain(
+			"startDeferredClient(options, () => import('virtual:c15t/engine'));"
+		);
+		// The engine is not in the first load.
+		expect(code).not.toContain('boot(');
+		expect(code).not.toMatch(/^import[^;]*Transport/mu);
+	});
+
+	it('serves the engine as virtual:c15t/engine', async () => {
+		const { calls } = await runSetup({ mode: offlineMode() });
+		const engine = engineSource(calls);
+		expect(engine).toContain(`from ${specifier('@c15t/astro/client')};`);
+		expect(engine).toContain('export { boot };');
 	});
 
 	it.each([
@@ -952,14 +977,13 @@ describe('astro:config:setup', () => {
 		'registers the one transport %s needs',
 		async (_name, options, config, transport) => {
 			const { calls } = await runSetup(options, config);
-			const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+			const code = engineSource(calls);
 			expect(code).toContain(
 				`registerTransport, ${transport} } from ${specifier('@c15t/astro/client')};`
 			);
 			expect(code).toContain(`registerTransport(${transport});`);
-			expect(code.indexOf('registerTransport(')).toBeLessThan(
-				code.indexOf('boot(options')
-			);
+			const [, page] = calls.injectScript.mock.calls[0] as [string, string];
+			expect(page).not.toContain('Transport');
 		}
 	);
 
@@ -971,13 +995,13 @@ describe('astro:config:setup', () => {
 
 	it('loads the script loader on demand for a site without scripts', async () => {
 		const { calls } = await runSetup({ mode: offlineMode() });
-		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+		const code = engineSource(calls);
 		expect(code).not.toContain('@c15t/core/modules/script-loader');
 		expect(code).not.toContain('@c15t/core/modules/network-blocker');
 		expect(code).not.toContain('registerRuntimeModules({');
 	});
 
-	it('ships the script loader and blocker with the page when configured', async () => {
+	it('ships the script loader and blocker with the engine when configured', async () => {
 		const { calls } = await runSetup({
 			mode: offlineMode(),
 			networkBlocker: {
@@ -987,7 +1011,7 @@ describe('astro:config:setup', () => {
 				{ category: 'measurement', id: 'ga', src: 'https://example.com/ga.js' },
 			],
 		});
-		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+		const code = engineSource(calls);
 		expect(code).toContain(
 			`import { createScriptLoader } from ${specifier('@c15t/core/modules/script-loader')};`
 		);
@@ -997,10 +1021,9 @@ describe('astro:config:setup', () => {
 		expect(code).toContain(
 			'registerRuntimeModules({ createScriptLoader, createNetworkBlocker });'
 		);
-		// Registered before the runtime starts.
-		expect(code.indexOf('registerRuntimeModules({')).toBeLessThan(
-			code.indexOf('boot(options')
-		);
+		// The first load carries neither.
+		const [, page] = calls.injectScript.mock.calls[0] as [string, string];
+		expect(page).not.toContain('@c15t/core/modules/');
 	});
 
 	it.each([
@@ -1012,18 +1035,19 @@ describe('astro:config:setup', () => {
 		// Here a site without it must not even reach the mount or the
 		// `import()` that fetches `@c15t/iab`.
 		const { calls } = await runSetup({ mode: offlineMode(), ...iabOptions });
-		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+		const [, page] = calls.injectScript.mock.calls[0] as [string, string];
+		const code = `${page}\n${engineSource(calls)}`;
 		expect(code).not.toContain('registerIAB(');
 		expect(code).not.toContain(resolveOwnEntry('@c15t/iab'));
 		expect(code).not.toContain('mountRuntimeIAB');
 	});
 
-	it('registers the IAB wiring before boot when `iab` is set', async () => {
+	it('registers the IAB wiring with the engine when `iab` is set', async () => {
 		const { calls } = await runSetup({
 			iab: { cmpId: 160 },
 			mode: offlineMode(),
 		});
-		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+		const code = engineSource(calls);
 		expect(code).toContain(
 			`import { mountRuntimeIAB } from ${specifier('@c15t/core/runtime/on-demand')};`
 		);
@@ -1037,17 +1061,14 @@ describe('astro:config:setup', () => {
 		expect(
 			staticImports.some((line) => line.includes(resolveOwnEntry('@c15t/iab')))
 		).toBe(false);
-		expect(code.indexOf('registerIAB(')).toBeLessThan(
-			code.indexOf('boot(options')
-		);
 	});
 
-	it('keeps what a client entrypoint may configure static', async () => {
+	it('keeps what a client entrypoint may configure in the engine', async () => {
 		const { calls } = await runSetup({
 			clientEntrypoint: 'site/c15t.client',
 			mode: offlineMode(),
 		});
-		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+		const code = engineSource(calls);
 		expect(code).toContain(
 			'registerRuntimeModules({ createScriptLoader, createNetworkBlocker, connectConsentSource });'
 		);
@@ -1066,7 +1087,9 @@ describe('astro:config:setup', () => {
 		});
 		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
 		expect(code).toContain('import clientOptions from "site/c15t.client"');
-		expect(code).toContain('boot(options, clientOptions);');
+		expect(code).toContain(
+			"startDeferredClient(options, () => import('virtual:c15t/engine'), clientOptions);"
+		);
 	});
 
 	it('resolves a relative client entrypoint from the project root', async () => {
@@ -1114,9 +1137,11 @@ describe('astro:config:setup', () => {
 		const [plugin] = update.vite.plugins;
 		const client = plugin.load('\0virtual:c15t/options', { ssr: false });
 		expect(client).not.toContain('site/c15t.client');
-		for (const key of ['middleware', 'inlineStyles', 'clientEntrypoint']) {
+		for (const key of ['middleware', 'clientEntrypoint']) {
 			expect(client).not.toContain(`"${key}"`);
 		}
+		// The engine reads it to add the first-paint rules a page left out.
+		expect(client).toContain('"inlineStyles":true');
 		expect(plugin.load('\0virtual:c15t/options', { ssr: true })).toContain(
 			'"clientEntrypoint":"site/c15t.client"'
 		);
@@ -1182,6 +1207,7 @@ describe('astro:config:setup', () => {
 		];
 		expect(vueConfig.vite.plugins.map((plugin) => plugin.name)).toEqual([
 			'c15t:options',
+			'c15t:engine',
 			'c15t:class-maps-without-css',
 			'@c15t/vue',
 		]);
@@ -1192,6 +1218,7 @@ describe('astro:config:setup', () => {
 		];
 		expect(svelteConfig.vite.plugins.map((plugin) => plugin.name)).toEqual([
 			'c15t:options',
+			'c15t:engine',
 			'c15t:class-maps-without-css',
 		]);
 	});

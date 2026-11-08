@@ -85,6 +85,46 @@ the time of the tap, saves it and loads the scripts it allows; Customize opens
 the dialog. A tap on a banner for one model or prompt is dropped when the
 browser resolves another, and the banner shows again.
 
+### When the consent engine loads
+
+For a visitor the server render asks to choose, the browser's first load
+holds no consent engine. The app hydrates from the state the server rendered
+with, so `useConsentSnapshot()`, `useConsentKernel()` and the other
+composables return it at once. The engine, which also brings the stock
+banner's code, loads at the first of these:
+
+- every `<img fetchpriority="high">` on the page has loaded or failed (the
+  window `load` event when there is none)
+- the first pointer press, key press or scroll outside the banner
+- page code calls something only the engine answers, such as
+  `kernel.set.overrides()` or `clearRecords()`
+- 10 seconds after hydration
+
+The banner stays server HTML until then. An Accept all or Reject all tapped
+before the engine loads takes effect in the tap's own task: the consent state
+the composables return changes, and script loaders on the provided kernel
+start the scripts the choice allows. A moment later c15t stores the consent
+record, queues the save and calls `onChoiceRecorded` and
+`onPermissionsChanged`. The engine then loads, starts from that record and
+sends the save. It records nothing a second time. Customize opens the dialog
+without the engine, and a save from the dialog takes the same path. The
+module's build gives the dialog's code a few files of its own, so the tap
+fetches it in about one round trip; the engine loads once the dialog is on
+screen.
+
+The browser loads the engine as the app starts, and the server render
+preloads it, for everyone else: a returning visitor, a policy with a notice
+prompt or a privacy signal, IAB, an experiment, a `consentSource`, `gpp`, a
+`networkBlocker`, or a `scripts` entry that may run now and does not start
+from the HTML. Routes the server does not render per visitor (prerendered,
+cached or `ssr: false`) load it as the app starts too.
+
+The c15t code the first load does run goes into one chunk, so the page makes
+one request for it rather than one per module it shares with the engine.
+The module adds this chunk group to the client build when Vite builds with
+Rolldown 1.2 or later and the app sets no `codeSplitting`, `advancedChunks`
+or `manualChunks` of its own.
+
 ### Without the consent route
 
 `routePrefix: false` adds no route. The server render still resolves each

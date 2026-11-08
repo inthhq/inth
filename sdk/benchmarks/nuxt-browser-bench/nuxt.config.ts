@@ -20,6 +20,9 @@ const getBenchManifestURL = function getBenchManifestURL() {
 const baselineBuild = process.env.C15T_BENCH_BASELINE === '1';
 const config = {
 	...(baselineBuild && {
+		// Own asset prefix, so the consent gate can route the control page's
+		// assets to this build while the full build serves `/_nuxt/`.
+		app: { buildAssetsDir: '/_nuxt-baseline/' },
 		buildDir: '.nuxt-baseline',
 		nitro: { output: { dir: baselineServerOutputDir } },
 	}),
@@ -72,6 +75,7 @@ if (baselineBuild) {
 			'app/pages/client.vue',
 			'app/pages/client-manifest.vue',
 			'app/pages/repeat-visitor.vue',
+			'app/pages/gate/index.vue',
 			'app/components/**',
 			'app/plugins/**',
 		],

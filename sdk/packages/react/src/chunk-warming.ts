@@ -18,6 +18,7 @@
 
 import { useEffect } from 'react';
 
+import { whenPriorityImagesLoad } from './deferred/trigger';
 import { useUIConfig } from './ui-config-context';
 
 type Warmer = () => void;
@@ -106,15 +107,21 @@ const scheduleIdleWarm = function scheduleIdleWarm(): void {
 	idleScheduled = true;
 	// No fixed wait after load. A tap or Enter gives intent warming almost no
 	// lead time, so a wait here adds the whole download to opens inside it
-	// (~700 ms each on Slow 4G with a 3 s wait). The cost: an image the page
-	// starts after load shares bandwidth with the chunk (~125 ms later LCP
-	// for a 159 KB hero on Slow 4G; none measurable unthrottled).
-	const afterLoad = () => {
+	// (~700 ms each on Slow 4G with a 3 s wait). It does wait for the page's
+	// priority images, which load events miss when the page inserts them
+	// late, as a client-rendered page does: a chunk downloaded alongside one
+	// delays Largest Contentful Paint (about 110 ms for the dialog's 22 KB
+	// on CookieBench's mobile profile). On a fast connection they are in by
+	// then.
+	const idle = () => {
 		if (typeof window.requestIdleCallback === 'function') {
 			window.requestIdleCallback(warmWhenIdle);
 		} else {
 			window.setTimeout(warmWhenIdle, IDLE_FALLBACK_DELAY_MS);
 		}
+	};
+	const afterLoad = () => {
+		whenPriorityImagesLoad(idle);
 	};
 	if (document.readyState === 'complete') {
 		afterLoad();

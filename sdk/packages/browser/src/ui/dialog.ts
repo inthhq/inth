@@ -1,12 +1,12 @@
 import { resolveConsentPresentation } from '@c15t/core';
 import type { ConsentSnapshot } from '@c15t/core';
-import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils';
 
 import { classes } from '../generated/styles';
 import type { ConsentDialogOptions } from '../types';
 import { renderBranding } from './branding';
 import { resolveCopy } from './copy';
 import { h, readDurationMs, supportsStartingStyle } from './dom';
+import { setupFocusTrap, setupScrollLock } from './locks';
 import { renderLegalLinks } from './surface';
 import type { Surface, SurfaceContext } from './surface';
 import { createWidget } from './widget';

@@ -71,6 +71,11 @@ export type {
 export { hosted, local, manifest, offline } from '@c15t/core/modes';
 // oxlint-disable-next-line oxc/no-barrel-file -- Preserve declaration order, interface shape, and public compatibility.
 export * from '@c15t/react';
+// Their code loads with the deferred root's engine; see `./root`.
+export {
+	DeferredConsentBanner as ConsentBanner,
+	DeferredConsentDialog as ConsentDialog,
+} from '@c15t/react/deferred';
 export { consentPrefetchHead } from './libs/prefetch-head';
 export type { ConsentRootProps } from './root';
 export { ConsentRoot } from './root';

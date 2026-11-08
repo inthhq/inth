@@ -48,6 +48,16 @@ const render = async (
 	return new Response(stream).text();
 };
 
+/**
+ * `html` without the boot data a deferred root reads: the snapshot and
+ * the engine-preload script after it, which carry no start script.
+ */
+const withoutBootData = (html: string): string =>
+	html.replace(
+		/<script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*<\/script>/u,
+		''
+	);
+
 afterEach(() => {
 	vi.unstubAllEnvs();
 });
@@ -112,7 +122,7 @@ test('renders no start script for a streamed state that starts nothing', async (
 
 	for (const html of pages) {
 		expect(html).toContain('<main id="page">Page</main>');
-		expect(html).not.toContain('<script');
+		expect(withoutBootData(html)).not.toContain('<script');
 	}
 });
 
@@ -133,7 +143,8 @@ test('renders no start script when the app turns the server start off', async ()
 	const html = await new Response(stream).text();
 
 	expect(html).toContain('<main id="page">Page</main>');
-	expect(html).not.toContain('<script');
+	expect(html).toContain('data-c15t-boot');
+	expect(withoutBootData(html)).not.toContain('<script');
 });
 
 test('renders without a server start when the state promise rejects', async () => {
@@ -239,4 +250,20 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 		vi.doUnmock('react');
 		vi.resetModules();
 	}
+});
+
+test('leaves the boot data and the engine preload for a visitor served at once', async () => {
+	// Marketing may run now, so the browser loads the engine at once and
+	// preloads the chunks an earlier visit recorded.
+	await render(await optOutState());
+	const html = await render(await optOutState());
+
+	const boot =
+		/<script data-c15t-boot[^>]*>(?<json>[^<]*)<\/script>(?<preload><script[^>]*>[^<]*<\/script>)/u.exec(
+			html
+		);
+	expect(
+		JSON.parse(boot?.groups?.json ?? '{}').s.effectivePermissions.marketing
+	).toBe(true);
+	expect(boot?.groups?.preload).toContain('c15t-engine-chunks');
 });

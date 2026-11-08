@@ -15,11 +15,12 @@ import { useConsentDialogTrigger } from '~/component-hooks/use-panel-trigger';
 import { useBranding } from '~/hooks';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 
-import { FIRST_PAINT_SHEETS } from '../../shared/first-paint-sheets';
 import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
+import type { SurfaceStyleSheet } from '../../shared/surface-styles';
+import { TRIGGER_SHEETS } from '../../shared/trigger-sheets';
 import type { CornerPosition, TriggerVisibility } from '../types';
 import { useDraggable } from '../use-draggable';
 import type { UseDraggableReturn } from '../use-draggable';
@@ -107,6 +108,9 @@ export interface TriggerRootProps {
 	onClick?: () => void;
 }
 
+/** Nothing to load while the trigger is hidden. */
+const NO_SHEETS: readonly SurfaceStyleSheet[] = [];
+
 /**
  * Root component that provides context and handles positioning.
  *
@@ -143,7 +147,13 @@ export const TriggerRoot = ({
 		});
 
 	const mounted = useIsHydrated();
-	const sheetsReady = useSurfaceSheetsReady(FIRST_PAINT_SHEETS);
+	// The trigger renders in the browser only, so its sheet is never in the
+	// server HTML. It loads once the trigger is about to show, not while a
+	// banner hides it, so a first visit spends no bytes on it before the
+	// page's own images.
+	const sheetsReady = useSurfaceSheetsReady(
+		isVisible ? TRIGGER_SHEETS : NO_SHEETS
+	);
 
 	const contextValue = useMemo<TriggerContextValue>(
 		() => ({
@@ -177,7 +187,7 @@ export const TriggerRoot = ({
 
 	return createPortal(
 		<TriggerContext.Provider value={contextValue}>
-			<SurfaceStyles sheets={FIRST_PAINT_SHEETS} />
+			<SurfaceStyles sheets={TRIGGER_SHEETS} />
 			{children}
 		</TriggerContext.Provider>,
 		document.body

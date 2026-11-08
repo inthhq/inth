@@ -184,6 +184,64 @@ answers. You write the consent transport yourself, and new policy needs a
 rebuild. A manifest with neither rule resolves to a failed
 `insufficient-inputs` result.
 
+## Know when ConsentRoot loads its engine
+
+`ConsentRoot` keeps c15t's consent engine out of the page's first-load
+JavaScript. The engine is the code that stores consent, saves choices and
+renders the banner in React. The server still renders the whole root, so the
+banner, its styles and any scripts the server starts are in the first HTML,
+with the consent state the page rendered from.
+
+In the browser the page under `ConsentRoot` hydrates at once. Until the engine
+loads, c15t's hooks return the consent state the server rendered with, and
+most of their actions, such as `useSetActiveUI()`, wait for the engine and run
+when it arrives. The banner keeps its server HTML.
+
+A tap on the banner before the engine loads is handled without waiting for
+all of it:
+
+- **Accept or Reject** hides the banner at once. For a visitor with no stored
+  choice, the choice takes effect while the browser is still handling the tap,
+  before any download. Plain `scripts` entries the choice allows (a `src` with
+  no callbacks, vendor or IAB fields) are inserted first, so their requests
+  start at the tap. A small chunk requested right after the tap then stores
+  the consent record, queues the save for your backend and calls
+  `onChoiceRecorded` and `onPermissionsChanged`. Then the engine loads. It
+  starts from the stored choice, sends the queued save and records nothing a
+  second time.
+- **Customize** hides the banner at once and opens the dialog from its own
+  chunk. That chunk starts downloading when the pointer goes down on the
+  button. With `consentManifest()` in the Vite config, the build gives the
+  dialog's code a few files of its own instead of one per set of importers,
+  so the tap fetches it in about one round trip. The engine loads once the
+  dialog is on screen.
+
+When the engine loads depends on the visitor:
+
+| Visitor | Engine loads |
+| --- | --- |
+| The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded, or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
+| Any other visitor, such as a returning visitor with consent | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+
+On a slow connection the engine would otherwise share bandwidth with the
+page's largest image and delay Largest Contentful Paint. The browser stops
+measuring that paint at the first input or scroll, so loading the engine then
+costs it nothing. `useScriptLoader()` loads the script loader once the engine
+is in or a banner choice was recorded, and at once for a script that may run
+now.
+
+`ConsentRoot` loads the engine at once when a `scripts` entry may run for this
+visitor (`alwaysLoad`, or a category that is allowed) and the server did not
+start it from the HTML. It renders the engine before the page hydrates, as a
+statically imported root would, when the state was not resolved for this
+request (a prerendered page, or the static root's `{}`), when
+`options.enabled` is `false`, with `options.experiment`, with a
+`networkBlocker`, for an IAB policy, or when the app renders `IABProvider`.
+
+With `consentManifest()` in `vite.config.ts`, the browser bundle carries no
+second copy of the banner's styles: it uses the `<style>` the server put in
+the page, and loads the text only when a banner renders first in the browser.
+
 ## Run on hosts that stop work after the response
 
 After a render, the server function reports the visitor's session to the

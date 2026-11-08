@@ -13,6 +13,7 @@ import {
 	NOW,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel, isVendorAllowed } from '../../index';
+import { isSnapshotVendorAllowed } from '../../surface-actions';
 import type { ConsentSnapshot, ResolvedVendor } from '../../types';
 
 const vendor = (
@@ -135,5 +136,47 @@ describe('isVendorAllowed', () => {
 		expect(isVendorAllowed(snap, 'meta-pixel', NOW)).toBe(
 			snap.effectivePermissions.marketing
 		);
+	});
+});
+
+describe('isSnapshotVendorAllowed', () => {
+	// The stock surfaces read vendors at the snapshot's own clock through
+	// this form, which leaves the record evaluator out of their chunk.
+	test('answers as isVendorAllowed does at the snapshot clock', () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const cases: [ConsentSnapshot, string][] = [
+			[snapshotWith(), 'meta-pixel'],
+			[snapshotWith({ consents: { marketing: false } }), 'meta-pixel'],
+			[snapshotWith({ denied: ['meta-pixel'] }), 'meta-pixel'],
+			[
+				snapshotWith({
+					declared: [vendor('meta-pixel', { disabled: true })],
+					denied: ['meta-pixel'],
+				}),
+				'meta-pixel',
+			],
+			[snapshotWith({ declared: [] }), 'meta-pixel'],
+			[
+				snapshotWith({
+					declared: [vendor('maps', { category: 'measurement' })],
+				}),
+				'maps',
+			],
+		];
+		const answers = cases.map(([snap, id]) =>
+			isSnapshotVendorAllowed(snap, id)
+		);
+		expect(answers).toEqual(
+			cases.map(([snap, id]) => isVendorAllowed(snap, id, snap.evaluatedAt))
+		);
+		expect(answers).toEqual([true, false, false, true, false, false]);
+	});
+
+	test('warns about an undeclared id like isVendorAllowed', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		expect(isSnapshotVendorAllowed(snapshotWith(), 'snapshot-typo')).toBe(
+			false
+		);
+		expect(warn.mock.calls[0]?.[0]).toMatch(/"snapshot-typo" is not declared/u);
 	});
 });

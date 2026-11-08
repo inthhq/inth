@@ -1,16 +1,16 @@
 <script lang="ts" setup>
-import { onMounted, ref, watch } from 'vue';
+import { computed, inject, onMounted, ref, toValue, watch } from 'vue';
 
 import {
 	useConsentActiveUI,
 	useConsentInit,
-	useConsentConfig,
 	useConsentKernelContext,
 } from '../composables';
 import { useMounted } from '../composables/use-mounted';
 import { applyRootOverrides } from '../root-overrides';
+import { consentConfigKey } from '../utils/symbols';
 import {
-	LazyConsentBanner as ConsentBanner,
+	ConsentBannerHost as ConsentBanner,
 	LazyConsentDialogTrigger,
 	LazyConsentManager,
 	LazyIabConsentBanner,
@@ -27,7 +27,11 @@ const props = defineProps<{
 	language?: string;
 }>();
 
-const config = useConsentConfig();
+// The root reads one option. `useConsentConfig()` also resolves the theme
+// and experiment, code the first load can do without (`showTrigger`
+// defaults to `false`).
+const configSource = inject(consentConfigKey, undefined);
+const showTrigger = computed(() => Boolean(toValue(configSource)?.showTrigger));
 const init = useConsentInit();
 const activeUI = useConsentActiveUI();
 const context = useConsentKernelContext();
@@ -84,7 +88,7 @@ onMounted(() => {
 		<LazyConsentManager
 			v-else-if="!(init?.gvl || init?.gvlReference) && managerNeeded"
 		/>
-		<LazyConsentDialogTrigger v-if="config.showTrigger && mounted" />
+		<LazyConsentDialogTrigger v-if="showTrigger && mounted" />
 	</template>
 	<slot />
 </template>

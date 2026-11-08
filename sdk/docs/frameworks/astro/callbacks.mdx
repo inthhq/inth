@@ -74,8 +74,11 @@ vendor on the page can stop itself. See
 
 Callbacks run for the whole site. A script on one page can subscribe to
 changes itself with `subscribe()` from `c15t/astro/client`. For single
-events, `getConsentClient()?.runtime.kernel.events.on('choice:recorded', listener)`
-takes the same event names the callbacks map to. See the
+events, `getConsentClient()?.runtime?.kernel.events.on('choice:recorded', listener)`
+takes the same event names the callbacks map to. Call it after
+`await getConsentClient()?.ready`: the runtime loads after the page for a
+visitor the banner asks to choose, and a banner choice made before then
+reaches the callbacks but not these listeners. See the
 [client API](/docs/frameworks/astro/client-api).
 
 ## Check your callbacks

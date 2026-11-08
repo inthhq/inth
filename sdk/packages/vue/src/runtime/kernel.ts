@@ -21,7 +21,6 @@ import type {
 	ConsentKernel,
 	ConsentSnapshot,
 	HydrationRecords,
-	KernelActiveUI,
 	KernelConfig,
 	ProviderTransportFactory,
 } from '@c15t/core';
@@ -56,43 +55,60 @@ import type {
 } from '@c15t/core/runtime/provider';
 import { showConsentSurface } from '@c15t/core/surface-actions';
 import type { ConsentActiveUI } from '@c15t/schema/config';
-import { CONSENT_REQUEST_HEADER_NAMES } from '@c15t/schema/types';
 import type { InitOutput } from '@c15t/schema/types';
 import { computed, shallowRef } from 'vue';
-import type { App, Ref } from 'vue';
+import type { Ref } from 'vue';
 
 import type { ConsentConfig } from './config';
 import {
-	symbolActiveUI,
-	symbolConsent,
-	symbolInit,
-	symbolKernel,
-	symbolKernelContext,
-	symbolSnapshot,
-} from './utils/symbols';
+	reuseDisplayData,
+	snapshotToDisplayData,
+	toKernelActiveUI,
+	toVueActiveUI,
+} from './display-data';
+import type { VueConsentDisplayData } from './display-data';
+import { pickAllowedInitHeaders } from './init-headers';
 
-export const INIT_HEADER_NAMES = [...CONSENT_REQUEST_HEADER_NAMES] as const;
+export type { VueConsentDisplayData } from './display-data';
+export { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers';
+export { provideVueConsentContext } from './provide';
 
-const INIT_HEADER_ALLOWLIST = new Set<string>(INIT_HEADER_NAMES);
-
-/** Translation, location and branding data for Vue components. Policy lives in the kernel snapshot. */
-export type VueConsentDisplayData = Pick<
-	InitOutput,
-	| 'branding'
-	| 'cmpId'
-	| 'customVendors'
-	| 'gvl'
-	| 'gvlReference'
-	| 'location'
-	| 'translations'
->;
+/**
+ * What the stock banner reads while it waits to hydrate under the Nuxt
+ * plugin's deferred context: the server's snapshot until it has hydrated,
+ * then the live one. See `deferred/shell.ts`.
+ *
+ * @internal
+ */
+export interface ConsentBannerView {
+	/** The context the banner's composables read. */
+	context: VueConsentKernelContext;
+	snapshot: Readonly<Ref<ConsentSnapshot>>;
+	init: Readonly<Ref<VueConsentDisplayData | undefined>>;
+	activeUI: Ref<ConsentActiveUI>;
+	storedConsent: Readonly<Ref<ConsentSnapshot['explicitChoice']>>;
+	/** Resolves once the engine attached; the banner hydrates after it. */
+	ready: Promise<void>;
+	/** Call once the banner has hydrated. */
+	hydrated: () => void;
+}
 
 export interface VueConsentKernelContext {
 	/**
 	 * The runtime this app renders: the one the plugin built, or the one a
-	 * host handed it (`ownsKernel` is then `false`).
+	 * host handed it (`ownsKernel` is then `false`). Under the Nuxt
+	 * plugin's deferred context it is `undefined` until the consent engine
+	 * attaches; {@link VueConsentKernelContext.ready} settles then. Read it
+	 * when you need it, not at setup.
 	 */
-	runtime: ConsentRuntime;
+	runtime: ConsentRuntime | undefined;
+	/**
+	 * Settles once {@link VueConsentKernelContext.runtime} is there: at
+	 * once for an engine the app loaded with its first chunk, when the
+	 * deferred engine attaches otherwise. Waiting on it does not load the
+	 * engine.
+	 */
+	ready: Promise<void>;
 	/**
 	 * Mounted client CMP handle; absent before mount or outside an IAB
 	 * policy. Follows the runtime; assigning replaces it until the runtime
@@ -138,12 +154,25 @@ export interface VueConsentKernelContext {
 		>
 	) => void;
 	/**
+	 * Store the visitor's language and run `init` again, as
+	 * `ConsentRuntime.setLanguage` does. Before the deferred engine has
+	 * loaded, the change waits for it.
+	 */
+	setLanguage: (language: string) => void;
+	/**
 	 * Apply a new config to a runtime this app owns: scripts, network and
 	 * iframe blocking, vendors, categories, callbacks and the reload rule
 	 * follow it. Storage, transport and experiment options are read once.
 	 */
 	update: (config: RuntimeConsentConfig) => void;
 	dispose: () => void;
+	/**
+	 * Set by the Nuxt plugin's deferred context only: what the stock banner
+	 * reads until it has hydrated.
+	 *
+	 * @internal
+	 */
+	bannerView?: ConsentBannerView;
 }
 
 /**
@@ -198,93 +227,6 @@ export type RuntimeConsentConfig = ConsentConfig & {
 	 * ```
 	 */
 	gpp?: RuntimeGPPOptions | boolean;
-};
-
-export const pickAllowedInitHeaders = function pickAllowedInitHeaders(
-	headers: Record<string, string | undefined>
-): Record<string, string> {
-	const allowed: Record<string, string> = {};
-	for (const [key, value] of Object.entries(headers)) {
-		const normalized = key.toLowerCase();
-		if (value && INIT_HEADER_ALLOWLIST.has(normalized)) {
-			allowed[normalized] = value;
-		}
-	}
-	return allowed;
-};
-
-/**
- * `'manager'` and `null` are the Vue config's names for the kernel's
- * `'dialog'` and `'none'`, kept so `useConsentActiveUI()` reads as before.
- */
-const toKernelActiveUI = function toKernelActiveUI(
-	ui: ConsentActiveUI
-): KernelActiveUI {
-	if (ui === 'manager') {
-		return 'dialog';
-	}
-	if (ui === null) {
-		return 'none';
-	}
-	return ui;
-};
-
-const toVueActiveUI = function toVueActiveUI(
-	ui: KernelActiveUI
-): ConsentActiveUI {
-	if (ui === 'dialog') {
-		return 'manager';
-	}
-	if (ui === 'none') {
-		return null;
-	}
-	return ui;
-};
-
-const DISPLAY_DATA_KEYS = [
-	'branding',
-	'cmpId',
-	'customVendors',
-	'gvl',
-	'gvlReference',
-	'location',
-	'translations',
-] as const;
-
-/**
- * Keep the previous display data when every field is the same reference, so
- * components reading `useConsentInit()` don't re-render on kernel changes
- * that leave it alone (opening the dialog, a save, a privacy signal).
- */
-const reuseDisplayData = function reuseDisplayData(
-	next: VueConsentDisplayData | undefined,
-	previous: VueConsentDisplayData | undefined
-): VueConsentDisplayData | undefined {
-	if (
-		next &&
-		previous &&
-		DISPLAY_DATA_KEYS.every((key) => next[key] === previous[key])
-	) {
-		return previous;
-	}
-	return next;
-};
-
-const snapshotToDisplayData = function snapshotToDisplayData(
-	snapshot: ConsentSnapshot
-): VueConsentDisplayData | undefined {
-	if (!snapshot.location || !snapshot.translations) {
-		return undefined;
-	}
-	return {
-		branding: snapshot.branding ?? 'c15t',
-		cmpId: snapshot.iab?.cmpId ?? undefined,
-		customVendors: snapshot.iab?.customVendors,
-		gvl: snapshot.iab?.gvl ?? undefined,
-		gvlReference: snapshot.iab?.gvlReference,
-		location: snapshot.location,
-		translations: snapshot.translations,
-	};
 };
 
 /**
@@ -671,7 +613,11 @@ export const createVueConsentKernelContext =
 			init,
 			kernel,
 			ownsKernel: Boolean(owned),
+			ready: Promise.resolve(),
 			runtime,
+			setLanguage(language) {
+				runtime.setLanguage(language);
+			},
 			setOverrides(overrides) {
 				runtime.setOverrides(overrides);
 				// Before start, the first init carries them. On the server
@@ -699,22 +645,3 @@ export const createVueConsentKernelContext =
 			},
 		};
 	};
-
-/**
- * Provide a context to every component of an app under the package's
- * injection keys.
- *
- * @param app - The Vue app.
- * @param context - The app's context.
- */
-export const provideVueConsentContext = function provideVueConsentContext(
-	app: App,
-	context: VueConsentKernelContext
-): void {
-	app.provide(symbolKernelContext, context);
-	app.provide(symbolKernel, context.kernel);
-	app.provide(symbolSnapshot, context.snapshot);
-	app.provide(symbolInit, context.init);
-	app.provide(symbolActiveUI, context.activeUI);
-	app.provide(symbolConsent, context.storedConsent);
-};

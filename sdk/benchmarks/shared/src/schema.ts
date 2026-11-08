@@ -12,7 +12,10 @@ export type BenchmarkSuite =
 	// over fixed policy fixtures (issue #1025).
 	| 'policy-runtime'
 	// First-load client bytes of every starter in `examples/`.
-	| 'examples-payload';
+	| 'examples-payload'
+	// CookieBench-equivalent page load and tap timings at its mobile profile,
+	// one result per framework (see `consent-gate.ts`).
+	| 'consent-gate';
 
 export type BenchmarkFramework =
 	| 'core'
@@ -23,7 +26,8 @@ export type BenchmarkFramework =
 	| 'solid'
 	| 'vue'
 	| 'astro'
-	| 'backend';
+	| 'backend'
+	| 'script-tag';
 
 export interface BenchmarkEnvironment {
 	os: string;

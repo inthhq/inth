@@ -8,7 +8,7 @@ import { useTranslations } from '~/component-hooks/use-translations';
 import { useUIConfig } from '~/ui-config-context';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { FIRST_PAINT_SHEETS } from '../shared/first-paint-sheets';
+import { CONSENT_GATE_SHEETS } from '../shared/consent-gate-sheets';
 import { Box } from '../shared/primitives/box';
 import type { BoxProps } from '../shared/primitives/box';
 import { ConsentButton } from '../shared/primitives/button';
@@ -21,14 +21,14 @@ const ConsentGateRoot = createForwardRef<
 >(({ children, ...props }, ref) => {
 	// A gate the browser renders first, after a client-side navigation,
 	// waits for a deferred sheet rather than paint unstyled.
-	const sheetsReady = useSurfaceSheetsReady(FIRST_PAINT_SHEETS, props.noStyle);
+	const sheetsReady = useSurfaceSheetsReady(CONSENT_GATE_SHEETS, props.noStyle);
 	if (!sheetsReady) {
 		return null;
 	}
 	return (
 		<>
 			<SurfaceStyles
-				sheets={FIRST_PAINT_SHEETS}
+				sheets={CONSENT_GATE_SHEETS}
 				noStyle={props.noStyle}
 			/>
 			<Box

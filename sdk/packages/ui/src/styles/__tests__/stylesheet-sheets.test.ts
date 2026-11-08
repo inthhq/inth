@@ -3,7 +3,8 @@
  * surfaces render themselves, and Astro inlines or links.
  *
  * Rendered in order, `first-paint` then `dialog` must apply exactly what
- * `styles.css` applies, rule for rule and in the same order, so a surface
+ * `styles.css` applies, rule for rule and in the same order (the variables
+ * `dialog` repeats aside), so a surface
  * that brings its own styles looks the same as an app that imports
  * `styles.css`. `first-paint` must hold no dialog rule, so the dialog's
  * rules load only with the dialog.
@@ -72,6 +73,24 @@ const ruleList = function ruleList(css: string): string[] {
 	return rules;
 };
 
+/**
+ * Every custom property declaration outside `@layer components`, with its
+ * selector and context.
+ */
+const declarationList = function declarationList(css: string): string[] {
+	const declarations: string[] = [];
+	parse(css).walkDecls(/^--/u, (node) => {
+		if (contextOf(node).includes('@layer components')) {
+			return;
+		}
+		const rule = node.parent as Container & { selector?: string };
+		declarations.push(
+			`${contextOf(node)}|${rule.selector ?? ''}|${node.prop}:${node.value}`
+		);
+	});
+	return declarations;
+};
+
 /** The layer order statements, which must open every sheet. */
 const layerStatements = (css: string): string[] =>
 	parse(css)
@@ -104,10 +123,26 @@ describe('styles/sheets', async () => {
 		// Only the token selectors' specificity differs (next test).
 		const asInStyles = (rule: string) =>
 			rule.replaceAll(':where(:root)', ':root').replaceAll('html.', ':root.');
+		// The dialog repeats the variables it reads, so it works after the
+		// per-surface sheets too. Those repeats are declarations
+		// first-paint already made.
+		const firstPaintDeclarations = declarationList(firstPaint.css);
+		const repeated = ruleList(dialog.css).filter(
+			(rule) => !rule.startsWith('@layer components')
+		);
 
 		expect(styles.length).toBeGreaterThan(0);
+		expect(repeated.length).toBeGreaterThan(0);
 		expect(
-			[...ruleList(firstPaint.css), ...ruleList(dialog.css)].map(asInStyles)
+			declarationList(dialog.css).filter(
+				(declaration) => !firstPaintDeclarations.includes(declaration)
+			)
+		).toEqual([]);
+		expect(
+			[
+				...ruleList(firstPaint.css),
+				...ruleList(dialog.css).filter((rule) => !repeated.includes(rule)),
+			].map(asInStyles)
 		).toEqual(styles);
 	});
 

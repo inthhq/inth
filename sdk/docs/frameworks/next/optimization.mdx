@@ -227,6 +227,83 @@ consent saves reach the backend and policy updates appear after a rebuild, or
 the configured refresh window with runtime caching. If you set `proxy: true`,
 also confirm browser consent requests use your origin.
 
+## Know when ConsentRoot loads its engine
+
+`ConsentRoot` keeps c15t's consent engine out of the page's first-load
+JavaScript. The engine is the code that stores consent, saves choices and
+renders the banner in React. The server still renders the whole root, so the
+banner, its styles and any [scripts the server starts](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
+are in the first HTML.
+
+In the browser the page under `ConsentRoot` hydrates at once. Until the engine
+loads, c15t's hooks return the consent state the server rendered with, and
+most of their actions, such as `useSetActiveUI()`, wait for the engine and run
+when it arrives. The banner keeps its server HTML.
+
+A tap on the banner before the engine loads is handled without waiting for
+all of it:
+
+- **Accept or Reject** hides the banner at once. For a visitor with no stored
+  choice, the choice takes effect while the browser is still handling the tap,
+  before any download. Plain scripts the choice allows (see below) are
+  inserted first, so their requests start at the tap. Then `useSnapshot()`
+  and the other hooks return the choice from the next render. React flushes
+  that render and its effects in the same task.
+- A small chunk (about 9 KB compressed), requested right after the tap, then
+  stores the consent record, queues the save for your backend and calls
+  `onChoiceRecorded` and `onPermissionsChanged`. On a slow connection that
+  is a few hundred milliseconds after the tap. A visitor who leaves the page
+  in that window has no stored choice, and the next page shows the banner
+  again. Then the engine loads. It starts from the stored choice, sends the
+  queued save and records nothing a second time.
+- A visitor who already has a stored choice, an active Global Privacy Control
+  signal, or a notice-only policy takes effect when that chunk has recorded
+  the choice, not at the tap. `useSaveConsents()` called with `'all'` or
+  `'none'` before the engine loads takes the same path as the banner.
+- **Customize** hides the banner at once and opens the dialog from its own
+  chunk, without the engine. That chunk starts downloading when the pointer
+  goes down on the button, before the click. The dialog's floating trigger
+  (`showTrigger`) loads separately, so the dialog does not wait for it. The
+  engine loads once the dialog is on screen.
+  A save from that dialog takes the same path as Accept or Reject.
+  `useSetActiveUI()` opening the dialog before the engine loads does the same.
+
+A plain `scripts` or `useScriptLoader()` entry (a `src` with no callbacks,
+vendor or IAB fields) starts with the choice; the script loader takes it over
+when it loads and does not insert it again. Entries with callbacks wait for
+the script loader, which then downloads alongside the choice's chunk. A choice that needs the
+engine, such as one with declared vendors or a cleared record, waits for it
+as before.
+
+When the engine loads depends on the visitor:
+
+| Visitor | Engine loads |
+| --- | --- |
+| The banner asks them to choose and no optional category is allowed | When the first of these happens: every `<img fetchpriority="high">` on the page has loaded, the visitor presses a pointer or key or scrolls anywhere outside the banner, a tap on the banner was recorded (see above), or 10 seconds pass. A page without a priority image waits for the `load` event instead. |
+| Any other visitor, such as a returning visitor with consent | As soon as the browser runs `ConsentRoot`'s first-load chunk, before hydration. |
+
+On a slow connection the engine would otherwise share bandwidth with the
+page's largest image and delay Largest Contentful Paint. The browser stops
+measuring that paint at the first input or scroll, so loading the engine then
+costs it nothing.
+
+Some pages need the engine sooner. `ConsentRoot` loads it at once when:
+
+- a `scripts` entry, in `c15t.config.ts` or on `ConsentRoot`, may run for
+  this visitor (`alwaysLoad`, or a category such as `necessary` that is
+  allowed) and the server did not start it from the HTML;
+- `useScriptLoader()` receives such a script, on mount or later.
+
+`ConsentRoot` renders the engine before the page hydrates, as a statically
+imported root would, when it has no `state`, when `options.enabled` is
+`false`, with an experiment, with a `networkBlocker` in its config, for an IAB
+policy, or when the app renders `IABProvider`.
+
+`useNetworkBlocker()` and `useIframeBlocker()` work before the engine loads,
+from the server's state, and do not load it. `useEventDispatcher()` delivers
+events sent before the engine loads once it has loaded. `usePersistence()`
+starts once the engine has loaded.
+
 ## Start returning visitors' scripts sooner
 
 `ConsentRoot` loads the script loader as a separate chunk, and only on pages
@@ -258,6 +335,13 @@ covers. There is nothing to configure. The code that decides ships with
 `ConsentRoot` only: a `ConsentProvider` from `@c15t/react` rendered without
 `ConsentRoot` loads the chunk when it mounts.
 
-c15t does not add a `<link rel="modulepreload">` for the chunk, as it does in
-SvelteKit. Next.js assigns the chunk's file name in the browser build, and the
-server rendering `ConsentRoot` cannot read it.
+Next.js assigns chunk file names in the browser build, and the server
+rendering `ConsentRoot` cannot read them. So the browser records the engine's
+chunk URLs in `localStorage` (key `c15t-engine-chunks`) the first time it
+loads the engine. When the server renders a visitor the engine must serve at
+once, `ConsentRoot` adds a small inline script after the page that preloads
+those URLs at low priority while the HTML is still parsing. The record is
+tied to the page's build, so after a deploy nothing stale is fetched; the
+first visit after a deploy loads the engine without a preload and records the
+new URLs. With storage blocked, the engine loads when the first-load chunk
+runs.

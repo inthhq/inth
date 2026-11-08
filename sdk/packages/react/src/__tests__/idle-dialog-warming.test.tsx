@@ -119,6 +119,29 @@ test('waits for the load event, then loads the dialog in the next idle period', 
 	expect(warmer).toHaveBeenCalledOnce();
 });
 
+test('waits for the page priority images, which share bandwidth with the dialog', async () => {
+	const hero = document.createElement('img');
+	hero.setAttribute('fetchpriority', 'high');
+	Object.defineProperty(hero, 'complete', { configurable: true, value: false });
+	document.body.append(hero);
+	try {
+		await render(
+			<ConsentProvider options={fresh}>
+				<ConsentDialog />
+			</ConsentProvider>
+		);
+		await settle();
+		expect(idleCallbacks).toHaveLength(0);
+
+		hero.dispatchEvent(new Event('load'));
+		expect(idleCallbacks).toHaveLength(1);
+		runIdleCallbacks();
+		expect(warmer).toHaveBeenCalledOnce();
+	} finally {
+		hero.remove();
+	}
+});
+
 test('loads the dialog in idle time for a mounted trigger after consent was saved', async () => {
 	await render(
 		<ConsentProvider options={saved}>

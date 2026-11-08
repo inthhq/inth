@@ -3,6 +3,7 @@
 import { isLateEntry } from '@c15t/ui/utils/late-entry';
 import { useState } from 'react';
 
+import { isStaticBannerShown } from '../components/prompt/static-banner-shell';
 import { useIsHydrated } from './use-is-hydrated';
 
 interface Entry {
@@ -16,7 +17,8 @@ interface Entry {
  * Decided once each time `shown` turns on, and held while it stays on, so a
  * re-render never restarts the entry. A banner hydrated from server HTML is
  * part of the first paint: the hook answers `false` while hydrating, which
- * also keeps the markup matching the server's.
+ * also keeps the markup matching the server's. So does one that replaces the
+ * static banner `consentManifest()` put in `index.html`, which is on screen.
  *
  * @param shown - Whether the banner is rendered.
  * @returns Whether to mark the mount `data-entry="late"`.
@@ -26,7 +28,9 @@ interface Entry {
 export const useLateEntry = function useLateEntry(shown: boolean): boolean {
 	const clientRender = useIsHydrated();
 	const decide = (): Entry => ({
-		late: shown && clientRender && isLateEntry(),
+		// A banner that replaces the static one from `index.html` takes
+		// its place without an entry.
+		late: shown && clientRender && isLateEntry() && !isStaticBannerShown(),
 		shown,
 	});
 	const [entry, setEntry] = useState(decide);

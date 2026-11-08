@@ -26,26 +26,36 @@ interface ModulePreloadOptions {
 }
 
 /**
- * The marker's `content` for a provider's options: the chunk name and an
+ * The marker's `content` for a provider's options: the chunk names and an
  * optional `nonce=…`, or `''` when its page starts with no on-demand chunk.
  *
  * Mirrors the runtime's own rule: the script loader mounts whenever
  * `scripts` is non-empty, the network blocker only while consent
- * management is enabled. Either one loads the shared chunk.
+ * management is enabled. Either one loads the shared chunk. `ConsentRoot`
+ * adds its engine for a visitor the engine must serve at once.
  *
  * @param options - The provider's options.
+ * @param extra - `engine: true` to preload `ConsentRoot`'s engine.
  * @returns The marker content.
  * @internal
  */
 export const modulePreloadMarker = function modulePreloadMarker(
-	options: ModulePreloadOptions
+	options: ModulePreloadOptions,
+	extra: { engine?: boolean } = {}
 ): string {
 	const hasScripts = Boolean(options.scripts && options.scripts.length > 0);
 	const hasBlocker =
 		options.enabled !== false && Boolean(options.networkBlocker);
-	if (!hasScripts && !hasBlocker) {
+	const chunks: PreloadChunkName[] = [];
+	if (extra.engine) {
+		chunks.push('engine');
+	}
+	if (hasScripts || hasBlocker) {
+		chunks.push('loader-and-blocker');
+	}
+	if (chunks.length === 0) {
 		return '';
 	}
-	const chunk: PreloadChunkName = 'loader-and-blocker';
-	return options.nonce ? `${chunk} nonce=${options.nonce}` : chunk;
+	const names = chunks.join(' ');
+	return options.nonce ? `${names} nonce=${options.nonce}` : names;
 };

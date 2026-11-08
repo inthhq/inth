@@ -21,10 +21,7 @@
 import type {
 	AllConsentNames,
 	ConsentKernel,
-	ConsentPresentation,
 	ExperimentAssignment,
-	PromptPresentation,
-	PreferencesPresentation,
 	ConsentSnapshot,
 	ConsentState,
 	KernelActiveUI,
@@ -40,26 +37,18 @@ import type {
 	VendorChoice,
 } from '@c15t/core';
 import {
-	applyExperimentAssignment,
-	applyExperimentTheme,
-	isVendorAllowed,
-} from '@c15t/core';
-import {
 	hasConsentPreferences,
 	hasConsentUI,
 	showConsentSurface,
 } from '@c15t/core/surface-actions';
-import { useCallback, useContext, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useSyncExternalStore } from 'react';
 
 import { ProviderServicesContext } from './context';
 import {
-	useGateSelector,
 	useKernel,
 	useKernelSelector,
 	useServerSnapshot,
 } from './kernel-selector';
-import type { Theme } from './types/theme';
-import { useUIConfig } from './ui-config-context';
 
 /**
  * Full snapshot accessor. Escape hatch for consumers that genuinely need
@@ -276,21 +265,6 @@ export const useVendorChoice =
 		return useKernelSelector((snap) => snap.vendorChoice);
 	};
 
-/**
- * Whether one vendor may load: it is declared, its category condition
- * passes, and outside IAB the visitor has not turned it off.
- *
- * @param vendorId - Vendor id as declared in `vendors`, on a script or by
- * the backend.
- * @returns `true` while the vendor may load. An id nothing declares, such
- * as a typo, returns `false` and logs a development warning.
- */
-export const useVendorAllowed = function useVendorAllowed(
-	vendorId: string
-): boolean {
-	return useGateSelector((snap, now) => isVendorAllowed(snap, vendorId, now));
-};
-
 /** Register categories used by scripts, frames, or other integrations. */
 export const useRegisterConsentCategories =
 	function useRegisterConsentCategories() {
@@ -481,48 +455,13 @@ export const useExperiment =
 		return useKernelSelector((snapshot) => snapshot.experiment);
 	};
 
-/**
- * The host presentation with the assigned experiment arm merged over it.
- *
- * @returns The presentation to render: `options.presentation` itself while
- * no arm is assigned.
- */
-export const useResolvedPresentation = function useResolvedPresentation():
-	| ConsentPresentation
-	| undefined {
-	const { experiment, presentation } = useUIConfig();
-	const assignment = useExperiment();
-	return useMemo(
-		() => applyExperimentAssignment(presentation, experiment, assignment),
-		[presentation, experiment, assignment]
-	);
-};
-
-/**
- * The host theme with the assigned experiment arm's `theme` merged over it.
- * Render its tokens with `<ConsentTheme theme={useResolvedTheme()} />`.
- *
- * @returns The theme to render: `options.theme` itself while no arm is
- * assigned or the arm has no theme.
- */
-export const useResolvedTheme = function useResolvedTheme(): Theme | undefined {
-	const { experiment, theme } = useUIConfig();
-	const assignment = useExperiment();
-	return useMemo(
-		() => applyExperimentTheme(theme, experiment, assignment),
-		[theme, experiment, assignment]
-	);
-};
-
-const EMPTY_PROMPT: PromptPresentation = {};
-const EMPTY_PREFERENCES: PreferencesPresentation = {};
-/** Host first-layer presentation, with the experiment arm applied. */
-export const usePromptPresentation =
-	function usePromptPresentation(): PromptPresentation {
-		return useResolvedPresentation()?.prompt ?? EMPTY_PROMPT;
-	};
-/** Host persistent preferences presentation, with the experiment arm applied. */
-export const usePreferencesPresentation =
-	function usePreferencesPresentation(): PreferencesPresentation {
-		return useResolvedPresentation()?.preferences ?? EMPTY_PREFERENCES;
-	};
+// In modules of their own, so a bundler that keeps whole modules leaves
+// their imports (experiment arms, vendor evaluation) out of a page that
+// only reads consent.
+export {
+	usePreferencesPresentation,
+	usePromptPresentation,
+	useResolvedPresentation,
+	useResolvedTheme,
+} from './hooks/use-resolved-presentation';
+export { useVendorAllowed } from './hooks/use-vendor-allowed';

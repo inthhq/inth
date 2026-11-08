@@ -87,7 +87,11 @@ describe('framework surfaces are reachable only through import()', () => {
 					(specifier) => !specifier.startsWith('./')
 				)
 			).toEqual([]);
-			expect(source).toMatch(/await Promise\.all\(\[/u);
+			// The framework and the island download together: side by side,
+			// or, for Svelte, the island exports the framework's `mount`.
+			expect(source).toMatch(
+				name === 'svelte' ? /surface\.mount/u : /await Promise\.all\(\[/u
+			);
 		}
 	);
 

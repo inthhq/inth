@@ -57,6 +57,20 @@ const config: StorybookConfig = {
 						find: /^@c15t\/react$/u,
 						replacement: workspace('packages/react/src/index.ts'),
 					},
+					// `@c15t/react`'s index reaches its provider and banner through the
+					// package's `imports` map, which Vite resolves to `dist`: a second
+					// copy of the package next to the sources above, whose surfaces
+					// would then find no kernel in context.
+					{
+						find: /^#consent-provider$/u,
+						replacement: workspace('packages/react/src/provider.tsx'),
+					},
+					{
+						find: /^#consent-banner$/u,
+						replacement: workspace(
+							'packages/react/src/components/prompt/index.ts'
+						),
+					},
 					{
 						find: /^@c15t\/iab$/u,
 						replacement: workspace('packages/iab/src/index.ts'),

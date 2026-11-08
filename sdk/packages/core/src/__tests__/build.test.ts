@@ -17,6 +17,7 @@ import type { Rollup } from 'vite';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import {
+	CONSENT_CHUNK_GROUP,
 	consentManifest,
 	createConsentManifestPlugin,
 	GENERATED_MODULE_IDS,
@@ -289,6 +290,76 @@ describe('@c15t/core/generated in Vite', () => {
 		expect(ssr.noExternal).toEqual(
 			expect.arrayContaining(['c15t', '@c15t/core', '@c15t/react'])
 		);
+	});
+
+	test('puts the c15t modules a client entry imports into one chunk', () => {
+		const plugin = consentManifest();
+		const rolldown = { meta: { rolldownVersion: '1.2.11' } };
+		const group = plugin.config.call(rolldown, {}, {}).build?.rolldownOptions
+			.output.codeSplitting.groups[0];
+		expect(group).toMatchObject({
+			includeDependenciesRecursively: false,
+			tags: ['$initial'],
+		});
+		expect(
+			group?.test.test('/app/node_modules/@c15t/react/dist/index.js')
+		).toBe(true);
+		expect(
+			group?.test.test(
+				'/app/node_modules/.pnpm/c15t@3/node_modules/c15t/shims/react.js'
+			)
+		).toBe(true);
+		expect(group?.test.test('/app/node_modules/react/index.js')).toBe(false);
+	});
+
+	test('keeps the app chunking for SSR, its own chunking, and older Rolldown', () => {
+		const plugin = consentManifest();
+		const rolldown = { meta: { rolldownVersion: '1.2.11' } };
+		expect(plugin.config.call(rolldown, {}, { isSsrBuild: true }).build).toBe(
+			undefined
+		);
+		expect(
+			plugin.config.call(
+				rolldown,
+				{ build: { rolldownOptions: { output: { codeSplitting: false } } } },
+				{}
+			).build
+		).toBe(undefined);
+		expect(
+			plugin.config.call({ meta: { rolldownVersion: '1.0.0' } }, {}, {}).build
+		).toBe(undefined);
+		expect(plugin.config.call({}, {}, {}).build).toBe(undefined);
+	});
+
+	test('scopes the group to the client environment of a shared config', () => {
+		const plugin = consentManifest();
+		const rolldown = { meta: { rolldownVersion: '1.2.11' } };
+		// Vite's Environment API: one config for the client and the server
+		// build, whose `config` hook runs once, without `isSsrBuild`.
+		const shared = plugin.config.call(
+			rolldown,
+			{ environments: { client: {}, ssr: {} } },
+			{}
+		);
+		expect(shared.build).toBe(undefined);
+		expect(
+			shared.environments?.client.build.rolldownOptions.output.codeSplitting
+				.groups
+		).toEqual([CONSENT_CHUNK_GROUP]);
+		// The client environment's own chunking opts out too.
+		const own = plugin.config.call(
+			rolldown,
+			{
+				environments: {
+					client: {
+						build: { rolldownOptions: { output: { codeSplitting: false } } },
+					},
+				},
+			},
+			{}
+		);
+		expect(own.build).toBe(undefined);
+		expect(own.environments).toBe(undefined);
 	});
 
 	test('leaves other modules alone', async () => {
@@ -737,10 +808,10 @@ describe('initPrefetch', () => {
 		expect(logger.warn).toHaveBeenCalledWith(
 			expect.stringContaining('initPrefetch has no effect')
 		);
-		expect(plugin.transformIndexHtml('<head></head>')).toBeUndefined();
+		expect(await plugin.transformIndexHtml('<head></head>')).toBeUndefined();
 	});
 
-	test('a page without a <head> keeps the script after the doctype', () => {
+	test('a page without a <head> keeps the script after the doctype', async () => {
 		const plugin = createConsentManifestPlugin(
 			{ backendURL: 'https://consent.example.com' },
 			{ envNames: [], label: 'test' }
@@ -750,7 +821,7 @@ describe('initPrefetch', () => {
 			logger: createLogger(),
 			root: '/app',
 		});
-		const html = plugin.transformIndexHtml(
+		const html = await plugin.transformIndexHtml(
 			'<!doctype html>\n<html lang="en"><body></body></html>'
 		);
 		expect(html).toMatch(
@@ -770,12 +841,14 @@ describe('initPrefetch', () => {
 			plugin.resolveId(GENERATED_MODULE_IDS[0]) as string
 		);
 		await plugin.renderChunk(source as string);
-		expect(plugin.transformIndexHtml('<head></head>')).toBeUndefined();
+		expect(await plugin.transformIndexHtml('<head></head>')).toBeUndefined();
 		plugin.buildStart();
-		expect(plugin.transformIndexHtml('<head></head>')).toContain(PREFETCH_TAG);
+		expect(await plugin.transformIndexHtml('<head></head>')).toContain(
+			PREFETCH_TAG
+		);
 	});
 
-	test('a server-rendered app that left the option unset hears nothing', () => {
+	test('a server-rendered app that left the option unset hears nothing', async () => {
 		const logger = createLogger();
 		const plugin = createConsentManifestPlugin(
 			{ backendURL: 'https://consent.example.com' },
@@ -783,7 +856,7 @@ describe('initPrefetch', () => {
 		);
 		plugin.configResolved({ command: 'build', logger, root: '/app' });
 		expect(logger.warn).not.toHaveBeenCalled();
-		expect(plugin.transformIndexHtml('<head></head>')).toBeUndefined();
+		expect(await plugin.transformIndexHtml('<head></head>')).toBeUndefined();
 	});
 });
 

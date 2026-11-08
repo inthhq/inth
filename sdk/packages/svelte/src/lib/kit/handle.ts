@@ -27,7 +27,7 @@ import {
 	createServerStartInjector,
 	loadServerScriptStart,
 } from './server-script-start';
-import { injectSurfaceStyles } from './surface-styles';
+import { injectSurfaceStyles, nonceEarlyTapScript } from './surface-styles';
 import type { C15tLocals, ConsentRequestOptions } from './types';
 
 /** Options for {@link c15tHandle}. */
@@ -306,7 +306,9 @@ export const c15tHandle = function c15tHandle(
 		// too: both are the same for every visitor.
 		return await resolve(event, {
 			transformPageChunk: ({ done, html }) => {
-				const page = injectModulePreloads(injectSurfaceStyles(html));
+				const page = injectModulePreloads(
+					nonceEarlyTapScript(injectSurfaceStyles(html))
+				);
 				return injectServerStart ? injectServerStart(page, done) : page;
 			},
 		});

@@ -72,10 +72,17 @@ export const collectStyleSources = function collectStyleSources(
  * the dialog use the same buttons), and those shared chunks kept their
  * render-blocking links next to the inlined copy of the same rules.
  *
- * A CSS file of a shared chunk moves from the chunk's stylesheets to its
+ * A CSS file of a lazy chunk moves from the chunk's stylesheets to its
  * preloaded assets when every rule in it comes from a c15t stylesheet that
  * only Vue components import (Nuxt inlines those for each component it
- * renders), and no chunk the entry imports statically carries it. The browser still
+ * renders), and no chunk the entry imports statically carries it. That
+ * covers a component's own chunk too: Nuxt 4.6 bundles a component the
+ * banner renders only sometimes, such as its legal links, into the
+ * banner's chunk, and links that component's stylesheet whenever the
+ * banner renders without it. A preloaded file Nuxt did inline gets no
+ * hint, since Nuxt leaves inlined files out of its resource hints.
+ *
+ * The browser still
  * applies the file: a lazy chunk's dynamic import loads its stylesheets
  * before the component renders, so a surface the browser shows first, such
  * as the banner on an `ssr: false` route or the dialog, is styled when it
@@ -133,9 +140,7 @@ export const preloadInlinedConsentStyles = function preloadInlinedConsentStyles(
 		}
 	}
 	for (const [key, chunk] of Object.entries(manifest)) {
-		// A chunk with a source is a component's own chunk, whose
-		// stylesheets Nuxt drops itself once it inlines them.
-		if (!chunk.css?.length || chunk.src || reached.has(key)) {
+		if (!chunk.css?.length || reached.has(key)) {
 			continue;
 		}
 		const inlined = chunk.css.filter(isInlinedConsentFile);

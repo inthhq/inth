@@ -20,6 +20,7 @@ import { hosted } from '../../transports/mode';
 import { c15tProtocolHeaders } from '../../transports/version-header';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
+	EARLY_TAP_HOLD_PRESSES_KEY,
 	EARLY_TAP_OPT_OUT,
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
@@ -209,6 +210,44 @@ describe('the inline script', () => {
 		expect(handler).toHaveBeenCalledOnce();
 		expect(queue()?.taps).toEqual([]);
 		expect(hidden()).toBe(false);
+	});
+
+	test('keeps presses on the banner from the page while a root holds them', () => {
+		// A deferred root's banner cannot hydrate before its engine; React
+		// would try at each press, in the tap's task.
+		runScript();
+		renderBanner();
+		const types = ['pointerdown', 'pointerup', 'mousedown', 'mouseup'];
+		const heard = vi.fn();
+		for (const type of types) {
+			document.addEventListener(type, heard);
+		}
+		const button = document.querySelector('[data-action="accept"] span');
+		const press = () => {
+			for (const type of types) {
+				button?.dispatchEvent(new MouseEvent(type, { bubbles: true }));
+			}
+		};
+		// Without a root holding them, presses reach the page.
+		press();
+		expect(heard).toHaveBeenCalledTimes(types.length);
+
+		const held = queue() as EarlyConsentTapQueue;
+		held[EARLY_TAP_HOLD_PRESSES_KEY] = 1;
+		press();
+		document.body.dispatchEvent(
+			new MouseEvent('pointerdown', { bubbles: true })
+		);
+		// Only the press outside the banner reached the page.
+		expect(heard).toHaveBeenCalledTimes(types.length + 1);
+		expect(queue()?.taps).toEqual([]);
+
+		held[EARLY_TAP_HOLD_PRESSES_KEY] = 0;
+		press();
+		expect(heard).toHaveBeenCalledTimes(2 * types.length + 1);
+		for (const type of types) {
+			document.removeEventListener(type, heard);
+		}
 	});
 
 	test('leaves the IAB banner and other buttons alone', () => {

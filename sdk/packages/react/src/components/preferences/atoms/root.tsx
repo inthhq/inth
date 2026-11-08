@@ -24,7 +24,7 @@ import type { ThemeContextValue } from '~/context/theme-context';
 import { ConsentDraftProvider } from '~/draft';
 import { useHasConsentUI } from '~/hooks';
 import { useTextDirection } from '~/hooks/use-text-direction';
-import { useTranslationLanguage } from '~/kernel-selector';
+import { useTranslationLanguage } from '~/hooks/use-translation-language';
 
 /**
  * Props for the ConsentWidgetRoot component.

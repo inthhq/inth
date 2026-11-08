@@ -325,6 +325,25 @@ describe('ordered gated scripts', () => {
 	});
 });
 
+it('offers the category of a tag that ran before the client', async () => {
+	// `c15t.js` started the measurement tag for an early choice; the engine
+	// that takes over finds only the marketing tag still inert.
+	const ran = document.createElement('script');
+	ran.setAttribute('data-c15t-category', 'measurement');
+	ran.setAttribute('data-c15t-activated', 'true');
+	document.body.append(ran);
+	inertScript('marketing', 'window.__ads = true;');
+	const client = createConsentClient({ ui: false });
+	clients.push(client);
+	client.start();
+	await client.ready();
+	expect(client.consentCategories).toEqual([
+		'necessary',
+		'measurement',
+		'marketing',
+	]);
+});
+
 it('discovers inert script categories and adds newly inserted categories', async () => {
 	inertScript('measurement', 'window.__analytics = true;');
 	inertScript('marketing', 'window.__ads = true;');

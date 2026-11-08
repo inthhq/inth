@@ -51,6 +51,10 @@
 	"type": "module",
 	"sideEffects": [
 		"./dist/c15t.js",
+		"./dist/c15t.hosted.js",
+		"./dist/c15t.commit.js",
+		"./dist/c15t.records.js",
+		"./dist/c15t.dialog.js",
 		"./dist/c15t.local.js",
 		"./dist/c15t.offline.js",
 		"./dist/c15t.iab.js",
@@ -96,6 +100,10 @@
 		},
 		"./styles.css": "./dist/c15t.css",
 		"./c15t.js": "./dist/c15t.js",
+		"./c15t.hosted.js": "./dist/c15t.hosted.js",
+		"./c15t.commit.js": "./dist/c15t.commit.js",
+		"./c15t.records.js": "./dist/c15t.records.js",
+		"./c15t.dialog.js": "./dist/c15t.dialog.js",
 		"./c15t.local.js": "./dist/c15t.local.js",
 		"./c15t.offline.js": "./dist/c15t.offline.js",
 		"./c15t.headless.js": "./dist/c15t.headless.js",
@@ -112,6 +120,11 @@
 			"types": "./dist-types/postcss-tailwind3.d.ts",
 			"import": "./dist/postcss-tailwind3.js",
 			"default": "./dist/postcss-tailwind3.js"
+		},
+		"./prefetch": {
+			"types": "./dist-types/prefetch.d.ts",
+			"import": "./dist/prefetch.js",
+			"default": "./dist/prefetch.js"
 		}
 	},
 	"publishConfig": {

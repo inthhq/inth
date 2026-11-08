@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+import { consentManifest } from '@c15t/tanstack-start/build';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -27,7 +28,14 @@ const adapterRequire = createRequire(
 
 export default defineConfig({
 	envPrefix: ['VITE_', 'C15T_'],
-	plugins: [tanstackStart(), viteReact()],
+	// `consentManifest()` as CookieBench's TanStack Start fixture and the
+	// quickstart add it, so browser bundles get what the documented setup
+	// gives them. The backend URL is relative, so the build fetches nothing.
+	plugins: [
+		consentManifest({ backendURL: '/api/bench-consent' }),
+		tanstackStart(),
+		viteReact(),
+	],
 	resolve: {
 		alias: [
 			{

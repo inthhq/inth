@@ -2,6 +2,7 @@ import type { ConsentSnapshot, PresentationAction } from '@c15t/core';
 import { setupFocusTrap, setupScrollLock } from '@c15t/ui/utils';
 
 import { classes } from '../generated/styles';
+import type { AdoptedBanner } from '../init/boot';
 import type { ConsentBannerOptions } from '../types';
 import { renderActionFooter, resolveActions } from './actions';
 import { renderBranding } from './branding';
@@ -11,6 +12,17 @@ import { renderLegalLinks } from './surface';
 import type { Surface, SurfaceContext } from './surface';
 
 const DEFAULT_DURATION_MS = 200;
+
+/** The banner surface, which can hand its elements to another banner. */
+export interface BannerSurface extends Surface {
+	/**
+	 * Stop managing the banner on screen and hand over its elements, still
+	 * in the document, or `null` when none is shown. The init script hands
+	 * its banner to the engine's this way.
+	 */
+	handoff: () => AdoptedBanner | null;
+}
+
 /**
  * The cookie banner.
  *
@@ -19,22 +31,29 @@ const DEFAULT_DURATION_MS = 200;
  *
  * @param ctx - The mount context.
  * @param options - Copy and behaviour overrides.
+ * @param adopted - A banner another surface rendered (the init script's).
+ * The first sync rebuilds it in place without an entry animation, or hides
+ * it when no banner is due.
  * @returns The surface.
  */
 // oxlint-disable-next-line max-lines-per-function -- Build, show, hide and reconcile are one lifecycle.
 export const createBanner = function createBanner(
 	ctx: SurfaceContext,
-	options: ConsentBannerOptions
-): Surface {
+	options: ConsentBannerOptions,
+	adopted?: AdoptedBanner
+): BannerSurface {
 	const styles = classes.banner;
 	const { noStyle, slot } = ctx;
 	const disableAnimation = options.disableAnimation ?? ctx.disableAnimation;
 	let trapFocus = false;
 	let scrollLock = false;
 
-	let element: HTMLElement | null = null;
-	let overlay: HTMLElement | null = null;
-	let cleanups: (() => void)[] = [];
+	let element: HTMLElement | null = adopted?.element ?? null;
+	let overlay: HTMLElement | null = adopted?.overlay ?? null;
+	let cleanups: (() => void)[] = adopted ? [adopted.release] : [];
+	// An adopted banner stays as it is until this kernel's policy arrives;
+	// hiding it while the policy is pending would flash it out and in.
+	let holdingAdopted = adopted !== undefined;
 	let hideTimer: ReturnType<typeof setTimeout> | undefined;
 	let renderedFrom: {
 		translations: ConsentSnapshot['translations'];
@@ -318,7 +337,31 @@ export const createBanner = function createBanner(
 		destroy() {
 			removeNow();
 		},
+		handoff() {
+			if (!element || hideTimer !== undefined) {
+				return null;
+			}
+			const released = cleanups;
+			const handed = {
+				element,
+				overlay,
+				release: () => {
+					for (const cleanup of released) {
+						cleanup();
+					}
+				},
+			};
+			cleanups = [];
+			element = null;
+			overlay = null;
+			renderedFrom = null;
+			return handed;
+		},
 		sync(snapshot) {
+			if (holdingAdopted && snapshot.policyPending) {
+				return;
+			}
+			holdingAdopted = false;
 			const shouldShow =
 				snapshot.activeUI === 'banner' &&
 				snapshot.policyRule.model !== 'iab' &&

@@ -144,6 +144,16 @@ export default mergeConfig(
 					),
 				},
 				{
+					'@c15t/core/surface-actions/early-commit': resolve(
+						__dirname,
+						'../core/src/surface-actions/early-commit.ts'
+					),
+					'@c15t/core/surface-actions/instant-commit': resolve(
+						__dirname,
+						'../core/src/surface-actions/instant-commit.ts'
+					),
+				},
+				{
 					'@c15t/core/surface-actions': resolve(
 						__dirname,
 						'../core/src/surface-actions/index.ts'

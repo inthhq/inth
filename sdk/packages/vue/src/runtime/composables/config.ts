@@ -3,14 +3,16 @@ import { defaultConsentConfig } from '@c15t/schema/config';
 import { applyThemeSlots } from '@c15t/ui/utils';
 import { defu } from 'defu';
 import { computed, inject, toValue } from 'vue';
-import type { ComputedRef, InjectionKey, MaybeRefOrGetter } from 'vue';
+import type { ComputedRef } from 'vue';
 
 import type { ConsentConfig } from '../config';
-import { symbolKernelContext, symbolSnapshot } from '../utils/symbols';
+import {
+	consentConfigKey,
+	symbolKernelContext,
+	symbolSnapshot,
+} from '../utils/symbols';
 
-export const consentConfigKey: InjectionKey<
-	MaybeRefOrGetter<Partial<ConsentConfig> | undefined>
-> = Symbol('c15t:config');
+export { consentConfigKey } from '../utils/symbols';
 
 export const useConsentConfig =
 	function useConsentConfig(): ComputedRef<ConsentConfig> {

@@ -1,6 +1,6 @@
 import { custom } from '@c15t/core';
 import { render } from '@testing-library/svelte';
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/notice-banner-fixture.svelte';
@@ -39,7 +39,7 @@ afterEach(() => {
 });
 
 describe('surface styles', () => {
-	test('the banner adds the first-paint sheet and the dialog its own, once each', () => {
+	test('the banner adds its own sheets and the dialog its own, once each', () => {
 		renderFixture({ nonce: 'test-nonce' });
 		renderFixture();
 
@@ -49,7 +49,9 @@ describe('surface styles', () => {
 		// The fixture renders the dialog component too, whose code carries
 		// the dialog and primitive sheets.
 		expect(sheets()).toEqual([
-			'c15t-first-paint',
+			'c15t-tokens',
+			'c15t-button',
+			'c15t-banner',
 			'c15t-dialog',
 			'c15t-primitives',
 		]);
@@ -71,7 +73,41 @@ describe('surface styles', () => {
 				'style[data-c15t-styles]'
 			),
 		].map((element) => element.nonce);
-		expect(nonces).toEqual(['kit-nonce', 'kit-nonce', 'kit-nonce']);
+		expect(nonces).toEqual(Array.from({ length: 5 }, () => 'kit-nonce'));
+	});
+
+	test('adopts the banner sheet the server wrote, without loading it again', () => {
+		const written = document.createElement('style');
+		written.dataset.c15tStyles = 'c15t-banner';
+		written.textContent = '/* server copy */';
+		document.head.append(written);
+		renderFixture();
+
+		const banner = document.head.querySelectorAll(
+			'style[data-c15t-styles="c15t-banner"]'
+		);
+		expect(banner).toHaveLength(1);
+		expect(banner[0]?.textContent).toBe('/* server copy */');
+	});
+
+	test('a browser-only render loads the banner sheets and keeps the surfaces hidden until then', async () => {
+		renderFixture();
+
+		const element = document.head.querySelector<HTMLStyleElement>(
+			'style[data-c15t-styles="c15t-tokens"]'
+		);
+		// Inserted in this task, ahead of the dialog's sheets, holding only
+		// the rule that hides the surfaces.
+		expect(element?.hasAttribute('data-c15t-pending')).toBe(true);
+		expect(element?.textContent).toContain('opacity:0');
+		await vi.waitFor(() => {
+			expect(element?.hasAttribute('data-c15t-pending')).toBe(false);
+		});
+		expect(element?.textContent).toContain('--c15t-border');
+		expect(sheets()[0]).toBe('c15t-tokens');
+		// The trigger's and ConsentGate's rules are not the banner's.
+		expect(sheets()).not.toContain('c15t-first-paint');
+		expect(sheets()).not.toContain('c15t-trigger');
 	});
 
 	test('adds nothing with `styles: false` or `noStyle`', () => {

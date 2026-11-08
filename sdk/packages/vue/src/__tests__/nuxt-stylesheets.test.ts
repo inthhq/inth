@@ -115,7 +115,10 @@ describe('preloadInlinedConsentStyles', () => {
 		expect(manifest['_unknown.js']?.css).toEqual(['unknown.css']);
 	});
 
-	test("leaves a component's own chunk to Nuxt, which drops the stylesheets it inlines", () => {
+	test("preloads a sibling component's stylesheet from a component's own chunk: Nuxt 4.6 links it when that sibling does not render", () => {
+		// Nuxt 4.6 bundles the legal links into the banner's chunk. A banner
+		// without legal links renders, Nuxt inlines nothing for them, and the
+		// chunk's `<link>` for their stylesheet blocks the first paint.
 		const manifest = createManifest();
 		preloadInlinedConsentStyles(
 			manifest,
@@ -126,8 +129,27 @@ describe('preloadInlinedConsentStyles', () => {
 		const own =
 			manifest['node_modules/@c15t/vue/dist/runtime/components/prompt.vue'];
 
-		expect(own?.css).toEqual(['button.css']);
-		expect(own?.assets).toBeUndefined();
+		expect(own?.css).toEqual([]);
+		expect(own?.assets).toEqual(['button.css']);
+	});
+
+	test("keeps a stylesheet in a component's own chunk that is not c15t's", () => {
+		const manifest = createManifest();
+		const own =
+			manifest['node_modules/@c15t/vue/dist/runtime/components/prompt.vue'];
+		if (!own) {
+			throw new Error('expected the prompt component in the manifest');
+		}
+		own.css = ['site.css', 'button.css'];
+		preloadInlinedConsentStyles(
+			manifest,
+			createIndex(),
+			inlineVueStyles,
+			isConsentFile
+		);
+
+		expect(own.css).toEqual(['site.css']);
+		expect(own.assets).toEqual(['button.css']);
 	});
 
 	test('keeps stylesheets the entry imports statically: the browser gets them only from the HTML', () => {

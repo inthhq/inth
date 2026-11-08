@@ -19,13 +19,20 @@ export type BenchmarkArm = 'base' | 'head';
 
 /**
  * Runtime comparisons use an even number of rounds so each arm runs first
- * equally often. Deterministic size measurements need only one pass.
+ * equally often. Deterministic size measurements need only one pass. The
+ * consent gate's throttled visits take seconds each, so it uses two rounds
+ * to keep each job near six minutes; the paired control visit in every
+ * iteration already absorbs drift within a round.
  *
  * @param mode - Benchmark mode.
  * @returns Number of measurement rounds.
  */
-export const benchmarkRoundsForMode = (mode: string): number =>
-	mode === 'bundle' || mode === 'examples' ? 1 : 4;
+export const benchmarkRoundsForMode = (mode: string): number => {
+	if (mode === 'bundle' || mode === 'examples') {
+		return 1;
+	}
+	return mode === 'gate' ? 2 : 4;
+};
 
 /**
  * Which arm runs first in a round. Alternating base-head, head-base, ...

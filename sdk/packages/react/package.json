@@ -44,6 +44,17 @@
 	],
 	"main": "./dist/index.js",
 	"types": "./dist-types/index.d.ts",
+	"imports": {
+		"#consent-banner": {
+			"types": "./dist-types/components/prompt/index.d.ts",
+			"default": "./dist/components/prompt/index.js"
+		},
+		"#consent-provider": {
+			"types": "./dist-types/provider.d.ts",
+			"browser": "./dist/deferred/client-provider.js",
+			"default": "./dist/provider.js"
+		}
+	},
 	"exports": {
 		".": {
 			"types": "./dist-types/index.d.ts",
@@ -59,6 +70,16 @@
 			"types": "./dist-types/provider.d.ts",
 			"import": "./dist/provider.js",
 			"default": "./dist/provider.js"
+		},
+		"./deferred": {
+			"types": "./dist-types/deferred/index.d.ts",
+			"import": "./dist/deferred/index.js",
+			"default": "./dist/deferred/index.js"
+		},
+		"./deferred/engine": {
+			"types": "./dist-types/deferred/engine.d.ts",
+			"import": "./dist/deferred/engine.js",
+			"default": "./dist/deferred/engine.js"
 		},
 		"./hooks": {
 			"types": "./dist-types/hooks.d.ts",
@@ -104,6 +125,11 @@
 			"types": "./dist-types/prompt.d.ts",
 			"import": "./dist/prompt.js",
 			"default": "./dist/prompt.js"
+		},
+		"./static-banner": {
+			"types": "./dist-types/static-banner.d.ts",
+			"import": "./dist/static-banner.js",
+			"default": "./dist/static-banner.js"
 		},
 		"./consent-dialog": {
 			"types": "./dist-types/panel.d.ts",

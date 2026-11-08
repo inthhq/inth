@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+
 import node from '@astrojs/node';
 import svelte from '@astrojs/svelte';
 import c15t, { hosted, manifest } from '@c15t/astro';
@@ -19,6 +21,10 @@ import { defineConfig } from 'astro/config';
  * - `scripts` — `/scripts`, `/repeat-visitor-scripts`: manifest mode plus
  *   one measurement-gated script and a network-blocker rule, so the runner
  *   can time when a consented script loads
+ * - `gate` — `/gate`, the consent gate page (`scripts/run-gate.ts`): manifest
+ *   mode with CookieBench's three categories and a `clientEntrypoint` that
+ *   adds the two gated scripts, as CookieBench's Astro fixture configures it.
+ *   Its control page is served from a `baseline` build.
  *
  * Absolute fixture URLs on purpose: the shared resolver assumes `https` for
  * a relative URL with no `x-forwarded-proto`, which a plain HTTP bench
@@ -78,6 +84,21 @@ if (benchMode === 'manifest' || benchMode === 'scripts') {
 		];
 	}
 	integrations.push(c15t(options));
+} else if (benchMode === 'gate') {
+	integrations.push(
+		c15t({
+			backendURL,
+			clientEntrypoint: fileURLToPath(
+				new URL('src/gate-client.ts', import.meta.url)
+			),
+			consentCategories: ['necessary', 'measurement', 'marketing'],
+			middleware: { skip: ['/api/bench-consent'] },
+			mode: manifest({
+				manifestURL: `${backendURL}/manifest`,
+				source: 'runtime',
+			}),
+		})
+	);
 } else if (benchMode === 'hosted') {
 	integrations.push(
 		c15t({

@@ -47,6 +47,52 @@ the backend request fails, they stay blocked and no banner shows.
 
 <include src="../../shared/vite-init-prefetch.mdx" />
 
+### Show the banner from `index.html`
+
+`vite build` also puts the stock banner in `index.html`, hidden. When the
+early `/init` answers, the inline script shows it, so the banner appears
+before your JavaScript has downloaded. `<ConsentBanner />` takes its place
+when it renders, in the same frame. A tap on it before then hides it, and
+the choice is recorded once the app has loaded.
+
+The build reads your backend's manifest and renders the banner of its first
+choice policy, in the language of `<html lang>`, or English. The page shows
+it only when all of these match the `/init` answer:
+
+- the policy
+- the language
+- the branding
+- the banner's title, description and button labels
+
+It also stays hidden when the visitor has a stored choice. Otherwise the page
+removes it, and the app shows its banner as before.
+
+While the static banner shows, the app loads less c15t code up front. The
+code that reads the `/init` answer, and `<ConsentBanner />`'s own code, load
+after the page's `fetchpriority="high"` images, or at once when the visitor
+taps, presses a key or scrolls. On a slow connection they don't share
+bandwidth with your hero image. A tap on the static banner before then still
+hides it at once and is applied when that code arrives.
+
+The banner's stylesheets move from the JavaScript into `index.html`, so they
+ship once.
+
+The build can't read your provider's options. Turn the static banner off with
+`consentManifest({ staticBanner: false })` when your banner looks different
+from the stock one on its first render. That includes these cases:
+
+- custom `i18n` messages
+- `legalLinks`
+- a `theme`
+- `components` slots
+- props on `<ConsentBanner />`
+- a banner of your own
+
+Only pages whose entry imports `ConsentBanner` get it, and only in a
+production build with the `/init` script. If the manifest fetch fails, the
+build warns and leaves the banner out. Under a Content Security Policy, set
+Vite's `html.cspNonce`, or allow the hashes of the inline scripts and styles.
+
 ## React Router, Remix and other server-rendered apps
 
 React Router framework mode, Remix and similar frameworks have no c15t adapter.

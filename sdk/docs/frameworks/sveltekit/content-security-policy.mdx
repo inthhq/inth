@@ -45,6 +45,17 @@ loader and network blocker chunk takes the nonce SvelteKit put on its own
 scripts, unless the provider has a `nonce` of its own. The chunk is on your
 own origin, so `'self'` covers it too.
 
+## Allow the banner's tap script
+
+A server-rendered `ConsentBanner` puts an inline `<script data-c15t-early-tap>`
+ahead of its markup. It holds a tap made before the page hydrates; see
+[taps before hydration](./rendering#taps-before-hydration). The script takes
+the provider's `nonce`, or else `c15tHandle` gives it the nonce SvelteKit put
+on its own scripts, so `mode: 'nonce'` and `mode: 'auto'` on a page rendered
+for each request admit it. Its text is the same on every page, so on a
+prerendered page you can allow it by the SHA-256 hash of its text. A policy
+that blocks it changes nothing else: a tap before hydration then does nothing.
+
 ## Allow the server start script
 
 When the visitor's consent already allows some vendor helper entries in

@@ -129,11 +129,14 @@ const readCustomProperties = function readCustomProperties(
  *
  * @param css - The stylesheet.
  * @param rendered - Class names the surfaces render.
+ * @param canRender - Further drops selectors the surfaces cannot match,
+ * such as an attribute value they never set.
  * @returns The pruned stylesheet, with the input's formatting.
  */
 export const pruneStylesheet = function pruneStylesheet(
 	css: string,
-	rendered: ReadonlySet<string>
+	rendered: ReadonlySet<string>,
+	canRender: (selector: string) => boolean = () => true
 ): string {
 	const root = parse(css);
 	const readBefore = readCustomProperties(root);
@@ -145,8 +148,8 @@ export const pruneStylesheet = function pruneStylesheet(
 		) {
 			return;
 		}
-		const kept = rule.selectors.filter((selector) =>
-			canMatch(selector, rendered)
+		const kept = rule.selectors.filter(
+			(selector) => canMatch(selector, rendered) && canRender(selector)
 		);
 		if (kept.length === 0) {
 			rule.remove();

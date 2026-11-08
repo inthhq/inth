@@ -6,12 +6,27 @@ import { baseConfig } from '@c15t/vitest-config/base';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig, mergeConfig } from 'vitest/config';
 
+import { serveInitScriptFixture } from './src/__tests__/fixtures/init-script-server';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default mergeConfig(
 	baseConfig,
 	defineConfig({
 		plugins: [
+			{
+				configureServer(server) {
+					server.middlewares.use((request, response, next) => {
+						void serveInitScriptFixture(
+							request,
+							response,
+							next,
+							resolve(__dirname, 'dist')
+						);
+					});
+				},
+				name: 'init-script-fixture',
+			},
 			{
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
@@ -178,6 +193,13 @@ export default mergeConfig(
 								replacement: resolve(
 									__dirname,
 									'../core/src/runtime/provider.ts'
+								),
+							},
+							{
+								find: '@c15t/core/runtime/deferred-snapshot',
+								replacement: resolve(
+									__dirname,
+									'../core/src/runtime/deferred-snapshot.ts'
 								),
 							},
 							{

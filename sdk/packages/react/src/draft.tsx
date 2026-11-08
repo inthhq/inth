@@ -26,7 +26,7 @@ import {
 	useDraftKernel,
 	useKernelGuard,
 } from './draft-context';
-import { useResolvedPresentation } from './hooks';
+import { useResolvedPresentation } from './hooks/use-resolved-presentation';
 
 /** A local, unmasked selection, committed only by an explicit save. */
 export interface ConsentDraftHandle {

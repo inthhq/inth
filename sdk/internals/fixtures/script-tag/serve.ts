@@ -49,21 +49,24 @@ const cdnPrefix = 'https://cdn.jsdelivr.net/npm/@c15t/browser@alpha/dist/';
 const backendPlaceholder = 'https://your-project.inth.app';
 const backendURL = process.env.C15T_BACKEND_URL;
 
-const bundles: Record<string, string> = {
-	'/c15t.devtools.js': fileURLToPath(
-		import.meta.resolve('@c15t/browser/c15t.devtools.js')
-	),
-	'/c15t.headless.js': fileURLToPath(
-		import.meta.resolve('@c15t/browser/c15t.headless.js')
-	),
-	'/c15t.iab.js': fileURLToPath(
-		import.meta.resolve('@c15t/browser/c15t.iab.js')
-	),
-	'/c15t.js': fileURLToPath(import.meta.resolve('@c15t/browser/c15t.js')),
-	'/c15t.offline.js': fileURLToPath(
-		import.meta.resolve('@c15t/browser/c15t.offline.js')
-	),
-};
+// `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
+// `c15t.dialog.js` from next to itself, so the server carries them too.
+const bundles: Record<string, string> = Object.fromEntries(
+	[
+		'c15t.commit.js',
+		'c15t.devtools.js',
+		'c15t.dialog.js',
+		'c15t.headless.js',
+		'c15t.hosted.js',
+		'c15t.iab.js',
+		'c15t.js',
+		'c15t.offline.js',
+		'c15t.records.js',
+	].map((file) => [
+		`/${file}`,
+		fileURLToPath(import.meta.resolve(`@c15t/browser/${file}`)),
+	])
+);
 
 if (process.argv.includes('--check')) {
 	// The example has no build of its own; `build` checks the bundles exist.

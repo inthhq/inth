@@ -2,7 +2,11 @@ import { execFileSync } from 'node:child_process';
 
 import { describe, expect, it } from 'vitest';
 
-import { createBenchmarkPlan } from './benchmark-plan';
+import {
+	createBenchmarkMatrix,
+	createBenchmarkPlan,
+	selectGatePackages,
+} from './benchmark-plan';
 
 describe('benchmark package selection', () => {
 	it('builds the Nuxt benchmark and checks the Vue results it produces', () => {
@@ -52,6 +56,7 @@ describe('benchmark package selection', () => {
 	it.each([
 		['quick', 4],
 		['full', 10],
+		['gate', 7],
 		['examples', 1],
 	])('emits %s matrix jobs with unique artifact names', (mode, count) => {
 		const output = execFileSync(
@@ -69,5 +74,32 @@ describe('benchmark package selection', () => {
 				entry.package,
 			]);
 		}
+	});
+
+	it('gives gate jobs ids that cannot collide with full-mode artifacts', () => {
+		const ids = createBenchmarkMatrix(['full', 'gate']).map(
+			(entry) => entry.id
+		);
+		expect(new Set(ids).size).toBe(ids.length);
+		expect(
+			createBenchmarkPlan('gate', 'gate-nuxt-browser-bench')
+		).toMatchObject({
+			expectedPackages: ['@c15t/vue'],
+			packages: ['@c15t/nuxt-browser-bench'],
+			suites: ['consent-gate'],
+		});
+	});
+
+	it('runs only the gate targets CI selected', () => {
+		expect(
+			createBenchmarkMatrix(['quick', 'gate'], 'script-tag')
+				.filter((entry) => entry.mode === 'gate')
+				.map((entry) => entry.package)
+		).toEqual(['@c15t/script-lifecycle-bench']);
+		expect(selectGatePackages('none')).toEqual([]);
+		expect(selectGatePackages('all')).toHaveLength(7);
+		expect(() => selectGatePackages('react,solid')).toThrow(
+			'Unknown consent gate target: solid'
+		);
 	});
 });

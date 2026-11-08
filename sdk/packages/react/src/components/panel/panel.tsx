@@ -11,14 +11,23 @@ import type * as C15tCoreTypes from '@c15t/core';
  */
 import type { FC } from 'react';
 
-import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import type { ConsentDialogTriggerProps } from '~/components/panel-trigger';
 import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
 import { useActiveUI } from '~/hooks';
 import { useComponentConfig } from '~/hooks/use-component-config';
+import { createDeferredModule } from '~/utils/deferred-module';
 
 import { ConsentCustomizationCard } from './atoms/card';
 import { Root as ConsentDialogRoot } from './atoms/root';
+
+/**
+ * The floating trigger, with its drag handling, icons and DevTools
+ * launcher, loads only for a dialog that shows it: opening the dialog
+ * does not wait for that code.
+ */
+const LazyConsentDialogTrigger = createDeferredModule(
+	() => import('~/components/panel-trigger')
+).component((module) => module.ConsentDialogTrigger);
 
 /**
  * Props for the `<ConsentDialog />` convenience component.
@@ -157,7 +166,7 @@ export const ConsentDialog: FC<ConsentDialogProps> = ({
 
 	return (
 		<>
-			{triggerProps && <ConsentDialogTrigger {...triggerProps} />}
+			{triggerProps && <LazyConsentDialogTrigger {...triggerProps} />}
 			<ConsentDialogRoot {...rootProps}>
 				<ConsentCustomizationCard
 					noStyle={rootProps.noStyle}

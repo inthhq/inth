@@ -3,6 +3,8 @@ import { generateThemeCSS } from '@c15t/ui/theme';
 import type { Theme } from '@c15t/ui/theme';
 
 import { stylesheet } from '../generated/styles';
+import { takeInitUI } from '../init/adopt';
+import type { AdoptedBanner, AdoptedDialog, InitUI } from '../init/boot';
 import type {
 	ConsentClient,
 	ConsentUIHandle,
@@ -11,11 +13,11 @@ import type {
 import { createBanner } from './banner';
 import { createDialog } from './dialog-surface';
 import { h, prefersReducedMotion } from './dom';
+import { applyColorScheme, createStyle, createUIRoot } from './root';
+import type { UIRoot } from './root';
 import { createSlotApplier } from './slots';
 import type { Surface, SurfaceContext } from './surface';
 import { createTrigger } from './trigger';
-
-const HOST_ATTRIBUTE = 'data-c15t-ui';
 
 const resolveContainer = function resolveContainer(
 	container: ConsentUIOptions['container']
@@ -30,18 +32,6 @@ const resolveContainer = function resolveContainer(
 		return found;
 	}
 	return container ?? document.body;
-};
-
-/**
- * Shadow content is not a child, so the host matches `:empty`, and themes
- * such as Shopify's Dawn hide `div:empty`. Page rules beat `:host`, so only
- * an inline `!important` keeps the host displayed.
- */
-const attachShadowRoot = function attachShadowRoot(
-	host: HTMLElement
-): ShadowRoot {
-	host.style.setProperty('display', 'block', 'important');
-	return host.attachShadow({ mode: 'open' });
 };
 
 const buildStyleText = function buildStyleText(
@@ -85,56 +75,82 @@ const appendStylesheetLinks = function appendStylesheetLinks(
 	}
 };
 
+/** The dialog the init script opened, unless this mount has none. */
+const takeInitDialog = function takeInitDialog(
+	adopted: InitUI,
+	options: ConsentUIOptions
+): AdoptedDialog | undefined {
+	const dialog = adopted.takeDialog() ?? undefined;
+	if (dialog && options.dialog === false) {
+		dialog.destroy();
+		return undefined;
+	}
+	return dialog;
+};
+
 /**
- * Follow the configured colour scheme on the UI wrapper.
+ * The UI root to render into: the init script's, when it rendered the
+ * banner where this mounts, else a new one.
  *
- * The stylesheet keys dark tokens off a `.c15t-dark` ancestor of
- * `.c15t-theme-root`; inside a shadow root nothing on `<html>` reaches
- * it, so the wrapper carries the class itself. For the same reason `null`
- * cannot simply leave the class alone, as it does in the framework
- * providers: the page's class would never reach the UI. It copies it
- * instead, from either `dark` or `c15t-dark` on `<html>`.
+ * The init script's banner sheet becomes the full one, a superset, so
+ * nothing on screen changes, and the banner it rendered is handed over
+ * for the banner surface to take over.
  */
-const applyColorScheme = function applyColorScheme(
-	wrapper: HTMLElement,
-	host: HTMLElement,
-	scheme: Exclude<ConsentUIOptions['colorScheme'], undefined>
-): () => void {
-	const set = function set(dark: boolean): void {
-		// The wrapper serves `.c15t-dark .c15t-theme-root`; the host serves the
-		// `:host(.c15t-dark)` variants the generated sheet adds for `:root`.
-		wrapper.classList.toggle('c15t-dark', dark);
-		host.classList.toggle('c15t-dark', dark);
-		host.style.colorScheme = dark ? 'dark' : 'light';
-	};
-	if (scheme === null) {
-		const html = document.documentElement;
-		const follow = function follow(): void {
-			set(
-				html.classList.contains('dark') || html.classList.contains('c15t-dark')
-			);
-		};
-		follow();
-		const observer = new MutationObserver(follow);
-		observer.observe(html, { attributeFilter: ['class'] });
-		return () => {
-			observer.disconnect();
+const mountRoot = function mountRoot(
+	options: ConsentUIOptions,
+	styleText: string,
+	nonce: string | undefined,
+	extended: boolean
+): {
+	ui: UIRoot;
+	banner: AdoptedBanner | undefined;
+	dialog: AdoptedDialog | undefined;
+} {
+	const adopted = takeInitUI(
+		options.container === undefined &&
+			(options.shadow ?? true) &&
+			!extended &&
+			!options.stylesheetURLs?.length
+	);
+	if (!adopted) {
+		return {
+			banner: undefined,
+			dialog: undefined,
+			ui: createUIRoot(
+				resolveContainer(options.container),
+				options,
+				styleText,
+				nonce,
+				(root) => {
+					appendStylesheetLinks(root, options, nonce);
+				}
+			),
 		};
 	}
-	if (scheme !== 'system' || typeof window.matchMedia !== 'function') {
-		set(scheme === 'dark');
-		return () => {
-			/* nothing to release */
-		};
+	adopted.releaseScheme();
+	if (adopted.style && styleText) {
+		adopted.style.textContent = styleText;
+	} else {
+		adopted.style?.remove();
 	}
-	const query = window.matchMedia('(prefers-color-scheme: dark)');
-	const onChange = function onChange(): void {
-		set(query.matches);
-	};
-	onChange();
-	query.addEventListener('change', onChange);
-	return () => {
-		query.removeEventListener('change', onChange);
+	const banner = adopted.takeBanner() ?? undefined;
+	if (banner && options.banner === false) {
+		banner.release();
+		banner.element.remove();
+		banner.overlay?.remove();
+	}
+	return {
+		banner: options.banner === false ? undefined : banner,
+		dialog: takeInitDialog(adopted, options),
+		ui: {
+			...adopted,
+			releaseScheme: applyColorScheme(
+				adopted.wrapper,
+				adopted.host,
+				options.colorScheme === undefined ? 'system' : options.colorScheme
+			),
+			style: styleText ? adopted.style : null,
+		},
 	};
 };
 
@@ -175,13 +191,6 @@ export const mountConsentUI = function mountConsentUI(
 		createSurfaces: (ctx: SurfaceContext) => Surface[];
 	}
 ): ConsentUIHandle {
-	const container = resolveContainer(options.container);
-	const useShadow = options.shadow ?? true;
-	const host = h('div', { [HOST_ATTRIBUTE]: '' });
-	const root: ShadowRoot | HTMLElement = useShadow
-		? attachShadowRoot(host)
-		: host;
-
 	// The arm's theme overrides ride on the host theme. Assignment lands in
 	// `start()`, before the UI mounts, so the first sheet already carries it;
 	// `update()` re-renders the sheet if the arm changes later, and creates
@@ -199,38 +208,16 @@ export const mountConsentUI = function mountConsentUI(
 		renderedTheme,
 		extension?.stylesheet
 	);
-	// A nonce-based `style-src` blocks an unnonced `<style>`, even in a
-	// shadow root.
-	const createStyle = function createStyle(text: string): HTMLStyleElement {
-		const style = h('style', {}, text);
-		if (client.options.nonce) {
-			style.nonce = client.options.nonce;
-		}
-		return style;
-	};
-	let styleEl: HTMLStyleElement | null = null;
-	if (styleText) {
-		styleEl = createStyle(styleText);
-		root.append(styleEl);
-	}
-	appendStylesheetLinks(root, options, client.options.nonce);
-
-	const wrapper = h('div', { class: 'c15t-host' });
-	const themeRoot = h('div', { class: 'c15t-theme-root' });
-	wrapper.append(themeRoot);
-	root.append(wrapper);
-	container.append(host);
+	const { nonce } = client.options;
+	const {
+		banner: adoptedBanner,
+		dialog: adoptedDialog,
+		ui,
+	} = mountRoot(options, styleText, nonce, extension !== undefined);
+	const { host, releaseScheme, root, themeRoot } = ui;
+	let styleEl = ui.style;
 
 	let slotApplier = createSlotApplier(renderedTheme?.slots);
-
-	const releaseScheme = applyColorScheme(
-		wrapper,
-		host,
-		// `'system'` rather than the React provider's `.dark` mirroring: a
-		// plain HTML page has no `.dark` convention, and a page that has
-		// one opts in with `null`.
-		options.colorScheme === undefined ? 'system' : options.colorScheme
-	);
 
 	const ctx: SurfaceContext = {
 		client,
@@ -245,12 +232,22 @@ export const mountConsentUI = function mountConsentUI(
 
 	const surfaces: Surface[] = [];
 	surfaces.push(...(extension?.createSurfaces(ctx) ?? []));
+	if (adoptedDialog) {
+		// The dialog the init script opened, synced before the banner: it
+		// holds the init script's scroll lock, which it must release before
+		// a banner that locks scrolling takes this bundle's.
+		surfaces.push(adoptedDialog.adopt(client));
+	}
 	if (options.banner !== false) {
 		surfaces.push(
-			createBanner(ctx, options.banner === true ? {} : (options.banner ?? {}))
+			createBanner(
+				ctx,
+				options.banner === true ? {} : (options.banner ?? {}),
+				adoptedBanner
+			)
 		);
 	}
-	if (options.dialog !== false) {
+	if (options.dialog !== false && !adoptedDialog) {
 		surfaces.push(
 			createDialog(
 				ctx,
@@ -275,7 +272,7 @@ export const mountConsentUI = function mountConsentUI(
 			if (styleEl) {
 				styleEl.textContent = text;
 			} else if (text) {
-				styleEl = createStyle(text);
+				styleEl = createStyle(text, nonce);
 				root.prepend(styleEl);
 			}
 		}

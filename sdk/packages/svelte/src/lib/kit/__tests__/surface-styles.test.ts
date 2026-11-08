@@ -2,7 +2,7 @@ import { css as dialogCSS } from '@c15t/ui/styles/sheets/dialog';
 import { css as firstPaintCSS } from '@c15t/ui/styles/sheets/first-paint';
 import { describe, expect, test } from 'vitest';
 
-import { injectSurfaceStyles } from '../surface-styles';
+import { injectSurfaceStyles, nonceEarlyTapScript } from '../surface-styles';
 
 const page = (head: string, body = '<p>page</p>') =>
 	`<html><head>${head}</head><body>${body}</body></html>`;
@@ -75,5 +75,47 @@ describe('injectSurfaceStyles', () => {
 		expect(styleTags(html)).toEqual([
 			'<style data-c15t-styles="c15t-first-paint">',
 		]);
+	});
+
+	test("writes a banner's sheets in cascade order, without the trigger's", () => {
+		const html = injectSurfaceStyles(
+			page(
+				'<meta name="c15t-styles" content="c15t-banner c15t-button c15t-tokens">'
+			)
+		);
+
+		expect(styleTags(html)).toEqual([
+			'<style data-c15t-styles="c15t-tokens">',
+			'<style data-c15t-styles="c15t-button">',
+			'<style data-c15t-styles="c15t-banner">',
+		]);
+	});
+});
+
+describe('nonceEarlyTapScript', () => {
+	test('gives the tap script the nonce SvelteKit put on its scripts', () => {
+		const html = nonceEarlyTapScript(
+			page(
+				'',
+				'<script data-c15t-early-tap>1</script><script nonce="kit">2</script>'
+			)
+		);
+
+		expect(html).toContain(
+			'<script data-c15t-early-tap nonce="kit">1</script>'
+		);
+	});
+
+	test('leaves a page without the script, a page nonce, or with its own nonce alone', () => {
+		const plain = page('', '<script nonce="kit">2</script>');
+		const noNonce = page('', '<script data-c15t-early-tap>1</script>');
+		const own = page(
+			'',
+			'<script data-c15t-early-tap nonce="own">1</script><script nonce="kit">2</script>'
+		);
+
+		expect(nonceEarlyTapScript(plain)).toBe(plain);
+		expect(nonceEarlyTapScript(noNonce)).toBe(noNonce);
+		expect(nonceEarlyTapScript(own)).toBe(own);
 	});
 });

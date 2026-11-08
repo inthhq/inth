@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { LegalLinks as LegalLinksType } from '@c15t/core';
-	import { defaultTranslationConfig } from '@c15t/core';
 	import legalLinkStyles from '@c15t/ui/styles/components/legal-links';
 	import { resolveTranslations } from '@c15t/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { fallbackTranslations } from '../translation-defaults';
 
 	// No theme slot: the React and Vue legal links take only the stock link
 	// class, and the description's slot belongs to the description.
@@ -24,7 +24,7 @@
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
-			defaultTranslationConfig
+			fallbackTranslations(consent.state.translationConfig)
 		)
 	);
 

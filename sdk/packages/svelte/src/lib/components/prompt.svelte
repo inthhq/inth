@@ -5,15 +5,21 @@
 		PromptPosition,
 		PromptVariant,
 	} from '@c15t/core';
+	import { resolveConsentPresentation } from '@c15t/core';
 	import {
-		defaultTranslationConfig,
-		resolveConsentPresentation,
-	} from '@c15t/core';
+		EARLY_CONSENT_TAP_SCRIPT,
+		replayEarlyConsentTaps,
+	} from '@c15t/core/surface-actions';
 	import type { PolicyRight } from '@c15t/schema/types';
 	import styles from '@c15t/ui/styles/components/consent-banner';
-	import { getTextDirection, resolveTranslations } from '@c15t/ui/utils';
+	import { resolveTranslations } from '@c15t/ui/utils';
+	import { getTextDirection } from '@c15t/ui/utils/text-direction';
+	import { onMount } from 'svelte';
 
-	import { focusTrap } from '../actions/focus-trap';
+	import {
+		bannerFocusTrap as focusTrap,
+		bannerScrollLock as scrollLock,
+	} from '../actions/banner-actions';
 	// Banner uses custom portal/focus-trap/scroll-lock actions (not Ark UI's built-in)
 	// because the banner is not an Ark Dialog - it's a simpler container that
 	// conditionally acts as a dialog. The ConsentDialog uses Ark's Dialog which
@@ -21,9 +27,12 @@
 	// banner to dialog, the banner unmounts (removing its focus trap) before
 	// the dialog mounts (establishing Ark's focus trap), so they don't compete.
 	import { portal } from '../actions/portal';
-	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { FIRST_PAINT_SHEETS } from '../surface-styles';
+	import { BANNER_SHEETS } from '../surface-styles';
+	import {
+		fallbackTranslations,
+		registeredDefaultTranslations,
+	} from '../translation-defaults';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
 	import {
 		resolveComponentStyles,
@@ -101,6 +110,34 @@
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 
+	// The script that holds a tap on the server-rendered banner made before
+	// hydration. The browser renders the same markup, so hydration adopts
+	// it; a script the browser inserts never runs. `c15tHandle` gives it the
+	// page's nonce when the provider has none.
+	const earlyTapMarkup = `<script data-c15t-early-tap${
+		theme.nonce ? ` nonce="${theme.nonce.replaceAll('"', '&quot;')}"` : ''
+	}>${EARLY_CONSENT_TAP_SCRIPT}</${'script'}>`;
+
+	// From here the banner's own handlers work: stop the script and record
+	// its tap once the runtime has started, which the provider does after
+	// its children mounted.
+	onMount(() => {
+		let stop: (() => void) | undefined;
+		let active = true;
+		queueMicrotask(() => {
+			if (active) {
+				stop = replayEarlyConsentTaps(consent.kernel, {
+					categories: () => consent.state.consentCategories,
+					started: () => consent.runtime.started,
+				});
+			}
+		});
+		return () => {
+			active = false;
+			stop?.();
+		};
+	});
+
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
 	const disableAnimation = $derived(
 		localDisableAnimation ?? theme.disableAnimation ?? false
@@ -110,7 +147,7 @@
 	const translations = $derived(
 		resolveTranslations(
 			consent.state.translationConfig,
-			defaultTranslationConfig
+			fallbackTranslations(consent.state.translationConfig)
 		)
 	);
 	const textDirection = $derived(
@@ -292,7 +329,13 @@
 
 	// Resolved texts. A notice has its own copy: it informs and points at
 	// the opt-out instead of asking for permission.
-	const englishTranslations = defaultTranslationConfig.translations.en;
+	// Before `ConsentRoot`'s engine there are none: the server completed the
+	// snapshot's bundle with them.
+	const englishTranslations = $derived.by(() => {
+		// Read again when the engine attaches, which changes the snapshot.
+		void consent.snapshot;
+		return registeredDefaultTranslations()?.translations.en;
+	});
 	const resolvedTitle = $derived(
 		title ??
 			(isNotice
@@ -338,7 +381,8 @@
 	<div use:portal>
 		<!-- Inside the portal: the block must stay one node, or removing it
 		     would walk from where it was to where the portal moved it. -->
-		<SurfaceStyles sheets={FIRST_PAINT_SHEETS} />
+		<SurfaceStyles sheets={BANNER_SHEETS} />
+		{@html earlyTapMarkup}
 		{#if shouldScrollLock}
 			<Overlay
 				{styles}

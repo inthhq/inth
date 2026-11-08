@@ -142,6 +142,14 @@ describe('ConsentGate server rendering', () => {
 		expect(html).toContain('data-testid="consent-gate-placeholder"');
 		expect(html).toContain('data-testid="consent-gate-button"');
 		expect(html).not.toContain('data-testid="gate-content"');
+		// The placeholder brings the tokens, its button's rules and its own,
+		// not the banner's.
+		expect(
+			// React merges same-precedence styles into one element.
+			[...html.matchAll(/<style[^>]*data-href="(?<ids>[^"]+)"/gu)].flatMap(
+				(match) => match.groups?.ids?.split(' ') ?? []
+			)
+		).toEqual(['c15t-tokens', 'c15t-button', 'c15t-consent-gate']);
 	});
 
 	test('includes a supplied placeholder in the first HTML', () => {

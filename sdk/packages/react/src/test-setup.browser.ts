@@ -23,6 +23,23 @@ vi.mock('@c15t/core', async (importOriginal) => {
 	};
 });
 
+// Every test file starts with the storage a fresh browser has. Files run
+// in one browser context, so what one leaves behind is there for the next:
+// `persistence.clear()` and a revoke store a clear epoch in a cookie as
+// well as localStorage, and a file that clears only localStorage then
+// starts under that epoch, where the deferred commit path refuses to
+// record a choice and the engine has to.
+if (typeof document !== 'undefined') {
+	for (const pair of document.cookie.split(';')) {
+		const name = pair.split('=')[0]?.trim();
+		if (name) {
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		}
+	}
+	localStorage.clear();
+	sessionStorage.clear();
+}
+
 // Set mock GVL on window immediately (before any other code runs)
 // This is picked up by the bundled core code's fetchGVL function
 if (typeof window !== 'undefined') {

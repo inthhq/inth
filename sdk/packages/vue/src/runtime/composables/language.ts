@@ -26,7 +26,7 @@ export const useConsentLanguage = function useConsentLanguage(): Ref<
 		get: () => context.snapshot.value.overrides.language ?? null,
 		set: (value) => {
 			if (value) {
-				context.runtime.setLanguage(value);
+				context.setLanguage(value);
 			}
 		},
 	});

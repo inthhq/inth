@@ -1,13 +1,17 @@
 import * as dialog from '@c15t/ui/styles/sheets/dialog';
-import * as firstPaint from '@c15t/ui/styles/sheets/first-paint';
 
+import { BANNER_SHEETS } from './first-paint-sheets';
 import type { SurfaceStyleSheet } from './surface-styles';
 
 /**
- * What the dialog and the preference widget render: the first-paint sheet,
- * then the dialog and widget rules. Only their lazy chunks import this, so
- * the dialog rules load with the dialog's code.
+ * What the dialog and the preference widget render: the banner's sheets,
+ * which carry the button, branding, action and legal-link rules they share,
+ * then the dialog and widget rules with the variables they read. Only their
+ * lazy chunks import `dialog`, so its rules load with the dialog's code.
  *
  * @internal
  */
-export const DIALOG_SHEETS: readonly SurfaceStyleSheet[] = [firstPaint, dialog];
+export const DIALOG_SHEETS: readonly SurfaceStyleSheet[] = [
+	...BANNER_SHEETS,
+	dialog,
+];

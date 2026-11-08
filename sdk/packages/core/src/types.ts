@@ -549,6 +549,14 @@ export interface KernelConfig {
 
 	/** Initial policy snapshot token. */
 	initialPolicySnapshotToken?: string;
+	/**
+	 * Impressions a stand-in recorded before this kernel: the epoch
+	 * milliseconds a surface it painted first became visible, such as an
+	 * init script's banner. A stamped surface is not stamped again when the
+	 * kernel goes live, and no `surface:shown` is emitted for it, since the
+	 * stand-in announced that impression itself.
+	 */
+	initialSurfaceShownAt?: Partial<Record<PromptSurface, number | null>>;
 	/** Initial IAB slice. */
 	initialIab?: Partial<KernelIABState>;
 	/** Vendors declared in code, already resolved. Presentation data only. */

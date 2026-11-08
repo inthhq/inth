@@ -1,0 +1,118 @@
+{
+	"branding": "inth",
+	"hosting": "inth",
+	"location": {
+		"countryCode": "GB",
+		"regionCode": "ENG"
+	},
+	"policyResolution": {
+		"fingerprints": {
+			"choice": "a35ac43b3d435b98441c5c39ccb3879d59d813fd9185d5fa9e3cfc08385412a9",
+			"notice": "7f05073243a60d3d057f8945113f5282024b4f5bcd13933e35952534ad1cf423",
+			"policy": "8aca68633714c54fb0a96eaee313aa415ae0a3137e56764cf629a20793b2f969"
+		},
+		"matchedBy": "country",
+		"policy": {
+			"model": "opt-in",
+			"prompt": "choice",
+			"scopeMode": "permissive",
+			"actions": {
+				"allowed": ["accept", "customize", "reject"],
+				"equivalent": [["accept", "reject"]],
+				"required": ["accept", "reject"]
+			},
+			"copyRevision": null,
+			"id": "europe_opt_in",
+			"preselectedCategories": [],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"proof": {
+				"storeIp": true,
+				"storeLanguage": true,
+				"storeUserAgent": true
+			},
+			"rights": ["disclosure", "preferences"],
+			"scope": ["experience", "functionality", "marketing", "measurement"],
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 31536000000
+			}
+		},
+		"policyId": "europe_opt_in",
+		"status": "matched",
+		"version": 1
+	},
+	"translations": {
+		"language": "en",
+		"translations": {
+			"common": {
+				"acceptAll": "Accept All",
+				"acknowledge": "OK",
+				"close": "Close",
+				"customize": "Customize",
+				"dismiss": "Dismiss",
+				"rejectAll": "Reject All",
+				"save": "Save Settings",
+				"securedBy": "Secured by"
+			},
+			"consentGate": {
+				"actionButton": "Enable {category} consent",
+				"error": "This content could not be loaded.",
+				"loading": "Loading content\u2026",
+				"policyBlocked": "This content is unavailable under your region's consent policy.",
+				"title": "Accept {category} consent to view this content."
+			},
+			"consentManagerDialog": {
+				"description": "Customize your privacy settings here. You can choose which types of cookies and tracking technologies you allow.",
+				"title": "Privacy Settings",
+				"vendors": {
+					"disabledByCategory": "Turn on this category to choose vendors.",
+					"privacyPolicy": "Privacy policy",
+					"switchLabel": "Allow {vendor}",
+					"title": "Vendors ({count})"
+				}
+			},
+			"consentTypes": {
+				"experience": {
+					"description": "These cookies help us provide a better user experience and test new features.",
+					"title": "Experience"
+				},
+				"functionality": {
+					"description": "These cookies enable enhanced functionality and personalization of the website.",
+					"title": "Functionality"
+				},
+				"marketing": {
+					"description": "These cookies are used to deliver relevant advertisements and track their effectiveness.",
+					"title": "Marketing"
+				},
+				"measurement": {
+					"description": "These cookies help us understand how visitors interact with the website and improve its performance.",
+					"title": "Analytics"
+				},
+				"necessary": {
+					"description": "These cookies are essential for the website to function properly and cannot be disabled.",
+					"title": "Strictly Necessary"
+				}
+			},
+			"cookieBanner": {
+				"description": "This site uses cookies to improve your browsing experience, analyze site traffic, and show personalized content.",
+				"noticeDescription": "We use cookies and similar technologies to run this site, measure traffic, and personalize content and ads. You can opt out or manage your preferences at any time.",
+				"noticeTitle": "Privacy notice",
+				"title": "We value your privacy"
+			},
+			"legalLinks": {
+				"cookiePolicy": "Cookie Policy",
+				"privacyPolicy": "Privacy Policy",
+				"termsOfService": "Terms of Service"
+			},
+			"rights": {
+				"optOut": "Do not sell or share my data",
+				"preferences": "Manage preferences"
+			}
+		}
+	},
+	"vendors": []
+}

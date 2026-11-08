@@ -133,6 +133,54 @@ describe('deferred ConsentDialog', () => {
 		});
 	});
 
+	test('returns focus to the Customize button once the dialog closes', async () => {
+		render(DeferredDialogFixture, {
+			options: { mode: testOffline(), preloadDialog: 'intent' },
+		});
+		const customize = await waitFor(() => {
+			const button = document.querySelector(
+				'[data-testid="consent-banner-customize-button"]'
+			);
+			expect(button).toBeInTheDocument();
+			return button as HTMLElement;
+		});
+		customize.focus();
+		// The dialog's focus trap remembers the last element a `focusin`
+		// reached while its code was loaded. On a page the dialog loads on
+		// first use, the Customize button was focused before that, so the
+		// trap has nothing to return to; a stray `focusin` stands in for
+		// that here, without moving focus.
+		const stray = document.createElement('div');
+		document.body.append(stray);
+		stray.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		expect(document.activeElement).toBe(customize);
+
+		await fireEvent.click(customize);
+		const dialog = await waitFor(() => {
+			const root = document.querySelector(
+				'[data-testid="consent-dialog-root"]'
+			);
+			expect(root).toBeInTheDocument();
+			return root as HTMLElement;
+		});
+		// The banner is gone with the dialog open, and with it the opener.
+		expect(customize.isConnected).toBe(false);
+
+		await fireEvent.keyDown(dialog, { key: 'Escape' });
+
+		await waitFor(() => {
+			expect(
+				document.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeNull();
+			const again = document.querySelector(
+				'[data-testid="consent-banner-customize-button"]'
+			);
+			expect(again).toBeInTheDocument();
+			expect(document.activeElement).toBe(again);
+		});
+		stray.remove();
+	});
+
 	test('loads at once to render its own trigger', async () => {
 		render(DeferredDialogTriggerFixture, {
 			options: { mode: testOffline(), preloadDialog: 'intent' },

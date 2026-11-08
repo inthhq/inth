@@ -101,6 +101,14 @@ c15t stamps a nonce on these DOM nodes:
   entry's own `nonce`. Its content changes with each visitor's consent, so a
   hash-based policy can't allow it. If the policy blocks it, the script loader
   starts those entries after hydration instead.
+- The inline `<script>` that `ConsentRoot` renders after the page whenever it
+  has a `state` gets `options.nonce`. For a visitor the consent engine must
+  serve at once, such as a returning visitor with consent, it preloads the
+  engine's chunks that the browser recorded on an earlier visit; otherwise it
+  is empty. Its content is the same for every visitor, so a hash-based policy
+  can allow it. If the policy blocks it, the engine loads when `ConsentRoot`'s
+  first-load chunk runs. See
+  [Performance](/docs/frameworks/next/optimization#start-returning-visitors-scripts-sooner).
 - The `<style id="c15t-theme">` element that `ConsentTheme` renders with the
   theme's `--c15t-*` custom properties gets its `nonce` prop. Pass it the same
   request nonce: `<ConsentTheme theme={theme} nonce={nonce} />`.

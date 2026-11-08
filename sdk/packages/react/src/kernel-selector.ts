@@ -8,16 +8,10 @@
  * @internal
  */
 
-import type {
-	AllConsentNames,
-	ConsentKernel,
-	ConsentSnapshot,
-} from '@c15t/core';
-import { evaluateConsent } from '@c15t/core';
+import type { ConsentKernel, ConsentSnapshot } from '@c15t/core';
 import { useContext, useSyncExternalStore } from 'react';
 
 import { HydrationSnapshotContext, KernelContext } from './context';
-import { defaultTranslationConfig } from './utils/default-translation-config';
 
 /**
  * Reads the kernel from the nearest provider.
@@ -104,34 +98,3 @@ export const useGateSelector = function useGateSelector<SliceType>(
 		}
 	);
 };
-
-/**
- * Whether content gated on one category may render, with the kernel's gate
- * semantics. Server rendering and hydration read no clock; see
- * `useGateSelector`.
- *
- * @param category - Category the content needs.
- * @returns `true` while the category is permitted.
- * @internal
- */
-export const useCategoryAllowed = function useCategoryAllowed(
-	category: AllConsentNames
-): boolean {
-	return useGateSelector((snap, now) =>
-		evaluateConsent({ category }, snap, now)
-	);
-};
-
-/**
- * Language of the active translation bundle.
- *
- * @returns The bundle's language, or the default language before one loads.
- * @internal
- */
-export const useTranslationLanguage =
-	function useTranslationLanguage(): string {
-		return useKernelSelector(
-			(snap) =>
-				snap.translations?.language ?? defaultTranslationConfig.defaultLanguage
-		);
-	};

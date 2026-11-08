@@ -328,7 +328,7 @@ describe('release validation', () => {
 						expect.objectContaining({
 							env: expect.objectContaining({
 								BENCHMARK_BASE_REF: `\${{ needs.plan.outputs.base_sha }}`,
-								BENCHMARK_MODE: `\${{ inputs.mode || 'full' }}`,
+								BENCHMARK_MODE: `\${{ matrix.mode }}`,
 								BENCHMARK_PACKAGE: `\${{ matrix.package }}`,
 								BENCHMARK_SHARD: `\${{ matrix.id }}`,
 							}),
@@ -351,6 +351,14 @@ describe('release validation', () => {
 						expect.objectContaining({
 							with: expect.objectContaining({
 								ref: `\${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'canary' || github.sha }}`,
+							}),
+						}),
+						// Pushes and the nightly run carry no inputs, so they measure
+						// every consent gate target alongside the full comparison.
+						expect.objectContaining({
+							env: expect.objectContaining({
+								BENCHMARK_GATE_TARGETS: `\${{ inputs.gate_targets || 'all' }}`,
+								BENCHMARK_MODE: `\${{ inputs.mode || 'full' }}`,
 							}),
 						}),
 					]),

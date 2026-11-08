@@ -5,9 +5,11 @@
  *
  * 1. A `pre`-order middleware that resolves consent for every request into
  *    `Astro.locals.c15t`, and the `App.Locals` type for it.
- * 2. A page-level boot script that creates the one consent runtime the page
- *    shares — Astro islands never share a component tree, so the runtime is
- *    a page singleton rather than a provider.
+ * 2. A page-level boot script that starts the one consent client the page
+ *    shares — Astro islands never share a component tree, so the client is
+ *    a page singleton rather than a provider. The consent engine behind it
+ *    is a virtual module (`virtual:c15t/engine`) the client imports when
+ *    it needs it.
  * 3. In `manifest()` mode, one catch-all route under `routePrefix` that
  *    answers `init` and `manifest`, with the same semantics as the Next.js
  *    consent route.
@@ -32,6 +34,8 @@ import type {
 
 const VIRTUAL_ID = 'virtual:c15t/options';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
+const ENGINE_ID = 'virtual:c15t/engine';
+const RESOLVED_ENGINE_ID = `\0${ENGINE_ID}`;
 
 /**
  * Variables the top-level `backendURL` defaults to, in order: the c15t one,
@@ -404,9 +408,10 @@ export const resolveOptions = function resolveOptions(
 export const toClientOptions = function toClientOptions(
 	resolved: C15tResolvedOptions
 ): Partial<C15tResolvedOptions> {
+	// `inlineStyles` stays: the engine adds the first-paint rules a page
+	// left out when the dialog opens.
 	const {
 		clientEntrypoint: _clientEntrypoint,
-		inlineStyles: _inlineStyles,
 		middleware: _middleware,
 		onBuildError: _onBuildError,
 		reportSessions: _reportSessions,
@@ -524,7 +529,28 @@ const createVirtualOptionsPlugin = function createVirtualOptionsPlugin(
 	};
 };
 
-/** A runtime module factory the boot script imports and registers. */
+/**
+ * Serves `virtual:c15t/engine`, the module the page's client imports to
+ * load the consent engine (see {@link buildBootScript}).
+ *
+ * @param source - The module's source.
+ * @returns The plugin.
+ */
+const createVirtualEnginePlugin = function createVirtualEnginePlugin(
+	source: string
+): VirtualOptionsPlugin {
+	return {
+		load(id) {
+			return id === RESOLVED_ENGINE_ID ? source : undefined;
+		},
+		name: 'c15t:engine',
+		resolveId(id: string) {
+			return id === ENGINE_ID ? RESOLVED_ENGINE_ID : undefined;
+		},
+	};
+};
+
+/** A runtime module factory the engine module imports and registers. */
 interface PageRuntimeModule {
 	/** The `ConsentRuntimeModules` key it fills. */
 	name: 'connectConsentSource' | 'createNetworkBlocker' | 'createScriptLoader';
@@ -534,23 +560,24 @@ interface PageRuntimeModule {
 }
 
 /**
- * The runtime modules this site's pages mount, which the boot script
+ * The runtime modules this site's pages mount, which the engine module
  * imports and registers.
  *
  * The client mounts none of the script loader, the network blocker and a
  * `consentSource` connection by itself, so a site that configures none of
- * them never downloads them. A site that does gets them statically: loaded
- * on demand, each would arrive only after the boot script ran, and for a
- * returning visitor consented scripts and held requests would wait one
- * more round trip. These options are site-wide and known at build time, so
- * the boot chunk carries the modules, with no extra request and no URL to
- * resolve. A `clientEntrypoint` may add scripts or a `consentSource` the
- * build cannot see, so it keeps both static, and it may add blocker rules,
- * so it gets the on-demand blocker when the site configures none.
+ * them never downloads them. A site that does gets them in the engine's
+ * chunk: loaded on demand, each would arrive only after the engine ran,
+ * and for a returning visitor consented scripts and held requests would
+ * wait one more round trip. None of them is in the page's first load: the
+ * first-load shell starts the plain scripts a banner choice allows itself,
+ * and loads the engine at once when a script may run before any choice. A
+ * `clientEntrypoint` may add scripts or a `consentSource` the build cannot
+ * see, so it keeps both, and it may add blocker rules, so it gets the
+ * on-demand blocker when the site configures none.
  *
- * The boot script imports each on-demand factory on its own: an `import()`
- * of the statically imported script loader anywhere in the page's graph
- * would keep it in a chunk of its own.
+ * The engine module imports each on-demand factory on its own: an
+ * `import()` of the statically imported script loader anywhere in the
+ * page's graph would keep it in a chunk of its own.
  *
  * @param resolved - The resolved options.
  * @returns The factories to import and register.
@@ -613,58 +640,55 @@ const transportExport = function transportExport(
 	return 'lazyTransport';
 };
 
+/** The two modules {@link buildBootScript} writes. */
+export interface BootScripts {
+	/** The page script, injected at the `page` stage: the first load. */
+	page: string;
+	/** `virtual:c15t/engine`, which the page's client imports. */
+	engine: string;
+}
+
 /**
- * Build the page script the integration injects.
+ * Build the page script the integration injects, and the engine module it
+ * loads.
+ *
+ * The page script is the first load: the options, the dialog loaders and
+ * the first-load shell (`startDeferredClient`), which reads the snapshot
+ * the server rendered the banner from, answers the delegated listener and
+ * records a banner choice before the engine loads. The engine (the
+ * runtime, its transport, persistence and the runtime modules) is
+ * `virtual:c15t/engine`, behind `import()`.
  *
  * The adapter and island specifiers are written here, not in `adapter.ts`
  * or the `.astro` components, because this is the one place that knows
  * `ui` before the app's bundler runs. A static reference to all three
  * would make a Svelte-only site's build resolve `@c15t/react` and `vue`.
  * Both specifiers stay behind `import()`, so nothing loads until someone
- * opens a dialog.
+ * opens a dialog. They are registered in the page script so that a tap on
+ * Customize starts the adapter, the island and the engine together.
  *
  * @param resolved - The resolved options.
  * @param resolveEntry - Maps this package's specifiers to what Astro loads.
  * @param hasAdapter - Whether the site has a server adapter.
- * @returns The module source to inject at the `page` stage.
+ * @returns The page script and the engine module.
  */
-const buildBootScript = function buildBootScript(
+export const buildBootScript = function buildBootScript(
 	resolved: C15tResolvedOptions,
 	resolveEntry: EntryResolver,
 	hasAdapter = false
-): string {
+): BootScripts {
 	const { ui } = resolved;
 	const adapter = UI_ADAPTERS[ui];
 	const serializedUI = JSON.stringify(ui);
 	const quote = (specifier: string): string =>
 		JSON.stringify(resolveEntry(specifier));
-	const transport = transportExport(resolved, hasAdapter);
-	const lines = [
+	const client = quote('@c15t/astro/client');
+	const page = [
 		`import options from '${VIRTUAL_ID}';`,
-		`import { boot, registerDialogAdapter, registerDialogStyles, registerDialogSurface, registerIAB, registerRuntimeModules, registerTransport, ${transport} } from ${quote('@c15t/astro/client')};`,
-		`registerTransport(${transport});`,
+		`import { registerDialogAdapter, registerDialogStyles, registerDialogSurface, startDeferredClient } from ${client};`,
 		`registerDialogAdapter(${serializedUI}, async () => (await import(${quote(adapter.adapterModule)})).${adapter.adapterExport});`,
 		`registerDialogSurface(${serializedUI}, () => import(${quote(adapter.surfaceModule)}));`,
 	];
-	const runtimeModules = pageRuntimeModules(resolved);
-	if (runtimeModules.length > 0) {
-		for (const { exportName, name, specifier } of runtimeModules) {
-			const binding = exportName ? `${exportName} as ${name}` : name;
-			lines.push(`import { ${binding} } from ${quote(specifier)};`);
-		}
-		lines.push(
-			`registerRuntimeModules({ ${runtimeModules.map(({ name }) => name).join(', ')} });`
-		);
-	}
-	// Only a site that sets `iab` ships the CMP mount and the lazy factory,
-	// and `@c15t/iab` itself stays behind the factory's `import()`.
-	if (isIABConfigured(resolved.iab)) {
-		lines.push(
-			`import { createLazyIABFactory } from ${quote('@c15t/core/runtime')};`,
-			`import { mountRuntimeIAB } from ${quote('@c15t/core/runtime/on-demand')};`,
-			`registerIAB({ ...createLazyIABFactory(() => import(${quote('@c15t/iab')})), mount: mountRuntimeIAB });`
-		);
-	}
 	// `?url` makes each stylesheet an emitted file and the import a string,
 	// so none of its rules reach the page until the client links it. Pages
 	// that link `styles.css` already have the dialog's rules.
@@ -676,27 +700,56 @@ const buildBootScript = function buildBootScript(
 	if (resolved.styles !== false && dialogStyles.length > 0) {
 		const names = dialogStyles.map((_, index) => `dialogStyle${index}`);
 		dialogStyles.forEach((specifier, index) => {
-			lines.push(
+			page.push(
 				`import ${names[index]} from ${JSON.stringify(`${resolveEntry(specifier)}?url`)};`
 			);
 		});
-		lines.push(`registerDialogStyles([${names.join(', ')}]);`);
+		page.push(`registerDialogStyles([${names.join(', ')}]);`);
 	}
 	if (resolved.inlineStyles && isIABConfigured(resolved.iab)) {
-		lines.push(
+		page.push(
 			`import iabDialogStyle from ${JSON.stringify(`${resolveEntry(IAB_DIALOG_STYLESHEET)}?url`)};`,
 			"registerDialogStyles([iabDialogStyle], 'iab');"
 		);
 	}
+	const loadEngine = `() => import('${ENGINE_ID}')`;
 	if (resolved.clientEntrypoint) {
-		lines.push(
+		page.push(
 			`import clientOptions from ${JSON.stringify(resolved.clientEntrypoint)};`,
-			'boot(options, clientOptions);'
+			`startDeferredClient(options, ${loadEngine}, clientOptions);`
 		);
 	} else {
-		lines.push('boot(options);');
+		page.push(`startDeferredClient(options, ${loadEngine});`);
 	}
-	return lines.join('\n');
+
+	const transport = transportExport(resolved, hasAdapter);
+	const engine = [
+		`import { boot, registerTransport, ${transport} } from ${client};`,
+		`registerTransport(${transport});`,
+	];
+	const runtimeModules = pageRuntimeModules(resolved);
+	if (runtimeModules.length > 0) {
+		engine.push(`import { registerRuntimeModules } from ${client};`);
+		for (const { exportName, name, specifier } of runtimeModules) {
+			const binding = exportName ? `${exportName} as ${name}` : name;
+			engine.push(`import { ${binding} } from ${quote(specifier)};`);
+		}
+		engine.push(
+			`registerRuntimeModules({ ${runtimeModules.map(({ name }) => name).join(', ')} });`
+		);
+	}
+	// Only a site that sets `iab` ships the CMP mount and the lazy factory,
+	// and `@c15t/iab` itself stays behind the factory's `import()`.
+	if (isIABConfigured(resolved.iab)) {
+		engine.push(
+			`import { registerIAB } from ${client};`,
+			`import { createLazyIABFactory } from ${quote('@c15t/core/runtime')};`,
+			`import { mountRuntimeIAB } from ${quote('@c15t/core/runtime/on-demand')};`,
+			`registerIAB({ ...createLazyIABFactory(() => import(${quote('@c15t/iab')})), mount: mountRuntimeIAB });`
+		);
+	}
+	engine.push('export { boot };');
+	return { engine: engine.join('\n'), page: page.join('\n') };
 };
 
 /**
@@ -745,12 +798,18 @@ export const buildStylesImport = function buildStylesImport(
  * be a second copy, so their class maps resolve without it.
  *
  * @param resolved - The resolved integration options.
+ * @param engineSource - The `virtual:c15t/engine` module from
+ * {@link buildBootScript}. Without it the module is not served.
  * @returns Vite plugins to merge into the app config.
  */
 export const buildVitePlugins = function buildVitePlugins(
-	resolved: C15tResolvedOptions
+	resolved: C15tResolvedOptions,
+	engineSource?: string
 ): VitePluginLike[] {
 	const plugins: VitePluginLike[] = [createVirtualOptionsPlugin(resolved)];
+	if (engineSource !== undefined) {
+		plugins.push(createVirtualEnginePlugin(engineSource));
+	}
 	if (resolved.styles !== false) {
 		plugins.push(
 			createClassMapPlugin({
@@ -1035,8 +1094,13 @@ export const c15t = function c15t(
 				const { buildAstroCsp } = await import('./csp');
 				const csp = await buildAstroCsp(config, site);
 				const serialized = csp?.browser ? { ...site, csp: csp.browser } : site;
+				const bootScripts = buildBootScript(
+					site,
+					resolveEntry,
+					Boolean(config?.adapter)
+				);
 				updateConfig({
-					vite: { plugins: buildVitePlugins(serialized) },
+					vite: { plugins: buildVitePlugins(serialized, bootScripts.engine) },
 				});
 				if (csp) {
 					updateConfig(csp.update);
@@ -1049,12 +1113,9 @@ export const c15t = function c15t(
 					});
 				}
 
-				// `page` runs the boot on every page, before any island
-				// hydrates, so the runtime exists before anything asks for it.
-				injectScript(
-					'page',
-					buildBootScript(site, resolveEntry, Boolean(config?.adapter))
-				);
+				// `page` starts the client on every page, before any island
+				// hydrates, so it exists before anything asks for it.
+				injectScript('page', bootScripts.page);
 
 				// `page-ssr` is Astro's hook for page-wide CSS. The components
 				// cannot import their own: the server build resolves the class

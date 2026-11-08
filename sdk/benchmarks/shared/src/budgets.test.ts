@@ -1,9 +1,12 @@
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
+	applyGateAcceptedShift,
 	artifactBudgets,
 	astroBrowserBudgetsForScenario,
 	bundleEntryBudgets,
+	consentGateBudgets,
+	gateAcceptedShifts,
 	nextjsBrowserBudgetsForScenario,
 	nuxtBrowserBudgetsForScenario,
 	reactBrowserBudgetsForScenario,
@@ -15,18 +18,19 @@ import {
 	reactBrowserScenarios,
 } from './expected-results';
 import { evaluateBudget } from './reporting';
+import type { MetricBudgetResult } from './schema';
 import { summarizeMetric } from './utils';
 
 it.each([
 	{ limit: 5632, metric: 'initialGzip', scenario: 'provider' },
-	{ limit: 27_136, metric: 'lazyGzip', scenario: 'provider' },
-	{ limit: 17_920, metric: 'gzipSize', scenario: 'provider' },
+	{ limit: 53_760, metric: 'lazyGzip', scenario: 'provider' },
+	{ limit: 71_168, metric: 'gzipSize', scenario: 'provider' },
 	{ limit: 14_848, metric: 'initialGzip', scenario: 'ordinary-react' },
-	{ limit: 17_920, metric: 'lazyGzip', scenario: 'ordinary-react' },
-	{ limit: 17_920, metric: 'gzipSize', scenario: 'ordinary-react' },
+	{ limit: 25_600, metric: 'lazyGzip', scenario: 'ordinary-react' },
+	{ limit: 20_480, metric: 'gzipSize', scenario: 'ordinary-react' },
 	{ limit: 14_848, metric: 'initialGzip', scenario: 'iab-lazy' },
-	{ limit: 25_088, metric: 'lazyGzip', scenario: 'iab-lazy' },
-	{ limit: 25_088, metric: 'gzipSize', scenario: 'iab-lazy' },
+	{ limit: 27_136, metric: 'lazyGzip', scenario: 'iab-lazy' },
+	{ limit: 29_184, metric: 'gzipSize', scenario: 'iab-lazy' },
 	{ limit: 5632, metric: 'initialGzip', scenario: 'kernel-hosted' },
 	{ limit: 12_288, metric: 'lazyGzip', scenario: 'kernel-hosted' },
 	{ limit: 3072, metric: 'gzipSize', scenario: 'kernel-hosted' },
@@ -74,6 +78,24 @@ it('caps @c15t/core tarball growth at 79,872 bytes over the v3 tarball', () => {
 		).pass;
 	expect(grownBy(79_872)).toBe(true);
 	expect(grownBy(79_873)).toBe(false);
+});
+
+it('caps @c15t/react tarball growth at 27,648 bytes and 16% over the base tarball', () => {
+	const budget = artifactBudgets.find(
+		(entry) => entry.metric === '@c15t/react'
+	);
+	expect.assert(budget);
+	const base = summarizeMetric(budget.metric, 'bytes', [175_651]);
+	const grownBy = (bytes: number) =>
+		evaluateBudget(
+			budget,
+			summarizeMetric(budget.metric, 'bytes', [175_651 + bytes]),
+			base
+		).pass;
+	expect(grownBy(27_648)).toBe(true);
+	expect(grownBy(27_649)).toBe(false);
+	// 16% of a base this size is 28,104 bytes: the byte limit decides.
+	expect(budget.secondaryThreshold).toBe(16);
 });
 
 it('requires zero init traffic on the consent-free TanStack baseline', () => {
@@ -173,4 +195,73 @@ it('lists the saved-consent visits instead of the fresh-context repeat arm', () 
 		);
 		expect(scenarios).not.toContain('repeat-visitor');
 	}
+});
+
+describe('applyGateAcceptedShift', () => {
+	const shifts = {
+		nextjs: {
+			preferencesVisibleMs: { expectedMs: 560, untilBaseIncludes: 'abc123' },
+		},
+	};
+	const budget = consentGateBudgets('nextjs').find(
+		(entry) =>
+			entry.metric === 'preferencesVisibleMs' &&
+			entry.comparator === 'absolute-or-percent-lte'
+	);
+	expect.assert(budget);
+	const failed = (headMs: number): MetricBudgetResult =>
+		evaluateBudget(
+			budget,
+			summarizeMetric('preferencesVisibleMs', 'ms', [headMs]),
+			summarizeMetric('preferencesVisibleMs', 'ms', [416])
+		);
+	const apply = (headMs: number, baseIncludes: boolean | undefined) =>
+		applyGateAcceptedShift(
+			'nextjs',
+			budget,
+			failed(headMs),
+			headMs,
+			() => baseIncludes,
+			shifts
+		);
+
+	it('passes within the band of the accepted value while the base lacks the commit', () => {
+		expect(failed(540).pass).toBe(false);
+		expect(apply(540, false).pass).toBe(true);
+		expect(apply(620, false).pass).toBe(true);
+		expect(apply(621, false).pass).toBe(false);
+	});
+
+	it('keeps the relative band once the base contains the commit', () => {
+		expect(apply(540, true).pass).toBe(false);
+	});
+
+	it('does not apply when ancestry is unknown, or to other targets', () => {
+		expect(apply(540, undefined).pass).toBe(false);
+		expect(
+			applyGateAcceptedShift(
+				'react',
+				budget,
+				failed(540),
+				540,
+				() => false,
+				shifts
+			).pass
+		).toBe(false);
+	});
+
+	it('covers the five targets whose Customize moved, under the tap rule', () => {
+		expect(Object.keys(gateAcceptedShifts).sort()).toEqual([
+			'astro',
+			'nextjs',
+			'nuxt',
+			'script-tag',
+			'tanstack-start',
+		]);
+		for (const metrics of Object.values(gateAcceptedShifts)) {
+			for (const shift of Object.values(metrics ?? {})) {
+				expect(shift?.expectedMs).toBeLessThan(1000);
+			}
+		}
+	});
 });

@@ -27,6 +27,7 @@
 		"bench:ci": "turbo run bench:ci --filter=@c15t/core-benchmarks --filter=@c15t/next-bundle-bench --filter=@c15t/react-browser-bench --filter=@c15t/nextjs-browser-bench --filter=@c15t/nuxt-browser-bench --filter=@c15t/tanstack-start-browser-bench --filter=@c15t/script-lifecycle-bench --filter=@c15t/sveltekit-browser-bench --filter=@c15t/astro-browser-bench",
 		"bench:compare": "bunx tsx benchmarks/shared/run-compare.ts",
 		"bench:frameworks": "bunx tsx benchmarks/shared/run-frameworks.ts",
+		"bench:gate": "bun scripts/benchmark-run.ts gate",
 		"bench:important-react": "bun scripts/run-important-react-benches.ts",
 		"bench:micro": "turbo run bench --filter=@c15t/benchmarks",
 		"bench:mobile": "bun run --cwd benchmarks/mobile bench",

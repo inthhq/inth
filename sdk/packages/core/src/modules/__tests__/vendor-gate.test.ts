@@ -14,6 +14,7 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../index';
 import type { ConsentSnapshot } from '../../types';
+import { evaluateCategoryGate } from '../category-gate';
 import { evaluateConsent, isVendorDenied } from '../has';
 
 /** The slugs these tests deny, declared so the gate honors the denial. */
@@ -167,5 +168,36 @@ describe('evaluateConsent with a vendor slug', () => {
 		expect(
 			evaluateConsent({ category: 'marketing', vendor: 'meta-pixel' }, base)
 		).toBe(base.effectivePermissions.marketing);
+	});
+});
+
+describe('evaluateCategoryGate', () => {
+	test('gives evaluateConsent’s answer for every target without IAB fields', () => {
+		const snapshots = [
+			snapshotWith(['meta-pixel']),
+			snapshotWith([], { marketing: false }),
+			snapshotWith(['meta-pixel'], { marketing: false, measurement: true }),
+			createConsentKernel({
+				initialIab: { enabled: true },
+				initialPolicyResolution: matchedResolution(iabRule()),
+				initialRecords: choiceRecords({ marketing: true }),
+				now: NOW,
+			}).getSnapshot(),
+		];
+		const targets = [
+			{ category: 'marketing' as const },
+			{ category: 'marketing' as const, vendor: 'meta-pixel' },
+			{ category: 'marketing' as const, vendor: 'other' },
+			{ category: { not: 'marketing' as const }, vendor: 'meta-pixel' },
+			{ category: { or: ['measurement', 'marketing'] as const } },
+			{ category: 'necessary' as const, vendor: 'meta-pixel' },
+		];
+		for (const snap of snapshots) {
+			for (const target of targets) {
+				expect(evaluateCategoryGate(target as never, snap, NOW)).toBe(
+					evaluateConsent(target as never, snap, NOW)
+				);
+			}
+		}
 	});
 });

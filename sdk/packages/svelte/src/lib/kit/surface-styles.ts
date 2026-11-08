@@ -8,17 +8,30 @@
  * without a stylesheet `<link>` that holds the paint back. In the browser,
  * the surfaces find these elements and add no second copy.
  */
+import * as banner from '@c15t/ui/styles/sheets/banner';
+import * as button from '@c15t/ui/styles/sheets/button';
+import * as consentGate from '@c15t/ui/styles/sheets/consent-gate';
 import * as dialog from '@c15t/ui/styles/sheets/dialog';
 import * as firstPaint from '@c15t/ui/styles/sheets/first-paint';
 import * as iabDialog from '@c15t/ui/styles/sheets/iab-dialog';
 import * as iabFirstPaint from '@c15t/ui/styles/sheets/iab-first-paint';
 import * as primitives from '@c15t/ui/styles/sheets/primitives';
+import * as tokens from '@c15t/ui/styles/sheets/tokens';
+import * as trigger from '@c15t/ui/styles/sheets/trigger';
 
 import { STYLE_ATTRIBUTE, STYLES_MARKER } from '../surface-styles';
 import type { SurfaceStyleSheet } from '../surface-styles';
 
-/** Every sheet a marker can name, in cascade order. */
+/**
+ * Every sheet a marker can name, in cascade order. The per-surface sheets
+ * are parts of `first-paint`, which the IAB banner still names.
+ */
 const SHEETS: readonly SurfaceStyleSheet[] = [
+	tokens,
+	button,
+	banner,
+	trigger,
+	consentGate,
 	firstPaint,
 	dialog,
 	primitives,
@@ -84,4 +97,30 @@ export const injectSurfaceStyles = function injectSurfaceStyles(
 		styles += `<style ${STYLE_ATTRIBUTE}="${sheet.id}"${nonceAttribute}>${sheet.css}</style>`;
 	}
 	return styles ? head + styles + html.slice(headEnd) : html;
+};
+
+const EARLY_TAP_TAG = '<script data-c15t-early-tap>';
+
+/**
+ * Give the banner's early-tap script the nonce SvelteKit put on its own
+ * scripts, when the provider had no `nonce` to render it with, so a
+ * nonce-based `script-src` admits it.
+ *
+ * @param html - A chunk of the rendered page.
+ * @returns The chunk; unchanged without the script or a page nonce.
+ * @internal
+ */
+export const nonceEarlyTapScript = function nonceEarlyTapScript(
+	html: string
+): string {
+	if (!html.includes(EARLY_TAP_TAG)) {
+		return html;
+	}
+	const nonce = SCRIPT_NONCE.exec(html)?.groups?.nonce;
+	return nonce
+		? html.replaceAll(
+				EARLY_TAP_TAG,
+				`<script data-c15t-early-tap nonce="${nonce}">`
+			)
+		: html;
 };

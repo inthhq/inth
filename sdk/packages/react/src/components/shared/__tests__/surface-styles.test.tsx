@@ -10,8 +10,8 @@ import { offline } from '~/transports/offline';
 
 /**
  * The stock surfaces render the c15t rules they use, so an app that imports
- * no stylesheet still gets styled surfaces: the banner the first-paint
- * sheet, the dialog that sheet and the dialog's. React 19 hoists them into
+ * no stylesheet still gets styled surfaces: the banner the tokens, button
+ * and banner sheets, the dialog those and its own. React 19 hoists them into
  * `<head>` and renders each once. These tests share one document, whose
  * hoisted styles outlive the trees that rendered them, so the cases that
  * expect no styles run first.
@@ -58,7 +58,7 @@ describe('surface styles', () => {
 		await screen.unmount();
 	});
 
-	test('the server-rendered banner carries the first-paint sheet only', () => {
+	test('the server-rendered banner carries its own sheets only', () => {
 		const html = renderToString(
 			<ComponentFixtureProvider options={fixture()}>
 				<ConsentBanner />
@@ -67,9 +67,14 @@ describe('surface styles', () => {
 		);
 
 		expect(html).toContain('data-testid="consent-banner-root"');
-		expect(html).toMatch(
-			/<style[^>]*data-precedence="c15t"[^>]*data-href="c15t-first-paint"/u
-		);
+		// React merges same-precedence styles into one element and lists
+		// their ids in `data-href`.
+		const ids = [
+			...html.matchAll(/<style[^>]*data-href="(?<ids>[^"]+)"/gu),
+		].flatMap((match) => match.groups?.ids?.split(' ') ?? []);
+		expect(ids).toEqual(['c15t-tokens', 'c15t-button', 'c15t-banner']);
+		// Not the trigger's, the ConsentGate's or the dialog's rules.
+		expect(html).not.toContain('c15t-first-paint');
 		expect(html).not.toContain('c15t-dialog');
 		// The rules reach the HTML as written, not entity-escaped.
 		expect(html).not.toMatch(/<style[^>]*>[^<]*&gt;/u);
@@ -84,14 +89,18 @@ describe('surface styles', () => {
 			</ComponentFixtureProvider>
 		);
 
-		expect(html).toMatch(
-			/<style data-c15t-styles="c15t-first-paint" nonce="test-nonce">/u
-		);
+		expect(
+			[
+				...html.matchAll(
+					/<style data-c15t-styles="(?<id>[^"]+)" nonce="test-nonce">/gu
+				),
+			].map((match) => match.groups?.id)
+		).toEqual(['c15t-tokens', 'c15t-button', 'c15t-banner']);
 		expect(html).not.toContain('data-precedence="c15t"');
 		expect(html).not.toMatch(/<style[^>]*>[^<]*&gt;/u);
 	});
 
-	test('the banner adds the first-paint sheet, the dialog adds its own after it', async () => {
+	test('the banner adds its sheets, the dialog adds its own after them', async () => {
 		const banner = await render(
 			<ComponentFixtureProvider options={fixture()}>
 				<ConsentBanner />
@@ -101,7 +110,7 @@ describe('surface styles', () => {
 			.element(banner.getByTestId('consent-banner-root'))
 			.toBeInTheDocument();
 
-		expect(c15tStyles()).toEqual(['c15t-first-paint']);
+		expect(c15tStyles()).toEqual(['c15t-tokens', 'c15t-button', 'c15t-banner']);
 		await banner.unmount();
 
 		// The app's own token rules win wherever the hoisted sheet lands:
@@ -130,7 +139,12 @@ describe('surface styles', () => {
 			.element(dialog.getByTestId('consent-dialog-root'))
 			.toBeInTheDocument();
 
-		expect(c15tStyles()).toEqual(['c15t-first-paint', 'c15t-dialog']);
+		expect(c15tStyles()).toEqual([
+			'c15t-tokens',
+			'c15t-button',
+			'c15t-banner',
+			'c15t-dialog',
+		]);
 		const card = document.querySelector<HTMLElement>(
 			'[data-testid="consent-dialog-root"]'
 		);

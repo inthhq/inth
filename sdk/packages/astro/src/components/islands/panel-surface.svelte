@@ -10,10 +10,27 @@
 	has to be owned outside the component tree. The provider borrows it and
 	leaves `start()`/`dispose()` to the owner.
 -->
+<script
+	lang="ts"
+	module
+>
+	// Svelte's own `mount` and `unmount`, so the adapter mounts this island
+	// with the island's download and fetches no separate chunk for them.
+	export { mount, unmount } from 'svelte';
+</script>
+
 <script lang="ts">
 	import type { LegalLinks } from '@c15t/core';
 	import type { ConsentRuntime } from '@c15t/core/runtime';
-	import { ConsentDialog, ConsentProvider } from '@c15t/svelte';
+	// The dialog itself, not the root's `ConsentDialog`, which would import
+	// it only once the dialog shows: this island is already loaded on
+	// demand, so the dialog arrives in the island's own download. The
+	// provider renders the runtime it is handed and carries no code to
+	// create one, so the island downloads none of the consent engine.
+	import {
+		ConsentDialogPanel,
+		ConsentRuntimeProvider,
+	} from '@c15t/svelte/dialog-panel';
 	import type { Component } from 'svelte';
 
 	// The injected stylesheet covers the banner and the dialog. The Svelte
@@ -51,7 +68,7 @@
 	});
 </script>
 
-<ConsentProvider
+<ConsentRuntimeProvider
 	{runtime}
 	options={options as never}
 >
@@ -60,6 +77,6 @@
 			<IABDialog {tab} />
 		{/if}
 	{:else}
-		<ConsentDialog {legalLinks} />
+		<ConsentDialogPanel {legalLinks} />
 	{/if}
-</ConsentProvider>
+</ConsentRuntimeProvider>

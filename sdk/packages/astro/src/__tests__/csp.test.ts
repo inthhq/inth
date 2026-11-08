@@ -110,7 +110,7 @@ describe.each(surfaces)('%s', (_name, component, options) => {
 		// The browser only moves marked elements onto a ClientRouter page's
 		// live nonce, so every inline script carries a c15t marker.
 		for (const tag of tags.filter((value) => value.startsWith('<script'))) {
-			expect(tag).toMatch(/data-c15t-(?:config|inline)/u);
+			expect(tag).toMatch(/data-c15t-(?:config|boot|inline)/u);
 		}
 	});
 

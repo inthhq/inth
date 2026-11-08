@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 import {
+	breakEntryImportCycles,
 	preloadBrowserResolver,
 	preloadConsentBanner,
 	stopPrefetchingConsentChunks,
@@ -239,5 +240,35 @@ describe('preloadBrowserResolver', () => {
 		preloadBrowserResolver(manifest, '/app', isConsentFile);
 
 		expect(manifest[entry]?.imports).toEqual([resolver]);
+	});
+});
+
+describe('breakEntryImportCycles', () => {
+	const entry = 'node_modules/nuxt/dist/app/entry.js';
+	// Rolldown's manifest for the c15t chunk group lists the entry among the
+	// group's imports although the entry imports the group statically.
+	const cyclicManifest = (): Record<string, ClientManifestChunk> => ({
+		'_c15t.js': { imports: ['_vue.js', entry] },
+		'_vue.js': {},
+		[c15t('vue/dist/runtime/components/prompt.vue')]: {
+			imports: ['_vue.js', '_c15t.js', entry],
+			isDynamicEntry: true,
+		},
+		[entry]: { imports: ['_vue.js', '_c15t.js'], isEntry: true },
+	});
+
+	test('drops the entry from chunks the entry imports', () => {
+		const manifest = cyclicManifest();
+		breakEntryImportCycles(manifest);
+		expect(manifest['_c15t.js']?.imports).toEqual(['_vue.js']);
+		expect(manifest[entry]?.imports).toEqual(['_vue.js', '_c15t.js']);
+	});
+
+	test('keeps the entry in chunks that load on demand', () => {
+		const manifest = cyclicManifest();
+		breakEntryImportCycles(manifest);
+		expect(
+			manifest[c15t('vue/dist/runtime/components/prompt.vue')]?.imports
+		).toContain(entry);
 	});
 });

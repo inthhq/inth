@@ -1,4 +1,4 @@
-import * as firstPaint from '@c15t/ui/styles/sheets/first-paint';
+import * as firstPaint from '@c15t/ui/styles/sheets/first-paint-deferred';
 import * as iabFirstPaint from '@c15t/ui/styles/sheets/iab-first-paint';
 
 import type { SurfaceStyleSheet } from './surface-styles';

@@ -33,9 +33,16 @@ A returning visitor who already chose sees no banner. Attributes from the
 [attribute reference](/docs/frameworks/html/attributes-and-api), such as
 `data-language`, still work on this tag.
 
-`c15t.js` keeps the stock UI and consent behavior while excluding local
-policy presets, local resolution and manifest transport code. `/init`
-returns the policy resolved for this visitor.
+`c15t.js` is small. It starts `/init`, shows the banner when `/init`
+answers, and records an Accept or Reject tapped on it. It then loads
+`c15t.hosted.js`, the consent engine and the rest of the UI, after the
+page's `fetchpriority="high"` images have loaded, at the visitor's first
+tap, key press or scroll, or after 10 seconds, whichever comes first. You
+add only the one tag; `c15t.js` loads `c15t.hosted.js` from the same place.
+See [the two script files](/docs/frameworks/html/attributes-and-api#how-c15tjs-loads-c15thostedjs).
+
+Neither file includes local policy presets, local resolution or manifest
+transport code. `/init` returns the policy resolved for this visitor.
 
 ### Where to paste it
 
@@ -137,6 +144,11 @@ If no banner appears, the policy for your location may not ask for one. See
   For local mode, use `dist/c15t.local.js` without `data-backend-url`.
   Replace `<version>` with the exact version listed on
   [npm](https://www.npmjs.com/package/@c15t/browser?activeTab=versions).
+  `c15t.js` loads `c15t.hosted.js`, `c15t.commit.js`, `c15t.records.js` and
+  `c15t.dialog.js` from the same folder. If you copy `c15t.js` to your own
+  server, copy those four next to it. `c15t.dialog.js` is recommended, not
+  required: without it, a Customize tap waits for `c15t.hosted.js`, which
+  opens its own copy of the dialog.
   A URL without a version loads the newest release, so a new release can
   change your banner without a deploy.
 - **Manifest mode.** Use the `@c15t/browser` ES module for manifest mode
