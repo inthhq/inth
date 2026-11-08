@@ -1,3 +1,13 @@
+## @inth/cli-linux-x64@0.0.9
+
+### Set a project's minimum c15t version
+
+`inth consent config-update --project <project-id> --minimum-c15t-major 3` makes the project refuse requests from c15t 2.x sites. Those sites stop loading the banner until they update to 3.x, so check `c15tV2HoursLast7Days` in `inth consent config-get` first. `--minimum-c15t-major 2` serves 2.x and 3.x again. Choosing 3 is rolling out and the command returns the server's refusal until it reaches your organization.
+
+### Send approved audit policies for the API to check
+
+`inth website create` and `inth website update` now check only that `approvedAuditPolicy` is a JSON object or `null`, then send it unchanged. The Inth API checks the policy's fields and returns any error. Send back the policy you read from `inth website get`, or leave it out to keep the current one.
+
 ## @inth/cli-linux-x64@0.0.8
 
 ### Review vendors seen on a project
