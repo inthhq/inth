@@ -92,7 +92,10 @@ packages, so they can pin Next.js 15 next to the workspace's Next.js 16.
 c15t survives preflight, that a utility on the banner root beats c15t's own
 padding (important on Tailwind 3, bare on Tailwind 4), that `dark` on `<html>`
 turns on Tailwind's `dark:` variant and, outside the shadow root, c15t's
-dark tokens, and that the dialog is styled. The fixtures keep their setup in `#region docs:` blocks for the docs.
+dark tokens, and that the dialog is styled. It takes the same banner reading
+twice: once before the consent engine arrives, holding every script from
+navigation on and releasing only what the banner itself needs, and once settled.
+The fixtures keep their setup in `#region docs:` blocks for the docs.
 
 ```sh
 bun run --cwd benchmarks/mobile bench:ci

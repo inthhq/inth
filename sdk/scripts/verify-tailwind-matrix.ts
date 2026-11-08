@@ -15,7 +15,23 @@
  * - A `dark` class on `<html>` turns on Tailwind's `dark:` variant for that
  *   utility and, where the fixture says c15t follows it, c15t's dark tokens.
  *   The script tag's shadow root follows its own `colorScheme` option.
+ *   This is checked on the early frame below and again once settled.
  * - Opening the dialog loads its stylesheet, which is styled too.
+ * - The banner the page paints before the consent engine loads passes the
+ *   same checks. Every script is held from navigation on and released one
+ *   at a time, in request order, only until the banner card is visible, so
+ *   a page that renders its banner from a chunk gets that chunk and
+ *   nothing after it. A deferred stylesheet whose text is still loading
+ *   keeps its surface at opacity 0 (`data-c15t-pending`), so the release
+ *   goes on until no sheet is pending. The reading is taken with the rest
+ *   still held. Short of input or their 10 s fallback, the adapters start
+ *   the engine at the window `load` event at the earliest, after every
+ *   script the page itself asked for, so the engine's chunks queue behind
+ *   the banner's and stay held unless the banner needs a later one. Each
+ *   cell reports `document.readyState` at the reading, how many scripts
+ *   were released, the file names still held, and whether the served HTML
+ *   already carried the banner. A cell with nothing held proves nothing
+ *   about the engine: all the banner needed came with it.
  *
  * Build first: `bun run compat:styles:build`.
  *
@@ -28,7 +44,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { chromium } from 'playwright';
-import type { Browser, Locator, Page } from 'playwright';
+import type { Browser, Locator, Page, Route } from 'playwright';
 
 import { TAILWIND_MATRIX_FIXTURES } from '../benchmarks/tailwind-matrix/fixtures';
 import type {
@@ -118,49 +134,53 @@ const hasBorder = (styles: Styles) =>
 const byTestId = (page: Page, id: string) =>
 	page.locator(`[data-testid="${id}"]`).first();
 
-/**
- * Checks one page and returns the failed expectations, empty on success.
- */
-const checkPage = async function checkPage(
-	page: Page,
-	url: string,
-	options: TailwindMatrixPage
-): Promise<string[]> {
-	const problems: string[] = [];
-	const expect = (condition: boolean, message: string) => {
-		if (!condition) {
-			problems.push(message);
-		}
-	};
+/** Script requests held, in order, until the early reading is done. */
+interface ScriptHold {
+	active: boolean;
+	held: Route[];
+}
 
-	await page.goto(url, { waitUntil: 'networkidle' });
+const SCRIPT_URL = /\.m?js(?:\?|$)/u;
 
-	const probe = await readStyles(byTestId(page, 'tailwind-probe'));
-	expect(
-		!TRANSPARENT.has(probe.backgroundColor),
-		'Tailwind utilities are missing from the page (probe has no background)'
-	);
+interface BannerStyles {
+	accept: Styles;
+	card: Styles;
+	footer: Styles;
+	header: Styles;
+	root: Styles;
+}
 
-	const card = byTestId(page, 'consent-banner-card');
-	await card.waitFor({ timeout: 15_000 });
-	const [root, cardStyles, header, footer, accept] = await Promise.all([
+const readBanner = async function readBanner(
+	page: Page
+): Promise<BannerStyles> {
+	const [root, card, header, footer, accept] = await Promise.all([
 		readStyles(byTestId(page, 'consent-banner-root')),
-		readStyles(card),
+		readStyles(byTestId(page, 'consent-banner-card')),
 		readStyles(byTestId(page, 'consent-banner-header')),
 		readStyles(byTestId(page, 'consent-banner-footer')),
 		readStyles(byTestId(page, 'consent-banner-accept-button')),
 	]);
+	return { accept, card, footer, header, root };
+};
+
+/** The preflight and slot checks, for one reading of the banner. */
+const checkBanner = function checkBanner(
+	banner: BannerStyles,
+	options: TailwindMatrixPage,
+	expect: (condition: boolean, message: string) => void
+) {
+	const { accept, card, footer, header, root } = banner;
 	expect(
-		!TRANSPARENT.has(cardStyles.backgroundColor),
-		`banner card lost its background (${cardStyles.backgroundColor})`
+		!TRANSPARENT.has(card.backgroundColor),
+		`banner card lost its background (${card.backgroundColor})`
 	);
 	expect(
-		hasBorder(cardStyles),
-		`banner card lost its border (${cardStyles.borderTopStyle} ${cardStyles.borderTopWidth} ${cardStyles.borderTopColor})`
+		hasBorder(card),
+		`banner card lost its border (${card.borderTopStyle} ${card.borderTopWidth} ${card.borderTopColor})`
 	);
-	expect(hasPadding(header), `banner header lost its padding`);
-	expect(hasPadding(footer), `banner footer lost its padding`);
-	expect(hasPadding(accept), `accept button lost its padding`);
+	expect(hasPadding(header), 'banner header lost its padding');
+	expect(hasPadding(footer), 'banner footer lost its padding');
+	expect(hasPadding(accept), 'accept button lost its padding');
 	expect(
 		!TRANSPARENT.has(accept.backgroundColor),
 		`accept button lost its background (${accept.backgroundColor})`
@@ -171,33 +191,120 @@ const checkPage = async function checkPage(
 			`utility on the banner root lost to c15t: padding ${root.padding}, expected ${SLOT_PADDING.light}`
 		);
 	}
+};
 
-	if (options.slots || options.darkTokens) {
-		const title = byTestId(page, 'consent-banner-title');
-		const lightTitle = await readStyles(title);
-		await page.evaluate(() => {
-			document.documentElement.classList.add('dark');
-		});
-		const [darkRoot, darkTitle] = await Promise.all([
-			readStyles(byTestId(page, 'consent-banner-root')),
-			readStyles(title),
-		]);
-		if (options.darkTokens) {
-			expect(
-				darkTitle.color !== lightTitle.color,
-				`c15t ignored the dark class: title color stayed ${darkTitle.color}`
-			);
-		}
-		if (options.slots) {
-			expect(
-				darkRoot.padding === SLOT_PADDING.dark,
-				`dark: utility on the banner root did not apply: padding ${darkRoot.padding}, expected ${SLOT_PADDING.dark}`
-			);
-		}
-		await page.evaluate(() => {
-			document.documentElement.classList.remove('dark');
-		});
+/**
+ * Puts `dark` on `<html>`, checks the `dark:` utility and c15t's dark
+ * tokens the page declares, and takes the class off again.
+ */
+const checkDark = async function checkDark(
+	page: Page,
+	options: TailwindMatrixPage,
+	expect: (condition: boolean, message: string) => void
+): Promise<void> {
+	if (!(options.slots || options.darkTokens)) {
+		return;
 	}
+	const title = byTestId(page, 'consent-banner-title');
+	const lightTitle = await readStyles(title);
+	await page.evaluate(() => {
+		document.documentElement.classList.add('dark');
+	});
+	const [darkRoot, darkTitle] = await Promise.all([
+		readStyles(byTestId(page, 'consent-banner-root')),
+		readStyles(title),
+	]);
+	if (options.darkTokens) {
+		expect(
+			darkTitle.color !== lightTitle.color,
+			`c15t ignored the dark class: title color stayed ${darkTitle.color}`
+		);
+	}
+	if (options.slots) {
+		expect(
+			darkRoot.padding === SLOT_PADDING.dark,
+			`dark: utility on the banner root did not apply: padding ${darkRoot.padding}, expected ${SLOT_PADDING.dark}`
+		);
+	}
+	await page.evaluate(() => {
+		document.documentElement.classList.remove('dark');
+	});
+};
+
+/**
+ * Checks one page and returns the failed expectations, empty on success.
+ */
+const checkPage = async function checkPage(
+	page: Page,
+	url: string,
+	options: TailwindMatrixPage,
+	hold: ScriptHold
+): Promise<{ note: string; problems: string[] }> {
+	const problems: string[] = [];
+	const expect = (condition: boolean, message: string) => {
+		if (!condition) {
+			problems.push(message);
+		}
+	};
+
+	// Hold every script from navigation on. The adapters start the engine
+	// from the window `load` event at the earliest, and in-page `load`
+	// listeners run before Playwright reports the event, so a hold armed at
+	// `load` can miss the engine's request. A banner that a chunk renders
+	// needs that chunk: release held scripts one at a time, oldest first,
+	// until the card is visible, then read with the rest held.
+	hold.active = true;
+	await page.goto(url, { waitUntil: 'commit' });
+
+	const card = byTestId(page, 'consent-banner-card');
+	const pendingSheet = page.locator('style[data-c15t-pending]');
+	const deadline = Date.now() + 15_000;
+	let released = 0;
+	// oxlint-disable-next-line no-await-in-loop -- Polls the page between releases.
+	while (!(await card.isVisible()) || (await pendingSheet.count()) > 0) {
+		if (Date.now() > deadline) {
+			// oxlint-disable-next-line no-await-in-loop -- Only on the way out.
+			const pending = await pendingSheet.count();
+			throw new Error(
+				`banner card did not appear within 15 s (${released} script(s) released, ${hold.held.length} held, ${pending} sheet(s) pending)`
+			);
+		}
+		const next = hold.held.shift();
+		if (next) {
+			released += 1;
+			// oxlint-disable-next-line no-await-in-loop -- One release per turn.
+			await next.continue();
+		}
+		// oxlint-disable-next-line no-await-in-loop -- Gives the released script a turn.
+		await page.waitForTimeout(25);
+	}
+	const early = await readBanner(page);
+	const readyState = await page.evaluate(() => document.readyState);
+	const served = await (await fetch(url)).text();
+	const serverBanner = served.includes('data-testid="consent-banner-card"');
+	const heldNames = hold.held.map(
+		(route) => new URL(route.request().url()).pathname.split('/').pop() ?? ''
+	);
+	const note = `early read at readyState ${readyState} after releasing ${released} script(s), ${heldNames.length} still held${heldNames.length ? ` (${heldNames.join(', ')})` : ''}; banner ${serverBanner ? 'in' : 'not in'} the served HTML`;
+	const expectEarly = (condition: boolean, message: string) =>
+		expect(condition, `before the engine: ${message}`);
+	checkBanner(early, options, expectEarly);
+	await checkDark(page, options, expectEarly);
+
+	hold.active = false;
+	await Promise.all(hold.held.splice(0).map((route) => route.continue()));
+	await page.waitForLoadState('networkidle');
+
+	const probe = await readStyles(byTestId(page, 'tailwind-probe'));
+	expect(
+		!TRANSPARENT.has(probe.backgroundColor),
+		'Tailwind utilities are missing from the page (probe has no background)'
+	);
+
+	const settled = await readBanner(page);
+	checkBanner(settled, options, expect);
+
+	await checkDark(page, options, expect);
 
 	await byTestId(page, 'consent-banner-customize-button').click();
 	const dialogCard = byTestId(page, 'consent-dialog-card');
@@ -213,7 +320,7 @@ const checkPage = async function checkPage(
 		problems.push(`dialog did not open: ${String(error).split('\n')[0]}`);
 	}
 
-	return problems;
+	return { note, problems };
 };
 
 interface Result {
@@ -221,6 +328,7 @@ interface Result {
 	fixture: string;
 	page: string;
 	problems: string[];
+	note?: string;
 }
 
 const checkFixture = async function checkFixture(
@@ -256,19 +364,30 @@ const checkFixture = async function checkFixture(
 				}
 				await route.fulfill({ json: {} });
 			});
+			const hold: ScriptHold = { active: false, held: [] };
+			// oxlint-disable-next-line no-await-in-loop -- Registered before navigation.
+			await context.route(SCRIPT_URL, (route) => {
+				if (hold.active) {
+					hold.held.push(route);
+					return;
+				}
+				void route.continue();
+			});
 			// oxlint-disable-next-line no-await-in-loop -- Pages share the fixture server.
 			const page = await context.newPage();
 			const errors: string[] = [];
 			page.on('pageerror', (error) => errors.push(error.message));
 			try {
 				// oxlint-disable-next-line no-await-in-loop -- Sequential browser checks.
-				const problems = await checkPage(
+				const { note, problems } = await checkPage(
 					page,
 					`${server.url}${options.path}`,
-					options
+					options,
+					hold
 				);
 				results.push({
 					fixture: fixture.id,
+					note,
 					page: label(options),
 					problems:
 						problems.length > 0 && errors.length > 0
@@ -316,7 +435,9 @@ const main = async function main() {
 				results.push(...fixtureResults);
 				for (const result of fixtureResults) {
 					const status = result.problems.length === 0 ? 'ok' : 'FAIL';
-					console.log(`${status} Tailwind ${version.slice(1)} ${result.page}`);
+					console.log(
+						`${status} Tailwind ${version.slice(1)} ${result.page}${result.note ? ` (${result.note})` : ''}`
+					);
 					for (const problem of result.problems) {
 						console.log(`     ${problem}`);
 					}

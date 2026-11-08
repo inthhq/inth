@@ -112,7 +112,9 @@ def main():
     wrapper = fixture.parent / 'gradle/wrapper'
     shutil.copytree(wrapper, android / 'gradle/wrapper')
     properties = android / 'gradle/wrapper/gradle-wrapper.properties'
-    properties.write_text(properties.read_text().replace('gradle-9.4.1-bin', 'gradle-9.3.1-bin'))
+    # GRADLE_USER_HOME below is fresh every run, so this distribution is always
+    # downloaded; the wrapper's 10 s default has timed out on GitHub's runners.
+    properties.write_text(properties.read_text().replace('gradle-9.4.1-bin', 'gradle-9.3.1-bin').replace('networkTimeout=10000', 'networkTimeout=120000'))
     shutil.copy(fixture.parent / 'gradlew', android / 'gradlew')
     env = dict(os.environ, GRADLE_USER_HOME=str(output / 'gradle-home'), BUN_INSTALL_CACHE_DIR=str(output / 'bun-cache'))
     # An inherited source-build flag can never change this consumer's dependency source.
