@@ -833,34 +833,39 @@ describe("named Dashboard writes", () => {
       ])
     ).toThrow();
   });
-  it("rejects unknown nested approved audit policy fields", () => {
-    expect(() =>
+  it("sends an approved audit policy unchanged for the API to validate", () => {
+    const approvedAuditPolicy = {
+      cookies: [{ extra: true, name: "a" }],
+      revision: "v1",
+      version: 1,
+    };
+    const request = buildResourceRequest(
       parseArguments([
         "website",
         "create",
         "--data",
-        JSON.stringify({
-          ...websiteInput,
-          approvedAuditPolicy: {
-            approvalReference: "review-1",
-            approvedAt: "2026-10-29T00:00:00Z",
-            cookies: [
-              {
-                extra: true,
-                name: "a",
-                ownerHost: "example.com",
-                partitionKey: null,
-              },
-            ],
-            origin: "https://example.com",
-            revision: "v1",
-            version: 1,
-          },
-        }),
+        JSON.stringify({ ...websiteInput, approvedAuditPolicy }),
         "--yes",
       ])
-    ).toThrow();
+    );
+    expect(JSON.parse(request.body ?? "{}").approvedAuditPolicy).toEqual(
+      approvedAuditPolicy
+    );
   });
+  it.each(["review-1", ["review-1"], 1])(
+    "rejects an approved audit policy that is not an object: %j",
+    (approvedAuditPolicy) => {
+      expect(() =>
+        parseArguments([
+          "website",
+          "create",
+          "--data",
+          JSON.stringify({ ...websiteInput, approvedAuditPolicy }),
+          "--yes",
+        ])
+      ).toThrow();
+    }
+  );
   it("rejects incomplete quote prices and invalid renewal dates", () => {
     for (const quote of [
       { ...billingQuote, total: "1200" },
