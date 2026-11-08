@@ -22,6 +22,7 @@
  */
 
 import type { ConsentSnapshot, SaveResult, SaveUISource } from '@c15t/core';
+import type { Script } from '@c15t/core/modules/script-loader';
 import type { ConsentRuntime } from '@c15t/core/runtime/provider';
 import { showConsentSurface } from '@c15t/core/surface-actions';
 import {
@@ -46,12 +47,18 @@ import type {
 	RuntimeConsentConfig,
 	VueConsentKernelContext,
 } from '../kernel';
+import { withRegisteredScripts } from '../registered-scripts';
+import type { RegisteredScripts } from '../registered-scripts';
 import type {
 	CompleteCommitInput,
 	CompleteCommitResult,
 	DeferredCommitted,
 } from './commit';
-import { startPlainScripts } from './scripts';
+import {
+	isRunnableNow,
+	removePlainScripts,
+	startPlainScripts,
+} from './scripts';
 import { createStandInKernel, pendingIsInert } from './stand-in';
 import {
 	BANNER_ROOT,
@@ -123,6 +130,18 @@ export const createDeferredContext = function createDeferredContext(
 	const requested = new Promise<void>((resolve) => {
 		requestEngine = resolve;
 	});
+	/** Scripts components registered before the engine (`registerScripts`). */
+	const registered = new Map<symbol, readonly Script[]>();
+	/** The app's config with the registered scripts in it. */
+	const configWithScripts = (): RuntimeConsentConfig =>
+		withRegisteredScripts(options.config(), registered.values());
+	/** The scripts still wanted besides registration `token`'s. */
+	const othersScripts = (token: symbol): Script[] => [
+		...(options.config().scripts ?? []),
+		...[...registered]
+			.filter(([key]) => key !== token)
+			.flatMap(([, scripts]) => scripts),
+	];
 	const hooks: {
 		early?: (
 			name: string,
@@ -168,6 +187,8 @@ export const createDeferredContext = function createDeferredContext(
 		}
 	};
 
+	/** The engine's handle for each set registered before it attached. */
+	const handovers = new Map<symbol, RegisteredScripts>();
 	const engineReady = (async () => {
 		await requested;
 		let create: DeferredEngineFactory;
@@ -185,6 +206,11 @@ export const createDeferredContext = function createDeferredContext(
 		}
 		const context = create(committed);
 		engine = context;
+		// The scripts components registered on the stand-in move to the
+		// engine's loader; later registrations go there directly.
+		for (const [token, scripts] of registered) {
+			handovers.set(token, context.registerScripts(scripts));
+		}
 		if (mounted) {
 			context.start();
 		}
@@ -293,7 +319,7 @@ export const createDeferredContext = function createDeferredContext(
 		if (!plan) {
 			return null;
 		}
-		const config = options.config();
+		const config = configWithScripts();
 		startPlainScripts(config.scripts ?? [], plan.snapshot, config.nonce);
 		return handle.commit(plan.snapshot, []) ? plan : null;
 	};
@@ -320,7 +346,7 @@ export const createDeferredContext = function createDeferredContext(
 				return await (options.completeCommit ?? loadCompleteCommit)({
 					actionAt,
 					choice,
-					config: options.config(),
+					config: configWithScripts(),
 					handle,
 					instant,
 					uiSource,
@@ -493,6 +519,60 @@ export const createDeferredContext = function createDeferredContext(
 		ownsKernel: true,
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Settles once attached.
 		ready: handle.ready.then(() => undefined),
+		registerScripts(scripts) {
+			if (engine) {
+				return engine.registerScripts(scripts);
+			}
+			const token = Symbol('registered scripts');
+			registered.set(token, scripts);
+			// A script that may run now would otherwise wait for the engine's
+			// trigger: ask for the engine, as a configured script does.
+			const wake = (): void => {
+				const current = handle.kernel.getSnapshot();
+				const own = registered.get(token) ?? [];
+				if (own.some((script) => isRunnableNow(script, current))) {
+					requestEngine();
+				}
+			};
+			wake();
+			return {
+				dispose: () => {
+					const own = registered.get(token) ?? [];
+					registered.delete(token);
+					const handed = handovers.get(token);
+					handovers.delete(token);
+					if (handed) {
+						handed.dispose();
+						return;
+					}
+					// A commit before the engine may have inserted these; no
+					// loader has adopted them yet, so nothing else removes them.
+					removePlainScripts(own, othersScripts(token));
+				},
+				update: (next) => {
+					const previous = registered.get(token);
+					if (!previous) {
+						return;
+					}
+					registered.set(token, next);
+					const handed = handovers.get(token);
+					if (handed) {
+						handed.update(next);
+						return;
+					}
+					// A commit may have started entries the new set drops; no
+					// loader has them yet, so remove them here. The new set is a
+					// survivor too: an entry that wants the same file under a new
+					// id keeps the element, which the loader adopts.
+					const kept = new Set(next.map((script) => script.id));
+					removePlainScripts(
+						previous.filter((script) => !kept.has(script.id)),
+						[...next, ...othersScripts(token)]
+					);
+					wake();
+				},
+			};
+		},
 		get runtime(): ConsentRuntime | undefined {
 			return engineRef.value?.runtime;
 		},

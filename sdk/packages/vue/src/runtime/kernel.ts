@@ -32,7 +32,10 @@ import type {
 } from '@c15t/core/modules/network-blocker';
 import { createPersistence } from '@c15t/core/modules/persistence';
 import type { StorageConfig } from '@c15t/core/modules/persistence';
-import type { Script } from '@c15t/core/modules/script-loader';
+import type {
+	Script,
+	ScriptLoaderHandle,
+} from '@c15t/core/modules/script-loader';
 import { createWindowDebug } from '@c15t/core/modules/window-debug';
 import {
 	createLazyIABFactory,
@@ -68,10 +71,14 @@ import {
 } from './display-data';
 import type { VueConsentDisplayData } from './display-data';
 import { pickAllowedInitHeaders } from './init-headers';
+import { withRegisteredScripts } from './registered-scripts';
+import type { RegisteredScripts } from './registered-scripts';
 
 export type { VueConsentDisplayData } from './display-data';
 export { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers';
 export { provideVueConsentContext } from './provide';
+export type { RegisteredScripts } from './registered-scripts';
+export { withRegisteredScripts } from './registered-scripts';
 
 /**
  * What the stock banner reads while it waits to hydrate under the Nuxt
@@ -165,6 +172,16 @@ export interface VueConsentKernelContext {
 	 * follow it. Storage, transport and experiment options are read once.
 	 */
 	update: (config: RuntimeConsentConfig) => void;
+	/**
+	 * Add scripts a component decides at runtime to the app's script
+	 * loader, next to the config's `scripts`. Returns a handle that swaps
+	 * or removes them. Under the Nuxt plugin's deferred context a script
+	 * that may run now loads the engine at once, and a banner choice made
+	 * before the engine starts the plain entries it allows. A borrowed
+	 * runtime's scripts belong to its host, so the context runs one loader
+	 * of its own on that runtime's kernel for the registered scripts.
+	 */
+	registerScripts: (scripts: readonly Script[]) => RegisteredScripts;
 	dispose: () => void;
 	/**
 	 * Set by the Nuxt plugin's deferred context only: what the stock banner
@@ -591,6 +608,87 @@ export const createVueConsentKernelContext =
 		const storedConsent = computed(() => snapshot.value.explicitChoice);
 
 		let active = true;
+		// Scripts components register. An owned runtime's loader takes them
+		// with the config's own through `update()`. A borrowed runtime's
+		// scripts are its host's, so the context runs its own loader on that
+		// runtime's kernel, created when the first set registers.
+		// Keyed per registration, not per array: two components may pass one.
+		const registered = new Map<symbol, readonly Script[]>();
+		let current = config;
+		let borrowedLoader: ScriptLoaderHandle | null = null;
+		let borrowedLoading: Promise<void> | null = null;
+		const registeredScripts = (): Script[] => [...registered.values()].flat();
+		const applyScripts = (): void => {
+			if (owned) {
+				void (async () => {
+					try {
+						await owned.update({
+							...toRuntimeOptions(
+								withRegisteredScripts(current, registered.values())
+							),
+							createIAB,
+						});
+					} catch {
+						// The update chunk failed to load: the previous options stay.
+					}
+				})();
+				return;
+			}
+			if (borrowedLoader) {
+				borrowedLoader.updateScripts(registeredScripts());
+				return;
+			}
+			if (borrowedLoading || typeof window === 'undefined') {
+				return;
+			}
+			borrowedLoading = (async () => {
+				try {
+					const { createScriptLoader } =
+						await import('@c15t/core/modules/script-loader');
+					// The host starts its runtime: persistence and privacy signals
+					// apply then. A loader on the kernel before that would read a
+					// snapshot a stored denial has not reached.
+					// Nothing announces a start: `runtime.subscribe` reports IAB
+					// changes only, and a runtime turned off starts without a
+					// commit. An enabled start commits to the kernel (hydration,
+					// `init:applied`), which wakes the check at once; a timer
+					// covers the rest.
+					if (!runtime.started) {
+						await new Promise<void>((resolve) => {
+							let stops: (() => void)[] = [];
+							const check = () => {
+								if (!(runtime.started || !active)) {
+									return;
+								}
+								for (const stop of stops.splice(0)) {
+									stop();
+								}
+								resolve();
+							};
+							const timer = setInterval(check, 50);
+							stops = [
+								kernel.subscribe(check),
+								kernel.events.on('init:applied', check),
+								() => clearInterval(timer),
+							];
+							check();
+						});
+					}
+					if (!active) {
+						return;
+					}
+					borrowedLoader = createScriptLoader({
+						kernel,
+						nonce: current.nonce,
+						scripts: registeredScripts(),
+					});
+				} catch {
+					// The chunk failed to load, or a script's own check threw:
+					// the next registration or update tries again.
+					borrowedLoading = null;
+				}
+			})();
+		};
 
 		return {
 			activeUI,
@@ -599,6 +697,8 @@ export const createVueConsentKernelContext =
 				active = false;
 				unsubscribeIab();
 				unsubscribe();
+				borrowedLoader?.dispose();
+				borrowedLoader = null;
 				// A borrowed runtime belongs to its host.
 				owned?.dispose();
 			},
@@ -614,6 +714,25 @@ export const createVueConsentKernelContext =
 			kernel,
 			ownsKernel: Boolean(owned),
 			ready: Promise.resolve(),
+			registerScripts(scripts) {
+				const token = Symbol('registered scripts');
+				registered.set(token, scripts);
+				applyScripts();
+				return {
+					dispose: () => {
+						if (registered.delete(token)) {
+							applyScripts();
+						}
+					},
+					update: (next) => {
+						if (!registered.has(token)) {
+							return;
+						}
+						registered.set(token, next);
+						applyScripts();
+					},
+				};
+			},
 			runtime,
 			setLanguage(language) {
 				runtime.setLanguage(language);
@@ -635,13 +754,8 @@ export const createVueConsentKernelContext =
 			},
 			storedConsent,
 			update(next) {
-				void (async () => {
-					try {
-						await owned?.update({ ...toRuntimeOptions(next), createIAB });
-					} catch {
-						// The update chunk failed to load: the previous options stay.
-					}
-				})();
+				current = next;
+				applyScripts();
 			},
 		};
 	};

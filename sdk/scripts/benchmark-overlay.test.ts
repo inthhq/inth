@@ -162,3 +162,57 @@ it.each([
 		}
 	}
 );
+
+it('gives the base copy of a fixture the older form of an API the head introduced', () => {
+	const root = mkdtempSync(join(tmpdir(), 'c15t-overlay-api-'));
+	try {
+		const gate = 'benchmarks/nuxt-browser-bench/app/pages/gate/index.vue';
+		const headPage = [
+			"import { onMounted, watch } from 'vue';",
+			'',
+			"import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';",
+			'',
+			'const snapshot = useConsentSnapshot();',
+			'// The scripts come from the page URL, so they register in the browser, as',
+			'// the other gate pages do with useScriptLoader.',
+			'useScriptLoader(gateScripts());',
+			'onMounted(() => {',
+			'\tupdateGateBridge(snapshot.value);',
+			'});',
+			'',
+		].join('\n');
+		for (const arm of ['base', 'head']) {
+			const cwd = join(root, arm);
+			mkdirSync(dirname(join(cwd, gate)), { recursive: true });
+			execFileSync('git', ['init', '--quiet'], { cwd });
+			writeFileSync(join(cwd, gate), headPage);
+			execFileSync('git', ['add', '.'], { cwd });
+		}
+		const head = join(root, 'head');
+		const composable = 'packages/vue/src/runtime/composables/script-loader.ts';
+		mkdirSync(dirname(join(head, composable)), { recursive: true });
+		writeFileSync(join(head, composable), 'export const useScriptLoader = 1;');
+
+		// The base lacks the composable: its page uses core's loader.
+		const base = join(root, 'base');
+		replaceBenchmarkFixtures(head, base);
+		const rewritten = readFileSync(join(base, gate), 'utf8');
+		expect(rewritten).toContain(
+			'createScriptLoader({ kernel, scripts: gateScripts() })'
+		);
+		expect(rewritten).not.toContain('useScriptLoader');
+
+		// A base that has it keeps the head's page as written.
+		const newer = join(root, 'newer');
+		mkdirSync(dirname(join(newer, gate)), { recursive: true });
+		mkdirSync(dirname(join(newer, composable)), { recursive: true });
+		execFileSync('git', ['init', '--quiet'], { cwd: newer });
+		writeFileSync(join(newer, gate), 'old');
+		writeFileSync(join(newer, composable), 'export const useScriptLoader = 1;');
+		execFileSync('git', ['add', '.'], { cwd: newer });
+		replaceBenchmarkFixtures(head, newer);
+		expect(readFileSync(join(newer, gate), 'utf8')).toBe(headPage);
+	} finally {
+		rmSync(root, { force: true, recursive: true });
+	}
+});

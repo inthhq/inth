@@ -61,3 +61,29 @@ describe('client boundary', () => {
 		}
 	});
 });
+
+describe('first-load boundary', () => {
+	/**
+	 * The Nuxt plugin's deferred context (`runtime/deferred/*`) is the page's
+	 * first-load chunk; `runtime/kernel.ts` is the engine. A value import of
+	 * the engine from there puts it back on the first load. (A stacked
+	 * `useScriptLoader` change did so and cost 138 ms of LCP on the gate.)
+	 */
+	test('no deferred module imports the engine by value', () => {
+		const deferredDir = join(runtimeDir, 'deferred');
+		const offenders = (readdirSync(deferredDir) as string[])
+			.filter((file) => file.endsWith('.ts') && file !== 'engine.ts')
+			.flatMap((file) => {
+				const source = readFileSync(join(deferredDir, file), 'utf8');
+				const valueImports = [
+					...source.matchAll(
+						/^import\s+(?!type\b)[^;]*?\bfrom\s+['"](?<specifier>[^'"]+)['"]/gmu
+					),
+				].map((match) => match.groups?.specifier);
+				return valueImports
+					.filter((specifier) => specifier === '../kernel')
+					.map((specifier) => `${file} -> ${specifier}`);
+			});
+		expect(offenders).toEqual([]);
+	});
+});

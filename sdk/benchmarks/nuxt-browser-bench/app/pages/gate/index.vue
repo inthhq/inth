@@ -4,7 +4,7 @@
  * on this bench's local backend. The module's build-time `manifest()` mode
  * resolves each visitor on the server (the route plugin leaves `/gate` on
  * it), app.vue mounts the static `<ConsentRoot />`, and this page registers
- * the gated scripts with core's script loader and bridges the snapshot.
+ * the gated scripts with the module's loader and bridges the snapshot.
  */
 import {
 	gatePageCSS,
@@ -12,24 +12,22 @@ import {
 	gateScripts,
 	updateGateBridge,
 } from '@c15t/benchmarking/consent-gate-page';
-import { createScriptLoader } from '@c15t/core/modules/script-loader';
-import { onMounted, onUnmounted, watch } from 'vue';
+import { onMounted, watch } from 'vue';
 
-import { useConsentKernel, useConsentSnapshot } from '#c15t/composables';
+import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';
 
-const kernel = useConsentKernel();
 const snapshot = useConsentSnapshot();
-let loader: ReturnType<typeof createScriptLoader> | undefined;
+// The scripts come from the page URL, so they register in the browser, as
+// the other gate pages do with useScriptLoader.
+useScriptLoader(gateScripts());
 onMounted(() => {
 	updateGateBridge(snapshot.value);
-	loader = createScriptLoader({ kernel, scripts: gateScripts() });
 });
 watch(snapshot, (value) => {
 	if (import.meta.client) {
 		updateGateBridge(value);
 	}
 });
-onUnmounted(() => loader?.dispose());
 </script>
 
 <template>

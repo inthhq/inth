@@ -32,6 +32,26 @@ reach the browser as JSON, which drops the functions inside each script.
 Every vendor guide under [integrations](/docs/integrations/overview) gives the
 helper and options for that vendor.
 
+## Register scripts from a component
+
+`app.config.ts` covers scripts known when the app starts. For one a component
+decides at runtime, such as a tenant's tag or a script one route needs, call
+`useScriptLoader()`, which the module auto-imports. It adds the scripts to
+the app's one loader, so they never load twice, and removes them when the
+component unmounts. Pass a ref or getter and a change reconciles.
+
+<include src="../../shared/examples/nuxt/script-loader.mdx" />
+
+The returned handle has `updateScripts(next)` to swap them and `dispose()` to
+remove them before the component unmounts. Withdrawing consent reloads the
+page as it does for configured scripts.
+
+Under the module's deferred first load (see
+[rendering](/docs/frameworks/nuxt/rendering)), a registered script that may
+run now loads the consent engine at once, and an Accept tapped before the
+engine starts the plain entries it allows without waiting for it, as
+`app.config.ts` scripts do.
+
 ## Embeds and other requests
 
 Scripts cover vendor code c15t loads for you. For the rest:

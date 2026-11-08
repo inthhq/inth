@@ -14,14 +14,15 @@ import {
 } from '@c15t/schema/types';
 import { translations } from '@c15t/translations/en';
 import { mount } from '@vue/test-utils';
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
-import { defineComponent, h } from 'vue';
+import { defineComponent, h, nextTick, ref } from 'vue';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { useEventDispatcher } from '../runtime/composables/event-dispatcher';
 import type { EventDispatcher } from '../runtime/composables/event-dispatcher';
 import { useConsentLanguage } from '../runtime/composables/language';
+import { useScriptLoader } from '../runtime/composables/script-loader';
 import type { CompleteCommitInput } from '../runtime/deferred/commit';
 import { completeCommit } from '../runtime/deferred/commit';
 import { createDeferredContext } from '../runtime/deferred/shell';
@@ -506,4 +507,231 @@ test('an event tracked before the engine loads is delivered once it attaches', a
 		'checkout',
 	]);
 	wrapper.unmount();
+});
+
+describe('useScriptLoader before the engine', () => {
+	const provide = (context: VueConsentKernelContext) => ({
+		global: {
+			provide: {
+				[symbolKernelContext as symbol]: context,
+				[symbolKernel as symbol]: context.kernel,
+				[symbolSnapshot as symbol]: context.snapshot,
+			},
+		},
+	});
+
+	test('a gated script waits, an Accept starts it with the choice, and the engine takes it over', async () => {
+		renderBanner();
+		const harness = createHarness();
+		const { context } = harness;
+		context.start();
+		const wrapper = mount(
+			defineComponent({
+				setup() {
+					useScriptLoader([
+						{
+							category: 'measurement',
+							id: 'late-measurement',
+							src: '/late.js',
+						},
+					]);
+					return () => h('div');
+				},
+			}),
+			provide(context)
+		);
+		// Nothing may run yet: the engine is not asked for.
+		expect(harness.loadEngine).not.toHaveBeenCalled();
+		expect(document.querySelector('script[src="/late.js"]')).toBeNull();
+
+		tap('accept');
+		// Same task: the registered plain script starts with the choice.
+		expect(document.querySelector('script[src="/late.js"]')).not.toBeNull();
+		await settle();
+		harness.releaseEngine();
+		await vi.waitFor(() => expect(harness.engine()).toBeDefined());
+		await settle();
+
+		// The engine's loader adopted it: one element, not two.
+		expect(document.querySelectorAll('script[src="/late.js"]')).toHaveLength(1);
+		const ids = () =>
+			harness.engine()?.runtime?.scripts.map((script) => script.id);
+		expect(ids()).toContain('late-measurement');
+		wrapper.unmount();
+		await vi.waitFor(() => expect(ids()).not.toContain('late-measurement'));
+	});
+
+	test('a registration disposed before the engine removes the script an Accept started', async () => {
+		renderBanner();
+		const harness = createHarness();
+		const { context } = harness;
+		context.start();
+		const wrapper = mount(
+			defineComponent({
+				setup() {
+					useScriptLoader([
+						{ category: 'measurement', id: 'route-only', src: '/route.js' },
+					]);
+					return () => h('div');
+				},
+			}),
+			provide(context)
+		);
+		tap('accept');
+		expect(document.querySelector('script[src="/route.js"]')).not.toBeNull();
+
+		// The route leaves while the engine chunk is still loading.
+		wrapper.unmount();
+		expect(document.querySelector('script[src="/route.js"]')).toBeNull();
+
+		await settle();
+		harness.releaseEngine();
+		await vi.waitFor(() => expect(harness.engine()).toBeDefined());
+		await settle();
+		expect(document.querySelector('script[src="/route.js"]')).toBeNull();
+		expect(
+			harness.engine()?.runtime?.scripts.map((script) => script.id)
+		).not.toContain('route-only');
+	});
+
+	test('a registration changed before the engine removes what the old set started, unless another owner wants it', async () => {
+		renderBanner();
+		const harness = createHarness({
+			scripts: [{ category: 'measurement', id: 'shared', src: '/shared.js' }],
+		});
+		const { context } = harness;
+		context.start();
+		const scripts = ref<Script[]>([
+			{ category: 'measurement', id: 'a', src: '/a.js' },
+			// The config has this resource too: the page still wants it.
+			{
+				category: 'measurement',
+				id: 'shared-again',
+				resourceKey: 'shared',
+				src: '/shared.js',
+			},
+		]);
+		const wrapper = mount(
+			defineComponent({
+				setup() {
+					useScriptLoader(scripts);
+					return () => h('div');
+				},
+			}),
+			provide(context)
+		);
+		tap('accept');
+		expect(document.querySelectorAll('script[src="/a.js"]')).toHaveLength(1);
+		expect(document.querySelectorAll('script[src="/shared.js"]')).toHaveLength(
+			1
+		);
+
+		scripts.value = [{ category: 'measurement', id: 'b', src: '/b.js' }];
+		await nextTick();
+		// `a` is gone; the shared resource stays for the configured script.
+		expect(document.querySelector('script[src="/a.js"]')).toBeNull();
+		expect(document.querySelectorAll('script[src="/shared.js"]')).toHaveLength(
+			1
+		);
+		wrapper.unmount();
+	});
+
+	test('a disposed script whose resource a survivor wants from another URL is removed for it', () => {
+		renderBanner();
+		const harness = createHarness();
+		const { context } = harness;
+		context.start();
+		// Registered first: its element occupies the key at the tap. The
+		// second wants the same resource from another file.
+		const First = defineComponent({
+			setup() {
+				useScriptLoader([
+					{
+						category: 'measurement',
+						id: 'tag-v1',
+						resourceKey: 'tag',
+						src: '/tag-v1.js',
+					},
+				]);
+				return () => h('div');
+			},
+		});
+		const Second = defineComponent({
+			setup() {
+				useScriptLoader([
+					{
+						category: 'measurement',
+						id: 'tag-v2',
+						resourceKey: 'tag',
+						src: '/tag-v2.js',
+					},
+					// The same file, but the loader runs it with a callback: it
+					// never adopts an element the commit inserted.
+					{
+						category: 'measurement',
+						id: 'tag-v1-observed',
+						onLoad: () => undefined,
+						resourceKey: 'tag',
+						src: '/tag-v1.js',
+					},
+					// The same file, plain, but second for its key: the loader
+					// mounts the first survivor, so this one keeps nothing.
+					{
+						category: 'measurement',
+						id: 'tag-v1-again',
+						resourceKey: 'tag',
+						src: '/tag-v1.js',
+					},
+				]);
+				return () => h('div');
+			},
+		});
+		const wrapper = mount(
+			defineComponent({
+				props: { first: { default: true, type: Boolean } },
+				setup: (props) => () => [props.first ? h(First) : null, h(Second)],
+			}),
+			provide(context)
+		);
+		tap('accept');
+		const started = () =>
+			[
+				...document.querySelectorAll<HTMLScriptElement>('script[src*="/tag-"]'),
+			].map((element) => element.getAttribute('src'));
+		expect(started()).toEqual(['/tag-v1.js']);
+
+		// The first leaves; the second wants another file, so nothing is kept
+		// for it to adopt and the loader mounts its own once the engine is in.
+		void wrapper.setProps({ first: false });
+		return nextTick().then(() => {
+			expect(started()).toEqual([]);
+			wrapper.unmount();
+		});
+	});
+
+	test('a script that may run now loads the engine at once', async () => {
+		const harness = createHarness();
+		const { context } = harness;
+		context.start();
+		const wrapper = mount(
+			defineComponent({
+				setup() {
+					useScriptLoader([
+						{
+							alwaysLoad: true,
+							category: 'necessary',
+							id: 'ops',
+							src: '/ops.js',
+						},
+					]);
+					return () => h('div');
+				},
+			}),
+			provide(context)
+		);
+		// The request resolves a promise; the load runs a task later.
+		await settle();
+		expect(harness.loadEngine).toHaveBeenCalledOnce();
+		wrapper.unmount();
+	});
 });

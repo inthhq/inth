@@ -96,6 +96,53 @@ const preserveBaseStyleImports = function preserveBaseStyleImports(
 	}
 };
 
+/**
+ * Fixture code that uses an API the head introduced. The base product lacks
+ * it, so the base copy of the fixture takes the older form, which both
+ * products support, while the head copy measures the new one.
+ */
+const API_FALLBACKS = [
+	{
+		// `useScriptLoader()` for Vue and Nuxt. Before it, a page registered
+		// runtime-decided scripts with core's loader directly.
+		automaticEntry: 'packages/vue/src/runtime/composables/script-loader.ts',
+		owner: 'benchmarks/nuxt-browser-bench/app/pages/gate/index.vue',
+		replace: [
+			[
+				"import { onMounted, watch } from 'vue';",
+				"import { createScriptLoader } from '@c15t/core/modules/script-loader';\nimport { onMounted, onUnmounted, watch } from 'vue';",
+			],
+			[
+				"import { useConsentSnapshot, useScriptLoader } from '#c15t/composables';",
+				"import { useConsentKernel, useConsentSnapshot } from '#c15t/composables';",
+			],
+			[
+				'const snapshot = useConsentSnapshot();\n// The scripts come from the page URL, so they register in the browser, as\n// the other gate pages do with useScriptLoader.\nuseScriptLoader(gateScripts());\nonMounted(() => {\n\tupdateGateBridge(snapshot.value);\n});',
+				'const kernel = useConsentKernel();\nconst snapshot = useConsentSnapshot();\nlet loader: ReturnType<typeof createScriptLoader> | undefined;\nonMounted(() => {\n\tupdateGateBridge(snapshot.value);\n\tloader = createScriptLoader({ kernel, scripts: gateScripts() });\n});\nonUnmounted(() => loader?.dispose());',
+			],
+		],
+	},
+] as const;
+
+const applyApiFallbacks = function applyApiFallbacks(base: string) {
+	for (const { automaticEntry, owner, replace } of API_FALLBACKS) {
+		const path = join(base, owner);
+		if (existsSync(join(base, automaticEntry)) || !existsSync(path)) {
+			continue;
+		}
+		let source = readFileSync(path, 'utf8');
+		for (const [from, to] of replace) {
+			if (!source.includes(from)) {
+				throw new Error(
+					`Benchmark fixture ${owner} no longer contains the text its base fallback rewrites: ${from.split('\n')[0]}`
+				);
+			}
+			source = source.replace(from, to);
+		}
+		writeFileSync(path, source);
+	}
+};
+
 /** Use identical fixtures, including deletions, while retaining each revision's product. */
 export const replaceBenchmarkFixtures = function replaceBenchmarkFixtures(
 	source: string,
@@ -185,4 +232,5 @@ export const replaceBenchmarkFixtures = function replaceBenchmarkFixtures(
 		}
 	}
 	preserveBaseStyleImports(base);
+	applyApiFallbacks(base);
 };

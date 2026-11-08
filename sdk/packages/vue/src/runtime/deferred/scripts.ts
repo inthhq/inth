@@ -120,6 +120,61 @@ type StartedElement = HTMLScriptElement & {
  * @param nonce - The app's CSP nonce.
  * @internal
  */
+/**
+ * Removes the elements {@link startPlainScripts} inserted for `scripts`,
+ * for a registration disposed or changed before a loader adopted them. An
+ * element a loader owns, or one another script inserted, stays. So does
+ * one the first plain script in `kept` for that resource would insert the
+ * same way (the same `src`), as the loader mounts the first entry for a
+ * key; a survivor with another `src`, or one the loader runs differently
+ * (callbacks, a vendor), gets its own from the loader. A script that asks
+ * to `persistAfterDispose` keeps its element, as it would under the
+ * loader.
+ *
+ * @param scripts - The scripts whose elements to remove.
+ * @param kept - The scripts the page still wants.
+ * @internal
+ */
+export const removePlainScripts = function removePlainScripts(
+	scripts: readonly Script[],
+	kept: readonly Script[] = []
+): void {
+	const host = window as unknown as {
+		__c15tStarted?: Record<
+			string,
+			StartedElement & { __c15tAdopted?: boolean }
+		>;
+	};
+	const started = host.__c15tStarted;
+	if (!started) {
+		return;
+	}
+	// The first plain survivor for a key is the one the loader mounts.
+	const keptSrcByKey = new Map<string, string | undefined>();
+	for (const script of kept) {
+		const key = script.resourceKey ?? script.id;
+		if (isPlainScript(script) && !keptSrcByKey.has(key)) {
+			keptSrcByKey.set(key, script.src);
+		}
+	}
+	for (const script of scripts) {
+		const key = script.resourceKey ?? script.id;
+		const element = started[key];
+		if (
+			!element ||
+			element.__c15tAdopted ||
+			element.__c15tScript !== script.id ||
+			script.persistAfterDispose === true ||
+			keptSrcByKey.get(key) === script.src
+		) {
+			continue;
+		}
+		element.remove();
+		// oxlint-disable-next-line typescript/no-dynamic-delete -- The registry is a plain object shared with core's loader, keyed by resource.
+		delete started[key];
+	}
+};
+
 export const startPlainScripts = function startPlainScripts(
 	scripts: readonly Script[],
 	snapshot: ConsentSnapshot,
