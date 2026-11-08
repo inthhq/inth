@@ -189,7 +189,7 @@ Read preconditions from `consent lifecycle-get`. The CLI never fetches substitut
 
 ## How do I configure website monitoring?
 
-`website create --data-file target.json --yes` and `website update <targetId> --data-file target.json --yes` take complete target configuration. Specify `projectId`, `origin`, `crawlMode`, `maxDepth`, `maxPages`, `monitoringEnabled`, `policyUrls` and `scheduleCadence`. Update also requires `enabled`. Optional fields include `includeUrls`, `regionProfiles` and a strictly validated `approvedAuditPolicy`.
+`website create --data-file target.json --yes` and `website update <targetId> --data-file target.json --yes` take complete target configuration. Specify `projectId`, `origin`, `crawlMode`, `maxDepth`, `maxPages`, `monitoringEnabled`, `policyUrls` and `scheduleCadence`. Update also requires `enabled`. Optional fields include `includeUrls`, `regionProfiles` and `approvedAuditPolicy`. The CLI checks that the policy is a JSON object or `null` and the API checks its fields.
 
 Monitoring and cadence are explicit. An omitted `approvedAuditPolicy` retains it on update; `null` clears it. Review the approved policy and recurring monitoring effects before confirming. `website search-console-sync --organization <id>` syncs the person's linked Search Console properties. Starting an audit still requires an explicit `--scope free_preview|full_audit`.
 
