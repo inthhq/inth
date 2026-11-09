@@ -186,7 +186,7 @@ internal object VendorListScopeFixtures {
 
 	/** The optional halves of `gvlVendorSchema`, so "the survivor kept its own fields" is one check. */
 	val OPTIONAL_VENDOR_FIELDS: List<String> = listOf(
-		"dataCategories",
+		"dataDeclaration",
 		"dataRetention",
 		"deletedDate",
 		"deviceStorageDisclosureUrl",

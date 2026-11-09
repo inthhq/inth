@@ -781,8 +781,8 @@ class C15tKernel(
 				if (!listIsUsable()) return@mutate refusedCommit("iab-list-stale", "Refresh the vendor list before saving")
 				val choices =
 					when (intent) {
-						is CommitIntent.All -> IabAuthority.accepting(gvl, configuration).copy(
-							adTechProviderConsents = currentAdditionalConsentList()?.providers?.map { it.id })
+						is CommitIntent.All -> IabAuthority.accepting(
+							gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id })
 						is CommitIntent.Necessary -> IabChoices()
 						is CommitIntent.Iab -> intent.choices
 						is CommitIntent.Explicit ->

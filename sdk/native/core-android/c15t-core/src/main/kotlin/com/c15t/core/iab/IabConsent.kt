@@ -219,21 +219,26 @@ internal object IabAuthority {
 			.detached()
 	}
 
-	fun accepting(gvl: GlobalVendorList, c: IabConfiguration): IabChoices {
+	/**
+	 * Accept All, as `applyBlanket` in `packages/iab/src/index.ts`: a signal is positive only for
+	 * what some vendor declares on that legal basis once publisher restrictions apply (TCF Policies
+	 * 5(3), 5(6) and 5(8)). Listed ad tech providers add purposes 1, 3 and 4. Publisher purposes are
+	 * never shown, so they stay unset, as on the web.
+	 */
+	fun accepting(gvl: GlobalVendorList, c: IabConfiguration, adTechProviders: List<Long>? = null): IabChoices {
+		val disclosures = gvl.vendors.filterValues { it.deletedDate.isNullOrEmpty() }.toSortedMap()
+			.map { (id, vendor) -> id to c.disclosure(id, vendor) }
+		val consent = disclosures.flatMap { it.second.consentPurposes }.toSet() +
+			if (adTechProviders.isNullOrEmpty()) emptySet() else adTechProviderPurposeIds
+		val interest = disclosures.flatMap { it.second.legitimateInterestPurposes }.toSet()
 		val purposes = gvl.purposes.keys.filter { it in 1..24 }.sorted()
-		val li = purposes.filterNot { it in neverLI }
-		val vendors = gvl.toTcVendorList().vendors.filterNot { it.isDeleted }.map { it.id }.sorted()
-		val custom = (1..c.numCustomPurposes.coerceIn(0, 63)).toList()
 		return IabChoices(
-			purposeConsents = purposes,
-			purposeLegitimateInterests = li,
-			vendorConsents = vendors,
-			vendorLegitimateInterests = vendors,
-			specialFeatureOptIns = gvl.specialFeatures.orEmpty().keys.sorted(),
-			publisherConsents = purposes,
-			publisherLegitimateInterests = li,
-			publisherCustomConsents = custom,
-			publisherCustomLegitimateInterests = custom,
+			adTechProviderConsents = adTechProviders,
+			purposeConsents = purposes.filter { it in consent },
+			purposeLegitimateInterests = purposes.filter { it in interest },
+			vendorConsents = disclosures.filter { it.second.consentPurposes.isNotEmpty() }.map { it.first },
+			vendorLegitimateInterests = disclosures.filter { it.second.legitimateInterestPurposes.isNotEmpty() }.map { it.first },
+			specialFeatureOptIns = gvl.declaredSpecialFeatureIds(),
 		)
 	}
 }

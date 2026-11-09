@@ -2,14 +2,14 @@
 	"cases": [
 		{
 			"choices": {
-				"publisherConsents": [1, 2, 7],
-				"publisherCustomConsents": [1, 2],
-				"publisherCustomLegitimateInterests": [1, 2],
-				"publisherLegitimateInterests": [2, 7],
-				"purposeConsents": [1, 2, 7],
+				"publisherConsents": [],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [1, 2],
 				"purposeLegitimateInterests": [2, 7],
 				"purposeObjections": [],
-				"specialFeatureOptIns": [1],
+				"specialFeatureOptIns": [],
 				"vendorConsents": [1],
 				"vendorLegitimateInterests": [1, 2],
 				"vendorObjections": []
@@ -24,7 +24,7 @@
 				"publisherRestrictions": []
 			},
 			"id": "accept",
-			"tcString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA"
+			"tcString": "CQX48QAQX48QAA1AHBENAqFgAMAAAEIAAAwIAAoABMAA.IABM.YAAAAAAAAQAA"
 		},
 		{
 			"choices": {
@@ -151,6 +151,32 @@
 			},
 			"id": "restriction-ranges",
 			"tcString": "CQX48QAQX48QAA1AHBENAqFgAAAAAAAAAAwIAAAAAABBAAMAAQACHAAQABAA.IABM.YAAAAAAAAQAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [1, 2, 7],
+				"publisherCustomConsents": [1, 2],
+				"publisherCustomLegitimateInterests": [1, 2],
+				"publisherLegitimateInterests": [2, 7],
+				"purposeConsents": [1, 2, 7],
+				"purposeLegitimateInterests": [2, 7],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [1],
+				"vendorConsents": [1],
+				"vendorLegitimateInterests": [1, 2],
+				"vendorObjections": []
+			},
+			"configuration": {
+				"cmpId": 53,
+				"cmpVersion": 7,
+				"consentLanguage": "EN",
+				"consentScreen": 1,
+				"numCustomPurposes": 2,
+				"publisherCountryCode": "GB",
+				"publisherRestrictions": []
+			},
+			"id": "publisher-purposes",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA"
 		}
 	],
 	"gvl": {

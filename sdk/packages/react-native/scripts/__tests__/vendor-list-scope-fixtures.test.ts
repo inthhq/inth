@@ -39,7 +39,7 @@ const KIND = 'vendor-list-scope';
 
 /** The optional halves of `gvlVendorSchema`, which a rebuilt entry is likeliest to lose. */
 const OPTIONAL_VENDOR_FIELDS = [
-	'dataCategories',
+	'dataDeclaration',
 	'dataRetention',
 	'deletedDate',
 	'deviceStorageDisclosureUrl',

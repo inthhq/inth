@@ -49,8 +49,11 @@ class DeviceCompleteStorageBusTest {
 		assertFalse(first.isIabAllowed(1, 3, IabLegalBasis.CONSENT))
 		assertEquals("1", prefs.getString(TcStorageBusKeys.DISCLOSED_VENDORS, null))
 		assertEquals("0", prefs.getString(TcStorageBusKeys.PUBLISHER_RESTRICTIONS + "3", null))
-		assertEquals("11", prefs.getString(TcStorageBusKeys.PUBLISHER_CUSTOM_PURPOSES_CONSENTS, null))
-		assertEquals("11", prefs.getString(TcStorageBusKeys.PUBLISHER_CUSTOM_PURPOSES_LEGITIMATE_INTERESTS, null))
+		// Accept All grants no publisher purposes, as the web's applyBlanket does;
+		// see commit-cases-accept in native/protocol/iab/storage-bus-cases.json.
+		assertEquals("000000000000000000000000", prefs.getString(TcStorageBusKeys.PUBLISHER_CONSENT, null))
+		assertEquals("00", prefs.getString(TcStorageBusKeys.PUBLISHER_CUSTOM_PURPOSES_CONSENTS, null))
+		assertEquals("00", prefs.getString(TcStorageBusKeys.PUBLISHER_CUSTOM_PURPOSES_LEGITIMATE_INTERESTS, null))
 		assertEquals(decoded.core.cmpId, prefs.getInt(TcStorageBusKeys.CMP_SDK_ID, -1))
 		assertEquals(saved.tcString, prefs.getString(TcStorageBusKeys.TC_STRING, null))
 		val before = prefs.all.filterKeys { it in TcStorageBusKeys.ALL_NAMES }

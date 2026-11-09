@@ -56,8 +56,11 @@ with `concurrent-change`, leaving the current decision intact. The category map
 records the app categories this action confirmed; it is separate from IAB purpose
 and vendor permissions.
 
-Under an IAB policy, `all` builds the complete native acceptance and `necessary`
-withdraws every optional IAB signal. A category-only custom action rejects with
+Under an IAB policy, `all` grants what the disclosed vendors declare after
+publisher restrictions, as the web's Accept All does: purposes and special
+features some vendor declares, legitimate interest only where a vendor claims
+it, and purposes 1, 3 and 4 when Google ad tech providers are listed. Publisher
+purposes stay unset. `necessary` withdraws every optional IAB signal. A category-only custom action rejects with
 `iab-choices-required`. Missing CMP configuration or a missing disclosed GVL
 rejects with `iab-unavailable`. An IAB draft under another policy also rejects.
 Configuration and selection validation failures report `invalid-iab-choices`.
@@ -167,7 +170,10 @@ failed deletion.
 
 `native/protocol/iab/commit-cases.json` comes from the pinned reference codec.
 Both native suites consume it for acceptance, rejection, custom choices,
-objections and publisher restrictions. Native tests also exercise file restart,
+objections, publisher restrictions and publisher purposes.
+`native/protocol/iab/accept-all-declared-signals.json` holds a real served GVL
+and what the web's Accept All encodes for it, with and without publisher
+restrictions. Native tests also exercise file restart,
 failed writes, concurrent commits, expiry, identity transitions and withdrawal.
 The fixture generator and its Vitest test are development tools only.
 

@@ -114,7 +114,7 @@ const definition = function definition(
 /**
  * One served vendor entry, in `gvlVendorSchema`'s names and no richer than it has to be.
  *
- * Four of them carry the optional half of the schema -- `dataCategories`, `dataRetention`,
+ * Four of them carry the optional half of the schema -- `dataDeclaration`, `dataRetention`,
  * `overflow`, `deviceStorageDisclosureUrl`, a `deletedDate` -- so a survivor that drops an
  * optional field on its way through a prune cannot pass the run.
  */
@@ -124,7 +124,7 @@ const vendor = function vendor(id: number): GVLVendor {
 		cookieRefresh: false,
 		...(id === 8 || id === 45
 			? {
-					dataCategories: [1, 9],
+					dataDeclaration: [1, 9],
 					dataRetention: {
 						purposes: { '1': 13 },
 						stdRetention: 34_128_000,
@@ -354,7 +354,7 @@ const survivingVendors = function survivingVendors(
 			bodyId: entry?.id ?? null,
 			bodyIdDiffersFromKey: entry === undefined || entry.id !== Number(key),
 			carriesOptionalFields:
-				entry?.dataCategories !== undefined ||
+				entry?.dataDeclaration !== undefined ||
 				entry?.dataRetention !== undefined ||
 				entry?.overflow !== undefined ||
 				entry?.deletedDate !== undefined ||

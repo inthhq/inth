@@ -431,7 +431,7 @@
 				"8": {
 					"cookieMaxAgeSeconds": 34128000,
 					"cookieRefresh": false,
-					"dataCategories": [1, 9],
+					"dataDeclaration": [1, 9],
 					"dataRetention": {
 						"purposes": {
 							"1": 13
@@ -1119,7 +1119,7 @@
 				"45": {
 					"cookieMaxAgeSeconds": null,
 					"cookieRefresh": false,
-					"dataCategories": [1, 9],
+					"dataDeclaration": [1, 9],
 					"dataRetention": {
 						"purposes": {
 							"1": 13

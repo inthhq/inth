@@ -513,7 +513,7 @@ class VendorListRetentionTest {
 "vendors":{"8":{"cookieMaxAgeSeconds":31536000,"cookieRefresh":false,"features":[],"flexiblePurposes":[],"id":8,
 "legIntPurposes":[],"name":"Vendor Eight","purposes":[2],"specialFeatures":[],"specialPurposes":[],
 "urls":[{"langId":"EN","privacy":"https://example.test/privacy"}],"usesCookies":true,"usesNonCookieAccess":false},
-"755":{"cookieRefresh":true,"dataCategories":[1],"dataRetention":{"purposes":{"1":341,"2":170},"stdRetention":341},
+"755":{"cookieRefresh":true,"dataDeclaration":[1],"dataRetention":{"purposes":{"1":341,"2":170},"stdRetention":341},
 "deviceStorageDisclosureUrl":"https://example.test/dsd","features":[2],"flexiblePurposes":[2],"id":755,
 "legIntPurposes":[2,7],"name":"Vendor Seven Fifty-Five","overflow":{"httpGetLimit":128},"purposes":[1,2,7,9],
 "specialFeatures":[],"specialPurposes":[1],"urls":[{"langId":"EN","legIntClaim":"https://example.test/li"}],

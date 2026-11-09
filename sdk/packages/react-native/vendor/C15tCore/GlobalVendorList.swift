@@ -164,6 +164,8 @@ public struct GVLVendor: Sendable, Codable, Equatable {
     public let usesNonCookieAccess: Bool
     public let deviceStorageDisclosureUrl: String?
     public let urls: [GVLVendorUrl]
+    /// Ids into ``GlobalVendorList/dataCategories`` that this vendor collects. GVL v3 names the
+    /// field `dataDeclaration` on the wire, as `packages/iab/src/headless/types.ts` reads it.
     public let dataCategories: [Int]?
     public let dataRetention: GVLVendorDataRetention?
     /// The date this vendor was withdrawn from the list, or nil while it is active.
@@ -223,6 +225,13 @@ public struct GVLVendor: Sendable, Codable, Equatable {
     public var isDeleted: Bool {
         guard let deletedDate else { return false }
         return !deletedDate.isEmpty
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, purposes, legIntPurposes, specialPurposes, flexiblePurposes, features
+        case specialFeatures, cookieMaxAgeSeconds, cookieRefresh, usesCookies, usesNonCookieAccess
+        case deviceStorageDisclosureUrl, urls, dataRetention, deletedDate, overflow
+        case dataCategories = "dataDeclaration"
     }
 }
 
@@ -394,7 +403,7 @@ extension GlobalVendorList {
                     usesNonCookieAccess: entry["usesNonCookieAccess"]?.boolValue ?? false,
                     deviceStorageDisclosureUrl: text(entry["deviceStorageDisclosureUrl"]),
                     urls: urls(entry["urls"]),
-                    dataCategories: optionalInts(entry["dataCategories"]),
+                    dataCategories: optionalInts(entry["dataDeclaration"]),
                     dataRetention: retention(entry["dataRetention"]),
                     deletedDate: text(entry["deletedDate"]),
                     overflow: entry["overflow"]?.objectValue.flatMap {
@@ -658,7 +667,7 @@ private indirect enum GVLDisclosureShape {
 
     static let document: GVLDisclosureShape = {
         let definition = object("id name description descriptionLegal illustrations")
-        let vendor = object("id name purposes legIntPurposes specialPurposes flexiblePurposes features specialFeatures cookieMaxAgeSeconds cookieRefresh usesCookies usesNonCookieAccess deviceStorageDisclosureUrl dataCategories deletedDate", nested: [
+        let vendor = object("id name purposes legIntPurposes specialPurposes flexiblePurposes features specialFeatures cookieMaxAgeSeconds cookieRefresh usesCookies usesNonCookieAccess deviceStorageDisclosureUrl dataDeclaration deletedDate", nested: [
             "urls": .array(object("langId privacy legIntClaim")),
             "dataRetention": object("stdRetention purposes specialPurposes"),
             "overflow": object("httpGetLimit")

@@ -469,6 +469,26 @@ class IabPolicyTest {
         compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendor.2.storage")) and hasText("1 day")).performScrollTo().assertIsDisplayed()
     }
 
+    // TCF-CHECK: P28
+    @Test fun vendorPageListsTheDataCategoriesARealListDeclares() {
+        // A served GVL v3 vendor names its categories in `dataDeclaration`.
+        val fixture = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+            .map { File(it, "native/protocol/iab/accept-all-declared-signals.json") }.first { it.exists() }.readText()).jsonObject
+        val expected = fixture.getValue("vendorDataCategories").jsonObject.getValue("21").jsonArray.map { it.jsonPrimitive.content }
+        assertEquals(10, expected.size)
+        val presenter = customize(boot { fixture.getValue("gvl").jsonObject })
+        assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 6L, 8L, 9L, 10L, 11L), presenter.disclosure!!.list.vendors.getValue(21).dataCategories)
+        scroll("c15t.iab.partners").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendors").fetchSemanticsNodes().isNotEmpty() }
+        // The partner list composes lazily; scroll it to the row.
+        compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("c15t.iab.vendors")))
+            .performScrollToNode(hasTestTag("c15t.iab.vendors.vendor.21"))
+        compose.onNodeWithTag("c15t.iab.vendors.vendor.21").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.vendor.21.consent").fetchSemanticsNodes().isNotEmpty() }
+        onPage(21, en.appDataCollected).performScrollTo().assertIsDisplayed()
+        for (name in expected) onPage(21, name).performScrollTo().assertIsDisplayed()
+    }
+
     // TCF-CHECK: P16
     @Test fun nonIabPartnersArePresentedApart() {
         val presenter = customize(boot())

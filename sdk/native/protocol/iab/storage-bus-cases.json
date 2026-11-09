@@ -2,25 +2,25 @@
 	"cases": [
 		{
 			"id": "commit-cases-accept",
-			"tcString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFgAMAAAEIAAAwIAAoABMAA.IABM.YAAAAAAAAQAA",
 			"values": {
 				"IABTCF_CmpSdkID": 53,
 				"IABTCF_CmpSdkVersion": 7,
 				"IABTCF_DisclosedVendors": "11",
 				"IABTCF_PolicyVersion": 5,
 				"IABTCF_PublisherCC": "GB",
-				"IABTCF_PurposeConsents": "110000100000000000000000",
+				"IABTCF_PurposeConsents": "110000000000000000000000",
 				"IABTCF_PurposeLegitimateInterests": "010000100000000000000000",
 				"IABTCF_PurposeOneTreatment": 0,
-				"IABTCF_SpecialFeaturesOptIns": "100000000000",
-				"IABTCF_TCString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA",
+				"IABTCF_SpecialFeaturesOptIns": "000000000000",
+				"IABTCF_TCString": "CQX48QAQX48QAA1AHBENAqFgAMAAAEIAAAwIAAoABMAA.IABM.YAAAAAAAAQAA",
 				"IABTCF_UseNonStandardTexts": 0,
 				"IABTCF_VendorConsents": "1",
 				"IABTCF_VendorLegitimateInterests": "11",
-				"IABTCF_PublisherConsent": "110000100000000000000000",
-				"IABTCF_PublisherCustomPurposesConsents": "11",
-				"IABTCF_PublisherCustomPurposesLegitimateInterests": "11",
-				"IABTCF_PublisherLegitimateInterests": "010000100000000000000000"
+				"IABTCF_PublisherConsent": "000000000000000000000000",
+				"IABTCF_PublisherCustomPurposesConsents": "00",
+				"IABTCF_PublisherCustomPurposesLegitimateInterests": "00",
+				"IABTCF_PublisherLegitimateInterests": "000000000000000000000000"
 			}
 		},
 		{
@@ -116,6 +116,29 @@
 				"IABTCF_PublisherLegitimateInterests": "000000000000000000000000",
 				"IABTCF_PublisherRestrictions2": "00",
 				"IABTCF_PublisherRestrictions7": "_0"
+			}
+		},
+		{
+			"id": "commit-cases-publisher-purposes",
+			"tcString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA",
+			"values": {
+				"IABTCF_CmpSdkID": 53,
+				"IABTCF_CmpSdkVersion": 7,
+				"IABTCF_DisclosedVendors": "11",
+				"IABTCF_PolicyVersion": 5,
+				"IABTCF_PublisherCC": "GB",
+				"IABTCF_PurposeConsents": "110000100000000000000000",
+				"IABTCF_PurposeLegitimateInterests": "010000100000000000000000",
+				"IABTCF_PurposeOneTreatment": 0,
+				"IABTCF_SpecialFeaturesOptIns": "100000000000",
+				"IABTCF_TCString": "CQX48QAQX48QAA1AHBENAqFoAMIAAEIAAAwIAAoABMAA.IABM.eEAACEAAAXgA",
+				"IABTCF_UseNonStandardTexts": 0,
+				"IABTCF_VendorConsents": "1",
+				"IABTCF_VendorLegitimateInterests": "11",
+				"IABTCF_PublisherConsent": "110000100000000000000000",
+				"IABTCF_PublisherCustomPurposesConsents": "11",
+				"IABTCF_PublisherCustomPurposesLegitimateInterests": "11",
+				"IABTCF_PublisherLegitimateInterests": "010000100000000000000000"
 			}
 		},
 		{

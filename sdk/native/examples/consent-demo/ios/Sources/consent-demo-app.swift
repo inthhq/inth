@@ -223,7 +223,7 @@ struct DemoRoot: View {
         if let presenter = session.presenter, let policyURL = session.policyURL {
             let host = HostState(session: session, presenter: presenter)
             if session.consentUIEnabled {
-                host.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: fixtureTheme)
+                host.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: consentTheme)
             } else {
                 host
             }
@@ -279,9 +279,7 @@ struct HostState: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
-                    Text(session.fixture ? "Local protocol fixture" : "Inth hosted project").font(.headline)
-                    Text("Native consent prototype").font(.subheadline)
+                Section("Privacy") {
                     Button("Privacy settings") { presenter.presentPreferences() }.frame(minHeight: 44).disabled(!session.consentUIEnabled).accessibilityIdentifier("fixture.open-preferences")
                 }
                 if session.reviewProfile != nil {
@@ -317,7 +315,10 @@ struct HostState: View {
                         Button("Reconnect") { session.transport?.offline = false; presenter.core.replayThenRefresh() }.accessibilityIdentifier("fixture.reconnect")
                     }
                 }
-            }.navigationTitle("Privacy demo").accessibilityIdentifier("fixture.state")
+                Section("About this demo") {
+                    Text(session.fixture ? "Local protocol fixture" : "Inth hosted project")
+                }
+            }.navigationTitle("Settings").accessibilityIdentifier("fixture.state")
                 .confirmationDialog("Reset review consent?", isPresented: $confirmReviewReset, titleVisibility: .visible) {
                     Button("Reset consent", role: .destructive) { Task { await session.resetReviewConsent() } }
                 } message: {
@@ -358,8 +359,9 @@ struct IABReviewDiagnosticsView: View {
 }
 
 extension DemoRoot {
-    /// Debug fixtures can opt into the sample brand theme; normal launches use the stock c15t appearance.
-    var fixtureTheme: ConsentTheme? {
+    /// Debug fixtures can opt into the sample brand theme. Other launches use the stock c15t
+    /// appearance with the demo's own name above the headline, as a real app would set.
+    var consentTheme: ConsentTheme? {
         #if DEBUG
         let env = ProcessInfo.processInfo.environment
         if env["C15T_FIXTURE_SCENARIO"] != nil {
@@ -380,7 +382,9 @@ extension DemoRoot {
             return theme
         }
         #endif
-        return nil
+        var theme = ConsentTheme.resolved()
+        theme.brand.name = "c15t Demo"
+        return theme
     }
 }
 

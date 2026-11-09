@@ -414,8 +414,6 @@ final class IABCommitTests: XCTestCase {
         XCTAssertEqual(core.pendingSaveCount(), 1)
     }
 
-    // TCF-CHECK: T2
-    // TCF-CHECK: T3
     // TCF-CHECK: T10
     func testAStoredTcStringWithUnequalDatesIsDroppedOnLaunch() async throws {
         let vector = try fixture()
@@ -469,6 +467,8 @@ final class IABCommitTests: XCTestCase {
         return ([encoded] + parts.dropFirst().map(String.init)).joined(separator: ".")
     }
 
+    // TCF-CHECK: T2
+    // TCF-CHECK: T3
     func testWithdrawalSupersedesQueuedGrantAndSurvivesRestart() async throws {
         let vector = try fixture()
         let store = InMemoryStore()

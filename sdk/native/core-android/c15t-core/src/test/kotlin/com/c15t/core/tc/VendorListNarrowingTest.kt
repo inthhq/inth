@@ -278,8 +278,8 @@ class VendorListNarrowingTest {
 				"tcfPolicyVersion": 5,
 				"vendorListVersion": 177,
 				"vendors": {
-					"8":{"id":8,"name":"Vendor Eight","purposes":[2],"legIntPurposes":[],"flexiblePurposes":[],"specialPurposes":[],"features":[],"specialFeatures":[],"dataCategories":[1],"usesCookies":true,"usesNonCookieAccess":false,"cookieMaxAgeSeconds":31536000,"cookieRefresh":false,"urls":[{"langId":"EN","privacy":"https://example.test/privacy"}]},
-					"42":{"id":42,"name":"Vendor Forty-Two","purposes":[1],"legIntPurposes":[2],"flexiblePurposes":[1],"specialPurposes":[1],"features":[2],"specialFeatures":[],"dataCategories":[1],"usesCookies":false,"usesNonCookieAccess":false,"urls":[]},
+					"8":{"id":8,"name":"Vendor Eight","purposes":[2],"legIntPurposes":[],"flexiblePurposes":[],"specialPurposes":[],"features":[],"specialFeatures":[],"dataDeclaration":[1],"usesCookies":true,"usesNonCookieAccess":false,"cookieMaxAgeSeconds":31536000,"cookieRefresh":false,"urls":[{"langId":"EN","privacy":"https://example.test/privacy"}]},
+					"42":{"id":42,"name":"Vendor Forty-Two","purposes":[1],"legIntPurposes":[2],"flexiblePurposes":[1],"specialPurposes":[1],"features":[2],"specialFeatures":[],"dataDeclaration":[1],"usesCookies":false,"usesNonCookieAccess":false,"urls":[]},
 					"755":{"id":755,"name":"Vendor Seven Fifty-Five","purposes":[1,2,7,9],"legIntPurposes":[2,7],"flexiblePurposes":[2],"specialPurposes":[1],"features":[2],"specialFeatures":[],"deletedDate":"2026-03-01T00:00:00Z","dataRetention":{"purposes":{"1":341,"2":170},"stdRetention":341},"deviceStorageDisclosureUrl":"https://example.test/dsd","cookieRefresh":true,"usesCookies":true,"usesNonCookieAccess":true,"urls":[{"langId":"EN","legIntClaim":"https://example.test/li"}],"overflow":{"httpGetLimit":128}},
 					"1000482":{"id":1000482,"name":"Publisher Custom Partner","purposes":[1],"legIntPurposes":[],"flexiblePurposes":[],"specialPurposes":[],"features":[],"specialFeatures":[],"usesCookies":true,"usesNonCookieAccess":false,"cookieMaxAgeSeconds":86400,"cookieRefresh":false,"urls":[]}
 				}

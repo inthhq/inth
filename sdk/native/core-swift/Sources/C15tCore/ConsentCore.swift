@@ -714,9 +714,9 @@ public final class ConsentCore: @unchecked Sendable {
                 let choices: IABChoices
                 switch intent {
                 case .all:
-                    var accepted = IABAuthority.accepting(gvl, configuration: configuration)
-                    accepted.adTechProviderConsents = currentAdditionalConsentListLocked()?.providers.map(\.id)
-                    choices = accepted
+                    choices = IABAuthority.accepting(
+                        gvl, configuration: configuration,
+                        adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id))
                 case .necessary: choices = IABChoices()
                 case let .iab(draft, _): choices = draft
                 case .custom:

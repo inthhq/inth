@@ -69,16 +69,14 @@ const base = {
 };
 const now = 1_758_100_000_000;
 const cases = [
+	// What Accept All grants for this list, as the web's `applyBlanket` does: no
+	// vendor takes purpose 7 on consent or declares special feature 1, vendor 2
+	// has no consent purpose, and publisher purposes are never shown.
 	{
 		choices: {
 			...empty,
-			publisherConsents: [1, 2, 7],
-			publisherCustomConsents: [1, 2],
-			publisherCustomLegitimateInterests: [1, 2],
-			publisherLegitimateInterests: [2, 7],
-			purposeConsents: [1, 2, 7],
+			purposeConsents: [1, 2],
 			purposeLegitimateInterests: [2, 7],
-			specialFeatureOptIns: [1],
 			vendorConsents: [1],
 			vendorLegitimateInterests: [1, 2],
 		},
@@ -124,6 +122,22 @@ const cases = [
 			],
 		},
 		id: 'restriction-ranges',
+	},
+	{
+		choices: {
+			...empty,
+			publisherConsents: [1, 2, 7],
+			publisherCustomConsents: [1, 2],
+			publisherCustomLegitimateInterests: [1, 2],
+			publisherLegitimateInterests: [2, 7],
+			purposeConsents: [1, 2, 7],
+			purposeLegitimateInterests: [2, 7],
+			specialFeatureOptIns: [1],
+			vendorConsents: [1],
+			vendorLegitimateInterests: [1, 2],
+		},
+		configuration: base,
+		id: 'publisher-purposes',
 	},
 ];
 

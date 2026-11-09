@@ -5,6 +5,7 @@ package com.c15t.core.tc
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KeepGeneratedSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.JsonObject
@@ -160,6 +161,8 @@ data class GvlVendorEntry(
 	val specialFeatures: List<Long>? = null,
 	@EncodeDefault(EncodeDefault.Mode.NEVER)
 	val deletedDate: String? = null,
+	/** Ids into [GlobalVendorList.dataCategories]. GVL v3 names the field `dataDeclaration` on the wire. */
+	@SerialName("dataDeclaration")
 	@EncodeDefault(EncodeDefault.Mode.NEVER)
 	val dataCategories: List<Long>? = null,
 	@EncodeDefault(EncodeDefault.Mode.NEVER)

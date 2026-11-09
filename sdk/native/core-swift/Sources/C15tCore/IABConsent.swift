@@ -226,17 +226,26 @@ enum IABAuthority {
             adTechProvidersID: providers.isEmpty ? nil : additionalConsentList?.disclosureID)
     }
 
-    static func accepting(_ gvl: GlobalVendorList, configuration: IABConfiguration) -> IABChoices {
+    /// Accept All, as `applyBlanket` in `packages/iab/src/index.ts`: a signal is positive only
+    /// for what some vendor declares on that legal basis once publisher restrictions apply
+    /// (TCF Policies 5(3), 5(6) and 5(8)). Listed ad tech providers add purposes 1, 3 and 4.
+    /// Publisher purposes are never shown, so they stay unset, as on the web.
+    static func accepting(
+        _ gvl: GlobalVendorList, configuration: IABConfiguration, adTechProviders: [Int]? = nil
+    ) -> IABChoices {
+        let disclosures = gvl.activeVendors.sorted { $0.id < $1.id }
+            .map { (id: $0.id, bases: configuration.disclosure(for: $0)) }
+        let consent = Set(disclosures.flatMap(\.bases.consentPurposes))
+            .union(adTechProviders?.isEmpty == false ? GlobalVendorList.adTechProviderPurposeIds : [])
+        let interest = Set(disclosures.flatMap(\.bases.legitimateInterestPurposes))
+        let purposeIds = gvl.purposes.keys.filter { (1...24).contains($0) }.sorted()
         var c = IABChoices()
-        c.purposeConsents = gvl.purposes.keys.filter { (1...24).contains($0) }.sorted()
-        c.purposeLegitimateInterests = c.purposeConsents.filter { !neverLI.contains($0) }
-        c.vendorConsents = gvl.vendors.values.filter { $0.deletedDate?.isEmpty != false }.map(\.id).sorted()
-        c.vendorLegitimateInterests = c.vendorConsents
-        c.specialFeatureOptIns = gvl.specialFeatures.keys.sorted()
-        c.publisherConsents = c.purposeConsents
-        c.publisherLegitimateInterests = c.purposeLegitimateInterests
-        c.publisherCustomConsents = (0..<max(0, min(63, configuration.numCustomPurposes))).map { $0 + 1 }
-        c.publisherCustomLegitimateInterests = c.publisherCustomConsents
+        c.adTechProviderConsents = adTechProviders
+        c.purposeConsents = purposeIds.filter(consent.contains)
+        c.purposeLegitimateInterests = purposeIds.filter(interest.contains)
+        c.vendorConsents = disclosures.filter { !$0.bases.consentPurposes.isEmpty }.map(\.id)
+        c.vendorLegitimateInterests = disclosures.filter { !$0.bases.legitimateInterestPurposes.isEmpty }.map(\.id)
+        c.specialFeatureOptIns = gvl.declaredSpecialFeatureIds()
         return c
     }
 }

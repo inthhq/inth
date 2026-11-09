@@ -121,7 +121,7 @@
 				"cookieRefresh": true,
 				"usesCookies": true,
 				"usesNonCookieAccess": false,
-				"dataCategories": [1],
+				"dataDeclaration": [1],
 				"urls": [
 					{
 						"langId": "en",
@@ -152,7 +152,7 @@
 				"cookieRefresh": true,
 				"usesCookies": true,
 				"usesNonCookieAccess": false,
-				"dataCategories": [1],
+				"dataDeclaration": [1],
 				"urls": [
 					{
 						"langId": "en",
@@ -183,7 +183,7 @@
 				"cookieRefresh": true,
 				"usesCookies": true,
 				"usesNonCookieAccess": false,
-				"dataCategories": [1],
+				"dataDeclaration": [1],
 				"urls": [
 					{
 						"langId": "en",

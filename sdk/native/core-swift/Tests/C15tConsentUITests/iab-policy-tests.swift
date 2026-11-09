@@ -502,6 +502,21 @@ final class IABPolicyTests: XCTestCase {
         XCTAssertEqual(vendor.dataCategories, ["Device information"])
     }
 
+    // TCF-CHECK: P28
+    func testPartnerPageListsTheDataCategoriesARealListDeclares() async throws {
+        // A served GVL v3 vendor names its categories in `dataDeclaration`.
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let fixture = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root
+            .appendingPathComponent("protocol/iab/accept-all-declared-signals.json"))) as? [String: Any])
+        let served = try XCTUnwrap(fixture["gvl"] as? [String: Any])
+        let expected = try XCTUnwrap((fixture["vendorDataCategories"] as? [String: [String]])?["21"])
+        let core = try await bootIAB { gvl in gvl = served }
+        let vendor = try XCTUnwrap(ConsentPresenter(core: core).iabVendor(21))
+        XCTAssertEqual(expected.count, 10)
+        XCTAssertEqual(vendor.dataCategories, expected)
+    }
+
     // TCF-CHECK: P27
     func testPartnerPageShowsRetentionIncludingSpecialPurposes() async throws {
         let core = try await bootIAB()

@@ -267,7 +267,7 @@ class GlobalVendorListShapeTest {
 				"vendorListVersion": 177,
 				"vendors": {
 					"8":{"id":8,"name":"Vendor Eight","purposes":[2],"legIntPurposes":[2],"flexiblePurposes":[],"specialPurposes":[],"features":[],"specialFeatures":[],"usesCookies":true,"usesNonCookieAccess":false,"cookieMaxAgeSeconds":31536000,"cookieRefresh":false,"urls":[{"langId":"EN","privacy":"https://example.test/privacy"}]},
-					"755":{"id":755,"name":"Vendor Seven Fifty-Five","purposes":[1,2,7,9],"legIntPurposes":[2,7],"flexiblePurposes":[2],"specialPurposes":[1],"features":[2],"specialFeatures":[],"dataCategories":[1],"dataRetention":{"purposes":{"1":341,"2":170},"stdRetention":341},"deletedDate":"2025-03-01T00:00:00Z","deviceStorageDisclosureUrl":"https://example.test/dsd","cookieMaxAgeSeconds":null,"cookieRefresh":true,"usesCookies":true,"usesNonCookieAccess":true,"urls":[{"langId":"EN","legIntClaim":"https://example.test/li","privacy":"https://example.test/privacy"}],"overflow":{"httpGetLimit":128}}
+					"755":{"id":755,"name":"Vendor Seven Fifty-Five","purposes":[1,2,7,9],"legIntPurposes":[2,7],"flexiblePurposes":[2],"specialPurposes":[1],"features":[2],"specialFeatures":[],"dataDeclaration":[1],"dataRetention":{"purposes":{"1":341,"2":170},"stdRetention":341},"deletedDate":"2025-03-01T00:00:00Z","deviceStorageDisclosureUrl":"https://example.test/dsd","cookieMaxAgeSeconds":null,"cookieRefresh":true,"usesCookies":true,"usesNonCookieAccess":true,"urls":[{"langId":"EN","legIntClaim":"https://example.test/li","privacy":"https://example.test/privacy"}],"overflow":{"httpGetLimit":128}}
 				}
 			}
 		"""
