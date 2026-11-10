@@ -592,6 +592,21 @@ extension ConsentTheme {
         return .system(size: style.scaled(size), weight: weight ?? .regular)
     }
 
+    /// The UIKit font for one text role, for text UIKit lays out itself: the same family and size
+    /// ``font(_:weight:slot:)`` gives SwiftUI, scaled with Dynamic Type so a view with
+    /// `adjustsFontForContentSizeCategory` keeps following it.
+    func uiFont(_ style: Font.TextStyle, weight: UIFont.Weight = .regular) -> UIFont {
+        let size = style.size(in: typography.fontSize) ?? style.defaultSize
+        let base: UIFont
+        if let family = typography.fontFamily, let custom = UIFont(name: family, size: size) {
+            let traits: [UIFontDescriptor.TraitKey: Any] = [.weight: weight]
+            base = UIFont(descriptor: custom.fontDescriptor.addingAttributes([.traits: traits]), size: size)
+        } else {
+            base = .systemFont(ofSize: size, weight: weight)
+        }
+        return UIFontMetrics(forTextStyle: style.uiKit).scaledFont(for: base)
+    }
+
     /// The first-layer headline in ``Typography/headlineFont``.
     var firstLayerHeadlineFont: Font {
         typography.headlineFont.font(.largeTitle, weight: .semibold,

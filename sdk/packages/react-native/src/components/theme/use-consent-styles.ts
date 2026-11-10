@@ -1494,7 +1494,9 @@ export const useConsentStyles = function useConsentStyles(
 				continue;
 			}
 
-			parts[key] = { ...base[key], ...flatten(override) };
+			// Over the themed part, not `base`: an override that sets a colour must not
+			// drop the face `withFonts` put there.
+			parts[key] = { ...parts[key], ...flatten(override) };
 		}
 
 		return {

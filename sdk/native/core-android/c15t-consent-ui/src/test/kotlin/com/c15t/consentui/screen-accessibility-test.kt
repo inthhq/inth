@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
@@ -108,6 +109,26 @@ class ScreenAccessibilityTest {
             val ratio = ColorUtils.calculateContrast(foreground, background)
             assertTrue("$name (${if (dark) "dark" else "light"}) was $ratio, needs $floor", ratio >= floor)
         }
+    }
+
+    /** The colour and size a text node was laid out with, from the layout Compose drew. */
+    private fun drawnStyle(tag: String): androidx.compose.ui.text.TextStyle {
+        val node = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        return layouts.single().layoutInput.style
+    }
+
+    @Test fun titleAndDescriptionSlotsReachTheFirstLayer() {
+        val theme = ConsentTheme(slots = mapOf(
+            ConsentTheme.Slot.ConsentBannerTitle to ConsentTheme.SlotStyle(color = ConsentThemeColor(0x8A1C7C), fontSize = 40.sp),
+            ConsentTheme.Slot.ConsentBannerDescription to ConsentTheme.SlotStyle(color = ConsentThemeColor(0x123456)),
+        ))
+        show(DecisionStore(), theme)
+        val title = drawnStyle("c15t.first-layer.title")
+        assertEquals(0x8A1C7C, title.color.toArgb() and 0xFFFFFF)
+        assertEquals(40.sp, title.fontSize)
+        assertEquals(0x123456, drawnStyle("c15t.first-layer.body").color.toArgb() and 0xFFFFFF)
     }
 
     @Test fun squareThemeCanShowAWriteRefusal() {
