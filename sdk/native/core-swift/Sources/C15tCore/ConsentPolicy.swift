@@ -194,14 +194,23 @@ public struct ConsentPolicy: Sendable, Equatable {
         }
     }
 
-    /// The rule for a location, as an `/init` answer.
-    func resolve(overrides: ConsentOverrides) -> InitResponse? {
-        guard let selected = BundledPolicyResource.match(packs, country: overrides.country, region: overrides.region),
-            var wire = packs[selected.0]["policyResolution"]?.objectValue
-        else { return nil }
-        wire["matchedBy"] = .string(selected.1)
+    /// The backend's outcome for a location.
+    func outcome(country: String?, region: String?) -> BundledPolicyResource.MatchOutcome {
+        BundledPolicyResource.matchOutcome(packs, country: country, region: region)
+    }
+
+    /// The rule for a location, as an `/init` answer. A location no rule covers gets the
+    /// backend's `no-match` or `insufficient-inputs` outcome, never silence, so the core
+    /// does not keep an earlier rule in force by default.
+    func resolve(overrides: ConsentOverrides) -> InitResponse {
+        let selected = self.outcome(country: overrides.country, region: overrides.region)
+        var policyResolution = BundledPolicyResource.unmatchedWire(selected)
+        if case let .matched(index, matchedBy) = selected, var wire = packs[index]["policyResolution"]?.objectValue {
+            wire["matchedBy"] = .string(matchedBy)
+            policyResolution = .object(wire)
+        }
         return InitResponse(
-            policyResolution: .object(wire),
+            policyResolution: policyResolution,
             location: LocationContext(countryCode: overrides.country, regionCode: overrides.region))
     }
 

@@ -22,6 +22,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { resolvePolicyRules } from '../packages/schema/src/shared/policy-resolution';
+import { writePolicyResolutionWire } from '../packages/schema/src/shared/policy-resolution-wire';
 import {
 	inspectPolicyRules,
 	normalizePolicyRule,
@@ -466,6 +467,89 @@ for (const [name, pack] of Object.entries(localInvalid)) {
 	}
 }
 
+/**
+ * Packs where a location can match nothing, so every matcher outcome the
+ * backend has (`matched`, `no-match`, `insufficient-inputs`) is pinned. An
+ * unmatched outcome carries the exact wire the backend sends for it.
+ */
+const outcomePacks: Record<string, PolicyRule[]> = {
+	'fallback without a default': [
+		{
+			id: 'germany',
+			match: { countries: ['DE'] },
+			model: 'opt-in',
+			prompt: 'choice',
+		},
+		{
+			id: 'unknown',
+			match: { fallback: true },
+			model: 'opt-in',
+			prompt: 'choice',
+		},
+	],
+	'region rules and a default without a fallback': [
+		{
+			id: 'california',
+			match: { regions: [{ country: 'US', region: 'CA' }] },
+			model: 'opt-out',
+			prompt: 'notice',
+		},
+		{
+			id: 'default',
+			match: { isDefault: true },
+			model: 'none',
+			prompt: 'none',
+		},
+	],
+	'region rules and a fallback without a default': [
+		{
+			id: 'california',
+			match: { regions: [{ country: 'US', region: 'CA' }] },
+			model: 'opt-out',
+			prompt: 'notice',
+		},
+		{
+			id: 'unknown',
+			match: { fallback: true },
+			model: 'opt-in',
+			prompt: 'choice',
+		},
+	],
+};
+const outcomeLocations: [string | null, string | null][] = [
+	[null, null],
+	['DE', null],
+	['FR', null],
+	['US', null],
+	['US', 'CA'],
+	['US', 'NY'],
+];
+const outcomes = Object.entries(outcomePacks).flatMap(([pack, packRules]) =>
+	outcomeLocations.map(([country, region]) => {
+		const resolution = resolvePolicyRules({
+			countryCode: country,
+			regionCode: region,
+			rules: packRules,
+		});
+		return {
+			expected:
+				resolution.status === 'matched'
+					? {
+							matchedBy: resolution.matchedBy,
+							policyId: resolution.policy.id,
+							status: 'matched',
+						}
+					: {
+							status: resolution.status,
+							wire: writePolicyResolutionWire(resolution),
+						},
+			inputs: { country, region },
+			pack,
+			rules: packRules,
+		};
+	})
+);
+
 /** Sort the matrix by the backend's own answer. */
 const localNames = new Set(['model = "iab"']);
 const classified = {
@@ -537,6 +621,7 @@ const fixture = {
 			rules: pack,
 		})),
 	],
+	outcomes,
 	resolved: Object.fromEntries(
 		rules.map((each) => [each.id, normalizePolicyRule(each)])
 	),

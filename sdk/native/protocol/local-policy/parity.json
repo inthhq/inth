@@ -7550,6 +7550,633 @@
 			]
 		}
 	],
+	"outcomes": [
+		{
+			"expected": {
+				"matchedBy": "fallback",
+				"policyId": "unknown",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": null,
+				"region": null
+			},
+			"pack": "fallback without a default",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "country",
+				"policyId": "germany",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "DE",
+				"region": null
+			},
+			"pack": "fallback without a default",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "FR",
+				"region": null
+			},
+			"pack": "fallback without a default",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "US",
+				"region": null
+			},
+			"pack": "fallback without a default",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "US",
+				"region": "CA"
+			},
+			"pack": "fallback without a default",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "US",
+				"region": "NY"
+			},
+			"pack": "fallback without a default",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "default",
+				"policyId": "default",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": null,
+				"region": null
+			},
+			"pack": "region rules and a default without a fallback",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "none",
+					"prompt": "none"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "default",
+				"policyId": "default",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "DE",
+				"region": null
+			},
+			"pack": "region rules and a default without a fallback",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "none",
+					"prompt": "none"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "default",
+				"policyId": "default",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "FR",
+				"region": null
+			},
+			"pack": "region rules and a default without a fallback",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "none",
+					"prompt": "none"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "failed",
+				"wire": {
+					"policy": null,
+					"reason": "insufficient-inputs",
+					"status": "failed",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "US",
+				"region": null
+			},
+			"pack": "region rules and a default without a fallback",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "none",
+					"prompt": "none"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "region",
+				"policyId": "california",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "US",
+				"region": "CA"
+			},
+			"pack": "region rules and a default without a fallback",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "none",
+					"prompt": "none"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "default",
+				"policyId": "default",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "US",
+				"region": "NY"
+			},
+			"pack": "region rules and a default without a fallback",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "none",
+					"prompt": "none"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "fallback",
+				"policyId": "unknown",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": null,
+				"region": null
+			},
+			"pack": "region rules and a fallback without a default",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "DE",
+				"region": null
+			},
+			"pack": "region rules and a fallback without a default",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "FR",
+				"region": null
+			},
+			"pack": "region rules and a fallback without a default",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "fallback",
+				"policyId": "unknown",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "US",
+				"region": null
+			},
+			"pack": "region rules and a fallback without a default",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"matchedBy": "region",
+				"policyId": "california",
+				"status": "matched"
+			},
+			"inputs": {
+				"country": "US",
+				"region": "CA"
+			},
+			"pack": "region rules and a fallback without a default",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"expected": {
+				"status": "no-match",
+				"wire": {
+					"policy": null,
+					"status": "no-match",
+					"version": 1
+				}
+			},
+			"inputs": {
+				"country": "US",
+				"region": "NY"
+			},
+			"pack": "region rules and a fallback without a default",
+			"rules": [
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "unknown",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		}
+	],
 	"resolved": {
 		"quebec": {
 			"actions": {

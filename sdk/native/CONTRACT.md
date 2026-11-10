@@ -1567,7 +1567,12 @@ Configuration picks one of two modes, and they do not mix.
   holds the shared cases: a matrix of every `PolicyRule` field against every
   kind of value, sorted by the backend's own `inspectPolicyRules` into
   policies all three validators (Expo prebuild and both cores) must refuse and
-  policies they must accept and normalize identically. Validity days may be fractional and round to whole
+  policies they must accept and normalize identically. Matching returns the
+  backend's three outcomes: a location no rule covers resolves to `no-match`
+  (the safe opt-in fallback) or `failed` with `insufficient-inputs`, never to
+  silence, for in-code policies and bundled manifests alike. An explicit
+  `no-match` or `unconfigured` answer replaces the rule in force on both cores,
+  as `resolveEffectivePolicy` does on the web; only a failed init keeps it. Validity days may be fractional and round to whole
   milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
   and never leave it; choice and notice validity feed only their own prompt. A
   declared policy a core refuses is reported as `policy-invalid` with resolution

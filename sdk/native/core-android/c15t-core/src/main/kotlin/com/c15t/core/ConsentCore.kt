@@ -1570,10 +1570,14 @@ class ConsentCore(
 			// `core-swift` drops its resolved policy in the same branch -- permissions
 			// derived from a wire this build cannot re-read are permissions it can no
 			// longer justify.
-			evaluationPolicy = if (mapped.policyUnreadable) {
-				null
-			} else {
-				mapped.evaluationPolicy ?: evaluationPolicy
+			evaluationPolicy = when {
+				mapped.policyUnreadable -> null
+				// An explicit `no-match` or `unconfigured` answer puts the safe fallback in force,
+				// as `resolveEffectivePolicy` in `@c15t/core` and core-swift's wire reader do. Only
+				// a failed init keeps the last policy.
+				mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_NO_MATCH ||
+					mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_UNCONFIGURED -> null
+				else -> mapped.evaluationPolicy ?: evaluationPolicy
 			}
 			// Latched, exactly like the policy two lines above, and for the reason on
 			// [vendorList]: once a purpose or vendor name has been drawn from a list, a `/init` that

@@ -115,6 +115,53 @@ class ConsentPolicyTest {
 		assertEquals(revision, core.snapshot().revision)
 	}
 
+	@Test fun `every location gets the outcome the backend matcher gives, unmatched ones included`() {
+		val problems = fixture.getValue("outcomes").jsonArray.mapNotNull { case ->
+			val row = case.jsonObject
+			val inputs = row.getValue("inputs").jsonObject
+			val expected = row.getValue("expected").jsonObject
+			val policy = ConsentPolicy.fromJson(buildJsonObject { put("rules", row.getValue("rules")) }.toString())
+			val country = inputs["country"]?.jsonPrimitive?.contentOrNull
+			val region = inputs["region"]?.jsonPrimitive?.contentOrNull
+			val actual = when (val outcome = policy.outcome(country, region)) {
+				is BundledPolicy.MatchOutcome.Matched -> buildJsonObject {
+					put("matchedBy", outcome.matchedBy); put("policyId", policy.rules[outcome.index].id); put("status", "matched")
+				}
+				else -> buildJsonObject {
+					put("status", if (outcome is BundledPolicy.MatchOutcome.NoMatch) "no-match" else "failed")
+					put("wire", BundledPolicy.unmatchedWire(outcome))
+				}
+			}
+			"${row.getValue("pack").jsonPrimitive.content} $country $region".takeIf { actual != expected }
+		}
+		assertEquals(emptyList(), problems)
+	}
+
+	private fun outcomePolicy(pack: String) = ConsentPolicy.fromJson(buildJsonObject {
+		put("rules", fixture.getValue("outcomes").jsonArray.first { it.jsonObject.getValue("pack").jsonPrimitive.content == pack }.jsonObject.getValue("rules"))
+	}.toString())
+
+	@Test fun `an unmatched known country runs the safe fallback and drops earlier grants`() {
+		val core = boot(outcomePolicy("fallback without a default"), overrides = KernelOverrides(country = "DE"))
+		assertEquals("germany", core.snapshot().resolution.policyId)
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
+		core.setOverrides(KernelOverrides(country = "FR"))
+		assertEquals("no-match", core.snapshot().resolution.status)
+		assertFalse(core.snapshot().policyPending)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+		val fresh = boot(outcomePolicy("fallback without a default"), overrides = KernelOverrides(country = "FR"))
+		assertEquals("no-match", fresh.snapshot().resolution.status)
+		assertTrue(fresh.snapshot().promptRequirement.acknowledge)
+	}
+
+	@Test fun `a country that needs a region stays pending instead of taking the default`() {
+		val core = boot(outcomePolicy("region rules and a default without a fallback"), overrides = KernelOverrides(country = "US"))
+		assertTrue(core.snapshot().policyPending)
+		assertEquals("insufficient-inputs", core.snapshot().resolution.reason)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+	}
+
 	@Test fun `locations match the rule the backend matcher picks`() {
 		for (case in fixture.getValue("cases").jsonArray) {
 			val inputs = case.jsonObject.getValue("inputs").jsonObject
