@@ -16,3 +16,14 @@ failed resolution, and `NativeSnapshotEvent` and `NativeInitializedEvent` for
 the event bodies. The iOS commit result no longer sends an undeclared `status`
 key, and Android no longer sends `resolution.reason: null` when the resolution
 did not fail.
+
+`CommitFailureReason` and the new `COMMIT_FAILURE_REASONS` include the IAB and
+bundled-policy refusals the native cores return, such as
+`bundled-policy-expired` and `iab-list-stale`.
+
+Breaking: `CommitIntent` no longer has `categories`. Neither native core ever
+honoured it, so `all` or `necessary` with a category list recorded the whole
+choice scope. Both native decoders now refuse an intent with any key besides
+`action` and `consents`, as `invalid-intent`. Use `explicit` to decide a
+subset. `ConsentSnapshot.subject` is now `NativeConsentSubject`, without
+`identityProvider`, which no native snapshot carries.

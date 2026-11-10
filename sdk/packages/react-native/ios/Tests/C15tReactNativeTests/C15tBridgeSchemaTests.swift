@@ -96,6 +96,13 @@ final class C15tBridgeSchemaTests: XCTestCase {
         }
         XCTAssertEqual(problems, [], "payloads that drifted from native/protocol/bridge/payloads.json")
 
+        // Optional keys are skipped when absent, so prove this binding can produce every
+        // subject key the schema declares. A declared key no core models fails here.
+        let snapshotFields = try fields("snapshot")
+        let subjectFields = try XCTUnwrap((snapshotFields["subject"] as? [String: Any])?["fields"] as? [String: Any])
+        let encoded = try XCTUnwrap(jsonObject(C15tPayload.snapshot(failed))["subject"] as? [String: Any])
+        XCTAssertEqual(Set(encoded.keys), Set(subjectFields.keys))
+
         let all = try payloads()
         let jsToNative = all.filter { (($0.value as? [String: Any])?["direction"] as? String) == "js-to-native" }.keys
         XCTAssertEqual(Set(samples.map { $0.0 }).union(jsToNative), Set(all.keys), "every payload needs a sample here")
@@ -108,7 +115,6 @@ final class C15tBridgeSchemaTests: XCTestCase {
             switch key {
             case "action": document[key] = "explicit"
             case "consents": document[key] = ["measurement": true, "marketing": false]
-            case "categories": document[key] = ["measurement", "marketing"]
             default: XCTFail("commitIntent.\(key) has no sample here; add one")
             }
         }
@@ -125,6 +131,18 @@ final class C15tBridgeSchemaTests: XCTestCase {
                 C15tPayload.parseCommitIntent(raw),
                 "action \"\(value)\" from the schema must decode"
             )
+        }
+    }
+
+    func testAnIntentThatNamesAScopeIsRefusedNotWidened() {
+        // Dropping `categories` would apply "all" to the whole choice scope, which is
+        // more than a caller that scoped it asked for.
+        for raw in [
+            #"{"action":"all","categories":["measurement"]}"#,
+            #"{"action":"necessary","categories":["measurement"]}"#,
+            #"{"action":"explicit","consents":{"measurement":true},"categories":["measurement"]}"#,
+        ] {
+            XCTAssertNil(C15tPayload.parseCommitIntent(raw), raw)
         }
     }
 

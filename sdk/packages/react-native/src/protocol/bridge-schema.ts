@@ -22,6 +22,7 @@
  * @packageDocumentation
  */
 
+import { COMMIT_FAILURE_REASONS } from './commit';
 import { POLICY_RESOLUTION_FAILURES } from './snapshot';
 import {
 	TRACKING_AUTHORIZATION_STATUSES,
@@ -70,16 +71,6 @@ export interface BridgeFields {
 	readonly [key: string]: BridgeFieldSpec;
 }
 
-const COMMIT_FAILURE_REASONS = [
-	'invalid-intent',
-	'no-subject',
-	'not-bootstrapped',
-	'policy-pending',
-	'encode-failed',
-	'queue-write-failed',
-	'concurrent-change',
-] as const;
-
 /**
  * Every bridge payload, by name.
  *
@@ -98,7 +89,6 @@ export const BRIDGE_PAYLOADS = {
 	},
 	commitIntent: {
 		action: { enum: ['all', 'necessary', 'explicit'] },
-		categories: 'array?',
 		consents: { fields: {}, optional: true },
 	},
 	commitResult: {
@@ -202,7 +192,6 @@ export const BRIDGE_PAYLOADS = {
 		subject: {
 			fields: {
 				externalId: 'string?',
-				identityProvider: 'string?',
 				subjectId: 'string?',
 			},
 			nullable: true,

@@ -187,6 +187,73 @@ describe('describeBridgePayloadDrift', () => {
 	});
 });
 
+describe('commitResult.reason', () => {
+	const REPO = resolve(PROTOCOL_DIR, '..', '..');
+	const read = (path: string): string =>
+		readFileSync(resolve(REPO, path), 'utf8');
+
+	/** The body of the first `func <name>(` in a Swift source, braces balanced. */
+	const swiftFunction = (source: string, name: string): string => {
+		const start = source.indexOf(`func ${name}(`);
+		let index = source.indexOf('{', start);
+		let depth = 0;
+		const begin = index;
+		do {
+			if (source[index] === '{') {
+				depth += 1;
+			} else if (source[index] === '}') {
+				depth -= 1;
+			}
+			index += 1;
+		} while (depth > 0 && index < source.length);
+		return source.slice(begin, index);
+	};
+
+	test('declares every refusal code a native save can return', () => {
+		const kotlin = [
+			...read(
+				'native/core-android/c15t-core/src/main/kotlin/com/c15t/core/ConsentCore.kt'
+			).matchAll(/refusedCommit\(\s*"(?<code>[a-z-]+)"/gu),
+		].map((match) => match.groups?.code);
+		const swiftSave = swiftFunction(
+			read('native/core-swift/Sources/C15tCore/ConsentCore.swift'),
+			'save'
+		);
+		// Rejections are `.failure(CoreErrorInfo(code: ...))` or the `let info`
+		// written before a refused queue write. Codes passed to `events.emit` report
+		// delivery, not the commit, so they are left out.
+		const swift = [
+			...swiftSave.matchAll(
+				/(?:\.failure\(\s*CoreErrorInfo\(|let info = CoreErrorInfo\()\s*code:\s*(?:\w+\s*\?\s*)?"(?<first>[a-z-]+)"(?:\s*:\s*"(?<second>[a-z-]+)")?/gu
+			),
+		].flatMap((match) => [match.groups?.first, match.groups?.second]);
+		const bridge = ['invalid-intent', 'not-bootstrapped'];
+		const declared = new Set<string>(BRIDGE_PAYLOADS.commitResult.reason.enum);
+
+		// Floors, so a pattern that stops matching cannot pass by finding nothing.
+		expect(new Set(kotlin).size).toBeGreaterThanOrEqual(10);
+		expect(new Set(swift).size).toBeGreaterThanOrEqual(14);
+		const undeclared = [...new Set([...kotlin, ...swift, ...bridge])]
+			.filter((code): code is string => code !== undefined)
+			.filter((code) => !declared.has(code))
+			.sort();
+		expect(undeclared).toEqual([]);
+	});
+
+	test('a legitimate IAB refusal is not reported as drift', () => {
+		expect(
+			describeBridgePayloadDrift('commitResult', {
+				confirmed: [],
+				ok: false,
+				queued: false,
+				reason: 'bundled-policy-expired',
+				revision: null,
+				subjectId: null,
+			})
+		).toEqual([]);
+	});
+});
+
 describe('the consent client at the boundary', () => {
 	afterEach(() => {
 		vi.restoreAllMocks();

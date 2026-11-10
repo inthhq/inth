@@ -91,6 +91,12 @@ class BridgeSchemaTest {
 		}
 		assertEquals("payloads that drifted from native/protocol/bridge/payloads.json", emptyList<String>(), problems)
 
+		// Optional keys are skipped when absent, so prove this binding can produce every
+		// subject key the schema declares. A declared key no core models fails here.
+		val subjectFields = fields("snapshot")["subject"]!!.jsonObject["fields"]!!.jsonObject
+		val subject = json.parseToJsonElement(C15tPayload.snapshot(identified)).jsonObject["subject"]!!.jsonObject
+		assertEquals(subjectFields.keys, subject.keys)
+
 		// Android sends neither of these: its tracking request rejects, and the stage only
 		// exists on an Apple request. A payload added later must be covered here too.
 		val covered = samples.map { it.first }.toSet() + setOf("trackingRequest") + jsToNative()
@@ -108,7 +114,6 @@ class BridgeSchemaTest {
 			when (key) {
 				"action" -> JsonPrimitive("explicit")
 				"consents" -> consents
-				"categories" -> JsonArray(listOf(JsonPrimitive("measurement"), JsonPrimitive("marketing")))
 				else -> throw AssertionError("commitIntent.$key has no sample here; add one")
 			}.also { assertEquals(field["type"]!!.jsonPrimitive.content, kindOf(it)) }
 		}
@@ -121,6 +126,19 @@ class BridgeSchemaTest {
 		for (action in actions - "explicit") {
 			val parsed = C15tPayload.parseCommitIntent(buildJsonObject { put("action", action) }.toString())
 			assertTrue("action \"$action\" from the schema must decode", parsed != null)
+		}
+	}
+
+	@Test
+	fun `an intent that names a scope is refused, not widened`() {
+		// Dropping `categories` would apply "all" to the whole choice scope, which is
+		// more than a caller that scoped it asked for.
+		for (raw in listOf(
+			"{\"action\":\"all\",\"categories\":[\"measurement\"]}",
+			"{\"action\":\"necessary\",\"categories\":[\"measurement\"]}",
+			"{\"action\":\"explicit\",\"consents\":{\"measurement\":true},\"categories\":[\"measurement\"]}",
+		)) {
+			assertEquals(raw, null, C15tPayload.parseCommitIntent(raw))
 		}
 	}
 

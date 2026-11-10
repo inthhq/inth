@@ -4,7 +4,6 @@
  */
 
 import type {
-	AllConsentNames,
 	ConsentState,
 	ConsentSubject,
 	ExplicitChoice,
@@ -19,20 +18,19 @@ import type {
  * The three shapes cover every prompt surface: an accept, a reject-everything
  * or save, and a preference-centre save. `explicit` carries exactly the
  * categories the user touched, so a partial save cannot renew a receipt the
- * user never looked at.
+ * user never looked at. `all` and `necessary` cover the whole choice scope;
+ * to decide a subset, use `explicit`. The native decoders refuse any other
+ * key with `invalid-intent`, so a scope they would not honour is never
+ * silently widened.
  */
 export type CommitIntent =
-	| { readonly action: 'all'; readonly categories?: readonly AllConsentNames[] }
-	| {
-			readonly action: 'necessary';
-			readonly categories?: readonly AllConsentNames[];
-	  }
+	| { readonly action: 'all' }
+	| { readonly action: 'necessary' }
 	| {
 			readonly action: 'explicit';
 			readonly consents: Readonly<
 				Partial<Record<OptionalConsentCategory, boolean>>
 			>;
-			readonly categories?: readonly AllConsentNames[];
 	  };
 
 /**
@@ -46,14 +44,29 @@ export type CommitIntent =
  * Both native bridges already report it; this union is what lets JavaScript
  * name it.
  */
-export type CommitFailureReason =
-	| 'invalid-intent'
-	| 'no-subject'
-	| 'not-bootstrapped'
-	| 'policy-pending'
-	| 'encode-failed'
-	| 'queue-write-failed'
-	| 'concurrent-change';
+export const COMMIT_FAILURE_REASONS = [
+	'invalid-intent',
+	'no-subject',
+	'not-bootstrapped',
+	'policy-pending',
+	'encode-failed',
+	'queue-write-failed',
+	'concurrent-change',
+	// IAB authority and bundled-policy refusals, which both native cores also
+	// copy into `reason`.
+	'bundled-policy-expired',
+	'additional-consent-list-stale',
+	'additional-consent-unavailable',
+	'iab-draft-required',
+	'iab-unavailable',
+	'iab-list-stale',
+	'iab-choices-required',
+	'invalid-iab-choices',
+	'invalid-action-time',
+] as const;
+
+/** One of {@link COMMIT_FAILURE_REASONS}. */
+export type CommitFailureReason = (typeof COMMIT_FAILURE_REASONS)[number];
 
 /**
  * Result of `commit(intent)`.

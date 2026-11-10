@@ -18,6 +18,7 @@ export type {
 	CommitResult,
 	NativeSavePayload,
 } from './commit';
+export { COMMIT_FAILURE_REASONS } from './commit';
 export type {
 	GlobalVendorList,
 	GVLDataCategory,
@@ -51,6 +52,7 @@ export {
 export type {
 	ConsentSnapshot,
 	NativeIABState,
+	NativeConsentSubject,
 	NativeModel,
 	NativeGpcSignal,
 	NativePrivacySignals,

@@ -360,6 +360,10 @@ public enum C15tPayload {
     /// rather than rounded to the nearest action.
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {
         guard let body = parseObject(raw) else { return nil }
+        // Only `action` and `consents` are part of an intent. A scope such as
+        // `categories` is refused rather than dropped: dropping it would apply the
+        // action to the whole choice scope, which is more than the caller asked for.
+        guard body.keys.allSatisfy({ $0 == "action" || $0 == "consents" }) else { return nil }
         switch body["action"]?.stringValue {
         case "all":
             return .all
