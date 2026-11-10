@@ -20,6 +20,8 @@ import com.c15t.core.model.KernelOverrides
 import com.c15t.core.model.PolicyResolution
 import com.c15t.core.model.PrivacySignals
 import com.c15t.core.policy.EvaluationPolicy
+import com.c15t.core.policy.PolicyRead
+import com.c15t.core.policy.StrictPolicyReader
 import com.c15t.core.policy.PolicyPrompt
 import com.c15t.core.policy.PolicyRight
 import com.c15t.core.policy.ScopeMode
@@ -27,6 +29,7 @@ import com.c15t.core.store.C15tStore
 import com.c15t.core.InMemoryKeyValueStore
 import com.c15t.core.store.TcBusValue
 import com.c15t.core.testKernel
+import com.c15t.core.transport.ProducerContract
 import com.c15t.core.wire.SnapshotWire
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -141,6 +144,56 @@ class GppFixtureTest {
 
 	private fun committed(tcString: String) = IabCommittedConsent(IabConfiguration(53, 7, "GB"), IabChoices(), "sub_test", null,
 		"f", 42, 5, 1, 0, 0, tcString)
+}
+
+/**
+ * `native/protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read. The
+ * expected answers are `readPolicyResolutionWire`'s in `@c15t/schema`, and `GPPTests.swift`
+ * runs the same cases through `PolicyWireReader`, so both cores hand `GppResolver` the same
+ * rights for the same `/init` body, or both refuse it.
+ */
+class PolicyRightsFixtureTest {
+	private val cases = generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+		.map { File(it, "native/protocol/gpp/policy-rights-cases.json") }.first { it.exists() }
+		.let { Json.parseToJsonElement(it.readText()).jsonObject.getValue("cases").jsonArray.map { case -> case.jsonObject } }
+
+	@Test fun `every case reads as the schema reads it`() {
+		assertTrue(cases.isNotEmpty())
+		for (case in cases) {
+			val id = case.getValue("id").jsonPrimitive.content
+			val expected = case.getValue("expected").jsonObject
+			val read = StrictPolicyReader.read(case.getValue("policyResolution"), ProducerContract.Declared(1))
+			val actual = when (read) {
+				is PolicyRead.Matched -> JsonObject(mapOf(
+					"accepted" to JsonPrimitive(true),
+					"rights" to JsonArray(read.policy.rights.map { JsonPrimitive(it.wireName) }),
+				))
+				is PolicyRead.Unreadable -> JsonObject(mapOf("accepted" to JsonPrimitive(false), "reason" to JsonPrimitive(read.reason)))
+				else -> JsonObject(mapOf("accepted" to JsonPrimitive(false), "unexpected" to JsonPrimitive(read.toString())))
+			}
+			assertEquals(expected, actual, id)
+		}
+	}
+
+	@Test fun `a US visitor under an opt-out rule missing its opt-out right gets no policy, so no GPP string`() {
+		val bus = RecordingTcStorageBus()
+		val wire = cases.first { it.getValue("id").jsonPrimitive.content == "opt-out-missing-opt-out" }
+			.getValue("policyResolution")
+		val body = JsonObject(mapOf(
+			"policyResolution" to wire,
+			"location" to JsonObject(mapOf("countryCode" to JsonPrimitive("US"), "regionCode" to JsonNull)),
+		)).toString()
+		val core = testKernel(
+			NativeConfig("https://cmp.example.test", overrides = KernelOverrides(country = "US"), gpp = GppOptions()),
+			C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(),
+			RecordingTransport().respondInit(initSuccess(body = body)),
+		)
+		core.bootstrap()
+		assertTrue(core.snapshot().policyPending)
+		assertEquals(PolicyResolution.REASON_INVALID_PAYLOAD, core.snapshot().error?.code)
+		assertNull(core.snapshot().gppString)
+		assertTrue(bus.live.keys.none { it.startsWith("IABGPP_") })
+	}
 }
 
 /** GPP through a real core: the snapshot field, the storage rows, and a cold start. */

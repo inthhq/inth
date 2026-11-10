@@ -10,6 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { readPolicyResolutionWire } from '@c15t/schema/types';
 import { GppModel } from '@iabgpp/cmpapi';
 import { describe, expect, test } from 'vitest';
 
@@ -214,6 +215,34 @@ describe('native GPP fixtures', () => {
 			expect(entry.expected.storage).toEqual(
 				expectedStorage(sections, gppString, entry.input.tcString)
 			);
+		}
+	);
+});
+
+const rightsCases = (
+	JSON.parse(
+		readFileSync(resolve(PROTOCOL, 'gpp/policy-rights-cases.json'), 'utf8')
+	) as {
+		cases: {
+			id: string;
+			policyResolution: unknown;
+			expected:
+				| { accepted: true; rights: string[] }
+				| { accepted: false; reason: string };
+		}[];
+	}
+).cases;
+
+describe('native policy rights fixtures', () => {
+	test.each(rightsCases.map((entry) => [entry.id, entry] as const))(
+		'%s reads as @c15t/schema reads it',
+		(_, entry) => {
+			const read = readPolicyResolutionWire(entry.policyResolution);
+			expect(
+				read.status === 'matched'
+					? { accepted: true, rights: read.policy.rights }
+					: { accepted: false, reason: read.reason }
+			).toEqual(entry.expected);
 		}
 	);
 });

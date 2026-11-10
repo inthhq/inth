@@ -154,16 +154,27 @@ object StrictPolicyReader {
 		)
 			?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 
-		// `/init` always serves the resolved set. A wire without it gets the rights the
-		// schema requires for the model; a value this build does not name is refused,
-		// as `core-swift`'s `PolicyWireReader` refuses it.
-		val rights = when (val raw = policy["rights"]) {
-			null -> PolicyRight.requiredFor(model)
-			is JsonArray -> raw.map { element ->
-				PolicyRight.fromWireName((element as? JsonPrimitive)?.takeIf { it.isString }?.content)
-					?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
-			}.distinct().sortedBy { it.wireName }
-			else -> return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		// `rights` decides whether a GPP US section applies and which notices it reports, so
+		// this reads it exactly as `PolicyWireReader` in core-swift and `readStringSet` plus
+		// `collectResolvedPolicyRuleIssues` in @c15t/schema do, in the same order. Absent, not
+		// an array, a non-string or a repeat is an invalid payload; a value this build does not
+		// name is an unsupported contract; a set missing a right the model requires is an
+		// invalid payload. Each fails closed rather than reporting fewer rights than the rule has.
+		val rawRights = policy["rights"] as? JsonArray
+			?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		val rightNames = rawRights.map { element ->
+			(element as? JsonPrimitive)?.takeIf { it.isString }?.content
+				?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		}
+		if (rightNames.toSet().size != rightNames.size) {
+			return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		}
+		val rights = rightNames.map { name ->
+			PolicyRight.fromWireName(name)
+				?: return PolicyRead.Unreadable(PolicyResolution.REASON_UNSUPPORTED_CONTRACT)
+		}
+		if (!rights.containsAll(PolicyRight.requiredFor(model))) {
+			return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 		}
 
 		return PolicyRead.Matched(
@@ -179,7 +190,7 @@ object StrictPolicyReader {
 				choiceFingerprint = choiceFingerprint,
 				policyFingerprint = policyFingerprint,
 				noticeFingerprint = noticeFingerprint,
-				rights = rights,
+				rights = rights.sortedBy { it.wireName },
 			)
 		)
 	}

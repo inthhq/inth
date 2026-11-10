@@ -72,7 +72,7 @@ internal class NativeIabDeviceBackend : C15tTransport {
 		val INIT = """{
 		  "policyResolution":{"version":1,"status":"matched","policyId":"mobile-iab","matchedBy":"country",
 			"fingerprints":{"policy":"mobile-policy","choice":"mobile-choice","notice":"mobile-notice"},
-			"policy":{"id":"mobile-iab","model":"iab","prompt":"choice","scopeMode":"permissive",
+			"policy":{"id":"mobile-iab","model":"iab","prompt":"choice","scopeMode":"permissive","rights":["disclosure","preferences"],
 			  "validity":{"choiceMs":2592000000,"noticeMs":2592000000}}},
 		  "gvl":{"vendorListVersion":42,"tcfPolicyVersion":5,"gvlSpecificationVersion":3,"lastUpdated":"2025-09-17T00:00:00Z",
 			"purposes":{"1":{"id":1,"name":"Storage","description":"Storage"},"3":{"id":3,"name":"Profiles","description":"Profiles"},"4":{"id":4,"name":"Ads","description":"Ads"}},

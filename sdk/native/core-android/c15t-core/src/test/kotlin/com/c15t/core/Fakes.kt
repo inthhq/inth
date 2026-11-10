@@ -291,6 +291,11 @@ fun initBody(
 	// is not a body the reader may accept. A notice dismissal binds to this one.
 	noticeFingerprint: String = "notice-fp-1",
 	gpcDenyCategories: String? = null,
+	/**
+	 * The rule's `rights` as raw JSON. Defaults to the set the schema requires for [model],
+	 * which is what the backend serves; `null` writes no key, which the reader refuses.
+	 */
+	rights: String? = requiredRightsJson(model),
 	policySnapshotToken: String? = "snap-1",
 	includePolicyResolution: Boolean = true,
 	version: String? = "1",
@@ -308,6 +313,7 @@ fun initBody(
 		scopeMode?.let { add("\"scopeMode\":$it") }
 		add("\"validity\":{\"choiceMs\":$choiceMs,\"noticeMs\":$noticeMs}")
 		gpcDenyCategories?.let { add("\"privacySignals\":{\"gpc\":{\"denyCategories\":$it}}") }
+		rights?.let { add("\"rights\":$it") }
 	}.joinToString(",", prefix = "{", postfix = "}")
 
 	val resolution = buildList {
@@ -331,6 +337,16 @@ fun initBody(
 	} else {
 		"""{"location":{"countryCode":"US"}$token$list}"""
 	}
+}
+
+/**
+ * `requiredPolicyRights` for a raw JSON model value such as `"opt-out"`, as a JSON array.
+ * A model this build does not name gets an empty set; the reader refuses the model anyway.
+ */
+fun requiredRightsJson(model: String): String {
+	val parsed = com.c15t.core.model.ConsentModel.fromWireName(model.trim().removeSurrounding("\""))
+	val rights = parsed?.let { com.c15t.core.policy.PolicyRight.requiredFor(it) } ?: emptyList()
+	return rights.joinToString(",", prefix = "[", postfix = "]") { "\"${it.wireName}\"" }
 }
 
 /** The same body, wrapped in the JSON object the transport hands over. */

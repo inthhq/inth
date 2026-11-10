@@ -108,6 +108,36 @@ final class GPPFixtureTests: XCTestCase {
     }
 }
 
+/// `native/protocol/gpp/policy-rights-cases.json`: how a matched rule's `rights` read.
+/// The expected answers are `readPolicyResolutionWire`'s in `@c15t/schema`, and
+/// `GppTest.kt` runs the same cases through `StrictPolicyReader`, so both cores hand the
+/// GPP resolver the same rights for the same `/init` body, or both refuse it.
+final class PolicyRightsFixtureTests: XCTestCase {
+    func testEveryCaseReadsAsTheSchemaReadsIt() throws {
+        let url = GPPFixtureTests.fixtureURL.deletingLastPathComponent()
+            .appendingPathComponent("policy-rights-cases.json")
+        let cases = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url))?.objectValue?["cases"]?.arrayValue)
+        XCTAssertFalse(cases.isEmpty)
+        for item in cases {
+            let testCase = try XCTUnwrap(item.objectValue)
+            let id = testCase["id"]?.stringValue ?? "?"
+            let expected = try XCTUnwrap(testCase["expected"]?.objectValue)
+            switch PolicyWireReader.read(testCase["policyResolution"]) {
+            case let .resolved(resolved):
+                XCTAssertEqual(expected["accepted"]?.boolValue, true, id)
+                XCTAssertEqual(
+                    resolved.policy.rights.map(\.rawValue),
+                    (expected["rights"]?.arrayValue ?? []).compactMap(\.stringValue),
+                    id
+                )
+            case let .rejected(reason, message):
+                XCTAssertEqual(expected["accepted"]?.boolValue, false, "\(id): \(message)")
+                XCTAssertEqual(reason.rawValue, expected["reason"]?.stringValue, id)
+            }
+        }
+    }
+}
+
 /// GPP through a real core: the snapshot field, the `IABGPP_*` rows, and a cold start.
 final class GPPCoreTests: XCTestCase {
     private let noChoice = "DBABLA~CVQqAAAAAACA.QA"
