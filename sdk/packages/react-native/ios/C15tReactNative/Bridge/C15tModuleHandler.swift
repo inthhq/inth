@@ -194,8 +194,13 @@ public struct C15tModuleHandler {
     /// The `getSnapshot()` payload.
     public func snapshotPayload() -> String {
         ensureCore()
+        let core = C15t.current
         return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage,
-            iabConsent: C15t.current?.iabConsent(), iabAcceptAll: C15t.current?.iabAcceptAllChoices())
+            iabConsent: core?.iabConsent(), iabAcceptAll: core?.iabAcceptAllChoices(),
+            iabHeadlessGaps: core.map {
+                C15tPayload.headlessIABGaps(
+                    publisherRestrictions: $0.iabPublisherRestrictions, adTechProviders: $0.adTechProviderDisclosures())
+            } ?? [])
     }
 
     /// The `getTrackingAuthorization()` payload.

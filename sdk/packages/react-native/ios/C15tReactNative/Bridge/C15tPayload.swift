@@ -132,7 +132,8 @@ public enum C15tPayload {
         _ snapshot: ConsentSnapshot,
         fallbackLanguage: String = defaultLanguage,
         iabConsent: IABCommittedConsent? = nil,
-        iabAcceptAll: IABChoices? = nil
+        iabAcceptAll: IABChoices? = nil,
+        iabHeadlessGaps: [String] = []
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -169,17 +170,36 @@ public enum C15tPayload {
         // The headless TCF state rides inside `iab`: the committed decision a screen shows
         // and reopens with (`null` while none is current), whether a draft can be edited and
         // saved now, and what Accept all saves under the publisher's disclosure. `acceptAll`
-        // is `null` exactly when `editable` is false: the core answers both from one state.
+        // is `null` exactly when `editable` is false. `headlessUnsupported` names what a screen
+        // built on the served list could not disclose; while it is not empty, `editable` stays
+        // false, so no custom screen saves choices it could not show.
         if case var .object(iab)? = fields["iab"] {
+            let acceptAll = iabHeadlessGaps.isEmpty ? iabAcceptAll : nil
             iab["committed"] = iabConsent.map(committedIAB) ?? .null
-            iab["editable"] = .bool(iabAcceptAll != nil)
-            iab["acceptAll"] = iabAcceptAll.flatMap { value(of: $0) } ?? .null
+            iab["editable"] = .bool(acceptAll != nil)
+            iab["acceptAll"] = acceptAll.flatMap { value(of: $0) } ?? .null
+            iab["headlessUnsupported"] = .array(iabHeadlessGaps.map { .string($0) })
             fields["iab"] = .object(iab)
         }
 
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
     }
+
+    /// What a custom screen built on the served vendor list could not disclose. Publisher
+    /// restrictions change a vendor's legal bases away from the list, and Additional Consent
+    /// providers are not on the snapshot at all; the stock screens show both.
+    public static func headlessIABGaps(
+        publisherRestrictions: [IABPublisherRestriction], adTechProviders: [AdTechProvider]?
+    ) -> [String] {
+        var gaps: [String] = []
+        if !publisherRestrictions.isEmpty { gaps.append(headlessGapPublisherRestrictions) }
+        if !(adTechProviders ?? []).isEmpty { gaps.append(headlessGapAdditionalConsent) }
+        return gaps
+    }
+
+    public static let headlessGapPublisherRestrictions = "publisher-restrictions"
+    public static let headlessGapAdditionalConsent = "additional-consent-providers"
 
     /// The committed IAB decision as JavaScript reads it.
     static func committedIAB(_ consent: IABCommittedConsent) -> JSONValue {

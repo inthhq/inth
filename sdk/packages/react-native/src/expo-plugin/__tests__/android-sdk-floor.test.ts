@@ -11,7 +11,14 @@
  * `android.minSdkVersion` and `android.compileSdkVersion` into
  * `gradle.properties`.
  */
-import { appendFileSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
+import {
+	appendFileSync,
+	cpSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -21,6 +28,7 @@ import {
 	assertAndroidSdkFloor,
 	findAndroidSdkSettings,
 	readAndroidSdkFiles,
+	stripGradleComments,
 } from '../android-sdk-floor';
 import { C15tPluginError } from '../errors';
 import { FIXTURE_DIR, applyToFixture, runMod } from './helpers';
@@ -53,6 +61,18 @@ const templateProject = function templateProject(
 	}
 	return root;
 };
+
+/** Rewrite the template's `android/app/build.gradle`. */
+const editAppGradle = function editAppGradle(
+	root: string,
+	edit: (contents: string) => string
+): void {
+	const path = join(root, 'android', 'app', 'build.gradle');
+	writeFileSync(path, edit(readFileSync(path, 'utf8')));
+};
+
+/** The template line every Expo 55 to 58 `defaultConfig` carries. */
+const MIN_SDK_LINE = 'minSdkVersion rootProject.ext.minSdkVersion';
 
 /** Run the plugin's finalized Android mod, the way prebuild ends. */
 const finalize = function finalize(projectRoot: string) {
@@ -103,6 +123,38 @@ describe.each(TEMPLATES)('the Expo %s template', (template) => {
 			/compileSdk is 35 in android\/gradle\.properties; c15t needs 36/u
 		);
 	});
+
+	it('ignores commented-out levels', async () => {
+		const root = templateProject(template);
+		editAppGradle(root, (contents) => {
+			expect(contents).toContain(MIN_SDK_LINE);
+			return contents.replace(
+				MIN_SDK_LINE,
+				`// minSdkVersion 21\n        /* compileSdk 33 */\n        ${MIN_SDK_LINE}`
+			);
+		});
+		await expect(finalize(root)).resolves.toBeDefined();
+	});
+
+	it('fails on a low literal in defaultConfig, past the comments', async () => {
+		// Proves the comment scanner reads the whole template rather than
+		// swallowing it from some quote onward, which would hide this line.
+		const root = templateProject(template);
+		editAppGradle(root, (contents) =>
+			contents.replace(MIN_SDK_LINE, 'minSdkVersion 21')
+		);
+		await expect(finalize(root)).rejects.toThrowError(
+			/minSdk is 21 in android\/app\/build\.gradle/u
+		);
+	});
+
+	it('lets an app literal override a low expo-build-properties value', async () => {
+		const root = templateProject(template, 'android.minSdkVersion=23');
+		editAppGradle(root, (contents) =>
+			contents.replace(MIN_SDK_LINE, 'minSdkVersion 26')
+		);
+		await expect(finalize(root)).resolves.toBeDefined();
+	});
 });
 
 describe('assertAndroidSdkFloor', () => {
@@ -133,6 +185,53 @@ describe('assertAndroidSdkFloor', () => {
 					'targetSdkVersion 21',
 			})
 		).not.toThrow();
+	});
+
+	it.each([
+		[
+			'a level named inside a string',
+			{ 'app/build.gradle': 'println "minSdkVersion 21 was the old floor"' },
+		],
+		[
+			'a gradle.properties entry a later one replaces',
+			{
+				'gradle.properties':
+					'android.minSdkVersion=23\nandroid.minSdkVersion=26',
+			},
+		],
+		[
+			'a gradle.properties entry a root ext value replaces',
+			{
+				'build.gradle':
+					'buildscript {\n  ext {\n    minSdkVersion = 26\n  }\n}',
+				'gradle.properties': 'android.minSdkVersion=23',
+			},
+		],
+		[
+			'a commented-out gradle.properties entry',
+			{ 'gradle.properties': '# android.minSdkVersion=21' },
+		],
+	])('passes %s', (_label, files) => {
+		expect(() => assertAndroidSdkFloor(files)).not.toThrow();
+	});
+
+	it.each([
+		['a colon separator', 'android.minSdkVersion: 21'],
+		['a space separator', 'android.minSdkVersion 21'],
+	])('reads a gradle.properties entry with %s', (_label, line) => {
+		expect(() =>
+			assertAndroidSdkFloor({ 'gradle.properties': line })
+		).toThrowError(/minSdk is 21 in android\/gradle\.properties/u);
+	});
+
+	it('keeps comment markers inside strings', () => {
+		expect(
+			stripGradleComments(
+				'maven { url "https://example.com/m2" }\ninclude: ["**/*.jar"]\nminSdk 21'
+			)
+		).toBe(
+			'maven { url "https://example.com/m2" }\ninclude: ["**/*.jar"]\nminSdk 21'
+		);
 	});
 
 	it('throws the plugin error type', () => {

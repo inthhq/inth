@@ -253,6 +253,13 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
+    /// The publisher restrictions this core was configured with, empty without IAB. A screen that
+    /// shows the served list as it is discloses the wrong legal bases while any are set; the core's
+    /// own projection is in ``iabPresentation()``.
+    public var iabPublisherRestrictions: [IABPublisherRestriction] {
+        lock.withLock { config?.iab?.publisherRestrictions ?? [] }
+    }
+
     /// What Accept all saves on the current disclosed list: every live partner's bases under the
     /// publisher's disclosure and restrictions, exactly as ``save(_:expectedRevision:)`` builds them
     /// for ``CommitIntent/all``. `nil` whenever ``openIABDraft()`` is.

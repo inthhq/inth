@@ -47,6 +47,8 @@ final class IABAcceptAllTests: XCTestCase {
             let core = try await boot(vector, restrictions: row.publisherRestrictions)
             // A headless Accept all stages what this answers, so it must be the same selection.
             XCTAssertEqual(core.iabAcceptAllChoices(), row.acceptAll, row.id)
+            // A headless screen is refused while restrictions apply, so it must see them.
+            XCTAssertEqual(core.iabPublisherRestrictions, row.publisherRestrictions, row.id)
             XCTAssertEqual(core.save(.all).status, .committed, row.id)
             let saved = try XCTUnwrap(core.iabConsent(), row.id)
             // Purposes 5, 6, 8 and 11 are in the list but no vendor declares them; vendors 10

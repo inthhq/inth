@@ -907,14 +907,17 @@ headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON number
 `consents` the categories it confirms, and an optional `revision` the core passes as
 `expectedRevision`, so a change since the draft was opened is refused as
 `concurrent-change`. The core validates IDs and legal bases as for the stock
-presenter. The bridge adds three keys inside the snapshot's `iab` object, beside the
+presenter. The bridge adds four keys inside the snapshot's `iab` object, beside the
 core's `gvl`: `committed: { tcString, addtlConsent, choices } | null` from
-`iabConsent()`, `acceptAll: IABChoices | null` from `iabAcceptAllChoices()` (what
-`save(all)` builds, publisher restrictions included; `null` exactly when no draft can
-open), and `editable`, which is `acceptAll != null`. They are additive without a
-protocol bump: `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
-`committed: null, editable: false, acceptAll: null`, so JavaScript offers no edit it
-cannot commit.
+`iabConsent()`; `headlessUnsupported`, which lists `publisher-restrictions` when
+`iabPublisherRestrictions` is not empty and `additional-consent-providers` when
+`adTechProviderDisclosures()` is not empty, the disclosures a screen built on the raw
+list cannot make; `acceptAll: IABChoices | null` from `iabAcceptAllChoices()`, sent
+only while `headlessUnsupported` is empty; and `editable`, which is
+`acceptAll != null`. They are additive without a protocol bump:
+`ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
+`committed: null, editable: false, acceptAll: null, headlessUnsupported: []`, so
+JavaScript offers no edit it cannot commit.
 
 `c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
 `gradle.properties` for Android) builds the bridge without the stock screens: the
@@ -1466,7 +1469,7 @@ Rules the plugin enforces at build time
   set on purpose and would be written back by the next prebuild. A finalized
   Android mod, which runs after every other plugin's mods, reads
   `gradle.properties` and the root and app `build.gradle(.kts)` and fails the
-  prebuild naming each literal below the floor and where to change it.
+  prebuild when the level Gradle applies (an app-module literal, else the last root `ext` assignment, else the last `gradle.properties` entry; comments never count) is below the floor, naming that setting and where to change it.
   `__tests__/android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
   57 and 58 templates. `targetSdkVersion` is never read.
 - Expo Go fails the build with a message rather than failing at runtime. The

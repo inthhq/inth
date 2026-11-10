@@ -47,8 +47,7 @@ class PresenterTest {
         return core to now
     }
     @Test fun retryPreservesDirtyExpiredListDraftUntilExplicitReload() {
-        val mainDispatcher = StandardTestDispatcher()
-        Dispatchers.setMain(mainDispatcher)
+        Dispatchers.setMain(main)
         try {
             val (core, clock) = boot()
             val p = ConsentPresenter(core)
@@ -62,10 +61,7 @@ class PresenterTest {
             assertTrue(p.dirty)
             assertEquals(choices, p.choices)
             // Observe the completed main-thread update, not the core's earlier list refresh.
-            await {
-                mainDispatcher.scheduler.runCurrent()
-                p.snapshot.revision > revision && !p.listUnavailable
-            }
+            await { p.snapshot.revision > revision && !p.listUnavailable }
             assertTrue(p.stale)
             assertTrue(p.dirty)
             assertEquals(choices, p.choices)
@@ -91,7 +87,7 @@ class PresenterTest {
         } finally { Dispatchers.resetMain() }
     }
     @Test fun partnerStatusIncludesSavedLIAndDistinguishesPartialSelection() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val (core, _) = boot()
             val p = ConsentPresenter(core)
@@ -116,7 +112,7 @@ class PresenterTest {
         } finally { Dispatchers.resetMain() }
     }
     @Test fun refusedWriteKeepsDraftAndRetryEmitsOneOutcome() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val store = Memory()
             val (core, _) = boot(store)
@@ -146,7 +142,7 @@ class PresenterTest {
     }
 
     @Test fun openSettingsCanWithdrawAfterBundledPolicyExpires() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val vector = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
                 .map { File(it, "native/protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
@@ -175,7 +171,7 @@ class PresenterTest {
     }
 
     @Test fun failureStaysVisibleWhileARetryIsPending() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val store = Memory()
             val (core, _) = boot(store)
@@ -189,6 +185,8 @@ class PresenterTest {
             val hold = java.util.concurrent.CountDownLatch(1)
             store.holdNext = hold; store.refuseNext = true
             p.retry()
+            // Start the commit, so the write is held on the IO thread while the presenter is read.
+            main.scheduler.runCurrent()
             // The row stays put while the retry runs; only an outcome replaces it, so nothing reflows under the thumb.
             assertTrue(p.pending); assertNotNull(p.errorCode)
             hold.countDown(); await { !p.pending }
@@ -209,9 +207,22 @@ class PresenterTest {
         assertTrue(p.providerPrerequisitesMet)
     }
 
+    /**
+     * The presenter's coroutines run on `Dispatchers.Main`. Under `Unconfined` a commit resumes on
+     * the IO worker that saved it and writes `pending`, then the outcome, while the test thread
+     * reads them, so `!pending` could be seen before `errorCode`. This queued dispatcher runs only
+     * when [await] drains it, which keeps every main-thread write on the test thread, as an app
+     * keeps them on its main thread.
+     */
+    private val main = StandardTestDispatcher()
     private fun await(condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
-        while (!condition() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Presenter did not receive refreshed disclosure", condition())
+        while (System.nanoTime() < deadline) {
+            main.scheduler.runCurrent()
+            if (condition()) return
+            Thread.sleep(10)
+        }
+        main.scheduler.runCurrent()
+        assertTrue("Presenter did not reach the expected state", condition())
     }
 }

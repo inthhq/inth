@@ -65,13 +65,22 @@ refusal. `isDirty` tells you whether anything changed. `acceptAll` and
 
 While the draft has no edits, it follows the saved record. While it has
 edits, a category you did not change still takes the newly saved value, so a
-save writes back only what the subject changed. A save through
-`useSaveConsents()` with `'all'`, `'none'` or a per-category object clears the
-edits the draft held when the save began; an edit made while a save is pending
-stays staged. If the policy or
-the displayed categories change under an unsaved edit, `isStale` turns true and
-`save()` resolves `ok: false` with `reason: 'concurrent-change'`, writing
-nothing. Call `reset()` and let the subject review again.
+save writes back only what the subject changed. A staged value that the record
+now holds is no longer an edit. If another surface records a different
+decision for a category the subject staged, the newer decision wins: the
+category drops its staged value, shows the record, and is listed in
+`staleCategories`. Setting that category again clears it from the list.
+
+A save through `useSaveConsents()` with `'all'`, `'none'` or a per-category
+object clears the edits the draft held when the save began. An edit made while
+a save is pending stays staged. If another decision landed after the save, an
+edit made meanwhile that disagrees with the record goes to `staleCategories`
+instead.
+
+If the policy or the displayed categories change under an unsaved edit, or
+`staleCategories` is not empty, `isStale` turns true and `save()` resolves
+`ok: false` with `reason: 'concurrent-change'`, writing nothing. Call `reset()`
+and let the subject review again.
 
 Every component outside a `ConsentDraftProvider` shares one draft, so a Save
 button elsewhere on the screen can call `useSaveConsents()()` with no argument,
@@ -96,13 +105,23 @@ staged selection, and `useTCString()` reads the committed TC String:
 
 <include src="../../shared/examples/react-native-bare/iab-preferences.mdx" />
 
+Headless IAB supports configurations without publisher restrictions or
+Additional Consent providers. Other configurations need the stock screens: a
+custom screen built on the served list would show the wrong legal bases or
+leave providers unnamed. For them `useIABSnapshot()?.headlessUnsupported`
+lists `'publisher-restrictions'` or `'additional-consent-providers'`,
+`editable` stays `false` and `useIAB()` returns `null`, so no custom screen can
+save a choice it could not disclose.
+
 `useIAB()` returns `null` unless the policy is `iab`, a vendor list was served
 and native can open a draft now. `useIABSnapshot()?.editable` is `false` while
 the list is stale or offline or a required Additional Consent list is missing;
 show the committed decision, call `useConsentActions().refresh()` and offer
 controls again once it turns `true`. A binary built before this release also
-reads `false`, because it cannot commit a headless selection. The draft opens
-with the committed choices, or with nothing granted.
+reads `false`, because it cannot commit a headless selection. If editing
+closes under an unsaved selection, the selection comes back when it opens
+again; it is stale only if the policy or the committed decision moved
+meanwhile. The draft opens with the committed choices, or with nothing granted.
 `save()` sends the whole selection and the displayed categories as one native
 commit, pinned to the snapshot revision the draft was opened on. The native
 core checks every ID and legal basis against the served list, encodes the TC
@@ -112,8 +131,8 @@ reason. If the vendor list or policy changed under an unsaved edit, the draft
 turns stale and refuses to save until you call `reset()`.
 
 `acceptAll()` stages exactly what native Accept all saves: the core projects
-every live partner's bases under your disclosure and publisher restrictions,
-and every displayed category is granted, so the headless and stock buttons
+every live partner's bases under your disclosure, and every displayed category
+is granted, so the headless and stock buttons
 record the same signals. `rejectAll()` stages withdrawal of every consent and
 a denial for every displayed category, and leaves legitimate interest alone,
 as on the web. A first decision opens with every consent off and the disclosed
@@ -121,13 +140,6 @@ legitimate interests not objected to, as the stock screens open it. For one-tap 
 without staging. `setPurposeLegitimateInterest` and
 `setVendorLegitimateInterest` with `false` record an objection; purposes 1 and
 3 to 6 never take legitimate interest.
-
-The snapshot carries the served vendor list as published, not the native
-disclosure projection. When your configuration sets publisher restrictions or
-the policy lists Additional Consent providers, the raw list does not show the
-legal bases your app discloses, and it does not name the providers
-`setAdTechProviderConsent` saves. In that setup, keep the stock screens for
-the disclosure layer; the headless hooks can still stage and save the choice.
 
 The staged values are for rendering controls. Gate vendors on the committed
 decision, which native SDK gates and `IABTCF_*` readers already use.

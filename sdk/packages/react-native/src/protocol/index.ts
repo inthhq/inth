@@ -49,6 +49,7 @@ export {
 export type {
 	ConsentSnapshot,
 	NativeIABCommittedConsent,
+	NativeIABHeadlessGap,
 	NativeIABState,
 	NativeModel,
 	NativeGpcSignal,
