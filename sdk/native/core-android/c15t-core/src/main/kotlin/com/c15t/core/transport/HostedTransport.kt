@@ -37,7 +37,7 @@ class HostedTransport(
 		val headers = linkedMapOf(
 			"accept" to "application/json",
 		)
-		headers.putAll(C15tProtocol.protocolHeaders(config.sdkVersion))
+		headers.putAll(C15tProtocol.protocolHeaders(config.sdkVersion, config.platform))
 		// The override travels on the adapter header the backend's shared
 		// extractor reads first, mirroring the web SDK.
 		// The override travels as the application header and wins on the backend;
@@ -141,7 +141,7 @@ class HostedTransport(
 	private fun jsonHeaders(): Map<String, String> = buildMap {
 		put("accept", "application/json")
 		put("content-type", "application/json")
-		putAll(C15tProtocol.protocolHeaders(config.sdkVersion))
+		putAll(C15tProtocol.protocolHeaders(config.sdkVersion, config.platform))
 	}
 
 	/**

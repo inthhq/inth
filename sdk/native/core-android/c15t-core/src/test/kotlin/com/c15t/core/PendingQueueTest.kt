@@ -195,14 +195,14 @@ class PendingQueueTest {
 		kernel.save(CommitIntent.All)
 
 		val init = http.requests.first { it.url == "https://test.c15t.app/init" }
-		assertEquals(
-			C15tProtocol.VERSION_PREFIX + C15tProtocol.DEFAULT_SDK_VERSION,
-			init.headers[C15tProtocol.VERSION_HEADER],
-		)
+		// The version is unprefixed, as on web and Swift; the host platform has its own header.
+		assertEquals(C15tProtocol.DEFAULT_SDK_VERSION, init.headers[C15tProtocol.VERSION_HEADER])
+		assertEquals("android->${C15tProtocol.DEFAULT_SDK_VERSION}", init.headers[C15tProtocol.PLATFORM_HEADER])
 		assertEquals("1", init.headers[C15tProtocol.POLICY_CONTRACT_HEADER])
 
 		val save = http.requests.first { it.url == "https://test.c15t.app/subjects" }
 		assertEquals("1", save.headers[C15tProtocol.POLICY_CONTRACT_HEADER])
+		assertEquals("android->${C15tProtocol.DEFAULT_SDK_VERSION}", save.headers[C15tProtocol.PLATFORM_HEADER])
 		val body = json.parseToJsonElement(requireNotNull(save.body)).jsonObject
 		assertEquals("cookie_banner", body["type"]?.jsonPrimitive?.content)
 		assertEquals("test.c15t.app", body["domain"]?.jsonPrimitive?.content, "domain falls back to the host")
@@ -225,6 +225,31 @@ class PendingQueueTest {
 			body.keys.toList(),
 			"member order matches buildSubjectPostBody, so bodies stay comparable with the fixtures",
 		)
+	}
+
+	@Test
+	fun `requests report the platform the config names`() {
+		fun platformHeaders(platform: String?): List<String?> {
+			val http = RecordingHttpClient { responseFor(it) }
+			val kernel = testKernel(
+				store = C15tStore(InMemoryKeyValueStore()),
+				transport = HostedTransport(
+					http,
+					NativeConfig(backendUrl = "https://test.c15t.app", sdkVersion = "9.9.9", platform = platform),
+				),
+			)
+			kernel.bootstrap()
+			kernel.save(CommitIntent.All)
+			assertTrue(http.requests.size >= 2, "an init and a save were sent")
+			assertTrue(http.requests.all { it.headers[C15tProtocol.VERSION_HEADER] == "9.9.9" })
+			return http.requests.map { it.headers[C15tProtocol.PLATFORM_HEADER] }.distinct()
+		}
+
+		// ENG-530: a React Native host reports `rn`, a Kotlin host `android`, and the
+		// version header never carries a platform prefix.
+		assertEquals(listOf("rn->9.9.9"), platformHeaders(C15tProtocol.PLATFORM_REACT_NATIVE))
+		assertEquals(listOf("android->9.9.9"), platformHeaders(C15tProtocol.PLATFORM_ANDROID))
+		assertEquals(listOf<String?>(null), platformHeaders(null))
 	}
 
 	private fun payloadFor(index: Int) = SavePayload(
