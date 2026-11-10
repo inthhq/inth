@@ -287,8 +287,16 @@ internal class ConsentBinding<State>(
 	private var applier: Thread? = null
 	private var target: State? = null
 	private var targetGranted: Set<ConsentCategory> = emptySet()
-	// Declared before init, which runs the first update.
-	private val readCurrent: () -> State = { current() }
+	// Declared before init, which runs the first update. What the update holding the
+	// turn reads, it may enable, so its categories join the turn's granted set even
+	// before the publication that granted them reaches this binding.
+	private val readCurrent: () -> State = {
+		synchronized(lock) {
+			val (state, granted) = readGranted()
+			if (applier === Thread.currentThread()) targetGranted = targetGranted + granted
+			state
+		}
+	}
 	private val observer: (Boolean) -> Unit = {
 		// gate delivers synchronously before returning its handle. Initial vendor
 		// failures must reach the constructor's cleanup and caller below.
@@ -363,9 +371,14 @@ internal class ConsentBinding<State>(
 				// Reentrant: this thread's own pass re-reads when its vendor call returns.
 				if (running === me) return
 				if (running != null) {
-					// Nothing the update holding the turn grants was withdrawn: it picks
-					// this change up when its vendor call returns.
-					if (granted.containsAll(targetGranted)) return
+					// Nothing the update holding the turn may have enabled was withdrawn:
+					// it picks this change up when its vendor call returns. It reads
+					// current authority before each enabling call, so it may enable
+					// anything granted while it holds the turn.
+					if (granted.containsAll(targetGranted)) {
+						targetGranted = targetGranted + granted
+						return
+					}
 					// A withdrawal takes the turn at once.
 					previous = target
 				} else {

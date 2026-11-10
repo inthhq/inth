@@ -212,4 +212,96 @@ final class WithdrawalPreemptionTests: XCTestCase {
             await core.waitUntilIdle()
         }
     }
+
+    /// Helpers that take a category, connected under measurement. The others read a
+    /// fixed set of categories and connect as in ``helpers``.
+    private let measured: [String: (ConsentCore, @escaping @Sendable (String) -> Void) -> ConnectedHelper] = [
+        "AppsFlyer": { core, r in
+            let helper = AppsFlyerIntegration(
+                core: core,
+                category: .measurement,
+                setConsentData: { r("consent:\($0.adUserData)") },
+                setStopped: { r("stopped:\($0)") },
+                start: { r("start") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Adjust": { core, r in
+            let helper = AdjustIntegration(
+                core: core,
+                category: .measurement,
+                enable: { r("enable") },
+                disable: { r("disable") },
+                trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Meta App Events": { core, r in
+            let helper = MetaAppEventsIntegration(
+                core: core,
+                category: .measurement,
+                setAutoLogAppEventsEnabled: { r("autoLog:\($0)") },
+                setAdvertiserIDCollectionEnabled: { r("advertiserId:\($0)") },
+                setLimitedDataUse: { r("ldu:\($0)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+    ]
+
+    func testSecondWithdrawalRunsAtOnceAfterTheFirstPreemptingWithdrawalReturned() async throws {
+        for (name, plain) in helpers {
+            let connect = measured[name] ?? plain
+            // The calls a withdrawal of measurement makes from a measurement-only grant.
+            let probeCore = try await resolvedCore()
+            let probe = BlockingCalls()
+            let probeHelper = connect(probeCore) { probe.call($0) }
+            var mark = probe.count
+            XCTAssertEqual(probeCore.save(.custom([.measurement: true, .marketing: true])).status, .committed)
+            let grant = probe.since(mark)
+            XCTAssertEqual(probeCore.save(.custom([.marketing: false])).status, .committed)
+            mark = probe.count
+            XCTAssertEqual(probeCore.save(.custom([.measurement: false])).status, .committed)
+            let stops = probe.since(mark)
+            probeHelper.cancel()
+            await probeCore.waitUntilIdle()
+
+            // Hold each grant-time call in turn: withdraw marketing, let that
+            // withdrawal return, then withdraw measurement.
+            for held in grant.indices {
+                let core = try await resolvedCore()
+                let calls = BlockingCalls()
+                let helper = connect(core) { calls.call($0) }
+                let release = DispatchSemaphore(value: 0)
+                let entered = calls.blockNext(release, skip: held)
+                let granted = DispatchSemaphore(value: 0)
+                DispatchQueue.global().async {
+                    _ = core.save(.custom([.measurement: true, .marketing: true]))
+                    granted.signal()
+                }
+                XCTAssertEqual(entered.wait(timeout: .now() + 5), .success, "\(name) \(held)")
+
+                let first = DispatchSemaphore(value: 0)
+                DispatchQueue.global().async {
+                    _ = core.save(.custom([.marketing: false]))
+                    first.signal()
+                }
+                XCTAssertEqual(
+                    first.wait(timeout: .now() + 5), .success,
+                    "\(name): the first withdrawal must not wait for grant call \(held)")
+                let secondMark = calls.count
+                let second = DispatchSemaphore(value: 0)
+                DispatchQueue.global().async {
+                    _ = core.save(.custom([.measurement: false]))
+                    second.signal()
+                }
+                XCTAssertEqual(
+                    second.wait(timeout: .now() + 5), .success,
+                    "\(name): the second withdrawal must not wait for grant call \(held)")
+                XCTAssertEqual(
+                    Array(calls.since(secondMark).filter { stops.contains($0) }.prefix(stops.count)), stops,
+                    "\(name): measurement's stop calls ran while grant call \(held) was blocked")
+                release.signal()
+                XCTAssertEqual(granted.wait(timeout: .now() + 5), .success, "\(name) \(held)")
+                helper.cancel()
+                await core.waitUntilIdle()
+            }
+        }
+    }
 }

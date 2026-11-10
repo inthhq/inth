@@ -37,6 +37,24 @@ const permissions = (granted: boolean): ConsentSnapshot => {
 	});
 };
 
+/** A snapshot granting exactly the named categories. */
+const granting = (
+	...categories: ('marketing' | 'measurement')[]
+): ConsentSnapshot => {
+	revision += 1;
+	const initial = buildSnapshot();
+	return buildSnapshot({
+		effectivePermissions: {
+			...initial.effectivePermissions,
+			experience: false,
+			functionality: false,
+			marketing: categories.includes('marketing'),
+			measurement: categories.includes('measurement'),
+		},
+		revision,
+	});
+};
+
 const tick = () =>
 	new Promise<void>((resolve) => {
 		setTimeout(resolve, 0);
@@ -238,6 +256,64 @@ describe.each(helpers)('%s', (_name, connect) => {
 		);
 		expect(lastGrant).toBeGreaterThan(lastDenial);
 		await integration.disconnect();
+	});
+
+	test('a second withdrawal runs at once after the first preempting withdrawal settled', async () => {
+		// The calls a withdrawal of measurement makes from a measurement-only grant.
+		const probeFake = createFakeNativeModule({ snapshot: granting() });
+		const probe = recorder();
+		const probeIntegration = connect(probe.client as never, {
+			category: 'measurement',
+			onError: vi.fn(),
+		});
+		await probeIntegration.ready;
+		probeFake.pushSnapshot(granting('measurement', 'marketing'));
+		await settle(probe.calls);
+		const grantCalls = probe.calls.splice(0);
+		probeFake.pushSnapshot(granting('measurement'));
+		await settle(probe.calls);
+		probe.calls.length = 0;
+		probeFake.pushSnapshot(granting());
+		await settle(probe.calls);
+		const stops = probe.calls.splice(0);
+		await probeIntegration.disconnect();
+		resetConsentClient();
+		resetNativeStub();
+
+		// Hold each grant-time call in turn, forever: withdraw marketing, let that
+		// withdrawal settle, then withdraw measurement.
+		const holdFrom = async (held: number): Promise<void> => {
+			if (held >= grantCalls.length) {
+				return;
+			}
+			const fake = createFakeNativeModule({ snapshot: granting() });
+			const vendor = recorder();
+			const integration = connect(vendor.client as never, {
+				category: 'measurement',
+				onError: vi.fn(),
+			});
+			await integration.ready;
+			vendor.holdNext(held);
+			fake.pushSnapshot(granting('measurement', 'marketing'));
+			await settle(vendor.calls);
+			fake.pushSnapshot(granting('measurement'));
+			await settle(vendor.calls);
+			const mark = vendor.calls.length;
+			fake.pushSnapshot(granting());
+			await settle(vendor.calls);
+			expect(
+				vendor.calls
+					.slice(mark)
+					.filter((call) => stops.includes(call))
+					.slice(0, stops.length),
+				`measurement's stop calls ran while grant call ${held} was held`
+			).toEqual(stops);
+			await integration.disconnect();
+			resetConsentClient();
+			resetNativeStub();
+			await holdFrom(held + 1);
+		};
+		await holdFrom(0);
 	});
 
 	test('a failing first denial call does not skip the rest and is reported', async () => {

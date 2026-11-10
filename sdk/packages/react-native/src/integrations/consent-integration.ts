@@ -47,13 +47,15 @@ export interface AnalyticsIntegrationOptions {
  * `disconnect()` and after a failure, so a vendor whose start call must run
  * once per grant can tell a new grant from an unrelated change.
  *
- * A withdrawal never waits in the queue. When a category the running apply
- * grants is withdrawn, or the integration disconnects, the withdrawal applies
- * at once, even while a vendor call of the running apply has not settled. Later
- * updates wait for both the withdrawal and the apply it overtook, then the queue
- * reapplies current state, so a grant that settles late cannot leave the vendor
- * enabled and a regrant cannot finish before the withdrawal. `apply` must read
- * `current()` before each call that enables collection.
+ * A withdrawal never waits in the queue. Every apply that has not settled is
+ * tracked with each category granted in any publication it has seen, because
+ * it reads `current()` before each enabling call and may have enabled any of
+ * them. When one of those is withdrawn, or the integration disconnects, the
+ * withdrawal applies at once, whichever apply is still waiting on a vendor
+ * call. Later updates wait for the withdrawal and every apply it overtook, then
+ * the queue reapplies current state, so a grant that settles late cannot leave
+ * the vendor enabled and a regrant cannot finish before the withdrawal. `apply`
+ * must read `current()` before each call that enables collection.
  */
 export const connectConsentState = <StateType>(
 	options: Pick<AnalyticsIntegrationOptions, 'client' | 'onError'>,
@@ -68,14 +70,14 @@ export const connectConsentState = <StateType>(
 	let applied: string | undefined;
 	let last: { readonly state: StateType } | undefined;
 	let tail = Promise.resolve();
-	// The newest apply: the state it works toward and the categories it grants.
-	let running:
-		| {
-				readonly state: StateType;
-				readonly granted: ReadonlySet<AllConsentNames>;
-				readonly generation: number;
-		  }
-		| undefined;
+	// Every apply that has not settled, oldest first: the state it works toward and
+	// each category granted in any publication it has seen.
+	const unsettled = new Map<
+		number,
+		{ readonly state: StateType; readonly granted: Set<AllConsentNames> }
+	>();
+	// The categories granted in the last publication seen.
+	let lastGranted: ReadonlySet<AllConsentNames> = new Set();
 	// Bumped by every apply; only the newest may record what it left the vendor in.
 	let generation = 0;
 	// Set by a withdrawal that ran beside the queue: the next apply must not skip.
@@ -115,7 +117,7 @@ export const connectConsentState = <StateType>(
 	): Promise<void> => {
 		generation += 1;
 		const mine = generation;
-		running = { ...next, generation: mine };
+		unsettled.set(mine, { granted: new Set(next.granted), state: next.state });
 		try {
 			const state = await apply(current, previous);
 			if (mine === generation) {
@@ -123,9 +125,7 @@ export const connectConsentState = <StateType>(
 				last = { state };
 			}
 		} finally {
-			if (running?.generation === mine) {
-				running = undefined;
-			}
+			unsettled.delete(mine);
 		}
 	};
 	const enqueue = (force = false): Promise<void> => {
@@ -147,23 +147,34 @@ export const connectConsentState = <StateType>(
 		void reportFailure(update);
 		return update;
 	};
-	// Apply a withdrawal beside the queue when a running apply grants more.
-	const preemptWithdrawal = (): Promise<void> | undefined => {
-		const active = running;
-		if (!active) {
-			return;
-		}
+	// Apply a withdrawal beside the queue when it takes back a category an apply
+	// that has not settled may have enabled. Disconnecting withdraws everything,
+	// so it never waits behind an apply that has not settled.
+	const preemptWithdrawal = (everything = false): Promise<void> | undefined => {
 		const next = readGranted();
-		const withdrawn = [...active.granted].some(
-			(category) => !next.granted.has(category)
-		);
+		const before = lastGranted;
+		lastGranted = next.granted;
+		let withdrawn = everything && unsettled.size > 0;
+		let newest: StateType | undefined;
+		for (const entry of unsettled.values()) {
+			for (const category of entry.granted) {
+				if (before.has(category) && !next.granted.has(category)) {
+					withdrawn = true;
+				}
+			}
+			// It may enable anything granted while it waits.
+			for (const category of next.granted) {
+				entry.granted.add(category);
+			}
+			newest = entry.state;
+		}
 		if (!withdrawn) {
 			return;
 		}
 		reapply = true;
-		const update = run(next, active.state);
+		const update = run(next, newest);
 		void reportFailure(update);
-		// Later updates wait for this withdrawal as well as the apply it overtook.
+		// Later updates wait for this withdrawal as well as the applies it overtook.
 		const overtaken = tail;
 		tail = (async () => {
 			await Promise.allSettled([overtaken, update]);
@@ -180,6 +191,7 @@ export const connectConsentState = <StateType>(
 			}
 		}
 	);
+	lastGranted = readGranted().granted;
 	const ready = enqueue();
 	const disconnect = (): Promise<void> => {
 		if (disconnected) {
@@ -190,7 +202,7 @@ export const connectConsentState = <StateType>(
 		applied = undefined;
 		last = undefined;
 		unsubscribe();
-		const update = preemptWithdrawal() ?? enqueue();
+		const update = preemptWithdrawal(true) ?? enqueue();
 		disconnected = update;
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Preserve the caller's rejection while allowing a later teardown retry.
 		update.catch(() => {
