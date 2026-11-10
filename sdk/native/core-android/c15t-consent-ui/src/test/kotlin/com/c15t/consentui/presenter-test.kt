@@ -120,7 +120,7 @@ class PresenterTest {
         try {
             val store = Memory()
             val (core, _) = boot(store)
-            val p = ConsentPresenter(core, automaticPresentation = false)
+            val p = ConsentPresenter(core, autoPresent = false)
             p.presentPreferences()
             val session = p.presentationID
             var outcomes = 0
@@ -156,7 +156,7 @@ class PresenterTest {
             val core = ConsentCore(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
             core.bootstrap()
             assertTrue(core.save(CommitIntent.All).ok)
-            val p = ConsentPresenter(core, automaticPresentation = false)
+            val p = ConsentPresenter(core, autoPresent = false)
             p.presentPreferences()
             val session = p.presentationID
             clock.addAndGet(604_800_000)
@@ -179,7 +179,7 @@ class PresenterTest {
         try {
             val store = Memory()
             val (core, _) = boot(store)
-            val p = ConsentPresenter(core, automaticPresentation = false)
+            val p = ConsentPresenter(core, autoPresent = false)
             p.presentPreferences()
             p.edit { it.copy(purposeConsents = listOf(7), vendorConsents = listOf(1)) }
             store.refuseNext = true
@@ -200,7 +200,7 @@ class PresenterTest {
     }
     @Test fun providerPrerequisitesFollowTheDraftAndNamePurposes() {
         val (core, _) = boot()
-        val p = ConsentPresenter(core, automaticPresentation = false)
+        val p = ConsentPresenter(core, autoPresent = false)
         p.presentPreferences()
         assertFalse(p.providerPrerequisitesMet)
         assertEquals(listOf("Store and access information on a device", "Create profiles for personalised advertising",

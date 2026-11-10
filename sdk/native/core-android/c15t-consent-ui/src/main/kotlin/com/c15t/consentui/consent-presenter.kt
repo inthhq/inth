@@ -13,8 +13,19 @@ import java.util.UUID
 /** Compact host outcome. DISMISSED always means no decision. */
 enum class ConsentPresenterOutcome { SAVED, DISMISSED }
 
-/** One host-owned native session. Retain through activity recreation with ViewModelStore. */
-class ConsentPresenter(val core: ConsentCore, private val automaticPresentation: Boolean = true) : ViewModel() {
+/**
+ * One host-owned native session. Retain through activity recreation with ViewModelStore.
+ *
+ * With [autoPresent] on, the presenter opens an owed prompt by itself once the core is ready,
+ * once per owed prompt: a prompt the person answered or dismissed stays closed until the policy,
+ * the reason or the requirement changes. With it off, nothing shows until [presentPrompt].
+ */
+class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : ViewModel() {
+    /** Open an owed prompt by itself. Turning it on presents a prompt that is already owed. */
+    var autoPresent: Boolean
+        get() = autoPresentState
+        set(value) { autoPresentState = value; if (value) presentIfOwed() }
+    private var autoPresentState by mutableStateOf(autoPresent)
     var snapshot by mutableStateOf(core.snapshot()); private set
     var presentationID by mutableStateOf<String?>(null); private set
     var preferences by mutableStateOf(false); private set
@@ -39,6 +50,7 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
     private var seedChoices = IabChoices()
     private var fromFirst = false
     private var suppressed: String? = null
+    private var noticeRequested by mutableStateOf(false)
     private var lastAction: Action? = null
     private var reloadAfterRefresh = false
     // The core holds snapshot observers weakly. This field owns the lambda until close.
@@ -49,7 +61,8 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
     init { receive(core.snapshot()) }
     private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}"
     val iab get() = snapshot.model == ConsentModel.IAB
-    val noticeVisible get() = !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
+    val noticeVisible get() = snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
+        && (autoPresent || noticeRequested)
     val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
@@ -101,8 +114,13 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
             } else loadDraft()
             reloadAfterRefresh = listUnavailable
         }
-        if (automaticPresentation && !next.policyPending && next.promptRequirement.acknowledge && presentationID == null && suppressed != promptKey) {
-            presentationID = UUID.randomUUID().toString(); preferences = false; loadDraft()
+        // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
+        if (!next.promptRequirement.acknowledge && !next.promptRequirement.notice) suppressed = null
+        presentIfOwed()
+    }
+    private fun presentIfOwed() {
+        if (autoPresent && snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.acknowledge && presentationID == null && !pending && suppressed != promptKey) {
+            presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
         }
     }
     /** Open standing privacy settings without replacing an in-flight presentation. */
@@ -110,11 +128,13 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
         if (pending || presentationID != null) return
         presentationID = UUID.randomUUID().toString(); preferences = true; fromFirst = false; loadDraft()
     }
-    /** Open an owed prompt without replacing an existing draft. */
+    /** Open an owed prompt without replacing an existing draft. An owed notice shows as the notice card. */
     fun presentPrompt() {
         if (pending || presentationID != null) return
         snapshot = core.snapshot()
-        if (snapshot.policyPending || !snapshot.promptRequirement.acknowledge) return
+        if (snapshot.policyPending) return
+        if (snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge) { noticeRequested = true; return }
+        if (!snapshot.promptRequirement.acknowledge) return
         presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
     }
     /** An obsolete host close must never dismiss a newer presentation. */
@@ -190,7 +210,7 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
             if (presentationID != session) return@launch
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; noticeRequested = false; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
             } else {
                 errorCode = result.second ?: "save-rejected"; failedAction = action; stale = errorCode == "concurrent-change"
                 announcement = if (stale) iabCopy.appSettingsChanged else errorMessage.orEmpty()

@@ -63,7 +63,7 @@ object ConsentHost {
         val presenter = ViewModelProvider(store, object : ViewModelProvider.Factory {
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return ConsentPresenter(core, automaticPresentation = false) as T
+                return ConsentPresenter(core, autoPresent = false) as T
             }
         })[ConsentPresenter::class.java]
         if (preferences) presenter.presentPreferences() else presenter.presentPrompt()

@@ -144,7 +144,7 @@ class ScreenAccessibilityTest {
             assertTrue(core.save(CommitIntent.All).ok)
             val payload = Json.parseToJsonElement(source.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
             clock.set(payload.getValue("expiresAt").jsonPrimitive.long + 1)
-            val presenter = ConsentPresenter(core, automaticPresentation = false)
+            val presenter = ConsentPresenter(core, autoPresent = false)
             presenter.presentPreferences()
             assertTrue(presenter.snapshot.policyPending)
             compose.setContent {
