@@ -93,9 +93,11 @@ export {
 } from './version';
 
 export {
+	ADDITIVE_SNAPSHOT_DEFAULTS,
 	KERNEL_OWNED_KEYS,
 	SNAPSHOT_KEYS,
 	describeSnapshotWireDrift,
+	withAdditiveSnapshotDefaults,
 } from './wire-shape';
 export type { WireDriftOptions } from './wire-shape';
 

@@ -384,6 +384,29 @@ describe('wire drift', () => {
 		);
 	});
 
+	test('fills gppString with null for a binary built before it existed, without drift', () => {
+		const warnings = captureWarnings();
+		// The shape a protocol-1 binary from before GPP sends: no gppString key at all.
+		const { gppString: _absent, ...older } = buildSnapshot();
+		const { client } = makeClient({ snapshot: older as ConsentSnapshot });
+
+		const snapshot = client.getSnapshot();
+
+		expect(Object.hasOwn(snapshot, 'gppString')).toBe(true);
+		expect(snapshot.gppString).toBeNull();
+		expect(warnings.warn).not.toHaveBeenCalled();
+	});
+
+	test('keeps a gppString the native build sent', () => {
+		const warnings = captureWarnings();
+		const { client } = makeClient({
+			snapshot: buildSnapshot({ gppString: 'DBABLA~CVQqAAAAAACA.QA' }),
+		});
+
+		expect(client.getSnapshot().gppString).toBe('DBABLA~CVQqAAAAAACA.QA');
+		expect(warnings.warn).not.toHaveBeenCalled();
+	});
+
 	test('warns once while the same broken snapshot stays current', () => {
 		const warnings = captureWarnings();
 		const { client } = makeClient({ snapshot: drifted() });

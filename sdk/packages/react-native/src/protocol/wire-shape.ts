@@ -64,6 +64,41 @@ export const SNAPSHOT_KEYS = [
 ] as const;
 
 /**
+ * Snapshot keys added after protocol version 1 shipped, with the value an older native
+ * build means by leaving the key out.
+ *
+ * A JavaScript-only update (Expo Updates, CodePush) can run this package over a binary
+ * built before a key existed, and the protocol version does not move for an additive
+ * key. Such a binary simply has none of the state the key describes, so the client
+ * fills the default before anything reads the snapshot or grades its shape: the public
+ * type keeps its promise, and an older binary is not reported as drift. Every key
+ * added to {@link SNAPSHOT_KEYS} from here on belongs in this table, with the default
+ * that means "this build has no such state". A key whose absence cannot be answered
+ * that way needs a protocol version instead.
+ */
+export const ADDITIVE_SNAPSHOT_DEFAULTS = {
+	gppString: null,
+} as const satisfies Partial<Record<(typeof SNAPSHOT_KEYS)[number], unknown>>;
+
+/**
+ * Fill every {@link ADDITIVE_SNAPSHOT_DEFAULTS} key the payload leaves out.
+ *
+ * @param candidate - A parsed snapshot payload.
+ * @returns The same object when nothing was missing, else a copy with the defaults.
+ */
+export const withAdditiveSnapshotDefaults =
+	function withAdditiveSnapshotDefaults(
+		candidate: Record<string, unknown>
+	): Record<string, unknown> {
+		const missing = Object.keys(ADDITIVE_SNAPSHOT_DEFAULTS).some(
+			(key) => !Object.hasOwn(candidate, key)
+		);
+		return missing
+			? { ...ADDITIVE_SNAPSHOT_DEFAULTS, ...candidate }
+			: candidate;
+	};
+
+/**
  * The five objects whose key names come from `@c15t/core` and are not a native
  * implementation detail. Names inside a core, and names inside a stored envelope,
  * stay the core's own business.

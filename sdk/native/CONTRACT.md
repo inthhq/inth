@@ -1006,6 +1006,14 @@ when `protocolVersion` is outside the range the installed JavaScript package
 supports. This catches the Expo Updates case where a JavaScript-only update ships
 against an older embedded native build.
 
+A snapshot key added without a protocol bump must be additive: its absence has to
+mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS`
+(`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
+client fills it before reading or grading the snapshot, so an older binary is
+neither `undefined` behind a typed field nor reported as drift. `gppString` is
+the first: an older binary has no GPP, so it reads as `null`. A key whose absence
+cannot be answered that way needs a new protocol version.
+
 Conformance fixtures
 --------------------
 
