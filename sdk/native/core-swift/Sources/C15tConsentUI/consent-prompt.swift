@@ -5,8 +5,13 @@ import C15tApple
 import C15tCore
 #endif
 import Combine
-import SwiftUI
+import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
+#if canImport(SwiftUI) && canImport(UIKit)
+import SwiftUI
+#endif
 
 /// The app's consent prompt for one core, shared by every scene that shows it.
 ///
@@ -73,6 +78,7 @@ public final class ConsentPrompt: ObservableObject {
     }
 }
 
+#if canImport(SwiftUI) && canImport(UIKit)
 public extension View {
     /// Install c15t and add the stock consent prompt and settings to a SwiftUI root, in one call.
     ///
@@ -264,3 +270,4 @@ private final class ConsentPassthroughView: UIView {
         noticeFrame.contains(convert(point, to: nil))
     }
 }
+#endif

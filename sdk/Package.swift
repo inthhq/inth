@@ -27,7 +27,7 @@ let package = Package(
         ),
         .target(
             name: "C15tConsentUI",
-            dependencies: ["C15tCore"],
+            dependencies: ["C15tCore", "C15tApple"],
             path: "native/core-swift/Sources/C15tConsentUI"
         ),
         .testTarget(
@@ -42,7 +42,7 @@ let package = Package(
         ),
         .testTarget(
             name: "C15tConsentUITests",
-            dependencies: ["C15tConsentUI", "C15tCore"],
+            dependencies: ["C15tConsentUI", "C15tCore", "C15tApple"],
             path: "native/core-swift/Tests/C15tConsentUITests"
         ),
     ]
