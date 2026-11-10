@@ -204,6 +204,41 @@ final class ConsentPolicyTests: XCTestCase {
         XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
     }
 
+    func testALocationThePolicyCannotAnswerFailsClosedAndTheSavedChoiceReturns() async throws {
+        for row in try XCTUnwrap(fixture["transitions"]?.arrayValue) {
+            let name = row["name"]?.stringValue ?? ""
+            let policy = try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null]))))
+            let steps = try XCTUnwrap(row["steps"]?.arrayValue)
+            func location(_ step: JSONValue) -> ConsentOverrides {
+                ConsentOverrides(
+                    country: step["inputs"]?["country"]?.stringValue,
+                    region: step["inputs"]?["region"]?.stringValue, language: "en")
+            }
+            let core = await boot(policy, overrides: location(steps[0]))
+            for (index, step) in steps.enumerated() {
+                let label = "\(name), step \(index + 1)"
+                if index > 0 {
+                    core.setOverrides(location(step))
+                    await core.waitUntilIdle()
+                }
+                if step["saveAll"]?.boolValue == true {
+                    XCTAssertEqual(core.save(.all).status, .committed, label)
+                    await core.waitUntilIdle()
+                }
+                let expected = step["expected"]
+                let snapshot = core.snapshot()
+                XCTAssertEqual(snapshot.resolution.status.rawValue, expected?["status"]?.stringValue, label)
+                XCTAssertEqual(snapshot.resolution.reason, expected?["reason"]?.stringValue, label)
+                XCTAssertEqual(snapshot.resolution.policyId, expected?["policyId"]?.stringValue, label)
+                XCTAssertEqual(snapshot.policyPending, expected?["policyPending"]?.boolValue, label)
+                for category in OptionalConsentCategory.ordered {
+                    XCTAssertEqual(core.isAllowed(category.category), expected?["optionalAllowed"]?.boolValue, "\(label): \(category)")
+                }
+                XCTAssertNotNil(snapshot.explicitChoice, "\(label): the saved choice stays on the device")
+            }
+        }
+    }
+
     func testACountryThatNeedsARegionNeverTakesThePermissiveDefault() async throws {
         let policy = try outcomePolicy("region rules and a default without a fallback")
         let core = await boot(policy, overrides: ConsentOverrides(country: "US", region: nil, language: "en"))

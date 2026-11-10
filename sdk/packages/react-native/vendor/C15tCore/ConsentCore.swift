@@ -411,9 +411,9 @@ public final class ConsentCore: @unchecked Sendable {
         }
         // In no-backend mode the in-code policy answers before the first read, once:
         // there is no init to schedule after it.
-        if let response = config.policy?.resolve(overrides: config.overrides) {
-            applyPolicyUpdate(response)
-        } else if config.policy == nil, let reason = config.policyError {
+        if let policy = config.policy {
+            applyInCodePolicy(policy, overrides: config.overrides)
+        } else if let reason = config.policyError {
             reportRefusedPolicy(reason)
         }
         if let stale = lock.withLock({ takeStaleAnnouncementLocked() }) { events.emit(.policyStale(stale)) }
@@ -428,15 +428,41 @@ public final class ConsentCore: @unchecked Sendable {
     /// Report an in-code policy the host declared and the adapter could not use, the way
     /// a refused `/init` is reported, rather than as a quiet deny-all start.
     private func reportRefusedPolicy(_ reason: String) {
-        let info = CoreErrorInfo(code: "policy-invalid", message: "The in-code policy was refused: \(reason)")
+        failClosed(CoreErrorInfo(code: "policy-invalid", message: "The in-code policy was refused: \(reason)"))
+    }
+
+    /// Apply the in-code policy's answer for `overrides`. The answer is local and final:
+    /// no `/init` will revise it. So a location the policy cannot answer without a region
+    /// fails closed instead of running the safe fallback or keeping the last rule, and the
+    /// saved choice comes back once the policy answers again.
+    private func applyInCodePolicy(_ policy: ConsentPolicy, overrides: ConsentOverrides) {
+        guard policy.outcome(country: overrides.country, region: overrides.region) == .insufficientInputs else {
+            applyPolicyUpdate(policy.resolve(overrides: overrides))
+            return
+        }
+        failClosed(
+            CoreErrorInfo(
+                code: "insufficient-inputs",
+                message: "The in-code policy cannot answer this location without a region; optional consent stays denied"),
+            resolution: PolicyResolutionInfo(
+                status: .failed, policyId: nil, fingerprint: nil, reason: "insufficient-inputs"),
+            location: LocationContext(countryCode: overrides.country, regionCode: overrides.region))
+    }
+
+    /// Drop the policy in force and deny every optional category. Stored choices stay.
+    private func failClosed(
+        _ info: CoreErrorInfo, resolution: PolicyResolutionInfo? = nil, location: LocationContext? = nil
+    ) {
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         lock.withLock {
-            // Fail closed: a policy this build refused cannot keep a cached one, or its
-            // grants, in force. Stored choices stay, for a later build with a usable policy.
+            // Fail closed: a policy that cannot answer cannot keep a cached one, or its
+            // grants, in force. Stored choices stay, for when a usable policy answers.
             resolvedPolicy = nil
             policyWire = nil
             currentSnapshot = currentSnapshot.byApplying { draft in
+                if let resolution { draft.resolution = resolution }
+                if let location { draft.location = location }
                 draft.policyPending = true
                 draft.effectivePermissions = ConsentSnapshot.failClosedPermissions
                 draft.restrictions = [:]
@@ -2089,9 +2115,9 @@ public final class ConsentCore: @unchecked Sendable {
     private func runInit(attempt: Int) async {
         guard let config = lock.withLock({ self.config }) else { return }
         if config.usesInCodePolicy {
-            if let response = config.policy?.resolve(overrides: lock.withLock { overrides }) {
-                applyPolicyUpdate(response)
-            } else if config.policy == nil, let reason = config.policyError {
+            if let policy = config.policy {
+                applyInCodePolicy(policy, overrides: lock.withLock { overrides })
+            } else if let reason = config.policyError {
                 // A reset clears the snapshot error, so a refused policy is reported again.
                 reportRefusedPolicy(reason)
             }

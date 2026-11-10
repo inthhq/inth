@@ -550,6 +550,88 @@ const outcomes = Object.entries(outcomePacks).flatMap(([pack, packRules]) =>
 	})
 );
 
+/**
+ * What a core does as the location moves under one in-code policy. The resolution
+ * fields come from the backend matcher; `policyPending` and `optionalAllowed` are the
+ * core contract: a local answer is final, so a location the policy cannot answer
+ * fails closed instead of keeping the last rule's grants, and the saved choice comes
+ * back when the policy answers again.
+ */
+const transitionRules: PolicyRule[] = [
+	{
+		id: 'germany',
+		match: { countries: ['DE'] },
+		model: 'opt-in',
+		prompt: 'choice',
+	},
+	{
+		id: 'california',
+		match: { regions: [{ country: 'US', region: 'CA' }] },
+		model: 'opt-out',
+		prompt: 'notice',
+	},
+	{
+		id: 'default',
+		match: { isDefault: true },
+		model: 'opt-in',
+		prompt: 'choice',
+	},
+];
+const transitionSteps: {
+	country: string | null;
+	optionalAllowed: boolean;
+	policyPending: boolean;
+	region: string | null;
+	saveAll: boolean;
+}[] = [
+	{
+		country: 'DE',
+		optionalAllowed: true,
+		policyPending: false,
+		region: null,
+		saveAll: true,
+	},
+	{
+		country: 'US',
+		optionalAllowed: false,
+		policyPending: true,
+		region: null,
+		saveAll: false,
+	},
+	{
+		country: 'DE',
+		optionalAllowed: true,
+		policyPending: false,
+		region: null,
+		saveAll: false,
+	},
+];
+const transitions = [
+	{
+		name: 'a location the policy cannot answer fails closed and keeps the saved choice',
+		rules: transitionRules,
+		steps: transitionSteps.map((step) => {
+			const resolution = resolvePolicyRules({
+				countryCode: step.country,
+				regionCode: step.region,
+				rules: transitionRules,
+			});
+			return {
+				expected: {
+					optionalAllowed: step.optionalAllowed,
+					policyId:
+						resolution.status === 'matched' ? resolution.policy.id : null,
+					policyPending: step.policyPending,
+					reason: resolution.status === 'failed' ? resolution.reason : null,
+					status: resolution.status,
+				},
+				inputs: { country: step.country, region: step.region },
+				saveAll: step.saveAll,
+			};
+		}),
+	},
+];
+
 /** Sort the matrix by the backend's own answer. */
 const localNames = new Set(['model = "iab"']);
 const classified = {
@@ -626,6 +708,7 @@ const fixture = {
 		rules.map((each) => [each.id, normalizePolicyRule(each)])
 	),
 	rules,
+	transitions,
 };
 
 const output =
