@@ -30,7 +30,8 @@ Breaking changes:
 - `ConsentPresenter(core:automaticPresentation:)` is now
   `ConsentPresenter(core:autoPresent:)` on both platforms, and `autoPresent` is
   a settable property.
-- With `autoPresent` off, an owed notice no longer shows until `presentPrompt()`.
+- With `autoPresent` off, an owed notice no longer shows until `presentPrompt()`,
+  and that request covers only the notice owed at the time.
 - `C15tConsentUI` now depends on `C15tApple`.
 
 The Swift quickstart drops its `ConsentModel` and `ConsentRoot` files, and the

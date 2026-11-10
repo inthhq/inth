@@ -40,6 +40,8 @@ object ConsentHost {
         active?.let {
             it.owner = WeakReference(owner)
             it.outcome = outcome
+            // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
+            if (!preferences) it.presenter.presentPrompt()
             if (it.notice) {
                 attachNotice(activity, it)
                 return result(it.id, "already-presented")

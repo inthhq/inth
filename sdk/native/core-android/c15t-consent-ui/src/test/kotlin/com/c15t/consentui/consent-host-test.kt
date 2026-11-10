@@ -110,6 +110,24 @@ class ConsentHostTest {
         assertEquals(1, outcomes.size)
     }
 
+    /** A notice cleared outside the host, then owed again: asking again shows it in the open session. */
+    @Test fun noticeOwedAgainShowsWhenTheHostIsAskedAgain() {
+        val core = boot(fixture("notice-init.json"))
+        val host = host()
+        val first = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {}))
+        val presenter = requireNotNull(presenter())
+        assertTrue(presenter.noticeVisible)
+        assertTrue(core.dismissNotice())
+        await { !presenter.noticeVisible }
+        core.reset()
+        await { presenter.snapshot.revision == core.snapshot().revision }
+        assertFalse("nothing shows until the app asks", presenter.noticeVisible)
+        val again = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {}))
+        assertEquals("already-presented", again.getString("status"))
+        assertEquals(first.getString("sessionId"), again.getString("sessionId"))
+        assertTrue("the open session shows the notice the app asked for again", presenter.noticeVisible)
+    }
+
     @Test fun savedStateFromClosedNoticeCannotAttachANewerSession() {
         val core = boot(fixture("notice-init.json"))
         val host = host()

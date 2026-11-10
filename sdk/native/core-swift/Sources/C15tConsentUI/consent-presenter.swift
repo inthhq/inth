@@ -43,8 +43,10 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private var suppressedPrompt: String?
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
-    /// An owed notice the host asked for while ``autoPresent`` is off.
-    @Published private var noticeRequested = false
+    /// The owed notice the host asked for while ``autoPresent`` is off. A later notice needs its own request.
+    @Published private var requestedNotice: String? = nil
+    /// Nothing was owed at some point since the running commit started, which ends that prompt.
+    private var endedSinceCommit = false
     /// Open an owed prompt by itself. Turning it on presents a prompt that is already owed.
     @Published public var autoPresent: Bool {
         didSet { if autoPresent { presentIfOwed() } }
@@ -87,7 +89,11 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             reloadAfterRefresh = listUnavailable
         }
         // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
-        if next.promptRequirement.kind == .none { suppressedPrompt = nil }
+        if next.promptRequirement.kind == .none {
+            suppressedPrompt = nil
+            requestedNotice = nil
+            endedSinceCommit = true
+        }
         presentIfOwed()
     }
 
@@ -104,7 +110,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
 
     public var noticeVisible: Bool {
         snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
-            && (autoPresent || noticeRequested)
+            && (autoPresent || requestedNotice == promptKey)
     }
     public var isDirty: Bool { categories != seedCategories || choices != seedChoices }
     /// Preferences were opened from the first layer, so closing them returns there.
@@ -191,7 +197,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         guard presentationID == nil, !pending else { return }
         snapshot = core.snapshot()
         guard !snapshot.policyPending else { return }
-        if snapshot.promptRequirement.kind == .notice { noticeRequested = true; return }
+        if snapshot.promptRequirement.kind == .notice { requestedNotice = promptKey; return }
         guard snapshot.promptRequirement.kind == .choice else { return }
         presentationID = UUID()
         preferences = false
@@ -300,6 +306,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         let session = presentationID
         // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
         let handled = promptKey
+        endedSinceCommit = false
         let authority = core
         let revision = baseRevision
         let categoryDraft = categories
@@ -334,9 +341,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             if outcome.0 {
                 errorCode = nil
                 failedAction = nil
-                suppressedPrompt = handled
+                suppressedPrompt = endedSinceCommit ? nil : handled
                 presentationID = nil
-                noticeRequested = false
+                requestedNotice = nil
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
                 else { onAnnouncement?("Privacy choices saved") }
                 onOutcome?(.saved)

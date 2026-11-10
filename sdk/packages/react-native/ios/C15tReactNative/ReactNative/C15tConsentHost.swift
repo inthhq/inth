@@ -20,7 +20,11 @@ final class C15tConsentHost {
         guard let url = URL(string: privacyPolicyURL), url.scheme == "https", url.host != nil else {
             throw HostError.invalidPrivacyPolicy
         }
-        if let sessionID { return encode(["sessionId": sessionID, "status": "already-presented"]) }
+        if let sessionID {
+            // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
+            if !preferences { presenter?.presentPrompt() }
+            return encode(["sessionId": sessionID, "status": "already-presented"])
+        }
         guard let core = C15t.current else { throw HostError.noCore }
         let snapshot = core.snapshot()
         if !preferences && (snapshot.policyPending || snapshot.promptRequirement.kind == .none) {

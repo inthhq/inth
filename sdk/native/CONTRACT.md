@@ -398,8 +398,17 @@ The rules, identical on all three:
   providers call native once, and the native host answers any racing call with
   `already-presented`.
 - **Opting out changes nothing else.** With auto-present off, an owed notice is
-  held back too. `presentPrompt`/`presentConsentPrompt` and
-  `presentPreferences` work as they did before.
+  held back too. A manual request covers the notice owed at that moment only;
+  once nothing is owed, a later notice needs its own request.
+  `presentPrompt`/`presentConsentPrompt` and `presentPreferences` work as they
+  did before.
+
+A repeated prompt request to the React Native host re-asks its open session, so
+a notice cleared outside the host and owed again shows again. The host rejects
+a refused privacy-policy URL with `C15T_PRESENTER_INVALID_URL`, which is
+permanent: `ConsentProvider` reports it with `console.error` and stops offering
+that URL. Every other refusal is `C15T_PRESENTER_UNAVAILABLE`, which is
+transient and is retried on the next consent change or foreground.
 
 `ConsentPrompt.onFinished` (Swift and Kotlin) and `onConsentPresenterOutcome`
 (React Native) report each closed session with its outcome. A step that must

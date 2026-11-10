@@ -110,6 +110,79 @@ final class AutoPresentTests: XCTestCase {
         XCTAssertEqual(outcomes, [.dismissed])
     }
 
+    func testWaitsUntilTheCoreIsReady() async throws {
+        let (config, _) = try fixtureConfig("category-init.json")
+        let core = ConsentCore()
+        let presenter = ConsentPresenter(core: core)
+        XCTAssertNil(presenter.presentationID)
+        core.bootstrap(config)
+        await core.waitUntilIdle()
+        await until { presenter.presentationID != nil }
+    }
+
+    func testTurningAutoPresentOnPresentsAnAlreadyOwedPrompt() async throws {
+        let (core, _) = try await boot("category-init.json")
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
+        XCTAssertNil(presenter.presentationID)
+        presenter.autoPresent = true
+        XCTAssertNotNil(presenter.presentationID)
+    }
+
+    func testAManualNoticeRequestEndsWithItsNotice() async throws {
+        let (core, _) = try await boot("notice-init.json")
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
+        presenter.presentPrompt()
+        XCTAssertTrue(presenter.noticeVisible)
+        // The notice is cleared outside this presenter, then owed again.
+        XCTAssertTrue(core.dismissNotice())
+        await until { !presenter.noticeVisible }
+        core.reset()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .notice)
+        await until { presenter.snapshot.revision == core.snapshot().revision }
+        XCTAssertFalse(presenter.noticeVisible, "the opt-out shows nothing the app did not ask for")
+        presenter.presentPrompt()
+        XCTAssertTrue(presenter.noticeVisible)
+    }
+
+    func testTheSameOwedPromptPresentsAgainAfterNothingWasOwed() async throws {
+        let (core, _) = try await boot("category-init.json")
+        let presenter = ConsentPresenter(core: core)
+        let first = try XCTUnwrap(presenter.presentationID)
+        presenter.requestClose()
+        XCTAssertNil(presenter.presentationID, "a dismissed prompt stays closed")
+        XCTAssertEqual(core.save(.all).status, .committed)
+        core.reset()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
+        await until { presenter.presentationID != nil }
+        XCTAssertNotEqual(presenter.presentationID, first)
+    }
+
+    func testAnExpiredChoicePromptsAgain() async throws {
+        let clock = TestClock(1_770_000_000_000)
+        let (config, _) = try fixtureConfig("category-init.json", now: clock.read)
+        let core = ConsentCore()
+        core.bootstrap(config)
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let presenter = ConsentPresenter(core: core)
+        XCTAssertNil(presenter.presentationID)
+        clock.advance(31_536_000_001)
+        core.refresh()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().promptRequirement.reason, .expired)
+        await until { presenter.presentationID != nil }
+    }
+
+    private final class TestClock: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value: Int64
+        init(_ value: Int64) { self.value = value }
+        func read() -> Int64 { lock.withLock { value } }
+        func advance(_ delta: Int64) { lock.withLock { value += delta } }
+    }
+
     private func until(_ condition: @MainActor () -> Bool) async {
         for _ in 0..<500 {
             if condition() { return }
@@ -118,13 +191,22 @@ final class AutoPresentTests: XCTestCase {
         XCTFail("Condition was not met")
     }
 
-    private func boot(_ fixture: String) async throws -> (ConsentCore, Peer) {
+    private func fixtureConfig(_ fixture: String, now: (@Sendable () -> Int64)? = nil) throws -> (CoreConfig, Peer) {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
         let peer = Peer(body)
+        let transport = HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: peer)
+        if let now {
+            return (CoreConfig(store: InMemoryStore(), transport: transport, now: now, initRetry: .disabled), peer)
+        }
+        return (CoreConfig(store: InMemoryStore(), transport: transport, initRetry: .disabled), peer)
+    }
+
+    private func boot(_ fixture: String) async throws -> (ConsentCore, Peer) {
+        let (config, peer) = try fixtureConfig(fixture)
         let core = ConsentCore()
-        core.bootstrap(CoreConfig(store: InMemoryStore(), transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: peer), initRetry: .disabled))
+        core.bootstrap(config)
         await core.waitUntilIdle()
         return (core, peer)
     }

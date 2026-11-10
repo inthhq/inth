@@ -50,7 +50,10 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     private var seedChoices = IabChoices()
     private var fromFirst = false
     private var suppressed: String? = null
-    private var noticeRequested by mutableStateOf(false)
+    /** The owed notice the host asked for while [autoPresent] is off. A later notice needs its own request. */
+    private var requestedNotice by mutableStateOf<String?>(null)
+    /** Nothing was owed at some point since the running commit started, which ends that prompt. */
+    private var endedSinceCommit = false
     private var lastAction: Action? = null
     private var reloadAfterRefresh = false
     // The core holds snapshot observers weakly. This field owns the lambda until close.
@@ -62,7 +65,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}"
     val iab get() = snapshot.model == ConsentModel.IAB
     val noticeVisible get() = snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
-        && (autoPresent || noticeRequested)
+        && (autoPresent || requestedNotice == promptKey)
     val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
@@ -115,7 +118,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
             reloadAfterRefresh = listUnavailable
         }
         // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
-        if (!next.promptRequirement.acknowledge && !next.promptRequirement.notice) suppressed = null
+        if (!next.promptRequirement.acknowledge && !next.promptRequirement.notice) { suppressed = null; requestedNotice = null; endedSinceCommit = true }
         presentIfOwed()
     }
     private fun presentIfOwed() {
@@ -133,7 +136,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         if (pending || presentationID != null) return
         snapshot = core.snapshot()
         if (snapshot.policyPending) return
-        if (snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge) { noticeRequested = true; return }
+        if (snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge) { requestedNotice = promptKey; return }
         if (!snapshot.promptRequirement.acknowledge) return
         presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
     }
@@ -189,6 +192,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         val session = presentationID
         // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
         val handled = promptKey
+        endedSinceCommit = false
         val revision = baseRevision
         val categoryDraft = categories.toMap()
         val choiceDraft = choices
@@ -212,7 +216,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
             if (presentationID != session) { presentIfOwed(); return@launch }
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; failedAction = null; suppressed = handled; presentationID = null; noticeRequested = false; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; suppressed = if (endedSinceCommit) null else handled; presentationID = null; requestedNotice = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
                 // Snapshots that arrived while the commit ran were not acted on; the current one is.
                 presentIfOwed()
             } else {
