@@ -159,7 +159,7 @@ export const useSaveConsents = function useSaveConsents(): (
 			// A saved choice supersedes the edits the draft held when it was made, as on
 			// web; an edit made while the save was pending is newer and stays.
 			if (result.ok) {
-				draft.settle(submitted);
+				draft.settle(submitted, result.revision);
 			}
 			return result;
 		},

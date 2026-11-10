@@ -287,6 +287,69 @@ describe('useConsentDraft', () => {
 		]);
 	});
 
+	test('a staged grant never outlives a refusal recorded after it', async () => {
+		mount(<DraftProbe name="screen" />, scoped());
+		const receipt = (value: boolean, confirmedAt: number) => ({
+			basis: { fingerprint: 'fp-1', kind: 'choice-v1' } as const,
+			confirmedAt,
+			value,
+		});
+
+		flush(() => handle('screen').set('measurement', true));
+		flush(() => handle('screen').set('marketing', true));
+		// Another surface saves measurement granted and marketing denied...
+		flush(() =>
+			fake.pushSnapshot(
+				scoped({
+					explicitChoice: {
+						categories: {
+							marketing: receipt(false, 3),
+							measurement: receipt(true, 3),
+						},
+						version: 3,
+					},
+					revision: 1,
+				})
+			)
+		);
+		// ...then refuses measurement.
+		flush(() =>
+			fake.pushSnapshot(
+				scoped({
+					explicitChoice: {
+						categories: {
+							marketing: receipt(false, 3),
+							measurement: receipt(false, 4),
+						},
+						version: 3,
+					},
+					revision: 2,
+				})
+			)
+		);
+
+		// Measurement agreed with the first save, so it is no longer an edit and
+		// follows the refusal. Marketing was refused after it was staged.
+		expect(handle('screen').values).toMatchObject({
+			marketing: false,
+			measurement: false,
+		});
+		expect(handle('screen').staleCategories).toEqual(['marketing']);
+		expect(handle('screen').isStale).toBe(true);
+		const refused = await handle('screen').save();
+		expect(refused).toMatchObject({ ok: false, reason: 'concurrent-change' });
+		expect(fake.commitIntents).toEqual([]);
+
+		// Setting marketing again is a new choice made with the refusal on screen.
+		flush(() => handle('screen').set('marketing', true));
+		expect(handle('screen').isStale).toBe(false);
+		await handle('screen').save();
+		await flushPromises();
+		expect(fake.commitIntents).toEqual([
+			'{"action":"explicit","consents":{"measurement":false,"marketing":true}}',
+		]);
+	});
+
 	test('a bulk save supersedes the staged edits', async () => {
 		mount(
 			<>
