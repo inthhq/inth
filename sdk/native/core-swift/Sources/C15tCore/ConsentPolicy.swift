@@ -266,7 +266,9 @@ public struct ConsentPolicy: Sendable, Equatable {
         let preselected = optionalNames(rule.preselectedCategories)
         try require(preselected.isEmpty || rule.model != .none, "\(label): the none model preselects nothing")
         try require(preselected.allSatisfy(inScope.contains), "\(label): preselectedCategories must be inside categories")
-        try require(optionalNames(rule.privacySignals?.gpc?.denyCategories ?? []).allSatisfy(inScope.contains),
+        let deny = rule.privacySignals?.gpc?.denyCategories ?? []
+        try require(Set(deny).count == deny.count, "\(label): privacySignals.gpc.denyCategories repeats a category")
+        try require(optionalNames(deny).allSatisfy(inScope.contains),
             "\(label): privacySignals.gpc.denyCategories must be inside categories")
     }
 
@@ -416,6 +418,7 @@ private struct JSONRuleReader {
         "actions", "validity", "privacySignals", "copyRevision", "review",
     ]
     private static let matchKeys: Set<String> = ["countries", "regions", "regionFallbacks", "fallback", "isDefault"]
+    private static let reviewKeys: Set<String> = ["status", "reviewedOn", "reviewBy", "sources", "assumptions"]
 
     let object: [String: JSONValue]
     let id: String
@@ -474,6 +477,31 @@ private struct JSONRuleReader {
         return (optional, necessary)
     }
 
+    /// `gpc.denyCategories` takes exact names: the backend neither trims nor allows a wildcard there.
+    private func exactCategories(_ value: JSONValue?, _ place: String) throws -> [OptionalConsentCategory] {
+        try strings(value, place).map { name in
+            if name == "necessary" { throw ConsentPolicyError("\(label): privacySignals.gpc cannot deny necessary") }
+            guard let category = OptionalConsentCategory(rawValue: name) else {
+                throw ConsentPolicyError("\(label): \(place) has unknown category '\(name)'")
+            }
+            return category
+        }
+    }
+
+    /// `review` is documentation only, but the backend checks its shape, so this does too.
+    private func review(_ value: JSONValue) throws {
+        let review = try fields(value, "review")
+        try keys(review, Self.reviewKeys, "review")
+        let status = review["status"]?.stringValue
+        guard status == "pending" || status == "reviewed" else {
+            throw ConsentPolicyError("\(label): review.status must be pending or reviewed")
+        }
+        if let value = review["reviewedOn"] { _ = try string(value, "review.reviewedOn") }
+        if let value = review["reviewBy"] { _ = try string(value, "review.reviewBy") }
+        if let value = review["sources"] { _ = try strings(value, "review.sources") }
+        if let value = review["assumptions"] { _ = try strings(value, "review.assumptions") }
+    }
+
     private func days(_ value: JSONValue?, _ place: String) throws -> Double? {
         switch value {
         case nil: return nil
@@ -485,10 +513,15 @@ private struct JSONRuleReader {
 
     func read() throws -> PolicyRule {
         try keys(object, Self.ruleKeys, "the rule")
+        if let value = object["review"] { try review(value) }
         let match = try fields(object["match"], "match")
         try keys(match, Self.matchKeys, "match")
         let model = try string(object["model"], "model")
         guard let parsedModel = ConsentModel(rawValue: model) else { throw ConsentPolicyError("\(label): unknown model") }
+        // The backend refuses the field itself, even empty, under a model that preselects nothing.
+        if parsedModel == .none, object["preselectedCategories"] != nil {
+            throw ConsentPolicyError("\(label): the none model takes no preselectedCategories")
+        }
         let prompt = try string(object["prompt"], "prompt")
         guard let parsedPrompt = PolicyPrompt(rawValue: prompt) else { throw ConsentPolicyError("\(label): unknown prompt") }
         var scope: [OptionalConsentCategory]?
@@ -530,9 +563,8 @@ private struct JSONRuleReader {
             if let gpcValue = signals["gpc"] {
                 let gpcFields = try fields(gpcValue, "privacySignals.gpc")
                 try keys(gpcFields, ["denyCategories"], "privacySignals.gpc")
-                let deny = try categories(gpcFields["denyCategories"], "privacySignals.gpc.denyCategories")
-                if deny.necessary { throw ConsentPolicyError("\(label): privacySignals.gpc cannot deny necessary") }
-                gpc = PolicyGpc(denyCategories: deny.optional)
+                gpc = PolicyGpc(denyCategories: try exactCategories(
+                    gpcFields["denyCategories"], "privacySignals.gpc.denyCategories"))
             }
             privacySignals = PolicyPrivacySignals(gpc: gpc)
         }
@@ -541,6 +573,7 @@ private struct JSONRuleReader {
             guard let items = value.arrayValue else { throw ConsentPolicyError("\(label): match.regions must be a list") }
             regions = try items.map { item in
                 let region = try fields(item, "match.regions[]")
+                try keys(region, ["country", "region"], "match.regions[]")
                 return PolicyRegion(
                     country: try string(region["country"], "match.regions[].country"),
                     region: try string(region["region"], "match.regions[].region"))

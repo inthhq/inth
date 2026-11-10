@@ -206,10 +206,11 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 			}
 			val scope = scopeOf(rule).toSet()
 			val preselected = optionalNames(rule.preselectedCategories)
-			require(preselected.isEmpty() || rule.model != ConsentModel.NONE) { "$label: the none model preselects nothing" }
+			require(rule.preselectedCategories.isEmpty() || rule.model != ConsentModel.NONE) { "$label: the none model preselects nothing" }
 			require(preselected.all { it in scope }) { "$label: preselectedCategories must be inside categories" }
 			val deny = rule.privacySignals?.gpc?.denyCategories.orEmpty()
 			require(ConsentCategory.NECESSARY !in deny) { "$label: privacySignals.gpc cannot deny necessary" }
+			require(deny.size == deny.toSet().size) { "$label: privacySignals.gpc.denyCategories repeats a category" }
 			require(optionalNames(deny).all { it in scope }) { "$label: privacySignals.gpc.denyCategories must be inside categories" }
 		}
 
@@ -365,12 +366,30 @@ private class JsonRuleReader(element: JsonElement, index: Int) {
 		ConsentCategory.fromWireName(name) ?: fail("$label: $where has unknown category '$name'")
 	}
 
+	/** `gpc.denyCategories` takes exact names: the backend neither trims nor allows a wildcard there. */
+	private fun exactCategories(element: JsonElement?, where: String): List<ConsentCategory> = strings(element, where).map { name ->
+		ConsentCategory.fromWireName(name) ?: fail("$label: $where has unknown category '$name'")
+	}
+
+	/** `review` is documentation only, but the backend checks its shape, so this does too. */
+	private fun review(element: JsonElement) {
+		val review = obj(element, "review")
+		keys(review, REVIEW_KEYS, "review")
+		val status = (review["status"] as? JsonPrimitive)?.takeIf { it.isString }?.content
+		if (status != "pending" && status != "reviewed") fail("$label: review.status must be pending or reviewed")
+		review["reviewedOn"]?.let { string(it, "review.reviewedOn") }
+		review["reviewBy"]?.let { string(it, "review.reviewBy") }
+		review["sources"]?.let { strings(it, "review.sources") }
+		review["assumptions"]?.let { strings(it, "review.assumptions") }
+	}
+
 	private fun days(element: JsonElement?, where: String): Double? = element?.let {
 		(it as? JsonPrimitive)?.takeIf { p -> !p.isString }?.doubleOrNull ?: fail("$label: $where must be a number of days")
 	}
 
 	fun read(): PolicyRule {
 		keys(value, RULE_KEYS, "the rule")
+		value["review"]?.let(::review)
 		val match = obj(value["match"], "match")
 		keys(match, MATCH_KEYS, "match")
 		val scope = value["categories"]?.let { strings(it, "categories") }
@@ -384,6 +403,7 @@ private class JsonRuleReader(element: JsonElement, index: Int) {
 				regions = match["regions"]?.let { regions ->
 					(regions as? JsonArray ?: fail("$label: match.regions must be a list")).map { entry ->
 						val region = obj(entry, "match.regions[]")
+						keys(region, setOf("country", "region"), "match.regions[]")
 						PolicyRegion(string(region["country"], "match.regions[].country"), string(region["region"], "match.regions[].region"))
 					}
 				} ?: emptyList(),
@@ -391,7 +411,10 @@ private class JsonRuleReader(element: JsonElement, index: Int) {
 				fallback = boolean(match["fallback"], "match.fallback"),
 				isDefault = boolean(match["isDefault"], "match.isDefault"),
 			),
-			model = ConsentModel.fromWireName(string(value["model"], "model")) ?: fail("$label: unknown model"),
+			model = ConsentModel.fromWireName(string(value["model"], "model"))?.also { model ->
+				// The backend refuses the field itself, even empty, under a model that preselects nothing.
+				if (model == ConsentModel.NONE && "preselectedCategories" in value) fail("$label: the none model takes no preselectedCategories")
+			} ?: fail("$label: unknown model"),
 			prompt = PolicyPrompt.fromWireName(string(value["prompt"], "prompt")) ?: fail("$label: unknown prompt"),
 			categories = if (scope == null || scope.any { it.trim() == "*" }) null else categories(value["categories"], "categories"),
 			scopeMode = value["scopeMode"]?.let { ScopeMode.fromWireName(string(it, "scopeMode")) ?: fail("$label: unknown scopeMode") },
@@ -400,7 +423,7 @@ private class JsonRuleReader(element: JsonElement, index: Int) {
 				strings(list, "actions").map { PolicyChoiceAction.fromWireName(it) ?: fail("$label: unknown action '$it'") }
 			},
 			validity = validity?.let { PolicyValidity(days(it["choiceDays"], "validity.choiceDays"), days(it["noticeDays"], "validity.noticeDays")) },
-			privacySignals = signals?.let { PolicyPrivacySignals(gpc?.let { PolicyGpc(categories(it["denyCategories"], "privacySignals.gpc.denyCategories")) }) },
+			privacySignals = signals?.let { PolicyPrivacySignals(gpc?.let { PolicyGpc(exactCategories(it["denyCategories"], "privacySignals.gpc.denyCategories")) }) },
 			copyRevision = value["copyRevision"]?.let { string(it, "copyRevision") },
 		)
 	}
@@ -412,5 +435,6 @@ private class JsonRuleReader(element: JsonElement, index: Int) {
 		)
 		val MATCH_KEYS = setOf("countries", "regions", "regionFallbacks", "fallback", "isDefault")
 		val VALIDITY_KEYS = setOf("choiceDays", "noticeDays")
+		val REVIEW_KEYS = setOf("status", "reviewedOn", "reviewBy", "sources", "assumptions")
 	}
 }

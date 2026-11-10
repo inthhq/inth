@@ -91,7 +91,8 @@ writes that file for you and names it with `com.c15t.policy.rules` in
 
 The rules follow the backend's authoring checks: a partial `categories` list
 needs `scopeMode`, `actions` must include `accept` and `reject`, at most one rule
-may set `fallback` and one `isDefault`, and unknown fields are refused.
+may set `fallback` and one `isDefault`, the `'*'` wildcard belongs only in
+`categories`, and unknown fields are refused.
 `validity` takes whole or fractional days, such as `0.5`. Expo prebuild runs the
 same checks as the native SDKs, so a policy a device would refuse fails the
 build. A policy the SDK refuses at launch, such as a hand-edited file, leaves

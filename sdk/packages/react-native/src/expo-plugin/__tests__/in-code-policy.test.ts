@@ -36,7 +36,8 @@ const parity = JSON.parse(
 	)
 ) as {
 	rules: C15tPolicyRule[];
-	invalid: { name: string; rules: unknown[] }[];
+	invalid: { name: string; rules: unknown }[];
+	accepted: { name: string; rules: unknown[] }[];
 };
 
 describe('prebuild refuses what the native cores refuse', () => {
@@ -47,14 +48,49 @@ describe('prebuild refuses what the native cores refuse', () => {
 		).toEqual(parity.rules);
 	});
 
-	it.each(parity.invalid.map((entry) => [entry.name, entry.rules] as const))(
-		'refuses %s',
-		(_name, rules) => {
+	it('refuses every policy the backend or no-backend mode refuses', () => {
+		const accepted = parity.invalid.filter(({ rules }) => {
+			try {
+				resolveParams({ mode: 'offline', policy: { rules } as never });
+				return true;
+			} catch (error) {
+				return !(error instanceof C15tPluginError);
+			}
+		});
+		expect(accepted.map(({ name }) => name)).toEqual([]);
+	});
+
+	it('accepts every policy the backend accepts', () => {
+		const refused = parity.accepted.filter(({ rules }) => {
+			try {
+				resolveParams({ mode: 'offline', policy: { rules } as never });
+				return false;
+			} catch {
+				return true;
+			}
+		});
+		expect(refused.map(({ name }) => name)).toEqual([]);
+	});
+
+	it('takes the wildcard only in categories', () => {
+		for (const extra of [
+			{ preselectedCategories: ['*'] },
+			{ privacySignals: { gpc: { denyCategories: ['*'] } } },
+		]) {
 			expect(() =>
-				resolveParams({ mode: 'offline', policy: { rules } as never })
-			).toThrow(C15tPluginError);
+				resolveParams({
+					mode: 'offline',
+					policy: { rules: [{ ...fallback, ...extra }] as never },
+				})
+			).toThrow(/unknown category "\*"/u);
 		}
-	);
+		expect(
+			resolveParams({
+				mode: 'offline',
+				policy: { rules: [{ ...fallback, categories: ['*'] }] },
+			}).policyRules
+		).toHaveLength(1);
+	});
 
 	it('names the missing scopeMode for a partial scope', () => {
 		expect(() =>

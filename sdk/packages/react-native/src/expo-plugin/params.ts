@@ -880,11 +880,15 @@ const isStringList = (value: unknown): value is string[] =>
 /** A rule as read from `app.json`, before any of it is trusted. */
 type UncheckedRule = Record<string, unknown>;
 
-/** Trimmed category names, or the problem with them. */
+/**
+ * Trimmed category names, or the problem with them. Only `categories` takes the
+ * `'*'` wildcard, as on the backend.
+ */
 const categoryNames = function categoryNames(
 	value: unknown,
 	field: string,
-	label: string
+	label: string,
+	options: { wildcard: boolean } = { wildcard: false }
 ): string[] | string {
 	if (!isStringList(value)) {
 		return `${label} ${field} must be a list of category names.`;
@@ -892,7 +896,9 @@ const categoryNames = function categoryNames(
 	const names = value.map((name) => name.trim());
 	const unknownName = names.find(
 		(name) =>
-			name !== '*' && name !== 'necessary' && !OPTIONAL_CATEGORIES.has(name)
+			!(options.wildcard && name === '*') &&
+			name !== 'necessary' &&
+			!OPTIONAL_CATEGORIES.has(name)
 	);
 	return unknownName === undefined
 		? names
@@ -929,6 +935,9 @@ const isRegionList = (value: unknown): boolean =>
 	value.every(
 		(region) =>
 			isRecord(region) &&
+			Object.keys(region).every(
+				(key) => key === 'country' || key === 'region'
+			) &&
 			typeof region.country === 'string' &&
 			region.country.trim() !== '' &&
 			typeof region.region === 'string' &&
@@ -995,7 +1004,9 @@ const scopeOf = function scopeOf(
 	if (categories === undefined) {
 		return [...OPTIONAL_CATEGORIES];
 	}
-	const names = categoryNames(categories, 'categories', label);
+	const names = categoryNames(categories, 'categories', label, {
+		wildcard: true,
+	});
 	if (typeof names === 'string') {
 		return names;
 	}
@@ -1017,6 +1028,11 @@ const preselectedProblem = function preselectedProblem(
 	if (rule.preselectedCategories === undefined) {
 		return null;
 	}
+	// The backend refuses the field itself, even empty, under a model that
+	// preselects nothing.
+	if (rule.model === 'none') {
+		return `${label}: the none model takes no preselectedCategories.`;
+	}
 	const names = categoryNames(
 		rule.preselectedCategories,
 		'preselectedCategories',
@@ -1025,11 +1041,7 @@ const preselectedProblem = function preselectedProblem(
 	if (typeof names === 'string') {
 		return names;
 	}
-	const preselected = optionalNames(names);
-	if (preselected.length > 0 && rule.model === 'none') {
-		return `${label}: the none model preselects nothing.`;
-	}
-	return preselected.every((name) => scope.includes(name))
+	return optionalNames(names).every((name) => scope.includes(name))
 		? null
 		: `${label} preselectedCategories must be inside categories.`;
 };
@@ -1120,20 +1132,64 @@ const signalsProblem = function signalsProblem(
 	) {
 		return `${label} privacySignals.gpc takes only denyCategories.`;
 	}
-	const names = categoryNames(
-		gpc.denyCategories,
-		'privacySignals.gpc.denyCategories',
-		label
-	);
-	if (typeof names === 'string') {
-		return names;
+	// Exact names: the backend neither trims nor takes a wildcard here.
+	const names = gpc.denyCategories;
+	if (!isStringList(names)) {
+		return `${label} privacySignals.gpc.denyCategories must be a list of category names.`;
 	}
 	if (names.includes('necessary')) {
 		return `${label} privacySignals.gpc cannot deny necessary.`;
 	}
-	return optionalNames(names).every((name) => scope.includes(name))
+	const unknownName = names.find((name) => !OPTIONAL_CATEGORIES.has(name));
+	if (unknownName !== undefined) {
+		return `${label} privacySignals.gpc.denyCategories has unknown category ${JSON.stringify(unknownName)}.`;
+	}
+	if (new Set(names).size !== names.length) {
+		return `${label} privacySignals.gpc.denyCategories repeats a category.`;
+	}
+	return names.every((name) => scope.includes(name))
 		? null
 		: `${label} privacySignals.gpc.denyCategories must be inside categories.`;
+};
+
+const REVIEW_KEYS = new Set([
+	'assumptions',
+	'reviewBy',
+	'reviewedOn',
+	'sources',
+	'status',
+]);
+
+/** `review` is documentation only, but the backend checks its shape, so this does too. */
+const reviewProblem = function reviewProblem(
+	review: unknown,
+	label: string
+): string | null {
+	if (review === undefined) {
+		return null;
+	}
+	if (
+		!isRecord(review) ||
+		Object.keys(review).some((key) => !REVIEW_KEYS.has(key))
+	) {
+		return `${label} review must be an object with status, reviewedOn, reviewBy, sources or assumptions.`;
+	}
+	if (review.status !== 'pending' && review.status !== 'reviewed') {
+		return `${label} review.status must be 'pending' or 'reviewed'.`;
+	}
+	const { assumptions, reviewBy, reviewedOn, sources } = review;
+	if (
+		[reviewedOn, reviewBy].some(
+			(field) => field !== undefined && typeof field !== 'string'
+		)
+	) {
+		return `${label} review dates must be strings.`;
+	}
+	return [sources, assumptions].every(
+		(list) => list === undefined || isStringList(list)
+	)
+		? null
+		: `${label} review.sources and review.assumptions must be lists of strings.`;
 };
 
 /**
@@ -1166,6 +1222,7 @@ const policyRuleProblem = function policyRuleProblem(
 		() => actionsProblem(rule, label),
 		() => validityProblem(rule.validity, label),
 		() => signalsProblem(rule.privacySignals, scope, label),
+		() => reviewProblem(rule.review, label),
 		() =>
 			rule.copyRevision === undefined || typeof rule.copyRevision === 'string'
 				? null

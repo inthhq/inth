@@ -2079,6 +2079,9 @@ public final class ConsentCore: @unchecked Sendable {
         if config.usesInCodePolicy {
             if let response = config.policy?.resolve(overrides: lock.withLock { overrides }) {
                 applyPolicyUpdate(response)
+            } else if config.policy == nil, let reason = config.policyError {
+                // A reset clears the snapshot error, so a refused policy is reported again.
+                reportRefusedPolicy(reason)
             }
             return
         }
