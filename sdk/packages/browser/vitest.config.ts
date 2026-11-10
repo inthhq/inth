@@ -10,6 +10,9 @@ import { serveInitScriptFixture } from './src/__tests__/fixtures/init-script-ser
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+/** The token the WebView fixture's native script was given. */
+const WEBVIEW_TOKEN = 'feedc0de00000000feedc0de00000000';
+
 export default mergeConfig(
 	baseConfig,
 	defineConfig({
@@ -81,6 +84,60 @@ export default mergeConfig(
 					});
 				},
 				name: 'gated-script-strict-dynamic-fixture',
+			},
+			{
+				configureServer(server) {
+					server.middlewares.use((request, response, next) => {
+						const url = new URL(request.url ?? '/', 'http://fixture');
+						if (url.pathname !== '/__c15t-test__/webview') {
+							next();
+							return;
+						}
+						// The native document-start script, first in <head>, as a
+						// WebView injects it. `?origin=other` lists an origin this
+						// page is not on.
+						const here = `http://${request.headers.host}`;
+						const origins =
+							url.searchParams.get('origin') === 'other'
+								? ['https://app.example']
+								: [here];
+						const state = {
+							gppString: null,
+							model: 'opt-in',
+							permissions: {
+								experience: false,
+								functionality: false,
+								marketing: false,
+								measurement: true,
+								necessary: true,
+							},
+							ready: true,
+							revision: 3,
+							tcString: null,
+							version: 1,
+						};
+						const nativeScript = `${readFileSync(
+							resolve(
+								__dirname,
+								'../../native/protocol/webview/document-start.js'
+							),
+							'utf8'
+						)
+							.trim()
+							.replace(
+								/;$/u,
+								''
+							)}(${JSON.stringify(origins)},"${WEBVIEW_TOKEN}",${JSON.stringify(state)});`;
+						response.setHeader('Content-Type', 'text/html');
+						response.end(
+							readFileSync(
+								resolve(__dirname, 'src/__tests__/fixtures/webview.html'),
+								'utf8'
+							).replace('/* native document-start script */', nativeScript)
+						);
+					});
+				},
+				name: 'webview-fixture',
 			},
 			{
 				configureServer(server) {
