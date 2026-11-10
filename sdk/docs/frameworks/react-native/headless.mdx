@@ -44,10 +44,33 @@ native value visible and explains the error. An explicit prior refusal does
 not disable the switch; enforced restrictions such as GPC can.
 
 Only a category in the resolved scope appears. The example changes
-`measurement` alone, so it does not renew unrelated category choices. For a
-form that collects a long-lived draft and saves several categories together,
-use the stock native preferences screen until the shared custom-draft
-contract is available.
+`measurement` alone, so it does not renew unrelated category choices.
+
+## Build a preferences screen with a draft
+
+For a screen that collects several choices and saves them together, stage them
+in a draft with `useConsentDraft()`. It uses the same names as the web
+preference dialog's draft in `@c15t/react`. Edits stay in JavaScript until you
+call `save()`, which records every displayed category in one commit:
+
+<include src="../../shared/examples/react-native-bare/draft-preferences.mdx" />
+
+`displayedCategories` lists the categories the resolved policy puts in scope,
+`necessary` first. A category with a saved receipt starts at that choice. One
+without a receipt starts at its effective permission. The draft shows the
+subject's own choices, so a GPC restriction does not appear as a staged
+refusal. `isDirty` tells you whether anything changed. `acceptAll` and
+`rejectAll` stage values only; they save nothing.
+
+While the draft has no edits, it follows the saved record. If the policy or
+the displayed categories change under an unsaved edit, `isStale` turns true and
+`save()` resolves `ok: false` with `reason: 'concurrent-change'`, writing
+nothing. Call `reset()` and let the subject review again.
+
+Every component outside a `ConsentDraftProvider` shares one draft, so a Save
+button elsewhere on the screen can call `useSaveConsents()()` with no argument,
+as on the web. Wrap a screen in `ConsentDraftProvider` to give it a draft of its
+own; its `initial` prop sets values for categories that have no receipt yet.
 
 Effective permission is different from an explicit saved choice. An opt-out
 policy may allow a category before anyone uses the switch. Read
@@ -62,8 +85,9 @@ native IAB draft and disclosure checks described under
 ## Handle accept, reject and save failures
 
 Use `useSaveConsents()` for explicit button actions. The function it returns
-takes `'all'`, `'none'` or a per-category object and resolves with a local
-`CommitResult`; check `ok` before dismissing your form. This reusable Reject button keeps a retry path on failure:
+takes `'all'`, `'none'` or a per-category object, or no argument to save the
+current draft, and resolves with a local `CommitResult`; check `ok` before
+dismissing your form. This reusable Reject button keeps a retry path on failure:
 
 <include src="../../shared/examples/react-native-bare/commit-results.mdx" />
 
@@ -114,7 +138,9 @@ It is for features that require both. It does not ask for authorization.
 | `useConsentStatus()` | Readiness, pending policy, active UI and owed prompt. |
 | `useConsentSelector(selector, equals?)` | A custom snapshot slice with optional equality. |
 | `useSnapshot()` | A screen that needs several snapshot fields, such as scope and restrictions. |
-| `useSaveConsents()` | Save `'all'`, `'none'` or a per-category choice. |
+| `useSaveConsents()` | Save `'all'`, `'none'`, a per-category choice, or the current draft. |
+| `useConsentDraft()` | Stage several category choices and save them together. |
+| `ConsentDraftProvider` | A separate draft for one screen, with defaults for undecided categories. |
 | `useDismissNotice()` | Acknowledge a notice without recording a choice. |
 | `useIdentify()` | Attach an external id from your account system. |
 | `useSetOverrides()` | Pin country, region, language or GPC for testing. |

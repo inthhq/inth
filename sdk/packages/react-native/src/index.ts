@@ -113,6 +113,12 @@ export {
 	useSetOverrides,
 } from './hooks';
 export type { ConsentActions, SaveConsentsInput } from './hooks';
+export { ConsentDraftProvider, useConsentDraft } from './draft';
+export type {
+	ConsentDraftHandle,
+	ConsentDraftProviderProps,
+	ConsentDraftState,
+} from './draft';
 export { useConsentSelector } from './hooks';
 export { useConsentStatus } from './hooks';
 export { useConsentSafeArea } from './hooks';

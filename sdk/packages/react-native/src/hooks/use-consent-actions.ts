@@ -4,6 +4,7 @@
 
 import { useCallback, useMemo } from 'react';
 
+import { useConsentDraftStore } from '../draft/consent-draft-provider';
 import type {
 	CommitResult,
 	NativeOverridesInput,
@@ -113,12 +114,17 @@ export type SaveConsentsInput =
 	| Readonly<Partial<Record<OptionalConsentCategory, boolean>>>;
 
 /**
- * Save the subject's consent choice.
+ * Save the subject's consent choice, as `@c15t/react`'s `save` does.
+ *
+ * With no argument it saves the current draft: the nearest
+ * `ConsentDraftProvider`'s, or the draft every `useConsentDraft()` outside one
+ * shares. A stale draft is refused with `reason: 'concurrent-change'`.
  *
  * @example
  * ```tsx
  * const save = useSaveConsents();
  * <Button onPress={() => save('all')} title="Accept all" />
+ * <Button onPress={() => save()} title="Save choices" />
  * ```
  *
  * @returns A stable function. Its promise resolves with the local commit
@@ -126,12 +132,16 @@ export type SaveConsentsInput =
  *   queued: true` is durable local success. Delivery is separate.
  */
 export const useSaveConsents = function useSaveConsents(): (
-	input: SaveConsentsInput
+	input?: SaveConsentsInput
 ) => Promise<CommitResult> {
 	const client = useConsentClient();
+	const draft = useConsentDraftStore();
 
 	return useCallback(
-		(input: SaveConsentsInput) => {
+		(input?: SaveConsentsInput) => {
+			if (input === undefined) {
+				return draft.save();
+			}
 			if (input === 'all') {
 				return client.commit({ action: 'all' });
 			}
@@ -140,7 +150,7 @@ export const useSaveConsents = function useSaveConsents(): (
 			}
 			return client.commit({ action: 'explicit', consents: input });
 		},
-		[client]
+		[client, draft]
 	);
 };
 
