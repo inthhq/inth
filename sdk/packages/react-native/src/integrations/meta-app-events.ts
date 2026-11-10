@@ -57,6 +57,9 @@ export const connectMetaAppEvents = (
 				return deny();
 			}
 			await meta.setLimitedDataUse(false);
+			if (!isAllowed()) {
+				return deny();
+			}
 			await meta.setAdvertiserIDCollectionEnabled(true);
 			if (!isAllowed()) {
 				return deny();

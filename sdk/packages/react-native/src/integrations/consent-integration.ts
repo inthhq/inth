@@ -46,6 +46,13 @@ export interface AnalyticsIntegrationOptions {
  * apply left, or `undefined` on the first apply, after `sync()`, on
  * `disconnect()` and after a failure, so a vendor whose start call must run
  * once per grant can tell a new grant from an unrelated change.
+ *
+ * A withdrawal never waits in the queue. When a category the running apply
+ * grants is withdrawn, or the integration disconnects, the withdrawal applies
+ * at once, even while a vendor call of the running apply has not settled. The
+ * queue then reapplies current state after the running apply finishes, so a
+ * grant that settles late cannot leave the vendor enabled. `apply` must read
+ * `current()` before each call that enables collection.
  */
 export const connectConsentState = <StateType>(
 	options: Pick<AnalyticsIntegrationOptions, 'client' | 'onError'>,
@@ -60,9 +67,29 @@ export const connectConsentState = <StateType>(
 	let applied: string | undefined;
 	let last: { readonly state: StateType } | undefined;
 	let tail = Promise.resolve();
+	// The state the running queued apply works toward and the categories it grants.
+	let running:
+		| {
+				readonly state: StateType;
+				readonly granted: ReadonlySet<AllConsentNames>;
+		  }
+		| undefined;
+	// Set by a withdrawal that ran beside the queue: the next apply must not skip.
+	let reapply = false;
 	let disconnected: Promise<void> | undefined;
 	const current = () =>
 		read((category) => connected && client.isAllowed(category));
+	const readGranted = () => {
+		const granted = new Set<AllConsentNames>();
+		const state = read((category) => {
+			const allowed = connected && client.isAllowed(category);
+			if (allowed) {
+				granted.add(category);
+			}
+			return allowed;
+		});
+		return { granted, state };
+	};
 	const reportFailure = async (update: Promise<void>): Promise<void> => {
 		try {
 			await update;
@@ -80,15 +107,22 @@ export const connectConsentState = <StateType>(
 	};
 	const enqueue = (force = false): Promise<void> => {
 		const reconcile = async () => {
-			if (!force && applied === JSON.stringify(current())) {
+			const next = readGranted();
+			if (!force && !reapply && applied === JSON.stringify(next.state)) {
 				return;
 			}
-			const previous = force ? undefined : last?.state;
+			const previous = force || reapply ? undefined : last?.state;
+			reapply = false;
 			applied = undefined;
 			last = undefined;
-			const state = await apply(current, previous);
-			applied = JSON.stringify(state);
-			last = { state };
+			running = next;
+			try {
+				const state = await apply(current, previous);
+				applied = JSON.stringify(state);
+				last = { state };
+			} finally {
+				running = undefined;
+			}
 		};
 		// A failed vendor call must not prevent a subsequent withdrawal or retry.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Both outcomes must continue the same serialized queue.
@@ -97,11 +131,35 @@ export const connectConsentState = <StateType>(
 		void reportFailure(update);
 		return update;
 	};
+	// Apply a withdrawal beside the queue when a running apply grants more.
+	const preemptWithdrawal = (): Promise<void> | undefined => {
+		const active = running;
+		if (!active) {
+			return;
+		}
+		const next = readGranted();
+		const withdrawn = [...active.granted].some(
+			(category) => !next.granted.has(category)
+		);
+		if (!withdrawn) {
+			return;
+		}
+		running = next;
+		reapply = true;
+		const update = (async () => {
+			await apply(current, active.state);
+		})();
+		void reportFailure(update);
+		enqueue();
+		return update;
+	};
 	const unsubscribe = client.subscribe(
 		(snapshot) =>
 			JSON.stringify(read((category) => isCategoryAllowed(snapshot, category))),
 		() => {
-			enqueue();
+			if (!preemptWithdrawal()) {
+				enqueue();
+			}
 		}
 	);
 	const ready = enqueue();
@@ -114,7 +172,7 @@ export const connectConsentState = <StateType>(
 		applied = undefined;
 		last = undefined;
 		unsubscribe();
-		const update = enqueue();
+		const update = preemptWithdrawal() ?? enqueue();
 		disconnected = update;
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Preserve the caller's rejection while allowing a later teardown retry.
 		update.catch(() => {

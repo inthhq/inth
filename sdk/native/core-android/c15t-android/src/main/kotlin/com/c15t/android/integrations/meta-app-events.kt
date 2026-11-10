@@ -42,10 +42,11 @@ class MetaAppEventsIntegration(
 	onError: (Exception) -> Unit,
 ) : AutoCloseable {
 	private val binding = AnalyticsConsentBinding(core, category, onError) { allowed, stillAllowed ->
+		// Each enabling call checks current authority first; a late grant is reapplied.
 		if (allowed && stillAllowed()) {
 			setLimitedDataUse(false)
-			setAdvertiserIDCollectionEnabled(true)
-			setAutoLogAppEventsEnabled(true)
+			if (stillAllowed()) setAdvertiserIDCollectionEnabled(true)
+			if (stillAllowed()) setAutoLogAppEventsEnabled(true)
 		} else {
 			runAll(
 				{ setAutoLogAppEventsEnabled(false) },

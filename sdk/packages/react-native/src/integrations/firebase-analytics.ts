@@ -1,4 +1,4 @@
-import { connectConsentState } from './consent-integration';
+import { connectConsentState, settleAll } from './consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
@@ -72,9 +72,13 @@ export const connectFirebaseAnalytics = (
 	options: FirebaseAnalyticsOptions
 ): ConsentIntegration =>
 	connectConsentState(options, firebaseConsent, async (current) => {
-		await analytics.setAnalyticsCollectionEnabled(false);
+		// Both calls are made even if disabling collection fails, so denied types
+		// still reach Firebase.
 		const consent = current();
-		await analytics.setConsent(consent);
+		await settleAll([
+			() => analytics.setAnalyticsCollectionEnabled(false),
+			() => analytics.setConsent(consent),
+		]);
 		if (!consent.analytics_storage) {
 			return consent;
 		}
@@ -86,8 +90,10 @@ export const connectFirebaseAnalytics = (
 		await analytics.setAnalyticsCollectionEnabled(true);
 		const after = current();
 		if (!after.analytics_storage) {
-			await analytics.setAnalyticsCollectionEnabled(false);
-			await analytics.setConsent(after);
+			await settleAll([
+				() => analytics.setAnalyticsCollectionEnabled(false),
+				() => analytics.setConsent(after),
+			]);
 			return after;
 		}
 		return consent;

@@ -39,10 +39,11 @@ public final class MetaAppEventsIntegration: @unchecked Sendable {
         setLimitedDataUse: @escaping @Sendable (Bool) -> Void
     ) {
         binding = categoryBinding(core: core, category: category.category) { allowed, stillAllowed in
+            // Each enabling call checks current state first; a late grant is reapplied.
             if allowed && stillAllowed() {
                 setLimitedDataUse(false)
-                setAdvertiserIDCollectionEnabled(true)
-                setAutoLogAppEventsEnabled(true)
+                if stillAllowed() { setAdvertiserIDCollectionEnabled(true) }
+                if stillAllowed() { setAutoLogAppEventsEnabled(true) }
             } else {
                 setAutoLogAppEventsEnabled(false)
                 setAdvertiserIDCollectionEnabled(false)

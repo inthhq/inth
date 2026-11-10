@@ -44,7 +44,7 @@ public final class AppsFlyerIntegration: @unchecked Sendable {
                 setConsentData(state.ads)
                 if previous?.tracking != true && current().tracking {
                     setStopped(false)
-                    start()
+                    if current().tracking { start() }
                 }
             } else {
                 setStopped(true)

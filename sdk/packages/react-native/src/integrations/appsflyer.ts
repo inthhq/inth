@@ -61,7 +61,9 @@ export const connectAppsFlyer = (
 		// A withdrawal during these calls queues the next apply, which stops.
 		if (previous?.tracking !== true && current().tracking) {
 			await appsFlyer.stop(false);
-			await appsFlyer.start();
+			if (current().tracking) {
+				await appsFlyer.start();
+			}
 		}
 		return state;
 	});
