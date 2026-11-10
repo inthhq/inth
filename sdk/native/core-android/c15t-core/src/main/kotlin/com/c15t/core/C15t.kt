@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 object C15t {
 	private val kernel = AtomicReference<ConsentCore?>()
+	private val installLock = Any()
 
 	/** The active kernel, or `null` before [bootstrap]. */
 	val current: ConsentCore?
@@ -61,22 +62,23 @@ object C15t {
 		transport: C15tTransport = C15tTransport.NONE,
 		executor: TaskExecutor? = null,
 		logger: (KernelError) -> Unit = {},
-	): ConsentCore {
-		kernel.get()?.let { return it }
-		val created = ConsentCore(
-			config = config,
-			store = store,
-			clock = clock,
-			transport = transport,
-			executor = executor,
-			logger = logger,
-		)
-		if (kernel.compareAndSet(null, created)) {
+	): ConsentCore =
+		// One caller installs at a time. A second caller waits here until the first
+		// has finished starting the core, so the core it gets back has hydrated.
+		synchronized(installLock) {
+			kernel.get()?.let { return it }
+			val created = ConsentCore(
+				config = config,
+				store = store,
+				clock = clock,
+				transport = transport,
+				executor = executor,
+				logger = logger,
+			)
+			kernel.set(created)
 			created.bootstrap()
-			return created
+			created
 		}
-		return checkNotNull(kernel.get())
-	}
 
 	/**
 	 * Drop the installed kernel. Intended for tests and host teardown.
