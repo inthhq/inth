@@ -1114,6 +1114,7 @@ export default defineDocsConfig({
 						'commands/codemods',
 						'commands/self-host',
 						'commands/mobile-manifest',
+						'commands/mobile-setup',
 					],
 					slug: 'commands',
 					title: 'Commands',

@@ -1,0 +1,81 @@
+---
+title: Mobile setup
+description: Run c15t setup in an Expo, React Native, Swift or Android app to write the consent configuration and provider, or print the native steps.
+group: cli
+---
+
+## Set up a mobile app
+
+`c15t setup` checks the directory it runs in. In an Expo, React Native, Swift
+or Android project, it runs the mobile setup instead of the web one. Web
+projects get the same setup as before.
+
+```sh
+npx c15t setup --backend-url https://your-project.inth.app
+```
+
+The mobile SDKs are a private prerelease. Install the `@c15t/react-native`
+tarball and get Maven access from your maintainer first.
+[Mobile availability](/docs/guides/mobile-status) covers distribution.
+
+| Project | Detected by | What setup does |
+| --- | --- | --- |
+| Expo | `expo` in `package.json` | Adds the config plugin entry to `app.json` and writes the provider file. |
+| Bare React Native | `react-native` without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. |
+| Swift | An Xcode project, workspace or `Package.swift`, with no `package.json` | Prints the package, products and setup code. |
+| Android | A Gradle build, with no `package.json` | Prints the repository, dependencies and setup code. |
+
+Setup never edits an Xcode project, a Gradle file or a native manifest. It
+prints those changes for you to make.
+
+## What Expo setup writes
+
+The plugin entry carries the backend URL and the categories your app offers.
+For example:
+
+```json title="app.json"
+{
+	"expo": {
+		"plugins": [
+			[
+				"@c15t/react-native/expo-plugin",
+				{
+					"backendURL": "https://your-project.inth.app",
+					"consentCategories": ["necessary", "measurement", "marketing"]
+				}
+			]
+		]
+	}
+}
+```
+
+When the app uses a dynamic `app.config.ts` or `app.config.js`, setup prints
+the entry instead of editing that file. An existing c15t entry stays unless
+you pass `--overwrite`.
+
+`c15t/privacy-app.tsx` (under `src/` when the app has one) exports
+`PrivacyApp`. It mounts `ConsentProvider`, opens the native prompt when the
+policy asks for one, and keeps a Privacy settings button reachable. Render your
+app inside it once, as the
+[React Native quickstart](/docs/frameworks/react-native/quickstart) shows.
+
+Then build a native app with `npx expo prebuild`. Expo Go cannot load the
+native module.
+
+## Options
+
+| Option | Purpose |
+| --- | --- |
+| `hosted`, `self-hosted`, `offline`, `custom` | The mode, as the first argument. Defaults to `hosted`. |
+| `--backend-url <url>` | The backend URL the app uses. Required except in offline mode, which refuses it. |
+| `--categories <list>` | Comma-separated categories the app offers. `necessary` is always included. Defaults to `measurement,marketing`. |
+| `--privacy-policy-url <url>` | Your privacy policy, for the provider and printed steps. |
+| `--bundle-manifest` | Expo only: bundle the hosted policy at prebuild with [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest). |
+| `--overwrite` | Replace an existing c15t plugin entry and provider file. |
+| `--dry-run` | Show the files and steps without writing anything. |
+| `--json` | Print the result as JSON and turn off prompts. |
+
+Offline mode writes a policy with one rule that asks for a choice everywhere.
+Replace it with your rules, as
+[define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code)
+describes.
