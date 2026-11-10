@@ -1,0 +1,227 @@
+---
+title: Consent in WebViews
+description: Pass the consent a visitor gave in your Swift, Android or React Native app to your own site in a WebView, so web c15t shows no second banner.
+group: guides
+seoTitle: Sync app consent into WebViews with c15t
+seoDescription: Hand native consent from a Swift, Kotlin or React Native app to web c15t in a WebView. No second banner, listed origins only, no subject ID.
+---
+
+When your app opens your own site in a WebView, the site's banner shows again,
+because web c15t cannot see the choice the visitor made in the app. Two changes
+fix this: the app injects its consent into the WebView, and the site reads it
+with `webViewConsentSource()`.
+
+The app stays the consent authority. The page gets a read-only copy and follows
+it as it changes. It shows no banner or dialog, stores no cookie and sends no
+consent record of its own. A "Cookie settings" link on the page asks the app to
+open its preferences screen.
+
+## What crosses into the page
+
+The page receives consent state and nothing else:
+
+| Field | Value |
+| --- | --- |
+| `ready` | `true` once the app has loaded stored consent and resolved a policy |
+| `permissions` | The app's effective permissions. Every optional category is `false` until `ready` |
+| `model` | `opt-in`, `opt-out`, `none` or `iab` |
+| `tcString` | The app's committed IAB TC string, when the app runs IAB TCF natively. Otherwise `null` |
+| `gppString` | Always `null` for now |
+| `revision` | The app's snapshot revision |
+
+The subject ID, external ID, location and consent records stay in the app.
+
+## Which pages receive it
+
+You list the origins that may receive consent, such as
+`https://www.example.com`. Only the top frame of a page on a listed origin gets
+the state. Each entry must be `https://host` or `https://host:port`. Plain
+`http://` is accepted only for `localhost`, `127.0.0.1` and `[::1]`, for local
+development. Paths, wildcards and non-ASCII host names are rejected; write an
+internationalized domain in its `xn--` form. An empty list, or one bad entry,
+is an error.
+
+A page that the visitor navigates to on another origin, and any iframe, gets
+nothing and behaves as it would in a browser.
+
+## Set up the site
+
+Pass `webViewConsentSource()` as the `consentSource` option wherever you
+configure c15t. Inside a WebView your app set up for this origin, it returns a
+source that reads the app's consent. Everywhere else, including a normal
+browser and server rendering, it returns `undefined`, and c15t behaves as if
+the option were not set.
+
+{/* example: fragment */}
+
+```ts
+import { webViewConsentSource } from 'c15t';
+
+const options = {
+	consentSource: webViewConsentSource(),
+	// ...your existing options, such as mode
+};
+```
+
+Call it once, when you build the options. The app's script runs before any
+script on the page, so the state is already there.
+
+On a page that renders the banner in the server HTML, the server cannot tell
+that the page is in a WebView. The banner in the HTML shows until the page
+hydrates, and then disappears. Serve those pages with consent resolved in the
+browser when they open in your app, or accept the brief banner.
+
+For IAB TCF, the page does not serve `__tcfapi` from the app's TC string. Read
+it from `webViewConsentSource()?.getState()?.tcString` if a script on the page
+needs it.
+
+## Set up the app
+
+Attach the helper before the WebView loads the first page, and keep the
+returned object for as long as the WebView lives.
+
+### Swift
+
+`ConsentWebView` is in `C15tApple`. It adds a main-frame user script to the web
+view's `WKUserContentController` and replaces it when consent changes, so every
+page load gets the current state, and a loaded page gets each change.
+
+```swift
+import C15tApple
+import C15tCore
+import WebKit
+
+final class SiteViewController: UIViewController {
+    private let webView = WKWebView()
+    private var consentSync: ConsentWebView?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view = webView
+        guard let core = C15t.current else { return }
+        consentSync = try? ConsentWebView(
+            webView: webView,
+            core: core,
+            allowedOrigins: ["https://www.example.com"]
+        ) { [weak self] in
+            self?.presentConsentPreferences()
+        }
+        webView.load(URLRequest(url: URL(string: "https://www.example.com/")!))
+    }
+}
+```
+
+The initializer throws when an origin is not accepted. The closure runs on the
+main actor when a listed page asks for preferences. The helper stops when it is
+released; call `close()` to stop it while the web view stays in use.
+
+### Kotlin
+
+`ConsentWebView` is in `com.c15t.android`. It uses
+`WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, with your
+origins as the origin rules.
+
+```kotlin
+import com.c15t.android.ConsentWebView
+import com.c15t.core.C15t
+
+class SiteActivity : AppCompatActivity() {
+    private var consentSync: ConsentWebView? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val webView = WebView(this).apply { settings.javaScriptEnabled = true }
+        setContentView(webView)
+        val core = C15t.current ?: return
+        consentSync = ConsentWebView.attach(webView, core, listOf("https://www.example.com")) {
+            showConsentPreferences()
+        }
+        webView.loadUrl("https://www.example.com/")
+    }
+
+    override fun onDestroy() {
+        consentSync?.close()
+        super.onDestroy()
+    }
+}
+```
+
+`attach` throws `IllegalArgumentException` when an origin is not accepted. It
+returns `null` when the device's WebView cannot run a script at document start
+(`ConsentWebView.isSupported()` is `false`). Then nothing is injected and the
+page shows its own banner.
+
+### React Native
+
+`useWebViewConsent()` returns props for a
+[`react-native-webview`](https://github.com/react-native-webview/react-native-webview)
+`WebView`. Render it under `ConsentProvider`.
+
+{/* example: fragment */}
+
+```tsx
+import { useWebViewConsent } from '@c15t/react-native';
+import { WebView } from 'react-native-webview';
+
+export function Site({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
+	const consent = useWebViewConsent({
+		allowedOrigins: ['https://www.example.com'],
+		onPreferencesRequested: onOpenPrivacy,
+	});
+
+	return <WebView {...consent} source={{ uri: 'https://www.example.com/' }} />;
+}
+```
+
+The props set `injectedJavaScriptBeforeContentLoaded`, a `ref` that pushes
+changes into the loaded page, and `onMessage`. If your `WebView` has its own
+`onMessage`, call `consent.onMessage(event)` from it. The hook throws when an
+origin is not accepted. It injects nothing when the native build predates the
+helper, so rebuild the app after updating the package.
+
+On Android, `react-native-webview` decides when the script runs. Versions that
+inject at document start run it before the page's scripts; older ones run it
+when the page starts loading.
+
+## Choices made in the page
+
+Consent flows one way, from the app to the page. The page cannot record a
+choice: under `webViewConsentSource()` web c15t shows no banner or dialog, and
+`acceptAll()` and similar calls are refused. A page has no way to prove that a
+person, and not some script on it, made a choice, so the app does not accept
+choices from it.
+
+The page can ask the app to open its preferences. Opening the preference dialog
+on the page, for example from a "Cookie settings" link, calls your
+`onPreferencesRequested`. The app acts only on requests from the top frame of a
+listed origin. When the visitor saves in the app, the page receives the new
+state. If a saved change withdraws a category the page was using, web c15t
+reloads the page, unless you set `reloadOnConsentRevoked: false`.
+
+## Security
+
+- Pages on unlisted origins and iframes get nothing. The injected script checks
+  the page's origin itself, so this holds even where the platform cannot filter.
+- Scripts on a listed page can read the state, as they can read any consent
+  state the page uses. They cannot replace it: it is defined before they run,
+  and cannot be redefined.
+- Only the app can change the state. Each WebView gets its own random token,
+  and the page ignores updates without it.
+- In a normal browser, `webViewConsentSource()` returns `undefined` unless a
+  script that ran before c15t defined the object. Such a script could equally
+  write c15t's own consent cookie.
+
+`native/CONTRACT.md` in the c15t repository describes the injected scripts and
+the state in full.
+
+## Check that it works
+
+1. Make a choice in the app, then open your site in the WebView.
+2. No banner shows. In the WebView's developer tools (Safari Web Inspector for
+   iOS, `chrome://inspect` for Android), run
+   `window.__c15tNativeConsent.getState()` and compare `permissions` with the
+   app's choice.
+3. Change the choice in the app while the page is open. `getState().revision`
+   goes up, and scripts the change allows start.
+4. Open a page on an origin you did not list. `window.__c15tNativeConsent` is
+   `undefined`, and the site's own banner shows.
