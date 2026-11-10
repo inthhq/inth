@@ -74,14 +74,37 @@ class AnalyticsIntegrationTest {
 	}
 
 	@Test
-	fun `firebase denies every advertising permission even after accept all`() {
+	fun `firebase grants advertising from marketing as the web does`() {
 		val core = kernel()
 		val states = mutableListOf<FirebaseAnalyticsConsent>()
 		val integration = FirebaseAnalyticsIntegration(core, onError = ::unexpectedError, setConsent = states::add, setCollectionEnabled = {})
 		assertTrue(core.save(CommitIntent.All).ok)
 
-		assertEquals(listOf(false, true), states.map { it.analyticsStorage })
-		assertTrue(states.all { !it.adStorage && !it.adUserData && !it.adPersonalization })
+		assertEquals(
+			listOf(
+				FirebaseAnalyticsConsent(analyticsStorage = false, adStorage = false, adUserData = false, adPersonalization = false),
+				FirebaseAnalyticsConsent(analyticsStorage = true, adStorage = true, adUserData = true, adPersonalization = true),
+			),
+			states,
+		)
+		integration.close()
+		assertEquals(FirebaseAnalyticsConsent(false, false, false, false), states.last())
+	}
+
+	@Test
+	fun `firebase follows marketing alone without enabling collection`() {
+		val core = kernel()
+		val states = mutableListOf<FirebaseAnalyticsConsent>()
+		val enabled = mutableListOf<Boolean>()
+		val integration = FirebaseAnalyticsIntegration(core, onError = ::unexpectedError, setConsent = states::add, setCollectionEnabled = enabled::add)
+		states.clear()
+
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertEquals(listOf(FirebaseAnalyticsConsent(false, true, true, true)), states)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertEquals(FirebaseAnalyticsConsent(false, false, false, false), states.last())
+		assertEquals(2, states.size)
+		assertFalse(enabled.contains(true))
 		integration.close()
 	}
 
@@ -92,7 +115,7 @@ class AnalyticsIntegrationTest {
 		val integration = firebase(core, calls)
 		calls.clear()
 
-		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
 		core.refresh()
 		assertTrue(calls.isEmpty())
 		integration.close()

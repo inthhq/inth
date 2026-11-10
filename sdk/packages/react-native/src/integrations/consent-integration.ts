@@ -2,7 +2,10 @@ import { isCategoryAllowed } from '../lib/selectors';
 import { getConsentClient } from '../native/client';
 import type { ConsentClient } from '../native/client';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
-import type { OptionalConsentCategory } from '../protocol/vocabulary';
+import type {
+	AllConsentNames,
+	OptionalConsentCategory,
+} from '../protocol/vocabulary';
 
 /** An app-owned connection between native consent and one vendor SDK. */
 export interface ConsentIntegration {
@@ -30,21 +33,27 @@ export interface AnalyticsIntegrationOptions {
 	readonly client?: ConsentClient;
 }
 
-/** Serialize async vendor calls and re-read native authority before each apply. */
-export const connectConsentIntegration = (
-	options: AnalyticsIntegrationOptions,
-	apply: (isAllowed: () => boolean) => Promise<boolean>
+/**
+ * Serialize async vendor calls for state derived from several categories.
+ *
+ * `read` derives the vendor's state from category permission. It is called with
+ * a reader that denies everything once the integration disconnects. `apply`
+ * pushes the state to the vendor, re-reading through `current` between calls,
+ * and returns the state it left the vendor in. A later snapshot that changes
+ * the derived state queues another apply.
+ */
+export const connectConsentState = <StateType>(
+	options: Pick<AnalyticsIntegrationOptions, 'client' | 'onError'>,
+	read: (isAllowed: (category: AllConsentNames) => boolean) => StateType,
+	apply: (current: () => StateType) => Promise<StateType>
 ): ConsentIntegration => {
-	const category = options.category ?? 'measurement';
-	if (!OPTIONAL_CONSENT_CATEGORIES.includes(category)) {
-		throw new TypeError('Analytics integrations require an optional category.');
-	}
 	const client = options.client ?? getConsentClient();
 	let connected = true;
-	let applied: boolean | undefined;
+	let applied: string | undefined;
 	let tail = Promise.resolve();
 	let disconnected: Promise<void> | undefined;
-	const isAllowed = () => connected && client.isAllowed(category);
+	const current = () =>
+		read((category) => connected && client.isAllowed(category));
 	const reportFailure = async (update: Promise<void>): Promise<void> => {
 		try {
 			await update;
@@ -62,11 +71,11 @@ export const connectConsentIntegration = (
 	};
 	const enqueue = (force = false): Promise<void> => {
 		const reconcile = async () => {
-			if (!force && applied === isAllowed()) {
+			if (!force && applied === JSON.stringify(current())) {
 				return;
 			}
 			applied = undefined;
-			applied = await apply(isAllowed);
+			applied = JSON.stringify(await apply(current));
 		};
 		// A failed vendor call must not prevent a subsequent withdrawal or retry.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Both outcomes must continue the same serialized queue.
@@ -76,7 +85,8 @@ export const connectConsentIntegration = (
 		return update;
 	};
 	const unsubscribe = client.subscribe(
-		(snapshot) => isCategoryAllowed(snapshot, category),
+		(snapshot) =>
+			JSON.stringify(read((category) => isCategoryAllowed(snapshot, category))),
 		() => {
 			enqueue();
 		}
@@ -103,4 +113,20 @@ export const connectConsentIntegration = (
 		ready,
 		sync: () => (connected ? enqueue(true) : disconnect()),
 	};
+};
+
+/** Serialize async vendor calls and re-read native authority before each apply. */
+export const connectConsentIntegration = (
+	options: AnalyticsIntegrationOptions,
+	apply: (isAllowed: () => boolean) => Promise<boolean>
+): ConsentIntegration => {
+	const category = options.category ?? 'measurement';
+	if (!OPTIONAL_CONSENT_CATEGORIES.includes(category)) {
+		throw new TypeError('Analytics integrations require an optional category.');
+	}
+	return connectConsentState(
+		options,
+		(isAllowed) => isAllowed(category),
+		apply
+	);
 };

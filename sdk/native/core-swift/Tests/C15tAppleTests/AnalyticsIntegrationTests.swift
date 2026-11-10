@@ -27,12 +27,37 @@ final class AnalyticsIntegrationTests: XCTestCase {
         XCTAssertEqual(core.save(.custom([.measurement: true])).status, .committed)
         XCTAssertEqual(recorder.events, [.collection(false), .consent(true), .collection(true)])
         recorder.clear()
-        XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
+        XCTAssertEqual(core.save(.custom([.experience: true])).status, .committed)
         XCTAssertTrue(recorder.events.isEmpty)
 
         XCTAssertEqual(core.save(.necessary).status, .committed)
         XCTAssertEqual(recorder.events, [.collection(false), .consent(false)])
         integration.cancel()
+        await core.waitUntilIdle()
+    }
+
+    func testFirebaseGrantsAdvertisingFromMarketingAsTheWebDoes() async throws {
+        let core = try await resolvedCore()
+        let recorder = AnalyticsCalls()
+        let integration = firebase(core, recorder)
+        recorder.clear()
+
+        XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
+        XCTAssertEqual(recorder.events, [.collection(false), .consent(false)])
+        XCTAssertEqual(
+            recorder.consents.last,
+            FirebaseAnalyticsConsent(analyticsStorage: false, adStorage: true, adUserData: true, adPersonalization: true))
+
+        XCTAssertEqual(core.save(.all).status, .committed)
+        XCTAssertEqual(
+            recorder.consents.last,
+            FirebaseAnalyticsConsent(analyticsStorage: true, adStorage: true, adUserData: true, adPersonalization: true))
+        XCTAssertEqual(recorder.events.last, .collection(true))
+
+        integration.cancel()
+        XCTAssertEqual(
+            recorder.consents.last,
+            FirebaseAnalyticsConsent(analyticsStorage: false, adStorage: false, adUserData: false, adPersonalization: false))
         await core.waitUntilIdle()
     }
 

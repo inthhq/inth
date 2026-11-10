@@ -8,7 +8,17 @@ export { connectFirebaseAnalytics } from './firebase-analytics';
 export type {
 	FirebaseAnalyticsClient,
 	FirebaseAnalyticsConsent,
+	FirebaseAnalyticsOptions,
 } from './firebase-analytics';
+export {
+	GOOGLE_CONSENT_MODE_CATEGORIES,
+	GOOGLE_CONSENT_TYPES,
+	resolveGoogleConsentMode,
+} from './google-consent-mode';
+export type {
+	GoogleConsentModeState,
+	GoogleConsentType,
+} from './google-consent-mode';
 export { connectMixpanel } from './mixpanel';
 export type { MixpanelClient } from './mixpanel';
 export { connectPostHog } from './posthog';

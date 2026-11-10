@@ -194,7 +194,7 @@ describe('Firebase Analytics', () => {
 		await integration.disconnect();
 	});
 
-	test('keeps advertising denied even when marketing is allowed', async () => {
+	test('grants advertising from marketing, as the web does', async () => {
 		const initial = snapshot(0, true);
 		createFakeNativeModule({
 			snapshot: {
@@ -211,11 +211,59 @@ describe('Firebase Analytics', () => {
 		});
 		await integration.ready;
 		expect(analytics.setConsent).toHaveBeenCalledWith({
+			ad_personalization: true,
+			ad_storage: true,
+			ad_user_data: true,
+			analytics_storage: true,
+		});
+		await integration.disconnect();
+		expect(analytics.setConsent).toHaveBeenLastCalledWith({
 			ad_personalization: false,
 			ad_storage: false,
 			ad_user_data: false,
-			analytics_storage: true,
+			analytics_storage: false,
 		});
+	});
+
+	test('follows marketing alone without enabling collection', async () => {
+		const fake = createFakeNativeModule({ snapshot: snapshot(0, false) });
+		const analytics = firebase();
+		const integration = connectFirebaseAnalytics(analytics, {
+			onError: vi.fn(),
+		});
+		await integration.ready;
+		const marketing = (revision: number, allowed: boolean) => {
+			const next = snapshot(revision, false);
+			return {
+				...next,
+				effectivePermissions: {
+					...next.effectivePermissions,
+					marketing: allowed,
+				},
+			};
+		};
+		fake.pushSnapshot(marketing(1, true));
+		await vi.waitFor(() =>
+			expect(analytics.setConsent).toHaveBeenLastCalledWith({
+				ad_personalization: true,
+				ad_storage: true,
+				ad_user_data: true,
+				analytics_storage: false,
+			})
+		);
+		fake.pushSnapshot(marketing(2, false));
+		await vi.waitFor(() =>
+			expect(analytics.setConsent).toHaveBeenLastCalledWith({
+				ad_personalization: false,
+				ad_storage: false,
+				ad_user_data: false,
+				analytics_storage: false,
+			})
+		);
+		expect(analytics.setConsent).toHaveBeenCalledTimes(3);
+		expect(analytics.setAnalyticsCollectionEnabled).not.toHaveBeenCalledWith(
+			true
+		);
 		await integration.disconnect();
 	});
 });

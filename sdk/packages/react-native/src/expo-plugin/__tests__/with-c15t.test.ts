@@ -11,6 +11,8 @@ import {
 	gradleFile,
 	runInfoPlist,
 	runMod,
+	GOOGLE_CONSENT_META_DATA,
+	GOOGLE_CONSENT_PLIST_DEFAULTS,
 } from './helpers';
 
 const BACKEND = 'https://consent.example.com';
@@ -46,6 +48,7 @@ describe('withC15t standard install', () => {
 		const applied = await runInfoPlist(config);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -112,6 +115,7 @@ describe('withC15t standard install', () => {
 					'android:value': BACKEND,
 				},
 			},
+			...GOOGLE_CONSENT_META_DATA,
 		]);
 	});
 
@@ -127,6 +131,7 @@ describe('withC15t standard install', () => {
 
 		const applied = await runInfoPlist(config);
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -163,6 +168,7 @@ describe('withC15t standard install', () => {
 		const applied = await runInfoPlist(config);
 		// Plist integers, so the bridge reads them as numbers.
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -220,6 +226,7 @@ describe('withC15t standard install', () => {
 
 		const applied = await runInfoPlist(config);
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -258,6 +265,7 @@ describe('withC15t standard install', () => {
 					'android:value': 'necessary,functionality,measurement,marketing',
 				},
 			},
+			...GOOGLE_CONSENT_META_DATA,
 		]);
 	});
 

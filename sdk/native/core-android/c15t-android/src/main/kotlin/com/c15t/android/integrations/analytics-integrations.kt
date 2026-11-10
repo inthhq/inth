@@ -6,61 +6,83 @@ import com.c15t.core.Subscription
 import com.c15t.core.model.ConsentCategory
 
 /**
- * Consent sent by [FirebaseAnalyticsIntegration]. Advertising permissions remain
- * denied. An analytics category does not authorize advertising or IAB vendors.
+ * The four Consent Mode v2 types Firebase Analytics takes, as sent by
+ * [FirebaseAnalyticsIntegration]. Measurement grants [analyticsStorage]; marketing
+ * grants [adStorage], [adUserData] and [adPersonalization]. See [GoogleConsentMode].
  *
- * @property analyticsStorage Whether the configured analytics category is allowed.
+ * @property analyticsStorage Firebase `ANALYTICS_STORAGE`.
+ * @property adStorage Firebase `AD_STORAGE`.
+ * @property adUserData Firebase `AD_USER_DATA`.
+ * @property adPersonalization Firebase `AD_PERSONALIZATION`.
  */
-data class FirebaseAnalyticsConsent(val analyticsStorage: Boolean) {
-	val adStorage: Boolean = false
-	val adUserData: Boolean = false
-	val adPersonalization: Boolean = false
+data class FirebaseAnalyticsConsent(
+	val analyticsStorage: Boolean,
+	val adStorage: Boolean,
+	val adUserData: Boolean,
+	val adPersonalization: Boolean,
+) {
+	companion object {
+		/** Pick Firebase's four types out of a full Consent Mode state. */
+		fun from(consent: Map<GoogleConsentType, Boolean>) = FirebaseAnalyticsConsent(
+			analyticsStorage = consent[GoogleConsentType.ANALYTICS_STORAGE] == true,
+			adStorage = consent[GoogleConsentType.AD_STORAGE] == true,
+			adUserData = consent[GoogleConsentType.AD_USER_DATA] == true,
+			adPersonalization = consent[GoogleConsentType.AD_PERSONALIZATION] == true,
+		)
+	}
 }
 
 /**
- * Keep Firebase Analytics collection and consent in sync with one native category.
+ * Keep Firebase Analytics consent and collection in sync with native consent.
+ *
+ * Sends all four Consent Mode v2 types Firebase takes, with the web's mapping:
+ * measurement grants `ANALYTICS_STORAGE`, marketing grants `AD_STORAGE`,
+ * `AD_USER_DATA` and `AD_PERSONALIZATION`. Collection is on only while analytics
+ * storage is granted. Pending authority denies every type and keeps collection off.
  *
  * Pass the installed core and synchronous calls to the vendor's consent and
  * collection APIs. The helper adds no Firebase dependency. It immediately applies
  * current authority, disables collection before updating consent and enables it
- * only while the category is still allowed. Pending authority keeps collection off.
+ * only while analytics storage is still granted.
  *
  * Callbacks run on the thread publishing the native change, serialized per helper.
  * Do not dispatch the callbacks asynchronously, because that can reorder grants and
- * withdrawals. Disable vendor automatic startup before constructing this helper.
- * Firebase persists its collection setting across launches, so a manifest default
- * alone cannot override an earlier runtime grant.
+ * withdrawals. Set Firebase's `google_analytics_default_allow_*` manifest keys to
+ * `false` and disable collection before constructing this helper. Firebase persists
+ * consent and its collection setting across launches, so a manifest default alone
+ * cannot override an earlier runtime grant.
  *
- * Retain one helper for the vendor's lifetime. [close] detaches and disables
- * collection. This analytics-only helper always denies all advertising consent
- * types. It does not provide IAB, Google Mobile Ads or ATT authorization.
+ * Retain one helper for the vendor's lifetime. [close] detaches, denies every type
+ * and disables collection. It does not provide IAB or ATT authorization.
  *
  * @param core The same installed native core used by the consent UI.
- * @param category Optional category controlling analytics. Defaults to measurement.
  * @param setConsent Apply every field to Firebase's consent API.
  * @param setCollectionEnabled Enable or disable Firebase Analytics collection.
  * @param onError Report automatic vendor-update failures without throwing. Explicit
  * construction, sync and close failures still throw to their caller.
- * @throws IllegalArgumentException If category is necessary.
  */
 class FirebaseAnalyticsIntegration(
 	core: ConsentCore,
-	category: ConsentCategory = ConsentCategory.MEASUREMENT,
 	setConsent: (FirebaseAnalyticsConsent) -> Unit,
 	setCollectionEnabled: (Boolean) -> Unit,
 	onError: (Exception) -> Unit,
 ) : AutoCloseable {
-	private val binding = AnalyticsConsentBinding(core, category, onError) { allowed, stillAllowed ->
+	private val binding = ConsentBinding(
+		core,
+		ConsentCategory.MEASUREMENT,
+		onError,
+		read = { isAllowed -> FirebaseAnalyticsConsent.from(GoogleConsentMode.consent(isAllowed)) },
+	) { _, current ->
 		setCollectionEnabled(false)
-		val grant = allowed && stillAllowed()
-		setConsent(FirebaseAnalyticsConsent(grant))
-		if (grant && stillAllowed()) setCollectionEnabled(true)
+		val consent = current()
+		setConsent(consent)
+		if (consent.analyticsStorage && current().analyticsStorage) setCollectionEnabled(true)
 	}
 
 	/** Reapply current authority after vendor reset or configuration. No-op after close. */
 	fun sync() = binding.sync()
 
-	/** Stop observing and disable collection. Safe to call more than once. */
+	/** Stop observing, deny every type and disable collection. Safe to call more than once. */
 	override fun close() = binding.close()
 }
 
@@ -193,28 +215,49 @@ class SentryReplayIntegration(
 	override fun close() = binding.close()
 }
 
-/** The core retains this binding until close; every update re-reads current authority. */
-private class AnalyticsConsentBinding(
-	private val core: ConsentCore,
-	private val category: ConsentCategory,
-	private val onError: (Exception) -> Unit,
-	private val apply: (Boolean, () -> Boolean) -> Unit,
-) : AutoCloseable {
-	init {
-		require(category.optional) { "Analytics integrations require an optional consent category." }
-	}
+/** Bind one optional category to a vendor's on/off calls. */
+@Suppress("FunctionName")
+private fun AnalyticsConsentBinding(
+	core: ConsentCore,
+	category: ConsentCategory,
+	onError: (Exception) -> Unit,
+	apply: (Boolean, () -> Boolean) -> Unit,
+): ConsentBinding<Boolean> {
+	require(category.optional) { "Analytics integrations require an optional consent category." }
+	return ConsentBinding(core, category, onError, read = { isAllowed -> isAllowed(category) }, apply = apply)
+}
 
+/**
+ * The core retains this binding until close; every update re-reads current authority.
+ *
+ * [read] derives the vendor state from category permission, through a reader that
+ * denies every category once closed, so it may read categories other than [category].
+ * The boolean gate on [category] is only the wake-up: it fires on every published
+ * snapshot, whichever category moved, and [reconcile] skips unchanged state. One
+ * registration therefore sees every publication once, which keeps a failing vendor
+ * call to one retry and one reported error per publication. [apply] receives the
+ * state read before the call and a way to read it again.
+ */
+private class ConsentBinding<State>(
+	private val core: ConsentCore,
+	category: ConsentCategory,
+	private val onError: (Exception) -> Unit,
+	private val read: ((ConsentCategory) -> Boolean) -> State,
+	private val apply: (State, () -> State) -> Unit,
+) : AutoCloseable {
 	private val lock = Any()
 	private var closed = false
+	private var attached = false
 	private var updating = false
 	private var needsSync = false
-	private var applied: Boolean? = null
+	private var applied: State? = null
+	private var hasApplied = false
 	private var subscription: Subscription? = null
 	private val observer: (Boolean) -> Unit = {
 		synchronized(lock) {
 			// gate delivers synchronously before returning its handle. Initial vendor
 			// failures must reach the constructor's cleanup and caller below.
-			if (subscription != null) {
+			if (attached) {
 				try {
 					reconcile()
 				} catch (error: Exception) {
@@ -232,12 +275,12 @@ private class AnalyticsConsentBinding(
 	init {
 		synchronized(lock) {
 			subscription = core.gate(category, observer)
+			attached = true
 			try {
 				reconcile()
 			} catch (error: Throwable) {
 				closed = true
-				subscription?.close()
-				subscription = null
+				detach()
 				// An enable can take effect before its vendor call reports failure.
 				try {
 					needsSync = true
@@ -250,7 +293,13 @@ private class AnalyticsConsentBinding(
 		}
 	}
 
-	private fun allowed(): Boolean = !closed && core.isAllowed(category)
+	private fun current(): State = read { category -> !closed && core.isAllowed(category) }
+
+	private fun detach() {
+		attached = false
+		subscription?.close()
+		subscription = null
+	}
 
 	fun sync() = synchronized(lock) {
 		if (closed) return@synchronized
@@ -263,12 +312,13 @@ private class AnalyticsConsentBinding(
 		updating = true
 		try {
 			while (true) {
-				val current = allowed()
-				if (applied == current && !needsSync) break
+				val state = current()
+				if (hasApplied && applied == state && !needsSync) break
 				needsSync = false
-				applied = null
-				apply(current, ::allowed)
-				applied = current
+				hasApplied = false
+				apply(state, ::current)
+				applied = state
+				hasApplied = true
 			}
 		} finally {
 			updating = false
@@ -280,8 +330,7 @@ private class AnalyticsConsentBinding(
 			closed = true
 			// A vendor reset may have changed capture since the last consent update.
 			needsSync = true
-			subscription?.close()
-			subscription = null
+			detach()
 		}
 		reconcile()
 	}

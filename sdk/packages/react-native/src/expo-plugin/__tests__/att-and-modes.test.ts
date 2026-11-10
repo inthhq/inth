@@ -11,6 +11,8 @@ import {
 	fixtureConfig,
 	runInfoPlist,
 	runMod,
+	GOOGLE_CONSENT_META_DATA_NAMES,
+	GOOGLE_CONSENT_PLIST_DEFAULTS,
 } from './helpers';
 
 const BACKEND = 'https://consent.example.com';
@@ -54,6 +56,7 @@ describe('App Tracking Transparency', () => {
 		const applied = await runInfoPlist(applyToFixture(ATT_PROPS));
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			NSUserTrackingUsageDescription:
 				'We use your activity to pick the ads you see.',
@@ -84,6 +87,7 @@ describe('App Tracking Transparency', () => {
 		);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -102,6 +106,7 @@ describe('App Tracking Transparency', () => {
 		);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -212,6 +217,7 @@ describe('transport modes', () => {
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
 
 		expect(plist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'offline',
 		});
@@ -221,6 +227,7 @@ describe('transport modes', () => {
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
+			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 	});
 
@@ -253,6 +260,7 @@ describe('transport modes', () => {
 			'expo.modules.updates.ENABLED',
 			'com.c15t.BACKEND_URL',
 			'com.c15t.reactnative.AUTO_BOOTSTRAP',
+			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 		expect(providerOf(manifest)).toBeUndefined();
 	});
