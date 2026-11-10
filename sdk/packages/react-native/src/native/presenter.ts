@@ -4,6 +4,12 @@ import { getNativeC15t, getNativeC15tEvents } from './module';
 export interface ConsentPresenterSession {
 	readonly sessionId: string | null;
 	readonly status: 'presented' | 'already-presented' | 'not-required';
+	/**
+	 * What the open session shows: the owed prompt (a first layer or a notice) or
+	 * standing privacy settings. A binary built before this field omits it, and it
+	 * reads as `undefined`.
+	 */
+	readonly presentation?: 'prompt' | 'preferences';
 }
 
 /** One final native outcome. Committed means durable on-device storage. */
@@ -61,10 +67,17 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 	) {
 		throw new TypeError('Invalid native consent presenter session');
 	}
-	return {
-		sessionId: typeof value.sessionId === 'string' ? value.sessionId : null,
-		status: value.status,
-	};
+	const presentation =
+		'presentation' in value &&
+		(value.presentation === 'prompt' || value.presentation === 'preferences')
+			? value.presentation
+			: undefined;
+	const sessionId =
+		typeof value.sessionId === 'string' ? value.sessionId : null;
+	if (presentation === undefined) {
+		return { sessionId, status: value.status };
+	}
+	return { presentation, sessionId, status: value.status };
 };
 
 /** Open an owed native prompt on the installed engine.

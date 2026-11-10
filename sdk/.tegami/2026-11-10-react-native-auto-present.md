@@ -27,6 +27,14 @@ again after an answer or a reset is presented even when the bridge delivered onl
 the latest snapshot. A binary built before this field reads it as `null` and keeps
 the previous behaviour.
 
+The provider follows what native says is on screen, and the decision is one
+state machine. An owed prompt that meets open privacy settings is presented once
+they close; a session that closes while the app has opted out is still heard; a
+corrected privacy-policy URL is retried. `presentConsentPrompt` and
+`presentPreferences` answers now carry `presentation` (`prompt` or
+`preferences`) for an open session, and the native host ends a session whose
+notice was cleared elsewhere with a `dismissed` outcome.
+
 This changes existing apps. `privacyPolicyURL` is now required unless you pass
 `autoPresent={false}`. TypeScript names the missing `privacyPolicyURL`, and the
 provider throws on render for a missing URL or one a native presenter would

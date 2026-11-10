@@ -17,6 +17,7 @@ import {
 } from '../../__tests__/helpers/fake-native';
 import type { FakeNativeModule } from '../../__tests__/helpers/fake-native';
 import {
+	emitNativeEvent,
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
@@ -39,25 +40,67 @@ const answered = buildSnapshot({
 	revision: 2,
 });
 
-/** A fake whose presenter answers like the native host: one open session at a time. */
+/** Send the outcome native sends when a session closes. */
+const emitOutcome = function emitOutcome(
+	sessionId: string,
+	kind: 'committed' | 'acknowledged' | 'dismissed' | 'unavailable' = 'dismissed'
+): void {
+	emitNativeEvent(
+		'onConsentPresenterOutcome',
+		JSON.stringify({ kind, revision: 1, sessionId })
+	);
+};
+
+/**
+ * A fake whose presenter answers like the native host: one open session at a
+ * time, named by what it shows, and an outcome when it closes.
+ */
 const bootFake = function bootFake(snapshot: ConsentSnapshot): {
 	readonly fake: FakeNativeModule;
 	readonly present: ReturnType<typeof vi.fn>;
-	readonly close: () => void;
+	readonly close: (kind?: 'committed' | 'dismissed') => void;
+	readonly openPreferences: () => void;
 } {
 	const fake = createFakeNativeModule({ snapshot });
-	let open = false;
+	let open: {
+		readonly id: string;
+		readonly presentation: 'prompt' | 'preferences';
+	} | null = null;
+	let sessions = 0;
 	const present = vi.fn((_url: string) => {
-		const status = open ? 'already-presented' : 'presented';
-		open = true;
-		return Promise.resolve(JSON.stringify({ sessionId: 's1', status }));
+		if (open !== null) {
+			return Promise.resolve(
+				JSON.stringify({
+					presentation: open.presentation,
+					sessionId: open.id,
+					status: 'already-presented',
+				})
+			);
+		}
+		sessions += 1;
+		open = { id: `s${sessions}`, presentation: 'prompt' };
+		return Promise.resolve(
+			JSON.stringify({
+				presentation: 'prompt',
+				sessionId: open.id,
+				status: 'presented',
+			})
+		);
 	});
 	fake.presentConsentPrompt = present;
 	return {
-		close: () => {
-			open = false;
+		close: (kind = 'dismissed') => {
+			const closed = open;
+			open = null;
+			if (closed !== null) {
+				emitOutcome(closed.id, kind);
+			}
 		},
 		fake,
+		openPreferences: () => {
+			sessions += 1;
+			open = { id: `p${sessions}`, presentation: 'preferences' };
+		},
 		present,
 	};
 };
@@ -253,20 +296,23 @@ describe('changes while the native call is pending', () => {
 		};
 	};
 
-	test('owed A, then none, then owed A again presents A a second time', async () => {
+	test('owed A, none, owed A while the call is pending: A is asked for again once that session closes', async () => {
 		const { fake, present, settle } = bootPending(owed);
 		const tree = renderTree(<App />);
 		await flushPromises();
 		expect(present).toHaveBeenCalledTimes(1);
 
-		// The prompt is answered and then owed again, all before native answered.
+		// The prompt is answered and owed again, all before native answered.
 		fake.pushSnapshot(answered);
 		await flushPromises();
 		fake.pushSnapshot({ ...owed, revision: 3 });
 		await flushPromises();
+		settle();
+		await flushPromises();
+		// Session s1 is on screen; nothing is asked while it is.
 		expect(present).toHaveBeenCalledTimes(1);
 
-		settle();
+		emitOutcome('s1', 'committed');
 		await flushPromises();
 		expect(present).toHaveBeenCalledTimes(2);
 		settle();
@@ -274,7 +320,7 @@ describe('changes while the native call is pending', () => {
 		tree.unmount();
 	});
 
-	test('a new owed prompt that arrives while pending is presented after', async () => {
+	test('a requirement that changes while the prompt opens is shown by that session', async () => {
 		const { fake, present, settle } = bootPending(owed);
 		const tree = renderTree(<App />);
 		await flushPromises();
@@ -291,19 +337,16 @@ describe('changes while the native call is pending', () => {
 			})
 		);
 		await flushPromises();
+		settle();
+		await flushPromises();
 		expect(present).toHaveBeenCalledTimes(1);
 
-		settle();
-		await flushPromises();
-		expect(present).toHaveBeenCalledTimes(2);
-		settle();
-		await flushPromises();
-
-		// And it is not presented a third time for the same requirement.
+		// The person dismissed the session, which showed the new requirement.
+		emitOutcome('s1');
 		setAppState('background');
 		setAppState('active');
 		await flushPromises();
-		expect(present).toHaveBeenCalledTimes(2);
+		expect(present).toHaveBeenCalledTimes(1);
 		tree.unmount();
 	});
 
@@ -489,6 +532,128 @@ describe('the native owed-prompt identifier', () => {
 	});
 });
 
+describe('what native says is on screen', () => {
+	test('an owed prompt that meets open preferences is presented once they close', async () => {
+		const { close, openPreferences, present } = bootFake(owed);
+		openPreferences();
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		// Native answered already-presented for the preferences session: nothing shown.
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		// The person closes preferences without saving; the prompt is still owed.
+		close('dismissed');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+
+	test('a session an older binary does not name is waited on, then decided again', async () => {
+		const fake = createFakeNativeModule({ snapshot: owed });
+		const present = vi.fn(() =>
+			Promise.resolve(
+				JSON.stringify({ sessionId: 'x1', status: 'already-presented' })
+			)
+		);
+		fake.presentConsentPrompt = present;
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		present.mockImplementation(() =>
+			Promise.resolve(JSON.stringify({ sessionId: 's2', status: 'presented' }))
+		);
+		emitOutcome('x1');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+
+	test('a URL native refused is not retried, and a corrected URL is', async () => {
+		const { present } = bootFake(owed);
+		const refused = 'https://refused.example/privacy';
+		const shown = present.getMockImplementation();
+		present.mockImplementation((url: string) =>
+			url === refused
+				? Promise.reject(
+						Object.assign(new Error('refused'), {
+							code: 'C15T_PRESENTER_INVALID_URL',
+						})
+					)
+				: (shown?.(url) as Promise<string>)
+		);
+		const error = vi
+			.spyOn(console, 'error')
+			.mockImplementation(() => undefined);
+		const tree = renderTree(
+			<ConsentProvider privacyPolicyURL={refused}>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		tree.rerender(
+			<ConsentProvider privacyPolicyURL={URL}>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		expect(present).toHaveBeenLastCalledWith(URL);
+		error.mockRestore();
+		tree.unmount();
+	});
+
+	test('a session that closes while the app opted out is still heard', async () => {
+		const { close, present } = bootFake(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		tree.rerender(
+			<ConsentProvider autoPresent={false}>
+				<span />
+			</ConsentProvider>
+		);
+		close('dismissed');
+		await flushPromises();
+		tree.rerender(<App />);
+		await flushPromises();
+		// The person dismissed it, so turning auto-present back on does not reopen it.
+		expect(present).toHaveBeenCalledTimes(1);
+		tree.unmount();
+	});
+
+	test('preferences that close while the app opted out leave the prompt owed', async () => {
+		const { close, openPreferences, present } = bootFake(owed);
+		openPreferences();
+		const tree = renderTree(<App />);
+		await flushPromises();
+		tree.rerender(
+			<ConsentProvider autoPresent={false}>
+				<span />
+			</ConsentProvider>
+		);
+		close('dismissed');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		tree.rerender(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+});
+
 describe('autoPresent={false}', () => {
 	test('presents nothing by itself', async () => {
 		const { fake, present } = bootFake(owed);
@@ -517,6 +682,7 @@ describe('autoPresent={false}', () => {
 		await flushPromises();
 
 		await expect(presentConsentPrompt(URL)).resolves.toEqual({
+			presentation: 'prompt',
 			sessionId: 's1',
 			status: 'presented',
 		});

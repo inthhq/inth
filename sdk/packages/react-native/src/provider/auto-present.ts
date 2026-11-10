@@ -2,18 +2,30 @@
  * Present the native consent prompt when one is owed, once per owed prompt.
  *
  * The provider calls {@link presentOwedPrompt} on mount, on every change to the
- * owed prompt, and on each return to the foreground. Everything that decides
- * whether to call native lives here, in one ledger per client, so React strict
- * mode, a remounted provider and a nested provider all see the same record of
- * what was already presented. The native host is the second guard: a call while
- * a session is open answers `already-presented` and opens nothing.
+ * owed prompt, and on each return to the foreground. The decisions are the state
+ * machine in `auto-present-machine.ts`; this file runs its effects. There is one
+ * ledger per client, so React strict mode, a remounted provider and a nested
+ * provider all see the same record. The native host is the second guard: a call
+ * while a session is open answers `already-presented`, names what that session
+ * shows, and opens nothing.
  */
 
 import { isPromptOwed } from '../lib/selectors';
 import { isProduction } from '../native/client';
 import type { ConsentClient } from '../native/client';
-import { presentConsentPrompt } from '../native/presenter';
+import {
+	onConsentPresenterOutcome,
+	presentConsentPrompt,
+} from '../native/presenter';
 import type { ConsentSnapshot } from '../protocol';
+import {
+	INITIAL_AUTO_PRESENT_STATE,
+	stepAutoPresent,
+} from './auto-present-machine';
+import type {
+	AutoPresentInput,
+	AutoPresentState,
+} from './auto-present-machine';
 import { isPrivacyPolicyURL } from './privacy-policy-url';
 
 /**
@@ -23,40 +35,6 @@ import { isPrivacyPolicyURL } from './privacy-policy-url';
  * rejection, such as no foreground window or a core that is still installing, is transient.
  */
 export const PRESENTER_INVALID_URL_CODE = 'C15T_PRESENTER_INVALID_URL';
-
-/** What the provider remembers about one client's owed prompt. */
-interface AutoPresentLedger {
-	/** Key of the owed prompt already handed to native, `null` before any. */
-	presented: string | null;
-	/** A native call is in flight; a second trigger waits for it. */
-	inFlight: boolean;
-	/** A trigger arrived during the call, so the latest snapshot needs a pass after it. */
-	recheck: boolean;
-	/** Nothing was owed at some point during the call, which ends that prompt's episode. */
-	endedInFlight: boolean;
-	/** A privacy-policy URL native refused for good. It is not offered again. */
-	refusedURL: string | null;
-	/** The owed prompt a transient failure was last reported for, so each is reported once. */
-	warned: string | null;
-}
-
-const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
-
-const ledgerFor = function ledgerFor(client: ConsentClient): AutoPresentLedger {
-	let ledger = ledgers.get(client);
-	if (ledger === undefined) {
-		ledger = {
-			endedInFlight: false,
-			inFlight: false,
-			presented: null,
-			recheck: false,
-			refusedURL: null,
-			warned: null,
-		};
-		ledgers.set(client, ledger);
-	}
-	return ledger;
-};
 
 /**
  * Name the owed prompt a snapshot describes.
@@ -86,105 +64,182 @@ export const selectOwedPromptKey = function selectOwedPromptKey(
 	return `${snapshot.resolution.fingerprint ?? ''}:${requirement.kind}:${reason}:${since}`;
 };
 
-/**
- * Record a failed native call: retry a transient one, stop on a refused URL.
- *
- * @param ledger - The client's ledger.
- * @param key - The owed prompt the call was for.
- * @param privacyPolicyURL - The URL the call passed.
- * @param error - What native rejected with.
- */
-const reportFailure = function reportFailure(
-	ledger: AutoPresentLedger,
-	key: string,
-	privacyPolicyURL: string,
-	error: unknown
-): void {
-	const code =
-		typeof error === 'object' && error !== null && 'code' in error
-			? String(error.code)
-			: undefined;
-	if (code === PRESENTER_INVALID_URL_CODE) {
-		// Keep the key: the same URL would fail the same way on every trigger.
-		ledger.refusedURL = privacyPolicyURL;
-		// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
-		console.error(
-			`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
-			error
-		);
-		return;
+const errorCode = function errorCode(error: unknown): string | undefined {
+	return typeof error === 'object' && error !== null && 'code' in error
+		? String(error.code)
+		: undefined;
+};
+
+/** One client's ledger: the pure state, and the side effects its transitions ask for. */
+class AutoPresentLedger {
+	state: AutoPresentState = INITIAL_AUTO_PRESENT_STATE;
+	/** Providers currently presenting through this client. Rechecks stop at zero. */
+	active = 0;
+	/** The owed prompt a transient failure was last reported for, so each is reported once. */
+	warned: string | null = null;
+	/** The latest native call, so a caller can wait for the chain to settle. */
+	settled: Promise<void> = Promise.resolve();
+
+	/** The URL the provider passes now. */
+	url: string;
+	private readonly client: ConsentClient;
+
+	constructor(client: ConsentClient, url: string) {
+		this.client = client;
+		this.url = url;
+		// For the client's lifetime, so an outcome is not lost while no provider is
+		// mounted or the app opted out; a phase waiting on a session always hears it close.
+		try {
+			onConsentPresenterOutcome((outcome) => {
+				this.dispatch({
+					key: this.currentKey(),
+					kind: outcome.kind,
+					sessionId: outcome.sessionId,
+					type: 'outcome',
+				});
+			});
+		} catch {
+			// No native event emitter: nothing can be presented either.
+		}
 	}
-	// No foreground window yet, or a core still installing. The next snapshot
-	// change or return to the foreground tries again.
-	ledger.presented = null;
-	if (ledger.warned !== key && !isProduction()) {
-		ledger.warned = key;
+
+	/** Decide with the current snapshot. */
+	trigger(): void {
+		this.dispatch({ key: this.currentKey(), type: 'trigger', url: this.url });
+	}
+
+	private currentKey(): string | null {
+		return selectOwedPromptKey(this.client.getSnapshot());
+	}
+
+	/**
+	 * Apply `input`, then run what the transition asks for.
+	 *
+	 * @param input - What happened.
+	 * @param error - The rejection behind a `refused` or `failed` input, for the report.
+	 */
+	private dispatch(input: AutoPresentInput, error?: unknown): void {
+		const before = this.state.phase;
+		const { effects, state } = stepAutoPresent(this.state, input);
+		this.state = state;
+		for (const effect of effects) {
+			switch (effect) {
+				case 'present':
+					this.settled = this.callNative();
+					break;
+				case 'recheck':
+					if (this.active > 0) {
+						this.trigger();
+					}
+					break;
+				case 'report-refused':
+					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
+					console.error(
+						`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(state.refusedURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+						error
+					);
+					break;
+				default:
+					this.warnUnavailable(
+						before.kind === 'requesting' ? before.key : null,
+						error
+					);
+			}
+		}
+	}
+
+	private warnUnavailable(key: string | null, error: unknown): void {
+		if (this.warned === key || isProduction()) {
+			return;
+		}
+		this.warned = key;
 		console.warn(
 			'c15t ConsentProvider: the native presenter could not open the owed consent prompt yet. It retries when the consent state changes or the app returns to the foreground.',
 			error
 		);
 	}
+
+	private async callNative(): Promise<void> {
+		const { url } = this;
+		try {
+			const session = await presentConsentPrompt(url);
+			if (session.status === 'not-required' || session.sessionId === null) {
+				this.dispatch({ type: 'not-required' });
+			} else if (session.status === 'presented') {
+				this.dispatch({ sessionId: session.sessionId, type: 'presented' });
+			} else {
+				this.dispatch({
+					presentation: session.presentation,
+					sessionId: session.sessionId,
+					type: 'already-presented',
+				});
+			}
+		} catch (error: unknown) {
+			this.dispatch(
+				errorCode(error) === PRESENTER_INVALID_URL_CODE
+					? { type: 'refused', url }
+					: { type: 'failed' },
+				error
+			);
+		}
+	}
+}
+
+const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
+
+const ledgerFor = function ledgerFor(
+	client: ConsentClient,
+	url: string
+): AutoPresentLedger {
+	let ledger = ledgers.get(client);
+	if (ledger === undefined) {
+		ledger = new AutoPresentLedger(client, url);
+		ledgers.set(client, ledger);
+	}
+	return ledger;
 };
 
 /**
- * Hand an owed prompt to native unless this client already did.
+ * Decide, with the current snapshot, whether to hand an owed prompt to native.
  *
- * A transient failure, or a native answer that nothing is owed, forgets the key,
- * so the next trigger tries again; outside production the first failure for each
- * owed prompt is logged. A refused privacy-policy URL is permanent: it is logged
- * with `console.error` and not offered to native again, because the owed prompt
- * cannot show until the app passes a URL native accepts. A prompt the subject
- * dismissed keeps its key and stays closed until the requirement changes.
- *
- * A trigger that arrives while a call is in flight is not dropped. It marks the
- * ledger, and once the call settles the latest snapshot gets another pass. A
- * moment with nothing owed during the call ends the episode, so the same prompt
- * owed again afterwards presents again.
+ * The provider calls it on mount, on every change to the owed prompt, and on
+ * each return to the foreground. The decision is {@link stepAutoPresent}'s. A
+ * refused privacy-policy URL is reported with `console.error` and not offered
+ * again; outside production the first transient failure for each owed prompt is
+ * logged and the next trigger retries.
  *
  * @param client - The client whose snapshot decides.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
- * @returns Once native answered, or at once when there is nothing to do.
+ * @returns Once the native call this trigger started, if any, has settled.
  */
-export const presentOwedPrompt = async function presentOwedPrompt(
+export const presentOwedPrompt = function presentOwedPrompt(
 	client: ConsentClient,
 	privacyPolicyURL: string
 ): Promise<void> {
-	const ledger = ledgerFor(client);
-	const key = selectOwedPromptKey(client.getSnapshot());
-	if (ledger.inFlight) {
-		ledger.recheck = true;
-		if (key === null) {
-			ledger.endedInFlight = true;
-		}
-		return;
-	}
-	if (key === null) {
-		ledger.presented = null;
-		return;
-	}
-	if (ledger.presented === key || ledger.refusedURL === privacyPolicyURL) {
-		return;
-	}
-	ledger.presented = key;
-	ledger.inFlight = true;
-	try {
-		const session = await presentConsentPrompt(privacyPolicyURL);
-		if (session.status === 'not-required') {
-			ledger.presented = null;
-		}
-	} catch (error: unknown) {
-		reportFailure(ledger, key, privacyPolicyURL, error);
-	} finally {
-		ledger.inFlight = false;
-	}
-	if (ledger.endedInFlight) {
-		ledger.endedInFlight = false;
-		ledger.presented = null;
-	}
-	if (ledger.recheck) {
-		ledger.recheck = false;
-		await presentOwedPrompt(client, privacyPolicyURL);
-	}
+	const ledger = ledgerFor(client, privacyPolicyURL);
+	ledger.url = privacyPolicyURL;
+	ledger.trigger();
+	return ledger.settled;
+};
+
+/**
+ * Count a provider that presents through `client`, for as long as it is mounted.
+ *
+ * Rechecks after a call or a session closes run only while one is.
+ *
+ * @param client - The client.
+ * @param privacyPolicyURL - The URL that provider passes.
+ * @returns Stop counting it.
+ */
+export const attachAutoPresent = function attachAutoPresent(
+	client: ConsentClient,
+	privacyPolicyURL: string
+): () => void {
+	const ledger = ledgerFor(client, privacyPolicyURL);
+	ledger.active += 1;
+	return () => {
+		ledger.active -= 1;
+	};
 };
 
 /**

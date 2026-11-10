@@ -21,6 +21,7 @@ import { AppState } from 'react-native';
 import { getConsentClient } from '../native/client';
 import {
 	assertPrivacyPolicyURL,
+	attachAutoPresent,
 	presentOwedPrompt,
 	selectOwedPromptKey,
 } from './auto-present';
@@ -201,6 +202,7 @@ export const ConsentProvider = ({
 		if (!presents || privacyPolicyURL === undefined) {
 			return;
 		}
+		const detach = attachAutoPresent(client, privacyPolicyURL);
 		const present = (): void => {
 			void presentOwedPrompt(client, privacyPolicyURL);
 		};
@@ -215,6 +217,7 @@ export const ConsentProvider = ({
 		return () => {
 			unsubscribe();
 			subscription.remove();
+			detach();
 		};
 	}, [client, presents, privacyPolicyURL]);
 
