@@ -44,7 +44,14 @@ const sorted = (ids: Iterable<number>): readonly number[] =>
 export const seedIABChoices = function seedIABChoices(
 	snapshot: ConsentSnapshot
 ): NativeIABChoices | null {
-	if (snapshot.model !== 'iab' || !snapshot.iab?.gvl) {
+	// Only while native can open and save a draft. A stale or offline list, a
+	// missing Additional Consent list, and a binary without a headless bridge all
+	// read `editable: false`, and a selection staged then would only be refused.
+	if (
+		snapshot.model !== 'iab' ||
+		!snapshot.iab?.gvl ||
+		!snapshot.iab.editable
+	) {
 		return null;
 	}
 	const committed = snapshot.iab.committed?.choices;
@@ -119,58 +126,28 @@ export const withLegitimateInterest = function withLegitimateInterest(
 };
 
 /**
- * Grant what the served partners declare, the way `@c15t/iab`'s `acceptAll`
- * stages it: consent for every declared consent purpose and the partners that
- * claim them, legitimate interest where it is declared and allowed, and the
- * declared special features. Undeclared purposes and features stay denied.
+ * Stage what native Accept all saves: the core's own projection of every live
+ * partner's bases under the publisher's disclosure and restrictions, so a
+ * headless Accept all and the stock one produce the same signals. Unchanged
+ * when native offers none.
  *
  * @param choices - Current selection.
- * @param snapshot - Snapshot holding the served vendor list.
+ * @param snapshot - Snapshot carrying the native `acceptAll`.
  * @returns The staged selection.
  */
 export const acceptAllIAB = function acceptAllIAB(
 	choices: NativeIABChoices,
 	snapshot: ConsentSnapshot
 ): NativeIABChoices {
-	const vendors = Object.entries(snapshot.iab?.gvl?.vendors ?? {}).filter(
-		([, vendor]) => !vendor.deletedDate
-	);
-	const purposes = new Set<number>();
-	const interests = new Set<number>();
-	const features = new Set<number>();
-	const consenting: number[] = [];
-	const interested: number[] = [];
-	for (const [key, vendor] of vendors) {
-		const id = Number(key);
-		for (const purpose of vendor.purposes) {
-			purposes.add(purpose);
-		}
-		const allowed = vendor.legIntPurposes.filter(
-			(purpose) => !NEVER_LI.has(purpose)
-		);
-		for (const purpose of allowed) {
-			interests.add(purpose);
-		}
-		for (const feature of vendor.specialFeatures) {
-			features.add(feature);
-		}
-		if (vendor.purposes.length > 0) {
-			consenting.push(id);
-		}
-		if (allowed.length > 0) {
-			interested.push(id);
-		}
+	const accepted = snapshot.iab?.acceptAll;
+	if (!accepted) {
+		return choices;
 	}
 	return {
-		...choices,
-		adTechProviderConsents: choices.adTechProviderConsents ?? null,
-		purposeConsents: sorted(purposes),
-		purposeLegitimateInterests: sorted(interests),
-		purposeObjections: [],
-		specialFeatureOptIns: sorted(features),
-		vendorConsents: sorted(consenting),
-		vendorLegitimateInterests: sorted(interested),
-		vendorObjections: [],
+		...(Object.fromEntries(
+			LISTS.map((list) => [list, sorted(accepted[list] ?? [])])
+		) as Record<IABChoiceList, readonly number[]>),
+		adTechProviderConsents: accepted.adTechProviderConsents ?? null,
 	};
 };
 

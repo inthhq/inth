@@ -133,11 +133,13 @@ class C15tPayloadTest {
 			.jsonObject
 
 		assertEquals(
-			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the committed decision",
-			setOf("gvl", "committed"),
+			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the headless TCF state",
+			setOf("gvl", "committed", "editable", "acceptAll"),
 			iab.keys,
 		)
 		assertEquals("nothing is committed yet", JsonNull, iab["committed"])
+		assertFalse("no draft can open without an accept-all answer", iab["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(JsonNull, iab["acceptAll"])
 		val document = iab["gvl"]!!.jsonObject
 		assertEquals(
 			"the version a disclosure is labelled with",
@@ -293,6 +295,10 @@ class C15tPayloadTest {
 
 		assertEquals("CQ-test", committed["tcString"]!!.jsonPrimitive.content)
 		assertEquals(JsonNull, committed["addtlConsent"])
+		val editable = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = IabChoices(vendorConsents = listOf(7))))
+			.getValue("iab").jsonObject
+		assertTrue("an accept-all answer means a draft can open", editable["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(listOf("7"), editable.getValue("acceptAll").jsonObject.getValue("vendorConsents").jsonArray.map { it.jsonPrimitive.content })
 		val choices = committed.getValue("choices").jsonObject
 		assertEquals(listOf("1", "3"), choices.getValue("purposeConsents").jsonArray.map { it.jsonPrimitive.content })
 		assertEquals("every list is written, empty or not", 0, choices.getValue("vendorObjections").jsonArray.size)

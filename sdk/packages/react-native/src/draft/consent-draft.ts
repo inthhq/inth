@@ -228,7 +228,21 @@ export const createConsentDraft = function createConsentDraft(
 			// Keep the edit. A new policy makes it stale. Under the same policy the
 			// record moves underneath: every category the subject did not touch takes
 			// the new record, so a save never writes back a value it only displayed.
-			if (next.policyKey === seed.policyKey) {
+			const iabEdited = !sameIABChoices(iab, seed.iab);
+			if (
+				next.policyKey !== seed.policyKey ||
+				(iabEdited && !sameIABChoices(seed.iab, next.iab))
+			) {
+				// A new policy, or a TCF decision committed elsewhere under an edited
+				// selection: saving the edit would overwrite something the subject never
+				// saw, so it waits for a review.
+				stale = true;
+			} else {
+				// The same authority. Untouched parts take the new record, and the save is
+				// pinned to its revision.
+				if (!iabEdited) {
+					({ iab } = next);
+				}
 				seed = next;
 				values = {
 					...next.values,
@@ -236,8 +250,6 @@ export const createConsentDraft = function createConsentDraft(
 						[...staged].map((category) => [category, values[category]])
 					),
 				};
-			} else {
-				stale = true;
 			}
 		} else {
 			seed = next;

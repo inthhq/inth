@@ -105,9 +105,23 @@ export interface NativeIABState {
 	/**
 	 * The current committed TCF decision, or `null` when none is current. The
 	 * bridge adds it beside the core's `gvl`; a binary older than this field
-	 * omits it, which reads as `null`.
+	 * omits it, which the client reads as `null`.
 	 */
-	readonly committed?: NativeIABCommittedConsent | null;
+	readonly committed: NativeIABCommittedConsent | null;
+	/**
+	 * Whether a headless draft can be edited and saved now: an IAB policy, CMP
+	 * configuration, a vendor list that is still usable, and a current
+	 * Additional Consent list where one is required. `false` while the list is
+	 * stale or offline; refresh, then offer controls again. A binary older than
+	 * this field cannot commit a headless draft and reads as `false`.
+	 */
+	readonly editable: boolean;
+	/**
+	 * What Accept all saves on the current list, as the native core builds it:
+	 * every live partner's bases under the publisher's disclosure and
+	 * restrictions. `null` exactly when {@link NativeIABState.editable} is false.
+	 */
+	readonly acceptAll: NativeIABChoices | null;
 }
 
 /** The committed TCF decision a headless IAB screen shows and reopens with. */

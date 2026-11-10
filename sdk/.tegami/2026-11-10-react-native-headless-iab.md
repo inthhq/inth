@@ -18,4 +18,7 @@ the selection to the native engine as one commit, pinned to the snapshot
 revision it was made against. The engine validates it, encodes the TC String
 and writes the `IABTCF_*` keys exactly as for the stock screens. The snapshot's
 `iab` object now carries `committed`: the TC String, the Additional Consent
-string and the committed choices, or `null`.
+string and the committed choices, or `null`; `editable`, whether native can open and
+save a draft now; and `acceptAll`, what native Accept all saves under the
+publisher's disclosure. `useIAB()` returns `null` while `editable` is false, and
+`acceptAll()` stages native's selection, so headless and stock Accept all match.

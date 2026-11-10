@@ -45,6 +45,7 @@ import type {
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
+import { withAdditiveIABDefaults } from '../protocol/wire-shape';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -560,7 +561,13 @@ export const createConsentClient = function createConsentClient(
 
 		rawSnapshot = raw;
 
-		const parsed = parseObject(raw);
+		const read = parseObject(raw);
+		// An older binary leaves out keys added since protocol 1; fill what their absence
+		// means before anything reads or grades the payload.
+		const parsed =
+			typeof read === 'object' && read !== null
+				? withAdditiveIABDefaults(read as Record<string, unknown>)
+				: read;
 		if (typeof parsed === 'object' && parsed !== null) {
 			const problems = describeSnapshotWireDrift(parsed, {
 				allowUnknownKeys: true,

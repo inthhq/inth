@@ -147,10 +147,10 @@ export interface IABDraftHandle {
 		value: boolean
 	) => void;
 	/**
-	 * Stage what the served partners declare: consent purposes and the partners
-	 * claiming them, allowed legitimate interests, and special features. Call
-	 * `save()` to record it. For a one-tap Accept all, `useSaveConsents()('all')`
-	 * lets the native core apply the full TCF rules instead.
+	 * Stage what native Accept all saves: the core's own projection of every live
+	 * partner's bases under the publisher's disclosure and restrictions, so a
+	 * headless Accept all records the same signals as the stock one. Call
+	 * `save()` to record it, or use `useSaveConsents()('all')` to save in one tap.
 	 */
 	readonly acceptAll: () => void;
 	/** Stage withdrawal of every consent grant. Legitimate interest stays. */
@@ -176,8 +176,10 @@ export interface IABDraftHandle {
  * <Switch value={usePurposeConsent(1)} onValueChange={(on) => iab.setPurposeConsent(1, on)} />;
  * ```
  *
- * @returns The handle, or `null` when the policy is not `iab` or no vendor list
- *   was served.
+ * @returns The handle, or `null` when the policy is not `iab`, no vendor list
+ *   was served, or native cannot open a draft now (`useIABSnapshot()?.editable`
+ *   is `false`: a stale or offline list, a missing Additional Consent list, or a
+ *   binary without the headless bridge).
  */
 export const useIAB = function useIAB(): IABDraftHandle | null {
 	const draft = useConsentDraftStore();
