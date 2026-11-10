@@ -11,6 +11,7 @@
  * those reuse the resolved part style verbatim instead of restating it.
  */
 
+import { resolveConsentTypeRoles } from '@c15t/react-native';
 import type { ConsentStyles, ConsentThemeColors } from '@c15t/react-native';
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
@@ -85,8 +86,8 @@ export const Screen = ({ children }: { readonly children: ReactNode }) => {
 	return (
 		<ScrollView
 			contentContainerStyle={{
-				gap: spacing.m,
-				padding: spacing.m,
+				gap: spacing.md,
+				padding: spacing.md,
 				paddingBottom: spacing.xl + safeArea.bottom,
 			}}
 			keyboardShouldPersistTaps="handled"
@@ -105,16 +106,17 @@ export const Card = ({
 	readonly title: string;
 }) => {
 	const { theme } = useHostStyles();
-	const { colors, radius, spacing, typography } = theme;
+	const { colors, radius, spacing } = theme;
+	const typography = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<View
 			style={{
 				borderColor: colors.border,
-				borderRadius: radius.surface,
+				borderRadius: radius.lg,
 				borderWidth: 1,
-				gap: spacing.s,
-				padding: spacing.m,
+				gap: spacing.sm,
+				padding: spacing.md,
 			}}
 		>
 			<NativeText
@@ -145,7 +147,7 @@ export const Card = ({
  */
 export const Heading = ({ children }: { readonly children: ReactNode }) => {
 	const { theme } = useHostStyles();
-	const { body, title } = theme.typography;
+	const { body, title } = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<NativeText
@@ -171,7 +173,7 @@ export const Text = ({
 	readonly muted?: boolean;
 }) => {
 	const { theme } = useHostStyles();
-	const { body } = theme.typography;
+	const { body } = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<NativeText
@@ -210,7 +212,7 @@ export const TextLink = ({
 	readonly onPress: () => void;
 }) => {
 	const { theme } = useHostStyles();
-	const { body, title } = theme.typography;
+	const { body, title } = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<Pressable
@@ -243,7 +245,8 @@ export const Mono = ({
 	readonly muted?: boolean;
 }) => {
 	const { theme } = useHostStyles();
-	const { colors, typography } = theme;
+	const { colors } = theme;
+	const typography = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<NativeText
@@ -269,11 +272,16 @@ export const Row = ({
 	readonly value: ReactNode;
 }) => {
 	const { theme } = useHostStyles();
-	const { colors, spacing, typography } = theme;
+	const { colors, spacing } = theme;
+	const typography = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<View
-			style={{ alignItems: 'flex-start', flexDirection: 'row', gap: spacing.m }}
+			style={{
+				alignItems: 'flex-start',
+				flexDirection: 'row',
+				gap: spacing.md,
+			}}
 		>
 			<NativeText
 				style={{
@@ -342,7 +350,7 @@ export const ButtonGrid = ({ children }: { readonly children: ReactNode }) => {
 	const { theme } = useHostStyles();
 
 	return (
-		<View style={{ flexDirection: 'column', gap: theme.spacing.s }}>
+		<View style={{ flexDirection: 'column', gap: theme.spacing.sm }}>
 			{children}
 		</View>
 	);
@@ -353,7 +361,7 @@ export const ButtonRow = ({ children }: { readonly children: ReactNode }) => {
 	const { theme } = useHostStyles();
 
 	return (
-		<View style={{ flexDirection: 'row', gap: theme.spacing.s }}>
+		<View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
 			{children}
 		</View>
 	);
@@ -376,7 +384,8 @@ export const Segmented = <Value extends string>({
 	readonly value: Value;
 }) => {
 	const { controlMinHeight, theme } = useHostStyles();
-	const { colors, radius, spacing, typography } = theme;
+	const { colors, radius, spacing } = theme;
+	const typography = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<View
@@ -400,13 +409,13 @@ export const Segmented = <Value extends string>({
 						}}
 						style={{
 							alignItems: 'center',
-							backgroundColor: selected ? colors.surfaceRaised : 'transparent',
+							backgroundColor: selected ? colors.surfaceHover : 'transparent',
 							borderColor: selected ? colors.primary : colors.border,
-							borderRadius: radius.control,
+							borderRadius: radius.md,
 							borderWidth: 1,
 							justifyContent: 'center',
 							minHeight: controlMinHeight,
-							paddingHorizontal: spacing.s,
+							paddingHorizontal: spacing.sm,
 						}}
 					>
 						<NativeText
@@ -444,14 +453,17 @@ export const Toggle = ({
 			style={{
 				alignItems: 'center',
 				flexDirection: 'row',
-				gap: spacing.m,
+				gap: spacing.md,
 				justifyContent: 'space-between',
 			}}
 		>
 			<Text>{label}</Text>
 			<Switch
 				accessibilityLabel={label}
-				trackColor={{ false: colors.switchTrack, true: colors.switchTrackOn }}
+				trackColor={{
+					false: colors.switchTrack,
+					true: colors.switchTrackActive,
+				}}
 				thumbColor={colors.switchThumb}
 				onValueChange={onValueChange}
 				value={value}
@@ -463,7 +475,8 @@ export const Toggle = ({
 /** `true`/`false`, coloured the way the fixtures read it at a glance. */
 export const Flag = ({ value }: { readonly value: boolean }) => {
 	const { theme } = useHostStyles();
-	const { colors, typography } = theme;
+	const { colors } = theme;
+	const typography = resolveConsentTypeRoles(theme.typography);
 
 	return (
 		<NativeText
@@ -489,7 +502,8 @@ export const Badge = ({
 	readonly tone?: 'accent' | 'danger' | 'neutral';
 }) => {
 	const { theme } = useHostStyles();
-	const { colors, radius, spacing, typography } = theme;
+	const { colors, radius, spacing } = theme;
+	const typography = resolveConsentTypeRoles(theme.typography);
 	const foreground = badgeInk(colors, tone);
 
 	return (
@@ -497,9 +511,9 @@ export const Badge = ({
 			style={{
 				alignSelf: 'flex-start',
 				borderColor: tone === 'neutral' ? colors.border : foreground,
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				borderWidth: 1,
-				paddingHorizontal: spacing.s,
+				paddingHorizontal: spacing.sm,
 				paddingVertical: spacing.xs,
 			}}
 		>

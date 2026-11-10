@@ -38,8 +38,8 @@ verify a new SDK revision.
   [Fake core](#fake-core).
 - The `theme` prop and the light/dark/system control in the header, which is the only
   way to see both palettes without leaving the app: the surfaces resolve a scheme from
-  `useColorScheme()` on their own, and a forced choice passes `lightTheme` or `darkTheme`
-  instead of a theme this app invented.
+  `useColorScheme()` on their own, and a forced choice passes the stock theme with both
+  appearances pinned to one palette instead of a theme this app invented.
 - `safeAreaInsets` on `ConsentProvider`, measured from React Native core in
   `src/safe-area.ts`, so the surfaces and this app's own header lay out against the same
   bands and nothing lands under a clock or a home indicator.

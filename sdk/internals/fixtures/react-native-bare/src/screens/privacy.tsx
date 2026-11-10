@@ -58,7 +58,7 @@ const CategoryLine = ({ category }: { readonly category: AllConsentNames }) => {
 
 	return (
 		<View
-			style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.m }}
+			style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.md }}
 		>
 			<Text>{categoryTitle(snapshot, category)}</Text>
 			<View style={{ marginLeft: 'auto' }}>
