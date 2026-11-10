@@ -10,6 +10,8 @@
  */
 
 export type { BootstrapPayload } from './bootstrap';
+export type { BridgePayloadName } from './bridge-schema';
+export { BRIDGE_PAYLOADS, describeBridgePayloadDrift } from './bridge-schema';
 export type {
 	CommitFailureReason,
 	CommitIntent,
@@ -29,6 +31,7 @@ export type {
 	GVLVendorOverflow,
 	GVLVendorUrl,
 } from './gvl';
+export type { NativeInitializedEvent, NativeSnapshotEvent } from './events';
 export type { NativeOverrides, NativeOverridesInput } from './overrides';
 export { defaultNativeOverrides } from './overrides';
 export type {
@@ -52,8 +55,10 @@ export type {
 	NativeGpcSignal,
 	NativePrivacySignals,
 	NativeSnapshotError,
+	PolicyResolutionFailure,
 	SnapshotResolution,
 } from './snapshot';
+export { POLICY_RESOLUTION_FAILURES } from './snapshot';
 export type {
 	AllConsentNames,
 	CategoryDecision,

@@ -82,6 +82,11 @@ export interface CommitResult {
 	readonly delivered?: boolean;
 	/** Present only when `ok` is `false`. */
 	readonly reason?: CommitFailureReason;
+	/**
+	 * The start of an intent the native core could not read, at most 200
+	 * characters, sent with `reason: 'invalid-intent'` for diagnostics.
+	 */
+	readonly detail?: string;
 }
 
 /**

@@ -104,6 +104,7 @@ Conventions not enforced by tooling (hold new code to these; older code has exce
 | `packages/cli/src/generate/version.ts` | `packages/cli/scripts/write-version.ts` via `prebuild`, `pretest`, and `check-types` | package.json version |
 | `native/core-swift/Sources/C15tConsentUI/generated/iab-copy.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/iab-copy.kt` and `.../resources/.../generated/iab-copy.json` | `bun run generate:native-iab-copy` | `iab` copy in `packages/translations` |
 | `native/protocol/iab/banner-summary-*.json` | `bun scripts/generate-iab-banner-summary-fixtures.ts` | web `resolveIABBannerSummary` in `packages/core` |
+| `native/protocol/bridge/payloads.json` | `bun run --cwd packages/react-native generate:bridge-schema` | `BRIDGE_PAYLOADS` in `packages/react-native/src/protocol/bridge-schema.ts` |
 | `dist/`, `dist-types/`, `coverage/` | builds/tests | — |
 | `.docs/` | `bun run setup:docs` (private docs-site template; maintainers only) | — |
 

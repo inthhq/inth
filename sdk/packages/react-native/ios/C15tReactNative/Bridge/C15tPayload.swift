@@ -217,7 +217,6 @@ public enum C15tPayload {
             "subjectId": stringOrNull(snapshot.subject?.id),
             "queued": .bool(!rejected && result.status == .committed),
             "delivered": .bool(false),
-            "status": .string(result.status.rawValue),
         ]
         if let error = result.error {
             fields["reason"] = .string(error.code)

@@ -49,7 +49,22 @@ export interface SnapshotResolution {
 	readonly policyId: string | null;
 	/** Fingerprint of the matched rule, `null` when nothing matched. */
 	readonly fingerprint: string | null;
+	/** Why the resolution failed. Present only when `status` is `failed`. */
+	readonly reason?: PolicyResolutionFailure;
 }
+
+/** Why a policy resolution failed, as the kernel's `PolicyResolutionFailure` names it. */
+export const POLICY_RESOLUTION_FAILURES = [
+	'invalid-configuration',
+	'insufficient-inputs',
+	'transport',
+	'unsupported-contract',
+	'invalid-payload',
+] as const;
+
+/** One of {@link POLICY_RESOLUTION_FAILURES}. */
+export type PolicyResolutionFailure =
+	(typeof POLICY_RESOLUTION_FAILURES)[number];
 
 /**
  * Privacy signals the native cores honor.

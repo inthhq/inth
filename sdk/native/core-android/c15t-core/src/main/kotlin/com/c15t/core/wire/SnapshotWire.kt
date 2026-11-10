@@ -47,6 +47,7 @@ object SnapshotWire {
 	private const val LOCATION = "location"
 	private const val PROMPT_REQUIREMENT = "promptRequirement"
 	private const val EXPLICIT_CHOICE = "explicitChoice"
+	private const val RESOLUTION = "resolution"
 
 	// subject
 	private const val SUBJECT_ID = "subjectId"
@@ -124,7 +125,20 @@ object SnapshotWire {
 		wire[LOCATION] = locationOf(snapshot.location)
 		wire[PROMPT_REQUIREMENT] = promptOf(snapshot.promptRequirement)
 		wire[EXPLICIT_CHOICE] = choiceOf(snapshot.explicitChoice)
+		encoded[RESOLUTION]?.let { wire[RESOLUTION] = resolutionOf(it) }
 		return JsonObject(wire)
+	}
+
+	/**
+	 * The resolution with `reason` only where the kernel writes one.
+	 *
+	 * `@c15t/core` puts `reason` on a failed resolution and on no other, and Swift encodes an
+	 * absent reason as no key. The model serialises it as an explicit `null`, which the
+	 * bridge schema in `native/protocol/bridge/payloads.json` does not allow.
+	 */
+	private fun resolutionOf(encoded: JsonElement): JsonElement {
+		val resolution = encoded as? JsonObject ?: return encoded
+		return if (resolution[REASON] is JsonNull) JsonObject(resolution - REASON) else resolution
 	}
 
 	/**
