@@ -72,7 +72,7 @@ class FirebaseAnalyticsIntegration(
 		ConsentCategory.MEASUREMENT,
 		onError,
 		read = { isAllowed -> FirebaseAnalyticsConsent.from(GoogleConsentMode.consent(isAllowed)) },
-	) { _, current ->
+	) { _, _, current ->
 		setCollectionEnabled(false)
 		val consent = current()
 		setConsent(consent)
@@ -217,14 +217,16 @@ class SentryReplayIntegration(
 
 /** Bind one optional category to a vendor's on/off calls. */
 @Suppress("FunctionName")
-private fun AnalyticsConsentBinding(
+internal fun AnalyticsConsentBinding(
 	core: ConsentCore,
 	category: ConsentCategory,
 	onError: (Exception) -> Unit,
 	apply: (Boolean, () -> Boolean) -> Unit,
 ): ConsentBinding<Boolean> {
 	require(category.optional) { "Analytics integrations require an optional consent category." }
-	return ConsentBinding(core, category, onError, read = { isAllowed -> isAllowed(category) }, apply = apply)
+	return ConsentBinding(core, category, onError, read = { isAllowed -> isAllowed(category) }) { _, allowed, current ->
+		apply(allowed, current)
+	}
 }
 
 /**
@@ -236,14 +238,17 @@ private fun AnalyticsConsentBinding(
  * snapshot, whichever category moved, and [reconcile] skips unchanged state. One
  * registration therefore sees every publication once, which keeps a failing vendor
  * call to one retry and one reported error per publication. [apply] receives the
- * state read before the call and a way to read it again.
+ * state it last applied, the state read before the call and a way to read it again.
+ * The last state is `null` on the first call, after [sync] or [close], and after a
+ * failed call, so a vendor whose start call must run once per grant can tell a new
+ * grant from an unrelated change.
  */
-private class ConsentBinding<State>(
+internal class ConsentBinding<State>(
 	private val core: ConsentCore,
 	category: ConsentCategory,
 	private val onError: (Exception) -> Unit,
 	private val read: ((ConsentCategory) -> Boolean) -> State,
-	private val apply: (State, () -> State) -> Unit,
+	private val apply: (previous: State?, state: State, current: () -> State) -> Unit,
 ) : AutoCloseable {
 	private val lock = Any()
 	private var closed = false
@@ -314,9 +319,10 @@ private class ConsentBinding<State>(
 			while (true) {
 				val state = current()
 				if (hasApplied && applied == state && !needsSync) break
+				val previous = if (hasApplied && !needsSync) applied else null
 				needsSync = false
 				hasApplied = false
-				apply(state, ::current)
+				apply(previous, state, ::current)
 				applied = state
 				hasApplied = true
 			}

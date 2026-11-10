@@ -6,6 +6,8 @@ import type {
 	AllConsentNames,
 	OptionalConsentCategory,
 } from '../protocol/vocabulary';
+import { resolveGoogleAdsConsent } from './google-consent-mode';
+import type { GoogleAdsConsent } from './google-consent-mode';
 
 /** An app-owned connection between native consent and one vendor SDK. */
 export interface ConsentIntegration {
@@ -40,16 +42,23 @@ export interface AnalyticsIntegrationOptions {
  * a reader that denies everything once the integration disconnects. `apply`
  * pushes the state to the vendor, re-reading through `current` between calls,
  * and returns the state it left the vendor in. A later snapshot that changes
- * the derived state queues another apply.
+ * the derived state queues another apply. `previous` is the state the last
+ * apply left, or `undefined` on the first apply, after `sync()`, on
+ * `disconnect()` and after a failure, so a vendor whose start call must run
+ * once per grant can tell a new grant from an unrelated change.
  */
 export const connectConsentState = <StateType>(
 	options: Pick<AnalyticsIntegrationOptions, 'client' | 'onError'>,
 	read: (isAllowed: (category: AllConsentNames) => boolean) => StateType,
-	apply: (current: () => StateType) => Promise<StateType>
+	apply: (
+		current: () => StateType,
+		previous: StateType | undefined
+	) => Promise<StateType>
 ): ConsentIntegration => {
 	const client = options.client ?? getConsentClient();
 	let connected = true;
 	let applied: string | undefined;
+	let last: { readonly state: StateType } | undefined;
 	let tail = Promise.resolve();
 	let disconnected: Promise<void> | undefined;
 	const current = () =>
@@ -74,8 +83,12 @@ export const connectConsentState = <StateType>(
 			if (!force && applied === JSON.stringify(current())) {
 				return;
 			}
+			const previous = force ? undefined : last?.state;
 			applied = undefined;
-			applied = JSON.stringify(await apply(current));
+			last = undefined;
+			const state = await apply(current, previous);
+			applied = JSON.stringify(state);
+			last = { state };
 		};
 		// A failed vendor call must not prevent a subsequent withdrawal or retry.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Both outcomes must continue the same serialized queue.
@@ -99,6 +112,7 @@ export const connectConsentState = <StateType>(
 		connected = false;
 		// The vendor may have reset its own opt-in since our last update.
 		applied = undefined;
+		last = undefined;
 		unsubscribe();
 		const update = enqueue();
 		disconnected = update;
@@ -115,18 +129,55 @@ export const connectConsentState = <StateType>(
 	};
 };
 
-/** Serialize async vendor calls and re-read native authority before each apply. */
-export const connectConsentIntegration = (
+const optionalCategory = (
 	options: AnalyticsIntegrationOptions,
-	apply: (isAllowed: () => boolean) => Promise<boolean>
-): ConsentIntegration => {
-	const category = options.category ?? 'measurement';
+	fallback: OptionalConsentCategory
+): OptionalConsentCategory => {
+	const category = options.category ?? fallback;
 	if (!OPTIONAL_CONSENT_CATEGORIES.includes(category)) {
 		throw new TypeError('Analytics integrations require an optional category.');
 	}
+	return category;
+};
+
+/** Serialize async vendor calls and re-read native authority before each apply. */
+export const connectConsentIntegration = (
+	options: AnalyticsIntegrationOptions,
+	apply: (isAllowed: () => boolean) => Promise<boolean>,
+	fallback: OptionalConsentCategory = 'measurement'
+): ConsentIntegration => {
+	const category = optionalCategory(options, fallback);
 	return connectConsentState(
 		options,
 		(isAllowed) => isAllowed(category),
+		apply
+	);
+};
+
+/** Whether a vendor may run under its category, with the advertising types. */
+export interface TrackingAndAds {
+	readonly tracking: boolean;
+	readonly ads: GoogleAdsConsent;
+}
+
+/**
+ * Connect a vendor that runs under one category, defaulting to marketing, and
+ * also takes the Consent Mode advertising types.
+ */
+export const connectTrackingAndAds = (
+	options: AnalyticsIntegrationOptions,
+	apply: (
+		current: () => TrackingAndAds,
+		previous: TrackingAndAds | undefined
+	) => Promise<TrackingAndAds>
+): ConsentIntegration => {
+	const category = optionalCategory(options, 'marketing');
+	return connectConsentState(
+		options,
+		(isAllowed) => ({
+			ads: resolveGoogleAdsConsent(isAllowed),
+			tracking: isAllowed(category),
+		}),
 		apply
 	);
 };

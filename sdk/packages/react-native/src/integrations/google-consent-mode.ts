@@ -67,3 +67,33 @@ export const resolveGoogleConsentMode = (
 	}
 	return state;
 };
+
+/**
+ * The three Consent Mode v2 advertising types, for vendor helpers that forward
+ * Google's EEA consent signals. All three follow marketing, as on the web.
+ */
+export interface GoogleAdsConsent {
+	/** `ad_storage`: advertising identifiers and storage on the device. */
+	readonly adStorage: boolean;
+	/** `ad_user_data`: sending user data to Google for advertising. */
+	readonly adUserData: boolean;
+	/** `ad_personalization`: personalized advertising. */
+	readonly adPersonalization: boolean;
+}
+
+/**
+ * Resolve the advertising types from c15t consent.
+ *
+ * @param isAllowed - Whether a c15t category is allowed.
+ * @returns The three advertising types, each granted (`true`) or denied.
+ */
+export const resolveGoogleAdsConsent = (
+	isAllowed: (category: AllConsentNames) => boolean
+): GoogleAdsConsent => {
+	const consent = resolveGoogleConsentMode(isAllowed);
+	return {
+		adPersonalization: consent.ad_personalization,
+		adStorage: consent.ad_storage,
+		adUserData: consent.ad_user_data,
+	};
+};

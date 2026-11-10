@@ -47,7 +47,7 @@ public struct FirebaseAnalyticsConsent: Equatable, Sendable {
 /// notification queue, and must not dispatch vendor changes asynchronously.
 /// It does not implement IAB or ATT.
 public final class FirebaseAnalyticsIntegration: @unchecked Sendable {
-    private let binding: AnalyticsConsentBinding
+    private let binding: ConsentStateBinding<FirebaseAnalyticsConsent>
 
     /// - Parameters:
     ///   - core: The app's installed native engine.
@@ -58,11 +58,15 @@ public final class FirebaseAnalyticsIntegration: @unchecked Sendable {
         setConsent: @escaping @Sendable (FirebaseAnalyticsConsent) -> Void,
         setCollectionEnabled: @escaping @Sendable (Bool) -> Void
     ) {
-        binding = AnalyticsConsentBinding(
+        binding = ConsentStateBinding(
             core: core,
             categories: [.measurement, .marketing],
-            actions: .firebase(setConsent, setCollectionEnabled)
-        )
+            read: { FirebaseAnalyticsConsent(GoogleConsentMode.consent($0)) }
+        ) { _, consent, current in
+            setCollectionEnabled(false)
+            setConsent(consent)
+            if consent.analyticsStorage && current().analyticsStorage { setCollectionEnabled(true) }
+        }
     }
 
     /// Stops collection, denies every Firebase consent type and unsubscribes.
@@ -83,7 +87,7 @@ public final class FirebaseAnalyticsIntegration: @unchecked Sendable {
 /// notification queue. Configure feature-flag requests, replay and other PostHog
 /// products separately; opt-in/out here controls the SDK's capture permission.
 public final class PostHogIntegration: @unchecked Sendable {
-    private let binding: AnalyticsConsentBinding
+    private let binding: ConsentStateBinding<Bool>
 
     /// - Parameters:
     ///   - core: The app's installed native engine.
@@ -96,7 +100,7 @@ public final class PostHogIntegration: @unchecked Sendable {
         optIn: @escaping @Sendable () -> Void,
         optOut: @escaping @Sendable () -> Void
     ) {
-        binding = AnalyticsConsentBinding(core: core, categories: [category.category], actions: .capture(optIn, optOut))
+        binding = captureBinding(core: core, category: category.category, on: optIn, off: optOut)
     }
 
     /// Opts out and unsubscribes. Safe to call repeatedly.
@@ -123,7 +127,7 @@ public final class PostHogIntegration: @unchecked Sendable {
 /// Its opt-out also clears local identity. Feature flags and replay need separate
 /// configuration; this helper does not provide IAB or ATT authorization.
 public final class MixpanelIntegration: @unchecked Sendable {
-    private let binding: AnalyticsConsentBinding
+    private let binding: ConsentStateBinding<Bool>
 
     /// - Parameters:
     ///   - core: The app's installed native engine.
@@ -136,7 +140,7 @@ public final class MixpanelIntegration: @unchecked Sendable {
         optInTracking: @escaping @Sendable () -> Void,
         optOutTracking: @escaping @Sendable () -> Void
     ) {
-        binding = AnalyticsConsentBinding(core: core, categories: [category.category], actions: .capture(optInTracking, optOutTracking))
+        binding = captureBinding(core: core, category: category.category, on: optInTracking, off: optOutTracking)
     }
 
     /// Submits opt-out and unsubscribes. Safe to call repeatedly.
@@ -163,7 +167,7 @@ public final class MixpanelIntegration: @unchecked Sendable {
 /// This helper does not call flush, delete recordings, configure masking, or gate
 /// errors, tracing, profiling, screenshots and other Sentry products.
 public final class SentryReplayIntegration: @unchecked Sendable {
-    private let binding: AnalyticsConsentBinding
+    private let binding: ConsentStateBinding<Bool>
 
     /// - Parameters:
     ///   - core: The app's installed native engine.
@@ -176,7 +180,7 @@ public final class SentryReplayIntegration: @unchecked Sendable {
         start: @escaping @Sendable () -> Void,
         stop: @escaping @Sendable () -> Void
     ) {
-        binding = AnalyticsConsentBinding(core: core, categories: [category.category], actions: .capture(start, stop))
+        binding = captureBinding(core: core, category: category.category, on: start, off: stop)
     }
 
     /// Submits replay stop and unsubscribes. Safe to call repeatedly.
@@ -190,27 +194,32 @@ public final class SentryReplayIntegration: @unchecked Sendable {
     deinit { binding.cancel() }
 }
 
-private enum AnalyticsVendorActions: Sendable {
-    case firebase(@Sendable (FirebaseAnalyticsConsent) -> Void, @Sendable (Bool) -> Void)
-    case capture(@Sendable () -> Void, @Sendable () -> Void)
-}
-
-/// Watches `categories` and applies the vendor calls whenever their decisions change.
-/// Capture actions follow the first category; Firebase reads ``GoogleConsentMode``.
-private final class AnalyticsConsentBinding: @unchecked Sendable {
+/// Watches `categories` and applies vendor state whenever it changes.
+///
+/// `read` derives the vendor's state from category decisions, through a reader that
+/// denies everything once cancelled. `apply` receives the state it last applied, the
+/// state to apply and a way to read current state again. The last state is `nil` on
+/// the first call and after `sync()` or `cancel()`, so a vendor whose start call must
+/// run once per grant can tell a new grant from an unrelated change.
+final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
     private let core: ConsentCore
-    private let categories: [ConsentCategory]
-    private let actions: AnalyticsVendorActions
+    private let read: ((ConsentCategory) -> Bool) -> State
+    private let apply: (_ previous: State?, _ state: State, _ current: () -> State) -> Void
     private let lock = NSRecursiveLock()
     private var subscriptions: [ConsentSubscription] = []
     private var active = true
     private var applying = false
-    private var lastApplied: [ConsentCategory: Bool]?
+    private var lastApplied: State?
 
-    init(core: ConsentCore, categories: [ConsentCategory], actions: AnalyticsVendorActions) {
+    init(
+        core: ConsentCore,
+        categories: [ConsentCategory],
+        read: @escaping ((ConsentCategory) -> Bool) -> State,
+        apply: @escaping (_ previous: State?, _ state: State, _ current: () -> State) -> Void
+    ) {
         self.core = core
-        self.categories = categories
-        self.actions = actions
+        self.read = read
+        self.apply = apply
         for category in categories {
             subscriptions.append(core.gate(category) { [weak self] (_: ConsentDecision) in
                 self?.refresh()
@@ -238,14 +247,8 @@ private final class AnalyticsConsentBinding: @unchecked Sendable {
         refresh()
     }
 
-    private func isGranted(_ category: ConsentCategory) -> Bool {
-        active && core.decision(for: category) == .granted
-    }
-
-    private var current: [ConsentCategory: Bool] {
-        var state: [ConsentCategory: Bool] = [:]
-        for category in categories { state[category] = isGranted(category) }
-        return state
+    private var current: State {
+        read { [core, active] in active && core.decision(for: $0) == .granted }
     }
 
     private func refresh() {
@@ -259,17 +262,33 @@ private final class AnalyticsConsentBinding: @unchecked Sendable {
         // cancellation or consent changes are reconciled before this update returns.
         while lastApplied != current {
             let next = current
+            let previous = lastApplied
             lastApplied = next
-            switch actions {
-            case let .firebase(setConsent, setCollectionEnabled):
-                setCollectionEnabled(false)
-                let consent = FirebaseAnalyticsConsent(GoogleConsentMode.consent { isGranted($0) })
-                setConsent(consent)
-                if consent.analyticsStorage && isGranted(.measurement) { setCollectionEnabled(true) }
-            case let .capture(optIn, optOut):
-                let category = categories[0]
-                if next[category] == true && isGranted(category) { optIn() } else { optOut() }
-            }
+            apply(previous, next) { current }
         }
+    }
+}
+
+/// Binds one optional category to a vendor's on/off calls. `apply` receives whether
+/// the category was granted and a way to check that it still is.
+func categoryBinding(
+    core: ConsentCore,
+    category: ConsentCategory,
+    apply: @escaping @Sendable (_ allowed: Bool, _ stillAllowed: () -> Bool) -> Void
+) -> ConsentStateBinding<Bool> {
+    ConsentStateBinding(core: core, categories: [category], read: { $0(category) }) { _, allowed, current in
+        apply(allowed, current)
+    }
+}
+
+/// Binds one optional category to an on/off call: `on` only while it is granted.
+func captureBinding(
+    core: ConsentCore,
+    category: ConsentCategory,
+    on: @escaping @Sendable () -> Void,
+    off: @escaping @Sendable () -> Void
+) -> ConsentStateBinding<Bool> {
+    categoryBinding(core: core, category: category) { allowed, stillAllowed in
+        if allowed && stillAllowed() { on() } else { off() }
     }
 }

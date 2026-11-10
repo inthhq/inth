@@ -52,3 +52,38 @@ object GoogleConsentMode {
 	 */
 	fun consent(core: ConsentCore): Map<GoogleConsentType, Boolean> = consent(core::isAllowed)
 }
+
+/**
+ * The three Consent Mode v2 advertising types, for vendor helpers that forward
+ * Google's EEA consent signals. All three follow marketing, as on the web. See
+ * [GoogleConsentMode].
+ *
+ * @property adStorage `ad_storage`: advertising identifiers and storage on the device.
+ * @property adUserData `ad_user_data`: sending user data to Google for advertising.
+ * @property adPersonalization `ad_personalization`: personalized advertising.
+ */
+data class GoogleAdsConsent(
+	val adStorage: Boolean,
+	val adUserData: Boolean,
+	val adPersonalization: Boolean,
+)
+
+/** Read the advertising types from [GoogleConsentMode] through a category reader. */
+internal fun googleAds(isAllowed: (ConsentCategory) -> Boolean): GoogleAdsConsent {
+	val consent = GoogleConsentMode.consent(isAllowed)
+	return GoogleAdsConsent(
+		adStorage = consent[GoogleConsentType.AD_STORAGE] == true,
+		adUserData = consent[GoogleConsentType.AD_USER_DATA] == true,
+		adPersonalization = consent[GoogleConsentType.AD_PERSONALIZATION] == true,
+	)
+}
+
+/**
+ * Read whether [category] allows the vendor to run, with the advertising types.
+ *
+ * @throws IllegalArgumentException If category is necessary.
+ */
+internal fun trackingAndAds(category: ConsentCategory): ((ConsentCategory) -> Boolean) -> Pair<Boolean, GoogleAdsConsent> {
+	require(category.optional) { "Vendor integrations require an optional consent category." }
+	return { isAllowed -> isAllowed(category) to googleAds(isAllowed) }
+}
