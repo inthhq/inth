@@ -117,8 +117,10 @@ Layout
     native/
       CONTRACT.md              this file
       protocol/                protocol fixtures, generated and consumed by all three impls
-      core-swift/              C15tCore: SwiftPM package, no React Native, no UIKit
-      core-android/            com.c15t.core: Gradle project, pure-JVM module + android lib module
+      core-swift/              SwiftPM package: C15tCore (no React Native, no UIKit), C15tApple
+                               (platform services), C15tConsentUI (optional SwiftUI screens)
+      core-android/            Gradle project: c15t-core (pure JVM), c15t-android (platform
+                               services), c15t-consent-ui (optional Compose screens)
       react-native/            (lives at packages/react-native, listed here for orientation)
 
 Rules that hold everywhere
@@ -127,9 +129,10 @@ Rules that hold everywhere
 1. Native owns consent state. There is no second consent kernel in JavaScript.
    The React Native layer renders native state and forwards user actions. It may
    import `@c15t/core` for types and pure selectors, never for state ownership.
-2. `core-swift` and `core-android` must not import React Native, Expo, UIKit, or
-   Android UI classes. React Native bindings live in the `C15tReactNative` and
-   `com.c15t.reactnative` targets only.
+2. The consent cores (`C15tCore`, `C15tApple`, `c15t-core`, `c15t-android`) must not
+   import React Native, Expo, UIKit, SwiftUI, or Android UI classes. Native screens
+   live in the optional `C15tConsentUI` and `c15t-consent-ui` modules, and React
+   Native bindings in the `C15tReactNative` and `com.c15t.reactnative` targets only.
 3. The Kotlin core logic must run on a plain JVM with no Android dependency.
    Storage, clock, and HTTP go through interfaces the Android layer implements.
    Same rule for Swift: no UIKit, and no Keychain outside the store conformances.
@@ -148,7 +151,7 @@ State model
 
 Native holds one immutable `ConsentSnapshot`, versioned by `revision`. It mirrors
 the fields of `ConsentSnapshot` in `packages/core/src/types.ts` that matter on
-mobile, minus IAB:
+mobile:
 
     revision: number                  // monotonic, bumps on every mutation
     policyPending: boolean            // true until the first init resolves
@@ -166,9 +169,9 @@ mobile, minus IAB:
     nextDeadline: number | null
     evaluatedAt: number
     error: { code, message } | null
+    iab: { gvl } | null               // the `/init`-served vendor list, see the top of this file
 
-`iab` is reserved. Serialize it as `null` and keep the key so an older JavaScript
-layer does not have to branch.
+`iab` is `null` until a vendor list has been served, and the key is always present.
 
 `consentCategories` is the subject-facing list a consent surface draws: `necessary`
 first, then the choice scope, all optional names in canonical sorted order. The choice
@@ -231,9 +234,11 @@ a notice/acknowledge/purpose triple. `subject` is keyed `subjectId`, not `id`.
 `location` is `{ countryCode, regionCode }`, not `country` and `region`.
 `explicitChoice` is the kernel's `ExplicitChoice`.
 
-The declaration is `NativeSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
-which imports all four types straight from `@c15t/core` and says plainly that it is the
-shape on the wire and that the JavaScript layer never derives it. The fixtures are
+The declaration is `ConsentSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
+which says plainly that it is the shape on the wire and that the JavaScript layer never
+derives it. It takes all four types from `src/protocol/vocabulary.ts`, a copy that keeps
+`@c15t/core` out of a phone app; `vocabulary.type-test.ts` fails the type check when the
+copy and `@c15t/core` disagree. The fixtures are
 generated from the TypeScript kernel, so where a native model and a fixture disagree
 about a key name, the fixture is right.
 
@@ -508,9 +513,11 @@ slot, so refusing an envelope never costs a device its identity. What each write
 
 - Swift stores plain JSON under `StoredEnvelope`: `version` (this build reads `1` and
   nothing else), `storedAt` in epoch milliseconds, `snapshot`, `noticeDismissal`, and
-  `policyResolution`.
+  `policyResolution`, plus the IAB authority and `pendingSaves` fields that
+  `docs/internal/native-iab-commits.mdx` defines.
 - Kotlin stores a `SnapshotEnvelope` in the encrypted blob: `snapshot`,
-  `evaluationPolicy`, and `noticeDismissal`. It carries no format version of its own
+  `evaluationPolicy`, and `noticeDismissal`, plus `gvl` and the same IAB authority and
+  `pendingSaves` fields. It carries no format version of its own
   and no write time. `AesGcmCodec` puts a version byte in the blob header, which
   gates the framing rather than the fields, so an envelope-level change has nowhere
   to be recorded. That is a gap in the Kotlin core, not a decision.
@@ -899,10 +906,18 @@ New Architecture only. TurboModule plus Codegen, no legacy bridge, no
     identify(externalId): Promise<void>
     logout(): Promise<void>
     reset(): Promise<void>                      // wipe consent, keep the subject id
+    getTrackingAuthorization(): TrackingAuthorizationPayload   // sync, JSON string
+    requestTrackingAuthorization(): Promise<TrackingRequestPayload>
+    presentConsentPrompt(privacyPolicyURL): Promise<ConsentPresenterSession>
+    presentPreferences(privacyPolicyURL): Promise<ConsentPresenterSession>
+    closeConsentPresenter(sessionId): Promise<void>
     addListener(eventName): void              // RNEventEmitter spec
     removeListeners(count): void
 
-Events: `snapshot`, `error`, `initialized`. The payload is a JSON string. The
+`packages/react-native/src/specs/NativeC15t.ts` is the authoritative list.
+
+Events: `snapshot`, `error`, `initialized`, and `onConsentPresenterOutcome` for the
+native presenter. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new
 `revision` and JavaScript pulls with `getSnapshot()` only when a mounted
 subscriber needs it. Selector subscriptions in `@c15t/react-native` compare the
@@ -1002,7 +1017,7 @@ Conformance fixtures
 --------------------
 
 `native/protocol/*.json`, generated by `packages/react-native/scripts/` from the
-TypeScript kernel. Six kinds:
+TypeScript kernel. Seven kinds:
 
 - `evaluation-*.json`  transport response plus stored records in, snapshot out.
 - `save-body-*.json`   transport response plus action in, exact request body out.
@@ -1036,9 +1051,10 @@ invented. Every fixture carries `now` (the fixed clock every side must use),
 `intent`. A fixture about the host's declaration adds `consentCategories`, where `null`
 is a host that declares nothing; a fixture without the key was generated with every
 category declared, and a runner configures its core that way. Nothing is derived from a random value: the subject id is always
-supplied, so no fixture depends on a CSPRNG. The fixtures carry a UUID v4, the
-shape an install minted before this format existed, which every core still has to
-hydrate. An id a device mints itself uses the base58 shape under "Subject identity".
+supplied, so no fixture depends on a CSPRNG. The fixtures carry ids in the base58
+`sub_` shape under "Subject identity". A stored legacy UUID is refused as that section
+describes, which `UnusableSubjectIdTest` (Kotlin) and `UnusableSubjectIdTests` (Swift)
+cover rather than a shared fixture.
 
 An `expected` is what the kernel produced for that input. It is not hand-written,
 with the single exception named in "The stored envelope". `evaluation-*` pin
@@ -1095,7 +1111,7 @@ build against the same reality.
   `bun run --cwd packages/react-native generate:fixtures`, which is byte-stable:
   two runs produce the same bytes, so a diff in `native/protocol/` is always a
   real change and never a timestamp.
-- All six kinds are generated, and both native cores claim and run all six. Each
+- All seven kinds are generated, and both native cores claim and run all seven. Each
   runner keeps a set of the kinds it has a function for, derives its unclaimed count
   from that set, and fails when the count is not zero, so a kind goes unrun only by a
   branch nobody wrote. The web v3 record envelope that used to be reported unclaimed
@@ -1114,7 +1130,7 @@ Kotlin core, as built
   encrypted storage with a `SharedPreferences` fallback, an `androidx.startup`
   `Initializer` that calls `bootstrap()`, a `ProcessLifecycleOwner` observer
   that calls `flushPending()` and `refresh()`, and a `ConnectivityManager`
-  callback that calls `flushPending()` on a gained network. The callback is the
+  callback that calls `flushPending()` and `refresh()` on a gained network. The callback is the
   one port that can be declined: without `ACCESS_NETWORK_STATE` in the host's
   manifest the registration is refused, and `C15tReachability.register` logs it
   and returns `null` rather than failing the install.
