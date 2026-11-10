@@ -1003,6 +1003,26 @@ class ConsentCore(
 		background.execute { runInit() }
 	}
 
+	/**
+	 * [refresh], then call [onComplete] once the init has landed.
+	 *
+	 * "Landed" means the response was folded and, when it changed state, every snapshot
+	 * observer has already heard about it, so a reader in [onComplete] sees the refreshed
+	 * snapshot. A failed init still completes; its error goes to [onError] as usual.
+	 * [onComplete] runs on the core's executor thread.
+	 *
+	 * This is what `awaitRefresh` in `c15t-android` suspends on.
+	 */
+	fun refresh(onComplete: () -> Unit) {
+		background.execute {
+			try {
+				runInit()
+			} finally {
+				onComplete()
+			}
+		}
+	}
+
 	/** Attach an external identity to the subject, then refresh. */
 	fun identify(user: KernelUser) = mutate { mutation ->
 		val transition = transitionIab(user.externalId, false)
