@@ -2,6 +2,7 @@ package com.c15t.core
 
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentModel
+import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelOverrides
 import com.c15t.core.policy.PolicyPrompt
 import com.c15t.core.store.C15tStore
@@ -106,6 +107,25 @@ class ConsentPolicyTest {
 		assertTrue(core.snapshot().policyPending)
 		assertEquals("policy-invalid", core.snapshot().error?.code)
 		assertEquals(listOf("policy-invalid", "policy-invalid"), errors)
+	}
+
+	@Test fun `reset publishes the cleared baseline before the in-code policy`() {
+		val core = boot()
+		assertFalse(core.snapshot().policyPending)
+		core.save(CommitIntent.All)
+		val before = core.snapshot().revision
+		val published = mutableListOf<ConsentSnapshot>()
+		val observer: (ConsentSnapshot) -> Unit = { published += it }
+		val subscription = core.onChange(observer)
+		published.clear()
+		core.reset()
+		subscription.close()
+		val baseline = published.first()
+		assertEquals(before + 1, baseline.revision)
+		assertTrue(baseline.policyPending)
+		assertNull(baseline.explicitChoice)
+		assertFalse(published.last().policyPending, "the in-code policy applies after the baseline")
+		assertEquals(published.map { it.revision }.distinct(), published.map { it.revision })
 	}
 
 	@Test fun `bootstrap applies the in-code policy once`() {
