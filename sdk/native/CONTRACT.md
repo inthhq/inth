@@ -524,11 +524,14 @@ React Native outcome is sent once the cover has finished animating away.
 
 The stock prompt sequences ATT through `trackingRequest` (`afterConsent` by
 default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.c15tConsent(...)`
-and `ConsentRootViewController`. It asks only when `NSUserTrackingUsageDescription`
-is present, Apple's answer is `not-determined`, the app is active and no c15t
-cover is on screen. `afterConsent` asks after a closed session, or at launch when
-no prompt is owed, and only while marketing is `granted`. The answer never
-writes consent. Android has no ATT and no option.
+and `ConsentRootViewController`. It asks only when
+`NSUserTrackingUsageDescription` is present, Apple's answer is `not-determined`,
+no stored choice refuses marketing, the app is active, a c15t root is attached
+and no c15t screen is on screen. `afterConsent` asks after a closed session, or
+at launch when no prompt is owed, and only while marketing is `granted`.
+`beforeConsent` also holds a prompt the app opens (`presentPrompt` or
+`presentConsentPrompt`), never settings. The answer never writes consent.
+Android has no ATT and no option.
 
 Native SDK gating
 -----------------

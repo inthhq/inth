@@ -14,4 +14,7 @@ settings, asks then. Apple's answer never changes stored consent.
 
 Pass `trackingRequest:` to `.c15tConsent(...)` or `ConsentRootViewController`
 to change the order: `.afterConsent` (default), `.beforeConsent` or `.manual`,
-which is the previous behaviour. Android has no ATT and no option.
+which is the previous behaviour. `.beforeConsent` also covers
+`ConsentPrompt.presentPrompt()`, but not settings. No order asks once a stored
+choice refuses marketing, while a notice card shows, or while no scene is
+attached. Android has no ATT and no option.
