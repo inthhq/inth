@@ -11,6 +11,8 @@
  * never in a build that did not enable ATT.
  */
 
+import { useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { afterEach, describe, expect, test } from 'vitest';
 
 import {
@@ -46,10 +48,16 @@ const MODES: readonly ConsentTrackingRequest[] = [
 const seeded = (seed: number): (() => number) => {
 	const modulus = 2_147_483_647;
 	let value = (seed % (modulus - 1)) + 1;
-	return () => {
+	const advance = (): number => {
 		value = (value * 48_271) % modulus;
 		return value / modulus;
 	};
+	// A small seed's first outputs sit near zero, which would pin every seed's
+	// first choices. Discard them.
+	for (let warm = 0; warm < 4; warm += 1) {
+		advance();
+	}
+	return advance;
 };
 
 /** What the model knows when Apple is asked. */
@@ -149,8 +157,17 @@ const ACTIONS = [
 	'remount',
 	'hold',
 	'answer',
+	'mount-child',
 ] as const;
 type Action = (typeof ACTIONS)[number];
+
+/** A child that opens the prompt from its own mount effect, before the provider's run. */
+const PresentsOnMount = (): ReactNode => {
+	useEffect(() => {
+		void presentConsentPrompt(URL);
+	}, []);
+	return null;
+};
 
 const runSeed = async function runSeed(seed: number): Promise<string[]> {
 	const random = seeded(seed);
@@ -170,6 +187,11 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 	let open: { readonly id: string; readonly kind: string } | null = null;
 	let sessions = 0;
 	let asks = 0;
+	let answers = 0;
+	let authorization = attEnabled ? 'not-determined' : 'unsupported';
+	let child = random() < 0.3;
+	/** A provider is mounted. Once it has gone, the app's own call is not held. */
+	let mounted = true;
 	let hold = false;
 	const held: (() => void)[] = [];
 
@@ -186,6 +208,19 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 		if (kind === 'prompt' && snapshot.promptRequirement.kind === 'none') {
 			return Promise.resolve(
 				JSON.stringify({ sessionId: null, status: 'not-required' })
+			);
+		}
+		// beforeConsent: no prompt opens while Apple would be asked and has not answered.
+		if (
+			kind === 'prompt' &&
+			mounted &&
+			mode === 'beforeConsent' &&
+			authorization === 'not-determined' &&
+			answers === 0 &&
+			snapshot.explicitChoice?.categories.marketing?.value !== false
+		) {
+			failures.push(
+				`a beforeConsent prompt opened before Apple answered, seed ${String(seed)} after ${trace.join(' ')}`
 			);
 		}
 		sessions += 1;
@@ -240,6 +275,8 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 		const status = eu ? 'not-determined' : answered;
 		return new Promise((resolve) => {
 			const answer = (): void => {
+				answers += 1;
+				authorization = status;
 				fake.setTrackingAuthorization(status);
 				resolve(JSON.stringify({ presentation: 'standard', stage, status }));
 			};
@@ -256,12 +293,16 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 			<ConsentProvider
 				privacyPolicyURL={URL}
 				trackingRequest={mode}
-			/>
+			>
+				{child ? <PresentsOnMount /> : null}
+			</ConsentProvider>
 		) : (
 			<ConsentProvider
 				autoPresent={false}
 				trackingRequest={mode}
-			/>
+			>
+				{child ? <PresentsOnMount /> : null}
+			</ConsentProvider>
 		);
 	let tree: RenderHandle | null = renderTree(element());
 	await flushPromises();
@@ -307,6 +348,13 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 				tree?.rerender(element());
 				break;
 			case 'remount':
+				child = false;
+				tree?.unmount();
+				tree = renderTree(element());
+				break;
+			case 'mount-child':
+				// A remount whose child presents in its own mount effect.
+				child = true;
 				tree?.unmount();
 				tree = renderTree(element());
 				break;
@@ -328,6 +376,7 @@ const runSeed = async function runSeed(seed: number): Promise<string[]> {
 		// oxlint-disable-next-line no-await-in-loop -- each step must settle before the next.
 		await flushPromises();
 	}
+	mounted = false;
 	tree?.unmount();
 	for (const answer of held.splice(0)) {
 		answer();

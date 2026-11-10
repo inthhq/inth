@@ -149,20 +149,23 @@ export const sessionPrivacyPolicyURL = (
 ): string | undefined =>
 	openSession?.id === sessionId ? openSession.url : undefined;
 
-/** Runs before the app's own `presentConsentPrompt`, or `null`. */
-let beforeConsentPrompt: (() => Promise<unknown>) | null = null;
+/**
+ * Runs before every native prompt request, or `null`. Resolves `false` when
+ * the provider that installed it has gone while it waited.
+ */
+let beforeConsentPrompt: (() => Promise<boolean>) | null = null;
 
 /**
- * Run `hook` before each app call to {@link presentConsentPrompt}, so a
- * provider with `trackingRequest="beforeConsent"` asks Apple first for a
- * prompt the app opens, as it does for one that opens by itself.
+ * Run `hook` before every native prompt request, so a provider with
+ * `trackingRequest="beforeConsent"` asks Apple first, whoever opens the
+ * prompt: the app, or the ledger on a trigger or after a session closes.
  *
  * @internal
- * @param hook - Settles when the prompt may open.
+ * @param hook - Resolves when the prompt may open; `false` if its provider left.
  * @returns Remove the hook, if it is still this one.
  */
 export const setBeforeConsentPrompt = (
-	hook: () => Promise<unknown>
+	hook: () => Promise<boolean>
 ): (() => void) => {
 	beforeConsentPrompt = hook;
 	return () => {
@@ -180,13 +183,25 @@ export const setBeforeConsentPrompt = (
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
  * @returns Presentation identity.
  */
-export const requestConsentPrompt = async (
+const callNativePrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
 	remember(
 		parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL)),
 		privacyPolicyURL
 	);
+
+export const requestConsentPrompt = async (
+	privacyPolicyURL: string
+): Promise<ConsentPresenterSession> => {
+	// Only with a hook: an `await` on nothing would still yield, and let a racing
+	// call reach native first. A provider that left while it waited asks for
+	// nothing now; the ledger asks again on its next trigger.
+	if (beforeConsentPrompt !== null && !(await beforeConsentPrompt())) {
+		return { sessionId: null, status: 'not-required' };
+	}
+	return callNativePrompt(privacyPolicyURL);
+};
 
 /** Open an owed native prompt on the installed engine. With a provider set to
  * `trackingRequest="beforeConsent"`, Apple's tracking alert comes first.
@@ -196,12 +211,11 @@ export const requestConsentPrompt = async (
 export const presentConsentPrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> => {
-	// Only with a hook: an `await` on nothing would still yield, and let a racing
-	// call reach native first.
+	// The app asked, so the prompt opens even if the provider left meanwhile.
 	if (beforeConsentPrompt !== null) {
 		await beforeConsentPrompt();
 	}
-	return announce(await requestConsentPrompt(privacyPolicyURL), 'prompt');
+	return announce(await callNativePrompt(privacyPolicyURL), 'prompt');
 };
 
 /** Open native standing preferences, including when no prompt is owed.

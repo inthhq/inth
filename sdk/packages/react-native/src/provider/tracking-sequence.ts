@@ -13,11 +13,16 @@ import { AppState } from 'react-native';
 import { isSnapshotReady } from '../lib/selectors';
 import type { ConsentDecision } from '../lib/selectors';
 import type { ConsentClient } from '../native/client';
+import { setBeforeConsentPrompt } from '../native/presenter';
 import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
-import { isConsentScreenBusy, onConsentScreenChange } from './auto-present';
+import {
+	isConsentScreenBusy,
+	onConsentScreenChange,
+	selectOwedPromptKey,
+} from './auto-present';
 
 /**
  * When the provider asks for App Tracking Transparency.
@@ -131,10 +136,11 @@ const whenActive = (token: SequenceToken): Promise<boolean> =>
  */
 const whenScreensClosed = (
 	client: ConsentClient,
-	token: SequenceToken
+	token: SequenceToken,
+	includeInFlight: boolean
 ): Promise<boolean> =>
 	new Promise((resolve) => {
-		if (token.cancelled || !isConsentScreenBusy(client)) {
+		if (token.cancelled || !isConsentScreenBusy(client, includeInFlight)) {
 			resolve(!token.cancelled);
 			return;
 		}
@@ -146,7 +152,7 @@ const whenScreensClosed = (
 		};
 		token.cleanups.add(settle);
 		listener.stop = onConsentScreenChange(client, () => {
-			if (!isConsentScreenBusy(client)) {
+			if (!isConsentScreenBusy(client, includeInFlight)) {
 				settle(true);
 			}
 		});
@@ -155,14 +161,21 @@ const whenScreensClosed = (
 /** Both waits, again until they hold at once. */
 const whenClear = async function whenClear(
 	client: ConsentClient,
-	token: SequenceToken
+	token: SequenceToken,
+	stage: ConsentTrackingStage
 ): Promise<boolean> {
-	if (!(await whenActive(token)) || !(await whenScreensClosed(client, token))) {
+	// Before a prompt, the present call in flight is the one this wait gates.
+	const includeInFlight = stage === 'afterPrompt';
+	if (
+		!(await whenActive(token)) ||
+		!(await whenScreensClosed(client, token, includeInFlight))
+	) {
 		return false;
 	}
-	return AppState.currentState === 'active' && !isConsentScreenBusy(client)
+	return AppState.currentState === 'active' &&
+		!isConsentScreenBusy(client, includeInFlight)
 		? true
-		: whenClear(client, token);
+		: whenClear(client, token, stage);
 };
 
 /** Apple's request in flight per client, shared so two effects ask once. */
@@ -206,7 +219,7 @@ export const requestSequencedTracking = async function requestSequencedTracking(
 	stage: ConsentTrackingStage,
 	token: SequenceToken
 ): Promise<SequenceResult> {
-	if (!(await whenClear(client, token))) {
+	if (!(await whenClear(client, token, stage))) {
 		return 'cancelled';
 	}
 	if (
@@ -236,7 +249,10 @@ export const requestSequencedTracking = async function requestSequencedTracking(
 const beforeConsentDone = new WeakSet<ConsentClient>();
 
 /**
- * Ask Apple once before the first prompt this launch, for `beforeConsent`.
+ * Ask Apple before a prompt opens, for `beforeConsent`, until Apple has
+ * answered once this launch. A skip (a stored refusal, ATT already answered or
+ * not enabled) is not an answer, so the next prompt checks again: a refusal
+ * that a reset cleared no longer holds the ask back.
  *
  * @param client - The client to ask for.
  * @param token - The calling effect's claim.
@@ -259,7 +275,9 @@ export const requestTrackingBeforeConsent =
 		if (result === 'cancelled') {
 			return false;
 		}
-		beforeConsentDone.add(client);
+		if (result !== 'skipped') {
+			beforeConsentDone.add(client);
+		}
 		return true;
 	};
 
@@ -308,4 +326,108 @@ export const checkTrackingAtLaunch = function checkTrackingAtLaunch(
 		void ask();
 	}
 	return true;
+};
+
+/** The before-consent wait one client's provider installed. */
+interface BeforeConsentRegistration {
+	readonly token: SequenceToken;
+	readonly remove: () => void;
+	/** Removed because the provider stopped asking for it: a waiting request opens. */
+	proceed: boolean;
+	/** A cleanup asked for removal; a remount in the same commit takes it back. */
+	releasing: boolean;
+}
+
+const beforeConsentRegistrations = new WeakMap<
+	ConsentClient,
+	BeforeConsentRegistration
+>();
+
+const removeBeforeConsentPrompt = function removeBeforeConsentPrompt(
+	client: ConsentClient,
+	proceed: boolean
+): void {
+	const registration = beforeConsentRegistrations.get(client);
+	if (registration !== undefined) {
+		registration.proceed = proceed;
+		beforeConsentRegistrations.delete(client);
+		cancelSequence(registration.token);
+		registration.remove();
+	}
+};
+
+/**
+ * Install or remove the wait that holds every native prompt request until
+ * Apple has been asked, for `beforeConsent`: the app's own, and the ledger's on
+ * a trigger or after a session closes.
+ *
+ * The provider calls this while it renders, before any descendant effect can
+ * call `presentConsentPrompt`: React runs child effects, layout and passive,
+ * before the parent's. It is idempotent, so strict mode's second render changes
+ * nothing.
+ *
+ * @param client - The provider's client.
+ * @param on - Whether the outermost provider says `beforeConsent`.
+ */
+export const syncBeforeConsentPrompt = function syncBeforeConsentPrompt(
+	client: ConsentClient,
+	on: boolean
+): void {
+	const current = beforeConsentRegistrations.get(client);
+	if (!on) {
+		// The provider now says another order: a request waiting on this one opens.
+		removeBeforeConsentPrompt(client, true);
+		return;
+	}
+	if (current !== undefined) {
+		current.releasing = false;
+		return;
+	}
+	const token = createSequenceToken();
+	const holder: { registration?: BeforeConsentRegistration } = {};
+	const wait = async function wait(): Promise<boolean> {
+		const asked = await requestTrackingBeforeConsent(client, token);
+		return asked || holder.registration?.proceed === true;
+	};
+	const remove = setBeforeConsentPrompt((): Promise<boolean> =>
+		selectOwedPromptKey(client.getSnapshot()) === null
+			? Promise.resolve(true)
+			: wait()
+	);
+	holder.registration = {
+		proceed: false,
+		releasing: false,
+		remove,
+		token,
+	};
+	beforeConsentRegistrations.set(client, holder.registration);
+};
+
+/**
+ * Remove the wait once the provider has really gone.
+ *
+ * Strict mode runs every cleanup and then every mount effect again, children
+ * first, in the same commit. Removing at once would leave that second child
+ * effect without the wait, so removal waits for a microtask and a remount in
+ * between keeps it.
+ *
+ * @param client - The provider's client.
+ */
+export const releaseBeforeConsentPrompt = function releaseBeforeConsentPrompt(
+	client: ConsentClient
+): void {
+	const registration = beforeConsentRegistrations.get(client);
+	if (registration === undefined) {
+		return;
+	}
+	registration.releasing = true;
+	queueMicrotask(() => {
+		if (
+			registration.releasing &&
+			beforeConsentRegistrations.get(client) === registration
+		) {
+			// The provider has gone: the ledger's waiting request asks for nothing.
+			removeBeforeConsentPrompt(client, false);
+		}
+	});
 };

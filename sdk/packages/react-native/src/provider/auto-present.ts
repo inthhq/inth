@@ -337,13 +337,18 @@ export const attachAutoPresent = function attachAutoPresent(
  *
  * @internal
  * @param client - The client to read.
+ * @param includeInFlight - Count a present call still in flight. A wait that
+ *   gates that very call passes `false`, or it would wait for itself.
  * @returns `true` while something may be on screen.
  */
 export const isConsentScreenBusy = function isConsentScreenBusy(
-	client: ConsentClient
+	client: ConsentClient,
+	includeInFlight = true
 ): boolean {
 	const { facts } = ledgerFor(client);
-	return facts.onScreen !== null || facts.inFlight !== null;
+	return (
+		facts.onScreen !== null || (includeInFlight && facts.inFlight !== null)
+	);
 };
 
 /**

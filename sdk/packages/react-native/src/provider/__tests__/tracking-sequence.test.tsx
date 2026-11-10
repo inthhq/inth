@@ -4,7 +4,7 @@
  * `beforeConsent`, and never by itself with `manual`.
  */
 
-import { StrictMode } from 'react';
+import { StrictMode, useEffect, useLayoutEffect } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -530,6 +530,119 @@ describe('never over a c15t screen', () => {
 		finish(fake, saved(true, 4));
 		await flushPromises();
 		expect(order).toStrictEqual(['preferences', 'prompt', 'tracking']);
+		tree.unmount();
+	});
+});
+
+/** Children that open the prompt from their own mount effect, before the provider's run. */
+const PresentsInEffect = (): ReactNode => {
+	useEffect(() => {
+		void presentConsentPrompt(URL);
+	}, []);
+	return null;
+};
+
+const PresentsInLayoutEffect = (): ReactNode => {
+	useLayoutEffect(() => {
+		void presentConsentPrompt(URL);
+	}, []);
+	return null;
+};
+
+describe('beforeConsent when a child presents as it mounts', () => {
+	test.each([
+		['useEffect', false, false],
+		['useEffect', true, false],
+		['useLayoutEffect', false, true],
+		['useLayoutEffect', true, true],
+	] as const)(
+		'%s, strict mode %s: Apple first',
+		async (_name, strict, layout) => {
+			const { fake, order } = boot(owed);
+			const app = (
+				<ConsentProvider
+					autoPresent={false}
+					trackingRequest="beforeConsent"
+				>
+					{layout ? <PresentsInLayoutEffect /> : <PresentsInEffect />}
+				</ConsentProvider>
+			);
+			const tree = renderTree(strict ? <StrictMode>{app}</StrictMode> : app);
+			await flushPromises();
+			expect(order[0]).toBe('tracking');
+			expect(order).toContain('prompt');
+			expect(fake.trackingRequestCalls).toBe(1);
+			tree.unmount();
+		}
+	);
+
+	test('a provider that unmounts stops holding the next prompt', async () => {
+		const { order } = boot(owed);
+		const tree = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				trackingRequest="beforeConsent"
+			/>
+		);
+		await flushPromises();
+		tree.unmount();
+		await flushPromises();
+		await presentConsentPrompt(URL);
+		expect(order).toStrictEqual(['prompt']);
+	});
+});
+
+describe('beforeConsent re-checks each prompt', () => {
+	test('asks before the next prompt once a stored refusal is gone', async () => {
+		const { fake, order } = boot(owedAfterRefusal);
+		// A new session id per prompt, as native gives: a closed id is never reused.
+		let sessions = 0;
+		fake.presentConsentPrompt = vi.fn(() => {
+			order.push('prompt');
+			sessions += 1;
+			return Promise.resolve(
+				JSON.stringify({
+					sessionId: `s${String(sessions)}`,
+					status: 'presented',
+				})
+			);
+		});
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(order).toStrictEqual(['prompt']);
+		// The person dismisses; a reset clears the refusal and owes a new prompt.
+		finish(fake, saved(false), 'dismissed');
+		await flushPromises();
+		fake.pushSnapshot(
+			buildSnapshot({
+				...owed,
+				promptRequirement: { kind: 'choice', reason: 'missing' },
+				resolution: {
+					fingerprint: 'policy-b',
+					policyId: 'p',
+					status: 'matched',
+				},
+				revision: 5,
+			})
+		);
+		await flushPromises();
+		expect(order).toStrictEqual(['prompt', 'tracking', 'prompt']);
+		tree.unmount();
+	});
+});
+
+describe('switching away from beforeConsent', () => {
+	test('a prompt waiting on Apple opens when the provider switches to manual', async () => {
+		const { fake, order } = boot(owed);
+		setAppState('inactive');
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(order).toStrictEqual([]);
+
+		tree.rerender(<App trackingRequest="manual" />);
+		await flushPromises();
+		expect(order).toStrictEqual(['prompt']);
+		expect(fake.trackingRequestCalls).toBe(0);
 		tree.unmount();
 	});
 });

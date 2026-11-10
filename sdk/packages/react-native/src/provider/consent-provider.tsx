@@ -24,7 +24,6 @@ import {
 	onConsentPresenterOutcome,
 	presentPreferences,
 	sessionPrivacyPolicyURL,
-	setBeforeConsentPrompt,
 } from '../native/presenter';
 import {
 	assertPrivacyPolicyURL,
@@ -44,8 +43,9 @@ import {
 	cancelSequence,
 	checkTrackingAtLaunch,
 	createSequenceToken,
+	releaseBeforeConsentPrompt,
 	requestSequencedTracking,
-	requestTrackingBeforeConsent,
+	syncBeforeConsentPrompt,
 } from './tracking-sequence';
 import type { ConsentTrackingRequest } from './tracking-sequence';
 
@@ -189,6 +189,8 @@ export const ConsentProvider = ({
 	// open a session, whether or not this provider presents. Idempotent per client.
 	if (inherited === null) {
 		recordConsentPresenter(client);
+		// Before any child effect can call presentConsentPrompt, for the same reason.
+		syncBeforeConsentPrompt(client, trackingRequest === 'beforeConsent');
 	}
 
 	// Only the outermost provider presents, so a nested one cannot double it. A
@@ -248,56 +250,35 @@ export const ConsentProvider = ({
 			return;
 		}
 		const detach = attachAutoPresent(client, privacyPolicyURL);
-		const token = createSequenceToken();
-		// With beforeConsent the ledger hears the trigger only once Apple has been
-		// asked or skipped, so it never opens the prompt over Apple's alert.
-		const present = async (): Promise<void> => {
-			if (
-				trackingRequest === 'beforeConsent' &&
-				!(await requestTrackingBeforeConsent(client, token))
-			) {
-				return;
-			}
-			await presentOwedPrompt(client, privacyPolicyURL);
+		const present = (): void => {
+			void presentOwedPrompt(client, privacyPolicyURL);
 		};
-		void present();
-		const unsubscribe = client.subscribe(selectOwedPromptKey, () => {
-			void present();
-		});
+		present();
+		const unsubscribe = client.subscribe(selectOwedPromptKey, present);
 		const subscription = AppState.addEventListener('change', (state): void => {
 			if (state === 'active') {
-				void present();
+				present();
 			}
 		});
 
 		return () => {
-			cancelSequence(token);
 			unsubscribe();
 			subscription.remove();
 			detach();
 		};
-	}, [client, presents, privacyPolicyURL, trackingRequest]);
+	}, [client, presents, privacyPolicyURL]);
 
 	// With beforeConsent, a prompt the app opens itself waits for Apple's alert
-	// too. Only an iOS build that can still ask registers the wait.
+	// too. The wait was installed while rendering; this keeps it through strict
+	// mode's remount and drops it once the provider has gone.
 	useEffect(() => {
-		if (
-			inherited !== null ||
-			trackingRequest !== 'beforeConsent' ||
-			client.getTrackingAuthorization() !== 'not-determined'
-		) {
+		if (inherited !== null || trackingRequest !== 'beforeConsent') {
 			return;
 		}
-		const token = createSequenceToken();
-		const remove = setBeforeConsentPrompt(async (): Promise<void> => {
-			if (selectOwedPromptKey(client.getSnapshot()) !== null) {
-				await requestTrackingBeforeConsent(client, token);
-			}
-		});
+		syncBeforeConsentPrompt(client, true);
 
 		return () => {
-			cancelSequence(token);
-			remove();
+			releaseBeforeConsentPrompt(client);
 		};
 	}, [client, inherited, trackingRequest]);
 
