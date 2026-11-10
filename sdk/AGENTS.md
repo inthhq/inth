@@ -11,7 +11,8 @@ repository lands here. If you are working in such an app, or in one that uses th
 `com.c15t` Maven artifacts, the rest of this file is monorepo contributor guidance.
 Read these instead:
 
-- Swift: `native/core-swift/README.md`, then `docs/frameworks/swift/*.mdx`.
+- Swift: `native/core-swift/AGENTS.md` (also in each released Swift package),
+  then `native/core-swift/README.md` and `docs/frameworks/swift/*.mdx`.
 - Android: `native/core-android/AGENTS.md` (also at the root of each artifact's
   sources jar), then `docs/frameworks/android/*.mdx`.
 - Both: `docs/guides/mobile-*.mdx`. The mobile SDKs are a private prerelease and
