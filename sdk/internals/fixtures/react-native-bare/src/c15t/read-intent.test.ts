@@ -11,6 +11,11 @@ describe('readIntent', () => {
 		expect(
 			readIntent('{"action":"explicit","consents":{"measurement":true}}')
 		).toEqual({ action: 'explicit', consents: { measurement: true } });
+		// Both native decoders accept an empty map, as a save that changed nothing.
+		expect(readIntent('{"action":"explicit","consents":{}}')).toEqual({
+			action: 'explicit',
+			consents: {},
+		});
 	});
 
 	it('refuses what the native decoders refuse, instead of widening it', () => {
@@ -20,6 +25,12 @@ describe('readIntent', () => {
 			'{"action":"explicit","consents":{"measurement":true},"categories":["measurement"]}',
 			'{"action":"all","consents":{"marketing":false}}',
 			'{"action":"explicit"}',
+			'{"action":"explicit","consents":[]}',
+			'{"action":"explicit","consents":null}',
+			'{"action":"explicit","consents":{"ads":true}}',
+			'{"action":"explicit","consents":{"necessary":true}}',
+			'{"action":"explicit","consents":{"measurement":"yes"}}',
+			'{"action":"explicit","consents":{"marketing":1}}',
 			'{"action":"maybe"}',
 			'not json',
 		]) {
