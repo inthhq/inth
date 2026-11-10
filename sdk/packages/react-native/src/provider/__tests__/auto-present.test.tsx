@@ -321,6 +321,118 @@ describe('changes while the native call is pending', () => {
 	});
 });
 
+describe('native failures', () => {
+	test('a refused URL is reported once and not offered again', async () => {
+		const { fake, present } = bootFake(owed);
+		present.mockImplementation(() =>
+			Promise.reject(
+				Object.assign(new Error('refused'), {
+					code: 'C15T_PRESENTER_INVALID_URL',
+				})
+			)
+		);
+		const error = vi
+			.spyOn(console, 'error')
+			.mockImplementation(() => undefined);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		expect(error).toHaveBeenCalledTimes(1);
+		expect(String(error.mock.calls[0]?.[0])).toContain('cannot show');
+
+		// Neither a foreground nor a new owed prompt retries the same URL.
+		setAppState('background');
+		setAppState('active');
+		fake.pushSnapshot(
+			buildSnapshot({
+				promptRequirement: { kind: 'choice', reason: 'policy-changed' },
+				resolution: {
+					fingerprint: 'policy-b',
+					policyId: 'p',
+					status: 'matched',
+				},
+				revision: 2,
+			})
+		);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		expect(error).toHaveBeenCalledTimes(1);
+		error.mockRestore();
+		tree.unmount();
+	});
+
+	test('a transient failure warns once per owed prompt and keeps retrying', async () => {
+		const { present } = bootFake(owed);
+		present.mockImplementation(() =>
+			Promise.reject(
+				Object.assign(new Error('no window'), {
+					code: 'C15T_PRESENTER_UNAVAILABLE',
+				})
+			)
+		);
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+
+		expect(present).toHaveBeenCalledTimes(3);
+		expect(
+			warn.mock.calls.filter((call) =>
+				String(call[0]).includes('could not open')
+			)
+		).toHaveLength(1);
+		warn.mockRestore();
+		tree.unmount();
+	});
+});
+
+describe('episodes', () => {
+	test('the same owed prompt presents again after nothing was owed', async () => {
+		const { close, fake, present } = bootFake(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		close();
+		fake.pushSnapshot(answered);
+		await flushPromises();
+		fake.pushSnapshot({ ...owed, revision: 3 });
+		await flushPromises();
+
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+
+	test('turning autoPresent on presents an already owed prompt', async () => {
+		const { present } = bootFake(owed);
+		const tree = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				privacyPolicyURL={URL}
+			>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		expect(present).not.toHaveBeenCalled();
+
+		tree.rerender(
+			<ConsentProvider
+				autoPresent
+				privacyPolicyURL={URL}
+			>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		tree.unmount();
+	});
+});
+
 describe('autoPresent={false}', () => {
 	test('presents nothing by itself', async () => {
 		const { fake, present } = bootFake(owed);
@@ -373,16 +485,23 @@ describe('privacyPolicyURL', () => {
 		expect(message).toContain('autoPresent={false}');
 	});
 
-	test('must be HTTPS', () => {
-		bootFake(owed);
+	test.each([
+		'http://example.com/privacy',
+		'https://example.com:bad',
+		'https://[',
+		'https://example.com/privacy ',
+	])('refuses %j at render, before native is asked', (url) => {
+		const { present } = bootFake(owed);
 		const message = captureErrorMessage(() =>
 			renderTree(
-				<ConsentProvider privacyPolicyURL="http://example.com/privacy">
+				<ConsentProvider privacyPolicyURL={url}>
 					<span />
 				</ConsentProvider>
 			)
 		);
 
-		expect(message).toContain('HTTPS');
+		expect(message).toContain('absolute HTTPS privacyPolicyURL');
+		expect(message).toContain(JSON.stringify(url));
+		expect(present).not.toHaveBeenCalled();
 	});
 });

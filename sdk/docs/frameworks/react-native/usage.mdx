@@ -74,6 +74,14 @@ The returned `ConsentPresenterSession` describes presentation:
 | `already-presented` | A session is already open, for example the one the provider presented. Repeated requests reuse it. |
 | `not-required` | No prompt is owed. `sessionId` is null. |
 
+A rejected call carries one of two codes. `C15T_PRESENTER_INVALID_URL` means
+the native host refused the privacy-policy URL, and the same URL will fail
+again. `C15T_PRESENTER_UNAVAILABLE` means there was no foreground window,
+Activity or installed core yet, so a later call can succeed. `ConsentProvider`
+stops auto-presenting and logs a `console.error` after the first code. After
+the second it retries on the next consent change or foreground, and warns once
+per owed prompt outside production.
+
 Opening a screen is separate from saving a choice. Subscribe with
 `onConsentPresenterOutcome(listener)` before presenting, and call the returned
 unsubscribe function when your React owner unmounts.

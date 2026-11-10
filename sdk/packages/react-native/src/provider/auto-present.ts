@@ -10,9 +10,19 @@
  */
 
 import { isPromptOwed } from '../lib/selectors';
+import { isProduction } from '../native/client';
 import type { ConsentClient } from '../native/client';
 import { presentConsentPrompt } from '../native/presenter';
 import type { ConsentSnapshot } from '../protocol';
+import { isPrivacyPolicyURL } from './privacy-policy-url';
+
+/**
+ * The code a native presenter rejects with when it refuses the privacy-policy URL.
+ *
+ * The only permanent refusal: the same URL fails the same way on every attempt. Every other
+ * rejection, such as no foreground window or a core that is still installing, is transient.
+ */
+export const PRESENTER_INVALID_URL_CODE = 'C15T_PRESENTER_INVALID_URL';
 
 /** What the provider remembers about one client's owed prompt. */
 interface AutoPresentLedger {
@@ -24,6 +34,10 @@ interface AutoPresentLedger {
 	recheck: boolean;
 	/** Nothing was owed at some point during the call, which ends that prompt's episode. */
 	endedInFlight: boolean;
+	/** A privacy-policy URL native refused for good. It is not offered again. */
+	refusedURL: string | null;
+	/** The owed prompt a transient failure was last reported for, so each is reported once. */
+	warned: string | null;
 }
 
 const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
@@ -36,6 +50,8 @@ const ledgerFor = function ledgerFor(client: ConsentClient): AutoPresentLedger {
 			inFlight: false,
 			presented: null,
 			recheck: false,
+			refusedURL: null,
+			warned: null,
 		};
 		ledgers.set(client, ledger);
 	}
@@ -65,11 +81,54 @@ export const selectOwedPromptKey = function selectOwedPromptKey(
 };
 
 /**
+ * Record a failed native call: retry a transient one, stop on a refused URL.
+ *
+ * @param ledger - The client's ledger.
+ * @param key - The owed prompt the call was for.
+ * @param privacyPolicyURL - The URL the call passed.
+ * @param error - What native rejected with.
+ */
+const reportFailure = function reportFailure(
+	ledger: AutoPresentLedger,
+	key: string,
+	privacyPolicyURL: string,
+	error: unknown
+): void {
+	const code =
+		typeof error === 'object' && error !== null && 'code' in error
+			? String(error.code)
+			: undefined;
+	if (code === PRESENTER_INVALID_URL_CODE) {
+		// Keep the key: the same URL would fail the same way on every trigger.
+		ledger.refusedURL = privacyPolicyURL;
+		// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
+		console.error(
+			`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(privacyPolicyURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+			error
+		);
+		return;
+	}
+	// No foreground window yet, or a core still installing. The next snapshot
+	// change or return to the foreground tries again.
+	ledger.presented = null;
+	if (ledger.warned !== key && !isProduction()) {
+		ledger.warned = key;
+		console.warn(
+			'c15t ConsentProvider: the native presenter could not open the owed consent prompt yet. It retries when the consent state changes or the app returns to the foreground.',
+			error
+		);
+	}
+};
+
+/**
  * Hand an owed prompt to native unless this client already did.
  *
- * A failed call, or a native answer that nothing is owed, forgets the key, so
- * the next trigger tries again. A prompt the subject dismissed keeps its key and
- * stays closed until the requirement changes.
+ * A transient failure, or a native answer that nothing is owed, forgets the key,
+ * so the next trigger tries again; outside production the first failure for each
+ * owed prompt is logged. A refused privacy-policy URL is permanent: it is logged
+ * with `console.error` and not offered to native again, because the owed prompt
+ * cannot show until the app passes a URL native accepts. A prompt the subject
+ * dismissed keeps its key and stays closed until the requirement changes.
  *
  * A trigger that arrives while a call is in flight is not dropped. It marks the
  * ledger, and once the call settles the latest snapshot gets another pass. A
@@ -97,7 +156,7 @@ export const presentOwedPrompt = async function presentOwedPrompt(
 		ledger.presented = null;
 		return;
 	}
-	if (ledger.presented === key) {
+	if (ledger.presented === key || ledger.refusedURL === privacyPolicyURL) {
 		return;
 	}
 	ledger.presented = key;
@@ -107,10 +166,8 @@ export const presentOwedPrompt = async function presentOwedPrompt(
 		if (session.status === 'not-required') {
 			ledger.presented = null;
 		}
-	} catch {
-		// No foreground window yet, or the native host refused. The next snapshot
-		// change or return to the foreground tries again.
-		ledger.presented = null;
+	} catch (error: unknown) {
+		reportFailure(ledger, key, privacyPolicyURL, error);
 	} finally {
 		ledger.inFlight = false;
 	}
@@ -124,22 +181,21 @@ export const presentOwedPrompt = async function presentOwedPrompt(
 	}
 };
 
-const HTTPS_URL = /^https:\/\/[^\s/?#]+/iu;
-
 /**
  * Refuse a privacy-policy URL the native host would reject, at render time.
  *
  * @param privacyPolicyURL - The value the app passed.
- * @throws {TypeError} When it is missing or is not an absolute HTTPS URL.
+ * @throws {TypeError} When it is missing or is a URL a native presenter would
+ *   refuse. See {@link isPrivacyPolicyURL} for the exact rules.
  */
 export const assertPrivacyPolicyURL: (
 	privacyPolicyURL: string | undefined
 ) => asserts privacyPolicyURL is string = function assertPrivacyPolicyURL(
 	privacyPolicyURL
 ) {
-	if (privacyPolicyURL === undefined || !HTTPS_URL.test(privacyPolicyURL)) {
+	if (privacyPolicyURL === undefined || !isPrivacyPolicyURL(privacyPolicyURL)) {
 		throw new TypeError(
-			'<ConsentProvider> presents the consent prompt and needs an HTTPS privacyPolicyURL. Pass privacyPolicyURL="https://…", or autoPresent={false} to present it yourself.'
+			`<ConsentProvider> presents the consent prompt and needs an absolute HTTPS privacyPolicyURL with a DNS host, such as "https://example.com/privacy". Got ${JSON.stringify(privacyPolicyURL)}. Pass a valid URL, or autoPresent={false} to present the prompt yourself.`
 		);
 	}
 };

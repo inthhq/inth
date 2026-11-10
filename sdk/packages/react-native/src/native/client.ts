@@ -331,7 +331,7 @@ const readString = function readString(
  * Read off `globalThis` because a React Native bundle may have no `process` at all,
  * depending on the polyfill the bundler chose.
  */
-const isProduction = function isProduction(): boolean {
+export const isProduction = function isProduction(): boolean {
 	return (
 		(globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
 			?.NODE_ENV === 'production'

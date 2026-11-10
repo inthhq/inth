@@ -81,8 +81,9 @@ choices, navigation, saving and retry. React receives the updated consent
 snapshot.
 
 Replace `https://example.com/privacy` with your app's privacy policy. The
-prompt links to it, so it must be an HTTPS URL; the provider throws on render
-if it is missing.
+prompt links to it. It must be an absolute HTTPS URL with an ASCII DNS host
+(write an internationalized domain in its `xn--` form). The provider throws on
+render if the URL is missing or is one a native presenter would refuse.
 
 Keep one provider mounted above your app navigation. A nested provider reuses
 the outer one and never presents a second prompt.

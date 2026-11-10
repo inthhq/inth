@@ -23,7 +23,12 @@ a second prompt.
 
 This changes existing apps. `privacyPolicyURL` is now required unless you pass
 `autoPresent={false}`. TypeScript names the missing `privacyPolicyURL`, and the
-provider throws on render without an HTTPS URL. `autoPresent` also takes a
+provider throws on render for a missing URL or one a native presenter would
+refuse: it must be an absolute `https://` URL with an ASCII DNS host and only
+RFC 3986 characters. A native presenter that refuses the URL rejects with
+`C15T_PRESENTER_INVALID_URL`; the provider logs it with `console.error` and
+stops retrying. Other refusals are `C15T_PRESENTER_UNAVAILABLE` and are
+retried. `autoPresent` also takes a
 boolean decided at runtime, as long as the URL is passed, and `children` is
 optional.
 An app that renders `ConsentBanner`, `ConsentDialog` or its own prompt should
