@@ -13,7 +13,10 @@ import { AppState } from 'react-native';
 import { isSnapshotReady } from '../lib/selectors';
 import type { ConsentDecision } from '../lib/selectors';
 import type { ConsentClient } from '../native/client';
-import type { TrackingAuthorization } from '../protocol';
+import type {
+	TrackingAuthorization,
+	TrackingRequestPayload,
+} from '../protocol';
 
 /**
  * When the provider asks for App Tracking Transparency.
@@ -59,107 +62,200 @@ export const shouldRequestTracking = function shouldRequestTracking(
 	);
 };
 
-/** Resolves once the app is active. Apple shows nothing while it is not. */
-const whenActive = (): Promise<void> =>
+/**
+ * One effect's claim on the sequence. Cleanup cancels it, and every step
+ * checks it after each wait, so a provider that unmounted or switched to
+ * `manual` never asks Apple or presents anything later.
+ */
+export interface SequenceToken {
+	cancelled: boolean;
+	/** Undo work still waiting, such as an `AppState` listener. */
+	readonly cleanups: Set<() => void>;
+}
+
+/** @returns A live token. */
+export const createSequenceToken = (): SequenceToken => ({
+	cancelled: false,
+	cleanups: new Set(),
+});
+
+/** Cancel `token` and release whatever it is waiting on. */
+export const cancelSequence = function cancelSequence(
+	token: SequenceToken
+): void {
+	token.cancelled = true;
+	for (const cleanup of token.cleanups) {
+		cleanup();
+	}
+	token.cleanups.clear();
+};
+
+/**
+ * Wait for the app to be active. Apple shows nothing while it is not.
+ *
+ * @returns `false` when `token` was cancelled first.
+ */
+const whenActive = (token: SequenceToken): Promise<boolean> =>
 	new Promise((resolve) => {
-		if (AppState.currentState === 'active') {
-			resolve();
+		if (token.cancelled || AppState.currentState === 'active') {
+			resolve(!token.cancelled);
 			return;
 		}
-		const subscription = AppState.addEventListener('change', (state) => {
+		const listener: { subscription?: { remove: () => void } } = {};
+		// Called with `true` on activation and with nothing on cancellation.
+		const settle = function settle(active = false): void {
+			listener.subscription?.remove();
+			token.cleanups.delete(settle);
+			resolve(active && !token.cancelled);
+		};
+		token.cleanups.add(settle);
+		listener.subscription = AppState.addEventListener('change', (state) => {
 			if (state === 'active') {
-				subscription.remove();
-				resolve();
+				settle(true);
 			}
 		});
 	});
 
-const inFlight = new WeakSet<ConsentClient>();
+/** Apple's request in flight per client, shared so two effects ask once. */
+const requests = new WeakMap<ConsentClient, Promise<TrackingRequestPayload>>();
+
+const askApple = function askApple(
+	client: ConsentClient
+): Promise<TrackingRequestPayload> {
+	let request = requests.get(client);
+	if (request === undefined) {
+		request = (async (): Promise<TrackingRequestPayload> => {
+			try {
+				return await client.requestTracking();
+			} finally {
+				requests.delete(client);
+			}
+		})();
+		requests.set(client, request);
+	}
+	return request;
+};
 
 /**
- * Ask Apple at `stage` if the rule says so, once at a time per client.
+ * How one sequenced step ended. `paused` means Apple's EU sheet was closed
+ * with Additional Information, so the caller opens privacy settings.
+ */
+export type SequenceResult = 'answered' | 'cancelled' | 'paused' | 'skipped';
+
+/**
+ * Ask Apple at `stage` if the rule says so.
  *
  * @param client - The client whose snapshot and tracking answer decide.
  * @param timing - The provider's `trackingRequest`.
  * @param stage - Where the flow is.
- * @returns `true` when Apple paused on Additional Information after a
- *   prompt, so the caller should open privacy settings.
+ * @param token - The calling effect's claim. Checked after every wait.
+ * @returns How the step ended.
  */
 export const requestSequencedTracking = async function requestSequencedTracking(
 	client: ConsentClient,
 	timing: ConsentTrackingRequest,
-	stage: ConsentTrackingStage
-): Promise<boolean> {
-	if (inFlight.has(client)) {
-		return false;
+	stage: ConsentTrackingStage,
+	token: SequenceToken
+): Promise<SequenceResult> {
+	if (!(await whenActive(token))) {
+		return 'cancelled';
 	}
-	inFlight.add(client);
+	if (
+		!shouldRequestTracking(
+			timing,
+			stage,
+			client.refreshTrackingAuthorization(),
+			client.decision('marketing')
+		)
+	) {
+		return 'skipped';
+	}
+	let answer: TrackingRequestPayload;
 	try {
-		await whenActive();
-		if (
-			!shouldRequestTracking(
-				timing,
-				stage,
-				client.refreshTrackingAuthorization(),
-				client.decision('marketing')
-			)
-		) {
-			return false;
-		}
-		const answer = await client.requestTracking();
-		return stage === 'afterPrompt' && answer.stage === 'additional-information';
+		answer = await askApple(client);
 	} catch {
 		// A build without the prompt string, or no ATT at all. Consent is unaffected.
-		return false;
-	} finally {
-		inFlight.delete(client);
+		answer = { stage: 'final', status: 'denied' };
 	}
+	if (token.cancelled) {
+		return 'cancelled';
+	}
+	return answer.stage === 'additional-information' ? 'paused' : 'answered';
 };
 
-const beforeConsent = new WeakMap<ConsentClient, Promise<unknown>>();
+const beforeConsentDone = new WeakSet<ConsentClient>();
 
 /**
  * Ask Apple once before the first prompt this launch, for `beforeConsent`.
  *
  * @param client - The client to ask for.
- * @returns Settles when the prompt may present.
+ * @param token - The calling effect's claim.
+ * @returns `false` when `token` was cancelled, so the caller presents nothing.
  */
 export const requestTrackingBeforeConsent =
-	function requestTrackingBeforeConsent(
-		client: ConsentClient
-	): Promise<unknown> {
-		let pending = beforeConsent.get(client);
-		if (pending === undefined) {
-			pending = requestSequencedTracking(
-				client,
-				'beforeConsent',
-				'beforePrompt'
-			);
-			beforeConsent.set(client, pending);
+	async function requestTrackingBeforeConsent(
+		client: ConsentClient,
+		token: SequenceToken
+	): Promise<boolean> {
+		if (beforeConsentDone.has(client)) {
+			return !token.cancelled;
 		}
-		return pending;
+		const result = await requestSequencedTracking(
+			client,
+			'beforeConsent',
+			'beforePrompt',
+			token
+		);
+		if (result === 'cancelled') {
+			return false;
+		}
+		beforeConsentDone.add(client);
+		return true;
 	};
 
-const launchChecked = new WeakSet<ConsentClient>();
+/** Whether the first ready snapshot owed no prompt, so launch still asks. */
+const launchAsk = new WeakMap<ConsentClient, boolean>();
 
 /**
  * For `afterConsent`, ask once per launch when the core first has an answer
  * and no prompt is owed: a stored choice that grants marketing, from a launch
- * where Apple was never asked.
+ * where Apple was never asked. A cancelled ask stays owed for the next effect.
  *
  * @param client - The client to check.
- * @returns Whether a launch check ran, so the caller can stop listening.
+ * @param token - The calling effect's claim.
+ * @param onPaused - Opens privacy settings after Additional Information.
+ * @returns Whether the launch decision is made, so the caller can stop listening.
  */
 export const checkTrackingAtLaunch = function checkTrackingAtLaunch(
-	client: ConsentClient
+	client: ConsentClient,
+	token: SequenceToken,
+	onPaused: () => void
 ): boolean {
-	const snapshot = client.getSnapshot();
-	if (launchChecked.has(client) || !isSnapshotReady(snapshot)) {
-		return launchChecked.has(client);
+	let owed = launchAsk.get(client);
+	if (owed === undefined) {
+		const snapshot = client.getSnapshot();
+		if (!isSnapshotReady(snapshot)) {
+			return false;
+		}
+		owed = snapshot.promptRequirement.kind === 'none';
+		launchAsk.set(client, owed);
 	}
-	launchChecked.add(client);
-	if (snapshot.promptRequirement.kind === 'none') {
-		void requestSequencedTracking(client, 'afterConsent', 'afterPrompt');
+	const ask = async (): Promise<void> => {
+		const result = await requestSequencedTracking(
+			client,
+			'afterConsent',
+			'afterPrompt',
+			token
+		);
+		if (result !== 'cancelled') {
+			launchAsk.set(client, false);
+		}
+		if (result === 'paused') {
+			onPaused();
+		}
+	};
+	if (owed) {
+		void ask();
 	}
 	return true;
 };

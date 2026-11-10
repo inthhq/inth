@@ -67,6 +67,33 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 	};
 };
 
+/** The open native session and the privacy-policy URL it was opened with. */
+let openSession: { readonly id: string; readonly url: string } | null = null;
+
+const remember = (
+	session: ConsentPresenterSession,
+	url: string
+): ConsentPresenterSession => {
+	if (session.status === 'presented' && session.sessionId !== null) {
+		openSession = { id: session.sessionId, url };
+	}
+	return session;
+};
+
+/**
+ * The privacy-policy URL a session was opened with. Every native outcome comes
+ * from a session JavaScript opened with a URL, so a step that follows the
+ * outcome, such as opening settings, always has one.
+ *
+ * @internal
+ * @param sessionId - The outcome's session.
+ * @returns The URL, or `undefined` for a session this bundle did not open.
+ */
+export const sessionPrivacyPolicyURL = (
+	sessionId: string
+): string | undefined =>
+	openSession?.id === sessionId ? openSession.url : undefined;
+
 /** Open an owed native prompt on the installed engine.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
  * @returns Presentation identity. Decisions arrive through onConsentPresenterOutcome.
@@ -74,7 +101,10 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 export const presentConsentPrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
-	parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL));
+	remember(
+		parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL)),
+		privacyPolicyURL
+	);
 
 /** Open native standing preferences, including when no prompt is owed.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
@@ -83,7 +113,10 @@ export const presentConsentPrompt = async (
 export const presentPreferences = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
-	parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL));
+	remember(
+		parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
+		privacyPolicyURL
+	);
 
 /** Request closing one native session. Dirty drafts require native confirmation.
  * @param sessionId - Identity returned when the session opened. Obsolete IDs do nothing.

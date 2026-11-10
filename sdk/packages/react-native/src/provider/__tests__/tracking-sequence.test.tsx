@@ -4,6 +4,7 @@
  * `beforeConsent`, and never by itself with `manual`.
  */
 
+import { StrictMode } from 'react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -20,6 +21,7 @@ import {
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
+import { presentConsentPrompt } from '../../native/presenter';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
 import { ConsentProvider } from '../consent-provider';
 import type { ConsentProviderProps } from '../consent-provider';
@@ -321,6 +323,122 @@ describe('stored consent', () => {
 		await flushPromises();
 		expect(fake.trackingRequestCalls).toBe(1);
 		expect(fake.commitIntents).toStrictEqual([]);
+		tree.unmount();
+	});
+});
+
+describe('a configuration that changed while a step waited', () => {
+	test('an unmounted provider neither asks nor presents when the app returns', async () => {
+		const { fake, order } = boot(owed);
+		setAppState('inactive');
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		tree.unmount();
+
+		setAppState('active');
+		await flushPromises();
+		expect(order).toStrictEqual([]);
+		expect(fake.trackingRequestCalls).toBe(0);
+	});
+
+	test('switching to manual cancels an ask waiting for the app to return', async () => {
+		const { fake } = boot(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		setAppState('inactive');
+		finish(fake, saved(true));
+		await flushPromises();
+
+		tree.rerender(<App trackingRequest="manual" />);
+		setAppState('active');
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+	});
+
+	test('switching to manual while Apple answers does not open settings', async () => {
+		const { fake, order } = boot(owed);
+		let answer = (): void => undefined;
+		const request = fake.requestTrackingAuthorization;
+		fake.requestTrackingAuthorization = vi.fn(
+			() =>
+				new Promise<string>((resolve) => {
+					answer = () => {
+						resolve(
+							JSON.stringify({
+								presentation: 'expanded',
+								stage: 'additional-information',
+								status: 'not-determined',
+							})
+						);
+					};
+					void request();
+				})
+		);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, saved(true));
+		await flushPromises();
+		expect(fake.requestTrackingAuthorization).toHaveBeenCalledTimes(1);
+
+		tree.rerender(<App trackingRequest="manual" />);
+		answer();
+		await flushPromises();
+		expect(order).not.toContain('preferences');
+	});
+
+	test('strict mode still asks once before the prompt with beforeConsent', async () => {
+		const { order } = boot(owed);
+		const tree = renderTree(
+			<StrictMode>
+				<App trackingRequest="beforeConsent" />
+			</StrictMode>
+		);
+		await flushPromises();
+		expect(order).toStrictEqual(['tracking', 'prompt']);
+		tree.unmount();
+	});
+
+	test('strict mode still asks at launch for a stored marketing grant', async () => {
+		const { order } = boot(saved(true));
+		const tree = renderTree(
+			<StrictMode>
+				<App />
+			</StrictMode>
+		);
+		await flushPromises();
+		expect(order).toStrictEqual(['tracking']);
+		tree.unmount();
+	});
+});
+
+describe('Additional Information without a provider URL', () => {
+	test('a launch-time ask opens settings with the provider URL', async () => {
+		const { fake, preferences } = boot(saved(true));
+		fake.setTrackingRequestReply({
+			presentation: 'expanded',
+			stage: 'additional-information',
+			status: 'not-determined',
+		});
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(preferences).toHaveBeenCalledWith(URL);
+		tree.unmount();
+	});
+
+	test('opens settings with the URL the app passed when it opened the prompt', async () => {
+		const { fake, preferences } = boot(owed);
+		fake.setTrackingRequestReply({
+			presentation: 'expanded',
+			stage: 'additional-information',
+			status: 'not-determined',
+		});
+		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		await flushPromises();
+		await presentConsentPrompt('https://app.example/privacy');
+
+		finish(fake, saved(true));
+		await flushPromises();
+		expect(preferences).toHaveBeenCalledWith('https://app.example/privacy');
 		tree.unmount();
 	});
 });

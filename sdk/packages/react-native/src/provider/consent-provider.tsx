@@ -23,6 +23,7 @@ import { getConsentClient } from '../native/client';
 import {
 	onConsentPresenterOutcome,
 	presentPreferences,
+	sessionPrivacyPolicyURL,
 } from '../native/presenter';
 import {
 	assertPrivacyPolicyURL,
@@ -36,7 +37,9 @@ import {
 } from './safe-area-context';
 import type { ConsentSafeAreaInsets } from './safe-area-context';
 import {
+	cancelSequence,
 	checkTrackingAtLaunch,
+	createSequenceToken,
 	requestSequencedTracking,
 	requestTrackingBeforeConsent,
 } from './tracking-sequence';
@@ -228,9 +231,13 @@ export const ConsentProvider = ({
 		if (!presents || privacyPolicyURL === undefined) {
 			return;
 		}
+		const token = createSequenceToken();
 		const present = async (): Promise<void> => {
-			if (trackingRequest === 'beforeConsent') {
-				await requestTrackingBeforeConsent(client);
+			if (
+				trackingRequest === 'beforeConsent' &&
+				!(await requestTrackingBeforeConsent(client, token))
+			) {
+				return;
 			}
 			await presentOwedPrompt(client, privacyPolicyURL);
 		};
@@ -245,6 +252,7 @@ export const ConsentProvider = ({
 		});
 
 		return () => {
+			cancelSequence(token);
 			unsubscribe();
 			subscription.remove();
 		};
@@ -262,35 +270,60 @@ export const ConsentProvider = ({
 		) {
 			return;
 		}
-		const afterPrompt = async (): Promise<void> => {
-			const paused = await requestSequencedTracking(
+		const token = createSequenceToken();
+		// Additional Information on Apple's EU sheet asks for the app's own
+		// controls. Closing them runs this rule again.
+		const openSettings = async (url: string): Promise<void> => {
+			if (token.cancelled) {
+				return;
+			}
+			try {
+				await presentPreferences(url);
+			} catch {
+				// No foreground window. The person can open settings themselves.
+			}
+		};
+		const afterPrompt = async (url: string | undefined): Promise<void> => {
+			const result = await requestSequencedTracking(
 				client,
 				trackingRequest,
-				'afterPrompt'
+				'afterPrompt',
+				token
 			);
-			// Additional Information on Apple's EU sheet asks for the app's own
-			// controls. Closing them runs this rule again.
-			if (paused && privacyPolicyURL !== undefined) {
-				await presentPreferences(privacyPolicyURL).catch(() => null);
+			if (result === 'paused' && url !== undefined) {
+				await openSettings(url);
 			}
 		};
 		const removeOutcome = onConsentPresenterOutcome((outcome): void => {
-			if (outcome.kind !== 'unavailable') {
-				void afterPrompt();
+			if (outcome.kind === 'unavailable') {
+				return;
 			}
+			// The session was opened with a URL, also with autoPresent off.
+			const url =
+				sessionPrivacyPolicyURL(outcome.sessionId) ?? privacyPolicyURL;
+			void afterPrompt(url);
 		});
 		// A stored choice still in force owes no prompt this launch, so the rule
-		// applies as soon as the core has an answer.
+		// applies as soon as the core has an answer. Only a presenting provider
+		// does this, and it always has a URL.
 		let stopLaunch = (): void => undefined;
-		if (presents && !checkTrackingAtLaunch(client)) {
-			stopLaunch = client.subscribe(isSnapshotReady, () => {
-				if (checkTrackingAtLaunch(client)) {
-					stopLaunch();
-				}
-			});
+		if (presents && privacyPolicyURL !== undefined) {
+			const launchURL = privacyPolicyURL;
+			const check = (): boolean =>
+				checkTrackingAtLaunch(client, token, () => {
+					void openSettings(launchURL);
+				});
+			if (!check()) {
+				stopLaunch = client.subscribe(isSnapshotReady, () => {
+					if (check()) {
+						stopLaunch();
+					}
+				});
+			}
 		}
 
 		return () => {
+			cancelSequence(token);
 			removeOutcome();
 			stopLaunch();
 		};
