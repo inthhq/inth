@@ -226,6 +226,30 @@ describe('c15t setup in a mobile project', () => {
 		);
 	});
 
+	it('tells an Expo app in custom mode to install the engine itself', async () => {
+		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
+
+		const steps = (
+			await setup(root, ['custom', '--backend-url', 'https://a.test'])
+		).data.steps.join('\n');
+
+		expect(steps).toContain('Custom mode starts no consent engine at launch.');
+		expect(steps).toContain(
+			'"When your app owns native installation" in node_modules/@c15t/react-native/docs/frameworks/react-native/bare.md'
+		);
+		expect(
+			await readFile(
+				path.join(REPO, 'docs/frameworks/react-native/bare.mdx'),
+				'utf8'
+			)
+		).toContain('## When your app owns native installation');
+		// Other modes start the engine from the plugin, so they get no such step.
+		const hosted = (
+			await setup(root, ['--backend-url', 'https://a.test', '--overwrite'])
+		).data.steps.join('\n');
+		expect(hosted).not.toContain('Custom mode starts no consent engine');
+	});
+
 	it('prints the entry for a dynamic app config instead of editing it', async () => {
 		const root = await project({
 			'app.config.ts': 'export default {};\n',

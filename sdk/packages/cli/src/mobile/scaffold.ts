@@ -372,6 +372,13 @@ export const planReactNativeSetup = (
 	steps.push(wrapStep(files, providerFile, options.privacyPolicyURL));
 
 	if (project.kind === 'expo') {
+		if (options.mode === 'custom') {
+			// The plugin turns automatic start-up off in custom mode, and the provider
+			// only attaches to an engine that already exists.
+			steps.push(
+				`Custom mode starts no consent engine at launch. Install one in native code that runs before React starts, with your own transport: see "When your app owns native installation" in ${RN_DOCS}/frameworks/react-native/bare.md, and "Use your own transport" in ${RN_DOCS}/frameworks/swift/headless.md and ${RN_DOCS}/frameworks/android/configuration.md. Expo regenerates native code on prebuild, so add that code through a config plugin of your own.`
+			);
+		}
 		steps.push(
 			`Android resolves the native SDK from the private Maven repository you were given. Add it with the plugin's androidMavenRepository option. See ${RN_DOCS}/frameworks/react-native/expo.md.`
 		);
