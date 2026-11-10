@@ -17,3 +17,7 @@ A debug prebuild that cannot reach the backend removes a manifest an earlier
 prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` now
 narrows the bundled GVL, and a `policyResource` that expires before it was
 issued is refused.
+
+Prebuild now refuses a `policyResource` the native SDKs would discard, such as
+one without a manifest revision or policy packs, or with a vendor list devices
+cannot use.

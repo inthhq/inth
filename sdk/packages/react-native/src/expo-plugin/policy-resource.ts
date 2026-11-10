@@ -7,6 +7,129 @@ import { C15tPluginError } from './errors';
 /** The native readers use a fixed filename inside the app's resources/assets. */
 export const POLICY_RESOURCE_NAME = 'c15t-policy.json';
 
+const PAYLOAD_KEYS = new Set([
+	'defaultLanguage',
+	'disclosures',
+	'endpoint',
+	'expiresAt',
+	'issuedAt',
+	'manifestRevision',
+	'policyPacks',
+	'requiresAtp',
+	'schemaVersion',
+	'tenantId',
+]);
+
+type Fields = Record<string, unknown>;
+
+const isRecord = (value: unknown): value is Fields =>
+	value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isWholeNumberIn = (value: unknown, min: number, max: number) =>
+	Number.isSafeInteger(value) &&
+	(value as number) >= min &&
+	(value as number) <= max;
+
+/** The native vendor-list gate, and the rule that a list's fetch time precedes issue. */
+const gvlProblem = function gvlProblem(
+	gvl: unknown,
+	issuedAt: number
+): string | null {
+	if (gvl === undefined) {
+		return null;
+	}
+	const data = isRecord(gvl) ? gvl.data : undefined;
+	if (
+		!isRecord(gvl) ||
+		!isRecord(data) ||
+		!isWholeNumberIn(data.vendorListVersion, 1, Number.MAX_SAFE_INTEGER) ||
+		!isWholeNumberIn(data.tcfPolicyVersion, 1, Number.MAX_SAFE_INTEGER) ||
+		!isRecord(data.purposes) ||
+		!isRecord(data.vendors)
+	) {
+		return 'its vendor list is one devices discard';
+	}
+	return isWholeNumberIn(gvl.fetchedAt, 0, issuedAt)
+		? null
+		: 'its vendor list has no fetch time before the issue time';
+};
+
+const payloadProblem = function payloadProblem(
+	payload: Fields,
+	endpoint: string | null,
+	now: number
+): string | null {
+	if (Object.keys(payload).some((key) => !PAYLOAD_KEYS.has(key))) {
+		return 'it has unsupported fields';
+	}
+	if (payload.schemaVersion !== 1) {
+		return 'its schemaVersion is not 1';
+	}
+	if (payload.endpoint !== endpoint?.replace(/\/+$/u, '')) {
+		return 'it belongs to a different backendURL';
+	}
+	const { expiresAt, issuedAt } = payload;
+	if (!isWholeNumberIn(issuedAt, 0, now)) {
+		return 'it is issued in the future or has no valid issue time';
+	}
+	if (
+		!Number.isSafeInteger(expiresAt) ||
+		(expiresAt as number) <= (issuedAt as number)
+	) {
+		return 'it expires before it was issued';
+	}
+	if (
+		typeof payload.manifestRevision !== 'string' ||
+		payload.manifestRevision === ''
+	) {
+		return 'it has no manifest revision';
+	}
+	if (typeof payload.defaultLanguage !== 'string') {
+		return 'it has no default language';
+	}
+	if (!Array.isArray(payload.policyPacks) || payload.policyPacks.length === 0) {
+		return 'it has no policy packs';
+	}
+	const disclosures = isRecord(payload.disclosures) ? payload.disclosures : {};
+	return gvlProblem(disclosures.gvl, issuedAt as number);
+};
+
+/**
+ * Why a native core would refuse this resource, or `null`. Structural checks
+ * only: the plugin cannot load the web policy code, so policy wires and rule
+ * matching are left to the CLI, which checks them at export.
+ */
+export const policyResourceProblem = function policyResourceProblem(
+	text: string,
+	endpoint: string | null,
+	now: number
+): string | null {
+	let wrapper: unknown;
+	try {
+		wrapper = JSON.parse(text);
+	} catch {
+		return 'it is not JSON';
+	}
+	if (
+		!isRecord(wrapper) ||
+		Object.keys(wrapper).sort().join(',') !== 'payload,sha256' ||
+		typeof wrapper.payload !== 'string' ||
+		wrapper.sha256 !==
+			createHash('sha256').update(wrapper.payload).digest('hex')
+	) {
+		return 'its checksum or wrapper is not what the export writes';
+	}
+	let payload: unknown;
+	try {
+		payload = JSON.parse(wrapper.payload);
+	} catch {
+		return 'its payload is not JSON';
+	}
+	return isRecord(payload)
+		? payloadProblem(payload, endpoint, now)
+		: 'its payload is not an object';
+};
+
 /** Copy an existing build export without changing any policy/disclosure timestamp. */
 export const embedPolicyResource = async (
 	projectRoot: string,
@@ -15,29 +138,23 @@ export const embedPolicyResource = async (
 	destination: string
 ): Promise<void> => {
 	const path = resolve(projectRoot, source);
-	const wrapper = JSON.parse(await readFile(path, 'utf8'));
-	const payload = JSON.parse(wrapper.payload);
-	if (
-		wrapper.sha256 !==
-			createHash('sha256').update(wrapper.payload).digest('hex') ||
-		payload.schemaVersion !== 1 ||
-		payload.endpoint !== endpoint?.replace(/\/+$/u, '') ||
-		!Number.isSafeInteger(payload.issuedAt) ||
-		!Number.isSafeInteger(payload.expiresAt) ||
-		payload.expiresAt <= payload.issuedAt ||
-		payload.issuedAt > Date.now()
-	) {
-		// An expired resource is usable; one that expires before it was issued is not,
-		// and both native cores would discard it.
+	const text = await readFile(path, 'utf8');
+	const now = Date.now();
+	const problem = policyResourceProblem(text, endpoint, now);
+	if (problem !== null) {
+		// An expired resource is usable; one a device would discard is not.
 		throw new C15tPluginError(
-			'policyResource is invalid, expires before it was issued, is issued in the future, or belongs to a different backendURL. Re-export it before prebuild.'
+			`policyResource is invalid: ${problem}. Re-export it before prebuild.`
 		);
 	}
-	if (payload.expiresAt <= Date.now()) {
+	const { expiresAt } = JSON.parse(JSON.parse(text).payload) as {
+		expiresAt: number;
+	};
+	if (expiresAt <= now) {
 		// An expired manifest still prompts and records choices; devices report
 		// policyStale until a live /init replaces it.
 		console.warn(
-			`c15t: ${source} expired on ${new Date(payload.expiresAt).toISOString()}. ` +
+			`c15t: ${source} expired on ${new Date(expiresAt).toISOString()}. ` +
 				'Devices will report policyStale until they reach the backend. Re-export it.'
 		);
 	}

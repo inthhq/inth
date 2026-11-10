@@ -10,6 +10,8 @@ import {
 } from '@c15t/schema';
 import { enTranslations } from '@c15t/translations';
 
+import { gvlProblem, resourceProblem } from './resource-check';
+
 /**
  * The backend could not be reached, or answered as an unavailable server would.
  *
@@ -74,16 +76,15 @@ const exportDisclosures = async (
 			};
 		// Authority uses the source timestamp, never the time this export ran.
 		const fetchedAt = Date.parse(data.lastUpdated ?? '');
+		// The native vendor-list gate: a list a device would discard fails the export.
+		const listProblem = gvlProblem(data);
 		if (
 			!Number.isFinite(fetchedAt) ||
 			fetchedAt > now ||
-			!Number.isSafeInteger(data.vendorListVersion) ||
-			!Number.isSafeInteger(data.tcfPolicyVersion) ||
-			!data.purposes ||
-			!data.vendors
+			listProblem !== null
 		) {
 			throw new Error(
-				'GVL requires valid original lastUpdated, versions and disclosure content.'
+				`GVL requires valid original lastUpdated, versions and disclosure content${listProblem === null ? '' : `: ${listProblem}`}.`
 			);
 		}
 		disclosures.gvl = {
@@ -247,6 +248,13 @@ export const exportMobilePolicy = async (options: {
 		options.vendors,
 		now
 	);
+	// Both native readers discard a resource without a revision to report.
+	if (
+		typeof manifest.revision !== 'string' ||
+		manifest.revision.trim() === ''
+	) {
+		throw new Error('The manifest needs a non-empty revision to bundle.');
+	}
 	const payload = JSON.stringify({
 		defaultLanguage: 'en',
 		disclosures,
@@ -259,9 +267,17 @@ export const exportMobilePolicy = async (options: {
 		schemaVersion: 1,
 		tenantId: manifest.tenantId,
 	});
-	return `${JSON.stringify(
+	const resource = `${JSON.stringify(
 		{ payload, sha256: createHash('sha256').update(payload).digest('hex') },
 		null,
 		2
 	)}\n`;
+	// Never write a resource a device would discard.
+	const problem = resourceProblem(resource, { endpoint, now });
+	if (problem !== null) {
+		throw new Error(
+			`The exported resource would be refused on devices: ${problem}.`
+		);
+	}
+	return resource;
 };

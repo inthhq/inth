@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
@@ -6,6 +5,7 @@ import {
 	exportMobilePolicy,
 	ManifestUnreachableError,
 } from './export-manifest';
+import { resourceProblem } from './resource-check';
 
 /** Release builds fail when the manifest fetch fails; debug builds warn and continue. */
 export type ManifestBuild = 'release' | 'debug';
@@ -34,26 +34,18 @@ export type BundleManifestResult =
 const DAY_MS = 86_400_000;
 const DEFAULT_EXPIRY_DAYS = 30;
 
-/** The copy at `path`, if it is an intact resource for this backend. */
+/**
+ * The copy at `path`, if a native core would use it for this backend: the same
+ * checks the export itself passes, so a reused copy is never one a device discards.
+ */
 const readLastCopy = async (
 	path: string,
-	backendUrl: string
+	backendUrl: string,
+	now: number
 ): Promise<string | null> => {
 	try {
 		const text = await readFile(path, 'utf8');
-		const wrapper = JSON.parse(text) as { payload?: unknown; sha256?: unknown };
-		if (
-			typeof wrapper.payload !== 'string' ||
-			wrapper.sha256 !==
-				createHash('sha256').update(wrapper.payload).digest('hex')
-		) {
-			return null;
-		}
-		const payload = JSON.parse(wrapper.payload) as {
-			endpoint?: unknown;
-			schemaVersion?: unknown;
-		};
-		return payload.schemaVersion === 1 && payload.endpoint === backendUrl
+		return resourceProblem(text, { endpoint: backendUrl, now }) === null
 			? text
 			: null;
 	} catch {
@@ -108,7 +100,7 @@ export const bundleMobileManifest = async (
 		failure = error.message;
 	}
 	if (options.allowStaleManifest === true) {
-		if ((await readLastCopy(options.out, backendUrl)) !== null) {
+		if ((await readLastCopy(options.out, backendUrl, now)) !== null) {
 			return {
 				out: options.out,
 				status: 'reused',

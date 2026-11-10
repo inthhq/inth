@@ -145,23 +145,50 @@ narrows the GVL in the bundled manifest.
 Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest)
 as a build step and point the platform at the file:
 
+Any configuration or build type you do not name as debug counts as release,
+so a production build never quietly skips its manifest. Add your other debug
+configurations to the `Debug` line.
+
 ```sh title="Xcode Run Script phase, after Copy Bundle Resources"
-BUILD=$([ "$CONFIGURATION" = "Release" ] && echo release || echo debug)
+case "$CONFIGURATION" in
+  Debug) BUILD=debug ;;
+  *) BUILD=release ;;
+esac
 npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
   --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/c15t-policy.json" \
   --build "$BUILD"
 ```
 
+On Android, register the fetch through the variant API, so every variant,
+product flavors included, gets its own copy as a generated asset:
+
 ```groovy title="android/app/build.gradle"
-['Debug', 'Release'].each { variant ->
-    def fetch = tasks.register("c15tManifest${variant}", Exec) {
-        workingDir rootProject.projectDir.parentFile
-        commandLine 'npx', '@c15t/cli', 'mobile-manifest',
-            '--backend-url', 'https://your-project.inth.app',
-            '--out', "${projectDir}/src/main/assets/c15t-policy.json",
-            '--build', variant.toLowerCase()
+abstract class C15tManifestTask extends DefaultTask {
+    @Input abstract Property<String> getBuild()
+    @Internal abstract DirectoryProperty getAppRoot()
+    @OutputDirectory abstract DirectoryProperty getOutputDir()
+    @Inject abstract ExecOperations getExecOperations()
+
+    @TaskAction
+    void fetch() {
+        def out = new File(outputDir.get().asFile, 'c15t-policy.json')
+        execOperations.exec {
+            workingDir appRoot.get().asFile
+            commandLine 'npx', '@c15t/cli', 'mobile-manifest',
+                '--backend-url', 'https://your-project.inth.app',
+                '--out', out.path, '--build', build.get()
+        }
     }
-    tasks.matching { it.name == "pre${variant}Build" }.configureEach { dependsOn fetch }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def fetch = tasks.register("c15tManifest${variant.name.capitalize()}", C15tManifestTask) {
+            build = variant.buildType == 'debug' ? 'debug' : 'release'
+            appRoot = rootProject.layout.projectDirectory.dir('..')
+        }
+        variant.sources.assets.addGeneratedSourceDirectory(fetch) { it.outputDir }
+    }
 }
 ```
 

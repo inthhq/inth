@@ -50,6 +50,28 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertNil(result.response.policySnapshotToken)
         }
     }
+    func testEveryMalformedSharedResourceIsRefusedOrCarriesNoUsableVendorList() throws {
+        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("protocol/bundled-policy/invalid-resources.json")
+        let fixture = try XCTUnwrap(C15tJSON.parse(Data(contentsOf: url)))
+        var problems: [String] = []
+        for row in try XCTUnwrap(fixture["cases"]?.arrayValue) {
+            let name = row["name"]?.stringValue ?? "?"
+            let data = try XCTUnwrap(C15tJSON.encode(row["resource"] ?? .null))
+            let selection = BundledPolicyResource(data: data, endpoint: row["endpoint"]?.stringValue ?? "")
+                .resolve(overrides: .default(), now: row["now"]?.intValue ?? 0)
+            if row["expect"]?.stringValue == "refused" {
+                if selection != nil { problems.append("\(name): accepted") }
+            } else if let selection, selection.response.gvl != nil, selection.gvlFetchedAt != nil {
+                problems.append("\(name): usable list")
+            } else if selection == nil {
+                problems.append("\(name): refused")
+            }
+        }
+        XCTAssertEqual(problems, [])
+    }
+
     func testInvalidAuthorityCannotBootstrap() throws {
         let now = try vector["now"]!.intValue!
         let variants: [(inout [String: JSONValue]) -> Void] = [

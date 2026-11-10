@@ -160,9 +160,12 @@ describe('bundling the manifest at prebuild', () => {
 				expiresAt: number
 			) => {
 				const payload = JSON.stringify({
+					defaultLanguage: 'en',
 					endpoint: backendURL,
 					expiresAt,
 					issuedAt,
+					manifestRevision: 'r1',
+					policyPacks: [{}],
 					schemaVersion: 1,
 				});
 				await writeFile(
