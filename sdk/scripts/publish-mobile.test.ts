@@ -136,6 +136,7 @@ beforeEach(async () => {
 		'// swift-tools-version:5.9\nimport PackageDescription\nlet package = Package(name: "C15tCore", targets: [.target(name: "C15tCore")])\n'
 	);
 	write('native/core-swift/README.md', '# Swift SDK\n');
+	write('native/core-swift/AGENTS.md', '# Swift agent notes\n');
 	write(
 		'native/core-swift/Sources/C15tCore/Transports.swift',
 		`extension C15t { public static let version = "${version}" }\n`

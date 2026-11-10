@@ -53,10 +53,12 @@ const fixture = () => {
 		'LICENSE.md': 'Apache License 2.0\n',
 		NOTICE: 'c15t attribution\n',
 		'Package.swift': '// swift-tools-version:5.9\nimport PackageDescription\n',
+		'native/core-android/AGENTS.md': '# Android agent notes fixture\n',
 		'native/core-android/build.gradle.kts': '// Native build\n',
 		'native/core-android/gradle/wrapper/gradle-wrapper.properties':
 			'distributionUrl=fixture\n',
 		'native/core-android/settings.gradle.kts': '// Native modules\n',
+		'native/core-swift/AGENTS.md': '# Swift agent notes fixture\n',
 		'native/core-swift/Package.swift':
 			'// swift-tools-version:5.9\nimport PackageDescription\n',
 		'native/core-swift/README.md': '# Native Swift fixture\n',
@@ -414,6 +416,24 @@ describe('independent native version drafts', () => {
 				'c15t.native.version=2.4.0'
 			);
 			expect(existsSync(join(root, lockPath))).toBe(false);
+		}
+	);
+});
+
+describe('native source digests', () => {
+	it.each([
+		['swift', 'native/core-swift/AGENTS.md'],
+		['android', 'native/core-android/AGENTS.md'],
+	] as const)(
+		'change when the %s agent notes that ship with a release change',
+		(kind, path) => {
+			const root = fixture();
+			const before = nativeSourceDigest(root, kind);
+			writeFileSync(join(root, path), '# Changed agent notes\n');
+			// A tag whose notes differ must not match the locked digest. Android hashes
+			// every tracked file under native/core-android, so its notes were covered;
+			// Swift lists its inputs, so its notes need their own entry.
+			expect(nativeSourceDigest(root, kind)).not.toBe(before);
 		}
 	);
 });
