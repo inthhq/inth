@@ -62,15 +62,17 @@ public final class FirebaseAnalyticsIntegration: @unchecked Sendable {
             core: core,
             categories: [.measurement, .marketing],
             read: { FirebaseAnalyticsConsent(GoogleConsentMode.consent($0)) }
-        ) { _, consent, current in
+        ) { _, _, current in
+            // Consent is read when sent, so a call that returns late sends current state.
             setCollectionEnabled(false)
-            setConsent(consent)
-            if consent.analyticsStorage && current().analyticsStorage { setCollectionEnabled(true) }
+            setConsent(current())
+            if current().analyticsStorage { setCollectionEnabled(true) }
         }
     }
 
     /// Stops collection, denies every Firebase consent type and unsubscribes.
-    /// Safe to call repeatedly. A concurrent update finishes before cancellation returns.
+    /// Safe to call repeatedly. Cancellation does not wait for an update blocked in a
+    /// vendor call on another thread; that update reapplies the denial when it returns.
     public func cancel() { binding.cancel() }
 
     /// Reapplies current permission after app code resets Firebase's own settings.
@@ -201,15 +203,25 @@ public final class SentryReplayIntegration: @unchecked Sendable {
 /// state to apply and a way to read current state again. The last state is `nil` on
 /// the first call and after `sync()` or `cancel()`, so a vendor whose start call must
 /// run once per grant can tell a new grant from an unrelated change.
+///
+/// Updates run one at a time on the thread that publishes them, and vendor calls run
+/// outside the lock. A withdrawal never waits for them: when a category the running
+/// update grants is withdrawn on another thread, that thread applies the withdrawal at
+/// once, even while the running update is blocked inside a vendor call. The running
+/// update then reapplies current state after its call returns, so a grant that
+/// completes late cannot leave the vendor enabled. Other changes are picked up by the
+/// running update when its call returns.
 final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
     private let core: ConsentCore
     private let read: ((ConsentCategory) -> Bool) -> State
     private let apply: (_ previous: State?, _ state: State, _ current: () -> State) -> Void
-    private let lock = NSRecursiveLock()
+    private let lock = NSLock()
     private var subscriptions: [ConsentSubscription] = []
     private var active = true
-    private var applying = false
     private var lastApplied: State?
+    private var applier: Thread?
+    private var target: State?
+    private var targetGranted: Set<ConsentCategory> = []
 
     init(
         core: ConsentCore,
@@ -221,9 +233,12 @@ final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
         self.read = read
         self.apply = apply
         for category in categories {
-            subscriptions.append(core.gate(category) { [weak self] (_: ConsentDecision) in
+            let subscription = core.gate(category) { [weak self] (_: ConsentDecision) in
                 self?.refresh()
-            })
+            }
+            lock.lock()
+            subscriptions.append(subscription)
+            lock.unlock()
         }
     }
 
@@ -234,37 +249,71 @@ final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
         let previous = subscriptions
         subscriptions = []
         lastApplied = nil
-        refresh()
         lock.unlock()
+        refresh()
         for subscription in previous { subscription.cancel() }
     }
 
     func sync() {
         lock.lock()
-        defer { lock.unlock() }
-        guard active else { return }
+        guard active else { lock.unlock(); return }
         lastApplied = nil
+        lock.unlock()
         refresh()
     }
 
+    /// Current state and the categories it grants. Call with `lock` held.
+    private func readLocked() -> (state: State, granted: Set<ConsentCategory>) {
+        var granted = Set<ConsentCategory>()
+        let state = read { category in
+            let allowed = active && core.decision(for: category) == .granted
+            if allowed { granted.insert(category) }
+            return allowed
+        }
+        return (state, granted)
+    }
+
     private var current: State {
-        read { [core, active] in active && core.decision(for: $0) == .granted }
+        lock.lock()
+        defer { lock.unlock() }
+        return readLocked().state
     }
 
     private func refresh() {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !applying else { return }
-        applying = true
-        defer { applying = false }
-
-        // Read current authority rather than an earlier callback's value. Reentrant
-        // cancellation or consent changes are reconciled before this update returns.
-        while lastApplied != current {
-            let next = current
+        let me = Thread.current
+        while true {
+            lock.lock()
+            let (next, granted) = readLocked()
+            if let running = applier {
+                // Reentrant, or nothing the running update grants was withdrawn: it
+                // re-reads current state when its vendor call returns.
+                if running === me || granted.isSuperset(of: targetGranted) {
+                    lock.unlock()
+                    return
+                }
+                // A withdrawal must not wait for a vendor call in flight elsewhere.
+                let previous = target
+                target = next
+                targetGranted = granted
+                lastApplied = nil
+                lock.unlock()
+                apply(previous, next) { current }
+                return
+            }
+            guard lastApplied != next else {
+                lock.unlock()
+                return
+            }
             let previous = lastApplied
             lastApplied = next
+            target = next
+            targetGranted = granted
+            applier = me
+            lock.unlock()
             apply(previous, next) { current }
+            lock.lock()
+            applier = nil
+            lock.unlock()
         }
     }
 }

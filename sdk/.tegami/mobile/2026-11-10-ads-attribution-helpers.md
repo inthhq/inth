@@ -23,3 +23,10 @@ created and on every change, and calls the vendor's own consent API:
 The Google signals come from the shared Consent Mode mapping through the new
 `GoogleAdsConsent`. The app passes the vendor calls in; c15t still adds no
 vendor dependency.
+
+Withdrawal now applies at once in every helper, including Firebase,
+PostHog, Mixpanel, Sentry Replay and Amplitude. A grant still waiting on a
+vendor call no longer holds it back, and consent is applied again when that
+call returns, so a late grant cannot leave the vendor enabled. When a helper
+makes several calls to turn collection off, they all run even if one fails,
+and the failure is reported.

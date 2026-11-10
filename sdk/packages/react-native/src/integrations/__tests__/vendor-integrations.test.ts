@@ -365,13 +365,20 @@ test('AppsFlyer stops when consent is withdrawn while start is pending', async (
 	fake.pushSnapshot(grant());
 	release();
 	await settle(calls);
-	expect(calls).toEqual([
+	// Withdrawal does not wait for the pending start, and is applied again after it.
+	expect(calls.slice(0, 5)).toEqual([
 		'consent:true',
 		'stop:false',
 		'start',
 		'stop:true',
 		'consent:false',
 	]);
+	expect(
+		calls
+			.slice(5)
+			.every((call) => ['stop:true', 'consent:false'].includes(call))
+	).toBe(true);
+	expect(calls.slice(-2)).toEqual(['stop:true', 'consent:false']);
 	await integration.disconnect();
 });
 

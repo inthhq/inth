@@ -22,3 +22,10 @@ it connects and on every change, and calls the vendor's own consent API:
 advertising types from the shared Consent Mode mapping. The app passes the
 vendor functions in; c15t adds no vendor dependency, and the helpers work in
 Expo development builds.
+
+Withdrawal now applies at once in every helper, including Firebase,
+PostHog, Mixpanel, Sentry Replay and Amplitude. A grant still waiting on a
+vendor call no longer holds it back, and consent is applied again when that
+call returns, so a late grant cannot leave the vendor enabled. When a helper
+makes several calls to turn collection off, they all run even if one fails,
+and the failure is reported.

@@ -48,7 +48,7 @@ class AppsFlyerIntegration(
 			setConsentData(ads)
 			if (previous?.first != true && current().first) {
 				stop(false)
-				start()
+				if (current().first) start()
 			}
 		} else {
 			runAll({ stop(true) }, { setConsentData(ads) })
