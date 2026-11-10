@@ -338,9 +338,11 @@ covers. There is nothing to configure. The code that decides ships with
 Next.js assigns chunk file names in the browser build, and the server
 rendering `ConsentRoot` cannot read them. So the browser records the engine's
 chunk URLs in `localStorage` (key `c15t-engine-chunks`) the first time it
-loads the engine. When the server renders a visitor the engine must serve at
-once, `ConsentRoot` adds a small inline script after the page that preloads
-those URLs at low priority while the HTML is still parsing. The record is
+loads the engine. It records only URLs under `/_next/static/`, never the
+consent-gated scripts that start while the engine loads. When the server
+renders a visitor the engine must serve at once, `ConsentRoot` adds a small
+inline script after the page that preloads those URLs at low priority while
+the HTML is still parsing. The record is
 tied to the page's build, so after a deploy nothing stale is fetched; the
 first visit after a deploy loads the engine without a preload and records the
 new URLs. With storage blocked, the engine loads when the first-load chunk

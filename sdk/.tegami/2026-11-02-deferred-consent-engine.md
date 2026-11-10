@@ -41,7 +41,9 @@ scroll outside the banner, or after a tap on the banner. On a throttled mobile p
 took c15t's cost to Largest Contentful Paint on the CookieBench Next.js
 article page from about 400 ms to about 55 ms. Other visitors, such as a
 returning visitor with consent, load the engine at once, and the server
-preloads its chunks once the browser has recorded them on an earlier visit.
+preloads its chunks at low priority once the browser has recorded them on an
+earlier visit. The browser records only the engine's `/_next/static/` chunks,
+never the consent-gated scripts that start while it loads.
 
 The engine also loads at once when a `scripts` entry or a `useScriptLoader()`
 script may run for the visitor and the server did not start it. Roots with an

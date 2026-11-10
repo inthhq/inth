@@ -153,6 +153,66 @@ for (const target of selectedTargets()) {
 				expect(browserInitRequests).toBe(0);
 			});
 
+			for (const route of ['/app-router', '/pages-router']) {
+				test(`${route}: a returning visitor preloads only the learned engine chunks, and no vendor after a change of mind`, async () => {
+					const chunkBase = new RegExp(`^${server.baseURL}/_next/static/`, 'u');
+					const learned = (): Promise<string[]> =>
+						page.evaluate(
+							() =>
+								JSON.parse(localStorage.getItem('c15t-engine-chunks') ?? 'null')
+									?.u ?? []
+						);
+					const lowPreloads = (): Promise<string[]> =>
+						page.evaluate(() =>
+							Array.from(
+								document.querySelectorAll(
+									'link[rel="preload"][as="script"][fetchpriority="low"]'
+								),
+								(link) => (link as HTMLLinkElement).href
+							)
+						);
+					await visit(route);
+					await acceptButton(page).click();
+					await page.waitForFunction(() => document.cookie.includes('c15t='));
+					await expect.poll(learned).not.toEqual([]);
+					for (const visitNumber of [2, 3]) {
+						// oxlint-disable-next-line no-await-in-loop -- Each visit follows the last.
+						await page.goto(route, { waitUntil: 'load' });
+						// oxlint-disable-next-line no-await-in-loop -- Each visit follows the last.
+						await page.waitForTimeout(1000);
+						// oxlint-disable-next-line no-await-in-loop -- Each visit follows the last.
+						const saved = await learned();
+						// oxlint-disable-next-line no-await-in-loop -- Each visit follows the last.
+						const preloaded = await lowPreloads();
+						expect(saved.length, `visit ${visitNumber}`).toBeGreaterThan(0);
+						for (const url of [...saved, ...preloaded]) {
+							expect(url, `visit ${visitNumber}`).toMatch(chunkBase);
+						}
+						for (const url of saved) {
+							expect(preloaded, `visit ${visitNumber}`).toContain(url);
+						}
+					}
+					// The visitor changes their mind in the dialog. The next visit
+					// requests no consent-gated vendor, preloaded or not.
+					await openPreferences(page);
+					await setCategory(page, 'Measurement', false);
+					await setCategory(page, 'Marketing', false);
+					await Promise.all([
+						page.waitForEvent('load'),
+						saveButton(page).click(),
+					]);
+					const before = { posthog: requests.posthog, xPixel: requests.xPixel };
+					await page.goto(route, { waitUntil: 'load' });
+					await page.waitForTimeout(2000);
+					expect(requests.posthog).toBe(before.posthog);
+					expect(requests.xPixel).toBe(before.xPixel);
+					for (const url of await lowPreloads()) {
+						expect(url).toMatch(chunkBase);
+					}
+					expect(requests.unexpected).toEqual([]);
+				});
+			}
+
 			test('ConsentGate is visible without completing an entrance animation', async () => {
 				({ context, page, requests } = await openBrowserContext(
 					browser,

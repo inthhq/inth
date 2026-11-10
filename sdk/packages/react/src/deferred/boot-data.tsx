@@ -18,7 +18,7 @@ import { useKernel } from '../kernel-selector';
 import { useUIConfig } from '../ui-config-context';
 import { CONSENT_BOOT_ATTRIBUTE, canDeferEngine } from './boot';
 import type { ConsentBoot } from './boot';
-import { ENGINE_PRELOAD_SCRIPT } from './engine-preload-script';
+import { enginePreloadScript } from './engine-preload-script';
 
 type RecordedThenable<Value> = PromiseLike<Value> & {
 	status?: 'pending' | 'fulfilled';
@@ -44,6 +44,14 @@ const useSettled = function useSettled<Value>(
 /** Props of {@link ConsentBootData}. @internal */
 export interface ConsentBootDataProps {
 	/**
+	 * The path every bundler chunk URL contains, such as Next.js's
+	 * `/_next/static/`, as the browser side gives to `learnEngineChunks`.
+	 * Without it the server leaves no engine preload: an adapter whose
+	 * bundler loads chunks without `<script>` elements (Vite's native
+	 * `import()`) has nothing to learn.
+	 */
+	chunks?: string;
+	/**
 	 * Preload the engine whatever the snapshot says: the root's options
 	 * need it from the first render (see `rootNeedsEngine`), so the
 	 * browser renders the root eagerly.
@@ -53,6 +61,7 @@ export interface ConsentBootDataProps {
 
 const BootJSON = ({
 	boot,
+	chunks,
 	preload = false,
 }: ConsentBootDataProps & { boot: ConsentBoot }) => {
 	const { nonce } = useUIConfig();
@@ -73,9 +82,10 @@ const BootJSON = ({
 				// oxlint-disable-next-line react/no-danger -- c15t's own constant script.
 				dangerouslySetInnerHTML={{
 					__html:
-						!preload && canDeferEngine(boot.r ?? boot.s)
+						chunks === undefined ||
+						(!preload && canDeferEngine(boot.r ?? boot.s))
 							? ''
-							: ENGINE_PRELOAD_SCRIPT,
+							: enginePreloadScript(chunks),
 				}}
 				nonce={nonce}
 			/>
@@ -85,6 +95,7 @@ const BootJSON = ({
 
 /** With a streamed state: waits for it, as the streamed surfaces do. */
 const StreamedBootData = ({
+	chunks,
 	preload,
 	server,
 	streamed,
@@ -97,6 +108,7 @@ const StreamedBootData = ({
 	return (
 		<BootJSON
 			boot={resolved === server ? { s: server } : { r: resolved, s: server }}
+			chunks={chunks}
 			preload={preload}
 		/>
 	);
@@ -108,12 +120,13 @@ const StreamedBootData = ({
  *
  * @internal
  */
-export const ServerBootData = ({ preload }: ConsentBootDataProps) => {
+export const ServerBootData = ({ chunks, preload }: ConsentBootDataProps) => {
 	const kernel = useKernel();
 	const streamed = useContext(StreamedPrefetchContext);
 	const server = kernel.getServerSnapshot();
 	return streamed ? (
 		<StreamedBootData
+			chunks={chunks}
 			preload={preload}
 			server={server}
 			streamed={streamed}
@@ -121,6 +134,7 @@ export const ServerBootData = ({ preload }: ConsentBootDataProps) => {
 	) : (
 		<BootJSON
 			boot={{ s: server }}
+			chunks={chunks}
 			preload={preload}
 		/>
 	);
@@ -131,7 +145,8 @@ export const ServerBootData = ({ preload }: ConsentBootDataProps) => {
  * inside the provider, in a Suspense boundary: with a streamed state it
  * waits for the state. In the browser it keeps the server's element.
  *
- * @param props - Whether to preload the engine whatever the snapshot says.
+ * @param props - The bundler's chunk path, and whether to preload the
+ * engine whatever the snapshot says.
  * @internal
  */
 export const ConsentBootData = (props: ConsentBootDataProps) => {
@@ -153,5 +168,10 @@ export const ConsentBootData = (props: ConsentBootDataProps) => {
 			</>
 		);
 	}
-	return <ServerBootData preload={props.preload} />;
+	return (
+		<ServerBootData
+			chunks={props.chunks}
+			preload={props.preload}
+		/>
+	);
 };

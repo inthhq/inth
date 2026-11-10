@@ -554,6 +554,62 @@ for (const app of selected) {
 				}
 			);
 		}
+		if (app.probeName === '__c15tNextBench') {
+			// The learned engine preload relies on the bundler adding an
+			// import's chunk scripts within the import() call; only a real
+			// build shows that it does.
+			test('a returning visitor preloads the learned engine chunks on every visit', async () => {
+				const base = `http://127.0.0.1:${app.port}`;
+				const { page } = await newPage(browser, app, {
+					'x-c15t-country': 'DE',
+				});
+				const learned = () =>
+					page.evaluate(
+						() =>
+							JSON.parse(localStorage.getItem('c15t-engine-chunks') ?? 'null')
+								?.u ?? []
+					);
+				// The page starts consent-gated vendor scripts from the server
+				// once the visitor has accepted.
+				await page.goto(`${base}/typical-install`);
+				await page.getByTestId('consent-banner-accept-button').click();
+				// The server serves the engine at once only once the choice is
+				// stored; a quick next visit could otherwise still be a new one.
+				await page.waitForFunction(() => document.cookie.includes('c15t='));
+				await expect.poll(learned).not.toEqual([]);
+				for (const visit of [2, 3]) {
+					await page.goto(`${base}/typical-install`, {
+						waitUntil: 'networkidle',
+					});
+					const saved = await learned();
+					const preloaded = await page.evaluate(() =>
+						Array.from(
+							document.querySelectorAll(
+								'link[rel="preload"][as="script"][fetchpriority="low"]'
+							),
+							(link) => link.href
+						)
+					);
+					expect(
+						saved.length,
+						`visit ${visit}: learned chunks`
+					).toBeGreaterThan(0);
+					for (const url of saved) {
+						expect(url, `visit ${visit}: learned URL`).toMatch(
+							new RegExp(`^${base}/_next/static/`, 'u')
+						);
+						expect(preloaded, `visit ${visit}: preloaded`).toContain(url);
+					}
+					// Nothing outside the page's chunks, such as a gated vendor
+					// script, gets a low-priority preload.
+					for (const url of preloaded) {
+						expect(url, `visit ${visit}: preloaded URL`).toMatch(
+							new RegExp(`^${base}/_next/static/`, 'u')
+						);
+					}
+				}
+			});
+		}
 		for (const check of app.extraChecks ?? []) {
 			test('Nuxt manifest, init, caching and upstream version contract', () =>
 				check(app));

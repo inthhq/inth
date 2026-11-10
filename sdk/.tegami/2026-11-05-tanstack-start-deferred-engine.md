@@ -16,7 +16,10 @@ return the server's consent state until the engine loads, and their actions
 run when it arrives. For a visitor the banner asks to choose, the engine loads
 after the page's `fetchpriority="high"` images, or at the first input or
 scroll. A visitor the engine must serve at once, such as one with stored
-consent, gets it as the first-load chunk runs.
+consent, gets it as the first-load chunk runs. Unlike Next.js, the HTML carries
+no learned engine preload: Vite's dynamic imports leave the browser no chunk
+URLs to learn, so nothing else, such as a consent-gated script, is preloaded in
+their place.
 
 An Accept or Reject tapped before the engine loads takes effect in the tap's
 own task, as on Next.js. `ConsentBanner` and `ConsentDialog` load their code

@@ -40,6 +40,7 @@ import { useState } from 'react';
 
 import { engineNow } from '#engine-now';
 
+import { NEXT_CHUNKS } from './engine-chunks';
 import type * as RootEngine from './root-engine';
 import { mergeOptions } from './root-options';
 import type { ConsentRootProps } from './root-options';
@@ -66,7 +67,7 @@ const loadEngine = (): Recorded<EngineModule> => {
 	engineModule ??= record(
 		typeof document === 'undefined'
 			? import('./root-engine')
-			: learnEngineChunks(() => import('./root-engine'))
+			: learnEngineChunks(() => import('./root-engine'), NEXT_CHUNKS)
 	);
 	return engineModule;
 };

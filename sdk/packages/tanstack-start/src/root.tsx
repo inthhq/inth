@@ -25,7 +25,6 @@ import {
 	DeferredConsentShell,
 	canDeferEngine,
 	iabProviderLoaded,
-	learnEngineChunks,
 	read,
 	readConsentBoot,
 	record,
@@ -61,13 +60,10 @@ const loadEngine = (): Recorded<EngineModule> => {
 		});
 		return engineModule;
 	}
-	// In the browser, records the engine's chunk URLs, which the server
-	// preloads for a later visitor it must serve at once.
-	engineModule ??= record(
-		typeof document === 'undefined'
-			? import('./root-engine')
-			: learnEngineChunks(() => import('./root-engine'))
-	);
+	// No learned preload, as the Next.js root has: Vite's native `import()`
+	// adds no `<script>` elements, so the only scripts a recording would
+	// catch are the consent-gated ones c15t starts meanwhile.
+	engineModule ??= record(import('./root-engine'));
 	return engineModule;
 };
 

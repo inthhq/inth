@@ -252,9 +252,10 @@ test('finishes concurrent React 18 renders while a failed start module reloads',
 	}
 });
 
-test('leaves the boot data and the engine preload for a visitor served at once', async () => {
-	// Marketing may run now, so the browser loads the engine at once and
-	// preloads the chunks an earlier visit recorded.
+test('leaves the boot data, and an empty script for the engine preload, for a visitor served at once', async () => {
+	// Marketing may run now, so the browser loads the engine at once. Vite
+	// gives it no chunk URLs to learn, so nothing is preloaded; the empty
+	// script keeps the elements the browser renders.
 	await render(await optOutState());
 	const html = await render(await optOutState());
 
@@ -265,5 +266,5 @@ test('leaves the boot data and the engine preload for a visitor served at once',
 	expect(
 		JSON.parse(boot?.groups?.json ?? '{}').s.effectivePermissions.marketing
 	).toBe(true);
-	expect(boot?.groups?.preload).toContain('c15t-engine-chunks');
+	expect(boot?.groups?.preload).toBe('<script></script>');
 });

@@ -32,6 +32,7 @@ import type { ReactNode } from 'react';
 import { createClientMode } from './client-mode';
 import type { ConsentConfig } from './config';
 import { readBackendURLFromEnv } from './config';
+import { NEXT_CHUNKS } from './engine-chunks';
 import { mergeOptions } from './root-options';
 import type { ConsentRootProps } from './root-options';
 import type { ConsentClientOptions, ConsentState } from './types';
@@ -334,6 +335,7 @@ const AfterPage = ({
 		(a network blocker) gets its preload whatever the snapshot says. */}
 		{options.prefetch === undefined ? null : (
 			<ConsentBootData
+				chunks={NEXT_CHUNKS}
 				preload={rootNeedsEngine({
 					networkBlocker: options.networkBlocker,
 					options,

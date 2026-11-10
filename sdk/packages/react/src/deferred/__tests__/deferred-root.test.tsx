@@ -87,7 +87,7 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 				<Probe />
 				<DeferredConsentBanner />
 				<Suspense fallback={null}>
-					<ServerBootData />
+					<ServerBootData chunks="/_next/static/" />
 				</Suspense>
 			</ConsentProvider>
 		</body>
@@ -128,7 +128,7 @@ const ClientPage = ({
 							prefetch: prefetch as KernelConfig,
 						}}
 					>
-						<ConsentBootData />
+						<ConsentBootData chunks="/_next/static/" />
 					</engine.DeferredEngineHost>
 				)}
 				schedule={schedule}

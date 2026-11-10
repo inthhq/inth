@@ -34,7 +34,6 @@ import { clientMode } from '@c15t/core/runtime/client-mode';
 import { preloadScriptLoaderWith } from '@c15t/core/runtime/script-loader-preload';
 import type * as ScriptServerStart from '@c15t/core/runtime/script-server-start';
 import { resolveStreamedInit } from '@c15t/core/runtime/streamed-init';
-import { rootNeedsEngine } from '@c15t/react/deferred';
 import type { DeferredCommitted, DeferredEngine } from '@c15t/react/deferred';
 import {
 	ConsentBootData,
@@ -388,16 +387,8 @@ const AfterPage = ({
 	serverStart: boolean;
 }) => (
 	<>
-		{/* A root whose options need the engine at once (a network blocker)
-		gets its preload whatever the snapshot says. */}
-		{bootData ? (
-			<ConsentBootData
-				preload={rootNeedsEngine({
-					networkBlocker: options.networkBlocker,
-					options,
-				})}
-			/>
-		) : null}
+		{/* No engine preload: see `loadEngine` in `./root`. */}
+		{bootData ? <ConsentBootData /> : null}
 		{serverStart ? <ServerScriptStart options={options} /> : null}
 	</>
 );

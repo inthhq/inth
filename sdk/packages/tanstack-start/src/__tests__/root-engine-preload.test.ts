@@ -1,35 +1,35 @@
 /**
- * The server leaves an engine preload after the boot data for a visitor the
- * engine must serve at once. The snapshot decides for most roots; a root
- * whose options need the engine from its first render, such as one with a
- * network blocker, is preloaded whatever the banner shows, since the
- * browser renders it eagerly and the blocker must be in place before the
- * page's code sends a request.
+ * TanStack Start leaves no engine preload in the HTML. Vite's native
+ * `import()` adds no `<script>` elements for the browser to learn the
+ * engine's chunks from; a recording caught only the consent-gated vendor
+ * scripts c15t started meanwhile, which a preload then fetched on later
+ * visits, even after the visitor rejected them.
  */
 import { offline } from '@c15t/core/modes';
 import { createElement } from 'react';
 import { renderToReadableStream } from 'react-dom/server';
 import { expect, test } from 'vitest';
 
-import { optInRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
+import {
+	optInRule,
+	optOutRule,
+} from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { ConsentRoot } from '../root';
 import type { ConsentRootProps } from '../root';
 import { resolveConsent } from '../server';
 
-/** A fresh visitor the banner asks to choose: the engine can wait. */
-const choiceState = () =>
-	resolveConsent({
-		mode: offline({ acknowledgeNoRecords: true, policyRules: [optInRule()] }),
-		request: new Request('https://app.example.com/'),
-	});
-
 const render = async (
+	rule: ReturnType<typeof optInRule>,
 	props: Partial<ConsentRootProps> = {}
 ): Promise<string> => {
+	const state = await resolveConsent({
+		mode: offline({ acknowledgeNoRecords: true, policyRules: [rule] }),
+		request: new Request('https://app.example.com/'),
+	});
 	const stream = await renderToReadableStream(
 		createElement(
 			ConsentRoot,
-			{ ...props, state: await choiceState() },
+			{ ...props, state },
 			createElement('main', { id: 'page' }, 'Page')
 		)
 	);
@@ -37,25 +37,17 @@ const render = async (
 	return new Response(stream).text();
 };
 
-/** Whether the script after the boot data preloads the engine's chunks. */
-const hasEnginePreload = (html: string): boolean =>
-	/<script data-c15t-boot[^>]*>[^<]*<\/script><script[^>]*>[^<]*c15t-engine-chunks[^<]*<\/script>/u.test(
-		html
-	);
-
-test('a choice banner leaves the engine preload out', async () => {
-	const html = await render();
-	expect(html).toContain('data-c15t-boot');
-	expect(hasEnginePreload(html)).toBe(false);
-});
-
-test('a root with a network blocker preloads the engine whatever the banner shows', async () => {
-	const html = await render({ networkBlocker: { rules: [] } });
-	expect(hasEnginePreload(html)).toBe(true);
-	// Turned off, the blocker asks nothing of the engine.
-	expect(
-		hasEnginePreload(
-			await render({ networkBlocker: { enabled: false, rules: [] } })
-		)
-	).toBe(false);
+test('no root leaves an engine preload, even one the engine must serve at once', async () => {
+	const pages = [
+		// A banner asking to choose: the engine can wait.
+		await render(optInRule()),
+		// Everything granted: the engine loads at once.
+		await render(optOutRule()),
+		// A network blocker needs the engine from the first render.
+		await render(optInRule(), { networkBlocker: { rules: [] } }),
+	];
+	for (const html of pages) {
+		expect(html).toContain('data-c15t-boot');
+		expect(html).not.toContain('c15t-engine-chunks');
+	}
 });
