@@ -73,7 +73,8 @@ class ScreenAccessibilityTest {
             assertTrue(spinners.single().boundsInRoot.left >= accept.left && spinners.single().boundsInRoot.right <= accept.right)
         } finally {
             store.release.countDown()
-            try { compose.waitUntil(5_000) { presenter?.pending != true } }
+            // `pending` clears before `pendingAction`, and the commit finishes off the test thread here.
+            try { compose.waitUntil(5_000) { presenter?.pending != true && presenter?.pendingAction == null } }
             finally { Dispatchers.resetMain() }
         }
         assertNull(presenter?.pendingAction)
