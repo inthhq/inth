@@ -433,6 +433,62 @@ describe('episodes', () => {
 	});
 });
 
+describe('the native owed-prompt identifier', () => {
+	const owedSince = (revision: number, since: number): ConsentSnapshot =>
+		buildSnapshot({ ...owed, promptOwedSince: since, revision });
+
+	test('the same prompt owed again reaches JavaScript as one update and is presented', async () => {
+		const { close, fake, present } = bootFake(owedSince(1, 1));
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		close();
+
+		// Native answered, owed nothing, and owed the same prompt again; the bridge
+		// delivered only the last state, so JavaScript never saw the moment between.
+		fake.pushSnapshot(owedSince(4, 4));
+		await flushPromises();
+
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+
+	test('an unrelated revision of the same owed prompt is not presented again', async () => {
+		const { close, fake, present } = bootFake(owedSince(1, 1));
+		const tree = renderTree(<App />);
+		await flushPromises();
+		close();
+
+		fake.pushSnapshot(owedSince(2, 1));
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+
+		expect(present).toHaveBeenCalledTimes(1);
+		tree.unmount();
+	});
+
+	test('a binary without the identifier keeps telling prompts apart by transitions', async () => {
+		const { close, fake, present } = bootFake(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		close();
+
+		// The same coalesced update from an older binary: nothing marks it as new.
+		fake.pushSnapshot({ ...owed, revision: 4 });
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		// It still sees a transition it observes.
+		fake.pushSnapshot(answered);
+		await flushPromises();
+		fake.pushSnapshot({ ...owed, revision: 6 });
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+});
+
 describe('autoPresent={false}', () => {
 	test('presents nothing by itself', async () => {
 		const { fake, present } = bootFake(owed);

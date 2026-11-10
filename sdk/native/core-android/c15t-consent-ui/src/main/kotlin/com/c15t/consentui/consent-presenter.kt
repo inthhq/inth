@@ -62,7 +62,11 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
 
     enum class Action { ACCEPT, REJECT, SAVE, ACKNOWLEDGE }
     init { receive(core.snapshot()) }
-    private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}"
+    /**
+     * Names the owed prompt. `promptOwedSince` moves whenever a prompt becomes owed again, so the
+     * same requirement owed again is a new prompt even when the snapshots between were coalesced.
+     */
+    private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}:${snapshot.promptOwedSince}"
     val iab get() = snapshot.model == ConsentModel.IAB
     val noticeVisible get() = snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
         && (autoPresent || requestedNotice == promptKey)

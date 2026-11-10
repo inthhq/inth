@@ -447,6 +447,37 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
     /// field null rather than moving `policyPending` or the deny-all rule. See
     /// ``ConsentCore``'s init fold.
     public let iab: KernelIABState?
+    /// The ``revision`` at which the prompt owed now became owed, or `nil` while nothing is owed.
+    ///
+    /// It changes every time a prompt becomes owed again, including the same requirement owed
+    /// again after an answer or a reset, so a reader that missed the snapshots in between still
+    /// knows it is a new prompt. The core sets it whenever it installs a state, which sees every
+    /// state in order. It is not kernel state: ``CodingKeys`` leaves it out of the wire form and
+    /// the stored envelope, and the React Native bridge adds it to its payload.
+    public internal(set) var promptOwedSince: Int? = nil
+
+    /// Every stored property except ``promptOwedSince``.
+    enum CodingKeys: String, CodingKey {
+        case revision, policyPending, ready, model, activeUI, promptRequirement, effectivePermissions
+        case explicitChoice, consentCategories, restrictions, resolution, policySnapshotToken, subject
+        case location, overrides, privacySignals, translations, nextDeadline, evaluatedAt, error, iab
+    }
+
+    /// When the prompt `next` owes became owed, given the state installed before it.
+    ///
+    /// A value `next` already carries is kept, which is what a restored earlier state does. The
+    /// same requirement under the same policy keeps the earlier revision; anything else that is
+    /// owed starts at `next`'s revision.
+    static func owedSince(previous: ConsentSnapshot, next: ConsentSnapshot) -> Int? {
+        guard next.promptRequirement.kind != .none else { return nil }
+        if let carried = next.promptOwedSince { return carried }
+        if previous.promptRequirement == next.promptRequirement,
+           previous.resolution.fingerprint == next.resolution.fingerprint,
+           let since = previous.promptOwedSince {
+            return since
+        }
+        return next.revision
+    }
 
     public init(
         revision: Int = 0,

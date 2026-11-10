@@ -3,6 +3,7 @@ package com.c15t.consentui
 import com.c15t.core.CommitIntent
 import com.c15t.core.ConsentCore
 import com.c15t.core.NativeConfig
+import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.PromptReason
 import com.c15t.core.spi.Clock
 import com.c15t.core.spi.HttpClient
@@ -113,6 +114,27 @@ class AutoPresentTest {
         main.scheduler.runCurrent()
         assertNotNull("the prompt owed again presents", p.presentationID)
         assertNotEquals(first, p.presentationID)
+    }
+
+    /**
+     * The core reads the snapshot it hands observers when it notifies, so concurrent mutations can
+     * reach the presenter as the latest state only. Here the deliveries for the answer and the
+     * reset stay queued, and the presenter is handed only the final snapshot.
+     */
+    @Test fun theSamePromptOwedAgainPresentsWhenOnlyTheLatestSnapshotArrives() {
+        Dispatchers.resetMain()
+        Dispatchers.setMain(StandardTestDispatcher())
+        val core = core("category-init.json").also { it.bootstrap() }
+        val p = ConsentPresenter(core)
+        assertNotNull(p.presentationID)
+        p.backFromFirstLayer()
+        assertNull(p.presentationID)
+        assertTrue(core.save(CommitIntent.All).ok)
+        core.reset()
+        val receive = ConsentPresenter::class.java.getDeclaredMethod("receive", ConsentSnapshot::class.java)
+            .apply { isAccessible = true }
+        receive.invoke(p, core.snapshot())
+        assertNotNull("the same requirement owed again is presented", p.presentationID)
     }
 
     private fun awaitTrue(condition: () -> Boolean) {

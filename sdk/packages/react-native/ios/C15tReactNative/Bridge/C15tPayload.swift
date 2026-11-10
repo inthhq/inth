@@ -150,6 +150,10 @@ public enum C15tPayload {
             fields["resolution"] = .object(patched)
         }
 
+        // Not kernel state, so the core's encoding leaves it out; JavaScript reads it to tell a
+        // new owed prompt from one it already presented, even when it skipped snapshots between.
+        fields["promptOwedSince"] = snapshot.promptOwedSince.map { .integer(Int64($0)) } ?? .null
+
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
     }

@@ -390,6 +390,16 @@ The rules, identical on all three:
   `none` and came back presents again. A change that arrives while a native
   present call or a commit is still in flight is evaluated once it settles; it
   is never dropped, and a commit closes only the prompt the subject acted on.
+- **The core names each owed prompt.** Both cores set `promptOwedSince` where they
+  install a state, under the mutation lock, so it sees every state in order: the
+  revision at which the prompt owed now became owed, kept while the same
+  requirement stays owed under the same policy, moved whenever a prompt becomes
+  owed again, and `null` while nothing is owed. Observers and the React Native
+  bridge may deliver only the latest snapshot, so a reader cannot rely on seeing
+  the moment with nothing owed; the presenters and the JavaScript ledger key their
+  suppression on it instead. It is not kernel state: it stays out of the kernel
+  wire encoding, the protocol fixtures and the stored envelope, and the bridges add
+  it to the `getSnapshot()` payload.
 - **Never two at once.** Swift and Kotlin keep one `ConsentPrompt` per core with a
   single `ConsentPresenter`; every scene, Activity or composable that attaches
   shares its session and draft, and only one attached host draws it: the first,
@@ -1087,6 +1097,16 @@ Version handshake
 when `protocolVersion` is outside the range the installed JavaScript package
 supports. This catches the Expo Updates case where a JavaScript-only update ships
 against an older embedded native build.
+
+A snapshot key added without a protocol bump must be additive: its absence has to
+mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS`
+(`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
+client fills it before reading or grading the snapshot, so an older binary is
+neither `undefined` behind a typed field nor reported as drift. A key whose absence
+cannot be answered that way needs a new protocol version. `promptOwedSince` is
+such a key, and a bridge-added one (`BRIDGE_SNAPSHOT_KEYS`): an older binary names
+no owed prompt, so it reads as `null`, and auto-present falls back to the
+transitions it observes.
 
 Conformance fixtures
 --------------------

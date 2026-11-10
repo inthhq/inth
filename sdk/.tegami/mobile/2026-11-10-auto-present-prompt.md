@@ -25,6 +25,13 @@ prompt. `ConsentPrompt.onFinished` reports how each session ended. Pass
 `autoPresent: false` (Swift) or `autoPresent = false` (Kotlin) to present it
 yourself.
 
+`ConsentSnapshot.promptOwedSince` is the revision at which the prompt owed now
+became owed, and `nil`/`null` while nothing is owed. Both cores set it where they
+install each state. The presenters key their suppression on it, so the same prompt
+owed again after an answer or a reset is presented even when observers deliver only
+the latest snapshot. It is not part of the kernel wire encoding or the stored
+envelope.
+
 Breaking changes:
 
 - `ConsentPresenter(core:automaticPresentation:)` is now

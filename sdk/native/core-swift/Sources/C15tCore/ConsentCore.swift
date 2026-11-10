@@ -147,7 +147,14 @@ public final class ConsentCore: @unchecked Sendable {
     private let lock = Lock()
     private let mutationGate = MutationGate()
     private var needsGrantCleanup = false
-    private var currentSnapshot = ConsentSnapshot.coldStart
+    private var currentSnapshot = ConsentSnapshot.coldStart {
+        // Every installed state passes here, in order and under `lock`, so this is where the
+        // owed prompt is named. Assigning inside `didSet` does not run it again.
+        didSet {
+            let since = ConsentSnapshot.owedSince(previous: oldValue, next: currentSnapshot)
+            if currentSnapshot.promptOwedSince != since { currentSnapshot.promptOwedSince = since }
+        }
+    }
     private var bootstrapped = false
     private var config: CoreConfig?
     private var queue: PendingSaveQueue?
@@ -410,7 +417,12 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// The current state. Synchronous, and never touches disk or the network.
     public func snapshot() -> ConsentSnapshot {
-        lock.withLock { readableSnapshotLocked() }
+        lock.withLock { () -> ConsentSnapshot in
+            // The readable view may be rebuilt from a draft, which carries no owed-prompt name.
+            var readable = readableSnapshotLocked()
+            readable.promptOwedSince = currentSnapshot.promptOwedSince
+            return readable
+        }
     }
 
     private func readableSnapshotLocked() -> ConsentSnapshot {

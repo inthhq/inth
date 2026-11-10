@@ -72,8 +72,10 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         Task { @MainActor [weak self] in self?.receive(snapshot) }
     }
 
+    /// Names the owed prompt. `promptOwedSince` moves whenever a prompt becomes owed again, so the
+    /// same requirement owed again is a new prompt even when the snapshots between were coalesced.
     private var promptKey: String {
-        "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? "")"
+        "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? ""):\(snapshot.promptOwedSince.map { String($0) } ?? "")"
     }
 
     private func receive(_ next: ConsentSnapshot) {

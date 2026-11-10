@@ -21,6 +21,12 @@ nothing. A new policy or an expired choice presents again. React strict mode,
 remounts, nested providers and a manual `presentConsentPrompt` call never open
 a second prompt.
 
+The native snapshot now carries `promptOwedSince`, the revision at which the prompt
+owed now became owed. The provider keys its record on it, so the same prompt owed
+again after an answer or a reset is presented even when the bridge delivered only
+the latest snapshot. A binary built before this field reads it as `null` and keeps
+the previous behaviour.
+
 This changes existing apps. `privacyPolicyURL` is now required unless you pass
 `autoPresent={false}`. TypeScript names the missing `privacyPolicyURL`, and the
 provider throws on render for a missing URL or one a native presenter would

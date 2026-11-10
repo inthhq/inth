@@ -61,10 +61,15 @@ const ledgerFor = function ledgerFor(client: ConsentClient): AutoPresentLedger {
 /**
  * Name the owed prompt a snapshot describes.
  *
- * Two snapshots owe the same prompt when the matched policy, the kind of prompt
- * and the reason all agree. A new policy or an expired choice changes the key,
- * which is what makes the prompt present again. The native presenters key their
- * own suppression the same way.
+ * Two snapshots owe the same prompt when the matched policy, the kind of prompt,
+ * the reason and `promptOwedSince` all agree. A new policy or an expired choice
+ * changes the key, which is what makes the prompt present again. So does the same
+ * requirement owed again after nothing was owed: native moves `promptOwedSince`
+ * for it, so the key changes even when the bridge delivered only the latest
+ * snapshot and the moment with nothing owed never reached JavaScript. A binary
+ * that predates `promptOwedSince` reports `null`, and the ledger falls back to the
+ * transitions it observes. The native presenters key their own suppression the
+ * same way.
  *
  * @param snapshot - The snapshot to read.
  * @returns The key, or `null` while the core is not ready or nothing is owed.
@@ -77,7 +82,8 @@ export const selectOwedPromptKey = function selectOwedPromptKey(
 	}
 	const requirement = snapshot.promptRequirement;
 	const reason = requirement.kind === 'none' ? '' : requirement.reason;
-	return `${snapshot.resolution.fingerprint ?? ''}:${requirement.kind}:${reason}`;
+	const since = snapshot.promptOwedSince ?? '';
+	return `${snapshot.resolution.fingerprint ?? ''}:${requirement.kind}:${reason}:${since}`;
 };
 
 /**

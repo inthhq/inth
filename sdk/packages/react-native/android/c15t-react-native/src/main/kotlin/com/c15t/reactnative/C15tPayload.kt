@@ -157,6 +157,9 @@ object C15tPayload {
 	 * `T | null` is present as an explicit null, so a JavaScript reader never has to
 	 * branch on presence.
 	 *
+	 * `promptOwedSince` is added here, always present and `null` while nothing is owed. The
+	 * core tracks it but it is not kernel state, so [SnapshotWire] does not carry it.
+	 *
 	 * `privacySignals.gpc` goes out untouched as the `detected` / `override` /
 	 * `active` triple the core computes. It is what makes a GPC denial explainable
 	 * from the payload alone: `active` is the reason a category is denied, and
@@ -190,6 +193,9 @@ object C15tPayload {
 			}
 		}
 		conformed["overrides"] = JsonObject(conformedOverrides)
+		// Not kernel state, so SnapshotWire leaves it out; JavaScript reads it to tell a new
+		// owed prompt from one it already presented, even when it skipped the snapshots between.
+		conformed["promptOwedSince"] = snapshot.promptOwedSince?.let(::JsonPrimitive) ?: JsonNull
 		return encode(JsonObject(conformed))
 	}
 

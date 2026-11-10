@@ -2041,6 +2041,21 @@ class ConsentCore(
 		return if (now - choice.actionAt <= policy.choiceMs) choice.consents else emptyMap()
 	}
 
+	/**
+	 * When the prompt [next] owes became owed. The same requirement under the same policy keeps
+	 * the earlier revision; anything else that is owed starts at [next]'s revision. Called with
+	 * the installed state under [mutationLock], so it sees every state in order.
+	 */
+	private fun promptOwedSince(previous: ConsentSnapshot, next: ConsentSnapshot): Long? {
+		val owed = next.promptRequirement
+		if (!owed.notice && !owed.acknowledge) return null
+		val before = previous.promptRequirement
+		val same = (before.notice || before.acknowledge) && before.notice == owed.notice &&
+			before.acknowledge == owed.acknowledge && before.reason == owed.reason &&
+			previous.resolution.fingerprint == next.resolution.fingerprint
+		return if (same) previous.promptOwedSince ?: next.revision else next.revision
+	}
+
 	private fun publishPure(snapshot: ConsentSnapshot) {
 		installSnapshot(snapshot)
 	}
@@ -2065,6 +2080,7 @@ class ConsentCore(
 			for (category in ConsentCategory.OPTIONAL) if (snapshot.explicitChoice?.consents?.get(category.wireName) != true) permissions = permissions.with(category, false)
 			snapshot = snapshot.copy(effectivePermissions = permissions)
 		}
+		snapshot = snapshot.copy(promptOwedSince = promptOwedSince(state.get(), snapshot))
 		val denied = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
 			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
 		val expired = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
