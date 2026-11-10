@@ -31,6 +31,12 @@ public struct CoreConfig: @unchecked Sendable {
     /// The policy in source control, the only policy source in no-backend mode. Use it
     /// with ``OfflineTransport`` or no transport: the two modes do not mix.
     public let policy: ConsentPolicy?
+    /// Why the app's declared in-code policy was refused, when an adapter read one and
+    /// could not use it. The core then reports `policy-invalid` in the snapshot and on
+    /// the event stream instead of starting as if no policy had been declared.
+    public let policyError: String?
+    /// No-backend mode with an in-code policy, usable or refused. Init never uses the transport.
+    var usesInCodePolicy: Bool { policy != nil || policyError != nil }
     var policyEndpoint: String? {
         transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
     }
@@ -102,6 +108,7 @@ public struct CoreConfig: @unchecked Sendable {
         store: any ConsentStore = InMemoryStore(),
         bundledPolicy: BundledPolicyResource? = nil,
         policy: ConsentPolicy? = nil,
+        policyError: String? = nil,
         transport: (any C15tTransport)? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
@@ -117,10 +124,11 @@ public struct CoreConfig: @unchecked Sendable {
     ) {
         self.store = store
         precondition(
-            policy == nil || bundledPolicy == nil && transport?.policyEndpoint == nil,
+            policy == nil && policyError == nil || bundledPolicy == nil && transport?.policyEndpoint == nil,
             "CoreConfig.policy is no-backend mode and does not mix with a bundled manifest or a backend transport")
         self.bundledPolicy = bundledPolicy
         self.policy = policy
+        self.policyError = policyError
         self.transport = transport
         self.consentCategories = consentCategories
         self.vendors = vendors
@@ -401,9 +409,12 @@ public final class ConsentCore: @unchecked Sendable {
             shouldAdoptBundle(selection.authority, config: config) {
             applyPolicyUpdate(selection.response, bundle: selection)
         }
-        // In no-backend mode the in-code policy answers before the first read.
+        // In no-backend mode the in-code policy answers before the first read, once:
+        // there is no init to schedule after it.
         if let response = config.policy?.resolve(overrides: config.overrides) {
             applyPolicyUpdate(response)
+        } else if config.policy == nil, let reason = config.policyError {
+            reportRefusedPolicy(reason)
         }
         if let stale = lock.withLock({ takeStaleAnnouncementLocked() }) { events.emit(.policyStale(stale)) }
         events.emit(.initialized)
@@ -411,7 +422,20 @@ public final class ConsentCore: @unchecked Sendable {
         if config.flushPendingOnBootstrap {
             schedule { await self.requestDeliveryPass(ownSend: nil) }
         }
-        scheduleInit(attempt: 1)
+        if !config.usesInCodePolicy { scheduleInit(attempt: 1) }
+    }
+
+    /// Report an in-code policy the host declared and the adapter could not use, the way
+    /// a refused `/init` is reported, rather than as a quiet deny-all start.
+    private func reportRefusedPolicy(_ reason: String) {
+        let info = CoreErrorInfo(code: "policy-invalid", message: "The in-code policy was refused: \(reason)")
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
+        lock.withLock {
+            currentSnapshot = currentSnapshot.byApplying { draft in draft.error = info }
+        }
+        publish(persist: true, mutation: mutation)
+        events.emit(.error(info))
     }
 
     /// Whether ``bootstrap(_:)`` has taken effect.
@@ -2052,8 +2076,8 @@ public final class ConsentCore: @unchecked Sendable {
 
     private func runInit(attempt: Int) async {
         guard let config = lock.withLock({ self.config }) else { return }
-        if let policy = config.policy {
-            if let response = policy.resolve(overrides: lock.withLock { overrides }) {
+        if config.usesInCodePolicy {
+            if let response = config.policy?.resolve(overrides: lock.withLock { overrides }) {
                 applyPolicyUpdate(response)
             }
             return

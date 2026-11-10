@@ -27,6 +27,54 @@ class ConsentPolicyTest {
 		for (rule in policy.rules) assertEquals(resolved.getValue(rule.id), ConsentPolicy.normalize(rule), rule.id)
 	}
 
+	@Test fun `fingerprints hash exactly the inputs the backend hashes`() {
+		val inputs = fixture.getValue("fingerprintInputs").jsonObject
+		for (rule in policy.rules) {
+			val expected = inputs.getValue(rule.id).jsonObject
+			val actual = ConsentPolicy.fingerprintInputs(rule)
+			for (domain in listOf("choice", "notice", "policy")) assertEquals(expected.getValue(domain), actual.getValue(domain), "${rule.id} $domain")
+		}
+	}
+
+	@Test fun `every policy the backend or no-backend mode refuses is refused`() {
+		for (case in fixture.getValue("invalid").jsonArray) {
+			val name = case.jsonObject.getValue("name").jsonPrimitive.content
+			val rules = buildJsonObject { put("rules", case.jsonObject.getValue("rules")) }.toString()
+			assertFailsWith<IllegalArgumentException>(name) { ConsentPolicy.fromJson(rules) }
+		}
+	}
+
+	@Test fun `changing one validity keeps the other prompt's receipt`() {
+		val store = C15tStore(InMemoryKeyValueStore())
+		assertTrue(boot(store = store).save(CommitIntent.All).ok)
+		fun revised(validity: PolicyValidity) =
+			ConsentPolicy(policy.rules.map { if (it.id == "everywhere_else") it.copy(validity = validity) else it })
+		val noticeOnly = boot(revised(PolicyValidity(noticeDays = 30.0)), store)
+		assertTrue(noticeOnly.isAllowed(ConsentCategory.MEASUREMENT))
+		assertFalse(noticeOnly.snapshot().promptRequirement.acknowledge)
+		val choiceChanged = boot(revised(PolicyValidity(choiceDays = 30.0, noticeDays = 30.0)), store)
+		assertFalse(choiceChanged.isAllowed(ConsentCategory.MEASUREMENT))
+	}
+
+	@Test fun `a refused in-code policy is reported, not started as a quiet deny-all`() {
+		val errors = mutableListOf<String>()
+		val core = testKernel(
+			NativeConfig(null, policyError = "Policy 'x': a partial category scope needs a scopeMode"),
+			C15tStore(InMemoryKeyValueStore()), FixedClock(), OfflineTransport, logger = { errors += it.code },
+		).also { it.bootstrap() }
+		assertTrue(core.snapshot().policyPending)
+		assertEquals("policy-invalid", core.snapshot().error?.code)
+		assertEquals(listOf("policy-invalid"), errors)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+	}
+
+	@Test fun `bootstrap applies the in-code policy once`() {
+		val core = boot()
+		val revision = core.snapshot().revision
+		core.flushPending()
+		assertEquals(revision, core.snapshot().revision)
+	}
+
 	@Test fun `locations match the rule the backend matcher picks`() {
 		for (case in fixture.getValue("cases").jsonArray) {
 			val inputs = case.jsonObject.getValue("inputs").jsonObject
@@ -88,7 +136,7 @@ class ConsentPolicyTest {
 		assertFailsWith<IllegalArgumentException> {
 			ConsentPolicy(listOf(fallback.copy(categories = listOf(ConsentCategory.MEASUREMENT), scopeMode = com.c15t.core.policy.ScopeMode.STRICT, preselectedCategories = listOf(ConsentCategory.MARKETING))))
 		}
-		assertFailsWith<IllegalArgumentException> { ConsentPolicy(listOf(fallback.copy(validity = PolicyValidity(choiceDays = 0)))) }
+		assertFailsWith<IllegalArgumentException> { ConsentPolicy(listOf(fallback.copy(validity = PolicyValidity(choiceDays = 0.0)))) }
 		assertFailsWith<IllegalArgumentException> { NativeConfig("https://consent.example.test", policy = ConsentPolicy(listOf(fallback))) }
 		assertFailsWith<IllegalArgumentException> {
 			ConsentPolicy.fromJson("""{"rules":[{"id":"x","match":{"fallback":true},"model":"opt-in","prompt":"choice","rights":["opt-out"]}]}""")

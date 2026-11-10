@@ -487,7 +487,23 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         try? appleConfiguration(fileStoreDirectory: nil).makeTransport()
     }
 
+    /// The in-code policy the app declared, or why it was refused. `nil` when none is declared.
+    var declaredPolicy: Result<ConsentPolicy, Error>? {
+        guard let name = policyRulesResource else { return nil }
+        let result = Result<ConsentPolicy, Error> {
+            guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
+                throw ConsentPolicyError("\(InfoPlistKey.policyRulesResource) names \(name), which is not in the app bundle")
+            }
+            return try ConsentPolicy(json: Data(contentsOf: url))
+        }
+        if case let .failure(error) = result {
+            NSLog("%@", "c15t: \(InfoPlistKey.policyRulesResource) refused: \(error). c15t reports policy-invalid and denies optional categories.")
+        }
+        return result
+    }
+
     fileprivate func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
+        let declared = declaredPolicy
         let transport: C15tAppleConfiguration.Transport
         switch transportMode {
         case .disabled: transport = .disabled
@@ -503,15 +519,10 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
                 guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
                 return BundledPolicyResource(url: url, endpoint: endpoint)
             },
-            policy: policyRulesResource.flatMap { name -> ConsentPolicy? in
-                guard let url = Bundle.main.url(forResource: name, withExtension: nil),
-                    let data = try? Data(contentsOf: url) else { return nil }
-                do {
-                    return try ConsentPolicy(json: data)
-                } catch {
-                    NSLog("%@", "c15t: \(InfoPlistKey.policyRulesResource) refused: \(error)")
-                    return nil
-                }
+            policy: try? declared?.get(),
+            policyError: declared.flatMap { result in
+                if case let .failure(error) = result { return String(describing: error) }
+                return nil
             },
             iab: iab
         )

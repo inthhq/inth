@@ -463,10 +463,10 @@ class ConsentCore(
 			}
 		}
 		announcePolicyStale()
-		// In no-backend mode the in-code policy answers before the first read.
-		if (config.policy != null) runInit()
+		// In no-backend mode the in-code policy answers before the first read, once.
+		if (inCodePolicy) runInit()
 		background.execute { flushPending() }
-		if (config.policy == null) background.execute { runInit() }
+		if (!inCodePolicy) background.execute { runInit() }
 	}
 
 	/** Whether a bundled manifest may replace the policy in force after hydration. */
@@ -1406,9 +1406,9 @@ class ConsentCore(
 		storedSnapshotFound = false
 		mutation.release()
 		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
-		if (config.policy != null) runInit()
+		if (inCodePolicy) runInit()
 		notifySnapshot()
-		if (config.policy == null) background.execute { runInit() }
+		if (!inCodePolicy) background.execute { runInit() }
 	}
 
 	// -- internals ------------------------------------------------------------
@@ -1488,10 +1488,21 @@ class ConsentCore(
 		)
 	}
 
+	/** No-backend mode with an in-code policy, usable or refused. Init never uses the transport. */
+	private val inCodePolicy = config.policy != null || config.policyError != null
+
 	private fun runInit() {
-		config.policy?.let { policy ->
-			val mapped = policy.resolve(state.get().overrides) ?: return
-			val (changed, emitted) = applyInit(mapped, detectedGpc, true)
+		if (inCodePolicy) {
+			// A refused policy is reported like a refused /init, not as a quiet deny-all start.
+			val mapped = config.policy?.resolve(state.get().overrides) ?: config.policyError?.let { reason ->
+				com.c15t.core.transport.MappedInit(
+					resolution = com.c15t.core.model.PolicyResolution.failed(com.c15t.core.model.PolicyResolution.REASON_INVALID_CONFIGURATION),
+					evaluationPolicy = null,
+					policyPending = true,
+					error = KernelError(POLICY_INVALID, "The in-code policy was refused: $reason"),
+				)
+			} ?: return
+			val (changed, emitted) = applyInit(mapped, detectedGpc, config.policy != null)
 			emitted?.let(::emitError)
 			if (changed) notifySnapshot()
 			return
@@ -2246,6 +2257,9 @@ class ConsentCore(
 	private companion object {
 		/** A retained manifest that belongs to another backend URL or was issued in the future. */
 		const val BUNDLED_POLICY_UNUSABLE = "bundled-policy-unusable"
+
+		/** The app declared an in-code policy and the core could not use it. */
+		const val POLICY_INVALID = "policy-invalid"
 
 		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
 			Thread(runnable, "c15t-deadline").apply { isDaemon = true }

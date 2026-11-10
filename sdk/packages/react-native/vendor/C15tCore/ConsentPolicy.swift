@@ -44,11 +44,13 @@ public struct PolicyMatch: Sendable, Equatable {
 }
 
 /// How long a choice and a notice dismissal stay valid, in days. Defaults to 365.
+///
+/// Fractional days are allowed, as on the backend, and round to whole milliseconds.
 public struct PolicyValidity: Sendable, Equatable {
-    public var choiceDays: Int?
-    public var noticeDays: Int?
+    public var choiceDays: Double?
+    public var noticeDays: Double?
 
-    public init(choiceDays: Int? = nil, noticeDays: Int? = nil) {
+    public init(choiceDays: Double? = nil, noticeDays: Double? = nil) {
         self.choiceDays = choiceDays
         self.noticeDays = noticeDays
     }
@@ -116,7 +118,7 @@ public struct ConsentPolicyError: Error, Equatable, CustomStringConvertible {
     public let message: String
     public var description: String { message }
 
-    init(_ message: String) { self.message = message }
+    public init(_ message: String) { self.message = message }
 }
 
 /// A policy kept in source control: the only policy source in no-backend mode.
@@ -124,19 +126,32 @@ public struct ConsentPolicyError: Error, Equatable, CustomStringConvertible {
 /// Pass it as `CoreConfig.policy` with ``OfflineTransport`` or no transport. The device
 /// has no geolocation without a backend, so the `fallback` rule applies unless the app
 /// sets `overrides` country and region itself. Records stay on the device.
+///
+/// Rules are checked with the backend's authoring rules (`inspectPolicyRules` in
+/// `@c15t/schema`), plus three no-backend limits: no `iab` model, a rule for an unknown
+/// location, and a validity of at least one millisecond.
 public struct ConsentPolicy: Sendable, Equatable {
     public let rules: [PolicyRule]
     private let packs: [JSONValue]
 
-    /// - Throws: ``ConsentPolicyError`` when a rule is invalid, an id repeats, a rule
-    ///   uses the `iab` model, or no rule covers an unknown location.
+    /// - Throws: ``ConsentPolicyError`` when the policy breaks any of those rules.
     public init(rules: [PolicyRule]) throws {
         guard !rules.isEmpty else { throw ConsentPolicyError("ConsentPolicy needs at least one rule") }
-        let ids = rules.map { $0.id.trimmingCharacters(in: .whitespacesAndNewlines) }
-        guard Set(ids).count == rules.count else { throw ConsentPolicyError("ConsentPolicy rule ids must be unique") }
+        for rule in rules { try Self.validate(rule) }
+        var seen = Set<String>()
+        for id in rules.map({ $0.id.trimmingCharacters(in: .whitespacesAndNewlines) }) {
+            guard seen.insert(id).inserted else {
+                throw ConsentPolicyError("ConsentPolicy rule ids must be unique; '\(id)' repeats")
+            }
+        }
+        guard rules.filter({ $0.match.isDefault }).count <= 1 else {
+            throw ConsentPolicyError("ConsentPolicy allows only one isDefault rule")
+        }
+        guard rules.filter({ $0.match.fallback }).count <= 1 else {
+            throw ConsentPolicyError("ConsentPolicy allows only one fallback rule")
+        }
         var packs: [JSONValue] = []
         for rule in rules {
-            try Self.validate(rule)
             let wire = Self.wire(rule)
             guard case .resolved = PolicyWireReader.read(wire) else {
                 throw ConsentPolicyError("Policy '\(rule.id)' is invalid")
@@ -152,6 +167,9 @@ public struct ConsentPolicy: Sendable, Equatable {
 
     /// Read rules written in the backend's JSON shape: `{"rules": [...]}` or a bare
     /// array. `review` is ignored, as the backend never hashes it.
+    ///
+    /// - Throws: ``ConsentPolicyError`` for anything the backend would refuse, and for
+    ///   the fields no-backend mode does not support.
     public init(json: Data) throws {
         guard let root = C15tJSON.parse(json) else { throw ConsentPolicyError("The policy file is not JSON") }
         let list: [JSONValue]
@@ -162,7 +180,7 @@ public struct ConsentPolicy: Sendable, Equatable {
         } else {
             throw ConsentPolicyError("A policy file holds only \"rules\"")
         }
-        try self.init(rules: list.map(Self.readRule))
+        try self.init(rules: list.enumerated().map { try JSONRuleReader(value: $0.element, index: $0.offset).read() })
     }
 
     public static func == (left: ConsentPolicy, right: ConsentPolicy) -> Bool {
@@ -187,135 +205,74 @@ public struct ConsentPolicy: Sendable, Equatable {
             location: LocationContext(countryCode: overrides.country, regionCode: overrides.region))
     }
 
-    // MARK: - Reading the backend's JSON shape
+    // MARK: - Validating
 
-    private static let ruleKeys: Set<String> = [
-        "id", "match", "model", "prompt", "categories", "scopeMode", "preselectedCategories",
-        "actions", "validity", "privacySignals", "copyRevision", "review",
-    ]
+    private static let dayMs: Double = 86_400_000
+    private static let defaultValidityDays: Double = 365
+    /// `Number.MAX_SAFE_INTEGER`, the backend's ceiling for a validity in milliseconds.
+    private static let maxSafeMs: Double = 9_007_199_254_740_991
 
-    private static func readRule(_ value: JSONValue) throws -> PolicyRule {
-        guard let object = value.objectValue, let id = object["id"]?.stringValue else {
-            throw ConsentPolicyError("A policy rule needs an id")
-        }
-        if let unknown = Set(object.keys).subtracting(ruleKeys).sorted().first {
-            throw ConsentPolicyError("Policy '\(id)': unsupported field '\(unknown)'")
-        }
-        func categories(_ element: JSONValue?) throws -> [OptionalConsentCategory]? {
-            guard let element else { return nil }
-            guard let items = element.arrayValue else { throw ConsentPolicyError("Policy '\(id)': categories must be a list") }
-            return try items.compactMap { item in
-                let name = (item.stringValue ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                if name == "necessary" { return nil }
-                guard let category = OptionalConsentCategory(rawValue: name) else {
-                    throw ConsentPolicyError("Policy '\(id)': unknown category '\(name)'")
-                }
-                return category
-            }
-        }
-        guard let match = object["match"]?.objectValue else { throw ConsentPolicyError("Policy '\(id)' needs a match") }
-        func strings(_ key: String) -> [String] { match[key]?.arrayValue?.compactMap(\.stringValue) ?? [] }
-        guard let model = object["model"]?.stringValue.flatMap(ConsentModel.init(rawValue:)) else {
-            throw ConsentPolicyError("Policy '\(id)': unknown model")
-        }
-        guard let prompt = object["prompt"]?.stringValue.flatMap(PolicyPrompt.init(rawValue:)) else {
-            throw ConsentPolicyError("Policy '\(id)': unknown prompt")
-        }
-        var scopeMode: PolicyScopeMode?
-        if let raw = object["scopeMode"]?.stringValue {
-            guard let mode = PolicyScopeMode(rawValue: raw) else { throw ConsentPolicyError("Policy '\(id)': unknown scopeMode '\(raw)'") }
-            scopeMode = mode
-        }
-        let scopeValue = object["categories"]
-        let wildcard = scopeValue?.stringValue == "*"
-            || scopeValue?.arrayValue?.contains { $0.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines) == "*" } == true
-        let scope: [OptionalConsentCategory]? = try wildcard ? nil : categories(scopeValue)
-        let preselected: [OptionalConsentCategory] = try categories(object["preselectedCategories"]) ?? []
-        let actions: [PolicyChoiceAction]? = try object["actions"]?.arrayValue?.map { item in
-            guard let action = item.stringValue.flatMap(PolicyChoiceAction.init(rawValue:)) else {
-                throw ConsentPolicyError("Policy '\(id)': unknown action")
-            }
-            return action
-        }
-        let validity = object["validity"]?.objectValue.map {
-            PolicyValidity(choiceDays: $0["choiceDays"]?.intValue.map { Int($0) }, noticeDays: $0["noticeDays"]?.intValue.map { Int($0) })
-        }
-        var privacySignals: PolicyPrivacySignals?
-        if let signals = object["privacySignals"]?.objectValue {
-            privacySignals = PolicyPrivacySignals(
-                gpc: try signals["gpc"]?.objectValue.map { PolicyGpc(denyCategories: try categories($0["denyCategories"]) ?? []) })
-        }
-        return PolicyRule(
-            id: id,
-            match: PolicyMatch(
-                countries: strings("countries"),
-                regions: match["regions"]?.arrayValue?.compactMap { region in
-                    guard let country = region["country"]?.stringValue, let code = region["region"]?.stringValue else { return nil }
-                    return PolicyRegion(country: country, region: code)
-                } ?? [],
-                regionFallbacks: strings("regionFallbacks"),
-                fallback: match["fallback"]?.boolValue == true,
-                isDefault: match["isDefault"]?.boolValue == true),
-            model: model,
-            prompt: prompt,
-            categories: scope,
-            scopeMode: scopeMode,
-            preselectedCategories: preselected,
-            actions: actions,
-            validity: validity,
-            privacySignals: privacySignals,
-            copyRevision: object["copyRevision"]?.stringValue)
+    private static func millis(_ days: Double?) -> Int64 {
+        Int64(((days ?? defaultValidityDays) * dayMs).rounded(.toNearestOrAwayFromZero))
     }
 
-    // MARK: - Normalizing
+    private static func optionalNames(_ values: [OptionalConsentCategory]) -> [String] {
+        Array(Set(values.map(\.rawValue))).sorted()
+    }
 
-    private static let dayMs: Int64 = 86_400_000
-    private static let defaultValidityDays = 365
+    private static func scope(of rule: PolicyRule) -> [String] {
+        let declared = optionalNames(rule.categories ?? [])
+        return declared.isEmpty ? optionalNames(OptionalConsentCategory.ordered) : declared
+    }
 
-    /// The authoring invariants `@c15t/schema` checks before it normalizes a rule.
+    /// The authoring rules `inspectPolicyRules` in `@c15t/schema` checks, plus the no-backend limits.
     private static func validate(_ rule: PolicyRule) throws {
         let label = "Policy '\(rule.id)'"
-        guard !rule.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw ConsentPolicyError("ConsentPolicy rule ids must not be blank")
+        func require(_ condition: Bool, _ message: @autoclosure () -> String) throws {
+            if !condition { throw ConsentPolicyError(message()) }
         }
-        guard rule.model != .iab else {
-            throw ConsentPolicyError("\(label): the iab model needs a backend to serve the Global Vendor List")
-        }
+        try require(!rule.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, "ConsentPolicy rule ids must not be blank")
+        try require(rule.model != .iab, "\(label): the iab model needs a backend to serve the Global Vendor List")
         let prompts: [PolicyPrompt]
         switch rule.model {
         case .optIn, .iab: prompts = [.choice]
         case .optOut: prompts = [.choice, .notice, .none]
         case .none: prompts = [.none]
         }
-        guard prompts.contains(rule.prompt) else {
-            throw ConsentPolicyError("\(label): the \(rule.model.rawValue) model cannot use a \(rule.prompt.rawValue) prompt")
+        try require(prompts.contains(rule.prompt),
+            "\(label): the \(rule.model.rawValue) model cannot use a \(rule.prompt.rawValue) prompt")
+        if let actions = rule.actions {
+            try require(rule.prompt == .choice, "\(label): actions belong to a choice prompt")
+            try require(actions.contains(.accept) && actions.contains(.reject), "\(label): actions must include accept and reject")
         }
-        guard rule.actions == nil || rule.prompt == .choice else {
-            throw ConsentPolicyError("\(label): actions belong to a choice prompt")
+        let match = rule.match
+        try require(match.isDefault || match.fallback || !match.countries.isEmpty || !match.regions.isEmpty
+            || !match.regionFallbacks.isEmpty,
+            "\(label) has no matcher. Add countries or regions, or set fallback or isDefault")
+        let blank = { (value: String) in value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        try require(!(match.countries + match.regionFallbacks).contains(where: blank)
+            && !match.regions.contains { blank($0.country) || blank($0.region) },
+            "\(label): match countries and regions must be non-empty codes")
+        for days in [rule.validity?.choiceDays, rule.validity?.noticeDays].compactMap({ $0 }) {
+            try require(days.isFinite && days > 0 && days * dayMs <= maxSafeMs,
+                "\(label): validity must be a finite number of days greater than zero")
+            try require((days * dayMs).rounded(.toNearestOrAwayFromZero) >= 1,
+                "\(label): validity must be at least one millisecond")
         }
-        let days = [rule.validity?.choiceDays, rule.validity?.noticeDays].compactMap { $0 }
-        guard days.allSatisfy({ $0 > 0 }) else { throw ConsentPolicyError("\(label): validity days must be greater than zero") }
-        let scope = rule.categories.flatMap { $0.isEmpty ? nil : Set($0) }
-        guard scope == nil || scope?.count == OptionalConsentCategory.allCases.count || rule.scopeMode != nil else {
-            throw ConsentPolicyError("\(label): a partial category scope needs a scopeMode")
-        }
-        let inScope = scope ?? Set(OptionalConsentCategory.allCases)
-        guard rule.preselectedCategories.allSatisfy(inScope.contains) else {
-            throw ConsentPolicyError("\(label): preselectedCategories must be inside categories")
-        }
-        guard rule.preselectedCategories.isEmpty || rule.model != .none else {
-            throw ConsentPolicyError("\(label): the none model preselects nothing")
-        }
-        guard (rule.privacySignals?.gpc?.denyCategories ?? []).allSatisfy(inScope.contains) else {
-            throw ConsentPolicyError("\(label): privacySignals.gpc.denyCategories must be inside categories")
-        }
+        let partial = optionalNames(rule.categories ?? [])
+        try require(partial.isEmpty || partial.count == OptionalConsentCategory.allCases.count || rule.scopeMode != nil,
+            "\(label): a partial category scope needs a scopeMode")
+        let inScope = Set(scope(of: rule))
+        let preselected = optionalNames(rule.preselectedCategories)
+        try require(preselected.isEmpty || rule.model != .none, "\(label): the none model preselects nothing")
+        try require(preselected.allSatisfy(inScope.contains), "\(label): preselectedCategories must be inside categories")
+        try require(optionalNames(rule.privacySignals?.gpc?.denyCategories ?? []).allSatisfy(inScope.contains),
+            "\(label): privacySignals.gpc.denyCategories must be inside categories")
     }
+
+    // MARK: - Normalizing
 
     private static func strings(_ values: [String]) -> JSONValue { .array(values.map(JSONValue.string)) }
-
-    private static func sortedNames(_ values: [OptionalConsentCategory]) -> [String] {
-        Array(Set(values.map(\.rawValue))).sorted()
-    }
 
     private static func matchJSON(_ match: PolicyMatch) -> JSONValue {
         var fields: [String: JSONValue] = [:]
@@ -357,9 +314,7 @@ public struct ConsentPolicy: Sendable, Equatable {
         case .optOut: rights = ["disclosure", "opt-out", "preferences"]
         case .optIn, .iab: rights = ["disclosure", "preferences"]
         }
-        let declared = rule.categories ?? []
-        let scope = sortedNames(declared.isEmpty ? OptionalConsentCategory.ordered : declared)
-        let preselected = rule.model == .none ? [] : sortedNames(rule.preselectedCategories)
+        let preselected = rule.model == .none ? [] : optionalNames(rule.preselectedCategories)
         let copyRevision = rule.copyRevision?.trimmingCharacters(in: .whitespacesAndNewlines)
         return .object([
             "actions": .object([
@@ -372,45 +327,244 @@ public struct ConsentPolicy: Sendable, Equatable {
             "model": .string(rule.model.rawValue),
             "preselectedCategories": strings(preselected),
             "privacySignals": .object([
-                "gpc": .object(["denyCategories": strings(sortedNames(rule.privacySignals?.gpc?.denyCategories ?? []))]),
+                "gpc": .object(["denyCategories": strings(optionalNames(rule.privacySignals?.gpc?.denyCategories ?? []))]),
             ]),
             "prompt": .string(rule.prompt.rawValue),
             "proof": .object(["storeIp": .bool(false), "storeLanguage": .bool(false), "storeUserAgent": .bool(false)]),
             "rights": strings(rights),
-            "scope": strings(scope),
+            "scope": strings(scope(of: rule)),
             "scopeMode": .string((rule.scopeMode ?? .permissive).rawValue),
             "validity": .object([
-                "choiceMs": .integer(Int64(rule.validity?.choiceDays ?? defaultValidityDays) * dayMs),
-                "noticeMs": .integer(Int64(rule.validity?.noticeDays ?? defaultValidityDays) * dayMs),
+                "choiceMs": .integer(millis(rule.validity?.choiceDays)),
+                "noticeMs": .integer(millis(rule.validity?.noticeDays)),
             ]),
         ])
     }
 
-    /// The rule as a matched wire. Fingerprints hash the canonical rule on the device:
-    /// they never leave it in no-backend mode, and changing the rule changes them, which
-    /// asks returning people again.
+    /// The inputs `policyFingerprintInput`, `choicePromptFingerprintInput` and
+    /// `noticePromptFingerprintInput` in `@c15t/schema` hash. The choice prompt hashes
+    /// only the choice validity and the notice prompt only the notice validity, so a
+    /// change to one never asks again for the other.
+    static func fingerprintInputs(_ rule: PolicyRule) -> [String: JSONValue] {
+        let policy = normalize(rule).objectValue ?? [:]
+        let validity = policy["validity"]?.objectValue ?? [:]
+        func field(_ key: String) -> JSONValue { policy[key] ?? .null }
+        func prompt(_ domain: String, _ validityMs: JSONValue?) -> JSONValue {
+            .object([
+                "copyRevision": field("copyRevision"),
+                "domain": .string(domain),
+                "model": field("model"),
+                "privacySignals": field("privacySignals"),
+                "prompt": field("prompt"),
+                "requiredActions": field("actions")["required"] ?? .array([]),
+                "rights": field("rights"),
+                "scope": field("scope"),
+                "scopeMode": field("scopeMode"),
+                "validityMs": validityMs ?? .null,
+                "version": .integer(1),
+            ])
+        }
+        return [
+            "choice": prompt("choice", validity["choiceMs"]),
+            "notice": prompt("notice", validity["noticeMs"]),
+            "policy": .object([
+                "actions": field("actions"),
+                "copyRevision": field("copyRevision"),
+                "domain": .string("policy"),
+                "model": field("model"),
+                "preselectedCategories": field("preselectedCategories"),
+                "privacySignals": field("privacySignals"),
+                "prompt": field("prompt"),
+                "proof": field("proof"),
+                "rights": field("rights"),
+                "scope": field("scope"),
+                "scopeMode": field("scopeMode"),
+                "validity": field("validity"),
+                "version": .integer(1),
+            ]),
+        ]
+    }
+
+    /// The rule as a matched wire. Fingerprints hash the backend's fingerprint inputs on
+    /// the device: they never leave it in no-backend mode, so the encoding stays local.
     private static func wire(_ rule: PolicyRule) -> JSONValue {
-        let policy = normalize(rule)
-        let fields = policy.objectValue ?? [:]
-        func hash(_ domain: String, _ keys: [String]) -> String {
-            var input: [String: JSONValue] = ["domain": .string(domain)]
-            for key in keys { input[key] = fields[key] ?? .null }
-            let data = C15tJSON.encode(.object(input)) ?? Data()
+        let inputs = fingerprintInputs(rule)
+        func hash(_ domain: String) -> String {
+            let data = inputs[domain].flatMap { C15tJSON.encode($0) } ?? Data()
             return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
         }
-        let promptKeys = ["copyRevision", "model", "privacySignals", "prompt", "rights", "scope", "scopeMode", "validity"]
-        let id = rule.id.trimmingCharacters(in: .whitespacesAndNewlines)
         return .object([
             "fingerprints": .object([
-                "choice": .string(hash("choice", promptKeys)),
-                "notice": .string(hash("notice", promptKeys)),
-                "policy": .string(hash("policy", Array(fields.keys))),
+                "choice": .string(hash("choice")),
+                "notice": .string(hash("notice")),
+                "policy": .string(hash("policy")),
             ]),
             "matchedBy": .string("default"),
-            "policy": policy,
-            "policyId": .string(id),
+            "policy": normalize(rule),
+            "policyId": .string(rule.id.trimmingCharacters(in: .whitespacesAndNewlines)),
             "status": .string("matched"),
             "version": .integer(1),
         ])
+    }
+}
+
+/// Reads one rule in the backend's JSON shape, refusing every field and value
+/// `inspectPolicyRules` in `@c15t/schema` refuses rather than guessing.
+private struct JSONRuleReader {
+    private static let ruleKeys: Set<String> = [
+        "id", "match", "model", "prompt", "categories", "scopeMode", "preselectedCategories",
+        "actions", "validity", "privacySignals", "copyRevision", "review",
+    ]
+    private static let matchKeys: Set<String> = ["countries", "regions", "regionFallbacks", "fallback", "isDefault"]
+
+    let object: [String: JSONValue]
+    let id: String
+    var label: String { "Policy '\(id)'" }
+
+    init(value: JSONValue, index: Int) throws {
+        guard let object = value.objectValue else { throw ConsentPolicyError("Policy at index \(index) must be an object") }
+        guard let id = object["id"]?.stringValue else {
+            throw ConsentPolicyError("Policy at index \(index) is missing a non-empty id")
+        }
+        self.object = object
+        self.id = id
+    }
+
+    private func keys(_ value: [String: JSONValue], _ allowed: Set<String>, _ place: String) throws {
+        if let unknown = Set(value.keys).subtracting(allowed).sorted().first {
+            throw ConsentPolicyError("\(label): \(place) has unsupported field '\(unknown)'")
+        }
+    }
+
+    private func string(_ value: JSONValue?, _ place: String) throws -> String {
+        guard let text = value?.stringValue else { throw ConsentPolicyError("\(label): \(place) must be a string") }
+        return text
+    }
+
+    private func strings(_ value: JSONValue?, _ place: String) throws -> [String] {
+        guard let items = value?.arrayValue else { throw ConsentPolicyError("\(label): \(place) must be a list of strings") }
+        return try items.map { try string($0, place) }
+    }
+
+    private func fields(_ value: JSONValue?, _ place: String) throws -> [String: JSONValue] {
+        guard let fields = value?.objectValue else { throw ConsentPolicyError("\(label): \(place) must be an object") }
+        return fields
+    }
+
+    private func boolean(_ value: JSONValue?, _ place: String) throws -> Bool {
+        guard let value else { return false }
+        guard let flag = value.boolValue else { throw ConsentPolicyError("\(label): \(place) must be true or false") }
+        return flag
+    }
+
+    /// Category names, with `necessary` kept so the validator can refuse it where the backend does.
+    private func categories(_ value: JSONValue?, _ place: String) throws -> (optional: [OptionalConsentCategory], necessary: Bool) {
+        var optional: [OptionalConsentCategory] = []
+        var necessary = false
+        for raw in try strings(value, place) {
+            let name = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if name == "necessary" {
+                necessary = true
+            } else if let category = OptionalConsentCategory(rawValue: name) {
+                optional.append(category)
+            } else {
+                throw ConsentPolicyError("\(label): \(place) has unknown category '\(name)'")
+            }
+        }
+        return (optional, necessary)
+    }
+
+    private func days(_ value: JSONValue?, _ place: String) throws -> Double? {
+        switch value {
+        case nil: return nil
+        case let .integer(whole)?: return Double(whole)
+        case let .number(fraction)?: return fraction
+        default: throw ConsentPolicyError("\(label): \(place) must be a number of days")
+        }
+    }
+
+    func read() throws -> PolicyRule {
+        try keys(object, Self.ruleKeys, "the rule")
+        let match = try fields(object["match"], "match")
+        try keys(match, Self.matchKeys, "match")
+        let model = try string(object["model"], "model")
+        guard let parsedModel = ConsentModel(rawValue: model) else { throw ConsentPolicyError("\(label): unknown model") }
+        let prompt = try string(object["prompt"], "prompt")
+        guard let parsedPrompt = PolicyPrompt(rawValue: prompt) else { throw ConsentPolicyError("\(label): unknown prompt") }
+        var scope: [OptionalConsentCategory]?
+        if let value = object["categories"] {
+            let names = try strings(value, "categories")
+            if !names.contains(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines) == "*" }) {
+                scope = try categories(value, "categories").optional
+            }
+        }
+        var scopeMode: PolicyScopeMode?
+        if let value = object["scopeMode"] {
+            guard let mode = PolicyScopeMode(rawValue: try string(value, "scopeMode")) else {
+                throw ConsentPolicyError("\(label): unknown scopeMode")
+            }
+            scopeMode = mode
+        }
+        var actions: [PolicyChoiceAction]?
+        if let value = object["actions"] {
+            actions = try strings(value, "actions").map { name in
+                guard let action = PolicyChoiceAction(rawValue: name) else {
+                    throw ConsentPolicyError("\(label): unknown action '\(name)'")
+                }
+                return action
+            }
+        }
+        var validity: PolicyValidity?
+        if let value = object["validity"] {
+            let validityFields = try fields(value, "validity")
+            try keys(validityFields, ["choiceDays", "noticeDays"], "validity")
+            validity = PolicyValidity(
+                choiceDays: try days(validityFields["choiceDays"], "validity.choiceDays"),
+                noticeDays: try days(validityFields["noticeDays"], "validity.noticeDays"))
+        }
+        var privacySignals: PolicyPrivacySignals?
+        if let value = object["privacySignals"] {
+            let signals = try fields(value, "privacySignals")
+            try keys(signals, ["gpc"], "privacySignals")
+            var gpc: PolicyGpc?
+            if let gpcValue = signals["gpc"] {
+                let gpcFields = try fields(gpcValue, "privacySignals.gpc")
+                try keys(gpcFields, ["denyCategories"], "privacySignals.gpc")
+                let deny = try categories(gpcFields["denyCategories"], "privacySignals.gpc.denyCategories")
+                if deny.necessary { throw ConsentPolicyError("\(label): privacySignals.gpc cannot deny necessary") }
+                gpc = PolicyGpc(denyCategories: deny.optional)
+            }
+            privacySignals = PolicyPrivacySignals(gpc: gpc)
+        }
+        var regions: [PolicyRegion] = []
+        if let value = match["regions"] {
+            guard let items = value.arrayValue else { throw ConsentPolicyError("\(label): match.regions must be a list") }
+            regions = try items.map { item in
+                let region = try fields(item, "match.regions[]")
+                return PolicyRegion(
+                    country: try string(region["country"], "match.regions[].country"),
+                    region: try string(region["region"], "match.regions[].region"))
+            }
+        }
+        var copyRevision: String?
+        if let value = object["copyRevision"] { copyRevision = try string(value, "copyRevision") }
+        let preselected = try object["preselectedCategories"].map { try categories($0, "preselectedCategories").optional } ?? []
+        return PolicyRule(
+            id: id,
+            match: PolicyMatch(
+                countries: try match["countries"].map { try strings($0, "match.countries") } ?? [],
+                regions: regions,
+                regionFallbacks: try match["regionFallbacks"].map { try strings($0, "match.regionFallbacks") } ?? [],
+                fallback: try boolean(match["fallback"], "match.fallback"),
+                isDefault: try boolean(match["isDefault"], "match.isDefault")),
+            model: parsedModel,
+            prompt: parsedPrompt,
+            categories: scope,
+            scopeMode: scopeMode,
+            preselectedCategories: preselected,
+            actions: actions,
+            validity: validity,
+            privacySignals: privacySignals,
+            copyRevision: copyRevision)
     }
 }
