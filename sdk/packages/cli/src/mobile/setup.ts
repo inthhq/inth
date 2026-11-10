@@ -6,6 +6,7 @@ import * as p from '@clack/prompts';
 import type { CliContext } from '../context/types';
 import { CliError } from '../core/errors';
 import type { MobileProject, ReactNativeProject } from './detect';
+import { isPrivacyPolicyURL } from './privacy-policy-url';
 import {
 	MOBILE_CATEGORIES,
 	planNativeSetup,
@@ -32,7 +33,6 @@ const DEFAULT_CATEGORIES: readonly MobileCategory[] = [
 	'measurement',
 	'marketing',
 ];
-const PLACEHOLDER_PRIVACY_URL = 'https://example.com/privacy';
 
 /** Prompts the setup may show. Injectable so tests drive the interactive path. */
 export interface MobilePrompts {
@@ -250,6 +250,11 @@ const resolveBundleManifest = (
 		: Promise.resolve(false);
 };
 
+/**
+ * The privacy policy the consent screens link to. Required on every platform,
+ * because every presenter refuses to open without one, and checked with the
+ * presenters' own rule, so plain `http` is refused even on a loopback host.
+ */
 const resolvePrivacyPolicyURL = async (
 	context: CliContext,
 	prompts: MobilePrompts | null
@@ -257,10 +262,25 @@ const resolvePrivacyPolicyURL = async (
 	let url = text(context.flags['privacy-policy-url']);
 	if (url === undefined && prompts) {
 		url = text(
-			await prompts.text('Privacy policy URL', PLACEHOLDER_PRIVACY_URL)
+			await prompts.text(
+				'Privacy policy URL (https, shown from the consent screens)',
+				'https://example.com/privacy'
+			)
 		);
 	}
-	return url ? readURL(url, '--privacy-policy-url') : PLACEHOLDER_PRIVACY_URL;
+	if (url === undefined) {
+		throw new CliError('INPUT_REQUIRED', {
+			details:
+				'Pass --privacy-policy-url https://your-app.example/privacy; the consent screens link to it on every platform.',
+		});
+	}
+	if (!isPrivacyPolicyURL(url)) {
+		throw new CliError('FLAG_INVALID', {
+			details:
+				'--privacy-policy-url must be an https URL with a DNS host, as the iOS and Android consent screens require.',
+		});
+	}
+	return url;
 };
 
 /**
@@ -405,15 +425,7 @@ export const setupMobile = async (
 			await fs.writeFile(target, file.contents);
 		}
 	}
-	// Remind only when nobody chose the URL: a flag that names the placeholder is a choice.
-	const steps =
-		options.privacyPolicyURL === PLACEHOLDER_PRIVACY_URL &&
-		text(flags['privacy-policy-url']) === undefined
-			? [
-					...plan.steps,
-					`Replace ${PLACEHOLDER_PRIVACY_URL} with your privacy policy, or rerun with --privacy-policy-url.`,
-				]
-			: plan.steps;
+	const { steps } = plan;
 	if (flags.json !== true) {
 		for (const file of plan.files) {
 			logger.success(`${applied ? 'Wrote' : 'Would write'} ${file.path}`);

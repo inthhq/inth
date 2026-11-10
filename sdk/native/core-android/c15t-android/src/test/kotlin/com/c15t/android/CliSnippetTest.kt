@@ -12,17 +12,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * The offline install `c15t setup offline` prints for an Android app.
+ * The installs `c15t setup` prints for an Android app, offline and hosted.
  *
- * Compiling [cliOfflineInstall] is the check that the printed code matches this module's
- * API. `packages/cli/src/__tests__/mobile/mobile-setup.test.ts` reads the lines between
- * the markers and fails when the CLI prints anything else, so change both together.
+ * Compiling [cliOfflineInstall] and [cliHostedInstall] is the check that the printed code
+ * matches this module's API. `packages/cli/src/__tests__/mobile/mobile-setup.test.ts` reads
+ * the lines between each pair of markers and fails when the CLI prints anything else, so
+ * change both together.
  */
 class CliSnippetTest {
 	// Never called. `this` is the Application, as in `Application.onCreate`.
 	@Suppress("unused")
 	private fun Application.cliOfflineInstall() {
-		// c15t-cli-snippet:start
+		// c15t-cli-snippet:offline:start
 		val policy = ConsentPolicy(listOf(
 		    PolicyRule("everywhere", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
 		))
@@ -31,7 +32,18 @@ class CliSnippetTest {
 		    consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
 		    policy = policy,
 		))
-		// c15t-cli-snippet:end
+		// c15t-cli-snippet:offline:end
+	}
+
+	// Never called, like [cliOfflineInstall].
+	@Suppress("unused")
+	private fun Application.cliHostedInstall() {
+		// c15t-cli-snippet:hosted:start
+		C15tAndroid.install(this, NativeConfig(
+		    backendUrl = "https://your-project.inth.app",
+		    consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
+		))
+		// c15t-cli-snippet:hosted:end
 	}
 
 	@Test

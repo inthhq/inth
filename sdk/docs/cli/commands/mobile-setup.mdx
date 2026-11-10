@@ -11,7 +11,8 @@ Expo, React Native, Swift or Android project, it runs the mobile setup instead
 of the web one. Web projects get the same setup as before.
 
 ```sh
-npx c15t setup --backend-url https://your-project.inth.app
+npx c15t setup --backend-url https://your-project.inth.app \
+	--privacy-policy-url https://your-app.example/privacy
 ```
 
 The mobile SDKs are a private prerelease. Install the `@c15t/react-native`
@@ -22,8 +23,8 @@ tarball and get Maven access from your maintainer first.
 | --- | --- | --- |
 | Expo | `expo` in `package.json` | Adds the config plugin entry to `app.json` and writes the provider file. |
 | Bare React Native | `react-native` without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. Offline mode also writes the policy rules to `android/app/src/main/assets/c15t-policy-rules.json`, which the iOS target references. |
-| Swift | An Xcode project, workspace or `Package.swift`, with no `package.json` | Prints the package, products and setup code. |
-| Android | A Gradle build, with no `package.json` | Prints the repository, dependencies and setup code. |
+| Swift | An Xcode project, workspace or `Package.swift`, with no `package.json` | Prints the package, products and the code that installs the engine and attaches the consent screens, for SwiftUI and UIKit. |
+| Android | A Gradle build, with no `package.json` | Prints the repository, dependencies and the code that installs the engine and attaches the consent screens, for Compose and for an Activity with views. |
 
 Setup never edits an Xcode project, a Gradle file or a native manifest. It
 prints those changes for you to make.
@@ -69,7 +70,7 @@ native module.
 | `hosted`, `self-hosted`, `offline`, `custom` | The mode, as the first argument. Defaults to `hosted`. |
 | `--backend-url <url>` | The backend URL the app uses: https, or plain http on a loopback host, with no credentials, query or fragment. Required except in offline mode, which refuses it. |
 | `--categories <list>` | Comma-separated categories the app offers. `necessary` is always included. Defaults to `measurement,marketing`. |
-| `--privacy-policy-url <url>` | Your privacy policy, for the provider and printed steps. |
+| `--privacy-policy-url <url>` | Required. Your privacy policy, which the consent screens link to on every platform. It must be https with a DNS name or IPv4 host, as the iOS and Android screens require, so plain http is refused even on a loopback host. |
 | `--bundle-manifest` | Expo only: bundle the hosted policy at prebuild with [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest). |
 | `--overwrite` | Replace an existing c15t plugin entry and provider file. |
 | `--dry-run` | Show the files and steps without writing anything. |

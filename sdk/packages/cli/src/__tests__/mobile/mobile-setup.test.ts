@@ -1,7 +1,8 @@
+import { existsSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -13,24 +14,28 @@ import {
 // CLI takes no dependency on the private React Native package.
 import { resolveParams } from '../../../../react-native/src/expo-plugin/params';
 import { writePolicyRules } from '../../../../react-native/src/expo-plugin/policy-resource';
-import type { CliCommand } from '../../context/types';
+import type { CliCommand, CliContext } from '../../context/types';
 import { runCli } from '../../index';
 import {
 	detectMobileProject,
 	detectNativePlatforms,
 } from '../../mobile/detect';
+import { isPrivacyPolicyURL } from '../../mobile/privacy-policy-url';
 import {
 	C15T_ANDROID_VERSION,
 	EXPO_PLUGIN,
 	expoPluginEntry,
+	KOTLIN_INSTALL_IMPORTS,
 	KOTLIN_OFFLINE_IMPORTS,
+	kotlinInstall,
 	kotlinOfflineInstall,
 	mergeExpoAppJson,
 	providerImport,
+	swiftConfiguration,
 	swiftOfflineInstall,
 } from '../../mobile/scaffold';
-import { normalizeMobileURL } from '../../mobile/setup';
-import type { MobileSetupResult } from '../../mobile/setup';
+import { normalizeMobileURL, resolveMobileOptions } from '../../mobile/setup';
+import type { MobilePrompts, MobileSetupResult } from '../../mobile/setup';
 import { createCliLogger } from '../../utils/logger';
 
 const logger = createCliLogger('error', { write: () => {} });
@@ -40,14 +45,24 @@ const REPO = path.resolve(
 );
 const DEFAULT_CATEGORIES = ['necessary', 'measurement', 'marketing'] as const;
 
-/** The lines between `c15t-cli-snippet` markers in a native test, dedented. */
-const nativeSnippet = async (file: string): Promise<string> => {
+const SWIFT_SNIPPETS =
+	'native/core-swift/Tests/C15tAppleTests/CLISnippetTests.swift';
+const KOTLIN_SNIPPETS =
+	'native/core-android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt';
+const PRIVACY_URL = 'https://app.example/privacy';
+
+/** The lines between the `c15t-cli-snippet:<name>` markers in a native test, dedented. */
+const nativeSnippet = async (file: string, name: string): Promise<string> => {
 	const source = await readFile(path.join(REPO, file), 'utf8');
 	const lines = source.split('\n');
 	const start = lines.findIndex((line) =>
-		line.includes('c15t-cli-snippet:start')
+		line.includes(`c15t-cli-snippet:${name}:start`)
 	);
-	const end = lines.findIndex((line) => line.includes('c15t-cli-snippet:end'));
+	const end = lines.findIndex((line) =>
+		line.includes(`c15t-cli-snippet:${name}:end`)
+	);
+	expect(start, `${name} markers in ${file}`).toBeGreaterThan(-1);
+	expect(end).toBeGreaterThan(start);
 	const block = lines.slice(start + 1, end);
 	const indent = Math.min(
 		...block.map((line) => /^[\t ]*/u.exec(line)?.[0].length ?? 0)
@@ -72,13 +87,22 @@ const project = async (files: Record<string, string>): Promise<string> => {
 const pkg = (dependencies: Record<string, string>) =>
 	JSON.stringify({ dependencies, name: 'app' });
 
-const setup = async (cwd: string, args: string[]) => {
+const run = async (cwd: string, args: string[]) => {
 	const result = await runCli(['setup', ...args, '--json', '--no-telemetry'], {
 		cwd,
 		logger,
 	});
 	return result as typeof result & { data: MobileSetupResult };
 };
+
+/** `c15t setup` with a privacy policy URL, which every platform requires. */
+const setup = (cwd: string, args: string[]) =>
+	run(
+		cwd,
+		args.includes('--privacy-policy-url')
+			? args
+			: [...args, '--privacy-policy-url', PRIVACY_URL]
+	);
 
 afterEach(async () => {
 	await Promise.all(
@@ -220,15 +244,16 @@ describe('c15t setup in a mobile project', () => {
 			path.join(root, 'c15t/privacy-app.tsx'),
 			'utf8'
 		);
-		expect(provider).toContain('<ConsentProvider>');
+		// The provider presents the prompt itself once it has the privacy policy.
+		expect(provider).toContain(
+			'<ConsentProvider privacyPolicyURL={privacyPolicyURL}>'
+		);
+		expect(provider).toContain('void presentPreferences(privacyPolicyURL);');
 		expect(provider).toContain("import type { ReactNode } from 'react';");
 		expect(result.data.steps.join('\n')).toContain(
 			'<PrivacyApp privacyPolicyURL="https://app.example/privacy">, once, in App.tsx: import { PrivacyApp } from \'./c15t/privacy-app\';'
 		);
 		expect(result.data.steps.join('\n')).toContain('-D @c15t/cli');
-		expect(result.data.steps.join('\n')).not.toContain(
-			'Replace https://example.com/privacy'
-		);
 	});
 
 	it('tells an Expo app in custom mode to install the engine itself', async () => {
@@ -275,10 +300,6 @@ describe('c15t setup in a mobile project', () => {
 			'Add this entry to "plugins" in app.config.ts'
 		);
 		expect(result.data.steps.join('\n')).not.toContain('tarball');
-		// The URL was passed, so it is a choice even though it is the example one.
-		expect(result.data.steps.join('\n')).not.toContain(
-			'Replace https://example.com/privacy'
-		);
 		expect(await readFile(path.join(root, 'app.config.ts'), 'utf8')).toBe(
 			'export default {};\n'
 		);
@@ -292,9 +313,6 @@ describe('c15t setup in a mobile project', () => {
 
 		const result = await setup(root, ['--backend-url', 'https://a.inth.app']);
 
-		expect(result.data.steps.at(-1)).toBe(
-			'Replace https://example.com/privacy with your privacy policy, or rerun with --privacy-policy-url.'
-		);
 		expect(result.data.skipped).toEqual([
 			'c15t/privacy-app.jsx exists; pass --overwrite to replace it.',
 		]);
@@ -418,6 +436,33 @@ describe('c15t setup in a mobile project', () => {
 		);
 	});
 
+	it('gives the native screens the privacy policy and the chosen categories', async () => {
+		const root = await project({ 'Package.swift': '', 'build.gradle.kts': '' });
+
+		const steps = (
+			await setup(root, [
+				'--backend-url',
+				'https://a.inth.app',
+				'--categories',
+				'measurement',
+			])
+		).data.steps.join('\n');
+
+		expect(steps).toContain('consentCategories: [.necessary, .measurement]\n');
+		expect(steps).toContain(
+			'consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT),'
+		);
+		expect(steps).toContain(
+			`.c15tConsent(\n        C15tAppleConfiguration(\n            transport: .hosted(URL(string: "https://a.inth.app")!),`
+		);
+		expect(steps).toContain(`privacyPolicyURL: URL(string: "${PRIVACY_URL}")!`);
+		expect(steps).toContain('ConsentRootViewController(');
+		expect(steps).toContain(`C15tConsent(privacyPolicyUrl = "${PRIVACY_URL}")`);
+		expect(steps).toContain(`attachConsent("${PRIVACY_URL}")`);
+		expect(steps).toContain(`imports: ${KOTLIN_INSTALL_IMPORTS.join(', ')}`);
+		expect(steps).not.toContain('example.com/privacy');
+	});
+
 	it('refuses a positional mode that conflicts with --mode', async () => {
 		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
 
@@ -439,6 +484,23 @@ describe('c15t setup in a mobile project', () => {
 		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
 
 		expect((await setup(root, [])).error?.message).toContain('--backend-url');
+		const noPolicy = await run(root, ['--backend-url', 'https://a.test']);
+		expect(noPolicy.error?.code).toBe('INPUT_REQUIRED');
+		expect(noPolicy.error?.message).toContain('--privacy-policy-url');
+		for (const url of [
+			'http://localhost:8787/privacy',
+			'http://127.0.0.1/privacy',
+			'https://user@app.example/privacy',
+		]) {
+			// oxlint-disable-next-line no-await-in-loop -- One URL at a time.
+			const refused = await setup(root, [
+				'--backend-url',
+				'https://a.test',
+				'--privacy-policy-url',
+				url,
+			]);
+			expect(refused.error?.code, url).toBe('FLAG_INVALID');
+		}
 		expect(
 			(await setup(root, ['--backend-url', 'http://consent.example.com'])).error
 				?.message
@@ -521,21 +583,31 @@ describe('offline setup in a Swift or Android app', () => {
 	});
 
 	it('prints exactly the code the native tests compile', async () => {
+		const hosted = {
+			backendURL: 'https://your-project.inth.app',
+			bundleManifest: false,
+			categories: DEFAULT_CATEGORIES,
+			mode: 'hosted',
+			privacyPolicyURL: PRIVACY_URL,
+		} as const;
 		expect(swiftOfflineInstall(DEFAULT_CATEGORIES)).toBe(
-			await nativeSnippet(
-				'native/core-swift/Tests/C15tAppleTests/CLISnippetTests.swift'
-			)
+			await nativeSnippet(SWIFT_SNIPPETS, 'offline')
 		);
-		const kotlinTest =
-			'native/core-android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt';
+		expect(swiftConfiguration(hosted)).toBe(
+			await nativeSnippet(SWIFT_SNIPPETS, 'hosted')
+		);
 		expect(kotlinOfflineInstall(DEFAULT_CATEGORIES)).toBe(
-			await nativeSnippet(kotlinTest)
+			await nativeSnippet(KOTLIN_SNIPPETS, 'offline')
 		);
-		const source = await readFile(path.join(REPO, kotlinTest), 'utf8');
+		expect(kotlinInstall(hosted)).toBe(
+			await nativeSnippet(KOTLIN_SNIPPETS, 'hosted')
+		);
+		const source = await readFile(path.join(REPO, KOTLIN_SNIPPETS), 'utf8');
 		// The test sits in com.c15t.android, so C15tAndroid needs no import there.
-		const imported = KOTLIN_OFFLINE_IMPORTS.filter(
-			(entry) => entry !== 'com.c15t.android.C15tAndroid'
-		);
+		const imported = [
+			...KOTLIN_OFFLINE_IMPORTS,
+			...KOTLIN_INSTALL_IMPORTS,
+		].filter((entry) => entry !== 'com.c15t.android.C15tAndroid');
 		for (const entry of imported) {
 			expect(source).toContain(`import ${entry}\n`);
 		}
@@ -703,6 +775,119 @@ describe('backend URLs', () => {
 		expect(await readFile(path.join(root, 'app.json'), 'utf8')).toBe(
 			'{"expo":{}}'
 		);
+	});
+});
+
+/**
+ * The React Native presenter's own table (`provider/__tests__/privacy-policy-url.test.ts`
+ * in the auto-present release), plus loopback `http`, which the backend URL rule allows.
+ */
+const PRIVACY_URL_CASES: readonly (readonly [string, boolean])[] = [
+	...[
+		'https://example.com',
+		'https://example.com/',
+		'https://example.com/privacy',
+		'https://EXAMPLE.com/Privacy',
+		'https://sub.example.co.uk/legal/privacy.html',
+		'https://example.com:8443/privacy',
+		'https://example.com:1/p',
+		'https://example.com:65535/p',
+		'https://example.com/privacy?lang=en&v=2#cookies',
+		'https://example.com/a%20b',
+		"https://example.com/~user/(policy);v=1,2*!$'@:",
+		'https://xn--bcher-kva.example/privacy',
+		'https://192.168.0.1/privacy',
+		'https://localhost',
+	].map((value) => [value, true] as const),
+	...[
+		'http://example.com/privacy',
+		'http://localhost:8787/privacy',
+		'http://127.0.0.1/privacy',
+		'HTTPS://example.com',
+		'example.com/privacy',
+		'https:example.com',
+		'',
+		'https://',
+		'https:///privacy',
+		'https://example.com:bad',
+		'https://example.com:/privacy',
+		'https://example.com:0',
+		'https://example.com:65536',
+		'https://[',
+		'https://[::1]/privacy',
+		'https://bücher.example/privacy',
+		'https://user@example.com/privacy',
+		'https://-bad.example/privacy',
+		'https://example..com/privacy',
+		'https://example.com./privacy',
+		' https://example.com',
+		'https://example.com/privacy ',
+		'https://example.com/privacy\n',
+		'https://example.com/privacy policy',
+		'https://example.com/"privacy"',
+		'https://example.com/%zz',
+		'https://example.com/a#b#c',
+		'https://example.com\\privacy',
+		'mailto:privacy@example.com',
+		`https://${'a'.repeat(60)}.${'b'.repeat(60)}.${'c'.repeat(60)}.${'d'.repeat(60)}.${'e'.repeat(20)}/p`,
+	].map((value) => [value, false] as const),
+];
+
+// The presenter's rule ships with the auto-present release of @c15t/react-native.
+const PRESENTER_RULE = path.join(
+	REPO,
+	'packages/react-native/src/provider/privacy-policy-url.ts'
+);
+
+describe('privacy policy URLs', () => {
+	it.each(PRIVACY_URL_CASES)('%j: the CLI accepts it: %s', (value, ok) => {
+		expect(isPrivacyPolicyURL(value)).toBe(ok);
+	});
+
+	it.skipIf(!existsSync(PRESENTER_RULE))(
+		'are accepted and refused exactly as the React Native presenter does',
+		async () => {
+			const presenter = (await import(pathToFileURL(PRESENTER_RULE).href)) as {
+				isPrivacyPolicyURL: (value: string) => boolean;
+			};
+			for (const [value] of PRIVACY_URL_CASES) {
+				expect(isPrivacyPolicyURL(value), value).toBe(
+					presenter.isPrivacyPolicyURL(value)
+				);
+			}
+		}
+	);
+
+	it('is a prompt of its own, checked with the same rule', async () => {
+		const asked: string[] = [];
+		const prompts = (answer: string): MobilePrompts => ({
+			confirm: () => Promise.resolve(false),
+			multiselect: (_message, _options, initial) =>
+				Promise.resolve([...initial]),
+			select: () => Promise.resolve('hosted'),
+			text: (message) => {
+				asked.push(message);
+				return Promise.resolve(
+					message.startsWith('Privacy') ? answer : 'https://a.inth.app'
+				);
+			},
+		});
+		const context = { commandArgs: [], flags: {} } as unknown as CliContext;
+		const expo = { kind: 'expo' } as Parameters<typeof resolveMobileOptions>[1];
+
+		const options = await resolveMobileOptions(
+			context,
+			expo,
+			prompts(PRIVACY_URL)
+		);
+
+		expect(options.privacyPolicyURL).toBe(PRIVACY_URL);
+		expect(
+			asked.some((message) => message.startsWith('Privacy policy URL'))
+		).toBe(true);
+		await expect(
+			resolveMobileOptions(context, expo, prompts('http://localhost/privacy'))
+		).rejects.toMatchObject({ code: 'FLAG_INVALID' });
 	});
 });
 
