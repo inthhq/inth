@@ -44,7 +44,9 @@ const mount = function mount(
 ): ReturnType<typeof renderTree> {
 	fake = createFakeNativeModule(options);
 
-	return renderTree(<ConsentProvider>{children}</ConsentProvider>);
+	return renderTree(
+		<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
+	);
 };
 
 afterEach(() => {

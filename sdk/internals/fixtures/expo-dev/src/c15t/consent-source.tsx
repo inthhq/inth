@@ -181,8 +181,10 @@ export const ConsentSourceProvider = ({
 		<ConsentSourceContext.Provider value={source}>
 			{usingNative ? (
 				// The provider is the documented entry point and the one that runs
-				// the protocol handshake, so the native path goes through it.
-				<ConsentProvider>{children}</ConsentProvider>
+				// the protocol handshake, so the native path goes through it. This app
+				// draws the JavaScript banner itself, so the provider presents no
+				// native prompt.
+				<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
 			) : (
 				// A new key is a new subtree, which is what a relaunch does to the
 				// JavaScript side: every subscriber attaches to the new core.

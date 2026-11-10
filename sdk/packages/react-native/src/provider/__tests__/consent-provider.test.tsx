@@ -61,7 +61,7 @@ describe('handshake', () => {
 		const fake = createFakeNativeModule();
 
 		const tree = renderTree(
-			<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
 				<FiveConsumers />
 			</ConsentProvider>
 		);
@@ -78,7 +78,10 @@ describe('handshake', () => {
 		const tree = renderTree(
 			<>
 				{Array.from({ length: 5 }, (_unused, index) => (
-					<ConsentProvider key={index}>
+					<ConsentProvider
+						autoPresent={false}
+						key={index}
+					>
 						<RevisionProbe />
 					</ConsentProvider>
 				))}
@@ -95,8 +98,8 @@ describe('handshake', () => {
 		const fake = createFakeNativeModule();
 
 		const tree = renderTree(
-			<ConsentProvider>
-				<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
+				<ConsentProvider autoPresent={false}>
 					<RevisionProbe />
 				</ConsentProvider>
 			</ConsentProvider>
@@ -112,7 +115,7 @@ describe('handshake', () => {
 		createFakeNativeModule();
 
 		const tree = renderTree(
-			<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
 				<BootstrapProbe />
 			</ConsentProvider>
 		);
@@ -133,7 +136,7 @@ describe('protocol version guard', () => {
 
 		const message = captureErrorMessage(() =>
 			renderToStaticMarkup(
-				<ConsentProvider>
+				<ConsentProvider autoPresent={false}>
 					<RevisionProbe />
 				</ConsentProvider>
 			)
@@ -151,7 +154,7 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<ConsentProvider>
+					<ConsentProvider autoPresent={false}>
 						<RevisionProbe />
 					</ConsentProvider>
 				)
@@ -165,7 +168,7 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<ConsentProvider>
+					<ConsentProvider autoPresent={false}>
 						<RevisionProbe />
 					</ConsentProvider>
 				)
@@ -178,7 +181,7 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<ConsentProvider>
+					<ConsentProvider autoPresent={false}>
 						<RevisionProbe />
 					</ConsentProvider>
 				)

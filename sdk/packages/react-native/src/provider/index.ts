@@ -3,7 +3,11 @@
  */
 
 export { ConsentProvider } from './consent-provider';
-export type { ConsentProviderProps } from './consent-provider';
+export type {
+	ConsentProviderBaseProps,
+	ConsentProviderPromptProps,
+	ConsentProviderProps,
+} from './consent-provider';
 export { ConsentClientContext, useConsentClient } from './consent-context';
 export { ConsentSafeAreaContext } from './safe-area-context';
 export type { ConsentSafeAreaInsets } from './safe-area-context';

@@ -42,7 +42,7 @@ For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify native bui
 
 ## Native setup before JavaScript
 
-Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `ConsentProvider` attaches to that engine and checks the protocol. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.
+Start with an Inth project and its authored policy. The reference apps use https://example-inth.inth.app/. Replace it with your own project URL. Configure the native launch hooks before optional SDK startup; `ConsentProvider` attaches to that engine, checks the protocol and presents the native consent prompt when one is owed. Pass `privacyPolicyURL`, or `autoPresent={false}` to present it yourself. It does not bootstrap a JavaScript consent engine. Disable vendor automatic startup and keep gates current after withdrawal.
 
 ## Local success and delivery
 

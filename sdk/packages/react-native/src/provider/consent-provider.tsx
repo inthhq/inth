@@ -7,9 +7,11 @@
  * The provider reads the handshake once, publishes the client, and gets out of
  * the way.
  *
- * The one thing it holds is a foreground listener, which re-reads the platform
- * tracking answer because the Settings app changes it without telling a running
- * process. That work belongs here rather than in a hook so it happens once per app.
+ * It holds two pieces of app-wide work. A foreground listener re-reads the
+ * platform tracking answer, because the Settings app changes it without telling
+ * a running process. And unless the app opts out, it presents the native consent
+ * prompt when one is owed. Both belong here rather than in a hook so they happen
+ * once per app.
  */
 
 import type { ReactNode } from 'react';
@@ -17,6 +19,11 @@ import { useContext, useEffect, useMemo } from 'react';
 import { AppState } from 'react-native';
 
 import { getConsentClient } from '../native/client';
+import {
+	assertPrivacyPolicyURL,
+	presentOwedPrompt,
+	selectOwedPromptKey,
+} from './auto-present';
 import { ConsentClientContext } from './consent-context';
 import {
 	ConsentSafeAreaContext,
@@ -25,9 +32,42 @@ import {
 import type { ConsentSafeAreaInsets } from './safe-area-context';
 
 /**
+ * Whether the provider presents the native consent prompt by itself.
+ *
+ * On by default. The provider then needs the app's privacy-policy URL, which the
+ * prompt links to. With `autoPresent={false}` nothing opens until the app calls
+ * {@link presentConsentPrompt} or {@link presentPreferences}.
+ */
+export type ConsentProviderPromptProps =
+	| {
+			/**
+			 * Present the native prompt once the core is ready and a prompt is owed,
+			 * once per owed prompt. A stored choice that is still valid shows nothing;
+			 * a new policy or an expired choice prompts again.
+			 *
+			 * @default true
+			 */
+			readonly autoPresent?: true;
+			/** The app's HTTPS privacy-policy URL, linked from the prompt. */
+			readonly privacyPolicyURL: string;
+	  }
+	| {
+			/** Present nothing by itself. The manual presenter APIs work as before. */
+			readonly autoPresent: false;
+			/** Unused while `autoPresent` is `false`. */
+			readonly privacyPolicyURL?: string;
+	  };
+
+/**
  * Props for {@link ConsentProvider}.
  */
-export interface ConsentProviderProps {
+export type ConsentProviderProps = ConsentProviderBaseProps &
+	ConsentProviderPromptProps;
+
+/**
+ * Props {@link ConsentProvider} takes whether or not it presents the prompt.
+ */
+export interface ConsentProviderBaseProps {
 	/** The app subtree that may read consent. */
 	readonly children: ReactNode;
 	/**
@@ -60,13 +100,16 @@ export interface ConsentProviderProps {
  * rather than attaching a second time, so a storybook or a test harness that
  * wraps an already-provided subtree cannot double the native listener.
  *
+ * By default it also presents the native consent prompt when one is owed. A
+ * nested provider never presents; the outermost one does.
+ *
  * @example
  * ```tsx
  * import { ConsentProvider } from '@c15t/react-native';
  *
  * export function App() {
  *     return (
- *         <ConsentProvider>
+ *         <ConsentProvider privacyPolicyURL="https://example.com/privacy">
  *             <Root />
  *         </ConsentProvider>
  *     );
@@ -77,19 +120,30 @@ export interface ConsentProviderProps {
  * @param props.children - Subtree that may read consent.
  * @param props.safeAreaInsets - Bands the surfaces stay clear of, when the host
  *   measured them.
+ * @param props.autoPresent - `false` leaves presenting to the app.
+ * @param props.privacyPolicyURL - The HTTPS privacy policy the prompt links to.
  * @returns The children, with consent available through the hooks.
  * @throws {NativeC15tUnavailableError} When the native module is not in the
  *   running binary, for example in Expo Go.
  * @throws {C15tProtocolMismatchError} When the embedded native build speaks a
  *   protocol this bundle does not support. The message names both sides and the
  *   fix, which is a rebuild rather than a JavaScript update.
+ * @throws {TypeError} When the provider presents the prompt and
+ *   `privacyPolicyURL` is not an HTTPS URL.
  */
 export const ConsentProvider = ({
+	autoPresent = true,
 	children,
+	privacyPolicyURL,
 	safeAreaInsets,
 }: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
+	// Only the outermost provider presents, so a nested one cannot double it.
+	const presents = autoPresent && inherited === null;
+	if (presents) {
+		assertPrivacyPolicyURL(privacyPolicyURL);
+	}
 
 	// The handshake runs here, during render, on purpose. A binary that cannot
 	// speak this protocol is a configuration error, and the app should stop at
@@ -137,6 +191,29 @@ export const ConsentProvider = ({
 			subscription.remove();
 		};
 	}, [client]);
+
+	// Present the owed prompt now, whenever the owed prompt changes, and on the
+	// way back to the foreground, where a call that found no window can succeed.
+	useEffect(() => {
+		if (!presents || privacyPolicyURL === undefined) {
+			return;
+		}
+		const present = (): void => {
+			void presentOwedPrompt(client, privacyPolicyURL);
+		};
+		present();
+		const unsubscribe = client.subscribe(selectOwedPromptKey, present);
+		const subscription = AppState.addEventListener('change', (state): void => {
+			if (state === 'active') {
+				present();
+			}
+		});
+
+		return () => {
+			unsubscribe();
+			subscription.remove();
+		};
+	}, [client, presents, privacyPolicyURL]);
 
 	return (
 		<ConsentClientContext.Provider value={client}>

@@ -109,7 +109,7 @@ export const mountSurface = function mountSurface(
 	let floor = 0;
 
 	const tree = renderTree(
-		<ConsentProvider>
+		<ConsentProvider autoPresent={false}>
 			<Profiler
 				id="surface"
 				onRender={() => {
