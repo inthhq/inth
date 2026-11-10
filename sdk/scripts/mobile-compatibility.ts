@@ -92,7 +92,14 @@ function PrivacyStatus() {
 }
 export const App = () => <ConsentProvider><PrivacyStatus /></ConsentProvider>;
 export const plugin: typeof withC15t = withC15t;
-export const configuration: C15tPluginProps = { mode: 'offline' };
+export const configuration: C15tPluginProps = {
+	mode: 'offline',
+	policy: {
+		rules: [
+			{ id: 'fallback', match: { fallback: true }, model: 'opt-in', prompt: 'choice' },
+		],
+	},
+};
 export const posthog: typeof connectPostHog = connectPostHog;
 export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
 `;
@@ -301,6 +308,17 @@ const main = function main(): void {
 								{
 									consentCategories: ['necessary', 'measurement'],
 									mode: 'offline',
+									// Offline mode has no backend, so the policy is in code.
+									policy: {
+										rules: [
+											{
+												id: 'fallback',
+												match: { fallback: true },
+												model: 'opt-in',
+												prompt: 'choice',
+											},
+										],
+									},
 								},
 							],
 						],
