@@ -40,6 +40,8 @@ export const ANDROID_META = {
 	/** `offline` selects no-backend mode, read by `C15tAndroid.configFrom`. */
 	mode: 'com.c15t.MODE',
 	policyResource: 'com.c15t.POLICY_RESOURCE',
+	/** Asset path of the in-code policy, read in no-backend mode. */
+	policyRules: 'com.c15t.POLICY_RULES',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by `C15tAndroid`.
 	 *
@@ -73,6 +75,8 @@ export const IOS_PLIST_KEY = {
 	/** Overrides `${backendURL}/init`, for a proxied init route. */
 	initURL: 'com.c15t.backend.initUrl',
 	policyResource: 'com.c15t.policy.resource',
+	/** Bundle filename of the in-code policy, read in offline mode. */
+	policyRules: 'com.c15t.policy.rules',
 	/** One of the iOS bridge's own `TransportMode` raw values. */
 	transportMode: 'com.c15t.backend.mode',
 	/**

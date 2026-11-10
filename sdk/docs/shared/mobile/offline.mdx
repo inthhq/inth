@@ -19,8 +19,82 @@ A newer bundled manifest replaces an older bundled one cached by an earlier
 build. It never replaces a cached live response.
 
 No-backend mode (`mode: 'offline'`) sends nothing and reads no bundled
-manifest. The two modes do not mix, so Expo prebuild refuses `backendURL`,
-`initURL`, `policyResource` and `iab` in offline mode.
+manifest. Its only policy source is a policy you keep in source control. The
+two modes do not mix, so Expo prebuild refuses `backendURL`, `initURL`,
+`policyResource` and `iab` in offline mode.
+
+## Define the policy in code
+
+In no-backend mode, write the policy as rules in the backend's `PolicyRule`
+names: `id`, `match`, `model`, `prompt`, `categories`, `scopeMode`,
+`preselectedCategories`, `actions`, `validity`, `privacySignals` and
+`copyRevision`. The SDK resolves them on the device with the backend's
+matching order: region, country, `regionFallbacks`, `fallback`, then
+`isDefault`.
+
+The device has no geolocation without a backend. The `fallback` rule applies
+unless your app sets an override country and region, so every policy needs a
+rule with `match.fallback` or `match.isDefault`. Choices stay on the device;
+nothing sends them anywhere.
+
+```ts title="app.config.ts"
+export default {
+	plugins: [
+		[
+			'@c15t/react-native/expo-plugin',
+			{
+				mode: 'offline',
+				consentCategories: ['necessary', 'measurement', 'marketing'],
+				policy: {
+					rules: [
+						{
+							id: 'germany',
+							match: { countries: ['DE'] },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+						{
+							id: 'everywhere_else',
+							match: { fallback: true, isDefault: true },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+					],
+				},
+			},
+		],
+	],
+};
+```
+
+```swift title="Swift"
+let policy = try ConsentPolicy(rules: [
+    PolicyRule(id: "germany", match: PolicyMatch(countries: ["DE"]), model: .optIn, prompt: .choice),
+    PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
+               model: .optIn, prompt: .choice),
+])
+core.bootstrap(CoreConfig(policy: policy, transport: OfflineTransport.offline()))
+```
+
+```kotlin title="Kotlin"
+val policy = ConsentPolicy(listOf(
+    PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+    PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+))
+C15tAndroid.install(context, NativeConfig(backendUrl = null, policy = policy))
+```
+
+Both cores also read the same rules as JSON, `{"rules": [...]}`:
+`ConsentPolicy(json:)` in Swift and `ConsentPolicy.fromJson` in Kotlin. Expo
+writes that file for you and names it with `com.c15t.policy.rules` in
+`Info.plist` and `com.c15t.POLICY_RULES` in the Android manifest.
+
+Change `copyRevision` when the wording people agreed to changes. Returning
+people are asked again after the update.
+
+IAB TCF does not work in no-backend mode. The `iab` model needs the Global
+Vendor List, and only a backend serves it, so the SDK refuses an `iab` rule
+without one. Use backend mode with a bundled manifest for offline IAB.
 
 ## Export the policy
 

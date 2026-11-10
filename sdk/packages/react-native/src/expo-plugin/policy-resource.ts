@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, mkdir, readFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 import { C15tPluginError } from './errors';
@@ -40,3 +40,19 @@ export const embedPolicyResource = async (
 /** Android app assets location, independent of application ID. */
 export const androidPolicyDestination = (root: string): string =>
 	join(root, 'android/app/src/main/assets', POLICY_RESOURCE_NAME);
+
+/** The in-code policy's fixed filename inside the app's resources/assets. */
+export const POLICY_RULES_NAME = 'c15t-policy-rules.json';
+
+/** Write the in-code policy as `{"rules": [...]}`, the shape both cores read. */
+export const writePolicyRules = async (
+	destination: string,
+	rules: readonly unknown[]
+): Promise<void> => {
+	await mkdir(dirname(destination), { recursive: true });
+	await writeFile(destination, `${JSON.stringify({ rules }, null, 2)}\n`);
+};
+
+/** Android assets location of the in-code policy. */
+export const androidPolicyRulesDestination = (root: string): string =>
+	join(root, 'android/app/src/main/assets', POLICY_RULES_NAME);

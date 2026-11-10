@@ -37,6 +37,26 @@ class OfflineModeTest {
 	}
 
 	@Test
+	fun `offline mode reads the in-code policy asset`() {
+		val rules = """{"rules":[{"id":"default","match":{"fallback":true,"isDefault":true},"model":"opt-in","prompt":"choice"}]}"""
+		val config = required(
+			mapOf(C15tAndroid.META_MODE to "offline", C15tAndroid.META_POLICY_RULES to "c15t-policy-rules.json"),
+			assets = mapOf("c15t-policy-rules.json" to rules),
+		)
+		assertEquals("default", config.policy?.rules?.single()?.id)
+		val broken = required(
+			mapOf(C15tAndroid.META_MODE to "offline", C15tAndroid.META_POLICY_RULES to "c15t-policy-rules.json"),
+			assets = mapOf("c15t-policy-rules.json" to """{"rules":[]}"""),
+		)
+		assertNull(broken.policy)
+		val backend = required(
+			mapOf(C15tAndroid.META_BACKEND_URL to "https://consent.example.test", C15tAndroid.META_POLICY_RULES to "c15t-policy-rules.json"),
+			assets = mapOf("c15t-policy-rules.json" to rules),
+		)
+		assertNull(backend.policy)
+	}
+
+	@Test
 	fun `backend mode still needs a backend URL`() {
 		assertNull(config(emptyMap()))
 		assertNull(config(mapOf(C15tAndroid.META_CATEGORIES to "necessary")))

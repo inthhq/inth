@@ -112,7 +112,7 @@ public struct BundledPolicyResource: Sendable {
     }
 
     // Mirrors schema matchPolicyRules. Locale is deliberately absent from legal matching.
-    private static func match(_ packs: [JSONValue], country: String?, region: String?) -> (
+    static func match(_ packs: [JSONValue], country: String?, region: String?) -> (
         Int, String
     )? {
         func countryCode(_ value: String?) -> String? {

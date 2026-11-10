@@ -105,6 +105,58 @@ export interface ResolvedC15tIabParams {
 	readonly consentScreen: number | null;
 }
 
+/** Optional categories a policy rule can name. `necessary` is tolerated and dropped. */
+export type C15tPolicyCategory = C15tConsentCategoryId;
+
+/**
+ * Where a policy rule applies, in the backend's `PolicyMatch` names.
+ *
+ * Precedence follows the backend: region, then country, then `regionFallbacks`
+ * for a country without a region, then the `fallback` rule for an unknown
+ * location, then the `isDefault` rule.
+ */
+export interface C15tPolicyMatch {
+	regions?: readonly { country: string; region: string }[];
+	countries?: readonly string[];
+	regionFallbacks?: readonly string[];
+	isDefault?: boolean;
+	fallback?: boolean;
+}
+
+/**
+ * One rule of the in-code policy, in the backend's `PolicyRule` names.
+ *
+ * It is the same shape `@c15t/backend` reads, minus `iab`, which needs a
+ * backend to serve the Global Vendor List, and minus the `rights`, `proof`,
+ * `i18n` and `legacyMaterial` fields, which only matter where records reach a
+ * backend.
+ */
+export interface C15tPolicyRule {
+	id: string;
+	match: C15tPolicyMatch;
+	model: 'opt-in' | 'opt-out' | 'none';
+	prompt: 'choice' | 'notice' | 'none';
+	/** Optional categories in scope. Omitted or `'*'` means every optional category. */
+	categories?: readonly C15tPolicyCategory[] | readonly ['*'];
+	/** How categories outside `categories` behave. Required for a partial scope. */
+	scopeMode?: 'strict' | 'permissive';
+	/** Categories the preference form preselects. Inside `categories`. */
+	preselectedCategories?: readonly C15tPolicyCategory[];
+	/** Actions a choice prompt offers. `accept` and `reject` are always offered. */
+	actions?: readonly ('accept' | 'reject' | 'customize')[];
+	/** Validity in days. Defaults to 365. */
+	validity?: { choiceDays?: number; noticeDays?: number };
+	/** Categories an active Global Privacy Control signal denies. */
+	privacySignals?: { gpc?: { denyCategories: readonly C15tPolicyCategory[] } };
+	/** Bump it when the wording a person agreed to changes; they are asked again. */
+	copyRevision?: string;
+}
+
+/** The in-code policy for no-backend mode. */
+export interface C15tPolicy {
+	rules: readonly C15tPolicyRule[];
+}
+
 /**
  * Parameters accepted by `@c15t/react-native/expo-plugin` in `app.json`.
  *
@@ -118,6 +170,15 @@ export interface C15tPluginProps {
 	androidMavenRepository?: C15tAndroidMavenRepository;
 	/** Path to a build-exported native policy JSON, relative to the Expo project. */
 	policyResource?: string;
+	/**
+	 * The policy for `mode: 'offline'`, kept in source control and the only
+	 * policy source in that mode. Required there, refused in every other mode.
+	 *
+	 * The device has no geolocation without a backend, so the `fallback` rule
+	 * applies unless the app sets an override country and region. Records stay
+	 * on the device.
+	 */
+	policy?: C15tPolicy;
 	/**
 	 * c15t backend base URL, without a trailing slash.
 	 *
@@ -280,6 +341,8 @@ export interface ResolvedC15tParams {
 	/** Validated build-only repository. Never copied into extra.c15t or native runtime configuration. */
 	readonly androidMavenRepository: C15tAndroidMavenRepository | null;
 	readonly policyResource: string | null;
+	/** The in-code policy rules for no-backend mode, or `null` in backend modes. */
+	readonly policyRules: readonly C15tPolicyRule[] | null;
 	/** Transport the embedded core should run. */
 	readonly mode: C15tTransportMode;
 	/** {@link mode} as the JavaScript provider spells it. */
@@ -772,6 +835,137 @@ const resolveAppTrackingTransparency = function resolveAppTrackingTransparency(
 	};
 };
 
+const POLICY_RULE_KEYS = new Set([
+	'actions',
+	'categories',
+	'copyRevision',
+	'id',
+	'match',
+	'model',
+	'preselectedCategories',
+	'privacySignals',
+	'prompt',
+	'review',
+	'scopeMode',
+	'validity',
+]);
+
+/** Prompts each model allows, as `@c15t/schema` defines them. */
+const POLICY_MODEL_PROMPTS: Readonly<Record<string, readonly string[]>> = {
+	none: ['none'],
+	'opt-in': ['choice'],
+	'opt-out': ['choice', 'notice', 'none'],
+};
+
+/**
+ * Check the in-code policy's shape at prebuild.
+ *
+ * Both cores validate every rule again at launch, where a refused policy leaves
+ * optional categories denied. Catching the common mistakes here keeps that
+ * from reaching a device.
+ */
+const normalizePolicy = function normalizePolicy(
+	policy: C15tPolicy | undefined
+): readonly C15tPolicyRule[] | null {
+	if (policy === undefined) {
+		return null;
+	}
+	const rules = (policy as { rules?: unknown } | null)?.rules;
+	if (!Array.isArray(rules) || rules.length === 0) {
+		throw new C15tPluginError(
+			'policy needs a non-empty rules array, such as { "rules": [{ "id": ' +
+				'"default", "match": { "fallback": true, "isDefault": true }, ' +
+				'"model": "opt-in", "prompt": "choice" }] }.'
+		);
+	}
+	const ids = new Set<string>();
+	for (const rule of rules as C15tPolicyRule[]) {
+		const id = typeof rule?.id === 'string' ? rule.id.trim() : '';
+		if (id === '' || ids.has(id)) {
+			throw new C15tPluginError(
+				`policy rule ids must be unique, non-empty strings; got ${JSON.stringify(rule?.id)}.`
+			);
+		}
+		ids.add(id);
+		const unknown = Object.keys(rule).filter(
+			(key) => !POLICY_RULE_KEYS.has(key)
+		);
+		if (unknown.length > 0) {
+			throw new C15tPluginError(
+				`policy rule ${JSON.stringify(id)} has unsupported fields: ${unknown.join(', ')}.`
+			);
+		}
+		const prompts = POLICY_MODEL_PROMPTS[rule.model as string];
+		if (prompts === undefined) {
+			throw new C15tPluginError(
+				`policy rule ${JSON.stringify(id)} has model ${JSON.stringify(rule.model)}. ` +
+					"Use 'opt-in', 'opt-out' or 'none'; 'iab' needs a backend to serve " +
+					'the Global Vendor List.'
+			);
+		}
+		if (!prompts.includes(rule.prompt)) {
+			throw new C15tPluginError(
+				`policy rule ${JSON.stringify(id)}: the ${rule.model} model cannot use ` +
+					`a ${JSON.stringify(rule.prompt)} prompt; use ${prompts.join(' or ')}.`
+			);
+		}
+		if (rule.match === null || typeof rule.match !== 'object') {
+			throw new C15tPluginError(
+				`policy rule ${JSON.stringify(id)} needs a match object.`
+			);
+		}
+	}
+	if (
+		!(rules as C15tPolicyRule[]).some(
+			(rule) => rule.match.fallback === true || rule.match.isDefault === true
+		)
+	) {
+		throw new C15tPluginError(
+			'policy needs a rule with match.fallback or match.isDefault, because ' +
+				'the device has no location without a backend.'
+		);
+	}
+	return rules as C15tPolicyRule[];
+};
+
+/**
+ * Keep backend mode and no-backend mode apart.
+ *
+ * A bundled manifest belongs to a backend, IAB TCF needs a backend to serve the
+ * Global Vendor List, and the in-code policy is the only source without one.
+ */
+const assertModesDoNotMix = function assertModesDoNotMix(
+	mode: C15tTransportMode,
+	props: C15tPluginProps
+): void {
+	if (mode !== 'offline') {
+		if (props.policy !== undefined) {
+			throw new C15tPluginError(
+				`policy is for mode 'offline'. Mode ${JSON.stringify(mode)} takes its ` +
+					'policy from the backend; remove policy, or switch to offline.'
+			);
+		}
+		return;
+	}
+	const mixed = (
+		['backendURL', 'initURL', 'policyResource', 'iab'] as const
+	).filter((key) => props[key] !== undefined);
+	if (mixed.length > 0) {
+		throw new C15tPluginError(
+			`mode 'offline' is no-backend mode and takes no ${mixed.join(', ')}. ` +
+				'Use a backend mode for a bundled manifest or IAB TCF, which ' +
+				'needs a backend to serve the Global Vendor List.'
+		);
+	}
+	if (props.policy === undefined) {
+		throw new C15tPluginError(
+			"mode 'offline' needs policy: it is the only policy source " +
+				'without a backend. Add { "policy": { "rules": [...] } } with a ' +
+				'fallback rule.'
+		);
+	}
+};
+
 /**
  * Resolve, validate, and default the plugin props.
  *
@@ -799,20 +993,7 @@ export const resolveParams = function resolveParams(
 			`backendURL is required for mode ${JSON.stringify(mode)}. ${USAGE}`
 		);
 	}
-	if (mode === 'offline') {
-		// No-backend mode and backend mode do not mix: a bundled manifest belongs to a
-		// backend, and IAB TCF needs a backend to serve the Global Vendor List.
-		const mixed = (
-			['backendURL', 'initURL', 'policyResource', 'iab'] as const
-		).filter((key) => props[key] !== undefined);
-		if (mixed.length > 0) {
-			throw new C15tPluginError(
-				`mode 'offline' is no-backend mode and takes no ${mixed.join(', ')}. ` +
-					'Use a backend mode for a bundled manifest or IAB TCF, which ' +
-					'needs a backend to serve the Global Vendor List.'
-			);
-		}
-	}
+	assertModesDoNotMix(mode, props);
 
 	const initURL =
 		props.initURL === undefined
@@ -868,6 +1049,7 @@ export const resolveParams = function resolveParams(
 			props.policyResource,
 			'policyResource'
 		),
+		policyRules: normalizePolicy(props.policy),
 		privacyTrackingDomains,
 		providerMode: PROVIDER_TRANSPORT_MODE[mode],
 		skipNativeBuildCheck: props.skipNativeBuildCheck ?? false,

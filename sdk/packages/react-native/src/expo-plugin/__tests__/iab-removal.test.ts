@@ -7,7 +7,7 @@ import { applyAndroidManifest } from '../android';
 import { ANDROID_IAB_META_KEYS, IOS_IAB_PLIST_KEYS } from '../constants';
 import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
-import { FIXTURE_DIR } from './helpers';
+import { FIXTURE_DIR, OFFLINE } from './helpers';
 
 const backendURL = 'https://demo.example.test';
 const withIab = resolveParams({
@@ -65,7 +65,7 @@ it('refuses IAB, a backend URL and a bundled manifest in no-backend mode', () =>
 		{ initURL: `${backendURL}/init` },
 		{ policyResource: 'c15t-policy.json' },
 	]) {
-		expect(() => resolveParams({ ...props, mode: 'offline' })).toThrow(
+		expect(() => resolveParams({ ...props, ...OFFLINE })).toThrow(
 			/mode 'offline' is no-backend mode/u
 		);
 	}
@@ -79,7 +79,7 @@ it('removes the offline mode key when a build moves back to a backend', async ()
 		(
 			AndroidConfig.Manifest.getMainApplication(manifest)?.['meta-data'] ?? []
 		).map((item) => item.$['android:name']);
-	applyAndroidManifest(resolveParams({ mode: 'offline' }), manifest);
+	applyAndroidManifest(resolveParams(OFFLINE), manifest);
 	expect(names()).toContain('com.c15t.MODE');
 	applyAndroidManifest(resolveParams({ backendURL }), manifest);
 	expect(names()).not.toContain('com.c15t.MODE');

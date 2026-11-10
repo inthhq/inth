@@ -463,8 +463,10 @@ class ConsentCore(
 			}
 		}
 		announcePolicyStale()
+		// In no-backend mode the in-code policy answers before the first read.
+		if (config.policy != null) runInit()
 		background.execute { flushPending() }
-		background.execute { runInit() }
+		if (config.policy == null) background.execute { runInit() }
 	}
 
 	/** Whether a bundled manifest may replace the policy in force after hydration. */
@@ -1404,8 +1406,9 @@ class ConsentCore(
 		storedSnapshotFound = false
 		mutation.release()
 		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
+		if (config.policy != null) runInit()
 		notifySnapshot()
-		background.execute { runInit() }
+		if (config.policy == null) background.execute { runInit() }
 	}
 
 	// -- internals ------------------------------------------------------------
@@ -1486,6 +1489,13 @@ class ConsentCore(
 	}
 
 	private fun runInit() {
+		config.policy?.let { policy ->
+			val mapped = policy.resolve(state.get().overrides) ?: return
+			val (changed, emitted) = applyInit(mapped, detectedGpc, true)
+			emitted?.let(::emitError)
+			if (changed) notifySnapshot()
+			return
+		}
 		var detected = detectedGpc
 		val current = state.get()
 		val outcome = try {

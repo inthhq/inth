@@ -1,0 +1,369 @@
+{
+	"cases": [
+		{
+			"expected": {
+				"matchedBy": "fallback",
+				"policyId": "everywhere_else"
+			},
+			"inputs": {
+				"country": null,
+				"region": null
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "country",
+				"policyId": "germany"
+			},
+			"inputs": {
+				"country": "DE",
+				"region": null
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "country",
+				"policyId": "germany"
+			},
+			"inputs": {
+				"country": "de",
+				"region": null
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "region",
+				"policyId": "quebec"
+			},
+			"inputs": {
+				"country": "CA",
+				"region": "QC"
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "region",
+				"policyId": "quebec"
+			},
+			"inputs": {
+				"country": "CA",
+				"region": "CA-QC"
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "fallback",
+				"policyId": "canada"
+			},
+			"inputs": {
+				"country": "CA",
+				"region": null
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "default",
+				"policyId": "everywhere_else"
+			},
+			"inputs": {
+				"country": "CA",
+				"region": "ON"
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "region",
+				"policyId": "california"
+			},
+			"inputs": {
+				"country": "US",
+				"region": "CA"
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "country",
+				"policyId": "united_states"
+			},
+			"inputs": {
+				"country": "US",
+				"region": "NY"
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "country",
+				"policyId": "united_states"
+			},
+			"inputs": {
+				"country": "US",
+				"region": null
+			}
+		},
+		{
+			"expected": {
+				"matchedBy": "default",
+				"policyId": "everywhere_else"
+			},
+			"inputs": {
+				"country": "FR",
+				"region": null
+			}
+		}
+	],
+	"resolved": {
+		"quebec": {
+			"actions": {
+				"allowed": ["accept", "reject"],
+				"equivalent": [["accept", "reject"]],
+				"required": ["accept", "reject"]
+			},
+			"copyRevision": null,
+			"id": "quebec",
+			"model": "opt-in",
+			"preselectedCategories": [],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"prompt": "choice",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": ["disclosure", "preferences"],
+			"scope": ["marketing", "measurement"],
+			"scopeMode": "strict",
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 31536000000
+			}
+		},
+		"germany": {
+			"actions": {
+				"allowed": ["accept", "customize", "reject"],
+				"equivalent": [["accept", "reject"]],
+				"required": ["accept", "reject"]
+			},
+			"copyRevision": null,
+			"id": "germany",
+			"model": "opt-in",
+			"preselectedCategories": [],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"prompt": "choice",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": ["disclosure", "preferences"],
+			"scope": ["experience", "functionality", "marketing", "measurement"],
+			"scopeMode": "permissive",
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 31536000000
+			}
+		},
+		"california": {
+			"actions": {
+				"allowed": ["dismiss"],
+				"equivalent": [],
+				"required": ["dismiss"]
+			},
+			"copyRevision": null,
+			"id": "california",
+			"model": "opt-out",
+			"preselectedCategories": [],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": ["marketing"]
+				}
+			},
+			"prompt": "notice",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": ["disclosure", "opt-out", "preferences"],
+			"scope": ["experience", "functionality", "marketing", "measurement"],
+			"scopeMode": "permissive",
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 2592000000
+			}
+		},
+		"united_states": {
+			"actions": {
+				"allowed": [],
+				"equivalent": [],
+				"required": []
+			},
+			"copyRevision": null,
+			"id": "united_states",
+			"model": "none",
+			"preselectedCategories": [],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"prompt": "none",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": [],
+			"scope": ["experience", "functionality", "marketing", "measurement"],
+			"scopeMode": "permissive",
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 31536000000
+			}
+		},
+		"canada": {
+			"actions": {
+				"allowed": ["accept", "customize", "reject"],
+				"equivalent": [["accept", "reject"]],
+				"required": ["accept", "reject"]
+			},
+			"copyRevision": null,
+			"id": "canada",
+			"model": "opt-in",
+			"preselectedCategories": ["functionality"],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"prompt": "choice",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": ["disclosure", "preferences"],
+			"scope": ["functionality", "measurement"],
+			"scopeMode": "strict",
+			"validity": {
+				"choiceMs": 15552000000,
+				"noticeMs": 31536000000
+			}
+		},
+		"everywhere_else": {
+			"actions": {
+				"allowed": ["accept", "customize", "reject"],
+				"equivalent": [["accept", "reject"]],
+				"required": ["accept", "reject"]
+			},
+			"copyRevision": "2026-11",
+			"id": "everywhere_else",
+			"model": "opt-in",
+			"preselectedCategories": [],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"prompt": "choice",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": ["disclosure", "preferences"],
+			"scope": ["experience", "functionality", "marketing", "measurement"],
+			"scopeMode": "permissive",
+			"validity": {
+				"choiceMs": 31536000000,
+				"noticeMs": 31536000000
+			}
+		}
+	},
+	"rules": [
+		{
+			"actions": ["accept", "reject"],
+			"categories": ["measurement", "marketing"],
+			"id": "quebec",
+			"match": {
+				"regions": [
+					{
+						"country": "CA",
+						"region": "QC"
+					}
+				]
+			},
+			"model": "opt-in",
+			"prompt": "choice",
+			"scopeMode": "strict"
+		},
+		{
+			"id": "germany",
+			"match": {
+				"countries": ["DE"]
+			},
+			"model": "opt-in",
+			"prompt": "choice"
+		},
+		{
+			"id": "california",
+			"match": {
+				"regions": [
+					{
+						"country": "US",
+						"region": "CA"
+					}
+				]
+			},
+			"model": "opt-out",
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": ["marketing"]
+				}
+			},
+			"prompt": "notice",
+			"validity": {
+				"noticeDays": 30
+			}
+		},
+		{
+			"id": "united_states",
+			"match": {
+				"countries": ["US"]
+			},
+			"model": "none",
+			"prompt": "none"
+		},
+		{
+			"categories": ["functionality", "measurement"],
+			"id": "canada",
+			"match": {
+				"regionFallbacks": ["CA"]
+			},
+			"model": "opt-in",
+			"preselectedCategories": ["functionality"],
+			"prompt": "choice",
+			"scopeMode": "strict",
+			"validity": {
+				"choiceDays": 180
+			}
+		},
+		{
+			"copyRevision": "2026-11",
+			"id": "everywhere_else",
+			"match": {
+				"fallback": true,
+				"isDefault": true
+			},
+			"model": "opt-in",
+			"prompt": "choice"
+		}
+	]
+}

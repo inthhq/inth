@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { applyToFixture, gradleFile, runMod } from './helpers';
+import { OFFLINE, applyToFixture, gradleFile, runMod } from './helpers';
 
 const repository = {
 	credentials: {
@@ -33,13 +33,13 @@ describe('Android Maven repository mod', () => {
 		expect(output).not.toContain('c15t-token-sentinel');
 		const config = applyToFixture({
 			androidMavenRepository: repository,
-			mode: 'offline',
+			...OFFLINE,
 		});
 		expect(config.extra?.c15t).not.toHaveProperty('androidMavenRepository');
 	});
 
 	it('removes its block when the option is removed and has no default repository', async () => {
-		const config = applyToFixture({ mode: 'offline' });
+		const config = applyToFixture(OFFLINE);
 		const first = await apply();
 		const result = await runMod(config, 'android', 'projectBuildGradle', {
 			...gradleFile('project-build.gradle'),
@@ -51,7 +51,7 @@ describe('Android Maven repository mod', () => {
 	it('refuses to write Groovy repository syntax into a Kotlin DSL root', async () => {
 		const config = applyToFixture({
 			androidMavenRepository: repository,
-			mode: 'offline',
+			...OFFLINE,
 		});
 		await expect(
 			runMod(
@@ -102,7 +102,7 @@ describe('Android Maven repository mod', () => {
 	it('accepts explicit local staging without credentials', async () => {
 		const config = applyToFixture({
 			androidMavenRepository: { url: 'file:///tmp/c15t-staging' },
-			mode: 'offline',
+			...OFFLINE,
 		});
 		const result = await runMod(
 			config,

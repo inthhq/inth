@@ -12,7 +12,7 @@ import {
 } from './constants';
 import { C15tPluginError } from './errors';
 import type { ResolvedC15tParams } from './params';
-import { POLICY_RESOURCE_NAME } from './policy-resource';
+import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
 
 /** A `<meta-data>` element, as the manifest is held after `xml2js` parsing. */
 interface ManifestMetaDataEntry {
@@ -64,6 +64,9 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	const pairs: MetaDataPair[] = [];
 	if (params.mode === 'offline') {
 		pairs.push({ name: ANDROID_META.mode, value: 'offline' });
+	}
+	if (params.policyRules !== null) {
+		pairs.push({ name: ANDROID_META.policyRules, value: POLICY_RULES_NAME });
 	}
 	if (params.policyResource !== null) {
 		pairs.push({
@@ -229,10 +232,14 @@ export const applyAndroidManifest = function applyAndroidManifest(
 			(item) => !ANDROID_IAB_META_KEYS.includes(item.$['android:name'])
 		);
 	}
-	// The plugin owns the mode key, so switching back to a backend mode removes it.
+	// The plugin owns the mode and policy rules keys, so switching back to a
+	// backend mode removes them.
 	if (application['meta-data']) {
 		application['meta-data'] = application['meta-data'].filter(
-			(item) => item.$['android:name'] !== ANDROID_META.mode
+			(item) =>
+				item.$['android:name'] !== ANDROID_META.mode &&
+				(item.$['android:name'] !== ANDROID_META.policyRules ||
+					item.$['android:value'] !== POLICY_RULES_NAME)
 		);
 	}
 	if (params.policyResource === null && application['meta-data']) {

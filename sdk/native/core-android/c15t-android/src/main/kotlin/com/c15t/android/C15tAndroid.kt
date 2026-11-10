@@ -7,6 +7,7 @@ import android.os.Looper
 import android.util.Log
 import com.c15t.core.C15t
 import com.c15t.core.ConsentCore
+import com.c15t.core.ConsentPolicy
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabConfiguration
 import com.c15t.core.model.ConsentCategory
@@ -42,6 +43,12 @@ object C15tAndroid {
 
 	/** The [META_MODE] value for no-backend mode. */
 	const val MODE_OFFLINE = "offline"
+
+	/**
+	 * Asset path of the in-code policy, `{"rules": [...]}` in the backend's `PolicyRule`
+	 * names. Read only in no-backend mode, where it is the only policy source.
+	 */
+	const val META_POLICY_RULES = "com.c15t.POLICY_RULES"
 
 	const val META_BACKEND_INIT_URL = "com.c15t.BACKEND_INIT_URL"
 	const val META_BACKEND_DOMAIN = "com.c15t.BACKEND_DOMAIN"
@@ -211,6 +218,7 @@ object C15tAndroid {
 		return NativeConfig(
 			backendUrl = backendUrl,
 			bundledPolicy = if (offline) null else C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
+			policy = if (offline) C15tManifestValue.string(read(META_POLICY_RULES))?.let(readAsset)?.let(::policyFrom) else null,
 			initUrl = if (offline) null else C15tManifestValue.string(read(META_BACKEND_INIT_URL)),
 			domain = C15tManifestValue.string(read(META_BACKEND_DOMAIN)),
 			consentCategories = declaredCategories(read(META_CATEGORIES)),
@@ -228,6 +236,17 @@ object C15tAndroid {
 			},
 			detectedGpc = C15tManifestValue.boolean(read(META_GPC)),
 		)
+	}
+
+	/**
+	 * Parse the in-code policy asset. A broken file is logged and leaves the core without
+	 * a policy, so optional categories stay denied rather than the app crashing at launch.
+	 */
+	private fun policyFrom(json: String): ConsentPolicy? = try {
+		ConsentPolicy.fromJson(json)
+	} catch (error: Exception) {
+		Log.e(TAG, "$META_POLICY_RULES refused: ${error.message}. c15t starts with no policy and denies optional categories.")
+		null
 	}
 
 	/** The outcome of reading the `com.c15t.IAB_*` meta-data. */

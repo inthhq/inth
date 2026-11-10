@@ -80,7 +80,7 @@ object BundledPolicy {
 	} catch (_: Exception) { null }
 
 	// Same precedence as schema matchPolicyRules. Language never enters this matcher.
-	private fun match(packs: List<JsonObject>, country: String?, region: String?): Pair<Int, String>? {
+	internal fun match(packs: List<JsonObject>, country: String?, region: String?): Pair<Int, String>? {
 		fun countryCode(value: String?) = value?.trim()?.uppercase()?.takeIf { it.isNotEmpty() }
 		fun regionCode(value: String?) = countryCode(value?.substringAfterLast('-'))
 		val c = countryCode(country); val r = regionCode(region)

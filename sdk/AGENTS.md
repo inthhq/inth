@@ -104,6 +104,7 @@ Conventions not enforced by tooling (hold new code to these; older code has exce
 | `packages/cli/src/generate/version.ts` | `packages/cli/scripts/write-version.ts` via `prebuild`, `pretest`, and `check-types` | package.json version |
 | `native/core-swift/Sources/C15tConsentUI/generated/iab-copy.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/iab-copy.kt` and `.../resources/.../generated/iab-copy.json` | `bun run generate:native-iab-copy` | `iab` copy in `packages/translations` |
 | `native/protocol/iab/banner-summary-*.json` | `bun scripts/generate-iab-banner-summary-fixtures.ts` | web `resolveIABBannerSummary` in `packages/core` |
+| `native/protocol/local-policy/parity.json` | `bun scripts/generate-local-policy-fixtures.ts` | `normalizePolicyRule` and `resolvePolicyRules` in `packages/schema` |
 | `dist/`, `dist-types/`, `coverage/` | builds/tests | — |
 | `.docs/` | `bun run setup:docs` (private docs-site template; maintainers only) | — |
 

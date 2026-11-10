@@ -1293,6 +1293,7 @@ Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
     iOS Info.plist                      Android <meta-data>
     com.c15t.backend.url                com.c15t.BACKEND_URL
     com.c15t.backend.mode               com.c15t.MODE (offline only)
+    com.c15t.policy.rules               com.c15t.POLICY_RULES
     com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
     com.c15t.forceGPC                   com.c15t.FORCE_GPC
     com.c15t.backend.initUrl            com.c15t.BACKEND_INIT_URL
@@ -1558,7 +1559,14 @@ Configuration picks one of two modes, and they do not mix.
   uses `OfflineTransport` with `NativeConfig.backendUrl = null`, and the
   Android manifest key `com.c15t.MODE=offline` selects it. A bundled manifest
   is refused: Kotlin's `NativeConfig` throws, and the Expo plugin refuses
-  `policyResource` and `iab` with `mode: 'offline'`.
+  `policyResource` and `iab` with `mode: 'offline'`. The only policy source is
+  `ConsentPolicy`, rules in the backend's `PolicyRule` names (`CoreConfig.policy`,
+  `NativeConfig.policy`, Expo `policy`). Both cores normalize rules exactly as
+  `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
+  `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
+  holds the shared cases. Fingerprints hash the canonical rule on the device and
+  never leave it. The `iab` model is refused without a backend. iOS reads the
+  rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
 
 Native bootstrap can resolve an endpoint-bound resource exported from hosted
 `/manifest` before JavaScript starts. See

@@ -93,6 +93,7 @@ initializers. Configure each optional SDK's startup separately.
 | `iab` | Registered CMP identity and publisher settings for an IAB policy. |
 | `iabListMaxAgeMs` | Maximum age of IAB disclosures, seven days by default. |
 | `bundledPolicy` | Manifest bundled at build time, used when no live or cached `/init` response is available. |
+| `policy` | `ConsentPolicy` kept in source control, the only policy source in no-backend mode. |
 | `overrides` | Country, region, language or GPC inputs for controlled QA. |
 | `detectedGpc` | A GPC signal supplied by a real platform integration. |
 | `extraHeaders` | App-owned transport headers. |
@@ -102,7 +103,8 @@ The corresponding manifest keys are `com.c15t.BACKEND_URL`, `BACKEND_INIT_URL`, 
 `CATEGORIES` and `POLICY_RESOURCE`, with the same `com.c15t.` prefix. The policy
 resource names a file in app assets. Set `com.c15t.MODE` to `offline` for
 no-backend mode: the core then starts with no backend URL and an offline
-transport, and ignores the backend and policy resource keys. Native
+transport, ignores the backend and policy resource keys, and reads its policy
+from the asset `com.c15t.POLICY_RULES` names. Native
 configuration supports more options than manifest startup.
 
 ## Handle identity and reset

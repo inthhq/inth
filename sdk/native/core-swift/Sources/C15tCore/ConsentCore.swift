@@ -28,6 +28,9 @@ public struct CoreConfig: @unchecked Sendable {
     public let store: any ConsentStore
     /// Optional build resource. It never replaces a usable stored policy.
     public let bundledPolicy: BundledPolicyResource?
+    /// The policy in source control, the only policy source in no-backend mode. Use it
+    /// with ``OfflineTransport`` or no transport: the two modes do not mix.
+    public let policy: ConsentPolicy?
     var policyEndpoint: String? {
         transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
     }
@@ -98,6 +101,7 @@ public struct CoreConfig: @unchecked Sendable {
     public init(
         store: any ConsentStore = InMemoryStore(),
         bundledPolicy: BundledPolicyResource? = nil,
+        policy: ConsentPolicy? = nil,
         transport: (any C15tTransport)? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
@@ -112,7 +116,11 @@ public struct CoreConfig: @unchecked Sendable {
         storageBus: (any TcStorageBusWriting)? = nil
     ) {
         self.store = store
+        precondition(
+            policy == nil || bundledPolicy == nil && transport?.policyEndpoint == nil,
+            "CoreConfig.policy is no-backend mode and does not mix with a bundled manifest or a backend transport")
         self.bundledPolicy = bundledPolicy
+        self.policy = policy
         self.transport = transport
         self.consentCategories = consentCategories
         self.vendors = vendors
@@ -392,6 +400,10 @@ public final class ConsentCore: @unchecked Sendable {
         if let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()),
             shouldAdoptBundle(selection.authority, config: config) {
             applyPolicyUpdate(selection.response, bundle: selection)
+        }
+        // In no-backend mode the in-code policy answers before the first read.
+        if let response = config.policy?.resolve(overrides: config.overrides) {
+            applyPolicyUpdate(response)
         }
         if let stale = lock.withLock({ takeStaleAnnouncementLocked() }) { events.emit(.policyStale(stale)) }
         events.emit(.initialized)
@@ -2040,6 +2052,12 @@ public final class ConsentCore: @unchecked Sendable {
 
     private func runInit(attempt: Int) async {
         guard let config = lock.withLock({ self.config }) else { return }
+        if let policy = config.policy {
+            if let response = policy.resolve(overrides: lock.withLock { overrides }) {
+                applyPolicyUpdate(response)
+            }
+            return
+        }
         guard let transport = config.transport else { return }
         let context = lock.withLock {
             InitContext(

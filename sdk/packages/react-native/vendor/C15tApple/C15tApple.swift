@@ -56,6 +56,9 @@ public struct C15tAppleConfiguration: Sendable {
     public var overrides: ConsentOverrides
     public var gpc: Bool?
     public var bundledPolicy: BundledPolicyResource?
+    /// The policy in source control. Used only with the `offline` or `disabled`
+    /// transport, where it is the only policy source.
+    public var policy: ConsentPolicy?
     /// Registered CMP identity and publisher settings. `nil` turns IAB TCF off.
     ///
     /// With a value, the installed core writes `IABTCF_CmpSdkID` and
@@ -74,6 +77,7 @@ public struct C15tAppleConfiguration: Sendable {
         overrides: ConsentOverrides = .default(),
         gpc: Bool? = nil,
         bundledPolicy: BundledPolicyResource? = nil,
+        policy: ConsentPolicy? = nil,
         iab: IABConfiguration? = nil
     ) {
         self.transport = transport
@@ -85,6 +89,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.overrides = overrides
         self.gpc = gpc
         self.bundledPolicy = bundledPolicy
+        self.policy = policy
         self.iab = iab
     }
 
@@ -111,8 +116,15 @@ public struct C15tAppleConfiguration: Sendable {
         if let iab, C15tApple.iabIssue(iab) != nil {
             throw C15tAppleInstallationError.invalidIABConfiguration
         }
+        // The two modes do not mix: an in-code policy needs a transport with no backend.
+        let noBackend: Bool
+        switch transport {
+        case .offline, .disabled: noBackend = true
+        case .hosted, .selfHosted: noBackend = false
+        }
         return CoreConfig(
-            store: try storage.makeStore(), bundledPolicy: bundledPolicy, transport: try makeTransport(),
+            store: try storage.makeStore(), bundledPolicy: noBackend ? nil : bundledPolicy,
+            policy: noBackend ? policy : nil, transport: try makeTransport(),
             consentCategories: consentCategories, vendors: vendors, iab: iab,
             overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
         )
