@@ -99,7 +99,8 @@ export const KERNEL_OWNED_KEYS = [
 		required: ['version', 'categories'],
 	},
 	{
-		optional: [],
+		// `committed` is the bridge's own addition beside the kernel's `gvl`.
+		optional: ['committed'],
 		path: 'iab',
 		required: ['gvl'],
 	},

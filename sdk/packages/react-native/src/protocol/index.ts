@@ -13,6 +13,7 @@ export type { BootstrapPayload } from './bootstrap';
 export type {
 	CommitFailureReason,
 	CommitIntent,
+	NativeIABChoices,
 	CommitResult,
 	NativeSavePayload,
 } from './commit';
@@ -47,6 +48,7 @@ export {
 } from './tracking';
 export type {
 	ConsentSnapshot,
+	NativeIABCommittedConsent,
 	NativeIABState,
 	NativeModel,
 	NativeGpcSignal,

@@ -116,7 +116,8 @@ public enum C15tPayload {
     /// says whether the app or the device caused it.
     public static func snapshot(
         _ snapshot: ConsentSnapshot,
-        fallbackLanguage: String = defaultLanguage
+        fallbackLanguage: String = defaultLanguage,
+        iabConsent: IABCommittedConsent? = nil
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -150,8 +151,25 @@ public enum C15tPayload {
             fields["resolution"] = .object(patched)
         }
 
+        // The committed TCF decision rides inside `iab`: the TC String a headless
+        // screen shows and the choices it reopens with. `null` while nothing current is
+        // committed, so a reader never mistakes an expired decision for a live one.
+        if case var .object(iab)? = fields["iab"] {
+            iab["committed"] = iabConsent.map(committedIAB) ?? .null
+            fields["iab"] = .object(iab)
+        }
+
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
+    }
+
+    /// The committed IAB decision as JavaScript reads it.
+    static func committedIAB(_ consent: IABCommittedConsent) -> JSONValue {
+        .object([
+            "addtlConsent": stringOrNull(consent.addtlConsent),
+            "choices": value(of: consent.choices) ?? .null,
+            "tcString": .string(consent.tcString),
+        ])
     }
 
     /// The `CommitResult` for `result`.
@@ -286,22 +304,46 @@ public enum C15tPayload {
         case "necessary":
             return .necessary
         case "explicit":
-            guard let consents = body["consents"]?.objectValue else { return nil }
-            var parsed: [OptionalConsentCategory: Bool] = [:]
-            for (name, value) in consents {
-                guard let category = OptionalConsentCategory(rawValue: name),
-                      let granted = value.boolValue
-                else {
-                    // `necessary` is nobody's choice, and an unknown category is not
-                    // one this build should invent a permission for.
-                    return nil
-                }
-                parsed[category] = granted
-            }
+            guard let consents = body["consents"]?.objectValue,
+                  let parsed = parseCategories(consents)
+            else { return nil }
             return .custom(parsed)
+        case "iab":
+            // A complete TCF draft from a headless screen. The core validates every ID
+            // and legal basis against the served list; this only refuses a body that is
+            // not the documented shape.
+            guard let raw = body["choices"], raw.objectValue != nil,
+                  let text = encodeValue(raw), let data = text.data(using: .utf8),
+                  let choices = try? JSONDecoder().decode(IABChoices.self, from: data),
+                  let consents = body["consents"]?.objectValue,
+                  let categories = parseCategories(consents)
+            else { return nil }
+            return .iab(choices, categories: categories)
         default:
             return nil
         }
+    }
+
+    /// The snapshot revision a headless draft was opened on, when the intent names one.
+    /// The core refuses the commit with `concurrent-change` if the state moved since.
+    public static func parseExpectedRevision(_ raw: String?) -> Int? {
+        guard let value = parseObject(raw)?["revision"]?.intValue else { return nil }
+        return Int(exactly: value)
+    }
+
+    private static func parseCategories(_ consents: [String: JSONValue]) -> [OptionalConsentCategory: Bool]? {
+        var parsed: [OptionalConsentCategory: Bool] = [:]
+        for (name, value) in consents {
+            guard let category = OptionalConsentCategory(rawValue: name),
+                  let granted = value.boolValue
+            else {
+                // `necessary` is nobody's choice, and an unknown category is not
+                // one this build should invent a permission for.
+                return nil
+            }
+            parsed[category] = granted
+        }
+        return parsed
     }
 
     /// Read a `NativeOverridesInput` into a complete override record.

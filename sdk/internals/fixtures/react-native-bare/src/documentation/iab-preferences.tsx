@@ -1,0 +1,118 @@
+// #region docs:iab-preferences title="iab-settings.tsx"
+import {
+	useIAB,
+	useIABSnapshot,
+	usePurposeConsent,
+	useTCString,
+	useVendorConsent,
+} from '@c15t/react-native';
+import type { IABDraftHandle } from '@c15t/react-native';
+import { useState } from 'react';
+import { Button, ScrollView, Switch, Text, View } from 'react-native';
+
+const PurposeRow = ({
+	iab,
+	id,
+	name,
+}: {
+	iab: IABDraftHandle;
+	id: number;
+	name: string;
+}) => {
+	const allowed = usePurposeConsent(id);
+	return (
+		<View>
+			<Text>{name}</Text>
+			<Switch
+				accessibilityLabel={`Allow ${name}`}
+				value={allowed}
+				onValueChange={(value) => iab.setPurposeConsent(id, value)}
+			/>
+		</View>
+	);
+};
+
+const VendorRow = ({
+	iab,
+	id,
+	name,
+}: {
+	iab: IABDraftHandle;
+	id: number;
+	name: string;
+}) => {
+	const allowed = useVendorConsent(id);
+	return (
+		<View>
+			<Text>{name}</Text>
+			<Switch
+				accessibilityLabel={`Allow ${name}`}
+				value={allowed}
+				onValueChange={(value) => iab.setVendorConsent(id, value)}
+			/>
+		</View>
+	);
+};
+
+export const IabSettings = ({ onSaved }: { onSaved: () => void }) => {
+	const iab = useIAB();
+	const list = useIABSnapshot()?.gvl;
+	const tcString = useTCString();
+	const [message, setMessage] = useState('');
+
+	if (iab === null || !list) {
+		return <Text>The vendor list is not available yet.</Text>;
+	}
+
+	const save = async () => {
+		const result = await iab.save();
+		if (result.ok) {
+			onSaved();
+		} else {
+			setMessage(`Nothing saved: ${result.reason}.`);
+		}
+	};
+
+	return (
+		<ScrollView>
+			<Text>Purposes</Text>
+			{Object.entries(list.purposes).map(([id, purpose]) => (
+				<PurposeRow
+					key={id}
+					iab={iab}
+					id={Number(id)}
+					name={purpose.name}
+				/>
+			))}
+			<Text>Partners</Text>
+			{Object.entries(list.vendors)
+				.filter(([, vendor]) => !vendor.deletedDate)
+				.map(([id, vendor]) => (
+					<VendorRow
+						key={id}
+						iab={iab}
+						id={Number(id)}
+						name={vendor.name}
+					/>
+				))}
+			{iab.isStale ? (
+				<Button
+					title="The partner list changed. Review again"
+					onPress={() => {
+						iab.reset();
+					}}
+				/>
+			) : (
+				<Button
+					title="Save choices"
+					onPress={() => {
+						void save();
+					}}
+				/>
+			)}
+			<Text accessibilityLiveRegion="polite">{message}</Text>
+			<Text selectable>{tcString ?? 'No decision saved yet.'}</Text>
+		</ScrollView>
+	);
+};
+// #endregion docs:iab-preferences

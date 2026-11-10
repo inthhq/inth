@@ -11,7 +11,11 @@
  */
 
 import type { ConsentClient } from '../native/client';
-import type { CommitResult, ConsentSnapshot } from '../protocol';
+import type {
+	CommitResult,
+	ConsentSnapshot,
+	NativeIABChoices,
+} from '../protocol';
 import {
 	CONSENT_CATEGORIES,
 	OPTIONAL_CONSENT_CATEGORIES,
@@ -21,6 +25,7 @@ import type {
 	ConsentState,
 	OptionalConsentCategory,
 } from '../protocol/vocabulary';
+import { sameIABChoices, seedIABChoices } from './iab-choices';
 
 /** What a draft holds at one moment. */
 export interface ConsentDraftState {
@@ -39,6 +44,11 @@ export interface ConsentDraftState {
 	 * edit. `save` refuses a stale draft; `reset` reseeds it from the record.
 	 */
 	readonly isStale: boolean;
+	/**
+	 * The staged TCF selection under an `iab` policy with a served vendor list,
+	 * seeded from the committed decision. `null` otherwise.
+	 */
+	readonly iab: NativeIABChoices | null;
 }
 
 /** A draft store bound to one native client. */
@@ -66,6 +76,17 @@ export interface ConsentDraft {
 	readonly save: () => Promise<CommitResult>;
 	/** Replace the defaults for categories without a receipt. */
 	readonly setDefaults: (defaults: Partial<ConsentState> | undefined) => void;
+	/**
+	 * Stage a change to the TCF selection. Ignored outside TCF.
+	 *
+	 * @internal
+	 */
+	readonly stageIAB: (
+		edit: (
+			choices: NativeIABChoices,
+			snapshot: ConsentSnapshot
+		) => NativeIABChoices
+	) => void;
 }
 
 /** What a stale save resolves with. Nothing was written. */
@@ -80,8 +101,10 @@ const STALE_RESULT: CommitResult = {
 
 interface Seed {
 	readonly values: ConsentState;
+	readonly iab: NativeIABChoices | null;
 	readonly displayed: readonly AllConsentNames[];
 	readonly policyKey: string;
+	readonly revision: number;
 }
 
 const isOptional = (
@@ -106,23 +129,30 @@ const seedFrom = function seedFrom(
 	) as ConsentState;
 	return {
 		displayed,
+		iab: seedIABChoices(snapshot),
 		policyKey: JSON.stringify([
 			snapshot.resolution.policyId,
 			snapshot.resolution.fingerprint,
 			displayed,
+			snapshot.model,
+			snapshot.iab?.gvl?.vendorListVersion ?? null,
 		]),
+		revision: snapshot.revision,
 		values,
 	};
 };
 
 const differs = function differs(
 	values: ConsentState,
-	baseline: ConsentState,
-	displayed: readonly AllConsentNames[]
+	iab: NativeIABChoices | null,
+	baseline: Seed
 ): boolean {
-	return displayed.some(
-		(category) =>
-			isOptional(category) && values[category] !== baseline[category]
+	return (
+		!sameIABChoices(iab, baseline.iab) ||
+		baseline.displayed.some(
+			(category) =>
+				isOptional(category) && values[category] !== baseline.values[category]
+		)
 	);
 };
 
@@ -140,10 +170,11 @@ export const createConsentDraft = function createConsentDraft(
 	let currentDefaults = defaults;
 	let snapshot = client.getSnapshot();
 	let seed = seedFrom(snapshot, currentDefaults);
-	let { values } = seed;
+	let { iab, values } = seed;
 	let stale = false;
 	let state: ConsentDraftState = {
 		displayedCategories: seed.displayed,
+		iab,
 		isDirty: false,
 		isStale: false,
 		values,
@@ -154,12 +185,14 @@ export const createConsentDraft = function createConsentDraft(
 	const publish = function publish(): void {
 		const next: ConsentDraftState = {
 			displayedCategories: seed.displayed,
-			isDirty: differs(values, seed.values, seed.displayed),
+			iab,
+			isDirty: differs(values, iab, seed),
 			isStale: stale,
 			values,
 		};
 		if (
 			next.values === state.values &&
+			next.iab === state.iab &&
 			next.displayedCategories === state.displayedCategories &&
 			next.isDirty === state.isDirty &&
 			next.isStale === state.isStale
@@ -175,7 +208,7 @@ export const createConsentDraft = function createConsentDraft(
 	/** Reseed from the record, dropping staged edits. */
 	const reseed = function reseed(): void {
 		seed = seedFrom(snapshot, currentDefaults);
-		({ values } = seed);
+		({ iab, values } = seed);
 		stale = false;
 		publish();
 	};
@@ -188,9 +221,9 @@ export const createConsentDraft = function createConsentDraft(
 		}
 		snapshot = latest;
 		const next = seedFrom(snapshot, currentDefaults);
-		if (differs(values, seed.values, seed.displayed)) {
+		if (differs(values, iab, seed)) {
 			// Keep the edit. A new policy makes it stale; the same policy only moves
-			// the baseline.
+			// the baseline and the revision a save is pinned to.
 			if (next.policyKey === seed.policyKey) {
 				seed = next;
 			} else {
@@ -198,7 +231,7 @@ export const createConsentDraft = function createConsentDraft(
 			}
 		} else {
 			seed = next;
-			({ values } = next);
+			({ iab, values } = next);
 			stale = false;
 		}
 		publish();
@@ -255,7 +288,13 @@ export const createConsentDraft = function createConsentDraft(
 					.filter(isOptional)
 					.map((category) => [category, values[category]])
 			) as Partial<Record<OptionalConsentCategory, boolean>>;
-			const result = await client.commit({ action: 'explicit', consents });
+			// Under TCF the purposes and vendors travel with the categories, pinned to
+			// the revision the selection was made against.
+			const result = await client.commit(
+				iab === null
+					? { action: 'explicit', consents }
+					: { action: 'iab', choices: iab, consents, revision: seed.revision }
+			);
 			if (result.ok) {
 				snapshot = client.getSnapshot();
 				reseed();
@@ -267,8 +306,19 @@ export const createConsentDraft = function createConsentDraft(
 		},
 		setDefaults: (next) => {
 			currentDefaults = next;
-			if (!differs(values, seed.values, seed.displayed)) {
+			if (!differs(values, iab, seed)) {
 				reseed();
+			}
+		},
+		stageIAB: (edit) => {
+			sync();
+			if (iab === null) {
+				return;
+			}
+			const next = edit(iab, snapshot);
+			if (next !== iab) {
+				iab = next;
+				publish();
 			}
 		},
 		subscribe: (listener) => {

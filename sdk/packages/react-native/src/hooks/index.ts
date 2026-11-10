@@ -29,3 +29,13 @@ export type {
 export { useConsentSafeArea } from './use-consent-safe-area';
 export type { ConsentSafeArea } from './use-consent-safe-area';
 export { useConsent } from './use-consent';
+export {
+	useIAB,
+	useIABEnabled,
+	useIABSnapshot,
+	usePurposeConsent,
+	useSpecialFeatureOptIn,
+	useTCString,
+	useVendorConsent,
+} from './use-iab';
+export type { IABDraftHandle } from './use-iab';

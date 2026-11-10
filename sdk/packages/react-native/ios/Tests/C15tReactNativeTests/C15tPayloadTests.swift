@@ -94,6 +94,39 @@ final class C15tPayloadTests: XCTestCase {
         )
     }
 
+    func testAnIABIntentReadsACompleteDraftWithItsCategoriesAndRevision() {
+        let raw = #"{"action":"iab","choices":{"purposeConsents":[1,2],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[755],"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]},"consents":{"marketing":true},"revision":12}"#
+        var choices = IABChoices()
+        choices.purposeConsents = [1, 2]
+        choices.vendorConsents = [755]
+        XCTAssertEqual(C15tPayload.parseCommitIntent(raw), .iab(choices, categories: [.marketing: true]))
+        XCTAssertEqual(C15tPayload.parseExpectedRevision(raw), 12)
+        XCTAssertNil(C15tPayload.parseExpectedRevision(#"{"action":"all"}"#))
+        for bad in [
+            #"{"action":"iab","consents":{}}"#,
+            raw.replacingOccurrences(of: "[1,2]", with: #"["1",2]"#),
+            raw.replacingOccurrences(of: #""purposeObjections":[],"#, with: ""),
+            raw.replacingOccurrences(of: #""consents":{"marketing":true}"#, with: #""consents":{"necessary":true}"#),
+        ] {
+            XCTAssertNil(C15tPayload.parseCommitIntent(bad), "\(bad) must not become a commit")
+        }
+    }
+
+    func testACommittedIABDecisionCrossesInsideTheIABSlot() throws {
+        // The memberwise initializer is internal to C15tCore; the Codable form is public.
+        let choices = String(decoding: try JSONEncoder().encode(IABChoices()), as: UTF8.self)
+        let configuration = String(decoding: try JSONEncoder().encode(
+            IABConfiguration(cmpId: 9, cmpVersion: 1, publisherCountryCode: "DE")), as: UTF8.self)
+        let consent = try JSONDecoder().decode(IABCommittedConsent.self, from: Data("""
+            {"configuration":\(configuration),"choices":\(choices),"subjectId":"sub","fingerprint":"fp",
+            "vendorListVersion":177,"policyVersion":5,"consentVersion":1,"createdAt":1,"actionAt":1,"tcString":"CQ-test"}
+            """.utf8))
+        let committed = C15tPayload.committedIAB(consent).objectValue
+        XCTAssertEqual(committed?["tcString"], .string("CQ-test"))
+        XCTAssertEqual(committed?["addtlConsent"], .null)
+        XCTAssertEqual(committed?["choices"]?.objectValue?["vendorConsents"], .array([]))
+    }
+
     func testCommitIntentFailsClosedOnAnythingElse() {
         // A commit is audit evidence, so a half-readable one is refused outright.
         for raw in [

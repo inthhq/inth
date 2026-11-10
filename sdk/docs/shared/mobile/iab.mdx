@@ -64,6 +64,10 @@ read their disclosures before saving. Keep a Privacy settings action in the
 app after the first layer closes so the visitor can change or withdraw their
 choice.
 
+In React Native you can draw the IAB screens yourself with `useIAB()` and
+`useTCString()`; the native engine still validates and commits the selection.
+See [Build your own IAB screen](/docs/frameworks/react-native/headless#build-your-own-iab-screen).
+
 Draft changes are not consent. A successful save validates the current
 disclosures and stores the decision locally. If the list changed while the
 visitor was editing, keep the draft visible and ask them to review the current

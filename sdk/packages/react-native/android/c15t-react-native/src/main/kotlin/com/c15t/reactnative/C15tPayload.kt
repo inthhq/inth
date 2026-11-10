@@ -2,6 +2,8 @@ package com.c15t.reactnative
 
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
+import com.c15t.core.iab.IabChoices
+import com.c15t.core.iab.IabCommittedConsent
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelError
@@ -165,6 +167,7 @@ object C15tPayload {
 	fun snapshot(
 		snapshot: ConsentSnapshot,
 		fallbackLanguage: String = DEFAULT_LANGUAGE,
+		iabConsent: IabCommittedConsent? = null,
 	): String {
 		val wire = SnapshotWire.toJsonElement(snapshot)
 		val overrides = wire["overrides"] as? JsonObject ?: JsonObject(emptyMap())
@@ -190,7 +193,19 @@ object C15tPayload {
 			}
 		}
 		conformed["overrides"] = JsonObject(conformedOverrides)
+		// The committed TCF decision rides inside `iab`: the TC String a headless screen
+		// shows and the choices it reopens with. `null` while nothing current is committed.
+		(conformed["iab"] as? JsonObject)?.let { iab ->
+			conformed["iab"] = JsonObject(iab + ("committed" to (iabConsent?.let(::committedIab) ?: JsonNull)))
+		}
 		return encode(JsonObject(conformed))
+	}
+
+	/** The committed IAB decision as JavaScript reads it. */
+	internal fun committedIab(consent: IabCommittedConsent): JsonObject = buildJsonObject {
+		putElement("addtlConsent", consent.addtlConsent)
+		put("choices", C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), consent.choices))
+		put("tcString", consent.tcString)
 	}
 
 	/**
@@ -301,22 +316,62 @@ object C15tPayload {
 			"necessary" -> CommitIntent.Necessary
 			"explicit" -> {
 				val consents = body["consents"] as? JsonObject ?: return null
-				val parsed = LinkedHashMap<ConsentCategory, Boolean>(consents.size)
-				for ((name, value) in consents) {
-					val category = ConsentCategory.fromWireName(name) ?: return null
-					val granted = optBoolean(value) ?: return null
-					if (!category.optional) {
-						// `necessary` is nobody's choice, so an intent offering it is not
-						// one this build should apply.
-						return null
-					}
-					parsed[category] = granted
+				CommitIntent.Custom(parseCategories(consents) ?: return null)
+			}
+
+			"iab" -> {
+				// A complete TCF draft from a headless screen. The core validates every ID and
+				// legal basis against the served list; this only refuses a body that is not
+				// the documented shape, unknown keys included.
+				val raw = body["choices"] as? JsonObject ?: return null
+				// Tree decoding reads a quoted "1" as 1, which Swift refuses. Every ID must be
+				// a JSON number on both platforms.
+				val numeric = raw.values.all { list ->
+					list == JsonNull || (list as? JsonArray)?.all { (it as? JsonPrimitive)?.isString == false } == true
 				}
-				CommitIntent.Custom(parsed)
+				// A complete draft, as Swift's decoder requires: every list is present.
+				if (!numeric || !raw.keys.containsAll(IAB_CHOICE_LISTS)) return null
+				val choices = try {
+					C15tJson.storage.decodeFromJsonElement(IabChoices.serializer(), raw)
+				} catch (_: Exception) {
+					return null
+				}
+				val consents = body["consents"] as? JsonObject ?: return null
+				CommitIntent.Iab(choices, parseCategories(consents) ?: return null)
 			}
 
 			else -> null
 		}
+	}
+
+	/** The `IabChoices` lists a headless draft must name, empty or not. */
+	private val IAB_CHOICE_LISTS = listOf(
+		"purposeConsents", "purposeLegitimateInterests", "purposeObjections",
+		"vendorConsents", "vendorLegitimateInterests", "vendorObjections", "specialFeatureOptIns",
+		"publisherConsents", "publisherLegitimateInterests", "publisherCustomConsents",
+		"publisherCustomLegitimateInterests",
+	)
+
+	/**
+	 * The snapshot revision a headless draft was opened on, when the intent names one. The
+	 * core refuses the commit with `concurrent-change` if the state moved since.
+	 */
+	fun parseExpectedRevision(raw: String?): Long? =
+		(parseObject(raw)?.get("revision") as? JsonPrimitive)?.takeIf { !it.isString }?.content?.toLongOrNull()
+
+	private fun parseCategories(consents: JsonObject): Map<ConsentCategory, Boolean>? {
+		val parsed = LinkedHashMap<ConsentCategory, Boolean>(consents.size)
+		for ((name, value) in consents) {
+			val category = ConsentCategory.fromWireName(name) ?: return null
+			val granted = optBoolean(value) ?: return null
+			if (!category.optional) {
+				// `necessary` is nobody's choice, so an intent offering it is not
+				// one this build should apply.
+				return null
+			}
+			parsed[category] = granted
+		}
+		return parsed
 	}
 
 	/**

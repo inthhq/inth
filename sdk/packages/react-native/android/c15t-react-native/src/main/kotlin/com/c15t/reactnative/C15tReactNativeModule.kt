@@ -62,7 +62,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	/** The current snapshot, encoded for the wire. */
 	override fun getSnapshot(): String {
 		ensureCore()
-		return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage = deviceLanguage())
+		return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage = deviceLanguage(), iabConsent = C15t.current?.iabConsent)
 	}
 
 	/**
@@ -101,7 +101,11 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			return
 		}
 		try {
-			val result = C15t.save(parsed)
+			// A headless draft names the revision it was opened on, so a change in between
+			// is refused rather than committed over.
+			val revision = C15tPayload.parseExpectedRevision(intent)
+			val core = C15t.current
+			val result = if (revision != null && core != null) core.save(parsed, expectedRevision = revision) else C15t.save(parsed)
 			promise.resolve(C15tPayload.commitResult(result, C15t.snapshot()))
 		} catch (error: Exception) {
 			promise.reject(REJECT_COMMIT, error.message, error)

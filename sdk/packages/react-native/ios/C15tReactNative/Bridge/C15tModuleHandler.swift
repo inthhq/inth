@@ -194,7 +194,8 @@ public struct C15tModuleHandler {
     /// The `getSnapshot()` payload.
     public func snapshotPayload() -> String {
         ensureCore()
-        return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage)
+        return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage,
+            iabConsent: C15t.current?.iabConsent())
     }
 
     /// The `getTrackingAuthorization()` payload.
@@ -241,7 +242,8 @@ public struct C15tModuleHandler {
         guard ensureCore(), let core = C15t.current else {
             return C15tPayload.notBootstrapped()
         }
-        return C15tPayload.commitResult(core.save(parsed), snapshot: core.snapshot())
+        let revision = C15tPayload.parseExpectedRevision(intent)
+        return C15tPayload.commitResult(core.save(parsed, expectedRevision: revision), snapshot: core.snapshot())
     }
 
     /// Replace the geographic, language, and GPC overrides.

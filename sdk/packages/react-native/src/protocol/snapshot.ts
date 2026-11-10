@@ -9,6 +9,7 @@
  * object from `getSnapshot()`; the JavaScript layer never derives it.
  */
 
+import type { NativeIABChoices } from './commit';
 import type { GlobalVendorList } from './gvl';
 import type { NativeOverrides } from './overrides';
 import type {
@@ -101,6 +102,22 @@ export interface NativeSnapshotError {
 export interface NativeIABState {
 	/** Global Vendor List (IAB-registered vendors + purposes), or `null`. */
 	readonly gvl: GlobalVendorList | null;
+	/**
+	 * The current committed TCF decision, or `null` when none is current. The
+	 * bridge adds it beside the core's `gvl`; a binary older than this field
+	 * omits it, which reads as `null`.
+	 */
+	readonly committed?: NativeIABCommittedConsent | null;
+}
+
+/** The committed TCF decision a headless IAB screen shows and reopens with. */
+export interface NativeIABCommittedConsent {
+	/** The encoded TC String, the same one native writes to the storage bus. */
+	readonly tcString: string;
+	/** The Google Additional Consent string, or `null`. */
+	readonly addtlConsent: string | null;
+	/** The selection the TC String encodes. */
+	readonly choices: NativeIABChoices;
 }
 
 /**

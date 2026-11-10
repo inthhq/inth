@@ -78,9 +78,43 @@ policy may allow a category before anyone uses the switch. Read
 recorded. Do not submit a save merely because the initial effective value is
 true.
 
-Use this form with category policies. A TCF purpose/vendor decision needs the
-native IAB draft and disclosure checks described under
-[IAB setup](/docs/guides/mobile-iab).
+Use this form with category policies. For a TCF policy, see
+[Build your own IAB screen](#build-your-own-iab-screen).
+
+## Build your own IAB screen
+
+Under a TCF policy the same draft holds a purpose and vendor selection. The
+hooks use the names `@c15t/react` exports for IAB: `useIAB()` stages changes,
+`usePurposeConsent`, `useVendorConsent` and `useSpecialFeatureOptIn` read the
+staged selection, and `useTCString()` reads the committed TC String:
+
+<include src="../../shared/examples/react-native-bare/iab-preferences.mdx" />
+
+`useIAB()` returns `null` unless the policy is `iab` and a vendor list was
+served. It opens with the committed choices, or with nothing granted.
+`save()` sends the whole selection and the displayed categories as one native
+commit, pinned to the snapshot revision the draft was opened on. The native
+core checks every ID and legal basis against the served list, encodes the TC
+String, writes the `IABTCF_*` keys and queues the backend record, exactly as it
+does for the stock screens. A refused selection resolves `ok: false` with the
+reason. If the vendor list or policy changed under an unsaved edit, the draft
+turns stale and refuses to save until you call `reset()`.
+
+`acceptAll()` stages consent for the purposes the served partners declare,
+the legitimate interests they declare and TCF allows, and their special
+features; `rejectAll()` stages withdrawal of every consent and leaves
+legitimate interest alone, as on the web. For one-tap Accept all and Reject
+all buttons, `useSaveConsents()('all')` and `('none')` let the native core
+apply the full TCF rules. `setPurposeLegitimateInterest` and
+`setVendorLegitimateInterest` with `false` record an objection; purposes 1 and
+3 to 6 never take legitimate interest.
+
+The staged values are for rendering controls. Gate vendors on the committed
+decision, which native SDK gates and `IABTCF_*` readers already use.
+`useIABSnapshot()` returns the served vendor list for your disclosure text and
+the committed decision; `useIABEnabled()` tells you whether the policy is TCF.
+Keep the TCF disclosures, the partner count and your privacy-policy link on
+the screen, as the [IAB setup](/docs/guides/mobile-iab) guide requires.
 
 ## Handle accept, reject and save failures
 
@@ -141,6 +175,10 @@ It is for features that require both. It does not ask for authorization.
 | `useSaveConsents()` | Save `'all'`, `'none'`, a per-category choice, or the current draft. |
 | `useConsentDraft()` | Stage several category choices and save them together. |
 | `ConsentDraftProvider` | A separate draft for one screen, with defaults for undecided categories. |
+| `useIAB()` | Stage and save a TCF purpose and vendor selection. |
+| `usePurposeConsent(id)`, `useVendorConsent(id)`, `useSpecialFeatureOptIn(id)` | One staged TCF selection, for a control. |
+| `useTCString()` | The committed TC String. |
+| `useIABSnapshot()`, `useIABEnabled()` | The served vendor list and committed decision, and whether the policy is TCF. |
 | `useDismissNotice()` | Acknowledge a notice without recording a choice. |
 | `useIdentify()` | Attach an external id from your account system. |
 | `useSetOverrides()` | Pin country, region, language or GPC for testing. |
@@ -159,6 +197,5 @@ keeps the control's old value, a successful change survives relaunch, and
 withdrawal stops optional work. Test larger text, focus, labels and error
 announcements as part of your app's accessibility checks.
 
-For IAB, prefer the native presenter for the complete stock flow. The RN
-snapshot's served GVL is disclosure data; it does not provide a complete
-per-vendor commit API or the committed TC String.
+For IAB, check the decoded TC String and the platform `IABTCF_*` keys after a
+save, as described under [IAB setup](/docs/guides/mobile-iab).
