@@ -5,8 +5,13 @@ import C15tApple
 import C15tCore
 #endif
 import Combine
-import SwiftUI
+import Foundation
+#if canImport(UIKit)
 import UIKit
+#endif
+#if canImport(SwiftUI) && canImport(UIKit)
+import SwiftUI
+#endif
 
 /// The app's consent prompt for one core, shared by every scene that shows it.
 ///
@@ -24,17 +29,48 @@ public final class ConsentPrompt: ObservableObject {
     /// Called each time a prompt or settings session closes, with how it ended. A step that has
     /// to follow the consent prompt, such as a platform permission request, starts here.
     public var onFinished: ((ConsentPresenterOutcome) -> Void)?
+    /// When App Tracking Transparency is asked, relative to this prompt. Set by the scene that
+    /// attaches; see ``ConsentTrackingRequest``.
+    public private(set) var trackingRequest = ConsentTrackingRequest.afterConsent
 
     @Published private(set) var host: UUID?
     @Published private(set) var hostActive = false
 
+    private let tracking: C15tTrackingController
+    private let isActive: @MainActor () -> Bool
+    private var wantsAutoPresent = false
+    private var launchChecked = false
+    private var trackingReleased = false
+    private var trackingInFlight = false
+    private var trackingOwed: ConsentTrackingStage?
+    private var observers: [AnyCancellable] = []
+
     private static var prompts: [ObjectIdentifier: ConsentPrompt] = [:]
 
-    private init(core: ConsentCore) {
+    init(core: ConsentCore, tracking: C15tTrackingController = C15tApple.tracking,
+         isActive: @escaping @MainActor () -> Bool = { ConsentPrompt.appIsActive() },
+         becameActive: AnyPublisher<Void, Never> = ConsentPrompt.activations) {
         self.core = core
+        self.tracking = tracking
+        self.isActive = isActive
         self.presenter = ConsentPresenter(core: core, autoPresent: false)
-        presenter.onOutcome = { [weak self] outcome in self?.onFinished?(outcome) }
+        presenter.onOutcome = { [weak self] outcome in self?.finished(outcome) }
+        presenter.onCoverDismissed = { [weak self] in self?.requestOwedTracking() }
+        observers = [
+            presenter.$snapshot.sink { [weak self] in self?.checkLaunch($0) },
+            becameActive.sink { [weak self] in self?.requestOwedTracking() },
+        ]
     }
+
+    #if canImport(UIKit)
+    static func appIsActive() -> Bool { UIApplication.shared.applicationState == .active }
+    static var activations: AnyPublisher<Void, Never> {
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification).map { _ in }.eraseToAnyPublisher()
+    }
+    #else
+    static func appIsActive() -> Bool { true }
+    static var activations: AnyPublisher<Void, Never> { Empty().eraseToAnyPublisher() }
+    #endif
 
     /// The prompt for `core`. Every call with the same core returns the same instance.
     public static func shared(for core: ConsentCore) -> ConsentPrompt {
@@ -58,11 +94,15 @@ public final class ConsentPrompt: ObservableObject {
 
     /// Let the scene behind `id` draw the prompt if nobody draws it, or if the scene drawing it
     /// left the foreground and this one is active.
-    func attach(_ id: UUID, active: Bool, autoPresent: Bool) {
+    func attach(_ id: UUID, active: Bool, autoPresent: Bool,
+                trackingRequest: ConsentTrackingRequest = .afterConsent) {
         guard host == nil || host == id || active && !hostActive else { return }
         if host != id { host = id }
         if hostActive != active { hostActive = active }
-        if presenter.autoPresent != autoPresent { presenter.autoPresent = autoPresent }
+        self.trackingRequest = trackingRequest
+        wantsAutoPresent = autoPresent
+        applyAutoPresent()
+        checkLaunch(presenter.snapshot)
     }
 
     /// The scene behind `id` went away. Another attached scene takes over.
@@ -71,8 +111,76 @@ public final class ConsentPrompt: ObservableObject {
         host = nil
         hostActive = false
     }
+
+    /// With `beforeConsent`, the prompt waits until Apple's alert has been asked or skipped.
+    private func applyAutoPresent() {
+        let on = wantsAutoPresent && (trackingRequest != .beforeConsent || trackingReleased)
+        if presenter.autoPresent != on { presenter.autoPresent = on }
+    }
+
+    /// Decide once per launch, when the core first has an answer, whether tracking is asked
+    /// before any prompt. Only an auto-presenting scene does this; `autoPresent: false` asks
+    /// nothing until the app opens a prompt.
+    private func checkLaunch(_ snapshot: ConsentSnapshot) {
+        guard !launchChecked, host != nil, wantsAutoPresent, snapshot.ready, !snapshot.policyPending else { return }
+        launchChecked = true
+        switch trackingRequest {
+        case .beforeConsent: owe(.beforePrompt)
+        // A stored choice still in force owes no prompt, so the after-consent rule applies now.
+        case .afterConsent where snapshot.promptRequirement.kind == .none: owe(.afterPrompt)
+        default: break
+        }
+    }
+
+    private func finished(_ outcome: ConsentPresenterOutcome) {
+        onFinished?(outcome)
+        owe(.afterPrompt)
+    }
+
+    private func owe(_ stage: ConsentTrackingStage) {
+        trackingOwed = stage
+        requestOwedTracking()
+    }
+
+    /// Ask once nothing of ours is on screen and the app is active. Apple shows nothing and
+    /// answers at once while the app is not active, and will not show an alert over a cover
+    /// that is still animating away, so each of those waits for its own signal.
+    private func requestOwedTracking() {
+        guard let stage = trackingOwed, !trackingInFlight, !presenter.covering, presenter.presentationID == nil,
+              isActive() else { return }
+        trackingOwed = nil
+        let marketing = ConsentDecision(snapshot: core.snapshot(), category: .marketing)
+        guard trackingRequest.shouldAsk(at: stage, platform: tracking.trackingPlatformStatus(),
+                                        promptStringPresent: tracking.trackingPromptStringPresent(),
+                                        marketing: marketing) else {
+            return releasePrompt()
+        }
+        trackingInFlight = true
+        tracking.request { [weak self] result in
+            Task { @MainActor in self?.trackingAnswered(stage, result) }
+        }
+    }
+
+    private func trackingAnswered(_ stage: ConsentTrackingStage,
+                                  _ result: Result<C15tTrackingRequestResult, C15tTrackingError>) {
+        trackingInFlight = false
+        // Additional Information on Apple's EU sheet asks the app to show its own controls.
+        // After a prompt, that is settings; closing them runs the after-consent rule again.
+        // Before the prompt, the prompt itself is those controls.
+        if stage == .afterPrompt, case let .success(answer) = result, answer.stage == .additionalInformation {
+            presenter.presentPreferences()
+        }
+        releasePrompt()
+    }
+
+    private func releasePrompt() {
+        guard !trackingReleased else { return }
+        trackingReleased = true
+        applyAutoPresent()
+    }
 }
 
+#if canImport(SwiftUI) && canImport(UIKit)
 public extension View {
     /// Install c15t and add the stock consent prompt and settings to a SwiftUI root, in one call.
     ///
@@ -97,20 +205,25 @@ public extension View {
     ///   - autoPresent: `false` shows nothing until ``ConsentPrompt/presentPrompt()`` or
     ///     ``ConsentPrompt/presentPreferences()`` is called. Your settings screen still opens
     ///     ``ConsentPrompt/presentPreferences()``.
+    ///   - trackingRequest: When App Tracking Transparency is asked. The default asks after the
+    ///     prompt, and only while marketing is granted. Needs `NSUserTrackingUsageDescription`.
     @MainActor
     func c15tConsent(_ configuration: C15tAppleConfiguration, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
-                     autoPresent: Bool = true) -> some View {
+                     autoPresent: Bool = true, trackingRequest: ConsentTrackingRequest = .afterConsent) -> some View {
         modifier(ConsentAttachment(resolve: { try? C15tApple.install(configuration) }, privacyPolicyURL: privacyPolicyURL,
-                                   theme: theme, autoPresent: autoPresent, onNoticeFrameChange: nil))
+                                   theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
+                                   onNoticeFrameChange: nil))
     }
 
     /// Add the stock consent prompt and settings for a core the app installed itself, such as an
     /// IAB core from `C15tApple.install(_: CoreConfig)`. Behaves like the configuration form and
     /// attaches once a core is installed.
     @MainActor
-    func c15tConsent(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true) -> some View {
+    func c15tConsent(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true,
+                     trackingRequest: ConsentTrackingRequest = .afterConsent) -> some View {
         modifier(ConsentAttachment(resolve: { C15t.current }, privacyPolicyURL: privacyPolicyURL,
-                                   theme: theme, autoPresent: autoPresent, onNoticeFrameChange: nil))
+                                   theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
+                                   onNoticeFrameChange: nil))
     }
 }
 
@@ -132,6 +245,7 @@ struct ConsentAttachment: ViewModifier {
     let privacyPolicyURL: URL
     let theme: ConsentTheme?
     let autoPresent: Bool
+    let trackingRequest: ConsentTrackingRequest
     let onNoticeFrameChange: ((CGRect) -> Void)?
     @StateObject private var model = ConsentAttachmentModel()
 
@@ -140,7 +254,8 @@ struct ConsentAttachment: ViewModifier {
             .overlay {
                 if let prompt = model.prompt {
                     ConsentPromptHost(prompt: prompt, privacyPolicyURL: privacyPolicyURL, theme: theme,
-                                      autoPresent: autoPresent, onNoticeFrameChange: onNoticeFrameChange)
+                                      autoPresent: autoPresent, trackingRequest: trackingRequest,
+                                      onNoticeFrameChange: onNoticeFrameChange)
                 }
             }
             .onAppear { model.attach(resolve) }
@@ -159,6 +274,7 @@ private struct ConsentPromptHost: View {
     let privacyPolicyURL: URL
     let theme: ConsentTheme?
     let autoPresent: Bool
+    let trackingRequest: ConsentTrackingRequest
     let onNoticeFrameChange: ((CGRect) -> Void)?
     @State private var id = UUID()
     @Environment(\.scenePhase) private var scenePhase
@@ -179,10 +295,11 @@ private struct ConsentPromptHost: View {
         .onChange(of: prompt.host) { _ in claim() }
         .onChange(of: prompt.hostActive) { _ in claim() }
         .onChange(of: autoPresent) { _ in claim() }
+        .onChange(of: trackingRequest) { _ in claim() }
     }
 
     private func claim() {
-        prompt.attach(id, active: scenePhase == .active, autoPresent: autoPresent)
+        prompt.attach(id, active: scenePhase == .active, autoPresent: autoPresent, trackingRequest: trackingRequest)
     }
 }
 
@@ -213,8 +330,10 @@ public final class ConsentRootViewController: UIViewController {
     ///   - theme: Appearance. `nil` uses ``ConsentTheme/current``.
     ///   - autoPresent: `false` shows nothing until ``ConsentPrompt/presentPrompt()`` or
     ///     ``ConsentPrompt/presentPreferences()`` is called.
+    ///   - trackingRequest: When App Tracking Transparency is asked. See ``ConsentTrackingRequest``.
     public init(root: UIViewController, configuration: C15tAppleConfiguration? = nil, privacyPolicyURL: URL,
-                theme: ConsentTheme? = nil, autoPresent: Bool = true) {
+                theme: ConsentTheme? = nil, autoPresent: Bool = true,
+                trackingRequest: ConsentTrackingRequest = .afterConsent) {
         self.root = root
         let passthrough = ConsentPassthroughView()
         self.passthrough = passthrough
@@ -226,7 +345,7 @@ public final class ConsentRootViewController: UIViewController {
         }
         overlay = UIHostingController(rootView: AnyView(Color.clear.modifier(ConsentAttachment(
             resolve: resolve, privacyPolicyURL: privacyPolicyURL, theme: theme, autoPresent: autoPresent,
-            onNoticeFrameChange: { [weak passthrough] in passthrough?.noticeFrame = $0 }))))
+            trackingRequest: trackingRequest, onNoticeFrameChange: { [weak passthrough] in passthrough?.noticeFrame = $0 }))))
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -264,3 +383,4 @@ private final class ConsentPassthroughView: UIView {
         noticeFrame.contains(convert(point, to: nil))
     }
 }
+#endif
