@@ -220,7 +220,7 @@ final class DecisionContrastGuardTests: XCTestCase {
         var reports: [String] = []
         let guarded = host.withReadableDecisions { reports.append($0) }
         XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.onDecision)
+        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.textOnDecision)
         XCTAssertGreaterThanOrEqual(guarded.decisionContrast, 5)
         // Only the decision colours change.
         XCTAssertEqual(guarded.colors.primary, host.colors.primary)
@@ -238,7 +238,7 @@ final class DecisionContrastGuardTests: XCTestCase {
         XCTAssertEqual(theme.colors.decision, ConsentThemeColor(light: 0x777777))
         let guarded = theme.withReadableDecisions { _ in }
         XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.onDecision)
+        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.textOnDecision)
     }
 
     // TCF-CHECK: P11
