@@ -9,6 +9,47 @@ import C15tCore
 #endif
 import Foundation
 
+/// What the native consent host did with a presentation request. The twin of
+/// `ConsentHostSession` in the Kotlin SDK.
+public enum ConsentHostSession: Equatable, Sendable {
+    /// A new session opened. Its outcome arrives once, as a ``ConsentHostOutcome``.
+    case presented(sessionID: String)
+    /// A session was already open. The request reused it and its draft.
+    case alreadyPresented(sessionID: String)
+    /// A prompt request found no prompt owed, so nothing opened.
+    case notRequired
+}
+
+/// How a native consent host session ended. Delivered once per session. The twin
+/// of `ConsentHostOutcome` in the Kotlin SDK.
+public enum ConsentHostOutcome: Equatable, Sendable {
+    /// A decision was saved durably on the device.
+    case committed(sessionID: String, revision: Int)
+    /// A notice was acknowledged. No consent decision was recorded.
+    case acknowledged(sessionID: String, revision: Int)
+    /// The subject closed the session without a decision.
+    case dismissed(sessionID: String, revision: Int)
+    /// The session closed because the policy was still unresolved.
+    case unavailable(sessionID: String, revision: Int)
+
+    /// The session that ended.
+    public var sessionID: String {
+        switch self {
+        case let .committed(id, _), let .acknowledged(id, _), let .dismissed(id, _), let .unavailable(id, _):
+            return id
+        }
+    }
+
+    /// The core's snapshot revision when the session ended.
+    public var revision: Int {
+        switch self {
+        case let .committed(_, revision), let .acknowledged(_, revision),
+             let .dismissed(_, revision), let .unavailable(_, revision):
+            return revision
+        }
+    }
+}
+
 /// The JSON the iOS bridge speaks, with no React Native types anywhere in it.
 ///
 /// Field names come from `src/protocol` on the JavaScript side, which owns the wire
@@ -262,6 +303,35 @@ public enum C15tPayload {
             "dirty": .bool(true),
             "ready": .bool(true),
             "policyPending": .bool(false),
+        ])
+    }
+
+    /// The answer to `presentConsentPrompt` and `presentPreferences`, in the
+    /// `ConsentPresenterSession` shape `src/native/presenter.ts` reads.
+    public static func consentHostSession(_ session: ConsentHostSession) -> String {
+        switch session {
+        case let .presented(id):
+            return encode(["sessionId": .string(id), "status": .string("presented")])
+        case let .alreadyPresented(id):
+            return encode(["sessionId": .string(id), "status": .string("already-presented")])
+        case .notRequired:
+            return encode(["sessionId": .null, "status": .string("not-required")])
+        }
+    }
+
+    /// An `onConsentPresenterOutcome` event, in the `ConsentPresenterOutcome` shape.
+    public static func consentHostOutcome(_ outcome: ConsentHostOutcome) -> String {
+        let kind: String
+        switch outcome {
+        case .committed: kind = "committed"
+        case .acknowledged: kind = "acknowledged"
+        case .dismissed: kind = "dismissed"
+        case .unavailable: kind = "unavailable"
+        }
+        return encode([
+            "sessionId": .string(outcome.sessionID),
+            "kind": .string(kind),
+            "revision": .integer(Int64(outcome.revision)),
         ])
     }
 

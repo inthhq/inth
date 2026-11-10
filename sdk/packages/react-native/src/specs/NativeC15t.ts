@@ -41,8 +41,9 @@ export interface Spec extends TurboModule {
 	 */
 	commit: (intent: string) => Promise<string>;
 	/**
-	 * Replace geographic, language, or test overrides, where `overrides` is a
-	 * JSON-encoded `NativeOverridesInput`. Re-resolves the policy.
+	 * Replace the country, region, language, or GPC override, where `overrides`
+	 * is a JSON-encoded `NativeOverridesInput`. Re-resolves the policy. There is
+	 * no test override: publisher test mode is a client option.
 	 */
 	setOverrides: (overrides: string) => Promise<void>;
 	/**

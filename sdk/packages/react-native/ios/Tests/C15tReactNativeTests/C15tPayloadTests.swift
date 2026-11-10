@@ -271,6 +271,37 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(error["message"] as? String, "nope")
     }
 
+    func testConsentHostSessionsEncodeAsThePresenterSessionReadsThem() {
+        XCTAssertEqual(
+            C15tPayload.consentHostSession(.presented(sessionID: "one")),
+            #"{"sessionId":"one","status":"presented"}"#
+        )
+        XCTAssertEqual(
+            C15tPayload.consentHostSession(.alreadyPresented(sessionID: "one")),
+            #"{"sessionId":"one","status":"already-presented"}"#
+        )
+        XCTAssertEqual(
+            C15tPayload.consentHostSession(.notRequired),
+            #"{"sessionId":null,"status":"not-required"}"#
+        )
+    }
+
+    func testConsentHostOutcomesEncodeEveryKind() {
+        let outcomes: [(String, ConsentHostOutcome)] = [
+            ("committed", .committed(sessionID: "one", revision: 4)),
+            ("acknowledged", .acknowledged(sessionID: "one", revision: 4)),
+            ("dismissed", .dismissed(sessionID: "one", revision: 4)),
+            ("unavailable", .unavailable(sessionID: "one", revision: 4)),
+        ]
+        for (kind, outcome) in outcomes {
+            let payload = jsonObject(C15tPayload.consentHostOutcome(outcome))
+            XCTAssertEqual(payload["sessionId"] as? String, "one")
+            XCTAssertEqual(payload["kind"] as? String, kind)
+            XCTAssertEqual(payload["revision"] as? Int, 4)
+            XCTAssertEqual(payload.count, 3)
+        }
+    }
+
     func testInvalidIntentEchoesOnlyATruncatedSample() {
         let payload = jsonObject(C15tPayload.invalidIntent(raw: String(repeating: "x", count: 900)))
 

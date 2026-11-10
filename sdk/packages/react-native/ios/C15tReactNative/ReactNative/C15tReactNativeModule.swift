@@ -46,8 +46,8 @@ import React
 public final class C15tReactNativeModule: RCTEventEmitter {
     private let handler = C15tModuleHandler(trackingController: C15tApple.tracking)
 
-    /// Held as a property: the core keeps snapshot observers weakly, so somebody has
-    /// to own the observer or the callbacks would silently stop.
+    /// Held as a property: its snapshot handle owns the callback, and detaching or
+    /// releasing it is what stops the module hearing the core.
     private lazy var subscriber = C15tCoreSubscriber(sink: C15tReactEmitterSink(module: self))
 
     /// Live JavaScript listeners. A snapshot event is only a hint to go and read, so
@@ -221,9 +221,10 @@ public final class C15tReactNativeModule: RCTEventEmitter {
             let host = self.consentHost ?? C15tConsentHost()
             self.consentHost = host
             do {
-                resolve(try host.present(preferences: preferences, privacyPolicyURL: privacyPolicyURL) { [weak self] payload in
-                    self?.publish(event: "onConsentPresenterOutcome", payload: payload)
-                })
+                let session = try host.present(preferences: preferences, privacyPolicyURL: privacyPolicyURL) { [weak self] outcome in
+                    self?.publish(event: "onConsentPresenterOutcome", payload: C15tPayload.consentHostOutcome(outcome))
+                }
+                resolve(C15tPayload.consentHostSession(session))
             } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host, installed core and HTTPS privacy-policy URL. \(error)", error) }
         }
     }

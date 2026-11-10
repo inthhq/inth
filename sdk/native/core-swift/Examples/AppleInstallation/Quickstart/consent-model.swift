@@ -6,7 +6,7 @@ import Combine
 import Foundation
 
 @MainActor
-final class ConsentModel: ObservableObject, SnapshotObserver {
+final class ConsentModel: ObservableObject {
     @Published private(set) var snapshot: ConsentSnapshot?
     @Published private(set) var presenter: ConsentPresenter?
     @Published private(set) var installationError: Error?
@@ -36,7 +36,8 @@ final class ConsentModel: ObservableObject, SnapshotObserver {
                 consentCategories: [.necessary, .measurement, .marketing]
             ))
             core = installed
-            observation = installed.onChange(self)
+            // The handle owns the closure, so capture the model weakly.
+            observation = installed.onChange { [weak self] in self?.consentDidChange($0) }
             snapshot = installed.snapshot()
             presenter = ConsentPresenter(core: installed)
             installationError = nil

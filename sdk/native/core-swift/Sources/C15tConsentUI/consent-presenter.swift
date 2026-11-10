@@ -10,7 +10,7 @@ public enum ConsentPresenterOutcome: Sendable { case saved, dismissed }
 /// Owns one native presentation and its draft. Keep one instance for the host's lifetime.
 /// Storage work runs on a worker; observing and editing are confined to the main actor.
 @MainActor
-public final class ConsentPresenter: ObservableObject, SnapshotObserver {
+public final class ConsentPresenter: ObservableObject {
     public let core: ConsentCore
     @Published public private(set) var snapshot: ConsentSnapshot
     @Published public private(set) var presentationID: UUID?
@@ -49,15 +49,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         self.automaticPresentation = automaticPresentation
         self.core = core
         self.snapshot = core.snapshot()
-        self.subscription = core.onChange(self)
+        // Weak, because the handle owns this closure and the presenter owns the handle.
+        self.subscription = core.onChange { [weak self] snapshot in
+            Task { @MainActor [weak self] in self?.receive(snapshot) }
+        }
         receive(core.snapshot())
     }
 
     deinit { subscription?.cancel() }
-
-    nonisolated public func consentDidChange(_ snapshot: ConsentSnapshot) {
-        Task { @MainActor [weak self] in self?.receive(snapshot) }
-    }
 
     private var promptKey: String {
         "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? "")"

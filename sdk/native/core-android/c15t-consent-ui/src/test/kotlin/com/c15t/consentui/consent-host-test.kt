@@ -16,7 +16,6 @@ import com.c15t.core.spi.KeyValueStore
 import com.c15t.core.spi.TaskExecutor
 import com.c15t.core.store.C15tStore
 import com.c15t.core.transport.HostedTransport
-import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
@@ -58,8 +57,8 @@ class ConsentHostTest {
         assertTrue(core.snapshot().promptRequirement.notice)
         assertTrue(core.snapshot().promptRequirement.acknowledge)
         val host = host()
-        val outcomes = mutableListOf<String>()
-        val request = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
+        val outcomes = mutableListOf<ConsentHostOutcome>()
+        val request = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
         val modalIntent = shadowOf(host.get()).nextStartedActivity
         if (modalIntent != null) {
             hosts += Robolectric.buildActivity(ConsentHostActivity::class.java, modalIntent).setup().visible()
@@ -67,7 +66,7 @@ class ConsentHostTest {
         requireNotNull(presenter()).commit(ConsentPresenter.Action.REJECT)
         await { outcomes.isNotEmpty() }
         assertNotNull(core.snapshot().explicitChoice)
-        assertEquals("committed", JSONObject(outcomes.single()).getString("kind"))
+        assertTrue(outcomes.single() is ConsentHostOutcome.Committed)
         assertOutcome(request, outcomes.single(), core)
         assertNotNull("A fallback choice must open the modal host", modalIntent)
         assertEquals(0, noticeViews(host.get()))
@@ -76,8 +75,8 @@ class ConsentHostTest {
     @Test fun embeddedNoticeRestoresAfterRecreationWithoutAnotherPresentationRequest() {
         val core = boot(fixture("notice-init.json"))
         val host = host()
-        val outcomes = mutableListOf<String>()
-        val request = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
+        val outcomes = mutableListOf<ConsentHostOutcome>()
+        val request = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
         val current = requireNotNull(presenter())
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(1, noticeViews(host.get()))
@@ -99,7 +98,7 @@ class ConsentHostTest {
 
         current.commit(ConsentPresenter.Action.ACKNOWLEDGE)
         await { outcomes.isNotEmpty() }
-        assertEquals("acknowledged", JSONObject(outcomes.single()).getString("kind"))
+        assertTrue(outcomes.single() is ConsentHostOutcome.Acknowledged)
         assertOutcome(request, outcomes.single(), core)
         assertNull(core.snapshot().explicitChoice)
         assertFalse(core.snapshot().promptRequirement.notice)
@@ -113,33 +112,33 @@ class ConsentHostTest {
     @Test fun savedStateFromClosedNoticeCannotAttachANewerSession() {
         val core = boot(fixture("notice-init.json"))
         val host = host()
-        val firstOutcomes = mutableListOf<String>()
-        val first = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = firstOutcomes::add))
+        val firstOutcomes = mutableListOf<ConsentHostOutcome>()
+        val first = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = firstOutcomes::add))
         val oldState = Bundle()
         host.saveInstanceState(oldState)
-        ConsentHost.close(first.getString("sessionId"))
-        assertEquals("dismissed", JSONObject(firstOutcomes.single()).getString("kind"))
+        ConsentHost.close(first.sessionId)
+        assertTrue(firstOutcomes.single() is ConsentHostOutcome.Dismissed)
 
-        val nextOutcomes = mutableListOf<String>()
-        val next = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = nextOutcomes::add))
-        assertNotEquals(first.getString("sessionId"), next.getString("sessionId"))
+        val nextOutcomes = mutableListOf<ConsentHostOutcome>()
+        val next = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = nextOutcomes::add))
+        assertNotEquals(first.sessionId, next.sessionId)
         val restored = Robolectric.buildActivity(HostActivity::class.java).create(oldState).start().resume().visible()
         hosts += restored
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(0, noticeViews(restored.get()))
         assertEquals(1, noticeViews(host.get()))
-        ConsentHost.close(first.getString("sessionId"))
+        ConsentHost.close(first.sessionId)
         assertTrue(nextOutcomes.isEmpty())
-        ConsentHost.close(next.getString("sessionId"))
-        assertEquals("dismissed", JSONObject(nextOutcomes.single()).getString("kind"))
+        ConsentHost.close(next.sessionId)
+        assertTrue(nextOutcomes.single() is ConsentHostOutcome.Dismissed)
         assertEquals(0, noticeViews(host.get()))
     }
 
     @Test fun modalRecreationRetainsDirtyDraftAndOneCompactOutcome() {
         val core = boot(fixture("category-init.json"))
         val host = host()
-        val outcomes = mutableListOf<String>()
-        val request = JSONObject(ConsentHost.present(host.get(), core, true, PRIVACY_URL, outcome = outcomes::add))
+        val outcomes = mutableListOf<ConsentHostOutcome>()
+        val request = opened(ConsentHost.present(host.get(), core, true, PRIVACY_URL, outcome = outcomes::add))
         val current = requireNotNull(presenter())
         current.setCategory(ConsentCategory.MEASUREMENT, true)
         val modal = Robolectric.buildActivity(ConsentHostActivity::class.java, shadowOf(host.get()).nextStartedActivity).setup().visible()
@@ -148,12 +147,12 @@ class ConsentHostTest {
         assertEquals(true, requireNotNull(presenter()).categories[ConsentCategory.MEASUREMENT])
         ConsentHost.close("obsolete-session")
         current.commit(ConsentPresenter.Action.SAVE)
-        ConsentHost.close(request.getString("sessionId"))
+        ConsentHost.close(request.sessionId)
         await { outcomes.isNotEmpty() }
         assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
-        assertEquals("committed", JSONObject(outcomes.single()).getString("kind"))
+        assertTrue(outcomes.single() is ConsentHostOutcome.Committed)
         assertOutcome(request, outcomes.single(), core)
-        ConsentHost.close(request.getString("sessionId"))
+        ConsentHost.close(request.sessionId)
         assertEquals(1, outcomes.size)
     }
 
@@ -171,11 +170,14 @@ class ConsentHostTest {
         return session.javaClass.getDeclaredField("presenter").apply { isAccessible = true }.get(session) as ConsentPresenter
     }
 
-    private fun assertOutcome(request: JSONObject, raw: String, core: ConsentCore) {
-        val event = JSONObject(raw)
-        assertEquals(request.getString("sessionId"), event.getString("sessionId"))
-        assertEquals(core.snapshot().revision, event.getLong("revision"))
-        assertEquals(setOf("sessionId", "kind", "revision"), event.keys().asSequence().toSet())
+    private fun opened(session: ConsentHostSession): ConsentHostSession.Presented {
+        assertTrue("Expected a new session, got $session", session is ConsentHostSession.Presented)
+        return session as ConsentHostSession.Presented
+    }
+
+    private fun assertOutcome(request: ConsentHostSession.Presented, outcome: ConsentHostOutcome, core: ConsentCore) {
+        assertEquals(request.sessionId, outcome.sessionId)
+        assertEquals(core.snapshot().revision, outcome.revision)
     }
 
     private fun await(condition: () -> Boolean) {

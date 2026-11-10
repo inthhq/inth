@@ -82,7 +82,7 @@ final class ResetTests: XCTestCase {
         let before = core.snapshot().revision
 
         let witness = PublicationWitness()
-        let subscription = core.onChange(witness)
+        let subscription = core.onChange { witness.consentDidChange($0) }
         let seen = SendableBox([ConsentDecision]())
         let gate = core.gate(ConsentCategory.marketing) { (decision: ConsentDecision) in
             seen.mutate { $0.append(decision) }
@@ -172,7 +172,7 @@ final class ResetTests: XCTestCase {
         // moment that is observable: it happens after the deletes and before the init is
         // scheduled, so reading the disk from it cannot race the network.
         let witness = DiskWitness(store: store)
-        let subscription = core.onChange(witness)
+        let subscription = core.onChange { witness.consentDidChange($0) }
         core.reset()
         subscription.cancel()
 
@@ -244,7 +244,7 @@ final class ResetTests: XCTestCase {
         let revision = core.snapshot().revision
 
         let witness = PublicationWitness()
-        let subscription = core.onChange(witness)
+        let subscription = core.onChange { witness.consentDidChange($0) }
         core.reset()
         subscription.cancel()
         await core.waitUntilIdle()
@@ -271,14 +271,14 @@ final class ResetTests: XCTestCase {
         // snapshot afterwards would race the network instead of comparing two devices.
         let freshWitness = PublicationWitness()
         let fresh = ConsentCore()
-        let freshSubscription = fresh.onChange(freshWitness)
+        let freshSubscription = fresh.onChange { freshWitness.consentDidChange($0) }
         fresh.bootstrap(settledConfig(store: InMemoryStore()))
         freshSubscription.cancel()
 
         let wipeWitness = PublicationWitness()
         let decided = await decidedCore(intent: .all)
         let revisionBefore = decided.snapshot().revision
-        let wipeSubscription = decided.onChange(wipeWitness)
+        let wipeSubscription = decided.onChange { wipeWitness.consentDidChange($0) }
         decided.reset()
         wipeSubscription.cancel()
 
@@ -363,7 +363,7 @@ private struct WipeTestFailure: Error {
 /// Records the revision of every publication, in the order the core announced them.
 ///
 /// Held strongly by the caller: the core's observer set is weak.
-private final class PublicationWitness: SnapshotObserver, @unchecked Sendable {
+private final class PublicationWitness: @unchecked Sendable {
     private let lock = NSLock()
     private var revisions: [Int] = []
     private var first: ConsentSnapshot?
@@ -392,7 +392,7 @@ private final class PublicationWitness: SnapshotObserver, @unchecked Sendable {
 
 /// Reads what is on disk from inside a publication, which is the only moment a wipe's own
 /// deletion is observable before the init it re-ran gets to write again.
-private final class DiskWitness: SnapshotObserver, @unchecked Sendable {
+private final class DiskWitness: @unchecked Sendable {
     struct OnDisk {
         let snapshotPresent: Bool
         let pendingPresent: Bool

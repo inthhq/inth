@@ -162,7 +162,8 @@ export const useIdentify = function useIdentify(): (user: {
 };
 
 /**
- * Pin country, region, language, or publisher test mode.
+ * Pin country, region, language, or the GPC signal. There is no test override:
+ * publisher test mode is a client option, not an override.
  *
  * Useful for a debug menu and for review-gated builds that must evaluate a
  * specific region's policy. Overrides change which rule matches; they never

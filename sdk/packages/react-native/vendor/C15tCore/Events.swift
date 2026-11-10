@@ -20,17 +20,6 @@ public enum CoreEvent: Sendable, Equatable {
     case saveReplayed(subjectId: String, ok: Bool)
 }
 
-/// A snapshot observer.
-///
-/// Held weakly, so a view model can register itself without a matching call to
-/// unregister. An observer that is still alive but no longer interested must
-/// remove itself using the returned token.
-public protocol SnapshotObserver: AnyObject {
-    /// Called on an arbitrary queue, off the main thread unless the host arranges
-    /// otherwise. UI layers must hop.
-    func consentDidChange(_ snapshot: ConsentSnapshot)
-}
-
 /// Fan-out for ``CoreEvent``.
 ///
 /// Each subscriber gets its own `AsyncStream`, so a slow consumer backpressures
@@ -84,11 +73,16 @@ final class EventHub: @unchecked Sendable {
     }
 }
 
-/// A live registration.
+/// A live registration. It owns the callback it was created for.
 ///
-/// Cancelling is idempotent, and a token that is released without being cancelled
-/// still unsubscribes: a view model that forgets to tear down should leak its own
-/// state, not a permanent subscription on a core that outlives the app's screens.
+/// The core holds the callback until this handle is cancelled or released, for
+/// every observer method: ``ConsentCore/onChange(_:)`` and both `gate` overloads.
+/// A closure written inline keeps firing with nothing else referencing it, so keep
+/// the handle for as long as you want updates. Releasing it ends the registration
+/// at once, which is why discarding the return value draws a warning.
+///
+/// Cancelling is idempotent. A callback that captures its owner should capture it
+/// weakly, or the owner keeps its own registration alive.
 public final class ConsentSubscription: @unchecked Sendable {
     private let lock = Lock()
     private var handlers: [() -> Void] = []
@@ -125,31 +119,28 @@ public final class ConsentSubscription: @unchecked Sendable {
     }
 }
 
-/// Weak observer set.
+/// Snapshot callbacks, each held strongly until its ``ConsentSubscription`` ends.
 ///
-/// Weak by requirement: a core lives for the whole process, and an observer set
-/// that retained its members would keep every screen that ever showed a banner
-/// alive after it was dismissed.
+/// Nothing here is weak. A weakly held callback can be released while the host
+/// still expects updates, and then they stop with no error. The handle is what
+/// bounds the lifetime instead: cancelling or releasing it removes the entry.
 final class ObserverSet: @unchecked Sendable {
+    typealias Callback = @Sendable (ConsentSnapshot) -> Void
+
     private struct Registration {
         let id: UUID
-        weak var observer: SnapshotObserver?
+        let callback: Callback
     }
 
     private let lock = Lock()
     private var registrations: [Registration] = []
 
-    /// Register an observer. Re-registering the same instance does not double
-    /// fire, which matters for a view model that can be attached twice.
-    @discardableResult
-    func add(_ observer: SnapshotObserver) -> ConsentSubscription {
-        let registration = Registration(id: UUID(), observer: observer)
+    /// Register a callback. Each call is its own registration with its own handle.
+    func add(_ callback: @escaping Callback) -> ConsentSubscription {
+        let registration = Registration(id: UUID(), callback: callback)
         let subscription = ConsentSubscription()
+        lock.withLock { registrations.append(registration) }
         subscription.addHandler { [weak self] in self?.remove(id: registration.id) }
-        lock.withLock {
-            registrations.removeAll { $0.observer == nil || $0.observer === observer }
-            registrations.append(registration)
-        }
         return subscription
     }
 
@@ -157,22 +148,16 @@ final class ObserverSet: @unchecked Sendable {
         lock.withLock { registrations.removeAll { $0.id == id } }
     }
 
-    /// Deliver to whoever is still alive. Dead observers are collected on the way
-    /// through, so the set does not grow with the app's history.
+    /// Deliver to every open registration, outside the lock, so a callback that
+    /// cancels its own handle cannot deadlock the set.
     func notify(_ snapshot: ConsentSnapshot) {
-        let observers = lock.withLock {
-            registrations.removeAll { $0.observer == nil }
-            return registrations.compactMap(\.observer)
-        }
-        for observer in observers {
-            observer.consentDidChange(snapshot)
+        let callbacks = lock.withLock { registrations.map(\.callback) }
+        for callback in callbacks {
+            callback(snapshot)
         }
     }
 
     var count: Int {
-        lock.withLock {
-            registrations.removeAll { $0.observer == nil }
-            return registrations.count
-        }
+        lock.withLock { registrations.count }
     }
 }

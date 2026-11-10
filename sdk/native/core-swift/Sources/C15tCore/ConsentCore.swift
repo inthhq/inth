@@ -308,12 +308,6 @@ public final class ConsentCore: @unchecked Sendable {
     private var deliveryPassInFlight = false
     private var deliveryPassRequested = false
     private var deliveryPassWaiters: [CheckedContinuation<Bool, Never>] = []
-    /// Strong holds on per-category gate subscriptions, keyed by identity. The
-    /// observer set itself stays weak, as the contract requires. Holds both gate
-    /// flavours: the boolean one ``gate(_:_:)`` and the decision-carrying
-    /// ``ConsentCore/gate(_:_:)`` overload, whose only owner would otherwise be a
-    /// closure no one else retains.
-    private var gateSubscriptions: [ObjectIdentifier: any SnapshotObserver] = [:]
 
     // MARK: - Collaborators
 
@@ -509,25 +503,14 @@ public final class ConsentCore: @unchecked Sendable {
     ///
     /// Firing immediately is what lets a script gate be written as "register and
     /// load if allowed" without a separate read, and without a race between the two.
-    @discardableResult
+    ///
+    /// The core holds `onChange` until the returned handle is cancelled or released.
     public func gate(
         _ category: OptionalConsentCategory,
         _ onChange: @escaping @Sendable (Bool) -> Void
     ) -> ConsentSubscription {
         let subscription = GateSubscription(category: category, onChange: onChange)
-        let registration = observers.add(subscription)
-        // The observer set holds the subscription weakly, and a closure is not an
-        // object anyone else owns, so the core keeps it alive for exactly as long
-        // as the registration does. Cancelling drops both ends together.
-        let key = ObjectIdentifier(subscription)
-        registration.addHandler { [weak self] in
-            guard let self else { return }
-            self.lock.withLock {
-                self.gateSubscriptions.removeValue(forKey: key)
-                ()
-            }
-        }
-        lock.withLock { gateSubscriptions[key] = subscription }
+        let registration = observers.add { subscription.consentDidChange($0) }
         let allowed = lock.withLock {
             readableSnapshotLocked().effectivePermissions.value(for: category)
         }
@@ -556,8 +539,8 @@ public final class ConsentCore: @unchecked Sendable {
     ///   - category: The category to watch. Takes `necessary`, which always answers
     ///     `granted`, so that a gate written over every category needs no special case.
     ///   - onChange: Called with the current decision, then with each new one.
-    /// - Returns: A handle that cancels the subscription.
-    @discardableResult
+    /// - Returns: A handle that owns `onChange`. Cancelling or releasing it ends the
+    ///   subscription.
     public func gate(
         _ category: ConsentCategory,
         _ onChange: @escaping @Sendable (ConsentDecision) -> Void
@@ -569,16 +552,7 @@ public final class ConsentCore: @unchecked Sendable {
         // Missing a change would leave an SDK switched off with nothing left listening,
         // which is the failure this gate exists to prevent, so the possible cost here
         // is one redundant delivery instead.
-        let registration = observers.add(subscription)
-        let key = ObjectIdentifier(subscription)
-        registration.addHandler { [weak self] in
-            guard let self else { return }
-            self.lock.withLock {
-                self.gateSubscriptions.removeValue(forKey: key)
-                ()
-            }
-        }
-        lock.withLock { gateSubscriptions[key] = subscription }
+        let registration = observers.add { subscription.consentDidChange($0) }
         let current = lock.withLock {
             ConsentDecision(snapshot: readableSnapshotLocked(), category: category)
         }
@@ -586,9 +560,21 @@ public final class ConsentCore: @unchecked Sendable {
         return registration
     }
 
-    /// Watch the whole snapshot. Held weakly.
-    @discardableResult
-    public func onChange(_ observer: any SnapshotObserver) -> ConsentSubscription {
+    /// Watch the whole snapshot.
+    ///
+    /// The core holds `observer` until the returned handle is cancelled or released,
+    /// so an inline closure keeps firing with nothing else referencing it. Keep the
+    /// handle for as long as you want updates. A closure that captures its owner
+    /// should capture it weakly, or the owner keeps its own registration alive.
+    ///
+    /// Called on an arbitrary queue, off the main thread unless the host arranges
+    /// otherwise. UI layers must hop.
+    ///
+    /// - Parameter observer: Called with each published snapshot.
+    /// - Returns: A handle that owns `observer`.
+    public func onChange(
+        _ observer: @escaping @Sendable (ConsentSnapshot) -> Void
+    ) -> ConsentSubscription {
         observers.add(observer)
     }
 
@@ -2428,8 +2414,8 @@ public final class ConsentCore: @unchecked Sendable {
 
     // MARK: - Gate plumbing
 
-    /// Keeps a per-category gate closure alive for as long as its registration.
-    private final class GateSubscription: SnapshotObserver, @unchecked Sendable {
+    /// One boolean gate's callback and the last value it delivered.
+    private final class GateSubscription: @unchecked Sendable {
         private let category: OptionalConsentCategory
         private let onChange: @Sendable (Bool) -> Void
         private let stateLock = Lock()
@@ -2461,15 +2447,14 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
-    /// Keeps a per-category decision gate alive for as long as its registration, and
-    /// keeps its callback in order.
+    /// One decision gate's callback, kept in order.
     ///
     /// The decision is what changed, not the snapshot: a revision that rewrites the
     /// prompt or the location without moving this category's permission must not wake a
     /// gate. One lock over the last delivered decision, held for the comparison alone,
     /// which is what makes the registration seed and a concurrent publication unable to
     /// arrive out of order.
-    private final class DecisionGateSubscription: SnapshotObserver, @unchecked Sendable {
+    private final class DecisionGateSubscription: @unchecked Sendable {
         private let category: ConsentCategory
         private let onChange: @Sendable (ConsentDecision) -> Void
         private let stateLock = Lock()

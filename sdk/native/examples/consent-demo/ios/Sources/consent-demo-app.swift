@@ -19,7 +19,7 @@ struct ConsentDemoContent: View {
 }
 
 @MainActor
-final class DemoSession: ObservableObject, SnapshotObserver {
+final class DemoSession: ObservableObject {
     @Published var presenter: ConsentPresenter?
     @Published var snapshot = ConsentSnapshot.coldStart
     @Published var pendingSaves = 0
@@ -120,7 +120,7 @@ final class DemoSession: ObservableObject, SnapshotObserver {
                 }
             }
             started = true
-            observer = core.onChange(self)
+            observer = core.onChange { [weak self] in self?.consentDidChange($0) }
             let stream = core.eventStream
             events = Task { [weak self] in
                 for await event in stream {

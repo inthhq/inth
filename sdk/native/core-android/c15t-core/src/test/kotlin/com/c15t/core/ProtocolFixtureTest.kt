@@ -455,8 +455,6 @@ class ProtocolFixtureTest {
 		run.kernel.bootstrap()
 
 		var publications = 0
-		// The core holds snapshot observers weakly, so the lambda needs an owner for
-		// as long as the trace runs.
 		val observer: (ConsentSnapshot) -> Unit = { publications += 1 }
 		val subscription = run.kernel.onChange(observer)
 		var scriptedInits = 1

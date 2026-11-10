@@ -56,11 +56,13 @@ data class FlushResult(
 )
 
 /**
- * Handle for a registered observer.
+ * Handle for a registered observer. It owns the callback.
  *
- * Call [close] to stop receiving callbacks. For `onChange` observers the core only
- * holds a weak reference, so the caller must keep the lambda reachable; a
- * discarded handle is harmless once the observer is unreachable.
+ * The core holds the callback strongly until [close] runs, for every observer
+ * method: `onChange`, `onError`, `gate`, and `gateDecision`. A lambda written
+ * inline keeps firing with nothing else referencing it. Dropping the handle
+ * without closing it does not stop callbacks, because the JVM gives no prompt
+ * signal when an object becomes unreachable; close it where the owner tears down.
  */
 fun interface Subscription {
 	/** Stop observing. Safe to call more than once. */

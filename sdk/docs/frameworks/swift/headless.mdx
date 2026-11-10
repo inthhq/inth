@@ -29,8 +29,11 @@ SwiftUI example:
 The example's `measurement` property is a thread-safe `MeasurementService`.
 It starts collecting only on `.granted` and stops on `.pending` or `.denied`.
 The gate delivers the current decision when it registers and then delivers
-changes. Retain its `ConsentSubscription`, and call `cancel()` when the
-service's owner goes away.
+changes. The `ConsentSubscription` it returns owns the callback: retain it for
+as long as you want updates. Calling `cancel()` or releasing the handle ends the
+registration. `onChange` follows the same rule. A closure that captures its
+owner should capture it weakly, as the example does, so the owner can still be
+released.
 
 Callbacks can run on any queue. Marshal UI updates to the main actor, as the
 sample does here:

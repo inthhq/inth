@@ -41,7 +41,7 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
     private var suppressed: String? = null
     private var lastAction: Action? = null
     private var reloadAfterRefresh = false
-    // The core holds snapshot observers weakly. This field owns the lambda until close.
+    // The handle owns the lambda; onCleared closes it so the core lets go of this presenter.
     private val observer: (ConsentSnapshot) -> Unit = { next -> viewModelScope.launch { receive(next) } }
     private val subscription = core.onChange(observer)
 

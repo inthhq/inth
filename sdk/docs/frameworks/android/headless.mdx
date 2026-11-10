@@ -59,10 +59,11 @@ to stop collection, design the integration around its supported shutdown or
 recreation behavior before enabling it. c15t does not intercept its network
 traffic or cancel work it already sent.
 
-For more than a boolean, use `gateDecision`. Snapshot observers registered with
-`onChange` are weakly held; retain the callback as well as its subscription.
-Callbacks can arrive on a worker thread, so marshal UI updates to the main
-thread.
+For more than a boolean, use `gateDecision`. Every observer method (`gate`,
+`gateDecision`, `onChange` and `onError`) returns a `Subscription` that owns its
+callback. The core keeps calling an inline lambda until you call `close()`, and
+dropping the handle without closing it does not stop the callback. Callbacks can
+arrive on a worker thread, so marshal UI updates to the main thread.
 
 ## Save a category form
 
