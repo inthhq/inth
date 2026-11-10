@@ -304,7 +304,7 @@ private struct FailureRow: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { UIAccessibility.post(notification: .layoutChanged, argument: messageElement) }
     }
     var body: some View {
-        let lineHeight = UIFont.preferredFont(forTextStyle: .subheadline).lineHeight
+        let lineHeight = theme.uiFont(.subheadline).lineHeight
         HStack(alignment: .top, spacing: 8) {
             // The glyph follows the text up to the largest non-accessibility size and then holds, so the
             // message keeps its column width where every point of it is lines of text.
@@ -376,8 +376,9 @@ private struct InlineLinkText: UIViewRepresentable {
 
     func updateUIView(_ host: LinkTextHost, context: Context) {
         let view = host.textView
-        let body = UIFont.preferredFont(forTextStyle: .subheadline)
-        let bold = UIFont(descriptor: body.fontDescriptor.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: UIFont.Weight.semibold]]), size: 0)
+        // The same family and size as the SwiftUI text around it, so the row's height and the glyph agree.
+        let body = theme.uiFont(.subheadline)
+        let bold = theme.uiFont(.subheadline, weight: .semibold)
         // A no-break space keeps the label whole; it wraps as one word or not at all.
         let label = link.replacingOccurrences(of: " ", with: "\u{00A0}")
         let text = NSMutableAttributedString(string: message + " ", attributes: [.font: body, .foregroundColor: theme.colors.text.uiColor()])

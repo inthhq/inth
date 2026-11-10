@@ -6,6 +6,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useConsentDraftStore } from '../draft/consent-draft-provider';
 import type {
+	CommitIntent,
 	CommitResult,
 	NativeOverridesInput,
 	TrackingAuthorization,
@@ -113,6 +114,17 @@ export type SaveConsentsInput =
 	| 'none'
 	| Readonly<Partial<Record<OptionalConsentCategory, boolean>>>;
 
+/** The native intent for an explicit {@link SaveConsentsInput}. */
+const intentFor = function intentFor(input: SaveConsentsInput): CommitIntent {
+	if (input === 'all') {
+		return { action: 'all' };
+	}
+	if (input === 'none') {
+		return { action: 'necessary' };
+	}
+	return { action: 'explicit', consents: input };
+};
+
 /**
  * Save the subject's consent choice, as `@c15t/react`'s `save` does.
  *
@@ -138,17 +150,17 @@ export const useSaveConsents = function useSaveConsents(): (
 	const draft = useConsentDraftStore();
 
 	return useCallback(
-		(input?: SaveConsentsInput) => {
+		async (input?: SaveConsentsInput) => {
 			if (input === undefined) {
 				return draft.save();
 			}
-			if (input === 'all') {
-				return client.commit({ action: 'all' });
+			const result = await client.commit(intentFor(input));
+			// A saved choice supersedes the edits the draft was holding, as on web: a
+			// later save of the draft must not write them back over it.
+			if (result.ok) {
+				draft.reset();
 			}
-			if (input === 'none') {
-				return client.commit({ action: 'necessary' });
-			}
-			return client.commit({ action: 'explicit', consents: input });
+			return result;
 		},
 		[client, draft]
 	);

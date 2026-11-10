@@ -122,8 +122,14 @@ const probeFacts = function probeFacts(
 };
 
 /** The face each part draws with, for a host theme. */
-const FontProbe = (props: { readonly theme?: ConsentTheme }): ReactNode => {
-	const { parts } = useConsentStyles({ theme: props.theme });
+const FontProbe = (props: {
+	readonly styles?: ConsentPartStyles;
+	readonly theme?: ConsentTheme;
+}): ReactNode => {
+	const { parts } = useConsentStyles({
+		styles: props.styles,
+		theme: props.theme,
+	});
 	const faces = Object.fromEntries(
 		Object.entries(parts).map(([part, style]) => [part, style.fontFamily])
 	);
@@ -133,6 +139,7 @@ const FontProbe = (props: { readonly theme?: ConsentTheme }): ReactNode => {
 
 /** Resolve the face of every part for a host theme. */
 const probeFonts = function probeFonts(props: {
+	readonly styles?: ConsentPartStyles;
 	readonly theme?: ConsentTheme;
 }): Record<string, string | undefined> {
 	const tree = mountSurface(<FontProbe {...props} />);
@@ -788,6 +795,19 @@ describe('theme', () => {
 		expect(faces.primaryLabel).toBe('Inter');
 		// A container draws no text and takes no face.
 		expect(faces.banner).toBeUndefined();
+
+		// A part override restyles the part; it does not take the theme's face away.
+		const overridden = probeFonts({
+			styles: {
+				description: { color: '#123456' },
+				title: { color: '#123456' },
+			},
+			theme: createConsentTheme({
+				typography: { fontFamily: 'Inter', headlineFont: 'Fraunces' },
+			}),
+		});
+		expect(overridden.title).toBe('Fraunces');
+		expect(overridden.description).toBe('Inter');
 
 		const keyword = probeFonts({
 			theme: createConsentTheme({ typography: { headlineFont: 'serif' } }),
