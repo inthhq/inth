@@ -114,11 +114,13 @@ final class BundledPolicyTests: XCTestCase {
         XCTAssertFalse(boot(bundle).isAllowed(.measurement))
         clock.advance(by: 604_800_000)
         XCTAssertFalse(restored.isAllowed(.measurement))
-        XCTAssertTrue(restored.snapshot().policyPending)
-        XCTAssertNotEqual(restored.save(.all).status, .committed)
-        XCTAssertTrue(boot(bundle).snapshot().policyPending)
+        XCTAssertFalse(restored.snapshot().policyPending)
+        XCTAssertTrue(restored.isPolicyStale)
+        XCTAssertEqual(restored.save(.all).status, .committed)
+        await restored.waitUntilIdle()
+        XCTAssertTrue(boot(bundle).isAllowed(.measurement))
     }
-    func testNoticeDismissalPreservesBundleExpiryAcrossOfflineRestart() async throws {
+    func testNoticeDismissalSurvivesOfflineRestartPastManifestExpiry() async throws {
         let clock = TestClock(try vector["now"]!.intValue!)
         let bundle = try resource { body in
             body["expiresAt"] = .integer(clock.now + 60_000)
@@ -157,16 +159,17 @@ final class BundledPolicyTests: XCTestCase {
         }
         clock.advance(by: 60_001)
         let restored = await boot()
-        XCTAssertTrue(restored.snapshot().policyPending)
+        XCTAssertFalse(restored.snapshot().policyPending)
+        XCTAssertTrue(restored.isPolicyStale)
         XCTAssertNil(restored.snapshot().explicitChoice)
         for category in OptionalConsentCategory.ordered {
             XCTAssertFalse(restored.isAllowed(category.category))
         }
-        XCTAssertNotEqual(restored.save(.all).status, .committed)
+        XCTAssertEqual(restored.save(.all).status, .committed)
     }
 
-    func testExpiredCategoryAndIabBundlesAllowDurableWithdrawalWithoutRestoringGrants() async throws {
-        let cases: [(String, Bool, String?)] = [("parity", false, nil), ("parity", true, nil), ("iab", false, nil), ("iab", true, nil), ("parity", true, "US")]
+    func testExpiredCategoryAndIabBundlesKeepRecordingGrantsAndWithdrawals() async throws {
+        let cases: [(String, Bool, String?)] = [("parity", false, nil), ("parity", true, nil), ("iab", false, nil), ("iab", true, nil)]
         for (name, restartBeforeWithdrawal, country) in cases {
             let url = IABCommitTests.fixtureURL.deletingLastPathComponent().deletingLastPathComponent()
                 .appendingPathComponent("bundled-policy/\(name).json")
@@ -203,36 +206,23 @@ final class BundledPolicyTests: XCTestCase {
             XCTAssertTrue(first.isAllowed(.measurement))
             clock.advance(by: 60_001)
             let expired: ConsentCore
-            let narrowed: [ConsentCategory]? = country == "US" ? nil : [.necessary, .measurement]
+            let narrowed: [ConsentCategory]? = [.necessary, .measurement]
             if restartBeforeWithdrawal { expired = await boot(narrowed) } else { expired = first }
-            XCTAssertTrue(expired.snapshot().policyPending)
-            XCTAssertNotEqual(expired.save(.all).status, .committed)
-            XCTAssertNotEqual(expired.save(.custom([.measurement: true])).status, .committed)
+            XCTAssertFalse(expired.snapshot().policyPending, name)
+            XCTAssertTrue(expired.isPolicyStale, name)
             let revision = expired.snapshot().revision
             XCTAssertEqual(expired.save(.necessary, expectedRevision: revision - 1).error?.code, "concurrent-change")
             XCTAssertEqual(expired.save(.necessary, expectedRevision: revision).status, .committed, name)
             await expired.waitUntilIdle()
-            XCTAssertEqual(queue.entries().count, 1)
-            let withdrawal = try XCTUnwrap(queue.entries().first)
-            XCTAssertTrue(withdrawal.isProtectedWithdrawal, name)
+            let withdrawal = try XCTUnwrap(queue.entries().last)
             let frozen = try XCTUnwrap(C15tJSON.parse(withdrawal.body))
-            let denied = Dictionary(uniqueKeysWithValues: OptionalConsentCategory.ordered.map { ($0.rawValue, false) })
-            XCTAssertEqual(frozen["choice"]?["categories"]?.objectValue?.compactMapValues { $0["value"]?.boolValue }, denied)
-            for category in OptionalConsentCategory.ordered {
-                XCTAssertEqual(frozen["preferences"]?[category.rawValue]?.boolValue, false)
-            }
+            XCTAssertEqual(frozen["preferences"]?["measurement"]?.boolValue, false, name)
             XCTAssertNotEqual(grant.body, withdrawal.body)
             XCTAssertEqual(withdrawal.actionAt, clock.now)
-            XCTAssertTrue(expired.snapshot().policyPending)
+            XCTAssertFalse(expired.isAllowed(.measurement), name)
             let restored = await boot(narrowed)
-            XCTAssertEqual(queue.entries().map(\.body), [withdrawal.body])
-            for category in OptionalConsentCategory.ordered { XCTAssertFalse(restored.isAllowed(category.category)) }
-            let sentBefore = http.recordedSaveRequests.count
-            http.setSavesFail(false)
-            restored.flushPending()
-            await restored.waitUntilIdle()
-            XCTAssertTrue(queue.entries().isEmpty)
-            XCTAssertEqual(http.recordedSaveRequests.dropFirst(sentBefore).map(\.body), [withdrawal.body])
+            XCTAssertEqual(queue.entries().last?.body, withdrawal.body)
+            XCTAssertFalse(restored.isAllowed(.measurement), name)
             var online: [String: JSONValue] = ["policyResolution": selected.response.policyResolution!]
             online["gvl"] = body["disclosures"]?["gvl"]?["data"]
             online["adTechProviders"] = body["disclosures"]?["atp"]?["providers"]
@@ -241,7 +231,7 @@ final class BundledPolicyTests: XCTestCase {
             await restored.waitUntilIdle()
             XCTAssertNil(restored.bundledPolicyInfo)
             XCTAssertFalse(restored.snapshot().policyPending)
-            for category in OptionalConsentCategory.ordered { XCTAssertFalse(restored.isAllowed(category.category), name) }
+            XCTAssertFalse(restored.isAllowed(.measurement), name)
         }
     }
 
@@ -387,33 +377,137 @@ final class BundledPolicyTests: XCTestCase {
         XCTAssertFalse(online.isAllowed(.measurement))
     }
 
-    func testExpiredStoredAuthorityAdoptsNewResourceAndDeadlineNotifiesGate() async throws {
+    func testManifestExpiringInUseKeepsPromptingAndEmitsPolicyStaleOnce() async throws {
+        let clock = TestClock(try vector["now"]!.intValue!)
+        let expiry = clock.now + 100
+        let bundle = try resource { $0["expiresAt"] = .integer(expiry) }
+        let core = ConsentCore()
+        await core.bootstrapAndSettle(CoreConfig(
+            bundledPolicy: bundle, transport: OfflineTransport.offline(),
+            consentCategories: ConsentCategory.allCases, now: clock.reading, initRetry: .disabled))
+        XCTAssertFalse(core.isPolicyStale)
+        let stream = core.eventStream
+        let stale = expectation(description: "policyStale once")
+        let listener = Task {
+            for await event in stream {
+                if case let .policyStale(authority) = event {
+                    XCTAssertEqual(authority.expiresAt, expiry)
+                    stale.fulfill()
+                }
+            }
+        }
+        clock.advance(by: 100)
+        await fulfillment(of: [stale], timeout: 3)
+        XCTAssertTrue(core.isPolicyStale)
+        XCTAssertFalse(core.snapshot().policyPending)
+        XCTAssertNotEqual(core.snapshot().error?.code, "bundled-policy-unusable")
+        XCTAssertTrue(core.isReady())
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(core.isAllowed(category.category))
+        }
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.isAllowed(.measurement))
+        listener.cancel()
+    }
+
+    func testFirstOfflineLaunchWithExpiredManifestPromptsAndEmitsPolicyStale() async throws {
+        let clock = TestClock(try vector["now"]!.intValue! + 604_800_000)
+        let store = InMemoryStore()
+        let core = ConsentCore()
+        let stream = core.eventStream
+        core.bootstrap(CoreConfig(
+            store: store, bundledPolicy: try resource(), transport: OfflineTransport.offline(),
+            consentCategories: ConsentCategory.allCases, now: clock.reading, initRetry: .disabled))
+        var stale: BundledPolicyAuthority?
+        for await event in stream {
+            if case let .policyStale(authority) = event { stale = authority }
+            if case .initialized = event { break }
+        }
+        XCTAssertEqual(stale, core.bundledPolicyInfo)
+        XCTAssertTrue(core.isPolicyStale)
+        XCTAssertFalse(core.snapshot().policyPending)
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(core.isAllowed(category.category))
+        }
+        XCTAssertEqual(core.save(.custom([.measurement: true])).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.isAllowed(.measurement))
+        XCTAssertFalse(core.isAllowed(.marketing))
+        XCTAssertEqual(core.pendingSaveCount(), 1)
+    }
+
+    func testPrecedenceIsLiveThenCachedThenBundled() async throws {
+        let bundle = try resource()
+        let clock = TestClock(try vector["now"]!.intValue!)
+        let selected = try XCTUnwrap(bundle.resolve(overrides: .default(), now: clock.now))
+        let offline = StubHTTP()
+        offline.initResponse = HTTPResponse(status: 503)
+        let live = StubHTTP()
+        live.initResponse = Fixture.initResponse(policyResolution: selected.response.policyResolution)
+        func boot(_ store: InMemoryStore, _ http: StubHTTP) async -> ConsentCore {
+            let core = ConsentCore()
+            await core.bootstrapAndSettle(CoreConfig(
+                store: store, bundledPolicy: bundle,
+                transport: HostedTransport(baseURL: URL(string: bundle.endpoint)!, client: http),
+                now: clock.reading, initRetry: .disabled))
+            return core
+        }
+        let airplane = await boot(InMemoryStore(), offline)
+        XCTAssertNotNil(airplane.bundledPolicyInfo)
+        XCTAssertFalse(airplane.snapshot().policyPending)
+        let store = InMemoryStore()
+        let online = await boot(store, live)
+        XCTAssertNil(online.bundledPolicyInfo)
+        XCTAssertFalse(online.snapshot().policyPending)
+        let cached = await boot(store, offline)
+        XCTAssertNil(cached.bundledPolicyInfo)
+        XCTAssertFalse(cached.snapshot().policyPending)
+        clock.advance(by: 604_800_000)
+        let later = await boot(store, offline)
+        XCTAssertNil(later.bundledPolicyInfo)
+        XCTAssertFalse(later.isPolicyStale)
+        XCTAssertFalse(later.snapshot().policyPending)
+    }
+
+    func testStaleOrOlderStoredManifestGivesWayToNewerBundle() async throws {
         let store = InMemoryStore()
         let clock = TestClock(try vector["now"]!.intValue!)
-        let old = try resource { $0["expiresAt"] = .integer(clock.now + 100) }
+        let start = clock.now
+        let old = try resource { $0["expiresAt"] = .integer(start + 100) }
         let first = ConsentCore()
         first.bootstrap(CoreConfig(store: store, bundledPolicy: old, now: clock.reading))
         XCTAssertEqual(first.save(.all).status, .committed)
         await first.waitUntilIdle()
-        let revision = first.snapshot().revision
-        let expired = expectation(
-            description: "Bundle expiry closes the gate without a read or network")
-        let gate = first.gate(.measurement) { if !$0 { expired.fulfill() } }
         clock.advance(by: 100)
-        await fulfillment(of: [expired], timeout: 3)
-        gate.cancel()
-        XCTAssertGreaterThan(first.snapshot().revision, revision)
-        XCTAssertFalse(first.isReady())
+        XCTAssertTrue(first.isPolicyStale)
+        XCTAssertTrue(first.isAllowed(.measurement))
         let newer = try resource {
             $0["issuedAt"] = .integer(clock.now)
-            $0["expiresAt"] = .integer(clock.now + 100000)
+            $0["expiresAt"] = .integer(start + 100000)
             $0["manifestRevision"] = .string("newer-manifest")
         }
         let relaunched = ConsentCore()
         relaunched.bootstrap(CoreConfig(store: store, bundledPolicy: newer, now: clock.reading))
         XCTAssertFalse(relaunched.snapshot().policyPending)
+        XCTAssertFalse(relaunched.isPolicyStale)
         XCTAssertEqual(relaunched.bundledPolicyInfo?.manifestRevision, "newer-manifest")
         XCTAssertTrue(relaunched.isAllowed(.measurement))
+        await relaunched.waitUntilIdle()
+        clock.advance(by: 1)
+        let newest = try resource {
+            $0["issuedAt"] = .integer(clock.now)
+            $0["expiresAt"] = .integer(start + 200000)
+            $0["manifestRevision"] = .string("newest-manifest")
+        }
+        let upgraded = ConsentCore()
+        upgraded.bootstrap(CoreConfig(store: store, bundledPolicy: newest, now: clock.reading))
+        XCTAssertEqual(upgraded.bundledPolicyInfo?.manifestRevision, "newest-manifest")
+        await upgraded.waitUntilIdle()
+        let downgraded = ConsentCore()
+        downgraded.bootstrap(CoreConfig(store: store, bundledPolicy: newer, now: clock.reading))
+        XCTAssertEqual(downgraded.bundledPolicyInfo?.manifestRevision, "newest-manifest")
     }
 
     func testPermissiveKnownPolicyDoesNotSupplyImplicitBundleGrants() throws {

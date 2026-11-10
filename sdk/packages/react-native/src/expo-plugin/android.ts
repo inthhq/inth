@@ -53,15 +53,18 @@ const metaDataEntry = function metaDataEntry(
  * The `<meta-data>` set that configures the core, in the names
  * `com.c15t.android.C15tAndroid.configFrom` and the bridge's bootstrap read.
  *
- * Android has no mode key, because neither reader has a mode string: `hosted`
- * and `selfHosted` differ only by URL, `offline` embeds no backend, which is
- * what leaves commands local, and `custom` turns the launch hook off so the
- * host's own `C15t.bootstrap` call wins the race.
+ * Only no-backend mode writes a mode key, `com.c15t.MODE` set to `offline`,
+ * which starts the core with no backend URL and an offline transport. `hosted`
+ * and `selfHosted` differ only by URL, and `custom` turns the launch hook off so
+ * the host's own `C15t.bootstrap` call wins the race.
  */
 export const buildMetaDataPairs = function buildMetaDataPairs(
 	params: ResolvedC15tParams
 ): MetaDataPair[] {
 	const pairs: MetaDataPair[] = [];
+	if (params.mode === 'offline') {
+		pairs.push({ name: ANDROID_META.mode, value: 'offline' });
+	}
 	if (params.policyResource !== null) {
 		pairs.push({
 			name: ANDROID_META.policyResource,
@@ -97,17 +100,6 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	}
 	// `C15tAndroid.declaredIab` reads these. Absent keys leave IAB TCF off.
 	if (params.iab !== null) {
-		// Android has no offline mode: without a backend URL `C15tAndroid.configFrom`
-		// installs no core, so no IABTCF_* signals or IAB screens, and with one the
-		// bootstrap builds a hosted transport, so the "offline" build goes online.
-		if (params.mode === 'offline') {
-			throw new C15tPluginError(
-				"iab can't use mode 'offline' on Android: the Android core either " +
-					'starts with a backend, and sends records, or does not start at ' +
-					'all. Use a hosted mode with backendURL, or build iOS only for ' +
-					'offline IAB.'
-			);
-		}
 		pairs.push(
 			{ name: ANDROID_META.iabCmpId, value: String(params.iab.cmpId) },
 			{
@@ -235,6 +227,12 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	if (application['meta-data']) {
 		application['meta-data'] = application['meta-data'].filter(
 			(item) => !ANDROID_IAB_META_KEYS.includes(item.$['android:name'])
+		);
+	}
+	// The plugin owns the mode key, so switching back to a backend mode removes it.
+	if (application['meta-data']) {
+		application['meta-data'] = application['meta-data'].filter(
+			(item) => item.$['android:name'] !== ANDROID_META.mode
 		);
 	}
 	if (params.policyResource === null && application['meta-data']) {

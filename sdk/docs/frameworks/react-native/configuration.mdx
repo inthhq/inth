@@ -18,7 +18,7 @@ App-owned native installation is available for custom services.
 | --- | --- |
 | `hosted` | Resolve policy and deliver records through your Inth project. |
 | `selfHosted` | Use the same protocol against your own backend. |
-| `offline` | Keep local choices and pending obligations without remote delivery. It cannot fetch a missing policy. Not recommended for production environments as the only launch transport. |
+| `offline` | No-backend mode on iOS and Android. Nothing is sent. It takes no `backendURL`, `initURL`, `policyResource` or `iab`. |
 | `custom` | Your app installs native services before RN starts. Expo defaults automatic bootstrap off in this mode. |
 
 `initURL` changes policy initialization only. Consent saves and identity
@@ -32,7 +32,7 @@ for a working `app.config.ts`. The plugin accepts:
 
 | Option | Purpose |
 | --- | --- |
-| `backendURL` | Public backend URL. Required except in offline mode. |
+| `backendURL` | Public backend URL. Required in every mode except offline, which refuses it. |
 | `mode` | Transport and installation mode. |
 | `initURL` | Optional policy-initialization URL override. |
 | `domain` | Domain value sent with subject writes. |

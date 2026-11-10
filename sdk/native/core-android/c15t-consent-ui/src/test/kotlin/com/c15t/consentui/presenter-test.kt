@@ -160,7 +160,8 @@ class PresenterTest {
             p.presentPreferences()
             val session = p.presentationID
             clock.addAndGet(604_800_000)
-            assertTrue(core.snapshot().policyPending)
+            assertFalse(core.snapshot().policyPending)
+            assertTrue(core.isPolicyStale)
             p.loadDraft()
             assertEquals(session, p.presentationID)
             assertNotNull(core.bundledPolicyInfo)
@@ -168,7 +169,7 @@ class PresenterTest {
             await { !p.pending }
             assertNull(p.errorCode)
             assertNull(p.presentationID)
-            assertTrue(core.snapshot().policyPending)
+            assertFalse(core.snapshot().policyPending)
             ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
             assertFalse(core.snapshot().explicitChoice!!.valueOf(ConsentCategory.MEASUREMENT)!!)
         } finally { Dispatchers.resetMain() }

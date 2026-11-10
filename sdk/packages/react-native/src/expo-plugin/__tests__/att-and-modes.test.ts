@@ -221,6 +221,7 @@ describe('transport modes', () => {
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
+			'com.c15t.MODE',
 		]);
 	});
 

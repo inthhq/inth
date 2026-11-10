@@ -362,7 +362,8 @@ does not have to know what it missed.
 One launch hook per app, owned by the layer that documents the opt-out. Android's core
 library registers an `androidx.startup` initializer of its own and the React Native
 binding registers one too, so two entries merge unless the binding says otherwise. The
-core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` is declared, and
+core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` or
+`com.c15t.MODE=offline` is declared, and
 installation is first-wins, so a host that set the binding's `AUTO_BOOTSTRAP` to install
 its own configured core would get the manifest core instead and have its own refused with
 no warning. The binding therefore removes the core's entry from a React Native app's
@@ -1291,7 +1292,7 @@ Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
 
     iOS Info.plist                      Android <meta-data>
     com.c15t.backend.url                com.c15t.BACKEND_URL
-    com.c15t.backend.mode               (mode is presence and absence)
+    com.c15t.backend.mode               com.c15t.MODE (offline only)
     com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
     com.c15t.forceGPC                   com.c15t.FORCE_GPC
     com.c15t.backend.initUrl            com.c15t.BACKEND_INIT_URL
@@ -1547,15 +1548,32 @@ reference, device latency and power-loss behavior remain separate evidence gates
 
 ## Build policy fallback
 
+Configuration picks one of two modes, and they do not mix.
+
+- Backend mode has a backend URL. Policy precedence is the live `/init`
+  response, then the last good cached response, then the manifest bundled at
+  build time. A bundled manifest replaces a cached one only when the cached one
+  also came from a bundle and is stale, older, or bound to another endpoint.
+- No-backend mode has no backend URL. Swift uses `OfflineTransport`, Kotlin
+  uses `OfflineTransport` with `NativeConfig.backendUrl = null`, and the
+  Android manifest key `com.c15t.MODE=offline` selects it. A bundled manifest
+  is refused: Kotlin's `NativeConfig` throws, and the Expo plugin refuses
+  `policyResource` and `iab` with `mode: 'offline'`.
+
 Native bootstrap can resolve an endpoint-bound resource exported from hosted
-`/manifest` before JavaScript starts. A usable stored policy takes precedence.
-See [mobile policy resources](docs/mobile-policy-resources.md) for
-resource version 1, expiry, unknown-geography and disclosure rules.
+`/manifest` before JavaScript starts. See
+[mobile policy resources](docs/mobile-policy-resources.md) for resource
+version 1, expiry, unknown-geography and disclosure rules.
 
 The resource has no visitor identity, grant, receipt, queue or policy token.
-Its original GVL and ATP timestamps survive storage and relaunch. Expired policy
-authority denies optional gates. Readable disclosure copy remains separate from
-authority to accept a new grant. Hosted refresh and durable replay stay installed.
+Its original GVL and ATP timestamps survive storage and relaunch. A manifest
+past `expiresAt` stays usable: the prompt shows, choices save, optional gates
+need an explicit grant, and both cores emit `policyStale` once per manifest
+(Swift `CoreEvent.policyStale`, Kotlin `ConsentCore.onPolicyStale`) and report
+`isPolicyStale`. A manifest bound to another endpoint or issued in the future
+supplies no policy and reports `bundled-policy-unusable`. Readable disclosure
+copy remains separate from authority to accept a new IAB grant. Hosted refresh
+and durable replay stay installed.
 
 The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
 `com.c15t.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from

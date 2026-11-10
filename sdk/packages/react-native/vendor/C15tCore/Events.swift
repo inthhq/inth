@@ -18,6 +18,10 @@ public enum CoreEvent: Sendable, Equatable {
     case saveDelivered(subjectId: String)
     /// A queued save was retried. `ok` is the outcome of this attempt.
     case saveReplayed(subjectId: String, ok: Bool)
+    /// The bundled manifest in force has passed its `expiresAt`. The prompt still shows
+    /// and choices still save; a live `/init` replaces the manifest once online. Emitted
+    /// once per manifest. Read ``ConsentCore/isPolicyStale`` for the current answer.
+    case policyStale(BundledPolicyAuthority)
 }
 
 /// A snapshot observer.

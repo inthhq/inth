@@ -37,6 +37,8 @@ export const ANDROID_META = {
 	iabPublisherCountryCode: 'com.c15t.IAB_PUBLISHER_COUNTRY_CODE',
 	/** Overrides `${backendUrl}/init` for a proxied init route. */
 	initUrl: 'com.c15t.BACKEND_INIT_URL',
+	/** `offline` selects no-backend mode, read by `C15tAndroid.configFrom`. */
+	mode: 'com.c15t.MODE',
 	policyResource: 'com.c15t.POLICY_RESOURCE',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by `C15tAndroid`.

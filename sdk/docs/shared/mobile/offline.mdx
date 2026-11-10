@@ -7,9 +7,20 @@ installation. Optional SDKs stay off while authority is unresolved or invalid.
 A fresh installation has no saved policy. Bundle an exported policy if that
 first launch must explain consent without connectivity. Keep hosted transport
 configured so the app can refresh policy and deliver queued records when it
-reconnects. Offline-only transport cannot fetch a missing policy or deliver
-records and is not recommended for production environments as the only
-transport.
+reconnects.
+
+In backend mode the SDK picks the policy in this order:
+
+1. The live `/init` response.
+2. The last good response cached on the device.
+3. The manifest bundled into the app at build time.
+
+A newer bundled manifest replaces an older bundled one cached by an earlier
+build. It never replaces a cached live response.
+
+No-backend mode (`mode: 'offline'`) sends nothing and reads no bundled
+manifest. The two modes do not mix, so Expo prebuild refuses `backendURL`,
+`initURL`, `policyResource` and `iab` in offline mode.
 
 ## Export the policy
 
@@ -52,12 +63,28 @@ binding and authority dates.
 The JSON is a public app artifact. Put no secrets in it. Its SHA-256 checks
 byte integrity; it is not a signature or an external approval.
 
-## Keep expiry and withdrawal separate
+## When the bundled manifest expires
 
-Once bundled authority expires, connect and refresh before requesting a new
-grant. Disclosure freshness has a separate deadline, measured from the
-original GVL or provider-list source date. The default maximum age is seven
-days. Copying an old list into a new app build does not renew it.
+An expired bundled manifest still works. If the device is offline, the SDK
+uses it to show the prompt and record choices, and emits a `policyStale`
+event. Optional categories stay off until the person chooses. The next live
+`/init` response replaces the manifest.
+
+| Platform | Event | Current state |
+| --- | --- | --- |
+| Swift | `CoreEvent.policyStale(authority)` on `eventStream` | `ConsentCore.isPolicyStale` |
+| Kotlin | `ConsentCore.onPolicyStale { authority -> }` | `ConsentCore.isPolicyStale` |
+
+Kotlin calls a new `onPolicyStale` observer at once when a stale manifest is
+already in force, so a subscription made after startup still hears it.
+
+A manifest bound to a different backend URL, or issued in the future, supplies
+no policy. Optional SDKs stay off and the core keeps trying to refresh.
+
+IAB disclosures have their own deadline, measured from the original GVL or
+provider-list source date. The default maximum age is seven days. Copying an
+old list into a new app build does not renew it, and an expired list cannot
+authorize a new IAB grant.
 
 Rejection and withdrawal remain available without connectivity. Confirm local
 commit success before dismissing app-owned settings. The native engine stores
@@ -75,8 +102,10 @@ the difference between withdrawal and starting over.
    previous choice. The prompt appears and optional SDKs stay off.
 2. Reject, stop the app and relaunch offline. The saved refusal remains.
 3. Reconnect. Confirm delivery at the configured backend.
-4. Repeat with an expired or mismatched bundle. Optional SDKs stay off and the
-   app offers recovery rather than creating a grant.
+4. Repeat with an expired bundle. The prompt still appears, optional SDKs stay
+   off until you choose, and the app receives `policyStale`.
+5. Repeat with a bundle exported for a different backend URL. No prompt
+   appears and optional SDKs stay off.
 
 Changing the bundled resource changes the native binary. Re-export during
 release preparation and build a new binary; a JavaScript OTA update does not

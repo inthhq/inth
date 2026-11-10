@@ -85,14 +85,14 @@ initializers. Configure each optional SDK's startup separately.
 
 | Setting | Purpose |
 | --- | --- |
-| `backendUrl` | Required project/backend URL. |
+| `backendUrl` | Project/backend URL. `null` selects no-backend mode, which sends nothing and refuses `bundledPolicy`. |
 | `initUrl` | Optional initialization URL override. |
 | `domain` | Domain reported with consent records; defaults to the project URL's host. |
 | `consentCategories` | App category scope. |
 | `vendors` | Optional IAB vendor scope. Absent or empty keeps the served list. |
 | `iab` | Registered CMP identity and publisher settings for an IAB policy. |
 | `iabListMaxAgeMs` | Maximum age of IAB disclosures, seven days by default. |
-| `bundledPolicy` | Exported policy resource for offline startup. |
+| `bundledPolicy` | Manifest bundled at build time, used when no live or cached `/init` response is available. |
 | `overrides` | Country, region, language or GPC inputs for controlled QA. |
 | `detectedGpc` | A GPC signal supplied by a real platform integration. |
 | `extraHeaders` | App-owned transport headers. |
@@ -100,8 +100,10 @@ initializers. Configure each optional SDK's startup separately.
 
 The corresponding manifest keys are `com.c15t.BACKEND_URL`, `BACKEND_INIT_URL`, `BACKEND_DOMAIN`,
 `CATEGORIES` and `POLICY_RESOURCE`, with the same `com.c15t.` prefix. The policy
-resource names a file in app assets. Native configuration supports more options
-than manifest startup.
+resource names a file in app assets. Set `com.c15t.MODE` to `offline` for
+no-backend mode: the core then starts with no backend URL and an offline
+transport, and ignores the backend and policy resource keys. Native
+configuration supports more options than manifest startup.
 
 ## Handle identity and reset
 

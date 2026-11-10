@@ -5,6 +5,8 @@ import com.c15t.core.store.C15tStore
 import com.c15t.core.transport.*
 import java.io.File
 import java.security.MessageDigest
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import kotlin.test.*
 import kotlinx.serialization.json.*
 
@@ -39,19 +41,85 @@ class BundledPolicyTest {
 		for (change in variants) assertNull(BundledPolicy.resolve(resource(change), endpoint, KernelOverrides(), now))
 		assertNull(BundledPolicy.resolve("corrupt", endpoint, KernelOverrides(), now))
 	}
-	@Test fun `expired bundle reads retain snapshot identity between publications`() {
+	@Test fun `manifest expiring in use keeps prompting and emits policyStale once`() {
 		val clock = FixedClock(now)
-		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource()), C15tStore(InMemoryKeyValueStore()), clock).also { it.bootstrap() }
-		val current = core.snapshot()
-		assertSame(current, core.snapshot())
+		val raw = resource { it["expiresAt"] = JsonPrimitive(now + 100) }
+		val core = testKernel(NativeConfig(endpoint, bundledPolicy = raw, consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), clock).also { it.bootstrap() }
+		val announced = LinkedBlockingQueue<BundledPolicyAuthority>()
+		val listener: (BundledPolicyAuthority) -> Unit = { announced.add(it) }
+		val subscription = core.onPolicyStale(listener)
+		assertFalse(core.isPolicyStale)
+		assertTrue(announced.isEmpty())
+		clock.advance(100)
+		assertEquals(now + 100, announced.poll(3, TimeUnit.SECONDS)?.expiresAt)
+		assertTrue(core.isPolicyStale)
+		val stale = core.snapshot()
+		assertFalse(stale.policyPending)
+		assertNotEquals("bundled-policy-unusable", stale.error?.code)
 		assertTrue(core.isReady())
-		clock.advance(604800000)
-		val expired = core.snapshot()
-		assertTrue(expired.policyPending)
-		assertFalse(core.isReady())
-		assertEquals("bundled-policy-expired", expired.error?.code)
+		repeat(100) { assertSame(stale, core.snapshot()) }
 		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
-		repeat(100) { assertSame(expired, core.snapshot()) }
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
+		assertNull(announced.poll(200, TimeUnit.MILLISECONDS))
+		subscription.close()
+	}
+
+	@Test fun `first offline launch with an expired manifest prompts records choices and replays policyStale`() {
+		val clock = FixedClock(now + 604800000)
+		val store = C15tStore(InMemoryKeyValueStore())
+		val config = NativeConfig(endpoint, bundledPolicy = resource(), consentCategories = ConsentCategory.entries)
+		val transport = RecordingTransport()
+		val core = testKernel(config, store, clock, transport).also { it.bootstrap() }
+		assertTrue(core.isPolicyStale)
+		var heard: BundledPolicyAuthority? = null
+		val listener: (BundledPolicyAuthority) -> Unit = { heard = it }
+		val subscription = core.onPolicyStale(listener)
+		assertEquals(core.bundledPolicyInfo, heard)
+		assertFalse(core.snapshot().policyPending)
+		assertTrue(core.snapshot().promptRequirement.acknowledge)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
+		assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+		assertEquals(1, transport.saveRequests.size)
+		subscription.close()
+	}
+
+	@Test fun `precedence is live then cached then bundled`() {
+		val clock = FixedClock(now)
+		val raw = resource()
+		val config = NativeConfig(endpoint, bundledPolicy = raw)
+		val airplane = testKernel(config, C15tStore(InMemoryKeyValueStore()), clock, RecordingTransport()).also { it.bootstrap() }
+		assertNotNull(airplane.bundledPolicyInfo)
+		assertFalse(airplane.snapshot().policyPending)
+		val store = C15tStore(InMemoryKeyValueStore())
+		val online = testKernel(config, store, clock, RecordingTransport().respondInit(liveResponse(raw))).also { it.bootstrap() }
+		assertNull(online.bundledPolicyInfo)
+		assertFalse(online.snapshot().policyPending)
+		val offline = testKernel(config, store, clock, RecordingTransport()).also { it.bootstrap() }
+		assertNull(offline.bundledPolicyInfo)
+		assertFalse(offline.snapshot().policyPending)
+		clock.advance(604800000)
+		val later = testKernel(config, store, clock, RecordingTransport()).also { it.bootstrap() }
+		assertNull(later.bundledPolicyInfo)
+		assertFalse(later.isPolicyStale)
+		assertFalse(later.snapshot().policyPending)
+	}
+
+	@Test fun `no-backend config refuses a bundled manifest and sends nothing`() {
+		assertFailsWith<IllegalArgumentException> { NativeConfig(null, bundledPolicy = resource()) }
+		val core = testKernel(NativeConfig(null), C15tStore(InMemoryKeyValueStore()), FixedClock(now), com.c15t.core.transport.OfflineTransport).also { it.bootstrap() }
+		assertTrue(core.snapshot().policyPending)
+		assertNull(core.bundledPolicyInfo)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+	}
+
+	private fun liveResponse(raw: String): TransportOutcome {
+		val selected = assertNotNull(BundledPolicy.resolve(raw, endpoint, KernelOverrides(), now))
+		val payload = Json.parseToJsonElement(Json.parseToJsonElement(raw).jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
+		val wire = payload.getValue("policyPacks").jsonArray.first { it.jsonObject.getValue("policyResolution").jsonObject.getValue("policyId").jsonPrimitive.content == selected.mapped.resolution.policyId }.jsonObject.getValue("policyResolution")
+		return TransportOutcome.Success(buildJsonObject { put("policyResolution", wire) }, emptyMap())
 	}
 	@Test fun `cold offline decision survives launch cache preference withdrawal and expiry`() {
 		val store = C15tStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
@@ -72,10 +140,11 @@ class BundledPolicyTest {
 		assertTrue(restored.save(CommitIntent.Necessary).ok)
 		assertFalse(boot().isAllowed(ConsentCategory.MEASUREMENT))
 		clock.advance(604800000)
-		assertFalse(restored.isAllowed(ConsentCategory.MEASUREMENT)); assertTrue(restored.snapshot().policyPending)
-		assertFalse(restored.save(CommitIntent.All).ok); assertTrue(boot().snapshot().policyPending)
+		assertFalse(restored.isAllowed(ConsentCategory.MEASUREMENT)); assertFalse(restored.snapshot().policyPending)
+		assertTrue(restored.isPolicyStale)
+		assertTrue(restored.save(CommitIntent.All).ok); assertTrue(boot().isAllowed(ConsentCategory.MEASUREMENT))
 	}
-	@Test fun `notice dismissal preserves bundle expiry across offline restart`() {
+	@Test fun `notice dismissal survives an offline restart past manifest expiry`() {
 		val clock = FixedClock(now)
 		val raw = resource { body ->
 			body["expiresAt"] = JsonPrimitive(now + 60_000)
@@ -105,14 +174,15 @@ class BundledPolicyTest {
 		ConsentCategory.OPTIONAL.forEach { assertFalse(first.isAllowed(it)) }
 		clock.advance(60_001)
 		val restored = boot()
-		assertTrue(restored.snapshot().policyPending)
+		assertFalse(restored.snapshot().policyPending)
+		assertTrue(restored.isPolicyStale)
 		assertNull(restored.snapshot().explicitChoice)
 		ConsentCategory.OPTIONAL.forEach { assertFalse(restored.isAllowed(it)) }
-		assertFalse(restored.save(CommitIntent.All).ok)
+		assertTrue(restored.save(CommitIntent.All).ok)
 	}
 
-	@Test fun `expired category and IAB bundles allow durable withdrawal without restoring grants`() {
-		for ((name, restartBeforeWithdrawal, country) in listOf(Triple("parity", false, null), Triple("parity", true, null), Triple("iab", false, null), Triple("iab", true, null), Triple("parity", true, "US"))) {
+	@Test fun `expired category and IAB bundles keep recording grants and withdrawals`() {
+		for ((name, restartBeforeWithdrawal, country) in listOf(Triple("parity", false, null), Triple("parity", true, null), Triple("iab", false, null), Triple("iab", true, null))) {
 			val source = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
 				.map { File(it, "native/protocol/bundled-policy/$name.json") }.first { it.exists() }.readText()).jsonObject
 			val startedAt = source.getValue("now").jsonPrimitive.long
@@ -135,28 +205,22 @@ class BundledPolicyTest {
 			assertFalse(grant.isWithdrawal())
 			assertTrue(first.isAllowed(ConsentCategory.MEASUREMENT))
 			clock.advance(60_001)
-			val narrowed = if (country == "US") null else listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT)
+			val narrowed = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT)
 			val expired = if (restartBeforeWithdrawal) boot(narrowed) else first
-			assertTrue(expired.snapshot().policyPending)
-			assertFalse(expired.save(CommitIntent.All).ok)
-			assertFalse(expired.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+			assertFalse(expired.snapshot().policyPending, name)
+			assertTrue(expired.isPolicyStale, name)
 			val revision = expired.snapshot().revision
 			assertEquals("concurrent-change", expired.save(CommitIntent.Necessary, revision - 1).error?.code)
 			assertTrue(expired.save(CommitIntent.Necessary, revision).ok, name)
-			val withdrawal = store.readPending().single()
-			assertTrue(withdrawal.isWithdrawal(), name)
-			assertEquals(ConsentCategory.OPTIONAL.associate { it.wireName to false }, withdrawal.payload.confirmed.categories)
+			val withdrawal = store.readPending().last()
+			assertFalse(withdrawal.payload.consents[ConsentCategory.MEASUREMENT], name)
 			assertNotEquals(grant.body, withdrawal.body)
 			assertEquals(clock.nowMillis(), withdrawal.payload.confirmed.actionAt)
-			assertTrue(expired.snapshot().policyPending)
-			ConsentCategory.OPTIONAL.forEach { assertFalse(expired.isAllowed(it)) }
+			assertFalse(expired.isAllowed(ConsentCategory.MEASUREMENT), name)
 			val restored = boot(narrowed)
-			assertEquals(withdrawal.body, store.readPending().single().body)
-			ConsentCategory.OPTIONAL.forEach { assertFalse(restored.isAllowed(it)) }
-			transport.saveRequests.clear()
-			transport.respondSave(SaveOutcome.Delivered)
-			assertEquals(1, restored.flushPending().delivered)
-			assertEquals(listOf(withdrawal.body), transport.saveRequests.map { it.body })
+			val queued = store.readPending().map { it.body }
+			assertEquals(withdrawal.body, queued.last(), name)
+			assertFalse(restored.isAllowed(ConsentCategory.MEASUREMENT), name)
 			transport.respondInit(TransportOutcome.Success(buildJsonObject {
 				put("policyResolution", wire)
 				val disclosures = body["disclosures"]?.jsonObject
@@ -166,7 +230,7 @@ class BundledPolicyTest {
 			restored.refresh()
 			assertNull(restored.bundledPolicyInfo)
 			assertFalse(restored.snapshot().policyPending)
-			ConsentCategory.OPTIONAL.forEach { assertFalse(restored.isAllowed(it), name) }
+			assertFalse(restored.isAllowed(ConsentCategory.MEASUREMENT), name)
 		}
 	}
 	@Test fun `offline IAB preserves source dates and refuses absent stale or future disclosures`() {
@@ -220,23 +284,26 @@ class BundledPolicyTest {
 		assertFalse(online.isAllowed(ConsentCategory.MEASUREMENT))
 	}
 
-	@Test fun `expired stored authority adopts newer resource and deadline closes gate`() {
+	@Test fun `stale or older stored manifest gives way to a newer bundled one`() {
 		val store = C15tStore(InMemoryKeyValueStore()); val clock = FixedClock(now)
 		val old = resource { it["expiresAt"] = JsonPrimitive(now + 100) }
 		val core = testKernel(NativeConfig(endpoint, bundledPolicy = old), store, clock).also { it.bootstrap() }
 		assertTrue(core.save(CommitIntent.All).ok)
-		val expired = java.util.concurrent.CountDownLatch(1)
-		val revision = core.snapshot().revision
-		val gate = core.gate(ConsentCategory.MEASUREMENT) { if (!it) expired.countDown() }
 		clock.advance(100)
-		assertTrue(expired.await(3, java.util.concurrent.TimeUnit.SECONDS))
-		gate.close()
-		assertTrue(core.snapshot().revision > revision)
+		assertTrue(core.isPolicyStale)
+		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
 		val newer = resource { it["issuedAt"] = JsonPrimitive(clock.nowMillis()); it["expiresAt"] = JsonPrimitive(now + 100000); it["manifestRevision"] = JsonPrimitive("newer-manifest") }
 		val relaunched = testKernel(NativeConfig(endpoint, bundledPolicy = newer), store, clock).also { it.bootstrap() }
 		assertFalse(relaunched.snapshot().policyPending)
+		assertFalse(relaunched.isPolicyStale)
 		assertEquals("newer-manifest", relaunched.bundledPolicyInfo?.manifestRevision)
 		assertTrue(relaunched.isAllowed(ConsentCategory.MEASUREMENT))
+		clock.advance(1)
+		val newest = resource { it["issuedAt"] = JsonPrimitive(clock.nowMillis()); it["expiresAt"] = JsonPrimitive(now + 200000); it["manifestRevision"] = JsonPrimitive("newest-manifest") }
+		val upgraded = testKernel(NativeConfig(endpoint, bundledPolicy = newest), store, clock).also { it.bootstrap() }
+		assertEquals("newest-manifest", upgraded.bundledPolicyInfo?.manifestRevision)
+		val downgraded = testKernel(NativeConfig(endpoint, bundledPolicy = newer), store, clock).also { it.bootstrap() }
+		assertEquals("newest-manifest", downgraded.bundledPolicyInfo?.manifestRevision)
 	}
 
 	@Test fun `permissive known policy cannot supply implicit grants from a bundle`() {
