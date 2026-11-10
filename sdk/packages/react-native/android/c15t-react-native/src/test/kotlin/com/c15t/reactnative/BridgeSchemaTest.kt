@@ -137,6 +137,9 @@ class BridgeSchemaTest {
 			"{\"action\":\"all\",\"categories\":[\"measurement\"]}",
 			"{\"action\":\"necessary\",\"categories\":[\"measurement\"]}",
 			"{\"action\":\"explicit\",\"consents\":{\"measurement\":true},\"categories\":[\"measurement\"]}",
+			// A bulk action carrying consents conflicts with itself.
+			"{\"action\":\"all\",\"consents\":{\"marketing\":false}}",
+			"{\"action\":\"necessary\",\"consents\":{\"marketing\":true}}",
 		)) {
 			assertEquals(raw, null, C15tPayload.parseCommitIntent(raw))
 		}

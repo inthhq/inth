@@ -141,6 +141,9 @@ final class C15tBridgeSchemaTests: XCTestCase {
             #"{"action":"all","categories":["measurement"]}"#,
             #"{"action":"necessary","categories":["measurement"]}"#,
             #"{"action":"explicit","consents":{"measurement":true},"categories":["measurement"]}"#,
+            // A bulk action carrying consents conflicts with itself.
+            #"{"action":"all","consents":{"marketing":false}}"#,
+            #"{"action":"necessary","consents":{"marketing":true}}"#,
         ] {
             XCTAssertNil(C15tPayload.parseCommitIntent(raw), raw)
         }

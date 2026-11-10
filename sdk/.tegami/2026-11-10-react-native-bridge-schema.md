@@ -23,7 +23,8 @@ bundled-policy refusals the native cores return, such as
 
 Breaking: `CommitIntent` no longer has `categories`. Neither native core ever
 honoured it, so `all` or `necessary` with a category list recorded the whole
-choice scope. Both native decoders now refuse an intent with any key besides
-`action` and `consents`, as `invalid-intent`. Use `explicit` to decide a
+choice scope. Both native decoders now refuse, as `invalid-intent`, any key
+the action does not take: `explicit` takes `action` and `consents`, and `all`
+and `necessary` take `action` alone. Use `explicit` to decide a
 subset. `ConsentSnapshot.subject` is now `NativeConsentSubject`, without
 `identityProvider`, which no native snapshot carries.

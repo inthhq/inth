@@ -360,10 +360,12 @@ public enum C15tPayload {
     /// rather than rounded to the nearest action.
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {
         guard let body = parseObject(raw) else { return nil }
-        // Only `action` and `consents` are part of an intent. A scope such as
-        // `categories` is refused rather than dropped: dropping it would apply the
-        // action to the whole choice scope, which is more than the caller asked for.
-        guard body.keys.allSatisfy({ $0 == "action" || $0 == "consents" }) else { return nil }
+        // `explicit` is `action` and `consents`; `all` and `necessary` are `action`
+        // alone. Any other key, such as a `categories` scope or `consents` on a bulk
+        // action, is refused rather than dropped: dropping it would apply the action to
+        // the whole choice scope, which is not what the caller sent.
+        let allowed: Set<String> = body["action"]?.stringValue == "explicit" ? ["action", "consents"] : ["action"]
+        guard Set(body.keys).isSubset(of: allowed) else { return nil }
         switch body["action"]?.stringValue {
         case "all":
             return .all

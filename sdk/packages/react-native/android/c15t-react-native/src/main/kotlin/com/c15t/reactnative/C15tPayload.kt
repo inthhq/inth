@@ -338,10 +338,12 @@ object C15tPayload {
 	 */
 	fun parseCommitIntent(raw: String?): CommitIntent? {
 		val body = parseObject(raw) ?: return null
-		// Only `action` and `consents` are part of an intent. A scope such as
-		// `categories` is refused rather than dropped: dropping it would apply the
-		// action to the whole choice scope, which is more than the caller asked for.
-		if (body.keys.any { it != "action" && it != "consents" }) {
+		// `explicit` is `action` and `consents`; `all` and `necessary` are `action`
+		// alone. Any other key, such as a `categories` scope or `consents` on a bulk
+		// action, is refused rather than dropped: dropping it would apply the action to
+		// the whole choice scope, which is not what the caller sent.
+		val allowed = if (optString(body["action"]) == "explicit") setOf("action", "consents") else setOf("action")
+		if (!allowed.containsAll(body.keys)) {
 			return null
 		}
 		return when (optString(body["action"])) {

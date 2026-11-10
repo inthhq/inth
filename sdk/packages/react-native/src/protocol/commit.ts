@@ -19,9 +19,9 @@ import type {
  * or save, and a preference-centre save. `explicit` carries exactly the
  * categories the user touched, so a partial save cannot renew a receipt the
  * user never looked at. `all` and `necessary` cover the whole choice scope;
- * to decide a subset, use `explicit`. The native decoders refuse any other
- * key with `invalid-intent`, so a scope they would not honour is never
- * silently widened.
+ * to decide a subset, use `explicit`. The native decoders refuse any key the
+ * action does not take, such as `consents` on `all`, with `invalid-intent`, so
+ * a scope they would not honour is never silently widened.
  */
 export type CommitIntent =
 	| { readonly action: 'all' }
