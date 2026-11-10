@@ -311,6 +311,75 @@ describe('useConsentDraft', () => {
 		]);
 	});
 
+	test('a category set back to its saved value is no longer staged', async () => {
+		mount(<DraftProbe name="screen" />, scoped());
+
+		flush(() => handle('screen').set('marketing', true));
+		flush(() => handle('screen').set('marketing', false));
+		flush(() => handle('screen').set('measurement', true));
+		// Marketing is granted elsewhere; this screen only ever displayed it.
+		flush(() =>
+			fake.pushSnapshot(
+				scoped({
+					explicitChoice: {
+						categories: {
+							marketing: {
+								basis: { fingerprint: 'fp-1', kind: 'choice-v1' },
+								confirmedAt: 3,
+								value: true,
+							},
+						},
+						version: 3,
+					},
+					revision: 1,
+				})
+			)
+		);
+
+		expect(handle('screen').values.marketing).toBe(true);
+		await handle('screen').save();
+		await flushPromises();
+		expect(fake.commitIntents).toEqual([
+			'{"action":"explicit","consents":{"measurement":true,"marketing":true}}',
+		]);
+	});
+
+	test('an edit made while the draft save is pending stays staged', async () => {
+		mount(<DraftProbe name="screen" />, scoped());
+
+		flush(() => handle('screen').set('marketing', true));
+		const saving = handle('screen').save();
+		flush(() => handle('screen').set('measurement', true));
+		await saving;
+		await flushPromises();
+
+		expect(handle('screen').values.measurement).toBe(true);
+		expect(handle('screen').isDirty).toBe(true);
+	});
+
+	test('an edit made while an argument save is pending stays staged', async () => {
+		mount(
+			<>
+				<DraftProbe name="screen" />
+				<SaveProbe />
+			</>,
+			scoped()
+		);
+
+		flush(() => handle('screen').set('marketing', true));
+		const saving = save?.('none');
+		flush(() => handle('screen').set('measurement', true));
+		await saving;
+		await flushPromises();
+
+		// The edit from before the save is superseded; the one after it is not.
+		expect(handle('screen').values).toMatchObject({
+			marketing: false,
+			measurement: true,
+		});
+		expect(handle('screen').isDirty).toBe(true);
+	});
+
 	test('an argument still saves exactly that choice', async () => {
 		mount(<SaveProbe />, scoped());
 

@@ -87,6 +87,13 @@ export interface ConsentDraft {
 			snapshot: ConsentSnapshot
 		) => NativeIABChoices
 	) => void;
+	/**
+	 * After a successful save of `submitted` (the values staged when the save
+	 * began), reseed from the record and keep only the edits made since.
+	 *
+	 * @internal
+	 */
+	readonly settle: (submitted: Readonly<ConsentState>) => void;
 }
 
 /** What a stale save resolves with. Nothing was written. */
@@ -266,8 +273,14 @@ export const createConsentDraft = function createConsentDraft(
 			(category) =>
 				patch[category] !== undefined && patch[category] !== values[category]
 		);
+		// A category set back to its saved value is no longer the subject's edit, so a
+		// new record must not be overlaid with it.
 		for (const category of changed) {
-			staged.add(category);
+			if (patch[category] === seed.values[category]) {
+				staged.delete(category);
+			} else {
+				staged.add(category);
+			}
 		}
 		if (changed.length > 0) {
 			values = {
@@ -286,6 +299,17 @@ export const createConsentDraft = function createConsentDraft(
 				seed.displayed.filter(isOptional).map((category) => [category, value])
 			)
 		);
+	};
+
+	const settle = function settle(submitted: Readonly<ConsentState>): void {
+		const later = Object.fromEntries(
+			[...staged]
+				.filter((category) => values[category] !== submitted[category])
+				.map((category) => [category, values[category]])
+		);
+		snapshot = client.getSnapshot();
+		reseed();
+		stage(later);
 	};
 
 	return {
@@ -314,6 +338,7 @@ export const createConsentDraft = function createConsentDraft(
 					.filter(isOptional)
 					.map((category) => [category, values[category]])
 			) as Partial<Record<OptionalConsentCategory, boolean>>;
+			const submitted = values;
 			// Under TCF the purposes and vendors travel with the categories, pinned to
 			// the revision the selection was made against.
 			const result = await client.commit(
@@ -322,8 +347,7 @@ export const createConsentDraft = function createConsentDraft(
 					: { action: 'iab', choices: iab, consents, revision: seed.revision }
 			);
 			if (result.ok) {
-				snapshot = client.getSnapshot();
-				reseed();
+				settle(submitted);
 			}
 			return result;
 		},
@@ -336,6 +360,7 @@ export const createConsentDraft = function createConsentDraft(
 				reseed();
 			}
 		},
+		settle,
 		stageIAB: (edit) => {
 			sync();
 			if (iab === null) {
