@@ -639,17 +639,19 @@ describe('consent gate accepted shifts', () => {
 		...makeResult(scenario, {}, consentGateBudgets('nextjs'), commitSha),
 		framework: 'nextjs',
 		metadata: { target: 'nextjs' },
-		metrics: consentGateBudgets('nextjs').map((budget) =>
-			summarizeMetric(
+		metrics: consentGateBudgets('nextjs').map((budget) => {
+			let value = 100;
+			if (['preferencesVisibleMs', 'slowestTapMs'].includes(budget.metric)) {
+				value = preferencesMs;
+			} else if (budget.metric === 'rejectedScriptRequests') {
+				value = 0;
+			}
+			return summarizeMetric(
 				budget.metric,
 				'ms',
-				Array<number>(12).fill(
-					['preferencesVisibleMs', 'slowestTapMs'].includes(budget.metric)
-						? preferencesMs
-						: 100
-				)
-			)
-		),
+				Array<number>(12).fill(value)
+			);
+		}),
 		package: pkg,
 		suite: 'consent-gate',
 	});

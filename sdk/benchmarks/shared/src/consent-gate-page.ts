@@ -42,7 +42,10 @@ export const gateSelectors = {
 	customize: '[data-testid="consent-banner-customize-button"]',
 	overlay:
 		'[data-testid="consent-dialog-overlay"], [data-testid="consent-banner-overlay"]',
+	preferencesLink:
+		'[data-testid="consent-dialog-link"], [data-testid="consent-dialog-trigger"]',
 	preferencesPanel: '[data-testid="consent-dialog-root"]',
+	preferencesReject: '[data-testid="consent-widget-reject-button"]',
 	primaryContent: '#primary-content',
 	ready: 'html[data-consent-ready="true"]',
 } as const;

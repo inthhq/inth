@@ -11,6 +11,7 @@ import {
 import {
 	ConsentBanner,
 	ConsentDialog,
+	ConsentDialogLink,
 	ConsentProvider,
 	hosted,
 	useScriptLoader,
@@ -46,6 +47,8 @@ const GatePage = () => (
 		<GateBridge />
 		<ConsentBanner />
 		<ConsentDialog />
+		{/* The gate reopens the choice here to replay a change of mind. */}
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</ConsentProvider>
 );
 

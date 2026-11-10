@@ -8,6 +8,7 @@ import {
 import {
 	ConsentBanner,
 	ConsentDialog,
+	ConsentDialogLink,
 	ConsentRoot,
 	useScriptLoader,
 	useSnapshot,
@@ -51,5 +52,7 @@ export const GateConsent = ({
 		<GateBridge />
 		<ConsentBanner />
 		<ConsentDialog />
+		{/* The gate reopens the choice here to replay a change of mind. */}
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</ConsentRoot>
 );

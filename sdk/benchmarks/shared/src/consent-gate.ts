@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { chromium } from 'playwright';
-import type { Browser, Page } from 'playwright';
+import type { Browser, BrowserContext, Page } from 'playwright';
 
 import {
 	BENCH_BACKEND_LATENCY_ENV,
@@ -14,6 +14,7 @@ import type { ConsentGateTarget } from './budgets';
 import { gateObserverScript } from './consent-gate-observer';
 import type { GateObservations } from './consent-gate-observer';
 import {
+	GATE_SCRIPT_PATH,
 	GATE_STATE_GLOBAL,
 	gateAcceptCategories,
 	gateSelectors,
@@ -78,12 +79,14 @@ export const INP_CENSOR_FLOOR_MS = 16;
 /** CookieBench's presentation grace before reading paint-dependent entries. */
 const PAINT_GRACE_MS = 250;
 
-/** One iteration's four visits, reduced to the gate's metrics. */
+/** One iteration's five visits, reduced to the gate's metrics. */
 export interface GateIterationSample {
 	controlLcpMs: number;
 	controlFcpMs: number;
 	lcpMs: number;
 	fcpMs: number;
+	returningLcpMs: number;
+	returningScriptsMs: number;
 	bannerVisibleMs: number;
 	consentEffectiveMs: number;
 	dismissedMs: number;
@@ -172,6 +175,31 @@ export const acceptMetrics = function acceptMetrics(
 	};
 };
 
+/**
+ * When a returning visitor's last gated script ran: each accepted category
+ * once, as `acceptMetrics` requires after a tap.
+ *
+ * @throws {Error} When a category ran twice or not at all, so a broken page
+ * fails the run instead of skewing the metric.
+ */
+export const returningScripts = function returningScripts(
+	observations: Pick<GateObservations, 'scripts'>
+): number {
+	const ran = observations.scripts.filter((script) =>
+		(gateAcceptCategories as readonly string[]).includes(script.category)
+	);
+	const categories = new Set(ran.map((script) => script.category));
+	if (
+		ran.length !== gateAcceptCategories.length ||
+		categories.size !== gateAcceptCategories.length
+	) {
+		throw new Error(
+			`Expected each of ${gateAcceptCategories.join(', ')} to run once on a returning visit, saw ${ran.map((script) => script.category).join(', ') || 'none'}`
+		);
+	}
+	return Math.max(...ran.map((script) => script.at));
+};
+
 /** Metric names, units and descriptions every gate result reports. */
 export const gateMetricGlossary = {
 	bannerVisibleMs:
@@ -190,6 +218,12 @@ export const gateMetricGlossary = {
 	lcpMs: 'page.lcp of the gate page (hero image)',
 	preferencesVisibleMs:
 		'action.preferences-visible: Customize pointerdown to the first frame the preferences dialog has a footprint',
+	rejectedScriptRequests:
+		'requests for a gated script on the return visit of a visitor who accepted, came back, then rejected, summed over three replays; any request reaches the vendor after a no',
+	returningLcpDeltaMs:
+		'page.lcp of a returning visitor who accepted, minus page.lcp of the control page measured in the same iteration',
+	returningScriptsMs:
+		'navigation to the last gated script executing, for a returning visitor who accepted',
 	scriptsCompleteMs:
 		'action.scripts-complete: Accept pointerdown to the last gated script executing',
 	slowestTapMs:
@@ -262,6 +296,16 @@ export const summarizeGateSamples = function summarizeGateSamples(
 			pick((sample) => sample.preferencesVisibleMs)
 		),
 		summarizeMetric(
+			'returningLcpDeltaMs',
+			'ms',
+			pick((sample) => sample.returningLcpMs - sample.controlLcpMs)
+		),
+		summarizeMetric(
+			'returningScriptsMs',
+			'ms',
+			pick((sample) => sample.returningScriptsMs)
+		),
+		summarizeMetric(
 			'slowestTapMs',
 			'ms',
 			pick((sample) =>
@@ -277,7 +321,9 @@ export const summarizeGateSamples = function summarizeGateSamples(
 	];
 };
 
-type VisitKind = 'control' | 'load' | 'accept' | 'preferences';
+type VisitKind = 'control' | 'load' | 'accept' | 'preferences' | 'returning';
+
+type StorageState = Awaited<ReturnType<BrowserContext['storageState']>>;
 
 const readObservations = (page: Page) =>
 	page.evaluate(
@@ -289,20 +335,50 @@ const readObservations = (page: Page) =>
 			).__c15tGate.observations
 	);
 
-const visit = async function visit(
+/** A fresh browser context at CookieBench's mobile profile. */
+const mobileContext = function mobileContext(
 	browser: Browser,
-	url: string,
-	kind: VisitKind
-): Promise<GateObservations> {
+	storageState?: StorageState
+): Promise<BrowserContext> {
 	const profile = cookieBenchMobileProfile;
-	const context = await browser.newContext({
+	return browser.newContext({
 		deviceScaleFactor: profile.deviceScaleFactor,
 		hasTouch: true,
 		isMobile: true,
 		locale: profile.locale,
+		storageState,
 		userAgent: profile.userAgent,
 		viewport: profile.viewport,
 	});
+};
+
+/** A page throttled to CookieBench's mobile CPU and network through CDP. */
+const mobilePage = async function mobilePage(
+	context: BrowserContext
+): Promise<Page> {
+	const profile = cookieBenchMobileProfile;
+	const page = await context.newPage();
+	const cdp = await context.newCDPSession(page);
+	await cdp.send('Network.enable');
+	await cdp.send('Emulation.setCPUThrottlingRate', {
+		rate: profile.cpuSlowdown,
+	});
+	await cdp.send('Network.emulateNetworkConditions', {
+		downloadThroughput: profile.network.downloadBytesPerSecond,
+		latency: profile.network.latencyMs,
+		offline: false,
+		uploadThroughput: profile.network.uploadBytesPerSecond,
+	});
+	return page;
+};
+
+const visit = async function visit(
+	browser: Browser,
+	url: string,
+	kind: VisitKind,
+	storageState?: StorageState
+): Promise<GateObservations> {
+	const context = await mobileContext(browser, storageState);
 	try {
 		await context.addInitScript(
 			gateObserverScript({
@@ -314,19 +390,34 @@ const visit = async function visit(
 				stateGlobal: GATE_STATE_GLOBAL,
 			})
 		);
-		const page = await context.newPage();
-		const cdp = await context.newCDPSession(page);
-		await cdp.send('Network.enable');
-		await cdp.send('Emulation.setCPUThrottlingRate', {
-			rate: profile.cpuSlowdown,
-		});
-		await cdp.send('Network.emulateNetworkConditions', {
-			downloadThroughput: profile.network.downloadBytesPerSecond,
-			latency: profile.network.latencyMs,
-			offline: false,
-			uploadThroughput: profile.network.uploadBytesPerSecond,
-		});
+		const page = await mobilePage(context);
 		await page.goto(url, { timeout: 60_000, waitUntil: 'commit' });
+		if (kind === 'returning') {
+			// No banner: the hero's LCP and both gated scripts, which the
+			// stored Accept lets run without a tap.
+			await page.waitForFunction(
+				(categories) => {
+					const observations = (
+						window as unknown as {
+							__c15tGate?: { observations: GateObservations };
+						}
+					).__c15tGate?.observations;
+					return Boolean(
+						observations?.heroComplete &&
+						observations.lcpElementId === 'primary-content' &&
+						categories.every((category) =>
+							observations.scripts.some(
+								(script) => script.category === category
+							)
+						)
+					);
+				},
+				[...gateAcceptCategories],
+				{ polling: 50, timeout: 45_000 }
+			);
+			await page.waitForTimeout(PAINT_GRACE_MS);
+			return await readObservations(page);
+		}
 		if (kind === 'control' || kind === 'load') {
 			// The hero is the page's largest element, so its LCP entry is final.
 			await page.waitForFunction(
@@ -429,28 +520,184 @@ const prime = async function prime(
 	}
 };
 
-const visitWithRetry = async function visitWithRetry(
+/** How many times a run replays a change of mind before counting requests. */
+const CHANGED_MIND_REPLAYS = 3;
+
+/** How long a visit lets c15t finish writing storage after it settles. */
+const STORAGE_SETTLE_MS = 1000;
+
+/** Waits until the gate bridge reports `consent` and at least `scripts` ran. */
+const consented = (
+	page: Page,
+	consent: 'accepted' | 'rejected',
+	scripts: number
+) =>
+	page.waitForFunction(
+		({ global, target, count }) => {
+			const bridge = (
+				window as unknown as Record<
+					string,
+					{ consent?: string; scripts?: unknown[] } | undefined
+				>
+			)[global];
+			return (
+				bridge?.consent === target && (bridge.scripts?.length ?? 0) >= count
+			);
+		},
+		{ count: scripts, global: GATE_STATE_GLOBAL, target: consent },
+		{ polling: 50, timeout: 45_000 }
+	);
+
+/**
+ * The storage of a visitor who accepted on the banner and came back once,
+ * at the mobile profile. The return visit matters: c15t may record what it
+ * learns there, and a measured visit then starts as a third visit would.
+ * Throttled because what a page records can depend on how long its chunks
+ * take: unthrottled, a dynamic import can finish before the scripts it
+ * would have overlapped start.
+ */
+const acceptedStorage = async function acceptedStorage(
+	browser: Browser,
+	url: string
+): Promise<StorageState> {
+	const context = await mobileContext(browser);
+	try {
+		const page = await mobilePage(context);
+		await page.goto(url, { timeout: 60_000, waitUntil: 'load' });
+		await page.waitForSelector(gateSelectors.ready, {
+			state: 'attached',
+			timeout: 45_000,
+		});
+		await page.locator(gateSelectors.accept).first().click({ timeout: 15_000 });
+		await consented(page, 'accepted', gateAcceptCategories.length);
+		await page.waitForTimeout(STORAGE_SETTLE_MS);
+		await page.goto(url, { timeout: 60_000, waitUntil: 'load' });
+		await consented(page, 'accepted', gateAcceptCategories.length);
+		await page.waitForTimeout(STORAGE_SETTLE_MS);
+		return await context.storageState();
+	} finally {
+		await context.close();
+	}
+};
+
+/**
+ * The storage of a visitor who changes their mind: from `accepted`, one
+ * more visit, where they open Privacy settings and tap Reject in the
+ * dialog, as a real visitor would. Whatever c15t recorded while the
+ * accepting visitor's scripts ran stays as that visit left it.
+ */
+const changedMindStorage = async function changedMindStorage(
 	browser: Browser,
 	url: string,
-	kind: VisitKind
-): Promise<GateObservations> {
+	accepted: StorageState
+): Promise<StorageState> {
+	const context = await mobileContext(browser, accepted);
 	try {
-		return await visit(browser, url, kind);
+		const page = await mobilePage(context);
+		await page.goto(url, { timeout: 60_000, waitUntil: 'load' });
+		await consented(page, 'accepted', gateAcceptCategories.length);
+		await page
+			.locator(gateSelectors.preferencesLink)
+			.first()
+			.click({ timeout: 15_000 });
+		await page
+			.locator(gateSelectors.preferencesReject)
+			.first()
+			.click({ timeout: 15_000 });
+		// A page may reload after a revocation; wait for the choice on
+		// whichever document is current.
+		for (let attempt = 0; ; attempt += 1) {
+			try {
+				// oxlint-disable-next-line no-await-in-loop -- Retries across a reload.
+				await page.waitForLoadState('load');
+				// oxlint-disable-next-line no-await-in-loop -- Retries across a reload.
+				await consented(page, 'rejected', 0);
+				break;
+			} catch (error) {
+				if (attempt >= 2) {
+					throw error;
+				}
+			}
+		}
+		await page.waitForTimeout(STORAGE_SETTLE_MS);
+		return await context.storageState();
+	} finally {
+		await context.close();
+	}
+};
+
+/**
+ * Reports each request for a gated script on one visit with
+ * `storageState` to `onRequest` as it starts, until the page has loaded and
+ * c15t has had time to load its engine (`STORAGE_SETTLE_MS * 3` after the
+ * page is ready). A request that starts later, such as one behind a later
+ * import, is not counted. Reporting as it happens keeps a request seen on
+ * an attempt that then fails.
+ */
+const gatedScriptRequests = async function gatedScriptRequests(
+	browser: Browser,
+	url: string,
+	storageState: StorageState,
+	onRequest: () => void
+): Promise<void> {
+	const context = await mobileContext(browser, storageState);
+	try {
+		const page = await mobilePage(context);
+		page.on('request', (request) => {
+			if (new URL(request.url()).pathname === GATE_SCRIPT_PATH) {
+				onRequest();
+			}
+		});
+		await page.goto(url, { timeout: 60_000, waitUntil: 'load' });
+		await page.waitForSelector(gateSelectors.ready, {
+			state: 'attached',
+			timeout: 45_000,
+		});
+		await page.waitForTimeout(STORAGE_SETTLE_MS * 3);
+	} finally {
+		await context.close();
+	}
+};
+
+const withRetry = async function withRetry<Value>(
+	label: string,
+	run: () => Promise<Value>
+): Promise<Value> {
+	try {
+		return await run();
 	} catch (error) {
 		process.stderr.write(
-			`consent gate: ${kind} visit to ${url} failed once, retrying: ${String(error)}\n`
+			`consent gate: ${label} failed once, retrying: ${String(error)}\n`
 		);
-		return await visit(browser, url, kind);
+		return await run();
 	}
+};
+
+const visitWithRetry = function visitWithRetry(
+	browser: Browser,
+	url: string,
+	kind: VisitKind,
+	storageState?: StorageState
+): Promise<GateObservations> {
+	return withRetry(`${kind} visit to ${url}`, () =>
+		visit(browser, url, kind, storageState)
+	);
 };
 
 const measureIteration = async function measureIteration(
 	browser: Browser,
 	origin: string,
 	paths: { gate: string; control: string },
-	index: number
+	index: number,
+	accepted: StorageState
 ): Promise<GateIterationSample> {
-	const kinds: VisitKind[] = ['control', 'load', 'accept', 'preferences'];
+	const kinds: VisitKind[] = [
+		'control',
+		'load',
+		'accept',
+		'preferences',
+		'returning',
+	];
 	// Alternate the order so a runner that drifts within an iteration does
 	// not always penalise the same visit.
 	const order = index % 2 === 0 ? kinds : [...kinds].reverse();
@@ -460,10 +707,11 @@ const measureIteration = async function measureIteration(
 		observed[kind] = await visitWithRetry(
 			browser,
 			`${origin}${kind === 'control' ? paths.control : paths.gate}`,
-			kind
+			kind,
+			kind === 'returning' ? accepted : undefined
 		);
 	}
-	const { control, load, accept, preferences } = observed as Record<
+	const { control, load, accept, preferences, returning } = observed as Record<
 		VisitKind,
 		GateObservations
 	>;
@@ -479,6 +727,9 @@ const measureIteration = async function measureIteration(
 	if (!preferences.input || preferences.preferencesVisibleAt === undefined) {
 		throw new Error('Customize did not open the preferences dialog');
 	}
+	if (returning.lcp === undefined) {
+		throw new Error('A returning visit finished without LCP');
+	}
 	return {
 		bannerVisibleMs: load.visibleAt,
 		controlFcpMs: control.fcp,
@@ -487,6 +738,8 @@ const measureIteration = async function measureIteration(
 		lcpMs: load.lcp,
 		preferencesVisibleMs:
 			preferences.preferencesVisibleAt - preferences.input.at,
+		returningLcpMs: returning.lcp,
+		returningScriptsMs: returningScripts(returning),
 		...acceptMetrics(accept),
 	};
 };
@@ -604,9 +857,11 @@ const readNumber = (names: string[], fallback: number) => {
 /**
  * Measure the consent gate for one framework and write its result to
  * `BENCH_OUTPUT_DIR`. Each iteration visits the control page, the gate page
- * to its LCP, the gate page through an Accept tap, and the gate page through
- * a Customize tap, each in a fresh browser context at CookieBench's mobile
- * profile.
+ * to its LCP, the gate page through an Accept tap, the gate page through a
+ * Customize tap, and the gate page as a returning visitor who accepted, each
+ * in a fresh browser context at CookieBench's mobile profile. Once per run
+ * it also counts gated script requests for a visitor who accepted, came
+ * back, then rejected.
  *
  * @throws {Error} When a visit fails twice; the gate never drops a sample.
  */
@@ -634,6 +889,7 @@ export const runConsentGate = async function runConsentGate(
 	const outputDir = process.env.BENCH_OUTPUT_DIR ?? `.benchmarks/${GATE_SUITE}`;
 	process.env[BENCH_BACKEND_LATENCY_ENV] = `${backendLatencyMs}`;
 	const samples: GateIterationSample[] = [];
+	let rejectedRequests = Number.NaN;
 	const started = Date.now();
 	const cleanup: (() => Promise<void>)[] = [];
 	let browserVersion = '';
@@ -657,19 +913,45 @@ export const runConsentGate = async function runConsentGate(
 		browserVersion = browser.version();
 		const origin = `http://127.0.0.1:${options.proxyPort}`;
 		await prime(browser, origin, options.paths);
+		const gateURL = `${origin}${options.paths.gate}`;
+		const accepted = await withRetry('accepting visitor', () =>
+			acceptedStorage(browser, gateURL)
+		);
+		// A leak can depend on timing: replay the change of mind a few times
+		// and count every request, so one leaking replay fails the budget.
+		rejectedRequests = 0;
+		// Every request counts, including one seen on an attempt that then
+		// failed and was retried.
+		const countRequest = () => {
+			rejectedRequests += 1;
+		};
+		for (let replay = 0; replay < CHANGED_MIND_REPLAYS; replay += 1) {
+			// oxlint-disable-next-line no-await-in-loop -- Replays must not overlap on one runner.
+			const changedMind = await withRetry('changed-mind visitor', () =>
+				changedMindStorage(browser, gateURL, accepted)
+			);
+			// oxlint-disable-next-line no-await-in-loop -- Replays must not overlap on one runner.
+			await withRetry('changed-mind visit', () =>
+				gatedScriptRequests(browser, gateURL, changedMind, countRequest)
+			);
+		}
+		process.stdout.write(
+			`consent gate ${options.target}: ${rejectedRequests} gated script requests after a reject\n`
+		);
 		for (let index = 0; index < warmups + iterations; index += 1) {
 			// oxlint-disable-next-line no-await-in-loop -- Iterations must not overlap on one runner.
 			const sample = await measureIteration(
 				browser,
 				origin,
 				options.paths,
-				index
+				index,
+				accepted
 			);
 			if (index >= warmups) {
 				samples.push(sample);
 			}
 			process.stdout.write(
-				`consent gate ${options.target}: ${index < warmups ? 'warmup' : 'iteration'} ${index < warmups ? index + 1 : index - warmups + 1}: lcp Δ ${(sample.lcpMs - sample.controlLcpMs).toFixed(0)} ms, banner ${sample.bannerVisibleMs.toFixed(0)} ms, effective ${sample.consentEffectiveMs.toFixed(0)} ms, scripts ${sample.scriptsCompleteMs.toFixed(0)} ms, preferences ${sample.preferencesVisibleMs.toFixed(0)} ms\n`
+				`consent gate ${options.target}: ${index < warmups ? 'warmup' : 'iteration'} ${index < warmups ? index + 1 : index - warmups + 1}: lcp Δ ${(sample.lcpMs - sample.controlLcpMs).toFixed(0)} ms, banner ${sample.bannerVisibleMs.toFixed(0)} ms, effective ${sample.consentEffectiveMs.toFixed(0)} ms, scripts ${sample.scriptsCompleteMs.toFixed(0)} ms, preferences ${sample.preferencesVisibleMs.toFixed(0)} ms, returning lcp Δ ${(sample.returningLcpMs - sample.controlLcpMs).toFixed(0)} ms, returning scripts ${sample.returningScriptsMs.toFixed(0)} ms\n`
 			);
 		}
 	} finally {
@@ -709,7 +991,10 @@ export const runConsentGate = async function runConsentGate(
 			wallMs: Date.now() - started,
 			warmups,
 		},
-		metrics: summarizeGateSamples(samples),
+		metrics: [
+			...summarizeGateSamples(samples),
+			summarizeMetric('rejectedScriptRequests', 'count', [rejectedRequests]),
+		],
 		notes: options.notes ?? [],
 		package: options.packageName,
 		runtime: 'chromium',

@@ -33,4 +33,6 @@ watch(snapshot, (value) => {
 <template>
 	<component is="style">{{ gatePageCSS }}</component>
 	<div v-html="gatePageHTML"></div>
+	<!-- The gate reopens the choice here to replay a change of mind. -->
+	<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 </template>

@@ -6,6 +6,7 @@ import {
 import {
 	ConsentBanner,
 	ConsentDialog,
+	ConsentDialogLink,
 	ConsentRoot,
 	useScriptLoader,
 	useSnapshot,
@@ -41,5 +42,7 @@ export const GatePage = ({ state }: { state: ConsentRootProps['state'] }) => (
 		<GateBridge />
 		<ConsentBanner />
 		<ConsentDialog />
+		{/* The gate reopens the choice here to replay a change of mind. */}
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 	</ConsentRoot>
 );

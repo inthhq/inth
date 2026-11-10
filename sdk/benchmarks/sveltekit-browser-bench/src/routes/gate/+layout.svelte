@@ -10,7 +10,12 @@
 		gatePageCSS,
 		gateScripts,
 	} from '@c15t/benchmarking/consent-gate-page';
-	import { ConsentBanner, ConsentDialog, ConsentRoot } from '@c15t/svelte';
+	import {
+		ConsentBanner,
+		ConsentDialog,
+		ConsentDialogLink,
+		ConsentRoot,
+	} from '@c15t/svelte';
 
 	import GateBridge from './gate-bridge.svelte';
 
@@ -31,4 +36,6 @@
 	<GateBridge />
 	<ConsentBanner />
 	<ConsentDialog />
+	<!-- The gate reopens the choice here to replay a change of mind. -->
+	<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 </ConsentRoot>

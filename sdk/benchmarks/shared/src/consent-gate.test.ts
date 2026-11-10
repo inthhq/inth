@@ -7,6 +7,7 @@ import {
 	acceptMetrics,
 	INP_CENSOR_FLOOR_MS,
 	interactionDuration,
+	returningScripts,
 	summarizeGateSamples,
 } from './consent-gate';
 import type { GateIterationSample } from './consent-gate';
@@ -80,6 +81,24 @@ describe('consent gate metrics', () => {
 		).toThrow('Accept did not complete');
 	});
 
+	it('fails a returning visit whose scripts did not each run once', () => {
+		const script = (category: string, at: number) => ({
+			at,
+			category,
+			id: category,
+		});
+		expect(
+			returningScripts({
+				scripts: [script('measurement', 900), script('marketing', 1200)],
+			})
+		).toBe(1200);
+		expect(() =>
+			returningScripts({
+				scripts: [script('measurement', 900), script('measurement', 1000)],
+			})
+		).toThrow('to run once');
+	});
+
 	it('pairs LCP with the same iteration control', () => {
 		const sample = (
 			lcpMs: number,
@@ -94,6 +113,8 @@ describe('consent gate metrics', () => {
 			inputToNextPaintMs: 16,
 			lcpMs,
 			preferencesVisibleMs: 640,
+			returningLcpMs: lcpMs - 20,
+			returningScriptsMs: 2100,
 			scriptsCompleteMs: 190,
 		});
 		const metrics = summarizeGateSamples([
@@ -103,6 +124,8 @@ describe('consent gate metrics', () => {
 		]);
 		const byName = new Map(metrics.map((metric) => [metric.name, metric]));
 		expect(byName.get('lcpDeltaMs')?.samples).toEqual([100, 200, 50]);
+		expect(byName.get('returningLcpDeltaMs')?.samples).toEqual([80, 180, 30]);
+		expect(byName.get('returningScriptsMs')?.median).toBe(2100);
 		expect(byName.get('slowestTapMs')?.median).toBe(640);
 	});
 });
@@ -181,6 +204,9 @@ describe('consent gate budgets', () => {
 				'scriptsCompleteMs',
 				'preferencesVisibleMs',
 				'slowestTapMs',
+				'returningLcpDeltaMs',
+				'returningScriptsMs',
+				'rejectedScriptRequests',
 			]) {
 				expect(metrics).toContain(metric);
 			}
@@ -193,6 +219,16 @@ describe('consent gate budgets', () => {
 		expect(identities).toEqual(
 			expect.arrayContaining(['bannerVisibleMs', 'bannerVisibleMs (ceiling)'])
 		);
+	});
+
+	it('allows no gated script request after a reject', () => {
+		for (const target of consentGateTargets) {
+			const budget = consentGateBudgets(target).find(
+				(entry) => entry.metric === 'rejectedScriptRequests'
+			);
+			expect(budget?.comparator).toBe('absolute-lte');
+			expect(budget?.threshold).toBe(0);
+		}
 	});
 
 	it('holds every tap to 1,000 ms', () => {

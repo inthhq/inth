@@ -221,11 +221,25 @@ gzips anything the framework server left uncompressed, so every framework
 loads the same bytes besides its own. The hero is generated at run time
 (`consent-gate-assets.ts`), so the repository carries no binary.
 
-Each iteration is four visits, each in a fresh browser context at
+Each iteration is five visits, each in a fresh browser context at
 CookieBench's `mobile-article-v1` profile through CDP: 390x844 at DPR 3,
 4x CPU slowdown, 200 KB/s down, 93.75 KB/s up, 150 ms latency. The visits
 are the control to its LCP, the gate page to its LCP, the gate page through
-an Accept tap, and the gate page through a Customize tap. Taps happen once
+an Accept tap, the gate page through a Customize tap, and the gate page as a
+returning visitor who accepted, to its LCP and both gated scripts. The
+returning visit starts from the storage of a visitor who accepted and came
+back once, so it is a third visit: what c15t records on a second visit,
+such as the engine's chunk list, is in place.
+
+Once per run, the gate also replays a visitor who changes their mind. They
+accept on the banner and come back once. On a third visit they open Privacy
+settings, a `ConsentDialogLink` every gate page renders, and tap Reject in
+the dialog. The gate then counts requests for a gated script on the next
+visit, for about 3 s after the page is ready. It replays this three times
+per run and reports the total, since a leak can depend on timing. These
+setup visits run at the same profile: unthrottled, a dynamic import can
+finish before the scripts it would have overlapped start, and what c15t
+records changes. Taps happen once
 `html[data-consent-ready="true"]` matches, as in CookieBench. The order
 alternates between iterations. The page observer (`consent-gate-observer.ts`)
 is adapted from CookieBench's `browser-observer.ts`, so each metric means
@@ -241,6 +255,9 @@ what CookieBench's does:
 | `scriptsCompleteMs` | action.scripts-complete | Accept `pointerdown`, the last gated script executing |
 | `preferencesVisibleMs` | action.preferences-visible | Customize `pointerdown`, first frame the dialog has a footprint |
 | `slowestTapMs` | the 1,000 ms rule | largest of the five tap metrics in one iteration |
+| `returningLcpDeltaMs` | page.lcp delta | returning visitor's LCP minus control LCP, paired per iteration |
+| `returningScriptsMs` | none | navigation, the last gated script executing for a returning visitor |
+| `rejectedScriptRequests` | none | requests for a gated script after accept, return, reject |
 
 `lcpMs`, `controlLcpMs`, `fcpMs` and `controlFcpMs` are reported too, without budgets.
 
@@ -253,6 +270,12 @@ holds the budgets and their rationale. All of them fail the gate:
   with the 99% confidence bound described under the CI comparisons. A
   metric fails only when its median grows past both the absolute band and
   the percentage, and the lower bound on that growth confirms it;
+- `returningLcpDeltaMs` within the first-visit LCP band, and
+  `returningScriptsMs` within the scripts-complete band. The base reports
+  them as soon as the head adds them, since the runner applies the head's
+  `benchmarks/` to the base checkout;
+- `rejectedScriptRequests` at most 0, for every target. A request reaches
+  the vendor after a no even when the script never runs;
 - `slowestTapMs` at most 1,000 ms (median iteration), for every target.
   Astro's former 1,300 ms exception is gone: its Customize dialog now opens
   before the consent engine loads;

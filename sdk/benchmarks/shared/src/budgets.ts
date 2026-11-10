@@ -1665,6 +1665,25 @@ export const consentGateBudgets = function consentGateBudgets(
 			'action.preferences-visible after Customize may not grow beyond the noise band.'
 		),
 		{
+			comparator: 'absolute-or-percent-lte',
+			description: `page.lcp delta of a returning visitor who accepted, over the no-CMP control, may not grow by more than ${GATE_LCP_DELTA_NOISE_MS} ms, the band of the first-visit delta.`,
+			metric: 'returningLcpDeltaMs',
+			threshold: GATE_LCP_DELTA_NOISE_MS,
+		},
+		relativeGateBudget(
+			'returningScriptsMs',
+			GATE_SCRIPTS_NOISE_MS,
+			GATE_SCRIPTS_NOISE_PERCENT,
+			"A returning visitor's gated scripts may not start later beyond the scripts-complete noise band."
+		),
+		{
+			comparator: 'absolute-lte',
+			description:
+				'A visitor who accepted, came back, then rejected makes no request for a gated script. A request reaches the vendor after a no, even when the script never runs, so the allowance is zero. The visitor rejects in the preferences dialog, as a real visitor would; the count covers three replays per run.',
+			metric: 'rejectedScriptRequests',
+			threshold: 0,
+		},
+		{
 			comparator: 'absolute-lte',
 			description:
 				tapCeiling === undefined

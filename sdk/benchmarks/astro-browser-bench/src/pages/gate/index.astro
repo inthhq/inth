@@ -7,6 +7,7 @@
  */
 import ConsentBanner from '@c15t/astro/components/consent-banner.astro';
 import ConsentDialog from '@c15t/astro/components/consent-dialog.astro';
+import ConsentDialogLink from '@c15t/astro/components/consent-dialog-link.astro';
 import ConsentScript from '@c15t/astro/components/consent-script.astro';
 import {
 	gatePageCSS,
@@ -34,6 +35,8 @@ export const prerender = false;
 		<Fragment set:html={gatePageHTML} />
 		<ConsentBanner />
 		<ConsentDialog />
+		<!-- The gate reopens the choice here to replay a change of mind. -->
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		<script>
 			import { getConsentClient } from '@c15t/astro/client';
 			import { updateGateBridge } from '@c15t/benchmarking/consent-gate-page';
