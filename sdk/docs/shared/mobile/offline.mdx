@@ -136,8 +136,9 @@ export default {
 
 Prebuild runs `c15t mobile-manifest` and embeds the result in both native
 projects. Prebuild cannot see which variant comes next, so it treats every
-build as release except `expo run:*` without a release variant or
-configuration. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
+build as release except `expo run:*` with no variant or configuration, or with
+one whose name contains `debug`. `expo run:ios --configuration Production`
+is release. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
 debug prebuild cannot reach the backend, it also removes a manifest an earlier
 prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` also
 narrows the GVL in the bundled manifest.
@@ -145,13 +146,13 @@ narrows the GVL in the bundled manifest.
 Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest)
 as a build step and point the platform at the file:
 
-Any configuration or build type you do not name as debug counts as release,
-so a production build never quietly skips its manifest. Add your other debug
-configurations to the `Debug` line.
+A configuration or build type counts as debug only when its name contains
+`debug`, in any case. Every other name, such as `Production` or `staging`,
+counts as release, so a production build never quietly skips its manifest.
 
 ```sh title="Xcode Run Script phase, after Copy Bundle Resources"
 case "$CONFIGURATION" in
-  Debug) BUILD=debug ;;
+  *[Dd][Ee][Bb][Uu][Gg]*) BUILD=debug ;;
   *) BUILD=release ;;
 esac
 npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
@@ -184,13 +185,17 @@ abstract class C15tManifestTask extends DefaultTask {
 androidComponents {
     onVariants(selector().all()) { variant ->
         def fetch = tasks.register("c15tManifest${variant.name.capitalize()}", C15tManifestTask) {
-            build = variant.buildType == 'debug' ? 'debug' : 'release'
+            build = (variant.buildType ?: '').toLowerCase().contains('debug') ? 'debug' : 'release'
             appRoot = rootProject.layout.projectDirectory.dir('..')
         }
         variant.sources.assets.addGeneratedSourceDirectory(fetch) { it.outputDir }
     }
 }
 ```
+
+`addGeneratedSourceDirectory` sets each task's `outputDir` to a directory of
+its own under `build/generated/assets`, so registration sets only `build` and
+`appRoot`. A task you run without that line has no output directory.
 
 On iOS the script writes straight into the built app, so the file is not
 listed in Copy Bundle Resources: a debug build that skipped the fetch then has

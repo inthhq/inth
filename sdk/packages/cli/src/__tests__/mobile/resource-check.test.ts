@@ -63,6 +63,7 @@ describe('export and reuse never produce a resource a device discards', () => {
 		{ tcfPolicyVersion: 0 },
 		{ vendorListVersion: 0 },
 		{ purposes: 'all' },
+		{ vendors: { 755: 'bad' } },
 	])('refuses a vendor list a device would discard: %o', async (patch) => {
 		const source = read('iab/additional-consent-cases.json');
 		const manifest = await buildConsentManifestFromConfig({

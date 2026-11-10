@@ -210,6 +210,14 @@ describe('prebuild refuses the resources devices discard', () => {
 		expect(missed.map((entry) => entry.name)).toEqual([]);
 	});
 
+	it('carries the same vendor-list entry check as the CLI', () => {
+		const copy = (path: string) =>
+			readFileSync(resolve(import.meta.dirname, path), 'utf8');
+		expect(copy('../gvl-fields.ts')).toBe(
+			copy('../../../../cli/src/mobile/gvl-fields.ts')
+		);
+	});
+
 	it('accepts the shared resources both native cores load', () => {
 		for (const name of ['parity', 'iab']) {
 			const source = JSON.parse(

@@ -25,10 +25,12 @@ export interface ResolvedBundleManifest {
 /**
  * Which kind of build this prebuild feeds.
  *
- * `C15T_MANIFEST_BUILD` wins. Otherwise only `expo run:*` without a release
- * variant or configuration counts as debug. Everything else, including a bare
- * `expo prebuild` and EAS Build, is treated as release, so a release binary never
- * ships without the manifest just because nobody said which build it was.
+ * `C15T_MANIFEST_BUILD` wins. Otherwise only `expo run:*` counts as debug, and
+ * only with no `--release` and with no variant or configuration, or one whose
+ * name says debug (`Debug`, `demoDebug`). Any other name, such as `Production`,
+ * is release. So is everything that is not `expo run:*`, including a bare
+ * `expo prebuild` and EAS Build. A release binary never ships without the
+ * manifest just because its build had an unexpected name.
  */
 export const manifestBuild = function manifestBuild(
 	argv: readonly string[],
@@ -47,7 +49,8 @@ export const manifestBuild = function manifestBuild(
 		if (value === null) {
 			return token === '--release';
 		}
-		return /release/iu.test(value.groups?.name ?? argv[index + 1] ?? '');
+		const name = value.groups?.name ?? argv[index + 1] ?? '';
+		return name.startsWith('-') || !/debug/iu.test(name);
 	});
 	return releaseFlag ? 'release' : 'debug';
 };

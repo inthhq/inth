@@ -63,6 +63,10 @@ final class BundledPolicyTests: XCTestCase {
                 .resolve(overrides: .default(), now: row["now"]?.intValue ?? 0)
             if row["expect"]?.stringValue == "refused" {
                 if selection != nil { problems.append("\(name): accepted") }
+            } else if row["iosKeepsList"]?.boolValue == true {
+                // iOS reads a vendor list forgivingly and drops or blanks a malformed
+                // entry; Android refuses the list. The CLI and Expo refuse these at build.
+                if selection?.response.gvl == nil { problems.append("\(name): iOS now drops the list; update the fixture") }
             } else if let selection, selection.response.gvl != nil, selection.gvlFetchedAt != nil {
                 problems.append("\(name): usable list")
             } else if selection == nil {

@@ -3,6 +3,7 @@ import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
 import { C15tPluginError } from './errors';
+import { gvlEntryProblem } from './gvl-fields';
 
 /** The native readers use a fixed filename inside the app's resources/assets. */
 export const POLICY_RESOURCE_NAME = 'c15t-policy.json';
@@ -48,6 +49,10 @@ const gvlProblem = function gvlProblem(
 		!isRecord(data.vendors)
 	) {
 		return 'its vendor list is one devices discard';
+	}
+	const entry = gvlEntryProblem(data);
+	if (entry !== null) {
+		return `its vendor list is one Android discards (${entry})`;
 	}
 	return isWholeNumberIn(gvl.fetchedAt, 0, issuedAt)
 		? null

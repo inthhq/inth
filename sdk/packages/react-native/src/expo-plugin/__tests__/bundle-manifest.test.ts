@@ -63,6 +63,22 @@ describe('bundling the manifest at prebuild', () => {
 		).toBe('debug');
 	});
 
+	it.each([
+		[['run:ios', '--configuration', 'Production'], 'release'],
+		[['run:ios', '--configuration=Staging'], 'release'],
+		[['run:android', '--variant', 'production'], 'release'],
+		[['run:android', '--variant=demoRelease'], 'release'],
+		[['run:android', '--variant'], 'release'],
+		[['run:ios', '--configuration', 'Debug'], 'debug'],
+		[['run:android', '--variant=demoDebug'], 'debug'],
+		[['run:android', '--variant', 'freeDebug'], 'debug'],
+	] as const)(
+		'treats an explicit variant or configuration as release unless it names debug: %o',
+		(flags, build) => {
+			expect(manifestBuild(['node', 'expo', ...flags], {})).toBe(build);
+		}
+	);
+
 	it('passes the build type and stale-copy setting to c15t mobile-manifest', () => {
 		expect(
 			manifestArguments(

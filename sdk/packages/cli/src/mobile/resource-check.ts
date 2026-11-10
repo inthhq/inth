@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { matchPolicyRules, readPolicyResolutionWire } from '@c15t/schema';
 
+import { gvlEntryProblem } from './gvl-fields';
+
 /**
  * The checks both native cores apply to a bundled resource before they use it,
  * so the CLI never writes or reuses one a device would discard.
@@ -35,9 +37,11 @@ const isWholeNumberIn = (value: unknown, min: number, max: number) =>
 	(value as number) <= max;
 
 /**
- * The native vendor-list gate: `fetchGVL`'s acceptance test. A list numbered 0,
- * a policy version below 1, or purposes and vendors that are not objects leave a
- * device with no vendor list.
+ * The native vendor-list gate: `fetchGVL`'s acceptance test, and the Android
+ * core's typed read. A list numbered 0, a policy version below 1, purposes and
+ * vendors that are not objects, or any entry of the wrong type leave an Android
+ * device with no vendor list. (iOS drops or blanks a malformed entry and keeps
+ * the rest, so the list it shows is not the one exported either.)
  */
 export const gvlProblem = function gvlProblem(data: unknown): string | null {
 	if (!isRecord(data)) {
@@ -52,7 +56,7 @@ export const gvlProblem = function gvlProblem(data: unknown): string | null {
 	if (!isRecord(data.purposes) || !isRecord(data.vendors)) {
 		return 'purposes and vendors must be objects';
 	}
-	return null;
+	return gvlEntryProblem(data);
 };
 
 const disclosureProblem = function disclosureProblem(

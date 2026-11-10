@@ -18,5 +18,6 @@ copy at `--out`, so an old manifest only ships with `--allow-stale-manifest`.
 
 The command never writes or reuses a resource the iOS and Android SDKs would
 discard: an empty manifest revision, a vendor list numbered 0 or with a policy
-version below 1, or a stale copy with impossible dates or an unexpected shape
+version below 1, a vendor list with an entry of the wrong type (such as a vendor
+that is a string), or a stale copy with impossible dates or an unexpected shape
 now fails the build.

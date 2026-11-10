@@ -44,6 +44,12 @@ interface Case {
 	base: Base;
 	expect: 'refused' | 'no-usable-gvl';
 	structural: boolean;
+	/**
+	 * A malformed entry inside an otherwise valid vendor list. Android refuses the
+	 * whole list; iOS drops or blanks the entry and keeps the rest, by design (see
+	 * `GlobalVendorList.read` in core-swift). Both lose what was exported.
+	 */
+	iosKeepsList?: boolean;
 	/** Edit the decoded payload; the wrapper and checksum are rebuilt after. */
 	payload?: (payload: Payload) => void;
 	/** Replace the wrapper outright, for wrapper-level faults. */
@@ -59,6 +65,9 @@ const isUnknownLocationPack = (pack: Payload) => {
 };
 const gvl = (payload: Payload) =>
 	((payload.disclosures as Payload).gvl as Payload).data as Payload;
+const data = gvl;
+const vendorOne = (payload: Payload) =>
+	(data(payload).vendors as Payload)['1'] as Payload;
 
 const cases: Case[] = [
 	{
@@ -268,6 +277,116 @@ const cases: Case[] = [
 	{
 		base: 'iab',
 		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a vendor that is a string',
+		payload: (p) => {
+			data(p).vendors = { ...(data(p).vendors as Payload), 755: 'bad' };
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a purpose that is a string',
+		payload: (p) => {
+			(data(p).purposes as Payload)['1'] = 'bad';
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a vendor key that is not a number',
+		payload: (p) => {
+			(data(p).vendors as Payload).abc = vendorOne(p);
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a vendor whose purposes are a string',
+		payload: (p) => {
+			vendorOne(p).purposes = '1,2';
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a fractional vendor id',
+		payload: (p) => {
+			vendorOne(p).id = 1.5;
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a vendor name that is a number',
+		payload: (p) => {
+			vendorOne(p).name = 5;
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a null vendor purpose id',
+		payload: (p) => {
+			vendorOne(p).purposes = [1, null];
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a vendor URL that is a string',
+		payload: (p) => {
+			vendorOne(p).urls = ['https://vendor.example'];
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'a vendor flag that is a string',
+		payload: (p) => {
+			vendorOne(p).usesCookies = 'yes';
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'stacks that are a string',
+		payload: (p) => {
+			data(p).stacks = 'none';
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
+		iosKeepsList: true,
+		name: 'standard texts without features',
+		payload: (p) => {
+			data(p).standardTexts = { purposes: 'Purposes' };
+		},
+		structural: true,
+	},
+	{
+		base: 'iab',
+		expect: 'no-usable-gvl',
 		name: 'vendor list fetched after issue',
 		payload: (p) => {
 			((p.disclosures as Payload).gvl as Payload).fetchedAt =
@@ -296,6 +415,7 @@ const fixture = {
 			base: entry.base,
 			endpoint: source.endpoint,
 			expect: entry.expect,
+			iosKeepsList: entry.iosKeepsList ?? false,
 			name: entry.name,
 			now: source.now,
 			resource: clone(entry.wrapper ? entry.wrapper(text) : wrap(text)),
