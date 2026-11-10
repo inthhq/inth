@@ -9,7 +9,8 @@ import com.c15t.core.model.ConsentCategory
  *
  * While [category] is denied or pending, the helper turns off automatic App
  * Events and advertiser ID collection and turns on Limited Data Use. When it is
- * granted, it turns Limited Data Use off and both settings on. Pass
+ * granted, it turns Limited Data Use off and both settings on. On withdrawal all
+ * three calls run even if one throws, and the first failure is reported. Pass
  * `FacebookSdk.setAutoLogAppEventsEnabled` and
  * `FacebookSdk.setAdvertiserIDCollectionEnabled`. For [setLimitedDataUse], call
  * `FacebookSdk.setDataProcessingOptions(arrayOf("LDU"), 0, 0)` when it is `true`,
@@ -46,9 +47,11 @@ class MetaAppEventsIntegration(
 			setAdvertiserIDCollectionEnabled(true)
 			setAutoLogAppEventsEnabled(true)
 		} else {
-			setAutoLogAppEventsEnabled(false)
-			setAdvertiserIDCollectionEnabled(false)
-			setLimitedDataUse(true)
+			runAll(
+				{ setAutoLogAppEventsEnabled(false) },
+				{ setAdvertiserIDCollectionEnabled(false) },
+				{ setLimitedDataUse(true) },
+			)
 		}
 	}
 

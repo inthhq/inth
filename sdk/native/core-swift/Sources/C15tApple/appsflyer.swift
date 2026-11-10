@@ -12,6 +12,9 @@ import Foundation
 /// `isUserSubjectToGDPR` is yours to supply: c15t's policy model is not a legal
 /// jurisdiction flag. Marketing grants all three types, as on the web.
 ///
+/// Written against AppsFlyer iOS SDK 6. SDK 7 starts sessions only from its
+/// session-ready listener, which this helper does not coordinate.
+///
 /// Do not call AppsFlyer's `start()` yourself. While the category is denied or
 /// pending, the helper sets `isStopped` to `true`. When it is granted, it sets
 /// `isStopped` to `false` and then calls `start`. A change that keeps the category

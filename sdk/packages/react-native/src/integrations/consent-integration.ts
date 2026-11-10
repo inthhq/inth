@@ -154,6 +154,30 @@ export const connectConsentIntegration = (
 	);
 };
 
+/**
+ * Make every call, in order, without waiting for one to settle before making the
+ * next, then wait for all of them. Withdrawal paths use this so a call that
+ * throws, rejects or never settles cannot stop a later call from turning
+ * collection off.
+ *
+ * @param calls - Vendor calls that each restrict collection.
+ * @returns Resolves when every call settled; rejects with the first failure.
+ */
+export const settleAll = async (
+	calls: readonly (() => void | Promise<void>)[]
+): Promise<void> => {
+	const results = await Promise.allSettled(
+		calls.map(async (call) => {
+			await call();
+		})
+	);
+	for (const result of results) {
+		if (result.status === 'rejected') {
+			throw result.reason;
+		}
+	}
+};
+
 /** Whether a vendor may run under its category, with the advertising types. */
 export interface TrackingAndAds {
 	readonly tracking: boolean;

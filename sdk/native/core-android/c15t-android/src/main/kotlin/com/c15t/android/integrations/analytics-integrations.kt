@@ -215,6 +215,23 @@ class SentryReplayIntegration(
 	override fun close() = binding.close()
 }
 
+/**
+ * Run every call, even when an earlier one throws, then rethrow the first failure
+ * with the others suppressed. Withdrawal paths use this so a failing vendor call
+ * cannot stop a later call from turning collection off.
+ */
+internal fun runAll(vararg calls: () -> Unit) {
+	var failure: Exception? = null
+	for (call in calls) {
+		try {
+			call()
+		} catch (error: Exception) {
+			failure?.addSuppressed(error) ?: run { failure = error }
+		}
+	}
+	failure?.let { throw it }
+}
+
 /** Bind one optional category to a vendor's on/off calls. */
 @Suppress("FunctionName")
 internal fun AnalyticsConsentBinding(

@@ -110,7 +110,7 @@ const cases: VendorCase[] = [
 			connectAppsFlyer(
 				{
 					setConsentData: (consent) => log(calls, `consent:${ads(consent)}`),
-					startSdk: () => log(calls, 'start'),
+					start: () => log(calls, 'start'),
 					stop: (stopped) => log(calls, `stop:${stopped}`),
 				},
 				options
@@ -337,14 +337,14 @@ describe('a marketing-only change after a grant', () => {
 	});
 });
 
-test('AppsFlyer stops when consent is withdrawn while startSdk is pending', async () => {
+test('AppsFlyer stops when consent is withdrawn while start is pending', async () => {
 	const fake = createFakeNativeModule({ snapshot: grant() });
 	const calls: string[] = [];
 	let release = () => {};
 	const integration = connectAppsFlyer(
 		{
 			setConsentData: (consent) => log(calls, `consent:${consent.adUserData}`),
-			startSdk: () => {
+			start: () => {
 				calls.push('start');
 				return new Promise<void>((resolve) => {
 					release = resolve;
@@ -375,9 +375,60 @@ test('vendor helpers reject necessary as their category', () => {
 	createFakeNativeModule();
 	expect(() =>
 		connectAppsFlyer(
-			{ setConsentData: vi.fn(), startSdk: vi.fn(), stop: vi.fn() },
+			{ setConsentData: vi.fn(), start: vi.fn(), stop: vi.fn() },
 			// @ts-expect-error An always-allowed category cannot gate a vendor.
 			{ category: 'necessary', onError: vi.fn() }
 		)
 	).toThrow(TypeError);
+});
+
+describe('withdrawal still restricts collection when a vendor call fails', () => {
+	test('AppsFlyer sends denied consent when stop rejects, and reports it', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('AppsFlyer rejected stop');
+		const onError = vi.fn();
+		const integration = connectAppsFlyer(
+			{
+				setConsentData: (consent) =>
+					log(calls, `consent:${consent.adUserData}`),
+				start: () => log(calls, 'start'),
+				stop: (stopped) =>
+					stopped ? Promise.reject(failure) : log(calls, 'stop:false'),
+			},
+			{ onError }
+		);
+		await integration.ready;
+		calls.length = 0;
+		fake.pushSnapshot(grant());
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		expect(calls).toEqual(['consent:false']);
+	});
+
+	test('Meta turns the other settings off when one rejects or never settles', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Meta rejected auto-log');
+		const onError = vi.fn();
+		let hang = false;
+		const integration = connectMetaAppEvents(
+			{
+				setAdvertiserIDCollectionEnabled: (enabled) => {
+					log(calls, `advertiserId:${enabled}`);
+					return hang && !enabled ? new Promise<void>(() => {}) : undefined;
+				},
+				setAutoLogAppEventsEnabled: (enabled) =>
+					enabled ? log(calls, 'autoLog:true') : Promise.reject(failure),
+				setLimitedDataUse: (limited) => log(calls, `ldu:${limited}`),
+			},
+			{ onError }
+		);
+		await integration.ready;
+		calls.length = 0;
+		hang = true;
+		fake.pushSnapshot(grant());
+		await vi.waitFor(() =>
+			expect(calls).toEqual(['advertiserId:false', 'ldu:true'])
+		);
+	});
 });
