@@ -7,9 +7,11 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.c15t.core.C15t
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -32,10 +34,21 @@ class DeviceWebViewConsentTest {
 		</script></head><body></body></html>
 	""".trimIndent()
 
-	private fun load(baseUrl: String, origins: List<String>): String {
+	@Before
+	fun installAnOfflineCore() {
 		awaitLaunchSettled()
+		uninstallCore()
+		C15tAndroid.install(appContext(), deviceConfig(), transport = DeviceBackend())
+	}
+
+	@After
+	fun leaveNoCoreInstalled() {
+		uninstallCore()
+	}
+
+	private fun load(baseUrl: String, origins: List<String>): String {
 		val core = C15t.current
-		assertNotNull("the launch core", core)
+		assertNotNull("the installed core", core)
 		val loaded = CountDownLatch(1)
 		val seen = CountDownLatch(1)
 		var result = ""
