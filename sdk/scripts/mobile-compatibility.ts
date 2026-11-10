@@ -90,7 +90,7 @@ function PrivacyStatus() {
   const saveConsents = useSaveConsents();
   return <View><Text onPress={() => { void saveConsents('none'); }}>{allowed ? 'Allowed' : 'Denied'}</Text></View>;
 }
-export const App = () => <ConsentProvider><PrivacyStatus /></ConsentProvider>;
+export const App = () => <ConsentProvider privacyPolicyURL="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
 export const plugin: typeof withC15t = withC15t;
 export const configuration: C15tPluginProps = { mode: 'offline' };
 export const posthog: typeof connectPostHog = connectPostHog;

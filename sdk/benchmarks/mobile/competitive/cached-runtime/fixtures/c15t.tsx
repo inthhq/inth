@@ -34,7 +34,9 @@ const read = (raw: ReturnType<typeof useSnapshot>): RuntimeRead => {
 	return { ready, snapshot: raw, targetId: 'measurement' };
 };
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<ConsentProvider>{children}</ConsentProvider>
+	<ConsentProvider privacyPolicyURL={benchmarkConfig.c15t.privacyUrl}>
+		{children}
+	</ConsentProvider>
 );
 export const useRuntimeConsent = (): RuntimeConsent => {
 	const raw = useSnapshot();
