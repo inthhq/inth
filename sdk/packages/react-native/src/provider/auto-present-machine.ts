@@ -15,8 +15,15 @@
  * | `dismissed` | owed key        | The person saw this owed prompt and closed it.        |
  * | `refused`   | URL             | Native refused this URL for good.                     |
  * | `declined`  | key, URL, trigger | Native said not now (nothing owed, or no window yet). |
- * | `closed`    | session id      | Outcomes that crossed the bridge before their answer. |
+ * | `closed`    | session id      | Sessions whose outcome arrived, so a late answer cannot revive one. |
  * | `excluded`  | the binary      | Native has no stock screens (`C15T_NATIVE_UI_EXCLUDED`). |
+ * | `withdrawn` | session id      | A prompt this ledger opened after every presenting provider left. |
+ *
+ * The facts hold whether or not a provider presents: a session the app opened
+ * itself is on screen, and a prompt the person dismissed there is dismissed,
+ * whatever `autoPresent` was. A prompt the ledger's own call opens after every
+ * presenting provider has gone is closed again, and its outcome is not the
+ * person's, so a remount with `autoPresent={false}` never inherits it.
  *
  * Present now exactly when: a provider presents, the binary links the stock
  * screens and never said otherwise, a prompt is owed, no call is in flight,
@@ -72,6 +79,8 @@ export interface AutoPresentFacts {
 	readonly closed: readonly ClosedSession[];
 	/** Native rejected with `C15T_NATIVE_UI_EXCLUDED`. A binary cannot gain its screens, so this lasts. */
 	readonly excluded: boolean;
+	/** The session this ledger asked native to close, because no provider presented when it opened. */
+	readonly withdrawn: string | null;
 }
 
 /** What happened. The current inputs travel beside it as the context. */
@@ -83,6 +92,12 @@ export type AutoPresentInput =
 			readonly sessionId: string;
 			/** Absent from a binary that predates naming its sessions. */
 			readonly presentation: SessionPresentation | undefined;
+	  }
+	/** A session the app's own present call found open. */
+	| {
+			readonly type: 'seen';
+			readonly sessionId: string;
+			readonly presentation: SessionPresentation;
 	  }
 	| { readonly type: 'not-required' }
 	| { readonly type: 'refused' }
@@ -100,6 +115,7 @@ export type AutoPresentEffect =
 	| 'present'
 	| 'report-refused'
 	| 'report-excluded'
+	| 'withdraw'
 	| 'warn-unavailable';
 
 /** One input's result. */
@@ -120,6 +136,7 @@ export const INITIAL_AUTO_PRESENT_FACTS: AutoPresentFacts = {
 	inFlight: null,
 	onScreen: null,
 	refused: null,
+	withdrawn: null,
 };
 
 /**
@@ -174,15 +191,31 @@ const closedSession = function closedSession(
 	sessionId: string,
 	dismissedKey: string | null
 ): AutoPresentFacts {
+	// Every closed session is remembered, so an answer naming it that was sent
+	// before it closed cannot put it back on screen.
+	const closed = [...facts.closed, { dismissedKey, sessionId }].slice(
+		-CLOSED_SESSIONS_KEPT
+	);
 	if (facts.onScreen?.sessionId !== sessionId) {
-		const closed = [...facts.closed, { dismissedKey, sessionId }];
-		return { ...facts, closed: closed.slice(-CLOSED_SESSIONS_KEPT) };
+		return { ...facts, closed };
+	}
+	if (facts.withdrawn === sessionId) {
+		// This ledger closed it; the person dismissed nothing.
+		return {
+			...facts,
+			closed: [...facts.closed, { dismissedKey: null, sessionId }].slice(
+				-CLOSED_SESSIONS_KEPT
+			),
+			onScreen: null,
+			withdrawn: null,
+		};
 	}
 	// A dismissal settles what was on screen, which follows the current requirement.
 	const settled =
 		facts.onScreen.presentation === 'prompt' && dismissedKey !== null;
 	return {
 		...facts,
+		closed,
 		dismissed: settled ? dismissedKey : facts.dismissed,
 		onScreen: null,
 	};
@@ -213,20 +246,42 @@ const record = function record(
 	switch (input.type) {
 		case 'trigger':
 			return { effects: [], facts };
-		case 'shown':
-		case 'already-presented':
-			// A fresh presentation shows the prompt; a session an older binary does not
-			// name is waited on like settings.
+		case 'seen':
+			return {
+				effects: [],
+				facts: opened(facts, input.sessionId, input.presentation),
+			};
+		case 'shown': {
+			const next = opened(
+				{ ...facts, inFlight: null },
+				input.sessionId,
+				'prompt'
+			);
+			// Opened for a provider that has gone or opted out since: not its to keep.
+			if (!context.active && next.onScreen?.sessionId === input.sessionId) {
+				return {
+					effects: ['withdraw'],
+					facts: { ...next, withdrawn: input.sessionId },
+				};
+			}
+			return { effects: [], facts: next };
+		}
+		case 'already-presented': {
+			// A session an older binary does not name keeps what is already known of
+			// it, and is otherwise waited on like settings.
+			const known =
+				facts.onScreen?.sessionId === input.sessionId
+					? facts.onScreen.presentation
+					: 'preferences';
 			return {
 				effects: [],
 				facts: opened(
 					{ ...facts, inFlight: null },
 					input.sessionId,
-					input.type === 'shown'
-						? 'prompt'
-						: (input.presentation ?? 'preferences')
+					input.presentation ?? known
 				),
 			};
+		}
 		case 'not-required':
 			return { effects: [], facts: declined(facts, context) };
 		case 'refused':

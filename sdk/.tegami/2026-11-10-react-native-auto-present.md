@@ -30,7 +30,10 @@ the previous behaviour.
 The provider follows what native says is on screen, and the decision is one
 state machine. An owed prompt that meets open privacy settings is presented once
 they close; a session that closes while the app has opted out is still heard; a
-corrected privacy-policy URL is retried. `presentConsentPrompt` and
+corrected privacy-policy URL is retried. A prompt the app opened with
+`presentConsentPrompt` and the person dismissed stays dismissed when
+auto-present is turned on later, and a prompt that opens after the provider
+turned auto-present off is closed again without counting as dismissed. `presentConsentPrompt` and
 `presentPreferences` answers now carry `presentation` (`prompt` or
 `preferences`) for an open session, and the native host ends a session whose
 notice was cleared elsewhere with a `dismissed` outcome.

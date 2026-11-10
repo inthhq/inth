@@ -14,8 +14,10 @@ import { isPromptOwed } from '../lib/selectors';
 import { isProduction } from '../native/client';
 import type { ConsentClient } from '../native/client';
 import {
+	closeConsentPresenter,
 	onConsentPresenterOutcome,
-	presentConsentPrompt,
+	onConsentPresenterSession,
+	requestConsentPrompt,
 } from '../native/presenter';
 import type { ConsentSnapshot } from '../protocol';
 import {
@@ -128,9 +130,14 @@ class AutoPresentLedger {
 	settled: Promise<void> = Promise.resolve();
 	private readonly client: ConsentClient;
 
-	constructor(client: ConsentClient, url: string) {
+	constructor(client: ConsentClient) {
 		this.client = client;
-		this.url = url;
+		this.url = '';
+		// What the app opens itself is on screen too, and a prompt the person dismissed
+		// there stays dismissed when auto-present turns on.
+		onConsentPresenterSession((sessionId, presentation) => {
+			this.dispatch({ presentation, sessionId, type: 'seen' });
+		});
 		// For the client's lifetime, so an outcome is not lost while no provider is
 		// mounted or the app opted out; a session reported open is always heard closing.
 		try {
@@ -186,6 +193,11 @@ class AutoPresentLedger {
 						error
 					);
 					break;
+				case 'withdraw':
+					if (facts.withdrawn !== null) {
+						closeConsentPresenter(facts.withdrawn).catch(() => undefined);
+					}
+					break;
 				case 'report-excluded':
 					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 					console.error(
@@ -213,7 +225,7 @@ class AutoPresentLedger {
 	private async callNative(): Promise<void> {
 		const { url } = this;
 		try {
-			const session = await presentConsentPrompt(url);
+			const session = await requestConsentPrompt(url);
 			if (session.status === 'not-required' || session.sessionId === null) {
 				this.dispatch({ type: 'not-required' });
 			} else {
@@ -231,16 +243,27 @@ class AutoPresentLedger {
 
 const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
 
-const ledgerFor = function ledgerFor(
-	client: ConsentClient,
-	url: string
-): AutoPresentLedger {
+const ledgerFor = function ledgerFor(client: ConsentClient): AutoPresentLedger {
 	let ledger = ledgers.get(client);
 	if (ledger === undefined) {
-		ledger = new AutoPresentLedger(client, url);
+		ledger = new AutoPresentLedger(client);
 		ledgers.set(client, ledger);
 	}
 	return ledger;
+};
+
+/**
+ * Start recording what native shows for `client`, whether or not anything
+ * auto-presents. The outermost provider calls it while it renders, so a prompt
+ * the app opens and the person dismisses is remembered before auto-present is
+ * ever turned on. Idempotent: there is one ledger per client, for its lifetime.
+ *
+ * @param client - The client.
+ */
+export const recordConsentPresenter = function recordConsentPresenter(
+	client: ConsentClient
+): void {
+	ledgerFor(client);
 };
 
 /**
@@ -260,7 +283,7 @@ export const presentOwedPrompt = function presentOwedPrompt(
 	client: ConsentClient,
 	privacyPolicyURL: string
 ): Promise<void> {
-	const ledger = ledgerFor(client, privacyPolicyURL);
+	const ledger = ledgerFor(client);
 	ledger.url = privacyPolicyURL;
 	ledger.dispatch({ type: 'trigger' });
 	return ledger.settled;
@@ -279,7 +302,8 @@ export const attachAutoPresent = function attachAutoPresent(
 	client: ConsentClient,
 	privacyPolicyURL: string
 ): () => void {
-	const ledger = ledgerFor(client, privacyPolicyURL);
+	const ledger = ledgerFor(client);
+	ledger.url = privacyPolicyURL;
 	ledger.active += 1;
 	return () => {
 		ledger.active -= 1;

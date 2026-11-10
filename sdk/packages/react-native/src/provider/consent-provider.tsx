@@ -24,6 +24,7 @@ import {
 	attachAutoPresent,
 	linksNativeUI,
 	presentOwedPrompt,
+	recordConsentPresenter,
 	selectOwedPromptKey,
 } from './auto-present';
 import { ConsentClientContext } from './consent-context';
@@ -150,6 +151,11 @@ export const ConsentProvider = ({
 	// speak this protocol is a configuration error, and the app should stop at
 	// the provider rather than render a consent UI over state it cannot trust.
 	const client = useMemo(() => inherited ?? getConsentClient(), [inherited]);
+	// Record what native shows from the first render, before any child effect can
+	// open a session, whether or not this provider presents. Idempotent per client.
+	if (inherited === null) {
+		recordConsentPresenter(client);
+	}
 
 	// Only the outermost provider presents, so a nested one cannot double it. A
 	// binary built without the stock native screens has nothing to present, so it

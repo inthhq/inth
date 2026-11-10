@@ -80,6 +80,61 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 	return { presentation, sessionId, status: value.status };
 };
 
+type SessionListener = (
+	sessionId: string,
+	presentation: 'prompt' | 'preferences'
+) => void;
+
+const sessionListeners = new Set<SessionListener>();
+
+/**
+ * Hear every session an app's own `presentConsentPrompt` or `presentPreferences`
+ * call finds open, with what it shows. The auto-present ledger records them, so
+ * what the person dismissed there counts whether or not auto-present was on.
+ *
+ * @internal
+ * @param listener - Receives the session id and what it shows.
+ * @returns Stop listening.
+ */
+export const onConsentPresenterSession = (
+	listener: SessionListener
+): (() => void) => {
+	sessionListeners.add(listener);
+	return () => {
+		sessionListeners.delete(listener);
+	};
+};
+
+const announce = (
+	session: ConsentPresenterSession,
+	asked: 'prompt' | 'preferences'
+): ConsentPresenterSession => {
+	if (session.sessionId !== null) {
+		// A session an older binary does not name is treated as settings.
+		const shows =
+			session.status === 'presented'
+				? asked
+				: (session.presentation ?? 'preferences');
+		for (const listener of sessionListeners) {
+			listener(session.sessionId, shows);
+		}
+	}
+	return session;
+};
+
+/**
+ * Ask native for the owed prompt without announcing the answer: the
+ * auto-present ledger's own call, which records its answer itself.
+ *
+ * @internal
+ * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
+ * @returns Presentation identity.
+ */
+export const requestConsentPrompt = async (
+	privacyPolicyURL: string
+): Promise<ConsentPresenterSession> =>
+	parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL));
+
 /** Open an owed native prompt on the installed engine.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
  * @returns Presentation identity. Decisions arrive through onConsentPresenterOutcome.
@@ -87,7 +142,7 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 export const presentConsentPrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
-	parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL));
+	announce(await requestConsentPrompt(privacyPolicyURL), 'prompt');
 
 /** Open native standing preferences, including when no prompt is owed.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
@@ -96,7 +151,10 @@ export const presentConsentPrompt = async (
 export const presentPreferences = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
-	parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL));
+	announce(
+		parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
+		'preferences'
+	);
 
 /** Request closing one native session. Dirty drafts require native confirmation.
  * @param sessionId - Identity returned when the session opened. Obsolete IDs do nothing.

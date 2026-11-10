@@ -434,6 +434,75 @@ describe('native failures', () => {
 	});
 });
 
+describe('what the person dismissed, whatever autoPresent was', () => {
+	test('a prompt the app opened and the person dismissed is not presented when auto-present turns on', async () => {
+		const { close, present } = bootFake(owed);
+		const tree = renderTree(
+			<ConsentProvider autoPresent={false}>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		await presentConsentPrompt(URL);
+		close('dismissed');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		tree.rerender(
+			<ConsentProvider privacyPolicyURL={URL}>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		tree.unmount();
+	});
+
+	test('a prompt that opens after the provider turned auto-present off is withdrawn, not dismissed', async () => {
+		const { close, fake, present } = bootFake(owed);
+		let answer: (() => void) | undefined;
+		const native = present.getMockImplementation();
+		if (native === undefined) {
+			throw new Error('the fake presenter has no implementation');
+		}
+		present.mockImplementationOnce(
+			(url: string) =>
+				new Promise<string>((resolve) => {
+					answer = () => {
+						void (native(url) as Promise<string>).then(resolve);
+					};
+				})
+		);
+		const closeSession = vi.fn((_sessionId: string) => {
+			close('dismissed');
+			return Promise.resolve();
+		});
+		fake.closeConsentPresenter = closeSession;
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		// The app turns auto-present off while native is still opening the prompt.
+		tree.rerender(
+			<ConsentProvider autoPresent={false}>
+				<span />
+			</ConsentProvider>
+		);
+		answer?.();
+		await flushPromises();
+		expect(closeSession).toHaveBeenCalledWith('s1');
+
+		// Turned back on, the same owed prompt is presented: nobody dismissed it.
+		tree.rerender(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+});
+
 describe('a binary without the stock native screens', () => {
 	/**
 	 * What a `c15t.nativeUI=false` build's handshake reports. #130 teaches the

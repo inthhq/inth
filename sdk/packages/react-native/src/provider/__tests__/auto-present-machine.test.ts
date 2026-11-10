@@ -49,6 +49,10 @@ const screen = (
 	onScreen: { presentation, sessionId },
 });
 const trigger: AutoPresentInput = { type: 'trigger' };
+const closedS1 = (dismissedKey: string | null) => ({
+	dismissedKey,
+	sessionId: 's1',
+});
 const outcome = (
 	kind: 'committed' | 'acknowledged' | 'dismissed' | 'unavailable',
 	sessionId = 's1'
@@ -267,7 +271,7 @@ describe('cells', () => {
 			facts(screen('s1')),
 			outcome('dismissed'),
 			ctx('A'),
-			{ dismissed: 'A', onScreen: null },
+			{ closed: [closedS1('A')], dismissed: 'A', onScreen: null },
 			[],
 		],
 		[
@@ -275,7 +279,7 @@ describe('cells', () => {
 			facts(screen('s1')),
 			outcome('committed'),
 			ctx(null),
-			{ onScreen: null },
+			{ closed: [closedS1(null)], onScreen: null },
 			[],
 		],
 		[
@@ -283,7 +287,7 @@ describe('cells', () => {
 			facts(screen('s1')),
 			outcome('committed'),
 			ctx('A'),
-			{ ...call('A'), onScreen: null },
+			{ ...call('A'), closed: [closedS1(null)], onScreen: null },
 			['present'],
 		],
 		[
@@ -291,7 +295,7 @@ describe('cells', () => {
 			facts(screen('s1', 'preferences')),
 			outcome('dismissed'),
 			ctx('A'),
-			{ ...call('A'), onScreen: null },
+			{ ...call('A'), closed: [closedS1('A')], onScreen: null },
 			['present'],
 		],
 		[
@@ -300,6 +304,71 @@ describe('cells', () => {
 			outcome('dismissed', 's9'),
 			ctx('A'),
 			{ ...screen('s1'), closed: [{ dismissedKey: 'A', sessionId: 's9' }] },
+			[],
+		],
+		[
+			'a late answer for a session that closed does not revive it',
+			facts({ ...call('A'), closed: [closedS1(null)] }),
+			answer('already-presented', 'preferences', 's1'),
+			ctx('A'),
+			{ ...call('A') },
+			['present'],
+		],
+		[
+			'an unnamed answer keeps what is known of the session',
+			facts({ ...call('A'), ...screen('s1') }),
+			answer('already-presented', undefined, 's1'),
+			ctx('A'),
+			{ inFlight: null },
+			[],
+		],
+		// What the app opens itself, and what happens with no provider presenting.
+		[
+			'a session the app opened is on screen',
+			facts(),
+			{ presentation: 'prompt', sessionId: 's2', type: 'seen' },
+			ctx('A'),
+			screen('s2'),
+			[],
+		],
+		[
+			'dismissed while no provider presents: remembered',
+			facts(screen('s2')),
+			outcome('dismissed', 's2'),
+			ctx('A', { active: false }),
+			{
+				closed: [{ dismissedKey: 'A', sessionId: 's2' }],
+				dismissed: 'A',
+				onScreen: null,
+			},
+			[],
+		],
+		[
+			'dismissed earlier, auto-present turned on: nothing',
+			facts({ dismissed: 'A' }),
+			trigger,
+			ctx('A'),
+			{},
+			[],
+		],
+		[
+			'opened after every presenting provider left: withdrawn',
+			facts(call('A')),
+			answer('shown', 'prompt', 's3'),
+			ctx('A', { active: false }),
+			{ inFlight: null, ...screen('s3'), withdrawn: 's3' },
+			['withdraw'],
+		],
+		[
+			'the withdrawn session closes: not a dismissal',
+			facts({ ...screen('s3'), withdrawn: 's3' }),
+			outcome('dismissed', 's3'),
+			ctx('A', { active: false }),
+			{
+				closed: [{ dismissedKey: null, sessionId: 's3' }],
+				onScreen: null,
+				withdrawn: null,
+			},
 			[],
 		],
 		[
@@ -377,7 +446,9 @@ const EVENTS = [
 	'manual-prompt',
 	'external-dismiss',
 	'opt',
+	'opt',
 	'url',
+	'withdrawn-closes',
 ] as const;
 
 /**
@@ -400,6 +471,8 @@ class Simulation {
 	generation = 0;
 	/** The owed episode the person closed without answering, which stays closed by design. */
 	dismissed: string | null = null;
+	/** A session the ledger asked native to close; native has not closed it yet. */
+	withdrawing: string | null = null;
 	readonly trace: string[] = [];
 	private counter = 1;
 	private readonly next: () => number;
@@ -410,6 +483,11 @@ class Simulation {
 		this.next = random(seed);
 		this.namesSessions = namesSessions;
 		this.build = build;
+		// Start anywhere: auto-present on or off, a prompt owed or not.
+		this.active = this.next() < 0.5;
+		if (this.next() < 0.5) {
+			this.owed = null;
+		}
 	}
 
 	pick<Item>(items: readonly Item[]): Item {
@@ -464,8 +542,17 @@ class Simulation {
 		const result = stepAutoPresent(this.facts, input, this.context());
 		this.facts = result.facts;
 		if (result.effects.includes('present')) {
+			// Property (f): whatever auto-present was when the person dismissed it.
+			if (this.dismissed !== null && this.dismissed === this.episode()) {
+				throw new Error(
+					`a prompt the person dismissed is presented again for the same owed stamp.\n${this.trace.join('\n')}`
+				);
+			}
 			this.calls += 1;
 			this.asked += 1;
+		}
+		if (result.effects.includes('withdraw')) {
+			this.withdrawing = result.facts.withdrawn;
 		}
 	}
 
@@ -494,7 +581,8 @@ class Simulation {
 	/** The person closes what is open. */
 	close(): void {
 		const closed = this.session;
-		if (closed === null) {
+		// Native closes a withdrawn session before the person can act on it.
+		if (closed === null || closed.id === this.withdrawing) {
 			return;
 		}
 		const answered = this.next() < 0.3;
@@ -554,13 +642,35 @@ class Simulation {
 				sessionId: opened.id,
 				type: 'shown',
 			});
+			// Property (g): a prompt opened after every presenting provider left is withdrawn.
+			if (!this.presenting() && this.withdrawing !== opened.id) {
+				throw new Error(
+					`a prompt opened with no provider presenting is kept.\n${this.trace.join('\n')}`
+				);
+			}
 		}
+	}
+
+	/** Native closes the session the ledger withdrew, and reports it like any close. */
+	withdrawnCloses(): void {
+		const open = this.session;
+		if (this.withdrawing === null || open?.id !== this.withdrawing) {
+			this.withdrawing = null;
+			return;
+		}
+		this.session = null;
+		this.withdrawing = null;
+		this.apply({ kind: 'dismissed', sessionId: open.id, type: 'outcome' });
 	}
 
 	/** The session's outcome crosses the bridge before the answer that names it. */
 	late(): void {
 		const pending = this.session;
-		if (this.calls === 0 || pending === null) {
+		if (
+			this.calls === 0 ||
+			pending === null ||
+			pending.id === this.withdrawing
+		) {
 			return;
 		}
 		this.close();
@@ -625,7 +735,12 @@ class Simulation {
 			case 'preferences':
 				// A binary without the stock screens opens nothing.
 				if (this.session === null && this.build === 'linked') {
-					this.open('preferences');
+					const opened = this.open('preferences');
+					this.apply({
+						presentation: 'preferences',
+						sessionId: opened.id,
+						type: 'seen',
+					});
 				}
 				break;
 			case 'manual-prompt':
@@ -634,8 +749,17 @@ class Simulation {
 					this.owed !== null &&
 					this.build === 'linked'
 				) {
-					this.open('prompt');
+					// The app's own presentConsentPrompt, which the ledger hears.
+					const opened = this.open('prompt');
+					this.apply({
+						presentation: 'prompt',
+						sessionId: opened.id,
+						type: 'seen',
+					});
 				}
+				break;
+			case 'withdrawn-closes':
+				this.withdrawnCloses();
 				break;
 			case 'external-dismiss':
 				this.externalDismiss();
