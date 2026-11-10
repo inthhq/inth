@@ -214,17 +214,28 @@ final class AutoPresentTests: XCTestCase {
         XCTAssertFalse(region.contains(inside), "the acknowledged card's bounds take no touches")
     }
 
-    /// The invariant over random sequences: if a choice is owed, auto-present is on, and nothing is
-    /// open, then the person dismissed exactly this owed prompt.
-    func testAnOwedPromptIsNeverLeftUnshownOverRandomSequences() async throws {
-        for seed in 1...60 { try await runSequence(seed: UInt64(seed)) }
+    /// Random sequences of what the app, the person and the core can do, through the shared
+    /// prompt a scene attaches to. After every step: (a) an owed choice with auto-present on and
+    /// nothing open is the one the person dismissed, and an owed notice is visible; (c) with
+    /// auto-present off, a visible notice is one the app asked for in this episode; and the UIKit
+    /// touch region takes touches only while the notice shows.
+    func testOwedPromptsAndNoticesOverRandomSequences() async throws {
+        for fixture in ["category-init.json", "notice-init.json"] {
+            for seed in 1...40 { try await runSequence(seed: UInt64(seed), fixture: fixture) }
+        }
     }
 
-    private func runSequence(seed: UInt64) async throws {
+    private func runSequence(seed: UInt64, fixture: String) async throws {
         var random = SeededRandom(seed: seed)
-        let (core, peer) = try await boot("category-init.json")
-        let presenter = ConsentPresenter(core: core)
+        let (core, peer) = try await boot(fixture)
+        let prompt = ConsentPrompt.shared(for: core)
+        let presenter = prompt.presenter
+        let region = NoticeTouchRegion(hostID: UUID())
+        region.prompt = prompt
+        region.frame = CGRect(x: 0, y: 600, width: 400, height: 200)
+        prompt.attach(region.hostID, active: true, autoPresent: true)
         var dismissed: String?
+        var requested: String?
         var trace: [String] = []
         var policies = 0
         var fingerprint = String(repeating: "a", count: 64)
@@ -236,7 +247,8 @@ final class AutoPresentTests: XCTestCase {
             await core.waitUntilIdle()
             await until { presenter.snapshot.revision == core.snapshot().revision && !presenter.pending }
         }
-        let actions = ["saved", "reset", "policy", "preferences", "manual", "discard", "customize", "accept", "save", "toggle"]
+        let actions = ["saved", "reset", "policy", "preferences", "manual", "discard", "customize", "accept", "save",
+                       "toggle", "dismiss-notice", "acknowledge"]
         for _ in 0..<40 {
             let action = actions[Int(random.next() % UInt64(actions.count))]
             trace.append(action)
@@ -250,7 +262,10 @@ final class AutoPresentTests: XCTestCase {
                 fingerprint = next
                 core.refresh()
             case "preferences": presenter.presentPreferences()
-            case "manual": presenter.presentPrompt()
+            case "manual":
+                let s = core.snapshot()
+                if presenter.presentationID == nil, !presenter.pending, s.promptRequirement.kind == .notice { requested = key() }
+                presenter.presentPrompt()
             case "discard":
                 if presenter.presentationID != nil, !presenter.pending {
                     let closes = !(presenter.preferences && presenter.returnsToFirstLayer)
@@ -265,15 +280,30 @@ final class AutoPresentTests: XCTestCase {
                     presenter.setCategory(.measurement, random.next() % 2 == 0)
                     presenter.commit(.save)
                 }
+            case "dismiss-notice": _ = core.dismissNotice()
+            case "acknowledge": if presenter.noticeVisible { presenter.commit(.acknowledge) }
             default: presenter.autoPresent.toggle()
             }
             await synced()
             let s = core.snapshot()
-            let owed = s.ready && !s.policyPending && s.promptRequirement.kind == .choice
-            if owed, presenter.autoPresent, presenter.presentationID == nil {
-                XCTAssertEqual(dismissed, key(), "seed \(seed): owed prompt left unshown after \(trace)")
+            let ready = s.ready && !s.policyPending
+            let nothingOpen = presenter.presentationID == nil && !presenter.pending
+            let context = "seed \(seed) (\(fixture)) after \(trace)"
+            if ready, s.promptRequirement.kind == .choice, presenter.autoPresent, nothingOpen {
+                XCTAssertEqual(dismissed, key(), "owed prompt left unshown, \(context)")
                 if dismissed != key() { return }
             }
+            if ready, s.promptRequirement.kind == .notice, presenter.autoPresent, nothingOpen {
+                XCTAssertTrue(presenter.noticeVisible, "owed notice not shown, \(context)")
+                if !presenter.noticeVisible { return }
+            }
+            if !presenter.autoPresent, presenter.noticeVisible {
+                XCTAssertEqual(requested, key(), "a notice the app did not ask for shows, \(context)")
+                if requested != key() { return }
+            }
+            let touchable = region.contains(CGPoint(x: 200, y: 700))
+            XCTAssertEqual(touchable, presenter.noticeVisible, "the notice area takes touches only while it shows, \(context)")
+            if touchable != presenter.noticeVisible { return }
         }
     }
 

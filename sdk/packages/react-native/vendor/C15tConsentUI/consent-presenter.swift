@@ -40,17 +40,17 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private var seedCategories: [OptionalConsentCategory: Bool] = [:]
     private var seedChoices = IABChoices()
     private var fromFirstLayer = false
-    /// The owed prompt the person saw and closed. It is not presented again by itself.
+    /// The owed prompt the person saw and closed, by its key. The key carries the core's
+    /// `promptOwedSince`, so a prompt owed again never matches it: nothing has to clear it.
     private var suppressedPrompt: String?
-    /// The open session showed the owed prompt: a first layer, not standing settings. Only
-    /// closing such a session settles the owed prompt; closing settings leaves it owed.
-    private var sessionIsPrompt = false
+    /// The open session shows the owed prompt (its first layer, or settings opened from it), not
+    /// standing settings.
+    private var sessionIsPrompt: Bool { presentationID != nil && (!preferences || fromFirstLayer) }
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
-    /// The owed notice the host asked for while ``autoPresent`` is off. A later notice needs its own request.
+    /// The owed notice the host asked for while ``autoPresent`` is off, by its key. A later notice
+    /// needs its own request.
     @Published private var requestedNotice: String? = nil
-    /// Nothing was owed at some point since the running commit started, which ends that prompt.
-    private var endedSinceCommit = false
     /// Open an owed prompt by itself. Turning it on presents a prompt that is already owed.
     @Published public var autoPresent: Bool {
         didSet { if autoPresent { presentIfOwed() } }
@@ -94,12 +94,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             } else { loadDraft() }
             reloadAfterRefresh = listUnavailable
         }
-        // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
-        if next.promptRequirement.kind == .none {
-            suppressedPrompt = nil
-            requestedNotice = nil
-            endedSinceCommit = true
-        }
         presentIfOwed()
     }
 
@@ -109,7 +103,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         presentationID = UUID()
         preferences = false
         fromFirstLayer = false
-        sessionIsPrompt = true
         errorCode = nil
         failedAction = nil
         loadDraft()
@@ -120,7 +113,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private func closeSession() {
         if sessionIsPrompt { suppressedPrompt = promptKey }
         presentationID = nil
-        sessionIsPrompt = false
         onOutcome?(.dismissed)
         presentIfOwed()
     }
@@ -206,7 +198,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         presentationID = UUID()
         preferences = true
         fromFirstLayer = false
-        sessionIsPrompt = false
         loadDraft()
     }
     /// Open an owed prompt. An owed notice shows as the notice card. Existing sessions keep
@@ -220,7 +211,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         presentationID = UUID()
         preferences = false
         fromFirstLayer = false
-        sessionIsPrompt = true
         loadDraft()
     }
     /// Close only the session the host opened. Dirty drafts still require confirmation.
@@ -323,7 +313,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         let handled = promptKey
         // A notice is shown without a session; a session shows the prompt or standing settings.
         let shownPrompt = session == nil || sessionIsPrompt
-        endedSinceCommit = false
         let authority = core
         let revision = baseRevision
         let categoryDraft = categories
@@ -358,10 +347,8 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             if outcome.0 {
                 errorCode = nil
                 failedAction = nil
-                if shownPrompt { suppressedPrompt = endedSinceCommit ? nil : handled }
+                if shownPrompt { suppressedPrompt = handled }
                 presentationID = nil
-                sessionIsPrompt = false
-                requestedNotice = nil
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
                 else { onAnnouncement?("Privacy choices saved") }
                 onOutcome?(.saved)

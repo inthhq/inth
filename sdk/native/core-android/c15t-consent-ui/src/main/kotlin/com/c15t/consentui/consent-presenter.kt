@@ -49,17 +49,15 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     private var seedCategories: Map<ConsentCategory, Boolean> = emptyMap()
     private var seedChoices = IabChoices()
     private var fromFirst = false
-    /** The owed prompt the person saw and closed. It is not presented again by itself. */
-    private var suppressed: String? = null
     /**
-     * The open session showed the owed prompt: a first layer or a notice, not standing settings.
-     * Only closing such a session settles the owed prompt; closing settings leaves it owed.
+     * The owed prompt the person saw and closed, by its key. The key carries the core's
+     * `promptOwedSince`, so a prompt owed again never matches it: nothing has to clear it.
      */
-    private var sessionIsPrompt = false
-    /** The owed notice the host asked for while [autoPresent] is off. A later notice needs its own request. */
+    private var suppressed: String? = null
+    /** The owed notice the host asked for while [autoPresent] is off, by its key; a later notice needs its own request. */
     private var requestedNotice by mutableStateOf<String?>(null)
-    /** Nothing was owed at some point since the running commit started, which ends that prompt. */
-    private var endedSinceCommit = false
+    /** The open session shows the owed prompt (its first layer, or settings opened from it), not standing settings. */
+    private val sessionIsPrompt get() = presentationID != null && (!preferences || fromFirst)
     private var lastAction: Action? = null
     private var reloadAfterRefresh = false
     // The core holds snapshot observers weakly. This field owns the lambda until close.
@@ -128,18 +126,17 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
             reloadAfterRefresh = listUnavailable
         }
         // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
-        if (!next.promptRequirement.acknowledge && !next.promptRequirement.notice) { suppressed = null; requestedNotice = null; endedSinceCommit = true }
         presentIfOwed()
     }
     private fun presentIfOwed() {
         if (autoPresent && snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.acknowledge && presentationID == null && !pending && suppressed != promptKey) {
-            presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; sessionIsPrompt = true; loadDraft()
+            presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
         }
     }
     /** Open standing privacy settings without replacing an in-flight presentation. */
     fun presentPreferences() {
         if (pending || presentationID != null) return
-        presentationID = UUID.randomUUID().toString(); preferences = true; fromFirst = false; sessionIsPrompt = false; loadDraft()
+        presentationID = UUID.randomUUID().toString(); preferences = true; fromFirst = false; loadDraft()
     }
     /** Open an owed prompt without replacing an existing draft. An owed notice shows as the notice card. */
     fun presentPrompt() {
@@ -148,7 +145,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         if (snapshot.policyPending) return
         if (snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge) { requestedNotice = promptKey; return }
         if (!snapshot.promptRequirement.acknowledge) return
-        presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; sessionIsPrompt = true; loadDraft()
+        presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
     }
     /** An obsolete host close must never dismiss a newer presentation. */
     fun requestClose(sessionID: String) { if (presentationID == sessionID) requestClose() }
@@ -197,7 +194,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
      */
     private fun closeSession(outcome: ConsentPresenterOutcome) {
         if (sessionIsPrompt) suppressed = promptKey
-        presentationID = null; sessionIsPrompt = false
+        presentationID = null
         onOutcome?.invoke(outcome)
         presentIfOwed()
     }
@@ -214,7 +211,6 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
         val handled = promptKey
         // A notice is shown without a session; a session shows the prompt or standing settings.
         val shownPrompt = session == null || sessionIsPrompt
-        endedSinceCommit = false
         val revision = baseRevision
         val categoryDraft = categories.toMap()
         val choiceDraft = choices
@@ -238,7 +234,7 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
             if (presentationID != session) { presentIfOwed(); return@launch }
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; failedAction = null; if (shownPrompt) suppressed = if (endedSinceCommit) null else handled; presentationID = null; sessionIsPrompt = false; requestedNotice = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; if (shownPrompt) suppressed = handled; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
                 // Snapshots that arrived while the commit ran were not acted on; the current one is.
                 presentIfOwed()
             } else {

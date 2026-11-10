@@ -143,18 +143,29 @@ class AutoPresentTest {
      * that never shows.
      */
     @Test fun anOwedPromptIsNeverLeftUnshownOverRandomSequences() {
-        for (seed in 1..150) runSequence(seed)
+        for (seed in 1..150) runSequence(seed, "category-init.json")
     }
 
-    private fun runSequence(seed: Int) {
+    @Test fun anOwedNoticeIsShownExactlyWhenItShouldBeOverRandomSequences() {
+        for (seed in 1..150) runSequence(seed, "notice-init.json")
+    }
+
+    /**
+     * Random sequences of what the app, the person and the core can do. After every step:
+     * (a) an owed choice with auto-present on and nothing open is the one the person dismissed;
+     * an owed notice with auto-present on and nothing open is visible;
+     * (c) with auto-present off, a visible notice is one the app asked for in this episode.
+     */
+    private fun runSequence(seed: Int, fixture: String) {
         val random = java.util.Random(seed.toLong())
-        val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
-            .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
-        var body = fixture
+        val text = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+            .map { File(it, "native/examples/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
+        var body = text
         var policies = 0
         val core = core(fixture, body = { body }).also { it.bootstrap() }
         val p = ConsentPresenter(core)
         var dismissed: String? = null
+        var requested: String? = null
         val trace = mutableListOf<String>()
         fun key(): String {
             val s = core.snapshot()
@@ -164,14 +175,18 @@ class AutoPresentTest {
         val promptOpen = { p.presentationID != null && (!p.preferences || p.returnsToFirstLayer) }
         repeat(60) {
             val action = listOf("saved", "reset", "policy", "preferences", "manual", "discard", "customize",
-                "back", "accept", "save", "toggle").let { it[random.nextInt(it.size)] }
+                "back", "accept", "save", "toggle", "dismiss-notice", "acknowledge").let { it[random.nextInt(it.size)] }
             trace += action
             when (action) {
                 "saved" -> core.save(CommitIntent.All)
                 "reset" -> core.reset()
-                "policy" -> { policies += 1; body = fixture.replace("a".repeat(64), "%064d".format(policies)); core.refresh() }
+                "policy" -> { policies += 1; body = text.replace("a".repeat(64), "%064d".format(policies)); core.refresh() }
                 "preferences" -> p.presentPreferences()
-                "manual" -> p.presentPrompt()
+                "manual" -> {
+                    val s = core.snapshot()
+                    if (p.presentationID == null && !p.pending && s.promptRequirement.notice && !s.promptRequirement.acknowledge) requested = key()
+                    p.presentPrompt()
+                }
                 "discard" -> if (p.presentationID != null && !p.pending) {
                     val closes = !(p.preferences && p.returnsToFirstLayer)
                     if (closes && promptOpen()) dismissed = key()
@@ -184,12 +199,23 @@ class AutoPresentTest {
                     p.setCategory(com.c15t.core.model.ConsentCategory.MEASUREMENT, random.nextBoolean())
                     p.commit(ConsentPresenter.Action.SAVE); settle()
                 }
+                "dismiss-notice" -> core.dismissNotice()
+                "acknowledge" -> if (p.noticeVisible) { p.commit(ConsentPresenter.Action.ACKNOWLEDGE); settle() }
                 "toggle" -> p.autoPresent = !p.autoPresent
             }
             val s = core.snapshot()
-            val owed = s.ready && !s.policyPending && s.promptRequirement.acknowledge
-            if (owed && p.autoPresent && p.presentationID == null && !p.pending) {
-                assertEquals("seed $seed: owed prompt left unshown after ${trace.joinToString()}", dismissed, key())
+            val ready = s.ready && !s.policyPending
+            val owedChoice = ready && s.promptRequirement.acknowledge
+            val owedNotice = ready && s.promptRequirement.notice && !s.promptRequirement.acknowledge
+            val nothingOpen = p.presentationID == null && !p.pending
+            if (owedChoice && p.autoPresent && nothingOpen) {
+                assertEquals("seed $seed ($fixture): owed prompt left unshown after ${trace.joinToString()}", dismissed, key())
+            }
+            if (owedNotice && p.autoPresent && nothingOpen) {
+                assertTrue("seed $seed ($fixture): owed notice not shown after ${trace.joinToString()}", p.noticeVisible)
+            }
+            if (!p.autoPresent && p.noticeVisible) {
+                assertEquals("seed $seed ($fixture): a notice the app did not ask for shows after ${trace.joinToString()}", requested, key())
             }
         }
     }

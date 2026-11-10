@@ -30,13 +30,9 @@ final class C15tConsentHost {
         guard let url = URL(string: privacyPolicyURL), url.scheme == "https", url.host != nil else {
             throw HostError.invalidPrivacyPolicy
         }
-        if sessionID != nil {
-            // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
-            if !preferences { presenter?.presentPrompt() }
-            // A session that shows nothing is over, even if no decision closed it.
-            if !showing { presenter?.onOutcome?(.dismissed) }
-        }
-        if let sessionID {
+        // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
+        if sessionID != nil, !preferences { presenter?.presentPrompt() }
+        if let sessionID = current() {
             return encode(["sessionId": sessionID, "status": "already-presented",
                            "presentation": sessionPreferences ? "preferences" : "prompt"])
         }
@@ -87,13 +83,18 @@ final class C15tConsentHost {
                        "presentation": preferences ? "preferences" : "prompt"])
     }
 
-    private func endIfShowingNothing() {
-        guard sessionID != nil, !showing else { return }
-        presenter?.onOutcome?(.dismissed)
+    /// The open session, derived from what is on screen: a held session that shows nothing (its
+    /// notice was cleared by `dismissNotice()` or a reset, with no decision to close it) is ended
+    /// here with a dismissed outcome, so no request is answered with a session that is not visible.
+    private func current() -> String? {
+        if sessionID != nil, !showing { presenter?.onOutcome?(.dismissed) }
+        return sessionID
     }
 
+    private func endIfShowingNothing() { _ = current() }
+
     func close(sessionID: String) {
-        guard self.sessionID == sessionID, let presenter, !presenter.pending else { return }
+        guard current() == sessionID, let presenter, !presenter.pending else { return }
         presenter.requestClose()
     }
 

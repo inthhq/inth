@@ -38,7 +38,19 @@ object ConsentHost {
         var noticeApplication: Application? = null
         var noticeLifecycle: Application.ActivityLifecycleCallbacks? = null
     }
-    private var active: Session? = null
+    /** The session last opened. Read it through [current], which never returns one that shows nothing. */
+    private var held: Session? = null
+
+    /**
+     * The open session, derived from what is on screen: a held session that shows nothing (its
+     * notice was cleared by `dismissNotice()` or a reset, with no decision to close it) is ended
+     * here with a dismissed outcome, so no request is ever answered with a session that is not
+     * visible.
+     */
+    private fun current(): Session? {
+        held?.takeIf { !it.showing }?.presenter?.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
+        return held
+    }
     private const val NOTICE_SESSION_STATE = "com.c15t.consentui.notice.session"
 
     /** Call on the main thread. Repeated requests reuse the current session and its draft. */
@@ -46,10 +58,8 @@ object ConsentHost {
         val uri = android.net.Uri.parse(privacyPolicyUrl)
         require(uri.scheme == "https" && !uri.host.isNullOrBlank()) { "An HTTPS privacy-policy URL is required" }
         // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
-        active?.takeIf { !preferences }?.presenter?.presentPrompt()
-        // A session that shows nothing is over, even if no decision closed it.
-        active?.takeIf { !it.showing }?.presenter?.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
-        active?.let {
+        held?.takeIf { !preferences }?.presenter?.presentPrompt()
+        current()?.let {
             it.owner = WeakReference(owner)
             it.outcome = outcome
             if (it.notice) {
@@ -82,13 +92,13 @@ object ConsentHost {
         val id = presenter.presentationID ?: UUID.randomUUID().toString()
         val session = Session(id, presenter, store, privacyPolicyUrl, WeakReference(owner), outcome,
             !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge, preferences)
-        active = session
+        held = session
         presenter.onOutcome = { value ->
-            if (active === session) {
+            if (held === session) {
                 val payload = JSONObject().put("sessionId", id).put("revision", core.snapshot().revision)
                     .put("kind", if (value == ConsentPresenterOutcome.DISMISSED) { if (core.snapshot().policyPending) "unavailable" else "dismissed" }
                         else if (session.notice && !presenter.preferences) "acknowledged" else "committed").toString()
-                active = null
+                held = null
                 releaseNotice(session)
                 session.activity.get()?.finish()
                 session.outcome?.invoke(payload)
@@ -100,14 +110,14 @@ object ConsentHost {
         // nothing and with no decision to close it: end it, so its outcome reaches JavaScript.
         presenter.viewModelScope.launch {
             snapshotFlow { session.showing }.collect { showing ->
-                if (!showing && active === session) presenter.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
+                if (!showing && held === session) presenter.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
             }
         }
         try {
             if (session.notice) attachNotice(activity, session)
             else activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", id))
         } catch (error: Exception) {
-            active = null
+            held = null
             releaseNotice(session)
             presenter.onOutcome = null
             store.clear()
@@ -115,11 +125,11 @@ object ConsentHost {
         }
         return result(id, "presented", session.presentation)
     }
-    fun close(sessionID: String) { active?.takeIf { it.id == sessionID }?.presenter?.requestClose() }
+    fun close(sessionID: String) { current()?.takeIf { it.id == sessionID }?.presenter?.requestClose() }
     /** Detach a torn-down JS runtime without cancelling native durable work. */
-    fun detach(owner: Any) { active?.takeIf { it.owner.get() === owner }?.let { it.outcome = null; it.owner.clear() } }
+    fun detach(owner: Any) { held?.takeIf { it.owner.get() === owner }?.let { it.outcome = null; it.owner.clear() } }
     internal fun attach(activity: ConsentHostActivity, id: String?): Boolean {
-        val session = active?.takeIf { it.id == id } ?: return false
+        val session = current()?.takeIf { it.id == id } ?: return false
         session.activity = WeakReference(activity)
         session.launching = false
         activity.setContent { C15tConsent(session.presenter, session.privacyPolicyUrl) }
@@ -143,15 +153,15 @@ object ConsentHost {
         if (session.noticeLifecycle != null) return
         val callbacks = object : Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                if (active === session && savedInstanceState?.getString(NOTICE_SESSION_STATE) == session.id) {
+                if (held === session && savedInstanceState?.getString(NOTICE_SESSION_STATE) == session.id) {
                     session.noticeActivity = WeakReference(activity)
                 }
             }
             override fun onActivityResumed(activity: Activity) {
-                if (active === session && session.noticeActivity.get() === activity) attachNotice(activity, session)
+                if (held === session && session.noticeActivity.get() === activity) attachNotice(activity, session)
             }
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-                if (active === session && session.noticeActivity.get() === activity) {
+                if (held === session && session.noticeActivity.get() === activity) {
                     outState.putString(NOTICE_SESSION_STATE, session.id)
                 }
             }
