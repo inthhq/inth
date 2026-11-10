@@ -10,6 +10,10 @@ export { connectAmplitude } from './amplitude';
 export type { AmplitudeClient } from './amplitude';
 export { connectAppsFlyer } from './appsflyer';
 export type { AppsFlyerClient } from './appsflyer';
+export { connectBranch } from './branch';
+export type { BranchAttribution, BranchClient, BranchOptions } from './branch';
+export { connectBraze } from './braze';
+export type { BrazeClient } from './braze';
 export { connectFirebaseAnalytics } from './firebase-analytics';
 export type {
 	FirebaseAnalyticsClient,
@@ -35,3 +39,5 @@ export { connectPostHog } from './posthog';
 export type { PostHogClient } from './posthog';
 export { connectSentryReplay } from './sentry-replay';
 export type { SentryReplayClient } from './sentry-replay';
+export { connectSingular } from './singular';
+export type { SingularClient } from './singular';

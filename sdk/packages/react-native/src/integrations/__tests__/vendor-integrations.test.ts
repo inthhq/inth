@@ -11,7 +11,10 @@ import {
 	connectAdjust,
 	connectAdMob,
 	connectAppsFlyer,
+	connectBranch,
+	connectBraze,
 	connectMetaAppEvents,
+	connectSingular,
 } from '../index';
 import type { AnalyticsIntegrationOptions, GoogleAdsConsent } from '../index';
 
@@ -150,6 +153,52 @@ const cases: VendorCase[] = [
 		name: 'Meta App Events',
 		withdrawn: ['autoLog:false', 'advertiserId:false', 'ldu:true'],
 	},
+	{
+		connect: (calls, options) =>
+			connectBraze(
+				{
+					disableSDK: () => log(calls, 'disable'),
+					enableSDK: () => log(calls, 'enable'),
+					setGoogleAdsConsent: (consent) => log(calls, `ads:${ads(consent)}`),
+				},
+				options
+			),
+		denied: ['disable'],
+		granted: ['enable', 'ads:true:true:true'],
+		name: 'Braze',
+		withdrawn: ['ads:false:false:false', 'disable'],
+	},
+	{
+		connect: (calls, options) =>
+			connectBranch(
+				{
+					setConsumerProtectionAttributionLevel: (level) =>
+						log(calls, `level:${level}`),
+					setDMAParamsForEEA: (consent) => log(calls, `dma:${ads(consent)}`),
+				},
+				options
+			),
+		denied: ['level:NONE', 'dma:false:false:false'],
+		granted: ['dma:true:true:true', 'level:FULL'],
+		name: 'Branch',
+		withdrawn: ['level:MINIMAL', 'dma:false:false:false'],
+	},
+	{
+		connect: (calls, options) =>
+			connectSingular(
+				{
+					limitDataSharing: (limit) => log(calls, `limit:${limit}`),
+					resumeAllTracking: () => log(calls, 'resume'),
+					stopAllTracking: () => log(calls, 'stop'),
+					trackingOptIn: () => log(calls, 'optIn'),
+				},
+				options
+			),
+		denied: ['stop', 'limit:true'],
+		granted: ['limit:false', 'resume', 'optIn'],
+		name: 'Singular',
+		withdrawn: ['stop', 'limit:true'],
+	},
 ];
 
 const vendor = (name: string): VendorCase => {
@@ -241,6 +290,49 @@ describe('a marketing-only change after a grant', () => {
 		fake.pushSnapshot(grant('measurement', 'marketing'));
 		await settle(calls);
 		expect(calls).toEqual(['sharing:true:true:true']);
+		await integration.disconnect();
+	});
+
+	test('Braze records attributes without enabling again', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('functionality') });
+		const calls: string[] = [];
+		const integration = vendor('Braze').connect(calls, {
+			category: 'functionality',
+			onError: vi.fn(),
+		});
+		await integration.ready;
+		expect(calls.splice(0)).toEqual(['enable', 'ads:false:false:false']);
+		fake.pushSnapshot(grant('functionality', 'marketing'));
+		await settle(calls);
+		expect(calls.splice(0)).toEqual(['ads:true:true:true']);
+		await integration.disconnect();
+		expect(calls).toEqual(['disable']);
+	});
+
+	test('Branch raises measurement-only attribution to full', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('measurement') });
+		const calls: string[] = [];
+		const integration = vendor('Branch').connect(calls, { onError: vi.fn() });
+		await integration.ready;
+		expect(calls.splice(0)).toEqual(['level:MINIMAL', 'dma:false:false:false']);
+		fake.pushSnapshot(grant('measurement', 'marketing'));
+		await settle(calls);
+		expect(calls).toEqual(['dma:true:true:true', 'level:FULL']);
+		await integration.disconnect();
+	});
+
+	test('Singular changes only the sharing limit', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('measurement') });
+		const calls: string[] = [];
+		const integration = vendor('Singular').connect(calls, {
+			category: 'measurement',
+			onError: vi.fn(),
+		});
+		await integration.ready;
+		expect(calls.splice(0)).toEqual(['limit:true', 'resume', 'optIn']);
+		fake.pushSnapshot(grant('measurement', 'marketing'));
+		await settle(calls);
+		expect(calls).toEqual(['limit:false']);
 		await integration.disconnect();
 	});
 });
