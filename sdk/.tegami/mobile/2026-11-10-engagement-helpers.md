@@ -15,8 +15,9 @@ packages:
   Braze guide explains how to clear them.
 - Branch sets its attribution level from marketing and measurement, and sends
   DMA parameters. Deep links keep working at every level.
-- Singular stops all tracking until its category is granted, then resumes,
-  opts in and limits data sharing from marketing.
+- Singular is started by the helper on the first grant, because it ignores
+  privacy calls before initialization. It then resumes, opts in and limits
+  data sharing from marketing, and stops all tracking on withdrawal.
 - Amplitude's opt-out follows measurement, matching the React Native helper.
 
 Amplitude reads `optOut` on its own queue, so an event tracked at the moment

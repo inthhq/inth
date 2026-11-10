@@ -189,13 +189,15 @@ const cases: VendorCase[] = [
 				{
 					limitDataSharing: (limit) => log(calls, `limit:${limit}`),
 					resumeAllTracking: () => log(calls, 'resume'),
+					start: (limit) => log(calls, `start:${limit}`),
 					stopAllTracking: () => log(calls, 'stop'),
 					trackingOptIn: () => log(calls, 'optIn'),
 				},
 				options
 			),
-		denied: ['stop', 'limit:true'],
-		granted: ['limit:false', 'resume', 'optIn'],
+		// Singular is not started before the first grant, so nothing is called.
+		denied: [],
+		granted: ['start:false', 'limit:false', 'resume', 'optIn'],
 		name: 'Singular',
 		withdrawn: ['stop', 'limit:true'],
 	},
@@ -333,7 +335,12 @@ describe('a marketing-only change after a grant', () => {
 			onError: vi.fn(),
 		});
 		await integration.ready;
-		expect(calls.splice(0)).toEqual(['limit:true', 'resume', 'optIn']);
+		expect(calls.splice(0)).toEqual([
+			'start:true',
+			'limit:true',
+			'resume',
+			'optIn',
+		]);
 		fake.pushSnapshot(grant('measurement', 'marketing'));
 		await settle(calls);
 		expect(calls).toEqual(['limit:false']);
@@ -476,6 +483,7 @@ describe('Braze, Singular and Branch withdrawal survives a failing vendor call',
 			{
 				limitDataSharing: (limit) => log(calls, `limit:${limit}`),
 				resumeAllTracking: () => log(calls, 'resume'),
+				start: (limit) => log(calls, `start:${limit}`),
 				stopAllTracking: () =>
 					failStop ? Promise.reject(failure) : log(calls, 'stop'),
 				trackingOptIn: () => log(calls, 'optIn'),

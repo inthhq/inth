@@ -82,22 +82,29 @@ final class EngagementIntegrationTests: XCTestCase {
 
     // MARK: Singular
 
-    func testSingularStopsWhilePendingAndOnCancel() {
+    func testSingularNeverStartsOrIsCalledWhileConsentWasNeverGranted() async throws {
         let calls = VendorCalls()
         singular(ConsentCore(), calls).cancel()
-        XCTAssertEqual(calls.all, ["stop", "limit:true", "stop", "limit:true"])
+        let core = try await resolvedCore()
+        let integration = singular(core, calls)
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        integration.cancel()
+        XCTAssertEqual(calls.all, [], "Singular's privacy calls need a started SDK, so none are made")
+        await core.waitUntilIdle()
     }
 
-    func testSingularOptsInOncePerGrantAndStopsOnWithdrawal() async throws {
+    func testSingularStartsOnceOnTheFirstGrantThenOptsInAndStopsOnWithdrawal() async throws {
         let core = try await resolvedCore()
         let calls = VendorCalls()
         let integration = singular(core, calls)
-        calls.drain()
         XCTAssertEqual(core.save(.all).status, .committed)
-        XCTAssertEqual(calls.drain(), ["limit:false", "resume", "optIn"])
+        XCTAssertEqual(calls.drain(), ["start:false", "limit:false", "resume", "optIn"])
         XCTAssertEqual(core.save(.necessary).status, .committed)
         XCTAssertEqual(calls.drain(), ["stop", "limit:true"])
+        XCTAssertEqual(core.save(.all).status, .committed)
+        XCTAssertEqual(calls.drain(), ["limit:false", "resume", "optIn"], "Singular starts once per process")
         integration.cancel()
+        XCTAssertEqual(calls.drain(), ["stop", "limit:true"])
         await core.waitUntilIdle()
     }
 
@@ -106,7 +113,7 @@ final class EngagementIntegrationTests: XCTestCase {
         let calls = VendorCalls()
         let integration = singular(core, calls, category: .measurement)
         XCTAssertEqual(core.save(.custom([.measurement: true])).status, .committed)
-        XCTAssertEqual(calls.drain(), ["stop", "limit:true", "limit:true", "resume", "optIn"])
+        XCTAssertEqual(calls.drain(), ["start:true", "limit:true", "resume", "optIn"])
         XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
         XCTAssertEqual(calls.drain(), ["limit:false"])
         XCTAssertEqual(core.save(.custom([.marketing: false])).status, .committed)
@@ -156,6 +163,7 @@ final class EngagementIntegrationTests: XCTestCase {
         SingularIntegration(
             core: core,
             category: category,
+            start: { calls.append("start:\($0)") },
             limitDataSharing: { calls.append("limit:\($0)") },
             stopAllTracking: { calls.append("stop") },
             resumeAllTracking: { calls.append("resume") },

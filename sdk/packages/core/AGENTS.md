@@ -150,7 +150,7 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Segment](./docs/integrations/segment.md): Load Segment Analytics.js only after measurement consent with the c15t segment helper, guard your own track and identify calls, and check it in DevTools.
 - [Sentry](./docs/integrations/sentry.md): Configure consent for Sentry error monitoring, user data and Session Replay on the web, and manual replay in Swift, Kotlin, React Native and Expo.
 - [Shopify](./docs/integrations/shopify.md): Send c15t consent to Shopify's Customer Privacy API from a Hydrogen storefront, so Shopify analytics wait for the visitor's choice and follow each later change.
-- [Singular](./docs/integrations/singular.md): Stop and resume Singular tracking and set its data-sharing limit from c15t consent in Swift, Kotlin, React Native and Expo, with Google's DMA signals passed through Singular.
+- [Singular](./docs/integrations/singular.md): Start Singular only after c15t consent allows it, then stop, resume and limit its data sharing in Swift, Kotlin, React Native and Expo, with Google's DMA signals passed through Singular.
 - [Snapchat Pixel](./docs/integrations/snapchat-pixel.md): Load the Snapchat Pixel only after marketing consent with the c15t snapchatPixel helper, guard snaptr event calls, and check it in DevTools.
 - [Statable](./docs/integrations/statable-analytics.md): Load Statable analytics after measurement consent with the c15t statableAnalytics helper, configure its ingestion endpoint, and verify requests and browser storage.
 - [The Trade Desk](./docs/integrations/the-trade-desk.md): Load The Trade Desk with c15t after marketing consent and verify its loader, storage and revocation behavior.

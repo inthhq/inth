@@ -136,6 +136,7 @@ class BranchIntegrationTest {
 class SingularIntegrationTest {
 	private fun singular(core: ConsentCore, calls: MutableList<String>, category: ConsentCategory = MARKETING) =
 		SingularIntegration(core, category,
+			start = { calls += "start:$it" },
 			limitDataSharing = { calls += "limit:$it" },
 			stopAllTracking = { calls += "stop" },
 			resumeAllTracking = { calls += "resume" },
@@ -144,23 +145,29 @@ class SingularIntegrationTest {
 		)
 
 	@Test
-	fun `stops while pending and on close`() {
+	fun `never starts or calls Singular while consent was never granted`() {
 		val calls = mutableListOf<String>()
 		singular(kernel(online = false), calls).close()
-		assertEquals(listOf("stop", "limit:true", "stop", "limit:true"), calls)
+		val core = kernel()
+		val integration = singular(core, calls)
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		integration.close()
+		assertEquals("Singular ignores privacy calls before init, so none are made", emptyList<String>(), calls)
 	}
 
 	@Test
-	fun `a grant opts in once and withdrawal stops`() {
+	fun `the first grant starts Singular with the limit, then opts in, and withdrawal stops`() {
 		val core = kernel()
 		val calls = mutableListOf<String>()
 		val integration = singular(core, calls)
-		calls.clear()
 		assertTrue(core.save(CommitIntent.All).ok)
-		assertEquals(listOf("limit:false", "resume", "optIn"), calls.drain())
+		assertEquals(listOf("start:false", "limit:false", "resume", "optIn"), calls.drain())
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertEquals(listOf("stop", "limit:true"), calls.drain())
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertEquals("Singular starts once per process", listOf("limit:false", "resume", "optIn"), calls.drain())
 		integration.close()
+		assertEquals(listOf("stop", "limit:true"), calls)
 	}
 
 	@Test
@@ -170,6 +177,7 @@ class SingularIntegrationTest {
 		val failures = mutableListOf<Exception>()
 		var failStop = false
 		val integration = SingularIntegration(core,
+			start = { calls += "start:$it" },
 			limitDataSharing = { calls += "limit:$it" },
 			stopAllTracking = {
 				if (failStop) error("Singular rejected stop")
@@ -195,7 +203,7 @@ class SingularIntegrationTest {
 		val calls = mutableListOf<String>()
 		val integration = singular(core, calls, MEASUREMENT)
 		core.choose(MEASUREMENT to true)
-		assertEquals(listOf("stop", "limit:true", "limit:true", "resume", "optIn"), calls.drain())
+		assertEquals(listOf("start:true", "limit:true", "resume", "optIn"), calls.drain())
 		core.choose(MEASUREMENT to true, MARKETING to true)
 		assertEquals(listOf("limit:false"), calls.drain())
 		core.choose(MARKETING to false)
