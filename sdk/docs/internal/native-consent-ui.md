@@ -31,19 +31,33 @@ Current simulator and emulator runs do not validate either minimum OS.
 
 ## Attach the optional UI
 
-On Apple platforms, install the engine once with `C15tApple.install`, away from
-the main actor because installation verifies durable storage. Keep a
-`C15tConsentUI.ConsentPresenter(core:)` in the host's state for its lifetime.
-Apply `c15tConsent(presenter:privacyPolicyURL:)` to the SwiftUI root. Call
-`presentPreferences()` from the app's standing Privacy settings entry. The
-compiled reference is `ios/Sources/consent-demo-app.swift`.
+Each platform has a one-call entry point that attaches to the installed core
+through a shared `ConsentPrompt`, one per core. The prompt holds a single
+presenter, so every scene, Activity or composable that attaches shares one open
+session and one draft. Only one attached host draws it: the first, or a
+foreground host when the one drawing it goes to the background. With
+`autoPresent` on, the default, the presenter opens an owed prompt once the core
+is ready, once per owed prompt. `ConsentPrompt.onFinished` reports each closed
+session with its outcome, which is where a follow-up step such as Apple's
+tracking request attaches.
 
-On Android, install with `C15tAndroid.install`, then attach a
-`com.c15t.consentui.ConsentPresenter` to that same `ConsentCore`. Keep the presenter
-in a `ViewModelStore` so it survives activity recreation. Place
-`C15tConsent(presenter, privacyPolicyUrl)` beside the host's content. Call
-`presentPreferences()` from Privacy settings. The compiled reference is
-`android/src/main/kotlin/com/c15t/demo/consent-demo-activity.kt`.
+On Apple platforms, apply `.c15tConsent(configuration, privacyPolicyURL:)` to the
+SwiftUI root, or make `ConsentRootViewController` the UIKit window root. Both
+install the engine on first appearance and retry after protected data becomes
+available. `.c15tConsent(privacyPolicyURL:)` attaches to a core the app
+installed itself. Call `ConsentPrompt.current?.presentPreferences()` from the
+app's standing Privacy settings entry. An app that needs its own presenter
+lifetime can still keep a `ConsentPresenter(core:)` and apply
+`c15tConsent(presenter:privacyPolicyURL:)`, as
+`ios/Sources/consent-demo-app.swift` does.
+
+On Android, install with `C15tAndroid.install`, then place
+`C15tConsent(privacyPolicyUrl = ...)` beside the host's Compose content, or call
+`attachConsent(privacyPolicyUrl)` from an Activity after `setContentView`. Call
+`ConsentPrompt.of(core).presentPreferences()` from Privacy settings. An app that
+retains its own `ConsentPresenter` can still render
+`C15tConsent(presenter, privacyPolicyUrl)`, as
+`android/src/main/kotlin/com/c15t/demo/consent-demo-activity.kt` does.
 
 Both presenters own drafts, search, navigation and native commits. Accept all
 and Reject all call core intents. Save choices submits the displayed draft with
@@ -310,6 +324,13 @@ The private RN package includes the same SwiftUI and Compose presenters. The
 bare RN and Expo examples use these screens when the native core is installed.
 Their explicit fake mode retains the existing JavaScript demo. Headless hooks
 and custom UI remain available.
+
+`ConsentProvider` presents the owed prompt by itself through
+`presentConsentPrompt`, once per owed prompt, unless the app passes
+`autoPresent={false}`. Its ledger is keyed by client, so strict mode, remounts
+and nested providers make one call; the native host answers any racing call
+with `already-presented`. The bare RN and Expo fixtures pass
+`autoPresent={false}` because they draw the JavaScript banner.
 
 Subscribe with `onConsentPresenterOutcome` before calling
 `presentConsentPrompt(privacyPolicyURL)` or `presentPreferences(privacyPolicyURL)`.

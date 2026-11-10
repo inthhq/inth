@@ -18,13 +18,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.c15t.android.C15tAndroid
 import com.c15t.android.decisionFlow
 import com.c15t.consentui.C15tConsent
-import com.c15t.consentui.ConsentPresenter
+import com.c15t.consentui.ConsentPrompt
+import com.c15t.consentui.attachConsent
 import com.c15t.core.C15t
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.ConsentCategory

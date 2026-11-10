@@ -12,10 +12,21 @@ engine keeps the policy, saved choices and SDK permissions.
 
 Complete [Expo](/docs/frameworks/react-native/expo) or
 [bare RN setup](/docs/frameworks/react-native/bare), then keep one
-`ConsentProvider` above your app. You can omit the quickstart's `PrivacyEntry` if
-your app owns both the initial prompt and the standing settings screen.
-Without `PrivacyEntry`, your custom flow is responsible for showing an owed
-prompt and keeping preferences reachable.
+`ConsentProvider` above your app. If your app owns both the initial prompt and
+the standing settings screen, pass `autoPresent={false}` so the provider does
+not present the native prompt:
+
+{/* example: fragment */}
+
+```tsx
+<ConsentProvider autoPresent={false}>
+	<App />
+</ConsentProvider>;
+```
+
+Your custom flow is then responsible for showing an owed prompt and keeping
+preferences reachable. `presentConsentPrompt` and `presentPreferences` still
+open the native screens when you call them.
 
 Headless hooks are included in `@c15t/react-native`. The package still links
 the stock native UI. A separate UI-free RN distribution is deferred; see

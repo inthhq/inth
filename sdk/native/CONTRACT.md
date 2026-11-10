@@ -365,6 +365,44 @@ with kotlinx-coroutines through `androidx.lifecycle`, so the flows add no runtim
 dependency. `ConsentCore.refresh(onComplete)` is the core-side hook `awaitRefresh`
 suspends on.
 
+Presenting the consent prompt
+-----------------------------
+
+The stock UI presents an owed prompt by itself. It is on by default on every
+platform, and each one offers the same opt-out:
+
+    React Native   <ConsentProvider privacyPolicyURL="https://...">     autoPresent={false}
+    SwiftUI        view.c15tConsent(configuration, privacyPolicyURL:)  autoPresent: false
+                   view.c15tConsent(privacyPolicyURL:)                 (core already installed)
+    UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
+    Compose        C15tConsent(privacyPolicyUrl = "https://...")       autoPresent = false
+    Activity       activity.attachConsent("https://...")               autoPresent = false
+
+The rules, identical on all three:
+
+- **Wait for an answer.** Nothing presents until `ready` is true and
+  `policyPending` is false, whatever supplied the policy: hosted init, a bundled
+  resource or a policy in code.
+- **One owed prompt, one presentation.** An owed prompt is named by the matched
+  policy fingerprint, the requirement's kind and its reason. A prompt the subject
+  answered or dismissed is not presented again under the same name. A new policy
+  (`policy-changed`), an expired choice (`expired`) or a requirement that went to
+  `none` and came back presents again.
+- **Never two at once.** Swift and Kotlin keep one `ConsentPrompt` per core with a
+  single `ConsentPresenter`; every scene, Activity or composable that attaches
+  shares its session and draft, and only one attached host draws it: the first,
+  or a foreground host when the one drawing it is in the background. React
+  Native keeps one ledger per client, so strict mode, remounts and nested
+  providers call native once, and the native host answers any racing call with
+  `already-presented`.
+- **Opting out changes nothing else.** With auto-present off, an owed notice is
+  held back too. `presentPrompt`/`presentConsentPrompt` and
+  `presentPreferences` work as they did before.
+
+`ConsentPrompt.onFinished` (Swift and Kotlin) and `onConsentPresenterOutcome`
+(React Native) report each closed session with its outcome. A step that must
+follow the prompt, such as Apple's tracking request, attaches there.
+
 Native SDK gating
 -----------------
 

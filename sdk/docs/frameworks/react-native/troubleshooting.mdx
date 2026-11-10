@@ -53,8 +53,8 @@ not point to a sibling monorepo checkout. Do not add a second standalone
 
 Mount one `ConsentProvider` above every component that calls a consent hook. Keep
 it above app navigation, including a settings screen that opens later. The
-[quickstart root](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings)
-shows the file layout.
+[quickstart](/docs/frameworks/react-native/quickstart#add-the-consent-provider)
+shows where it goes.
 
 The provider attaches to the native engine. Adding it does not replace the
 native backend configuration.
@@ -68,7 +68,7 @@ Check `useConsentStatus()` and the current snapshot:
 | `ready` is false | Native hydration has not completed. Inspect protected-storage and installation errors. |
 | `policyPending` is true | Check the backend URL, network result and embedded policy resource. |
 | `promptRequirement.kind` is `none` | No interaction is owed. A valid saved choice or a nonprompting policy can make this expected. Use Privacy settings to reopen preferences. |
-| A choice is owed but no screen opens | Confirm the prompt effect is mounted, inspect the presenter command error and supply an HTTPS privacy-policy URL. |
+| A choice is owed but no screen opens | Confirm the outermost `ConsentProvider` has `privacyPolicyURL` and no `autoPresent={false}`. A dismissed prompt stays closed until the requirement changes; use Privacy settings to reopen it. With `autoPresent={false}`, inspect the error from your `presentConsentPrompt` call. |
 
 A `not-bootstrapped` error usually means native installation was disabled or
 never configured. Check launch metadata and `autoBootstrap` before adding

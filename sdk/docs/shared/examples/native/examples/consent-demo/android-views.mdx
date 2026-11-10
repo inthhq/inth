@@ -1,0 +1,13 @@
+{/* Generated from native/examples/consent-demo/android/src/main/kotlin/com/c15t/demo/documentation.kt (docs:android-views) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```kotlin title="SettingsActivity.kt"
+class SettingsActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val privacySettings = android.widget.Button(this).apply { text = "Privacy settings" }
+        setContentView(privacySettings)
+        val consent = attachConsent("https://your-app.example/privacy")
+        privacySettings.setOnClickListener { consent.presentPreferences() }
+    }
+}
+```

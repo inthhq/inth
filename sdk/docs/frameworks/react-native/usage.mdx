@@ -53,22 +53,25 @@ queued delivery and reconnects.
 
 ## Open the native screens
 
-Both functions take your app's HTTPS privacy-policy URL:
+`ConsentProvider` presents the initial prompt by itself when one is owed. Call
+these functions for anything else, such as a Privacy settings button, or for
+the initial prompt when you pass `autoPresent={false}`. Both take your app's
+HTTPS privacy-policy URL:
 
 | Function | Opens |
 | --- | --- |
 | `presentConsentPrompt(privacyPolicyURL)` | The initial native prompt, only when the policy requires an interaction. |
 | `presentPreferences(privacyPolicyURL)` | Standing privacy settings, including when the initial prompt is already answered. |
 
-Use the [quickstart's complete root](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings)
-for the imports, effect, result subscription and settings button.
+The [quickstart](/docs/frameworks/react-native/quickstart#keep-privacy-settings-reachable)
+shows a settings button.
 
 The returned `ConsentPresenterSession` describes presentation:
 
 | `status` | Meaning |
 | --- | --- |
 | `presented` | A native session opened. |
-| `already-presented` | A session is already open; repeated requests reuse it. |
+| `already-presented` | A session is already open, for example the one the provider presented. Repeated requests reuse it. |
 | `not-required` | No prompt is owed. `sessionId` is null. |
 
 Opening a screen is separate from saving a choice. Subscribe with

@@ -65,29 +65,44 @@ to that installed engine after JavaScript starts.
 Complete the setup for each platform you ship, then return here. Native
 configuration changes require a new app binary.
 
-## Add the consent provider and privacy settings
+## Add the consent provider
 
-Create `setup.tsx` beside `App.tsx`. This component attaches the provider,
-opens the native prompt when the policy asks for one, and leaves a Privacy
-settings button available after the prompt closes:
-
-<include src="../../shared/examples/react-native-bare/native-root.mdx" />
-
-`PrivacyEntry` subscribes to the result before opening a screen. The native
-presenter handles the choices, navigation, saving and retry UI. React receives
-the final outcome and the updated consent snapshot.
-
-Keep one provider mounted above your app navigation. Render your app inside
-`PrivacyApp` in `App.tsx`:
+Wrap your app in `ConsentProvider` in `App.tsx` and pass your privacy-policy
+URL. The provider presents the native consent prompt when the policy asks for
+one:
 
 <include src="../../shared/examples/react-native-bare/app-entry.mdx" />
 
-Replace `https://example.com/privacy` with your app's privacy policy. Move the
-Privacy settings button into your settings screen if you prefer, keeping it
-under the provider and reachable after the first prompt.
+The provider waits until the native core has restored saved choices and
+resolved the policy. It presents the prompt once per owed prompt. A stored
+choice that is still valid shows nothing. A new policy or an expired choice
+presents it again on the next launch or refresh. The native presenter handles
+choices, navigation, saving and retry. React receives the updated consent
+snapshot.
+
+Replace `https://example.com/privacy` with your app's privacy policy. The
+prompt links to it, so it must be an HTTPS URL; the provider throws on render
+if it is missing.
+
+Keep one provider mounted above your app navigation. A nested provider reuses
+the outer one and never presents a second prompt.
+
+## Keep privacy settings reachable
+
+People must be able to change their choice after the first prompt closes.
+Create `setup.tsx` with a button that opens the native privacy settings:
+
+<include src="../../shared/examples/react-native-bare/native-root.mdx" />
+
+Move the button into your settings screen if you prefer. It works anywhere
+under the provider.
 
 You do not need to mount `ConsentBanner` or `ConsentDialog` with this setup.
-`presentConsentPrompt` and `presentPreferences` open the native screens.
+If you render them, or build your own prompt with the
+[headless APIs](/docs/frameworks/react-native/headless), pass
+`autoPresent={false}` so the provider does not also present the native one.
+`presentConsentPrompt` and `presentPreferences` keep working with
+`autoPresent={false}`.
 
 ## Gate analytics and other optional work
 
@@ -99,7 +114,7 @@ and calls your cleanup function when permission closes:
 <include src="../../shared/examples/react-native-bare/headless-gate.mdx" />
 
 Pass a stable `start` function that returns the vendor's actual stop or disable
-operation. Mount the hook under `PrivacyApp`. The tracking variant is only for
+operation. Mount the hook under `ConsentProvider`. The tracking variant is only for
 a feature that also needs Apple's tracking authorization.
 
 Native analytics and advertising initializers can run before React. Put those

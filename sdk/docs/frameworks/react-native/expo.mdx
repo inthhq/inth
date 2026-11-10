@@ -68,14 +68,14 @@ Plugin and Kotlin setup. Do not lower a higher host SDK setting.
 ## Add the React root
 
 Create `setup.tsx` at the project root using the
-[quickstart's provider and privacy-settings example](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings).
+[quickstart's privacy-settings button](/docs/frameworks/react-native/quickstart#keep-privacy-settings-reachable).
 Keep this file outside the Expo Router route directory.
 
 For an app whose entry point is `App.tsx`, use the quickstart's `App.tsx`
 example directly.
 
-For Expo Router, change your existing root layout instead. Import `PrivacyApp`
-from `../setup` in `app/_layout.tsx`, or from `../../setup` in
+For Expo Router, change your existing root layout instead. Import
+`ConsentProvider` from `@c15t/react-native` in `app/_layout.tsx` or
 `src/app/_layout.tsx`. Wrap the existing `Stack` or `Slot` in that layout,
 keeping your other providers and navigation configuration. For example, this
 fragment wraps an existing `Stack`:
@@ -84,9 +84,9 @@ fragment wraps an existing `Stack`:
 
 ```tsx
 return (
-	<PrivacyApp privacyPolicyURL="https://example.com/privacy">
+	<ConsentProvider privacyPolicyURL="https://example.com/privacy">
 		<Stack />
-	</PrivacyApp>
+	</ConsentProvider>
 );
 ```
 
