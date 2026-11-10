@@ -81,6 +81,28 @@ Declare `xmlns:tools="http://schemas.android.com/tools"` on the manifest root
 when using this override. Disabling c15t's initializer does not disable vendor
 initializers. Configure each optional SDK's startup separately.
 
+## Use your own transport
+
+Pass a `C15tTransport` to `C15tAndroid.install` when requests must go through
+your own networking stack or proxy. The installer still supplies protected
+storage and foreground and reconnect handling. Only the requests change.
+
+{/* example: fragment */}
+
+```kotlin
+C15tAndroid.install(
+	context,
+	NativeConfig(backendUrl = "https://your-project.inth.app"),
+	transport = MyConsentTransport(),
+)
+```
+
+Your transport implements `init`, `save` and `identify`, and can override
+`logout`. Send each queued save body byte for byte: the core stored those bytes
+before delivery, so a retry must not rewrite them. In a React Native app, set
+`com.c15t.reactnative.AUTO_BOOTSTRAP` to `false` and install this way before the
+React host starts.
+
 ## Native configuration reference
 
 | Setting | Purpose |

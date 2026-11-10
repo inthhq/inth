@@ -10,6 +10,7 @@ import {
 	MOBILE_CATEGORIES,
 	planNativeSetup,
 	planReactNativeSetup,
+	UNKNOWN_ROOT_COMPONENT,
 } from './scaffold';
 import type {
 	MobileCategory,
@@ -80,21 +81,44 @@ const clackPrompts: MobilePrompts = {
 const text = (value: unknown): string | undefined =>
 	typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 
-/** An HTTPS URL, or plain HTTP on a loopback host, without a trailing slash. */
-const readURL = (value: string, flag: string): string => {
+/**
+ * A URL the Expo config plugin will accept, trimmed and without a trailing slash, or
+ * `null`.
+ *
+ * Mirrors `parseURL` and `normalizeURL` in
+ * `packages/react-native/src/expo-plugin/params.ts`: https, or plain http on a
+ * loopback host, and no credentials, query or fragment. The plugin refuses anything
+ * else at prebuild, so setup refuses it first rather than write an `app.json` that
+ * cannot build. `mobile-setup.test.ts` runs both on one table of cases.
+ */
+export const normalizeMobileURL = (value: string): string | null => {
 	let url: URL;
 	try {
-		url = new URL(value);
+		url = new URL(value.trim());
 	} catch {
-		throw new CliError('FLAG_INVALID', { details: `${flag} must be a URL.` });
+		return null;
 	}
 	const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
 	if (url.protocol !== 'https:' && !(url.protocol === 'http:' && loopback)) {
+		return null;
+	}
+	if (url.username !== '' || url.password !== '') {
+		return null;
+	}
+	if (url.search !== '' || url.hash !== '') {
+		return null;
+	}
+	return value.trim().replace(/\/+$/u, '');
+};
+
+const readURL = (value: string, flag: string): string => {
+	const url = normalizeMobileURL(value);
+	if (url === null) {
 		throw new CliError('FLAG_INVALID', {
-			details: `${flag} must use https, or http on a loopback host.`,
+			details: `${flag} must be an https URL without credentials, a query or a fragment, or plain http on a loopback host.`,
 		});
 	}
-	return value.replace(/\/+$/u, '');
+	return url;
 };
 
 const readCategories = (values: readonly string[]): MobileCategory[] => {
@@ -301,7 +325,7 @@ export const readProjectFiles = async (
 			'App.tsx',
 			'App.jsx',
 			'App.js',
-		])) ?? 'your root component';
+		])) ?? UNKNOWN_ROOT_COMPONENT;
 	return {
 		appJson:
 			project.kind === 'expo'

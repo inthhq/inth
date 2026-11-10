@@ -7,6 +7,8 @@
  * never edits an Xcode project, a Gradle file or a native manifest.
  */
 
+import path from 'node:path';
+
 import type { NativePlatform, ReactNativeProject } from './detect';
 
 /** The plugin's specifier, as `app.json` names it. */
@@ -287,8 +289,34 @@ const installStep = (project: ReactNativeProject, files: ProjectFiles) =>
 				`Install the @c15t/react-native tarball your maintainer supplied (the mobile SDK is a private prerelease): ${files.installCommand} /absolute/path/to/c15t-react-native.tgz`,
 			];
 
+/** No root component was found, so the step names the provider by its project path. */
+export const UNKNOWN_ROOT_COMPONENT = 'your root component';
+
+/**
+ * The specifier the root component imports the provider with.
+ *
+ * Relative to the root component's own directory, so `app/_layout.tsx` imports
+ * `../c15t/privacy-app`, not the project-root path it would otherwise be given.
+ */
+export const providerImport = (
+	rootComponent: string,
+	providerFile: string
+): string => {
+	const target = providerFile.replace(/\.[jt]sx$/u, '');
+	if (rootComponent === UNKNOWN_ROOT_COMPONENT) {
+		return `./${target}`;
+	}
+	const relative = path.posix.relative(
+		path.posix.dirname(rootComponent),
+		target
+	);
+	return relative.startsWith('.') ? relative : `./${relative}`;
+};
+
 const wrapStep = (files: ProjectFiles, providerFile: string, url: string) =>
-	`Render your app inside <PrivacyApp privacyPolicyURL="${url}"> from ./${providerFile.replace(/\.[jt]sx$/u, '')}, once, in ${files.rootComponent}.`;
+	files.rootComponent === UNKNOWN_ROOT_COMPONENT
+		? `Render your app inside <PrivacyApp privacyPolicyURL="${url}">, once, in your root component. It is exported from ${providerFile}.`
+		: `Render your app inside <PrivacyApp privacyPolicyURL="${url}">, once, in ${files.rootComponent}: import { PrivacyApp } from '${providerImport(files.rootComponent, providerFile)}';`;
 
 /**
  * Plan the setup for an Expo or bare React Native app.
@@ -372,6 +400,89 @@ export const planReactNativeSetup = (
 	return { files: planned, skipped, steps };
 };
 
+const kotlinCategories = (categories: readonly MobileCategory[]): string =>
+	categories
+		.map((category) => `ConsentCategory.${category.toUpperCase()}`)
+		.join(', ');
+
+const swiftCategories = (categories: readonly MobileCategory[]): string =>
+	categories.map((category) => `.${category}`).join(', ');
+
+/**
+ * The Swift install for offline mode: a one-rule policy in code and the offline
+ * transport.
+ *
+ * `native/core-swift/Tests/C15tAppleTests/cli-snippet-tests.swift` compiles this exact
+ * text against `C15tCore` and `C15tApple`, and the CLI tests compare the two, so the
+ * printed step cannot drift from the API.
+ */
+export const swiftOfflineInstall = (
+	categories: readonly MobileCategory[]
+): string => `let policy = try ConsentPolicy(rules: [
+    PolicyRule(id: "everywhere", match: PolicyMatch(fallback: true, isDefault: true), model: .optIn, prompt: .choice),
+])
+let core = try C15tApple.install(C15tAppleConfiguration(
+    transport: .offline,
+    consentCategories: [${swiftCategories(categories)}],
+    policy: policy
+))`;
+
+/** The Kotlin imports {@link kotlinOfflineInstall} needs. */
+export const KOTLIN_OFFLINE_IMPORTS = [
+	'com.c15t.android.C15tAndroid',
+	'com.c15t.core.ConsentPolicy',
+	'com.c15t.core.NativeConfig',
+	'com.c15t.core.PolicyMatch',
+	'com.c15t.core.PolicyRule',
+	'com.c15t.core.model.ConsentCategory',
+	'com.c15t.core.model.ConsentModel',
+	'com.c15t.core.policy.PolicyPrompt',
+] as const;
+
+/**
+ * The Kotlin install for offline mode, for `Application.onCreate`.
+ *
+ * `c15t-android`'s `CliSnippetTest.kt` compiles this exact text, and the CLI tests
+ * compare the two.
+ */
+export const kotlinOfflineInstall = (
+	categories: readonly MobileCategory[]
+): string => `val policy = ConsentPolicy(listOf(
+    PolicyRule("everywhere", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+))
+C15tAndroid.install(this, NativeConfig(
+    backendUrl = null,
+    consentCategories = listOf(${kotlinCategories(categories)}),
+    policy = policy,
+))`;
+
+const swiftInstallStep = (options: MobileSetupOptions, url: string): string => {
+	const root = `wrap your root view in ConsentRoot(consent: consent, privacyPolicyURL: URL(string: "${options.privacyPolicyURL}")!)`;
+	switch (options.mode) {
+		case 'offline':
+			return `iOS: add ConsentModel.swift and ConsentRoot.swift from frameworks/swift/quickstart.mdx (${SOURCE_DOCS}). In ConsentModel.swift, replace the C15tApple.install(...) call with this offline install, then ${root}:\n${swiftOfflineInstall(options.categories)}\nReplace the example rule with your own, as guides/mobile-offline.mdx describes.`;
+		case 'custom':
+			return `iOS: install the engine with your own transport, as "Use your own transport" in frameworks/swift/headless.mdx shows (${SOURCE_DOCS}). Then ${root}, using ConsentRoot.swift from frameworks/swift/quickstart.mdx.`;
+		default:
+			return `iOS: add ConsentModel.swift and ConsentRoot.swift from frameworks/swift/quickstart.mdx (${SOURCE_DOCS}), then create the model once in your App with ConsentModel(backendURL: URL(string: "${url}")!) and ${root}.`;
+	}
+};
+
+const androidInstallStep = (
+	options: MobileSetupOptions,
+	url: string
+): string => {
+	const rest = `mount C15tConsent(presenter, "${options.privacyPolicyURL}") in your activity, and add android.permission.INTERNET to the manifest. The complete files are in frameworks/android/quickstart.mdx.`;
+	switch (options.mode) {
+		case 'offline':
+			return `Android: in Application.onCreate, install the engine with this offline install (imports: ${KOTLIN_OFFLINE_IMPORTS.join(', ')}), then ${rest.replace(', and add android.permission.INTERNET to the manifest', '')}\n${kotlinOfflineInstall(options.categories)}\nReplace the example rule with your own, as guides/mobile-offline.mdx describes.`;
+		case 'custom':
+			return `Android: install the engine with your own transport in Application.onCreate, as "Use your own transport" in frameworks/android/configuration.mdx shows (${SOURCE_DOCS}). Then ${rest}`;
+		default:
+			return `Android: call C15tAndroid.install(this, NativeConfig(backendUrl = "${url}", consentCategories = listOf(${kotlinCategories(options.categories)}))) in Application.onCreate, ${rest}`;
+	}
+};
+
 /**
  * Steps for a Swift or Kotlin app. Nothing is written: Xcode projects, Gradle
  * files and manifests stay the developer's to edit.
@@ -389,23 +500,14 @@ export const planNativeSetup = (
 	if (platforms.includes('ios')) {
 		steps.push(
 			'iOS: the Swift SDK is private source. In Xcode, choose File > Add Package Dependencies > Add Local and select your c15t checkout. Add the C15tCore, C15tApple and C15tConsentUI products to your app target.',
-			`iOS: add ConsentModel.swift and ConsentRoot.swift from frameworks/swift/quickstart.mdx (${SOURCE_DOCS}), then create the model once in your App with ConsentModel(backendURL: URL(string: "${url}")!) and wrap your root view in ConsentRoot(consent: consent, privacyPolicyURL: URL(string: "${options.privacyPolicyURL}")!).`
+			swiftInstallStep(options, url)
 		);
 	}
 	if (platforms.includes('android')) {
 		steps.push(
 			`Android: add the private Maven repository you were given to dependencyResolutionManagement.repositories in settings.gradle.kts, with includeGroup("com.c15t"), as frameworks/android/quickstart.mdx shows (${SOURCE_DOCS}).`,
 			`Android: add to app/build.gradle.kts:\nimplementation("com.c15t:c15t-android:${C15T_ANDROID_VERSION}")\nimplementation("com.c15t:c15t-consent-ui:${C15T_ANDROID_VERSION}")`,
-			`Android: call C15tAndroid.install(this, NativeConfig(backendUrl = "${url}", consentCategories = listOf(${options.categories
-				.map((category) => `ConsentCategory.${category.toUpperCase()}`)
-				.join(
-					', '
-				)}))) in Application.onCreate, mount C15tConsent(presenter, "${options.privacyPolicyURL}") in your activity, and add android.permission.INTERNET to the manifest. The complete files are in frameworks/android/quickstart.mdx.`
-		);
-	}
-	if (options.mode === 'offline' || options.mode === 'custom') {
-		steps.push(
-			`Configure ${options.mode} mode in code instead of a backend URL, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`
+			androidInstallStep(options, url)
 		);
 	}
 	return { files: [], skipped: [], steps };
