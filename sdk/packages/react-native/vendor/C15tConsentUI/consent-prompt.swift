@@ -43,13 +43,15 @@ public final class ConsentPrompt: ObservableObject {
     private var trackingReleased = false
     private var trackingInFlight = false
     private var trackingOwed: ConsentTrackingStage?
+    /// The owed ask came from the launch check, which depends on the scene's settings.
+    private var trackingOwedAtLaunch = false
     private var observers: [AnyCancellable] = []
 
     private static var prompts: [ObjectIdentifier: ConsentPrompt] = [:]
 
     init(core: ConsentCore, tracking: C15tTrackingController = C15tApple.tracking,
          isActive: @escaping @MainActor () -> Bool = { ConsentPrompt.appIsActive() },
-         becameActive: AnyPublisher<Void, Never> = ConsentPrompt.activations) {
+         becameActive: AnyPublisher<Void, Never>? = nil) {
         self.core = core
         self.tracking = tracking
         self.isActive = isActive
@@ -58,7 +60,7 @@ public final class ConsentPrompt: ObservableObject {
         presenter.onCoverDismissed = { [weak self] in self?.requestOwedTracking() }
         observers = [
             presenter.$snapshot.sink { [weak self] in self?.checkLaunch($0) },
-            becameActive.sink { [weak self] in self?.requestOwedTracking() },
+            (becameActive ?? ConsentPrompt.activations).sink { [weak self] in self?.requestOwedTracking() },
         ]
     }
 
@@ -99,6 +101,12 @@ public final class ConsentPrompt: ObservableObject {
         guard host == nil || host == id || active && !hostActive else { return }
         if host != id { host = id }
         if hostActive != active { hostActive = active }
+        // A launch ask still waiting was decided under the old settings; decide it again.
+        if trackingOwedAtLaunch, autoPresent != wantsAutoPresent || trackingRequest != self.trackingRequest {
+            trackingOwed = nil
+            trackingOwedAtLaunch = false
+            launchChecked = false
+        }
         self.trackingRequest = trackingRequest
         wantsAutoPresent = autoPresent
         applyAutoPresent()
@@ -125,9 +133,9 @@ public final class ConsentPrompt: ObservableObject {
         guard !launchChecked, host != nil, wantsAutoPresent, snapshot.ready, !snapshot.policyPending else { return }
         launchChecked = true
         switch trackingRequest {
-        case .beforeConsent: owe(.beforePrompt)
+        case .beforeConsent: owe(.beforePrompt, atLaunch: true)
         // A stored choice still in force owes no prompt, so the after-consent rule applies now.
-        case .afterConsent where snapshot.promptRequirement.kind == .none: owe(.afterPrompt)
+        case .afterConsent where snapshot.promptRequirement.kind == .none: owe(.afterPrompt, atLaunch: true)
         default: break
         }
     }
@@ -137,8 +145,9 @@ public final class ConsentPrompt: ObservableObject {
         owe(.afterPrompt)
     }
 
-    private func owe(_ stage: ConsentTrackingStage) {
+    private func owe(_ stage: ConsentTrackingStage, atLaunch: Bool = false) {
         trackingOwed = stage
+        trackingOwedAtLaunch = atLaunch
         requestOwedTracking()
     }
 
@@ -149,6 +158,7 @@ public final class ConsentPrompt: ObservableObject {
         guard let stage = trackingOwed, !trackingInFlight, !presenter.covering, presenter.presentationID == nil,
               isActive() else { return }
         trackingOwed = nil
+        trackingOwedAtLaunch = false
         let marketing = ConsentDecision(snapshot: core.snapshot(), category: .marketing)
         guard trackingRequest.shouldAsk(at: stage, platform: tracking.trackingPlatformStatus(),
                                         promptStringPresent: tracking.trackingPromptStringPresent(),
@@ -167,7 +177,9 @@ public final class ConsentPrompt: ObservableObject {
         // Additional Information on Apple's EU sheet asks the app to show its own controls.
         // After a prompt, that is settings; closing them runs the after-consent rule again.
         // Before the prompt, the prompt itself is those controls.
-        if stage == .afterPrompt, case let .success(answer) = result, answer.stage == .additionalInformation {
+        // Settings are read now, not when the request started: a switch to manual opens nothing.
+        if stage == .afterPrompt, trackingRequest == .afterConsent, case let .success(answer) = result,
+           answer.stage == .additionalInformation {
             presenter.presentPreferences()
         }
         releasePrompt()

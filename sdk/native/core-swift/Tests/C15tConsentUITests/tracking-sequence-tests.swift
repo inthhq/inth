@@ -17,6 +17,9 @@ final class TrackingSequenceTests: XCTestCase {
         var active = true
         var additionalInformation = false
         var asks = 0
+        /// Keep Apple's answer until ``reply()``, to change settings while it is on screen.
+        var hold = false
+        private var held: (() -> Void)?
         let activations = PassthroughSubject<Void, Never>()
 
         var controller: C15tTrackingController {
@@ -25,17 +28,31 @@ final class TrackingSequenceTests: XCTestCase {
                 trackingPromptStringPresent: { self.promptString },
                 trackingPrompt: { completion in
                     self.asks += 1
-                    self.status = self.answer
-                    completion(self.answer)
+                    self.answerLater {
+                        self.status = self.answer
+                        completion(self.answer)
+                    }
                 },
                 trackingExpandedInterfaceAvailable: { self.additionalInformation },
                 trackingExpandedPrompt: { _, info, completion in
                     self.asks += 1
-                    info()
-                    completion(.notDetermined)
+                    self.answerLater {
+                        info()
+                        completion(.notDetermined)
+                    }
                     return true
                 }
             )
+        }
+
+        private func answerLater(_ answer: @escaping () -> Void) {
+            if hold { held = answer } else { answer() }
+        }
+
+        func reply() {
+            let answer = held
+            held = nil
+            answer?()
         }
     }
 
@@ -214,6 +231,52 @@ final class TrackingSequenceTests: XCTestCase {
         await settle()
         XCTAssertEqual(prompt.core.snapshot().revision, revision)
         XCTAssertEqual(ConsentDecision(snapshot: prompt.core.snapshot(), category: .marketing), .granted)
+    }
+
+    func testSwitchingToManualWhileAppleAnswersOpensNoSettings() async throws {
+        let apple = Apple()
+        apple.additionalInformation = true
+        apple.hold = true
+        let core = try await boot()
+        let prompt = attach(core, apple)
+        let scene = try XCTUnwrap(prompt.host)
+        prompt.presenter.commit(.accept)
+        await until { apple.asks == 1 }
+
+        prompt.attach(scene, active: true, autoPresent: true, trackingRequest: .manual)
+        apple.reply()
+        await settle()
+        XCTAssertNil(prompt.presenter.presentationID)
+    }
+
+    func testLaunchAskIsDroppedWhenAutoPresentTurnsOffFirst() async throws {
+        let apple = Apple()
+        apple.active = false
+        let core = try await boot()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let prompt = attach(core, apple)
+        let scene = try XCTUnwrap(prompt.host)
+
+        prompt.attach(scene, active: true, autoPresent: false)
+        apple.active = true
+        apple.activations.send()
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testLaunchAskIsDecidedAgainUnderNewSettings() async throws {
+        let apple = Apple()
+        apple.active = false
+        let core = try await boot()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let prompt = attach(core, apple, order: .beforeConsent)
+        let scene = try XCTUnwrap(prompt.host)
+
+        // Still waiting for the app to become active; the app switches to afterConsent.
+        prompt.attach(scene, active: true, autoPresent: true, trackingRequest: .afterConsent)
+        apple.active = true
+        apple.activations.send()
+        await until { apple.asks == 1 }
     }
 
     // MARK: - Helpers
