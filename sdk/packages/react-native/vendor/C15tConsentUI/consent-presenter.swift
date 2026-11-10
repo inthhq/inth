@@ -46,6 +46,8 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     /// The open session shows the owed prompt (its first layer, or settings opened from it), not
     /// standing settings.
     private var sessionIsPrompt: Bool { presentationID != nil && (!preferences || fromFirstLayer) }
+    /// The session ``autoPresent`` opened, by its id, as opposed to one the app asked for.
+    private var automaticSession: UUID?
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
     /// The owed notice the host asked for while ``autoPresent`` is off, by its key. A later notice
@@ -106,6 +108,16 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         errorCode = nil
         failedAction = nil
         loadDraft()
+        automaticSession = presentationID
+    }
+
+    /// End a session that opened by itself, because the host now drawing it opted out of
+    /// auto-present and never asked for it. Nothing was decided or dismissed, so it reports no
+    /// outcome and leaves the owed prompt owed: a host that auto-presents opens it again.
+    func withdrawAutomaticSession() {
+        guard !pending, let id = presentationID, id == automaticSession else { return }
+        presentationID = nil
+        confirmDiscard = false
     }
 
     /// Close the open session without a commit. Closing the prompt settles it; closing standing

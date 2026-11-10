@@ -65,6 +65,9 @@ public final class ConsentPrompt: ObservableObject {
     /// left the foreground and this one is active.
     func attach(_ id: UUID, active: Bool, autoPresent: Bool) {
         guard host == nil || host == id || active && !hostActive else { return }
+        // A session that opened by itself for another scene is not this one's to draw if it
+        // opted out.
+        if host != id, !autoPresent { presenter.withdrawAutomaticSession() }
         if host != id { host = id }
         if hostActive != active { hostActive = active }
         if presenter.autoPresent != autoPresent { presenter.autoPresent = autoPresent }

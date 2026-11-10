@@ -52,6 +52,17 @@ class AutoPresentTest {
         assertNotNull(p.presentationID)
     }
 
+    /** Dismissing is a fact about the person, not about the setting: it holds once auto-present is on. */
+    @Test fun aPromptDismissedWhileAutoPresentWasOffStaysClosedWhenItTurnsOn() {
+        val core = core("category-init.json").also { it.bootstrap() }
+        val p = ConsentPresenter(core, autoPresent = false)
+        p.presentPrompt()
+        assertNotNull(p.presentationID)
+        p.backFromFirstLayer()
+        p.autoPresent = true
+        assertNull(p.presentationID)
+    }
+
     @Test fun aManualNoticeRequestEndsWithItsNotice() {
         val core = core("notice-init.json").also { it.bootstrap() }
         val p = ConsentPresenter(core, autoPresent = false)
@@ -150,11 +161,21 @@ class AutoPresentTest {
         for (seed in 1..150) runSequence(seed, "notice-init.json")
     }
 
+    /** One screen attached to the shared prompt, as a composable or `attachConsent` would be. */
+    private class Host(var autoPresent: Boolean, var started: Boolean)
+
     /**
-     * Random sequences of what the app, the person and the core can do. After every step:
+     * Random sequences of what the app, the person, the core and the screens can do. Screens
+     * attach and detach with either `autoPresent` value, several at once, and start and stop.
+     * After every step:
      * (a) an owed choice with auto-present on and nothing open is the one the person dismissed;
      * an owed notice with auto-present on and nothing open is visible;
-     * (c) with auto-present off, a visible notice is one the app asked for in this episode.
+     * (c) with auto-present off, a visible notice is one the app asked for in this episode;
+     * (d) auto-present is the setting of the screen drawing the prompt, and off with none;
+     * (e) a screen with `autoPresent = false` draws only a session the app asked for, or one
+     * that opened by itself while that screen drew the prompt with auto-present on;
+     * (f) nothing opens by itself for an owed prompt the person dismissed, whatever the
+     * auto-present setting was when they dismissed it.
      */
     private fun runSequence(seed: Int, fixture: String) {
         val random = java.util.Random(seed.toLong())
@@ -163,7 +184,17 @@ class AutoPresentTest {
         var body = text
         var policies = 0
         val core = core(fixture, body = { body }).also { it.bootstrap() }
-        val p = ConsentPresenter(core)
+        val prompt = ConsentPrompt.of(core)
+        val p = prompt.presenter
+        val hosts = mutableListOf(Host(autoPresent = true, started = true))
+        // Every screen re-claims whenever the drawing screen or its state changes, as the
+        // composable's LaunchedEffect does.
+        fun reclaim() = repeat(3) { hosts.forEach { prompt.attach(it, it.started, it.autoPresent) } }
+        reclaim()
+        val manually = Any()
+        /** Who asked for the open session: [manually], the screen it opened for, or nobody. */
+        // The first screen auto-presents an owed prompt as it attaches, before the first step.
+        var opener: Any? = if (p.presentationID != null) hosts[0] else null
         var dismissed: String? = null
         var requested: String? = null
         val trace = mutableListOf<String>()
@@ -175,8 +206,10 @@ class AutoPresentTest {
         val promptOpen = { p.presentationID != null && (!p.preferences || p.returnsToFirstLayer) }
         repeat(60) {
             val action = listOf("saved", "reset", "policy", "preferences", "manual", "discard", "customize",
-                "back", "accept", "save", "toggle", "dismiss-notice", "acknowledge").let { it[random.nextInt(it.size)] }
+                "back", "accept", "save", "toggle", "dismiss-notice", "acknowledge", "attach", "detach",
+                "background").let { it[random.nextInt(it.size)] }
             trace += action
+            val before = p.presentationID
             when (action) {
                 "saved" -> core.save(CommitIntent.All)
                 "reset" -> core.reset()
@@ -201,7 +234,45 @@ class AutoPresentTest {
                 }
                 "dismiss-notice" -> core.dismissNotice()
                 "acknowledge" -> if (p.noticeVisible) { p.commit(ConsentPresenter.Action.ACKNOWLEDGE); settle() }
-                "toggle" -> p.autoPresent = !p.autoPresent
+                "toggle" -> if (hosts.isNotEmpty()) {
+                    val host = hosts[random.nextInt(hosts.size)]
+                    host.autoPresent = !host.autoPresent
+                    trace += "host ${hosts.indexOf(host)} autoPresent=${host.autoPresent}"
+                    reclaim()
+                }
+                "attach" -> if (hosts.size < 4) {
+                    val host = Host(random.nextBoolean(), random.nextBoolean())
+                    hosts += host
+                    trace += "host ${hosts.size - 1} autoPresent=${host.autoPresent} started=${host.started}"
+                    reclaim()
+                }
+                "detach" -> if (hosts.isNotEmpty()) {
+                    val host = hosts.removeAt(random.nextInt(hosts.size))
+                    if (opener === host) opener = null
+                    prompt.detach(host)
+                    reclaim()
+                }
+                "background" -> if (hosts.isNotEmpty()) {
+                    val host = hosts[random.nextInt(hosts.size)]
+                    host.started = !host.started
+                    reclaim()
+                }
+            }
+            val drawing = hosts.firstOrNull { it === prompt.host }
+            val opened = p.presentationID
+            if (opened != null && opened != before) {
+                opener = if (action == "manual" || action == "preferences") manually else prompt.host
+                assertNotEquals("seed $seed ($fixture): a dismissed prompt opened by itself after ${trace.joinToString()}",
+                    dismissed.takeIf { opener !== manually }, key())
+            }
+            // A screen that auto-presents would have opened it itself, so it takes it over.
+            if (opened != null && opener !== manually && drawing?.autoPresent == true) opener = drawing
+            if (opened == null) opener = null
+            assertEquals("seed $seed ($fixture): auto-present is not the drawing screen's after ${trace.joinToString()}",
+                drawing?.autoPresent ?: false, p.autoPresent)
+            if (drawing != null && !drawing.autoPresent && opened != null) {
+                assertTrue("seed $seed ($fixture): a screen that opted out draws a prompt it did not ask for after ${trace.joinToString()}",
+                    opener === manually || opener === drawing)
             }
             val s = core.snapshot()
             val ready = s.ready && !s.policyPending

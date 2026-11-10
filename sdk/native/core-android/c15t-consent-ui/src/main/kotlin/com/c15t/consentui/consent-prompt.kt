@@ -72,6 +72,9 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
      */
     internal fun attach(token: Any, started: Boolean, autoPresent: Boolean): Boolean {
         if (host == null || host === token || started && !hostStarted) {
+            // A session that opened by itself for another screen is not this one's to draw if
+            // it opted out.
+            if (host !== token && !autoPresent) presenter.withdrawAutomaticSession()
             host = token
             hostStarted = started
             presenter.autoPresent = autoPresent

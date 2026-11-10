@@ -66,6 +66,17 @@ final class AutoPresentTests: XCTestCase {
         XCTAssertNil(core.snapshot().explicitChoice)
     }
 
+    /// Dismissing is a fact about the person, not about the setting: it holds once auto-present is on.
+    func testAPromptDismissedWhileAutoPresentWasOffStaysClosedWhenItTurnsOn() async throws {
+        let (core, _) = try await boot("category-init.json")
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
+        presenter.presentPrompt()
+        XCTAssertNotNil(presenter.presentationID)
+        presenter.requestClose()
+        presenter.autoPresent = true
+        XCTAssertNil(presenter.presentationID)
+    }
+
     func testSharedPromptWaitsForASceneThenOpensOnce() async throws {
         let (core, _) = try await boot("category-init.json")
         let prompt = ConsentPrompt.shared(for: core)
@@ -237,6 +248,11 @@ final class AutoPresentTests: XCTestCase {
     /// nothing open is the one the person dismissed, and an owed notice is visible; (c) with
     /// auto-present off, a visible notice is one the app asked for in this episode; and the UIKit
     /// touch region takes touches only while the notice shows.
+    /// (d) auto-present is the setting of the scene drawing the prompt, and off with none; (e) a scene
+    /// with `autoPresent: false` draws only a session the app asked for, or one that opened by itself
+    /// while that scene drew the prompt with auto-present on; (f) nothing opens by itself for an owed
+    /// prompt the person dismissed, whatever the setting was when they dismissed it. Scenes attach and
+    /// detach with either setting, several at once, and move between foreground and background.
     func testOwedPromptsAndNoticesOverRandomSequences() async throws {
         for fixture in ["category-init.json", "notice-init.json"] {
             for seed in 1...40 { try await runSequence(seed: UInt64(seed), fixture: fixture) }
@@ -248,10 +264,28 @@ final class AutoPresentTests: XCTestCase {
         let (core, peer) = try await boot(fixture)
         let prompt = ConsentPrompt.shared(for: core)
         let presenter = prompt.presenter
-        let region = NoticeTouchRegion(hostID: UUID())
-        region.prompt = prompt
-        region.frame = CGRect(x: 0, y: 600, width: 400, height: 200)
-        prompt.attach(region.hostID, active: true, autoPresent: true)
+        /// One attached scene, with the UIKit touch region a root view controller would give it.
+        @MainActor final class Scene {
+            let region = NoticeTouchRegion(hostID: UUID())
+            var autoPresent: Bool
+            var active: Bool
+            init(_ prompt: ConsentPrompt, autoPresent: Bool, active: Bool) {
+                self.autoPresent = autoPresent
+                self.active = active
+                region.prompt = prompt
+                region.frame = CGRect(x: 0, y: 600, width: 400, height: 200)
+            }
+        }
+        var scenes = [Scene(prompt, autoPresent: true, active: true)]
+        // Every scene claims again when the drawing scene or its state changes, as the SwiftUI host does.
+        func reclaim() {
+            for _ in 0..<3 { for scene in scenes { prompt.attach(scene.region.hostID, active: scene.active, autoPresent: scene.autoPresent) } }
+        }
+        reclaim()
+        /// Who asked for the open session: the app, the scene it opened for, or nobody.
+        enum Opener: Equatable { case app, scene(UUID), nobody }
+        // The first scene auto-presents an owed prompt as it attaches, before the first step.
+        var opener = presenter.presentationID == nil ? Opener.nobody : .scene(scenes[0].region.hostID)
         var dismissed: String?
         var requested: String?
         var trace: [String] = []
@@ -266,10 +300,11 @@ final class AutoPresentTests: XCTestCase {
             await until { presenter.snapshot.revision == core.snapshot().revision && !presenter.pending }
         }
         let actions = ["saved", "reset", "policy", "preferences", "manual", "discard", "customize", "accept", "save",
-                       "toggle", "dismiss-notice", "acknowledge"]
+                       "toggle", "dismiss-notice", "acknowledge", "attach", "detach", "background"]
         for _ in 0..<40 {
             let action = actions[Int(random.next() % UInt64(actions.count))]
             trace.append(action)
+            let before = presenter.presentationID
             switch action {
             case "saved": _ = core.save(.all)
             case "reset": core.reset()
@@ -300,9 +335,53 @@ final class AutoPresentTests: XCTestCase {
                 }
             case "dismiss-notice": _ = core.dismissNotice()
             case "acknowledge": if presenter.noticeVisible { presenter.commit(.acknowledge) }
-            default: presenter.autoPresent.toggle()
+            case "attach":
+                if scenes.count < 4 {
+                    let scene = Scene(prompt, autoPresent: random.next() % 2 == 0, active: random.next() % 2 == 0)
+                    scenes.append(scene)
+                    trace.append("scene \(scenes.count - 1) autoPresent=\(scene.autoPresent) active=\(scene.active)")
+                    reclaim()
+                }
+            case "detach":
+                if !scenes.isEmpty {
+                    let scene = scenes.remove(at: Int(random.next() % UInt64(scenes.count)))
+                    if opener == .scene(scene.region.hostID) { opener = .nobody }
+                    prompt.detach(scene.region.hostID)
+                    reclaim()
+                }
+            case "background":
+                if !scenes.isEmpty {
+                    let scene = scenes[Int(random.next() % UInt64(scenes.count))]
+                    scene.active.toggle()
+                    reclaim()
+                }
+            default:
+                if !scenes.isEmpty {
+                    let index = Int(random.next() % UInt64(scenes.count))
+                    scenes[index].autoPresent.toggle()
+                    trace.append("scene \(index) autoPresent=\(scenes[index].autoPresent)")
+                    reclaim()
+                }
             }
             await synced()
+            let drawing = scenes.first { $0.region.hostID == prompt.host }
+            let opened = presenter.presentationID
+            let failure = "seed \(seed) (\(fixture)) after \(trace)"
+            if let opened, opened != before {
+                opener = action == "manual" || action == "preferences" ? .app : prompt.host.map(Opener.scene) ?? .nobody
+                if opener != .app, dismissed == key() {
+                    return XCTFail("a dismissed prompt opened by itself, \(failure)")
+                }
+            }
+            // A scene that auto-presents would have opened it itself, so it takes it over.
+            if opened != nil, opener != .app, let drawing, drawing.autoPresent { opener = .scene(drawing.region.hostID) }
+            if opened == nil { opener = .nobody }
+            if presenter.autoPresent != (drawing?.autoPresent ?? false) {
+                return XCTFail("auto-present is not the drawing scene's, \(failure)")
+            }
+            if let drawing, !drawing.autoPresent, opened != nil, opener != .app, opener != .scene(drawing.region.hostID) {
+                return XCTFail("a scene that opted out draws a prompt it did not ask for, \(failure)")
+            }
             let s = core.snapshot()
             let ready = s.ready && !s.policyPending
             let nothingOpen = presenter.presentationID == nil && !presenter.pending
@@ -319,9 +398,11 @@ final class AutoPresentTests: XCTestCase {
                 XCTAssertEqual(requested, key(), "a notice the app did not ask for shows, \(context)")
                 if requested != key() { return }
             }
-            let touchable = region.contains(CGPoint(x: 200, y: 700))
-            XCTAssertEqual(touchable, presenter.noticeVisible, "the notice area takes touches only while it shows, \(context)")
-            if touchable != presenter.noticeVisible { return }
+            for scene in scenes {
+                let touchable = scene.region.contains(CGPoint(x: 200, y: 700))
+                let drawn = presenter.noticeVisible && prompt.host == scene.region.hostID
+                if touchable != drawn { return XCTFail("the notice area takes touches only where it shows, \(context)") }
+            }
         }
     }
 

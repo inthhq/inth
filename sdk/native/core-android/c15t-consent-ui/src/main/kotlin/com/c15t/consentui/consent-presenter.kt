@@ -58,6 +58,8 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     private var requestedNotice by mutableStateOf<String?>(null)
     /** The open session shows the owed prompt (its first layer, or settings opened from it), not standing settings. */
     private val sessionIsPrompt get() = presentationID != null && (!preferences || fromFirst)
+    /** The session [autoPresent] opened, by its id, as opposed to one the app asked for. */
+    private var automaticSession: String? = null
     private var lastAction: Action? = null
     private var reloadAfterRefresh = false
     // The core holds snapshot observers weakly. This field owns the lambda until close.
@@ -131,7 +133,16 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     private fun presentIfOwed() {
         if (autoPresent && snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.acknowledge && presentationID == null && !pending && suppressed != promptKey) {
             presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
+            automaticSession = presentationID
         }
+    }
+    /**
+     * End a session that opened by itself, because the host now drawing it opted out of
+     * auto-present and never asked for it. Nothing was decided or dismissed, so it reports no
+     * outcome and leaves the owed prompt owed: a host that auto-presents opens it again.
+     */
+    internal fun withdrawAutomaticSession() {
+        if (!pending && presentationID != null && presentationID == automaticSession) presentationID = null
     }
     /** Open standing privacy settings without replacing an in-flight presentation. */
     fun presentPreferences() {
