@@ -66,6 +66,13 @@ export interface ConsentDraft {
 	readonly save: () => Promise<CommitResult>;
 	/** Replace the defaults for categories without a receipt. */
 	readonly setDefaults: (defaults: Partial<ConsentState> | undefined) => void;
+	/**
+	 * After a successful save of `submitted` (the values staged when the save
+	 * began), reseed from the record and keep only the edits made since.
+	 *
+	 * @internal
+	 */
+	readonly settle: (submitted: Readonly<ConsentState>) => void;
 }
 
 /** What a stale save resolves with. Nothing was written. */
@@ -221,8 +228,14 @@ export const createConsentDraft = function createConsentDraft(
 			(category) =>
 				patch[category] !== undefined && patch[category] !== values[category]
 		);
+		// A category set back to its saved value is no longer the subject's edit, so a
+		// new record must not be overlaid with it.
 		for (const category of changed) {
-			staged.add(category);
+			if (patch[category] === seed.values[category]) {
+				staged.delete(category);
+			} else {
+				staged.add(category);
+			}
 		}
 		if (changed.length > 0) {
 			values = {
@@ -241,6 +254,17 @@ export const createConsentDraft = function createConsentDraft(
 				seed.displayed.filter(isOptional).map((category) => [category, value])
 			)
 		);
+	};
+
+	const settle = function settle(submitted: Readonly<ConsentState>): void {
+		const later = Object.fromEntries(
+			[...staged]
+				.filter((category) => values[category] !== submitted[category])
+				.map((category) => [category, values[category]])
+		);
+		snapshot = client.getSnapshot();
+		reseed();
+		stage(later);
 	};
 
 	return {
@@ -269,10 +293,10 @@ export const createConsentDraft = function createConsentDraft(
 					.filter(isOptional)
 					.map((category) => [category, values[category]])
 			) as Partial<Record<OptionalConsentCategory, boolean>>;
+			const submitted = values;
 			const result = await client.commit({ action: 'explicit', consents });
 			if (result.ok) {
-				snapshot = client.getSnapshot();
-				reseed();
+				settle(submitted);
 			}
 			return result;
 		},
@@ -285,6 +309,8 @@ export const createConsentDraft = function createConsentDraft(
 				reseed();
 			}
 		},
+		settle,
+
 		subscribe: (listener) => {
 			listeners.add(listener);
 			if (unsubscribeClient === null) {
