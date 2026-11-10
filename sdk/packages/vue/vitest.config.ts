@@ -49,6 +49,12 @@ export default mergeConfig(
 					),
 				},
 				{
+					'#c15t/banner-preload-files': resolve(
+						__dirname,
+						'./src/__tests__/banner-preload-files-virtual.ts'
+					),
+				},
+				{
 					'#c15t/client-manifest-snapshot': resolve(
 						__dirname,
 						'./src/__tests__/manifest-snapshot.ts'

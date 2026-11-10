@@ -177,6 +177,7 @@ const SERVER_BUILD = (import.meta as ImportMeta & { server?: boolean }).server;
 
 /** The part of Nuxt's SSR context this plugin edits. */
 interface NuxtSSRModules {
+	event?: { context: Record<string, unknown> };
 	modules?: Set<string>;
 	'~lazyHydratedModules'?: Set<string>;
 }
@@ -448,6 +449,20 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 			Boolean(boot.value),
 			DEFERRED_ENGINE_MANIFEST_KEY
 		);
+		// A visitor resolved for this request whom the page shows no banner,
+		// such as a returning one: the banner's preloads can wait behind the
+		// page's images (`server/banner-preload-priority.ts`).
+		const event = (nuxtApp.ssrContext as NuxtSSRModules | undefined)?.event;
+		if (
+			event &&
+			request &&
+			snapshot.resolution?.status === 'matched' &&
+			snapshot.activeUI !== 'banner'
+		) {
+			const { QUIET_BANNER_CONTEXT_KEY } =
+				await import('./server/banner-preload-priority');
+			event.context[QUIET_BANNER_CONTEXT_KEY] = true;
+		}
 	} else {
 		if (!nuxtApp.payload.serverRendered) {
 			// No server HTML carries the tokens: they are in the head before

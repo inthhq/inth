@@ -532,6 +532,43 @@ for (const app of selected) {
 		test('global privacy control', () => verifyGpc(browser, app));
 		test('language resolution', () => verifyLanguage(browser, app));
 		test('no banner returns after consent', () => verifyNoZombie(browser, app));
+		if (app.probeName === '__c15tNuxtBench') {
+			test("a returning visitor gets the banner's preloads at low priority, a new one does not", async () => {
+				const { context, page, url } = await newPage(browser, app);
+				const preloads = (html) =>
+					(html.match(/<link[^>]*rel="modulepreload"[^>]*>/gu) ?? []).map(
+						(tag) => ({
+							href: /href="(?<href>[^"]+)"/u.exec(tag)?.groups?.href,
+							low: tag.includes('fetchpriority="low"'),
+						})
+					);
+				// A new visitor sees the banner: none of its preloads wait.
+				const fresh = preloads(await fetchHtml(context, url));
+				expect(fresh.filter((link) => link.low)).toEqual([]);
+				await gotoSettled(page, url);
+				await page.locator(acceptSelector).first().click();
+				await page.waitForFunction(() => document.cookie.includes('c15t='));
+				const cookies = await context.cookies(url);
+				// A returning visitor sees none: the banner's chunks wait behind
+				// the page's own. Only links the returning page adds (the engine
+				// and the banner) may be lowered: the entry and the app's chunks,
+				// which a new visitor's page preloads too, never are.
+				const returning = preloads(
+					await fetchHtml(context, url, { cookie: cookieHeader(cookies) })
+				);
+				const lowered = returning.filter((link) => link.low);
+				expect(lowered.length).toBeGreaterThan(0);
+				const freshHrefs = new Set(fresh.map((link) => link.href));
+				for (const link of lowered) {
+					expect(freshHrefs.has(link.href), link.href).toBe(false);
+				}
+				// The engine stays at its priority: some links the returning page
+				// adds are not lowered.
+				expect(
+					returning.some((link) => !link.low && !freshHrefs.has(link.href))
+				).toBe(true);
+			});
+		}
 		if (app.probeName === '__c15tNextBench') {
 			test.each([
 				['/ssr', 1],

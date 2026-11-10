@@ -31,7 +31,9 @@ from the dialog takes the same path.
 Returning visitors, notice prompts, privacy signals, IAB, experiments,
 `consentSource`, `gpp`, `networkBlocker` and `scripts` entries that may run at
 once load the engine as the app starts, and the server render preloads it.
-Prerendered, cached and `ssr: false` routes do the same.
+The stock banner's chunks, which the app hydrates without, are preloaded at low
+priority, so they download behind the page's own images. Prerendered, cached
+and `ssr: false` routes also load the engine as the app starts.
 
 `@c15t/core/surface-actions/instant-commit` is a new internal entry that
 computes the snapshot a banner or dialog save commits, without the kernel.

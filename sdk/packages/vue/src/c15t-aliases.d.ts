@@ -71,3 +71,10 @@ declare module '#c15t/build-options' {
 	const built: BuiltOptions;
 	export default built;
 }
+
+/** A Nitro virtual the module fills from the client manifest. */
+declare module '#c15t/banner-preload-files' {
+	/** The stock banner's own files (`bannerOnlyFiles`). */
+	const files: readonly string[];
+	export default files;
+}

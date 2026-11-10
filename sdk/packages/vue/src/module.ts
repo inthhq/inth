@@ -30,10 +30,12 @@ import type { Plugin as VitePlugin } from 'vite';
 
 import { consentPackageDirs, groupConsentChunks } from './chunk-group';
 import { readComposableExports } from './composable-exports';
+import { GLOBAL_COMPONENTS } from './global-components';
 import type { C15tNuxtConfig, ModuleOptions } from './nuxt-options';
 import {
 	breakEntryImportCycles,
 	createPackageCheck,
+	bannerOnlyFiles,
 	preloadBrowserResolver,
 	preloadDeferredEngine,
 	stopPrefetchingConsentChunks,
@@ -600,6 +602,15 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 		nuxt.options.nitro.virtual['#c15t/build-options'] = () =>
 			`export default ${JSON.stringify(built)};\n`;
 		addServerPlugin(resolver.resolve('./runtime/server/build-options.nuxt'));
+		// The stock banner's own files, from the client manifest
+		// (`build:manifest` below runs before Nitro builds). The plugin
+		// preloads them at low priority.
+		let bannerFiles: string[] = [];
+		nuxt.options.nitro.virtual['#c15t/banner-preload-files'] = () =>
+			`export default ${JSON.stringify(bannerFiles)};\n`;
+		addServerPlugin(
+			resolver.resolve('./runtime/server/banner-preload-priority.nuxt')
+		);
 		// Nuxt applies `NUXT_PUBLIC_C15T_BACKEND_URL` on a running server by
 		// itself. The Inth variable needs a plugin, and only while neither the
 		// option nor the c15t variable gave the build its URL.
@@ -699,35 +710,21 @@ const module: NuxtModule<ModuleOptions> = defineNuxtModule<ModuleOptions>({
 			if (browserResolve) {
 				preloadBrowserResolver(manifest, nuxt.options.srcDir, isConsentFile);
 			}
+			// Last: every entry import is in place, so a chunk the entry
+			// shares keeps its priority.
+			bannerFiles = bannerOnlyFiles(
+				manifest,
+				nuxt.options.srcDir,
+				isConsentFile,
+				{ browserResolve, iab }
+			);
 		});
 
 		if (nuxt.options.dev && devtools && isNuxtDevToolsEnabled(nuxt)) {
 			addDevToolsTab(nuxt, (path) => resolver.resolve(path));
 		}
 
-		// oxlint-disable-next-line sort-keys -- Preserve declaration order, interface shape, and public compatibility.
-		addComponent({
-			// Global so runtime resolution (<component :is="'ConsentRoot'">)
-			// works too — ConsentRoot is the documented mount-anywhere entry.
-			global: true,
-			name: 'ConsentRoot',
-			filePath: resolver.resolve('./runtime/components/nuxt-root.vue'),
-		});
-
-		// oxlint-disable-next-line sort-keys -- Preserve declaration order, interface shape, and public compatibility.
-		addComponent({
-			// Inline consent widget for settings/privacy pages — same DOM
-			// contract as @c15t/react and @c15t/svelte ConsentWidget.
-			global: true,
-			name: 'ConsentWidget',
-			filePath: resolver.resolve('./runtime/components/preferences.vue'),
-		});
-
-		for (const [name, file] of [
-			['ConsentDialogLink', 'consent-dialog-link'],
-			['ConsentDialogTrigger', 'panel-trigger'],
-			['ConsentGate', 'consent-gate'],
-		] as const) {
+		for (const [name, file] of GLOBAL_COMPONENTS) {
 			addComponent({
 				filePath: resolver.resolve(`./runtime/components/${file}.vue`),
 				global: true,
