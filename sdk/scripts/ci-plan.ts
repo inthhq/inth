@@ -81,9 +81,11 @@ export const isMobileNativePath = function isMobileNativePath(
  * Files a phone actually compiles, as opposed to files that only reach the SDK's
  * JavaScript.
  *
- * The device group pays for `expo prebuild`, `pod install`, and two app builds, so
- * it keys on the native kernels, the binding's iOS and Android halves, and the two
- * example apps. JavaScript-only SDK changes run in the package test job.
+ * The device group pays for `expo prebuild`, `pod install`, and the app builds, so
+ * it keys on the native kernels, the binding's iOS and Android halves, the two
+ * example apps, and the Expo config plugin, which writes the native projects those
+ * builds compile (including the `c15t.nativeUI` switch the podspec reads).
+ * JavaScript-only SDK changes run in the package test job.
  */
 export const isMobileDevicePath = function isMobileDevicePath(
 	path: string
@@ -91,7 +93,7 @@ export const isMobileDevicePath = function isMobileDevicePath(
 	return (
 		/^internals\/fixtures\/(?:expo-dev|react-native-bare)\//u.test(path) ||
 		isMobileNativePath(path) ||
-		/^packages\/react-native\/(?:ios|android)\//u.test(path) ||
+		/^packages\/react-native\/(?:ios|android|src\/expo-plugin)\//u.test(path) ||
 		/^packages\/react-native\/(?:Package\.swift|C15tReactNative\.podspec|react-native\.config\.(?:js|cjs|mjs|ts))$/u.test(
 			path
 		)

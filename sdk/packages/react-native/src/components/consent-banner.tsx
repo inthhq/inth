@@ -8,7 +8,7 @@
  * made elsewhere in the app does not rerender it.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -19,7 +19,9 @@ import {
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import { useConsentStatus } from '../hooks/use-consent-status';
 import { isStatusPromptOwed } from '../lib/selectors';
+import { claimPrompt } from '../native/without-native-ui';
 import type { ConsentSnapshot } from '../protocol';
+import { useConsentClient } from '../provider/consent-context';
 import { ConsentDialog } from './consent-dialog';
 import { ConsentBrandingTag } from './internal/branding-tag';
 import {
@@ -215,6 +217,8 @@ export const ConsentBanner = ({
 }: ConsentBannerProps): ReactNode => {
 	const saveConsents = useSaveConsents();
 	const status = useConsentStatus();
+	const client = useConsentClient();
+	useEffect(() => claimPrompt(client), [client]);
 	const promptKey = useConsentSelector(selectBannerPromptKey);
 	const copy = useConsentSelector(selectConsentCopy, isConsentCopyEqual);
 	// The banner's own type roles: its heading is larger than the copy under it,

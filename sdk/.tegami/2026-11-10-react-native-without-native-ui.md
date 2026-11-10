@@ -17,3 +17,9 @@ encoding, storage and SDK gates stay.
 `presentConsentPrompt` and `presentPreferences` reject with
 `C15T_NATIVE_UI_EXCLUDED`. The plugin refuses `nativeUI: false` together with
 `theme`.
+
+In such a build, a TCF policy with publisher restrictions or Additional Consent
+providers reports a `console.error` at startup, because no custom screen can
+disclose it and no TCF decision could be collected. In development, a prompt
+owed for three seconds with no `ConsentPrompt` or `ConsentBanner` mounted logs a
+warning.

@@ -251,7 +251,16 @@ because the theme would style screens the build leaves out; pass that object to
 
 Your app must then show the owed prompt itself, for example with
 `ConsentPrompt`, and keep a privacy settings entry that opens your own
-preferences screen.
+preferences screen. In development, if a prompt has been owed for three
+seconds and no `ConsentPrompt` or `ConsentBanner` is mounted, the SDK logs a
+warning. If your app renders its prompt another way, wrap it in
+`ConsentPrompt`.
+
+Under a TCF policy, a build without the stock screens can collect IAB consent
+only where headless IAB works: without publisher restrictions or Additional
+Consent providers. With either one, the SDK reports a `console.error` at
+startup naming the reason, in every build, and no TCF decision can be
+collected. Keep the stock screens for those configurations.
 
 ## Check the custom flow
 

@@ -57,6 +57,7 @@ import type {
 	NativeEventsLike,
 } from './module';
 import { C15tProtocolMismatchError } from './protocol-mismatch-error';
+import { watchWithoutNativeUI } from './without-native-ui';
 
 /**
  * Read one field out of a snapshot.
@@ -845,7 +846,10 @@ export const createConsentClient = function createConsentClient(
 		return afterMutation(Promise.resolve(result));
 	};
 
-	return {
+	/** Stops the checks a build without the stock native screens runs. */
+	let stopWatching = (): void => undefined;
+
+	const api: ConsentClient = {
 		bootstrap,
 		commit,
 		decision: (category: AllConsentNames) =>
@@ -859,6 +863,7 @@ export const createConsentClient = function createConsentClient(
 			}
 		},
 		dispose: (): void => {
+			stopWatching();
 			stopListening();
 			trackingSubscribers.clear();
 		},
@@ -926,6 +931,14 @@ export const createConsentClient = function createConsentClient(
 			};
 		},
 	};
+
+	// Without the stock screens nothing else can collect consent, so say when
+	// nothing will.
+	if (!bootstrap.nativeUI) {
+		stopWatching = watchWithoutNativeUI(api, isProduction());
+	}
+
+	return api;
 };
 
 /**
