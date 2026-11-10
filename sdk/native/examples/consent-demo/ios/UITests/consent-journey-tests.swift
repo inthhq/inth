@@ -135,6 +135,18 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertFalse(button("c15t.first-layer.accept-all").exists)
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
     }
+    /// The demo hosts the one-line `.c15tConsent` modifier, so this is the default auto-present path.
+    func test22AutoPresentedPromptStaysClosedAfterAnAnswerAndAForeground() {
+        launch()
+        XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10), "an owed prompt presents by itself")
+        button("c15t.first-layer.reject-all").tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 10))
+        XCTAssertFalse(button("c15t.first-layer.reject-all").waitForExistence(timeout: 2), "an answered prompt is not presented again")
+        XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
+    }
     func test02CustomDraftRefusalRetryAndStandingSettings() {
         launch(fail: true)
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()

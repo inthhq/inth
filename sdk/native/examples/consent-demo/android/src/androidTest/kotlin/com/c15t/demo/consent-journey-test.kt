@@ -161,6 +161,10 @@ class ConsentJourneyTest {
         waitFor("fixture.open-preferences").assertIsDisplayed()
         Assert.assertEquals(context.packageName, device.currentPackageName)
         compose.onNodeWithTag("fixture.state.explicit-choice").assertTextEquals("none")
+        // Auto-present shows an owed prompt once: the dismissed one stays closed when the Activity is recreated.
+        scenario!!.recreate()
+        waitFor("fixture.open-preferences").assertIsDisplayed(); compose.waitForIdle()
+        compose.onNodeWithTag("c15t.first-layer.accept-all").assertDoesNotExist()
         compose.onNodeWithTag("fixture.open-preferences").performClick()
         waitFor("c15t.prefs.reject-all").performClick()
         waitFor("fixture.state.permission.marketing").assertTextEquals("marketing: false")
