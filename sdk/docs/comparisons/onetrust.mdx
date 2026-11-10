@@ -1,6 +1,6 @@
 ---
 title: c15t vs OneTrust
-description: Choose c15t to own the consent engine, framework components and backend. Compare OneTrust's headless API, cookie scans and broader privacy operations.
+description: Choose c15t to own the consent engine, framework components and backend. Compare OneTrust's headless API, cookie scans, mobile SDKs and broader privacy operations.
 group: reference
 ---
 
@@ -47,6 +47,24 @@ A c15t server can cache the public consent manifest, the file that holds your po
 In the Next.js App Router, the default setup streams. The page appears first, and the banner follows in a later chunk before hydration. If the page and the banner must arrive together, await consent instead, and the page waits for it. [Rendering options](/docs/frameworks/next/rendering) covers both.
 
 This page doesn't claim c15t is faster than OneTrust. That would need a side-by-side test.
+
+## Mobile apps
+
+<include src="../shared/comparisons/mobile-c15t.mdx" />
+
+| What you need | c15t (private prerelease) | OneTrust |
+| --- | --- | --- |
+| Platforms | Swift, Kotlin, React Native and Expo | Android, iOS, MAUI, Unity, React Native, Flutter, Cordova and Ionic, plus OTT and CTV platforms |
+| Stock consent screens | SwiftUI and Compose screens. React Native opens the same native screens | OneTrust-provided UI, with most configuration in the OneTrust tenant |
+| Your own UI | Headless APIs in Swift and Kotlin, and React Native hooks | Build your own UI on iOS, Android, Unity, MAUI and Flutter. Not on React Native, Cordova or Ionic |
+| IAB TCF | Native TCF choices, TC strings and `IABTCF_` keys | TCF 2.2 consent string on every listed platform |
+| GPP | In development | GPP strings on mobile, except Unity and MAUI |
+| Google Consent Mode | In development | Consent Mode statuses from the React Native SDK |
+| Consent in WebViews | In development | JavaScript from the React Native SDK that passes consent to a WebView |
+| First launch without network | A bundled policy resource | Offline Mode in the React Native SDK, from 202608.1.0 |
+| Find SDKs inside the app | **Not included** | App scanning on iOS, Android, Unity, MAUI and React Native. For React Native it finds native libraries only |
+
+Sources: [Mobile and OTT/CTV SDKs](https://developer.onetrust.com/onetrust/docs/mobile-ctv) and [React Native SDK](https://developer.onetrust.com/onetrust/docs/react-native), checked on 10 November 2026.
 
 ## What c15t does not include
 
