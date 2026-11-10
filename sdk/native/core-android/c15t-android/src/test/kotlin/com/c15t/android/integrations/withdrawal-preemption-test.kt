@@ -13,19 +13,31 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
-/** Vendor calls recorded as strings. The next call after [blockNext] blocks until released. */
+/**
+ * Vendor calls recorded as strings. [blockNext] blocks the call `skip` calls from now
+ * until `release` counts down, and returns a latch that opens when that call starts.
+ */
 internal class BlockingRecorder {
-	val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
-	private val gate = AtomicReference<CountDownLatch?>()
-	val entered = CountDownLatch(1)
+	private class Hold(var skip: Int, val release: CountDownLatch, val entered: CountDownLatch)
 
-	fun blockNext(release: CountDownLatch) = gate.set(release)
+	val calls: MutableList<String> = Collections.synchronizedList(mutableListOf())
+	private val hold = AtomicReference<Hold?>()
+
+	fun blockNext(release: CountDownLatch, skip: Int = 0): CountDownLatch =
+		CountDownLatch(1).also { hold.set(Hold(skip, release, it)) }
 
 	fun call(name: String) {
 		calls += name
-		val release = gate.getAndSet(null) ?: return
-		entered.countDown()
-		check(release.await(10, TimeUnit.SECONDS)) { "test never released the blocked call" }
+		val held = hold.get() ?: return
+		synchronized(held) {
+			if (held.skip > 0) {
+				held.skip--
+				return
+			}
+		}
+		if (!hold.compareAndSet(held, null)) return
+		held.entered.countDown()
+		check(held.release.await(10, TimeUnit.SECONDS)) { "test never released the blocked call" }
 	}
 
 	fun since(mark: Int): List<String> = synchronized(calls) { calls.drop(mark) }
@@ -83,53 +95,99 @@ class WithdrawalPreemptionTest(private val helper: IntegrationHelper) {
 		fun helpers(): List<IntegrationHelper> = integrationHelpers
 	}
 
-	/** The calls a helper makes for denial, and those only a grant makes. */
-	private fun profile(): Pair<List<String>, Set<String>> {
+	/** The calls a helper makes for denial, for a grant, and those only a grant makes. */
+	private fun profile(): Triple<List<String>, List<String>, Set<String>> {
 		val core = kernel()
 		val recorder = BlockingRecorder()
 		val integration = helper.connect(core, recorder::call, ::unexpectedError)
 		val denied = recorder.since(0)
 		val mark = recorder.calls.size
 		assertTrue(core.save(CommitIntent.All).ok)
-		val grantedOnly = recorder.since(mark).toSet() - denied.toSet()
+		val grant = recorder.since(mark)
 		integration.close()
-		return denied to grantedOnly
+		return Triple(denied, grant, grant.toSet() - denied.toSet())
 	}
 
 	@Test
-	fun `withdrawal applies at once while a grant-time vendor call is blocked`() {
-		val (denied, grantedOnly) = profile()
+	fun `withdrawal applies at once while any grant-time vendor call is blocked`() {
+		val (denied, grant, grantedOnly) = profile()
 		assertTrue("${helper.name} must make a grant-only call", grantedOnly.isNotEmpty())
+		// Hold each grant-time call in turn, so every enabling call is shown to
+		// re-read consent rather than trust a stale grant.
+		for (held in grant.indices) {
+			val core = kernel()
+			val recorder = BlockingRecorder()
+			val integration = helper.connect(core, recorder::call, ::unexpectedError)
+			val release = CountDownLatch(1)
+			val entered = recorder.blockNext(release, skip = held)
+			val granting = Thread { core.save(CommitIntent.All) }
+			granting.start()
+			assertTrue(entered.await(5, TimeUnit.SECONDS))
+
+			val mark = recorder.calls.size
+			val withdrawing = Thread { core.save(CommitIntent.Necessary) }
+			withdrawing.start()
+			withdrawing.join(5_000)
+			assertFalse("withdrawal must not wait for grant call $held", withdrawing.isAlive)
+			assertTrue("grant call $held is still blocked", granting.isAlive)
+			assertEquals(
+				"every denial call ran, in order, while grant call $held was blocked",
+				denied,
+				recorder.since(mark).filter { it in denied }.take(denied.size),
+			)
+
+			release.countDown()
+			granting.join(5_000)
+			assertFalse(granting.isAlive)
+			val afterWithdrawal = recorder.since(mark)
+			assertEquals("no grant-only call after withdrawal, holding grant call $held", emptyList<String>(), afterWithdrawal.filter { it in grantedOnly })
+			assertEquals("the late grant is overwritten by denial", denied, afterWithdrawal.takeLast(denied.size))
+			integration.close()
+		}
+	}
+
+	@Test
+	fun `a regrant waits for a blocked preempting withdrawal, then applies`() {
+		val (_, _, grantedOnly) = profile()
 		val core = kernel()
 		val recorder = BlockingRecorder()
 		val integration = helper.connect(core, recorder::call, ::unexpectedError)
-		val release = CountDownLatch(1)
-		recorder.blockNext(release)
+		val releaseGrant = CountDownLatch(1)
+		val grantEntered = recorder.blockNext(releaseGrant)
 		val granting = Thread { core.save(CommitIntent.All) }
 		granting.start()
-		assertTrue(recorder.entered.await(5, TimeUnit.SECONDS))
+		assertTrue(grantEntered.await(5, TimeUnit.SECONDS))
 
-		val mark = recorder.calls.size
+		val releaseWithdrawal = CountDownLatch(1)
+		val withdrawalEntered = recorder.blockNext(releaseWithdrawal)
 		val withdrawing = Thread { core.save(CommitIntent.Necessary) }
 		withdrawing.start()
-		withdrawing.join(5_000)
-		assertFalse("withdrawal must not wait for the blocked grant", withdrawing.isAlive)
-		assertTrue("the grant is still blocked", granting.isAlive)
-		val beforeRelease = recorder.since(mark)
-		assertEquals("every denial call ran, in order, before the grant returned", denied, beforeRelease.filter { it in denied }.take(denied.size))
+		assertTrue(withdrawalEntered.await(5, TimeUnit.SECONDS))
 
-		release.countDown()
+		releaseGrant.countDown()
 		granting.join(5_000)
 		assertFalse(granting.isAlive)
-		val afterWithdrawal = recorder.since(mark)
-		assertEquals("no grant-only call after withdrawal", emptyList<String>(), afterWithdrawal.filter { it in grantedOnly })
-		assertEquals("the late grant is overwritten by denial", denied, afterWithdrawal.takeLast(denied.size))
+		val mark = recorder.calls.size
+		val regranting = Thread { core.save(CommitIntent.All) }
+		regranting.start()
+		regranting.join(5_000)
+		assertFalse("the regrant must not wait for the blocked withdrawal", regranting.isAlive)
+		assertEquals("the regrant must not overtake the blocked withdrawal", emptyList<String>(), recorder.since(mark).filter { it in grantedOnly })
+
+		releaseWithdrawal.countDown()
+		withdrawing.join(5_000)
+		assertFalse(withdrawing.isAlive)
+		val afterRelease = recorder.since(mark)
+		assertTrue("the regrant applies once the withdrawal returns", afterRelease.containsAll(grantedOnly))
+		val lastGrant = afterRelease.indexOfLast { it in grantedOnly }
+		val lastDenial = afterRelease.indexOfLast { it !in grantedOnly }
+		assertTrue("the vendor ends granted", lastGrant > lastDenial)
 		integration.close()
 	}
 
 	@Test
 	fun `a failing first denial call does not skip the rest and is reported`() {
-		val (denied, _) = profile()
+		val (denied, _, _) = profile()
 		val core = kernel()
 		val recorder = BlockingRecorder()
 		val failures = mutableListOf<Exception>()

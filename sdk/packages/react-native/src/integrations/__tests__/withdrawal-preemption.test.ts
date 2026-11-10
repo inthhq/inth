@@ -55,13 +55,14 @@ const settle = async (calls: readonly string[]): Promise<void> => {
 };
 
 /**
- * A vendor client that records every method call. The next call after `holdNext`
- * returns a promise that settles only when `release` runs, or never.
+ * A vendor client that records every method call. `holdNext(skip)` holds the
+ * call `skip` calls from now: it returns a promise that settles only when the
+ * release function `takeRelease` hands out runs, or never.
  */
 const recorder = () => {
 	const calls: string[] = [];
-	let hold = false;
-	let release = () => {};
+	let holdIn: number | undefined;
+	let pending: (() => void) | undefined;
 	let fail: string | undefined;
 	const client = new Proxy(
 		{},
@@ -74,12 +75,16 @@ const recorder = () => {
 						return Promise.reject(new Error(`vendor rejected ${call}`));
 					}
 					calls.push(call);
-					if (!hold) {
+					if (holdIn === undefined) {
 						return;
 					}
-					hold = false;
+					if (holdIn > 0) {
+						holdIn -= 1;
+						return;
+					}
+					holdIn = undefined;
 					return new Promise<void>((resolve) => {
-						release = resolve;
+						pending = resolve;
 					});
 				},
 		}
@@ -90,10 +95,14 @@ const recorder = () => {
 		failOn: (call: string | undefined) => {
 			fail = call;
 		},
-		holdNext: () => {
-			hold = true;
+		holdNext: (skip = 0) => {
+			holdIn = skip;
 		},
-		release: () => release(),
+		takeRelease: (): (() => void) => {
+			const release = pending ?? (() => {});
+			pending = undefined;
+			return release;
+		},
 	};
 };
 
@@ -127,11 +136,12 @@ const profile = async (connect: Connect) => {
 	vendor.calls.length = 0;
 	fake.pushSnapshot(permissions(true));
 	await settle(vendor.calls);
-	const grantedOnly = vendor.calls.filter((call) => !denied.includes(call));
+	const grantCalls = [...vendor.calls];
+	const grantedOnly = grantCalls.filter((call) => !denied.includes(call));
 	await integration.disconnect();
 	resetConsentClient();
 	resetNativeStub();
-	return { denied, grantedOnly };
+	return { denied, grantCalls, grantedOnly };
 };
 
 afterEach(() => {
@@ -141,10 +151,56 @@ afterEach(() => {
 });
 
 describe.each(helpers)('%s', (_name, connect) => {
-	test('withdrawal runs at once while a grant-time vendor promise never settles', async () => {
-		const { denied, grantedOnly } = await profile(connect);
+	test('withdrawal runs at once while any grant-time vendor promise never settles', async () => {
+		const { denied, grantCalls, grantedOnly } = await profile(connect);
 		expect(grantedOnly.length).toBeGreaterThan(0);
+		// Hold each grant-time call in turn, so every enabling call is shown to
+		// re-read consent rather than trust a stale grant.
+		// One held call at a time: the cases share the fake native module.
+		const holdFrom = async (held: number): Promise<void> => {
+			if (held >= grantCalls.length) {
+				return;
+			}
+			const fake = createFakeNativeModule({ snapshot: permissions(false) });
+			const vendor = recorder();
+			const integration = connect(vendor.client as never, {
+				onError: vi.fn(),
+			});
+			await integration.ready;
+			vendor.holdNext(held);
+			fake.pushSnapshot(permissions(true));
+			await settle(vendor.calls);
+			const release = vendor.takeRelease();
 
+			const mark = vendor.calls.length;
+			fake.pushSnapshot(permissions(false));
+			await settle(vendor.calls);
+			expect(
+				vendor.calls
+					.slice(mark)
+					.filter((call) => denied.includes(call))
+					.slice(0, denied.length),
+				`denial ran while grant call ${held} was held`
+			).toEqual(denied);
+
+			release();
+			await settle(vendor.calls);
+			const afterWithdrawal = vendor.calls.slice(mark);
+			expect(
+				afterWithdrawal.filter((call) => grantedOnly.includes(call)),
+				`no grant-only call after withdrawal, holding grant call ${held}`
+			).toEqual([]);
+			expect(afterWithdrawal.slice(-denied.length)).toEqual(denied);
+			await integration.disconnect();
+			resetConsentClient();
+			resetNativeStub();
+			await holdFrom(held + 1);
+		};
+		await holdFrom(0);
+	});
+
+	test('a regrant waits for a pending preempting withdrawal, then applies', async () => {
+		const { grantedOnly } = await profile(connect);
 		const fake = createFakeNativeModule({ snapshot: permissions(false) });
 		const vendor = recorder();
 		const integration = connect(vendor.client as never, { onError: vi.fn() });
@@ -152,24 +208,41 @@ describe.each(helpers)('%s', (_name, connect) => {
 		vendor.holdNext();
 		fake.pushSnapshot(permissions(true));
 		await settle(vendor.calls);
+		const releaseGrant = vendor.takeRelease();
 
-		const mark = vendor.calls.length;
+		vendor.holdNext();
 		fake.pushSnapshot(permissions(false));
 		await settle(vendor.calls);
-		const beforeRelease = vendor.calls.slice(mark);
-		expect(
-			beforeRelease
-				.filter((call) => denied.includes(call))
-				.slice(0, denied.length)
-		).toEqual(denied);
+		const releaseWithdrawal = vendor.takeRelease();
 
-		vendor.release();
+		releaseGrant();
 		await settle(vendor.calls);
-		const afterWithdrawal = vendor.calls.slice(mark);
+		const mark = vendor.calls.length;
+		fake.pushSnapshot(permissions(true));
+		await settle(vendor.calls);
 		expect(
-			afterWithdrawal.filter((call) => grantedOnly.includes(call))
+			vendor.calls.slice(mark).filter((call) => grantedOnly.includes(call)),
+			'the regrant must not overtake the pending withdrawal'
 		).toEqual([]);
-		expect(afterWithdrawal.slice(-denied.length)).toEqual(denied);
+
+		releaseWithdrawal();
+		await settle(vendor.calls);
+		const afterRelease = vendor.calls.slice(mark);
+		expect(
+			grantedOnly.every((call) => afterRelease.includes(call)),
+			'the regrant applies once the withdrawal settles'
+		).toBe(true);
+		const lastDenial = Math.max(
+			...afterRelease.map((call, index) =>
+				grantedOnly.includes(call) ? -1 : index
+			)
+		);
+		const lastGrant = Math.max(
+			...afterRelease.map((call, index) =>
+				grantedOnly.includes(call) ? index : -1
+			)
+		);
+		expect(lastGrant).toBeGreaterThan(lastDenial);
 		await integration.disconnect();
 	});
 

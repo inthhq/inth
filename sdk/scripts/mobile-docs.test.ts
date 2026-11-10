@@ -107,6 +107,26 @@ test('the mobile bundle covers every public mobile guide and advertises native s
 	}
 });
 
+test('the mobile bundle includes every integration guide for a mobile helper', () => {
+	const config = PACKAGE_DOCS_CONFIGS.find(
+		(entry) => entry.name === '@c15t/react-native'
+	);
+	const included = new Set(
+		fg.sync(config?.include ?? [], { cwd: resolve(root, 'docs') })
+	);
+	// A guide that names a mobile helper package documents an export of the
+	// tarball, so it must ship with it.
+	const mobileHelper =
+		/@c15t\/react-native\/integrations|`C15tApple`|com\.c15t\.android\.integrations/u;
+	const guides = fg
+		.sync('integrations/*.mdx', { cwd: resolve(root, 'docs') })
+		.filter((file) =>
+			mobileHelper.test(readFileSync(resolve(root, 'docs', file), 'utf8'))
+		);
+	expect(guides.length).toBeGreaterThan(5);
+	expect(guides.filter((file) => !included.has(file))).toEqual([]);
+});
+
 test('mobile setup examples come from checked source and survive Markdown conversion', async () => {
 	const regions = collectExampleRegions(root);
 	await Promise.all(

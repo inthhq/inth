@@ -407,10 +407,11 @@ withdrawal, every stop call for the helper runs, in order, whether or not earlie
 or in-flight grants fail or hang, and failures are reported through `onError` (Swift's
 vendor closures cannot throw, so Swift has no `onError`). A
 withdrawal never waits behind a grant still inside a vendor call, on another thread
-in Kotlin and Swift, or as an unsettled promise in React Native. When that grant
-returns, the helper reapplies current consent, so a late grant cannot leave the vendor
-enabled. Each enabling call reads current consent immediately before it is made. The
-shared bindings own this rule and their withdrawal tests pin it per helper.
+in Kotlin and Swift, or as an unsettled promise in React Native. A later regrant waits
+for that withdrawal and applies after it. When the overtaken grant returns, the helper
+reapplies current consent, so a late grant cannot leave the vendor enabled. Each
+enabling call reads current consent immediately before it is made. The shared
+bindings own this rule and their withdrawal tests pin it per helper.
 
 Platform privacy
 ----------------

@@ -204,13 +204,15 @@ public final class SentryReplayIntegration: @unchecked Sendable {
 /// the first call and after `sync()` or `cancel()`, so a vendor whose start call must
 /// run once per grant can tell a new grant from an unrelated change.
 ///
-/// Updates run one at a time on the thread that publishes them, and vendor calls run
-/// outside the lock. A withdrawal never waits for them: when a category the running
-/// update grants is withdrawn on another thread, that thread applies the withdrawal at
-/// once, even while the running update is blocked inside a vendor call. The running
-/// update then reapplies current state after its call returns, so a grant that
-/// completes late cannot leave the vendor enabled. Other changes are picked up by the
-/// running update when its call returns.
+/// One update holds the turn at a time, on the thread that publishes it, and vendor
+/// calls run outside the lock. A withdrawal never waits for them: when a category the
+/// update holding the turn grants is withdrawn on another thread, that thread takes
+/// the turn and applies the withdrawal at once, even while the overtaken update is
+/// blocked inside a vendor call. Other changes, including a regrant, are picked up by
+/// whichever update holds the turn when its call returns, so they apply after the
+/// withdrawal. An overtaken update records nothing when it returns; it asks for
+/// current state to be reapplied, so a grant that completes late cannot leave the
+/// vendor enabled.
 final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
     private let core: ConsentCore
     private let read: ((ConsentCategory) -> Bool) -> State
@@ -284,27 +286,23 @@ final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
         while true {
             lock.lock()
             let (next, granted) = readLocked()
+            let previous: State?
             if let running = applier {
-                // Reentrant, or nothing the running update grants was withdrawn: it
-                // re-reads current state when its vendor call returns.
+                // Reentrant, or nothing the update holding the turn grants was
+                // withdrawn: it picks this change up when its vendor call returns.
                 if running === me || granted.isSuperset(of: targetGranted) {
                     lock.unlock()
                     return
                 }
-                // A withdrawal must not wait for a vendor call in flight elsewhere.
-                let previous = target
-                target = next
-                targetGranted = granted
-                lastApplied = nil
-                lock.unlock()
-                apply(previous, next) { current }
-                return
+                // A withdrawal takes the turn at once.
+                previous = target
+            } else {
+                guard lastApplied != next else {
+                    lock.unlock()
+                    return
+                }
+                previous = lastApplied
             }
-            guard lastApplied != next else {
-                lock.unlock()
-                return
-            }
-            let previous = lastApplied
             lastApplied = next
             target = next
             targetGranted = granted
@@ -312,8 +310,19 @@ final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
             lock.unlock()
             apply(previous, next) { current }
             lock.lock()
-            applier = nil
+            let again: Bool
+            if applier === me {
+                applier = nil
+                // Pick up changes made while the call ran.
+                again = true
+            } else {
+                // A withdrawal overtook this update while its call ran, so its result
+                // is stale. Reapply current state once the turn is free.
+                lastApplied = nil
+                again = applier == nil
+            }
             lock.unlock()
+            if !again { return }
         }
     }
 }
