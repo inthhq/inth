@@ -144,7 +144,11 @@ disable it and install the engine before RN starts:
 
 - iOS uses `com.c15t.reactnative.AutoBootstrap: false`. Install through the
   APIs in `C15tReactNative`, then attach the core with
-  `C15tReactNativeBootstrap.install(core)`.
+  `C15tReactNativeBootstrap.install(core)`. A core built from
+  `C15tBridgeConfiguration.makeCoreConfiguration()` already reports React
+  Native. If you build `C15tAppleConfiguration` yourself, set
+  `configuration.platform = "rn"` before installing, or requests are
+  attributed to a Swift app.
 - Android uses `com.c15t.reactnative.AUTO_BOOTSTRAP: false`. Install through
   the Android platform API before starting the React host, and set
   `platform = C15tProtocol.PLATFORM_REACT_NATIVE` in `NativeConfig` so requests
