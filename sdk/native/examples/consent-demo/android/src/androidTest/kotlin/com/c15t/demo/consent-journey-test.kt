@@ -456,7 +456,7 @@ class ConsentJourneyTest {
     @Test fun accessibilityNamesRolesAndStates() {
         launch(fail = true)
         waitFor("c15t.first-layer.title").assert(heading())
-        for ((tag, name) in listOf("c15t.first-layer.reject-all" to "Reject all", "c15t.first-layer.accept-all" to "Accept all", "c15t.first-layer.customize" to "Customize")) {
+        for ((tag, name) in listOf("c15t.first-layer.reject-all" to "Reject All", "c15t.first-layer.accept-all" to "Accept All", "c15t.first-layer.customize" to "Customize")) {
             waitFor(tag).assertHasClickAction().assertContentDescriptionEquals(name)
         }
         // The brand is announced once; the mark beside it is decorative.
@@ -471,7 +471,7 @@ class ConsentJourneyTest {
         measurement.assert(role(androidx.compose.ui.semantics.Role.Switch)).assertIsOff().assertTextContains("Measurement", substring = true)
         measurement.performClick().assertIsOn()
         capture("android-ax-preferences")
-        compose.onNodeWithTag("c15t.prefs.save").assertContentDescriptionEquals("Save choices").performClick()
+        compose.onNodeWithTag("c15t.prefs.save").assertContentDescriptionEquals("Save Settings").performClick()
         val retry = waitFor("c15t.prefs.error.retry")
         retry.assert(role(androidx.compose.ui.semantics.Role.Button)).assertHasClickAction().assertContentDescriptionEquals("Try again")
         // The failure is two nodes: the message once, then the retry.

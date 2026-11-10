@@ -651,8 +651,8 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
         // Names, roles and states on the first layer.
         for id in ["c15t.first-layer.reject-all", "c15t.first-layer.accept-all", "c15t.first-layer.customize"] { assertNamed(button(id), id) }
-        XCTAssertEqual(button("c15t.first-layer.reject-all").label, "Reject all")
-        XCTAssertEqual(button("c15t.first-layer.accept-all").label, "Accept all")
+        XCTAssertEqual(button("c15t.first-layer.reject-all").label, "Reject All")
+        XCTAssertEqual(button("c15t.first-layer.accept-all").label, "Accept All")
         XCTAssertEqual(app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.label, "Secured by c15t")
         // The brand mark is decorative: the brand name is announced once, not once per image.
         let brandLabels = labelled().filter { $0.label == "Your brand here" }
