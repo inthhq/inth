@@ -21,7 +21,7 @@ tarball and get Maven access from your maintainer first.
 | Project | Detected by | What setup does |
 | --- | --- | --- |
 | Expo | `expo` in `package.json` | Adds the config plugin entry to `app.json` and writes the provider file. |
-| Bare React Native | `react-native` without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. |
+| Bare React Native | `react-native` without `expo` | Writes the provider file and prints the `Info.plist` and `AndroidManifest.xml` entries. Offline mode also writes the policy rules to `android/app/src/main/assets/c15t-policy-rules.json`, which the iOS target references. |
 | Swift | An Xcode project, workspace or `Package.swift`, with no `package.json` | Prints the package, products and setup code. |
 | Android | A Gradle build, with no `package.json` | Prints the repository, dependencies and setup code. |
 

@@ -82,6 +82,34 @@ const PLUGIN_MODE: Record<MobileMode, string | undefined> = {
 };
 
 /**
+ * The example policy offline setup writes: one rule that asks for a choice
+ * everywhere. The app replaces it with its own rules.
+ */
+export const OFFLINE_RULES = [
+	{
+		id: 'everywhere',
+		match: { fallback: true, isDefault: true },
+		model: 'opt-in',
+		prompt: 'choice',
+	},
+] as const;
+
+/**
+ * Where a bare React Native app keeps the offline rules: the Android assets
+ * folder, which the Android reader loads by name. The iOS target references the
+ * same file, so the two platforms cannot drift.
+ */
+export const BARE_POLICY_RULES_PATH =
+	'android/app/src/main/assets/c15t-policy-rules.json';
+
+/**
+ * The rules file, byte for byte what the Expo plugin's `writePolicyRules`
+ * writes: `{"rules": [...]}`, the shape both native cores read.
+ */
+export const policyRulesFile = (): string =>
+	`${JSON.stringify({ rules: OFFLINE_RULES }, null, 2)}\n`;
+
+/**
  * The Expo config plugin entry for these options.
  *
  * Offline mode carries a one-rule policy that asks for a choice everywhere,
@@ -101,16 +129,7 @@ export const expoPluginEntry = (
 	}
 	props.consentCategories = [...options.categories];
 	if (options.mode === 'offline') {
-		props.policy = {
-			rules: [
-				{
-					id: 'everywhere',
-					match: { fallback: true, isDefault: true },
-					model: 'opt-in',
-					prompt: 'choice',
-				},
-			],
-		};
+		props.policy = { rules: OFFLINE_RULES };
 	} else if (options.bundleManifest) {
 		props.bundleManifest = true;
 	}
@@ -243,23 +262,50 @@ const xml = (value: string): string =>
 		.replaceAll('>', '&gt;')
 		.replaceAll('"', '&quot;');
 
-/** The `Info.plist` entries a hosted or self-hosted app adds. */
+const IOS_MODE: Record<MobileMode, string> = {
+	custom: 'none',
+	hosted: 'hosted',
+	offline: 'offline',
+	'self-hosted': 'selfHosted',
+};
+
+/**
+ * The `Info.plist` entries a bare app adds. Offline mode names the rules file
+ * instead of a backend.
+ */
 export const infoPlistEntries = (options: MobileSetupOptions): string =>
 	[
 		'<key>com.c15t.backend.mode</key>',
-		`<string>${options.mode === 'self-hosted' ? 'selfHosted' : 'hosted'}</string>`,
-		'<key>com.c15t.backend.url</key>',
-		`<string>${xml(options.backendURL ?? '')}</string>`,
+		`<string>${IOS_MODE[options.mode]}</string>`,
+		...(options.mode === 'offline'
+			? [
+					'<key>com.c15t.policy.rules</key>',
+					'<string>c15t-policy-rules.json</string>',
+				]
+			: [
+					'<key>com.c15t.backend.url</key>',
+					`<string>${xml(options.backendURL ?? '')}</string>`,
+				]),
 		'<key>com.c15t.categories</key>',
 		'<array>',
 		...options.categories.map((category) => `\t<string>${category}</string>`),
 		'</array>',
 	].join('\n');
 
-/** The `<application>` meta-data a hosted or self-hosted app adds. */
+/**
+ * The `<application>` meta-data a bare app adds. Offline mode selects no-backend
+ * mode and names the rules asset instead of a backend.
+ */
 export const androidManifestEntries = (options: MobileSetupOptions): string =>
 	[
-		`<meta-data android:name="com.c15t.BACKEND_URL" android:value="${xml(options.backendURL ?? '')}" />`,
+		...(options.mode === 'offline'
+			? [
+					'<meta-data android:name="com.c15t.MODE" android:value="offline" />',
+					'<meta-data android:name="com.c15t.POLICY_RULES" android:value="c15t-policy-rules.json" />',
+				]
+			: [
+					`<meta-data android:name="com.c15t.BACKEND_URL" android:value="${xml(options.backendURL ?? '')}" />`,
+				]),
 		`<meta-data android:name="com.c15t.CATEGORIES" android:value="${options.categories.join(', ')}" />`,
 	].join('\n');
 
@@ -274,6 +320,8 @@ export interface ProjectFiles {
 	readonly dynamicConfig: string | null;
 	/** Whether a `src` directory exists. */
 	readonly hasSrc: boolean;
+	/** Whether a bare app already has the offline rules file. */
+	readonly policyRulesExists: boolean;
 	/** Whether the provider file already exists. */
 	readonly providerExists: boolean;
 	/** The root component the app renders, such as `app/_layout.tsx`. */
@@ -393,15 +441,37 @@ export const planReactNativeSetup = (
 		return { files: planned, skipped, steps };
 	}
 
-	if (options.mode === 'offline' || options.mode === 'custom') {
+	if (options.mode === 'custom') {
 		steps.push(
-			`Configure ${options.mode} mode in the native projects. See ${RN_DOCS}/frameworks/react-native/configuration.md.`
+			`Custom mode installs no consent engine from app metadata. Turn automatic start-up off and install the engine with your own transport before React starts: see "When your app owns native installation" in ${RN_DOCS}/frameworks/react-native/bare.md, and "Use your own transport" in ${RN_DOCS}/frameworks/swift/headless.md and ${RN_DOCS}/frameworks/android/configuration.md.`
 		);
 	} else {
+		if (options.mode === 'offline') {
+			if (files.policyRulesExists && !overwrite) {
+				skipped.push(
+					`${BARE_POLICY_RULES_PATH} exists; pass --overwrite to replace it.`
+				);
+			} else {
+				planned.push({
+					action: files.policyRulesExists ? 'update' : 'create',
+					contents: policyRulesFile(),
+					path: BARE_POLICY_RULES_PATH,
+				});
+			}
+		}
+		const iosRules =
+			options.mode === 'offline'
+				? ` In Xcode, also add ${BARE_POLICY_RULES_PATH} to the app target without copying it, so Copy Bundle Resources includes the same rules file Android reads.`
+				: '';
 		steps.push(
-			`iOS: add these entries inside the root <dict> of your app target's Info.plist, then run pod install in ios/:\n${infoPlistEntries(options)}`,
+			`iOS: add these entries inside the root <dict> of your app target's Info.plist, then run pod install in ios/.${iosRules}\n${infoPlistEntries(options)}`,
 			`Android: add the private Maven repository you were given to android/build.gradle (${RN_DOCS}/frameworks/react-native/bare.md, Set up Android), and these entries inside <application> in android/app/src/main/AndroidManifest.xml:\n${androidManifestEntries(options)}`
 		);
+		if (options.mode === 'offline') {
+			steps.push(
+				`Replace the example rule in ${BARE_POLICY_RULES_PATH} with your own, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`
+			);
+		}
 	}
 	steps.push('Rebuild both apps; native configuration needs a new binary.');
 	return { files: planned, skipped, steps };

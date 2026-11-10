@@ -5,9 +5,14 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import {
+	ANDROID_META,
+	IOS_PLIST_KEY,
+} from '../../../../react-native/src/expo-plugin/constants';
 // The Expo plugin's own URL rules, which setup mirrors. Test-only, so the published
 // CLI takes no dependency on the private React Native package.
 import { resolveParams } from '../../../../react-native/src/expo-plugin/params';
+import { writePolicyRules } from '../../../../react-native/src/expo-plugin/policy-resource';
 import type { CliCommand } from '../../context/types';
 import { runCli } from '../../index';
 import {
@@ -330,6 +335,66 @@ describe('c15t setup in a mobile project', () => {
 		await expect(
 			readFile(path.join(root, 'src/c15t/privacy-app.jsx'), 'utf8')
 		).rejects.toThrow();
+	});
+
+	it('sets up a bare React Native app for offline mode the way the Expo plugin does', async () => {
+		const root = await project({
+			'package.json': pkg({ 'react-native': '0.86.0' }),
+		});
+
+		const result = await setup(root, ['offline']);
+
+		expect(result.success).toBe(true);
+		const rulesPath = 'android/app/src/main/assets/c15t-policy-rules.json';
+		expect(result.data.files.map((file) => file.path)).toContain(rulesPath);
+		// Byte for byte what the plugin writes for the same rules, so both cores read it.
+		const pluginCopy = path.join(root, 'plugin-rules.json');
+		await writePolicyRules(
+			pluginCopy,
+			expoPluginEntry({
+				bundleManifest: false,
+				categories: DEFAULT_CATEGORIES,
+				mode: 'offline',
+				privacyPolicyURL: 'https://example.com/privacy',
+			})[1].policy.rules
+		);
+		expect(await readFile(path.join(root, rulesPath), 'utf8')).toBe(
+			await readFile(pluginCopy, 'utf8')
+		);
+		const steps = result.data.steps.join('\n');
+		expect(steps).toContain(`<key>${IOS_PLIST_KEY.policyRules}</key>`);
+		expect(steps).toContain(
+			'<key>com.c15t.backend.mode</key>\n<string>offline</string>'
+		);
+		expect(steps).toContain(
+			`android:name="${ANDROID_META.mode}" android:value="offline"`
+		);
+		expect(steps).toContain(
+			`android:name="${ANDROID_META.policyRules}" android:value="c15t-policy-rules.json"`
+		);
+		expect(steps).not.toContain(ANDROID_META.backendUrl);
+		expect(steps).not.toContain(IOS_PLIST_KEY.backendURL);
+		expect(steps).not.toContain('frameworks/react-native/configuration.md');
+	});
+
+	it('points a bare React Native app in custom mode at app-owned installation', async () => {
+		const root = await project({
+			'package.json': pkg({ 'react-native': '0.86.0' }),
+		});
+
+		const steps = (
+			await setup(root, [
+				'custom',
+				'--backend-url',
+				'https://a.test',
+				'--dry-run',
+			])
+		).data.steps.join('\n');
+
+		expect(steps).toContain(
+			'"When your app owns native installation" in node_modules/@c15t/react-native/docs/frameworks/react-native/bare.md'
+		);
+		expect(steps).not.toContain('frameworks/react-native/configuration.md');
 	});
 
 	it('prints steps for Swift and Android apps and writes nothing', async () => {

@@ -9,6 +9,7 @@ import type { MobileProject, ReactNativeProject } from './detect';
 import {
 	MOBILE_CATEGORIES,
 	planNativeSetup,
+	BARE_POLICY_RULES_PATH,
 	planReactNativeSetup,
 	UNKNOWN_ROOT_COMPONENT,
 } from './scaffold';
@@ -355,6 +356,8 @@ export const readProjectFiles = async (
 				: null,
 		hasSrc,
 		installCommand: INSTALL[packageManager] ?? 'npm install',
+		policyRulesExists:
+			(await readIfExists(path.join(root, BARE_POLICY_RULES_PATH))) !== null,
 		providerExists: (await readIfExists(path.join(root, provider))) !== null,
 		rootComponent,
 	};
