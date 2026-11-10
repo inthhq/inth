@@ -1625,7 +1625,10 @@ of them, because it records nothing.
   `injectJavaScript`.
 
 Each helper instance draws its own 128-bit token from the platform's secure
-generator and keeps it for the life of that WebView.
+generator and keeps it for the life of that WebView. The Swift and Kotlin
+helpers observe the core before they read the first state, and live as long as
+their WebView (an associated object on iOS, a weak registry on Android), so a
+released helper never leaves a document-start script carrying an old state.
 
 ### Web side
 
@@ -1643,9 +1646,12 @@ One way, native to web. A choice cannot be made in the page: the consent
 source disables the web choice UI. The page may only ask the app to open its
 own preferences, by posting `{"type":"c15t:open-preferences"}` to the
 `c15tConsent` message handler (iOS), the `c15tConsent` web message listener
-(Android) or `ReactNativeWebView` (React Native). Native acts on it only from
-the main frame of a listed origin. A forged request can open the preferences
-screen and nothing more.
+(Android) or `ReactNativeWebView` (React Native). Swift and Kotlin act on it
+only from the main frame of a listed origin. React Native checks the origin of
+the page URL `react-native-webview` reports, but that library cannot always say
+which frame sent a message, so an iframe on a listed page can send it too; the
+hook drops requests less than a second apart. A forged request can open the
+preferences screen and nothing more.
 
 Web-to-native choices are deliberately absent. Native would have to record a
 receipt in the subject's name on the word of page script, and nothing in a page

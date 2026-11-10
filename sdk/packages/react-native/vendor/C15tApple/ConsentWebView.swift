@@ -24,12 +24,12 @@ import WebKit
 ///     presentPreferences()
 /// }
 /// webView.load(URLRequest(url: URL(string: "https://www.example.com/")!))
-/// // When the screen goes away:
-/// sync.close()
 /// ```
 ///
-/// Create it before the first load and keep it for as long as the web view lives:
-/// it holds the consent observer. Call ``close()`` to stop.
+/// Create it before the first load. The web view keeps the helper alive for as long
+/// as the web view lives, so a page never keeps a state the app has since changed.
+/// Call ``close()`` to stop sooner. A second helper on the same web view closes the
+/// first.
 @MainActor
 public final class ConsentWebView {
     private weak var webView: WKWebView?
@@ -42,6 +42,9 @@ public final class ConsentWebView {
     private var subscription: ConsentSubscription?
     private var messages: ConsentWebViewMessageHandler?
     private var closed = false
+
+    /// The web view retains its helper through this association.
+    private static var associationKey: UInt8 = 0
 
     /// Start syncing `core` into `webView` for `allowedOrigins`.
     ///
@@ -62,12 +65,17 @@ public final class ConsentWebView {
         self.webView = webView
         self.core = core
         self.onPreferencesRequested = onPreferencesRequested
-        publish()
+        // Observe first, so a change between the first read and the subscription
+        // is not missed. A repeated state is skipped.
         let observer = ConsentWebViewObserver { [weak self] in
             Task { @MainActor [weak self] in self?.publish() }
         }
         self.observer = observer
         subscription = core.onChange(observer)
+        publish()
+        // Tie the helper's lifetime to the web view's, replacing an earlier helper.
+        (objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView)?.close()
+        objc_setAssociatedObject(webView, &Self.associationKey, self, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         if onPreferencesRequested != nil {
             let messages = ConsentWebViewMessageHandler(owner: self)
             self.messages = messages
@@ -82,7 +90,11 @@ public final class ConsentWebView {
         subscription?.cancel()
         subscription = nil
         observer = nil
-        guard let controller = webView?.configuration.userContentController else { return }
+        guard let webView else { return }
+        if (objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView) === self {
+            objc_setAssociatedObject(webView, &Self.associationKey, nil, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+        let controller = webView.configuration.userContentController
         replaceUserScript(in: controller, with: nil)
         if messages != nil {
             controller.removeScriptMessageHandler(forName: WebViewConsentScript.channel)

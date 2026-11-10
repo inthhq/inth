@@ -154,6 +154,9 @@ test('answers a preferences request from a listed top frame only', () => {
 	expect(onPreferencesRequested).not.toHaveBeenCalled();
 	message(request, 'https://www.example.com/cookies?x=1');
 	expect(onPreferencesRequested).toHaveBeenCalledTimes(1);
+	// A burst, such as a frame posting in a loop, opens the screen once.
+	message(request, 'https://www.example.com/');
+	expect(onPreferencesRequested).toHaveBeenCalledTimes(1);
 });
 
 test('an unsafe origin list is a wiring mistake, not a silent no-op', () => {

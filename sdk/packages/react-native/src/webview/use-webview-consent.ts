@@ -57,6 +57,9 @@ export interface WebViewConsentProps {
 	readonly onMessage: (event: WebViewConsentMessageEvent) => void;
 }
 
+/** Preference requests closer together than this are dropped. */
+const PREFERENCES_REQUEST_INTERVAL_MS = 1000;
+
 const selectRevision = (snapshot: ConsentSnapshot): number => snapshot.revision;
 
 const call = (
@@ -151,16 +154,23 @@ export const useWebViewConsent = function useWebViewConsent(
 		webView.current = instance;
 	}, []);
 
+	const lastRequest = useRef(Number.NEGATIVE_INFINITY);
+	// `react-native-webview` reports the top page's URL and, on some Android
+	// WebViews, no frame at all, so an iframe on a listed page can send this
+	// too. It can only ask for the preferences screen; repeats are dropped.
 	const onMessage = useCallback(
 		(event: WebViewConsentMessageEvent) => {
 			const { data, isTopFrame, url } = event.nativeEvent;
 			const origin = originOfUrl(url);
+			const now = Date.now();
 			if (
 				data === OPEN_PREFERENCES_MESSAGE &&
 				isTopFrame !== false &&
 				origin !== null &&
-				origins.includes(origin)
+				origins.includes(origin) &&
+				now - lastRequest.current >= PREFERENCES_REQUEST_INTERVAL_MS
 			) {
+				lastRequest.current = now;
 				onPreferencesRequested.current?.();
 			}
 		},

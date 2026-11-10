@@ -112,8 +112,9 @@ final class SiteViewController: UIViewController {
 ```
 
 The initializer throws when an origin is not accepted. The closure runs on the
-main actor when a listed page asks for preferences. The helper stops when it is
-released; call `close()` to stop it while the web view stays in use.
+main actor when a listed page asks for preferences. The web view keeps the
+helper alive, so you don't need to hold it; call `close()` to stop it while the
+web view stays in use.
 
 ### Kotlin
 
@@ -146,7 +147,9 @@ class SiteActivity : AppCompatActivity() {
 }
 ```
 
-`attach` throws `IllegalArgumentException` when an origin is not accepted. It
+The helper lives as long as the WebView, and attaching again to the same
+WebView replaces it. `attach` throws `IllegalArgumentException` when an origin
+is not accepted. It
 returns `null` when the device's WebView cannot run a script at document start
 (`ConsentWebView.isSupported()` is `false`). Then nothing is injected and the
 page shows its own banner.
@@ -193,8 +196,11 @@ choices from it.
 
 The page can ask the app to open its preferences. Opening the preference dialog
 on the page, for example from a "Cookie settings" link, calls your
-`onPreferencesRequested`. The app acts only on requests from the top frame of a
-listed origin. When the visitor saves in the app, the page receives the new
+`onPreferencesRequested`. Swift and Android act only on requests from the top
+frame of a listed origin. React Native checks the page's origin, but
+`react-native-webview` cannot always tell which frame sent a message, so an
+iframe on a listed page can also open the preferences screen. The hook ignores
+requests less than a second apart. When the visitor saves in the app, the page receives the new
 state. If a saved change withdraws a category the page was using, web c15t
 reloads the page, unless you set `reloadOnConsentRevoked: false`.
 

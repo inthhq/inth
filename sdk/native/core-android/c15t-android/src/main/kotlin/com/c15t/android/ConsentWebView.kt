@@ -12,6 +12,8 @@ import com.c15t.core.Subscription
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.webview.WebViewConsentScript
 import com.c15t.core.webview.WebViewConsentState
+import java.lang.ref.WeakReference
+import java.util.WeakHashMap
 
 /**
  * Keeps the pages a [WebView] loads in step with native consent, so a site that
@@ -33,15 +35,19 @@ import com.c15t.core.webview.WebViewConsentState
  * sync?.close()
  * ```
  *
- * Attach before the first `loadUrl`. Keep the returned handle for as long as the
- * WebView lives; it holds the consent observer.
+ * Attach before the first `loadUrl`. The helper lives as long as the WebView, so a
+ * page never keeps a state the app has since changed. Call [close] to stop sooner.
+ * Attaching again to the same WebView closes the earlier helper.
  */
 class ConsentWebView private constructor(
-	private val webView: WebView,
+	webView: WebView,
 	private val core: ConsentCore,
 	private val script: WebViewConsentScript,
 	private val onPreferencesRequested: (() -> Unit)?,
 ) : AutoCloseable {
+	// Weak: the registry below keys on the WebView, and a strong reference here
+	// would keep it alive through its own map entry.
+	private val webViewRef = WeakReference(webView)
 	private val main = Handler(Looper.getMainLooper())
 	private var handler: ScriptHandler? = null
 	private var listening = false
@@ -52,9 +58,11 @@ class ConsentWebView private constructor(
 	// Held here: the core keeps observers weakly.
 	private val observer: (ConsentSnapshot) -> Unit = { main.post { publish() } }
 
-	private fun start() {
-		publish()
+	private fun start(webView: WebView) {
+		// Observe first, so a change between the first read and the
+		// subscription is not missed. A repeated state is skipped.
 		subscription = core.onChange(observer)
+		publish()
 		if (onPreferencesRequested != null && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
 			WebViewCompat.addWebMessageListener(
 				webView,
@@ -74,6 +82,7 @@ class ConsentWebView private constructor(
 	/** Re-register the document-start script and push the state into the loaded page. */
 	@MainThread
 	private fun publish() {
+		val webView = webViewRef.get() ?: return
 		if (closed || !WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return
 		val state = WebViewConsentState.from(core)
 		if (state == published) return
@@ -90,19 +99,24 @@ class ConsentWebView private constructor(
 	override fun close() {
 		if (closed) return
 		closed = true
+		val webView = webViewRef.get()
+		if (webView != null && attached[webView] === this) attached.remove(webView)
 		subscription?.close()
 		subscription = null
 		if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
 			handler?.remove()
 		}
 		handler = null
-		if (listening && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+		if (webView != null && listening && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
 			WebViewCompat.removeWebMessageListener(webView, WebViewConsentScript.CHANNEL)
 			listening = false
 		}
 	}
 
 	companion object {
+		/** One helper per WebView, alive as long as the WebView. Main thread only. */
+		private val attached = WeakHashMap<WebView, ConsentWebView>()
+
 		/** Whether this device's WebView can run a script at document start, which the helper needs. */
 		@JvmStatic
 		fun isSupported(): Boolean = WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)
@@ -130,7 +144,11 @@ class ConsentWebView private constructor(
 		): ConsentWebView? {
 			val script = WebViewConsentScript(allowedOrigins)
 			if (!isSupported()) return null
-			return ConsentWebView(webView, core, script, onPreferencesRequested).also { it.start() }
+			attached[webView]?.close()
+			val helper = ConsentWebView(webView, core, script, onPreferencesRequested)
+			attached[webView] = helper
+			helper.start(webView)
+			return helper
 		}
 	}
 }
