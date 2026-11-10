@@ -1,309 +1,292 @@
 /**
- * The auto-present state machine, cell by cell, and the invariant it exists for:
- * if a prompt is owed, auto-present is on, and nothing of ours is on screen, then
- * a native call is in flight or the next trigger makes one, unless the person
- * already saw this owed prompt and closed it, or native refused the URL.
+ * The auto-present decision, cell by cell, and the invariant it exists for: if
+ * a prompt is owed, auto-present is on, the props are valid and nothing is on
+ * screen, then a native call is in flight or the next trigger makes one, unless
+ * the person already closed this owed prompt.
  */
 
 import { describe, expect, test } from 'vitest';
 
+import { buildSnapshot } from '../../__tests__/helpers/fake-native';
+import { selectOwedPromptKey } from '../auto-present';
 import {
-	INITIAL_AUTO_PRESENT_STATE,
+	INITIAL_AUTO_PRESENT_FACTS,
 	stepAutoPresent,
 } from '../auto-present-machine';
 import type {
+	AutoPresentContext,
 	AutoPresentEffect,
+	AutoPresentFacts,
 	AutoPresentInput,
-	AutoPresentPhase,
-	AutoPresentState,
 	SessionPresentation,
 } from '../auto-present-machine';
+import { isPrivacyPolicyURL } from '../privacy-policy-url';
 
 const URL = 'https://example.com/privacy';
+const LEGAL = 'https://example.com/legal';
 
-const at = (
-	phase: AutoPresentPhase,
-	extra: Partial<AutoPresentState> = {}
-): AutoPresentState => ({
-	...INITIAL_AUTO_PRESENT_STATE,
+const facts = (extra: Partial<AutoPresentFacts> = {}): AutoPresentFacts => ({
+	...INITIAL_AUTO_PRESENT_FACTS,
 	...extra,
-	phase,
 });
-
-const requesting = (
-	key: string,
-	ended = false,
-	recheck = false
-): AutoPresentPhase => ({
-	ended,
+const ctx = (
+	key: string | null,
+	extra: Partial<AutoPresentContext> = {}
+): AutoPresentContext => ({
+	active: true,
+	generation: 1,
 	key,
-	kind: 'requesting',
-	recheck,
+	url: URL,
+	...extra,
 });
-const showing = (
-	key: string,
-	sessionId = 's1',
-	ended = false
-): AutoPresentPhase => ({
-	ended,
-	key,
-	kind: 'showing',
-	sessionId,
+const call = (key: string, url = URL) => ({ inFlight: { key, url } });
+const screen = (
+	sessionId: string,
+	presentation: SessionPresentation = 'prompt'
+) => ({
+	onScreen: { presentation, sessionId },
 });
-const trigger = (key: string | null, url = URL): AutoPresentInput => ({
-	key,
-	type: 'trigger',
-	url,
-});
+const trigger: AutoPresentInput = { type: 'trigger' };
 const outcome = (
 	kind: 'committed' | 'acknowledged' | 'dismissed' | 'unavailable',
-	key: string | null,
 	sessionId = 's1'
-): AutoPresentInput => ({ key, kind, sessionId, type: 'outcome' });
-const already = (
-	presentation: SessionPresentation | undefined,
+): AutoPresentInput => ({ kind, sessionId, type: 'outcome' });
+const answer = (
+	type: 'shown' | 'already-presented',
+	presentation?: SessionPresentation,
 	sessionId = 's1'
-): AutoPresentInput => ({
-	presentation,
-	sessionId,
-	type: 'already-presented',
-});
+): AutoPresentInput => ({ presentation, sessionId, type });
 
 describe('cells', () => {
 	test.each<
 		[
 			string,
-			AutoPresentState,
+			AutoPresentFacts,
 			AutoPresentInput,
-			AutoPresentPhase,
+			AutoPresentContext,
+			Partial<AutoPresentFacts>,
 			AutoPresentEffect[],
 		]
 	>([
-		// trigger
+		// What is owed, what is on screen, what is in flight, the props.
 		[
-			'idle, owed: ask',
-			at({ kind: 'idle' }),
-			trigger('A'),
-			requesting('A'),
+			'owed, nothing else: ask',
+			facts(),
+			trigger,
+			ctx('A'),
+			call('A'),
+			['present'],
+		],
+		['nothing owed: nothing', facts(), trigger, ctx(null), {}, []],
+		[
+			'opted out: nothing',
+			facts(),
+			trigger,
+			ctx('A', { active: false }),
+			{},
+			[],
+		],
+		[
+			'a call in flight: wait for it',
+			facts(call('A')),
+			trigger,
+			ctx('B'),
+			call('A'),
+			[],
+		],
+		[
+			'something on screen: nothing',
+			facts(screen('s1')),
+			trigger,
+			ctx('A'),
+			screen('s1'),
+			[],
+		],
+		[
+			'the person closed this prompt: nothing',
+			facts({ dismissed: 'A' }),
+			trigger,
+			ctx('A'),
+			{ dismissed: 'A' },
+			[],
+		],
+		[
+			'closed another prompt: ask',
+			facts({ dismissed: 'A' }),
+			trigger,
+			ctx('B'),
+			{ ...call('B'), dismissed: 'A' },
 			['present'],
 		],
 		[
-			'idle, nothing owed: wait',
-			at({ kind: 'idle' }),
-			trigger(null),
-			{ kind: 'idle' },
+			'nothing owed ends the dismissal',
+			facts({ dismissed: 'A' }),
+			trigger,
+			ctx(null),
+			{ dismissed: null },
 			[],
 		],
 		[
-			'requesting, change: recheck later',
-			at(requesting('A')),
-			trigger('B'),
-			requesting('A', false, true),
+			'this URL refused: nothing',
+			facts({ refused: URL }),
+			trigger,
+			ctx('A'),
+			{ refused: URL },
 			[],
 		],
 		[
-			'requesting, nothing owed: the episode ends',
-			at(requesting('A')),
-			trigger(null),
-			requesting('A', true, true),
+			'another URL: ask',
+			facts({ refused: URL }),
+			trigger,
+			ctx('A', { url: LEGAL }),
+			{ ...call('A', LEGAL), refused: URL },
+			['present'],
+		],
+		// Native answers.
+		[
+			'shown: on screen',
+			facts(call('A')),
+			answer('shown'),
+			ctx('A'),
+			{ ...screen('s1'), inFlight: null },
 			[],
 		],
 		[
-			'showing, anything owed: the session shows it',
-			at(showing('A')),
-			trigger('B'),
-			showing('A'),
+			'already presented, the prompt: on screen',
+			facts(call('A')),
+			answer('already-presented', 'prompt'),
+			ctx('A'),
+			{ ...screen('s1'), inFlight: null },
 			[],
 		],
 		[
-			'showing, nothing owed: the episode ends',
-			at(showing('A')),
-			trigger(null),
-			showing('A', 's1', true),
+			'already presented, settings: on screen as settings',
+			facts(call('A')),
+			answer('already-presented', 'preferences'),
+			ctx('A'),
+			{ ...screen('s1', 'preferences'), inFlight: null },
 			[],
 		],
 		[
-			'blocked: wait for the session',
-			at({ kind: 'blocked', sessionId: 's1' }),
-			trigger('A'),
-			{ kind: 'blocked', sessionId: 's1' },
+			'already presented, unnamed: waited on as settings',
+			facts(call('A')),
+			answer('already-presented'),
+			ctx('A'),
+			{ ...screen('s1', 'preferences'), inFlight: null },
 			[],
 		],
 		[
-			'handled, same prompt: stays closed',
-			at({ key: 'A', kind: 'handled' }),
-			trigger('A'),
-			{ key: 'A', kind: 'handled' },
-			[],
-		],
-		[
-			'handled, another prompt: ask',
-			at({ key: 'A', kind: 'handled' }),
-			trigger('B'),
-			requesting('B'),
+			'answer for a session already closed: decide again',
+			facts({
+				...call('A'),
+				closed: [{ dismissedKey: null, sessionId: 's1' }],
+			}),
+			answer('already-presented', 'preferences'),
+			ctx('A'),
+			call('A'),
 			['present'],
 		],
 		[
-			'handled, nothing owed: forget it',
-			at({ key: 'A', kind: 'handled' }),
-			trigger(null),
-			{ kind: 'idle' },
+			'answer for a prompt the person already dismissed',
+			facts({ ...call('A'), closed: [{ dismissedKey: 'A', sessionId: 's1' }] }),
+			answer('shown'),
+			ctx('A'),
+			{ dismissed: 'A', inFlight: null },
 			[],
-		],
-		[
-			'refused URL: not offered again',
-			at({ kind: 'idle' }, { refusedURL: URL }),
-			trigger('A'),
-			{ kind: 'idle' },
-			[],
-		],
-		[
-			'refused URL, a new URL: ask',
-			at({ kind: 'idle' }, { refusedURL: URL }),
-			trigger('A', 'https://example.com/legal'),
-			requesting('A'),
-			['present'],
-		],
-		// native answers
-		[
-			'presented: shown',
-			at(requesting('A')),
-			{ sessionId: 's1', type: 'presented' },
-			showing('A'),
-			[],
-		],
-		[
-			'presented after a change: shown, then decide again',
-			at(requesting('A', false, true)),
-			{ sessionId: 's1', type: 'presented' },
-			showing('A'),
-			['recheck'],
-		],
-		[
-			'already presented, a prompt: shown',
-			at(requesting('A')),
-			already('prompt'),
-			showing('A'),
-			[],
-		],
-		[
-			'already presented, preferences: blocked, not shown',
-			at(requesting('A')),
-			already('preferences'),
-			{ kind: 'blocked', sessionId: 's1' },
-			[],
-		],
-		[
-			'already presented, unnamed by an older binary: blocked',
-			at(requesting('A')),
-			already(undefined),
-			{ kind: 'blocked', sessionId: 's1' },
-			[],
-		],
-		[
-			'already presented, that session already closed: decide again',
-			at(requesting('A'), { closed: ['s1'] }),
-			already('preferences'),
-			{ kind: 'idle' },
-			['recheck'],
 		],
 		[
 			'not required: wait for the next trigger',
-			at(requesting('A')),
+			facts(call('A')),
 			{ type: 'not-required' },
-			{ kind: 'idle' },
+			ctx('A'),
+			{ declined: { generation: 1, key: 'A', url: URL }, inFlight: null },
 			[],
 		],
 		[
-			'refused: reported, URL remembered',
-			at(requesting('A')),
-			{ type: 'refused', url: URL },
-			{ kind: 'idle' },
-			['report-refused'],
+			'not required, then a trigger: ask',
+			facts({ declined: { generation: 1, key: 'A', url: URL } }),
+			trigger,
+			ctx('A', { generation: 2 }),
+			call('A'),
+			['present'],
 		],
 		[
-			'failed: warned, the next trigger retries',
-			at(requesting('A')),
+			'failed: warn, wait for the next trigger',
+			facts(call('A')),
 			{ type: 'failed' },
-			{ kind: 'idle' },
+			ctx('A'),
+			{ declined: { generation: 1, key: 'A', url: URL }, inFlight: null },
 			['warn-unavailable'],
 		],
-		// session outcomes
 		[
-			'showing, dismissed: handled as on screen',
-			at(showing('A')),
-			outcome('dismissed', 'A'),
-			{ key: 'A', kind: 'handled' },
-			['recheck'],
+			'failed, but the prompt changed meanwhile: ask for it',
+			facts(call('A')),
+			{ type: 'failed' },
+			ctx('B'),
+			{ ...call('B'), declined: { generation: 1, key: 'A', url: URL } },
+			['warn-unavailable', 'present'],
 		],
 		[
-			'showing, dismissed after the requirement changed: the new one was on screen',
-			at(showing('A')),
-			outcome('dismissed', 'B'),
-			{ key: 'B', kind: 'handled' },
-			['recheck'],
+			'refused: the URL the call carried',
+			facts(call('A', LEGAL)),
+			{ type: 'refused' },
+			ctx('A'),
+			{ ...call('A'), refused: LEGAL },
+			['report-refused', 'present'],
 		],
+		// Session outcomes.
 		[
-			'showing, unavailable, nothing owed: idle',
-			at(showing('A')),
-			outcome('unavailable', null),
-			{ kind: 'idle' },
-			['recheck'],
-		],
-		[
-			'showing, committed: the shown prompt is answered',
-			at(showing('A')),
-			outcome('committed', null),
-			{ key: 'A', kind: 'handled' },
-			['recheck'],
-		],
-		[
-			'showing, committed after its episode ended: decide afresh',
-			at(showing('A', 's1', true)),
-			outcome('committed', 'C'),
-			{ kind: 'idle' },
-			['recheck'],
-		],
-		[
-			'showing, another session closed: still showing',
-			at(showing('A')),
-			outcome('dismissed', 'A', 's9'),
-			showing('A'),
-			['recheck'],
-		],
-		[
-			'blocked, its session closed: decide again',
-			at({ kind: 'blocked', sessionId: 's1' }),
-			outcome('dismissed', 'A'),
-			{ kind: 'idle' },
-			['recheck'],
-		],
-		[
-			'requesting, a session closed: the answer checks it',
-			at(requesting('A')),
-			outcome('dismissed', 'A'),
-			requesting('A'),
+			'prompt dismissed: closed for this prompt',
+			facts(screen('s1')),
+			outcome('dismissed'),
+			ctx('A'),
+			{ dismissed: 'A', onScreen: null },
 			[],
 		],
 		[
-			'handled, a session closed: decide again',
-			at({ key: 'A', kind: 'handled' }),
-			outcome('dismissed', 'A', 's9'),
-			{ key: 'A', kind: 'handled' },
-			['recheck'],
+			'prompt answered: nothing owed, nothing to remember',
+			facts(screen('s1')),
+			outcome('committed'),
+			ctx(null),
+			{ onScreen: null },
+			[],
 		],
-	])('%s', (_name, state, input, phase, effects) => {
-		const result = stepAutoPresent(state, input);
-		expect(result.state.phase).toEqual(phase);
+		[
+			'prompt answered, still owed: ask',
+			facts(screen('s1')),
+			outcome('committed'),
+			ctx('A'),
+			{ ...call('A'), onScreen: null },
+			['present'],
+		],
+		[
+			'settings closed: the owed prompt is asked for',
+			facts(screen('s1', 'preferences')),
+			outcome('dismissed'),
+			ctx('A'),
+			{ ...call('A'), onScreen: null },
+			['present'],
+		],
+		[
+			'another session closed: still on screen',
+			facts(screen('s1')),
+			outcome('dismissed', 's9'),
+			ctx('A'),
+			{ ...screen('s1'), closed: [{ dismissedKey: 'A', sessionId: 's9' }] },
+			[],
+		],
+		[
+			'outcome before its answer: remembered',
+			facts(call('A')),
+			outcome('dismissed', 's4'),
+			ctx('A'),
+			{ ...call('A'), closed: [{ dismissedKey: 'A', sessionId: 's4' }] },
+			[],
+		],
+	])('%s', (_name, before, input, context, expected, effects) => {
+		const result = stepAutoPresent(before, input, context);
+		expect(result.facts).toEqual({ ...before, ...expected });
 		expect(result.effects).toEqual(effects);
-	});
-
-	test('a closed session is remembered for a late answer', () => {
-		const result = stepAutoPresent(
-			at(requesting('A')),
-			outcome('dismissed', 'A', 's4')
-		);
-		expect(result.state.closed).toEqual(['s4']);
 	});
 });
 
@@ -320,45 +303,69 @@ const random = function random(seed: number): () => number {
 interface NativeSession {
 	readonly id: string;
 	readonly presentation: SessionPresentation;
+	/** The owed prompt was a notice, which an external dismissal clears. */
+	readonly notice: boolean;
 }
 
-const GOOD_URLS: ReadonlySet<string> = new Set([
+interface Owed {
+	readonly fingerprint: string;
+	readonly kind: 'choice' | 'notice';
+	/** What `promptOwedSince` stamps: a new value each time a prompt becomes owed again. */
+	readonly since: number;
+}
+
+/**
+ * A well-formed URL native refuses anyway, as a stricter binary might. The provider
+ * accepts it, native reports the refusal, and the owed prompt cannot show while it is
+ * the URL in use: the one exemption from property (a).
+ */
+const REFUSED_BY_NATIVE = 'https://refused.example/privacy';
+
+/** URLs the provider may be given. Native accepts only the first two. */
+const URLS = [
 	URL,
-	'https://example.com/legal',
-]);
+	LEGAL,
+	REFUSED_BY_NATIVE,
+	'https://example.com:bad/privacy',
+	'https://[',
+	'http://example.com/privacy',
+	'https://example.com/privacy ',
+] as const;
+const NATIVE_ACCEPTS: ReadonlySet<string> = new Set([URL, LEGAL]);
+
 const EVENTS = [
-	'snapshot',
-	'snapshot',
+	'unrelated',
+	'policy',
+	'none',
+	'again',
+	'coalesced',
 	'foreground',
+	'remount',
 	'answer',
 	'answer',
 	'answer',
+	'late',
 	'close',
 	'preferences',
 	'manual-prompt',
+	'external-dismiss',
 	'opt',
 	'url',
-	'none',
-	'again',
-	'late',
 ] as const;
 
-/**
- * The machine driven against a model of native and the app. `namesSessions: false`
- * models a binary that predates `presentation`.
- */
+/** The machine driven against a model of native, the host and the app. */
 class Simulation {
-	state = INITIAL_AUTO_PRESENT_STATE;
-	owed: string | null = 'k0';
+	facts = INITIAL_AUTO_PRESENT_FACTS;
+	owed: Owed | null = { fingerprint: 'f0', kind: 'choice', since: 1 };
 	session: NativeSession | null = null;
 	calls = 0;
 	active = true;
-	url = URL;
-	/** What the person closed without answering, which stays closed by design. */
+	url: string = URL;
+	generation = 0;
+	/** The owed episode the person closed without answering, which stays closed by design. */
 	dismissed: string | null = null;
 	readonly trace: string[] = [];
-	private keys = 0;
-	private sessions = 0;
+	private counter = 1;
 	private readonly next: () => number;
 	private readonly namesSessions: boolean;
 
@@ -371,55 +378,112 @@ class Simulation {
 		return items[Math.floor(this.next() * items.length)] as Item;
 	}
 
+	/** The episode identity, whatever the binary reports. */
+	episode(): string | null {
+		return this.owed === null
+			? null
+			: `${this.owed.fingerprint}/${this.owed.since}`;
+	}
+
+	/** The key the ledger sees: the real selector over a snapshot like native's. */
+	key(): string | null {
+		if (this.owed === null) {
+			return null;
+		}
+		return selectOwedPromptKey(
+			buildSnapshot({
+				promptOwedSince: this.namesSessions ? this.owed.since : null,
+				promptRequirement: { kind: this.owed.kind, reason: 'missing' },
+				resolution: {
+					fingerprint: this.owed.fingerprint,
+					policyId: 'p',
+					status: 'matched',
+				},
+			})
+		);
+	}
+
+	/** The provider renders only with a URL it accepts; otherwise it throws and presents nothing. */
+	presenting(): boolean {
+		return this.active && isPrivacyPolicyURL(this.url);
+	}
+
+	context(generation = this.generation): AutoPresentContext {
+		return {
+			active: this.presenting(),
+			generation,
+			key: this.key(),
+			url: this.url,
+		};
+	}
+
 	apply(input: AutoPresentInput): void {
+		if (input.type === 'trigger') {
+			this.generation += 1;
+		}
 		this.trace.push(JSON.stringify(input));
-		const result = stepAutoPresent(this.state, input);
-		this.state = result.state;
-		for (const effect of result.effects) {
-			if (effect === 'present') {
-				this.calls += 1;
-			}
-			if (effect === 'recheck') {
-				this.trigger();
-			}
+		const result = stepAutoPresent(this.facts, input, this.context());
+		this.facts = result.facts;
+		if (result.effects.includes('present')) {
+			this.calls += 1;
 		}
 	}
 
 	trigger(): void {
-		if (this.active) {
-			this.apply({ key: this.owed, type: 'trigger', url: this.url });
-		}
+		this.apply({ type: 'trigger' });
 	}
 
-	owe(key: string | null): void {
-		this.owed = key;
-		this.trigger();
-	}
-
-	newKey(): string {
-		this.keys += 1;
-		return `k${this.keys}`;
+	owe(
+		kind: 'choice' | 'notice',
+		fingerprint = this.owed?.fingerprint ?? 'f0'
+	): void {
+		this.counter += 1;
+		this.owed = { fingerprint, kind, since: this.counter };
 	}
 
 	open(presentation: SessionPresentation): NativeSession {
-		this.sessions += 1;
-		this.session = { id: `s${this.sessions}`, presentation };
+		this.counter += 1;
+		this.session = {
+			id: `s${this.counter}`,
+			notice: presentation === 'prompt' && this.owed?.kind === 'notice',
+			presentation,
+		};
 		return this.session;
 	}
 
+	/** The person closes what is open. */
 	close(): void {
 		const closed = this.session;
 		if (closed === null) {
 			return;
 		}
-		const kind = this.next() < 0.7 ? 'dismissed' : 'committed';
+		const answered = this.next() < 0.3;
 		this.session = null;
-		if (kind === 'committed') {
+		if (answered) {
 			this.owed = null;
-		} else if (closed.presentation === 'prompt') {
-			this.dismissed = this.owed;
+		} else if (closed.presentation === 'prompt' && this.owed !== null) {
+			this.dismissed = this.episode();
 		}
-		this.apply({ key: this.owed, kind, sessionId: closed.id, type: 'outcome' });
+		this.apply({
+			kind: answered ? 'committed' : 'dismissed',
+			sessionId: closed.id,
+			type: 'outcome',
+		});
+	}
+
+	/** `dismissNotice()` or a save through the core, not the card. The host ends a notice session it empties. */
+	externalDismiss(): void {
+		if (this.owed === null) {
+			return;
+		}
+		const wasNotice = this.owed.kind === 'notice';
+		this.owed = null;
+		const open = this.session;
+		if (open !== null && open.notice && wasNotice) {
+			this.session = null;
+			this.apply({ kind: 'dismissed', sessionId: open.id, type: 'outcome' });
+		}
+		this.trigger();
 	}
 
 	answerWith(session: NativeSession): void {
@@ -432,8 +496,9 @@ class Simulation {
 
 	answer(): void {
 		this.calls -= 1;
-		if (!GOOD_URLS.has(this.url)) {
-			this.apply({ type: 'refused', url: this.url });
+		const url = this.facts.inFlight?.url ?? this.url;
+		if (!NATIVE_ACCEPTS.has(url)) {
+			this.apply({ type: 'refused' });
 		} else if (this.next() < 0.1) {
 			this.apply({ type: 'failed' });
 		} else if (this.session !== null) {
@@ -441,7 +506,12 @@ class Simulation {
 		} else if (this.owed === null) {
 			this.apply({ type: 'not-required' });
 		} else {
-			this.apply({ sessionId: this.open('prompt').id, type: 'presented' });
+			const opened = this.open('prompt');
+			this.apply({
+				presentation: 'prompt',
+				sessionId: opened.id,
+				type: 'shown',
+			});
 		}
 	}
 
@@ -456,23 +526,49 @@ class Simulation {
 		this.answerWith(pending);
 	}
 
+	/** Change what is owed; `true` when the step should end in a trigger. */
+	private changeOwed(event: (typeof EVENTS)[number]): void {
+		switch (event) {
+			case 'policy':
+				if (this.owed !== null || this.next() < 0.5) {
+					this.owe(
+						this.pick(['choice', 'notice'] as const),
+						`f${this.counter}`
+					);
+				}
+				break;
+			case 'none':
+				this.owed = null;
+				break;
+			case 'again':
+				if (this.owed === null) {
+					this.owe(this.pick(['choice', 'notice'] as const));
+				}
+				break;
+			case 'coalesced':
+				// Answered elsewhere and owed again, delivered as one update. Only a binary
+				// that stamps the episode can tell; an older one is known not to.
+				if (this.namesSessions && this.owed !== null) {
+					this.owe(this.owed.kind);
+				}
+				break;
+			case 'opt':
+				this.active = !this.active;
+				break;
+			case 'url':
+				this.url = this.pick(URLS);
+				break;
+			default:
+				// unrelated revision, foreground, remount
+				break;
+		}
+		this.trigger();
+	}
+
 	step(): void {
 		const event = this.pick(EVENTS);
 		this.trace.push(event);
 		switch (event) {
-			case 'snapshot':
-				// An unrelated revision keeps the key; a policy change names a new prompt.
-				this.owe(
-					this.owed !== null && this.next() < 0.5 ? this.newKey() : this.owed
-				);
-				break;
-			case 'none':
-				this.owe(null);
-				break;
-			case 'again':
-				// Owed again: native names it anew, as promptOwedSince does.
-				this.owe(this.newKey());
-				break;
 			case 'answer':
 				if (this.calls > 0) {
 					this.answer();
@@ -494,69 +590,66 @@ class Simulation {
 					this.open('prompt');
 				}
 				break;
-			case 'opt':
-				this.active = !this.active;
-				this.trigger();
-				break;
-			case 'url':
-				this.url = this.pick([
-					URL,
-					'https://example.com/legal',
-					'https://bad.example/refused',
-				]);
-				this.trigger();
+			case 'external-dismiss':
+				this.externalDismiss();
 				break;
 			default:
-				this.trigger();
+				this.changeOwed(event);
 		}
 	}
 
-	/** The invariant: owed, auto on, nothing on screen, not dismissed, a usable URL: asked or about to be. */
+	/** Property (a). */
 	check(seed: number): void {
-		const { owed } = this;
 		const mustShow =
-			this.active &&
-			owed !== null &&
+			this.presenting() &&
+			this.owed !== null &&
 			this.session === null &&
-			this.dismissed !== owed &&
-			GOOD_URLS.has(this.url);
+			this.dismissed !== this.episode() &&
+			this.url !== REFUSED_BY_NATIVE;
 		if (!mustShow || this.calls > 0) {
 			return;
 		}
-		const probe = stepAutoPresent(this.state, {
-			key: owed,
-			type: 'trigger',
-			url: this.url,
-		});
+		const probe = stepAutoPresent(
+			this.facts,
+			{ type: 'trigger' },
+			this.context(this.generation + 1)
+		);
 		if (!probe.effects.includes('present')) {
 			throw new Error(
-				`seed ${seed}: prompt ${owed} owed, nothing on screen, no call in flight, and the next trigger asks nothing. Phase ${JSON.stringify(this.state.phase)}.\n${this.trace.join('\n')}`
+				`seed ${seed}: ${this.episode()} owed, nothing on screen, no call in flight, and the next trigger asks nothing. Facts ${JSON.stringify(this.facts)}.\n${this.trace.join('\n')}`
 			);
 		}
 	}
 }
 
-const run = function run(
-	seed: number,
-	options: { readonly namesSessions: boolean }
-): void {
-	const simulation = new Simulation(seed, options.namesSessions);
-	for (let index = 0; index < 80; index += 1) {
-		simulation.step();
-		simulation.check(seed);
+/** Fixed seeds, so the run is the same everywhere. */
+const SEEDS = Array.from({ length: 4000 }, (_unused, index) => index + 1);
+const STEPS = 100;
+
+/** Run every seed; the first violation, or `null`. */
+const firstViolation = function firstViolation(
+	namesSessions: boolean
+): string | null {
+	for (const seed of SEEDS) {
+		const simulation = new Simulation(seed, namesSessions);
+		try {
+			for (let index = 0; index < STEPS; index += 1) {
+				simulation.step();
+				simulation.check(seed);
+			}
+		} catch (error: unknown) {
+			return String(error).slice(0, 4000);
+		}
 	}
+	return null;
 };
 
-describe('the invariant, over random sequences', () => {
-	test('a binary that names its sessions', () => {
-		for (let seed = 1; seed <= 3000; seed += 1) {
-			expect(() => run(seed, { namesSessions: true })).not.toThrow();
-		}
+describe('property (a), over fixed random sequences', () => {
+	test('a binary that names its sessions and stamps each owed prompt', () => {
+		expect(firstViolation(true)).toBeNull();
 	});
 
-	test('an older binary that does not', () => {
-		for (let seed = 1; seed <= 3000; seed += 1) {
-			expect(() => run(seed, { namesSessions: false })).not.toThrow();
-		}
+	test('an older binary that does neither', () => {
+		expect(firstViolation(false)).toBeNull();
 	});
 });

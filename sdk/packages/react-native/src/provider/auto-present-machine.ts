@@ -1,25 +1,26 @@
 /**
- * The auto-present ledger as a state machine: one phase per client, one
- * transition per input, no side effects.
+ * Whether to present the native consent prompt, recomputed on every input from
+ * a few stored facts and the current inputs. No decision is remembered.
  *
- * The rule it keeps: if a prompt is owed, auto-present is on, and nothing of
- * ours is on screen, then a native call is in flight or the next trigger makes
- * one, unless the person already saw this owed prompt and closed it. Native
- * says what is on screen, so the ledger never records a prompt as shown on its
- * own say-so: `presented` and an `already-presented` naming a prompt session
- * mean shown, anything else means wait for that session's outcome and decide
- * again.
+ * The current inputs ({@link AutoPresentContext}) are what is owed now, named by
+ * the key native stamps (`promptOwedSince`), the URL the app passes now, and
+ * whether a provider presents. The stored facts are each keyed by what they were
+ * decided for, so changing any input invalidates them by itself:
  *
- * | Phase        | Meaning                                                    |
- * | ------------ | ---------------------------------------------------------- |
- * | `idle`       | Nothing known for the owed prompt; the next trigger asks.  |
- * | `requesting` | A native call is in flight for `key`.                      |
- * | `showing`    | Native shows our prompt in `sessionId`, now for any key.   |
- * | `blocked`    | Another session (preferences, or one a binary did not name) is open. |
- * | `handled`    | The person saw `key` and its session closed.               |
+ * | Fact        | Keyed by        | Meaning                                               |
+ * | ----------- | --------------- | ----------------------------------------------------- |
+ * | `inFlight`  | key and URL     | A present call is in flight.                          |
+ * | `onScreen`  | session id      | Native reported this session open, and what it shows. |
+ * | `dismissed` | owed key        | The person saw this owed prompt and closed it.        |
+ * | `refused`   | URL             | Native refused this URL for good.                     |
+ * | `declined`  | key, URL, trigger | Native said not now (nothing owed, or no window yet). |
+ * | `closed`    | session id      | Outcomes that crossed the bridge before their answer. |
  *
- * `ended` records that nothing was owed at some point since the phase began,
- * which ends that prompt's episode: the same requirement owed again is new.
+ * Present now exactly when: a provider presents, a prompt is owed, no call is in
+ * flight, nothing is on screen, the person has not closed this owed prompt,
+ * native has not refused this URL, and native has not declined these same inputs
+ * since the last trigger. That predicate is the invariant; the property
+ * test asserts it after every input.
  */
 
 import type { ConsentPresenterOutcome } from '../native/presenter';
@@ -27,244 +28,239 @@ import type { ConsentPresenterOutcome } from '../native/presenter';
 /** What an open native session shows. */
 export type SessionPresentation = 'prompt' | 'preferences';
 
-/** One phase of the ledger. */
-export type AutoPresentPhase =
-	| { readonly kind: 'idle' }
-	| {
-			readonly kind: 'requesting';
-			readonly key: string;
-			readonly recheck: boolean;
-			readonly ended: boolean;
-	  }
-	| {
-			readonly kind: 'showing';
-			readonly key: string;
-			readonly sessionId: string;
-			readonly ended: boolean;
-	  }
-	| { readonly kind: 'blocked'; readonly sessionId: string }
-	| { readonly kind: 'handled'; readonly key: string };
-
-/** The ledger for one client. */
-export interface AutoPresentState {
-	readonly phase: AutoPresentPhase;
-	/** Sessions whose outcome already arrived, newest last, so a late answer naming one is not waited on. */
-	readonly closed: readonly string[];
-	/** A privacy-policy URL native refused for good. That URL is not offered again; another one is. */
-	readonly refusedURL: string | null;
+/** The current inputs, read fresh for every input. */
+export interface AutoPresentContext {
+	/** The owed prompt, or `null` while the core is not ready or nothing is owed. */
+	readonly key: string | null;
+	/** The privacy-policy URL the provider passes now. */
+	readonly url: string;
+	/** A provider currently presents through this client. */
+	readonly active: boolean;
+	/** Counts triggers (snapshot change, foreground, mount, a new prop), so a decline waits for the next. */
+	readonly generation: number;
 }
 
-/** Everything the ledger reacts to. */
+/** A session outcome that arrived before the answer naming its session. */
+interface ClosedSession {
+	readonly sessionId: string;
+	/** The owed prompt a dismissal of it would settle, `null` for an answer or nothing owed. */
+	readonly dismissedKey: string | null;
+}
+
+/** Everything the ledger stores. */
+export interface AutoPresentFacts {
+	readonly inFlight: { readonly key: string; readonly url: string } | null;
+	readonly onScreen: {
+		readonly sessionId: string;
+		readonly presentation: SessionPresentation;
+	} | null;
+	readonly dismissed: string | null;
+	readonly refused: string | null;
+	readonly declined: {
+		readonly key: string;
+		readonly url: string;
+		readonly generation: number;
+	} | null;
+	readonly closed: readonly ClosedSession[];
+}
+
+/** What happened. The current inputs travel beside it as the context. */
 export type AutoPresentInput =
-	/** Snapshot change, foreground, mount, opt-in or a new URL: decide with the current key. */
+	/** A snapshot change, foreground, mount, or a change of URL or `autoPresent`. */
+	| { readonly type: 'trigger' }
 	| {
-			readonly type: 'trigger';
-			readonly key: string | null;
-			readonly url: string;
-	  }
-	| { readonly type: 'presented'; readonly sessionId: string }
-	| {
-			readonly type: 'already-presented';
+			readonly type: 'shown' | 'already-presented';
 			readonly sessionId: string;
+			/** Absent from a binary that predates naming its sessions. */
 			readonly presentation: SessionPresentation | undefined;
 	  }
 	| { readonly type: 'not-required' }
-	| { readonly type: 'refused'; readonly url: string }
+	| { readonly type: 'refused' }
 	| { readonly type: 'failed' }
 	| {
 			readonly type: 'outcome';
 			readonly sessionId: string;
 			readonly kind: ConsentPresenterOutcome['kind'];
-			/** The owed prompt when the outcome arrived, `null` when nothing is owed. */
-			readonly key: string | null;
 	  };
 
-/**
- * What the driver does after a transition. `recheck` means "trigger again with
- * the current key", which is how a decision deferred by a call or a session gets
- * made once that call or session is over.
- */
+/** What the driver does after an input. */
 export type AutoPresentEffect =
 	| 'present'
-	| 'recheck'
 	| 'report-refused'
 	| 'warn-unavailable';
 
-/** One transition's result. */
+/** One input's result. */
 export interface AutoPresentStep {
-	readonly state: AutoPresentState;
+	readonly facts: AutoPresentFacts;
 	readonly effects: readonly AutoPresentEffect[];
 }
 
-/** How many closed session ids are kept for late answers. */
+/** How many early outcomes are kept for answers that arrive after them. */
 const CLOSED_SESSIONS_KEPT = 8;
 
-/** The ledger before anything happened. */
-export const INITIAL_AUTO_PRESENT_STATE: AutoPresentState = {
+/** Nothing known yet. */
+export const INITIAL_AUTO_PRESENT_FACTS: AutoPresentFacts = {
 	closed: [],
-	phase: { kind: 'idle' },
-	refusedURL: null,
-};
-
-const IDLE: AutoPresentPhase = { kind: 'idle' };
-
-const step = function step(
-	state: AutoPresentState,
-	phase: AutoPresentPhase,
-	...effects: AutoPresentEffect[]
-): AutoPresentStep {
-	return { effects, state: { ...state, phase } };
-};
-
-const onTrigger = function onTrigger(
-	state: AutoPresentState,
-	key: string | null,
-	url: string
-): AutoPresentStep {
-	const { phase } = state;
-	if (phase.kind === 'requesting') {
-		return step(state, {
-			...phase,
-			ended: phase.ended || key === null,
-			recheck: true,
-		});
-	}
-	if (key === null) {
-		if (phase.kind === 'showing') {
-			return step(state, { ...phase, ended: true });
-		}
-		return step(state, phase.kind === 'handled' ? IDLE : phase);
-	}
-	// Something is on screen, or the person already closed this very prompt.
-	if (
-		phase.kind === 'showing' ||
-		phase.kind === 'blocked' ||
-		(phase.kind === 'handled' && phase.key === key)
-	) {
-		return step(state, phase);
-	}
-	// The URL was refused and reported; a different URL is offered.
-	if (state.refusedURL === url) {
-		return step(state, phase);
-	}
-	return step(
-		state,
-		{ ended: false, key, kind: 'requesting', recheck: false },
-		'present'
-	);
-};
-
-const settle = function settle(
-	state: AutoPresentState,
-	phase: AutoPresentPhase,
-	recheck: boolean,
-	...effects: AutoPresentEffect[]
-): AutoPresentStep {
-	return step(
-		state,
-		phase,
-		...effects,
-		...(recheck ? (['recheck'] as const) : [])
-	);
-};
-
-const onAnswer = function onAnswer(
-	state: AutoPresentState,
-	input: Exclude<AutoPresentInput, { type: 'trigger' } | { type: 'outcome' }>
-	// `failed` is the default branch.
-): AutoPresentStep {
-	const { phase } = state;
-	if (phase.kind !== 'requesting') {
-		return step(state, phase);
-	}
-	const { ended, key, recheck } = phase;
-	switch (input.type) {
-		case 'presented':
-		case 'already-presented': {
-			// The session already closed before this answer crossed the bridge.
-			if (state.closed.includes(input.sessionId)) {
-				return step(state, IDLE, 'recheck');
-			}
-			const shown =
-				input.type === 'presented' || input.presentation === 'prompt';
-			return settle(
-				state,
-				shown
-					? { ended, key, kind: 'showing', sessionId: input.sessionId }
-					: { kind: 'blocked', sessionId: input.sessionId },
-				recheck
-			);
-		}
-		case 'not-required':
-			return settle(state, IDLE, recheck);
-		case 'refused':
-			return settle(
-				{ ...state, refusedURL: input.url },
-				IDLE,
-				recheck,
-				'report-refused'
-			);
-		default:
-			return settle(state, IDLE, recheck, 'warn-unavailable');
-	}
-};
-
-const onOutcome = function onOutcome(
-	state: AutoPresentState,
-	input: Extract<AutoPresentInput, { type: 'outcome' }>
-): AutoPresentStep {
-	const closed = [...state.closed, input.sessionId].slice(
-		-CLOSED_SESSIONS_KEPT
-	);
-	const next = { ...state, closed };
-	const { phase } = state;
-	if (phase.kind === 'showing' && phase.sessionId === input.sessionId) {
-		// A dismissal settles what was on screen when it closed. The open session reloads
-		// its draft as the requirement changes, so that is the current owed prompt.
-		if (input.kind === 'dismissed' || input.kind === 'unavailable') {
-			return step(
-				next,
-				input.key === null ? IDLE : { key: input.key, kind: 'handled' },
-				'recheck'
-			);
-		}
-		// An answer settles the prompt that was shown, unless that prompt's episode ended
-		// meanwhile; whatever is owed now is decided afresh.
-		return step(
-			next,
-			phase.ended ? IDLE : { key: phase.key, kind: 'handled' },
-			'recheck'
-		);
-	}
-	if (phase.kind === 'blocked' && phase.sessionId === input.sessionId) {
-		return step(next, IDLE, 'recheck');
-	}
-	// A call is in flight: its answer checks `closed`. Otherwise any closed session
-	// is a moment worth deciding again.
-	return step(
-		next,
-		phase,
-		...(phase.kind === 'requesting' ? [] : (['recheck'] as const))
-	);
+	declined: null,
+	dismissed: null,
+	inFlight: null,
+	onScreen: null,
+	refused: null,
 };
 
 /**
- * Apply one input to the ledger.
+ * Whether to hand the owed prompt to native now.
  *
- * @param state - The ledger before the input.
- * @param input - What happened.
- * @returns The next ledger and what the driver should do.
+ * @param facts - What the ledger stores.
+ * @param context - The current inputs.
+ * @returns `true` when a present call should start.
  */
-export const stepAutoPresent = function stepAutoPresent(
-	state: AutoPresentState,
-	input: AutoPresentInput
-): AutoPresentStep {
+export const shouldPresent = function shouldPresent(
+	facts: AutoPresentFacts,
+	context: AutoPresentContext
+): boolean {
+	return (
+		context.active &&
+		context.key !== null &&
+		facts.inFlight === null &&
+		facts.onScreen === null &&
+		facts.dismissed !== context.key &&
+		facts.refused !== context.url &&
+		!(
+			facts.declined?.key === context.key &&
+			facts.declined.url === context.url &&
+			facts.declined.generation === context.generation
+		)
+	);
+};
+
+const closes = (kind: ConsentPresenterOutcome['kind']): boolean =>
+	kind === 'dismissed' || kind === 'unavailable';
+
+/** A session native reported open, unless its outcome already arrived. */
+const opened = function opened(
+	facts: AutoPresentFacts,
+	sessionId: string,
+	presentation: SessionPresentation
+): AutoPresentFacts {
+	const early = facts.closed.find((entry) => entry.sessionId === sessionId);
+	if (early === undefined) {
+		return { ...facts, onScreen: { presentation, sessionId } };
+	}
+	return presentation === 'prompt' && early.dismissedKey !== null
+		? { ...facts, dismissed: early.dismissedKey }
+		: facts;
+};
+
+/** The outcome of `sessionId`: forget it as on screen, remembering a dismissed prompt. */
+const closedSession = function closedSession(
+	facts: AutoPresentFacts,
+	sessionId: string,
+	dismissedKey: string | null
+): AutoPresentFacts {
+	if (facts.onScreen?.sessionId !== sessionId) {
+		const closed = [...facts.closed, { dismissedKey, sessionId }];
+		return { ...facts, closed: closed.slice(-CLOSED_SESSIONS_KEPT) };
+	}
+	// A dismissal settles what was on screen, which follows the current requirement.
+	const settled =
+		facts.onScreen.presentation === 'prompt' && dismissedKey !== null;
+	return {
+		...facts,
+		dismissed: settled ? dismissedKey : facts.dismissed,
+		onScreen: null,
+	};
+};
+
+/** Native said not now to the call in flight; the next trigger asks again. */
+const declined = function declined(
+	facts: AutoPresentFacts,
+	context: AutoPresentContext
+): AutoPresentFacts {
+	const call = facts.inFlight;
+	return {
+		...facts,
+		declined:
+			call === null ? null : { ...call, generation: context.generation },
+		inFlight: null,
+	};
+};
+
+const record = function record(
+	facts: AutoPresentFacts,
+	input: AutoPresentInput,
+	context: AutoPresentContext
+): {
+	readonly facts: AutoPresentFacts;
+	readonly effects: readonly AutoPresentEffect[];
+} {
 	switch (input.type) {
 		case 'trigger':
-			return onTrigger(state, input.key, input.url);
-		case 'outcome':
-			return onOutcome(state, input);
+			return { effects: [], facts };
+		case 'shown':
+		case 'already-presented':
+			// A fresh presentation shows the prompt; a session an older binary does not
+			// name is waited on like settings.
+			return {
+				effects: [],
+				facts: opened(
+					{ ...facts, inFlight: null },
+					input.sessionId,
+					input.type === 'shown'
+						? 'prompt'
+						: (input.presentation ?? 'preferences')
+				),
+			};
+		case 'not-required':
+			return { effects: [], facts: declined(facts, context) };
+		case 'refused':
+			// Tied to the URL the call carried, so a corrected URL retries.
+			return {
+				effects: ['report-refused'],
+				facts: {
+					...facts,
+					inFlight: null,
+					refused: facts.inFlight?.url ?? context.url,
+				},
+			};
+		case 'failed':
+			return { effects: ['warn-unavailable'], facts: declined(facts, context) };
 		default:
-			return onAnswer(state, input);
+			return {
+				effects: [],
+				facts: closedSession(
+					facts,
+					input.sessionId,
+					closes(input.kind) ? context.key : null
+				),
+			};
 	}
+};
+
+/**
+ * Apply one input, then decide afresh with the current inputs.
+ *
+ * @param facts - What the ledger stores.
+ * @param input - What happened.
+ * @param context - The current inputs.
+ * @returns The next facts and what the driver should do.
+ */
+export const stepAutoPresent = function stepAutoPresent(
+	facts: AutoPresentFacts,
+	input: AutoPresentInput,
+	context: AutoPresentContext
+): AutoPresentStep {
+	const recorded = record(facts, input, context);
+	// Nothing owed ends the episode, so a dismissal no longer applies.
+	const next =
+		context.key === null && recorded.facts.dismissed !== null
+			? { ...recorded.facts, dismissed: null }
+			: recorded.facts;
+	if (context.key === null || !shouldPresent(next, context)) {
+		return { effects: recorded.effects, facts: next };
+	}
+	return {
+		effects: [...recorded.effects, 'present'],
+		facts: { ...next, inFlight: { key: context.key, url: context.url } },
+	};
 };

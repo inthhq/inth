@@ -19,12 +19,13 @@ import {
 } from '../native/presenter';
 import type { ConsentSnapshot } from '../protocol';
 import {
-	INITIAL_AUTO_PRESENT_STATE,
+	INITIAL_AUTO_PRESENT_FACTS,
 	stepAutoPresent,
 } from './auto-present-machine';
 import type {
+	AutoPresentContext,
+	AutoPresentFacts,
 	AutoPresentInput,
-	AutoPresentState,
 } from './auto-present-machine';
 import { isPrivacyPolicyURL } from './privacy-policy-url';
 
@@ -70,29 +71,29 @@ const errorCode = function errorCode(error: unknown): string | undefined {
 		: undefined;
 };
 
-/** One client's ledger: the pure state, and the side effects its transitions ask for. */
+/** One client's ledger: the stored facts, and the side effects each input asks for. */
 class AutoPresentLedger {
-	state: AutoPresentState = INITIAL_AUTO_PRESENT_STATE;
-	/** Providers currently presenting through this client. Rechecks stop at zero. */
+	facts: AutoPresentFacts = INITIAL_AUTO_PRESENT_FACTS;
+	/** Providers currently presenting through this client. */
 	active = 0;
-	/** The owed prompt a transient failure was last reported for, so each is reported once. */
-	warned: string | null = null;
-	/** The latest native call, so a caller can wait for the chain to settle. */
-	settled: Promise<void> = Promise.resolve();
-
 	/** The URL the provider passes now. */
 	url: string;
+	/** The owed prompt a transient failure was last reported for, so each is reported once. */
+	warned: string | null = null;
+	/** Counts triggers, for the context. */
+	generation = 0;
+	/** The latest native call, so a caller can wait for the chain to settle. */
+	settled: Promise<void> = Promise.resolve();
 	private readonly client: ConsentClient;
 
 	constructor(client: ConsentClient, url: string) {
 		this.client = client;
 		this.url = url;
 		// For the client's lifetime, so an outcome is not lost while no provider is
-		// mounted or the app opted out; a phase waiting on a session always hears it close.
+		// mounted or the app opted out; a session reported open is always heard closing.
 		try {
 			onConsentPresenterOutcome((outcome) => {
 				this.dispatch({
-					key: this.currentKey(),
 					kind: outcome.kind,
 					sessionId: outcome.sessionId,
 					type: 'outcome',
@@ -103,47 +104,47 @@ class AutoPresentLedger {
 		}
 	}
 
-	/** Decide with the current snapshot. */
-	trigger(): void {
-		this.dispatch({ key: this.currentKey(), type: 'trigger', url: this.url });
-	}
-
-	private currentKey(): string | null {
-		return selectOwedPromptKey(this.client.getSnapshot());
+	/** The current inputs, read fresh for every input. */
+	private context(): AutoPresentContext {
+		return {
+			active: this.active > 0,
+			generation: this.generation,
+			key: selectOwedPromptKey(this.client.getSnapshot()),
+			url: this.url,
+		};
 	}
 
 	/**
-	 * Apply `input`, then run what the transition asks for.
+	 * Apply `input`, decide afresh, and run what that asks for.
 	 *
 	 * @param input - What happened.
 	 * @param error - The rejection behind a `refused` or `failed` input, for the report.
 	 */
-	private dispatch(input: AutoPresentInput, error?: unknown): void {
-		const before = this.state.phase;
-		const { effects, state } = stepAutoPresent(this.state, input);
-		this.state = state;
+	dispatch(input: AutoPresentInput, error?: unknown): void {
+		if (input.type === 'trigger') {
+			this.generation += 1;
+		}
+		const failedKey = this.facts.inFlight?.key ?? null;
+		const { effects, facts } = stepAutoPresent(
+			this.facts,
+			input,
+			this.context()
+		);
+		this.facts = facts;
 		for (const effect of effects) {
 			switch (effect) {
 				case 'present':
 					this.settled = this.callNative();
 					break;
-				case 'recheck':
-					if (this.active > 0) {
-						this.trigger();
-					}
-					break;
 				case 'report-refused':
 					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 					console.error(
-						`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(state.refusedURL)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+						`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(facts.refused)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
 						error
 					);
 					break;
 				default:
-					this.warnUnavailable(
-						before.kind === 'requesting' ? before.key : null,
-						error
-					);
+					this.warnUnavailable(failedKey, error);
 			}
 		}
 	}
@@ -165,20 +166,21 @@ class AutoPresentLedger {
 			const session = await presentConsentPrompt(url);
 			if (session.status === 'not-required' || session.sessionId === null) {
 				this.dispatch({ type: 'not-required' });
-			} else if (session.status === 'presented') {
-				this.dispatch({ sessionId: session.sessionId, type: 'presented' });
 			} else {
 				this.dispatch({
 					presentation: session.presentation,
 					sessionId: session.sessionId,
-					type: 'already-presented',
+					type: session.status === 'presented' ? 'shown' : 'already-presented',
 				});
 			}
 		} catch (error: unknown) {
 			this.dispatch(
-				errorCode(error) === PRESENTER_INVALID_URL_CODE
-					? { type: 'refused', url }
-					: { type: 'failed' },
+				{
+					type:
+						errorCode(error) === PRESENTER_INVALID_URL_CODE
+							? 'refused'
+							: 'failed',
+				},
 				error
 			);
 		}
@@ -218,7 +220,7 @@ export const presentOwedPrompt = function presentOwedPrompt(
 ): Promise<void> {
 	const ledger = ledgerFor(client, privacyPolicyURL);
 	ledger.url = privacyPolicyURL;
-	ledger.trigger();
+	ledger.dispatch({ type: 'trigger' });
 	return ledger.settled;
 };
 
