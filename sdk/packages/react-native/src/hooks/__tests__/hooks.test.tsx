@@ -40,6 +40,7 @@ import {
 import { useConsentDecision } from '../use-consent-decision';
 import { useConsentSelector } from '../use-consent-selector';
 import { useConsentStatus } from '../use-consent-status';
+import { useGPPString } from '../use-gpp-string';
 import { useIsTrackingAllowed } from '../use-is-tracking-allowed';
 import { useSnapshot } from '../use-snapshot';
 import { useTrackingAuthorization } from '../use-tracking-authorization';
@@ -166,6 +167,16 @@ const SelectorProbe = (): ReactNode => {
 	});
 
 	return <span>{country}</span>;
+};
+
+const GPPProbe = (): ReactNode => {
+	const gppString = useGPPString();
+
+	useEffect(() => {
+		countCommit('gpp');
+	});
+
+	return <span>{gppString ?? 'none'}</span>;
 };
 
 const ActionsProbe = (): ReactNode => {
@@ -396,6 +407,37 @@ describe('useConsentSelector', () => {
 
 		expect(tree.text()).toBe('FR');
 		expect(commitsOf('selector')).toBe(2);
+
+		tree.unmount();
+	});
+});
+
+describe('useGPPString', () => {
+	test('reads the native GPP string and ignores unrelated changes', () => {
+		const tree = mount(<GPPProbe />);
+
+		expect(tree.text()).toBe('none');
+
+		flush(() => {
+			fake.pushSnapshot(
+				buildSnapshot({ gppString: 'DBABLA~CVQqAAAAAACA.QA', revision: 4 })
+			);
+		});
+
+		expect(tree.text()).toBe('DBABLA~CVQqAAAAAACA.QA');
+		expect(commitsOf('gpp')).toBe(2);
+
+		flush(() => {
+			fake.pushSnapshot(
+				buildSnapshot({
+					gppString: 'DBABLA~CVQqAAAAAACA.QA',
+					location: { countryCode: 'FR', regionCode: null },
+					revision: 5,
+				})
+			);
+		});
+
+		expect(commitsOf('gpp')).toBe(2);
 
 		tree.unmount();
 	});

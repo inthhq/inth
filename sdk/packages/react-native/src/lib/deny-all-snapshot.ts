@@ -47,6 +47,7 @@ export const denyAllSnapshot = function denyAllSnapshot(
 		error: { code: INVALID_NATIVE_SNAPSHOT_CODE, message },
 		evaluatedAt: 0,
 		explicitChoice: null,
+		gppString: null,
 		iab: null,
 		location: null,
 		model: 'none',

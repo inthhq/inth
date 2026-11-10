@@ -60,6 +60,7 @@ export const SNAPSHOT_KEYS = [
 	'evaluatedAt',
 	'error',
 	'iab',
+	'gppString',
 ] as const;
 
 /**

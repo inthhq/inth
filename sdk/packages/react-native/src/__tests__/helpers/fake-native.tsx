@@ -73,6 +73,7 @@ export const buildSnapshot = function buildSnapshot(
 		error: null,
 		evaluatedAt: 1_770_000_000_000,
 		explicitChoice: null,
+		gppString: null,
 		iab: null,
 		location: { countryCode: 'DE', regionCode: null },
 		model: 'opt-in',

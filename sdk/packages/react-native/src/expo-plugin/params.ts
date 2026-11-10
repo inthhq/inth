@@ -95,6 +95,43 @@ export interface C15tIabPluginProps {
 	consentScreen?: number;
 }
 
+/** MSPA mode for covered GPP transactions. */
+export type C15tGppMspaMode = 'opt-out-option' | 'service-provider';
+
+/**
+ * IAB GPP options: the ones web c15t's `gpp` option takes that apply on a
+ * device. `true` turns GPP on with the defaults.
+ */
+export interface C15tGppPluginProps {
+	/**
+	 * MSPA mode. Set it only if you signed the IAB Multi-State Privacy
+	 * Agreement; the transaction is then reported as covered.
+	 */
+	mspaMode?: C15tGppMspaMode;
+	/**
+	 * Categories whose refusal reports an opt-out of sale, sharing and
+	 * targeted advertising.
+	 *
+	 * @defaultValue ['marketing']
+	 */
+	optOutCategories?: readonly C15tConsentCategoryId[];
+	/**
+	 * Include the TCF EU section under an `iab` policy.
+	 *
+	 * @defaultValue true
+	 */
+	tcf?: boolean;
+}
+
+/** Validated GPP options. */
+export interface ResolvedC15tGppParams {
+	/** `null` reports the transaction as not covered and writes no key. */
+	readonly mspaMode: C15tGppMspaMode | null;
+	/** Empty keeps the cores' default, `marketing`, and writes no key. */
+	readonly optOutCategories: readonly C15tConsentCategoryId[];
+	readonly tcf: boolean;
+}
+
 /** Validated IAB settings. */
 export interface ResolvedC15tIabParams {
 	readonly cmpId: number;
@@ -163,6 +200,13 @@ export interface C15tPluginProps {
 	 * not turn IAB on.
 	 */
 	iab?: C15tIabPluginProps;
+	/**
+	 * IAB GPP: the GPP string on the snapshot (`useGPPString()`) and the
+	 * `IABGPP_*` keys ad SDKs read. US visitors under a rule that offers an
+	 * opt-out get the US National section; an `iab` rule gets the TCF EU
+	 * section. Omit it to leave GPP off.
+	 */
+	gpp?: boolean | C15tGppPluginProps;
 	/**
 	 * Transport mode.
 	 *
@@ -310,6 +354,8 @@ export interface ResolvedC15tParams {
 	readonly vendors: readonly number[];
 	/** IAB settings, or `null` when IAB TCF stays off. */
 	readonly iab: ResolvedC15tIabParams | null;
+	/** GPP options, or `null` when GPP stays off. */
+	readonly gpp: ResolvedC15tGppParams | null;
 	/** App Tracking Transparency opt-in, resolved. */
 	readonly appTrackingTransparency: {
 		readonly enabled: boolean;
@@ -592,6 +638,56 @@ const normalizeIab = function normalizeIab(
 	};
 };
 
+const GPP_MSPA_MODES: readonly C15tGppMspaMode[] = [
+	'opt-out-option',
+	'service-provider',
+];
+
+/**
+ * Validate the GPP options.
+ *
+ * An unknown MSPA mode is refused rather than dropped: a covered-transaction
+ * claim is the publisher's to make, and a typo would ship a binary that
+ * reports a transaction as not covered while `app.json` says otherwise.
+ */
+const normalizeGpp = function normalizeGpp(
+	gpp: boolean | C15tGppPluginProps | undefined
+): ResolvedC15tGppParams | null {
+	if (gpp === undefined || gpp === false) {
+		return null;
+	}
+	if (gpp === true) {
+		return { mspaMode: null, optOutCategories: [], tcf: true };
+	}
+	if (gpp === null || typeof gpp !== 'object') {
+		throw new C15tPluginError(
+			'gpp must be true or an object such as { "mspaMode": "opt-out-option" }. ' +
+				'Omit it to leave GPP off.'
+		);
+	}
+	if (gpp.mspaMode !== undefined && !GPP_MSPA_MODES.includes(gpp.mspaMode)) {
+		throw new C15tPluginError(
+			`gpp.mspaMode must be ${GPP_MSPA_MODES.map((mode) => JSON.stringify(mode)).join(' or ')}. ` +
+				`Got ${JSON.stringify(gpp.mspaMode)}. Omit it unless you signed the MSPA.`
+		);
+	}
+	if (gpp.tcf !== undefined && typeof gpp.tcf !== 'boolean') {
+		throw new C15tPluginError(
+			`gpp.tcf must be true or false. Got ${JSON.stringify(gpp.tcf)}.`
+		);
+	}
+	return {
+		mspaMode: gpp.mspaMode ?? null,
+		optOutCategories:
+			gpp.optOutCategories === undefined
+				? []
+				: normalizeConsentCategories(gpp.optOutCategories).filter(
+						(category) => category !== 'necessary'
+					),
+		tcf: gpp.tcf ?? true,
+	};
+};
+
 /**
  * Trim a Markdown prompt value, refusing one that carries no copy.
  *
@@ -845,6 +941,7 @@ export const resolveParams = function resolveParams(
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
 		forceGPC: props.forceGPC ?? false,
+		gpp: normalizeGpp(props.gpp),
 		iab: normalizeIab(props.iab),
 		initURL,
 		mode,

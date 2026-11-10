@@ -2,6 +2,7 @@ import type { AndroidConfig } from '@expo/config-plugins';
 
 import { androidConfig } from './config-plugins';
 import {
+	ANDROID_GPP_META_KEYS,
 	ANDROID_IAB_META_KEYS,
 	ANDROID_INITIALIZER,
 	ANDROID_INTERNET_PERMISSION,
@@ -129,6 +130,26 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	if (params.forceGPC) {
 		pairs.push({ name: ANDROID_META.forceGpc, value: 'true' });
 	}
+	// `C15tAndroid.declaredGpp` reads these. Absent keys leave GPP off, and an
+	// absent option keeps the core's default.
+	if (params.gpp !== null) {
+		pairs.push({ name: ANDROID_META.gpp, value: 'true' });
+		if (params.gpp.mspaMode !== null) {
+			pairs.push({
+				name: ANDROID_META.gppMspaMode,
+				value: params.gpp.mspaMode,
+			});
+		}
+		if (params.gpp.optOutCategories.length > 0) {
+			pairs.push({
+				name: ANDROID_META.gppOptOutCategories,
+				value: params.gpp.optOutCategories.join(','),
+			});
+		}
+		if (!params.gpp.tcf) {
+			pairs.push({ name: ANDROID_META.gppTcf, value: 'false' });
+		}
+	}
 	if (!params.autoBootstrap) {
 		pairs.push({ name: ANDROID_META.autoBootstrap, value: 'false' });
 	}
@@ -230,11 +251,13 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	ensureInternetPermission(next);
 
 	const application = getMainApplicationOrThrow(next);
-	// The plugin owns every IAB entry. Clear them first, so a removed `iab`
-	// option or `consentScreen` leaves no earlier CMP identity behind.
+	// The plugin owns every IAB and GPP entry. Clear them first, so a removed
+	// `iab` or `gpp` option leaves no earlier CMP identity or GPP switch behind.
 	if (application['meta-data']) {
 		application['meta-data'] = application['meta-data'].filter(
-			(item) => !ANDROID_IAB_META_KEYS.includes(item.$['android:name'])
+			(item) =>
+				!ANDROID_IAB_META_KEYS.includes(item.$['android:name']) &&
+				!ANDROID_GPP_META_KEYS.includes(item.$['android:name'])
 		);
 	}
 	if (params.policyResource === null && application['meta-data']) {

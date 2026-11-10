@@ -96,7 +96,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         vendors: [Int]? = nil,
         gpc: Bool? = nil,
         bundledPolicyResource: String? = nil,
-        iab: IABConfiguration? = nil
+        iab: IABConfiguration? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.autoBootstrap = autoBootstrap
         self.transportMode = transportMode
@@ -111,6 +112,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         self.gpc = gpc
         self.bundledPolicyResource = bundledPolicyResource
         self.iab = iab
+        self.gpp = gpp
     }
 
     /// Whether the launch hook should start the core.
@@ -159,6 +161,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// declaration without one, or with any value out of range, leaves this `nil`
     /// and ``iabIssue(in:)`` explains why.
     public var iab: IABConfiguration?
+    /// GPP options, or `nil` to write no GPP signal. Read from the `com.c15t.gpp*` keys.
+    public var gpp: GPPOptions?
 
     /// Keys read out of `Info.plist`. All optional.
     public enum InfoPlistKey {
@@ -189,6 +193,14 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let iabPublisherCountryCode = "com.c15t.iab.publisherCountryCode"
         /// Optional consent screen number, 0 to 63. The core's default is 1.
         public static let iabConsentScreen = "com.c15t.iab.consentScreen"
+        /// `true` turns on the IAB GPP string and the `IABGPP_*` keys.
+        public static let gpp = "com.c15t.gpp"
+        /// `opt-out-option` or `service-provider`. Only for MSPA signatories.
+        public static let gppMspaMode = "com.c15t.gpp.mspaMode"
+        /// Categories whose refusal reports a GPP opt-out. Defaults to `["marketing"]`.
+        public static let gppOptOutCategories = "com.c15t.gpp.optOutCategories"
+        /// `false` leaves the TCF EU section out of the GPP string.
+        public static let gppTCF = "com.c15t.gpp.tcf"
     }
 
     /// A key a host app may still have in `Info.plist` that this build does not model.
@@ -311,7 +323,23 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
                 var configuration = declared
                 if let code = iabConsentLanguage(language) { configuration.consentLanguage = code }
                 return configuration
-            }
+            },
+            gpp: declaredGPP(in: infoPlist)
+        )
+    }
+
+    /// Read the GPP options a host declared: `nil` unless `com.c15t.gpp` is `true`.
+    ///
+    /// An MSPA mode this build does not name reads as no mode, which reports the
+    /// transaction as not covered rather than claiming a coverage nobody configured.
+    public static func declaredGPP(in infoPlist: [String: Any]) -> GPPOptions? {
+        guard infoPlist[InfoPlistKey.gpp] as? Bool == true else { return nil }
+        let categories = ((infoPlist[InfoPlistKey.gppOptOutCategories] as? [String]) ?? [])
+            .compactMap { ConsentCategory(rawValue: $0) }
+        return GPPOptions(
+            mspaMode: (infoPlist[InfoPlistKey.gppMspaMode] as? String).flatMap(GPPMspaMode.init(rawValue:)),
+            optOutCategories: categories.isEmpty ? [.marketing] : categories,
+            tcf: infoPlist[InfoPlistKey.gppTCF] as? Bool ?? true
         )
     }
 
@@ -495,7 +523,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
                 guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
                 return BundledPolicyResource(url: url, endpoint: endpoint)
             },
-            iab: iab
+            iab: iab,
+            gpp: gpp
         )
     }
 }

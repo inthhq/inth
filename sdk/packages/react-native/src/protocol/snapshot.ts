@@ -184,4 +184,14 @@ export interface ConsentSnapshot {
 	 * a JavaScript layer that predates TCF avoid branching on an SDK version.
 	 */
 	readonly iab: NativeIABState | null;
+	/**
+	 * The IAB GPP string for this state, or `null`.
+	 *
+	 * `null` while GPP is off, which it is until the app turns it on with the Expo
+	 * plugin's `gpp` option or the native `gpp` setting, and whenever no section
+	 * applies. The native core derives it from the matched rule, the location and
+	 * the committed TC String, and writes the same string to `IABGPP_HDR_GppString`.
+	 * Read it with `useGPPString()`.
+	 */
+	readonly gppString: string | null;
 }
