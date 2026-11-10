@@ -321,6 +321,15 @@ data class ConsentSnapshot(
 	 */
 	@SerialName("iab")
 	val iab: KernelIabState? = null,
+	/**
+	 * The IAB GPP string for this state, or `null` when GPP is off or no section applies.
+	 *
+	 * Derived, never decided: the core computes it from this snapshot, the matched rule and
+	 * the committed TC String each time it installs a state, with
+	 * [com.c15t.core.gpp.GppResolver]. It is `null` in the stored envelope, which keeps no
+	 * copy of a value it can recompute. The key is always present on the wire.
+	 */
+	val gppString: String? = null,
 ) {
 	/**
 	 * Whether [category] may run right now.

@@ -8,6 +8,8 @@ import android.util.Log
 import com.c15t.core.C15t
 import com.c15t.core.ConsentCore
 import com.c15t.core.NativeConfig
+import com.c15t.core.gpp.GppMspaMode
+import com.c15t.core.gpp.GppOptions
 import com.c15t.core.iab.IabConfiguration
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.KernelError
@@ -209,6 +211,22 @@ object C15tAndroid {
 				DeclaredIab.None -> null
 			},
 			detectedGpc = C15tManifestValue.boolean(read(META_GPC)),
+			gpp = declaredGpp(read),
+		)
+	}
+
+	/**
+	 * The GPP options the manifest declares: `null` unless `com.c15t.GPP` is `true`.
+	 *
+	 * An MSPA mode this build does not name reads as no mode, which reports the transaction as
+	 * not covered rather than claiming a coverage nobody configured.
+	 */
+	internal fun declaredGpp(read: (String) -> Any?): GppOptions? {
+		if (C15tManifestValue.boolean(read(META_GPP)) != true) return null
+		return GppOptions(
+			mspaMode = GppMspaMode.fromWireName(C15tManifestValue.string(read(META_GPP_MSPA_MODE))?.trim()),
+			optOutCategories = declaredCategories(read(META_GPP_OPT_OUT_CATEGORIES)) ?: listOf(ConsentCategory.MARKETING),
+			tcf = C15tManifestValue.boolean(read(META_GPP_TCF)) ?: true,
 		)
 	}
 
@@ -321,6 +339,18 @@ object C15tAndroid {
 			?.mapNotNull { entry -> entry.trim().toIntOrNull()?.takeIf { it > 0 } }
 			?.distinct()
 			?.takeIf { it.isNotEmpty() }
+
+	/** `true` turns on the IAB GPP string and the `IABGPP_*` keys. */
+	const val META_GPP = "com.c15t.GPP"
+
+	/** `opt-out-option` or `service-provider`. Only for MSPA signatories. */
+	const val META_GPP_MSPA_MODE = "com.c15t.GPP_MSPA_MODE"
+
+	/** Comma-separated categories whose refusal reports a GPP opt-out. Defaults to `marketing`. */
+	const val META_GPP_OPT_OUT_CATEGORIES = "com.c15t.GPP_OPT_OUT_CATEGORIES"
+
+	/** `false` leaves the TCF EU section out of the GPP string. */
+	const val META_GPP_TCF = "com.c15t.GPP_TCF"
 
 	/** Manifest key that forces GPC on for a staged build. */
 	const val META_GPC = "com.c15t.FORCE_GPC"

@@ -62,6 +62,9 @@ public struct C15tAppleConfiguration: Sendable {
     /// `IABTCF_CmpSdkVersion` to standard `UserDefaults` at startup and can commit
     /// IAB choices. There is no default CMP ID.
     public var iab: IABConfiguration?
+    /// Turns on the IAB GPP string and the `IABGPP_*` keys in standard `UserDefaults`.
+    /// `nil`, the default, writes no GPP signal.
+    public var gpp: GPPOptions?
 
     /// Choose hosted or self-hosted explicitly. Keychain is the default store.
     public init(
@@ -74,7 +77,8 @@ public struct C15tAppleConfiguration: Sendable {
         overrides: ConsentOverrides = .default(),
         gpc: Bool? = nil,
         bundledPolicy: BundledPolicyResource? = nil,
-        iab: IABConfiguration? = nil
+        iab: IABConfiguration? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.transport = transport
         self.storage = storage
@@ -86,6 +90,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.gpc = gpc
         self.bundledPolicy = bundledPolicy
         self.iab = iab
+        self.gpp = gpp
     }
 
     /// Build the native transport. HTTP is allowed only for exact loopback hosts.
@@ -114,7 +119,7 @@ public struct C15tAppleConfiguration: Sendable {
         return CoreConfig(
             store: try storage.makeStore(), bundledPolicy: bundledPolicy, transport: try makeTransport(),
             consentCategories: consentCategories, vendors: vendors, iab: iab,
-            overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
+            overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus(), gpp: gpp
         )
     }
 }

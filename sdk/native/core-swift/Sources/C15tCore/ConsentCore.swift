@@ -94,6 +94,9 @@ public struct CoreConfig: @unchecked Sendable {
     /// that ships no ad SDK leaves this `nil` and the core's behavior is
     /// byte-identical to a build with no bus at all.
     public let storageBus: (any TcStorageBusWriting)?
+    /// Turns on the IAB GPP string: ``ConsentSnapshot/gppString`` and the `IABGPP_*`
+    /// rows on ``storageBus``. `nil`, the default, writes no GPP signal.
+    public let gpp: GPPOptions?
 
     public init(
         store: any ConsentStore = InMemoryStore(),
@@ -109,7 +112,8 @@ public struct CoreConfig: @unchecked Sendable {
         now: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1_000) },
         initRetry: InitRetry? = InitRetry(),
         flushPendingOnBootstrap: Bool = true,
-        storageBus: (any TcStorageBusWriting)? = nil
+        storageBus: (any TcStorageBusWriting)? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.store = store
         self.bundledPolicy = bundledPolicy
@@ -125,6 +129,7 @@ public struct CoreConfig: @unchecked Sendable {
         self.initRetry = initRetry
         self.flushPendingOnBootstrap = flushPendingOnBootstrap
         self.storageBus = storageBus
+        self.gpp = gpp
     }
 }
 
@@ -410,7 +415,37 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// The current state. Synchronous, and never touches disk or the network.
     public func snapshot() -> ConsentSnapshot {
-        lock.withLock { readableSnapshotLocked() }
+        lock.withLock { publishedSnapshotLocked() }
+    }
+
+    /// ``readableSnapshotLocked()`` carrying the GPP string derived for it.
+    ///
+    /// Only snapshots handed out carry the string; the gates read the readable view
+    /// directly, so ``isAllowed(_:)`` never pays for an encode. The TC String goes in
+    /// only while the committed consent still authorizes vendors, which is the same
+    /// condition under which the readable view keeps its IAB permissions.
+    private func publishedSnapshotLocked() -> ConsentSnapshot {
+        let readable = readableSnapshotLocked()
+        let gppString = GPPResolver.resolve(
+            readable,
+            policy: resolvedPolicy?.policy,
+            tcString: currentCommittedIABLocked()?.tcString,
+            options: config?.gpp
+        )?.gppString
+        guard gppString != readable.gppString else { return readable }
+        var draft = ConsentSnapshot.Draft(current: readable)
+        draft.gppString = gppString
+        return draft.build(revision: readable.revision)
+    }
+
+    /// The committed IAB consent while it still authorizes vendors, else `nil`.
+    private func currentCommittedIABLocked() -> IABCommittedConsent? {
+        guard let config, let saved = committedIAB, listIsUsableLocked(), resolvedPolicy?.policy.model == .iab,
+            !currentSnapshot.policyPending,
+            saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil,
+            saved.isCurrent(now: config.now(), maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0)
+        else { return nil }
+        return saved
     }
 
     private func readableSnapshotLocked() -> ConsentSnapshot {
@@ -1514,21 +1549,17 @@ public final class ConsentCore: @unchecked Sendable {
     private func writeTcStorageBus() {
         let publication = lock.withLock { () -> (bus: any TcStorageBusWriting, values: [String: TcBusValue])? in
             guard let config, let bus = config.storageBus else { return nil }
-            let saved = committedIAB.flatMap { saved -> IABCommittedConsent? in
-                guard listIsUsableLocked(), resolvedPolicy?.policy.model == .iab,
-                    !currentSnapshot.policyPending,
-                    saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil,
-                    saved.isCurrent(now: config.now(), maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0)
-                else { return nil }
-                return saved
-            }
+            let saved = currentCommittedIABLocked()
+            let signal = GPPResolver.resolve(
+                readableSnapshotLocked(), policy: resolvedPolicy?.policy, tcString: saved?.tcString, options: config.gpp)
             let envelope = StoredEnvelope(
                     bundledPolicyAuthority: bundledPolicyAuthority,
                 snapshot: readableSnapshotLocked(), noticeDismissal: noticeDismissal,
                 policyResolution: policyWire, storedAt: config.now(), iabConsent: saved,
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
                 additionalConsentList: additionalConsentList)
-            return (bus, TcStorageBus.values(for: envelope, configuration: config.iab))
+            let gpp = GPPStorageBus.values(signal, iabConsent: saved)
+            return (bus, TcStorageBus.values(for: envelope, configuration: config.iab).merging(gpp) { _, new in new })
         }
         guard let publication else { return }
         publication.bus.write(publication.values)
@@ -1857,7 +1888,7 @@ public final class ConsentCore: @unchecked Sendable {
         if persist { persistEnvelope() }
         let state = lock.withLock {
             scheduleIABDeadlineLocked()
-            return readableSnapshotLocked()
+            return publishedSnapshotLocked()
         }
         mutation.release()
         events.emit(.snapshot(revision: state.revision))

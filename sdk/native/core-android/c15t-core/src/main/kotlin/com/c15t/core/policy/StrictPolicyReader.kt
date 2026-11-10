@@ -154,6 +154,18 @@ object StrictPolicyReader {
 		)
 			?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
 
+		// `/init` always serves the resolved set. A wire without it gets the rights the
+		// schema requires for the model; a value this build does not name is refused,
+		// as `core-swift`'s `PolicyWireReader` refuses it.
+		val rights = when (val raw = policy["rights"]) {
+			null -> PolicyRight.requiredFor(model)
+			is JsonArray -> raw.map { element ->
+				PolicyRight.fromWireName((element as? JsonPrimitive)?.takeIf { it.isString }?.content)
+					?: return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+			}.distinct().sortedBy { it.wireName }
+			else -> return PolicyRead.Unreadable(PolicyResolution.REASON_INVALID_PAYLOAD)
+		}
+
 		return PolicyRead.Matched(
 			EvaluationPolicy(
 				id = policy.stringOrNull("id") ?: policyId,
@@ -167,6 +179,7 @@ object StrictPolicyReader {
 				choiceFingerprint = choiceFingerprint,
 				policyFingerprint = policyFingerprint,
 				noticeFingerprint = noticeFingerprint,
+				rights = rights,
 			)
 		)
 	}

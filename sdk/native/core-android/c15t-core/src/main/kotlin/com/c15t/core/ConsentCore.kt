@@ -3,6 +3,8 @@ package com.c15t.core
 import com.c15t.core.model.isWithdrawal
 import com.c15t.core.model.ConsentState
 
+import com.c15t.core.gpp.GppResolver
+import com.c15t.core.gpp.GppStorageBusProjection
 import com.c15t.core.iab.*
 import com.c15t.core.model.ActiveUI
 import com.c15t.core.model.ConfirmedCoverage
@@ -463,12 +465,17 @@ class ConsentCore(
 
 	/** Capture current authority after durable I/O, then write the mirror off the state lock. */
 	private fun publishCurrentTcStorageBus(allowConsent: Boolean = true) {
-		val envelope = synchronized(mutationLock) {
+		val (envelope, gpp) = synchronized(mutationLock) {
 			val snapshot = state.get()
-			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority, snapshot = snapshot.copy(iab = null),
-				evaluationPolicy = evaluationPolicy, gvl = snapshot.iab?.gvl, iabConsent = iabConsent)
+			val validIab = iabConsent
+			// The GPP rows follow the view a reader gets, so they never name a TC String
+			// `snapshot()` would withhold, and the string matches `snapshot().gppString`.
+			val signal = GppResolver.resolve(snapshot(), evaluationPolicy, validIab?.tcString, config.gpp)
+			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority, snapshot = snapshot.copy(iab = null, gppString = null),
+				evaluationPolicy = evaluationPolicy, gvl = snapshot.iab?.gvl, iabConsent = validIab) to
+				GppStorageBusProjection.values(signal, validIab)
 		}
-		if (allowConsent || envelope.iabConsent == null) store.publishTcStorageBus(envelope)
+		if (allowConsent || envelope.iabConsent == null) store.publishTcStorageBus(envelope, gpp)
 	}
 
 	/** `true` once [bootstrap] has run. */
@@ -2045,11 +2052,18 @@ class ConsentCore(
 			for (category in ConsentCategory.OPTIONAL) if (snapshot.explicitChoice?.consents?.get(category.wireName) != true) permissions = permissions.with(category, false)
 			snapshot = snapshot.copy(effectivePermissions = permissions)
 		}
-		val denied = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
+		val deniedBase = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
 			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
-		val expired = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
+		val expiredBase = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
 			effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE,
 			error = KernelError("bundled-policy-expired", "Connect to refresh consent policy."))
+		// Each view reports the GPP string for what it says. Only the full view can carry
+		// the TC String: `snapshot()` hands it out only while the committed consent is valid.
+		val sameDenied = deniedBase === snapshot
+		val sameExpired = expiredBase === snapshot
+		snapshot = withGpp(snapshot, committedIab?.tcString)
+		val denied = if (sameDenied) snapshot else withGpp(deniedBase, null)
+		val expired = if (sameExpired) snapshot else withGpp(expiredBase, null)
 		state.set(snapshot)
 		readView.set(ReadView(snapshot, bundledPolicyAuthority, denied, requiresIab, committedIab, iabListFetchedAt,
 			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0, expired))
@@ -2061,6 +2075,12 @@ class ConsentCore(
 				TimeUnit.MILLISECONDS,
 			)
 		}
+	}
+
+	/** [view] carrying the GPP string [GppResolver] derives for it, or none when GPP is off. */
+	private fun withGpp(view: ConsentSnapshot, tcString: String?): ConsentSnapshot {
+		val gppString = GppResolver.resolve(view, evaluationPolicy, tcString, config.gpp)?.gppString
+		return if (gppString == view.gppString) view else view.copy(gppString = gppString)
 	}
 
 	private fun expireIabDeadline(generation: Long, deadline: Long): Unit = mutate { mutation ->
@@ -2100,7 +2120,7 @@ class ConsentCore(
 				// [bootstrap] reads it back onto the snapshot -- so the stored snapshot goes with
 				// `iab` nulled instead of carrying the largest thing either object holds a second
 				// time, on a write that happens for every committed mutation.
-				snapshot = snapshot.copy(iab = null),
+				snapshot = snapshot.copy(iab = null, gppString = null),
 				evaluationPolicy = evaluationPolicy,
 				noticeDismissal = noticeDismissal,
 				gvl = snapshot.iab?.gvl,
