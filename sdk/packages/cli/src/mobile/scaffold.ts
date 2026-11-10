@@ -64,7 +64,13 @@ export interface MobileSetupPlan {
 	readonly skipped: readonly string[];
 }
 
-const DOCS = 'https://c15t.com/docs/frameworks';
+/**
+ * Where the guides are. The mobile SDKs are a private prerelease and their pages
+ * are not on c15t.com yet, so the steps point at copies a developer already has:
+ * the Markdown `@c15t/react-native` bundles, or the MDX in the supplied c15t source.
+ */
+const RN_DOCS = 'node_modules/@c15t/react-native/docs';
+const SOURCE_DOCS = 'docs in the c15t source your maintainer supplied';
 
 const PLUGIN_MODE: Record<MobileMode, string | undefined> = {
 	custom: 'custom',
@@ -339,7 +345,7 @@ export const planReactNativeSetup = (
 
 	if (project.kind === 'expo') {
 		steps.push(
-			`Android resolves the native SDK from the private Maven repository you were given. Add it with the plugin's androidMavenRepository option: ${DOCS}/react-native/expo`
+			`Android resolves the native SDK from the private Maven repository you were given. Add it with the plugin's androidMavenRepository option. See ${RN_DOCS}/frameworks/react-native/expo.md.`
 		);
 		if (options.bundleManifest && !project.cliInstalled) {
 			steps.push(
@@ -354,12 +360,12 @@ export const planReactNativeSetup = (
 
 	if (options.mode === 'offline' || options.mode === 'custom') {
 		steps.push(
-			`Configure ${options.mode} mode in the native projects: ${DOCS}/react-native/configuration`
+			`Configure ${options.mode} mode in the native projects. See ${RN_DOCS}/frameworks/react-native/configuration.md.`
 		);
 	} else {
 		steps.push(
 			`iOS: add these entries inside the root <dict> of your app target's Info.plist, then run pod install in ios/:\n${infoPlistEntries(options)}`,
-			`Android: add the private Maven repository you were given to android/build.gradle (${DOCS}/react-native/bare#set-up-android), and these entries inside <application> in android/app/src/main/AndroidManifest.xml:\n${androidManifestEntries(options)}`
+			`Android: add the private Maven repository you were given to android/build.gradle (${RN_DOCS}/frameworks/react-native/bare.md, Set up Android), and these entries inside <application> in android/app/src/main/AndroidManifest.xml:\n${androidManifestEntries(options)}`
 		);
 	}
 	steps.push('Rebuild both apps; native configuration needs a new binary.');
@@ -383,23 +389,23 @@ export const planNativeSetup = (
 	if (platforms.includes('ios')) {
 		steps.push(
 			'iOS: the Swift SDK is private source. In Xcode, choose File > Add Package Dependencies > Add Local and select your c15t checkout. Add the C15tCore, C15tApple and C15tConsentUI products to your app target.',
-			`iOS: add ConsentModel.swift and ConsentRoot.swift from ${DOCS}/swift/quickstart, then create the model once in your App with ConsentModel(backendURL: URL(string: "${url}")!) and wrap your root view in ConsentRoot(consent: consent, privacyPolicyURL: URL(string: "${options.privacyPolicyURL}")!).`
+			`iOS: add ConsentModel.swift and ConsentRoot.swift from frameworks/swift/quickstart.mdx (${SOURCE_DOCS}), then create the model once in your App with ConsentModel(backendURL: URL(string: "${url}")!) and wrap your root view in ConsentRoot(consent: consent, privacyPolicyURL: URL(string: "${options.privacyPolicyURL}")!).`
 		);
 	}
 	if (platforms.includes('android')) {
 		steps.push(
-			`Android: add the private Maven repository you were given to dependencyResolutionManagement.repositories in settings.gradle.kts, with includeGroup("com.c15t"). ${DOCS}/android/quickstart#add-the-dependencies`,
+			`Android: add the private Maven repository you were given to dependencyResolutionManagement.repositories in settings.gradle.kts, with includeGroup("com.c15t"), as frameworks/android/quickstart.mdx shows (${SOURCE_DOCS}).`,
 			`Android: add to app/build.gradle.kts:\nimplementation("com.c15t:c15t-android:${C15T_ANDROID_VERSION}")\nimplementation("com.c15t:c15t-consent-ui:${C15T_ANDROID_VERSION}")`,
 			`Android: call C15tAndroid.install(this, NativeConfig(backendUrl = "${url}", consentCategories = listOf(${options.categories
 				.map((category) => `ConsentCategory.${category.toUpperCase()}`)
 				.join(
 					', '
-				)}))) in Application.onCreate, mount C15tConsent(presenter, "${options.privacyPolicyURL}") in your activity, and add android.permission.INTERNET to the manifest. The complete files: ${DOCS}/android/quickstart`
+				)}))) in Application.onCreate, mount C15tConsent(presenter, "${options.privacyPolicyURL}") in your activity, and add android.permission.INTERNET to the manifest. The complete files are in frameworks/android/quickstart.mdx.`
 		);
 	}
 	if (options.mode === 'offline' || options.mode === 'custom') {
 		steps.push(
-			`Configure ${options.mode} mode in code instead of a backend URL: https://c15t.com/docs/guides/mobile-offline`
+			`Configure ${options.mode} mode in code instead of a backend URL, as guides/mobile-offline.mdx describes (${SOURCE_DOCS}).`
 		);
 	}
 	return { files: [], skipped: [], steps };

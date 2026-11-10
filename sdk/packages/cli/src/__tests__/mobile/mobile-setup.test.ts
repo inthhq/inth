@@ -325,6 +325,52 @@ describe('c15t setup in a mobile project', () => {
 	});
 });
 
+describe('the doc paths the steps print', () => {
+	it('name pages that exist, not unpublished c15t.com pages', async () => {
+		const repo = path.resolve(
+			path.dirname(fileURLToPath(import.meta.url)),
+			'../../../../..'
+		);
+		const expo = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
+		const bare = await project({
+			'package.json': pkg({ 'react-native': '0.86.0' }),
+		});
+		const native = await project({ 'Package.swift': '', 'build.gradle': '' });
+		const steps = [
+			...(await setup(expo, ['--backend-url', 'https://a.test'])).data.steps,
+			...(await setup(bare, ['--backend-url', 'https://a.test', '--dry-run']))
+				.data.steps,
+			...(
+				await setup(bare, [
+					'custom',
+					'--backend-url',
+					'https://a.test',
+					'--dry-run',
+				])
+			).data.steps,
+			...(await setup(native, ['offline'])).data.steps,
+		].join('\n');
+
+		expect(steps).not.toContain('https://c15t.com/docs');
+		const bundled = [
+			...steps.matchAll(
+				/node_modules\/@c15t\/react-native\/docs\/(?<page>[\w/-]+)\.md/gu
+			),
+		].map((match) => match.groups?.page);
+		const source = [
+			...steps.matchAll(/(?<page>(?:frameworks|guides)\/[\w/-]+)\.mdx/gu),
+		].map((match) => match.groups?.page);
+		expect(bundled.length).toBeGreaterThan(0);
+		expect(source.length).toBeGreaterThan(0);
+		for (const page of [...bundled, ...source]) {
+			// oxlint-disable-next-line no-await-in-loop -- One page at a time.
+			await expect(
+				readFile(path.join(repo, 'docs', `${page}.mdx`), 'utf8')
+			).resolves.toBeTypeOf('string');
+		}
+	});
+});
+
 describe('the printed Android version', () => {
 	it('matches the native release the steps point at', async () => {
 		const properties = await readFile(
