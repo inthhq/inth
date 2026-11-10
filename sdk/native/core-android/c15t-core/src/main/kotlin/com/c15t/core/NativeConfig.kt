@@ -80,6 +80,12 @@ data class NativeConfig(
 	 * `null` [backendUrl]: the two modes do not mix.
 	 */
 	val policy: ConsentPolicy? = null,
+	/**
+	 * Why the app's declared in-code policy was refused, when an adapter read one and
+	 * could not use it. The core then reports `policy-invalid` in the snapshot and on the
+	 * error stream instead of starting as if no policy had been declared.
+	 */
+	val policyError: String? = null,
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)
@@ -87,7 +93,7 @@ data class NativeConfig(
 		require(backendUrl != null || bundledPolicy == null) {
 			"NativeConfig.bundledPolicy needs backendUrl: a bundled manifest belongs to backend mode"
 		}
-		require(policy == null || backendUrl == null) {
+		require(policy == null && policyError == null || backendUrl == null) {
 			"NativeConfig.policy is no-backend mode and does not mix with backendUrl"
 		}
 	}

@@ -109,6 +109,1328 @@
 				"country": "FR",
 				"region": null
 			}
+		},
+		{
+			"expected": {
+				"matchedBy": "country",
+				"policyId": "japan"
+			},
+			"inputs": {
+				"country": "JP",
+				"region": null
+			}
+		}
+	],
+	"fingerprintInputs": {
+		"quebec": {
+			"choice": {
+				"copyRevision": null,
+				"domain": "choice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["marketing", "measurement"],
+				"scopeMode": "strict",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": null,
+				"domain": "notice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["marketing", "measurement"],
+				"scopeMode": "strict",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": ["accept", "reject"],
+					"equivalent": [["accept", "reject"]],
+					"required": ["accept", "reject"]
+				},
+				"copyRevision": null,
+				"domain": "policy",
+				"model": "opt-in",
+				"preselectedCategories": [],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": ["disclosure", "preferences"],
+				"scope": ["marketing", "measurement"],
+				"scopeMode": "strict",
+				"validity": {
+					"choiceMs": 31536000000,
+					"noticeMs": 31536000000
+				},
+				"version": 1
+			}
+		},
+		"germany": {
+			"choice": {
+				"copyRevision": null,
+				"domain": "choice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": null,
+				"domain": "notice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": ["accept", "customize", "reject"],
+					"equivalent": [["accept", "reject"]],
+					"required": ["accept", "reject"]
+				},
+				"copyRevision": null,
+				"domain": "policy",
+				"model": "opt-in",
+				"preselectedCategories": [],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": ["disclosure", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validity": {
+					"choiceMs": 31536000000,
+					"noticeMs": 31536000000
+				},
+				"version": 1
+			}
+		},
+		"california": {
+			"choice": {
+				"copyRevision": null,
+				"domain": "choice",
+				"model": "opt-out",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": ["marketing"]
+					}
+				},
+				"prompt": "notice",
+				"requiredActions": ["dismiss"],
+				"rights": ["disclosure", "opt-out", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": null,
+				"domain": "notice",
+				"model": "opt-out",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": ["marketing"]
+					}
+				},
+				"prompt": "notice",
+				"requiredActions": ["dismiss"],
+				"rights": ["disclosure", "opt-out", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 2592000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": ["dismiss"],
+					"equivalent": [],
+					"required": ["dismiss"]
+				},
+				"copyRevision": null,
+				"domain": "policy",
+				"model": "opt-out",
+				"preselectedCategories": [],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": ["marketing"]
+					}
+				},
+				"prompt": "notice",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": ["disclosure", "opt-out", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validity": {
+					"choiceMs": 31536000000,
+					"noticeMs": 2592000000
+				},
+				"version": 1
+			}
+		},
+		"united_states": {
+			"choice": {
+				"copyRevision": null,
+				"domain": "choice",
+				"model": "none",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "none",
+				"requiredActions": [],
+				"rights": [],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": null,
+				"domain": "notice",
+				"model": "none",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "none",
+				"requiredActions": [],
+				"rights": [],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": [],
+					"equivalent": [],
+					"required": []
+				},
+				"copyRevision": null,
+				"domain": "policy",
+				"model": "none",
+				"preselectedCategories": [],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "none",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": [],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validity": {
+					"choiceMs": 31536000000,
+					"noticeMs": 31536000000
+				},
+				"version": 1
+			}
+		},
+		"canada": {
+			"choice": {
+				"copyRevision": null,
+				"domain": "choice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["functionality", "measurement"],
+				"scopeMode": "strict",
+				"validityMs": 15552000000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": null,
+				"domain": "notice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["functionality", "measurement"],
+				"scopeMode": "strict",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": ["accept", "customize", "reject"],
+					"equivalent": [["accept", "reject"]],
+					"required": ["accept", "reject"]
+				},
+				"copyRevision": null,
+				"domain": "policy",
+				"model": "opt-in",
+				"preselectedCategories": ["functionality"],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": ["disclosure", "preferences"],
+				"scope": ["functionality", "measurement"],
+				"scopeMode": "strict",
+				"validity": {
+					"choiceMs": 15552000000,
+					"noticeMs": 31536000000
+				},
+				"version": 1
+			}
+		},
+		"japan": {
+			"choice": {
+				"copyRevision": "r1",
+				"domain": "choice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["marketing", "measurement"],
+				"scopeMode": "strict",
+				"validityMs": 43200000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": "r1",
+				"domain": "notice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["marketing", "measurement"],
+				"scopeMode": "strict",
+				"validityMs": 108000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": ["accept", "customize", "reject"],
+					"equivalent": [["accept", "reject"]],
+					"required": ["accept", "reject"]
+				},
+				"copyRevision": "r1",
+				"domain": "policy",
+				"model": "opt-in",
+				"preselectedCategories": ["measurement"],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": ["disclosure", "preferences"],
+				"scope": ["marketing", "measurement"],
+				"scopeMode": "strict",
+				"validity": {
+					"choiceMs": 43200000,
+					"noticeMs": 108000000
+				},
+				"version": 1
+			}
+		},
+		"everywhere_else": {
+			"choice": {
+				"copyRevision": "2026-11",
+				"domain": "choice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"notice": {
+				"copyRevision": "2026-11",
+				"domain": "notice",
+				"model": "opt-in",
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"requiredActions": ["accept", "reject"],
+				"rights": ["disclosure", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validityMs": 31536000000,
+				"version": 1
+			},
+			"policy": {
+				"actions": {
+					"allowed": ["accept", "customize", "reject"],
+					"equivalent": [["accept", "reject"]],
+					"required": ["accept", "reject"]
+				},
+				"copyRevision": "2026-11",
+				"domain": "policy",
+				"model": "opt-in",
+				"preselectedCategories": [],
+				"privacySignals": {
+					"gpc": {
+						"denyCategories": []
+					}
+				},
+				"prompt": "choice",
+				"proof": {
+					"storeIp": false,
+					"storeLanguage": false,
+					"storeUserAgent": false
+				},
+				"rights": ["disclosure", "preferences"],
+				"scope": ["experience", "functionality", "marketing", "measurement"],
+				"scopeMode": "permissive",
+				"validity": {
+					"choiceMs": 31536000000,
+					"noticeMs": 31536000000
+				},
+				"version": 1
+			}
+		}
+	},
+	"invalid": [
+		{
+			"name": "actions-not-a-list",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"actions": "accept"
+				}
+			]
+		},
+		{
+			"name": "actions-on-notice-prompt",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-out",
+					"prompt": "notice",
+					"actions": ["accept", "reject"]
+				}
+			]
+		},
+		{
+			"name": "actions-without-reject",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"actions": ["accept"]
+				}
+			]
+		},
+		{
+			"name": "blank-id",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "  ",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "categories-not-a-list",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": "*"
+				}
+			]
+		},
+		{
+			"name": "days-not-a-number",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"validity": {
+						"choiceDays": "30"
+					}
+				}
+			]
+		},
+		{
+			"name": "days-too-large",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"validity": {
+						"noticeDays": 1e300
+					}
+				}
+			]
+		},
+		{
+			"name": "duplicate-ids",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["FR"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "empty-countries",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": []
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "empty-match",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "gpc-denies-necessary",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"privacySignals": {
+						"gpc": {
+							"denyCategories": ["necessary"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "gpc-outside-scope",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["measurement"],
+					"privacySignals": {
+						"gpc": {
+							"denyCategories": ["marketing"]
+						}
+					},
+					"scopeMode": "strict"
+				}
+			]
+		},
+		{
+			"name": "missing-match",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "non-string-copy-revision",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"copyRevision": 7
+				}
+			]
+		},
+		{
+			"name": "non-string-country",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": [49]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "none-model-preselects",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "none",
+					"prompt": "none",
+					"preselectedCategories": ["measurement"]
+				}
+			]
+		},
+		{
+			"name": "null-copy-revision",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"copyRevision": null
+				}
+			]
+		},
+		{
+			"name": "opt-in-notice-prompt",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "notice"
+				}
+			]
+		},
+		{
+			"name": "partial-scope-without-scope-mode",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["measurement"]
+				}
+			]
+		},
+		{
+			"name": "preselected-outside-scope",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["measurement"],
+					"preselectedCategories": ["marketing"],
+					"scopeMode": "strict"
+				}
+			]
+		},
+		{
+			"name": "region-without-code",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"regions": [
+							{
+								"country": "CA"
+							}
+						]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "two-defaults",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "two-fallbacks",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"fallback": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "unknown-action",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"actions": ["accept", "reject", "maybe"]
+				}
+			]
+		},
+		{
+			"name": "unknown-category",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["ads"]
+				}
+			]
+		},
+		{
+			"name": "unknown-gpc-field",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"privacySignals": {
+						"gpc": {
+							"allow": [],
+							"denyCategories": []
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "unknown-match-field",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"continent": "EU",
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "unknown-model",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "implied",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"name": "unknown-privacy-signal",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"privacySignals": {
+						"dnt": {}
+					}
+				}
+			]
+		},
+		{
+			"name": "unknown-scope-mode",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"scopeMode": "loose"
+				}
+			]
+		},
+		{
+			"name": "unknown-validity-field",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"validity": {
+						"years": 1
+					}
+				}
+			]
+		},
+		{
+			"name": "zero-days",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"validity": {
+						"choiceDays": 0
+					}
+				}
+			]
+		},
+		{
+			"local": true,
+			"name": "iab-model",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "iab",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"local": true,
+			"name": "no-rule-for-unknown-location",
+			"rules": [
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			]
+		},
+		{
+			"local": true,
+			"name": "unsupported-field",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"rights": ["opt-out"]
+				}
+			]
+		},
+		{
+			"local": true,
+			"name": "validity-under-a-millisecond",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"validity": {
+						"choiceDays": 1e-12
+					}
+				}
+			]
 		}
 	],
 	"resolved": {
@@ -257,6 +1579,35 @@
 				"noticeMs": 31536000000
 			}
 		},
+		"japan": {
+			"actions": {
+				"allowed": ["accept", "customize", "reject"],
+				"equivalent": [["accept", "reject"]],
+				"required": ["accept", "reject"]
+			},
+			"copyRevision": "r1",
+			"id": "japan",
+			"model": "opt-in",
+			"preselectedCategories": ["measurement"],
+			"privacySignals": {
+				"gpc": {
+					"denyCategories": []
+				}
+			},
+			"prompt": "choice",
+			"proof": {
+				"storeIp": false,
+				"storeLanguage": false,
+				"storeUserAgent": false
+			},
+			"rights": ["disclosure", "preferences"],
+			"scope": ["marketing", "measurement"],
+			"scopeMode": "strict",
+			"validity": {
+				"choiceMs": 43200000,
+				"noticeMs": 108000000
+			}
+		},
 		"everywhere_else": {
 			"actions": {
 				"allowed": ["accept", "customize", "reject"],
@@ -353,6 +1704,28 @@
 			"scopeMode": "strict",
 			"validity": {
 				"choiceDays": 180
+			}
+		},
+		{
+			"actions": ["customize", "accept", "reject"],
+			"categories": ["necessary", " measurement ", "marketing"],
+			"copyRevision": " r1 ",
+			"id": "japan",
+			"match": {
+				"countries": ["JP"],
+				"fallback": false
+			},
+			"model": "opt-in",
+			"preselectedCategories": ["necessary", "measurement"],
+			"privacySignals": {},
+			"prompt": "choice",
+			"review": {
+				"status": "pending"
+			},
+			"scopeMode": "strict",
+			"validity": {
+				"choiceDays": 0.5,
+				"noticeDays": 1.25
 			}
 		},
 		{

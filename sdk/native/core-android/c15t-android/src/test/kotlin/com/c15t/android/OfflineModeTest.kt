@@ -3,6 +3,7 @@ package com.c15t.android
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OfflineModeTest {
@@ -49,6 +50,15 @@ class OfflineModeTest {
 			assets = mapOf("c15t-policy-rules.json" to """{"rules":[]}"""),
 		)
 		assertNull(broken.policy)
+		assertNotNull(broken.policyError)
+		val partial = required(
+			mapOf(C15tAndroid.META_MODE to "offline", C15tAndroid.META_POLICY_RULES to "c15t-policy-rules.json"),
+			assets = mapOf("c15t-policy-rules.json" to """{"rules":[{"id":"x","match":{"fallback":true},"model":"opt-in","prompt":"choice","categories":["measurement"]}]}"""),
+		)
+		assertNull(partial.policy)
+		assertTrue(partial.policyError!!.contains("scopeMode"))
+		val missing = required(mapOf(C15tAndroid.META_MODE to "offline", C15tAndroid.META_POLICY_RULES to "absent.json"))
+		assertNotNull(missing.policyError)
 		val backend = required(
 			mapOf(C15tAndroid.META_BACKEND_URL to "https://consent.example.test", C15tAndroid.META_POLICY_RULES to "c15t-policy-rules.json"),
 			assets = mapOf("c15t-policy-rules.json" to rules),

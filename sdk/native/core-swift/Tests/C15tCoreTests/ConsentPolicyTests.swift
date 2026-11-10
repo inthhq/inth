@@ -38,6 +38,71 @@ final class ConsentPolicyTests: XCTestCase {
         }
     }
 
+    func testFingerprintsHashExactlyTheInputsTheBackendHashes() throws {
+        let inputs = try XCTUnwrap(fixture["fingerprintInputs"]?.objectValue)
+        for rule in try policy().rules {
+            let actual = ConsentPolicy.fingerprintInputs(rule)
+            for domain in ["choice", "notice", "policy"] {
+                XCTAssertEqual(actual[domain], inputs[rule.id]?[domain], "\(rule.id) \(domain)")
+            }
+        }
+    }
+
+    func testEveryPolicyTheBackendOrNoBackendModeRefusesIsRefused() throws {
+        for row in try XCTUnwrap(fixture["invalid"]?.arrayValue) {
+            let name = row["name"]?.stringValue ?? "?"
+            let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
+            XCTAssertThrowsError(try ConsentPolicy(json: data), name)
+        }
+    }
+
+    func testChangingOneValidityKeepsTheOtherPromptsReceipt() async throws {
+        let store = InMemoryStore()
+        let policy = try policy()
+        let first = await boot(policy, store: store)
+        XCTAssertEqual(first.save(.all).status, .committed)
+        await first.waitUntilIdle()
+        func revised(_ validity: PolicyValidity) throws -> ConsentPolicy {
+            try ConsentPolicy(rules: policy.rules.map { rule in
+                var rule = rule
+                if rule.id == "everywhere_else" { rule.validity = validity }
+                return rule
+            })
+        }
+        let noticeOnly = await boot(try revised(PolicyValidity(noticeDays: 30)), store: store)
+        XCTAssertTrue(noticeOnly.isAllowed(.measurement))
+        XCTAssertEqual(noticeOnly.snapshot().promptRequirement.kind, PromptRequirement.Kind.none)
+        let choiceChanged = await boot(try revised(PolicyValidity(choiceDays: 30, noticeDays: 30)), store: store)
+        XCTAssertFalse(choiceChanged.isAllowed(.measurement))
+    }
+
+    func testARefusedInCodePolicyIsReportedNotStartedAsAQuietDenyAll() async throws {
+        let core = ConsentCore()
+        let stream = core.eventStream
+        core.bootstrap(CoreConfig(
+            policyError: "Policy 'x': a partial category scope needs a scopeMode",
+            transport: OfflineTransport.offline(), initRetry: .disabled))
+        var reported: String?
+        for await event in stream {
+            if case let .error(info) = event { reported = info.code }
+            if case .initialized = event { break }
+        }
+        XCTAssertEqual(reported, "policy-invalid")
+        XCTAssertEqual(core.snapshot().error?.code, "policy-invalid")
+        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertFalse(core.isAllowed(.measurement))
+    }
+
+    func testBootstrapAppliesTheInCodePolicyOnce() async throws {
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(
+            policy: try policy(), transport: OfflineTransport.offline(),
+            consentCategories: ConsentCategory.allCases, initRetry: .disabled))
+        let revision = core.snapshot().revision
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().revision, revision)
+    }
+
     func testLocationsMatchTheRuleTheBackendMatcherPicks() throws {
         let policy = try policy()
         for row in try XCTUnwrap(fixture["cases"]?.arrayValue) {

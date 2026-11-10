@@ -59,6 +59,8 @@ public struct C15tAppleConfiguration: Sendable {
     /// The policy in source control. Used only with the `offline` or `disabled`
     /// transport, where it is the only policy source.
     public var policy: ConsentPolicy?
+    /// Why a declared in-code policy was refused. The core reports it as `policy-invalid`.
+    public var policyError: String?
     /// Registered CMP identity and publisher settings. `nil` turns IAB TCF off.
     ///
     /// With a value, the installed core writes `IABTCF_CmpSdkID` and
@@ -78,6 +80,7 @@ public struct C15tAppleConfiguration: Sendable {
         gpc: Bool? = nil,
         bundledPolicy: BundledPolicyResource? = nil,
         policy: ConsentPolicy? = nil,
+        policyError: String? = nil,
         iab: IABConfiguration? = nil
     ) {
         self.transport = transport
@@ -90,6 +93,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.gpc = gpc
         self.bundledPolicy = bundledPolicy
         self.policy = policy
+        self.policyError = policyError
         self.iab = iab
     }
 
@@ -124,7 +128,8 @@ public struct C15tAppleConfiguration: Sendable {
         }
         return CoreConfig(
             store: try storage.makeStore(), bundledPolicy: noBackend ? nil : bundledPolicy,
-            policy: noBackend ? policy : nil, transport: try makeTransport(),
+            policy: noBackend ? policy : nil, policyError: noBackend ? policyError : nil,
+            transport: try makeTransport(),
             consentCategories: consentCategories, vendors: vendors, iab: iab,
             overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
         )

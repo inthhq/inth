@@ -1,12 +1,14 @@
+import { readFileSync } from 'node:fs';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 import { AndroidConfig } from '@expo/config-plugins';
 import { describe, expect, it } from 'vitest';
 
 import { applyAndroidManifest } from '../android';
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
+import { C15tPluginError } from '../errors';
 import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
 import type { C15tPolicyRule } from '../params';
@@ -23,6 +25,46 @@ const fallback: C15tPolicyRule = {
 	model: 'opt-in',
 	prompt: 'choice',
 };
+
+const parity = JSON.parse(
+	readFileSync(
+		resolve(
+			import.meta.dirname,
+			'../../../../../native/protocol/local-policy/parity.json'
+		),
+		'utf8'
+	)
+) as {
+	rules: C15tPolicyRule[];
+	invalid: { name: string; rules: unknown[] }[];
+};
+
+describe('prebuild refuses what the native cores refuse', () => {
+	it('accepts the shared rules, including fractional validity days', () => {
+		expect(
+			resolveParams({ mode: 'offline', policy: { rules: parity.rules } })
+				.policyRules
+		).toEqual(parity.rules);
+	});
+
+	it.each(parity.invalid.map((entry) => [entry.name, entry.rules] as const))(
+		'refuses %s',
+		(_name, rules) => {
+			expect(() =>
+				resolveParams({ mode: 'offline', policy: { rules } as never })
+			).toThrow(C15tPluginError);
+		}
+	);
+
+	it('names the missing scopeMode for a partial scope', () => {
+		expect(() =>
+			resolveParams({
+				mode: 'offline',
+				policy: { rules: [{ ...fallback, categories: ['measurement'] }] },
+			})
+		).toThrow(/needs scopeMode/u);
+	});
+});
 
 describe('the in-code policy for no-backend mode', () => {
 	it('is required in offline mode and refused in backend modes', () => {

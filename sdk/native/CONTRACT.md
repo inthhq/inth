@@ -1564,8 +1564,13 @@ Configuration picks one of two modes, and they do not mix.
   `NativeConfig.policy`, Expo `policy`). Both cores normalize rules exactly as
   `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
   `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
-  holds the shared cases. Fingerprints hash the canonical rule on the device and
-  never leave it. The `iab` model is refused without a backend. iOS reads the
+  holds the shared cases, including every policy all three validators (Expo
+  prebuild and both cores) refuse; the generator checks each against
+  `inspectPolicyRules`. Validity days may be fractional and round to whole
+  milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
+  and never leave it; choice and notice validity feed only their own prompt. A
+  declared policy a core refuses is reported as `policy-invalid` with resolution
+  reason `invalid-configuration`. The `iab` model is refused without a backend. iOS reads the
   rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
 
 Native bootstrap can resolve an endpoint-bound resource exported from hosted

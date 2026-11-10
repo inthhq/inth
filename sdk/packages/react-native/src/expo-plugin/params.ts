@@ -145,7 +145,7 @@ export interface C15tPolicyRule {
 	preselectedCategories?: readonly C15tPolicyCategory[];
 	/** Actions a choice prompt offers. `accept` and `reject` are always offered. */
 	actions?: readonly ('accept' | 'reject' | 'customize')[];
-	/** Validity in days. Defaults to 365. */
+	/** Validity in days, fractions allowed. Defaults to 365. */
 	validity?: { choiceDays?: number; noticeDays?: number };
 	/** Categories an active Global Privacy Control signal denies. */
 	privacySignals?: { gpc?: { denyCategories: readonly C15tPolicyCategory[] } };
@@ -913,6 +913,20 @@ const POLICY_RULE_KEYS = new Set([
 	'scopeMode',
 	'validity',
 ]);
+const POLICY_MATCH_KEYS = new Set([
+	'countries',
+	'fallback',
+	'isDefault',
+	'regionFallbacks',
+	'regions',
+]);
+const OPTIONAL_CATEGORIES = new Set([
+	'experience',
+	'functionality',
+	'marketing',
+	'measurement',
+]);
+const DAY_MS = 86_400_000;
 
 /** Prompts each model allows, as `@c15t/schema` defines them. */
 const POLICY_MODEL_PROMPTS: Readonly<Record<string, readonly string[]>> = {
@@ -921,12 +935,318 @@ const POLICY_MODEL_PROMPTS: Readonly<Record<string, readonly string[]>> = {
 	'opt-out': ['choice', 'notice', 'none'],
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isStringList = (value: unknown): value is string[] =>
+	Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/** A rule as read from `app.json`, before any of it is trusted. */
+type UncheckedRule = Record<string, unknown>;
+
+/** Trimmed category names, or the problem with them. */
+const categoryNames = function categoryNames(
+	value: unknown,
+	field: string,
+	label: string
+): string[] | string {
+	if (!isStringList(value)) {
+		return `${label} ${field} must be a list of category names.`;
+	}
+	const names = value.map((name) => name.trim());
+	const unknownName = names.find(
+		(name) =>
+			name !== '*' && name !== 'necessary' && !OPTIONAL_CATEGORIES.has(name)
+	);
+	return unknownName === undefined
+		? names
+		: `${label} ${field} has unknown category ${JSON.stringify(unknownName)}.`;
+};
+
+const optionalNames = (names: readonly string[]): string[] => [
+	...new Set(names.filter((name) => OPTIONAL_CATEGORIES.has(name))),
+];
+
+const modelProblem = function modelProblem(
+	rule: UncheckedRule,
+	label: string
+): string | null {
+	const unknown = Object.keys(rule).filter((key) => !POLICY_RULE_KEYS.has(key));
+	if (unknown.length > 0) {
+		return `${label} has unsupported fields: ${unknown.join(', ')}.`;
+	}
+	const prompts = POLICY_MODEL_PROMPTS[rule.model as string];
+	if (prompts === undefined) {
+		return (
+			`${label} has model ${JSON.stringify(rule.model)}. Use 'opt-in', ` +
+			"'opt-out' or 'none'; 'iab' needs a backend to serve the Global Vendor List."
+		);
+	}
+	return prompts.includes(rule.prompt as string)
+		? null
+		: `${label}: the ${String(rule.model)} model cannot use a ` +
+				`${JSON.stringify(rule.prompt)} prompt; use ${prompts.join(' or ')}.`;
+};
+
+const isRegionList = (value: unknown): boolean =>
+	Array.isArray(value) &&
+	value.every(
+		(region) =>
+			isRecord(region) &&
+			typeof region.country === 'string' &&
+			region.country.trim() !== '' &&
+			typeof region.region === 'string' &&
+			region.region.trim() !== ''
+	);
+
+const matchProblem = function matchProblem(
+	match: unknown,
+	label: string
+): string | null {
+	if (!isRecord(match)) {
+		return `${label} needs a match object.`;
+	}
+	const unknown = Object.keys(match).filter(
+		(key) => !POLICY_MATCH_KEYS.has(key)
+	);
+	if (unknown.length > 0) {
+		return `${label} match has unsupported fields: ${unknown.join(', ')}.`;
+	}
+	const codes = [match.countries, match.regionFallbacks].filter(
+		(list) => list !== undefined
+	);
+	if (
+		codes.some(
+			(list) => !isStringList(list) || list.some((code) => code.trim() === '')
+		)
+	) {
+		return `${label} match countries must be lists of non-empty codes.`;
+	}
+	if (match.regions !== undefined && !isRegionList(match.regions)) {
+		return `${label} match.regions must be a list of { country, region } codes.`;
+	}
+	if (
+		[match.fallback, match.isDefault].some(
+			(flag) => flag !== undefined && typeof flag !== 'boolean'
+		)
+	) {
+		return `${label} match.fallback and match.isDefault must be true or false.`;
+	}
+	const hasMatcher =
+		match.fallback === true ||
+		match.isDefault === true ||
+		[match.countries, match.regions, match.regionFallbacks].some(
+			(list) => Array.isArray(list) && list.length > 0
+		);
+	return hasMatcher
+		? null
+		: `${label} has no matcher. Add countries or regions, or set fallback or isDefault.`;
+};
+
+/** The rule's category scope, or the problem with it. */
+const scopeOf = function scopeOf(
+	rule: UncheckedRule,
+	label: string
+): string[] | string {
+	const { categories, scopeMode } = rule;
+	if (
+		scopeMode !== undefined &&
+		scopeMode !== 'strict' &&
+		scopeMode !== 'permissive'
+	) {
+		return `${label} scopeMode must be 'strict' or 'permissive'.`;
+	}
+	if (categories === undefined) {
+		return [...OPTIONAL_CATEGORIES];
+	}
+	const names = categoryNames(categories, 'categories', label);
+	if (typeof names === 'string') {
+		return names;
+	}
+	const declared = optionalNames(names);
+	if (names.includes('*') || declared.length === 0) {
+		return [...OPTIONAL_CATEGORIES];
+	}
+	if (declared.length < OPTIONAL_CATEGORIES.size && scopeMode === undefined) {
+		return `${label} selects only some categories, so it needs scopeMode 'strict' or 'permissive'.`;
+	}
+	return declared;
+};
+
+const preselectedProblem = function preselectedProblem(
+	rule: UncheckedRule,
+	scope: readonly string[],
+	label: string
+): string | null {
+	if (rule.preselectedCategories === undefined) {
+		return null;
+	}
+	const names = categoryNames(
+		rule.preselectedCategories,
+		'preselectedCategories',
+		label
+	);
+	if (typeof names === 'string') {
+		return names;
+	}
+	const preselected = optionalNames(names);
+	if (preselected.length > 0 && rule.model === 'none') {
+		return `${label}: the none model preselects nothing.`;
+	}
+	return preselected.every((name) => scope.includes(name))
+		? null
+		: `${label} preselectedCategories must be inside categories.`;
+};
+
+const actionsProblem = function actionsProblem(
+	rule: UncheckedRule,
+	label: string
+): string | null {
+	const { actions } = rule;
+	if (actions === undefined) {
+		return null;
+	}
+	if (rule.prompt !== 'choice') {
+		return `${label}: actions belong to a choice prompt.`;
+	}
+	if (
+		!isStringList(actions) ||
+		actions.some(
+			(action) => !['accept', 'customize', 'reject'].includes(action)
+		)
+	) {
+		return `${label} actions must list 'accept', 'reject' and optionally 'customize'.`;
+	}
+	return actions.includes('accept') && actions.includes('reject')
+		? null
+		: `${label} actions must include 'accept' and 'reject'.`;
+};
+
+/** Days the backend accepts, which round to at least one millisecond on a device. */
+const daysProblem = function daysProblem(
+	key: string,
+	days: unknown,
+	label: string
+): string | null {
+	if (key !== 'choiceDays' && key !== 'noticeDays') {
+		return `${label} validity has unsupported field ${JSON.stringify(key)}.`;
+	}
+	if (
+		typeof days !== 'number' ||
+		!Number.isFinite(days) ||
+		days <= 0 ||
+		days * DAY_MS > Number.MAX_SAFE_INTEGER
+	) {
+		return `${label} validity.${key} must be a finite number of days greater than zero.`;
+	}
+	return Math.round(days * DAY_MS) < 1
+		? `${label} validity.${key} must be at least one millisecond.`
+		: null;
+};
+
+const validityProblem = function validityProblem(
+	validity: unknown,
+	label: string
+): string | null {
+	if (validity === undefined) {
+		return null;
+	}
+	if (!isRecord(validity)) {
+		return `${label} validity must be an object.`;
+	}
+	for (const [key, days] of Object.entries(validity)) {
+		const problem = daysProblem(key, days, label);
+		if (problem !== null) {
+			return problem;
+		}
+	}
+	return null;
+};
+
+const signalsProblem = function signalsProblem(
+	signals: unknown,
+	scope: readonly string[],
+	label: string
+): string | null {
+	if (signals === undefined) {
+		return null;
+	}
+	if (!isRecord(signals) || Object.keys(signals).some((key) => key !== 'gpc')) {
+		return `${label} privacySignals takes only gpc.`;
+	}
+	const { gpc } = signals;
+	if (gpc === undefined) {
+		return null;
+	}
+	if (
+		!isRecord(gpc) ||
+		Object.keys(gpc).some((key) => key !== 'denyCategories')
+	) {
+		return `${label} privacySignals.gpc takes only denyCategories.`;
+	}
+	const names = categoryNames(
+		gpc.denyCategories,
+		'privacySignals.gpc.denyCategories',
+		label
+	);
+	if (typeof names === 'string') {
+		return names;
+	}
+	if (names.includes('necessary')) {
+		return `${label} privacySignals.gpc cannot deny necessary.`;
+	}
+	return optionalNames(names).every((name) => scope.includes(name))
+		? null
+		: `${label} privacySignals.gpc.denyCategories must be inside categories.`;
+};
+
 /**
- * Check the in-code policy's shape at prebuild.
+ * Check one rule with the rules both native cores apply at launch: the backend's
+ * authoring rules (`inspectPolicyRules` in `@c15t/schema`) plus the no-backend
+ * limits. `native/protocol/local-policy/parity.json` lists the cases all three
+ * refuse, and the tests of each read it.
  *
- * Both cores validate every rule again at launch, where a refused policy leaves
- * optional categories denied. Catching the common mistakes here keeps that
- * from reaching a device.
+ * @returns The first problem, or `null` for a usable rule.
+ */
+const policyRuleProblem = function policyRuleProblem(
+	rule: unknown,
+	index: number
+): string | null {
+	if (!isRecord(rule)) {
+		return `policy rule ${index} must be an object.`;
+	}
+	if (typeof rule.id !== 'string' || rule.id.trim() === '') {
+		return `policy rule ${index} needs a non-empty string id.`;
+	}
+	const label = `policy rule ${JSON.stringify(rule.id)}`;
+	const scope = scopeOf(rule, label);
+	if (typeof scope === 'string') {
+		return scope;
+	}
+	const checks = [
+		() => modelProblem(rule, label),
+		() => matchProblem(rule.match, label),
+		() => preselectedProblem(rule, scope, label),
+		() => actionsProblem(rule, label),
+		() => validityProblem(rule.validity, label),
+		() => signalsProblem(rule.privacySignals, scope, label),
+		() =>
+			rule.copyRevision === undefined || typeof rule.copyRevision === 'string'
+				? null
+				: `${label} copyRevision must be a string.`,
+	];
+	for (const check of checks) {
+		const problem = check();
+		if (problem !== null) {
+			return problem;
+		}
+	}
+	return null;
+};
+
+/**
+ * Check the in-code policy at prebuild with every rule the native cores check at
+ * launch, so a policy the device would refuse never reaches a build.
  */
 const normalizePolicy = function normalizePolicy(
 	policy: C15tPolicy | undefined
@@ -942,45 +1262,27 @@ const normalizePolicy = function normalizePolicy(
 				'"model": "opt-in", "prompt": "choice" }] }.'
 		);
 	}
-	const ids = new Set<string>();
-	for (const rule of rules as C15tPolicyRule[]) {
-		const id = typeof rule?.id === 'string' ? rule.id.trim() : '';
-		if (id === '' || ids.has(id)) {
-			throw new C15tPluginError(
-				`policy rule ids must be unique, non-empty strings; got ${JSON.stringify(rule?.id)}.`
-			);
-		}
-		ids.add(id);
-		const unknown = Object.keys(rule).filter(
-			(key) => !POLICY_RULE_KEYS.has(key)
+	const problem = rules
+		.map((rule: unknown, index) => policyRuleProblem(rule, index))
+		.find((found) => found !== null);
+	if (problem !== undefined && problem !== null) {
+		throw new C15tPluginError(problem);
+	}
+	const valid = rules as C15tPolicyRule[];
+	const ids = valid.map((rule) => rule.id.trim());
+	const repeated = ids.find((id, index) => ids.indexOf(id) !== index);
+	if (repeated !== undefined) {
+		throw new C15tPluginError(
+			`policy rule ids must be unique; ${JSON.stringify(repeated)} repeats.`
 		);
-		if (unknown.length > 0) {
-			throw new C15tPluginError(
-				`policy rule ${JSON.stringify(id)} has unsupported fields: ${unknown.join(', ')}.`
-			);
-		}
-		const prompts = POLICY_MODEL_PROMPTS[rule.model as string];
-		if (prompts === undefined) {
-			throw new C15tPluginError(
-				`policy rule ${JSON.stringify(id)} has model ${JSON.stringify(rule.model)}. ` +
-					"Use 'opt-in', 'opt-out' or 'none'; 'iab' needs a backend to serve " +
-					'the Global Vendor List.'
-			);
-		}
-		if (!prompts.includes(rule.prompt)) {
-			throw new C15tPluginError(
-				`policy rule ${JSON.stringify(id)}: the ${rule.model} model cannot use ` +
-					`a ${JSON.stringify(rule.prompt)} prompt; use ${prompts.join(' or ')}.`
-			);
-		}
-		if (rule.match === null || typeof rule.match !== 'object') {
-			throw new C15tPluginError(
-				`policy rule ${JSON.stringify(id)} needs a match object.`
-			);
+	}
+	for (const flag of ['isDefault', 'fallback'] as const) {
+		if (valid.filter((rule) => rule.match[flag] === true).length > 1) {
+			throw new C15tPluginError(`policy allows only one ${flag} rule.`);
 		}
 	}
 	if (
-		!(rules as C15tPolicyRule[]).some(
+		!valid.some(
 			(rule) => rule.match.fallback === true || rule.match.isDefault === true
 		)
 	) {
@@ -989,7 +1291,7 @@ const normalizePolicy = function normalizePolicy(
 				'the device has no location without a backend.'
 		);
 	}
-	return rules as C15tPolicyRule[];
+	return valid;
 };
 
 /**

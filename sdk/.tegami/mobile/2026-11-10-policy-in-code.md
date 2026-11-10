@@ -23,3 +23,9 @@ Rules normalize and match as on the backend. The device has no geolocation
 without a backend, so the `fallback` rule applies unless the app sets an
 override country and region. The `iab` model is refused, because IAB TCF needs
 a backend to serve the Global Vendor List.
+
+Rules are checked with the backend's authoring rules, and validity days may be
+fractional. Changing only `validity.noticeDays` keeps category choices, and
+changing only `choiceDays` keeps notice acknowledgements. A declared policy the
+SDK refuses at launch reports `policy-invalid` in the snapshot `error` and on
+the error stream instead of starting silently with no policy.
