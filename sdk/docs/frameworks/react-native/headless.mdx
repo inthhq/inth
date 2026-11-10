@@ -121,6 +121,13 @@ without staging. `setPurposeLegitimateInterest` and
 `setVendorLegitimateInterest` with `false` record an objection; purposes 1 and
 3 to 6 never take legitimate interest.
 
+The snapshot carries the served vendor list as published, not the native
+disclosure projection. When your configuration sets publisher restrictions or
+the policy lists Additional Consent providers, the raw list does not show the
+legal bases your app discloses, and it does not name the providers
+`setAdTechProviderConsent` saves. In that setup, keep the stock screens for
+the disclosure layer; the headless hooks can still stage and save the choice.
+
 The staged values are for rendering controls. Gate vendors on the committed
 decision, which native SDK gates and `IABTCF_*` readers already use.
 `useIABSnapshot()` returns the served vendor list for your disclosure text and
