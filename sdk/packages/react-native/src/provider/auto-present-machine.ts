@@ -3,9 +3,10 @@
  * a few stored facts and the current inputs. No decision is remembered.
  *
  * The current inputs ({@link AutoPresentContext}) are what is owed now, named by
- * the key native stamps (`promptOwedSince`), the URL the app passes now, and
- * whether a provider presents. The stored facts are each keyed by what they were
- * decided for, so changing any input invalidates them by itself:
+ * the key native stamps (`promptOwedSince`), the URL the app passes now, whether
+ * a provider presents, and whether the binary links the stock native screens.
+ * The stored facts are each keyed by what they were decided for, so changing any
+ * input invalidates them by itself:
  *
  * | Fact        | Keyed by        | Meaning                                               |
  * | ----------- | --------------- | ----------------------------------------------------- |
@@ -15,11 +16,13 @@
  * | `refused`   | URL             | Native refused this URL for good.                     |
  * | `declined`  | key, URL, trigger | Native said not now (nothing owed, or no window yet). |
  * | `closed`    | session id      | Outcomes that crossed the bridge before their answer. |
+ * | `excluded`  | the binary      | Native has no stock screens (`C15T_NATIVE_UI_EXCLUDED`). |
  *
- * Present now exactly when: a provider presents, a prompt is owed, no call is in
- * flight, nothing is on screen, the person has not closed this owed prompt,
- * native has not refused this URL, and native has not declined these same inputs
- * since the last trigger. That predicate is the invariant; the property
+ * Present now exactly when: a provider presents, the binary links the stock
+ * screens and never said otherwise, a prompt is owed, no call is in flight,
+ * nothing is on screen, the person has not closed this owed prompt, native has
+ * not refused this URL, and native has not declined these same inputs since the
+ * last trigger. That predicate is the invariant; the property
  * test asserts it after every input.
  */
 
@@ -36,6 +39,11 @@ export interface AutoPresentContext {
 	readonly url: string;
 	/** A provider currently presents through this client. */
 	readonly active: boolean;
+	/**
+	 * The binary links the stock native screens: `false` only when the bootstrap
+	 * says `nativeUI: false` (a `c15t.nativeUI=false` build). Absent means linked.
+	 */
+	readonly nativeUI: boolean;
 	/** Counts triggers (snapshot change, foreground, mount, a new prop), so a decline waits for the next. */
 	readonly generation: number;
 }
@@ -62,6 +70,8 @@ export interface AutoPresentFacts {
 		readonly generation: number;
 	} | null;
 	readonly closed: readonly ClosedSession[];
+	/** Native rejected with `C15T_NATIVE_UI_EXCLUDED`. A binary cannot gain its screens, so this lasts. */
+	readonly excluded: boolean;
 }
 
 /** What happened. The current inputs travel beside it as the context. */
@@ -76,6 +86,8 @@ export type AutoPresentInput =
 	  }
 	| { readonly type: 'not-required' }
 	| { readonly type: 'refused' }
+	/** Rejected with `C15T_NATIVE_UI_EXCLUDED`: the binary has no stock screens. */
+	| { readonly type: 'excluded' }
 	| { readonly type: 'failed' }
 	| {
 			readonly type: 'outcome';
@@ -87,6 +99,7 @@ export type AutoPresentInput =
 export type AutoPresentEffect =
 	| 'present'
 	| 'report-refused'
+	| 'report-excluded'
 	| 'warn-unavailable';
 
 /** One input's result. */
@@ -103,6 +116,7 @@ export const INITIAL_AUTO_PRESENT_FACTS: AutoPresentFacts = {
 	closed: [],
 	declined: null,
 	dismissed: null,
+	excluded: false,
 	inFlight: null,
 	onScreen: null,
 	refused: null,
@@ -121,6 +135,8 @@ export const shouldPresent = function shouldPresent(
 ): boolean {
 	return (
 		context.active &&
+		context.nativeUI &&
+		!facts.excluded &&
 		context.key !== null &&
 		facts.inFlight === null &&
 		facts.onScreen === null &&
@@ -222,6 +238,12 @@ const record = function record(
 					inFlight: null,
 					refused: facts.inFlight?.url ?? context.url,
 				},
+			};
+		case 'excluded':
+			// Permanent for the process: reported once, never retried.
+			return {
+				effects: facts.excluded ? [] : ['report-excluded'],
+				facts: { ...facts, excluded: true, inFlight: null },
 			};
 		case 'failed':
 			return { effects: ['warn-unavailable'], facts: declined(facts, context) };

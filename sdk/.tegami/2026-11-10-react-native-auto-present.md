@@ -48,3 +48,9 @@ optional.
 An app that renders `ConsentBanner`, `ConsentDialog` or its own prompt should
 pass `autoPresent={false}`; `presentConsentPrompt` and `presentPreferences` work
 as before.
+
+In a binary built without the stock native screens, whose handshake reports
+`nativeUI: false`, the provider presents nothing and does not check
+`privacyPolicyURL`. A presenter rejection with `C15T_NATIVE_UI_EXCLUDED` is
+logged once with `console.error` and never retried. A binary that reports no
+`nativeUI` flag links the screens, as before.

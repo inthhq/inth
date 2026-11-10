@@ -21,7 +21,7 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { getConsentClient, resetConsentClient } from '../../native/client';
 import { presentConsentPrompt } from '../../native/presenter';
 import type { ConsentSnapshot } from '../../protocol';
 import { ConsentProvider } from '../consent-provider';
@@ -429,6 +429,89 @@ describe('native failures', () => {
 				String(call[0]).includes('could not open')
 			)
 		).toHaveLength(1);
+		warn.mockRestore();
+		tree.unmount();
+	});
+});
+
+describe('a binary without the stock native screens', () => {
+	/**
+	 * What a `c15t.nativeUI=false` build's handshake reports. #130 teaches the
+	 * parser the flag; this branch's parser predates it, so the test sets the
+	 * parsed field the way that parser will.
+	 */
+	const withoutNativeUI = function withoutNativeUI(): void {
+		Object.assign(getConsentClient().bootstrap, { nativeUI: false });
+	};
+
+	test('presents nothing and needs no privacy-policy URL', async () => {
+		const { fake, present } = bootFake(owed);
+		withoutNativeUI();
+		const tree = renderTree(
+			// @ts-expect-error -- the types still require it; the build is only known at runtime.
+			<ConsentProvider>
+				<span />
+			</ConsentProvider>
+		);
+		await flushPromises();
+		setAppState('background');
+		setAppState('active');
+		fake.pushSnapshot({ ...owed, revision: 3 });
+		await flushPromises();
+		expect(present).not.toHaveBeenCalled();
+		tree.unmount();
+	});
+
+	test('a URL it would refuse does not throw either', () => {
+		const { present } = bootFake(owed);
+		withoutNativeUI();
+		expect(() =>
+			renderTree(
+				<ConsentProvider privacyPolicyURL="http://example.com/privacy">
+					<span />
+				</ConsentProvider>
+			).unmount()
+		).not.toThrow();
+		expect(present).not.toHaveBeenCalled();
+	});
+
+	test('a rejection saying the screens are excluded is reported once and never retried', async () => {
+		const { fake, present } = bootFake(owed);
+		present.mockImplementation(() =>
+			Promise.reject(
+				Object.assign(new Error('excluded'), {
+					code: 'C15T_NATIVE_UI_EXCLUDED',
+				})
+			)
+		);
+		const error = vi
+			.spyOn(console, 'error')
+			.mockImplementation(() => undefined);
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		// Neither a foreground nor a new owed prompt asks again.
+		setAppState('background');
+		setAppState('active');
+		fake.pushSnapshot(
+			buildSnapshot({
+				promptRequirement: { kind: 'choice', reason: 'policy-changed' },
+				resolution: {
+					fingerprint: 'policy-b',
+					policyId: 'p',
+					status: 'matched',
+				},
+				revision: 2,
+			})
+		);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		expect(error).toHaveBeenCalledTimes(1);
+		expect(String(error.mock.calls[0]?.[0])).toContain('nativeUI=false');
+		expect(warn).not.toHaveBeenCalled();
+		error.mockRestore();
 		warn.mockRestore();
 		tree.unmount();
 	});

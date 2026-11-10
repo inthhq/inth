@@ -22,6 +22,7 @@ import { getConsentClient } from '../native/client';
 import {
 	assertPrivacyPolicyURL,
 	attachAutoPresent,
+	linksNativeUI,
 	presentOwedPrompt,
 	selectOwedPromptKey,
 } from './auto-present';
@@ -133,7 +134,9 @@ export interface ConsentProviderBaseProps {
  *   protocol this bundle does not support. The message names both sides and the
  *   fix, which is a rebuild rather than a JavaScript update.
  * @throws {TypeError} When the provider presents the prompt and
- *   `privacyPolicyURL` is not an HTTPS URL.
+ *   `privacyPolicyURL` is not an HTTPS URL. A binary built without the stock
+ *   native screens (`bootstrap.nativeUI === false`) presents nothing, so it
+ *   neither checks the URL nor needs one.
  */
 export const ConsentProvider = ({
 	autoPresent = true,
@@ -143,16 +146,18 @@ export const ConsentProvider = ({
 }: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
-	// Only the outermost provider presents, so a nested one cannot double it.
-	const presents = autoPresent && inherited === null;
-	if (presents) {
-		assertPrivacyPolicyURL(privacyPolicyURL);
-	}
-
 	// The handshake runs here, during render, on purpose. A binary that cannot
 	// speak this protocol is a configuration error, and the app should stop at
 	// the provider rather than render a consent UI over state it cannot trust.
 	const client = useMemo(() => inherited ?? getConsentClient(), [inherited]);
+
+	// Only the outermost provider presents, so a nested one cannot double it. A
+	// binary built without the stock native screens has nothing to present, so it
+	// needs no URL either: the app draws its own consent UI.
+	const presents = autoPresent && inherited === null && linksNativeUI(client);
+	if (presents) {
+		assertPrivacyPolicyURL(privacyPolicyURL);
+	}
 
 	// An inner provider that was given nothing keeps the ancestor's measurement
 	// rather than dropping the tree back to the reserved floor.

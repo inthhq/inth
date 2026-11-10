@@ -434,7 +434,10 @@ every input, "present now" is recomputed from the facts and the current inputs.
 The React Native ledger is the pure `stepAutoPresent` in
 `packages/react-native/src/provider/auto-present-machine.ts`. Its current inputs
 are the owed key (carrying `promptOwedSince`), the URL, whether a provider
-presents, and a trigger count. It stores:
+presents, a trigger count, and the build: whether the binary links the stock
+native screens. Only a bootstrap reporting `nativeUI: false` (a
+`c15t.nativeUI=false` build) means it does not; an absent flag means it does. It
+stores:
 
     fact        keyed by              meaning
     inFlight    owed key, URL         a present call is in flight
@@ -443,8 +446,10 @@ presents, and a trigger count. It stores:
     refused     URL                   native refused this URL for good
     declined    owed key, URL, trigger  native said not now; the next trigger asks again
     closed      session id            outcomes that crossed the bridge before their answer
+    excluded    the binary            native rejected with C15T_NATIVE_UI_EXCLUDED
 
-    present now = provider presents and a key is owed and nothing is in flight
+    present now = provider presents and the binary links the stock screens
+                  and not excluded and a key is owed and nothing is in flight
                   and nothing is on screen and dismissed != key and refused != URL
                   and declined != (key, URL, this trigger)
 
@@ -482,7 +487,11 @@ visible. A
 repeated prompt request re-asks the open session, so a notice owed again shows.
 The host rejects a refused privacy-policy URL with `C15T_PRESENTER_INVALID_URL`,
 which is permanent: `ConsentProvider` reports it with `console.error` and stops
-offering that URL. Every other refusal is `C15T_PRESENTER_UNAVAILABLE`, which is
+offering that URL. A binary built without the stock screens rejects every
+presenter call with `C15T_NATIVE_UI_EXCLUDED`, also permanent: the provider
+reports it once and never asks again. When the bootstrap already says
+`nativeUI: false`, the provider asks nothing and does not check
+`privacyPolicyURL`, because the app draws its own consent UI. Every other refusal is `C15T_PRESENTER_UNAVAILABLE`, which is
 transient and is retried on the next consent change or foreground.
 
 **The notice card's touch area.** A UIKit root hit-tests against the card's

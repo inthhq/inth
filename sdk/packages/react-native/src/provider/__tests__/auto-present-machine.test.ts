@@ -2,7 +2,8 @@
  * The auto-present decision, cell by cell, and the invariant it exists for: if
  * a prompt is owed, auto-present is on, the props are valid and nothing is on
  * screen, then a native call is in flight or the next trigger makes one, unless
- * the person already closed this owed prompt.
+ * the person already closed this owed prompt. In a binary without the stock
+ * native screens, nothing is asked of native, or only the one call that learns so.
  */
 
 import { describe, expect, test } from 'vitest';
@@ -36,6 +37,7 @@ const ctx = (
 	active: true,
 	generation: 1,
 	key,
+	nativeUI: true,
 	url: URL,
 	...extra,
 });
@@ -234,6 +236,31 @@ describe('cells', () => {
 			{ ...call('A'), refused: LEGAL },
 			['report-refused', 'present'],
 		],
+		// The build: a binary without the stock native screens.
+		[
+			'built without the stock screens: nothing, whatever the URL',
+			facts(),
+			trigger,
+			ctx('A', { nativeUI: false, url: 'not a url' }),
+			{},
+			[],
+		],
+		[
+			'native says it has no stock screens: reported, never asked again',
+			facts(call('A')),
+			{ type: 'excluded' },
+			ctx('A'),
+			{ excluded: true, inFlight: null },
+			['report-excluded'],
+		],
+		[
+			'no stock screens: a new prompt and a new URL ask nothing',
+			facts({ excluded: true }),
+			trigger,
+			ctx('B', { url: LEGAL }),
+			{},
+			[],
+		],
 		// Session outcomes.
 		[
 			'prompt dismissed: closed for this prompt',
@@ -353,12 +380,21 @@ const EVENTS = [
 	'url',
 ] as const;
 
+/**
+ * The binary under test: one that links the stock screens, one built without them
+ * that says so in its bootstrap, and one without them whose bootstrap predates the
+ * flag, so only its rejection tells.
+ */
+type Build = 'linked' | 'flagged' | 'unflagged';
+
 /** The machine driven against a model of native, the host and the app. */
 class Simulation {
 	facts = INITIAL_AUTO_PRESENT_FACTS;
 	owed: Owed | null = { fingerprint: 'f0', kind: 'choice', since: 1 };
 	session: NativeSession | null = null;
 	calls = 0;
+	/** Every present call made, answered or not. */
+	asked = 0;
 	active = true;
 	url: string = URL;
 	generation = 0;
@@ -368,10 +404,12 @@ class Simulation {
 	private counter = 1;
 	private readonly next: () => number;
 	private readonly namesSessions: boolean;
+	private readonly build: Build;
 
-	constructor(seed: number, namesSessions: boolean) {
+	constructor(seed: number, namesSessions: boolean, build: Build) {
 		this.next = random(seed);
 		this.namesSessions = namesSessions;
+		this.build = build;
 	}
 
 	pick<Item>(items: readonly Item[]): Item {
@@ -413,6 +451,7 @@ class Simulation {
 			active: this.presenting(),
 			generation,
 			key: this.key(),
+			nativeUI: this.build !== 'flagged',
 			url: this.url,
 		};
 	}
@@ -426,6 +465,7 @@ class Simulation {
 		this.facts = result.facts;
 		if (result.effects.includes('present')) {
 			this.calls += 1;
+			this.asked += 1;
 		}
 	}
 
@@ -497,7 +537,9 @@ class Simulation {
 	answer(): void {
 		this.calls -= 1;
 		const url = this.facts.inFlight?.url ?? this.url;
-		if (!NATIVE_ACCEPTS.has(url)) {
+		if (this.build !== 'linked') {
+			this.apply({ type: 'excluded' });
+		} else if (!NATIVE_ACCEPTS.has(url)) {
 			this.apply({ type: 'refused' });
 		} else if (this.next() < 0.1) {
 			this.apply({ type: 'failed' });
@@ -581,12 +623,17 @@ class Simulation {
 				this.close();
 				break;
 			case 'preferences':
-				if (this.session === null) {
+				// A binary without the stock screens opens nothing.
+				if (this.session === null && this.build === 'linked') {
 					this.open('preferences');
 				}
 				break;
 			case 'manual-prompt':
-				if (this.session === null && this.owed !== null) {
+				if (
+					this.session === null &&
+					this.owed !== null &&
+					this.build === 'linked'
+				) {
 					this.open('prompt');
 				}
 				break;
@@ -598,9 +645,16 @@ class Simulation {
 		}
 	}
 
-	/** Property (a). */
+	/** Property (a), and in a binary without the stock screens, no retries. */
 	check(seed: number): void {
+		const allowed = { flagged: 0, linked: Infinity, unflagged: 1 }[this.build];
+		if (this.asked > allowed) {
+			throw new Error(
+				`seed ${seed}: a ${this.build} binary without the stock screens was asked ${this.asked} times.\n${this.trace.join('\n')}`
+			);
+		}
 		const mustShow =
+			this.build === 'linked' &&
 			this.presenting() &&
 			this.owed !== null &&
 			this.session === null &&
@@ -628,10 +682,11 @@ const STEPS = 100;
 
 /** Run every seed; the first violation, or `null`. */
 const firstViolation = function firstViolation(
-	namesSessions: boolean
+	namesSessions: boolean,
+	build: Build = 'linked'
 ): string | null {
 	for (const seed of SEEDS) {
-		const simulation = new Simulation(seed, namesSessions);
+		const simulation = new Simulation(seed, namesSessions, build);
 		try {
 			for (let index = 0; index < STEPS; index += 1) {
 				simulation.step();
@@ -651,5 +706,13 @@ describe('property (a), over fixed random sequences', () => {
 
 	test('an older binary that does neither', () => {
 		expect(firstViolation(false)).toBeNull();
+	});
+
+	test('a binary built without the stock screens that says so: never asked', () => {
+		expect(firstViolation(true, 'flagged')).toBeNull();
+	});
+
+	test('one whose bootstrap predates the flag: asked once, then never', () => {
+		expect(firstViolation(false, 'unflagged')).toBeNull();
 	});
 });

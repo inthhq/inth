@@ -38,6 +38,34 @@ import { isPrivacyPolicyURL } from './privacy-policy-url';
 export const PRESENTER_INVALID_URL_CODE = 'C15T_PRESENTER_INVALID_URL';
 
 /**
+ * The code presenters reject with in a binary built without the stock native screens
+ * (`c15t.nativeUI=false`, the Expo plugin's `nativeUI: false`). Permanent: the binary
+ * cannot gain them, so it is reported once and never retried.
+ */
+export const NATIVE_UI_EXCLUDED_CODE = 'C15T_NATIVE_UI_EXCLUDED';
+
+/**
+ * Whether the running binary links the stock native consent screens.
+ *
+ * Reads `bootstrap.nativeUI` without depending on it being declared: only an explicit
+ * `false` means the screens are absent. A binary that predates the flag always links them.
+ *
+ * @param client - The client whose handshake to read.
+ * @returns `false` only for a build without the stock native screens.
+ */
+export const linksNativeUI = function linksNativeUI(
+	client: ConsentClient
+): boolean {
+	const bootstrap: unknown = client.bootstrap;
+	return !(
+		typeof bootstrap === 'object' &&
+		bootstrap !== null &&
+		'nativeUI' in bootstrap &&
+		bootstrap.nativeUI === false
+	);
+};
+
+/**
  * Name the owed prompt a snapshot describes.
  *
  * Two snapshots owe the same prompt when the matched policy, the kind of prompt,
@@ -69,6 +97,20 @@ const errorCode = function errorCode(error: unknown): string | undefined {
 	return typeof error === 'object' && error !== null && 'code' in error
 		? String(error.code)
 		: undefined;
+};
+
+/** Which input a presenter rejection is. Only the two permanent codes stop retries. */
+const rejection = function rejection(
+	error: unknown
+): 'refused' | 'excluded' | 'failed' {
+	switch (errorCode(error)) {
+		case PRESENTER_INVALID_URL_CODE:
+			return 'refused';
+		case NATIVE_UI_EXCLUDED_CODE:
+			return 'excluded';
+		default:
+			return 'failed';
+	}
 };
 
 /** One client's ledger: the stored facts, and the side effects each input asks for. */
@@ -110,6 +152,7 @@ class AutoPresentLedger {
 			active: this.active > 0,
 			generation: this.generation,
 			key: selectOwedPromptKey(this.client.getSnapshot()),
+			nativeUI: linksNativeUI(this.client),
 			url: this.url,
 		};
 	}
@@ -140,6 +183,13 @@ class AutoPresentLedger {
 					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
 					console.error(
 						`c15t ConsentProvider: the native presenter refused privacyPolicyURL ${JSON.stringify(facts.refused)}, so the owed consent prompt cannot show. Pass an absolute HTTPS URL with a DNS host.`,
+						error
+					);
+					break;
+				case 'report-excluded':
+					// oxlint-disable-next-line no-console -- An owed consent prompt that can never show must be visible in every build.
+					console.error(
+						'c15t ConsentProvider: this binary was built without the stock native consent screens (c15t.nativeUI=false), so the owed consent prompt cannot be presented natively. Pass autoPresent={false} and draw the consent UI in JavaScript.',
 						error
 					);
 					break;
@@ -174,15 +224,7 @@ class AutoPresentLedger {
 				});
 			}
 		} catch (error: unknown) {
-			this.dispatch(
-				{
-					type:
-						errorCode(error) === PRESENTER_INVALID_URL_CODE
-							? 'refused'
-							: 'failed',
-				},
-				error
-			);
+			this.dispatch({ type: rejection(error) }, error);
 		}
 	}
 }
