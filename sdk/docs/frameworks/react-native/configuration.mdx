@@ -40,6 +40,7 @@ for a working `app.config.ts`. The plugin accepts:
 | `vendors` | Optional IAB disclosure scope. |
 | `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
 | `policyResource` | Build-exported policy JSON, relative to the Expo project. |
+| `bundleManifest` | Fetch the manifest at prebuild with `c15t mobile-manifest` and bundle it. Replaces `policyResource`. See [bundle the manifest at build time](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time). |
 | `policy` | The policy in source control for offline mode, as `{ rules: [...] }` in the backend's `PolicyRule` names. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code). |
 | `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
 | `autoBootstrap` | Whether native launch installs the engine. Defaults to true except for custom mode. |

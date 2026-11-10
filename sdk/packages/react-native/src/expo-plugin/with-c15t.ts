@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -13,6 +14,7 @@ import {
 import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
 
 import { applyAndroidManifest } from './android';
+import { fetchBundledManifest, manifestBuild } from './bundle-manifest';
 import { iosConfig } from './config-plugins';
 import { EXTRA_KEY } from './constants';
 import { applyAppBuildGradle, applyProjectBuildGradle } from './gradle';
@@ -204,8 +206,25 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	if (params.policyResource !== null) {
 		const source = params.policyResource;
+		const bundle = params.bundleManifest;
+		const build = manifestBuild(
+			context.argv ?? process.argv,
+			context.env ?? process.env
+		);
+		// With bundleManifest, fetch first. A debug build may continue without a
+		// copy, and then there is nothing to embed.
+		const ready = async (projectRoot: string): Promise<boolean> => {
+			if (bundle === null || params.backendURL === null) {
+				return true;
+			}
+			await fetchBundledManifest(projectRoot, params.backendURL, bundle, build);
+			return existsSync(join(projectRoot, source));
+		};
 		next = withXcodeProject(next, async (cfg) => {
 			if (cfg.modRequest.introspect) {
+				return cfg;
+			}
+			if (!(await ready(cfg.modRequest.projectRoot))) {
 				return cfg;
 			}
 			const name =
@@ -233,6 +252,9 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		next = withDangerousMod(next, [
 			'android',
 			async (cfg) => {
+				if (!(await ready(cfg.modRequest.projectRoot))) {
+					return cfg;
+				}
 				await embedPolicyResource(
 					cfg.modRequest.projectRoot,
 					source,

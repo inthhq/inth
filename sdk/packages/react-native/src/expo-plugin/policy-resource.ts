@@ -24,11 +24,18 @@ export const embedPolicyResource = async (
 		payload.endpoint !== endpoint?.replace(/\/+$/u, '') ||
 		!Number.isSafeInteger(payload.issuedAt) ||
 		!Number.isSafeInteger(payload.expiresAt) ||
-		payload.issuedAt > Date.now() ||
-		payload.expiresAt <= Date.now()
+		payload.issuedAt > Date.now()
 	) {
 		throw new C15tPluginError(
-			'policyResource is invalid, expired, or belongs to a different backendURL. Re-export it before prebuild.'
+			'policyResource is invalid, issued in the future, or belongs to a different backendURL. Re-export it before prebuild.'
+		);
+	}
+	if (payload.expiresAt <= Date.now()) {
+		// An expired manifest still prompts and records choices; devices report
+		// policyStale until a live /init replaces it.
+		console.warn(
+			`c15t: ${source} expired on ${new Date(payload.expiresAt).toISOString()}. ` +
+				'Devices will report policyStale until they reach the backend. Re-export it.'
 		);
 	}
 	await mkdir(dirname(destination), { recursive: true });

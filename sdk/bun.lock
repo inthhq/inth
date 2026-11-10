@@ -1851,6 +1851,8 @@
       "dependencies": {
         "@c15t/backend": "workspace:*",
         "@c15t/integrations": "workspace:*",
+        "@c15t/schema": "workspace:*",
+        "@c15t/translations": "workspace:*",
         "@clack/prompts": "1.7.0",
         "@inth/cli": "0.0.4",
         "c12": "3.3.3",

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { AndroidConfig } from '@expo/config-plugins';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { applyAndroidManifest } from '../android';
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
@@ -42,28 +42,46 @@ describe('Expo native policy embedding', () => {
 				)
 			).rejects.toThrow('different backendURL');
 			await Promise.all(
-				[
-					{ expiresAt: Date.now() - 1 },
-					{ issuedAt: Date.now() + 60000 },
-					{ schemaVersion: 2 },
-				].map(async (patch, index) => {
-					const invalidPayload = JSON.stringify({
-						...JSON.parse(payload),
-						...patch,
-					});
-					const name = `invalid-${index}.json`;
-					await writeFile(
-						join(root, name),
-						JSON.stringify({
-							payload: invalidPayload,
-							sha256: createHash('sha256').update(invalidPayload).digest('hex'),
-						})
-					);
-					await expect(
-						embedPolicyResource(root, name, endpoint, output)
-					).rejects.toThrow('invalid, expired');
+				[{ issuedAt: Date.now() + 60000 }, { schemaVersion: 2 }].map(
+					async (patch, index) => {
+						const invalidPayload = JSON.stringify({
+							...JSON.parse(payload),
+							...patch,
+						});
+						const name = `invalid-${index}.json`;
+						await writeFile(
+							join(root, name),
+							JSON.stringify({
+								payload: invalidPayload,
+								sha256: createHash('sha256')
+									.update(invalidPayload)
+									.digest('hex'),
+							})
+						);
+						await expect(
+							embedPolicyResource(root, name, endpoint, output)
+						).rejects.toThrow('is invalid');
+					}
+				)
+			);
+			const expiredPayload = JSON.stringify({
+				...JSON.parse(payload),
+				expiresAt: Date.now() - 1,
+			});
+			await writeFile(
+				join(root, 'expired.json'),
+				JSON.stringify({
+					payload: expiredPayload,
+					sha256: createHash('sha256').update(expiredPayload).digest('hex'),
 				})
 			);
+			// An expired manifest still prompts on the device, so prebuild warns and embeds it.
+			const warn = vi
+				.spyOn(console, 'warn')
+				.mockImplementation(() => undefined);
+			await embedPolicyResource(root, 'expired.json', endpoint, output);
+			expect(warn).toHaveBeenCalledWith(expect.stringContaining('policyStale'));
+			warn.mockRestore();
 			await writeFile(
 				join(root, 'input.json'),
 				source.replace('sha256', 'corrupt')

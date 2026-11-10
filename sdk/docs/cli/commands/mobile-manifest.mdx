@@ -1,0 +1,43 @@
+---
+title: Mobile manifest
+description: Fetch your project's consent manifest at build time and bundle it into an iOS or Android app, with release builds failing on a failed fetch.
+group: cli
+---
+
+## Bundle the manifest into a native build
+
+`c15t mobile-manifest` fetches the hosted `/manifest` and writes it as the
+policy resource the iOS and Android SDKs read before the first network
+response. Run it as a build step so each build carries the latest policy.
+
+```sh
+npx c15t mobile-manifest \
+  --backend-url https://your-project.inth.app \
+  --out c15t-policy.json \
+  --build release
+```
+
+| Flag | Purpose |
+| --- | --- |
+| `--backend-url` | The backend URL the app uses. Required. |
+| `--out` | Where to write the resource. Defaults to `c15t-policy.json`. |
+| `--build` | `release` (default) or `debug`. Decides what a failed fetch means. |
+| `--allow-stale-manifest` | Reuse the last fetched copy at `--out` when the fetch fails. |
+| `--expires-in-days` | Days until devices report `policyStale`. Defaults to 30. |
+| `--languages` | Comma-separated languages to compile prompt copy for. English is always included. |
+| `--vendors` | Comma-separated IAB vendor IDs to keep in the bundled GVL. |
+
+## When the fetch fails
+
+- A release build fails, so no release ships without its manifest.
+- A debug build prints a warning and continues.
+- With `--allow-stale-manifest`, both reuse the last fetched copy, if one for
+  the same backend is at `--out`. Air-gapped CI can commit or cache that copy.
+
+An expired manifest still works on the device: it shows the prompt, records
+choices and emits `policyStale` until the app reaches the backend. See
+[mobile offline consent](/docs/guides/mobile-offline).
+
+The manifest needs a conservative opt-in or IAB fallback for unknown
+geography, with no preselected optional categories. The command fails when
+that rule is missing, whatever the build type.
