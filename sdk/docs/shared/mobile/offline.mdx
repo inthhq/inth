@@ -96,8 +96,9 @@ may set `fallback` and one `isDefault`, the `'*'` wildcard belongs only in
 `validity` takes whole or fractional days, such as `0.5`. Expo prebuild runs the
 same checks as the native SDKs, so a policy a device would refuse fails the
 build. A policy the SDK refuses at launch, such as a hand-edited file, leaves
-optional categories off and reports `policy-invalid` in the snapshot `error`
-and on the error stream.
+optional categories off, even if an earlier build stored a usable policy and
+grants, and reports `policy-invalid` in the snapshot `error` and on the error
+stream. Stored choices come back once a later build ships a usable policy.
 
 Change `copyRevision` when the wording people agreed to changes. Returning
 people are asked again after the update. Changing `validity.choiceDays` asks

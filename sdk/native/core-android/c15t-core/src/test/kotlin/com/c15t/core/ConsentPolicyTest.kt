@@ -81,6 +81,21 @@ class ConsentPolicyTest {
 		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
 	}
 
+	@Test fun `a refused policy over a cached one fails closed and keeps the stored choice`() {
+		val store = C15tStore(InMemoryKeyValueStore())
+		val first = boot(store = store)
+		assertTrue(first.save(CommitIntent.All).ok)
+		assertTrue(first.isAllowed(ConsentCategory.MEASUREMENT))
+		val refused = testKernel(
+			NativeConfig(null, policyError = "Policy 'x': a partial category scope needs a scopeMode", consentCategories = ConsentCategory.entries),
+			store, FixedClock(), OfflineTransport,
+		).also { it.bootstrap() }
+		assertTrue(refused.snapshot().policyPending)
+		assertEquals("policy-invalid", refused.snapshot().error?.code)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(refused.isAllowed(it)) }
+		assertTrue(boot(store = store).isAllowed(ConsentCategory.MEASUREMENT))
+	}
+
 	@Test fun `a refused in-code policy is reported again after reset`() {
 		val errors = mutableListOf<String>()
 		val core = testKernel(

@@ -226,6 +226,9 @@ const CATEGORY_LIST_VALUES: unknown[] = [
 	['measurement', 'measurement'],
 	[' measurement '],
 	['measurement', '*'],
+	['*', 'ads'],
+	['*', null],
+	['*', ''],
 ];
 const COUNTRY_LIST_VALUES: unknown[] = [
 	null,

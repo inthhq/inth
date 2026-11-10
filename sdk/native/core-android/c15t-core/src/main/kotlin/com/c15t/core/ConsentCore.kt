@@ -1495,10 +1495,13 @@ class ConsentCore(
 		if (inCodePolicy) {
 			// A refused policy is reported like a refused /init, not as a quiet deny-all start.
 			val mapped = config.policy?.resolve(state.get().overrides) ?: config.policyError?.let { reason ->
+				// Fail closed: a policy this build refused cannot keep a cached one, or its
+				// grants, in force.
 				com.c15t.core.transport.MappedInit(
 					resolution = com.c15t.core.model.PolicyResolution.failed(com.c15t.core.model.PolicyResolution.REASON_INVALID_CONFIGURATION),
 					evaluationPolicy = null,
 					policyPending = true,
+					policyUnreadable = true,
 					error = KernelError(POLICY_INVALID, "The in-code policy was refused: $reason"),
 				)
 			} ?: return

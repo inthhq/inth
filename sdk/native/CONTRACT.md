@@ -1571,7 +1571,9 @@ Configuration picks one of two modes, and they do not mix.
   milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
   and never leave it; choice and notice validity feed only their own prompt. A
   declared policy a core refuses is reported as `policy-invalid` with resolution
-  reason `invalid-configuration`. The `iab` model is refused without a backend. iOS reads the
+  reason `invalid-configuration`, and fails closed: a policy cached by an earlier
+  build stops applying and optional gates are denied, while stored choices stay
+  for a later build with a usable policy. Bootstrap and `reset()` both report it. The `iab` model is refused without a backend. iOS reads the
   rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
 
 Native bootstrap can resolve an endpoint-bound resource exported from hosted
