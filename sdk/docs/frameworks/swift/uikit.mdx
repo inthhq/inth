@@ -12,8 +12,8 @@ consent root in your scene. React Native and JavaScript are not required.
 
 Follow [Add the Swift package](/docs/frameworks/swift/quickstart#add-the-swift-package)
 to link `C15tCore`, `C15tApple` and `C15tConsentUI`. Add the
-`ConsentModel.swift` and `ConsentRoot.swift` files from that quickstart to your
-UIKit app target. These files own installation, observation, the consent
+`ConsentModel.swift`, `ConsentRoot.swift` and `PrivacyStatus.swift` files from
+that quickstart to your UIKit app target. These files own installation, observation, the consent
 modifier and the standing Privacy settings action.
 
 Use your Inth project's HTTPS backend URL and the app's HTTPS privacy-policy
@@ -47,14 +47,19 @@ controller hierarchy using normal UIKit child-controller containment. Keep the
 host mounted for as long as it owns the consent presentation. Do not create a
 new presenter every time Settings opens.
 
-Use the shared model's `presenter?.presentPreferences()` from your UIKit
-Privacy settings action. Call it on the main actor after the model reports
-`isReady`. That opens the same stored choices used by SDK gates. The host
-modifier handles the actual sheet or full-screen presentation.
+Use the shared model's `presenter?.presentPreferences()` from your UIKit Privacy
+settings action. Call it on the main actor after the model's `state?.isReady` is
+true. That opens the same stored choices used by SDK gates. The host modifier
+handles the actual sheet or full-screen presentation.
 
 The presenter owns draft edits, partner navigation, rejected-save retry and
 discard confirmation. Keep your app's navigation outside that flow, and avoid
 presenting a second consent controller while it is already open.
+
+To update a UIKit label, subscribe to the model's `PublishedConsent`.
+`state.decisionPublisher(for: .measurement)` delivers the current decision and
+then each change, on the main thread. Keep the returned `AnyCancellable` in the
+controller.
 
 ## Handle startup and unlock
 

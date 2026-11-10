@@ -324,6 +324,47 @@ Native API (Swift and Kotlin, same shape)
 `snapshot()` and `isAllowed()` must not touch the network, the disk, or a lock
 that can be held across either. They are called from ad SDKs on the main thread.
 
+Observable state for UI code
+----------------------------
+
+The callbacks above deliver on whatever thread published the change. UI code gets
+a second surface on each platform that delivers on the main thread and needs no
+observer code of its own. It is built on the callbacks and adds no state: every
+value is the core's own snapshot, and every decision is the `decision` rule below
+applied to it.
+
+    Kotlin (c15t-android, package com.c15t.android)
+    core.snapshotFlow: StateFlow<ConsentSnapshot>          // one instance per core
+    core.decisionFlow(category): StateFlow<ConsentDecision> // emits on change only
+    suspend core.awaitSave(intent, expectedRevision?)      // save on Dispatchers.IO
+    suspend core.awaitRefresh()                            // returns once the init landed
+    suspend core.awaitFlushPending()                       // flushPending on Dispatchers.IO
+
+    Swift (C15tCore)
+    PublishedConsent(core:)    // ObservableObject, iOS 16.4+, @MainActor
+    ObservableConsent(core:)   // @Observable, iOS 17+, @MainActor
+      .snapshot                // the core's snapshot
+      .decisions               // [ConsentCategory: ConsentDecision], reassigned on change only
+      .decision(for:) / .isReady
+    PublishedConsent.decisionPublisher(for:) // Combine, current value then each change
+
+Both platforms keep three rules:
+
+- The model never steps back. A snapshot whose revision is older than the one
+  it holds is dropped, because two publishing threads can deliver out of order.
+- It conflates. A busy main thread sees the latest snapshot, not every revision.
+  Code that must act on each revision uses `onChange`.
+- It follows the core for the core's lifetime. Kotlin keeps one set of flows per
+  core and owns the observer the core holds weakly, so a screen that keeps only the
+  `StateFlow` still sees later changes. Swift ties the subscription to the model:
+  releasing the model ends it.
+
+The Kotlin flows live in `c15t-android` rather than `c15t-core`, which stays pure
+JVM with only kotlinx-serialization. `c15t-android` already reaches every host
+with kotlinx-coroutines through `androidx.lifecycle`, so the flows add no runtime
+dependency. `ConsentCore.refresh(onComplete)` is the core-side hook `awaitRefresh`
+suspends on.
+
 Native SDK gating
 -----------------
 
