@@ -68,6 +68,12 @@ the app; retrying will not repair it.
 To present the prompt yourself, pass `autoPresent: false` and call
 `ConsentPrompt.current?.presentPrompt()` when you are ready.
 
+If your app has `NSUserTrackingUsageDescription` in `Info.plist`, the modifier
+also asks for App Tracking Transparency after the prompt closes, and only if
+the person granted marketing. Pass `trackingRequest: .beforeConsent` or
+`.manual` to change that. See
+[ask for ATT after the consent prompt](/docs/guides/mobile-iab#ask-for-att-after-the-consent-prompt).
+
 ## Keep privacy settings reachable
 
 People must be able to change their choice after the first prompt closes.

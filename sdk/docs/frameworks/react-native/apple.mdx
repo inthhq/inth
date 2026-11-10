@@ -42,6 +42,6 @@ copies would create competing process authorities.
 
 ## Use ATT and custom services separately
 
-`C15tApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes c15t consent. Platform services own foreground/reachability subscriptions; `C15tApple.shutdown()` tears down those subscriptions without clearing consent.
+`C15tApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes c15t consent. The stock prompt asks for ATT after consent by default, only with marketing granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground/reachability subscriptions; `C15tApple.shutdown()` tears down those subscriptions without clearing consent.
 
 Advanced self-hosted/custom `CoreConfig` installation remains available. Raw `CoreConfig()` uses memory/no transport and is not a production installation recipe. Custom stores must distinguish missing values from operational read failures.

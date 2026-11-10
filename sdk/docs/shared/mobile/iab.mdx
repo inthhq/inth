@@ -113,6 +113,69 @@ In RN, `useTrackingAuthorization()` reads ATT status and
 `useIsTrackingAllowed(category)` combines it with category permission. Those
 hooks do not replace IAB vendor and purpose checks.
 
+## Ask for ATT after the consent prompt
+
+When your app enables ATT, the stock prompt also decides when Apple's alert
+appears. By default the consent prompt comes first. Apple's alert follows once
+the prompt has closed, and only if the person granted marketing. Someone who
+refused marketing never sees it.
+
+Set the order with `trackingRequest` on `<ConsentProvider>` in React Native, or
+on `.c15tConsent(...)` and `ConsentRootViewController` in Swift:
+
+| Value | What happens |
+| --- | --- |
+| `afterConsent` (default) | The consent prompt first. Apple's alert after it closes, only while marketing is granted. |
+| `beforeConsent` | Apple's alert first, then the consent prompt. |
+| `manual` | Nothing automatic. Call `requestTrackingAuthorization()`, `useTrackingRequest()` or `C15tApple.tracking.request` yourself. |
+
+The SDK asks Apple only when all of these hold:
+
+- The app enabled ATT: `enableAppTrackingTransparency` in the Expo plugin, or
+  `NSUserTrackingUsageDescription` in `Info.plist`.
+- Apple's answer is still not determined. An app that has already been answered
+  is never asked again by the SDK, on any path.
+- The app is active. Apple shows nothing to an app that is not active, so the
+  request waits for the app to return to the foreground.
+- The prompt has finished animating away. The native presenter reports the end
+  of a session only after its screen is gone, so Apple's alert does not race it.
+
+With `afterConsent`, three moments can lead to Apple's alert:
+
+- The person closes the consent prompt with marketing granted.
+- A later launch where a stored choice already grants marketing, no prompt is
+  owed, and Apple was never asked. The rule "after consent, only with marketing
+  granted" already holds, so the SDK asks once the engine has an answer.
+- The person changes marketing from denied to granted in privacy settings.
+
+With `autoPresent` off, nothing is asked at launch. Apple's alert still follows
+a prompt or settings screen your app opens through c15t.
+
+On Apple's expanded EU sheet, Additional Information opens c15t's privacy
+settings. Closing them applies the same rule again, so Apple's alert returns
+only while marketing is granted.
+
+Android has no ATT, so `trackingRequest` does nothing there.
+
+Apple's answer never changes stored consent, and consent never stands in for
+Apple's answer. Gate tracking on both, for example with
+`useIsTrackingAllowed('marketing')`.
+
+### Why consent comes first
+
+Apple's
+[user privacy and data use](https://developer.apple.com/app-store/user-privacy-and-data-use/)
+page lets apps show a consent management platform alongside ATT, and says not
+to show the ATT prompt to people who opted out of all relevant choices in that
+separate control. Asking only after a marketing grant follows that rule. It
+also keeps the order the purpose string can explain: the person has just been
+told what tracking is for.
+
+App Review Guideline 5.1.1(iv) forbids manipulating or forcing consent, and
+5.1.2(i) forbids requiring tracking to use the app or rewarding it. The stock
+prompt does neither. If you add your own screen before Apple's alert, keep it
+transparent about the data use and do not mimic the system alert.
+
 ## Check the complete integration
 
 Use the [mobile verification checklist](/docs/guides/mobile-verify) with the
