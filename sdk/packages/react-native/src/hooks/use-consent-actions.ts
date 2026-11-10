@@ -154,11 +154,12 @@ export const useSaveConsents = function useSaveConsents(): (
 			if (input === undefined) {
 				return draft.save();
 			}
+			const { iab: submittedIAB, values: submitted } = draft.getState();
 			const result = await client.commit(intentFor(input));
-			// A saved choice supersedes the edits the draft was holding, as on web: a
-			// later save of the draft must not write them back over it.
+			// A saved choice supersedes the edits the draft held when it was made, as on
+			// web; an edit made while the save was pending is newer and stays.
 			if (result.ok) {
-				draft.reset();
+				draft.settle(submitted, submittedIAB);
 			}
 			return result;
 		},

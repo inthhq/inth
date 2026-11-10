@@ -251,6 +251,82 @@ describe('headless IAB hooks', () => {
 		});
 	});
 
+	test('a first decision starts with disclosed legitimate interests on and consents off', () => {
+		mount(
+			tcf({
+				iab: {
+					acceptAll: NATIVE_ACCEPT_ALL,
+					committed: null,
+					editable: true,
+					gvl: GVL,
+				},
+			})
+		);
+
+		// As the stock presenter seeds it: no objection until the subject makes one.
+		expect(handle().choices).toMatchObject({
+			purposeConsents: [],
+			purposeLegitimateInterests: NATIVE_ACCEPT_ALL.purposeLegitimateInterests,
+			vendorConsents: [],
+			vendorLegitimateInterests: NATIVE_ACCEPT_ALL.vendorLegitimateInterests,
+		});
+		expect(handle().isDirty).toBe(false);
+	});
+
+	test('blanket actions stage the categories with the TCF selection', async () => {
+		mount(tcf());
+
+		flush(() => handle().acceptAll());
+		await handle().save();
+		await flushPromises();
+		flush(() => handle().rejectAll());
+		await handle().save();
+		await flushPromises();
+
+		expect(
+			fake.commitIntents.map((intent) => JSON.parse(intent).consents)
+		).toEqual([{ marketing: true }, { marketing: false }]);
+	});
+
+	test('an edited selection is withdrawn when native can no longer open a draft', () => {
+		mount(tcf());
+
+		flush(() => handle().setVendorConsent(9, true));
+		flush(() =>
+			fake.pushSnapshot(
+				tcf({
+					iab: {
+						acceptAll: null,
+						committed: {
+							addtlConsent: null,
+							choices: COMMITTED,
+							tcString: 'CQ-1',
+						},
+						editable: false,
+						gvl: GVL,
+					},
+					revision: 5,
+				})
+			)
+		);
+
+		expect(current().iab).toBeNull();
+		expect(current().tcString).toBe('CQ-1');
+	});
+
+	test('an IAB edit made while the save is pending stays staged', async () => {
+		mount(tcf());
+
+		flush(() => handle().setVendorConsent(9, true));
+		const saving = handle().save();
+		flush(() => handle().setPurposeConsent(3, true));
+		await saving;
+		await flushPromises();
+
+		expect(handle().choices.purposeConsents).toEqual([1, 3]);
+		expect(handle().isDirty).toBe(true);
+	});
+
 	test('offer no edits while native cannot open a draft', () => {
 		mount(
 			tcf({

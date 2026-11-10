@@ -148,12 +148,16 @@ export interface IABDraftHandle {
 	) => void;
 	/**
 	 * Stage what native Accept all saves: the core's own projection of every live
-	 * partner's bases under the publisher's disclosure and restrictions, so a
-	 * headless Accept all records the same signals as the stock one. Call
-	 * `save()` to record it, or use `useSaveConsents()('all')` to save in one tap.
+	 * partner's bases under the publisher's disclosure and restrictions, and a grant
+	 * for every displayed category, so a headless Accept all records the same
+	 * signals as the stock one. Call `save()` to record it, or use
+	 * `useSaveConsents()('all')` to save in one tap.
 	 */
 	readonly acceptAll: () => void;
-	/** Stage withdrawal of every consent grant. Legitimate interest stays. */
+	/**
+	 * Stage withdrawal of every consent grant and a denial for every displayed
+	 * category. Legitimate interest stays.
+	 */
 	readonly rejectAll: () => void;
 	/**
 	 * Commit the selection and the displayed categories in one native commit,
@@ -199,10 +203,13 @@ export const useIAB = function useIAB(): IABDraftHandle | null {
 
 	const commands = useMemo(
 		() => ({
+			// The stock blanket actions decide the categories too, so these stage both.
 			acceptAll: () => {
+				draft.acceptAll();
 				stageIAB(acceptAllIAB);
 			},
 			rejectAll: () => {
+				draft.rejectAll();
 				stageIAB(rejectAllIAB);
 			},
 			reset: draft.reset,
