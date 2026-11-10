@@ -224,6 +224,103 @@ describe('auto-present', () => {
 	});
 });
 
+describe('changes while the native call is pending', () => {
+	/** A fake whose presenter answers only when the test says so. */
+	const bootPending = function bootPending(snapshot: ConsentSnapshot): {
+		readonly fake: FakeNativeModule;
+		readonly present: ReturnType<typeof vi.fn>;
+		readonly settle: () => void;
+	} {
+		const fake = createFakeNativeModule({ snapshot });
+		const waiting: (() => void)[] = [];
+		const present = vi.fn(
+			(_url: string) =>
+				new Promise<string>((resolve) => {
+					waiting.push(() =>
+						resolve(JSON.stringify({ sessionId: 's1', status: 'presented' }))
+					);
+				})
+		);
+		fake.presentConsentPrompt = present;
+		return {
+			fake,
+			present,
+			settle: () => {
+				for (const answer of waiting.splice(0)) {
+					answer();
+				}
+			},
+		};
+	};
+
+	test('owed A, then none, then owed A again presents A a second time', async () => {
+		const { fake, present, settle } = bootPending(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		// The prompt is answered and then owed again, all before native answered.
+		fake.pushSnapshot(answered);
+		await flushPromises();
+		fake.pushSnapshot({ ...owed, revision: 3 });
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		settle();
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		settle();
+		await flushPromises();
+		tree.unmount();
+	});
+
+	test('a new owed prompt that arrives while pending is presented after', async () => {
+		const { fake, present, settle } = bootPending(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+
+		fake.pushSnapshot(
+			buildSnapshot({
+				promptRequirement: { kind: 'choice', reason: 'policy-changed' },
+				resolution: {
+					fingerprint: 'policy-b',
+					policyId: 'p',
+					status: 'matched',
+				},
+				revision: 2,
+			})
+		);
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+
+		settle();
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		settle();
+		await flushPromises();
+
+		// And it is not presented a third time for the same requirement.
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(2);
+		tree.unmount();
+	});
+
+	test('the same prompt still owed after the call settles is not presented twice', async () => {
+		const { fake, present, settle } = bootPending(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+
+		fake.pushSnapshot({ ...owed, revision: 2 });
+		await flushPromises();
+		settle();
+		await flushPromises();
+		expect(present).toHaveBeenCalledTimes(1);
+		tree.unmount();
+	});
+});
+
 describe('autoPresent={false}', () => {
 	test('presents nothing by itself', async () => {
 		const { fake, present } = bootFake(owed);

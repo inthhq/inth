@@ -20,6 +20,10 @@ interface AutoPresentLedger {
 	presented: string | null;
 	/** A native call is in flight; a second trigger waits for it. */
 	inFlight: boolean;
+	/** A trigger arrived during the call, so the latest snapshot needs a pass after it. */
+	recheck: boolean;
+	/** Nothing was owed at some point during the call, which ends that prompt's episode. */
+	endedInFlight: boolean;
 }
 
 const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
@@ -27,7 +31,12 @@ const ledgers = new WeakMap<ConsentClient, AutoPresentLedger>();
 const ledgerFor = function ledgerFor(client: ConsentClient): AutoPresentLedger {
 	let ledger = ledgers.get(client);
 	if (ledger === undefined) {
-		ledger = { inFlight: false, presented: null };
+		ledger = {
+			endedInFlight: false,
+			inFlight: false,
+			presented: null,
+			recheck: false,
+		};
 		ledgers.set(client, ledger);
 	}
 	return ledger;
@@ -62,6 +71,11 @@ export const selectOwedPromptKey = function selectOwedPromptKey(
  * the next trigger tries again. A prompt the subject dismissed keeps its key and
  * stays closed until the requirement changes.
  *
+ * A trigger that arrives while a call is in flight is not dropped. It marks the
+ * ledger, and once the call settles the latest snapshot gets another pass. A
+ * moment with nothing owed during the call ends the episode, so the same prompt
+ * owed again afterwards presents again.
+ *
  * @param client - The client whose snapshot decides.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
  * @returns Once native answered, or at once when there is nothing to do.
@@ -72,13 +86,18 @@ export const presentOwedPrompt = async function presentOwedPrompt(
 ): Promise<void> {
 	const ledger = ledgerFor(client);
 	const key = selectOwedPromptKey(client.getSnapshot());
-	if (key === null) {
-		if (!ledger.inFlight) {
-			ledger.presented = null;
+	if (ledger.inFlight) {
+		ledger.recheck = true;
+		if (key === null) {
+			ledger.endedInFlight = true;
 		}
 		return;
 	}
-	if (ledger.inFlight || ledger.presented === key) {
+	if (key === null) {
+		ledger.presented = null;
+		return;
+	}
+	if (ledger.presented === key) {
 		return;
 	}
 	ledger.presented = key;
@@ -94,6 +113,14 @@ export const presentOwedPrompt = async function presentOwedPrompt(
 		ledger.presented = null;
 	} finally {
 		ledger.inFlight = false;
+	}
+	if (ledger.endedInFlight) {
+		ledger.endedInFlight = false;
+		ledger.presented = null;
+	}
+	if (ledger.recheck) {
+		ledger.recheck = false;
+		await presentOwedPrompt(client, privacyPolicyURL);
 	}
 };
 
