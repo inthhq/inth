@@ -387,7 +387,9 @@ The rules, identical on all three:
   policy fingerprint, the requirement's kind and its reason. A prompt the subject
   answered or dismissed is not presented again under the same name. A new policy
   (`policy-changed`), an expired choice (`expired`) or a requirement that went to
-  `none` and came back presents again.
+  `none` and came back presents again. A change that arrives while a native
+  present call or a commit is still in flight is evaluated once it settles; it
+  is never dropped, and a commit closes only the prompt the subject acted on.
 - **Never two at once.** Swift and Kotlin keep one `ConsentPrompt` per core with a
   single `ConsentPresenter`; every scene, Activity or composable that attaches
   shares its session and draft, and only one attached host draws it: the first,

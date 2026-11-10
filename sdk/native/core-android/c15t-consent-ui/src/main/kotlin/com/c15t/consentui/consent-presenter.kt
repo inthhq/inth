@@ -187,6 +187,8 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
             suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED); return
         }
         val session = presentationID
+        // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
+        val handled = promptKey
         val revision = baseRevision
         val categoryDraft = categories.toMap()
         val choiceDraft = choices
@@ -207,10 +209,12 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
                 }
             }
             pending = false; pendingAction = null; showProgress = false
-            if (presentationID != session) return@launch
+            if (presentationID != session) { presentIfOwed(); return@launch }
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; noticeRequested = false; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; suppressed = handled; presentationID = null; noticeRequested = false; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                // Snapshots that arrived while the commit ran were not acted on; the current one is.
+                presentIfOwed()
             } else {
                 errorCode = result.second ?: "save-rejected"; failedAction = action; stale = errorCode == "concurrent-change"
                 announcement = if (stale) iabCopy.appSettingsChanged else errorMessage.orEmpty()

@@ -298,6 +298,8 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             return
         }
         let session = presentationID
+        // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
+        let handled = promptKey
         let authority = core
         let revision = baseRevision
         let categoryDraft = categories
@@ -327,17 +329,19 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             pending = false
             pendingAction = nil
             showProgress = false
-            guard presentationID == session else { return }
+            guard presentationID == session else { presentIfOwed(); return }
             snapshot = authority.snapshot()
             if outcome.0 {
                 errorCode = nil
                 failedAction = nil
-                suppressedPrompt = promptKey
+                suppressedPrompt = handled
                 presentationID = nil
                 noticeRequested = false
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
                 else { onAnnouncement?("Privacy choices saved") }
                 onOutcome?(.saved)
+                // Snapshots that arrived while the commit ran were not acted on; the current one is.
+                presentIfOwed()
             } else {
                 errorCode = outcome.1 ?? "save-rejected"
                 failedAction = action
