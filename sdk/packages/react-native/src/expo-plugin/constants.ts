@@ -197,6 +197,13 @@ export const IOS_IAB_PLIST_KEYS: readonly string[] = [
 	IOS_PLIST_KEY.iabPublisherCountryCode,
 ];
 
+/**
+ * The `com.c15t.GPP_OPT_OUT_CATEGORIES` value for an empty list. Android
+ * meta-data has no reliably empty value, so `C15tAndroid.declaredGpp` reads
+ * this word, or a blank value, as "no category drives the opt-outs".
+ */
+export const GPP_NO_OPT_OUT_CATEGORIES = 'none';
+
 /** Every AndroidManifest meta-data name the plugin writes for GPP. */
 export const ANDROID_GPP_META_KEYS: readonly string[] = [
 	ANDROID_META.gpp,

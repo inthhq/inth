@@ -44,6 +44,19 @@ class DeclaredGppTest {
 	}
 
 	@Test
+	fun `an absent opt-out list keeps marketing, and a present empty one stays empty`() {
+		fun read(value: Any?) = config(
+			base + listOfNotNull(C15tAndroid.META_GPP to true, value?.let { C15tAndroid.META_GPP_OPT_OUT_CATEGORIES to it }),
+		)?.gpp?.optOutCategories
+		assertEquals(listOf(ConsentCategory.MARKETING), read(null))
+		assertEquals(emptyList<ConsentCategory>(), read("none"))
+		assertEquals(emptyList<ConsentCategory>(), read("NONE"))
+		assertEquals(emptyList<ConsentCategory>(), read(""))
+		assertEquals(emptyList<ConsentCategory>(), read("  "))
+		assertEquals(listOf(ConsentCategory.MEASUREMENT), read("measurement, measurement"))
+	}
+
+	@Test
 	fun `an unknown MSPA mode reports no coverage rather than guessing one`() {
 		val declared = config(base + mapOf(C15tAndroid.META_GPP to true, C15tAndroid.META_GPP_MSPA_MODE to "signatory"))?.gpp
 		assertEquals(GppOptions(), declared)

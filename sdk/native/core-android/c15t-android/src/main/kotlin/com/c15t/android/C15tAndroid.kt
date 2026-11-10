@@ -225,9 +225,24 @@ object C15tAndroid {
 		if (C15tManifestValue.boolean(read(META_GPP)) != true) return null
 		return GppOptions(
 			mspaMode = GppMspaMode.fromWireName(C15tManifestValue.string(read(META_GPP_MSPA_MODE))?.trim()),
-			optOutCategories = declaredCategories(read(META_GPP_OPT_OUT_CATEGORIES)) ?: listOf(ConsentCategory.MARKETING),
+			optOutCategories = declaredGppOptOutCategories(read(META_GPP_OPT_OUT_CATEGORIES)),
 			tcf = C15tManifestValue.boolean(read(META_GPP_TCF)) ?: true,
 		)
+	}
+
+	/**
+	 * `com.c15t.GPP_OPT_OUT_CATEGORIES`, keeping "not set" apart from "set to empty".
+	 *
+	 * An absent key keeps the default, `marketing`. A present key is the app's list: `none`
+	 * or a blank value is the empty list, meaning no category drives the sale, sharing and
+	 * targeted advertising opt-outs, which is what `GppOptions(optOutCategories = emptyList())`
+	 * and web's `optOutCategories: []` mean. Names neither core knows are dropped.
+	 */
+	internal fun declaredGppOptOutCategories(raw: Any?): List<ConsentCategory> {
+		if (raw == null) return listOf(ConsentCategory.MARKETING)
+		val text = raw.toString().trim()
+		if (text.isEmpty() || text.equals(GPP_NO_OPT_OUT_CATEGORIES, ignoreCase = true)) return emptyList()
+		return text.split(',').mapNotNull { ConsentCategory.fromWireName(it.trim()) }.distinct()
 	}
 
 	/** The outcome of reading the `com.c15t.IAB_*` meta-data. */
@@ -346,8 +361,14 @@ object C15tAndroid {
 	/** `opt-out-option` or `service-provider`. Only for MSPA signatories. */
 	const val META_GPP_MSPA_MODE = "com.c15t.GPP_MSPA_MODE"
 
-	/** Comma-separated categories whose refusal reports a GPP opt-out. Defaults to `marketing`. */
+	/**
+	 * Comma-separated categories whose refusal reports a GPP opt-out. Absent means `marketing`;
+	 * `none` means no category drives the opt-outs.
+	 */
 	const val META_GPP_OPT_OUT_CATEGORIES = "com.c15t.GPP_OPT_OUT_CATEGORIES"
+
+	/** The [META_GPP_OPT_OUT_CATEGORIES] value for an empty list. */
+	const val GPP_NO_OPT_OUT_CATEGORIES = "none"
 
 	/** `false` leaves the TCF EU section out of the GPP string. */
 	const val META_GPP_TCF = "com.c15t.GPP_TCF"

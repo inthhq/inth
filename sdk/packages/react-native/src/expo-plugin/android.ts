@@ -10,6 +10,7 @@ import {
 	ANDROID_STARTUP_AUTHORITY_SUFFIX,
 	ANDROID_STARTUP_META_VALUE,
 	ANDROID_STARTUP_PROVIDER,
+	GPP_NO_OPT_OUT_CATEGORIES,
 } from './constants';
 import { C15tPluginError } from './errors';
 import type { ResolvedC15tParams } from './params';
@@ -140,10 +141,15 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 				value: params.gpp.mspaMode,
 			});
 		}
-		if (params.gpp.optOutCategories.length > 0) {
+		// Written whenever the app set the option. Meta-data cannot carry a
+		// reliably empty value, so an empty list is the word `none`.
+		if (params.gpp.optOutCategories !== null) {
 			pairs.push({
 				name: ANDROID_META.gppOptOutCategories,
-				value: params.gpp.optOutCategories.join(','),
+				value:
+					params.gpp.optOutCategories.length > 0
+						? params.gpp.optOutCategories.join(',')
+						: GPP_NO_OPT_OUT_CATEGORIES,
 			});
 		}
 		if (!params.gpp.tcf) {

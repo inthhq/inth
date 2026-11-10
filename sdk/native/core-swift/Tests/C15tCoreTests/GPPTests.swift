@@ -213,6 +213,23 @@ final class GPPCoreTests: XCTestCase {
         for key in GPPStorageBusKeys.allNames { XCTAssertNil(defaults.object(forKey: key), key) }
     }
 
+    func testAnEmptyOptOutListDrivesNoOptOutWhenMarketingIsRefused() async throws {
+        let suite = "c15t-gpp-empty-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let bus = UserDefaultsStorageBus(defaults: defaults)
+        let core = ConsentCore()
+        await core.bootstrapAndSettle(config(
+            store: InMemoryStore(), http: http(), bus: bus, gpp: GPPOptions(optOutCategories: [])))
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertFalse(core.snapshot().effectivePermissions.marketing)
+        // The same bytes as a visitor who refused nothing: SaleOptOut, SharingOptOut and
+        // TargetedAdvertisingOptOut stay 2, where the default list would report 1.
+        XCTAssertEqual(core.snapshot().gppString, noChoice)
+        XCTAssertEqual(defaults.string(forKey: GPPStorageBusKeys.hdrGppString), noChoice)
+    }
+
     func testGPPStaysOffUntilTheAppTurnsItOn() async throws {
         let suite = "c15t-gpp-off-" + UUID().uuidString
         let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))

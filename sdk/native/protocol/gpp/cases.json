@@ -560,6 +560,64 @@
 			}
 		},
 		{
+			"id": "us-empty-opt-out-categories",
+			"description": "The app set optOutCategories to an empty list and the visitor refused marketing: no category drives the opt-outs, so they stay did not opt out, as on web.",
+			"input": {
+				"options": {
+					"optOutCategories": []
+				},
+				"policy": {
+					"model": "opt-out",
+					"rights": ["disclosure", "opt-out", "preferences"]
+				},
+				"resolution": "matched",
+				"ready": true,
+				"policyPending": false,
+				"location": "US",
+				"overrideCountry": null,
+				"effectivePermissions": {
+					"experience": true,
+					"functionality": true,
+					"marketing": false,
+					"measurement": true
+				},
+				"gpc": false,
+				"tcString": null
+			},
+			"expected": {
+				"gppString": "DBABLA~CVQqAAAAAACA.QA",
+				"sectionIds": [7],
+				"usnat": {
+					"Version": 2,
+					"SharingNotice": 1,
+					"SaleOptOutNotice": 1,
+					"SharingOptOutNotice": 1,
+					"TargetedAdvertisingOptOutNotice": 1,
+					"SensitiveDataProcessingOptOutNotice": 0,
+					"SensitiveDataLimitUseNotice": 0,
+					"SaleOptOut": 2,
+					"SharingOptOut": 2,
+					"TargetedAdvertisingOptOut": 2,
+					"SensitiveDataProcessing": [
+						0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+					],
+					"KnownChildSensitiveDataConsents": [0, 0, 0],
+					"PersonalDataConsents": 0,
+					"MspaCoveredTransaction": 2,
+					"MspaOptOutOptionMode": 0,
+					"MspaServiceProviderMode": 0,
+					"Gpc": false
+				},
+				"storage": {
+					"IABGPP_7_String": "CVQqAAAAAACA.QA",
+					"IABGPP_GppSID": "7",
+					"IABGPP_HDR_GppString": "DBABLA~CVQqAAAAAACA.QA",
+					"IABGPP_HDR_Sections": "7",
+					"IABGPP_HDR_Version": "1"
+				}
+			}
+		},
+		{
 			"id": "us-none-rule-with-preferences",
 			"description": "A none rule the host gave the preferences right, without disclosure: the sharing notice reads not given.",
 			"input": {

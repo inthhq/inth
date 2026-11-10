@@ -197,7 +197,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let gpp = "com.c15t.gpp"
         /// `opt-out-option` or `service-provider`. Only for MSPA signatories.
         public static let gppMspaMode = "com.c15t.gpp.mspaMode"
-        /// Categories whose refusal reports a GPP opt-out. Defaults to `["marketing"]`.
+        /// Categories whose refusal reports a GPP opt-out, as an array. Absent means
+        /// `["marketing"]`; an empty array, or the string `none`, means no category does.
         public static let gppOptOutCategories = "com.c15t.gpp.optOutCategories"
         /// `false` leaves the TCF EU section out of the GPP string.
         public static let gppTCF = "com.c15t.gpp.tcf"
@@ -334,13 +335,37 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// transaction as not covered rather than claiming a coverage nobody configured.
     public static func declaredGPP(in infoPlist: [String: Any]) -> GPPOptions? {
         guard infoPlist[InfoPlistKey.gpp] as? Bool == true else { return nil }
-        let categories = ((infoPlist[InfoPlistKey.gppOptOutCategories] as? [String]) ?? [])
-            .compactMap { ConsentCategory(rawValue: $0) }
         return GPPOptions(
             mspaMode: (infoPlist[InfoPlistKey.gppMspaMode] as? String).flatMap(GPPMspaMode.init(rawValue:)),
-            optOutCategories: categories.isEmpty ? [.marketing] : categories,
+            optOutCategories: declaredGPPOptOutCategories(infoPlist[InfoPlistKey.gppOptOutCategories]),
             tcf: infoPlist[InfoPlistKey.gppTCF] as? Bool ?? true
         )
+    }
+
+    /// `com.c15t.gpp.optOutCategories`, keeping "not set" apart from "set to empty".
+    ///
+    /// An absent key keeps the default, `marketing`. A present key is the app's list: an
+    /// empty array, a blank string or `none` is the empty list, meaning no category drives
+    /// the sale, sharing and targeted advertising opt-outs, as `GPPOptions(optOutCategories: [])`
+    /// and web's `optOutCategories: []` mean. A string is read as comma-separated ids, the
+    /// shape Android's metadata takes. Names this build does not model are dropped.
+    public static func declaredGPPOptOutCategories(_ raw: Any?) -> [ConsentCategory] {
+        guard let raw else { return [.marketing] }
+        let names: [String]
+        switch raw {
+        case let list as [String]:
+            names = list
+        case let text as String:
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed.lowercased() == "none" { return [] }
+            names = trimmed.components(separatedBy: ",")
+        default:
+            return [.marketing]
+        }
+        var seen = Set<ConsentCategory>()
+        return names
+            .compactMap { ConsentCategory(rawValue: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            .filter { seen.insert($0).inserted }
     }
 
     /// A language tag as a TCF consent language: its primary subtag in two uppercase letters, or

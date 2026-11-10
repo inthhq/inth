@@ -260,6 +260,19 @@ class GppCoreTest {
 		assertTrue(bus.live.keys.none { it.startsWith("IABGPP_") })
 	}
 
+	@Test fun `an empty opt-out list drives no opt-out when marketing is refused`() {
+		val bus = RecordingTcStorageBus()
+		val core = testKernel(config(GppOptions(optOutCategories = emptyList())), C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus),
+			FixedClock(), transport())
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(false, core.snapshot().effectivePermissions.marketing)
+		// The same bytes as a visitor who refused nothing: SaleOptOut, SharingOptOut and
+		// TargetedAdvertisingOptOut stay 2, where the default list would report 1.
+		assertEquals(noChoice, core.snapshot().gppString)
+		assertEquals(TcBusValue.TextValue(noChoice), bus.live[GppStorageBusKeys.HDR_GPP_STRING])
+	}
+
 	@Test fun `GPP stays off until the app turns it on`() {
 		val bus = RecordingTcStorageBus()
 		val core = testKernel(config(null), C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(), transport())

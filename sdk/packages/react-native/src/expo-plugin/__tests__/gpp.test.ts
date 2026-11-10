@@ -7,6 +7,7 @@ import { applyAndroidManifest } from '../android';
 import {
 	ANDROID_GPP_META_KEYS,
 	ANDROID_META,
+	GPP_NO_OPT_OUT_CATEGORIES,
 	IOS_GPP_PLIST_KEYS,
 	IOS_PLIST_KEY,
 } from '../constants';
@@ -100,6 +101,39 @@ describe('the gpp option', () => {
 		for (const key of ANDROID_GPP_META_KEYS) {
 			expect(meta).not.toHaveProperty(key);
 		}
+	});
+
+	it('keeps an unset opt-out list apart from an empty one on both platforms', async () => {
+		const unset = resolveParams({ backendURL, gpp: { tcf: true } });
+		const empty = resolveParams({ backendURL, gpp: { optOutCategories: [] } });
+		const onlyNecessary = resolveParams({
+			backendURL,
+			gpp: { optOutCategories: ['necessary'] },
+		});
+
+		expect(unset.gpp?.optOutCategories).toBeNull();
+		expect(empty.gpp?.optOutCategories).toEqual([]);
+		expect(onlyNecessary.gpp?.optOutCategories).toEqual([]);
+
+		// Unset: no key, so both cores keep their default, marketing.
+		expect(applyInfoPlist(unset, {})).not.toHaveProperty(
+			IOS_PLIST_KEY.gppOptOutCategories
+		);
+		expect(await metaData([unset])).not.toHaveProperty(
+			ANDROID_META.gppOptOutCategories
+		);
+
+		// Empty, written or reached by dropping necessary: the key says so.
+		const written = await Promise.all(
+			[empty, onlyNecessary].map(async (params) => ({
+				android: (await metaData([params]))[ANDROID_META.gppOptOutCategories],
+				ios: applyInfoPlist(params, {})[IOS_PLIST_KEY.gppOptOutCategories],
+			}))
+		);
+		expect(written).toEqual([
+			{ android: GPP_NO_OPT_OUT_CATEGORIES, ios: [] },
+			{ android: GPP_NO_OPT_OUT_CATEGORIES, ios: [] },
+		]);
 	});
 
 	it('refuses an MSPA mode neither core names', () => {

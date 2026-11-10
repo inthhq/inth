@@ -173,7 +173,9 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 		if (params.gpp.mspaMode !== null) {
 			entries[IOS_PLIST_KEY.gppMspaMode] = params.gpp.mspaMode;
 		}
-		if (params.gpp.optOutCategories.length > 0) {
+		// Written whenever the app set the option, as an array, so `[]` stays
+		// an empty array the bridge reads as "no category drives the opt-outs".
+		if (params.gpp.optOutCategories !== null) {
 			entries[IOS_PLIST_KEY.gppOptOutCategories] = [
 				...params.gpp.optOutCategories,
 			];

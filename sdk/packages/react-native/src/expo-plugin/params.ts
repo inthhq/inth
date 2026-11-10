@@ -110,7 +110,9 @@ export interface C15tGppPluginProps {
 	mspaMode?: C15tGppMspaMode;
 	/**
 	 * Categories whose refusal reports an opt-out of sale, sharing and
-	 * targeted advertising.
+	 * targeted advertising. `[]` means no category drives them, so they read
+	 * "did not opt out", as on web and in the Swift and Kotlin APIs.
+	 * `necessary` is always granted, so it never drives them.
 	 *
 	 * @defaultValue ['marketing']
 	 */
@@ -127,8 +129,11 @@ export interface C15tGppPluginProps {
 export interface ResolvedC15tGppParams {
 	/** `null` reports the transaction as not covered and writes no key. */
 	readonly mspaMode: C15tGppMspaMode | null;
-	/** Empty keeps the cores' default, `marketing`, and writes no key. */
-	readonly optOutCategories: readonly C15tConsentCategoryId[];
+	/**
+	 * `null` when the option was not set: no key is written and the cores use
+	 * their default, `marketing`. A list, empty included, is written as given.
+	 */
+	readonly optOutCategories: readonly C15tConsentCategoryId[] | null;
 	readonly tcf: boolean;
 }
 
@@ -638,6 +643,43 @@ const normalizeIab = function normalizeIab(
 	};
 };
 
+/**
+ * Validate `gpp.optOutCategories`, keeping an empty list empty.
+ *
+ * Unlike `consentCategories`, an empty list is a real answer here: no
+ * category drives the opt-outs. Collapsing it into "not set" would make
+ * both cores report an opt-out whenever `marketing` is refused, a signal the
+ * app did not configure. `necessary` is dropped, since it is always granted.
+ */
+const normalizeGppOptOutCategories = function normalizeGppOptOutCategories(
+	categories: readonly string[]
+): C15tConsentCategoryId[] {
+	if (!Array.isArray(categories)) {
+		throw new C15tPluginError(
+			'gpp.optOutCategories must be an array of category ids, such as ' +
+				'["marketing"]. Use [] for no category-driven opt-out.'
+		);
+	}
+	const trimmed = categories.map((category) => String(category).trim());
+	const unknown = [
+		...new Set(
+			trimmed.filter(
+				(category) =>
+					!(CONSENT_CATEGORY_IDS as readonly string[]).includes(category)
+			)
+		),
+	];
+	if (unknown.length > 0) {
+		throw new C15tPluginError(
+			`gpp.optOutCategories accepts only ${CONSENT_CATEGORY_IDS.join(', ')}; ` +
+				`unknown: ${unknown.map((name) => JSON.stringify(name)).join(', ')}.`
+		);
+	}
+	return [...new Set(trimmed)].filter(
+		(category) => category !== 'necessary'
+	) as C15tConsentCategoryId[];
+};
+
 const GPP_MSPA_MODES: readonly C15tGppMspaMode[] = [
 	'opt-out-option',
 	'service-provider',
@@ -657,7 +699,7 @@ const normalizeGpp = function normalizeGpp(
 		return null;
 	}
 	if (gpp === true) {
-		return { mspaMode: null, optOutCategories: [], tcf: true };
+		return { mspaMode: null, optOutCategories: null, tcf: true };
 	}
 	if (gpp === null || typeof gpp !== 'object') {
 		throw new C15tPluginError(
@@ -680,10 +722,8 @@ const normalizeGpp = function normalizeGpp(
 		mspaMode: gpp.mspaMode ?? null,
 		optOutCategories:
 			gpp.optOutCategories === undefined
-				? []
-				: normalizeConsentCategories(gpp.optOutCategories).filter(
-						(category) => category !== 'necessary'
-					),
+				? null
+				: normalizeGppOptOutCategories(gpp.optOutCategories),
 		tcf: gpp.tcf ?? true,
 	};
 };

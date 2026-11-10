@@ -71,7 +71,13 @@ Replace `https://your-project.inth.app` with the URL from your Inth project.
   are reported as not applicable. The Expo plugin stops prebuild on any other
   value. A native key with another value reads as unset.
 - `optOutCategories` lists the categories whose refusal reports an opt-out of
-  sale, sharing and targeted advertising.
+  sale, sharing and targeted advertising. Leave it out to use `marketing`. An
+  empty list means no category drives the opt-outs, so they always report
+  "did not opt out", as `optOutCategories: []` does on web. Write the empty
+  list as `optOutCategories: []` in Expo, an empty array (`<array/>`) under
+  `com.c15t.gpp.optOutCategories` in `Info.plist`, and the value `none` for
+  `com.c15t.GPP_OPT_OUT_CATEGORIES` on Android. `necessary` is always granted,
+  so it never drives them.
 - `tcf: false` leaves the TCF EU section out under an `iab` policy.
 
 ## How the policy decides the section
