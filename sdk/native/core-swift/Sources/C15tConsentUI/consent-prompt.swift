@@ -33,19 +33,24 @@ public final class ConsentPrompt: ObservableObject {
     @Published private(set) var host: UUID?
     @Published private(set) var hostActive = false
 
-    private static var prompts: [ObjectIdentifier: ConsentPrompt] = [:]
-
     private init(core: ConsentCore) {
         self.core = core
         self.presenter = ConsentPresenter(core: core, autoPresent: false)
         presenter.onOutcome = { [weak self] outcome in self?.onFinished?(outcome) }
     }
 
-    /// The prompt for `core`. Every call with the same core returns the same instance.
+    /// The prompt for `core`. Every call with the same core returns the same instance while it
+    /// lives. The installed core keeps its prompt; a core the app built without installing it keeps
+    /// its prompt while a scene or the app holds it.
     public static func shared(for core: ConsentCore) -> ConsentPrompt {
-        if let prompt = prompts[ObjectIdentifier(core)], prompt.core === core { return prompt }
-        let prompt = ConsentPrompt(core: core)
-        prompts[ObjectIdentifier(core)] = prompt
+        let id = ObjectIdentifier(core)
+        let prompt: ConsentPrompt
+        if let existing = PromptRegistry.shared.lookup(id), existing.core === core {
+            prompt = existing
+        } else {
+            prompt = ConsentPrompt(core: core)
+        }
+        PromptRegistry.shared.store(prompt, id: id, installed: C15t.current === core)
         return prompt
     }
 
@@ -80,6 +85,53 @@ public final class ConsentPrompt: ObservableObject {
         host = nil
         hostActive = false
         presenter.autoPresent = false
+    }
+}
+
+/// Each core's prompt. A prompt points back at its core, so the registry holds prompts weakly and
+/// can never keep a core alive. The installed core's prompt is also held strongly, so its session
+/// and what the person dismissed survive a moment with no scene attached, until the runtime drops
+/// that core. Locked, because the runtime reports a dropped core from any thread.
+private final class PromptRegistry: @unchecked Sendable {
+    static let shared = PromptRegistry()
+
+    private final class WeakPrompt {
+        weak var prompt: ConsentPrompt?
+        init(_ prompt: ConsentPrompt) { self.prompt = prompt }
+    }
+
+    private let lock = NSLock()
+    private var prompts: [ObjectIdentifier: WeakPrompt] = [:]
+    private var installed: (id: ObjectIdentifier, prompt: ConsentPrompt)?
+
+    private init() {
+        C15t.onUninstall { core in PromptRegistry.shared.drop(ObjectIdentifier(core)) }
+    }
+
+    func lookup(_ id: ObjectIdentifier) -> ConsentPrompt? {
+        lock.lock()
+        defer { lock.unlock() }
+        return prompts[id]?.prompt
+    }
+
+    func store(_ prompt: ConsentPrompt, id: ObjectIdentifier, installed isInstalled: Bool) {
+        lock.lock()
+        defer { lock.unlock() }
+        if prompts[id]?.prompt !== prompt {
+            prompts = prompts.filter { $0.value.prompt != nil }
+            prompts[id] = WeakPrompt(prompt)
+        }
+        if isInstalled { installed = (id, prompt) }
+    }
+
+    func drop(_ id: ObjectIdentifier) {
+        lock.lock()
+        prompts[id] = nil
+        // Released after unlocking, in case this was the last reference.
+        let released = installed?.id == id ? installed : nil
+        if released != nil { installed = nil }
+        lock.unlock()
+        _ = released
     }
 }
 

@@ -126,6 +126,33 @@ final class AutoPresentTests: XCTestCase {
         XCTAssertNil(prompt.presenter.presentationID, "the opted-out scene finds nothing open")
     }
 
+    /// The installed core keeps its prompt between scenes; a core the runtime dropped is released
+    /// with it, because the registry cannot keep a core alive.
+    func testAnUninstalledCoreIsReleasedWithItsPrompt() async throws {
+        C15t.resetForTests()
+        defer { C15t.resetForTests() }
+        weak var core: ConsentCore?
+        weak var prompt: ConsentPrompt?
+        do {
+            let (installed, _) = try await boot("category-init.json")
+            XCTAssertTrue(C15t.install(installed))
+            let shared = ConsentPrompt.shared(for: installed)
+            let scene = UUID()
+            shared.attach(scene, active: true, autoPresent: true)
+            XCTAssertNotNil(shared.presenter.presentationID)
+            shared.detach(scene)
+            core = installed
+            prompt = shared
+        }
+        await Task.yield()
+        XCTAssertNotNil(prompt, "the installed core keeps its prompt, and the dismissal in it, between scenes")
+
+        C15t.resetForTests()
+        for _ in 0..<50 where core != nil { try? await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertNil(core, "a dropped core is released")
+        XCTAssertNil(prompt, "and so is its prompt")
+    }
+
     func testSharedPromptOptOutAndOutcomeHook() async throws {
         let (core, _) = try await boot("category-init.json")
         let prompt = ConsentPrompt.shared(for: core)

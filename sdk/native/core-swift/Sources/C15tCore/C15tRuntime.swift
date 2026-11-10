@@ -17,6 +17,7 @@ import Foundation
 public final class C15t: @unchecked Sendable {
     private static let lock = Lock()
     private static var installed: ConsentCore?
+    private static var uninstallListeners: [@Sendable (ConsentCore) -> Void] = []
 
     private init() {}
 
@@ -122,6 +123,17 @@ public final class C15t: @unchecked Sendable {
     /// Tests only. A production app installs once at launch and never needs this,
     /// and calling it mid-session strands any observer still holding the old core.
     public static func resetForTests() {
-        lock.withLock { installed = nil }
+        let (dropped, listeners) = lock.withLock { () -> (ConsentCore?, [@Sendable (ConsentCore) -> Void]) in
+            defer { installed = nil }
+            return (installed, uninstallListeners)
+        }
+        guard let dropped else { return }
+        for listener in listeners { listener(dropped) }
+    }
+
+    /// Run `listener` with each core the runtime drops, so a layer that keeps something per core,
+    /// such as the stock consent UI, lets it go with the core. Mirrors the Kotlin `C15t.onUninstall`.
+    public static func onUninstall(_ listener: @escaping @Sendable (ConsentCore) -> Void) {
+        lock.withLock { uninstallListeners.append(listener) }
     }
 }

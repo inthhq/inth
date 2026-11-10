@@ -404,10 +404,17 @@ The rules, identical on all three:
   single `ConsentPresenter`; every scene, Activity or composable that attaches
   shares its session and draft, and only one attached host draws it: the first,
   or a foreground host when the one drawing it is in the background. Auto-present
-  follows the host's setting and is off while no host is attached, so nothing
-  opens unseen for a host that opted out to find. React Native keeps one ledger per client, so strict mode, remounts and nested
-  providers call native once, and the native host answers any racing call with
-  `already-presented`.
+  is the drawing host's setting and is off while no host is attached, so nothing
+  opens unseen. A host with auto-present off draws only a session the app asked
+  for, or one that opened by itself while that host drew it with auto-present
+  on: when it takes over a session that opened by itself for another host, the
+  session is withdrawn, with no outcome, and the owed prompt stays owed. The
+  installed core keeps its `ConsentPrompt` until it is uninstalled
+  (`C15t.uninstall()` on Kotlin, `C15t.resetForTests()` on Swift, both reported
+  through `C15t.onUninstall`); the registry holds prompts weakly and never keeps
+  a core alive. React Native keeps one ledger per client, so strict mode,
+  remounts and nested providers call native once, and the native host answers
+  any racing call with `already-presented`.
 - **Opting out changes nothing else.** With auto-present off, an owed notice is
   held back too. A manual request covers the notice owed at that moment only;
   once nothing is owed, a later notice needs its own request.
@@ -445,8 +452,10 @@ stores:
     dismissed   owed key              the subject saw this owed prompt and closed it
     refused     URL                   native refused this URL for good
     declined    owed key, URL, trigger  native said not now; the next trigger asks again
-    closed      session id            outcomes that crossed the bridge before their answer
+    closed      session id            sessions whose outcome arrived, so a late answer cannot revive one
     excluded    the binary            native rejected with C15T_NATIVE_UI_EXCLUDED
+    withdrawn   session id            a prompt the ledger's call opened after every presenting
+                                      provider left; closed again, its outcome is not the subject's
 
     present now = provider presents and the binary links the stock screens
                   and not excluded and a key is owed and nothing is in flight
@@ -456,10 +465,15 @@ stores:
 A native answer of `presented`, or `already-presented` for a prompt session,
 puts that session on screen; `already-presented` for settings, or from a binary
 that does not name its sessions, puts it on screen as settings, which the owed
-prompt waits behind. A session's outcome takes it off screen; a dismissal of a
-prompt session records the owed key then current, because the open session
-reloads its draft. Nothing owed ends a dismissal. Outcomes are heard for the
-client's lifetime.
+prompt waits behind. An unnamed answer keeps what is already known of that
+session. The app's own `presentConsentPrompt` and `presentPreferences` calls
+report the session they find open to the ledger too. A session's outcome takes
+it off screen; a dismissal of a prompt session records the owed key then
+current, because the open session reloads its draft. Nothing owed ends a
+dismissal. The outermost provider creates the ledger as it renders, whether or
+not it presents, and the ledger hears outcomes for the client's lifetime, so a
+prompt the subject dismissed while auto-present was off stays dismissed when it
+is turned on.
 
 The native presenters store the open session (`presentationID`, whether it is
 standing settings or the prompt, which is derived from `preferences` and whether
@@ -475,6 +489,9 @@ has to clear them:
     commit from a prompt or notice            suppress the key acted on
     commit from settings                      no suppression; re-evaluate
     autoPresent turned on                     re-evaluate
+    a host attaches or takes over             autoPresent = its setting; if off, withdraw a
+                                              session that opened by itself for another host
+    the drawing host detaches                 autoPresent off until a host attaches
 
 **The React Native hosts** report what an open session shows: every
 `presentConsentPrompt`/`presentPreferences` answer carries `presentation`,

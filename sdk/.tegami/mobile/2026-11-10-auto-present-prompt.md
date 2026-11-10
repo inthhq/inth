@@ -36,6 +36,12 @@ Closing standing privacy settings no longer suppresses a prompt they covered;
 it is presented once they close. A UIKit root's notice card stops taking
 touches as soon as it is acknowledged or cleared.
 
+Auto-present follows the scene or screen drawing the prompt and is off while
+none is attached. A scene with `autoPresent: false` never draws a prompt that
+opened by itself for another scene. `ConsentPrompt` no longer keeps a core alive:
+the installed core keeps its prompt until it is uninstalled, and
+`C15t.onUninstall` (new on both platforms) reports each core the runtime drops.
+
 Breaking changes:
 
 - `ConsentPresenter(core:automaticPresentation:)` is now
