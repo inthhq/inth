@@ -117,10 +117,20 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 	internal fun match(country: String?, region: String?): Pair<String, String>? =
 		BundledPolicy.match(packs, country, region)?.let { (index, matchedBy) -> rules[index].id.trim() to matchedBy }
 
-	/** The rule for [overrides]' country and region, as an `/init` answer. */
-	internal fun resolve(overrides: KernelOverrides): MappedInit? {
-		val (index, matchedBy) = BundledPolicy.match(packs, overrides.country, overrides.region) ?: return null
-		val wire = JsonObject(packs[index].getValue("policyResolution").jsonObject + ("matchedBy" to JsonPrimitive(matchedBy)))
+	/** The backend's outcome for a location. */
+	internal fun outcome(country: String?, region: String?) = BundledPolicy.matchOutcome(packs, country, region)
+
+	/**
+	 * The rule for [overrides]' country and region, as an `/init` answer. A location no
+	 * rule covers gets the backend's `no-match` or `insufficient-inputs` outcome, never
+	 * silence, so the core does not keep an earlier rule in force by default.
+	 */
+	internal fun resolve(overrides: KernelOverrides): MappedInit {
+		val wire = when (val outcome = BundledPolicy.matchOutcome(packs, overrides.country, overrides.region)) {
+			is BundledPolicy.MatchOutcome.Matched ->
+				JsonObject(packs[outcome.index].getValue("policyResolution").jsonObject + ("matchedBy" to JsonPrimitive(outcome.matchedBy)))
+			else -> BundledPolicy.unmatchedWire(outcome)
+		}
 		val body = buildJsonObject {
 			put("policyResolution", wire)
 			put("location", buildJsonObject {
@@ -128,7 +138,7 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 				put("regionCode", overrides.region?.let(::JsonPrimitive) ?: JsonNull)
 			})
 		}
-		return InitMapper.map(TransportOutcome.Success(body, emptyMap())).takeIf { !it.policyPending }
+		return InitMapper.map(TransportOutcome.Success(body, emptyMap()))
 	}
 
 	override fun equals(other: Any?) = other is ConsentPolicy && other.rules == rules

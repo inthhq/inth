@@ -330,7 +330,24 @@ class ConsentCore(
 	private val snapshotObservers = CopyOnWriteArrayList<WeakReference<(ConsentSnapshot) -> Unit>>()
 	private val strongObservers = CopyOnWriteArrayList<(ConsentSnapshot) -> Unit>()
 	private val errorObservers = CopyOnWriteArrayList<WeakReference<(KernelError) -> Unit>>()
-	private val policyStaleObservers = CopyOnWriteArrayList<WeakReference<(BundledPolicyAuthority) -> Unit>>()
+	/**
+	 * A `policyStale` subscriber and the manifest it was last told about. Replay on
+	 * subscription and the announcement after a publication both deliver through it, so a
+	 * subscriber that arrives between the two hears the manifest once.
+	 */
+	private class StaleObserver(observer: (BundledPolicyAuthority) -> Unit) {
+		private val reference = WeakReference(observer)
+		private val heard = AtomicReference<BundledPolicyAuthority?>(null)
+
+		/** `false` once the observer has been collected. */
+		fun deliver(authority: BundledPolicyAuthority): Boolean {
+			val observer = reference.get() ?: return false
+			if (heard.getAndSet(authority) != authority) observer(authority)
+			return true
+		}
+	}
+
+	private val policyStaleObservers = CopyOnWriteArrayList<StaleObserver>()
 	/** The stale manifest already announced, so one manifest is announced once. */
 	private var staleAnnounced: BundledPolicyAuthority? = null
 	/** A stale manifest recorded under the lock and announced after it is released. */
@@ -735,10 +752,10 @@ class ConsentCore(
 	 * host that subscribes after bootstrap still hears it. Held weakly, like [onError].
 	 */
 	fun onPolicyStale(observer: (BundledPolicyAuthority) -> Unit): Subscription {
-		val reference = WeakReference(observer)
-		policyStaleObservers += reference
-		if (isPolicyStale) bundledPolicyInfo?.let(observer)
-		return Subscription { policyStaleObservers.remove(reference) }
+		val entry = StaleObserver(observer)
+		policyStaleObservers += entry
+		if (isPolicyStale) bundledPolicyInfo?.let(entry::deliver)
+		return Subscription { policyStaleObservers.remove(entry) }
 	}
 
 	/**
@@ -1553,10 +1570,14 @@ class ConsentCore(
 			// `core-swift` drops its resolved policy in the same branch -- permissions
 			// derived from a wire this build cannot re-read are permissions it can no
 			// longer justify.
-			evaluationPolicy = if (mapped.policyUnreadable) {
-				null
-			} else {
-				mapped.evaluationPolicy ?: evaluationPolicy
+			evaluationPolicy = when {
+				mapped.policyUnreadable -> null
+				// An explicit `no-match` or `unconfigured` answer puts the safe fallback in force,
+				// as `resolveEffectivePolicy` in `@c15t/core` and core-swift's wire reader do. Only
+				// a failed init keeps the last policy.
+				mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_NO_MATCH ||
+					mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_UNCONFIGURED -> null
+				else -> mapped.evaluationPolicy ?: evaluationPolicy
 			}
 			// Latched, exactly like the policy two lines above, and for the reason on
 			// [vendorList]: once a purpose or vendor name has been drawn from a list, a `/init` that
@@ -2230,8 +2251,8 @@ class ConsentCore(
 
 	private fun announcePolicyStale() {
 		val authority = pendingStale.getAndSet(null) ?: return
-		for (reference in policyStaleObservers) {
-			reference.get()?.invoke(authority) ?: policyStaleObservers.remove(reference)
+		for (entry in policyStaleObservers) {
+			if (!entry.deliver(authority)) policyStaleObservers.remove(entry)
 		}
 	}
 

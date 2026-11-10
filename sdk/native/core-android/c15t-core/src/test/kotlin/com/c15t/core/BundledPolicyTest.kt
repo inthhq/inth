@@ -65,6 +65,36 @@ class BundledPolicyTest {
 		subscription.close()
 	}
 
+	@Test fun `a subscriber added while the expiry is being published hears policyStale once`() {
+		val clock = FixedClock(now)
+		val backing = InMemoryKeyValueStore()
+		val armed = java.util.concurrent.atomic.AtomicBoolean(false)
+		val entered = java.util.concurrent.CountDownLatch(1)
+		val release = java.util.concurrent.CountDownLatch(1)
+		// Holds the deadline task between installing the stale snapshot and announcing it.
+		val blocking = object : com.c15t.core.spi.KeyValueStore by backing {
+			override fun writeDurably(key: String, value: String?): Boolean {
+				if (armed.compareAndSet(true, false)) {
+					entered.countDown()
+					release.await(3, TimeUnit.SECONDS)
+				}
+				return backing.writeDurably(key, value)
+			}
+		}
+		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource { it["expiresAt"] = JsonPrimitive(now + 100) }),
+			C15tStore(blocking), clock).also { it.bootstrap() }
+		armed.set(true)
+		clock.advance(100)
+		assertTrue(entered.await(3, TimeUnit.SECONDS))
+		val heard = LinkedBlockingQueue<BundledPolicyAuthority>()
+		val listener: (BundledPolicyAuthority) -> Unit = { heard.add(it) }
+		val subscription = core.onPolicyStale(listener)
+		release.countDown()
+		assertNotNull(heard.poll(3, TimeUnit.SECONDS))
+		assertNull(heard.poll(300, TimeUnit.MILLISECONDS))
+		subscription.close()
+	}
+
 	@Test fun `first offline launch with an expired manifest prompts records choices and replays policyStale`() {
 		val clock = FixedClock(now + 604800000)
 		val store = C15tStore(InMemoryKeyValueStore())
@@ -106,6 +136,22 @@ class BundledPolicyTest {
 		transport.respondSave(SaveOutcome.Delivered)
 		core.flushPending()
 		assertEquals(listOf(queued.body), transport.saveRequests.map { it.body })
+	}
+
+	@Test fun `a live no-match answer drops the earlier rule and its grants, as the web kernel does`() {
+		val transport = RecordingTransport().respondInit(liveResponse(resource()))
+		val core = testKernel(NativeConfig(endpoint, consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), FixedClock(now), transport)
+			.also { it.bootstrap() }
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
+		transport.respondInit(TransportOutcome.Success(buildJsonObject {
+			put("policyResolution", buildJsonObject { put("policy", JsonNull); put("status", "no-match"); put("version", 1) })
+		}, emptyMap()))
+		core.refresh()
+		assertEquals("no-match", core.snapshot().resolution.status)
+		assertFalse(core.snapshot().policyPending)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+		assertTrue(core.snapshot().promptRequirement.acknowledge)
 	}
 
 	@Test fun `precedence is live then cached then bundled`() {

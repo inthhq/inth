@@ -155,6 +155,65 @@ final class ConsentPolicyTests: XCTestCase {
         XCTAssertEqual(core.snapshot().revision, revision)
     }
 
+    func testEveryLocationGetsTheOutcomeTheBackendMatcherGivesUnmatchedOnesIncluded() throws {
+        var problems: [String] = []
+        for row in try XCTUnwrap(fixture["outcomes"]?.arrayValue) {
+            let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
+            let policy = try ConsentPolicy(json: data)
+            let country = row["inputs"]?["country"]?.stringValue
+            let region = row["inputs"]?["region"]?.stringValue
+            let actual: JSONValue
+            switch policy.outcome(country: country, region: region) {
+            case let .matched(index, matchedBy):
+                actual = .object([
+                    "matchedBy": .string(matchedBy), "policyId": .string(policy.rules[index].id),
+                    "status": .string("matched"),
+                ])
+            case let outcome:
+                actual = .object([
+                    "status": .string(outcome == .noMatch ? "no-match" : "failed"),
+                    "wire": BundledPolicyResource.unmatchedWire(outcome),
+                ])
+            }
+            if actual != row["expected"] {
+                problems.append("\(row["pack"]?.stringValue ?? "?") \(country ?? "-") \(region ?? "-")")
+            }
+        }
+        XCTAssertEqual(problems, [])
+    }
+
+    private func outcomePolicy(_ pack: String) throws -> ConsentPolicy {
+        let row = try XCTUnwrap(fixture["outcomes"]?.arrayValue?.first { $0["pack"]?.stringValue == pack })
+        return try ConsentPolicy(json: XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null]))))
+    }
+
+    func testAnUnmatchedKnownCountryRunsTheSafeFallbackAndDropsEarlierGrants() async throws {
+        let policy = try outcomePolicy("fallback without a default")
+        let core = await boot(policy, overrides: ConsentOverrides(country: "DE", region: nil, language: "en"))
+        XCTAssertEqual(core.snapshot().resolution.policyId, "germany")
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.isAllowed(.measurement))
+        core.setOverrides(ConsentOverrides(country: "FR", region: nil, language: "en"))
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().resolution.status, .noMatch)
+        XCTAssertFalse(core.snapshot().policyPending)
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(core.isAllowed(category.category))
+        }
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
+    }
+
+    func testACountryThatNeedsARegionNeverTakesThePermissiveDefault() async throws {
+        let policy = try outcomePolicy("region rules and a default without a fallback")
+        let core = await boot(policy, overrides: ConsentOverrides(country: "US", region: nil, language: "en"))
+        XCTAssertEqual(core.snapshot().resolution.status, .failed)
+        XCTAssertEqual(core.snapshot().resolution.reason, "insufficient-inputs")
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(core.isAllowed(category.category))
+        }
+    }
+
     func testLocationsMatchTheRuleTheBackendMatcherPicks() throws {
         let policy = try policy()
         for row in try XCTUnwrap(fixture["cases"]?.arrayValue) {
