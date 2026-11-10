@@ -49,11 +49,29 @@ final class ConsentPolicyTests: XCTestCase {
     }
 
     func testEveryPolicyTheBackendOrNoBackendModeRefusesIsRefused() throws {
+        var accepted: [String] = []
         for row in try XCTUnwrap(fixture["invalid"]?.arrayValue) {
+            let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
+            if (try? ConsentPolicy(json: data)) != nil { accepted.append(row["name"]?.stringValue ?? "?") }
+        }
+        XCTAssertEqual(accepted, [], "accepted policies the backend refuses")
+    }
+
+    func testEveryPolicyTheBackendAcceptsIsAcceptedAndNormalizedTheSameWay() throws {
+        var problems: [String] = []
+        for row in try XCTUnwrap(fixture["accepted"]?.arrayValue) {
             let name = row["name"]?.stringValue ?? "?"
             let data = try XCTUnwrap(C15tJSON.encode(.object(["rules": row["rules"] ?? .null])))
-            XCTAssertThrowsError(try ConsentPolicy(json: data), name)
+            do {
+                let policy = try ConsentPolicy(json: data)
+                if ConsentPolicy.normalize(policy.rules[1]) != row["resolved"] {
+                    problems.append("\(name): normalized differently")
+                }
+            } catch {
+                problems.append("\(name): \(error)")
+            }
         }
+        XCTAssertEqual(problems, [])
     }
 
     func testChangingOneValidityKeepsTheOtherPromptsReceipt() async throws {
@@ -90,6 +108,19 @@ final class ConsentPolicyTests: XCTestCase {
         XCTAssertEqual(reported, "policy-invalid")
         XCTAssertEqual(core.snapshot().error?.code, "policy-invalid")
         XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertFalse(core.isAllowed(.measurement))
+    }
+
+    func testARefusedInCodePolicyIsReportedAgainAfterReset() async throws {
+        let core = ConsentCore()
+        await core.bootstrapAndSettle(CoreConfig(
+            policyError: "Policy 'x': a partial category scope needs a scopeMode",
+            transport: OfflineTransport.offline(), initRetry: .disabled))
+        XCTAssertEqual(core.snapshot().error?.code, "policy-invalid")
+        core.reset()
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertEqual(core.snapshot().error?.code, "policy-invalid")
         XCTAssertFalse(core.isAllowed(.measurement))
     }
 

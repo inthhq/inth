@@ -205,6 +205,249 @@ const localInvalid: Record<string, unknown[]> = {
 	}),
 };
 
+/**
+ * Every field of `PolicyRule`, crossed with every kind of value it could hold.
+ * The backend decides which of these it refuses; the rest must be accepted by
+ * every validator too, so none is stricter than the backend.
+ */
+const CATEGORY_LIST_VALUES: unknown[] = [
+	null,
+	'measurement',
+	7,
+	{},
+	[7],
+	[null],
+	[''],
+	['ads'],
+	['Measurement'],
+	['*'],
+	['necessary'],
+	[],
+	['measurement', 'measurement'],
+	[' measurement '],
+	['measurement', '*'],
+];
+const COUNTRY_LIST_VALUES: unknown[] = [
+	null,
+	'DE',
+	7,
+	{},
+	[7],
+	[null],
+	[''],
+	[' '],
+	[],
+	['de'],
+	['DE', 'DE'],
+];
+const FLAG_VALUES: unknown[] = [null, 'true', 1, {}, false];
+const fieldMatrix: [string, unknown[]][] = [
+	['id', [undefined, null, 7, '', '  ', ' x ', {}]],
+	['match', [undefined, null, 'DE', 7, [], {}]],
+	['match.countries', COUNTRY_LIST_VALUES],
+	['match.regionFallbacks', COUNTRY_LIST_VALUES],
+	[
+		'match.regions',
+		[
+			null,
+			'CA',
+			{},
+			[],
+			[null],
+			['CA'],
+			[{}],
+			[{ country: 'CA' }],
+			[{ region: 'QC' }],
+			[{ country: 'CA', region: '' }],
+			[{ country: 7, region: 'QC' }],
+			[{ country: 'CA', extra: 1, region: 'QC' }],
+			[{ country: 'ca', region: 'qc' }],
+		],
+	],
+	['match.fallback', FLAG_VALUES],
+	['match.isDefault', FLAG_VALUES],
+	['match.continent', ['EU']],
+	['model', [undefined, null, 7, '', 'OPT-IN', 'implied', 'opt-out', 'none']],
+	['prompt', [undefined, null, 7, '', 'Choice', 'banner', 'notice', 'none']],
+	['categories', CATEGORY_LIST_VALUES],
+	['scopeMode', [null, 7, '', 'loose', 'STRICT', 'strict', 'permissive']],
+	['preselectedCategories', CATEGORY_LIST_VALUES],
+	[
+		'actions',
+		[
+			null,
+			'accept',
+			7,
+			{},
+			[],
+			[7],
+			[null],
+			['maybe'],
+			['accept'],
+			['reject'],
+			['accept', 'reject'],
+			['accept', 'reject', 'reject'],
+			['ACCEPT', 'reject'],
+			['accept', 'reject', 'dismiss'],
+		],
+	],
+	['validity', [null, 7, [], 'x', {}]],
+	['validity.choiceDays', [null, '30', true, [], 0, -1, 1e300, 0.5, 30]],
+	['validity.noticeDays', [null, '30', true, [], 0, -1, 1e300, 0.5, 30]],
+	['validity.years', [1]],
+	['privacySignals', [null, 7, [], {}, { dnt: {} }]],
+	['privacySignals.gpc', [null, 7, [], {}, { allow: [] }]],
+	['privacySignals.gpc.denyCategories', CATEGORY_LIST_VALUES],
+	['copyRevision', [null, 7, true, {}, '', '  ', ' r2 ']],
+	['review', [null, 'x', 7, {}, { status: 'bogus' }, { status: 'reviewed' }]],
+];
+
+const setPath = (
+	target: Record<string, unknown>,
+	path: string,
+	value: unknown
+) => {
+	const keys = path.split('.');
+	let node: Record<string, unknown> = target;
+	for (const key of keys.slice(0, -1)) {
+		if (
+			typeof node[key] !== 'object' ||
+			node[key] === null ||
+			Array.isArray(node[key])
+		) {
+			node[key] = {};
+		}
+		node = node[key] as Record<string, unknown>;
+	}
+	const last = keys.at(-1) as string;
+	if (value === undefined) {
+		Reflect.deleteProperty(node, last);
+	} else {
+		node[last] = value;
+	}
+};
+
+const matrixPacks: [string, unknown[]][] = fieldMatrix.flatMap(
+	([path, values]) =>
+		values.map((value): [string, unknown[]] => {
+			const candidate: Record<string, unknown> = JSON.parse(
+				JSON.stringify(rule({}))
+			);
+			setPath(candidate, path, value);
+			return [
+				`${path} = ${value === undefined ? 'missing' : JSON.stringify(value)}`,
+				[fallback, candidate],
+			];
+		})
+);
+
+/** Rules that depend on two fields at once. */
+const crossFieldMatrix: [string, unknown[]][] = [
+	[
+		'model none with preselectedCategories = []',
+		[
+			fallback,
+			rule({ model: 'none', preselectedCategories: [], prompt: 'none' }),
+		],
+	],
+	[
+		'model none with preselectedCategories = ["necessary"]',
+		[
+			fallback,
+			rule({
+				model: 'none',
+				preselectedCategories: ['necessary'],
+				prompt: 'none',
+			}),
+		],
+	],
+	[
+		'model none with actions = ["accept","reject"]',
+		[
+			fallback,
+			rule({ actions: ['accept', 'reject'], model: 'none', prompt: 'none' }),
+		],
+	],
+	[
+		'notice prompt with actions = []',
+		[fallback, rule({ actions: [], model: 'opt-out', prompt: 'notice' })],
+	],
+	[
+		'strict scope with preselectedCategories inside it',
+		[
+			fallback,
+			rule({
+				categories: ['measurement'],
+				preselectedCategories: ['measurement'],
+				scopeMode: 'strict',
+			}),
+		],
+	],
+	[
+		'strict scope with gpc.denyCategories inside it',
+		[
+			fallback,
+			rule({
+				categories: ['measurement'],
+				privacySignals: { gpc: { denyCategories: ['measurement'] } },
+				scopeMode: 'strict',
+			}),
+		],
+	],
+	[
+		'wildcard scope with preselectedCategories = ["marketing"]',
+		[
+			fallback,
+			rule({ categories: ['*'], preselectedCategories: ['marketing'] }),
+		],
+	],
+	[
+		'review with every field',
+		[
+			fallback,
+			rule({
+				review: {
+					assumptions: ['a'],
+					reviewBy: '2027-01-01',
+					reviewedOn: '2026-01-01',
+					sources: ['s'],
+					status: 'reviewed',
+				},
+			}),
+		],
+	],
+	[
+		'review with a numeric reviewedOn',
+		[fallback, rule({ review: { reviewedOn: 2026, status: 'pending' } })],
+	],
+	[
+		'review with sources that are not strings',
+		[fallback, rule({ review: { sources: [1], status: 'pending' } })],
+	],
+	[
+		'review with an unknown field',
+		[fallback, rule({ review: { status: 'pending', verdict: 'ok' } })],
+	],
+];
+
+/** Pack shapes rather than field values. */
+const packMatrix: [string, unknown][] = [
+	['rules = a rule that is not an object', [fallback, 7]],
+	['rules = a null rule', [fallback, null]],
+	[
+		'rules = the same id twice',
+		[fallback, rule({}), rule({ match: { countries: ['FR'] } })],
+	],
+	[
+		'rules = two isDefault rules',
+		[fallback, rule({ match: { isDefault: true } })],
+	],
+	[
+		'rules = two fallback rules',
+		[fallback, rule({ match: { fallback: true } })],
+	],
+];
+
 for (const [name, pack] of Object.entries(backendInvalid)) {
 	if (inspectPolicyRules(pack).errors.length === 0) {
 		throw new Error(
@@ -220,7 +463,35 @@ for (const [name, pack] of Object.entries(localInvalid)) {
 	}
 }
 
+/** Sort the matrix by the backend's own answer. */
+const localNames = new Set(['model = "iab"']);
+const classified = {
+	accepted: [] as { name: string; rules: unknown[]; resolved: unknown }[],
+	refused: [] as { name: string; rules: unknown }[],
+};
+for (const [name, pack] of [
+	...matrixPacks,
+	...crossFieldMatrix,
+	...packMatrix,
+]) {
+	const candidates = JSON.parse(JSON.stringify(pack)) as unknown;
+	if (localNames.has(name)) {
+		continue;
+	}
+	if (inspectPolicyRules(candidates).errors.length > 0) {
+		classified.refused.push({ name, rules: candidates });
+	} else {
+		const candidate = (candidates as PolicyRule[])[1] as PolicyRule;
+		classified.accepted.push({
+			name,
+			resolved: normalizePolicyRule(candidate),
+			rules: candidates as unknown[],
+		});
+	}
+}
+
 const fixture = {
+	accepted: classified.accepted,
 	cases: locations.map(([country, region]) => {
 		const resolution = resolvePolicyRules({
 			countryCode: country,
@@ -256,6 +527,7 @@ const fixture = {
 			name,
 			rules: JSON.parse(JSON.stringify(pack)),
 		})),
+		...classified.refused,
 		...Object.entries(localInvalid).map(([name, pack]) => ({
 			local: true,
 			name,

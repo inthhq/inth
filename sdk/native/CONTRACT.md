@@ -1564,9 +1564,10 @@ Configuration picks one of two modes, and they do not mix.
   `NativeConfig.policy`, Expo `policy`). Both cores normalize rules exactly as
   `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
   `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
-  holds the shared cases, including every policy all three validators (Expo
-  prebuild and both cores) refuse; the generator checks each against
-  `inspectPolicyRules`. Validity days may be fractional and round to whole
+  holds the shared cases: a matrix of every `PolicyRule` field against every
+  kind of value, sorted by the backend's own `inspectPolicyRules` into
+  policies all three validators (Expo prebuild and both cores) must refuse and
+  policies they must accept and normalize identically. Validity days may be fractional and round to whole
   milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
   and never leave it; choice and notice validity feed only their own prompt. A
   declared policy a core refuses is reported as `policy-invalid` with resolution

@@ -37,11 +37,24 @@ class ConsentPolicyTest {
 	}
 
 	@Test fun `every policy the backend or no-backend mode refuses is refused`() {
-		for (case in fixture.getValue("invalid").jsonArray) {
+		val accepted = fixture.getValue("invalid").jsonArray.mapNotNull { case ->
 			val name = case.jsonObject.getValue("name").jsonPrimitive.content
 			val rules = buildJsonObject { put("rules", case.jsonObject.getValue("rules")) }.toString()
-			assertFailsWith<IllegalArgumentException>(name) { ConsentPolicy.fromJson(rules) }
+			name.takeIf { runCatching { ConsentPolicy.fromJson(rules) }.isSuccess }
 		}
+		assertEquals(emptyList(), accepted, "accepted policies the backend refuses")
+	}
+
+	@Test fun `every policy the backend accepts is accepted and normalized the same way`() {
+		val problems = fixture.getValue("accepted").jsonArray.mapNotNull { case ->
+			val name = case.jsonObject.getValue("name").jsonPrimitive.content
+			val rules = buildJsonObject { put("rules", case.jsonObject.getValue("rules")) }.toString()
+			runCatching { ConsentPolicy.fromJson(rules) }.fold(
+				onSuccess = { policy -> name.takeIf { ConsentPolicy.normalize(policy.rules[1]) != case.jsonObject.getValue("resolved") }?.let { "$it: normalized differently" } },
+				onFailure = { "$name: ${it.message}" },
+			)
+		}
+		assertEquals(emptyList(), problems)
 	}
 
 	@Test fun `changing one validity keeps the other prompt's receipt`() {
@@ -66,6 +79,18 @@ class ConsentPolicyTest {
 		assertEquals("policy-invalid", core.snapshot().error?.code)
 		assertEquals(listOf("policy-invalid"), errors)
 		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+	}
+
+	@Test fun `a refused in-code policy is reported again after reset`() {
+		val errors = mutableListOf<String>()
+		val core = testKernel(
+			NativeConfig(null, policyError = "Policy 'x': a partial category scope needs a scopeMode"),
+			C15tStore(InMemoryKeyValueStore()), FixedClock(), OfflineTransport, logger = { errors += it.code },
+		).also { it.bootstrap() }
+		core.reset()
+		assertTrue(core.snapshot().policyPending)
+		assertEquals("policy-invalid", core.snapshot().error?.code)
+		assertEquals(listOf("policy-invalid", "policy-invalid"), errors)
 	}
 
 	@Test fun `bootstrap applies the in-code policy once`() {
