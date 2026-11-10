@@ -529,8 +529,11 @@ and `ConsentRootViewController`. It asks only when
 no stored choice refuses marketing, the app is active, a c15t root is attached
 and no c15t screen is on screen. `afterConsent` asks after a closed session, or
 at launch when no prompt is owed, and only while marketing is `granted`.
-`beforeConsent` also holds a prompt the app opens (`presentPrompt` or
-`presentConsentPrompt`), never settings. The answer never writes consent.
+`beforeConsent` (not the recommended order) holds every prompt that would open
+while it would ask: automatic, after a session, or the app's own
+`presentPrompt`/`presentConsentPrompt`, from the provider's first render or, in
+Swift, from the first scene that attaches. It never holds settings, and asks
+nothing on a launch that owes no prompt. The answer never writes consent.
 Android has no ATT and no option.
 
 Native SDK gating

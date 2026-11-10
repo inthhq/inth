@@ -126,7 +126,7 @@ on `.c15tConsent(...)` and `ConsentRootViewController` in Swift:
 | Value | What happens |
 | --- | --- |
 | `afterConsent` (default) | The consent prompt first. Apple's alert after it closes, only while marketing is granted. |
-| `beforeConsent` | Apple's alert first, then the consent prompt, whether the prompt opens by itself or your app opens it. |
+| `beforeConsent` | Apple's alert first, then the consent prompt, whether the prompt opens by itself or your app opens it. Not recommended; see below. |
 | `manual` | Nothing automatic. Call `requestTrackingAuthorization()`, `useTrackingRequest()` or `C15tApple.tracking.request` yourself. |
 
 The SDK asks Apple only when all of these hold:
@@ -157,10 +157,32 @@ With `afterConsent`, three moments can lead to Apple's alert:
 With `autoPresent` off, nothing is asked at launch. With `afterConsent`, Apple's
 alert still follows a prompt or settings screen your app opens through c15t.
 
-With `beforeConsent`, a prompt your app opens itself waits for Apple's alert
-too: `presentConsentPrompt()` in React Native, or `ConsentPrompt.presentPrompt()`
-in Swift. Privacy settings the person opens are never delayed. They asked for
-those controls, and Apple's alert is not one of them.
+### When to use `beforeConsent`
+
+Prefer the default. `beforeConsent` shows Apple's alert before the person has
+seen your consent prompt, so they answer it without knowing what tracking is
+for. It also asks people who will refuse marketing in the prompt a moment
+later, which is the order Apple's guidance steers away from: "You should not
+display the ATT prompt to users who have opted out of all relevant legal consent
+choices." Use it only when a product or legal review has asked for that order.
+
+How it behaves:
+
+- Apple's alert comes right before a consent prompt opens: one that opens by
+  itself, one the SDK opens after another screen closes, or one your app opens
+  with `presentConsentPrompt()` in React Native or `ConsentPrompt.presentPrompt()`
+  in Swift. A launch that owes no prompt asks nothing.
+- It asks at most once per launch, and only under the conditions above, so a
+  stored refusal of marketing skips it. If a later prompt opens after that
+  refusal is gone, for example after a reset, it asks then.
+- Privacy settings the person opens are never delayed. They asked for those
+  controls, and Apple's alert is not one of them.
+- It is in force from the first render of `<ConsentProvider>`, before your own
+  components' effects run. In Swift, a `presentPrompt()` call made before the
+  `.c15tConsent` scene has attached, for example from a view's `onAppear`, waits
+  for that scene and follows its order.
+- If the provider unmounts while your app's own `presentConsentPrompt()` call
+  waits, that call opens the prompt without Apple's alert.
 
 On Apple's expanded EU sheet, Additional Information opens c15t's privacy
 settings. Closing them applies the same rule again, so Apple's alert returns
