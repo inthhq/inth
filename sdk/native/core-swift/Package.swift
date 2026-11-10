@@ -22,7 +22,7 @@ let package = Package(
     targets: [
         .target(name: "C15tCore", resources: [.copy("Resources/PrivacyInfo.xcprivacy")]),
         .target(name: "C15tApple", dependencies: ["C15tCore"]),
-        .target(name: "C15tConsentUI", dependencies: ["C15tCore"]),
+        .target(name: "C15tConsentUI", dependencies: ["C15tCore", "C15tApple"]),
         .testTarget(name: "C15tConsentUITests", dependencies: ["C15tConsentUI", "C15tCore"]),
         .testTarget(name: "C15tAppleTests", dependencies: ["C15tApple", "C15tCore"]),
         .executableTarget(name: "C15tCoreBench", dependencies: ["C15tCore"]),

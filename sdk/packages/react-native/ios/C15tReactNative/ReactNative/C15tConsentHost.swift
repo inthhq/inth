@@ -31,7 +31,7 @@ final class C15tConsentHost {
             .flatMap(\.windows).first(where: \.isKeyWindow)?.rootViewController else { throw HostError.noHost }
         var parent = root
         while let presented = parent.presentedViewController { parent = presented }
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         if preferences { presenter.presentPreferences() } else { presenter.presentPrompt() }
         let id = presenter.presentationID?.uuidString ?? UUID().uuidString
         self.sessionID = id

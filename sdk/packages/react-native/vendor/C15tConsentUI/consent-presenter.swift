@@ -9,6 +9,10 @@ public enum ConsentPresenterOutcome: Sendable { case saved, dismissed }
 
 /// Owns one native presentation and its draft. Keep one instance for the host's lifetime.
 /// Storage work runs on a worker; observing and editing are confined to the main actor.
+///
+/// With ``autoPresent`` on, the presenter opens an owed prompt by itself once the core is ready,
+/// once per owed prompt: a prompt the person answered or dismissed stays closed until the policy,
+/// the reason or the requirement changes. With it off, nothing shows until ``presentPrompt()``.
 @MainActor
 public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     public let core: ConsentCore
@@ -39,14 +43,21 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private var suppressedPrompt: String?
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
-    private let automaticPresentation: Bool
+    /// An owed notice the host asked for while ``autoPresent`` is off.
+    @Published private var noticeRequested = false
+    /// Open an owed prompt by itself. Turning it on presents a prompt that is already owed.
+    @Published public var autoPresent: Bool {
+        didSet { if autoPresent { presentIfOwed() } }
+    }
 
     public enum Action { case accept, reject, save, acknowledge }
 
     /// Attach to a bootstrapped core. The presenter never installs a second engine.
-    /// - Parameter core: Native authority shared by the app's SDK gates.
-    public init(core: ConsentCore, automaticPresentation: Bool = true) {
-        self.automaticPresentation = automaticPresentation
+    /// - Parameters:
+    ///   - core: Native authority shared by the app's SDK gates.
+    ///   - autoPresent: Open an owed prompt by itself. `false` waits for ``presentPrompt()``.
+    public init(core: ConsentCore, autoPresent: Bool = true) {
+        self.autoPresent = autoPresent
         self.core = core
         self.snapshot = core.snapshot()
         self.subscription = core.onChange(self)
@@ -75,18 +86,25 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             } else { loadDraft() }
             reloadAfterRefresh = listUnavailable
         }
-        if automaticPresentation, !next.policyPending, next.promptRequirement.kind == .choice,
-           presentationID == nil, suppressedPrompt != promptKey {
-            presentationID = UUID()
-            preferences = false
-            errorCode = nil
-            failedAction = nil
-            loadDraft()
-        }
+        // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
+        if next.promptRequirement.kind == .none { suppressedPrompt = nil }
+        presentIfOwed()
+    }
+
+    private func presentIfOwed() {
+        guard autoPresent, snapshot.ready, !snapshot.policyPending, snapshot.promptRequirement.kind == .choice,
+              presentationID == nil, !pending, suppressedPrompt != promptKey else { return }
+        presentationID = UUID()
+        preferences = false
+        fromFirstLayer = false
+        errorCode = nil
+        failedAction = nil
+        loadDraft()
     }
 
     public var noticeVisible: Bool {
-        !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
+        snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
+            && (autoPresent || noticeRequested)
     }
     public var isDirty: Bool { categories != seedCategories || choices != seedChoices }
     /// Preferences were opened from the first layer, so closing them returns there.
@@ -167,11 +185,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         fromFirstLayer = false
         loadDraft()
     }
-    /// Open an owed choice prompt. Existing sessions keep their identity and draft.
+    /// Open an owed prompt. An owed notice shows as the notice card. Existing sessions keep
+    /// their identity and draft.
     public func presentPrompt() {
         guard presentationID == nil, !pending else { return }
         snapshot = core.snapshot()
-        guard !snapshot.policyPending, snapshot.promptRequirement.kind == .choice else { return }
+        guard !snapshot.policyPending else { return }
+        if snapshot.promptRequirement.kind == .notice { noticeRequested = true; return }
+        guard snapshot.promptRequirement.kind == .choice else { return }
         presentationID = UUID()
         preferences = false
         fromFirstLayer = false
@@ -313,6 +334,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
                 failedAction = nil
                 suppressedPrompt = promptKey
                 presentationID = nil
+                noticeRequested = false
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
                 else { onAnnouncement?("Privacy choices saved") }
                 onOutcome?(.saved)

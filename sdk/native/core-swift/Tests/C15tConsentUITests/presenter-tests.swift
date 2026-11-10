@@ -169,7 +169,7 @@ final class PresenterTests: XCTestCase {
 
     @MainActor func testExplicitHostKeepsDraftAndIgnoresObsoleteClose() async throws {
         let core = try await boot(InMemoryStore())
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         XCTAssertNil(presenter.presentationID)
         presenter.presentPrompt()
         let prompt = try XCTUnwrap(presenter.presentationID)
@@ -196,7 +196,7 @@ final class PresenterTests: XCTestCase {
     @MainActor func testRefusedWriteKeepsDraftAndRetryEmitsOneOutcome() async throws {
         let store = RefusingStore()
         let core = try await boot(store)
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         presenter.presentPreferences()
         let session = presenter.presentationID
         var outcomes = 0
@@ -230,7 +230,7 @@ final class PresenterTests: XCTestCase {
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(), bundledPolicy: BundledPolicyResource(data: resource, endpoint: vector["endpoint"] as! String), consentCategories: ConsentCategory.allCases, now: clock.read, initRetry: .disabled))
         XCTAssertEqual(core.save(.all).status, .committed)
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         presenter.presentPreferences()
         let session = presenter.presentationID
         clock.advance(604_800_000)
@@ -315,7 +315,7 @@ final class PresenterTests: XCTestCase {
     @MainActor func testFailureStaysVisibleWhileARetryIsPending() async throws {
         let store = RefusingStore()
         let core = try await boot(store)
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         presenter.presentPreferences()
         presenter.setCategory(.measurement, true)
         store.refuseNext = true
