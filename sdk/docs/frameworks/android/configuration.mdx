@@ -97,6 +97,14 @@ initializers. Configure each optional SDK's startup separately.
 | `detectedGpc` | A GPC signal supplied by a real platform integration. |
 | `extraHeaders` | App-owned transport headers. |
 | `maxPendingSaves` | Durable delivery queue limit, up to 20. |
+| `platform` | The app type the backend records for each request. Defaults to `android`. |
+
+`platform` labels requests in the `x-c15t-platform` header, as
+`<platform>-><sdkVersion>`. Keep the default `android` in a Kotlin or Java app.
+In a React Native app that installs the engine itself, with `AUTO_BOOTSTRAP`
+off, set `platform = C15tProtocol.PLATFORM_REACT_NATIVE` (`rn`). A React Native
+app that keeps the automatic startup already sends `rn`. Set `null` to send no
+platform header. The value is attribution only and changes no consent decision.
 
 The corresponding manifest keys are `com.c15t.BACKEND_URL`, `BACKEND_INIT_URL`, `BACKEND_DOMAIN`,
 `CATEGORIES` and `POLICY_RESOURCE`, with the same `com.c15t.` prefix. The policy

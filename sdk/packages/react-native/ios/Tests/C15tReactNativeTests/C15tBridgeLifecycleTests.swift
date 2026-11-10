@@ -124,6 +124,8 @@ final class C15tBootstrapTests: XCTestCase {
 
         let transport = configuration.makeTransport() as? HostedTransport
         XCTAssertNotNil(transport, "a hosted backend must build a hosted transport")
+        // ENG-530: a React Native app reports `rn`, not the Swift app's `apple`.
+        XCTAssertEqual(transport?.extraHeaders["x-c15t-platform"], "rn->\(C15t.version)")
         XCTAssertEqual(transport?.initURL, URL(string: "https://app.example.com/api/consent/init"))
         XCTAssertEqual(
             transport?.baseURL,

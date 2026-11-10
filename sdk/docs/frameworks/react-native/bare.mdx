@@ -146,7 +146,9 @@ disable it and install the engine before RN starts:
   APIs in `C15tReactNative`, then attach the core with
   `C15tReactNativeBootstrap.install(core)`.
 - Android uses `com.c15t.reactnative.AUTO_BOOTSTRAP: false`. Install through
-  the Android platform API before starting the React host.
+  the Android platform API before starting the React host, and set
+  `platform = C15tProtocol.PLATFORM_REACT_NATIVE` in `NativeConfig` so requests
+  are attributed to React Native rather than to a Kotlin app.
 
 Use [IAB setup](/docs/guides/mobile-iab) for native CMP and publisher
 configuration. A vendor-scope list alone does not install that authority.

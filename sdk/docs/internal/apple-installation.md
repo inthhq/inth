@@ -127,7 +127,9 @@ presentation and Settings changes still need on-device verification.
 ## Versions and validation limits
 
 Core requests report `x-c15t-version: <C15t.version>`. Platform-created
-hosted transports also report `x-c15t-platform: apple-><C15tApple.version>` on
+hosted transports also report `x-c15t-platform: <platform>-><C15tApple.version>`,
+where `C15tAppleConfiguration.platform` is `apple` by default and `rn` for a core
+the React Native bridge configures, on
 init, save and identity requests. These native source versions are independent
 of the RN npm version. None is the internal 12-bit IAB CMP version or a claim of
 CMP registration or certification. `C15t.version` in `Transports.swift` is the

@@ -687,16 +687,18 @@ Transports
 Same three modes as the web SDK, same backend endpoints, same headers.
 
     x-c15t-version:            <C15t.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
-    x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
-                               android-><sdkVersion> for a Kotlin app, rn-><sdkVersion>
-                               for a core the React Native binding installs on Android
+    x-c15t-platform:           apple-><C15tApple.version> for a Swift app, android-><sdkVersion>
+                               for a Kotlin app, rn-><version> for a core either React Native
+                               binding configures
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
 
 Both cores send the unprefixed semantic version, matching the web header format.
 Each reports its host separately in `x-c15t-platform`. Hosted gateways can reject
 unknown platform prefixes in `x-c15t-version`, so platform attribution must not be
 prepended to either version. Kotlin reads the tag from `NativeConfig.platform`,
-which defaults to `android`; `null` sends no platform header.
+which defaults to `android`; `null` sends no platform header. Swift reads it from
+`C15tAppleConfiguration.platform`, which defaults to `apple`. Web clients send no
+platform header. `@c15t/backend` passes `x-c15t-platform` to `sessions.onReport`.
 The policy-contract header remains the capability declaration.
 
 A backend that answers `unsupported-contract` is a hard configuration error. The
