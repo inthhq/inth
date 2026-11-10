@@ -1,9 +1,34 @@
 /**
+ * Every Google Consent Mode v2 consent type, in Google's documented order.
+ *
+ * @remarks
+ * Each type appears exactly once in {@link GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING}.
+ */
+export const GOOGLE_CONSENT_TYPES = [
+	'ad_storage',
+	'ad_user_data',
+	'ad_personalization',
+	'analytics_storage',
+	'functionality_storage',
+	'personalization_storage',
+	'security_storage',
+] as const;
+
+/** One Google Consent Mode v2 consent type. */
+export type GoogleConsentType = (typeof GOOGLE_CONSENT_TYPES)[number];
+
+/**
  * Default c15t consent category mapping for Google Consent Mode v2.
  *
  * @remarks
  * Shared by direct gtag.js and Google Tag Manager integrations so both emit the
  * same Google storage consent defaults unless a caller provides an override.
+ *
+ * This is the one source of the mapping. The Swift, Kotlin and React Native
+ * helpers are tested against `native/protocol/google-consent-mode/`, which
+ * `scripts/generate-google-consent-mode-fixture.ts` writes from this object.
+ * After a change here, regenerate the fixture and update the mobile copies,
+ * or their tests fail.
  *
  * @example
  * ```ts

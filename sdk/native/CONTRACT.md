@@ -54,6 +54,16 @@ own:
                     copy comes from `iab.app` and `iab.banner` in
                     @c15t/translations through the generated IABCopy /
                     IabCopy tables (`bun run generate:native-iab-copy`).
+    Consent Mode    Google Consent Mode v2 maps categories to signals
+                    exactly as the web does. The mapping lives in
+                    packages/integrations/src/vendors/_shared/google-consent.ts;
+                    `bun scripts/generate-google-consent-mode-fixture.ts`
+                    writes native/protocol/google-consent-mode/, and
+                    scripts/generate-google-consent-mode-fixture.test.ts fails
+                    when the file is stale. GoogleConsentType in Swift and
+                    Kotlin and resolveGoogleConsentMode in React Native are
+                    tested against that file. Firebase helpers send its four
+                    Firebase types; later vendor helpers read the same mapping.
 
 `docs/internal/native-iab-commits.mdx` defines the native commit, migration,
 withdrawal and delivery contract, including the storage adapter requirements.
