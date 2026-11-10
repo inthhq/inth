@@ -101,6 +101,15 @@ const errorCode = function errorCode(error: unknown): string | undefined {
 		: undefined;
 };
 
+/** Close a prompt nobody presenting asked for. Its outcome arrives either way. */
+const withdraw = async function withdraw(sessionId: string): Promise<void> {
+	try {
+		await closeConsentPresenter(sessionId);
+	} catch {
+		// Already closed: the outcome that closed it reaches the ledger.
+	}
+};
+
 /** Which input a presenter rejection is. Only the two permanent codes stop retries. */
 const rejection = function rejection(
 	error: unknown
@@ -195,7 +204,7 @@ class AutoPresentLedger {
 					break;
 				case 'withdraw':
 					if (facts.withdrawn !== null) {
-						closeConsentPresenter(facts.withdrawn).catch(() => undefined);
+						void withdraw(facts.withdrawn);
 					}
 					break;
 				case 'report-excluded':
