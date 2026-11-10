@@ -93,7 +93,10 @@ export interface ConsentDraft {
 	 *
 	 * @internal
 	 */
-	readonly settle: (submitted: Readonly<ConsentState>) => void;
+	readonly settle: (
+		submitted: Readonly<ConsentState>,
+		submittedIAB?: NativeIABChoices | null
+	) => void;
 }
 
 /** What a stale save resolves with. Nothing was written. */
@@ -244,6 +247,11 @@ export const createConsentDraft = function createConsentDraft(
 				// selection: saving the edit would overwrite something the subject never
 				// saw, so it waits for a review.
 				stale = true;
+				// Native can no longer open a draft at all: withdraw the selection so no
+				// control offers an edit every save would refuse.
+				if (next.iab === null) {
+					iab = null;
+				}
 			} else {
 				// The same authority. Untouched parts take the new record, and the save is
 				// pinned to its revision.
@@ -301,15 +309,27 @@ export const createConsentDraft = function createConsentDraft(
 		);
 	};
 
-	const settle = function settle(submitted: Readonly<ConsentState>): void {
+	const settle = function settle(
+		submitted: Readonly<ConsentState>,
+		submittedIAB?: NativeIABChoices | null
+	): void {
 		const later = Object.fromEntries(
 			[...staged]
 				.filter((category) => values[category] !== submitted[category])
 				.map((category) => [category, values[category]])
 		);
+		// A TCF edit made while the save was pending is newer than the save.
+		const laterIAB =
+			submittedIAB !== undefined && !sameIABChoices(iab, submittedIAB)
+				? iab
+				: null;
 		snapshot = client.getSnapshot();
 		reseed();
 		stage(later);
+		if (laterIAB !== null && iab !== null) {
+			iab = laterIAB;
+			publish();
+		}
 	};
 
 	return {
@@ -339,6 +359,7 @@ export const createConsentDraft = function createConsentDraft(
 					.map((category) => [category, values[category]])
 			) as Partial<Record<OptionalConsentCategory, boolean>>;
 			const submitted = values;
+			const submittedIAB = iab;
 			// Under TCF the purposes and vendors travel with the categories, pinned to
 			// the revision the selection was made against.
 			const result = await client.commit(
@@ -347,7 +368,7 @@ export const createConsentDraft = function createConsentDraft(
 					: { action: 'iab', choices: iab, consents, revision: seed.revision }
 			);
 			if (result.ok) {
-				settle(submitted);
+				settle(submitted, submittedIAB);
 			}
 			return result;
 		},

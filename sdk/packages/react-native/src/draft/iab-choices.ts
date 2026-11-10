@@ -56,7 +56,19 @@ export const seedIABChoices = function seedIABChoices(
 	}
 	const committed = snapshot.iab.committed?.choices;
 	if (!committed) {
-		return EMPTY_IAB_CHOICES;
+		// A first decision starts as the stock presenter starts it: every consent off
+		// and the disclosed legitimate interests not objected to, from native's own
+		// projection under the publisher's disclosure.
+		const disclosed = snapshot.iab.acceptAll;
+		return {
+			...EMPTY_IAB_CHOICES,
+			purposeLegitimateInterests: sorted(
+				disclosed?.purposeLegitimateInterests ?? []
+			),
+			vendorLegitimateInterests: sorted(
+				disclosed?.vendorLegitimateInterests ?? []
+			),
+		};
 	}
 	const filled = Object.fromEntries(
 		LISTS.map((list) => [list, sorted(committed[list] ?? [])])
