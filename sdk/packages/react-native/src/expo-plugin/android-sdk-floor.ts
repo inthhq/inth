@@ -23,64 +23,162 @@ export interface AndroidSdkSetting {
 interface SdkFloor {
 	readonly level: AndroidSdkSetting['level'];
 	readonly floor: number;
-	/** Gradle DSL spellings: `minSdkVersion 24`, `minSdkVersion = 24`, `minSdk = 24`. */
+	/**
+	 * One whole Gradle statement: `minSdkVersion 24`, `minSdkVersion = 24`,
+	 * `minSdk = 24`. Anchored to the line, so the name inside a string or a call
+	 * argument is not a setting.
+	 */
 	readonly gradle: RegExp;
+	/** The same statement in the root `ext` block, which may spell `ext.` first. */
+	readonly ext: RegExp;
 	/** `gradle.properties` key, the one `expo-build-properties` writes. */
 	readonly property: RegExp;
 	/** The `expo-build-properties` option path that writes the property. */
 	readonly buildProperty: string;
 }
 
+/** `key value`, `key = value` or `key: value`, as `java.util.Properties` reads it. */
+const propertyPattern = (key: string): RegExp =>
+	new RegExp(
+		`^[ \\t\\f]*${key.replaceAll('.', '\\.')}(?:[ \\t\\f]*[=:][ \\t\\f]*|[ \\t\\f]+)(?<value>\\d{1,3})[ \\t\\f]*$`,
+		'gmu'
+	);
+
+const gradlePattern = (names: string, prefix = ''): RegExp =>
+	new RegExp(
+		`^[ \\t]*${prefix}(?:${names})(?:[ \\t]*=[ \\t]*|[ \\t]+)(?<value>\\d{1,3})[ \\t]*;?[ \\t]*$`,
+		'gmu'
+	);
+
 const SDK_FLOORS: readonly SdkFloor[] = [
 	{
 		buildProperty: 'android.minSdkVersion',
+		ext: gradlePattern('minSdkVersion', '(?:ext\\.)?'),
 		floor: MIN_ANDROID_MIN_SDK,
-		gradle: /\bminSdk(?:Version)?\b\s*=?\s*(?<value>\d{1,3})(?![\d.])/gu,
+		gradle: gradlePattern('minSdkVersion|minSdk'),
 		level: 'minSdk',
-		property: /^\s*android\.minSdkVersion\s*=\s*(?<value>\d{1,3})\s*$/gmu,
+		property: propertyPattern('android.minSdkVersion'),
 	},
 	{
 		buildProperty: 'android.compileSdkVersion',
+		ext: gradlePattern('compileSdkVersion', '(?:ext\\.)?'),
 		floor: MIN_ANDROID_COMPILE_SDK,
-		gradle: /\bcompileSdk(?:Version)?\b\s*=?\s*(?<value>\d{1,3})(?![\d.])/gu,
+		gradle: gradlePattern('compileSdkVersion|compileSdk'),
 		level: 'compileSdk',
-		property: /^\s*android\.compileSdkVersion\s*=\s*(?<value>\d{1,3})\s*$/gmu,
+		property: propertyPattern('android.compileSdkVersion'),
 	},
 ];
 
 /**
- * Every SDK level the Android project sets explicitly.
+ * Blank out Groovy and Kotlin comments, keeping strings and line breaks.
+ *
+ * Strings are skipped rather than parsed, so `//` inside `"https://..."` and
+ * `/*` inside `"**\/*.jar"` stay code. A commented-out level is not one Gradle
+ * applies.
+ */
+export const stripGradleComments = function stripGradleComments(
+	source: string
+): string {
+	let output = '';
+	let index = 0;
+	while (index < source.length) {
+		const char = source[index] ?? '';
+		const next = source[index + 1] ?? '';
+		if (char === '/' && next === '/') {
+			const end = source.indexOf('\n', index);
+			index = end === -1 ? source.length : end;
+			continue;
+		}
+		if (char === '/' && next === '*') {
+			const end = source.indexOf('*/', index + 2);
+			const stop = end === -1 ? source.length : end + 2;
+			output += source.slice(index, stop).replaceAll(/[^\n]/gu, ' ');
+			index = stop;
+			continue;
+		}
+		if (char === '"' || char === "'") {
+			const quote = source.startsWith(char.repeat(3), index)
+				? char.repeat(3)
+				: char;
+			let end = index + quote.length;
+			while (end < source.length && !source.startsWith(quote, end)) {
+				end += source[end] === '\\' ? 2 : 1;
+			}
+			end = Math.min(source.length, end + quote.length);
+			output += source.slice(index, end);
+			index = end;
+			continue;
+		}
+		output += char;
+		index += 1;
+	}
+	return output;
+};
+
+const matches = function matches(
+	contents: string | undefined,
+	pattern: RegExp
+): number[] {
+	return contents === undefined
+		? []
+		: [...contents.matchAll(pattern)].map((match) =>
+				Number.parseInt(match.groups?.value ?? '', 10)
+			);
+};
+
+const firstFile = function firstFile(
+	files: AndroidSdkFiles,
+	paths: readonly string[]
+): string | undefined {
+	return paths.find((path) => files[path] !== undefined);
+};
+
+/**
+ * The SDK levels the app module builds with, where the project sets them.
  *
  * An Expo SDK 55 to 58 template writes no number: `app/build.gradle` reads
  * `rootProject.ext.*`, and the `expo-root-project` Gradle plugin fills those
  * from, in order, a root `ext` block, the `android.*SdkVersion` keys in
  * `gradle.properties`, then React Native's version catalog. The catalog default
- * already meets c15t's floors, so only an explicit value can fall below them,
- * and these are the places one can be written.
+ * already meets c15t's floors, so only an explicit value can fall below them.
+ *
+ * Only the value Gradle applies counts. A literal in the app module wins over
+ * the other two, and every literal there counts, because a product flavor's
+ * level applies to that flavor's variants. Otherwise the last root `ext`
+ * assignment wins, and otherwise the last `gradle.properties` entry, as
+ * `java.util.Properties` reads it. Comments never count.
  *
  * @param files - File contents keyed by path under `android/`.
- * @returns Each literal level, in file order.
+ * @returns The effective explicit levels; empty when Expo's defaults apply.
  */
 export const findAndroidSdkSettings = function findAndroidSdkSettings(
 	files: AndroidSdkFiles
 ): AndroidSdkSetting[] {
-	const settings: AndroidSdkSetting[] = [];
-	for (const [file, contents] of Object.entries(files)) {
-		if (contents === undefined) {
-			continue;
+	const app = firstFile(files, ['app/build.gradle', 'app/build.gradle.kts']);
+	const root = firstFile(files, ['build.gradle', 'build.gradle.kts']);
+	const appSource =
+		app === undefined ? undefined : stripGradleComments(files[app] ?? '');
+	const rootSource =
+		root === undefined ? undefined : stripGradleComments(files[root] ?? '');
+	const properties = files['gradle.properties'];
+
+	return SDK_FLOORS.flatMap((floor): AndroidSdkSetting[] => {
+		const inApp = matches(appSource, floor.gradle);
+		if (app !== undefined && inApp.length > 0) {
+			return inApp.map((value) => ({ file: app, level: floor.level, value }));
 		}
-		const pattern = file.endsWith('gradle.properties') ? 'property' : 'gradle';
-		for (const floor of SDK_FLOORS) {
-			for (const match of contents.matchAll(floor[pattern])) {
-				settings.push({
-					file,
-					level: floor.level,
-					value: Number.parseInt(match.groups?.value ?? '', 10),
-				});
-			}
+		const inRoot = matches(rootSource, floor.ext).at(-1);
+		if (root !== undefined && inRoot !== undefined) {
+			return [{ file: root, level: floor.level, value: inRoot }];
 		}
-	}
-	return settings;
+		const inProperties = matches(properties, floor.property).at(-1);
+		if (inProperties !== undefined) {
+			return [
+				{ file: 'gradle.properties', level: floor.level, value: inProperties },
+			];
+		}
+		return [];
+	});
 };
 
 /**

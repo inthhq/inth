@@ -64,13 +64,22 @@ refusal. `isDirty` tells you whether anything changed. `acceptAll` and
 
 While the draft has no edits, it follows the saved record. While it has
 edits, a category you did not change still takes the newly saved value, so a
-save writes back only what the subject changed. A save through
-`useSaveConsents()` with `'all'`, `'none'` or a per-category object clears the
-edits the draft held when the save began; an edit made while a save is pending
-stays staged. If the policy or
-the displayed categories change under an unsaved edit, `isStale` turns true and
-`save()` resolves `ok: false` with `reason: 'concurrent-change'`, writing
-nothing. Call `reset()` and let the subject review again.
+save writes back only what the subject changed. A staged value that the record
+now holds is no longer an edit. If another surface records a different
+decision for a category the subject staged, the newer decision wins: the
+category drops its staged value, shows the record, and is listed in
+`staleCategories`. Setting that category again clears it from the list.
+
+A save through `useSaveConsents()` with `'all'`, `'none'` or a per-category
+object clears the edits the draft held when the save began. An edit made while
+a save is pending stays staged. If another decision landed after the save, an
+edit made meanwhile that disagrees with the record goes to `staleCategories`
+instead.
+
+If the policy or the displayed categories change under an unsaved edit, or
+`staleCategories` is not empty, `isStale` turns true and `save()` resolves
+`ok: false` with `reason: 'concurrent-change'`, writing nothing. Call `reset()`
+and let the subject review again.
 
 Every component outside a `ConsentDraftProvider` shares one draft, so a Save
 button elsewhere on the screen can call `useSaveConsents()()` with no argument,

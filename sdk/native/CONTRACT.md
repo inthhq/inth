@@ -1457,7 +1457,7 @@ Rules the plugin enforces at build time
   set on purpose and would be written back by the next prebuild. A finalized
   Android mod, which runs after every other plugin's mods, reads
   `gradle.properties` and the root and app `build.gradle(.kts)` and fails the
-  prebuild naming each literal below the floor and where to change it.
+  prebuild when the level Gradle applies (an app-module literal, else the last root `ext` assignment, else the last `gradle.properties` entry; comments never count) is below the floor, naming that setting and where to change it.
   `__tests__/android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
   57 and 58 templates. `targetSdkVersion` is never read.
 - Expo Go fails the build with a message rather than failing at runtime. The
