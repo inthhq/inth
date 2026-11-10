@@ -75,7 +75,7 @@ final class BranchConsentOwner {
                 Branch.getInstance().setConsumerProtectionAttributionLevel(branchLevel)
             },
             setDMAParamsForEEA: { consent in
-                Branch.getInstance().setDMAParamsForEEA(inEEA, adPersonalizationConsent: consent.adPersonalization, adUserDataUsageConsent: consent.adUserData)
+                Branch.setDMAParamsForEEA(inEEA, adPersonalizationConsent: consent.adPersonalization, adUserDataUsageConsent: consent.adUserData)
             }
         )
     }
@@ -86,7 +86,9 @@ final class BranchConsentOwner {
 ```
 
 c15t names its type `BranchAttribution` so it does not collide with Branch's
-`BranchAttributionLevel` in a file that imports both.
+`BranchAttributionLevel` in a file that imports both. In Branch's iOS SDK,
+`setDMAParamsForEEA` is a class method on `Branch`, while
+`setConsumerProtectionAttributionLevel` is called on `Branch.getInstance()`.
 
 ## Connect an Android app
 
@@ -157,6 +159,9 @@ Branch's config plugin.
 `close()` or `disconnect()`) sets `NONE` and sends denied DMA values. Deep
 links keep working.
 
+When the level goes down, the helper makes both calls even if one of them
+fails, and reports the failure to `onError`.
+
 ## Check the integration
 
 1. Launch with no saved choice. Confirm Branch requests carry no advertising
@@ -166,4 +171,10 @@ links keep working.
 4. Withdraw both. Confirm `NONE`.
 
 The helper tests cover level order and category changes with recorded calls.
-They were not run against the Branch SDK.
+They were not run against the Branch SDK. The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `react-native-branch` 7.0.0 | Type-checked against the package's published types |
+| Android | `io.branch.sdk.android:library` 5.21.3 | Method signatures read from the published AAR |
+| iOS | Branch iOS SDK 3.14.2 | Checked against the SDK's public `Branch.h` header |

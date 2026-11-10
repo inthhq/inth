@@ -28,7 +28,7 @@ class BrazeIntegrationTest {
 	}
 
 	@Test
-	fun `a grant enables then records consent and withdrawal records denial before disabling`() {
+	fun `a grant enables then records consent and withdrawal only disables`() {
 		val core = kernel()
 		val calls = mutableListOf<String>()
 		val integration = braze(core, calls)
@@ -36,7 +36,7 @@ class BrazeIntegrationTest {
 		assertTrue(core.save(CommitIntent.All).ok)
 		assertEquals(listOf("enable", "ads:true:true"), calls.drain())
 		assertTrue(core.save(CommitIntent.Necessary).ok)
-		assertEquals(listOf("ads:false:false", "disable"), calls.drain())
+		assertEquals(listOf("disable"), calls.drain())
 		integration.close()
 		assertEquals(listOf("disable"), calls)
 	}
@@ -50,6 +50,10 @@ class BrazeIntegrationTest {
 		assertEquals(listOf("disable", "enable", "ads:false:false"), calls.drain())
 		core.choose(FUNCTIONALITY to true, MARKETING to true)
 		assertEquals(listOf("ads:true:true"), calls.drain())
+		core.choose(MARKETING to false)
+		assertEquals("Braze still runs, so the denial is written", listOf("ads:false:false"), calls.drain())
+		core.choose(MARKETING to true)
+		calls.clear()
 		integration.sync()
 		assertEquals(listOf("enable", "ads:true:true"), calls.drain())
 		integration.close()
@@ -86,6 +90,30 @@ class BranchIntegrationTest {
 		assertEquals(listOf("dma:true:true", "level:FULL"), calls.drain())
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertEquals(listOf("level:NONE", "dma:false:false"), calls.drain())
+		integration.close()
+	}
+
+	@Test
+	fun `a failed level change on withdrawal still sends denied DMA parameters and is reported`() {
+		val core = kernel()
+		val calls = mutableListOf<String>()
+		val failures = mutableListOf<Exception>()
+		var failLowering = false
+		val integration = BranchIntegration(core,
+			setConsumerProtectionAttributionLevel = {
+				if (failLowering && it != BranchAttribution.FULL) error("Branch rejected level")
+				calls += "level:$it"
+			},
+			setDMAParamsForEEA = { calls += "dma:${it.adPersonalization}:${it.adUserData}" },
+			onError = failures::add,
+		)
+		assertTrue(core.save(CommitIntent.All).ok)
+		calls.clear()
+		failLowering = true
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("dma:false:false"), calls)
+		assertEquals(listOf("Branch rejected level"), failures.map { it.message })
+		failLowering = false
 		integration.close()
 	}
 
@@ -132,6 +160,32 @@ class SingularIntegrationTest {
 		assertEquals(listOf("limit:false", "resume", "optIn"), calls.drain())
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertEquals(listOf("stop", "limit:true"), calls.drain())
+		integration.close()
+	}
+
+	@Test
+	fun `a failed stop on withdrawal still limits data sharing and is reported`() {
+		val core = kernel()
+		val calls = mutableListOf<String>()
+		val failures = mutableListOf<Exception>()
+		var failStop = false
+		val integration = SingularIntegration(core,
+			limitDataSharing = { calls += "limit:$it" },
+			stopAllTracking = {
+				if (failStop) error("Singular rejected stop")
+				calls += "stop"
+			},
+			resumeAllTracking = { calls += "resume" },
+			trackingOptIn = { calls += "optIn" },
+			onError = failures::add,
+		)
+		assertTrue(core.save(CommitIntent.All).ok)
+		calls.clear()
+		failStop = true
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("limit:true"), calls)
+		assertEquals(listOf("Singular rejected stop"), failures.map { it.message })
+		failStop = false
 		integration.close()
 	}
 

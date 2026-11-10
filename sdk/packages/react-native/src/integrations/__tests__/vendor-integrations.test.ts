@@ -166,7 +166,7 @@ const cases: VendorCase[] = [
 		denied: ['disable'],
 		granted: ['enable', 'ads:true:true:true'],
 		name: 'Braze',
-		withdrawn: ['ads:false:false:false', 'disable'],
+		withdrawn: ['disable'],
 	},
 	{
 		connect: (calls, options) =>
@@ -305,6 +305,10 @@ describe('a marketing-only change after a grant', () => {
 		fake.pushSnapshot(grant('functionality', 'marketing'));
 		await settle(calls);
 		expect(calls.splice(0)).toEqual(['ads:true:true:true']);
+		// Braze still runs, so the denial is written.
+		fake.pushSnapshot(grant('functionality'));
+		await settle(calls);
+		expect(calls.splice(0)).toEqual(['ads:false:false:false']);
 		await integration.disconnect();
 		expect(calls).toEqual(['disable']);
 	});
@@ -430,5 +434,72 @@ describe('withdrawal still restricts collection when a vendor call fails', () =>
 		await vi.waitFor(() =>
 			expect(calls).toEqual(['advertiserId:false', 'ldu:true'])
 		);
+	});
+});
+
+describe('Braze, Singular and Branch withdrawal survives a failing vendor call', () => {
+	test('Braze withdrawal only disables, so a failing attribute write cannot block it', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const integration = connectBraze(
+			{
+				disableSDK: () => log(calls, 'disable'),
+				enableSDK: () => log(calls, 'enable'),
+				setGoogleAdsConsent: (consent) =>
+					consent.adUserData
+						? log(calls, 'ads:true')
+						: Promise.reject(new Error('Braze rejected attributes')),
+			},
+			{ onError: vi.fn() }
+		);
+		await integration.ready;
+		calls.length = 0;
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['disable']);
+	});
+
+	test('Singular limits data sharing when stop rejects, and reports it', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Singular rejected stop');
+		const onError = vi.fn();
+		let failStop = false;
+		const integration = connectSingular(
+			{
+				limitDataSharing: (limit) => log(calls, `limit:${limit}`),
+				resumeAllTracking: () => log(calls, 'resume'),
+				stopAllTracking: () =>
+					failStop ? Promise.reject(failure) : log(calls, 'stop'),
+				trackingOptIn: () => log(calls, 'optIn'),
+			},
+			{ onError }
+		);
+		await integration.ready;
+		calls.length = 0;
+		failStop = true;
+		fake.pushSnapshot(grant());
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		expect(calls).toEqual(['limit:true']);
+	});
+
+	test('Branch sends denied DMA parameters when lowering the level never settles', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const integration = connectBranch(
+			{
+				setConsumerProtectionAttributionLevel: (level) => {
+					log(calls, `level:${level}`);
+					return level === 'FULL' ? undefined : new Promise<void>(() => {});
+				},
+				setDMAParamsForEEA: (consent) =>
+					log(calls, `dma:${consent.adPersonalization}`),
+			},
+			{ onError: vi.fn() }
+		);
+		await integration.ready;
+		calls.length = 0;
+		fake.pushSnapshot(grant());
+		await vi.waitFor(() => expect(calls).toEqual(['level:NONE', 'dma:false']));
 	});
 });

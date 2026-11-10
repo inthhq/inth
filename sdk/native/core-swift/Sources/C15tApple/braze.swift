@@ -14,10 +14,11 @@ import Foundation
 /// Sync. Marketing grants both, and is the default category, as for the web's email
 /// and messaging helpers. c15t does not link Braze.
 ///
-/// On withdrawal from a running state, the helper records the denied attributes before
-/// disabling, so Audience Sync stops treating the user as consented. It never writes
-/// attributes to a Braze user that was not running under consent. After `changeUser`,
-/// call ``sync()`` to record the attributes on the new user.
+/// When the category is withdrawn, the helper only disables Braze. It does not write
+/// denied attributes first: Braze cancels in-flight requests when disabled and offers
+/// no acknowledged flush, so the write could not be confirmed. Braze's servers keep the
+/// last values sent. A marketing change while the category stays granted is written
+/// normally. After `changeUser`, call ``sync()`` to record the attributes on the new user.
 ///
 /// Retain this object for the SDK's lifetime. Calls run synchronously on the caller
 /// or native consent notification queue.
@@ -42,7 +43,6 @@ public final class BrazeIntegration: @unchecked Sendable {
                 let now = current()
                 if now.tracking { setGoogleAdsConsent(now.ads) }
             } else {
-                if previous?.tracking == true { setGoogleAdsConsent(state.ads) }
                 setEnabled(false)
             }
         }

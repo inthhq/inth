@@ -12,7 +12,7 @@ final class EngagementIntegrationTests: XCTestCase {
         XCTAssertEqual(calls.all, ["enabled:false", "enabled:false"])
     }
 
-    func testBrazeRecordsConsentOnGrantAndDenialBeforeDisabling() async throws {
+    func testBrazeRecordsConsentOnGrantAndOnlyDisablesOnWithdrawal() async throws {
         let core = try await resolvedCore()
         let calls = VendorCalls()
         let integration = braze(core, calls)
@@ -20,7 +20,7 @@ final class EngagementIntegrationTests: XCTestCase {
         XCTAssertEqual(core.save(.all).status, .committed)
         XCTAssertEqual(calls.drain(), ["enabled:true", "ads:true"])
         XCTAssertEqual(core.save(.necessary).status, .committed)
-        XCTAssertEqual(calls.drain(), ["ads:false", "enabled:false"])
+        XCTAssertEqual(calls.drain(), ["enabled:false"])
         integration.cancel()
         XCTAssertEqual(calls.drain(), ["enabled:false"])
         await core.waitUntilIdle()
@@ -34,6 +34,10 @@ final class EngagementIntegrationTests: XCTestCase {
         XCTAssertEqual(calls.drain(), ["enabled:false", "enabled:true", "ads:false"])
         XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
         XCTAssertEqual(calls.drain(), ["ads:true"])
+        XCTAssertEqual(core.save(.custom([.marketing: false])).status, .committed)
+        XCTAssertEqual(calls.drain(), ["ads:false"], "Braze still runs, so the denial is written")
+        XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
+        calls.drain()
         integration.sync()
         XCTAssertEqual(calls.drain(), ["enabled:true", "ads:true"])
         integration.cancel()

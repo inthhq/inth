@@ -29,6 +29,9 @@ enum class BranchAttribution {
  * then `adPersonalization` and `adUserData`. Marketing grants both, as on the web.
  * The helper adds no Branch dependency.
  *
+ * When lowering the level, both calls run even if the first throws, and the
+ * failure is reported.
+ *
  * Connect before Branch initializes its session so the first request carries the
  * level. Callbacks run synchronously on the publishing thread, serialized per
  * helper. Retain the helper for the SDK's lifetime and [close] it during teardown.
@@ -58,8 +61,7 @@ class BranchIntegration(
 			setDMAParamsForEEA(ads)
 			setConsumerProtectionAttributionLevel(current().first)
 		} else {
-			setConsumerProtectionAttributionLevel(level)
-			setDMAParamsForEEA(ads)
+			runAll({ setConsumerProtectionAttributionLevel(level) }, { setDMAParamsForEEA(ads) })
 		}
 	}
 

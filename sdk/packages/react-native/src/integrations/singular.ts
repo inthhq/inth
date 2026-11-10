@@ -1,4 +1,4 @@
-import { connectTrackingAndAds } from './consent-integration';
+import { connectTrackingAndAds, settleAll } from './consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
@@ -24,7 +24,8 @@ export interface SingularClient {
  * `resumeAllTracking` and `trackingOptIn` once per grant. `limitDataSharing`
  * receives `true` unless `adUserData` and `adPersonalization` are both granted;
  * Singular passes it to Google as the DMA consent signals. Marketing grants
- * both and is the default category.
+ * both and is the default category. On withdrawal both calls are made even if
+ * the first fails.
  *
  * @param singular - App-owned wrapper around `singular-react-native`.
  * @param options - Category, error handler and optional native client.
@@ -43,8 +44,10 @@ export const connectSingular = (
 		const state = current();
 		const limit = !(state.ads.adUserData && state.ads.adPersonalization);
 		if (!state.tracking) {
-			await singular.stopAllTracking();
-			await singular.limitDataSharing(limit);
+			await settleAll([
+				() => singular.stopAllTracking(),
+				() => singular.limitDataSharing(limit),
+			]);
 			return state;
 		}
 		await singular.limitDataSharing(limit);

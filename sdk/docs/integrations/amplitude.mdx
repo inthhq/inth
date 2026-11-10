@@ -207,7 +207,13 @@ withdrawal. Relaunch after both choices, reset the vendor and reapply permission
 Check that unrelated consent changes do not submit new opt-out commands.
 Inspect previously queued events separately from events attempted after refusal.
 
-The checked mapping uses RN Analytics 1.13.0.
+The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `@amplitude/analytics-react-native` 1.13.1 | Type-checked against the package's published types |
+| Android | `com.amplitude:analytics-android` 1.37.1 | `optOut` read from the published artifacts |
+| iOS | AmplitudeSwift 1.20.0 | Checked against the SDK's Swift source |
 Helper tests and vendor consumer checks cover the binding;
 they do not prove your app's actual network or device behavior. Follow
 [mobile verification](/docs/guides/mobile-verify) before relying on collection

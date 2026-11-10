@@ -25,9 +25,12 @@ export interface BrazeClient {
  * there, as Booleans, from `adUserData` and `adPersonalization`. Marketing
  * grants both and is the default category.
  *
- * On withdrawal from a running state, the helper records the denied attributes
- * before disabling. It never writes attributes to a Braze user that was not
- * running under consent. Call `sync()` after `changeUser`.
+ * When the category is withdrawn, the helper only calls `disableSDK`. It does
+ * not write denied attributes first: Braze drops pending data when disabled
+ * and the wrapper offers no acknowledged flush, so the write could not be
+ * confirmed. Braze's servers keep the last values sent. A marketing change
+ * while the category stays granted is written normally. Call `sync()` after
+ * `changeUser`.
  *
  * @param braze - App-owned wrapper around `@braze/react-native-sdk`.
  * @param options - Category, error handler and optional native client.
@@ -45,9 +48,6 @@ export const connectBraze = (
 	connectTrackingAndAds(options, async (current, previous) => {
 		const state = current();
 		if (!state.tracking) {
-			if (previous?.tracking === true) {
-				await braze.setGoogleAdsConsent(state.ads);
-			}
 			await braze.disableSDK();
 			return state;
 		}

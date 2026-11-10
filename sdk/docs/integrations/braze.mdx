@@ -26,15 +26,34 @@ no Braze helper.
 | Category denied or pending at startup | Disable the SDK |
 | Category granted | Enable the SDK, once per grant, then set both attributes |
 | Marketing changes while the category stays granted | Set both attributes |
-| Category withdrawn while Braze runs | Set both attributes to the denied values, then disable |
-
-The helper writes `false` before disabling so Audience Sync stops treating
-the user as consented. It never writes attributes for a user Braze was not
-already tracking under consent.
+| Category withdrawn | Disable the SDK, and nothing else |
 
 [Disabling Braze](https://www.braze.com/docs/developer_guide/analytics/managing_data_collection)
-cancels its network requests and drops pending work. Android keeps the
-disabled state across launches.
+cancels its network requests and drops pending work. Android and Swift keep
+the disabled state across launches.
+
+### Braze keeps the last attributes after withdrawal
+
+When the category Braze runs under is withdrawn, the helper disables Braze
+straight away and does **not** write `false` to the two attributes first.
+Braze would drop that write: disabling cancels in-flight requests, and the
+data flush on Swift, Android and React Native (`requestImmediateDataFlush`)
+reports neither success nor failure. Stopping collection at once is the safe
+choice for the user, so c15t does not send a write it cannot confirm.
+
+So Braze's servers keep whatever the attributes last said, which can be
+`true`, and Audience Sync can go on treating the user as consented. To close
+that gap:
+
+- Run Braze under a category other than marketing, such as `functionality`
+  for push and in-app messages. Withdrawing marketing then leaves Braze
+  running, and the helper writes `false` through Braze's normal sync.
+- When the category Braze runs under is withdrawn, set
+  `$google_ad_user_data` and `$google_ad_personalization` to `false` from
+  your backend with Braze's [`/users/track` endpoint](https://www.braze.com/docs/api/endpoints/user_data/post_user_track),
+  and remove the user from synced audiences with an Audience Sync step, as
+  Braze's [Audience Sync guide](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync)
+  requires for withdrawn consent. c15t does not do this for you.
 
 ## Before you start
 
@@ -152,9 +171,18 @@ without writing attributes. To clear data on the device, use Braze's
 1. Launch with no saved choice. Confirm Braze sends no session.
 2. Grant marketing. Confirm a session, and both attributes as `true` on the
    user's profile.
-3. Withdraw marketing. Confirm both attributes become `false` before Braze
-   stops sending.
-4. Relaunch after withdrawal. Confirm Braze stays disabled.
+3. Withdraw marketing. Confirm Braze stops sending at once, and that your
+   backend update sets both attributes to `false` on the profile.
+4. With `category` set to `functionality`, withdraw marketing only. Confirm
+   both attributes become `false` while Braze keeps running.
+5. Relaunch after withdrawal. Confirm Braze stays disabled.
 
 The helper tests cover order, withdrawal and category changes with recorded
-calls. They were not run against the Braze SDK.
+calls. They were not run against the Braze SDK. The snippets were written
+against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `@braze/react-native-sdk` 24.0.1 | Type-checked against the package's published types |
+| Android | `android-sdk-base` 45.0.0 | Method signatures read from the published AAR |
+| iOS | Braze Swift SDK 19.2.0 | Checked against the SDK's published API reference |

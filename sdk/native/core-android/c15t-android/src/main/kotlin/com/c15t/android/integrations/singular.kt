@@ -15,7 +15,8 @@ import com.c15t.core.model.ConsentCategory
  *
  * Connect before `Singular.init` so the first session carries the limit, as
  * Singular recommends. Callbacks run synchronously on the publishing thread,
- * serialized per helper. Retain the helper and [close] it during teardown.
+ * serialized per helper. Retain the helper and [close] it during teardown. On
+ * withdrawal both calls run even if the first throws, and the failure is reported.
  *
  * @param core The same installed native core used by the consent UI.
  * @param category Optional category that lets Singular track. Defaults to marketing.
@@ -45,8 +46,7 @@ class SingularIntegration(
 				trackingOptIn()
 			}
 		} else {
-			stopAllTracking()
-			limitDataSharing(limit)
+			runAll(stopAllTracking, { limitDataSharing(limit) })
 		}
 	}
 

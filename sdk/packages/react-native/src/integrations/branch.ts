@@ -1,5 +1,5 @@
 import type { AllConsentNames } from '../protocol/vocabulary';
-import { connectConsentState } from './consent-integration';
+import { connectConsentState, settleAll } from './consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
@@ -47,7 +47,8 @@ export type BranchOptions = Pick<
  * analytics-only level. Anything else, including pending consent, sets `NONE`,
  * which keeps deep links working. In `setDMAParamsForEEA`, pass your own EEA
  * flag, since c15t's policy model is not a legal jurisdiction flag, then
- * `adPersonalization` and `adUserData`. Requires `react-native-branch` 6.5 or
+ * `adPersonalization` and `adUserData`. When lowering the level, both calls
+ * are made even if the first fails. Requires `react-native-branch` 6.5 or
  * later.
  *
  * @param branch - App-owned wrapper around `react-native-branch`.
@@ -78,8 +79,10 @@ export const connectBranch = (
 				await branch.setConsumerProtectionAttributionLevel(now.level);
 				return { ads: state.ads, level: now.level };
 			}
-			await branch.setConsumerProtectionAttributionLevel(state.level);
-			await branch.setDMAParamsForEEA(state.ads);
+			await settleAll([
+				() => branch.setConsumerProtectionAttributionLevel(state.level),
+				() => branch.setDMAParamsForEEA(state.ads),
+			]);
 			return state;
 		}
 	);

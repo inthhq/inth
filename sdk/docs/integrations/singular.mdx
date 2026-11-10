@@ -129,6 +129,10 @@ development build with Singular's native module.
 Teardown (`stop()`, `close()` or `disconnect()`) stops all tracking. Neither
 deletes data Singular already received.
 
+On withdrawal, the helper makes both calls, `stopAllTracking()` and
+`limitDataSharing(true)`, even if one of them fails, and reports the failure
+to `onError`.
+
 ## Check the integration
 
 1. Launch with no saved choice. Confirm `isAllTrackingStopped()` is `true`.
@@ -139,4 +143,10 @@ deletes data Singular already received.
 4. Withdraw. Confirm tracking stops, and stays stopped after a relaunch.
 
 The helper tests cover order and category changes with recorded calls. They
-were not run against the Singular SDK.
+were not run against the Singular SDK. The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `singular-react-native` 4.3.1 | Type-checked against the package's published types |
+| Android | `singular_sdk` 12.17.0 | Method signatures read from the published AAR |
+| iOS | Singular iOS SDK 12.16.0 | Checked against the SDK's public `Singular.h` header |

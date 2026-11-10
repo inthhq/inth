@@ -14,10 +14,12 @@ import com.c15t.core.model.ConsentCategory
  * Google in Audience Sync. Marketing grants both, and is the default category, as
  * for the web's email and messaging helpers. The helper adds no Braze dependency.
  *
- * On withdrawal from a running state, the helper records the denied attributes
- * before disabling, so Audience Sync stops treating the user as consented. It never
- * writes attributes to a Braze user that was not running under consent. After
- * `changeUser`, call [sync] to record the attributes on the new user.
+ * When [category] is withdrawn, the helper only disables Braze. It does not write
+ * denied attributes first: Braze drops pending data when disabled and offers no
+ * acknowledged flush, so the write could not be confirmed. Braze's servers keep
+ * the last values sent. A marketing change while [category] stays granted is
+ * written normally. After `changeUser`, call [sync] to record the attributes on
+ * the new user.
  *
  * Callbacks run synchronously on the publishing thread, serialized per helper.
  * Retain the helper for the SDK's lifetime and [close] it during teardown.
@@ -39,14 +41,13 @@ class BrazeIntegration(
 	setGoogleAdsConsent: (GoogleAdsConsent) -> Unit,
 	onError: (Exception) -> Unit,
 ) : AutoCloseable {
-	private val binding = ConsentBinding(core, category, onError, trackingAndAds(category)) { previous, (tracking, ads), current ->
+	private val binding = ConsentBinding(core, category, onError, trackingAndAds(category)) { previous, (tracking), current ->
 		if (tracking) {
 			if (previous?.first != true) enableSdk()
 			// A withdrawal during enable is applied next.
 			val (stillTracking, now) = current()
 			if (stillTracking) setGoogleAdsConsent(now)
 		} else {
-			if (previous?.first == true) setGoogleAdsConsent(ads)
 			disableSdk()
 		}
 	}
