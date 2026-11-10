@@ -54,7 +54,9 @@ export const connectSingular = (
 		// A withdrawal during these calls queues the next apply, which stops.
 		if (previous?.tracking !== true && current().tracking) {
 			await singular.resumeAllTracking();
-			await singular.trackingOptIn();
+			if (current().tracking) {
+				await singular.trackingOptIn();
+			}
 		}
 		return state;
 	});

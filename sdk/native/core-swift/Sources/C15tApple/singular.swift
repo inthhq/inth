@@ -40,7 +40,7 @@ public final class SingularIntegration: @unchecked Sendable {
                 limitDataSharing(limit)
                 if previous?.tracking != true && current().tracking {
                     resumeAllTracking()
-                    trackingOptIn()
+                    if current().tracking { trackingOptIn() }
                 }
             } else {
                 stopAllTracking()

@@ -80,6 +80,33 @@ final class WithdrawalPreemptionTests: XCTestCase {
                 trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
             return ConnectedHelper(cancel: helper.cancel)
         }),
+        ("Braze", { core, r in
+            let helper = BrazeIntegration(
+                core: core,
+                setEnabled: { r("enabled:\($0)") },
+                setGoogleAdsConsent: { r("ads:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Branch", { core, r in
+            let helper = BranchIntegration(
+                core: core,
+                setConsumerProtectionAttributionLevel: { r("level:\($0.rawValue)") },
+                setDMAParamsForEEA: { r("dma:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Singular", { core, r in
+            let helper = SingularIntegration(
+                core: core,
+                limitDataSharing: { r("limit:\($0)") },
+                stopAllTracking: { r("stop") },
+                resumeAllTracking: { r("resume") },
+                trackingOptIn: { r("optIn") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Amplitude", { core, r in
+            let helper = AmplitudeIntegration(core: core) { r("optOut:\($0)") }
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
         ("Meta App Events", { core, r in
             let helper = MetaAppEventsIntegration(
                 core: core,

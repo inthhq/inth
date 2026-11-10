@@ -49,6 +49,22 @@ internal val integrationHelpers = listOf(
 	IntegrationHelper("Adjust") { core, r, e ->
 		AdjustIntegration(core, enable = { r("enable") }, disable = { r("disable") }, trackThirdPartySharing = { r("sharing:${it.adUserData}") }, onError = e)
 	},
+	IntegrationHelper("Braze") { core, r, e ->
+		BrazeIntegration(core, enableSdk = { r("enable") }, disableSdk = { r("disable") }, setGoogleAdsConsent = { r("ads:${it.adUserData}") }, onError = e)
+	},
+	IntegrationHelper("Branch") { core, r, e ->
+		BranchIntegration(core, setConsumerProtectionAttributionLevel = { r("level:$it") }, setDMAParamsForEEA = { r("dma:${it.adUserData}") }, onError = e)
+	},
+	IntegrationHelper("Singular") { core, r, e ->
+		SingularIntegration(core,
+			limitDataSharing = { r("limit:$it") },
+			stopAllTracking = { r("stop") },
+			resumeAllTracking = { r("resume") },
+			trackingOptIn = { r("optIn") },
+			onError = e,
+		)
+	},
+	IntegrationHelper("Amplitude") { core, r, e -> AmplitudeIntegration(core, setOptOut = { r("optOut:$it") }, onError = e) },
 	IntegrationHelper("Meta App Events") { core, r, e ->
 		MetaAppEventsIntegration(core,
 			setAutoLogAppEventsEnabled = { r("autoLog:$it") },

@@ -43,7 +43,7 @@ class SingularIntegration(
 			limitDataSharing(limit)
 			if (previous?.first != true && current().first) {
 				resumeAllTracking()
-				trackingOptIn()
+				if (current().first) trackingOptIn()
 			}
 		} else {
 			runAll(stopAllTracking, { limitDataSharing(limit) })

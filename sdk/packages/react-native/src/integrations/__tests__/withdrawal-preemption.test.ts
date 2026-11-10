@@ -12,11 +12,14 @@ import {
 	connectAdMob,
 	connectAmplitude,
 	connectAppsFlyer,
+	connectBranch,
+	connectBraze,
 	connectFirebaseAnalytics,
 	connectMetaAppEvents,
 	connectMixpanel,
 	connectPostHog,
 	connectSentryReplay,
+	connectSingular,
 } from '../index';
 import type { AnalyticsIntegrationOptions, ConsentIntegration } from '../index';
 
@@ -109,6 +112,9 @@ const helpers: readonly (readonly [string, Connect])[] = [
 	['AppsFlyer', connectAppsFlyer],
 	['Adjust', connectAdjust],
 	['Meta App Events', connectMetaAppEvents],
+	['Braze', connectBraze],
+	['Branch', (client, options) => connectBranch(client, options)],
+	['Singular', connectSingular],
 ];
 
 /** The calls a helper makes for denial, and those only a grant makes. */
