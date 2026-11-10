@@ -53,7 +53,9 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     /// Live JavaScript listeners. A snapshot event is only a hint to go and read, so
     /// with no subscriber it is dropped rather than queued.
     private var listenerCount = 0
+    #if !C15T_NO_NATIVE_UI
     private var consentHost: C15tConsentHost?
+    #endif
 
     public override init() {
         super.init()
@@ -215,6 +217,9 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     private func presentNative(preferences: Bool, privacyPolicyURL: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        #if C15T_NO_NATIVE_UI
+        reject(C15tPayload.nativeUIExcludedCode, C15tPayload.nativeUIExcludedMessage, nil)
+        #else
         followCore()
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
@@ -226,12 +231,16 @@ public final class C15tReactNativeModule: RCTEventEmitter {
                 })
             } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host, installed core and HTTPS privacy-policy URL. \(error)", error) }
         }
+        #endif
     }
 
     @objc(closeConsentPresenter:resolve:reject:)
     public func closeConsentPresenter(_ sessionId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DispatchQueue.main.async { [weak self] in
+            #if !C15T_NO_NATIVE_UI
             self?.consentHost?.close(sessionID: sessionId)
+            #endif
+            _ = self
             resolve(nil)
         }
     }
@@ -276,7 +285,9 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     public override func invalidate() {
+        #if !C15T_NO_NATIVE_UI
         DispatchQueue.main.async { [self] in consentHost?.detach(); consentHost = nil }
+        #endif
         subscriber.detach()
         super.invalidate()
     }

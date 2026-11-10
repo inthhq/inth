@@ -105,6 +105,9 @@ draw is `#RRGGBB`. A native `dark` value needs the same field in `colors`.
 | `brand.name`, `brand.mark`, `brand.hidden` | None | App name and mark above the headline |
 | `branding.provider`, `branding.name`, `branding.mark`, `branding.hidden` | None | Provider attribution |
 
+To build without the stock native screens, set `nativeUI: false` instead of
+`theme`; see [Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
+
 Fields only the React Native components draw, such as `motion`,
 `colors.border` or `typography.lineHeight`, are checked and not written.
 Prebuild fails on a value the native screens cannot draw, such as an `hsl()`

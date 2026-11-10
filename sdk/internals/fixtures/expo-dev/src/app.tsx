@@ -11,6 +11,7 @@ import {
 	ConsentDialog,
 	ConsentPreferences,
 	createConsentTheme,
+	useC15tBootstrap,
 	useTrackingRequest,
 	useConsentStatus,
 	useSnapshot,
@@ -25,6 +26,7 @@ import { Text as NativeText, View } from 'react-native';
 import { useConsentSource } from './c15t/consent-source';
 import consentTheme from './c15t/consent-theme.json';
 import { Button, Card, Hint, Screen } from './components/ui';
+import { HeadlessConsentApp } from './screens/headless';
 import { HomeScreen } from './screens/home';
 import { PreferencesScreen } from './screens/preferences';
 
@@ -265,7 +267,18 @@ const NativeApp = () => {
 		</View>
 	);
 };
+/**
+ * A binary built with `C15T_NATIVE_UI=0` links no stock native screens, so it
+ * draws its own consent UI instead of asking native to present one.
+ */
+const NativeOrHeadlessApp = () =>
+	useC15tBootstrap().nativeUI === false ? (
+		<HeadlessConsentApp />
+	) : (
+		<NativeApp />
+	);
+
 export const App = () => {
 	const { kind } = useConsentSource();
-	return kind === 'native' ? <NativeApp /> : <LegacyApp />;
+	return kind === 'native' ? <NativeOrHeadlessApp /> : <LegacyApp />;
 };

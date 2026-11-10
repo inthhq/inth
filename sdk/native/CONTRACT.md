@@ -910,6 +910,13 @@ headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON number
 presenter. The bridge adds `committed: { tcString, addtlConsent, choices } | null`
 inside the snapshot's `iab` object, from `iabConsent()`, beside the core's `gvl`.
 
+`c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
+`gradle.properties` for Android) builds the bridge without the stock screens: the
+pod drops `vendor/C15tConsentUI` and `C15tConsentHost.swift` and compiles with
+`C15T_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
+`src/nativeUi` and drops `c15t-consent-ui`. `getBootstrap()` reports `nativeUI`,
+and the presenter methods reject with `C15T_NATIVE_UI_EXCLUDED`.
+
 Events: `snapshot`, `error`, `initialized`. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new
 `revision` and JavaScript pulls with `getSnapshot()` only when a mounted

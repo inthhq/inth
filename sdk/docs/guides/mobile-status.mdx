@@ -54,14 +54,15 @@ category commands, hooks and native presenter sessions. The Expo plugin and
 bare RN metadata configure category startup and IAB CMP identity and publisher
 country during native builds.
 
-A separate RN distribution that excludes the stock native UI, together with a
-shared custom-UI draft API, is deferred from the first release. RN apps that
-need IAB publisher restrictions or custom purposes still use app-owned native
+An RN app can build without the stock native UI and draw its own banner,
+preferences and IAB screens with the draft and IAB hooks; see
+[Build your own UI](/docs/frameworks/react-native/headless). RN apps that need
+IAB publisher restrictions or custom purposes still use app-owned native
 installation.
 
-The [IAB guide](/docs/guides/mobile-iab) explains both setups. Use the stock
-presenter for a complete IAB flow rather than building vendor decisions from
-the category API.
+The [IAB guide](/docs/guides/mobile-iab) explains both setups. Build vendor
+decisions with the IAB hooks or the stock presenter, never from the category
+API.
 
 ## Certification and production rollout
 

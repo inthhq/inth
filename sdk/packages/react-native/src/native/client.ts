@@ -441,10 +441,8 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 		);
 	}
 
-	const { hasStoredSnapshot, protocolVersion, subjectId } = parsed as Record<
-		string,
-		unknown
-	>;
+	const { hasStoredSnapshot, nativeUI, protocolVersion, subjectId } =
+		parsed as Record<string, unknown>;
 
 	if (typeof protocolVersion !== 'number') {
 		// A native build that reports no version predates the handshake, which
@@ -465,6 +463,9 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 			protocolVersion
 		),
 		nativeSdkVersion: readString(parsed, 'nativeSdkVersion', 'unknown'),
+		// Only an explicit `false` means the screens are absent; older binaries
+		// always link them.
+		nativeUI: nativeUI !== false,
 		protocolVersion,
 		subjectId: typeof subjectId === 'string' ? subjectId : null,
 	};

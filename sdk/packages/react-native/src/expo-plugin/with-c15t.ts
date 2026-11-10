@@ -23,6 +23,7 @@ import {
 	buildPrivacyManifestDeclarations,
 	withIosDeploymentTargetFloor,
 } from './ios';
+import { resolveNativeUI, withC15tNativeUI } from './native-ui';
 import { resolveParams } from './params';
 import type {
 	C15tPluginProps,
@@ -149,6 +150,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 ): ExportedConfig {
 	const params = resolveParams(props);
 	const theme = resolveTheme(props?.theme);
+	const nativeUI = resolveNativeUI(props?.nativeUI, props?.theme);
 
 	assertCustomNativeBuild(params, {
 		argv: context.argv,
@@ -163,6 +165,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	};
 
 	next = applyPrivacyDeclarations(next, params);
+	next = withC15tNativeUI(next, nativeUI);
 	next = withIosDeploymentTargetFloor(next);
 
 	next = withInfoPlist(next, (configWithPlist) => ({

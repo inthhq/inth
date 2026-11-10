@@ -56,6 +56,7 @@ class C15tPayloadTest {
 			"nothing was stored, so the handshake must not claim a cached snapshot",
 			payload["hasStoredSnapshot"]!!.jsonPrimitive.boolean,
 		)
+		assertTrue("this build links the stock screens", payload["nativeUI"]!!.jsonPrimitive.boolean)
 		assertFalse("the handshake carries the version, not the snapshot", payload.containsKey("effectivePermissions"))
 
 		val snapshot = parse(C15tPayload.snapshot(kernel.snapshot()))

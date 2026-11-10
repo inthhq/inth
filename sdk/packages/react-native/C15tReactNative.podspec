@@ -38,7 +38,21 @@ Pod::Spec.new do |s|
   # The kernel brings no privacy manifest of its own. Its own spec ships one, and it declares the
   # same four keys with the same values as the bundle below, so the copy compiled into this
   # target is described by it.
-  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift", "vendor/C15tConsentUI/**/*.swift"
+  # `c15t.nativeUI` false in Podfile.properties.json (the Expo plugin's `nativeUI: false`
+  # writes it), or C15T_NATIVE_UI=0 for `pod install`, builds without the stock SwiftUI
+  # consent screens. The presenter methods then reject with C15T_NATIVE_UI_EXCLUDED.
+  podfile_properties = begin
+    JSON.parse(File.read(File.join(Pod::Config.instance.installation_root.to_s, "Podfile.properties.json")))
+  rescue StandardError
+    {}
+  end
+  native_ui_setting = ENV["C15T_NATIVE_UI"] || podfile_properties["c15t.nativeUI"]
+  native_ui = !%w[0 false no].include?(native_ui_setting.to_s.strip.downcase)
+
+  source_files = ["ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift"]
+  source_files << "vendor/C15tConsentUI/**/*.swift" if native_ui
+  s.source_files = source_files
+  s.exclude_files = "ios/C15tReactNative/ReactNative/C15tConsentHost.swift" unless native_ui
   s.public_header_files = "ios/C15tReactNative/C15tReactNative.h"
   s.resource_bundle = { "C15tReactNative" => "ios/C15tReactNative/Resources/Privacy.xcprivacy" }
   # `Package.swift` is not in here because it is not in the package: the SPM manifest
@@ -50,7 +64,7 @@ Pod::Spec.new do |s|
   s.requires_arc = true
   s.static_framework = true
 
-  s.frameworks = "Foundation", "Security", "SwiftUI", "UIKit"
+  s.frameworks = native_ui ? ["Foundation", "Security", "SwiftUI", "UIKit"] : ["Foundation", "Security", "UIKit"]
 
   # RCTEventEmitter, RCTBridgeModule, and the promise blocks.
   s.dependency "React-Core"
@@ -116,6 +130,7 @@ Pod::Spec.new do |s|
     # CocoaPods does not, which is why ../native/core-swift/C15tCore.podspec passes it too. The
     # copy is part of this module now, so it names this pod and not the kernel.
     "OTHER_SWIFT_FLAGS" => '$(inherited) -package-name "C15tReactNative"',
+    "SWIFT_ACTIVE_COMPILATION_CONDITIONS" => native_ui ? "$(inherited)" : "$(inherited) C15T_NO_NATIVE_UI",
   }
 
 end

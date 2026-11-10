@@ -28,6 +28,9 @@ def prop = { String name ->
 
 String groupName = prop('c15t.core.group') ?: 'com.c15t'
 String coreVersion = prop('c15t.core.version') ?: '3.0.0-alpha.1'
+// `c15t.nativeUI=false` in the app's gradle.properties (the Expo plugin's `nativeUI: false`
+// writes it) builds without the stock Compose consent screens and their dependency.
+boolean c15tNativeUi = !(['false', '0', 'no'].contains((prop('c15t.nativeUI') ?: 'true').toLowerCase()))
 
 // Unset in a host app, where the version is not ours to choose: React Native's root plugin
 // forces com.facebook.react:react-android onto every project's every configuration
@@ -204,7 +207,13 @@ android {
 	sourceSets {
 		main {
 			manifest.srcFile new File(projectDir, 'src/main/AndroidManifest.xml').absolutePath
-			java.srcDirs = [new File(projectDir, 'src/main/kotlin').absolutePath, new File(projectDir, 'src/main/java').absolutePath]
+			// `C15tNativeUi` comes from one of two directories: the stock screens, or a
+			// stub that rejects presenter calls when `c15t.nativeUI` is false.
+			java.srcDirs = [
+				new File(projectDir, 'src/main/kotlin').absolutePath,
+				new File(projectDir, 'src/main/java').absolutePath,
+				new File(projectDir, c15tNativeUi ? 'src/nativeUi/kotlin' : 'src/withoutNativeUi/kotlin').absolutePath,
+			]
 			kotlin.srcDirs = java.srcDirs
 		}
 		test {
@@ -233,7 +242,9 @@ dependencies {
 	// Versioned binaries keep the native producer toolchain out of the host build.
 	implementation "$groupName:c15t-core:$coreVersion"
 	implementation "$groupName:c15t-android:$coreVersion"
-	implementation "$groupName:c15t-consent-ui:$coreVersion"
+	if (c15tNativeUi) {
+		implementation "$groupName:c15t-consent-ui:$coreVersion"
+	}
 
 	implementation 'androidx.startup:startup-runtime:1.1.1'
 

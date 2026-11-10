@@ -1,3 +1,5 @@
+// Left out of a build with `c15t.nativeUI` false; see C15tReactNative.podspec.
+#if !C15T_NO_NATIVE_UI
 #if canImport(C15tCore)
 import C15tCore
 #endif
@@ -93,3 +95,4 @@ private final class ConsentPassthroughView: UIView {
         noticeFrame.contains(convert(point, to: nil))
     }
 }
+#endif

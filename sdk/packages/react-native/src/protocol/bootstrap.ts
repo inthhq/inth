@@ -32,4 +32,12 @@ export interface BootstrapPayload {
 	 * connectivity still answers `getSnapshot()` immediately.
 	 */
 	readonly hasStoredSnapshot: boolean;
+	/**
+	 * Whether the binary links the stock native consent screens. `false` in a
+	 * build with `c15t.nativeUI` false (the Expo plugin's `nativeUI: false`),
+	 * where `presentConsentPrompt` and `presentPreferences` reject with
+	 * `C15T_NATIVE_UI_EXCLUDED`. Absent from older binaries, which always link
+	 * them.
+	 */
+	readonly nativeUI?: boolean;
 }

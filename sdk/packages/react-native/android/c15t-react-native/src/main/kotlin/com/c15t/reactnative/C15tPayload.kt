@@ -133,8 +133,14 @@ object C15tPayload {
 			put("nativeSdkVersion", sdkVersion)
 			putElement("subjectId", snapshot.subject?.id)
 			put("hasStoredSnapshot", hasStoredSnapshot)
+			put("nativeUI", C15tNativeUi.AVAILABLE)
 		},
 	)
+
+	/** What a presenter call rejects with in a build without the stock consent screens. */
+	const val REJECT_NATIVE_UI_EXCLUDED = "C15T_NATIVE_UI_EXCLUDED"
+	const val MESSAGE_NATIVE_UI_EXCLUDED =
+		"This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks."
 
 	/**
 	 * The `ConsentSnapshot` wire form.
