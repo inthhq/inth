@@ -284,8 +284,11 @@ final class PresenterTests: XCTestCase {
         XCTAssertEqual(presenter.copy, german)
         XCTAssertEqual(presenter.iabCopy, IABCopy.forLanguage("de"))
         XCTAssertEqual(presenter.decisionLabels, DecisionLabels(copy: german))
+        // The header identity is UIKit-only, and `swift test` runs this suite on macOS.
+        #if canImport(SwiftUI) && canImport(UIKit)
         XCTAssertEqual(ResolvedIdentity.resolve(ConsentTheme.Brand(), provider: .c15t, placeholder: presenter.copy.brandPlaceholder).name,
             german.brandPlaceholder)
+        #endif
     }
 
     private func boot(_ store: any ConsentStore, language: String = "en") async throws -> ConsentCore {
