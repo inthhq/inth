@@ -325,5 +325,17 @@ final class TypeScaleTests: XCTestCase {
         XCTAssertEqual(Font.TextStyle.largeTitle.size(in: scale), 30)
         XCTAssertNil(Font.TextStyle.body.size(in: .init()))
     }
+
+    /// The failure row lays its text out in UIKit, so it needs the theme's size too.
+    func testUIKitFontsFollowTheTypeScale() {
+        let traits = UITraitCollection(preferredContentSizeCategory: .large)
+        let themed = ConsentTheme(typography: .init(fontSize: .init(sm: 20))).uiFont(.subheadline)
+        XCTAssertEqual(UIFontMetrics(forTextStyle: .subheadline).scaledFont(for: themed, compatibleWith: traits).pointSize, 20, accuracy: 0.5)
+        let stock = ConsentTheme.c15t.uiFont(.subheadline)
+        XCTAssertEqual(stock.pointSize, UIFont.preferredFont(forTextStyle: .subheadline).pointSize, accuracy: 0.5)
+        // A family the app does not bundle falls back to the system face rather than nothing.
+        XCTAssertEqual(ConsentTheme(typography: .init(fontFamily: "NotBundled-Regular")).uiFont(.subheadline).pointSize,
+            stock.pointSize, accuracy: 0.5)
+    }
 }
 #endif

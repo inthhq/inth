@@ -174,6 +174,7 @@ object C15tPayload {
 		snapshot: ConsentSnapshot,
 		fallbackLanguage: String = DEFAULT_LANGUAGE,
 		iabConsent: IabCommittedConsent? = null,
+		iabAcceptAll: IabChoices? = null,
 	): String {
 		val wire = SnapshotWire.toJsonElement(snapshot)
 		val overrides = wire["overrides"] as? JsonObject ?: JsonObject(emptyMap())
@@ -199,10 +200,18 @@ object C15tPayload {
 			}
 		}
 		conformed["overrides"] = JsonObject(conformedOverrides)
-		// The committed TCF decision rides inside `iab`: the TC String a headless screen
-		// shows and the choices it reopens with. `null` while nothing current is committed.
+		// The headless TCF state rides inside `iab`: the committed decision a screen shows and
+		// reopens with (`null` while none is current), whether a draft can be edited and saved
+		// now, and what Accept all saves under the publisher's disclosure. `acceptAll` is `null`
+		// exactly when `editable` is false: the core answers both from one state.
 		(conformed["iab"] as? JsonObject)?.let { iab ->
-			conformed["iab"] = JsonObject(iab + ("committed" to (iabConsent?.let(::committedIab) ?: JsonNull)))
+			conformed["iab"] = JsonObject(
+				iab + mapOf(
+					"committed" to (iabConsent?.let(::committedIab) ?: JsonNull),
+					"editable" to JsonPrimitive(iabAcceptAll != null),
+					"acceptAll" to (iabAcceptAll?.let { C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
+				),
+			)
 		}
 		return encode(JsonObject(conformed))
 	}

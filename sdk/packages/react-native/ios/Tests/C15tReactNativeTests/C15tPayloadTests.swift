@@ -128,6 +128,22 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(committed?["choices"]?.objectValue?["vendorConsents"], .array([]))
     }
 
+    func testTheIABSlotSaysWhetherADraftCanOpenAndWhatAcceptAllSaves() throws {
+        // `iab` is immutable on the public type, so the snapshot comes through its Codable form.
+        var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+        wire["iab"] = ["gvl": NSNull()]
+        let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        func slot(_ acceptAll: IABChoices?) -> [String: Any] {
+            (jsonObject(C15tPayload.snapshot(snapshot, iabAcceptAll: acceptAll))["iab"] as? [String: Any]) ?? [:]
+        }
+        XCTAssertEqual(slot(nil)["editable"] as? Bool, false)
+        XCTAssertTrue(slot(nil)["acceptAll"] is NSNull)
+        var choices = IABChoices()
+        choices.vendorConsents = [7]
+        XCTAssertEqual(slot(choices)["editable"] as? Bool, true)
+        XCTAssertEqual((slot(choices)["acceptAll"] as? [String: Any])?["vendorConsents"] as? [Int], [7])
+    }
+
     func testCommitIntentFailsClosedOnAnythingElse() {
         // A commit is audit evidence, so a half-readable one is refused outright.
         for raw in [

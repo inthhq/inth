@@ -131,7 +131,8 @@ public enum C15tPayload {
     public static func snapshot(
         _ snapshot: ConsentSnapshot,
         fallbackLanguage: String = defaultLanguage,
-        iabConsent: IABCommittedConsent? = nil
+        iabConsent: IABCommittedConsent? = nil,
+        iabAcceptAll: IABChoices? = nil
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -165,11 +166,14 @@ public enum C15tPayload {
             fields["resolution"] = .object(patched)
         }
 
-        // The committed TCF decision rides inside `iab`: the TC String a headless
-        // screen shows and the choices it reopens with. `null` while nothing current is
-        // committed, so a reader never mistakes an expired decision for a live one.
+        // The headless TCF state rides inside `iab`: the committed decision a screen shows
+        // and reopens with (`null` while none is current), whether a draft can be edited and
+        // saved now, and what Accept all saves under the publisher's disclosure. `acceptAll`
+        // is `null` exactly when `editable` is false: the core answers both from one state.
         if case var .object(iab)? = fields["iab"] {
             iab["committed"] = iabConsent.map(committedIAB) ?? .null
+            iab["editable"] = .bool(iabAcceptAll != nil)
+            iab["acceptAll"] = iabAcceptAll.flatMap { value(of: $0) } ?? .null
             fields["iab"] = .object(iab)
         }
 

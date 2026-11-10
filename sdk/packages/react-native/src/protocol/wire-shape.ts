@@ -63,6 +63,44 @@ export const SNAPSHOT_KEYS = [
 ] as const;
 
 /**
+ * Keys the bridge adds inside the snapshot's `iab` object after protocol version 1
+ * shipped, with the value an older native build means by leaving them out.
+ *
+ * The same rule as the top-level additive keys in `native/CONTRACT.md` ("Version
+ * handshake"): a JavaScript-only update can run this package over an older binary,
+ * and the protocol version does not move for an additive key, so each absence must
+ * mean "this build has no such state". An older bridge cannot commit a headless TCF
+ * draft, so it is not `editable` and has no `acceptAll`; it publishes no committed
+ * decision either. The client fills these before anything reads the snapshot.
+ */
+export const ADDITIVE_IAB_DEFAULTS = {
+	acceptAll: null,
+	committed: null,
+	editable: false,
+} as const;
+
+/**
+ * Fill every {@link ADDITIVE_IAB_DEFAULTS} key an `iab` object leaves out.
+ *
+ * @param candidate - A parsed snapshot payload.
+ * @returns The same object when nothing was missing, else a copy with the defaults.
+ */
+export const withAdditiveIABDefaults = function withAdditiveIABDefaults(
+	candidate: Record<string, unknown>
+): Record<string, unknown> {
+	const { iab } = candidate;
+	if (typeof iab !== 'object' || iab === null || Array.isArray(iab)) {
+		return candidate;
+	}
+	const missing = Object.keys(ADDITIVE_IAB_DEFAULTS).some(
+		(key) => !Object.hasOwn(iab, key)
+	);
+	return missing
+		? { ...candidate, iab: { ...ADDITIVE_IAB_DEFAULTS, ...iab } }
+		: candidate;
+};
+
+/**
  * The five objects whose key names come from `@c15t/core` and are not a native
  * implementation detail. Names inside a core, and names inside a stored envelope,
  * stay the core's own business.
@@ -99,8 +137,8 @@ export const KERNEL_OWNED_KEYS = [
 		required: ['version', 'categories'],
 	},
 	{
-		// `committed` is the bridge's own addition beside the kernel's `gvl`.
-		optional: ['committed'],
+		// The bridge's own additions beside the kernel's `gvl`; see ADDITIVE_IAB_DEFAULTS.
+		optional: ['committed', 'editable', 'acceptAll'],
 		path: 'iab',
 		required: ['gvl'],
 	},

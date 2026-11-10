@@ -195,7 +195,7 @@ public struct C15tModuleHandler {
     public func snapshotPayload() -> String {
         ensureCore()
         return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage,
-            iabConsent: C15t.current?.iabConsent())
+            iabConsent: C15t.current?.iabConsent(), iabAcceptAll: C15t.current?.iabAcceptAllChoices())
     }
 
     /// The `getTrackingAuthorization()` payload.

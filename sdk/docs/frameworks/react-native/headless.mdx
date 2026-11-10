@@ -63,7 +63,11 @@ subject's own choices, so a GPC restriction does not appear as a staged
 refusal. `isDirty` tells you whether anything changed. `acceptAll` and
 `rejectAll` stage values only; they save nothing.
 
-While the draft has no edits, it follows the saved record. If the policy or
+While the draft has no edits, it follows the saved record. While it has
+edits, a category you did not change still takes the newly saved value, so a
+save writes back only what the subject changed. A save through
+`useSaveConsents()` with `'all'`, `'none'` or a per-category object clears the
+draft's edits. If the policy or
 the displayed categories change under an unsaved edit, `isStale` turns true and
 `save()` resolves `ok: false` with `reason: 'concurrent-change'`, writing
 nothing. Call `reset()` and let the subject review again.
@@ -91,8 +95,13 @@ staged selection, and `useTCString()` reads the committed TC String:
 
 <include src="../../shared/examples/react-native-bare/iab-preferences.mdx" />
 
-`useIAB()` returns `null` unless the policy is `iab` and a vendor list was
-served. It opens with the committed choices, or with nothing granted.
+`useIAB()` returns `null` unless the policy is `iab`, a vendor list was served
+and native can open a draft now. `useIABSnapshot()?.editable` is `false` while
+the list is stale or offline or a required Additional Consent list is missing;
+show the committed decision, call `useConsentActions().refresh()` and offer
+controls again once it turns `true`. A binary built before this release also
+reads `false`, because it cannot commit a headless selection. The draft opens
+with the committed choices, or with nothing granted.
 `save()` sends the whole selection and the displayed categories as one native
 commit, pinned to the snapshot revision the draft was opened on. The native
 core checks every ID and legal basis against the served list, encodes the TC
@@ -101,12 +110,12 @@ does for the stock screens. A refused selection resolves `ok: false` with the
 reason. If the vendor list or policy changed under an unsaved edit, the draft
 turns stale and refuses to save until you call `reset()`.
 
-`acceptAll()` stages consent for the purposes the served partners declare,
-the legitimate interests they declare and TCF allows, and their special
-features; `rejectAll()` stages withdrawal of every consent and leaves
-legitimate interest alone, as on the web. For one-tap Accept all and Reject
-all buttons, `useSaveConsents()('all')` and `('none')` let the native core
-apply the full TCF rules. `setPurposeLegitimateInterest` and
+`acceptAll()` stages exactly what native Accept all saves: the core projects
+every live partner's bases under your disclosure and publisher restrictions,
+so the headless and stock buttons record the same signals. `rejectAll()`
+stages withdrawal of every consent and leaves legitimate interest alone, as on
+the web. For one-tap buttons, `useSaveConsents()('all')` and `('none')` save
+without staging. `setPurposeLegitimateInterest` and
 `setVendorLegitimateInterest` with `false` record an objection; purposes 1 and
 3 to 6 never take legitimate interest.
 

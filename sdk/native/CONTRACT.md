@@ -907,8 +907,14 @@ headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON number
 `consents` the categories it confirms, and an optional `revision` the core passes as
 `expectedRevision`, so a change since the draft was opened is refused as
 `concurrent-change`. The core validates IDs and legal bases as for the stock
-presenter. The bridge adds `committed: { tcString, addtlConsent, choices } | null`
-inside the snapshot's `iab` object, from `iabConsent()`, beside the core's `gvl`.
+presenter. The bridge adds three keys inside the snapshot's `iab` object, beside the
+core's `gvl`: `committed: { tcString, addtlConsent, choices } | null` from
+`iabConsent()`, `acceptAll: IABChoices | null` from `iabAcceptAllChoices()` (what
+`save(all)` builds, publisher restrictions included; `null` exactly when no draft can
+open), and `editable`, which is `acceptAll != null`. They are additive without a
+protocol bump: `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
+`committed: null, editable: false, acceptAll: null`, so JavaScript offers no edit it
+cannot commit.
 
 `c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
 `gradle.properties` for Android) builds the bridge without the stock screens: the

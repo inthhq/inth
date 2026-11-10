@@ -61,7 +61,8 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	/** The current snapshot, encoded for the wire. */
 	override fun getSnapshot(): String {
 		ensureCore()
-		return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage = deviceLanguage(), iabConsent = C15t.current?.iabConsent)
+		return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage = deviceLanguage(), iabConsent = C15t.current?.iabConsent,
+			iabAcceptAll = C15t.current?.iabAcceptAllChoices())
 	}
 
 	/**

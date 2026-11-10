@@ -235,8 +235,9 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
 
 // MARK: Shared pieces
 
-@Composable private fun Heading(text: String, id: String, style: TextStyle = MaterialTheme.typography.titleLarge) {
-    Text(text, style = style, color = LocalConsentTheme.current.colors.text.color(), modifier = Modifier.semantics { heading() }.testTag(id))
+@Composable private fun Heading(text: String, id: String, style: TextStyle = MaterialTheme.typography.titleLarge,
+    color: ConsentThemeColor = LocalConsentTheme.current.colors.text) {
+    Text(text, style = style, color = color.color(), modifier = Modifier.semantics { heading() }.testTag(id))
 }
 @Composable private fun Body(text: String, modifier: Modifier = Modifier) {
     Text(text, style = MaterialTheme.typography.bodyMedium, color = LocalConsentTheme.current.colors.textMuted.color(), modifier = modifier)
@@ -529,7 +530,8 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
                     "expired" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("Your earlier choice has expired, so we're asking again.") }
                     "policy-changed" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text("How this app uses data has changed since your last choice, so we're asking again.") }
                 }
-                Heading(theme.copy.headline, "c15t.first-layer.title", headlineStyle(theme))
+                Heading(theme.copy.headline, "c15t.first-layer.title", headlineStyle(theme),
+                    color = theme.slot(ConsentTheme.Slot.ConsentBannerTitle).color ?: theme.colors.text)
                 Column(verticalArrangement = Arrangement.spacedBy(theme.spacing.sm + theme.spacing.xs)) {
                     val description = theme.slot(ConsentTheme.Slot.ConsentBannerDescription)
                     val body = MaterialTheme.typography.bodyLarge

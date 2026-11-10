@@ -98,11 +98,28 @@ const COMMITTED: NativeIABChoices = {
 	vendorObjections: [],
 };
 
+/**
+ * What native Accept all saves for {@link GVL} under this publisher: partner 9's
+ * purpose 7 is restricted to consent, so it moves from legitimate interest. A
+ * selection a raw-GVL reading would never produce, which is the point.
+ */
+const NATIVE_ACCEPT_ALL: NativeIABChoices = {
+	...COMMITTED,
+	adTechProviderConsents: null,
+	purposeConsents: [1, 3, 7],
+	purposeLegitimateInterests: [2],
+	specialFeatureOptIns: [1],
+	vendorConsents: [7, 9],
+	vendorLegitimateInterests: [9],
+};
+
 const tcf = (overrides: Partial<ConsentSnapshot> = {}): ConsentSnapshot =>
 	buildSnapshot({
 		consentCategories: ['necessary', 'marketing'],
 		iab: {
+			acceptAll: NATIVE_ACCEPT_ALL,
 			committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+			editable: true,
 			gvl: GVL,
 		},
 		model: 'iab',
@@ -219,25 +236,113 @@ describe('headless IAB hooks', () => {
 		});
 	});
 
-	test('accept all stages what the live partners declare, and nothing else', () => {
+	test('accept all stages what native Accept all saves, publisher restrictions included', () => {
 		mount(tcf());
 
 		flush(() => handle().acceptAll());
 
-		expect(handle().choices).toMatchObject({
-			// Purpose 4 is never a legitimate-interest purpose.
-			purposeConsents: [1, 3],
-			purposeLegitimateInterests: [2, 7],
-			specialFeatureOptIns: [1],
-			vendorConsents: [7],
-			vendorLegitimateInterests: [9],
-		});
+		expect(handle().choices).toEqual(NATIVE_ACCEPT_ALL);
 		flush(() => handle().rejectAll());
 		expect(handle().choices).toMatchObject({
 			purposeConsents: [],
-			purposeLegitimateInterests: [2, 7],
+			purposeLegitimateInterests: [2],
 			specialFeatureOptIns: [],
 			vendorConsents: [],
+		});
+	});
+
+	test('offer no edits while native cannot open a draft', () => {
+		mount(
+			tcf({
+				iab: {
+					acceptAll: null,
+					committed: {
+						addtlConsent: null,
+						choices: COMMITTED,
+						tcString: 'CQ-1',
+					},
+					editable: false,
+					gvl: GVL,
+				},
+			})
+		);
+
+		// The list is stale or offline: the committed decision still shows.
+		expect(current().iab).toBeNull();
+		expect(current().tcString).toBe('CQ-1');
+	});
+
+	test('treat a bridge without the headless fields as unable to edit', async () => {
+		// A JavaScript-only update over a binary from before the headless IAB bridge:
+		// its `iab` object carries the list and nothing else.
+		const older = tcf();
+		mount({ ...older, iab: { gvl: GVL } as ConsentSnapshot['iab'] });
+
+		expect(current().enabled).toBe(true);
+		expect(current().iab).toBeNull();
+		expect(current().tcString).toBeNull();
+		await current().save();
+		await flushPromises();
+		expect(JSON.parse(fake.commitIntents[0] ?? '{}').action).toBe('explicit');
+	});
+
+	test('a decision committed elsewhere under an edited selection makes the draft stale', async () => {
+		mount(tcf());
+
+		flush(() => handle().setVendorConsent(9, true));
+		flush(() =>
+			fake.pushSnapshot(
+				tcf({
+					iab: {
+						acceptAll: NATIVE_ACCEPT_ALL,
+						committed: {
+							addtlConsent: null,
+							choices: { ...COMMITTED, vendorConsents: [] },
+							tcString: 'CQ-2',
+						},
+						editable: true,
+						gvl: GVL,
+					},
+					revision: 5,
+				})
+			)
+		);
+
+		expect(handle().isStale).toBe(true);
+		const refused = await handle().save();
+		expect(refused.reason).toBe('concurrent-change');
+		expect(fake.commit).not.toHaveBeenCalled();
+	});
+
+	test('an untouched selection takes a decision committed elsewhere, and the save pins its revision', async () => {
+		mount(tcf());
+
+		flush(() =>
+			fake.pushSnapshot(
+				tcf({
+					iab: {
+						acceptAll: NATIVE_ACCEPT_ALL,
+						committed: {
+							addtlConsent: null,
+							choices: { ...COMMITTED, vendorConsents: [] },
+							tcString: 'CQ-2',
+						},
+						editable: true,
+						gvl: GVL,
+					},
+					revision: 5,
+				})
+			)
+		);
+
+		expect(current().vendor7).toBe(false);
+		expect(handle().isStale).toBe(false);
+		await handle().save();
+		await flushPromises();
+		expect(JSON.parse(fake.commitIntents[0] ?? '{}')).toMatchObject({
+			action: 'iab',
+			choices: { vendorConsents: [] },
+			revision: 5,
 		});
 	});
 
@@ -262,7 +367,12 @@ describe('headless IAB hooks', () => {
 		flush(() =>
 			fake.pushSnapshot(
 				tcf({
-					iab: { committed: null, gvl: { ...GVL, vendorListVersion: 178 } },
+					iab: {
+						acceptAll: NATIVE_ACCEPT_ALL,
+						committed: null,
+						editable: true,
+						gvl: { ...GVL, vendorListVersion: 178 },
+					},
 					revision: 5,
 				})
 			)
