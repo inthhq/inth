@@ -63,6 +63,15 @@ export const SNAPSHOT_KEYS = [
 ] as const;
 
 /**
+ * Bootstrap keys added after protocol version 1 shipped, with what an older native
+ * build means by leaving them out: the same additive rule as the snapshot keys.
+ * Every binary before `nativeUI` linked the stock native screens.
+ */
+export const ADDITIVE_BOOTSTRAP_DEFAULTS = {
+	nativeUI: true,
+} as const;
+
+/**
  * Keys the bridge adds inside the snapshot's `iab` object after protocol version 1
  * shipped, with the value an older native build means by leaving them out.
  *

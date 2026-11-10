@@ -921,7 +921,9 @@ cannot commit.
 pod drops `vendor/C15tConsentUI` and `C15tConsentHost.swift` and compiles with
 `C15T_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
 `src/nativeUi` and drops `c15t-consent-ui`. `getBootstrap()` reports `nativeUI`,
-and the presenter methods reject with `C15T_NATIVE_UI_EXCLUDED`.
+and the presenter methods reject with `C15T_NATIVE_UI_EXCLUDED`. `nativeUI` is
+additive without a protocol bump: `ADDITIVE_BOOTSTRAP_DEFAULTS` in `wire-shape.ts`
+reads an older binary, which sends no flag and always links the screens, as `true`.
 
 Events: `snapshot`, `error`, `initialized`. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new

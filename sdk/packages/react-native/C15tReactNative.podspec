@@ -41,18 +41,23 @@ Pod::Spec.new do |s|
   # `c15t.nativeUI` false in Podfile.properties.json (the Expo plugin's `nativeUI: false`
   # writes it), or C15T_NATIVE_UI=0 for `pod install`, builds without the stock SwiftUI
   # consent screens. The presenter methods then reject with C15T_NATIVE_UI_EXCLUDED.
+  #
+  # A bare app has no Podfile.properties.json, so the file is read only when it exists. The
+  # podspec is evaluated inside `Pod::Specification`, where a bare `StandardError` names
+  # CocoaPods' own `Pod::StandardError`, so the rescue spells the Ruby class out.
+  podfile_properties_path = File.join(Pod::Config.instance.installation_root.to_s, "Podfile.properties.json")
   podfile_properties = begin
-    JSON.parse(File.read(File.join(Pod::Config.instance.installation_root.to_s, "Podfile.properties.json")))
-  rescue StandardError
+    File.exist?(podfile_properties_path) ? JSON.parse(File.read(podfile_properties_path)) : {}
+  rescue ::StandardError
     {}
   end
   native_ui_setting = ENV["C15T_NATIVE_UI"] || podfile_properties["c15t.nativeUI"]
   native_ui = !%w[0 false no].include?(native_ui_setting.to_s.strip.downcase)
 
-  source_files = ["ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift"]
-  source_files << "vendor/C15tConsentUI/**/*.swift" if native_ui
-  s.source_files = source_files
-  s.exclude_files = "ios/C15tReactNative/ReactNative/C15tConsentHost.swift" unless native_ui
+  # Every glob stays literal on these lines: `scripts/react-native-autolink.ts` reads them
+  # textually to check each one against the packed tarball.
+  s.source_files = "ios/C15tReactNative/**/*.{h,swift,m,mm}", "vendor/C15tCore/**/*.swift", "vendor/C15tApple/**/*.swift", "vendor/C15tConsentUI/**/*.swift"
+  s.exclude_files = "vendor/C15tConsentUI/**/*.swift", "ios/C15tReactNative/ReactNative/C15tConsentHost.swift" unless native_ui
   s.public_header_files = "ios/C15tReactNative/C15tReactNative.h"
   s.resource_bundle = { "C15tReactNative" => "ios/C15tReactNative/Resources/Privacy.xcprivacy" }
   # `Package.swift` is not in here because it is not in the package: the SPM manifest
@@ -101,7 +106,7 @@ Pod::Spec.new do |s|
   end
   react_native_version = begin
     JSON.parse(File.read(File.join(react_native_dir, "package.json")))["version"]
-  rescue StandardError
+  rescue ::StandardError
     nil
   end
   react_native_minor = react_native_version ? react_native_version.split(".")[1].to_i : 0

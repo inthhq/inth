@@ -69,6 +69,21 @@ afterEach(() => {
 });
 
 describe('handshake', () => {
+	// A JavaScript-only update can run over a binary built before `nativeUI` existed.
+	// That binary links the stock screens, so its silence must read as `true`;
+	// only an explicit `false` from a `c15t.nativeUI=false` build means they are out.
+	test.each([
+		['absent', undefined, true],
+		['false', false, false],
+		['true', true, true],
+		['not a boolean', 'false', true],
+	])('reads a %s nativeUI flag as %s', (_label, nativeUI, expected) => {
+		const { client } = makeClient({
+			bootstrap: { ...FAKE_BOOTSTRAP, nativeUI },
+		});
+		expect(client.bootstrap.nativeUI).toBe(expected);
+	});
+
 	test('reads the bootstrap payload once per app', () => {
 		const fake = createFakeNativeModule();
 

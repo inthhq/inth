@@ -45,7 +45,10 @@ import type {
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
-import { withAdditiveIABDefaults } from '../protocol/wire-shape';
+import {
+	ADDITIVE_BOOTSTRAP_DEFAULTS,
+	withAdditiveIABDefaults,
+} from '../protocol/wire-shape';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -464,9 +467,12 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 			protocolVersion
 		),
 		nativeSdkVersion: readString(parsed, 'nativeSdkVersion', 'unknown'),
-		// Only an explicit `false` means the screens are absent; older binaries
-		// always link them.
-		nativeUI: nativeUI !== false,
+		// Only a boolean from the binary counts. An older binary sends nothing, and
+		// ADDITIVE_BOOTSTRAP_DEFAULTS says what that means: the screens are linked.
+		nativeUI:
+			typeof nativeUI === 'boolean'
+				? nativeUI
+				: ADDITIVE_BOOTSTRAP_DEFAULTS.nativeUI,
 		protocolVersion,
 		subjectId: typeof subjectId === 'string' ? subjectId : null,
 	};
