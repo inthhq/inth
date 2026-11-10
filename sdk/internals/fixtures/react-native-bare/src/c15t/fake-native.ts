@@ -47,6 +47,8 @@ import type {
 	NativeOverridesInput,
 } from '@c15t/react-native';
 
+import { readIntent } from './read-intent';
+
 /** Categories the fake core knows about, in display order. */
 export const CATEGORIES = [
 	'necessary',
@@ -277,14 +279,8 @@ const decide = (
 	intent: CommitIntent
 ): Partial<Record<OptionalCategory, boolean>> => {
 	const decided: Partial<Record<OptionalCategory, boolean>> = {};
-	const inScope = (category: OptionalCategory): boolean =>
-		intent.categories === undefined || intent.categories.includes(category);
 
 	for (const category of OPTIONAL_CATEGORIES) {
-		if (!inScope(category)) {
-			continue;
-		}
-
 		if (intent.action === 'all') {
 			decided[category] = true;
 		} else if (intent.action === 'necessary') {
@@ -567,9 +563,9 @@ class FakeCore {
 
 	private async commit(intentJson: string): Promise<string> {
 		await settle();
-		const intent = parseJson<CommitIntent>(intentJson);
+		const intent = readIntent(intentJson);
 
-		if (intent === null || typeof intent.action !== 'string') {
+		if (intent === null) {
 			const rejected: CommitResult = {
 				confirmed: [],
 				ok: false,
