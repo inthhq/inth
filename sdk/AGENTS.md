@@ -4,6 +4,19 @@ c15t is a developer-first consent management platform (CMP): cookie banners, con
 
 This file is the canonical agent guide. `CLAUDE.md` imports it. Deeper task guides live in `.agents/skills/` (symlinked into `.claude/skills/`, `.cursor/skills/`, and `.github/skills/`). Third-party skills are managed with the [skills CLI](https://skills.sh) and pinned in `skills-lock.json` — add or refresh them with `bunx skills add <owner>/<repo>` / `bunx skills update -y`, never by hand-editing their files. The first-party skills (`writing-docs`, `releasing`, `creating-a-package`) are maintained in this repo.
 
+## Using the native SDKs from an app
+
+The root `Package.swift` is the Swift package, so an app's SwiftPM checkout of this
+repository lands here. If you are working in such an app, or in one that uses the
+`com.c15t` Maven artifacts, the rest of this file is monorepo contributor guidance.
+Read these instead:
+
+- Swift: `native/core-swift/README.md`, then `docs/frameworks/swift/*.mdx`.
+- Android: `native/core-android/AGENTS.md` (also at the root of each artifact's
+  sources jar), then `docs/frameworks/android/*.mdx`.
+- Both: `docs/guides/mobile-*.mdx`. The mobile SDKs are a private prerelease and
+  these pages are not on c15t.com yet, so the files here are the current copy.
+
 ## Repo map
 
 | Path | What it is |
