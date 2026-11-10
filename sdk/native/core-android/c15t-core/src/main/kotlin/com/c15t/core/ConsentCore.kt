@@ -1422,10 +1422,11 @@ class ConsentCore(
 		store.clearConsentState()
 		storedSnapshotFound = false
 		mutation.release()
-		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
-		if (inCodePolicy) runInit()
+		// The cleared baseline goes out first, at revision + 1, as on iOS. The bundled
+		// manifest or the in-code policy then publishes on top of it.
 		notifySnapshot()
-		if (!inCodePolicy) background.execute { runInit() }
+		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { if (applyInit(it.mapped, config.detectedGpc, false, it).first) notifySnapshot() } }
+		if (inCodePolicy) runInit() else background.execute { runInit() }
 	}
 
 	// -- internals ------------------------------------------------------------
