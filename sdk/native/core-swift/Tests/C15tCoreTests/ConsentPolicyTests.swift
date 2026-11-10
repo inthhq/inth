@@ -111,6 +111,27 @@ final class ConsentPolicyTests: XCTestCase {
         XCTAssertFalse(core.isAllowed(.measurement))
     }
 
+    func testARefusedPolicyOverACachedOneFailsClosedAndKeepsTheStoredChoice() async throws {
+        let store = InMemoryStore()
+        let policy = try policy()
+        let first = await boot(policy, store: store)
+        XCTAssertEqual(first.save(.all).status, .committed)
+        await first.waitUntilIdle()
+        XCTAssertTrue(first.isAllowed(.measurement))
+        let refused = ConsentCore()
+        await refused.bootstrapAndSettle(CoreConfig(
+            store: store, policyError: "Policy 'x': a partial category scope needs a scopeMode",
+            transport: OfflineTransport.offline(), consentCategories: ConsentCategory.allCases,
+            initRetry: .disabled))
+        XCTAssertTrue(refused.snapshot().policyPending)
+        XCTAssertEqual(refused.snapshot().error?.code, "policy-invalid")
+        for category in OptionalConsentCategory.ordered {
+            XCTAssertFalse(refused.isAllowed(category.category))
+        }
+        let repaired = await boot(policy, store: store)
+        XCTAssertTrue(repaired.isAllowed(.measurement))
+    }
+
     func testARefusedInCodePolicyIsReportedAgainAfterReset() async throws {
         let core = ConsentCore()
         await core.bootstrapAndSettle(CoreConfig(

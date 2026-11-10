@@ -416,7 +416,11 @@ private class JsonRuleReader(element: JsonElement, index: Int) {
 				if (model == ConsentModel.NONE && "preselectedCategories" in value) fail("$label: the none model takes no preselectedCategories")
 			} ?: fail("$label: unknown model"),
 			prompt = PolicyPrompt.fromWireName(string(value["prompt"], "prompt")) ?: fail("$label: unknown prompt"),
-			categories = if (scope == null || scope.any { it.trim() == "*" }) null else categories(value["categories"], "categories"),
+			// Every entry beside a wildcard is still checked, as on the backend.
+			categories = scope?.let {
+				val named = categories(JsonArray(it.filter { name -> name.trim() != "*" }.map(::JsonPrimitive)), "categories")
+				if (it.any { name -> name.trim() == "*" }) null else named
+			},
 			scopeMode = value["scopeMode"]?.let { ScopeMode.fromWireName(string(it, "scopeMode")) ?: fail("$label: unknown scopeMode") },
 			preselectedCategories = value["preselectedCategories"]?.let { categories(it, "preselectedCategories") } ?: emptyList(),
 			actions = value["actions"]?.let { list ->

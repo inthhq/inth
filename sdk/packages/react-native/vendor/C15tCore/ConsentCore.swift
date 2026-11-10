@@ -432,7 +432,19 @@ public final class ConsentCore: @unchecked Sendable {
         let mutation = mutationGate.acquire()
         defer { mutation.release() }
         lock.withLock {
-            currentSnapshot = currentSnapshot.byApplying { draft in draft.error = info }
+            // Fail closed: a policy this build refused cannot keep a cached one, or its
+            // grants, in force. Stored choices stay, for a later build with a usable policy.
+            resolvedPolicy = nil
+            policyWire = nil
+            currentSnapshot = currentSnapshot.byApplying { draft in
+                draft.policyPending = true
+                draft.effectivePermissions = ConsentSnapshot.failClosedPermissions
+                draft.restrictions = [:]
+                draft.promptRequirement = .none
+                draft.activeUI = .none
+                draft.nextDeadline = nil
+                draft.error = info
+            }
         }
         publish(persist: true, mutation: mutation)
         events.emit(.error(info))

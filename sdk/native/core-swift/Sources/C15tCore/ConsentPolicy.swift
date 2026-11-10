@@ -527,9 +527,10 @@ private struct JSONRuleReader {
         var scope: [OptionalConsentCategory]?
         if let value = object["categories"] {
             let names = try strings(value, "categories")
-            if !names.contains(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines) == "*" }) {
-                scope = try categories(value, "categories").optional
-            }
+            let isWildcard = { (name: String) in name.trimmingCharacters(in: .whitespacesAndNewlines) == "*" }
+            // Every entry beside a wildcard is still checked, as on the backend.
+            let named = try categories(.array(names.filter { !isWildcard($0) }.map(JSONValue.string)), "categories")
+            if !names.contains(where: isWildcard) { scope = named.optional }
         }
         var scopeMode: PolicyScopeMode?
         if let value = object["scopeMode"] {

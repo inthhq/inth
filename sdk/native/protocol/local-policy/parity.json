@@ -5051,6 +5051,75 @@
 			]
 		},
 		{
+			"name": "categories = [\"*\",\"ads\"]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["*", "ads"]
+				}
+			]
+		},
+		{
+			"name": "categories = [\"*\",null]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["*", null]
+				}
+			]
+		},
+		{
+			"name": "categories = [\"*\",\"\"]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"categories": ["*", ""]
+				}
+			]
+		},
+		{
 			"name": "scopeMode = null",
 			"rules": [
 				{
@@ -5415,6 +5484,75 @@
 					"model": "opt-in",
 					"prompt": "choice",
 					"preselectedCategories": ["measurement", "*"]
+				}
+			]
+		},
+		{
+			"name": "preselectedCategories = [\"*\",\"ads\"]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"preselectedCategories": ["*", "ads"]
+				}
+			]
+		},
+		{
+			"name": "preselectedCategories = [\"*\",null]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"preselectedCategories": ["*", null]
+				}
+			]
+		},
+		{
+			"name": "preselectedCategories = [\"*\",\"\"]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"preselectedCategories": ["*", ""]
 				}
 			]
 		},
@@ -6755,6 +6893,87 @@
 					"privacySignals": {
 						"gpc": {
 							"denyCategories": ["measurement", "*"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "privacySignals.gpc.denyCategories = [\"*\",\"ads\"]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"privacySignals": {
+						"gpc": {
+							"denyCategories": ["*", "ads"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "privacySignals.gpc.denyCategories = [\"*\",null]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"privacySignals": {
+						"gpc": {
+							"denyCategories": ["*", null]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "privacySignals.gpc.denyCategories = [\"*\",\"\"]",
+			"rules": [
+				{
+					"id": "fallback",
+					"match": {
+						"fallback": true,
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "x",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice",
+					"privacySignals": {
+						"gpc": {
+							"denyCategories": ["*", ""]
 						}
 					}
 				}
