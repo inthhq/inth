@@ -468,7 +468,7 @@ class ConsentJourneyTest {
         // Opened from the first layer, the leading action goes back to it and is named so.
         compose.onNodeWithTag("c15t.prefs.cancel").assertContentDescriptionEquals("Back")
         val measurement = scrollPage("c15t.prefs", "c15t.prefs.category.measurement.switch")
-        measurement.assert(role(androidx.compose.ui.semantics.Role.Switch)).assertIsOff().assertTextContains("Measurement", substring = true)
+        measurement.assert(role(androidx.compose.ui.semantics.Role.Switch)).assertIsOff().assertTextContains("Analytics", substring = true)
         measurement.performClick().assertIsOn()
         capture("android-ax-preferences")
         compose.onNodeWithTag("c15t.prefs.save").assertContentDescriptionEquals("Save Settings").performClick()

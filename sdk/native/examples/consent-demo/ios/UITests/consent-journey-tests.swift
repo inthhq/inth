@@ -663,10 +663,10 @@ final class ConsentJourneyTests: XCTestCase {
         let measurement = app.switches["c15t.prefs.category.measurement.switch"]
         reveal(measurement)
         // Switch rows carry their category name and state.
-        XCTAssertTrue(measurement.label.contains("Measurement"), measurement.label)
+        XCTAssertTrue(measurement.label.contains("Analytics"), measurement.label)
         XCTAssertEqual(measurement.value as? String, "0")
         let locked = app.descendants(matching: .any)["c15t.prefs.category.necessary.locked"].firstMatch
-        XCTAssertTrue(locked.label.contains("Strictly necessary") && locked.label.contains("Always on"), locked.label)
+        XCTAssertTrue(locked.label.contains("Strictly Necessary") && locked.label.contains("Always on"), locked.label)
         // Opened from the first layer, the bar's leading action goes back to it and is named so.
         XCTAssertEqual(button("c15t.prefs.cancel").label, "Back")
         audit("ax-preferences")
