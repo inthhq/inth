@@ -1,0 +1,169 @@
+---
+title: Branch
+description: Set Branch's consumer protection attribution level and Google DMA parameters from c15t consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
+seoTitle: Branch consent for mobile apps with c15t
+seoDescription: Drive Branch attribution levels and DMA parameters from c15t consent in Swift, Android, React Native and Expo, with deep links kept working.
+group: integrations
+---
+
+The Branch helper sets Branch's
+[consumer protection attribution level](https://help.branch.io/developer-hub/honoring-opt-out-of-processing-requests)
+from marketing and measurement, and sends Google's DMA parameters with
+`setDMAParamsForEEA`. At the lowest level Branch still resolves deep links,
+so the app keeps working without consent.
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. c15t adds no Branch dependency. The web
+has no Branch helper.
+
+## What the helper changes
+
+| Consent | Attribution level |
+| --- | --- |
+| Marketing granted | `FULL`: advertising and device identifiers |
+| Only measurement granted | `MINIMAL`: device identifiers for analytics, no advertising frameworks |
+| Neither, or pending | `NONE`: deterministic deep linking only |
+
+When the level goes up, the helper sends the DMA parameters first. When it
+goes down, it lowers the level first. The DMA values come from the shared
+[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types):
+
+| `setDMAParamsForEEA` argument | From |
+| --- | --- |
+| `eeaRegion` | Your app |
+| `adPersonalizationConsent` | `adPersonalization` |
+| `adUserDataUsageConsent` | `adUserData` |
+
+c15t's policy model says how the app asks for consent, not where the user is,
+so `eeaRegion` comes from your own region logic. Branch needs all three
+arguments.
+
+## Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
+`marketing` and `measurement` in your Inth policy and native configuration.
+Install Branch through its [iOS](https://help.branch.io/developer-hub/ios-full-reference),
+[Android](https://help.branch.io/developer-hub/android-full-reference) or
+[React Native](https://help.branch.io/developer-hub/react-native-full-reference)
+guide. React Native needs `react-native-branch` 6.5 or later.
+
+Connect the helper before Branch initializes its session, so the first
+request already carries the level.
+
+## Connect a Swift app
+
+```swift title="BranchConsentOwner.swift"
+import BranchSDK
+import C15tApple
+import C15tCore
+
+final class BranchConsentOwner {
+    private let integration: BranchIntegration
+
+    init(core: ConsentCore, inEEA: Bool) {
+        integration = BranchIntegration(
+            core: core,
+            setConsumerProtectionAttributionLevel: { level in
+                let branchLevel: BranchAttributionLevel
+                switch level {
+                case .full: branchLevel = .full
+                case .minimal: branchLevel = .minimal
+                case .none: branchLevel = .none
+                }
+                Branch.getInstance().setConsumerProtectionAttributionLevel(branchLevel)
+            },
+            setDMAParamsForEEA: { consent in
+                Branch.getInstance().setDMAParamsForEEA(inEEA, adPersonalizationConsent: consent.adPersonalization, adUserDataUsageConsent: consent.adUserData)
+            }
+        )
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterReset() { integration.sync() }
+}
+```
+
+c15t names its type `BranchAttribution` so it does not collide with Branch's
+`BranchAttributionLevel` in a file that imports both.
+
+## Connect an Android app
+
+```kotlin title="BranchConsent.kt"
+import com.c15t.android.integrations.BranchIntegration
+import com.c15t.core.C15t
+import io.branch.referral.Branch
+import io.branch.referral.Defines
+
+fun connectBranchConsent(inEea: Boolean, onError: (Exception) -> Unit): BranchIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting Branch" }
+	return BranchIntegration(
+		core = core,
+		setConsumerProtectionAttributionLevel = { level ->
+			Branch.getInstance().setConsumerProtectionAttributionLevel(
+				Defines.BranchAttributionLevel.valueOf(level.name),
+			)
+		},
+		setDMAParamsForEEA = { consent ->
+			Branch.getInstance().setDMAParamsForEEA(inEea, consent.adPersonalization, consent.adUserData)
+		},
+		onError = onError,
+	)
+}
+```
+
+Call it after `Branch.getAutoInstance(this)` in `Application.onCreate`, and
+keep the returned helper on the application.
+
+## Connect React Native or Expo
+
+Copy the checked connection function into `branch-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-branch-integration.mdx" />
+
+Then supply `react-native-branch`:
+
+{/* example: fragment */}
+
+```ts title="branch-vendor.ts"
+import branch from 'react-native-branch';
+
+import { connectAppBranch } from './branch-consent';
+
+export const connectBranchVendor = (
+	inEea: boolean,
+	onError: (error: unknown) => void
+) =>
+	connectAppBranch(
+		{
+			setConsumerProtectionAttributionLevel: (level) =>
+				branch.setConsumerProtectionAttributionLevel(level),
+			setDMAParamsForEEA: ({ adPersonalization, adUserData }) =>
+				branch.setDMAParamsForEEA(inEea, adPersonalization, adUserData),
+		},
+		onError
+	);
+```
+
+The React Native levels are the same strings Branch takes. JavaScript runs
+after Branch's native session starts, so set a default level in native code
+too if the first session must carry it. Expo needs a development build with
+Branch's config plugin.
+
+## Handle reset and teardown
+
+`sync()` reapplies the current level and DMA parameters. Teardown (`stop()`,
+`close()` or `disconnect()`) sets `NONE` and sends denied DMA values. Deep
+links keep working.
+
+## Check the integration
+
+1. Launch with no saved choice. Confirm Branch requests carry no advertising
+   or device identifiers, and a deep link still opens.
+2. Grant measurement only. Confirm the minimal level.
+3. Grant marketing. Confirm the full level and DMA consent `true`.
+4. Withdraw both. Confirm `NONE`.
+
+The helper tests cover level order and category changes with recorded calls.
+They were not run against the Branch SDK.

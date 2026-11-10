@@ -1,15 +1,14 @@
 ---
 title: Amplitude
-description: Load Amplitude Browser SDK 2 after web consent, or connect Amplitude Analytics opt-out in React Native and Expo, with withdrawal and reset handling.
+description: Load Amplitude Browser SDK 2 after web consent, or connect Amplitude Analytics opt-out in Swift, Kotlin, React Native and Expo, with withdrawal and reset handling.
 seoTitle: Amplitude consent for web and mobile with c15t
-seoDescription: Load Amplitude after web measurement consent, or connect its React Native and Expo opt-out API to c15t. Handle withdrawal, reset and teardown.
+seoDescription: Load Amplitude after web measurement consent, or connect its Swift, Android, React Native and Expo opt-out to c15t, with withdrawal and reset.
 icon: amplitude
 group: integrations
 ---
 
 Use c15t to load Amplitude Browser SDK 2 with [web consent](#web), or connect
-Amplitude Analytics in [React Native and Expo](#mobile). Native Swift and Kotlin
-adapters are deferred.
+Amplitude Analytics opt-out in [Swift, Kotlin, React Native and Expo](#mobile).
 
 ## Web
 
@@ -73,20 +72,24 @@ Use the bundled Amplitude helper to keep Analytics opt-out in sync with native
 c15t permission. Pending or denied permission enables opt-out. A grant disables
 opt-out. The default category is `measurement`.
 
-The helper ships in `@c15t/react-native/integrations`.
-Native Swift and Kotlin Amplitude support is deferred. Your app owns the
-Amplitude dependency, configuration and event calls.
-This adapter uses the modern JavaScript Analytics client's `setOptOut` API;
-it does not bind a native Amplitude client.
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. Your app owns the Amplitude dependency,
+configuration and event calls. The React Native helper uses the JavaScript
+Analytics client's `setOptOut` API; the Swift and Kotlin helpers set the
+native client's `optOut` property.
 
 ### Before you start
 
-Complete the [React Native](/docs/frameworks/react-native/quickstart) quickstart.
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart.
 Include `measurement` in your native category configuration and Inth policy. Connect
 the same installed engine your consent UI uses. Mobile SDKs currently have
 [private prerelease access](/docs/guides/mobile-status).
 
-Install the current [React Native](https://amplitude.com/docs/sdks/analytics/react-native/react-native-sdk)
+Install the current [iOS Swift](https://amplitude.com/docs/sdks/analytics/ios/ios-swift-sdk),
+[Android Kotlin](https://amplitude.com/docs/sdks/analytics/android/android-kotlin-sdk)
+or [React Native](https://amplitude.com/docs/sdks/analytics/react-native/react-native-sdk)
 Analytics SDK. This mapping targets the current SDK, rather than its legacy
 maintenance library.
 
@@ -100,18 +103,59 @@ A JS helper cannot stop an earlier native initializer. See
 Expo needs an app build containing the vendor and c15t native modules. Expo Go
 does not provide c15t's native engine.
 
-### Native Swift and Kotlin support
+### Connect a Swift app
 
-There are no bundled native Amplitude helpers in this release. In the reviewed
-AmplitudeSwift 1.19.4 and Android Analytics 1.36.0 sources, the runtime `optOut`
-value has no documented synchronization contract across consent callbacks,
-event callers and vendor worker queues. c15t's native notifications can arrive
-on different threads.
+Create Amplitude with `optOut` on, then hand its property to the helper:
 
-A future native adapter needs a vendor-supported synchronization or event-gating
-contract. Suppressing Swift's `Sendable` warning or dispatching a setter to the
-main queue does not prove withdrawal across vendor workers. Other bundled
-[mobile integrations](/docs/integrations/overview#mobile-sdks) remain available.
+```swift title="AmplitudeConsentOwner.swift"
+import AmplitudeSwift
+import C15tApple
+import C15tCore
+
+final class AmplitudeConsentOwner {
+    private let integration: AmplitudeIntegration
+
+    init(core: ConsentCore, amplitude: Amplitude) {
+        integration = AmplitudeIntegration(core: core) { amplitude.optOut = $0 }
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterReset() { integration.sync() }
+}
+```
+
+Amplitude does not persist `optOut`, so create the owner on every launch,
+right after `Amplitude(configuration: Configuration(apiKey: ..., optOut: true))`.
+
+### Connect an Android app
+
+```kotlin title="AmplitudeConsent.kt"
+import com.amplitude.android.Amplitude
+import com.c15t.android.integrations.AmplitudeIntegration
+import com.c15t.core.C15t
+
+fun connectAmplitudeConsent(amplitude: Amplitude, onError: (Exception) -> Unit): AmplitudeIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting Amplitude" }
+	return AmplitudeIntegration(
+		core = core,
+		setOptOut = { amplitude.optOut = it },
+		onError = onError,
+	)
+}
+```
+
+Create Amplitude with `optOut = true` in its configuration block, then
+connect it. Keep the returned helper on the application.
+
+### Native threading limits
+
+Both native helpers set `optOut` on the thread that publishes the consent
+change. Amplitude reads `optOut` when it processes each event, on its own
+queue, and documents no ordering between the two. An event tracked at the
+moment of withdrawal can still be processed under the old value. Keep your own
+event calls behind current permission, as with every helper here. Earlier
+c15t releases deferred these helpers for this reason; they ship now for
+parity with React Native, with this limit stated.
 
 ### Connect React Native or Expo
 
@@ -141,10 +185,11 @@ failures through `onError`, and handle rejections from `ready`, `sync()` and
 
 ### Handle reset and teardown
 
-After an app-owned Amplitude reset completes, call `await amplitudeConsent.sync()`.
+After an app-owned Amplitude reset completes, call `syncAfterReset()` on the
+Swift owner, `sync()` on the Kotlin helper or `await amplitudeConsent.sync()`.
 This reapplies current native permission without recording a new choice.
 
-For final teardown, call `await amplitudeConsent.disconnect()`.
+For final teardown, call `stop()`, `close()` or `await amplitudeConsent.disconnect()`.
 The helper detaches and enables opt-out.
 It does not log the person out, rotate their identity or shut down unrelated
 app services.
