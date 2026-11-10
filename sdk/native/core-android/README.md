@@ -58,7 +58,7 @@ or Google certification.
 A successful `CommitResult.ok` confirms durable local storage and the queued
 delivery obligation. It does not claim backend delivery. Keep refused drafts
 and retry controls visible. For local start-over, use the installed kernel's
-`reset`; the facade's `C15t.reset()` only tears down the singleton.
+`reset`; the facade's `C15t.uninstall()` only tears down the singleton.
 
 ## Working on this package
 

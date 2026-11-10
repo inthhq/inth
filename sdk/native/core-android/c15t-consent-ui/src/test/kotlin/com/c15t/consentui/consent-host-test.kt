@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.ComposeView
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.spi.HttpClient
@@ -171,7 +171,7 @@ class ConsentHostTest {
         return session.javaClass.getDeclaredField("presenter").apply { isAccessible = true }.get(session) as ConsentPresenter
     }
 
-    private fun assertOutcome(request: JSONObject, raw: String, core: C15tKernel) {
+    private fun assertOutcome(request: JSONObject, raw: String, core: ConsentCore) {
         val event = JSONObject(raw)
         assertEquals(request.getString("sessionId"), event.getString("sessionId"))
         assertEquals(core.snapshot().revision, event.getLong("revision"))
@@ -190,7 +190,7 @@ class ConsentHostTest {
     private fun fixture(name: String) = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
         .map { File(it, "native/examples/consent-demo/fixtures/$name") }.first { it.exists() }.readText()
 
-    private fun boot(body: String): C15tKernel {
+    private fun boot(body: String): ConsentCore {
         val config = NativeConfig("https://fixture.invalid")
         val store = object : KeyValueStore {
             private val values = java.util.concurrent.ConcurrentHashMap<String, String>()
@@ -202,7 +202,7 @@ class ConsentHostTest {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
-        return C15tKernel(config, C15tStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
+        return ConsentCore(config, C15tStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
     }
 
     companion object { private const val PRIVACY_URL = "https://app.test/privacy" }

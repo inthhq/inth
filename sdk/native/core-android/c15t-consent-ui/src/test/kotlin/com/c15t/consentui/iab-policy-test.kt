@@ -43,7 +43,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.c15t.consentui.generated.IabCopy
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabBannerSummary
@@ -606,14 +606,14 @@ class IabPolicyTest {
     }
     private fun inRetention(vendor: Int, text: String) = compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendor.$vendor.retention")) and hasText(text))
 
-    private fun customize(core: C15tKernel): ConsentPresenter {
+    private fun customize(core: ConsentCore): ConsentPresenter {
         val presenter = show(core)
         compose.onNodeWithTag("c15t.first-layer.customize").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
         return presenter
     }
 
-    private fun show(core: C15tKernel, theme: ConsentTheme? = null): ConsentPresenter {
+    private fun show(core: ConsentCore, theme: ConsentTheme? = null): ConsentPresenter {
         lateinit var presenter: ConsentPresenter
         compose.setContent {
             presenter = remember { ConsentPresenter(core) }
@@ -624,9 +624,9 @@ class IabPolicyTest {
     }
 
     /** The demo's IAB fixture, with [edit] applied to its vendor list. */
-    private fun boot(edit: (JsonObject) -> JsonObject = { it }): C15tKernel = bootIn("EN", edit)
+    private fun boot(edit: (JsonObject) -> JsonObject = { it }): ConsentCore = bootIn("EN", edit)
 
-    private fun bootIn(language: String, edit: (JsonObject) -> JsonObject = { it }): C15tKernel {
+    private fun bootIn(language: String, edit: (JsonObject) -> JsonObject = { it }): ConsentCore {
         val source = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()).jsonObject
         val body = JsonObject(source + ("gvl" to edit(source.getValue("gvl").jsonObject))).toString()
@@ -635,7 +635,7 @@ class IabPolicyTest {
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", consentLanguage = language))
-        val core = C15tKernel(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+        val core = ConsentCore(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core
     }

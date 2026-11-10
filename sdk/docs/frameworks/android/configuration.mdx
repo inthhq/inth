@@ -10,10 +10,10 @@ Android's default storage and lifecycle services.
 
 ## Choose the backend
 
-`portalUrl` is the public HTTPS URL of your Inth project. A self-hosted backend
+`backendUrl` is the public HTTPS URL of your Inth project. A self-hosted backend
 can use the same configuration if it implements the c15t native policy and save
 protocol. An `initUrl` changes only policy initialization; consent saves still
-use `portalUrl`.
+use `backendUrl`.
 
 The installer handles HTTP transport, foreground refresh and reconnect retry.
 Keep those services enabled when embedding an
@@ -51,7 +51,7 @@ provide application metadata instead of the quickstart's explicit
 
 ```xml title="app/src/main/AndroidManifest.xml"
 <application>
-	<meta-data android:name="com.c15t.PORTAL_URL" android:value="https://your-project.inth.app" />
+	<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://your-project.inth.app" />
 	<meta-data android:name="com.c15t.CATEGORIES" android:value="necessary,measurement,marketing" />
 </application>
 ```
@@ -85,7 +85,7 @@ initializers. Configure each optional SDK's startup separately.
 
 | Setting | Purpose |
 | --- | --- |
-| `portalUrl` | Required project/backend URL. |
+| `backendUrl` | Required project/backend URL. |
 | `initUrl` | Optional initialization URL override. |
 | `domain` | Domain reported with consent records; defaults to the project URL's host. |
 | `consentCategories` | App category scope. |
@@ -98,7 +98,7 @@ initializers. Configure each optional SDK's startup separately.
 | `extraHeaders` | App-owned transport headers. |
 | `maxPendingSaves` | Durable delivery queue limit, up to 20. |
 
-The corresponding manifest keys are `com.c15t.PORTAL_URL`, `INIT_URL`, `DOMAIN`,
+The corresponding manifest keys are `com.c15t.BACKEND_URL`, `BACKEND_INIT_URL`, `BACKEND_DOMAIN`,
 `CATEGORIES` and `POLICY_RESOURCE`, with the same `com.c15t.` prefix. The policy
 resource names a file in app assets. Native configuration supports more options
 than manifest startup.
@@ -113,7 +113,7 @@ identity changes; IAB authority may be retired and a new choice required.
 For an explicit withdrawal, save `CommitIntent.Necessary` and inspect the commit
 result. For a start-over control, call the installed kernel's
 `C15t.current?.reset()`. This resets local consent and resolves policy again.
-`C15t.reset()` only drops the singleton for teardown and leaves persisted
+`C15t.uninstall()` only drops the singleton for teardown and leaves persisted
 consent unchanged. Neither operation is a backend account-deletion API.
 
 ## Handle a policy or storage failure

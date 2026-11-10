@@ -1,7 +1,7 @@
 package com.c15t.android.integrations
 
 import android.util.Log
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.Subscription
 import com.c15t.core.model.ConsentCategory
 
@@ -44,7 +44,7 @@ data class FirebaseAnalyticsConsent(val analyticsStorage: Boolean) {
  * @throws IllegalArgumentException If category is necessary.
  */
 class FirebaseAnalyticsIntegration(
-	core: C15tKernel,
+	core: ConsentCore,
 	category: ConsentCategory = ConsentCategory.MEASUREMENT,
 	setConsent: (FirebaseAnalyticsConsent) -> Unit,
 	setCollectionEnabled: (Boolean) -> Unit,
@@ -88,7 +88,7 @@ class FirebaseAnalyticsIntegration(
  * @throws IllegalArgumentException If category is necessary.
  */
 class PostHogIntegration(
-	core: C15tKernel,
+	core: ConsentCore,
 	category: ConsentCategory = ConsentCategory.MEASUREMENT,
 	optIn: () -> Unit,
 	optOut: () -> Unit,
@@ -130,7 +130,7 @@ class PostHogIntegration(
  * @throws IllegalArgumentException If category is necessary.
  */
 class MixpanelIntegration(
-	core: C15tKernel,
+	core: ConsentCore,
 	category: ConsentCategory = ConsentCategory.MEASUREMENT,
 	optInTracking: () -> Unit,
 	optOutTracking: () -> Unit,
@@ -176,7 +176,7 @@ class MixpanelIntegration(
  * @throws IllegalArgumentException If category is necessary.
  */
 class SentryReplayIntegration(
-	core: C15tKernel,
+	core: ConsentCore,
 	category: ConsentCategory = ConsentCategory.MEASUREMENT,
 	start: () -> Unit,
 	stop: () -> Unit,
@@ -195,7 +195,7 @@ class SentryReplayIntegration(
 
 /** The core retains this binding until close; every update re-reads current authority. */
 private class AnalyticsConsentBinding(
-	private val core: C15tKernel,
+	private val core: ConsentCore,
 	private val category: ConsentCategory,
 	private val onError: (Exception) -> Unit,
 	private val apply: (Boolean, () -> Boolean) -> Unit,

@@ -795,7 +795,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
    no scope declared. Web's `iab.vendors` does three jobs and mobile now does two of them. The
    request goes out with `x-c15t-vendors` (`C15tProtocol.kt:48`, `Transports.swift:53`): deduped,
    ascending, comma-separated, and absent above the same 500 that `MAX_GVL_QUERY_VENDOR_IDS` uses.
-   The held list is pruned on every path it arrives by — `C15tKernel.kt:253` and `:1077`,
+   The held list is pruned on every path it arrives by — `ConsentCore.kt:253` and `:1077`,
    `ConsentCore.swift:1076` and `:1490` — which is what makes it a read-path rule rather than a
    first-store rule, so bytes written before a host scoped the app stop disclosing vendors it never
    named. The prune carries the promise and the header only saves bytes: a producer that ignores the

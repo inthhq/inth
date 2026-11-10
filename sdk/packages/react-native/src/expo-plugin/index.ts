@@ -45,7 +45,7 @@ export { C15tPluginError } from './errors';
 export type {
 	C15tIabPluginProps,
 	C15tPluginProps,
-	C15tProviderTransportKind,
+	ConsentProviderTransportKind,
 	C15tTrackingMarkdownLocalization,
 	C15tTransportMode,
 	ResolvedC15tIabParams,

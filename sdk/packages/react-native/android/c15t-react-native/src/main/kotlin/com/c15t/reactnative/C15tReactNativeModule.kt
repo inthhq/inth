@@ -194,8 +194,8 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			return
 		}
 		try {
-			// `C15t.reset()` is teardown, not a wipe, and the two names are the reason
-			// this goes through the kernel it means. See its KDoc.
+			// `C15t.uninstall()` is teardown, not a wipe, so the wipe goes through the
+			// installed core's own `reset()`.
 			val kernel = C15t.current
 			if (kernel == null) {
 				promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED)

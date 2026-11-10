@@ -362,7 +362,7 @@ does not have to know what it missed.
 One launch hook per app, owned by the layer that documents the opt-out. Android's core
 library registers an `androidx.startup` initializer of its own and the React Native
 binding registers one too, so two entries merge unless the binding says otherwise. The
-core's takes no flag: it installs a core whenever `com.c15t.PORTAL_URL` is declared, and
+core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` is declared, and
 installation is first-wins, so a host that set the binding's `AUTO_BOOTSTRAP` to install
 its own configured core would get the manifest core instead and have its own refused with
 no warning. The binding therefore removes the core's entry from a React Native app's
@@ -686,7 +686,7 @@ Transports
 
 Same three modes as the web SDK, same backend endpoints, same headers.
 
-    x-c15t-version:            <c15t.version> on Swift
+    x-c15t-version:            <C15t.version> on Swift
     x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
 
@@ -964,7 +964,7 @@ The bridge does not carry them, and it is the wrong place for them. Nothing in
 2 keeps the consent cores free of UI: a home indicator is not consent state, and
 neither core owns a window or a UI thread to read one from.
 
-The bands reach the surfaces from the app instead, through `C15tProvider`'s
+The bands reach the surfaces from the app instead, through `ConsentProvider`'s
 `safeAreaInsets`, which the provider publishes on a context and
 `useConsentSafeArea()` reads. The host measures rather than the bridge because
 React Native itself has no inset API worth calling one: `SafeAreaView` is
@@ -1128,7 +1128,7 @@ Kotlin core, as built
   a key dies, `ResilientKeyValueStore` deletes the blobs it can no longer open,
   warns once, and serves deny-all with `policyPending: true`. The SPI exposes
   `KeyValueStore.keys()` for that purge only, and defaults to `emptySet()`.
-- Every mutation in `C15tKernel` already ended in `persist()` and
+- Every mutation in `ConsentCore` already ended in `persist()` and
   `notifySnapshot()` together, including the failed-init path that records
   `unsupported-contract`, so this core needed no change to satisfy "Revisions and
   error writes". `ProtocolFixtureTest` runs the revision trace to keep it that way:
@@ -1290,16 +1290,16 @@ Both platforms get the flat reverse-DNS names their readers already use, not a
 Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
 
     iOS Info.plist                      Android <meta-data>
-    com.c15t.backend.url                com.c15t.PORTAL_URL
+    com.c15t.backend.url                com.c15t.BACKEND_URL
     com.c15t.backend.mode               (mode is presence and absence)
-    com.c15t.backend.domain             com.c15t.DOMAIN
-    com.c15t.gpc                        com.c15t.FORCE_GPC
-    com.c15t.backend.initUrl            com.c15t.INIT_URL
+    com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
+    com.c15t.forceGPC                   com.c15t.FORCE_GPC
+    com.c15t.backend.initUrl            com.c15t.BACKEND_INIT_URL
     com.c15t.categories                 com.c15t.CATEGORIES
     com.c15t.reactnative.AutoBootstrap  com.c15t.reactnative.AUTO_BOOTSTRAP
 
-The two spellings differ because the readers already did, and a plugin that
-tidied that up would write keys nothing reads. Absent values stay absent: the
+Each key keeps its platform's casing, lowercase dotted on iOS and upper snake on
+Android, and both spell the same concept with the same words. Absent values stay absent: the
 bridge treats a missing key as "not configured" and has to parse an empty
 string. `AutoBootstrap` is written only in the opt-out case, since on is the
 bridge's own default.
@@ -1334,7 +1334,7 @@ An unread key is not a spare knob: it is a wrong promise carried inside a shippe
 binary, and the app looks configured while one platform runs something else.
 `com.c15t.backend.publicKey` / `com.c15t.PUBLIC_KEY` were exactly that and are
 gone; iOS `com.c15t.backend.initUrl` was a silent wrong-backend bug, since Android
-honoured its `com.c15t.INIT_URL` and iOS kept building `${base}/init`, and the
+honoured its `com.c15t.BACKEND_INIT_URL` and iOS kept building `${base}/init`, and the
 bridge now passes it to `HostedTransport` the way `@c15t/core` and Android do:
 the value is used as given, and only an absent key takes the default.
 

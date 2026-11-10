@@ -114,7 +114,7 @@ export interface TrackingRequest {
  * having refused.
  *
  * Apple's answer stays Apple's answer. Pressing Allow writes no consent, and this hook never
- * calls {@link ConsentActions.acceptAll} or saves a category on the strength of a platform
+ * calls `useSaveConsents()` or saves a category on the strength of a platform
  * yes. Consent still comes from the c15t surfaces, and a category that is still unresolved
  * after the journey is still unresolved: the tracking gate reads it as off, which is the
  * point of {@link useIsTrackingAllowed}.

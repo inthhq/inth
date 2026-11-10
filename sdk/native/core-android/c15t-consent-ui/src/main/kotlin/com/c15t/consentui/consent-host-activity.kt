@@ -14,7 +14,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import org.json.JSONObject
 import java.lang.ref.WeakReference
 import java.util.UUID
@@ -22,7 +22,7 @@ import java.util.UUID
 /** Optional native Activity host. The registry owns one session, never a second engine. */
 object ConsentHost {
     private class Session(val id: String, val presenter: ConsentPresenter, val store: ViewModelStore,
-        val privacyURL: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean) {
+        val privacyPolicyUrl: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean) {
         var activity = WeakReference<ConsentHostActivity>(null)
         var launching = true
         var noticeView = WeakReference<ComposeView>(null)
@@ -34,8 +34,8 @@ object ConsentHost {
     private const val NOTICE_SESSION_STATE = "com.c15t.consentui.notice.session"
 
     /** Call on the main thread. Repeated requests reuse the current session and its draft. */
-    fun present(activity: Activity, core: C15tKernel, preferences: Boolean, privacyURL: String, owner: Any = activity, outcome: (String) -> Unit): String {
-        val uri = android.net.Uri.parse(privacyURL)
+    fun present(activity: Activity, core: ConsentCore, preferences: Boolean, privacyPolicyUrl: String, owner: Any = activity, outcome: (String) -> Unit): String {
+        val uri = android.net.Uri.parse(privacyPolicyUrl)
         require(uri.scheme == "https" && !uri.host.isNullOrBlank()) { "An HTTPS privacy-policy URL is required" }
         active?.let {
             it.owner = WeakReference(owner)
@@ -68,7 +68,7 @@ object ConsentHost {
         })[ConsentPresenter::class.java]
         if (preferences) presenter.presentPreferences() else presenter.presentPrompt()
         val id = presenter.presentationID ?: UUID.randomUUID().toString()
-        val session = Session(id, presenter, store, privacyURL, WeakReference(owner), outcome, !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge)
+        val session = Session(id, presenter, store, privacyPolicyUrl, WeakReference(owner), outcome, !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge)
         active = session
         presenter.onOutcome = { value ->
             if (active === session) {
@@ -102,7 +102,7 @@ object ConsentHost {
         val session = active?.takeIf { it.id == id } ?: return false
         session.activity = WeakReference(activity)
         session.launching = false
-        activity.setContent { C15tConsent(session.presenter, session.privacyURL) }
+        activity.setContent { C15tConsent(session.presenter, session.privacyPolicyUrl) }
         return true
     }
     private fun attachNotice(activity: Activity, session: Session) {
@@ -113,7 +113,7 @@ object ConsentHost {
         observeNoticeLifecycle(activity.application, session)
         val content = activity.findViewById<ViewGroup>(android.R.id.content)
         val view = ComposeView(activity)
-        view.setContent { C15tConsent(session.presenter, session.privacyURL, noticeModifier = Modifier.fillMaxWidth()) }
+        view.setContent { C15tConsent(session.presenter, session.privacyPolicyUrl, noticeModifier = Modifier.fillMaxWidth()) }
         content.addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM))
         session.noticeView = WeakReference(view)

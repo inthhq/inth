@@ -12,7 +12,10 @@ import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { useConsentActions } from '../hooks/use-consent-actions';
+import {
+	useDismissNotice,
+	useSaveConsents,
+} from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import { useConsentStatus } from '../hooks/use-consent-status';
 import { isStatusPromptOwed } from '../lib/selectors';
@@ -91,7 +94,7 @@ const ConsentBannerActions = ({
 	customize,
 	notice,
 }: ConsentBannerActionsProps): ReactNode => {
-	const actions = useConsentActions();
+	const dismissNotice = useDismissNotice();
 	const { parts } = useConsentSurfaceFrame();
 	const [saveFailed, setSaveFailed] = useState(false);
 
@@ -124,7 +127,7 @@ const ConsentBannerActions = ({
 					<ConsentButton
 						label={copy.acknowledge}
 						onPress={() => {
-							actions.dismissNotice();
+							dismissNotice();
 						}}
 						parts={parts}
 						style={CONSENT_BUTTON_ROW_ITEM}
@@ -195,10 +198,10 @@ const ConsentBannerActions = ({
  *
  * @example
  * ```tsx
- * <C15tProvider>
+ * <ConsentProvider>
  *     <App />
  *     <ConsentBanner />
- * </C15tProvider>
+ * </ConsentProvider>
  * ```
  *
  * @param props - Banner props.
@@ -210,7 +213,7 @@ export const ConsentBanner = ({
 	styles,
 	theme,
 }: ConsentBannerProps): ReactNode => {
-	const actions = useConsentActions();
+	const saveConsents = useSaveConsents();
 	const status = useConsentStatus();
 	const promptKey = useConsentSelector(selectBannerPromptKey);
 	const copy = useConsentSelector(selectConsentCopy, isConsentCopyEqual);
@@ -231,9 +234,7 @@ export const ConsentBanner = ({
 		setBusy(true);
 		let written: boolean;
 		try {
-			const result = await (choice === 'accept'
-				? actions.acceptAll()
-				: actions.rejectAll());
+			const result = await saveConsents(choice === 'accept' ? 'all' : 'none');
 			written = result.ok;
 		} catch {
 			written = false;

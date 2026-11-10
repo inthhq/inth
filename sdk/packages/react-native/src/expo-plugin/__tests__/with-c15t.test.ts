@@ -108,7 +108,7 @@ describe('withC15t standard install', () => {
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.PORTAL_URL',
+					'android:name': 'com.c15t.BACKEND_URL',
 					'android:value': BACKEND,
 				},
 			},
@@ -248,7 +248,7 @@ describe('withC15t standard install', () => {
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.PORTAL_URL',
+					'android:name': 'com.c15t.BACKEND_URL',
 					'android:value': BACKEND,
 				},
 			},
@@ -305,7 +305,7 @@ describe('withC15t standard install', () => {
 		);
 
 		expect(xml).toContain(
-			'<meta-data android:name="com.c15t.PORTAL_URL" android:value="https://consent.example.com"/>'
+			'<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://consent.example.com"/>'
 		);
 		expect(xml).toContain(
 			'<uses-permission android:name="android.permission.INTERNET"/>'

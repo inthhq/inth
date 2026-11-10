@@ -294,7 +294,7 @@ class C15tStore(
 		publishTcStorageBus(null)
 	}
 
-	/** Repair metadata only. Use [com.c15t.core.C15tKernel.rebuildTcStorageBus] to restore
+	/** Repair metadata only. Use [com.c15t.core.ConsentCore.rebuildTcStorageBus] to restore
 	 * consent rows after current clock, list, configuration and identity validation. */
 	@Synchronized
 	fun rebuildTcStorageBus() {

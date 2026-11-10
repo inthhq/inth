@@ -155,7 +155,7 @@ export interface ConsentButtonProps {
  * <ConsentButton
  *     label="Accept all"
  *     onPress={() => {
- *         actions.acceptAll();
+ *         saveConsents('all');
  *     }}
  *     parts={parts}
  * />

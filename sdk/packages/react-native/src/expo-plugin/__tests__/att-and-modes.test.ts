@@ -105,7 +105,7 @@ describe('App Tracking Transparency', () => {
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
-			'com.c15t.gpc': true,
+			'com.c15t.forceGPC': true,
 		});
 	});
 
@@ -251,7 +251,7 @@ describe('transport modes', () => {
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			'com.c15t.PORTAL_URL',
+			'com.c15t.BACKEND_URL',
 			'com.c15t.reactnative.AUTO_BOOTSTRAP',
 		]);
 		expect(providerOf(manifest)).toBeUndefined();
@@ -266,7 +266,7 @@ describe('transport modes', () => {
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
 
 		expect((await runInfoPlist(config)).ios?.infoPlist).toMatchObject({
-			'com.c15t.gpc': true,
+			'com.c15t.forceGPC': true,
 		});
 		expect(application['meta-data']).toContainEqual({
 			$: {
@@ -294,7 +294,7 @@ describe('transport modes', () => {
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
 		).toContainEqual({
 			$: {
-				'android:name': 'com.c15t.INIT_URL',
+				'android:name': 'com.c15t.BACKEND_INIT_URL',
 				'android:value': 'https://app.example.com/api/consent/init',
 			},
 		});

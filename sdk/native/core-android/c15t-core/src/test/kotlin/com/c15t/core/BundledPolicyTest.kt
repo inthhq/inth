@@ -139,7 +139,7 @@ class BundledPolicyTest {
 			val expired = if (restartBeforeWithdrawal) boot(narrowed) else first
 			assertTrue(expired.snapshot().policyPending)
 			assertFalse(expired.save(CommitIntent.All).ok)
-			assertFalse(expired.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+			assertFalse(expired.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
 			val revision = expired.snapshot().revision
 			assertEquals("concurrent-change", expired.save(CommitIntent.Necessary, revision - 1).error?.code)
 			assertTrue(expired.save(CommitIntent.Necessary, revision).ok, name)

@@ -12,7 +12,7 @@
 
 import { median } from '@c15t/benchmarking/utils';
 import {
-	C15tProvider,
+	ConsentProvider,
 	ConsentBanner,
 	ConsentClientContext,
 	createConsentClient,
@@ -152,7 +152,7 @@ const mountBanner = function mountBanner(
 	client?: ReturnType<typeof createConsentClient>
 ): ReactTestRenderer {
 	const banner = createElement(
-		C15tProvider,
+		ConsentProvider,
 		null,
 		createElement(ConsentBanner)
 	);

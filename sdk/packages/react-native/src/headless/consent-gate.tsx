@@ -4,9 +4,9 @@
 
 import type { ReactNode } from 'react';
 
+import { useConsent } from '../hooks/use-consent';
 import type { ConsentActions } from '../hooks/use-consent-actions';
 import { useConsentActions } from '../hooks/use-consent-actions';
-import { useIsAllowed } from '../hooks/use-is-allowed';
 import type { AllConsentNames } from '../protocol/vocabulary';
 
 /**
@@ -62,7 +62,7 @@ export const ConsentGate = ({
 	children,
 	fallback = null,
 }: ConsentGateProps): ReactNode => {
-	const allowed = useIsAllowed(category);
+	const allowed = useConsent(category);
 	const actions = useConsentActions();
 
 	return allowed ? children({ actions, category }) : fallback;

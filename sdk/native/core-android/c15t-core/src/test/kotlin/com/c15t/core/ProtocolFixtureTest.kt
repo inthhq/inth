@@ -50,7 +50,7 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * Runs every fixture in `native/protocol/index.json` against [C15tKernel].
+ * Runs every fixture in `native/protocol/index.json` against [ConsentCore].
  *
  * The TypeScript kernel produced these files, so a difference here is Kotlin and
  * JavaScript reading the same input differently, and `native/CONTRACT.md` rule 4
@@ -182,7 +182,7 @@ class ProtocolFixtureTest {
 		val index = readIndex(directory)
 		val ran = mutableListOf<String>()
 
-		// TC Strings are graded by the codec's own runners, not by this file: nothing in C15tKernel
+		// TC Strings are graded by the codec's own runners, not by this file: nothing in ConsentCore
 		// reads or writes one yet. The delegation is checked rather than assumed -- the codec's
 		// loader has to reach exactly the fixtures this index lists -- so the kind is claimed here
 		// with something behind it instead of skipped.
@@ -198,7 +198,7 @@ class ProtocolFixtureTest {
 				"would make the delegation below a claim rather than a fact",
 		)
 		// The vendor-scope vectors are graded by VendorListScopeFixturesTest for the same reason
-		// the TC Strings are: C15tKernel never narrows a vendor list, so this file has no kernel
+		// the TC Strings are: ConsentCore never narrows a vendor list, so this file has no kernel
 		// call to make against them. The loader has to reach exactly the ids the index lists, which
 		// is what turns the branch below into a claim rather than an excuse.
 		val vendorScopesDelegated = VendorListScopeFixtures.ids()
@@ -361,10 +361,10 @@ class ProtocolFixtureTest {
 	 *
 	 * The device is a real one by the time the wipe lands: it bootstrapped over the
 	 * fixture's stored subject, resolved a policy from the transport, and took the
-	 * fixture's action through [C15tKernel.save], so the receipt being deleted is one
+	 * fixture's action through [ConsentCore.save], so the receipt being deleted is one
 	 * this core wrote. Then three answers are read off it, in this order:
 	 *
-	 * - the baseline [C15tKernel.reset] publishes, which has to be the cold-start state
+	 * - the baseline [ConsentCore.reset] publishes, which has to be the cold-start state
 	 *   the contract table describes, with the identity and the host's own configuration
 	 *   still on it;
 	 * - what storage holds at that same instant, read from inside the publication. That is
@@ -531,7 +531,7 @@ class ProtocolFixtureTest {
 	 * would score a publication the core did not earn.
 	 */
 	private class Run(
-		val kernel: C15tKernel,
+		val kernel: ConsentCore,
 		val http: RecordingHttpClient,
 		val initScript: ArrayDeque<HttpResponse>,
 		/** The slot the core persists to, so a fixture can read the bytes it wrote. */
@@ -624,7 +624,7 @@ class ProtocolFixtureTest {
 		val deviceDetection = input["privacySignals"]?.jsonObject?.get("gpc")?.jsonObject?.get("detected")?.jsonPrimitive?.booleanOrNull
 			?: fail("$fixtureId: privacySignals.gpc.detected is missing")
 		val config = NativeConfig(
-			portalUrl = "https://backend.example.com",
+			backendUrl = "https://backend.example.com",
 			domain = input["domain"]?.jsonPrimitive?.contentOrNull ?: "app.example.com",
 			overrides = KernelOverrides(
 				country = overrides["country"]?.jsonPrimitive?.contentOrNull,
@@ -655,7 +655,7 @@ class ProtocolFixtureTest {
 		}
 		val clock = FixedClock(now)
 		val store = C15tStore(backend)
-		val kernel = C15tKernel(
+		val kernel = ConsentCore(
 			config = config,
 			store = store,
 			clock = clock,
@@ -732,7 +732,7 @@ class ProtocolFixtureTest {
 						?: fail("${id(entry)}: intent.consents.$name is not an optional category")
 					consents[category] = value.jsonPrimitive.boolean
 				}
-				CommitIntent.Explicit(consents)
+				CommitIntent.Custom(consents)
 			}
 
 			else -> fail("${id(entry)}: intent.action ${intent["action"]} is unknown")

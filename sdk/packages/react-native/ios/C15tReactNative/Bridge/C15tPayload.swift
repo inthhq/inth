@@ -19,13 +19,13 @@ import Foundation
 /// same fail-closed rules, so a JavaScript package cannot tell which core answered.
 public enum C15tPayload {
     /// Protocol this native build speaks.
-    public static let protocolVersion = c15t.protocolVersion
+    public static let protocolVersion = C15t.protocolVersion
 
     /// Oldest protocol this native build accepts from a JavaScript package.
     public static let minSupportedProtocolVersion = 1
 
     /// Newest protocol this native build accepts from a JavaScript package.
-    public static let maxSupportedProtocolVersion = c15t.protocolVersion
+    public static let maxSupportedProtocolVersion = C15t.protocolVersion
 
     /// Language used when neither the app nor the backend resolved one.
     public static let defaultLanguage = "en"
@@ -90,7 +90,7 @@ public enum C15tPayload {
     public static func bootstrap(
         snapshot: ConsentSnapshot,
         hasStoredSnapshot: Bool,
-        sdkVersion: String = c15t.version
+        sdkVersion: String = C15t.version
     ) -> String {
         encode([
             "protocolVersion": .integer(Int64(protocolVersion)),

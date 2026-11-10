@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.c15t.core.C15t
+import com.c15t.core.ConsentCore
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabConfiguration
 import com.c15t.core.model.ConsentCategory
@@ -28,12 +29,12 @@ object C15tAndroid {
 	private const val TAG = "c15t"
 
 	/** Manifest keys the Initializer reads; the app declares these. */
-	const val META_PORTAL_URL = "com.c15t.PORTAL_URL"
+	const val META_BACKEND_URL = "com.c15t.BACKEND_URL"
 
 	const val META_BUNDLED_POLICY = "com.c15t.POLICY_RESOURCE"
 
-	const val META_INIT_URL = "com.c15t.INIT_URL"
-	const val META_DOMAIN = "com.c15t.DOMAIN"
+	const val META_BACKEND_INIT_URL = "com.c15t.BACKEND_INIT_URL"
+	const val META_BACKEND_DOMAIN = "com.c15t.BACKEND_DOMAIN"
 
 	/**
 	 * Comma-separated category ids the app offers, e.g.
@@ -76,6 +77,7 @@ object C15tAndroid {
 	 * This one needs `android.permission.ACCESS_NETWORK_STATE`, which belongs to the
 	 * host: without it the registration is refused and c15t carries on with the launch
 	 * and foreground replays, so declaring it buys a faster retry rather than correctness.
+	 * @return The installed core. A repeated call returns the core already installed.
 	 */
 	fun install(
 		context: Context,
@@ -85,7 +87,7 @@ object C15tAndroid {
 		observeForeground: Boolean = true,
 		observeReachability: Boolean = true,
 		logger: (KernelError) -> Unit = { error -> Log.w(TAG, "${error.code}: ${error.message}") },
-	) {
+	): ConsentCore {
 		val appContext = context.applicationContext
 		val store = C15tStores.create(appContext)
 		val http = transport ?: HostedTransport(C15tHttpClient(), config)
@@ -94,7 +96,7 @@ object C15tAndroid {
 		// replay and the foreground replay cannot deliver the same queued entry twice.
 		val executor = worker
 
-		C15t.bootstrap(
+		val core = C15t.bootstrap(
 			config = config,
 			store = store,
 			clock = clock,
@@ -118,12 +120,13 @@ object C15tAndroid {
 				}
 			}
 		}
+		return core
 	}
 
 	/**
 	 * Block until every task already handed to the shared worker has run.
 	 *
-	 * [C15t.reset] drops a kernel without cancelling the init and replay it queued here, and
+	 * [C15t.uninstall] drops a kernel without cancelling the init and replay it queued here, and
 	 * that work still writes to the same files. A test that installs the next core straight
 	 * after a reset waits on this first, so the dropped core cannot land a write in the next
 	 * test's store.
@@ -140,14 +143,14 @@ object C15tAndroid {
 	/**
 	 * Start c15t from manifest metadata, the zero-code path.
 	 *
-	 * Without `com.c15t.PORTAL_URL` there is no backend to talk to, so this logs and
+	 * Without `com.c15t.BACKEND_URL` there is no backend to talk to, so this logs and
 	 * leaves the core uninstalled: reads still answer deny-all, which is the safe
 	 * state for a misconfigured build rather than a crash at startup.
 	 */
 	fun bootstrap(context: Context) {
 		val config = configFrom(context)
 		if (config == null) {
-			Log.i(TAG, "no $META_PORTAL_URL meta-data declared; c15t stays inactive until C15tAndroid.install")
+			Log.i(TAG, "no $META_BACKEND_URL meta-data declared; c15t stays inactive until C15tAndroid.install")
 			return
 		}
 		install(context, config)
@@ -184,14 +187,14 @@ object C15tAndroid {
 		// manifest parser chose. A hand-edited manifest and an Expo-generated one do not
 		// arrive as the same Java type, and a reader that names one of them honours only
 		// the app that happened to spell it that way.
-		val portalUrl = C15tManifestValue.string(read(META_PORTAL_URL)) ?: return null
+		val backendUrl = C15tManifestValue.string(read(META_BACKEND_URL)) ?: return null
 		// Absent stays absent. `false` is an answer and a missing key is not, and the
 		// core treats them differently when it derives the signal.
 		return NativeConfig(
-			portalUrl = portalUrl,
+			backendUrl = backendUrl,
 			bundledPolicy = C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
-			initUrl = C15tManifestValue.string(read(META_INIT_URL)),
-			domain = C15tManifestValue.string(read(META_DOMAIN)),
+			initUrl = C15tManifestValue.string(read(META_BACKEND_INIT_URL)),
+			domain = C15tManifestValue.string(read(META_BACKEND_DOMAIN)),
 			consentCategories = declaredCategories(read(META_CATEGORIES)),
 			vendors = declaredVendors(read(META_VENDORS)),
 			iab = when (val declared = declaredIab(read)) {

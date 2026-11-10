@@ -105,8 +105,8 @@ produces nothing, or if the spec reaches the AAR.
 ## Configuration
 
 The core reads its backend from `AndroidManifest.xml` meta-data (see
-[`native/core-android`](../../../native/core-android)): `com.c15t.PORTAL_URL`,
-`com.c15t.INIT_URL`, `com.c15t.DOMAIN`, `com.c15t.FORCE_GPC`. Without a portal URL nothing
+[`native/core-android`](../../../native/core-android)): `com.c15t.BACKEND_URL`,
+`com.c15t.BACKEND_INIT_URL`, `com.c15t.BACKEND_DOMAIN`, `com.c15t.FORCE_GPC`. Without a backend URL nothing
 installs, and the module answers with the deny-all snapshot. Each is read whichever type
 the manifest parser gave it, so a bare `true` and a quoted `"true"` mean the same thing;
 `true`, `TRUE`, and `1` all count, and anything else reads as absent.

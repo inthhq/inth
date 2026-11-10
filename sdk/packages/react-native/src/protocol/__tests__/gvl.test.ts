@@ -36,7 +36,7 @@ const KOTLIN_LIST = `${KOTLIN_PACKAGE}/tc/GlobalVendorList.kt`;
 const KOTLIN_JSON = `${KOTLIN_PACKAGE}/tc/GlobalVendorListJson.kt`;
 const KOTLIN_SNAPSHOT = `${KOTLIN_PACKAGE}/model/Snapshot.kt`;
 const KOTLIN_ENVELOPE = `${KOTLIN_PACKAGE}/store/SnapshotEnvelope.kt`;
-const KOTLIN_KERNEL = `${KOTLIN_PACKAGE}/C15tKernel.kt`;
+const KOTLIN_KERNEL = `${KOTLIN_PACKAGE}/ConsentCore.kt`;
 
 /**
  * The names `gvl.ts` declares, which every source below has to agree with.

@@ -4,15 +4,16 @@ description: Save category choices, handle local commit results and open native 
 group: frameworks
 ---
 
-Use `useConsentActions()` under `C15tProvider` when your own controls need to
+Use `useSaveConsents()` under `ConsentProvider` when your own controls need to
 save a choice. For the stock screens, call `presentConsentPrompt` or
 `presentPreferences` and let the native presenter manage the form.
 
 ## Save a category choice
 
-`save({ measurement: true })` records the supplied category choices. Omitted
-categories keep their existing receipts. `acceptAll()` grants the resolved
-policy scope, and `rejectAll()` records a necessary-only choice.
+`saveConsents({ measurement: true })` records the supplied category choices.
+Omitted categories keep their existing receipts. `saveConsents('all')` grants
+the resolved policy scope, and `saveConsents('none')` records a necessary-only
+choice.
 
 Call them in response to a person's explicit action. Reading an allowed
 permission, mounting a provider or resolving policy does not record a choice.
@@ -20,7 +21,7 @@ For app-owned controls, follow [Build your own UI](/docs/frameworks/react-native
 
 ## Inspect every local commit
 
-`save`, `acceptAll` and `rejectAll` return `Promise<CommitResult>`. Check
+Every `saveConsents` call returns `Promise<CommitResult>`. Check
 `result.ok` before closing a form or displaying a saved confirmation. A
 resolved promise can still report a refused save.
 

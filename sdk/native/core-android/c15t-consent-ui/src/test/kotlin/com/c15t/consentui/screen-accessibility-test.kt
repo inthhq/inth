@@ -15,7 +15,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabConfiguration
@@ -139,7 +139,7 @@ class ScreenAccessibilityTest {
             val config = NativeConfig(source.getValue("endpoint").jsonPrimitive.content,
                 bundledPolicy = source.getValue("resource").toString(), iab = configuration, consentCategories = ConsentCategory.entries)
             val store = DecisionStore()
-            val core = C15tKernel(config, C15tStore(store), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
+            val core = ConsentCore(config, C15tStore(store), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
             core.bootstrap()
             assertTrue(core.save(CommitIntent.All).ok)
             val payload = Json.parseToJsonElement(source.getValue("resource").jsonObject.getValue("payload").jsonPrimitive.content).jsonObject
@@ -214,7 +214,7 @@ class ScreenAccessibilityTest {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), fixture) else HttpResponse(503)
         }
-        val core = C15tKernel(config, C15tStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+        val core = ConsentCore(config, C15tStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         lateinit var presenter: ConsentPresenter
         compose.setContent {

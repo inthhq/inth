@@ -36,7 +36,7 @@ class IabAcceptAllTest {
 				.readText(),
 		)
 
-	private fun boot(restrictions: List<IabPublisherRestriction>): C15tKernel {
+	private fun boot(restrictions: List<IabPublisherRestriction>): ConsentCore {
 		val base = Json.parseToJsonElement(initBody(model = "\"iab\"", gvl = vector.gvl.toString())).jsonObject
 		val http =
 			RecordingTransport()

@@ -138,7 +138,7 @@ beforeEach(async () => {
 	write('native/core-swift/README.md', '# Swift SDK\n');
 	write(
 		'native/core-swift/Sources/C15tCore/Transports.swift',
-		`public enum c15t { public static let version = "${version}" }\n`
+		`extension C15t { public static let version = "${version}" }\n`
 	);
 	write(
 		'native/core-swift/Tests/C15tCoreTests/test.swift',
@@ -317,7 +317,7 @@ test.each([
 		write('NOTICE', 'Later attribution\n');
 		write(
 			'native/core-swift/Sources/C15tCore/Transports.swift',
-			'public enum c15t { public static let version = "9.0.0" }\n'
+			'extension C15t { public static let version = "9.0.0" }\n'
 		);
 		write('native/protocol/index.json', '{"fixtures":["next"]}\n');
 		commit();

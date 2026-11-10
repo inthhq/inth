@@ -32,7 +32,7 @@ class PresenterTest {
             write(key, value); return true
         }
     }
-    private fun boot(store: Memory = Memory()): Pair<C15tKernel, AtomicLong> {
+    private fun boot(store: Memory = Memory()): Pair<ConsentCore, AtomicLong> {
         val now = AtomicLong(System.currentTimeMillis())
         val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()
@@ -41,7 +41,7 @@ class PresenterTest {
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"), iabListMaxAgeMs = 60_000)
-        val core = C15tKernel(config, C15tStore(store), clock = Clock { now.get() },
+        val core = ConsentCore(config, C15tStore(store), clock = Clock { now.get() },
             transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core to now
@@ -153,7 +153,7 @@ class PresenterTest {
             val clock = AtomicLong(vector.getValue("now").jsonPrimitive.long)
             val config = NativeConfig(vector.getValue("endpoint").jsonPrimitive.content,
                 bundledPolicy = vector.getValue("resource").toString(), consentCategories = ConsentCategory.entries)
-            val core = C15tKernel(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
+            val core = ConsentCore(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
             core.bootstrap()
             assertTrue(core.save(CommitIntent.All).ok)
             val p = ConsentPresenter(core, automaticPresentation = false)

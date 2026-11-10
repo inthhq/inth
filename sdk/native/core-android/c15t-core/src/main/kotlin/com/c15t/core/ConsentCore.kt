@@ -60,7 +60,7 @@ import kotlinx.serialization.json.*
  * [Reached] is the only case that lets a caller stop owing the body, and it is a claim
  * about storage rather than about the network: the entry is gone from disk. A `save()` that
  * has not been answered at all is a `null` in an atomic, not a case here -- see
- * [C15tKernel.save].
+ * [ConsentCore.save].
  */
 private sealed interface Delivery {
 	/** The backend accepted the body and the queue released the entry. */
@@ -73,7 +73,7 @@ private sealed interface Delivery {
 	data class Refused(val attempt: FailedAttempt, val error: KernelError) : Delivery
 }
 /**
- * What one delivery pass did, as [C15tKernel.requestDeliveryPass] hands it back.
+ * What one delivery pass did, as [ConsentCore.requestDeliveryPass] hands it back.
  *
  * Private to the core: `FlushResult` is the shape a host sees, and this carries the one fact a
  * host has no use for -- whether the pass stopped because no sender could be reached at all,
@@ -116,7 +116,7 @@ private class PassReport(
  * one-pass-in-flight rule.
  * @param logger Receives every [KernelError] the core emits.
  */
-class C15tKernel(
+class ConsentCore(
 	private val config: NativeConfig,
 	private val store: C15tStore,
 	private val clock: Clock = Clock.SYSTEM,
@@ -191,7 +191,7 @@ class C15tKernel(
 		}
 
 	private fun listIsUsable(): Boolean {
-		if (bundledPolicyAuthority?.isCurrent(config.portalUrl, clock.nowMillis()) == false) return false
+		if (bundledPolicyAuthority?.isCurrent(config.backendUrl, clock.nowMillis()) == false) return false
 		val fetched = iabListFetchedAt ?: return false
 		val now = clock.nowMillis()
 		return fetched >= 0 && now >= fetched && now - fetched < config.iabListMaxAgeMs
@@ -450,7 +450,7 @@ class C15tKernel(
 		// synchronous, which is what the tests rely on.
 		mutation.release()
 		if (snapshot().policyPending) config.bundledPolicy?.let { resource ->
-			BundledPolicy.resolve(resource, config.portalUrl, config.overrides, clock.nowMillis())?.let { selection ->
+			BundledPolicy.resolve(resource, config.backendUrl, config.overrides, clock.nowMillis())?.let { selection ->
 				applyInit(selection.mapped, config.detectedGpc, false, selection)
 			}
 		}
@@ -496,7 +496,7 @@ class C15tKernel(
 	fun snapshot(): ConsentSnapshot {
 		val view = readView.get()
 		view.authority?.let { authority ->
-			if (!authority.isCurrent(config.portalUrl, clock.nowMillis())) return view.expired
+			if (!authority.isCurrent(config.backendUrl, clock.nowMillis())) return view.expired
 		}
 		if (!view.requiresIab) return view.snapshot
 		val now = clock.nowMillis()
@@ -740,8 +740,8 @@ class C15tKernel(
 		synchronized(mutationLock) {
 			val current = state.get()
 			val withdrawingExpiredBundle = intent is CommitIntent.Necessary && evaluationPolicy != null &&
-				bundledPolicyAuthority?.hasExpired(config.portalUrl, at) == true
-			if (bundledPolicyAuthority?.isCurrent(config.portalUrl, at) == false && !withdrawingExpiredBundle)
+				bundledPolicyAuthority?.hasExpired(config.backendUrl, at) == true
+			if (bundledPolicyAuthority?.isCurrent(config.backendUrl, at) == false && !withdrawingExpiredBundle)
 				return@mutate refusedCommit("bundled-policy-expired", "Connect to refresh consent policy.")
 			if (bundledPolicyAuthority?.requiresAtp == true && intent !is CommitIntent.Necessary && currentAdditionalConsentList() == null)
 				return@mutate refusedCommit("additional-consent-list-stale", "Refresh the provider disclosures before saving.")
@@ -785,7 +785,7 @@ class C15tKernel(
 							gvl, configuration, currentAdditionalConsentList()?.providers?.map { it.id })
 						is CommitIntent.Necessary -> IabChoices()
 						is CommitIntent.Iab -> intent.choices
-						is CommitIntent.Explicit ->
+						is CommitIntent.Custom ->
 							return@mutate refusedCommit(
 								"iab-choices-required",
 								"Save the complete native IAB draft with category choices",
@@ -826,13 +826,13 @@ class C15tKernel(
 				// Expired-policy rejection also withdraws older grants outside today's scope.
 				is CommitIntent.Necessary ->
 					(if (withdrawingExpiredBundle) ConsentCategory.OPTIONAL else choiceScope).associateWith { false }
-				is CommitIntent.Explicit -> intent.consents
+				is CommitIntent.Custom -> intent.consents
 					is CommitIntent.Iab -> intent.consents
 				}
 			// With nothing to decide, a bulk action still covers everything the subject
 			// was shown: strictly necessary alone.
 			action = if (
-				withdrawingExpiredBundle || intent is CommitIntent.Explicit || intent is CommitIntent.Iab ||
+				withdrawingExpiredBundle || intent is CommitIntent.Custom || intent is CommitIntent.Iab ||
 				choiceScope.size == policyScope.size ||
 				choiceScope.isEmpty()
 			) {
@@ -892,7 +892,7 @@ class C15tKernel(
 
 		val isIab = policy?.model == ConsentModel.IAB
 		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
-			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.portalUrl).host.orEmpty()).toString()
+			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.backendUrl).host.orEmpty()).toString()
 		val entry = QueuedSave(
 			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
 			actionAt, payload, body = frozen,
@@ -1365,7 +1365,7 @@ class C15tKernel(
 		store.clearConsentState()
 		storedSnapshotFound = false
 		mutation.release()
-		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.portalUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
+		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
 		notifySnapshot()
 		background.execute { runInit() }
 	}
@@ -2039,7 +2039,7 @@ class C15tKernel(
 		).filter { it > now }.minOrNull() else null
 		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline, bundledPolicyAuthority?.expiresAt?.takeIf { it > now }).minOrNull()
 		var snapshot = if (deadline == candidate.nextDeadline) candidate else candidate.copy(nextDeadline = deadline)
-		if (bundledPolicyAuthority?.isCurrent(config.portalUrl, now) == false) snapshot = snapshot.copy(effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
+		if (bundledPolicyAuthority?.isCurrent(config.backendUrl, now) == false) snapshot = snapshot.copy(effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
 		if (bundledPolicyAuthority != null) {
 			var permissions = snapshot.effectivePermissions
 			for (category in ConsentCategory.OPTIONAL) if (snapshot.explicitChoice?.consents?.get(category.wireName) != true) permissions = permissions.with(category, false)

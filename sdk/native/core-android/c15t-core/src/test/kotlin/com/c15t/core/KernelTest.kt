@@ -224,7 +224,7 @@ class KernelTest {
 		assertTrue(kernel.snapshot().promptRequirement.acknowledge, "an undecided subject owes the choice prompt")
 		assertEquals(ActiveUI.BANNER, kernel.snapshot().activeUI)
 
-		val accepted = kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
+		val accepted = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
 		assertTrue(accepted.ok)
 
 		assertTrue(kernel.isAllowed(ConsentCategory.MEASUREMENT))
@@ -299,7 +299,7 @@ class KernelTest {
 			assertFalse(kernel.isAllowed(category), "$category: an IAB rule grants nothing unsaid")
 		}
 
-		val accepted = kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
+		val accepted = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
 		assertFalse(accepted.ok)
 		assertEquals("iab-unavailable", accepted.error?.code)
 		assertFalse(kernel.isAllowed(ConsentCategory.MEASUREMENT))
@@ -318,7 +318,7 @@ class KernelTest {
 			)
 		)
 		val kernel = testKernel(
-			config = NativeConfig(portalUrl = "https://test.c15t.app", detectedGpc = true),
+			config = NativeConfig(backendUrl = "https://test.c15t.app", detectedGpc = true),
 			store = C15tStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)

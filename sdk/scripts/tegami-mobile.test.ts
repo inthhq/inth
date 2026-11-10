@@ -85,7 +85,7 @@ const fixture = () => {
 			2
 		)}\n`,
 		[swiftVersionPath]:
-			'public enum c15t { public static let version = "1.2.3" }\n',
+			'extension C15t { public static let version = "1.2.3" }\n',
 		[`${swiftSource}/consent-core.swift`]: 'public struct ConsentCore {}\n',
 		[swiftPrivacyPath]: '<plist><dict/></plist>\n',
 		'packages/react-native/vendor/C15tCore/Transports.swift':

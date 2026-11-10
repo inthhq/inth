@@ -15,7 +15,7 @@ import {
 import type { FakeNativeModule } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
-import { C15tProvider } from '../../provider/c15t-provider';
+import { ConsentProvider } from '../../provider/consent-provider';
 import { ConsentGate } from '../consent-gate';
 import { ConsentPrompt } from '../consent-prompt';
 import { ConsentReady } from '../consent-ready';
@@ -44,7 +44,7 @@ const mount = function mount(
 ): ReturnType<typeof renderTree> {
 	fake = createFakeNativeModule(options);
 
-	return renderTree(<C15tProvider>{children}</C15tProvider>);
+	return renderTree(<ConsentProvider>{children}</ConsentProvider>);
 };
 
 afterEach(() => {
@@ -107,10 +107,10 @@ describe('ConsentGate', () => {
 			<ConsentGate category="necessary">
 				{({ actions }) => (
 					<button
-						onClick={() => actions.acceptAll()}
+						onClick={() => actions.refresh()}
 						type="button"
 					>
-						accept
+						refresh
 					</button>
 				)}
 			</ConsentGate>
@@ -124,8 +124,7 @@ describe('ConsentGate', () => {
 			button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		});
 
-		expect(fake.commit).toHaveBeenCalledTimes(1);
-		expect(fake.commitIntents).toEqual(['{"action":"all"}']);
+		expect(fake.refreshCalls).toBe(1);
 
 		tree.unmount();
 	});

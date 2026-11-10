@@ -6,7 +6,7 @@ import androidx.startup.Initializer
 /**
  * Starts c15t before the first Activity exists.
  *
- * The core's own [com.c15t.core.C15tKernel.bootstrap] is idempotent and does its
+ * The core's own [com.c15t.core.ConsentCore.bootstrap] is idempotent and does its
  * network work on a worker thread, so this adds nothing measurable to launch time
  * while guaranteeing that an ad SDK initialised during `Application.onCreate`
  * already gets a real answer from [com.c15t.core.C15t.isAllowed].

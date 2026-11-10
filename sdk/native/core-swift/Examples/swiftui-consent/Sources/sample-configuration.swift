@@ -30,10 +30,10 @@ struct SampleConfiguration {
         if let backend = configured(backend) {
             guard let url = URL(string: backend), url.scheme == "https", url.host != nil,
                   url.user == nil, url.password == nil else { throw ConfigurationError.invalidBackend }
-            guard let privacy = configured(privacy), let privacyURL = URL(string: privacy),
-                  privacyURL.scheme == "https", privacyURL.host != nil else { throw ConfigurationError.missingPrivacyPolicy }
+            guard let privacy = configured(privacy), let policyURL = URL(string: privacy),
+                  policyURL.scheme == "https", policyURL.host != nil else { throw ConfigurationError.missingPrivacyPolicy }
             backendURL = url
-            privacyPolicyURL = privacyURL
+            privacyPolicyURL = policyURL
         } else {
             backendURL = nil
             // Placeholder for this local demonstration, never presented as the app's policy.

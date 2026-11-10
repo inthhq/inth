@@ -50,7 +50,7 @@ class VendorListRetentionTest {
 	 * Three places, one document. A drawer that names partners reads `snapshot.iab.gvl`, which is the
 	 * key `packages/react-native/src/protocol/snapshot.ts` declares and the key `core-swift` fills, so
 	 * a body parked only behind a kernel accessor left that drawer empty on Android while the same
-	 * build worked on iOS. [com.c15t.core.C15tKernel.vendorList] is now that same field read a second
+	 * build worked on iOS. [com.c15t.core.ConsentCore.vendorList] is now that same field read a second
 	 * way, which is what keeps a native disclosure and a JavaScript one naming the same vendors.
 	 *
 	 * The stored half is still the load-bearing half -- the envelope is what proves the list will be
@@ -112,7 +112,7 @@ class VendorListRetentionTest {
 	 *
 	 * Both directions ride on one property: for these two keys the bytes did not change shape. The
 	 * earlier build wrote a populated top-level `gvl` and an `iab` sitting at `null`, which is what
-	 * [com.c15t.core.C15tKernel.persist] writes today and what [com.c15t.core.C15tKernel.bootstrap]
+	 * [com.c15t.core.ConsentCore.persist] writes today and what [com.c15t.core.ConsentCore.bootstrap]
 	 * reads back onto the slot, so an installed device keeps the list it already paid for. The upgrade
 	 * read is run here. What the build *behind* this one would read cannot be run from this tree, so
 	 * that half is graded as the shape it depends on -- `iab` written null, `gvl` written under the
@@ -298,7 +298,7 @@ class VendorListRetentionTest {
 	 */
 	@Test
 	fun `a refused gvl is answered exactly like no gvl at all`() {
-		fun servedThen(gvl: String?): Pair<C15tKernel, List<KernelError>> {
+		fun servedThen(gvl: String?): Pair<ConsentCore, List<KernelError>> {
 			val errors = mutableListOf<KernelError>()
 			val kernel = testKernel(
 				store = C15tStore(InMemoryKeyValueStore()),
@@ -337,7 +337,7 @@ class VendorListRetentionTest {
 	 */
 	@Test
 	fun `an unreadable policy resolution fails closed the same way with a list on the body`() {
-		fun run(gvl: String?): Pair<C15tKernel, List<KernelError>> {
+		fun run(gvl: String?): Pair<ConsentCore, List<KernelError>> {
 			val errors = mutableListOf<KernelError>()
 			val kernel = testKernel(
 				store = C15tStore(InMemoryKeyValueStore()),
@@ -403,7 +403,7 @@ class VendorListRetentionTest {
 	 * A wipe takes the list with the policy, because a wiped device is showing nobody a disclosure.
 	 *
 	 * This is the one place the latch releases, and it releases for the matched policy's own reason
-	 * rather than a new one: [com.c15t.core.C15tKernel.reset] deletes the rule the receipts were
+	 * rather than a new one: [com.c15t.core.ConsentCore.reset] deletes the rule the receipts were
 	 * judged against, so the claim the latch protects has been withdrawn with it -- and a list left
 	 * in memory would be written straight back into the fresh envelope the next save builds.
 	 */

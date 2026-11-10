@@ -32,14 +32,14 @@ sealed class CommitIntent {
 	 * A preference form result. Categories absent from [consents] stay undecided
 	 * and keep whatever the policy default gives them.
 	 */
-	data class Explicit(val consents: Map<ConsentCategory, Boolean>) : CommitIntent()
+	data class Custom(val consents: Map<ConsentCategory, Boolean>) : CommitIntent()
 
 	/** The action label sent to the backend with this intent. */
 	val action: ConsentAction
 		get() = when (this) {
 			is All -> ConsentAction.ALL
 			is Necessary -> ConsentAction.NECESSARY
-			is Explicit,
+			is Custom,
 				is Iab -> ConsentAction.CUSTOM
 		}
 
@@ -48,7 +48,7 @@ sealed class CommitIntent {
 		get() = when (this) {
 			is All -> All.consents
 			is Necessary -> Necessary.consents
-			is Explicit -> consents
+			is Custom -> consents
 				is Iab -> consents
 			}
 }

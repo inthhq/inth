@@ -4,13 +4,19 @@
  *
  * These buttons are named after the method each one calls, not after a consent
  * surface. The banner next to them says `Accept All` because that is the served
- * label a subject reads; a button here says `acceptAll()` because it is a call into
+ * label a subject reads; a button here says `saveConsents('all')` because it is a call into
  * the package, and a reader who sees both on one screen should know which is which.
  * The same calls answer to the demo links listed below them, so a step written at a
  * shell and a step done with a thumb drive the same code path.
  */
 
-import { useConsentActions } from '@c15t/react-native';
+import {
+	useConsentActions,
+	useDismissNotice,
+	useIdentify,
+	useSaveConsents,
+	useSetOverrides,
+} from '@c15t/react-native';
 import { useState } from 'react';
 
 import { useConsentSource } from '../c15t/consent-source';
@@ -42,6 +48,10 @@ export const ActionsCard = ({
 	readonly onOpenPreferences: () => void;
 }) => {
 	const actions = useConsentActions();
+	const dismissNotice = useDismissNotice();
+	const identify = useIdentify();
+	const saveConsents = useSaveConsents();
+	const setOverrides = useSetOverrides();
 	const [busy, setBusy] = useState(false);
 	const [lastResult, setLastResult] = useState('nothing yet');
 	const [overrideStep, setOverrideStep] = useState(0);
@@ -80,35 +90,35 @@ export const ActionsCard = ({
 			<ButtonGrid>
 				<Button
 					busy={busy}
-					label="acceptAll()"
+					label="saveConsents('all')"
 					onPress={() => {
-						run('acceptAll', actions.acceptAll);
+						run("saveConsents('all')", () => saveConsents('all'));
 					}}
 					variant="secondary"
 				/>
 				<Button
 					busy={busy}
-					label="rejectAll()"
+					label="saveConsents('none')"
 					onPress={() => {
-						run('rejectAll', actions.rejectAll);
+						run("saveConsents('none')", () => saveConsents('none'));
 					}}
 					variant="secondary"
 				/>
 				<Button
 					busy={busy}
-					label="save({ experience: true, marketing: false })"
+					label="saveConsents({ experience: true, marketing: false })"
 					onPress={() => {
-						run('save', () =>
-							actions.save({ experience: true, marketing: false })
+						run('saveConsents', () =>
+							saveConsents({ experience: true, marketing: false })
 						);
 					}}
 					variant="secondary"
 				/>
 				<Button
 					busy={busy}
-					label={`identify('${EXTERNAL_ID}')`}
+					label={`identify({ externalId: '${EXTERNAL_ID}' })`}
 					onPress={() => {
-						run('identify', () => actions.identify(EXTERNAL_ID));
+						run('identify', () => identify({ externalId: EXTERNAL_ID }));
 					}}
 					variant="secondary"
 				/>
@@ -134,16 +144,14 @@ export const ActionsCard = ({
 					onPress={() => {
 						const step = OVERRIDE_STEPS[overrideStep] ?? OVERRIDE_STEPS[0];
 						setOverrideStep((index) => (index + 1) % OVERRIDE_STEPS.length);
-						run('setOverrides', () =>
-							actions.setOverrides({ country: step.country })
-						);
+						run('setOverrides', () => setOverrides({ country: step.country }));
 					}}
 					variant="secondary"
 				/>
 				<Button
 					label="dismissNotice()"
 					onPress={() => {
-						actions.dismissNotice();
+						dismissNotice();
 						setLastResult('dismissNotice -> local, nothing sent');
 					}}
 					variant="secondary"

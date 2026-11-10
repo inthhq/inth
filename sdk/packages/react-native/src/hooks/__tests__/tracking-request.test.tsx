@@ -34,7 +34,7 @@ import { MAX_TRACKING_REQUEST_TURNS } from '../../lib/tracking-journey';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot } from '../../protocol';
 import type { OptionalConsentCategory } from '../../protocol/vocabulary';
-import { C15tProvider } from '../../provider/c15t-provider';
+import { ConsentProvider } from '../../provider/consent-provider';
 import { useTrackingRequest } from '../use-tracking-request';
 import type { TrackingRequest } from '../use-tracking-request';
 
@@ -135,9 +135,9 @@ const boot = function boot(
 	return {
 		fake,
 		tree: renderTree(
-			<C15tProvider>
+			<ConsentProvider>
 				<Probe {...options} />
-			</C15tProvider>
+			</ConsentProvider>
 		),
 	};
 };
@@ -519,14 +519,14 @@ describe('useTrackingRequest', () => {
 		// render. The journey reads the list when it needs it rather than capturing it,
 		// so a host's own memo of the button keeps holding.
 		tree.rerender(
-			<C15tProvider>
+			<ConsentProvider>
 				<Probe categories={['marketing']} />
-			</C15tProvider>
+			</ConsentProvider>
 		);
 		tree.rerender(
-			<C15tProvider>
+			<ConsentProvider>
 				<Probe categories={['marketing']} />
-			</C15tProvider>
+			</ConsentProvider>
 		);
 
 		expect(probe.tracking?.request).toBe(request);
@@ -551,9 +551,9 @@ describe('useTrackingRequest', () => {
 		// when the journey began still holds `marketing`, and ending here would leave
 		// the subject who kept measurement granted stuck without their sheet.
 		tree.rerender(
-			<C15tProvider>
+			<ConsentProvider>
 				<Probe categories={['measurement']} />
-			</C15tProvider>
+			</ConsentProvider>
 		);
 
 		close();
@@ -645,9 +645,9 @@ describe('a preference centre the host already owns', () => {
 		return {
 			fake,
 			tree: renderTree(
-				<C15tProvider>
+				<ConsentProvider>
 					<SharedProbe />
-				</C15tProvider>
+				</ConsentProvider>
 			),
 		};
 	};

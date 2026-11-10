@@ -179,7 +179,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         /// `com.c15t.VENDORS` meta-data has to take, and one spelling for the same declaration on
         /// both platforms is the reason either key is readable at all.
         public static let vendors = "com.c15t.vendors"
-        public static let gpc = "com.c15t.gpc"
+        public static let forceGPC = "com.c15t.forceGPC"
         public static let bundledPolicyResource = "com.c15t.policy.resource"
         /// IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.iab.*` key is present.
         public static let iabCmpId = "com.c15t.iab.cmpId"
@@ -213,12 +213,12 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// client option that never reaches a save body, and ``ConsentOverrides`` has no
     /// property for it. ``RetiredEnvelope`` refuses a stored envelope that carries
     /// `overrides.test`; refusing the plist key here is the same rule on the way in.
-    /// `com.c15t.gpc` is offered because it is the key a host reaching for test mode
+    /// `com.c15t.forceGPC` is offered because it is the key a host reaching for test mode
     /// usually wants, and it is the GPC signal, which is a different thing: it feeds
     /// the core's detection, never ``ConsentOverrides/gpc``. The Expo config plugin
     /// writes none of these keys.
     public static let retiredInfoPlistKeys: [RetiredInfoPlistKey] = [
-        RetiredInfoPlistKey(key: "com.c15t.test", replacement: "com.c15t.gpc"),
+        RetiredInfoPlistKey(key: "com.c15t.test", replacement: "com.c15t.forceGPC"),
     ]
 
     /// The retired keys present in `infoPlist`, in declaration order.
@@ -303,7 +303,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             ),
             consentCategories: categories?.isEmpty == true ? nil : categories,
             vendors: declaredVendors(infoPlist[InfoPlistKey.vendors]),
-            gpc: infoPlist[InfoPlistKey.gpc] as? Bool,
+            gpc: infoPlist[InfoPlistKey.forceGPC] as? Bool,
             bundledPolicyResource: infoPlist[InfoPlistKey.bundledPolicyResource] as? String,
             iab: (try? declaredIAB(in: infoPlist).get()).flatMap { $0 }.map { declared in
                 // The backend serves disclosures in `language`; the TC String and the screens

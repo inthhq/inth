@@ -18,7 +18,6 @@ import {
 	ConsentIabDrawer,
 	ConsentPreferences,
 	isStatusPromptOwed,
-	useConsentActions,
 	useConsentStyles,
 	useConsentStatus,
 	useTrackingRequest,
@@ -42,6 +41,7 @@ import {
 	useHostStyles,
 } from './components/ui';
 import { useDemoDeepLinks } from './deep-links/use-deep-links';
+import { useDemoActions } from './deep-links/use-demo-actions';
 import { useE2eObserver } from './e2e-observer';
 import { IAB_DEMO_DISPLAY_MODEL } from './fixtures/iab-display-model';
 import { NativePresenterApp } from './native-presenter-app';
@@ -104,7 +104,7 @@ class ErrorBoundary extends Component<
 						{this.state.error.message}
 					</NativeText>
 					<Hint>
-						`C15tProvider` throws on purpose when the binary cannot speak the
+						`ConsentProvider` throws on purpose when the binary cannot speak the
 						protocol this bundle expects. Rebuild the app, or install the
 						@c15t/react-native version that shipped with the binary.
 					</Hint>
@@ -235,7 +235,7 @@ const Header = ({
 const LegacyApp = () => {
 	useE2eObserver();
 	const { appearance, setAppearance } = useAppearance();
-	const actions = useConsentActions();
+	const actions = useDemoActions();
 	const promptOwed = isStatusPromptOwed(useConsentStatus());
 	const [tab, setTab] = useState<Tab>('privacy');
 	const [dialogOpen, setDialogOpen] = useState(false);

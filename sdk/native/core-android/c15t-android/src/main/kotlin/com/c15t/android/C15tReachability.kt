@@ -13,7 +13,7 @@ import com.c15t.core.C15t
  * `native/CONTRACT.md` asks for a replay when the process *gains* a network it did not
  * have, and that is a transition rather than an event. [ConnectivityManager] reports the
  * already-connected network the instant a callback registers, and replaying there would
- * race the launch replay `C15tKernel.bootstrap` already performs. So the first delivery
+ * race the launch replay `ConsentCore.bootstrap` already performs. So the first delivery
  * only records the state, and a later one counts as a gain only once an [onLost] has
  * separated it from that seed.
  *

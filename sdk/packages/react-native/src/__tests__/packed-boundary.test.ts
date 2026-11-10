@@ -218,11 +218,11 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 		writeFileSync(
 			join(directory, 'consumer.ts'),
 			`
-			import { C15tProvider, useIsAllowed, type ConsentSnapshot } from '@c15t/react-native';
+			import { ConsentProvider, useConsent, type ConsentSnapshot } from '@c15t/react-native';
 			import withC15t, { type C15tPluginProps } from '@c15t/react-native/expo-plugin';
 			import { connectAmplitude, connectFirebaseAnalytics, connectMixpanel, connectPostHog, connectSentryReplay } from '@c15t/react-native/integrations';
-			export const provider: typeof C15tProvider = C15tProvider;
-			export const gate: typeof useIsAllowed = useIsAllowed;
+			export const provider: typeof ConsentProvider = ConsentProvider;
+			export const gate: typeof useConsent = useConsent;
 			export type Snapshot = ConsentSnapshot;
 			export const plugin: typeof withC15t = withC15t;
 			export const pluginProps: C15tPluginProps = { mode: 'offline' };
@@ -364,7 +364,7 @@ test('the actual local mobile tarball contains useful generated docs and no web 
 			expect(Object.keys(dependencies).filter(isForbiddenModule)).toEqual([]);
 		}
 		expect(read('docs/frameworks/react-native/quickstart.md')).toContain(
-			'C15tProvider'
+			'ConsentProvider'
 		);
 		expect(read('docs/frameworks/react-native/expo.md')).toContain(
 			'androidMavenRepository'

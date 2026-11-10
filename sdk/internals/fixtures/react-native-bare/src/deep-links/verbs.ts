@@ -13,7 +13,9 @@
 import type {
 	CommitResult,
 	ConsentActions,
+	NativeOverridesInput,
 	OptionalConsentCategory,
+	SaveConsentsInput,
 	ConsentIabTab,
 	TrackingRequestPayload,
 } from '@c15t/react-native';
@@ -23,10 +25,22 @@ import { APPEARANCE_HINT, isAppearance } from '../theme';
 import type { DemoLink } from './parse';
 import { DEMO_REPORT_PARAM, linkFlag } from './parse';
 
+/**
+ * The consent commands a verb can call: `useConsentActions` plus the functions
+ * `useDismissNotice`, `useIdentify`, `useSaveConsents` and `useSetOverrides`
+ * return. `use-demo-actions.ts` builds it.
+ */
+export interface DemoActions extends ConsentActions {
+	readonly dismissNotice: () => void;
+	readonly identify: (user: { readonly externalId: string }) => Promise<void>;
+	readonly saveConsents: (input: SaveConsentsInput) => Promise<CommitResult>;
+	readonly setOverrides: (overrides: NativeOverridesInput) => Promise<void>;
+}
+
 /** What a verb is allowed to touch, handed over by the shell that owns it. */
 export interface DemoVerbContext {
-	/** The consent actions, exactly as `useConsentActions` returns them. */
-	readonly actions: ConsentActions;
+	/** The consent commands, from `useDemoActions`. */
+	readonly actions: DemoActions;
 	/** Close the dialog and the preference centre. */
 	readonly closeSheets: () => void;
 	/** Open the built-in consent manager. */
@@ -147,21 +161,24 @@ const selectionFrom = (
 export const DEMO_VERBS: readonly DemoVerb[] = [
 	{
 		run: async (context) =>
-			describeCommit('acceptAll', await context.actions.acceptAll()),
+			describeCommit('acceptAll', await context.actions.saveConsents('all')),
 		summary: 'Grant every category in the policy scope.',
 		usage: 'accept',
 		verb: 'accept',
 	},
 	{
 		run: async (context) =>
-			describeCommit('rejectAll', await context.actions.rejectAll()),
+			describeCommit('rejectAll', await context.actions.saveConsents('none')),
 		summary: 'Grant strictly necessary only.',
 		usage: 'reject',
 		verb: 'reject',
 	},
 	{
 		run: async (context, link) =>
-			describeCommit('save', await context.actions.save(selectionFrom(link))),
+			describeCommit(
+				'save',
+				await context.actions.saveConsents(selectionFrom(link))
+			),
 		summary: 'Save a per-category set: one parameter per category, 1 or 0.',
 		usage: 'save?experience=1&marketing=0',
 		verb: 'save',
@@ -240,7 +257,7 @@ export const DEMO_VERBS: readonly DemoVerb[] = [
 	{
 		run: async (context, link) => {
 			const externalId = link.params.id ?? link.rest[0] ?? DEFAULT_EXTERNAL_ID;
-			await context.actions.identify(externalId);
+			await context.actions.identify({ externalId });
 
 			return `identify: ${externalId}`;
 		},

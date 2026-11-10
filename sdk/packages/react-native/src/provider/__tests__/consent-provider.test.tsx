@@ -22,13 +22,13 @@ import {
 	resetNativeStub,
 } from '../../__tests__/helpers/react-native-stub';
 import { useC15tBootstrap } from '../../hooks/use-c15t-bootstrap';
-import { useConsent } from '../../hooks/use-consent';
+import { useSnapshot } from '../../hooks/use-snapshot';
 import { resetConsentClient } from '../../native/client';
-import { C15tProvider } from '../c15t-provider';
+import { ConsentProvider } from '../consent-provider';
 
 /** Render the revision, so a test can see which consumers updated. */
 const RevisionProbe = (): ReactNode => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 
 	return <span>{`r${String(snapshot.revision)}`}</span>;
 };
@@ -61,9 +61,9 @@ describe('handshake', () => {
 		const fake = createFakeNativeModule();
 
 		const tree = renderTree(
-			<C15tProvider>
+			<ConsentProvider>
 				<FiveConsumers />
-			</C15tProvider>
+			</ConsentProvider>
 		);
 
 		expect(fake.bootstrapCalls).toBe(1);
@@ -78,9 +78,9 @@ describe('handshake', () => {
 		const tree = renderTree(
 			<>
 				{Array.from({ length: 5 }, (_unused, index) => (
-					<C15tProvider key={index}>
+					<ConsentProvider key={index}>
 						<RevisionProbe />
-					</C15tProvider>
+					</ConsentProvider>
 				))}
 			</>
 		);
@@ -95,11 +95,11 @@ describe('handshake', () => {
 		const fake = createFakeNativeModule();
 
 		const tree = renderTree(
-			<C15tProvider>
-				<C15tProvider>
+			<ConsentProvider>
+				<ConsentProvider>
 					<RevisionProbe />
-				</C15tProvider>
-			</C15tProvider>
+				</ConsentProvider>
+			</ConsentProvider>
 		);
 
 		expect(fake.bootstrapCalls).toBe(1);
@@ -112,9 +112,9 @@ describe('handshake', () => {
 		createFakeNativeModule();
 
 		const tree = renderTree(
-			<C15tProvider>
+			<ConsentProvider>
 				<BootstrapProbe />
-			</C15tProvider>
+			</ConsentProvider>
 		);
 
 		expect(tree.text()).toBe(
@@ -133,9 +133,9 @@ describe('protocol version guard', () => {
 
 		const message = captureErrorMessage(() =>
 			renderToStaticMarkup(
-				<C15tProvider>
+				<ConsentProvider>
 					<RevisionProbe />
-				</C15tProvider>
+				</ConsentProvider>
 			)
 		);
 
@@ -151,9 +151,9 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<C15tProvider>
+					<ConsentProvider>
 						<RevisionProbe />
-					</C15tProvider>
+					</ConsentProvider>
 				)
 			)
 		).toContain('protocol 0');
@@ -165,9 +165,9 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<C15tProvider>
+					<ConsentProvider>
 						<RevisionProbe />
-					</C15tProvider>
+					</ConsentProvider>
 				)
 			)
 		).toContain('no protocolVersion');
@@ -178,9 +178,9 @@ describe('protocol version guard', () => {
 		expect(
 			captureErrorMessage(() =>
 				renderToStaticMarkup(
-					<C15tProvider>
+					<ConsentProvider>
 						<RevisionProbe />
-					</C15tProvider>
+					</ConsentProvider>
 				)
 			)
 		).toContain('cannot reach its native consent module');
@@ -191,6 +191,6 @@ describe('wiring', () => {
 	test('a hook outside a provider says what is missing', () => {
 		expect(
 			captureErrorMessage(() => renderToStaticMarkup(<RevisionProbe />))
-		).toContain('<C15tProvider>');
+		).toContain('<ConsentProvider>');
 	});
 });

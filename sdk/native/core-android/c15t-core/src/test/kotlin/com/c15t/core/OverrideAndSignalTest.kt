@@ -139,7 +139,7 @@ class OverrideAndSignalTest {
 		storeAlphaDirectiveEnvelope(backend)
 
 		val kernel = testKernel(
-			config = NativeConfig(portalUrl = "https://test.c15t.app", detectedGpc = true),
+			config = NativeConfig(backendUrl = "https://test.c15t.app", detectedGpc = true),
 			store = C15tStore(backend),
 		)
 		kernel.bootstrap()
@@ -259,7 +259,7 @@ class OverrideAndSignalTest {
 			),
 		)
 		val kernel = testKernel(
-			config = NativeConfig(portalUrl = "https://test.c15t.app", overrides = KernelOverrides(language = "en")),
+			config = NativeConfig(backendUrl = "https://test.c15t.app", overrides = KernelOverrides(language = "en")),
 			store = C15tStore(InMemoryKeyValueStore()),
 			transport = transport,
 		)
@@ -283,7 +283,7 @@ class OverrideAndSignalTest {
 		)
 		val kernel = testKernel(
 			config = NativeConfig(
-				portalUrl = "https://test.c15t.app",
+				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(gpc = false),
 				detectedGpc = true,
 			),
@@ -308,7 +308,7 @@ class OverrideAndSignalTest {
 		val transport = RecordingTransport().respondInit(initSuccess(body = initBody(policySnapshotToken = null)))
 		val kernel = testKernel(
 			config = NativeConfig(
-				portalUrl = "https://test.c15t.app",
+				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
 			store = C15tStore(InMemoryKeyValueStore()),
@@ -332,7 +332,7 @@ class OverrideAndSignalTest {
 		val transport = RecordingTransport().respondInit(initSuccess())
 		val kernel = testKernel(
 			config = NativeConfig(
-				portalUrl = "https://test.c15t.app",
+				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
 			store = C15tStore(InMemoryKeyValueStore()),
@@ -357,7 +357,7 @@ class OverrideAndSignalTest {
 			.respondSave(SaveOutcome.Unavailable("offline"))
 		val kernel = testKernel(
 			config = NativeConfig(
-				portalUrl = "https://test.c15t.app",
+				backendUrl = "https://test.c15t.app",
 				overrides = KernelOverrides(language = "en", gpc = true),
 			),
 			store = store,

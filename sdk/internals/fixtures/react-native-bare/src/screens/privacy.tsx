@@ -10,7 +10,7 @@
  */
 
 import type { AllConsentNames, TrackingRequest } from '@c15t/react-native';
-import { useConsent, useIsAllowed } from '@c15t/react-native';
+import { useSnapshot, useConsent } from '@c15t/react-native';
 import { View } from 'react-native';
 
 import { TrackingCard } from '../components/tracking';
@@ -51,8 +51,8 @@ const stateLabel = (category: AllConsentNames, allowed: boolean): string => {
 
 /** One category: its name from the served bundle, its state from the core. */
 const CategoryLine = ({ category }: { readonly category: AllConsentNames }) => {
-	const snapshot = useConsent();
-	const allowed = useIsAllowed(category);
+	const snapshot = useSnapshot();
+	const allowed = useConsent(category);
 	const { theme } = useHostStyles();
 	const { spacing } = theme;
 
@@ -72,7 +72,7 @@ const CategoryLine = ({ category }: { readonly category: AllConsentNames }) => {
 };
 
 /** The one line that says whether what is on screen is stored state or a live answer. */
-const statusLabel = (snapshot: ReturnType<typeof useConsent>): string => {
+const statusLabel = (snapshot: ReturnType<typeof useSnapshot>): string => {
 	if (!snapshot.ready) {
 		return 'Loading stored consent';
 	}
@@ -92,7 +92,7 @@ export const PrivacyScreen = ({
 	readonly onOpenPreferences: () => void;
 	readonly tracking: TrackingRequest;
 }) => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const { theme } = useHostStyles();
 	const { spacing } = theme;
 	const granted = CHOICES.filter(

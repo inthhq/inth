@@ -79,7 +79,7 @@ object C15tPayload {
 	/** What a host hears when no core exists, naming both ways to fix it. */
 	const val MESSAGE_NOT_BOOTSTRAPPED =
 		"c15t has no backend configured, so the consent core was not started. Declare " +
-			"com.c15t.PORTAL_URL in the manifest, or call C15t.bootstrap() yourself " +
+			"com.c15t.BACKEND_URL in the manifest, or call C15t.bootstrap() yourself " +
 			"before React Native initializes."
 
 	/** The override keys `NativeOverridesInput` declares, in wire order. */
@@ -312,7 +312,7 @@ object C15tPayload {
 					}
 					parsed[category] = granted
 				}
-				CommitIntent.Explicit(parsed)
+				CommitIntent.Custom(parsed)
 			}
 
 			else -> null

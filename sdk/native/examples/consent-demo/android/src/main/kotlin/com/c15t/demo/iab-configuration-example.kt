@@ -10,7 +10,7 @@ fun iabConfig(
     cmpVersion: Int,
     publisherCountryCode: String,
 ): NativeConfig = NativeConfig(
-    portalUrl = projectUrl,
+    backendUrl = projectUrl,
     iab = IabConfiguration(
         cmpId = cmpId,
         cmpVersion = cmpVersion,

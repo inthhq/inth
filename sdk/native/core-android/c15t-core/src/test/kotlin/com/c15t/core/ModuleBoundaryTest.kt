@@ -40,7 +40,7 @@ class ModuleBoundaryTest {
 
 	@Test
 	fun `the engine exposes every name the shared contract names`() {
-		val names = C15tKernel::class.java.declaredMethods.map { it.name }.toSet()
+		val names = ConsentCore::class.java.declaredMethods.map { it.name }.toSet()
 		val expected = setOf(
 			"bootstrap",
 			"snapshot",

@@ -26,7 +26,7 @@ import com.c15t.core.model.ConsentCategory
 
 fun installConsent(context: Context) {
     C15tAndroid.install(context, NativeConfig(
-        portalUrl = "https://your-project.inth.app",
+        backendUrl = "https://your-project.inth.app",
         consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
     ))
 }

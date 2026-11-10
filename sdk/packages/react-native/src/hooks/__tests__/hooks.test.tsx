@@ -27,15 +27,21 @@ import type {
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
-import { C15tProvider } from '../../provider/c15t-provider';
+import { ConsentProvider } from '../../provider/consent-provider';
 import { useConsent } from '../use-consent';
 import type { ConsentActions } from '../use-consent-actions';
-import { useConsentActions } from '../use-consent-actions';
+import {
+	useConsentActions,
+	useDismissNotice,
+	useIdentify,
+	useSaveConsents,
+	useSetOverrides,
+} from '../use-consent-actions';
 import { useConsentDecision } from '../use-consent-decision';
 import { useConsentSelector } from '../use-consent-selector';
 import { useConsentStatus } from '../use-consent-status';
-import { useIsAllowed } from '../use-is-allowed';
 import { useIsTrackingAllowed } from '../use-is-tracking-allowed';
+import { useSnapshot } from '../use-snapshot';
 import { useTrackingAuthorization } from '../use-tracking-authorization';
 
 /** The default permissions, with marketing granted. */
@@ -47,9 +53,23 @@ const MARKETING_GRANTED: ConsentState = {
 	necessary: true,
 };
 
-/** Commits per probe, plus the action objects the last probe rendered with. */
-const probe: { actions: ConsentActions[]; counts: Record<string, number> } = {
+/** What the actions probe captures: the action object plus each command hook. */
+interface ProbeCommands {
+	readonly actions: ConsentActions;
+	readonly dismissNotice: ReturnType<typeof useDismissNotice>;
+	readonly identify: ReturnType<typeof useIdentify>;
+	readonly saveConsents: ReturnType<typeof useSaveConsents>;
+	readonly setOverrides: ReturnType<typeof useSetOverrides>;
+}
+
+/** Commits per probe, plus the commands the last probe rendered with. */
+const probe: {
+	actions: ConsentActions[];
+	commands: ProbeCommands[];
+	counts: Record<string, number>;
+} = {
 	actions: [],
+	commands: [],
 	counts: {},
 };
 
@@ -64,7 +84,7 @@ const commitsOf = function commitsOf(key: string): number {
 };
 
 const AllowedProbe = (): ReactNode => {
-	const allowed = useIsAllowed('marketing');
+	const allowed = useConsent('marketing');
 
 	useEffect(() => {
 		countCommit('allowed');
@@ -125,7 +145,7 @@ const StatusProbe = (): ReactNode => {
 };
 
 const ConsentProbe = (): ReactNode => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 
 	useEffect(() => {
 		countCommit('consent');
@@ -151,15 +171,37 @@ const SelectorProbe = (): ReactNode => {
 const ActionsProbe = (): ReactNode => {
 	// Reads the whole snapshot so it commits on every native change, which is
 	// what makes the identity assertion below mean something.
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const actions = useConsentActions();
+	const dismissNotice = useDismissNotice();
+	const identify = useIdentify();
+	const saveConsents = useSaveConsents();
+	const setOverrides = useSetOverrides();
 
 	useEffect(() => {
 		countCommit('actions');
 		probe.actions.push(actions);
+		probe.commands.push({
+			actions,
+			dismissNotice,
+			identify,
+			saveConsents,
+			setOverrides,
+		});
 	});
 
 	return <span>{`rev${String(snapshot.revision)}`}</span>;
+};
+
+/** The commands the probe first rendered with, or a failure that says why. */
+const capturedCommands = function capturedCommands(): ProbeCommands {
+	const [commands] = probe.commands;
+
+	if (commands === undefined) {
+		throw new Error('the actions probe never rendered');
+	}
+
+	return commands;
 };
 
 /** The action object the probe rendered with, or a failure that says why. */
@@ -205,9 +247,10 @@ const mount = function mount(
 	}
 
 	probe.actions = [];
+	probe.commands = [];
 	probe.counts = {};
 
-	return renderTree(<C15tProvider>{children}</C15tProvider>);
+	return renderTree(<ConsentProvider>{children}</ConsentProvider>);
 };
 
 afterEach(() => {
@@ -215,7 +258,7 @@ afterEach(() => {
 	resetNativeStub();
 });
 
-describe('useIsAllowed', () => {
+describe('useConsent', () => {
 	test('does not rerender for an event whose selected value is unchanged', () => {
 		const tree = mount(<AllowedProbe />);
 
@@ -358,11 +401,11 @@ describe('useConsentSelector', () => {
 	});
 });
 
-describe('useConsentActions', () => {
+describe('useSaveConsents', () => {
 	test('sends an explicit save to commit exactly once', async () => {
 		mount(<ActionsProbe />);
 
-		const result = await capturedActions().save({ marketing: true });
+		const result = await capturedCommands().saveConsents({ marketing: true });
 
 		await flushPromises();
 
@@ -373,20 +416,20 @@ describe('useConsentActions', () => {
 		expect(result.ok).toBe(true);
 	});
 
-	test('sends an empty explicit save when no category is passed', async () => {
+	test('sends an empty explicit save when the object names no category', async () => {
 		mount(<ActionsProbe />);
 
-		await capturedActions().save();
+		await capturedCommands().saveConsents({});
 		await flushPromises();
 
 		expect(fake.commitIntents).toEqual(['{"action":"explicit","consents":{}}']);
 	});
 
-	test('maps acceptAll and rejectAll onto the intent vocabulary', async () => {
+	test('maps all and none onto the intent vocabulary', async () => {
 		mount(<ActionsProbe />);
 
-		await capturedActions().acceptAll();
-		await capturedActions().rejectAll();
+		await capturedCommands().saveConsents('all');
+		await capturedCommands().saveConsents('none');
 		await flushPromises();
 
 		expect(fake.commit).toHaveBeenCalledTimes(2);
@@ -395,28 +438,32 @@ describe('useConsentActions', () => {
 			'{"action":"necessary"}',
 		]);
 	});
+});
 
+describe('useDismissNotice', () => {
 	test('dismisses a notice without writing a consent record', () => {
 		mount(<ActionsProbe />);
 
 		flush(() => {
-			capturedActions().dismissNotice();
+			capturedCommands().dismissNotice();
 		});
 
 		expect(fake.dismissCalls).toBe(1);
 		expect(fake.commit).toHaveBeenCalledTimes(0);
 	});
+});
 
+describe('useConsentActions', () => {
 	test('forwards refresh, identify, logout, reset, and overrides', async () => {
 		mount(<ActionsProbe />);
 
-		const actions = capturedActions();
+		const { actions, identify, setOverrides } = capturedCommands();
 
 		await actions.refresh();
-		await actions.identify('user-7');
+		await identify({ externalId: 'user-7' });
 		await actions.logout();
 		await actions.reset();
-		await actions.setOverrides({ country: 'US' });
+		await setOverrides({ country: 'US' });
 		await flushPromises();
 
 		expect(fake.refreshCalls).toBe(1);
@@ -426,17 +473,23 @@ describe('useConsentActions', () => {
 		expect(fake.overrideCalls).toEqual(['{"country":"US"}']);
 	});
 
-	test('keeps one action object across rerenders', () => {
+	test('keeps one action object and one function per command across rerenders', () => {
 		const tree = mount(<ActionsProbe />);
 
 		flush(() => {
 			fake.pushSnapshot(buildSnapshot({ revision: 13 }));
 		});
 
-		const [first] = probe.actions;
+		const [first] = probe.commands;
 
-		expect(probe.actions.length).toBe(2);
-		expect(probe.actions.every((actions) => actions === first)).toBe(true);
+		expect(probe.commands.length).toBe(2);
+		for (const commands of probe.commands) {
+			expect(commands.actions).toBe(first?.actions);
+			expect(commands.dismissNotice).toBe(first?.dismissNotice);
+			expect(commands.identify).toBe(first?.identify);
+			expect(commands.saveConsents).toBe(first?.saveConsents);
+			expect(commands.setOverrides).toBe(first?.setOverrides);
+		}
 
 		tree.unmount();
 	});
@@ -452,7 +505,7 @@ describe('wiring', () => {
 		]) {
 			expect(
 				captureErrorMessage(() => renderToStaticMarkup(<Missing />))
-			).toContain('<C15tProvider>');
+			).toContain('<ConsentProvider>');
 		}
 	});
 });
@@ -530,7 +583,7 @@ describe('useConsentDecision', () => {
 /**
  * The platform half of a tracking gate, seen from a component.
  *
- * The consent half is covered by `useIsAllowed` and `useConsentDecision`; what
+ * The consent half is covered by `useConsent` and `useConsentDecision`; what
  * belongs here is that both answers are read, that neither one is allowed to
  * speak for the other, and that the Apple dialog is a thing the host asks for
  * rather than something that happens to it.

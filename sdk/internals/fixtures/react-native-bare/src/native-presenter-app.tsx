@@ -3,7 +3,6 @@ import {
 	onConsentPresenterOutcome,
 	presentConsentPrompt,
 	presentPreferences,
-	useConsentActions,
 	useConsentStatus,
 } from '@c15t/react-native';
 import type {
@@ -14,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { Button, Text, View } from 'react-native';
 
 import { useDemoDeepLinks } from './deep-links/use-deep-links';
+import { useDemoActions } from './deep-links/use-demo-actions';
 import { useE2eObserver } from './e2e-observer';
 import { useE2eVendorProbe } from './vendors/e2e-vendor-probe';
 
@@ -59,7 +59,7 @@ export const NativePresenterApp = () => {
 	const vendors = useE2eVendorProbe(vendorProbeSettings);
 	const handleVendorProbe = vendors.probe;
 	const status = useConsentStatus();
-	const actions = useConsentActions();
+	const actions = useDemoActions();
 	const [latest, setLatest] = useState<ConsentPresenterOutcome>();
 	const [error, setError] = useState('');
 	const [hostActions, setHostActions] = useState(0);

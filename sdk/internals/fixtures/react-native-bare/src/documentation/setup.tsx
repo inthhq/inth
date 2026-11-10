@@ -1,6 +1,6 @@
 // #region docs:native-root title="setup.tsx"
 import {
-	C15tProvider,
+	ConsentProvider,
 	onConsentPresenterOutcome,
 	presentConsentPrompt,
 	presentPreferences,
@@ -57,9 +57,9 @@ export const PrivacyApp = ({
 	children: ReactNode;
 	privacyPolicyURL: string;
 }) => (
-	<C15tProvider>
+	<ConsentProvider>
 		{children}
 		<PrivacyEntry privacyPolicyURL={privacyPolicyURL} />
-	</C15tProvider>
+	</ConsentProvider>
 );
 // #endregion docs:native-root

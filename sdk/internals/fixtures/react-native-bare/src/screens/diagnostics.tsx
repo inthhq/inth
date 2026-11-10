@@ -1,14 +1,14 @@
 /**
  * What the native core says, kept off the happy path.
  *
- * Every read here is worth having: the snapshot is what `useConsent` returns, the
- * permission lines are what `useIsAllowed` returns per category, and the handshake is
+ * Every read here is worth having: the snapshot is what `useSnapshot` returns, the
+ * permission lines are what `useConsent` returns per category, and the handshake is
  * what the bridge reported at startup. None of it belongs on the screen a first-time
  * viewer opens, so it lives behind a tab that starts closed, and the app looks like an
  * app until someone asks what the kernel thinks.
  */
 
-import { useConsent, useC15tBootstrap } from '@c15t/react-native';
+import { useSnapshot, useC15tBootstrap } from '@c15t/react-native';
 
 import { config } from '../c15t/config';
 import { useConsentSource } from '../c15t/consent-source';
@@ -29,7 +29,7 @@ const time = (at: number): string =>
 /** Timestamp down to the minute, which is as fine as a deadline is read. */
 const when = (at: number): string => new Date(at).toISOString().slice(0, 16);
 
-type Snapshot = ReturnType<typeof useConsent>;
+type Snapshot = ReturnType<typeof useSnapshot>;
 
 /** The prompt requirement, with its reason when it carries one. */
 const promptLabel = (requirement: Snapshot['promptRequirement']): string =>
@@ -106,9 +106,9 @@ const CoreCard = () => {
 	);
 };
 
-/** Everything `useConsent` returns. */
+/** Everything `useSnapshot` returns. */
 const SnapshotCard = () => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 
 	return (
 		<Card title="Snapshot">
@@ -195,7 +195,7 @@ const HandshakeCard = () => {
 
 /** The receipts a subject has actually left behind. */
 const ReceiptsCard = () => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const categories = [
 		'experience',
 		'functionality',
@@ -232,7 +232,7 @@ const ReceiptsCard = () => {
 
 /** Policy facts the core resolved, including which bundle it served. */
 const PolicyCard = () => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 
 	return (
 		<Card title="Policy context">
@@ -272,7 +272,7 @@ const PolicyCard = () => {
 
 /** Categories the core denies whatever the subject granted. */
 const RestrictionsCard = () => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const restrictions = Object.entries(snapshot.restrictions);
 
 	return (

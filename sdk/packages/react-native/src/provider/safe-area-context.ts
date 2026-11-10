@@ -34,7 +34,7 @@ export const ConsentSafeAreaContext =
 	createContext<ConsentSafeAreaInsets | null>(null);
 
 /**
- * Read the insets the nearest {@link C15tProvider} was given.
+ * Read the insets the nearest {@link ConsentProvider} was given.
  *
  * @returns The host's measurements, or `null` when the host supplies none.
  */

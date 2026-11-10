@@ -1,6 +1,6 @@
 package com.c15t.android.integrations
 
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.ConsentCategory
@@ -41,7 +41,7 @@ class AnalyticsIntegrationTest {
 		handle.get()?.close()
 	}
 
-	private fun connectWithoutRetainingHandle(core: C15tKernel, calls: MutableList<String>) =
+	private fun connectWithoutRetainingHandle(core: ConsentCore, calls: MutableList<String>) =
 		WeakReference(PostHogIntegration(core,
 			optIn = { calls += "in" }, optOut = { calls += "out" },
 			onError = ::unexpectedError,
@@ -92,7 +92,7 @@ class AnalyticsIntegrationTest {
 		val integration = firebase(core, calls)
 		calls.clear()
 
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
 		core.refresh()
 		assertTrue(calls.isEmpty())
 		integration.close()
@@ -253,9 +253,9 @@ class AnalyticsIntegrationTest {
 			optIn = { calls += true },
 			optOut = { calls += false },
 		)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
 		assertEquals(listOf(false), calls)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
 		assertEquals(listOf(false, true), calls)
 		integration.close()
 	}
@@ -491,7 +491,7 @@ class AnalyticsIntegrationTest {
 		)
 		assertTrue(core.save(CommitIntent.All).ok)
 		assertFalse(optedOut)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
 		assertEquals(1, optIns)
 
 		optedOut = true
@@ -611,7 +611,7 @@ class AnalyticsIntegrationTest {
 			onError = ::unexpectedError,
 		)
 		assertTrue(core.save(CommitIntent.All).ok)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
 		assertEquals(listOf("stop", "start"), commands)
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertTrue(core.save(CommitIntent.All).ok)
@@ -734,9 +734,9 @@ class AnalyticsIntegrationTest {
 			start = { recording = true }, stop = { recording = false },
 			onError = ::unexpectedError,
 		)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
 		assertFalse(recording)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
 		assertTrue(recording)
 		integration.close()
 	}
@@ -775,15 +775,15 @@ class AnalyticsIntegrationTest {
 
 	private fun unexpectedError(error: Exception): Unit = throw AssertionError("Unexpected vendor failure", error)
 
-	private fun firebase(core: C15tKernel, calls: MutableList<String>): FirebaseAnalyticsIntegration =
+	private fun firebase(core: ConsentCore, calls: MutableList<String>): FirebaseAnalyticsIntegration =
 		FirebaseAnalyticsIntegration(core, onError = ::unexpectedError,
 			setConsent = { calls += "consent:${it.analyticsStorage}" },
 			setCollectionEnabled = { calls += "collection:$it" },
 		)
 
-	private fun kernel(store: MemoryStore = MemoryStore(), online: Boolean = true): C15tKernel =
-		C15tKernel(
-			config = NativeConfig(portalUrl = "https://example.test", consentCategories = ConsentCategory.entries),
+	private fun kernel(store: MemoryStore = MemoryStore(), online: Boolean = true): ConsentCore =
+		ConsentCore(
+			config = NativeConfig(backendUrl = "https://example.test", consentCategories = ConsentCategory.entries),
 			store = C15tStore(store),
 			executor = TaskExecutor.DIRECT,
 			transport = object : C15tTransport {

@@ -12,7 +12,7 @@ engine keeps the policy, saved choices and SDK permissions.
 
 Complete [Expo](/docs/frameworks/react-native/expo) or
 [bare RN setup](/docs/frameworks/react-native/bare), then keep one
-`C15tProvider` above your app. You can omit the quickstart's `PrivacyEntry` if
+`ConsentProvider` above your app. You can omit the quickstart's `PrivacyEntry` if
 your app owns both the initial prompt and the standing settings screen.
 Without `PrivacyEntry`, your custom flow is responsible for showing an owed
 prompt and keeping preferences reachable.
@@ -24,7 +24,7 @@ the stock native UI. A separate UI-free RN distribution is deferred; see
 ## Read one permission
 
 For a feature that only needs measurement permission, use
-`useIsAllowed('measurement')`. It returns `false` while policy is unresolved
+`useConsent('measurement')`. It returns `false` while policy is unresolved
 and whenever that category is denied. The component subscribes to that
 permission, so unrelated snapshot changes do not rerender it.
 
@@ -61,9 +61,9 @@ native IAB draft and disclosure checks described under
 
 ## Handle accept, reject and save failures
 
-Use `useConsentActions()` for explicit button actions. `save`, `acceptAll` and
-`rejectAll` return a local `CommitResult`; check `ok` before dismissing your
-form. This reusable Reject button keeps a retry path on failure:
+Use `useSaveConsents()` for explicit button actions. The function it returns
+takes `'all'`, `'none'` or a per-category object and resolves with a local
+`CommitResult`; check `ok` before dismissing your form. This reusable Reject button keeps a retry path on failure:
 
 <include src="../../shared/examples/react-native-bare/commit-results.mdx" />
 
@@ -109,12 +109,16 @@ It is for features that require both. It does not ask for authorization.
 
 | API | Use it for |
 | --- | --- |
-| `useIsAllowed(category)` | One effective permission. |
+| `useConsent(category)` | One effective permission. |
 | `useConsentDecision(category)` | A permission with `pending`, `denied` and `granted` states. |
 | `useConsentStatus()` | Readiness, pending policy, active UI and owed prompt. |
 | `useConsentSelector(selector, equals?)` | A custom snapshot slice with optional equality. |
-| `useConsent()` | A screen that needs several snapshot fields, such as scope and restrictions. |
-| `useConsentActions()` | Stable native category and lifecycle commands. |
+| `useSnapshot()` | A screen that needs several snapshot fields, such as scope and restrictions. |
+| `useSaveConsents()` | Save `'all'`, `'none'` or a per-category choice. |
+| `useDismissNotice()` | Acknowledge a notice without recording a choice. |
+| `useIdentify()` | Attach an external id from your account system. |
+| `useSetOverrides()` | Pin country, region, language or GPC for testing. |
+| `useConsentActions()` | Stable `refresh`, `logout`, `reset` and `requestTrackingAuthorization` commands. |
 | `useC15tBootstrap()` | The native protocol and subject bootstrap payload. |
 | `ConsentGate` | Render-prop content for an allowed category, with an optional fallback. |
 | `ConsentReady` | Render-prop content after native readiness and policy resolution. |
