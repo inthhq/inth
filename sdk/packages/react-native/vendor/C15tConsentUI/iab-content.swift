@@ -277,14 +277,13 @@ struct IABVendorContent: Equatable, Sendable {
     }
 }
 
-/// Decision button labels. IAB screens take them from the generated IAB copy.
+/// Decision button labels, from the generated copy: IAB copy on IAB screens, category-mode copy
+/// otherwise.
 struct DecisionLabels: Equatable, Sendable {
     let acceptAll: String
     let rejectAll: String
     let customize: String
     let save: String
-
-    static let standard = DecisionLabels(acceptAll: "Accept all", rejectAll: "Reject all", customize: "Customize", save: "Save choices")
 
     init(acceptAll: String, rejectAll: String, customize: String, save: String) {
         self.acceptAll = acceptAll
@@ -296,6 +295,10 @@ struct DecisionLabels: Equatable, Sendable {
     init(copy: IABCopy) {
         self.init(acceptAll: copy.commonAcceptAll, rejectAll: copy.commonRejectAll,
             customize: copy.commonCustomize, save: copy.commonSaveSettings)
+    }
+
+    init(copy: ConsentCopy) {
+        self.init(acceptAll: copy.acceptAll, rejectAll: copy.rejectAll, customize: copy.customize, save: copy.save)
     }
 }
 

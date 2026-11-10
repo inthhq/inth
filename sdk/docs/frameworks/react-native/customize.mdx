@@ -110,10 +110,16 @@ the native screen retains its layout and interaction rules.
 
 ## Copy and languages
 
-`headline` and `introduction` change the first-layer copy. They are not a
-complete localization dictionary. The current stock native navigation, action
-labels and category explanations contain English strings. Changing the policy
-language does not translate all native UI.
+The native presenter reads every label from `@c15t/translations`, in the
+policy's translation language, on iOS and Android alike. Buttons, headings and
+category names use the web banner's keys, so they read "Accept All" and
+"Reject All". App-only sentences, such as the category explanations and save
+errors, come from native-only keys in the same package. A language c15t has
+no copy for falls back to English.
+
+`headline` and `introduction` replace the first-layer copy in every language.
+Leave them unset to keep the translated stock copy. They are not a complete
+localization dictionary.
 
 GVL descriptions use the available language disclosures and fallback. ATT
 usage descriptions have separate native localization. If your app needs a

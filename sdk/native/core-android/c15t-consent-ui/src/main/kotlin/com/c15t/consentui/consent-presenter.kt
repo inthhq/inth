@@ -3,6 +3,7 @@ package com.c15t.consentui
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.c15t.consentui.generated.ConsentCopy
 import com.c15t.consentui.generated.IabCopy
 import com.c15t.core.*
 import com.c15t.core.iab.*
@@ -53,8 +54,16 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
     val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
-    /** IAB copy in the list's language, English until a disclosure is loaded. Hosts cannot replace it. */
-    internal val iabCopy: IabCopy get() = IabCopy.forLanguage(disclosure?.language ?: "en")
+    /**
+     * The language every label is shown in. IAB mode follows the served list, English until it loads;
+     * category mode follows the policy's translation language.
+     */
+    internal val copyLanguage: String get() =
+        if (iab) disclosure?.language ?: "en" else snapshot.overrides.language ?: snapshot.location?.language ?: "en"
+    /** IAB copy in [copyLanguage]. Hosts cannot replace it. */
+    internal val iabCopy: IabCopy get() = IabCopy.forLanguage(copyLanguage)
+    /** Category-mode copy in [copyLanguage]. Hosts replace only the headline and introduction, through the theme. */
+    internal val copy: ConsentCopy get() = ConsentCopy.forLanguage(copyLanguage)
     /** "Last changed" with the date in the copy's language, not the device's. */
     internal fun lastChanged(epochMs: Long): String {
         val copy = iabCopy
@@ -77,9 +86,9 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
      */
     val errorMessage get() = errorCode?.let {
         when {
-            it == "invalid-action-time" -> "Couldn't save because this device's date and time look wrong. Fix them in Settings first."
-            lastAction == Action.ACKNOWLEDGE -> "Couldn't dismiss this notice. Nothing changed on this device."
-            else -> "Couldn't save your choices. Nothing changed on this device."
+            it == "invalid-action-time" -> copy.actionTimeInvalid
+            lastAction == Action.ACKNOWLEDGE -> copy.dismissFailed
+            else -> copy.saveFailed
         }
     }
     /**
@@ -190,7 +199,7 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
             if (presentationID != session) return@launch
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) "Privacy notice acknowledged" else "Privacy choices saved"; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) copy.noticeAcknowledged else copy.choicesSaved; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
             } else {
                 errorCode = result.second ?: "save-rejected"; failedAction = action; stale = errorCode == "concurrent-change"
                 announcement = if (stale) iabCopy.appSettingsChanged else errorMessage.orEmpty()

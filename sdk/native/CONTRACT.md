@@ -53,7 +53,9 @@ own:
                     scripts/tcf-policy-checks.test.ts fails otherwise. IAB UI
                     copy comes from `iab.app` and `iab.banner` in
                     @c15t/translations through the generated IABCopy /
-                    IabCopy tables (`bun run generate:native-iab-copy`).
+                    IabCopy tables, and category-mode copy through the
+                    generated ConsentCopy table, in the policy's language
+                    (`bun run generate:native-iab-copy`).
 
 `docs/internal/native-iab-commits.mdx` defines the native commit, migration,
 withdrawal and delivery contract, including the storage adapter requirements.

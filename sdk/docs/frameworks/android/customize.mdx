@@ -98,12 +98,21 @@ same native presenter is opened through a wrapper.
 
 Keys shortened within a row retain the `com.c15t.consent.` prefix.
 
-## Know which copy stays native
+## Know where the copy comes from
 
-`ConsentTheme.Copy` replaces the first-layer headline and introduction. It is
-not a localization dictionary. Current stock navigation, decision labels and
-category explanations use English strings. Setting a policy language or
-embedding several policy languages does not translate those controls.
+The stock screens read every label from `@c15t/translations`, in the policy's
+translation language: the language `/init` serves, or the `language` in
+`NativeConfig.overrides`. Buttons, headings and category names use the same
+keys as the web banner, so they read "Accept All", "Reject All" and
+"Strictly Necessary". Sentences that only make sense in an app, such as the
+category explanations and save errors, are native-only keys in the same
+package. A language c15t has no copy for falls back to English. IAB screens
+follow the served vendor list's language instead.
+
+`ConsentTheme.Copy` replaces the first-layer headline and introduction. Leave
+a field `null` to keep the translated stock copy. A string you set is shown as
+given in every language, so pass your own translation for each language you
+support. It is not a localization dictionary for the other labels.
 
 IAB purpose and vendor disclosures come from the served authoritative data.
 Keep that copy and required policy links intact. Use the

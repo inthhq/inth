@@ -145,10 +145,11 @@ public struct ConsentTheme: Equatable, Sendable {
         }
     }
 
-    /// The identity shown above the headline. Defaults to the selected provider logo and
-    /// "Your brand here". Supply app assets and a name to replace either value.
+    /// The identity shown above the headline. Defaults to the selected provider logo and a
+    /// placeholder name. Supply app assets and a name to replace either value.
     public struct Brand: Equatable, Sendable {
-        /// Short name shown as an eyebrow above the headline. `nil` shows "Your brand here".
+        /// Short name shown as an eyebrow above the headline. `nil` shows a placeholder in the
+        /// policy's language.
         public var name: String?
         /// Asset-catalogue image name for the mark. `nil` uses the selected provider logo. A missing explicit
         /// asset shows a drawn tile with the name's initial. Rendered 56pt square with the icon mask.
@@ -166,7 +167,7 @@ public struct ConsentTheme: Equatable, Sendable {
         public static let hidden = Brand(isHidden: true)
     }
 
-    /// Provider identity in the small "Secured by" tag, separate from the app's ``Brand``.
+    /// Provider identity in the small provider tag, separate from the app's ``Brand``.
     public enum Branding: Equatable, Sendable {
         /// The bundled c15t mark and name.
         case c15t
@@ -175,7 +176,7 @@ public struct ConsentTheme: Equatable, Sendable {
         /// A provider's name and optional image from the app's asset catalogue.
         case custom(name: String, markImageName: String? = nil)
 
-        /// The provider name displayed and announced with "Secured by".
+        /// The provider name displayed and announced in the provider tag.
         public var name: String {
             switch self {
             case .c15t: return "c15t"
@@ -193,21 +194,22 @@ public struct ConsentTheme: Equatable, Sendable {
         }
     }
 
-    /// First-layer copy a host may replace. Decision labels are not here on purpose.
+    /// First-layer copy a host may replace. Decision labels are not here on purpose. A `nil` field
+    /// shows the stock copy from `@c15t/translations` in the policy's language; a host string is
+    /// shown as given in every language.
     public struct Copy: Equatable, Sendable {
         /// The headline. Keep it short: it is set in display type.
-        public var headline: String
+        public var headline: String?
         /// The sentence under the headline. Partner and category details stay native.
-        public var introduction: String
+        public var introduction: String?
 
-        public init(headline: String, introduction: String) {
+        public init(headline: String? = nil, introduction: String? = nil) {
             self.headline = headline
             self.introduction = introduction
         }
 
-        public static let c15t = Copy(
-            headline: "Your privacy, your choice.",
-            introduction: "We use data to improve your experience, measure how the app is used and show relevant advertising.")
+        /// The stock copy, translated.
+        public static let c15t = Copy()
     }
 
     public var colors: Colors
@@ -433,6 +435,11 @@ struct IABCopyKey: EnvironmentKey {
     static let defaultValue = IABCopy.forLanguage("en")
 }
 
+/// The category-mode copy for the views below, in the policy's language.
+struct ConsentCopyKey: EnvironmentKey {
+    static let defaultValue = ConsentCopy.forLanguage("en")
+}
+
 struct ConsentThemeKey: EnvironmentKey {
     static let defaultValue = ConsentTheme.c15t
 }
@@ -445,6 +452,10 @@ extension EnvironmentValues {
     var iabCopy: IABCopy {
         get { self[IABCopyKey.self] }
         set { self[IABCopyKey.self] = newValue }
+    }
+    var consentCopy: ConsentCopy {
+        get { self[ConsentCopyKey.self] }
+        set { self[ConsentCopyKey.self] = newValue }
     }
 }
 #endif

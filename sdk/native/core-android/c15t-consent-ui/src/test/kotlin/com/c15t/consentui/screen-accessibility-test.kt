@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -19,7 +20,9 @@ import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabConfiguration
+import com.c15t.consentui.generated.ConsentCopy
 import com.c15t.core.model.ConsentCategory
+import com.c15t.core.model.KernelOverrides
 import com.c15t.core.spi.*
 import com.c15t.core.store.C15tStore
 import com.c15t.core.transport.HostedTransport
@@ -60,7 +63,7 @@ class ScreenAccessibilityTest {
             compose.waitUntil(5_000) { active.showProgress }
             assertEquals(ConsentPresenter.Action.ACCEPT, active.pendingAction)
             // Both decisions keep their names and lock; only the pressed one reports progress.
-            for ((id, name) in listOf("accept-all" to "Accept all", "reject-all" to "Reject all")) {
+            for ((id, name) in listOf("accept-all" to "Accept All", "reject-all" to "Reject All")) {
                 val semantics = compose.onNodeWithTag("c15t.first-layer.$id").fetchSemanticsNode().config
                 assertEquals(listOf(name), semantics.getOrNull(SemanticsProperties.ContentDescription))
                 assertEquals(if (id == "accept-all") "Saving choices" else null, semantics.getOrNull(SemanticsProperties.StateDescription))
@@ -166,7 +169,7 @@ class ScreenAccessibilityTest {
         val provider = mutableStateOf<ConsentTheme.Branding>(ConsentTheme.Branding.C15t)
         compose.setContent {
             CompositionLocalProvider(LocalConsentTheme provides ConsentTheme(branding = provider.value)) {
-                ProviderBranding()
+                ProviderBranding("Secured by")
             }
         }
         for (branding in listOf(ConsentTheme.Branding.C15t, ConsentTheme.Branding.Inth,
@@ -178,6 +181,27 @@ class ScreenAccessibilityTest {
         compose.runOnIdle { provider.value = ConsentTheme.Branding.Custom("Example") }
         compose.onNodeWithTag("c15t.first-layer.branding").assertContentDescriptionEquals("Secured by Example")
         compose.onNodeWithTag("c15t.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    /** Category mode speaks the policy's language, from `@c15t/translations`, not English literals. */
+    @Test fun categoryLabelsFollowThePolicyLanguage() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            val german = ConsentCopy.forLanguage("de")
+            val english = ConsentCopy.forLanguage("en")
+            assertNotEquals(english.acceptAll, german.acceptAll)
+            val presenter = show(DecisionStore(), language = "de")
+            for ((id, label) in listOf("accept-all" to german.acceptAll, "reject-all" to german.rejectAll, "customize" to german.customize)) {
+                compose.onNodeWithTag("c15t.first-layer.$id").assertContentDescriptionEquals(label)
+            }
+            compose.onNodeWithTag("c15t.first-layer.title").assertTextEquals(german.headline)
+            compose.onNodeWithTag("c15t.first-layer.body").assertTextEquals(german.introduction)
+            compose.onNodeWithTag("c15t.first-layer.branding").assertContentDescriptionEquals("${german.securedBy} c15t")
+            compose.onNodeWithTag("c15t.first-layer.brand").assertContentDescriptionEquals(german.brandPlaceholder)
+            compose.runOnIdle { presenter.customize() }
+            compose.waitForIdle()
+            compose.onNodeWithTag("c15t.prefs.save").assertContentDescriptionEquals(german.save)
+        } finally { Dispatchers.resetMain() }
     }
 
     @Test fun hidingBrandingHidesTheLogoAndNameTogether() {
@@ -206,10 +230,10 @@ class ScreenAccessibilityTest {
         }
     }
 
-    private fun show(store: DecisionStore, theme: ConsentTheme = ConsentTheme.c15t): ConsentPresenter {
+    private fun show(store: DecisionStore, theme: ConsentTheme = ConsentTheme.c15t, language: String? = null): ConsentPresenter {
         val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
-        val config = NativeConfig("https://fixture.invalid")
+        val config = NativeConfig("https://fixture.invalid", overrides = KernelOverrides(language = language))
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), fixture) else HttpResponse(503)

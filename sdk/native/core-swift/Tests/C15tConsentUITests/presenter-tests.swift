@@ -274,12 +274,27 @@ final class PresenterTests: XCTestCase {
         XCTFail("Native commit did not settle")
     }
 
-    private func boot(_ store: any ConsentStore) async throws -> ConsentCore {
+    /// Category mode speaks the policy's language, from `@c15t/translations`, not English literals.
+    @MainActor func testCategoryCopyFollowsThePolicyLanguage() async throws {
+        let core = try await boot(InMemoryStore(), language: "de")
+        let presenter = ConsentPresenter(core: core)
+        let german = ConsentCopy.forLanguage("de")
+        XCTAssertFalse(presenter.iab)
+        XCTAssertNotEqual(german.acceptAll, ConsentCopy.forLanguage("en").acceptAll)
+        XCTAssertEqual(presenter.copy, german)
+        XCTAssertEqual(presenter.iabCopy, IABCopy.forLanguage("de"))
+        XCTAssertEqual(presenter.decisionLabels, DecisionLabels(copy: german))
+        XCTAssertEqual(ResolvedIdentity.resolve(ConsentTheme.Brand(), provider: .c15t, placeholder: presenter.copy.brandPlaceholder).name,
+            german.brandPlaceholder)
+    }
+
+    private func boot(_ store: any ConsentStore, language: String = "en") async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/category-init.json"))
         let core = ConsentCore()
-        core.bootstrap(CoreConfig(store: store, transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body)), initRetry: .disabled))
+        core.bootstrap(CoreConfig(store: store, transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: Peer(body)),
+            overrides: .default(language: language), initRetry: .disabled))
         await core.waitUntilIdle()
         return core
     }

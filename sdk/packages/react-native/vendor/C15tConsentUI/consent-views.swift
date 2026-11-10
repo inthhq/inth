@@ -205,16 +205,16 @@ private struct ConsentPresentationModifier: ViewModifier {
                 if presenter.noticeVisible {
                     NoticeCard(presenter: presenter, privacyPolicyURL: privacyPolicyURL)
                         .padding(12).background(NoticeBoundsReporter(onChange: onNoticeFrameChange))
-                        .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy)
+                        .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy).environment(\.consentCopy, presenter.copy)
                 }
             }
             .fullScreenCover(item: session(fullScreen: true)) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
-                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy)
+                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy).environment(\.consentCopy, presenter.copy)
             }
             .sheet(item: session(fullScreen: false)) { session in
                 ConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL).id(session.id)
-                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy)
+                    .environment(\.consentTheme, theme).environment(\.failureFocus, failureFocus).environment(\.iabCopy, presenter.iabCopy).environment(\.consentCopy, presenter.copy)
                     .presentationDetents([.large]).presentationDragIndicator(.hidden)
             }
             .onAppear {
@@ -237,15 +237,15 @@ private struct NoticeCard: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: theme.cornerRadius + 6, style: .continuous)
         VStack(alignment: .leading, spacing: 12) {
-            Text("How this app uses your data").font(.headline).foregroundStyle(theme.colors.text.color)
+            Text(presenter.copy.noticeTitle).font(.headline).foregroundStyle(theme.colors.text.color)
                 .accessibilityAddTraits(.isHeader).accessibilityIdentifier("c15t.notice.title")
-            Text("You can review or change this at any time in Privacy settings.")
+            Text(presenter.copy.noticeDescription)
                 .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
             EqualDecisionLayout {
-                Button("Got it") { presenter.commit(.acknowledge) }
+                Button(presenter.copy.acknowledge) { presenter.commit(.acknowledge) }
                     .buttonStyle(ConsentButtonStyle(busy: presenter.showProgress && presenter.pendingAction == .acknowledge))
                     .accessibilityIdentifier("c15t.notice.acknowledge")
-                Button("Privacy settings") { presenter.presentPreferences() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.notice.settings")
+                Button(presenter.copy.privacySettings) { presenter.presentPreferences() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier("c15t.notice.settings")
             }
             PrivacyLink(url: privacyPolicyURL)
             if let message = presenter.errorMessage { FailureRow(message: message, id: "c15t.notice.error", retry: presenter.retry) }
@@ -631,24 +631,24 @@ private struct FirstLayer: View {
         ScrollViewReader { proxy in
           ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand, provider: theme.branding)) }
+                if !theme.brand.isHidden { IdentityHeader(identity: ResolvedIdentity.resolve(theme.brand, provider: theme.branding, placeholder: presenter.copy.brandPlaceholder)) }
                 if let reason = presenter.snapshot.promptRequirement.reason, reason.rawValue != "missing" {
                     InfoCallout {
-                        Text(reason.rawValue == "expired" ? "Your earlier choice has expired, so we're asking again." : "How this app uses data has changed since your last choice, so we're asking again.")
+                        Text(reason.rawValue == "expired" ? presenter.copy.choiceExpired : presenter.copy.policyChanged)
                     }.accessibilityIdentifier("c15t.first-layer.reason")
                 }
                 BalancedTextLayout {
-                    Text(theme.copy.headline).font(theme.headlineFont.font(.largeTitle, weight: .semibold))
+                    Text(theme.copy.headline ?? presenter.copy.headline).font(theme.headlineFont.font(.largeTitle, weight: .semibold))
                         .foregroundStyle(theme.colors.text.color).multilineTextAlignment(.leading)
                         .accessibilityAddTraits(.isHeader).accessibilityIdentifier("c15t.first-layer.title").accessibilityFocused($titleFocused)
                 }
-                Text(theme.copy.introduction).font(.body).foregroundStyle(theme.colors.text.color)
+                Text(theme.copy.introduction ?? presenter.copy.introduction).font(.body).foregroundStyle(theme.colors.text.color)
                     .accessibilityIdentifier("c15t.first-layer.body")
                 // The IAB sentences come from the IAB copy, never from the host theme.
                 if let content = presenter.iabFirstLayer {
                     iabDisclosure(content)
                 } else {
-                    Text("You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
+                    Text(presenter.copy.firstLayerDescription)
                         .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                 }
                 PrivacyLink(url: privacyPolicyURL)
@@ -782,28 +782,30 @@ private struct ProviderSignature: View {
 
 private struct Branding: View {
     @Environment(\.consentTheme) private var theme
+    @Environment(\.consentCopy) private var copy
     var body: some View {
         HStack(spacing: 6) {
-            Text("Secured by")
+            Text(copy.securedBy)
             ProviderSignature()
         }
         .font(.caption).foregroundStyle(theme.colors.textSecondary.color)
         .frame(maxWidth: .infinity, alignment: .trailing)
-        .accessibilityElement(children: .ignore).accessibilityLabel("Secured by \(theme.branding.name)")
+        .accessibilityElement(children: .ignore).accessibilityLabel("\(copy.securedBy) \(theme.branding.name)")
         .accessibilityIdentifier("c15t.first-layer.branding")
     }
 }
 
 private struct CompactBranding: View {
     @Environment(\.consentTheme) private var theme
+    @Environment(\.consentCopy) private var copy
     var body: some View {
         VStack(spacing: 4) {
-            Text("Secured by").font(.caption2)
+            Text(copy.securedBy).font(.caption2)
             ProviderSignature().font(.caption)
         }
         .foregroundStyle(theme.colors.textSecondary.color)
         .fixedSize()
-        .accessibilityElement(children: .ignore).accessibilityLabel("Secured by \(theme.branding.name)")
+        .accessibilityElement(children: .ignore).accessibilityLabel("\(copy.securedBy) \(theme.branding.name)")
         .accessibilityIdentifier("c15t.first-layer.branding")
     }
 }
@@ -994,7 +996,7 @@ private struct DecisionGroup: View {
         let busy = presenter.showProgress && presenter.pendingAction == action
         return Button(label) { presenter.commit(action) }
             .buttonStyle(ConsentButtonStyle(variant: style ?? (action == .save ? .accent : first ? .decision : .quiet), busy: busy))
-            .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(prefix + "." + suffix)
+            .accessibilityLabel(label).accessibilityValue(busy ? presenter.copy.saving : "").accessibilityIdentifier(prefix + "." + suffix)
     }
 }
 
@@ -1093,7 +1095,7 @@ private struct PreferencesList: View {
                             Button(presenter.iabCopy.format(presenter.iabCopy.appIabPartnerCount, ["count": String(presenter.disclosure?.vendors.count ?? 0)])) { path.append(.vendors(nil)) }
                                 .buttonStyle(TextLinkStyle(font: .subheadline.weight(.semibold))).accessibilityIdentifier("c15t.iab.partner-count")
                         } else {
-                            Text("Choose which kinds of data use you allow. Changes apply on this device as soon as you save.")
+                            Text(presenter.copy.preferencesDescription)
                                 .accessibilityFocused($introFocused)
                         }
                     }.font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
@@ -1250,14 +1252,24 @@ private struct CategoryRow: View {
     @ObservedObject var presenter: ConsentPresenter
     let category: ConsentCategory
     @Environment(\.consentTheme) private var theme
-    private var title: String { category == .necessary ? "Strictly necessary" : category.rawValue.capitalized }
-    private var description: String {
+    private var title: String {
+        let copy = presenter.copy
         switch category {
-        case .necessary: "Required for the app to work."
-        case .functionality: "Remember your settings and choices."
-        case .experience: "Adapt the app to how you use it."
-        case .measurement: "Help us understand how the app is used."
-        case .marketing: "Show advertising relevant to you."
+        case .necessary: return copy.necessaryTitle
+        case .functionality: return copy.functionalityTitle
+        case .experience: return copy.experienceTitle
+        case .measurement: return copy.measurementTitle
+        case .marketing: return copy.marketingTitle
+        }
+    }
+    private var description: String {
+        let copy = presenter.copy
+        switch category {
+        case .necessary: return copy.necessaryDescription
+        case .functionality: return copy.functionalityDescription
+        case .experience: return copy.experienceDescription
+        case .measurement: return copy.measurementDescription
+        case .marketing: return copy.marketingDescription
         }
     }
     var body: some View {
@@ -1271,7 +1283,7 @@ private struct CategoryRow: View {
             } else {
                 ReadOnlyStatusRow(
                     label: RowLabel(title: title, description: description,
-                        note: optional.flatMap { optional in restricted ? (presenter.snapshot.restrictions[optional]?.contains(.gpc) == true ? "Off because your device sends a Global Privacy Control signal." : "Not offered where you are.") : nil }),
+                        note: optional.flatMap { optional in restricted ? (presenter.snapshot.restrictions[optional]?.contains(.gpc) == true ? presenter.copy.restrictedByGpc : presenter.copy.notOffered) : nil }),
                     status: Text(category == .necessary ? presenter.iabCopy.appAlwaysOn : presenter.iabCopy.appOff).font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
                         .accessibilityIdentifier("c15t.prefs.category.\(category.rawValue).locked")
                 )

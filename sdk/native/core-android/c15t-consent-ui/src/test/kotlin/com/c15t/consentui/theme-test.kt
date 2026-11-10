@@ -210,8 +210,8 @@ class IdentityTest {
 
     @Test fun stockIdentityUsesThePlaceholderAndSelectedProvider() {
         for (provider in listOf(ConsentTheme.Branding.C15t, ConsentTheme.Branding.Inth)) {
-            val resolved = HeaderIdentity.resolve(context, ConsentTheme.Brand(), provider)
-            assertEquals("Your brand here", resolved.name)
+            val resolved = HeaderIdentity.resolve(context, ConsentTheme.Brand(), provider, PLACEHOLDER)
+            assertEquals(PLACEHOLDER, resolved.name)
             assertEquals(provider, resolved.provider)
             assertNull(resolved.markResId)
         }
@@ -220,13 +220,13 @@ class IdentityTest {
     }
 
     @Test fun explicitBrandMarksAndNamesOverrideTheStockIdentity() {
-        val named = HeaderIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry"), ConsentTheme.Branding.Inth)
+        val named = HeaderIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry"), ConsentTheme.Branding.Inth, PLACEHOLDER)
         assertEquals("Pantry", named.name)
         assertEquals(ConsentTheme.Branding.Inth, named.provider)
-        val marked = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = android.R.drawable.ic_dialog_info), ConsentTheme.Branding.Inth)
+        val marked = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = android.R.drawable.ic_dialog_info), ConsentTheme.Branding.Inth, PLACEHOLDER)
         assertEquals(android.R.drawable.ic_dialog_info, marked.markResId)
         assertNull(marked.provider)
-        val missing = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = 1), ConsentTheme.Branding.Inth)
+        val missing = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = 1), ConsentTheme.Branding.Inth, PLACEHOLDER)
         assertNull(missing.markResId); assertNull(missing.provider)
         assertEquals("Y", HeaderIdentity.initial(missing.name))
         assertEquals("P", HeaderIdentity.initial("pantry"))
@@ -234,11 +234,15 @@ class IdentityTest {
     }
 
     @Test fun customProvidersUseTheirMarkOrInitial() {
-        val custom = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info))
+        val custom = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info), PLACEHOLDER)
         assertEquals(android.R.drawable.ic_dialog_info, custom.markResId)
-        assertEquals("Your brand here", custom.name)
-        val noMark = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example"))
+        assertEquals(PLACEHOLDER, custom.name)
+        val noMark = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example"), PLACEHOLDER)
         assertNull(noMark.markResId); assertNull(noMark.provider)
         assertEquals("Y", HeaderIdentity.initial(noMark.name))
+    }
+
+    private companion object {
+        val PLACEHOLDER = com.c15t.consentui.generated.ConsentCopy.forLanguage("en").brandPlaceholder
     }
 }
