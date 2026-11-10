@@ -98,9 +98,11 @@ type KindMatches<Value, Kind> = Kind extends 'string'
 				? [Value] extends [readonly unknown[]]
 					? true
 					: false
-				: [Value] extends [object]
-					? true
-					: false;
+				: [Value] extends [readonly unknown[]]
+					? false
+					: [Value] extends [object]
+						? true
+						: false;
 
 type FieldProblem<Type, Key extends PropertyKey, Spec> =
 	Same<
@@ -199,4 +201,19 @@ expectTypeOf<
 >().toEqualTypeOf<true>();
 expectTypeOf<
 	Matches<TrackingRequestPayload, Schema['trackingRequest']>
+>().toEqualTypeOf<true>();
+
+// The checker itself: a field the table calls an object must reject an array, or a
+// protocol type that turned `restrictions` or `iab` into a list would still match.
+expectTypeOf<
+	Matches<
+		{ readonly restrictions: readonly string[] },
+		{ readonly restrictions: 'object' }
+	>
+>().not.toEqualTypeOf<true>();
+expectTypeOf<
+	Matches<
+		{ readonly restrictions: Readonly<Record<string, string>> },
+		{ readonly restrictions: 'object' }
+	>
 >().toEqualTypeOf<true>();
