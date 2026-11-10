@@ -62,7 +62,11 @@ subject's own choices, so a GPC restriction does not appear as a staged
 refusal. `isDirty` tells you whether anything changed. `acceptAll` and
 `rejectAll` stage values only; they save nothing.
 
-While the draft has no edits, it follows the saved record. If the policy or
+While the draft has no edits, it follows the saved record. While it has
+edits, a category you did not change still takes the newly saved value, so a
+save writes back only what the subject changed. A save through
+`useSaveConsents()` with `'all'`, `'none'` or a per-category object clears the
+draft's edits. If the policy or
 the displayed categories change under an unsaved edit, `isStale` turns true and
 `save()` resolves `ok: false` with `reason: 'concurrent-change'`, writing
 nothing. Call `reset()` and let the subject review again.

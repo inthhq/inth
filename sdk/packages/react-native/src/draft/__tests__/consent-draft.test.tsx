@@ -251,6 +251,66 @@ describe('useConsentDraft', () => {
 		]);
 	});
 
+	test('a record change under an edit rebases the untouched categories', async () => {
+		mount(<DraftProbe name="screen" />, scoped());
+
+		flush(() => handle('screen').set('marketing', true));
+		// Another surface records analytics while this screen holds the edit.
+		flush(() =>
+			fake.pushSnapshot(
+				scoped({
+					explicitChoice: {
+						categories: {
+							measurement: {
+								basis: { fingerprint: 'fp-1', kind: 'choice-v1' },
+								confirmedAt: 3,
+								value: true,
+							},
+						},
+						version: 3,
+					},
+					revision: 1,
+				})
+			)
+		);
+
+		expect(handle('screen').values).toMatchObject({
+			marketing: true,
+			measurement: true,
+		});
+		expect(handle('screen').isDirty).toBe(true);
+		await handle('screen').save();
+		await flushPromises();
+
+		expect(fake.commitIntents).toEqual([
+			'{"action":"explicit","consents":{"measurement":true,"marketing":true}}',
+		]);
+	});
+
+	test('a bulk save supersedes the staged edits', async () => {
+		mount(
+			<>
+				<DraftProbe name="screen" />
+				<SaveProbe />
+			</>,
+			scoped()
+		);
+
+		flush(() => handle('screen').set('marketing', true));
+		await save?.('none');
+		await flushPromises();
+
+		expect(handle('screen').isDirty).toBe(false);
+		expect(handle('screen').values.marketing).toBe(false);
+		await save?.();
+		await flushPromises();
+
+		expect(fake.commitIntents).toEqual([
+			'{"action":"necessary"}',
+			'{"action":"explicit","consents":{"measurement":false,"marketing":false}}',
+		]);
+	});
+
 	test('an argument still saves exactly that choice', async () => {
 		mount(<SaveProbe />, scoped());
 

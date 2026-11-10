@@ -148,6 +148,8 @@ export const createConsentDraft = function createConsentDraft(
 		isStale: false,
 		values,
 	};
+	/** The categories the subject changed since the last seed: only these survive a new record. */
+	const staged = new Set<OptionalConsentCategory>();
 	const listeners = new Set<() => void>();
 	let unsubscribeClient: (() => void) | null = null;
 
@@ -176,6 +178,7 @@ export const createConsentDraft = function createConsentDraft(
 	const reseed = function reseed(): void {
 		seed = seedFrom(snapshot, currentDefaults);
 		({ values } = seed);
+		staged.clear();
 		stale = false;
 		publish();
 	};
@@ -189,16 +192,24 @@ export const createConsentDraft = function createConsentDraft(
 		snapshot = latest;
 		const next = seedFrom(snapshot, currentDefaults);
 		if (differs(values, seed.values, seed.displayed)) {
-			// Keep the edit. A new policy makes it stale; the same policy only moves
-			// the baseline.
+			// Keep the edit. A new policy makes it stale. Under the same policy the
+			// record moves underneath: every category the subject did not touch takes
+			// the new record, so a save never writes back a value it only displayed.
 			if (next.policyKey === seed.policyKey) {
 				seed = next;
+				values = {
+					...next.values,
+					...Object.fromEntries(
+						[...staged].map((category) => [category, values[category]])
+					),
+				};
 			} else {
 				stale = true;
 			}
 		} else {
 			seed = next;
 			({ values } = next);
+			staged.clear();
 			stale = false;
 		}
 		publish();
@@ -210,6 +221,9 @@ export const createConsentDraft = function createConsentDraft(
 			(category) =>
 				patch[category] !== undefined && patch[category] !== values[category]
 		);
+		for (const category of changed) {
+			staged.add(category);
+		}
 		if (changed.length > 0) {
 			values = {
 				...values,
