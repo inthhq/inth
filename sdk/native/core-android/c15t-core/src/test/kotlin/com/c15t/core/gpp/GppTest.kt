@@ -155,15 +155,29 @@ class GppCoreTest {
 		gpp = gpp,
 	)
 
-	private fun transport() = RecordingTransport()
-		.respondInit(initSuccess(body = initBody(model = "\"opt-out\"")))
-		.respondInit(initSuccess(body = initBody(model = "\"opt-out\"")))
+	/**
+	 * An opt-out rule served with the location the backend resolved. The served location
+	 * wins over the app's override once `/init` answers, as in `@c15t/core`, so a test of a
+	 * US visitor has to be served a US location: `GPPTests.swift` once served Germany and
+	 * got no section, correctly.
+	 */
+	private fun initFor(country: String) = initSuccess(
+		body = JsonObject(
+			Json.parseToJsonElement(initBody(model = "\"opt-out\"")).jsonObject +
+				("location" to JsonObject(mapOf("countryCode" to JsonPrimitive(country), "regionCode" to JsonNull))),
+		).toString(),
+	)
+
+	private fun transport(country: String = "US") = RecordingTransport()
+		.respondInit(initFor(country))
+		.respondInit(initFor(country))
 
 	@Test fun `a US opt-out visitor gets usnat on the snapshot and in storage, and a refusal opts out`() {
 		val bus = RecordingTcStorageBus()
 		val backend = InMemoryKeyValueStore()
 		val core = testKernel(config(GppOptions()), C15tStore(backend, tcStorageBus = bus), FixedClock(), transport())
 		core.bootstrap()
+		assertEquals("US", core.snapshot().overrides.country, "the backend placed the visitor in the US")
 		assertEquals(noChoice, core.snapshot().gppString)
 		assertEquals(TcBusValue.TextValue(noChoice), bus.live[GppStorageBusKeys.HDR_GPP_STRING])
 		assertEquals(TcBusValue.TextValue("7"), bus.live[GppStorageBusKeys.GPP_SID])
@@ -181,6 +195,16 @@ class GppCoreTest {
 			executor = com.c15t.core.spi.TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(optedOut, cold.snapshot().gppString)
+	}
+
+	@Test fun `the location the backend matched on decides, not the app's earlier override`() {
+		val bus = RecordingTcStorageBus()
+		val core = testKernel(config(GppOptions()), C15tStore(InMemoryKeyValueStore(), tcStorageBus = bus), FixedClock(),
+			transport(country = "DE"))
+		core.bootstrap()
+		assertEquals("DE", core.snapshot().overrides.country)
+		assertNull(core.snapshot().gppString)
+		assertTrue(bus.live.keys.none { it.startsWith("IABGPP_") })
 	}
 
 	@Test fun `GPP stays off until the app turns it on`() {

@@ -128,10 +128,19 @@ final class GPPCoreTests: XCTestCase {
         )
     }
 
-    private func http() -> StubHTTP {
+    /// An opt-out rule served with the location the backend resolved.
+    ///
+    /// Once `/init` answers, the served location wins over the app's override, as in
+    /// `@c15t/core` and `core-android`. `Fixture.initResponse` serves Germany, so a test
+    /// of a US visitor has to say where the backend placed them: with Germany served, no
+    /// US section applies, which is what the first run of this test reported.
+    private func http(country: String = "US") -> StubHTTP {
         let http = StubHTTP()
-        http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(
+        let body = Fixture.initBody(policyResolution: Fixture.matchedResolution(
             policy: Fixture.rule(model: "opt-out", rights: ["disclosure", "opt-out", "preferences"])))
+        var fields = C15tJSON.parse(body)?.objectValue ?? [:]
+        fields["location"] = .object(["countryCode": .string(country), "regionCode": .null])
+        http.initResponse = .json(String(decoding: C15tJSON.encode(.object(fields)) ?? Data("{}".utf8), as: UTF8.self))
         return http
     }
 
@@ -143,6 +152,7 @@ final class GPPCoreTests: XCTestCase {
         let store = InMemoryStore()
         let core = ConsentCore()
         await core.bootstrapAndSettle(config(store: store, http: http(), bus: bus, gpp: GPPOptions()))
+        XCTAssertEqual(core.snapshot().overrides.country, "US", "the backend placed the visitor in the US")
         XCTAssertEqual(core.snapshot().gppString, noChoice)
         XCTAssertEqual(defaults.string(forKey: GPPStorageBusKeys.hdrGppString), noChoice)
         XCTAssertEqual(defaults.string(forKey: GPPStorageBusKeys.gppSID), "7")
@@ -159,6 +169,18 @@ final class GPPCoreTests: XCTestCase {
         let cold = ConsentCore()
         await cold.bootstrapAndSettle(config(store: store, http: nil, bus: bus, gpp: GPPOptions()))
         XCTAssertEqual(cold.snapshot().gppString, optedOut)
+    }
+
+    func testTheLocationTheBackendMatchedOnDecidesNotTheAppsEarlierOverride() async throws {
+        let suite = "c15t-gpp-served-" + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let bus = UserDefaultsStorageBus(defaults: defaults)
+        let core = ConsentCore()
+        await core.bootstrapAndSettle(config(store: InMemoryStore(), http: http(country: "DE"), bus: bus, gpp: GPPOptions()))
+        XCTAssertEqual(core.snapshot().overrides.country, "DE")
+        XCTAssertNil(core.snapshot().gppString)
+        for key in GPPStorageBusKeys.allNames { XCTAssertNil(defaults.object(forKey: key), key) }
     }
 
     func testGPPStaysOffUntilTheAppTurnsItOn() async throws {
