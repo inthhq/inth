@@ -17,6 +17,8 @@ final class TrackingSequenceTests: XCTestCase {
         var active = true
         var additionalInformation = false
         var asks = 0
+        /// Answers delivered so far.
+        var answers = 0
         /// Called as Apple is asked, before it answers, to check what is on screen then.
         var onAsk: (() -> Void)?
         /// Keep Apple's answer until ``reply()``, to change settings while it is on screen.
@@ -50,7 +52,8 @@ final class TrackingSequenceTests: XCTestCase {
         }
 
         private func answerLater(_ answer: @escaping () -> Void) {
-            if hold { held = answer } else { answer() }
+            let counted = { self.answers += 1; answer() }
+            if hold { held = counted } else { counted() }
         }
 
         func reply() {
@@ -362,6 +365,47 @@ final class TrackingSequenceTests: XCTestCase {
 
         prompt.presenter.commit(.acknowledge)
         await until { apple.asks == 1 }
+    }
+
+    func testAPromptRequestedBeforeAnySceneAttachesFollowsThatScenesOrder() async throws {
+        // A view's onAppear or task can run before the modifier's scene attaches.
+        let apple = Apple()
+        let core = try await boot()
+        let prompt = ConsentPrompt(core: core, tracking: apple.controller, isActive: { apple.active },
+                                   becameActive: apple.activations.eraseToAnyPublisher())
+        apple.onAsk = { XCTAssertNil(prompt.presenter.presentationID, "the prompt waits for Apple") }
+        prompt.presentPrompt()
+        XCTAssertNil(prompt.presenter.presentationID, "nothing opens before a scene says which order it wants")
+
+        prompt.attach(UUID(), active: true, autoPresent: false, trackingRequest: .beforeConsent)
+        XCTAssertEqual(apple.asks, 1)
+        await until { prompt.presenter.presentationID != nil }
+    }
+
+    func testAPromptRequestedBeforeAnySceneAttachesOpensWhenOneDoes() async throws {
+        let apple = Apple()
+        let core = try await boot()
+        let prompt = ConsentPrompt(core: core, tracking: apple.controller, isActive: { apple.active },
+                                   becameActive: apple.activations.eraseToAnyPublisher())
+        prompt.presentPrompt()
+        prompt.attach(UUID(), active: true, autoPresent: false, trackingRequest: .afterConsent)
+        XCTAssertNotNil(prompt.presenter.presentationID)
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testBeforeConsentAsksBeforeTheNextPromptOnceARefusalIsGone() async throws {
+        let apple = Apple()
+        let core = try await boot()
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        let prompt = attach(core, apple, order: .beforeConsent)
+        await settle()
+        XCTAssertEqual(apple.asks, 0, "a stored refusal skips the ask")
+
+        apple.onAsk = { XCTAssertNil(prompt.presenter.presentationID, "the prompt waits for Apple") }
+        core.reset()
+        await core.waitUntilIdle()
+        await until { apple.asks == 1 }
+        await until { prompt.presenter.presentationID != nil }
     }
 
     // MARK: - Helpers

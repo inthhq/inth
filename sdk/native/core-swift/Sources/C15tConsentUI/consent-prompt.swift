@@ -42,14 +42,16 @@ public final class ConsentPrompt: ObservableObject {
     /// `beforeConsent`.
     private var wantsAutoPresent = false
     private var launchChecked = false
-    /// `beforeConsent` has asked Apple, or skipped it, for this launch.
-    private(set) var trackingReleased = false
+    /// Apple has answered a request from this prompt in this launch. `beforeConsent` asks once.
+    private var trackingAsked = false
     private var trackingInFlight = false
     private var trackingOwed: ConsentTrackingStage?
     /// The owed ask came from the launch check, which depends on the scene's settings.
     private var trackingOwedAtLaunch = false
     /// The app called ``presentPrompt()`` with `beforeConsent` and Apple has not been asked yet.
     private var promptAfterTracking = false
+    /// The app called ``presentPrompt()`` before any scene attached, so no order was known yet.
+    private var promptAfterAttach = false
     private var observers: [AnyCancellable] = []
 
     init(core: ConsentCore, tracking: C15tTrackingController = C15tApple.tracking,
@@ -64,6 +66,7 @@ public final class ConsentPrompt: ObservableObject {
         observers = [
             presenter.$snapshot.sink { [weak self] in
                 self?.checkLaunch($0)
+                self?.syncTrackingHold()
                 self?.requestOwedTracking()
             },
             (becameActive ?? ConsentPrompt.activations).sink { [weak self] in self?.requestOwedTracking() },
@@ -103,9 +106,14 @@ public final class ConsentPrompt: ObservableObject {
 
     /// Open an owed prompt now. Does nothing while a prompt or settings session is open. With
     /// `beforeConsent`, Apple's alert comes first, as it does for a prompt that opens by itself.
+    /// Called before any scene has attached, for example from a view's `onAppear`, it opens once
+    /// the first scene attaches, in that scene's order.
     public func presentPrompt() {
-        if trackingRequest == .beforeConsent, !trackingReleased, host != nil,
-           core.snapshot().promptRequirement.kind != .none {
+        guard host != nil else {
+            promptAfterAttach = true
+            return
+        }
+        if holdsForTracking, core.snapshot().promptRequirement.kind != .none {
             promptAfterTracking = true
             return owe(.beforePrompt)
         }
@@ -125,14 +133,20 @@ public final class ConsentPrompt: ObservableObject {
         if host != id, !autoPresent { presenter.withdrawAutomaticSession() }
         if host != id { host = id }
         if hostActive != active { hostActive = active }
-        // A launch ask still waiting was decided under the old settings; decide it again.
-        if trackingOwedAtLaunch, autoPresent != wantsAutoPresent || trackingRequest != self.trackingRequest {
-            dropOwedTracking()
+        // The launch decision was made under the old settings; make it again, and drop a launch
+        // ask still waiting on them.
+        if autoPresent != wantsAutoPresent || trackingRequest != self.trackingRequest {
+            if trackingOwedAtLaunch { dropOwedTracking() }
+            launchChecked = false
         }
         self.trackingRequest = trackingRequest
         wantsAutoPresent = autoPresent
-        applyAutoPresent()
         checkLaunch(presenter.snapshot)
+        syncTrackingHold()
+        if promptAfterAttach {
+            promptAfterAttach = false
+            presentPrompt()
+        }
     }
 
     /// The scene behind `id` went away. Another attached scene takes over. Until one does, nothing
@@ -154,10 +168,30 @@ public final class ConsentPrompt: ObservableObject {
         promptAfterTracking = false
     }
 
-    /// With `beforeConsent`, the prompt waits until Apple's alert has been asked or skipped.
+    /// With `beforeConsent`, a prompt waits while Apple would be asked now and has not answered
+    /// yet in this launch. Read live, so a refusal that clears or an answer that arrives later is
+    /// seen by the next prompt.
+    var holdsForTracking: Bool {
+        guard trackingRequest == .beforeConsent, !trackingAsked else { return false }
+        if trackingInFlight { return true }
+        let snapshot = core.snapshot()
+        return trackingRequest.shouldAsk(at: .beforePrompt, platform: tracking.trackingPlatformStatus(),
+                                         promptStringPresent: tracking.trackingPromptStringPresent(),
+                                         marketing: ConsentDecision(snapshot: snapshot, category: .marketing),
+                                         marketingRefused: snapshot.explicitChoice?.categories[.marketing]?.value == false)
+    }
+
     private func applyAutoPresent() {
-        let on = wantsAutoPresent && (trackingRequest != .beforeConsent || trackingReleased)
+        let on = wantsAutoPresent && !holdsForTracking
         if presenter.autoPresent != on { presenter.autoPresent = on }
+    }
+
+    /// Apply the hold, and owe the ask it waits for when a prompt would open by itself.
+    private func syncTrackingHold() {
+        applyAutoPresent()
+        guard wantsAutoPresent, host != nil, trackingOwed == nil, !trackingInFlight, holdsForTracking,
+              core.snapshot().promptRequirement.kind != .none else { return }
+        owe(.beforePrompt)
     }
 
     /// Decide once per attachment, when the core first has an answer, whether tracking is asked
@@ -167,7 +201,7 @@ public final class ConsentPrompt: ObservableObject {
         guard !launchChecked, host != nil, wantsAutoPresent, snapshot.ready, !snapshot.policyPending else { return }
         launchChecked = true
         switch trackingRequest {
-        case .beforeConsent: owe(.beforePrompt, atLaunch: true)
+        // beforeConsent asks right before a prompt opens; ``syncTrackingHold()`` owes that ask.
         // A stored choice still in force owes no prompt, so the after-consent rule applies now.
         case .afterConsent where snapshot.promptRequirement.kind == .none: owe(.afterPrompt, atLaunch: true)
         default: break
@@ -209,6 +243,7 @@ public final class ConsentPrompt: ObservableObject {
     private func trackingAnswered(_ stage: ConsentTrackingStage,
                                   _ result: Result<C15tTrackingRequestResult, C15tTrackingError>) {
         trackingInFlight = false
+        trackingAsked = true
         // Additional Information on Apple's EU sheet asks the app to show its own controls.
         // After a prompt, that is settings; closing them runs the after-consent rule again.
         // Before the prompt, the prompt itself is those controls. Settings are read now, not when
@@ -222,10 +257,7 @@ public final class ConsentPrompt: ObservableObject {
     }
 
     private func releasePrompt() {
-        if !trackingReleased {
-            trackingReleased = true
-            applyAutoPresent()
-        }
+        applyAutoPresent()
         if promptAfterTracking {
             promptAfterTracking = false
             if host != nil { presenter.presentPrompt() }
