@@ -1572,7 +1572,11 @@ Configuration picks one of two modes, and they do not mix.
   (the safe opt-in fallback) or `failed` with `insufficient-inputs`, never to
   silence, for in-code policies and bundled manifests alike. An explicit
   `no-match` or `unconfigured` answer replaces the rule in force on both cores,
-  as `resolveEffectivePolicy` does on the web; only a failed init keeps it. Validity days may be fractional and round to whole
+  as `resolveEffectivePolicy` does on the web; only a failed init keeps it. An
+  in-code answer is local and final, so no init will revise it: a location the
+  in-code policy cannot answer without a region drops the rule in force, sets
+  `policyPending` and denies optional gates on both cores. Stored choices stay,
+  and apply again when the policy answers. The `transitions` cases pin this. Validity days may be fractional and round to whole
   milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
   and never leave it; choice and notice validity feed only their own prompt. A
   declared policy a core refuses is reported as `policy-invalid` with resolution

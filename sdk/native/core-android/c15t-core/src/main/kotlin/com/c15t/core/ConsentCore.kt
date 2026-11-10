@@ -1520,6 +1520,7 @@ class ConsentCore(
 					evaluationPolicy = null,
 					policyPending = true,
 					policyUnreadable = true,
+					isFinal = true,
 					error = KernelError(POLICY_INVALID, "The in-code policy was refused: $reason"),
 				)
 			} ?: return
@@ -1573,6 +1574,8 @@ class ConsentCore(
 			// longer justify.
 			evaluationPolicy = when {
 				mapped.policyUnreadable -> null
+				// A local answer is the last word: no `/init` is coming to correct it.
+				mapped.isFinal -> mapped.evaluationPolicy
 				// An explicit `no-match` or `unconfigured` answer puts the safe fallback in force,
 				// as `resolveEffectivePolicy` in `@c15t/core` and core-swift's wire reader do. Only
 				// a failed init keeps the last policy.
@@ -1624,7 +1627,7 @@ class ConsentCore(
 			// lands on PENDING rather than DENIED deliberately: DENIED reads as the
 			// subject's own refusal and invites a host to stop listening, which would
 			// make the category unrecoverable when the next resolution parses.
-			val superseded = mapped.policyPending && !base.policyPending
+			val superseded = mapped.policyPending && !base.policyPending && !mapped.isFinal
 			published = PolicyEvaluator.evaluate(
 				snapshot = base.copy(
 					// The latch lands on the snapshot's own field, which is the copy the bridge
@@ -1633,7 +1636,7 @@ class ConsentCore(
 					iab = latchedVendorList?.let(::KernelIabState),
 					resolution = if (superseded) base.resolution else mapped.resolution,
 					policyPending = mapped.policyPending &&
-						(base.policyPending || mapped.policyUnreadable),
+						(base.policyPending || mapped.policyUnreadable || mapped.isFinal),
 					// A failed init leaves the local state unready: nothing resolved, so
 					// gates keep denying. Only a definitive answer makes it ready.
 					ready = if (mapped.policyPending) base.ready else true,

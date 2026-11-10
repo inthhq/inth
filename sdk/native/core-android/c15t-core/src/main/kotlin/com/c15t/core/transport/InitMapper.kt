@@ -37,6 +37,13 @@ data class MappedInit(
 	 * served from a wire it can no longer represent.
 	 */
 	val policyUnreadable: Boolean = false,
+	/**
+	 * `true` when the answer was worked out on the device, as the in-code policy is. No
+	 * later `/init` will revise it, so it replaces the policy in force even when it is a
+	 * failure: a device under a local policy that cannot answer a location fails closed
+	 * instead of keeping the last rule's grants.
+	 */
+	val isFinal: Boolean = false,
 	val subjectId: String? = null,
 	val location: ConsentLocation? = null,
 	val resolvedOverrides: KernelOverrides? = null,

@@ -138,7 +138,12 @@ class ConsentPolicy(val rules: List<PolicyRule>) {
 				put("regionCode", overrides.region?.let(::JsonPrimitive) ?: JsonNull)
 			})
 		}
-		return InitMapper.map(TransportOutcome.Success(body, emptyMap()))
+		return InitMapper.map(TransportOutcome.Success(body, emptyMap())).let { mapped ->
+			mapped.copy(
+				isFinal = true,
+				error = mapped.error?.copy(message = "The in-code policy cannot answer this location without a region; optional consent stays denied"),
+			)
+		}
 	}
 
 	override fun equals(other: Any?) = other is ConsentPolicy && other.rules == rules

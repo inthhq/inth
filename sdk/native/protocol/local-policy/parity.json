@@ -8482,5 +8482,85 @@
 			"model": "opt-in",
 			"prompt": "choice"
 		}
+	],
+	"transitions": [
+		{
+			"name": "a location the policy cannot answer fails closed and keeps the saved choice",
+			"rules": [
+				{
+					"id": "germany",
+					"match": {
+						"countries": ["DE"]
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				},
+				{
+					"id": "california",
+					"match": {
+						"regions": [
+							{
+								"country": "US",
+								"region": "CA"
+							}
+						]
+					},
+					"model": "opt-out",
+					"prompt": "notice"
+				},
+				{
+					"id": "default",
+					"match": {
+						"isDefault": true
+					},
+					"model": "opt-in",
+					"prompt": "choice"
+				}
+			],
+			"steps": [
+				{
+					"expected": {
+						"optionalAllowed": true,
+						"policyId": "germany",
+						"policyPending": false,
+						"reason": null,
+						"status": "matched"
+					},
+					"inputs": {
+						"country": "DE",
+						"region": null
+					},
+					"saveAll": true
+				},
+				{
+					"expected": {
+						"optionalAllowed": false,
+						"policyId": null,
+						"policyPending": true,
+						"reason": "insufficient-inputs",
+						"status": "failed"
+					},
+					"inputs": {
+						"country": "US",
+						"region": null
+					},
+					"saveAll": false
+				},
+				{
+					"expected": {
+						"optionalAllowed": true,
+						"policyId": "germany",
+						"policyPending": false,
+						"reason": null,
+						"status": "matched"
+					},
+					"inputs": {
+						"country": "DE",
+						"region": null
+					},
+					"saveAll": false
+				}
+			]
+		}
 	]
 }

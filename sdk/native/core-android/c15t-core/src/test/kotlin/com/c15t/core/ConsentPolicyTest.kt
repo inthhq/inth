@@ -128,6 +128,32 @@ class ConsentPolicyTest {
 		assertEquals(published.map { it.revision }.distinct(), published.map { it.revision })
 	}
 
+	@Test fun `a location the in-code policy cannot answer fails closed and the saved choice returns`() {
+		for (case in fixture.getValue("transitions").jsonArray.map { it.jsonObject }) {
+			val name = case.getValue("name").jsonPrimitive.content
+			val policy = ConsentPolicy.fromJson(buildJsonObject { put("rules", case.getValue("rules")) }.toString())
+			val steps = case.getValue("steps").jsonArray.map { it.jsonObject }
+			fun location(step: JsonObject) = step.getValue("inputs").jsonObject.let {
+				KernelOverrides(country = it["country"]?.jsonPrimitive?.contentOrNull, region = it["region"]?.jsonPrimitive?.contentOrNull)
+			}
+			val core = boot(policy, overrides = location(steps.first()))
+			steps.forEachIndexed { index, step ->
+				val label = "$name, step ${index + 1}"
+				if (index > 0) core.setOverrides(location(step), merge = false)
+				if (step.getValue("saveAll").jsonPrimitive.boolean) core.save(CommitIntent.All)
+				val expected = step.getValue("expected").jsonObject
+				val snapshot = core.snapshot()
+				assertEquals(expected.getValue("status").jsonPrimitive.content, snapshot.resolution.status, label)
+				assertEquals(expected["reason"]?.jsonPrimitive?.contentOrNull, snapshot.resolution.reason, label)
+				assertEquals(expected["policyId"]?.jsonPrimitive?.contentOrNull, snapshot.resolution.policyId, label)
+				assertEquals(expected.getValue("policyPending").jsonPrimitive.boolean, snapshot.policyPending, label)
+				val allowed = expected.getValue("optionalAllowed").jsonPrimitive.boolean
+				ConsentCategory.OPTIONAL.forEach { assertEquals(allowed, core.isAllowed(it), "$label: $it") }
+				assertNotNull(snapshot.explicitChoice, "$label: the saved choice stays on the device")
+			}
+		}
+	}
+
 	@Test fun `bootstrap applies the in-code policy once`() {
 		val core = boot()
 		val revision = core.snapshot().revision

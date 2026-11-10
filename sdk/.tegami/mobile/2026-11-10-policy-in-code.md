@@ -31,6 +31,9 @@ SDK refuses at launch reports `policy-invalid` in the snapshot `error` and on
 the error stream instead of starting silently with no policy.
 
 A location no rule covers now gets the backend's own outcome: `no-match` runs
-the safe opt-in fallback, and a country that needs a region stays pending. An
+the safe opt-in fallback. A country that needs a region, given without one,
+drops the rule in force and denies optional categories on both platforms until
+a region arrives. The saved choice stays and applies again when the policy
+matches. An
 explicit `no-match` answer from `/init` also replaces the rule in force on
 Android, as it already did on iOS and the web.
