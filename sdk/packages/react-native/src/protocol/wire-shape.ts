@@ -71,12 +71,14 @@ export const SNAPSHOT_KEYS = [
  * and the protocol version does not move for an additive key, so each absence must
  * mean "this build has no such state". An older bridge cannot commit a headless TCF
  * draft, so it is not `editable` and has no `acceptAll`; it publishes no committed
- * decision either. The client fills these before anything reads the snapshot.
+ * decision and names no `headlessUnsupported` configuration either. The client
+ * fills these before anything reads the snapshot.
  */
 export const ADDITIVE_IAB_DEFAULTS = {
 	acceptAll: null,
 	committed: null,
 	editable: false,
+	headlessUnsupported: [],
 } as const;
 
 /**
@@ -138,7 +140,7 @@ export const KERNEL_OWNED_KEYS = [
 	},
 	{
 		// The bridge's own additions beside the kernel's `gvl`; see ADDITIVE_IAB_DEFAULTS.
-		optional: ['committed', 'editable', 'acceptAll'],
+		optional: ['committed', 'editable', 'acceptAll', 'headlessUnsupported'],
 		path: 'iab',
 		required: ['gvl'],
 	},

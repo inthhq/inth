@@ -121,6 +121,7 @@ const tcf = (overrides: Partial<ConsentSnapshot> = {}): ConsentSnapshot =>
 			committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
 			editable: true,
 			gvl: GVL,
+			headlessUnsupported: [],
 		},
 		model: 'iab',
 		resolution: { fingerprint: 'fp', policyId: 'tcf', status: 'match' },
@@ -259,6 +260,7 @@ describe('headless IAB hooks', () => {
 					committed: null,
 					editable: true,
 					gvl: GVL,
+					headlessUnsupported: [],
 				},
 			})
 		);
@@ -304,6 +306,7 @@ describe('headless IAB hooks', () => {
 						},
 						editable: false,
 						gvl: GVL,
+						headlessUnsupported: [],
 					},
 					revision: 5,
 				})
@@ -312,6 +315,77 @@ describe('headless IAB hooks', () => {
 
 		expect(current().iab).toBeNull();
 		expect(current().tcString).toBe('CQ-1');
+	});
+
+	test('a withdrawn selection comes back when native can open a draft again', () => {
+		mount(tcf());
+		const closed = tcf({
+			iab: {
+				acceptAll: null,
+				committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+				editable: false,
+				gvl: GVL,
+				headlessUnsupported: [],
+			},
+			revision: 5,
+		});
+
+		flush(() => handle().setVendorConsent(9, true));
+		flush(() => fake.pushSnapshot(closed));
+		expect(current().iab).toBeNull();
+		// The list is usable again, with the same decision underneath.
+		flush(() => fake.pushSnapshot(tcf({ revision: 6 })));
+
+		expect(handle().choices.vendorConsents).toContain(9);
+		expect(handle().isDirty).toBe(true);
+		expect(handle().isStale).toBe(false);
+	});
+
+	test('a withdrawn selection comes back stale when the decision moved meanwhile', () => {
+		mount(tcf());
+
+		flush(() => handle().setVendorConsent(9, true));
+		flush(() =>
+			fake.pushSnapshot(
+				tcf({
+					iab: {
+						acceptAll: null,
+						committed: null,
+						editable: false,
+						gvl: GVL,
+						headlessUnsupported: [],
+					},
+					revision: 5,
+				})
+			)
+		);
+		flush(() =>
+			fake.pushSnapshot(
+				tcf({
+					iab: {
+						acceptAll: NATIVE_ACCEPT_ALL,
+						committed: {
+							addtlConsent: null,
+							choices: NATIVE_ACCEPT_ALL,
+							tcString: 'CQ-2',
+						},
+						editable: true,
+						gvl: GVL,
+						headlessUnsupported: [],
+					},
+					revision: 6,
+				})
+			)
+		);
+
+		// Saving would overwrite a decision made elsewhere, so the handle is back
+		// for a review and `reset` takes the newer decision.
+		expect(handle().isStale).toBe(true);
+		flush(() => handle().reset());
+		expect(handle().isStale).toBe(false);
+		expect(handle().choices).toMatchObject({
+			vendorConsents: NATIVE_ACCEPT_ALL.vendorConsents,
+		});
 	});
 
 	test('an IAB edit made while the save is pending stays staged', async () => {
@@ -339,11 +413,35 @@ describe('headless IAB hooks', () => {
 					},
 					editable: false,
 					gvl: GVL,
+					headlessUnsupported: [],
 				},
 			})
 		);
 
 		// The list is stale or offline: the committed decision still shows.
+		expect(current().iab).toBeNull();
+		expect(current().tcString).toBe('CQ-1');
+	});
+
+	test('offer no edits while a custom screen could not disclose everything', () => {
+		// Native could open a draft, but the publisher restricts legal bases, which
+		// the served list does not show.
+		mount(
+			tcf({
+				iab: {
+					acceptAll: NATIVE_ACCEPT_ALL,
+					committed: {
+						addtlConsent: null,
+						choices: COMMITTED,
+						tcString: 'CQ-1',
+					},
+					editable: true,
+					gvl: GVL,
+					headlessUnsupported: ['publisher-restrictions'],
+				},
+			})
+		);
+
 		expect(current().iab).toBeNull();
 		expect(current().tcString).toBe('CQ-1');
 	});
@@ -378,6 +476,7 @@ describe('headless IAB hooks', () => {
 						},
 						editable: true,
 						gvl: GVL,
+						headlessUnsupported: [],
 					},
 					revision: 5,
 				})
@@ -405,6 +504,7 @@ describe('headless IAB hooks', () => {
 						},
 						editable: true,
 						gvl: GVL,
+						headlessUnsupported: [],
 					},
 					revision: 5,
 				})
@@ -448,6 +548,7 @@ describe('headless IAB hooks', () => {
 						committed: null,
 						editable: true,
 						gvl: { ...GVL, vendorListVersion: 178 },
+						headlessUnsupported: [],
 					},
 					revision: 5,
 				})

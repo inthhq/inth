@@ -2,8 +2,10 @@ package com.c15t.reactnative
 
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
+import com.c15t.core.iab.AdTechProvider
 import com.c15t.core.iab.IabChoices
 import com.c15t.core.iab.IabCommittedConsent
+import com.c15t.core.iab.IabPublisherRestriction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelError
@@ -169,6 +171,7 @@ object C15tPayload {
 		fallbackLanguage: String = DEFAULT_LANGUAGE,
 		iabConsent: IabCommittedConsent? = null,
 		iabAcceptAll: IabChoices? = null,
+		iabHeadlessGaps: List<String> = emptyList(),
 	): String {
 		val wire = SnapshotWire.toJsonElement(snapshot)
 		val overrides = wire["overrides"] as? JsonObject ?: JsonObject(emptyMap())
@@ -197,18 +200,36 @@ object C15tPayload {
 		// The headless TCF state rides inside `iab`: the committed decision a screen shows and
 		// reopens with (`null` while none is current), whether a draft can be edited and saved
 		// now, and what Accept all saves under the publisher's disclosure. `acceptAll` is `null`
-		// exactly when `editable` is false: the core answers both from one state.
+		// exactly when `editable` is false. `headlessUnsupported` names what a screen built on
+		// the served list could not disclose; while it is not empty, `editable` stays false, so
+		// no custom screen saves choices it could not show.
 		(conformed["iab"] as? JsonObject)?.let { iab ->
+			val acceptAll = iabAcceptAll?.takeIf { iabHeadlessGaps.isEmpty() }
 			conformed["iab"] = JsonObject(
 				iab + mapOf(
 					"committed" to (iabConsent?.let(::committedIab) ?: JsonNull),
-					"editable" to JsonPrimitive(iabAcceptAll != null),
-					"acceptAll" to (iabAcceptAll?.let { C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
+					"editable" to JsonPrimitive(acceptAll != null),
+					"acceptAll" to (acceptAll?.let { C15tJson.storage.encodeToJsonElement(IabChoices.serializer(), it) } ?: JsonNull),
+					"headlessUnsupported" to JsonArray(iabHeadlessGaps.map { JsonPrimitive(it) }),
 				),
 			)
 		}
 		return encode(JsonObject(conformed))
 	}
+
+	/**
+	 * What a custom screen built on the served vendor list could not disclose. Publisher
+	 * restrictions change a vendor's legal bases away from the list, and Additional Consent
+	 * providers are not on the snapshot at all; the stock screens show both.
+	 */
+	fun headlessIabGaps(publisherRestrictions: List<IabPublisherRestriction>, adTechProviders: List<AdTechProvider>?): List<String> =
+		buildList {
+			if (publisherRestrictions.isNotEmpty()) add(HEADLESS_GAP_PUBLISHER_RESTRICTIONS)
+			if (!adTechProviders.isNullOrEmpty()) add(HEADLESS_GAP_ADDITIONAL_CONSENT)
+		}
+
+	const val HEADLESS_GAP_PUBLISHER_RESTRICTIONS = "publisher-restrictions"
+	const val HEADLESS_GAP_ADDITIONAL_CONSENT = "additional-consent-providers"
 
 	/** The committed IAB decision as JavaScript reads it. */
 	internal fun committedIab(consent: IabCommittedConsent): JsonObject = buildJsonObject {

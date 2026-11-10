@@ -22,3 +22,8 @@ string and the committed choices, or `null`; `editable`, whether native can open
 save a draft now; and `acceptAll`, what native Accept all saves under the
 publisher's disclosure. `useIAB()` returns `null` while `editable` is false, and
 `acceptAll()` stages native's selection, so headless and stock Accept all match.
+
+Headless IAB supports configurations without publisher restrictions or
+Additional Consent providers. For those, `iab.headlessUnsupported` names what a
+custom screen could not disclose and `editable` stays `false`; use the stock
+screens.

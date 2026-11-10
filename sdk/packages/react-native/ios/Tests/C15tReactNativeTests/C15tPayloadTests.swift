@@ -141,6 +141,26 @@ final class C15tPayloadTests: XCTestCase {
         choices.vendorConsents = [7]
         XCTAssertEqual(slot(choices)["editable"] as? Bool, true)
         XCTAssertEqual((slot(choices)["acceptAll"] as? [String: Any])?["vendorConsents"] as? [Int], [7])
+        XCTAssertEqual(slot(choices)["headlessUnsupported"] as? [String], [])
+    }
+
+    func testHeadlessIABEditingClosesWhileACustomScreenCouldNotDiscloseEverything() throws {
+        var wire = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(ConsentSnapshot.coldStart)) as? [String: Any])
+        wire["iab"] = ["gvl": NSNull()]
+        let snapshot = try JSONDecoder().decode(ConsentSnapshot.self, from: JSONSerialization.data(withJSONObject: wire))
+        let restriction = IABPublisherRestriction(purposeId: 2, type: 1, vendorIds: [7])
+        let provider = AdTechProvider(id: 89, name: "Provider", policyUrl: "https://provider.invalid/privacy")
+        XCTAssertEqual(C15tPayload.headlessIABGaps(publisherRestrictions: [], adTechProviders: nil), [])
+        let gaps = C15tPayload.headlessIABGaps(publisherRestrictions: [restriction], adTechProviders: [provider])
+        XCTAssertEqual(gaps, ["publisher-restrictions", "additional-consent-providers"])
+
+        var choices = IABChoices()
+        choices.vendorConsents = [7]
+        let slot = (jsonObject(C15tPayload.snapshot(snapshot, iabAcceptAll: choices, iabHeadlessGaps: gaps))["iab"]
+            as? [String: Any]) ?? [:]
+        XCTAssertEqual(slot["editable"] as? Bool, false, "a draft that could open still is not offered to a custom screen")
+        XCTAssertTrue(slot["acceptAll"] is NSNull)
+        XCTAssertEqual(slot["headlessUnsupported"] as? [String], gaps)
     }
 
     func testCommitIntentFailsClosedOnAnythingElse() {

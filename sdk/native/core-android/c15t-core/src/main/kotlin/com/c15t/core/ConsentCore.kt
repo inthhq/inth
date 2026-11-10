@@ -242,6 +242,13 @@ class ConsentCore(
 	 * publisher's disclosure and restrictions, exactly as [save] builds them for [CommitIntent.All].
 	 * `null` whenever [openIabDraft] is.
 	 */
+	/**
+	 * The publisher restrictions this core was configured with, empty without IAB. A screen that
+	 * shows the served list as it is discloses the wrong legal bases while any are set; the core's
+	 * own projection is in [iabPresentation].
+	 */
+	val iabPublisherRestrictions: List<IabPublisherRestriction> get() = iabConfiguration?.publisherRestrictions.orEmpty()
+
 	fun iabAcceptAllChoices(): IabChoices? = synchronized(mutationLock) {
 		if (openIabDraft() == null) return@synchronized null
 		val gvl = state.get().iab?.gvl ?: return@synchronized null

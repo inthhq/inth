@@ -11,4 +11,5 @@ selection Accept all saves on the current list: every live partner's bases
 under the publisher's disclosure and restrictions, exactly as `save(.all)`
 builds them. It returns `nil` (`null` on Android) whenever `openIABDraft()`
 does, so a custom IAB screen can stage the same selection the stock Accept all
-records.
+records. `ConsentCore.iabPublisherRestrictions` returns the publisher
+restrictions the core was configured with.

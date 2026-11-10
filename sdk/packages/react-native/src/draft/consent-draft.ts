@@ -206,6 +206,10 @@ export const createConsentDraft = function createConsentDraft(
 	let { iab, values } = seed;
 	let stale = false;
 	let staleCategories: readonly OptionalConsentCategory[] = [];
+	/** An edited TCF selection held back while native cannot open a draft. */
+	let withdrawnIAB: NativeIABChoices | null = null;
+	/** Whether losing editability is the only reason the draft is stale. */
+	let staleByWithdrawal = false;
 	let state: ConsentDraftState = {
 		displayedCategories: seed.displayed,
 		iab,
@@ -255,6 +259,8 @@ export const createConsentDraft = function createConsentDraft(
 		staged.clear();
 		stale = false;
 		staleCategories = [];
+		withdrawnIAB = null;
+		staleByWithdrawal = false;
 		publish();
 	};
 
@@ -303,24 +309,43 @@ export const createConsentDraft = function createConsentDraft(
 		}
 		snapshot = latest;
 		const next = seedFrom(snapshot, currentDefaults);
-		const iabEdited = !sameIABChoices(iab, seed.iab);
+		if (withdrawnIAB !== null && next.iab !== null) {
+			// Native can open a draft again: hand the selection back, so it can be
+			// saved or reset. Nothing else changed if the policy and the committed
+			// decision are the ones it was made against.
+			iab = withdrawnIAB;
+			withdrawnIAB = null;
+			if (
+				staleByWithdrawal &&
+				next.policyKey === seed.policyKey &&
+				sameIABChoices(seed.iab, next.iab)
+			) {
+				stale = false;
+			}
+			staleByWithdrawal = false;
+		}
+		const iabEdited = !sameIABChoices(iab ?? withdrawnIAB, seed.iab);
 		if (staged.size === 0 && staleCategories.length === 0 && !iabEdited) {
 			seed = next;
 			({ iab, values } = next);
+			withdrawnIAB = null;
 			stale = false;
 		} else if (
 			next.policyKey !== seed.policyKey ||
 			(iabEdited && !sameIABChoices(seed.iab, next.iab))
 		) {
+			// Native can no longer open a draft at all: withdraw the selection so no
+			// control offers an edit every save would refuse, and keep it to hand
+			// back when native can again.
+			if (next.iab === null && iab !== null) {
+				staleByWithdrawal = !stale && next.policyKey === seed.policyKey;
+				withdrawnIAB = iab;
+				iab = null;
+			}
 			// A new policy, or a TCF decision committed elsewhere under an edited
 			// selection: saving the edit would overwrite something the subject never
 			// saw, so it waits for a review.
 			stale = true;
-			// Native can no longer open a draft at all: withdraw the selection so no
-			// control offers an edit every save would refuse.
-			if (next.iab === null) {
-				iab = null;
-			}
 		} else {
 			// The same authority. Untouched parts take the new record, and the save is
 			// pinned to its revision.

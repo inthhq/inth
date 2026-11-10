@@ -65,6 +65,8 @@ class IabAcceptAllTest {
 			val core = boot(row.publisherRestrictions)
 			// A headless Accept all stages what this answers, so it must be the same selection.
 			assertEquals(row.acceptAll, core.iabAcceptAllChoices(), row.id)
+			// A headless screen is refused while restrictions apply, so it must see them.
+			assertEquals(row.publisherRestrictions, core.iabPublisherRestrictions, row.id)
 			assertTrue(core.save(CommitIntent.All).ok, row.id)
 			val saved = assertNotNull(core.iabConsent, row.id)
 			// Purposes 5, 6, 8 and 11 are in the list but no vendor declares them; vendors 10 and 91

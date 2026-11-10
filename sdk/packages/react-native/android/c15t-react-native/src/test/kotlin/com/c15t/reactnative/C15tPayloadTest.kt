@@ -3,9 +3,11 @@ package com.c15t.reactnative
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
 import com.c15t.core.NativeConfig
+import com.c15t.core.iab.AdTechProvider
 import com.c15t.core.iab.IabChoices
 import com.c15t.core.iab.IabCommittedConsent
 import com.c15t.core.iab.IabConfiguration
+import com.c15t.core.iab.IabPublisherRestriction
 import com.c15t.core.model.ConsentAction
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentLocation
@@ -134,7 +136,7 @@ class C15tPayloadTest {
 
 		assertEquals(
 			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the headless TCF state",
-			setOf("gvl", "committed", "editable", "acceptAll"),
+			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported"),
 			iab.keys,
 		)
 		assertEquals("nothing is committed yet", JsonNull, iab["committed"])
@@ -303,6 +305,27 @@ class C15tPayloadTest {
 		assertEquals(listOf("1", "3"), choices.getValue("purposeConsents").jsonArray.map { it.jsonPrimitive.content })
 		assertEquals("every list is written, empty or not", 0, choices.getValue("vendorObjections").jsonArray.size)
 		assertEquals(JsonNull, choices["adTechProviderConsents"])
+	}
+
+	@Test
+	fun `headless IAB editing closes while a custom screen could not disclose everything`() {
+		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
+		val restriction = IabPublisherRestriction(purposeId = 2, type = 1, vendorIds = listOf(7))
+		val provider = AdTechProvider(id = 89, name = "Provider", policyUrl = "https://provider.invalid/privacy")
+
+		assertEquals(emptyList<String>(), C15tPayload.headlessIabGaps(emptyList(), emptyList()))
+		assertEquals(emptyList<String>(), C15tPayload.headlessIabGaps(emptyList(), null))
+		val gaps = C15tPayload.headlessIabGaps(listOf(restriction), listOf(provider))
+		assertEquals(listOf("publisher-restrictions", "additional-consent-providers"), gaps)
+
+		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
+			iabAcceptAll = IabChoices(vendorConsents = listOf(7)), iabHeadlessGaps = gaps)).getValue("iab").jsonObject
+		assertFalse("a draft that could open still is not offered to a custom screen", iab["editable"]!!.jsonPrimitive.boolean)
+		assertEquals(JsonNull, iab["acceptAll"])
+		assertEquals(gaps, iab.getValue("headlessUnsupported").jsonArray.map { it.jsonPrimitive.content })
+		val open = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)),
+			iabAcceptAll = IabChoices(vendorConsents = listOf(7)))).getValue("iab").jsonObject
+		assertEquals(0, open.getValue("headlessUnsupported").jsonArray.size)
 	}
 
 	@Test
