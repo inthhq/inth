@@ -14,6 +14,7 @@
 import {
 	appendFileSync,
 	cpSync,
+	mkdirSync,
 	mkdtempSync,
 	readFileSync,
 	rmSync,
@@ -148,6 +149,34 @@ describe.each(TEMPLATES)('the Expo %s template', (template) => {
 		);
 	});
 
+	it.each([
+		['minSdkVersion(21)', /minSdk is 21 in android\/app\/build\.gradle/u],
+		['minSdk(21)', /minSdk is 21 in android\/app\/build\.gradle/u],
+	])('fails on the call form %s in defaultConfig', async (line, message) => {
+		const root = templateProject(template);
+		editAppGradle(root, (contents) => contents.replace(MIN_SDK_LINE, line));
+		await expect(finalize(root)).rejects.toThrowError(message);
+	});
+
+	it('ignores a commented-out call form', async () => {
+		const root = templateProject(template);
+		editAppGradle(root, (contents) =>
+			contents.replace(
+				MIN_SDK_LINE,
+				`// minSdkVersion(21)\n        /* compileSdkVersion(33) */\n        ${MIN_SDK_LINE}`
+			)
+		);
+		await expect(finalize(root)).resolves.toBeDefined();
+	});
+
+	it('lets an app call form override a low expo-build-properties value', async () => {
+		const root = templateProject(template, 'android.minSdkVersion=23');
+		editAppGradle(root, (contents) =>
+			contents.replace(MIN_SDK_LINE, 'minSdkVersion(26)')
+		);
+		await expect(finalize(root)).resolves.toBeDefined();
+	});
+
 	it('lets an app literal override a low expo-build-properties value', async () => {
 		const root = templateProject(template, 'android.minSdkVersion=23');
 		editAppGradle(root, (contents) =>
@@ -232,6 +261,151 @@ describe('assertAndroidSdkFloor', () => {
 		).toBe(
 			'maven { url "https://example.com/m2" }\ninclude: ["**/*.jar"]\nminSdk 21'
 		);
+	});
+
+	describe('call forms and the Kotlin DSL', () => {
+		it.each([
+			[
+				'Groovy minSdkVersion(21)',
+				'app/build.gradle',
+				'defaultConfig {\n  minSdkVersion(21)\n}',
+				'minSdk is 21',
+			],
+			[
+				'Groovy compileSdkVersion(35)',
+				'app/build.gradle',
+				'android {\n  compileSdkVersion( 35 );\n}',
+				'compileSdk is 35',
+			],
+			['Groovy minSdk(21)', 'app/build.gradle', '  minSdk(21)', 'minSdk is 21'],
+			[
+				'Groovy root ext.set',
+				'build.gradle',
+				"ext.set('minSdkVersion', 21)",
+				'minSdk is 21',
+			],
+			[
+				'Kotlin minSdkVersion(21)',
+				'app/build.gradle.kts',
+				'defaultConfig {\n    minSdkVersion(21)\n}',
+				'minSdk is 21',
+			],
+			[
+				'Kotlin compileSdk = 35',
+				'app/build.gradle.kts',
+				'android {\n    compileSdk = 35\n}',
+				'compileSdk is 35',
+			],
+			[
+				'Kotlin root extra[]',
+				'build.gradle.kts',
+				'extra["minSdkVersion"] = 21',
+				'minSdk is 21',
+			],
+			[
+				'Kotlin root extra.set',
+				'build.gradle.kts',
+				'extra.set("compileSdkVersion", 35)',
+				'compileSdk is 35',
+			],
+			[
+				'Kotlin root by extra',
+				'build.gradle.kts',
+				'val minSdkVersion by extra(21)',
+				'minSdk is 21',
+			],
+		])('refuses %s', (_label, file, contents, message) => {
+			expect(() => assertAndroidSdkFloor({ [file]: contents })).toThrowError(
+				new RegExp(`${message} in android/${file.replaceAll('.', '\\.')}`, 'u')
+			);
+		});
+
+		it.each([
+			[
+				'a commented-out Groovy call',
+				{
+					'app/build.gradle':
+						'// minSdkVersion(21)\n/* compileSdkVersion(33) */',
+				},
+			],
+			[
+				'a commented-out Kotlin call',
+				{
+					'app/build.gradle.kts': '// minSdkVersion(21)\n/* compileSdk = 33 */',
+				},
+			],
+			[
+				'a Groovy call named in a string',
+				{ 'app/build.gradle': 'println "minSdkVersion(21)"' },
+			],
+			[
+				'a Kotlin call named in a string',
+				{ 'app/build.gradle.kts': 'println("minSdkVersion(21)")' },
+			],
+			[
+				'a call at the floor',
+				{ 'app/build.gradle.kts': 'compileSdkVersion(36)\nminSdkVersion(24)' },
+			],
+			[
+				'a Groovy app call over a low property',
+				{
+					'app/build.gradle': 'minSdkVersion(26)',
+					'gradle.properties': 'android.minSdkVersion=23',
+				},
+			],
+			[
+				'a Kotlin app assignment over a low property',
+				{
+					'app/build.gradle.kts': 'minSdk = 26',
+					'gradle.properties': 'android.minSdkVersion=23',
+				},
+			],
+			[
+				'a Kotlin root extra over a low property',
+				{
+					'build.gradle.kts': 'extra["minSdkVersion"] = 26',
+					'gradle.properties': 'android.minSdkVersion=23',
+				},
+			],
+			[
+				'a later Kotlin root extra over an earlier one',
+				{
+					'build.gradle.kts':
+						'extra["minSdkVersion"] = 21\nextra.set("minSdkVersion", 26)',
+				},
+			],
+			[
+				'a Kotlin file beside a Groovy one, which Expo ignores',
+				{
+					'app/build.gradle': 'minSdkVersion 26',
+					'app/build.gradle.kts': 'minSdk = 21',
+				},
+			],
+		])('passes %s', (_label, files) => {
+			expect(() => assertAndroidSdkFloor(files)).not.toThrow();
+		});
+
+		it('fails a Kotlin DSL project at prebuild', async () => {
+			const root = mkdtempSync(join(tmpdir(), 'c15t-sdk-floor-kts-'));
+			scratch.push(root);
+			const android = join(root, 'android');
+			mkdirSync(join(android, 'app'), { recursive: true });
+			cpSync(
+				join(FIXTURE_DIR, 'expo-templates', 'sdk-58', 'gradle.properties'),
+				join(android, 'gradle.properties')
+			);
+			writeFileSync(
+				join(android, 'build.gradle.kts'),
+				'plugins {\n    id("expo-root-project")\n}\n'
+			);
+			writeFileSync(
+				join(android, 'app', 'build.gradle.kts'),
+				'android {\n    compileSdkVersion(35) // too low\n    defaultConfig {\n        minSdk = 24\n    }\n}\n'
+			);
+			await expect(finalize(root)).rejects.toThrowError(
+				/compileSdk is 35 in android\/app\/build\.gradle\.kts/u
+			);
+		});
 	});
 
 	it('throws the plugin error type', () => {
