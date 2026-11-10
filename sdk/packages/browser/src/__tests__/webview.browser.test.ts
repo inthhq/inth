@@ -64,9 +64,10 @@ const nativeState = (marketing: boolean) => ({
 const pushNative = (
 	tab: Window,
 	token: string,
-	state: ReturnType<typeof nativeState>
+	state: ReturnType<typeof nativeState>,
+	listed: readonly string[] = [tab.location.origin]
 ): unknown => {
-	const origins = JSON.stringify([tab.location.origin]);
+	const origins = JSON.stringify(listed);
 	return (tab as Window & { eval: (code: string) => unknown }).eval(
 		`${UPDATE_SCRIPT.trim().replace(/;$/u, '')}(${origins},${JSON.stringify(token)},${JSON.stringify(state)});`
 	);
@@ -108,6 +109,33 @@ it('follows a native change while the page is open, and only from the app', asyn
 	await expect
 		.poll(() => page.client.getSnapshot().effectivePermissions.marketing)
 		.toBe(true);
+	expect(banner(tab, page)).toBeNull();
+});
+
+it('loses a grant when the app drops the page origin from its list', async () => {
+	const [tab, page] = await openPage();
+	expect(pushNative(tab, TOKEN, nativeState(true))).toBe(true);
+	await expect
+		.poll(() => page.client.getSnapshot().effectivePermissions.marketing)
+		.toBe(true);
+
+	// The app's new list leaves this origin out, so an update to the new list
+	// does not reach the page and the grant would stay.
+	expect(
+		pushNative(tab, TOKEN, nativeState(false), ['https://app.example'])
+	).toBe(false);
+	expect(page.client.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+	// The revocation the helpers send first, with the page's own token.
+	expect(pushNative(tab, TOKEN, { ...nativeState(false), ready: false })).toBe(
+		true
+	);
+	await expect
+		.poll(() => page.client.getSnapshot().effectivePermissions.marketing)
+		.toBe(false);
+	expect(page.client.getSnapshot().effectivePermissions.measurement).toBe(
+		false
+	);
 	expect(banner(tab, page)).toBeNull();
 });
 

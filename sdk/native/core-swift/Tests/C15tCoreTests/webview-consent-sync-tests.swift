@@ -40,6 +40,19 @@ final class WebViewConsentSyncTests: XCTestCase {
         return core
     }
 
+    /// A ready core whose visitor accepted everything, so a page holds real grants.
+    func grantedCore() async -> ConsentCore {
+        let http = StubHTTP()
+        http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution())
+        let core = ConsentCore()
+        await core.bootstrapAndSettle(Fixture.configured(
+            store: InMemoryStore(), transport: Fixture.transport(http), clock: TestClock()))
+        XCTAssertEqual(core.save(.all).status, .committed)
+        await core.waitUntilIdle()
+        XCTAssertTrue(core.isAllowed(.marketing), "the fixture grants marketing")
+        return core
+    }
+
     func match(_ pattern: String, in script: String) -> String? {
         guard let regex = try? NSRegularExpression(pattern: pattern),
               let found = regex.firstMatch(in: script, range: NSRange(script.startIndex..., in: script)),
@@ -122,6 +135,61 @@ final class WebViewConsentSyncTests: XCTestCase {
         await core.waitUntilIdle()
         queue.drain()
         XCTAssertEqual(target.uninstalls, 1)
-        XCTAssertEqual(target.evaluated.count, 1)
+        XCTAssertEqual(target.evaluated.count, 2, "the first state, then the revocation, and nothing after")
+    }
+
+    func testCloseTellsTheLoadedPageToStopFollowingTheApp() async throws {
+        let core = await grantedCore()
+        let target = RecordingTarget()
+        let sync = try WebViewConsentSync(
+            core: core, allowedOrigins: ["https://app.example"], target: target, post: queue.post)
+        let loadedToken = try XCTUnwrap(token(in: try XCTUnwrap(target.installed.first)))
+        XCTAssertTrue(try XCTUnwrap(target.evaluated.first).contains(#""marketing":true"#), "the page was given the grant")
+        sync.close()
+        let revocation = try XCTUnwrap(target.evaluated.last)
+        XCTAssertTrue(revocation.contains(#"(["https://app.example"],"\#(loadedToken)","#), revocation)
+        XCTAssertTrue(revocation.contains(#""ready":false"#))
+        XCTAssertTrue(revocation.contains(#""marketing":false"#))
+    }
+
+    func testDroppingAnOriginRevokesThePageLoadedFromItAndOnlyThatOne() async throws {
+        let core = await grantedCore()
+        let first = RecordingTarget()
+        let original = try WebViewConsentSync(
+            core: core, allowedOrigins: ["https://old.example", "https://kept.example"], target: first, post: queue.post)
+        let loadedToken = try XCTUnwrap(token(in: try XCTUnwrap(first.installed.first)))
+        let second = RecordingTarget()
+        let replacement = try WebViewConsentSync(
+            core: core, allowedOrigins: ["https://kept.example"], target: second, replacing: original, post: queue.post)
+
+        let revocation = try XCTUnwrap(first.evaluated.last)
+        XCTAssertTrue(revocation.contains(#"(["https://old.example"],"\#(loadedToken)","#), revocation)
+        XCTAssertTrue(revocation.contains(#""ready":false"#))
+        XCTAssertEqual(first.evaluated.count, 2, "one revocation, for the dropped origin only")
+        XCTAssertTrue(try XCTUnwrap(second.evaluated.first).contains(#"(["https://kept.example"],"\#(loadedToken)","#))
+        replacement.close()
+    }
+
+    func testWebViewsSharingAControllerShareSecretsAndOneChannel() async throws {
+        let core = await core()
+        let group = WebViewConsentGroup()
+        let first = RecordingTarget()
+        let a = try WebViewConsentSync(
+            core: core, allowedOrigins: ["https://app.example"], target: first,
+            secretsFrom: group.secrets, post: queue.post)
+        XCTAssertTrue(group.join(a.script), "the first member installs the channel")
+        let second = RecordingTarget()
+        let b = try WebViewConsentSync(
+            core: core, allowedOrigins: ["https://app.example"], target: second,
+            secretsFrom: group.secrets, post: queue.post)
+        XCTAssertFalse(group.join(b.script), "a second member must not add the handler again")
+        XCTAssertEqual(token(in: try XCTUnwrap(first.installed.first)), token(in: try XCTUnwrap(second.installed.first)))
+        let key = try XCTUnwrap(match(#"\],"[0-9a-f]{32}","([0-9a-f]{32})","#, in: try XCTUnwrap(first.installed.first)))
+        XCTAssertTrue(b.script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"\#(key)"}"#))
+        XCTAssertFalse(group.leave())
+        XCTAssertTrue(group.leave(), "the last member removes the channel")
+        XCTAssertNil(group.secrets)
+        a.close()
+        b.close()
     }
 }

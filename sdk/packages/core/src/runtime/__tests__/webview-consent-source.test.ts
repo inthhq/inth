@@ -169,6 +169,37 @@ test('only the native token can change the state', () => {
 	expect(source?.getPermissions()?.measurement).toBe(true);
 });
 
+test('removing an origin from the list revokes the page already loaded from it', () => {
+	const page = openWindow();
+	const granted = nativeState({
+		permissions: { marketing: true, measurement: true },
+	});
+	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, granted));
+	const source = webViewConsentSource();
+	expect(source?.getPermissions()?.marketing).toBe(true);
+
+	// The app replaces its list without this origin. An update addressed to the
+	// new list never reaches the page, so on its own it would keep the grant.
+	const denied = nativeState({
+		permissions: { marketing: false },
+		revision: 5,
+	});
+	expect(
+		page.eval(call(UPDATE, ['https://other.example'], TOKEN, denied))
+	).toBe(false);
+	expect(source?.getPermissions()?.marketing).toBe(true);
+
+	// So the helpers first revoke the dropped origin with the page's own token.
+	const revoked = nativeState({
+		permissions: {},
+		ready: false,
+		revision: 5,
+	});
+	expect(page.eval(call(UPDATE, [ORIGIN], TOKEN, revoked))).toBe(true);
+	expect(source?.getPermissions()).toBeNull();
+	expect(source?.getState()?.permissions.marketing).toBe(false);
+});
+
 test('the update script does nothing once the page left the listed origins', () => {
 	const page = openWindow('https://other.example');
 	expect(page.eval(call(UPDATE, [ORIGIN], TOKEN, nativeState()))).toBe(false);

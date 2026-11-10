@@ -22,7 +22,11 @@ public protocol WebViewConsentTarget: AnyObject {
 /// - an unchanged state is not pushed again;
 /// - a replacement keeps the secrets of the sync it replaces, because a loaded
 ///   page only accepts the token it was given at document start;
-/// - a sync released without ``close()`` still removes its script.
+/// - an origin that stops being listed is revoked first: a page loaded from it
+///   gets a "no state" update it still accepts, so it cannot keep the last state,
+///   grants included, after the app stops talking to it. ``close()`` revokes all;
+/// - a sync released without ``close()`` still removes its script. Its web view is
+///   gone by then, so there is no page left to revoke.
 ///
 /// Every method runs on the web view's thread.
 public final class WebViewConsentSync: @unchecked Sendable {
@@ -40,7 +44,11 @@ public final class WebViewConsentSync: @unchecked Sendable {
     ///
     /// - Parameters:
     ///   - replacing: The sync this one replaces on the same web view. It is closed,
-    ///     and its token and request key carry over.
+    ///     origins it no longer lists are revoked, and its token and request key
+    ///     carry over.
+    ///   - secretsFrom: Scripts whose token and request key to use, when this web
+    ///     view shares its document-start scripts with others (one
+    ///     `WKUserContentController` for several web views). `replacing` wins.
     ///   - post: Runs a block on the web view's thread.
     /// - Throws: ``WebViewConsentScript/OriginError`` when an origin is not accepted
     ///   or the list is empty.
@@ -49,11 +57,13 @@ public final class WebViewConsentSync: @unchecked Sendable {
         allowedOrigins: [String],
         target: WebViewConsentTarget,
         replacing: WebViewConsentSync? = nil,
+        secretsFrom: WebViewConsentScript? = nil,
         post: @escaping (@escaping () -> Void) -> Void
     ) throws {
-        script = try replacing?.script.replacingOrigins(allowedOrigins)
+        let script = try (replacing?.script ?? secretsFrom)?.replacingOrigins(allowedOrigins)
             ?? WebViewConsentScript(allowedOrigins: allowedOrigins)
-        replacing?.close()
+        self.script = script
+        replacing?.close(revoking: replacing?.script.origins.filter { !script.origins.contains($0) } ?? [])
         self.core = core
         self.target = target
         self.post = post
@@ -86,13 +96,23 @@ public final class WebViewConsentSync: @unchecked Sendable {
         target.evaluate(script.update(state))
     }
 
-    /// Stop syncing and remove the document-start script. Safe to call more than once.
+    /// Stop syncing. The loaded page stops following the app (every optional
+    /// category denied), and pages loaded afterwards get nothing. Safe to call more
+    /// than once.
     public func close() {
+        close(revoking: script.origins)
+    }
+
+    /// Close, revoking only `origins`: those a replacement no longer lists.
+    private func close(revoking origins: [String]) {
         guard !closed else { return }
         closed = true
         subscription?.cancel()
         subscription = nil
         observer = nil
+        if !origins.isEmpty {
+            target.evaluate(script.revoke(fromOrigins: origins, previous: published))
+        }
         target.uninstall()
     }
 

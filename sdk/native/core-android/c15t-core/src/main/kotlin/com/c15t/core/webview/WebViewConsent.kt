@@ -28,7 +28,7 @@ data class WebViewConsentState(
 	val marketing: Boolean,
 	/** The committed TC string, when the app runs IAB TCF natively. */
 	val tcString: String?,
-	/** Always `null` until the native cores produce GPP strings. */
+	/** The GPP string, read through [gppStringOf]. */
 	val gppString: String? = null,
 ) {
 	/** The state as the JSON object the scripts take. Optional categories are denied until [ready]. */
@@ -49,8 +49,34 @@ data class WebViewConsentState(
 	}.toString()
 
 	companion object {
+		/**
+		 * The GPP string a page receives for [snapshot]: the one place it is read, so
+		 * GPP cannot be left out of WebView state by accident. `null` until the
+		 * snapshot carries one (#113); then it returns `snapshot.gppString`, and
+		 * `WebViewConsentTest` fails until it does.
+		 */
+		@Suppress("UNUSED_PARAMETER")
+		internal fun gppStringOf(snapshot: ConsentSnapshot): String? = null
+
+		/**
+		 * What a page receives when it must stop following the app: no state, every
+		 * optional category denied. [previous] keeps the revision and model the page
+		 * already saw.
+		 */
+		fun revoked(previous: WebViewConsentState?): WebViewConsentState = WebViewConsentState(
+			ready = false,
+			revision = previous?.revision ?: 0,
+			model = previous?.model ?: "opt-in",
+			functionality = false,
+			experience = false,
+			measurement = false,
+			marketing = false,
+			tcString = null,
+			gppString = null,
+		)
+
 		/** The state for [snapshot], with the TC string the core committed for it. */
-		fun from(snapshot: ConsentSnapshot, tcString: String?, gppString: String? = null): WebViewConsentState {
+		fun from(snapshot: ConsentSnapshot, tcString: String?): WebViewConsentState {
 			val ready = snapshot.ready && !snapshot.policyPending
 			val granted = snapshot.effectivePermissions
 			return WebViewConsentState(
@@ -62,7 +88,7 @@ data class WebViewConsentState(
 				measurement = granted.measurement,
 				marketing = granted.marketing,
 				tcString = tcString,
-				gppString = gppString,
+				gppString = gppStringOf(snapshot),
 			)
 		}
 
@@ -117,6 +143,16 @@ class WebViewConsentScript(
 	/** The script that pushes [state] into an already loaded page. */
 	fun update(state: WebViewConsentState): String =
 		"${WebViewConsentScripts.UPDATE}($originsJson,$tokenJson,${state.toJson()});"
+
+	/**
+	 * The script that tells a page on one of [fromOrigins] to stop following the app:
+	 * an update the page still accepts, carrying [WebViewConsentState.revoked]. Pages
+	 * on other origins are untouched.
+	 */
+	fun revoke(fromOrigins: Collection<String>, previous: WebViewConsentState?): String {
+		val origins = JsonArray(fromOrigins.mapNotNull(::normalize).distinct().map(::JsonPrimitive)).toString()
+		return "${WebViewConsentScripts.UPDATE}($origins,$tokenJson,${WebViewConsentState.revoked(previous).toJson()});"
+	}
 
 	/** Whether [origin], as a WebView reports it, is one of [origins]. */
 	fun isAllowed(origin: String?): Boolean = origin != null && normalize(origin.removeSuffix("/")) in origins

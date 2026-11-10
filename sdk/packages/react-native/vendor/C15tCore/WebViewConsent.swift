@@ -17,7 +17,7 @@ public struct WebViewConsentState: Sendable, Equatable {
     public let permissions: ConsentState
     /// The committed TC string, when the app runs IAB TCF natively.
     public let tcString: String?
-    /// Always `nil` until the native cores produce GPP strings.
+    /// The GPP string, read through ``gppString(of:)``.
     public let gppString: String?
 
     public init(
@@ -37,14 +37,37 @@ public struct WebViewConsentState: Sendable, Equatable {
     }
 
     /// The state for `snapshot`, with the TC string the core committed for it.
-    public init(snapshot: ConsentSnapshot, tcString: String?, gppString: String? = nil) {
+    public init(snapshot: ConsentSnapshot, tcString: String?) {
         self.init(
             ready: snapshot.ready && !snapshot.policyPending,
             revision: snapshot.revision,
             model: snapshot.model.rawValue,
             permissions: snapshot.effectivePermissions,
             tcString: tcString,
-            gppString: gppString
+            gppString: Self.gppString(of: snapshot)
+        )
+    }
+
+    /// The GPP string a page receives for `snapshot`: the one place it is read, so
+    /// GPP cannot be left out of WebView state by accident. `nil` until the snapshot
+    /// carries one (#113). Then it returns `snapshot.gppString`, with
+    /// ``readsSnapshotGPP`` set to `true`; `WebViewConsentTests` fails until both are.
+    static func gppString(of snapshot: ConsentSnapshot) -> String? { nil }
+
+    /// Whether ``gppString(of:)`` reads the snapshot's GPP string.
+    static let readsSnapshotGPP = false
+
+    /// What a page receives when it must stop following the app: no state, every
+    /// optional category denied. `previous` keeps the revision and model the page
+    /// already saw.
+    public static func revoked(_ previous: WebViewConsentState?) -> WebViewConsentState {
+        WebViewConsentState(
+            ready: false,
+            revision: previous?.revision ?? 0,
+            model: previous?.model ?? ConsentModel.optIn.rawValue,
+            permissions: ConsentState(),
+            tcString: nil,
+            gppString: nil
         )
     }
 
@@ -183,6 +206,18 @@ public struct WebViewConsentScript: Sendable {
     /// The script that pushes `state` into an already loaded page.
     public func update(_ state: WebViewConsentState) -> String {
         "\(WebViewConsentScripts.update)(\(originsJSON),\(tokenJSON),\(state.json()));"
+    }
+
+    /// The script that tells a page on one of `origins` to stop following the app:
+    /// an update the page still accepts, carrying ``WebViewConsentState/revoked(_:)``.
+    /// Pages on other origins are untouched.
+    public func revoke(fromOrigins origins: [String], previous: WebViewConsentState?) -> String {
+        var normalized: [String] = []
+        for origin in origins.compactMap(Self.normalize) where !normalized.contains(origin) {
+            normalized.append(origin)
+        }
+        let state = WebViewConsentState.revoked(previous)
+        return "\(WebViewConsentScripts.update)(\(Self.encode(normalized)),\(tokenJSON),\(state.json()));"
     }
 
     /// Whether `origin`, as a WebView reports it, is one of ``origins``.

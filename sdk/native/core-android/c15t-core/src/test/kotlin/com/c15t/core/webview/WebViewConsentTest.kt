@@ -10,6 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -71,6 +72,35 @@ class WebViewConsentTest {
 		val permissions = state.getValue("permissions").jsonObject
 		assertTrue(permissions.getValue("measurement").jsonPrimitive.boolean)
 		assertFalse(permissions.getValue("marketing").jsonPrimitive.boolean)
+	}
+
+	/**
+	 * #113 adds `gppString` to [ConsentSnapshot] on a sibling branch. Once it is here,
+	 * this fails until [WebViewConsentState.gppStringOf] returns it, so a merge cannot
+	 * leave every WebView reporting a null GPP string.
+	 */
+	@Test fun `the GPP string the snapshot carries reaches the page`() {
+		val json = Json { ignoreUnknownKeys = true }
+		val snapshot = json.decodeFromString(ConsentSnapshot.serializer(), """{"gppString":"DBABMA~CQ"}""")
+		val carries = ConsentSnapshot::class.java.declaredFields.any { it.name == "gppString" }
+		val state = WebViewConsentState.from(snapshot, null)
+		if (carries) {
+			assertEquals("DBABMA~CQ", state.gppString, "return snapshot.gppString from WebViewConsentState.gppStringOf")
+		} else {
+			assertNull(state.gppString)
+		}
+	}
+
+	@Test fun `a revoked state denies everything and carries no strings`() {
+		val previous = WebViewConsentState.from(decided, tcString = "CQ-tc")
+		val revoked = WebViewConsentState.revoked(previous)
+		val state = Json.parseToJsonElement(revoked.toJson()).jsonObject
+		assertFalse(state.getValue("ready").jsonPrimitive.boolean)
+		assertEquals(JsonNull, state.getValue("tcString"))
+		val permissions = state.getValue("permissions").jsonObject
+		for (category in listOf("functionality", "experience", "measurement", "marketing")) {
+			assertFalse(permissions.getValue(category).jsonPrimitive.boolean, category)
+		}
 	}
 
 	@Test fun `nothing is granted before the core is ready`() {

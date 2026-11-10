@@ -5,6 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createContext, runInContext } from 'node:vm';
 
 import type { ReactNode } from 'react';
 import { afterEach, expect, test, vi } from 'vitest';
@@ -170,6 +171,115 @@ test("answers only a preferences request that carries the top frame's key", () =
 	// A burst, such as a frame posting in a loop, opens the screen once.
 	message(request, 'https://www.example.com/');
 	expect(onPreferencesRequested).toHaveBeenCalledTimes(1);
+});
+
+/** A top-level page realm at `origin`, as a WebView page would be. */
+const openPage = (origin: string) => {
+	const context = createContext({});
+	runInContext(
+		`globalThis.window = globalThis; globalThis.top = globalThis;
+		globalThis.location = Object.freeze({ origin: ${JSON.stringify(origin)} });`,
+		context
+	);
+	const run = (code: string): unknown => runInContext(code, context);
+	const state = () =>
+		JSON.parse(
+			run('JSON.stringify(window.__c15tNativeConsent.getState())') as string
+		) as { ready: boolean; permissions: Record<string, boolean> };
+	return { run, state };
+};
+
+const GRANTED = {
+	experience: false,
+	functionality: true,
+	marketing: true,
+	measurement: true,
+	necessary: true,
+};
+
+test('dropping an origin revokes the page already loaded from it', () => {
+	createFakeNativeModule({
+		snapshot: buildSnapshot({ effectivePermissions: GRANTED }),
+	});
+	const handle = renderTree(
+		<ConsentProvider>
+			<Probe allowedOrigins={['https://old.example', 'https://kept.example']} />
+		</ConsentProvider>
+	);
+	const page = openPage('https://old.example');
+	page.run(latest().injectedJavaScriptBeforeContentLoaded);
+	expect(page.state().permissions.marketing).toBe(true);
+	const injected: string[] = [];
+	flush(() => {
+		latest().ref({ injectJavaScript: (script) => injected.push(script) });
+	});
+
+	handle.rerender(
+		<ConsentProvider>
+			<Probe allowedOrigins={['https://kept.example']} />
+		</ConsentProvider>
+	);
+	for (const script of injected) {
+		page.run(script);
+	}
+
+	// The page no longer receives updates, so it must not keep the grant.
+	expect(page.state().ready).toBe(false);
+	expect(page.state().permissions.marketing).toBe(false);
+});
+
+test('a page on an origin that stays listed keeps following the app', () => {
+	createFakeNativeModule({
+		snapshot: buildSnapshot({ effectivePermissions: GRANTED }),
+	});
+	const handle = renderTree(
+		<ConsentProvider>
+			<Probe allowedOrigins={['https://old.example', 'https://kept.example']} />
+		</ConsentProvider>
+	);
+	const page = openPage('https://kept.example');
+	page.run(latest().injectedJavaScriptBeforeContentLoaded);
+	const injected: string[] = [];
+	flush(() => {
+		latest().ref({ injectJavaScript: (script) => injected.push(script) });
+	});
+	handle.rerender(
+		<ConsentProvider>
+			<Probe allowedOrigins={['https://kept.example']} />
+		</ConsentProvider>
+	);
+	for (const script of injected) {
+		page.run(script);
+	}
+	expect(page.state().ready).toBe(true);
+	expect(page.state().permissions.marketing).toBe(true);
+});
+
+test('the native GPP string reaches the page unchanged', () => {
+	const fake = createFakeNativeModule();
+	fake.getWebViewConsent = vi.fn(() =>
+		JSON.stringify({
+			key: 'fedcba9876543210fedcba9876543210',
+			state: {
+				gppString: 'DBABMA~CQ',
+				model: 'opt-in',
+				permissions: GRANTED,
+				ready: true,
+				revision: 2,
+				tcString: null,
+				version: 1,
+			},
+			token: '0123456789abcdef0123456789abcdef',
+		})
+	);
+	renderTree(
+		<ConsentProvider>
+			<Probe allowedOrigins={['https://www.example.com']} />
+		</ConsentProvider>
+	);
+	expect(latest().injectedJavaScriptBeforeContentLoaded).toContain(
+		'"gppString":"DBABMA~CQ"'
+	);
 });
 
 test('an entry holding a line break stays one invalid origin', () => {

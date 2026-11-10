@@ -62,6 +62,26 @@ const PREFERENCES_REQUEST_INTERVAL_MS = 1000;
 
 const selectRevision = (snapshot: ConsentSnapshot): number => snapshot.revision;
 
+/**
+ * What a page receives when it must stop following the app: no state, every
+ * optional category denied. Keeps the revision and model the page already saw.
+ */
+const revokedState = (previous: Readonly<Record<string, unknown>> | null) => ({
+	gppString: null,
+	model: previous?.model ?? null,
+	permissions: {
+		experience: false,
+		functionality: false,
+		marketing: false,
+		measurement: false,
+		necessary: true,
+	},
+	ready: false,
+	revision: previous?.revision ?? 0,
+	tcString: null,
+	version: 1,
+});
+
 /** `<script>(<arguments as JSON>);`, the call shape every platform uses. */
 const call = (script: string, ...args: readonly unknown[]): string =>
 	`${script}(${args.map((arg) => JSON.stringify(arg)).join(',')});`;
@@ -123,6 +143,7 @@ export const useWebViewConsent = function useWebViewConsent(
 
 	const webView = useRef<WebViewConsentTarget | null>(null);
 	const pushed = useRef<string | null>(null);
+	const listed = useRef<readonly string[] | null>(null);
 	const onPreferencesRequested = useRef(options.onPreferencesRequested);
 	useEffect(() => {
 		onPreferencesRequested.current = options.onPreferencesRequested;
@@ -136,6 +157,20 @@ export const useWebViewConsent = function useWebViewConsent(
 		secrets && state
 			? call(UPDATE_SCRIPT, origins, secrets.token, state)
 			: null;
+
+	// An origin that leaves the list is revoked: a page loaded from it gets a
+	// "no state" update it still accepts, instead of keeping its last state,
+	// grants included, once updates stop reaching it.
+	useEffect(() => {
+		const before = listed.current;
+		listed.current = origins;
+		const dropped = before?.filter((origin) => !origins.includes(origin)) ?? [];
+		if (secrets && dropped.length > 0) {
+			webView.current?.injectJavaScript(
+				call(UPDATE_SCRIPT, dropped, secrets.token, revokedState(state))
+			);
+		}
+	}, [origins, secrets, state]);
 
 	useEffect(() => {
 		if (update === null) {

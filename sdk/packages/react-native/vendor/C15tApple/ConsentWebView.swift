@@ -32,19 +32,22 @@ import WebKit
 /// first and keeps its secrets, so a page that is already loaded keeps receiving
 /// changes.
 ///
-/// The ordering and replacement rules live in ``WebViewConsentSync`` in C15tCore;
-/// this class only connects it to WebKit.
+/// Several web views may share one `WKUserContentController`. Their helpers then
+/// share one message handler (installed with the first, removed with the last) and
+/// one set of secrets; see ``WebViewConsentGroup``.
+///
+/// The ordering, replacement and revocation rules live in ``WebViewConsentSync`` in
+/// C15tCore; this class only connects it to WebKit.
 @MainActor
 public final class ConsentWebView {
     private weak var webView: WKWebView?
     private let onPreferencesRequested: (@MainActor () -> Void)?
     private let target: WebKitTarget
     private var sync: WebViewConsentSync?
-    private var messages: ConsentWebViewMessageHandler?
     private var closed = false
 
     /// The web view retains its helper through this association.
-    private static var associationKey: UInt8 = 0
+    fileprivate static var associationKey: UInt8 = 0
 
     /// Start syncing `core` into `webView` for `allowedOrigins`.
     ///
@@ -64,26 +67,26 @@ public final class ConsentWebView {
         _ = try WebViewConsentScript(allowedOrigins: allowedOrigins)
         self.webView = webView
         self.onPreferencesRequested = onPreferencesRequested
-        target = WebKitTarget(webView: webView)
+        let channel = ControllerChannel.of(webView.configuration.userContentController)
+        target = WebKitTarget(webView: webView, channel: channel)
         let previous = objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView
         let replaced = previous?.detachForReplacement()
-        sync = try WebViewConsentSync(
+        let sync = try WebViewConsentSync(
             core: core,
             allowedOrigins: allowedOrigins,
             target: target,
             replacing: replaced,
+            secretsFrom: channel.group.secrets,
             post: { block in DispatchQueue.main.async(execute: block) }
         )
+        self.sync = sync
+        target.join(sync.script)
         // Tie the helper's lifetime to the web view's.
         objc_setAssociatedObject(webView, &Self.associationKey, self, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
-        if onPreferencesRequested != nil {
-            let messages = ConsentWebViewMessageHandler(owner: self)
-            self.messages = messages
-            webView.configuration.userContentController.add(messages, name: WebViewConsentScript.channel)
-        }
     }
 
-    /// Stop syncing. Pages loaded afterwards get no state. Safe to call more than once.
+    /// Stop syncing. The loaded page stops following the app (every optional category
+    /// denied), and pages loaded afterwards get nothing. Safe to call more than once.
     public func close() {
         guard !closed else { return }
         detachForReplacement()?.close()
@@ -99,18 +102,13 @@ public final class ConsentWebView {
     private func detachForReplacement() -> WebViewConsentSync? {
         guard !closed else { return nil }
         closed = true
-        if messages != nil {
-            webView?.configuration.userContentController
-                .removeScriptMessageHandler(forName: WebViewConsentScript.channel)
-            messages = nil
-        }
         defer { sync = nil }
         return sync
     }
 
     fileprivate func receive(_ message: WKScriptMessage) {
-        guard !closed, let script = sync?.script, message.frameInfo.isMainFrame,
-              script.isPreferencesRequest(message.body)
+        guard !closed, onPreferencesRequested != nil, let script = sync?.script,
+              message.frameInfo.isMainFrame, script.isPreferencesRequest(message.body)
         else { return }
         let origin = message.frameInfo.securityOrigin
         var text = "\(origin.protocol)://\(origin.host)"
@@ -120,16 +118,53 @@ public final class ConsentWebView {
     }
 }
 
-/// Puts a sync's scripts into one web view. Main thread; a removal that arrives
-/// from elsewhere, such as a release on another thread, hops to it.
+/// What the helpers on one `WKUserContentController` share: the group that counts
+/// them and keeps their secrets, and the one message handler WebKit allows under
+/// the channel's name. The controller retains it through an association.
+private final class ControllerChannel: @unchecked Sendable {
+    let group = WebViewConsentGroup()
+    let handler: ConsentWebViewMessageHandler
+    private static var associationKey: UInt8 = 0
+
+    private init(handler: ConsentWebViewMessageHandler) {
+        self.handler = handler
+    }
+
+    @MainActor
+    static func of(_ controller: WKUserContentController) -> ControllerChannel {
+        if let channel = objc_getAssociatedObject(controller, &associationKey) as? ControllerChannel {
+            return channel
+        }
+        let channel = ControllerChannel(handler: ConsentWebViewMessageHandler())
+        objc_setAssociatedObject(controller, &associationKey, channel, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        return channel
+    }
+}
+
+/// Puts a sync's scripts into one web view, and holds that web view's place in its
+/// controller's channel. Main thread; a removal that arrives from elsewhere, such as
+/// a release on another thread, hops to it.
 private final class WebKitTarget: WebViewConsentTarget, @unchecked Sendable {
     private weak var webView: WKWebView?
     private weak var controller: WKUserContentController?
+    private let channel: ControllerChannel
     private var userScript: WKUserScript?
+    private var joined = false
 
-    init(webView: WKWebView) {
+    init(webView: WKWebView, channel: ControllerChannel) {
         self.webView = webView
         controller = webView.configuration.userContentController
+        self.channel = channel
+    }
+
+    /// Take a place in the controller's channel, installing its handler first.
+    @MainActor
+    func join(_ script: WebViewConsentScript) {
+        guard !joined else { return }
+        joined = true
+        if channel.group.join(script) {
+            controller?.add(channel.handler, name: WebViewConsentScript.channel)
+        }
     }
 
     func install(_ script: String) {
@@ -146,9 +181,21 @@ private final class WebKitTarget: WebViewConsentTarget, @unchecked Sendable {
 
     func uninstall() {
         if Thread.isMainThread {
-            MainActor.assumeIsolated { replace(with: nil) }
+            MainActor.assumeIsolated { remove() }
         } else {
-            DispatchQueue.main.async { MainActor.assumeIsolated { self.replace(with: nil) } }
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.remove() } }
+        }
+    }
+
+    /// Remove the script and give up the place in the channel; the last one out
+    /// removes the handler.
+    @MainActor
+    private func remove() {
+        replace(with: nil)
+        guard joined else { return }
+        joined = false
+        if channel.group.leave() {
+            controller?.removeScriptMessageHandler(forName: WebViewConsentScript.channel)
         }
     }
 
@@ -166,18 +213,18 @@ private final class WebKitTarget: WebViewConsentTarget, @unchecked Sendable {
     }
 }
 
-/// `WKUserContentController` holds its handlers strongly; this one holds the
-/// helper weakly so the two do not keep each other alive.
+/// One per controller. `WKUserContentController` holds its handlers strongly, so
+/// this one holds nothing: it finds the helper through the message's web view.
 @MainActor
 private final class ConsentWebViewMessageHandler: NSObject, WKScriptMessageHandler {
-    weak var owner: ConsentWebView?
-    init(owner: ConsentWebView) { self.owner = owner }
-
     func userContentController(
         _ userContentController: WKUserContentController,
         didReceive message: WKScriptMessage
     ) {
-        owner?.receive(message)
+        guard let webView = message.webView,
+              let helper = objc_getAssociatedObject(webView, &ConsentWebView.associationKey) as? ConsentWebView
+        else { return }
+        helper.receive(message)
     }
 }
 #endif

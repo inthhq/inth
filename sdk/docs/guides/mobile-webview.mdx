@@ -214,6 +214,13 @@ reloads the page, unless you set `reloadOnConsentRevoked: false`.
   and the page ignores updates without it. Attaching a new helper to the same
   WebView keeps the token, so a page that is already open keeps following the
   app.
+- When a page stops being listed, because you remove its origin or close the
+  helper, the app first tells that page to stop: it denies every optional
+  category and no longer follows the app. If it was using a category, web c15t
+  reloads it, and the reload shows your site's own banner. It never keeps a
+  grant the app can no longer update.
+- On iOS, web views that share one `WKUserContentController` share one message
+  handler and one set of secrets, so you can attach a helper to each.
 - In a normal browser, `webViewConsentSource()` returns `undefined` unless a
   script that ran before c15t defined the object. Such a script could equally
   write c15t's own consent cookie.

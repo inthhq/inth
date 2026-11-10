@@ -16,7 +16,10 @@ import com.c15t.core.model.ConsentSnapshot
  *   two is not missed;
  * - an unchanged state is not pushed again;
  * - a replacement keeps the secrets of the sync it replaces, because a loaded
- *   page only accepts the token it was given at document start.
+ *   page only accepts the token it was given at document start;
+ * - an origin that stops being listed is revoked first: a page loaded from it
+ *   gets a "no state" update it still accepts, so it cannot keep the last state,
+ *   grants included, after the app stops talking to it. [close] revokes them all.
  *
  * Every method runs on the WebView's thread.
  */
@@ -63,12 +66,19 @@ class WebViewConsentSync private constructor(
 		target.evaluate(script.update(state))
 	}
 
-	/** Stop syncing and remove the document-start script. Safe to call more than once. */
-	override fun close() {
+	/**
+	 * Stop syncing. The loaded page stops following the app (every optional category
+	 * denied), and pages loaded afterwards get nothing. Safe to call more than once.
+	 */
+	override fun close() = close(revoking = script.origins)
+
+	/** Close, revoking only [revoking]: the origins a replacement no longer lists. */
+	private fun close(revoking: Collection<String>) {
 		if (closed) return
 		closed = true
 		subscription?.close()
 		subscription = null
+		if (revoking.isNotEmpty()) target.evaluate(script.revoke(revoking, published))
 		target.uninstall()
 	}
 
@@ -89,7 +99,7 @@ class WebViewConsentSync private constructor(
 			post: (() -> Unit) -> Unit,
 		): WebViewConsentSync {
 			val script = replacing?.script?.replacingOrigins(allowedOrigins) ?: WebViewConsentScript(allowedOrigins)
-			replacing?.close()
+			replacing?.close(revoking = replacing.script.origins - script.origins.toSet())
 			return WebViewConsentSync(core, script, target, post).also { it.start() }
 		}
 	}

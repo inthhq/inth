@@ -69,6 +69,42 @@ final class WebViewConsentTests: XCTestCase {
         XCTAssertEqual(permissions["marketing"], false)
     }
 
+    /// #113 adds `gppString` to ``ConsentSnapshot`` on a sibling branch. Once it is
+    /// here, this fails until ``WebViewConsentState/gppString(of:)`` reads it, so a
+    /// merge cannot leave every WebView reporting a nil GPP string.
+    func testTheGPPSeamReadsTheSnapshotOnceItCarriesOne() {
+        let snapshot = ConsentCore().snapshot()
+        let carries = Mirror(reflecting: snapshot).children.contains { $0.label == "gppString" }
+        if carries {
+            XCTAssertTrue(
+                WebViewConsentState.readsSnapshotGPP,
+                "return snapshot.gppString from WebViewConsentState.gppString(of:) and set readsSnapshotGPP"
+            )
+        } else {
+            XCTAssertNil(WebViewConsentState.gppString(of: snapshot))
+        }
+    }
+
+    func testARevokedStateDeniesEverythingAndCarriesNoStrings() throws {
+        let state = try object(WebViewConsentState.revoked(decided).json())
+        XCTAssertEqual(state["ready"] as? Bool, false)
+        XCTAssertTrue(state["tcString"] is NSNull)
+        XCTAssertEqual(state["revision"] as? Int, 7)
+        let permissions = try XCTUnwrap(state["permissions"] as? [String: Bool])
+        XCTAssertEqual(permissions, [
+            "necessary": true, "functionality": false, "experience": false, "measurement": false, "marketing": false,
+        ])
+    }
+
+    func testARevocationReachesOnlyTheGivenOrigins() throws {
+        let script = try WebViewConsentScript(
+            allowedOrigins: ["https://old.example", "https://kept.example"], token: "t0k3n", requestKey: "k3y")
+        XCTAssertEqual(
+            script.revoke(fromOrigins: ["https://OLD.example/"], previous: decided),
+            "\(WebViewConsentScripts.update)([\"https://old.example\"],\"t0k3n\",\(WebViewConsentState.revoked(decided).json()));"
+        )
+    }
+
     func testNothingIsGrantedBeforeTheCoreIsReady() throws {
         let pending = WebViewConsentState(
             ready: false, revision: 1, model: "opt-in",

@@ -3,6 +3,8 @@ package com.c15t.core.webview
 import com.c15t.core.store.C15tStore
 import com.c15t.core.InMemoryKeyValueStore
 import com.c15t.core.RecordingTransport
+import com.c15t.core.initSuccess
+import com.c15t.core.CommitIntent
 import com.c15t.core.model.KernelUser
 import com.c15t.core.testKernel
 import kotlin.test.Test
@@ -45,6 +47,16 @@ class WebViewConsentSyncTest {
 
 	private fun core() = testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = RecordingTransport())
 		.also { it.bootstrap() }
+
+	/** A ready core whose visitor accepted everything, so a page holds real grants. */
+	private fun grantedCore() = testKernel(
+		store = C15tStore(InMemoryKeyValueStore()),
+		transport = RecordingTransport().respondInit(initSuccess()),
+	).also {
+		it.bootstrap()
+		it.save(CommitIntent.All)
+		assertTrue(it.snapshot().effectivePermissions.marketing, "the fixture grants marketing")
+	}
 
 	private fun revisionIn(script: String): Long =
 		Regex(""""revision":(\d+)""").find(script)!!.groupValues[1].toLong()
@@ -109,6 +121,36 @@ class WebViewConsentSyncTest {
 		core.identify(KernelUser(externalId = "user-1"))
 		drain()
 		assertEquals(1, target.uninstalls)
-		assertEquals(1, target.evaluated.size)
+		assertEquals(2, target.evaluated.size, "the first state, then the revocation, and nothing after")
+	}
+
+	@Test fun `close tells the loaded page to stop following the app`() {
+		val core = grantedCore()
+		val target = RecordingTarget()
+		val sync = WebViewConsentSync.start(core, listOf("https://app.example"), target, post = post)
+		val token = tokenIn(target.installed.single())
+		assertTrue(target.evaluated.single().contains(""""marketing":true"""), "the page was given the grant")
+		sync.close()
+		val revocation = target.evaluated.last()
+		assertTrue(revocation.contains("""(["https://app.example"],"$token","""), revocation)
+		assertTrue(revocation.contains(""""ready":false"""))
+		assertTrue(revocation.contains(""""marketing":false"""))
+	}
+
+	@Test fun `dropping an origin revokes the page loaded from it, and only that one`() {
+		val core = grantedCore()
+		val first = RecordingTarget()
+		val original = WebViewConsentSync.start(
+			core, listOf("https://old.example", "https://kept.example"), first, post = post,
+		)
+		val token = tokenIn(first.installed.single())
+		val second = RecordingTarget()
+		WebViewConsentSync.start(core, listOf("https://kept.example"), second, replacing = original, post = post)
+
+		val revocation = first.evaluated.last()
+		assertTrue(revocation.contains("""(["https://old.example"],"$token","""), revocation)
+		assertTrue(revocation.contains(""""ready":false"""))
+		assertEquals(2, first.evaluated.size, "one revocation, for the dropped origin only")
+		assertTrue(second.evaluated.single().contains("""(["https://kept.example"],"$token","""))
 	}
 }

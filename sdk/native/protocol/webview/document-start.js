@@ -68,17 +68,12 @@
 				if (current) {
 					try {
 						current(state);
-					} catch (error) {
-						/* One listener must not stop the others. */
-					}
+					} catch (error) {}
 				}
 			}
 			return true;
 		},
 		openPreferences: function () {
-			// The key proves the request came from this closure, in the top frame
-			// of a listed origin. A frame that can post to the same channel
-			// cannot read it.
 			var message =
 				'{"type":"c15t:open-preferences","key":"' + requestKey + '"}';
 			var webkit = w.webkit && w.webkit.messageHandlers;

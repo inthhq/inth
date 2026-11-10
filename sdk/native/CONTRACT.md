@@ -1636,6 +1636,33 @@ as long as their WebView (an associated object on iOS, a weak registry on
 Android), and a Swift sync released without `close()` still removes its
 script, so no document-start script outlives its sync carrying an old state.
 
+A page that stops being listed is revoked, not abandoned. Updates are addressed
+to the listed origins, so a page loaded from an origin the app drops would keep
+its last state, grants included, with nothing able to reach it. Before a sync
+stops serving an origin it runs `update.js` for that origin alone, with the
+page's token and the revoked state (`ready: false`, every optional category
+denied): `close()` revokes every listed origin, and a replacement revokes the
+origins it drops. The page denies everything and follows the app no further;
+web c15t reloads it when a category it used is withdrawn, and the reload shows
+the site's own banner because nothing is injected any more. A Swift sync
+released without `close()` revokes nothing, because its web view is gone. React
+Native revokes dropped origins when `allowedOrigins` changes.
+
+Several `WKWebView`s may share one `WKUserContentController`, and with it every
+document-start script and message handler. WebKit raises
+`NSInvalidArgumentException` when a second handler is added under a name in use.
+The helpers on one controller therefore share one handler, installed with the
+first and removed with the last, which finds the helper through the message's
+web view; and they share one token and request key, so whichever script defines
+a page's object, every helper's updates and requests match it.
+`WebViewConsentGroup` in C15tCore keeps the count and the secrets.
+
+The GPP string is read in one place per platform:
+`WebViewConsentState.gppStringOf(snapshot)` (Kotlin) and
+`WebViewConsentState.gppString(of:)` (Swift). Both return `null` until the
+snapshot carries a GPP string; a test on each platform fails once it does and
+the seam still returns `null`.
+
 ### Web side
 
 `webViewConsentSource()` in `@c15t/core` returns an `ExternalConsentSource`
