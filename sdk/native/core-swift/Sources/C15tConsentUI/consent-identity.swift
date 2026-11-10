@@ -40,26 +40,44 @@ struct IdentityHeader: View {
         }
     }
 
-    private var shape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: tileSize * 0.22, style: .continuous)
-    }
-
+    /// The host tiles are their own views, so the stock mark never builds their types.
     @ViewBuilder private var tile: some View {
         if let provider = identity.provider {
             ConsentProviderMark(branding: provider).fill(style: FillStyle(eoFill: true))
                 .foregroundStyle(theme.colors.text.color)
                 .frame(width: markSize, height: markSize)
         } else if let icon = identity.icon {
-            Image(uiImage: icon).resizable().scaledToFill().frame(width: tileSize, height: tileSize)
-                .clipShape(shape).overlay(shape.strokeBorder(.black.opacity(0.08)))
+            IconTile(icon: icon, size: tileSize)
         } else {
-            ZStack {
-                shape.fill(theme.colors.accent.color.opacity(0.12))
-                Text(String(identity.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)).uppercased())
-                    .font(theme.headlineFont.font(.title, weight: .semibold))
-                    .foregroundStyle(theme.colors.accent.color)
-            }.frame(width: tileSize, height: tileSize)
+            InitialTile(name: identity.name, size: tileSize)
         }
+    }
+}
+
+private func tileShape(_ size: CGFloat) -> RoundedRectangle {
+    RoundedRectangle(cornerRadius: size * 0.22, style: .continuous)
+}
+
+private struct IconTile: View {
+    let icon: UIImage
+    let size: CGFloat
+    var body: some View {
+        Image(uiImage: icon).resizable().scaledToFill().frame(width: size, height: size)
+            .clipShape(tileShape(size)).overlay(tileShape(size).strokeBorder(.black.opacity(0.08)))
+    }
+}
+
+private struct InitialTile: View {
+    let name: String
+    let size: CGFloat
+    @Environment(\.consentTheme) private var theme
+    var body: some View {
+        ZStack {
+            tileShape(size).fill(theme.colors.accent.color.opacity(0.12))
+            Text(String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)).uppercased())
+                .font(theme.headlineFont.font(.title, weight: .semibold))
+                .foregroundStyle(theme.colors.accent.color)
+        }.frame(width: size, height: size)
     }
 }
 #endif

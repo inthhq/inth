@@ -19,7 +19,8 @@ struct ConsentProviderMark: Shape {
             tx: rect.midX - size.width * scale / 2, ty: rect.midY - size.height * scale / 2))
     }
 
-    private static var c15t: Path {
+    /// Built once; every `path(in:)` only scales it.
+    private static let c15t: Path = {
         var path = Path()
         path.move(to: CGPoint(x: 223.178, y: 0.313))
         path.addCurve(to: CGPoint(x: 293.91, y: 71.045), control1: CGPoint(x: 262.242, y: 0.313), control2: CGPoint(x: 293.91, y: 31.981))
@@ -79,9 +80,9 @@ struct ConsentProviderMark: Shape {
         path.addLine(to: CGPoint(x: 223.178, y: 40.73))
         path.closeSubpath()
         return path
-    }
+    }()
 
-    private static var inth: Path {
+    private static let inth: Path = {
         var path = Path()
         path.move(to: CGPoint(x: 40.9164, y: 0))
         path.addLine(to: CGPoint(x: 40.9164, y: 8.26444))
@@ -143,6 +144,6 @@ struct ConsentProviderMark: Shape {
         path.addLine(to: CGPoint(x: 47.0603, y: 48.1391))
         path.closeSubpath()
         return path
-    }
+    }()
 }
 #endif

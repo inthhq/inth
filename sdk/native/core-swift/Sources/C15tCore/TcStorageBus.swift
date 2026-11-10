@@ -137,15 +137,31 @@ public final class UserDefaultsStorageBus: TcStorageBusWriting, @unchecked Senda
     private let defaults: UserDefaults
     private let lock = NSRecursiveLock()
     private let onWriteFailure: @Sendable () -> Void
+    /// The last table this instance published in full and read back, or `nil` before
+    /// the first write and after a refused one.
+    private var lastPublished: [String: TcBusValue]?
 
     public init(defaults: UserDefaults? = nil, onWriteFailure: @escaping @Sendable () -> Void = {}) {
         self.defaults = defaults ?? .standard
         self.onWriteFailure = onWriteFailure
     }
 
+    /// Publish `values` as the whole owned table.
+    ///
+    /// A table equal to the last one this instance published is not written again
+    /// when every row still reads back as published. That skips the remove/set cycle,
+    /// and the change notifications it fires, for the repeated identical tables a
+    /// launch produces. The first write of each instance is always a full write, and
+    /// any row someone else changed since forces one.
+    ///
+    /// - Parameter values: Every row the table should hold; owned keys absent here are removed.
     public func write(_ values: [String: TcBusValue]) {
         lock.lock()
         defer { lock.unlock() }
+        if lastPublished == values, TcStorageBusKeys.allNames.allSatisfy({ matches(values[$0], key: $0) }) {
+            return
+        }
+        lastPublished = nil
         let markers = [TcStorageBusKeys.tcString, TcStorageBusKeys.addtlConsent]
         for key in markers { defaults.removeObject(forKey: key) }
         guard markers.allSatisfy({ defaults.object(forKey: $0) == nil }) else {
@@ -160,6 +176,7 @@ public final class UserDefaultsStorageBus: TcStorageBusWriting, @unchecked Senda
             set(values[key], key: key)
             guard matches(values[key], key: key) else { refusePublication(); return }
         }
+        lastPublished = values
     }
 
     private func set(_ value: TcBusValue?, key: String) {

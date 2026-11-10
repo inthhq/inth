@@ -1,4 +1,5 @@
 import C15tCore
+import Combine
 import Foundation
 import XCTest
 @testable import C15tConsentUI
@@ -41,6 +42,20 @@ final class PresenterTests: XCTestCase {
         XCTAssertTrue(core.snapshot().effectivePermissions.marketing)
         // Count actual queued decisions, never revision arithmetic.
         XCTAssertEqual(core.pendingSaveCount(), 1)
+    }
+
+    @MainActor func testUnchangedSnapshotAndReloadPublishNothing() async throws {
+        let core = try await boot(InMemoryStore())
+        let presenter = ConsentPresenter(core: core)
+        // An open, clean prompt: the state in which a new snapshot reloads the draft.
+        XCTAssertNotNil(presenter.presentationID)
+        var changes = 0
+        let observation = presenter.objectWillChange.sink { changes += 1 }
+        defer { observation.cancel() }
+        presenter.consentDidChange(core.snapshot())
+        try await Task.sleep(for: .milliseconds(50))
+        presenter.loadDraft()
+        XCTAssertEqual(changes, 0, "the same snapshot and an identical draft re-render nothing")
     }
 
     @MainActor func testCompetingDecisionKeepsDraftUntilExplicitReload() async throws {

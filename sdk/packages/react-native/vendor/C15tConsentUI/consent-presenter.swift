@@ -66,8 +66,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private func receive(_ next: ConsentSnapshot) {
         guard next.revision >= snapshot.revision else { return }
         let wasPending = snapshot.policyPending
-        snapshot = next
-        if presentationID != nil, !pending, !isDirty, (!preferences || wasPending && !next.policyPending) { loadDraft() }
+        // The draft was already loaded from exactly this snapshot, so reloading it
+        // would rebuild the same disclosure and seeds.
+        let draftCurrent = next == snapshot && baseRevision == next.revision
+        // `@Published` announces every assignment, equal or not, and each announcement
+        // re-renders every observing view, so state is assigned only when it differs.
+        if snapshot != next { snapshot = next }
+        if presentationID != nil, !pending, !isDirty, !draftCurrent,
+           (!preferences || wasPending && !next.policyPending) { loadDraft() }
         if reloadAfterRefresh, !next.policyPending {
             if isDirty {
                 disclosure = core.iabPresentation()
@@ -78,9 +84,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         if automaticPresentation, !next.policyPending, next.promptRequirement.kind == .choice,
            presentationID == nil, suppressedPrompt != promptKey {
             presentationID = UUID()
-            preferences = false
-            errorCode = nil
-            failedAction = nil
+            if preferences { preferences = false }
+            if errorCode != nil { errorCode = nil }
+            if failedAction != nil { failedAction = nil }
             loadDraft()
         }
     }
@@ -191,21 +197,25 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     public func loadDraft() {
         guard !pending else { return }
         let current = core.snapshot()
-        snapshot = current
-        disclosure = core.iabPresentation()
+        if snapshot != current { snapshot = current }
+        // `IABPresentation` is not `Equatable`; only nil-to-nil is known to be no change.
+        let presentation = core.iabPresentation()
+        if disclosure != nil || presentation != nil { disclosure = presentation }
         baseRevision = current.revision
         // No IAB decision yet: no choice at all, or a usable list with no saved IAB decision. A
         // list that can't be edited hides the saved decision, so it never counts as first time.
-        choices = disclosure.map { Self.initialChoices($0, firstTime: current.explicitChoice == nil || ($0.canEdit && core.iabConsent() == nil)) } ?? IABChoices()
-        categories = Dictionary(uniqueKeysWithValues: (current.consentCategories ?? [.necessary]).compactMap {
-            guard let category = OptionalConsentCategory(rawValue: $0.rawValue) else { return nil }
+        let nextChoices = presentation.map { Self.initialChoices($0, firstTime: current.explicitChoice == nil || ($0.canEdit && core.iabConsent() == nil)) } ?? IABChoices()
+        if choices != nextChoices { choices = nextChoices }
+        let nextCategories = Dictionary(uniqueKeysWithValues: (current.consentCategories ?? [.necessary]).compactMap { entry -> (OptionalConsentCategory, Bool)? in
+            guard let category = OptionalConsentCategory(rawValue: entry.rawValue) else { return nil }
             return (category, current.explicitChoice?.categories[category]?.value ?? false)
         })
+        if categories != nextCategories { categories = nextCategories }
         seedCategories = categories
         seedChoices = choices
-        errorCode = nil
-        failedAction = nil
-        stale = false
+        if errorCode != nil { errorCode = nil }
+        if failedAction != nil { failedAction = nil }
+        if stale { stale = false }
     }
     /// A first-time user starts with every consent off and legitimate interest not objected to,
     /// as on the web: legitimate interest needs no opt-in, and the user objects with its switch.

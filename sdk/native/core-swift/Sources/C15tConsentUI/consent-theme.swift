@@ -51,18 +51,55 @@ public struct ConsentThemeColor: Equatable, Hashable, Sendable {
     }
 
     #if canImport(SwiftUI) && canImport(UIKit)
-    /// A dynamic colour that follows the trait collection.
-    public var color: Color { Color(uiColor: uiColor()) }
+    /// A dynamic colour that follows the trait collection. Every read of the same pair returns the
+    /// same instance, so SwiftUI sees an unchanged colour and skips the views that use it.
+    public var color: Color { ConsentColorCache.shared.color(light: light, dark: dark) }
 
     /// The same dynamic colour for UIKit, with `alpha` applied in each appearance.
     func uiColor(alpha: CGFloat = 1) -> UIColor {
-        let light = light, dark = dark
-        return UIColor { traits in
-            UIColor(rgb: traits.userInterfaceStyle == .dark ? dark : light).withAlphaComponent(alpha)
-        }
+        ConsentColorCache.shared.uiColor(light: light, dark: dark, alpha: alpha)
     }
     #endif
 }
+
+#if canImport(SwiftUI) && canImport(UIKit)
+/// Dynamic colours by light, dark and alpha. A theme has a handful of colours, so the cache
+/// stays small; the cap only guards a host that builds colours without end.
+private final class ConsentColorCache: @unchecked Sendable {
+    static let shared = ConsentColorCache()
+    private struct Key: Hashable { let light: UInt32, dark: UInt32, alpha: CGFloat }
+    private let lock = NSLock()
+    private var uiColors: [Key: UIColor] = [:]
+    private var colors: [Key: Color] = [:]
+
+    func uiColor(light: UInt32, dark: UInt32, alpha: CGFloat) -> UIColor {
+        let key = Key(light: light, dark: dark, alpha: alpha)
+        lock.lock(); defer { lock.unlock() }
+        return uiColorLocked(key)
+    }
+
+    func color(light: UInt32, dark: UInt32) -> Color {
+        let key = Key(light: light, dark: dark, alpha: 1)
+        lock.lock(); defer { lock.unlock() }
+        if let color = colors[key] { return color }
+        if colors.count >= 256 { colors.removeAll() }
+        let color = Color(uiColor: uiColorLocked(key))
+        colors[key] = color
+        return color
+    }
+
+    private func uiColorLocked(_ key: Key) -> UIColor {
+        if let color = uiColors[key] { return color }
+        if uiColors.count >= 256 { uiColors.removeAll() }
+        let light = key.light, dark = key.dark, alpha = key.alpha
+        let color = UIColor { traits in
+            UIColor(rgb: traits.userInterfaceStyle == .dark ? dark : light).withAlphaComponent(alpha)
+        }
+        uiColors[key] = color
+        return color
+    }
+}
+#endif
 
 /// Appearance of the native consent screens. Every value has a c15t default.
 ///

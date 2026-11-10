@@ -263,3 +263,30 @@ final class IdentityTests: XCTestCase {
         XCTAssertEqual(ConsentTheme().headlineFont, .sansSerif)
     }
 }
+
+#if canImport(SwiftUI) && canImport(UIKit)
+import SwiftUI
+import UIKit
+
+final class ThemeColorCacheTests: XCTestCase {
+    /// SwiftUI skips a view whose inputs compare equal, so every read of a theme colour must be.
+    func testRepeatedReadsReturnTheSameColour() {
+        let accent = ConsentTheme.Colors.c15t.accent
+        XCTAssertEqual(accent.color, accent.color)
+        XCTAssertEqual(accent.color, ConsentThemeColor(light: accent.light, dark: accent.dark).color)
+        XCTAssertTrue(accent.uiColor() === accent.uiColor())
+        XCTAssertTrue(accent.uiColor(alpha: 0.5) === accent.uiColor(alpha: 0.5))
+        XCTAssertFalse(accent.uiColor(alpha: 0.5) === accent.uiColor())
+        XCTAssertFalse(accent.uiColor() === ConsentTheme.Colors.c15t.text.uiColor())
+    }
+
+    func testCachedColoursStillFollowTheAppearance() {
+        let color = ConsentThemeColor(light: 0x335CFF, dark: 0x8CA2FF)
+        _ = color.uiColor()
+        let light = color.uiColor().resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        let dark = color.uiColor(alpha: 0.5).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+        XCTAssertEqual(light, UIColor(rgb: 0x335CFF))
+        XCTAssertEqual(dark, UIColor(rgb: 0x8CA2FF).withAlphaComponent(0.5))
+    }
+}
+#endif

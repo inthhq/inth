@@ -27,12 +27,13 @@ private struct ConsentButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let shape = RoundedRectangle(cornerRadius: theme.cornerRadius, style: .continuous)
         configuration.label.font(.body.weight(.semibold))
-            .multilineTextAlignment(.center).padding(.horizontal, 16).padding(.vertical, 14)
+            .multilineTextAlignment(.center).padding(EdgeInsets(top: 14, leading: 16, bottom: 14, trailing: 16))
             .frame(maxWidth: .infinity, minHeight: 52)
             .foregroundStyle(foreground)
             .background(background, in: shape)
-            .overlay { if variant == .quiet { shape.strokeBorder(theme.colors.text.color.opacity(0.18)) } }
+            // One overlay: the stroke fills the bounds whatever the alignment, and the spinner sits above it.
             .overlay(alignment: .leading) {
+                if variant == .quiet { shape.strokeBorder(theme.colors.text.color.opacity(0.18)) }
                 if busy { ProgressView().tint(foreground).padding(.leading, 16).accessibilityIdentifier("c15t.status.progress") }
             }
             .opacity(configuration.isPressed ? 0.85 : isEnabled || busy ? 1 : 0.5)
@@ -524,10 +525,43 @@ private struct SectionLabel: View {
     }
 }
 
+/// The first layer needs no navigation, so it is drawn on its own. The stack that preferences and
+/// partner pages need is built the first time either opens and then kept for the session: from
+/// then on, going back to the first layer and forward again animates inside the stack as before.
 private struct ConsentScreen: View {
     @ObservedObject var presenter: ConsentPresenter
     let privacyPolicyURL: URL
     @State private var path: [Destination] = []
+    @State private var navigated = false
+    @Environment(\.consentTheme) private var theme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var body: some View {
+        let navigates = navigated || presenter.preferences || !path.isEmpty
+        ZStack {
+            theme.colors.canvas.color.ignoresSafeArea()
+            if navigates {
+                NavigatingConsentScreen(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
+                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
+            } else {
+                FirstLayer(presenter: presenter, privacyPolicyURL: privacyPolicyURL, path: $path)
+                    .transition(reduceMotion ? .opacity : .move(edge: .leading).combined(with: .opacity))
+            }
+        }
+        // Keyed to the switch, not to `preferences`: once the stack exists this never changes again,
+        // and the stack's own animation drives every later move.
+        .animation(.easeOut(duration: 0.28), value: navigates)
+        .onChange(of: navigates) { if $0 { navigated = true } }
+        .tint(theme.colors.accent.color)
+        .interactiveDismissDisabled(!presenter.allowsInteractiveDismiss)
+        .accessibilityHidden(presenter.confirmDiscard)
+        .overlay { if presenter.confirmDiscard { DiscardConfirmation(presenter: presenter) } }
+    }
+}
+
+private struct NavigatingConsentScreen: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let privacyPolicyURL: URL
+    @Binding var path: [Destination]
     @Environment(\.consentTheme) private var theme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
@@ -579,10 +613,6 @@ private struct ConsentScreen: View {
             .toolbarBackground(theme.colors.canvas.color, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
-        .tint(theme.colors.accent.color)
-        .interactiveDismissDisabled(!presenter.allowsInteractiveDismiss)
-        .accessibilityHidden(presenter.confirmDiscard)
-        .overlay { if presenter.confirmDiscard { DiscardConfirmation(presenter: presenter) } }
     }
 
     private func backIdentifier(_ destination: Destination) -> String {
@@ -646,7 +676,7 @@ private struct FirstLayer: View {
                     .accessibilityIdentifier("c15t.first-layer.body")
                 // The IAB sentences come from the IAB copy, never from the host theme.
                 if let content = presenter.iabFirstLayer {
-                    iabDisclosure(content)
+                    IABDisclosure(content: content, openPartners: openPartners)
                 } else {
                     Text("You decide which uses to allow, and you can change your mind at any time in Privacy settings.")
                         .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color)
@@ -678,6 +708,15 @@ private struct FirstLayer: View {
         presenter.customize()
         path.append(.vendors(nil))
     }
+}
+
+/// The web prompt's order: description and partners link, the purpose summary on a quieter
+/// surface, then legitimate interest, scope and withdrawal. Its own view, so a first layer
+/// outside IAB mode never builds these types.
+private struct IABDisclosure: View {
+    let content: IABFirstLayerContent
+    let openPartners: () -> Void
+    @Environment(\.consentTheme) private var theme
 
     /// The description with its partners link inline, as on the web. The link opens the partner
     /// list; the button under the summary opens the same list with a full-size target.
@@ -692,9 +731,7 @@ private struct FirstLayer: View {
         return text
     }
 
-    /// The web prompt's order: description and partners link, the purpose summary on a quieter
-    /// surface, then legitimate interest, scope and withdrawal.
-    @ViewBuilder private func iabDisclosure(_ content: IABFirstLayerContent) -> some View {
+    var body: some View {
         Text(description(content)).font(.subheadline).foregroundStyle(theme.colors.text.color)
             .tint(theme.colors.accent.color)
             .environment(\.openURL, OpenURLAction { _ in openPartners(); return .handled })
@@ -770,13 +807,18 @@ private struct ProviderSignature: View {
                 ConsentProviderMark(branding: theme.branding).fill(style: FillStyle(eoFill: true))
                     .frame(width: 15, height: 15).accessibilityHidden(true)
             case .custom(_, let imageName):
-                if let imageName {
-                    Image(imageName).resizable().scaledToFit().frame(width: 15, height: 15)
-                        .accessibilityHidden(true)
-                }
+                if let imageName { ProviderImage(name: imageName) }
             }
             Text(theme.branding.name).fontWeight(.semibold)
         }
+    }
+}
+
+private struct ProviderImage: View {
+    let name: String
+    var body: some View {
+        Image(name).resizable().scaledToFit().frame(width: 15, height: 15)
+            .accessibilityHidden(true)
     }
 }
 
@@ -891,9 +933,6 @@ private struct DecisionGroup: View {
     let first: Bool
     let part: Part
     @Binding var path: [Destination]
-    @Environment(\.consentTheme) private var theme
-    @Environment(\.brandingInOverlay) private var brandingInOverlay
-    private var prefix: String { first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs" }
 
     static func errorID(first: Bool) -> String { (first ? "c15t.first-layer" : "c15t.prefs") + ".error" }
     /// The one action a compact footer keeps at accessibility sizes, if any.
@@ -914,18 +953,18 @@ private struct DecisionGroup: View {
             case .all:
                 if presenter.stale { reload } else {
                     failure
-                    decisions
+                    DecisionRows(presenter: presenter, first: first, part: part)
                 }
             case .pinned:
                 if presenter.stale { reload }
                 else if let action = Self.pinnedAction(presenter) {
                     let labels = presenter.decisionLabels
-                    decision(action == .save ? labels.save : labels.rejectAll, action)
+                    DecisionButton(presenter, first: first, label: action == .save ? labels.save : labels.rejectAll, action: action)
                 }
             case .shortcuts:
                 if Self.showsShortcuts(presenter) {
                     if presenter.failedAction != Self.pinnedAction(presenter) { failure }
-                    decisions
+                    DecisionRows(presenter: presenter, first: first, part: part)
                 }
             case .pinnedStatus:
                 if Self.showsPinnedStatus(presenter) { failure }
@@ -934,26 +973,31 @@ private struct DecisionGroup: View {
         .disabled(presenter.pending)
     }
 
-    private var reload: some View {
-        Button(presenter.iabCopy.appLoadCurrentSettings) { presenter.loadDraft() }.buttonStyle(ConsentButtonStyle(variant: .accent)).accessibilityIdentifier("c15t.prefs.stale.reload")
+    private var reload: ActionButton {
+        ActionButton(label: presenter.iabCopy.appLoadCurrentSettings, variant: .accent, id: "c15t.prefs.stale.reload") { [presenter] in presenter.loadDraft() }
     }
     @ViewBuilder private var failure: some View {
         if let message = presenter.errorMessage {
             FailureRow(message: message, id: Self.errorID(first: first), retry: presenter.retry)
         }
     }
-    @ViewBuilder private var decisions: some View {
+}
+
+/// The decisions of the `all` and `shortcuts` cuts. Each case that is not on screen is its own
+/// view or a leaf button, so a page builds only the controls it shows.
+private struct DecisionRows: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let first: Bool
+    let part: DecisionGroup.Part
+    @Environment(\.consentTheme) private var theme
+    @Environment(\.brandingInOverlay) private var brandingInOverlay
+
+    var body: some View {
         let labels = presenter.decisionLabels
         if presenter.snapshot.policyPending {
-            decision(labels.rejectAll, .reject)
+            DecisionButton(presenter, first: first, label: labels.rejectAll, action: .reject)
         } else if presenter.listUnavailable {
-            Text(presenter.iabCopy.appListOutdated)
-                .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).frame(maxWidth: .infinity, alignment: .leading)
-                .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
-            EqualDecisionLayout {
-                decision(labels.rejectAll, .reject)
-                Button(presenter.iabCopy.appTryAgain) { presenter.refresh() }.buttonStyle(ConsentButtonStyle(variant: .quiet)).accessibilityIdentifier(first ? "c15t.first-layer.retry" : "c15t.iab.retry")
-            }
+            ListOutdatedRows(presenter: presenter, first: first)
         } else {
             let plan = DecisionPlan.rows(first: first, labels: labels)
             EqualDecisionLayout {
@@ -978,23 +1022,63 @@ private struct DecisionGroup: View {
     }
 
     @ViewBuilder private func decision(_ control: DecisionControl) -> some View {
-        switch control.kind {
-        case .reject: decision(control.label, .reject, style: control.style)
-        case .accept: decision(control.label, .accept, style: control.style)
-        case .save: decision(control.label, .save, style: control.style)
-        case .customize:
-            Button(control.label) { presenter.customize() }.buttonStyle(ConsentButtonStyle(variant: control.style)).accessibilityIdentifier("c15t.first-layer.customize")
+        if control.kind == .customize {
+            ActionButton(label: control.label, variant: control.style, id: "c15t.first-layer.customize") { [presenter] in presenter.customize() }
+        } else {
+            DecisionButton(presenter, first: first, label: control.label,
+                action: control.kind == .reject ? .reject : control.kind == .accept ? .accept : .save, style: control.style)
         }
     }
+}
 
-    /// Labels stay put while a commit runs: the pressed action shows progress beside its own
-    /// label, and the others fade as disabled, so the person can still see what is being saved.
-    private func decision(_ label: String, _ action: ConsentPresenter.Action, style: DecisionStyle? = nil) -> some View {
+/// The list could not be refreshed: Reject all stays available beside Try again.
+private struct ListOutdatedRows: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let first: Bool
+    @Environment(\.consentTheme) private var theme
+    var body: some View {
+        Text(presenter.iabCopy.appListOutdated)
+            .font(.subheadline).foregroundStyle(theme.colors.textSecondary.color).frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityIdentifier(first ? "c15t.first-layer.list-stale" : "c15t.iab.list-stale")
+        EqualDecisionLayout {
+            DecisionButton(presenter, first: first, label: presenter.decisionLabels.rejectAll, action: .reject)
+            ActionButton(label: presenter.iabCopy.appTryAgain, variant: .quiet, id: first ? "c15t.first-layer.retry" : "c15t.iab.retry") { [presenter] in presenter.refresh() }
+        }
+    }
+}
+
+/// A button in the decision shape that does not commit: Customize, Try again, Load current settings.
+private struct ActionButton: View {
+    let label: String
+    let variant: DecisionStyle
+    let id: String
+    let action: () -> Void
+    var body: some View {
+        Button(label, action: action).buttonStyle(ConsentButtonStyle(variant: variant)).accessibilityIdentifier(id)
+    }
+}
+
+/// Labels stay put while a commit runs: the pressed action shows progress beside its own
+/// label, and the others fade as disabled, so the person can still see what is being saved.
+private struct DecisionButton: View {
+    let label: String
+    let variant: DecisionStyle
+    let busy: Bool
+    let id: String
+    let commit: () -> Void
+    @MainActor init(_ presenter: ConsentPresenter, first: Bool, label: String, action: ConsentPresenter.Action, style: DecisionStyle? = nil) {
         let suffix: String = switch action { case .accept: "accept-all"; case .reject: "reject-all"; case .save: "save"; case .acknowledge: "acknowledge" }
-        let busy = presenter.showProgress && presenter.pendingAction == action
-        return Button(label) { presenter.commit(action) }
-            .buttonStyle(ConsentButtonStyle(variant: style ?? (action == .save ? .accent : first ? .decision : .quiet), busy: busy))
-            .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(prefix + "." + suffix)
+        let prefix = first ? "c15t.first-layer" : presenter.iab ? "c15t.iab" : "c15t.prefs"
+        self.label = label
+        self.variant = style ?? (action == .save ? .accent : first ? .decision : .quiet)
+        self.busy = presenter.showProgress && presenter.pendingAction == action
+        self.id = prefix + "." + suffix
+        self.commit = { presenter.commit(action) }
+    }
+    var body: some View {
+        Button(label, action: commit)
+            .buttonStyle(ConsentButtonStyle(variant: variant, busy: busy))
+            .accessibilityLabel(label).accessibilityValue(busy ? "Saving" : "").accessibilityIdentifier(id)
     }
 }
 

@@ -209,6 +209,36 @@ extension FullStorageBusTests {
     }
 }
 
+extension FullStorageBusTests {
+    func testAnIdenticalTableIsWrittenOnceAndAChangedRowForcesARewrite() {
+        let suite = "c15t-bus-unchanged-" + UUID().uuidString
+        let defaults = FaultingBusDefaults(suiteName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let bus = UserDefaultsStorageBus(defaults: defaults)
+        let values: [String: TcBusValue] = [
+            TcStorageBusKeys.cmpSdkID: .number(53), TcStorageBusKeys.gdprApplies: .number(0),
+            TcStorageBusKeys.tcString: .text("tc"), TcStorageBusKeys.purposeConsents: .text("101"),
+        ]
+        bus.write(values)
+        XCTAssertEqual(defaults.operations.last, "set:" + TcStorageBusKeys.tcString)
+
+        defaults.operations = []
+        bus.write(values)
+        XCTAssertEqual(defaults.operations, [], "an unchanged table is not rewritten")
+
+        defaults.set("tampered", forKey: TcStorageBusKeys.purposeConsents)
+        defaults.operations = []
+        bus.write(values)
+        XCTAssertEqual(defaults.string(forKey: TcStorageBusKeys.purposeConsents), "101")
+        XCTAssertEqual(defaults.operations.first, "remove:" + TcStorageBusKeys.tcString)
+
+        // A new instance, like a new process, always publishes in full.
+        defaults.operations = []
+        UserDefaultsStorageBus(defaults: defaults).write(values)
+        XCTAssertEqual(defaults.operations.last, "set:" + TcStorageBusKeys.tcString)
+    }
+}
+
 private final class ReadCheckingBus: TcStorageBusWriting, @unchecked Sendable {
     var onWrite: (@Sendable () -> Void)?
     func write(_ values: [String: TcBusValue]) { onWrite?() }
