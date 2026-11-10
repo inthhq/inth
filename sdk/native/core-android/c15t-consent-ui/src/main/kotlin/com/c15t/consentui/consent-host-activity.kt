@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
@@ -14,6 +15,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.c15t.core.ConsentCore
 import org.json.JSONObject
 import java.lang.ref.WeakReference
@@ -22,7 +25,12 @@ import java.util.UUID
 /** Optional native Activity host. The registry owns one session, never a second engine. */
 object ConsentHost {
     private class Session(val id: String, val presenter: ConsentPresenter, val store: ViewModelStore,
-        val privacyPolicyUrl: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean) {
+        val privacyPolicyUrl: String, var owner: WeakReference<Any>, var outcome: ((String) -> Unit)?, val notice: Boolean,
+        val preferences: Boolean) {
+        /** What the session shows, for `presentation` on the wire. */
+        val presentation get() = if (preferences) "preferences" else "prompt"
+        /** Whether anything of this session is on screen or still saving. */
+        val showing get() = presenter.presentationID != null || presenter.noticeVisible || presenter.pending
         var activity = WeakReference<ConsentHostActivity>(null)
         var launching = true
         var noticeView = WeakReference<ComposeView>(null)
@@ -37,14 +45,16 @@ object ConsentHost {
     fun present(activity: Activity, core: ConsentCore, preferences: Boolean, privacyPolicyUrl: String, owner: Any = activity, outcome: (String) -> Unit): String {
         val uri = android.net.Uri.parse(privacyPolicyUrl)
         require(uri.scheme == "https" && !uri.host.isNullOrBlank()) { "An HTTPS privacy-policy URL is required" }
+        // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
+        active?.takeIf { !preferences }?.presenter?.presentPrompt()
+        // A session that shows nothing is over, even if no decision closed it.
+        active?.takeIf { !it.showing }?.presenter?.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
         active?.let {
             it.owner = WeakReference(owner)
             it.outcome = outcome
-            // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
-            if (!preferences) it.presenter.presentPrompt()
             if (it.notice) {
                 attachNotice(activity, it)
-                return result(it.id, "already-presented")
+                return result(it.id, "already-presented", it.presentation)
             }
             val host = it.activity.get()
             if (!it.launching && (host == null || host.isFinishing || host.isDestroyed)) {
@@ -56,7 +66,7 @@ object ConsentHost {
                     throw error
                 }
             }
-            return result(it.id, "already-presented")
+            return result(it.id, "already-presented", it.presentation)
         }
         val snapshot = core.snapshot()
         if (!preferences && (snapshot.policyPending || !snapshot.promptRequirement.acknowledge && !snapshot.promptRequirement.notice))
@@ -70,7 +80,8 @@ object ConsentHost {
         })[ConsentPresenter::class.java]
         if (preferences) presenter.presentPreferences() else presenter.presentPrompt()
         val id = presenter.presentationID ?: UUID.randomUUID().toString()
-        val session = Session(id, presenter, store, privacyPolicyUrl, WeakReference(owner), outcome, !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge)
+        val session = Session(id, presenter, store, privacyPolicyUrl, WeakReference(owner), outcome,
+            !preferences && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge, preferences)
         active = session
         presenter.onOutcome = { value ->
             if (active === session) {
@@ -85,6 +96,13 @@ object ConsentHost {
                 store.clear()
             }
         }
+        // A notice cleared outside this session (`dismissNotice()`, a reset) leaves it showing
+        // nothing and with no decision to close it: end it, so its outcome reaches JavaScript.
+        presenter.viewModelScope.launch {
+            snapshotFlow { session.showing }.collect { showing ->
+                if (!showing && active === session) presenter.onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
+            }
+        }
         try {
             if (session.notice) attachNotice(activity, session)
             else activity.startActivity(Intent(activity, ConsentHostActivity::class.java).putExtra("c15t.session", id))
@@ -95,7 +113,7 @@ object ConsentHost {
             store.clear()
             throw error
         }
-        return result(id, "presented")
+        return result(id, "presented", session.presentation)
     }
     fun close(sessionID: String) { active?.takeIf { it.id == sessionID }?.presenter?.requestClose() }
     /** Detach a torn-down JS runtime without cancelling native durable work. */
@@ -165,7 +183,8 @@ object ConsentHost {
         }
         session.noticeView.clear()
     }
-    private fun result(id: String, status: String) = JSONObject().put("sessionId", id).put("status", status).toString()
+    private fun result(id: String, status: String, presentation: String) =
+        JSONObject().put("sessionId", id).put("status", status).put("presentation", presentation).toString()
 }
 
 /** Shares drafts and pending work across configuration changes. No exported launch entry. */

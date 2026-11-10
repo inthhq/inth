@@ -4,6 +4,7 @@ import C15tCore
 #if canImport(C15tConsentUI)
 import C15tConsentUI
 #endif
+import Combine
 import SwiftUI
 import UIKit
 
@@ -15,15 +16,29 @@ final class C15tConsentHost {
     private var controller: UIHostingController<AnyView>?
     private var sessionID: String?
     private var outcome: ((String) -> Void)?
+    /// The open session shows standing settings rather than the owed prompt.
+    private var sessionPreferences = false
+    private var watch: AnyCancellable?
+
+    /// Whether anything of the open session is on screen or still saving.
+    private var showing: Bool {
+        guard let presenter else { return false }
+        return presenter.presentationID != nil || presenter.noticeVisible || presenter.pending
+    }
 
     func present(preferences: Bool, privacyPolicyURL: String, outcome: @escaping (String) -> Void) throws -> String {
         guard let url = URL(string: privacyPolicyURL), url.scheme == "https", url.host != nil else {
             throw HostError.invalidPrivacyPolicy
         }
-        if let sessionID {
+        if sessionID != nil {
             // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
             if !preferences { presenter?.presentPrompt() }
-            return encode(["sessionId": sessionID, "status": "already-presented"])
+            // A session that shows nothing is over, even if no decision closed it.
+            if !showing { presenter?.onOutcome?(.dismissed) }
+        }
+        if let sessionID {
+            return encode(["sessionId": sessionID, "status": "already-presented",
+                           "presentation": sessionPreferences ? "preferences" : "prompt"])
         }
         guard let core = C15t.current else { throw HostError.noCore }
         let snapshot = core.snapshot()
@@ -41,6 +56,12 @@ final class C15tConsentHost {
         self.sessionID = id
         self.presenter = presenter
         self.outcome = outcome
+        self.sessionPreferences = preferences
+        // A notice cleared outside this session (`dismissNotice()`, a reset) leaves it showing
+        // nothing and with no decision to close it: end it, so its outcome reaches JavaScript.
+        watch = presenter.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in self?.endIfShowingNothing() }
+        }
         let notice = !preferences && snapshot.promptRequirement.kind == .notice
         presenter.onOutcome = { [weak self] result in
             guard let self, self.sessionID == id else { return }
@@ -62,7 +83,13 @@ final class C15tConsentHost {
         self.overlay = overlay
         controller.didMove(toParent: parent)
         self.controller = controller
-        return encode(["sessionId": id, "status": "presented"])
+        return encode(["sessionId": id, "status": "presented",
+                       "presentation": preferences ? "preferences" : "prompt"])
+    }
+
+    private func endIfShowingNothing() {
+        guard sessionID != nil, !showing else { return }
+        presenter?.onOutcome?(.dismissed)
     }
 
     func close(sessionID: String) {
@@ -71,6 +98,7 @@ final class C15tConsentHost {
     }
 
     func detach() {
+        watch = nil
         outcome = nil
         sessionID = nil
         presenter?.onOutcome = nil

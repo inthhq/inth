@@ -137,18 +137,75 @@ class AutoPresentTest {
         assertNotNull("the same requirement owed again is presented", p.presentationID)
     }
 
+    /**
+     * The invariant over random sequences: if a choice is owed, auto-present is on, and nothing is
+     * open, then the person dismissed exactly this owed prompt. Anything else means an owed prompt
+     * that never shows.
+     */
+    @Test fun anOwedPromptIsNeverLeftUnshownOverRandomSequences() {
+        for (seed in 1..150) runSequence(seed)
+    }
+
+    private fun runSequence(seed: Int) {
+        val random = java.util.Random(seed.toLong())
+        val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+            .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
+        var body = fixture
+        var policies = 0
+        val core = core(fixture, body = { body }).also { it.bootstrap() }
+        val p = ConsentPresenter(core)
+        var dismissed: String? = null
+        val trace = mutableListOf<String>()
+        fun key(): String {
+            val s = core.snapshot()
+            return "${s.resolution.fingerprint}:${s.promptRequirement.acknowledge}:${s.promptRequirement.reason}:${s.promptOwedSince}"
+        }
+        fun settle() = awaitTrue { !p.pending }
+        val promptOpen = { p.presentationID != null && (!p.preferences || p.returnsToFirstLayer) }
+        repeat(60) {
+            val action = listOf("saved", "reset", "policy", "preferences", "manual", "discard", "customize",
+                "back", "accept", "save", "toggle").let { it[random.nextInt(it.size)] }
+            trace += action
+            when (action) {
+                "saved" -> core.save(CommitIntent.All)
+                "reset" -> core.reset()
+                "policy" -> { policies += 1; body = fixture.replace("a".repeat(64), "%064d".format(policies)); core.refresh() }
+                "preferences" -> p.presentPreferences()
+                "manual" -> p.presentPrompt()
+                "discard" -> if (p.presentationID != null && !p.pending) {
+                    val closes = !(p.preferences && p.returnsToFirstLayer)
+                    if (closes && promptOpen()) dismissed = key()
+                    p.discard()
+                }
+                "customize" -> if (p.presentationID != null && !p.preferences) p.customize()
+                "back" -> if (p.presentationID != null && !p.preferences && !p.pending) { dismissed = key(); p.backFromFirstLayer() }
+                "accept" -> if (p.presentationID != null) { p.commit(ConsentPresenter.Action.ACCEPT); settle() }
+                "save" -> if (p.presentationID != null) {
+                    p.setCategory(com.c15t.core.model.ConsentCategory.MEASUREMENT, random.nextBoolean())
+                    p.commit(ConsentPresenter.Action.SAVE); settle()
+                }
+                "toggle" -> p.autoPresent = !p.autoPresent
+            }
+            val s = core.snapshot()
+            val owed = s.ready && !s.policyPending && s.promptRequirement.acknowledge
+            if (owed && p.autoPresent && p.presentationID == null && !p.pending) {
+                assertEquals("seed $seed: owed prompt left unshown after ${trace.joinToString()}", dismissed, key())
+            }
+        }
+    }
+
     private fun awaitTrue(condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
         while (!condition() && System.nanoTime() < deadline) Thread.sleep(10)
         assertTrue(condition())
     }
 
-    private fun core(fixture: String, clock: Clock = Clock.SYSTEM): ConsentCore {
-        val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+    private fun core(fixture: String, clock: Clock = Clock.SYSTEM, body: (() -> String)? = null): ConsentCore {
+        val fixed = if (body != null) "" else generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/$fixture") }.first { it.exists() }.readText()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
-                HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
+                HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body?.invoke() ?: fixed) else HttpResponse(503)
         }
         val store = object : KeyValueStore {
             private val values = java.util.concurrent.ConcurrentHashMap<String, String>()

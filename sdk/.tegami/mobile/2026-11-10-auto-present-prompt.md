@@ -32,6 +32,10 @@ owed again after an answer or a reset is presented even when observers deliver o
 the latest snapshot. It is not part of the kernel wire encoding or the stored
 envelope.
 
+Closing standing privacy settings no longer suppresses a prompt they covered;
+it is presented once they close. A UIKit root's notice card stops taking
+touches as soon as it is acknowledged or cleared.
+
 Breaking changes:
 
 - `ConsentPresenter(core:automaticPresentation:)` is now

@@ -150,6 +150,32 @@ class ConsentPromptTest {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
+    /** Once the notice is acknowledged, the view `attachConsent` added takes no space and no touches. */
+    @Test fun theActivityNoticeLeavesNoTouchRegionBehind() {
+        val (core, _) = boot(fixture("notice-init.json"))
+        AttachingActivity.core = core
+        val controller = Robolectric.buildActivity(AttachingActivity::class.java).setup().visible()
+        shadowOf(Looper.getMainLooper()).idle()
+        frames()
+        val content = controller.get().findViewById<android.view.ViewGroup>(android.R.id.content)
+        val overlay = content.getChildAt(content.childCount - 1)
+        // Measure as the content frame does: full width, at most its height, wrap content.
+        val measured = {
+            overlay.measure(android.view.View.MeasureSpec.makeMeasureSpec(400, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(800, android.view.View.MeasureSpec.AT_MOST))
+            overlay.measuredHeight
+        }
+        assertTrue("the notice is drawn", measured() > 0)
+
+        ConsentPrompt.of(core).presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE)
+        await { !ConsentPrompt.of(core).presenter.pending }
+        frames()
+        assertFalse(ConsentPrompt.of(core).presenter.noticeVisible)
+        assertEquals("nothing is left to swallow touches", 0, measured())
+        controller.pause().stop().destroy()
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
     class AttachingActivity : ComponentActivity() {
         var prompt: ConsentPrompt? = null
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -168,6 +194,12 @@ class ConsentPromptTest {
             shadowOf(Looper.getMainLooper()).idle()
         }
         assertTrue("Presenter did not settle", condition())
+        compose.waitForIdle()
+    }
+
+    /** Run the frames a recomposition and its layout pass wait for. */
+    private fun frames() = repeat(5) {
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(50))
         compose.waitForIdle()
     }
 

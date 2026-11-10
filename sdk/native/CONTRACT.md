@@ -413,12 +413,79 @@ The rules, identical on all three:
   `presentPrompt`/`presentConsentPrompt` and `presentPreferences` work as they
   did before.
 
-A repeated prompt request to the React Native host re-asks its open session, so
-a notice cleared outside the host and owed again shows again. The host rejects
-a refused privacy-policy URL with `C15T_PRESENTER_INVALID_URL`, which is
-permanent: `ConsentProvider` reports it with `console.error` and stops offering
-that URL. Every other refusal is `C15T_PRESENTER_UNAVAILABLE`, which is
+**The invariant.** On all three platforms: if a prompt is owed, auto-present is
+on, and nothing of ours is on screen, then a presentation is in flight or the next
+trigger makes one, unless the subject already saw this owed prompt and closed it,
+or native refused the privacy-policy URL. A ledger never records a prompt as shown
+on its own say-so; it records what native says is on screen. Property tests drive
+random sequences of the inputs below and check this after every input:
+`auto-present-machine.test.ts` (React Native), `AutoPresentTest` (Kotlin) and
+`AutoPresentTests` (Swift).
+
+**The React Native ledger** is the pure `stepAutoPresent` in
+`packages/react-native/src/provider/auto-present-machine.ts`, one phase per client:
+
+    phase        meaning
+    idle         nothing known for the owed prompt; the next trigger asks native
+    requesting   a present call is in flight for key K
+    showing      native shows our prompt in session S (for whatever is owed now)
+    blocked      another session S is open: standing settings, or one an older binary did not name
+    handled      the subject saw K and its session closed
+
+    input \ phase      idle           requesting          showing          blocked     handled(K)
+    trigger, owed K    requesting     recheck later       stay             stay        stay if K, else requesting
+    trigger, nothing   stay           episode ends        episode ends     stay        idle
+    presented S        -              showing S           -                -           -
+    already S, prompt  -              showing S           -                -           -
+    already S, other   -              blocked S           -                -           -
+    already S, closed  -              idle, recheck       -                -           -
+    not-required       -              idle                -                -           -
+    refused URL        -              idle, remember URL  -                -           -
+    failed             -              idle, warn          -                -           -
+    outcome of S       recheck        remember S          handled, recheck idle,       recheck
+                                                                           recheck
+
+`trigger` is a snapshot change, a return to the foreground, a mount, turning
+auto-present on, or a new URL. A call that saw a trigger meanwhile rechecks once
+it settles; a phase that saw nothing owed treats the next owed prompt as new.
+A dismissal settles what was on screen when it closed, which follows the current
+requirement because the open session reloads its draft. An answer settles the
+prompt that was shown. A refused URL is not offered again, and a different one
+is. The ledger hears outcomes for the client's lifetime, also while no provider
+is mounted or the app opted out, so a phase waiting on a session always hears it
+close.
+
+**The native presenters** keep the equivalent state on `ConsentPresenter`: the
+open session (`presentationID`), whether it shows the owed prompt or standing
+settings, the suppressed key, the requested notice and a running commit.
+
+    input                                     next
+    snapshot, owed, auto on, nothing open     open the prompt (unless suppressed)
+    snapshot, nothing owed                    clear suppression and the notice request
+    presentPrompt / presentPreferences        open that session if none is open
+    close a prompt session                    suppress its key, outcome, re-evaluate
+    close a settings session                  outcome, re-evaluate (the owed prompt stays owed)
+    commit from a prompt or notice            suppress the key acted on (none if its episode ended)
+    commit from settings                      no suppression; re-evaluate
+    autoPresent turned on                     re-evaluate
+
+**The React Native hosts** report what an open session shows: every
+`presentConsentPrompt`/`presentPreferences` answer carries `presentation`,
+`prompt` or `preferences`, beside `sessionId`, and an older binary omits it. A
+session that shows nothing (its notice was cleared outside the host by
+`dismissNotice()` or a reset) is over: the host ends it with a `dismissed`
+outcome as soon as it notices, and before answering the next request. A
+repeated prompt request re-asks the open session, so a notice owed again shows.
+The host rejects a refused privacy-policy URL with `C15T_PRESENTER_INVALID_URL`,
+which is permanent: `ConsentProvider` reports it with `console.error` and stops
+offering that URL. Every other refusal is `C15T_PRESENTER_UNAVAILABLE`, which is
 transient and is retried on the next consent change or foreground.
+
+**The notice card's touch area.** A UIKit root hit-tests against the card's
+bounds only while that scene draws the prompt and the notice is showing
+(`NoticeTouchRegion`), so an acknowledged or cleared card leaves no area that
+swallows the app's touches. The Android notice view wraps its content and takes
+no space once the card is gone.
 
 `ConsentPrompt.onFinished` (Swift and Kotlin) and `onConsentPresenterOutcome`
 (React Native) report each closed session with its outcome. A step that must

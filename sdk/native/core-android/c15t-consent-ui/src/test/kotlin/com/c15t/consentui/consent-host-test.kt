@@ -110,22 +110,52 @@ class ConsentHostTest {
         assertEquals(1, outcomes.size)
     }
 
-    /** A notice cleared outside the host, then owed again: asking again shows it in the open session. */
-    @Test fun noticeOwedAgainShowsWhenTheHostIsAskedAgain() {
+    /**
+     * A notice cleared outside the host (`dismissNotice()`) leaves its session showing nothing. The
+     * host ends it with an outcome, so a later request opens what was asked for, not `already-presented`.
+     */
+    @Test fun aNoticeClearedOutsideEndsItsSessionAndPreferencesOpen() {
         val core = boot(fixture("notice-init.json"))
         val host = host()
-        val first = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {}))
-        val presenter = requireNotNull(presenter())
-        assertTrue(presenter.noticeVisible)
+        val outcomes = mutableListOf<String>()
+        val first = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
+        assertEquals("prompt", first.getString("presentation"))
+        assertTrue(requireNotNull(presenter()).noticeVisible)
         assertTrue(core.dismissNotice())
-        await { !presenter.noticeVisible }
+        await { outcomes.isNotEmpty() }
+        assertEquals("dismissed", JSONObject(outcomes.single()).getString("kind"))
+        assertEquals(first.getString("sessionId"), JSONObject(outcomes.single()).getString("sessionId"))
+
+        val settings = JSONObject(ConsentHost.present(host.get(), core, true, PRIVACY_URL, outcome = {}))
+        assertEquals("presented", settings.getString("status"))
+        assertEquals("preferences", settings.getString("presentation"))
+        assertNotNull(requireNotNull(presenter()).presentationID)
+    }
+
+    /** A notice owed again after its session ended opens a new session that shows it. */
+    @Test fun aNoticeOwedAgainOpensANewSession() {
+        val core = boot(fixture("notice-init.json"))
+        val host = host()
+        val outcomes = mutableListOf<String>()
+        val first = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
+        assertTrue(core.dismissNotice())
+        await { outcomes.isNotEmpty() }
         core.reset()
-        await { presenter.snapshot.revision == core.snapshot().revision }
-        assertFalse("nothing shows until the app asks", presenter.noticeVisible)
         val again = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {}))
-        assertEquals("already-presented", again.getString("status"))
-        assertEquals(first.getString("sessionId"), again.getString("sessionId"))
-        assertTrue("the open session shows the notice the app asked for again", presenter.noticeVisible)
+        assertEquals("presented", again.getString("status"))
+        assertNotEquals(first.getString("sessionId"), again.getString("sessionId"))
+        assertTrue(requireNotNull(presenter()).noticeVisible)
+    }
+
+    /** A prompt request that meets open settings names them, so JavaScript waits for them to close. */
+    @Test fun aPromptRequestOverOpenSettingsNamesThem() {
+        val core = boot(fixture("category-init.json"))
+        val host = host()
+        val settings = JSONObject(ConsentHost.present(host.get(), core, true, PRIVACY_URL, outcome = {}))
+        val prompt = JSONObject(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {}))
+        assertEquals("already-presented", prompt.getString("status"))
+        assertEquals(settings.getString("sessionId"), prompt.getString("sessionId"))
+        assertEquals("preferences", prompt.getString("presentation"))
     }
 
     @Test fun savedStateFromClosedNoticeCannotAttachANewerSession() {

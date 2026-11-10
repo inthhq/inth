@@ -40,7 +40,11 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private var seedCategories: [OptionalConsentCategory: Bool] = [:]
     private var seedChoices = IABChoices()
     private var fromFirstLayer = false
+    /// The owed prompt the person saw and closed. It is not presented again by itself.
     private var suppressedPrompt: String?
+    /// The open session showed the owed prompt: a first layer, not standing settings. Only
+    /// closing such a session settles the owed prompt; closing settings leaves it owed.
+    private var sessionIsPrompt = false
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
     /// The owed notice the host asked for while ``autoPresent`` is off. A later notice needs its own request.
@@ -105,9 +109,20 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         presentationID = UUID()
         preferences = false
         fromFirstLayer = false
+        sessionIsPrompt = true
         errorCode = nil
         failedAction = nil
         loadDraft()
+    }
+
+    /// Close the open session without a commit. Closing the prompt settles it; closing standing
+    /// settings does not, so an owed prompt they covered is presented now.
+    private func closeSession() {
+        if sessionIsPrompt { suppressedPrompt = promptKey }
+        presentationID = nil
+        sessionIsPrompt = false
+        onOutcome?(.dismissed)
+        presentIfOwed()
     }
 
     public var noticeVisible: Bool {
@@ -191,6 +206,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         presentationID = UUID()
         preferences = true
         fromFirstLayer = false
+        sessionIsPrompt = false
         loadDraft()
     }
     /// Open an owed prompt. An owed notice shows as the notice card. Existing sessions keep
@@ -204,6 +220,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         presentationID = UUID()
         preferences = false
         fromFirstLayer = false
+        sessionIsPrompt = true
         loadDraft()
     }
     /// Close only the session the host opened. Dirty drafts still require confirmation.
@@ -282,9 +299,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             fromFirstLayer = false
             loadDraft()
         } else {
-            suppressedPrompt = promptKey
-            presentationID = nil
-            onOutcome?(.dismissed)
+            closeSession()
         }
     }
     public func retry() {
@@ -300,14 +315,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     public func commit(_ action: Action) {
         guard !pending, !stale else { return }
         if case .save = action, !isDirty, snapshot.promptRequirement.kind == .none {
-            suppressedPrompt = promptKey
-            presentationID = nil
-            onOutcome?(.dismissed)
+            closeSession()
             return
         }
         let session = presentationID
         // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
         let handled = promptKey
+        // A notice is shown without a session; a session shows the prompt or standing settings.
+        let shownPrompt = session == nil || sessionIsPrompt
         endedSinceCommit = false
         let authority = core
         let revision = baseRevision
@@ -343,8 +358,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             if outcome.0 {
                 errorCode = nil
                 failedAction = nil
-                suppressedPrompt = endedSinceCommit ? nil : handled
+                if shownPrompt { suppressedPrompt = endedSinceCommit ? nil : handled }
                 presentationID = nil
+                sessionIsPrompt = false
                 requestedNotice = nil
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
                 else { onAnnouncement?("Privacy choices saved") }

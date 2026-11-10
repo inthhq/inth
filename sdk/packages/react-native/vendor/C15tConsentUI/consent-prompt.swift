@@ -78,6 +78,29 @@ public final class ConsentPrompt: ObservableObject {
     }
 }
 
+/// Where the notice card takes touches over a UIKit root.
+///
+/// It is asked at hit-test time and accepts a point only while the scene behind `hostID` draws
+/// the prompt and the notice is actually showing, so a card that was acknowledged, cleared or
+/// handed to another scene leaves no area that swallows the app's touches.
+@MainActor
+final class NoticeTouchRegion {
+    /// The scene this region belongs to.
+    let hostID: UUID
+    /// The prompt that scene attached to, once a core is available.
+    weak var prompt: ConsentPrompt?
+    /// The card's last measured bounds, in window coordinates.
+    var frame: CGRect = .zero
+
+    init(hostID: UUID) { self.hostID = hostID }
+
+    /// Whether a touch at `point`, in window coordinates, belongs to the notice card.
+    func contains(_ point: CGPoint) -> Bool {
+        guard let prompt, prompt.host == hostID, prompt.presenter.noticeVisible else { return false }
+        return frame.contains(point)
+    }
+}
+
 #if canImport(SwiftUI) && canImport(UIKit)
 public extension View {
     /// Install c15t and add the stock consent prompt and settings to a SwiftUI root, in one call.
@@ -125,9 +148,11 @@ public extension View {
 final class ConsentAttachmentModel: ObservableObject {
     @Published private(set) var prompt: ConsentPrompt?
 
-    func attach(_ resolve: @MainActor () -> ConsentCore?) {
+    func attach(_ resolve: @MainActor () -> ConsentCore?, onAttach: ((ConsentPrompt) -> Void)?) {
         guard prompt == nil, let core = resolve() else { return }
-        prompt = ConsentPrompt.shared(for: core)
+        let shared = ConsentPrompt.shared(for: core)
+        prompt = shared
+        onAttach?(shared)
     }
 }
 
@@ -139,22 +164,27 @@ struct ConsentAttachment: ViewModifier {
     let theme: ConsentTheme?
     let autoPresent: Bool
     let onNoticeFrameChange: ((CGRect) -> Void)?
+    /// The scene's id for host claims. A UIKit root passes its own so its touch region can ask.
+    var hostID: UUID? = nil
+    /// Called once with the shared prompt this scene attached to.
+    var onAttach: ((ConsentPrompt) -> Void)? = nil
     @StateObject private var model = ConsentAttachmentModel()
+    @State private var ownID = UUID()
 
     func body(content: Content) -> some View {
         content
             .overlay {
                 if let prompt = model.prompt {
-                    ConsentPromptHost(prompt: prompt, privacyPolicyURL: privacyPolicyURL, theme: theme,
-                                      autoPresent: autoPresent, onNoticeFrameChange: onNoticeFrameChange)
+                    ConsentPromptHost(prompt: prompt, id: hostID ?? ownID, privacyPolicyURL: privacyPolicyURL,
+                                      theme: theme, autoPresent: autoPresent, onNoticeFrameChange: onNoticeFrameChange)
                 }
             }
-            .onAppear { model.attach(resolve) }
+            .onAppear { model.attach(resolve, onAttach: onAttach) }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.protectedDataDidBecomeAvailableNotification)) { _ in
-                model.attach(resolve)
+                model.attach(resolve, onAttach: onAttach)
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                model.attach(resolve)
+                model.attach(resolve, onAttach: onAttach)
             }
     }
 }
@@ -162,11 +192,11 @@ struct ConsentAttachment: ViewModifier {
 /// One scene's claim on the shared prompt. Draws it only while the claim holds.
 private struct ConsentPromptHost: View {
     @ObservedObject var prompt: ConsentPrompt
+    let id: UUID
     let privacyPolicyURL: URL
     let theme: ConsentTheme?
     let autoPresent: Bool
     let onNoticeFrameChange: ((CGRect) -> Void)?
-    @State private var id = UUID()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -211,6 +241,7 @@ public final class ConsentRootViewController: UIViewController {
     public let root: UIViewController
     private let overlay: UIHostingController<AnyView>
     private let passthrough: ConsentPassthroughView
+    private let region: NoticeTouchRegion
 
     /// - Parameters:
     ///   - root: The app's own root view controller.
@@ -222,7 +253,9 @@ public final class ConsentRootViewController: UIViewController {
     public init(root: UIViewController, configuration: C15tAppleConfiguration? = nil, privacyPolicyURL: URL,
                 theme: ConsentTheme? = nil, autoPresent: Bool = true) {
         self.root = root
-        let passthrough = ConsentPassthroughView()
+        let region = NoticeTouchRegion(hostID: UUID())
+        let passthrough = ConsentPassthroughView(region: region)
+        self.region = region
         self.passthrough = passthrough
         let resolve: @MainActor () -> ConsentCore?
         if let configuration {
@@ -232,7 +265,9 @@ public final class ConsentRootViewController: UIViewController {
         }
         overlay = UIHostingController(rootView: AnyView(Color.clear.modifier(ConsentAttachment(
             resolve: resolve, privacyPolicyURL: privacyPolicyURL, theme: theme, autoPresent: autoPresent,
-            onNoticeFrameChange: { [weak passthrough] in passthrough?.noticeFrame = $0 }))))
+            onNoticeFrameChange: { [weak region] in region?.frame = $0 },
+            hostID: region.hostID,
+            onAttach: { [weak region] in region?.prompt = $0 }))))
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -262,12 +297,21 @@ public final class ConsentRootViewController: UIViewController {
     }
 }
 
-/// Accepts touches only inside the notice card's measured bounds, in window coordinates.
+/// Accepts touches only where the notice card is showing now. Everything else reaches the app.
 @MainActor
 private final class ConsentPassthroughView: UIView {
-    var noticeFrame = CGRect.zero
+    private let region: NoticeTouchRegion
+
+    init(region: NoticeTouchRegion) {
+        self.region = region
+        super.init(frame: .zero)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
     override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
-        noticeFrame.contains(convert(point, to: nil))
+        region.contains(convert(point, to: nil))
     }
 }
 #endif

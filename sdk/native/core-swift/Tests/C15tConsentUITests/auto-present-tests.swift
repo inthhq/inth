@@ -183,6 +183,100 @@ final class AutoPresentTests: XCTestCase {
         func advance(_ delta: Int64) { lock.withLock { value += delta } }
     }
 
+    /// A UIKit root hit-tests the notice card against this region. Once the notice is acknowledged,
+    /// or another scene draws the prompt, the old card bounds must take no touches.
+    func testTheNoticeTouchRegionEmptiesWhenTheNoticeIsGone() async throws {
+        let (core, _) = try await boot("notice-init.json")
+        let prompt = ConsentPrompt.shared(for: core)
+        let region = NoticeTouchRegion(hostID: UUID())
+        region.prompt = prompt
+        region.frame = CGRect(x: 0, y: 600, width: 400, height: 200)
+        let inside = CGPoint(x: 200, y: 700)
+        XCTAssertFalse(region.contains(inside), "nothing is drawn before the scene attaches")
+
+        prompt.attach(region.hostID, active: true, autoPresent: true)
+        XCTAssertTrue(prompt.presenter.noticeVisible)
+        XCTAssertTrue(region.contains(inside))
+        XCTAssertFalse(region.contains(CGPoint(x: 200, y: 100)), "outside the card reaches the app")
+
+        // Another scene takes over drawing the prompt.
+        prompt.attach(region.hostID, active: false, autoPresent: true)
+        let other = UUID()
+        prompt.attach(other, active: true, autoPresent: true)
+        XCTAssertFalse(region.contains(inside))
+        prompt.detach(other)
+        prompt.attach(region.hostID, active: true, autoPresent: true)
+        XCTAssertTrue(region.contains(inside))
+
+        prompt.presenter.commit(.acknowledge)
+        await until { !prompt.presenter.pending }
+        XCTAssertFalse(prompt.presenter.noticeVisible)
+        XCTAssertFalse(region.contains(inside), "the acknowledged card's bounds take no touches")
+    }
+
+    /// The invariant over random sequences: if a choice is owed, auto-present is on, and nothing is
+    /// open, then the person dismissed exactly this owed prompt.
+    func testAnOwedPromptIsNeverLeftUnshownOverRandomSequences() async throws {
+        for seed in 1...60 { try await runSequence(seed: UInt64(seed)) }
+    }
+
+    private func runSequence(seed: UInt64) async throws {
+        var random = SeededRandom(seed: seed)
+        let (core, peer) = try await boot("category-init.json")
+        let presenter = ConsentPresenter(core: core)
+        var dismissed: String?
+        var trace: [String] = []
+        var policies = 0
+        var fingerprint = String(repeating: "a", count: 64)
+        func key() -> String {
+            let s = core.snapshot()
+            return "\(s.resolution.fingerprint ?? ""):\(s.promptRequirement.kind.rawValue):\(s.promptRequirement.reason?.rawValue ?? ""):\(s.promptOwedSince.map { String($0) } ?? "")"
+        }
+        func synced() async {
+            await core.waitUntilIdle()
+            await until { presenter.snapshot.revision == core.snapshot().revision && !presenter.pending }
+        }
+        let actions = ["saved", "reset", "policy", "preferences", "manual", "discard", "customize", "accept", "save", "toggle"]
+        for _ in 0..<40 {
+            let action = actions[Int(random.next() % UInt64(actions.count))]
+            trace.append(action)
+            switch action {
+            case "saved": _ = core.save(.all)
+            case "reset": core.reset()
+            case "policy":
+                policies += 1
+                let next = String(format: "%064d", policies)
+                peer.replace(fingerprint, with: next)
+                fingerprint = next
+                core.refresh()
+            case "preferences": presenter.presentPreferences()
+            case "manual": presenter.presentPrompt()
+            case "discard":
+                if presenter.presentationID != nil, !presenter.pending {
+                    let closes = !(presenter.preferences && presenter.returnsToFirstLayer)
+                    let promptOpen = !presenter.preferences || presenter.returnsToFirstLayer
+                    if closes, promptOpen { dismissed = key() }
+                    presenter.discard()
+                }
+            case "customize": if presenter.presentationID != nil, !presenter.preferences { presenter.customize() }
+            case "accept": if presenter.presentationID != nil { presenter.commit(.accept) }
+            case "save":
+                if presenter.presentationID != nil {
+                    presenter.setCategory(.measurement, random.next() % 2 == 0)
+                    presenter.commit(.save)
+                }
+            default: presenter.autoPresent.toggle()
+            }
+            await synced()
+            let s = core.snapshot()
+            let owed = s.ready && !s.policyPending && s.promptRequirement.kind == .choice
+            if owed, presenter.autoPresent, presenter.presentationID == nil {
+                XCTAssertEqual(dismissed, key(), "seed \(seed): owed prompt left unshown after \(trace)")
+                if dismissed != key() { return }
+            }
+        }
+    }
+
     private func until(_ condition: @MainActor () -> Bool) async {
         for _ in 0..<500 {
             if condition() { return }
@@ -209,6 +303,18 @@ final class AutoPresentTests: XCTestCase {
         core.bootstrap(config)
         await core.waitUntilIdle()
         return (core, peer)
+    }
+
+    /// A small seeded generator, so a failing sequence reproduces.
+    struct SeededRandom {
+        var state: UInt64
+        init(seed: UInt64) { state = seed &* 0x9E3779B97F4A7C15 | 1 }
+        mutating func next() -> UInt64 {
+            state ^= state << 13
+            state ^= state >> 7
+            state ^= state << 17
+            return state
+        }
     }
 
     /// Serves one `/init` body that a test can change between refreshes.
