@@ -72,11 +72,11 @@ class FirebaseAnalyticsIntegration(
 		ConsentCategory.MEASUREMENT,
 		onError,
 		read = { isAllowed -> FirebaseAnalyticsConsent.from(GoogleConsentMode.consent(isAllowed)) },
-	) { _, current ->
-		setCollectionEnabled(false)
-		val consent = current()
-		setConsent(consent)
-		if (consent.analyticsStorage && current().analyticsStorage) setCollectionEnabled(true)
+	) { _, _, current ->
+		// Both run even if disabling collection throws, so denied types still reach
+		// Firebase. Consent is read when sent, so a call that returns late sends current.
+		runAll({ setCollectionEnabled(false) }, { setConsent(current()) })
+		if (current().analyticsStorage) setCollectionEnabled(true)
 	}
 
 	/** Reapply current authority after vendor reset or configuration. No-op after close. */
@@ -215,16 +215,35 @@ class SentryReplayIntegration(
 	override fun close() = binding.close()
 }
 
+/**
+ * Run every call, even when an earlier one throws, then rethrow the first failure
+ * with the others suppressed. Withdrawal paths use this so a failing vendor call
+ * cannot stop a later call from turning collection off.
+ */
+internal fun runAll(vararg calls: () -> Unit) {
+	var failure: Exception? = null
+	for (call in calls) {
+		try {
+			call()
+		} catch (error: Exception) {
+			failure?.addSuppressed(error) ?: run { failure = error }
+		}
+	}
+	failure?.let { throw it }
+}
+
 /** Bind one optional category to a vendor's on/off calls. */
 @Suppress("FunctionName")
-private fun AnalyticsConsentBinding(
+internal fun AnalyticsConsentBinding(
 	core: ConsentCore,
 	category: ConsentCategory,
 	onError: (Exception) -> Unit,
 	apply: (Boolean, () -> Boolean) -> Unit,
 ): ConsentBinding<Boolean> {
 	require(category.optional) { "Analytics integrations require an optional consent category." }
-	return ConsentBinding(core, category, onError, read = { isAllowed -> isAllowed(category) }, apply = apply)
+	return ConsentBinding(core, category, onError, read = { isAllowed -> isAllowed(category) }) { _, allowed, current ->
+		apply(allowed, current)
+	}
 }
 
 /**
@@ -236,37 +255,60 @@ private fun AnalyticsConsentBinding(
  * snapshot, whichever category moved, and [reconcile] skips unchanged state. One
  * registration therefore sees every publication once, which keeps a failing vendor
  * call to one retry and one reported error per publication. [apply] receives the
- * state read before the call and a way to read it again.
+ * state it last applied, the state read before the call and a way to read it again.
+ * The last state is `null` on the first call, after [sync] or [close], and after a
+ * failed call, so a vendor whose start call must run once per grant can tell a new
+ * grant from an unrelated change.
+ *
+ * One update holds the turn at a time, on the thread that publishes it, and vendor
+ * calls run outside the lock. A withdrawal never waits for them: when a category the
+ * update holding the turn grants is withdrawn on another thread, that thread takes
+ * the turn and applies the withdrawal at once, even while the overtaken update is
+ * blocked inside a vendor call. Other changes, including a regrant, are picked up by
+ * whichever update holds the turn when its call returns, so they apply after the
+ * withdrawal. An overtaken update records nothing when it returns; it asks for
+ * current authority to be reapplied, so a grant that completes late cannot leave the
+ * vendor enabled.
  */
-private class ConsentBinding<State>(
+internal class ConsentBinding<State>(
 	private val core: ConsentCore,
 	category: ConsentCategory,
 	private val onError: (Exception) -> Unit,
 	private val read: ((ConsentCategory) -> Boolean) -> State,
-	private val apply: (State, () -> State) -> Unit,
+	private val apply: (previous: State?, state: State, current: () -> State) -> Unit,
 ) : AutoCloseable {
 	private val lock = Any()
-	private var closed = false
+	@Volatile private var closed = false
 	private var attached = false
-	private var updating = false
 	private var needsSync = false
 	private var applied: State? = null
 	private var hasApplied = false
 	private var subscription: Subscription? = null
-	private val observer: (Boolean) -> Unit = {
+	private var applier: Thread? = null
+	private var target: State? = null
+	private var targetGranted: Set<ConsentCategory> = emptySet()
+	// Declared before init, which runs the first update. What the update holding the
+	// turn reads, it may enable, so its categories join the turn's granted set even
+	// before the publication that granted them reaches this binding.
+	private val readCurrent: () -> State = {
 		synchronized(lock) {
-			// gate delivers synchronously before returning its handle. Initial vendor
-			// failures must reach the constructor's cleanup and caller below.
-			if (attached) {
+			val (state, granted) = readGranted()
+			if (applier === Thread.currentThread()) targetGranted = targetGranted + granted
+			state
+		}
+	}
+	private val observer: (Boolean) -> Unit = {
+		// gate delivers synchronously before returning its handle. Initial vendor
+		// failures must reach the constructor's cleanup and caller below.
+		if (synchronized(lock) { attached }) {
+			try {
+				reconcile()
+			} catch (error: Exception) {
+				// A vendor failure must not prevent other observers receiving withdrawal.
 				try {
-					reconcile()
-				} catch (error: Exception) {
-					// A vendor failure must not prevent other observers receiving withdrawal.
-					try {
-						onError(error)
-					} catch (reporterError: Exception) {
-						Log.e("c15t", "Analytics integration error reporter failed", reporterError)
-					}
+					onError(error)
+				} catch (reporterError: Exception) {
+					Log.e("c15t", "Analytics integration error reporter failed", reporterError)
 				}
 			}
 		}
@@ -276,62 +318,127 @@ private class ConsentBinding<State>(
 		synchronized(lock) {
 			subscription = core.gate(category, observer)
 			attached = true
+		}
+		try {
+			reconcile()
+		} catch (error: Throwable) {
+			synchronized(lock) { closed = true }
+			detach()
+			// An enable can take effect before its vendor call reports failure.
 			try {
+				synchronized(lock) { needsSync = true }
 				reconcile()
-			} catch (error: Throwable) {
-				closed = true
-				detach()
-				// An enable can take effect before its vendor call reports failure.
-				try {
-					needsSync = true
-					reconcile()
-				} catch (cleanupError: Throwable) {
-					if (cleanupError !== error) error.addSuppressed(cleanupError)
-				}
-				throw error
+			} catch (cleanupError: Throwable) {
+				if (cleanupError !== error) error.addSuppressed(cleanupError)
 			}
+			throw error
 		}
 	}
 
 	private fun current(): State = read { category -> !closed && core.isAllowed(category) }
 
-	private fun detach() {
-		attached = false
-		subscription?.close()
-		subscription = null
+	/** Read current state and the categories it grants. Call with [lock] held. */
+	private fun readGranted(): Pair<State, Set<ConsentCategory>> {
+		val granted = HashSet<ConsentCategory>()
+		val state = read { category -> (!closed && core.isAllowed(category)).also { if (it) granted += category } }
+		return state to granted
 	}
 
-	fun sync() = synchronized(lock) {
-		if (closed) return@synchronized
-		needsSync = true
+	private fun detach() {
+		val previous = synchronized(lock) {
+			attached = false
+			subscription.also { subscription = null }
+		}
+		previous?.close()
+	}
+
+	fun sync() {
+		synchronized(lock) {
+			if (closed) return
+			needsSync = true
+		}
 		reconcile()
 	}
 
-	private fun reconcile() = synchronized(lock) {
-		if (updating) return@synchronized
-		updating = true
-		try {
-			while (true) {
-				val state = current()
-				if (hasApplied && applied == state && !needsSync) break
-				needsSync = false
+	private fun reconcile() {
+		val me = Thread.currentThread()
+		while (true) {
+			val previous: State?
+			val state: State
+			synchronized(lock) {
+				val (next, granted) = readGranted()
+				val running = applier
+				// Reentrant: this thread's own pass re-reads when its vendor call returns.
+				if (running === me) return
+				if (running != null) {
+					// Nothing the update holding the turn may have enabled was withdrawn:
+					// it picks this change up when its vendor call returns. It reads
+					// current authority before each enabling call, so it may enable
+					// anything granted while it holds the turn.
+					if (granted.containsAll(targetGranted)) {
+						targetGranted = targetGranted + granted
+						return
+					}
+					// A withdrawal takes the turn at once.
+					previous = target
+				} else {
+					if (hasApplied && applied == next && !needsSync) return
+					previous = if (hasApplied && !needsSync) applied else null
+					needsSync = false
+				}
 				hasApplied = false
-				apply(state, ::current)
-				applied = state
-				hasApplied = true
+				applier = me
+				state = next
+				target = next
+				targetGranted = granted
 			}
-		} finally {
-			updating = false
+			val failure = try {
+				apply(previous, state, readCurrent)
+				null
+			} catch (error: Throwable) {
+				error
+			}
+			val again = synchronized(lock) {
+				if (applier === me) {
+					applier = null
+					if (failure == null) {
+						applied = state
+						hasApplied = true
+					}
+					// Pick up changes made while the call ran, unless it failed.
+					failure == null
+				} else {
+					// A withdrawal overtook this update while its call ran, so its result
+					// is stale. Reapply current authority once the turn is free.
+					needsSync = true
+					applier == null
+				}
+			}
+			if (failure != null) {
+				if (again) {
+					try {
+						reconcile()
+					} catch (retryError: Throwable) {
+						if (retryError !== failure) failure.addSuppressed(retryError)
+					}
+				}
+				throw failure
+			}
+			if (!again) return
 		}
 	}
 
-	override fun close() = synchronized(lock) {
-		if (!closed) {
-			closed = true
-			// A vendor reset may have changed capture since the last consent update.
-			needsSync = true
-			detach()
+	override fun close() {
+		val first = synchronized(lock) {
+			val first = !closed
+			if (first) {
+				closed = true
+				// A vendor reset may have changed capture since the last consent update.
+				needsSync = true
+			}
+			first
 		}
+		if (first) detach()
 		reconcile()
 	}
 }

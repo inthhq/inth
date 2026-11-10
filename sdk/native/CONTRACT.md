@@ -401,6 +401,18 @@ keeps the SDK switched off. A host that cannot wait that long bounds the wait it
 The core grows no timeout, because whatever number it picked would become a legally
 loadable answer the policy never gave.
 
+The bundled vendor helpers (`C15tApple`, `com.c15t.android.integrations`,
+`@c15t/react-native/integrations`) hold one withdrawal rule on all three platforms: on
+withdrawal, every stop call for the helper runs, in order, whether or not earlier calls
+or in-flight grants fail or hang, and failures are reported through `onError` (Swift's
+vendor closures cannot throw, so Swift has no `onError`). A
+withdrawal never waits behind a grant still inside a vendor call, on another thread
+in Kotlin and Swift, or as an unsettled promise in React Native. A later regrant waits
+for that withdrawal and applies after it. When the overtaken grant returns, the helper
+reapplies current consent, so a late grant cannot leave the vendor enabled. Each
+enabling call reads current consent immediately before it is made. The shared
+bindings own this rule and their withdrawal tests pin it per helper.
+
 Platform privacy
 ----------------
 
