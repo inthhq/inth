@@ -70,11 +70,13 @@ public final class ConsentPrompt: ObservableObject {
         if presenter.autoPresent != autoPresent { presenter.autoPresent = autoPresent }
     }
 
-    /// The scene behind `id` went away. Another attached scene takes over.
+    /// The scene behind `id` went away. Another attached scene takes over. Until one does, nothing
+    /// presents by itself, so a scene that attaches later with `autoPresent: false` finds nothing open.
     func detach(_ id: UUID) {
         guard host == id else { return }
         host = nil
         hostActive = false
+        presenter.autoPresent = false
     }
 }
 

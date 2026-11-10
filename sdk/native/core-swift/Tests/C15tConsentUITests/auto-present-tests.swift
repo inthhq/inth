@@ -97,6 +97,24 @@ final class AutoPresentTests: XCTestCase {
         XCTAssertEqual(prompt.presenter.presentationID, session)
     }
 
+    /// With no scene attached nothing presents by itself, so a scene that opted out finds nothing open.
+    func testNothingPresentsWhileNoSceneIsAttached() async throws {
+        let (core, _) = try await boot("category-init.json")
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let prompt = ConsentPrompt.shared(for: core)
+        let automatic = UUID()
+        prompt.attach(automatic, active: true, autoPresent: true)
+        prompt.detach(automatic)
+
+        core.reset()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
+        XCTAssertNil(prompt.presenter.presentationID, "nothing presents without a scene")
+
+        prompt.attach(UUID(), active: true, autoPresent: false)
+        XCTAssertNil(prompt.presenter.presentationID, "the opted-out scene finds nothing open")
+    }
+
     func testSharedPromptOptOutAndOutcomeHook() async throws {
         let (core, _) = try await boot("category-init.json")
         let prompt = ConsentPrompt.shared(for: core)

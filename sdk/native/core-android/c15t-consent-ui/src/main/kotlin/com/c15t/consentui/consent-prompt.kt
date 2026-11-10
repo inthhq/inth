@@ -79,9 +79,13 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
         return host === token
     }
 
-    /** The screen behind [token] went away. Another attached screen takes over. */
+    /**
+     * The screen behind [token] went away. Another attached screen takes over. Until one does,
+     * nothing presents by itself, so a screen that attaches later with `autoPresent = false`
+     * finds nothing open.
+     */
     internal fun detach(token: Any) {
-        if (host === token) { host = null; hostStarted = false }
+        if (host === token) { host = null; hostStarted = false; presenter.autoPresent = false }
     }
 
     companion object {

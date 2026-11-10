@@ -403,8 +403,9 @@ The rules, identical on all three:
 - **Never two at once.** Swift and Kotlin keep one `ConsentPrompt` per core with a
   single `ConsentPresenter`; every scene, Activity or composable that attaches
   shares its session and draft, and only one attached host draws it: the first,
-  or a foreground host when the one drawing it is in the background. React
-  Native keeps one ledger per client, so strict mode, remounts and nested
+  or a foreground host when the one drawing it is in the background. Auto-present
+  follows the host's setting and is off while no host is attached, so nothing
+  opens unseen for a host that opted out to find. React Native keeps one ledger per client, so strict mode, remounts and nested
   providers call native once, and the native host answers any racing call with
   `already-presented`.
 - **Opting out changes nothing else.** With auto-present off, an owed notice is

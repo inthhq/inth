@@ -116,6 +116,33 @@ class ConsentPromptTest {
         firstLayers().assertCountEquals(1)
     }
 
+    /** With no screen attached nothing presents by itself, so a screen that opted out finds nothing open. */
+    @Test fun nothingPresentsWhileNoScreenIsAttached() {
+        val (core, _) = boot(fixture("category-init.json"))
+        assertTrue(core.save(CommitIntent.All).ok)
+        var screen by mutableIntStateOf(0)
+        compose.setContent {
+            when (screen) {
+                0 -> C15tConsent(URL, core = core)
+                2 -> C15tConsent(URL, autoPresent = false, core = core)
+            }
+        }
+        compose.waitForIdle()
+        val prompt = ConsentPrompt.of(core)
+        compose.runOnIdle { screen = 1 }
+        compose.waitForIdle()
+
+        core.reset()
+        await { core.snapshot().promptRequirement.acknowledge }
+        compose.waitForIdle()
+        assertNull("nothing presents without a screen", prompt.presenter.presentationID)
+
+        compose.runOnIdle { screen = 2 }
+        compose.waitForIdle()
+        assertNull("the opted-out screen finds nothing open", prompt.presenter.presentationID)
+        firstLayers().assertCountEquals(0)
+    }
+
     @Test fun dismissedPromptStaysClosedWhenAScreenComesBack() {
         val (core, _) = boot(fixture("category-init.json"))
         var generation by mutableIntStateOf(0)
