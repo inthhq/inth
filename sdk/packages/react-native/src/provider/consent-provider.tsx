@@ -39,6 +39,15 @@ import type { ConsentSafeAreaInsets } from './safe-area-context';
  * {@link presentConsentPrompt} or {@link presentPreferences}.
  */
 export type ConsentProviderPromptProps =
+	// The opt-out comes first on purpose. TypeScript reports a failed union
+	// against its last member, so `<ConsentProvider>` with no props is told that
+	// `privacyPolicyURL` is missing rather than that `autoPresent` is.
+	| {
+			/** Present nothing by itself. The manual presenter APIs work as before. */
+			readonly autoPresent: false;
+			/** Unused while `autoPresent` is `false`. */
+			readonly privacyPolicyURL?: string;
+	  }
 	| {
 			/**
 			 * Present the native prompt once the core is ready and a prompt is owed,
@@ -47,15 +56,9 @@ export type ConsentProviderPromptProps =
 			 *
 			 * @default true
 			 */
-			readonly autoPresent?: true;
+			readonly autoPresent?: boolean;
 			/** The app's HTTPS privacy-policy URL, linked from the prompt. */
 			readonly privacyPolicyURL: string;
-	  }
-	| {
-			/** Present nothing by itself. The manual presenter APIs work as before. */
-			readonly autoPresent: false;
-			/** Unused while `autoPresent` is `false`. */
-			readonly privacyPolicyURL?: string;
 	  };
 
 /**
@@ -69,7 +72,7 @@ export type ConsentProviderProps = ConsentProviderBaseProps &
  */
 export interface ConsentProviderBaseProps {
 	/** The app subtree that may read consent. */
-	readonly children: ReactNode;
+	readonly children?: ReactNode;
 	/**
 	 * The system-reserved bands to lay the consent surfaces outside of.
 	 *

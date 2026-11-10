@@ -22,7 +22,10 @@ remounts, nested providers and a manual `presentConsentPrompt` call never open
 a second prompt.
 
 This changes existing apps. `privacyPolicyURL` is now required unless you pass
-`autoPresent={false}`, and the provider throws on render without an HTTPS URL.
+`autoPresent={false}`. TypeScript names the missing `privacyPolicyURL`, and the
+provider throws on render without an HTTPS URL. `autoPresent` also takes a
+boolean decided at runtime, as long as the URL is passed, and `children` is
+optional.
 An app that renders `ConsentBanner`, `ConsentDialog` or its own prompt should
 pass `autoPresent={false}`; `presentConsentPrompt` and `presentPreferences` work
 as before.
