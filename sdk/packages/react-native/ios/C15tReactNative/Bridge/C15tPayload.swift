@@ -97,6 +97,9 @@ public enum C15tPayload {
 
     private static let overridesNullKeys = ["country", "region", "gpc"]
     private static let resolutionNullKeys = ["policyId", "fingerprint"]
+    /// `LocationResponse` declares both as `string | null`, and a synthesized encoder
+    /// drops a nil one, so the key is restored as an explicit null.
+    private static let locationNullKeys = ["countryCode", "regionCode"]
 
     /// The keys `NativeOverridesInput` declares. A document that names none of them is
     /// not an override set, and applying it would wipe a language the app relies on.
@@ -189,6 +192,14 @@ public enum C15tPayload {
                 patched[key] = .null
             }
             fields["resolution"] = .object(patched)
+        }
+
+        if case let .object(location)? = fields["location"] {
+            var patched = location
+            for key in locationNullKeys where patched[key] == nil {
+                patched[key] = .null
+            }
+            fields["location"] = .object(patched)
         }
 
         wire = .object(fields)
