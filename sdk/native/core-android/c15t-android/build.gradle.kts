@@ -75,6 +75,7 @@ dependencies {
 
 	implementation(libs.androidx.startup)
 	implementation(libs.androidx.lifecycle.process)
+	implementation(libs.androidx.webkit)
 	compileOnly(libs.androidx.annotation)
 
 	// JUnit directly: AGP's built-in Kotlin does not register a test framework, so

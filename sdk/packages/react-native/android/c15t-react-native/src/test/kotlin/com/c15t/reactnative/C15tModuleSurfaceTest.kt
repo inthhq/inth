@@ -26,6 +26,7 @@ class C15tModuleSurfaceTest {
 		val declared = mapOf(
 			"getBootstrap" to 0,
 			"getSnapshot" to 0,
+			"getWebViewConsent" to 0,
 			"commit" to 2,
 			"setOverrides" to 2,
 			"dismissNotice" to 0,
@@ -49,7 +50,7 @@ class C15tModuleSurfaceTest {
 		}
 		assertEquals(
 			"the spec declares no method the bridge does not implement",
-			13,
+			14,
 			declared.size,
 		)
 	}
@@ -87,7 +88,7 @@ class C15tModuleSurfaceTest {
 	}
 
 	private companion object {
-		val SYNC_METHODS = listOf("getBootstrap", "getSnapshot", "getTrackingAuthorization")
+		val SYNC_METHODS = listOf("getBootstrap", "getSnapshot", "getWebViewConsent", "getTrackingAuthorization")
 
 		val PROMISE_METHODS =
 			listOf("commit", "setOverrides", "refresh", "identify", "logout", "reset", "requestTrackingAuthorization")

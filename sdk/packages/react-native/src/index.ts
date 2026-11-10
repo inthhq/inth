@@ -99,6 +99,13 @@ export type {
 	ConsentReadyState,
 } from './headless';
 export { useC15tBootstrap, useSnapshot } from './hooks';
+export { useWebViewConsent } from './webview/use-webview-consent';
+export type {
+	UseWebViewConsentOptions,
+	WebViewConsentMessageEvent,
+	WebViewConsentProps,
+	WebViewConsentTarget,
+} from './webview/use-webview-consent';
 export {
 	useConsentActions,
 	useDismissNotice,

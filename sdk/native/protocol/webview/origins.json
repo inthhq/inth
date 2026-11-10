@@ -1,0 +1,41 @@
+{
+	"description": "Allowed-origin normalization for the WebView consent helpers. Every platform must map each input to the same output; null means the helper rejects the entry. See 'WebView consent' in native/CONTRACT.md.",
+	"cases": [
+		{ "input": "https://example.com", "origin": "https://example.com" },
+		{ "input": "https://Example.COM/", "origin": "https://example.com" },
+		{ "input": "HTTPS://example.com", "origin": "https://example.com" },
+		{ "input": "https://example.com:443", "origin": "https://example.com" },
+		{
+			"input": "https://example.com:8443",
+			"origin": "https://example.com:8443"
+		},
+		{
+			"input": "https://shop.example.co.uk",
+			"origin": "https://shop.example.co.uk"
+		},
+		{
+			"input": "https://xn--bcher-kva.de",
+			"origin": "https://xn--bcher-kva.de"
+		},
+		{ "input": "http://localhost:3000", "origin": "http://localhost:3000" },
+		{ "input": "http://localhost:80", "origin": "http://localhost" },
+		{ "input": "http://127.0.0.1:8080", "origin": "http://127.0.0.1:8080" },
+		{ "input": "http://[::1]:3000", "origin": "http://[::1]:3000" },
+		{ "input": "http://example.com", "origin": null },
+		{ "input": "http://10.0.2.2:3000", "origin": null },
+		{ "input": "https://example.com/path", "origin": null },
+		{ "input": "https://example.com/?q=1", "origin": null },
+		{ "input": "https://example.com#top", "origin": null },
+		{ "input": "https://user@example.com", "origin": null },
+		{ "input": "https://*.example.com", "origin": null },
+		{ "input": "https://bücher.de", "origin": null },
+		{ "input": "https://exa mple.com", "origin": null },
+		{ "input": "https://example.com:0", "origin": null },
+		{ "input": "https://example.com:65536", "origin": null },
+		{ "input": "https://", "origin": null },
+		{ "input": "file:///index.html", "origin": null },
+		{ "input": "*", "origin": null },
+		{ "input": "", "origin": null },
+		{ "input": " https://example.com", "origin": null }
+	]
+}

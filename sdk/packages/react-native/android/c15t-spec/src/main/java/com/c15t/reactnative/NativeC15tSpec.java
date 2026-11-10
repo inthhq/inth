@@ -52,6 +52,9 @@ public abstract class NativeC15tSpec extends ReactContextBaseJavaModule implemen
 	@ReactMethod(isBlockingSynchronousMethod = true)
 	public abstract String getSnapshot();
 
+	@ReactMethod(isBlockingSynchronousMethod = true)
+	public abstract String getWebViewConsent();
+
 	@ReactMethod
 	public abstract void commit(String intent, Promise promise);
 

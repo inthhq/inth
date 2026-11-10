@@ -45,6 +45,8 @@ import type {
 } from '../protocol';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
+import { parseWebViewConsent } from '../webview/payload';
+import type { WebViewConsentPayload } from '../webview/payload';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -118,6 +120,17 @@ export interface ConsentClient {
 	 * @returns `true` when the snapshot allows it.
 	 */
 	isAllowed: (category: AllConsentNames) => boolean;
+	/**
+	 * WebView consent from the native core: the state a page reads and a
+	 * fresh token. `null` when the native build predates
+	 * `getWebViewConsent`, or replied with something unreadable; then a
+	 * WebView gets nothing and the page shows its own banner.
+	 *
+	 * Read through `useWebViewConsent()` rather than directly.
+	 *
+	 * @returns The payload, or `null`.
+	 */
+	getWebViewConsent: () => WebViewConsentPayload | null;
 	/**
 	 * What the platform says about tracking, for the category an SDK is about to
 	 * start.
@@ -850,6 +863,10 @@ export const createConsentClient = function createConsentClient(
 		},
 		getSnapshot: currentSnapshot,
 		getTrackingAuthorization: currentTracking,
+		getWebViewConsent: () =>
+			typeof nativeModule.getWebViewConsent === 'function'
+				? parseWebViewConsent(nativeModule.getWebViewConsent())
+				: null,
 		identify: (externalId: string) =>
 			afterMutation(nativeModule.identify(externalId)),
 		isAllowed: (category: AllConsentNames) =>

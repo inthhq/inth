@@ -128,6 +128,10 @@ export default defineConfig({
 		'.tmp-bun/**',
 		'apps/shadcn-registry/vendor/**',
 		'packages/c15t/shims/**',
+		// Injected verbatim into WebView pages, where page script may have
+		// replaced built-ins first. They avoid iterators and destructuring on
+		// purpose; see "WebView consent" in native/CONTRACT.md.
+		'native/protocol/webview/*.js',
 	],
 	overrides: [
 		{

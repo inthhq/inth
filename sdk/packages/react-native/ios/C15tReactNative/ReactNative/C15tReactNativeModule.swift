@@ -81,6 +81,13 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         return handler.snapshotPayload()
     }
 
+    /// WebView consent: the state a page reads, and a fresh token for one WebView.
+    @objc(getWebViewConsent)
+    public func getWebViewConsent() -> String {
+        followCore()
+        return handler.webViewConsentPayload()
+    }
+
     /// The platform tracking answer.
     ///
     /// No `followCore()`: this reads Apple, not the consent core, and the answer is the
