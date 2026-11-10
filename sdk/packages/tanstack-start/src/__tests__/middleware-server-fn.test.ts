@@ -117,7 +117,6 @@ test('renders ConsentRoot from a server function that lists it', async () => {
 
 	const outcome = await callOnServer(fn, request);
 	expect(outcome.error).toBeUndefined();
-	// A server function has no response for a cookie: no subject is minted.
 	expect(request.headers.get('cookie')).toBeNull();
 
 	const stream = await renderToReadableStream(

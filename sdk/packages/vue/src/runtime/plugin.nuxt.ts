@@ -1,4 +1,4 @@
-import type { HydrationRecords, StorageConfig } from '@c15t/core';
+import type { HydrationRecords } from '@c15t/core';
 import type { RequestConsentState } from '@c15t/core/server';
 import { defu } from 'defu';
 import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
@@ -6,7 +6,6 @@ import { computed, markRaw, shallowRef, toRaw, watch } from 'vue';
 import {
 	defineNuxtPlugin,
 	showError,
-	useCookie,
 	useAppConfig,
 	useHead,
 	useRequestEvent,
@@ -107,51 +106,6 @@ export const serverScriptStartHead = async function serverScriptStartHead(
 		tag.nonce = config.nonce;
 	}
 	return { script: [tag] };
-};
-
-/**
- * Gives a visitor without a subject ID one on the server render: the
- * response sets `<storageKey>-sid` through Nuxt's `useCookie`, and the
- * request this returns carries the cookie, so the records and the consent
- * the render reads hold the same ID the browser starts with. The cookie
- * holds only the ID, so the banner still shows. A prefetch, or a render
- * with no request event to answer, gets none.
- *
- * @param nuxtApp - Restores the Nuxt context after the import.
- * @param request - What the plugin read about the request.
- * @param storage - The `storageConfig` the browser uses.
- * @returns The request, with the subject cookie in its `cookie` header.
- * @internal
- */
-const withSubjectCookie = async function withSubjectCookie(
-	nuxtApp: { runWithContext: (run: () => void) => unknown },
-	request: NuxtConsentRequest,
-	storage: StorageConfig | undefined
-): Promise<NuxtConsentRequest> {
-	if (!request.event) {
-		return request;
-	}
-	const { resolveRequestSubject } = await import('@c15t/core/server');
-	const subject = resolveRequestSubject({
-		request: { headers: request.headers, url: request.url },
-		storage,
-	});
-	if (!subject?.setCookie) {
-		return request;
-	}
-	const { header: _header, name, value, ...attributes } = subject.setCookie;
-	nuxtApp.runWithContext(() => {
-		// Encode like `header` does, so the cookie holds the same bytes as
-		// the request below, whatever Nuxt's default encoder does.
-		useCookie<string>(name, {
-			...attributes,
-			encode: encodeURIComponent,
-		}).value = value;
-	});
-	return {
-		...request,
-		headers: { ...request.headers, cookie: subject.cookie },
-	};
 };
 
 /**
@@ -329,9 +283,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	const headers = requestHeaders.value;
 	const onServer = rendersOnServer();
 	const readsRecords = !(config.value.consentSource || shared);
-	// The server fills it in below, once the visitor has a subject ID. The
-	// browser reads the cookie itself only when the payload has none, in
-	// the engine (`deferred/engine.ts`).
+	// The server fills it in below from the request's cookies. The browser
+	// reads the cookie itself only when the payload has none, in the engine
+	// (`deferred/engine.ts`).
 	const initialRecords = useNuxtState<HydrationRecords | undefined>(
 		'c15t:records',
 		() => undefined
@@ -351,17 +305,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 		() => undefined
 	);
 	// Read before the first await, while the Nuxt context is current.
-	const request =
+	const request: NuxtConsentRequest | undefined =
 		SERVER_BUILD !== false && onServer && readsRecords
-			? await withSubjectCookie(
-					nuxtApp,
-					{
-						event: useRequestEvent(),
-						headers: useRequestHeaders(),
-						url: useRequestURL(),
-					},
-					config.value.storageConfig
-				)
+			? {
+					event: useRequestEvent(),
+					headers: useRequestHeaders(),
+					url: useRequestURL(),
+				}
 			: undefined;
 	if (SERVER_BUILD !== false && request) {
 		const { readStoredRecordsFromCookieHeader } =
