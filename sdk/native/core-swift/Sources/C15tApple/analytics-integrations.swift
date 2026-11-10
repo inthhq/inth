@@ -275,10 +275,15 @@ final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
         return (state, granted)
     }
 
+    /// Current state. What the update holding the turn reads, it may enable, so its
+    /// categories join the turn's granted set even before the publication that
+    /// granted them reaches this binding.
     private var current: State {
         lock.lock()
         defer { lock.unlock() }
-        return readLocked().state
+        let (state, granted) = readLocked()
+        if applier === Thread.current { targetGranted.formUnion(granted) }
+        return state
     }
 
     private func refresh() {
@@ -288,9 +293,12 @@ final class ConsentStateBinding<State: Equatable>: @unchecked Sendable {
             let (next, granted) = readLocked()
             let previous: State?
             if let running = applier {
-                // Reentrant, or nothing the update holding the turn grants was
-                // withdrawn: it picks this change up when its vendor call returns.
+                // Reentrant, or nothing the update holding the turn may have enabled
+                // was withdrawn: it picks this change up when its vendor call returns.
+                // It reads current state before each enabling call, so it may enable
+                // anything granted while it holds the turn.
                 if running === me || granted.isSuperset(of: targetGranted) {
+                    targetGranted.formUnion(granted)
                     lock.unlock()
                     return
                 }

@@ -2,6 +2,8 @@ package com.c15t.android.integrations
 
 import com.c15t.core.CommitIntent
 import com.c15t.core.ConsentCore
+import com.c15t.core.model.ConsentCategory.MARKETING
+import com.c15t.core.model.ConsentCategory.MEASUREMENT
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -43,31 +45,42 @@ internal class BlockingRecorder {
 	fun since(mark: Int): List<String> = synchronized(calls) { calls.drop(mark) }
 }
 
-class IntegrationHelper internal constructor(val name: String, internal val connect: (ConsentCore, (String) -> Unit, (Exception) -> Unit) -> AutoCloseable) {
+class IntegrationHelper internal constructor(
+	val name: String,
+	internal val connect: (ConsentCore, (String) -> Unit, (Exception) -> Unit) -> AutoCloseable,
+	/** The same helper running under measurement, for helpers that take a category. */
+	internal val measured: (ConsentCore, (String) -> Unit, (Exception) -> Unit) -> AutoCloseable = connect,
+) {
 	override fun toString() = name
 }
 
 internal val integrationHelpers = listOf(
-	IntegrationHelper("Firebase") { core, r, e ->
+	IntegrationHelper("Firebase", { core, r, e ->
 		FirebaseAnalyticsIntegration(core, setConsent = { r("consent:${it.analyticsStorage}:${it.adStorage}") }, setCollectionEnabled = { r("collection:$it") }, onError = e)
-	},
-	IntegrationHelper("PostHog") { core, r, e -> PostHogIntegration(core, optIn = { r("optIn") }, optOut = { r("optOut") }, onError = e) },
-	IntegrationHelper("Mixpanel") { core, r, e -> MixpanelIntegration(core, optInTracking = { r("optIn") }, optOutTracking = { r("optOut") }, onError = e) },
-	IntegrationHelper("Sentry Replay") { core, r, e -> SentryReplayIntegration(core, start = { r("start") }, stop = { r("stop") }, onError = e) },
-	IntegrationHelper("AdMob") { core, r, e -> AdMobIntegration(core, setConsent = { r("ads:${it.adStorage}") }, onError = e) },
-	IntegrationHelper("AppsFlyer") { core, r, e ->
+	}),
+	IntegrationHelper("PostHog", { core, r, e -> PostHogIntegration(core, optIn = { r("optIn") }, optOut = { r("optOut") }, onError = e) }),
+	IntegrationHelper("Mixpanel", { core, r, e -> MixpanelIntegration(core, optInTracking = { r("optIn") }, optOutTracking = { r("optOut") }, onError = e) }),
+	IntegrationHelper("Sentry Replay", { core, r, e -> SentryReplayIntegration(core, start = { r("start") }, stop = { r("stop") }, onError = e) }),
+	IntegrationHelper("AdMob", { core, r, e -> AdMobIntegration(core, setConsent = { r("ads:${it.adStorage}") }, onError = e) }),
+	IntegrationHelper("AppsFlyer", { core, r, e ->
 		AppsFlyerIntegration(core, setConsentData = { r("consent:${it.adUserData}") }, stop = { r("stop:$it") }, start = { r("start") }, onError = e)
-	},
-	IntegrationHelper("Adjust") { core, r, e ->
+	}, { core, r, e ->
+		AppsFlyerIntegration(core, MEASUREMENT, setConsentData = { r("consent:${it.adUserData}") }, stop = { r("stop:$it") }, start = { r("start") }, onError = e)
+	}),
+	IntegrationHelper("Adjust", { core, r, e ->
 		AdjustIntegration(core, enable = { r("enable") }, disable = { r("disable") }, trackThirdPartySharing = { r("sharing:${it.adUserData}") }, onError = e)
-	},
-	IntegrationHelper("Braze") { core, r, e ->
+	}, { core, r, e ->
+		AdjustIntegration(core, MEASUREMENT, enable = { r("enable") }, disable = { r("disable") }, trackThirdPartySharing = { r("sharing:${it.adUserData}") }, onError = e)
+	}),
+	IntegrationHelper("Braze", { core, r, e ->
 		BrazeIntegration(core, enableSdk = { r("enable") }, disableSdk = { r("disable") }, setGoogleAdsConsent = { r("ads:${it.adUserData}") }, onError = e)
-	},
-	IntegrationHelper("Branch") { core, r, e ->
+	}, { core, r, e ->
+		BrazeIntegration(core, MEASUREMENT, enableSdk = { r("enable") }, disableSdk = { r("disable") }, setGoogleAdsConsent = { r("ads:${it.adUserData}") }, onError = e)
+	}),
+	IntegrationHelper("Branch", { core, r, e ->
 		BranchIntegration(core, setConsumerProtectionAttributionLevel = { r("level:$it") }, setDMAParamsForEEA = { r("dma:${it.adUserData}") }, onError = e)
-	},
-	IntegrationHelper("Singular") { core, r, e ->
+	}),
+	IntegrationHelper("Singular", { core, r, e ->
 		SingularIntegration(core,
 			start = { r("start:$it") },
 			limitDataSharing = { r("limit:$it") },
@@ -76,16 +89,32 @@ internal val integrationHelpers = listOf(
 			trackingOptIn = { r("optIn") },
 			onError = e,
 		)
-	},
-	IntegrationHelper("Amplitude") { core, r, e -> AmplitudeIntegration(core, setOptOut = { r("optOut:$it") }, onError = e) },
-	IntegrationHelper("Meta App Events") { core, r, e ->
+	}, { core, r, e ->
+		SingularIntegration(core, MEASUREMENT,
+			start = { r("start:$it") },
+			limitDataSharing = { r("limit:$it") },
+			stopAllTracking = { r("stop") },
+			resumeAllTracking = { r("resume") },
+			trackingOptIn = { r("optIn") },
+			onError = e,
+		)
+	}),
+	IntegrationHelper("Amplitude", { core, r, e -> AmplitudeIntegration(core, setOptOut = { r("optOut:$it") }, onError = e) }),
+	IntegrationHelper("Meta App Events", { core, r, e ->
 		MetaAppEventsIntegration(core,
 			setAutoLogAppEventsEnabled = { r("autoLog:$it") },
 			setAdvertiserIDCollectionEnabled = { r("advertiserId:$it") },
 			setLimitedDataUse = { r("ldu:$it") },
 			onError = e,
 		)
-	},
+	}, { core, r, e ->
+		MetaAppEventsIntegration(core, MEASUREMENT,
+			setAutoLogAppEventsEnabled = { r("autoLog:$it") },
+			setAdvertiserIDCollectionEnabled = { r("advertiserId:$it") },
+			setLimitedDataUse = { r("ldu:$it") },
+			onError = e,
+		)
+	}),
 )
 
 @RunWith(Parameterized::class)
@@ -200,6 +229,54 @@ class WithdrawalPreemptionTest(private val helper: IntegrationHelper) {
 		val lastDenial = afterRelease.indexOfLast { it !in grantedOnly }
 		assertTrue("the vendor ends granted", lastGrant > lastDenial)
 		integration.close()
+	}
+
+	@Test
+	fun `a second withdrawal runs at once after the first preempting withdrawal returned`() {
+		// The calls a withdrawal of measurement makes from a measurement-only grant.
+		val probeCore = kernel()
+		val probe = BlockingRecorder()
+		val probeIntegration = helper.measured(probeCore, probe::call, ::unexpectedError)
+		var mark = probe.calls.size
+		probeCore.choose(MEASUREMENT to true, MARKETING to true)
+		val grant = probe.since(mark)
+		probeCore.choose(MARKETING to false)
+		mark = probe.calls.size
+		probeCore.choose(MEASUREMENT to false)
+		val stops = probe.since(mark)
+		probeIntegration.close()
+
+		// Hold each grant-time call in turn: withdraw marketing, let that withdrawal
+		// return, then withdraw measurement.
+		for (held in grant.indices) {
+			val core = kernel()
+			val recorder = BlockingRecorder()
+			val integration = helper.measured(core, recorder::call, ::unexpectedError)
+			val release = CountDownLatch(1)
+			val entered = recorder.blockNext(release, skip = held)
+			val granting = Thread { core.save(CommitIntent.Custom(mapOf(MEASUREMENT to true, MARKETING to true))) }
+			granting.start()
+			assertTrue(entered.await(5, TimeUnit.SECONDS))
+
+			val first = Thread { core.save(CommitIntent.Custom(mapOf(MARKETING to false))) }
+			first.start()
+			first.join(5_000)
+			assertFalse("the first withdrawal must not wait for grant call $held", first.isAlive)
+			val secondMark = recorder.calls.size
+			val second = Thread { core.save(CommitIntent.Custom(mapOf(MEASUREMENT to false))) }
+			second.start()
+			second.join(5_000)
+			assertFalse("the second withdrawal must not wait for grant call $held", second.isAlive)
+			assertEquals(
+				"measurement's stop calls ran while grant call $held was blocked",
+				stops,
+				recorder.since(secondMark).filter { it in stops }.take(stops.size),
+			)
+			release.countDown()
+			granting.join(5_000)
+			assertFalse(granting.isAlive)
+			integration.close()
+		}
 	}
 
 	@Test
