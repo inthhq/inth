@@ -362,6 +362,21 @@ describe('wire drift', () => {
 		vi.restoreAllMocks();
 	});
 
+	test('an older binary without promptOwedSince reads as null and is not drift', () => {
+		const warnings = captureWarnings();
+		const { promptOwedSince: _omitted, ...older } = buildSnapshot({
+			revision: 4,
+		});
+		const { client } = makeClient({
+			snapshot: older as unknown as ConsentSnapshot,
+		});
+
+		expect(client.getSnapshot().promptOwedSince).toBeNull();
+		expect(client.getSnapshot().revision).toBe(4);
+		expect(warnings.warn).not.toHaveBeenCalled();
+		warnings.restore();
+	});
+
 	test('names a key the native bridge renamed', () => {
 		const warnings = captureWarnings();
 		const { client } = makeClient({ snapshot: drifted() });

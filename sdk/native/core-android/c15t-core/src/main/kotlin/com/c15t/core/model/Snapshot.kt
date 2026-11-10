@@ -3,6 +3,7 @@ package com.c15t.core.model
 import com.c15t.core.tc.GlobalVendorList
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -321,6 +322,17 @@ data class ConsentSnapshot(
 	 */
 	@SerialName("iab")
 	val iab: KernelIabState? = null,
+	/**
+	 * The [revision] at which the prompt owed now became owed, or `null` while nothing is owed.
+	 *
+	 * It changes every time a prompt becomes owed again, including the same requirement owed
+	 * again after an answer or a reset, so a reader that missed the snapshots in between still
+	 * knows it is a new prompt. The core sets it where it installs each state, which sees every
+	 * state in order. It is not kernel state: it stays out of [com.c15t.core.wire.SnapshotWire]
+	 * and the stored envelope, and the React Native bridge adds it to its payload.
+	 */
+	@Transient
+	val promptOwedSince: Long? = null,
 ) {
 	/**
 	 * Whether [category] may run right now.

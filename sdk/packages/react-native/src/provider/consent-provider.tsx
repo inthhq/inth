@@ -24,10 +24,14 @@ import {
 	onConsentPresenterOutcome,
 	presentPreferences,
 	sessionPrivacyPolicyURL,
+	setBeforeConsentPrompt,
 } from '../native/presenter';
 import {
 	assertPrivacyPolicyURL,
+	attachAutoPresent,
+	linksNativeUI,
 	presentOwedPrompt,
+	recordConsentPresenter,
 	selectOwedPromptKey,
 } from './auto-present';
 import { ConsentClientContext } from './consent-context';
@@ -53,6 +57,15 @@ import type { ConsentTrackingRequest } from './tracking-sequence';
  * {@link presentConsentPrompt} or {@link presentPreferences}.
  */
 export type ConsentProviderPromptProps =
+	// The opt-out comes first on purpose. TypeScript reports a failed union
+	// against its last member, so `<ConsentProvider>` with no props is told that
+	// `privacyPolicyURL` is missing rather than that `autoPresent` is.
+	| {
+			/** Present nothing by itself. The manual presenter APIs work as before. */
+			readonly autoPresent: false;
+			/** Unused while `autoPresent` is `false`. */
+			readonly privacyPolicyURL?: string;
+	  }
 	| {
 			/**
 			 * Present the native prompt once the core is ready and a prompt is owed,
@@ -61,15 +74,9 @@ export type ConsentProviderPromptProps =
 			 *
 			 * @default true
 			 */
-			readonly autoPresent?: true;
+			readonly autoPresent?: boolean;
 			/** The app's HTTPS privacy-policy URL, linked from the prompt. */
 			readonly privacyPolicyURL: string;
-	  }
-	| {
-			/** Present nothing by itself. The manual presenter APIs work as before. */
-			readonly autoPresent: false;
-			/** Unused while `autoPresent` is `false`. */
-			readonly privacyPolicyURL?: string;
 	  };
 
 /**
@@ -83,7 +90,7 @@ export type ConsentProviderProps = ConsentProviderBaseProps &
  */
 export interface ConsentProviderBaseProps {
 	/** The app subtree that may read consent. */
-	readonly children: ReactNode;
+	readonly children?: ReactNode;
 	/**
 	 * The system-reserved bands to lay the consent surfaces outside of.
 	 *
@@ -161,7 +168,9 @@ export interface ConsentProviderBaseProps {
  *   protocol this bundle does not support. The message names both sides and the
  *   fix, which is a rebuild rather than a JavaScript update.
  * @throws {TypeError} When the provider presents the prompt and
- *   `privacyPolicyURL` is not an HTTPS URL.
+ *   `privacyPolicyURL` is not an HTTPS URL. A binary built without the stock
+ *   native screens (`bootstrap.nativeUI === false`) presents nothing, so it
+ *   neither checks the URL nor needs one.
  */
 export const ConsentProvider = ({
 	autoPresent = true,
@@ -172,16 +181,23 @@ export const ConsentProvider = ({
 }: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
-	// Only the outermost provider presents, so a nested one cannot double it.
-	const presents = autoPresent && inherited === null;
-	if (presents) {
-		assertPrivacyPolicyURL(privacyPolicyURL);
-	}
-
 	// The handshake runs here, during render, on purpose. A binary that cannot
 	// speak this protocol is a configuration error, and the app should stop at
 	// the provider rather than render a consent UI over state it cannot trust.
 	const client = useMemo(() => inherited ?? getConsentClient(), [inherited]);
+	// Record what native shows from the first render, before any child effect can
+	// open a session, whether or not this provider presents. Idempotent per client.
+	if (inherited === null) {
+		recordConsentPresenter(client);
+	}
+
+	// Only the outermost provider presents, so a nested one cannot double it. A
+	// binary built without the stock native screens has nothing to present, so it
+	// needs no URL either: the app draws its own consent UI.
+	const presents = autoPresent && inherited === null && linksNativeUI(client);
+	if (presents) {
+		assertPrivacyPolicyURL(privacyPolicyURL);
+	}
 
 	// An inner provider that was given nothing keeps the ancestor's measurement
 	// rather than dropping the tree back to the reserved floor.
@@ -231,7 +247,10 @@ export const ConsentProvider = ({
 		if (!presents || privacyPolicyURL === undefined) {
 			return;
 		}
+		const detach = attachAutoPresent(client, privacyPolicyURL);
 		const token = createSequenceToken();
+		// With beforeConsent the ledger hears the trigger only once Apple has been
+		// asked or skipped, so it never opens the prompt over Apple's alert.
 		const present = async (): Promise<void> => {
 			if (
 				trackingRequest === 'beforeConsent' &&
@@ -255,8 +274,32 @@ export const ConsentProvider = ({
 			cancelSequence(token);
 			unsubscribe();
 			subscription.remove();
+			detach();
 		};
 	}, [client, presents, privacyPolicyURL, trackingRequest]);
+
+	// With beforeConsent, a prompt the app opens itself waits for Apple's alert
+	// too. Only an iOS build that can still ask registers the wait.
+	useEffect(() => {
+		if (
+			inherited !== null ||
+			trackingRequest !== 'beforeConsent' ||
+			client.getTrackingAuthorization() !== 'not-determined'
+		) {
+			return;
+		}
+		const token = createSequenceToken();
+		const remove = setBeforeConsentPrompt(async (): Promise<void> => {
+			if (selectOwedPromptKey(client.getSnapshot()) !== null) {
+				await requestTrackingBeforeConsent(client, token);
+			}
+		});
+
+		return () => {
+			cancelSequence(token);
+			remove();
+		};
+	}, [client, inherited, trackingRequest]);
 
 	// Ask for App Tracking Transparency after each prompt or settings session
 	// closes. The native host reports the outcome once its UI has animated away,

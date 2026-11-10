@@ -184,4 +184,15 @@ export interface ConsentSnapshot {
 	 * a JavaScript layer that predates TCF avoid branching on an SDK version.
 	 */
 	readonly iab: NativeIABState | null;
+	/**
+	 * The `revision` at which the prompt owed now became owed, or `null` while nothing
+	 * is owed.
+	 *
+	 * The native core sets it each time a prompt becomes owed again, including the same
+	 * requirement owed again after an answer or a reset, so it tells a new owed prompt
+	 * from one already presented even when the bridge delivered only the latest
+	 * snapshot. It is native bookkeeping, not kernel state, and the bridge adds it. A
+	 * binary built before it existed omits it, and the client reads that as `null`.
+	 */
+	readonly promptOwedSince: number | null;
 }

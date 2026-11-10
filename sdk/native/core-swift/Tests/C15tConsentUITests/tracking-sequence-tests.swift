@@ -17,6 +17,8 @@ final class TrackingSequenceTests: XCTestCase {
         var active = true
         var additionalInformation = false
         var asks = 0
+        /// Called as Apple is asked, before it answers, to check what is on screen then.
+        var onAsk: (() -> Void)?
         /// Keep Apple's answer until ``reply()``, to change settings while it is on screen.
         var hold = false
         private var held: (() -> Void)?
@@ -28,6 +30,7 @@ final class TrackingSequenceTests: XCTestCase {
                 trackingPromptStringPresent: { self.promptString },
                 trackingPrompt: { completion in
                     self.asks += 1
+                    self.onAsk?()
                     self.answerLater {
                         self.status = self.answer
                         completion(self.answer)
@@ -36,6 +39,7 @@ final class TrackingSequenceTests: XCTestCase {
                 trackingExpandedInterfaceAvailable: { self.additionalInformation },
                 trackingExpandedPrompt: { _, info, completion in
                     self.asks += 1
+                    self.onAsk?()
                     self.answerLater {
                         info()
                         completion(.notDetermined)
@@ -74,7 +78,8 @@ final class TrackingSequenceTests: XCTestCase {
             (.manual, .beforePrompt, .notDetermined, true, .granted, false),
         ]
         for (order, stage, platform, string, marketing, expected) in cases {
-            XCTAssertEqual(order.shouldAsk(at: stage, platform: platform, promptStringPresent: string, marketing: marketing),
+            XCTAssertEqual(order.shouldAsk(at: stage, platform: platform, promptStringPresent: string, marketing: marketing,
+                                           marketingRefused: false),
                            expected, "\(order) \(stage) \(String(describing: platform)) \(string) \(marketing)")
         }
     }
@@ -279,6 +284,86 @@ final class TrackingSequenceTests: XCTestCase {
         await until { apple.asks == 1 }
     }
 
+    func testAStoredMarketingRefusalAsksNothingInAnyOrder() {
+        for order in ConsentTrackingRequest.allCases {
+            for stage in [ConsentTrackingStage.beforePrompt, .afterPrompt] {
+                XCTAssertFalse(order.shouldAsk(at: stage, platform: .notDetermined, promptStringPresent: true,
+                                               marketing: .denied, marketingRefused: true), "\(order) \(stage)")
+            }
+        }
+    }
+
+    func testBeforeConsentSkipsAPersonWhoAlreadyRefusedMarketing() async throws {
+        let apple = Apple()
+        let core = try await boot()
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        _ = attach(core, apple, order: .beforeConsent)
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testBeforeConsentAsksFirstForAPromptTheAppOpens() async throws {
+        let apple = Apple()
+        let core = try await boot()
+        let prompt = attach(core, apple, order: .beforeConsent, autoPresent: false)
+        await settle()
+        XCTAssertEqual(apple.asks, 0, "nothing by itself with autoPresent off")
+        apple.onAsk = { XCTAssertNil(prompt.presenter.presentationID, "the prompt waits for Apple") }
+
+        prompt.presentPrompt()
+        XCTAssertEqual(apple.asks, 1)
+        await until { prompt.presenter.presentationID != nil }
+        XCTAssertFalse(prompt.presenter.preferences)
+    }
+
+    func testBeforeConsentDoesNotDelaySettingsThePersonOpens() async throws {
+        let apple = Apple()
+        let core = try await boot()
+        let prompt = attach(core, apple, order: .beforeConsent, autoPresent: false)
+        prompt.presentPreferences()
+        XCTAssertNotNil(prompt.presenter.presentationID)
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testDetachingTheLastSceneDropsAnOwedAsk() async throws {
+        let apple = Apple()
+        let prompt = try await attached(apple)
+        let scene = try XCTUnwrap(prompt.host)
+        apple.active = false
+        prompt.presenter.commit(.accept)
+        await until { !prompt.presenter.pending }
+
+        prompt.detach(scene)
+        apple.active = true
+        apple.activations.send()
+        await settle()
+        XCTAssertEqual(apple.asks, 0, "no scene is left to own the ask")
+
+        // A scene that attaches decides again: marketing is granted and Apple was never asked.
+        prompt.attach(UUID(), active: true, autoPresent: true)
+        await until { apple.asks == 1 }
+    }
+
+    func testNothingIsAskedWhileTheNoticeCardShows() async throws {
+        let apple = Apple()
+        let core = try await boot("notice-init.json")
+        let prompt = attach(core, apple)
+        await until { prompt.presenter.noticeVisible }
+        apple.onAsk = { XCTAssertFalse(prompt.presenter.noticeVisible, "asked over the notice card") }
+
+        // Settings saved with marketing granted close over a notice that is still owed.
+        prompt.presentPreferences()
+        prompt.presenter.setCategory(.marketing, true)
+        prompt.presenter.commit(.save)
+        await until { !prompt.presenter.pending }
+        await settle()
+        XCTAssertTrue(prompt.presenter.noticeVisible)
+        XCTAssertEqual(apple.asks, 0)
+
+        prompt.presenter.commit(.acknowledge)
+        await until { apple.asks == 1 }
+    }
+
     // MARK: - Helpers
 
     private func attached(_ apple: Apple, order: ConsentTrackingRequest = .afterConsent) async throws -> ConsentPrompt {
@@ -306,10 +391,10 @@ final class TrackingSequenceTests: XCTestCase {
         XCTFail("Condition was not met")
     }
 
-    private func boot() async throws -> ConsentCore {
+    private func boot(_ fixture: String = "category-init.json") async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/category-init.json"), encoding: .utf8)
+        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/\(fixture)"), encoding: .utf8)
         let core = ConsentCore()
         core.bootstrap(CoreConfig(store: InMemoryStore(), transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!,
                                                                                      client: AutoPresentTests.Peer(body)), initRetry: .disabled))

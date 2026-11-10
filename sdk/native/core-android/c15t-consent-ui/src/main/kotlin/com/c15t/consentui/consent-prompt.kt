@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.c15t.core.C15t
 import com.c15t.core.ConsentCore
+import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 /**
@@ -72,6 +73,9 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
      */
     internal fun attach(token: Any, started: Boolean, autoPresent: Boolean): Boolean {
         if (host == null || host === token || started && !hostStarted) {
+            // A session that opened by itself for another screen is not this one's to draw if
+            // it opted out.
+            if (host !== token && !autoPresent) presenter.withdrawAutomaticSession()
             host = token
             hostStarted = started
             presenter.autoPresent = autoPresent
@@ -79,17 +83,49 @@ class ConsentPrompt private constructor(val core: ConsentCore) {
         return host === token
     }
 
-    /** The screen behind [token] went away. Another attached screen takes over. */
+    /**
+     * The screen behind [token] went away. Another attached screen takes over. Until one does,
+     * nothing presents by itself, so a screen that attaches later with `autoPresent = false`
+     * finds nothing open.
+     */
     internal fun detach(token: Any) {
-        if (host === token) { host = null; hostStarted = false }
+        if (host === token) { host = null; hostStarted = false; presenter.autoPresent = false }
     }
 
     companion object {
-        private val byCore = WeakHashMap<ConsentCore, ConsentPrompt>()
+        /**
+         * Each core's prompt, held weakly: a prompt points back at its core, so a strong value
+         * would keep the weak key alive for good.
+         */
+        private val byCore = WeakHashMap<ConsentCore, WeakReference<ConsentPrompt>>()
 
-        /** The prompt for [core]. Every call with the same core returns the same instance. */
+        /**
+         * The installed core's prompt, held as long as [C15t] holds that core, so its session and
+         * what the person dismissed survive a moment with no screen attached. Dropped on
+         * [C15t.uninstall].
+         */
+        private var installed: ConsentPrompt? = null
+
+        init {
+            C15t.onUninstall { core ->
+                synchronized(byCore) {
+                    byCore.remove(core)
+                    if (installed?.core === core) installed = null
+                }
+            }
+        }
+
+        /**
+         * The prompt for [core]. Every call with the same core returns the same instance while it
+         * lives. The installed core keeps its prompt; a core the app built without installing it
+         * keeps its prompt while a screen or the app holds it.
+         */
         @JvmStatic
-        fun of(core: ConsentCore): ConsentPrompt = synchronized(byCore) { byCore.getOrPut(core) { ConsentPrompt(core) } }
+        fun of(core: ConsentCore): ConsentPrompt = synchronized(byCore) {
+            val prompt = byCore[core]?.get() ?: ConsentPrompt(core).also { byCore[core] = WeakReference(it) }
+            if (core === C15t.current) installed = prompt
+            prompt
+        }
 
         /** The prompt for the installed core, or `null` before the app installs one. */
         @JvmStatic

@@ -116,6 +116,33 @@ class ConsentPromptTest {
         firstLayers().assertCountEquals(1)
     }
 
+    /** With no screen attached nothing presents by itself, so a screen that opted out finds nothing open. */
+    @Test fun nothingPresentsWhileNoScreenIsAttached() {
+        val (core, _) = boot(fixture("category-init.json"))
+        assertTrue(core.save(CommitIntent.All).ok)
+        var screen by mutableIntStateOf(0)
+        compose.setContent {
+            when (screen) {
+                0 -> C15tConsent(URL, core = core)
+                2 -> C15tConsent(URL, autoPresent = false, core = core)
+            }
+        }
+        compose.waitForIdle()
+        val prompt = ConsentPrompt.of(core)
+        compose.runOnIdle { screen = 1 }
+        compose.waitForIdle()
+
+        core.reset()
+        await { core.snapshot().promptRequirement.acknowledge }
+        compose.waitForIdle()
+        assertNull("nothing presents without a screen", prompt.presenter.presentationID)
+
+        compose.runOnIdle { screen = 2 }
+        compose.waitForIdle()
+        assertNull("the opted-out screen finds nothing open", prompt.presenter.presentationID)
+        firstLayers().assertCountEquals(0)
+    }
+
     @Test fun dismissedPromptStaysClosedWhenAScreenComesBack() {
         val (core, _) = boot(fixture("category-init.json"))
         var generation by mutableIntStateOf(0)
@@ -150,6 +177,32 @@ class ConsentPromptTest {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
+    /** Once the notice is acknowledged, the view `attachConsent` added takes no space and no touches. */
+    @Test fun theActivityNoticeLeavesNoTouchRegionBehind() {
+        val (core, _) = boot(fixture("notice-init.json"))
+        AttachingActivity.core = core
+        val controller = Robolectric.buildActivity(AttachingActivity::class.java).setup().visible()
+        shadowOf(Looper.getMainLooper()).idle()
+        frames()
+        val content = controller.get().findViewById<android.view.ViewGroup>(android.R.id.content)
+        val overlay = content.getChildAt(content.childCount - 1)
+        // Measure as the content frame does: full width, at most its height, wrap content.
+        val measured = {
+            overlay.measure(android.view.View.MeasureSpec.makeMeasureSpec(400, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(800, android.view.View.MeasureSpec.AT_MOST))
+            overlay.measuredHeight
+        }
+        assertTrue("the notice is drawn", measured() > 0)
+
+        ConsentPrompt.of(core).presenter.commit(ConsentPresenter.Action.ACKNOWLEDGE)
+        await { !ConsentPrompt.of(core).presenter.pending }
+        frames()
+        assertFalse(ConsentPrompt.of(core).presenter.noticeVisible)
+        assertEquals("nothing is left to swallow touches", 0, measured())
+        controller.pause().stop().destroy()
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
     class AttachingActivity : ComponentActivity() {
         var prompt: ConsentPrompt? = null
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -168,6 +221,12 @@ class ConsentPromptTest {
             shadowOf(Looper.getMainLooper()).idle()
         }
         assertTrue("Presenter did not settle", condition())
+        compose.waitForIdle()
+    }
+
+    /** Run the frames a recomposition and its layout pass wait for. */
+    private fun frames() = repeat(5) {
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(50))
         compose.waitForIdle()
     }
 

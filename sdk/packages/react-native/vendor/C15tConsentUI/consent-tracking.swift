@@ -16,7 +16,9 @@ public enum ConsentTrackingRequest: String, Sendable, CaseIterable {
     /// while marketing is granted. Also asks at launch when a stored choice grants marketing
     /// and Apple was never asked. The default.
     case afterConsent
-    /// Apple's alert first, then the consent prompt.
+    /// Apple's alert first, then the consent prompt, whether it opens by itself or from
+    /// ``ConsentPrompt/presentPrompt()``. Settings the person opens are not delayed, and nothing
+    /// is asked once a stored choice refuses marketing.
     case beforeConsent
     /// Nothing automatic. Call `C15tApple.tracking.request(_:)` yourself.
     case manual
@@ -37,9 +39,11 @@ extension ConsentTrackingRequest {
     ///   - platform: Apple's current answer, `nil` where there is no App Tracking Transparency.
     ///   - promptStringPresent: Whether `Info.plist` carries `NSUserTrackingUsageDescription`.
     ///   - marketing: The marketing decision from the current snapshot.
+    ///   - marketingRefused: The person's stored choice refuses marketing. Apple asks apps not to
+    ///     show its alert to people who opted out in a separate control, so no order asks then.
     func shouldAsk(at stage: ConsentTrackingStage, platform: C15tTrackingPlatformStatus?,
-                   promptStringPresent: Bool, marketing: ConsentDecision) -> Bool {
-        guard promptStringPresent, platform == .notDetermined else { return false }
+                   promptStringPresent: Bool, marketing: ConsentDecision, marketingRefused: Bool) -> Bool {
+        guard promptStringPresent, platform == .notDetermined, !marketingRefused else { return false }
         switch (self, stage) {
         case (.beforeConsent, .beforePrompt): return true
         case (.afterConsent, .afterPrompt): return marketing == .granted

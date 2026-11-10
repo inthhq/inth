@@ -94,8 +94,18 @@ describe('handshake', () => {
 		tree.unmount();
 	});
 
-	test('a nested provider reuses the ancestor client and one emitter', () => {
+	test('a nested provider reuses the ancestor client and adds no emitter', () => {
 		const fake = createFakeNativeModule();
+		const single = renderTree(
+			<ConsentProvider autoPresent={false}>
+				<RevisionProbe />
+			</ConsentProvider>
+		);
+		// The client's own, and the presenter ledger's, which lives as long as the client.
+		const perClient = emitterState.instances;
+		single.unmount();
+		resetConsentClient();
+		emitterState.instances = 0;
 
 		const tree = renderTree(
 			<ConsentProvider autoPresent={false}>
@@ -105,8 +115,8 @@ describe('handshake', () => {
 			</ConsentProvider>
 		);
 
-		expect(fake.bootstrapCalls).toBe(1);
-		expect(emitterState.instances).toBe(1);
+		expect(fake.bootstrapCalls).toBe(2);
+		expect(emitterState.instances).toBe(perClient);
 
 		tree.unmount();
 	});

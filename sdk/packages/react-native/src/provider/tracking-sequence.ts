@@ -17,13 +17,16 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
+import { isConsentScreenBusy, onConsentScreenChange } from './auto-present';
 
 /**
  * When the provider asks for App Tracking Transparency.
  *
  * - `afterConsent`: the consent prompt first, then Apple's alert once the
  *   prompt has closed, and only while marketing is granted. The default.
- * - `beforeConsent`: Apple's alert first, then the consent prompt.
+ * - `beforeConsent`: Apple's alert first, then the consent prompt, whether it
+ *   opens by itself or from `presentConsentPrompt`. Settings the person opens
+ *   are not delayed.
  * - `manual`: nothing automatic. Call {@link useTrackingRequest} yourself.
  */
 export type ConsentTrackingRequest =
@@ -41,15 +44,19 @@ export type ConsentTrackingStage = 'beforePrompt' | 'afterPrompt';
  * @param stage - Where the flow is.
  * @param authorization - Apple's current answer.
  * @param marketing - The marketing decision from the current snapshot.
+ * @param marketingRefused - The person's stored choice refuses marketing.
+ *   Apple asks apps not to show its alert to people who opted out in a
+ *   separate control, so no order asks then.
  * @returns `true` when the alert should be asked for.
  */
 export const shouldRequestTracking = function shouldRequestTracking(
 	timing: ConsentTrackingRequest,
 	stage: ConsentTrackingStage,
 	authorization: TrackingAuthorization,
-	marketing: ConsentDecision
+	marketing: ConsentDecision,
+	marketingRefused: boolean
 ): boolean {
-	if (authorization !== 'not-determined') {
+	if (authorization !== 'not-determined' || marketingRefused) {
 		return false;
 	}
 	if (timing === 'beforeConsent') {
@@ -116,6 +123,48 @@ const whenActive = (token: SequenceToken): Promise<boolean> =>
 		});
 	});
 
+/**
+ * Wait until no c15t screen is open or being asked for. Apple will not show
+ * its alert over a presentation, and the person should finish one screen first.
+ *
+ * @returns `false` when `token` was cancelled first.
+ */
+const whenScreensClosed = (
+	client: ConsentClient,
+	token: SequenceToken
+): Promise<boolean> =>
+	new Promise((resolve) => {
+		if (token.cancelled || !isConsentScreenBusy(client)) {
+			resolve(!token.cancelled);
+			return;
+		}
+		const listener: { stop?: () => void } = {};
+		const settle = function settle(clear = false): void {
+			listener.stop?.();
+			token.cleanups.delete(settle);
+			resolve(clear && !token.cancelled);
+		};
+		token.cleanups.add(settle);
+		listener.stop = onConsentScreenChange(client, () => {
+			if (!isConsentScreenBusy(client)) {
+				settle(true);
+			}
+		});
+	});
+
+/** Both waits, again until they hold at once. */
+const whenClear = async function whenClear(
+	client: ConsentClient,
+	token: SequenceToken
+): Promise<boolean> {
+	if (!(await whenActive(token)) || !(await whenScreensClosed(client, token))) {
+		return false;
+	}
+	return AppState.currentState === 'active' && !isConsentScreenBusy(client)
+		? true
+		: whenClear(client, token);
+};
+
 /** Apple's request in flight per client, shared so two effects ask once. */
 const requests = new WeakMap<ConsentClient, Promise<TrackingRequestPayload>>();
 
@@ -157,7 +206,7 @@ export const requestSequencedTracking = async function requestSequencedTracking(
 	stage: ConsentTrackingStage,
 	token: SequenceToken
 ): Promise<SequenceResult> {
-	if (!(await whenActive(token))) {
+	if (!(await whenClear(client, token))) {
 		return 'cancelled';
 	}
 	if (
@@ -165,7 +214,8 @@ export const requestSequencedTracking = async function requestSequencedTracking(
 			timing,
 			stage,
 			client.refreshTrackingAuthorization(),
-			client.decision('marketing')
+			client.decision('marketing'),
+			client.getSnapshot().explicitChoice?.categories.marketing?.value === false
 		)
 	) {
 		return 'skipped';

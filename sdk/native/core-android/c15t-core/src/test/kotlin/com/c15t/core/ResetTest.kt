@@ -212,8 +212,8 @@ class ResetTest {
 		).bootstrap()
 
 		// Both relaunch over their own bytes, with nothing left to answer an init. Revision
-		// is the one field left out: it counts the mutations the wiped device made and the
-		// new install never did.
+		// is left out because it counts the mutations the wiped device made and the new
+		// install never did, and promptOwedSince with it, because it is a revision.
 		val relaunchedWiped = testKernel(
 			store = C15tStore(wipedBackend),
 			clock = clock,
@@ -229,8 +229,8 @@ class ResetTest {
 
 		val after = relaunchedWiped.snapshot()
 		assertEquals(
-			relaunchedFresh.snapshot().copy(revision = 0),
-			after.copy(revision = 0),
+			relaunchedFresh.snapshot().copy(revision = 0, promptOwedSince = null),
+			after.copy(revision = 0, promptOwedSince = null),
 			"a reviewer who wiped the app has to be looking at what a new install looks like",
 		)
 		assertNull(after.explicitChoice)

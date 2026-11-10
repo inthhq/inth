@@ -9,7 +9,9 @@ import { benchmarkConfig } from './benchmark-config';
 import type { RuntimeConsent } from './runtime-types';
 
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<ConsentProvider>{children}</ConsentProvider>
+	<ConsentProvider privacyPolicyURL={benchmarkConfig.c15t.privacyUrl}>
+		{children}
+	</ConsentProvider>
 );
 export const useRuntimeConsent = (): RuntimeConsent => {
 	const raw = useSnapshot();

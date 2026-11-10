@@ -8,6 +8,7 @@ import com.c15t.core.transport.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import com.c15t.core.model.ConsentCategory
+import com.c15t.core.model.PromptReason
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -207,6 +208,42 @@ class PresenterTest {
             "Use profiles to select personalised advertising"), p.providerPrerequisiteNames)
         p.edit { it.copy(purposeConsents = listOf(1, 3, 4)) }
         assertTrue(p.providerPrerequisitesMet)
+    }
+
+    /**
+     * A policy refresh that lands after the save but before the commit's main-thread continuation
+     * owes a new prompt. The commit closes the prompt the person answered, not the new one, and the
+     * new one presents once the commit is done.
+     */
+    @Test fun promptOwedDuringACommitPresentsAfterIt() {
+        val mainDispatcher = StandardTestDispatcher()
+        Dispatchers.setMain(mainDispatcher)
+        try {
+            val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+                .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
+            var body = fixture
+            val client = object : HttpClient {
+                override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
+                    HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
+            }
+            val config = NativeConfig("https://fixture.invalid")
+            val core = ConsentCore(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+            core.bootstrap()
+            val p = ConsentPresenter(core)
+            val first = p.presentationID
+            assertNotNull(first)
+            p.commit(ConsentPresenter.Action.ACCEPT)
+            mainDispatcher.scheduler.runCurrent()
+            await { core.snapshot().explicitChoice != null }
+            // The main thread has not resumed the commit yet when the new policy arrives.
+            body = fixture.replace("a".repeat(64), "d".repeat(64))
+            core.refresh()
+            assertEquals(PromptReason.POLICY_CHANGED, core.snapshot().promptRequirement.reason)
+            await { mainDispatcher.scheduler.runCurrent(); !p.pending }
+            mainDispatcher.scheduler.runCurrent()
+            assertNotNull("the prompt owed after the commit presents", p.presentationID)
+            assertNotEquals(first, p.presentationID)
+        } finally { Dispatchers.resetMain() }
     }
 
     private fun await(condition: () -> Boolean) {

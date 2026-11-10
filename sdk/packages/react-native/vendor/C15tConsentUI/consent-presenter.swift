@@ -45,11 +45,19 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     private var seedCategories: [OptionalConsentCategory: Bool] = [:]
     private var seedChoices = IABChoices()
     private var fromFirstLayer = false
+    /// The owed prompt the person saw and closed, by its key. The key carries the core's
+    /// `promptOwedSince`, so a prompt owed again never matches it: nothing has to clear it.
     private var suppressedPrompt: String?
+    /// The open session shows the owed prompt (its first layer, or settings opened from it), not
+    /// standing settings.
+    private var sessionIsPrompt: Bool { presentationID != nil && (!preferences || fromFirstLayer) }
+    /// The session ``autoPresent`` opened, by its id, as opposed to one the app asked for.
+    private var automaticSession: UUID?
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
-    /// An owed notice the host asked for while ``autoPresent`` is off.
-    @Published private var noticeRequested = false
+    /// The owed notice the host asked for while ``autoPresent`` is off, by its key. A later notice
+    /// needs its own request.
+    @Published private var requestedNotice: String? = nil
     /// Open an owed prompt by itself. Turning it on presents a prompt that is already owed.
     @Published public var autoPresent: Bool {
         didSet { if autoPresent { presentIfOwed() } }
@@ -75,8 +83,10 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         Task { @MainActor [weak self] in self?.receive(snapshot) }
     }
 
+    /// Names the owed prompt. `promptOwedSince` moves whenever a prompt becomes owed again, so the
+    /// same requirement owed again is a new prompt even when the snapshots between were coalesced.
     private var promptKey: String {
-        "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? "")"
+        "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? ""):\(snapshot.promptOwedSince.map { String($0) } ?? "")"
     }
 
     private func receive(_ next: ConsentSnapshot) {
@@ -91,8 +101,6 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             } else { loadDraft() }
             reloadAfterRefresh = listUnavailable
         }
-        // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
-        if next.promptRequirement.kind == .none { suppressedPrompt = nil }
         presentIfOwed()
     }
 
@@ -105,11 +113,30 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         errorCode = nil
         failedAction = nil
         loadDraft()
+        automaticSession = presentationID
+    }
+
+    /// End a session that opened by itself, because the host now drawing it opted out of
+    /// auto-present and never asked for it. Nothing was decided or dismissed, so it reports no
+    /// outcome and leaves the owed prompt owed: a host that auto-presents opens it again.
+    func withdrawAutomaticSession() {
+        guard !pending, let id = presentationID, id == automaticSession else { return }
+        presentationID = nil
+        confirmDiscard = false
+    }
+
+    /// Close the open session without a commit. Closing the prompt settles it; closing standing
+    /// settings does not, so an owed prompt they covered is presented now.
+    private func closeSession() {
+        if sessionIsPrompt { suppressedPrompt = promptKey }
+        presentationID = nil
+        onOutcome?(.dismissed)
+        presentIfOwed()
     }
 
     public var noticeVisible: Bool {
         snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
-            && (autoPresent || noticeRequested)
+            && (autoPresent || requestedNotice == promptKey)
     }
     public var isDirty: Bool { categories != seedCategories || choices != seedChoices }
     /// Preferences were opened from the first layer, so closing them returns there.
@@ -196,7 +223,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         guard presentationID == nil, !pending else { return }
         snapshot = core.snapshot()
         guard !snapshot.policyPending else { return }
-        if snapshot.promptRequirement.kind == .notice { noticeRequested = true; return }
+        if snapshot.promptRequirement.kind == .notice { requestedNotice = promptKey; return }
         guard snapshot.promptRequirement.kind == .choice else { return }
         presentationID = UUID()
         preferences = false
@@ -279,9 +306,7 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             fromFirstLayer = false
             loadDraft()
         } else {
-            suppressedPrompt = promptKey
-            presentationID = nil
-            onOutcome?(.dismissed)
+            closeSession()
         }
     }
     func coverAppeared() { covering = true }
@@ -302,12 +327,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     public func commit(_ action: Action) {
         guard !pending, !stale else { return }
         if case .save = action, !isDirty, snapshot.promptRequirement.kind == .none {
-            suppressedPrompt = promptKey
-            presentationID = nil
-            onOutcome?(.dismissed)
+            closeSession()
             return
         }
         let session = presentationID
+        // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
+        let handled = promptKey
+        // A notice is shown without a session; a session shows the prompt or standing settings.
+        let shownPrompt = session == nil || sessionIsPrompt
         let authority = core
         let revision = baseRevision
         let categoryDraft = categories
@@ -337,17 +364,18 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             pending = false
             pendingAction = nil
             showProgress = false
-            guard presentationID == session else { return }
+            guard presentationID == session else { presentIfOwed(); return }
             snapshot = authority.snapshot()
             if outcome.0 {
                 errorCode = nil
                 failedAction = nil
-                suppressedPrompt = promptKey
+                if shownPrompt { suppressedPrompt = handled }
                 presentationID = nil
-                noticeRequested = false
                 if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
                 else { onAnnouncement?("Privacy choices saved") }
                 onOutcome?(.saved)
+                // Snapshots that arrived while the commit ran were not acted on; the current one is.
+                presentIfOwed()
             } else {
                 errorCode = outcome.1 ?? "save-rejected"
                 failedAction = action

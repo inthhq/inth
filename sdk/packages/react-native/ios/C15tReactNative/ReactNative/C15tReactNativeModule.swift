@@ -224,7 +224,10 @@ public final class C15tReactNativeModule: RCTEventEmitter {
                 resolve(try host.present(preferences: preferences, privacyPolicyURL: privacyPolicyURL) { [weak self] payload in
                     self?.publish(event: "onConsentPresenterOutcome", payload: payload)
                 })
-            } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host, installed core and HTTPS privacy-policy URL. \(error)", error) }
+            } catch C15tConsentHost.HostError.invalidPrivacyPolicy {
+                // Retrying the same URL cannot help, so JavaScript stops and reports it.
+                reject("C15T_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
+            } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host and installed core. \(error)", error) }
         }
     }
 

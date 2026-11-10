@@ -32,6 +32,7 @@ import {
 	NATIVE_EVENT_NAMES,
 	parseTrackingAuthorization,
 	parseTrackingRequest,
+	withAdditiveSnapshotDefaults,
 } from '../protocol';
 import type {
 	BootstrapPayload,
@@ -332,7 +333,7 @@ const readString = function readString(
  * Read off `globalThis` because a React Native bundle may have no `process` at all,
  * depending on the polyfill the bundler chose.
  */
-const isProduction = function isProduction(): boolean {
+export const isProduction = function isProduction(): boolean {
 	return (
 		(globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
 			?.NODE_ENV === 'production'
@@ -561,7 +562,13 @@ export const createConsentClient = function createConsentClient(
 
 		rawSnapshot = raw;
 
-		const parsed = parseObject(raw);
+		// An older binary leaves out keys added since protocol version 1; fill them
+		// before grading the shape, so the public type holds and that is not drift.
+		const object = parseObject(raw);
+		const parsed =
+			typeof object === 'object' && object !== null
+				? withAdditiveSnapshotDefaults(object as Record<string, unknown>)
+				: object;
 		if (typeof parsed === 'object' && parsed !== null) {
 			const problems = describeSnapshotWireDrift(parsed, {
 				allowUnknownKeys: true,

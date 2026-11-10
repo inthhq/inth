@@ -4,6 +4,12 @@ import { getNativeC15t, getNativeC15tEvents } from './module';
 export interface ConsentPresenterSession {
 	readonly sessionId: string | null;
 	readonly status: 'presented' | 'already-presented' | 'not-required';
+	/**
+	 * What the open session shows: the owed prompt (a first layer or a notice) or
+	 * standing privacy settings. A binary built before this field omits it, and it
+	 * reads as `undefined`.
+	 */
+	readonly presentation?: 'prompt' | 'preferences';
 }
 
 /** One final native outcome. Committed means durable on-device storage. */
@@ -61,10 +67,59 @@ const parseSession = (payload: string): ConsentPresenterSession => {
 	) {
 		throw new TypeError('Invalid native consent presenter session');
 	}
-	return {
-		sessionId: typeof value.sessionId === 'string' ? value.sessionId : null,
-		status: value.status,
+	const presentation =
+		'presentation' in value &&
+		(value.presentation === 'prompt' || value.presentation === 'preferences')
+			? value.presentation
+			: undefined;
+	const sessionId =
+		typeof value.sessionId === 'string' ? value.sessionId : null;
+	if (presentation === undefined) {
+		return { sessionId, status: value.status };
+	}
+	return { presentation, sessionId, status: value.status };
+};
+
+type SessionListener = (
+	sessionId: string,
+	presentation: 'prompt' | 'preferences'
+) => void;
+
+const sessionListeners = new Set<SessionListener>();
+
+/**
+ * Hear every session an app's own `presentConsentPrompt` or `presentPreferences`
+ * call finds open, with what it shows. The auto-present ledger records them, so
+ * what the person dismissed there counts whether or not auto-present was on.
+ *
+ * @internal
+ * @param listener - Receives the session id and what it shows.
+ * @returns Stop listening.
+ */
+export const onConsentPresenterSession = (
+	listener: SessionListener
+): (() => void) => {
+	sessionListeners.add(listener);
+	return () => {
+		sessionListeners.delete(listener);
 	};
+};
+
+const announce = (
+	session: ConsentPresenterSession,
+	asked: 'prompt' | 'preferences'
+): ConsentPresenterSession => {
+	if (session.sessionId !== null) {
+		// A session an older binary does not name is treated as settings.
+		const shows =
+			session.status === 'presented'
+				? asked
+				: (session.presentation ?? 'preferences');
+		for (const listener of sessionListeners) {
+			listener(session.sessionId, shows);
+		}
+	}
+	return session;
 };
 
 /** The open native session and the privacy-policy URL it was opened with. */
@@ -94,17 +149,60 @@ export const sessionPrivacyPolicyURL = (
 ): string | undefined =>
 	openSession?.id === sessionId ? openSession.url : undefined;
 
-/** Open an owed native prompt on the installed engine.
- * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
- * @returns Presentation identity. Decisions arrive through onConsentPresenterOutcome.
+/** Runs before the app's own `presentConsentPrompt`, or `null`. */
+let beforeConsentPrompt: (() => Promise<unknown>) | null = null;
+
+/**
+ * Run `hook` before each app call to {@link presentConsentPrompt}, so a
+ * provider with `trackingRequest="beforeConsent"` asks Apple first for a
+ * prompt the app opens, as it does for one that opens by itself.
+ *
+ * @internal
+ * @param hook - Settles when the prompt may open.
+ * @returns Remove the hook, if it is still this one.
  */
-export const presentConsentPrompt = async (
+export const setBeforeConsentPrompt = (
+	hook: () => Promise<unknown>
+): (() => void) => {
+	beforeConsentPrompt = hook;
+	return () => {
+		if (beforeConsentPrompt === hook) {
+			beforeConsentPrompt = null;
+		}
+	};
+};
+
+/**
+ * Ask native for the owed prompt without announcing the answer: the
+ * auto-present ledger's own call, which records its answer itself.
+ *
+ * @internal
+ * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
+ * @returns Presentation identity.
+ */
+export const requestConsentPrompt = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
 	remember(
 		parseSession(await getNativeC15t().presentConsentPrompt(privacyPolicyURL)),
 		privacyPolicyURL
 	);
+
+/** Open an owed native prompt on the installed engine. With a provider set to
+ * `trackingRequest="beforeConsent"`, Apple's tracking alert comes first.
+ * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
+ * @returns Presentation identity. Decisions arrive through onConsentPresenterOutcome.
+ */
+export const presentConsentPrompt = async (
+	privacyPolicyURL: string
+): Promise<ConsentPresenterSession> => {
+	// Only with a hook: an `await` on nothing would still yield, and let a racing
+	// call reach native first.
+	if (beforeConsentPrompt !== null) {
+		await beforeConsentPrompt();
+	}
+	return announce(await requestConsentPrompt(privacyPolicyURL), 'prompt');
+};
 
 /** Open native standing preferences, including when no prompt is owed.
  * @param privacyPolicyURL - The app's HTTPS privacy-policy URL.
@@ -113,9 +211,12 @@ export const presentConsentPrompt = async (
 export const presentPreferences = async (
 	privacyPolicyURL: string
 ): Promise<ConsentPresenterSession> =>
-	remember(
-		parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
-		privacyPolicyURL
+	announce(
+		remember(
+			parseSession(await getNativeC15t().presentPreferences(privacyPolicyURL)),
+			privacyPolicyURL
+		),
+		'preferences'
 	);
 
 /** Request closing one native session. Dirty drafts require native confirmation.

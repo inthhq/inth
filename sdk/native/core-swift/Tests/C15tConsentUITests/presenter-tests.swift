@@ -15,6 +15,31 @@ final class PresenterTests: XCTestCase {
         XCTAssertNil(core.snapshot().explicitChoice)
     }
 
+    /// The same requirement owed again while an answer commits: the answer settled the prompt it was
+    /// given, so the one owed again presents after it. The save is held in the store until the main
+    /// actor is busy, then the core resets before the commit's continuation can run.
+    @MainActor func testThePromptOwedAgainDuringItsCommitPresentsAfterIt() async throws {
+        let store = BlockingStore()
+        let core = try await boot(store)
+        let presenter = ConsentPresenter(core: core)
+        let first = try XCTUnwrap(presenter.presentationID)
+        store.arm()
+        presenter.commit(.accept)
+        let entered = await Task.detached { store.entered.wait(timeout: .now() + 5) == .success }.value
+        XCTAssertTrue(entered)
+        // Hold the main actor from here, so the commit cannot finish before the reset.
+        store.resume.signal()
+        for _ in 0..<500 where core.snapshot().explicitChoice == nil { Thread.sleep(forTimeInterval: 0.01) }
+        XCTAssertNotNil(core.snapshot().explicitChoice)
+        core.reset()
+        for _ in 0..<500 where core.snapshot().promptRequirement.kind != .choice { Thread.sleep(forTimeInterval: 0.01) }
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .choice)
+        await settle(presenter)
+        for _ in 0..<500 where presenter.presentationID == nil { try? await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertNotNil(presenter.presentationID, "the prompt owed again presents")
+        XCTAssertNotEqual(presenter.presentationID, first)
+    }
+
     @MainActor func testPendingCommitKeepsSessionAndRejectsDuplicateActions() async throws {
         let store = BlockingStore()
         let core = try await boot(store)

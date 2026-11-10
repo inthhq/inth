@@ -21,7 +21,10 @@ import {
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
-import { presentConsentPrompt } from '../../native/presenter';
+import {
+	presentConsentPrompt,
+	presentPreferences,
+} from '../../native/presenter';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
 import { ConsentProvider } from '../consent-provider';
 import type { ConsentProviderProps } from '../consent-provider';
@@ -133,7 +136,7 @@ describe('shouldRequestTracking', () => {
 		'%s at %s with %s and marketing %s: %s',
 		(timing, stage, authorization, marketing, expected) => {
 			expect(
-				shouldRequestTracking(timing, stage, authorization, marketing)
+				shouldRequestTracking(timing, stage, authorization, marketing, false)
 			).toBe(expected);
 		}
 	);
@@ -439,6 +442,94 @@ describe('Additional Information without a provider URL', () => {
 		finish(fake, saved(true));
 		await flushPromises();
 		expect(preferences).toHaveBeenCalledWith('https://app.example/privacy');
+		tree.unmount();
+	});
+});
+
+/** A prompt owed again for a person whose stored choice refuses marketing. */
+const owedAfterRefusal = buildSnapshot({
+	...owed,
+	explicitChoice: {
+		categories: {
+			marketing: {
+				basis: { fingerprint: 'policy-a', kind: 'choice-v1' },
+				confirmedAt: 1,
+				value: false,
+			},
+		},
+		version: 3,
+	},
+	promptRequirement: { kind: 'choice', reason: 'policy-changed' },
+});
+
+describe('beforeConsent and screens the app opens', () => {
+	test('a prompt the app opens waits for Apple first', async () => {
+		const { order } = boot(owed);
+		const tree = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				trackingRequest="beforeConsent"
+			/>
+		);
+		await flushPromises();
+		expect(order).toStrictEqual([]);
+
+		await presentConsentPrompt(URL);
+		expect(order).toStrictEqual(['tracking', 'prompt']);
+		tree.unmount();
+	});
+
+	test('settings the person opens are not delayed', async () => {
+		const { order } = boot(owed);
+		const tree = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				trackingRequest="beforeConsent"
+			/>
+		);
+		await flushPromises();
+		await presentPreferences(URL);
+		expect(order).toStrictEqual(['preferences']);
+		tree.unmount();
+	});
+
+	test('a stored marketing refusal asks nothing, in either order', async () => {
+		const { fake, order } = boot(owedAfterRefusal);
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(order).toStrictEqual(['prompt']);
+		finish(fake, saved(false));
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+});
+
+describe('never over a c15t screen', () => {
+	test('waits for a prompt that opens as settings close', async () => {
+		const { fake, order } = boot(saved(false));
+		const tree = renderTree(<App />);
+		await flushPromises();
+		await presentPreferences(URL);
+		// A prompt becomes owed while settings are open; marketing is granted.
+		fake.pushSnapshot(
+			buildSnapshot({
+				...owed,
+				effectivePermissions: permissions(true),
+				revision: 3,
+			})
+		);
+		await flushPromises();
+		emitNativeEvent(
+			'onConsentPresenterOutcome',
+			JSON.stringify({ kind: 'committed', revision: 3, sessionId: 's2' })
+		);
+		await flushPromises();
+		expect(order).toStrictEqual(['preferences', 'prompt']);
+
+		finish(fake, saved(true, 4));
+		await flushPromises();
+		expect(order).toStrictEqual(['preferences', 'prompt', 'tracking']);
 		tree.unmount();
 	});
 });
