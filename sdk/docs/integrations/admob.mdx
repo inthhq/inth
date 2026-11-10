@@ -201,3 +201,11 @@ The c15t helper tests cover consent order, withdrawal and reset with recorded
 calls. They were not run against Google Mobile Ads itself. Inspect real ad
 requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector)
 or a proxy before you ship.
+
+The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `react-native-google-mobile-ads` 17.4.0 | Type-checked against the package's published types |
+| Android | Google Mobile Ads 25 (`play-services-ads-api` 25.5.0) | Method signatures read from the published AAR |
+| iOS | Google Mobile Ads 13 | Checked against Google's documentation only, not compiled |

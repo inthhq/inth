@@ -13,9 +13,13 @@ import com.c15t.core.model.ConsentCategory
  * `isUserSubjectToGDPR` is yours to supply: c15t's policy model is not a legal
  * jurisdiction flag. Marketing grants all three types, as on the web.
  *
+ * Written against AppsFlyer Android SDK 6. SDK 7 starts sessions only from its
+ * session-ready listener, which this helper does not coordinate.
+ *
  * Do not call AppsFlyer's `start` yourself. While [category] is denied or pending,
  * the helper calls `stop(true)`. When it is granted, it calls `stop(false)` and
- * then [start], which AppsFlyer requires to resume. A change that keeps
+ * then [start], which AppsFlyer requires to resume. On withdrawal both denial
+ * calls run even if the first throws, and the first failure is reported. A change that keeps
  * [category] granted sends the new consent data without starting again. The
  * helper adds no AppsFlyer dependency.
  *
@@ -47,8 +51,7 @@ class AppsFlyerIntegration(
 				start()
 			}
 		} else {
-			stop(true)
-			setConsentData(ads)
+			runAll({ stop(true) }, { setConsentData(ads) })
 		}
 	}
 

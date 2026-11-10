@@ -1,4 +1,4 @@
-import { connectTrackingAndAds } from './consent-integration';
+import { connectTrackingAndAds, settleAll } from './consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
@@ -11,8 +11,8 @@ export interface AppsFlyerClient {
 	setConsentData: (consent: GoogleAdsConsent) => void | Promise<void>;
 	/** Call `appsFlyer.stop`. */
 	stop: (isStopped: boolean) => void | Promise<void>;
-	/** Call `appsFlyer.startSdk`. */
-	startSdk: () => void | Promise<void>;
+	/** Start AppsFlyer: `appsFlyer.startSdk()` in react-native-appsflyer 6. */
+	start: () => void | Promise<void>;
 }
 
 /**
@@ -24,9 +24,14 @@ export interface AppsFlyerClient {
  * supply: c15t's policy model is not a legal jurisdiction flag. Marketing
  * grants all three types and is the default category.
  *
- * Initialize AppsFlyer with `manualStart: true` and do not call `startSdk`
- * yourself. While the category is denied or pending, the helper calls
- * `stop(true)`. When it is granted, it calls `stop(false)` and then `startSdk`.
+ * Written against `react-native-appsflyer` 6. Version 7 removed
+ * `AppsFlyerConsent` and starts sessions only from its session-ready listener,
+ * which this helper does not coordinate.
+ *
+ * Initialize AppsFlyer with `manualStart: true` and do not start it yourself.
+ * While the category is denied or pending, the helper calls `stop(true)`. When
+ * it is granted, it calls `stop(false)` and then `start`. On withdrawal both
+ * denial calls are made even if the first fails.
  * A change that keeps the category granted sends new consent data without
  * starting again.
  *
@@ -46,15 +51,17 @@ export const connectAppsFlyer = (
 	connectTrackingAndAds(options, async (current, previous) => {
 		const state = current();
 		if (!state.tracking) {
-			await appsFlyer.stop(true);
-			await appsFlyer.setConsentData(state.ads);
+			await settleAll([
+				() => appsFlyer.stop(true),
+				() => appsFlyer.setConsentData(state.ads),
+			]);
 			return state;
 		}
 		await appsFlyer.setConsentData(state.ads);
 		// A withdrawal during these calls queues the next apply, which stops.
 		if (previous?.tracking !== true && current().tracking) {
 			await appsFlyer.stop(false);
-			await appsFlyer.startSdk();
+			await appsFlyer.start();
 		}
 		return state;
 	});

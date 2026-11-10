@@ -172,6 +172,9 @@ with `AppEventsLogger` or `AppEvents` need their own consent check.
 Teardown (`stop()`, `close()` or `disconnect()`) turns collection off and
 Limited Data Use on. Neither deletes data Meta already received.
 
+On withdrawal, the helper makes all three calls even if one of them fails,
+and reports the failure to `onError`.
+
 ## Check the integration
 
 1. Launch with no saved choice. Confirm no automatic `fb_mobile_activate_app`
@@ -184,3 +187,11 @@ Limited Data Use on. Neither deletes data Meta already received.
 Use Meta's App Events debugging in Events Manager. The helper tests cover
 order, withdrawal during a grant and category changes with recorded calls.
 They were not run against the Meta SDK.
+
+The snippets were written against these SDK majors and checked as shown:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `react-native-fbsdk-next` 13.4.3 | Type-checked against the package's published types |
+| Android | `facebook-core` 19.0.1 | Method signatures read from the published AAR |
+| iOS | FBSDKCoreKit 19.0.1 | Checked against the SDK's Swift source |

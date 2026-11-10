@@ -102,6 +102,32 @@ class AppsFlyerIntegrationTest {
 	fun `rejects necessary as tracking authorization`() {
 		appsFlyer(kernel(), mutableListOf(), NECESSARY)
 	}
+
+	@Test
+	fun `a failed stop on withdrawal still sends denied consent and is reported`() {
+		val core = kernel()
+		val calls = mutableListOf<String>()
+		val failures = mutableListOf<Exception>()
+		var failStop = false
+		val integration = AppsFlyerIntegration(core,
+			setConsentData = { calls += "consent:${it.adUserData}" },
+			stop = { stopped ->
+				if (stopped && failStop) error("AppsFlyer rejected stop")
+				calls += "stop:$stopped"
+			},
+			start = { calls += "start" },
+			onError = failures::add,
+		)
+		assertTrue(core.save(CommitIntent.All).ok)
+		calls.clear()
+		failStop = true
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("consent:false"), calls)
+		assertEquals(listOf("AppsFlyer rejected stop"), failures.map { it.message })
+		failStop = false
+		integration.close()
+		assertEquals("stop:true", calls[1])
+	}
 }
 
 class AdjustIntegrationTest {
@@ -191,6 +217,31 @@ class MetaAppEventsIntegrationTest {
 		assertEquals(granted, calls.drain())
 		core.choose(MARKETING to false)
 		assertEquals(denied, calls.drain())
+		integration.close()
+	}
+
+	@Test
+	fun `a failed denial call does not stop the other two and is reported`() {
+		val core = kernel()
+		val calls = mutableListOf<String>()
+		val failures = mutableListOf<Exception>()
+		var failAutoLogOff = false
+		val integration = MetaAppEventsIntegration(core,
+			setAutoLogAppEventsEnabled = {
+				if (!it && failAutoLogOff) error("Meta rejected auto-log")
+				calls += "autoLog:$it"
+			},
+			setAdvertiserIDCollectionEnabled = { calls += "advertiserId:$it" },
+			setLimitedDataUse = { calls += "ldu:$it" },
+			onError = failures::add,
+		)
+		assertTrue(core.save(CommitIntent.All).ok)
+		calls.clear()
+		failAutoLogOff = true
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("advertiserId:false", "ldu:true"), calls)
+		assertEquals(listOf("Meta rejected auto-log"), failures.map { it.message })
+		failAutoLogOff = false
 		integration.close()
 	}
 

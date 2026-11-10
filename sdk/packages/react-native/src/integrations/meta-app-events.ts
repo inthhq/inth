@@ -1,4 +1,4 @@
-import { connectConsentIntegration } from './consent-integration';
+import { connectConsentIntegration, settleAll } from './consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
@@ -23,7 +23,8 @@ export interface MetaAppEventsClient {
  * granted, it turns Limited Data Use off and both settings on. For
  * `setLimitedDataUse`, call `Settings.setDataProcessingOptions(['LDU'], 0, 0)`
  * when it is `true` and `Settings.setDataProcessingOptions([])` when it is
- * `false`. Marketing is the default, as for the web's Meta Pixel.
+ * `false`. Marketing is the default, as for the web's Meta Pixel. On
+ * withdrawal all three calls are made even if one fails.
  *
  * Turn both settings off in the native projects so nothing runs before
  * JavaScript connects. Events the app logs itself need their own consent check.
@@ -42,9 +43,11 @@ export const connectMetaAppEvents = (
 	options: AnalyticsIntegrationOptions
 ): ConsentIntegration => {
 	const deny = async () => {
-		await meta.setAutoLogAppEventsEnabled(false);
-		await meta.setAdvertiserIDCollectionEnabled(false);
-		await meta.setLimitedDataUse(true);
+		await settleAll([
+			() => meta.setAutoLogAppEventsEnabled(false),
+			() => meta.setAdvertiserIDCollectionEnabled(false),
+			() => meta.setLimitedDataUse(true),
+		]);
 		return false;
 	};
 	return connectConsentIntegration(

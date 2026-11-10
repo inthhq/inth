@@ -44,9 +44,11 @@ Complete the [Swift](/docs/frameworks/swift/quickstart),
 [Android](/docs/frameworks/android/quickstart) or
 [React Native](/docs/frameworks/react-native/quickstart) quickstart, with
 `marketing` in your Inth policy and native configuration. Install AppsFlyer
-6.16 or later through its [iOS](https://dev.appsflyer.com/hc/docs/ios-send-consent-for-dma-compliance),
+**6.16 to 6.x** through its [iOS](https://dev.appsflyer.com/hc/docs/ios-send-consent-for-dma-compliance),
 [Android](https://dev.appsflyer.com/hc/docs/android-sdk-reference-appsflyerconsent)
-or [React Native](https://dev.appsflyer.com/hc/docs/rn_cmp) guide.
+or [React Native](https://dev.appsflyer.com/hc/docs/rn_cmp) guide: the iOS and
+Android SDK 6 and `react-native-appsflyer` 6. This page does not cover
+AppsFlyer 7; see [AppsFlyer 7](#appsflyer-7).
 
 Initialize AppsFlyer, but **do not call `start` yourself**. The helper starts
 it once consent allows. AppsFlyer requires `stop(false)` before `start` after
@@ -69,10 +71,10 @@ final class AppsFlyerConsentOwner {
             core: core,
             setConsentData: { consent in
                 AppsFlyerLib.shared().setConsentData(AppsFlyerConsent(
-                    isUserSubjectToGDPR: subjectToGDPR,
-                    hasConsentForDataUsage: consent.adUserData,
-                    hasConsentForAdsPersonalization: consent.adPersonalization,
-                    hasConsentForAdStorage: consent.adStorage
+                    isUserSubjectToGDPR: NSNumber(value: subjectToGDPR),
+                    hasConsentForDataUsage: NSNumber(value: consent.adUserData),
+                    hasConsentForAdsPersonalization: NSNumber(value: consent.adPersonalization),
+                    hasConsentForAdStorage: NSNumber(value: consent.adStorage)
                 ))
             },
             setStopped: { AppsFlyerLib.shared().isStopped = $0 },
@@ -85,8 +87,10 @@ final class AppsFlyerConsentOwner {
 }
 ```
 
-Create the owner after configuring `AppsFlyerLib.shared()` with your dev key
-and app ID, and keep it for the app's lifetime. Pass
+`AppsFlyerConsent` takes `NSNumber?` arguments in Swift, hence the
+`NSNumber(value:)` wrappers. Create the owner after configuring
+`AppsFlyerLib.shared()` with your dev key and app ID, and keep it for the
+app's lifetime. Pass
 `category: .measurement` if you treat attribution as measurement.
 
 ## Connect an Android app
@@ -152,7 +156,7 @@ export const connectAppsFlyerVendor = (
 						adStorage
 					)
 				),
-			startSdk: () => appsFlyer.startSdk(),
+			start: () => appsFlyer.startSdk(),
 			stop: (isStopped) => appsFlyer.stop(isStopped),
 		},
 		onError
@@ -162,12 +166,35 @@ export const connectAppsFlyerVendor = (
 React Native runs this after native startup. Use AppsFlyer's Expo config
 plugin and a development build; Expo Go cannot load either native module.
 
+## AppsFlyer 7
+
+AppsFlyer 7 is a breaking release, and the snippets above do not work with it:
+
+- `react-native-appsflyer` 7 removed `AppsFlyerConsent` and `initSdk`, takes
+  one object per call (`stop({ shouldStop })`, `setConsentData({ ... })`), and
+  needs React Native's New Architecture.
+- The Android SDK 7 `start()` takes no `Context`, and `AppsFlyerConsent` moved
+  to `com.appsflyer.share`.
+- On iOS, Android and React Native, SDK 7 starts a session only when `start`
+  runs after its session-ready listener has fired. Without the listener,
+  `start` does nothing.
+
+The c15t helper's calls (`setConsentData`, `stop`, `start`) map onto SDK 7,
+but its `start` call can come before the session is ready, and coordinating
+the two is untested. Stay on AppsFlyer 6 with this helper for now. See
+AppsFlyer's [Android](https://dev.appsflyer.com/hc/docs/migrate-android-sdk-to-v7)
+and [iOS](https://dev.appsflyer.com/hc/docs/migrate-ios-sdk-to-v7) migration
+guides and the [React Native 7 release notes](https://github.com/AppsFlyerSDK/appsflyer-react-native-plugin/releases/tag/v7.0.2).
+
 ## Handle reset and teardown
 
 `sync()` reapplies current consent and starts AppsFlyer again if allowed, so
 call it only after you have reset AppsFlyer. Teardown (`stop()`, `close()` or
 `disconnect()`) stops the SDK. Stopping does not delete data AppsFlyer already
 received.
+
+On withdrawal, the helper makes both calls, stop and the denied consent
+data, even if one of them fails, and reports the failure to `onError`.
 
 ## Check the integration
 
@@ -180,6 +207,12 @@ received.
    marketing. Confirm consent data changes without a second launch.
 4. Withdraw. Confirm AppsFlyer stops.
 
-The helper tests cover start order, withdrawal during start and
-marketing-only changes with recorded calls. They were not run against the
-AppsFlyer SDK.
+The helper tests cover start order, withdrawal during start, a failing stop
+call and marketing-only changes with recorded calls. They were not run
+against the AppsFlyer SDK. The snippets were checked against these versions:
+
+| Platform | Version | How |
+| --- | --- | --- |
+| React Native | `react-native-appsflyer` 6.18.0 | Type-checked against the package's published types |
+| Android | `af-android-sdk` 6.18.3 | Method signatures read from the published AAR |
+| iOS | AppsFlyerLib 6.18.1 | Initializer and method signatures read from the published framework's Swift interface |
