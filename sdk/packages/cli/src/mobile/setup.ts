@@ -146,7 +146,20 @@ const resolveMode = async (
 	context: CliContext,
 	prompts: MobilePrompts | null
 ): Promise<MobileMode> => {
-	let mode = text(context.commandArgs[0]) ?? text(context.flags.mode);
+	const positional = text(context.commandArgs[0]);
+	const flagged = text(context.flags.mode);
+	// Same rule as the web setup: two different modes is invalid input, not a
+	// choice for this command to make.
+	if (
+		positional !== undefined &&
+		flagged !== undefined &&
+		positional !== flagged
+	) {
+		throw new CliError('FLAG_INVALID', {
+			details: 'The positional mode conflicts with --mode.',
+		});
+	}
+	let mode = positional ?? flagged;
 	if (mode === undefined && prompts) {
 		mode = await prompts.select('How will the app resolve its policy?', MODES);
 	}

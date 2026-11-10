@@ -329,6 +329,23 @@ describe('c15t setup in a mobile project', () => {
 		);
 	});
 
+	it('refuses a positional mode that conflicts with --mode', async () => {
+		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
+
+		const conflict = await setup(root, ['hosted', '--mode', 'offline']);
+		const agree = await setup(root, [
+			'offline',
+			'--mode',
+			'offline',
+			'--dry-run',
+		]);
+
+		expect(conflict.success).toBe(false);
+		expect(conflict.error?.message).toContain('conflicts with --mode');
+		expect(agree.success).toBe(true);
+		expect(agree.data.options.mode).toBe('offline');
+	});
+
 	it('refuses missing or invalid answers without prompting', async () => {
 		const root = await project({ 'package.json': pkg({ expo: '57.0.0' }) });
 
@@ -509,6 +526,35 @@ describe('where setup looks for the project', () => {
 		}
 		// Setup from ios/ also finds the React Native app, not a Swift project.
 		expect(await rootOf(ios, 'setup')).toBe(root);
+	});
+
+	it('finds a Swift or Gradle project from a directory inside it', async () => {
+		const parent = await project({ 'package.json': pkg({ next: '16.0.0' }) });
+		const swift = path.join(parent, 'MyApp');
+		await mkdir(path.join(swift, 'Sources/Feature'), { recursive: true });
+		await writeFile(path.join(swift, 'Package.swift'), '');
+		const gradle = await project({
+			'app/build.gradle.kts': '',
+			'app/src/main/AndroidManifest.xml': '',
+			'settings.gradle.kts': '',
+		});
+
+		expect(await rootOf(path.join(swift, 'Sources/Feature'), 'setup')).toBe(
+			swift
+		);
+		// The Gradle project, not the `app` module that also has a build file.
+		expect(await rootOf(path.join(gradle, 'app/src/main'), 'setup')).toBe(
+			gradle
+		);
+		const result = await setup(path.join(swift, 'Sources/Feature'), [
+			'--backend-url',
+			'https://a.test',
+		]);
+		expect(result.data.platform).toBe('native');
+		// Other commands still walk to the package above, as before.
+		expect(await rootOf(path.join(swift, 'Sources/Feature'), 'codemods')).toBe(
+			parent
+		);
 	});
 
 	it('keeps a Swift app outside any package as its own root for setup only', async () => {

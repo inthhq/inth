@@ -27,6 +27,8 @@ export interface NativeProject {
 export type MobileProject = ReactNativeProject | NativeProject;
 
 const IOS_MARKERS = [/\.xcodeproj$/u, /\.xcworkspace$/u, /^Package\.swift$/u];
+/** Markers that name a whole project, not one module inside it. */
+const PROJECT_MARKERS = [...IOS_MARKERS, /^settings\.gradle(?:\.kts)?$/u];
 const ANDROID_MARKERS = [
 	/^settings\.gradle(?:\.kts)?$/u,
 	/^build\.gradle(?:\.kts)?$/u,
@@ -91,6 +93,61 @@ export const detectNativePlatforms = async (
 		platforms.push('android');
 	}
 	return platforms;
+};
+
+/**
+ * The nearest Swift or Gradle project at or above `dir`, or `null`.
+ *
+ * The walk stops at the first `package.json`, because a JavaScript project there
+ * owns the directory. An Xcode project, a workspace, `Package.swift` or a Gradle
+ * settings file names a project, so the nearest one wins. A module's own
+ * `build.gradle` is only used when no settings file is found above it, so
+ * `app/src/main` resolves to the Gradle project, not to `app/`.
+ *
+ * @param dir - The directory `c15t` runs in.
+ * @param maxDepth - How many levels to climb.
+ * @returns The native project root, or `null` when there is none.
+ */
+export const findNativeRoot = async (
+	dir: string,
+	maxDepth = 10
+): Promise<string | null> => {
+	let module: string | null = null;
+	let current = path.resolve(dir);
+	for (let depth = 0; depth <= maxDepth; depth += 1) {
+		// oxlint-disable-next-line no-await-in-loop -- Nearest directory first.
+		if (await exists(path.join(current, 'package.json'))) {
+			return null;
+		}
+		let entries: string[] = [];
+		try {
+			// oxlint-disable-next-line no-await-in-loop -- Nearest directory first.
+			entries = await fs.readdir(current);
+		} catch {
+			entries = [];
+		}
+		if (
+			entries.some((entry) =>
+				PROJECT_MARKERS.some((marker) => marker.test(entry))
+			)
+		) {
+			return current;
+		}
+		if (
+			module === null &&
+			entries.some((entry) =>
+				ANDROID_MARKERS.some((marker) => marker.test(entry))
+			)
+		) {
+			module = current;
+		}
+		const parent = path.dirname(current);
+		if (parent === current) {
+			break;
+		}
+		current = parent;
+	}
+	return module;
 };
 
 /**
