@@ -84,11 +84,11 @@ class WebViewConsentTest {
 		}
 	}
 
-	@Test fun `scripts call the protocol functions with the origins, the token and the state`() {
-		val script = WebViewConsentScript(listOf("https://app.example"), token = "t0k3n")
+	@Test fun `scripts call the protocol functions with the origins, the secrets and the state`() {
+		val script = WebViewConsentScript(listOf("https://app.example"), token = "t0k3n", requestKey = "k3y")
 		val state = WebViewConsentState.from(decided, null)
 		assertEquals(
-			"${WebViewConsentScripts.DOCUMENT_START}([\"https://app.example\"],\"t0k3n\",${state.toJson()});",
+			"${WebViewConsentScripts.DOCUMENT_START}([\"https://app.example\"],\"t0k3n\",\"k3y\",${state.toJson()});",
 			script.documentStart(state),
 		)
 		assertEquals(
@@ -110,7 +110,26 @@ class WebViewConsentTest {
 		assertTrue(script.isAllowed("https://app.example/"))
 		assertFalse(script.isAllowed("https://evil.example"))
 		assertFalse(script.isAllowed(null))
-		assertTrue(WebViewConsentScript.isOpenPreferencesMessage("""{"type":"c15t:open-preferences"}"""))
-		assertFalse(WebViewConsentScript.isOpenPreferencesMessage("""{"type":"c15t:save","all":true}"""))
+	}
+
+	@Test fun `a preferences request must carry the key only the top frame holds`() {
+		val script = WebViewConsentScript(listOf("https://app.example"), requestKey = "k3y")
+		assertTrue(script.isPreferencesRequest("""{"type":"c15t:open-preferences","key":"k3y"}"""))
+		// What a frame that can post to the channel, but cannot read the key, can send.
+		assertFalse(script.isPreferencesRequest("""{"type":"c15t:open-preferences"}"""))
+		assertFalse(script.isPreferencesRequest("""{"type":"c15t:open-preferences","key":"guess"}"""))
+		assertFalse(script.isPreferencesRequest(null))
+	}
+
+	@Test fun `a replacement keeps both secrets for the new origins`() {
+		val first = WebViewConsentScript(listOf("https://app.example"), token = "t0k3n", requestKey = "k3y")
+		val next = first.replacingOrigins(listOf("https://www.example.com"))
+		val state = WebViewConsentState.from(decided, null)
+		assertEquals(listOf("https://www.example.com"), next.origins)
+		assertEquals(
+			"${WebViewConsentScripts.UPDATE}([\"https://www.example.com\"],\"t0k3n\",${state.toJson()});",
+			next.update(state),
+		)
+		assertTrue(next.isPreferencesRequest("""{"type":"c15t:open-preferences","key":"k3y"}"""))
 	}
 }

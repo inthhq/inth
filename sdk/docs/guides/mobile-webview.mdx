@@ -196,12 +196,11 @@ choices from it.
 
 The page can ask the app to open its preferences. Opening the preference dialog
 on the page, for example from a "Cookie settings" link, calls your
-`onPreferencesRequested`. Swift and Android act only on requests from the top
-frame of a listed origin. React Native checks the page's origin, but
-`react-native-webview` cannot always tell which frame sent a message, so an
-iframe on a listed page can also open the preferences screen. The hook ignores
-requests less than a second apart. When the visitor saves in the app, the page receives the new
-state. If a saved change withdraws a category the page was using, web c15t
+`onPreferencesRequested`. The request carries a key that only the page's top
+frame holds, so an iframe on your site cannot send one, on any platform.
+Swift and Android also check the frame and origin the WebView reports. React
+Native also checks the page's origin and ignores requests less than a second
+apart. When the visitor saves in the app, the page receives the new state. If a saved change withdraws a category the page was using, web c15t
 reloads the page, unless you set `reloadOnConsentRevoked: false`.
 
 ## Security
@@ -212,7 +211,9 @@ reloads the page, unless you set `reloadOnConsentRevoked: false`.
   state the page uses. They cannot replace it: it is defined before they run,
   and cannot be redefined.
 - Only the app can change the state. Each WebView gets its own random token,
-  and the page ignores updates without it.
+  and the page ignores updates without it. Attaching a new helper to the same
+  WebView keeps the token, so a page that is already open keeps following the
+  app.
 - In a normal browser, `webViewConsentSource()` returns `undefined` unless a
   script that ran before c15t defined the object. Such a script could equally
   write c15t's own consent cookie.

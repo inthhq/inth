@@ -8,10 +8,8 @@ import androidx.webkit.ScriptHandler
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import com.c15t.core.ConsentCore
-import com.c15t.core.Subscription
-import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.webview.WebViewConsentScript
-import com.c15t.core.webview.WebViewConsentState
+import com.c15t.core.webview.WebViewConsentSync
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
@@ -37,12 +35,14 @@ import java.util.WeakHashMap
  *
  * Attach before the first `loadUrl`. The helper lives as long as the WebView, so a
  * page never keeps a state the app has since changed. Call [close] to stop sooner.
- * Attaching again to the same WebView closes the earlier helper.
+ * Attaching again to the same WebView closes the earlier helper and keeps its
+ * secrets, so a page that is already loaded keeps receiving changes.
+ *
+ * The ordering and replacement rules live in [WebViewConsentSync], which runs
+ * on a plain JVM; this class only connects it to `androidx.webkit`.
  */
 class ConsentWebView private constructor(
 	webView: WebView,
-	private val core: ConsentCore,
-	private val script: WebViewConsentScript,
 	private val onPreferencesRequested: (() -> Unit)?,
 ) : AutoCloseable {
 	// Weak: the registry below keys on the WebView, and a strong reference here
@@ -51,26 +51,44 @@ class ConsentWebView private constructor(
 	private val main = Handler(Looper.getMainLooper())
 	private var handler: ScriptHandler? = null
 	private var listening = false
-	private var subscription: Subscription? = null
-	private var published: WebViewConsentState? = null
 	private var closed = false
+	private var origins: Set<String> = emptySet()
+	private lateinit var sync: WebViewConsentSync
 
-	// Held here: the core keeps observers weakly.
-	private val observer: (ConsentSnapshot) -> Unit = { main.post { publish() } }
+	private val target = object : WebViewConsentSync.Target {
+		override fun install(script: String) {
+			val webView = webViewRef.get() ?: return
+			if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return
+			handler?.remove()
+			handler = WebViewCompat.addDocumentStartJavaScript(webView, script, origins)
+		}
 
-	private fun start(webView: WebView) {
-		// Observe first, so a change between the first read and the
-		// subscription is not missed. A repeated state is skipped.
-		subscription = core.onChange(observer)
-		publish()
+		override fun evaluate(script: String) {
+			webViewRef.get()?.evaluateJavascript(script, null)
+		}
+
+		override fun uninstall() {
+			if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+				handler?.remove()
+			}
+			handler = null
+		}
+	}
+
+	private fun start(webView: WebView, core: ConsentCore, allowedOrigins: Collection<String>, replacing: ConsentWebView?) {
+		// Set before the sync starts: its first publish installs a script.
+		origins = WebViewConsentScript.normalizeAll(allowedOrigins).toSet()
+		replacing?.closeListener()
+		sync = WebViewConsentSync.start(core, allowedOrigins, target, replacing?.sync) { block -> main.post(block) }
+		replacing?.closed = true
 		if (onPreferencesRequested != null && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
 			WebViewCompat.addWebMessageListener(
 				webView,
 				WebViewConsentScript.CHANNEL,
-				script.origins.toSet(),
+				origins,
 			) { _, message, sourceOrigin, isMainFrame, _ ->
-				if (!closed && isMainFrame && script.isAllowed(sourceOrigin.toString()) &&
-					WebViewConsentScript.isOpenPreferencesMessage(message.data)
+				if (!closed && isMainFrame && sync.script.isAllowed(sourceOrigin.toString()) &&
+					sync.script.isPreferencesRequest(message.data)
 				) {
 					onPreferencesRequested.invoke()
 				}
@@ -79,19 +97,12 @@ class ConsentWebView private constructor(
 		}
 	}
 
-	/** Re-register the document-start script and push the state into the loaded page. */
-	@MainThread
-	private fun publish() {
-		val webView = webViewRef.get() ?: return
-		if (closed || !WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return
-		val state = WebViewConsentState.from(core)
-		if (state == published) return
-		published = state
-		handler?.remove()
-		handler = WebViewCompat.addDocumentStartJavaScript(webView, script.documentStart(state), script.origins.toSet())
-		// The update script checks the page origin itself, so a page that
-		// navigated off the list gets nothing.
-		webView.evaluateJavascript(script.update(state), null)
+	private fun closeListener() {
+		val webView = webViewRef.get()
+		if (webView != null && listening && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+			WebViewCompat.removeWebMessageListener(webView, WebViewConsentScript.CHANNEL)
+		}
+		listening = false
 	}
 
 	/** Stop syncing. Pages loaded afterwards get no state. Safe to call more than once. */
@@ -101,16 +112,8 @@ class ConsentWebView private constructor(
 		closed = true
 		val webView = webViewRef.get()
 		if (webView != null && attached[webView] === this) attached.remove(webView)
-		subscription?.close()
-		subscription = null
-		if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-			handler?.remove()
-		}
-		handler = null
-		if (webView != null && listening && WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
-			WebViewCompat.removeWebMessageListener(webView, WebViewConsentScript.CHANNEL)
-			listening = false
-		}
+		sync.close()
+		closeListener()
 	}
 
 	companion object {
@@ -142,12 +145,12 @@ class ConsentWebView private constructor(
 			allowedOrigins: Collection<String>,
 			onPreferencesRequested: (() -> Unit)? = null,
 		): ConsentWebView? {
-			val script = WebViewConsentScript(allowedOrigins)
+			WebViewConsentScript.normalizeAll(allowedOrigins)
 			if (!isSupported()) return null
-			attached[webView]?.close()
-			val helper = ConsentWebView(webView, core, script, onPreferencesRequested)
+			val previous = attached[webView]
+			val helper = ConsentWebView(webView, onPreferencesRequested)
+			helper.start(webView, core, allowedOrigins, previous)
 			attached[webView] = helper
-			helper.start(webView)
 			return helper
 		}
 	}

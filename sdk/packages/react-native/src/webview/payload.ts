@@ -12,10 +12,25 @@ export interface WebViewConsentPayload {
 	readonly state: Readonly<Record<string, unknown>>;
 	/** 128 random bits, hex. Only scripts that carry it can change a page's state. */
 	readonly token: string;
+	/**
+	 * 128 random bits, hex. A page's preferences request must carry it. Only the
+	 * top frame's document-start closure holds it, so a frame cannot send one.
+	 */
+	readonly key: string;
 }
 
-/** The message a page posts to ask the app for its preferences. */
-export const OPEN_PREFERENCES_MESSAGE = '{"type":"c15t:open-preferences"}';
+/**
+ * The message a page prepared with `key` posts to ask the app for its
+ * preferences.
+ *
+ * @param key - The request key the document-start script was given.
+ * @returns The exact message text.
+ */
+export const preferencesRequest = function preferencesRequest(
+	key: string
+): string {
+	return `{"type":"c15t:open-preferences","key":"${key}"}`;
+};
 
 const TOKEN = /^[0-9a-f]{32}$/u;
 
@@ -43,11 +58,13 @@ export const parseWebViewConsent = function parseWebViewConsent(
 		!isRecord(parsed.state) ||
 		parsed.state.version !== 1 ||
 		typeof parsed.token !== 'string' ||
-		!TOKEN.test(parsed.token)
+		!TOKEN.test(parsed.token) ||
+		typeof parsed.key !== 'string' ||
+		!TOKEN.test(parsed.key)
 	) {
 		return null;
 	}
-	return { state: parsed.state, token: parsed.token };
+	return { key: parsed.key, state: parsed.state, token: parsed.token };
 };
 
 const ORIGIN =

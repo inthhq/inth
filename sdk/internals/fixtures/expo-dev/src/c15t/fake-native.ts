@@ -800,7 +800,7 @@ class FakeCore {
 
 	/**
 	 * The WebView consent payload the native cores build from a snapshot. The
-	 * token is fixed: the fixture has no WebView to protect.
+	 * token and key are fixed: the fixture has no WebView to protect.
 	 */
 	private webViewConsent(): string {
 		const snapshot = JSON.parse(this.getSnapshot()) as {
@@ -811,6 +811,7 @@ class FakeCore {
 			revision: number;
 		};
 		return JSON.stringify({
+			key: '11111111111111111111111111111111',
 			state: {
 				gppString: null,
 				model: snapshot.model,

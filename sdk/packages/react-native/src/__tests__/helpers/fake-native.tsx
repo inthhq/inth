@@ -210,6 +210,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		getWebViewConsent: vi.fn(() => {
 			const current = typeof snapshot === 'string' ? buildSnapshot() : snapshot;
 			return JSON.stringify({
+				key: 'fedcba9876543210fedcba9876543210',
 				state: {
 					gppString: null,
 					model: current.model,

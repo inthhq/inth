@@ -9,8 +9,8 @@ import type { ConsentSnapshot } from '../protocol';
 import { useConsentClient } from '../provider/consent-context';
 import {
 	normalizeWebViewOrigins,
-	OPEN_PREFERENCES_MESSAGE,
 	originOfUrl,
+	preferencesRequest,
 } from './payload';
 import { DOCUMENT_START_SCRIPT, UPDATE_SCRIPT } from './scripts.generated';
 
@@ -62,13 +62,9 @@ const PREFERENCES_REQUEST_INTERVAL_MS = 1000;
 
 const selectRevision = (snapshot: ConsentSnapshot): number => snapshot.revision;
 
-const call = (
-	script: string,
-	origins: string,
-	token: string,
-	state: unknown
-): string =>
-	`${script}(${origins},${JSON.stringify(token)},${JSON.stringify(state)});`;
+/** `<script>(<arguments as JSON>);`, the call shape every platform uses. */
+const call = (script: string, ...args: readonly unknown[]): string =>
+	`${script}(${args.map((arg) => JSON.stringify(arg)).join(',')});`;
 
 /**
  * Keep the pages a `WebView` loads in step with native consent, so a site
@@ -105,16 +101,20 @@ export const useWebViewConsent = function useWebViewConsent(
 ): WebViewConsentProps {
 	const client = useConsentClient();
 	const revision = useConsentSelector(selectRevision);
-	// Keyed on the list's content, so an inline array does not re-run it.
-	const originsKey = options.allowedOrigins.join('\n');
+	// Keyed on the list's content, so an inline array does not re-run it. JSON
+	// keeps every entry intact; a joined string would let one entry that holds
+	// the separator turn into several origins.
+	const originsKey = JSON.stringify(options.allowedOrigins);
 	const origins = useMemo(
-		() => normalizeWebViewOrigins(originsKey ? originsKey.split('\n') : []),
+		() => normalizeWebViewOrigins(JSON.parse(originsKey) as string[]),
 		[originsKey]
 	);
-	const originsJson = JSON.stringify(origins);
-	// One token for the life of this WebView.
+	// One token and request key for the life of this WebView.
 	// oxlint-disable-next-line react/hook-use-state -- Drawn once, at mount.
-	const [token] = useState(() => client.getWebViewConsent()?.token ?? null);
+	const [secrets] = useState(() => {
+		const consent = client.getWebViewConsent();
+		return consent ? { key: consent.key, token: consent.token } : null;
+	});
 	// Read again whenever the native snapshot moves.
 	const state = useMemo(
 		() => (revision >= 0 ? (client.getWebViewConsent()?.state ?? null) : null),
@@ -129,11 +129,13 @@ export const useWebViewConsent = function useWebViewConsent(
 	}, [options.onPreferencesRequested]);
 
 	const documentStart =
-		token && state
-			? call(DOCUMENT_START_SCRIPT, originsJson, token, state)
+		secrets && state
+			? call(DOCUMENT_START_SCRIPT, origins, secrets.token, secrets.key, state)
 			: '';
 	const update =
-		token && state ? call(UPDATE_SCRIPT, originsJson, token, state) : null;
+		secrets && state
+			? call(UPDATE_SCRIPT, origins, secrets.token, state)
+			: null;
 
 	useEffect(() => {
 		if (update === null) {
@@ -156,15 +158,18 @@ export const useWebViewConsent = function useWebViewConsent(
 
 	const lastRequest = useRef(Number.NEGATIVE_INFINITY);
 	// `react-native-webview` reports the top page's URL and, on some Android
-	// WebViews, no frame at all, so an iframe on a listed page can send this
-	// too. It can only ask for the preferences screen; repeats are dropped.
+	// WebViews, no frame at all, so the frame and origin checks cannot tell an
+	// iframe from the page. The request key can: only the top frame's
+	// document-start closure holds it. Repeats are dropped as well.
+	const expectedRequest = secrets ? preferencesRequest(secrets.key) : null;
 	const onMessage = useCallback(
 		(event: WebViewConsentMessageEvent) => {
 			const { data, isTopFrame, url } = event.nativeEvent;
 			const origin = originOfUrl(url);
 			const now = Date.now();
 			if (
-				data === OPEN_PREFERENCES_MESSAGE &&
+				expectedRequest !== null &&
+				data === expectedRequest &&
 				isTopFrame !== false &&
 				origin !== null &&
 				origins.includes(origin) &&
@@ -174,7 +179,7 @@ export const useWebViewConsent = function useWebViewConsent(
 				onPreferencesRequested.current?.();
 			}
 		},
-		[origins]
+		[expectedRequest, origins]
 	);
 
 	return useMemo(

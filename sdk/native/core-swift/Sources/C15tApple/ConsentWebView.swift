@@ -29,17 +29,17 @@ import WebKit
 /// Create it before the first load. The web view keeps the helper alive for as long
 /// as the web view lives, so a page never keeps a state the app has since changed.
 /// Call ``close()`` to stop sooner. A second helper on the same web view closes the
-/// first.
+/// first and keeps its secrets, so a page that is already loaded keeps receiving
+/// changes.
+///
+/// The ordering and replacement rules live in ``WebViewConsentSync`` in C15tCore;
+/// this class only connects it to WebKit.
 @MainActor
 public final class ConsentWebView {
     private weak var webView: WKWebView?
-    private let core: ConsentCore
-    private let script: WebViewConsentScript
     private let onPreferencesRequested: (@MainActor () -> Void)?
-    private var userScript: WKUserScript?
-    private var published: WebViewConsentState?
-    private var observer: ConsentWebViewObserver?
-    private var subscription: ConsentSubscription?
+    private let target: WebKitTarget
+    private var sync: WebViewConsentSync?
     private var messages: ConsentWebViewMessageHandler?
     private var closed = false
 
@@ -61,20 +61,20 @@ public final class ConsentWebView {
         allowedOrigins: [String],
         onPreferencesRequested: (@MainActor () -> Void)? = nil
     ) throws {
-        script = try WebViewConsentScript(allowedOrigins: allowedOrigins)
+        _ = try WebViewConsentScript(allowedOrigins: allowedOrigins)
         self.webView = webView
-        self.core = core
         self.onPreferencesRequested = onPreferencesRequested
-        // Observe first, so a change between the first read and the subscription
-        // is not missed. A repeated state is skipped.
-        let observer = ConsentWebViewObserver { [weak self] in
-            Task { @MainActor [weak self] in self?.publish() }
-        }
-        self.observer = observer
-        subscription = core.onChange(observer)
-        publish()
-        // Tie the helper's lifetime to the web view's, replacing an earlier helper.
-        (objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView)?.close()
+        target = WebKitTarget(webView: webView)
+        let previous = objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView
+        let replaced = previous?.detachForReplacement()
+        sync = try WebViewConsentSync(
+            core: core,
+            allowedOrigins: allowedOrigins,
+            target: target,
+            replacing: replaced,
+            post: { block in DispatchQueue.main.async(execute: block) }
+        )
+        // Tie the helper's lifetime to the web view's.
         objc_setAssociatedObject(webView, &Self.associationKey, self, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         if onPreferencesRequested != nil {
             let messages = ConsentWebViewMessageHandler(owner: self)
@@ -86,53 +86,31 @@ public final class ConsentWebView {
     /// Stop syncing. Pages loaded afterwards get no state. Safe to call more than once.
     public func close() {
         guard !closed else { return }
-        closed = true
-        subscription?.cancel()
-        subscription = nil
-        observer = nil
-        guard let webView else { return }
-        if (objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView) === self {
+        detachForReplacement()?.close()
+        if let webView,
+           (objc_getAssociatedObject(webView, &Self.associationKey) as? ConsentWebView) === self {
             objc_setAssociatedObject(webView, &Self.associationKey, nil, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
-        let controller = webView.configuration.userContentController
-        replaceUserScript(in: controller, with: nil)
+    }
+
+    /// Stop answering messages and hand back the sync, for a replacement to take
+    /// over (it keeps the secrets) or for ``close()`` to close.
+    @discardableResult
+    private func detachForReplacement() -> WebViewConsentSync? {
+        guard !closed else { return nil }
+        closed = true
         if messages != nil {
-            controller.removeScriptMessageHandler(forName: WebViewConsentScript.channel)
+            webView?.configuration.userContentController
+                .removeScriptMessageHandler(forName: WebViewConsentScript.channel)
             messages = nil
         }
-    }
-
-    /// Re-register the document-start script and push the state into the loaded page.
-    private func publish() {
-        guard !closed, let webView else { return }
-        let state = WebViewConsentState(core: core)
-        guard state != published else { return }
-        published = state
-        let next = WKUserScript(
-            source: script.documentStart(state),
-            injectionTime: .atDocumentStart,
-            forMainFrameOnly: true
-        )
-        replaceUserScript(in: webView.configuration.userContentController, with: next)
-        // The update script checks the page origin itself, so a page that navigated
-        // off the list gets nothing.
-        webView.evaluateJavaScript(script.update(state), completionHandler: nil)
-    }
-
-    /// WebKit cannot remove one user script, so remove all and add back every
-    /// script but ours. Ours goes first, ahead of the host's own.
-    private func replaceUserScript(in controller: WKUserContentController, with next: WKUserScript?) {
-        let previous = userScript
-        let others = controller.userScripts.filter { $0 !== previous }
-        controller.removeAllUserScripts()
-        if let next { controller.addUserScript(next) }
-        others.forEach(controller.addUserScript)
-        userScript = next
+        defer { sync = nil }
+        return sync
     }
 
     fileprivate func receive(_ message: WKScriptMessage) {
-        guard !closed, message.frameInfo.isMainFrame,
-              WebViewConsentScript.isOpenPreferencesMessage(message.body)
+        guard !closed, let script = sync?.script, message.frameInfo.isMainFrame,
+              script.isPreferencesRequest(message.body)
         else { return }
         let origin = message.frameInfo.securityOrigin
         var text = "\(origin.protocol)://\(origin.host)"
@@ -142,11 +120,50 @@ public final class ConsentWebView {
     }
 }
 
-/// Strong home for the observer the core holds weakly. Called on any queue.
-private final class ConsentWebViewObserver: SnapshotObserver, @unchecked Sendable {
-    let changed: () -> Void
-    init(_ changed: @escaping () -> Void) { self.changed = changed }
-    func consentDidChange(_ snapshot: ConsentSnapshot) { changed() }
+/// Puts a sync's scripts into one web view. Main thread; a removal that arrives
+/// from elsewhere, such as a release on another thread, hops to it.
+private final class WebKitTarget: WebViewConsentTarget, @unchecked Sendable {
+    private weak var webView: WKWebView?
+    private weak var controller: WKUserContentController?
+    private var userScript: WKUserScript?
+
+    init(webView: WKWebView) {
+        self.webView = webView
+        controller = webView.configuration.userContentController
+    }
+
+    func install(_ script: String) {
+        MainActor.assumeIsolated {
+            replace(with: WKUserScript(source: script, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
+    }
+
+    func evaluate(_ script: String) {
+        MainActor.assumeIsolated {
+            webView?.evaluateJavaScript(script, completionHandler: nil)
+        }
+    }
+
+    func uninstall() {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated { replace(with: nil) }
+        } else {
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.replace(with: nil) } }
+        }
+    }
+
+    /// WebKit cannot remove one user script, so remove all and add back every
+    /// script but ours. Ours goes first, ahead of the host's own.
+    @MainActor
+    private func replace(with next: WKUserScript?) {
+        guard let controller else { return }
+        let previous = userScript
+        let others = controller.userScripts.filter { $0 !== previous }
+        controller.removeAllUserScripts()
+        if let next { controller.addUserScript(next) }
+        others.forEach(controller.addUserScript)
+        userScript = next
+    }
 }
 
 /// `WKUserContentController` holds its handlers strongly; this one holds the

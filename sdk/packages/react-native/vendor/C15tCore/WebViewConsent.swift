@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(Security)
+import Security
+#endif
 
 /// What a page inside a WebView reads as `window.__c15tNativeConsent.getState()`.
 ///
@@ -113,8 +116,10 @@ public struct WebViewConsentState: Sendable, Equatable {
 /// in the main frame when consent changes. Both scripts check the page origin
 /// themselves, so a page outside ``origins`` gets nothing.
 ///
-/// The token is the only thing that lets ``update(_:)`` change a page's state.
-/// A new one is drawn for every instance; keep one instance per WebView.
+/// Two secrets, both drawn for every instance and kept for the life of one WebView:
+/// the token is the only thing that lets ``update(_:)`` change a page's state, and
+/// the request key is what a page's preferences request must carry. Both live only
+/// in the document-start closure of the top frame, so a frame cannot read either.
 public struct WebViewConsentScript: Sendable {
     public enum OriginError: Error, Equatable, CustomStringConvertible {
         case empty
@@ -133,16 +138,20 @@ public struct WebViewConsentScript: Sendable {
     /// The message-channel name pages post to.
     public static let channel = "c15tConsent"
 
-    /// The only message the page sends: a request to open preferences.
-    public static let openPreferencesMessage = #"{"type":"c15t:open-preferences"}"#
-
     /// The normalized origins, in the order given, without duplicates.
     public let origins: [String]
     private let token: String
+    private let requestKey: String
     private let originsJSON: String
     private let tokenJSON: String
+    private let requestKeyJSON: String
+    private let preferencesRequest: String
 
-    public init(allowedOrigins: [String], token: String = WebViewConsentScript.newToken()) throws {
+    public init(
+        allowedOrigins: [String],
+        token: String = WebViewConsentScript.newToken(),
+        requestKey: String = WebViewConsentScript.newToken()
+    ) throws {
         guard !allowedOrigins.isEmpty else { throw OriginError.empty }
         var normalized: [String] = []
         for input in allowedOrigins {
@@ -151,13 +160,24 @@ public struct WebViewConsentScript: Sendable {
         }
         origins = normalized
         self.token = token
+        self.requestKey = requestKey
         originsJSON = Self.encode(normalized)
         tokenJSON = Self.encode(token)
+        requestKeyJSON = Self.encode(requestKey)
+        preferencesRequest = #"{"type":"c15t:open-preferences","key":"#
+            + Self.encode(requestKey) + "}"
+    }
+
+    /// The same secrets for a new origin list. A page loaded under the old instance
+    /// keeps the token it was given, so a replacement must keep it too, or its
+    /// updates would be refused until the next navigation.
+    public func replacingOrigins(_ allowedOrigins: [String]) throws -> WebViewConsentScript {
+        try WebViewConsentScript(allowedOrigins: allowedOrigins, token: token, requestKey: requestKey)
     }
 
     /// The script to run at document start, carrying `state`.
     public func documentStart(_ state: WebViewConsentState) -> String {
-        "\(WebViewConsentScripts.documentStart)(\(originsJSON),\(tokenJSON),\(state.json()));"
+        "\(WebViewConsentScripts.documentStart)(\(originsJSON),\(tokenJSON),\(requestKeyJSON),\(state.json()));"
     }
 
     /// The script that pushes `state` into an already loaded page.
@@ -173,9 +193,9 @@ public struct WebViewConsentScript: Sendable {
         return origins.contains(normalized)
     }
 
-    /// Whether `message` is the page's request to open preferences.
-    public static func isOpenPreferencesMessage(_ message: Any?) -> Bool {
-        (message as? String) == openPreferencesMessage
+    /// Whether `message` is a preferences request from a page this instance prepared.
+    public func isPreferencesRequest(_ message: Any?) -> Bool {
+        (message as? String) == preferencesRequest
     }
 
     private static let pattern = try! NSRegularExpression(
@@ -205,15 +225,28 @@ public struct WebViewConsentScript: Sendable {
         return "\(scheme)://\(host)\(port)"
     }
 
-    /// 128 random bits as hex, from the system's secure generator.
+    /// 128 random bits as hex, from the platform CSPRNG, as the subject id draws its
+    /// bytes. `SystemRandomNumberGenerator` makes no cryptographic guarantee, so it
+    /// is only the fallback on platforms without Security, which no shipping app is.
     public static func newToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 16)
+        #if canImport(Security)
+        let status = bytes.withUnsafeMutableBytes { buffer -> OSStatus in
+            guard let base = buffer.baseAddress else { return errSecParam }
+            return SecRandomCopyBytes(kSecRandomDefault, buffer.count, base)
+        }
+        precondition(status == errSecSuccess, "the platform CSPRNG failed")
+        #else
         var generator = SystemRandomNumberGenerator()
-        return (0..<16).map { _ in String(format: "%02x", UInt8.random(in: 0...255, using: &generator)) }.joined()
+        for index in bytes.indices { bytes[index] = UInt8.random(in: 0...255, using: &generator) }
+        #endif
+        return bytes.map { String(format: "%02x", $0) }.joined()
     }
 
     static func encode<Value: Encodable>(_ value: Value) -> String {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = [.withoutEscapingSlashes]
+        // Sorted, so the same state always encodes to the same bytes.
+        encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         // Encoding strings, booleans and integers cannot fail.
         let data = (try? encoder.encode(value)) ?? Data("null".utf8)
         return String(decoding: data, as: UTF8.self)

@@ -19,5 +19,7 @@ banner.
 Only the top frame of a listed origin receives the state: permissions, model,
 the committed IAB TC string and a GPP slot. The subject ID stays in the app.
 Consent flows from the app to the page; a page can only ask the app to open its
-preferences. `WebViewConsentScript` and `WebViewConsentState` in the cores
-build the scripts for hosts with their own WebView glue.
+preferences, and that request must carry a key only the page's top frame
+holds. `WebViewConsentScript`, `WebViewConsentState` and `WebViewConsentSync`
+in the cores build the scripts and keep a WebView in step, for hosts with
+their own WebView glue.

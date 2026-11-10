@@ -81,7 +81,7 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         return handler.snapshotPayload()
     }
 
-    /// WebView consent: the state a page reads, and a fresh token for one WebView.
+    /// WebView consent: the state a page reads, and a fresh token and request key for one WebView.
     @objc(getWebViewConsent)
     public func getWebViewConsent() -> String {
         followCore()

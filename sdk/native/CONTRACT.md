@@ -1573,16 +1573,17 @@ gets a read-only copy, and nothing it does is recorded as a native choice.
 for byte. `bun run generate:webview-consent-scripts` copies them into
 `WebViewConsentScripts` (Swift and Kotlin) and `scripts.generated.ts` (React
 Native); `scripts/generate-webview-consent-scripts.test.ts` fails on drift. Each
-file is one parenthesized function expression, called as
-`<script>(<origins>, <token>, <state>);` with JSON arguments.
+file is one parenthesized function expression, called with JSON arguments.
 
-    document-start.js   runs before any page script. It returns at once unless
+    document-start.js   <script>(<origins>, <token>, <key>, <state>);
+                        runs before any page script. It returns at once unless
                         location.origin is one of <origins> and the frame is the
                         top frame. Otherwise it defines window.__c15tNativeConsent
                         as a frozen object on a non-writable, non-configurable
                         property: { version: 1, getState(), subscribe(listener),
                         update(token, state), openPreferences() }.
-    update.js           runs in the loaded main frame when consent changes. It
+    update.js           <script>(<origins>, <token>, <state>);
+                        runs in the loaded main frame when consent changes. It
                         checks the origin the same way, then calls
                         update(<token>, <state>). A wrong token changes nothing.
 
@@ -1612,23 +1613,28 @@ of them, because it records nothing.
 
 ### Platform glue
 
-- Swift: `WebViewConsentScript` and `WebViewConsentState` in C15tCore build the
-  scripts; `ConsentWebView` in C15tApple adds a main-frame-only `WKUserScript`
-  at document start, swaps it when consent changes, and runs the update script.
-- Kotlin: the same two types in `com.c15t.core.webview`; `ConsentWebView` in
-  c15t-android uses `WebViewCompat.addDocumentStartJavaScript` with the origins
-  as origin rules. `attach` returns `null`, and injects nothing, on a WebView
-  without `DOCUMENT_START_SCRIPT`.
+- Swift and Kotlin: `WebViewConsentScript` and `WebViewConsentState` build the
+  scripts, and `WebViewConsentSync` owns the rules below, in C15tCore and in
+  `com.c15t.core.webview`, with no WebKit or Android in them. `ConsentWebView`
+  connects a sync to a `WKWebView` (C15tApple: a main-frame-only `WKUserScript`
+  at document start) or an `android.webkit.WebView` (c15t-android:
+  `WebViewCompat.addDocumentStartJavaScript` with the origins as origin rules;
+  `attach` returns `null`, and injects nothing, without `DOCUMENT_START_SCRIPT`).
 - React Native: the bridge method `getWebViewConsent()` returns
-  `{ state, token }` from the native types above; `useWebViewConsent()` builds
-  `injectedJavaScriptBeforeContentLoaded` and pushes updates with
+  `{ state, token, key }` from the native types above; `useWebViewConsent()`
+  builds `injectedJavaScriptBeforeContentLoaded` and pushes updates with
   `injectJavaScript`.
 
-Each helper instance draws its own 128-bit token from the platform's secure
-generator and keeps it for the life of that WebView. The Swift and Kotlin
-helpers observe the core before they read the first state, and live as long as
-their WebView (an associated object on iOS, a weak registry on Android), so a
-released helper never leaves a document-start script carrying an old state.
+Each WebView gets two 128-bit secrets from the platform CSPRNG
+(`SecRandomCopyBytes`, `SecureRandom`; React Native takes them from the
+bridge): the update token and the preferences request key. Both live only in
+the top frame's document-start closure. A sync observes the core before it
+reads the first state, so a change in between is not missed. A sync that
+replaces another on the same WebView keeps both secrets, because a page loaded
+under the old one accepts only the token it was given. The native helpers live
+as long as their WebView (an associated object on iOS, a weak registry on
+Android), and a Swift sync released without `close()` still removes its
+script, so no document-start script outlives its sync carrying an old state.
 
 ### Web side
 
@@ -1644,14 +1650,18 @@ no IAB CMP; permissions follow the injected state and are all denied until
 
 One way, native to web. A choice cannot be made in the page: the consent
 source disables the web choice UI. The page may only ask the app to open its
-own preferences, by posting `{"type":"c15t:open-preferences"}` to the
-`c15tConsent` message handler (iOS), the `c15tConsent` web message listener
-(Android) or `ReactNativeWebView` (React Native). Swift and Kotlin act on it
-only from the main frame of a listed origin. React Native checks the origin of
-the page URL `react-native-webview` reports, but that library cannot always say
-which frame sent a message, so an iframe on a listed page can send it too; the
-hook drops requests less than a second apart. A forged request can open the
-preferences screen and nothing more.
+own preferences, by posting `{"type":"c15t:open-preferences","key":"<key>"}`
+to the `c15tConsent` message handler (iOS), the `c15tConsent` web message
+listener (Android) or `ReactNativeWebView` (React Native). Every platform
+requires the exact key. A frame can post to the same channel (React Native's
+Android fallback exposes it to every frame and reports the top page's URL), but
+it cannot read the key, which sits in the top frame's closure. Swift and Kotlin
+also require platform main-frame metadata and a listed origin; React Native
+requires a listed page URL and drops requests less than a second apart. Script
+in the top frame of a listed page can intercept the posted message and learn
+the key, which lets it ask for the preferences screen, as calling
+`openPreferences()` already does. The key opens nothing else, and it is not
+the update token.
 
 Web-to-native choices are deliberately absent. Native would have to record a
 receipt in the subject's name on the word of page script, and nothing in a page

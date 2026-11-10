@@ -114,7 +114,9 @@ it('follows a native change while the page is open, and only from the app', asyn
 it('asks the app for its preferences instead of opening a web dialog', async () => {
 	const [tab, page] = await openPage();
 	page.client.openDialog();
-	expect(page.posted).toEqual(['{"type":"c15t:open-preferences"}']);
+	expect(page.posted).toEqual([
+		'{"type":"c15t:open-preferences","key":"0badc0de0badc0de0badc0de0badc0de"}',
+	]);
 	expect(page.client.getSnapshot().activeUI).toBe('none');
 	expect(banner(tab, page)).toBeNull();
 });

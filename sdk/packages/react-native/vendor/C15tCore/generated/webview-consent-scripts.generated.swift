@@ -5,7 +5,7 @@
 /// calls with JSON arguments: `<script>(<origins>, <token>, <state>);`.
 enum WebViewConsentScripts {
     static let documentStart = #"""
-(function (origins, token, initial) {
+(function (origins, token, requestKey, initial) {
 	'use strict';
 	var w = window;
 	var origin = w.location.origin;
@@ -18,8 +18,8 @@ enum WebViewConsentScripts {
 	if (!listed || w.top !== w) {
 		return;
 	}
-	var key = '__c15tNativeConsent';
-	if (Object.prototype.hasOwnProperty.call(w, key)) {
+	var name = '__c15tNativeConsent';
+	if (Object.prototype.hasOwnProperty.call(w, name)) {
 		return;
 	}
 	var freeze = Object.freeze;
@@ -65,8 +65,8 @@ enum WebViewConsentScripts {
 				entry.listener = null;
 			};
 		},
-		update: function (key, next) {
-			if (key !== token) {
+		update: function (given, next) {
+			if (given !== token) {
 				return false;
 			}
 			state = read(next);
@@ -83,7 +83,11 @@ enum WebViewConsentScripts {
 			return true;
 		},
 		openPreferences: function () {
-			var message = '{"type":"c15t:open-preferences"}';
+			// The key proves the request came from this closure, in the top frame
+			// of a listed origin. A frame that can post to the same channel
+			// cannot read it.
+			var message =
+				'{"type":"c15t:open-preferences","key":"' + requestKey + '"}';
 			var webkit = w.webkit && w.webkit.messageHandlers;
 			var channel =
 				(webkit && webkit.c15tConsent) || w.c15tConsent || w.ReactNativeWebView;
@@ -94,7 +98,7 @@ enum WebViewConsentScripts {
 			return false;
 		},
 	});
-	Object.defineProperty(w, key, {
+	Object.defineProperty(w, name, {
 		configurable: false,
 		enumerable: false,
 		value: api,

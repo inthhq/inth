@@ -67,12 +67,13 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage = deviceLanguage())
 	}
 
-	/** WebView consent: the state a page reads, and a fresh token for one WebView. */
+	/** WebView consent: the state a page reads, and a fresh token and request key for one WebView. */
 	override fun getWebViewConsent(): String {
 		ensureCore()
 		val core = C15t.current
 		val state = if (core != null) WebViewConsentState.from(core) else WebViewConsentState.from(C15t.snapshot(), null)
-		return "{\"state\":${state.toJson()},\"token\":\"${WebViewConsentScript.newToken()}\"}"
+		return "{\"state\":${state.toJson()},\"token\":\"${WebViewConsentScript.newToken()}\"," +
+			"\"key\":\"${WebViewConsentScript.newToken()}\"}"
 	}
 
 	/**

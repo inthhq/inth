@@ -22,6 +22,7 @@ const UPDATE = readFileSync(scriptPath('update.js'), 'utf8');
 
 const ORIGIN = 'https://app.example';
 const TOKEN = 'b3f1c0de4a5e6f708192a3b4c5d6e7f8';
+const KEY = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
 
 const nativeState = (overrides: Record<string, unknown> = {}) => ({
 	gppString: null,
@@ -92,6 +93,7 @@ test('reads the native decision on a listed origin', () => {
 			DOCUMENT_START,
 			[ORIGIN],
 			TOKEN,
+			KEY,
 			nativeState({ model: 'iab', tcString: 'CQ-test' })
 		)
 	);
@@ -113,14 +115,14 @@ test('reads the native decision on a listed origin', () => {
 
 test('injects nothing on an origin the app did not list', () => {
 	const page = openWindow('https://other.example');
-	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, nativeState()));
+	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	expect('__c15tNativeConsent' in page).toBe(false);
 	expect(webViewConsentSource()).toBeUndefined();
 });
 
 test('a page script cannot replace the injected object', () => {
 	const page = openWindow();
-	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, nativeState()));
+	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	expect(() =>
 		page.eval(
 			"'use strict'; window.__c15tNativeConsent = { version: 1, getState() { return {}; } };"
@@ -137,7 +139,7 @@ test('a page script cannot replace the injected object', () => {
 test('only the native token can change the state', () => {
 	const page = openWindow();
 	page.eval(
-		call(DOCUMENT_START, [ORIGIN], TOKEN, nativeState({ ready: false }))
+		call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState({ ready: false }))
 	);
 	const source = webViewConsentSource();
 	const listener = vi.fn();
@@ -175,7 +177,7 @@ test('the update script does nothing once the page left the listed origins', () 
 test('malformed state grants nothing', () => {
 	const page = openWindow();
 	page.eval(
-		call(DOCUMENT_START, [ORIGIN], TOKEN, {
+		call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, {
 			permissions: { marketing: 'yes', measurement: 1 },
 			ready: true,
 			version: 1,
@@ -196,9 +198,11 @@ test('opening preferences asks the app through its message channel', () => {
 	Object.assign(page, {
 		webkit: { messageHandlers: { c15tConsent: { postMessage } } },
 	});
-	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, nativeState()));
+	page.eval(call(DOCUMENT_START, [ORIGIN], TOKEN, KEY, nativeState()));
 	webViewConsentSource()?.openPreferences();
-	expect(postMessage).toHaveBeenCalledWith('{"type":"c15t:open-preferences"}');
+	expect(postMessage).toHaveBeenCalledWith(
+		`{"type":"c15t:open-preferences","key":"${KEY}"}`
+	);
 });
 
 test('the runtime follows the app and shows no banner', () => {
@@ -208,6 +212,7 @@ test('the runtime follows the app and shows no banner', () => {
 			DOCUMENT_START,
 			[ORIGIN],
 			TOKEN,
+			KEY,
 			nativeState({
 				permissions: { measurement: false },
 			})

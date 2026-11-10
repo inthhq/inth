@@ -71,6 +71,11 @@ test('origins normalize like every other platform', () => {
 test('a malformed bridge reply injects nothing', () => {
 	expect(parseWebViewConsent('nope')).toBeNull();
 	expect(
+		parseWebViewConsent(
+			'{"state":{"version":1},"token":"0123456789abcdef0123456789abcdef"}'
+		)
+	).toBeNull();
+	expect(
 		parseWebViewConsent('{"state":{"version":1},"token":"short"}')
 	).toBeNull();
 	expect(
@@ -92,7 +97,7 @@ test('injects the native state at document start for the listed origins', () => 
 		true
 	);
 	expect(props.injectedJavaScriptBeforeContentLoaded).toContain(
-		`${DOCUMENT_START_SCRIPT}(["https://www.example.com"],"0123456789abcdef0123456789abcdef",`
+		`${DOCUMENT_START_SCRIPT}(["https://www.example.com"],"0123456789abcdef0123456789abcdef","fedcba9876543210fedcba9876543210",`
 	);
 	expect(props.injectedJavaScriptBeforeContentLoaded).not.toContain('sub-1');
 });
@@ -133,7 +138,7 @@ test('pushes a changed state into the loaded page, once per change', () => {
 	);
 });
 
-test('answers a preferences request from a listed top frame only', () => {
+test("answers only a preferences request that carries the top frame's key", () => {
 	createFakeNativeModule();
 	const onPreferencesRequested = vi.fn();
 	renderTree(
@@ -147,7 +152,15 @@ test('answers a preferences request from a listed top frame only', () => {
 	const message = (data: string, url: string, isTopFrame?: boolean) => {
 		latest().onMessage({ nativeEvent: { data, isTopFrame, url } });
 	};
-	const request = '{"type":"c15t:open-preferences"}';
+	const request =
+		'{"type":"c15t:open-preferences","key":"fedcba9876543210fedcba9876543210"}';
+	// An iframe on the listed page: `react-native-webview` on Android reports
+	// the top page's URL and no frame, but the frame cannot read the key.
+	message('{"type":"c15t:open-preferences"}', 'https://www.example.com/');
+	message(
+		'{"type":"c15t:open-preferences","key":"00000000000000000000000000000000"}',
+		'https://www.example.com/'
+	);
 	message(request, 'https://evil.example/');
 	message(request, 'https://www.example.com/', false);
 	message('{"type":"c15t:save"}', 'https://www.example.com/');
@@ -157,6 +170,20 @@ test('answers a preferences request from a listed top frame only', () => {
 	// A burst, such as a frame posting in a loop, opens the screen once.
 	message(request, 'https://www.example.com/');
 	expect(onPreferencesRequested).toHaveBeenCalledTimes(1);
+});
+
+test('an entry holding a line break stays one invalid origin', () => {
+	createFakeNativeModule();
+	const message = captureErrorMessage(() => {
+		renderTree(
+			<ConsentProvider>
+				<Probe
+					allowedOrigins={['https://trusted.example\nhttps://other.example']}
+				/>
+			</ConsentProvider>
+		);
+	});
+	expect(message).toContain('not an allowed WebView origin');
 });
 
 test('an unsafe origin list is a wiring mistake, not a silent no-op', () => {

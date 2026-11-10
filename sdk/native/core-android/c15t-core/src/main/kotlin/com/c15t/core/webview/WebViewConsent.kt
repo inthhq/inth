@@ -79,21 +79,40 @@ data class WebViewConsentState(
  * frame when consent changes. Both scripts check the page origin themselves, so
  * a page outside [origins] gets nothing even when the glue cannot filter.
  *
- * The token is the only thing that lets [update] change the page's state. A new
- * one is drawn for every instance; keep one instance per WebView.
+ * Two secrets, both drawn for every instance and kept for the life of one WebView:
+ * the token is the only thing that lets [update] change a page's state, and the
+ * request key is what a page's preferences request must carry. Both live only in
+ * the document-start closure of the top frame, so a frame cannot read either.
  *
  * @throws IllegalArgumentException when an origin is not a valid origin, or the list is empty.
  */
-class WebViewConsentScript(allowedOrigins: Collection<String>, private val token: String = newToken()) {
+class WebViewConsentScript(
+	allowedOrigins: Collection<String>,
+	private val token: String = newToken(),
+	private val requestKey: String = newToken(),
+) {
 	/** The normalized origins, in the order given, without duplicates. */
 	val origins: List<String> = normalizeAll(allowedOrigins)
 
 	private val originsJson = JsonArray(origins.map(::JsonPrimitive)).toString()
 	private val tokenJson = JsonPrimitive(token).toString()
+	private val requestKeyJson = JsonPrimitive(requestKey).toString()
+	private val preferencesRequest = buildJsonObject {
+		put("type", "c15t:open-preferences")
+		put("key", requestKey)
+	}.toString()
+
+	/**
+	 * The same secrets for a new origin list. A page loaded under the old instance
+	 * keeps the token it was given, so a replacement must keep it too, or its
+	 * updates would be refused until the next navigation.
+	 */
+	fun replacingOrigins(allowedOrigins: Collection<String>): WebViewConsentScript =
+		WebViewConsentScript(allowedOrigins, token, requestKey)
 
 	/** The script to run at document start, carrying [state]. */
 	fun documentStart(state: WebViewConsentState): String =
-		"${WebViewConsentScripts.DOCUMENT_START}($originsJson,$tokenJson,${state.toJson()});"
+		"${WebViewConsentScripts.DOCUMENT_START}($originsJson,$tokenJson,$requestKeyJson,${state.toJson()});"
 
 	/** The script that pushes [state] into an already loaded page. */
 	fun update(state: WebViewConsentState): String =
@@ -102,12 +121,12 @@ class WebViewConsentScript(allowedOrigins: Collection<String>, private val token
 	/** Whether [origin], as a WebView reports it, is one of [origins]. */
 	fun isAllowed(origin: String?): Boolean = origin != null && normalize(origin.removeSuffix("/")) in origins
 
+	/** Whether [message] is a preferences request from a page this instance prepared. */
+	fun isPreferencesRequest(message: String?): Boolean = message == preferencesRequest
+
 	companion object {
 		/** The message-channel name pages post to. */
 		const val CHANNEL: String = "c15tConsent"
-
-		/** The only message the page sends: a request to open preferences. */
-		const val OPEN_PREFERENCES_MESSAGE: String = """{"type":"c15t:open-preferences"}"""
 
 		private val ORIGIN = Regex("""^(https?)://([a-z0-9-]+(?:\.[a-z0-9-]+)*|\[[0-9a-f:]+\])(?::([0-9]{1,5}))?/?$""", RegexOption.IGNORE_CASE)
 		private val LOOPBACK = setOf("localhost", "127.0.0.1", "[::1]")
@@ -142,9 +161,6 @@ class WebViewConsentScript(allowedOrigins: Collection<String>, private val token
 				)
 			}.distinct()
 		}
-
-		/** Whether [message] is the page's request to open preferences. */
-		fun isOpenPreferencesMessage(message: String?): Boolean = message == OPEN_PREFERENCES_MESSAGE
 
 		/** 128 random bits as hex. */
 		fun newToken(): String {

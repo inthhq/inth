@@ -12,6 +12,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** The token the WebView fixture's native script was given. */
 const WEBVIEW_TOKEN = 'feedc0de00000000feedc0de00000000';
+/** The request key the WebView fixture's native script was given. */
+const WEBVIEW_KEY = '0badc0de0badc0de0badc0de0badc0de';
 
 export default mergeConfig(
 	baseConfig,
@@ -127,7 +129,7 @@ export default mergeConfig(
 							.replace(
 								/;$/u,
 								''
-							)}(${JSON.stringify(origins)},"${WEBVIEW_TOKEN}",${JSON.stringify(state)});`;
+							)}(${JSON.stringify(origins)},"${WEBVIEW_TOKEN}","${WEBVIEW_KEY}",${JSON.stringify(state)});`;
 						response.setHeader('Content-Type', 'text/html');
 						response.end(
 							readFileSync(

@@ -82,10 +82,10 @@ final class WebViewConsentTests: XCTestCase {
     }
 
     func testScriptsCallTheProtocolFunctions() throws {
-        let script = try WebViewConsentScript(allowedOrigins: ["https://app.example"], token: "t0k3n")
+        let script = try WebViewConsentScript(allowedOrigins: ["https://app.example"], token: "t0k3n", requestKey: "k3y")
         XCTAssertEqual(
             script.documentStart(decided),
-            "\(WebViewConsentScripts.documentStart)([\"https://app.example\"],\"t0k3n\",\(decided.json()));"
+            "\(WebViewConsentScripts.documentStart)([\"https://app.example\"],\"t0k3n\",\"k3y\",\(decided.json()));"
         )
         XCTAssertEqual(
             script.update(decided),
@@ -106,7 +106,25 @@ final class WebViewConsentTests: XCTestCase {
         XCTAssertTrue(script.isAllowed("https://app.example/"))
         XCTAssertFalse(script.isAllowed("https://evil.example"))
         XCTAssertFalse(script.isAllowed(nil))
-        XCTAssertTrue(WebViewConsentScript.isOpenPreferencesMessage(#"{"type":"c15t:open-preferences"}"#))
-        XCTAssertFalse(WebViewConsentScript.isOpenPreferencesMessage(#"{"type":"c15t:save"}"#))
+    }
+
+    func testAPreferencesRequestMustCarryTheKeyOnlyTheTopFrameHolds() throws {
+        let script = try WebViewConsentScript(allowedOrigins: ["https://app.example"], requestKey: "k3y")
+        XCTAssertTrue(script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"k3y"}"#))
+        // What a frame that can post to the channel, but cannot read the key, can send.
+        XCTAssertFalse(script.isPreferencesRequest(#"{"type":"c15t:open-preferences"}"#))
+        XCTAssertFalse(script.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"guess"}"#))
+        XCTAssertFalse(script.isPreferencesRequest(nil))
+    }
+
+    func testAReplacementKeepsBothSecretsForTheNewOrigins() throws {
+        let first = try WebViewConsentScript(allowedOrigins: ["https://app.example"], token: "t0k3n", requestKey: "k3y")
+        let next = try first.replacingOrigins(["https://www.example.com"])
+        XCTAssertEqual(next.origins, ["https://www.example.com"])
+        XCTAssertEqual(
+            next.update(decided),
+            "\(WebViewConsentScripts.update)([\"https://www.example.com\"],\"t0k3n\",\(decided.json()));"
+        )
+        XCTAssertTrue(next.isPreferencesRequest(#"{"type":"c15t:open-preferences","key":"k3y"}"#))
     }
 }
