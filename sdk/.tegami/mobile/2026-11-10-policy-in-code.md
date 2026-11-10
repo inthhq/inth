@@ -29,3 +29,8 @@ fractional. Changing only `validity.noticeDays` keeps category choices, and
 changing only `choiceDays` keeps notice acknowledgements. A declared policy the
 SDK refuses at launch reports `policy-invalid` in the snapshot `error` and on
 the error stream instead of starting silently with no policy.
+
+A location no rule covers now gets the backend's own outcome: `no-match` runs
+the safe opt-in fallback, and a country that needs a region stays pending. An
+explicit `no-match` answer from `/init` also replaces the rule in force on
+Android, as it already did on iOS and the web.
