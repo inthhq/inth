@@ -1052,6 +1052,10 @@ export default defineDocsConfig({
 				{
 					pages: [
 						'meta-pixel',
+						'meta-app-events',
+						'admob',
+						'appsflyer',
+						'adjust',
 						'amazon-ads',
 						'openai-pixel',
 						'pinterest-tag',

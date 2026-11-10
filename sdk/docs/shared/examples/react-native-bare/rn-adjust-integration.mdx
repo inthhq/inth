@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/adjust-integration.ts (docs:rn-adjust-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="adjust-consent.ts"
+import { connectAdjust } from '@c15t/react-native/integrations';
+import type {
+	AdjustClient,
+	ConsentIntegration,
+} from '@c15t/react-native/integrations';
+
+export const connectAppAdjust = (
+	adjust: AdjustClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectAdjust(adjust, { onError });
+```

@@ -1,0 +1,203 @@
+---
+title: AdMob
+description: Connect Google Mobile Ads (AdMob) to native c15t consent in Swift, Kotlin, React Native and Expo, with limited ads, personalization and restricted data processing driven by marketing.
+seoTitle: AdMob consent for mobile apps with c15t
+seoDescription: Drive Google Mobile Ads personalization, limited ads and restricted data processing from c15t consent in Swift, Android, React Native and Expo.
+group: integrations
+---
+
+The AdMob helper reads the three Google Consent Mode advertising types from
+c15t consent and hands them to your app, which applies them to Google Mobile
+Ads. Marketing grants `ad_storage`, `ad_user_data` and `ad_personalization`,
+with the same [category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
+the web uses. Pending consent denies all three.
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. Google Mobile Ads stays a dependency your
+app installs; c15t adds none.
+
+## What the helper changes
+
+| Consent | Google Mobile Ads setting |
+| --- | --- |
+| `adStorage` denied | `gad_has_consent_for_cookies` set to `0`, which turns on [limited ads](https://support.google.com/admob/answer/10105530) |
+| `adStorage` granted | `gad_has_consent_for_cookies` removed |
+| `adUserData` or `adPersonalization` denied | Publisher privacy treatment set to disabled, and `gad_rdp` set for [restricted data processing](https://developers.google.com/admob/android/privacy/us-states) |
+| Both granted | Publisher privacy treatment set to enabled, and `gad_rdp` removed |
+
+Google Mobile Ads reads `gad_has_consent_for_cookies` and `gad_rdp` from the
+default `SharedPreferences` on Android and `UserDefaults.standard` on iOS when
+it loads an ad. The [publisher privacy treatment](https://developers.google.com/admob/android/targeting#publisher_privacy_treatment)
+applies to every later request in the session. When several signals apply,
+Google uses the most restrictive one.
+
+### EEA, UK and Switzerland
+
+In these regions Google serves personalized or non-personalized ads only when
+the request carries a TC string from a
+[Google-certified CMP](https://developers.google.com/admob/android/privacy/ad-serving-modes).
+Without one, Google serves limited ads at most. The settings above do not
+replace that. Under an IAB policy, the native core writes the `IABTCF_` keys
+that Google reads; see [mobile IAB and ads](/docs/guides/mobile-iab).
+
+## Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart. Include
+`marketing` in your Inth policy and native configuration. Install Google
+Mobile Ads through Google's [iOS](https://developers.google.com/admob/ios/quick-start),
+[Android](https://developers.google.com/admob/android/quick-start) or
+[React Native](https://docs.page/invertase/react-native-google-mobile-ads)
+instructions. c15t's mobile packages are a private prerelease; see
+[mobile availability](/docs/guides/mobile-status).
+
+Connect the helper before you request the first ad. The helper does not
+request App Tracking Transparency.
+
+## Connect a Swift app
+
+Create the helper after installing c15t, and keep it for the app's lifetime:
+
+```swift title="AdMobConsent.swift"
+import C15tApple
+import C15tCore
+import Foundation
+import GoogleMobileAds
+
+final class AdMobConsent {
+    private let integration: AdMobIntegration
+
+    init(core: ConsentCore) {
+        integration = AdMobIntegration(core: core) { consent in
+            let defaults = UserDefaults.standard
+            if consent.adStorage {
+                defaults.removeObject(forKey: "gad_has_consent_for_cookies")
+            } else {
+                defaults.set(0, forKey: "gad_has_consent_for_cookies")
+            }
+            let personalized = consent.adUserData && consent.adPersonalization
+            if personalized {
+                defaults.removeObject(forKey: "gad_rdp")
+            } else {
+                defaults.set(true, forKey: "gad_rdp")
+            }
+            MobileAds.shared.requestConfiguration.publisherPrivacyPersonalizationState =
+                personalized ? .enabled : .disabled
+        }
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterReset() { integration.sync() }
+}
+```
+
+`core` is the `ConsentCore` your installation returns. The helper applies the
+current state before its initializer returns, and later calls run on the
+thread that publishes the consent change. Releasing the owner denies every
+advertising type.
+
+## Connect an Android app
+
+Create the helper in your `Application` after installing c15t:
+
+```kotlin title="AdMobConsent.kt"
+import android.content.Context
+import androidx.core.content.edit
+import androidx.preference.PreferenceManager
+import com.c15t.android.integrations.AdMobIntegration
+import com.c15t.core.C15t
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration.PublisherPrivacyPersonalizationState
+
+fun connectAdMobConsent(context: Context, onError: (Exception) -> Unit): AdMobIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting AdMob" }
+	val preferences = PreferenceManager.getDefaultSharedPreferences(context)
+	return AdMobIntegration(
+		core = core,
+		setConsent = { consent ->
+			val personalized = consent.adUserData && consent.adPersonalization
+			preferences.edit {
+				if (consent.adStorage) remove("gad_has_consent_for_cookies")
+				else putInt("gad_has_consent_for_cookies", 0)
+				if (personalized) remove("gad_rdp") else putInt("gad_rdp", 1)
+			}
+			MobileAds.setRequestConfiguration(
+				MobileAds.getRequestConfiguration().toBuilder()
+					.setPublisherPrivacyPersonalizationState(
+						if (personalized) PublisherPrivacyPersonalizationState.ENABLED
+						else PublisherPrivacyPersonalizationState.DISABLED,
+					)
+					.build(),
+			)
+		},
+		onError = onError,
+	)
+}
+```
+
+Keep the returned helper on the application. Replace `onError` with a handler
+that does not throw; it receives failures from automatic updates. The
+constructor, `sync()` and `close()` throw to their caller instead.
+
+## Connect React Native or Expo
+
+Copy the checked connection function into `admob-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-admob-integration.mdx" />
+
+Then supply Google Mobile Ads from `react-native-google-mobile-ads`:
+
+{/* example: fragment */}
+
+```ts title="admob-vendor.ts"
+import mobileAds from 'react-native-google-mobile-ads';
+
+import { connectAppAdMob } from './admob-consent';
+
+export const connectAdMobVendor = (onError: (error: unknown) => void) =>
+	connectAppAdMob(
+		{
+			setConsent: ({ adUserData, adPersonalization }) =>
+				mobileAds().setRequestConfiguration({
+					publisherPrivacyPersonalizationState:
+						adUserData && adPersonalization ? 'enabled' : 'disabled',
+				}),
+		},
+		onError
+	);
+```
+
+Await the returned handle's `ready` before you request ads. To request only
+non-personalized ads on a given request, pass `requestNonPersonalizedAdsOnly`
+from the same consent.
+
+`react-native-google-mobile-ads` cannot write `gad_has_consent_for_cookies`
+or `gad_rdp`, so the React Native helper cannot turn on limited ads or
+restricted data processing. If you need them, use the Swift and Kotlin
+helpers in your native code. Expo needs a development build with both native
+modules; Expo Go cannot load them.
+
+## Handle reset and teardown
+
+If app code changes these settings, call `syncAfterReset()` on the Swift
+owner, `sync()` on the Kotlin helper or `await consent.sync()` in React Native.
+This reapplies current consent without recording a choice.
+
+For final teardown, use `stop()`, `close()` or `await consent.disconnect()`.
+These detach the helper and deny every advertising type. They do not affect
+ads already loaded.
+
+## Check the integration
+
+1. Launch with no saved choice. Confirm `gad_has_consent_for_cookies` is `0`,
+   `gad_rdp` is set and ad requests carry the privacy treatment.
+2. Grant marketing. Confirm both keys are removed and personalization is
+   enabled.
+3. Withdraw marketing. Confirm the denied settings return.
+4. Grant or withdraw measurement only. Confirm nothing changes.
+
+The c15t helper tests cover consent order, withdrawal and reset with recorded
+calls. They were not run against Google Mobile Ads itself. Inspect real ad
+requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector)
+or a proxy before you ship.

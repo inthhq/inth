@@ -1,0 +1,185 @@
+---
+title: AppsFlyer
+description: Run AppsFlyer only while c15t consent allows it and send Google's DMA consent through AppsFlyer's consent API, in Swift, Kotlin, React Native and Expo.
+seoTitle: AppsFlyer consent for mobile apps with c15t
+seoDescription: Start and stop AppsFlyer from c15t consent and send DMA consent data in Swift, Android, React Native and Expo apps.
+group: integrations
+---
+
+The AppsFlyer helper keeps the SDK stopped until a category allows it, then
+starts it and sends Google's DMA consent through
+[`setConsentData`](https://dev.appsflyer.com/hc/docs/android-send-consent-for-dma-compliance).
+The category defaults to `marketing`. The three consent fields come from the
+shared [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types),
+so marketing grants them too.
+
+The helper ships in `C15tApple`, `c15t-android` and
+`@c15t/react-native/integrations`. c15t adds no AppsFlyer dependency. The web
+has no AppsFlyer helper.
+
+## What the helper changes
+
+| Consent | AppsFlyer calls |
+| --- | --- |
+| Category denied or pending | Stop the SDK, then send consent data |
+| Category granted | Send consent data, then resume and start the SDK, once per grant |
+| Marketing changes while the category stays granted | Send consent data only |
+
+| `AppsFlyerConsent` field | From |
+| --- | --- |
+| `isUserSubjectToGDPR` | Your app |
+| `hasConsentForDataUsage` | `adUserData` |
+| `hasConsentForAdsPersonalization` | `adPersonalization` |
+| `hasConsentForAdStorage` | `adStorage` |
+
+### Who supplies `isUserSubjectToGDPR`
+
+c15t's policy model says how the app asks for consent, not which law applies,
+so the helper does not guess. Set the flag from your own region logic. If you
+cannot tell, `true` is the cautious value: it limits what AppsFlyer passes on.
+
+## Before you start
+
+Complete the [Swift](/docs/frameworks/swift/quickstart),
+[Android](/docs/frameworks/android/quickstart) or
+[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
+`marketing` in your Inth policy and native configuration. Install AppsFlyer
+6.16 or later through its [iOS](https://dev.appsflyer.com/hc/docs/ios-send-consent-for-dma-compliance),
+[Android](https://dev.appsflyer.com/hc/docs/android-sdk-reference-appsflyerconsent)
+or [React Native](https://dev.appsflyer.com/hc/docs/rn_cmp) guide.
+
+Initialize AppsFlyer, but **do not call `start` yourself**. The helper starts
+it once consent allows. AppsFlyer requires `stop(false)` before `start` after
+a stop, and the helper does both. Do not also turn on
+`enableTCFDataCollection`; AppsFlyer prefers manual consent data when both
+exist.
+
+## Connect a Swift app
+
+```swift title="AppsFlyerConsentOwner.swift"
+import AppsFlyerLib
+import C15tApple
+import C15tCore
+
+final class AppsFlyerConsentOwner {
+    private let integration: AppsFlyerIntegration
+
+    init(core: ConsentCore, subjectToGDPR: Bool) {
+        integration = AppsFlyerIntegration(
+            core: core,
+            setConsentData: { consent in
+                AppsFlyerLib.shared().setConsentData(AppsFlyerConsent(
+                    isUserSubjectToGDPR: subjectToGDPR,
+                    hasConsentForDataUsage: consent.adUserData,
+                    hasConsentForAdsPersonalization: consent.adPersonalization,
+                    hasConsentForAdStorage: consent.adStorage
+                ))
+            },
+            setStopped: { AppsFlyerLib.shared().isStopped = $0 },
+            start: { AppsFlyerLib.shared().start() }
+        )
+    }
+
+    func stop() { integration.cancel() }
+    func syncAfterReset() { integration.sync() }
+}
+```
+
+Create the owner after configuring `AppsFlyerLib.shared()` with your dev key
+and app ID, and keep it for the app's lifetime. Pass
+`category: .measurement` if you treat attribution as measurement.
+
+## Connect an Android app
+
+```kotlin title="AppsFlyerConsent.kt"
+import android.content.Context
+import com.appsflyer.AppsFlyerConsent
+import com.appsflyer.AppsFlyerLib
+import com.c15t.android.integrations.AppsFlyerIntegration
+import com.c15t.core.C15t
+
+fun connectAppsFlyerConsent(
+	context: Context,
+	subjectToGdpr: Boolean,
+	onError: (Exception) -> Unit,
+): AppsFlyerIntegration {
+	val core = checkNotNull(C15t.current) { "Install c15t before connecting AppsFlyer" }
+	val appsFlyer = AppsFlyerLib.getInstance()
+	return AppsFlyerIntegration(
+		core = core,
+		setConsentData = { consent ->
+			appsFlyer.setConsentData(
+				AppsFlyerConsent(subjectToGdpr, consent.adUserData, consent.adPersonalization, consent.adStorage),
+			)
+		},
+		stop = { stopped -> appsFlyer.stop(stopped, context) },
+		start = { appsFlyer.start(context) },
+		onError = onError,
+	)
+}
+```
+
+Call `AppsFlyerLib.getInstance().init(...)` first, without `start`. Keep the
+returned helper on the application.
+
+## Connect React Native or Expo
+
+Copy the checked connection function into `appsflyer-consent.ts`:
+
+<include src="../shared/examples/react-native-bare/rn-appsflyer-integration.mdx" />
+
+Initialize `react-native-appsflyer` with `manualStart: true`, then supply it:
+
+{/* example: fragment */}
+
+```ts title="appsflyer-vendor.ts"
+import appsFlyer, { AppsFlyerConsent } from 'react-native-appsflyer';
+
+import { connectAppAppsFlyer } from './appsflyer-consent';
+
+export const connectAppsFlyerVendor = (
+	subjectToGdpr: boolean,
+	onError: (error: unknown) => void
+) =>
+	connectAppAppsFlyer(
+		{
+			setConsentData: ({ adUserData, adPersonalization, adStorage }) =>
+				appsFlyer.setConsentData(
+					new AppsFlyerConsent(
+						subjectToGdpr,
+						adUserData,
+						adPersonalization,
+						adStorage
+					)
+				),
+			startSdk: () => appsFlyer.startSdk(),
+			stop: (isStopped) => appsFlyer.stop(isStopped),
+		},
+		onError
+	);
+```
+
+React Native runs this after native startup. Use AppsFlyer's Expo config
+plugin and a development build; Expo Go cannot load either native module.
+
+## Handle reset and teardown
+
+`sync()` reapplies current consent and starts AppsFlyer again if allowed, so
+call it only after you have reset AppsFlyer. Teardown (`stop()`, `close()` or
+`disconnect()`) stops the SDK. Stopping does not delete data AppsFlyer already
+received.
+
+## Check the integration
+
+1. Launch with no saved choice. Confirm AppsFlyer reports stopped and sends no
+   launch.
+2. Grant marketing. Turn on AppsFlyer's debug log and confirm `consent_data`
+   shows `ad_user_data_enabled` and `ad_personalization_enabled` as `true`,
+   then a launch.
+3. With `category` set to measurement, grant measurement, then change
+   marketing. Confirm consent data changes without a second launch.
+4. Withdraw. Confirm AppsFlyer stops.
+
+The helper tests cover start order, withdrawal during start and
+marketing-only changes with recorded calls. They were not run against the
+AppsFlyer SDK.
