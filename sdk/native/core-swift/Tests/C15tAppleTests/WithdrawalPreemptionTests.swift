@@ -3,12 +3,12 @@ import C15tCore
 import Foundation
 import XCTest
 
-/// Vendor calls recorded as strings. The next call after `blockNext` blocks until released.
+/// Vendor calls recorded as strings. `blockNext` blocks the call `skip` calls from now
+/// until `release` is signalled, and returns a semaphore signalled when that call starts.
 final class BlockingCalls: @unchecked Sendable {
     private let lock = NSLock()
     private var recorded: [String] = []
-    private var release: DispatchSemaphore?
-    let entered = DispatchSemaphore(value: 0)
+    private var hold: (skip: Int, release: DispatchSemaphore, entered: DispatchSemaphore)?
 
     var count: Int { lock.lock(); defer { lock.unlock() }; return recorded.count }
 
@@ -17,20 +17,27 @@ final class BlockingCalls: @unchecked Sendable {
         return Array(recorded.dropFirst(mark))
     }
 
-    func blockNext(_ release: DispatchSemaphore) {
+    @discardableResult
+    func blockNext(_ release: DispatchSemaphore, skip: Int = 0) -> DispatchSemaphore {
         lock.lock(); defer { lock.unlock() }
-        self.release = release
+        let entered = DispatchSemaphore(value: 0)
+        hold = (skip, release, entered)
+        return entered
     }
 
     func call(_ name: String) {
         lock.lock()
         recorded.append(name)
-        let gate = release
-        release = nil
+        guard let current = hold else { lock.unlock(); return }
+        if current.skip > 0 {
+            hold = (current.skip - 1, current.release, current.entered)
+            lock.unlock()
+            return
+        }
+        hold = nil
         lock.unlock()
-        guard let gate else { return }
-        entered.signal()
-        _ = gate.wait(timeout: .now() + 10)
+        current.entered.signal()
+        _ = current.release.wait(timeout: .now() + 10)
     }
 }
 
@@ -90,48 +97,117 @@ final class WithdrawalPreemptionTests: XCTestCase {
         }),
     ]
 
-    func testWithdrawalAppliesAtOnceWhileAGrantTimeVendorCallIsBlocked() async throws {
-        for (name, connect) in helpers {
-            // The calls a helper makes for denial, and those only a grant makes.
-            let probeCore = try await resolvedCore()
-            let probe = BlockingCalls()
-            let probeHelper = connect(probeCore) { probe.call($0) }
-            let denied = probe.since(0)
-            let probeMark = probe.count
-            XCTAssertEqual(probeCore.save(.all).status, .committed)
-            let grantedOnly = Set(probe.since(probeMark)).subtracting(denied)
-            probeHelper.cancel()
-            XCTAssertFalse(grantedOnly.isEmpty, "\(name) must make a grant-only call")
+    /// The calls a helper makes for denial, for a grant, and those only a grant makes.
+    private func profile(
+        _ connect: (ConsentCore, @escaping @Sendable (String) -> Void) -> ConnectedHelper
+    ) async throws -> (denied: [String], grant: [String], grantedOnly: Set<String>) {
+        let core = try await resolvedCore()
+        let probe = BlockingCalls()
+        let helper = connect(core) { probe.call($0) }
+        let denied = probe.since(0)
+        let mark = probe.count
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let grant = probe.since(mark)
+        helper.cancel()
+        await core.waitUntilIdle()
+        return (denied, grant, Set(grant).subtracting(denied))
+    }
 
+    func testWithdrawalAppliesAtOnceWhileAnyGrantTimeVendorCallIsBlocked() async throws {
+        for (name, connect) in helpers {
+            let (denied, grant, grantedOnly) = try await profile(connect)
+            XCTAssertFalse(grantedOnly.isEmpty, "\(name) must make a grant-only call")
+            // Hold each grant-time call in turn, so every enabling call is shown to
+            // re-read consent rather than trust a stale grant.
+            for held in grant.indices {
+                let core = try await resolvedCore()
+                let calls = BlockingCalls()
+                let helper = connect(core) { calls.call($0) }
+                let release = DispatchSemaphore(value: 0)
+                let entered = calls.blockNext(release, skip: held)
+                let granted = DispatchSemaphore(value: 0)
+                DispatchQueue.global().async {
+                    _ = core.save(.all)
+                    granted.signal()
+                }
+                XCTAssertEqual(entered.wait(timeout: .now() + 5), .success, "\(name) \(held)")
+
+                let mark = calls.count
+                let withdrawn = DispatchSemaphore(value: 0)
+                DispatchQueue.global().async {
+                    _ = core.save(.necessary)
+                    withdrawn.signal()
+                }
+                XCTAssertEqual(
+                    withdrawn.wait(timeout: .now() + 5), .success,
+                    "\(name): withdrawal must not wait for grant call \(held)")
+                XCTAssertEqual(
+                    Array(calls.since(mark).filter { denied.contains($0) }.prefix(denied.count)), denied,
+                    "\(name): every denial call ran, in order, while grant call \(held) was blocked")
+
+                release.signal()
+                XCTAssertEqual(granted.wait(timeout: .now() + 5), .success, "\(name) \(held)")
+                let afterWithdrawal = calls.since(mark)
+                XCTAssertEqual(
+                    afterWithdrawal.filter { grantedOnly.contains($0) }, [],
+                    "\(name): no grant-only call after withdrawal, holding grant call \(held)")
+                XCTAssertEqual(
+                    Array(afterWithdrawal.suffix(denied.count)), denied,
+                    "\(name): the late grant is overwritten by denial")
+                helper.cancel()
+                await core.waitUntilIdle()
+            }
+        }
+    }
+
+    func testRegrantWaitsForABlockedPreemptingWithdrawalThenApplies() async throws {
+        for (name, connect) in helpers {
+            let (_, _, grantedOnly) = try await profile(connect)
             let core = try await resolvedCore()
             let calls = BlockingCalls()
             let helper = connect(core) { calls.call($0) }
-            let release = DispatchSemaphore(value: 0)
-            calls.blockNext(release)
+            let releaseGrant = DispatchSemaphore(value: 0)
+            let grantEntered = calls.blockNext(releaseGrant)
             let granted = DispatchSemaphore(value: 0)
             DispatchQueue.global().async {
                 _ = core.save(.all)
                 granted.signal()
             }
-            XCTAssertEqual(calls.entered.wait(timeout: .now() + 5), .success, name)
+            XCTAssertEqual(grantEntered.wait(timeout: .now() + 5), .success, name)
 
-            let mark = calls.count
+            let releaseWithdrawal = DispatchSemaphore(value: 0)
+            let withdrawalEntered = calls.blockNext(releaseWithdrawal)
             let withdrawn = DispatchSemaphore(value: 0)
             DispatchQueue.global().async {
                 _ = core.save(.necessary)
                 withdrawn.signal()
             }
-            XCTAssertEqual(withdrawn.wait(timeout: .now() + 5), .success, "\(name): withdrawal must not wait for the blocked grant")
-            let beforeRelease = calls.since(mark)
-            XCTAssertEqual(
-                Array(beforeRelease.filter { denied.contains($0) }.prefix(denied.count)), denied,
-                "\(name): every denial call ran, in order, before the grant returned")
+            XCTAssertEqual(withdrawalEntered.wait(timeout: .now() + 5), .success, name)
 
-            release.signal()
+            releaseGrant.signal()
             XCTAssertEqual(granted.wait(timeout: .now() + 5), .success, name)
-            let afterWithdrawal = calls.since(mark)
-            XCTAssertEqual(afterWithdrawal.filter { grantedOnly.contains($0) }, [], "\(name): no grant-only call after withdrawal")
-            XCTAssertEqual(Array(afterWithdrawal.suffix(denied.count)), denied, "\(name): the late grant is overwritten by denial")
+            let mark = calls.count
+            let regranted = DispatchSemaphore(value: 0)
+            DispatchQueue.global().async {
+                _ = core.save(.all)
+                regranted.signal()
+            }
+            XCTAssertEqual(
+                regranted.wait(timeout: .now() + 5), .success,
+                "\(name): the regrant must not wait for the blocked withdrawal")
+            XCTAssertEqual(
+                calls.since(mark).filter { grantedOnly.contains($0) }, [],
+                "\(name): the regrant must not overtake the blocked withdrawal")
+
+            releaseWithdrawal.signal()
+            XCTAssertEqual(withdrawn.wait(timeout: .now() + 5), .success, name)
+            let afterRelease = calls.since(mark)
+            XCTAssertTrue(
+                grantedOnly.isSubset(of: Set(afterRelease)),
+                "\(name): the regrant applies once the withdrawal returns")
+            let lastGrant = afterRelease.lastIndex { grantedOnly.contains($0) } ?? -1
+            let lastDenial = afterRelease.lastIndex { !grantedOnly.contains($0) } ?? -1
+            XCTAssertGreaterThan(lastGrant, lastDenial, "\(name): the vendor ends granted")
             helper.cancel()
             await core.waitUntilIdle()
         }

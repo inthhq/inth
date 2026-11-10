@@ -260,13 +260,15 @@ internal fun AnalyticsConsentBinding(
  * failed call, so a vendor whose start call must run once per grant can tell a new
  * grant from an unrelated change.
  *
- * Updates run one at a time on the thread that publishes them, and vendor calls run
- * outside the lock. A withdrawal never waits for them: when a category the running
- * update grants is withdrawn on another thread, that thread applies the withdrawal
- * at once, even while the running update is blocked inside a vendor call. The
- * running update then reapplies current authority after its call returns, so a
- * grant that completes late cannot leave the vendor enabled. Other changes are
- * picked up by the running update when its call returns.
+ * One update holds the turn at a time, on the thread that publishes it, and vendor
+ * calls run outside the lock. A withdrawal never waits for them: when a category the
+ * update holding the turn grants is withdrawn on another thread, that thread takes
+ * the turn and applies the withdrawal at once, even while the overtaken update is
+ * blocked inside a vendor call. Other changes, including a regrant, are picked up by
+ * whichever update holds the turn when its call returns, so they apply after the
+ * withdrawal. An overtaken update records nothing when it returns; it asks for
+ * current authority to be reapplied, so a grant that completes late cannot leave the
+ * vendor enabled.
  */
 internal class ConsentBinding<State>(
 	private val core: ConsentCore,
@@ -353,46 +355,63 @@ internal class ConsentBinding<State>(
 	private fun reconcile() {
 		val me = Thread.currentThread()
 		while (true) {
-			var preempt = false
 			val previous: State?
 			val state: State
 			synchronized(lock) {
 				val (next, granted) = readGranted()
 				val running = applier
+				// Reentrant: this thread's own pass re-reads when its vendor call returns.
+				if (running === me) return
 				if (running != null) {
-					// Reentrant, or nothing the running update grants was withdrawn: it
-					// re-reads current authority when its vendor call returns.
-					if (running === me || granted.containsAll(targetGranted)) return
-					// A withdrawal must not wait for a vendor call in flight elsewhere.
-					preempt = true
+					// Nothing the update holding the turn grants was withdrawn: it picks
+					// this change up when its vendor call returns.
+					if (granted.containsAll(targetGranted)) return
+					// A withdrawal takes the turn at once.
 					previous = target
-					needsSync = true
 				} else {
 					if (hasApplied && applied == next && !needsSync) return
 					previous = if (hasApplied && !needsSync) applied else null
 					needsSync = false
-					hasApplied = false
-					applier = me
 				}
+				hasApplied = false
+				applier = me
 				state = next
 				target = next
 				targetGranted = granted
 			}
-			if (preempt) {
+			val failure = try {
 				apply(previous, state, readCurrent)
-				return
-			}
-			try {
-				apply(previous, state, readCurrent)
+				null
 			} catch (error: Throwable) {
-				synchronized(lock) { applier = null }
-				throw error
+				error
 			}
-			synchronized(lock) {
-				applier = null
-				applied = state
-				hasApplied = true
+			val again = synchronized(lock) {
+				if (applier === me) {
+					applier = null
+					if (failure == null) {
+						applied = state
+						hasApplied = true
+					}
+					// Pick up changes made while the call ran, unless it failed.
+					failure == null
+				} else {
+					// A withdrawal overtook this update while its call ran, so its result
+					// is stale. Reapply current authority once the turn is free.
+					needsSync = true
+					applier == null
+				}
 			}
+			if (failure != null) {
+				if (again) {
+					try {
+						reconcile()
+					} catch (retryError: Throwable) {
+						if (retryError !== failure) failure.addSuppressed(retryError)
+					}
+				}
+				throw failure
+			}
+			if (!again) return
 		}
 	}
 

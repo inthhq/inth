@@ -49,9 +49,10 @@ export interface AnalyticsIntegrationOptions {
  *
  * A withdrawal never waits in the queue. When a category the running apply
  * grants is withdrawn, or the integration disconnects, the withdrawal applies
- * at once, even while a vendor call of the running apply has not settled. The
- * queue then reapplies current state after the running apply finishes, so a
- * grant that settles late cannot leave the vendor enabled. `apply` must read
+ * at once, even while a vendor call of the running apply has not settled. Later
+ * updates wait for both the withdrawal and the apply it overtook, then the queue
+ * reapplies current state, so a grant that settles late cannot leave the vendor
+ * enabled and a regrant cannot finish before the withdrawal. `apply` must read
  * `current()` before each call that enables collection.
  */
 export const connectConsentState = <StateType>(
@@ -67,13 +68,16 @@ export const connectConsentState = <StateType>(
 	let applied: string | undefined;
 	let last: { readonly state: StateType } | undefined;
 	let tail = Promise.resolve();
-	// The state the running queued apply works toward and the categories it grants.
+	// The newest apply: the state it works toward and the categories it grants.
 	let running:
 		| {
 				readonly state: StateType;
 				readonly granted: ReadonlySet<AllConsentNames>;
+				readonly generation: number;
 		  }
 		| undefined;
+	// Bumped by every apply; only the newest may record what it left the vendor in.
+	let generation = 0;
 	// Set by a withdrawal that ran beside the queue: the next apply must not skip.
 	let reapply = false;
 	let disconnected: Promise<void> | undefined;
@@ -105,6 +109,25 @@ export const connectConsentState = <StateType>(
 			}
 		}
 	};
+	const run = async (
+		next: ReturnType<typeof readGranted>,
+		previous: StateType | undefined
+	): Promise<void> => {
+		generation += 1;
+		const mine = generation;
+		running = { ...next, generation: mine };
+		try {
+			const state = await apply(current, previous);
+			if (mine === generation) {
+				applied = JSON.stringify(state);
+				last = { state };
+			}
+		} finally {
+			if (running?.generation === mine) {
+				running = undefined;
+			}
+		}
+	};
 	const enqueue = (force = false): Promise<void> => {
 		const reconcile = async () => {
 			const next = readGranted();
@@ -115,14 +138,7 @@ export const connectConsentState = <StateType>(
 			reapply = false;
 			applied = undefined;
 			last = undefined;
-			running = next;
-			try {
-				const state = await apply(current, previous);
-				applied = JSON.stringify(state);
-				last = { state };
-			} finally {
-				running = undefined;
-			}
+			await run(next, previous);
 		};
 		// A failed vendor call must not prevent a subsequent withdrawal or retry.
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Both outcomes must continue the same serialized queue.
@@ -144,12 +160,14 @@ export const connectConsentState = <StateType>(
 		if (!withdrawn) {
 			return;
 		}
-		running = next;
 		reapply = true;
-		const update = (async () => {
-			await apply(current, active.state);
-		})();
+		const update = run(next, active.state);
 		void reportFailure(update);
+		// Later updates wait for this withdrawal as well as the apply it overtook.
+		const overtaken = tail;
+		tail = (async () => {
+			await Promise.allSettled([overtaken, update]);
+		})();
 		enqueue();
 		return update;
 	};
