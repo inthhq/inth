@@ -7,6 +7,7 @@ import type { C15tConsentCategoryId } from './constants';
 import { C15tPluginError } from './errors';
 import { resolveAndroidMavenRepository } from './maven';
 import type { C15tAndroidMavenRepository } from './maven';
+import type { C15tThemePluginProps } from './theme';
 
 /**
  * Transport the embedded core should run.
@@ -271,6 +272,12 @@ export interface C15tPluginProps {
 	 * @defaultValue false
 	 */
 	skipNativeBuildCheck?: boolean;
+	/**
+	 * Appearance of the native consent screens, written into the native theme
+	 * keys at prebuild. Field names follow the web `Theme` from `@c15t/ui`.
+	 * Omit it to leave those keys to the app.
+	 */
+	theme?: C15tThemePluginProps;
 }
 
 /** Validated parameters, with defaults applied. */

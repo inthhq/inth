@@ -81,6 +81,28 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 您可以随时在设置中更改。`,
 };
 
+/**
+ * The native consent screens' appearance, written into Info.plist and
+ * AndroidManifest.xml at prebuild. The Expo and Customize docs pages show this
+ * block.
+ */
+// #region docs:expo-theme title="app.config.ts"
+const theme: C15tPluginProps['theme'] = {
+	colors: {
+		decision: '#172554',
+		primary: '#2563EB',
+		textOnDecision: '#FFFFFF',
+	},
+	dark: {
+		decision: '#DBEAFE',
+		primary: '#60A5FA',
+		textOnDecision: '#172554',
+	},
+	radius: { md: 16 },
+	typography: { headlineFont: 'serif' },
+};
+// #endregion docs:expo-theme
+
 const c15tPluginProps: C15tPluginProps = {
 	androidMavenRepository: (process.env.C15T_MAVEN_URL ?? '').startsWith('file:')
 		? { url: process.env.C15T_MAVEN_URL ?? '' }
@@ -115,6 +137,7 @@ const c15tPluginProps: C15tPluginProps = {
 			? 'hosted'
 			: 'selfHosted',
 	policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json',
+	theme,
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,

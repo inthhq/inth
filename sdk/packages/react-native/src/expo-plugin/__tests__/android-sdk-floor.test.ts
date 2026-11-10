@@ -1,0 +1,143 @@
+/**
+ * The Android SDK floor, checked against the files a current Expo template
+ * generates.
+ *
+ * `fixtures/expo-templates/sdk-*` are `android/build.gradle`,
+ * `android/app/build.gradle` and `android/gradle.properties` copied unchanged
+ * from `expo-template-bare-minimum` 55.0.44, 57.0.34 and 58.0.32. None of them
+ * spells an SDK number: the `expo-root-project` Gradle plugin resolves it, which
+ * is why the old raise never fired. A level only lands in these files when the
+ * host sets one, most often through `expo-build-properties`, which writes
+ * `android.minSdkVersion` and `android.compileSdkVersion` into
+ * `gradle.properties`.
+ */
+import { appendFileSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import {
+	assertAndroidSdkFloor,
+	findAndroidSdkSettings,
+	readAndroidSdkFiles,
+} from '../android-sdk-floor';
+import { C15tPluginError } from '../errors';
+import { FIXTURE_DIR, applyToFixture, runMod } from './helpers';
+
+const TEMPLATES = ['sdk-55', 'sdk-57', 'sdk-58'] as const;
+
+const scratch: string[] = [];
+
+afterEach(() => {
+	for (const directory of scratch.splice(0)) {
+		rmSync(directory, { force: true, recursive: true });
+	}
+});
+
+/** A project root whose `android/` is one template's generated files. */
+const templateProject = function templateProject(
+	template: (typeof TEMPLATES)[number],
+	gradleProperties = ''
+): string {
+	const root = mkdtempSync(join(tmpdir(), 'c15t-sdk-floor-'));
+	scratch.push(root);
+	cpSync(join(FIXTURE_DIR, 'expo-templates', template), join(root, 'android'), {
+		recursive: true,
+	});
+	if (gradleProperties !== '') {
+		appendFileSync(
+			join(root, 'android', 'gradle.properties'),
+			`\n${gradleProperties}\n`
+		);
+	}
+	return root;
+};
+
+/** Run the plugin's finalized Android mod, the way prebuild ends. */
+const finalize = function finalize(projectRoot: string) {
+	return runMod(
+		applyToFixture({ backendURL: 'https://consent.example.com' }),
+		'android',
+		'finalized',
+		undefined,
+		{ projectRoot }
+	);
+};
+
+describe.each(TEMPLATES)('the Expo %s template', (template) => {
+	it('sets no SDK level, so there was nothing to raise', () => {
+		const files = readAndroidSdkFiles(
+			join(templateProject(template), 'android')
+		);
+		expect(Object.keys(files).sort()).toStrictEqual([
+			'app/build.gradle',
+			'build.gradle',
+			'gradle.properties',
+		]);
+		expect(findAndroidSdkSettings(files)).toStrictEqual([]);
+	});
+
+	it('passes prebuild untouched', async () => {
+		await expect(finalize(templateProject(template))).resolves.toBeDefined();
+	});
+
+	it('passes levels at or above the floor', async () => {
+		const root = templateProject(
+			template,
+			'android.minSdkVersion=26\nandroid.compileSdkVersion=37'
+		);
+		await expect(finalize(root)).resolves.toBeDefined();
+	});
+
+	it('fails prebuild on an expo-build-properties minSdk below 24', async () => {
+		const root = templateProject(template, 'android.minSdkVersion=23');
+		await expect(finalize(root)).rejects.toThrowError(
+			/minSdk is 23 in android\/gradle\.properties; c15t needs 24 or later \(raise or remove android\.minSdkVersion in the expo-build-properties plugin options\)/u
+		);
+	});
+
+	it('fails prebuild on an expo-build-properties compileSdk below 36', async () => {
+		const root = templateProject(template, 'android.compileSdkVersion=35');
+		await expect(finalize(root)).rejects.toThrowError(
+			/compileSdk is 35 in android\/gradle\.properties; c15t needs 36/u
+		);
+	});
+});
+
+describe('assertAndroidSdkFloor', () => {
+	it.each([
+		['a Groovy app literal', 'app/build.gradle', 'compileSdk 35', 'compileSdk'],
+		[
+			'a root ext literal',
+			'build.gradle',
+			'ext {\n  minSdkVersion = 23\n}',
+			'minSdk',
+		],
+		['a Kotlin DSL literal', 'app/build.gradle.kts', 'minSdk = 21', 'minSdk'],
+	])('refuses %s', (_label, file, contents, level) => {
+		expect(() => assertAndroidSdkFloor({ [file]: contents })).toThrowError(
+			new RegExp(
+				`${level} is \\d+ in android/${file.replaceAll('.', '\\.')}`,
+				'u'
+			)
+		);
+	});
+
+	it('leaves rootProject.ext indirection and targetSdk alone', () => {
+		expect(() =>
+			assertAndroidSdkFloor({
+				'app/build.gradle':
+					'compileSdk rootProject.ext.compileSdkVersion\n' +
+					'minSdkVersion rootProject.ext.minSdkVersion\n' +
+					'targetSdkVersion 21',
+			})
+		).not.toThrow();
+	});
+
+	it('throws the plugin error type', () => {
+		expect(() =>
+			assertAndroidSdkFloor({ 'gradle.properties': 'android.minSdkVersion=21' })
+		).toThrowError(C15tPluginError);
+	});
+});

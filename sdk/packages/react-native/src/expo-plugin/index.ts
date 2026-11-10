@@ -55,3 +55,8 @@ export { TRANSPORT_MODES } from './params';
 export type { WorkflowContext } from './workflow';
 
 export type { C15tAndroidMavenRepository } from './maven';
+export type {
+	C15tThemeColorName,
+	C15tThemeColors,
+	C15tThemePluginProps,
+} from './theme';
