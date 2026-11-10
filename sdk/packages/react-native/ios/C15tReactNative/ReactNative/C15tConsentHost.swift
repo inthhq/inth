@@ -42,8 +42,13 @@ final class C15tConsentHost {
             guard let self, self.sessionID == id else { return }
             let kind = result == .dismissed ? (presenter.snapshot.policyPending ? "unavailable" : "dismissed") : (notice && !presenter.preferences ? "acknowledged" : "committed")
             let payload = self.encode(["sessionId": id, "kind": kind, "revision": core.snapshot().revision])
-            self.detach()
-            outcome(payload)
+            // Report once the cover has animated away, so a step that follows the prompt, such as
+            // the App Tracking Transparency alert, is not asked while the cover is still leaving.
+            let finish = { [weak self] in
+                self?.detach()
+                outcome(payload)
+            }
+            if presenter.covering { presenter.onCoverDismissed = finish } else { finish() }
         }
         presenter.onAnnouncement = { UIAccessibility.post(notification: .announcement, argument: $0) }
         let overlay = ConsentPassthroughView(frame: parent.view.bounds)
@@ -70,6 +75,7 @@ final class C15tConsentHost {
         outcome = nil
         sessionID = nil
         presenter?.onOutcome = nil
+        presenter?.onCoverDismissed = nil
         controller?.willMove(toParent: nil)
         controller?.view.removeFromSuperview()
         controller?.removeFromParent()

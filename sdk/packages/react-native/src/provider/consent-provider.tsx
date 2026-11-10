@@ -18,7 +18,12 @@ import type { ReactNode } from 'react';
 import { useContext, useEffect, useMemo } from 'react';
 import { AppState } from 'react-native';
 
+import { isSnapshotReady } from '../lib/selectors';
 import { getConsentClient } from '../native/client';
+import {
+	onConsentPresenterOutcome,
+	presentPreferences,
+} from '../native/presenter';
 import {
 	assertPrivacyPolicyURL,
 	presentOwedPrompt,
@@ -30,6 +35,12 @@ import {
 	useConsentSafeAreaInsets,
 } from './safe-area-context';
 import type { ConsentSafeAreaInsets } from './safe-area-context';
+import {
+	checkTrackingAtLaunch,
+	requestSequencedTracking,
+	requestTrackingBeforeConsent,
+} from './tracking-sequence';
+import type { ConsentTrackingRequest } from './tracking-sequence';
 
 /**
  * Whether the provider presents the native consent prompt by itself.
@@ -91,6 +102,23 @@ export interface ConsentProviderBaseProps {
 	 * ```
 	 */
 	readonly safeAreaInsets?: ConsentSafeAreaInsets;
+	/**
+	 * When to ask for App Tracking Transparency on iOS.
+	 *
+	 * Runs only when the app enabled it (`enableAppTrackingTransparency` in the
+	 * Expo plugin, or `NSUserTrackingUsageDescription` in `Info.plist`) and Apple
+	 * has not been answered yet. Android has no such alert, so this does nothing
+	 * there. Apple's answer never changes stored consent.
+	 *
+	 * - `afterConsent`: the prompt first, then Apple's alert once the prompt has
+	 *   closed, and only while marketing is granted. Saving marketing as granted
+	 *   later in settings asks then.
+	 * - `beforeConsent`: Apple's alert first, then the prompt.
+	 * - `manual`: nothing automatic.
+	 *
+	 * @default 'afterConsent'
+	 */
+	readonly trackingRequest?: ConsentTrackingRequest;
 }
 
 /**
@@ -122,6 +150,7 @@ export interface ConsentProviderBaseProps {
  *   measured them.
  * @param props.autoPresent - `false` leaves presenting to the app.
  * @param props.privacyPolicyURL - The HTTPS privacy policy the prompt links to.
+ * @param props.trackingRequest - When to ask for App Tracking Transparency.
  * @returns The children, with consent available through the hooks.
  * @throws {NativeC15tUnavailableError} When the native module is not in the
  *   running binary, for example in Expo Go.
@@ -136,6 +165,7 @@ export const ConsentProvider = ({
 	children,
 	privacyPolicyURL,
 	safeAreaInsets,
+	trackingRequest = 'afterConsent',
 }: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
@@ -198,14 +228,19 @@ export const ConsentProvider = ({
 		if (!presents || privacyPolicyURL === undefined) {
 			return;
 		}
-		const present = (): void => {
-			void presentOwedPrompt(client, privacyPolicyURL);
+		const present = async (): Promise<void> => {
+			if (trackingRequest === 'beforeConsent') {
+				await requestTrackingBeforeConsent(client);
+			}
+			await presentOwedPrompt(client, privacyPolicyURL);
 		};
-		present();
-		const unsubscribe = client.subscribe(selectOwedPromptKey, present);
+		void present();
+		const unsubscribe = client.subscribe(selectOwedPromptKey, () => {
+			void present();
+		});
 		const subscription = AppState.addEventListener('change', (state): void => {
 			if (state === 'active') {
-				present();
+				void present();
 			}
 		});
 
@@ -213,7 +248,53 @@ export const ConsentProvider = ({
 			unsubscribe();
 			subscription.remove();
 		};
-	}, [client, presents, privacyPolicyURL]);
+	}, [client, presents, privacyPolicyURL, trackingRequest]);
+
+	// Ask for App Tracking Transparency after each prompt or settings session
+	// closes. The native host reports the outcome once its UI has animated away,
+	// because iOS will not show the alert over a presentation that is leaving.
+	// Only an iOS build that can still ask listens.
+	useEffect(() => {
+		if (
+			inherited !== null ||
+			trackingRequest !== 'afterConsent' ||
+			client.getTrackingAuthorization() !== 'not-determined'
+		) {
+			return;
+		}
+		const afterPrompt = async (): Promise<void> => {
+			const paused = await requestSequencedTracking(
+				client,
+				trackingRequest,
+				'afterPrompt'
+			);
+			// Additional Information on Apple's EU sheet asks for the app's own
+			// controls. Closing them runs this rule again.
+			if (paused && privacyPolicyURL !== undefined) {
+				await presentPreferences(privacyPolicyURL).catch(() => null);
+			}
+		};
+		const removeOutcome = onConsentPresenterOutcome((outcome): void => {
+			if (outcome.kind !== 'unavailable') {
+				void afterPrompt();
+			}
+		});
+		// A stored choice still in force owes no prompt this launch, so the rule
+		// applies as soon as the core has an answer.
+		let stopLaunch = (): void => undefined;
+		if (presents && !checkTrackingAtLaunch(client)) {
+			stopLaunch = client.subscribe(isSnapshotReady, () => {
+				if (checkTrackingAtLaunch(client)) {
+					stopLaunch();
+				}
+			});
+		}
+
+		return () => {
+			removeOutcome();
+			stopLaunch();
+		};
+	}, [client, inherited, presents, privacyPolicyURL, trackingRequest]);
 
 	return (
 		<ConsentClientContext.Provider value={client}>
