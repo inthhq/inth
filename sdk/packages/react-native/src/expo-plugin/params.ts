@@ -896,6 +896,7 @@ const normalizeBundleManifest = function normalizeBundleManifest(
 		out:
 			normalizeOptionalText(options.out, 'bundleManifest.out') ??
 			'c15t-policy.json',
+		vendors: normalizeVendors(props.vendors),
 	};
 };
 

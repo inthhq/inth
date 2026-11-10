@@ -10,6 +10,27 @@ import {
 } from '@c15t/schema';
 import { enTranslations } from '@c15t/translations';
 
+/**
+ * The backend could not be reached, or answered as an unavailable server would.
+ *
+ * Only this failure lets a debug build continue or reuse a stale copy. A reachable
+ * backend that serves a manifest the exporter refuses is a configuration error and
+ * fails every build.
+ */
+export class ManifestUnreachableError extends Error {
+	override name = 'ManifestUnreachableError';
+}
+
+/** Statuses a working backend sends while it is briefly unavailable. */
+const isUnavailableStatus = (status: number): boolean =>
+	status >= 500 || status === 408 || status === 429;
+
+const isRedirect = (error: unknown): boolean =>
+	error instanceof Error &&
+	/redirect/iu.test(
+		`${error.message} ${String((error as { cause?: unknown }).cause ?? '')}`
+	);
+
 interface GlobalVendorListDocument {
 	vendors: Record<string, unknown>;
 	[key: string]: unknown;
@@ -133,13 +154,30 @@ export const exportMobilePolicy = async (options: {
 				'Policy export requires TLS without credentials or fragments.'
 			);
 		}
-		const response = await fetcher(url, {
-			headers: { accept: 'application/json', 'x-c15t-policy-contract': '1' },
-			redirect: 'error',
-			signal: AbortSignal.timeout(15000),
-		});
+		let response: Response;
+		try {
+			response = await fetcher(url, {
+				headers: { accept: 'application/json', 'x-c15t-policy-contract': '1' },
+				redirect: 'error',
+				signal: AbortSignal.timeout(15000),
+			});
+		} catch (error) {
+			// A redirect is an answer from a reachable server, and a wrong URL.
+			if (isRedirect(error)) {
+				throw new Error(`Policy export refuses redirects: ${url}`, {
+					cause: error,
+				});
+			}
+			throw new ManifestUnreachableError(
+				`Could not reach ${url}: ${error instanceof Error ? error.message : String(error)}`,
+				{ cause: error }
+			);
+		}
 		if (!response.ok) {
-			throw new Error(`Policy export HTTP ${response.status}: ${url}`);
+			const message = `Policy export HTTP ${response.status}: ${url}`;
+			throw isUnavailableStatus(response.status)
+				? new ManifestUnreachableError(message)
+				: new Error(message);
 		}
 		return response;
 	};

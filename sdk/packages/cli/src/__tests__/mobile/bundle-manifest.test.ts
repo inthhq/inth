@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mobileManifest } from '~/commands/mobile-manifest';
 import type { CliContext } from '~/context/types';
 import { bundleMobileManifest } from '~/mobile/bundle-manifest';
+import { ManifestUnreachableError } from '~/mobile/export-manifest';
 
 const now = Date.parse('2026-11-10T00:00:00Z');
 const backendUrl = 'https://fixture.example.test';
@@ -62,16 +63,71 @@ describe('bundling the manifest at build time', () => {
 		).rejects.toThrow(/release build/u);
 	});
 
-	it('warns and continues for a debug build when the fetch fails', async () => {
-		const result = await bundleMobileManifest({
-			backendUrl,
-			build: 'debug',
-			fetch: offline,
-			now,
-			out,
-		});
-		expect(result.status).toBe('skipped');
-	});
+	it.each([
+		['no response', offline],
+		['503', () => Promise.resolve(new Response('', { status: 503 }))],
+	])(
+		'warns and continues for a debug build that gets %s, without the old copy',
+		async (_name, fetch) => {
+			await bundleMobileManifest({
+				backendUrl,
+				build: 'release',
+				fetch: await online(),
+				now,
+				out,
+			});
+			const result = await bundleMobileManifest({
+				backendUrl,
+				build: 'debug',
+				fetch,
+				now,
+				out,
+			});
+			expect(result.status).toBe('skipped');
+			await expect(readFile(out, 'utf8')).rejects.toThrow(/ENOENT/u);
+		}
+	);
+
+	it.each([
+		['a manifest without a fallback', false],
+		['a manifest without a fallback', true],
+		['a body that is not JSON', false],
+		['a body that is not JSON', true],
+		['a 404', false],
+		['a 404', true],
+	] as const)(
+		'fails a debug build when a reachable backend serves %s (stale copy allowed: %s)',
+		async (name, allowStaleManifest) => {
+			// A stale copy is available, and still must not stand in for a refused manifest.
+			await bundleMobileManifest({
+				backendUrl,
+				build: 'release',
+				fetch: await online(),
+				now,
+				out,
+			});
+			const noFallback = await buildConsentManifestFromConfig({
+				policyRules: [policyRulePresets.worldOptOutNoPrompt()],
+			});
+			const answers = {
+				'a 404': () => Promise.resolve(new Response('', { status: 404 })),
+				'a body that is not JSON': () =>
+					Promise.resolve(new Response('not json')),
+				'a manifest without a fallback': () =>
+					Promise.resolve(new Response(JSON.stringify(noFallback))),
+			};
+			await expect(
+				bundleMobileManifest({
+					allowStaleManifest,
+					backendUrl,
+					build: 'debug',
+					fetch: answers[name],
+					now,
+					out,
+				})
+			).rejects.not.toBeInstanceOf(ManifestUnreachableError);
+		}
+	);
 
 	it('reuses the last fetched copy, even an expired one, with allowStaleManifest', async () => {
 		await bundleMobileManifest({

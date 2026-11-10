@@ -24,10 +24,13 @@ export const embedPolicyResource = async (
 		payload.endpoint !== endpoint?.replace(/\/+$/u, '') ||
 		!Number.isSafeInteger(payload.issuedAt) ||
 		!Number.isSafeInteger(payload.expiresAt) ||
+		payload.expiresAt <= payload.issuedAt ||
 		payload.issuedAt > Date.now()
 	) {
+		// An expired resource is usable; one that expires before it was issued is not,
+		// and both native cores would discard it.
 		throw new C15tPluginError(
-			'policyResource is invalid, issued in the future, or belongs to a different backendURL. Re-export it before prebuild.'
+			'policyResource is invalid, expires before it was issued, is issued in the future, or belongs to a different backendURL. Re-export it before prebuild.'
 		);
 	}
 	if (payload.expiresAt <= Date.now()) {
@@ -42,6 +45,65 @@ export const embedPolicyResource = async (
 	if (path !== destination) {
 		await copyFile(path, destination);
 	}
+};
+
+/** The parts of an Xcode project object this file edits. */
+interface PbxObjects {
+	[section: string]: Record<string, unknown> | undefined;
+}
+
+/**
+ * Remove a resource file reference, its build files, and its entries in groups
+ * and Resources build phases.
+ *
+ * The `xcode` package's own `removeResourceFile` assumes a group named
+ * `Resources`, which Expo projects do not have.
+ */
+export const removeXcodeResource = function removeXcodeResource<
+	Project extends { hash: { project: { objects: PbxObjects } } },
+>(project: Project, filepath: string): Project {
+	const { objects } = project.hash.project;
+	const unquote = (value: unknown) =>
+		typeof value === 'string'
+			? value.replace(/^"(?<inner>.*)"$/u, '$<inner>')
+			: value;
+	const entries = (section: string) =>
+		Object.entries(objects[section] ?? {}).filter(
+			([key, value]) => !key.endsWith('_comment') && typeof value === 'object'
+		) as [string, Record<string, unknown>][];
+	const references = entries('PBXFileReference')
+		.filter(([, value]) => unquote(value.path) === filepath)
+		.map(([key]) => key);
+	if (references.length === 0) {
+		return project;
+	}
+	const buildFiles = entries('PBXBuildFile')
+		.filter(([, value]) => references.includes(value.fileRef as string))
+		.map(([key]) => key);
+	for (const [section, keys] of [
+		['PBXFileReference', references],
+		['PBXBuildFile', buildFiles],
+	] as const) {
+		for (const key of keys) {
+			Reflect.deleteProperty(objects[section] ?? {}, key);
+			Reflect.deleteProperty(objects[section] ?? {}, `${key}_comment`);
+		}
+	}
+	const removed = new Set([...references, ...buildFiles]);
+	for (const [section, field] of [
+		['PBXGroup', 'children'],
+		['PBXResourcesBuildPhase', 'files'],
+	] as const) {
+		for (const [, value] of entries(section)) {
+			const list = value[field];
+			if (Array.isArray(list)) {
+				value[field] = list.filter(
+					(item: { value?: string }) => !removed.has(item.value ?? '')
+				);
+			}
+		}
+	}
+	return project;
 };
 
 /** Android app assets location, independent of application ID. */

@@ -11,7 +11,7 @@ policy resource the iOS and Android SDKs read before the first network
 response. Run it as a build step so each build carries the latest policy.
 
 ```sh
-npx c15t mobile-manifest \
+npx @c15t/cli mobile-manifest \
   --backend-url https://your-project.inth.app \
   --out c15t-policy.json \
   --build release
@@ -27,12 +27,26 @@ npx c15t mobile-manifest \
 | `--languages` | Comma-separated languages to compile prompt copy for. English is always included. |
 | `--vendors` | Comma-separated IAB vendor IDs to keep in the bundled GVL. |
 
-## When the fetch fails
+In a project with `@c15t/cli` installed, `npx` runs that copy. Without it,
+`npx @c15t/cli` downloads the package; `npx c15t` does not work, because the
+`c15t` package on npm has no executable.
+
+## When the backend cannot be reached
+
+The fetch counts as failed when no response arrives, or the backend answers
+`5xx`, `408` or `429`.
 
 - A release build fails, so no release ships without its manifest.
-- A debug build prints a warning and continues.
+- A debug build prints a warning and continues with no bundled manifest. It
+  deletes any earlier copy at `--out`, so an old manifest cannot ship by
+  accident.
 - With `--allow-stale-manifest`, both reuse the last fetched copy, if one for
   the same backend is at `--out`. Air-gapped CI can commit or cache that copy.
+
+A backend that answers with anything else fails every build, debug included,
+with or without `--allow-stale-manifest`: a `404`, a response that is not a
+manifest, or a manifest that does not pass validation is a configuration
+problem to fix, not an outage to wait out.
 
 An expired manifest still works on the device: it shows the prompt, records
 choices and emits `policyStale` until the app reaches the backend. See

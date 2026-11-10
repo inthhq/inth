@@ -109,9 +109,11 @@ without one. Use backend mode with a bundled manifest for offline IAB.
 
 ## Bundle the manifest at build time
 
-Each build should fetch the latest manifest and bundle it. If the fetch
-fails, a release build fails and a debug build warns and continues.
-`allowStaleManifest` lets air-gapped CI reuse the last fetched copy instead.
+Each build should fetch the latest manifest and bundle it. If the backend
+cannot be reached, a release build fails and a debug build warns and
+continues with no bundled manifest. `allowStaleManifest` lets air-gapped CI
+reuse the last fetched copy instead. A manifest the backend serves but that
+fails validation fails every build.
 
 With Expo, add `@c15t/cli` to `devDependencies` and turn on
 `bundleManifest`:
@@ -133,22 +135,26 @@ export default {
 Prebuild runs `c15t mobile-manifest` and embeds the result in both native
 projects. Prebuild cannot see which variant comes next, so it treats every
 build as release except `expo run:*` without a release variant or
-configuration. Set `C15T_MANIFEST_BUILD=debug` to say otherwise.
+configuration. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
+debug prebuild cannot reach the backend, it also removes a manifest an earlier
+prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` also
+narrows the GVL in the bundled manifest.
 
 Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest)
 as a build step and point the platform at the file:
 
-```sh title="Xcode Run Script phase, before Copy Bundle Resources"
+```sh title="Xcode Run Script phase, after Copy Bundle Resources"
 BUILD=$([ "$CONFIGURATION" = "Release" ] && echo release || echo debug)
-npx c15t mobile-manifest --backend-url https://your-project.inth.app \
-  --out "$SRCROOT/c15t-policy.json" --build "$BUILD"
+npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
+  --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/c15t-policy.json" \
+  --build "$BUILD"
 ```
 
 ```groovy title="android/app/build.gradle"
 ['Debug', 'Release'].each { variant ->
     def fetch = tasks.register("c15tManifest${variant}", Exec) {
         workingDir rootProject.projectDir.parentFile
-        commandLine 'npx', 'c15t', 'mobile-manifest',
+        commandLine 'npx', '@c15t/cli', 'mobile-manifest',
             '--backend-url', 'https://your-project.inth.app',
             '--out', "${projectDir}/src/main/assets/c15t-policy.json",
             '--build', variant.toLowerCase()
@@ -157,8 +163,11 @@ npx c15t mobile-manifest --backend-url https://your-project.inth.app \
 }
 ```
 
-Add the file to Copy Bundle Resources once on iOS, and set the keys in the
-table below.
+On iOS the script writes straight into the built app, so the file is not
+listed in Copy Bundle Resources: a debug build that skipped the fetch then has
+no file to copy rather than an old one. List the output path in the phase's
+Output Files when user script sandboxing is on. Set the keys in the table
+below.
 
 The manifest needs a conservative opt-in or IAB fallback for unknown
 geography, with no preselected optional categories. Export fails when that

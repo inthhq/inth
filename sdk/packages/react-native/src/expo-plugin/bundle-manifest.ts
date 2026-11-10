@@ -15,6 +15,11 @@ export interface ResolvedBundleManifest {
 	readonly languages: readonly string[];
 	/** Where the fetched copy is kept, relative to the Expo project. */
 	readonly out: string;
+	/**
+	 * The app's declared vendor scope, so the bundled GVL holds the same vendors the
+	 * runtime discloses rather than the whole list. Empty keeps every vendor.
+	 */
+	readonly vendors: readonly number[];
 }
 
 /**
@@ -91,6 +96,9 @@ export const manifestArguments = function manifestArguments(
 			: ['--expires-in-days', String(settings.expiresInDays)]),
 		...(settings.languages.length > 0
 			? ['--languages', settings.languages.join(',')]
+			: []),
+		...(settings.vendors.length > 0
+			? ['--vendors', settings.vendors.join(',')]
 			: []),
 	];
 };

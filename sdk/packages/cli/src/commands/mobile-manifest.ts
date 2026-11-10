@@ -4,6 +4,7 @@ import type { CliContext } from '../context/types';
 import { CliError } from '../core/errors';
 import { bundleMobileManifest } from '../mobile/bundle-manifest';
 import type { BundleManifestResult } from '../mobile/bundle-manifest';
+import { ManifestUnreachableError } from '../mobile/export-manifest';
 
 const text = (value: unknown): string | undefined =>
 	typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
@@ -56,8 +57,11 @@ export const mobileManifest = async (
 		}
 		return result;
 	} catch (error) {
-		throw new CliError('NETWORK_ERROR', {
-			details: error instanceof Error ? error.message : String(error),
-		});
+		// A backend that answered with a manifest the exporter refuses is a
+		// configuration problem, not a connection problem.
+		throw new CliError(
+			error instanceof ManifestUnreachableError ? 'NETWORK_ERROR' : 'API_ERROR',
+			{ details: error instanceof Error ? error.message : String(error) }
+		);
 	}
 };
