@@ -417,15 +417,18 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// The current state. Synchronous, and never touches disk or the network.
     public func snapshot() -> ConsentSnapshot {
-        lock.withLock { () -> ConsentSnapshot in
-            // The readable view may be rebuilt from a draft, which carries no owed-prompt name.
-            var readable = readableSnapshotLocked()
-            readable.promptOwedSince = currentSnapshot.promptOwedSince
-            return readable
-        }
+        lock.withLock { readableSnapshotLocked() }
     }
 
+    /// What every reader sees: the sync read, observers, events and gate decisions alike.
     private func readableSnapshotLocked() -> ConsentSnapshot {
+        // The views below may be rebuilt from a draft, which carries no owed-prompt name.
+        var readable = constrainedSnapshotLocked()
+        readable.promptOwedSince = currentSnapshot.promptOwedSince
+        return readable
+    }
+
+    private func constrainedSnapshotLocked() -> ConsentSnapshot {
         let constrained = constrainBundledPolicyLocked(currentSnapshot)
         guard !constrained.policyPending, resolvedPolicy?.policy.model == .iab else { return constrained }
         if listIsUsableLocked(), let saved = committedIAB, let config, let resolvedPolicy,

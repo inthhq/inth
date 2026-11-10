@@ -35,6 +35,36 @@ final class PromptOwedSinceTests: XCTestCase {
         XCTAssertNil(fields["promptOwedSince"])
     }
 
+    /// A bundled policy rebuilds the readable snapshot from a draft. Observers must still get the
+    /// identifier, or a presenter that sees only the latest callback keeps a prompt suppressed.
+    func testObserversGetTheIdentifierWhenTheReadableViewIsRebuilt() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let vector = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: root.appendingPathComponent("protocol/bundled-policy/parity.json"))) as? [String: Any])
+        let resource = try JSONSerialization.data(withJSONObject: XCTUnwrap(vector["resource"]))
+        let now = try XCTUnwrap(vector["now"] as? Int64)
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore(),
+            bundledPolicy: BundledPolicyResource(data: resource, endpoint: try XCTUnwrap(vector["endpoint"] as? String)),
+            consentCategories: ConsentCategory.allCases, now: { now }, initRetry: .disabled))
+        let recorder = Recorder()
+        let subscription = core.onChange(recorder)
+        defer { subscription.cancel() }
+
+        XCTAssertEqual(core.save(.all).status, .committed)
+        core.reset()
+        let owed = try XCTUnwrap(core.snapshot().promptOwedSince)
+        XCTAssertEqual(recorder.last?.revision, core.snapshot().revision)
+        XCTAssertEqual(recorder.last?.promptOwedSince, owed, "the observer sees the same identifier as a read")
+    }
+
+    private final class Recorder: SnapshotObserver, @unchecked Sendable {
+        private let lock = NSLock()
+        private var latest: ConsentSnapshot?
+        var last: ConsentSnapshot? { lock.withLock { latest } }
+        func consentDidChange(_ snapshot: ConsentSnapshot) { lock.withLock { latest = snapshot } }
+    }
+
     private func boot() async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
