@@ -137,3 +137,31 @@ test('mobile setup examples come from checked source and survive Markdown conver
 		)
 	);
 });
+
+test('mobile comparison claims say what ships today, not what is coming', () => {
+	const pages = [
+		'docs/shared/comparisons/mobile-c15t.mdx',
+		'docs/comparisons/didomi.mdx',
+		'docs/comparisons/onetrust.mdx',
+		'docs/comparisons/usercentrics.mdx',
+	];
+	for (const page of pages) {
+		const source = readFileSync(resolve(root, page), 'utf8');
+		// A forecast goes stale when the work lands; the release checklist updates state.
+		expect(source, page).not.toMatch(
+			/in development|coming soon|planned|on the roadmap/iu
+		);
+		// Every missing feature names the pull request that adds it.
+		const missing = source
+			.split('\n')
+			.filter(
+				(line) => line.startsWith('|') && /not in the prerelease/iu.test(line)
+			);
+		const cited = missing.filter((line) =>
+			/\[#\d+\]\(https:\/\/github\.com\/inthhq\/c15t-private\/pull\/\d+\)/u.test(
+				line
+			)
+		);
+		expect(cited, page).toEqual(missing);
+	}
+});
