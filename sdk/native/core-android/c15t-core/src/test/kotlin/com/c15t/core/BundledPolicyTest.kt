@@ -57,6 +57,24 @@ class BundledPolicyTest {
 		for (change in variants) assertNull(BundledPolicy.resolve(resource(change), endpoint, KernelOverrides(), now))
 		assertNull(BundledPolicy.resolve("corrupt", endpoint, KernelOverrides(), now))
 	}
+	@Test fun `reset publishes the cleared baseline before the bundled manifest`() {
+		val core = testKernel(NativeConfig(endpoint, bundledPolicy = resource(), consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), FixedClock(now), RecordingTransport()).also { it.bootstrap() }
+		assertFalse(core.snapshot().policyPending)
+		core.save(CommitIntent.All)
+		val before = core.snapshot().revision
+		val published = mutableListOf<ConsentSnapshot>()
+		val observer: (ConsentSnapshot) -> Unit = { published += it }
+		val subscription = core.onChange(observer)
+		published.clear()
+		core.reset()
+		subscription.close()
+		val baseline = published.first()
+		assertEquals(before + 1, baseline.revision)
+		assertTrue(baseline.policyPending)
+		assertNull(baseline.explicitChoice)
+		assertFalse(published.last().policyPending, "the bundled manifest applies after the baseline")
+		assertEquals(published.map { it.revision }.distinct(), published.map { it.revision })
+	}
 	@Test fun `manifest expiring in use keeps prompting and emits policyStale once`() {
 		val clock = FixedClock(now)
 		val raw = resource { it["expiresAt"] = JsonPrimitive(now + 100) }
