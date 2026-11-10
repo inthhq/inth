@@ -452,16 +452,9 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
     /// It changes every time a prompt becomes owed again, including the same requirement owed
     /// again after an answer or a reset, so a reader that missed the snapshots in between still
     /// knows it is a new prompt. The core sets it whenever it installs a state, which sees every
-    /// state in order. It is not kernel state: ``CodingKeys`` leaves it out of the wire form and
+    /// state in order. It is not kernel state: ``encode(to:)`` leaves it out of the wire form and
     /// the stored envelope, and the React Native bridge adds it to its payload.
     public internal(set) var promptOwedSince: Int? = nil
-
-    /// Every stored property except ``promptOwedSince``.
-    enum CodingKeys: String, CodingKey {
-        case revision, policyPending, ready, model, activeUI, promptRequirement, effectivePermissions
-        case explicitChoice, consentCategories, restrictions, resolution, policySnapshotToken, subject
-        case location, overrides, privacySignals, translations, nextDeadline, evaluatedAt, error, iab
-    }
 
     /// When the prompt `next` owes became owed, given the state installed before it.
     ///
