@@ -43,20 +43,26 @@ export { ConsentPreferences } from './consent-preferences';
 export type { ConsentPreferencesProps } from './consent-preferences';
 export {
 	CONSENT_COLOR_SCHEMES,
+	consentColorsFor,
 	createConsentTheme,
-	darkTheme,
-	lightTheme,
+	defaultConsentTheme,
 	resolveConsentColorScheme,
+	resolveConsentTypeRoles,
 } from './theme/create-consent-theme';
 export type {
 	ConsentColorScheme,
 	ConsentTheme,
+	ConsentNativeSlot,
+	ConsentNativeSlotStyle,
+	ConsentNativeThemeColors,
+	ConsentThemeColorOptions,
 	ConsentThemeColors,
 	ConsentThemeMotion,
 	ConsentThemeOptions,
 	ConsentThemeRadius,
 	ConsentThemeSpacing,
 	ConsentThemeTypography,
+	ConsentTypeRoles,
 	ConsentTypeStyle,
 } from './theme/create-consent-theme';
 export {

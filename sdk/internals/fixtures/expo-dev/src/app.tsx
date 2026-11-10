@@ -10,6 +10,7 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentPreferences,
+	createConsentTheme,
 	useTrackingRequest,
 	useConsentStatus,
 	useSnapshot,
@@ -22,9 +23,16 @@ import type { ReactNode } from 'react';
 import { Text as NativeText, View } from 'react-native';
 
 import { useConsentSource } from './c15t/consent-source';
+import consentTheme from './c15t/consent-theme.json';
 import { Button, Card, Hint, Screen } from './components/ui';
 import { HomeScreen } from './screens/home';
 import { PreferencesScreen } from './screens/preferences';
+
+// #region docs:expo-theme-components title="app.tsx"
+// `consentTheme` is src/c15t/consent-theme.json, the object app.config.ts
+// passes to the plugin. Here it styles the React Native components.
+const theme = createConsentTheme(consentTheme);
+// #endregion docs:expo-theme-components
 
 const TABS = ['home', 'preferences'] as const;
 type Tab = (typeof TABS)[number];
@@ -186,6 +194,7 @@ const LegacyApp = () => {
 				onCustomize={() => {
 					setPreferencesOpen(true);
 				}}
+				theme={theme}
 			/>
 			<ConsentDialog
 				onOpenPreferences={() => {
@@ -196,12 +205,16 @@ const LegacyApp = () => {
 					setDialogOpen(false);
 				}}
 				open={dialogOpen}
+				theme={theme}
 			/>
 			{/*
 			 * One centre doing both jobs: the subject opens it from either tab, and it is
 			 * the same card the tracking journey raises mid-request.
 			 */}
-			<ConsentPreferences {...tracking.preferences} />
+			<ConsentPreferences
+				{...tracking.preferences}
+				theme={theme}
+			/>
 		</View>
 	);
 };

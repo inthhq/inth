@@ -31,7 +31,7 @@ import { ConsentBanner } from '../consent-banner';
 import { ConsentDialog } from '../consent-dialog';
 import { ConsentPreferences } from '../consent-preferences';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
-import { lightTheme } from '../theme/create-consent-theme';
+import { defaultConsentTheme } from '../theme/create-consent-theme';
 import {
 	nodeStyle,
 	requireRole,
@@ -181,7 +181,7 @@ describe('consent surface safe area', () => {
 		// has to stay exactly the gutter, so neither a collapsed edge nor an
 		// inflated reserve passes.
 		expect(cardClearance(layerStyle(tree.container())) - PORTRAIT.bottom).toBe(
-			lightTheme.spacing.m
+			defaultConsentTheme.spacing.md
 		);
 
 		tree.unmount();
@@ -193,7 +193,7 @@ describe('consent surface safe area', () => {
 		// The gutter is a constant and not an inset multiplier, so a flat screen
 		// gets the same 16 rather than collapsing onto the edge of the display.
 		expect(cardClearance(layerStyle(tree.container())) - NO_BANDS.bottom).toBe(
-			lightTheme.spacing.m
+			defaultConsentTheme.spacing.md
 		);
 
 		tree.unmount();
@@ -264,7 +264,7 @@ describe('consent surface safe area', () => {
 		// gutter above it, so the save row is neither inside the indicator nor
 		// floated a control height clear of it.
 		expect(length(layer, 'paddingBottom') - PORTRAIT.bottom).toBe(
-			lightTheme.spacing.m
+			defaultConsentTheme.spacing.md
 		);
 		expect(cardClearance(layer)).toBeGreaterThan(PORTRAIT.bottom);
 		requireRole(tree.container(), 'button', 'Speichern');
@@ -332,7 +332,7 @@ describe('consent surface safe area', () => {
 		// A centred card is a web surface, and the web overlay pads 16 all round
 		// *inside* the safe area: the band is added to the gutter, not traded for it.
 		expect(layerStyle(tree.container()).paddingTop).toBe(
-			28 + lightTheme.spacing.m
+			28 + defaultConsentTheme.spacing.md
 		);
 
 		tree.unmount();

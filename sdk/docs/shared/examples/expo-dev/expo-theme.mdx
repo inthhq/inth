@@ -1,14 +1,7 @@
 {/* Generated from internals/fixtures/expo-dev/app.config.ts (docs:expo-theme) by scripts/sync-example-docs.ts. Edit the source file. */}
 
 ```ts title="app.config.ts"
-const theme: C15tPluginProps['theme'] = {
-	colors: {
-		decision: '#172554',
-		primary: '#2563EB',
-		textOnDecision: '#FFFFFF',
-	},
-	dark: { decision: '#DBEAFE', primary: '#60A5FA', textOnDecision: '#172554' },
-	radius: { md: 16 },
-	typography: { headlineFont: 'serif' },
-};
+import consentTheme from './src/c15t/consent-theme.json';
+
+const theme: C15tPluginProps['theme'] = consentTheme;
 ```

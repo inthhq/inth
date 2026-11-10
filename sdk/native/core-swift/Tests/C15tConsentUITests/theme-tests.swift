@@ -15,33 +15,68 @@ final class ThemeTests: XCTestCase {
 
     func testInfoPlistValuesOverrideOnlyWhatTheyName() {
         let theme = ConsentTheme.c15t.applying(infoDictionary: [
-            ConsentTheme.InfoPlistKey.accent: "#00CCBC,#7FE6DC",
+            ConsentTheme.InfoPlistKey.primary: "#00CCBC,#7FE6DC",
             ConsentTheme.InfoPlistKey.brandName: "Deliveroo",
             ConsentTheme.InfoPlistKey.brandMark: "ConsentMark",
             ConsentTheme.InfoPlistKey.headline: "Mmmm, cookies.",
             ConsentTheme.InfoPlistKey.headlineFont: "rounded",
-            ConsentTheme.InfoPlistKey.cornerRadius: NSNumber(value: 8),
+            ConsentTheme.InfoPlistKey.radiusMd: NSNumber(value: 8),
             ConsentTheme.InfoPlistKey.branding: false,
         ])
-        XCTAssertEqual(theme.colors.accent, ConsentThemeColor(light: 0x00CCBC, dark: 0x7FE6DC))
+        XCTAssertEqual(theme.colors.primary, ConsentThemeColor(light: 0x00CCBC, dark: 0x7FE6DC))
         XCTAssertEqual(theme.colors.decision, ConsentTheme.Colors.c15t.decision)
         XCTAssertEqual(theme.brand, ConsentTheme.Brand(name: "Deliveroo", markImageName: "ConsentMark"))
         XCTAssertEqual(theme.copy.headline, "Mmmm, cookies.")
         XCTAssertEqual(theme.copy.introduction, ConsentTheme.Copy.c15t.introduction)
-        XCTAssertEqual(theme.headlineFont, .rounded)
-        XCTAssertEqual(theme.cornerRadius, 8)
+        XCTAssertEqual(theme.typography.headlineFont, .rounded)
+        XCTAssertEqual(theme.radius.md, 8)
         XCTAssertFalse(theme.showsBranding)
     }
 
     func testUnreadableValuesKeepTheExistingTheme() {
-        let base = ConsentTheme(cornerRadius: 20, headlineFont: .sansSerif)
+        let base = ConsentTheme(radius: .init(md: 20), typography: .init(headlineFont: .sansSerif))
         let theme = base.applying(infoDictionary: [
-            ConsentTheme.InfoPlistKey.accent: "not a colour",
-            ConsentTheme.InfoPlistKey.cornerRadius: "-4",
+            ConsentTheme.InfoPlistKey.primary: "not a colour",
+            ConsentTheme.InfoPlistKey.radiusMd: "-4",
             ConsentTheme.InfoPlistKey.headline: "   ",
             ConsentTheme.InfoPlistKey.branding: "maybe",
         ])
         XCTAssertEqual(theme, base)
+    }
+
+    func testInfoPlistReadsSpacingTypeAndSlots() {
+        let theme = ConsentTheme.c15t.applying(infoDictionary: [
+            ConsentTheme.InfoPlistKey.radiusSm: 2,
+            ConsentTheme.InfoPlistKey.radiusLg: "28",
+            ConsentTheme.InfoPlistKey.spaceMd: 20,
+            ConsentTheme.InfoPlistKey.spaceLg: "32",
+            ConsentTheme.InfoPlistKey.fontFamily: "Inter-Regular",
+            ConsentTheme.InfoPlistKey.fontSizeSm: 14,
+            ConsentTheme.InfoPlistKey.fontSizeBase: "16",
+            ConsentTheme.InfoPlistKey.fontSizeLg: 0,
+            ConsentTheme.InfoPlistKey.slot(.buttonPrimary, "borderRadius"): 999,
+            ConsentTheme.InfoPlistKey.slot(.buttonSecondary, "color"): "#112233",
+            ConsentTheme.InfoPlistKey.slot(.consentBannerTitle, "fontSize"): "40",
+        ])
+        XCTAssertEqual(theme.radius, ConsentTheme.Radius(sm: 2, md: 14, lg: 28))
+        XCTAssertEqual(theme.spacing, ConsentTheme.Spacing(md: 20, lg: 32))
+        XCTAssertEqual(theme.typography.fontFamily, "Inter-Regular")
+        // A size of 0 is unreadable and keeps the platform size.
+        XCTAssertEqual(theme.typography.fontSize, .init(sm: 14, base: 16, lg: nil))
+        XCTAssertEqual(theme.slots, [
+            .buttonPrimary: .init(borderRadius: 999),
+            .buttonSecondary: .init(color: ConsentThemeColor(light: 0x112233)),
+            .consentBannerTitle: .init(fontSize: 40),
+        ])
+        XCTAssertEqual(ConsentTheme.InfoPlistKey.slot(.buttonPrimary, "backgroundColor"),
+            "com.c15t.consent.buttonPrimary.backgroundColor")
+    }
+
+    func testRadiusStepsFollowMdUntilSet() {
+        XCTAssertEqual(ConsentTheme.Radius(md: 10).resolvedSm, 8)
+        XCTAssertEqual(ConsentTheme.Radius(md: 10).resolvedLg, 16)
+        XCTAssertEqual(ConsentTheme.Radius(sm: 1, md: 10, lg: 3).resolvedLg, 3)
+        XCTAssertEqual(ConsentTheme.Radius(sm: 1, md: 10, lg: 3).resolvedSm, 1)
     }
 
     func testHeadlineFontNamesResolve() {
@@ -53,30 +88,30 @@ final class ThemeTests: XCTestCase {
 
     func testStringCornerRadiusAndBrandingSpellings() {
         let theme = ConsentTheme.c15t.applying(infoDictionary: [
-            ConsentTheme.InfoPlistKey.cornerRadius: "6",
+            ConsentTheme.InfoPlistKey.radiusMd: "6",
             ConsentTheme.InfoPlistKey.branding: "NO",
         ])
-        XCTAssertEqual(theme.cornerRadius, 6)
+        XCTAssertEqual(theme.radius.md, 6)
         XCTAssertFalse(theme.showsBranding)
     }
 
     @MainActor func testResolvedAppliesBundleOverCurrent() {
         let previous = ConsentTheme.current
         defer { ConsentTheme.current = previous }
-        ConsentTheme.current = ConsentTheme(cornerRadius: 4)
-        XCTAssertEqual(ConsentTheme.resolved(bundle: Bundle(for: ThemeTests.self)).cornerRadius, 4)
+        ConsentTheme.current = ConsentTheme(radius: .init(md: 4))
+        XCTAssertEqual(ConsentTheme.resolved(bundle: Bundle(for: ThemeTests.self)).radius.md, 4)
     }
 
     func testSquareAndSmallThemesKeepNonnegativeCalloutRadii() {
-        XCTAssertEqual(ConsentTheme(cornerRadius: 0).calloutRadius, 0)
-        XCTAssertEqual(ConsentTheme(cornerRadius: 1).calloutRadius, 0)
-        XCTAssertEqual(ConsentTheme(cornerRadius: 14).calloutRadius, 12)
+        XCTAssertEqual(ConsentTheme(radius: .init(md: 0)).radius.resolvedSm, 0)
+        XCTAssertEqual(ConsentTheme(radius: .init(md: 1)).radius.resolvedSm, 0)
+        XCTAssertEqual(ConsentTheme(radius: .init(md: 14)).radius.resolvedSm, 12)
     }
 
     func testMalformedOverridesPreserveHostSettings() {
-        let base = ConsentTheme(cornerRadius: 10, showsBranding: false)
+        let base = ConsentTheme(radius: .init(md: 10), showsBranding: false)
         for value in ["inf", "NaN"] {
-            XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.cornerRadius: value]), base)
+            XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.radiusMd: value]), base)
         }
         XCTAssertEqual(base.applying(infoDictionary: [ConsentTheme.InfoPlistKey.branding: "maybe"]), base)
     }
@@ -151,17 +186,17 @@ final class ContrastTests: XCTestCase {
         let colors = ConsentTheme.Colors.c15t
         for dark in [false, true] {
             func value(_ color: ConsentThemeColor) -> UInt32 { dark ? color.dark : color.light }
-            let tagFill = composite(value(colors.accent), alpha: 0.14, over: value(colors.surface))
+            let tagFill = composite(value(colors.primary), alpha: 0.14, over: value(colors.surface))
             let pairs: [(String, UInt32, UInt32, Double)] = [
                 ("status tag text on its tint", value(colors.statusTagText), tagFill, 4.5),
-                ("off tag text on muted surface", value(colors.textSecondary), value(colors.surfaceMuted), 4.5),
+                ("off tag text on muted surface", value(colors.textMuted), value(colors.surfaceMuted), 4.5),
                 ("partner count on muted surface", value(colors.text), value(colors.surfaceMuted), 4.5),
-                ("section label on muted surface", value(colors.textSecondary), value(colors.surfaceMuted), 4.5),
-                ("links on canvas", value(colors.accent), value(colors.canvas), 4.5),
-                ("links on surface", value(colors.accent), value(colors.surface), 4.5),
-                ("decision label", value(colors.onDecision), value(colors.decision), 5),
+                ("section label on muted surface", value(colors.textMuted), value(colors.surfaceMuted), 4.5),
+                ("links on canvas", value(colors.primary), value(colors.canvas), 4.5),
+                ("links on surface", value(colors.primary), value(colors.surface), 4.5),
+                ("decision label", value(colors.textOnDecision), value(colors.decision), 5),
                 ("customize label on canvas", value(colors.text), value(colors.canvas), 5),
-                ("save label", value(colors.onAccent), value(colors.accent), 4.5),
+                ("save label", value(colors.textOnPrimary), value(colors.primary), 4.5),
             ]
             for (name, foreground, background, minimum) in pairs {
                 let ratio = contrast(foreground, background)
@@ -176,20 +211,20 @@ final class ContrastTests: XCTestCase {
 final class DecisionContrastGuardTests: XCTestCase {
     // TCF-CHECK: P11
     func testLowContrastHostDecisionColoursFallBackToStock() {
-        var host = ConsentTheme(cornerRadius: 6)
-        host.colors.accent = ConsentThemeColor(light: 0x00796B)
+        var host = ConsentTheme(radius: .init(md: 6))
+        host.colors.primary = ConsentThemeColor(light: 0x00796B)
         // 2.2:1 in light, fine in dark: one weak appearance is enough to fall back.
         host.colors.decision = ConsentThemeColor(light: 0x8A8A8A, dark: 0x000000)
-        host.colors.onDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0xFFFFFF)
+        host.colors.textOnDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0xFFFFFF)
         XCTAssertLessThan(host.decisionContrast, 5)
         var reports: [String] = []
         let guarded = host.withReadableDecisions { reports.append($0) }
         XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.colors.onDecision, ConsentTheme.Colors.c15t.onDecision)
+        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.onDecision)
         XCTAssertGreaterThanOrEqual(guarded.decisionContrast, 5)
         // Only the decision colours change.
-        XCTAssertEqual(guarded.colors.accent, host.colors.accent)
-        XCTAssertEqual(guarded.cornerRadius, 6)
+        XCTAssertEqual(guarded.colors.primary, host.colors.primary)
+        XCTAssertEqual(guarded.radius.md, 6)
         XCTAssertEqual(reports.count, 1)
         XCTAssertTrue(reports[0].contains("5:1"), reports[0])
     }
@@ -198,12 +233,25 @@ final class DecisionContrastGuardTests: XCTestCase {
     func testInfoPlistDecisionOverridesAreGuardedToo() {
         let theme = ConsentTheme.c15t.applying(infoDictionary: [
             ConsentTheme.InfoPlistKey.decision: "#777777",
-            ConsentTheme.InfoPlistKey.onDecision: "#888888",
+            ConsentTheme.InfoPlistKey.textOnDecision: "#888888",
         ])
         XCTAssertEqual(theme.colors.decision, ConsentThemeColor(light: 0x777777))
         let guarded = theme.withReadableDecisions { _ in }
         XCTAssertEqual(guarded.colors.decision, ConsentTheme.Colors.c15t.decision)
-        XCTAssertEqual(guarded.colors.onDecision, ConsentTheme.Colors.c15t.onDecision)
+        XCTAssertEqual(guarded.colors.textOnDecision, ConsentTheme.Colors.c15t.onDecision)
+    }
+
+    // TCF-CHECK: P11
+    func testPrimaryButtonSlotColoursAreGuardedToo() {
+        var host = ConsentTheme.c15t
+        host.slots[.buttonPrimary] = .init(color: ConsentThemeColor(light: 0xFFFFFF), backgroundColor: ConsentThemeColor(light: 0xBBBBBB),
+            borderRadius: 4)
+        XCTAssertLessThan(host.decisionContrast, 5)
+        let guarded = host.withReadableDecisions { _ in }
+        XCTAssertEqual(guarded.decisionFill, ConsentTheme.Colors.c15t.decision)
+        XCTAssertEqual(guarded.decisionLabel, ConsentTheme.Colors.c15t.textOnDecision)
+        // The slot keeps what is not a colour.
+        XCTAssertEqual(guarded.slots[.buttonPrimary]?.borderRadius, 4)
     }
 
     // TCF-CHECK: P11
@@ -211,7 +259,7 @@ final class DecisionContrastGuardTests: XCTestCase {
         var host = ConsentTheme.c15t
         // The demo's brand theme: teal decisions at 5.3:1 light and 7:1 dark.
         host.colors.decision = ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0)
-        host.colors.onDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)
+        host.colors.textOnDecision = ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)
         var reports = 0
         XCTAssertEqual(host.withReadableDecisions { _ in reports += 1 }, host)
         XCTAssertEqual(ConsentTheme.c15t.withReadableDecisions { _ in reports += 1 }, .c15t)
@@ -259,7 +307,23 @@ final class IdentityTests: XCTestCase {
     }
 
     func testStockThemeUsesTheSystemTypeface() {
-        XCTAssertEqual(ConsentTheme.c15t.headlineFont, .sansSerif)
-        XCTAssertEqual(ConsentTheme().headlineFont, .sansSerif)
+        XCTAssertEqual(ConsentTheme.c15t.typography.headlineFont, .sansSerif)
+        XCTAssertEqual(ConsentTheme().typography.headlineFont, .sansSerif)
     }
 }
+
+#if canImport(SwiftUI) && canImport(UIKit)
+import SwiftUI
+
+final class TypeScaleTests: XCTestCase {
+    func testRolesKeepTheirRatioToTheGroupToken() {
+        let scale = ConsentTheme.Typography.FontSize(sm: 14, base: 16, lg: 30)
+        XCTAssertEqual(Font.TextStyle.subheadline.size(in: scale), 14)
+        XCTAssertEqual(Font.TextStyle.footnote.size(in: scale) ?? 0, 14 * 13 / 15, accuracy: 1e-9)
+        XCTAssertEqual(Font.TextStyle.body.size(in: scale), 16)
+        XCTAssertEqual(Font.TextStyle.headline.size(in: scale), 16)
+        XCTAssertEqual(Font.TextStyle.largeTitle.size(in: scale), 30)
+        XCTAssertNil(Font.TextStyle.body.size(in: .init()))
+    }
+}
+#endif

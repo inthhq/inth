@@ -103,8 +103,8 @@ class ConsentJourneyTest {
         val metadata = testContext.packageManager.getApplicationInfo(testContext.packageName,
             android.content.pm.PackageManager.GET_META_DATA).metaData
         val theme = com.c15t.consentui.ConsentTheme.c15t.applying(metadata, testContext)
-        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0x009688), theme.colors.accent)
-        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0xFFFFFF), theme.colors.onAccent)
+        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0x009688), theme.colors.primary)
+        Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0xFFFFFF), theme.colors.textOnPrimary)
         Assert.assertEquals(com.c15t.consentui.ConsentThemeColor(0x009688, 0x4FD1C0), theme.colors.decision)
     }
 
@@ -386,10 +386,10 @@ class ConsentJourneyTest {
                 Assert.assertTrue("Brand text contrast $ratio must be at least 4.5:1", ratio >= 4.5f)
             }
         }
-        assertContrast(colors.onDecision, colors.decision)
-        assertContrast(colors.onAccent, colors.accent)
-        assertContrast(colors.accent, colors.canvas)
-        assertContrast(colors.accent, colors.surface)
+        assertContrast(colors.textOnDecision, colors.decision)
+        assertContrast(colors.textOnPrimary, colors.primary)
+        assertContrast(colors.primary, colors.canvas)
+        assertContrast(colors.primary, colors.surface)
         launch("fresh-online-iab", theme = "brand")
         val reject = waitFor("c15t.first-layer.reject-all"); val accept = waitFor("c15t.first-layer.accept-all")
         waitFor("c15t.first-layer.brand").assertTextEquals("PANTRY")

@@ -20,9 +20,10 @@ import type {
 	ConsentResolvedParts,
 } from './consent-theme-parts';
 import {
-	createConsentTheme,
-	darkTheme,
+	consentColorsFor,
+	defaultConsentTheme,
 	resolveConsentColorScheme,
+	resolveConsentTypeRoles,
 } from './create-consent-theme';
 import type {
 	ConsentColorScheme,
@@ -71,7 +72,10 @@ export interface ConsentStyles {
 	readonly sheetLayer: ViewStyle;
 	/** Scheme the palette came from. */
 	readonly scheme: ConsentColorScheme;
-	/** Theme in force after the platform scheme and any host override. */
+	/**
+	 * Theme in force after any host override, with `colors` set to the palette of
+	 * the platform scheme.
+	 */
 	readonly theme: ConsentTheme;
 	/** Every restylable part, already merged with the host override. */
 	readonly parts: ConsentResolvedParts;
@@ -456,6 +460,49 @@ const textStyle = function textStyle(
 	};
 };
 
+/** Names the native presenter reads as a system face rather than a font. */
+const HEADLINE_KEYWORDS = new Set([
+	'rounded',
+	'sans',
+	'sans-serif',
+	'sansserif',
+	'serif',
+	'system',
+]);
+
+/**
+ * Put the theme's faces on every part that draws text: `fontFamily` on all of
+ * them, and a named `headlineFont` on the heading.
+ *
+ * @param parts - Resolved parts, before host overrides.
+ * @param typography - Type tokens.
+ * @returns The same parts, with faces set.
+ */
+const withFonts = function withFonts(
+	parts: ConsentResolvedParts,
+	typography: ConsentTheme['typography']
+): ConsentResolvedParts {
+	const { fontFamily, headlineFont } = typography;
+	const heading =
+		headlineFont === undefined ||
+		HEADLINE_KEYWORDS.has(headlineFont.trim().toLowerCase())
+			? undefined
+			: headlineFont;
+	if (fontFamily === undefined && heading === undefined) {
+		return parts;
+	}
+	for (const key of Object.keys(parts) as (keyof ConsentResolvedParts)[]) {
+		if (parts[key].fontSize === undefined) {
+			continue;
+		}
+		const face = key === 'title' ? (heading ?? fontFamily) : fontFamily;
+		if (face !== undefined) {
+			parts[key] = { ...parts[key], fontFamily: face };
+		}
+	}
+	return parts;
+};
+
 /** The four surfaces a host can ask for, as the `presentation` option takes them. */
 type SurfacePresentation = 'banner' | 'dialog' | 'drawer' | 'sheet';
 
@@ -709,15 +756,14 @@ export const useConsentStyles = function useConsentStyles(
 	const safeArea = useConsentSafeArea();
 	const { presentation = 'dialog', styles, theme } = options;
 
-	// A host theme is used exactly as given, including its colors: overriding
-	// only the palette would make `createConsentTheme` surprising. Built in a
-	// memo because a fresh object per render would invalidate every style memo
-	// downstream of it.
-	const builtTheme = useMemo(
-		() => (scheme === 'dark' ? darkTheme : createConsentTheme()),
-		[scheme]
+	// A theme carries both palettes, so a host theme follows the platform scheme
+	// the same way the stock one does. Built in a memo because a fresh object per
+	// render would invalidate every style memo downstream of it.
+	const baseTheme = theme ?? defaultConsentTheme;
+	const resolvedTheme = useMemo<ConsentTheme>(
+		() => ({ ...baseTheme, colors: consentColorsFor(baseTheme, scheme) }),
+		[baseTheme, scheme]
 	);
-	const resolvedTheme = theme ?? builtTheme;
 
 	const scaled = Math.min(Math.max(fontScale, 1), MAX_FONT_SCALE);
 	// The bands come off before the ratio is applied. A body sized against the
@@ -732,7 +778,8 @@ export const useConsentStyles = function useConsentStyles(
 	);
 
 	return useMemo(() => {
-		const { colors, radius, spacing, typography } = resolvedTheme;
+		const { colors, radius, spacing } = resolvedTheme;
+		const typography = resolveConsentTypeRoles(resolvedTheme.typography);
 		const layout = SURFACE_LAYOUTS[presentation];
 		// The banner heading is larger than its copy, the sheet heading is smaller
 		// than its, and the disclosure brings a third pairing, so the roles -- and
@@ -747,8 +794,8 @@ export const useConsentStyles = function useConsentStyles(
 				cardBorderWidth: 0,
 				cardFlex: undefined,
 				cardMaxWidth: undefined,
-				cardPadding: spacing.m,
-				cardRadius: radius.surface,
+				cardPadding: spacing.md,
+				cardRadius: radius.lg,
 				cardShadow: undefined,
 				contentPaddingTop: 0,
 				// The banner's band holds the heading on its own, because its copy
@@ -757,9 +804,9 @@ export const useConsentStyles = function useConsentStyles(
 				// `margin-top: 0.5rem` -- is spent on this band's bottom edge instead,
 				// and a gap has nothing left to space.
 				headerGap: 0,
-				headerPaddingBottom: spacing.s,
-				headerPaddingHorizontal: spacing.m,
-				headerPaddingTop: spacing.m,
+				headerPaddingBottom: spacing.sm,
+				headerPaddingHorizontal: spacing.md,
+				headerPaddingTop: spacing.md,
 				headerRuleWidth: 0,
 				listGap: CATEGORY_STACK_GAP,
 				titleTracking: TRACKING_EM.bannerTitle,
@@ -771,8 +818,8 @@ export const useConsentStyles = function useConsentStyles(
 				cardBorderWidth: HAIRLINE,
 				cardFlex: undefined,
 				cardMaxWidth: DIALOG_MAX_WIDTH,
-				cardPadding: spacing.l,
-				cardRadius: radius.surface,
+				cardPadding: spacing.lg,
+				cardRadius: radius.lg,
 				cardShadow: SHADOW_SM,
 				contentPaddingTop: 0,
 				// The web spends its 8 twice as halved: `.header` opens at
@@ -782,9 +829,9 @@ export const useConsentStyles = function useConsentStyles(
 				// leaves under its title, which is also the 8 the banner reaches in one
 				// rule.
 				headerGap: spacing.xs * 2,
-				headerPaddingBottom: spacing.l,
-				headerPaddingHorizontal: spacing.l,
-				headerPaddingTop: spacing.l,
+				headerPaddingBottom: spacing.lg,
+				headerPaddingHorizontal: spacing.lg,
+				headerPaddingTop: spacing.lg,
 				headerRuleWidth: 0,
 				listGap: CATEGORY_STACK_GAP,
 				titleTracking: TRACKING_EM.dialogTitle,
@@ -821,17 +868,17 @@ export const useConsentStyles = function useConsentStyles(
 				cardBorderWidth: 0,
 				cardFlex: undefined,
 				cardMaxWidth: undefined,
-				cardPadding: spacing.m,
-				cardRadius: radius.surface,
+				cardPadding: spacing.md,
+				cardRadius: radius.lg,
 				cardShadow: undefined,
 				contentPaddingTop: 0,
 				// One card anchored two ways, so the step is the dialog's 8 for the
 				// dialog's reason; only the inset differs, and that is the sheet's own
 				// `--consent-dialog-card-padding-mobile`.
 				headerGap: spacing.xs * 2,
-				headerPaddingBottom: spacing.m,
-				headerPaddingHorizontal: spacing.m,
-				headerPaddingTop: spacing.m,
+				headerPaddingBottom: spacing.md,
+				headerPaddingHorizontal: spacing.md,
+				headerPaddingTop: spacing.md,
 				headerRuleWidth: 0,
 				listGap: CATEGORY_STACK_GAP,
 				titleTracking: TRACKING_EM.dialogTitle,
@@ -863,12 +910,12 @@ export const useConsentStyles = function useConsentStyles(
 					typography.label.lineHeight * scaled
 				)
 			) +
-			spacing.s * 2;
+			spacing.sm * 2;
 
 		// The gutter a floating banner keeps off the screen edge, and the gap a
 		// bottom sheet keeps below itself. The bands are added outside both, so a
 		// measurement moves the surface and never its internal rhythm.
-		const gutter = spacing.m;
+		const gutter = spacing.md;
 
 		// The card sits the gutter clear of the band, which is what the web does at
 		// the viewport edge: its banner root pads 16 and the card measures 16 from
@@ -920,7 +967,7 @@ export const useConsentStyles = function useConsentStyles(
 			banner: {
 				backgroundColor: colors.surface,
 				borderColor: colors.border,
-				borderRadius: radius.surface,
+				borderRadius: radius.lg,
 				borderWidth: HAIRLINE,
 				boxShadow: BANNER_SHADOW,
 				flexDirection: 'column',
@@ -936,7 +983,7 @@ export const useConsentStyles = function useConsentStyles(
 				alignItems: 'center',
 				backgroundColor: colors.primary,
 				borderColor: colors.primaryBorder,
-				borderRadius: radius.surface,
+				borderRadius: radius.lg,
 				// React Native cannot draw an inset shadow. At this size a 1px
 				// translucent white top border reads the same as the web's
 				// `inset 0 1px 0 rgb(255 255 255 / 0.16)`, so that is what stands in.
@@ -968,13 +1015,13 @@ export const useConsentStyles = function useConsentStyles(
 			// `.brandingTag .brandingCopy` opens by `.01em`, +0.11 at 11pt, and the
 			// wordmark closes by `.03em`, -0.3 at 10.
 			brandingLabel: {
-				color: colors.onPrimary,
+				color: colors.textOnPrimary,
 				fontSize: 11,
 				letterSpacing: Number((TRACKING_EM.brandingLabel * 11).toFixed(4)),
 				lineHeight: 11,
 			},
 			brandingWordmark: {
-				color: colors.onPrimary,
+				color: colors.textOnPrimary,
 				fontSize: 10,
 				letterSpacing: Number((TRACKING_EM.brandingWordmark * 10).toFixed(4)),
 				lineHeight: 10,
@@ -984,9 +1031,9 @@ export const useConsentStyles = function useConsentStyles(
 			// The revealed description. It starts where the label starts, a box and a
 			// step past the card's edge, so the two lines of text share a margin.
 			categoryContent: {
-				paddingBottom: spacing.s,
+				paddingBottom: spacing.sm,
 				paddingLeft: CONSENT_DISCLOSURE_GEOMETRY.box + 4,
-				paddingRight: spacing.s,
+				paddingRight: spacing.sm,
 			},
 			// The accordion's own small copy: same 14pt as the label above it, on a
 			// 21 line, in `.content`'s colour, and tracked at nothing because both
@@ -1014,7 +1061,7 @@ export const useConsentStyles = function useConsentStyles(
 			categoryRow: {
 				backgroundColor: colors.surface,
 				borderColor: colors.border,
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				borderWidth: HAIRLINE,
 				flexDirection: 'column',
 			},
@@ -1040,7 +1087,7 @@ export const useConsentStyles = function useConsentStyles(
 				flexDirection: 'row',
 				gap: spacing.xs,
 				minHeight: categoryTriggerHeight,
-				padding: spacing.s,
+				padding: spacing.sm,
 			},
 			// The box the close control draws: `.closeButton` is `padding: .375rem`
 			// on `--c15t-radius-md` over the muted tone, with no border and no fill
@@ -1049,7 +1096,7 @@ export const useConsentStyles = function useConsentStyles(
 			// header stays the height the web header measures.
 			closeButton: {
 				alignItems: 'center',
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				height: 28,
 				justifyContent: 'center',
 				padding: 6,
@@ -1094,7 +1141,7 @@ export const useConsentStyles = function useConsentStyles(
 			handle: {
 				alignSelf: 'center',
 				backgroundColor: colors.switchTrack,
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				height: 4,
 				width: 36,
 			},
@@ -1171,7 +1218,7 @@ export const useConsentStyles = function useConsentStyles(
 				alignItems: 'center',
 				backgroundColor: colors.surface,
 				borderColor: colors.primary,
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				borderWidth: HAIRLINE + 1,
 				boxShadow: SHADOW_SM,
 				justifyContent: 'center',
@@ -1182,7 +1229,7 @@ export const useConsentStyles = function useConsentStyles(
 				...textStyle(typography.label, colors.primary),
 				textAlign: 'center',
 			},
-			row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.m },
+			row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
 			// One row of the disclosure. `.purposeItem`, `.stackItem`, and
 			// `.specialPurposesSection` are the same bordered card: a hairline in the
 			// border token on `--c15t-radius-md`, which is this theme's own `control`
@@ -1191,7 +1238,7 @@ export const useConsentStyles = function useConsentStyles(
 			rowCard: {
 				backgroundColor: colors.surface,
 				borderColor: colors.border,
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				borderWidth: HAIRLINE,
 				flexDirection: 'column',
 			},
@@ -1314,7 +1361,7 @@ export const useConsentStyles = function useConsentStyles(
 				alignItems: 'center',
 				backgroundColor: colors.surface,
 				borderColor: colors.border,
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				borderWidth: HAIRLINE,
 				boxShadow: SHADOW_SM,
 				justifyContent: 'center',
@@ -1358,7 +1405,7 @@ export const useConsentStyles = function useConsentStyles(
 			// purpose rows, which is what a stack is -- a shortcut over N decisions
 			// rather than a further decision of its own.
 			stackContent: {
-				backgroundColor: colors.surfaceRaised,
+				backgroundColor: colors.surfaceHover,
 				borderTopColor: colors.border,
 				borderTopWidth: HAIRLINE,
 				gap: IAB_ROWS.listGap,
@@ -1381,7 +1428,7 @@ export const useConsentStyles = function useConsentStyles(
 			// difference arrived at by a different mechanism.
 			tab: {
 				alignItems: 'center',
-				borderRadius: radius.control,
+				borderRadius: radius.md,
 				flexBasis: 0,
 				flexGrow: 1,
 				flexShrink: 1,
@@ -1416,8 +1463,8 @@ export const useConsentStyles = function useConsentStyles(
 			// punched in it rather than two buttons side by side.
 			tabList: {
 				alignItems: 'stretch',
-				backgroundColor: colors.surfaceRaised,
-				borderRadius: radius.surface,
+				backgroundColor: colors.surfaceHover,
+				borderRadius: radius.lg,
 				flexDirection: 'row',
 				gap: IAB_ROWS.tabListGap,
 				padding: IAB_ROWS.tabListPadding,
@@ -1428,7 +1475,7 @@ export const useConsentStyles = function useConsentStyles(
 			// starts flush with the row's header instead of adding a second 10 above the
 			// rule, and it keeps its own 10 sideways rather than a stack's 8.
 			vendorContent: {
-				backgroundColor: colors.surfaceRaised,
+				backgroundColor: colors.surfaceHover,
 				borderTopColor: colors.border,
 				borderTopWidth: HAIRLINE,
 				gap: 12,
@@ -1437,7 +1484,10 @@ export const useConsentStyles = function useConsentStyles(
 			},
 		};
 
-		const parts = { ...base } as ConsentResolvedParts;
+		const parts = withFonts(
+			{ ...base } as ConsentResolvedParts,
+			resolvedTheme.typography
+		);
 
 		for (const [key, override] of Object.entries(styles ?? {})) {
 			if (!isConsentThemePart(key)) {

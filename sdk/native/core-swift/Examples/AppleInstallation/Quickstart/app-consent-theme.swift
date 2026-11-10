@@ -10,10 +10,13 @@ enum AppConsentTheme {
             headline: "Your privacy choices",
             introduction: "Choose whether this app may measure usage and personalize marketing. You can change your choices in Privacy settings."
         )
-        theme.colors.accent = ConsentThemeColor(light: 0x2255CC, dark: 0xADC6FF)
-        theme.colors.onAccent = ConsentThemeColor(light: 0xFFFFFF, dark: 0x10234D)
-        theme.headlineFont = .sansSerif
-        theme.cornerRadius = 16
+        theme.colors.primary = ConsentThemeColor(light: 0x2255CC, dark: 0xADC6FF)
+        theme.colors.textOnPrimary = ConsentThemeColor(light: 0xFFFFFF, dark: 0x10234D)
+        theme.radius.md = 16
+        theme.spacing.lg = 28
+        theme.typography.headlineFont = .serif
+        theme.typography.fontSize.base = 18
+        theme.slots[.buttonSecondary] = .init(borderRadius: 26)
         theme.branding = .inth
         return theme
     }

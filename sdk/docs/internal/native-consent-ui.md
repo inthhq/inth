@@ -152,10 +152,15 @@ page margin. List rows rely on the platform's own cell insets with a 44pt
 minimum target, and on iOS 17 and later sections sit 24pt apart.
 
 `ConsentTheme` (Swift, `C15tConsentUI`) and `com.c15t.consentui.ConsentTheme`
-(Kotlin) are the one customization surface. Each holds nine semantic colours
-(`canvas`, `surface`, `surfaceMuted`, `text`, `textSecondary`, `accent`,
-`onAccent`, `decision`, `onDecision`), the corner radius, the headline typeface
-(`serif`, `sansSerif`, `rounded` on Apple, or a bundled font), a brand name and
+(Kotlin) are the one customization surface. Names with a web token follow
+`--c15t-*` in `@c15t/ui`. Each holds nine semantic colours (`canvas`,
+`surface`, `surfaceMuted`, `text`, `textMuted`, `primary`, `textOnPrimary`,
+`decision`, `textOnDecision`), radii (`sm`, `md`, `lg`), spacing (`xs` to `xl`),
+typography (`fontFamily`, `fontSize` `sm`/`base`/`lg`, and the headline
+typeface: `serif`, `sansSerif`, `rounded` on Apple, or a bundled font), four
+slots (`consentBannerTitle`, `consentBannerDescription`, `buttonPrimary`,
+`buttonSecondary`) with `color`, `backgroundColor`, `borderRadius` and
+`fontSize`, a brand name and
 mark, the headline and introduction copy, and the provider name and logo in the
 "Secured by" tag. The tag uses the bundled c15t logo by default. Decision labels, category copy and every partner disclosure stay native
 and are not themeable: the theme cannot make Accept louder than Reject, hide a
@@ -168,7 +173,7 @@ takes precedence over both and uses exactly the values passed by the host.
 ```swift
 // 1. Set once at launch; every presenter that does not pass a theme uses it.
 ConsentTheme.current = ConsentTheme(
-    colors: .c15t, cornerRadius: 10, headlineFont: .rounded,
+    colors: .c15t, radius: .init(md: 10), typography: .init(headlineFont: .rounded),
     brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
     copy: ConsentTheme.Copy(headline: "Before you shop.", introduction: "Pantry uses data to remember your basket, measure what works and show offers you might like."))
 
@@ -179,7 +184,7 @@ content.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: Pa
 ```kotlin
 // 1. Set once in Application.onCreate.
 ConsentTheme.current = ConsentTheme(
-    colors = ConsentTheme.Colors.c15t.copy(accent = ConsentThemeColor(0x00796B, 0x4FD1C0)),
+    colors = ConsentTheme.Colors.c15t.copy(primary = ConsentThemeColor(0x00796B, 0x4FD1C0)),
     brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark))
 
 // 2. Pass one to the composable.
@@ -193,16 +198,20 @@ dark). Android also accepts colour, drawable and font resources.
 
 | Info.plist | Android meta-data | Value |
 | --- | --- | --- |
-| `com.c15t.consent.accent` | `com.c15t.consent.ACCENT` | colour |
-| `com.c15t.consent.onAccent` | `com.c15t.consent.ON_ACCENT` | colour |
+| `com.c15t.consent.primary` | `com.c15t.consent.PRIMARY` | colour |
+| `com.c15t.consent.textOnPrimary` | `com.c15t.consent.TEXT_ON_PRIMARY` | colour |
 | `com.c15t.consent.canvas` | `com.c15t.consent.CANVAS` | colour |
 | `com.c15t.consent.surface` | `com.c15t.consent.SURFACE` | colour |
 | `com.c15t.consent.surfaceMuted` | `com.c15t.consent.SURFACE_MUTED` | colour |
 | `com.c15t.consent.text` | `com.c15t.consent.TEXT` | colour |
-| `com.c15t.consent.textSecondary` | `com.c15t.consent.TEXT_SECONDARY` | colour |
+| `com.c15t.consent.textMuted` | `com.c15t.consent.TEXT_MUTED` | colour |
 | `com.c15t.consent.decision` | `com.c15t.consent.DECISION` | colour |
-| `com.c15t.consent.onDecision` | `com.c15t.consent.ON_DECISION` | colour |
-| `com.c15t.consent.cornerRadius` | `com.c15t.consent.CORNER_RADIUS` | points or dp |
+| `com.c15t.consent.textOnDecision` | `com.c15t.consent.TEXT_ON_DECISION` | colour |
+| `com.c15t.consent.radiusSm`, `radiusMd`, `radiusLg` | `com.c15t.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | points or dp |
+| `com.c15t.consent.spaceXs` to `spaceXl` | `com.c15t.consent.SPACE_XS` to `SPACE_XL` | points or dp |
+| `com.c15t.consent.fontSizeSm`, `fontSizeBase`, `fontSizeLg` | `com.c15t.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | points or sp |
+| `com.c15t.consent.fontFamily` | `com.c15t.consent.FONT_FAMILY` | PostScript name or font resource |
+| `com.c15t.consent.<slot>.<field>` | `com.c15t.consent.<SLOT>_<FIELD>` | slot colour or size |
 | `com.c15t.consent.headlineFont` | `com.c15t.consent.HEADLINE_FONT` | `serif`, `sans`, `rounded`, or a font |
 | `com.c15t.consent.brand` | `com.c15t.consent.BRAND` | Boolean, show or hide the app identity above the headline |
 | `com.c15t.consent.brandName` | `com.c15t.consent.BRAND_NAME` | text |

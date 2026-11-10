@@ -71,45 +71,46 @@ public struct ConsentThemeColor: Equatable, Hashable, Sendable {
 /// ``InfoPlistKey`` names. Plist values override ``current``; an explicit theme
 /// passed to the root modifier takes precedence over both.
 public struct ConsentTheme: Equatable, Sendable {
-    /// Semantic colours. Components never use a raw value outside this set.
+    /// Semantic colours. Components never use a raw value outside this set. A name that has a web
+    /// token is that token's name: `primary` is `--c15t-primary`, `textMuted` is `--c15t-text-muted`.
     public struct Colors: Equatable, Sendable {
-        /// Page background behind every consent screen.
+        /// Page background behind every consent screen. No web token.
         public var canvas: ConsentThemeColor
-        /// Cards and list rows that sit on the canvas.
+        /// Cards and list rows that sit on the canvas. Web: `--c15t-surface`.
         public var surface: ConsentThemeColor
-        /// A quieter surface for subordinate content such as the partner purposes list.
+        /// A quieter surface for subordinate content such as the partner purposes list. No web token.
         public var surfaceMuted: ConsentThemeColor
-        /// Primary text.
+        /// Primary text. Web: `--c15t-text`.
         public var text: ConsentThemeColor
-        /// Supporting text and section labels.
-        public var textSecondary: ConsentThemeColor
-        /// Links, switches, the Save button, and the brand eyebrow.
-        public var accent: ConsentThemeColor
-        /// Text on `accent`.
-        public var onAccent: ConsentThemeColor
-        /// Fill of the two decision buttons. Accept all and Reject all always share it.
+        /// Supporting text and section labels. Web: `--c15t-text-muted`.
+        public var textMuted: ConsentThemeColor
+        /// Links, switches, the Save button, and the brand eyebrow. Web: `--c15t-primary`.
+        public var primary: ConsentThemeColor
+        /// Text on `primary`. Web: `--c15t-text-on-primary`.
+        public var textOnPrimary: ConsentThemeColor
+        /// Fill of the two decision buttons. Accept all and Reject all always share it. No web token.
         public var decision: ConsentThemeColor
-        /// Text on `decision`.
-        public var onDecision: ConsentThemeColor
+        /// Text on `decision`. No web token.
+        public var textOnDecision: ConsentThemeColor
 
         public init(canvas: ConsentThemeColor, surface: ConsentThemeColor, surfaceMuted: ConsentThemeColor,
-            text: ConsentThemeColor, textSecondary: ConsentThemeColor, accent: ConsentThemeColor,
-            onAccent: ConsentThemeColor, decision: ConsentThemeColor, onDecision: ConsentThemeColor) {
+            text: ConsentThemeColor, textMuted: ConsentThemeColor, primary: ConsentThemeColor,
+            textOnPrimary: ConsentThemeColor, decision: ConsentThemeColor, textOnDecision: ConsentThemeColor) {
             self.canvas = canvas
             self.surface = surface
             self.surfaceMuted = surfaceMuted
             self.text = text
-            self.textSecondary = textSecondary
-            self.accent = accent
-            self.onAccent = onAccent
+            self.textMuted = textMuted
+            self.primary = primary
+            self.textOnPrimary = textOnPrimary
             self.decision = decision
-            self.onDecision = onDecision
+            self.textOnDecision = textOnDecision
         }
 
-        /// Text of an On or Partly on status tag. The tag sits on a 14% tint of `accent`, and the
-        /// accent alone does not reach 4.5:1 on its own tint at caption size, so the label is the
-        /// accent pulled toward `text`. Derived, so a host theme gets the same floor for free.
-        var statusTagText: ConsentThemeColor { accent.blended(toward: text, fraction: 0.3) }
+        /// Text of an On or Partly on status tag. The tag sits on a 14% tint of `primary`, and the
+        /// primary alone does not reach 4.5:1 on its own tint at caption size, so the label is the
+        /// primary pulled toward `text`. Derived, so a host theme gets the same floor for free.
+        var statusTagText: ConsentThemeColor { primary.blended(toward: text, fraction: 0.3) }
 
         /// Warm paper, ink decisions, and the c15t blue for links and switches.
         public static let c15t = Colors(
@@ -117,11 +118,115 @@ public struct ConsentTheme: Equatable, Sendable {
             surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x211D18),
             surfaceMuted: ConsentThemeColor(light: 0xEFE9DF, dark: 0x2B2620),
             text: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6),
-            textSecondary: ConsentThemeColor(light: 0x6B655D, dark: 0xA49D93),
-            accent: ConsentThemeColor(light: 0x335CFF, dark: 0x8CA2FF),
-            onAccent: ConsentThemeColor(light: 0xFFFFFF, dark: 0x0A1033),
+            textMuted: ConsentThemeColor(light: 0x6B655D, dark: 0xA49D93),
+            primary: ConsentThemeColor(light: 0x335CFF, dark: 0x8CA2FF),
+            textOnPrimary: ConsentThemeColor(light: 0xFFFFFF, dark: 0x0A1033),
             decision: ConsentThemeColor(light: 0x1E1B17, dark: 0xF3EEE6),
-            onDecision: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411))
+            textOnDecision: ConsentThemeColor(light: 0xF8F4EE, dark: 0x171411))
+    }
+
+    /// Corner radii in points, named after `--c15t-radius-*`.
+    public struct Radius: Equatable, Sendable {
+        /// Status callouts. `nil` follows `md` minus 2.
+        public var sm: CGFloat?
+        /// Buttons and cards. Web: `--c15t-radius-md`.
+        public var md: CGFloat
+        /// The notice card and the discard confirmation. `nil` follows `md` plus 6.
+        public var lg: CGFloat?
+
+        public init(sm: CGFloat? = nil, md: CGFloat = 14, lg: CGFloat? = nil) {
+            self.sm = sm
+            self.md = md
+            self.lg = lg
+        }
+
+        var resolvedSm: CGFloat { sm ?? max(0, md - 2) }
+        var resolvedLg: CGFloat { lg ?? md + 6 }
+    }
+
+    /// Spacing scale in points, named after `--c15t-space-*`. Page gutters, stack gaps and
+    /// section padding read it; a control's own inset stays fixed so its tap target keeps its size.
+    public struct Spacing: Equatable, Sendable {
+        public var xs: CGFloat
+        public var sm: CGFloat
+        public var md: CGFloat
+        public var lg: CGFloat
+        public var xl: CGFloat
+
+        public init(xs: CGFloat = 4, sm: CGFloat = 8, md: CGFloat = 16, lg: CGFloat = 24, xl: CGFloat = 32) {
+            self.xs = xs
+            self.sm = sm
+            self.md = md
+            self.lg = lg
+            self.xl = xl
+        }
+    }
+
+    /// Type settings, named after the web `typography` tokens.
+    public struct Typography: Equatable, Sendable {
+        /// Sizes in points at the default Dynamic Type size, named after `--c15t-font-size-*`.
+        /// `nil` keeps the platform text style. Every text role in a group scales with its token,
+        /// so the hierarchy inside the group holds, and Dynamic Type still applies on top.
+        public struct FontSize: Equatable, Sendable {
+            /// Supporting text, footnotes and captions. The platform default is 15 (subheadline).
+            public var sm: CGFloat?
+            /// Body text, row titles and buttons. The platform default is 17 (body).
+            public var base: CGFloat?
+            /// The first-layer headline. The platform default is 34 (large title).
+            public var lg: CGFloat?
+
+            public init(sm: CGFloat? = nil, base: CGFloat? = nil, lg: CGFloat? = nil) {
+                self.sm = sm
+                self.base = base
+                self.lg = lg
+            }
+        }
+
+        /// PostScript name of a font the app bundles, for every text role except the headline.
+        /// `nil` is the system face. Web: `--c15t-font-family`.
+        public var fontFamily: String?
+        /// Typeface of the first-layer headline. No web token.
+        public var headlineFont: HeadlineFont
+        public var fontSize: FontSize
+
+        public init(fontFamily: String? = nil, headlineFont: HeadlineFont = .sansSerif, fontSize: FontSize = FontSize()) {
+            self.fontFamily = fontFamily
+            self.headlineFont = headlineFont
+            self.fontSize = fontSize
+        }
+    }
+
+    /// Parts a theme can restyle one at a time, named after the web `slots`.
+    public enum Slot: String, CaseIterable, Sendable {
+        /// The first-layer headline.
+        case consentBannerTitle
+        /// The sentence under the first-layer headline.
+        case consentBannerDescription
+        /// Accept all and Reject all, and the other filled decisions. Both always share it.
+        case buttonPrimary
+        /// Outlined actions such as Customize and Privacy settings.
+        case buttonSecondary
+    }
+
+    /// One part's overrides. Each field names the CSS property a web slot's `style` would set,
+    /// and `nil` keeps the theme value. A field the part does not draw is ignored.
+    public struct SlotStyle: Equatable, Sendable {
+        /// Text colour.
+        public var color: ConsentThemeColor?
+        /// Fill of a button.
+        public var backgroundColor: ConsentThemeColor?
+        /// Corner radius of a button, in points.
+        public var borderRadius: CGFloat?
+        /// Text size in points at the default Dynamic Type size.
+        public var fontSize: CGFloat?
+
+        public init(color: ConsentThemeColor? = nil, backgroundColor: ConsentThemeColor? = nil,
+            borderRadius: CGFloat? = nil, fontSize: CGFloat? = nil) {
+            self.color = color
+            self.backgroundColor = backgroundColor
+            self.borderRadius = borderRadius
+            self.fontSize = fontSize
+        }
     }
 
     /// Typeface of the first-layer headline. Body text always uses the system face.
@@ -211,10 +316,11 @@ public struct ConsentTheme: Equatable, Sendable {
     }
 
     public var colors: Colors
-    /// Corner radius of buttons and cards, in points.
-    public var cornerRadius: CGFloat
-    var calloutRadius: CGFloat { max(0, cornerRadius - 2) }
-    public var headlineFont: HeadlineFont
+    public var radius: Radius
+    public var spacing: Spacing
+    public var typography: Typography
+    /// Per-part overrides on top of the tokens.
+    public var slots: [Slot: SlotStyle]
     public var brand: Brand
     public var copy: Copy
     /// Provider name and logo in the attribution tag. The app identity above the headline is ``brand``.
@@ -222,16 +328,22 @@ public struct ConsentTheme: Equatable, Sendable {
     /// Whether the small provider attribution appears under the first-layer actions.
     public var showsBranding: Bool
 
-    public init(colors: Colors = .c15t, cornerRadius: CGFloat = 14, headlineFont: HeadlineFont = .sansSerif,
+    public init(colors: Colors = .c15t, radius: Radius = Radius(), spacing: Spacing = Spacing(),
+        typography: Typography = Typography(), slots: [Slot: SlotStyle] = [:],
         brand: Brand = Brand(), copy: Copy = .c15t, showsBranding: Bool = true, branding: Branding = .c15t) {
         self.colors = colors
-        self.cornerRadius = cornerRadius
-        self.headlineFont = headlineFont
+        self.radius = radius
+        self.spacing = spacing
+        self.typography = typography
+        self.slots = slots
         self.brand = brand
         self.copy = copy
         self.showsBranding = showsBranding
         self.branding = branding
     }
+
+    /// The overrides for `slot`, or an empty style.
+    func slot(_ slot: Slot) -> SlotStyle { slots[slot] ?? SlotStyle() }
 
     /// The stock c15t appearance.
     public static let c15t = ConsentTheme()
@@ -239,21 +351,36 @@ public struct ConsentTheme: Equatable, Sendable {
     /// The theme hosts that present without passing one get. Set it once at launch.
     @MainActor public static var current = ConsentTheme.c15t
 
-    /// `Info.plist` keys. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark).
+    /// `Info.plist` keys. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark). Each
+    /// size is a number of points.
     public enum InfoPlistKey {
-        public static let accent = "com.c15t.consent.accent"
-        public static let onAccent = "com.c15t.consent.onAccent"
+        public static let primary = "com.c15t.consent.primary"
+        public static let textOnPrimary = "com.c15t.consent.textOnPrimary"
         public static let canvas = "com.c15t.consent.canvas"
         public static let surface = "com.c15t.consent.surface"
         public static let surfaceMuted = "com.c15t.consent.surfaceMuted"
         public static let text = "com.c15t.consent.text"
-        public static let textSecondary = "com.c15t.consent.textSecondary"
+        public static let textMuted = "com.c15t.consent.textMuted"
         public static let decision = "com.c15t.consent.decision"
-        public static let onDecision = "com.c15t.consent.onDecision"
-        /// A number of points.
-        public static let cornerRadius = "com.c15t.consent.cornerRadius"
+        public static let textOnDecision = "com.c15t.consent.textOnDecision"
+        public static let radiusSm = "com.c15t.consent.radiusSm"
+        public static let radiusMd = "com.c15t.consent.radiusMd"
+        public static let radiusLg = "com.c15t.consent.radiusLg"
+        public static let spaceXs = "com.c15t.consent.spaceXs"
+        public static let spaceSm = "com.c15t.consent.spaceSm"
+        public static let spaceMd = "com.c15t.consent.spaceMd"
+        public static let spaceLg = "com.c15t.consent.spaceLg"
+        public static let spaceXl = "com.c15t.consent.spaceXl"
+        /// A bundled font's PostScript name.
+        public static let fontFamily = "com.c15t.consent.fontFamily"
+        public static let fontSizeSm = "com.c15t.consent.fontSizeSm"
+        public static let fontSizeBase = "com.c15t.consent.fontSizeBase"
+        public static let fontSizeLg = "com.c15t.consent.fontSizeLg"
         /// `serif`, `rounded`, `sans`, or a bundled font's PostScript name.
         public static let headlineFont = "com.c15t.consent.headlineFont"
+        /// One slot field, such as `com.c15t.consent.buttonPrimary.backgroundColor`. `field` is
+        /// `color`, `backgroundColor`, `borderRadius` or `fontSize`.
+        public static func slot(_ slot: Slot, _ field: String) -> String { "com.c15t.consent.\(slot.rawValue).\(field)" }
         /// A Boolean. `false` hides the app mark and name above the headline.
         public static let brand = "com.c15t.consent.brand"
         public static let brandName = "com.c15t.consent.brandName"
@@ -278,21 +405,38 @@ public struct ConsentTheme: Equatable, Sendable {
         func color(_ key: String, _ path: WritableKeyPath<Colors, ConsentThemeColor>) {
             if let text = dictionary[key] as? String, let value = ConsentThemeColor(hex: text) { theme.colors[keyPath: path] = value }
         }
-        color(InfoPlistKey.accent, \.accent)
-        color(InfoPlistKey.onAccent, \.onAccent)
+        color(InfoPlistKey.primary, \.primary)
+        color(InfoPlistKey.textOnPrimary, \.textOnPrimary)
         color(InfoPlistKey.canvas, \.canvas)
         color(InfoPlistKey.surface, \.surface)
         color(InfoPlistKey.surfaceMuted, \.surfaceMuted)
         color(InfoPlistKey.text, \.text)
-        color(InfoPlistKey.textSecondary, \.textSecondary)
+        color(InfoPlistKey.textMuted, \.textMuted)
         color(InfoPlistKey.decision, \.decision)
-        color(InfoPlistKey.onDecision, \.onDecision)
-        if let radius = dictionary[InfoPlistKey.cornerRadius] as? NSNumber, radius.doubleValue.isFinite, radius.doubleValue >= 0 {
-            theme.cornerRadius = CGFloat(radius.doubleValue)
-        } else if let text = dictionary[InfoPlistKey.cornerRadius] as? String, let radius = Double(text), radius.isFinite, radius >= 0 {
-            theme.cornerRadius = CGFloat(radius)
+        color(InfoPlistKey.textOnDecision, \.textOnDecision)
+        if let value = size(dictionary[InfoPlistKey.radiusSm]) { theme.radius.sm = value }
+        if let value = size(dictionary[InfoPlistKey.radiusMd]) { theme.radius.md = value }
+        if let value = size(dictionary[InfoPlistKey.radiusLg]) { theme.radius.lg = value }
+        if let value = size(dictionary[InfoPlistKey.spaceXs]) { theme.spacing.xs = value }
+        if let value = size(dictionary[InfoPlistKey.spaceSm]) { theme.spacing.sm = value }
+        if let value = size(dictionary[InfoPlistKey.spaceMd]) { theme.spacing.md = value }
+        if let value = size(dictionary[InfoPlistKey.spaceLg]) { theme.spacing.lg = value }
+        if let value = size(dictionary[InfoPlistKey.spaceXl]) { theme.spacing.xl = value }
+        if let name = string(dictionary[InfoPlistKey.fontFamily]) { theme.typography.fontFamily = name }
+        if let value = size(dictionary[InfoPlistKey.fontSizeSm], positive: true) { theme.typography.fontSize.sm = value }
+        if let value = size(dictionary[InfoPlistKey.fontSizeBase], positive: true) { theme.typography.fontSize.base = value }
+        if let value = size(dictionary[InfoPlistKey.fontSizeLg], positive: true) { theme.typography.fontSize.lg = value }
+        if let name = string(dictionary[InfoPlistKey.headlineFont]) { theme.typography.headlineFont = HeadlineFont(name: name) }
+        for slot in Slot.allCases {
+            var style = theme.slot(slot)
+            if let text = dictionary[InfoPlistKey.slot(slot, "color")] as? String, let value = ConsentThemeColor(hex: text) { style.color = value }
+            if let text = dictionary[InfoPlistKey.slot(slot, "backgroundColor")] as? String, let value = ConsentThemeColor(hex: text) {
+                style.backgroundColor = value
+            }
+            if let value = size(dictionary[InfoPlistKey.slot(slot, "borderRadius")]) { style.borderRadius = value }
+            if let value = size(dictionary[InfoPlistKey.slot(slot, "fontSize")], positive: true) { style.fontSize = value }
+            if style != SlotStyle() { theme.slots[slot] = style }
         }
-        if let name = string(dictionary[InfoPlistKey.headlineFont]) { theme.headlineFont = HeadlineFont(name: name) }
         if let name = string(dictionary[InfoPlistKey.brandName]) { theme.brand.name = name }
         if let name = string(dictionary[InfoPlistKey.brandMark]) { theme.brand.markImageName = name }
         if let flag = flag(dictionary[InfoPlistKey.brand]) { theme.brand.isHidden = !flag }
@@ -308,6 +452,21 @@ public struct ConsentTheme: Equatable, Sendable {
         }
         if let flag = flag(dictionary[InfoPlistKey.branding]) { theme.showsBranding = flag }
         return theme
+    }
+
+    /// A plist number, or a string holding one, that is finite and at least 0 (above 0 when
+    /// `positive`). Anything else is unreadable.
+    private func size(_ value: Any?, positive: Bool = false) -> CGFloat? {
+        let number: Double?
+        if let value = value as? NSNumber {
+            number = value.doubleValue
+        } else if let text = string(value) {
+            number = Double(text)
+        } else {
+            number = nil
+        }
+        guard let number, number.isFinite, positive ? number > 0 : number >= 0 else { return nil }
+        return CGFloat(number)
     }
 
     private func string(_ value: Any?) -> String? {
@@ -346,10 +505,15 @@ public struct ConsentTheme: Equatable, Sendable {
         return (max(a, b) + 0.05) / (min(a, b) + 0.05)
     }
 
+    /// The fill and label the decision buttons draw: the ``Slot/buttonPrimary`` colours over
+    /// `decision` and `textOnDecision`.
+    var decisionFill: ConsentThemeColor { slot(.buttonPrimary).backgroundColor ?? colors.decision }
+    var decisionLabel: ConsentThemeColor { slot(.buttonPrimary).color ?? colors.textOnDecision }
+
     /// The lower of the light and dark decision-label contrasts.
     var decisionContrast: Double {
-        min(Self.contrastRatio(colors.onDecision.light, colors.decision.light),
-            Self.contrastRatio(colors.onDecision.dark, colors.decision.dark))
+        min(Self.contrastRatio(decisionLabel.light, decisionFill.light),
+            Self.contrastRatio(decisionLabel.dark, decisionFill.dark))
     }
 
     /// This theme, or this theme with the stock decision colours when the host's fall under 5:1
@@ -360,7 +524,9 @@ public struct ConsentTheme: Equatable, Sendable {
         guard ratio < Self.minimumDecisionContrast else { return self }
         var theme = self
         theme.colors.decision = Colors.c15t.decision
-        theme.colors.onDecision = Colors.c15t.onDecision
+        theme.colors.textOnDecision = Colors.c15t.textOnDecision
+        theme.slots[.buttonPrimary]?.color = nil
+        theme.slots[.buttonPrimary]?.backgroundColor = nil
         report(String(format: "c15t: decision colours reach %.2f:1, under the 5:1 IAB TCF minimum. Using the stock decision colours.", ratio))
         return theme
     }
@@ -398,16 +564,73 @@ extension UIColor {
 
 extension ConsentTheme.HeadlineFont {
     /// The display font at the given text style, scaled with Dynamic Type.
-    func font(_ style: Font.TextStyle, weight: Font.Weight) -> Font {
+    /// - Parameter size: Points at the default Dynamic Type size. `nil` keeps the text style's size.
+    func font(_ style: Font.TextStyle, weight: Font.Weight, size: CGFloat? = nil) -> Font {
+        let design: Font.Design
         switch self {
-        case .serif: return .system(style, design: .serif).weight(weight)
-        case .rounded: return .system(style, design: .rounded).weight(weight)
-        case .sansSerif: return .system(style, design: .default).weight(weight)
+        case .serif: design = .serif
+        case .rounded: design = .rounded
+        case .sansSerif: design = .default
         case .custom(let name):
-            let size = UIFont.preferredFont(forTextStyle: style.uiKit).pointSize
-            return .custom(name, size: size, relativeTo: style).weight(weight)
+            return .custom(name, size: size ?? style.defaultSize, relativeTo: style).weight(weight)
+        }
+        guard let size else { return .system(style, design: design).weight(weight) }
+        return .system(size: style.scaled(size), weight: weight, design: design)
+    }
+}
+
+extension ConsentTheme {
+    /// The font for one text role: the platform text style unless the theme sets a family, a size
+    /// for the role's group, or a size on `slot`. Dynamic Type applies in every case.
+    func font(_ style: Font.TextStyle, weight: Font.Weight? = nil, slot: Slot? = nil) -> Font {
+        let size = slot.flatMap { self.slot($0).fontSize } ?? style.size(in: typography.fontSize)
+        if let family = typography.fontFamily {
+            let font = Font.custom(family, size: size ?? style.defaultSize, relativeTo: style)
+            return weight.map { font.weight($0) } ?? font
+        }
+        guard let size else { return weight.map { Font.system(style).weight($0) } ?? .system(style) }
+        return .system(size: style.scaled(size), weight: weight ?? .regular)
+    }
+
+    /// The first-layer headline in ``Typography/headlineFont``.
+    var firstLayerHeadlineFont: Font {
+        typography.headlineFont.font(.largeTitle, weight: .semibold,
+            size: slot(.consentBannerTitle).fontSize ?? typography.fontSize.lg)
+    }
+}
+
+extension Font.TextStyle {
+    /// The style's size in points at the default Dynamic Type size.
+    var defaultSize: CGFloat {
+        switch self {
+        case .largeTitle: return 34
+        case .title: return 28
+        case .title2: return 22
+        case .title3: return 20
+        case .callout: return 16
+        case .subheadline: return 15
+        case .footnote: return 13
+        case .caption: return 12
+        case .caption2: return 11
+        default: return 17
         }
     }
+
+    /// The size this role takes from the theme's scale, keeping its ratio to the group's lead
+    /// style: with `sm` at 14, a footnote is 14 × 13 / 15. `nil` when the group's token is unset.
+    func size(in scale: ConsentTheme.Typography.FontSize) -> CGFloat? {
+        switch self {
+        case .largeTitle, .title, .title2, .title3:
+            return scale.lg.map { $0 * defaultSize / Font.TextStyle.largeTitle.defaultSize }
+        case .subheadline, .footnote, .caption, .caption2:
+            return scale.sm.map { $0 * defaultSize / Font.TextStyle.subheadline.defaultSize }
+        default:
+            return scale.base.map { $0 * defaultSize / Font.TextStyle.body.defaultSize }
+        }
+    }
+
+    /// `size` scaled for the current Dynamic Type setting the way this style scales.
+    func scaled(_ size: CGFloat) -> CGFloat { UIFontMetrics(forTextStyle: uiKit).scaledValue(for: size) }
 }
 
 private extension Font.TextStyle {

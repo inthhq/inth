@@ -92,16 +92,16 @@ class ScreenAccessibilityTest {
     private fun assertStockSmallTextContrast(dark: Boolean) {
         val colors = ConsentTheme.Colors.c15t
         fun argb(color: ConsentThemeColor) = (if (dark) color.dark else color.light) or 0xFF000000.toInt()
-        val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.accent), Math.round(255 * 0.14f)), argb(colors.surface))
+        val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.primary), Math.round(255 * 0.14f)), argb(colors.surface))
         val pairs = listOf(
             Triple("status tag text on its tint", argb(colors.statusTagText), tagFill) to 4.5,
-            Triple("off tag text on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)) to 4.5,
+            Triple("off tag text on muted surface", argb(colors.textMuted), argb(colors.surfaceMuted)) to 4.5,
             Triple("summary text on muted surface", argb(colors.text), argb(colors.surfaceMuted)) to 4.5,
-            Triple("section label on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)) to 4.5,
-            Triple("links on canvas", argb(colors.accent), argb(colors.canvas)) to 4.5,
-            Triple("links on surface", argb(colors.accent), argb(colors.surface)) to 4.5,
-            Triple("decision label", argb(colors.onDecision), argb(colors.decision)) to ConsentTheme.DECISION_CONTRAST_FLOOR,
-            Triple("save label", argb(colors.onAccent), argb(colors.accent)) to 4.5,
+            Triple("section label on muted surface", argb(colors.textMuted), argb(colors.surfaceMuted)) to 4.5,
+            Triple("links on canvas", argb(colors.primary), argb(colors.canvas)) to 4.5,
+            Triple("links on surface", argb(colors.primary), argb(colors.surface)) to 4.5,
+            Triple("decision label", argb(colors.textOnDecision), argb(colors.decision)) to ConsentTheme.DECISION_CONTRAST_FLOOR,
+            Triple("save label", argb(colors.textOnPrimary), argb(colors.primary)) to 4.5,
         )
         for ((pair, floor) in pairs) {
             val (name, foreground, background) = pair
@@ -114,7 +114,7 @@ class ScreenAccessibilityTest {
         Dispatchers.setMain(Dispatchers.Unconfined)
         try {
             val store = DecisionStore()
-            val presenter = show(store, ConsentTheme(cornerRadius = 0.dp))
+            val presenter = show(store, ConsentTheme(radius = ConsentTheme.Radius(md = 0.dp)))
             store.refuseNext = true
             compose.runOnIdle { presenter.commit(ConsentPresenter.Action.REJECT) }
             compose.waitUntil(5_000) { presenter.errorMessage != null }

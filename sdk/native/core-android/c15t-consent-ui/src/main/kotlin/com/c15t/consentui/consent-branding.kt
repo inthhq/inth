@@ -38,7 +38,7 @@ internal object ProviderMarks {
 @Composable internal fun ProviderBranding() {
     val theme = LocalConsentTheme.current
     val provider = theme.branding
-    val color = theme.colors.textSecondary.color()
+    val color = theme.colors.textMuted.color()
     Row(
         modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.branding")
             .semantics(mergeDescendants = true) { contentDescription = "Secured by ${provider.name}" },

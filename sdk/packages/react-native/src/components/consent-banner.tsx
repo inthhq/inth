@@ -267,7 +267,7 @@ export const ConsentBanner = ({
 			label={copy.securedBy}
 			parts={parts}
 			presentation="banner"
-			radius={surface.theme.radius.surface}
+			radius={surface.theme.radius.lg}
 		/>
 	);
 

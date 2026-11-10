@@ -388,8 +388,9 @@ extension DemoRoot {
     }
 }
 
-/// A fictional grocery app's appearance: a teal accent on mint paper, rounded display type,
-/// and its own mark and headline. Everything here goes through the public theme.
+/// A fictional grocery app's appearance: a teal primary on mint paper, rounded display type,
+/// roomier spacing, a larger type scale, pill decisions, and its own mark and headline.
+/// Everything here goes through the public theme.
 enum PantryBrand {
     static let theme = ConsentTheme(
         colors: ConsentTheme.Colors(
@@ -397,13 +398,16 @@ enum PantryBrand {
             surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x17241F),
             surfaceMuted: ConsentThemeColor(light: 0xE2F1EB, dark: 0x1F3029),
             text: ConsentThemeColor(light: 0x10201C, dark: 0xEAF4F0),
-            textSecondary: ConsentThemeColor(light: 0x5C7169, dark: 0x9DB3AC),
-            accent: ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0),
-            onAccent: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A),
+            textMuted: ConsentThemeColor(light: 0x5C7169, dark: 0x9DB3AC),
+            primary: ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0),
+            textOnPrimary: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A),
             decision: ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0),
-            onDecision: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)),
-        cornerRadius: 10,
-        headlineFont: .rounded,
+            textOnDecision: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)),
+        radius: ConsentTheme.Radius(md: 10),
+        spacing: ConsentTheme.Spacing(md: 20, lg: 28),
+        typography: ConsentTheme.Typography(headlineFont: .rounded,
+            fontSize: ConsentTheme.Typography.FontSize(sm: 16, base: 18)),
+        slots: [.buttonPrimary: ConsentTheme.SlotStyle(borderRadius: 26)],
         brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
         copy: ConsentTheme.Copy(
             headline: "Before you shop.",

@@ -45,11 +45,12 @@ export {
 	ConsentPreferences,
 	CONSENT_COLOR_SCHEMES,
 	CONSENT_THEME_PARTS,
+	consentColorsFor,
 	createConsentTheme,
-	darkTheme,
+	defaultConsentTheme,
 	isConsentThemePart,
-	lightTheme,
 	resolveConsentColorScheme,
+	resolveConsentTypeRoles,
 	seedConsentIabSelection,
 	useConsentStyles,
 } from './components';
@@ -80,6 +81,10 @@ export type {
 	ConsentIabVendorId,
 	ConsentStyles,
 	ConsentTheme,
+	ConsentNativeSlot,
+	ConsentNativeSlotStyle,
+	ConsentNativeThemeColors,
+	ConsentThemeColorOptions,
 	ConsentThemeColors,
 	ConsentThemeMotion,
 	ConsentThemeOptions,
@@ -87,6 +92,7 @@ export type {
 	ConsentThemeRadius,
 	ConsentThemeSpacing,
 	ConsentThemeTypography,
+	ConsentTypeRoles,
 	ConsentTypeStyle,
 } from './components';
 export { ConsentGate, ConsentPrompt, ConsentReady } from './headless';

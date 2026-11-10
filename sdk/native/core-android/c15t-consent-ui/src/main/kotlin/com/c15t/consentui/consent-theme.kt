@@ -13,8 +13,11 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlin.math.max
 import kotlin.math.min
 
@@ -63,10 +66,11 @@ data class ConsentThemeColor(val light: Int, val dark: Int = light) {
  */
 data class ConsentTheme(
     val colors: Colors = Colors.c15t,
-    /** Corner radius of buttons and cards. */
-    val cornerRadius: Dp = 14.dp,
-    /** The platform system sans by default; hosts may supply another face. */
-    val headlineFont: HeadlineFont = HeadlineFont.SansSerif,
+    val radius: Radius = Radius(),
+    val spacing: Spacing = Spacing(),
+    val typography: Typography = Typography(),
+    /** Per-part overrides on top of the tokens. */
+    val slots: Map<Slot, SlotStyle> = emptyMap(),
     val brand: Brand = Brand(),
     val copy: Copy = Copy.c15t,
     /** Whether the small "Secured by c15t" line appears under the first-layer actions. */
@@ -74,38 +78,43 @@ data class ConsentTheme(
     /** Provider identity in the attribution tag, independent of the app [brand]. */
     val branding: Branding = Branding.C15t,
 ) {
-    internal val calloutRadius: Dp get() = (cornerRadius - 2.dp).coerceAtLeast(0.dp)
+    /** The overrides for [slot], or an empty style. */
+    fun slot(slot: Slot): SlotStyle = slots[slot] ?: SlotStyle()
 
-    /** Semantic colours. Components never use a raw value outside this set. */
+    /**
+     * Semantic colours. Components never use a raw value outside this set. A name that has a web
+     * token is that token's name: [primary] is `--c15t-primary`, [textMuted] is `--c15t-text-muted`.
+     */
     data class Colors(
-        /** Page background behind every consent screen. */
+        /** Page background behind every consent screen. No web token. */
         val canvas: ConsentThemeColor,
-        /** Cards and list rows that sit on the canvas. */
+        /** Cards and list rows that sit on the canvas. Web: `--c15t-surface`. */
         val surface: ConsentThemeColor,
-        /** A quieter surface for subordinate content such as the partner purposes list. */
+        /** A quieter surface for subordinate content such as the partner purposes list. No web token. */
         val surfaceMuted: ConsentThemeColor,
-        /** Primary text. */
+        /** Primary text. Web: `--c15t-text`. */
         val text: ConsentThemeColor,
-        /** Supporting text and section labels. */
-        val textSecondary: ConsentThemeColor,
-        /** Links, switches, the Save button, and the brand eyebrow. */
-        val accent: ConsentThemeColor,
-        /** Text on [accent]. */
-        val onAccent: ConsentThemeColor,
+        /** Supporting text and section labels. Web: `--c15t-text-muted`. */
+        val textMuted: ConsentThemeColor,
+        /** Links, switches, the Save button, and the brand eyebrow. Web: `--c15t-primary`. */
+        val primary: ConsentThemeColor,
+        /** Text on [primary]. Web: `--c15t-text-on-primary`. */
+        val textOnPrimary: ConsentThemeColor,
         /**
          * Fill of the two decision buttons. Accept all and Reject all always share it. In an
-         * appearance where it and [onDecision] are below 5:1 contrast, the stock pair is used.
+         * appearance where it and [textOnDecision] are below 5:1 contrast, the stock pair is used.
+         * No web token.
          */
         val decision: ConsentThemeColor,
-        /** Text on [decision]. Needs at least 5:1 contrast with it; see [decision]. */
-        val onDecision: ConsentThemeColor,
+        /** Text on [decision]. Needs at least 5:1 contrast with it; see [decision]. No web token. */
+        val textOnDecision: ConsentThemeColor,
     ) {
         /**
-         * Text of an On or Partly on status tag. The tag sits on a 14% tint of [accent], and the
-         * accent alone does not reach 4.5:1 on its own tint at label size, so the label is the
-         * accent pulled toward [text]. Derived, so a host theme gets the same floor for free.
+         * Text of an On or Partly on status tag. The tag sits on a 14% tint of [primary], and the
+         * primary alone does not reach 4.5:1 on its own tint at label size, so the label is the
+         * primary pulled toward [text]. Derived, so a host theme gets the same floor for free.
          */
-        internal val statusTagText: ConsentThemeColor get() = accent.blended(toward = text, fraction = 0.3f)
+        internal val statusTagText: ConsentThemeColor get() = primary.blended(toward = text, fraction = 0.3f)
 
         companion object {
             /** Warm paper, ink decisions, and the c15t blue for links and switches. */
@@ -114,14 +123,91 @@ data class ConsentTheme(
                 surface = ConsentThemeColor(0xFFFFFF, 0x211D18),
                 surfaceMuted = ConsentThemeColor(0xEFE9DF, 0x2B2620),
                 text = ConsentThemeColor(0x1E1B17, 0xF3EEE6),
-                textSecondary = ConsentThemeColor(0x6B655D, 0xA49D93),
-                accent = ConsentThemeColor(0x335CFF, 0x8CA2FF),
-                onAccent = ConsentThemeColor(0xFFFFFF, 0x0A1033),
+                textMuted = ConsentThemeColor(0x6B655D, 0xA49D93),
+                primary = ConsentThemeColor(0x335CFF, 0x8CA2FF),
+                textOnPrimary = ConsentThemeColor(0xFFFFFF, 0x0A1033),
                 decision = ConsentThemeColor(0x1E1B17, 0xF3EEE6),
-                onDecision = ConsentThemeColor(0xF8F4EE, 0x171411),
+                textOnDecision = ConsentThemeColor(0xF8F4EE, 0x171411),
             )
         }
     }
+
+    /** Corner radii, named after `--c15t-radius-*`. */
+    data class Radius(
+        /** Status callouts. `null` follows [md] minus 2dp. */
+        val sm: Dp? = null,
+        /** Buttons and cards. Web: `--c15t-radius-md`. */
+        val md: Dp = 14.dp,
+        /** The notice card and the dialogs. `null` follows [md] plus 6dp. */
+        val lg: Dp? = null,
+    ) {
+        internal val resolvedSm: Dp get() = sm ?: (md - 2.dp).coerceAtLeast(0.dp)
+        internal val resolvedLg: Dp get() = lg ?: (md + 6.dp)
+    }
+
+    /**
+     * Spacing scale, named after `--c15t-space-*`. Page gutters, stack gaps and section padding
+     * read it; a control's own inset stays fixed so its tap target keeps its size.
+     */
+    data class Spacing(
+        val xs: Dp = 4.dp,
+        val sm: Dp = 8.dp,
+        val md: Dp = 16.dp,
+        val lg: Dp = 24.dp,
+        val xl: Dp = 32.dp,
+    )
+
+    /** Type settings, named after the web `typography` tokens. */
+    data class Typography(
+        /** Face for every text role except the headline. `null` is the platform face. Web: `--c15t-font-family`. */
+        val fontFamily: FontFamily? = null,
+        /** Typeface of the first-layer headline. No web token. */
+        val headlineFont: HeadlineFont = HeadlineFont.SansSerif,
+        val fontSize: FontSize = FontSize(),
+    )
+
+    /**
+     * Sizes in sp, named after `--c15t-font-size-*`. `null` keeps the Material size. Every text
+     * role in a group scales with its token, so the hierarchy inside the group holds, and the
+     * system font scale still applies on top.
+     */
+    data class FontSize(
+        /** Supporting text, footnotes and captions. The Material default is 14sp (bodyMedium). */
+        val sm: TextUnit? = null,
+        /** Body text, row titles and buttons. The Material default is 16sp (bodyLarge). */
+        val base: TextUnit? = null,
+        /** The first-layer headline and screen titles. The stock headline is 34sp. */
+        val lg: TextUnit? = null,
+    )
+
+    /** Parts a theme can restyle one at a time, named after the web `slots`. */
+    enum class Slot(
+        /** Name in the web theme and in `Info.plist`. */
+        val key: String,
+        internal val meta: String,
+    ) {
+        /** The first-layer headline. */
+        ConsentBannerTitle("consentBannerTitle", "CONSENT_BANNER_TITLE"),
+        /** The sentence under the first-layer headline. */
+        ConsentBannerDescription("consentBannerDescription", "CONSENT_BANNER_DESCRIPTION"),
+        /** Accept all and Reject all, and the other filled decisions. Both always share it. */
+        ButtonPrimary("buttonPrimary", "BUTTON_PRIMARY"),
+        /** Outlined actions such as Customize and Privacy settings. */
+        ButtonSecondary("buttonSecondary", "BUTTON_SECONDARY"),
+    }
+
+    /**
+     * One part's overrides. Each field names the CSS property a web slot's `style` would set, and
+     * `null` keeps the theme value. A field the part does not draw is ignored.
+     */
+    data class SlotStyle(
+        val color: ConsentThemeColor? = null,
+        /** Fill of a button. */
+        val backgroundColor: ConsentThemeColor? = null,
+        /** Corner radius of a button. */
+        val borderRadius: Dp? = null,
+        val fontSize: TextUnit? = null,
+    )
 
     /** Typeface of the first-layer headline. Body text always uses the system face. */
     sealed interface HeadlineFont {
@@ -182,21 +268,40 @@ data class ConsentTheme(
         }
     }
 
-    /** `<meta-data>` names. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark), or a colour resource. */
+    /**
+     * `<meta-data>` names. Each colour is `#RRGGBB` or `#RRGGBB,#RRGGBB` (light, dark), or a colour
+     * resource. Radii and spacing are numbers of dp; font sizes are numbers of sp.
+     */
     object Meta {
-        const val META_ACCENT = "com.c15t.consent.ACCENT"
-        const val META_ON_ACCENT = "com.c15t.consent.ON_ACCENT"
+        const val META_PRIMARY = "com.c15t.consent.PRIMARY"
+        const val META_TEXT_ON_PRIMARY = "com.c15t.consent.TEXT_ON_PRIMARY"
         const val META_CANVAS = "com.c15t.consent.CANVAS"
         const val META_SURFACE = "com.c15t.consent.SURFACE"
         const val META_SURFACE_MUTED = "com.c15t.consent.SURFACE_MUTED"
         const val META_TEXT = "com.c15t.consent.TEXT"
-        const val META_TEXT_SECONDARY = "com.c15t.consent.TEXT_SECONDARY"
+        const val META_TEXT_MUTED = "com.c15t.consent.TEXT_MUTED"
         const val META_DECISION = "com.c15t.consent.DECISION"
-        const val META_ON_DECISION = "com.c15t.consent.ON_DECISION"
-        /** A number of dp. */
-        const val META_CORNER_RADIUS = "com.c15t.consent.CORNER_RADIUS"
+        const val META_TEXT_ON_DECISION = "com.c15t.consent.TEXT_ON_DECISION"
+        const val META_RADIUS_SM = "com.c15t.consent.RADIUS_SM"
+        const val META_RADIUS_MD = "com.c15t.consent.RADIUS_MD"
+        const val META_RADIUS_LG = "com.c15t.consent.RADIUS_LG"
+        const val META_SPACE_XS = "com.c15t.consent.SPACE_XS"
+        const val META_SPACE_SM = "com.c15t.consent.SPACE_SM"
+        const val META_SPACE_MD = "com.c15t.consent.SPACE_MD"
+        const val META_SPACE_LG = "com.c15t.consent.SPACE_LG"
+        const val META_SPACE_XL = "com.c15t.consent.SPACE_XL"
+        /** A font resource. */
+        const val META_FONT_FAMILY = "com.c15t.consent.FONT_FAMILY"
+        const val META_FONT_SIZE_SM = "com.c15t.consent.FONT_SIZE_SM"
+        const val META_FONT_SIZE_BASE = "com.c15t.consent.FONT_SIZE_BASE"
+        const val META_FONT_SIZE_LG = "com.c15t.consent.FONT_SIZE_LG"
         /** `serif`, `sans`, or a font resource. */
         const val META_HEADLINE_FONT = "com.c15t.consent.HEADLINE_FONT"
+        /**
+         * One slot field, such as `com.c15t.consent.BUTTON_PRIMARY_BACKGROUND_COLOR`. [field] is
+         * `COLOR`, `BACKGROUND_COLOR`, `BORDER_RADIUS` or `FONT_SIZE`.
+         */
+        fun slot(slot: Slot, field: String): String = "com.c15t.consent.${slot.meta}_$field"
         /** A Boolean. `false` hides the app mark and name above the headline. */
         const val META_BRAND = "com.c15t.consent.BRAND"
         const val META_BRAND_NAME = "com.c15t.consent.BRAND_NAME"
@@ -221,29 +326,45 @@ data class ConsentTheme(
         if (bundle == null) return this
         @Suppress("DEPRECATION") fun raw(key: String): Any? = bundle.get(key)
         fun text(key: String): String? = raw(key)?.toString()?.trim()?.takeIf { it.isNotEmpty() }
-        fun color(key: String, current: ConsentThemeColor): ConsentThemeColor = when (val value = raw(key)) {
+        fun readColor(key: String): ConsentThemeColor? = when (val value = raw(key)) {
             // AAPT stores a literal #RRGGBB as an opaque ARGB integer, not a string.
             is Int -> if (value ushr 24 == 0xFF) ConsentThemeColor(value and 0xFFFFFF)
-                else runCatching { ConsentThemeColor(context.getColor(value) and 0xFFFFFF) }.getOrDefault(current)
-            is String -> ConsentThemeColor.parse(value) ?: current
-            else -> current
+                else runCatching { ConsentThemeColor(context.getColor(value) and 0xFFFFFF) }.getOrNull()
+            is String -> ConsentThemeColor.parse(value)
+            else -> null
         }
+        fun color(key: String, current: ConsentThemeColor): ConsentThemeColor = readColor(key) ?: current
         fun resource(key: String, type: String): Int? = when (val value = raw(key)) {
             is Int -> value.takeIf { it != 0 }
             is String -> context.resources.getIdentifier(value.trim().removePrefix("@$type/"), type, context.packageName).takeIf { it != 0 }
             else -> null
         }
         val c = colors
-        val radius = when (val value = raw(Meta.META_CORNER_RADIUS)) {
-            is Number -> value.toFloat().takeIf { it.isFinite() && it >= 0 }?.dp
-            is String -> value.trim().toFloatOrNull()?.takeIf { it.isFinite() && it >= 0 }?.dp
+        /** A finite number at least 0, or above 0 when [positive]; `null` when unreadable. */
+        fun number(key: String, positive: Boolean = false): Float? = when (val value = raw(key)) {
+            is Number -> value.toFloat()
+            is String -> value.trim().toFloatOrNull()
             else -> null
-        }
+        }?.takeIf { it.isFinite() && if (positive) it > 0 else it >= 0 }
+        fun dp(key: String): Dp? = number(key)?.dp
+        fun sp(key: String): TextUnit? = number(key, positive = true)?.sp
         val font = when (val name = text(Meta.META_HEADLINE_FONT)?.lowercase()) {
-            null -> headlineFont
+            null -> typography.headlineFont
             "serif" -> HeadlineFont.Serif
             "sans", "sans-serif", "sansserif", "system", "rounded" -> HeadlineFont.SansSerif
-            else -> resource(Meta.META_HEADLINE_FONT, "font")?.let { HeadlineFont.Custom(FontFamily(Font(it))) } ?: headlineFont
+            else -> resource(Meta.META_HEADLINE_FONT, "font")?.let { HeadlineFont.Custom(FontFamily(Font(it))) } ?: typography.headlineFont
+        }
+        val family = resource(Meta.META_FONT_FAMILY, "font")?.let { FontFamily(Font(it)) } ?: typography.fontFamily
+        val slotStyles = slots.toMutableMap()
+        for (slot in Slot.entries) {
+            val current = slot(slot)
+            val next = current.copy(
+                color = readColor(Meta.slot(slot, "COLOR")) ?: current.color,
+                backgroundColor = readColor(Meta.slot(slot, "BACKGROUND_COLOR")) ?: current.backgroundColor,
+                borderRadius = dp(Meta.slot(slot, "BORDER_RADIUS")) ?: current.borderRadius,
+                fontSize = sp(Meta.slot(slot, "FONT_SIZE")) ?: current.fontSize,
+            )
+            if (next != SlotStyle()) slotStyles[slot] = next
         }
         fun flag(key: String): Boolean? = when (val value = raw(key)) {
             is Boolean -> value
@@ -268,12 +389,25 @@ data class ConsentTheme(
             colors = Colors(
                 canvas = color(Meta.META_CANVAS, c.canvas), surface = color(Meta.META_SURFACE, c.surface),
                 surfaceMuted = color(Meta.META_SURFACE_MUTED, c.surfaceMuted), text = color(Meta.META_TEXT, c.text),
-                textSecondary = color(Meta.META_TEXT_SECONDARY, c.textSecondary), accent = color(Meta.META_ACCENT, c.accent),
-                onAccent = color(Meta.META_ON_ACCENT, c.onAccent), decision = color(Meta.META_DECISION, c.decision),
-                onDecision = color(Meta.META_ON_DECISION, c.onDecision),
+                textMuted = color(Meta.META_TEXT_MUTED, c.textMuted), primary = color(Meta.META_PRIMARY, c.primary),
+                textOnPrimary = color(Meta.META_TEXT_ON_PRIMARY, c.textOnPrimary), decision = color(Meta.META_DECISION, c.decision),
+                textOnDecision = color(Meta.META_TEXT_ON_DECISION, c.textOnDecision),
             ),
-            cornerRadius = radius ?: cornerRadius,
-            headlineFont = font,
+            radius = Radius(
+                sm = dp(Meta.META_RADIUS_SM) ?: radius.sm, md = dp(Meta.META_RADIUS_MD) ?: radius.md, lg = dp(Meta.META_RADIUS_LG) ?: radius.lg,
+            ),
+            spacing = Spacing(
+                xs = dp(Meta.META_SPACE_XS) ?: spacing.xs, sm = dp(Meta.META_SPACE_SM) ?: spacing.sm, md = dp(Meta.META_SPACE_MD) ?: spacing.md,
+                lg = dp(Meta.META_SPACE_LG) ?: spacing.lg, xl = dp(Meta.META_SPACE_XL) ?: spacing.xl,
+            ),
+            typography = Typography(
+                fontFamily = family, headlineFont = font,
+                fontSize = FontSize(
+                    sm = sp(Meta.META_FONT_SIZE_SM) ?: typography.fontSize.sm, base = sp(Meta.META_FONT_SIZE_BASE) ?: typography.fontSize.base,
+                    lg = sp(Meta.META_FONT_SIZE_LG) ?: typography.fontSize.lg,
+                ),
+            ),
+            slots = slotStyles,
             brand = Brand(name = text(Meta.META_BRAND_NAME) ?: brand.name, markResId = resource(Meta.META_BRAND_MARK, "drawable") ?: brand.markResId, hidden = identityHidden),
             copy = Copy(headline = text(Meta.META_HEADLINE) ?: copy.headline, introduction = text(Meta.META_INTRODUCTION) ?: copy.introduction),
             showsBranding = visible,
@@ -287,13 +421,13 @@ data class ConsentTheme(
         val dark = isSystemInDarkTheme()
         val base = if (dark) darkColorScheme() else lightColorScheme()
         return base.copy(
-            primary = colors.accent.color(), onPrimary = colors.onAccent.color(),
+            primary = colors.primary.color(), onPrimary = colors.textOnPrimary.color(),
             background = colors.canvas.color(), onBackground = colors.text.color(),
             surface = colors.canvas.color(), onSurface = colors.text.color(),
             surfaceContainer = colors.surface.color(), surfaceContainerLow = colors.surface.color(),
             surfaceContainerHigh = colors.surface.color(), surfaceContainerHighest = colors.surfaceMuted.color(),
-            surfaceVariant = colors.surfaceMuted.color(), onSurfaceVariant = colors.textSecondary.color(),
-            outline = colors.textSecondary.color(), outlineVariant = colors.text.color().copy(alpha = 0.1f),
+            surfaceVariant = colors.surfaceMuted.color(), onSurfaceVariant = colors.textMuted.color(),
+            outline = colors.textMuted.color(), outlineVariant = colors.text.color().copy(alpha = 0.1f),
             error = Color(if (dark) 0xFFFF9C8F else 0xFFB42318), errorContainer = Color(if (dark) 0xFF3A1D1A else 0xFFFBEAE7),
             onErrorContainer = Color(if (dark) 0xFFFF9C8F else 0xFFB42318),
         )
@@ -307,8 +441,10 @@ data class ConsentTheme(
      */
     internal fun withReadableDecisions(): ConsentTheme {
         val stock = Colors.c15t
-        val light = contrastRatio(colors.decision.light, colors.onDecision.light) >= DECISION_CONTRAST_FLOOR
-        val dark = contrastRatio(colors.decision.dark, colors.onDecision.dark) >= DECISION_CONTRAST_FLOOR
+        val fill = decisionFill
+        val label = decisionLabel
+        val light = contrastRatio(fill.light, label.light) >= DECISION_CONTRAST_FLOOR
+        val dark = contrastRatio(fill.dark, label.dark) >= DECISION_CONTRAST_FLOOR
         if (light && dark) return this
         if (decisionContrastWarned.compareAndSet(false, true)) {
             android.util.Log.w(LOG_TAG, "Decision colours are below $DECISION_CONTRAST_FLOOR:1 contrast in " +
@@ -317,12 +453,65 @@ data class ConsentTheme(
         }
         fun pick(host: ConsentThemeColor, fallback: ConsentThemeColor) =
             ConsentThemeColor(if (light) host.light else fallback.light, if (dark) host.dark else fallback.dark)
-        return copy(colors = colors.copy(decision = pick(colors.decision, stock.decision), onDecision = pick(colors.onDecision, stock.onDecision)))
+        val primarySlot = slots[Slot.ButtonPrimary]
+        return copy(
+            colors = colors.copy(decision = pick(fill, stock.decision), textOnDecision = pick(label, stock.textOnDecision)),
+            slots = if (primarySlot == null) slots else slots + (Slot.ButtonPrimary to primarySlot.copy(color = null, backgroundColor = null)),
+        )
+    }
+
+    /** The fill the decision buttons draw: the [Slot.ButtonPrimary] colour over [Colors.decision]. */
+    internal val decisionFill: ConsentThemeColor get() = slot(Slot.ButtonPrimary).backgroundColor ?: colors.decision
+    /** The label the decision buttons draw: the [Slot.ButtonPrimary] colour over [Colors.textOnDecision]. */
+    internal val decisionLabel: ConsentThemeColor get() = slot(Slot.ButtonPrimary).color ?: colors.textOnDecision
+
+    /**
+     * The Material type scale the screens are built on, with [Typography.fontFamily] on every style
+     * and each [FontSize] token scaling its group. A role keeps its ratio to the group's lead
+     * size, so with `sm` at 15sp a 12sp bodySmall becomes 15 × 12 / 14.
+     */
+    internal fun materialTypography(): androidx.compose.material3.Typography {
+        val base = androidx.compose.material3.Typography()
+        val family = typography.fontFamily
+        val size = typography.fontSize
+        fun TextStyle.themed(token: TextUnit?, lead: Float): TextStyle {
+            val styled = if (family != null) copy(fontFamily = family) else this
+            if (token == null) return styled
+            val ratio = token.value / lead
+            return styled.copy(
+                fontSize = (fontSize.value * ratio).sp,
+                lineHeight = if (lineHeight.isSp) (lineHeight.value * ratio).sp else lineHeight,
+            )
+        }
+        return base.copy(
+            displayLarge = base.displayLarge.themed(size.lg, HEADLINE_SIZE), displayMedium = base.displayMedium.themed(size.lg, HEADLINE_SIZE),
+            displaySmall = base.displaySmall.themed(size.lg, HEADLINE_SIZE), headlineLarge = base.headlineLarge.themed(size.lg, HEADLINE_SIZE),
+            headlineMedium = base.headlineMedium.themed(size.lg, HEADLINE_SIZE), headlineSmall = base.headlineSmall.themed(size.lg, HEADLINE_SIZE),
+            titleLarge = base.titleLarge.themed(size.lg, HEADLINE_SIZE),
+            titleMedium = base.titleMedium.themed(size.base, BODY_SIZE), titleSmall = base.titleSmall.themed(size.base, BODY_SIZE),
+            bodyLarge = base.bodyLarge.themed(size.base, BODY_SIZE), labelLarge = base.labelLarge.themed(size.base, BODY_SIZE),
+            bodyMedium = base.bodyMedium.themed(size.sm, SUPPORTING_SIZE), bodySmall = base.bodySmall.themed(size.sm, SUPPORTING_SIZE),
+            labelMedium = base.labelMedium.themed(size.sm, SUPPORTING_SIZE), labelSmall = base.labelSmall.themed(size.sm, SUPPORTING_SIZE),
+        )
+    }
+
+    /** The first-layer headline: [Typography.headlineFont] at `lg`, or the [Slot.ConsentBannerTitle] size. */
+    internal fun headlineStyle(material: TextStyle): TextStyle {
+        val size = slot(Slot.ConsentBannerTitle).fontSize ?: typography.fontSize.lg ?: HEADLINE_SIZE.sp
+        return material.copy(
+            fontFamily = typography.headlineFont.family, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            fontSize = size, lineHeight = (size.value * HEADLINE_LINE_HEIGHT / HEADLINE_SIZE).sp, letterSpacing = (-0.25).sp,
+        )
     }
 
     companion object {
         /** IAB TCF policy's minimum text contrast for the first layer's two primary actions. */
         internal const val DECISION_CONTRAST_FLOOR = 5.0
+        /** Lead sizes of the three type groups, in sp: the stock headline, bodyLarge and bodyMedium. */
+        internal const val HEADLINE_SIZE = 34f
+        internal const val HEADLINE_LINE_HEIGHT = 40f
+        internal const val BODY_SIZE = 16f
+        internal const val SUPPORTING_SIZE = 14f
         internal const val LOG_TAG = "C15tConsent"
         /** Set after the first decision-colour fallback is logged; tests reset it. */
         internal val decisionContrastWarned = java.util.concurrent.atomic.AtomicBoolean(false)
