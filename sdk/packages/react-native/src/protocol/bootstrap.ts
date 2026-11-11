@@ -24,7 +24,7 @@ export interface BootstrapPayload {
 	readonly nativeSdkVersion: string;
 	/**
 	 * Subject id the core generated or loaded, or `null` before the first
-	 * write. It is a c15t-generated UUID, never a hardware identifier.
+	 * write. It is a c15t-generated `sub_` id, never a hardware identifier.
 	 */
 	readonly subjectId: string | null;
 	/**

@@ -116,7 +116,10 @@ export interface ConsentSnapshot {
 	readonly revision: number;
 	/** `true` until the first init resolves a policy. */
 	readonly policyPending: boolean;
-	/** `false` until the stored envelope finished hydrating. */
+	/**
+	 * `false` until hydration found a stored envelope or the first init
+	 * resolved. It latches: a later failed refresh does not clear it.
+	 */
 	readonly ready: boolean;
 	/** Model the evaluator applies. */
 	readonly model: NativeModel;
