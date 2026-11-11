@@ -82,27 +82,6 @@ final class GlobalVendorListTests: XCTestCase {
         )
     }
 
-    /// Older GVL publications use dense arrays where the schema declares an object keyed
-    /// by id. `dialog-data.ts` does not care which arrived, and neither can the core.
-    func testADenseArrayCollectionReadsByEachEntryOwnId() async {
-        http.initResponse = Fixture.initResponse(
-            policyResolution: readablePolicy,
-            gvl: Fixture.gvlDocument(
-                purposes: [1, 2, 3],
-                vendors: [
-                    Fixture.gvlVendor(8, purposes: [2]),
-                    Fixture.gvlVendor(755, legIntPurposes: [4]),
-                ],
-                denseArrays: true
-            )
-        )
-        let core = await bootstrapped()
-        let gvl = try? XCTUnwrap(core.globalVendorList())
-        XCTAssertEqual(gvl?.purposes.keys.sorted(), [1, 2, 3])
-        XCTAssertEqual(gvl?.vendors.keys.sorted(), [8, 755])
-        XCTAssertEqual(gvl?.vendors[755]?.legIntPurposes, [4])
-    }
-
     /// A sparse object with holes stays a sparse object: a kernel may narrow the vendor
     /// half of a list (`narrowGVLToVendors` in `fetch-gvl.ts`), and filling the gaps with
     /// invented vendors is the one thing a list must never do.
@@ -144,6 +123,17 @@ final class GlobalVendorListTests: XCTestCase {
             ("tcfPolicyVersion past the safe range", replace("tcfPolicyVersion", with: .number(1e30), in: complete)),
         ]
         cases.append(("explicit null vendors", replace("vendors", with: .null, in: complete)))
+        // The entry types, as Android's typed reader and the CLI check them: a list with
+        // one malformed entry is refused whole, never read with the entry dropped.
+        let dense = try XCTUnwrap(Fixture.gvlDocument(purposes: [1], vendors: [Fixture.gvlVendor(8)], denseArrays: true))
+        cases.append(("collections as dense arrays", dense))
+        var vendors = try XCTUnwrap(complete["vendors"]?.objectValue)
+        vendors["755"] = .string("bad")
+        cases.append(("a vendor that is a string", replace("vendors", with: .object(vendors), in: complete)))
+        var vendor = try XCTUnwrap(complete["vendors"]?["8"]?.objectValue)
+        vendor["name"] = .integer(5)
+        cases.append(("a vendor name that is a number", replace("vendors", with: .object(["8": .object(vendor)]), in: complete)))
+        cases.append(("standard texts without features", replace("standardTexts", with: .object(["purposes": .string("Purposes")]), in: complete)))
 
         for (label, document) in cases {
             let body: [String: JSONValue] = [
@@ -277,6 +267,25 @@ final class GlobalVendorListTests: XCTestCase {
 
         XCTAssertEqual(core.snapshot().revision, revisionBefore + 1, "the second init was still folded")
         XCTAssertEqual(core.globalVendorList()?.vendorListVersion, 177, "and left the list where it was")
+    }
+
+    /// A newer list with one malformed entry is refused whole, and the core keeps the
+    /// list it already holds, as the Android core does.
+    func testARefusedListKeepsTheOneAlreadyServed() async throws {
+        var malformed = try XCTUnwrap(Fixture.gvlDocument(vendorListVersion: 178, vendors: [Fixture.gvlVendor(8)]).objectValue)
+        var vendors = try XCTUnwrap(malformed["vendors"]?.objectValue)
+        vendors["755"] = .string("bad")
+        malformed["vendors"] = .object(vendors)
+        http.enqueueInit(Fixture.initResponse(policyResolution: readablePolicy, gvl: servedList))
+        http.enqueueInit(Fixture.initResponse(policyResolution: readablePolicy, gvl: .object(malformed)))
+        let core = await bootstrapped()
+        XCTAssertEqual(core.globalVendorList()?.vendorListVersion, 177)
+
+        core.refresh()
+        await core.waitUntilIdle()
+
+        XCTAssertEqual(core.globalVendorList()?.vendorListVersion, 177, "the refused list never replaces the held one")
+        XCTAssertNotNil(core.globalVendorList()?.vendors[755], "and the held list is the one served, entries intact")
     }
 
     /// A newer document replaces the list whole. Keeping both halves would let one string

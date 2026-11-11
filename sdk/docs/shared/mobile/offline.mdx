@@ -109,29 +109,109 @@ IAB TCF does not work in no-backend mode. The `iab` model needs the Global
 Vendor List, and only a backend serves it, so the SDK refuses an `iab` rule
 without one. Use backend mode with a bundled manifest for offline IAB.
 
-## Export the policy
+## Bundle the manifest at build time
 
-From an authorized source checkout, build the exporter's dependencies and
-export your project's public manifest:
+Each build should fetch the latest manifest and bundle it. If the backend
+cannot be reached, a release build fails and a debug build warns and
+continues with no bundled manifest. `allowStaleManifest` lets air-gapped CI
+reuse the last fetched copy instead. A manifest the backend serves but that
+fails validation fails every build.
 
-```sh
-bun turbo run build --filter=@c15t/schema --filter=@c15t/translations
-bunx tsx scripts/export-mobile-policy.ts \
-  --endpoint https://your-project.inth.app \
-  --out /absolute/path/to/app/c15t-policy.json \
-  --expires-at 2027-01-01T00:00:00.000Z \
-  --languages en,de
+With Expo, add `@c15t/cli` to `devDependencies` and turn on
+`bundleManifest`:
+
+```ts title="app.config.ts"
+export default {
+	plugins: [
+		[
+			'@c15t/react-native/expo-plugin',
+			{
+				backendURL: 'https://your-project.inth.app',
+				bundleManifest: { allowStaleManifest: false, languages: ['de'] },
+			},
+		],
+	],
+};
 ```
 
-Replace the URL, output path, languages and expiry. Choose a future expiry
-for your release; the example date is not a recommended lifetime. This
-exporter is currently a repository tool, not an installed RN command.
+Prebuild runs `c15t mobile-manifest` and embeds the result in both native
+projects. Prebuild cannot see which variant comes next, so it treats every
+build as release except `expo run:*` with no variant or configuration, or with
+one whose name contains `debug`. `expo run:ios --configuration Production`
+is release. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
+debug prebuild cannot reach the backend, it also removes a manifest an earlier
+prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` also
+narrows the GVL in the bundled manifest.
+
+Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest)
+as a build step and point the platform at the file:
+
+A configuration or build type counts as debug only when its name contains
+`debug`, in any case. Every other name, such as `Production` or `staging`,
+counts as release, so a production build never quietly skips its manifest.
+
+```sh title="Xcode Run Script phase, after Copy Bundle Resources"
+case "$CONFIGURATION" in
+  *[Dd][Ee][Bb][Uu][Gg]*) BUILD=debug ;;
+  *) BUILD=release ;;
+esac
+npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
+  --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/c15t-policy.json" \
+  --build "$BUILD"
+```
+
+On Android, register the fetch through the variant API, so every variant,
+product flavors included, gets its own copy as a generated asset:
+
+```groovy title="android/app/build.gradle"
+abstract class C15tManifestTask extends DefaultTask {
+    @Input abstract Property<String> getBuild()
+    @Internal abstract DirectoryProperty getAppRoot()
+    @OutputDirectory abstract DirectoryProperty getOutputDir()
+    @Inject abstract ExecOperations getExecOperations()
+
+    @TaskAction
+    void fetch() {
+        def out = new File(outputDir.get().asFile, 'c15t-policy.json')
+        execOperations.exec {
+            workingDir appRoot.get().asFile
+            commandLine 'npx', '@c15t/cli', 'mobile-manifest',
+                '--backend-url', 'https://your-project.inth.app',
+                '--out', out.path, '--build', build.get()
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def fetch = tasks.register("c15tManifest${variant.name.capitalize()}", C15tManifestTask) {
+            build = (variant.buildType ?: '').toLowerCase().contains('debug') ? 'debug' : 'release'
+            appRoot = rootProject.layout.projectDirectory.dir('..')
+        }
+        variant.sources.assets.addGeneratedSourceDirectory(fetch) { it.outputDir }
+    }
+}
+```
+
+`addGeneratedSourceDirectory` sets each task's `outputDir` to a directory of
+its own under `build/generated/assets`, so registration sets only `build` and
+`appRoot`. A task you run without that line has no output directory.
+
+On iOS the script writes straight into the built app, so the file is not
+listed in Copy Bundle Resources: a debug build that skipped the fetch then has
+no file to copy rather than an old one. List the output path in the phase's
+Output Files when user script sandboxing is on. Set the keys in the table
+below.
 
 The manifest needs a conservative opt-in or IAB fallback for unknown
 geography, with no preselected optional categories. Export fails when that
 fallback is absent. For a scoped IAB app, supply `--vendors` with the
 comma-separated vendor IDs. Export also needs the GVL and all configured
 Additional Consent provider disclosures.
+
+Repository maintainers re-export the example apps' fixtures with
+`bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit
+`--expires-at`.
 
 ## Include the resource in the app
 

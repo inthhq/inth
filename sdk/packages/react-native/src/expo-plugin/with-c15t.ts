@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -13,6 +15,7 @@ import {
 import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
 
 import { applyAndroidManifest } from './android';
+import { fetchBundledManifest, manifestBuild } from './bundle-manifest';
 import { androidConfig, iosConfig } from './config-plugins';
 import { EXTRA_KEY } from './constants';
 import {
@@ -38,6 +41,7 @@ import {
 	androidPolicyRulesDestination,
 	POLICY_RESOURCE_NAME,
 	POLICY_RULES_NAME,
+	removeXcodeResource,
 	writePolicyRules,
 } from './policy-resource';
 import {
@@ -210,6 +214,22 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	if (params.policyResource !== null) {
 		const source = params.policyResource;
+		const bundle = params.bundleManifest;
+		const build = manifestBuild(
+			context.argv ?? process.argv,
+			context.env ?? process.env
+		);
+		// With bundleManifest, fetch first. A debug build that could not reach the
+		// backend continues with no manifest, so an earlier build's embedded copy is
+		// removed rather than shipped: reusing an old copy is what
+		// allowStaleManifest is for, and then the fetch leaves that copy in place.
+		const ready = async (projectRoot: string): Promise<boolean> => {
+			if (bundle === null || params.backendURL === null) {
+				return true;
+			}
+			await fetchBundledManifest(projectRoot, params.backendURL, bundle, build);
+			return existsSync(join(projectRoot, source));
+		};
 		next = withXcodeProject(next, async (cfg) => {
 			if (cfg.modRequest.introspect) {
 				return cfg;
@@ -220,6 +240,17 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 					cfg.modRequest.projectRoot,
 					cfg
 				);
+			if (!(await ready(cfg.modRequest.projectRoot))) {
+				await rm(
+					join(cfg.modRequest.platformProjectRoot, name, POLICY_RESOURCE_NAME),
+					{ force: true }
+				);
+				cfg.modResults = removeXcodeResource(
+					cfg.modResults,
+					`${name}/${POLICY_RESOURCE_NAME}`
+				);
+				return cfg;
+			}
 			await embedPolicyResource(
 				cfg.modRequest.projectRoot,
 				source,
@@ -239,6 +270,12 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		next = withDangerousMod(next, [
 			'android',
 			async (cfg) => {
+				if (!(await ready(cfg.modRequest.projectRoot))) {
+					await rm(androidPolicyDestination(cfg.modRequest.projectRoot), {
+						force: true,
+					});
+					return cfg;
+				}
 				await embedPolicyResource(
 					cfg.modRequest.projectRoot,
 					source,

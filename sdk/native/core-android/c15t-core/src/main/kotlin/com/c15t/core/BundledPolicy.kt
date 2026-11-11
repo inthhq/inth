@@ -49,7 +49,7 @@ object BundledPolicy {
 		require(value["schemaVersion"]?.jsonPrimitive?.int == 1 && value.keys.all { it in setOf("schemaVersion", "endpoint", "manifestRevision", "tenantId", "issuedAt", "expiresAt", "defaultLanguage", "requiresAtp", "policyPacks", "disclosures") })
 		val authority = BundledPolicyAuthority(value.getValue("endpoint").jsonPrimitive.content,
 			value.getValue("issuedAt").jsonPrimitive.long, value.getValue("expiresAt").jsonPrimitive.long,
-			value.getValue("manifestRevision").jsonPrimitive.content, value["requiresAtp"]?.jsonPrimitive?.boolean == true)
+			value.getValue("manifestRevision").jsonPrimitive.also { require(it.isString) }.content, value["requiresAtp"]?.jsonPrimitive?.boolean == true)
 		require(authority.manifestRevision.isNotEmpty() && authority.isUsable(endpoint, now))
 		val packs = value.getValue("policyPacks").jsonArray.map { it.jsonObject }
 		require(packs.isNotEmpty())

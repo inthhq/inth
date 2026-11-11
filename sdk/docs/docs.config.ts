@@ -1116,7 +1116,12 @@ export default defineDocsConfig({
 			base: 'cli',
 			children: [
 				{
-					pages: ['commands/setup', 'commands/codemods', 'commands/self-host'],
+					pages: [
+						'commands/setup',
+						'commands/codemods',
+						'commands/self-host',
+						'commands/mobile-manifest',
+					],
 					slug: 'commands',
 					title: 'Commands',
 				},

@@ -18,9 +18,13 @@ export default defineConfig({
 			enforce: 'pre',
 			name: 'repository-sources-before-package-builds',
 			resolveId(source, importer) {
-				// The mobile exporter uses built packages in the CLI. Repository
-				// tests run before package builds, so exercise their real sources here.
-				if (source === '../packages/schema/dist/index.js') {
+				// The mobile exporter lives in the CLI and imports these packages by
+				// name. Repository tests run before package builds, so exercise their
+				// real sources here.
+				if (
+					source === '../packages/schema/dist/index.js' ||
+					source === '@c15t/schema'
+				) {
 					return fileURLToPath(
 						new URL('../packages/schema/src/index.ts', import.meta.url)
 					);

@@ -6,8 +6,11 @@ policy rules, prompt copy and an explicit conservative rule for unknown geograph
 Use your project's `https://your-project.inth.app` URL in a production app.
 The reference apps use the public demo at `https://example-inth.inth.app/`.
 
-This implementation remains private. The exporter is a repository build tool;
-it is not an npm CLI or an automatic hosted deployment step.
+Apps fetch and bundle the manifest with `c15t mobile-manifest` from
+`@c15t/cli`, or the Expo plugin's `bundleManifest`, which runs it at prebuild.
+A failed fetch fails a release build and warns in a debug build;
+`--allow-stale-manifest` reuses the last fetched copy. The repository script
+below remains for fixtures that need an explicit expiry.
 
 ## Export at build time
 

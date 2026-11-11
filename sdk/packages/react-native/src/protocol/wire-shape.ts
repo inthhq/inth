@@ -14,7 +14,7 @@
  * assertion rather than an undefined read in someone's app.
  *
  * The check stops at the top of the vendor list inside `iab`. That document belongs
- * to the IAB framework and is read field-by-field forgivingly on every platform, so
+ * to the IAB framework, and any of its fields may be absent on every platform, so
  * a key name inside one of its records is a question for `gvl.ts`, which the vendor
  * list tests compare against all four places it is written.
  *

@@ -30,6 +30,22 @@ class BundledPolicyTest {
 			assertNull(selected.mapped.subjectId); assertNull(selected.mapped.policySnapshotToken)
 		}
 	}
+	@Test fun `every malformed shared resource is refused or carries no usable vendor list`() {
+		val fixture = Json.parseToJsonElement(generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+			.map { File(it, "native/protocol/bundled-policy/invalid-resources.json") }.first { it.exists() }.readText()).jsonObject
+		val problems = fixture.getValue("cases").jsonArray.mapNotNull { case ->
+			val row = case.jsonObject
+			val name = row.getValue("name").jsonPrimitive.content
+			val selection = BundledPolicy.resolve(row.getValue("resource").toString(), row.getValue("endpoint").jsonPrimitive.content,
+				KernelOverrides(), row.getValue("now").jsonPrimitive.long)
+			when (row.getValue("expect").jsonPrimitive.content) {
+				"refused" -> name.takeIf { selection != null }?.let { "$it: accepted" }
+				else -> name.takeIf { selection == null || selection.mapped.gvl != null && selection.gvlFetchedAt != null }?.let { "$it: ${if (selection == null) "refused" else "usable list"}" }
+			}
+		}
+		assertEquals(emptyList(), problems)
+	}
+
 	@Test fun `invalid build authority never bootstraps`() {
 		val variants: List<(MutableMap<String, JsonElement>) -> Unit> = listOf(
 			{ it["endpoint"] = JsonPrimitive("https://wrong.example.test") },

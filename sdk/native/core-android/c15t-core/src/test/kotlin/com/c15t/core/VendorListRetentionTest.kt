@@ -16,6 +16,7 @@ import kotlinx.serialization.json.put
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -310,18 +311,23 @@ class VendorListRetentionTest {
 			return kernel to errors
 		}
 
-		val bad = GVL.replace("\"tcfPolicyVersion\":5", "\"tcfPolicyVersion\":0")
-		val (refused, refusedErrors) = servedThen(bad)
 		val (absent, absentErrors) = servedThen(null)
-
-		assertNotNull(refused.vendorList, "the refusal keeps the list already held, it does not clear it")
-		assertEquals(absent.vendorList, refused.vendorList)
-		assertEquals(absentErrors.map { it.code }, refusedErrors.map { it.code })
-		assertEquals(
-			absent.snapshot().copy(revision = 0),
-			refused.snapshot().copy(revision = 0),
-			"a refused list must not reach the answer the subject gets",
-		)
+		for (bad in listOf(
+			GVL.replace("\"tcfPolicyVersion\":5", "\"tcfPolicyVersion\":0"),
+			// One malformed entry refuses the whole list, as core-swift and the CLI do.
+			GVL.replace("\"vendors\":{", "\"vendors\":{\"755\":\"bad\","),
+		)) {
+			assertNotEquals(GVL, bad)
+			val (refused, refusedErrors) = servedThen(bad)
+			assertNotNull(refused.vendorList, "the refusal keeps the list already held, it does not clear it")
+			assertEquals(absent.vendorList, refused.vendorList)
+			assertEquals(absentErrors.map { it.code }, refusedErrors.map { it.code })
+			assertEquals(
+				absent.snapshot().copy(revision = 0),
+				refused.snapshot().copy(revision = 0),
+				"a refused list must not reach the answer the subject gets",
+			)
+		}
 	}
 
 	/**

@@ -1,3 +1,4 @@
+import type { ResolvedBundleManifest } from './bundle-manifest';
 import {
 	CONSENT_CATEGORY_IDS,
 	LOCALE_TAG_PATTERN,
@@ -171,6 +172,32 @@ export interface C15tPluginProps {
 	/** Path to a build-exported native policy JSON, relative to the Expo project. */
 	policyResource?: string;
 	/**
+	 * Fetch the latest manifest from `backendURL` at prebuild and bundle it, so a
+	 * first launch with no network still shows the prompt.
+	 *
+	 * Runs `c15t mobile-manifest` from the app's `@c15t/cli` dev dependency. If
+	 * the fetch fails, a release build fails and a debug build warns and
+	 * continues. Only `expo run:*` without a release variant counts as debug;
+	 * set `C15T_MANIFEST_BUILD` to `release` or `debug` to say so explicitly.
+	 * Replaces `policyResource`.
+	 */
+	bundleManifest?:
+		| true
+		| {
+				/** Reuse the last fetched copy when the fetch fails, as air-gapped CI needs. */
+				allowStaleManifest?: boolean;
+				/** Days until devices report `policyStale`. Defaults to 30. */
+				expiresInDays?: number;
+				/** Languages to compile prompt copy for. English is always included. */
+				languages?: readonly string[];
+				/**
+				 * Where the fetched copy is kept, relative to the Expo project.
+				 *
+				 * @defaultValue 'c15t-policy.json'
+				 */
+				out?: string;
+		  };
+	/**
 	 * The policy for `mode: 'offline'`, kept in source control and the only
 	 * policy source in that mode. Required there, refused in every other mode.
 	 *
@@ -341,6 +368,8 @@ export interface ResolvedC15tParams {
 	/** Validated build-only repository. Never copied into extra.c15t or native runtime configuration. */
 	readonly androidMavenRepository: C15tAndroidMavenRepository | null;
 	readonly policyResource: string | null;
+	/** Build-time manifest fetch settings, or `null` when the plugin fetches nothing. */
+	readonly bundleManifest: ResolvedBundleManifest | null;
 	/** The in-code policy rules for no-backend mode, or `null` in backend modes. */
 	readonly policyRules: readonly C15tPolicyRule[] | null;
 	/** Transport the embedded core should run. */
@@ -835,6 +864,42 @@ const resolveAppTrackingTransparency = function resolveAppTrackingTransparency(
 	};
 };
 
+/** Validate `bundleManifest`, which replaces `policyResource`. */
+const normalizeBundleManifest = function normalizeBundleManifest(
+	props: C15tPluginProps
+): ResolvedBundleManifest | null {
+	const setting = props.bundleManifest;
+	if (setting === undefined) {
+		return null;
+	}
+	if (props.policyResource !== undefined) {
+		throw new C15tPluginError(
+			'bundleManifest fetches and bundles the manifest itself; remove policyResource.'
+		);
+	}
+	const options = setting === true ? {} : setting;
+	if (options === null || typeof options !== 'object') {
+		throw new C15tPluginError(
+			'bundleManifest must be true or an object such as { "allowStaleManifest": true }.'
+		);
+	}
+	const days = options.expiresInDays;
+	if (days !== undefined && !(typeof days === 'number' && days > 0)) {
+		throw new C15tPluginError(
+			`bundleManifest.expiresInDays must be a number of days greater than zero. Got ${JSON.stringify(days)}.`
+		);
+	}
+	return {
+		allowStaleManifest: options.allowStaleManifest === true,
+		expiresInDays: days ?? null,
+		languages: (options.languages ?? []).map((language) => language.trim()),
+		out:
+			normalizeOptionalText(options.out, 'bundleManifest.out') ??
+			'c15t-policy.json',
+		vendors: normalizeVendors(props.vendors),
+	};
+};
+
 const POLICY_RULE_KEYS = new Set([
 	'actions',
 	'categories',
@@ -1307,7 +1372,13 @@ const assertModesDoNotMix = function assertModesDoNotMix(
 		return;
 	}
 	const mixed = (
-		['backendURL', 'initURL', 'policyResource', 'iab'] as const
+		[
+			'backendURL',
+			'initURL',
+			'policyResource',
+			'bundleManifest',
+			'iab',
+		] as const
 	).filter((key) => props[key] !== undefined);
 	if (mixed.length > 0) {
 		throw new C15tPluginError(
@@ -1398,6 +1469,7 @@ export const resolveParams = function resolveParams(
 		autoBootstrap: props.autoBootstrap ?? mode !== 'custom',
 		backendHost,
 		backendURL,
+		bundleManifest: normalizeBundleManifest(props),
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
 		forceGPC: props.forceGPC ?? false,
@@ -1405,7 +1477,9 @@ export const resolveParams = function resolveParams(
 		initURL,
 		mode,
 		policyResource: normalizeOptionalText(
-			props.policyResource,
+			props.bundleManifest === undefined
+				? props.policyResource
+				: normalizeBundleManifest(props)?.out,
 			'policyResource'
 		),
 		policyRules: normalizePolicy(props.policy),
