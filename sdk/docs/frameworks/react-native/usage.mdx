@@ -4,15 +4,16 @@ description: Save category choices, handle local commit results and open native 
 group: frameworks
 ---
 
-Use `useConsentActions()` under `C15tProvider` when your own controls need to
+Use `useSaveConsents()` under `ConsentProvider` when your own controls need to
 save a choice. For the stock screens, call `presentConsentPrompt` or
 `presentPreferences` and let the native presenter manage the form.
 
 ## Save a category choice
 
-`save({ measurement: true })` records the supplied category choices. Omitted
-categories keep their existing receipts. `acceptAll()` grants the resolved
-policy scope, and `rejectAll()` records a necessary-only choice.
+`saveConsents({ measurement: true })` records the supplied category choices.
+Omitted categories keep their existing receipts. `saveConsents('all')` grants
+the resolved policy scope, and `saveConsents('none')` records a necessary-only
+choice.
 
 Call them in response to a person's explicit action. Reading an allowed
 permission, mounting a provider or resolving policy does not record a choice.
@@ -20,7 +21,7 @@ For app-owned controls, follow [Build your own UI](/docs/frameworks/react-native
 
 ## Inspect every local commit
 
-`save`, `acceptAll` and `rejectAll` return `Promise<CommitResult>`. Check
+Every `saveConsents` call returns `Promise<CommitResult>`. Check
 `result.ok` before closing a form or displaying a saved confirmation. A
 resolved promise can still report a refused save.
 
@@ -52,23 +53,53 @@ queued delivery and reconnects.
 
 ## Open the native screens
 
-Both functions take your app's HTTPS privacy-policy URL:
+`ConsentProvider` hands its `autoPresent` setting and privacy-policy URL to the
+native `ConsentPrompt`, which presents the initial prompt by itself when one is
+owed, as it does in a Swift or Kotlin app. Call
+these functions for anything else, such as a Privacy settings button, or for
+the initial prompt when you pass `autoPresent={false}`. Both take your app's
+HTTPS privacy-policy URL:
 
 | Function | Opens |
 | --- | --- |
 | `presentConsentPrompt(privacyPolicyURL)` | The initial native prompt, only when the policy requires an interaction. |
 | `presentPreferences(privacyPolicyURL)` | Standing privacy settings, including when the initial prompt is already answered. |
 
-Use the [quickstart's complete root](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings)
-for the imports, effect, result subscription and settings button.
+The [quickstart](/docs/frameworks/react-native/quickstart#keep-privacy-settings-reachable)
+shows a settings button.
 
 The returned `ConsentPresenterSession` describes presentation:
 
 | `status` | Meaning |
 | --- | --- |
 | `presented` | A native session opened. |
-| `already-presented` | A session is already open; repeated requests reuse it. |
+| `already-presented` | A session is already open, for example the one the provider presented. Repeated requests reuse it. |
 | `not-required` | No prompt is owed. `sessionId` is null. |
+
+When a session is open, `presentation` says what it shows: `prompt` for the
+initial prompt or a notice, `preferences` for standing privacy settings. A
+binary built before this field omits it.
+
+A rejected call carries one of two codes. `C15T_PRESENTER_INVALID_URL` means
+the native host refused the privacy-policy URL, and the same URL will fail
+again. `C15T_PRESENTER_UNAVAILABLE` means there was no foreground window,
+Activity or installed core yet, so a later call can succeed.
+
+The native decision covers everything automatic. A prompt owed while the app is
+in the background, before its window or Activity is ready, or across a
+`C15t.uninstall()` and a new install, opens once the app is in the foreground
+again. A prompt owed behind open settings opens when they close. A prompt the
+person dismissed, also one the app opened itself, stays closed until the
+requirement changes. With `autoPresent={false}` nothing opens by itself. If
+native refuses the privacy-policy URL, `ConsentProvider` logs a
+`console.error` in every build. Outside production it warns once when native
+owes a prompt it cannot show yet.
+
+A JavaScript update running on a binary built before native auto-present has
+no native decision to hand over to. `ConsentProvider` then presents nothing by
+itself and logs one `console.error` that asks for a rebuild.
+`presentConsentPrompt` and `presentPreferences` keep working there, so an app
+can open the prompt itself until the new binary ships.
 
 Opening a screen is separate from saving a choice. Subscribe with
 `onConsentPresenterOutcome(listener)` before presenting, and call the returned
@@ -76,7 +107,9 @@ unsubscribe function when your React owner unmounts.
 
 ## Handle the final presenter outcome
 
-Each final outcome includes the session ID and snapshot revision:
+Each final outcome includes the session ID and snapshot revision. A session whose
+notice was cleared elsewhere, for example by `dismissNotice()`, shows nothing; the
+native host ends it with a `dismissed` outcome:
 
 | `kind` | Meaning |
 | --- | --- |
@@ -103,7 +136,7 @@ of dismissing an overlapping React dialog.
 | `logout()` | Detach that external identity. |
 | `reset()` | Clear local consent authority and require a new choice while keeping the c15t subject. |
 | `setOverrides(overrides)` | Set QA country, region, language or GPC inputs. |
-| `requestTrackingAuthorization()` | Explicitly request Apple's separate tracking authorization where supported. |
+| `requestTrackingAuthorization()` | Request Apple's separate tracking authorization where supported. `<ConsentProvider>` already asks after consent unless `trackingRequest="manual"`. |
 
 Await asynchronous actions and handle their errors. See
 [identity and reset](/docs/frameworks/react-native/identity),

@@ -1,4 +1,10 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -282,6 +288,37 @@ describe('podspecPathDeclarations', () => {
 			'package.json',
 			'react-native.config.js',
 		]);
+	});
+});
+
+describe('the published podspec', () => {
+	const source = readFileSync(
+		join(
+			dirname(new URL(import.meta.url).pathname),
+			'../packages/react-native/C15tReactNative.podspec'
+		),
+		'utf8'
+	);
+
+	// The checker reads `s.*` lines as text. A list built in a variable and assigned
+	// later hides every glob from it, so a missing vendor directory would publish.
+	it('keeps every source glob where the package-surface check can see it', () => {
+		const sources = podspecPathDeclarations(source)
+			.filter(({ field }) => field === 's.source_files')
+			.map(({ pattern }) => pattern);
+		expect(sources).toStrictEqual([
+			'ios/C15tReactNative/**/*.{h,swift,m,mm}',
+			'vendor/C15tCore/**/*.swift',
+			'vendor/C15tApple/**/*.swift',
+			'vendor/C15tConsentUI/**/*.swift',
+		]);
+	});
+
+	// CocoaPods evaluates a podspec inside `Pod::Specification`, where a bare
+	// `StandardError` is `Pod::StandardError` and misses `Errno::ENOENT`: a bare app
+	// with no Podfile.properties.json then failed `pod install` outright.
+	it('never rescues with a bare StandardError', () => {
+		expect(source).not.toMatch(/rescue\s+StandardError/u);
 	});
 });
 

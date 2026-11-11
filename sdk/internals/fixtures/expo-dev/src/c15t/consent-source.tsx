@@ -3,7 +3,7 @@
  *
  * Two paths, both public API:
  *
- * - `native` renders the package's `C15tProvider`, which reads the handshake from
+ * - `native` renders the package's `ConsentProvider`, which reads the handshake from
  *   the Swift or Kotlin core in the binary. If the module is not there, the
  *   package throws with a message that names the cause, and this file catches it
  *   so the screen can show it rather than white-screening.
@@ -17,7 +17,7 @@
  */
 
 import {
-	C15tProvider,
+	ConsentProvider,
 	ConsentClientContext,
 	createConsentClient,
 	getConsentClient,
@@ -181,8 +181,10 @@ export const ConsentSourceProvider = ({
 		<ConsentSourceContext.Provider value={source}>
 			{usingNative ? (
 				// The provider is the documented entry point and the one that runs
-				// the protocol handshake, so the native path goes through it.
-				<C15tProvider>{children}</C15tProvider>
+				// the protocol handshake, so the native path goes through it. This app
+				// draws the JavaScript banner itself, so the provider presents no
+				// native prompt.
+				<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
 			) : (
 				// A new key is a new subtree, which is what a relaunch does to the
 				// JavaScript side: every subscriber attaches to the new core.

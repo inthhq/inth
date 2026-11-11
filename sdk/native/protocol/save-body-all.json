@@ -195,6 +195,7 @@
 				},
 				"version": 3
 			},
+			"gppString": null,
 			"iab": null,
 			"location": {
 				"countryCode": "DE",
@@ -266,6 +267,7 @@
 			"error": null,
 			"evaluatedAt": 1770000000000,
 			"explicitChoice": null,
+			"gppString": null,
 			"iab": null,
 			"location": {
 				"countryCode": "DE",

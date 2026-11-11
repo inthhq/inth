@@ -37,10 +37,12 @@ import java.util.concurrent.atomic.AtomicReference
  * ```
  */
 object C15t {
-	private val kernel = AtomicReference<C15tKernel?>()
+	private val kernel = AtomicReference<ConsentCore?>()
+	private val installLock = Any()
+	private val uninstallListeners = java.util.concurrent.CopyOnWriteArrayList<(ConsentCore) -> Unit>()
 
 	/** The active kernel, or `null` before [bootstrap]. */
-	val current: C15tKernel?
+	val current: ConsentCore?
 		get() = kernel.get()
 
 	/**
@@ -51,6 +53,8 @@ object C15t {
 	 *
 	 * @param store Persistence the host provides; see [C15tStore].
 	 * @param executor Where init and delivery run; `null` uses a daemon thread.
+	 * @return The installed core. A repeated call returns the core already
+	 * installed, with its original config.
 	 */
 	fun bootstrap(
 		config: NativeConfig,
@@ -59,19 +63,23 @@ object C15t {
 		transport: C15tTransport = C15tTransport.NONE,
 		executor: TaskExecutor? = null,
 		logger: (KernelError) -> Unit = {},
-	) {
-		val created = C15tKernel(
-			config = config,
-			store = store,
-			clock = clock,
-			transport = transport,
-			executor = executor,
-			logger = logger,
-		)
-		if (kernel.compareAndSet(null, created)) {
+	): ConsentCore =
+		// One caller installs at a time. A second caller waits here until the first
+		// has finished starting the core, so the core it gets back has hydrated.
+		synchronized(installLock) {
+			kernel.get()?.let { return it }
+			val created = ConsentCore(
+				config = config,
+				store = store,
+				clock = clock,
+				transport = transport,
+				executor = executor,
+				logger = logger,
+			)
+			kernel.set(created)
 			created.bootstrap()
+			created
 		}
-	}
 
 	/**
 	 * Drop the installed kernel. Intended for tests and host teardown.
@@ -81,13 +89,21 @@ object C15t {
 	 * behind. A host that means "forget what this device decided" wants
 	 * [current]'s own method instead: `C15t.current?.reset()`, which wipes consent,
 	 * keeps the subject id, and re-resolves the policy.
-	 *
-	 * The two share a name and do not share a meaning. Unifying them is a rename and
-	 * therefore separate landing work; until then this is the sentence that keeps
-	 * someone from calling the wrong one at a "delete my data" button.
 	 */
-	fun reset() {
-		kernel.set(null)
+	fun uninstall() {
+		val dropped = kernel.getAndSet(null) ?: return
+		for (listener in uninstallListeners) listener(dropped)
+	}
+
+	/**
+	 * Run [listener] with each core [uninstall] drops, so a layer that keeps something per core,
+	 * such as the stock consent UI, lets it go with the core.
+	 *
+	 * @return Stop listening.
+	 */
+	fun onUninstall(listener: (ConsentCore) -> Unit): Subscription {
+		uninstallListeners += listener
+		return Subscription { uninstallListeners -= listener }
 	}
 
 	/** The current snapshot, or a deny-all snapshot before [bootstrap]. */
@@ -96,7 +112,7 @@ object C15t {
 	/**
 	 * The vendor list the served disclosure is read out of, or `null` before one has been accepted.
 	 *
-	 * The accessor a host's own Kotlin code and a binding layer use. [C15tKernel.vendorList] states why
+	 * The accessor a host's own Kotlin code and a binding layer use. [ConsentCore.vendorList] states why
 	 * this is a call on the core rather than a field of the snapshot, and why the answer outlives the
 	 * `/init` that served it. With no kernel installed it answers `null`, which is the same answer a
 	 * device with IAB off gives.
@@ -128,7 +144,7 @@ object C15t {
 	 * refusal produces `DENIED`.
 	 *
 	 * One read of memory, with no fallback that touches storage. See
-	 * [C15tKernel.decision].
+	 * [ConsentCore.decision].
 	 */
 	fun decision(category: ConsentCategory): ConsentDecision = kernel.get()?.decision(category)
 		?: if (category.optional) ConsentDecision.PENDING else ConsentDecision.GRANTED
@@ -179,7 +195,7 @@ object C15t {
 	 *
 	 * Named rather than an overload of [gate] because both callback types erase to
 	 * `Function1`, which Kotlin cannot declare as two methods. See
-	 * [C15tKernel.gateDecision].
+	 * [ConsentCore.gateDecision].
 	 */
 	fun gateDecision(
 		category: ConsentCategory,
@@ -193,11 +209,15 @@ object C15t {
 		return active.gateDecision(category, onDecision)
 	}
 
-	/** Observe every snapshot change, held weakly. */
+	/**
+	 * Observe every snapshot change. The core holds [observer] until the returned
+	 * handle is closed. Before [bootstrap] there is nothing to observe and the handle
+	 * has nothing to close.
+	 */
 	fun onChange(observer: (ConsentSnapshot) -> Unit): Subscription =
 		kernel.get()?.onChange(observer) ?: Subscription {}
 
-	/** Observe emitted errors. */
+	/** Observe emitted errors, held until the returned handle is closed. */
 	fun onError(observer: (KernelError) -> Unit): Subscription = kernel.get()?.onError(observer) ?: Subscription {}
 
 	/** Record a decision, or a no-op result when the core was never installed. */

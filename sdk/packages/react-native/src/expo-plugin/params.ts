@@ -1,3 +1,4 @@
+import type { ResolvedBundleManifest } from './bundle-manifest';
 import {
 	CONSENT_CATEGORY_IDS,
 	LOCALE_TAG_PATTERN,
@@ -7,6 +8,7 @@ import type { C15tConsentCategoryId } from './constants';
 import { C15tPluginError } from './errors';
 import { resolveAndroidMavenRepository } from './maven';
 import type { C15tAndroidMavenRepository } from './maven';
+import type { C15tThemePluginProps } from './theme';
 
 /**
  * Transport the embedded core should run.
@@ -27,7 +29,7 @@ export const TRANSPORT_MODES = [
 export type C15tTransportMode = (typeof TRANSPORT_MODES)[number];
 
 /** Transport kind `@c15t/core`'s provider factories report. */
-export type C15tProviderTransportKind = 'custom' | 'hosted' | 'offline';
+export type ConsentProviderTransportKind = 'custom' | 'hosted' | 'offline';
 
 /**
  * One locale's Markdown prompt copy, ready to write into a string table.
@@ -65,7 +67,7 @@ export const IOS_TRANSPORT_MODE: Record<C15tTransportMode, string> = {
  */
 export const PROVIDER_TRANSPORT_MODE: Record<
 	C15tTransportMode,
-	C15tProviderTransportKind
+	ConsentProviderTransportKind
 > = {
 	custom: 'custom',
 	hosted: 'hosted',
@@ -95,6 +97,48 @@ export interface C15tIabPluginProps {
 	consentScreen?: number;
 }
 
+/** MSPA mode for covered GPP transactions. */
+export type C15tGppMspaMode = 'opt-out-option' | 'service-provider';
+
+/**
+ * IAB GPP options: the ones web c15t's `gpp` option takes that apply on a
+ * device. `true` turns GPP on with the defaults.
+ */
+export interface C15tGppPluginProps {
+	/**
+	 * MSPA mode. Set it only if you signed the IAB Multi-State Privacy
+	 * Agreement; the transaction is then reported as covered.
+	 */
+	mspaMode?: C15tGppMspaMode;
+	/**
+	 * Categories whose refusal reports an opt-out of sale, sharing and
+	 * targeted advertising. `[]` means no category drives them, so they read
+	 * "did not opt out", as on web and in the Swift and Kotlin APIs.
+	 * `necessary` is always granted, so it never drives them.
+	 *
+	 * @defaultValue ['marketing']
+	 */
+	optOutCategories?: readonly C15tConsentCategoryId[];
+	/**
+	 * Include the TCF EU section under an `iab` policy.
+	 *
+	 * @defaultValue true
+	 */
+	tcf?: boolean;
+}
+
+/** Validated GPP options. */
+export interface ResolvedC15tGppParams {
+	/** `null` reports the transaction as not covered and writes no key. */
+	readonly mspaMode: C15tGppMspaMode | null;
+	/**
+	 * `null` when the option was not set: no key is written and the cores use
+	 * their default, `marketing`. A list, empty included, is written as given.
+	 */
+	readonly optOutCategories: readonly C15tConsentCategoryId[] | null;
+	readonly tcf: boolean;
+}
+
 /** Validated IAB settings. */
 export interface ResolvedC15tIabParams {
 	readonly cmpId: number;
@@ -103,6 +147,58 @@ export interface ResolvedC15tIabParams {
 	readonly publisherCountryCode: string;
 	/** `null` keeps the core's default of 1 and writes no key. */
 	readonly consentScreen: number | null;
+}
+
+/** Optional categories a policy rule can name. `necessary` is tolerated and dropped. */
+export type C15tPolicyCategory = C15tConsentCategoryId;
+
+/**
+ * Where a policy rule applies, in the backend's `PolicyMatch` names.
+ *
+ * Precedence follows the backend: region, then country, then `regionFallbacks`
+ * for a country without a region, then the `fallback` rule for an unknown
+ * location, then the `isDefault` rule.
+ */
+export interface C15tPolicyMatch {
+	regions?: readonly { country: string; region: string }[];
+	countries?: readonly string[];
+	regionFallbacks?: readonly string[];
+	isDefault?: boolean;
+	fallback?: boolean;
+}
+
+/**
+ * One rule of the in-code policy, in the backend's `PolicyRule` names.
+ *
+ * It is the same shape `@c15t/backend` reads, minus `iab`, which needs a
+ * backend to serve the Global Vendor List, and minus the `rights`, `proof`,
+ * `i18n` and `legacyMaterial` fields, which only matter where records reach a
+ * backend.
+ */
+export interface C15tPolicyRule {
+	id: string;
+	match: C15tPolicyMatch;
+	model: 'opt-in' | 'opt-out' | 'none';
+	prompt: 'choice' | 'notice' | 'none';
+	/** Optional categories in scope. Omitted or `'*'` means every optional category. */
+	categories?: readonly C15tPolicyCategory[] | readonly ['*'];
+	/** How categories outside `categories` behave. Required for a partial scope. */
+	scopeMode?: 'strict' | 'permissive';
+	/** Categories the preference form preselects. Inside `categories`. */
+	preselectedCategories?: readonly C15tPolicyCategory[];
+	/** Actions a choice prompt offers. `accept` and `reject` are always offered. */
+	actions?: readonly ('accept' | 'reject' | 'customize')[];
+	/** Validity in days, fractions allowed. Defaults to 365. */
+	validity?: { choiceDays?: number; noticeDays?: number };
+	/** Categories an active Global Privacy Control signal denies. */
+	privacySignals?: { gpc?: { denyCategories: readonly C15tPolicyCategory[] } };
+	/** Bump it when the wording a person agreed to changes; they are asked again. */
+	copyRevision?: string;
+}
+
+/** The in-code policy for no-backend mode. */
+export interface C15tPolicy {
+	rules: readonly C15tPolicyRule[];
 }
 
 /**
@@ -119,10 +215,45 @@ export interface C15tPluginProps {
 	/** Path to a build-exported native policy JSON, relative to the Expo project. */
 	policyResource?: string;
 	/**
+	 * Fetch the latest manifest from `backendURL` at prebuild and bundle it, so a
+	 * first launch with no network still shows the prompt.
+	 *
+	 * Runs `c15t mobile-manifest` from the app's `@c15t/cli` dev dependency. If
+	 * the fetch fails, a release build fails and a debug build warns and
+	 * continues. Only `expo run:*` without a release variant counts as debug;
+	 * set `C15T_MANIFEST_BUILD` to `release` or `debug` to say so explicitly.
+	 * Replaces `policyResource`.
+	 */
+	bundleManifest?:
+		| true
+		| {
+				/** Reuse the last fetched copy when the fetch fails, as air-gapped CI needs. */
+				allowStaleManifest?: boolean;
+				/** Days until devices report `policyStale`. Defaults to 30. */
+				expiresInDays?: number;
+				/** Languages to compile prompt copy for. English is always included. */
+				languages?: readonly string[];
+				/**
+				 * Where the fetched copy is kept, relative to the Expo project.
+				 *
+				 * @defaultValue 'c15t-policy.json'
+				 */
+				out?: string;
+		  };
+	/**
+	 * The policy for `mode: 'offline'`, kept in source control and the only
+	 * policy source in that mode. Required there, refused in every other mode.
+	 *
+	 * The device has no geolocation without a backend, so the `fallback` rule
+	 * applies unless the app sets an override country and region. Records stay
+	 * on the device.
+	 */
+	policy?: C15tPolicy;
+	/**
 	 * c15t backend base URL, without a trailing slash.
 	 *
-	 * Required for every mode except `offline`. A path is allowed, so a
-	 * deployment fronted by a same-origin route works unchanged.
+	 * Required for every mode except `offline`, which refuses it. A path is
+	 * allowed, so a deployment fronted by a same-origin route works unchanged.
 	 */
 	backendURL?: string;
 	/**
@@ -164,12 +295,21 @@ export interface C15tPluginProps {
 	 */
 	iab?: C15tIabPluginProps;
 	/**
+	 * IAB GPP: the GPP string on the snapshot (`useGPPString()`) and the
+	 * `IABGPP_*` keys ad SDKs read. US visitors under a rule that offers an
+	 * opt-out get the US National section; an `iab` rule gets the TCF EU
+	 * section. Omit it to leave GPP off.
+	 */
+	gpp?: boolean | C15tGppPluginProps;
+	/**
 	 * Transport mode.
 	 *
 	 * `hosted` starts the core from the embedded config. `selfHosted` is the
-	 * same wire against a `@c15t/backend` the host runs itself. `offline` embeds
-	 * no backend, which makes every command local-only. `custom` leaves the core
-	 * unstarted so the host can install its own transport.
+	 * same wire against a `@c15t/backend` the host runs itself. `offline` is
+	 * no-backend mode on iOS and Android: nothing is sent, and it takes no
+	 * `backendURL`, `initURL`, `policyResource` or `iab`, because the two modes
+	 * do not mix and IAB TCF needs a backend to serve the vendor list. `custom`
+	 * leaves the core unstarted so the host can install its own transport.
 	 *
 	 * @defaultValue 'hosted'
 	 */
@@ -271,6 +411,22 @@ export interface C15tPluginProps {
 	 * @defaultValue false
 	 */
 	skipNativeBuildCheck?: boolean;
+	/**
+	 * Appearance of the native consent screens, written into the native theme
+	 * keys at prebuild. Field names follow the web `Theme` from `@c15t/ui`.
+	 * Omit it to leave those keys to the app.
+	 */
+	theme?: C15tThemePluginProps;
+	/**
+	 * `false` builds without the stock native consent screens, for an app that
+	 * renders its own consent UI with the headless hooks. The iOS pod drops the
+	 * SwiftUI screens and the Android build drops `c15t-consent-ui`;
+	 * `presentConsentPrompt` and `presentPreferences` reject with
+	 * `C15T_NATIVE_UI_EXCLUDED`. Cannot be combined with `theme`.
+	 *
+	 * @defaultValue true
+	 */
+	nativeUI?: boolean;
 }
 
 /** Validated parameters, with defaults applied. */
@@ -278,10 +434,14 @@ export interface ResolvedC15tParams {
 	/** Validated build-only repository. Never copied into extra.c15t or native runtime configuration. */
 	readonly androidMavenRepository: C15tAndroidMavenRepository | null;
 	readonly policyResource: string | null;
+	/** Build-time manifest fetch settings, or `null` when the plugin fetches nothing. */
+	readonly bundleManifest: ResolvedBundleManifest | null;
+	/** The in-code policy rules for no-backend mode, or `null` in backend modes. */
+	readonly policyRules: readonly C15tPolicyRule[] | null;
 	/** Transport the embedded core should run. */
 	readonly mode: C15tTransportMode;
 	/** {@link mode} as the JavaScript provider spells it. */
-	readonly providerMode: C15tProviderTransportKind;
+	readonly providerMode: ConsentProviderTransportKind;
 	/** Normalised backend base URL, or `null` when no backend is embedded. */
 	readonly backendURL: string | null;
 	/** Hostname of {@link backendURL}, used for the iOS privacy manifest. */
@@ -310,6 +470,8 @@ export interface ResolvedC15tParams {
 	readonly vendors: readonly number[];
 	/** IAB settings, or `null` when IAB TCF stays off. */
 	readonly iab: ResolvedC15tIabParams | null;
+	/** GPP options, or `null` when GPP stays off. */
+	readonly gpp: ResolvedC15tGppParams | null;
 	/** App Tracking Transparency opt-in, resolved. */
 	readonly appTrackingTransparency: {
 		readonly enabled: boolean;
@@ -593,6 +755,91 @@ const normalizeIab = function normalizeIab(
 };
 
 /**
+ * Validate `gpp.optOutCategories`, keeping an empty list empty.
+ *
+ * Unlike `consentCategories`, an empty list is a real answer here: no
+ * category drives the opt-outs. Collapsing it into "not set" would make
+ * both cores report an opt-out whenever `marketing` is refused, a signal the
+ * app did not configure. `necessary` is dropped, since it is always granted.
+ */
+const normalizeGppOptOutCategories = function normalizeGppOptOutCategories(
+	categories: readonly string[]
+): C15tConsentCategoryId[] {
+	if (!Array.isArray(categories)) {
+		throw new C15tPluginError(
+			'gpp.optOutCategories must be an array of category ids, such as ' +
+				'["marketing"]. Use [] for no category-driven opt-out.'
+		);
+	}
+	const trimmed = categories.map((category) => String(category).trim());
+	const unknown = [
+		...new Set(
+			trimmed.filter(
+				(category) =>
+					!(CONSENT_CATEGORY_IDS as readonly string[]).includes(category)
+			)
+		),
+	];
+	if (unknown.length > 0) {
+		throw new C15tPluginError(
+			`gpp.optOutCategories accepts only ${CONSENT_CATEGORY_IDS.join(', ')}; ` +
+				`unknown: ${unknown.map((name) => JSON.stringify(name)).join(', ')}.`
+		);
+	}
+	return [...new Set(trimmed)].filter(
+		(category) => category !== 'necessary'
+	) as C15tConsentCategoryId[];
+};
+
+const GPP_MSPA_MODES: readonly C15tGppMspaMode[] = [
+	'opt-out-option',
+	'service-provider',
+];
+
+/**
+ * Validate the GPP options.
+ *
+ * An unknown MSPA mode is refused rather than dropped: a covered-transaction
+ * claim is the publisher's to make, and a typo would ship a binary that
+ * reports a transaction as not covered while `app.json` says otherwise.
+ */
+const normalizeGpp = function normalizeGpp(
+	gpp: boolean | C15tGppPluginProps | undefined
+): ResolvedC15tGppParams | null {
+	if (gpp === undefined || gpp === false) {
+		return null;
+	}
+	if (gpp === true) {
+		return { mspaMode: null, optOutCategories: null, tcf: true };
+	}
+	if (gpp === null || typeof gpp !== 'object') {
+		throw new C15tPluginError(
+			'gpp must be true or an object such as { "mspaMode": "opt-out-option" }. ' +
+				'Omit it to leave GPP off.'
+		);
+	}
+	if (gpp.mspaMode !== undefined && !GPP_MSPA_MODES.includes(gpp.mspaMode)) {
+		throw new C15tPluginError(
+			`gpp.mspaMode must be ${GPP_MSPA_MODES.map((mode) => JSON.stringify(mode)).join(' or ')}. ` +
+				`Got ${JSON.stringify(gpp.mspaMode)}. Omit it unless you signed the MSPA.`
+		);
+	}
+	if (gpp.tcf !== undefined && typeof gpp.tcf !== 'boolean') {
+		throw new C15tPluginError(
+			`gpp.tcf must be true or false. Got ${JSON.stringify(gpp.tcf)}.`
+		);
+	}
+	return {
+		mspaMode: gpp.mspaMode ?? null,
+		optOutCategories:
+			gpp.optOutCategories === undefined
+				? null
+				: normalizeGppOptOutCategories(gpp.optOutCategories),
+		tcf: gpp.tcf ?? true,
+	};
+};
+
+/**
  * Trim a Markdown prompt value, refusing one that carries no copy.
  *
  * Blank is not a default here. Apple answers an empty
@@ -770,6 +1017,538 @@ const resolveAppTrackingTransparency = function resolveAppTrackingTransparency(
 	};
 };
 
+/** Validate `bundleManifest`, which replaces `policyResource`. */
+const normalizeBundleManifest = function normalizeBundleManifest(
+	props: C15tPluginProps
+): ResolvedBundleManifest | null {
+	const setting = props.bundleManifest;
+	if (setting === undefined) {
+		return null;
+	}
+	if (props.policyResource !== undefined) {
+		throw new C15tPluginError(
+			'bundleManifest fetches and bundles the manifest itself; remove policyResource.'
+		);
+	}
+	const options = setting === true ? {} : setting;
+	if (options === null || typeof options !== 'object') {
+		throw new C15tPluginError(
+			'bundleManifest must be true or an object such as { "allowStaleManifest": true }.'
+		);
+	}
+	const days = options.expiresInDays;
+	if (days !== undefined && !(typeof days === 'number' && days > 0)) {
+		throw new C15tPluginError(
+			`bundleManifest.expiresInDays must be a number of days greater than zero. Got ${JSON.stringify(days)}.`
+		);
+	}
+	return {
+		allowStaleManifest: options.allowStaleManifest === true,
+		expiresInDays: days ?? null,
+		languages: (options.languages ?? []).map((language) => language.trim()),
+		out:
+			normalizeOptionalText(options.out, 'bundleManifest.out') ??
+			'c15t-policy.json',
+		vendors: normalizeVendors(props.vendors),
+	};
+};
+
+const POLICY_RULE_KEYS = new Set([
+	'actions',
+	'categories',
+	'copyRevision',
+	'id',
+	'match',
+	'model',
+	'preselectedCategories',
+	'privacySignals',
+	'prompt',
+	'review',
+	'scopeMode',
+	'validity',
+]);
+const POLICY_MATCH_KEYS = new Set([
+	'countries',
+	'fallback',
+	'isDefault',
+	'regionFallbacks',
+	'regions',
+]);
+const OPTIONAL_CATEGORIES = new Set([
+	'experience',
+	'functionality',
+	'marketing',
+	'measurement',
+]);
+const DAY_MS = 86_400_000;
+
+/** Prompts each model allows, as `@c15t/schema` defines them. */
+const POLICY_MODEL_PROMPTS: Readonly<Record<string, readonly string[]>> = {
+	none: ['none'],
+	'opt-in': ['choice'],
+	'opt-out': ['choice', 'notice', 'none'],
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isStringList = (value: unknown): value is string[] =>
+	Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/** A rule as read from `app.json`, before any of it is trusted. */
+type UncheckedRule = Record<string, unknown>;
+
+/**
+ * Trimmed category names, or the problem with them. Only `categories` takes the
+ * `'*'` wildcard, as on the backend.
+ */
+const categoryNames = function categoryNames(
+	value: unknown,
+	field: string,
+	label: string,
+	options: { wildcard: boolean } = { wildcard: false }
+): string[] | string {
+	if (!isStringList(value)) {
+		return `${label} ${field} must be a list of category names.`;
+	}
+	const names = value.map((name) => name.trim());
+	const unknownName = names.find(
+		(name) =>
+			!(options.wildcard && name === '*') &&
+			name !== 'necessary' &&
+			!OPTIONAL_CATEGORIES.has(name)
+	);
+	return unknownName === undefined
+		? names
+		: `${label} ${field} has unknown category ${JSON.stringify(unknownName)}.`;
+};
+
+const optionalNames = (names: readonly string[]): string[] => [
+	...new Set(names.filter((name) => OPTIONAL_CATEGORIES.has(name))),
+];
+
+const modelProblem = function modelProblem(
+	rule: UncheckedRule,
+	label: string
+): string | null {
+	const unknown = Object.keys(rule).filter((key) => !POLICY_RULE_KEYS.has(key));
+	if (unknown.length > 0) {
+		return `${label} has unsupported fields: ${unknown.join(', ')}.`;
+	}
+	const prompts = POLICY_MODEL_PROMPTS[rule.model as string];
+	if (prompts === undefined) {
+		return (
+			`${label} has model ${JSON.stringify(rule.model)}. Use 'opt-in', ` +
+			"'opt-out' or 'none'; 'iab' needs a backend to serve the Global Vendor List."
+		);
+	}
+	return prompts.includes(rule.prompt as string)
+		? null
+		: `${label}: the ${String(rule.model)} model cannot use a ` +
+				`${JSON.stringify(rule.prompt)} prompt; use ${prompts.join(' or ')}.`;
+};
+
+const isRegionList = (value: unknown): boolean =>
+	Array.isArray(value) &&
+	value.every(
+		(region) =>
+			isRecord(region) &&
+			Object.keys(region).every(
+				(key) => key === 'country' || key === 'region'
+			) &&
+			typeof region.country === 'string' &&
+			region.country.trim() !== '' &&
+			typeof region.region === 'string' &&
+			region.region.trim() !== ''
+	);
+
+const matchProblem = function matchProblem(
+	match: unknown,
+	label: string
+): string | null {
+	if (!isRecord(match)) {
+		return `${label} needs a match object.`;
+	}
+	const unknown = Object.keys(match).filter(
+		(key) => !POLICY_MATCH_KEYS.has(key)
+	);
+	if (unknown.length > 0) {
+		return `${label} match has unsupported fields: ${unknown.join(', ')}.`;
+	}
+	const codes = [match.countries, match.regionFallbacks].filter(
+		(list) => list !== undefined
+	);
+	if (
+		codes.some(
+			(list) => !isStringList(list) || list.some((code) => code.trim() === '')
+		)
+	) {
+		return `${label} match countries must be lists of non-empty codes.`;
+	}
+	if (match.regions !== undefined && !isRegionList(match.regions)) {
+		return `${label} match.regions must be a list of { country, region } codes.`;
+	}
+	if (
+		[match.fallback, match.isDefault].some(
+			(flag) => flag !== undefined && typeof flag !== 'boolean'
+		)
+	) {
+		return `${label} match.fallback and match.isDefault must be true or false.`;
+	}
+	const hasMatcher =
+		match.fallback === true ||
+		match.isDefault === true ||
+		[match.countries, match.regions, match.regionFallbacks].some(
+			(list) => Array.isArray(list) && list.length > 0
+		);
+	return hasMatcher
+		? null
+		: `${label} has no matcher. Add countries or regions, or set fallback or isDefault.`;
+};
+
+/** The rule's category scope, or the problem with it. */
+const scopeOf = function scopeOf(
+	rule: UncheckedRule,
+	label: string
+): string[] | string {
+	const { categories, scopeMode } = rule;
+	if (
+		scopeMode !== undefined &&
+		scopeMode !== 'strict' &&
+		scopeMode !== 'permissive'
+	) {
+		return `${label} scopeMode must be 'strict' or 'permissive'.`;
+	}
+	if (categories === undefined) {
+		return [...OPTIONAL_CATEGORIES];
+	}
+	const names = categoryNames(categories, 'categories', label, {
+		wildcard: true,
+	});
+	if (typeof names === 'string') {
+		return names;
+	}
+	const declared = optionalNames(names);
+	if (names.includes('*') || declared.length === 0) {
+		return [...OPTIONAL_CATEGORIES];
+	}
+	if (declared.length < OPTIONAL_CATEGORIES.size && scopeMode === undefined) {
+		return `${label} selects only some categories, so it needs scopeMode 'strict' or 'permissive'.`;
+	}
+	return declared;
+};
+
+const preselectedProblem = function preselectedProblem(
+	rule: UncheckedRule,
+	scope: readonly string[],
+	label: string
+): string | null {
+	if (rule.preselectedCategories === undefined) {
+		return null;
+	}
+	// The backend refuses the field itself, even empty, under a model that
+	// preselects nothing.
+	if (rule.model === 'none') {
+		return `${label}: the none model takes no preselectedCategories.`;
+	}
+	const names = categoryNames(
+		rule.preselectedCategories,
+		'preselectedCategories',
+		label
+	);
+	if (typeof names === 'string') {
+		return names;
+	}
+	return optionalNames(names).every((name) => scope.includes(name))
+		? null
+		: `${label} preselectedCategories must be inside categories.`;
+};
+
+const actionsProblem = function actionsProblem(
+	rule: UncheckedRule,
+	label: string
+): string | null {
+	const { actions } = rule;
+	if (actions === undefined) {
+		return null;
+	}
+	if (rule.prompt !== 'choice') {
+		return `${label}: actions belong to a choice prompt.`;
+	}
+	if (
+		!isStringList(actions) ||
+		actions.some(
+			(action) => !['accept', 'customize', 'reject'].includes(action)
+		)
+	) {
+		return `${label} actions must list 'accept', 'reject' and optionally 'customize'.`;
+	}
+	return actions.includes('accept') && actions.includes('reject')
+		? null
+		: `${label} actions must include 'accept' and 'reject'.`;
+};
+
+/** Days the backend accepts, which round to at least one millisecond on a device. */
+const daysProblem = function daysProblem(
+	key: string,
+	days: unknown,
+	label: string
+): string | null {
+	if (key !== 'choiceDays' && key !== 'noticeDays') {
+		return `${label} validity has unsupported field ${JSON.stringify(key)}.`;
+	}
+	if (
+		typeof days !== 'number' ||
+		!Number.isFinite(days) ||
+		days <= 0 ||
+		days * DAY_MS > Number.MAX_SAFE_INTEGER
+	) {
+		return `${label} validity.${key} must be a finite number of days greater than zero.`;
+	}
+	return Math.round(days * DAY_MS) < 1
+		? `${label} validity.${key} must be at least one millisecond.`
+		: null;
+};
+
+const validityProblem = function validityProblem(
+	validity: unknown,
+	label: string
+): string | null {
+	if (validity === undefined) {
+		return null;
+	}
+	if (!isRecord(validity)) {
+		return `${label} validity must be an object.`;
+	}
+	for (const [key, days] of Object.entries(validity)) {
+		const problem = daysProblem(key, days, label);
+		if (problem !== null) {
+			return problem;
+		}
+	}
+	return null;
+};
+
+const signalsProblem = function signalsProblem(
+	signals: unknown,
+	scope: readonly string[],
+	label: string
+): string | null {
+	if (signals === undefined) {
+		return null;
+	}
+	if (!isRecord(signals) || Object.keys(signals).some((key) => key !== 'gpc')) {
+		return `${label} privacySignals takes only gpc.`;
+	}
+	const { gpc } = signals;
+	if (gpc === undefined) {
+		return null;
+	}
+	if (
+		!isRecord(gpc) ||
+		Object.keys(gpc).some((key) => key !== 'denyCategories')
+	) {
+		return `${label} privacySignals.gpc takes only denyCategories.`;
+	}
+	// Exact names: the backend neither trims nor takes a wildcard here.
+	const names = gpc.denyCategories;
+	if (!isStringList(names)) {
+		return `${label} privacySignals.gpc.denyCategories must be a list of category names.`;
+	}
+	if (names.includes('necessary')) {
+		return `${label} privacySignals.gpc cannot deny necessary.`;
+	}
+	const unknownName = names.find((name) => !OPTIONAL_CATEGORIES.has(name));
+	if (unknownName !== undefined) {
+		return `${label} privacySignals.gpc.denyCategories has unknown category ${JSON.stringify(unknownName)}.`;
+	}
+	if (new Set(names).size !== names.length) {
+		return `${label} privacySignals.gpc.denyCategories repeats a category.`;
+	}
+	return names.every((name) => scope.includes(name))
+		? null
+		: `${label} privacySignals.gpc.denyCategories must be inside categories.`;
+};
+
+const REVIEW_KEYS = new Set([
+	'assumptions',
+	'reviewBy',
+	'reviewedOn',
+	'sources',
+	'status',
+]);
+
+/** `review` is documentation only, but the backend checks its shape, so this does too. */
+const reviewProblem = function reviewProblem(
+	review: unknown,
+	label: string
+): string | null {
+	if (review === undefined) {
+		return null;
+	}
+	if (
+		!isRecord(review) ||
+		Object.keys(review).some((key) => !REVIEW_KEYS.has(key))
+	) {
+		return `${label} review must be an object with status, reviewedOn, reviewBy, sources or assumptions.`;
+	}
+	if (review.status !== 'pending' && review.status !== 'reviewed') {
+		return `${label} review.status must be 'pending' or 'reviewed'.`;
+	}
+	const { assumptions, reviewBy, reviewedOn, sources } = review;
+	if (
+		[reviewedOn, reviewBy].some(
+			(field) => field !== undefined && typeof field !== 'string'
+		)
+	) {
+		return `${label} review dates must be strings.`;
+	}
+	return [sources, assumptions].every(
+		(list) => list === undefined || isStringList(list)
+	)
+		? null
+		: `${label} review.sources and review.assumptions must be lists of strings.`;
+};
+
+/**
+ * Check one rule with the rules both native cores apply at launch: the backend's
+ * authoring rules (`inspectPolicyRules` in `@c15t/schema`) plus the no-backend
+ * limits. `native/protocol/local-policy/parity.json` lists the cases all three
+ * refuse, and the tests of each read it.
+ *
+ * @returns The first problem, or `null` for a usable rule.
+ */
+const policyRuleProblem = function policyRuleProblem(
+	rule: unknown,
+	index: number
+): string | null {
+	if (!isRecord(rule)) {
+		return `policy rule ${index} must be an object.`;
+	}
+	if (typeof rule.id !== 'string' || rule.id.trim() === '') {
+		return `policy rule ${index} needs a non-empty string id.`;
+	}
+	const label = `policy rule ${JSON.stringify(rule.id)}`;
+	const scope = scopeOf(rule, label);
+	if (typeof scope === 'string') {
+		return scope;
+	}
+	const checks = [
+		() => modelProblem(rule, label),
+		() => matchProblem(rule.match, label),
+		() => preselectedProblem(rule, scope, label),
+		() => actionsProblem(rule, label),
+		() => validityProblem(rule.validity, label),
+		() => signalsProblem(rule.privacySignals, scope, label),
+		() => reviewProblem(rule.review, label),
+		() =>
+			rule.copyRevision === undefined || typeof rule.copyRevision === 'string'
+				? null
+				: `${label} copyRevision must be a string.`,
+	];
+	for (const check of checks) {
+		const problem = check();
+		if (problem !== null) {
+			return problem;
+		}
+	}
+	return null;
+};
+
+/**
+ * Check the in-code policy at prebuild with every rule the native cores check at
+ * launch, so a policy the device would refuse never reaches a build.
+ */
+const normalizePolicy = function normalizePolicy(
+	policy: C15tPolicy | undefined
+): readonly C15tPolicyRule[] | null {
+	if (policy === undefined) {
+		return null;
+	}
+	const rules = (policy as { rules?: unknown } | null)?.rules;
+	if (!Array.isArray(rules) || rules.length === 0) {
+		throw new C15tPluginError(
+			'policy needs a non-empty rules array, such as { "rules": [{ "id": ' +
+				'"default", "match": { "fallback": true, "isDefault": true }, ' +
+				'"model": "opt-in", "prompt": "choice" }] }.'
+		);
+	}
+	const problem = rules
+		.map((rule: unknown, index) => policyRuleProblem(rule, index))
+		.find((found) => found !== null);
+	if (problem !== undefined && problem !== null) {
+		throw new C15tPluginError(problem);
+	}
+	const valid = rules as C15tPolicyRule[];
+	const ids = valid.map((rule) => rule.id.trim());
+	const repeated = ids.find((id, index) => ids.indexOf(id) !== index);
+	if (repeated !== undefined) {
+		throw new C15tPluginError(
+			`policy rule ids must be unique; ${JSON.stringify(repeated)} repeats.`
+		);
+	}
+	for (const flag of ['isDefault', 'fallback'] as const) {
+		if (valid.filter((rule) => rule.match[flag] === true).length > 1) {
+			throw new C15tPluginError(`policy allows only one ${flag} rule.`);
+		}
+	}
+	if (
+		!valid.some(
+			(rule) => rule.match.fallback === true || rule.match.isDefault === true
+		)
+	) {
+		throw new C15tPluginError(
+			'policy needs a rule with match.fallback or match.isDefault, because ' +
+				'the device has no location without a backend.'
+		);
+	}
+	return valid;
+};
+
+/**
+ * Keep backend mode and no-backend mode apart.
+ *
+ * A bundled manifest belongs to a backend, IAB TCF needs a backend to serve the
+ * Global Vendor List, and the in-code policy is the only source without one.
+ */
+const assertModesDoNotMix = function assertModesDoNotMix(
+	mode: C15tTransportMode,
+	props: C15tPluginProps
+): void {
+	if (mode !== 'offline') {
+		if (props.policy !== undefined) {
+			throw new C15tPluginError(
+				`policy is for mode 'offline'. Mode ${JSON.stringify(mode)} takes its ` +
+					'policy from the backend; remove policy, or switch to offline.'
+			);
+		}
+		return;
+	}
+	const mixed = (
+		[
+			'backendURL',
+			'initURL',
+			'policyResource',
+			'bundleManifest',
+			'iab',
+		] as const
+	).filter((key) => props[key] !== undefined);
+	if (mixed.length > 0) {
+		throw new C15tPluginError(
+			`mode 'offline' is no-backend mode and takes no ${mixed.join(', ')}. ` +
+				'Use a backend mode for a bundled manifest or IAB TCF, which ' +
+				'needs a backend to serve the Global Vendor List.'
+		);
+	}
+	if (props.policy === undefined) {
+		throw new C15tPluginError(
+			"mode 'offline' needs policy: it is the only policy source " +
+				'without a backend. Add { "policy": { "rules": [...] } } with a ' +
+				'fallback rule.'
+		);
+	}
+};
+
 /**
  * Resolve, validate, and default the plugin props.
  *
@@ -797,6 +1576,7 @@ export const resolveParams = function resolveParams(
 			`backendURL is required for mode ${JSON.stringify(mode)}. ${USAGE}`
 		);
 	}
+	assertModesDoNotMix(mode, props);
 
 	const initURL =
 		props.initURL === undefined
@@ -842,16 +1622,21 @@ export const resolveParams = function resolveParams(
 		autoBootstrap: props.autoBootstrap ?? mode !== 'custom',
 		backendHost,
 		backendURL,
+		bundleManifest: normalizeBundleManifest(props),
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
 		forceGPC: props.forceGPC ?? false,
+		gpp: normalizeGpp(props.gpp),
 		iab: normalizeIab(props.iab),
 		initURL,
 		mode,
 		policyResource: normalizeOptionalText(
-			props.policyResource,
+			props.bundleManifest === undefined
+				? props.policyResource
+				: normalizeBundleManifest(props)?.out,
 			'policyResource'
 		),
+		policyRules: normalizePolicy(props.policy),
 		privacyTrackingDomains,
 		providerMode: PROVIDER_TRANSPORT_MODE[mode],
 		skipNativeBuildCheck: props.skipNativeBuildCheck ?? false,

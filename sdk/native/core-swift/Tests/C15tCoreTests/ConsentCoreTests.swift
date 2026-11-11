@@ -548,9 +548,9 @@ final class ConsentCoreTests: XCTestCase {
             + http.recordedIdentityRequests
         XCTAssertGreaterThanOrEqual(requests.count, 3)
         for request in requests {
-            XCTAssertEqual(request.headers[c15t.versionHeader], c15t.version)
+            XCTAssertEqual(request.headers[C15t.versionHeader], C15t.version)
             XCTAssertEqual(
-                request.headers[c15t.policyContractHeader],
+                request.headers[C15t.policyContractHeader],
                 String(c15tPolicyContractVersion)
             )
         }
@@ -846,7 +846,7 @@ final class ConsentCoreTests: XCTestCase {
         XCTAssertEqual(seen.value, [false, true], "cancelled means finished")
     }
 
-    func testObserverIsHeldWeakly() async {
+    func testInlineObserverIsOwnedByItsHandle() async {
         http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(
             policy: Fixture.rule(model: "opt-in")
         ))
@@ -857,16 +857,53 @@ final class ConsentCoreTests: XCTestCase {
             clock: clock
         ))
 
-        var observer: RecordingObserver? = RecordingObserver()
-        weak var weakObserver = observer
-        _ = core.onChange(observer!)
-        XCTAssertNotNil(weakObserver, "registered while it is alive")
-        observer = nil
-        XCTAssertNil(weakObserver, "the core must not be the only owner")
+        // The closure has no owner but the core: nothing else references it once
+        // this call returns. The handle is what keeps it registered.
+        let revisions = SendableBox([Int]())
+        let subscription = core.onChange { snapshot in
+            revisions.mutate { $0.append(snapshot.revision) }
+        }
 
         core.save(.all)
         await core.waitUntilIdle()
-        XCTAssertNil(weakObserver?.lastRevision)
+        XCTAssertFalse(revisions.value.isEmpty, "an open handle must keep its inline observer firing")
+
+        subscription.cancel()
+        let delivered = revisions.value
+        core.save(.necessary)
+        await core.waitUntilIdle()
+        XCTAssertEqual(revisions.value, delivered, "cancelled means finished")
+    }
+
+    func testReleasingTheHandleEndsTheObserver() async {
+        http.initResponse = Fixture.initResponse(policyResolution: Fixture.matchedResolution(
+            policy: Fixture.rule(model: "opt-in")
+        ))
+        let core = ConsentCore()
+        await core.bootstrapAndSettle(Fixture.configured(
+            store: store,
+            transport: Fixture.transport(http),
+            clock: clock
+        ))
+
+        let revisions = SendableBox([Int]())
+        weak var weakObserver: RecordingObserver?
+        do {
+            let observer = RecordingObserver()
+            weakObserver = observer
+            let subscription = core.onChange { [observer] snapshot in
+                observer.consentDidChange(snapshot)
+                revisions.mutate { $0.append(snapshot.revision) }
+            }
+            withExtendedLifetime(subscription) {
+                XCTAssertNotNil(weakObserver, "the handle keeps what the observer captured")
+            }
+        }
+        XCTAssertNil(weakObserver, "releasing the handle must release what the observer captured")
+
+        core.save(.all)
+        await core.waitUntilIdle()
+        XCTAssertEqual(revisions.value, [], "a released handle must not deliver")
     }
 
     // MARK: Snapshot shape
@@ -998,7 +1035,7 @@ final class SendableBox<Value>: @unchecked Sendable {
     }
 }
 
-private final class RecordingObserver: SnapshotObserver, @unchecked Sendable {
+private final class RecordingObserver: @unchecked Sendable {
     private let lock = NSLock()
     private var revision: Int?
 

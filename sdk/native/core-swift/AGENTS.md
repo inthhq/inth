@@ -1,0 +1,34 @@
+# c15t for Swift: notes for coding agents
+
+This file ships with the `c15t` Swift package. It tells an agent working in an
+app that depends on the package where the guides are and which rules the
+integration must keep.
+
+## Where the docs are
+
+The Swift SDK is a private prerelease, and its guides are not published on
+c15t.com yet. Read them from either place:
+
+- The c15t source your maintainer supplied: `docs/frameworks/swift/`
+  (`quickstart.mdx`, `uikit.mdx`, `headless.mdx`, `customize.mdx`) and
+  `docs/guides/mobile-*.mdx` (IAB, offline startup, identity, verification).
+- The `@c15t/react-native` package, which bundles the same pages as Markdown
+  under `docs/frameworks/swift/` and `docs/guides/`.
+
+`native/core-swift/README.md` beside this file lists the products. Once the
+mobile SDKs are public, the pages move to `https://c15t.com/docs/frameworks/swift`.
+
+## Rules the integration keeps
+
+- Install one engine, once, at launch, with
+  `C15tApple.install(C15tAppleConfiguration(...))`, and keep the returned core.
+  `C15t.current` returns it later. Never install a second engine.
+- `snapshot()`, `isAllowed(_:)`, `decision(for:)` and `isReady()` read cached
+  state and never block, so SDK start-up code may call them on the main thread.
+- Start an optional SDK only on `.granted`, and keep a `gate` subscription so a
+  withdrawal stops it. `.pending` is not a refusal: keep listening. Disable the
+  vendor's own automatic start first.
+- Keep a Privacy settings action reachable after the first prompt closes.
+- A successful save means the choice is stored on the device and queued for
+  delivery. It does not mean the backend has it.
+- App Tracking Transparency and consent are separate. Neither grants the other.

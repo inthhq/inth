@@ -31,7 +31,7 @@ import type {
 	ConsentIabDisplayModel,
 	ConsentIabSelection,
 } from '../iab-display-model';
-import { lightTheme } from '../theme/create-consent-theme';
+import { defaultConsentTheme } from '../theme/create-consent-theme';
 import type { SurfaceTree } from './harness';
 import { mountSurface, nodeStyle, roleNodes, tap } from './harness';
 
@@ -71,7 +71,7 @@ const mountDrawer = function mountDrawer(
 				saved.push(selection);
 			}}
 			open={open}
-			theme={lightTheme}
+			theme={defaultConsentTheme}
 		>
 			<ConsentIabDrawer.Header />
 			<ConsentIabDrawer.Tabs />
@@ -377,7 +377,7 @@ describe('the two tabs', () => {
 				onClose={() => {}}
 				onSave={() => {}}
 				open
-				theme={lightTheme}
+				theme={defaultConsentTheme}
 			>
 				<ConsentIabDrawer.Header />
 				<ConsentIabDrawer.Tabs />

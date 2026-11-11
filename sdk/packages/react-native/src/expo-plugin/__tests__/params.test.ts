@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { C15tPluginError } from '../errors';
 import { TRANSPORT_MODES, resolveParams } from '../params';
 import type { C15tIabPluginProps } from '../params';
+import { OFFLINE } from './helpers';
 
 const BACKEND = 'https://consent.example.com';
 
@@ -62,7 +63,7 @@ describe('resolveParams', () => {
 			);
 		}
 
-		expect(resolveParams({ mode: 'offline' }).backendURL).toBeNull();
+		expect(resolveParams(OFFLINE).backendURL).toBeNull();
 	});
 
 	it('rejects an unknown mode with the list of real ones', () => {
@@ -247,7 +248,7 @@ describe('resolveParams', () => {
 	it('has no backend host to default tracking domains to when offline', () => {
 		const resolved = resolveParams({
 			enableAppTrackingTransparency: true,
-			mode: 'offline',
+			...OFFLINE,
 			trackingUsageDescription: 'Relevant ads.',
 		});
 

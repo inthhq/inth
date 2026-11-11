@@ -43,11 +43,14 @@ export { withC15t } from './with-c15t';
 export { applyParamsOnConfig, type C15tExtraConfig } from './with-c15t';
 export { C15tPluginError } from './errors';
 export type {
+	C15tGppMspaMode,
+	C15tGppPluginProps,
 	C15tIabPluginProps,
 	C15tPluginProps,
-	C15tProviderTransportKind,
+	ConsentProviderTransportKind,
 	C15tTrackingMarkdownLocalization,
 	C15tTransportMode,
+	ResolvedC15tGppParams,
 	ResolvedC15tIabParams,
 	ResolvedC15tParams,
 } from './params';
@@ -55,3 +58,8 @@ export { TRANSPORT_MODES } from './params';
 export type { WorkflowContext } from './workflow';
 
 export type { C15tAndroidMavenRepository } from './maven';
+export type {
+	C15tThemeColorName,
+	C15tThemeColors,
+	C15tThemePluginProps,
+} from './theme';

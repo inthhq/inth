@@ -30,6 +30,7 @@ import type {
 	LocationResponse as KernelLocationResponse,
 	OptionalConsentCategory as KernelOptionalConsentCategory,
 	PolicyResolution as KernelPolicyResolution,
+	PolicyResolutionFailure as KernelPolicyResolutionFailure,
 	PromptReason as KernelPromptReason,
 	PromptRequirement as KernelPromptRequirement,
 	RestrictionReason as KernelRestrictionReason,
@@ -40,7 +41,11 @@ import { expectTypeOf } from 'vitest';
 import type { KernelCommonCopy } from '../../index';
 import type { KernelUser, NativeSavePayload } from '../commit';
 import type { NativeOverrides } from '../overrides';
-import type { ConsentSnapshot, NativeModel } from '../snapshot';
+import type {
+	ConsentSnapshot,
+	NativeModel,
+	PolicyResolutionFailure,
+} from '../snapshot';
 import type {
 	AllConsentNames,
 	CategoryDecision,
@@ -98,6 +103,7 @@ expectTypeOf<PromptRequirement>().toEqualTypeOf<KernelPromptRequirement>();
 expectTypeOf<PolicyResolutionStatus>().toEqualTypeOf<
 	KernelPolicyResolution['status']
 >();
+expectTypeOf<PolicyResolutionFailure>().toEqualTypeOf<KernelPolicyResolutionFailure>();
 
 // The record shapes: what a subject's receipts and identity look like on the wire.
 expectTypeOf<ChoiceBasis>().toEqualTypeOf<KernelChoiceBasis>();

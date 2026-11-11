@@ -96,7 +96,9 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         vendors: [Int]? = nil,
         gpc: Bool? = nil,
         bundledPolicyResource: String? = nil,
-        iab: IABConfiguration? = nil
+        policyRulesResource: String? = nil,
+        iab: IABConfiguration? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.autoBootstrap = autoBootstrap
         self.transportMode = transportMode
@@ -110,7 +112,9 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         self.vendors = vendors
         self.gpc = gpc
         self.bundledPolicyResource = bundledPolicyResource
+        self.policyRulesResource = policyRulesResource
         self.iab = iab
+        self.gpp = gpp
     }
 
     /// Whether the launch hook should start the core.
@@ -150,6 +154,9 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     public var vendors: [Int]?
     /// Filename of an endpoint-bound policy export in the main app bundle.
     public var bundledPolicyResource: String?
+    /// Filename of the in-code policy, `{"rules": [...]}`, in the main app bundle. Read
+    /// only in offline mode, where it is the only policy source.
+    public var policyRulesResource: String?
     /// The host app's Global Privacy Control signal, or `nil` when it has none.
     public var gpc: Bool?
     /// Registered CMP identity and publisher settings, or `nil` to leave IAB TCF off.
@@ -159,6 +166,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// declaration without one, or with any value out of range, leaves this `nil`
     /// and ``iabIssue(in:)`` explains why.
     public var iab: IABConfiguration?
+    /// GPP options, or `nil` to write no GPP signal. Read from the `com.c15t.gpp*` keys.
+    public var gpp: GPPOptions?
 
     /// Keys read out of `Info.plist`. All optional.
     public enum InfoPlistKey {
@@ -179,8 +188,10 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         /// `com.c15t.VENDORS` meta-data has to take, and one spelling for the same declaration on
         /// both platforms is the reason either key is readable at all.
         public static let vendors = "com.c15t.vendors"
-        public static let gpc = "com.c15t.gpc"
+        public static let forceGPC = "com.c15t.forceGPC"
         public static let bundledPolicyResource = "com.c15t.policy.resource"
+        /// Filename of the in-code policy rules, read in offline mode.
+        public static let policyRulesResource = "com.c15t.policy.rules"
         /// IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.iab.*` key is present.
         public static let iabCmpId = "com.c15t.iab.cmpId"
         /// Your CMP version, 0 to 4095. Required with ``iabCmpId``.
@@ -189,6 +200,15 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let iabPublisherCountryCode = "com.c15t.iab.publisherCountryCode"
         /// Optional consent screen number, 0 to 63. The core's default is 1.
         public static let iabConsentScreen = "com.c15t.iab.consentScreen"
+        /// `true` turns on the IAB GPP string and the `IABGPP_*` keys.
+        public static let gpp = "com.c15t.gpp"
+        /// `opt-out-option` or `service-provider`. Only for MSPA signatories.
+        public static let gppMspaMode = "com.c15t.gpp.mspaMode"
+        /// Categories whose refusal reports a GPP opt-out, as an array. Absent means
+        /// `["marketing"]`; an empty array, or the string `none`, means no category does.
+        public static let gppOptOutCategories = "com.c15t.gpp.optOutCategories"
+        /// `false` leaves the TCF EU section out of the GPP string.
+        public static let gppTCF = "com.c15t.gpp.tcf"
     }
 
     /// A key a host app may still have in `Info.plist` that this build does not model.
@@ -213,12 +233,12 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// client option that never reaches a save body, and ``ConsentOverrides`` has no
     /// property for it. ``RetiredEnvelope`` refuses a stored envelope that carries
     /// `overrides.test`; refusing the plist key here is the same rule on the way in.
-    /// `com.c15t.gpc` is offered because it is the key a host reaching for test mode
+    /// `com.c15t.forceGPC` is offered because it is the key a host reaching for test mode
     /// usually wants, and it is the GPC signal, which is a different thing: it feeds
     /// the core's detection, never ``ConsentOverrides/gpc``. The Expo config plugin
     /// writes none of these keys.
     public static let retiredInfoPlistKeys: [RetiredInfoPlistKey] = [
-        RetiredInfoPlistKey(key: "com.c15t.test", replacement: "com.c15t.gpc"),
+        RetiredInfoPlistKey(key: "com.c15t.test", replacement: "com.c15t.forceGPC"),
     ]
 
     /// The retired keys present in `infoPlist`, in declaration order.
@@ -303,16 +323,57 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             ),
             consentCategories: categories?.isEmpty == true ? nil : categories,
             vendors: declaredVendors(infoPlist[InfoPlistKey.vendors]),
-            gpc: infoPlist[InfoPlistKey.gpc] as? Bool,
+            gpc: infoPlist[InfoPlistKey.forceGPC] as? Bool,
             bundledPolicyResource: infoPlist[InfoPlistKey.bundledPolicyResource] as? String,
+            policyRulesResource: infoPlist[InfoPlistKey.policyRulesResource] as? String,
             iab: (try? declaredIAB(in: infoPlist).get()).flatMap { $0 }.map { declared in
                 // The backend serves disclosures in `language`; the TC String and the screens
                 // declare the same one. Codes TCF can't carry keep the default EN.
                 var configuration = declared
                 if let code = iabConsentLanguage(language) { configuration.consentLanguage = code }
                 return configuration
-            }
+            },
+            gpp: declaredGPP(in: infoPlist)
         )
+    }
+
+    /// Read the GPP options a host declared: `nil` unless `com.c15t.gpp` is `true`.
+    ///
+    /// An MSPA mode this build does not name reads as no mode, which reports the
+    /// transaction as not covered rather than claiming a coverage nobody configured.
+    public static func declaredGPP(in infoPlist: [String: Any]) -> GPPOptions? {
+        guard infoPlist[InfoPlistKey.gpp] as? Bool == true else { return nil }
+        return GPPOptions(
+            mspaMode: (infoPlist[InfoPlistKey.gppMspaMode] as? String).flatMap(GPPMspaMode.init(rawValue:)),
+            optOutCategories: declaredGPPOptOutCategories(infoPlist[InfoPlistKey.gppOptOutCategories]),
+            tcf: infoPlist[InfoPlistKey.gppTCF] as? Bool ?? true
+        )
+    }
+
+    /// `com.c15t.gpp.optOutCategories`, keeping "not set" apart from "set to empty".
+    ///
+    /// An absent key keeps the default, `marketing`. A present key is the app's list: an
+    /// empty array, a blank string or `none` is the empty list, meaning no category drives
+    /// the sale, sharing and targeted advertising opt-outs, as `GPPOptions(optOutCategories: [])`
+    /// and web's `optOutCategories: []` mean. A string is read as comma-separated ids, the
+    /// shape Android's metadata takes. Names this build does not model are dropped.
+    public static func declaredGPPOptOutCategories(_ raw: Any?) -> [ConsentCategory] {
+        guard let raw else { return [.marketing] }
+        let names: [String]
+        switch raw {
+        case let list as [String]:
+            names = list
+        case let text as String:
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed.lowercased() == "none" { return [] }
+            names = trimmed.components(separatedBy: ",")
+        default:
+            return [.marketing]
+        }
+        var seen = Set<ConsentCategory>()
+        return names
+            .compactMap { ConsentCategory(rawValue: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            .filter { seen.insert($0).inserted }
     }
 
     /// A language tag as a TCF consent language: its primary subtag in two uppercase letters, or
@@ -479,7 +540,23 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         try? appleConfiguration(fileStoreDirectory: nil).makeTransport()
     }
 
+    /// The in-code policy the app declared, or why it was refused. `nil` when none is declared.
+    var declaredPolicy: Result<ConsentPolicy, Error>? {
+        guard let name = policyRulesResource else { return nil }
+        let result = Result<ConsentPolicy, Error> {
+            guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
+                throw ConsentPolicyError("\(InfoPlistKey.policyRulesResource) names \(name), which is not in the app bundle")
+            }
+            return try ConsentPolicy(json: Data(contentsOf: url))
+        }
+        if case let .failure(error) = result {
+            NSLog("%@", "c15t: \(InfoPlistKey.policyRulesResource) refused: \(error). c15t reports policy-invalid and denies optional categories.")
+        }
+        return result
+    }
+
     fileprivate func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
+        let declared = declaredPolicy
         let transport: C15tAppleConfiguration.Transport
         switch transportMode {
         case .disabled: transport = .disabled
@@ -487,7 +564,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         case .hosted: transport = backendURL.map(C15tAppleConfiguration.Transport.hosted) ?? .offline
         case .selfHosted: transport = backendURL.map(C15tAppleConfiguration.Transport.selfHosted) ?? .offline
         }
-        return C15tAppleConfiguration(
+        var configuration = C15tAppleConfiguration(
             transport: transport, storage: appleStorage(fileStoreDirectory: fileStoreDirectory),
             initURL: initURL, domain: domain, consentCategories: consentCategories,
             vendors: vendors, overrides: overrides, gpc: gpc,
@@ -495,8 +572,18 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
                 guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
                 return BundledPolicyResource(url: url, endpoint: endpoint)
             },
-            iab: iab
+            policy: try? declared?.get(),
+            policyError: declared.flatMap { result in
+                if case let .failure(error) = result { return String(describing: error) }
+                return nil
+            },
+            iab: iab,
+            gpp: gpp
         )
+        // A core this bridge configures serves a React Native app, so requests say `rn`,
+        // as the Android binding does.
+        configuration.platform = "rn"
+        return configuration
     }
 }
 

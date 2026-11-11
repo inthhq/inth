@@ -135,6 +135,18 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertFalse(button("c15t.first-layer.accept-all").exists)
         XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
     }
+    /// The demo hosts the one-line `.c15tConsent` modifier, so this is the default auto-present path.
+    func test22AutoPresentedPromptStaysClosedAfterAnAnswerAndAForeground() {
+        launch()
+        XCTAssertTrue(button("c15t.first-layer.reject-all").waitForExistence(timeout: 10), "an owed prompt presents by itself")
+        button("c15t.first-layer.reject-all").tap()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 5))
+        XCUIDevice.shared.press(.home)
+        app.activate()
+        XCTAssertTrue(button("fixture.open-preferences").waitForExistence(timeout: 10))
+        XCTAssertFalse(button("c15t.first-layer.reject-all").waitForExistence(timeout: 2), "an answered prompt is not presented again")
+        XCTAssertEqual(app.staticTexts["fixture.state.explicit-choice"].label, "recorded")
+    }
     func test02CustomDraftRefusalRetryAndStandingSettings() {
         launch(fail: true)
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10)); button("c15t.first-layer.customize").tap()
@@ -651,8 +663,8 @@ final class ConsentJourneyTests: XCTestCase {
         XCTAssertTrue(button("c15t.first-layer.customize").waitForExistence(timeout: 10))
         // Names, roles and states on the first layer.
         for id in ["c15t.first-layer.reject-all", "c15t.first-layer.accept-all", "c15t.first-layer.customize"] { assertNamed(button(id), id) }
-        XCTAssertEqual(button("c15t.first-layer.reject-all").label, "Reject all")
-        XCTAssertEqual(button("c15t.first-layer.accept-all").label, "Accept all")
+        XCTAssertEqual(button("c15t.first-layer.reject-all").label, "Reject All")
+        XCTAssertEqual(button("c15t.first-layer.accept-all").label, "Accept All")
         XCTAssertEqual(app.descendants(matching: .any)["c15t.first-layer.branding"].firstMatch.label, "Secured by c15t")
         // The brand mark is decorative: the brand name is announced once, not once per image.
         let brandLabels = labelled().filter { $0.label == "Your brand here" }
@@ -663,10 +675,10 @@ final class ConsentJourneyTests: XCTestCase {
         let measurement = app.switches["c15t.prefs.category.measurement.switch"]
         reveal(measurement)
         // Switch rows carry their category name and state.
-        XCTAssertTrue(measurement.label.contains("Measurement"), measurement.label)
+        XCTAssertTrue(measurement.label.contains("Analytics"), measurement.label)
         XCTAssertEqual(measurement.value as? String, "0")
         let locked = app.descendants(matching: .any)["c15t.prefs.category.necessary.locked"].firstMatch
-        XCTAssertTrue(locked.label.contains("Strictly necessary") && locked.label.contains("Always on"), locked.label)
+        XCTAssertTrue(locked.label.contains("Strictly Necessary") && locked.label.contains("Always on"), locked.label)
         // Opened from the first layer, the bar's leading action goes back to it and is named so.
         XCTAssertEqual(button("c15t.prefs.cancel").label, "Back")
         audit("ax-preferences")

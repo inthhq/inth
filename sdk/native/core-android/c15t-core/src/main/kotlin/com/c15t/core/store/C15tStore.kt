@@ -76,11 +76,11 @@ class C15tStore(
 
 	/** Only the core may supply a live, validated authority for a repair publication. */
 	@Synchronized
-	internal fun publishTcStorageBus(envelope: SnapshotEnvelope?) {
+	internal fun publishTcStorageBus(envelope: SnapshotEnvelope?, gpp: Map<String, TcBusValue> = emptyMap()) {
 		val bus = tcStorageBus ?: return
 		try {
 			val values = if (envelope == null) TcStorageBusProjection.detection(busConfiguration)
-				else TcStorageBusProjection.values(envelope, busConfiguration)
+				else TcStorageBusProjection.values(envelope, busConfiguration) + gpp
 			if (values.isEmpty()) bus.clear() else bus.write(values)
 		} catch (_: Exception) {
 			try { bus.clear() } catch (_: Exception) { /* Next publication retries. */ }
@@ -294,7 +294,7 @@ class C15tStore(
 		publishTcStorageBus(null)
 	}
 
-	/** Repair metadata only. Use [com.c15t.core.C15tKernel.rebuildTcStorageBus] to restore
+	/** Repair metadata only. Use [com.c15t.core.ConsentCore.rebuildTcStorageBus] to restore
 	 * consent rows after current clock, list, configuration and identity validation. */
 	@Synchronized
 	fun rebuildTcStorageBus() {

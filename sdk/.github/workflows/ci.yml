@@ -451,13 +451,15 @@ jobs:
             --staging-repository native/core-android/build/maven-staging \
             --version "${native_version}" --rn-package "${RUNNER_TEMP}/c15t-react-native.tgz" \
             --output "${RUNNER_TEMP}/c15t-packed-android-consumer"
-      - name: Assemble the React Native Android binding
+      - name: Test and assemble the React Native Android binding
         if: matrix.kind == 'android-js'
         env:
           C15T_MAVEN_URL: file://${{ github.workspace }}/native/core-android/build/maven-staging
+        # The unit tests hold the bridge's JSON to native/protocol/bridge/payloads.json
+        # (BridgeSchemaTest), so a Kotlin-only key rename fails here rather than on a device.
         run: |
           cd packages/react-native/android
-          ./gradlew :c15t-react-native:assembleRelease --console=plain
+          ./gradlew :c15t-react-native:testDebugUnitTest :c15t-react-native:assembleRelease --console=plain
       - name: Compile oldest and current packed React Native consumers
         if: matrix.kind == 'android-js'
         run: |

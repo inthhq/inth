@@ -384,3 +384,8 @@ export {
 	IABUnavailableError,
 	policyNeedsIAB,
 } from './libs/iab-unavailable';
+export type {
+	WebViewConsentSource,
+	WebViewConsentState,
+} from './runtime/webview-consent-source';
+export { webViewConsentSource } from './runtime/webview-consent-source';

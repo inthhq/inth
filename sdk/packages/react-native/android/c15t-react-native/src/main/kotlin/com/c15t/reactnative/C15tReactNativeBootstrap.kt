@@ -7,6 +7,7 @@ import com.c15t.android.C15tManifestValue
 import com.c15t.core.C15t
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.KernelOverrides
+import com.c15t.core.transport.C15tProtocol
 import java.util.Locale
 
 /**
@@ -41,7 +42,7 @@ object C15tReactNativeBootstrap {
 		if (!autoBootstrapEnabled(context)) {
 			return false
 		}
-		val config = C15tAndroid.configFrom(context)?.withDeviceLanguage() ?: return false
+		val config = C15tAndroid.configFrom(context)?.withDeviceLanguage()?.forReactNative() ?: return false
 		synchronized(lock) {
 			if (C15t.current != null) {
 				return true
@@ -93,6 +94,15 @@ object C15tReactNativeBootstrap {
 			iab = iab?.let { declared -> iabConsentLanguage(language)?.let { declared.copy(consentLanguage = it) } ?: declared },
 		)
 	}
+
+	/**
+	 * Report React Native as the host platform in `x-c15t-platform`.
+	 *
+	 * The core defaults to `android`, which is right for a Kotlin app. A core this binding
+	 * installs answers for a React Native app, so the backend attributes it to `rn`. An app
+	 * that turns `AUTO_BOOTSTRAP` off and installs its own core chooses its own platform.
+	 */
+	internal fun NativeConfig.forReactNative(): NativeConfig = copy(platform = C15tProtocol.PLATFORM_REACT_NATIVE)
 
 	/** A language tag as a TCF consent language: two uppercase letters, or null when it has none. */
 	internal fun iabConsentLanguage(tag: String): String? =

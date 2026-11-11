@@ -27,12 +27,37 @@ final class AnalyticsIntegrationTests: XCTestCase {
         XCTAssertEqual(core.save(.custom([.measurement: true])).status, .committed)
         XCTAssertEqual(recorder.events, [.collection(false), .consent(true), .collection(true)])
         recorder.clear()
-        XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
+        XCTAssertEqual(core.save(.custom([.experience: true])).status, .committed)
         XCTAssertTrue(recorder.events.isEmpty)
 
         XCTAssertEqual(core.save(.necessary).status, .committed)
         XCTAssertEqual(recorder.events, [.collection(false), .consent(false)])
         integration.cancel()
+        await core.waitUntilIdle()
+    }
+
+    func testFirebaseGrantsAdvertisingFromMarketingAsTheWebDoes() async throws {
+        let core = try await resolvedCore()
+        let recorder = AnalyticsCalls()
+        let integration = firebase(core, recorder)
+        recorder.clear()
+
+        XCTAssertEqual(core.save(.custom([.marketing: true])).status, .committed)
+        XCTAssertEqual(recorder.events, [.collection(false), .consent(false)])
+        XCTAssertEqual(
+            recorder.consents.last,
+            FirebaseAnalyticsConsent(analyticsStorage: false, adStorage: true, adUserData: true, adPersonalization: true))
+
+        XCTAssertEqual(core.save(.all).status, .committed)
+        XCTAssertEqual(
+            recorder.consents.last,
+            FirebaseAnalyticsConsent(analyticsStorage: true, adStorage: true, adUserData: true, adPersonalization: true))
+        XCTAssertEqual(recorder.events.last, .collection(true))
+
+        integration.cancel()
+        XCTAssertEqual(
+            recorder.consents.last,
+            FirebaseAnalyticsConsent(analyticsStorage: false, adStorage: false, adUserData: false, adPersonalization: false))
         await core.waitUntilIdle()
     }
 
@@ -499,30 +524,6 @@ final class AnalyticsIntegrationTests: XCTestCase {
     private func posthog(_ core: ConsentCore, _ recorder: AnalyticsCalls) -> PostHogIntegration {
         PostHogIntegration(core: core, optIn: { recorder.append(.optIn) }, optOut: { recorder.append(.optOut) })
     }
-
-    private func resolvedCore(store: InMemoryStore = InMemoryStore()) async throws -> ConsentCore {
-        let core = ConsentCore()
-        try await bootstrap(core, store: store)
-        return core
-    }
-
-    private func bootstrap(_ core: ConsentCore, store: InMemoryStore = InMemoryStore()) async throws {
-        let transport = HostedTransport(baseURL: URL(string: "https://consent.example.com")!, client: try AnalyticsFixtureHTTP())
-        core.bootstrap(config(store: store, transport: transport))
-        await core.waitUntilIdle()
-        XCTAssertTrue(core.isReady())
-    }
-
-    private func config(store: InMemoryStore, transport: (any C15tTransport)? = nil) -> CoreConfig {
-        CoreConfig(
-            store: store,
-            transport: transport,
-            consentCategories: [.necessary, .measurement, .marketing, .experience],
-            now: { 1_770_000_000_000 },
-            initRetry: .disabled,
-            flushPendingOnBootstrap: false
-        )
-    }
 }
 
 private enum AnalyticsCall: Equatable, Sendable {
@@ -601,17 +602,5 @@ private final class FirebaseIntegrationReference: @unchecked Sendable {
     var value: FirebaseAnalyticsIntegration? {
         get { lock.lock(); defer { lock.unlock() }; return integration }
         set { lock.lock(); defer { lock.unlock() }; integration = newValue }
-    }
-}
-
-private final class AnalyticsFixtureHTTP: HTTPTransport, @unchecked Sendable {
-    private let body: Data
-    init() throws {
-        let url = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../protocol/native-envelope-opt-in-grants.json")
-        let fixture = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: url))
-        body = try JSONEncoder().encode(XCTUnwrap(fixture["input"]?["transport"]?["body"]))
-    }
-    func send(_ request: HTTPRequest) async throws -> HTTPResponse {
-        HTTPResponse(status: 200, body: request.method == .get ? body : Data("{}".utf8))
     }
 }

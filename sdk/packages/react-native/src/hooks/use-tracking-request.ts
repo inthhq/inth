@@ -114,7 +114,7 @@ export interface TrackingRequest {
  * having refused.
  *
  * Apple's answer stays Apple's answer. Pressing Allow writes no consent, and this hook never
- * calls {@link ConsentActions.acceptAll} or saves a category on the strength of a platform
+ * calls `useSaveConsents()` or saves a category on the strength of a platform
  * yes. Consent still comes from the c15t surfaces, and a category that is still unresolved
  * after the journey is still unresolved: the tracking gate reads it as off, which is the
  * point of {@link useIsTrackingAllowed}.
@@ -259,7 +259,10 @@ export const useTrackingRequest = function useTrackingRequest(
 		// reported a pause without showing anything, which would otherwise recurse as
 		// fast as the bridge answers.
 		const turn = async (remaining: number): Promise<TrackingRequestPayload> => {
-			const outcome = await client.requestTracking();
+			// This journey handles Additional Information, so Apple may show the button.
+			const outcome = await client.requestTracking({
+				additionalInformation: true,
+			});
 
 			if (!isAdditionalInformationPause(outcome) || remaining <= 1) {
 				return outcome;

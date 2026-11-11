@@ -135,7 +135,7 @@ class DurableCategorySaveTest {
 			.respondSave(SaveOutcome.Unavailable("offline"))
 		val core = testKernel(store = store, transport = transport)
 		core.bootstrap()
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
 		val prior = store.readPending().single()
 		val envelope = assertNotNull(store.readEnvelope())
 		backend.write(C15tStoreKeys.SNAPSHOT,
@@ -148,7 +148,7 @@ class DurableCategorySaveTest {
 		val duringWrite = mutableListOf<ConsentSnapshot>()
 		backend.beforeSnapshotWrite = { duringWrite += core.snapshot() }
 
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
 
 		assertEquals(before, duringWrite.first(), "authority must stay old until the durable write returns")
 		backend.beforeSnapshotWrite = null

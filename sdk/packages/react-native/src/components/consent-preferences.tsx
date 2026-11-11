@@ -11,7 +11,7 @@ import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { useConsentActions } from '../hooks/use-consent-actions';
+import { useSaveConsents } from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import { ConsentBrandingTag } from './internal/branding-tag';
 import {
@@ -96,7 +96,7 @@ const ConsentPreferencesContent = ({
 	copy,
 	onRequestClose,
 }: ConsentPreferencesContentProps): ReactNode => {
-	const actions = useConsentActions();
+	const saveConsents = useSaveConsents();
 	const rows = useConsentSelector(
 		selectConsentCategoryRows,
 		isConsentCategoryRowsEqual
@@ -120,7 +120,7 @@ const ConsentPreferencesContent = ({
 		let written = false;
 
 		try {
-			written = (await actions.save(selection.commitSelection())).ok;
+			written = (await saveConsents(selection.commitSelection())).ok;
 			setSaveFailed(!written);
 		} catch {
 			setSaveFailed(true);
@@ -159,9 +159,7 @@ const ConsentPreferencesContent = ({
 		let written = false;
 
 		try {
-			written = (
-				await (choice === 'accept' ? actions.acceptAll() : actions.rejectAll())
-			).ok;
+			written = (await saveConsents(choice === 'accept' ? 'all' : 'none')).ok;
 			setSaveFailed(!written);
 		} catch {
 			setSaveFailed(true);
@@ -287,7 +285,7 @@ export const ConsentPreferences = ({
 			label={copy.securedBy}
 			parts={surface.parts}
 			presentation={presentation}
-			radius={surface.theme.radius.surface}
+			radius={surface.theme.radius.lg}
 		/>
 	);
 

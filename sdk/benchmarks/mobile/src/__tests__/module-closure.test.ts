@@ -29,6 +29,23 @@ const ENTRY = join(DIST_DIR, 'index.js');
 // The same entry a consumer resolves, and the same root the measurement passes.
 const closure = walkModuleClosure(ENTRY, REPO_ROOT);
 
+describe('development-only diagnostics', () => {
+	// The bridge schema table and its drift checker warn about renamed keys while an
+	// app is in development. The client loads them inside an `if (__DEV__)` branch,
+	// which Metro folds away in a release bundle, import and all.
+	const SCHEMA = join(DIST_DIR, 'protocol', 'bridge-schema.js');
+
+	it('keeps the bridge schema out of the release closure', () => {
+		expect(existsSync(SCHEMA), `run the build first: ${SCHEMA}`).toBe(true);
+		expect(closure.files).not.toContain(SCHEMA);
+	});
+
+	it('still loads it in a development build, so the guard is what removes it', () => {
+		const development = walkModuleClosure(ENTRY, REPO_ROOT, 'development');
+		expect(development.files).toContain(SCHEMA);
+	});
+});
+
 describe('walking the built entry', () => {
 	it('starts from an entry that exists, because a stale dist fakes a small closure', () => {
 		expect(existsSync(ENTRY), `run the build first: ${ENTRY}`).toBe(true);

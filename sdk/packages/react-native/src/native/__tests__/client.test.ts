@@ -69,6 +69,38 @@ afterEach(() => {
 });
 
 describe('handshake', () => {
+	// A JavaScript-only update can run over a binary that ignores a commit's
+	// `revision`. Its silence must read as "unchecked", so a draft never trusts it.
+	test.each([
+		['absent', undefined, false],
+		['false', false, false],
+		['true', true, true],
+		['not a boolean', 'true', false],
+	])(
+		'reads a %s commitRevision flag as %s',
+		(_label, commitRevision, expected) => {
+			const { client } = makeClient({
+				bootstrap: { ...FAKE_BOOTSTRAP, commitRevision },
+			});
+			expect(client.bootstrap.commitRevision).toBe(expected);
+		}
+	);
+
+	// A JavaScript-only update can run over a binary built before `nativeUI` existed.
+	// That binary links the stock screens, so its silence must read as `true`;
+	// only an explicit `false` from a `c15t.nativeUI=false` build means they are out.
+	test.each([
+		['absent', undefined, true],
+		['false', false, false],
+		['true', true, true],
+		['not a boolean', 'false', true],
+	])('reads a %s nativeUI flag as %s', (_label, nativeUI, expected) => {
+		const { client } = makeClient({
+			bootstrap: { ...FAKE_BOOTSTRAP, nativeUI },
+		});
+		expect(client.bootstrap.nativeUI).toBe(expected);
+	});
+
 	test('reads the bootstrap payload once per app', () => {
 		const fake = createFakeNativeModule();
 
@@ -362,6 +394,21 @@ describe('wire drift', () => {
 		vi.restoreAllMocks();
 	});
 
+	test('an older binary without promptOwedSince reads as null and is not drift', () => {
+		const warnings = captureWarnings();
+		const { promptOwedSince: _omitted, ...older } = buildSnapshot({
+			revision: 4,
+		});
+		const { client } = makeClient({
+			snapshot: older as unknown as ConsentSnapshot,
+		});
+
+		expect(client.getSnapshot().promptOwedSince).toBeNull();
+		expect(client.getSnapshot().revision).toBe(4);
+		expect(warnings.warn).not.toHaveBeenCalled();
+		warnings.restore();
+	});
+
 	test('names a key the native bridge renamed', () => {
 		const warnings = captureWarnings();
 		const { client } = makeClient({ snapshot: drifted() });
@@ -382,6 +429,29 @@ describe('wire drift', () => {
 		expect(problems).toContain(
 			'location.country: the kernel owns these key names and does not use "country" here'
 		);
+	});
+
+	test('fills gppString with null for a binary built before it existed, without drift', () => {
+		const warnings = captureWarnings();
+		// The shape a protocol-1 binary from before GPP sends: no gppString key at all.
+		const { gppString: _absent, ...older } = buildSnapshot();
+		const { client } = makeClient({ snapshot: older as ConsentSnapshot });
+
+		const snapshot = client.getSnapshot();
+
+		expect(Object.hasOwn(snapshot, 'gppString')).toBe(true);
+		expect(snapshot.gppString).toBeNull();
+		expect(warnings.warn).not.toHaveBeenCalled();
+	});
+
+	test('keeps a gppString the native build sent', () => {
+		const warnings = captureWarnings();
+		const { client } = makeClient({
+			snapshot: buildSnapshot({ gppString: 'DBABLA~CVQqAAAAAACA.QA' }),
+		});
+
+		expect(client.getSnapshot().gppString).toBe('DBABLA~CVQqAAAAAACA.QA');
+		expect(warnings.warn).not.toHaveBeenCalled();
 	});
 
 	test('warns once while the same broken snapshot stays current', () => {

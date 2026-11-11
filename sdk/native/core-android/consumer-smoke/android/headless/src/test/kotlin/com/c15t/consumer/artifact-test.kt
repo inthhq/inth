@@ -16,7 +16,8 @@ class ArtifactTest {
         }
         assertEquals(expected, metadata.getProperty("version"))
         assertEquals(expected, NativeConfig("https://consent.example.com").sdkVersion)
-        assertEquals(C15tProtocol.VERSION_PREFIX + expected, C15tProtocol.protocolHeaders()[C15tProtocol.VERSION_HEADER])
+        assertEquals(expected, C15tProtocol.protocolHeaders()[C15tProtocol.VERSION_HEADER])
+        assertEquals("android->$expected", C15tProtocol.protocolHeaders(platform = C15tProtocol.PLATFORM_ANDROID)[C15tProtocol.PLATFORM_HEADER])
         assertFalse(C15t.isAllowed(ConsentCategory.MARKETING))
     }
 }

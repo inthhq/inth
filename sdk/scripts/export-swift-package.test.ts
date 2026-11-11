@@ -22,8 +22,7 @@ import { exportSwiftPackage } from './export-swift-package';
 
 const nativeRoot = 'native/core-swift';
 const sourcePath = `${nativeRoot}/Sources/C15tCore/Transports.swift`;
-const core =
-	'public enum c15t { public static let version = "3.0.0-alpha.1" }\n';
+const core = 'extension C15t { public static let version = "3.0.0-alpha.1" }\n';
 const manifest = `// swift-tools-version:5.9
 import PackageDescription
 let package = Package(
@@ -172,6 +171,11 @@ describe('Swift source distribution', () => {
 			repo.write(path, 'must not ship');
 		}
 		repo.write(`${nativeRoot}/Resources/binary.dat`, Buffer.from([0, 255, 10]));
+		repo.write(
+			`${nativeRoot}/AGENTS.md`,
+			'# c15t for Swift: notes for coding agents\n'
+		);
+		repo.write('AGENTS.md', '# Monorepo contributor guide\n');
 		const sourceCommit = repo.commit();
 		repo.write(sourcePath, 'uncommitted source must not ship');
 		repo.write(`${nativeRoot}/Sources/C15tCore/untracked.swift`, 'untracked');
@@ -202,6 +206,11 @@ describe('Swift source distribution', () => {
 		).toBe(false);
 		expect(exported).not.toContain(`${nativeRoot}/C15tCore.podspec`);
 		expect(exported).not.toContain(`${nativeRoot}/CHANGELOG.md`);
+		// The consumer notes ship; the monorepo's contributor AGENTS.md does not.
+		expect(readFileSync(join(repo.output, `${nativeRoot}/AGENTS.md`))).toEqual(
+			repo.read(`${nativeRoot}/AGENTS.md`)
+		);
+		expect(exported).not.toContain('AGENTS.md');
 		expect(
 			readFileSync(join(repo.output, `${nativeRoot}/Package.swift`))
 		).toEqual(repo.read(`${nativeRoot}/Package.swift`));
@@ -229,7 +238,9 @@ describe('Swift source distribution', () => {
 		]) {
 			expect(root).toContain(`path: "${nativeRoot}/Tests/${name}"`);
 		}
-		expect(root).toContain('dependencies: ["C15tConsentUI", "C15tCore"]');
+		expect(root).toContain(
+			'dependencies: ["C15tConsentUI", "C15tCore", "C15tApple"]'
+		);
 		const testDirectory = join(
 			repo.output,
 			`${nativeRoot}/Tests/C15tCoreTests`
@@ -438,7 +449,7 @@ describe('Swift source distribution', () => {
 		repo.write(sourcePath, core.replace('3.0.0-alpha.1', 'not-a-version'));
 		repo.commit();
 		expect(() => exportSwiftPackage({ ...repo, ref: 'HEAD' })).toThrow(
-			'valid c15t.version'
+			'valid C15t.version'
 		);
 		expect(() => exportSwiftPackage({ ...repo, ref: '--not-a-ref' })).toThrow();
 		expect(existsSync(repo.output)).toBe(false);

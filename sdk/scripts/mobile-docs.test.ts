@@ -107,6 +107,26 @@ test('the mobile bundle covers every public mobile guide and advertises native s
 	}
 });
 
+test('the mobile bundle includes every integration guide for a mobile helper', () => {
+	const config = PACKAGE_DOCS_CONFIGS.find(
+		(entry) => entry.name === '@c15t/react-native'
+	);
+	const included = new Set(
+		fg.sync(config?.include ?? [], { cwd: resolve(root, 'docs') })
+	);
+	// A guide that names a mobile helper package documents an export of the
+	// tarball, so it must ship with it.
+	const mobileHelper =
+		/@c15t\/react-native\/integrations|`C15tApple`|com\.c15t\.android\.integrations/u;
+	const guides = fg
+		.sync('integrations/*.mdx', { cwd: resolve(root, 'docs') })
+		.filter((file) =>
+			mobileHelper.test(readFileSync(resolve(root, 'docs', file), 'utf8'))
+		);
+	expect(guides.length).toBeGreaterThan(5);
+	expect(guides.filter((file) => !included.has(file))).toEqual([]);
+});
+
 test('mobile setup examples come from checked source and survive Markdown conversion', async () => {
 	const regions = collectExampleRegions(root);
 	await Promise.all(
@@ -136,4 +156,55 @@ test('mobile setup examples come from checked source and survive Markdown conver
 			}
 		)
 	);
+});
+
+test('mobile comparison claims say what ships today, not what is coming', () => {
+	const pages = [
+		'docs/shared/comparisons/mobile-c15t.mdx',
+		'docs/comparisons/didomi.mdx',
+		'docs/comparisons/onetrust.mdx',
+		'docs/comparisons/usercentrics.mdx',
+	];
+	for (const page of pages) {
+		const source = readFileSync(resolve(root, page), 'utf8');
+		// A forecast goes stale when the work lands; the release checklist updates state.
+		expect(source, page).not.toMatch(
+			/in development|coming soon|planned|on the roadmap/iu
+		);
+		// A missing feature points at the public availability page.
+		const missing = source
+			.split('\n')
+			.filter(
+				(line) => line.startsWith('|') && /not in the prerelease/iu.test(line)
+			);
+		const pointed = missing.filter((line) =>
+			line.includes('(/docs/guides/mobile-status#first-release-scope)')
+		);
+		expect(pointed, page).toEqual(missing);
+	}
+});
+
+/**
+ * Pages on the private repository: the repository itself and any pull request or
+ * issue in the `inthhq` organisation. The Maven package host
+ * (`maven.pkg.github.com/inthhq/c15t-private`) is a dependency source, not a page,
+ * so a host label before `github.com` does not count.
+ */
+const PRIVATE_REPO_PAGE =
+	/(?<![\w.-])github\.com\/inthhq\/(?:c15t-private\b|[\w.-]+\/(?:pull|issues)\/\d)/iu;
+
+test('docs never link to the private repository, which c15t.com readers cannot open', async () => {
+	expect(
+		PRIVATE_REPO_PAGE.test('https://github.com/inthhq/c15t-private/pull/1')
+	).toBe(true);
+	expect(PRIVATE_REPO_PAGE.test('github.com/inthhq/other/issues/2')).toBe(true);
+	expect(
+		PRIVATE_REPO_PAGE.test('https://maven.pkg.github.com/inthhq/c15t-private')
+	).toBe(false);
+	const files = await fg('docs/**/*.{md,mdx}', { cwd: root });
+	expect(files.length).toBeGreaterThan(0);
+	const linked = files.filter((file) =>
+		PRIVATE_REPO_PAGE.test(readFileSync(resolve(root, file), 'utf8'))
+	);
+	expect(linked).toEqual([]);
 });

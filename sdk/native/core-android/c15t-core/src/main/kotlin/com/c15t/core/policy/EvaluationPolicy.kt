@@ -2,6 +2,7 @@ package com.c15t.core.policy
 
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentModel
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /** The prompt a policy asks for. */
@@ -15,6 +16,38 @@ enum class PolicyPrompt(val wireName: String) {
 	companion object {
 		/** Parse a wire value, returning `null` for unknown values. */
 		fun fromWireName(value: String?): PolicyPrompt? = entries.firstOrNull { it.wireName == value }
+	}
+}
+
+/**
+ * A persistent right the matched rule keeps reachable: `PolicyRight` in
+ * `packages/schema/src/shared/policy-rule.ts`.
+ */
+@Serializable
+enum class PolicyRight(val wireName: String) {
+	@SerialName("disclosure")
+	DISCLOSURE("disclosure"),
+
+	@SerialName("preferences")
+	PREFERENCES("preferences"),
+
+	@SerialName("opt-out")
+	OPT_OUT("opt-out"),
+	;
+
+	companion object {
+		/** Parse a wire value, returning `null` for unknown values. */
+		fun fromWireName(value: String?): PolicyRight? = entries.firstOrNull { it.wireName == value }
+
+		/**
+		 * The rights every rule of [model] carries: `requiredPolicyRights` in
+		 * `packages/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
+		 */
+		fun requiredFor(model: ConsentModel): List<PolicyRight> = when (model) {
+			ConsentModel.NONE -> emptyList()
+			ConsentModel.OPT_OUT -> listOf(DISCLOSURE, OPT_OUT, PREFERENCES)
+			else -> listOf(DISCLOSURE, PREFERENCES)
+		}
 	}
 }
 
@@ -73,6 +106,15 @@ data class EvaluationPolicy(
 	 * answer it used to give until the next `/init` serves the real one.
 	 */
 	val noticeFingerprint: String = choiceFingerprint,
+	/**
+	 * The rule's persistent rights, which decide whether a GPP US section applies and
+	 * which notices it reports. See [com.c15t.core.gpp.GppResolver].
+	 *
+	 * An envelope stored before this key existed reads the rights the schema requires
+	 * for [model], which is every right such a rule can carry except ones a host added
+	 * to a `none` rule. The next `/init` serves the real set.
+	 */
+	val rights: List<PolicyRight> = PolicyRight.requiredFor(model),
 ) {
 	/**
 	 * The categories the choice prompt asks about, in canonical order.

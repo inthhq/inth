@@ -1,6 +1,6 @@
 package com.c15t.android
 
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.NativeConfig
 import com.c15t.core.crypto.AesGcmCodec
 import com.c15t.core.model.ConsentCategory
@@ -119,8 +119,8 @@ class KeyLossIdentityTest {
 		assertEquals(0, idsMinted)
 	}
 
-	private fun kernel(store: C15tStore): C15tKernel = C15tKernel(
-		config = NativeConfig(portalUrl = "https://test.c15t.app"),
+	private fun kernel(store: C15tStore): ConsentCore = ConsentCore(
+		config = NativeConfig(backendUrl = "https://test.c15t.app"),
 		store = store,
 		// Inline execution keeps hydration inside bootstrap(), so one launch reads as
 		// one synchronous block and the assertions cannot race a background thread.

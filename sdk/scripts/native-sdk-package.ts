@@ -32,6 +32,8 @@ const nativeInputs = function nativeInputs(kind: NativeSdkKind) {
 			'Package.swift',
 			'native/core-swift/Package.swift',
 			'native/core-swift/README.md',
+			// Exported with the package for agents in consumer apps.
+			'native/core-swift/AGENTS.md',
 			'native/core-swift/Sources',
 			'native/core-swift/Tests',
 			'native/examples/consent-demo/fixtures',

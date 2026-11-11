@@ -14,10 +14,104 @@
  * which keeps it honest about files a bundler includes but a cold launch might skip,
  * and it names what it could not resolve instead of dropping it, because a silent
  * skip here would understate the number it exists to measure.
+ *
+ * Each file is read the way Metro reads it for a release bundle: `__DEV__` inlined as
+ * `false` and constant branches folded, with Metro's own plugins. An import inside an
+ * `if (__DEV__)` branch is gone by the time Metro collects dependencies, so it is not
+ * an edge of a release app, and counting it would overstate what an app carries.
  */
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
+
+// Metro's plugins are dev dependencies of the React Native package, which is what
+// they model. A benchmark package cannot declare a dependency its base revision
+// lacks (scripts/benchmark-overlay.ts), so this resolves them from there.
+const require = createRequire(
+	new URL('../../../../packages/react-native/package.json', import.meta.url)
+);
+
+/** Which Metro build the walk models. */
+export type ClosureBuild = 'release' | 'development';
+
+interface BabelResult {
+	readonly ast?: unknown;
+	readonly code?: string | null;
+}
+
+/** The Babel options this walk passes: no project config, one plugin list. */
+interface BabelOptions {
+	readonly ast: true;
+	readonly babelrc: false;
+	readonly code: true;
+	readonly configFile: false;
+	readonly plugins: readonly unknown[];
+	readonly sourceType: 'module';
+}
+
+interface Babel {
+	readonly transformSync: (
+		code: string,
+		options: BabelOptions
+	) => BabelResult | null;
+	readonly transformFromAstSync: (
+		ast: unknown,
+		code: string,
+		options: BabelOptions
+	) => BabelResult | null;
+}
+
+interface MetroPlugins {
+	readonly constantFoldingPlugin: unknown;
+	readonly inlinePlugin: unknown;
+}
+
+const babel = require('@babel/core') as Babel;
+const metroPlugins = require('metro-transform-plugins') as MetroPlugins;
+
+const BABEL_OPTIONS = {
+	ast: true,
+	babelrc: false,
+	code: true,
+	configFile: false,
+	sourceType: 'module',
+} as const;
+
+/**
+ * The source Metro collects dependencies from: `__DEV__` and `process.env.NODE_ENV`
+ * inlined for `build`, then constant expressions folded, in the two passes Metro's
+ * transform worker runs.
+ *
+ * @param text - A built module.
+ * @param build - The Metro build to model.
+ * @returns The transformed source.
+ */
+export const metroSource = function metroSource(
+	text: string,
+	build: ClosureBuild
+): string {
+	const inlined = babel.transformSync(text, {
+		...BABEL_OPTIONS,
+		plugins: [
+			[
+				metroPlugins.inlinePlugin,
+				{ dev: build === 'development', inlinePlatform: false },
+			],
+		],
+	});
+	if (inlined?.ast === undefined || typeof inlined.code !== 'string') {
+		throw new Error('Metro inlining produced no output');
+	}
+	const folded = babel.transformFromAstSync(inlined.ast, inlined.code, {
+		...BABEL_OPTIONS,
+		plugins: [metroPlugins.constantFoldingPlugin],
+	});
+	if (typeof folded?.code !== 'string') {
+		throw new Error('Metro constant folding produced no output');
+	}
+	return folded.code;
+};
 
 /** What a walk found. */
 export interface ModuleClosure {
@@ -157,11 +251,14 @@ export const resolveWorkspaceEntry = function resolveWorkspaceEntry(
  *
  * @param entryFile - Absolute path of the entry a consumer imports.
  * @param workspaceRoot - Repository root, used to resolve workspace packages.
+ * @param build - The Metro build to model; a release build by default, which is
+ *   what ships to devices.
  * @returns The files reached, plus anything that did not resolve.
  */
 export const walkModuleClosure = function walkModuleClosure(
 	entryFile: string,
-	workspaceRoot: string
+	workspaceRoot: string,
+	build: ClosureBuild = 'release'
 ): ModuleClosure {
 	const closure: ModuleClosure = { external: [], files: [], unresolved: [] };
 	const seen = new Set<string>();
@@ -180,7 +277,9 @@ export const walkModuleClosure = function walkModuleClosure(
 		}
 		seen.add(file);
 
-		for (const spec of specifiers(readFileSync(file, 'utf8'))) {
+		for (const spec of specifiers(
+			metroSource(readFileSync(file, 'utf8'), build)
+		)) {
 			if (spec.startsWith('.')) {
 				const target = resolve(dirname(file), spec);
 				if (existsSync(target)) {

@@ -115,7 +115,7 @@ final class C15tTrackingGateTests: XCTestCase {
 
         func request(
             preferExpanded: Bool,
-            additionalInformationSelected: @escaping () -> Void,
+            additionalInformationSelected: (() -> Void)?,
             completion: @escaping (C15tTrackingPlatformStatus?) -> Void
         ) -> Bool {
             lock.lock()
@@ -124,7 +124,7 @@ final class C15tTrackingGateTests: XCTestCase {
             lock.unlock()
 
             guard canAsk else { return false }
-            if triggerAdditionalInformation { additionalInformationSelected() }
+            if triggerAdditionalInformation { additionalInformationSelected?() }
             completion(answer)
             return true
         }
@@ -470,7 +470,8 @@ final class C15tTrackingGateTests: XCTestCase {
 
         var outcome: Result<C15tTrackingRequestResult, C15tBridgeError>?
 
-        handler.requestTrackingAuthorization { outcome = $0 }
+        // A caller that handles the tap asks for the button; the plain request offers none.
+        handler.requestTrackingAuthorization(additionalInformation: true) { outcome = $0 }
 
         XCTAssertEqual(expanded.calls, 1)
         XCTAssertEqual(prompts.calls, 0, "the expanded call was made, so the plain one must not also fire")
@@ -585,7 +586,7 @@ final class C15tTrackingGateTests: XCTestCase {
         // expanded prompt quietly stops appearing on the devices that could have shown it.
         XCTAssertEqual(
             C15tTracking.expandedRequestSelectorName,
-            "requestTrackingAuthorizationUsingExpandedInterface:additionalInformationAction:completionHandler:"
+            "requestTrackingAuthorizationPreferringExpandedInterface:additionalInformationAction:completionHandler:"
         )
     }
 

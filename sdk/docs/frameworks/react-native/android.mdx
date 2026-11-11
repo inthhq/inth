@@ -29,7 +29,7 @@ This source example compiles with the native demo. Call it before optional vendo
 
 <include src="../../shared/examples/native/examples/consent-demo/android-install.mdx" />
 
-`C15tAndroid.install` selects platform storage, HTTP transport and foreground/reachability services, then hydrates the native authority. Do not create a second kernel for UI or RN. Manifest-based startup through `C15tInitializer` is an alternative when the app supplies `com.c15t.PORTAL_URL` and its configuration metadata.
+`C15tAndroid.install` selects platform storage, HTTP transport and foreground/reachability services, then hydrates the native authority. Do not create a second kernel for UI or RN. Manifest-based startup through `C15tInitializer` is an alternative when the app supplies `com.c15t.BACKEND_URL` and its configuration metadata.
 
 Disable vendor auto-initializers that can run before your installation and gate. Keep `android.permission.INTERNET`. `ACCESS_NETWORK_STATE` enables reconnect observation; launch and foreground retry remain available when it is absent. Treat storage and policy errors as closed optional gates and inspect native errors.
 
@@ -37,10 +37,10 @@ Disable vendor auto-initializers that can run before your installation and gate.
 
 `C15t.decision` distinguishes pending, denied and granted. `gate` and `gateDecision` provide native subscriptions; close the handle when its owner ends. Stop or reconfigure optional collection when the gate closes. A startup-only check does not cover withdrawal.
 
-For app-owned storage/transport or IAB settings, use `NativeConfig` and the existing platform installer. `portalUrl` identifies hosted Inth or a backend implementing the same protocol. A build-exported resource uses `bundledPolicy`, or the platform's `com.c15t.POLICY_RESOURCE` assets entry. Keep transport available for refresh and durable queue replay.
+For app-owned storage/transport or IAB settings, use `NativeConfig` and the existing platform installer. `backendUrl` identifies hosted Inth or a backend implementing the same protocol. A build-exported resource uses `bundledPolicy`, or the platform's `com.c15t.POLICY_RESOURCE` assets entry. Keep transport available for refresh and durable queue replay.
 
 ## Add Compose screens deliberately
 
-Retrieve the installed kernel through `C15t.current`, which is null before bootstrap. Retain `ConsentPresenter` with that kernel in a lifecycle-owned ViewModel and render `C15tConsent` in a Compose host with your privacy-policy URL. The presenter owns drafts, saves, search and reopening. Use `ConsentTheme` for [supported native customization](/docs/frameworks/react-native/customize).
+Retrieve the installed kernel through `C15t.current`, which is null before bootstrap. Render `C15tConsent(privacyPolicyUrl = ...)` in a Compose host, or call `attachConsent(privacyPolicyUrl)` from an Activity after `setContentView`. Both attach to the installed kernel through the shared `ConsentPrompt`, which owns drafts, saves, search and reopening, and presents an owed choice by default. `autoPresent = false` leaves presenting to `ConsentPrompt.current?.presentPrompt()`. When native code presents the prompt, pass `autoPresent={false}` to the JavaScript `ConsentProvider` so only one side presents it. Use `ConsentTheme` for [supported native customization](/docs/frameworks/react-native/customize).
 
 The standalone platform AAR does not require stock UI. RN's packaged host adds its UI dependency because its presenter commands need it. Neither path establishes Google/AdMob interoperability or certification.

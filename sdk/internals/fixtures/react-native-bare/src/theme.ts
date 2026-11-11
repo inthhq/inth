@@ -10,8 +10,7 @@
 
 import type { ConsentColorScheme, ConsentTheme } from '@c15t/react-native';
 import {
-	darkTheme,
-	lightTheme,
+	defaultConsentTheme,
 	resolveConsentColorScheme,
 } from '@c15t/react-native';
 import { useColorScheme } from 'react-native';
@@ -43,12 +42,25 @@ export const isAppearance = (value: unknown): value is Appearance =>
 	(APPEARANCES as readonly string[]).includes(value);
 
 /**
+ * The stock theme pinned to one palette: both appearances draw the same colours,
+ * so the surfaces show it whatever the platform reports.
+ */
+const lightTheme: ConsentTheme = {
+	...defaultConsentTheme,
+	dark: defaultConsentTheme.colors,
+};
+const darkTheme: ConsentTheme = {
+	...defaultConsentTheme,
+	colors: defaultConsentTheme.dark,
+};
+
+/**
  * The theme to hand the built-in surfaces for a chosen appearance.
  *
  * `system` answers `undefined`, which is the documented way to leave the choice
  * with the platform: the surfaces then read `useColorScheme()` themselves. A
- * light or dark pick is passed as one of the package's finished themes, which are
- * module-scope constants, so the identity the surfaces memoize on never moves.
+ * light or dark pick is the stock theme pinned to that palette, a module-scope
+ * constant, so the identity the surfaces memoize on never moves.
  *
  * @param appearance - Value from the header control or a deep link.
  * @returns A finished theme, or `undefined` to follow the platform.

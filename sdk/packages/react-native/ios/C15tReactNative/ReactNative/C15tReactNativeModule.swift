@@ -46,14 +46,21 @@ import React
 public final class C15tReactNativeModule: RCTEventEmitter {
     private let handler = C15tModuleHandler(trackingController: C15tApple.tracking)
 
-    /// Held as a property: the core keeps snapshot observers weakly, so somebody has
-    /// to own the observer or the callbacks would silently stop.
+    /// Held as a property: its snapshot handle owns the callback, and detaching or
+    /// releasing it is what stops the module hearing the core.
     private lazy var subscriber = C15tCoreSubscriber(sink: C15tReactEmitterSink(module: self))
 
     /// Live JavaScript listeners. A snapshot event is only a hint to go and read, so
     /// with no subscriber it is dropped rather than queued.
     private var listenerCount = 0
+    #if !C15T_NO_NATIVE_UI
     private var consentHost: C15tConsentHost?
+    /// The core the native prompt was last moved to, so a new install moves it once. Main thread.
+    private var followed: ObjectIdentifier?
+    /// The core `followCore()` last saw, from any thread, so an unchanged core costs no hop.
+    private let seenLock = NSLock()
+    private var seen: ObjectIdentifier?
+    #endif
 
     public override init() {
         super.init()
@@ -79,6 +86,13 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     public func getSnapshot() -> String {
         followCore()
         return handler.snapshotPayload()
+    }
+
+    /// WebView consent: the state a page reads, and a fresh token and request key for one WebView.
+    @objc(getWebViewConsent)
+    public func getWebViewConsent() -> String {
+        followCore()
+        return handler.webViewConsentPayload()
     }
 
     /// The platform tracking answer.
@@ -178,6 +192,24 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         }
     }
 
+    @objc(requestTrackingAuthorizationWithOptions:resolve:reject:)
+    public func requestTrackingAuthorizationWithOptions(
+        _ options: String,
+        resolve: @escaping RCTPromiseResolveBlock,
+        reject: @escaping RCTPromiseRejectBlock
+    ) {
+        handler.requestTrackingAuthorization(
+            additionalInformation: C15tPayload.trackingRequestOffersAdditionalInformation(options)
+        ) { result in
+            switch result {
+            case let .success(requestResult):
+                resolve(C15tPayload.trackingRequestResult(requestResult))
+            case let .failure(error):
+                reject(error.code, error.message, nil)
+            }
+        }
+    }
+
     @objc(logout:reject:)
     public func logout(
         _ resolve: @escaping RCTPromiseResolveBlock,
@@ -215,23 +247,67 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     private func presentNative(preferences: Bool, privacyPolicyURL: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        #if C15T_NO_NATIVE_UI
+        reject(C15tPayload.nativeUIExcludedCode, C15tPayload.nativeUIExcludedMessage, nil)
+        #else
         followCore()
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            let host = self.consentHost ?? C15tConsentHost()
-            self.consentHost = host
             do {
-                resolve(try host.present(preferences: preferences, privacyPolicyURL: privacyPolicyURL) { [weak self] payload in
-                    self?.publish(event: "onConsentPresenterOutcome", payload: payload)
-                })
-            } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host, installed core and HTTPS privacy-policy URL. \(error)", error) }
+                resolve(C15tPayload.consentHostSession(try self.host().present(preferences: preferences, privacyPolicyURL: privacyPolicyURL)))
+            } catch C15tConsentHost.HostError.invalidPrivacyPolicy {
+                // Retrying the same URL cannot help, so JavaScript stops and reports it.
+                reject("C15T_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
+            } catch { reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active host and installed core. \(error)", error) }
         }
+        #endif
+    }
+
+    #if !C15T_NO_NATIVE_UI
+    /// The host, created on first use, with every presenter event going to JavaScript.
+    @MainActor
+    private func host() -> C15tConsentHost {
+        if let consentHost { return consentHost }
+        let created = C15tConsentHost()
+        created.emit = { [weak self] event, payload in self?.publish(event: event, payload: payload) }
+        consentHost = created
+        return created
+    }
+    #endif
+
+    /// Hand the native prompt the provider's auto-present settings. The native `ConsentPrompt`
+    /// decides when a prompt is owed and presents it; this forwards what it shows as events.
+    @objc(configureAutoPresent:resolve:reject:)
+    public func configureAutoPresent(_ settings: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        guard let parsed = C15tPayload.autoPresentSettings(settings) else {
+            reject("C15T_INVALID_SETTINGS", #"configureAutoPresent needs {"autoPresent": boolean, "privacyPolicyURL": string | null}"#, nil)
+            return
+        }
+        #if C15T_NO_NATIVE_UI
+        // Nothing to present in this build, so turning it off is already true.
+        if parsed.autoPresent { reject(C15tPayload.nativeUIExcludedCode, C15tPayload.nativeUIExcludedMessage, nil) } else { resolve(nil) }
+        #else
+        followCore()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            do {
+                try self.host().configure(autoPresent: parsed.autoPresent, privacyPolicyURL: parsed.privacyPolicyURL)
+                self.followed = C15t.current.map(ObjectIdentifier.init)
+                resolve(nil)
+            } catch C15tConsentHost.HostError.invalidPrivacyPolicy {
+                reject("C15T_PRESENTER_INVALID_URL", "The privacy-policy URL is not an absolute HTTPS URL with a host.", nil)
+            } catch { reject("C15T_NOT_BOOTSTRAPPED", "No consent core is installed. \(error)", error) }
+        }
+        #endif
     }
 
     @objc(closeConsentPresenter:resolve:reject:)
     public func closeConsentPresenter(_ sessionId: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         DispatchQueue.main.async { [weak self] in
+            #if !C15T_NO_NATIVE_UI
             self?.consentHost?.close(sessionID: sessionId)
+            #endif
+            _ = self
             resolve(nil)
         }
     }
@@ -240,7 +316,9 @@ public final class C15tReactNativeModule: RCTEventEmitter {
 
     public override func supportedEvents() -> [String]! {
         [
-            "onConsentPresenterOutcome",
+            C15tPayload.eventPresenterOutcome,
+            C15tPayload.eventPresenterPresented,
+            C15tPayload.eventPresenterUnavailable,
             C15tPayload.eventSnapshot,
             C15tPayload.eventError,
             C15tPayload.eventInitialized,
@@ -276,7 +354,9 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     }
 
     public override func invalidate() {
+        #if !C15T_NO_NATIVE_UI
         DispatchQueue.main.async { [self] in consentHost?.detach(); consentHost = nil }
+        #endif
         subscriber.detach()
         super.invalidate()
     }
@@ -289,6 +369,21 @@ public final class C15tReactNativeModule: RCTEventEmitter {
     private func followCore() {
         guard handler.ensureCore(), let core = C15t.current else { return }
         subscriber.attach(to: core)
+        #if !C15T_NO_NATIVE_UI
+        // After `C15t` dropped a core and installed another, move the native prompt to it, so an
+        // owed prompt is presented there too. Only once auto-present was configured.
+        let id = ObjectIdentifier(core)
+        let changed = seenLock.withLock { () -> Bool in
+            defer { seen = id }
+            return seen != id
+        }
+        guard changed else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let followed = self.followed, followed != ObjectIdentifier(core) else { return }
+            self.followed = ObjectIdentifier(core)
+            self.consentHost?.follow(core)
+        }
+        #endif
     }
 }
 

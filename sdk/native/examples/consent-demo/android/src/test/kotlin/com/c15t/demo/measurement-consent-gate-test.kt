@@ -25,17 +25,17 @@ import org.junit.Test
 class MeasurementConsentGateTest {
     @After fun cleanUp() {
         Handler.drain()
-        C15t.reset()
+        C15t.uninstall()
     }
 
     @Test fun delayedGrantCannotEnableCollectionAfterCommittedRefusal() {
         C15t.bootstrap(
-            NativeConfig(portalUrl = "https://example.test", consentCategories = ConsentCategory.entries),
+            NativeConfig(backendUrl = "https://example.test", consentCategories = ConsentCategory.entries),
             C15tStore(MemoryStore()),
             executor = TaskExecutor.DIRECT,
             transport = object : C15tTransport {
                 override fun init(context: InitContext): TransportOutcome = TransportOutcome.Success(
-                    Json.parseToJsonElement("""{"policyResolution":{"version":1,"status":"matched","policyId":"app-policy","matchedBy":"country","fingerprints":{"policy":"policy-1","choice":"choice-1","notice":"notice-1"},"policy":{"id":"app-policy","model":"opt-in","prompt":"choice","scopeMode":"permissive","validity":{"choiceMs":2592000000,"noticeMs":15552000000}}},"policySnapshotToken":"snapshot-1"}"""),
+                    Json.parseToJsonElement("""{"policyResolution":{"version":1,"status":"matched","policyId":"app-policy","matchedBy":"country","fingerprints":{"policy":"policy-1","choice":"choice-1","notice":"notice-1"},"policy":{"id":"app-policy","model":"opt-in","prompt":"choice","scopeMode":"permissive","rights":["disclosure","preferences"],"validity":{"choiceMs":2592000000,"noticeMs":15552000000}}},"policySnapshotToken":"snapshot-1"}"""),
                     emptyMap(),
                 )
                 override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("offline")

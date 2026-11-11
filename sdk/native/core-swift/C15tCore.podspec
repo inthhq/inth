@@ -14,7 +14,7 @@
 # version from its request metadata.
 core_source = File.read(File.join(__dir__, "Sources/C15tCore/Transports.swift"))
 core_version = core_source.match(/public static let version = "([^"]+)"/)&.captures&.first
-raise "c15t.version is missing from Transports.swift" unless core_version
+raise "C15t.version is missing from Transports.swift" unless core_version
 
 Pod::Spec.new do |s|
   s.name         = "C15tCore"

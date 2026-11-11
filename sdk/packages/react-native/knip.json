@@ -1,6 +1,10 @@
 {
 	"$schema": "https://unpkg.com/knip@latest/schema.json",
-	"entry": ["./src/index.ts", "./src/specs/NativeC15t.ts"],
+	"entry": [
+		"./src/index.ts",
+		"./src/protocol/bridge-schema.ts",
+		"./src/specs/NativeC15t.ts"
+	],
 	"ignoreBinaries": ["oxfmt", "oxlint", "rslib", "tsc", "tsx", "vitest"],
 	"ignore": [
 		"**/*.spec.{js,ts,tsx}",
@@ -11,11 +15,13 @@
 		"scripts/**"
 	],
 	"ignoreDependencies": [
+		"@babel/core",
 		"@c15t/core",
 		"@c15t/iab",
 		"@c15t/typescript-config",
 		"@c15t/vitest-config",
-		"@react-native/codegen"
+		"@react-native/codegen",
+		"metro-transform-plugins"
 	],
 	"rules": {
 		"exports": "warn",

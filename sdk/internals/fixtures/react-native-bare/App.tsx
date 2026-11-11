@@ -2,7 +2,7 @@
  * Root component: attach a consent core, hold the scheme choice, then render.
  *
  * The system bands are measured here and handed to both halves of the screen: the
- * chrome pads itself by them, and `C15tProvider` lays the consent surfaces against
+ * chrome pads itself by them, and `ConsentProvider` lays the consent surfaces against
  * the same numbers. No safe-area library is installed on purpose, because every
  * extra native module in this example is one more thing that has to build before the
  * consent path can be checked. See `src/safe-area.ts` for what core reports.

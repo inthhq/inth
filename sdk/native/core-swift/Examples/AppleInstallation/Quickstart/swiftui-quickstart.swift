@@ -1,19 +1,20 @@
 // #region docs:swift-quickstart-app title="MyApp.swift"
+import C15tApple
+import C15tConsentUI
 import SwiftUI
 
 @main
-@MainActor
 struct MyApp: App {
-    @StateObject private var consent = ConsentModel(
-        backendURL: URL(string: "https://your-project.inth.app")!
-    )
-
     var body: some Scene {
         WindowGroup {
-            ConsentRoot(
-                consent: consent,
-                privacyPolicyURL: URL(string: "https://example.com/privacy")!
-            )
+            ContentView()
+                .c15tConsent(
+                    C15tAppleConfiguration(
+                        transport: .hosted(URL(string: "https://your-project.inth.app")!),
+                        consentCategories: [.necessary, .measurement, .marketing]
+                    ),
+                    privacyPolicyURL: URL(string: "https://example.com/privacy")!
+                )
         }
     }
 }

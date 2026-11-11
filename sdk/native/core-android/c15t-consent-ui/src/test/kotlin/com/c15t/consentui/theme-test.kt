@@ -2,6 +2,7 @@ package com.c15t.consentui
 
 import android.os.Bundle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
@@ -43,30 +44,30 @@ class ThemeTest {
 
     @Test fun manifestValuesOverrideOnlyWhatTheyName() {
         val bundle = Bundle().apply {
-            putString(ConsentTheme.Meta.META_ACCENT, "#00CCBC,#7FE6DC")
+            putString(ConsentTheme.Meta.META_PRIMARY, "#00CCBC,#7FE6DC")
             putString(ConsentTheme.Meta.META_BRAND_NAME, "Pantry")
             putString(ConsentTheme.Meta.META_HEADLINE, "Before you shop.")
             putString(ConsentTheme.Meta.META_HEADLINE_FONT, "sans")
-            putInt(ConsentTheme.Meta.META_CORNER_RADIUS, 8)
+            putInt(ConsentTheme.Meta.META_RADIUS_MD, 8)
             putBoolean(ConsentTheme.Meta.META_BRANDING, false)
         }
         val theme = ConsentTheme.c15t.applying(bundle, context)
-        assertEquals(ConsentThemeColor(0x00CCBC, 0x7FE6DC), theme.colors.accent)
+        assertEquals(ConsentThemeColor(0x00CCBC, 0x7FE6DC), theme.colors.primary)
         assertEquals(ConsentTheme.Colors.c15t.decision, theme.colors.decision)
         assertEquals("Pantry", theme.brand.name)
         assertNull(theme.brand.markResId)
         assertEquals("Before you shop.", theme.copy.headline)
         assertEquals(ConsentTheme.Copy.c15t.introduction, theme.copy.introduction)
-        assertEquals(ConsentTheme.HeadlineFont.SansSerif, theme.headlineFont)
-        assertEquals(8.dp, theme.cornerRadius)
+        assertEquals(ConsentTheme.HeadlineFont.SansSerif, theme.typography.headlineFont)
+        assertEquals(8.dp, theme.radius.md)
         assertFalse(theme.showsBranding)
     }
 
     @Test fun unreadableValuesKeepTheExistingTheme() {
-        val base = ConsentTheme(cornerRadius = 20.dp, headlineFont = ConsentTheme.HeadlineFont.SansSerif)
+        val base = ConsentTheme(radius = ConsentTheme.Radius(md = 20.dp), typography = ConsentTheme.Typography(headlineFont = ConsentTheme.HeadlineFont.SansSerif))
         val bundle = Bundle().apply {
-            putString(ConsentTheme.Meta.META_ACCENT, "not a colour")
-            putString(ConsentTheme.Meta.META_CORNER_RADIUS, "-4")
+            putString(ConsentTheme.Meta.META_PRIMARY, "not a colour")
+            putString(ConsentTheme.Meta.META_RADIUS_MD, "-4")
             putString(ConsentTheme.Meta.META_HEADLINE, "   ")
             putString(ConsentTheme.Meta.META_BRANDING, "maybe")
             putString(ConsentTheme.Meta.META_BRAND_MARK, "no_such_drawable")
@@ -77,19 +78,19 @@ class ThemeTest {
 
     @Test fun stringSpellingsOfRadiusAndBrandingResolve() {
         val bundle = Bundle().apply {
-            putString(ConsentTheme.Meta.META_CORNER_RADIUS, "6")
+            putString(ConsentTheme.Meta.META_RADIUS_MD, "6")
             putString(ConsentTheme.Meta.META_BRANDING, "NO")
         }
         val theme = ConsentTheme.c15t.applying(bundle, context)
-        assertEquals(6.dp, theme.cornerRadius)
+        assertEquals(6.dp, theme.radius.md)
         assertFalse(theme.showsBranding)
     }
 
     @Test fun resolveLayersManifestOverCurrent() {
         val previous = ConsentTheme.current
         try {
-            ConsentTheme.current = ConsentTheme(cornerRadius = 4.dp)
-            assertEquals(4.dp, ConsentTheme.resolve(context).cornerRadius)
+            ConsentTheme.current = ConsentTheme(radius = ConsentTheme.Radius(md = 4.dp))
+            assertEquals(4.dp, ConsentTheme.resolve(context).radius.md)
             ConsentTheme.current = null
             assertTrue(ConsentTheme.resolve(context) == ConsentTheme.c15t)
         } finally { ConsentTheme.current = previous }
@@ -97,12 +98,12 @@ class ThemeTest {
 
     @Test fun typedManifestColoursKeepLiteralsAndResolveResources() {
         val bundle = Bundle().apply {
-            putInt(ConsentTheme.Meta.META_ACCENT, 0xFF009688.toInt())
-            putInt(ConsentTheme.Meta.META_ON_ACCENT, android.R.color.white)
+            putInt(ConsentTheme.Meta.META_PRIMARY, 0xFF009688.toInt())
+            putInt(ConsentTheme.Meta.META_TEXT_ON_PRIMARY, android.R.color.white)
         }
         val theme = ConsentTheme.c15t.applying(bundle, context)
-        assertEquals(ConsentThemeColor(0x009688), theme.colors.accent)
-        assertEquals(ConsentThemeColor(0xFFFFFF), theme.colors.onAccent)
+        assertEquals(ConsentThemeColor(0x009688), theme.colors.primary)
+        assertEquals(ConsentThemeColor(0xFFFFFF), theme.colors.textOnPrimary)
     }
 
     // TCF-CHECK: P11
@@ -113,25 +114,85 @@ class ThemeTest {
         // A manifest DECISION near the stock light text: fine in dark, unreadable in light.
         val bundle = Bundle().apply {
             putString(ConsentTheme.Meta.META_DECISION, "#C8C2B8,#1E1B17")
-            putString(ConsentTheme.Meta.META_ON_DECISION, "#F8F4EE,#F8F4EE")
+            putString(ConsentTheme.Meta.META_TEXT_ON_DECISION, "#F8F4EE,#F8F4EE")
         }
         val host = ConsentTheme.c15t.applying(bundle, context)
         val guarded = host.withReadableDecisions()
         assertEquals(ConsentThemeColor(stock.decision.light, 0x1E1B17), guarded.colors.decision)
-        assertEquals(ConsentThemeColor(stock.onDecision.light, 0xF8F4EE), guarded.colors.onDecision)
+        assertEquals(ConsentThemeColor(stock.textOnDecision.light, 0xF8F4EE), guarded.colors.textOnDecision)
         for (dark in listOf(false, true)) {
             val pick = { color: ConsentThemeColor -> if (dark) color.dark else color.light }
-            val ratio = ConsentTheme.contrastRatio(pick(guarded.colors.decision), pick(guarded.colors.onDecision))
+            val ratio = ConsentTheme.contrastRatio(pick(guarded.colors.decision), pick(guarded.colors.textOnDecision))
             assertTrue("decision label (${if (dark) "dark" else "light"}) was $ratio", ratio >= 5.0)
         }
         // Only the decision pair changes, and a passing theme is returned as it is.
-        assertEquals(host.colors.copy(decision = guarded.colors.decision, onDecision = guarded.colors.onDecision), guarded.colors)
+        assertEquals(host.colors.copy(decision = guarded.colors.decision, textOnDecision = guarded.colors.textOnDecision), guarded.colors)
         assertSame(ConsentTheme.c15t, ConsentTheme.c15t.withReadableDecisions())
         // A host ConsentTheme gets the same floor, and the warning is logged once per process.
-        val code = ConsentTheme(colors = stock.copy(decision = ConsentThemeColor(0x335CFF), onDecision = ConsentThemeColor(0x8CA2FF))).withReadableDecisions()
+        val code = ConsentTheme(colors = stock.copy(decision = ConsentThemeColor(0x335CFF), textOnDecision = ConsentThemeColor(0x8CA2FF))).withReadableDecisions()
         assertEquals(stock.decision, code.colors.decision)
-        assertEquals(stock.onDecision, code.colors.onDecision)
+        assertEquals(stock.textOnDecision, code.colors.textOnDecision)
         assertEquals(1, ShadowLog.getLogsForTag(ConsentTheme.LOG_TAG).size)
+    }
+
+    // TCF-CHECK: P11
+    @Test fun primaryButtonSlotColoursAreGuardedToo() {
+        val host = ConsentTheme(slots = mapOf(ConsentTheme.Slot.ButtonPrimary to ConsentTheme.SlotStyle(
+            color = ConsentThemeColor(0xFFFFFF), backgroundColor = ConsentThemeColor(0xBBBBBB), borderRadius = 4.dp)))
+        val guarded = host.withReadableDecisions()
+        assertEquals(ConsentTheme.Colors.c15t.decision, guarded.decisionFill)
+        assertEquals(ConsentTheme.Colors.c15t.textOnDecision, guarded.decisionLabel)
+        // The slot keeps what is not a colour.
+        assertEquals(ConsentTheme.SlotStyle(borderRadius = 4.dp), guarded.slots[ConsentTheme.Slot.ButtonPrimary])
+    }
+
+    @Test fun manifestReadsSpacingTypeAndSlots() {
+        val bundle = Bundle().apply {
+            putInt(ConsentTheme.Meta.META_RADIUS_SM, 2)
+            putString(ConsentTheme.Meta.META_RADIUS_LG, "28")
+            putFloat(ConsentTheme.Meta.META_SPACE_MD, 20f)
+            putString(ConsentTheme.Meta.META_SPACE_LG, "32")
+            putInt(ConsentTheme.Meta.META_FONT_SIZE_SM, 15)
+            putString(ConsentTheme.Meta.META_FONT_SIZE_BASE, "18")
+            putInt(ConsentTheme.Meta.META_FONT_SIZE_LG, 0)
+            putInt(ConsentTheme.Meta.slot(ConsentTheme.Slot.ButtonPrimary, "BORDER_RADIUS"), 999)
+            putString(ConsentTheme.Meta.slot(ConsentTheme.Slot.ButtonSecondary, "COLOR"), "#112233")
+            putString(ConsentTheme.Meta.slot(ConsentTheme.Slot.ConsentBannerTitle, "FONT_SIZE"), "40")
+        }
+        val theme = ConsentTheme.c15t.applying(bundle, context)
+        assertEquals(ConsentTheme.Radius(sm = 2.dp, md = 14.dp, lg = 28.dp), theme.radius)
+        assertEquals(ConsentTheme.Spacing(md = 20.dp, lg = 32.dp), theme.spacing)
+        // A size of 0 is unreadable and keeps the Material size.
+        assertEquals(ConsentTheme.FontSize(sm = 15.sp, base = 18.sp), theme.typography.fontSize)
+        assertEquals(mapOf(
+            ConsentTheme.Slot.ButtonPrimary to ConsentTheme.SlotStyle(borderRadius = 999.dp),
+            ConsentTheme.Slot.ButtonSecondary to ConsentTheme.SlotStyle(color = ConsentThemeColor(0x112233)),
+            ConsentTheme.Slot.ConsentBannerTitle to ConsentTheme.SlotStyle(fontSize = 40.sp),
+        ), theme.slots)
+        assertEquals("com.c15t.consent.BUTTON_PRIMARY_BACKGROUND_COLOR", ConsentTheme.Meta.slot(ConsentTheme.Slot.ButtonPrimary, "BACKGROUND_COLOR"))
+    }
+
+    @Test fun radiusStepsFollowMdUntilSet() {
+        assertEquals(8.dp, ConsentTheme.Radius(md = 10.dp).resolvedSm)
+        assertEquals(16.dp, ConsentTheme.Radius(md = 10.dp).resolvedLg)
+        assertEquals(3.dp, ConsentTheme.Radius(sm = 1.dp, md = 10.dp, lg = 3.dp).resolvedLg)
+    }
+
+    @Test fun typeTokensScaleTheirMaterialGroups() {
+        val stock = androidx.compose.material3.Typography()
+        assertEquals(stock, ConsentTheme.c15t.materialTypography())
+        val themed = ConsentTheme(typography = ConsentTheme.Typography(fontSize = ConsentTheme.FontSize(sm = 15.sp, base = 18.sp, lg = 40.sp)))
+            .materialTypography()
+        assertEquals(15.sp, themed.bodyMedium.fontSize)
+        // A role keeps its ratio to the group lead: bodySmall is 12 of bodyMedium's 14.
+        assertEquals(15f * 12f / 14f, themed.bodySmall.fontSize.value, 0.001f)
+        assertEquals(18.sp, themed.bodyLarge.fontSize)
+        assertEquals(stock.bodyLarge.lineHeight.value * 18f / 16f, themed.bodyLarge.lineHeight.value, 0.001f)
+        assertEquals(22f * 40f / 34f, themed.titleLarge.fontSize.value, 0.001f)
+        val headline = ConsentTheme(typography = ConsentTheme.Typography(fontSize = ConsentTheme.FontSize(lg = 40.sp))).headlineStyle(stock.headlineLarge)
+        assertEquals(40.sp, headline.fontSize)
+        assertEquals(34.sp, ConsentTheme.c15t.headlineStyle(stock.headlineLarge).fontSize)
+        assertEquals(40.sp, ConsentTheme.c15t.headlineStyle(stock.headlineLarge).lineHeight)
     }
 
     @Test fun contrastRatioMatchesWcag() {
@@ -142,15 +203,15 @@ class ThemeTest {
 
     @Test fun squareAndSmallThemesProduceValidCalloutOutlines() {
         for (radius in listOf(0.dp, 1.dp, 2.dp, 14.dp)) {
-            RoundedCornerShape(ConsentTheme(cornerRadius = radius).calloutRadius)
+            RoundedCornerShape(ConsentTheme(radius = ConsentTheme.Radius(md = radius)).radius.resolvedSm)
                 .createOutline(Size(300f, 120f), LayoutDirection.Ltr, Density(1f))
         }
     }
 
     @Test fun nonFiniteRadiusKeepsTheHostValue() {
-        val base = ConsentTheme(cornerRadius = 10.dp)
+        val base = ConsentTheme(radius = ConsentTheme.Radius(md = 10.dp))
         for (value in listOf("Infinity", "NaN")) {
-            assertEquals(base, base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_CORNER_RADIUS, value) }, context))
+            assertEquals(base, base.applying(Bundle().apply { putString(ConsentTheme.Meta.META_RADIUS_MD, value) }, context))
         }
     }
     @Test fun providerBrandingIsIndependentOfTheAppIdentity() {
@@ -210,23 +271,23 @@ class IdentityTest {
 
     @Test fun stockIdentityUsesThePlaceholderAndSelectedProvider() {
         for (provider in listOf(ConsentTheme.Branding.C15t, ConsentTheme.Branding.Inth)) {
-            val resolved = HeaderIdentity.resolve(context, ConsentTheme.Brand(), provider)
-            assertEquals("Your brand here", resolved.name)
+            val resolved = HeaderIdentity.resolve(context, ConsentTheme.Brand(), provider, PLACEHOLDER)
+            assertEquals(PLACEHOLDER, resolved.name)
             assertEquals(provider, resolved.provider)
             assertNull(resolved.markResId)
         }
-        assertEquals(ConsentTheme.HeadlineFont.SansSerif, ConsentTheme.c15t.headlineFont)
-        assertEquals(androidx.compose.ui.text.font.FontFamily.Default, ConsentTheme.c15t.headlineFont.family)
+        assertEquals(ConsentTheme.HeadlineFont.SansSerif, ConsentTheme.c15t.typography.headlineFont)
+        assertEquals(androidx.compose.ui.text.font.FontFamily.Default, ConsentTheme.c15t.typography.headlineFont.family)
     }
 
     @Test fun explicitBrandMarksAndNamesOverrideTheStockIdentity() {
-        val named = HeaderIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry"), ConsentTheme.Branding.Inth)
+        val named = HeaderIdentity.resolve(context, ConsentTheme.Brand(name = "Pantry"), ConsentTheme.Branding.Inth, PLACEHOLDER)
         assertEquals("Pantry", named.name)
         assertEquals(ConsentTheme.Branding.Inth, named.provider)
-        val marked = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = android.R.drawable.ic_dialog_info), ConsentTheme.Branding.Inth)
+        val marked = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = android.R.drawable.ic_dialog_info), ConsentTheme.Branding.Inth, PLACEHOLDER)
         assertEquals(android.R.drawable.ic_dialog_info, marked.markResId)
         assertNull(marked.provider)
-        val missing = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = 1), ConsentTheme.Branding.Inth)
+        val missing = HeaderIdentity.resolve(context, ConsentTheme.Brand(markResId = 1), ConsentTheme.Branding.Inth, PLACEHOLDER)
         assertNull(missing.markResId); assertNull(missing.provider)
         assertEquals("Y", HeaderIdentity.initial(missing.name))
         assertEquals("P", HeaderIdentity.initial("pantry"))
@@ -234,11 +295,15 @@ class IdentityTest {
     }
 
     @Test fun customProvidersUseTheirMarkOrInitial() {
-        val custom = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info))
+        val custom = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info), PLACEHOLDER)
         assertEquals(android.R.drawable.ic_dialog_info, custom.markResId)
-        assertEquals("Your brand here", custom.name)
-        val noMark = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example"))
+        assertEquals(PLACEHOLDER, custom.name)
+        val noMark = HeaderIdentity.resolve(context, ConsentTheme.Brand(), ConsentTheme.Branding.Custom("Example"), PLACEHOLDER)
         assertNull(noMark.markResId); assertNull(noMark.provider)
         assertEquals("Y", HeaderIdentity.initial(noMark.name))
+    }
+
+    private companion object {
+        val PLACEHOLDER = com.c15t.consentui.generated.ConsentCopy.forLanguage("en").brandPlaceholder
     }
 }

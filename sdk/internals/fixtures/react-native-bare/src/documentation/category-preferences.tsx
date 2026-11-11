@@ -1,16 +1,12 @@
 // #region docs:category-preferences title="category-preferences.tsx"
-import {
-	useConsent,
-	useConsentActions,
-	useIsAllowed,
-} from '@c15t/react-native';
+import { useConsent, useSaveConsents, useSnapshot } from '@c15t/react-native';
 import { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 
 export const MeasurementPreference = () => {
-	const snapshot = useConsent();
-	const allowed = useIsAllowed('measurement');
-	const { save } = useConsentActions();
+	const snapshot = useSnapshot();
+	const allowed = useConsent('measurement');
+	const saveConsents = useSaveConsents();
 	const [pending, setPending] = useState(false);
 	const [message, setMessage] = useState('');
 	const restrictions = snapshot.restrictions.measurement ?? [];
@@ -24,7 +20,7 @@ export const MeasurementPreference = () => {
 		setPending(true);
 		setMessage('');
 		try {
-			const result = await save({ measurement: enabled });
+			const result = await saveConsents({ measurement: enabled });
 			setMessage(
 				result.ok ? 'Saved on this device.' : `Nothing saved: ${result.reason}.`
 			);

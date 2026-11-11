@@ -134,7 +134,7 @@ public struct C15tModuleHandler {
     /// caller is told, in the same breath, that nothing was asked.
     public let trackingExpandedPrompt: @Sendable (
         _ preferExpandedInterface: Bool,
-        _ additionalInformationSelected: @escaping () -> Void,
+        _ additionalInformationSelected: (() -> Void)?,
         _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool
 
@@ -152,7 +152,7 @@ public struct C15tModuleHandler {
         trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { C15tTracking.expandedInterfaceAvailable() },
         trackingExpandedPrompt: @escaping @Sendable (
             _ preferExpandedInterface: Bool,
-            _ additionalInformationSelected: @escaping () -> Void,
+            _ additionalInformationSelected: (() -> Void)?,
             _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
         ) -> Bool = { preferExpanded, additionalInformationSelected, completion in
             C15tTracking.requestExpandedPrompt(
@@ -194,7 +194,23 @@ public struct C15tModuleHandler {
     /// The `getSnapshot()` payload.
     public func snapshotPayload() -> String {
         ensureCore()
-        return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage)
+        let core = C15t.current
+        let (snapshot, additions) = C15tPayload.consistently(snapshot: { C15t.snapshot() }) {
+            (core?.iabConsent(), core?.iabAcceptAllChoices(), core?.iabPresentation(),
+             core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) }, core?.iabCustomVendors() ?? [])
+        }
+        return C15tPayload.snapshot(snapshot, fallbackLanguage: deviceLanguage,
+            iabConsent: additions.0, iabAcceptAll: additions.1, iabPresentation: additions.2,
+            iabMarketingPurposes: additions.3, iabCustomVendors: additions.4)
+    }
+
+    /// The `getWebViewConsent()` payload: `{ state, token, key }`.
+    public func webViewConsentPayload() -> String {
+        ensureCore()
+        let state = C15t.current.map { WebViewConsentState(core: $0) }
+            ?? WebViewConsentState(snapshot: C15t.snapshot(), tcString: nil)
+        return "{\"state\":\(state.json()),\"token\":\"\(WebViewConsentScript.newToken())\","
+            + "\"key\":\"\(WebViewConsentScript.newToken())\"}"
     }
 
     /// The `getTrackingAuthorization()` payload.
@@ -208,7 +224,8 @@ public struct C15tModuleHandler {
             C15tTrackingGate.authorization(
                 platform: trackingPlatformStatus(),
                 promptStringPresent: trackingPromptStringPresent()
-            )
+            ),
+            answeredAt: trackingPromptStringPresent() ? trackingController.lastAnswerDate() : nil
         )
     }
 
@@ -222,11 +239,21 @@ public struct C15tModuleHandler {
     /// Nothing here touches the snapshot, and nothing here can. A platform answer is not a
     /// consent decision, so a request that resolves `authorized` leaves every category
     /// exactly where the subject left it.
+    ///
+    /// `additionalInformation` asks Apple for the Additional Information button, for a caller
+    /// that will handle the tap. Without it Apple shows no button.
     public func requestTrackingAuthorization(
+        additionalInformation: Bool = false,
         _ completion: @escaping (Result<C15tTrackingRequestResult, C15tBridgeError>) -> Void
     ) {
-        trackingController.request { result in
-            completion(result.mapError { $0 == .notConfigured ? .trackingNotConfigured : .trackingUnsupported })
+        // JavaScript shows its own controls when the request resolves paused, so the native
+        // action has nothing to do beyond letting Apple show the button.
+        var handled: (@Sendable () -> Void)?
+        if additionalInformation { handled = {} }
+        trackingController.request(onAdditionalInformation: handled) { (result: Result<C15tTrackingRequestResult, C15tTrackingError>) in
+            completion(result.mapError { error -> C15tBridgeError in
+                error == .notConfigured ? .trackingNotConfigured : .trackingUnsupported
+            })
         }
     }
 
@@ -235,13 +262,14 @@ public struct C15tModuleHandler {
     /// An unreadable intent and a missing core both resolve rather than reject: the
     /// result type carries the reason, and JavaScript renders it.
     public func commitPayload(intent: String) -> String {
-        guard let parsed = C15tPayload.parseCommitIntent(intent) else {
+        // An unreadable intent is refused before a core is started for it.
+        guard C15tPayload.parseCommitIntent(intent) != nil else {
             return C15tPayload.invalidIntent(raw: intent)
         }
         guard ensureCore(), let core = C15t.current else {
             return C15tPayload.notBootstrapped()
         }
-        return C15tPayload.commitResult(core.save(parsed), snapshot: core.snapshot())
+        return C15tPayload.commit(intent, core: core)
     }
 
     /// Replace the geographic, language, and GPC overrides.

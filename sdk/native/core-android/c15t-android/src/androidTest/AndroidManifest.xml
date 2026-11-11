@@ -12,13 +12,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 	<application>
 		<meta-data
-			android:name="com.c15t.PORTAL_URL"
+			android:name="com.c15t.BACKEND_URL"
 			android:value="https://consent.instrumentation.invalid" />
 		<meta-data
-			android:name="com.c15t.INIT_URL"
+			android:name="com.c15t.BACKEND_INIT_URL"
 			android:value="https://consent.instrumentation.invalid/api/consent/init" />
 		<meta-data
-			android:name="com.c15t.DOMAIN"
+			android:name="com.c15t.BACKEND_DOMAIN"
 			android:value="consent.instrumentation.invalid" />
 		<!--
 			The declared category scope, comma-separated, with a trailing name

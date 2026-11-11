@@ -41,10 +41,9 @@ extension GlobalVendorList {
     ///   list instead of coming back with an empty drawer that a subject has to be told is
     ///   not a refusal.
     /// - Entries are chosen by dictionary key, never by reading an `id` out of an entry
-    ///   body. ``GlobalVendorList/read(from:)`` already keys a dense-array publication by
-    ///   each entry's own `id`, so the key is the id the document was read as; letting a
-    ///   body `id` take part would let an entry whose two disagree answer for a vendor the
-    ///   publisher did not name.
+    ///   body. ``GlobalVendorList/read(from:)`` keys every entry by its document key, so
+    ///   the key is the id the document was read as; letting a body `id` take part would
+    ///   let an entry whose two disagree answer for a vendor the publisher did not name.
     ///
     /// Nothing is ever added: a scope id with no entry in the served list simply does not
     /// appear in the result. That is the point of pruning a served document rather than

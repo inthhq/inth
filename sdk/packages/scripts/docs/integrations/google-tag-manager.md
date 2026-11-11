@@ -344,6 +344,17 @@ include every category you still want signalled.
 Under an opt-out policy, the default command can grant types before the
 visitor has chosen anything. That is a permission, not a recorded choice.
 
+The Swift, Android and React Native SDKs use the same table, and no mobile
+option replaces it. A pending policy denies every optional type. Firebase
+Analytics takes four of these types: `analytics_storage`, `ad_storage`,
+`ad_user_data` and `ad_personalization`. The
+[Firebase Analytics integration](./firebase-analytics.md) sends
+all four. Swift exposes the table as `GoogleConsentMode` and
+`GoogleConsentType` in `C15tApple`, Android in
+`com.c15t.android.integrations`, and React Native as
+`resolveGoogleConsentMode` in `@c15t/react-native/integrations`. Each mobile
+copy is tested against the web mapping, so they cannot drift apart.
+
 ## Configure consent inside the container
 
 With the default `loadMode: 'always'`, `googleTagManager` uses the `necessary`

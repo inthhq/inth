@@ -179,7 +179,7 @@ final class IABCommitTests: XCTestCase {
         let draft = try XCTUnwrap(core.openIABDraft())
         let before = core.snapshot()
         let observer = IABRetryObserver()
-        let observation = core.onChange(observer)
+        let observation = core.onChange { observer.consentDidChange($0) }
         let gates = SendableBox([Bool]())
         let subscription = core.gate(OptionalConsentCategory.marketing) { value in
             gates.mutate { $0.append(value) }
@@ -621,7 +621,7 @@ private final class FailingIABStore: ConsentStore, @unchecked Sendable {
     }
 }
 
-private final class IABRetryObserver: SnapshotObserver, @unchecked Sendable {
+private final class IABRetryObserver: @unchecked Sendable {
     let revisions = SendableBox([Int]())
     func consentDidChange(_ snapshot: ConsentSnapshot) {
         revisions.mutate { $0.append(snapshot.revision) }

@@ -51,19 +51,37 @@ object C15tProtocol {
 	const val POLICY_CONTRACT_VERSION = 1
 
 	/**
-	 * Platform tag the shared contract puts in front of the native SDK version,
-	 * so backend traffic attributes to the mobile client rather than a web one.
+	 * The `x-c15t-platform` header name: which host built the request.
+	 *
+	 * The value is `<platform>-><sdkVersion>`, the same shape the Apple installer sends as
+	 * `apple-><version>`. The platform travels here rather than as a prefix on
+	 * [VERSION_HEADER], because hosted gateways may reject a version they cannot parse.
 	 */
-	const val VERSION_PREFIX = "rn->"
+	const val PLATFORM_HEADER = "x-c15t-platform"
+
+	/** Platform tag for a Kotlin or Java app that installs the core itself. */
+	const val PLATFORM_ANDROID = "android"
+
+	/** Platform tag for the Android side of `@c15t/react-native`. */
+	const val PLATFORM_REACT_NATIVE = "rn"
 
 	/** Default SDK version, kept in step with the `@c15t/core` alpha line. */
 	const val DEFAULT_SDK_VERSION = "3.0.0-alpha.1"
 
-	/** Headers every c15t-bound request carries. */
-	fun protocolHeaders(sdkVersion: String = DEFAULT_SDK_VERSION): Map<String, String> = mapOf(
-		VERSION_HEADER to "$VERSION_PREFIX$sdkVersion",
-		POLICY_CONTRACT_HEADER to POLICY_CONTRACT_VERSION.toString(),
-	)
+	/**
+	 * Headers every c15t-bound request carries.
+	 *
+	 * `x-c15t-version` is the unprefixed native version, matching the web format and the
+	 * Swift core. [platform] adds [PLATFORM_HEADER]; `null` sends no platform header.
+	 */
+	fun protocolHeaders(
+		sdkVersion: String = DEFAULT_SDK_VERSION,
+		platform: String? = null,
+	): Map<String, String> = buildMap {
+		put(VERSION_HEADER, sdkVersion)
+		put(POLICY_CONTRACT_HEADER, POLICY_CONTRACT_VERSION.toString())
+		platform?.takeIf { it.isNotBlank() }?.let { put(PLATFORM_HEADER, "$it->$sdkVersion") }
+	}
 
 	/**
 	 * The `x-c15t-vendors` value for a declared scope, or `null` for no header.

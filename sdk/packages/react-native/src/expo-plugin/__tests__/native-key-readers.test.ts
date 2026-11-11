@@ -28,7 +28,13 @@ import { AndroidConfig } from '@expo/config-plugins';
 import { expect, it } from 'vitest';
 
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
-import { FIXTURE_DIR, applyToFixture, runInfoPlist, runMod } from './helpers';
+import {
+	FIXTURE_DIR,
+	OFFLINE,
+	applyToFixture,
+	runInfoPlist,
+	runMod,
+} from './helpers';
 
 const PACKAGE_ROOT = resolve(
 	dirname(fileURLToPath(import.meta.url)),
@@ -69,6 +75,11 @@ const EVERY_KEY_PROPS = {
 	consentCategories: ['necessary', 'functionality', 'measurement', 'marketing'],
 	domain: 'app.example.com',
 	forceGPC: true,
+	gpp: {
+		mspaMode: 'opt-out-option',
+		optOutCategories: ['marketing', 'measurement'],
+		tcf: false,
+	},
 	iab: {
 		cmpId: 1234,
 		cmpVersion: 7,
@@ -136,28 +147,46 @@ const writtenKeys = async function writtenKeys(): Promise<{
 }> {
 	const config = applyToFixture(EVERY_KEY_PROPS);
 
-	const plist = (await runInfoPlist(config)).ios?.infoPlist ?? {};
-	// Filtered by prefix only: a key written as a literal somewhere off the tables
-	// is exactly what the reader check exists to catch, so the tables must not be
-	// allowed to filter it out of view here.
-	const ios = Object.keys(plist)
-		.filter((key) => key.startsWith(C15T_KEY_PREFIX))
-		.sort();
+	const iosKeys = async (
+		applied: ReturnType<typeof applyToFixture>
+	): Promise<string[]> => {
+		const plist = (await runInfoPlist(applied)).ios?.infoPlist ?? {};
+		// Filtered by prefix only: a key written as a literal somewhere off the
+		// tables is exactly what the reader check exists to catch, so the tables
+		// must not be allowed to filter it out of view here.
+		return Object.keys(plist).filter((key) => key.startsWith(C15T_KEY_PREFIX));
+	};
+	// No-backend mode writes the keys a backend build cannot: the two modes do
+	// not mix, so no single configuration writes every key.
+	const offline = applyToFixture(OFFLINE);
+	const ios = [
+		...new Set([...(await iosKeys(config)), ...(await iosKeys(offline))]),
+	].sort();
 
-	const applied = await runMod(
-		config,
-		'android',
-		'manifest',
-		await AndroidConfig.Manifest.readAndroidManifestAsync(
-			join(FIXTURE_DIR, 'AndroidManifest.xml')
-		)
-	);
-	const application = AndroidConfig.Manifest.getMainApplicationOrThrow(
-		applied.modResults as AndroidConfig.Manifest.AndroidManifest
-	);
-	const android = (application['meta-data'] ?? [])
-		.map((entry) => entry.$['android:name'] ?? '')
-		.filter((name) => name.startsWith(C15T_KEY_PREFIX));
+	const androidKeys = async (
+		applied: ReturnType<typeof applyToFixture>
+	): Promise<string[]> => {
+		const result = await runMod(
+			applied,
+			'android',
+			'manifest',
+			await AndroidConfig.Manifest.readAndroidManifestAsync(
+				join(FIXTURE_DIR, 'AndroidManifest.xml')
+			)
+		);
+		const application = AndroidConfig.Manifest.getMainApplicationOrThrow(
+			result.modResults as AndroidConfig.Manifest.AndroidManifest
+		);
+		return (application['meta-data'] ?? [])
+			.map((entry) => entry.$['android:name'] ?? '')
+			.filter((name) => name.startsWith(C15T_KEY_PREFIX));
+	};
+	const android = [
+		...new Set([
+			...(await androidKeys(config)),
+			...(await androidKeys(offline)),
+		]),
+	];
 
 	return { android, ios: ios.sort() };
 };

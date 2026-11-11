@@ -2,13 +2,16 @@
  * Prompt surface slot for apps that bring their own UI.
  */
 
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import type { ConsentActions } from '../hooks/use-consent-actions';
 import { useConsentActions } from '../hooks/use-consent-actions';
 import { useConsentStatus } from '../hooks/use-consent-status';
 import { isStatusPromptOwed } from '../lib/selectors';
+import { claimPrompt } from '../native/without-native-ui';
 import type { KernelActiveUI, PromptRequirement } from '../protocol/vocabulary';
+import { useConsentClient } from '../provider/consent-context';
 
 /**
  * What the prompt slot hands its children.
@@ -44,16 +47,17 @@ export interface ConsentPromptProps {
  * The built-in surfaces live in `@c15t/react-native/components`; this is the
  * slot for an app that designs its own banner and dialog. It reads the four
  * lifecycle fields, so a snapshot event that changes neither the surface nor
- * the requirement leaves it alone.
+ * the requirement leaves it alone. Your banner and dialog record the answer
+ * with `useSaveConsents()`.
  *
  * @example
  * ```tsx
  * <ConsentPrompt>
- *     {({ actions, activeUI, promptRequirement }) =>
+ *     {({ activeUI, promptRequirement }) =>
  *         activeUI === 'banner' ? (
- *             <MyBanner onAccept={actions.acceptAll} requirement={promptRequirement} />
+ *             <MyBanner requirement={promptRequirement} />
  *         ) : (
- *             <MyDialog onAccept={actions.acceptAll} />
+ *             <MyDialog />
  *         )
  *     }
  * </ConsentPrompt>
@@ -70,6 +74,10 @@ export const ConsentPrompt = ({
 }: ConsentPromptProps): ReactNode => {
 	const status = useConsentStatus();
 	const actions = useConsentActions();
+	const client = useConsentClient();
+	// The owed prompt has somewhere to go, so a build without the stock screens
+	// has no reason to warn.
+	useEffect(() => claimPrompt(client), [client]);
 
 	if (!isStatusPromptOwed(status)) {
 		return fallback;

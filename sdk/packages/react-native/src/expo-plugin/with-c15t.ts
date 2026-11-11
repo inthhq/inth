@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -13,26 +15,38 @@ import {
 import type { ConfigPlugin, ExportedConfig } from '@expo/config-plugins';
 
 import { applyAndroidManifest } from './android';
-import { iosConfig } from './config-plugins';
+import { withAndroidSdkFloor } from './android-sdk-floor';
+import { fetchBundledManifest, manifestBuild } from './bundle-manifest';
+import { androidConfig, iosConfig } from './config-plugins';
 import { EXTRA_KEY } from './constants';
-import { applyAppBuildGradle, applyProjectBuildGradle } from './gradle';
+import {
+	applyGoogleConsentDefaultsToApplication,
+	applyGoogleConsentDefaultsToInfoPlist,
+} from './google-consent-mode';
+import { applyProjectBuildGradle } from './gradle';
 import {
 	applyInfoPlist,
 	applyLocalizedMarkdownDescriptions,
 	buildPrivacyManifestDeclarations,
 	withIosDeploymentTargetFloor,
 } from './ios';
+import { resolveNativeUI, withC15tNativeUI } from './native-ui';
 import { resolveParams } from './params';
 import type {
 	C15tPluginProps,
-	C15tProviderTransportKind,
+	ConsentProviderTransportKind,
 	ResolvedC15tParams,
 } from './params';
 import {
 	embedPolicyResource,
 	androidPolicyDestination,
+	androidPolicyRulesDestination,
 	POLICY_RESOURCE_NAME,
+	POLICY_RULES_NAME,
+	removeXcodeResource,
+	writePolicyRules,
 } from './policy-resource';
+import { resolveTheme, withC15tTheme } from './theme';
 import {
 	assertUpdatesCannotOutrunTheBinary,
 	buildProtocolInfo,
@@ -48,7 +62,7 @@ import type { WorkflowContext } from './workflow';
 /** What the plugin publishes under `extra.c15t`. */
 export interface C15tExtraConfig {
 	/** Transport mode in the spelling the JavaScript provider takes. */
-	mode: C15tProviderTransportKind;
+	mode: ConsentProviderTransportKind;
 	/** Backend base URL, or `null` when none is embedded. */
 	backendURL: string | null;
 	/** Init URL override, or `null`. */
@@ -146,6 +160,8 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	context: Partial<WorkflowContext> = {}
 ): ExportedConfig {
 	const params = resolveParams(props);
+	const theme = resolveTheme(props?.theme);
+	const nativeUI = resolveNativeUI(props?.nativeUI, props?.theme);
 
 	assertCustomNativeBuild(params, {
 		argv: context.argv,
@@ -160,11 +176,14 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 	};
 
 	next = applyPrivacyDeclarations(next, params);
+	next = withC15tNativeUI(next, nativeUI);
 	next = withIosDeploymentTargetFloor(next);
 
 	next = withInfoPlist(next, (configWithPlist) => ({
 		...configWithPlist,
-		modResults: applyInfoPlist(params, configWithPlist.modResults),
+		modResults: applyGoogleConsentDefaultsToInfoPlist(
+			applyInfoPlist(params, configWithPlist.modResults)
+		),
 	}));
 
 	// Localized prompt copy has no mod of its own in the config plugin version
@@ -201,6 +220,22 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	if (params.policyResource !== null) {
 		const source = params.policyResource;
+		const bundle = params.bundleManifest;
+		const build = manifestBuild(
+			context.argv ?? process.argv,
+			context.env ?? process.env
+		);
+		// With bundleManifest, fetch first. A debug build that could not reach the
+		// backend continues with no manifest, so an earlier build's embedded copy is
+		// removed rather than shipped: reusing an old copy is what
+		// allowStaleManifest is for, and then the fetch leaves that copy in place.
+		const ready = async (projectRoot: string): Promise<boolean> => {
+			if (bundle === null || params.backendURL === null) {
+				return true;
+			}
+			await fetchBundledManifest(projectRoot, params.backendURL, bundle, build);
+			return existsSync(join(projectRoot, source));
+		};
 		next = withXcodeProject(next, async (cfg) => {
 			if (cfg.modRequest.introspect) {
 				return cfg;
@@ -211,6 +246,17 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 					cfg.modRequest.projectRoot,
 					cfg
 				);
+			if (!(await ready(cfg.modRequest.projectRoot))) {
+				await rm(
+					join(cfg.modRequest.platformProjectRoot, name, POLICY_RESOURCE_NAME),
+					{ force: true }
+				);
+				cfg.modResults = removeXcodeResource(
+					cfg.modResults,
+					`${name}/${POLICY_RESOURCE_NAME}`
+				);
+				return cfg;
+			}
 			await embedPolicyResource(
 				cfg.modRequest.projectRoot,
 				source,
@@ -230,6 +276,12 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		next = withDangerousMod(next, [
 			'android',
 			async (cfg) => {
+				if (!(await ready(cfg.modRequest.projectRoot))) {
+					await rm(androidPolicyDestination(cfg.modRequest.projectRoot), {
+						force: true,
+					});
+					return cfg;
+				}
 				await embedPolicyResource(
 					cfg.modRequest.projectRoot,
 					source,
@@ -241,10 +293,54 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		]);
 	}
 
-	next = withAndroidManifest(next, (configWithManifest) => ({
-		...configWithManifest,
-		modResults: applyAndroidManifest(params, configWithManifest.modResults),
-	}));
+	if (params.policyRules !== null) {
+		const rules = params.policyRules;
+		next = withXcodeProject(next, async (cfg) => {
+			if (cfg.modRequest.introspect) {
+				return cfg;
+			}
+			const name =
+				cfg.modRequest.projectName ??
+				iosConfig.XcodeUtils.getHackyProjectName(
+					cfg.modRequest.projectRoot,
+					cfg
+				);
+			await writePolicyRules(
+				join(cfg.modRequest.platformProjectRoot, name, POLICY_RULES_NAME),
+				rules
+			);
+			if (!cfg.modResults.hasFile(`${name}/${POLICY_RULES_NAME}`)) {
+				cfg.modResults = iosConfig.XcodeUtils.addResourceFileToGroup({
+					filepath: `${name}/${POLICY_RULES_NAME}`,
+					groupName: name,
+					isBuildFile: true,
+					project: cfg.modResults,
+				});
+			}
+			return cfg;
+		});
+		next = withDangerousMod(next, [
+			'android',
+			async (cfg) => {
+				await writePolicyRules(
+					androidPolicyRulesDestination(cfg.modRequest.projectRoot),
+					rules
+				);
+				return cfg;
+			},
+		]);
+	}
+
+	next = withAndroidManifest(next, (configWithManifest) => {
+		const manifest = applyAndroidManifest(
+			params,
+			configWithManifest.modResults
+		);
+		const application =
+			androidConfig.Manifest.getMainApplicationOrThrow(manifest);
+		applyGoogleConsentDefaultsToApplication(application);
+		return { ...configWithManifest, modResults: manifest };
+	});
 
 	next = withProjectBuildGradle(next, (configWithGradle) => ({
 		...configWithGradle,
@@ -256,10 +352,7 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 
 	next = withAppBuildGradle(next, (configWithGradle) => {
 		assertNoManualGradleRegistration(configWithGradle.modResults.contents);
-		return {
-			...configWithGradle,
-			modResults: applyAppBuildGradle(configWithGradle.modResults),
-		};
+		return configWithGradle;
 	});
 
 	next = withMainApplication(next, (configWithApplication) => {
@@ -273,6 +366,9 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 		assertNoManualIosRegistration(configWithPodfile.modResults.contents);
 		return configWithPodfile;
 	});
+
+	next = withC15tTheme(next, theme);
+	next = withAndroidSdkFloor(next);
 
 	return next;
 };

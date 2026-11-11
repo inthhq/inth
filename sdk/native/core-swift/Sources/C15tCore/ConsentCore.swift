@@ -28,6 +28,15 @@ public struct CoreConfig: @unchecked Sendable {
     public let store: any ConsentStore
     /// Optional build resource. It never replaces a usable stored policy.
     public let bundledPolicy: BundledPolicyResource?
+    /// The policy in source control, the only policy source in no-backend mode. Use it
+    /// with ``OfflineTransport`` or no transport: the two modes do not mix.
+    public let policy: ConsentPolicy?
+    /// Why the app's declared in-code policy was refused, when an adapter read one and
+    /// could not use it. The core then reports `policy-invalid` in the snapshot and on
+    /// the event stream instead of starting as if no policy had been declared.
+    public let policyError: String?
+    /// No-backend mode with an in-code policy, usable or refused. Init never uses the transport.
+    var usesInCodePolicy: Bool { policy != nil || policyError != nil }
     var policyEndpoint: String? {
         transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
     }
@@ -94,10 +103,15 @@ public struct CoreConfig: @unchecked Sendable {
     /// that ships no ad SDK leaves this `nil` and the core's behavior is
     /// byte-identical to a build with no bus at all.
     public let storageBus: (any TcStorageBusWriting)?
+    /// Turns on the IAB GPP string: ``ConsentSnapshot/gppString`` and the `IABGPP_*`
+    /// rows on ``storageBus``. `nil`, the default, writes no GPP signal.
+    public let gpp: GPPOptions?
 
     public init(
         store: any ConsentStore = InMemoryStore(),
         bundledPolicy: BundledPolicyResource? = nil,
+        policy: ConsentPolicy? = nil,
+        policyError: String? = nil,
         transport: (any C15tTransport)? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
@@ -109,10 +123,16 @@ public struct CoreConfig: @unchecked Sendable {
         now: @escaping @Sendable () -> Int64 = { Int64(Date().timeIntervalSince1970 * 1_000) },
         initRetry: InitRetry? = InitRetry(),
         flushPendingOnBootstrap: Bool = true,
-        storageBus: (any TcStorageBusWriting)? = nil
+        storageBus: (any TcStorageBusWriting)? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.store = store
+        precondition(
+            policy == nil && policyError == nil || bundledPolicy == nil && transport?.policyEndpoint == nil,
+            "CoreConfig.policy is no-backend mode and does not mix with a bundled manifest or a backend transport")
         self.bundledPolicy = bundledPolicy
+        self.policy = policy
+        self.policyError = policyError
         self.transport = transport
         self.consentCategories = consentCategories
         self.vendors = vendors
@@ -125,6 +145,7 @@ public struct CoreConfig: @unchecked Sendable {
         self.initRetry = initRetry
         self.flushPendingOnBootstrap = flushPendingOnBootstrap
         self.storageBus = storageBus
+        self.gpp = gpp
     }
 }
 
@@ -147,7 +168,14 @@ public final class ConsentCore: @unchecked Sendable {
     private let lock = Lock()
     private let mutationGate = MutationGate()
     private var needsGrantCleanup = false
-    private var currentSnapshot = ConsentSnapshot.coldStart
+    private var currentSnapshot = ConsentSnapshot.coldStart {
+        // Every installed state passes here, in order and under `lock`, so this is where the
+        // owed prompt is named. Assigning inside `didSet` does not run it again.
+        didSet {
+            let since = ConsentSnapshot.owedSince(previous: oldValue, next: currentSnapshot)
+            if currentSnapshot.promptOwedSince != since { currentSnapshot.promptOwedSince = since }
+        }
+    }
     private var bootstrapped = false
     private var config: CoreConfig?
     private var queue: PendingSaveQueue?
@@ -155,9 +183,13 @@ public final class ConsentCore: @unchecked Sendable {
     private var resolvedPolicy: ResolvedPolicy?
     private var policyWire: JSONValue?
     private var bundledPolicyAuthority: BundledPolicyAuthority?
+    /// The stale manifest already announced through ``CoreEvent/policyStale(_:)``.
+    private var staleAnnounced: BundledPolicyAuthority?
     private var noticeDismissal: NoticeDismissal?
     private var lastIABActionAt: Int64?
     private var additionalConsentList: AdditionalConsentList?
+    /// `/init`'s `customVendors`, kept until a response serves another list, as on the web.
+    private var customVendors: [IABCustomVendor] = []
     private var iabListFetchedAt: Int64?
     private var iabListFromCache = true
     private var iabListOffline = false
@@ -191,7 +223,7 @@ public final class ConsentCore: @unchecked Sendable {
     }
 
     private func listIsUsableLocked() -> Bool {
-        guard bundledPolicyAuthority?.isCurrent(endpoint: config?.policyEndpoint, now: config?.now() ?? -1) != false,
+        guard bundledPolicyAuthority?.isUsable(endpoint: config?.policyEndpoint, now: config?.now() ?? -1) != false,
             let c = config, let fetched = iabListFetchedAt, fetched >= 0,
             currentSnapshot.iab?.gvl != nil else { return false }
         let now = c.now()
@@ -221,6 +253,42 @@ public final class ConsentCore: @unchecked Sendable {
     /// Build metadata in force, or nil after a hosted refresh. No identity or grants.
     public var bundledPolicyInfo: BundledPolicyAuthority? { lock.withLock { bundledPolicyAuthority } }
 
+    /// Whether the policy in force comes from a bundled manifest past its `expiresAt`.
+    ///
+    /// The prompt still shows and choices still save. Optional categories stay denied
+    /// until the person chooses, and a live `/init` replaces the manifest once online.
+    public var isPolicyStale: Bool {
+        lock.withLock {
+            guard let authority = bundledPolicyAuthority, let config else { return false }
+            let now = config.now()
+            return authority.isUsable(endpoint: config.policyEndpoint, now: now) && authority.isStale(now: now)
+        }
+    }
+
+    /// The stale manifest to announce, once per manifest. Callers hold the lock.
+    private func takeStaleAnnouncementLocked() -> BundledPolicyAuthority? {
+        guard let authority = bundledPolicyAuthority, let config, staleAnnounced != authority else { return nil }
+        let now = config.now()
+        guard authority.isUsable(endpoint: config.policyEndpoint, now: now), authority.isStale(now: now) else { return nil }
+        staleAnnounced = authority
+        return authority
+    }
+
+    /// Whether a bundled manifest may replace the policy in force after hydration.
+    ///
+    /// Precedence: a live `/init` response, then the last good cached one, then the
+    /// manifest bundled at build time. A cached response from an earlier bundle gives way
+    /// to this build's bundle when that one is newer, or when the cached one is stale.
+    private func shouldAdoptBundle(_ candidate: BundledPolicyAuthority, config: CoreConfig) -> Bool {
+        let now = config.now()
+        guard candidate.isUsable(endpoint: config.policyEndpoint, now: now) else { return false }
+        if snapshot().policyPending { return true }
+        guard let retained = lock.withLock({ bundledPolicyAuthority }) else { return false }
+        return !retained.isUsable(endpoint: config.policyEndpoint, now: now)
+            || candidate.issuedAt > retained.issuedAt
+            || retained.isStale(now: now) && !candidate.isStale(now: now)
+    }
+
     /// Last readable provider disclosures, including stale copy. Check additionalConsentStatus
     /// before offering a new grant. Reading does not renew list authority.
     public func adTechProviderDisclosures() -> [AdTechProvider]? { lock.withLock { additionalConsentList?.providers } }
@@ -228,6 +296,27 @@ public final class ConsentCore: @unchecked Sendable {
     /// Read ATP disclosures once when opening native preferences, without a JS fetch.
     public func adTechProviders() -> [AdTechProvider]? {
         lock.withLock { currentAdditionalConsentListLocked()?.providers }
+    }
+
+    /// The custom (non-IAB) vendors `/init` served, in the order served. Empty when none.
+    public func iabCustomVendors() -> [IABCustomVendor] { lock.withLock { customVendors } }
+
+    /// Check committed custom vendor consent without a JS runtime. ATT remains a separate gate.
+    public func isCustomVendorAllowed(_ id: String) -> Bool {
+        iabConsent()?.choices.customVendorConsents.contains(id) == true
+    }
+
+    /// The c15t categories the committed TC String grants, by the web's derivation
+    /// (``IABPurposeCategories``), or `nil` when no decision is current. Registered vendors after
+    /// publisher restrictions, custom vendors and listed ad tech providers decide which purposes
+    /// count.
+    public func iabPurposeCategories() -> [OptionalConsentCategory: Bool]? {
+        guard let consent = iabConsent(), let presentation = iabPresentation() else { return nil }
+        let basis = IABPurposeCategories.consentBasis(
+            vendorConsentPurposes: presentation.vendors.values.map(\.consentPurposes),
+            customVendors: presentation.customVendors,
+            adTechProvidersListed: presentation.adTechProviders?.isEmpty == false)
+        return IABPurposeCategories.categories(purposeConsents: Set(consent.choices.purposeConsents), basis: basis)
     }
 
     /// Check committed ATP consent without a JS runtime. ATT remains a separate gate.
@@ -248,12 +337,37 @@ public final class ConsentCore: @unchecked Sendable {
     /// Open a draft on the current disclosed list. Retry after a missing or stale list.
     public func openIABDraft() -> IABDraft? {
         lock.withLock {
-            guard config?.iab != nil, resolvedPolicy?.policy.model == .iab,
-                !currentSnapshot.policyPending, listIsUsableLocked(),
-                (bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false) || currentAdditionalConsentListLocked() != nil
-            else { return nil }
+            guard iabDraftOpenableLocked() else { return nil }
             return IABDraft(revision: currentSnapshot.revision, choices: committedIAB?.choices ?? IABChoices())
         }
+    }
+
+    /// The publisher restrictions this core was configured with, empty without IAB. A screen that
+    /// shows the served list as it is discloses the wrong legal bases while any are set; the core's
+    /// own projection is in ``iabPresentation()``.
+    public var iabPublisherRestrictions: [IABPublisherRestriction] {
+        lock.withLock { config?.iab?.publisherRestrictions ?? [] }
+    }
+
+    /// What Accept all saves on the current disclosed list: every live partner's bases under the
+    /// publisher's disclosure and restrictions, exactly as ``save(_:expectedRevision:)`` builds them
+    /// for ``CommitIntent/all``. `nil` whenever ``openIABDraft()`` is.
+    public func iabAcceptAllChoices() -> IABChoices? {
+        lock.withLock {
+            guard iabDraftOpenableLocked(), let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else { return nil }
+            return IABAuthority.accepting(
+                gvl, configuration: configuration,
+                adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id),
+                customVendors: customVendors)
+        }
+    }
+
+    /// Whether a draft can open and be saved now: an IAB policy, configuration, a usable list and,
+    /// where one is required, a current Additional Consent list. The caller holds `lock`.
+    private func iabDraftOpenableLocked() -> Bool {
+        config?.iab != nil && resolvedPolicy?.policy.model == .iab && !currentSnapshot.policyPending && listIsUsableLocked()
+            && ((bundledPolicyAuthority?.requiresAtp != true && additionalConsentList?.providers.isEmpty != false)
+                || currentAdditionalConsentListLocked() != nil)
     }
 
     /// Capture retained disclosure and a draft atomically. Check `canEdit` before offering grants.
@@ -268,6 +382,7 @@ public final class ConsentCore: @unchecked Sendable {
             return IABPresentation(canEdit: canEdit, draft: draft, list: list,
                 vendors: Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, configuration.disclosure(for: $0)) }),
                 adTechProviders: additionalConsentList?.providers,
+                customVendors: customVendors,
                 // A saved decision stops counting, and leaves the storage bus, once the
                 // choice validity passes (`isCurrent`, `writeTcStorageBus`).
                 consentStorageMaxDays: IABPresentation.days(ms: resolvedPolicy?.policy.choiceMaxAgeMs),
@@ -308,12 +423,6 @@ public final class ConsentCore: @unchecked Sendable {
     private var deliveryPassInFlight = false
     private var deliveryPassRequested = false
     private var deliveryPassWaiters: [CheckedContinuation<Bool, Never>] = []
-    /// Strong holds on per-category gate subscriptions, keyed by identity. The
-    /// observer set itself stays weak, as the contract requires. Holds both gate
-    /// flavours: the boolean one ``gate(_:_:)`` and the decision-carrying
-    /// ``ConsentCore/gate(_:_:)`` overload, whose only owner would otherwise be a
-    /// closure no one else retains.
-    private var gateSubscriptions: [ObjectIdentifier: any SnapshotObserver] = [:]
 
     // MARK: - Collaborators
 
@@ -351,16 +460,75 @@ public final class ConsentCore: @unchecked Sendable {
         guard adopted else { return }
 
         hydrate(mutation: mutation)
-        if snapshot().policyPending, let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()),
-            selection.authority.isCurrent(endpoint: config.policyEndpoint, now: config.now()) {
+        if let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()),
+            shouldAdoptBundle(selection.authority, config: config) {
             applyPolicyUpdate(selection.response, bundle: selection)
         }
+        // In no-backend mode the in-code policy answers before the first read, once:
+        // there is no init to schedule after it.
+        if let policy = config.policy {
+            applyInCodePolicy(policy, overrides: config.overrides)
+        } else if let reason = config.policyError {
+            reportRefusedPolicy(reason)
+        }
+        if let stale = lock.withLock({ takeStaleAnnouncementLocked() }) { events.emit(.policyStale(stale)) }
         events.emit(.initialized)
 
         if config.flushPendingOnBootstrap {
             schedule { await self.requestDeliveryPass(ownSend: nil) }
         }
-        scheduleInit(attempt: 1)
+        if !config.usesInCodePolicy { scheduleInit(attempt: 1) }
+    }
+
+    /// Report an in-code policy the host declared and the adapter could not use, the way
+    /// a refused `/init` is reported, rather than as a quiet deny-all start.
+    private func reportRefusedPolicy(_ reason: String) {
+        failClosed(CoreErrorInfo(code: "policy-invalid", message: "The in-code policy was refused: \(reason)"))
+    }
+
+    /// Apply the in-code policy's answer for `overrides`. The answer is local and final:
+    /// no `/init` will revise it. So a location the policy cannot answer without a region
+    /// fails closed instead of running the safe fallback or keeping the last rule, and the
+    /// saved choice comes back once the policy answers again.
+    private func applyInCodePolicy(_ policy: ConsentPolicy, overrides: ConsentOverrides) {
+        guard policy.outcome(country: overrides.country, region: overrides.region) == .insufficientInputs else {
+            applyPolicyUpdate(policy.resolve(overrides: overrides))
+            return
+        }
+        failClosed(
+            CoreErrorInfo(
+                code: "insufficient-inputs",
+                message: "The in-code policy cannot answer this location without a region; optional consent stays denied"),
+            resolution: PolicyResolutionInfo(
+                status: .failed, policyId: nil, fingerprint: nil, reason: "insufficient-inputs"),
+            location: LocationContext(countryCode: overrides.country, regionCode: overrides.region))
+    }
+
+    /// Drop the policy in force and deny every optional category. Stored choices stay.
+    private func failClosed(
+        _ info: CoreErrorInfo, resolution: PolicyResolutionInfo? = nil, location: LocationContext? = nil
+    ) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
+        lock.withLock {
+            // Fail closed: a policy that cannot answer cannot keep a cached one, or its
+            // grants, in force. Stored choices stay, for when a usable policy answers.
+            resolvedPolicy = nil
+            policyWire = nil
+            currentSnapshot = currentSnapshot.byApplying { draft in
+                if let resolution { draft.resolution = resolution }
+                if let location { draft.location = location }
+                draft.policyPending = true
+                draft.effectivePermissions = ConsentSnapshot.failClosedPermissions
+                draft.restrictions = [:]
+                draft.promptRequirement = .none
+                draft.activeUI = .none
+                draft.nextDeadline = nil
+                draft.error = info
+            }
+        }
+        publish(persist: true, mutation: mutation)
+        events.emit(.error(info))
     }
 
     /// Whether ``bootstrap(_:)`` has taken effect.
@@ -410,10 +578,51 @@ public final class ConsentCore: @unchecked Sendable {
 
     /// The current state. Synchronous, and never touches disk or the network.
     public func snapshot() -> ConsentSnapshot {
-        lock.withLock { readableSnapshotLocked() }
+        lock.withLock { publishedSnapshotLocked() }
     }
 
+    /// ``readableSnapshotLocked()`` carrying the GPP string derived for it.
+    ///
+    /// Only snapshots handed out carry the string; the gates read the readable view
+    /// directly, so ``isAllowed(_:)`` never pays for an encode. The TC String goes in
+    /// only while the committed consent still authorizes vendors, which is the same
+    /// condition under which the readable view keeps its IAB permissions.
+    private func publishedSnapshotLocked() -> ConsentSnapshot {
+        let readable = readableSnapshotLocked()
+        let gppString = GPPResolver.resolve(
+            readable,
+            policy: resolvedPolicy?.policy,
+            tcString: currentCommittedIABLocked()?.tcString,
+            options: config?.gpp
+        )?.gppString
+        guard gppString != readable.gppString else { return readable }
+        var draft = ConsentSnapshot.Draft(current: readable)
+        draft.gppString = gppString
+        // A draft carries no owed-prompt name, so the rebuilt snapshot takes the readable one's.
+        var published = draft.build(revision: readable.revision)
+        published.promptOwedSince = readable.promptOwedSince
+        return published
+    }
+
+    /// The committed IAB consent while it still authorizes vendors, else `nil`.
+    private func currentCommittedIABLocked() -> IABCommittedConsent? {
+        guard let config, let saved = committedIAB, listIsUsableLocked(), resolvedPolicy?.policy.model == .iab,
+            !currentSnapshot.policyPending,
+            saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil,
+            saved.isCurrent(now: config.now(), maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0)
+        else { return nil }
+        return saved
+    }
+
+    /// What every reader sees: the sync read, observers, events and gate decisions alike.
     private func readableSnapshotLocked() -> ConsentSnapshot {
+        // The views below may be rebuilt from a draft, which carries no owed-prompt name.
+        var readable = constrainedSnapshotLocked()
+        readable.promptOwedSince = currentSnapshot.promptOwedSince
+        return readable
+    }
+
+    private func constrainedSnapshotLocked() -> ConsentSnapshot {
         let constrained = constrainBundledPolicyLocked(currentSnapshot)
         guard !constrained.policyPending, resolvedPolicy?.policy.model == .iab else { return constrained }
         if listIsUsableLocked(), let saved = committedIAB, let config, let resolvedPolicy,
@@ -429,11 +638,11 @@ public final class ConsentCore: @unchecked Sendable {
     private func constrainBundledPolicyLocked(_ snapshot: ConsentSnapshot) -> ConsentSnapshot {
         guard let authority = bundledPolicyAuthority else { return snapshot }
         var draft = ConsentSnapshot.Draft(current: snapshot)
-        guard authority.isCurrent(endpoint: config?.policyEndpoint, now: config?.now() ?? -1) else {
+        guard authority.isUsable(endpoint: config?.policyEndpoint, now: config?.now() ?? -1) else {
             draft.effectivePermissions = .necessaryOnly
             draft.policyPending = true
             draft.activeUI = .none
-            draft.error = CoreErrorInfo(code: "bundled-policy-expired", message: "Connect to refresh consent policy.")
+            draft.error = CoreErrorInfo(code: "bundled-policy-unusable", message: "Connect to refresh consent policy.")
             return draft.build(revision: snapshot.revision)
         }
         for category in OptionalConsentCategory.ordered where snapshot.explicitChoice?.categories[category]?.value != true {
@@ -509,25 +718,14 @@ public final class ConsentCore: @unchecked Sendable {
     ///
     /// Firing immediately is what lets a script gate be written as "register and
     /// load if allowed" without a separate read, and without a race between the two.
-    @discardableResult
+    ///
+    /// The core holds `onChange` until the returned handle is cancelled or released.
     public func gate(
         _ category: OptionalConsentCategory,
         _ onChange: @escaping @Sendable (Bool) -> Void
     ) -> ConsentSubscription {
         let subscription = GateSubscription(category: category, onChange: onChange)
-        let registration = observers.add(subscription)
-        // The observer set holds the subscription weakly, and a closure is not an
-        // object anyone else owns, so the core keeps it alive for exactly as long
-        // as the registration does. Cancelling drops both ends together.
-        let key = ObjectIdentifier(subscription)
-        registration.addHandler { [weak self] in
-            guard let self else { return }
-            self.lock.withLock {
-                self.gateSubscriptions.removeValue(forKey: key)
-                ()
-            }
-        }
-        lock.withLock { gateSubscriptions[key] = subscription }
+        let registration = observers.add { subscription.consentDidChange($0) }
         let allowed = lock.withLock {
             readableSnapshotLocked().effectivePermissions.value(for: category)
         }
@@ -556,8 +754,8 @@ public final class ConsentCore: @unchecked Sendable {
     ///   - category: The category to watch. Takes `necessary`, which always answers
     ///     `granted`, so that a gate written over every category needs no special case.
     ///   - onChange: Called with the current decision, then with each new one.
-    /// - Returns: A handle that cancels the subscription.
-    @discardableResult
+    /// - Returns: A handle that owns `onChange`. Cancelling or releasing it ends the
+    ///   subscription.
     public func gate(
         _ category: ConsentCategory,
         _ onChange: @escaping @Sendable (ConsentDecision) -> Void
@@ -569,16 +767,7 @@ public final class ConsentCore: @unchecked Sendable {
         // Missing a change would leave an SDK switched off with nothing left listening,
         // which is the failure this gate exists to prevent, so the possible cost here
         // is one redundant delivery instead.
-        let registration = observers.add(subscription)
-        let key = ObjectIdentifier(subscription)
-        registration.addHandler { [weak self] in
-            guard let self else { return }
-            self.lock.withLock {
-                self.gateSubscriptions.removeValue(forKey: key)
-                ()
-            }
-        }
-        lock.withLock { gateSubscriptions[key] = subscription }
+        let registration = observers.add { subscription.consentDidChange($0) }
         let current = lock.withLock {
             ConsentDecision(snapshot: readableSnapshotLocked(), category: category)
         }
@@ -586,9 +775,21 @@ public final class ConsentCore: @unchecked Sendable {
         return registration
     }
 
-    /// Watch the whole snapshot. Held weakly.
-    @discardableResult
-    public func onChange(_ observer: any SnapshotObserver) -> ConsentSubscription {
+    /// Watch the whole snapshot.
+    ///
+    /// The core holds `observer` until the returned handle is cancelled or released,
+    /// so an inline closure keeps firing with nothing else referencing it. Keep the
+    /// handle for as long as you want updates. A closure that captures its owner
+    /// should capture it weakly, or the owner keeps its own registration alive.
+    ///
+    /// Called on an arbitrary queue, off the main thread unless the host arranges
+    /// otherwise. UI layers must hop.
+    ///
+    /// - Parameter observer: Called with each published snapshot.
+    /// - Returns: A handle that owns `observer`.
+    public func onChange(
+        _ observer: @escaping @Sendable (ConsentSnapshot) -> Void
+    ) -> ConsentSubscription {
         observers.add(observer)
     }
 
@@ -644,12 +845,9 @@ public final class ConsentCore: @unchecked Sendable {
         }
 
         let prepared: Result<Planned, CoreErrorInfo> = lock.withLock {
-            let withdrawingExpiredBundle = intent == .necessary && resolvedPolicy != nil
-                && bundledPolicyAuthority?.hasExpired(endpoint: config?.policyEndpoint, now: wallActionAt) == true
             if let authority = bundledPolicyAuthority,
-                !authority.isCurrent(endpoint: config?.policyEndpoint, now: wallActionAt),
-                !withdrawingExpiredBundle {
-                return .failure(CoreErrorInfo(code: "bundled-policy-expired", message: "Connect to refresh consent policy."))
+                !authority.isUsable(endpoint: config?.policyEndpoint, now: wallActionAt) {
+                return .failure(CoreErrorInfo(code: "bundled-policy-unusable", message: "Connect to refresh consent policy."))
             }
             if bundledPolicyAuthority?.requiresAtp == true && intent != .necessary && currentAdditionalConsentListLocked() == nil {
                 return .failure(CoreErrorInfo(code: "additional-consent-list-stale", message: "Refresh the provider disclosures before saving."))
@@ -672,7 +870,7 @@ public final class ConsentCore: @unchecked Sendable {
                     message: "No subject identity is available."
                 ))
             }
-            guard let resolved = resolvedPolicy, !currentSnapshot.policyPending || withdrawingExpiredBundle else {
+            guard let resolved = resolvedPolicy, !currentSnapshot.policyPending else {
                 // Without a policy there is no scope, so "accept all" would have to
                 // invent one. Refuse and leave the deny-all snapshot alone.
                 return .failure(CoreErrorInfo(
@@ -716,7 +914,8 @@ public final class ConsentCore: @unchecked Sendable {
                 case .all:
                     choices = IABAuthority.accepting(
                         gvl, configuration: configuration,
-                        adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id))
+                        adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id),
+                        customVendors: customVendors)
                 case .necessary: choices = IABChoices()
                 case let .iab(draft, _): choices = draft
                 case .custom:
@@ -734,7 +933,7 @@ public final class ConsentCore: @unchecked Sendable {
                         configuration: configuration, choices: choices,
                         gvl: gvl, subjectId: identity.id, externalId: user?.externalId,
                         fingerprint: resolved.choiceFingerprint, actionAt: actionAt, previous: committedIAB,
-                        additionalConsentList: currentAdditionalConsentListLocked())
+                        additionalConsentList: currentAdditionalConsentListLocked(), customVendors: customVendors)
                 } catch let info as CoreErrorInfo { return .failure(info) } catch {
                     return .failure(
                         CoreErrorInfo(code: "invalid-iab-choices", message: "Native IAB validation failed."))
@@ -747,10 +946,9 @@ public final class ConsentCore: @unchecked Sendable {
             // A bulk action covers the categories the prompt asks about, which is
             // what `resolveSaveSelection` in `packages/core` narrows it to.
             let choiceScope = choiceScopeLocked(resolved)
-            // Expired-policy rejection also withdraws older grants outside today's scope.
             let receipts = categories(
                 for: intent,
-                scope: withdrawingExpiredBundle ? OptionalConsentCategory.ordered : choiceScope,
+                scope: choiceScope,
                 current: currentSnapshot.explicitChoice
             )
             // With nothing to decide, a bulk action still covers everything the
@@ -759,7 +957,7 @@ public final class ConsentCore: @unchecked Sendable {
             let action: ConsentAction
             switch intent {
             case .all: action = coversShown ? .all : .custom
-            case .necessary: action = withdrawingExpiredBundle || coversShown ? .necessary : .custom
+            case .necessary: action = coversShown ? .necessary : .custom
             case .custom, .iab: action = .custom
             }
 
@@ -800,7 +998,7 @@ public final class ConsentCore: @unchecked Sendable {
             let baseRevision = currentSnapshot.revision
             let next = currentSnapshot.byApplying { draft in
                 draft.explicitChoice = storedChoice
-                draft.effectivePermissions = withdrawingExpiredBundle || resolved.policy.model == .iab && nextIAB == nil
+                draft.effectivePermissions = resolved.policy.model == .iab && nextIAB == nil
                     ? .necessaryOnly : evaluation.permissions
                 draft.restrictions = evaluation.restrictions
                 draft.promptRequirement = evaluation.promptRequirement
@@ -816,7 +1014,6 @@ public final class ConsentCore: @unchecked Sendable {
                 draft.activeUI = evaluation.promptRequirement.kind == .none
                     ? ActiveUI.none
                     : ActiveUI.banner
-                if withdrawingExpiredBundle { draft.policyPending = true; draft.activeUI = .none }
                 draft.error = nil
             }
             let payload = SavePayload(
@@ -902,7 +1099,7 @@ public final class ConsentCore: @unchecked Sendable {
                     iabConsent: plan.isIAB ? plan.iabConsent : committedIAB,
                     lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt,
                     iabListFetchedAt: iabListFetchedAt,
-                    additionalConsentList: additionalConsentList)
+                    additionalConsentList: additionalConsentList, customVendors: customVendors)
             }
             let queued = envelope.flatMap {
                 plan.queue.commit($0, body: plan.body,
@@ -1084,7 +1281,7 @@ public final class ConsentCore: @unchecked Sendable {
                 snapshot: next, noticeDismissal: dismissal,
                 policyResolution: policyWire, storedAt: at, iabConsent: committedIAB,
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
-                additionalConsentList: additionalConsentList)
+                additionalConsentList: additionalConsentList, customVendors: customVendors)
             return (next, dismissal, envelope, queue)
         }
         guard let (next, dismissal, envelope, queue) = planned else { return false }
@@ -1335,7 +1532,7 @@ public final class ConsentCore: @unchecked Sendable {
         writeTcStorageBus()
         publish(persist: false, mutation: mutation)
         if let config = lock.withLock({ self.config }), let selection = config.bundledPolicy?.resolve(overrides: config.overrides, now: config.now()),
-            selection.authority.isCurrent(endpoint: config.policyEndpoint, now: config.now()) { applyPolicyUpdate(selection.response, bundle: selection) }
+            selection.authority.isUsable(endpoint: config.policyEndpoint, now: config.now()) { applyPolicyUpdate(selection.response, bundle: selection) }
         scheduleInit(attempt: 1)
     }
 
@@ -1428,6 +1625,7 @@ public final class ConsentCore: @unchecked Sendable {
             self.policyWire = envelope?.policyResolution
             self.noticeDismissal = envelope?.noticeDismissal
             self.additionalConsentList = envelope?.additionalConsentList
+            self.customVendors = envelope?.customVendors ?? []
             self.iabListFetchedAt = envelope?.iabListFetchedAt
             self.committedIAB = envelope?.iabConsent
             let watermark = envelope?.lastIABActionAt ?? envelope?.iabConsent?.actionAt
@@ -1514,21 +1712,17 @@ public final class ConsentCore: @unchecked Sendable {
     private func writeTcStorageBus() {
         let publication = lock.withLock { () -> (bus: any TcStorageBusWriting, values: [String: TcBusValue])? in
             guard let config, let bus = config.storageBus else { return nil }
-            let saved = committedIAB.flatMap { saved -> IABCommittedConsent? in
-                guard listIsUsableLocked(), resolvedPolicy?.policy.model == .iab,
-                    !currentSnapshot.policyPending,
-                    saved.adTechProvidersID == nil || currentAdditionalConsentListLocked() != nil,
-                    saved.isCurrent(now: config.now(), maxAge: resolvedPolicy?.policy.choiceMaxAgeMs ?? 0)
-                else { return nil }
-                return saved
-            }
+            let saved = currentCommittedIABLocked()
+            let signal = GPPResolver.resolve(
+                readableSnapshotLocked(), policy: resolvedPolicy?.policy, tcString: saved?.tcString, options: config.gpp)
             let envelope = StoredEnvelope(
                     bundledPolicyAuthority: bundledPolicyAuthority,
                 snapshot: readableSnapshotLocked(), noticeDismissal: noticeDismissal,
                 policyResolution: policyWire, storedAt: config.now(), iabConsent: saved,
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
-                additionalConsentList: additionalConsentList)
-            return (bus, TcStorageBus.values(for: envelope, configuration: config.iab))
+                additionalConsentList: additionalConsentList, customVendors: customVendors)
+            let gpp = GPPStorageBus.values(signal, iabConsent: saved)
+            return (bus, TcStorageBus.values(for: envelope, configuration: config.iab).merging(gpp) { _, new in new })
         }
         guard let publication else { return }
         publication.bus.write(publication.values)
@@ -1733,7 +1927,7 @@ public final class ConsentCore: @unchecked Sendable {
                 configuration: c, choices: saved.choices,
                 gvl: gvl, subjectId: saved.subjectId, externalId: saved.externalId,
                 fingerprint: saved.fingerprint, actionAt: saved.actionAt, previous: saved,
-                additionalConsentList: currentAdditionalConsentListLocked())
+                additionalConsentList: currentAdditionalConsentListLocked(), customVendors: customVendors)
         {
             valid = rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices
                 && rebuilt.addtlConsent == saved.addtlConsent && rebuilt.adTechProvidersID == saved.adTechProvidersID
@@ -1792,7 +1986,7 @@ public final class ConsentCore: @unchecked Sendable {
                 snapshot: next, noticeDismissal: nil,
                 policyResolution: reset ? nil : policyWire, storedAt: config.now(),
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: reset ? nil : iabListFetchedAt,
-                additionalConsentList: reset ? nil : additionalConsentList)
+                additionalConsentList: reset ? nil : additionalConsentList, customVendors: reset ? [] : customVendors)
         }
         guard let envelope else { return nil }
         guard queue.replace(envelope) else { return false }
@@ -1802,6 +1996,7 @@ public final class ConsentCore: @unchecked Sendable {
             if reset {
                 resolvedPolicy = nil; policyWire = nil; restoredFromStore = false
                 additionalConsentList = nil
+                customVendors = []
                 iabListFetchedAt = nil; iabListFromCache = true; iabListOffline = false
             }
         }
@@ -1813,7 +2008,7 @@ public final class ConsentCore: @unchecked Sendable {
     /// already hold the lock.
     private func reevaluateLocked(now: Int64, bumpRevision: Bool = true) {
         guard let resolved = resolvedPolicy, !currentSnapshot.policyPending else { return }
-        if let authority = bundledPolicyAuthority, !authority.isCurrent(endpoint: config?.policyEndpoint, now: now) {
+        if let authority = bundledPolicyAuthority, !authority.isUsable(endpoint: config?.policyEndpoint, now: now) {
             var draft = ConsentSnapshot.Draft(current: constrainBundledPolicyLocked(currentSnapshot))
             draft.nextDeadline = nil
             draft.evaluatedAt = now
@@ -1855,12 +2050,13 @@ public final class ConsentCore: @unchecked Sendable {
         }
         cleanup?.discardGrants()
         if persist { persistEnvelope() }
-        let state = lock.withLock {
+        let (state, stale) = lock.withLock {
             scheduleIABDeadlineLocked()
-            return readableSnapshotLocked()
+            return (publishedSnapshotLocked(), takeStaleAnnouncementLocked())
         }
         mutation.release()
         events.emit(.snapshot(revision: state.revision))
+        if let stale { events.emit(.policyStale(stale)) }
         observers.notify(state)
     }
 
@@ -1949,7 +2145,8 @@ public final class ConsentCore: @unchecked Sendable {
                 iabConsent: committedIAB,
                 lastIABActionAt: lastIABActionAt,
                 iabListFetchedAt: iabListFetchedAt,
-                additionalConsentList: additionalConsentList
+                additionalConsentList: additionalConsentList,
+                customVendors: customVendors
             )
             // Claim the revision before releasing the lock, so two overlapping
             // publishes cannot both decide they are the newest writer.
@@ -2005,6 +2202,15 @@ public final class ConsentCore: @unchecked Sendable {
 
     private func runInit(attempt: Int) async {
         guard let config = lock.withLock({ self.config }) else { return }
+        if config.usesInCodePolicy {
+            if let policy = config.policy {
+                applyInCodePolicy(policy, overrides: lock.withLock { overrides })
+            } else if let reason = config.policyError {
+                // A reset clears the snapshot error, so a refused policy is reported again.
+                reportRefusedPolicy(reason)
+            }
+            return
+        }
         guard let transport = config.transport else { return }
         let context = lock.withLock {
             InitContext(
@@ -2111,6 +2317,14 @@ public final class ConsentCore: @unchecked Sendable {
             } else if let providers = response.adTechProviders {
                 additionalConsentList = AdditionalConsentList(providers: providers, fetchedAt: bundle == nil ? nowMs : bundle?.atpFetchedAt ?? -1)
             }
+            // Absent keeps the list held, as `init-lifecycle.ts` does on the web; an unreadable one
+            // is none. A grant for a vendor no longer listed goes with it.
+            if response.customVendorsInvalid {
+                customVendors = []
+            } else if let served = response.customVendors {
+                customVendors = served
+            }
+            committedIAB = committedIAB?.keepingCustomVendors(customVendors)
             if let gvl = response.gvl {
                 iabListFetchedAt = bundle == nil ? nowMs : bundle?.gvlFetchedAt
                 iabListFromCache = bundle != nil
@@ -2428,8 +2642,8 @@ public final class ConsentCore: @unchecked Sendable {
 
     // MARK: - Gate plumbing
 
-    /// Keeps a per-category gate closure alive for as long as its registration.
-    private final class GateSubscription: SnapshotObserver, @unchecked Sendable {
+    /// One boolean gate's callback and the last value it delivered.
+    private final class GateSubscription: @unchecked Sendable {
         private let category: OptionalConsentCategory
         private let onChange: @Sendable (Bool) -> Void
         private let stateLock = Lock()
@@ -2461,15 +2675,14 @@ public final class ConsentCore: @unchecked Sendable {
         }
     }
 
-    /// Keeps a per-category decision gate alive for as long as its registration, and
-    /// keeps its callback in order.
+    /// One decision gate's callback, kept in order.
     ///
     /// The decision is what changed, not the snapshot: a revision that rewrites the
     /// prompt or the location without moving this category's permission must not wake a
     /// gate. One lock over the last delivered decision, held for the comparison alone,
     /// which is what makes the registration seed and a concurrent publication unable to
     /// arrive out of order.
-    private final class DecisionGateSubscription: SnapshotObserver, @unchecked Sendable {
+    private final class DecisionGateSubscription: @unchecked Sendable {
         private let category: ConsentCategory
         private let onChange: @Sendable (ConsentDecision) -> Void
         private let stateLock = Lock()

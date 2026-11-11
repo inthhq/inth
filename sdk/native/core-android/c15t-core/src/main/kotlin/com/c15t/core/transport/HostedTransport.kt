@@ -29,7 +29,9 @@ class HostedTransport(
 	private val clock: Clock = Clock.SYSTEM,
 	private val json: Json = Json { ignoreUnknownKeys = true },
 ) : C15tTransport {
-	private val base: String = trimTrailingSlash(config.portalUrl)
+	private val base: String = trimTrailingSlash(
+		requireNotNull(config.backendUrl) { "HostedTransport needs NativeConfig.backendUrl" },
+	)
 	private val initUrl: String = config.initUrl?.takeIf { it.isNotBlank() } ?: "$base/init"
 	private val domain: String = config.domain?.takeIf { it.isNotBlank() } ?: hostOf(base)
 
@@ -37,7 +39,7 @@ class HostedTransport(
 		val headers = linkedMapOf(
 			"accept" to "application/json",
 		)
-		headers.putAll(C15tProtocol.protocolHeaders(config.sdkVersion))
+		headers.putAll(C15tProtocol.protocolHeaders(config.sdkVersion, config.platform))
 		// The override travels on the adapter header the backend's shared
 		// extractor reads first, mirroring the web SDK.
 		// The override travels as the application header and wins on the backend;
@@ -141,7 +143,7 @@ class HostedTransport(
 	private fun jsonHeaders(): Map<String, String> = buildMap {
 		put("accept", "application/json")
 		put("content-type", "application/json")
-		putAll(C15tProtocol.protocolHeaders(config.sdkVersion))
+		putAll(C15tProtocol.protocolHeaders(config.sdkVersion, config.platform))
 	}
 
 	/**

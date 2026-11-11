@@ -243,6 +243,14 @@ test('rejects unexpected ZIP entries before extracting or uploading', () => {
 	);
 });
 
+/**
+ * Each run re-signs three files and verifies the repository twice, which is 33 gpg
+ * processes and 4 Python ones: about 0.5 s alone and 1.3 to 2.2 s inside the full
+ * file on a busy machine. A shared CI runner once took more than 5 s for it. The
+ * budget below leaves room for that without hiding a hang.
+ */
+const SIGNED_METADATA_TIMEOUT_MS = 20_000;
+
 test.each(['0', '1'])(
 	'rejects signed private POM metadata and native dependency version drift with PYTHONOPTIMIZE=%s',
 	(optimization) => {
@@ -283,7 +291,8 @@ test.each(['0', '1'])(
 				process.env.PYTHONOPTIMIZE = previous;
 			}
 		}
-	}
+	},
+	SIGNED_METADATA_TIMEOUT_MS
 );
 
 test('uploads USER_MANAGED, persists the id before status, and resumes without a second upload', async () => {

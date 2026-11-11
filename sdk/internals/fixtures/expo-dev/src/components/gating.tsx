@@ -13,7 +13,7 @@ import {
 	ConsentReady,
 	ConsentPrompt,
 	useConsentDecision,
-	useIsAllowed,
+	useConsent,
 } from '@c15t/react-native';
 import type { ReactNode } from 'react';
 
@@ -82,7 +82,7 @@ export const GatedVendor = ({ category }: { readonly category: Category }) => {
 
 /** One category, on its own subscription, with its own render counter. */
 const PermissionLine = ({ category }: { readonly category: Category }) => {
-	const allowed = useIsAllowed(category);
+	const allowed = useConsent(category);
 	const passes = countRender(`line:${category}`);
 
 	return (

@@ -31,19 +31,33 @@ Current simulator and emulator runs do not validate either minimum OS.
 
 ## Attach the optional UI
 
-On Apple platforms, install the engine once with `C15tApple.install`, away from
-the main actor because installation verifies durable storage. Keep a
-`C15tConsentUI.ConsentPresenter(core:)` in the host's state for its lifetime.
-Apply `c15tConsent(presenter:privacyPolicyURL:)` to the SwiftUI root. Call
-`presentPreferences()` from the app's standing Privacy settings entry. The
-compiled reference is `ios/Sources/consent-demo-app.swift`.
+Each platform has a one-call entry point that attaches to the installed core
+through a shared `ConsentPrompt`, one per core. The prompt holds a single
+presenter, so every scene, Activity or composable that attaches shares one open
+session and one draft. Only one attached host draws it: the first, or a
+foreground host when the one drawing it goes to the background. With
+`autoPresent` on, the default, the presenter opens an owed prompt once the core
+is ready, once per owed prompt. `ConsentPrompt.onFinished` reports each closed
+session with its outcome, which is where a follow-up step such as Apple's
+tracking request attaches.
 
-On Android, install with `C15tAndroid.install`, then attach a
-`com.c15t.consentui.ConsentPresenter` to that same `C15tKernel`. Keep the presenter
-in a `ViewModelStore` so it survives activity recreation. Place
-`C15tConsent(presenter, privacyPolicyUrl)` beside the host's content. Call
-`presentPreferences()` from Privacy settings. The compiled reference is
-`android/src/main/kotlin/com/c15t/demo/consent-demo-activity.kt`.
+On Apple platforms, apply `.c15tConsent(configuration, privacyPolicyURL:)` to the
+SwiftUI root, or make `ConsentRootViewController` the UIKit window root. Both
+install the engine on first appearance and retry after protected data becomes
+available. `.c15tConsent(privacyPolicyURL:)` attaches to a core the app
+installed itself. Call `ConsentPrompt.current?.presentPreferences()` from the
+app's standing Privacy settings entry. An app that needs its own presenter
+lifetime can still keep a `ConsentPresenter(core:)` and apply
+`c15tConsent(presenter:privacyPolicyURL:)`, as
+`ios/Sources/consent-demo-app.swift` does.
+
+On Android, install with `C15tAndroid.install`, then place
+`C15tConsent(privacyPolicyUrl = ...)` beside the host's Compose content, or call
+`attachConsent(privacyPolicyUrl)` from an Activity after `setContentView`. Call
+`ConsentPrompt.of(core).presentPreferences()` from Privacy settings. An app that
+retains its own `ConsentPresenter` can still render
+`C15tConsent(presenter, privacyPolicyUrl)`, as
+`android/src/main/kotlin/com/c15t/demo/consent-demo-activity.kt` does.
 
 Both presenters own drafts, search, navigation and native commits. Accept all
 and Reject all call core intents. Save choices submits the displayed draft with
@@ -152,10 +166,15 @@ page margin. List rows rely on the platform's own cell insets with a 44pt
 minimum target, and on iOS 17 and later sections sit 24pt apart.
 
 `ConsentTheme` (Swift, `C15tConsentUI`) and `com.c15t.consentui.ConsentTheme`
-(Kotlin) are the one customization surface. Each holds nine semantic colours
-(`canvas`, `surface`, `surfaceMuted`, `text`, `textSecondary`, `accent`,
-`onAccent`, `decision`, `onDecision`), the corner radius, the headline typeface
-(`serif`, `sansSerif`, `rounded` on Apple, or a bundled font), a brand name and
+(Kotlin) are the one customization surface. Names with a web token follow
+`--c15t-*` in `@c15t/ui`. Each holds nine semantic colours (`canvas`,
+`surface`, `surfaceMuted`, `text`, `textMuted`, `primary`, `textOnPrimary`,
+`decision`, `textOnDecision`), radii (`sm`, `md`, `lg`), spacing (`xs` to `xl`),
+typography (`fontFamily`, `fontSize` `sm`/`base`/`lg`, and the headline
+typeface: `serif`, `sansSerif`, `rounded` on Apple, or a bundled font), four
+slots (`consentBannerTitle`, `consentBannerDescription`, `buttonPrimary`,
+`buttonSecondary`) with `color`, `backgroundColor`, `borderRadius` and
+`fontSize`, a brand name and
 mark, the headline and introduction copy, and the provider name and logo in the
 "Secured by" tag. The tag uses the bundled c15t logo by default. Decision labels, category copy and every partner disclosure stay native
 and are not themeable: the theme cannot make Accept louder than Reject, hide a
@@ -168,7 +187,7 @@ takes precedence over both and uses exactly the values passed by the host.
 ```swift
 // 1. Set once at launch; every presenter that does not pass a theme uses it.
 ConsentTheme.current = ConsentTheme(
-    colors: .c15t, cornerRadius: 10, headlineFont: .rounded,
+    colors: .c15t, radius: .init(md: 10), typography: .init(headlineFont: .rounded),
     brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
     copy: ConsentTheme.Copy(headline: "Before you shop.", introduction: "Pantry uses data to remember your basket, measure what works and show offers you might like."))
 
@@ -179,7 +198,7 @@ content.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: Pa
 ```kotlin
 // 1. Set once in Application.onCreate.
 ConsentTheme.current = ConsentTheme(
-    colors = ConsentTheme.Colors.c15t.copy(accent = ConsentThemeColor(0x00796B, 0x4FD1C0)),
+    colors = ConsentTheme.Colors.c15t.copy(primary = ConsentThemeColor(0x00796B, 0x4FD1C0)),
     brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark))
 
 // 2. Pass one to the composable.
@@ -193,16 +212,20 @@ dark). Android also accepts colour, drawable and font resources.
 
 | Info.plist | Android meta-data | Value |
 | --- | --- | --- |
-| `com.c15t.consent.accent` | `com.c15t.consent.ACCENT` | colour |
-| `com.c15t.consent.onAccent` | `com.c15t.consent.ON_ACCENT` | colour |
+| `com.c15t.consent.primary` | `com.c15t.consent.PRIMARY` | colour |
+| `com.c15t.consent.textOnPrimary` | `com.c15t.consent.TEXT_ON_PRIMARY` | colour |
 | `com.c15t.consent.canvas` | `com.c15t.consent.CANVAS` | colour |
 | `com.c15t.consent.surface` | `com.c15t.consent.SURFACE` | colour |
 | `com.c15t.consent.surfaceMuted` | `com.c15t.consent.SURFACE_MUTED` | colour |
 | `com.c15t.consent.text` | `com.c15t.consent.TEXT` | colour |
-| `com.c15t.consent.textSecondary` | `com.c15t.consent.TEXT_SECONDARY` | colour |
+| `com.c15t.consent.textMuted` | `com.c15t.consent.TEXT_MUTED` | colour |
 | `com.c15t.consent.decision` | `com.c15t.consent.DECISION` | colour |
-| `com.c15t.consent.onDecision` | `com.c15t.consent.ON_DECISION` | colour |
-| `com.c15t.consent.cornerRadius` | `com.c15t.consent.CORNER_RADIUS` | points or dp |
+| `com.c15t.consent.textOnDecision` | `com.c15t.consent.TEXT_ON_DECISION` | colour |
+| `com.c15t.consent.radiusSm`, `radiusMd`, `radiusLg` | `com.c15t.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | points or dp |
+| `com.c15t.consent.spaceXs` to `spaceXl` | `com.c15t.consent.SPACE_XS` to `SPACE_XL` | points or dp |
+| `com.c15t.consent.fontSizeSm`, `fontSizeBase`, `fontSizeLg` | `com.c15t.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | points or sp |
+| `com.c15t.consent.fontFamily` | `com.c15t.consent.FONT_FAMILY` | PostScript name or font resource |
+| `com.c15t.consent.<slot>.<field>` | `com.c15t.consent.<SLOT>_<FIELD>` | slot colour or size |
 | `com.c15t.consent.headlineFont` | `com.c15t.consent.HEADLINE_FONT` | `serif`, `sans`, `rounded`, or a font |
 | `com.c15t.consent.brand` | `com.c15t.consent.BRAND` | Boolean, show or hide the app identity above the headline |
 | `com.c15t.consent.brandName` | `com.c15t.consent.BRAND_NAME` | text |
@@ -310,6 +333,14 @@ The private RN package includes the same SwiftUI and Compose presenters. The
 bare RN and Expo examples use these screens when the native core is installed.
 Their explicit fake mode retains the existing JavaScript demo. Headless hooks
 and custom UI remain available.
+
+`ConsentProvider` hands its `autoPresent` setting and URL to native with
+`configureAutoPresent`, and the native `ConsentPrompt` presents the owed prompt
+once per owed prompt, as it does for a Swift or Kotlin app. JavaScript keeps no
+record of its own; it hears `onConsentPresenterPresented`,
+`onConsentPresenterUnavailable` and `onConsentPresenterOutcome`. The native host
+answers any racing call with `already-presented`. The bare RN and Expo fixtures pass
+`autoPresent={false}` because they draw the JavaScript banner.
 
 Subscribe with `onConsentPresenterOutcome` before calling
 `presentConsentPrompt(privacyPolicyURL)` or `presentPreferences(privacyPolicyURL)`.

@@ -23,7 +23,7 @@ internal data class TcfReviewProfile private constructor(
     val vendors: List<Int>?,
 ) {
     fun nativeConfig() = NativeConfig(
-        portalUrl = backend,
+        backendUrl = backend,
         consentCategories = ConsentCategory.entries,
         vendors = vendors,
         iab = IabConfiguration(cmpId = cmpId, cmpVersion = cmpVersion, publisherCountryCode = publisherCountry),

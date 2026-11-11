@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
+	GOOGLE_CONSENT_TYPES,
 	withOptionalConsentMapping,
 } from './google-consent';
 
@@ -14,6 +15,12 @@ describe('google consent helpers', () => {
 			measurement: ['analytics_storage'],
 			necessary: ['security_storage'],
 		});
+	});
+
+	it('maps every Consent Mode v2 type exactly once', () => {
+		expect(
+			Object.values(GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING).flat().sort()
+		).toEqual([...GOOGLE_CONSENT_TYPES].sort());
 	});
 
 	it('returns the original manifest when no override is provided', () => {

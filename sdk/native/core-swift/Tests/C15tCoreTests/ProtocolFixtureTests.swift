@@ -82,18 +82,18 @@ final class ProtocolFixtureTests: XCTestCase {
         )
         XCTAssertEqual(
             index.protocolVersion,
-            c15t.protocolVersion,
-            "index.json is protocol \(index.protocolVersion); this build speaks \(c15t.protocolVersion). Rebuild or regenerate, do not compare across versions."
+            C15t.protocolVersion,
+            "index.json is protocol \(index.protocolVersion); this build speaks \(C15t.protocolVersion). Rebuild or regenerate, do not compare across versions."
         )
         XCTAssertEqual(
             index.policyContractHeader.name,
-            c15t.policyContractHeader,
+            C15t.policyContractHeader,
             "the fixture index declares a different contract header than this build sends"
         )
         XCTAssertEqual(
             index.policyContractHeader.value,
-            c15t.protocolHeaders[c15t.policyContractHeader],
-            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(c15t.protocolHeaders[c15t.policyContractHeader] ?? "nothing")"
+            C15t.protocolHeaders[C15t.policyContractHeader],
+            "the fixture index pins policy contract \(index.policyContractHeader.value); this build sends \(C15t.protocolHeaders[C15t.policyContractHeader] ?? "nothing")"
         )
         for entry in index.fixtures {
             XCTAssertEqual(
@@ -282,7 +282,7 @@ final class ProtocolFixtureTests: XCTestCase {
         run.http.enqueueInit(try Self.initResponse(from: transport, entry: entry))
 
         let witness = WipeWitness(store: run.store)
-        let subscription = run.core.onChange(witness)
+        let subscription = run.core.onChange { witness.consentDidChange($0) }
         run.core.reset()
         subscription.cancel()
 
@@ -326,7 +326,7 @@ final class ProtocolFixtureTests: XCTestCase {
     /// The store has to be read from inside the callback. A wipe deletes and then re-runs
     /// init, and that init caches the policy it resolves, so by the time the call stack
     /// unwinds the bytes the wipe removed have been replaced by bytes that are allowed.
-    private final class WipeWitness: SnapshotObserver, @unchecked Sendable {
+    private final class WipeWitness: @unchecked Sendable {
         private let store: any ConsentStore
         private let lock = NSLock()
         private var first: ConsentSnapshot?
@@ -376,7 +376,7 @@ final class ProtocolFixtureTests: XCTestCase {
         await run.core.bootstrapAndSettle(run.config)
 
         let witness = RevisionWitness()
-        let subscription = run.core.onChange(witness)
+        let subscription = run.core.onChange { witness.consentDidChange($0) }
         var observations: [JSONValue] = []
         var initResponses = 1
         for step in steps {
@@ -436,7 +436,7 @@ final class ProtocolFixtureTests: XCTestCase {
     ///
     /// Held strongly by the caller: the core's observer set is weak, so an observer
     /// nobody owns stops being an observer.
-    private final class RevisionWitness: SnapshotObserver, @unchecked Sendable {
+    private final class RevisionWitness: @unchecked Sendable {
         private let lock = NSLock()
         private var publications = 0
 
@@ -1229,10 +1229,10 @@ final class ProtocolFixtureTests: XCTestCase {
         guard let parsed = C15tJSON.parse(data) else {
             throw Failure.unsupported(fixture: entry.id, detail: "\(entry.file) is not JSON")
         }
-        guard parsed["protocolVersion"]?.intValue == Int64(c15t.protocolVersion) else {
+        guard parsed["protocolVersion"]?.intValue == Int64(C15t.protocolVersion) else {
             throw Failure.unsupported(
                 fixture: entry.id,
-                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(c15t.protocolVersion)"
+                detail: "fixture protocolVersion \(parsed["protocolVersion"]?.intValue ?? -1) is not this build's \(C15t.protocolVersion)"
             )
         }
         return parsed

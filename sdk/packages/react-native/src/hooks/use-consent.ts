@@ -1,23 +1,42 @@
 /**
- * Read the whole snapshot.
+ * Gate one category.
  */
 
+import { useCallback } from 'react';
+
+import { isCategoryAllowed } from '../lib/selectors';
 import type { ConsentSnapshot } from '../protocol';
+import type { AllConsentNames } from '../protocol/vocabulary';
 import { useConsentSelector } from './use-consent-selector';
 
-/** Module scope, so the subscription behind {@link useConsent} is stable. */
-const selectSnapshot = (snapshot: ConsentSnapshot): ConsentSnapshot => snapshot;
-
 /**
- * The full native snapshot.
+ * Whether one category may run right now.
  *
- * An escape hatch for a surface that genuinely reads several slices, such as a
- * preference centre. Anything narrower should use {@link useConsentSelector},
- * {@link useIsAllowed}, or {@link useConsentStatus}: this one rerenders on every
- * native change, including changes your screen does not care about.
+ * The value is a boolean, so the subscriber rerenders on the flip and nothing
+ * else: a policy re-resolution that leaves the permission alone costs nothing.
  *
- * @returns The snapshot the native core holds.
+ * @example
+ * ```tsx
+ * function Attribution() {
+ *     const allowed = useConsent('measurement');
+ *
+ *     return allowed ? <VendorInit /> : null;
+ * }
+ * ```
+ *
+ * @param category - Category to gate. `necessary` is always allowed.
+ * @returns `true` when the category is allowed, `false` while hydration or the
+ *   first policy resolution is still outstanding.
  */
-export const useConsent = function useConsent(): ConsentSnapshot {
-	return useConsentSelector(selectSnapshot);
+export const useConsent = function useConsent(
+	category: AllConsentNames
+): boolean {
+	// Memoized per category so the subscription survives an unrelated rerender.
+	const selectCategory = useCallback(
+		(snapshot: ConsentSnapshot): boolean =>
+			isCategoryAllowed(snapshot, category),
+		[category]
+	);
+
+	return useConsentSelector(selectCategory);
 };

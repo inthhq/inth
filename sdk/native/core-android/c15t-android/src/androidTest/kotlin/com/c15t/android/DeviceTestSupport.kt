@@ -35,7 +35,7 @@ internal fun appContext(): Context = ApplicationProvider.getApplicationContext()
  * `.invalid` is reserved by RFC 6761 and never resolves, so a request that escapes a test
  * dies at DNS instead of posting consent to somebody's real project from a shared emulator.
  */
-internal fun deviceConfig(): NativeConfig = NativeConfig(portalUrl = "https://consent.instrumentation.invalid")
+internal fun deviceConfig(): NativeConfig = NativeConfig(backendUrl = "https://consent.instrumentation.invalid")
 
 /**
  * Tear the running core down between tests.
@@ -49,7 +49,7 @@ internal fun deviceConfig(): NativeConfig = NativeConfig(portalUrl = "https://co
  * race it for the same blob, so this waits for the worker as well as the main thread.
  */
 internal fun uninstallCore() {
-	C15t.reset()
+	C15t.uninstall()
 	awaitMainThread()
 	awaitCoreWorker()
 }

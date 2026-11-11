@@ -6,8 +6,11 @@ policy rules, prompt copy and an explicit conservative rule for unknown geograph
 Use your project's `https://your-project.inth.app` URL in a production app.
 The reference apps use the public demo at `https://example-inth.inth.app/`.
 
-This implementation remains private. The exporter is a repository build tool;
-it is not an npm CLI or an automatic hosted deployment step.
+Apps fetch and bundle the manifest with `c15t mobile-manifest` from
+`@c15t/cli`, or the Expo plugin's `bundleManifest`, which runs it at prebuild.
+A failed fetch fails a release build and warns in a debug build;
+`--allow-stale-manifest` reuses the last fetched copy. The repository script
+below remains for fixtures that need an explicit expiry.
 
 ## Export at build time
 
@@ -48,13 +51,15 @@ subject, receipt, effective permissions, TC string, delivery queue or
 | Host | Configuration |
 | --- | --- |
 | Bare iOS | Add the JSON to Copy Bundle Resources. Set `com.c15t.policy.resource` to its filename in Info.plist. Keep the hosted backend URL and mode configured. |
-| Bare Android | Put the JSON in `app/src/main/assets`. Set `com.c15t.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.c15t.PORTAL_URL` configured. |
+| Bare Android | Put the JSON in `app/src/main/assets`. Set `com.c15t.POLICY_RESOURCE` to its asset path in application metadata. Keep `com.c15t.BACKEND_URL` configured. |
 | Expo development or release build | Set the config plugin's `policyResource` to the JSON path relative to the Expo project, alongside `backendURL`. Prebuild copies the exact bytes into both native projects and registers the iOS resource. Rebuild the binary after changing it. |
 | Swift host | Load `BundledPolicyResource` from resource URL or Data with the configured endpoint, then pass it as `CoreConfig.bundledPolicy` before bootstrapping. |
 | Kotlin host | Read the resource into `NativeConfig.bundledPolicy` before bootstrapping. `C15tAndroid.configFrom` can load the declared asset for you. |
 
-A usable stored policy wins over the bundle, including a newer policy downloaded
-by an earlier launch. An expired stored bundle can use a newer valid resource.
+Precedence is the live `/init` response, then the last good cached response,
+then the bundled manifest. A cached live response always wins over the bundle.
+A cached bundle gives way to this build's bundle when the cached one is stale,
+older or bound to another endpoint.
 Stored bundled authority stays usable without loading seed bytes again when the
 configured backend URL is unchanged. Swift's `HostedTransport` supplies that URL.
 A custom Swift transport can expose `policyEndpoint`; otherwise it needs the
@@ -66,16 +71,14 @@ next prebuild by removing its activation metadata. Prebuild preserves custom
 resource names and unrelated resources. Previously stored policy still follows
 the cache and endpoint rules above.
 
-Wrong-project, corrupt, future-dated, expired or unsupported resources supply no
+Wrong-project, corrupt, future-dated or unsupported resources supply no
 authority. Optional gates stay denied and the core keeps trying hosted refresh.
-The expiry also applies after process relaunch and to synchronous native reads.
-Expiry denies optional processing and prevents new grants. A person can still
-Reject all against a retained expired policy. This writes false receipts for every
-optional category, including older grants outside the app's current declaration.
-Ordinary saves under current policy still use the declared choice scope.
-That denial and its frozen delivery
-body are stored atomically, replace an older queued grant for the same owner, and
-survive relaunch. Accept, custom saves and IAB drafts require current policy.
+
+An expired resource still supplies policy. An offline device shows the prompt
+and records choices from it, and optional categories stay denied until the
+person chooses. Each core emits `policyStale` once per manifest and reports
+`isPolicyStale`. The next successful hosted refresh replaces it. IAB drafts
+still need current GVL and ATP disclosures, which have their own age limit.
 
 A successful hosted refresh replaces bundle authority and uses normal fingerprint
 and reconsent behavior.

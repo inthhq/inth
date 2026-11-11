@@ -5,7 +5,7 @@ group: frameworks
 ---
 
 Configure the consent engine in the native app before React starts. Expo uses
-the config plugin; bare RN uses native metadata. `C15tProvider` reads the
+the config plugin; bare RN uses native metadata. `ConsentProvider` reads the
 installed engine and has no backend or policy-options prop.
 
 ## Choose where policy and records live
@@ -18,7 +18,7 @@ App-owned native installation is available for custom services.
 | --- | --- |
 | `hosted` | Resolve policy and deliver records through your Inth project. |
 | `selfHosted` | Use the same protocol against your own backend. |
-| `offline` | Keep local choices and pending obligations without remote delivery. It cannot fetch a missing policy. Not recommended for production environments as the only launch transport. |
+| `offline` | No-backend mode on iOS and Android. Nothing is sent. It needs `policy` and takes no `backendURL`, `initURL`, `policyResource` or `iab`. |
 | `custom` | Your app installs native services before RN starts. Expo defaults automatic bootstrap off in this mode. |
 
 `initURL` changes policy initialization only. Consent saves and identity
@@ -32,14 +32,17 @@ for a working `app.config.ts`. The plugin accepts:
 
 | Option | Purpose |
 | --- | --- |
-| `backendURL` | Public backend URL. Required except in offline mode. |
+| `backendURL` | Public backend URL. Required in every mode except offline, which refuses it. |
 | `mode` | Transport and installation mode. |
 | `initURL` | Optional policy-initialization URL override. |
 | `domain` | Domain value sent with subject writes. |
 | `consentCategories` | Optional app category declaration. |
 | `vendors` | Optional IAB disclosure scope. |
 | `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
+| `gpp` | Optional IAB GPP string and `IABGPP_*` keys. See [IAB GPP](/docs/frameworks/react-native/gpp). |
 | `policyResource` | Build-exported policy JSON, relative to the Expo project. |
+| `bundleManifest` | Fetch the manifest at prebuild with `c15t mobile-manifest` and bundle it. Replaces `policyResource`. See [bundle the manifest at build time](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time). |
+| `policy` | The policy in source control for offline mode, as `{ rules: [...] }` in the backend's `PolicyRule` names. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code). |
 | `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
 | `autoBootstrap` | Whether native launch installs the engine. Defaults to true except for custom mode. |
 | `forceGPC` | GPC input for a staged or test build. |
@@ -61,13 +64,13 @@ Use these keys when configuring the same engine without Expo:
 
 | Expo option | iOS `Info.plist` key | Android application metadata |
 | --- | --- | --- |
-| `backendURL` | `com.c15t.backend.url` | `com.c15t.PORTAL_URL` |
-| `initURL` | `com.c15t.backend.initUrl` | `com.c15t.INIT_URL` |
-| `domain` | `com.c15t.backend.domain` | `com.c15t.DOMAIN` |
+| `backendURL` | `com.c15t.backend.url` | `com.c15t.BACKEND_URL` |
+| `initURL` | `com.c15t.backend.initUrl` | `com.c15t.BACKEND_INIT_URL` |
+| `domain` | `com.c15t.backend.domain` | `com.c15t.BACKEND_DOMAIN` |
 | `consentCategories` | `com.c15t.categories`, string array | `com.c15t.CATEGORIES`, comma-separated |
 | `vendors` | `com.c15t.vendors` | `com.c15t.VENDORS`, comma-separated |
 | `policyResource` | `com.c15t.policy.resource` | `com.c15t.POLICY_RESOURCE` |
-| `forceGPC` | `com.c15t.gpc` | `com.c15t.FORCE_GPC` |
+| `forceGPC` | `com.c15t.forceGPC` | `com.c15t.FORCE_GPC` |
 | `iab` | `com.c15t.iab.*`, see below | `com.c15t.IAB_*`, see below |
 | `autoBootstrap: false` | `com.c15t.reactnative.AutoBootstrap` | `com.c15t.reactnative.AUTO_BOOTSTRAP` |
 
@@ -117,7 +120,7 @@ themselves; see [IAB setup](/docs/guides/mobile-iab).
 
 ## Preview a regional policy
 
-`useConsentActions().setOverrides` accepts `country`, `region`, `language` and
+The function `useSetOverrides()` returns accepts `country`, `region`, `language` and
 `gpc`. Use these in a debug menu to exercise your policy rules. Omitted values
 stay as they are; explicit null clears country, region or GPC overrides.
 

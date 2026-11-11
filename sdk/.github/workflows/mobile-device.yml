@@ -186,6 +186,29 @@ jobs:
           pod install --repo-update
           xcodebuild -workspace c15tExpoDev.xcworkspace -scheme c15tExpoDev \
             -destination 'generic/platform=iOS Simulator' -configuration Release build
+      # `c15t.nativeUI=false` compiles different Swift: the pod leaves the SwiftUI screens
+      # and the consent host out and defines C15T_NO_NATIVE_UI, so the default build above
+      # proves nothing about it. The fixture renders its custom screens in this mode.
+      - name: Build the Expo dev-client app for iOS without the stock consent screens
+        if: matrix.kind == 'ios'
+        run: |
+          set -ex
+          # The switch goes to prebuild only: the fixture's app.config.ts turns it into
+          # the plugin's `nativeUI: false`, which writes `c15t.nativeUI` to
+          # Podfile.properties.json. `pod install` runs without it, as in an app, so the
+          # podspec has to read that file; the variable would override the file.
+          (cd internals/fixtures/expo-dev && C15T_NATIVE_UI=0 bun x expo prebuild --platform ios --clean --no-install)
+          grep -q '"c15t.nativeUI": "false"' internals/fixtures/expo-dev/ios/Podfile.properties.json
+          cd internals/fixtures/expo-dev/ios
+          env -u C15T_NATIVE_UI pod install
+          # The flag reached the pod target, and the excluded sources are not in it.
+          grep -rq C15T_NO_NATIVE_UI 'Pods/Target Support Files/C15tReactNative'
+          if grep -Eq 'consent-views\.swift|C15tConsentHost\.swift' Pods/Pods.xcodeproj/project.pbxproj; then
+            echo "The pod still compiles the stock consent screens." >&2
+            exit 1
+          fi
+          xcodebuild -workspace c15tExpoDev.xcworkspace -scheme c15tExpoDev \
+            -destination 'generic/platform=iOS Simulator' -configuration Release build
       - name: Bundle the JavaScript for both platforms
         if: matrix.kind == 'android'
         run: |

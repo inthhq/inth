@@ -20,10 +20,10 @@ verify a new SDK revision.
 
 ## Fixture code and historical exercises
 
-- `C15tProvider` and the protocol handshake against the Swift/Kotlin core in the
+- `ConsentProvider` and the protocol handshake against the Swift/Kotlin core in the
   binary, with the mismatch error surfaced on screen instead of a red box.
-- The headless surface: `useConsent`, `useConsentActions`, `useC15tBootstrap`,
-  `useIsAllowed`, `ConsentGate`, `ConsentReady`, `ConsentPrompt`.
+- The headless surface: `useSnapshot`, `useSaveConsents`, `useConsentActions`, `useC15tBootstrap`,
+  `useConsent`, `ConsentGate`, `ConsentReady`, `ConsentPrompt`.
 - The built-in `ConsentBanner`, `ConsentDialog`, and `ConsentPreferences`.
 - `useTrackingRequest`, the Apple tracking journey on the Privacy screen: the sheet, the
   centre that opens when the subject taps Additional Information, and the second sheet
@@ -38,9 +38,9 @@ verify a new SDK revision.
   [Fake core](#fake-core).
 - The `theme` prop and the light/dark/system control in the header, which is the only
   way to see both palettes without leaving the app: the surfaces resolve a scheme from
-  `useColorScheme()` on their own, and a forced choice passes `lightTheme` or `darkTheme`
-  instead of a theme this app invented.
-- `safeAreaInsets` on `C15tProvider`, measured from React Native core in
+  `useColorScheme()` on their own, and a forced choice passes the stock theme with both
+  appearances pinned to one palette instead of a theme this app invented.
+- `safeAreaInsets` on `ConsentProvider`, measured from React Native core in
   `src/safe-area.ts`, so the surfaces and this app's own header lay out against the same
   bands and nothing lands under a clock or a home indicator.
 - `c15t-demo://` links, which is how a consent journey is run on a machine that cannot
@@ -73,7 +73,7 @@ Use your Inth project URL for your app. Update the JS environment value and
 regenerate the resource when changing endpoints. Point the native core at it by editing the two files the core actually reads:
 
 - `ios/C15tBare/Info.plist` → `com.c15t.backend.url`, `com.c15t.backend.mode`
-- `android/app/src/main/AndroidManifest.xml` → `com.c15t.PORTAL_URL`
+- `android/app/src/main/AndroidManifest.xml` → `com.c15t.BACKEND_URL`
 
 Android has no mode key; it infers the transport from which keys are present. An
 absent key means "not configured", so leave a value out rather than setting it to an
@@ -134,9 +134,9 @@ on Android: `?` and `&` belong to the shell otherwise.
 
 | Verb | What it calls |
 | --- | --- |
-| `accept` | `acceptAll()`, every category the policy scope offers |
-| `reject` | `rejectAll()`, strictly necessary only |
-| `save?experience=1&marketing=0` | `save()` with one boolean per category named; unmentioned categories keep their receipts, and a `save` that names none writes experience on, marketing off |
+| `accept` | `saveConsents('all')`, every category the policy scope offers |
+| `reject` | `saveConsents('none')`, strictly necessary only |
+| `save?experience=1&marketing=0` | `saveConsents()` with one boolean per category named; unmentioned categories keep their receipts, and a `save` that names none writes experience on, marketing off |
 | `dismiss` | closes any open sheet, then `dismissNotice()` |
 | `customize` | opens `ConsentDialog`, the path the banner's Customize button takes |
 | `preferences` | opens `ConsentPreferences`, with no prompt owed |
@@ -265,7 +265,7 @@ psql "$DATABASE_URL" -c 'select "givenAt", jurisdiction, "uiSource", "consentAct
 ```
 
 A `custom` action from `banner` naming exactly the purposes you switched on is the receipt.
-`acceptAll` records `accept_all` with every purpose, and a dismissal records nothing at all,
+`saveConsents('all')` records `accept_all` with every purpose, and a dismissal records nothing at all,
 because a dismissal is not a choice.
 
 The registration lives in three files, and all three are needed. `CFBundleURLTypes` in

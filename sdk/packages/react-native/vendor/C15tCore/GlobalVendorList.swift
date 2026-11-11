@@ -243,10 +243,9 @@ public struct GVLVendor: Sendable, Codable, Equatable {
 /// a snapshot without owning a network call.
 ///
 /// Every id-keyed collection is keyed by number because that is what callers ask it
-/// for (`gvl.vendors[755]`), and the reader accepts both shapes the wire comes in: the
-/// sparse object `globalVendorListSchema` declares, and the dense array older GVL
-/// publications use. `dialog-data.ts` gets away with the same tolerance by running
-/// `Object.entries` over either, so both platforms read the same document.
+/// for (`gvl.vendors[755]`). The reader takes the sparse object `globalVendorListSchema`
+/// declares and refuses any other shape, as the Android core does, so both platforms
+/// accept or refuse the same document.
 public struct GlobalVendorList: Sendable, Codable, Equatable {
     /// `gvlSpecificationVersion`: the GVL document format revision.
     public let gvlSpecificationVersion: Int
@@ -337,8 +336,13 @@ extension GlobalVendorList {
         return read(fields: fields)
     }
 
-    /// The `fetch-gvl.ts` accept rule, on its own, so both the transport read and the
-    /// stored-envelope read run the identical gate.
+    /// The `fetch-gvl.ts` accept rule plus the entry types, on its own, so both the
+    /// transport read and the stored-envelope read run the identical gate.
+    ///
+    /// A list with any malformed entry is refused whole, as the Android core and the
+    /// CLI and Expo checks refuse it (``GVLFieldType``). The TC String records the
+    /// list's version, which says the subject saw that list; a list with entries dropped
+    /// or blanked is not that list. The core keeps a still-usable list it already holds.
     private static func passesReadGate(_ fields: [String: JSONValue]) -> Bool {
         // `!gvl.vendorListVersion`: a list numbered 0 is not a list.
         guard let vendorListVersion = fields["vendorListVersion"]?.intValue,
@@ -346,20 +350,14 @@ extension GlobalVendorList {
         else { return false }
         guard let policyVersion = fields["tcfPolicyVersion"]?.intValue, policyVersion >= 1
         else { return false }
-        guard fields["purposes"]?.arrayValue != nil || fields["purposes"]?.objectValue != nil
+        guard fields["purposes"]?.objectValue != nil, fields["vendors"]?.objectValue != nil
         else { return false }
-        guard fields["vendors"]?.arrayValue != nil || fields["vendors"]?.objectValue != nil
-        else { return false }
-        return true
+        return GVLFieldType.vendorList.accepts(.object(fields))
     }
 
-    /// Read past the gate.
-    ///
-    /// Individual fields stay forgiving, because `dialog-data.ts` reads them that way
-    /// (`vendor.purposes || []`, `gvl.specialPurposes || {}`): the list is a third-party
-    /// document, and one vendor missing a `name` is a renameable detail, not a reason
-    /// to leave a device with no vendor list at all. That is the split this reader
-    /// keeps: strict about whether there is a list, forgiving about what is in it.
+    /// Read past the gate, which has already checked every entry's types. An absent
+    /// field still reads as its empty value, as `dialog-data.ts` reads it
+    /// (`vendor.purposes || []`): every field may be absent, none may be the wrong type.
     private static func read(fields: [String: JSONValue]) -> GlobalVendorList {
         var list = GlobalVendorList(
             gvlSpecificationVersion: int(fields["gvlSpecificationVersion"]) ?? 0,
@@ -468,63 +466,33 @@ extension GlobalVendorList {
         )
     }
 
-    /// Walk an id-keyed collection that arrives either as an object with numeric keys
-    /// or as a dense array.
-    ///
-    /// An array entry is keyed by its own `id` when it carries a numeric one, which is
-    /// what the array-shaped publications put in each entry, and by its position
-    /// otherwise, one-based, because that is where the purposes actually sit. A sparse
-    /// object with holes reads as the holes it has. Keys that are not numbers are
-    /// dropped rather than guessed at: every caller of these collections asks for a
-    /// number, and `dialog-data.ts` would hand a non-numeric id to `Number()` and get
-    /// `NaN`.
+    /// Walk an id-keyed collection: an object with numeric keys, as the gate requires. A
+    /// sparse object with holes reads as the holes it has.
     private static func keyed<Value>(
         _ value: JSONValue?,
         build: (_ entry: [String: JSONValue], _ id: Int) -> Value?
     ) -> [Int: Value] {
         var result: [Int: Value] = [:]
-        switch value {
-        case let .object(fields):
-            for (name, item) in fields {
-                guard let id = Int(name), let entry = item.objectValue,
-                      let built = build(entry, id)
-                else { continue }
-                result[id] = built
-            }
-        case let .array(items):
-            for (offset, item) in items.enumerated() {
-                guard let entry = item.objectValue else { continue }
-                let id = int(entry["id"]) ?? offset + 1
-                guard let built = build(entry, id) else { continue }
-                result[id] = built
-            }
-        default:
-            break
+        for (name, item) in value?.objectValue ?? [:] {
+            guard let id = Int(name), let entry = item.objectValue,
+                  let built = build(entry, id)
+            else { continue }
+            result[id] = built
         }
         return result
     }
 
-    /// An id list, forgiving about its contents the way the dialog is: a member that is
-    /// not a number is dropped rather than turned into a purpose nobody declared.
+    /// An id list. The gate has already refused a list holding anything but whole
+    /// numbers, so an absent list is the only one that reads as empty.
     private static func ints(_ value: JSONValue?) -> [Int] {
         (value?.arrayValue ?? []).compactMap(int)
     }
 
     private static func idKeyedInts(_ value: JSONValue?) -> [Int: Int] {
         var result: [Int: Int] = [:]
-        switch value {
-        case let .object(fields):
-            for (name, item) in fields {
-                guard let id = Int(name), let number = int(item) else { continue }
-                result[id] = number
-            }
-        case let .array(items):
-            for (offset, item) in items.enumerated() {
-                guard let number = int(item) else { continue }
-                result[offset + 1] = number
-            }
-        default:
-            break
+        for (name, item) in value?.objectValue ?? [:] {
+            guard let id = Int(name), let number = int(item) else { continue }
+            result[id] = number
         }
         return result
     }
@@ -654,6 +622,86 @@ extension TcVendorList {
 }
 
 /// Unknown fields follow loose backend objects; collection membership stays typed.
+/// The entry types the Android core's typed GVL model accepts, mirrored field for field
+/// by `gvl-fields.ts` in the CLI and the Expo plugin. Every field may be absent or null;
+/// a present value must have its type. Maps are objects whose values are never null,
+/// lists never hold null, and numbers are whole. Unknown keys are ignored.
+/// `native/protocol/bundled-policy/invalid-resources.json` pins the cases.
+private indirect enum GVLFieldType {
+    case boolean
+    case string
+    case whole
+    case list(GVLFieldType)
+    case map(GVLFieldType, intKeys: Bool)
+    case fields([String: GVLFieldType], required: Set<String> = [])
+
+    private static let maxSafeInteger: Int64 = 9_007_199_254_740_991
+
+    /// Whether `value`, present and not null, has this type.
+    func accepts(_ value: JSONValue) -> Bool {
+        switch self {
+        case .boolean:
+            if case .bool = value { return true }
+            return false
+        case .string:
+            return value.stringValue != nil
+        case .whole:
+            guard let number = value.intValue else { return false }
+            return number >= -Self.maxSafeInteger && number <= Self.maxSafeInteger
+        case let .list(item):
+            guard let items = value.arrayValue else { return false }
+            return items.allSatisfy { !$0.isNull && item.accepts($0) }
+        case let .map(item, intKeys):
+            guard let entries = value.objectValue else { return false }
+            return entries.allSatisfy { key, entry in
+                (!intKeys || Int32(key) != nil) && !entry.isNull && item.accepts(entry)
+            }
+        case let .fields(known, required):
+            guard let entries = value.objectValue else { return false }
+            return known.allSatisfy { key, type in
+                guard let entry = entries[key], !entry.isNull else { return !required.contains(key) }
+                return type.accepts(entry)
+            }
+        }
+    }
+
+    private static let ids = GVLFieldType.list(.whole)
+    private static let definitions = GVLFieldType.map(
+        .fields([
+            "description": .string, "descriptionLegal": .string, "id": .whole,
+            "illustrations": .list(.string), "name": .string,
+        ]), intKeys: true)
+    private static let vendor = GVLFieldType.fields([
+        "cookieMaxAgeSeconds": .whole, "cookieRefresh": .boolean, "dataDeclaration": ids,
+        "dataRetention": .fields([
+            "purposes": .map(.whole, intKeys: false), "specialPurposes": .map(.whole, intKeys: false),
+            "stdRetention": .whole,
+        ]),
+        "deletedDate": .string, "deviceStorageDisclosureUrl": .string, "features": ids,
+        "flexiblePurposes": ids, "id": .whole, "legIntPurposes": ids, "name": .string,
+        "overflow": .fields(["httpGetLimit": .whole]), "purposes": ids, "specialFeatures": ids,
+        "specialPurposes": ids,
+        "urls": .list(.fields(["langId": .string, "legIntClaim": .string, "privacy": .string])),
+        "usesCookies": .boolean, "usesNonCookieAccess": .boolean,
+    ])
+    static let vendorList = GVLFieldType.fields([
+        "dataCategories": definitions, "features": definitions,
+        "gvlSpecificationVersion": .whole, "lastUpdated": .string, "purposes": definitions,
+        "specialFeatures": definitions, "specialPurposes": definitions,
+        "stacks": .map(
+            .fields([
+                "description": .string, "id": .whole, "name": .string, "purposes": ids,
+                "specialFeatures": ids,
+            ]), intKeys: true),
+        "standardTexts": .fields(
+            [
+                "features": .string, "purposes": .string, "specialFeatures": .string,
+                "specialPurposes": .string,
+            ], required: ["features"]),
+        "vendors": .map(vendor, intKeys: true),
+    ])
+}
+
 private indirect enum GVLDisclosureShape {
     case leaf
     case object([String: GVLDisclosureShape])

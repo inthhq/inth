@@ -12,7 +12,7 @@
 
 import { median } from '@c15t/benchmarking/utils';
 import {
-	C15tProvider,
+	ConsentProvider,
 	ConsentBanner,
 	ConsentClientContext,
 	createConsentClient,
@@ -151,9 +151,11 @@ const settle = async function settle(
 const mountBanner = function mountBanner(
 	client?: ReturnType<typeof createConsentClient>
 ): ReactTestRenderer {
+	// The JavaScript banner is the surface under test, so the provider presents
+	// no native prompt beside it, as the docs tell an app that renders it.
 	const banner = createElement(
-		C15tProvider,
-		null,
+		ConsentProvider,
+		{ autoPresent: false },
 		createElement(ConsentBanner)
 	);
 	const element =

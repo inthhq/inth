@@ -15,7 +15,7 @@ import { useConsentSelector } from './use-consent-selector';
  *
  * The value is one of three strings, so a subscriber rerenders when the answer
  * changes and not when a policy re-resolves underneath it. Reach for
- * {@link useIsAllowed} instead when the only question is "may I run", and for this
+ * {@link useConsent} instead when the only question is "may I run", and for this
  * when you have to hold off rather than give up: an SDK that starts on `pending` is
  * initializing on an unknown, and an SDK that stays off after a policy resolves has
  * switched off a category that was about to be granted.

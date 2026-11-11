@@ -1,3 +1,4 @@
+import C15tApple
 // #region docs:swift-app-theme title="AppConsentTheme.swift"
 import C15tConsentUI
 import SwiftUI
@@ -10,10 +11,13 @@ enum AppConsentTheme {
             headline: "Your privacy choices",
             introduction: "Choose whether this app may measure usage and personalize marketing. You can change your choices in Privacy settings."
         )
-        theme.colors.accent = ConsentThemeColor(light: 0x2255CC, dark: 0xADC6FF)
-        theme.colors.onAccent = ConsentThemeColor(light: 0xFFFFFF, dark: 0x10234D)
-        theme.headlineFont = .sansSerif
-        theme.cornerRadius = 16
+        theme.colors.primary = ConsentThemeColor(light: 0x2255CC, dark: 0xADC6FF)
+        theme.colors.textOnPrimary = ConsentThemeColor(light: 0xFFFFFF, dark: 0x10234D)
+        theme.radius.md = 16
+        theme.spacing.lg = 28
+        theme.typography.headlineFont = .serif
+        theme.typography.fontSize.base = 18
+        theme.slots[.buttonSecondary] = .init(borderRadius: 26)
         theme.branding = .inth
         return theme
     }
@@ -21,12 +25,13 @@ enum AppConsentTheme {
 // #endregion docs:swift-app-theme
 
 @MainActor
-private func brandedConsentRoot(consent: ConsentModel, privacyPolicyURL: URL) -> some View {
+private func brandedConsentRoot(configuration: C15tAppleConfiguration, privacyPolicyURL: URL) -> some View {
     // #region docs:swift-themed-root title="MyApp.swift"
-    ConsentRoot(
-        consent: consent,
-        privacyPolicyURL: privacyPolicyURL,
-        theme: AppConsentTheme.value
-    )
+    ContentView()
+        .c15tConsent(
+            configuration,
+            privacyPolicyURL: privacyPolicyURL,
+            theme: AppConsentTheme.value
+        )
     // #endregion docs:swift-themed-root
 }

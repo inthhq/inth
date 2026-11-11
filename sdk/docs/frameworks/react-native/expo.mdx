@@ -55,27 +55,90 @@ a fresh installation to resolve a conservative policy without a network
 connection. You can add it after the online path works.
 
 The plugin configures native launch metadata, Android startup and internet
-permission, SDK floors and iOS privacy declarations. The native engine owns
+permission, SDK floors and iOS privacy declarations. It also sets Google
+Analytics for Firebase's four
+[Consent Mode defaults](/docs/integrations/firebase-analytics#deny-consent-mode-signals-by-default)
+to denied in `Info.plist` and `AndroidManifest.xml`, so Firebase grants nothing
+before c15t's consent is read. These keys are harmless in an app without
+Firebase. The native engine owns
 policy resolution and storage. You do not pass a backend URL to
-`C15tProvider` in JavaScript.
+`ConsentProvider` in JavaScript.
 
 The plugin raises the iOS deployment target to 16.4 when needed and preserves
 a higher target. This includes Expo 55, whose default target is 15.1. Android
-still requires API 24 or later. Use compile SDK 36 for Expo 55 through 57 and
-37 for Expo 58, with JDK 17 and the host's compatible Gradle, Android Gradle
-Plugin and Kotlin setup. Do not lower a higher host SDK setting.
+requires API 24 or later and compile SDK 36 or later. Expo 55 through 57
+default to compile SDK 36 and Expo 58 to 37, so a new app meets both. Use JDK
+17 and the host's compatible Gradle, Android Gradle Plugin and Kotlin setup.
+
+The plugin does not change Android SDK levels. If `expo-build-properties` or
+a Gradle file sets `minSdkVersion` below 24 or `compileSdkVersion` below 36,
+prebuild fails and names the file and value to change.
+
+## Theme the native screens
+
+Add a `theme` to the plugin options to set the colors, radii, spacing, type,
+per-part slots, app identity and provider attribution of the native consent
+screens. The plugin writes them into `Info.plist` and `AndroidManifest.xml` at
+prebuild, so you do not need your own config plugin. The option takes the same
+object as `createConsentTheme`, so a JSON theme file can style the native
+screens here and the React Native components at runtime; see
+[Customize](/docs/frameworks/react-native/customize#theme-both-renderers-from-one-object).
+Pass the object as `theme` in the `consent` options above:
+
+<include src="../../shared/examples/expo-dev/expo-theme.mdx" />
+
+Field names follow the web theme from `@c15t/ui`. `colors` holds the light
+values and `dark` overrides them in dark mode. Each color the native screens
+draw is `#RRGGBB`. A native `dark` value needs the same field in `colors`.
+
+| Field | Web token | Native setting |
+| --- | --- | --- |
+| `colors.primary` | `--c15t-primary` | Accent: links, switches, Save |
+| `colors.textOnPrimary` | `--c15t-text-on-primary` | Text on the accent |
+| `colors.surface` | `--c15t-surface` | Cards and list rows |
+| `colors.text` | `--c15t-text` | Main text |
+| `colors.textMuted` | `--c15t-text-muted` | Secondary text |
+| `colors.canvas` | None | Page background |
+| `colors.surfaceMuted` | None | Quieter surface for partner lists |
+| `colors.decision`, `colors.textOnDecision` | None | Accept all and Reject all fill and text |
+| `radius.sm`, `radius.md`, `radius.lg` | `--c15t-radius-*` | Callout, button and card, and notice card radius, in points or dp |
+| `spacing.xs` to `spacing.xl` | `--c15t-space-*` | Page gutters, section gaps and padding, in points or dp |
+| `typography.fontSize.sm`, `.base`, `.lg` | `--c15t-font-size-*` | Supporting, body and headline text sizes, in points or sp |
+| `typography.fontFamily` | `--c15t-font-family` | A bundled font for every role but the headline; see below |
+| `typography.headlineFont` | None | `serif`, `rounded`, `sans` or a bundled font; see below |
+| `slots.consentBannerTitle`, `slots.consentBannerDescription`, `slots.buttonPrimary`, `slots.buttonSecondary` | Web `slots` | One part's `color`, `backgroundColor`, `borderRadius` or `fontSize` |
+| `brand.name`, `brand.mark`, `brand.hidden` | None | App name and mark above the headline |
+| `branding.provider`, `branding.name`, `branding.mark`, `branding.hidden` | None | Provider attribution |
+
+For a bundled font in `fontFamily` or `headlineFont`, iOS needs the
+PostScript name and Android needs the font resource name. One string works on
+both when it is a valid resource name, such as `inter_bold`. When the names
+differ, pass both: `headlineFont: { ios: 'Inter-Bold', android: 'inter_bold' }`.
+`fontFamily` takes a bundled font only; leave it out for the system face.
+
+To build without the stock native screens, set `nativeUI: false` instead of
+`theme`; see [Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
+
+Fields only the React Native components draw, such as `motion`,
+`colors.border` or `typography.lineHeight`, are checked and not written.
+Prebuild fails on a value the native screens cannot draw, such as an `hsl()`
+color, on a web field neither renderer draws, such as `shadows`, and on `copy`. With
+`theme` set, the plugin owns these native keys and removes ones you delete
+from it. Without `theme`, it leaves them alone. Headline and introduction copy
+are separate; see [Customize](/docs/frameworks/react-native/customize#copy-and-languages).
+Rebuild the binary after you change the theme.
 
 ## Add the React root
 
 Create `setup.tsx` at the project root using the
-[quickstart's provider and privacy-settings example](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings).
+[quickstart's privacy-settings button](/docs/frameworks/react-native/quickstart#keep-privacy-settings-reachable).
 Keep this file outside the Expo Router route directory.
 
 For an app whose entry point is `App.tsx`, use the quickstart's `App.tsx`
 example directly.
 
-For Expo Router, change your existing root layout instead. Import `PrivacyApp`
-from `../setup` in `app/_layout.tsx`, or from `../../setup` in
+For Expo Router, change your existing root layout instead. Import
+`ConsentProvider` from `@c15t/react-native` in `app/_layout.tsx` or
 `src/app/_layout.tsx`. Wrap the existing `Stack` or `Slot` in that layout,
 keeping your other providers and navigation configuration. For example, this
 fragment wraps an existing `Stack`:
@@ -84,9 +147,9 @@ fragment wraps an existing `Stack`:
 
 ```tsx
 return (
-	<PrivacyApp privacyPolicyURL="https://example.com/privacy">
+	<ConsentProvider privacyPolicyURL="https://example.com/privacy">
 		<Stack />
-	</PrivacyApp>
+	</ConsentProvider>
 );
 ```
 
@@ -155,9 +218,12 @@ For a feature that needs Apple's tracking authorization, set
 `trackingMarkdownUsageDescription`, its localization map,
 `skAdNetworkIdentifiers` and `privacyTrackingDomains`.
 
-These options configure native declarations. Your app explicitly calls
-`requestTrackingAuthorization()` at the appropriate point in its flow. A c15t
-consent grant does not trigger or replace the system prompt. Read
+Once ATT is enabled, `<ConsentProvider>` asks for it after the consent prompt
+closes, and only if the person granted marketing. Set `trackingRequest` to
+`beforeConsent` or `manual` to change that. A c15t consent grant does not
+replace Apple's answer. Read
+[ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt)
+for the order and the App Store reasoning, and
 [ATT and ads](/docs/frameworks/react-native/iab#keep-att-separate) before adding
 an advertising SDK.
 
@@ -169,9 +235,9 @@ Set the plugin's `iab` option to turn on IAB TCF. It takes your registered
 out of range. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
 lists the ranges and native keys.
 
-On Android, `iab` needs a hosted mode with a `backendURL`. Android has no
-offline mode, so Android prebuild fails if you combine `iab` with
-`mode: 'offline'`, even with a `backendURL`. iOS supports offline IAB.
+`iab` needs a backend mode with a `backendURL`, because a backend serves the
+Global Vendor List. Prebuild fails if you combine `iab` with
+`mode: 'offline'`.
 
 `vendors` narrows the disclosed vendor list; it does not turn IAB on. For
 publisher restrictions or custom purposes, use the

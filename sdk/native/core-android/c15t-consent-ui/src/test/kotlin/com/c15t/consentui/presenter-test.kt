@@ -8,6 +8,7 @@ import com.c15t.core.transport.*
 import kotlinx.coroutines.*
 import kotlinx.serialization.json.*
 import com.c15t.core.model.ConsentCategory
+import com.c15t.core.model.PromptReason
 import kotlinx.coroutines.test.*
 import org.junit.Assert.*
 import org.junit.Test
@@ -32,7 +33,7 @@ class PresenterTest {
             write(key, value); return true
         }
     }
-    private fun boot(store: Memory = Memory()): Pair<C15tKernel, AtomicLong> {
+    private fun boot(store: Memory = Memory()): Pair<ConsentCore, AtomicLong> {
         val now = AtomicLong(System.currentTimeMillis())
         val body = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()
@@ -41,14 +42,13 @@ class PresenterTest {
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB"), iabListMaxAgeMs = 60_000)
-        val core = C15tKernel(config, C15tStore(store), clock = Clock { now.get() },
+        val core = ConsentCore(config, C15tStore(store), clock = Clock { now.get() },
             transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core to now
     }
     @Test fun retryPreservesDirtyExpiredListDraftUntilExplicitReload() {
-        val mainDispatcher = StandardTestDispatcher()
-        Dispatchers.setMain(mainDispatcher)
+        Dispatchers.setMain(main)
         try {
             val (core, clock) = boot()
             val p = ConsentPresenter(core)
@@ -62,10 +62,7 @@ class PresenterTest {
             assertTrue(p.dirty)
             assertEquals(choices, p.choices)
             // Observe the completed main-thread update, not the core's earlier list refresh.
-            await {
-                mainDispatcher.scheduler.runCurrent()
-                p.snapshot.revision > revision && !p.listUnavailable
-            }
+            await { p.snapshot.revision > revision && !p.listUnavailable }
             assertTrue(p.stale)
             assertTrue(p.dirty)
             assertEquals(choices, p.choices)
@@ -91,7 +88,7 @@ class PresenterTest {
         } finally { Dispatchers.resetMain() }
     }
     @Test fun partnerStatusIncludesSavedLIAndDistinguishesPartialSelection() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val (core, _) = boot()
             val p = ConsentPresenter(core)
@@ -116,11 +113,11 @@ class PresenterTest {
         } finally { Dispatchers.resetMain() }
     }
     @Test fun refusedWriteKeepsDraftAndRetryEmitsOneOutcome() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val store = Memory()
             val (core, _) = boot(store)
-            val p = ConsentPresenter(core, automaticPresentation = false)
+            val p = ConsentPresenter(core, autoPresent = false)
             p.presentPreferences()
             val session = p.presentationID
             var outcomes = 0
@@ -146,21 +143,22 @@ class PresenterTest {
     }
 
     @Test fun openSettingsCanWithdrawAfterBundledPolicyExpires() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val vector = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
                 .map { File(it, "native/protocol/bundled-policy/parity.json") }.first { it.exists() }.readText()).jsonObject
             val clock = AtomicLong(vector.getValue("now").jsonPrimitive.long)
             val config = NativeConfig(vector.getValue("endpoint").jsonPrimitive.content,
                 bundledPolicy = vector.getValue("resource").toString(), consentCategories = ConsentCategory.entries)
-            val core = C15tKernel(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
+            val core = ConsentCore(config, C15tStore(Memory()), clock = Clock { clock.get() }, executor = TaskExecutor.DIRECT)
             core.bootstrap()
             assertTrue(core.save(CommitIntent.All).ok)
-            val p = ConsentPresenter(core, automaticPresentation = false)
+            val p = ConsentPresenter(core, autoPresent = false)
             p.presentPreferences()
             val session = p.presentationID
             clock.addAndGet(604_800_000)
-            assertTrue(core.snapshot().policyPending)
+            assertFalse(core.snapshot().policyPending)
+            assertTrue(core.isPolicyStale)
             p.loadDraft()
             assertEquals(session, p.presentationID)
             assertNotNull(core.bundledPolicyInfo)
@@ -168,18 +166,18 @@ class PresenterTest {
             await { !p.pending }
             assertNull(p.errorCode)
             assertNull(p.presentationID)
-            assertTrue(core.snapshot().policyPending)
+            assertFalse(core.snapshot().policyPending)
             ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
             assertFalse(core.snapshot().explicitChoice!!.valueOf(ConsentCategory.MEASUREMENT)!!)
         } finally { Dispatchers.resetMain() }
     }
 
     @Test fun failureStaysVisibleWhileARetryIsPending() {
-        Dispatchers.setMain(Dispatchers.Unconfined)
+        Dispatchers.setMain(main)
         try {
             val store = Memory()
             val (core, _) = boot(store)
-            val p = ConsentPresenter(core, automaticPresentation = false)
+            val p = ConsentPresenter(core, autoPresent = false)
             p.presentPreferences()
             p.edit { it.copy(purposeConsents = listOf(7), vendorConsents = listOf(1)) }
             store.refuseNext = true
@@ -189,6 +187,8 @@ class PresenterTest {
             val hold = java.util.concurrent.CountDownLatch(1)
             store.holdNext = hold; store.refuseNext = true
             p.retry()
+            // Start the commit, so the write is held on the IO thread while the presenter is read.
+            main.scheduler.runCurrent()
             // The row stays put while the retry runs; only an outcome replaces it, so nothing reflows under the thumb.
             assertTrue(p.pending); assertNotNull(p.errorCode)
             hold.countDown(); await { !p.pending }
@@ -200,7 +200,7 @@ class PresenterTest {
     }
     @Test fun providerPrerequisitesFollowTheDraftAndNamePurposes() {
         val (core, _) = boot()
-        val p = ConsentPresenter(core, automaticPresentation = false)
+        val p = ConsentPresenter(core, autoPresent = false)
         p.presentPreferences()
         assertFalse(p.providerPrerequisitesMet)
         assertEquals(listOf("Store and access information on a device", "Create profiles for personalised advertising",
@@ -209,9 +209,58 @@ class PresenterTest {
         assertTrue(p.providerPrerequisitesMet)
     }
 
+    /**
+     * A policy refresh that lands after the save but before the commit's main-thread continuation
+     * owes a new prompt. The commit closes the prompt the person answered, not the new one, and the
+     * new one presents once the commit is done.
+     */
+    @Test fun promptOwedDuringACommitPresentsAfterIt() {
+        val mainDispatcher = StandardTestDispatcher()
+        Dispatchers.setMain(mainDispatcher)
+        try {
+            val fixture = generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
+                .map { File(it, "native/examples/consent-demo/fixtures/category-init.json") }.first { it.exists() }.readText()
+            var body = fixture
+            val client = object : HttpClient {
+                override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
+                    HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
+            }
+            val config = NativeConfig("https://fixture.invalid")
+            val core = ConsentCore(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+            core.bootstrap()
+            val p = ConsentPresenter(core)
+            val first = p.presentationID
+            assertNotNull(first)
+            p.commit(ConsentPresenter.Action.ACCEPT)
+            mainDispatcher.scheduler.runCurrent()
+            await { core.snapshot().explicitChoice != null }
+            // The main thread has not resumed the commit yet when the new policy arrives.
+            body = fixture.replace("a".repeat(64), "d".repeat(64))
+            core.refresh()
+            assertEquals(PromptReason.POLICY_CHANGED, core.snapshot().promptRequirement.reason)
+            await { mainDispatcher.scheduler.runCurrent(); !p.pending }
+            mainDispatcher.scheduler.runCurrent()
+            assertNotNull("the prompt owed after the commit presents", p.presentationID)
+            assertNotEquals(first, p.presentationID)
+        } finally { Dispatchers.resetMain() }
+    }
+
+    /**
+     * The presenter's coroutines run on `Dispatchers.Main`. Under `Unconfined` a commit resumes on
+     * the IO worker that saved it and writes `pending`, then the outcome, while the test thread
+     * reads them, so `!pending` could be seen before `errorCode`. This queued dispatcher runs only
+     * when [await] drains it, which keeps every main-thread write on the test thread, as an app
+     * keeps them on its main thread.
+     */
+    private val main = StandardTestDispatcher()
     private fun await(condition: () -> Boolean) {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
-        while (!condition() && System.nanoTime() < deadline) Thread.sleep(10)
-        assertTrue("Presenter did not receive refreshed disclosure", condition())
+        while (System.nanoTime() < deadline) {
+            main.scheduler.runCurrent()
+            if (condition()) return
+            Thread.sleep(10)
+        }
+        main.scheduler.runCurrent()
+        assertTrue("Presenter did not reach the expected state", condition())
     }
 }

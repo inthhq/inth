@@ -22,14 +22,20 @@
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
+import {
+	resetNativeStub,
+	setColorScheme,
+} from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot } from '../../protocol';
 import { ConsentBanner } from '../consent-banner';
 import { ConsentDialog } from '../consent-dialog';
 import { ConsentPreferences } from '../consent-preferences';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
-import { darkTheme, lightTheme } from '../theme/create-consent-theme';
+import {
+	defaultConsentTheme,
+	resolveConsentTypeRoles,
+} from '../theme/create-consent-theme';
 import { BANNER_FOOTER_PADDING_HORIZONTAL } from '../theme/use-consent-styles';
 import {
 	hitSlop,
@@ -41,6 +47,9 @@ import {
 	tap,
 	translatedSnapshot,
 } from './harness';
+
+/** The stock type roles, from the stock type tokens. */
+const lightRoles = resolveConsentTypeRoles(defaultConsentTheme.typography);
 
 /**
  * The web's own neutrals, computed from the tokens in `packages/ui`:
@@ -141,8 +150,8 @@ const isAccent = function isAccent(
 	const { container: box, label: text } = actionStyles(container, label);
 
 	return (
-		box.borderColor === lightTheme.colors.primary &&
-		text.color === lightTheme.colors.primary
+		box.borderColor === defaultConsentTheme.colors.primary &&
+		text.color === defaultConsentTheme.colors.primary
 	);
 };
 
@@ -470,7 +479,7 @@ describe('action roles', () => {
 				label
 			);
 
-			expect(box.borderColor).toBe(lightTheme.colors.border);
+			expect(box.borderColor).toBe(defaultConsentTheme.colors.border);
 			expect(text.color).toBe(WEB.text);
 			// Stroke mode, always. Web has a filled mode and the consent surfaces
 			// never ask for it.
@@ -624,8 +633,8 @@ describe('dialog card', () => {
 		// sheet runs edge to edge, so it keeps the fill and the corners and gives up
 		// the outline it has nowhere to show.
 		expect(nodeStyle(surfaceNode(dialog.container()))).toMatchObject({
-			borderColor: lightTheme.colors.border,
-			borderRadius: lightTheme.radius.surface,
+			borderColor: defaultConsentTheme.colors.border,
+			borderRadius: defaultConsentTheme.radius.lg,
 			borderWidth: 1,
 			boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
 		});
@@ -670,7 +679,7 @@ describe('dialog card', () => {
 		]);
 		expect(isAccent(tree.container(), 'Accept All')).toBe(false);
 		expect(nodeStyle(actions[2] as HTMLElement).borderColor).toBe(
-			lightTheme.colors.primary
+			defaultConsentTheme.colors.primary
 		);
 
 		tree.unmount();
@@ -750,10 +759,10 @@ describe('card height', () => {
 
 		// The web's copy is 16pt over `--c15t-line-height-normal`, and the live card
 		// carries the English notice across three of those lines at the card's own width.
-		const description = 3 * lightTheme.typography.body.lineHeight;
+		const description = 3 * lightRoles.body.lineHeight;
 		const heading =
 			points(bands.header, 'paddingTop') +
-			lightTheme.typography.title.lineHeight +
+			lightRoles.title.lineHeight +
 			points(bands.header, 'gap') +
 			description +
 			points(bands.header, 'paddingBottom');
@@ -791,14 +800,19 @@ describe('sheet grab handle', () => {
 		// surface, and the distances asserted below are computed here out of the two
 		// palettes rather than taken on trust -- 38 from a white card, 89 from the scrim
 		// over it, 46 and 59 in the dark.
-		for (const theme of [lightTheme, darkTheme]) {
-			const scheme = theme === darkTheme ? 'dark' : 'light';
+		for (const scheme of ['light', 'dark'] as const) {
+			setColorScheme(scheme);
+			const theme = {
+				colors:
+					scheme === 'dark'
+						? defaultConsentTheme.dark
+						: defaultConsentTheme.colors,
+			};
 			const tree = mountSurface(
 				<ConsentDialog
 					onRequestClose={vi.fn()}
 					open
 					presentation="sheet"
-					theme={theme}
 				/>,
 				englishSnapshot()
 			);
@@ -953,7 +967,7 @@ describe('category accordion', () => {
 		expect(nodeStyle(glyph)).toMatchObject({ height: 20, width: 20 });
 		expect(bar.width).toBeCloseTo(11.667, 2);
 		expect(bar.height).toBeCloseTo(1.667, 2);
-		expect(bar.backgroundColor).toBe(lightTheme.colors.disclosure);
+		expect(bar.backgroundColor).toBe(defaultConsentTheme.colors.disclosure);
 
 		tree.unmount();
 	});
@@ -977,9 +991,9 @@ describe('switch thumb', () => {
 		// of the border token around the disc, so the thumb is a ring rather than a
 		// filled dot, and the 4pt hole reads as the track colour it sits on.
 		expect(dot).toMatchObject({ height: 4, width: 4 });
-		expect(dot.backgroundColor).toBe(lightTheme.colors.switchTrack);
+		expect(dot.backgroundColor).toBe(defaultConsentTheme.colors.switchTrack);
 		expect(nodeStyle(thumb).boxShadow).toBe(
-			`0 0 0 1px ${lightTheme.colors.border}`
+			`0 0 0 1px ${defaultConsentTheme.colors.border}`
 		);
 
 		tree.unmount();
@@ -1061,7 +1075,9 @@ describe('branding tab', () => {
 			...tree.container().querySelectorAll<HTMLElement>('span[data-rn-style]'),
 		]
 			.map(nodeStyle)
-			.filter((style) => style.color === lightTheme.colors.onPrimary);
+			.filter(
+				(style) => style.color === defaultConsentTheme.colors.textOnPrimary
+			);
 
 		// The `max-width: 480px` query restates both runs as `0.625rem`, but only the
 		// wordmark's copy of that rule carries the `:not(.headless)` that ties it with

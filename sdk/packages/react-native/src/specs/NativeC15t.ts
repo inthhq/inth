@@ -36,13 +36,21 @@ export interface Spec extends TurboModule {
 	 */
 	getSnapshot: () => string;
 	/**
+	 * WebView consent as JSON `{ state, token, key }`: the state a page reads,
+	 * and a fresh 128-bit update token and preferences request key for one
+	 * WebView. See "WebView consent" in `native/CONTRACT.md`. Synchronous and
+	 * non-blocking.
+	 */
+	getWebViewConsent: () => string;
+	/**
 	 * Apply a consent action, where `intent` is a JSON-encoded `CommitIntent`.
 	 * Resolves with a JSON-encoded `CommitResult`.
 	 */
 	commit: (intent: string) => Promise<string>;
 	/**
-	 * Replace geographic, language, or test overrides, where `overrides` is a
-	 * JSON-encoded `NativeOverridesInput`. Re-resolves the policy.
+	 * Replace the country, region, language, or GPC override, where `overrides`
+	 * is a JSON-encoded `NativeOverridesInput`. Re-resolves the policy. There is
+	 * no test override: publisher test mode is a client option.
 	 */
 	setOverrides: (overrides: string) => Promise<void>;
 	/**
@@ -101,12 +109,29 @@ export interface Spec extends TurboModule {
 	 * without saying why; on Android it rejects because there is nothing to ask.
 	 */
 	requestTrackingAuthorization: () => Promise<string>;
+	/**
+	 * The same request, with JSON options. `{"additionalInformation": true}` asks
+	 * Apple to show the Additional Information button on its EU sheet, for a
+	 * caller that will handle the tap; without it there is no button. The plain
+	 * method above shows no button.
+	 */
+	requestTrackingAuthorizationWithOptions: (options: string) => Promise<string>;
 	/** Open the shared native flow. Resolves a JSON PresenterSession, not a decision. */
 	presentConsentPrompt: (privacyPolicyURL: string) => Promise<string>;
 	/** Open standing native preferences on the installed engine. */
 	presentPreferences: (privacyPolicyURL: string) => Promise<string>;
 	/** Request dismissal of the matching session. Pending commits remain locked. */
 	closeConsentPresenter: (sessionId: string) => Promise<void>;
+	/**
+	 * Hand native the provider's auto-present settings, a JSON-encoded
+	 * `NativeAutoPresentSettings`. The native `ConsentPrompt` decides when a
+	 * prompt is owed and presents it; JavaScript only hears
+	 * `onConsentPresenterPresented`, `onConsentPresenterUnavailable` and
+	 * `onConsentPresenterOutcome`. Rejects with `C15T_PRESENTER_INVALID_URL`
+	 * for a URL native refuses, and `C15T_NATIVE_UI_EXCLUDED` in a build
+	 * without the stock screens. A binary that predates it has no such method.
+	 */
+	configureAutoPresent: (settings: string) => Promise<void>;
 	/** Register interest in an event; required by the event-emitter spec. */
 	addListener: (eventName: string) => void;
 	/** Report the number of live listeners; required by the emitter spec. */

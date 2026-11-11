@@ -45,6 +45,8 @@
 		"android/c15t-react-native/consumer-rules.pro",
 		"android/c15t-react-native/library.gradle",
 		"android/c15t-react-native/src/main",
+		"android/c15t-react-native/src/nativeUi",
+		"android/c15t-react-native/src/withoutNativeUi",
 		"android/codegen/generate-spec.mjs",
 		"ios/C15tReactNative",
 		"vendor/C15tCore",
@@ -65,6 +67,12 @@
 			"react-native": "./dist/index.js",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
+		},
+		"./bridge-schema": {
+			"types": "./dist-types/protocol/bridge-schema.d.ts",
+			"react-native": "./dist/protocol/bridge-schema.js",
+			"import": "./dist/protocol/bridge-schema.js",
+			"default": "./dist/protocol/bridge-schema.js"
 		},
 		"./integrations": {
 			"types": "./dist-types/integrations/index.d.ts",
@@ -88,6 +96,7 @@
 		"check-types": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "bun oxfmt .",
+		"generate:bridge-schema": "tsx scripts/generate-bridge-schema.ts",
 		"generate:fixtures": "tsx scripts/generate-protocol-fixtures.ts",
 		"lint": "bun oxlint ./src",
 		"prepack": "bun run build:docs && bun -e \"for (const name of ['LICENSE.md', 'NOTICE']) await Bun.write(name, Bun.file('../../' + name));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",
@@ -99,6 +108,7 @@
 		"@expo/config-plugins": "57.0.9"
 	},
 	"devDependencies": {
+		"@babel/core": "7.29.7",
 		"@babel/parser": "7.28.5",
 		"@c15t/core": "workspace:*",
 		"@c15t/iab": "workspace:*",
@@ -108,6 +118,7 @@
 		"@react-native/codegen": "0.87.1",
 		"@types/react-dom": "19.2.3",
 		"jsdom": "25.0.1",
+		"metro-transform-plugins": "0.84.5",
 		"react": "19.2.7",
 		"react-dom": "19.2.7",
 		"react-native": "0.87.1",

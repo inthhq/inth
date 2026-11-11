@@ -13,9 +13,11 @@ export type { BootstrapPayload } from './bootstrap';
 export type {
 	CommitFailureReason,
 	CommitIntent,
+	NativeIABChoices,
 	CommitResult,
 	NativeSavePayload,
 } from './commit';
+export { COMMIT_FAILURE_REASONS } from './commit';
 export type {
 	GlobalVendorList,
 	GVLDataCategory,
@@ -29,16 +31,19 @@ export type {
 	GVLVendorOverflow,
 	GVLVendorUrl,
 } from './gvl';
+export type { NativeInitializedEvent, NativeSnapshotEvent } from './events';
 export type { NativeOverrides, NativeOverridesInput } from './overrides';
 export { defaultNativeOverrides } from './overrides';
 export type {
 	TrackingAuthorization,
 	TrackingAuthorizationPayload,
+	NativeTrackingRequestOptions,
 	TrackingPresentation,
 	TrackingRequestPayload,
 	TrackingRequestStage,
 } from './tracking';
 export {
+	parseTrackingAnsweredAt,
 	parseTrackingAuthorization,
 	parseTrackingRequest,
 	TRACKING_AUTHORIZATION_STATUSES,
@@ -47,13 +52,23 @@ export {
 } from './tracking';
 export type {
 	ConsentSnapshot,
+	NativeAdTechProvider,
+	NativeIABCommittedConsent,
+	NativeIABCustomVendor,
+	NativeIABDisclosure,
+	NativeIABHeadlessGap,
+	NativeIABPurposePartnerCounts,
 	NativeIABState,
+	NativeIABVendorDisclosure,
+	NativeConsentSubject,
 	NativeModel,
 	NativeGpcSignal,
 	NativePrivacySignals,
 	NativeSnapshotError,
+	PolicyResolutionFailure,
 	SnapshotResolution,
 } from './snapshot';
+export { POLICY_RESOLUTION_FAILURES } from './snapshot';
 export type {
 	AllConsentNames,
 	CategoryDecision,
@@ -93,9 +108,12 @@ export {
 } from './version';
 
 export {
+	ADDITIVE_SNAPSHOT_DEFAULTS,
+	BRIDGE_SNAPSHOT_KEYS,
 	KERNEL_OWNED_KEYS,
 	SNAPSHOT_KEYS,
 	describeSnapshotWireDrift,
+	withAdditiveSnapshotDefaults,
 } from './wire-shape';
 export type { WireDriftOptions } from './wire-shape';
 

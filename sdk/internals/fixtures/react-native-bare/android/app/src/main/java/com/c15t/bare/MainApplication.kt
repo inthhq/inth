@@ -42,7 +42,7 @@ class MainApplication : Application(), ReactApplication {
         (0 until values.length()).map { name -> com.c15t.core.model.ConsentCategory.entries.first { it.wireName == values.getString(name) } }
       } ?: com.c15t.core.model.ConsentCategory.entries.toList()
       com.c15t.android.C15tAndroid.install(this, com.c15t.core.NativeConfig(
-        portalUrl = "http://localhost:3000/api/self-host",
+        backendUrl = "http://localhost:3000/api/self-host",
         bundledPolicy = assets.open("c15t-policy.json").bufferedReader().use { it.readText() },
         consentCategories = declared,
         iab = com.c15t.core.iab.IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB")

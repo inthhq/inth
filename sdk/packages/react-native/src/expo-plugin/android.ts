@@ -2,6 +2,7 @@ import type { AndroidConfig } from '@expo/config-plugins';
 
 import { androidConfig } from './config-plugins';
 import {
+	ANDROID_GPP_META_KEYS,
 	ANDROID_IAB_META_KEYS,
 	ANDROID_INITIALIZER,
 	ANDROID_INTERNET_PERMISSION,
@@ -9,10 +10,11 @@ import {
 	ANDROID_STARTUP_AUTHORITY_SUFFIX,
 	ANDROID_STARTUP_META_VALUE,
 	ANDROID_STARTUP_PROVIDER,
+	GPP_NO_OPT_OUT_CATEGORIES,
 } from './constants';
 import { C15tPluginError } from './errors';
 import type { ResolvedC15tParams } from './params';
-import { POLICY_RESOURCE_NAME } from './policy-resource';
+import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
 
 /** A `<meta-data>` element, as the manifest is held after `xml2js` parsing. */
 interface ManifestMetaDataEntry {
@@ -53,15 +55,21 @@ const metaDataEntry = function metaDataEntry(
  * The `<meta-data>` set that configures the core, in the names
  * `com.c15t.android.C15tAndroid.configFrom` and the bridge's bootstrap read.
  *
- * Android has no mode key, because neither reader has a mode string: `hosted`
- * and `selfHosted` differ only by URL, `offline` embeds no backend, which is
- * what leaves commands local, and `custom` turns the launch hook off so the
- * host's own `C15t.bootstrap` call wins the race.
+ * Only no-backend mode writes a mode key, `com.c15t.MODE` set to `offline`,
+ * which starts the core with no backend URL and an offline transport. `hosted`
+ * and `selfHosted` differ only by URL, and `custom` turns the launch hook off so
+ * the host's own `C15t.bootstrap` call wins the race.
  */
 export const buildMetaDataPairs = function buildMetaDataPairs(
 	params: ResolvedC15tParams
 ): MetaDataPair[] {
 	const pairs: MetaDataPair[] = [];
+	if (params.mode === 'offline') {
+		pairs.push({ name: ANDROID_META.mode, value: 'offline' });
+	}
+	if (params.policyRules !== null) {
+		pairs.push({ name: ANDROID_META.policyRules, value: POLICY_RULES_NAME });
+	}
 	if (params.policyResource !== null) {
 		pairs.push({
 			name: ANDROID_META.policyResource,
@@ -70,7 +78,7 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	}
 
 	if (params.backendURL !== null) {
-		pairs.push({ name: ANDROID_META.portalUrl, value: params.backendURL });
+		pairs.push({ name: ANDROID_META.backendUrl, value: params.backendURL });
 	}
 	if (params.initURL !== null) {
 		pairs.push({ name: ANDROID_META.initUrl, value: params.initURL });
@@ -97,17 +105,6 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	}
 	// `C15tAndroid.declaredIab` reads these. Absent keys leave IAB TCF off.
 	if (params.iab !== null) {
-		// Android has no offline mode: without a portal URL `C15tAndroid.configFrom`
-		// installs no core, so no IABTCF_* signals or IAB screens, and with one the
-		// bootstrap builds a hosted transport, so the "offline" build goes online.
-		if (params.mode === 'offline') {
-			throw new C15tPluginError(
-				"iab can't use mode 'offline' on Android: the Android core either " +
-					'starts with a backend, and sends records, or does not start at ' +
-					'all. Use a hosted mode with backendURL, or build iOS only for ' +
-					'offline IAB.'
-			);
-		}
 		pairs.push(
 			{ name: ANDROID_META.iabCmpId, value: String(params.iab.cmpId) },
 			{
@@ -128,6 +125,31 @@ export const buildMetaDataPairs = function buildMetaDataPairs(
 	}
 	if (params.forceGPC) {
 		pairs.push({ name: ANDROID_META.forceGpc, value: 'true' });
+	}
+	// `C15tAndroid.declaredGpp` reads these. Absent keys leave GPP off, and an
+	// absent option keeps the core's default.
+	if (params.gpp !== null) {
+		pairs.push({ name: ANDROID_META.gpp, value: 'true' });
+		if (params.gpp.mspaMode !== null) {
+			pairs.push({
+				name: ANDROID_META.gppMspaMode,
+				value: params.gpp.mspaMode,
+			});
+		}
+		// Written whenever the app set the option. Meta-data cannot carry a
+		// reliably empty value, so an empty list is the word `none`.
+		if (params.gpp.optOutCategories !== null) {
+			pairs.push({
+				name: ANDROID_META.gppOptOutCategories,
+				value:
+					params.gpp.optOutCategories.length > 0
+						? params.gpp.optOutCategories.join(',')
+						: GPP_NO_OPT_OUT_CATEGORIES,
+			});
+		}
+		if (!params.gpp.tcf) {
+			pairs.push({ name: ANDROID_META.gppTcf, value: 'false' });
+		}
 	}
 	if (!params.autoBootstrap) {
 		pairs.push({ name: ANDROID_META.autoBootstrap, value: 'false' });
@@ -230,11 +252,23 @@ export const applyAndroidManifest = function applyAndroidManifest(
 	ensureInternetPermission(next);
 
 	const application = getMainApplicationOrThrow(next);
-	// The plugin owns every IAB entry. Clear them first, so a removed `iab`
-	// option or `consentScreen` leaves no earlier CMP identity behind.
+	// The plugin owns every IAB and GPP entry. Clear them first, so a removed
+	// `iab` or `gpp` option leaves no earlier CMP identity or GPP switch behind.
 	if (application['meta-data']) {
 		application['meta-data'] = application['meta-data'].filter(
-			(item) => !ANDROID_IAB_META_KEYS.includes(item.$['android:name'])
+			(item) =>
+				!ANDROID_IAB_META_KEYS.includes(item.$['android:name']) &&
+				!ANDROID_GPP_META_KEYS.includes(item.$['android:name'])
+		);
+	}
+	// The plugin owns the mode and policy rules keys, so switching back to a
+	// backend mode removes them.
+	if (application['meta-data']) {
+		application['meta-data'] = application['meta-data'].filter(
+			(item) =>
+				item.$['android:name'] !== ANDROID_META.mode &&
+				(item.$['android:name'] !== ANDROID_META.policyRules ||
+					item.$['android:value'] !== POLICY_RULES_NAME)
 		);
 	}
 	if (params.policyResource === null && application['meta-data']) {

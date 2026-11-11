@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.c15t.android.*
 import com.c15t.consentui.*
 import com.c15t.core.*
@@ -49,13 +49,11 @@ class ConsentDemoActivity : ComponentActivity() {
                 if (core == null) Setup(model)
                 else if (model.consentPresentationDeferred) ReviewDiagnostics(model, onClose = model::showConsentScreen)
                 else {
-                    val presenter: ConsentPresenter = viewModel(factory = object : ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            @Suppress("UNCHECKED_CAST") return ConsentPresenter(core) as T
-                        }
-                    })
+                    // The app-wide prompt the one-line composable attaches to, so the journeys run
+                    // the default auto-present path.
+                    val prompt = remember(core) { ConsentPrompt.of(core) }
                     Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
-                        Host(model, presenter)
+                        Host(model, prompt)
                         val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
                         val providerTheme = when (model.fixtureBranding) {
                             "inth" -> (theme ?: ConsentTheme.c15t).copy(branding = ConsentTheme.Branding.Inth)
@@ -69,7 +67,7 @@ class ConsentDemoActivity : ComponentActivity() {
                             "hidden" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand.Hidden)
                             else -> providerTheme
                         }
-                        C15tConsent(presenter, model.policyUrl, theme = identityTheme)
+                        C15tConsent(model.policyUrl, theme = identityTheme, core = core)
                     }
                 }
             }
@@ -78,7 +76,7 @@ class ConsentDemoActivity : ComponentActivity() {
 }
 
 class DemoModel(application: Application) : AndroidViewModel(application) {
-    var core by mutableStateOf<C15tKernel?>(null); private set
+    var core by mutableStateOf<ConsentCore?>(null); private set
     var snapshot by mutableStateOf(ConsentSnapshot.denyAll()); private set
     var pending by mutableIntStateOf(0); private set
     var lastError by mutableStateOf("none"); private set
@@ -154,11 +152,11 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                             require(uri.host in listOf("localhost", "127.0.0.1"))
                             reportUrl = uri.resolve("/e2e/state").toString()
                         }
-                        val config = NativeConfig(portalUrl = backend ?: "https://fixture.invalid", consentCategories = ConsentCategory.entries, detectedGpc = scenario == "gpc-on",
+                        val config = NativeConfig(backendUrl = backend ?: "https://fixture.invalid", consentCategories = ConsentCategory.entries, detectedGpc = scenario == "gpc-on",
                             iab = if (mode == "iab") IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", publisherRestrictions = listOf(IabPublisherRestriction(7,0,listOf(2)))) else null)
                         val durableStore = C15tStore(store)
                         fixtureStore = durableStore
-                        val kernel = C15tKernel(config, durableStore, transport = HostedTransport(if (backend == null) peer else C15tHttpClient(),config), executor = TaskExecutor.DIRECT)
+                        val kernel = ConsentCore(config, durableStore, transport = HostedTransport(if (backend == null) peer else C15tHttpClient(),config), executor = TaskExecutor.DIRECT)
                         kernel.bootstrap()
                         fault = store; http = peer
                         policyUrl = "https://example.test/privacy"
@@ -171,7 +169,7 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
                         vendorProbe = connectVendorSdks(context, kernel, vendors) { e -> viewModelScope.launch { lastError = "vendor: ${e.message}" } }
                         kernel
                     } else {
-                        val config = profile?.nativeConfig() ?: NativeConfig(portalUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
+                        val config = profile?.nativeConfig() ?: NativeConfig(backendUrl = hostedBackend!!, consentCategories = ConsentCategory.entries)
                         C15tAndroid.install(context, config)
                         policyUrl = hostedPrivacy!!
                         if (profile != null) {
@@ -309,13 +307,13 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
         model.setupError?.let { Text(it) }
     }
 }
-@Composable private fun Host(model: DemoModel, presenter: ConsentPresenter) {
+@Composable private fun Host(model: DemoModel, prompt: ConsentPrompt) {
     if (model.showReviewDiagnostics) {
         ReviewDiagnostics(model, onClose = model::showConsentScreen)
     } else {
         LazyColumn(Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp).testTag("fixture.state"), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { Text("Privacy demo", style = MaterialTheme.typography.headlineMedium); Text(if (model.fixture) "Local protocol fixture" else "Inth hosted project") }
-            item { Button(onClick = presenter::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
+            item { Button(onClick = prompt::presentPreferences, modifier = Modifier.testTag("fixture.open-preferences")) { Text("Privacy settings") } }
             if (model.reviewing) {
                 item { Text("Hosted IAB TCF review. This is a preparation app, not a certification result.") }
                 if (model.snapshot.ready && !model.snapshot.policyPending && model.snapshot.model != ConsentModel.IAB) {
@@ -369,19 +367,22 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
 }
 
 /**
- * A fictional grocery app's appearance: a teal accent on mint paper, its own mark and headline.
- * Everything here goes through the public theme.
+ * A fictional grocery app's appearance: a teal primary on mint paper, roomier spacing, a larger
+ * type scale, pill decisions, and its own mark and headline. Everything here goes through the
+ * public theme.
  */
 object PantryBrand {
     val theme = ConsentTheme(
         colors = ConsentTheme.Colors(
             canvas = ConsentThemeColor(0xF3FAF7, 0x0F1A17), surface = ConsentThemeColor(0xFFFFFF, 0x17241F),
             surfaceMuted = ConsentThemeColor(0xE2F1EB, 0x1F3029), text = ConsentThemeColor(0x10201C, 0xEAF4F0),
-            textSecondary = ConsentThemeColor(0x5C7169, 0x9DB3AC), accent = ConsentThemeColor(0x00796B, 0x4FD1C0),
-            onAccent = ConsentThemeColor(0xFFFFFF, 0x06302A), decision = ConsentThemeColor(0x00796B, 0x4FD1C0),
-            onDecision = ConsentThemeColor(0xFFFFFF, 0x06302A)),
-        cornerRadius = 10.dp,
-        headlineFont = ConsentTheme.HeadlineFont.SansSerif,
+            textMuted = ConsentThemeColor(0x5C7169, 0x9DB3AC), primary = ConsentThemeColor(0x00796B, 0x4FD1C0),
+            textOnPrimary = ConsentThemeColor(0xFFFFFF, 0x06302A), decision = ConsentThemeColor(0x00796B, 0x4FD1C0),
+            textOnDecision = ConsentThemeColor(0xFFFFFF, 0x06302A)),
+        radius = ConsentTheme.Radius(md = 10.dp),
+        spacing = ConsentTheme.Spacing(md = 20.dp, lg = 28.dp),
+        typography = ConsentTheme.Typography(fontSize = ConsentTheme.FontSize(sm = 15.sp, base = 18.sp)),
+        slots = mapOf(ConsentTheme.Slot.ButtonPrimary to ConsentTheme.SlotStyle(borderRadius = 26.dp)),
         brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark),
         copy = ConsentTheme.Copy(headline = "Before you shop.", introduction = "Pantry uses data to remember your basket, measure what works and show offers you might like."),
     )

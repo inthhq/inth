@@ -1,19 +1,21 @@
 import {
-	C15tProvider,
+	ConsentProvider,
 	presentPreferences,
 	useConsentStatus,
-	useIsAllowed,
+	useConsent,
 } from '@c15t/react-native';
 import type { PropsWithChildren } from 'react';
 
 import { benchmarkConfig } from './benchmark-config';
 
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<C15tProvider>{children}</C15tProvider>
+	<ConsentProvider privacyPolicyURL={benchmarkConfig.c15t.privacyUrl}>
+		{children}
+	</ConsentProvider>
 );
 export const useSizeConsent = () => {
 	const status = useConsentStatus();
-	const measurement = useIsAllowed('measurement');
+	const measurement = useConsent('measurement');
 	return {
 		measurement,
 		open: () => presentPreferences(benchmarkConfig.c15t.privacyUrl),

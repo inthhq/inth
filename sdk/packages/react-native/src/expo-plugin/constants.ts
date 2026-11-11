@@ -19,12 +19,22 @@
 export const ANDROID_META = {
 	/** Present only when the host bootstraps the core itself. */
 	autoBootstrap: 'com.c15t.reactnative.AUTO_BOOTSTRAP',
+	/** c15t backend base URL, the value the core calls `backendUrl`. */
+	backendUrl: 'com.c15t.BACKEND_URL',
 	/** Comma-separated category ids the app offers, read by `C15tAndroid`. */
 	categories: 'com.c15t.CATEGORIES',
 	/** Value sent as the `domain` field of `POST /subjects`. */
-	domain: 'com.c15t.DOMAIN',
+	domain: 'com.c15t.BACKEND_DOMAIN',
 	/** Staged-build switch that forces GPC on. */
 	forceGpc: 'com.c15t.FORCE_GPC',
+	/** `true` turns on the IAB GPP string, read by `C15tAndroid.declaredGpp`. */
+	gpp: 'com.c15t.GPP',
+	/** MSPA mode, `opt-out-option` or `service-provider`. */
+	gppMspaMode: 'com.c15t.GPP_MSPA_MODE',
+	/** Comma-separated categories whose refusal reports a GPP opt-out. */
+	gppOptOutCategories: 'com.c15t.GPP_OPT_OUT_CATEGORIES',
+	/** `false` leaves the TCF EU section out of the GPP string. */
+	gppTcf: 'com.c15t.GPP_TCF',
 	/** Registered IAB CMP ID, read by `C15tAndroid.declaredIab`. */
 	iabCmpId: 'com.c15t.IAB_CMP_ID',
 	/** CMP version, required with the CMP ID. */
@@ -33,11 +43,13 @@ export const ANDROID_META = {
 	iabConsentScreen: 'com.c15t.IAB_CONSENT_SCREEN',
 	/** Two-letter publisher country code, required with the CMP ID. */
 	iabPublisherCountryCode: 'com.c15t.IAB_PUBLISHER_COUNTRY_CODE',
-	/** Overrides `${portalUrl}/init` for a proxied init route. */
-	initUrl: 'com.c15t.INIT_URL',
+	/** Overrides `${backendUrl}/init` for a proxied init route. */
+	initUrl: 'com.c15t.BACKEND_INIT_URL',
+	/** `offline` selects no-backend mode, read by `C15tAndroid.configFrom`. */
+	mode: 'com.c15t.MODE',
 	policyResource: 'com.c15t.POLICY_RESOURCE',
-	/** c15t backend base URL, the value the core calls `portalUrl`. */
-	portalUrl: 'com.c15t.PORTAL_URL',
+	/** Asset path of the in-code policy, read in no-backend mode. */
+	policyRules: 'com.c15t.POLICY_RULES',
 	/**
 	 * Comma-separated IAB vendor ids the app may disclose, read by `C15tAndroid`.
 	 *
@@ -59,7 +71,15 @@ export const IOS_PLIST_KEY = {
 	/** Value sent as the `domain` field of `POST /subjects`. */
 	domain: 'com.c15t.backend.domain',
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
-	gpc: 'com.c15t.gpc',
+	forceGPC: 'com.c15t.forceGPC',
+	/** `true` turns on the IAB GPP string, as a real Boolean. */
+	gpp: 'com.c15t.gpp',
+	/** MSPA mode, `opt-out-option` or `service-provider`. */
+	gppMspaMode: 'com.c15t.gpp.mspaMode',
+	/** Category id array whose refusal reports a GPP opt-out. */
+	gppOptOutCategories: 'com.c15t.gpp.optOutCategories',
+	/** `false` leaves the TCF EU section out of the GPP string, as a real Boolean. */
+	gppTCF: 'com.c15t.gpp.tcf',
 	/** Registered IAB CMP ID, as a plist integer. */
 	iabCmpId: 'com.c15t.iab.cmpId',
 	/** CMP version, as a plist integer. */
@@ -71,6 +91,8 @@ export const IOS_PLIST_KEY = {
 	/** Overrides `${backendURL}/init`, for a proxied init route. */
 	initURL: 'com.c15t.backend.initUrl',
 	policyResource: 'com.c15t.policy.resource',
+	/** Bundle filename of the in-code policy, read in offline mode. */
+	policyRules: 'com.c15t.policy.rules',
 	/** One of the iOS bridge's own `TransportMode` raw values. */
 	transportMode: 'com.c15t.backend.mode',
 	/**
@@ -179,4 +201,27 @@ export const IOS_IAB_PLIST_KEYS: readonly string[] = [
 	IOS_PLIST_KEY.iabCmpVersion,
 	IOS_PLIST_KEY.iabConsentScreen,
 	IOS_PLIST_KEY.iabPublisherCountryCode,
+];
+
+/**
+ * The `com.c15t.GPP_OPT_OUT_CATEGORIES` value for an empty list. Android
+ * meta-data has no reliably empty value, so `C15tAndroid.declaredGpp` reads
+ * this word, or a blank value, as "no category drives the opt-outs".
+ */
+export const GPP_NO_OPT_OUT_CATEGORIES = 'none';
+
+/** Every AndroidManifest meta-data name the plugin writes for GPP. */
+export const ANDROID_GPP_META_KEYS: readonly string[] = [
+	ANDROID_META.gpp,
+	ANDROID_META.gppMspaMode,
+	ANDROID_META.gppOptOutCategories,
+	ANDROID_META.gppTcf,
+];
+
+/** Every Info.plist key the plugin writes for GPP. */
+export const IOS_GPP_PLIST_KEYS: readonly string[] = [
+	IOS_PLIST_KEY.gpp,
+	IOS_PLIST_KEY.gppMspaMode,
+	IOS_PLIST_KEY.gppOptOutCategories,
+	IOS_PLIST_KEY.gppTCF,
 ];

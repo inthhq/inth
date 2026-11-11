@@ -194,7 +194,7 @@ describe('Firebase Analytics', () => {
 		await integration.disconnect();
 	});
 
-	test('keeps advertising denied even when marketing is allowed', async () => {
+	test('grants advertising from marketing, as the web does', async () => {
 		const initial = snapshot(0, true);
 		createFakeNativeModule({
 			snapshot: {
@@ -211,11 +211,59 @@ describe('Firebase Analytics', () => {
 		});
 		await integration.ready;
 		expect(analytics.setConsent).toHaveBeenCalledWith({
+			ad_personalization: true,
+			ad_storage: true,
+			ad_user_data: true,
+			analytics_storage: true,
+		});
+		await integration.disconnect();
+		expect(analytics.setConsent).toHaveBeenLastCalledWith({
 			ad_personalization: false,
 			ad_storage: false,
 			ad_user_data: false,
-			analytics_storage: true,
+			analytics_storage: false,
 		});
+	});
+
+	test('follows marketing alone without enabling collection', async () => {
+		const fake = createFakeNativeModule({ snapshot: snapshot(0, false) });
+		const analytics = firebase();
+		const integration = connectFirebaseAnalytics(analytics, {
+			onError: vi.fn(),
+		});
+		await integration.ready;
+		const marketing = (revision: number, allowed: boolean) => {
+			const next = snapshot(revision, false);
+			return {
+				...next,
+				effectivePermissions: {
+					...next.effectivePermissions,
+					marketing: allowed,
+				},
+			};
+		};
+		fake.pushSnapshot(marketing(1, true));
+		await vi.waitFor(() =>
+			expect(analytics.setConsent).toHaveBeenLastCalledWith({
+				ad_personalization: true,
+				ad_storage: true,
+				ad_user_data: true,
+				analytics_storage: false,
+			})
+		);
+		fake.pushSnapshot(marketing(2, false));
+		await vi.waitFor(() =>
+			expect(analytics.setConsent).toHaveBeenLastCalledWith({
+				ad_personalization: false,
+				ad_storage: false,
+				ad_user_data: false,
+				analytics_storage: false,
+			})
+		);
+		expect(analytics.setConsent).toHaveBeenCalledTimes(3);
+		expect(analytics.setAnalyticsCollectionEnabled).not.toHaveBeenCalledWith(
+			true
+		);
 		await integration.disconnect();
 	});
 });
@@ -353,11 +401,19 @@ describe('PostHog', () => {
 		const integration = connectPostHog(posthog, { onError: vi.fn() });
 		await vi.waitFor(() => expect(posthog.optIn).toHaveBeenCalledOnce());
 		fake.pushSnapshot(snapshot(1, false));
+		// The withdrawal does not wait for the pending opt-in.
+		expect(posthog.optOut).toHaveBeenCalledOnce();
 		wait.release();
 		await integration.ready;
-		expect(posthog.optOut).toHaveBeenCalledOnce();
+		// Once the opt-in settles, the denial is applied again.
+		await vi.waitFor(() =>
+			expect(posthog.optOut.mock.invocationCallOrder.at(-1)).toBeGreaterThan(
+				posthog.optIn.mock.invocationCallOrder[0] ?? 0
+			)
+		);
 		await integration.disconnect();
-		expect(posthog.optOut).toHaveBeenCalledTimes(2);
+		expect(posthog.optIn).toHaveBeenCalledOnce();
+		expect(posthog.optOut).toHaveBeenLastCalledWith();
 	});
 
 	test('disconnects during an in-flight grant and never re-enables', async () => {
@@ -368,13 +424,19 @@ describe('PostHog', () => {
 		await vi.waitFor(() => expect(posthog.optIn).toHaveBeenCalledOnce());
 		const stop = integration.disconnect();
 		expect(integration.disconnect()).toBe(stop);
+		// Disconnect does not wait for the pending opt-in.
+		expect(posthog.optOut).toHaveBeenCalledOnce();
 		wait.release();
 		await stop;
 		fake.pushSnapshot(snapshot(1, false));
 		fake.pushSnapshot(snapshot(2, true));
-		await Promise.resolve();
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 0);
+		});
 		expect(posthog.optIn).toHaveBeenCalledOnce();
-		expect(posthog.optOut).toHaveBeenCalledOnce();
+		expect(posthog.optOut.mock.invocationCallOrder.at(-1)).toBeGreaterThan(
+			posthog.optIn.mock.invocationCallOrder[0] ?? 0
+		);
 	});
 
 	test('reports later failures and allows the next denial to proceed', async () => {

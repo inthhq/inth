@@ -33,7 +33,7 @@ final class SaveDeliveryTests: XCTestCase {
     /// This is the call pattern the React Native bridge actually uses: `commit:` runs
     /// on the JS thread, resolves as soon as the local commit is durable, and the next
     /// thing the app does is pull `getSnapshot()` again on that same thread, from the
-    /// snapshot event, from `useConsent`, and from every gated component on screen. A
+    /// snapshot event, from `useSnapshot`, and from every gated component on screen. A
     /// synchronous `snapshot()` is a lock and a copy, so it cannot hold a delivery
     /// back, and that gets pinned down here rather than left to reasoning.
     ///

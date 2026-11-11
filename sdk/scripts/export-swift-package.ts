@@ -29,6 +29,9 @@ const sourceFiles = new Set([
 	'NOTICE',
 	manifestPath,
 	`${nativeRoot}/README.md`,
+	// Where the guides are, for an agent in an app that depends on the package. The
+	// monorepo's root AGENTS.md is contributor guidance and stays out.
+	`${nativeRoot}/AGENTS.md`,
 ]);
 const excludedSegments = new Set([
 	'.build',
@@ -328,7 +331,7 @@ export const exportSwiftPackage = (options: {
 	const version =
 		versions.length === 1 ? versions[0]?.groups?.version : undefined;
 	if (!version || valid(version) !== version) {
-		throw new Error('Swift source must declare one valid c15t.version.');
+		throw new Error('Swift source must declare one valid C15t.version.');
 	}
 	if (options.manifest === 'root') {
 		required('Package.swift');

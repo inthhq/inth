@@ -7,33 +7,211 @@ installation. Optional SDKs stay off while authority is unresolved or invalid.
 A fresh installation has no saved policy. Bundle an exported policy if that
 first launch must explain consent without connectivity. Keep hosted transport
 configured so the app can refresh policy and deliver queued records when it
-reconnects. Offline-only transport cannot fetch a missing policy or deliver
-records and is not recommended for production environments as the only
-transport.
+reconnects.
 
-## Export the policy
+In backend mode the SDK picks the policy in this order:
 
-From an authorized source checkout, build the exporter's dependencies and
-export your project's public manifest:
+1. The live `/init` response.
+2. The last good response cached on the device.
+3. The manifest bundled into the app at build time.
 
-```sh
-bun turbo run build --filter=@c15t/schema --filter=@c15t/translations
-bunx tsx scripts/export-mobile-policy.ts \
-  --endpoint https://your-project.inth.app \
-  --out /absolute/path/to/app/c15t-policy.json \
-  --expires-at 2027-01-01T00:00:00.000Z \
-  --languages en,de
+A newer bundled manifest replaces an older bundled one cached by an earlier
+build. It never replaces a cached live response.
+
+No-backend mode (`mode: 'offline'`) sends nothing and reads no bundled
+manifest. Its only policy source is a policy you keep in source control. The
+two modes do not mix, so Expo prebuild refuses `backendURL`, `initURL`,
+`policyResource` and `iab` in offline mode.
+
+## Define the policy in code
+
+In no-backend mode, write the policy as rules in the backend's `PolicyRule`
+names: `id`, `match`, `model`, `prompt`, `categories`, `scopeMode`,
+`preselectedCategories`, `actions`, `validity`, `privacySignals` and
+`copyRevision`. The SDK resolves them on the device with the backend's
+matching order: region, country, `regionFallbacks`, `fallback`, then
+`isDefault`.
+
+The device has no geolocation without a backend. The `fallback` rule applies
+unless your app sets an override country and region, so every policy needs a
+rule with `match.fallback` or `match.isDefault`. Choices stay on the device;
+nothing sends them anywhere.
+
+```ts title="app.config.ts"
+export default {
+	plugins: [
+		[
+			'@c15t/react-native/expo-plugin',
+			{
+				mode: 'offline',
+				consentCategories: ['necessary', 'measurement', 'marketing'],
+				policy: {
+					rules: [
+						{
+							id: 'germany',
+							match: { countries: ['DE'] },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+						{
+							id: 'everywhere_else',
+							match: { fallback: true, isDefault: true },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+					],
+				},
+			},
+		],
+	],
+};
 ```
 
-Replace the URL, output path, languages and expiry. Choose a future expiry
-for your release; the example date is not a recommended lifetime. This
-exporter is currently a repository tool, not an installed RN command.
+```swift title="Swift"
+let policy = try ConsentPolicy(rules: [
+    PolicyRule(id: "germany", match: PolicyMatch(countries: ["DE"]), model: .optIn, prompt: .choice),
+    PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
+               model: .optIn, prompt: .choice),
+])
+core.bootstrap(CoreConfig(policy: policy, transport: OfflineTransport.offline()))
+```
+
+```kotlin title="Kotlin"
+val policy = ConsentPolicy(listOf(
+    PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+    PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+))
+C15tAndroid.install(context, NativeConfig(backendUrl = null, policy = policy))
+```
+
+Both cores also read the same rules as JSON, `{"rules": [...]}`:
+`ConsentPolicy(json:)` in Swift and `ConsentPolicy.fromJson` in Kotlin. Expo
+writes that file for you and names it with `com.c15t.policy.rules` in
+`Info.plist` and `com.c15t.POLICY_RULES` in the Android manifest.
+
+The rules follow the backend's authoring checks: a partial `categories` list
+needs `scopeMode`, `actions` must include `accept` and `reject`, at most one rule
+may set `fallback` and one `isDefault`, the `'*'` wildcard belongs only in
+`categories`, and unknown fields are refused.
+`validity` takes whole or fractional days, such as `0.5`. Expo prebuild runs the
+same checks as the native SDKs, so a policy a device would refuse fails the
+build. A policy the SDK refuses at launch, such as a hand-edited file, leaves
+optional categories off, even if an earlier build stored a usable policy and
+grants, and reports `policy-invalid` in the snapshot `error` and on the error
+stream. Stored choices come back once a later build ships a usable policy.
+
+Change `copyRevision` when the wording people agreed to changes. Returning
+people are asked again after the update. Changing `validity.choiceDays` asks
+again for category choices only, and changing `validity.noticeDays` asks again
+for notice acknowledgements only.
+
+IAB TCF does not work in no-backend mode. The `iab` model needs the Global
+Vendor List, and only a backend serves it, so the SDK refuses an `iab` rule
+without one. Use backend mode with a bundled manifest for offline IAB.
+
+## Bundle the manifest at build time
+
+Each build should fetch the latest manifest and bundle it. If the backend
+cannot be reached, a release build fails and a debug build warns and
+continues with no bundled manifest. `allowStaleManifest` lets air-gapped CI
+reuse the last fetched copy instead. A manifest the backend serves but that
+fails validation fails every build.
+
+With Expo, add `@c15t/cli` to `devDependencies` and turn on
+`bundleManifest`:
+
+```ts title="app.config.ts"
+export default {
+	plugins: [
+		[
+			'@c15t/react-native/expo-plugin',
+			{
+				backendURL: 'https://your-project.inth.app',
+				bundleManifest: { allowStaleManifest: false, languages: ['de'] },
+			},
+		],
+	],
+};
+```
+
+Prebuild runs `c15t mobile-manifest` and embeds the result in both native
+projects. Prebuild cannot see which variant comes next, so it treats every
+build as release except `expo run:*` with no variant or configuration, or with
+one whose name contains `debug`. `expo run:ios --configuration Production`
+is release. Set `C15T_MANIFEST_BUILD=debug` to say otherwise. When a
+debug prebuild cannot reach the backend, it also removes a manifest an earlier
+prebuild embedded, unless `allowStaleManifest` is on. Top-level `vendors` also
+narrows the GVL in the bundled manifest.
+
+Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest)
+as a build step and point the platform at the file:
+
+A configuration or build type counts as debug only when its name contains
+`debug`, in any case. Every other name, such as `Production` or `staging`,
+counts as release, so a production build never quietly skips its manifest.
+
+```sh title="Xcode Run Script phase, after Copy Bundle Resources"
+case "$CONFIGURATION" in
+  *[Dd][Ee][Bb][Uu][Gg]*) BUILD=debug ;;
+  *) BUILD=release ;;
+esac
+npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
+  --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/c15t-policy.json" \
+  --build "$BUILD"
+```
+
+On Android, register the fetch through the variant API, so every variant,
+product flavors included, gets its own copy as a generated asset:
+
+```groovy title="android/app/build.gradle"
+abstract class C15tManifestTask extends DefaultTask {
+    @Input abstract Property<String> getBuild()
+    @Internal abstract DirectoryProperty getAppRoot()
+    @OutputDirectory abstract DirectoryProperty getOutputDir()
+    @Inject abstract ExecOperations getExecOperations()
+
+    @TaskAction
+    void fetch() {
+        def out = new File(outputDir.get().asFile, 'c15t-policy.json')
+        execOperations.exec {
+            workingDir appRoot.get().asFile
+            commandLine 'npx', '@c15t/cli', 'mobile-manifest',
+                '--backend-url', 'https://your-project.inth.app',
+                '--out', out.path, '--build', build.get()
+        }
+    }
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def fetch = tasks.register("c15tManifest${variant.name.capitalize()}", C15tManifestTask) {
+            build = (variant.buildType ?: '').toLowerCase().contains('debug') ? 'debug' : 'release'
+            appRoot = rootProject.layout.projectDirectory.dir('..')
+        }
+        variant.sources.assets.addGeneratedSourceDirectory(fetch) { it.outputDir }
+    }
+}
+```
+
+`addGeneratedSourceDirectory` sets each task's `outputDir` to a directory of
+its own under `build/generated/assets`, so registration sets only `build` and
+`appRoot`. A task you run without that line has no output directory.
+
+On iOS the script writes straight into the built app, so the file is not
+listed in Copy Bundle Resources: a debug build that skipped the fetch then has
+no file to copy rather than an old one. List the output path in the phase's
+Output Files when user script sandboxing is on. Set the keys in the table
+below.
 
 The manifest needs a conservative opt-in or IAB fallback for unknown
 geography, with no preselected optional categories. Export fails when that
 fallback is absent. For a scoped IAB app, supply `--vendors` with the
 comma-separated vendor IDs. Export also needs the GVL and all configured
 Additional Consent provider disclosures.
+
+Repository maintainers re-export the example apps' fixtures with
+`bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit
+`--expires-at`.
 
 ## Include the resource in the app
 
@@ -52,12 +230,28 @@ binding and authority dates.
 The JSON is a public app artifact. Put no secrets in it. Its SHA-256 checks
 byte integrity; it is not a signature or an external approval.
 
-## Keep expiry and withdrawal separate
+## When the bundled manifest expires
 
-Once bundled authority expires, connect and refresh before requesting a new
-grant. Disclosure freshness has a separate deadline, measured from the
-original GVL or provider-list source date. The default maximum age is seven
-days. Copying an old list into a new app build does not renew it.
+An expired bundled manifest still works. If the device is offline, the SDK
+uses it to show the prompt and record choices, and emits a `policyStale`
+event. Optional categories stay off until the person chooses. The next live
+`/init` response replaces the manifest.
+
+| Platform | Event | Current state |
+| --- | --- | --- |
+| Swift | `CoreEvent.policyStale(authority)` on `eventStream` | `ConsentCore.isPolicyStale` |
+| Kotlin | `ConsentCore.onPolicyStale { authority -> }` | `ConsentCore.isPolicyStale` |
+
+Kotlin calls a new `onPolicyStale` observer at once when a stale manifest is
+already in force, so a subscription made after startup still hears it.
+
+A manifest bound to a different backend URL, or issued in the future, supplies
+no policy. Optional SDKs stay off and the core keeps trying to refresh.
+
+IAB disclosures have their own deadline, measured from the original GVL or
+provider-list source date. The default maximum age is seven days. Copying an
+old list into a new app build does not renew it, and an expired list cannot
+authorize a new IAB grant.
 
 Rejection and withdrawal remain available without connectivity. Confirm local
 commit success before dismissing app-owned settings. The native engine stores
@@ -75,8 +269,10 @@ the difference between withdrawal and starting over.
    previous choice. The prompt appears and optional SDKs stay off.
 2. Reject, stop the app and relaunch offline. The saved refusal remains.
 3. Reconnect. Confirm delivery at the configured backend.
-4. Repeat with an expired or mismatched bundle. Optional SDKs stay off and the
-   app offers recovery rather than creating a grant.
+4. Repeat with an expired bundle. The prompt still appears, optional SDKs stay
+   off until you choose, and the app receives `policyStale`.
+5. Repeat with a bundle exported for a different backend URL. No prompt
+   appears and optional SDKs stay off.
 
 Changing the bundled resource changes the native binary. Re-export during
 release preparation and build a new binary; a JavaScript OTA update does not

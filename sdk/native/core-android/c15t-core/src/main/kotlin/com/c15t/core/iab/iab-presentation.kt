@@ -25,18 +25,81 @@ data class IabPresentation(
      * served list is English today, so this is "EN". Use it to pick the UI copy around the list.
      */
     val language: String = TcVendorList.DEFAULT_LANGUAGE,
+    /** Partners the publisher declares outside the Global Vendor List, in the order served. */
+    val customVendors: List<IabCustomVendor> = emptyList(),
 ) {
-    /** The first layer's vendor count and purpose, stack and special-feature names. */
-    val bannerSummary: IabBannerSummary by lazy { IabBannerSummary.resolve(list, adTechProviders?.size ?: 0) }
+    /**
+     * The first layer's vendor count and purpose, stack and special-feature names. It counts custom
+     * vendors but names only what registered vendors declare, as `resolveIABBannerSummary` does.
+     */
+    val bannerSummary: IabBannerSummary by lazy {
+        IabBannerSummary.resolve(list, adTechProviders?.size ?: 0, customVendors.size)
+    }
 
     /**
-     * Purposes some active vendor declares for consent or legitimate interest, plus purposes 1, 3
-     * and 4 when ad tech providers are listed. Ascending.
+     * Purposes some active or custom vendor declares for consent or legitimate interest, plus
+     * purposes 1, 3 and 4 when ad tech providers are listed. Ascending. The preference centre lists
+     * every one, as the web's `processPurposes` does.
      */
-    val declaredPurposeIds: List<Int> by lazy { list.declaredPurposeIds(adTechProviders?.size ?: 0) }
+    val declaredPurposeIds: List<Int> by lazy {
+        val custom = customVendors.flatMap { it.purposes + it.legIntPurposes }.filter { it in list.purposes.keys }
+        (list.declaredPurposeIds(adTechProviders?.size ?: 0) + custom).toSortedSet().toList()
+    }
 
-    /** Special features some active vendor declares. Ascending. */
-    val declaredSpecialFeatureIds: List<Int> by lazy { list.declaredSpecialFeatureIds() }
+    /** Special features some active or custom vendor declares. Ascending. */
+    val declaredSpecialFeatureIds: List<Int> by lazy { list.declaredSpecialFeatureIds(customVendors) }
+
+    /**
+     * Purposes 1, 3 and 4: Google counts an ad tech provider's consent only while all three are
+     * consented, and the core records every provider as off otherwise. Ascending.
+     */
+    val adTechProviderPurposeIds: List<Int> get() = com.c15t.core.iab.adTechProviderPurposeIds.sorted()
+
+    /**
+     * How many partners ask for consent to [purposeId], and how many rely on legitimate interest
+     * for it, after publisher restrictions. Google ad tech providers count toward consent for
+     * purposes 1, 3 and 4, as the web counts them. Custom partners count where they declare the
+     * purpose, as the web's `processPurposes` lists them, and never for legitimate interest on a
+     * purpose TCF does not allow it for.
+     */
+    fun partnerCounts(purposeId: Int): IabPurposePartnerCounts {
+        val providers = if (purposeId in adTechProviderPurposeIds) adTechProviders?.size ?: 0 else 0
+        val customLI = if (purposeId in IabAuthority.neverLI) 0 else customVendors.count { purposeId in it.legIntPurposes }
+        return IabPurposePartnerCounts(
+            consent = vendors.values.count { purposeId in it.consentPurposes } + providers +
+                customVendors.count { purposeId in it.purposes },
+            legitimateInterest = vendors.values.count { purposeId in it.legitimateInterestPurposes } + customLI,
+        )
+    }
+
+    /**
+     * Vendor signals in [choices] that the publisher's restrictions rule out: a consent for a
+     * vendor whose every declared consent purpose a restriction removed or moved to legitimate
+     * interest, or a legitimate interest for a vendor whose every legitimate-interest purpose a
+     * restriction removed or moved to consent. The stock screens never offer these switches; a
+     * headless commit carrying one is refused.
+     *
+     * @return `vendorConsents:<id>` and `vendorLegitimateInterests:<id>` entries, ascending by
+     * id. Empty when nothing contradicts a restriction.
+     */
+    fun restrictionConflicts(choices: IabChoices): List<String> {
+        fun conflicts(
+            ids: List<Int>,
+            name: String,
+            declared: (GvlVendorEntry) -> List<Int>,
+            disclosed: (IabVendorDisclosure) -> List<Int>,
+        ): List<String> = ids.toSortedSet().mapNotNull { id ->
+            val vendor = list.vendors[id] ?: return@mapNotNull null
+            val disclosure = vendors[id] ?: return@mapNotNull null
+            if (disclosed(disclosure).isEmpty() && declared(vendor).isNotEmpty()) "$name:$id" else null
+        }
+        return conflicts(choices.vendorConsents, "vendorConsents", { v -> v.purposes.orEmpty().map { it.toInt() } }, { it.consentPurposes }) +
+            conflicts(
+                choices.vendorLegitimateInterests, "vendorLegitimateInterests",
+                { v -> v.legIntPurposes.orEmpty().map { it.toInt() }.filter { it !in IabAuthority.neverLI } },
+                { it.legitimateInterestPurposes },
+            )
+    }
 
     internal companion object {
         /** Whole days, rounded up, for a validity in milliseconds. Null for no positive limit. */
@@ -47,6 +110,15 @@ data class IabPresentation(
         }
     }
 }
+
+/**
+ * Partners per purpose after publisher restrictions, as the purpose rows show them.
+ *
+ * @property consent Vendors that ask for consent, plus Google ad tech providers for purposes 1,
+ * 3 and 4.
+ * @property legitimateInterest Vendors that rely on legitimate interest.
+ */
+data class IabPurposePartnerCounts(val consent: Int, val legitimateInterest: Int)
 
 /**
  * The first layer's summary of what partners do. Same algorithm as the web's
@@ -133,10 +205,12 @@ internal fun GlobalVendorList.declaredPurposeIds(adTechProviderCount: Int): List
     }
 }
 
-/** Special features some active vendor declares. Only features the list defines. */
-internal fun GlobalVendorList.declaredSpecialFeatureIds(): List<Int> {
+/** Special features some active vendor, or one of [customVendors], declares. Only features the list defines. */
+internal fun GlobalVendorList.declaredSpecialFeatureIds(customVendors: List<IabCustomVendor> = emptyList()): List<Int> {
     val active = activeVendors()
-    return specialFeatures.orEmpty().keys.sorted().filter { id -> active.any { id.toLong() in it.specialFeatures.orEmpty() } }
+    return specialFeatures.orEmpty().keys.sorted().filter { id ->
+        active.any { id.toLong() in it.specialFeatures.orEmpty() } || customVendors.any { id in it.specialFeatures }
+    }
 }
 
 /** Summary of the draft's permitted consent and legitimate-interest selections. */
@@ -146,7 +220,12 @@ enum class IabVendorSelectionStatus { OFF, PARTIAL, ON }
 data class IabVendorDisclosure(
     val consentPurposes: List<Int>,
     val legitimateInterestPurposes: List<Int>,
+    /** Purposes a publisher restriction does not allow this vendor at all. */
     val notAllowedPurposes: List<Int>,
+    /** Purposes declared on legitimate interest that a restriction moved to consent. Also in [consentPurposes]. */
+    val consentRequiredPurposes: List<Int> = emptyList(),
+    /** Purposes declared on consent that a restriction moved to legitimate interest. Also in [legitimateInterestPurposes]. */
+    val legitimateInterestRequiredPurposes: List<Int> = emptyList(),
 ) {
     /** Describe selections using projected bases. This does not grant authority. */
     fun selectionStatus(vendorId: Int, choices: IabChoices): IabVendorSelectionStatus {
@@ -167,10 +246,14 @@ data class IabVendorDisclosure(
 /** Project a disclosed vendor without evaluating the subject's choices. */
 fun IabConfiguration.disclosure(id: Int, vendor: GvlVendorEntry): IabVendorDisclosure {
     val purposes = (vendor.purposes.orEmpty() + vendor.legIntPurposes.orEmpty() + vendor.flexiblePurposes.orEmpty()).map { it.toInt() }.toSet()
+    val consent = purposes.filter { discloses(id, vendor, it, IabLegalBasis.CONSENT) }.sorted()
+    val interest = purposes.filter { discloses(id, vendor, it, IabLegalBasis.LEGITIMATE_INTEREST) }.sorted()
     return IabVendorDisclosure(
-        purposes.filter { discloses(id, vendor, it, IabLegalBasis.CONSENT) }.sorted(),
-        purposes.filter { discloses(id, vendor, it, IabLegalBasis.LEGITIMATE_INTEREST) }.sorted(),
+        consent,
+        interest,
         purposes.filter { p -> publisherRestrictions.any { it.purposeId == p && id in it.vendorIds && it.type == 0 } }.sorted(),
+        consentRequiredPurposes = consent.filter { it.toLong() !in vendor.purposes.orEmpty() },
+        legitimateInterestRequiredPurposes = interest.filter { it.toLong() !in vendor.legIntPurposes.orEmpty() },
     )
 }
 

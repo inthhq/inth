@@ -219,7 +219,15 @@ test('integration navigation covers web and mobile vendors, embeds and Shopify',
 	).toEqual([]);
 	const expectedRoutes = [
 		...vendors,
+		// Mobile-only vendor guides, with no web helper.
+		'adjust',
+		'admob',
+		'appsflyer',
+		'branch',
+		'braze',
 		'firebase-analytics',
+		'meta-app-events',
+		'singular',
 		'google-maps',
 		'youtube',
 		'shopify',

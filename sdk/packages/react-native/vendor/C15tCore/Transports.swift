@@ -6,7 +6,7 @@ import FoundationNetworking
 // MARK: - Version and header contract
 
 /// The values every c15t-bound request carries.
-public enum c15t {
+extension C15t {
     /// Version of this native core.
     ///
     /// Source of truth for the native Swift package, including the Apple platform
@@ -297,9 +297,10 @@ public struct HydrationRecords: Sendable, Equatable {
 /// something on mobile. `gvl` is read: the backend embeds it whenever the matched
 /// policy model is `iab` (`buildInitResponse` in `packages/backend/src/http/init.ts`),
 /// and a mobile consent surface needs the purposes and vendor names to render the
-/// same dialog the web one does. `gvlReference`, `customVendors`, and `cmpId` stay
-/// unread, because this build has no IAB runtime to hand them to and no publisher-side
-/// non-IAB list to draw; `branding` drives a web theme there is no native surface for.
+/// same dialog the web one does. `customVendors` is read for the same reason: the dialog
+/// lists them and they get their own consent. `gvlReference` and `cmpId` stay unread, because
+/// the native list is always embedded and the CMP id is the app's own configuration;
+/// `branding` drives a web theme there is no native surface for.
 /// Anything absent here leaves the current snapshot value alone, which is also what the
 /// web transport does with an omitted field.
 public struct InitResponse: Sendable, Equatable {
@@ -331,6 +332,10 @@ public struct InitResponse: Sendable, Equatable {
     public let gvl: GlobalVendorList?
     public let adTechProviders: [AdTechProvider]?
     public let adTechProvidersInvalid: Bool
+    /// `nil` when the response has no `customVendors` key, which keeps the list held.
+    public let customVendors: [IABCustomVendor]?
+    /// A `customVendors` value that is not a readable list. The core then holds none.
+    public let customVendorsInvalid: Bool
 
     public init(
         policyResolution: JSONValue? = nil,
@@ -342,7 +347,8 @@ public struct InitResponse: Sendable, Equatable {
         resolvedPrivacySignals: ResolvedPrivacySignals? = nil,
         records: HydrationRecords? = nil,
         gvl: GlobalVendorList? = nil,
-        adTechProviders: [AdTechProvider]? = nil, adTechProvidersInvalid: Bool = false
+        adTechProviders: [AdTechProvider]? = nil, adTechProvidersInvalid: Bool = false,
+        customVendors: [IABCustomVendor]? = nil, customVendorsInvalid: Bool = false
     ) {
         self.policyResolution = policyResolution
         self.subjectId = subjectId
@@ -355,6 +361,8 @@ public struct InitResponse: Sendable, Equatable {
         self.gvl = gvl
         self.adTechProviders = adTechProviders
         self.adTechProvidersInvalid = adTechProvidersInvalid
+        self.customVendors = customVendors
+        self.customVendorsInvalid = customVendorsInvalid
     }
 
     /// Read a response body. Anything that is not a JSON object is
@@ -381,7 +389,10 @@ public struct InitResponse: Sendable, Equatable {
             gvl: GlobalVendorList.read(from: parsed["gvl"]),
             adTechProviders: AdditionalConsent.providers(parsed["adTechProviders"]),
             adTechProvidersInvalid: parsed["adTechProviders"] != nil && parsed["adTechProviders"] != .null
-                && AdditionalConsent.providers(parsed["adTechProviders"]) == nil
+                && AdditionalConsent.providers(parsed["adTechProviders"]) == nil,
+            customVendors: IABCustomVendor.list(parsed["customVendors"]),
+            customVendorsInvalid: parsed["customVendors"] != nil
+                && IABCustomVendor.list(parsed["customVendors"]) == nil
         ))
     }
 
@@ -391,7 +402,7 @@ public struct InitResponse: Sendable, Equatable {
     /// A missing header means the producer predates the declaration, which is not
     /// an error; the body still gets read strictly.
     static func producerContractError(in response: HTTPResponse) -> Result<Void, C15tError>? {
-        guard let declared = response.header(c15t.policyContractHeader) else { return nil }
+        guard let declared = response.header(C15t.policyContractHeader) else { return nil }
         guard let version = Int(declared.trimmingCharacters(in: .whitespaces)) else {
             return .failure(.unsupportedContract(
                 declared: declared,
@@ -567,8 +578,8 @@ public struct HostedTransport: C15tTransport {
         if let country = context.overrides.country { headers["x-c15t-country"] = country }
         if let region = context.overrides.region { headers["x-c15t-region"] = region }
         if context.overrides.gpc == true { headers["sec-gpc"] = "1" }
-        if let scope = c15t.vendorScopeHeaderValue(context.vendors) {
-            headers[c15t.vendorScopeHeader] = scope
+        if let scope = C15t.vendorScopeHeaderValue(context.vendors) {
+            headers[C15t.vendorScopeHeader] = scope
         }
 
         do {
@@ -662,7 +673,7 @@ public struct HostedTransport: C15tTransport {
             "accept": "application/json",
             "content-type": "application/json",
         ]
-        for (name, value) in c15t.protocolHeaders { headers[name] = value }
+        for (name, value) in C15t.protocolHeaders { headers[name] = value }
         for (name, value) in extraHeaders { headers[name] = value }
         return headers
     }

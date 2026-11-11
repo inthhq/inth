@@ -1,24 +1,12 @@
 package com.c15t.android.integrations
 
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
-import com.c15t.core.NativeConfig
 import com.c15t.core.model.ConsentCategory
-import com.c15t.core.model.ConsentSubject
-import com.c15t.core.model.KernelUser
-import com.c15t.core.model.QueuedSave
-import com.c15t.core.spi.KeyValueStore
-import com.c15t.core.spi.TaskExecutor
-import com.c15t.core.store.C15tStore
-import com.c15t.core.transport.C15tTransport
-import com.c15t.core.transport.InitContext
-import com.c15t.core.transport.SaveOutcome
-import com.c15t.core.transport.TransportOutcome
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.lang.ref.WeakReference
-import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -41,7 +29,7 @@ class AnalyticsIntegrationTest {
 		handle.get()?.close()
 	}
 
-	private fun connectWithoutRetainingHandle(core: C15tKernel, calls: MutableList<String>) =
+	private fun connectWithoutRetainingHandle(core: ConsentCore, calls: MutableList<String>) =
 		WeakReference(PostHogIntegration(core,
 			optIn = { calls += "in" }, optOut = { calls += "out" },
 			onError = ::unexpectedError,
@@ -74,14 +62,37 @@ class AnalyticsIntegrationTest {
 	}
 
 	@Test
-	fun `firebase denies every advertising permission even after accept all`() {
+	fun `firebase grants advertising from marketing as the web does`() {
 		val core = kernel()
 		val states = mutableListOf<FirebaseAnalyticsConsent>()
 		val integration = FirebaseAnalyticsIntegration(core, onError = ::unexpectedError, setConsent = states::add, setCollectionEnabled = {})
 		assertTrue(core.save(CommitIntent.All).ok)
 
-		assertEquals(listOf(false, true), states.map { it.analyticsStorage })
-		assertTrue(states.all { !it.adStorage && !it.adUserData && !it.adPersonalization })
+		assertEquals(
+			listOf(
+				FirebaseAnalyticsConsent(analyticsStorage = false, adStorage = false, adUserData = false, adPersonalization = false),
+				FirebaseAnalyticsConsent(analyticsStorage = true, adStorage = true, adUserData = true, adPersonalization = true),
+			),
+			states,
+		)
+		integration.close()
+		assertEquals(FirebaseAnalyticsConsent(false, false, false, false), states.last())
+	}
+
+	@Test
+	fun `firebase follows marketing alone without enabling collection`() {
+		val core = kernel()
+		val states = mutableListOf<FirebaseAnalyticsConsent>()
+		val enabled = mutableListOf<Boolean>()
+		val integration = FirebaseAnalyticsIntegration(core, onError = ::unexpectedError, setConsent = states::add, setCollectionEnabled = enabled::add)
+		states.clear()
+
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertEquals(listOf(FirebaseAnalyticsConsent(false, true, true, true)), states)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertEquals(FirebaseAnalyticsConsent(false, false, false, false), states.last())
+		assertEquals(2, states.size)
+		assertFalse(enabled.contains(true))
 		integration.close()
 	}
 
@@ -92,7 +103,7 @@ class AnalyticsIntegrationTest {
 		val integration = firebase(core, calls)
 		calls.clear()
 
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
 		core.refresh()
 		assertTrue(calls.isEmpty())
 		integration.close()
@@ -253,9 +264,9 @@ class AnalyticsIntegrationTest {
 			optIn = { calls += true },
 			optOut = { calls += false },
 		)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
 		assertEquals(listOf(false), calls)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
 		assertEquals(listOf(false, true), calls)
 		integration.close()
 	}
@@ -491,7 +502,7 @@ class AnalyticsIntegrationTest {
 		)
 		assertTrue(core.save(CommitIntent.All).ok)
 		assertFalse(optedOut)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
 		assertEquals(1, optIns)
 
 		optedOut = true
@@ -611,7 +622,7 @@ class AnalyticsIntegrationTest {
 			onError = ::unexpectedError,
 		)
 		assertTrue(core.save(CommitIntent.All).ok)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MARKETING to false))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
 		assertEquals(listOf("stop", "start"), commands)
 		assertTrue(core.save(CommitIntent.Necessary).ok)
 		assertTrue(core.save(CommitIntent.All).ok)
@@ -734,9 +745,9 @@ class AnalyticsIntegrationTest {
 			start = { recording = true }, stop = { recording = false },
 			onError = ::unexpectedError,
 		)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
 		assertFalse(recording)
-		assertTrue(core.save(CommitIntent.Explicit(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.EXPERIENCE to true))).ok)
 		assertTrue(recording)
 		integration.close()
 	}
@@ -773,41 +784,9 @@ class AnalyticsIntegrationTest {
 		posthog.close()
 	}
 
-	private fun unexpectedError(error: Exception): Unit = throw AssertionError("Unexpected vendor failure", error)
-
-	private fun firebase(core: C15tKernel, calls: MutableList<String>): FirebaseAnalyticsIntegration =
+	private fun firebase(core: ConsentCore, calls: MutableList<String>): FirebaseAnalyticsIntegration =
 		FirebaseAnalyticsIntegration(core, onError = ::unexpectedError,
 			setConsent = { calls += "consent:${it.analyticsStorage}" },
 			setCollectionEnabled = { calls += "collection:$it" },
 		)
-
-	private fun kernel(store: MemoryStore = MemoryStore(), online: Boolean = true): C15tKernel =
-		C15tKernel(
-			config = NativeConfig(portalUrl = "https://example.test", consentCategories = ConsentCategory.entries),
-			store = C15tStore(store),
-			executor = TaskExecutor.DIRECT,
-			transport = object : C15tTransport {
-				override fun init(context: InitContext): TransportOutcome =
-					if (online) TransportOutcome.Success(
-						Json.parseToJsonElement("""{"policyResolution":{"version":1,"status":"matched","policyId":"app-policy","matchedBy":"country","fingerprints":{"policy":"policy-1","choice":"choice-1","notice":"notice-1"},"policy":{"id":"app-policy","model":"opt-in","prompt":"choice","scopeMode":"permissive","validity":{"choiceMs":2592000000,"noticeMs":15552000000}}},"policySnapshotToken":"snapshot-1"}"""),
-						emptyMap(),
-					) else TransportOutcome.NetworkFailure("offline")
-				override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("offline")
-				override fun identify(subject: ConsentSubject, user: KernelUser): TransportOutcome = TransportOutcome.Success(null, emptyMap())
-			},
-		).also { it.bootstrap() }
-
-	private class MemoryStore : KeyValueStore {
-		private val values = mutableMapOf<String, String>()
-		@Synchronized override fun read(key: String): String? = values[key]
-		@Synchronized override fun write(key: String, value: String?) {
-			if (value == null) values.remove(key) else values[key] = value
-		}
-		@Synchronized override fun writeDurably(key: String, value: String?): Boolean {
-			write(key, value)
-			return true
-		}
-		@Synchronized override fun keys(): Set<String> = values.keys.toSet()
-		override fun flush() = Unit
-	}
 }

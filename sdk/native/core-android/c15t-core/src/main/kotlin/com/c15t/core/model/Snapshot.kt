@@ -3,6 +3,7 @@ package com.c15t.core.model
 import com.c15t.core.tc.GlobalVendorList
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.json.JsonObject
 
 /**
@@ -308,7 +309,7 @@ data class ConsentSnapshot(
 	 *
 	 * Latched, and it travels with the snapshot rather than beside it: a `/init`
 	 * that serves no list leaves the list already there, and only
-	 * [com.c15t.core.C15tKernel.reset] takes it back. The reason is on that field --
+	 * [com.c15t.core.ConsentCore.reset] takes it back. The reason is on that field --
 	 * once a purpose or vendor name has been on screen, replacing it with nothing
 	 * changes a claim the subject was already given, and the backend embeds a list
 	 * only while the matched model is `iab`.
@@ -321,6 +322,26 @@ data class ConsentSnapshot(
 	 */
 	@SerialName("iab")
 	val iab: KernelIabState? = null,
+	/**
+	 * The [revision] at which the prompt owed now became owed, or `null` while nothing is owed.
+	 *
+	 * It changes every time a prompt becomes owed again, including the same requirement owed
+	 * again after an answer or a reset, so a reader that missed the snapshots in between still
+	 * knows it is a new prompt. The core sets it where it installs each state, which sees every
+	 * state in order. It is not kernel state: it stays out of [com.c15t.core.wire.SnapshotWire]
+	 * and the stored envelope, and the React Native bridge adds it to its payload.
+	 */
+	@Transient
+	val promptOwedSince: Long? = null,
+	/**
+	 * The IAB GPP string for this state, or `null` when GPP is off or no section applies.
+	 *
+	 * Derived, never decided: the core computes it from this snapshot, the matched rule and
+	 * the committed TC String each time it installs a state, with
+	 * [com.c15t.core.gpp.GppResolver]. It is `null` in the stored envelope, which keeps no
+	 * copy of a value it can recompute. The key is always present on the wire.
+	 */
+	val gppString: String? = null,
 ) {
 	/**
 	 * Whether [category] may run right now.

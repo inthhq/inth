@@ -56,12 +56,25 @@ public struct C15tAppleConfiguration: Sendable {
     public var overrides: ConsentOverrides
     public var gpc: Bool?
     public var bundledPolicy: BundledPolicyResource?
+    /// The policy in source control. Used only with the `offline` or `disabled`
+    /// transport, where it is the only policy source.
+    public var policy: ConsentPolicy?
+    /// Why a declared in-code policy was refused. The core reports it as `policy-invalid`.
+    public var policyError: String?
     /// Registered CMP identity and publisher settings. `nil` turns IAB TCF off.
     ///
     /// With a value, the installed core writes `IABTCF_CmpSdkID` and
     /// `IABTCF_CmpSdkVersion` to standard `UserDefaults` at startup and can commit
     /// IAB choices. There is no default CMP ID.
     public var iab: IABConfiguration?
+    /// Turns on the IAB GPP string and the `IABGPP_*` keys in standard `UserDefaults`.
+    /// `nil`, the default, writes no GPP signal.
+    public var gpp: GPPOptions?
+
+    /// The host reported as `x-c15t-platform: <platform>-><version>` on hosted
+    /// requests. `apple` for a Swift app; the React Native bridge sets `rn`, so the
+    /// backend can tell the two apart now that `x-c15t-version` carries no prefix.
+    public var platform = "apple"
 
     /// Choose hosted or self-hosted explicitly. Keychain is the default store.
     public init(
@@ -74,7 +87,10 @@ public struct C15tAppleConfiguration: Sendable {
         overrides: ConsentOverrides = .default(),
         gpc: Bool? = nil,
         bundledPolicy: BundledPolicyResource? = nil,
-        iab: IABConfiguration? = nil
+        policy: ConsentPolicy? = nil,
+        policyError: String? = nil,
+        iab: IABConfiguration? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.transport = transport
         self.storage = storage
@@ -85,7 +101,10 @@ public struct C15tAppleConfiguration: Sendable {
         self.overrides = overrides
         self.gpc = gpc
         self.bundledPolicy = bundledPolicy
+        self.policy = policy
+        self.policyError = policyError
         self.iab = iab
+        self.gpp = gpp
     }
 
     /// Build the native transport. HTTP is allowed only for exact loopback hosts.
@@ -96,7 +115,7 @@ public struct C15tAppleConfiguration: Sendable {
             if let initURL { try C15tApple.validate(initURL) }
             return HostedTransport(
                 baseURL: url, initURL: initURL, domain: domain,
-                extraHeaders: ["x-c15t-platform": "apple->\(C15tApple.version)"],
+                extraHeaders: ["x-c15t-platform": "\(platform)->\(C15tApple.version)"],
                 client: client
             )
         case .offline: return OfflineTransport(domain: domain ?? "offline")
@@ -111,10 +130,18 @@ public struct C15tAppleConfiguration: Sendable {
         if let iab, C15tApple.iabIssue(iab) != nil {
             throw C15tAppleInstallationError.invalidIABConfiguration
         }
+        // The two modes do not mix: an in-code policy needs a transport with no backend.
+        let noBackend: Bool
+        switch transport {
+        case .offline, .disabled: noBackend = true
+        case .hosted, .selfHosted: noBackend = false
+        }
         return CoreConfig(
-            store: try storage.makeStore(), bundledPolicy: bundledPolicy, transport: try makeTransport(),
+            store: try storage.makeStore(), bundledPolicy: noBackend ? nil : bundledPolicy,
+            policy: noBackend ? policy : nil, policyError: noBackend ? policyError : nil,
+            transport: try makeTransport(),
             consentCategories: consentCategories, vendors: vendors, iab: iab,
-            overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
+            overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus(), gpp: gpp
         )
     }
 }
@@ -122,7 +149,7 @@ public struct C15tAppleConfiguration: Sendable {
 /// Installs and hydrates the process-wide engine before returning it to any adapter.
 public enum C15tApple {
     /// Version of the Apple platform module, released with this native source package.
-    public static let version = c15t.version
+    public static let version = C15t.version
     /// Optional ATT requests share one process-wide flight across native hosts and RN.
     public static let tracking = C15tTrackingController()
     private static let lock = NSRecursiveLock()

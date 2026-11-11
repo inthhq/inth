@@ -15,7 +15,7 @@ import org.junit.Test
  * a `String`.
  */
 class DeclaredIabTest {
-	private val base = mapOf<String, Any>(C15tAndroid.META_PORTAL_URL to "https://consent.example.com")
+	private val base = mapOf<String, Any>(C15tAndroid.META_BACKEND_URL to "https://consent.example.com")
 
 	private val complete = base + mapOf(
 		C15tAndroid.META_IAB_CMP_ID to 1234,
@@ -39,7 +39,7 @@ class DeclaredIabTest {
 	@Test
 	fun `no IAB meta-data leaves IAB off and the rest of the config unchanged`() {
 		val config = config(base)
-		assertEquals("https://consent.example.com", config?.portalUrl)
+		assertEquals("https://consent.example.com", config?.backendUrl)
 		assertNull(config?.iab)
 		assertEquals(C15tAndroid.DeclaredIab.None, C15tAndroid.declaredIab { base[it] })
 	}
@@ -81,7 +81,7 @@ class DeclaredIabTest {
 		for (values in cases) {
 			assertTrue("$values", C15tAndroid.declaredIab { values[it] } is C15tAndroid.DeclaredIab.Invalid)
 			val config = config(values)
-			assertEquals("$values", "https://consent.example.com", config?.portalUrl)
+			assertEquals("$values", "https://consent.example.com", config?.backendUrl)
 			assertNull("$values", config?.iab)
 		}
 	}

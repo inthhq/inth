@@ -53,7 +53,27 @@ own:
                     scripts/tcf-policy-checks.test.ts fails otherwise. IAB UI
                     copy comes from `iab.app` and `iab.banner` in
                     @c15t/translations through the generated IABCopy /
-                    IabCopy tables (`bun run generate:native-iab-copy`).
+                    IabCopy tables, and category-mode copy through the
+                    generated ConsentCopy table, in the policy's language
+                    (`bun run generate:native-iab-copy`).
+    Consent Mode    Google Consent Mode v2 maps categories to signals
+                    exactly as the web does. The mapping lives in
+                    packages/integrations/src/vendors/_shared/google-consent.ts;
+                    `bun scripts/generate-google-consent-mode-fixture.ts`
+                    writes native/protocol/google-consent-mode/, and
+                    scripts/generate-google-consent-mode-fixture.test.ts fails
+                    when the file is stale. GoogleConsentType in Swift and
+                    Kotlin and resolveGoogleConsentMode in React Native are
+                    tested against that file. Firebase helpers send its four
+                    Firebase types; later vendor helpers read the same mapping.
+
+    IAB GPP         off until the host passes `gpp` (Kotlin NativeConfig.gpp,
+                    Swift CoreConfig.gpp, the Expo plugin's `gpp` option). Then
+                    both cores derive one GPP string per state, publish it as
+                    `snapshot.gppString`, and write the IABGPP_* rows in the
+                    same publication as the IABTCF_* rows. Sections: US National
+                    (usnat, MSPA version 2) and TCF EU (the committed TC String,
+                    unchanged). See "IAB GPP" at the end of this document.
 
 `docs/internal/native-iab-commits.mdx` defines the native commit, migration,
 withdrawal and delivery contract, including the storage adapter requirements.
@@ -117,8 +137,10 @@ Layout
     native/
       CONTRACT.md              this file
       protocol/                protocol fixtures, generated and consumed by all three impls
-      core-swift/              C15tCore: SwiftPM package, no React Native, no UIKit
-      core-android/            com.c15t.core: Gradle project, pure-JVM module + android lib module
+      core-swift/              SwiftPM package: C15tCore (no React Native, no UIKit), C15tApple
+                               (platform services), C15tConsentUI (optional SwiftUI screens)
+      core-android/            Gradle project: c15t-core (pure JVM), c15t-android (platform
+                               services), c15t-consent-ui (optional Compose screens)
       react-native/            (lives at packages/react-native, listed here for orientation)
 
 Rules that hold everywhere
@@ -127,9 +149,10 @@ Rules that hold everywhere
 1. Native owns consent state. There is no second consent kernel in JavaScript.
    The React Native layer renders native state and forwards user actions. It may
    import `@c15t/core` for types and pure selectors, never for state ownership.
-2. `core-swift` and `core-android` must not import React Native, Expo, UIKit, or
-   Android UI classes. React Native bindings live in the `C15tReactNative` and
-   `com.c15t.reactnative` targets only.
+2. The consent cores (`C15tCore`, `C15tApple`, `c15t-core`, `c15t-android`) must not
+   import React Native, Expo, UIKit, SwiftUI, or Android UI classes. Native screens
+   live in the optional `C15tConsentUI` and `c15t-consent-ui` modules, and React
+   Native bindings in the `C15tReactNative` and `com.c15t.reactnative` targets only.
 3. The Kotlin core logic must run on a plain JVM with no Android dependency.
    Storage, clock, and HTTP go through interfaces the Android layer implements.
    Same rule for Swift: no UIKit, and no Keychain outside the store conformances.
@@ -148,7 +171,7 @@ State model
 
 Native holds one immutable `ConsentSnapshot`, versioned by `revision`. It mirrors
 the fields of `ConsentSnapshot` in `packages/core/src/types.ts` that matter on
-mobile, minus IAB:
+mobile:
 
     revision: number                  // monotonic, bumps on every mutation
     policyPending: boolean            // true until the first init resolves
@@ -166,9 +189,9 @@ mobile, minus IAB:
     nextDeadline: number | null
     evaluatedAt: number
     error: { code, message } | null
+    iab: { gvl } | null               // the `/init`-served vendor list, see the top of this file
 
-`iab` is reserved. Serialize it as `null` and keep the key so an older JavaScript
-layer does not have to branch.
+`iab` is `null` until a vendor list has been served, and the key is always present.
 
 `consentCategories` is the subject-facing list a consent surface draws: `necessary`
 first, then the choice scope, all optional names in canonical sorted order. The choice
@@ -231,9 +254,11 @@ a notice/acknowledge/purpose triple. `subject` is keyed `subjectId`, not `id`.
 `location` is `{ countryCode, regionCode }`, not `country` and `region`.
 `explicitChoice` is the kernel's `ExplicitChoice`.
 
-The declaration is `NativeSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
-which imports all four types straight from `@c15t/core` and says plainly that it is the
-shape on the wire and that the JavaScript layer never derives it. The fixtures are
+The declaration is `ConsentSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
+which says plainly that it is the shape on the wire and that the JavaScript layer never
+derives it. It takes all four types from `src/protocol/vocabulary.ts`, a copy that keeps
+`@c15t/core` out of a phone app; `vocabulary.type-test.ts` fails the type check when the
+copy and `@c15t/core` disagree. The fixtures are
 generated from the TypeScript kernel, so where a native model and a fixture disagree
 about a key name, the fixture is right.
 
@@ -246,6 +271,18 @@ written. A Kotlin build carried four renamed keys behind fixture tolerations, an
 device the subject printed as absent and the location printed as empty while all 21
 fixtures stayed green. Names inside the core and inside a stored envelope are the
 core's own business; the JSON a bridge emits is not.
+
+So no compiler sees a bridge key, and a test does instead. `BRIDGE_PAYLOADS` in
+`packages/react-native/src/protocol/bridge-schema.ts` names every key of every
+payload the TurboModule carries, and `native/protocol/bridge/payloads.json` is
+generated from it (`generate:bridge-schema`). It ships behind the
+`@c15t/react-native/bridge-schema` subpath, not the main entry, and the client
+loads it only in a `__DEV__` build, so a release app carries none of it. `bridge-schema.type-test.ts` holds the
+TypeScript types to the table, and `BridgeSchemaTest.kt` and
+`C15tBridgeSchemaTests.swift` hold every encoder and decoder to the JSON. A key
+renamed on one side fails one of the three. Codegen object types would not do this
+job: a returned object reaches Kotlin as `WritableMap` and Swift as `NSDictionary`,
+and an object argument cannot tell an omitted key from `null`.
 
 Revisions and error writes
 --------------------------
@@ -312,17 +349,293 @@ Native API (Swift and Kotlin, same shape)
     decision(_ category)              // granted | denied | pending
     isReady() -> Bool                 // hydrated, and the first init has resolved
     gate(_ category, onChange)        // fires now and on every change
-    onChange(_ observer)              // snapshot observer, weakly held
+    onChange(_ observer)              // snapshot callback, owned by its handle
     save(_ intent) -> CommitResult    // 'all' | 'necessary' | explicit map
     dismissNotice()
     refresh()
     identify(user) / logout()
-    setOverrides({ country, region, language, test })
+    setOverrides({ country, region, language, gpc })
     flushPending()                    // retry the offline queue
     reset()                           // wipe consent, keep the subject id
 
 `snapshot()` and `isAllowed()` must not touch the network, the disk, or a lock
 that can be held across either. They are called from ad SDKs on the main thread.
+
+Every observer method (`onChange`, `gate`, Kotlin's `gateDecision` and
+`onError`) takes a callback and returns a subscription handle that owns it. The
+core holds the callback strongly and never drops it on its own, so a closure
+written inline keeps firing with nothing else referencing it. The registration
+ends when the caller ends the handle: `close()` in Kotlin, `cancel()` or
+releasing the `ConsentSubscription` in Swift. Swift's ARC releases a dropped
+handle at once, and the methods are not `@discardableResult`, so a discarded
+handle draws a warning. The JVM has no prompt release, so a Kotlin handle that
+is dropped without `close()` keeps its callback for the life of the core. A
+callback that captures its owner captures it weakly, or the owner keeps its own
+registration alive. Swift reports errors through `eventStream`, whose consumer
+task owns its lifetime.
+
+Observable state for UI code
+----------------------------
+
+The callbacks above deliver on whatever thread published the change. UI code gets
+a second surface on each platform that delivers on the main thread and needs no
+observer code of its own. It is built on the callbacks and adds no state: every
+value is the core's own snapshot, and every decision is the `decision` rule below
+applied to it.
+
+    Kotlin (c15t-android, package com.c15t.android)
+    core.snapshotFlow: StateFlow<ConsentSnapshot>          // one instance per core
+    core.decisionFlow(category): StateFlow<ConsentDecision> // emits on change only
+    suspend core.awaitSave(intent, expectedRevision?)      // save on Dispatchers.IO
+    suspend core.awaitRefresh()                            // returns once the init landed
+    suspend core.awaitFlushPending()                       // flushPending on Dispatchers.IO
+
+    Swift (C15tCore)
+    PublishedConsent(core:)    // ObservableObject, iOS 16.4+, @MainActor
+    ObservableConsent(core:)   // @Observable, iOS 17+, @MainActor
+      .snapshot                // the core's snapshot
+      .decisions               // [ConsentCategory: ConsentDecision], reassigned on change only
+      .decision(for:) / .isReady
+    PublishedConsent.decisionPublisher(for:) // Combine, current value then each change
+
+Both platforms keep three rules:
+
+- The model never steps back. A snapshot whose revision is older than the one
+  it holds is dropped, because two publishing threads can deliver out of order.
+- It conflates. A busy main thread sees the latest snapshot, not every revision.
+  Code that must act on each revision uses `onChange`.
+- It follows the core for the core's lifetime. Kotlin keeps one set of flows per
+  core and never closes their `onChange` subscription, so a screen that keeps only
+  the `StateFlow` still sees later changes. Swift ties the subscription to the
+  model: releasing the model ends it.
+
+The Kotlin flows live in `c15t-android` rather than `c15t-core`, which stays pure
+JVM with only kotlinx-serialization. `c15t-android` already reaches every host
+with kotlinx-coroutines through `androidx.lifecycle`, so the flows add no runtime
+dependency. `ConsentCore.refresh(onComplete)` is the core-side hook `awaitRefresh`
+suspends on.
+
+Presenting the consent prompt
+-----------------------------
+
+The stock UI presents an owed prompt by itself. It is on by default on every
+platform, and each one offers the same opt-out:
+
+    React Native   <ConsentProvider privacyPolicyURL="https://...">     autoPresent={false}
+    SwiftUI        view.c15tConsent(configuration, privacyPolicyURL:)  autoPresent: false
+                   view.c15tConsent(privacyPolicyURL:)                 (core already installed)
+    UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
+    Compose        C15tConsent(privacyPolicyUrl = "https://...")       autoPresent = false
+    Activity       activity.attachConsent("https://...")               autoPresent = false
+
+The rules, identical on all three:
+
+- **Wait for an answer.** Nothing presents until `ready` is true and
+  `policyPending` is false, whatever supplied the policy: hosted init, a bundled
+  resource or a policy in code.
+- **One owed prompt, one presentation.** An owed prompt is named by the matched
+  policy fingerprint, the requirement's kind and its reason. A prompt the subject
+  answered or dismissed is not presented again under the same name. A new policy
+  (`policy-changed`), an expired choice (`expired`) or a requirement that went to
+  `none` and came back presents again. A change that arrives while a native
+  present call or a commit is still in flight is evaluated once it settles; it
+  is never dropped, and a commit closes only the prompt the subject acted on.
+- **The core names each owed prompt.** Both cores set `promptOwedSince` where they
+  install a state, under the mutation lock, so it sees every state in order: the
+  revision at which the prompt owed now became owed, kept while the same
+  requirement stays owed under the same policy, moved whenever a prompt becomes
+  owed again, and `null` while nothing is owed. Observers and the React Native
+  bridge may deliver only the latest snapshot, so a reader cannot rely on seeing
+  the moment with nothing owed; the presenters key their suppression on it
+  instead. It is not kernel state: it stays out of the kernel
+  wire encoding, the protocol fixtures and the stored envelope, and the bridges add
+  it to the `getSnapshot()` payload.
+- **Never two at once.** Swift and Kotlin keep one `ConsentPrompt` per core with a
+  single `ConsentPresenter`; every scene, Activity or composable that attaches
+  shares its session and draft, and only one attached host draws it: the first,
+  or a foreground host when the one drawing it is in the background. Auto-present
+  is the drawing host's setting and is off while no host is attached, so nothing
+  opens unseen. A host with auto-present off draws only a session the app asked
+  for, or one that opened by itself while that host drew it with auto-present
+  on: when it takes over a session that opened by itself for another host, the
+  session is withdrawn, with no outcome, and the owed prompt stays owed. The
+  installed core keeps its `ConsentPrompt` until it is uninstalled
+  (`C15t.uninstall()` on Kotlin, `C15t.resetForTests()` on Swift, both reported
+  through `C15t.onUninstall`); the registry holds prompts weakly and never keeps
+  a core alive. React Native attaches to the same `ConsentPrompt` through the
+  native host (below), so a React Native app and any native scene in it share
+  one session, and the host answers any racing call with `already-presented`.
+- **Opting out changes nothing else.** With auto-present off, an owed notice is
+  held back too. A manual request covers the notice owed at that moment only;
+  once nothing is owed, a later notice needs its own request.
+  `presentPrompt`/`presentConsentPrompt` and `presentPreferences` work as they
+  did before.
+
+**One decision, in native.** Only the native `ConsentPrompt` decides when a
+prompt is owed and opens it, on all three platforms. React Native does not
+decide: `ConsentProvider` hands native its settings and observes what native
+shows, so no rule about when a prompt is owed exists in JavaScript.
+
+**The invariant.** If a prompt is owed, auto-present is on, and nothing of ours
+is on screen, then the prompt is open, unless the subject already saw this owed
+prompt and closed it. Property tests drive random sequences of the inputs below
+and check this after every input: `AutoPresentTest` (Kotlin) and
+`AutoPresentTests` (Swift) for the presenter, and `ConsentHostAutoPresentTest`
+(Kotlin) and `ConsentHostTests` (Swift) for the React Native hosts, which also
+check that what a host reports open is what native shows, and that nothing
+opens by itself after the app opted out. A second property holds for the React
+Native hosts: a manual `presentConsentPrompt` or `presentPreferences` shows
+something or reports why not, and is never answered `already-presented` over a
+session that shows nothing
+(`ConsentHostTest.aRequestIsNeverAnsweredWithASessionThatShowsNothing`).
+
+**Few stored facts, one recomputed decision.** No platform remembers a decision.
+Each stores a handful of facts, each keyed by what it was decided for, so a change
+to any of those inputs invalidates it without an event having to reset it. After
+every input, "present now" is recomputed from the facts and the current inputs.
+
+The native presenters store the open session (`presentationID`, whether it is
+standing settings or the prompt, which is derived from `preferences` and whether
+settings were opened from the first layer), the suppressed key, the requested
+notice key and a running commit. Both keys carry `promptOwedSince`, so nothing
+has to clear them:
+
+    input                                     next
+    snapshot, owed, auto on, nothing open     open the prompt (unless suppressed)
+    presentPrompt / presentPreferences        open that session if none is open
+    close a prompt session                    suppress its key, outcome, re-evaluate
+    close a settings session                  outcome, re-evaluate (the owed prompt stays owed)
+    commit from a prompt or notice            suppress the key acted on
+    commit from settings                      no suppression; re-evaluate
+    autoPresent turned on                     re-evaluate
+    a host attaches or takes over             autoPresent = its setting; if off, withdraw a
+                                              session that opened by itself for another host
+    the drawing host detaches                 autoPresent off until a host attaches
+    close a notice the host asked for         drop that request; the notice stays owed
+
+**The React Native hosts** draw the shared `ConsentPrompt` over the app's own
+screens: `ConsentHost` in `c15t-consent-ui` on Android, and `ConsentHostDriver`
+in `C15tConsentUI` with a UIKit canvas in the binding on iOS. JavaScript drives
+them with one call and hears three events:
+
+    configureAutoPresent('{"autoPresent":true,"privacyPolicyURL":"https://..."}')
+    onConsentPresenterPresented   { sessionId, presentation, automatic }
+    onConsentPresenterUnavailable { code, message }
+    onConsentPresenterOutcome     { sessionId, kind, revision }
+
+`configureAutoPresent` attaches the host to the installed core's prompt with
+that `autoPresent`, exactly as a scene attaches, with ATT left to JavaScript
+(`trackingRequest` is `manual` on the native side). The outermost provider sends
+it on mount and on every change, and sends `autoPresent: false` when it
+unmounts, so nothing opens by itself while no provider is mounted. Turning it
+off withdraws, with no outcome, a session that opened by itself and was never
+on screen, so an app that opted out never sees a prompt it did not ask for. A
+session that is already on screen stays for the person to finish.
+
+The host puts what the prompt opened on the foreground window (iOS) or the
+resumed Activity (Android) and reports `onConsentPresenterPresented`. With
+nowhere to show it yet it reports `onConsentPresenterUnavailable` once,
+`C15T_PRESENTER_UNAVAILABLE`, and keeps the session: it shows when a scene
+becomes active or an Activity resumes, so an owed prompt is not lost across
+backgrounding, rotation or a host that is not ready yet. When the installed
+core is dropped (`C15t.uninstall()`, `C15t.resetForTests()`) the host ends its
+session with `unavailable` and lets the prompt go; the binding moves the host to
+the next installed core's prompt on its next call, and Android also on the next
+resumed Activity, so an owed prompt presents on the new core too.
+
+Before reporting a session's outcome, the host lets the prompt open what is
+owed next and reports that first: `presented` for the new session, then the
+outcome of the old one. A step that waits for c15t's screens to close, such as
+the ATT request, never runs between the two. The new session often cannot show
+at once. On Android the app's Activity is still paused under the host Activity
+that is finishing, and resumes only after that Activity's `onPause`. On iOS the
+scene may not be active. So the old outcome waits until the new session is
+reported presented. It goes at once when nothing is owed any more, when the app
+turns auto-present off, when the core is uninstalled or the runtime detaches,
+and after two seconds at most, so an app sent to the background still hears it.
+In that last case `onConsentPresenterUnavailable` follows it, and the prompt
+shows when the app returns. On iOS the outcome also waits for the cover to
+animate away.
+
+`ConsentProvider` mirrors only what is on screen, from these events and from the
+answers to the app's own `presentConsentPrompt` and `presentPreferences`, so the
+ATT sequence can wait for it. With `trackingRequest="beforeConsent"` it keeps
+auto-present off until Apple has been asked: native opens an owed prompt the
+moment the core owes it, so while Apple has not answered in this launch the
+provider releases auto-present for one owed prompt at a time, after checking
+it, and takes it back when that session closes. That is the ATT order, not a
+rule about when a prompt is owed. A build where Apple asks nothing never holds.
+
+Every `presentConsentPrompt`/`presentPreferences` answer carries `presentation`,
+`prompt` or `preferences`, beside `sessionId`, and an older binary omits it. A
+host's open session is derived from what is on screen: one that shows nothing
+(its notice was cleared outside the host by `dismissNotice()` or a reset) is
+ended with a `dismissed` outcome by every entry point that reads it, and as soon
+as the host notices, so no request is answered with a session that is not
+visible. A repeated prompt request re-asks the open session, so a notice owed
+again shows. A refused privacy-policy URL is rejected with
+`C15T_PRESENTER_INVALID_URL`, by `configureAutoPresent` and the presenter calls
+alike; it is permanent, and `ConsentProvider` reports it with `console.error`.
+A binary built without the stock screens rejects every presenter call, and
+`configureAutoPresent` with `autoPresent: true`, with `C15T_NATIVE_UI_EXCLUDED`,
+also permanent: the provider reports it once. When the bootstrap already says
+`nativeUI: false`, the provider sends `autoPresent: false` and does not check
+`privacyPolicyURL`, because the app draws its own consent UI. Every other
+presenter refusal is `C15T_PRESENTER_UNAVAILABLE`, which is transient.
+
+**The notice card's touch area.** A UIKit root hit-tests against the card's
+bounds only while that scene draws the prompt and the notice is showing
+(`NoticeTouchRegion`), so an acknowledged or cleared card leaves no area that
+swallows the app's touches. The Android notice view wraps its content and takes
+no space once the card is gone.
+
+`ConsentPrompt.onFinished` (Swift and Kotlin) and `onConsentPresenterOutcome`
+(React Native) report each closed session with its outcome. A step that must
+follow the prompt, such as Apple's tracking request, attaches there. On iOS the
+React Native outcome is sent once the cover has finished animating away.
+
+The stock prompt sequences ATT through `trackingRequest` (`afterConsent` by
+default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.c15tConsent(...)`
+and `ConsentRootViewController`. It asks only when
+`NSUserTrackingUsageDescription` is present, marketing is not refused (a stored
+choice, or a `gpc` or `explicit-denial` restriction on marketing), the app is
+active, a c15t root is attached and no c15t screen is on screen, and while
+Apple's answer is `not-determined`. `afterConsent` asks after a closed session,
+or at launch when no prompt is owed, and only while marketing is `granted`.
+`beforeConsent` (not the recommended order) holds every prompt that would open
+while it would ask: automatic, after a session, or the app's own
+`presentPrompt`/`presentConsentPrompt`, from the provider's first render or, in
+Swift, from the first scene that attaches. It never holds settings. A launch
+that owes no prompt asks at launch, once per launch. An Additional Information
+pause before an owed prompt lets the prompt open; closing it applies the
+after-consent rule.
+
+`trackingReprompt` (`never` by default, `yearly`) also calls the request once per
+launch when Apple's answer is `authorized` or `denied`, marketing is `granted`,
+and 365 days have passed since the SDK last saw an answer. Apple decides whether
+anything shows. The SDK stores that time in `C15tTrackingAnswerLog`; an answer
+with no stored time is stamped when first read and waits a year from then. On a
+re-ask the time moves only when the answer changes. The iOS bridge sends it as
+`answeredAt` on `getTrackingAuthorization()`. It never asks for `restricted` or
+with `manual`.
+
+The SDK asks Apple for the Additional Information button only when something
+handles the tap: the stock UI, `onTrackingAdditionalInformation`, or a handler
+passed to `C15tApple.tracking.request(onAdditionalInformation:)`. React Native
+asks through `requestTrackingAuthorizationWithOptions('{"additionalInformation":true}')`;
+the plain `requestTrackingAuthorization()` shows no button.
+
+Under an IAB TCF policy, marketing is `granted` for this sequence only while the
+c15t category is granted and the committed TC String grants `marketing` by the
+web derivation (`C15T_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
+registered or custom vendor asks consent for) to at least one consented
+registered or custom vendor that asks consent for a deciding purpose, or a
+consented ad tech provider. Otherwise it is a refusal.
+`native/protocol/att/iab-marketing.json` holds the cases both sides run. The iOS
+bridge sends the answer, cached per snapshot revision, as the snapshot key
+`iabMarketingPurposes`. This decides only whether the SDK asks Apple, not
+whether a vendor may read the advertising identifier. The ATT answer never
+writes consent or the TC String. Android has no ATT and no option.
 
 Native SDK gating
 -----------------
@@ -362,7 +675,8 @@ does not have to know what it missed.
 One launch hook per app, owned by the layer that documents the opt-out. Android's core
 library registers an `androidx.startup` initializer of its own and the React Native
 binding registers one too, so two entries merge unless the binding says otherwise. The
-core's takes no flag: it installs a core whenever `com.c15t.PORTAL_URL` is declared, and
+core's takes no flag: it installs a core whenever `com.c15t.BACKEND_URL` or
+`com.c15t.MODE=offline` is declared, and
 installation is first-wins, so a host that set the binding's `AUTO_BOOTSTRAP` to install
 its own configured core would get the manifest core instead and have its own refused with
 no warning. The binding therefore removes the core's entry from a React Native app's
@@ -390,6 +704,18 @@ stays `PENDING` for the life of the process, which is the safe answer and the on
 keeps the SDK switched off. A host that cannot wait that long bounds the wait itself.
 The core grows no timeout, because whatever number it picked would become a legally
 loadable answer the policy never gave.
+
+The bundled vendor helpers (`C15tApple`, `com.c15t.android.integrations`,
+`@c15t/react-native/integrations`) hold one withdrawal rule on all three platforms: on
+withdrawal, every stop call for the helper runs, in order, whether or not earlier calls
+or in-flight grants fail or hang, and failures are reported through `onError` (Swift's
+vendor closures cannot throw, so Swift has no `onError`). A
+withdrawal never waits behind a grant still inside a vendor call, on another thread
+in Kotlin and Swift, or as an unsettled promise in React Native. A later regrant waits
+for that withdrawal and applies after it. When the overtaken grant returns, the helper
+reapplies current consent, so a late grant cannot leave the vendor enabled. Each
+enabling call reads current consent immediately before it is made. The shared
+bindings own this rule and their withdrawal tests pin it per helper.
 
 Platform privacy
 ----------------
@@ -508,9 +834,11 @@ slot, so refusing an envelope never costs a device its identity. What each write
 
 - Swift stores plain JSON under `StoredEnvelope`: `version` (this build reads `1` and
   nothing else), `storedAt` in epoch milliseconds, `snapshot`, `noticeDismissal`, and
-  `policyResolution`.
+  `policyResolution`, plus the IAB authority and `pendingSaves` fields that
+  `docs/internal/native-iab-commits.mdx` defines.
 - Kotlin stores a `SnapshotEnvelope` in the encrypted blob: `snapshot`,
-  `evaluationPolicy`, and `noticeDismissal`. It carries no format version of its own
+  `evaluationPolicy`, and `noticeDismissal`, plus `gvl` and the same IAB authority and
+  `pendingSaves` fields. It carries no format version of its own
   and no write time. `AesGcmCodec` puts a version byte in the blob header, which
   gates the framing rather than the fields, so an envelope-level change has nowhere
   to be recorded. That is a gap in the Kotlin core, not a decision.
@@ -670,7 +998,12 @@ the queue holds bodies and nothing else, and a credential that comes back later
 cannot rescue bytes the producer already refused on its own terms.
 
 Commit refusal reasons are `invalid-intent`, `no-subject`, `not-bootstrapped`,
-`policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`.
+`policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`,
+plus the IAB and bundled-policy refusals `bundled-policy-unusable`,
+`additional-consent-list-stale`, `additional-consent-unavailable`,
+`iab-draft-required`, `iab-unavailable`, `iab-list-stale`, `iab-choices-required`,
+`invalid-iab-choices` and `invalid-action-time`. `COMMIT_FAILURE_REASONS` in
+`packages/react-native/src/protocol/commit.ts` is the list.
 These are the values of `CommitResult.reason` when `ok` is false. Delivery
 failures such as `transport-unavailable`, `save-rejected` and
 `save-undeliverable` are error-event codes, not commit refusal reasons.
@@ -686,18 +1019,19 @@ Transports
 
 Same three modes as the web SDK, same backend endpoints, same headers.
 
-    x-c15t-version:            <c15t.version> on Swift
-    x-c15t-platform:           apple-><C15tApple.version> on Apple-created transports
+    x-c15t-version:            <C15t.version> on Swift, <NativeConfig.sdkVersion> on Kotlin
+    x-c15t-platform:           apple-><C15tApple.version> for a Swift app, android-><sdkVersion>
+                               for a Kotlin app, rn-><version> for a core either React Native
+                               binding configures
     x-c15t-policy-contract:    <POLICY_CONTRACT_VERSION from @c15t/schema>
 
-Kotlin currently reports `rn-><sdkVersion>` from `C15tProtocol.protocolHeaders`
-for every Android host.
-ENG-530 must give standalone Android requests their own module attribution.
-
-Swift sends the unprefixed semantic version, matching the web header format.
-Apple-created transports report their module separately in `x-c15t-platform`.
-Hosted gateways can reject unknown platform prefixes in `x-c15t-version`, so
-platform attribution must not be prepended to the Swift version.
+Both cores send the unprefixed semantic version, matching the web header format.
+Each reports its host separately in `x-c15t-platform`. Hosted gateways can reject
+unknown platform prefixes in `x-c15t-version`, so platform attribution must not be
+prepended to either version. Kotlin reads the tag from `NativeConfig.platform`,
+which defaults to `android`; `null` sends no platform header. Swift reads it from
+`C15tAppleConfiguration.platform`, which defaults to `apple`. Web clients send no
+platform header. `@c15t/backend` passes `x-c15t-platform` to `sessions.onReport`.
 The policy-contract header remains the capability declaration.
 
 A backend that answers `unsupported-contract` is a hard configuration error. The
@@ -899,10 +1233,77 @@ New Architecture only. TurboModule plus Codegen, no legacy bridge, no
     identify(externalId): Promise<void>
     logout(): Promise<void>
     reset(): Promise<void>                      // wipe consent, keep the subject id
+    getTrackingAuthorization(): TrackingAuthorizationPayload   // sync, JSON string
+    requestTrackingAuthorization(): Promise<TrackingRequestPayload>
+    presentConsentPrompt(privacyPolicyURL): Promise<ConsentPresenterSession>
+    presentPreferences(privacyPolicyURL): Promise<ConsentPresenterSession>
+    closeConsentPresenter(sessionId): Promise<void>
     addListener(eventName): void              // RNEventEmitter spec
     removeListeners(count): void
 
-Events: `snapshot`, `error`, `initialized`. The payload is a JSON string. The
+`packages/react-native/src/specs/NativeC15t.ts` is the authoritative list.
+
+A commit intent may carry `revision`, the snapshot revision a draft was built on.
+The bridge passes it to `save` as `expectedRevision`, so the core refuses the commit
+with `concurrent-change` if anything was recorded since; JavaScript reads a cached
+snapshot, and only this check can see a decision made in between. A `revision` that
+is not a whole number is `invalid-intent`. `getBootstrap()` reports
+`commitRevision: true` from builds that do this; `ADDITIVE_BOOTSTRAP_DEFAULTS` reads
+an older binary as `false`, and the draft then saves unpinned.
+
+`commit` takes `all`, `necessary`, `explicit`, and `iab`. An `iab` intent is a
+headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON numbers;
+`customVendorConsents` and `customVendorLegitimateInterests` hold string IDs and may
+be left out, which grants no custom vendor), `consents` the categories it confirms, and an optional `revision` the core passes as
+`expectedRevision`, so a change since the draft was opened is refused as
+`concurrent-change`. The core validates IDs and legal bases as for the stock
+presenter. The bridge adds six keys inside the snapshot's `iab` object, beside the
+core's `gvl`: `customVendors` from `iabCustomVendors()`; `committed: { tcString,
+addtlConsent, choices } | null` from
+`iabConsent()`; `disclosure`, the core's `iabPresentation()` as the stock screens
+read it (each active vendor's `consentPurposes`, `legitimateInterestPurposes`,
+`notAllowedPurposes`, `consentRequiredPurposes` and
+`legitimateInterestRequiredPurposes` after publisher restrictions; per-purpose
+`consentPartnerCount` and `legitimateInterestPartnerCount` from `partnerCounts`,
+which counts `customVendors` where they declare the purpose;
+`declaredPurposeIds`, `declaredSpecialFeatureIds`, `adTechProviders` with `id`,
+`name` and `policyUrl`, `adTechProviderPurposeIds`, `bannerSummary`,
+`consentStorageMaxDays` and `language`), or `null` without one; `acceptAll:
+IABChoices | null` from `iabAcceptAllChoices()`, sent only while `disclosure` is
+not null; `editable`, which is `acceptAll != null`; and `headlessUnsupported`,
+which this build always sends empty. Builds before `disclosure` listed
+`publisher-restrictions` and `additional-consent-providers` there and kept
+`editable` false, and the JavaScript draft still refuses to open while the list
+is not empty. A headless `iab` intent carrying a vendor consent for a vendor
+whose `consentPurposes` are empty, or a vendor legitimate interest for one whose
+`legitimateInterestPurposes` are empty, while a restriction removed what it
+declared on that basis (`IABPresentation.restrictionConflicts`), is refused by
+the bridge as `invalid-iab-choices` before it reaches the core. The stock
+screens offer no such switch. Purpose signals are the subject's answer per
+purpose and are not refused, as on the stock screens.
+`native/protocol/iab/headless-disclosure-cases.json`, generated from
+`packages/iab`, holds the disclosure, the TC and AC strings both the stock save
+and the headless commit write, and the refused selections. The web encoder
+writes restriction vendors that are adjacent in the narrowed list as one range,
+which also covers the IDs between them; both native encoders write each vendor,
+so the fixture avoids such groups. These keys are additive without a protocol
+bump: `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
+`committed: null, disclosure: null, editable: false, acceptAll: null,
+headlessUnsupported: [], customVendors: []`, so JavaScript offers no edit it
+cannot commit. `BRIDGE_PAYLOADS` types the `iab` object with these keys, so both
+bridges' tests check them.
+
+`c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
+`gradle.properties` for Android) builds the bridge without the stock screens: the
+pod drops `vendor/C15tConsentUI` and `C15tConsentHost.swift` and compiles with
+`C15T_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
+`src/nativeUi` and drops `c15t-consent-ui`. `getBootstrap()` reports `nativeUI`,
+and the presenter methods reject with `C15T_NATIVE_UI_EXCLUDED`. `nativeUI` is
+additive without a protocol bump: `ADDITIVE_BOOTSTRAP_DEFAULTS` in `wire-shape.ts`
+reads an older binary, which sends no flag and always links the screens, as `true`.
+
+Events: `snapshot`, `error`, `initialized`, and `onConsentPresenterOutcome` for the
+native presenter. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new
 `revision` and JavaScript pulls with `getSnapshot()` only when a mounted
 subscriber needs it. Selector subscriptions in `@c15t/react-native` compare the
@@ -964,7 +1365,7 @@ The bridge does not carry them, and it is the wrong place for them. Nothing in
 2 keeps the consent cores free of UI: a home indicator is not consent state, and
 neither core owns a window or a UI thread to read one from.
 
-The bands reach the surfaces from the app instead, through `C15tProvider`'s
+The bands reach the surfaces from the app instead, through `ConsentProvider`'s
 `safeAreaInsets`, which the provider publishes on a context and
 `useConsentSafeArea()` reads. The host measures rather than the bridge because
 React Native itself has no inset API worth calling one: `SafeAreaView` is
@@ -998,11 +1399,34 @@ when `protocolVersion` is outside the range the installed JavaScript package
 supports. This catches the Expo Updates case where a JavaScript-only update ships
 against an older embedded native build.
 
+A snapshot key added without a protocol bump must be additive: its absence has to
+mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS`
+(`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
+client fills it before reading or grading the snapshot, so an older binary is
+neither `undefined` behind a typed field nor reported as drift. `gppString` is
+one: an older binary has no GPP, so it reads as `null`. `promptOwedSince` is
+another, and a bridge-added one (`BRIDGE_SNAPSHOT_KEYS`): an older binary names
+no owed prompt, so it reads as `null`. A key whose absence cannot be answered
+that way needs a new protocol version.
+
+A bridge method or event added without a protocol bump follows the same rule:
+JavaScript feature-detects the method (`typeof module.method === 'function'`)
+and treats its absence as "this build cannot do it", and an event an older
+binary never sends simply never arrives. `requestTrackingAuthorizationWithOptions`
+is one: an older binary shows no Additional Information button.
+`configureAutoPresent` is another. A JavaScript bundle on a binary built before
+native auto-present finds no such method, so nothing presents by itself: the
+provider logs one `console.error` in every build that asks for a rebuild, and
+`presentConsentPrompt` and `presentPreferences` keep working. There is no
+JavaScript fallback that decides when a prompt is owed, because that would be a
+second copy of the native rule. The bridge's payloads, new ones included, are in
+`packages/react-native/src/protocol/bridge-schema.ts`.
+
 Conformance fixtures
 --------------------
 
 `native/protocol/*.json`, generated by `packages/react-native/scripts/` from the
-TypeScript kernel. Six kinds:
+TypeScript kernel. Seven kinds:
 
 - `evaluation-*.json`  transport response plus stored records in, snapshot out.
 - `save-body-*.json`   transport response plus action in, exact request body out.
@@ -1036,9 +1460,10 @@ invented. Every fixture carries `now` (the fixed clock every side must use),
 `intent`. A fixture about the host's declaration adds `consentCategories`, where `null`
 is a host that declares nothing; a fixture without the key was generated with every
 category declared, and a runner configures its core that way. Nothing is derived from a random value: the subject id is always
-supplied, so no fixture depends on a CSPRNG. The fixtures carry a UUID v4, the
-shape an install minted before this format existed, which every core still has to
-hydrate. An id a device mints itself uses the base58 shape under "Subject identity".
+supplied, so no fixture depends on a CSPRNG. The fixtures carry ids in the base58
+`sub_` shape under "Subject identity". A stored legacy UUID is refused as that section
+describes, which `UnusableSubjectIdTest` (Kotlin) and `UnusableSubjectIdTests` (Swift)
+cover rather than a shared fixture.
 
 An `expected` is what the kernel produced for that input. It is not hand-written,
 with the single exception named in "The stored envelope". `evaluation-*` pin
@@ -1095,7 +1520,7 @@ build against the same reality.
   `bun run --cwd packages/react-native generate:fixtures`, which is byte-stable:
   two runs produce the same bytes, so a diff in `native/protocol/` is always a
   real change and never a timestamp.
-- All six kinds are generated, and both native cores claim and run all six. Each
+- All seven kinds are generated, and both native cores claim and run all seven. Each
   runner keeps a set of the kinds it has a function for, derives its unclaimed count
   from that set, and fails when the count is not zero, so a kind goes unrun only by a
   branch nobody wrote. The web v3 record envelope that used to be reported unclaimed
@@ -1114,7 +1539,7 @@ Kotlin core, as built
   encrypted storage with a `SharedPreferences` fallback, an `androidx.startup`
   `Initializer` that calls `bootstrap()`, a `ProcessLifecycleOwner` observer
   that calls `flushPending()` and `refresh()`, and a `ConnectivityManager`
-  callback that calls `flushPending()` on a gained network. The callback is the
+  callback that calls `flushPending()` and `refresh()` on a gained network. The callback is the
   one port that can be declined: without `ACCESS_NETWORK_STATE` in the host's
   manifest the registration is refused, and `C15tReachability.register` logs it
   and returns `null` rather than failing the install.
@@ -1128,7 +1553,7 @@ Kotlin core, as built
   a key dies, `ResilientKeyValueStore` deletes the blobs it can no longer open,
   warns once, and serves deny-all with `policyPending: true`. The SPI exposes
   `KeyValueStore.keys()` for that purge only, and defaults to `emptySet()`.
-- Every mutation in `C15tKernel` already ended in `persist()` and
+- Every mutation in `ConsentCore` already ended in `persist()` and
   `notifySnapshot()` together, including the failed-init path that records
   `unsupported-contract`, so this core needed no change to satisfy "Revisions and
   error writes". `ProtocolFixtureTest` runs the revision trace to keep it that way:
@@ -1290,16 +1715,17 @@ Both platforms get the flat reverse-DNS names their readers already use, not a
 Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
 
     iOS Info.plist                      Android <meta-data>
-    com.c15t.backend.url                com.c15t.PORTAL_URL
-    com.c15t.backend.mode               (mode is presence and absence)
-    com.c15t.backend.domain             com.c15t.DOMAIN
-    com.c15t.gpc                        com.c15t.FORCE_GPC
-    com.c15t.backend.initUrl            com.c15t.INIT_URL
+    com.c15t.backend.url                com.c15t.BACKEND_URL
+    com.c15t.backend.mode               com.c15t.MODE (offline only)
+    com.c15t.policy.rules               com.c15t.POLICY_RULES
+    com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
+    com.c15t.forceGPC                   com.c15t.FORCE_GPC
+    com.c15t.backend.initUrl            com.c15t.BACKEND_INIT_URL
     com.c15t.categories                 com.c15t.CATEGORIES
     com.c15t.reactnative.AutoBootstrap  com.c15t.reactnative.AUTO_BOOTSTRAP
 
-The two spellings differ because the readers already did, and a plugin that
-tidied that up would write keys nothing reads. Absent values stay absent: the
+Each key keeps its platform's casing, lowercase dotted on iOS and upper snake on
+Android, and both spell the same concept with the same words. Absent values stay absent: the
 bridge treats a missing key as "not configured" and has to parse an empty
 string. `AutoBootstrap` is written only in the opt-out case, since on is the
 bridge's own default.
@@ -1334,7 +1760,7 @@ An unread key is not a spare knob: it is a wrong promise carried inside a shippe
 binary, and the app looks configured while one platform runs something else.
 `com.c15t.backend.publicKey` / `com.c15t.PUBLIC_KEY` were exactly that and are
 gone; iOS `com.c15t.backend.initUrl` was a silent wrong-backend bug, since Android
-honoured its `com.c15t.INIT_URL` and iOS kept building `${base}/init`, and the
+honoured its `com.c15t.BACKEND_INIT_URL` and iOS kept building `${base}/init`, and the
 bridge now passes it to `HostedTransport` the way `@c15t/core` and Android do:
 the value is used as given, and only an absent key takes the default.
 
@@ -1345,6 +1771,56 @@ all. `selfHosted` reaches JavaScript as `hosted`, because
 the same values from `extra.c15t`: `backendURL`, `initURL`, `domain`,
 `mode`, `enableAppTrackingTransparency`, and the `protocol` range.
 There is no second config source.
+
+Theme keys
+----------
+
+The `theme` prop writes the native theme keys, `com.c15t.consent.*`, that
+`ConsentTheme.InfoPlistKey` in `consent-theme.swift` and `ConsentTheme.Meta` in
+`consent-theme.kt` read. Its field names follow the web `Theme` in `@c15t/ui`,
+and so do the native token names. The prop is the `ConsentThemeOptions` type
+`createConsentTheme` takes, so one object themes both renderers. The plugin
+maps it in `src/expo-plugin/theme.ts`:
+
+    theme field              web token                 iOS / Android key suffix
+    colors.primary           --c15t-primary            primary / PRIMARY
+    colors.textOnPrimary     --c15t-text-on-primary    textOnPrimary / TEXT_ON_PRIMARY
+    colors.surface           --c15t-surface            surface / SURFACE
+    colors.text              --c15t-text               text / TEXT
+    colors.textMuted         --c15t-text-muted         textMuted / TEXT_MUTED
+    colors.canvas            (none)                    canvas / CANVAS
+    colors.surfaceMuted      (none)                    surfaceMuted / SURFACE_MUTED
+    colors.decision          (none)                    decision / DECISION
+    colors.textOnDecision    (none)                    textOnDecision / TEXT_ON_DECISION
+    radius.sm, .md, .lg      --c15t-radius-*           radiusSm.. / RADIUS_SM..
+    spacing.xs .. .xl        --c15t-space-*            spaceXs.. / SPACE_XS..
+    typography.fontSize.*    --c15t-font-size-*        fontSizeSm.. / FONT_SIZE_SM..
+    typography.fontFamily    --c15t-font-family        fontFamily / FONT_FAMILY
+    typography.headlineFont  (none)                    headlineFont / HEADLINE_FONT
+    slots.<slot>.<field>     web slots                 <slot>.<field> / <SLOT>_<FIELD>
+    brand.name, brand.mark   (none)                    brandName, brandMark / BRAND_NAME, BRAND_MARK
+    brand.hidden (inverted)  (none)                    brand / BRAND
+    branding.provider        (none)                    brandingProvider / BRANDING_PROVIDER
+    branding.name, .mark     (none)                    brandingName, brandingMark / BRANDING_NAME, BRANDING_MARK
+    branding.hidden (inv.)   (none)                    branding / BRANDING
+
+`dark.<color>` joins its `colors.<color>` as the `#light,#dark` pair both readers
+parse, and needs that light value. Colors must be `#RRGGBB`; a CSS function, an
+alpha channel, or a field neither renderer draws fails the prebuild. Fields only
+the React Native components draw (`motion`, `typography.fontWeight`,
+`typography.lineHeight`, and colors such as `border`) are checked and not
+written.
+`typography.fontFamily` and `typography.headlineFont` take one string or
+`{ ios, android }`: iOS reads a PostScript name and Android a font resource name.
+A single string must be a valid resource name (lowercase letters, digits, `_`), or
+for `headlineFont` a keyword such as `serif`; otherwise the prebuild fails and
+shows the per-platform form. A per-platform name is written to that platform's
+key only. The body readers know no keywords, so `fontFamily: 'serif'` fails too.
+With `theme` set the plugin owns every key above and clears the ones the prop no
+longer names; without it the plugin registers no theme write, so an app-owned
+config plugin keeps working. The copy keys (`headline`, `introduction`) are not
+part of the prop. `__tests__/theme.test.ts` checks every key against both reader
+sources.
 
 Rules the plugin enforces at build time
 ---------------------------------------
@@ -1386,17 +1862,22 @@ Rules the plugin enforces at build time
   permission buys only the reachability leg of the queue replay, and a host that
   wants the shorter retry declares it itself; the plugin writing it would trade
   every host's manifest for one wake-up nobody asked for.
-- The root and app gradle files have `minSdk` and `compileSdk` raised to 24 and
-  36, the floors in `native/core-android/gradle/libs.versions.toml`. Below them
-  the manifest merger fails with a message that names neither c15t nor the
-  number. Only literal values are touched, never `targetSdkVersion` or a
-  `rootProject.ext` indirection. That carve-out now swallows the whole rule: an
-  SDK 57 template writes no literal SDK number anywhere, because
-  `app/build.gradle` reads `rootProject.ext.compileSdkVersion` and the
-  `expo-root-project` Gradle plugin supplies it at build time. So the raise
-  never fires on a current template, and nothing here has measured what that
-  plugin resolves. Checking the floors against the resolved values, or dropping
-  this step, is open work.
+- The Android SDK floor, `minSdk` 24 and `compileSdk` 36 from
+  `native/core-android/gradle/libs.versions.toml`, is checked, not raised.
+  Below it the manifest merger or the AAR compile fails with a message that
+  names neither c15t nor the number. An Expo 55 to 58 template writes no SDK
+  number: `app/build.gradle` reads `rootProject.ext.*`, and the
+  `expo-root-project` Gradle plugin fills that from a root `ext` block, then the
+  `android.minSdkVersion` and `android.compileSdkVersion` keys in
+  `gradle.properties` (which `expo-build-properties` writes), then React
+  Native's version catalog. The catalog defaults (24, and 36 or 37) meet the
+  floor, so only an explicit value can fall below it, and an explicit value was
+  set on purpose and would be written back by the next prebuild. A finalized
+  Android mod, which runs after every other plugin's mods, reads
+  `gradle.properties` and the root and app `build.gradle(.kts)` and fails the
+  prebuild when the level Gradle applies (an app-module literal, else the last root `ext` assignment, else the last `gradle.properties` entry; comments never count) is below the floor, naming that setting and where to change it.
+  `__tests__/android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
+  57 and 58 templates. `targetSdkVersion` is never read.
 - Expo Go fails the build with a message rather than failing at runtime. The
   check stays quiet when an `EAS_BUILD*` variable is set, when the command is a
   native one (`prebuild`, `run:`, `build`, `config`, `doctor`), or when an `ios/`
@@ -1510,6 +1991,12 @@ subject even for category-only saves. No installer or RN bridge is required for
 these checks, and vendor storage never supplies identity or consent authority.
 
 
+A vendor list with any entry of the wrong type is refused whole on both cores, as
+the CLI and Expo refuse it at build (`gvl-fields.ts`). The TC String's vendor-list
+version says the subject saw that list, and a list with entries dropped or blanked
+is not it. A refused list reads as no list: a core keeps the one it holds while
+that one is still within its age limit. `invalid-resources.json` pins the cases.
+
 Native IAB disclosure lifecycle: fetch time is durable and defaults to a seven-day
 list age limit. No-GVL responses do not renew it. Native lifecycle reads distinguish
 fresh, cached, offline, stale, missing and unconfigured states. Only exact
@@ -1534,6 +2021,40 @@ IABTCF_AddtlConsent as a string and removes it with invalid authority or reset.
 ATT remains a separate permission. RN API and shared UI wiring remain an ENG-511
 acceptance gate after this native foundation integrates.
 
+Custom (non-IAB) vendors are the web's `iab.customVendors`: partners the publisher
+declares that are not on the Global Vendor List. Both cores read `/init`'s
+`customVendors` with `nonIABVendorSchema`'s rules (`IABCustomVendor`,
+`IabCustomVendor`). An entry that breaks them, or two entries with one id, makes the
+core hold none, as for ad tech providers. An absent key keeps the list held, as
+`init-lifecycle.ts` does on the web; the backend leaves the key out once a publisher
+removes every custom vendor, so a device keeps its last list until a response serves
+a new one (#138). The list lives in the stored envelope's `customVendors` key and
+goes with reset. Bundled manifests carry none, so a launch served only by a bundle
+lists none until a live `/init` answers.
+
+A custom vendor's id is a string, `String(vendor.id)`, as the web keys its consent
+maps. `IABChoices` carries `customVendorConsents` and
+`customVendorLegitimateInterests`. They never reach the TC String, which holds IAB
+vendor ids only: native keeps them in the committed decision beside it, as the web
+keeps them in its authority receipt (`customConsents`), and, like the web, sends no
+custom vendor map in a save body. A grant needs a listed vendor that declares that
+basis. Accept all grants each listed custom vendor its declared bases and adds its
+purposes, its legitimate-interest purposes and its special features to the TCF
+signals, as `applyBlanket` does; Reject all withdraws them. Legitimate interest on
+purposes 1, 3, 4, 5 and 6 is never signalled, for a custom vendor as for a
+registered one, where the web's Accept all would set it. A served list without a
+vendor drops that vendor's grants and keeps the rest of the decision. The stock
+screens list custom vendors on their own page with `common.customPartner`, and
+start their choices off, legitimate interest included, as the web's preference
+centre does.
+
+Their purposes count toward the consent basis that decides a category, as
+`consentBasisPurposes` passes them to `iabPurposesToC15tConsents`:
+`IABPurposeCategories` and `iabPurposeCategories()` on both cores, and the ATT
+gate above. `native/protocol/iab/purpose-categories.json` and
+`native/protocol/att/iab-marketing.json` hold the shared cases; the web's
+expected values come from its own function.
+
 The complete IABTCF bus is an egress projection of validated native authority.
 Explicit CMP detection is synchronous at bootstrap. Consent values use native
 integer/string types and the exact committed TC vectors. Apple removes TC/AC
@@ -1547,16 +2068,304 @@ reference, device latency and power-loss behavior remain separate evidence gates
 
 ## Build policy fallback
 
+Configuration picks one of two modes, and they do not mix.
+
+- Backend mode has a backend URL. Policy precedence is the live `/init`
+  response, then the last good cached response, then the manifest bundled at
+  build time. A bundled manifest replaces a cached one only when the cached one
+  also came from a bundle and is stale, older, or bound to another endpoint.
+- No-backend mode has no backend URL. Swift uses `OfflineTransport`, Kotlin
+  uses `OfflineTransport` with `NativeConfig.backendUrl = null`, and the
+  Android manifest key `com.c15t.MODE=offline` selects it. A bundled manifest
+  is refused: Kotlin's `NativeConfig` throws, and the Expo plugin refuses
+  `policyResource` and `iab` with `mode: 'offline'`. The only policy source is
+  `ConsentPolicy`, rules in the backend's `PolicyRule` names (`CoreConfig.policy`,
+  `NativeConfig.policy`, Expo `policy`). Both cores normalize rules exactly as
+  `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
+  `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
+  holds the shared cases: a matrix of every `PolicyRule` field against every
+  kind of value, sorted by the backend's own `inspectPolicyRules` into
+  policies all three validators (Expo prebuild and both cores) must refuse and
+  policies they must accept and normalize identically. Matching returns the
+  backend's three outcomes: a location no rule covers resolves to `no-match`
+  (the safe opt-in fallback) or `failed` with `insufficient-inputs`, never to
+  silence, for in-code policies and bundled manifests alike. An explicit
+  `no-match` or `unconfigured` answer replaces the rule in force on both cores,
+  as `resolveEffectivePolicy` does on the web; only a failed init keeps it. An
+  in-code answer is local and final, so no init will revise it: a location the
+  in-code policy cannot answer without a region drops the rule in force, sets
+  `policyPending` and denies optional gates on both cores. Stored choices stay,
+  and apply again when the policy answers. The `transitions` cases pin this. Validity days may be fractional and round to whole
+  milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
+  and never leave it; choice and notice validity feed only their own prompt. A
+  declared policy a core refuses is reported as `policy-invalid` with resolution
+  reason `invalid-configuration`, and fails closed: a policy cached by an earlier
+  build stops applying and optional gates are denied, while stored choices stay
+  for a later build with a usable policy. Bootstrap and `reset()` both report it. The `iab` model is refused without a backend. iOS reads the
+  rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
+
 Native bootstrap can resolve an endpoint-bound resource exported from hosted
-`/manifest` before JavaScript starts. A usable stored policy takes precedence.
-See [mobile policy resources](docs/mobile-policy-resources.md) for
-resource version 1, expiry, unknown-geography and disclosure rules.
+`/manifest` before JavaScript starts. See
+[mobile policy resources](docs/mobile-policy-resources.md) for resource
+version 1, expiry, unknown-geography and disclosure rules.
 
 The resource has no visitor identity, grant, receipt, queue or policy token.
-Its original GVL and ATP timestamps survive storage and relaunch. Expired policy
-authority denies optional gates. Readable disclosure copy remains separate from
-authority to accept a new grant. Hosted refresh and durable replay stay installed.
+Its original GVL and ATP timestamps survive storage and relaunch. A manifest
+past `expiresAt` stays usable: the prompt shows, choices save, optional gates
+need an explicit grant, and both cores emit `policyStale` once per manifest
+(Swift `CoreEvent.policyStale`, Kotlin `ConsentCore.onPolicyStale`) and report
+`isPolicyStale`. A manifest bound to another endpoint or issued in the future
+supplies no policy and reports `bundled-policy-unusable`. Readable disclosure
+copy remains separate from authority to accept a new IAB grant. Hosted refresh
+and durable replay stay installed.
 
 The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
 `com.c15t.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from
 `policyResource` and copies the exact resource bytes during prebuild.
+
+## IAB GPP
+
+Both cores encode the IAB Global Privacy Platform string with the same rules as
+`@c15t/iab/gpp` on the web. `GppEncoder.kt` and `GPPEncoder.swift` port
+`packages/iab/src/gpp/encoder.ts`; `GppResolver.kt` and `GPPResolver.swift` port
+`resolveUSSectionDefinition` and `resolveUSSectionValues` from
+`packages/iab/src/gpp/us-section.ts`, restricted to the two sections a device
+encodes. State sections (`usca`, `usva` and the rest) are not encoded on mobile.
+
+**GPP is off by default.** A US section reports notices as given, and that is
+the app's claim about its own UI, so the SDK makes it only when the host turns
+GPP on. With `gpp` unset, `gppString` is `null` and no IABGPP_* row is written.
+Turning GPP off removes the rows an earlier launch wrote.
+
+**Which section applies.** Nothing applies until the snapshot is ready, no policy
+is pending and the resolution is `matched`. Then:
+
+| Matched rule | Section |
+| --- | --- |
+| `iab`, with a committed TC String that still authorizes vendors, `tcf` not `false` | TCF EU (ID 2): the TC String, byte for byte |
+| `iab`, any other case | none |
+| any other model with the `preferences` or `opt-out` right, and the country (override, else location) is `US` | US National (ID 7) |
+| anything else | none |
+
+The rule's `rights` come from `/init`. Kotlin's `EvaluationPolicy.rights` falls
+back to `requiredPolicyRights(model)` for an envelope stored before the key
+existed; Swift reads them from the stored wire.
+
+**US National values.** `SharingNotice` is 1 with the `disclosure` right, else 2.
+The three opt-out notices are 1. The sale, sharing and targeted advertising
+opt-outs are 1 when any `optOutCategories` entry (default `marketing`) is not
+permitted in the snapshot's effective permissions, else 2. `Gpc` is
+`privacySignals.gpc.active`. MSPA fields follow `mspaMode`: unset reports
+`MspaCoveredTransaction` 2 and both modes 0; service provider mode reports the
+notices and opt-outs as 0. Every field c15t has no input for is 0 (not
+applicable): `SensitiveDataProcessingOptOutNotice`,
+`SensitiveDataLimitUseNotice`, all 16 `SensitiveDataProcessing` entries, all 3
+`KnownChildSensitiveDataConsents` entries and `PersonalDataConsents`.
+
+**Why version 2.** IAB Tech Lab published US National version 3 on 2026-11-04.
+It replaces every field with `MspaVersion`, `MspaNotice`, `MspaOptOut` and a
+14-bit `MspaId` behind a section header. No reference decoder reads it yet
+(`@iabgpp/cmpapi` 3.2.0, `iabgpp-java` 4.0.0), and the web encodes version 2, so
+both cores encode version 2 until web and mobile move together.
+
+**Where the string goes.** `snapshot.gppString` carries it on the wire; the key
+is always present. The stored envelope never keeps a copy: Kotlin writes `null`
+and recomputes on install, Swift adds the string only to snapshots it hands out,
+so `isAllowed` never pays for an encode. The in-app rows follow the GPP CMP API
+"In-App Key Names" table and the TCF EU section's key table:
+
+| Key | Value |
+| --- | --- |
+| `IABGPP_HDR_Version` | `"1"`, the header version |
+| `IABGPP_HDR_Sections`, `IABGPP_GppSID` | section IDs joined with `_`, such as `"7"` |
+| `IABGPP_HDR_GppString` | the full GPP string |
+| `IABGPP_[ID]_String` | each section's string |
+| `IABGPP_2_TCString` | the TC String, the TCF EU table's name for the same value |
+| `IABGPP_TCFEU2_*` | the IABTCF_* consent rows renamed by the TCF EU table, plus `gdprApplies` 1. The table names `UseNonStandardStacks`, TCF 2.0's name for `UseNonStandardTexts` |
+
+No document defines per-field keys for US National, so none are written. The rows
+share the IABTCF_* sink: Android replaces both tables in one preferences commit,
+Apple treats `IABGPP_HDR_GppString` as a marker it removes first and writes last.
+
+**Conformance.** `native/protocol/gpp/cases.json` holds encoder and resolver
+cases with the expected string and in-app rows. `GppTest.kt` and
+`GPPTests.swift` assert every case, and
+`packages/iab/src/__tests__/native-gpp-fixtures.test.ts` checks each expected
+string against the web encoder and decodes it with `@iabgpp/cmpapi`.
+
+## WebView consent
+
+An app that opens its own site in a WebView passes the native decision to the
+page, so web c15t shows no second banner. Native stays the authority: the page
+gets a read-only copy, and nothing it does is recorded as a native choice.
+
+### Scripts
+
+`native/protocol/webview/` holds the two scripts every platform injects, byte
+for byte. `bun run generate:webview-consent-scripts` copies them into
+`WebViewConsentScripts` (Swift and Kotlin) and `scripts.generated.ts` (React
+Native); `scripts/generate-webview-consent-scripts.test.ts` fails on drift. Each
+file is one parenthesized function expression, called with JSON arguments.
+
+    document-start.js   <script>(<origins>, <token>, <key>, <state>);
+                        runs before any page script. It returns at once unless
+                        location.origin is one of <origins> and the frame is the
+                        top frame. Otherwise it defines window.__c15tNativeConsent
+                        as a frozen object on a non-writable, non-configurable
+                        property: { version: 1, getState(), subscribe(listener),
+                        update(token, state), openPreferences() }.
+    update.js           <script>(<origins>, <token>, <state>);
+                        runs in the loaded main frame when consent changes. It
+                        checks the origin the same way, then calls
+                        update(<token>, <state>). A wrong token changes nothing.
+
+`origins.json` in the same directory fixes how an allowed origin is written:
+`https://host[:port]`, or `http://` on `localhost`, `127.0.0.1` or `[::1]`;
+lowercase; no default port; no path, query, fragment, credentials, wildcard or
+non-ASCII host. Every platform rejects the whole list when one entry fails, and
+an empty list.
+
+### State
+
+    {
+      "version": 1,
+      "ready": boolean,           // snapshot.ready && !snapshot.policyPending
+      "revision": number,         // snapshot.revision
+      "model": "opt-in" | "opt-out" | "none" | "iab",
+      "permissions": { "necessary": true, "functionality", "experience",
+                       "measurement", "marketing" },  // effectivePermissions,
+                                                      // all false until ready
+      "tcString": string | null,  // the committed native TC string under IAB
+      "gppString": string | null  // snapshot.gppString; null while GPP is off
+    }
+
+Nothing else crosses: no subject id, external id, policy snapshot token,
+location, overrides, translations or receipts. The web side does not need any
+of them, because it records nothing.
+
+### Platform glue
+
+- Swift and Kotlin: `WebViewConsentScript` and `WebViewConsentState` build the
+  scripts, and `WebViewConsentSync` owns the rules below, in C15tCore and in
+  `com.c15t.core.webview`, with no WebKit or Android in them. `ConsentWebView`
+  connects a sync to a `WKWebView` (C15tApple: a main-frame-only `WKUserScript`
+  at document start) or an `android.webkit.WebView` (c15t-android:
+  `WebViewCompat.addDocumentStartJavaScript` with the origins as origin rules;
+  `attach` returns `null`, and injects nothing, without `DOCUMENT_START_SCRIPT`).
+- React Native: the bridge method `getWebViewConsent()` returns
+  `{ state, token, key }` from the native types above; `useWebViewConsent()`
+  builds `injectedJavaScriptBeforeContentLoaded` and pushes updates with
+  `injectJavaScript`.
+
+Each WebView gets two 128-bit secrets from the platform CSPRNG
+(`SecRandomCopyBytes`, `SecureRandom`; React Native takes them from the
+bridge): the update token and the preferences request key. Both live only in
+the top frame's document-start closure. A sync observes the core before it
+reads the first state, so a change in between is not missed. A sync that
+replaces another on the same WebView keeps both secrets, because a page loaded
+under the old one accepts only the token it was given. The native helpers live
+as long as their WebView (an associated object on iOS, a weak registry on
+Android), and a Swift sync released without `close()` still removes its
+script, so no document-start script outlives its sync carrying an old state.
+
+A page that stops being listed is revoked, not abandoned. Updates are addressed
+to the listed origins, so a page loaded from an origin the app drops would keep
+its last state, grants included, with nothing able to reach it. Before a sync
+stops serving an origin it runs `update.js` for that origin alone, with the
+page's token and the revoked state (`ready: false`, every optional category
+denied): `close()` revokes every listed origin, and a replacement revokes the
+origins it drops. The page denies everything and follows the app no further;
+web c15t reloads it when a category it used is withdrawn, and the reload shows
+the site's own banner because nothing is injected any more. A Swift sync
+released without `close()` revokes nothing, because its web view is gone. React
+Native revokes dropped origins when `allowedOrigins` changes.
+
+On iOS a `WKUserContentController` is one consent scope. Its user scripts run in
+every web view attached to it, and a document-start script cannot tell which web
+view it is in, so a helper's state and allowlist reach every web view on its
+controller. A controller therefore has exactly one authority: one `ConsentCore`
+and one allowlist (compared after normalization, in any order). Attaching a
+helper with another core or another allowlist to a controller that already has
+a helper throws `WebViewConsentGroup.ScopeConflict` before anything changes; the
+app gives each differently scoped web view its own controller. The one exception
+is a web view's own sole helper, which a new helper on that web view replaces,
+so a controller with one web view can change scope. Helpers with the same core
+and allowlist share the controller: one message handler (WebKit raises
+`NSInvalidArgumentException` on a second handler under a name in use), installed
+with the first and removed with the last, which finds the helper through the
+message's web view; and one token and request key, so whichever script defines a
+page's object, every helper's updates and requests match it.
+`WebViewConsentGroup` in C15tCore keeps the count, the authority and the secrets.
+
+A web view that shares a helper's controller without a helper of its own is in
+that helper's scope too: it receives the state at document start but no live
+updates, because the helper evaluates updates only in its own web view.
+Attach a helper to every web view on the controller, or give the web view its own
+controller. Android injects per WebView (`addDocumentStartJavaScript` takes the
+WebView), and `react-native-webview` gives every WebView its own
+`WKUserContentController` on iOS and injects per WebView on Android, whatever
+`useSharedProcessPool` or `sharedCookiesEnabled` say; neither has this
+scope.
+
+The GPP string is read in one place per platform:
+`WebViewConsentState.gppStringOf(snapshot)` (Kotlin) and
+`WebViewConsentState.gppString(of:)` (Swift). Both return `snapshot.gppString`,
+so the page gets the string the core wrote to `IABGPP_HDR_GppString`, and `null`
+while GPP is off or no section applies (see "IAB GPP"). React Native takes the
+state from those types through `getWebViewConsent()`. A test on each platform
+checks that a GPP string in the snapshot appears in the injected payload.
+
+### Web side
+
+`webViewConsentSource()` in `@c15t/core` returns an `ExternalConsentSource`
+when it finds the injected object with its locks (non-writable,
+non-configurable, frozen, version 1), and `undefined` everywhere else. A site
+passes it as `consentSource`, so it opts in explicitly. Under a consent source
+web c15t shows no banner or dialog, stores nothing, sends no receipt and mounts
+no IAB CMP; permissions follow the injected state and are all denied until
+`ready`.
+
+### Direction
+
+One way, native to web. A choice cannot be made in the page: the consent
+source disables the web choice UI. The page may only ask the app to open its
+own preferences, by posting `{"type":"c15t:open-preferences","key":"<key>"}`
+to the `c15tConsent` message handler (iOS), the `c15tConsent` web message
+listener (Android) or `ReactNativeWebView` (React Native). Every platform
+requires the exact key. A frame can post to the same channel (React Native's
+Android fallback exposes it to every frame and reports the top page's URL), but
+it cannot read the key, which sits in the top frame's closure. Swift and Kotlin
+also require platform main-frame metadata and a listed origin; React Native
+requires a listed page URL and drops requests less than a second apart. Script
+in the top frame of a listed page can intercept the posted message and learn
+the key, which lets it ask for the preferences screen, as calling
+`openPreferences()` already does. The key opens nothing else, and it is not
+the update token.
+
+Web-to-native choices are deliberately absent. Native would have to record a
+receipt in the subject's name on the word of page script, and nothing in a page
+can prove that a person, rather than any script on the page, made the choice.
+
+### Threat model
+
+- An unlisted page, including one the WebView navigated to, gets nothing. The
+  scripts check `location.origin` themselves, so this holds even where the
+  platform cannot filter (iOS user scripts, React Native on Android). Android
+  also filters with origin rules.
+- A third-party iframe gets nothing: the scripts run in the top frame only, and
+  a cross-origin frame cannot read the parent's globals. The page posts no
+  messages to frames, and the web side listens for none.
+- Script on a listed page can read the state, as it can read any consent state
+  the page uses. It cannot replace the object, which was defined before it ran
+  and cannot be redefined. It cannot change the state without the token, which
+  lives only in the closure and in scripts the app evaluates.
+- The update script reads the origin before it touches the global, so a page
+  that navigated off the list never receives the token.
+- In a normal browser, a script that runs before c15t could fake the object
+  with the same locks. That script could equally write c15t's own consent
+  cookie, so this adds nothing it could not already do. Sites that do not pass
+  `webViewConsentSource()` never read the global.
+- Residual: where React Native on Android injects late (react-native-webview
+  without document-start support), a page script on a listed origin could
+  define the global first and capture the token. It could then forge updates
+  for that page only; native state is never affected.

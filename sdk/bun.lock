@@ -1416,6 +1416,7 @@
       "dependencies": {
         "@amplitude/analytics-react-native": "1.13.0",
         "@c15t/react-native": "workspace:*",
+        "@c15t/translations": "workspace:*",
         "@react-native-async-storage/async-storage": "2.2.0",
         "@react-native-firebase/analytics": "27.1.0",
         "@react-native-firebase/app": "27.1.0",
@@ -1851,6 +1852,8 @@
       "dependencies": {
         "@c15t/backend": "workspace:*",
         "@c15t/integrations": "workspace:*",
+        "@c15t/schema": "workspace:*",
+        "@c15t/translations": "workspace:*",
         "@clack/prompts": "1.7.0",
         "@inth/cli": "0.0.4",
         "c12": "3.3.3",
@@ -2044,6 +2047,7 @@
         "@expo/config-plugins": "57.0.9",
       },
       "devDependencies": {
+        "@babel/core": "7.29.7",
         "@babel/parser": "7.28.5",
         "@c15t/core": "workspace:*",
         "@c15t/iab": "workspace:*",
@@ -2053,6 +2057,7 @@
         "@react-native/codegen": "0.87.1",
         "@types/react-dom": "19.2.3",
         "jsdom": "25.0.1",
+        "metro-transform-plugins": "0.84.5",
         "react": "19.2.7",
         "react-dom": "19.2.7",
         "react-native": "0.87.1",

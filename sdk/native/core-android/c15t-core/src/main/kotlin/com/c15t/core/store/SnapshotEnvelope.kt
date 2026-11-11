@@ -26,6 +26,8 @@ data class SnapshotEnvelope(
 	val snapshot: ConsentSnapshot,
 	@SerialName("lastIABActionAt") val lastIabActionAt: Long? = null,
 	val additionalConsentList: com.c15t.core.iab.AdditionalConsentList? = null,
+	/** `/init`'s custom (non-IAB) vendors. Absent in an envelope written before they were kept, which reads as none. */
+	val customVendors: List<com.c15t.core.iab.IabCustomVendor>? = null,
 	val iabListFetchedAt: Long? = null,
 	val iabConsent: com.c15t.core.iab.IabCommittedConsent? = null,
 	val pendingSaves: List<@Serializable(with = EnvelopeQueuedSaveSerializer::class) QueuedSave>? = null,
@@ -42,7 +44,7 @@ data class SnapshotEnvelope(
 	 * The published snapshot does carry the list, at [com.c15t.core.model.ConsentSnapshot.iab], because
 	 * that is the key the React Native bridge reads and the key `core-swift` puts it on: a drawer that
 	 * renders partner names has to reach the list the same way on both platforms. This key is the
-	 * durable half of the same fact. [com.c15t.core.C15tKernel] nulls the snapshot slot on the way in
+	 * durable half of the same fact. [com.c15t.core.ConsentCore] nulls the snapshot slot on the way in
 	 * and refills it on hydration, so the encrypted blob holds one copy of a document that is by far
 	 * the largest thing in it, written on every committed mutation, and a device that upgrades from a
 	 * build that kept the list only here loses nothing: this is the key that build wrote, and it is
@@ -57,7 +59,7 @@ data class SnapshotEnvelope(
 	 * It is kept because losing it is not neutral. A device that drew purpose and vendor names off one
 	 * list and relaunches without it either renders a disclosure with no names behind it or re-derives
 	 * one from a `/init` that served no list, and either way the claim made to the subject changes
-	 * without the subject doing anything. See [com.c15t.core.C15tKernel.vendorList].
+	 * without the subject doing anything. See [com.c15t.core.ConsentCore.vendorList].
 	 */
 	val gvl: GlobalVendorList? = null,
 	val bundledPolicyAuthority: com.c15t.core.BundledPolicyAuthority? = null,

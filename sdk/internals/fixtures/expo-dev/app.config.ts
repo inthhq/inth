@@ -3,6 +3,18 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type { ConfigPlugin } from 'expo/config-plugins';
 import expoPackage from 'expo/package.json';
 
+/*
+ * The appearance of the native consent screens, written into Info.plist and
+ * AndroidManifest.xml at prebuild. The theme is JSON so Node can load it here
+ * and Metro can bundle it into `src/app.tsx`, where the same values style the
+ * React Native components. The Expo and Customize docs pages show this block.
+ */
+// #region docs:expo-theme title="app.config.ts"
+import consentTheme from './src/c15t/consent-theme.json';
+
+const theme: C15tPluginProps['theme'] = consentTheme;
+// #endregion docs:expo-theme
+
 /**
  * Backend and key for the embedded consent core.
  *
@@ -115,6 +127,9 @@ const c15tPluginProps: C15tPluginProps = {
 			? 'hosted'
 			: 'selfHosted',
 	policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json',
+	// `C15T_NATIVE_UI=0` builds without the stock native consent screens; the app
+	// then draws its own with the headless hooks (src/screens/headless.tsx).
+	...(process.env.C15T_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,

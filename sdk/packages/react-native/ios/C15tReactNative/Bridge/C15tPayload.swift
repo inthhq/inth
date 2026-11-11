@@ -9,6 +9,57 @@ import C15tCore
 #endif
 import Foundation
 
+/// What an open native consent host session shows. The twin of
+/// `ConsentHostPresentation` in the Kotlin SDK.
+public enum ConsentHostPresentation: String, Equatable, Sendable {
+    /// The owed prompt: a first layer or a notice.
+    case prompt
+    /// Standing privacy settings.
+    case preferences
+}
+
+/// What the native consent host did with a presentation request. The twin of
+/// `ConsentHostSession` in the Kotlin SDK.
+public enum ConsentHostSession: Equatable, Sendable {
+    /// A new session opened. Its outcome arrives once, as a ``ConsentHostOutcome``.
+    case presented(sessionID: String, presentation: ConsentHostPresentation)
+    /// A session was already open. The request reused it and its draft; `presentation` is
+    /// what that session shows.
+    case alreadyPresented(sessionID: String, presentation: ConsentHostPresentation)
+    /// A prompt request found no prompt owed, so nothing opened.
+    case notRequired
+}
+
+/// How a native consent host session ended. Delivered once per session. The twin
+/// of `ConsentHostOutcome` in the Kotlin SDK.
+public enum ConsentHostOutcome: Equatable, Sendable {
+    /// A decision was saved durably on the device.
+    case committed(sessionID: String, revision: Int)
+    /// A notice was acknowledged. No consent decision was recorded.
+    case acknowledged(sessionID: String, revision: Int)
+    /// The subject closed the session without a decision.
+    case dismissed(sessionID: String, revision: Int)
+    /// The session closed because the policy was still unresolved.
+    case unavailable(sessionID: String, revision: Int)
+
+    /// The session that ended.
+    public var sessionID: String {
+        switch self {
+        case let .committed(id, _), let .acknowledged(id, _), let .dismissed(id, _), let .unavailable(id, _):
+            return id
+        }
+    }
+
+    /// The core's snapshot revision when the session ended.
+    public var revision: Int {
+        switch self {
+        case let .committed(_, revision), let .acknowledged(_, revision),
+             let .dismissed(_, revision), let .unavailable(_, revision):
+            return revision
+        }
+    }
+}
+
 /// The JSON the iOS bridge speaks, with no React Native types anywhere in it.
 ///
 /// Field names come from `src/protocol` on the JavaScript side, which owns the wire
@@ -19,13 +70,13 @@ import Foundation
 /// same fail-closed rules, so a JavaScript package cannot tell which core answered.
 public enum C15tPayload {
     /// Protocol this native build speaks.
-    public static let protocolVersion = c15t.protocolVersion
+    public static let protocolVersion = C15t.protocolVersion
 
     /// Oldest protocol this native build accepts from a JavaScript package.
     public static let minSupportedProtocolVersion = 1
 
     /// Newest protocol this native build accepts from a JavaScript package.
-    public static let maxSupportedProtocolVersion = c15t.protocolVersion
+    public static let maxSupportedProtocolVersion = C15t.protocolVersion
 
     /// Language used when neither the app nor the backend resolved one.
     public static let defaultLanguage = "en"
@@ -38,6 +89,10 @@ public enum C15tPayload {
 
     /// Event names, matching `NATIVE_EVENT_NAMES` in `src/protocol`.
     public static let eventSnapshot = "snapshot"
+    /// The presenter events, by the names `src/native/presenter.ts` listens for.
+    public static let eventPresenterOutcome = "onConsentPresenterOutcome"
+    public static let eventPresenterPresented = "onConsentPresenterPresented"
+    public static let eventPresenterUnavailable = "onConsentPresenterUnavailable"
     public static let eventError = "error"
     public static let eventInitialized = "initialized"
 
@@ -52,10 +107,14 @@ public enum C15tPayload {
         "translations",
         "nextDeadline",
         "error",
+        "gppString",
     ]
 
     private static let overridesNullKeys = ["country", "region", "gpc"]
     private static let resolutionNullKeys = ["policyId", "fingerprint"]
+    /// `LocationResponse` declares both as `string | null`, and a synthesized encoder
+    /// drops a nil one, so the key is restored as an explicit null.
+    private static let locationNullKeys = ["countryCode", "regionCode"]
 
     /// The keys `NativeOverridesInput` declares. A document that names none of them is
     /// not an override set, and applying it would wipe a language the app relies on.
@@ -90,7 +149,7 @@ public enum C15tPayload {
     public static func bootstrap(
         snapshot: ConsentSnapshot,
         hasStoredSnapshot: Bool,
-        sdkVersion: String = c15t.version
+        sdkVersion: String = C15t.version
     ) -> String {
         encode([
             "protocolVersion": .integer(Int64(protocolVersion)),
@@ -99,8 +158,24 @@ public enum C15tPayload {
             "nativeSdkVersion": .string(sdkVersion),
             "subjectId": stringOrNull(snapshot.subject?.id),
             "hasStoredSnapshot": .bool(hasStoredSnapshot),
+            // This build passes a commit's `revision` to the core as `expectedRevision`.
+            "commitRevision": .bool(true),
+            "nativeUI": .bool(nativeUI),
         ])
     }
+
+    /// Whether this build links the stock consent screens. A build with `c15t.nativeUI`
+    /// false compiles with `C15T_NO_NATIVE_UI` and leaves them out.
+    #if C15T_NO_NATIVE_UI
+    public static let nativeUI = false
+    #else
+    public static let nativeUI = true
+    #endif
+
+    /// What a presenter call rejects with in a build without the stock consent screens.
+    public static let nativeUIExcludedCode = "C15T_NATIVE_UI_EXCLUDED"
+    public static let nativeUIExcludedMessage =
+        "This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks."
 
     /// The `ConsentSnapshot` wire form.
     ///
@@ -116,7 +191,12 @@ public enum C15tPayload {
     /// says whether the app or the device caused it.
     public static func snapshot(
         _ snapshot: ConsentSnapshot,
-        fallbackLanguage: String = defaultLanguage
+        fallbackLanguage: String = defaultLanguage,
+        iabConsent: IABCommittedConsent? = nil,
+        iabAcceptAll: IABChoices? = nil,
+        iabPresentation: IABPresentation? = nil,
+        iabMarketingPurposes: Bool? = nil,
+        iabCustomVendors: [IABCustomVendor] = []
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -150,8 +230,122 @@ public enum C15tPayload {
             fields["resolution"] = .object(patched)
         }
 
+        if case let .object(location)? = fields["location"] {
+            var patched = location
+            for key in locationNullKeys where patched[key] == nil {
+                patched[key] = .null
+            }
+            fields["location"] = .object(patched)
+        }
+
+        // Not kernel state, so the core's encoding leaves it out; JavaScript reads it to tell a
+        // new owed prompt from one it already presented, even when it skipped snapshots between.
+        fields["promptOwedSince"] = snapshot.promptOwedSince.map { .integer(Int64($0)) } ?? .null
+        // Also not kernel state: whether the committed TC String grants `marketing`, which the
+        // ATT sequence reads under an IAB policy. Purpose vectors stay in native authority.
+        fields["iabMarketingPurposes"] = iabMarketingPurposes.map { .bool($0) } ?? .null
+
+        // The headless TCF state rides inside `iab`: the committed decision a screen shows
+        // and reopens with (`null` while none is current), whether a draft can be edited and
+        // saved now, what Accept all saves under the publisher's disclosure, and `disclosure`,
+        // the core's own projection the stock screens draw (legal bases after publisher
+        // restrictions, Additional Consent providers, partner counts, the first-layer summary).
+        // `acceptAll` is `null` exactly when `editable` is false, and editing needs the
+        // disclosure, so no custom screen saves choices it was not given the means to show.
+        // `headlessUnsupported` is always empty from this build: older builds listed
+        // `publisher-restrictions` and `additional-consent-providers` there, before
+        // `disclosure` carried both.
+        // `customVendors` is the core's `iabCustomVendors()`: the non-IAB partners a screen
+        // lists and decides on.
+        if case var .object(iab)? = fields["iab"] {
+            let acceptAll = iabPresentation == nil ? nil : iabAcceptAll
+            iab["committed"] = iabConsent.map(committedIAB) ?? .null
+            iab["editable"] = .bool(acceptAll != nil)
+            iab["acceptAll"] = acceptAll.flatMap { value(of: $0) } ?? .null
+            iab["headlessUnsupported"] = .array([])
+            iab["disclosure"] = iabPresentation.map(iabDisclosure) ?? .null
+            iab["customVendors"] = value(of: iabCustomVendors) ?? .array([])
+            fields["iab"] = .object(iab)
+        }
+
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
+    }
+
+    /// Read the snapshot and the bridge's additions to it as one revision.
+    ///
+    /// The core locks each accessor on its own, so a commit between `snapshot()` and
+    /// `iabConsent()` would pair one revision's snapshot with the next one's TCF decision,
+    /// and JavaScript caches a payload by its revision. The additions are read between two
+    /// snapshot reads and kept only when both name the same revision; otherwise the read
+    /// starts again, up to `attempts` times, and the last read is returned.
+    public static func consistently<Additions>(
+        snapshot: () -> ConsentSnapshot, attempts: Int = 4, additions: () -> Additions
+    ) -> (ConsentSnapshot, Additions) {
+        var before = snapshot()
+        var read = additions()
+        for _ in 1..<max(attempts, 1) {
+            let after = snapshot()
+            if after.revision == before.revision { return (before, read) }
+            before = after
+            read = additions()
+        }
+        return (before, read)
+    }
+
+    /// The `iab.disclosure` object: what ``IABPresentation`` gives the stock screens, so a
+    /// headless screen shows the same legal bases, providers and counts without computing them.
+    static func iabDisclosure(_ presentation: IABPresentation) -> JSONValue {
+        func ids(_ values: [Int]) -> JSONValue { .array(values.map { .integer(Int64($0)) }) }
+        let vendors = presentation.vendors.map { id, disclosure in
+            (String(id), JSONValue.object([
+                "consentPurposes": ids(disclosure.consentPurposes),
+                "consentRequiredPurposes": ids(disclosure.consentRequiredPurposes),
+                "legitimateInterestPurposes": ids(disclosure.legitimateInterestPurposes),
+                "legitimateInterestRequiredPurposes": ids(disclosure.legitimateInterestRequiredPurposes),
+                "notAllowedPurposes": ids(disclosure.notAllowedPurposes),
+            ]))
+        }
+        let purposes = presentation.declaredPurposeIds.map { id in
+            let counts = presentation.partnerCounts(purposeId: id)
+            return (String(id), JSONValue.object([
+                "consentPartnerCount": .integer(Int64(counts.consent)),
+                "legitimateInterestPartnerCount": .integer(Int64(counts.legitimateInterest)),
+            ]))
+        }
+        let summary = presentation.bannerSummary
+        return .object([
+            "adTechProviderPurposeIds": ids(presentation.adTechProviderPurposeIds),
+            "adTechProviders": presentation.adTechProviders.map { providers in
+                .array(providers.map { provider in
+                    .object([
+                        "id": .integer(Int64(provider.id)),
+                        "name": .string(provider.name),
+                        "policyUrl": .string(provider.policyUrl),
+                    ])
+                })
+            } ?? .null,
+            "bannerSummary": .object([
+                "displayItems": .array(summary.displayItems.map { .string($0) }),
+                "remainingCount": .integer(Int64(summary.remainingCount)),
+                "vendorCount": .integer(Int64(summary.vendorCount)),
+            ]),
+            "consentStorageMaxDays": presentation.consentStorageMaxDays.map { .integer(Int64($0)) } ?? .null,
+            "declaredPurposeIds": ids(presentation.declaredPurposeIds),
+            "declaredSpecialFeatureIds": ids(presentation.declaredSpecialFeatureIds),
+            "language": .string(presentation.language),
+            "purposes": .object(Dictionary(uniqueKeysWithValues: purposes)),
+            "vendors": .object(Dictionary(uniqueKeysWithValues: vendors)),
+        ])
+    }
+
+    /// The committed IAB decision as JavaScript reads it.
+    static func committedIAB(_ consent: IABCommittedConsent) -> JSONValue {
+        .object([
+            "addtlConsent": stringOrNull(consent.addtlConsent),
+            "choices": value(of: consent.choices) ?? .null,
+            "tcString": .string(consent.tcString),
+        ])
     }
 
     /// The `CommitResult` for `result`.
@@ -176,7 +370,6 @@ public enum C15tPayload {
             "subjectId": stringOrNull(snapshot.subject?.id),
             "queued": .bool(!rejected && result.status == .committed),
             "delivered": .bool(false),
-            "status": .string(result.status.rawValue),
         ]
         if let error = result.error {
             fields["reason"] = .string(error.code)
@@ -214,10 +407,25 @@ public enum C15tPayload {
     /// One field, because the arm is the whole answer. There is no consent field here and
     /// there never will be: the payload describes what the platform said, and a host that
     /// wants to know whether it may track has to ask c15t as well.
+    ///
+    /// `answeredAt` is when this SDK last saw an `authorized` or `denied` answer, in epoch
+    /// milliseconds. It is platform bookkeeping for the yearly re-ask, not consent, and it is
+    /// absent while Apple has no such answer on file.
     public static func trackingAuthorization(
-        _ status: C15tTrackingAuthorization
+        _ status: C15tTrackingAuthorization,
+        answeredAt: Date? = nil
     ) -> String {
-        encode(["status": .string(status.rawValue)])
+        var fields: [String: JSONValue] = ["status": .string(status.rawValue)]
+        if let answeredAt { fields["answeredAt"] = .integer(Int64((answeredAt.timeIntervalSince1970 * 1000).rounded())) }
+        return encode(fields)
+    }
+
+    /// Read `requestTrackingAuthorizationWithOptions`'s JSON options. Anything unreadable
+    /// asks for no Additional Information button.
+    public static func trackingRequestOffersAdditionalInformation(_ options: String) -> Bool {
+        guard let data = options.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
+        return object["additionalInformation"] as? Bool == true
     }
 
     /// The `TrackingRequestPayload` a tracking request resolves with.
@@ -265,6 +473,64 @@ public enum C15tPayload {
         ])
     }
 
+    /// The answer to `presentConsentPrompt` and `presentPreferences`, in the
+    /// `ConsentPresenterSession` shape `src/native/presenter.ts` reads.
+    public static func consentHostSession(_ session: ConsentHostSession) -> String {
+        switch session {
+        case let .presented(id, presentation):
+            return encode([
+                "sessionId": .string(id), "status": .string("presented"),
+                "presentation": .string(presentation.rawValue),
+            ])
+        case let .alreadyPresented(id, presentation):
+            return encode([
+                "sessionId": .string(id), "status": .string("already-presented"),
+                "presentation": .string(presentation.rawValue),
+            ])
+        case .notRequired:
+            return encode(["sessionId": .null, "status": .string("not-required")])
+        }
+    }
+
+    /// An `onConsentPresenterOutcome` event, in the `ConsentPresenterOutcome` shape.
+    public static func consentHostOutcome(_ outcome: ConsentHostOutcome) -> String {
+        let kind: String
+        switch outcome {
+        case .committed: kind = "committed"
+        case .acknowledged: kind = "acknowledged"
+        case .dismissed: kind = "dismissed"
+        case .unavailable: kind = "unavailable"
+        }
+        return encode([
+            "sessionId": .string(outcome.sessionID),
+            "kind": .string(kind),
+            "revision": .integer(Int64(outcome.revision)),
+        ])
+    }
+
+    /// An `onConsentPresenterPresented` event: a session is on screen.
+    public static func consentHostPresented(sessionID: String, presentation: ConsentHostPresentation, automatic: Bool) -> String {
+        encode([
+            "sessionId": .string(sessionID),
+            "presentation": .string(presentation.rawValue),
+            "automatic": .bool(automatic),
+        ])
+    }
+
+    /// An `onConsentPresenterUnavailable` event: an owed prompt has nowhere to show yet.
+    public static func presenterUnavailable(code: String, message: String) -> String {
+        encode(["code": .string(code), "message": .string(message)])
+    }
+
+    /// Read a `configureAutoPresent` body, the `NativeAutoPresentSettings` shape.
+    /// - Returns: The settings, or `nil` when `autoPresent` is not a boolean.
+    public static func autoPresentSettings(_ raw: String) -> (autoPresent: Bool, privacyPolicyURL: String?)? {
+        guard let data = raw.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let autoPresent = object["autoPresent"] as? Bool else { return nil }
+        return (autoPresent, object["privacyPolicyURL"] as? String)
+    }
+
     /// An `error` event, in the `NativeSnapshotError` shape.
     public static func errorEvent(code: String, message: String) -> String {
         encode([
@@ -278,30 +544,102 @@ public enum C15tPayload {
     /// Anything unreadable, or outside the three actions, returns `nil` and the caller
     /// answers `invalid-intent`. A commit is evidence, so a malformed one is refused
     /// rather than rounded to the nearest action.
+    /// Apply a `commit(intent)` body to `core` and encode the result.
+    ///
+    /// A draft names the snapshot revision it was built on, and the core refuses the
+    /// commit with `concurrent-change` if the record moved since: JavaScript reads a
+    /// cached snapshot, so only this check can see a decision recorded in between. A
+    /// `revision` that is not a whole number is refused as `invalid-intent` rather than
+    /// saved unchecked.
+    public static func commit(_ raw: String?, core: ConsentCore) -> String {
+        guard let parsed = parseCommitIntent(raw) else { return invalidIntent(raw: raw) }
+        var revision: Int?
+        if let value = parseObject(raw)?["revision"] {
+            guard let whole = value.intValue.flatMap({ Int(exactly: $0) }) else {
+                return invalidIntent(raw: raw)
+            }
+            revision = whole
+        }
+        // A headless draft may not carry a vendor signal the publisher's restrictions rule out.
+        // The stock screens never offer one, and the TC encoder would keep its bit. Read against
+        // the disclosure the draft was opened on; a newer one fails `concurrent-change` anyway.
+        if case let .iab(choices, _) = parsed, let presentation = core.iabPresentation(),
+           presentation.draft.revision == revision, !presentation.restrictionConflicts(choices).isEmpty {
+            return refused(reasonInvalidIABChoices, snapshot: core.snapshot())
+        }
+        return commitResult(core.save(parsed, expectedRevision: revision), snapshot: core.snapshot())
+    }
+
+    /// Reported for a headless TCF draft that contradicts a publisher restriction, the same code
+    /// the core uses for IDs and legal bases the list does not allow.
+    public static let reasonInvalidIABChoices = "invalid-iab-choices"
+
+    /// The failure shape for a commit the bridge refused before it reached the core.
+    static func refused(_ reason: String, snapshot: ConsentSnapshot) -> String {
+        encode([
+            "ok": .bool(false),
+            "revision": .null,
+            "confirmed": .array([]),
+            "subjectId": stringOrNull(snapshot.subject?.id),
+            "queued": .bool(false),
+            "delivered": .bool(false),
+            "reason": .string(reason),
+        ])
+    }
+
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {
         guard let body = parseObject(raw) else { return nil }
+        // `explicit` is `action`, `consents` and an optional `revision`; `iab` adds
+        // `choices`; `all` and `necessary` are `action` alone. Any other key, such as a
+        // `categories` scope or `consents` on a bulk action, is refused rather than
+        // dropped: dropping it would apply the action to the whole choice scope, which is
+        // not what the caller sent. `commit` reads `revision`.
+        let allowed: Set<String>
+        switch body["action"]?.stringValue {
+        case "explicit": allowed = ["action", "consents", "revision"]
+        case "iab": allowed = ["action", "choices", "consents", "revision"]
+        default: allowed = ["action"]
+        }
+        guard Set(body.keys).isSubset(of: allowed) else { return nil }
         switch body["action"]?.stringValue {
         case "all":
             return .all
         case "necessary":
             return .necessary
         case "explicit":
-            guard let consents = body["consents"]?.objectValue else { return nil }
-            var parsed: [OptionalConsentCategory: Bool] = [:]
-            for (name, value) in consents {
-                guard let category = OptionalConsentCategory(rawValue: name),
-                      let granted = value.boolValue
-                else {
-                    // `necessary` is nobody's choice, and an unknown category is not
-                    // one this build should invent a permission for.
-                    return nil
-                }
-                parsed[category] = granted
-            }
+            guard let consents = body["consents"]?.objectValue,
+                  let parsed = parseCategories(consents)
+            else { return nil }
             return .custom(parsed)
+        case "iab":
+            // A complete TCF draft from a headless screen. The core validates every ID
+            // and legal basis against the served list; this only refuses a body that is
+            // not the documented shape.
+            guard let raw = body["choices"], raw.objectValue != nil,
+                  let text = encodeValue(raw), let data = text.data(using: .utf8),
+                  let choices = try? JSONDecoder().decode(IABChoices.self, from: data),
+                  let consents = body["consents"]?.objectValue,
+                  let categories = parseCategories(consents)
+            else { return nil }
+            return .iab(choices, categories: categories)
         default:
             return nil
         }
+    }
+
+    private static func parseCategories(_ consents: [String: JSONValue]) -> [OptionalConsentCategory: Bool]? {
+        var parsed: [OptionalConsentCategory: Bool] = [:]
+        for (name, value) in consents {
+            guard let category = OptionalConsentCategory(rawValue: name),
+                  let granted = value.boolValue
+            else {
+                // `necessary` is nobody's choice, and an unknown category is not
+                // one this build should invent a permission for.
+                return nil
+            }
+            parsed[category] = granted
+        }
+        return parsed
     }
 
     /// Read a `NativeOverridesInput` into a complete override record.

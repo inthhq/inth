@@ -53,6 +53,7 @@
 		"generate:package-docs": "bun scripts/generate-package-docs.ts",
 		"generate:readmes": "tsx scripts/generate-readme.ts",
 		"generate:umbrella": "bun scripts/generate-umbrella-exports.ts",
+		"generate:webview-consent-scripts": "bun scripts/generate-webview-consent-scripts.ts",
 		"knip": "knip",
 		"lint": "turbo run lint && bun run lint:repo && bun run lint:testids",
 		"lint:docs": "bunx remark ./docs --ext mdx --output --use remark-mdx --use remark-frontmatter --use remark-preset-lint-recommended --use remark-preset-lint-consistent --use ./scripts/remark-lint-canonical-integrations.mjs",

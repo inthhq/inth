@@ -9,8 +9,12 @@ public enum ConsentPresenterOutcome: Sendable { case saved, dismissed }
 
 /// Owns one native presentation and its draft. Keep one instance for the host's lifetime.
 /// Storage work runs on a worker; observing and editing are confined to the main actor.
+///
+/// With ``autoPresent`` on, the presenter opens an owed prompt by itself once the core is ready,
+/// once per owed prompt: a prompt the person answered or dismissed stays closed until the policy,
+/// the reason or the requirement changes. With it off, nothing shows until ``presentPrompt()``.
 @MainActor
-public final class ConsentPresenter: ObservableObject, SnapshotObserver {
+public final class ConsentPresenter: ObservableObject {
     public let core: ConsentCore
     @Published public private(set) var snapshot: ConsentSnapshot
     @Published public private(set) var presentationID: UUID?
@@ -31,39 +35,61 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     @Published public var confirmDiscard = false
     public var onOutcome: ((ConsentPresenterOutcome) -> Void)?
     public var onAnnouncement: ((String) -> Void)?
+    /// A cover or sheet is on screen, including while it animates away after ``onOutcome``.
+    public private(set) var covering = false
+    /// Called once the cover or sheet has finished animating away. iOS will not show a system
+    /// alert, such as App Tracking Transparency, over a presentation that is still leaving.
+    public var onCoverDismissed: (() -> Void)?
     private var subscription: ConsentSubscription?
     private var baseRevision = 0
     private var seedCategories: [OptionalConsentCategory: Bool] = [:]
     private var seedChoices = IABChoices()
     private var fromFirstLayer = false
+    /// The owed prompt the person saw and closed, by its key. The key carries the core's
+    /// `promptOwedSince`, so a prompt owed again never matches it: nothing has to clear it.
     private var suppressedPrompt: String?
+    /// The open session shows the owed prompt (its first layer, or settings opened from it), not
+    /// standing settings.
+    private var sessionIsPrompt: Bool { presentationID != nil && (!preferences || fromFirstLayer) }
+    /// The session ``autoPresent`` opened, by its id, as opposed to one the app asked for.
+    private var automaticSession: UUID?
     private var lastIntent: Action?
     private var reloadAfterRefresh = false
-    private let automaticPresentation: Bool
+    /// The owed notice the host asked for while ``autoPresent`` is off, by its key. A later notice
+    /// needs its own request.
+    @Published private var requestedNotice: String? = nil
+    /// Open an owed prompt by itself. Turning it on presents a prompt that is already owed.
+    @Published public var autoPresent: Bool {
+        didSet { if autoPresent { presentIfOwed() } }
+    }
 
     public enum Action { case accept, reject, save, acknowledge }
 
     /// Attach to a bootstrapped core. The presenter never installs a second engine.
-    /// - Parameter core: Native authority shared by the app's SDK gates.
-    public init(core: ConsentCore, automaticPresentation: Bool = true) {
-        self.automaticPresentation = automaticPresentation
+    /// - Parameters:
+    ///   - core: Native authority shared by the app's SDK gates.
+    ///   - autoPresent: Open an owed prompt by itself. `false` waits for ``presentPrompt()``.
+    public init(core: ConsentCore, autoPresent: Bool = true) {
+        self.autoPresent = autoPresent
         self.core = core
         self.snapshot = core.snapshot()
-        self.subscription = core.onChange(self)
+        // Weak, because the handle owns this closure and the presenter owns the handle.
+        self.subscription = core.onChange { [weak self] snapshot in
+            Task { @MainActor [weak self] in self?.receive(snapshot) }
+        }
         receive(core.snapshot())
     }
 
     deinit { subscription?.cancel() }
 
-    nonisolated public func consentDidChange(_ snapshot: ConsentSnapshot) {
-        Task { @MainActor [weak self] in self?.receive(snapshot) }
-    }
-
+    /// Names the owed prompt. `promptOwedSince` moves whenever a prompt becomes owed again, so the
+    /// same requirement owed again is a new prompt even when the snapshots between were coalesced.
     private var promptKey: String {
-        "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? "")"
+        "\(snapshot.resolution.fingerprint ?? ""):\(snapshot.promptRequirement.kind.rawValue):\(snapshot.promptRequirement.reason?.rawValue ?? ""):\(snapshot.promptOwedSince.map { String($0) } ?? "")"
     }
 
-    private func receive(_ next: ConsentSnapshot) {
+    /// Apply a published snapshot. Internal so a test can hand it a snapshot directly.
+    func receive(_ next: ConsentSnapshot) {
         guard next.revision >= snapshot.revision else { return }
         let wasPending = snapshot.policyPending
         // The draft was already loaded from exactly this snapshot, so reloading it
@@ -81,18 +107,56 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             } else { loadDraft() }
             reloadAfterRefresh = listUnavailable
         }
-        if automaticPresentation, !next.policyPending, next.promptRequirement.kind == .choice,
-           presentationID == nil, suppressedPrompt != promptKey {
-            presentationID = UUID()
-            if preferences { preferences = false }
-            if errorCode != nil { errorCode = nil }
-            if failedAction != nil { failedAction = nil }
-            loadDraft()
-        }
+        presentIfOwed()
+    }
+
+    /// Open an owed prompt now if ``autoPresent`` says so. Idempotent. A host calls it before it
+    /// reports an outcome, so the prompt that follows is on screen first.
+    func presentIfOwed() {
+        guard autoPresent, snapshot.ready, !snapshot.policyPending, snapshot.promptRequirement.kind == .choice,
+              presentationID == nil, !pending, suppressedPrompt != promptKey else { return }
+        presentationID = UUID()
+        // Skip writes that change nothing: each one republishes the whole presenter.
+        if preferences { preferences = false }
+        if fromFirstLayer { fromFirstLayer = false }
+        if errorCode != nil { errorCode = nil }
+        if failedAction != nil { failedAction = nil }
+        loadDraft()
+        automaticSession = presentationID
+    }
+
+    /// End a session that opened by itself, because the host now drawing it opted out of
+    /// auto-present and never asked for it. Nothing was decided or dismissed, so it reports no
+    /// outcome and leaves the owed prompt owed: a host that auto-presents opens it again.
+    func withdrawAutomaticSession() {
+        guard !pending, let id = presentationID, id == automaticSession else { return }
+        presentationID = nil
+        confirmDiscard = false
+    }
+
+    /// End a session a host asked for but could not put on screen. Nothing was decided or
+    /// dismissed, so it reports no outcome.
+    func withdrawSession() {
+        guard !pending else { return }
+        if presentationID != nil { presentationID = nil }
+        if requestedNotice != nil { requestedNotice = nil }
+        confirmDiscard = false
+    }
+
+    /// Close the open session without a commit. Closing the prompt settles it; closing standing
+    /// settings does not, so an owed prompt they covered is presented now.
+    private func closeSession() {
+        if sessionIsPrompt { suppressedPrompt = promptKey }
+        // Closing a notice the host asked for ends that request; it stays owed for the next one.
+        if presentationID == nil, requestedNotice != nil { requestedNotice = nil }
+        presentationID = nil
+        onOutcome?(.dismissed)
+        presentIfOwed()
     }
 
     public var noticeVisible: Bool {
-        !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
+        snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.kind == .notice && presentationID == nil
+            && (autoPresent || requestedNotice == promptKey)
     }
     public var isDirty: Bool { categories != seedCategories || choices != seedChoices }
     /// Preferences were opened from the first layer, so closing them returns there.
@@ -109,12 +173,23 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         disclosure?.vendors[id]?.selectionStatus(vendorId: id, choices: choices) ?? .off
     }
     /// Human-readable summary of both permitted legal bases in the current draft, from the shared copy.
-    public func partnerStatus(_ id: Int) -> String {
-        switch partnerSelection(id) {
+    public func partnerStatus(_ id: Int) -> String { statusText(partnerSelection(id)) }
+    /// Whether a custom (non-IAB) partner's legal bases are off, partly on or on in the current draft.
+    public func customPartnerSelection(_ id: String) -> IABVendorSelectionStatus {
+        disclosure?.customVendors.first { $0.id == id }?.selectionStatus(choices: choices) ?? .off
+    }
+    /// The same summary for a custom partner.
+    public func customPartnerStatus(_ id: String) -> String { statusText(customPartnerSelection(id)) }
+    private func statusText(_ selection: IABVendorSelectionStatus) -> String {
+        switch selection {
         case .off: return iabCopy.appOff
         case .partial: return iabCopy.appPartlyOn
         case .on: return iabCopy.appOn
         }
+    }
+    /// One custom partner's page, or `nil` when it is not in the current disclosure.
+    func customVendor(_ id: String) -> IABCustomVendorContent? {
+        disclosure.flatMap { IABCustomVendorContent($0, id: id) }
     }
     /// How the open session is shown: the first layer, and preferences opened from it, cover
     /// the screen; standing preferences are a sheet. `nil` while nothing is open.
@@ -133,8 +208,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         let language = String(Locale.preferredLanguages.first?.prefix(2) ?? "en")
         return disclosure.flatMap { IABVendorContent($0, id: id, language: language) }
     }
-    /// The shared IAB copy in the served list's language.
-    var iabCopy: IABCopy { IABCopy.forLanguage(disclosure?.language ?? "en") }
+    /// The language every label is shown in. IAB mode follows the served list, English until it
+    /// loads; category mode follows the policy's translation language.
+    var copyLanguage: String { iab ? disclosure?.language ?? "en" : snapshot.overrides.language }
+    /// The shared IAB copy in ``copyLanguage``.
+    var iabCopy: IABCopy { IABCopy.forLanguage(copyLanguage) }
+    /// Category-mode copy in ``copyLanguage``. Hosts replace only the headline and introduction,
+    /// through the theme.
+    var copy: ConsentCopy { ConsentCopy.forLanguage(copyLanguage) }
     /// "Last changed" with the date in the copy's language, not the device's.
     func lastChanged(at epochMs: Int64) -> String {
         let copy = iabCopy
@@ -142,9 +223,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             .formatted(Date.FormatStyle(date: .abbreviated, time: .omitted).locale(Locale(identifier: copy.language)))
         return copy.format(copy.appLastChanged, ["date": date])
     }
-    /// Button labels: the IAB copy in IAB mode, the stock labels otherwise.
+    /// Button labels: the IAB copy in IAB mode, the category-mode copy otherwise.
     var decisionLabels: DecisionLabels {
-        guard iab, let disclosure else { return .standard }
+        guard iab, let disclosure else { return DecisionLabels(copy: copy) }
         return DecisionLabels(copy: IABCopy.forLanguage(disclosure.language))
     }
     public var offeredCategories: [ConsentCategory] { snapshot.consentCategories ?? [.necessary] }
@@ -153,11 +234,9 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     /// only on success or a reload.
     public var errorMessage: String? {
         guard let errorCode else { return nil }
-        if errorCode == "invalid-action-time" {
-            return "Couldn't save because this device's date and time look wrong. Fix them in Settings first."
-        }
-        if case .acknowledge = lastIntent { return "Couldn't dismiss this notice. Nothing changed on this device." }
-        return "Couldn't save your choices. Nothing changed on this device."
+        if errorCode == "invalid-action-time" { return copy.actionTimeInvalid }
+        if case .acknowledge = lastIntent { return copy.dismissFailed }
+        return copy.saveFailed
     }
     /// Google's Additional Consent only takes effect while TCF purposes 1, 3 and 4 are consented;
     /// the core records every provider as off otherwise. The provider page says so in those
@@ -173,11 +252,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         fromFirstLayer = false
         loadDraft()
     }
-    /// Open an owed choice prompt. Existing sessions keep their identity and draft.
+    /// Open an owed prompt. An owed notice shows as the notice card. Existing sessions keep
+    /// their identity and draft.
     public func presentPrompt() {
         guard presentationID == nil, !pending else { return }
         snapshot = core.snapshot()
-        guard !snapshot.policyPending, snapshot.promptRequirement.kind == .choice else { return }
+        guard !snapshot.policyPending else { return }
+        if snapshot.promptRequirement.kind == .notice { requestedNotice = promptKey; return }
+        guard snapshot.promptRequirement.kind == .choice else { return }
         presentationID = UUID()
         preferences = false
         fromFirstLayer = false
@@ -245,6 +327,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
         edit(purpose ? \.purposeLegitimateInterests : \.vendorLegitimateInterests, id: id, enabled: enabled)
         edit(purpose ? \.purposeObjections : \.vendorObjections, id: id, enabled: !enabled)
     }
+    /// Grant or withdraw a custom partner's consent or legitimate interest. Turning legitimate
+    /// interest off is the objection; custom partners have no separate objection list.
+    public func editCustom(_ key: WritableKeyPath<IABChoices, [String]>, id: String, enabled: Bool) {
+        guard !pending, !stale else { return }
+        var values = Set(choices[keyPath: key])
+        if enabled { values.insert(id) } else { values.remove(id) }
+        choices[keyPath: key] = values.sorted()
+    }
     public func editProvider(id: Int, enabled: Bool) {
         guard !pending, !stale else { return }
         var ids = Set(choices.adTechProviderConsents ?? [])
@@ -263,10 +353,13 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             fromFirstLayer = false
             loadDraft()
         } else {
-            suppressedPrompt = promptKey
-            presentationID = nil
-            onOutcome?(.dismissed)
+            closeSession()
         }
+    }
+    func coverAppeared() { covering = true }
+    func coverDismissed() {
+        covering = false
+        onCoverDismissed?()
     }
     public func retry() {
         guard let lastIntent else { return }
@@ -281,12 +374,14 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
     public func commit(_ action: Action) {
         guard !pending, !stale else { return }
         if case .save = action, !isDirty, snapshot.promptRequirement.kind == .none {
-            suppressedPrompt = promptKey
-            presentationID = nil
-            onOutcome?(.dismissed)
+            closeSession()
             return
         }
         let session = presentationID
+        // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
+        let handled = promptKey
+        // A notice is shown without a session; a session shows the prompt or standing settings.
+        let shownPrompt = session == nil || sessionIsPrompt
         let authority = core
         let revision = baseRevision
         let categoryDraft = categories
@@ -316,21 +411,23 @@ public final class ConsentPresenter: ObservableObject, SnapshotObserver {
             pending = false
             pendingAction = nil
             showProgress = false
-            guard presentationID == session else { return }
+            guard presentationID == session else { presentIfOwed(); return }
             snapshot = authority.snapshot()
             if outcome.0 {
                 errorCode = nil
                 failedAction = nil
-                suppressedPrompt = promptKey
+                if shownPrompt { suppressedPrompt = handled }
                 presentationID = nil
-                if case .acknowledge = action { onAnnouncement?("Privacy notice acknowledged") }
-                else { onAnnouncement?("Privacy choices saved") }
+                if case .acknowledge = action { onAnnouncement?(copy.noticeAcknowledged) }
+                else { onAnnouncement?(copy.choicesSaved) }
                 onOutcome?(.saved)
+                // Snapshots that arrived while the commit ran were not acted on; the current one is.
+                presentIfOwed()
             } else {
                 errorCode = outcome.1 ?? "save-rejected"
                 failedAction = action
                 stale = errorCode == "concurrent-change"
-                onAnnouncement?(stale ? iabCopy.appSettingsChanged : errorMessage ?? "Couldn't save your choices.")
+                onAnnouncement?(stale ? iabCopy.appSettingsChanged : errorMessage ?? copy.saveFailed)
             }
         }
     }

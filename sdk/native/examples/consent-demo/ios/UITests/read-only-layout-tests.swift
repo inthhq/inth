@@ -8,11 +8,11 @@ final class ReadOnlyLayoutTests: XCTestCase {
     override func setUp() { continueAfterFailure = false }
 
     func testRequiredCategoryKeepsHorizontalStatusAtDefaultText() throws {
-        try checkCategory("necessary", title: ["Strictly", "necessary"], status: "Always on", accessibility: false)
+        try checkCategory("necessary", title: ["Strictly", "Necessary"], status: "Always on", accessibility: false)
     }
 
     func testRequiredCategoryWordsRemainReadableAtLargestText() throws {
-        try checkCategory("necessary", title: ["Strictly", "necessary"], status: "Always on", accessibility: true)
+        try checkCategory("necessary", title: ["Strictly", "Necessary"], status: "Always on", accessibility: true)
     }
 
     func testRestrictedCategoryPutsStatusAfterItsLabelAtLargestText() throws {

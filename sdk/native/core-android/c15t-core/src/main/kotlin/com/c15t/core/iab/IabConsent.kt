@@ -36,7 +36,24 @@ data class IabChoices(
 	val publisherLegitimateInterests: List<Int> = emptyList(),
 	val publisherCustomConsents: List<Int> = emptyList(),
 	val publisherCustomLegitimateInterests: List<Int> = emptyList(),
-)
+	/** Custom (non-IAB) vendors with consent, by [IabCustomVendor.id]. Never in the TC String. */
+	val customVendorConsents: List<String> = emptyList(),
+	/** Custom vendors whose legitimate interest stands. One not listed is objected to. */
+	val customVendorLegitimateInterests: List<String> = emptyList(),
+) {
+	/**
+	 * The same choices with custom vendor grants kept only for vendors still in [vendors] and still
+	 * declaring that basis, as the web restores its receipt against the current list.
+	 */
+	internal fun keepingCustomVendors(vendors: List<IabCustomVendor>): IabChoices {
+		val consent = vendors.filter { it.purposes.isNotEmpty() }.map { it.id }.toSet()
+		val interest = vendors.filter { it.legIntPurposes.isNotEmpty() }.map { it.id }.toSet()
+		return copy(
+			customVendorConsents = customVendorConsents.filter { it in consent },
+			customVendorLegitimateInterests = customVendorLegitimateInterests.filter { it in interest },
+		)
+	}
+}
 
 /** One durable native IAB decision, read without a JS runtime. */
 @Serializable
@@ -83,6 +100,7 @@ internal object IabAuthority {
 		actionAt: Long,
 		previous: IabCommittedConsent?,
 		additionalConsentList: AdditionalConsentList? = null,
+		customVendors: List<IabCustomVendor> = emptyList(),
 	): IabCommittedConsent {
 		fun ids(values: List<Int>, allowed: Set<Int>) {
 			require(values.size == values.toSet().size && allowed.containsAll(values))
@@ -114,6 +132,13 @@ internal object IabAuthority {
 		ids(requested.vendorLegitimateInterests, vendors)
 		ids(requested.vendorObjections, vendors)
 		ids(requested.specialFeatureOptIns, features)
+		// Custom vendors: a grant only on a basis the vendor declares. Kept beside the TC String, never
+		// in it, as the web keeps them in its authority receipt.
+		fun names(values: List<String>, allowed: Set<String>) {
+			require(values.size == values.toSet().size && allowed.containsAll(values))
+		}
+		names(requested.customVendorConsents, customVendors.filter { it.purposes.isNotEmpty() }.map { it.id }.toSet())
+		names(requested.customVendorLegitimateInterests, customVendors.filter { it.legIntPurposes.isNotEmpty() }.map { it.id }.toSet())
 		ids(requested.publisherConsents, purposes)
 		ids(requested.publisherLegitimateInterests, purposes - neverLI)
 		ids(requested.publisherCustomConsents, (1..c.numCustomPurposes).toSet())
@@ -200,6 +225,8 @@ internal object IabAuthority {
 					if (requested.purposeConsents.containsAll(listOf(1, 3, 4))) it.sorted() else emptyList()
 				},				vendorConsents = prepared.vendorConsents.sorted(),
 				vendorLegitimateInterests = prepared.vendorLegitimateInterests.sorted(),
+				customVendorConsents = requested.customVendorConsents.sorted(),
+				customVendorLegitimateInterests = requested.customVendorLegitimateInterests.sorted(),
 			)
 		return IabCommittedConsent(
 				c,
@@ -225,12 +252,21 @@ internal object IabAuthority {
 	 * 5(3), 5(6) and 5(8)). Listed ad tech providers add purposes 1, 3 and 4. Publisher purposes are
 	 * never shown, so they stay unset, as on the web.
 	 */
-	fun accepting(gvl: GlobalVendorList, c: IabConfiguration, adTechProviders: List<Long>? = null): IabChoices {
+	fun accepting(
+		gvl: GlobalVendorList,
+		c: IabConfiguration,
+		adTechProviders: List<Long>? = null,
+		customVendors: List<IabCustomVendor> = emptyList(),
+	): IabChoices {
 		val disclosures = gvl.vendors.filterValues { it.deletedDate.isNullOrEmpty() }.toSortedMap()
 			.map { (id, vendor) -> id to c.disclosure(id, vendor) }
+		// Custom vendors count as the web's `applyBlanket` counts them: their purposes, their
+		// legitimate-interest purposes TCF allows, and their special features.
 		val consent = disclosures.flatMap { it.second.consentPurposes }.toSet() +
-			if (adTechProviders.isNullOrEmpty()) emptySet() else adTechProviderPurposeIds
-		val interest = disclosures.flatMap { it.second.legitimateInterestPurposes }.toSet()
+			(if (adTechProviders.isNullOrEmpty()) emptySet() else adTechProviderPurposeIds) +
+			customVendors.flatMap { it.purposes }
+		val interest = disclosures.flatMap { it.second.legitimateInterestPurposes }.toSet() +
+			customVendors.flatMap { it.legIntPurposes }.filter { it !in neverLI }
 		val purposes = gvl.purposes.keys.filter { it in 1..24 }.sorted()
 		return IabChoices(
 			adTechProviderConsents = adTechProviders,
@@ -238,7 +274,9 @@ internal object IabAuthority {
 			purposeLegitimateInterests = purposes.filter { it in interest },
 			vendorConsents = disclosures.filter { it.second.consentPurposes.isNotEmpty() }.map { it.first },
 			vendorLegitimateInterests = disclosures.filter { it.second.legitimateInterestPurposes.isNotEmpty() }.map { it.first },
-			specialFeatureOptIns = gvl.declaredSpecialFeatureIds(),
+			specialFeatureOptIns = gvl.declaredSpecialFeatureIds(customVendors),
+			customVendorConsents = customVendors.filter { it.purposes.isNotEmpty() }.map { it.id }.sorted(),
+			customVendorLegitimateInterests = customVendors.filter { it.legIntPurposes.isNotEmpty() }.map { it.id }.sorted(),
 		)
 	}
 }
@@ -284,6 +322,8 @@ internal fun IabChoices.detached(): IabChoices =
 		publisherLegitimateInterests = publisherLegitimateInterests.toList(),
 		publisherCustomConsents = publisherCustomConsents.toList(),
 		publisherCustomLegitimateInterests = publisherCustomLegitimateInterests.toList(),
+		customVendorConsents = customVendorConsents.toList(),
+		customVendorLegitimateInterests = customVendorLegitimateInterests.toList(),
 	)
 
 internal fun IabCommittedConsent.detached(): IabCommittedConsent =

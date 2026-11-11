@@ -29,7 +29,7 @@ Read `C15t.isAllowed(.measurement)` or `C15t.decision(for: .measurement)` before
 
 ## Present native screens
 
-Retain one `ConsentPresenter(core:)` on the main actor and apply the `.c15tConsent(presenter:privacyPolicyURL:theme:)` modifier to your SwiftUI host. UIKit can host that SwiftUI tree. The presenter observes the same native core, owns drafts and automatically presents an owed choice by default. `ConsentTheme` configures the [native appearance](/docs/frameworks/react-native/customize). An IAB host must supply native CMP/publisher settings and current disclosures before accepting vendor decisions.
+Apply `.c15tConsent(privacyPolicyURL:theme:autoPresent:)` to your SwiftUI root, or make `ConsentRootViewController(root:privacyPolicyURL:)` the window root in UIKit. Both attach to the installed core through the shared `ConsentPrompt`, which owns drafts and presents an owed choice by default. `autoPresent: false` leaves presenting to `ConsentPrompt.current?.presentPrompt()`. When native code presents the prompt, pass `autoPresent={false}` to the JavaScript `ConsentProvider` so only one side presents it. `ConsentTheme` configures the [native appearance](/docs/frameworks/react-native/customize). An IAB host must supply native CMP/publisher settings and current disclosures before accepting vendor decisions.
 
 ## Attach to an RN CocoaPods host
 
@@ -42,6 +42,6 @@ copies would create competing process authorities.
 
 ## Use ATT and custom services separately
 
-`C15tApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes c15t consent. Platform services own foreground/reachability subscriptions; `C15tApple.shutdown()` tears down those subscriptions without clearing consent.
+`C15tApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes c15t consent. The stock prompt asks for ATT after consent by default, only with marketing granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground/reachability subscriptions; `C15tApple.shutdown()` tears down those subscriptions without clearing consent.
 
 Advanced self-hosted/custom `CoreConfig` installation remains available. Raw `CoreConfig()` uses memory/no transport and is not a production installation recipe. Custom stores must distinguish missing values from operational read failures.

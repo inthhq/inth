@@ -19,7 +19,7 @@ private typealias C15tExpandedRequestFunction = @convention(c) (
     AnyObject,
     Selector,
     ObjCBool,
-    @convention(block) () -> Void,
+    (@convention(block) () -> Void)?,
     @convention(block) (Int) -> Void
 ) -> Void
 #endif
@@ -99,12 +99,12 @@ public enum C15tTracking {
     /// Spelled by hand because `#selector` cannot reach a declaration this build never saw:
     /// the request arrives with iOS and iPadOS 27.2, newer than the SDK the pod compiles
     /// against. The string is Apple's own, from the symbol identifier behind
-    /// `requestTrackingAuthorization(usingExpandedInterface:additionalInformationAction:completionHandler:)`.
+    /// `requestTrackingAuthorization(preferExpandedInterface:additionalInformationAction:completionHandler:)`.
     /// It is a public constant and the test target pins it, so if Apple renames the method
     /// before it leaves beta the failure is a red test rather than a permission prompt that
     /// quietly never appears.
     public static let expandedRequestSelectorName =
-        "requestTrackingAuthorizationUsingExpandedInterface:additionalInformationAction:completionHandler:"
+        "requestTrackingAuthorizationPreferringExpandedInterface:additionalInformationAction:completionHandler:"
 
     #if canImport(ObjectiveC)
     /// The selector ``expandedRequestSelectorName`` names.
@@ -129,9 +129,15 @@ public enum C15tTracking {
     /// specific EU country or region, and reads none of that from this process. A `true` here
     /// means the call exists, and the call is what asks Apple the regional question.
     public static func expandedInterfaceAvailable() -> Bool {
+        expandedInterfaceAvailable(on: trackingManagerClass())
+    }
+
+    /// ``expandedInterfaceAvailable()`` asked of `managerClass`. Internal so a test can hand it
+    /// a class of its own instead of registering a fake `ATTrackingManager`.
+    static func expandedInterfaceAvailable(on managerClass: AnyClass?) -> Bool {
         #if canImport(ObjectiveC)
-        guard let trackingManager = trackingManagerClass() else { return false }
-        return (trackingManager as AnyObject).responds(to: expandedRequestSelector)
+        guard let managerClass else { return false }
+        return (managerClass as AnyObject).responds(to: expandedRequestSelector)
         #else
         return false
         #endif
@@ -141,10 +147,11 @@ public enum C15tTracking {
     ///
     /// - Parameters:
     ///   - preferExpandedInterface: Passed straight through as Apple's
-    ///     `usingExpandedInterface`. The full-page sheet Apple shows for it depends on
+    ///     `preferExpandedInterface`. The full-page sheet Apple shows for it depends on
     ///     `NSUserTrackingMarkdownUsageDescription` being in the binary, and Apple may show
     ///     the plain alert anyway outside the EU, so this is a preference and not a promise.
     ///   - additionalInformationSelected: Runs when the subject taps Additional Information.
+    ///     `nil` passes no action, so Apple shows no button: nothing would handle the tap.
     ///     Apple closes its sheet without recording an answer, runs this, and still calls the
     ///     completion handler with `notDetermined`, so the caller must treat its own closure
     ///     as a pause and not as a refusal.
@@ -156,15 +163,37 @@ public enum C15tTracking {
     ///   first one and not the second.
     public static func requestExpandedPrompt(
         preferExpandedInterface: Bool,
-        additionalInformationSelected: @escaping () -> Void,
+        additionalInformationSelected: (() -> Void)?,
+        completion: @escaping (C15tTrackingPlatformStatus?) -> Void
+    ) -> Bool {
+        requestExpandedPrompt(on: trackingManagerClass(), preferExpandedInterface: preferExpandedInterface,
+                              additionalInformationSelected: additionalInformationSelected, completion: completion)
+    }
+
+    /// ``requestExpandedPrompt(preferExpandedInterface:additionalInformationSelected:completion:)``
+    /// made on `managerClass`. Internal so a test can hand it a class of its own.
+    static func requestExpandedPrompt(
+        on managerClass: AnyClass?,
+        preferExpandedInterface: Bool,
+        additionalInformationSelected: (() -> Void)?,
         completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool {
         #if canImport(ObjectiveC)
-        guard let trackingManager = trackingManagerClass() else { return false }
+        guard let managerClass else { return false }
+        let trackingManager: AnyObject = managerClass
         let selector = expandedRequestSelector
-        guard let isa = object_getClass(trackingManager),
-              let method = class_getClassMethod(isa, selector) else { return false }
+        // A class method is looked up on the class itself. Passing its metaclass happens to work
+        // too, because the runtime treats a metaclass as its own meta, but that is not the API.
+        guard let method = class_getClassMethod(managerClass, selector) else { return false }
+        // Receiver, selector and the three parameters. Anything else is not the method this
+        // cast describes, and calling it through the cast would be undefined, so fall back.
+        guard method_getNumberOfArguments(method) == 5 else { return false }
 
+        // `nil` reaches Apple as a nil block, which is what keeps the button off its sheet.
+        let action: (@convention(block) () -> Void)? = additionalInformationSelected.map { selected in
+            let block: @convention(block) () -> Void = { selected() }
+            return block
+        }
         let implementation = method_getImplementation(method)
         let request = unsafeBitCast(implementation, to: C15tExpandedRequestFunction.self)
 
@@ -175,7 +204,7 @@ public enum C15tTracking {
                 trackingManager,
                 selector,
                 ObjCBool(preferExpandedInterface),
-                { additionalInformationSelected() },
+                action,
                 { raw in completion(C15tTrackingPlatformStatus(rawValue: raw)) }
             )
         }
@@ -190,7 +219,7 @@ public enum C15tTracking {
     /// Looked up by name so this file needs no link-time dependency for the expanded path:
     /// the plain reads already import the framework where the SDK has it, and the expanded
     /// call works whether or not this build ever saw that header.
-    private static func trackingManagerClass() -> AnyObject? {
+    private static func trackingManagerClass() -> AnyClass? {
         NSClassFromString("ATTrackingManager")
     }
 

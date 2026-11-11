@@ -182,14 +182,14 @@ export const ConsentSwitch = ({
 	// even while a smaller disabled one is drawn, so an immovable category stops at
 	// exactly the point a movable one does.
 	const trackColor = value
-		? theme.colors.switchTrackOn
+		? theme.colors.switchTrackActive
 		: theme.colors.switchTrack;
 	const size = disabled ? THUMB_SIZE_DISABLED : thumb;
 
 	const thumbStyle: ViewStyle = {
 		alignItems: 'center',
 		backgroundColor: disabled
-			? theme.colors.surfaceRaised
+			? theme.colors.surfaceHover
 			: theme.colors.switchThumb,
 		borderRadius: size / 2,
 		height: size,
@@ -215,7 +215,7 @@ export const ConsentSwitch = ({
 					track,
 					{
 						backgroundColor: value
-							? theme.colors.switchTrackOn
+							? theme.colors.switchTrackActive
 							: theme.colors.switchTrack,
 						opacity: disabled ? 0.4 : 1,
 					},

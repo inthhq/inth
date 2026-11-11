@@ -26,7 +26,6 @@ class C15tChangePumpTest {
 		kernel.bootstrap()
 		val sink = RecordingSink()
 		val pump = C15tChangePump(sink)
-		// Held in a field-like local: the core keeps observers weakly by contract.
 		val observer: (ConsentSnapshot) -> Unit = { pump.onSnapshot(it) }
 		val subscription: Subscription = kernel.onChange(observer)
 

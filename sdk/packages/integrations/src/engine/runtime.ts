@@ -10,6 +10,7 @@ import { inlineStepsStart } from '#inline-start';
 
 import { RUNTIME_VALUE_KIND } from '../types';
 import type { ManifestStep, ResolvedManifest, RuntimeValue } from '../types';
+import { mapConsentState } from './consent-mapping';
 
 type ManifestLifecycleCallback = Exclude<ScriptLifecycleCallback, 'onError'>;
 
@@ -607,22 +608,6 @@ const executePhaseSteps = function executePhaseSteps(
 		scriptId: context.scriptId,
 		source: 'manifest-runtime',
 	});
-};
-
-const mapConsentState = function mapConsentState(
-	mapping: Record<string, string[]>,
-	consents: ConsentState
-): Record<string, 'granted' | 'denied'> {
-	const result: Record<string, 'granted' | 'denied'> = {};
-
-	for (const [c15tCategory, vendorTypes] of Object.entries(mapping)) {
-		const isGranted = (consents as Record<string, boolean>)[c15tCategory];
-		for (const vendorType of vendorTypes) {
-			result[vendorType] = isGranted ? 'granted' : 'denied';
-		}
-	}
-
-	return result;
 };
 
 const partitionConsentIds = function partitionConsentIds(

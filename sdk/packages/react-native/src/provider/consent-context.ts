@@ -20,7 +20,7 @@ export const ConsentClientContext = createContext<ConsentClient | null>(null);
 /**
  * Read the client from context.
  *
- * @returns The client the nearest {@link C15tProvider} installed.
+ * @returns The client the nearest {@link ConsentProvider} installed.
  * @throws {Error} When no provider is mounted, because a hook that quietly
  *   returned a deny-all snapshot would look like a consent bug rather than a
  *   wiring mistake.
@@ -30,7 +30,7 @@ export const useConsentClient = function useConsentClient(): ConsentClient {
 
 	if (client === null) {
 		throw new Error(
-			'@c15t/react-native hooks need a <C15tProvider> above them in the tree. Render <C15tProvider> once, near the root of your app, and mount the consent UI inside it.'
+			'@c15t/react-native hooks need a <ConsentProvider> above them in the tree. Render <ConsentProvider> once, near the root of your app, and mount the consent UI inside it.'
 		);
 	}
 

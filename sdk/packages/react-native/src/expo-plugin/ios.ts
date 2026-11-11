@@ -10,11 +10,15 @@ import type {
 } from '@expo/config-plugins';
 
 import { iosConfig } from './config-plugins';
-import { IOS_IAB_PLIST_KEYS, IOS_PLIST_KEY } from './constants';
+import {
+	IOS_GPP_PLIST_KEYS,
+	IOS_IAB_PLIST_KEYS,
+	IOS_PLIST_KEY,
+} from './constants';
 import { C15tPluginError } from './errors';
 import { IOS_TRANSPORT_MODE } from './params';
 import type { ResolvedC15tParams } from './params';
-import { POLICY_RESOURCE_NAME } from './policy-resource';
+import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
 
 const minimumDeploymentTarget = (
 	value: string | undefined,
@@ -126,6 +130,9 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 	if (params.policyResource !== null) {
 		entries[IOS_PLIST_KEY.policyResource] = POLICY_RESOURCE_NAME;
 	}
+	if (params.policyRules !== null) {
+		entries[IOS_PLIST_KEY.policyRules] = POLICY_RULES_NAME;
+	}
 	if (params.backendURL !== null) {
 		entries[IOS_PLIST_KEY.backendURL] = params.backendURL;
 	}
@@ -160,7 +167,25 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 		}
 	}
 	if (params.forceGPC) {
-		entries[IOS_PLIST_KEY.gpc] = true;
+		entries[IOS_PLIST_KEY.forceGPC] = true;
+	}
+	// The bridge's `declaredGPP` reads these. Absent keys leave GPP off, and an
+	// absent option keeps the core's default.
+	if (params.gpp !== null) {
+		entries[IOS_PLIST_KEY.gpp] = true;
+		if (params.gpp.mspaMode !== null) {
+			entries[IOS_PLIST_KEY.gppMspaMode] = params.gpp.mspaMode;
+		}
+		// Written whenever the app set the option, as an array, so `[]` stays
+		// an empty array the bridge reads as "no category drives the opt-outs".
+		if (params.gpp.optOutCategories !== null) {
+			entries[IOS_PLIST_KEY.gppOptOutCategories] = [
+				...params.gpp.optOutCategories,
+			];
+		}
+		if (!params.gpp.tcf) {
+			entries[IOS_PLIST_KEY.gppTCF] = false;
+		}
 	}
 	// Only the opt-out is worth recording; on is the bridge's own default.
 	if (!params.autoBootstrap) {
@@ -261,9 +286,9 @@ export const applyInfoPlist = function applyInfoPlist(
 	infoPlist: InfoPlist
 ): InfoPlist {
 	const next: InfoPlist = { ...infoPlist };
-	// The plugin owns every IAB key. Clear them first, so a removed `iab`
-	// option or `consentScreen` leaves no earlier CMP identity behind.
-	for (const key of IOS_IAB_PLIST_KEYS) {
+	// The plugin owns every IAB and GPP key. Clear them first, so a removed
+	// `iab` or `gpp` option leaves no earlier CMP identity or GPP switch behind.
+	for (const key of [...IOS_IAB_PLIST_KEYS, ...IOS_GPP_PLIST_KEYS]) {
 		Reflect.deleteProperty(next, key);
 	}
 	Object.assign(next, buildInfoPlistEntries(params));
@@ -272,6 +297,12 @@ export const applyInfoPlist = function applyInfoPlist(
 		next[IOS_PLIST_KEY.policyResource] === POLICY_RESOURCE_NAME
 	) {
 		Reflect.deleteProperty(next, IOS_PLIST_KEY.policyResource);
+	}
+	if (
+		params.policyRules === null &&
+		next[IOS_PLIST_KEY.policyRules] === POLICY_RULES_NAME
+	) {
+		Reflect.deleteProperty(next, IOS_PLIST_KEY.policyRules);
 	}
 
 	const att = params.appTrackingTransparency;

@@ -37,6 +37,13 @@ data class MappedInit(
 	 * served from a wire it can no longer represent.
 	 */
 	val policyUnreadable: Boolean = false,
+	/**
+	 * `true` when the answer was worked out on the device, as the in-code policy is. No
+	 * later `/init` will revise it, so it replaces the policy in force even when it is a
+	 * failure: a device under a local policy that cannot answer a location fails closed
+	 * instead of keeping the last rule's grants.
+	 */
+	val isFinal: Boolean = false,
 	val subjectId: String? = null,
 	val location: ConsentLocation? = null,
 	val resolvedOverrides: KernelOverrides? = null,
@@ -62,7 +69,7 @@ data class MappedInit(
 	 *
 	 * It is null in the third case by construction, and that costs nothing: this field never takes
 	 * anything away. The kernel keeps the last list it accepted across a list-less or failed `/init`,
-	 * for the reason written at [com.c15t.core.C15tKernel.vendorList], so a device that has already
+	 * for the reason written at [com.c15t.core.ConsentCore.vendorList], so a device that has already
 	 * drawn purpose names off a list keeps being able to say who they belong to. Reading this field
 	 * as "install it, or clear what you have" would be the bug that comment is there to prevent.
 	 *
@@ -73,6 +80,10 @@ data class MappedInit(
 	val gvl: GlobalVendorList? = null,
     val adTechProviders: List<AdTechProvider>? = null,
     val adTechProvidersInvalid: Boolean = false,
+    /** `/init`'s `customVendors`, or null when the key is absent, which keeps the list held. */
+    val customVendors: List<com.c15t.core.iab.IabCustomVendor>? = null,
+    /** A `customVendors` value that is not a readable list. The core then holds none. */
+    val customVendorsInvalid: Boolean = false,
 	val error: KernelError? = null,
 )
 
@@ -174,6 +185,8 @@ object InitMapper {
             adTechProvidersInvalid = body?.get("adTechProviders")?.let {
                 it != JsonNull && AdditionalConsent.providers(it) == null
             } ?: false,
+            customVendors = com.c15t.core.iab.IabCustomVendor.list(body?.get("customVendors")),
+            customVendorsInvalid = body?.get("customVendors")?.let { com.c15t.core.iab.IabCustomVendor.list(it) == null } ?: false,
 			error = error,
 		)
 	}

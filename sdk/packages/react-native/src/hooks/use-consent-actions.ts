@@ -2,9 +2,11 @@
  * Forward subject decisions to the native core.
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
+import { useConsentDraftStore } from '../draft/consent-draft-provider';
 import type {
+	CommitIntent,
 	CommitResult,
 	NativeOverridesInput,
 	TrackingAuthorization,
@@ -13,56 +15,20 @@ import type { OptionalConsentCategory } from '../protocol/vocabulary';
 import { useConsentClient } from '../provider/consent-context';
 
 /**
- * The actions a consent surface can take.
+ * The commands a consent surface can take that `@c15t/react` has no hook for.
+ *
+ * Saving, identifying, overrides and notice dismissal have their own hooks with
+ * the web names: {@link useSaveConsents}, {@link useIdentify},
+ * {@link useSetOverrides} and {@link useDismissNotice}.
  *
  * The object is stable for the life of the provider, so it is safe in a
  * dependency list or a memoized component.
  */
 export interface ConsentActions {
 	/**
-	 * Record an explicit per-category choice, the shape a preference centre
-	 * saves.
-	 *
-	 * Only the categories you pass are written. Omitted categories keep their
-	 * stored receipts, which is what stops a preference-centre save from
-	 * renewing a consent the subject never looked at.
-	 *
-	 * @param consents - Per-category decision.
-	 * @returns The local commit outcome. Check `ok` before treating the action as
-	 *   saved. `ok: true, queued: true` is durable local success. Delivery is separate.
-	 */
-	save: (
-		consents?: Readonly<Partial<Record<OptionalConsentCategory, boolean>>>
-	) => Promise<CommitResult>;
-	/**
-	 * Grant every category in the policy scope.
-	 *
-	 * @returns The local commit outcome, including `ok: false` for a refused save.
-	 */
-	acceptAll: () => Promise<CommitResult>;
-	/**
-	 * Grant necessary only.
-	 *
-	 * @returns The local commit outcome, including `ok: false` for a refused save.
-	 */
-	rejectAll: () => Promise<CommitResult>;
-	/**
-	 * Record that the current notice was dismissed.
-	 *
-	 * Local and synchronous: a notice is an acknowledgement, not a written
-	 * consent record, so nothing is sent to the backend.
-	 */
-	dismissNotice: () => void;
-	/**
 	 * Re-resolve policy, re-evaluate, and retry the offline queue.
 	 */
 	refresh: () => Promise<void>;
-	/**
-	 * Attach an external id and load that subject's stored record.
-	 *
-	 * @param externalId - Id from the app's own account system.
-	 */
-	identify: (externalId: string) => Promise<void>;
 	/**
 	 * Detach the external id. Consent stays with the c15t subject id, so
 	 * signing out does not reset consent.
@@ -112,21 +78,10 @@ export interface ConsentActions {
 	 * @returns The platform arm after the request settled.
 	 */
 	requestTrackingAuthorization: () => Promise<TrackingAuthorization>;
-	/**
-	 * Pin country, region, language, or publisher test mode.
-	 *
-	 * Useful for a debug menu and for review-gated builds that must evaluate a
-	 * specific region's policy. Overrides change which rule matches; they never
-	 * create a consent record.
-	 *
-	 * @param overrides - Fields to change; omitted fields keep their value, and
-	 *   an explicit `null` clears one.
-	 */
-	setOverrides: (overrides: NativeOverridesInput) => Promise<void>;
 }
 
 /**
- * Get the actions for the mounted native core.
+ * Get the commands for the mounted native core that web has no hook for.
  *
  * @returns A stable action object.
  */
@@ -135,22 +90,136 @@ export const useConsentActions = function useConsentActions(): ConsentActions {
 
 	return useMemo(
 		() => ({
-			acceptAll: () => client.commit({ action: 'all' }),
-			dismissNotice: () => {
-				client.dismissNotice();
-			},
-			identify: (externalId: string) => client.identify(externalId),
 			logout: () => client.logout(),
 			refresh: () => client.refresh(),
-			rejectAll: () => client.commit({ action: 'necessary' }),
 			requestTrackingAuthorization: () => client.requestTrackingAuthorization(),
 			reset: () => client.reset(),
-			save: (
-				consents?: Readonly<Partial<Record<OptionalConsentCategory, boolean>>>
-			) => client.commit({ action: 'explicit', consents: consents ?? {} }),
-			setOverrides: (overrides: NativeOverridesInput) =>
-				client.setOverrides(overrides),
 		}),
 		[client]
 	);
+};
+
+/**
+ * What {@link useSaveConsents} accepts, matching `@c15t/react`'s `save`.
+ *
+ * - `'all'` grants every category in the policy scope.
+ * - `'none'` grants necessary only.
+ * - An object records an explicit per-category choice, the shape a preference
+ *   centre saves. Only the categories you pass are written. Omitted categories
+ *   keep their stored receipts, which is what stops a preference-centre save
+ *   from renewing a consent the subject never looked at.
+ */
+export type SaveConsentsInput =
+	| 'all'
+	| 'none'
+	| Readonly<Partial<Record<OptionalConsentCategory, boolean>>>;
+
+/** The native intent for an explicit {@link SaveConsentsInput}. */
+const intentFor = function intentFor(input: SaveConsentsInput): CommitIntent {
+	if (input === 'all') {
+		return { action: 'all' };
+	}
+	if (input === 'none') {
+		return { action: 'necessary' };
+	}
+	return { action: 'explicit', consents: input };
+};
+
+/**
+ * Save the subject's consent choice, as `@c15t/react`'s `save` does.
+ *
+ * With no argument it saves the current draft: the nearest
+ * `ConsentDraftProvider`'s, or the draft every `useConsentDraft()` outside one
+ * shares. A stale draft is refused with `reason: 'concurrent-change'`.
+ *
+ * @example
+ * ```tsx
+ * const save = useSaveConsents();
+ * <Button onPress={() => save('all')} title="Accept all" />
+ * <Button onPress={() => save()} title="Save choices" />
+ * ```
+ *
+ * @returns A stable function. Its promise resolves with the local commit
+ *   outcome: check `ok` before treating the action as saved. `ok: true,
+ *   queued: true` is durable local success. Delivery is separate.
+ */
+export const useSaveConsents = function useSaveConsents(): (
+	input?: SaveConsentsInput
+) => Promise<CommitResult> {
+	const client = useConsentClient();
+	const draft = useConsentDraftStore();
+
+	return useCallback(
+		async (input?: SaveConsentsInput) => {
+			if (input === undefined) {
+				return draft.save();
+			}
+			const { iab: submittedIAB, values: submitted } = draft.getState();
+			const result = await draft.whileSaving(() =>
+				client.commit(intentFor(input))
+			);
+			// A saved choice supersedes the edits the draft held when it was made, as on
+			// web; an edit made while the save was pending is newer and stays.
+			if (result.ok) {
+				draft.settle(submitted, result.revision, submittedIAB);
+			}
+			return result;
+		},
+		[client, draft]
+	);
+};
+
+/**
+ * Attach an external id and load that subject's stored record.
+ *
+ * @returns A stable function that takes the user, whose `externalId` is the id
+ *   from the app's own account system.
+ */
+export const useIdentify = function useIdentify(): (user: {
+	readonly externalId: string;
+}) => Promise<void> {
+	const client = useConsentClient();
+
+	return useCallback(
+		(user: { readonly externalId: string }) => client.identify(user.externalId),
+		[client]
+	);
+};
+
+/**
+ * Pin country, region, language, or the GPC signal. There is no test override:
+ * publisher test mode is a client option, not an override.
+ *
+ * Useful for a debug menu and for review-gated builds that must evaluate a
+ * specific region's policy. Overrides change which rule matches; they never
+ * create a consent record.
+ *
+ * @returns A stable function that takes the fields to change. Omitted fields
+ *   keep their value, and an explicit `null` clears one.
+ */
+export const useSetOverrides = function useSetOverrides(): (
+	overrides: NativeOverridesInput
+) => Promise<void> {
+	const client = useConsentClient();
+
+	return useCallback(
+		(overrides: NativeOverridesInput) => client.setOverrides(overrides),
+		[client]
+	);
+};
+
+/**
+ * Record that the current notice was dismissed.
+ *
+ * Local and synchronous: a notice is an acknowledgement, not a written consent
+ * record, so nothing is sent to the backend.
+ *
+ * @returns A stable function.
+ */
+export const useDismissNotice = function useDismissNotice(): () => void {
+	const client = useConsentClient();
+
+	return useCallback(() => {
+		client.dismissNotice();
+	}, [client]);
 };

@@ -27,7 +27,7 @@ import kotlin.test.assertTrue
  * [com.c15t.core.tc.narrowToVendorIds] has always been correct and has always been called only from
  * a test, which is the gap this file closes: a device discloses exactly the scope the server chose
  * to embed, and a setting nobody reads is not a setting. Everything here therefore enters through
- * [C15tKernel.bootstrap] with a configured core and leaves through one of the three surfaces a host
+ * [ConsentCore.bootstrap] with a configured core and leaves through one of the three surfaces a host
  * actually reads -- the published snapshot, the body a bridge forwards, and the `IABTCF_*` mirror --
  * because a prune that lives only inside the helper would still leave all three serving the wide list.
  *
@@ -186,7 +186,7 @@ class DeclaredVendorScopeTest {
 		val coldTransport = RecordingTransport()
 		val coldStore = C15tStore(backend)
 		val cold = testKernel(
-			config = NativeConfig(portalUrl = "https://test.c15t.app", vendors = scope),
+			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
 			store = coldStore,
 			transport = coldTransport,
 		)
@@ -206,7 +206,7 @@ class DeclaredVendorScopeTest {
 		// The repair is stored, not just remembered: the next launch of the same build hydrates a
 		// document that already says what the device discloses.
 		val relaunched = testKernel(
-			config = NativeConfig(portalUrl = "https://test.c15t.app", vendors = scope),
+			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
 			store = C15tStore(backend),
 			transport = RecordingTransport(),
 		)
@@ -218,7 +218,7 @@ class DeclaredVendorScopeTest {
 	/**
 	 * A stored list inside the snapshot's own `iab` object is pruned as honestly as the envelope key.
 	 *
-	 * [com.c15t.core.C15tKernel.bootstrap] reads two shapes -- the envelope's `gvl` key, which is what
+	 * [com.c15t.core.ConsentCore.bootstrap] reads two shapes -- the envelope's `gvl` key, which is what
 	 * this build writes, and `snapshot.iab.gvl`, which is what a device holding the list that way must
 	 * not be stranded without. A scope applied to the preferred branch only would leave the fallback
 	 * disclosing the wide list, and a reader that never sees the fallback would call that green.
@@ -246,7 +246,7 @@ class DeclaredVendorScopeTest {
 		)
 
 		val kernel = testKernel(
-			config = NativeConfig(portalUrl = "https://test.c15t.app", vendors = scope),
+			config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
 			store = C15tStore(backend),
 			transport = RecordingTransport(),
 		)
@@ -291,8 +291,8 @@ class DeclaredVendorScopeTest {
 		fixture: VendorListScopeFixture,
 		scope: List<Int>?,
 		store: C15tStore = C15tStore(InMemoryKeyValueStore()),
-	): C15tKernel = testKernel(
-		config = NativeConfig(portalUrl = "https://test.c15t.app", vendors = scope),
+	): ConsentCore = testKernel(
+		config = NativeConfig(backendUrl = "https://test.c15t.app", vendors = scope),
 		store = store,
 		transport = RecordingTransport().respondInit(
 			initSuccess(body = initBody(policyId = "de-tcf", model = "\"iab\"", gvl = fixture.served.toString())),

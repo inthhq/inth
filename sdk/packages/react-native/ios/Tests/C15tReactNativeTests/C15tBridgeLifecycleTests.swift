@@ -124,6 +124,8 @@ final class C15tBootstrapTests: XCTestCase {
 
         let transport = configuration.makeTransport() as? HostedTransport
         XCTAssertNotNil(transport, "a hosted backend must build a hosted transport")
+        // ENG-530: a React Native app reports `rn`, not the Swift app's `apple`.
+        XCTAssertEqual(transport?.extraHeaders["x-c15t-platform"], "rn->\(C15t.version)")
         XCTAssertEqual(transport?.initURL, URL(string: "https://app.example.com/api/consent/init"))
         XCTAssertEqual(
             transport?.baseURL,
@@ -321,7 +323,7 @@ final class C15tBootstrapTests: XCTestCase {
         }
         XCTAssertEqual(issue.code, "C15T_CONFIGURATION_RETIRED")
         XCTAssertTrue(issue.message.contains("com.c15t.test"), "name the key: \(issue.message)")
-        XCTAssertTrue(issue.message.contains("com.c15t.gpc"), "name the key to use instead: \(issue.message)")
+        XCTAssertTrue(issue.message.contains("com.c15t.forceGPC"), "name the key to use instead: \(issue.message)")
         XCTAssertFalse(
             C15tReactNativeBootstrap.start(infoPlist: plist),
             "the core must not start from a configuration this build cannot read"
@@ -333,7 +335,7 @@ final class C15tBootstrapTests: XCTestCase {
         // The two collapse into one field if the plist key feeds both, which is the
         // distinction the contract keeps apart and the evaluator depends on.
         let configuration = C15tBridgeConfiguration.from(infoPlist: [
-            C15tBridgeConfiguration.InfoPlistKey.gpc: true,
+            C15tBridgeConfiguration.InfoPlistKey.forceGPC: true,
         ])
 
         XCTAssertEqual(configuration.gpc, true, "the host reported a signal")
@@ -343,7 +345,7 @@ final class C15tBootstrapTests: XCTestCase {
     func testAPlistWithoutRetiredKeysIsValid() {
         let plist: [String: Any] = [
             C15tBridgeConfiguration.InfoPlistKey.backendURL: "https://example.eu.c15t.app",
-            C15tBridgeConfiguration.InfoPlistKey.gpc: true,
+            C15tBridgeConfiguration.InfoPlistKey.forceGPC: true,
             C15tBridgeConfiguration.InfoPlistKey.language: "de",
         ]
 

@@ -165,8 +165,17 @@ expectTypeOf<
 	keyof NonNullable<GVLVendor['overflow']>
 >().toEqualTypeOf<'httpGetLimit'>();
 
-// The IAB slot: the one name a device carries, and the kernel's own "no list yet".
-expectTypeOf<keyof NativeIABState>().toEqualTypeOf<'gvl'>();
+// The IAB slot: the kernel's list, its own "no list yet", and the committed
+// decision the bridge adds beside it.
+expectTypeOf<keyof NativeIABState>().toEqualTypeOf<
+	| 'acceptAll'
+	| 'committed'
+	| 'customVendors'
+	| 'disclosure'
+	| 'editable'
+	| 'gvl'
+	| 'headlessUnsupported'
+>();
 expectTypeOf<NativeIABState['gvl']>().toEqualTypeOf<GlobalVendorList | null>();
 expectTypeOf<
 	KernelIABState['gvl']

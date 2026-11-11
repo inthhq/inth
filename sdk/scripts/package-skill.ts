@@ -89,7 +89,7 @@ export const renderPackageSkill = function renderPackageSkill(
 			'',
 			'- Use the maintainer-provided private package and native artifacts. Do not invent an npm version, Maven repository, SwiftPM tag or certification claim.',
 			"- Start with the developer's Inth project URL and authored policy. The repository reference apps use https://example-inth.inth.app/. A backend URL is public configuration, not a secret.",
-			'- Install one native engine before optional SDKs and before React Native starts. C15tProvider attaches to it; JavaScript does not bootstrap another engine.',
+			'- Install one native engine before optional SDKs and before React Native starts. ConsentProvider attaches to it; JavaScript does not bootstrap another engine.',
 			'- Disable vendor auto-initializers. Gate native startup on cached native permissions and reevaluate after withdrawal. React hooks alone cannot gate startup before JavaScript.',
 			'- Check CommitResult.ok. A resolved promise can refuse a commit. ok:true with queued:true is durable local success; it does not prove network delivery.',
 			'- Keep drafts open after refused commits. Never turn a policy refresh, hydration, ATT result or notice acknowledgement into a consent grant.',

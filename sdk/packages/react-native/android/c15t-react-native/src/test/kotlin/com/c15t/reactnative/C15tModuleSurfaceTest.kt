@@ -26,6 +26,7 @@ class C15tModuleSurfaceTest {
 		val declared = mapOf(
 			"getBootstrap" to 0,
 			"getSnapshot" to 0,
+			"getWebViewConsent" to 0,
 			"commit" to 2,
 			"setOverrides" to 2,
 			"dismissNotice" to 0,
@@ -35,6 +36,11 @@ class C15tModuleSurfaceTest {
 			"reset" to 1,
 			"getTrackingAuthorization" to 0,
 			"requestTrackingAuthorization" to 1,
+			"requestTrackingAuthorizationWithOptions" to 2,
+			"presentConsentPrompt" to 2,
+			"presentPreferences" to 2,
+			"closeConsentPresenter" to 2,
+			"configureAutoPresent" to 2,
 			"addListener" to 1,
 			"removeListeners" to 1,
 		)
@@ -47,11 +53,10 @@ class C15tModuleSurfaceTest {
 				.filter { it.name == name && it.parameterCount == arity }
 			assertTrue("$name with $arity parameter(s) must exist on the module", matches.isNotEmpty())
 		}
-		assertEquals(
-			"the spec declares no method the bridge does not implement",
-			13,
-			declared.size,
-		)
+		// Counted from the spec itself, so a method added there and not here fails this test
+		// rather than waiting for someone to recount a number.
+		val specMethods = Regex("""^\s+(\w+): \(""", RegexOption.MULTILINE).findAll(spec).map { it.groupValues[1] }.toSet()
+		assertEquals("the spec declares no method the bridge does not implement", specMethods, declared.keys)
 	}
 
 	@Test
@@ -87,9 +92,19 @@ class C15tModuleSurfaceTest {
 	}
 
 	private companion object {
-		val SYNC_METHODS = listOf("getBootstrap", "getSnapshot", "getTrackingAuthorization")
+		val SYNC_METHODS = listOf("getBootstrap", "getSnapshot", "getWebViewConsent", "getTrackingAuthorization")
 
 		val PROMISE_METHODS =
-			listOf("commit", "setOverrides", "refresh", "identify", "logout", "reset", "requestTrackingAuthorization")
+			listOf(
+				"commit",
+				"setOverrides",
+				"refresh",
+				"identify",
+				"logout",
+				"reset",
+				"requestTrackingAuthorization",
+				"requestTrackingAuthorizationWithOptions",
+				"configureAutoPresent",
+			)
 	}
 }

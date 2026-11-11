@@ -4,6 +4,20 @@ c15t is a developer-first consent management platform (CMP): cookie banners, con
 
 This file is the canonical agent guide. `CLAUDE.md` imports it. Deeper task guides live in `.agents/skills/` (symlinked into `.claude/skills/`, `.cursor/skills/`, and `.github/skills/`). Third-party skills are managed with the [skills CLI](https://skills.sh) and pinned in `skills-lock.json` — add or refresh them with `bunx skills add <owner>/<repo>` / `bunx skills update -y`, never by hand-editing their files. The first-party skills (`writing-docs`, `releasing`, `creating-a-package`) are maintained in this repo.
 
+## Using the native SDKs from an app
+
+The root `Package.swift` is the Swift package, so an app's SwiftPM checkout of this
+repository lands here. If you are working in such an app, or in one that uses the
+`com.c15t` Maven artifacts, the rest of this file is monorepo contributor guidance.
+Read these instead:
+
+- Swift: `native/core-swift/AGENTS.md` (also in each released Swift package),
+  then `native/core-swift/README.md` and `docs/frameworks/swift/*.mdx`.
+- Android: `native/core-android/AGENTS.md` (also at the root of each artifact's
+  sources jar), then `docs/frameworks/android/*.mdx`.
+- Both: `docs/guides/mobile-*.mdx`. The mobile SDKs are a private prerelease and
+  these pages are not on c15t.com yet, so the files here are the current copy.
+
 ## Repo map
 
 | Path | What it is |
@@ -102,8 +116,11 @@ Conventions not enforced by tooling (hold new code to these; older code has exce
 | `README.md` in packages that have a `readme.json` | `bun run generate:readmes` | that package's `readme.json` |
 | `packages/*/src/version.ts` | `genversion` via each package's `prebuild` | package.json version |
 | `packages/cli/src/generate/version.ts` | `packages/cli/scripts/write-version.ts` via `prebuild`, `pretest`, and `check-types` | package.json version |
-| `native/core-swift/Sources/C15tConsentUI/generated/iab-copy.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/iab-copy.kt` and `.../resources/.../generated/iab-copy.json` | `bun run generate:native-iab-copy` | `iab` copy in `packages/translations` |
+| `native/core-swift/Sources/C15tConsentUI/generated/{iab-copy,consent-copy}.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/{iab-copy,consent-copy}.kt` and `.../resources/.../generated/{iab-copy,consent-copy}.json` | `bun run generate:native-iab-copy` | `iab` copy and the category-mode keys in `packages/translations`, plus `src/native-app-labels.ts` |
 | `native/protocol/iab/banner-summary-*.json` | `bun scripts/generate-iab-banner-summary-fixtures.ts` | web `resolveIABBannerSummary` in `packages/core` |
+| `native/protocol/bridge/payloads.json` | `bun run --cwd packages/react-native generate:bridge-schema` | `BRIDGE_PAYLOADS` in `packages/react-native/src/protocol/bridge-schema.ts` |
+| `native/protocol/local-policy/parity.json` | `bun scripts/generate-local-policy-fixtures.ts` | `normalizePolicyRule` and `resolvePolicyRules` in `packages/schema` |
+| `native/protocol/bundled-policy/invalid-resources.json` | `bun scripts/generate-bundled-resource-fixtures.ts` | `native/protocol/bundled-policy/parity.json` and `iab.json` |
 | `dist/`, `dist-types/`, `coverage/` | builds/tests | — |
 | `.docs/` | `bun run setup:docs` (private docs-site template; maintainers only) | — |
 
@@ -193,5 +210,5 @@ Create an issue before starting feature work; features/refactors/architecture ch
 - `bunfig.toml` delays newly published npm versions by 3 days (`minimumReleaseAge`) — a just-released dependency version won't resolve.
 - Root scripts intentionally mix runners (`bun`, `bunx`, `tsx`) — copy the existing script's invocation style rather than "fixing" it.
 - `scripts/check-publish-artifacts.ts` fails the release if test/snapshot/mock artifacts leak into the publish tarball; keep test files under `__tests__/` or `*.test.*` patterns so rslib excludes them.
-- Native IAB TCF UI and signals must keep passing IAB Europe's non-web CMP checks, listed in `native/protocol/iab/tcf-policy-checks.json`. Each check needs a Swift and a Kotlin test carrying `// TCF-CHECK: <id>`, or `bun run test:scripts` fails. Change IAB copy in `packages/translations` (`iab.app`, `iab.banner`, and `src/native-app-labels.ts` for labels only the native screens show), never as literals in the native views.
+- Native IAB TCF UI and signals must keep passing IAB Europe's non-web CMP checks, listed in `native/protocol/iab/tcf-policy-checks.json`. Each check needs a Swift and a Kotlin test carrying `// TCF-CHECK: <id>`, or `bun run test:scripts` fails. Change native copy in `packages/translations` (`iab.app`, `iab.banner`, the web keys listed in `CONSENT_COPY_KEYS`, and `src/native-app-labels.ts` for labels only the native screens show), never as literals in the native views; `scripts/native-iab-copy-literals.test.ts` fails on a literal.
 - The docs site app is a private template; external contributors edit `docs/**/*.mdx` only and preview via the PR's docs preview action.

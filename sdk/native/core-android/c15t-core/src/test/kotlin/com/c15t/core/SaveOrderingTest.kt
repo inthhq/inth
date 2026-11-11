@@ -293,7 +293,7 @@ class SaveOrderingTest {
 		val kernel = testKernel(store = store)
 		kernel.bootstrap()
 
-		val result = kernel.save(CommitIntent.Explicit(mapOf(ConsentCategory.MEASUREMENT to true)))
+		val result = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true)))
 
 		assertTrue(result.ok)
 		assertEquals(

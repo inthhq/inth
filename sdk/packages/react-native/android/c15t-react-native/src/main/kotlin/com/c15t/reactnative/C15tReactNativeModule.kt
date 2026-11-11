@@ -1,11 +1,12 @@
 package com.c15t.reactnative
 
-import com.c15t.consentui.ConsentHost
 import com.c15t.core.C15t
 import com.c15t.core.Subscription
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelError
 import com.c15t.core.model.KernelUser
+import com.c15t.core.webview.WebViewConsentScript
+import com.c15t.core.webview.WebViewConsentState
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.modules.core.DeviceEventManagerModule
@@ -33,8 +34,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	private val context: ReactApplicationContext = appContext
 	private val pump = C15tChangePump(sink = this::publish)
 
-	// Held as fields on purpose: the core keeps snapshot observers weakly, so the
-	// module has to own the lambdas or the callbacks would silently stop.
+	// The subscriptions own these lambdas until invalidate() closes them.
 	private val snapshotObserver: (ConsentSnapshot) -> Unit = pump::onSnapshot
 
 	private val errorObserver: (KernelError) -> Unit = pump::onError
@@ -62,7 +62,25 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	/** The current snapshot, encoded for the wire. */
 	override fun getSnapshot(): String {
 		ensureCore()
-		return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage = deviceLanguage())
+		val core = C15t.current
+		val (snapshot, additions) = C15tPayload.consistently({ C15t.snapshot() }) {
+			Triple(
+				core?.iabConsent to core?.iabCustomVendors().orEmpty(),
+				core?.iabAcceptAllChoices(),
+				core?.iabPresentation(),
+			)
+		}
+		return C15tPayload.snapshot(snapshot, fallbackLanguage = deviceLanguage(), iabConsent = additions.first.first,
+			iabAcceptAll = additions.second, iabPresentation = additions.third, iabCustomVendors = additions.first.second)
+	}
+
+	/** WebView consent: the state a page reads, and a fresh token and request key for one WebView. */
+	override fun getWebViewConsent(): String {
+		ensureCore()
+		val core = C15t.current
+		val state = if (core != null) WebViewConsentState.from(core) else WebViewConsentState.from(C15t.snapshot(), null)
+		return "{\"state\":${state.toJson()},\"token\":\"${WebViewConsentScript.newToken()}\"," +
+			"\"key\":\"${WebViewConsentScript.newToken()}\"}"
 	}
 
 	/**
@@ -87,6 +105,14 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		promise.reject(C15tTracking.REJECT_UNSUPPORTED, C15tTracking.MESSAGE_UNSUPPORTED)
 	}
 
+	/** The same request with JSON options. Android has nothing to ask, so it rejects the same way. */
+	override fun requestTrackingAuthorizationWithOptions(
+		options: String,
+		promise: Promise,
+	) {
+		promise.reject(C15tTracking.REJECT_UNSUPPORTED, C15tTracking.MESSAGE_UNSUPPORTED)
+	}
+
 	override fun commit(
 		intent: String,
 		promise: Promise,
@@ -96,13 +122,13 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			promise.resolve(C15tPayload.invalidIntent(intent))
 			return
 		}
-		if (!ensureCore()) {
+		val core = if (ensureCore()) C15t.current else null
+		if (core == null) {
 			promise.resolve(C15tPayload.notBootstrapped())
 			return
 		}
 		try {
-			val result = C15t.save(parsed)
-			promise.resolve(C15tPayload.commitResult(result, C15t.snapshot()))
+			promise.resolve(C15tPayload.commit(intent, core))
 		} catch (error: Exception) {
 			promise.reject(REJECT_COMMIT, error.message, error)
 		}
@@ -194,8 +220,8 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			return
 		}
 		try {
-			// `C15t.reset()` is teardown, not a wipe, and the two names are the reason
-			// this goes through the kernel it means. See its KDoc.
+			// `C15t.uninstall()` is teardown, not a wipe, so the wipe goes through the
+			// installed core's own `reset()`.
 			val kernel = C15t.current
 			if (kernel == null) {
 				promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED)
@@ -211,6 +237,9 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	override fun presentConsentPrompt(privacyPolicyURL: String, promise: Promise) = presentNative(false, privacyPolicyURL, promise)
 	override fun presentPreferences(privacyPolicyURL: String, promise: Promise) = presentNative(true, privacyPolicyURL, promise)
 	private fun presentNative(preferences: Boolean, privacyPolicyURL: String, promise: Promise) {
+		if (!C15tNativeUi.AVAILABLE) {
+			promise.reject(C15tPayload.REJECT_NATIVE_UI_EXCLUDED, C15tPayload.MESSAGE_NATIVE_UI_EXCLUDED); return
+		}
 		if (!ensureCore()) { promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED); return }
 		context.runOnUiQueueThread {
 			val activity = context.currentActivity
@@ -218,12 +247,44 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			if (activity == null || activity.isFinishing || core == null) {
 				promise.reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active Activity and installed core"); return@runOnUiQueueThread
 			}
-			try { promise.resolve(ConsentHost.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish("onConsentPresenterOutcome", it) }) }
+			try { promise.resolve(C15tNativeUi.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish(C15tPayload.EVENT_PRESENTER_OUTCOME, it) }) }
+			// The host refuses the URL before it touches any UI. Retrying the same URL cannot help.
+			catch (error: IllegalArgumentException) { promise.reject("C15T_PRESENTER_INVALID_URL", error.message, error) }
 			catch (error: Exception) { promise.reject("C15T_PRESENTER_UNAVAILABLE", error.message, error) }
 		}
 	}
 	override fun closeConsentPresenter(sessionId: String, promise: Promise) {
-		context.runOnUiQueueThread { ConsentHost.close(sessionId); promise.resolve(null) }
+		context.runOnUiQueueThread { C15tNativeUi.close(sessionId); promise.resolve(null) }
+	}
+
+	/**
+	 * Hand the native prompt the provider's auto-present settings. The native `ConsentPrompt`
+	 * decides when a prompt is owed and presents it; this forwards what it shows as events.
+	 */
+	override fun configureAutoPresent(settings: String, promise: Promise) {
+		val parsed = C15tPayload.parseAutoPresentSettings(settings)
+		if (parsed == null) {
+			promise.reject(REJECT_SETTINGS, "configureAutoPresent needs {\"autoPresent\": boolean, \"privacyPolicyURL\": string | null}"); return
+		}
+		if (!C15tNativeUi.AVAILABLE) {
+			// Nothing to present in this build, so turning it off is already true.
+			if (parsed.autoPresent) promise.reject(C15tPayload.REJECT_NATIVE_UI_EXCLUDED, C15tPayload.MESSAGE_NATIVE_UI_EXCLUDED)
+			else promise.resolve(null)
+			return
+		}
+		if (!ensureCore()) { promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED); return }
+		context.runOnUiQueueThread {
+			val core = C15t.current
+			if (core == null) { promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED); return@runOnUiQueueThread }
+			val application = context.applicationContext as android.app.Application
+			try {
+				C15tNativeUi.configure(application, context.currentActivity, core, parsed.autoPresent, parsed.privacyPolicyUrl, owner = this, emit = ::publish)
+				followed = core
+				promise.resolve(null)
+			}
+			// Refused before anything changed. Retrying the same URL cannot help.
+			catch (error: IllegalArgumentException) { promise.reject("C15T_PRESENTER_INVALID_URL", error.message, error) }
+		}
 	}
 
 	override fun addListener(eventName: String) {
@@ -236,7 +297,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 
 	/** Drop the core subscriptions when React tears this module down. */
 	override fun invalidate() {
-		context.runOnUiQueueThread { ConsentHost.detach(this) }
+		context.runOnUiQueueThread { C15tNativeUi.detach(this) }
 		snapshotSubscription?.close()
 		errorSubscription?.close()
 		snapshotSubscription = null
@@ -253,8 +314,25 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		val started = C15tReactNativeBootstrap.ensure(context)
 		if (started) {
 			subscribeToCore()
+			followPrompt()
 		}
 		return started
+	}
+
+	/** The core the native prompt was last moved to, so a new install moves it once. */
+	@Volatile
+	private var followed: com.c15t.core.ConsentCore? = null
+
+	/**
+	 * After `C15t.uninstall()` and a new install, move the native prompt to the new core, so
+	 * an owed prompt is presented there too. Only once auto-present was configured.
+	 */
+	private fun followPrompt() {
+		val core = C15t.current ?: return
+		val previous = followed ?: return
+		if (previous === core) return
+		followed = core
+		context.runOnUiQueueThread { C15tNativeUi.follow(core) }
 	}
 
 	/** Subscribe once the core exists, since a subscription before it would be inert. */
@@ -303,5 +381,6 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		const val REJECT_LOGOUT = "C15T_LOGOUT_FAILED"
 		const val REJECT_RESET = "C15T_RESET_FAILED"
 		const val REJECT_NOT_BOOTSTRAPPED = "C15T_NOT_BOOTSTRAPPED"
+		const val REJECT_SETTINGS = "C15T_INVALID_SETTINGS"
 	}
 }

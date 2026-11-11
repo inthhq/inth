@@ -8,15 +8,20 @@
  * made elsewhere in the app does not rerender it.
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { useConsentActions } from '../hooks/use-consent-actions';
+import {
+	useDismissNotice,
+	useSaveConsents,
+} from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import { useConsentStatus } from '../hooks/use-consent-status';
 import { isStatusPromptOwed } from '../lib/selectors';
+import { claimPrompt } from '../native/without-native-ui';
 import type { ConsentSnapshot } from '../protocol';
+import { useConsentClient } from '../provider/consent-context';
 import { ConsentDialog } from './consent-dialog';
 import { ConsentBrandingTag } from './internal/branding-tag';
 import {
@@ -81,7 +86,6 @@ const selectBannerPromptKey = (snapshot: ConsentSnapshot): string =>
 		snapshot.resolution.fingerprint,
 		snapshot.subject?.subjectId,
 		snapshot.subject?.externalId,
-		snapshot.subject?.identityProvider,
 	]);
 
 const ConsentBannerActions = ({
@@ -91,7 +95,7 @@ const ConsentBannerActions = ({
 	customize,
 	notice,
 }: ConsentBannerActionsProps): ReactNode => {
-	const actions = useConsentActions();
+	const dismissNotice = useDismissNotice();
 	const { parts } = useConsentSurfaceFrame();
 	const [saveFailed, setSaveFailed] = useState(false);
 
@@ -124,7 +128,7 @@ const ConsentBannerActions = ({
 					<ConsentButton
 						label={copy.acknowledge}
 						onPress={() => {
-							actions.dismissNotice();
+							dismissNotice();
 						}}
 						parts={parts}
 						style={CONSENT_BUTTON_ROW_ITEM}
@@ -193,12 +197,15 @@ const ConsentBannerActions = ({
  * the policy owes an interaction and unmounts itself once the subject has acted,
  * and it picks notice or opt-in copy from `promptRequirement.kind`.
  *
+ * Pass `autoPresent={false}` to the provider when you render it, so the native
+ * prompt does not open as well.
+ *
  * @example
  * ```tsx
- * <C15tProvider>
+ * <ConsentProvider autoPresent={false}>
  *     <App />
  *     <ConsentBanner />
- * </C15tProvider>
+ * </ConsentProvider>
  * ```
  *
  * @param props - Banner props.
@@ -210,8 +217,10 @@ export const ConsentBanner = ({
 	styles,
 	theme,
 }: ConsentBannerProps): ReactNode => {
-	const actions = useConsentActions();
+	const saveConsents = useSaveConsents();
 	const status = useConsentStatus();
+	const client = useConsentClient();
+	useEffect(() => claimPrompt(client), [client]);
 	const promptKey = useConsentSelector(selectBannerPromptKey);
 	const copy = useConsentSelector(selectConsentCopy, isConsentCopyEqual);
 	// The banner's own type roles: its heading is larger than the copy under it,
@@ -231,9 +240,7 @@ export const ConsentBanner = ({
 		setBusy(true);
 		let written: boolean;
 		try {
-			const result = await (choice === 'accept'
-				? actions.acceptAll()
-				: actions.rejectAll());
+			const result = await saveConsents(choice === 'accept' ? 'all' : 'none');
 			written = result.ok;
 		} catch {
 			written = false;
@@ -266,7 +273,7 @@ export const ConsentBanner = ({
 			label={copy.securedBy}
 			parts={parts}
 			presentation="banner"
-			radius={surface.theme.radius.surface}
+			radius={surface.theme.radius.lg}
 		/>
 	);
 

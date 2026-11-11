@@ -9,10 +9,11 @@ still resolves policy, stores choices, validates drafts and queues delivery.
 Your UI reads that authority and saves explicit actions to it.
 
 For an app that never renders the stock screens, link `C15tCore` and
-`C15tApple` and omit `C15tConsentUI`. Keep the same protected installation as
-the [quickstart](/docs/frameworks/swift/quickstart). The quickstart's
-`ConsentModel` includes a stock presenter, so replace that presentation
-ownership with your own observable model when dropping the UI product.
+`C15tApple` and omit `C15tConsentUI`. Install with `C15tApple.install(_:)`
+during launch, using the same `C15tAppleConfiguration` as the
+[quickstart](/docs/frameworks/swift/quickstart), and drop its `.c15tConsent`
+modifier. Your views observe the installed core through `PublishedConsent` or,
+on iOS 17 and later, `ObservableConsent`.
 
 ## Keep SDK gates current
 
@@ -29,13 +30,21 @@ SwiftUI example:
 The example's `measurement` property is a thread-safe `MeasurementService`.
 It starts collecting only on `.granted` and stops on `.pending` or `.denied`.
 The gate delivers the current decision when it registers and then delivers
-changes. Retain its `ConsentSubscription`, and call `cancel()` when the
-service's owner goes away.
+changes. The `ConsentSubscription` it returns owns the callback: retain it for
+as long as you want updates. Calling `cancel()` or releasing the handle ends the
+registration. `onChange` follows the same rule. A closure that captures its
+owner should capture it weakly, as the example does, so the owner can still be
+released.
 
-Callbacks can run on any queue. Marshal UI updates to the main actor, as the
-sample does here:
+Gate callbacks can run on any queue, so the service guards its own state. UI
+state should come from `PublishedConsent`, or `ObservableConsent` on iOS 17
+and later, which update on the main actor. The sample republishes the snapshot
+with a Combine sink that needs no hop:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-snapshot.mdx" />
+
+A UIKit controller can subscribe to `decisionPublisher(for:)`, which delivers
+the current decision and then each change on the main thread.
 
 Use your vendor's supported disable, stop or reset API on withdrawal. The
 sample counter is local and makes no network requests; adapt the gate to the
@@ -85,6 +94,27 @@ snippets above, including readiness, restrictions, retry and reload handling.
 The example project links the UI product to support its separate stock mode.
 An app that ships only its own UI can remove that product and its imports.
 Its engine and platform services remain the same.
+
+## Use your own transport
+
+`C15tApple.install` also takes a `CoreConfig`, for an app whose requests must go
+through its own networking stack or proxy. Supply your `C15tTransport` and a
+protected store:
+
+{/* example: fragment */}
+
+```swift
+let core = try C15tApple.install(CoreConfig(
+    store: KeychainStore(),
+    transport: MyConsentTransport(),
+    consentCategories: [.necessary, .measurement, .marketing]
+))
+```
+
+Your transport provides `domain`, `performInit`, `sendSave` and
+`patchIdentity`. `sendSave` receives bytes the core already stored, so send
+them unchanged. With a custom store or transport, your app owns their
+protection and retry policy.
 
 ## Own the complete consent flow
 

@@ -40,9 +40,9 @@ import {
 } from '../theme/consent-theme-parts';
 import {
 	createConsentTheme,
-	darkTheme,
-	lightTheme,
+	defaultConsentTheme,
 	resolveConsentColorScheme,
+	resolveConsentTypeRoles,
 } from '../theme/create-consent-theme';
 import type { ConsentTheme } from '../theme/create-consent-theme';
 import { useConsentStyles } from '../theme/use-consent-styles';
@@ -121,6 +121,35 @@ const probeFacts = function probeFacts(
 	return facts;
 };
 
+/** The face each part draws with, for a host theme. */
+const FontProbe = (props: {
+	readonly styles?: ConsentPartStyles;
+	readonly theme?: ConsentTheme;
+}): ReactNode => {
+	const { parts } = useConsentStyles({
+		styles: props.styles,
+		theme: props.theme,
+	});
+	const faces = Object.fromEntries(
+		Object.entries(parts).map(([part, style]) => [part, style.fontFamily])
+	);
+
+	return <Text>{JSON.stringify(faces)}</Text>;
+};
+
+/** Resolve the face of every part for a host theme. */
+const probeFonts = function probeFonts(props: {
+	readonly styles?: ConsentPartStyles;
+	readonly theme?: ConsentTheme;
+}): Record<string, string | undefined> {
+	const tree = mountSurface(<FontProbe {...props} />);
+	const faces = JSON.parse(tree.text()) as Record<string, string | undefined>;
+
+	tree.unmount();
+
+	return faces;
+};
+
 /** Render a bare banner layer through the shared surface, as a host would. */
 const HostBanner = ({
 	onRequestClose,
@@ -180,6 +209,9 @@ const textStyleOf = function textStyleOf(
 	return nodeStyle(drawn);
 };
 
+/** The stock type roles, from the stock type tokens. */
+const lightRoles = resolveConsentTypeRoles(defaultConsentTheme.typography);
+
 describe('theme', () => {
 	test('follows the platform scheme', () => {
 		setColorScheme('dark');
@@ -188,7 +220,7 @@ describe('theme', () => {
 		expect(
 			nodeStyle(surfaceNode(dark.container(), 'Deine Privatsphaere'))
 				.backgroundColor
-		).toBe(darkTheme.colors.surface);
+		).toBe(defaultConsentTheme.dark.surface);
 		dark.unmount();
 
 		setColorScheme('light');
@@ -197,7 +229,7 @@ describe('theme', () => {
 		expect(
 			nodeStyle(surfaceNode(light.container(), 'Deine Privatsphaere'))
 				.backgroundColor
-		).toBe(lightTheme.colors.surface);
+		).toBe(defaultConsentTheme.colors.surface);
 		light.unmount();
 	});
 
@@ -214,32 +246,50 @@ describe('theme', () => {
 		// The values are the ones `packages/ui` ships, so the banner a subject saw
 		// in a browser and the banner they see in the app are one design. The
 		// accent is the point of the exercise: it used to be near-black.
-		expect(lightTheme.colors.primary).toBe('#335CFF');
-		expect(lightTheme.colors.switchTrackOn).toBe('#335CFF');
-		expect(lightTheme.colors.text).toBe('#1A1A1A');
-		expect(lightTheme.colors.textMuted).toBe('#666666');
-		expect(lightTheme.colors.border).toBe('#E6E6E6');
-		expect(lightTheme.colors.surfaceRaised).toBe('#FAFAFA');
-		expect(darkTheme.colors.primary).toBe('#6685FF');
+		expect(defaultConsentTheme.colors.primary).toBe('#335CFF');
+		expect(defaultConsentTheme.colors.switchTrackActive).toBe('#335CFF');
+		expect(defaultConsentTheme.colors.text).toBe('#1A1A1A');
+		expect(defaultConsentTheme.colors.textMuted).toBe('#666666');
+		expect(defaultConsentTheme.colors.border).toBe('#E6E6E6');
+		expect(defaultConsentTheme.colors.surfaceHover).toBe('#FAFAFA');
+		expect(defaultConsentTheme.dark.primary).toBe('#6685FF');
 
 		// The branding tab is filled with the accent, so web outlines it with the
 		// accent 14% toward black. React Native has no `color-mix` to run at render,
 		// so the resolved literal is the token: 0.86 of each channel.
-		expect(lightTheme.colors.primaryBorder).toBe('#2C4FDB');
-		expect(darkTheme.colors.primaryBorder).toBe('#5872DB');
+		expect(defaultConsentTheme.colors.primaryBorder).toBe('#2C4FDB');
+		expect(defaultConsentTheme.dark.primaryBorder).toBe('#5872DB');
 
 		// 4 8 16 24 32, the web step scale.
-		expect(lightTheme.spacing).toEqual({ l: 24, m: 16, s: 8, xl: 32, xs: 4 });
-		expect(lightTheme.radius).toEqual({ control: 8, surface: 12 });
+		expect(defaultConsentTheme.spacing).toEqual({
+			lg: 24,
+			md: 16,
+			sm: 8,
+			xl: 32,
+			xs: 4,
+		});
+		expect(defaultConsentTheme.radius).toEqual({
+			full: 9999,
+			lg: 12,
+			md: 8,
+			sm: 4,
+		});
+		expect(defaultConsentTheme.typography).toEqual({
+			fontFamily: undefined,
+			fontSize: { base: 16, lg: 18, sm: 14 },
+			fontWeight: { medium: 500, normal: 400, semibold: 600 },
+			headlineFont: undefined,
+			lineHeight: { normal: 1.5, relaxed: 1.75, tight: 1.25 },
+		});
 
 		// A button label is 14 at medium on the web tight line, and the sheet
 		// pairs a 14 semibold heading, set tight at 1, over 16 regular copy.
-		expect(lightTheme.typography.body).toEqual({
+		expect(lightRoles.body).toEqual({
 			fontSize: 16,
 			lineHeight: 24,
 			weight: '400',
 		});
-		expect(lightTheme.typography.label).toEqual({
+		expect(lightRoles.label).toEqual({
 			fontSize: 14,
 			lineHeight: 17.5,
 			weight: '500',
@@ -247,7 +297,7 @@ describe('theme', () => {
 
 		// `.title` in `panel.module.css` is `line-height: 1` at `font-size: sm`,
 		// so the heading sits in a 14 line box.
-		expect(lightTheme.typography.title).toEqual({
+		expect(lightRoles.title).toEqual({
 			fontSize: 14,
 			lineHeight: 14,
 			weight: '600',
@@ -255,12 +305,12 @@ describe('theme', () => {
 
 		// The banner inverts that: `.title` is `1rem` over a `0.875rem`
 		// description, so the heading leads the copy.
-		expect(lightTheme.typography.bannerTitle).toEqual({
+		expect(lightRoles.bannerTitle).toEqual({
 			fontSize: 16,
 			lineHeight: 24,
 			weight: '500',
 		});
-		expect(lightTheme.typography.bannerBody).toEqual({
+		expect(lightRoles.bannerBody).toEqual({
 			fontSize: 14,
 			lineHeight: 20,
 			weight: '400',
@@ -268,9 +318,9 @@ describe('theme', () => {
 
 		// The neutral outline reads `border` and `text`, so the filled pair that
 		// would have served a solid button is gone rather than parked.
-		expect(lightTheme.colors).not.toHaveProperty('secondary');
-		expect(lightTheme.colors).not.toHaveProperty('onSecondary');
-		expect(darkTheme.colors).not.toHaveProperty('secondary');
+		expect(defaultConsentTheme.colors).not.toHaveProperty('secondary');
+		expect(defaultConsentTheme.colors).not.toHaveProperty('onSecondary');
+		expect(defaultConsentTheme.dark).not.toHaveProperty('secondary');
 	});
 
 	test('the banner heading leads its copy and the sheet heading follows its', () => {
@@ -325,9 +375,9 @@ describe('theme', () => {
 		// `.item` is a card in its own border, not a row between two dividers, and it
 		// carries nothing but that border.
 		expect(nodeStyle(card)).toMatchObject({
-			backgroundColor: lightTheme.colors.surface,
-			borderColor: lightTheme.colors.border,
-			borderRadius: lightTheme.radius.control,
+			backgroundColor: defaultConsentTheme.colors.surface,
+			borderColor: defaultConsentTheme.colors.border,
+			borderRadius: defaultConsentTheme.radius.md,
 			borderWidth: 1,
 			flexDirection: 'column',
 		});
@@ -427,8 +477,8 @@ describe('theme', () => {
 		// which is every banner that opts in. It is what keeps the card 238 tall
 		// instead of 271.6.
 		expect(nodeStyle(bannerFooter)).toMatchObject({
-			backgroundColor: lightTheme.colors.surfaceRaised,
-			borderTopColor: lightTheme.colors.border,
+			backgroundColor: defaultConsentTheme.colors.surfaceHover,
+			borderTopColor: defaultConsentTheme.colors.border,
 			borderTopWidth: 1,
 			gap: 8,
 			paddingBottom: 16,
@@ -454,7 +504,7 @@ describe('theme', () => {
 		// those actions are the manager's footer, not the dialog frame's, so the 16 in
 		// `panel.module.css` never paints and reading it instead left the row 8 short.
 		expect(nodeStyle(dialogFooter)).toMatchObject({
-			backgroundColor: lightTheme.colors.surface,
+			backgroundColor: defaultConsentTheme.colors.surface,
 			borderTopWidth: 0,
 			gap: 8,
 			paddingBottom: 24,
@@ -477,7 +527,7 @@ describe('theme', () => {
 		// card anchored two ways, and the host's `presentation` prop should not also
 		// restyle its footer.
 		expect(nodeStyle(sheetFooter)).toMatchObject({
-			backgroundColor: lightTheme.colors.surface,
+			backgroundColor: defaultConsentTheme.colors.surface,
 			borderTopWidth: 0,
 			gap: 8,
 			paddingBottom: 16,
@@ -548,7 +598,9 @@ describe('theme', () => {
 		expect(16 + slop.top + slop.bottom).toBe(MIN_TAP_TARGET);
 		expect(28 + slop.left + slop.right).toBe(MIN_TAP_TARGET);
 
-		expect(trackStyle().backgroundColor).toBe(lightTheme.colors.switchTrack);
+		expect(trackStyle().backgroundColor).toBe(
+			defaultConsentTheme.colors.switchTrack
+		);
 
 		flush(() => {
 			tapSwitch(tree.container(), 'Werbung');
@@ -559,7 +611,9 @@ describe('theme', () => {
 				'aria-checked'
 			)
 		).toBe('true');
-		expect(trackStyle().backgroundColor).toBe(lightTheme.colors.switchTrackOn);
+		expect(trackStyle().backgroundColor).toBe(
+			defaultConsentTheme.colors.switchTrackActive
+		);
 
 		tree.unmount();
 	});
@@ -572,7 +626,7 @@ describe('theme', () => {
 		// surface that is not the subject's own language.
 		expect(textStyleOf(tree, 'Secured by')).toEqual(
 			expect.objectContaining({
-				color: lightTheme.colors.onPrimary,
+				color: defaultConsentTheme.colors.textOnPrimary,
 				fontSize: 11,
 				lineHeight: 11,
 			})
@@ -661,15 +715,123 @@ describe('theme', () => {
 		expect(probeFacts().fontScale).toBe(3.5);
 	});
 
-	test('a host theme is used exactly as given', () => {
+	test('a host theme keeps its own tokens', () => {
 		const theme = createConsentTheme({
-			radius: { surface: 2 },
-			spacing: { l: 4 },
+			radius: { lg: 2 },
+			spacing: { lg: 4 },
 		});
 		const resolved = probeFacts({ theme });
 
 		expect(resolved.border).toBe(2);
 		expect(resolved.scheme).toBe('light');
+	});
+
+	test('a host theme follows the platform scheme, and colors apply to both unless dark overrides', () => {
+		const theme = createConsentTheme({
+			colors: { primary: '#7C3AED', surface: '#FAF5FF' },
+			dark: { surface: '#1E1033' },
+		});
+
+		expect(theme.colors.primary).toBe('#7C3AED');
+		expect(theme.dark.primary).toBe('#7C3AED');
+		expect(theme.dark.surface).toBe('#1E1033');
+		// Unset colours keep each appearance's stock value.
+		expect(theme.dark.text).toBe(defaultConsentTheme.dark.text);
+
+		setColorScheme('dark');
+		const dark = mountSurface(<ConsentBanner theme={theme} />);
+		expect(
+			nodeStyle(surfaceNode(dark.container(), 'Deine Privatsphaere'))
+				.backgroundColor
+		).toBe('#1E1033');
+		dark.unmount();
+	});
+
+	test('colours only the native presenter draws stay out of the palette', () => {
+		const theme = createConsentTheme({
+			colors: { canvas: '#F8F4EE', decision: '#172554', primary: '#2563EB' },
+			dark: { textOnDecision: '#172554' },
+		});
+
+		expect(theme.colors).not.toHaveProperty('canvas');
+		expect(theme.colors).not.toHaveProperty('decision');
+		expect(theme.dark).not.toHaveProperty('textOnDecision');
+		expect(theme.colors.primary).toBe('#2563EB');
+	});
+
+	test('the type roles scale with the type tokens and keep their ratios', () => {
+		const roles = resolveConsentTypeRoles(
+			createConsentTheme({
+				typography: {
+					fontSize: { base: 18, sm: 16 },
+					fontWeight: { medium: 600 },
+				},
+			}).typography
+		);
+
+		expect(roles.bannerTitle).toEqual({
+			fontSize: 18,
+			lineHeight: 27,
+			weight: '600',
+		});
+		expect(roles.bannerBody.lineHeight).toBeCloseTo((16 * 20) / 14);
+		expect(roles.label).toEqual({
+			fontSize: 16,
+			lineHeight: 20,
+			weight: '600',
+		});
+		expect(roles.caption.fontSize).toBeCloseTo((16 * 13) / 14);
+	});
+
+	test('a font family reaches every text part, and a named headline font the heading', () => {
+		const faces = probeFonts({
+			theme: createConsentTheme({
+				typography: { fontFamily: 'Inter', headlineFont: 'Fraunces' },
+			}),
+		});
+
+		expect(faces.title).toBe('Fraunces');
+		expect(faces.description).toBe('Inter');
+		expect(faces.primaryLabel).toBe('Inter');
+		// A container draws no text and takes no face.
+		expect(faces.banner).toBeUndefined();
+
+		// A part override restyles the part; it does not take the theme's face away.
+		const overridden = probeFonts({
+			styles: {
+				description: { color: '#123456' },
+				title: { color: '#123456' },
+			},
+			theme: createConsentTheme({
+				typography: { fontFamily: 'Inter', headlineFont: 'Fraunces' },
+			}),
+		});
+		expect(overridden.title).toBe('Fraunces');
+		expect(overridden.description).toBe('Inter');
+
+		const keyword = probeFonts({
+			theme: createConsentTheme({ typography: { headlineFont: 'serif' } }),
+		});
+		expect(keyword.title).toBeUndefined();
+	});
+
+	test('one theme names each font per platform, as the Expo plugin takes it', () => {
+		const theme = createConsentTheme({
+			typography: {
+				fontFamily: { android: 'inter_regular', ios: 'Inter-Regular' },
+				headlineFont: { android: 'fraunces_bold', ios: 'Fraunces-Bold' },
+			},
+		});
+
+		setPlatformOS('ios');
+		const ios = probeFonts({ theme });
+		expect(ios.title).toBe('Fraunces-Bold');
+		expect(ios.description).toBe('Inter-Regular');
+
+		setPlatformOS('android');
+		const android = probeFonts({ theme });
+		expect(android.title).toBe('fraunces_bold');
+		expect(android.description).toBe('inter_regular');
 	});
 });
 

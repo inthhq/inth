@@ -855,7 +855,14 @@ export default defineDocsConfig({
 							title: 'Consent API',
 						},
 						{
-							pages: ['configuration', 'offline', 'iab', 'identity'],
+							pages: [
+								'configuration',
+								'offline',
+								'iab',
+								'gpp',
+								'identity',
+								'/guides/mobile-webview',
+							],
 							slug: 'advanced',
 							title: 'Advanced',
 						},
@@ -892,8 +899,10 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'/guides/mobile-iab',
+								'/guides/mobile-gpp',
 								'/guides/mobile-offline',
 								'/guides/mobile-identity',
+								'/guides/mobile-webview',
 							],
 							slug: 'advanced',
 							title: 'Advanced',
@@ -927,8 +936,10 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'/guides/mobile-iab',
+								'/guides/mobile-gpp',
 								'/guides/mobile-offline',
 								'/guides/mobile-identity',
+								'/guides/mobile-webview',
 							],
 							slug: 'advanced',
 							title: 'Advanced',
@@ -1040,6 +1051,7 @@ export default defineDocsConfig({
 					pages: [
 						'activecampaign',
 						'attentive',
+						'braze',
 						'customer-io',
 						'insider',
 						'klaviyo',
@@ -1052,6 +1064,12 @@ export default defineDocsConfig({
 				{
 					pages: [
 						'meta-pixel',
+						'meta-app-events',
+						'admob',
+						'appsflyer',
+						'adjust',
+						'branch',
+						'singular',
 						'amazon-ads',
 						'openai-pixel',
 						'pinterest-tag',
@@ -1109,7 +1127,13 @@ export default defineDocsConfig({
 			base: 'cli',
 			children: [
 				{
-					pages: ['commands/setup', 'commands/codemods', 'commands/self-host'],
+					pages: [
+						'commands/setup',
+						'commands/codemods',
+						'commands/self-host',
+						'commands/mobile-manifest',
+						'commands/mobile-setup',
+					],
 					slug: 'commands',
 					title: 'Commands',
 				},

@@ -11,11 +11,13 @@ import com.c15t.core.transport.C15tProtocol
  * semantics on its own. The backend identifies the project by URL, the same way
  * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
  *
- * @property portalUrl c15t backend base URL, without a trailing slash.
- * @property initUrl Overrides `$portalUrl/init`, for a deployment fronted by a
+ * @property backendUrl c15t backend base URL, without a trailing slash. `null` selects
+ * no-backend mode: nothing is sent, and a [bundledPolicy] is refused because a bundled
+ * manifest belongs to a backend.
+ * @property initUrl Overrides `$backendUrl/init`, for a deployment fronted by a
  * same-origin proxy.
  * @property domain Value sent as the `domain` field of `POST /subjects`. Defaults
- * to the host of [portalUrl].
+ * to the host of [backendUrl].
  * @property consentCategories Categories the host offers. `null` or empty declares
  * none: a strict policy offers its full scope and a permissive one offers
  * `necessary` alone, with an acknowledgement prompt.
@@ -25,7 +27,7 @@ import com.c15t.core.transport.C15tProtocol
  * Web puts that option to three uses: filtering the GVL request, narrowing the list the
  * module holds through `narrowGVLToVendors`, and clearing a summary that had counted the
  * wider list. The first one reaches this core as the `x-c15t-vendors` request header, the
- * second is what [com.c15t.core.C15tKernel] does with this field on every path a list
+ * second is what [com.c15t.core.ConsentCore] does with this field on every path a list
  * arrives by, and the third has no native equivalent yet because this build holds one
  * list and reports it whole.
  *
@@ -51,15 +53,21 @@ import com.c15t.core.transport.C15tProtocol
  *   lives: a WebView's `isGlobalPrivacyControlEnabled`, an equivalent Android check, or the React
  *   Native layer. `null` means "no signal", which is not the same answer as `false`. An app
  *   override on [overrides] wins over this.
+ * @property platform The host that built this core, sent as `x-c15t-platform: <platform>-><sdkVersion>`.
+ *   [C15tProtocol.PLATFORM_ANDROID] for a Kotlin or Java app, and the React Native binding sets
+ *   [C15tProtocol.PLATFORM_REACT_NATIVE]. `null` sends no platform header.
  * @property extraHeaders Extra request headers, for a deployment that needs its own auth or tenant
  *   header.
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
+ * @property gpp Turns on the IAB GPP string: [com.c15t.core.model.ConsentSnapshot.gppString] and the `IABGPP_*`
+ *   storage keys. `null`, the default, writes no GPP signal. See [com.c15t.core.gpp.GppOptions].
  */
 data class NativeConfig(
-	val portalUrl: String,
+	val backendUrl: String?,
 	val initUrl: String? = null,
 	val domain: String? = null,
 	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
+	val platform: String? = C15tProtocol.PLATFORM_ANDROID,
 	val consentCategories: List<ConsentCategory>? = null,
 	val vendors: List<Int>? = null,
 	val iab: com.c15t.core.iab.IabConfiguration? = null,
@@ -68,11 +76,32 @@ data class NativeConfig(
 	val detectedGpc: Boolean? = null,
 	val extraHeaders: Map<String, String> = emptyMap(),
 	val maxPendingSaves: Int = 20,
-	/** Raw build resource, loaded by the Android adapter before JavaScript. */
+	/**
+	 * Raw manifest bundled at build time for [backendUrl], loaded by the Android adapter
+	 * before JavaScript. Used only while no live or cached `/init` response is available.
+	 */
 	val bundledPolicy: String? = null,
+	/**
+	 * The policy in source control, the only policy source in no-backend mode. Needs a
+	 * `null` [backendUrl]: the two modes do not mix.
+	 */
+	val policy: ConsentPolicy? = null,
+	/**
+	 * Why the app's declared in-code policy was refused, when an adapter read one and
+	 * could not use it. The core then reports `policy-invalid` in the snapshot and on the
+	 * error stream instead of starting as if no policy had been declared.
+	 */
+	val policyError: String? = null,
+	val gpp: com.c15t.core.gpp.GppOptions? = null,
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)
-		require(portalUrl.isNotBlank()) { "NativeConfig.portalUrl must not be blank" }
+		require(backendUrl == null || backendUrl.isNotBlank()) { "NativeConfig.backendUrl must not be blank" }
+		require(backendUrl != null || bundledPolicy == null) {
+			"NativeConfig.bundledPolicy needs backendUrl: a bundled manifest belongs to backend mode"
+		}
+		require(policy == null && policyError == null || backendUrl == null) {
+			"NativeConfig.policy is no-backend mode and does not mix with backendUrl"
+		}
 	}
 }

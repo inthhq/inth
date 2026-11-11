@@ -52,6 +52,9 @@ public abstract class NativeC15tSpec extends ReactContextBaseJavaModule implemen
 	@ReactMethod(isBlockingSynchronousMethod = true)
 	public abstract String getSnapshot();
 
+	@ReactMethod(isBlockingSynchronousMethod = true)
+	public abstract String getWebViewConsent();
+
 	@ReactMethod
 	public abstract void commit(String intent, Promise promise);
 
@@ -80,11 +83,16 @@ public abstract class NativeC15tSpec extends ReactContextBaseJavaModule implemen
 	public abstract void requestTrackingAuthorization(Promise promise);
 
 	@ReactMethod
+	public abstract void requestTrackingAuthorizationWithOptions(String options, Promise promise);
+
+	@ReactMethod
 	public abstract void presentConsentPrompt(String privacyPolicyURL, Promise promise);
 	@ReactMethod
 	public abstract void presentPreferences(String privacyPolicyURL, Promise promise);
 	@ReactMethod
 	public abstract void closeConsentPresenter(String sessionId, Promise promise);
+	@ReactMethod
+	public abstract void configureAutoPresent(String settings, Promise promise);
 
 
 	@ReactMethod

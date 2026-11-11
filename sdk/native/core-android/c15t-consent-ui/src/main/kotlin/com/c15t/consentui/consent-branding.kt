@@ -35,17 +35,18 @@ internal object ProviderMarks {
         .build()
 }
 
-@Composable internal fun ProviderBranding() {
+/** The provider tag: [securedBy], the lead-in in the screen's language, then the provider. */
+@Composable internal fun ProviderBranding(securedBy: String) {
     val theme = LocalConsentTheme.current
     val provider = theme.branding
-    val color = theme.colors.textSecondary.color()
+    val color = theme.colors.textMuted.color()
     Row(
         modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.branding")
-            .semantics(mergeDescendants = true) { contentDescription = "Secured by ${provider.name}" },
+            .semantics(mergeDescendants = true) { contentDescription = "$securedBy ${provider.name}" },
         horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.End),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text("Secured by", style = MaterialTheme.typography.labelMedium, color = color,
+        Text(securedBy, style = MaterialTheme.typography.labelMedium, color = color,
             modifier = Modifier.clearAndSetSemantics {})
         val logo = Modifier.size(15.dp).testTag("c15t.first-layer.branding.logo")
         when (provider) {

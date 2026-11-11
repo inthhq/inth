@@ -289,21 +289,21 @@ const footerChrome = function footerChrome(
 
 	// The two edges that disagree per surface, taken as plain numbers because a
 	// `ViewStyle` cannot be built up field by field.
-	let paddingHorizontal = spacing.m;
-	let paddingVertical = spacing.m;
+	let paddingHorizontal = spacing.md;
+	let paddingVertical = spacing.md;
 
 	if (banner) {
 		paddingHorizontal = BANNER_FOOTER_PADDING_HORIZONTAL;
 	} else if (dialog) {
-		paddingHorizontal = spacing.l;
-		paddingVertical = spacing.l;
+		paddingHorizontal = spacing.lg;
+		paddingVertical = spacing.lg;
 	} else if (drawer) {
 		paddingHorizontal = IAB_BANDS.footerPaddingHorizontal;
 		paddingVertical = IAB_BANDS.footerPaddingVertical;
 	}
 
 	return {
-		backgroundColor: banded ? colors.surfaceRaised : colors.surface,
+		backgroundColor: banded ? colors.surfaceHover : colors.surface,
 		// Only the banner has an edge to hide: its band sits under the copy, so the
 		// rule along its top is what separates the two, and a drawer's list scrolls
 		// under its footer, so that one needs a rule of its own. A card surface that
@@ -313,7 +313,7 @@ const footerChrome = function footerChrome(
 		// The step between the two action rows is 8 on the banner and the dialog, and
 		// 16 on the disclosure, which keeps `.actionRoot`'s own `gap: 1rem` because it
 		// carries no `[data-split]` to drop that to `.5rem`. Measured row to row: 16.0.
-		gap: drawer ? IAB_BANDS.footerGap : spacing.s,
+		gap: drawer ? IAB_BANDS.footerGap : spacing.sm,
 		paddingBottom: paddingVertical,
 		paddingHorizontal,
 		paddingTop: paddingVertical,

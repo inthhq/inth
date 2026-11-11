@@ -8,7 +8,7 @@
  * nesting the package's provider inside the client context it publishes, which the
  * provider is documented to accept without attaching a second time.
  *
- * - `native` renders the package's `C15tProvider`, which reads the handshake from
+ * - `native` renders the package's `ConsentProvider`, which reads the handshake from
  *   the Swift or Kotlin core in the binary. If the module is not there, the
  *   package throws with a message that names the cause, and this file catches it
  *   so the screen can show it rather than white-screening.
@@ -22,7 +22,7 @@
  */
 
 import {
-	C15tProvider,
+	ConsentProvider,
 	ConsentClientContext,
 	createConsentClient,
 	getConsentClient,
@@ -189,8 +189,15 @@ export const ConsentSourceProvider = ({
 		<ConsentSourceContext.Provider value={source}>
 			{usingNative ? (
 				// The provider is the documented entry point and the one that runs
-				// the protocol handshake, so the native path goes through it.
-				<C15tProvider safeAreaInsets={insets}>{children}</C15tProvider>
+				// the protocol handshake, so the native path goes through it. This app
+				// draws the JavaScript banner itself, so the provider presents no
+				// native prompt.
+				<ConsentProvider
+					autoPresent={false}
+					safeAreaInsets={insets}
+				>
+					{children}
+				</ConsentProvider>
 			) : (
 				// A new key is a new subtree, which is what a relaunch does to the
 				// JavaScript side: every subscriber attaches to the new core.
@@ -201,7 +208,12 @@ export const ConsentSourceProvider = ({
 					{/* The nested provider inherits the fake client instead of attaching
 					    to the binary, and is the only way the measured insets reach the
 					    surfaces without a fake-core path of their own. */}
-					<C15tProvider safeAreaInsets={insets}>{children}</C15tProvider>
+					<ConsentProvider
+						autoPresent={false}
+						safeAreaInsets={insets}
+					>
+						{children}
+					</ConsentProvider>
 				</ConsentClientContext.Provider>
 			)}
 		</ConsentSourceContext.Provider>

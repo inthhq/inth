@@ -32,7 +32,13 @@ import type { ExportedConfig, XcodeProject } from '@expo/config-plugins';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { resolveParams } from '../params';
-import { FIXTURE_DIR, applyToFixture, runInfoPlist, runMod } from './helpers';
+import {
+	FIXTURE_DIR,
+	GOOGLE_CONSENT_PLIST_DEFAULTS,
+	applyToFixture,
+	runInfoPlist,
+	runMod,
+} from './helpers';
 
 const BACKEND = 'https://consent.example.com';
 
@@ -156,6 +162,7 @@ describe('the Markdown prompt in Info.plist', () => {
 		);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			[MARKDOWN_KEY]: MARKDOWN,
 			[PLAIN_KEY]: 'We use your activity to pick the ads you see.',

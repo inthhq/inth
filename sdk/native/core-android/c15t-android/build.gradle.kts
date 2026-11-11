@@ -72,14 +72,20 @@ android {
 
 dependencies {
 	api(project(":c15t-core"))
+	// StateFlow and suspend functions are part of this module's public API. The
+	// coroutines runtime already reaches every host through androidx.lifecycle, so
+	// declaring it costs no new dependency; it pins the version this code is built on.
+	api(libs.kotlinx.coroutines.core)
 
 	implementation(libs.androidx.startup)
 	implementation(libs.androidx.lifecycle.process)
+	implementation(libs.androidx.webkit)
 	compileOnly(libs.androidx.annotation)
 
 	// JUnit directly: AGP's built-in Kotlin does not register a test framework, so
 	// the plain kotlin-test artifact would carry the assertions but not @Test.
 	testImplementation(libs.junit)
+	testImplementation(libs.kotlinx.coroutines.test)
 
 	// The runner is what `testInstrumentationRunner` names, `core` supplies the
 	// application context, and the ext bridge gives `@RunWith(AndroidJUnit4::class)`,

@@ -146,20 +146,21 @@ struct IABPreferencesContent: Equatable, Sendable {
     let iabPartnerCount: Int
     /// Google ad tech providers. They have their own page, apart from IAB partners.
     let otherPartnerCount: Int
+    /// Custom (non-IAB) partners. They have their own page too.
+    let customPartnerCount: Int
     let labels: DecisionLabels
 
     init(_ presentation: IABPresentation) {
         let list = presentation.list
         let copy = IABCopy.forLanguage(presentation.language)
         let projections = presentation.vendors.values
-        let providerCount = presentation.adTechProviders?.count ?? 0
+        let custom = presentation.customVendors
         purposes = presentation.declaredPurposeIds.compactMap { id in
             list.purposes[id].map { definition in
-                IABPurposeContent(definition: IABDefinitionContent(.purpose, definition),
-                    // Google ad tech providers need consent to purposes 1, 3 and 4, as the web counts them.
-                    consentPartnerCount: projections.filter { $0.consentPurposes.contains(id) }.count
-                        + (adTechProviderPurposeIds.contains(id) ? providerCount : 0),
-                    legitimateInterestPartnerCount: projections.filter { $0.legitimateInterestPurposes.contains(id) }.count,
+                let counts = presentation.partnerCounts(purposeId: id)
+                return IABPurposeContent(definition: IABDefinitionContent(.purpose, definition),
+                    consentPartnerCount: counts.consent,
+                    legitimateInterestPartnerCount: counts.legitimateInterest,
                     copy: copy)
             }
         }
@@ -168,7 +169,7 @@ struct IABPreferencesContent: Equatable, Sendable {
         }
         let active = presentation.vendors.keys.compactMap { list.vendors[$0] }
         let usedSpecialPurposes = Set(active.flatMap(\.specialPurposes))
-        let usedFeatures = Set(active.flatMap(\.features))
+        let usedFeatures = Set(active.flatMap(\.features)).union(custom.flatMap(\.features))
         specialPurposes = list.specialPurposes.keys.sorted().filter(usedSpecialPurposes.contains).compactMap { id in
             list.specialPurposes[id].map { IABDefinitionContent(.specialPurpose, $0) }
         }
@@ -177,12 +178,74 @@ struct IABPreferencesContent: Equatable, Sendable {
         }
         featuresStandardText = featuresExplanation(list, copy)
         legitimateInterestExplanation = projections.contains { !$0.legitimateInterestPurposes.isEmpty }
+            || custom.contains { !$0.legIntPurposes.isEmpty }
             ? copy.appLegitimateInterestExplanation : nil
         rightToObject = copy.preferenceCenterPurposeItemRightToObject
         consentStorage = presentation.consentStorageMaxDays.map { copy.format(copy.appConsentStorage, ["days": String($0)]) }
         iabPartnerCount = presentation.vendors.count
         otherPartnerCount = presentation.adTechProviders?.count ?? 0
+        customPartnerCount = custom.count
         labels = DecisionLabels(copy: copy)
+    }
+}
+
+/// Purposes TCF never lets anyone claim under legitimate interest.
+let customNeverLI: Set<Int> = [1, 3, 4, 5, 6]
+
+/// One custom (non-IAB) partner's page: what it is, its legal bases and everything it declares,
+/// with the same rows a registered partner's page has. The names come from the served list.
+struct IABCustomVendorContent: Equatable, Sendable {
+    typealias Row = IABVendorContent.Row
+    let id: String
+    let name: String
+    /// That this partner is not registered with IAB, in the web's words.
+    let note: String
+    let description: String?
+    let privacyPolicy: URL?
+    let consentPurposes: [String]
+    let legitimateInterestPurposes: [String]
+    let offersConsent: Bool
+    let offersLegitimateInterest: Bool
+    let features: [IABDefinitionContent]
+    let featuresStandardText: String
+    let specialFeatureIds: [Int]
+    let specialFeatures: [String]
+    let dataCategories: [String]
+    let retention: [Row]
+    let storage: [Row]
+    let storesOnDevice: Bool
+
+    init?(_ presentation: IABPresentation, id: String) {
+        guard let vendor = presentation.customVendors.first(where: { $0.id == id }) else { return nil }
+        let copy = IABCopy.forLanguage(presentation.language)
+        let list = presentation.list
+        func names(_ ids: [Int], in table: [Int: GVLDefinition]) -> [String] { ids.compactMap { table[$0]?.name } }
+        self.id = id
+        name = vendor.name
+        note = copy.commonCustomPartner
+        description = vendor.description?.isEmpty == false ? vendor.description : nil
+        privacyPolicy = URL(string: vendor.privacyPolicyUrl)
+        consentPurposes = names(vendor.purposes, in: list.purposes)
+        legitimateInterestPurposes = names(vendor.legIntPurposes.filter { !customNeverLI.contains($0) }, in: list.purposes)
+        offersConsent = !vendor.purposes.isEmpty
+        offersLegitimateInterest = !vendor.legIntPurposes.isEmpty
+        features = vendor.features.compactMap { list.features[$0].map { IABDefinitionContent(.feature, $0) } }
+        featuresStandardText = featuresExplanation(list, copy)
+        specialFeatureIds = vendor.specialFeatures.filter { list.specialFeatures[$0] != nil }
+        specialFeatures = names(vendor.specialFeatures, in: list.specialFeatures)
+        dataCategories = vendor.dataCategories.compactMap { list.dataCategories?[$0]?.name }
+        retention = vendor.dataRetentionDays.map {
+            [Row(label: copy.appStandardRetention, value: IABVendorContent.days($0, copy))]
+        } ?? []
+        storesOnDevice = vendor.usesCookies || vendor.usesNonCookieAccess
+        var storage: [Row] = []
+        if storesOnDevice {
+            if let seconds = vendor.cookieMaxAgeSeconds {
+                storage.append(Row(label: copy.appStoredForUpTo, value: IABVendorContent.storageDuration(seconds: seconds, copy)))
+            }
+            storage.append(Row(label: copy.appOtherDeviceAccess, value: vendor.usesNonCookieAccess ? copy.appYes : copy.appNo))
+        }
+        self.storage = storage
     }
 }
 
@@ -277,14 +340,13 @@ struct IABVendorContent: Equatable, Sendable {
     }
 }
 
-/// Decision button labels. IAB screens take them from the generated IAB copy.
+/// Decision button labels, from the generated copy: IAB copy on IAB screens, category-mode copy
+/// otherwise.
 struct DecisionLabels: Equatable, Sendable {
     let acceptAll: String
     let rejectAll: String
     let customize: String
     let save: String
-
-    static let standard = DecisionLabels(acceptAll: "Accept all", rejectAll: "Reject all", customize: "Customize", save: "Save choices")
 
     init(acceptAll: String, rejectAll: String, customize: String, save: String) {
         self.acceptAll = acceptAll
@@ -296,6 +358,10 @@ struct DecisionLabels: Equatable, Sendable {
     init(copy: IABCopy) {
         self.init(acceptAll: copy.commonAcceptAll, rejectAll: copy.commonRejectAll,
             customize: copy.commonCustomize, save: copy.commonSaveSettings)
+    }
+
+    init(copy: ConsentCopy) {
+        self.init(acceptAll: copy.acceptAll, rejectAll: copy.rejectAll, customize: copy.customize, save: copy.save)
     }
 }
 

@@ -6,11 +6,14 @@ import { describe, expect, it } from 'vitest';
 import { applyParamsOnConfig } from '../with-c15t';
 import {
 	FIXTURE_DIR,
+	OFFLINE,
 	PREBUILD_ARGV,
 	applyToFixture,
 	fixtureConfig,
 	runInfoPlist,
 	runMod,
+	GOOGLE_CONSENT_META_DATA_NAMES,
+	GOOGLE_CONSENT_PLIST_DEFAULTS,
 } from './helpers';
 
 const BACKEND = 'https://consent.example.com';
@@ -54,6 +57,7 @@ describe('App Tracking Transparency', () => {
 		const applied = await runInfoPlist(applyToFixture(ATT_PROPS));
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			NSUserTrackingUsageDescription:
 				'We use your activity to pick the ads you see.',
@@ -84,6 +88,7 @@ describe('App Tracking Transparency', () => {
 		);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -102,10 +107,11 @@ describe('App Tracking Transparency', () => {
 		);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
-			'com.c15t.gpc': true,
+			'com.c15t.forceGPC': true,
 		});
 	});
 
@@ -205,15 +211,17 @@ describe('App Tracking Transparency', () => {
 
 describe('transport modes', () => {
 	it('embeds no backend and no tracking for offline', async () => {
-		const config = applyToFixture({ mode: 'offline' });
+		const config = applyToFixture(OFFLINE);
 		const plist = (await runInfoPlist(config)).ios?.infoPlist;
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
 		).modResults as AndroidConfig.Manifest.AndroidManifest;
 
 		expect(plist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'offline',
+			'com.c15t.policy.rules': 'c15t-policy-rules.json',
 		});
 		expect(config.extra?.c15t).toMatchObject({
 			backendURL: null,
@@ -221,6 +229,9 @@ describe('transport modes', () => {
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
+			'com.c15t.MODE',
+			'com.c15t.POLICY_RULES',
+			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 	});
 
@@ -251,8 +262,9 @@ describe('transport modes', () => {
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			'com.c15t.PORTAL_URL',
+			'com.c15t.BACKEND_URL',
 			'com.c15t.reactnative.AUTO_BOOTSTRAP',
+			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 		expect(providerOf(manifest)).toBeUndefined();
 	});
@@ -266,7 +278,7 @@ describe('transport modes', () => {
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest);
 
 		expect((await runInfoPlist(config)).ios?.infoPlist).toMatchObject({
-			'com.c15t.gpc': true,
+			'com.c15t.forceGPC': true,
 		});
 		expect(application['meta-data']).toContainEqual({
 			$: {
@@ -294,7 +306,7 @@ describe('transport modes', () => {
 			AndroidConfig.Manifest.getMainApplicationOrThrow(manifest)['meta-data']
 		).toContainEqual({
 			$: {
-				'android:name': 'com.c15t.INIT_URL',
+				'android:name': 'com.c15t.BACKEND_INIT_URL',
 				'android:value': 'https://app.example.com/api/consent/init',
 			},
 		});

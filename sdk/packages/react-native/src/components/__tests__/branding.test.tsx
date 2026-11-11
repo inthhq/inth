@@ -24,7 +24,7 @@ import {
 	BRANDING_MARK_SCALES,
 	selectBrandingMark,
 } from '../internal/branding-mark';
-import { lightTheme } from '../theme/create-consent-theme';
+import { defaultConsentTheme } from '../theme/create-consent-theme';
 import {
 	mountSurface,
 	nodeStyle,
@@ -163,7 +163,7 @@ describe('ConsentBrandingTag', () => {
 		const tree = mountSurface(<ConsentBanner />);
 		const style = nodeStyle(tabNode(tree.container()));
 
-		expect(style.backgroundColor).toBe(lightTheme.colors.primary);
+		expect(style.backgroundColor).toBe(defaultConsentTheme.colors.primary);
 		// The tab is filled with the accent, so its border has to be darker than
 		// the fill or the shape dissolves into it.
 		expect(style.borderColor).toBe('#2C4FDB');
@@ -194,7 +194,7 @@ describe('ConsentBrandingTag', () => {
 		// overlaps that 1px so the rule runs beside the tab instead of under it.
 		expect(style.borderBottomWidth).toBe(0);
 		expect(style.marginBottom).toBe(-1);
-		expect(style.borderTopRightRadius).toBe(lightTheme.radius.surface);
+		expect(style.borderTopRightRadius).toBe(defaultConsentTheme.radius.lg);
 		expect(style.borderBottomRightRadius).toBe(0);
 
 		tree.unmount();
@@ -220,7 +220,7 @@ describe('ConsentBrandingTag', () => {
 		expect(style.marginBottom).toBeNull();
 		expect(style.borderTopWidth).toBe(0);
 		expect(style.borderTopRightRadius).toBe(0);
-		expect(style.borderBottomRightRadius).toBe(lightTheme.radius.surface);
+		expect(style.borderBottomRightRadius).toBe(defaultConsentTheme.radius.lg);
 
 		tree.unmount();
 	});

@@ -17,6 +17,7 @@ import com.c15t.core.spi.KeyValueStore
 import com.c15t.core.store.C15tStore
 import com.c15t.core.store.SubjectPreservingStore
 import com.c15t.core.store.TcBusValue
+import com.c15t.core.gpp.GppStorageBusKeys
 import com.c15t.core.store.TcStorageBusKeys
 import com.c15t.core.store.TcStorageBusSink
 import java.io.File
@@ -261,7 +262,7 @@ internal class DefaultPreferencesTcStorageBus(private val prefs: SharedPreferenc
 	override fun write(values: Map<String, TcBusValue>) {
 		try {
 			val editor = prefs.edit()
-			for (key in TcStorageBusKeys.ALL_NAMES) {
+			for (key in OWNED_NAMES) {
 				when (val value = values[key]) {
 					is TcBusValue.NumberValue -> editor.putInt(key, value.value)
 					is TcBusValue.TextValue -> editor.putString(key, value.value)
@@ -274,13 +275,18 @@ internal class DefaultPreferencesTcStorageBus(private val prefs: SharedPreferenc
 			// commit() can update memory even when its disk write fails. Remove every grant.
 			try {
 				val clear = prefs.edit()
-				TcStorageBusKeys.ALL_NAMES.forEach { clear.remove(it) }
+				OWNED_NAMES.forEach { clear.remove(it) }
 				clear.commit()
 			} catch (_: Exception) { /* Report the failure; a later publication retries. */ }
-			Log.e(TAG, "failed to publish the IABTCF storage bus", error)
+			Log.e(TAG, "failed to publish the IABTCF and IABGPP storage bus", error)
 		}
 	}
 
 	override fun clear() = write(emptyMap())
-	private companion object { const val TAG = "c15t" }
+	private companion object {
+		const val TAG = "c15t"
+
+		/** The `IABTCF_*` table and the `IABGPP_*` table, replaced together in one commit. */
+		val OWNED_NAMES = TcStorageBusKeys.ALL_NAMES + GppStorageBusKeys.ALL_NAMES
+	}
 }

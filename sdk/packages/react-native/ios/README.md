@@ -123,7 +123,7 @@ Read by `C15tBridgeConfiguration.from(infoPlist:)`. Expo apps set these through
 | `com.c15t.keychain.service` | Keychain service name, default `com.c15t.core`. |
 | `com.c15t.country`, `com.c15t.region`, `com.c15t.language` | Override geo/locale detection. |
 | `com.c15t.categories` | Category ids the app declares. |
-| `com.c15t.gpc` | Report the Global Privacy Control signal. Detection only: it never becomes an override. |
+| `com.c15t.forceGPC` | Report the Global Privacy Control signal. Detection only: it never becomes an override. |
 
 `com.c15t.test` is retired. Publisher test mode is a client option rather than an
 override, and never reaches a save body, so nothing reads the key. The launch hook

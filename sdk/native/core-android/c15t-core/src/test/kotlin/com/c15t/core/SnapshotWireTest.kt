@@ -109,13 +109,26 @@ class SnapshotWireTest {
 			C15tJson.storage.encodeToString(ConsentSnapshot.serializer(), snapshot)
 		).jsonObject
 
-		val ownedByKernel = SnapshotWire.KERNEL_OBJECT_KEYS.keys
+		// `resolution` loses only a null `reason`; its own test below covers it.
+		val ownedByKernel = SnapshotWire.KERNEL_OBJECT_KEYS.keys + "resolution"
 		val names = wire.keys.toList()
 		assertEquals(stored.keys.toList(), names, "the wire moves a key the model does not declare")
-		assertEquals(21, names.size, "the snapshot carries 21 keys, `iab` included")
+		assertEquals(22, names.size, "the snapshot carries 22 keys, `iab` and `gppString` included")
 		names.filterNot { it in ownedByKernel }.forEach { name ->
 			assertEquals(stored.getValue(name), wire.getValue(name), "$name was rewritten on the way out")
 		}
+	}
+
+	@Test
+	fun `a resolution carries reason only when it failed, as the kernel writes it`() {
+		val matched = SnapshotWire.toJsonElement(choiceSnapshot())["resolution"]!!.jsonObject
+		assertFalse(matched.containsKey("reason"), "a null reason is absent, not null")
+		assertEquals(setOf("status", "policyId", "fingerprint"), matched.keys)
+
+		val failed = SnapshotWire.toJsonElement(
+			ConsentSnapshot(resolution = PolicyResolution.failed(PolicyResolution.REASON_TRANSPORT)),
+		)["resolution"]!!.jsonObject
+		assertEquals("transport", failed["reason"]!!.jsonPrimitive.content)
 	}
 
 	@Test

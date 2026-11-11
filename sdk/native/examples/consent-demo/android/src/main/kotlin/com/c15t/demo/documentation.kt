@@ -8,25 +8,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.c15t.android.C15tAndroid
+import com.c15t.android.decisionFlow
 import com.c15t.consentui.C15tConsent
-import com.c15t.consentui.ConsentPresenter
+import com.c15t.consentui.ConsentPrompt
+import com.c15t.consentui.attachConsent
 import com.c15t.core.C15t
 import com.c15t.core.NativeConfig
 import com.c15t.core.model.ConsentCategory
+import com.c15t.core.model.ConsentDecision
 
 fun installConsent(context: Context) {
     C15tAndroid.install(context, NativeConfig(
-        portalUrl = "https://your-project.inth.app",
+        backendUrl = "https://your-project.inth.app",
         consentCategories = listOf(ConsentCategory.NECESSARY, ConsentCategory.MEASUREMENT, ConsentCategory.MARKETING),
     ))
 }
@@ -48,22 +51,31 @@ class ConsentActivity : ComponentActivity() {
         val core = checkNotNull(C15t.current) { "Install c15t in Application first" }
         setContent {
             MaterialTheme {
-                val presenter: ConsentPresenter = viewModel(
-                    factory = object : ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            @Suppress("UNCHECKED_CAST")
-                            return ConsentPresenter(core) as T
+                // Recomposes when the decision changes, on the main thread.
+                val measurement by core.decisionFlow(ConsentCategory.MEASUREMENT).collectAsState()
+                Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+                    Column {
+                        Text(if (measurement == ConsentDecision.GRANTED) "Measurement allowed" else "Measurement off")
+                        Button(onClick = { ConsentPrompt.of(core).presentPreferences() }) {
+                            Text("Privacy settings")
                         }
                     }
-                )
-                Box(Modifier.fillMaxSize().safeDrawingPadding()) {
-                    Button(onClick = presenter::presentPreferences) {
-                        Text("Privacy settings")
-                    }
-                    C15tConsent(presenter, "https://your-app.example/privacy")
+                    C15tConsent(privacyPolicyUrl = "https://your-app.example/privacy")
                 }
             }
         }
     }
 }
 // #endregion docs:android-quickstart
+
+// #region docs:android-views title="SettingsActivity.kt"
+class SettingsActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val privacySettings = android.widget.Button(this).apply { text = "Privacy settings" }
+        setContentView(privacySettings)
+        val consent = attachConsent("https://your-app.example/privacy")
+        privacySettings.setOnClickListener { consent.presentPreferences() }
+    }
+}
+// #endregion docs:android-views

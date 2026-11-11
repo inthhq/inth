@@ -20,12 +20,12 @@ import kotlin.test.assertTrue
  * to end in the same deny-all state rather than an invented permission.
  */
 class FailClosedTest {
-	private fun bootstrapWith(body: String): C15tKernel {
+	private fun bootstrapWith(body: String): ConsentCore {
 		val transport = RecordingTransport().respondInit(initSuccess(body = body))
 		return testKernel(store = C15tStore(InMemoryKeyValueStore()), transport = transport).also { it.bootstrap() }
 	}
 
-	private fun assertDenyAll(kernel: C15tKernel) {
+	private fun assertDenyAll(kernel: ConsentCore) {
 		val snapshot = kernel.snapshot()
 		assertTrue(snapshot.policyPending, "an unreadable policy leaves the pending flag set")
 		assertEquals(ActiveUI.NONE, snapshot.activeUI, "the first layer stays hidden")

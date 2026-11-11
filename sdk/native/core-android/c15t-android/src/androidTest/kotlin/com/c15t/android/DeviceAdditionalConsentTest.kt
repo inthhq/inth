@@ -4,7 +4,7 @@ package com.c15t.android
 
 import android.preference.PreferenceManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabConfiguration
@@ -36,7 +36,7 @@ class DeviceAdditionalConsentTest {
 		val config = NativeConfig("https://consent.instrumentation.invalid",
 			iab = IabConfiguration(53, 7, "GB"))
 		val backend = NativeIabDeviceBackend()
-		val first = C15tKernel(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
+		val first = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
 			transport = backend, executor = TaskExecutor.DIRECT)
 		first.bootstrap()
 		assertTrue(first.save(CommitIntent.All).ok)
@@ -45,7 +45,7 @@ class DeviceAdditionalConsentTest {
 		val before = first.iabConsent!!
 		assertEquals(before.tcString, defaults.getString(TcStorageBusKeys.TC_STRING, null))
 		defaults.edit().remove(TcStorageBusKeys.ADDTL_CONSENT).commit()
-		val cold = C15tKernel(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
+		val cold = ConsentCore(config, C15tStores.create(context), clock = Clock { DEVICE_IAB_NOW },
 			transport = backend, executor = TaskExecutor { })
 		cold.bootstrap()
 		assertEquals(before, cold.iabConsent)
@@ -72,7 +72,7 @@ internal class NativeIabDeviceBackend : C15tTransport {
 		val INIT = """{
 		  "policyResolution":{"version":1,"status":"matched","policyId":"mobile-iab","matchedBy":"country",
 			"fingerprints":{"policy":"mobile-policy","choice":"mobile-choice","notice":"mobile-notice"},
-			"policy":{"id":"mobile-iab","model":"iab","prompt":"choice","scopeMode":"permissive",
+			"policy":{"id":"mobile-iab","model":"iab","prompt":"choice","scopeMode":"permissive","rights":["disclosure","preferences"],
 			  "validity":{"choiceMs":2592000000,"noticeMs":2592000000}}},
 		  "gvl":{"vendorListVersion":42,"tcfPolicyVersion":5,"gvlSpecificationVersion":3,"lastUpdated":"2025-09-17T00:00:00Z",
 			"purposes":{"1":{"id":1,"name":"Storage","description":"Storage"},"3":{"id":3,"name":"Profiles","description":"Profiles"},"4":{"id":4,"name":"Ads","description":"Ads"}},

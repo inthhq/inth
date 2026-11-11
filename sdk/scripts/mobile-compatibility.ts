@@ -81,18 +81,25 @@ export const prepareCompatibilityOutput = function prepareCompatibilityOutput(
 
 const consumerSource = `
 import { Text, View } from 'react-native';
-import { C15tProvider, useIsAllowed, useConsentActions } from '@c15t/react-native';
+import { ConsentProvider, useConsent, useSaveConsents } from '@c15t/react-native';
 import withC15t, { type C15tPluginProps } from '@c15t/react-native/expo-plugin';
 import { connectPostHog, connectFirebaseAnalytics } from '@c15t/react-native/integrations';
 
 function PrivacyStatus() {
-  const allowed = useIsAllowed('measurement');
-  const actions = useConsentActions();
-  return <View><Text onPress={() => { void actions.rejectAll(); }}>{allowed ? 'Allowed' : 'Denied'}</Text></View>;
+  const allowed = useConsent('measurement');
+  const saveConsents = useSaveConsents();
+  return <View><Text onPress={() => { void saveConsents('none'); }}>{allowed ? 'Allowed' : 'Denied'}</Text></View>;
 }
-export const App = () => <C15tProvider><PrivacyStatus /></C15tProvider>;
+export const App = () => <ConsentProvider privacyPolicyURL="https://example.com/privacy"><PrivacyStatus /></ConsentProvider>;
 export const plugin: typeof withC15t = withC15t;
-export const configuration: C15tPluginProps = { mode: 'offline' };
+export const configuration: C15tPluginProps = {
+	mode: 'offline',
+	policy: {
+		rules: [
+			{ id: 'fallback', match: { fallback: true }, model: 'opt-in', prompt: 'choice' },
+		],
+	},
+};
 export const posthog: typeof connectPostHog = connectPostHog;
 export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
 `;
@@ -301,6 +308,17 @@ const main = function main(): void {
 								{
 									consentCategories: ['necessary', 'measurement'],
 									mode: 'offline',
+									// Offline mode has no backend, so the policy is in code.
+									policy: {
+										rules: [
+											{
+												id: 'fallback',
+												match: { fallback: true },
+												model: 'opt-in',
+												prompt: 'choice',
+											},
+										],
+									},
 								},
 							],
 						],

@@ -179,8 +179,6 @@ class ConsentDecisionTest {
 		kernel.gateDecision(ConsentCategory.MARKETING) { decision -> seen += decision }
 
 		var publications = 0
-		// The core holds snapshot observers weakly, so the lambda needs an owner for
-		// as long as the run lasts.
 		val observer: (ConsentSnapshot) -> Unit = { publications += 1 }
 		val watcher = kernel.onChange(observer)
 
@@ -261,7 +259,7 @@ class ConsentDecisionTest {
 
 	@Test
 	fun `the boolean facade gate answers before it returns with no kernel installed`() {
-		C15t.reset()
+		C15t.uninstall()
 
 		val order = mutableListOf<String>()
 		val allowed = mutableListOf<Boolean>()
@@ -313,7 +311,7 @@ class ConsentDecisionTest {
 
 	@Test
 	fun `the process-wide facade answers PENDING rather than DENIED before bootstrap`() {
-		C15t.reset()
+		C15t.uninstall()
 
 		val seen = mutableListOf<ConsentDecision>()
 		val subscription = C15t.gateDecision(ConsentCategory.MARKETING) { decision -> seen += decision }
@@ -334,10 +332,10 @@ class ConsentDecisionTest {
 	}
 
 	/** A core whose init cannot be reached, which is the unanswered device. */
-	private fun pendingKernel(): C15tKernel = testKernel(store = C15tStore(InMemoryKeyValueStore()))
+	private fun pendingKernel(): ConsentCore = testKernel(store = C15tStore(InMemoryKeyValueStore()))
 
 	/** A core whose first init resolved an opt-in policy, with nothing chosen yet. */
-	private fun resolvedKernel(model: String = "\"opt-in\""): C15tKernel {
+	private fun resolvedKernel(model: String = "\"opt-in\""): ConsentCore {
 		val kernel = testKernel(
 			store = C15tStore(InMemoryKeyValueStore()),
 			transport = RecordingTransport().respondInit(initSuccess(body = initBody(model = model))),

@@ -9,8 +9,11 @@ import {
 	FIXTURE_DIR,
 	applyToFixture,
 	gradleFile,
+	readFixture,
 	runInfoPlist,
 	runMod,
+	GOOGLE_CONSENT_META_DATA,
+	GOOGLE_CONSENT_PLIST_DEFAULTS,
 } from './helpers';
 
 const BACKEND = 'https://consent.example.com';
@@ -46,6 +49,7 @@ describe('withC15t standard install', () => {
 		const applied = await runInfoPlist(config);
 
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -108,10 +112,11 @@ describe('withC15t standard install', () => {
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.PORTAL_URL',
+					'android:name': 'com.c15t.BACKEND_URL',
 					'android:value': BACKEND,
 				},
 			},
+			...GOOGLE_CONSENT_META_DATA,
 		]);
 	});
 
@@ -127,6 +132,7 @@ describe('withC15t standard install', () => {
 
 		const applied = await runInfoPlist(config);
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -163,6 +169,7 @@ describe('withC15t standard install', () => {
 		const applied = await runInfoPlist(config);
 		// Plist integers, so the bridge reads them as numbers.
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -220,6 +227,7 @@ describe('withC15t standard install', () => {
 
 		const applied = await runInfoPlist(config);
 		expect(applied.ios?.infoPlist).toStrictEqual({
+			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'hosted',
 			'com.c15t.backend.url': BACKEND,
@@ -248,7 +256,7 @@ describe('withC15t standard install', () => {
 			},
 			{
 				$: {
-					'android:name': 'com.c15t.PORTAL_URL',
+					'android:name': 'com.c15t.BACKEND_URL',
 					'android:value': BACKEND,
 				},
 			},
@@ -258,6 +266,7 @@ describe('withC15t standard install', () => {
 					'android:value': 'necessary,functionality,measurement,marketing',
 				},
 			},
+			...GOOGLE_CONSENT_META_DATA,
 		]);
 	});
 
@@ -305,7 +314,7 @@ describe('withC15t standard install', () => {
 		);
 
 		expect(xml).toContain(
-			'<meta-data android:name="com.c15t.PORTAL_URL" android:value="https://consent.example.com"/>'
+			'<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://consent.example.com"/>'
 		);
 		expect(xml).toContain(
 			'<uses-permission android:name="android.permission.INTERNET"/>'
@@ -315,63 +324,21 @@ describe('withC15t standard install', () => {
 		);
 	});
 
-	it('raises the root gradle compileSdk and leaves the rest alone', async () => {
+	it('leaves gradle SDK levels to the host', async () => {
+		// The floor is checked after prebuild (android-sdk-floor.test.ts), never
+		// rewritten: a level below it was set on purpose and fails loudly.
 		const config = applyToFixture(STANDARD_PROPS);
-		const applied = await runMod(
-			config,
-			'android',
-			'projectBuildGradle',
-			gradleFile('project-build.gradle')
+		const files = [
+			['projectBuildGradle', 'project-build.gradle'],
+			['appBuildGradle', 'app-build.gradle'],
+		] as const;
+		const applied = await Promise.all(
+			files.map(([modName, name]) =>
+				runMod(config, 'android', modName, gradleFile(name))
+			)
 		);
-
-		// Exact file, not a substring: only compileSdkVersion moves, and the
-		// host's own targetSdkVersion and indirections must survive.
-		expect(applied.modResults.contents).toBe(
-			[
-				'// Top-level build file where you can add configuration options common to all',
-				'// sub-projects/modules.',
-				'',
-				'buildscript {',
-				'    ext {',
-				"        buildToolsVersion = '36.0.0'",
-				'        minSdkVersion = 24',
-				'        compileSdkVersion = 36',
-				'        targetSdkVersion = 35',
-				"        kotlinVersion = '2.1.20'",
-				'    }',
-				'    repositories {',
-				'        google()',
-				'        mavenCentral()',
-				'    }',
-				'    dependencies {',
-				"        classpath('com.android.tools.build:gradle')",
-				'    }',
-				'}',
-				'',
-				"apply plugin: 'com.facebook.react.rootproject'",
-				'',
-			].join('\n')
-		);
-	});
-
-	it('raises a literal app gradle compileSdk and keeps indirection', async () => {
-		const config = applyToFixture(STANDARD_PROPS);
-		const applied = await runMod(
-			config,
-			'android',
-			'appBuildGradle',
-			gradleFile('app-build.gradle')
-		);
-
-		expect(applied.modResults.contents).toContain('compileSdk 36');
-		expect(applied.modResults.contents).toContain(
-			'buildToolsVersion rootProject.ext.buildToolsVersion'
-		);
-		expect(applied.modResults.contents).toContain(
-			'minSdkVersion rootProject.ext.minSdkVersion'
-		);
-		expect(applied.modResults.contents).toContain(
-			'targetSdkVersion rootProject.ext.targetSdkVersion'
+		expect(applied.map((result) => result.modResults.contents)).toStrictEqual(
+			files.map(([, name]) => readFixture(name))
 		);
 	});
 

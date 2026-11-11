@@ -47,6 +47,8 @@ import type {
 	NativeOverridesInput,
 } from '@c15t/react-native';
 
+import { readIntent } from './read-intent';
+
 /** Categories the fake core knows about, in display order. */
 export const CATEGORIES = [
 	'necessary',
@@ -277,14 +279,8 @@ const decide = (
 	intent: CommitIntent
 ): Partial<Record<OptionalCategory, boolean>> => {
 	const decided: Partial<Record<OptionalCategory, boolean>> = {};
-	const inScope = (category: OptionalCategory): boolean =>
-		intent.categories === undefined || intent.categories.includes(category);
 
 	for (const category of OPTIONAL_CATEGORIES) {
-		if (!inScope(category)) {
-			continue;
-		}
-
 		if (intent.action === 'all') {
 			decided[category] = true;
 		} else if (intent.action === 'necessary') {
@@ -394,6 +390,9 @@ class FakeCore {
 			},
 			closeConsentPresenter: () => Promise.resolve(),
 			commit: (intent) => this.commit(intent),
+			// The fixtures draw their own JavaScript banner with autoPresent={false};
+			// the fake has no native prompt to configure.
+			configureAutoPresent: () => Promise.resolve(),
 			dismissNotice: () => {
 				this.dismissNotice();
 			},
@@ -404,6 +403,7 @@ class FakeCore {
 				// gives: there is no system question for this build to ask, so the
 				// arm is `unsupported` rather than a not-yet-answered `not-determined`.
 				JSON.stringify({ status: 'unsupported' }),
+			getWebViewConsent: () => this.webViewConsent(),
 			identify: async (externalId) => {
 				this.identify(externalId);
 				await settle();
@@ -423,6 +423,17 @@ class FakeCore {
 				// See `addListener`.
 			},
 			requestTrackingAuthorization: () =>
+				// Rejected with the code the real Android bridge uses, so a host that
+				// calls this against the fake sees the shape it would ship against.
+				Promise.reject(
+					Object.assign(
+						new Error('The fake core has no platform gate to ask'),
+						{
+							code: 'C15T_TRACKING_UNSUPPORTED',
+						}
+					)
+				),
+			requestTrackingAuthorizationWithOptions: (_options: string) =>
 				// Rejected with the code the real Android bridge uses, so a host that
 				// calls this against the fake sees the shape it would ship against.
 				Promise.reject(
@@ -558,9 +569,9 @@ class FakeCore {
 
 	private async commit(intentJson: string): Promise<string> {
 		await settle();
-		const intent = parseJson<CommitIntent>(intentJson);
+		const intent = readIntent(intentJson);
 
-		if (intent === null || typeof intent.action !== 'string') {
+		if (intent === null) {
 			const rejected: CommitResult = {
 				confirmed: [],
 				ok: false,
@@ -794,6 +805,33 @@ class FakeCore {
 			revision: this.revision,
 			snapshot: this.snapshot,
 			subjectId: this.subjectId,
+		});
+	}
+
+	/**
+	 * The WebView consent payload the native cores build from a snapshot. The
+	 * token and key are fixed: the fixture has no WebView to protect.
+	 */
+	private webViewConsent(): string {
+		const snapshot = JSON.parse(this.getSnapshot()) as {
+			effectivePermissions: Record<string, boolean>;
+			model: string;
+			policyPending: boolean;
+			ready: boolean;
+			revision: number;
+		};
+		return JSON.stringify({
+			key: '11111111111111111111111111111111',
+			state: {
+				gppString: null,
+				model: snapshot.model,
+				permissions: snapshot.effectivePermissions,
+				ready: snapshot.ready && !snapshot.policyPending,
+				revision: snapshot.revision,
+				tcString: null,
+				version: 1,
+			},
+			token: '00000000000000000000000000000000',
 		});
 	}
 

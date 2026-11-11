@@ -10,9 +10,11 @@ import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentPreferences,
+	createConsentTheme,
+	useC15tBootstrap,
 	useTrackingRequest,
 	useConsentStatus,
-	useConsent,
+	useSnapshot,
 	presentConsentPrompt,
 	presentPreferences,
 	onConsentPresenterOutcome,
@@ -22,9 +24,17 @@ import type { ReactNode } from 'react';
 import { Text as NativeText, View } from 'react-native';
 
 import { useConsentSource } from './c15t/consent-source';
+import consentTheme from './c15t/consent-theme.json';
 import { Button, Card, Hint, Screen } from './components/ui';
+import { HeadlessConsentApp } from './screens/headless';
 import { HomeScreen } from './screens/home';
 import { PreferencesScreen } from './screens/preferences';
+
+// #region docs:expo-theme-components title="app.tsx"
+// `consentTheme` is src/c15t/consent-theme.json, the object app.config.ts
+// passes to the plugin. Here it styles the React Native components.
+const theme = createConsentTheme(consentTheme);
+// #endregion docs:expo-theme-components
 
 const TABS = ['home', 'preferences'] as const;
 type Tab = (typeof TABS)[number];
@@ -79,7 +89,7 @@ class ErrorBoundary extends Component<
 						{this.state.error.message}
 					</NativeText>
 					<Hint>
-						`C15tProvider` throws on purpose when the binary cannot speak the
+						`ConsentProvider` throws on purpose when the binary cannot speak the
 						protocol this bundle expects. Rebuild the app, or install the
 						@c15t/react-native version that shipped with the binary.
 					</Hint>
@@ -186,6 +196,7 @@ const LegacyApp = () => {
 				onCustomize={() => {
 					setPreferencesOpen(true);
 				}}
+				theme={theme}
 			/>
 			<ConsentDialog
 				onOpenPreferences={() => {
@@ -196,12 +207,16 @@ const LegacyApp = () => {
 					setDialogOpen(false);
 				}}
 				open={dialogOpen}
+				theme={theme}
 			/>
 			{/*
 			 * One centre doing both jobs: the subject opens it from either tab, and it is
 			 * the same card the tracking journey raises mid-request.
 			 */}
-			<ConsentPreferences {...tracking.preferences} />
+			<ConsentPreferences
+				{...tracking.preferences}
+				theme={theme}
+			/>
 		</View>
 	);
 };
@@ -210,7 +225,7 @@ const LegacyApp = () => {
 export const UnavailableScreen = MissingNativeCore;
 
 const NativeApp = () => {
-	const snapshot = useConsent();
+	const snapshot = useSnapshot();
 	const status = useConsentStatus();
 	const [outcome, setOutcome] = useState('No native decision');
 	useEffect(
@@ -252,7 +267,18 @@ const NativeApp = () => {
 		</View>
 	);
 };
+/**
+ * A binary built with `C15T_NATIVE_UI=0` links no stock native screens, so it
+ * draws its own consent UI instead of asking native to present one.
+ */
+const NativeOrHeadlessApp = () =>
+	useC15tBootstrap().nativeUI === false ? (
+		<HeadlessConsentApp />
+	) : (
+		<NativeApp />
+	);
+
 export const App = () => {
 	const { kind } = useConsentSource();
-	return kind === 'native' ? <NativeApp /> : <LegacyApp />;
+	return kind === 'native' ? <NativeOrHeadlessApp /> : <LegacyApp />;
 };

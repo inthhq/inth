@@ -6,7 +6,11 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.c15t.core.C15t
+import com.c15t.core.ConsentCore
+import com.c15t.core.ConsentPolicy
 import com.c15t.core.NativeConfig
+import com.c15t.core.gpp.GppMspaMode
+import com.c15t.core.gpp.GppOptions
 import com.c15t.core.iab.IabConfiguration
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.KernelError
@@ -14,6 +18,7 @@ import com.c15t.core.spi.Clock
 import com.c15t.core.spi.TaskExecutor
 import com.c15t.core.transport.C15tTransport
 import com.c15t.core.transport.HostedTransport
+import com.c15t.core.transport.OfflineTransport
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -28,12 +33,27 @@ object C15tAndroid {
 	private const val TAG = "c15t"
 
 	/** Manifest keys the Initializer reads; the app declares these. */
-	const val META_PORTAL_URL = "com.c15t.PORTAL_URL"
+	const val META_BACKEND_URL = "com.c15t.BACKEND_URL"
 
 	const val META_BUNDLED_POLICY = "com.c15t.POLICY_RESOURCE"
 
-	const val META_INIT_URL = "com.c15t.INIT_URL"
-	const val META_DOMAIN = "com.c15t.DOMAIN"
+	/**
+	 * `offline` selects no-backend mode: the core starts without [META_BACKEND_URL] and
+	 * sends nothing. Absent, the mode is backend mode, which needs [META_BACKEND_URL].
+	 */
+	const val META_MODE = "com.c15t.MODE"
+
+	/** The [META_MODE] value for no-backend mode. */
+	const val MODE_OFFLINE = "offline"
+
+	/**
+	 * Asset path of the in-code policy, `{"rules": [...]}` in the backend's `PolicyRule`
+	 * names. Read only in no-backend mode, where it is the only policy source.
+	 */
+	const val META_POLICY_RULES = "com.c15t.POLICY_RULES"
+
+	const val META_BACKEND_INIT_URL = "com.c15t.BACKEND_INIT_URL"
+	const val META_BACKEND_DOMAIN = "com.c15t.BACKEND_DOMAIN"
 
 	/**
 	 * Comma-separated category ids the app offers, e.g.
@@ -68,7 +88,8 @@ object C15tAndroid {
 	 * initializer and application code.
 	 *
 	 * @param transport override the backend transport, for a host that proxies
-	 * c15t through its own HTTP stack.
+	 * c15t through its own HTTP stack. Without one, a config with no backend URL gets
+	 * [OfflineTransport].
 	 * @param observeForeground register the process-foreground observer that replays
 	 * the offline queue. Turn it off only if the host drives [C15t.flushPending] and
 	 * [C15t.refresh] itself.
@@ -76,6 +97,7 @@ object C15tAndroid {
 	 * This one needs `android.permission.ACCESS_NETWORK_STATE`, which belongs to the
 	 * host: without it the registration is refused and c15t carries on with the launch
 	 * and foreground replays, so declaring it buys a faster retry rather than correctness.
+	 * @return The installed core. A repeated call returns the core already installed.
 	 */
 	fun install(
 		context: Context,
@@ -85,16 +107,16 @@ object C15tAndroid {
 		observeForeground: Boolean = true,
 		observeReachability: Boolean = true,
 		logger: (KernelError) -> Unit = { error -> Log.w(TAG, "${error.code}: ${error.message}") },
-	) {
+	): ConsentCore {
 		val appContext = context.applicationContext
 		val store = C15tStores.create(appContext)
-		val http = transport ?: HostedTransport(C15tHttpClient(), config)
+		val http = transport ?: if (config.backendUrl == null) OfflineTransport else HostedTransport(C15tHttpClient(), config)
 
 		// One executor for both the core and the observer registered below, so the launch
 		// replay and the foreground replay cannot deliver the same queued entry twice.
 		val executor = worker
 
-		C15t.bootstrap(
+		val core = C15t.bootstrap(
 			config = config,
 			store = store,
 			clock = clock,
@@ -118,12 +140,13 @@ object C15tAndroid {
 				}
 			}
 		}
+		return core
 	}
 
 	/**
 	 * Block until every task already handed to the shared worker has run.
 	 *
-	 * [C15t.reset] drops a kernel without cancelling the init and replay it queued here, and
+	 * [C15t.uninstall] drops a kernel without cancelling the init and replay it queued here, and
 	 * that work still writes to the same files. A test that installs the next core straight
 	 * after a reset waits on this first, so the dropped core cannot land a write in the next
 	 * test's store.
@@ -140,14 +163,15 @@ object C15tAndroid {
 	/**
 	 * Start c15t from manifest metadata, the zero-code path.
 	 *
-	 * Without `com.c15t.PORTAL_URL` there is no backend to talk to, so this logs and
-	 * leaves the core uninstalled: reads still answer deny-all, which is the safe
-	 * state for a misconfigured build rather than a crash at startup.
+	 * Without `com.c15t.BACKEND_URL`, and without `com.c15t.MODE` set to `offline`, there
+	 * is nothing to start, so this logs and leaves the core uninstalled: reads still answer
+	 * deny-all, which is the safe state for a misconfigured build rather than a crash at
+	 * startup.
 	 */
 	fun bootstrap(context: Context) {
 		val config = configFrom(context)
 		if (config == null) {
-			Log.i(TAG, "no $META_PORTAL_URL meta-data declared; c15t stays inactive until C15tAndroid.install")
+			Log.i(TAG, "no $META_BACKEND_URL meta-data and no $META_MODE=$MODE_OFFLINE declared; c15t stays inactive until C15tAndroid.install")
 			return
 		}
 		install(context, config)
@@ -184,14 +208,25 @@ object C15tAndroid {
 		// manifest parser chose. A hand-edited manifest and an Expo-generated one do not
 		// arrive as the same Java type, and a reader that names one of them honours only
 		// the app that happened to spell it that way.
-		val portalUrl = C15tManifestValue.string(read(META_PORTAL_URL)) ?: return null
+		// The two modes do not mix. No-backend mode reads no backend URL and no bundled
+		// manifest, so a stray key from an earlier backend build cannot bring either back.
+		val offline = C15tManifestValue.string(read(META_MODE))?.trim()?.lowercase(Locale.ROOT) == MODE_OFFLINE
+		val declaredPolicy = if (!offline) null else C15tManifestValue.string(read(META_POLICY_RULES))?.let { name ->
+			readAsset(name)?.let(::policyFrom) ?: Result.failure(IllegalArgumentException("$META_POLICY_RULES names $name, which cannot be read"))
+		}
+		val backendUrl = if (offline) null else C15tManifestValue.string(read(META_BACKEND_URL)) ?: return null
+		if (offline && read(META_BACKEND_URL) != null) {
+			Log.w(TAG, "$META_MODE=$MODE_OFFLINE ignores $META_BACKEND_URL and $META_BUNDLED_POLICY")
+		}
 		// Absent stays absent. `false` is an answer and a missing key is not, and the
 		// core treats them differently when it derives the signal.
 		return NativeConfig(
-			portalUrl = portalUrl,
-			bundledPolicy = C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
-			initUrl = C15tManifestValue.string(read(META_INIT_URL)),
-			domain = C15tManifestValue.string(read(META_DOMAIN)),
+			backendUrl = backendUrl,
+			bundledPolicy = if (offline) null else C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
+			policy = declaredPolicy?.getOrNull(),
+			policyError = declaredPolicy?.exceptionOrNull()?.let { it.message ?: it.toString() },
+			initUrl = if (offline) null else C15tManifestValue.string(read(META_BACKEND_INIT_URL)),
+			domain = C15tManifestValue.string(read(META_BACKEND_DOMAIN)),
 			consentCategories = declaredCategories(read(META_CATEGORIES)),
 			vendors = declaredVendors(read(META_VENDORS)),
 			iab = when (val declared = declaredIab(read)) {
@@ -206,7 +241,46 @@ object C15tAndroid {
 				DeclaredIab.None -> null
 			},
 			detectedGpc = C15tManifestValue.boolean(read(META_GPC)),
+			gpp = declaredGpp(read),
 		)
+	}
+
+	/**
+	 * Parse the in-code policy asset. A refused file is logged as an error and handed to
+	 * the core as `NativeConfig.policyError`, which reports `policy-invalid` in the
+	 * snapshot and keeps every optional category denied rather than crashing at launch.
+	 */
+	private fun policyFrom(json: String): Result<ConsentPolicy> = runCatching { ConsentPolicy.fromJson(json) }
+		.onFailure { Log.e(TAG, "$META_POLICY_RULES refused: ${it.message}. c15t reports policy-invalid and denies optional categories.") }
+
+	/**
+	 * The GPP options the manifest declares: `null` unless `com.c15t.GPP` is `true`.
+	 *
+	 * An MSPA mode this build does not name reads as no mode, which reports the transaction as
+	 * not covered rather than claiming a coverage nobody configured.
+	 */
+	internal fun declaredGpp(read: (String) -> Any?): GppOptions? {
+		if (C15tManifestValue.boolean(read(META_GPP)) != true) return null
+		return GppOptions(
+			mspaMode = GppMspaMode.fromWireName(C15tManifestValue.string(read(META_GPP_MSPA_MODE))?.trim()),
+			optOutCategories = declaredGppOptOutCategories(read(META_GPP_OPT_OUT_CATEGORIES)),
+			tcf = C15tManifestValue.boolean(read(META_GPP_TCF)) ?: true,
+		)
+	}
+
+	/**
+	 * `com.c15t.GPP_OPT_OUT_CATEGORIES`, keeping "not set" apart from "set to empty".
+	 *
+	 * An absent key keeps the default, `marketing`. A present key is the app's list: `none`
+	 * or a blank value is the empty list, meaning no category drives the sale, sharing and
+	 * targeted advertising opt-outs, which is what `GppOptions(optOutCategories = emptyList())`
+	 * and web's `optOutCategories: []` mean. Names neither core knows are dropped.
+	 */
+	internal fun declaredGppOptOutCategories(raw: Any?): List<ConsentCategory> {
+		if (raw == null) return listOf(ConsentCategory.MARKETING)
+		val text = raw.toString().trim()
+		if (text.isEmpty() || text.equals(GPP_NO_OPT_OUT_CATEGORIES, ignoreCase = true)) return emptyList()
+		return text.split(',').mapNotNull { ConsentCategory.fromWireName(it.trim()) }.distinct()
 	}
 
 	/** The outcome of reading the `com.c15t.IAB_*` meta-data. */
@@ -318,6 +392,24 @@ object C15tAndroid {
 			?.mapNotNull { entry -> entry.trim().toIntOrNull()?.takeIf { it > 0 } }
 			?.distinct()
 			?.takeIf { it.isNotEmpty() }
+
+	/** `true` turns on the IAB GPP string and the `IABGPP_*` keys. */
+	const val META_GPP = "com.c15t.GPP"
+
+	/** `opt-out-option` or `service-provider`. Only for MSPA signatories. */
+	const val META_GPP_MSPA_MODE = "com.c15t.GPP_MSPA_MODE"
+
+	/**
+	 * Comma-separated categories whose refusal reports a GPP opt-out. Absent means `marketing`;
+	 * `none` means no category drives the opt-outs.
+	 */
+	const val META_GPP_OPT_OUT_CATEGORIES = "com.c15t.GPP_OPT_OUT_CATEGORIES"
+
+	/** The [META_GPP_OPT_OUT_CATEGORIES] value for an empty list. */
+	const val GPP_NO_OPT_OUT_CATEGORIES = "none"
+
+	/** `false` leaves the TCF EU section out of the GPP string. */
+	const val META_GPP_TCF = "com.c15t.GPP_TCF"
 
 	/** Manifest key that forces GPC on for a staged build. */
 	const val META_GPC = "com.c15t.FORCE_GPC"

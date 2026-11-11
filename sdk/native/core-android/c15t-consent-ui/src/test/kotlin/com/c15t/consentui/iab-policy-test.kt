@@ -43,7 +43,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.c15t.consentui.generated.IabCopy
-import com.c15t.core.C15tKernel
+import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
 import com.c15t.core.NativeConfig
 import com.c15t.core.iab.IabBannerSummary
@@ -210,7 +210,7 @@ class IabPolicyTest {
     // TCF-CHECK: P11
     @Test fun primaryActionsShareTheirTextTreatmentAndReachFiveToOne() {
         // A host decision pair under 5:1 is replaced by the stock pair before anything draws.
-        val unreadable = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(decision = ConsentThemeColor(0x8CA2FF), onDecision = ConsentThemeColor(0xFFFFFF)))
+        val unreadable = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(decision = ConsentThemeColor(0x8CA2FF), textOnDecision = ConsentThemeColor(0xFFFFFF)))
         show(boot(), unreadable)
         val accept = buttonLabel("c15t.first-layer.accept-all", en.commonAcceptAll)
         val reject = buttonLabel("c15t.first-layer.reject-all", en.commonRejectAll)
@@ -221,7 +221,7 @@ class IabPolicyTest {
         assertEquals(FontWeight.SemiBold, accept.fontWeight)
         assertEquals(accept.color, reject.color)
         val stock = ConsentTheme.Colors.c15t
-        assertEquals(stock.onDecision.light, accept.color.toArgb() and 0xFFFFFF)
+        assertEquals(stock.textOnDecision.light, accept.color.toArgb() and 0xFFFFFF)
         assertTrue(ConsentTheme.contrastRatio(accept.color.toArgb() and 0xFFFFFF, stock.decision.light) >= 5.0)
         val a = compose.onNodeWithTag("c15t.first-layer.accept-all").fetchSemanticsNode().size
         val r = compose.onNodeWithTag("c15t.first-layer.reject-all").fetchSemanticsNode().size
@@ -376,6 +376,29 @@ class IabPolicyTest {
         compose.onNode(hasScrollToNodeAction() and hasAnyAncestor(hasTestTag("c15t.iab.vendors"))).performScrollToNode(hasTestTag("c15t.iab.vendors.other-partners"))
         compose.onNodeWithTag("c15t.iab.vendors.other-partners").assertTextContains("2", substring = true)
         compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendors")) and hasText(en.preferenceCenterVendorListAdTechProvidersNotice)).assertExists()
+    }
+
+    // TCF-CHECK: P16, P21
+    @Test fun customPartnersArePresentedApartWithTheirOwnChoices() {
+        val vendors = Json.parseToJsonElement("""[{"id":"internal-ads","name":"Internal ads","privacyPolicyUrl":"https://example.test/ads",
+            "purposes":[1,3],"legIntPurposes":[7],"usesCookies":true,"cookieMaxAgeSeconds":3600}]""").jsonArray
+        val core = bootIn("EN", customVendors = vendors)
+        val presenter = customize(core)
+        scroll("c15t.iab.custom-partners").assertTextContains(en.preferenceCenterVendorListCustomVendorsHeading, substring = true)
+            .assertTextContains("1", substring = true).performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.custom-vendors").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag("c15t.iab.custom-vendors.intro").assertTextEquals(en.preferenceCenterVendorListCustomVendorsNotice)
+        compose.onNodeWithTag("c15t.iab.custom-vendors.vendor.internal-ads").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab.custom-vendor.internal-ads").fetchSemanticsNodes().isNotEmpty() }
+        // Labelled as not registered with IAB, in the web's words, and off for a first-time user.
+        compose.onNodeWithTag("c15t.iab.custom-vendor.internal-ads.note").assertTextEquals(en.commonCustomPartner)
+        compose.onNodeWithTag("c15t.iab.custom-vendor.internal-ads.li").assertIsOff()
+        compose.onNodeWithTag("c15t.iab.custom-vendor.internal-ads.consent").assertIsOff().performClick().assertIsOn()
+        assertEquals(listOf("internal-ads"), presenter.choices.customVendorConsents)
+        assertEquals(emptyList<String>(), presenter.choices.customVendorLegitimateInterests)
+        // Not among the IAB partners.
+        assertTrue(presenter.disclosure!!.vendors.values.isNotEmpty())
+        assertEquals(listOf("internal-ads"), presenter.disclosure!!.customVendors.map { it.id })
     }
 
     @Test fun lastChangedDateUsesTheCopyLanguage() {
@@ -606,14 +629,14 @@ class IabPolicyTest {
     }
     private fun inRetention(vendor: Int, text: String) = compose.onNode(hasAnyAncestor(hasTestTag("c15t.iab.vendor.$vendor.retention")) and hasText(text))
 
-    private fun customize(core: C15tKernel): ConsentPresenter {
+    private fun customize(core: ConsentCore): ConsentPresenter {
         val presenter = show(core)
         compose.onNodeWithTag("c15t.first-layer.customize").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithTag("c15t.iab").fetchSemanticsNodes().isNotEmpty() }
         return presenter
     }
 
-    private fun show(core: C15tKernel, theme: ConsentTheme? = null): ConsentPresenter {
+    private fun show(core: ConsentCore, theme: ConsentTheme? = null): ConsentPresenter {
         lateinit var presenter: ConsentPresenter
         compose.setContent {
             presenter = remember { ConsentPresenter(core) }
@@ -624,18 +647,19 @@ class IabPolicyTest {
     }
 
     /** The demo's IAB fixture, with [edit] applied to its vendor list. */
-    private fun boot(edit: (JsonObject) -> JsonObject = { it }): C15tKernel = bootIn("EN", edit)
+    private fun boot(edit: (JsonObject) -> JsonObject = { it }): ConsentCore = bootIn("EN", edit)
 
-    private fun bootIn(language: String, edit: (JsonObject) -> JsonObject = { it }): C15tKernel {
+    private fun bootIn(language: String, edit: (JsonObject) -> JsonObject = { it }, customVendors: JsonArray? = null): ConsentCore {
         val source = Json.parseToJsonElement(generateSequence(File(requireNotNull(System.getProperty("user.dir")))) { it.parentFile }
             .map { File(it, "native/examples/consent-demo/fixtures/iab-init.json") }.first { it.exists() }.readText()).jsonObject
-        val body = JsonObject(source + ("gvl" to edit(source.getValue("gvl").jsonObject))).toString()
+        val served = source + ("gvl" to edit(source.getValue("gvl").jsonObject))
+        val body = JsonObject(if (customVendors == null) served else served + ("customVendors" to customVendors)).toString()
         val client = object : HttpClient {
             override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
                 HttpResponse(200, mapOf("x-c15t-policy-contract" to "1"), body) else HttpResponse(503)
         }
         val config = NativeConfig("https://fixture.invalid", iab = IabConfiguration(cmpId = 53, cmpVersion = 7, publisherCountryCode = "GB", consentLanguage = language))
-        val core = C15tKernel(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+        val core = ConsentCore(config, C15tStore(Memory()), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
         core.bootstrap()
         return core
     }

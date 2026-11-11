@@ -30,8 +30,10 @@ import {
 	describeSnapshotWireDrift,
 	isProtocolVersionSupported,
 	NATIVE_EVENT_NAMES,
+	parseTrackingAnsweredAt,
 	parseTrackingAuthorization,
 	parseTrackingRequest,
+	withAdditiveSnapshotDefaults,
 } from '../protocol';
 import type {
 	BootstrapPayload,
@@ -40,11 +42,20 @@ import type {
 	ConsentSnapshot,
 	NativeEventName,
 	NativeOverridesInput,
+	NativeTrackingRequestOptions,
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
+import type * as BridgeSchema from '../protocol/bridge-schema';
+import type { BridgePayloadName } from '../protocol/bridge-schema';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
+import {
+	ADDITIVE_BOOTSTRAP_DEFAULTS,
+	withAdditiveIABDefaults,
+} from '../protocol/wire-shape';
+import { parseWebViewConsent } from '../webview/payload';
+import type { WebViewConsentPayload } from '../webview/payload';
 import { NativeBridgeError } from './bridge-error';
 import { getNativeC15t, getNativeC15tEvents } from './module';
 import type {
@@ -53,6 +64,7 @@ import type {
 	NativeEventsLike,
 } from './module';
 import { C15tProtocolMismatchError } from './protocol-mismatch-error';
+import { watchWithoutNativeUI } from './without-native-ui';
 
 /**
  * Read one field out of a snapshot.
@@ -119,6 +131,17 @@ export interface ConsentClient {
 	 */
 	isAllowed: (category: AllConsentNames) => boolean;
 	/**
+	 * WebView consent from the native core: the state a page reads and a
+	 * fresh token. `null` when the native build predates
+	 * `getWebViewConsent`, or replied with something unreadable; then a
+	 * WebView gets nothing and the page shows its own banner.
+	 *
+	 * Read through `useWebViewConsent()` rather than directly.
+	 *
+	 * @returns The payload, or `null`.
+	 */
+	getWebViewConsent: () => WebViewConsentPayload | null;
+	/**
 	 * What the platform says about tracking, for the category an SDK is about to
 	 * start.
 	 *
@@ -141,10 +164,11 @@ export interface ConsentClient {
 	/**
 	 * Ask the platform for tracking authorization.
 	 *
-	 * Nothing in this package calls it. It belongs after the consent UI has been
-	 * answered, because a platform prompt that arrives before the subject has been
-	 * told anything is the rejection Apple writes back to the developer, and it is
-	 * the ordering the ATT prompt string exists to serve.
+	 * {@link ConsentProvider} calls it after the consent prompt closes with
+	 * marketing granted, unless `trackingRequest` says otherwise. A platform
+	 * prompt that arrives before the subject has been told anything is the
+	 * rejection Apple writes back to the developer, and it is the ordering the ATT
+	 * prompt string exists to serve.
 	 *
 	 * How often this can produce a prompt is Apple's decision and not this
 	 * package's. Outside the European Union Apple shows its dialog once and answers
@@ -152,8 +176,8 @@ export interface ConsentClient {
 	 * again a year after the answer, whichever way it went. So this always asks
 	 * Apple and never answers from a cached arm, which is the only way an eligible
 	 * install can ever be asked again, and it costs nothing when it is not eligible:
-	 * Apple shows nothing and calls back with the arm on file. Nothing here prompts
-	 * on its own, so a host that never calls this never re-prompts.
+	 * Apple shows nothing and calls back with the arm on file. The provider asks
+	 * only while the answer is `not-determined`, so it never re-prompts by itself.
 	 *
 	 * It rejects with `C15T_TRACKING_NOT_CONFIGURED` on an iOS build that carries no
 	 * `NSUserTrackingUsageDescription`, because Apple then suppresses the dialog and
@@ -178,9 +202,16 @@ export interface ConsentClient {
 	 * {@link useTrackingRequest} is the surface most hosts want: it drives the
 	 * preference centre through the pause, so nothing has to be assembled by hand.
 	 *
+	 * @param options - `additionalInformation: true` asks Apple for the
+	 *   Additional Information button on its EU sheet, for a caller that will
+	 *   show its own controls when the request resolves with
+	 *   `stage: 'additional-information'`. Without it there is no button. A
+	 *   binary that predates the option shows no button either.
 	 * @returns The arm, the stage, and which call ran.
 	 */
-	requestTracking: () => Promise<TrackingRequestPayload>;
+	requestTracking: (options?: {
+		readonly additionalInformation?: boolean;
+	}) => Promise<TrackingRequestPayload>;
 	/**
 	 * Read the platform answer again, after a cached one.
 	 *
@@ -188,7 +219,7 @@ export interface ConsentClient {
 	 * which is right for a render path and wrong for the one moment the answer
 	 * genuinely moves: the subject went to the Settings app, changed tracking, and
 	 * came back. Apple tells a running process nothing when that happens, so this is
-	 * the read that has to be asked for, and it is what {@link C15tProvider} calls
+	 * the read that has to be asked for, and it is what {@link ConsentProvider} calls
 	 * when the app returns to the foreground.
 	 *
 	 * @returns The freshly read arm, with subscribers notified only when it moved.
@@ -210,6 +241,15 @@ export interface ConsentClient {
 	 * @returns `true` when consent and the platform both allow it.
 	 */
 	isTrackingAllowed: (category: AllConsentNames) => boolean;
+	/**
+	 * When the SDK last saw Apple answer `authorized` or `denied`, in epoch
+	 * milliseconds, as of the last tracking read. `null` while no such answer is
+	 * on file and on Android. Read by the yearly re-ask.
+	 *
+	 * @internal
+	 * @returns Epoch milliseconds, or `null`.
+	 */
+	getTrackingAnsweredAt: () => number | null;
 	/**
 	 * Register interest in the platform tracking answer.
 	 *
@@ -330,8 +370,11 @@ const readString = function readString(
  *
  * Read off `globalThis` because a React Native bundle may have no `process` at all,
  * depending on the polyfill the bundler chose.
+ *
+ * @returns `true` in a production bundle.
+ * @internal
  */
-const isProduction = function isProduction(): boolean {
+export const isProduction = function isProduction(): boolean {
 	return (
 		(globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
 			?.NODE_ENV === 'production'
@@ -369,6 +412,68 @@ const warnSnapshotDrift = function warnSnapshotDrift(
 		'c15t ConsentClient: the native snapshot does not match the declared wire shape. Consent state may read as missing.',
 		problems
 	);
+};
+
+/**
+ * React Native's build flag. Metro replaces it with `false` in a release bundle,
+ * and it is undefined outside React Native.
+ */
+declare const __DEV__: boolean | undefined;
+
+/** Payload problem sets already reported, so a repeated payload stays quiet. */
+const reportedBridgeDrift = new Set<string>();
+
+/**
+ * Report the drift {@link warnBridgeDrift} found, once the checker has loaded.
+ *
+ * @param schema - The loading bridge-schema module.
+ * @param name - Which payload `parsed` is.
+ * @param parsed - The parsed JSON.
+ */
+const reportBridgeDrift = async function reportBridgeDrift(
+	schema: Promise<typeof BridgeSchema>,
+	name: BridgePayloadName,
+	parsed: unknown
+): Promise<void> {
+	const { describeBridgePayloadDrift } = await schema;
+	const problems = describeBridgePayloadDrift(name, parsed, {
+		allowUnknownKeys: true,
+	});
+	const signature = `${name}\n${problems.join('\n')}`;
+	if (problems.length === 0 || reportedBridgeDrift.has(signature)) {
+		return;
+	}
+	reportedBridgeDrift.add(signature);
+	console.warn(
+		`c15t ConsentClient: the native ${name} payload does not match the declared wire shape.`,
+		problems
+	);
+};
+
+/**
+ * Name the keys a native payload got wrong, once per distinct set of problems,
+ * in a development build.
+ *
+ * Checked against `BRIDGE_PAYLOADS`, the table `native/protocol/bridge/payloads.json`
+ * is generated from, so a key one native build renamed shows up here by name
+ * instead of as an `undefined` read. Keys a newer native build added stay quiet.
+ *
+ * The table and its checker load inside the `__DEV__` branch. Metro inlines
+ * `__DEV__` as `false` in a release bundle and folds the branch away with the
+ * import in it, so a release app carries none of it. The warning therefore
+ * arrives a tick after the payload is read.
+ *
+ * @param name - Which payload `parsed` is.
+ * @param parsed - The parsed JSON.
+ */
+const warnBridgeDrift = function warnBridgeDrift(
+	name: BridgePayloadName,
+	parsed: unknown
+): void {
+	// The import stays inside this branch: started anywhere else, Metro would keep it.
+	if (typeof __DEV__ !== 'undefined' && __DEV__ && !isProduction()) {
+		void reportBridgeDrift(import('../protocol/bridge-schema'), name, parsed);
+	}
 };
 
 /**
@@ -441,10 +546,17 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 		);
 	}
 
-	const { hasStoredSnapshot, protocolVersion, subjectId } = parsed as Record<
-		string,
-		unknown
-	>;
+	// An older binary leaves out keys added since protocol version 1; fill what
+	// their absence means before grading the shape, so that is not drift.
+	warnBridgeDrift('bootstrap', { ...ADDITIVE_BOOTSTRAP_DEFAULTS, ...parsed });
+
+	const {
+		commitRevision,
+		hasStoredSnapshot,
+		nativeUI,
+		protocolVersion,
+		subjectId,
+	} = parsed as Record<string, unknown>;
 
 	if (typeof protocolVersion !== 'number') {
 		// A native build that reports no version predates the handshake, which
@@ -453,6 +565,11 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 	}
 
 	return {
+		// Only a boolean from the binary counts; an older binary sends nothing.
+		commitRevision:
+			typeof commitRevision === 'boolean'
+				? commitRevision
+				: ADDITIVE_BOOTSTRAP_DEFAULTS.commitRevision,
 		hasStoredSnapshot: hasStoredSnapshot === true,
 		maxSupportedProtocolVersion: readNumber(
 			parsed,
@@ -465,6 +582,12 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 			protocolVersion
 		),
 		nativeSdkVersion: readString(parsed, 'nativeSdkVersion', 'unknown'),
+		// Only a boolean from the binary counts. An older binary sends nothing, and
+		// ADDITIVE_BOOTSTRAP_DEFAULTS says what that means: the screens are linked.
+		nativeUI:
+			typeof nativeUI === 'boolean'
+				? nativeUI
+				: ADDITIVE_BOOTSTRAP_DEFAULTS.nativeUI,
 		protocolVersion,
 		subjectId: typeof subjectId === 'string' ? subjectId : null,
 	};
@@ -541,6 +664,8 @@ export const createConsentClient = function createConsentClient(
 	 * one moment it is not.
 	 */
 	let tracking: TrackingAuthorization | null = null;
+	/** When the last tracking read said the SDK last saw an answer. */
+	let trackingAnsweredAt: number | null = null;
 	/** Consumers that watch the platform answer and no slice of the snapshot. */
 	const trackingSubscribers = new Set<() => void>();
 	/** Keeps the missing-surface warning to one line per client. */
@@ -560,7 +685,16 @@ export const createConsentClient = function createConsentClient(
 
 		rawSnapshot = raw;
 
-		const parsed = parseObject(raw);
+		// An older binary leaves out keys added since protocol version 1; fill what
+		// their absence means before anything reads or grades the payload, so the
+		// public type holds and that is not drift.
+		const object = parseObject(raw);
+		const parsed =
+			typeof object === 'object' && object !== null
+				? withAdditiveIABDefaults(
+						withAdditiveSnapshotDefaults(object as Record<string, unknown>)
+					)
+				: object;
 		if (typeof parsed === 'object' && parsed !== null) {
 			const problems = describeSnapshotWireDrift(parsed, {
 				allowUnknownKeys: true,
@@ -666,7 +800,7 @@ export const createConsentClient = function createConsentClient(
 	 *
 	 * Reconciling here rather than waiting for the event means a resolved
 	 * promise and the rendered snapshot never disagree, which is what a caller
-	 * that awaits `acceptAll()` and then reads `useConsent()` expects.
+	 * that awaits `acceptAll()` and then reads `useSnapshot()` expects.
 	 */
 	const afterMutation = async function afterMutation<ReturnType>(
 		settled: Promise<ReturnType>
@@ -719,9 +853,9 @@ export const createConsentClient = function createConsentClient(
 			return 'denied';
 		}
 
-		tracking = parseTrackingAuthorization(
-			nativeModule.getTrackingAuthorization()
-		);
+		const raw = nativeModule.getTrackingAuthorization();
+		tracking = parseTrackingAuthorization(raw);
+		trackingAnsweredAt = parseTrackingAnsweredAt(raw);
 
 		return tracking;
 	};
@@ -740,41 +874,53 @@ export const createConsentClient = function createConsentClient(
 	 * difference between "this build cannot prompt" and "Android has no such
 	 * question" lives.
 	 */
-	const requestTracking =
-		async function requestTracking(): Promise<TrackingRequestPayload> {
-			if (typeof nativeModule.requestTrackingAuthorization !== 'function') {
-				warnTrackingSurfaceMissing();
+	const requestTracking = async function requestTracking(
+		options: { readonly additionalInformation?: boolean } = {}
+	): Promise<TrackingRequestPayload> {
+		if (typeof nativeModule.requestTrackingAuthorization !== 'function') {
+			warnTrackingSurfaceMissing();
 
-				throw new NativeBridgeError(
-					'@c15t/react-native cannot request tracking authorization: this native build has no requestTrackingAuthorization method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
-				);
-			}
+			throw new NativeBridgeError(
+				'@c15t/react-native cannot request tracking authorization: this native build has no requestTrackingAuthorization method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
+			);
+		}
 
-			let outcome: TrackingRequestPayload;
+		let outcome: TrackingRequestPayload;
 
-			try {
-				outcome = parseTrackingRequest(
-					await nativeModule.requestTrackingAuthorization()
-				);
-			} catch (error: unknown) {
-				// Whether the prompt appeared is unknown from here, so drop the cached
-				// arm and let the next read ask the platform rather than trust a stale
-				// one.
-				tracking = null;
+		try {
+			// The button needs the options method; an older binary has only the plain one.
+			const withOptions =
+				options.additionalInformation === true &&
+				typeof nativeModule.requestTrackingAuthorizationWithOptions ===
+					'function';
+			outcome = parseTrackingRequest(
+				withOptions
+					? await nativeModule.requestTrackingAuthorizationWithOptions(
+							JSON.stringify({
+								additionalInformation: true,
+							} satisfies NativeTrackingRequestOptions)
+						)
+					: await nativeModule.requestTrackingAuthorization()
+			);
+		} catch (error: unknown) {
+			// Whether the prompt appeared is unknown from here, so drop the cached
+			// arm and let the next read ask the platform rather than trust a stale
+			// one.
+			tracking = null;
 
-				throw error;
-			}
+			throw error;
+		}
 
-			tracking = outcome.status;
+		tracking = outcome.status;
 
-			// Deliberately no `stale = true` and no snapshot notify. The platform
-			// answer is not consent: a prompt that changed nothing about any category
-			// must not reach a tree that subscribed to categories, and the consent
-			// decision a subscriber reads has to be identical before and after.
-			notifyTracking();
+		// Deliberately no `stale = true` and no snapshot notify. The platform
+		// answer is not consent: a prompt that changed nothing about any category
+		// must not reach a tree that subscribed to categories, and the consent
+		// decision a subscriber reads has to be identical before and after.
+		notifyTracking();
 
-			return outcome;
-		};
+		return outcome;
+	};
 
 	const requestTrackingAuthorization =
 		async function requestTrackingAuthorization(): Promise<TrackingAuthorization> {
@@ -823,6 +969,8 @@ export const createConsentClient = function createConsentClient(
 			);
 		}
 
+		warnBridgeDrift('commitResult', parsed);
+
 		// The only field the read path uses is `ok`, and that is guarded above.
 		// Everything else rides along, so a native core that adds a field does
 		// not have to wait for this package to learn about it.
@@ -831,7 +979,10 @@ export const createConsentClient = function createConsentClient(
 		return afterMutation(Promise.resolve(result));
 	};
 
-	return {
+	/** Stops the checks a build without the stock native screens runs. */
+	let stopWatching = (): void => undefined;
+
+	const api: ConsentClient = {
 		bootstrap,
 		commit,
 		decision: (category: AllConsentNames) =>
@@ -845,11 +996,20 @@ export const createConsentClient = function createConsentClient(
 			}
 		},
 		dispose: (): void => {
+			stopWatching();
 			stopListening();
 			trackingSubscribers.clear();
 		},
 		getSnapshot: currentSnapshot,
+		getTrackingAnsweredAt: (): number | null => {
+			currentTracking();
+			return trackingAnsweredAt;
+		},
 		getTrackingAuthorization: currentTracking,
+		getWebViewConsent: () =>
+			typeof nativeModule.getWebViewConsent === 'function'
+				? parseWebViewConsent(nativeModule.getWebViewConsent())
+				: null,
 		identify: (externalId: string) =>
 			afterMutation(nativeModule.identify(externalId)),
 		isAllowed: (category: AllConsentNames) =>
@@ -912,6 +1072,14 @@ export const createConsentClient = function createConsentClient(
 			};
 		},
 	};
+
+	// Without the stock screens nothing else can collect consent, so say when
+	// nothing will.
+	if (!bootstrap.nativeUI) {
+		stopWatching = watchWithoutNativeUI(api, isProduction());
+	}
+
+	return api;
 };
 
 /**

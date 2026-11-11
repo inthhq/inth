@@ -10,10 +10,10 @@ Android's default storage and lifecycle services.
 
 ## Choose the backend
 
-`portalUrl` is the public HTTPS URL of your Inth project. A self-hosted backend
+`backendUrl` is the public HTTPS URL of your Inth project. A self-hosted backend
 can use the same configuration if it implements the c15t native policy and save
 protocol. An `initUrl` changes only policy initialization; consent saves still
-use `portalUrl`.
+use `backendUrl`.
 
 The installer handles HTTP transport, foreground refresh and reconnect retry.
 Keep those services enabled when embedding an
@@ -51,7 +51,7 @@ provide application metadata instead of the quickstart's explicit
 
 ```xml title="app/src/main/AndroidManifest.xml"
 <application>
-	<meta-data android:name="com.c15t.PORTAL_URL" android:value="https://your-project.inth.app" />
+	<meta-data android:name="com.c15t.BACKEND_URL" android:value="https://your-project.inth.app" />
 	<meta-data android:name="com.c15t.CATEGORIES" android:value="necessary,measurement,marketing" />
 </application>
 ```
@@ -81,27 +81,61 @@ Declare `xmlns:tools="http://schemas.android.com/tools"` on the manifest root
 when using this override. Disabling c15t's initializer does not disable vendor
 initializers. Configure each optional SDK's startup separately.
 
+## Use your own transport
+
+Pass a `C15tTransport` to `C15tAndroid.install` when requests must go through
+your own networking stack or proxy. The installer still supplies protected
+storage and foreground and reconnect handling. Only the requests change.
+
+{/* example: fragment */}
+
+```kotlin
+C15tAndroid.install(
+	context,
+	NativeConfig(backendUrl = "https://your-project.inth.app"),
+	transport = MyConsentTransport(),
+)
+```
+
+Your transport implements `init`, `save` and `identify`, and can override
+`logout`. Send each queued save body byte for byte: the core stored those bytes
+before delivery, so a retry must not rewrite them. In a React Native app, set
+`com.c15t.reactnative.AUTO_BOOTSTRAP` to `false` and install this way before the
+React host starts.
+
 ## Native configuration reference
 
 | Setting | Purpose |
 | --- | --- |
-| `portalUrl` | Required project/backend URL. |
+| `backendUrl` | Project/backend URL. `null` selects no-backend mode, which sends nothing and refuses `bundledPolicy`. |
 | `initUrl` | Optional initialization URL override. |
 | `domain` | Domain reported with consent records; defaults to the project URL's host. |
 | `consentCategories` | App category scope. |
 | `vendors` | Optional IAB vendor scope. Absent or empty keeps the served list. |
 | `iab` | Registered CMP identity and publisher settings for an IAB policy. |
 | `iabListMaxAgeMs` | Maximum age of IAB disclosures, seven days by default. |
-| `bundledPolicy` | Exported policy resource for offline startup. |
+| `bundledPolicy` | Manifest bundled at build time, used when no live or cached `/init` response is available. |
+| `policy` | `ConsentPolicy` kept in source control, the only policy source in no-backend mode. |
 | `overrides` | Country, region, language or GPC inputs for controlled QA. |
 | `detectedGpc` | A GPC signal supplied by a real platform integration. |
 | `extraHeaders` | App-owned transport headers. |
 | `maxPendingSaves` | Durable delivery queue limit, up to 20. |
+| `platform` | The app type the backend records for each request. Defaults to `android`. |
 
-The corresponding manifest keys are `com.c15t.PORTAL_URL`, `INIT_URL`, `DOMAIN`,
+`platform` labels requests in the `x-c15t-platform` header, as
+`<platform>-><sdkVersion>`. Keep the default `android` in a Kotlin or Java app.
+In a React Native app that installs the engine itself, with `AUTO_BOOTSTRAP`
+off, set `platform = C15tProtocol.PLATFORM_REACT_NATIVE` (`rn`). A React Native
+app that keeps the automatic startup already sends `rn`. Set `null` to send no
+platform header. The value is attribution only and changes no consent decision.
+
+The corresponding manifest keys are `com.c15t.BACKEND_URL`, `BACKEND_INIT_URL`, `BACKEND_DOMAIN`,
 `CATEGORIES` and `POLICY_RESOURCE`, with the same `com.c15t.` prefix. The policy
-resource names a file in app assets. Native configuration supports more options
-than manifest startup.
+resource names a file in app assets. Set `com.c15t.MODE` to `offline` for
+no-backend mode: the core then starts with no backend URL and an offline
+transport, ignores the backend and policy resource keys, and reads its policy
+from the asset `com.c15t.POLICY_RULES` names. Native
+configuration supports more options than manifest startup.
 
 ## Handle identity and reset
 
@@ -113,7 +147,7 @@ identity changes; IAB authority may be retired and a new choice required.
 For an explicit withdrawal, save `CommitIntent.Necessary` and inspect the commit
 result. For a start-over control, call the installed kernel's
 `C15t.current?.reset()`. This resets local consent and resolves policy again.
-`C15t.reset()` only drops the singleton for teardown and leaves persisted
+`C15t.uninstall()` only drops the singleton for teardown and leaves persisted
 consent unchanged. Neither operation is a backend account-deletion API.
 
 ## Handle a policy or storage failure

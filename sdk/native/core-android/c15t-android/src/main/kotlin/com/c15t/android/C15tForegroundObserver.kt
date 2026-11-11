@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
  * foreground.
  *
  * The contract asks for a retry on launch, on foreground, and on a reachability
- * change; this covers the foreground leg, and [com.c15t.core.C15tKernel.bootstrap]
+ * change; this covers the foreground leg, and [com.c15t.core.ConsentCore.bootstrap]
  * covers launch.
  *
  * The callback arrives on the main thread and the replay it triggers opens an HTTP

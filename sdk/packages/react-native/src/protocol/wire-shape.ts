@@ -14,7 +14,7 @@
  * assertion rather than an undefined read in someone's app.
  *
  * The check stops at the top of the vendor list inside `iab`. That document belongs
- * to the IAB framework and is read field-by-field forgivingly on every platform, so
+ * to the IAB framework, and any of its fields may be absent on every platform, so
  * a key name inside one of its records is a question for `gvl.ts`, which the vendor
  * list tests compare against all four places it is written.
  *
@@ -60,7 +60,124 @@ export const SNAPSHOT_KEYS = [
 	'evaluatedAt',
 	'error',
 	'iab',
+	'gppString',
 ] as const;
+
+/**
+ * Keys a native bridge adds to the kernel's snapshot wire.
+ *
+ * They are native bookkeeping rather than kernel state, so `@c15t/core` has no such
+ * field and the protocol fixtures, which {@link SNAPSHOT_KEYS} is checked against, do
+ * not carry them. `promptOwedSince` is the revision at which the prompt owed now
+ * became owed. The native presenters key their auto-present on it; JavaScript only
+ * passes it through.
+ */
+export const BRIDGE_SNAPSHOT_KEYS = [
+	'promptOwedSince',
+	'iabMarketingPurposes',
+] as const;
+
+/**
+ * Snapshot keys added after protocol version 1 shipped, with the value an older native
+ * build means by leaving the key out.
+ *
+ * A JavaScript-only update (Expo Updates, CodePush) can run this package over a binary
+ * built before a key existed, and the protocol version does not move for an additive
+ * key. Such a binary simply has none of the state the key describes, so the client
+ * fills the default before anything reads the snapshot or grades its shape: the public
+ * type keeps its promise, and an older binary is not reported as drift. Every key
+ * added to {@link SNAPSHOT_KEYS} or {@link BRIDGE_SNAPSHOT_KEYS} from here on belongs in
+ * this table, with the default that means "this build has no such state". A key whose
+ * absence cannot be answered that way needs a protocol version instead.
+ *
+ * `gppString: null` means the build writes no GPP string, which is also what a build
+ * with GPP off reports. `iabMarketingPurposes: null` means no TC String answer is
+ * known, so the ATT sequence does not ask under an IAB policy. `promptOwedSince: null`
+ * means the build names no owed prompt.
+ */
+export const ADDITIVE_SNAPSHOT_DEFAULTS = {
+	gppString: null,
+	iabMarketingPurposes: null,
+	promptOwedSince: null,
+} as const satisfies Partial<
+	Record<
+		(typeof SNAPSHOT_KEYS)[number] | (typeof BRIDGE_SNAPSHOT_KEYS)[number],
+		unknown
+	>
+>;
+
+/**
+ * Fill every {@link ADDITIVE_SNAPSHOT_DEFAULTS} key the payload leaves out.
+ *
+ * @param candidate - A parsed snapshot payload.
+ * @returns The same object when nothing was missing, else a copy with the defaults.
+ */
+export const withAdditiveSnapshotDefaults =
+	function withAdditiveSnapshotDefaults(
+		candidate: Record<string, unknown>
+	): Record<string, unknown> {
+		const missing = Object.keys(ADDITIVE_SNAPSHOT_DEFAULTS).some(
+			(key) => !Object.hasOwn(candidate, key)
+		);
+		return missing
+			? { ...ADDITIVE_SNAPSHOT_DEFAULTS, ...candidate }
+			: candidate;
+	};
+
+/**
+ * Bootstrap keys added after protocol version 1 shipped, with what an older native
+ * build means by leaving them out: the same additive rule as the snapshot keys.
+ * A binary before `commitRevision` ignores a commit's `revision`, so it cannot be
+ * trusted to refuse a draft built on an older snapshot. Every binary before
+ * `nativeUI` linked the stock native screens.
+ */
+export const ADDITIVE_BOOTSTRAP_DEFAULTS = {
+	commitRevision: false,
+	nativeUI: true,
+} as const;
+
+/**
+ * Keys the bridge adds inside the snapshot's `iab` object after protocol version 1
+ * shipped, with the value an older native build means by leaving them out.
+ *
+ * The same rule as the top-level additive keys in `native/CONTRACT.md` ("Version
+ * handshake"): a JavaScript-only update can run this package over an older binary,
+ * and the protocol version does not move for an additive key, so each absence must
+ * mean "this build has no such state". An older bridge cannot commit a headless TCF
+ * draft, so it is not `editable` and has no `acceptAll`; it publishes no committed
+ * decision, no `disclosure`, and names no `headlessUnsupported` configuration
+ * either. It keeps no custom (non-IAB) vendors, so it lists none. The client
+ * fills these before anything reads the snapshot.
+ */
+export const ADDITIVE_IAB_DEFAULTS = {
+	acceptAll: null,
+	committed: null,
+	customVendors: [],
+	disclosure: null,
+	editable: false,
+	headlessUnsupported: [],
+} as const;
+
+/**
+ * Fill every {@link ADDITIVE_IAB_DEFAULTS} key an `iab` object leaves out.
+ *
+ * @param candidate - A parsed snapshot payload.
+ * @returns The same object when nothing was missing, else a copy with the defaults.
+ */
+export const withAdditiveIABDefaults = function withAdditiveIABDefaults(
+	candidate: Record<string, unknown>
+): Record<string, unknown> {
+	const { iab } = candidate;
+	if (typeof iab !== 'object' || iab === null || Array.isArray(iab)) {
+		return candidate;
+	}
+	const missing = Object.keys(ADDITIVE_IAB_DEFAULTS).some(
+		(key) => !Object.hasOwn(iab, key)
+	);
+	return missing
+		? { ...candidate, iab: { ...ADDITIVE_IAB_DEFAULTS, ...iab } }
+		: candidate;
+};
 
 /**
  * The five objects whose key names come from `@c15t/core` and are not a native
@@ -99,7 +216,14 @@ export const KERNEL_OWNED_KEYS = [
 		required: ['version', 'categories'],
 	},
 	{
-		optional: [],
+		// The bridge's own additions beside the kernel's `gvl`; see ADDITIVE_IAB_DEFAULTS.
+		optional: [
+			'committed',
+			'editable',
+			'acceptAll',
+			'headlessUnsupported',
+			'customVendors',
+		],
 		path: 'iab',
 		required: ['gvl'],
 	},

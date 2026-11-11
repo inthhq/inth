@@ -20,6 +20,21 @@ export const readFixture = function readFixture(name: string): string {
 };
 
 /** argv for `expo prebuild`, the command Continuous Native Generation runs. */
+/** The smallest in-code policy offline mode accepts. */
+export const OFFLINE_POLICY = {
+	rules: [
+		{
+			id: 'everywhere',
+			match: { fallback: true, isDefault: true },
+			model: 'opt-in',
+			prompt: 'choice',
+		},
+	],
+} as const;
+
+/** Offline-mode props, with the policy that mode requires. */
+export const OFFLINE = { mode: 'offline', policy: OFFLINE_POLICY } as const;
+
 export const PREBUILD_ARGV = ['node', '/usr/local/bin/expo', 'prebuild'];
 
 /** argv for `expo start`, which on a managed project means Expo Go. */
@@ -113,3 +128,30 @@ export const gradleFile = function gradleFile(
 ) {
 	return { contents: readFixture(name), language, path: name };
 };
+
+/** The Firebase Consent Mode v2 defaults every `Info.plist` gets: all denied. */
+export const GOOGLE_CONSENT_PLIST_DEFAULTS = {
+	GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS: false,
+	GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE: false,
+	GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA: false,
+	GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE: false,
+} as const;
+
+/** The same defaults as `<meta-data>` names, in the order they are written. */
+export const GOOGLE_CONSENT_META_DATA_NAMES = [
+	'google_analytics_default_allow_analytics_storage',
+	'google_analytics_default_allow_ad_storage',
+	'google_analytics_default_allow_ad_user_data',
+	'google_analytics_default_allow_ad_personalization_signals',
+];
+
+/** The `<meta-data>` entries for those defaults, as the manifest holds them. */
+export const GOOGLE_CONSENT_META_DATA = GOOGLE_CONSENT_META_DATA_NAMES.map(
+	(name) => ({
+		$: {
+			'android:name': name,
+			'android:value': 'false',
+			'tools:replace': 'android:value',
+		},
+	})
+);

@@ -13,6 +13,7 @@ import type { Root } from 'react-dom/client';
 import { vi } from 'vitest';
 
 import type { NativeC15tTurboModule } from '../../native/module';
+import type { NativeAutoPresentSettings } from '../../native/presenter';
 import { NATIVE_C15T_MODULE_NAME } from '../../protocol';
 import type {
 	ConsentSnapshot,
@@ -29,10 +30,12 @@ import { emitNativeEvent, setNativeModule } from './react-native-stub';
 
 /** Handshake payload the fake module reports by default. */
 export const FAKE_BOOTSTRAP = {
+	commitRevision: true,
 	hasStoredSnapshot: true,
 	maxSupportedProtocolVersion: 1,
 	minSupportedProtocolVersion: 1,
 	nativeSdkVersion: 'rn->9.9.9',
+	nativeUI: true,
 	protocolVersion: 1,
 	subjectId: 'sub-1',
 };
@@ -73,7 +76,9 @@ export const buildSnapshot = function buildSnapshot(
 		error: null,
 		evaluatedAt: 1_770_000_000_000,
 		explicitChoice: null,
+		gppString: null,
 		iab: null,
+		iabMarketingPurposes: null,
 		location: { countryCode: 'DE', regionCode: null },
 		model: 'opt-in',
 		nextDeadline: null,
@@ -81,6 +86,7 @@ export const buildSnapshot = function buildSnapshot(
 		policyPending: false,
 		policySnapshotToken: null,
 		privacySignals: { gpc: { active: false, detected: false, override: null } },
+		promptOwedSince: null,
 		promptRequirement: { kind: 'choice', reason: 'missing' },
 		ready: true,
 		resolution: { fingerprint: null, policyId: null, status: 'no-match' },
@@ -116,14 +122,18 @@ export interface FakeNativeModule extends NativeC15tTurboModule {
 	resetCalls: number;
 	/** Times `getTrackingAuthorization()` was called. */
 	trackingReadCalls: number;
-	/** Times `requestTrackingAuthorization()` was called. */
+	/** Times `requestTrackingAuthorization()` or its options form was called. */
 	trackingRequestCalls: number;
+	/** Options passed to `requestTrackingAuthorizationWithOptions`, in order; `null` for the plain call. */
+	trackingRequestOptions: (string | null)[];
 	/** Serve a new snapshot and emit the `snapshot` event for it. */
 	pushSnapshot: (snapshot: ConsentSnapshot) => void;
 	/** Serve unreadable text as the next snapshot payload. */
 	pushUnreadableSnapshot: (raw: string) => void;
 	/** Serve a different platform tracking arm from the next read. */
 	setTrackingAuthorization: (status: TrackingAuthorization) => void;
+	/** Serve `answeredAt` (epoch ms) with the tracking arm, or leave it out with `null`. */
+	setTrackingAnsweredAt: (answeredAt: number | null) => void;
 	/** Make the next tracking request reject, the way a build without the plist key does. */
 	rejectTrackingRequestWith: (code: string, message: string) => void;
 	/**
@@ -148,7 +158,51 @@ export interface FakeNativeModule extends NativeC15tTurboModule {
 	setBootstrap: (payload: unknown) => void;
 	/** Make `commit()` resolve with text that is not a `CommitResult`. */
 	failCommitWith: (raw: string) => void;
+	/** Settings handed to `configureAutoPresent()`, parsed, in order. */
+	autoPresentSettings: NativeAutoPresentSettings[];
+	/** The last settings native was sent, or `null` before any. */
+	readonly autoPresent: NativeAutoPresentSettings | null;
 }
+
+/**
+ * Report a session native put on screen, the way both hosts do.
+ *
+ * @param sessionId - The session.
+ * @param presentation - What it shows.
+ * @param automatic - Native opened it by itself.
+ */
+export const emitPresented = function emitPresented(
+	sessionId: string,
+	presentation: 'prompt' | 'preferences' = 'prompt',
+	automatic = true
+): void {
+	emitNativeEvent(
+		'onConsentPresenterPresented',
+		JSON.stringify({ automatic, presentation, sessionId })
+	);
+};
+
+/**
+ * Report a session's outcome, the way both hosts do.
+ *
+ * @param sessionId - The session that closed.
+ * @param kind - How it ended.
+ * @param revision - The core's revision then.
+ */
+export const emitOutcome = function emitOutcome(
+	sessionId: string,
+	kind:
+		| 'committed'
+		| 'acknowledged'
+		| 'dismissed'
+		| 'unavailable' = 'dismissed',
+	revision = 1
+): void {
+	emitNativeEvent(
+		'onConsentPresenterOutcome',
+		JSON.stringify({ kind, revision, sessionId })
+	);
+};
 
 /**
  * Create a fake module and register it under the real module name.
@@ -165,6 +219,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 	let snapshot: ConsentSnapshot | string = options.snapshot ?? buildSnapshot();
 	let bootstrap: unknown = options.bootstrap ?? FAKE_BOOTSTRAP;
 	let trackingStatus: TrackingAuthorization = 'unsupported';
+	let trackingAnsweredAt: number | null = null;
 	let trackingRequestReply: TrackingRequestReply = { status: 'unsupported' };
 	const trackingRequestQueue: TrackingRequestReply[] = [];
 	let commitReply = JSON.stringify({
@@ -177,6 +232,10 @@ export const createFakeNativeModule = function createFakeNativeModule(
 
 	const fake = {
 		addListener: vi.fn(),
+		get autoPresent(): NativeAutoPresentSettings | null {
+			return fake.autoPresentSettings.at(-1) ?? null;
+		},
+		autoPresentSettings: [] as NativeAutoPresentSettings[],
 		bootstrapCalls: 0,
 		closeConsentPresenter: () => Promise.resolve(),
 		commit: vi.fn((intent: string) => {
@@ -185,6 +244,12 @@ export const createFakeNativeModule = function createFakeNativeModule(
 			return Promise.resolve(commitReply);
 		}),
 		commitIntents: [] as string[],
+		configureAutoPresent: vi.fn((settings: string) => {
+			fake.autoPresentSettings.push(
+				JSON.parse(settings) as NativeAutoPresentSettings
+			);
+			return Promise.resolve();
+		}),
 		dismissCalls: 0,
 		dismissNotice: vi.fn(() => {
 			fake.dismissCalls += 1;
@@ -205,7 +270,28 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		getTrackingAuthorization: vi.fn(() => {
 			fake.trackingReadCalls += 1;
 
-			return JSON.stringify({ status: trackingStatus });
+			return JSON.stringify(
+				trackingAnsweredAt === null
+					? { status: trackingStatus }
+					: { answeredAt: trackingAnsweredAt, status: trackingStatus }
+			);
+		}),
+		getWebViewConsent: vi.fn(() => {
+			const current = typeof snapshot === 'string' ? buildSnapshot() : snapshot;
+			return JSON.stringify({
+				key: 'fedcba9876543210fedcba9876543210',
+				state: {
+					// Both bridges read the snapshot's GPP string into the WebView state.
+					gppString: current.gppString,
+					model: current.model,
+					permissions: current.effectivePermissions,
+					ready: current.ready && !current.policyPending,
+					revision: current.revision,
+					tcString: null,
+					version: 1,
+				},
+				token: '0123456789abcdef0123456789abcdef',
+			});
 		}),
 		identify: vi.fn((externalId: string) => {
 			fake.identifyCalls.push(externalId);
@@ -249,6 +335,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		removeListeners: vi.fn(),
 		requestTrackingAuthorization: vi.fn(() => {
 			fake.trackingRequestCalls += 1;
+			fake.trackingRequestOptions.push(null);
 
 			const reply = trackingRequestQueue.shift() ?? trackingRequestReply;
 
@@ -271,6 +358,14 @@ export const createFakeNativeModule = function createFakeNativeModule(
 			fake.trackingRequestPayloads.push(payload);
 
 			return Promise.resolve(payload);
+		}),
+		// The options form answers the same way, through whatever the test installed as
+		// the plain method, and records the options it was given.
+		requestTrackingAuthorizationWithOptions: vi.fn((requestOptions: string) => {
+			const answer = fake.requestTrackingAuthorization();
+			fake.trackingRequestOptions[fake.trackingRequestOptions.length - 1] =
+				requestOptions;
+			return answer;
 		}),
 		reset: vi.fn(() => {
 			fake.resetCalls += 1;
@@ -310,6 +405,9 @@ export const createFakeNativeModule = function createFakeNativeModule(
 
 			return Promise.resolve();
 		}),
+		setTrackingAnsweredAt: (answeredAt: number | null) => {
+			trackingAnsweredAt = answeredAt;
+		},
 		setTrackingAuthorization: (status: TrackingAuthorization) => {
 			trackingStatus = status;
 			trackingRequestReply = { status };
@@ -320,6 +418,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		snapshotCalls: 0,
 		trackingReadCalls: 0,
 		trackingRequestCalls: 0,
+		trackingRequestOptions: [] as (string | null)[],
 		trackingRequestPayloads: [] as string[],
 	};
 

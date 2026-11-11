@@ -49,7 +49,7 @@ The model retains both subscription handles for its lifetime. `gate` delivers th
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-observe.mdx" />
 
-Snapshot callbacks can arrive on any queue. Hop to the main actor before publishing SwiftUI state:
+The model republishes its snapshot from a `PublishedConsent`, which updates on the main actor. The Combine sink needs no hop:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-snapshot.mdx" />
 

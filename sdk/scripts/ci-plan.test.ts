@@ -22,7 +22,7 @@ const plan = (files: string[]) => createCiPlan(files, workspaces);
 
 describe('CI selection', () => {
 	it.each([
-		'packages/react-native/src/provider/c15t-provider.tsx',
+		'packages/react-native/src/provider/consent-provider.tsx',
 		'packages/react-native/package.json',
 		'scripts/mobile-compatibility.json',
 	])('checks older and current mobile hosts when %s changes', (file) => {
@@ -302,7 +302,7 @@ describe('CI selection', () => {
 	it.each([
 		'Package.swift',
 		'native/core-swift/Sources/C15tCore/ConsentCore.swift',
-		'native/core-android/c15t-core/src/main/kotlin/com/c15t/core/C15tKernel.kt',
+		'native/core-android/c15t-core/src/main/kotlin/com/c15t/core/ConsentCore.kt',
 		'native/protocol/evaluation-eu-opt-in.json',
 		'native/core-android/c15t-android/src/test/kotlin/com/c15t/android/ConsentGateTest.kt',
 	])('selects the whole graph for the native path %s', (file) => {
@@ -330,6 +330,8 @@ describe('CI selection', () => {
 			'packages/react-native/ios/C15tReactNative/Bridge/Wire.swift',
 			'packages/react-native/C15tReactNative.podspec',
 			'packages/react-native/Package.swift',
+			// Prebuild output: the plugin writes what `pod install` and Gradle read.
+			'packages/react-native/src/expo-plugin/native-ui.ts',
 		];
 		for (const file of device) {
 			expect(plan([file]).mobileBrowserOrDevice, file).toBe(true);

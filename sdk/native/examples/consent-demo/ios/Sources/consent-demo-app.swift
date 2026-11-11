@@ -19,8 +19,8 @@ struct ConsentDemoContent: View {
 }
 
 @MainActor
-final class DemoSession: ObservableObject, SnapshotObserver {
-    @Published var presenter: ConsentPresenter?
+final class DemoSession: ObservableObject {
+    @Published var prompt: ConsentPrompt?
     @Published var snapshot = ConsentSnapshot.coldStart
     @Published var pendingSaves = 0
     @Published var setupError: String?
@@ -120,7 +120,7 @@ final class DemoSession: ObservableObject, SnapshotObserver {
                 }
             }
             started = true
-            observer = core.onChange(self)
+            observer = core.onChange { [weak self] in self?.consentDidChange($0) }
             let stream = core.eventStream
             events = Task { [weak self] in
                 for await event in stream {
@@ -130,13 +130,15 @@ final class DemoSession: ObservableObject, SnapshotObserver {
                     refresh(core)
                 }
             }
-            presenter = ConsentPresenter(core: core)
+            // The app-wide prompt the one-line modifier attaches to, so the journeys run
+            // the default auto-present path.
+            prompt = ConsentPrompt.shared(for: core)
             refresh(core)
         } catch { setupError = String(describing: error) }
     }
     nonisolated func consentDidChange(_ snapshot: ConsentSnapshot) {
         Task { @MainActor [weak self] in
-            guard let self, let core = self.presenter?.core else { return }
+            guard let self, let core = self.prompt?.core else { return }
             self.refresh(core)
         }
     }
@@ -157,7 +159,7 @@ final class DemoSession: ObservableObject, SnapshotObserver {
         }
     }
     func refreshReviewDiagnostics() {
-        guard let profile = reviewProfile, let core = presenter?.core else { return }
+        guard let profile = reviewProfile, let core = prompt?.core else { return }
         let capturedAtMs = Int64(Date().timeIntervalSince1970 * 1000)
         let current = core.snapshot()
         let committed = core.iabConsent()
@@ -192,7 +194,7 @@ final class DemoSession: ObservableObject, SnapshotObserver {
         } catch { setupError = "The diagnostic report could not be encoded: \(error.localizedDescription)" }
     }
     func resetReviewConsent() async {
-        guard reviewProfile != nil, let core = presenter?.core, !resettingReview else { return }
+        guard reviewProfile != nil, let core = prompt?.core, !resettingReview else { return }
         resettingReview = true
         defer { resettingReview = false }
         await Task.detached { core.reset() }.value
@@ -220,13 +222,10 @@ struct DemoRoot: View {
     @State private var vendorIDs = ""
     @State private var inspectBeforeShowingConsent = false
     var body: some View {
-        if let presenter = session.presenter, let policyURL = session.policyURL {
-            let host = HostState(session: session, presenter: presenter)
-            if session.consentUIEnabled {
-                host.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: consentTheme)
-            } else {
-                host
-            }
+        if let prompt = session.prompt, let policyURL = session.policyURL {
+            // Review inspection holds the prompt back with the opt-out until the reviewer asks for it.
+            HostState(session: session, prompt: prompt)
+                .c15tConsent(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
         } else {
             NavigationStack {
                 Form {
@@ -274,13 +273,13 @@ struct DemoRoot: View {
 
 struct HostState: View {
     @ObservedObject var session: DemoSession
-    @ObservedObject var presenter: ConsentPresenter
+    @ObservedObject var prompt: ConsentPrompt
     @State private var confirmReviewReset = false
     var body: some View {
         NavigationStack {
             List {
                 Section("Privacy") {
-                    Button("Privacy settings") { presenter.presentPreferences() }.frame(minHeight: 44).disabled(!session.consentUIEnabled).accessibilityIdentifier("fixture.open-preferences")
+                    Button("Privacy settings") { prompt.presentPreferences() }.frame(minHeight: 44).disabled(!session.consentUIEnabled).accessibilityIdentifier("fixture.open-preferences")
                 }
                 if session.reviewProfile != nil {
                     Section("IAB review") {
@@ -311,8 +310,8 @@ struct HostState: View {
                     }
                     Section("Test faults") {
                         Button("Refuse next storage write") { session.store?.failNext = true }.accessibilityIdentifier("fixture.fail-next-write")
-                        Button("Competing accept") { Task.detached { presenter.core.save(.all) } }.accessibilityIdentifier("fixture.competing-save")
-                        Button("Reconnect") { session.transport?.offline = false; presenter.core.replayThenRefresh() }.accessibilityIdentifier("fixture.reconnect")
+                        Button("Competing accept") { Task.detached { prompt.core.save(.all) } }.accessibilityIdentifier("fixture.competing-save")
+                        Button("Reconnect") { session.transport?.offline = false; prompt.core.replayThenRefresh() }.accessibilityIdentifier("fixture.reconnect")
                     }
                 }
                 Section("About this demo") {
@@ -388,8 +387,9 @@ extension DemoRoot {
     }
 }
 
-/// A fictional grocery app's appearance: a teal accent on mint paper, rounded display type,
-/// and its own mark and headline. Everything here goes through the public theme.
+/// A fictional grocery app's appearance: a teal primary on mint paper, rounded display type,
+/// roomier spacing, a larger type scale, pill decisions, and its own mark and headline.
+/// Everything here goes through the public theme.
 enum PantryBrand {
     static let theme = ConsentTheme(
         colors: ConsentTheme.Colors(
@@ -397,13 +397,16 @@ enum PantryBrand {
             surface: ConsentThemeColor(light: 0xFFFFFF, dark: 0x17241F),
             surfaceMuted: ConsentThemeColor(light: 0xE2F1EB, dark: 0x1F3029),
             text: ConsentThemeColor(light: 0x10201C, dark: 0xEAF4F0),
-            textSecondary: ConsentThemeColor(light: 0x5C7169, dark: 0x9DB3AC),
-            accent: ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0),
-            onAccent: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A),
+            textMuted: ConsentThemeColor(light: 0x5C7169, dark: 0x9DB3AC),
+            primary: ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0),
+            textOnPrimary: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A),
             decision: ConsentThemeColor(light: 0x00796B, dark: 0x4FD1C0),
-            onDecision: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)),
-        cornerRadius: 10,
-        headlineFont: .rounded,
+            textOnDecision: ConsentThemeColor(light: 0xFFFFFF, dark: 0x06302A)),
+        radius: ConsentTheme.Radius(md: 10),
+        spacing: ConsentTheme.Spacing(md: 20, lg: 28),
+        typography: ConsentTheme.Typography(headlineFont: .rounded,
+            fontSize: ConsentTheme.Typography.FontSize(sm: 16, base: 18)),
+        slots: [.buttonPrimary: ConsentTheme.SlotStyle(borderRadius: 26)],
         brand: ConsentTheme.Brand(name: "Pantry", markImageName: "ConsentDemoMark"),
         copy: ConsentTheme.Copy(
             headline: "Before you shop.",

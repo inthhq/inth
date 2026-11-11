@@ -36,8 +36,9 @@ internal data class HeaderIdentity(
     val provider: ConsentTheme.Branding? = null,
 ) {
     companion object {
-        fun resolve(context: Context, brand: ConsentTheme.Brand, provider: ConsentTheme.Branding): HeaderIdentity {
-            val name = brand.name ?: "Your brand here"
+        /** [placeholder] stands in for a brand with no name, in the screen's language. */
+        fun resolve(context: Context, brand: ConsentTheme.Brand, provider: ConsentTheme.Branding, placeholder: String): HeaderIdentity {
+            val name = brand.name ?: placeholder
             fun drawable(id: Int?): Int? = id?.takeIf {
                 runCatching { context.resources.getResourceTypeName(it) in listOf("drawable", "mipmap") }.getOrDefault(false)
             }
@@ -53,10 +54,10 @@ internal data class HeaderIdentity(
 }
 
 /** The mark is decorative; the replaceable brand label is read once. */
-@Composable internal fun IdentityHeader() {
+@Composable internal fun IdentityHeader(placeholder: String) {
     val theme = LocalConsentTheme.current
     val context = LocalContext.current
-    val identity = remember(theme.brand, theme.branding) { HeaderIdentity.resolve(context, theme.brand, theme.branding) }
+    val identity = remember(theme.brand, theme.branding, placeholder) { HeaderIdentity.resolve(context, theme.brand, theme.branding, placeholder) }
     val shape = RoundedCornerShape(22)
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         val tile = Modifier.size(56.dp).clip(shape)
@@ -69,13 +70,13 @@ internal data class HeaderIdentity(
                 Icon(if (isInth) ProviderMarks.inth else ProviderMarks.c15t, contentDescription = null, tint = theme.colors.text.color(),
                     modifier = Modifier.size(40.dp).testTag("c15t.first-layer.brand-logo.${if (isInth) "inth" else "c15t"}"))
             }
-            else -> Box(tile.background(theme.colors.accent.color().copy(alpha = 0.12f)).testTag("c15t.first-layer.brand-logo.initial"), contentAlignment = Alignment.Center) {
-                Text(HeaderIdentity.initial(identity.name), fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold,
-                    fontSize = 28.sp, color = theme.colors.accent.color(), modifier = Modifier.clearAndSetSemantics {})
+            else -> Box(tile.background(theme.colors.primary.color().copy(alpha = 0.12f)).testTag("c15t.first-layer.brand-logo.initial"), contentAlignment = Alignment.Center) {
+                Text(HeaderIdentity.initial(identity.name), fontFamily = theme.typography.headlineFont.family, fontWeight = FontWeight.SemiBold,
+                    fontSize = 28.sp, color = theme.colors.primary.color(), modifier = Modifier.clearAndSetSemantics {})
             }
         }
         Text(identity.name.uppercase(), style = MaterialTheme.typography.labelLarge, letterSpacing = 1.4.sp,
-            color = theme.colors.accent.color(),
+            color = theme.colors.primary.color(),
             modifier = Modifier.semantics { contentDescription = identity.name }.testTag("c15t.first-layer.brand"))
     }
 }

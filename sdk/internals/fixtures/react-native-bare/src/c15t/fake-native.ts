@@ -47,6 +47,8 @@ import type {
 	NativeOverridesInput,
 } from '@c15t/react-native';
 
+import { readIntent } from './read-intent';
+
 /** Categories the fake core knows about, in display order. */
 export const CATEGORIES = [
 	'necessary',
@@ -277,14 +279,8 @@ const decide = (
 	intent: CommitIntent
 ): Partial<Record<OptionalCategory, boolean>> => {
 	const decided: Partial<Record<OptionalCategory, boolean>> = {};
-	const inScope = (category: OptionalCategory): boolean =>
-		intent.categories === undefined || intent.categories.includes(category);
 
 	for (const category of OPTIONAL_CATEGORIES) {
-		if (!inScope(category)) {
-			continue;
-		}
-
 		if (intent.action === 'all') {
 			decided[category] = true;
 		} else if (intent.action === 'necessary') {
@@ -408,6 +404,9 @@ class FakeCore {
 			},
 			closeConsentPresenter: () => Promise.resolve(),
 			commit: (intent) => this.commit(intent),
+			// The fixtures draw their own JavaScript banner with autoPresent={false};
+			// the fake has no native prompt to configure.
+			configureAutoPresent: () => Promise.resolve(),
 			dismissNotice: () => {
 				this.dismissNotice();
 			},
@@ -418,6 +417,7 @@ class FakeCore {
 			// inventing a third one: nothing to ask, and the c15t decision alone
 			// decides. See `C15tTracking.kt`.
 			getTrackingAuthorization: () => JSON.stringify({ status: 'unsupported' }),
+			getWebViewConsent: () => this.webViewConsent(),
 			identify: async (externalId) => {
 				this.identify(externalId);
 				await settle();
@@ -437,6 +437,12 @@ class FakeCore {
 				// See `addListener`.
 			},
 			requestTrackingAuthorization: () =>
+				Promise.reject(
+					Object.assign(new Error(ANDROID_TRACKING_UNSUPPORTED), {
+						code: 'C15T_TRACKING_UNSUPPORTED',
+					})
+				),
+			requestTrackingAuthorizationWithOptions: (_options: string) =>
 				Promise.reject(
 					Object.assign(new Error(ANDROID_TRACKING_UNSUPPORTED), {
 						code: 'C15T_TRACKING_UNSUPPORTED',
@@ -567,9 +573,9 @@ class FakeCore {
 
 	private async commit(intentJson: string): Promise<string> {
 		await settle();
-		const intent = parseJson<CommitIntent>(intentJson);
+		const intent = readIntent(intentJson);
 
-		if (intent === null || typeof intent.action !== 'string') {
+		if (intent === null) {
 			const rejected: CommitResult = {
 				confirmed: [],
 				ok: false,
@@ -803,6 +809,33 @@ class FakeCore {
 			revision: this.revision,
 			snapshot: this.snapshot,
 			subjectId: this.subjectId,
+		});
+	}
+
+	/**
+	 * The WebView consent payload the native cores build from a snapshot. The
+	 * token and key are fixed: the fixture has no WebView to protect.
+	 */
+	private webViewConsent(): string {
+		const snapshot = JSON.parse(this.getSnapshot()) as {
+			effectivePermissions: Record<string, boolean>;
+			model: string;
+			policyPending: boolean;
+			ready: boolean;
+			revision: number;
+		};
+		return JSON.stringify({
+			key: '11111111111111111111111111111111',
+			state: {
+				gppString: null,
+				model: snapshot.model,
+				permissions: snapshot.effectivePermissions,
+				ready: snapshot.ready && !snapshot.policyPending,
+				revision: snapshot.revision,
+				tcString: null,
+				version: 1,
+			},
+			token: '00000000000000000000000000000000',
 		});
 	}
 

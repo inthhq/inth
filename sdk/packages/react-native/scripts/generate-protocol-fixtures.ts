@@ -553,6 +553,11 @@ interface FixtureSnapshot {
 	readonly error: { code: string; message: string } | null;
 	readonly evaluatedAt: number;
 	readonly explicitChoice: ExplicitChoice | null;
+	/**
+	 * `null` in every fixture: GPP is off unless the app turns it on, and no fixture
+	 * does. `native/protocol/gpp/cases.json` covers the string itself.
+	 */
+	readonly gppString: null;
 	readonly iab: null;
 	readonly location: LocationResponse | null;
 	readonly model: Exclude<KernelModel, 'iab'>;
@@ -1383,6 +1388,7 @@ const toFixtureSnapshot = function toFixtureSnapshot(
 		explicitChoice: snapshot.explicitChoice
 			? structuredClone(snapshot.explicitChoice)
 			: null,
+		gppString: null,
 		iab: null,
 		location: snapshot.location ? { ...snapshot.location } : null,
 		model: snapshot.model,
@@ -2624,6 +2630,7 @@ const RESET_BASELINE: Omit<
 	error: null,
 	evaluatedAt: NOW,
 	explicitChoice: null,
+	gppString: null,
 	iab: null,
 	location: null,
 	model: 'opt-in',

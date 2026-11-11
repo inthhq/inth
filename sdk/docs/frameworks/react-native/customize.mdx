@@ -1,18 +1,21 @@
 ---
 title: Customize
-description: Change native consent colors, app identity, provider attribution and introductory copy in React Native apps.
+description: Theme the native consent screens and the React Native consent components from one object with web token names, and change app identity, provider attribution and introductory copy.
 group: frameworks
 ---
 
 The standard React Native integration opens SwiftUI and Compose consent
 screens. Customize those screens through native `ConsentTheme` settings or
-native build metadata. React `style` props and web CSS do not style them.
+native build metadata. React `style` props and web CSS do not style them. The
+theme uses the web token names from `@c15t/ui`, so a brand defined for the web
+theme maps onto the native screens field for field.
 
 ## Choose what to change
 
 | Change | Use |
 | --- | --- |
-| Colors, corner radius and headline font | Native theme metadata or native `ConsentTheme`. |
+| Colors, radii, spacing and type | One theme object: the Expo plugin's `theme` option for the native screens, and `createConsentTheme` for the React Native components. Bare apps write native theme metadata. |
+| One part, such as the decision buttons | The theme's `slots`. |
 | Your app's name and logo | Native app-identity settings. |
 | c15t, Inth or custom provider attribution | Native branding settings. |
 | First-layer heading and introduction | Native copy settings. |
@@ -21,22 +24,85 @@ native build metadata. React `style` props and web CSS do not style them.
 The presenter keeps Accept and Reject on the same decision style. Their
 first-layer action labels are not replaceable introductory copy.
 
-## Set colors in the native app
+## Theme both renderers from one object
 
-For bare RN, merge these iOS entries into the app target's `Info.plist`. This
-fragment changes the accent, decision fill and corner radius:
+In Expo, keep the theme in a JSON file. Node loads JSON in `app.config.ts`, and
+Metro bundles the same file into the app, so one object reaches both
+renderers. This theme sets the primary and decision colors, the button radius,
+spacing, type sizes, the headline face and a pill shape for the decision
+buttons:
+
+```json title="src/c15t/consent-theme.json"
+{
+	"colors": {
+		"decision": "#172554",
+		"primary": "#2563EB",
+		"textOnDecision": "#FFFFFF"
+	},
+	"dark": {
+		"decision": "#DBEAFE",
+		"primary": "#60A5FA",
+		"textOnDecision": "#172554"
+	},
+	"radius": { "md": 16 },
+	"slots": { "buttonPrimary": { "borderRadius": 26 } },
+	"spacing": { "lg": 28, "md": 20 },
+	"typography": {
+		"fontSize": { "base": 17, "sm": 15 },
+		"headlineFont": "serif"
+	}
+}
+```
+
+Pass it to the config plugin's `theme` option. Prebuild writes it into
+`Info.plist` and `AndroidManifest.xml`:
+
+<include src="../../shared/examples/expo-dev/expo-theme.mdx" />
+
+Pass the same object to `createConsentTheme` for `ConsentBanner`,
+`ConsentDialog`, `ConsentPreferences` and `ConsentIabDrawer`:
+
+<include src="../../shared/examples/expo-dev/expo-theme-components.mdx" />
+
+The object's type is `ConsentThemeOptions` from `@c15t/react-native`. Each
+renderer reads the fields it draws and ignores the rest: the native screens
+ignore `motion`, `typography.fontWeight`, `typography.lineHeight` and the
+colors only the components draw, such as `border`; the components ignore
+`slots`, `brand`, `branding` and the native-only colors `canvas`,
+`surfaceMuted`, `decision` and `textOnDecision`. The plugin still fails
+prebuild on a field neither renderer draws, such as `shadows`, and on a value
+the native screens cannot read, such as an `hsl()` color.
+
+A value in `colors` applies in both appearances unless `dark` sets its own.
+The components follow the device appearance with a host theme too.
+
+Rebuild the binary after a theme change, then open Privacy settings and check
+both appearances and a large text size.
+
+[Expo and EAS](/docs/frameworks/react-native/expo#theme-the-native-screens)
+shows where the option sits in the plugin config.
+
+## Set theme values in a bare app
+
+For bare React Native, merge these iOS entries into the app target's
+`Info.plist`. This fragment changes the primary color, the decision fill, the
+button radius, the page gutter and the body size:
 
 {/* example: fragment */}
 
 ```xml title="Info.plist entries"
-<key>com.c15t.consent.accent</key>
+<key>com.c15t.consent.primary</key>
 <string>#2563EB,#60A5FA</string>
 <key>com.c15t.consent.decision</key>
 <string>#172554,#DBEAFE</string>
-<key>com.c15t.consent.onDecision</key>
+<key>com.c15t.consent.textOnDecision</key>
 <string>#FFFFFF,#172554</string>
-<key>com.c15t.consent.cornerRadius</key>
+<key>com.c15t.consent.radiusMd</key>
 <real>16</real>
+<key>com.c15t.consent.spaceLg</key>
+<real>28</real>
+<key>com.c15t.consent.fontSizeBase</key>
+<real>17</real>
 ```
 
 On Android, add the corresponding metadata inside `<application>`:
@@ -44,20 +110,58 @@ On Android, add the corresponding metadata inside `<application>`:
 {/* example: fragment */}
 
 ```xml title="AndroidManifest.xml application entries"
-<meta-data android:name="com.c15t.consent.ACCENT" android:value="#2563EB,#60A5FA" />
+<meta-data android:name="com.c15t.consent.PRIMARY" android:value="#2563EB,#60A5FA" />
 <meta-data android:name="com.c15t.consent.DECISION" android:value="#172554,#DBEAFE" />
-<meta-data android:name="com.c15t.consent.ON_DECISION" android:value="#FFFFFF,#172554" />
-<meta-data android:name="com.c15t.consent.CORNER_RADIUS" android:value="16" />
+<meta-data android:name="com.c15t.consent.TEXT_ON_DECISION" android:value="#FFFFFF,#172554" />
+<meta-data android:name="com.c15t.consent.RADIUS_MD" android:value="16" />
+<meta-data android:name="com.c15t.consent.SPACE_LG" android:value="28" />
+<meta-data android:name="com.c15t.consent.FONT_SIZE_BASE" android:value="17" />
 ```
 
 A single `#RRGGBB` color applies in both appearances. A comma-separated pair
-selects light and dark values. Corner radius uses points on iOS and dp on
-Android. Rebuild the binary, open Privacy settings and check both appearances.
+selects light and dark values. Radii and spacing use points on iOS and dp on
+Android; font sizes use points on iOS and sp on Android.
 
-For Expo, the c15t config plugin does not expose a `theme` prop. Apply these
-native keys through an app-owned Expo config plugin, or maintain them in your
-native projects when your app owns those files. Regenerating native files
-with prebuild can replace manual edits.
+## How type, spacing and radius apply
+
+The native screens group their text roles under the three web sizes:
+
+- `fontSize.sm` sets supporting text, footnotes and captions. The default is
+  the platform size: 15 on iOS (subheadline) and 14 on Android (bodyMedium).
+- `fontSize.base` sets body text, row titles and buttons. The default is 17 on
+  iOS and 16 on Android.
+- `fontSize.lg` sets the first-layer headline and screen titles. The default
+  headline is 34.
+
+Each role keeps its ratio to its group, so a footnote stays smaller than the
+subheadline beside it. Dynamic Type on iOS and the font scale on Android still
+apply on top. `fontFamily` sets the face of every role except the headline,
+which `headlineFont` sets: `serif`, `rounded`, `sans`, or a bundled font. Font
+names are PostScript names on iOS and font resource names on Android.
+
+Spacing sets the page gutters, the gaps between sections and the padding of
+the footer and the notice card. A control's own padding stays fixed so its tap
+target keeps its size. `radius.md` rounds buttons and cards; `radius.sm` (the
+status callouts) and `radius.lg` (the notice card and dialogs) follow `md`
+until you set them.
+
+## Restyle one part
+
+`slots` restyle one part of the native screens. The names come from the web
+`slots`, and each field is the CSS property a web slot's `style` would set:
+
+| Slot | Part | Fields |
+| --- | --- | --- |
+| `consentBannerTitle` | The first-layer headline | `color`, `fontSize` |
+| `consentBannerDescription` | The sentence under the headline | `color`, `fontSize` |
+| `buttonPrimary` | Accept all, Reject all and the other filled decisions | `color`, `backgroundColor`, `borderRadius`, `fontSize` |
+| `buttonSecondary` | Outlined actions such as Customize | `color`, `backgroundColor`, `borderRadius`, `fontSize` |
+
+A slot color is `#RRGGBB` or `{ "light": "#RRGGBB", "dark": "#RRGGBB" }`. Accept
+all and Reject all always share `buttonPrimary`. If its colors fall under 5:1
+text contrast in either appearance, the screens draw the stock decision colors
+instead, as they do for `colors.decision`. The React Native components take
+per-part styles through their `styles` prop.
 
 ## Add your app's identity
 
@@ -87,33 +191,57 @@ or accessibility text needs more space.
 ## Native setting reference
 
 Every iOS suffix below starts with `com.c15t.consent.`. Android suffixes use
-the same prefix inside application metadata.
+the same prefix inside application metadata. The Expo column is the field in
+the config plugin's `theme` option.
 
-| Setting | iOS suffix | Android suffix |
-| --- | --- | --- |
-| Accent and text on accent | `accent`, `onAccent` | `ACCENT`, `ON_ACCENT` |
-| Page and card surfaces | `canvas`, `surface`, `surfaceMuted` | `CANVAS`, `SURFACE`, `SURFACE_MUTED` |
-| Main and secondary text | `text`, `textSecondary` | `TEXT`, `TEXT_SECONDARY` |
-| Decision buttons | `decision`, `onDecision` | `DECISION`, `ON_DECISION` |
-| Corner radius | `cornerRadius` | `CORNER_RADIUS` |
-| Headline font | `headlineFont` | `HEADLINE_FONT` |
-| App name and mark | `brandName`, `brandMark` | `BRAND_NAME`, `BRAND_MARK` |
-| Show app identity | `brand` | `BRAND` |
-| First-layer copy | `headline`, `introduction` | `HEADLINE`, `INTRODUCTION` |
-| Show provider attribution | `branding` | `BRANDING` |
-| Built-in provider | `brandingProvider` | `BRANDING_PROVIDER` |
-| Custom provider name and mark | `brandingName`, `brandingMark` | `BRANDING_NAME`, `BRANDING_MARK` |
+| Setting | iOS suffix | Android suffix | Expo `theme` field |
+| --- | --- | --- | --- |
+| Primary and text on primary | `primary`, `textOnPrimary` | `PRIMARY`, `TEXT_ON_PRIMARY` | `colors.primary`, `colors.textOnPrimary` |
+| Page and card surfaces | `canvas`, `surface`, `surfaceMuted` | `CANVAS`, `SURFACE`, `SURFACE_MUTED` | `colors.canvas`, `colors.surface`, `colors.surfaceMuted` |
+| Main and muted text | `text`, `textMuted` | `TEXT`, `TEXT_MUTED` | `colors.text`, `colors.textMuted` |
+| Decision buttons | `decision`, `textOnDecision` | `DECISION`, `TEXT_ON_DECISION` | `colors.decision`, `colors.textOnDecision` |
+| Corner radii | `radiusSm`, `radiusMd`, `radiusLg` | `RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | `radius.sm`, `radius.md`, `radius.lg` |
+| Spacing | `spaceXs` to `spaceXl` | `SPACE_XS` to `SPACE_XL` | `spacing.xs` to `spacing.xl` |
+| Font sizes | `fontSizeSm`, `fontSizeBase`, `fontSizeLg` | `FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | `typography.fontSize` |
+| Body and headline faces | `fontFamily`, `headlineFont` | `FONT_FAMILY`, `HEADLINE_FONT` | `typography.fontFamily`, `typography.headlineFont` |
+| One part | `<slot>.<field>`, such as `buttonPrimary.borderRadius` | `<SLOT>_<FIELD>`, such as `BUTTON_PRIMARY_BORDER_RADIUS` | `slots.<slot>.<field>` |
+| App name and mark | `brandName`, `brandMark` | `BRAND_NAME`, `BRAND_MARK` | `brand.name`, `brand.mark` |
+| Show app identity | `brand` | `BRAND` | `brand.hidden` (inverted) |
+| First-layer copy | `headline`, `introduction` | `HEADLINE`, `INTRODUCTION` | None |
+| Show provider attribution | `branding` | `BRANDING` | `branding.hidden` (inverted) |
+| Built-in provider | `brandingProvider` | `BRANDING_PROVIDER` | `branding.provider` |
+| Custom provider name and mark | `brandingName`, `brandingMark` | `BRANDING_NAME`, `BRANDING_MARK` | `branding.name`, `branding.mark` |
 
-Body text uses the system face. Android maps `rounded` headline type to its
-system sans face. Check contrast and larger text after changing theme values;
-the native screen retains its layout and interaction rules.
+Android maps `rounded` headline type to its system sans face. Check contrast
+and larger text after changing theme values; the native screen retains its
+layout and interaction rules.
+
+### Token names before this release
+
+Mobile is in private alpha, so the old names have no aliases. Rename them in
+native code and build metadata:
+
+| Before | Now (iOS key, Android key) |
+| --- | --- |
+| `colors.accent` | `colors.primary` (`primary`, `PRIMARY`) |
+| `colors.onAccent` | `colors.textOnPrimary` (`textOnPrimary`, `TEXT_ON_PRIMARY`) |
+| `colors.textSecondary` | `colors.textMuted` (`textMuted`, `TEXT_MUTED`) |
+| `colors.onDecision` | `colors.textOnDecision` (`textOnDecision`, `TEXT_ON_DECISION`) |
+| `cornerRadius` | `radius.md` (`radiusMd`, `RADIUS_MD`) |
+| `headlineFont` | `typography.headlineFont` (key unchanged) |
 
 ## Copy and languages
 
-`headline` and `introduction` change the first-layer copy. They are not a
-complete localization dictionary. The current stock native navigation, action
-labels and category explanations contain English strings. Changing the policy
-language does not translate all native UI.
+The native presenter reads every label from `@c15t/translations`, in the
+policy's translation language, on iOS and Android alike. Buttons, headings and
+category names use the web banner's keys, so they read "Accept All" and
+"Reject All". App-only sentences, such as the category explanations and save
+errors, come from native-only keys in the same package. A language c15t has
+no copy for falls back to English.
+
+`headline` and `introduction` replace the first-layer copy in every language.
+Leave them unset to keep the translated stock copy. They are not a complete
+localization dictionary.
 
 GVL descriptions use the available language disclosures and fallback. ATT
 usage descriptions have separate native localization. If your app needs a
@@ -125,8 +253,19 @@ required policy information in that UI.
 
 The package also exports `ConsentBanner`, `ConsentDialog`,
 `ConsentPreferences`, `ConsentIabDrawer` and React theme helpers. Those render
-React Native UI and have separate component props. Their theme does not affect
-the native presenter.
+React Native UI. They take a theme from `createConsentTheme` through their
+`theme` prop and per-part styles through `styles`. The theme reaches the native
+presenter only through the plugin or native metadata at build time, as shown
+in [Theme both renderers from one object](#theme-both-renderers-from-one-object).
+
+`createConsentTheme` returns both palettes, `colors` and `dark`, and the
+components draw the one the device appearance selects. Its names changed with
+the native ones: `onPrimary` is `textOnPrimary`, `switchTrackOn` is
+`switchTrackActive`, `surfaceRaised` is `surfaceHover`, spacing steps are `xs`
+to `xl`, and radii are `sm`, `md`, `lg` and `full`. `lightTheme` and
+`darkTheme` became `defaultConsentTheme`. The type tokens are the web scale
+(`fontSize`, `fontWeight`, `lineHeight`); `resolveConsentTypeRoles` returns the
+banner and dialog text styles derived from them.
 
 Use the shared native screens for the standard flow. If you use the React
 components or your own controls, preserve the native engine, check every
