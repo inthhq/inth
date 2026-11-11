@@ -178,18 +178,6 @@ public enum C15tTracking {
         additionalInformationSelected: (() -> Void)?,
         completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool {
-        requestExpandedPrompt(on: trackingManagerClass(), preferExpandedInterface: preferExpandedInterface,
-                              additionalInformationSelected: additionalInformationSelected, completion: completion)
-    }
-
-    /// ``requestExpandedPrompt(preferExpandedInterface:additionalInformationSelected:completion:)``
-    /// made on `managerClass`. Internal so a test can hand it a class of its own.
-    static func requestExpandedPrompt(
-        on managerClass: AnyClass?,
-        preferExpandedInterface: Bool,
-        additionalInformationSelected: @escaping () -> Void,
-        completion: @escaping (C15tTrackingPlatformStatus?) -> Void
-    ) -> Bool {
         #if canImport(ObjectiveC)
         guard let managerClass else { return false }
         let trackingManager: AnyObject = managerClass
