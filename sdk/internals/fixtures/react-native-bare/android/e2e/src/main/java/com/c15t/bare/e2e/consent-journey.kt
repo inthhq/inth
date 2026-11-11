@@ -5,6 +5,7 @@ import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.Direction
+import androidx.test.uiautomator.StaleObjectException
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
@@ -19,6 +20,9 @@ import java.net.URL
 
 /** Longer than Sentry's 5-second replay upload interval. */
 private const val VENDOR_QUIET_MS = 6000L
+
+/** How long [ConsentJourney.reveal] waits for a control or a scroll container to exist. */
+private const val REVEAL_TIMEOUT_MS = 15000L
 
 @RunWith(AndroidJUnit4::class)
 class ConsentJourney {
@@ -265,16 +269,53 @@ class ConsentJourney {
         return if (choice is JSONObject) canonical(choice) else choice.toString()
     }
 
+    /**
+     * Scroll [id] into view and return it.
+     *
+     * A screen with neither the control nor a scroll container is not an answer yet: right
+     * after a configuration change the old window is gone before the recreated one has
+     * drawn, and a single look in that gap used to fail the journey. This waits for one of
+     * the two to appear, up to [REVEAL_TIMEOUT_MS], and only then scrolls or gives up.
+     */
     private fun reveal(id: String, down: Boolean = false): UiObject2 {
         var direction = if (down) Direction.UP else Direction.DOWN
-        repeat(32) { index ->
-            if (index == 16) direction = if (direction == Direction.UP) Direction.DOWN else Direction.UP
-            device.findObject(By.res(id))?.let { if (it.visibleBounds.height() >= 48) return it }
-            val list = device.findObject(By.scrollable(true)) ?: error("No native scroll container for $id")
-            list.scroll(direction, .4f)
-            device.waitForIdle()
+        val deadline = SystemClock.elapsedRealtime() + REVEAL_TIMEOUT_MS
+        var scrolls = 0
+        while (true) {
+            visible(id)?.let { return it }
+            val list = device.findObject(By.scrollable(true))
+            when {
+                list != null && scrolls < 32 -> {
+                    if (scrolls == 16) direction = if (direction == Direction.UP) Direction.DOWN else Direction.UP
+                    try { list.scroll(direction, .4f) } catch (_: StaleObjectException) { /* Recreated; look again. */ }
+                    scrolls += 1
+                    device.waitForIdle()
+                }
+                list != null -> error("Not reachable: $id")
+                SystemClock.elapsedRealtime() >= deadline -> error("No native scroll container for $id")
+                else -> device.wait(Until.hasObject(By.res(id)), 500)
+            }
         }
-        error("Not reachable: $id")
+    }
+
+    /** [id] when it is on screen and tall enough to act on, else `null`, including for a node torn down mid-read. */
+    private fun visible(id: String): UiObject2? = try {
+        device.findObject(By.res(id))?.takeIf { it.visibleBounds.height() >= 48 }
+    } catch (_: StaleObjectException) {
+        null
+    }
+
+    /**
+     * Wait for [id] in the window a configuration change recreated.
+     *
+     * `setOrientation*` returns once the display has rotated, before the Activity it
+     * relaunches has drawn: in the evidence of the failed runs the next lookup ran about
+     * 100 ms before the recreated preferences window finished drawing.
+     */
+    private fun afterConfigurationChange(id: String): UiObject2 {
+        device.waitForIdle()
+        assertTrue("$id did not come back after the configuration change", device.wait(Until.hasObject(By.res(id)), 15000))
+        return reveal(id)
     }
 
     /**
@@ -566,7 +607,7 @@ class ConsentJourney {
             assertTrue("The unsaved draft changed the visible switch", device.wait(Until.hasObject(By.res("c15t.prefs.category.measurement.switch").checked(false)), 5000))
             device.setOrientationLeft()
             device.setOrientationNatural()
-            assertFalse("Draft survives native host recreation", reveal("c15t.prefs.category.measurement.switch").isChecked)
+            assertFalse("Draft survives native host recreation", afterConfigurationChange("c15t.prefs.category.measurement.switch").isChecked)
             device.pressHome()
             device.executeShellCommand("am start -W -a android.intent.action.MAIN -c android.intent.category.LAUNCHER -f 0x10200000 -n $app/.MainActivity")
             if (device.wait(Until.hasObject(By.res("fixture.open-preferences")), 3000)) tap("fixture.open-preferences")
