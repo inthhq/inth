@@ -12,11 +12,14 @@ import {
 	connectAdMob,
 	connectAmplitude,
 	connectAppsFlyer,
+	connectBranch,
+	connectBraze,
 	connectFirebaseAnalytics,
 	connectMetaAppEvents,
 	connectMixpanel,
 	connectPostHog,
 	connectSentryReplay,
+	connectSingular,
 } from '../index';
 import type { AnalyticsIntegrationOptions, ConsentIntegration } from '../index';
 
@@ -104,6 +107,9 @@ const helpers: readonly (readonly [string, Connect])[] = [
 	['AppsFlyer', connectAppsFlyer],
 	['Adjust', connectAdjust],
 	['Meta App Events', connectMetaAppEvents],
+	['Braze', connectBraze],
+	['Branch', (client, options) => connectBranch(client, options)],
+	['Singular', connectSingular],
 ];
 
 const categoryOptions: readonly (Category | undefined)[] = [
@@ -206,7 +212,9 @@ describe.each(helpers)('%s', (_name, connect) => {
 				resetConsentClient();
 				resetNativeStub();
 			};
-			const seeds = Array.from({ length: 40 }, (_, index) => index + 1);
+			// 25 seeds per case keep the file near half a minute; tracking only the
+			// newest unsettled apply still fails a third of the cases.
+			const seeds = Array.from({ length: 25 }, (_, index) => index + 1);
 			const runAll = async (index: number): Promise<void> => {
 				const seed = seeds[index];
 				if (seed === undefined) {

@@ -104,7 +104,7 @@ final class WithdrawalPreemptionTests: XCTestCase {
         ("Singular", { core, r in
             let helper = SingularIntegration(
                 core: core,
-                start: { r("start:\($0)") },
+                start: { r("start:\($0)"); return true },
                 limitDataSharing: { r("limit:\($0)") },
                 stopAllTracking: { r("stop") },
                 resumeAllTracking: { r("resume") },
@@ -266,6 +266,25 @@ final class WithdrawalPreemptionTests: XCTestCase {
                 enable: { r("enable") },
                 disable: { r("disable") },
                 trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Braze": { core, r in
+            let helper = BrazeIntegration(
+                core: core,
+                category: .measurement,
+                setEnabled: { r("enabled:\($0)") },
+                setGoogleAdsConsent: { r("ads:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Singular": { core, r in
+            let helper = SingularIntegration(
+                core: core,
+                category: .measurement,
+                start: { r("start:\($0)"); return true },
+                limitDataSharing: { r("limit:\($0)") },
+                stopAllTracking: { r("stop") },
+                resumeAllTracking: { r("resume") },
+                trackingOptIn: { r("optIn") })
             return ConnectedHelper(cancel: helper.cancel)
         },
         "Meta App Events": { core, r in

@@ -82,7 +82,7 @@ internal val integrationHelpers = listOf(
 	}),
 	IntegrationHelper("Singular", { core, r, e ->
 		SingularIntegration(core,
-			start = { r("start:$it") },
+			start = { r("start:$it"); true },
 			limitDataSharing = { r("limit:$it") },
 			stopAllTracking = { r("stop") },
 			resumeAllTracking = { r("resume") },
@@ -91,7 +91,7 @@ internal val integrationHelpers = listOf(
 		)
 	}, { core, r, e ->
 		SingularIntegration(core, MEASUREMENT,
-			start = { r("start:$it") },
+			start = { r("start:$it"); true },
 			limitDataSharing = { r("limit:$it") },
 			stopAllTracking = { r("stop") },
 			resumeAllTracking = { r("resume") },
