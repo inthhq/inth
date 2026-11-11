@@ -479,11 +479,17 @@ public enum C15tPayload {
 
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {
         guard let body = parseObject(raw) else { return nil }
-        // `explicit` is `action` and `consents`; `all` and `necessary` are `action`
-        // alone. Any other key, such as a `categories` scope or `consents` on a bulk
-        // action, is refused rather than dropped: dropping it would apply the action to
-        // the whole choice scope, which is not what the caller sent.
-        let allowed: Set<String> = body["action"]?.stringValue == "explicit" ? ["action", "consents"] : ["action"]
+        // `explicit` is `action`, `consents` and an optional `revision`; `iab` adds
+        // `choices`; `all` and `necessary` are `action` alone. Any other key, such as a
+        // `categories` scope or `consents` on a bulk action, is refused rather than
+        // dropped: dropping it would apply the action to the whole choice scope, which is
+        // not what the caller sent. `commit` reads `revision`.
+        let allowed: Set<String>
+        switch body["action"]?.stringValue {
+        case "explicit": allowed = ["action", "consents", "revision"]
+        case "iab": allowed = ["action", "choices", "consents", "revision"]
+        default: allowed = ["action"]
+        }
         guard Set(body.keys).isSubset(of: allowed) else { return nil }
         switch body["action"]?.stringValue {
         case "all":

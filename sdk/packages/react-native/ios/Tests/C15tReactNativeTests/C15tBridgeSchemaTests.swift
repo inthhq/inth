@@ -110,22 +110,39 @@ final class C15tBridgeSchemaTests: XCTestCase {
 
     func testTheCommitIntentDecoderReadsTheKeysTheSchemaDeclares() throws {
         let intent = try fields("commitIntent")
-        var document: [String: Any] = [:]
-        for key in intent.keys {
-            switch key {
-            case "action": document[key] = "explicit"
-            case "consents": document[key] = ["measurement": true, "marketing": false]
-            default: XCTFail("commitIntent.\(key) has no sample here; add one")
+        // Every list a headless TCF draft names, empty: the shape, not a valid choice.
+        let lists = [
+            "purposeConsents", "purposeLegitimateInterests", "purposeObjections",
+            "vendorConsents", "vendorLegitimateInterests", "vendorObjections", "specialFeatureOptIns",
+            "publisherConsents", "publisherLegitimateInterests", "publisherCustomConsents",
+            "publisherCustomLegitimateInterests",
+        ]
+        func sample(_ action: String) -> [String: Any] {
+            var document: [String: Any] = [:]
+            for key in intent.keys {
+                switch key {
+                case "action": document[key] = action
+                case "choices": document[key] = Dictionary(uniqueKeysWithValues: lists.map { ($0, [Int]()) })
+                case "consents": document[key] = ["measurement": true, "marketing": false]
+                case "revision": document[key] = 3
+                default: XCTFail("commitIntent.\(key) has no sample here; add one")
+                }
             }
+            return document
         }
-        let explicit = try encode(document)
+        // `choices` belongs to an `iab` intent only; every other declared key is an explicit one's.
+        var explicit = sample("explicit")
+        explicit["choices"] = nil
         XCTAssertEqual(
-            C15tPayload.parseCommitIntent(explicit),
+            C15tPayload.parseCommitIntent(try encode(explicit)),
             .custom([.measurement: true, .marketing: false])
         )
+        guard case .iab = C15tPayload.parseCommitIntent(try encode(sample("iab"))) else {
+            return XCTFail("an iab intent with every declared key must decode")
+        }
 
         let action = try XCTUnwrap(intent["action"] as? [String: Any])
-        for value in try XCTUnwrap(action["values"] as? [String]) where value != "explicit" {
+        for value in try XCTUnwrap(action["values"] as? [String]) where value != "explicit" && value != "iab" {
             let raw = try encode(["action": value])
             XCTAssertNotNil(
                 C15tPayload.parseCommitIntent(raw),

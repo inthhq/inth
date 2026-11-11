@@ -375,13 +375,6 @@ object C15tPayload {
 	)
 
 	/**
-	 * Read a `CommitIntent`.
-	 *
-	 * Anything unreadable, or outside the three actions, returns `null` and the caller
-	 * answers [REASON_INVALID_INTENT]. A commit is evidence, so a malformed one is
-	 * refused rather than rounded to the nearest action.
-	 */
-	/**
 	 * Apply a `commit(intent)` body to [core] and encode the result.
 	 *
 	 * A draft names the snapshot revision it was built on, and the core refuses the
@@ -403,13 +396,25 @@ object C15tPayload {
 		return commitResult(core.save(parsed, expectedRevision = revision), core.snapshot())
 	}
 
+	/**
+	 * Read a `CommitIntent`.
+	 *
+	 * Anything unreadable, or outside the four actions, returns `null` and the caller
+	 * answers [REASON_INVALID_INTENT]. A commit is evidence, so a malformed one is
+	 * refused rather than rounded to the nearest action.
+	 */
 	fun parseCommitIntent(raw: String?): CommitIntent? {
 		val body = parseObject(raw) ?: return null
-		// `explicit` is `action` and `consents`; `all` and `necessary` are `action`
-		// alone. Any other key, such as a `categories` scope or `consents` on a bulk
-		// action, is refused rather than dropped: dropping it would apply the action to
-		// the whole choice scope, which is not what the caller sent.
-		val allowed = if (optString(body["action"]) == "explicit") setOf("action", "consents") else setOf("action")
+		// `explicit` is `action`, `consents` and an optional `revision`; `iab` adds
+		// `choices`; `all` and `necessary` are `action` alone. Any other key, such as a
+		// `categories` scope or `consents` on a bulk action, is refused rather than
+		// dropped: dropping it would apply the action to the whole choice scope, which is
+		// not what the caller sent. [commit] reads `revision`.
+		val allowed = when (optString(body["action"])) {
+			"explicit" -> setOf("action", "consents", "revision")
+			"iab" -> setOf("action", "choices", "consents", "revision")
+			else -> setOf("action")
+		}
 		if (!allowed.containsAll(body.keys)) {
 			return null
 		}

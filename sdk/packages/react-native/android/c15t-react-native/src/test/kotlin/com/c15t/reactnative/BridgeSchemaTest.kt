@@ -111,20 +111,33 @@ class BridgeSchemaTest {
 			put("measurement", true)
 			put("marketing", false)
 		}
-		val explicit = sample(intent) { key, field ->
-			when (key) {
-				"action" -> JsonPrimitive("explicit")
-				"consents" -> consents
-				else -> throw AssertionError("commitIntent.$key has no sample here; add one")
-			}.also { assertEquals(field["type"]!!.jsonPrimitive.content, kindOf(it)) }
+		// Every list a headless TCF draft names, empty: the shape, not a valid choice.
+		val choices = buildJsonObject {
+			for (list in listOf(
+				"purposeConsents", "purposeLegitimateInterests", "purposeObjections",
+				"vendorConsents", "vendorLegitimateInterests", "vendorObjections", "specialFeatureOptIns",
+				"publisherConsents", "publisherLegitimateInterests", "publisherCustomConsents",
+				"publisherCustomLegitimateInterests",
+			)) put(list, JsonArray(emptyList()))
 		}
+		fun value(action: String, key: String, field: JsonObject): JsonElement = when (key) {
+			"action" -> JsonPrimitive(action)
+			"choices" -> choices
+			"consents" -> consents
+			"revision" -> JsonPrimitive(3)
+			else -> throw AssertionError("commitIntent.$key has no sample here; add one")
+		}.also { assertEquals(field["type"]!!.jsonPrimitive.content, kindOf(it)) }
+		// `choices` belongs to an `iab` intent only; every other declared key is an explicit one's.
+		val explicit = sample(JsonObject(intent.filterKeys { it != "choices" })) { key, field -> value("explicit", key, field) }
+		val iab = sample(intent) { key, field -> value("iab", key, field) }
 
 		assertEquals(
 			CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true, ConsentCategory.MARKETING to false)),
 			C15tPayload.parseCommitIntent(explicit.toString()),
 		)
+		assertTrue("an iab intent with every declared key must decode", C15tPayload.parseCommitIntent(iab.toString()) is CommitIntent.Iab)
 		val actions = intent["action"]!!.jsonObject["values"]!!.jsonArray.map { it.jsonPrimitive.content }
-		for (action in actions - "explicit") {
+		for (action in actions - "explicit" - "iab") {
 			val parsed = C15tPayload.parseCommitIntent(buildJsonObject { put("action", action) }.toString())
 			assertTrue("action \"$action\" from the schema must decode", parsed != null)
 		}
