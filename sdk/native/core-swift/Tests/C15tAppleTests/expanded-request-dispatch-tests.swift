@@ -21,7 +21,7 @@ final class ExpandedRequestDispatchTests: XCTestCase {
     /// A class answering the released class-method selector, as `ATTrackingManager` does on 27.2.
     private func makeManager(_ recorder: Recorder) throws -> AnyClass {
         let name = "C15tTestTrackingManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
-        let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0))
+        let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0)) as AnyClass
         let request: Request = { _, prefer, additionalInformation, completion in
             recorder.preferExpandedInterface = prefer.boolValue
             additionalInformation()
@@ -32,6 +32,32 @@ final class ExpandedRequestDispatchTests: XCTestCase {
         XCTAssertTrue(added)
         objc_registerClassPair(manager)
         return manager
+    }
+
+    /// A class answering the selector with the wrong number of arguments.
+    private func makeWrongArityManager(_ recorder: Recorder) throws -> AnyClass {
+        let name = "C15tTestWrongArityManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+        let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0))
+        let request: @convention(block) (AnyObject, ObjCBool) -> Void = { _, _ in recorder.events.append("called") }
+        let added = class_addMethod(try XCTUnwrap(object_getClass(manager)), C15tTracking.expandedRequestSelector,
+                                    imp_implementationWithBlock(request), "v@:B")
+        XCTAssertTrue(added)
+        objc_registerClassPair(manager)
+        return manager
+    }
+
+    func testAMethodWithTheWrongShapeIsNotCalled() throws {
+        let recorder = Recorder()
+        let manager = try makeWrongArityManager(recorder)
+        let made = C15tTracking.requestExpandedPrompt(
+            on: manager, preferExpandedInterface: true,
+            additionalInformationSelected: { recorder.events.append("additional-information") },
+            completion: { _ in recorder.events.append("completion") })
+        XCTAssertFalse(made, "the caller falls back to the plain request")
+        let drained = expectation(description: "main queue")
+        DispatchQueue.main.async { drained.fulfill() }
+        wait(for: [drained], timeout: 2)
+        XCTAssertEqual(recorder.events, [], "nothing was called through the wrong cast")
     }
 
     func testTheReleasedClassMethodIsCalledWithItsArgumentsInOrder() throws {

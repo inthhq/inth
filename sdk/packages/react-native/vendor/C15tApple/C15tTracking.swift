@@ -181,8 +181,12 @@ public enum C15tTracking {
         guard let managerClass else { return false }
         let trackingManager: AnyObject = managerClass
         let selector = expandedRequestSelector
-        guard let isa = object_getClass(trackingManager),
-              let method = class_getClassMethod(isa, selector) else { return false }
+        // A class method is looked up on the class itself. Passing its metaclass happens to work
+        // too, because the runtime treats a metaclass as its own meta, but that is not the API.
+        guard let method = class_getClassMethod(managerClass, selector) else { return false }
+        // Receiver, selector and the three parameters. Anything else is not the method this
+        // cast describes, and calling it through the cast would be undefined, so fall back.
+        guard method_getNumberOfArguments(method) == 5 else { return false }
 
         let implementation = method_getImplementation(method)
         let request = unsafeBitCast(implementation, to: C15tExpandedRequestFunction.self)
