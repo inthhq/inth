@@ -25,6 +25,12 @@ final class TrackingSequenceTests: XCTestCase {
         var hold = false
         private var held: (() -> Void)?
         let activations = PassthroughSubject<Void, Never>()
+        /// The clock the answer log reads, moved by tests.
+        var clock = Date(timeIntervalSince1970: 1_800_000_000)
+        /// When the SDK last saw an answer. In memory, so tests start from nothing.
+        let log = C15tTrackingAnswerLog.inMemory()
+        /// How many more times the EU sheet pauses on Additional Information before it answers.
+        var pausesLeft = Int.max
 
         var controller: C15tTrackingController {
             C15tTrackingController(
@@ -43,11 +49,19 @@ final class TrackingSequenceTests: XCTestCase {
                     self.asks += 1
                     self.onAsk?()
                     self.answerLater {
-                        info()
-                        completion(.notDetermined)
+                        if self.pausesLeft > 0 {
+                            self.pausesLeft -= 1
+                            info()
+                            completion(.notDetermined)
+                        } else {
+                            self.status = self.answer
+                            completion(self.answer)
+                        }
                     }
                     return true
-                }
+                },
+                answerLog: log,
+                now: { self.clock }
             )
         }
 
@@ -408,6 +422,207 @@ final class TrackingSequenceTests: XCTestCase {
         await until { prompt.presenter.presentationID != nil }
     }
 
+    // MARK: - beforeConsent at launch
+
+    func testBeforeConsentAsksAtALaunchThatOwesNoPrompt() async throws {
+        let apple = Apple()
+        let core = try await boot()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let prompt = attach(core, apple, order: .beforeConsent)
+        await until { apple.asks == 1 }
+        // Settings changing re-checks the launch; Apple has answered, so nothing more.
+        prompt.attach(try XCTUnwrap(prompt.host), active: true, autoPresent: false, trackingRequest: .beforeConsent)
+        prompt.attach(try XCTUnwrap(prompt.host), active: true, autoPresent: true, trackingRequest: .beforeConsent)
+        await settle()
+        XCTAssertEqual(apple.asks, 1)
+    }
+
+    func testBeforeConsentAtLaunchSkipsAnAnsweredApple() async throws {
+        let apple = Apple()
+        apple.status = .denied
+        let core = try await boot()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        _ = attach(core, apple, order: .beforeConsent)
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    // MARK: - Yearly re-ask
+
+    /// A stored grant, Apple answered `authorized`, and the SDK saw that answer `ago` seconds ago.
+    private func answered(_ apple: Apple, ago: TimeInterval?) async throws -> ConsentCore {
+        apple.status = .authorized
+        if let ago { apple.log.record(apple.clock.addingTimeInterval(-ago)) }
+        let core = try await boot()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        return core
+    }
+
+    private let day: TimeInterval = 24 * 60 * 60
+
+    func testYearlyAsksAgainOncePerLaunchAfterAYear() async throws {
+        for order in [ConsentTrackingRequest.afterConsent, .beforeConsent] {
+            let apple = Apple()
+            let core = try await answered(apple, ago: 366 * day)
+            let prompt = attach(core, apple, order: order, reprompt: .yearly)
+            await until { apple.asks == 1 }
+            XCTAssertEqual(apple.log.lastAnswerAt, apple.clock, "\(order): the answer restarts the year")
+
+            // Even if Apple returned the stored answer without asking, this launch is done.
+            apple.log.record(apple.clock.addingTimeInterval(-400 * day))
+            prompt.presentPreferences()
+            prompt.presenter.requestClose()
+            await settle()
+            XCTAssertEqual(apple.asks, 1, "\(order)")
+        }
+    }
+
+    func testYearlyWaitsForTheYear() async throws {
+        let apple = Apple()
+        let core = try await answered(apple, ago: 364 * day)
+        _ = attach(core, apple, reprompt: .yearly)
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testYearlyStampsAnAnswerFromBeforeThisVersionAndWaits() async throws {
+        let apple = Apple()
+        let core = try await answered(apple, ago: nil)
+        _ = attach(core, apple, reprompt: .yearly)
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+        XCTAssertEqual(apple.log.lastAnswerAt, apple.clock, "stored now, so the year starts today")
+    }
+
+    func testNeverIsTheDefaultAndAsksNothingAfterAnAnswer() async throws {
+        let apple = Apple()
+        let core = try await answered(apple, ago: 800 * day)
+        _ = attach(core, apple)
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testYearlyNeverAsksRestrictedRefusedOrManual() async throws {
+        let restricted = Apple()
+        let core = try await answered(restricted, ago: 800 * day)
+        restricted.status = .restricted
+        _ = attach(core, restricted, reprompt: .yearly)
+
+        let refusedApple = Apple()
+        refusedApple.status = .denied
+        refusedApple.log.record(refusedApple.clock.addingTimeInterval(-800 * day))
+        let refusedCore = try await boot()
+        XCTAssertEqual(refusedCore.save(.necessary).status, .committed)
+        _ = attach(refusedCore, refusedApple, reprompt: .yearly)
+
+        let manual = Apple()
+        _ = attach(try await answered(manual, ago: 800 * day), manual, order: .manual, reprompt: .yearly)
+        await settle()
+        XCTAssertEqual(restricted.asks, 0, "restricted")
+        XCTAssertEqual(refusedApple.asks, 0, "marketing refused")
+        XCTAssertEqual(manual.asks, 0, "manual")
+    }
+
+    func testTheYearlyRuleTable() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        XCTAssertFalse(ConsentTrackingReprompt.never.isDue(lastAnswer: now.addingTimeInterval(-800 * day), now: now))
+        XCTAssertFalse(ConsentTrackingReprompt.yearly.isDue(lastAnswer: nil, now: now))
+        XCTAssertFalse(ConsentTrackingReprompt.yearly.isDue(lastAnswer: now.addingTimeInterval(-364 * day), now: now))
+        XCTAssertTrue(ConsentTrackingReprompt.yearly.isDue(lastAnswer: now.addingTimeInterval(-365 * day), now: now))
+        let due = ConsentTrackingInputs(platform: .denied, promptStringPresent: true, marketing: .granted,
+                                        marketingRefused: false, repromptDue: true)
+        XCTAssertTrue(ConsentTrackingRequest.afterConsent.shouldAsk(at: .afterPrompt, due))
+        XCTAssertTrue(ConsentTrackingRequest.beforeConsent.shouldAsk(at: .beforePrompt, due))
+        XCTAssertFalse(ConsentTrackingRequest.manual.shouldAsk(at: .afterPrompt, due))
+        var restricted = due; restricted.platform = .restricted
+        XCTAssertFalse(ConsentTrackingRequest.afterConsent.shouldAsk(at: .afterPrompt, restricted))
+        var refused = due; refused.marketingRefused = true
+        XCTAssertFalse(ConsentTrackingRequest.afterConsent.shouldAsk(at: .afterPrompt, refused))
+        var denied = due; denied.marketing = .denied
+        XCTAssertFalse(ConsentTrackingRequest.afterConsent.shouldAsk(at: .afterPrompt, denied))
+    }
+
+    func testTheControllerRecordsTheTimeOfAFinalAnswer() async {
+        let apple = Apple()
+        XCTAssertNil(apple.log.lastAnswerAt)
+        let answered = expectation(description: "answered")
+        apple.controller.request { _ in answered.fulfill() }
+        await fulfillment(of: [answered], timeout: 2)
+        XCTAssertEqual(apple.log.lastAnswerAt, apple.clock)
+    }
+
+    // MARK: - IAB TCF
+
+    func testTCFAcceptAllAsksAfterThePrompt() async throws {
+        let apple = Apple()
+        let prompt = attach(try await bootIAB(), apple)
+        await until { prompt.presenter.presentationID != nil }
+        XCTAssertTrue(prompt.presenter.iab)
+        prompt.presenter.commit(.accept)
+        await until { apple.asks == 1 }
+    }
+
+    func testTCFRejectAllNeverAsks() async throws {
+        let apple = Apple()
+        let prompt = attach(try await bootIAB(), apple)
+        await until { prompt.presenter.presentationID != nil }
+        prompt.presenter.commit(.reject)
+        await until { !prompt.presenter.pending }
+        await settle()
+        XCTAssertEqual(apple.asks, 0)
+    }
+
+    func testTCFMarketingCategoryWithoutTheAdPurposesDoesNotAsk() async throws {
+        let apple = Apple()
+        let core = try await bootIAB()
+        let prompt = attach(core, apple)
+        await until { prompt.presenter.presentationID != nil }
+        prompt.presenter.customize()
+        prompt.presenter.setCategory(.marketing, true)
+        // This list's vendors ask consent for 3 and 4 but not 2, so 3 and 4 decide marketing.
+        prompt.presenter.edit(\.purposeConsents, id: 1, enabled: true)
+        prompt.presenter.edit(\.purposeConsents, id: 3, enabled: true)
+        prompt.presenter.commit(.save)
+        await until { !prompt.presenter.pending }
+        await settle()
+        XCTAssertEqual(ConsentDecision(snapshot: core.snapshot(), category: .marketing), .granted)
+        XCTAssertEqual(core.iabConsent()?.choices.purposeConsents, [1, 3])
+        XCTAssertEqual(apple.asks, 0, "purpose 4 is refused")
+        XCTAssertTrue(prompt.trackingInputs().marketingRefused)
+    }
+
+    func testTCFAdPurposesWithMarketingAsk() async throws {
+        let apple = Apple()
+        let core = try await bootIAB()
+        let prompt = attach(core, apple)
+        await until { prompt.presenter.presentationID != nil }
+        prompt.presenter.customize()
+        prompt.presenter.setCategory(.marketing, true)
+        for purpose in [1, 3, 4] { prompt.presenter.edit(\.purposeConsents, id: purpose, enabled: true) }
+        prompt.presenter.commit(.save)
+        await until { apple.asks == 1 }
+    }
+
+    func testTCFAdditionalInformationOpensTCFSettingsAndAsksAgainOnlyWithThePurposes() async throws {
+        for keep in [true, false] {
+            let apple = Apple()
+            apple.additionalInformation = true
+            apple.pausesLeft = 1
+            let prompt = attach(try await bootIAB(), apple)
+            await until { prompt.presenter.presentationID != nil }
+            prompt.presenter.commit(.accept)
+            await until { prompt.presenter.presentationID != nil && prompt.presenter.preferences }
+            XCTAssertTrue(prompt.presenter.iab, "the TCF preferences open")
+            XCTAssertEqual(apple.asks, 1)
+
+            if !keep { prompt.presenter.edit(\.purposeConsents, id: 3, enabled: false) }
+            prompt.presenter.commit(.save)
+            await until { !prompt.presenter.pending }
+            await settle()
+            XCTAssertEqual(apple.asks, keep ? 2 : 1, keep ? "purposes kept: asked again" : "purpose 3 refused: not asked again")
+        }
+    }
+
     // MARK: - Helpers
 
     private func attached(_ apple: Apple, order: ConsentTrackingRequest = .afterConsent) async throws -> ConsentPrompt {
@@ -415,11 +630,24 @@ final class TrackingSequenceTests: XCTestCase {
     }
 
     private func attach(_ core: ConsentCore, _ apple: Apple, order: ConsentTrackingRequest = .afterConsent,
-                        autoPresent: Bool = true) -> ConsentPrompt {
+                        autoPresent: Bool = true, reprompt: ConsentTrackingReprompt = .never) -> ConsentPrompt {
         let prompt = ConsentPrompt(core: core, tracking: apple.controller, isActive: { apple.active },
                                    becameActive: apple.activations.eraseToAnyPublisher())
-        prompt.attach(UUID(), active: true, autoPresent: autoPresent, trackingRequest: order)
+        prompt.attach(UUID(), active: true, autoPresent: autoPresent, trackingRequest: order, trackingReprompt: reprompt)
         return prompt
+    }
+
+    private func bootIAB() async throws -> ConsentCore {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let body = try String(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"), encoding: .utf8)
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore(),
+            transport: HostedTransport(baseURL: URL(string: "https://fixture.invalid")!, client: AutoPresentTests.Peer(body)),
+            iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"), initRetry: .disabled))
+        await core.waitUntilIdle()
+        XCTAssertNotNil(core.iabPresentation(), "fixture should load an IAB list")
+        return core
     }
 
     private func settle() async {

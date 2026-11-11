@@ -194,7 +194,8 @@ public struct C15tModuleHandler {
     /// The `getSnapshot()` payload.
     public func snapshotPayload() -> String {
         ensureCore()
-        return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage)
+        return C15tPayload.snapshot(C15t.snapshot(), fallbackLanguage: deviceLanguage,
+                                    iabMarketingPurposes: C15t.current.flatMap { C15tTrackingConsent.iabMarketingConsented($0) })
     }
 
     /// The `getTrackingAuthorization()` payload.
@@ -208,7 +209,8 @@ public struct C15tModuleHandler {
             C15tTrackingGate.authorization(
                 platform: trackingPlatformStatus(),
                 promptStringPresent: trackingPromptStringPresent()
-            )
+            ),
+            answeredAt: trackingPromptStringPresent() ? trackingController.lastAnswerDate() : nil
         )
     }
 

@@ -84,6 +84,7 @@ describe('ConsentPrompt public surface', () => {
 			'presentPreferences',
 			'presentPrompt',
 			'shared',
+			'trackingReprompt',
 			'trackingRequest',
 		]);
 		// trackingRequest is readable, never settable from outside.

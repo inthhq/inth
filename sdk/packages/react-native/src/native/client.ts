@@ -30,6 +30,7 @@ import {
 	describeSnapshotWireDrift,
 	isProtocolVersionSupported,
 	NATIVE_EVENT_NAMES,
+	parseTrackingAnsweredAt,
 	parseTrackingAuthorization,
 	parseTrackingRequest,
 	withAdditiveSnapshotDefaults,
@@ -212,6 +213,15 @@ export interface ConsentClient {
 	 * @returns `true` when consent and the platform both allow it.
 	 */
 	isTrackingAllowed: (category: AllConsentNames) => boolean;
+	/**
+	 * When the SDK last saw Apple answer `authorized` or `denied`, in epoch
+	 * milliseconds, as of the last tracking read. `null` while no such answer is
+	 * on file and on Android. Read by the yearly re-ask.
+	 *
+	 * @internal
+	 * @returns Epoch milliseconds, or `null`.
+	 */
+	getTrackingAnsweredAt: () => number | null;
 	/**
 	 * Register interest in the platform tracking answer.
 	 *
@@ -543,6 +553,8 @@ export const createConsentClient = function createConsentClient(
 	 * one moment it is not.
 	 */
 	let tracking: TrackingAuthorization | null = null;
+	/** When the last tracking read said the SDK last saw an answer. */
+	let trackingAnsweredAt: number | null = null;
 	/** Consumers that watch the platform answer and no slice of the snapshot. */
 	const trackingSubscribers = new Set<() => void>();
 	/** Keeps the missing-surface warning to one line per client. */
@@ -727,9 +739,9 @@ export const createConsentClient = function createConsentClient(
 			return 'denied';
 		}
 
-		tracking = parseTrackingAuthorization(
-			nativeModule.getTrackingAuthorization()
-		);
+		const raw = nativeModule.getTrackingAuthorization();
+		tracking = parseTrackingAuthorization(raw);
+		trackingAnsweredAt = parseTrackingAnsweredAt(raw);
 
 		return tracking;
 	};
@@ -857,6 +869,10 @@ export const createConsentClient = function createConsentClient(
 			trackingSubscribers.clear();
 		},
 		getSnapshot: currentSnapshot,
+		getTrackingAnsweredAt: (): number | null => {
+			currentTracking();
+			return trackingAnsweredAt;
+		},
 		getTrackingAuthorization: currentTracking,
 		identify: (externalId: string) =>
 			afterMutation(nativeModule.identify(externalId)),

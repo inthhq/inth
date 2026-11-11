@@ -116,7 +116,8 @@ public enum C15tPayload {
     /// says whether the app or the device caused it.
     public static func snapshot(
         _ snapshot: ConsentSnapshot,
-        fallbackLanguage: String = defaultLanguage
+        fallbackLanguage: String = defaultLanguage,
+        iabMarketingPurposes: Bool? = nil
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -153,6 +154,9 @@ public enum C15tPayload {
         // Not kernel state, so the core's encoding leaves it out; JavaScript reads it to tell a
         // new owed prompt from one it already presented, even when it skipped snapshots between.
         fields["promptOwedSince"] = snapshot.promptOwedSince.map { .integer(Int64($0)) } ?? .null
+        // Also not kernel state: whether the committed TC String grants `marketing`, which the
+        // ATT sequence reads under an IAB policy. Purpose vectors stay in native authority.
+        fields["iabMarketingPurposes"] = iabMarketingPurposes.map { .bool($0) } ?? .null
 
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
@@ -218,10 +222,17 @@ public enum C15tPayload {
     /// One field, because the arm is the whole answer. There is no consent field here and
     /// there never will be: the payload describes what the platform said, and a host that
     /// wants to know whether it may track has to ask c15t as well.
+    ///
+    /// `answeredAt` is when this SDK last saw an `authorized` or `denied` answer, in epoch
+    /// milliseconds. It is platform bookkeeping for the yearly re-ask, not consent, and it is
+    /// absent while Apple has no such answer on file.
     public static func trackingAuthorization(
-        _ status: C15tTrackingAuthorization
+        _ status: C15tTrackingAuthorization,
+        answeredAt: Date? = nil
     ) -> String {
-        encode(["status": .string(status.rawValue)])
+        var fields: [String: JSONValue] = ["status": .string(status.rawValue)]
+        if let answeredAt { fields["answeredAt"] = .integer(Int64((answeredAt.timeIntervalSince1970 * 1000).rounded())) }
+        return encode(fields)
     }
 
     /// The `TrackingRequestPayload` a tracking request resolves with.

@@ -43,11 +43,16 @@ import {
 	cancelSequence,
 	checkTrackingAtLaunch,
 	createSequenceToken,
+	markAfterInformation,
 	releaseBeforeConsentPrompt,
 	requestSequencedTracking,
+	setTrackingReprompt,
 	syncBeforeConsentPrompt,
 } from './tracking-sequence';
-import type { ConsentTrackingRequest } from './tracking-sequence';
+import type {
+	ConsentTrackingReprompt,
+	ConsentTrackingRequest,
+} from './tracking-sequence';
 
 /**
  * Whether the provider presents the native consent prompt by itself.
@@ -129,6 +134,20 @@ export interface ConsentProviderBaseProps {
 	 * @default 'afterConsent'
 	 */
 	readonly trackingRequest?: ConsentTrackingRequest;
+	/**
+	 * Whether to ask Apple again after the person has answered.
+	 *
+	 * With `yearly`, the provider calls the request once per launch when Apple's
+	 * answer is `authorized` or `denied`, marketing is granted, and a year has
+	 * passed since the SDK last saw an answer. Apple decides whether to show
+	 * anything: in the European Union it may ask again a year after the previous
+	 * answer; elsewhere, or before then, it returns the stored answer at once. It
+	 * never asks when marketing is refused, when tracking is restricted, or with
+	 * `trackingRequest="manual"`.
+	 *
+	 * @default 'never'
+	 */
+	readonly trackingReprompt?: ConsentTrackingReprompt;
 }
 
 /**
@@ -161,6 +180,7 @@ export interface ConsentProviderBaseProps {
  * @param props.autoPresent - `false` leaves presenting to the app.
  * @param props.privacyPolicyURL - The HTTPS privacy policy the prompt links to.
  * @param props.trackingRequest - When to ask for App Tracking Transparency.
+ * @param props.trackingReprompt - Whether to ask again a year after an answer.
  * @returns The children, with consent available through the hooks.
  * @throws {NativeC15tUnavailableError} When the native module is not in the
  *   running binary, for example in Expo Go.
@@ -178,6 +198,7 @@ export const ConsentProvider = ({
 	privacyPolicyURL,
 	safeAreaInsets,
 	trackingRequest = 'afterConsent',
+	trackingReprompt = 'never',
 }: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
@@ -191,6 +212,7 @@ export const ConsentProvider = ({
 		recordConsentPresenter(client);
 		// Before any child effect can call presentConsentPrompt, for the same reason.
 		syncBeforeConsentPrompt(client, trackingRequest === 'beforeConsent');
+		setTrackingReprompt(client, trackingReprompt);
 	}
 
 	// Only the outermost provider presents, so a nested one cannot double it. A
@@ -283,14 +305,21 @@ export const ConsentProvider = ({
 	}, [client, inherited, trackingRequest]);
 
 	// Ask for App Tracking Transparency after each prompt or settings session
-	// closes. The native host reports the outcome once its UI has animated away,
-	// because iOS will not show the alert over a presentation that is leaving.
-	// Only an iOS build that can still ask listens.
+	// closes, and at a launch that owes no prompt. The native host reports the
+	// outcome once its UI has animated away, because iOS will not show the alert
+	// over a presentation that is leaving. Only an iOS build that can still ask
+	// listens: Apple has not answered, or the yearly re-ask may call again.
 	useEffect(() => {
+		const authorization = client.getTrackingAuthorization();
+		const answered =
+			authorization === 'authorized' || authorization === 'denied';
 		if (
 			inherited !== null ||
-			trackingRequest !== 'afterConsent' ||
-			client.getTrackingAuthorization() !== 'not-determined'
+			trackingRequest === 'manual' ||
+			!(
+				authorization === 'not-determined' ||
+				(answered && trackingReprompt === 'yearly')
+			)
 		) {
 			return;
 		}
@@ -315,6 +344,7 @@ export const ConsentProvider = ({
 				token
 			);
 			if (result === 'paused' && url !== undefined) {
+				markAfterInformation(client);
 				await openSettings(url);
 			}
 		};
@@ -334,7 +364,9 @@ export const ConsentProvider = ({
 		if (presents && privacyPolicyURL !== undefined) {
 			const launchURL = privacyPolicyURL;
 			const check = (): boolean =>
-				checkTrackingAtLaunch(client, token, () => {
+				checkTrackingAtLaunch(client, token, trackingRequest, () => {
+					// Nothing else would show those controls; closing them asks again.
+					markAfterInformation(client);
 					void openSettings(launchURL);
 				});
 			if (!check()) {
@@ -351,7 +383,14 @@ export const ConsentProvider = ({
 			removeOutcome();
 			stopLaunch();
 		};
-	}, [client, inherited, presents, privacyPolicyURL, trackingRequest]);
+	}, [
+		client,
+		inherited,
+		presents,
+		privacyPolicyURL,
+		trackingReprompt,
+		trackingRequest,
+	]);
 
 	return (
 		<ConsentClientContext.Provider value={client}>

@@ -34,6 +34,9 @@ public final class ConsentPrompt: ObservableObject {
     /// When App Tracking Transparency is asked, relative to this prompt. Set by the scene that
     /// attaches; see ``ConsentTrackingRequest``.
     public private(set) var trackingRequest = ConsentTrackingRequest.afterConsent
+    /// Whether an answered request is made again a year later. Set by the scene that attaches;
+    /// see ``ConsentTrackingReprompt``.
+    public private(set) var trackingReprompt = ConsentTrackingReprompt.never
 
     @Published private(set) var host: UUID?
     @Published private(set) var hostActive = false
@@ -54,6 +57,11 @@ public final class ConsentPrompt: ObservableObject {
     private var promptAfterTracking = false
     /// The app called ``presentPrompt()`` before any scene attached, so no order was known yet.
     private var promptAfterAttach = false
+    /// The yearly re-ask called the request this launch. It calls at most once per launch.
+    private var repromptCalled = false
+    /// Apple paused on Additional Information and the person is in c15t's settings. Closing
+    /// them applies the after-consent rule in either order.
+    private var afterInformation = false
     private var observers: [AnyCancellable] = []
 
     init(core: ConsentCore, tracking: C15tTrackingController = C15tApple.tracking,
@@ -128,7 +136,8 @@ public final class ConsentPrompt: ObservableObject {
     /// Let the scene behind `id` draw the prompt if nobody draws it, or if the scene drawing it
     /// left the foreground and this one is active.
     func attach(_ id: UUID, active: Bool, autoPresent: Bool,
-                trackingRequest: ConsentTrackingRequest = .afterConsent) {
+                trackingRequest: ConsentTrackingRequest = .afterConsent,
+                trackingReprompt: ConsentTrackingReprompt = .never) {
         guard host == nil || host == id || active && !hostActive else { return }
         // A session that opened by itself for another scene is not this one's to draw if it
         // opted out.
@@ -137,11 +146,13 @@ public final class ConsentPrompt: ObservableObject {
         if hostActive != active { hostActive = active }
         // The launch decision was made under the old settings; make it again, and drop a launch
         // ask still waiting on them.
-        if autoPresent != wantsAutoPresent || trackingRequest != self.trackingRequest {
+        if autoPresent != wantsAutoPresent || trackingRequest != self.trackingRequest
+            || trackingReprompt != self.trackingReprompt {
             if trackingOwedAtLaunch { dropOwedTracking() }
             launchChecked = false
         }
         self.trackingRequest = trackingRequest
+        self.trackingReprompt = trackingReprompt
         wantsAutoPresent = autoPresent
         checkLaunch(presenter.snapshot)
         syncTrackingHold()
@@ -176,11 +187,31 @@ public final class ConsentPrompt: ObservableObject {
     var holdsForTracking: Bool {
         guard trackingRequest == .beforeConsent, !trackingAsked else { return false }
         if trackingInFlight { return true }
+        return trackingRequest.shouldAsk(at: .beforePrompt, trackingInputs())
+    }
+
+    /// What the tracking rule reads, now.
+    ///
+    /// Under an IAB TCF policy, marketing counts as granted only while the committed TC String
+    /// also consents to every purpose the category maps to, and a TC String that does not
+    /// consent to them counts as a refusal. TCF records the legal consent and ATT is Apple's
+    /// own gate; tracking needs both, so a refusal in either stops the ask.
+    func trackingInputs() -> ConsentTrackingInputs {
         let snapshot = core.snapshot()
-        return trackingRequest.shouldAsk(at: .beforePrompt, platform: tracking.trackingPlatformStatus(),
-                                         promptStringPresent: tracking.trackingPromptStringPresent(),
-                                         marketing: ConsentDecision(snapshot: snapshot, category: .marketing),
-                                         marketingRefused: snapshot.explicitChoice?.categories[.marketing]?.value == false)
+        var marketing = ConsentDecision(snapshot: snapshot, category: .marketing)
+        var refused = snapshot.explicitChoice?.categories[.marketing]?.value == false
+        if snapshot.model == .iab {
+            let consented = C15tTrackingConsent.iabMarketingConsented(core)
+            if consented != true, marketing == .granted { marketing = .denied }
+            if consented == false { refused = true }
+        }
+        let lastAnswer = trackingReprompt == .yearly ? tracking.lastAnswerDate() : nil
+        return ConsentTrackingInputs(
+            platform: tracking.trackingPlatformStatus(),
+            promptStringPresent: tracking.trackingPromptStringPresent(),
+            marketing: marketing,
+            marketingRefused: refused,
+            repromptDue: !repromptCalled && trackingReprompt.isDue(lastAnswer: lastAnswer, now: tracking.now()))
     }
 
     private func applyAutoPresent() {
@@ -203,9 +234,12 @@ public final class ConsentPrompt: ObservableObject {
         guard !launchChecked, host != nil, wantsAutoPresent, snapshot.ready, !snapshot.policyPending else { return }
         launchChecked = true
         switch trackingRequest {
-        // beforeConsent asks right before a prompt opens; ``syncTrackingHold()`` owes that ask.
-        // A stored choice still in force owes no prompt, so the after-consent rule applies now.
+        // A stored choice still in force owes no prompt, so each order's rule applies now. With a
+        // prompt owed, beforeConsent asks right before it opens; ``syncTrackingHold()`` owes that.
         case .afterConsent where snapshot.promptRequirement.kind == .none: owe(.afterPrompt, atLaunch: true)
+        // One ask per launch: a later re-check after Apple answered, or paused, asks nothing.
+        case .beforeConsent where snapshot.promptRequirement.kind == .none && !trackingAsked:
+            owe(.beforePrompt, atLaunch: true)
         default: break
         }
     }
@@ -229,13 +263,13 @@ public final class ConsentPrompt: ObservableObject {
               presenter.presentationID == nil, !presenter.noticeVisible, isActive() else { return }
         trackingOwed = nil
         trackingOwedAtLaunch = false
-        let snapshot = core.snapshot()
-        guard trackingRequest.shouldAsk(at: stage, platform: tracking.trackingPlatformStatus(),
-                                        promptStringPresent: tracking.trackingPromptStringPresent(),
-                                        marketing: ConsentDecision(snapshot: snapshot, category: .marketing),
-                                        marketingRefused: snapshot.explicitChoice?.categories[.marketing]?.value == false) else {
-            return releasePrompt()
-        }
+        let inputs = trackingInputs()
+        // Back from Additional Information: the after-consent rule applies in either order.
+        let order = afterInformation && stage == .afterPrompt && trackingRequest == .beforeConsent
+            ? ConsentTrackingRequest.afterConsent : trackingRequest
+        afterInformation = false
+        guard order.shouldAsk(at: stage, inputs) else { return releasePrompt() }
+        if inputs.platform == .authorized || inputs.platform == .denied { repromptCalled = true }
         trackingInFlight = true
         tracking.request { [weak self] result in
             Task { @MainActor in self?.trackingAnswered(stage, result) }
@@ -250,8 +284,11 @@ public final class ConsentPrompt: ObservableObject {
         // After a prompt, that is settings; closing them runs the after-consent rule again.
         // Before the prompt, the prompt itself is those controls. Settings are read now, not when
         // the request started: a switch to manual, or no scene left, opens nothing.
-        if stage == .afterPrompt, trackingRequest == .afterConsent, host != nil, case let .success(answer) = result,
-           answer.stage == .additionalInformation {
+        // With nothing owed, nothing else would show those controls, so settings open then too.
+        if trackingRequest != .manual, host != nil, case let .success(answer) = result,
+           answer.stage == .additionalInformation,
+           stage == .afterPrompt || core.snapshot().promptRequirement.kind == .none {
+            afterInformation = true
             presenter.presentPreferences()
         }
         releasePrompt()
@@ -364,12 +401,15 @@ public extension View {
     ///     ``ConsentPrompt/presentPreferences()``.
     ///   - trackingRequest: When App Tracking Transparency is asked. The default asks after the
     ///     prompt, and only while marketing is granted. Needs `NSUserTrackingUsageDescription`.
+    ///   - trackingReprompt: `.yearly` asks again a year after the last answer, where Apple
+    ///     allows it (the EU). See ``ConsentTrackingReprompt``.
     @MainActor
     func c15tConsent(_ configuration: C15tAppleConfiguration, privacyPolicyURL: URL, theme: ConsentTheme? = nil,
-                     autoPresent: Bool = true, trackingRequest: ConsentTrackingRequest = .afterConsent) -> some View {
+                     autoPresent: Bool = true, trackingRequest: ConsentTrackingRequest = .afterConsent,
+                     trackingReprompt: ConsentTrackingReprompt = .never) -> some View {
         modifier(ConsentAttachment(resolve: { try? C15tApple.install(configuration) }, privacyPolicyURL: privacyPolicyURL,
                                    theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
-                                   onNoticeFrameChange: nil))
+                                   trackingReprompt: trackingReprompt, onNoticeFrameChange: nil))
     }
 
     /// Add the stock consent prompt and settings for a core the app installed itself, such as an
@@ -377,10 +417,11 @@ public extension View {
     /// attaches once a core is installed.
     @MainActor
     func c15tConsent(privacyPolicyURL: URL, theme: ConsentTheme? = nil, autoPresent: Bool = true,
-                     trackingRequest: ConsentTrackingRequest = .afterConsent) -> some View {
+                     trackingRequest: ConsentTrackingRequest = .afterConsent,
+                     trackingReprompt: ConsentTrackingReprompt = .never) -> some View {
         modifier(ConsentAttachment(resolve: { C15t.current }, privacyPolicyURL: privacyPolicyURL,
                                    theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
-                                   onNoticeFrameChange: nil))
+                                   trackingReprompt: trackingReprompt, onNoticeFrameChange: nil))
     }
 }
 
@@ -405,6 +446,7 @@ struct ConsentAttachment: ViewModifier {
     let theme: ConsentTheme?
     let autoPresent: Bool
     var trackingRequest: ConsentTrackingRequest = .afterConsent
+    var trackingReprompt: ConsentTrackingReprompt = .never
     let onNoticeFrameChange: ((CGRect) -> Void)?
     /// The scene's id for host claims. A UIKit root passes its own so its touch region can ask.
     var hostID: UUID? = nil
@@ -419,7 +461,7 @@ struct ConsentAttachment: ViewModifier {
                 if let prompt = model.prompt {
                     ConsentPromptHost(prompt: prompt, id: hostID ?? ownID, privacyPolicyURL: privacyPolicyURL,
                                       theme: theme, autoPresent: autoPresent, trackingRequest: trackingRequest,
-                                      onNoticeFrameChange: onNoticeFrameChange)
+                                      trackingReprompt: trackingReprompt, onNoticeFrameChange: onNoticeFrameChange)
                 }
             }
             .onAppear { model.attach(resolve, onAttach: onAttach) }
@@ -440,6 +482,7 @@ private struct ConsentPromptHost: View {
     let theme: ConsentTheme?
     let autoPresent: Bool
     let trackingRequest: ConsentTrackingRequest
+    let trackingReprompt: ConsentTrackingReprompt
     let onNoticeFrameChange: ((CGRect) -> Void)?
     @Environment(\.scenePhase) private var scenePhase
 
@@ -460,10 +503,12 @@ private struct ConsentPromptHost: View {
         .onChange(of: prompt.hostActive) { _ in claim() }
         .onChange(of: autoPresent) { _ in claim() }
         .onChange(of: trackingRequest) { _ in claim() }
+        .onChange(of: trackingReprompt) { _ in claim() }
     }
 
     private func claim() {
-        prompt.attach(id, active: scenePhase == .active, autoPresent: autoPresent, trackingRequest: trackingRequest)
+        prompt.attach(id, active: scenePhase == .active, autoPresent: autoPresent, trackingRequest: trackingRequest,
+                      trackingReprompt: trackingReprompt)
     }
 }
 
@@ -496,9 +541,12 @@ public final class ConsentRootViewController: UIViewController {
     ///   - autoPresent: `false` shows nothing until ``ConsentPrompt/presentPrompt()`` or
     ///     ``ConsentPrompt/presentPreferences()`` is called.
     ///   - trackingRequest: When App Tracking Transparency is asked. See ``ConsentTrackingRequest``.
+    ///   - trackingReprompt: Whether an answered request is made again a year later. See
+    ///     ``ConsentTrackingReprompt``.
     public init(root: UIViewController, configuration: C15tAppleConfiguration? = nil, privacyPolicyURL: URL,
                 theme: ConsentTheme? = nil, autoPresent: Bool = true,
-                trackingRequest: ConsentTrackingRequest = .afterConsent) {
+                trackingRequest: ConsentTrackingRequest = .afterConsent,
+                trackingReprompt: ConsentTrackingReprompt = .never) {
         self.root = root
         let region = NoticeTouchRegion(hostID: UUID())
         let passthrough = ConsentPassthroughView(region: region)
@@ -512,7 +560,8 @@ public final class ConsentRootViewController: UIViewController {
         }
         overlay = UIHostingController(rootView: AnyView(Color.clear.modifier(ConsentAttachment(
             resolve: resolve, privacyPolicyURL: privacyPolicyURL, theme: theme, autoPresent: autoPresent,
-            trackingRequest: trackingRequest, onNoticeFrameChange: { [weak region] in region?.frame = $0 },
+            trackingRequest: trackingRequest, trackingReprompt: trackingReprompt,
+            onNoticeFrameChange: { [weak region] in region?.frame = $0 },
             hostID: region.hostID,
             onAttach: { [weak region] in region?.prompt = $0 }))))
         super.init(nibName: nil, bundle: nil)

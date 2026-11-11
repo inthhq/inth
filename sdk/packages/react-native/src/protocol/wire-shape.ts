@@ -71,7 +71,10 @@ export const SNAPSHOT_KEYS = [
  * became owed, which the auto-present ledger uses to tell a new owed prompt from one
  * it already presented when the bridge delivered only the latest snapshot.
  */
-export const BRIDGE_SNAPSHOT_KEYS = ['promptOwedSince'] as const;
+export const BRIDGE_SNAPSHOT_KEYS = [
+	'promptOwedSince',
+	'iabMarketingPurposes',
+] as const;
 
 /**
  * Snapshot keys added after protocol version 1 shipped, with the value an older native
@@ -88,8 +91,11 @@ export const BRIDGE_SNAPSHOT_KEYS = ['promptOwedSince'] as const;
  *
  * `promptOwedSince: null` means the build names no owed prompt, so auto-present falls
  * back to telling prompts apart by the transitions it observes.
+ * `iabMarketingPurposes: null` means no TC String answer is known, so the ATT
+ * sequence does not ask under an IAB policy.
  */
 export const ADDITIVE_SNAPSHOT_DEFAULTS = {
+	iabMarketingPurposes: null,
 	promptOwedSince: null,
 } as const satisfies Partial<
 	Record<

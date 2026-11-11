@@ -38,6 +38,19 @@ final class C15tPayloadTests: XCTestCase {
         }
     }
 
+    func testSnapshotCarriesTheTCFMarketingAnswerForTheTrackingSequence() {
+        assertJSONNull(jsonObject(C15tPayload.snapshot(.coldStart)), "iabMarketingPurposes")
+        XCTAssertEqual(jsonObject(C15tPayload.snapshot(.coldStart, iabMarketingPurposes: true))["iabMarketingPurposes"] as? Bool, true)
+        XCTAssertEqual(jsonObject(C15tPayload.snapshot(.coldStart, iabMarketingPurposes: false))["iabMarketingPurposes"] as? Bool, false)
+    }
+
+    func testTrackingAuthorizationCarriesWhenTheLastAnswerWasSeen() {
+        let payload = jsonObject(C15tPayload.trackingAuthorization(.authorized, answeredAt: Date(timeIntervalSince1970: 1_800_000_000.5)))
+        XCTAssertEqual(payload["status"] as? String, "authorized")
+        XCTAssertEqual((payload["answeredAt"] as? NSNumber)?.int64Value, 1_800_000_000_500)
+        XCTAssertNil(jsonObject(C15tPayload.trackingAuthorization(.notDetermined))["answeredAt"])
+    }
+
     func testSnapshotSendsEveryReservedKeyAsExplicitNull() {
         // The protocol declares these `T | null`, not optional. Omitting them would
         // hand JavaScript `undefined` where its types promise `null`.

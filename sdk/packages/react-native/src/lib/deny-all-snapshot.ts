@@ -48,6 +48,7 @@ export const denyAllSnapshot = function denyAllSnapshot(
 		evaluatedAt: 0,
 		explicitChoice: null,
 		iab: null,
+		iabMarketingPurposes: null,
 		location: null,
 		model: 'none',
 		nextDeadline: null,

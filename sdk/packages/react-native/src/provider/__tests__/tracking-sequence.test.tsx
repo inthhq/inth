@@ -28,7 +28,11 @@ import {
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
 import { ConsentProvider } from '../consent-provider';
 import type { ConsentProviderProps } from '../consent-provider';
-import { shouldRequestTracking } from '../tracking-sequence';
+import {
+	isRepromptDue,
+	shouldRequestTracking,
+	TRACKING_REPROMPT_INTERVAL_MS,
+} from '../tracking-sequence';
 
 const URL = 'https://example.com/privacy';
 
@@ -136,7 +140,12 @@ describe('shouldRequestTracking', () => {
 		'%s at %s with %s and marketing %s: %s',
 		(timing, stage, authorization, marketing, expected) => {
 			expect(
-				shouldRequestTracking(timing, stage, authorization, marketing, false)
+				shouldRequestTracking(timing, stage, {
+					authorization,
+					marketing,
+					marketingRefused: false,
+					repromptDue: false,
+				})
 			).toBe(expected);
 		}
 	);
@@ -645,4 +654,283 @@ describe('switching away from beforeConsent', () => {
 		expect(fake.trackingRequestCalls).toBe(0);
 		tree.unmount();
 	});
+});
+
+describe('beforeConsent at a launch that owes no prompt', () => {
+	test('asks once while Apple has not answered', async () => {
+		const { fake, order } = boot(saved(true));
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(order).toStrictEqual(['tracking']);
+		setAppState('background');
+		setAppState('active');
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(1);
+		tree.unmount();
+	});
+
+	test('asks with no stored choice about marketing either way', async () => {
+		const { order } = boot(
+			buildSnapshot({ ...saved(false), explicitChoice: null })
+		);
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(order).toStrictEqual(['tracking']);
+		tree.unmount();
+	});
+
+	test('does not ask when a stored choice refuses marketing', async () => {
+		const { fake } = boot({
+			...owedAfterRefusal,
+			promptRequirement: { kind: 'none' },
+		});
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test('does not ask when Apple already answered', async () => {
+		const { fake } = boot(saved(true), 'authorized');
+		const tree = renderTree(<App trackingRequest="beforeConsent" />);
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+});
+
+describe('yearly re-ask', () => {
+	const NOW = 1_800_000_000_000;
+	const DAY = 24 * 60 * 60 * 1000;
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	const answered = (
+		ago: number | null,
+		status: TrackingAuthorization = 'authorized'
+	) => {
+		vi.useFakeTimers({ now: NOW, toFake: ['Date'] });
+		const booted = boot(saved(true), status);
+		booted.fake.setTrackingAnsweredAt(ago === null ? null : NOW - ago);
+		return booted;
+	};
+
+	test('the rule: due a year after the last answer, never without one', () => {
+		expect(
+			isRepromptDue('yearly', NOW - TRACKING_REPROMPT_INTERVAL_MS, NOW)
+		).toBe(true);
+		expect(isRepromptDue('yearly', NOW - 364 * DAY, NOW)).toBe(false);
+		expect(isRepromptDue('yearly', null, NOW)).toBe(false);
+		expect(isRepromptDue('never', NOW - 800 * DAY, NOW)).toBe(false);
+		const due = {
+			authorization: 'denied' as const,
+			marketing: 'granted' as const,
+			marketingRefused: false,
+			repromptDue: true,
+		};
+		expect(shouldRequestTracking('afterConsent', 'afterPrompt', due)).toBe(
+			true
+		);
+		expect(shouldRequestTracking('beforeConsent', 'beforePrompt', due)).toBe(
+			true
+		);
+		expect(shouldRequestTracking('manual', 'afterPrompt', due)).toBe(false);
+		expect(
+			shouldRequestTracking('afterConsent', 'afterPrompt', {
+				...due,
+				authorization: 'restricted',
+			})
+		).toBe(false);
+		expect(
+			shouldRequestTracking('afterConsent', 'afterPrompt', {
+				...due,
+				marketingRefused: true,
+			})
+		).toBe(false);
+		expect(
+			shouldRequestTracking('afterConsent', 'afterPrompt', {
+				...due,
+				marketing: 'denied',
+			})
+		).toBe(false);
+	});
+
+	test.each(['afterConsent', 'beforeConsent'] as const)(
+		'%s: calls once per launch after a year',
+		async (timing) => {
+			const { fake } = answered(366 * DAY);
+			const tree = renderTree(
+				<App
+					trackingRequest={timing}
+					trackingReprompt="yearly"
+				/>
+			);
+			await flushPromises();
+			expect(fake.trackingRequestCalls).toBe(1);
+			finish(fake, saved(true, 3));
+			await flushPromises();
+			expect(fake.trackingRequestCalls).toBe(1);
+			tree.unmount();
+		}
+	);
+
+	test('waits for the year', async () => {
+		const { fake } = answered(364 * DAY);
+		const tree = renderTree(<App trackingReprompt="yearly" />);
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test('an answer with no stored time waits a year from now', async () => {
+		const { fake } = answered(null);
+		const tree = renderTree(<App trackingReprompt="yearly" />);
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test('never is the default', async () => {
+		const { fake } = answered(800 * DAY);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test('never asks restricted, refused or manual', async () => {
+		const restricted = answered(800 * DAY, 'restricted');
+		let tree = renderTree(<App trackingReprompt="yearly" />);
+		await flushPromises();
+		expect(restricted.fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+		resetConsentClient();
+		resetNativeStub();
+
+		const manual = answered(800 * DAY);
+		tree = renderTree(
+			<App
+				trackingRequest="manual"
+				trackingReprompt="yearly"
+			/>
+		);
+		await flushPromises();
+		expect(manual.fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+		resetConsentClient();
+		resetNativeStub();
+
+		vi.useFakeTimers({ now: NOW, toFake: ['Date'] });
+		const refused = boot(
+			{ ...owedAfterRefusal, promptRequirement: { kind: 'none' } },
+			'denied'
+		);
+		refused.fake.setTrackingAnsweredAt(NOW - 800 * DAY);
+		tree = renderTree(<App trackingReprompt="yearly" />);
+		await flushPromises();
+		expect(refused.fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+});
+
+describe('ATT under IAB TCF', () => {
+	const iab = (
+		marketing: boolean,
+		purposes: boolean | null,
+		revision = 2
+	): ConsentSnapshot =>
+		({
+			...saved(marketing, revision),
+			iabMarketingPurposes: purposes,
+			model: 'iab',
+		}) as ConsentSnapshot;
+	const owedIAB = { ...owed, model: 'iab' } as ConsentSnapshot;
+
+	test('Accept all, with the TC String granting marketing, asks after the prompt', async () => {
+		const { fake, order } = boot(owedIAB);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, iab(true, true));
+		await flushPromises();
+		expect(order).toStrictEqual(['prompt', 'tracking']);
+		tree.unmount();
+	});
+
+	test('Reject all never asks', async () => {
+		const { fake } = boot(owedIAB);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, iab(false, false));
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test('the marketing category without the TC String purposes does not ask', async () => {
+		const { fake } = boot(owedIAB);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, iab(true, false));
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test('an older binary that does not say asks nothing under IAB', async () => {
+		const { fake } = boot(owedIAB);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, iab(true, null));
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test.each([true, false])(
+		'Additional Information opens TCF settings; purposes kept %s',
+		async (kept) => {
+			const { fake, order, preferences } = boot(owedIAB);
+			let sessions = 0;
+			fake.presentConsentPrompt = vi.fn(() => {
+				order.push('prompt');
+				sessions += 1;
+				return Promise.resolve(
+					JSON.stringify({
+						sessionId: `p${String(sessions)}`,
+						status: 'presented',
+					})
+				);
+			});
+			fake.queueTrackingRequestReplies([
+				{
+					presentation: 'expanded',
+					stage: 'additional-information',
+					status: 'not-determined',
+				},
+				{ stage: 'final', status: 'authorized' },
+			]);
+			const tree = renderTree(<App />);
+			await flushPromises();
+			fake.pushSnapshot(iab(true, true));
+			emitNativeEvent(
+				'onConsentPresenterOutcome',
+				JSON.stringify({ kind: 'committed', revision: 2, sessionId: 'p1' })
+			);
+			await flushPromises();
+			expect(preferences).toHaveBeenCalledTimes(1);
+			expect(order).toStrictEqual(['prompt', 'tracking', 'preferences']);
+
+			// The native host opens the IAB preferences for an IAB policy; the person saves them.
+			fake.pushSnapshot(iab(kept, kept, 3));
+			emitNativeEvent(
+				'onConsentPresenterOutcome',
+				JSON.stringify({ kind: 'committed', revision: 3, sessionId: 's2' })
+			);
+			await flushPromises();
+			expect(fake.trackingRequestCalls).toBe(kept ? 2 : 1);
+			tree.unmount();
+		}
+	);
 });

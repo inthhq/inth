@@ -39,6 +39,7 @@ export type {
 	TrackingRequestStage,
 } from './tracking';
 export {
+	parseTrackingAnsweredAt,
 	parseTrackingAuthorization,
 	parseTrackingRequest,
 	TRACKING_AUTHORIZATION_STATUSES,
