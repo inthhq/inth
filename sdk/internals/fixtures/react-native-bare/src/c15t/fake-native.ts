@@ -439,6 +439,12 @@ class FakeCore {
 						code: 'C15T_TRACKING_UNSUPPORTED',
 					})
 				),
+			requestTrackingAuthorizationWithOptions: (_options: string) =>
+				Promise.reject(
+					Object.assign(new Error(ANDROID_TRACKING_UNSUPPORTED), {
+						code: 'C15T_TRACKING_UNSUPPORTED',
+					})
+				),
 			reset: async () => {
 				this.resetConsent();
 				await settle();

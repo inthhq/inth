@@ -36,6 +36,7 @@ class C15tModuleSurfaceTest {
 			"reset" to 1,
 			"getTrackingAuthorization" to 0,
 			"requestTrackingAuthorization" to 1,
+			"requestTrackingAuthorizationWithOptions" to 2,
 			"addListener" to 1,
 			"removeListeners" to 1,
 		)
@@ -91,6 +92,15 @@ class C15tModuleSurfaceTest {
 		val SYNC_METHODS = listOf("getBootstrap", "getSnapshot", "getWebViewConsent", "getTrackingAuthorization")
 
 		val PROMISE_METHODS =
-			listOf("commit", "setOverrides", "refresh", "identify", "logout", "reset", "requestTrackingAuthorization")
+			listOf(
+				"commit",
+				"setOverrides",
+				"refresh",
+				"identify",
+				"logout",
+				"reset",
+				"requestTrackingAuthorization",
+				"requestTrackingAuthorizationWithOptions",
+			)
 	}
 }

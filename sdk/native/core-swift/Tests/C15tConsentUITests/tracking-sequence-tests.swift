@@ -1,4 +1,4 @@
-import C15tApple
+@testable import C15tApple
 import C15tCore
 import Combine
 import Foundation
@@ -31,6 +31,8 @@ final class TrackingSequenceTests: XCTestCase {
         let log = C15tTrackingAnswerLog.inMemory()
         /// How many more times the EU sheet pauses on Additional Information before it answers.
         var pausesLeft = Int.max
+        /// Whether the last expanded request offered Apple's Additional Information button.
+        var offeredButton: Bool?
 
         var controller: C15tTrackingController {
             C15tTrackingController(
@@ -47,9 +49,10 @@ final class TrackingSequenceTests: XCTestCase {
                 trackingExpandedInterfaceAvailable: { self.additionalInformation },
                 trackingExpandedPrompt: { _, info, completion in
                     self.asks += 1
+                    self.offeredButton = info != nil
                     self.onAsk?()
                     self.answerLater {
-                        if self.pausesLeft > 0 {
+                        if self.pausesLeft > 0, let info {
                             self.pausesLeft -= 1
                             info()
                             completion(.notDetermined)
@@ -466,7 +469,9 @@ final class TrackingSequenceTests: XCTestCase {
             let core = try await answered(apple, ago: 366 * day)
             let prompt = attach(core, apple, order: order, reprompt: .yearly)
             await until { apple.asks == 1 }
-            XCTAssertEqual(apple.log.lastAnswerAt, apple.clock, "\(order): the answer restarts the year")
+            // Apple returned the same answer: shown and answered alike, or not shown. The stamp
+            // stays, so a launch after Apple's own year can try again.
+            XCTAssertEqual(apple.log.lastAnswerAt, apple.clock.addingTimeInterval(-366 * day), "\(order)")
 
             // Even if Apple returned the stored answer without asking, this launch is done.
             apple.log.record(apple.clock.addingTimeInterval(-400 * day))
@@ -599,6 +604,8 @@ final class TrackingSequenceTests: XCTestCase {
         prompt.presenter.customize()
         prompt.presenter.setCategory(.marketing, true)
         for purpose in [1, 3, 4] { prompt.presenter.edit(\.purposeConsents, id: purpose, enabled: true) }
+        // Vendor 2 asks consent for 3 and 4, so someone could track.
+        prompt.presenter.edit(\.vendorConsents, id: 2, enabled: true)
         prompt.presenter.commit(.save)
         await until { apple.asks == 1 }
     }
@@ -621,6 +628,82 @@ final class TrackingSequenceTests: XCTestCase {
             await settle()
             XCTAssertEqual(apple.asks, keep ? 2 : 1, keep ? "purposes kept: asked again" : "purpose 3 refused: not asked again")
         }
+    }
+
+    // MARK: - Final review round
+
+    func testBeforeConsentTreatsAGPCRestrictionAsARefusalAtLaunch() async throws {
+        let apple = Apple()
+        let core = try await boot("notice-init.json")
+        core.setOverrides(ConsentOverrides(country: nil, region: nil, language: "en", gpc: true))
+        await core.waitUntilIdle()
+        _ = core.dismissNotice()
+        await core.waitUntilIdle()
+        XCTAssertEqual(core.snapshot().promptRequirement.kind, .none, "no prompt owed")
+        XCTAssertTrue(core.snapshot().restrictions[.marketing]?.contains(.gpc) == true)
+        XCTAssertNil(core.snapshot().explicitChoice?.categories[.marketing], "no stored refusal")
+        _ = attach(core, apple, order: .beforeConsent)
+        await settle()
+        XCTAssertEqual(apple.asks, 0, "opted out through GPC")
+    }
+
+    func testBeforeConsentAPauseBeforeThePromptAsksAgainAfterItOnlyWithMarketing() async throws {
+        for granted in [true, false] {
+            let apple = Apple()
+            apple.additionalInformation = true
+            apple.pausesLeft = 1
+            let prompt = try await attached(apple, order: .beforeConsent)
+            await until { prompt.presenter.presentationID != nil }
+            XCTAssertEqual(apple.asks, 1, "asked before the prompt, and the person tapped Additional Information")
+            prompt.presenter.commit(granted ? .accept : .reject)
+            await until { !prompt.presenter.pending }
+            await settle()
+            XCTAssertEqual(apple.asks, granted ? 2 : 1, granted ? "asked again after the prompt" : "marketing refused")
+        }
+    }
+
+    func testTCFPurposesWithEveryVendorRefusedDoesNotAsk() async throws {
+        let apple = Apple()
+        let core = try await bootIAB()
+        let prompt = attach(core, apple)
+        await until { prompt.presenter.presentationID != nil }
+        prompt.presenter.customize()
+        prompt.presenter.setCategory(.marketing, true)
+        for purpose in [1, 3, 4] { prompt.presenter.edit(\.purposeConsents, id: purpose, enabled: true) }
+        prompt.presenter.commit(.save)
+        await until { !prompt.presenter.pending }
+        await settle()
+        XCTAssertEqual(core.iabConsent()?.choices.purposeConsents, [1, 3, 4])
+        XCTAssertEqual(core.iabConsent()?.choices.vendorConsents, [])
+        XCTAssertEqual(apple.asks, 0, "nobody could track")
+        XCTAssertTrue(prompt.trackingInputs().marketingRefused)
+    }
+
+    func testTheIABAnswerIsComputedOncePerRevision() async throws {
+        let core = try await bootIAB()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let before = C15tTrackingConsent.computations
+        for _ in 0..<5 { _ = C15tTrackingConsent.iabMarketingConsented(core) }
+        XCTAssertEqual(C15tTrackingConsent.computations - before, 1)
+        XCTAssertEqual(C15tTrackingConsent.iabMarketingConsented(core), true)
+    }
+
+    func testTheStockUIOffersTheAdditionalInformationButtonAndADirectRequestDoesNot() async throws {
+        let apple = Apple()
+        apple.additionalInformation = true
+        apple.pausesLeft = 0
+        let prompt = try await attached(apple)
+        prompt.presenter.commit(.accept)
+        await until { apple.asks == 1 }
+        XCTAssertEqual(apple.offeredButton, true, "the stock UI handles the tap")
+
+        let direct = Apple()
+        direct.additionalInformation = true
+        direct.pausesLeft = 0
+        let answered = expectation(description: "answered")
+        direct.controller.request { _ in answered.fulfill() }
+        await fulfillment(of: [answered], timeout: 2)
+        XCTAssertEqual(direct.offeredButton, false, "nothing handles the tap, so no button")
     }
 
     // MARK: - Helpers

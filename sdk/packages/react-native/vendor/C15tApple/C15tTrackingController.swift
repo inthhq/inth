@@ -32,9 +32,12 @@ public struct C15tTrackingController: Sendable {
     /// capability probe is still true a moment later is what keeps a lazily linked App
     /// Tracking Transparency from turning into a tracking request that never resolves: the
     /// caller is told, in the same breath, that nothing was asked.
+    ///
+    /// `additionalInformationSelected` is `nil` when nothing will handle Apple's Additional
+    /// Information button. Apple then shows no button.
     public let trackingExpandedPrompt: @Sendable (
         _ preferExpandedInterface: Bool,
-        _ additionalInformationSelected: @escaping () -> Void,
+        _ additionalInformationSelected: (() -> Void)?,
         _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool
 
@@ -53,7 +56,7 @@ public struct C15tTrackingController: Sendable {
         trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { C15tTracking.expandedInterfaceAvailable() },
         trackingExpandedPrompt: @escaping @Sendable (
             _ preferExpandedInterface: Bool,
-            _ additionalInformationSelected: @escaping () -> Void,
+            _ additionalInformationSelected: (() -> Void)?,
             _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
         ) -> Bool = { preferExpanded, additionalInformationSelected, completion in
             C15tTracking.requestExpandedPrompt(
@@ -89,9 +92,18 @@ public struct C15tTrackingController: Sendable {
     }
 
     /// Ask Apple explicitly, coalescing simultaneous requests into one prompt.
-    public func request(_ completion: @escaping (Result<C15tTrackingRequestResult, C15tTrackingError>) -> Void) {
+    ///
+    /// - Parameters:
+    ///   - onAdditionalInformation: Runs on the main thread when the person taps Additional
+    ///     Information on Apple's EU sheet, to show the app's own controls. `nil`, the default,
+    ///     means nothing would handle the tap, so Apple shows no button. The request still
+    ///     resolves with stage `additionalInformation` after a tap.
+    ///   - completion: The outcome.
+    public func request(onAdditionalInformation: (@Sendable () -> Void)? = nil,
+                        _ completion: @escaping (Result<C15tTrackingRequestResult, C15tTrackingError>) -> Void) {
+        let before = trackingPlatformStatus()
         switch C15tTrackingGate.request(
-            platform: trackingPlatformStatus(),
+            platform: before,
             promptStringPresent: trackingPromptStringPresent(),
             expandedInterfaceAvailable: trackingExpandedInterfaceAvailable()
         ) {
@@ -112,7 +124,7 @@ public struct C15tTrackingController: Sendable {
             completion(.failure(refusal == .noPromptString ? .notConfigured : .unsupported))
         case let .prompt(presentation):
             guard trackingWaiters.acquire(completion) else { return }
-            askApple(presentation: presentation)
+            askApple(presentation: presentation, before: before, onAdditionalInformation: onAdditionalInformation)
         }
     }
 
@@ -126,7 +138,8 @@ public struct C15tTrackingController: Sendable {
     ///
     /// The flag, and not a captured `var`, carries the Additional Information tap because
     /// Apple runs that closure after this function has returned and on a thread it chooses.
-    private func askApple(presentation: C15tTrackingPresentation) {
+    private func askApple(presentation: C15tTrackingPresentation, before: C15tTrackingPlatformStatus?,
+                          onAdditionalInformation: (@Sendable () -> Void)?) {
         let additionalInformationSelected = C15tTrackingFlag()
 
         // The call that ran arrives as an argument rather than being read off the gate's
@@ -136,8 +149,15 @@ public struct C15tTrackingController: Sendable {
         // the only thing a host has for telling "Apple had the expanded sheet and chose not
         // to use it" apart from "this binary never asked for it".
         let deliver: (C15tTrackingPresentation, C15tTrackingPlatformStatus?) -> Void = { [trackingWaiters, answerLog, now] ran, answered in
-            // A final answer starts the year Apple counts before it may ask again in the EU.
-            if answered == .authorized || answered == .denied, !additionalInformationSelected.isSet {
+            // A final answer starts the year Apple counts before it may ask again in the EU. On a
+            // re-ask (Apple had answered before) the stamp moves only when the status changed:
+            // Apple returns the stored answer without showing anything until its own year is up,
+            // and that silent return must not restart our year. "Shown and answered the same" is
+            // indistinguishable from "not shown", so that case keeps the old stamp too; the cost
+            // is one silent call per launch until the status changes.
+            let reask = before == .authorized || before == .denied
+            if answered == .authorized || answered == .denied, !additionalInformationSelected.isSet,
+               !reask || answered != before {
                 answerLog.record(now())
             }
             let result = C15tTrackingGate.requestResult(
@@ -156,7 +176,12 @@ public struct C15tTrackingController: Sendable {
         if presentation == .expanded,
            trackingExpandedPrompt(
                true,
-               { additionalInformationSelected.set() },
+               onAdditionalInformation.map { handler -> () -> Void in
+                   {
+                       additionalInformationSelected.set()
+                       DispatchQueue.main.async { handler() }
+                   }
+               },
                { deliver(.expanded, $0) }
            ) {
             return

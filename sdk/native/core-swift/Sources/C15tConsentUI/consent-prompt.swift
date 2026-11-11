@@ -199,7 +199,11 @@ public final class ConsentPrompt: ObservableObject {
     func trackingInputs() -> ConsentTrackingInputs {
         let snapshot = core.snapshot()
         var marketing = ConsentDecision(snapshot: snapshot, category: .marketing)
+        // A stored refusal, and a GPC or explicit-denial restriction on marketing, both count:
+        // a US opt-out policy with GPC owes no prompt but has still been opted out of.
+        let restrictions = snapshot.restrictions[.marketing] ?? []
         var refused = snapshot.explicitChoice?.categories[.marketing]?.value == false
+            || restrictions.contains(.gpc) || restrictions.contains(.explicitDenial)
         if snapshot.model == .iab {
             let consented = C15tTrackingConsent.iabMarketingConsented(core)
             if consented != true, marketing == .granted { marketing = .denied }
@@ -271,7 +275,9 @@ public final class ConsentPrompt: ObservableObject {
         guard order.shouldAsk(at: stage, inputs) else { return releasePrompt() }
         if inputs.platform == .authorized || inputs.platform == .denied { repromptCalled = true }
         trackingInFlight = true
-        tracking.request { [weak self] result in
+        // The stock UI handles Additional Information (settings, or the prompt about to open),
+        // so Apple may show the button.
+        tracking.request(onAdditionalInformation: {}) { [weak self] result in
             Task { @MainActor in self?.trackingAnswered(stage, result) }
         }
     }
@@ -285,11 +291,14 @@ public final class ConsentPrompt: ObservableObject {
         // Before the prompt, the prompt itself is those controls. Settings are read now, not when
         // the request started: a switch to manual, or no scene left, opens nothing.
         // With nothing owed, nothing else would show those controls, so settings open then too.
+        // Before an owed prompt, the prompt about to open is those controls; closing it applies
+        // the after-consent rule, so Apple is asked again only if marketing is then granted.
         if trackingRequest != .manual, host != nil, case let .success(answer) = result,
-           answer.stage == .additionalInformation,
-           stage == .afterPrompt || core.snapshot().promptRequirement.kind == .none {
+           answer.stage == .additionalInformation {
             afterInformation = true
-            presenter.presentPreferences()
+            if stage == .afterPrompt || core.snapshot().promptRequirement.kind == .none {
+                presenter.presentPreferences()
+            }
         }
         releasePrompt()
         requestOwedTracking()

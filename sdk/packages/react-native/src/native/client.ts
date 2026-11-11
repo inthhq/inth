@@ -201,9 +201,16 @@ export interface ConsentClient {
 	 * {@link useTrackingRequest} is the surface most hosts want: it drives the
 	 * preference centre through the pause, so nothing has to be assembled by hand.
 	 *
+	 * @param options - `additionalInformation: true` asks Apple for the
+	 *   Additional Information button on its EU sheet, for a caller that will
+	 *   show its own controls when the request resolves with
+	 *   `stage: 'additional-information'`. Without it there is no button. A
+	 *   binary that predates the option shows no button either.
 	 * @returns The arm, the stage, and which call ran.
 	 */
-	requestTracking: () => Promise<TrackingRequestPayload>;
+	requestTracking: (options?: {
+		readonly additionalInformation?: boolean;
+	}) => Promise<TrackingRequestPayload>;
 	/**
 	 * Read the platform answer again, after a cached one.
 	 *
@@ -866,41 +873,51 @@ export const createConsentClient = function createConsentClient(
 	 * difference between "this build cannot prompt" and "Android has no such
 	 * question" lives.
 	 */
-	const requestTracking =
-		async function requestTracking(): Promise<TrackingRequestPayload> {
-			if (typeof nativeModule.requestTrackingAuthorization !== 'function') {
-				warnTrackingSurfaceMissing();
+	const requestTracking = async function requestTracking(
+		options: { readonly additionalInformation?: boolean } = {}
+	): Promise<TrackingRequestPayload> {
+		if (typeof nativeModule.requestTrackingAuthorization !== 'function') {
+			warnTrackingSurfaceMissing();
 
-				throw new NativeBridgeError(
-					'@c15t/react-native cannot request tracking authorization: this native build has no requestTrackingAuthorization method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
-				);
-			}
+			throw new NativeBridgeError(
+				'@c15t/react-native cannot request tracking authorization: this native build has no requestTrackingAuthorization method. Rebuild the app so the binary matches this package; a JavaScript update cannot add it.'
+			);
+		}
 
-			let outcome: TrackingRequestPayload;
+		let outcome: TrackingRequestPayload;
 
-			try {
-				outcome = parseTrackingRequest(
-					await nativeModule.requestTrackingAuthorization()
-				);
-			} catch (error: unknown) {
-				// Whether the prompt appeared is unknown from here, so drop the cached
-				// arm and let the next read ask the platform rather than trust a stale
-				// one.
-				tracking = null;
+		try {
+			// The button needs the options method; an older binary has only the plain one.
+			const withOptions =
+				options.additionalInformation === true &&
+				typeof nativeModule.requestTrackingAuthorizationWithOptions ===
+					'function';
+			outcome = parseTrackingRequest(
+				withOptions
+					? await nativeModule.requestTrackingAuthorizationWithOptions(
+							JSON.stringify({ additionalInformation: true })
+						)
+					: await nativeModule.requestTrackingAuthorization()
+			);
+		} catch (error: unknown) {
+			// Whether the prompt appeared is unknown from here, so drop the cached
+			// arm and let the next read ask the platform rather than trust a stale
+			// one.
+			tracking = null;
 
-				throw error;
-			}
+			throw error;
+		}
 
-			tracking = outcome.status;
+		tracking = outcome.status;
 
-			// Deliberately no `stale = true` and no snapshot notify. The platform
-			// answer is not consent: a prompt that changed nothing about any category
-			// must not reach a tree that subscribed to categories, and the consent
-			// decision a subscriber reads has to be identical before and after.
-			notifyTracking();
+		// Deliberately no `stale = true` and no snapshot notify. The platform
+		// answer is not consent: a prompt that changed nothing about any category
+		// must not reach a tree that subscribed to categories, and the consent
+		// decision a subscriber reads has to be identical before and after.
+		notifyTracking();
 
-			return outcome;
-		};
+		return outcome;
+	};
 
 	const requestTrackingAuthorization =
 		async function requestTrackingAuthorization(): Promise<TrackingAuthorization> {

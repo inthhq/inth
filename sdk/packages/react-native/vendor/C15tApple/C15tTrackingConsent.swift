@@ -6,40 +6,140 @@ import Foundation
 /// What App Tracking Transparency sequencing reads from IAB TCF consent.
 ///
 /// Under an IAB TCF policy the c15t `marketing` category and the TC String are recorded side by
-/// side. Tracking needs both, so the sequence asks Apple only while the TC String also consents
-/// to the purposes `marketing` stands for. This is the web derivation, not a second one:
-/// `C15T_TO_IAB_PURPOSE_MAP.marketing` and `iabPurposesToC15tConsents` in
-/// `packages/iab/src/tcf/purpose-mapping.ts`, with the purposes some vendor processes on consent
-/// deciding, as `consentBasisPurposes` in `packages/iab/src/index.ts` passes them.
+/// side. Tracking needs both, so the sequence asks Apple only while the TC String grants
+/// `marketing` and someone could actually track. This decides only whether the SDK asks Apple.
+/// It does not decide whether a vendor may read the advertising identifier: purpose 1, that
+/// vendor's consent and the ATT answer do.
+///
+/// The purpose half is the web derivation, not a second one: `C15T_TO_IAB_PURPOSE_MAP.marketing`
+/// and `iabPurposesToC15tConsents` in `packages/iab/src/tcf/purpose-mapping.ts`, with the purposes
+/// some vendor processes on consent deciding, as `consentBasisPurposes` in
+/// `packages/iab/src/index.ts` passes them. `native/protocol/att/iab-marketing.json` runs the same
+/// cases against both.
 public enum C15tTrackingConsent {
     /// The TCF purposes the `marketing` category stands for: 2, 3 and 4.
-    /// `scripts/consent-tracking-iab-purposes.test.ts` keeps this equal to the web map.
     public static let iabMarketingPurposes: Set<Int> = [2, 3, 4]
 
     /// The purposes Google's ad tech providers need, which the web adds to the consent basis.
     static let adTechProviderPurposes: Set<Int> = [1, 3, 4]
 
-    /// Whether `purposeConsents` grants `marketing`, the way `iabPurposesToC15tConsents` does.
-    ///
-    /// Only the marketing purposes some vendor processes on consent decide, because a purpose
-    /// nobody asks consent for has no switch the person could turn on. When none of them is in
-    /// that basis, all of them decide, so legitimate interest alone never grants the category.
-    /// - Parameters:
-    ///   - purposeConsents: The TC String's purpose consents.
-    ///   - consentBasis: Purposes some vendor processes on consent after publisher restrictions,
-    ///     with the ad tech providers' purposes when the list has providers.
-    public static func iabMarketingConsented(purposeConsents: Set<Int>, consentBasis: Set<Int>) -> Bool {
-        let deciding = iabMarketingPurposes.intersection(consentBasis)
-        return (deciding.isEmpty ? iabMarketingPurposes : deciding).isSubset(of: purposeConsents)
+    /// The TC String facts the rule reads.
+    public struct IABInput: Equatable, Sendable {
+        /// The TC String's purpose consents.
+        public var purposeConsents: Set<Int>
+        /// Each registered vendor's purposes on consent, after publisher restrictions.
+        public var vendorConsentPurposes: [Int: Set<Int>]
+        /// Vendors the TC String grants consent.
+        public var vendorConsents: Set<Int>
+        /// The list carries Google ad tech providers.
+        public var adTechProvidersListed: Bool
+        /// Ad tech providers the person consented to.
+        public var adTechProviderConsents: Set<Int>
+
+        public init(purposeConsents: Set<Int>, vendorConsentPurposes: [Int: Set<Int>], vendorConsents: Set<Int>,
+                    adTechProvidersListed: Bool = false, adTechProviderConsents: Set<Int> = []) {
+            self.purposeConsents = purposeConsents
+            self.vendorConsentPurposes = vendorConsentPurposes
+            self.vendorConsents = vendorConsents
+            self.adTechProvidersListed = adTechProvidersListed
+            self.adTechProviderConsents = adTechProviderConsents
+        }
+
+        /// Purposes some vendor processes on consent, as the web's `consentBasisPurposes`.
+        var consentBasis: Set<Int> {
+            var basis = Set(vendorConsentPurposes.values.flatMap { $0 })
+            if adTechProvidersListed { basis.formUnion(C15tTrackingConsent.adTechProviderPurposes) }
+            return basis
+        }
+
+        /// The marketing purposes that decide: those some vendor asks consent for, or all of
+        /// them when none is, so legitimate interest alone never grants the category.
+        var decidingPurposes: Set<Int> {
+            let deciding = C15tTrackingConsent.iabMarketingPurposes.intersection(consentBasis)
+            return deciding.isEmpty ? C15tTrackingConsent.iabMarketingPurposes : deciding
+        }
     }
 
-    /// Whether `core`'s committed TC String grants `marketing`, or `nil` when there is no current
-    /// TC String (no IAB policy, nothing saved yet, or a list that can no longer be read).
+    /// The purpose half: whether the TC String grants `marketing` the way
+    /// `iabPurposesToC15tConsents` does.
+    public static func iabMarketingPurposesConsented(_ input: IABInput) -> Bool {
+        input.decidingPurposes.isSubset(of: input.purposeConsents)
+    }
+
+    /// Whether the TC String grants `marketing` and someone could track: the purpose half, and
+    /// at least one consented vendor that asks consent for a deciding marketing purpose, or a
+    /// consented Google ad tech provider. With every such vendor refused nobody could track, so
+    /// it counts as a refusal. Native IAB keeps no consent for custom (non-IAB) vendors, so only
+    /// registered vendors and ad tech providers count.
+    public static func iabMarketingConsented(_ input: IABInput) -> Bool {
+        guard iabMarketingPurposesConsented(input) else { return false }
+        let deciding = input.decidingPurposes
+        let vendor = input.vendorConsents.contains { id in
+            !(input.vendorConsentPurposes[id] ?? []).isDisjoint(with: deciding)
+        }
+        return vendor || input.adTechProvidersListed && !input.adTechProviderConsents.isEmpty
+    }
+
+    /// Whether `core`'s committed TC String grants `marketing` with someone who could track, or
+    /// `nil` when there is no current TC String (no IAB policy, nothing saved yet, or a list that
+    /// can no longer be read). Computed once per snapshot revision: it builds the IAB
+    /// presentation, which is too heavy for every snapshot.
     public static func iabMarketingConsented(_ core: ConsentCore) -> Bool? {
-        guard core.snapshot().model == .iab, let consent = core.iabConsent(),
-              let presentation = core.iabPresentation() else { return nil }
-        var basis = Set(presentation.vendors.values.flatMap(\.consentPurposes))
-        if presentation.adTechProviders?.isEmpty == false { basis.formUnion(adTechProviderPurposes) }
-        return iabMarketingConsented(purposeConsents: Set(consent.choices.purposeConsents), consentBasis: basis)
+        let snapshot = core.snapshot()
+        guard snapshot.model == .iab else { return nil }
+        if let hit = cache.value(for: core, revision: snapshot.revision) { return hit }
+        let value = compute(core)
+        cache.store(value, for: core, revision: snapshot.revision)
+        return value
+    }
+
+    /// How many times the IAB answer was computed rather than read from the cache. For tests.
+    static var computations: Int { cache.computations }
+
+    private static func compute(_ core: ConsentCore) -> Bool? {
+        cache.counted()
+        guard let consent = core.iabConsent(), let presentation = core.iabPresentation() else { return nil }
+        let input = IABInput(
+            purposeConsents: Set(consent.choices.purposeConsents),
+            vendorConsentPurposes: presentation.vendors.mapValues { Set($0.consentPurposes) },
+            vendorConsents: Set(consent.choices.vendorConsents),
+            adTechProvidersListed: presentation.adTechProviders?.isEmpty == false,
+            adTechProviderConsents: Set(consent.choices.adTechProviderConsents ?? []))
+        return iabMarketingConsented(input)
+    }
+
+    private static let cache = Cache()
+
+    /// The last answer per core, keyed by snapshot revision. Locked: the React Native bridge
+    /// encodes snapshots off the main thread.
+    private final class Cache: @unchecked Sendable {
+        private struct Entry {
+            weak var core: ConsentCore?
+            let revision: Int
+            let value: Bool?
+        }
+        private let lock = NSLock()
+        private var entries: [ObjectIdentifier: Entry] = [:]
+        private var count = 0
+
+        var computations: Int { lock.withLock { count } }
+        func counted() { lock.withLock { count += 1 } }
+
+        /// The stored answer, or `nil` when none is stored for this core at this revision. A
+        /// stored `nil` answer (no TC String) comes back as `.some(nil)`.
+        func value(for core: ConsentCore, revision: Int) -> Bool?? {
+            lock.withLock {
+                guard let entry = entries[ObjectIdentifier(core)], entry.core === core,
+                      entry.revision == revision else { return nil }
+                return .some(entry.value)
+            }
+        }
+
+        func store(_ value: Bool?, for core: ConsentCore, revision: Int) {
+            lock.withLock {
+                entries = entries.filter { $0.value.core != nil }
+                entries[ObjectIdentifier(core)] = Entry(core: core, revision: revision, value: value)
+            }
+        }
     }
 }

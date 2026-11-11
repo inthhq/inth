@@ -187,6 +187,24 @@ public final class C15tReactNativeModule: RCTEventEmitter {
         }
     }
 
+    @objc(requestTrackingAuthorizationWithOptions:resolve:reject:)
+    public func requestTrackingAuthorizationWithOptions(
+        _ options: String,
+        resolve: @escaping RCTPromiseResolveBlock,
+        reject: @escaping RCTPromiseRejectBlock
+    ) {
+        handler.requestTrackingAuthorization(
+            additionalInformation: C15tPayload.trackingRequestOffersAdditionalInformation(options)
+        ) { result in
+            switch result {
+            case let .success(requestResult):
+                resolve(C15tPayload.trackingRequestResult(requestResult))
+            case let .failure(error):
+                reject(error.code, error.message, nil)
+            }
+        }
+    }
+
     @objc(logout:reject:)
     public func logout(
         _ resolve: @escaping RCTPromiseResolveBlock,
