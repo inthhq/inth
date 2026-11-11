@@ -134,6 +134,44 @@ class BundledPolicyTest {
 		subscription.close()
 	}
 
+	@Test fun `rejecting after the manifest expires withdraws at once and replaces the queued grant`() {
+		val clock = FixedClock(now)
+		val store = C15tStore(InMemoryKeyValueStore())
+		val transport = RecordingTransport().respondSave(SaveOutcome.Unavailable("offline"))
+		val config = NativeConfig(endpoint, bundledPolicy = resource { it["expiresAt"] = JsonPrimitive(now + 100) },
+			consentCategories = ConsentCategory.entries)
+		val core = testKernel(config, store, clock, transport).also { it.bootstrap() }
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertTrue(core.isAllowed(ConsentCategory.MARKETING))
+		clock.advance(100)
+		assertTrue(core.isPolicyStale)
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+		val queued = store.readPending().single()
+		assertTrue(queued.isWithdrawal())
+		ConsentCategory.OPTIONAL.forEach { assertFalse(testKernel(config, store, clock, transport).also { k -> k.bootstrap() }.isAllowed(it)) }
+		transport.saveRequests.clear()
+		transport.respondSave(SaveOutcome.Delivered)
+		core.flushPending()
+		assertEquals(listOf(queued.body), transport.saveRequests.map { it.body })
+	}
+
+	@Test fun `a live no-match answer drops the earlier rule and its grants, as the web kernel does`() {
+		val transport = RecordingTransport().respondInit(liveResponse(resource()))
+		val core = testKernel(NativeConfig(endpoint, consentCategories = ConsentCategory.entries), C15tStore(InMemoryKeyValueStore()), FixedClock(now), transport)
+			.also { it.bootstrap() }
+		assertTrue(core.save(CommitIntent.All).ok)
+		assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
+		transport.respondInit(TransportOutcome.Success(buildJsonObject {
+			put("policyResolution", buildJsonObject { put("policy", JsonNull); put("status", "no-match"); put("version", 1) })
+		}, emptyMap()))
+		core.refresh()
+		assertEquals("no-match", core.snapshot().resolution.status)
+		assertFalse(core.snapshot().policyPending)
+		ConsentCategory.OPTIONAL.forEach { assertFalse(core.isAllowed(it)) }
+		assertTrue(core.snapshot().promptRequirement.acknowledge)
+	}
+
 	@Test fun `precedence is live then cached then bundled`() {
 		val clock = FixedClock(now)
 		val raw = resource()

@@ -35,7 +35,10 @@ import type {
 import {
 	embedPolicyResource,
 	androidPolicyDestination,
+	androidPolicyRulesDestination,
 	POLICY_RESOURCE_NAME,
+	POLICY_RULES_NAME,
+	writePolicyRules,
 } from './policy-resource';
 import {
 	assertUpdatesCannotOutrunTheBinary,
@@ -241,6 +244,44 @@ export const applyParamsOnConfig = function applyParamsOnConfig(
 					source,
 					params.backendURL,
 					androidPolicyDestination(cfg.modRequest.projectRoot)
+				);
+				return cfg;
+			},
+		]);
+	}
+
+	if (params.policyRules !== null) {
+		const rules = params.policyRules;
+		next = withXcodeProject(next, async (cfg) => {
+			if (cfg.modRequest.introspect) {
+				return cfg;
+			}
+			const name =
+				cfg.modRequest.projectName ??
+				iosConfig.XcodeUtils.getHackyProjectName(
+					cfg.modRequest.projectRoot,
+					cfg
+				);
+			await writePolicyRules(
+				join(cfg.modRequest.platformProjectRoot, name, POLICY_RULES_NAME),
+				rules
+			);
+			if (!cfg.modResults.hasFile(`${name}/${POLICY_RULES_NAME}`)) {
+				cfg.modResults = iosConfig.XcodeUtils.addResourceFileToGroup({
+					filepath: `${name}/${POLICY_RULES_NAME}`,
+					groupName: name,
+					isBuildFile: true,
+					project: cfg.modResults,
+				});
+			}
+			return cfg;
+		});
+		next = withDangerousMod(next, [
+			'android',
+			async (cfg) => {
+				await writePolicyRules(
+					androidPolicyRulesDestination(cfg.modRequest.projectRoot),
+					rules
 				);
 				return cfg;
 			},

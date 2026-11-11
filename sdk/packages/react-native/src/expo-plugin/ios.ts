@@ -14,7 +14,7 @@ import { IOS_IAB_PLIST_KEYS, IOS_PLIST_KEY } from './constants';
 import { C15tPluginError } from './errors';
 import { IOS_TRANSPORT_MODE } from './params';
 import type { ResolvedC15tParams } from './params';
-import { POLICY_RESOURCE_NAME } from './policy-resource';
+import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
 
 const minimumDeploymentTarget = (
 	value: string | undefined,
@@ -125,6 +125,9 @@ export const buildInfoPlistEntries = function buildInfoPlistEntries(
 
 	if (params.policyResource !== null) {
 		entries[IOS_PLIST_KEY.policyResource] = POLICY_RESOURCE_NAME;
+	}
+	if (params.policyRules !== null) {
+		entries[IOS_PLIST_KEY.policyRules] = POLICY_RULES_NAME;
 	}
 	if (params.backendURL !== null) {
 		entries[IOS_PLIST_KEY.backendURL] = params.backendURL;
@@ -272,6 +275,12 @@ export const applyInfoPlist = function applyInfoPlist(
 		next[IOS_PLIST_KEY.policyResource] === POLICY_RESOURCE_NAME
 	) {
 		Reflect.deleteProperty(next, IOS_PLIST_KEY.policyResource);
+	}
+	if (
+		params.policyRules === null &&
+		next[IOS_PLIST_KEY.policyRules] === POLICY_RULES_NAME
+	) {
+		Reflect.deleteProperty(next, IOS_PLIST_KEY.policyRules);
 	}
 
 	const att = params.appTrackingTransparency;

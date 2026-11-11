@@ -96,6 +96,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         vendors: [Int]? = nil,
         gpc: Bool? = nil,
         bundledPolicyResource: String? = nil,
+        policyRulesResource: String? = nil,
         iab: IABConfiguration? = nil
     ) {
         self.autoBootstrap = autoBootstrap
@@ -110,6 +111,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         self.vendors = vendors
         self.gpc = gpc
         self.bundledPolicyResource = bundledPolicyResource
+        self.policyRulesResource = policyRulesResource
         self.iab = iab
     }
 
@@ -150,6 +152,9 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     public var vendors: [Int]?
     /// Filename of an endpoint-bound policy export in the main app bundle.
     public var bundledPolicyResource: String?
+    /// Filename of the in-code policy, `{"rules": [...]}`, in the main app bundle. Read
+    /// only in offline mode, where it is the only policy source.
+    public var policyRulesResource: String?
     /// The host app's Global Privacy Control signal, or `nil` when it has none.
     public var gpc: Bool?
     /// Registered CMP identity and publisher settings, or `nil` to leave IAB TCF off.
@@ -181,6 +186,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let vendors = "com.c15t.vendors"
         public static let forceGPC = "com.c15t.forceGPC"
         public static let bundledPolicyResource = "com.c15t.policy.resource"
+        /// Filename of the in-code policy rules, read in offline mode.
+        public static let policyRulesResource = "com.c15t.policy.rules"
         /// IAB Europe CMP ID, 2 to 4095. Required when any `com.c15t.iab.*` key is present.
         public static let iabCmpId = "com.c15t.iab.cmpId"
         /// Your CMP version, 0 to 4095. Required with ``iabCmpId``.
@@ -305,6 +312,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             vendors: declaredVendors(infoPlist[InfoPlistKey.vendors]),
             gpc: infoPlist[InfoPlistKey.forceGPC] as? Bool,
             bundledPolicyResource: infoPlist[InfoPlistKey.bundledPolicyResource] as? String,
+            policyRulesResource: infoPlist[InfoPlistKey.policyRulesResource] as? String,
             iab: (try? declaredIAB(in: infoPlist).get()).flatMap { $0 }.map { declared in
                 // The backend serves disclosures in `language`; the TC String and the screens
                 // declare the same one. Codes TCF can't carry keep the default EN.
@@ -479,7 +487,23 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         try? appleConfiguration(fileStoreDirectory: nil).makeTransport()
     }
 
+    /// The in-code policy the app declared, or why it was refused. `nil` when none is declared.
+    var declaredPolicy: Result<ConsentPolicy, Error>? {
+        guard let name = policyRulesResource else { return nil }
+        let result = Result<ConsentPolicy, Error> {
+            guard let url = Bundle.main.url(forResource: name, withExtension: nil) else {
+                throw ConsentPolicyError("\(InfoPlistKey.policyRulesResource) names \(name), which is not in the app bundle")
+            }
+            return try ConsentPolicy(json: Data(contentsOf: url))
+        }
+        if case let .failure(error) = result {
+            NSLog("%@", "c15t: \(InfoPlistKey.policyRulesResource) refused: \(error). c15t reports policy-invalid and denies optional categories.")
+        }
+        return result
+    }
+
     fileprivate func appleConfiguration(fileStoreDirectory: URL?) -> C15tAppleConfiguration {
+        let declared = declaredPolicy
         let transport: C15tAppleConfiguration.Transport
         switch transportMode {
         case .disabled: transport = .disabled
@@ -494,6 +518,11 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
             bundledPolicy: bundledPolicyResource.flatMap { name -> BundledPolicyResource? in
                 guard let endpoint = backendURL?.absoluteString, let url = Bundle.main.url(forResource: name, withExtension: nil) else { return nil }
                 return BundledPolicyResource(url: url, endpoint: endpoint)
+            },
+            policy: try? declared?.get(),
+            policyError: declared.flatMap { result in
+                if case let .failure(error) = result { return String(describing: error) }
+                return nil
             },
             iab: iab
         )

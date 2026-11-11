@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { applyParamsOnConfig } from '../with-c15t';
 import {
 	FIXTURE_DIR,
+	OFFLINE,
 	PREBUILD_ARGV,
 	applyToFixture,
 	fixtureConfig,
@@ -210,7 +211,7 @@ describe('App Tracking Transparency', () => {
 
 describe('transport modes', () => {
 	it('embeds no backend and no tracking for offline', async () => {
-		const config = applyToFixture({ mode: 'offline' });
+		const config = applyToFixture(OFFLINE);
 		const plist = (await runInfoPlist(config)).ios?.infoPlist;
 		const manifest = (
 			await runMod(config, 'android', 'manifest', await readFixtureManifest())
@@ -220,6 +221,7 @@ describe('transport modes', () => {
 			...GOOGLE_CONSENT_PLIST_DEFAULTS,
 			ITSAppUsesNonExemptEncryption: false,
 			'com.c15t.backend.mode': 'offline',
+			'com.c15t.policy.rules': 'c15t-policy-rules.json',
 		});
 		expect(config.extra?.c15t).toMatchObject({
 			backendURL: null,
@@ -227,9 +229,9 @@ describe('transport modes', () => {
 		});
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
-			...GOOGLE_CONSENT_META_DATA_NAMES,
-
 			'com.c15t.MODE',
+			'com.c15t.POLICY_RULES',
+			...GOOGLE_CONSENT_META_DATA_NAMES,
 		]);
 	});
 

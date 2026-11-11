@@ -105,6 +105,7 @@ Conventions not enforced by tooling (hold new code to these; older code has exce
 | `native/core-swift/Sources/C15tConsentUI/generated/{iab-copy,consent-copy}.generated.swift`, `native/core-android/c15t-consent-ui/.../generated/{iab-copy,consent-copy}.kt` and `.../resources/.../generated/{iab-copy,consent-copy}.json` | `bun run generate:native-iab-copy` | `iab` copy and the category-mode keys in `packages/translations`, plus `src/native-app-labels.ts` |
 | `native/protocol/iab/banner-summary-*.json` | `bun scripts/generate-iab-banner-summary-fixtures.ts` | web `resolveIABBannerSummary` in `packages/core` |
 | `native/protocol/bridge/payloads.json` | `bun run --cwd packages/react-native generate:bridge-schema` | `BRIDGE_PAYLOADS` in `packages/react-native/src/protocol/bridge-schema.ts` |
+| `native/protocol/local-policy/parity.json` | `bun scripts/generate-local-policy-fixtures.ts` | `normalizePolicyRule` and `resolvePolicyRules` in `packages/schema` |
 | `dist/`, `dist-types/`, `coverage/` | builds/tests | — |
 | `.docs/` | `bun run setup:docs` (private docs-site template; maintainers only) | — |
 

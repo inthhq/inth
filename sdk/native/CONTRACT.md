@@ -1569,6 +1569,7 @@ Android through `C15tAndroid` and `C15tReactNativeBootstrap`:
     iOS Info.plist                      Android <meta-data>
     com.c15t.backend.url                com.c15t.BACKEND_URL
     com.c15t.backend.mode               com.c15t.MODE (offline only)
+    com.c15t.policy.rules               com.c15t.POLICY_RULES
     com.c15t.backend.domain             com.c15t.BACKEND_DOMAIN
     com.c15t.forceGPC                   com.c15t.FORCE_GPC
     com.c15t.backend.initUrl            com.c15t.BACKEND_INIT_URL
@@ -1834,7 +1835,31 @@ Configuration picks one of two modes, and they do not mix.
   uses `OfflineTransport` with `NativeConfig.backendUrl = null`, and the
   Android manifest key `com.c15t.MODE=offline` selects it. A bundled manifest
   is refused: Kotlin's `NativeConfig` throws, and the Expo plugin refuses
-  `policyResource` and `iab` with `mode: 'offline'`.
+  `policyResource` and `iab` with `mode: 'offline'`. The only policy source is
+  `ConsentPolicy`, rules in the backend's `PolicyRule` names (`CoreConfig.policy`,
+  `NativeConfig.policy`, Expo `policy`). Both cores normalize rules exactly as
+  `normalizePolicyRule` does and match them as `resolvePolicyRules` does;
+  `native/protocol/local-policy/parity.json`, generated from `@c15t/schema`,
+  holds the shared cases: a matrix of every `PolicyRule` field against every
+  kind of value, sorted by the backend's own `inspectPolicyRules` into
+  policies all three validators (Expo prebuild and both cores) must refuse and
+  policies they must accept and normalize identically. Matching returns the
+  backend's three outcomes: a location no rule covers resolves to `no-match`
+  (the safe opt-in fallback) or `failed` with `insufficient-inputs`, never to
+  silence, for in-code policies and bundled manifests alike. An explicit
+  `no-match` or `unconfigured` answer replaces the rule in force on both cores,
+  as `resolveEffectivePolicy` does on the web; only a failed init keeps it. An
+  in-code answer is local and final, so no init will revise it: a location the
+  in-code policy cannot answer without a region drops the rule in force, sets
+  `policyPending` and denies optional gates on both cores. Stored choices stay,
+  and apply again when the policy answers. The `transitions` cases pin this. Validity days may be fractional and round to whole
+  milliseconds. Fingerprints hash the backend's fingerprint inputs on the device
+  and never leave it; choice and notice validity feed only their own prompt. A
+  declared policy a core refuses is reported as `policy-invalid` with resolution
+  reason `invalid-configuration`, and fails closed: a policy cached by an earlier
+  build stops applying and optional gates are denied, while stored choices stay
+  for a later build with a usable policy. Bootstrap and `reset()` both report it. The `iab` model is refused without a backend. iOS reads the
+  rules file from `com.c15t.policy.rules`, Android from `com.c15t.POLICY_RULES`.
 
 Native bootstrap can resolve an endpoint-bound resource exported from hosted
 `/manifest` before JavaScript starts. See

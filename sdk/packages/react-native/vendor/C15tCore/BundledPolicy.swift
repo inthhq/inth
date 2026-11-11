@@ -81,18 +81,34 @@ public struct BundledPolicyResource: Sendable {
             conservative.policy.prompt == .choice,
             packs[unknown.0]["policyResolution"]?["policy"]?["preselectedCategories"]?.arrayValue?
                 .isEmpty == true,
-            let selected = Self.match(packs, country: overrides.country, region: overrides.region),
-            var wire = packs[selected.0]["policyResolution"]?.objectValue,
-            let translations = packs[selected.0]["translations"]?.objectValue
+            true
         else { return nil }
-        wire["matchedBy"] = .string(selected.1)
-        let language =
-            overrides.language.lowercased().split(separator: "-").first.map(String.init)
-            ?? fallbackLanguage
-        guard let copy = translations[language] ?? translations[fallbackLanguage],
-            let copyLanguage = copy["language"]?.stringValue,
-            let text = copy["translations"]?.objectValue
-        else { return nil }
+        // An unmatched location gets the backend's own outcome, not silence: `no-match`
+        // runs the safe fallback. `insufficient-inputs` applies no bundle and stays
+        // pending, as the Kotlin core does.
+        let outcome = Self.matchOutcome(packs, country: overrides.country, region: overrides.region)
+        let policyResolution: JSONValue
+        var bundleTranslations: TranslationsBundle?
+        switch outcome {
+        case .insufficientInputs:
+            return nil
+        case .noMatch:
+            policyResolution = Self.unmatchedWire(outcome)
+        case let .matched(index, matchedBy):
+            guard var wire = packs[index]["policyResolution"]?.objectValue,
+                let translations = packs[index]["translations"]?.objectValue
+            else { return nil }
+            wire["matchedBy"] = .string(matchedBy)
+            policyResolution = .object(wire)
+            let language =
+                overrides.language.lowercased().split(separator: "-").first.map(String.init)
+                ?? fallbackLanguage
+            guard let copy = translations[language] ?? translations[fallbackLanguage],
+                let copyLanguage = copy["language"]?.stringValue,
+                let text = copy["translations"]?.objectValue
+            else { return nil }
+            bundleTranslations = TranslationsBundle(language: copyLanguage, translations: .object(text))
+        }
         let disclosure = value["disclosures"]
         let gvl = GlobalVendorList.read(from: disclosure?["gvl"]?["data"])
         let providers = AdditionalConsent.providers(disclosure?["atp"]?["providers"])
@@ -101,20 +117,45 @@ public struct BundledPolicyResource: Sendable {
         return Selection(
             authority: authority,
             response: InitResponse(
-                policyResolution: .object(wire),
+                policyResolution: policyResolution,
                 location: LocationContext(
                     countryCode: overrides.country, regionCode: overrides.region),
-                translations: TranslationsBundle(
-                    language: copyLanguage, translations: .object(text)),
+                translations: bundleTranslations,
                 gvl: gvl, adTechProviders: providers),
             gvlFetchedAt: gvlAt.flatMap { $0 >= 0 && $0 <= issued ? $0 : nil },
             atpFetchedAt: atpAt.flatMap { $0 >= 0 && $0 <= issued ? $0 : nil })
     }
 
-    // Mirrors schema matchPolicyRules. Locale is deliberately absent from legal matching.
-    private static func match(_ packs: [JSONValue], country: String?, region: String?) -> (
-        Int, String
-    )? {
+    /// What `matchPolicyRules` in `@c15t/schema` answers for a location.
+    enum MatchOutcome: Equatable {
+        case matched(index: Int, matchedBy: String)
+        /// A known location no rule covers. The core runs the safe fallback.
+        case noMatch
+        /// The location needs a region, or is unknown with no rule for it.
+        case insufficientInputs
+    }
+
+    /// The wire `writePolicyResolutionWire` produces for an unmatched outcome.
+    static func unmatchedWire(_ outcome: MatchOutcome) -> JSONValue {
+        if outcome == .insufficientInputs {
+            return .object([
+                "policy": .null, "reason": .string("insufficient-inputs"),
+                "status": .string("failed"), "version": .integer(1),
+            ])
+        }
+        return .object(["policy": .null, "status": .string("no-match"), "version": .integer(1)])
+    }
+
+    static func match(_ packs: [JSONValue], country: String?, region: String?) -> (Int, String)? {
+        if case let .matched(index, matchedBy) = matchOutcome(packs, country: country, region: region) {
+            return (index, matchedBy)
+        }
+        return nil
+    }
+
+    // Mirrors schema matchPolicyRules, outcomes included. Locale is deliberately absent
+    // from legal matching.
+    static func matchOutcome(_ packs: [JSONValue], country: String?, region: String?) -> MatchOutcome {
         func countryCode(_ value: String?) -> String? {
             value?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased().nilIfEmpty
         }
@@ -139,25 +180,30 @@ public struct BundledPolicyResource: Sendable {
                     } == true
                 })
             {
-                return (index, "region")
+                return .matched(index: index, matchedBy: "region")
             }
-            if let index = first({ hasCountry($0, "countries") }) { return (index, "country") }
+            if let index = first({ hasCountry($0, "countries") }) {
+                return .matched(index: index, matchedBy: "country")
+            }
             if region == nil {
                 if let index = first({ hasCountry($0, "regionFallbacks") }) {
-                    return (index, "fallback")
+                    return .matched(index: index, matchedBy: "fallback")
                 }
                 if first({
                     $0["regions"]?.arrayValue?.contains {
                         countryCode($0["country"]?.stringValue) == country
                     } == true
                 }) != nil {
-                    return fallback.map { ($0, "fallback") }
+                    return fallback.map { .matched(index: $0, matchedBy: "fallback") } ?? .insufficientInputs
                 }
             }
         } else if let fallback {
-            return (fallback, "fallback")
+            return .matched(index: fallback, matchedBy: "fallback")
         }
-        return first { $0["isDefault"]?.boolValue == true }.map { ($0, "default") }
+        if let index = first({ $0["isDefault"]?.boolValue == true }) {
+            return .matched(index: index, matchedBy: "default")
+        }
+        return country == nil ? .insufficientInputs : .noMatch
     }
 }
 

@@ -206,7 +206,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 					assert.equal(typeof plugin.default, 'function');
 					const config = plugin.applyParamsOnConfig(
 						{ name: 'Packed consumer', slug: 'packed-consumer' },
-						{ mode: 'offline' },
+						{ mode: 'offline', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } },
 						{ argv: ['node', 'expo', 'config'], env: {}, projectRoot: process.cwd() }
 					);
 					assert.equal(config.extra.c15t.mode, 'offline');
@@ -225,7 +225,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			export const gate: typeof useConsent = useConsent;
 			export type Snapshot = ConsentSnapshot;
 			export const plugin: typeof withC15t = withC15t;
-			export const pluginProps: C15tPluginProps = { mode: 'offline' };
+			export const pluginProps: C15tPluginProps = { mode: 'offline', policy: { rules: [{ id: 'everywhere', match: { fallback: true, isDefault: true }, model: 'opt-in', prompt: 'choice' }] } };
 			export const firebase: typeof connectFirebaseAnalytics = connectFirebaseAnalytics;
 			export const posthog: typeof connectPostHog = connectPostHog;
 			export const amplitude: typeof connectAmplitude = connectAmplitude;

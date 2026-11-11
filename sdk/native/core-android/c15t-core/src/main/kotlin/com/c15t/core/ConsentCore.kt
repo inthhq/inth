@@ -482,8 +482,10 @@ class ConsentCore(
 			}
 		}
 		announcePolicyStale()
+		// In no-backend mode the in-code policy answers before the first read, once.
+		if (inCodePolicy) runInit()
 		background.execute { flushPending() }
-		background.execute { runInit() }
+		if (!inCodePolicy) background.execute { runInit() }
 	}
 
 	/** Whether a bundled manifest may replace the policy in force after hydration. */
@@ -1457,10 +1459,10 @@ class ConsentCore(
 		storedSnapshotFound = false
 		mutation.release()
 		// The cleared baseline goes out first, at revision + 1, as on iOS. The bundled
-		// manifest then publishes on top of it.
+		// manifest or the in-code policy then publishes on top of it.
 		notifySnapshot()
 		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { if (applyInit(it.mapped, config.detectedGpc, false, it).first) notifySnapshot() } }
-		background.execute { runInit() }
+		if (inCodePolicy) runInit() else background.execute { runInit() }
 	}
 
 	// -- internals ------------------------------------------------------------
@@ -1540,7 +1542,29 @@ class ConsentCore(
 		)
 	}
 
+	/** No-backend mode with an in-code policy, usable or refused. Init never uses the transport. */
+	private val inCodePolicy = config.policy != null || config.policyError != null
+
 	private fun runInit() {
+		if (inCodePolicy) {
+			// A refused policy is reported like a refused /init, not as a quiet deny-all start.
+			val mapped = config.policy?.resolve(state.get().overrides) ?: config.policyError?.let { reason ->
+				// Fail closed: a policy this build refused cannot keep a cached one, or its
+				// grants, in force.
+				com.c15t.core.transport.MappedInit(
+					resolution = com.c15t.core.model.PolicyResolution.failed(com.c15t.core.model.PolicyResolution.REASON_INVALID_CONFIGURATION),
+					evaluationPolicy = null,
+					policyPending = true,
+					policyUnreadable = true,
+					isFinal = true,
+					error = KernelError(POLICY_INVALID, "The in-code policy was refused: $reason"),
+				)
+			} ?: return
+			val (changed, emitted) = applyInit(mapped, detectedGpc, config.policy != null)
+			emitted?.let(::emitError)
+			if (changed) notifySnapshot()
+			return
+		}
 		var detected = detectedGpc
 		val current = state.get()
 		val outcome = try {
@@ -1584,10 +1608,16 @@ class ConsentCore(
 			// `core-swift` drops its resolved policy in the same branch -- permissions
 			// derived from a wire this build cannot re-read are permissions it can no
 			// longer justify.
-			evaluationPolicy = if (mapped.policyUnreadable) {
-				null
-			} else {
-				mapped.evaluationPolicy ?: evaluationPolicy
+			evaluationPolicy = when {
+				mapped.policyUnreadable -> null
+				// A local answer is the last word: no `/init` is coming to correct it.
+				mapped.isFinal -> mapped.evaluationPolicy
+				// An explicit `no-match` or `unconfigured` answer puts the safe fallback in force,
+				// as `resolveEffectivePolicy` in `@c15t/core` and core-swift's wire reader do. Only
+				// a failed init keeps the last policy.
+				mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_NO_MATCH ||
+					mapped.resolution.status == com.c15t.core.model.PolicyResolution.STATUS_UNCONFIGURED -> null
+				else -> mapped.evaluationPolicy ?: evaluationPolicy
 			}
 			// Latched, exactly like the policy two lines above, and for the reason on
 			// [vendorList]: once a purpose or vendor name has been drawn from a list, a `/init` that
@@ -1633,7 +1663,7 @@ class ConsentCore(
 			// lands on PENDING rather than DENIED deliberately: DENIED reads as the
 			// subject's own refusal and invites a host to stop listening, which would
 			// make the category unrecoverable when the next resolution parses.
-			val superseded = mapped.policyPending && !base.policyPending
+			val superseded = mapped.policyPending && !base.policyPending && !mapped.isFinal
 			published = PolicyEvaluator.evaluate(
 				snapshot = base.copy(
 					// The latch lands on the snapshot's own field, which is the copy the bridge
@@ -1642,7 +1672,7 @@ class ConsentCore(
 					iab = latchedVendorList?.let(::KernelIabState),
 					resolution = if (superseded) base.resolution else mapped.resolution,
 					policyPending = mapped.policyPending &&
-						(base.policyPending || mapped.policyUnreadable),
+						(base.policyPending || mapped.policyUnreadable || mapped.isFinal),
 					// A failed init leaves the local state unready: nothing resolved, so
 					// gates keep denying. Only a definitive answer makes it ready.
 					ready = if (mapped.policyPending) base.ready else true,
@@ -2302,6 +2332,9 @@ class ConsentCore(
 	private companion object {
 		/** A retained manifest that belongs to another backend URL or was issued in the future. */
 		const val BUNDLED_POLICY_UNUSABLE = "bundled-policy-unusable"
+
+		/** The app declared an in-code policy and the core could not use it. */
+		const val POLICY_INVALID = "policy-invalid"
 
 		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
 			Thread(runnable, "c15t-deadline").apply { isDaemon = true }

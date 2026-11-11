@@ -28,6 +28,15 @@ public struct CoreConfig: @unchecked Sendable {
     public let store: any ConsentStore
     /// Optional build resource. It never replaces a usable stored policy.
     public let bundledPolicy: BundledPolicyResource?
+    /// The policy in source control, the only policy source in no-backend mode. Use it
+    /// with ``OfflineTransport`` or no transport: the two modes do not mix.
+    public let policy: ConsentPolicy?
+    /// Why the app's declared in-code policy was refused, when an adapter read one and
+    /// could not use it. The core then reports `policy-invalid` in the snapshot and on
+    /// the event stream instead of starting as if no policy had been declared.
+    public let policyError: String?
+    /// No-backend mode with an in-code policy, usable or refused. Init never uses the transport.
+    var usesInCodePolicy: Bool { policy != nil || policyError != nil }
     var policyEndpoint: String? {
         transport?.policyEndpoint?.absoluteString ?? bundledPolicy?.endpoint
     }
@@ -98,6 +107,8 @@ public struct CoreConfig: @unchecked Sendable {
     public init(
         store: any ConsentStore = InMemoryStore(),
         bundledPolicy: BundledPolicyResource? = nil,
+        policy: ConsentPolicy? = nil,
+        policyError: String? = nil,
         transport: (any C15tTransport)? = nil,
         consentCategories: [ConsentCategory]? = nil,
         vendors: [Int]? = nil,
@@ -112,7 +123,12 @@ public struct CoreConfig: @unchecked Sendable {
         storageBus: (any TcStorageBusWriting)? = nil
     ) {
         self.store = store
+        precondition(
+            policy == nil && policyError == nil || bundledPolicy == nil && transport?.policyEndpoint == nil,
+            "CoreConfig.policy is no-backend mode and does not mix with a bundled manifest or a backend transport")
         self.bundledPolicy = bundledPolicy
+        self.policy = policy
+        self.policyError = policyError
         self.transport = transport
         self.consentCategories = consentCategories
         self.vendors = vendors
@@ -394,13 +410,71 @@ public final class ConsentCore: @unchecked Sendable {
             shouldAdoptBundle(selection.authority, config: config) {
             applyPolicyUpdate(selection.response, bundle: selection)
         }
+        // In no-backend mode the in-code policy answers before the first read, once:
+        // there is no init to schedule after it.
+        if let policy = config.policy {
+            applyInCodePolicy(policy, overrides: config.overrides)
+        } else if let reason = config.policyError {
+            reportRefusedPolicy(reason)
+        }
         if let stale = lock.withLock({ takeStaleAnnouncementLocked() }) { events.emit(.policyStale(stale)) }
         events.emit(.initialized)
 
         if config.flushPendingOnBootstrap {
             schedule { await self.requestDeliveryPass(ownSend: nil) }
         }
-        scheduleInit(attempt: 1)
+        if !config.usesInCodePolicy { scheduleInit(attempt: 1) }
+    }
+
+    /// Report an in-code policy the host declared and the adapter could not use, the way
+    /// a refused `/init` is reported, rather than as a quiet deny-all start.
+    private func reportRefusedPolicy(_ reason: String) {
+        failClosed(CoreErrorInfo(code: "policy-invalid", message: "The in-code policy was refused: \(reason)"))
+    }
+
+    /// Apply the in-code policy's answer for `overrides`. The answer is local and final:
+    /// no `/init` will revise it. So a location the policy cannot answer without a region
+    /// fails closed instead of running the safe fallback or keeping the last rule, and the
+    /// saved choice comes back once the policy answers again.
+    private func applyInCodePolicy(_ policy: ConsentPolicy, overrides: ConsentOverrides) {
+        guard policy.outcome(country: overrides.country, region: overrides.region) == .insufficientInputs else {
+            applyPolicyUpdate(policy.resolve(overrides: overrides))
+            return
+        }
+        failClosed(
+            CoreErrorInfo(
+                code: "insufficient-inputs",
+                message: "The in-code policy cannot answer this location without a region; optional consent stays denied"),
+            resolution: PolicyResolutionInfo(
+                status: .failed, policyId: nil, fingerprint: nil, reason: "insufficient-inputs"),
+            location: LocationContext(countryCode: overrides.country, regionCode: overrides.region))
+    }
+
+    /// Drop the policy in force and deny every optional category. Stored choices stay.
+    private func failClosed(
+        _ info: CoreErrorInfo, resolution: PolicyResolutionInfo? = nil, location: LocationContext? = nil
+    ) {
+        let mutation = mutationGate.acquire()
+        defer { mutation.release() }
+        lock.withLock {
+            // Fail closed: a policy that cannot answer cannot keep a cached one, or its
+            // grants, in force. Stored choices stay, for when a usable policy answers.
+            resolvedPolicy = nil
+            policyWire = nil
+            currentSnapshot = currentSnapshot.byApplying { draft in
+                if let resolution { draft.resolution = resolution }
+                if let location { draft.location = location }
+                draft.policyPending = true
+                draft.effectivePermissions = ConsentSnapshot.failClosedPermissions
+                draft.restrictions = [:]
+                draft.promptRequirement = .none
+                draft.activeUI = .none
+                draft.nextDeadline = nil
+                draft.error = info
+            }
+        }
+        publish(persist: true, mutation: mutation)
+        events.emit(.error(info))
     }
 
     /// Whether ``bootstrap(_:)`` has taken effect.
@@ -2041,6 +2115,15 @@ public final class ConsentCore: @unchecked Sendable {
 
     private func runInit(attempt: Int) async {
         guard let config = lock.withLock({ self.config }) else { return }
+        if config.usesInCodePolicy {
+            if let policy = config.policy {
+                applyInCodePolicy(policy, overrides: lock.withLock { overrides })
+            } else if let reason = config.policyError {
+                // A reset clears the snapshot error, so a refused policy is reported again.
+                reportRefusedPolicy(reason)
+            }
+            return
+        }
         guard let transport = config.transport else { return }
         let context = lock.withLock {
             InitContext(

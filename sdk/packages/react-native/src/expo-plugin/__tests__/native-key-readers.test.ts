@@ -28,7 +28,13 @@ import { AndroidConfig } from '@expo/config-plugins';
 import { expect, it } from 'vitest';
 
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
-import { FIXTURE_DIR, applyToFixture, runInfoPlist, runMod } from './helpers';
+import {
+	FIXTURE_DIR,
+	OFFLINE,
+	applyToFixture,
+	runInfoPlist,
+	runMod,
+} from './helpers';
 
 const PACKAGE_ROOT = resolve(
 	dirname(fileURLToPath(import.meta.url)),
@@ -136,13 +142,21 @@ const writtenKeys = async function writtenKeys(): Promise<{
 }> {
 	const config = applyToFixture(EVERY_KEY_PROPS);
 
-	const plist = (await runInfoPlist(config)).ios?.infoPlist ?? {};
-	// Filtered by prefix only: a key written as a literal somewhere off the tables
-	// is exactly what the reader check exists to catch, so the tables must not be
-	// allowed to filter it out of view here.
-	const ios = Object.keys(plist)
-		.filter((key) => key.startsWith(C15T_KEY_PREFIX))
-		.sort();
+	const iosKeys = async (
+		applied: ReturnType<typeof applyToFixture>
+	): Promise<string[]> => {
+		const plist = (await runInfoPlist(applied)).ios?.infoPlist ?? {};
+		// Filtered by prefix only: a key written as a literal somewhere off the
+		// tables is exactly what the reader check exists to catch, so the tables
+		// must not be allowed to filter it out of view here.
+		return Object.keys(plist).filter((key) => key.startsWith(C15T_KEY_PREFIX));
+	};
+	// No-backend mode writes the keys a backend build cannot: the two modes do
+	// not mix, so no single configuration writes every key.
+	const offline = applyToFixture(OFFLINE);
+	const ios = [
+		...new Set([...(await iosKeys(config)), ...(await iosKeys(offline))]),
+	].sort();
 
 	const androidKeys = async (
 		applied: ReturnType<typeof applyToFixture>
@@ -162,12 +176,10 @@ const writtenKeys = async function writtenKeys(): Promise<{
 			.map((entry) => entry.$['android:name'] ?? '')
 			.filter((name) => name.startsWith(C15T_KEY_PREFIX));
 	};
-	// No-backend mode writes the one key a backend build cannot: the two modes
-	// do not mix, so no single configuration writes every Android key.
 	const android = [
 		...new Set([
 			...(await androidKeys(config)),
-			...(await androidKeys(applyToFixture({ mode: 'offline' }))),
+			...(await androidKeys(offline)),
 		]),
 	];
 
