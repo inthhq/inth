@@ -118,8 +118,10 @@ export interface FakeNativeModule extends NativeC15tTurboModule {
 	resetCalls: number;
 	/** Times `getTrackingAuthorization()` was called. */
 	trackingReadCalls: number;
-	/** Times `requestTrackingAuthorization()` was called. */
+	/** Times `requestTrackingAuthorization()` or its options form was called. */
 	trackingRequestCalls: number;
+	/** Options passed to `requestTrackingAuthorizationWithOptions`, in order; `null` for the plain call. */
+	trackingRequestOptions: (string | null)[];
 	/** Serve a new snapshot and emit the `snapshot` event for it. */
 	pushSnapshot: (snapshot: ConsentSnapshot) => void;
 	/** Serve unreadable text as the next snapshot payload. */
@@ -258,6 +260,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		removeListeners: vi.fn(),
 		requestTrackingAuthorization: vi.fn(() => {
 			fake.trackingRequestCalls += 1;
+			fake.trackingRequestOptions.push(null);
 
 			const reply = trackingRequestQueue.shift() ?? trackingRequestReply;
 
@@ -280,6 +283,14 @@ export const createFakeNativeModule = function createFakeNativeModule(
 			fake.trackingRequestPayloads.push(payload);
 
 			return Promise.resolve(payload);
+		}),
+		// The options form answers the same way, through whatever the test installed as
+		// the plain method, and records the options it was given.
+		requestTrackingAuthorizationWithOptions: vi.fn((requestOptions: string) => {
+			const answer = fake.requestTrackingAuthorization();
+			fake.trackingRequestOptions[fake.trackingRequestOptions.length - 1] =
+				requestOptions;
+			return answer;
 		}),
 		reset: vi.fn(() => {
 			fake.resetCalls += 1;
@@ -332,6 +343,7 @@ export const createFakeNativeModule = function createFakeNativeModule(
 		snapshotCalls: 0,
 		trackingReadCalls: 0,
 		trackingRequestCalls: 0,
+		trackingRequestOptions: [] as (string | null)[],
 		trackingRequestPayloads: [] as string[],
 	};
 

@@ -131,6 +131,24 @@ export const isRepromptDue = function isRepromptDue(
 };
 
 const reprompts = new WeakMap<ConsentClient, ConsentTrackingReprompt>();
+/** Whether something will handle Apple's Additional Information button, per client. */
+const informationHandled = new WeakMap<ConsentClient, boolean>();
+
+/**
+ * Record whether the outermost provider can handle Additional Information:
+ * the stock native screens can open, or the app passed
+ * `onTrackingAdditionalInformation`. Without either, Apple shows no button.
+ *
+ * @param client - The provider's client.
+ * @param handled - Whether a tap would open something.
+ */
+export const setTrackingInformationHandled =
+	function setTrackingInformationHandled(
+		client: ConsentClient,
+		handled: boolean
+	): void {
+		informationHandled.set(client, handled);
+	};
 const repromptCalled = new WeakSet<ConsentClient>();
 const afterInformation = new WeakSet<ConsentClient>();
 
@@ -170,8 +188,13 @@ export const trackingInputs = function trackingInputs(
 ): TrackingInputs {
 	const snapshot = client.getSnapshot();
 	let marketing = client.decision('marketing');
+	// A stored refusal, and a GPC or explicit-denial restriction on marketing,
+	// both count: a US opt-out policy with GPC owes no prompt but was opted out of.
+	const restrictions = snapshot.restrictions.marketing ?? [];
 	let marketingRefused =
-		snapshot.explicitChoice?.categories.marketing?.value === false;
+		snapshot.explicitChoice?.categories.marketing?.value === false ||
+		restrictions.includes('gpc') ||
+		restrictions.includes('explicit-denial');
 	// TCF records the legal consent and ATT is Apple's own gate: tracking needs
 	// both, so under an IAB policy the TC String has to grant marketing too.
 	if (snapshot.model === 'iab') {
@@ -311,7 +334,9 @@ const askApple = function askApple(
 	if (request === undefined) {
 		request = (async (): Promise<TrackingRequestPayload> => {
 			try {
-				return await client.requestTracking();
+				return await client.requestTracking({
+					additionalInformation: informationHandled.get(client) === true,
+				});
 			} finally {
 				requests.delete(client);
 			}
@@ -406,6 +431,12 @@ export const requestTrackingBeforeConsent =
 		}
 		if (result !== 'skipped') {
 			beforeConsentDone.add(client);
+		}
+		// Apple paused on Additional Information before the prompt: the prompt
+		// about to open is those controls, and closing it applies the
+		// after-consent rule, so Apple is asked again only if marketing is granted.
+		if (result === 'paused') {
+			afterInformation.add(client);
 		}
 		return true;
 	};

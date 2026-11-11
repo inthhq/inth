@@ -46,6 +46,26 @@ final class ExpandedRequestDispatchTests: XCTestCase {
         return manager
     }
 
+    /// With no handler, the action reaches Apple as a nil block, so its sheet shows no button.
+    func testNoHandlerPassesANilAction() throws {
+        let name = "C15tTestNilActionManager\(UUID().uuidString.replacingOccurrences(of: "-", with: ""))"
+        let manager: AnyClass = try XCTUnwrap(objc_allocateClassPair(NSObject.self, name, 0)) as AnyClass
+        let recorder = Recorder()
+        let request: @convention(block) (AnyObject, ObjCBool, Action?, Completion) -> Void = { _, _, action, completion in
+            recorder.events.append(action == nil ? "no-action" : "action")
+            completion(C15tTrackingPlatformStatus.denied.rawValue)
+        }
+        XCTAssertTrue(class_addMethod(try XCTUnwrap(object_getClass(manager)), C15tTracking.expandedRequestSelector,
+                                      imp_implementationWithBlock(request), "v@:B@?@?"))
+        objc_registerClassPair(manager)
+        let done = expectation(description: "completion")
+        XCTAssertTrue(C15tTracking.requestExpandedPrompt(
+            on: manager, preferExpandedInterface: true, additionalInformationSelected: nil,
+            completion: { _ in done.fulfill() }))
+        wait(for: [done], timeout: 2)
+        XCTAssertEqual(recorder.events, ["no-action"])
+    }
+
     func testAMethodWithTheWrongShapeIsNotCalled() throws {
         let recorder = Recorder()
         let manager = try makeWrongArityManager(recorder)

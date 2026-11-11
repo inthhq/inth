@@ -134,7 +134,7 @@ public struct C15tModuleHandler {
     /// caller is told, in the same breath, that nothing was asked.
     public let trackingExpandedPrompt: @Sendable (
         _ preferExpandedInterface: Bool,
-        _ additionalInformationSelected: @escaping () -> Void,
+        _ additionalInformationSelected: (() -> Void)?,
         _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool
 
@@ -152,7 +152,7 @@ public struct C15tModuleHandler {
         trackingExpandedInterfaceAvailable: @escaping @Sendable () -> Bool = { C15tTracking.expandedInterfaceAvailable() },
         trackingExpandedPrompt: @escaping @Sendable (
             _ preferExpandedInterface: Bool,
-            _ additionalInformationSelected: @escaping () -> Void,
+            _ additionalInformationSelected: (() -> Void)?,
             _ completion: @escaping (C15tTrackingPlatformStatus?) -> Void
         ) -> Bool = { preferExpanded, additionalInformationSelected, completion in
             C15tTracking.requestExpandedPrompt(
@@ -224,11 +224,21 @@ public struct C15tModuleHandler {
     /// Nothing here touches the snapshot, and nothing here can. A platform answer is not a
     /// consent decision, so a request that resolves `authorized` leaves every category
     /// exactly where the subject left it.
+    ///
+    /// `additionalInformation` asks Apple for the Additional Information button, for a caller
+    /// that will handle the tap. Without it Apple shows no button.
     public func requestTrackingAuthorization(
+        additionalInformation: Bool = false,
         _ completion: @escaping (Result<C15tTrackingRequestResult, C15tBridgeError>) -> Void
     ) {
-        trackingController.request { result in
-            completion(result.mapError { $0 == .notConfigured ? .trackingNotConfigured : .trackingUnsupported })
+        // JavaScript shows its own controls when the request resolves paused, so the native
+        // action has nothing to do beyond letting Apple show the button.
+        var handled: (@Sendable () -> Void)?
+        if additionalInformation { handled = {} }
+        trackingController.request(onAdditionalInformation: handled) { (result: Result<C15tTrackingRequestResult, C15tTrackingError>) in
+            completion(result.mapError { error -> C15tBridgeError in
+                error == .notConfigured ? .trackingNotConfigured : .trackingUnsupported
+            })
         }
     }
 

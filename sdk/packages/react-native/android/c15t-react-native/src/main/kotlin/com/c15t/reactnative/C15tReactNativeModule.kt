@@ -87,6 +87,14 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		promise.reject(C15tTracking.REJECT_UNSUPPORTED, C15tTracking.MESSAGE_UNSUPPORTED)
 	}
 
+	/** The same request with JSON options. Android has nothing to ask, so it rejects the same way. */
+	override fun requestTrackingAuthorizationWithOptions(
+		options: String,
+		promise: Promise,
+	) {
+		promise.reject(C15tTracking.REJECT_UNSUPPORTED, C15tTracking.MESSAGE_UNSUPPORTED)
+	}
+
 	override fun commit(
 		intent: String,
 		promise: Promise,

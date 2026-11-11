@@ -1,0 +1,64 @@
+/**
+ * The ATT sequence reads IAB TCF consent through the web's category derivation,
+ * not a second one. `native/protocol/att/iab-marketing.json` holds the shared
+ * cases; this runs their purpose half against `iabPurposesToC15tConsents`, and
+ * `IABMarketingFixtureTests` in `native/core-swift/Tests/C15tAppleTests` runs all
+ * of them against Swift.
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, test } from 'vitest';
+
+import { iabPurposesToC15tConsents } from '../packages/iab/src/tcf/purpose-mapping';
+
+const root = fileURLToPath(new URL('..', import.meta.url));
+
+interface FixtureCase {
+	readonly name: string;
+	readonly purposeConsents: readonly number[];
+	readonly vendors: Readonly<Record<string, readonly number[]>>;
+	readonly vendorConsents: readonly number[];
+	readonly adTechProvidersListed: boolean;
+	readonly adTechProviderConsents: readonly number[];
+	readonly expected: {
+		readonly purposes: boolean;
+		readonly marketing: boolean;
+	};
+}
+
+const fixture = JSON.parse(
+	readFileSync(join(root, 'native/protocol/att/iab-marketing.json'), 'utf8')
+) as { readonly cases: readonly FixtureCase[] };
+
+/** The web's consent basis: vendor purposes, plus 1, 3 and 4 for ad tech providers. */
+const basisOf = (fixtureCase: FixtureCase): Set<number> =>
+	new Set([
+		...Object.values(fixtureCase.vendors).flat(),
+		...(fixtureCase.adTechProvidersListed ? [1, 3, 4] : []),
+	]);
+
+describe('ATT IAB marketing fixture: the purpose half is the web derivation', () => {
+	test.each(
+		fixture.cases.map((fixtureCase) => [fixtureCase.name, fixtureCase] as const)
+	)('%s', (_name, fixtureCase) => {
+		const purposeConsents = Object.fromEntries(
+			fixtureCase.purposeConsents.map((id) => [id, true])
+		);
+		expect(
+			iabPurposesToC15tConsents(purposeConsents, basisOf(fixtureCase)).marketing
+		).toBe(fixtureCase.expected.purposes);
+	});
+
+	test('the fixture covers the cases the gate depends on', () => {
+		const names = fixture.cases.map((fixtureCase) => fixtureCase.name);
+		expect(names).toContain(
+			'purposes 1 to 4 consented but every vendor refused'
+		);
+		expect(
+			fixture.cases.some((c) => c.expected.purposes && !c.expected.marketing)
+		).toBe(true);
+		expect(fixture.cases.some((c) => c.expected.marketing)).toBe(true);
+	});
+});

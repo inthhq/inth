@@ -259,7 +259,10 @@ export const useTrackingRequest = function useTrackingRequest(
 		// reported a pause without showing anything, which would otherwise recurse as
 		// fast as the bridge answers.
 		const turn = async (remaining: number): Promise<TrackingRequestPayload> => {
-			const outcome = await client.requestTracking();
+			// This journey handles Additional Information, so Apple may show the button.
+			const outcome = await client.requestTracking({
+				additionalInformation: true,
+			});
 
 			if (!isAdditionalInformationPause(outcome) || remaining <= 1) {
 				return outcome;

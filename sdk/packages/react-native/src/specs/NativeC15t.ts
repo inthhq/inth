@@ -101,6 +101,13 @@ export interface Spec extends TurboModule {
 	 * without saying why; on Android it rejects because there is nothing to ask.
 	 */
 	requestTrackingAuthorization: () => Promise<string>;
+	/**
+	 * The same request, with JSON options. `{"additionalInformation": true}` asks
+	 * Apple to show the Additional Information button on its EU sheet, for a
+	 * caller that will handle the tap; without it there is no button. The plain
+	 * method above shows no button.
+	 */
+	requestTrackingAuthorizationWithOptions: (options: string) => Promise<string>;
 	/** Open the shared native flow. Resolves a JSON PresenterSession, not a decision. */
 	presentConsentPrompt: (privacyPolicyURL: string) => Promise<string>;
 	/** Open standing native preferences on the installed engine. */

@@ -46,6 +46,7 @@ import {
 	markAfterInformation,
 	releaseBeforeConsentPrompt,
 	requestSequencedTracking,
+	setTrackingInformationHandled,
 	setTrackingReprompt,
 	syncBeforeConsentPrompt,
 } from './tracking-sequence';
@@ -148,6 +149,18 @@ export interface ConsentProviderBaseProps {
 	 * @default 'never'
 	 */
 	readonly trackingReprompt?: ConsentTrackingReprompt;
+	/**
+	 * Show your own consent controls when the person taps Additional Information
+	 * on Apple's EU tracking sheet.
+	 *
+	 * Apple shows that button only when something will handle it. The provider
+	 * handles it itself when the binary links the stock native screens: it opens
+	 * native privacy settings. Pass this when you draw your own consent UI
+	 * (`autoPresent={false}` with a JavaScript UI, or a build without the stock
+	 * screens) and want the button; without either, Apple shows no button.
+	 * Closing your controls does not ask Apple again by itself.
+	 */
+	readonly onTrackingAdditionalInformation?: () => void;
 }
 
 /**
@@ -181,6 +194,8 @@ export interface ConsentProviderBaseProps {
  * @param props.privacyPolicyURL - The HTTPS privacy policy the prompt links to.
  * @param props.trackingRequest - When to ask for App Tracking Transparency.
  * @param props.trackingReprompt - Whether to ask again a year after an answer.
+ * @param props.onTrackingAdditionalInformation - Your own controls for Apple's
+ *   Additional Information button, when you draw your own consent UI.
  * @returns The children, with consent available through the hooks.
  * @throws {NativeC15tUnavailableError} When the native module is not in the
  *   running binary, for example in Expo Go.
@@ -199,6 +214,7 @@ export const ConsentProvider = ({
 	safeAreaInsets,
 	trackingRequest = 'afterConsent',
 	trackingReprompt = 'never',
+	onTrackingAdditionalInformation,
 }: ConsentProviderProps): ReactNode => {
 	const inherited = useContext(ConsentClientContext);
 	const inheritedInsets = useConsentSafeAreaInsets();
@@ -213,6 +229,10 @@ export const ConsentProvider = ({
 		// Before any child effect can call presentConsentPrompt, for the same reason.
 		syncBeforeConsentPrompt(client, trackingRequest === 'beforeConsent');
 		setTrackingReprompt(client, trackingReprompt);
+		setTrackingInformationHandled(
+			client,
+			onTrackingAdditionalInformation !== undefined || linksNativeUI(client)
+		);
 	}
 
 	// Only the outermost provider presents, so a nested one cannot double it. A
@@ -336,6 +356,15 @@ export const ConsentProvider = ({
 				// No foreground window. The person can open settings themselves.
 			}
 		};
+		// The app's own controls when it passed a handler, the stock settings otherwise.
+		const showControls = async (url: string | undefined): Promise<void> => {
+			markAfterInformation(client);
+			if (onTrackingAdditionalInformation !== undefined) {
+				onTrackingAdditionalInformation();
+			} else if (url !== undefined) {
+				await openSettings(url);
+			}
+		};
 		const afterPrompt = async (url: string | undefined): Promise<void> => {
 			const result = await requestSequencedTracking(
 				client,
@@ -343,9 +372,8 @@ export const ConsentProvider = ({
 				'afterPrompt',
 				token
 			);
-			if (result === 'paused' && url !== undefined) {
-				markAfterInformation(client);
-				await openSettings(url);
+			if (result === 'paused') {
+				await showControls(url);
 			}
 		};
 		const removeOutcome = onConsentPresenterOutcome((outcome): void => {
@@ -366,8 +394,7 @@ export const ConsentProvider = ({
 			const check = (): boolean =>
 				checkTrackingAtLaunch(client, token, trackingRequest, () => {
 					// Nothing else would show those controls; closing them asks again.
-					markAfterInformation(client);
-					void openSettings(launchURL);
+					void showControls(launchURL);
 				});
 			if (!check()) {
 				stopLaunch = client.subscribe(isSnapshotReady, () => {
@@ -386,6 +413,7 @@ export const ConsentProvider = ({
 	}, [
 		client,
 		inherited,
+		onTrackingAdditionalInformation,
 		presents,
 		privacyPolicyURL,
 		trackingReprompt,

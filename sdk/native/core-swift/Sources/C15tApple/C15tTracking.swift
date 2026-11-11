@@ -19,7 +19,7 @@ private typealias C15tExpandedRequestFunction = @convention(c) (
     AnyObject,
     Selector,
     ObjCBool,
-    @convention(block) () -> Void,
+    (@convention(block) () -> Void)?,
     @convention(block) (Int) -> Void
 ) -> Void
 #endif
@@ -151,6 +151,7 @@ public enum C15tTracking {
     ///     `NSUserTrackingMarkdownUsageDescription` being in the binary, and Apple may show
     ///     the plain alert anyway outside the EU, so this is a preference and not a promise.
     ///   - additionalInformationSelected: Runs when the subject taps Additional Information.
+    ///     `nil` passes no action, so Apple shows no button: nothing would handle the tap.
     ///     Apple closes its sheet without recording an answer, runs this, and still calls the
     ///     completion handler with `notDetermined`, so the caller must treat its own closure
     ///     as a pause and not as a refusal.
@@ -162,7 +163,7 @@ public enum C15tTracking {
     ///   first one and not the second.
     public static func requestExpandedPrompt(
         preferExpandedInterface: Bool,
-        additionalInformationSelected: @escaping () -> Void,
+        additionalInformationSelected: (() -> Void)?,
         completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool {
         requestExpandedPrompt(on: trackingManagerClass(), preferExpandedInterface: preferExpandedInterface,
@@ -174,7 +175,7 @@ public enum C15tTracking {
     static func requestExpandedPrompt(
         on managerClass: AnyClass?,
         preferExpandedInterface: Bool,
-        additionalInformationSelected: @escaping () -> Void,
+        additionalInformationSelected: (() -> Void)?,
         completion: @escaping (C15tTrackingPlatformStatus?) -> Void
     ) -> Bool {
         #if canImport(ObjectiveC)
@@ -188,6 +189,11 @@ public enum C15tTracking {
         // cast describes, and calling it through the cast would be undefined, so fall back.
         guard method_getNumberOfArguments(method) == 5 else { return false }
 
+        // `nil` reaches Apple as a nil block, which is what keeps the button off its sheet.
+        let action: (@convention(block) () -> Void)? = additionalInformationSelected.map { selected in
+            let block: @convention(block) () -> Void = { selected() }
+            return block
+        }
         let implementation = method_getImplementation(method)
         let request = unsafeBitCast(implementation, to: C15tExpandedRequestFunction.self)
 
@@ -198,7 +204,7 @@ public enum C15tTracking {
                 trackingManager,
                 selector,
                 ObjCBool(preferExpandedInterface),
-                { additionalInformationSelected() },
+                action,
                 { raw in completion(C15tTrackingPlatformStatus(rawValue: raw)) }
             )
         }

@@ -20,7 +20,7 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { getConsentClient, resetConsentClient } from '../../native/client';
 import {
 	presentConsentPrompt,
 	presentPreferences,
@@ -933,4 +933,129 @@ describe('ATT under IAB TCF', () => {
 			tree.unmount();
 		}
 	);
+});
+
+describe('final review round', () => {
+	const iabSaved = (
+		marketing: boolean,
+		purposes: boolean | null,
+		revision = 2
+	): ConsentSnapshot =>
+		({
+			...saved(marketing, revision),
+			iabMarketingPurposes: purposes,
+			model: 'iab',
+		}) as ConsentSnapshot;
+
+	test('IAB: purposes consented but every vendor refused asks nothing (native sends false)', async () => {
+		const { fake } = boot({ ...owed, model: 'iab' } as ConsentSnapshot);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, iabSaved(true, false));
+		await flushPromises();
+		expect(fake.trackingRequestCalls).toBe(0);
+		tree.unmount();
+	});
+
+	test.each([true, false])(
+		'beforeConsent: a pause before the prompt asks again after it only with marketing granted (%s)',
+		async (granted) => {
+			const { fake, order } = boot(owed);
+			fake.queueTrackingRequestReplies([
+				{
+					presentation: 'expanded',
+					stage: 'additional-information',
+					status: 'not-determined',
+				},
+				{ stage: 'final', status: 'authorized' },
+			]);
+			const tree = renderTree(<App trackingRequest="beforeConsent" />);
+			await flushPromises();
+			expect(order).toStrictEqual(['tracking', 'prompt']);
+			finish(fake, saved(granted));
+			await flushPromises();
+			expect(fake.trackingRequestCalls).toBe(granted ? 2 : 1);
+			tree.unmount();
+		}
+	);
+
+	test.each(['gpc', 'explicit-denial'] as const)(
+		'beforeConsent: a %s restriction on marketing is a refusal at launch',
+		async (reason) => {
+			const { fake } = boot(
+				buildSnapshot({
+					...saved(false),
+					explicitChoice: null,
+					restrictions: { marketing: [reason] },
+				})
+			);
+			const tree = renderTree(<App trackingRequest="beforeConsent" />);
+			await flushPromises();
+			expect(fake.trackingRequestCalls).toBe(0);
+			tree.unmount();
+		}
+	);
+
+	test('the provider asks Apple for the Additional Information button when the stock screens can open', async () => {
+		const { fake } = boot(owed);
+		const tree = renderTree(<App />);
+		await flushPromises();
+		finish(fake, saved(true));
+		await flushPromises();
+		expect(fake.trackingRequestOptions).toStrictEqual([
+			JSON.stringify({ additionalInformation: true }),
+		]);
+		tree.unmount();
+	});
+
+	test('a build without the stock screens and no handler gets no button', async () => {
+		const { fake } = boot(owed);
+		Object.assign(getConsentClient().bootstrap, { nativeUI: false });
+		const tree = renderTree(<ConsentProvider autoPresent={false} />);
+		await flushPromises();
+		finish(fake, saved(true));
+		await flushPromises();
+		expect(fake.trackingRequestOptions).toStrictEqual([null]);
+		tree.unmount();
+	});
+
+	test('onTrackingAdditionalInformation gives the button and runs on a pause', async () => {
+		const { fake, preferences } = boot(owed);
+		Object.assign(getConsentClient().bootstrap, { nativeUI: false });
+		fake.setTrackingRequestReply({
+			presentation: 'expanded',
+			stage: 'additional-information',
+			status: 'not-determined',
+		});
+		const controls = vi.fn();
+		const tree = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				onTrackingAdditionalInformation={controls}
+			/>
+		);
+		await flushPromises();
+		finish(fake, saved(true));
+		await flushPromises();
+		expect(fake.trackingRequestOptions).toStrictEqual([
+			JSON.stringify({ additionalInformation: true }),
+		]);
+		expect(controls).toHaveBeenCalledTimes(1);
+		expect(preferences).not.toHaveBeenCalled();
+		tree.unmount();
+	});
+
+	test("the app's own requestTrackingAuthorization() offers no button", async () => {
+		const { fake } = boot(saved(false));
+		const tree = renderTree(
+			<ConsentProvider
+				autoPresent={false}
+				trackingRequest="manual"
+			/>
+		);
+		await flushPromises();
+		await getConsentClient().requestTrackingAuthorization();
+		expect(fake.trackingRequestOptions).toStrictEqual([null]);
+		tree.unmount();
+	});
 });
