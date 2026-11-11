@@ -24,8 +24,10 @@ import SwiftUI
 public final class ConsentPrompt: ObservableObject {
     /// The core this prompt follows.
     public let core: ConsentCore
-    /// The presenter behind the prompt. Auto-present stays off until a scene attaches.
-    public let presenter: ConsentPresenter
+    /// The presenter behind the prompt. Auto-present stays off until a scene attaches. Internal:
+    /// opening it directly would skip the host rules and the App Tracking Transparency order, so
+    /// apps open the prompt through ``presentPrompt()`` and ``presentPreferences()``.
+    let presenter: ConsentPresenter
     /// Called each time a prompt or settings session closes, with how it ended. A step that has
     /// to follow the consent prompt, such as a platform permission request, starts here.
     public var onFinished: ((ConsentPresenterOutcome) -> Void)?

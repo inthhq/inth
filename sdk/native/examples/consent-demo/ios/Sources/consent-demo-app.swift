@@ -20,7 +20,7 @@ struct ConsentDemoContent: View {
 
 @MainActor
 final class DemoSession: ObservableObject, SnapshotObserver {
-    @Published var presenter: ConsentPresenter?
+    @Published var prompt: ConsentPrompt?
     @Published var snapshot = ConsentSnapshot.coldStart
     @Published var pendingSaves = 0
     @Published var setupError: String?
@@ -132,13 +132,13 @@ final class DemoSession: ObservableObject, SnapshotObserver {
             }
             // The app-wide prompt the one-line modifier attaches to, so the journeys run
             // the default auto-present path.
-            presenter = ConsentPrompt.shared(for: core).presenter
+            prompt = ConsentPrompt.shared(for: core)
             refresh(core)
         } catch { setupError = String(describing: error) }
     }
     nonisolated func consentDidChange(_ snapshot: ConsentSnapshot) {
         Task { @MainActor [weak self] in
-            guard let self, let core = self.presenter?.core else { return }
+            guard let self, let core = self.prompt?.core else { return }
             self.refresh(core)
         }
     }
@@ -159,7 +159,7 @@ final class DemoSession: ObservableObject, SnapshotObserver {
         }
     }
     func refreshReviewDiagnostics() {
-        guard let profile = reviewProfile, let core = presenter?.core else { return }
+        guard let profile = reviewProfile, let core = prompt?.core else { return }
         let capturedAtMs = Int64(Date().timeIntervalSince1970 * 1000)
         let current = core.snapshot()
         let committed = core.iabConsent()
@@ -194,7 +194,7 @@ final class DemoSession: ObservableObject, SnapshotObserver {
         } catch { setupError = "The diagnostic report could not be encoded: \(error.localizedDescription)" }
     }
     func resetReviewConsent() async {
-        guard reviewProfile != nil, let core = presenter?.core, !resettingReview else { return }
+        guard reviewProfile != nil, let core = prompt?.core, !resettingReview else { return }
         resettingReview = true
         defer { resettingReview = false }
         await Task.detached { core.reset() }.value
@@ -222,9 +222,9 @@ struct DemoRoot: View {
     @State private var vendorIDs = ""
     @State private var inspectBeforeShowingConsent = false
     var body: some View {
-        if let presenter = session.presenter, let policyURL = session.policyURL {
+        if let prompt = session.prompt, let policyURL = session.policyURL {
             // Review inspection holds the prompt back with the opt-out until the reviewer asks for it.
-            HostState(session: session, presenter: presenter)
+            HostState(session: session, prompt: prompt)
                 .c15tConsent(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
         } else {
             NavigationStack {
@@ -273,13 +273,13 @@ struct DemoRoot: View {
 
 struct HostState: View {
     @ObservedObject var session: DemoSession
-    @ObservedObject var presenter: ConsentPresenter
+    @ObservedObject var prompt: ConsentPrompt
     @State private var confirmReviewReset = false
     var body: some View {
         NavigationStack {
             List {
                 Section("Privacy") {
-                    Button("Privacy settings") { presenter.presentPreferences() }.frame(minHeight: 44).disabled(!session.consentUIEnabled).accessibilityIdentifier("fixture.open-preferences")
+                    Button("Privacy settings") { prompt.presentPreferences() }.frame(minHeight: 44).disabled(!session.consentUIEnabled).accessibilityIdentifier("fixture.open-preferences")
                 }
                 if session.reviewProfile != nil {
                     Section("IAB review") {
@@ -310,8 +310,8 @@ struct HostState: View {
                     }
                     Section("Test faults") {
                         Button("Refuse next storage write") { session.store?.failNext = true }.accessibilityIdentifier("fixture.fail-next-write")
-                        Button("Competing accept") { Task.detached { presenter.core.save(.all) } }.accessibilityIdentifier("fixture.competing-save")
-                        Button("Reconnect") { session.transport?.offline = false; presenter.core.replayThenRefresh() }.accessibilityIdentifier("fixture.reconnect")
+                        Button("Competing accept") { Task.detached { prompt.core.save(.all) } }.accessibilityIdentifier("fixture.competing-save")
+                        Button("Reconnect") { session.transport?.offline = false; prompt.core.replayThenRefresh() }.accessibilityIdentifier("fixture.reconnect")
                     }
                 }
                 Section("About this demo") {
