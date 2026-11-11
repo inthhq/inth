@@ -100,8 +100,6 @@ final class C15tPayloadTests: XCTestCase {
         choices.purposeConsents = [1, 2]
         choices.vendorConsents = [755]
         XCTAssertEqual(C15tPayload.parseCommitIntent(raw), .iab(choices, categories: [.marketing: true]))
-        XCTAssertEqual(C15tPayload.parseExpectedRevision(raw), 12)
-        XCTAssertNil(C15tPayload.parseExpectedRevision(#"{"action":"all"}"#))
         for bad in [
             #"{"action":"iab","consents":{}}"#,
             raw.replacingOccurrences(of: "[1,2]", with: #"["1",2]"#),
@@ -289,6 +287,36 @@ final class C15tPayloadTests: XCTestCase {
             XCTFail("\(raw) should apply, got \(error.code): \(error.message)")
             return current
         }
+    }
+
+    func testACommitBuiltOnAnOlderRevisionIsRefusedAndChangesNothing() throws {
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore()))
+        let current = core.snapshot().revision
+        let before = try JSONEncoder().encode(core.snapshot())
+
+        XCTAssertEqual(
+            jsonObject(C15tPayload.bootstrap(snapshot: core.snapshot(), hasStoredSnapshot: false))["commitRevision"] as? Bool,
+            true, "the binary says it checks a commit's revision")
+        let stale = jsonObject(C15tPayload.commit(
+            #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current - 1)}"#, core: core))
+        XCTAssertEqual(stale["ok"] as? Bool, false)
+        XCTAssertEqual(stale["reason"] as? String, "concurrent-change")
+        XCTAssertEqual(try JSONEncoder().encode(core.snapshot()), before, "a refused draft must not touch the record")
+
+        for raw in [
+            #"{"action":"explicit","consents":{"marketing":true},"revision":"\#(current)"}"#,
+            #"{"action":"explicit","consents":{"marketing":true},"revision":null}"#,
+            #"{"action":"explicit","consents":{"marketing":true},"revision":1.5}"#,
+        ] {
+            XCTAssertEqual(jsonObject(C15tPayload.commit(raw, core: core))["reason"] as? String, "invalid-intent",
+                "a revision that is not a whole number is not ignored: \(raw)")
+        }
+        XCTAssertEqual(try JSONEncoder().encode(core.snapshot()), before)
+
+        let pinned = jsonObject(C15tPayload.commit(
+            #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current)}"#, core: core))
+        XCTAssertNotEqual(pinned["reason"] as? String, "concurrent-change", "the current revision passes the check")
     }
 
     func testCommitResultDistinguishesRejectedFromCommitted() {

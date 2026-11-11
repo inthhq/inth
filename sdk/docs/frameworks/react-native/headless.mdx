@@ -81,6 +81,15 @@ If the policy or the displayed categories change under an unsaved edit, or
 `ok: false` with `reason: 'concurrent-change'`, writing nothing. Call `reset()`
 and let the subject review again.
 
+A draft save names the snapshot revision the draft was built on, and the native
+core refuses it if another screen, or native code, recorded a decision after
+that. The draft then reads the new record under the rules above and tries once
+more if none of the staged categories was overtaken. Otherwise `save()` resolves
+`concurrent-change` with the overtaken categories in `staleCategories`. A
+binary built with an older `@c15t/react-native` cannot do this check;
+`useC15tBootstrap().commitRevision` reads `false` there, the draft saves with
+the JavaScript-side check alone, and development builds log a warning once.
+
 Every component outside a `ConsentDraftProvider` shares one draft, so a Save
 button elsewhere on the screen can call `useSaveConsents()()` with no argument,
 as on the web. Wrap a screen in `ConsentDraftProvider` to give it a draft of its
