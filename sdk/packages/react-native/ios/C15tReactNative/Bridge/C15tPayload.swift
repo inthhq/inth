@@ -195,7 +195,8 @@ public enum C15tPayload {
         iabConsent: IABCommittedConsent? = nil,
         iabAcceptAll: IABChoices? = nil,
         iabPresentation: IABPresentation? = nil,
-        iabMarketingPurposes: Bool? = nil
+        iabMarketingPurposes: Bool? = nil,
+        iabCustomVendors: [IABCustomVendor] = []
     ) -> String {
         guard var wire = value(of: snapshot) else {
             // Encoding the core's own snapshot cannot fail in practice, and a silent
@@ -254,6 +255,8 @@ public enum C15tPayload {
         // `headlessUnsupported` is always empty from this build: older builds listed
         // `publisher-restrictions` and `additional-consent-providers` there, before
         // `disclosure` carried both.
+        // `customVendors` is the core's `iabCustomVendors()`: the non-IAB partners a screen
+        // lists and decides on.
         if case var .object(iab)? = fields["iab"] {
             let acceptAll = iabPresentation == nil ? nil : iabAcceptAll
             iab["committed"] = iabConsent.map(committedIAB) ?? .null
@@ -261,6 +264,7 @@ public enum C15tPayload {
             iab["acceptAll"] = acceptAll.flatMap { value(of: $0) } ?? .null
             iab["headlessUnsupported"] = .array([])
             iab["disclosure"] = iabPresentation.map(iabDisclosure) ?? .null
+            iab["customVendors"] = value(of: iabCustomVendors) ?? .array([])
             fields["iab"] = .object(iab)
         }
 

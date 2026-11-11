@@ -14,8 +14,9 @@ import Foundation
 /// The purpose half is the web derivation, not a second one: `C15T_TO_IAB_PURPOSE_MAP.marketing`
 /// and `iabPurposesToC15tConsents` in `packages/iab/src/tcf/purpose-mapping.ts`, with the purposes
 /// some vendor processes on consent deciding, as `consentBasisPurposes` in
-/// `packages/iab/src/index.ts` passes them. `native/protocol/att/iab-marketing.json` runs the same
-/// cases against both.
+/// `packages/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed
+/// ad tech providers (``IABPurposeCategories``). `native/protocol/att/iab-marketing.json` runs the
+/// same cases against both.
 public enum C15tTrackingConsent {
     /// The TCF purposes the `marketing` category stands for: 2, 3 and 4.
     public static let iabMarketingPurposes: Set<Int> = [2, 3, 4]
@@ -35,29 +36,34 @@ public enum C15tTrackingConsent {
         public var adTechProvidersListed: Bool
         /// Ad tech providers the person consented to.
         public var adTechProviderConsents: Set<Int>
+        /// Each custom (non-IAB) vendor's purposes on consent, by id.
+        public var customVendorConsentPurposes: [String: Set<Int>]
+        /// Custom vendors the person consented to.
+        public var customVendorConsents: Set<String>
 
         public init(purposeConsents: Set<Int>, vendorConsentPurposes: [Int: Set<Int>], vendorConsents: Set<Int>,
-                    adTechProvidersListed: Bool = false, adTechProviderConsents: Set<Int> = []) {
+                    adTechProvidersListed: Bool = false, adTechProviderConsents: Set<Int> = [],
+                    customVendorConsentPurposes: [String: Set<Int>] = [:], customVendorConsents: Set<String> = []) {
             self.purposeConsents = purposeConsents
             self.vendorConsentPurposes = vendorConsentPurposes
             self.vendorConsents = vendorConsents
             self.adTechProvidersListed = adTechProvidersListed
             self.adTechProviderConsents = adTechProviderConsents
+            self.customVendorConsentPurposes = customVendorConsentPurposes
+            self.customVendorConsents = customVendorConsents
         }
 
         /// Purposes some vendor processes on consent, as the web's `consentBasisPurposes`.
         var consentBasis: Set<Int> {
             var basis = Set(vendorConsentPurposes.values.flatMap { $0 })
+                .union(customVendorConsentPurposes.values.flatMap { $0 })
             if adTechProvidersListed { basis.formUnion(C15tTrackingConsent.adTechProviderPurposes) }
             return basis
         }
 
         /// The marketing purposes that decide: those some vendor asks consent for, or all of
         /// them when none is, so legitimate interest alone never grants the category.
-        var decidingPurposes: Set<Int> {
-            let deciding = C15tTrackingConsent.iabMarketingPurposes.intersection(consentBasis)
-            return deciding.isEmpty ? C15tTrackingConsent.iabMarketingPurposes : deciding
-        }
+        var decidingPurposes: Set<Int> { IABPurposeCategories.deciding(.marketing, basis: consentBasis) }
     }
 
     /// The purpose half: whether the TC String grants `marketing` the way
@@ -68,16 +74,19 @@ public enum C15tTrackingConsent {
 
     /// Whether the TC String grants `marketing` and someone could track: the purpose half, and
     /// at least one consented vendor that asks consent for a deciding marketing purpose, or a
-    /// consented Google ad tech provider. With every such vendor refused nobody could track, so
-    /// it counts as a refusal. Native IAB keeps no consent for custom (non-IAB) vendors, so only
-    /// registered vendors and ad tech providers count.
+    /// consented Google ad tech provider. A consented custom (non-IAB) vendor counts the same way
+    /// as a registered one. With every such vendor refused nobody could track, so it counts as a
+    /// refusal.
     public static func iabMarketingConsented(_ input: IABInput) -> Bool {
         guard iabMarketingPurposesConsented(input) else { return false }
         let deciding = input.decidingPurposes
         let vendor = input.vendorConsents.contains { id in
             !(input.vendorConsentPurposes[id] ?? []).isDisjoint(with: deciding)
         }
-        return vendor || input.adTechProvidersListed && !input.adTechProviderConsents.isEmpty
+        let custom = input.customVendorConsents.contains { id in
+            !(input.customVendorConsentPurposes[id] ?? []).isDisjoint(with: deciding)
+        }
+        return vendor || custom || input.adTechProvidersListed && !input.adTechProviderConsents.isEmpty
     }
 
     /// Whether `core`'s committed TC String grants `marketing` with someone who could track, or
@@ -104,7 +113,10 @@ public enum C15tTrackingConsent {
             vendorConsentPurposes: presentation.vendors.mapValues { Set($0.consentPurposes) },
             vendorConsents: Set(consent.choices.vendorConsents),
             adTechProvidersListed: presentation.adTechProviders?.isEmpty == false,
-            adTechProviderConsents: Set(consent.choices.adTechProviderConsents ?? []))
+            adTechProviderConsents: Set(consent.choices.adTechProviderConsents ?? []),
+            customVendorConsentPurposes: Dictionary(
+                presentation.customVendors.map { ($0.id, Set($0.purposes)) }, uniquingKeysWith: { first, _ in first }),
+            customVendorConsents: Set(consent.choices.customVendorConsents))
         return iabMarketingConsented(input)
     }
 

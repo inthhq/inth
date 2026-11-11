@@ -80,6 +80,10 @@ data class MappedInit(
 	val gvl: GlobalVendorList? = null,
     val adTechProviders: List<AdTechProvider>? = null,
     val adTechProvidersInvalid: Boolean = false,
+    /** `/init`'s `customVendors`, or null when the key is absent, which keeps the list held. */
+    val customVendors: List<com.c15t.core.iab.IabCustomVendor>? = null,
+    /** A `customVendors` value that is not a readable list. The core then holds none. */
+    val customVendorsInvalid: Boolean = false,
 	val error: KernelError? = null,
 )
 
@@ -181,6 +185,8 @@ object InitMapper {
             adTechProvidersInvalid = body?.get("adTechProviders")?.let {
                 it != JsonNull && AdditionalConsent.providers(it) == null
             } ?: false,
+            customVendors = com.c15t.core.iab.IabCustomVendor.list(body?.get("customVendors")),
+            customVendorsInvalid = body?.get("customVendors")?.let { com.c15t.core.iab.IabCustomVendor.list(it) == null } ?: false,
 			error = error,
 		)
 	}

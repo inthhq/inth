@@ -188,6 +188,8 @@ public final class ConsentCore: @unchecked Sendable {
     private var noticeDismissal: NoticeDismissal?
     private var lastIABActionAt: Int64?
     private var additionalConsentList: AdditionalConsentList?
+    /// `/init`'s `customVendors`, kept until a response serves another list, as on the web.
+    private var customVendors: [IABCustomVendor] = []
     private var iabListFetchedAt: Int64?
     private var iabListFromCache = true
     private var iabListOffline = false
@@ -296,6 +298,27 @@ public final class ConsentCore: @unchecked Sendable {
         lock.withLock { currentAdditionalConsentListLocked()?.providers }
     }
 
+    /// The custom (non-IAB) vendors `/init` served, in the order served. Empty when none.
+    public func iabCustomVendors() -> [IABCustomVendor] { lock.withLock { customVendors } }
+
+    /// Check committed custom vendor consent without a JS runtime. ATT remains a separate gate.
+    public func isCustomVendorAllowed(_ id: String) -> Bool {
+        iabConsent()?.choices.customVendorConsents.contains(id) == true
+    }
+
+    /// The c15t categories the committed TC String grants, by the web's derivation
+    /// (``IABPurposeCategories``), or `nil` when no decision is current. Registered vendors after
+    /// publisher restrictions, custom vendors and listed ad tech providers decide which purposes
+    /// count.
+    public func iabPurposeCategories() -> [OptionalConsentCategory: Bool]? {
+        guard let consent = iabConsent(), let presentation = iabPresentation() else { return nil }
+        let basis = IABPurposeCategories.consentBasis(
+            vendorConsentPurposes: presentation.vendors.values.map(\.consentPurposes),
+            customVendors: presentation.customVendors,
+            adTechProvidersListed: presentation.adTechProviders?.isEmpty == false)
+        return IABPurposeCategories.categories(purposeConsents: Set(consent.choices.purposeConsents), basis: basis)
+    }
+
     /// Check committed ATP consent without a JS runtime. ATT remains a separate gate.
     public func isAdTechProviderAllowed(_ id: Int) -> Bool {
         iabConsent()?.choices.adTechProviderConsents?.contains(id) == true
@@ -334,7 +357,8 @@ public final class ConsentCore: @unchecked Sendable {
             guard iabDraftOpenableLocked(), let configuration = config?.iab, let gvl = currentSnapshot.iab?.gvl else { return nil }
             return IABAuthority.accepting(
                 gvl, configuration: configuration,
-                adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id))
+                adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id),
+                customVendors: customVendors)
         }
     }
 
@@ -358,6 +382,7 @@ public final class ConsentCore: @unchecked Sendable {
             return IABPresentation(canEdit: canEdit, draft: draft, list: list,
                 vendors: Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, configuration.disclosure(for: $0)) }),
                 adTechProviders: additionalConsentList?.providers,
+                customVendors: customVendors,
                 // A saved decision stops counting, and leaves the storage bus, once the
                 // choice validity passes (`isCurrent`, `writeTcStorageBus`).
                 consentStorageMaxDays: IABPresentation.days(ms: resolvedPolicy?.policy.choiceMaxAgeMs),
@@ -889,7 +914,8 @@ public final class ConsentCore: @unchecked Sendable {
                 case .all:
                     choices = IABAuthority.accepting(
                         gvl, configuration: configuration,
-                        adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id))
+                        adTechProviders: currentAdditionalConsentListLocked()?.providers.map(\.id),
+                        customVendors: customVendors)
                 case .necessary: choices = IABChoices()
                 case let .iab(draft, _): choices = draft
                 case .custom:
@@ -907,7 +933,7 @@ public final class ConsentCore: @unchecked Sendable {
                         configuration: configuration, choices: choices,
                         gvl: gvl, subjectId: identity.id, externalId: user?.externalId,
                         fingerprint: resolved.choiceFingerprint, actionAt: actionAt, previous: committedIAB,
-                        additionalConsentList: currentAdditionalConsentListLocked())
+                        additionalConsentList: currentAdditionalConsentListLocked(), customVendors: customVendors)
                 } catch let info as CoreErrorInfo { return .failure(info) } catch {
                     return .failure(
                         CoreErrorInfo(code: "invalid-iab-choices", message: "Native IAB validation failed."))
@@ -1073,7 +1099,7 @@ public final class ConsentCore: @unchecked Sendable {
                     iabConsent: plan.isIAB ? plan.iabConsent : committedIAB,
                     lastIABActionAt: plan.isIAB ? actionAt : lastIABActionAt,
                     iabListFetchedAt: iabListFetchedAt,
-                    additionalConsentList: additionalConsentList)
+                    additionalConsentList: additionalConsentList, customVendors: customVendors)
             }
             let queued = envelope.flatMap {
                 plan.queue.commit($0, body: plan.body,
@@ -1255,7 +1281,7 @@ public final class ConsentCore: @unchecked Sendable {
                 snapshot: next, noticeDismissal: dismissal,
                 policyResolution: policyWire, storedAt: at, iabConsent: committedIAB,
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
-                additionalConsentList: additionalConsentList)
+                additionalConsentList: additionalConsentList, customVendors: customVendors)
             return (next, dismissal, envelope, queue)
         }
         guard let (next, dismissal, envelope, queue) = planned else { return false }
@@ -1599,6 +1625,7 @@ public final class ConsentCore: @unchecked Sendable {
             self.policyWire = envelope?.policyResolution
             self.noticeDismissal = envelope?.noticeDismissal
             self.additionalConsentList = envelope?.additionalConsentList
+            self.customVendors = envelope?.customVendors ?? []
             self.iabListFetchedAt = envelope?.iabListFetchedAt
             self.committedIAB = envelope?.iabConsent
             let watermark = envelope?.lastIABActionAt ?? envelope?.iabConsent?.actionAt
@@ -1693,7 +1720,7 @@ public final class ConsentCore: @unchecked Sendable {
                 snapshot: readableSnapshotLocked(), noticeDismissal: noticeDismissal,
                 policyResolution: policyWire, storedAt: config.now(), iabConsent: saved,
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: iabListFetchedAt,
-                additionalConsentList: additionalConsentList)
+                additionalConsentList: additionalConsentList, customVendors: customVendors)
             let gpp = GPPStorageBus.values(signal, iabConsent: saved)
             return (bus, TcStorageBus.values(for: envelope, configuration: config.iab).merging(gpp) { _, new in new })
         }
@@ -1900,7 +1927,7 @@ public final class ConsentCore: @unchecked Sendable {
                 configuration: c, choices: saved.choices,
                 gvl: gvl, subjectId: saved.subjectId, externalId: saved.externalId,
                 fingerprint: saved.fingerprint, actionAt: saved.actionAt, previous: saved,
-                additionalConsentList: currentAdditionalConsentListLocked())
+                additionalConsentList: currentAdditionalConsentListLocked(), customVendors: customVendors)
         {
             valid = rebuilt.tcString == saved.tcString && rebuilt.choices == saved.choices
                 && rebuilt.addtlConsent == saved.addtlConsent && rebuilt.adTechProvidersID == saved.adTechProvidersID
@@ -1959,7 +1986,7 @@ public final class ConsentCore: @unchecked Sendable {
                 snapshot: next, noticeDismissal: nil,
                 policyResolution: reset ? nil : policyWire, storedAt: config.now(),
                 lastIABActionAt: lastIABActionAt, iabListFetchedAt: reset ? nil : iabListFetchedAt,
-                additionalConsentList: reset ? nil : additionalConsentList)
+                additionalConsentList: reset ? nil : additionalConsentList, customVendors: reset ? [] : customVendors)
         }
         guard let envelope else { return nil }
         guard queue.replace(envelope) else { return false }
@@ -1969,6 +1996,7 @@ public final class ConsentCore: @unchecked Sendable {
             if reset {
                 resolvedPolicy = nil; policyWire = nil; restoredFromStore = false
                 additionalConsentList = nil
+                customVendors = []
                 iabListFetchedAt = nil; iabListFromCache = true; iabListOffline = false
             }
         }
@@ -2117,7 +2145,8 @@ public final class ConsentCore: @unchecked Sendable {
                 iabConsent: committedIAB,
                 lastIABActionAt: lastIABActionAt,
                 iabListFetchedAt: iabListFetchedAt,
-                additionalConsentList: additionalConsentList
+                additionalConsentList: additionalConsentList,
+                customVendors: customVendors
             )
             // Claim the revision before releasing the lock, so two overlapping
             // publishes cannot both decide they are the newest writer.
@@ -2288,6 +2317,14 @@ public final class ConsentCore: @unchecked Sendable {
             } else if let providers = response.adTechProviders {
                 additionalConsentList = AdditionalConsentList(providers: providers, fetchedAt: bundle == nil ? nowMs : bundle?.atpFetchedAt ?? -1)
             }
+            // Absent keeps the list held, as `init-lifecycle.ts` does on the web; an unreadable one
+            // is none. A grant for a vendor no longer listed goes with it.
+            if response.customVendorsInvalid {
+                customVendors = []
+            } else if let served = response.customVendors {
+                customVendors = served
+            }
+            committedIAB = committedIAB?.keepingCustomVendors(customVendors)
             if let gvl = response.gvl {
                 iabListFetchedAt = bundle == nil ? nowMs : bundle?.gvlFetchedAt
                 iabListFromCache = bundle != nil

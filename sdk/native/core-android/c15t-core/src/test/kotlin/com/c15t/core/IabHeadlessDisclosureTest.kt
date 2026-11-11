@@ -59,6 +59,7 @@ class IabHeadlessDisclosureTest {
 		val acceptAll: IabChoices,
 		val cases: List<Case>,
 		val conflicts: List<Conflict>,
+		val customVendors: JsonArray,
 	)
 
 	@Serializable
@@ -76,7 +77,10 @@ class IabHeadlessDisclosureTest {
 		val base = Json.parseToJsonElement(initBody(model = "\"iab\"", gvl = list.gvl.toString())).jsonObject
 		val http =
 			RecordingTransport()
-				.respondInit(initSuccess(body = JsonObject(base + ("adTechProviders" to list.adTechProviders)).toString()))
+				.respondInit(initSuccess(body = JsonObject(base + mapOf(
+					"adTechProviders" to list.adTechProviders,
+					"customVendors" to vector.customVendors,
+				)).toString()))
 				.respondSave(SaveOutcome.Unavailable("offline"))
 		return testKernel(
 			config = NativeConfig("https://cmp.example.test", iab = vector.configuration),
@@ -118,6 +122,10 @@ class IabHeadlessDisclosureTest {
 		val summary = presentation.bannerSummary
 		assertEquals(expected.bannerSummary, Summary(summary.vendorCount, summary.displayItems, summary.remainingCount))
 		assertEquals(expected.language, presentation.language)
+		assertEquals(
+			vector.customVendors.map { it.jsonObject.getValue("id").jsonPrimitive.content },
+			presentation.customVendors.map { it.id },
+		)
 		assertEquals(vector.acceptAll, core.iabAcceptAllChoices())
 	}
 
@@ -128,6 +136,7 @@ class IabHeadlessDisclosureTest {
 			val draft = assertNotNull(core.openIabDraft(), row.id)
 			assertTrue(core.saveIab(IabDraft(draft.revision, row.choices), emptyMap()).ok, row.id)
 			val saved = assertNotNull(core.iabConsent, row.id)
+			assertEquals(row.choices.customVendorConsents, saved.choices.customVendorConsents, row.id)
 			assertEquals(row.tcString, saved.tcString, row.id)
 			assertEquals(row.addtlConsent, saved.addtlConsent, row.id)
 			assertEquals(emptyList(), core.iabPresentation()?.restrictionConflicts(row.choices), row.id)

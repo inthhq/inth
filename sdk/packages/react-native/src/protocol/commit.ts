@@ -76,6 +76,15 @@ export interface NativeIABChoices {
 	readonly publisherCustomLegitimateInterests: readonly number[];
 	/** Google Additional Consent providers, or `null` when none are listed. */
 	readonly adTechProviderConsents?: readonly number[] | null;
+	/**
+	 * Custom (non-IAB) vendors with consent, by {@link NativeIABCustomVendor.id}.
+	 * Native keeps them beside the TC String, never in it, as the web keeps them
+	 * in its authority receipt. A binary older than custom vendor support omits
+	 * the list, which reads as none.
+	 */
+	readonly customVendorConsents?: readonly string[];
+	/** Custom vendors whose legitimate interest stands. One not listed is objected to. */
+	readonly customVendorLegitimateInterests?: readonly string[];
 }
 
 /**

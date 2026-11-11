@@ -628,8 +628,9 @@ the plain `requestTrackingAuthorization()` shows no button.
 Under an IAB TCF policy, marketing is `granted` for this sequence only while the
 c15t category is granted and the committed TC String grants `marketing` by the
 web derivation (`C15T_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
-vendor asks consent for) to at least one consented vendor that asks consent for
-a deciding purpose, or a consented ad tech provider. Otherwise it is a refusal.
+registered or custom vendor asks consent for) to at least one consented
+registered or custom vendor that asks consent for a deciding purpose, or a
+consented ad tech provider. Otherwise it is a refusal.
 `native/protocol/att/iab-marketing.json` holds the cases both sides run. The iOS
 bridge sends the answer, cached per snapshot revision, as the snapshot key
 `iabMarketingPurposes`. This decides only whether the SDK asks Apple, not
@@ -1251,17 +1252,20 @@ is not a whole number is `invalid-intent`. `getBootstrap()` reports
 an older binary as `false`, and the draft then saves unpinned.
 
 `commit` takes `all`, `necessary`, `explicit`, and `iab`. An `iab` intent is a
-headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON numbers),
-`consents` the categories it confirms, and an optional `revision` the core passes as
+headless TCF draft: `choices` names every `IABChoices` list (IDs are JSON numbers;
+`customVendorConsents` and `customVendorLegitimateInterests` hold string IDs and may
+be left out, which grants no custom vendor), `consents` the categories it confirms, and an optional `revision` the core passes as
 `expectedRevision`, so a change since the draft was opened is refused as
 `concurrent-change`. The core validates IDs and legal bases as for the stock
-presenter. The bridge adds five keys inside the snapshot's `iab` object, beside the
-core's `gvl`: `committed: { tcString, addtlConsent, choices } | null` from
+presenter. The bridge adds six keys inside the snapshot's `iab` object, beside the
+core's `gvl`: `customVendors` from `iabCustomVendors()`; `committed: { tcString,
+addtlConsent, choices } | null` from
 `iabConsent()`; `disclosure`, the core's `iabPresentation()` as the stock screens
 read it (each active vendor's `consentPurposes`, `legitimateInterestPurposes`,
 `notAllowedPurposes`, `consentRequiredPurposes` and
 `legitimateInterestRequiredPurposes` after publisher restrictions; per-purpose
-`consentPartnerCount` and `legitimateInterestPartnerCount` from `partnerCounts`;
+`consentPartnerCount` and `legitimateInterestPartnerCount` from `partnerCounts`,
+which counts `customVendors` where they declare the purpose;
 `declaredPurposeIds`, `declaredSpecialFeatureIds`, `adTechProviders` with `id`,
 `name` and `policyUrl`, `adTechProviderPurposeIds`, `bannerSummary`,
 `consentStorageMaxDays` and `language`), or `null` without one; `acceptAll:
@@ -1285,7 +1289,9 @@ which also covers the IDs between them; both native encoders write each vendor,
 so the fixture avoids such groups. These keys are additive without a protocol
 bump: `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
 `committed: null, disclosure: null, editable: false, acceptAll: null,
-headlessUnsupported: []`, so JavaScript offers no edit it cannot commit.
+headlessUnsupported: [], customVendors: []`, so JavaScript offers no edit it
+cannot commit. `BRIDGE_PAYLOADS` types the `iab` object with these keys, so both
+bridges' tests check them.
 
 `c15t.nativeUI` false (`Podfile.properties.json` or `C15T_NATIVE_UI=0` for the pod,
 `gradle.properties` for Android) builds the bridge without the stock screens: the
@@ -2014,6 +2020,40 @@ even when a newer GVL remains current. Stale lists cannot grant. The platform bu
 IABTCF_AddtlConsent as a string and removes it with invalid authority or reset.
 ATT remains a separate permission. RN API and shared UI wiring remain an ENG-511
 acceptance gate after this native foundation integrates.
+
+Custom (non-IAB) vendors are the web's `iab.customVendors`: partners the publisher
+declares that are not on the Global Vendor List. Both cores read `/init`'s
+`customVendors` with `nonIABVendorSchema`'s rules (`IABCustomVendor`,
+`IabCustomVendor`). An entry that breaks them, or two entries with one id, makes the
+core hold none, as for ad tech providers. An absent key keeps the list held, as
+`init-lifecycle.ts` does on the web; the backend leaves the key out once a publisher
+removes every custom vendor, so a device keeps its last list until a response serves
+a new one (#138). The list lives in the stored envelope's `customVendors` key and
+goes with reset. Bundled manifests carry none, so a launch served only by a bundle
+lists none until a live `/init` answers.
+
+A custom vendor's id is a string, `String(vendor.id)`, as the web keys its consent
+maps. `IABChoices` carries `customVendorConsents` and
+`customVendorLegitimateInterests`. They never reach the TC String, which holds IAB
+vendor ids only: native keeps them in the committed decision beside it, as the web
+keeps them in its authority receipt (`customConsents`), and, like the web, sends no
+custom vendor map in a save body. A grant needs a listed vendor that declares that
+basis. Accept all grants each listed custom vendor its declared bases and adds its
+purposes, its legitimate-interest purposes and its special features to the TCF
+signals, as `applyBlanket` does; Reject all withdraws them. Legitimate interest on
+purposes 1, 3, 4, 5 and 6 is never signalled, for a custom vendor as for a
+registered one, where the web's Accept all would set it. A served list without a
+vendor drops that vendor's grants and keeps the rest of the decision. The stock
+screens list custom vendors on their own page with `common.customPartner`, and
+start their choices off, legitimate interest included, as the web's preference
+centre does.
+
+Their purposes count toward the consent basis that decides a category, as
+`consentBasisPurposes` passes them to `iabPurposesToC15tConsents`:
+`IABPurposeCategories` and `iabPurposeCategories()` on both cores, and the ATT
+gate above. `native/protocol/iab/purpose-categories.json` and
+`native/protocol/att/iab-marketing.json` hold the shared cases; the web's
+expected values come from its own function.
 
 The complete IABTCF bus is an egress projection of validated native authority.
 Explicit CMP detection is synchronous at bootstrap. Consent values use native

@@ -37,6 +37,10 @@ class C15tModuleSurfaceTest {
 			"getTrackingAuthorization" to 0,
 			"requestTrackingAuthorization" to 1,
 			"requestTrackingAuthorizationWithOptions" to 2,
+			"presentConsentPrompt" to 2,
+			"presentPreferences" to 2,
+			"closeConsentPresenter" to 2,
+			"configureAutoPresent" to 2,
 			"addListener" to 1,
 			"removeListeners" to 1,
 		)
@@ -49,11 +53,10 @@ class C15tModuleSurfaceTest {
 				.filter { it.name == name && it.parameterCount == arity }
 			assertTrue("$name with $arity parameter(s) must exist on the module", matches.isNotEmpty())
 		}
-		assertEquals(
-			"the spec declares no method the bridge does not implement",
-			15,
-			declared.size,
-		)
+		// Counted from the spec itself, so a method added there and not here fails this test
+		// rather than waiting for someone to recount a number.
+		val specMethods = Regex("""^\s+(\w+): \(""", RegexOption.MULTILINE).findAll(spec).map { it.groupValues[1] }.toSet()
+		assertEquals("the spec declares no method the bridge does not implement", specMethods, declared.keys)
 	}
 
 	@Test

@@ -197,11 +197,11 @@ public struct C15tModuleHandler {
         let core = C15t.current
         let (snapshot, additions) = C15tPayload.consistently(snapshot: { C15t.snapshot() }) {
             (core?.iabConsent(), core?.iabAcceptAllChoices(), core?.iabPresentation(),
-             core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) })
+             core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) }, core?.iabCustomVendors() ?? [])
         }
         return C15tPayload.snapshot(snapshot, fallbackLanguage: deviceLanguage,
             iabConsent: additions.0, iabAcceptAll: additions.1, iabPresentation: additions.2,
-            iabMarketingPurposes: additions.3)
+            iabMarketingPurposes: additions.3, iabCustomVendors: additions.4)
     }
 
     /// The `getWebViewConsent()` payload: `{ state, token, key }`.

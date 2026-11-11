@@ -10,6 +10,7 @@ import com.c15t.core.iab.AdTechProvider
 import com.c15t.core.iab.IabChoices
 import com.c15t.core.iab.IabCommittedConsent
 import com.c15t.core.iab.IabConfiguration
+import com.c15t.core.iab.IabCustomVendor
 import com.c15t.core.iab.IabDraft
 import com.c15t.core.iab.IabPresentation
 import com.c15t.core.model.ConsentAction
@@ -141,7 +142,7 @@ class C15tPayloadTest {
 
 		assertEquals(
 			"the kernel's `KernelIABState` carries `gvl`, and the bridge adds the headless TCF state",
-			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported", "disclosure"),
+			setOf("gvl", "committed", "editable", "acceptAll", "headlessUnsupported", "disclosure", "customVendors"),
 			iab.keys,
 		)
 		assertEquals("nothing is committed yet", JsonNull, iab["committed"])
@@ -402,7 +403,11 @@ class C15tPayloadTest {
 		// A served IAB policy, unchanged, from the kernel-generated evaluation fixture.
 		val served = json.parseToJsonElement(protocolFile("evaluation-narrow-iab-no-receipt.json")).jsonObject
 			.getValue("input").jsonObject.getValue("transport").jsonObject.getValue("body").jsonObject
-		val body = JsonObject(served + mapOf("gvl" to vendorList.getValue("gvl"), "adTechProviders" to vendorList.getValue("adTechProviders")))
+		val body = JsonObject(served + mapOf(
+			"gvl" to vendorList.getValue("gvl"),
+			"adTechProviders" to vendorList.getValue("adTechProviders"),
+			"customVendors" to headless.getValue("customVendors"),
+		))
 		val transport = object : com.c15t.core.transport.C15tTransport {
 			override fun init(context: com.c15t.core.transport.InitContext) =
 				com.c15t.core.transport.TransportOutcome.Success(body, mapOf("x-c15t-policy-contract" to "1"))
@@ -425,7 +430,7 @@ class C15tPayloadTest {
 
 	private fun headlessSnapshot(core: com.c15t.core.ConsentCore): JsonObject =
 		parse(C15tPayload.snapshot(core.snapshot(), iabConsent = core.iabConsent, iabAcceptAll = core.iabAcceptAllChoices(),
-			iabPresentation = core.iabPresentation())).getValue("iab").jsonObject
+			iabPresentation = core.iabPresentation(), iabCustomVendors = core.iabCustomVendors())).getValue("iab").jsonObject
 
 	private fun headlessCommit(core: com.c15t.core.ConsentCore, choices: JsonObject, revision: Long): JsonObject =
 		parse(C15tPayload.commit("""{"action":"iab","choices":$choices,"consents":{},"revision":$revision}""", core))
@@ -439,6 +444,7 @@ class C15tPayloadTest {
 		assertEquals("the policy's 30-day choice validity", "30", disclosure.getValue("consentStorageMaxDays").jsonPrimitive.content)
 		assertEquals(headless.getValue("disclosure"), JsonObject(disclosure - "consentStorageMaxDays"))
 		assertEquals(headless.getValue("acceptAll"), iab.getValue("acceptAll"))
+		assertEquals(headless.getValue("customVendors"), iab.getValue("customVendors"))
 	}
 
 	@Test
@@ -451,6 +457,11 @@ class C15tPayloadTest {
 			val committed = headlessSnapshot(core).getValue("committed").jsonObject
 			assertEquals(id, row.getValue("tcString"), committed.getValue("tcString"))
 			assertEquals(id, row.getValue("addtlConsent"), committed.getValue("addtlConsent"))
+			assertEquals(
+				id,
+				row.getValue("choices").jsonObject["customVendorConsents"] ?: kotlinx.serialization.json.JsonArray(emptyList<kotlinx.serialization.json.JsonElement>()),
+				committed.getValue("choices").jsonObject["customVendorConsents"] ?: kotlinx.serialization.json.JsonArray(emptyList<kotlinx.serialization.json.JsonElement>()),
+			)
 		}
 	}
 
@@ -464,6 +475,36 @@ class C15tPayloadTest {
 			assertEquals(id, "invalid-iab-choices", result.getValue("reason").jsonPrimitive.content)
 			assertNull("$id: nothing is recorded", core.iabConsent)
 		}
+	}
+
+	@Test
+	fun `custom vendors cross inside the IAB slot and their choices as strings`() {
+		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
+		val vendor = IabCustomVendor("internal-ads", "Internal ads", "https://example.test/ads", listOf(1, 3))
+		val iab = parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabCustomVendors = listOf(vendor)))
+			.getValue("iab").jsonObject
+		val listed = iab.getValue("customVendors").jsonArray.single().jsonObject
+		assertEquals("internal-ads", listed.getValue("id").jsonPrimitive.content)
+		assertEquals(listOf("1", "3"), listed.getValue("purposes").jsonArray.map { it.jsonPrimitive.content })
+		assertFalse("absent optionals stay out, as Swift writes them", "description" in listed)
+		assertEquals(0, parse(C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list))))
+			.getValue("iab").jsonObject.getValue("customVendors").jsonArray.size)
+		// The same state crosses as the same bytes, every time.
+		val accepted = IabChoices(customVendorConsents = listOf("chat", "internal-ads"), customVendorLegitimateInterests = listOf("internal-ads"))
+		val first = C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor))
+		repeat(20) {
+			assertEquals(first, C15tPayload.snapshot(ConsentSnapshot(iab = KernelIabState(list)), iabAcceptAll = accepted, iabCustomVendors = listOf(vendor, vendor)))
+		}
+
+		val lists = """"purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],""" +
+			""""vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],""" +
+			""""publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"""
+		val raw = """{"action":"iab","choices":{$lists,"customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"""
+		val intent = C15tPayload.parseCommitIntent(raw) as CommitIntent.Iab
+		assertEquals(listOf("internal-ads"), intent.choices.customVendorConsents)
+		assertNull("custom vendor ids are strings", C15tPayload.parseCommitIntent(raw.replace("[\"internal-ads\"]", "[1]")))
+		val without = C15tPayload.parseCommitIntent("""{"action":"iab","choices":{$lists},"consents":{}}""") as CommitIntent.Iab
+		assertEquals("a draft that names no custom vendor grants none", emptyList<String>(), without.choices.customVendorConsents)
 	}
 
 	@Test

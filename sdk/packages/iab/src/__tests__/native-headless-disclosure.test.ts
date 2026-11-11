@@ -53,6 +53,8 @@ interface Choices {
 	publisherLegitimateInterests: number[];
 	publisherCustomConsents: number[];
 	publisherCustomLegitimateInterests: number[];
+	customVendorConsents?: string[];
+	customVendorLegitimateInterests?: string[];
 }
 
 interface NativeRestriction {
@@ -117,6 +119,40 @@ const configuration = {
 	] satisfies NativeRestriction[],
 };
 
+// One partner outside the list, served beside the restrictions. Restrictions name
+// IAB vendor IDs, so they never touch it; its purposes still count, as the web's
+// `processPurposes` and `applyBlanket` count them. Purpose 3 sits in its
+// legitimate-interest list to check that TCF's consent-only purposes stay out.
+/** A custom vendor as `/init` serves it, `NonIABVendor` in `@c15t/schema`. */
+interface CustomVendor {
+	id: string;
+	name: string;
+	privacyPolicyUrl: string;
+	purposes: number[];
+	legIntPurposes: number[];
+	specialFeatures: number[];
+	features: number[];
+	dataCategories: number[];
+	usesCookies: boolean;
+	usesNonCookieAccess: boolean;
+}
+
+const customVendors: CustomVendor[] = [
+	{
+		dataCategories: [],
+		features: [],
+		id: 'publisher-measurement',
+		legIntPurposes: [3, 10],
+		name: 'Publisher measurement',
+		privacyPolicyUrl: 'https://publisher.example/privacy',
+		purposes: [1, 8],
+		specialFeatures: [],
+		usesCookies: false,
+		usesNonCookieAccess: false,
+	},
+];
+const customIds = customVendors.map((vendor) => vendor.id);
+
 const webRestrictions: PublisherRestriction[] =
 	configuration.publisherRestrictions.map(({ purposeId, type, vendorIds }) => ({
 		purposeId,
@@ -175,15 +211,25 @@ const vendors = Object.fromEntries(
 const declaredPurposeIds = purposeIds.filter(
 	(id) =>
 		(adTechProviders.length > 0 && AD_TECH_PROVIDER_PURPOSES.includes(id)) ||
-		active.some((v) => v.purposes.includes(id) || v.legIntPurposes.includes(id))
+		active.some(
+			(v) => v.purposes.includes(id) || v.legIntPurposes.includes(id)
+		) ||
+		customVendors.some(
+			(v) => v.purposes.includes(id) || v.legIntPurposes.includes(id)
+		)
 );
 const declaredSpecialFeatureIds = Object.keys(gvl.specialFeatures)
 	.map(Number)
 	.sort((left, right) => left - right)
-	.filter((id) => active.some((v) => v.specialFeatures.includes(id)));
+	.filter(
+		(id) =>
+			active.some((v) => v.specialFeatures.includes(id)) ||
+			customVendors.some((v) => v.specialFeatures.includes(id))
+	);
 
 const summary = resolveIABBannerSummary({
 	adTechProviders,
+	customVendors,
 	gvl,
 } as unknown as Parameters<typeof resolveIABBannerSummary>[0]);
 
@@ -205,10 +251,18 @@ const disclosure = {
 				consentPartnerCount:
 					Object.values(vendors).filter((v) => v.consentPurposes.includes(id))
 						.length +
-					(AD_TECH_PROVIDER_PURPOSES.includes(id) ? adTechProviders.length : 0),
-				legitimateInterestPartnerCount: Object.values(vendors).filter((v) =>
-					v.legitimateInterestPurposes.includes(id)
-				).length,
+					(AD_TECH_PROVIDER_PURPOSES.includes(id)
+						? adTechProviders.length
+						: 0) +
+					customVendors.filter((v) => v.purposes.includes(id)).length,
+				legitimateInterestPartnerCount:
+					Object.values(vendors).filter((v) =>
+						v.legitimateInterestPurposes.includes(id)
+					).length +
+					(NEVER_LI.has(id)
+						? 0
+						: customVendors.filter((v) => v.legIntPurposes.includes(id))
+								.length),
 			},
 		])
 	),
@@ -223,12 +277,26 @@ const consentUsed = new Set(
 for (const id of AD_TECH_PROVIDER_PURPOSES) {
 	consentUsed.add(id);
 }
+for (const id of customVendors.flatMap((v) => v.purposes)) {
+	consentUsed.add(id);
+}
 const interestUsed = new Set(
 	Object.values(vendors).flatMap((v) => v.legitimateInterestPurposes)
 );
+for (const id of customVendors.flatMap((v) => v.legIntPurposes)) {
+	if (!NEVER_LI.has(id)) {
+		interestUsed.add(id);
+	}
+}
 const acceptAll: Choices = {
 	...NONE,
 	adTechProviderConsents: adTechProviders.map((p) => p.id),
+	customVendorConsents: customVendors
+		.filter((v) => v.purposes.length > 0)
+		.map((v) => v.id),
+	customVendorLegitimateInterests: customVendors
+		.filter((v) => v.legIntPurposes.length > 0)
+		.map((v) => v.id),
 	purposeConsents: purposeIds.filter((id) => consentUsed.has(id)),
 	purposeLegitimateInterests: purposeIds.filter((id) => interestUsed.has(id)),
 	specialFeatureOptIns: declaredSpecialFeatureIds,
@@ -266,6 +334,19 @@ const selections: { id: string; choices: Choices }[] = [
 		id: 'providers-without-prerequisites',
 	},
 	{ choices: { ...NONE, adTechProviderConsents: [] }, id: 'reject' },
+	{
+		// A custom vendor's ids ride beside restricted IAB vendors: the strict
+		// restriction check reads IAB vendor IDs only, so this commit passes.
+		choices: {
+			...NONE,
+			customVendorConsents: customIds,
+			customVendorLegitimateInterests: customIds,
+			purposeConsents: [1, 8],
+			purposeLegitimateInterests: [10],
+			vendorConsents: [21],
+		},
+		id: 'custom-vendor-beside-restrictions',
+	},
 ];
 
 // Vendor signals no stock switch offers: vendor 10 has no consent purpose left
@@ -282,6 +363,16 @@ const conflicting: { id: string; choices: Choices }[] = [
 			vendorLegitimateInterests: [21, 52],
 		},
 		id: 'legitimate-interest-for-a-vendor-restricted-off-legitimate-interest',
+	},
+	{
+		// A custom vendor's consent does not excuse a restricted IAB vendor's.
+		choices: {
+			...NONE,
+			customVendorConsents: customIds,
+			purposeConsents: [1, 3, 4, 8],
+			vendorConsents: [10],
+		},
+		id: 'consent-for-a-restricted-vendor-beside-a-custom-vendor',
 	},
 ];
 
@@ -362,8 +453,9 @@ const build = async function build() {
 			conflicts: conflictsOf(choices),
 			id,
 		})),
+		customVendors,
 		description:
-			'A React Native screen that draws its own TCF UI under publisher restrictions and Google Additional Consent providers. `disclosure` is what the bridge sends as `iab.disclosure` (consentStorageMaxDays left out: it comes from the policy). `cases` are the TC and AC strings the stock save and the headless commit must both write for a selection; `conflicts` are selections the headless commit refuses as invalid-iab-choices.',
+			'A React Native screen that draws its own TCF UI under publisher restrictions, Google Additional Consent providers and one custom (non-IAB) vendor. `customVendors` is what `/init` serves and the bridge sends as `iab.customVendors`; `disclosure` is what the bridge sends as `iab.disclosure` (consentStorageMaxDays left out: it comes from the policy), with the custom vendor in the partner counts, the declared purposes and the summary. `cases` are the TC and AC strings the stock save and the headless commit must both write for a selection; `conflicts` are selections the headless commit refuses as invalid-iab-choices.',
 		disclosure,
 		now,
 		source: `Generated by packages/iab/src/__tests__/native-headless-disclosure.test.ts with UPDATE_NATIVE_FIXTURES=1 from the web code. gvl and adTechProviders come from ${VENDOR_LIST}.`,

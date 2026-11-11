@@ -4,14 +4,16 @@
 		"publisherCustomConsents": [],
 		"publisherCustomLegitimateInterests": [],
 		"publisherLegitimateInterests": [],
-		"purposeConsents": [1, 2, 3, 4, 7, 9, 10],
+		"purposeConsents": [1, 2, 3, 4, 7, 8, 9, 10],
 		"purposeLegitimateInterests": [2, 7, 10],
 		"purposeObjections": [],
 		"specialFeatureOptIns": [1, 2],
 		"vendorConsents": [21, 52, 91, 755],
 		"vendorLegitimateInterests": [10, 52, 755],
 		"vendorObjections": [],
-		"adTechProviderConsents": [89, 2572]
+		"adTechProviderConsents": [89, 2572],
+		"customVendorConsents": ["publisher-measurement"],
+		"customVendorLegitimateInterests": ["publisher-measurement"]
 	},
 	"cases": [
 		{
@@ -20,18 +22,20 @@
 				"publisherCustomConsents": [],
 				"publisherCustomLegitimateInterests": [],
 				"publisherLegitimateInterests": [],
-				"purposeConsents": [1, 2, 3, 4, 7, 9, 10],
+				"purposeConsents": [1, 2, 3, 4, 7, 8, 9, 10],
 				"purposeLegitimateInterests": [2, 7, 10],
 				"purposeObjections": [],
 				"specialFeatureOptIns": [1, 2],
 				"vendorConsents": [21, 52, 91, 755],
 				"vendorLegitimateInterests": [10, 52, 755],
 				"vendorObjections": [],
-				"adTechProviderConsents": [89, 2572]
+				"adTechProviderConsents": [89, 2572],
+				"customVendorConsents": ["publisher-measurement"],
+				"customVendorLegitimateInterests": ["publisher-measurement"]
 			},
 			"id": "accept-all",
 			"addtlConsent": "2~89.2572~dv.",
-			"tcString": "CQX48QAQX48QAA1AHBENC3FsAPLAAEJAAAwIF5wBAAKgA0AC2AvMC84AYACgAaALzAJBAAQAFBAAIAFQoAEABQgACAAodABAAqPAAgAKJAAQF5lIAQAFQF5lQAIACgAA.IF5wBQAFAAVABoAFsBeY.YAAAAAAAAAAA"
+			"tcString": "CQX48QAQX48QAA1AHBENC3FsAPPAAEJAAAwIF5wBAAKgA0AC2AvMC84AYACgAaALzAJBAAQAFBAAIAFQoAEABQgACAAodABAAqPAAgAKJAAQF5lIAQAFQF5lQAIACgAA.IF5wBQAFAAVABoAFsBeY.YAAAAAAAAAAA"
 		},
 		{
 			"choices": {
@@ -89,6 +93,26 @@
 			"id": "reject",
 			"addtlConsent": "2~~dv.89.2572",
 			"tcString": "CQX48QAQX48QAA1AHBENC3FgAAAAAAAAAAwIAAAAAAEggAIACggAEACoUACAAoQABAAUOgAgAVHgAQAFEgAIC8ykAIACoC8yoAEABQAA.IF5wBQAFAAVABoAFsBeY.YAAAAAAAAAAA"
+		},
+		{
+			"choices": {
+				"publisherConsents": [],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [1, 8],
+				"purposeLegitimateInterests": [10],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [],
+				"vendorConsents": [21],
+				"vendorLegitimateInterests": [],
+				"vendorObjections": [],
+				"customVendorConsents": ["publisher-measurement"],
+				"customVendorLegitimateInterests": ["publisher-measurement"]
+			},
+			"id": "custom-vendor-beside-restrictions",
+			"addtlConsent": "2~~dv.89.2572",
+			"tcString": "CQX48QAQX48QAA1AHBENC3FgAIEAAABAAAwIAKgAACAAAAkEABAAUEAAgAVCgAQAFCAAIACh0AEACo8ACAAokABAXmUgBAAVAXmVAAgAKAAA.IF5wBQAFAAVABoAFsBeY.YAAAAAAAAAAA"
 		}
 	],
 	"configuration": {
@@ -180,9 +204,41 @@
 			},
 			"conflicts": ["vendorLegitimateInterests:21"],
 			"id": "legitimate-interest-for-a-vendor-restricted-off-legitimate-interest"
+		},
+		{
+			"choices": {
+				"publisherConsents": [],
+				"publisherCustomConsents": [],
+				"publisherCustomLegitimateInterests": [],
+				"publisherLegitimateInterests": [],
+				"purposeConsents": [1, 3, 4, 8],
+				"purposeLegitimateInterests": [],
+				"purposeObjections": [],
+				"specialFeatureOptIns": [],
+				"vendorConsents": [10],
+				"vendorLegitimateInterests": [],
+				"vendorObjections": [],
+				"customVendorConsents": ["publisher-measurement"]
+			},
+			"conflicts": ["vendorConsents:10"],
+			"id": "consent-for-a-restricted-vendor-beside-a-custom-vendor"
 		}
 	],
-	"description": "A React Native screen that draws its own TCF UI under publisher restrictions and Google Additional Consent providers. `disclosure` is what the bridge sends as `iab.disclosure` (consentStorageMaxDays left out: it comes from the policy). `cases` are the TC and AC strings the stock save and the headless commit must both write for a selection; `conflicts` are selections the headless commit refuses as invalid-iab-choices.",
+	"customVendors": [
+		{
+			"dataCategories": [],
+			"features": [],
+			"id": "publisher-measurement",
+			"legIntPurposes": [3, 10],
+			"name": "Publisher measurement",
+			"privacyPolicyUrl": "https://publisher.example/privacy",
+			"purposes": [1, 8],
+			"specialFeatures": [],
+			"usesCookies": false,
+			"usesNonCookieAccess": false
+		}
+	],
+	"description": "A React Native screen that draws its own TCF UI under publisher restrictions, Google Additional Consent providers and one custom (non-IAB) vendor. `customVendors` is what `/init` serves and the bridge sends as `iab.customVendors`; `disclosure` is what the bridge sends as `iab.disclosure` (consentStorageMaxDays left out: it comes from the policy), with the custom vendor in the partner counts, the declared purposes and the summary. `cases` are the TC and AC strings the stock save and the headless commit must both write for a selection; `conflicts` are selections the headless commit refuses as invalid-iab-choices.",
 	"disclosure": {
 		"adTechProviderPurposeIds": [1, 3, 4],
 		"adTechProviders": [
@@ -205,14 +261,14 @@
 				"Identify devices based on information actively requested"
 			],
 			"remainingCount": 0,
-			"vendorCount": 7
+			"vendorCount": 8
 		},
-		"declaredPurposeIds": [1, 2, 3, 4, 7, 9, 10],
+		"declaredPurposeIds": [1, 2, 3, 4, 7, 8, 9, 10],
 		"declaredSpecialFeatureIds": [1, 2],
 		"language": "EN",
 		"purposes": {
 			"1": {
-				"consentPartnerCount": 6,
+				"consentPartnerCount": 7,
 				"legitimateInterestPartnerCount": 0
 			},
 			"2": {
@@ -231,13 +287,17 @@
 				"consentPartnerCount": 2,
 				"legitimateInterestPartnerCount": 3
 			},
+			"8": {
+				"consentPartnerCount": 1,
+				"legitimateInterestPartnerCount": 0
+			},
 			"9": {
 				"consentPartnerCount": 1,
 				"legitimateInterestPartnerCount": 0
 			},
 			"10": {
 				"consentPartnerCount": 3,
-				"legitimateInterestPartnerCount": 2
+				"legitimateInterestPartnerCount": 3
 			}
 		},
 		"vendors": {

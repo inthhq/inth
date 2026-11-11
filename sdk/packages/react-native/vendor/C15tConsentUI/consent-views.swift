@@ -109,7 +109,7 @@ struct EqualDecisionLayout: Layout {
     }
 }
 
-private enum Destination: Hashable { case vendors(Int?), vendor(Int), providers }
+private enum Destination: Hashable { case vendors(Int?), vendor(Int), providers, customVendors(Int?), customVendor(String) }
 
 /// Widest a consent column gets; wider screens centre it.
 private let contentWidth: CGFloat = 560
@@ -615,6 +615,8 @@ private struct NavigatingConsentScreen: View {
                     case .vendors(let purpose): VendorList(presenter: presenter, purpose: purpose)
                     case .vendor(let id): VendorDetails(presenter: presenter, id: id)
                     case .providers: ProviderList(presenter: presenter)
+                    case .customVendors(let purpose): CustomVendorList(presenter: presenter, purpose: purpose)
+                    case .customVendor(let id): CustomVendorDetails(presenter: presenter, id: id)
                     }
                 }
                 // A pushed page is its own view: the root's canvas and bar colour do not follow it.
@@ -640,6 +642,8 @@ private struct NavigatingConsentScreen: View {
         case .vendors: "c15t.iab.vendors.back"
         case .vendor: "c15t.iab.vendor.back"
         case .providers: "c15t.ac.back"
+        case .customVendors: "c15t.iab.custom-vendors.back"
+        case .customVendor: "c15t.iab.custom-vendor.back"
         }
     }
 }
@@ -1254,6 +1258,10 @@ private struct PreferencesList: View {
                             NavigationLink(value: Destination.providers) { LabeledContent(presenter.iabCopy.preferenceCenterVendorListAdTechProvidersHeading, value: "\(content.otherPartnerCount)") }
                                 .frame(minHeight: 44).accessibilityIdentifier("c15t.iab.other-partners")
                         }
+                        if content.customPartnerCount > 0 {
+                            NavigationLink(value: Destination.customVendors(nil)) { LabeledContent(presenter.iabCopy.preferenceCenterVendorListCustomVendorsHeading, value: "\(content.customPartnerCount)") }
+                                .frame(minHeight: 44).accessibilityIdentifier("c15t.iab.custom-partners")
+                        }
                     } header: { SectionLabel(presenter.iabCopy.appPartners) }
                         .listRowBackground(surface)
                 }
@@ -1578,6 +1586,17 @@ private struct VendorList: View {
                 } footer: { Text(presenter.iabCopy.preferenceCenterVendorListAdTechProvidersNotice) }
                     .listRowBackground(theme.colors.surface.color)
             }
+            // Custom partners are listed with IAB partners, as on the web, on a page of their own.
+            let custom = (presenter.disclosure?.customVendors ?? []).filter { vendor in
+                purpose.map { vendor.purposes.contains($0) || vendor.legIntPurposes.contains($0) } ?? true
+            }
+            if search.isEmpty, !custom.isEmpty {
+                Section {
+                    NavigationLink(value: Destination.customVendors(purpose)) { LabeledContent(presenter.iabCopy.preferenceCenterVendorListCustomVendorsHeading, value: "\(custom.count)") }
+                        .frame(minHeight: 44).accessibilityIdentifier("c15t.iab.vendors.custom-partners")
+                } footer: { Text(presenter.iabCopy.preferenceCenterVendorListCustomVendorsNotice) }
+                    .listRowBackground(theme.colors.surface.color)
+            }
         }
         .listStyle(.insetGrouped).scrollContentBackground(.hidden)
         .navigationTitle(presenter.iabCopy.appIabPartners).navigationBarTitleDisplayMode(.inline)
@@ -1684,6 +1703,112 @@ private struct VendorDetails: View {
         } header: { SectionLabel(copy.appDeviceStorage) }
             .listRowBackground(theme.colors.surface.color)
             .accessibilityIdentifier("c15t.iab.vendor.\(id).storage")
+    }
+}
+
+private struct CustomVendorList: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let purpose: Int?
+    @State private var search = ""
+    @Environment(\.consentTheme) private var theme
+    var body: some View {
+        List {
+            Section {
+                SearchField(placeholder: presenter.iabCopy.appSearchPartners, text: $search, id: "c15t.iab.custom-vendors.search")
+            } footer: {
+                Text(presenter.iabCopy.preferenceCenterVendorListCustomVendorsNotice).accessibilityIdentifier("c15t.iab.custom-vendors.intro")
+            }.listRowBackground(theme.colors.surface.color)
+            let vendors = (presenter.disclosure?.customVendors ?? []).filter { vendor in
+                (search.isEmpty || vendor.name.localizedStandardContains(search))
+                    && (purpose.map { vendor.purposes.contains($0) || vendor.legIntPurposes.contains($0) } ?? true)
+            }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+            Section {
+                if vendors.isEmpty {
+                    Text(presenter.iabCopy.format(presenter.iabCopy.appNoPartnersMatch, ["search": search])).foregroundStyle(theme.colors.textMuted.color).accessibilityIdentifier("c15t.iab.custom-vendors.empty")
+                }
+                ForEach(vendors, id: \.id) { vendor in
+                    NavigationLink(value: Destination.customVendor(vendor.id)) {
+                        HStack(alignment: .center, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(vendor.name).font(theme.font(.body, weight: .semibold)).foregroundStyle(theme.colors.text.color)
+                                Text(presenter.iabCopy.format(presenter.iabCopy.appVendorPurposeSummary, ["purposes": String(vendor.purposes.count), "legitimateInterest": String(vendor.legIntPurposes.filter { !customNeverLI.contains($0) }.count)])).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color)
+                            }
+                            Spacer(minLength: 0)
+                            StatusTag(status: presenter.customPartnerStatus(vendor.id), off: presenter.customPartnerSelection(vendor.id) == .off).accessibilityIdentifier("c15t.iab.custom-vendors.vendor.\(vendor.id).status")
+                        }.padding(.vertical, 6)
+                    }.accessibilityIdentifier("c15t.iab.custom-vendors.vendor.\(vendor.id)")
+                }
+            }.listRowBackground(theme.colors.surface.color)
+        }
+        .listStyle(.insetGrouped).scrollContentBackground(.hidden)
+        .navigationTitle(presenter.iabCopy.preferenceCenterVendorListCustomVendorsHeading).navigationBarTitleDisplayMode(.inline)
+        .scrollDismissesKeyboard(.immediately).accessibilityIdentifier("c15t.iab.custom-vendors")
+    }
+}
+
+private struct CustomVendorDetails: View {
+    @ObservedObject var presenter: ConsentPresenter
+    let id: String
+    @Environment(\.consentTheme) private var theme
+    private var copy: IABCopy { presenter.iabCopy }
+    var body: some View {
+        List {
+            if let vendor = presenter.customVendor(id) {
+                Section {
+                    Text(vendor.note).font(theme.font(.subheadline)).foregroundStyle(theme.colors.textMuted.color)
+                        .accessibilityIdentifier("c15t.iab.custom-vendor.\(id).note")
+                    if let description = vendor.description { Text(description) }
+                    if let url = vendor.privacyPolicy { Link(copy.preferenceCenterVendorListPrivacyPolicy, destination: url).buttonStyle(TextLinkStyle(style: .body, weight: nil)).accessibilityIdentifier("c15t.iab.custom-vendor.\(id).privacy-link") }
+                }.listRowBackground(theme.colors.surface.color)
+                Section {
+                    if vendor.offersConsent {
+                        ConsentToggle(isOn: Binding(get: { presenter.choices.customVendorConsents.contains(id) }, set: { presenter.editCustom(\.customVendorConsents, id: id, enabled: $0) })) {
+                            RowLabel(title: copy.appConsent, description: vendor.consentPurposes.joined(separator: ", "))
+                        }.accessibilityIdentifier("c15t.iab.custom-vendor.\(id).consent")
+                    }
+                    if vendor.offersLegitimateInterest {
+                        ConsentToggle(isOn: Binding(get: { presenter.choices.customVendorLegitimateInterests.contains(id) }, set: { presenter.editCustom(\.customVendorLegitimateInterests, id: id, enabled: $0) })) {
+                            RowLabel(title: copy.preferenceCenterPurposeItemLegitimateInterest, description: vendor.legitimateInterestPurposes.joined(separator: ", "), note: copy.appTurnOffToObject)
+                        }.accessibilityIdentifier("c15t.iab.custom-vendor.\(id).li")
+                    }
+                } header: { SectionLabel(copy.appYourChoices) }
+                    .listRowBackground(theme.colors.surface.color)
+                    .disabled(presenter.pending || presenter.stale || presenter.listUnavailable)
+                if !vendor.features.isEmpty {
+                    Section {
+                        ForEach(vendor.features) { item in ReadOnlyDefinition(item: item, id: "c15t.iab.custom-vendor.\(id).feature.\(item.id)") }
+                    } header: { SectionLabel(copy.preferenceCenterFeaturesTitle) } footer: { Text(vendor.featuresStandardText) }
+                        .listRowBackground(theme.colors.surface.color)
+                }
+                if !vendor.specialFeatureIds.isEmpty {
+                    Section {
+                        ForEach(Array(zip(vendor.specialFeatureIds, vendor.specialFeatures)), id: \.0) { feature, name in
+                            ReadOnlyStatusRow(label: Text(name),
+                                status: Text(presenter.choices.specialFeatureOptIns.contains(feature) ? copy.appOn : copy.appOff).font(theme.font(.footnote)).foregroundStyle(theme.colors.textMuted.color))
+                        }
+                    } header: { SectionLabel(copy.preferenceCenterVendorListSpecialFeatures) } footer: { Text(copy.appSpecialFeaturesElsewhere) }
+                        .listRowBackground(theme.colors.surface.color)
+                }
+                if !vendor.dataCategories.isEmpty {
+                    Section { ForEach(vendor.dataCategories, id: \.self) { Text($0) } } header: { SectionLabel(copy.appDataCollected) }
+                        .listRowBackground(theme.colors.surface.color)
+                }
+                Section {
+                    if vendor.retention.isEmpty { Text(copy.appRetentionNotProvided).foregroundStyle(theme.colors.textMuted.color) }
+                    ForEach(Array(vendor.retention.enumerated()), id: \.offset) { _, row in LabeledContent(row.label, value: row.value) }
+                } header: { SectionLabel(copy.appRetentionTitle) }
+                    .listRowBackground(theme.colors.surface.color)
+                Section {
+                    if !vendor.storesOnDevice { Text(copy.appNoDeviceStorage) }
+                    ForEach(Array(vendor.storage.enumerated()), id: \.offset) { _, row in LabeledContent(row.label, value: row.value) }
+                } header: { SectionLabel(copy.appDeviceStorage) }
+                    .listRowBackground(theme.colors.surface.color)
+            }
+        }
+        .listStyle(.insetGrouped).scrollContentBackground(.hidden)
+        .foregroundStyle(theme.colors.text.color)
+        .navigationTitle(presenter.disclosure?.customVendors.first { $0.id == id }?.name ?? copy.appPartner).navigationBarTitleDisplayMode(.inline)
+        .accessibilityIdentifier("c15t.iab.custom-vendor.\(id)")
     }
 }
 

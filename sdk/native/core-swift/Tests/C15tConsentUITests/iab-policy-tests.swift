@@ -352,6 +352,39 @@ final class IABPolicyTests: XCTestCase {
         for id in providers { XCTAssertNil(presenter.iabVendor(id)) }
     }
 
+    // TCF-CHECK: P16, P21
+    func testCustomPartnersArePresentedApartWithTheirOwnChoices() async throws {
+        let core = try await bootIAB(customVendors: [
+            ["id": "internal-ads", "name": "Internal ads", "privacyPolicyUrl": "https://example.test/ads",
+             "purposes": [1, 3], "legIntPurposes": [7], "usesCookies": true, "cookieMaxAgeSeconds": 3600],
+        ])
+        let presenter = ConsentPresenter(core: core)
+        let content = try XCTUnwrap(presenter.iabPreferences)
+        XCTAssertEqual(content.iabPartnerCount, 3)
+        XCTAssertEqual(content.customPartnerCount, 1)
+        // On their own page, with the web's note that they are not registered with IAB.
+        XCTAssertNil(presenter.iabVendor(1_000_000))
+        let vendor = try XCTUnwrap(presenter.customVendor("internal-ads"))
+        XCTAssertEqual(vendor.note, presenter.iabCopy.commonCustomPartner)
+        XCTAssertEqual(vendor.privacyPolicy, URL(string: "https://example.test/ads"))
+        XCTAssertEqual(vendor.consentPurposes, ["Store and access information on a device", "Create profiles for personalised advertising"])
+        XCTAssertTrue(vendor.offersConsent)
+        XCTAssertTrue(vendor.offersLegitimateInterest)
+        // Off for a first-time user, legitimate interest included, as on the web.
+        presenter.customize()
+        XCTAssertEqual(presenter.choices.customVendorConsents, [])
+        XCTAssertEqual(presenter.choices.customVendorLegitimateInterests, [])
+        XCTAssertEqual(presenter.customPartnerSelection("internal-ads"), .off)
+        presenter.edit(\.purposeConsents, id: 1, enabled: true)
+        presenter.editCustom(\.customVendorConsents, id: "internal-ads", enabled: true)
+        XCTAssertEqual(presenter.customPartnerSelection("internal-ads"), .partial)
+        presenter.commit(.save)
+        await settle(presenter)
+        let saved = try XCTUnwrap(core.iabConsent())
+        XCTAssertEqual(saved.choices.customVendorConsents, ["internal-ads"])
+        XCTAssertTrue(core.isCustomVendorAllowed("internal-ads"))
+    }
+
     // TCF-CHECK: P19
     func testPartnerPageListsEverythingTheVendorDeclaresAndChoicesAreGranular() async throws {
         let core = try await bootIAB()
@@ -585,15 +618,19 @@ final class IABPolicyTests: XCTestCase {
     // MARK: - Helpers
 
     /// Boots a core on the demo's IAB `/init` fixture, optionally edited first.
-    private func bootIAB(language: String = "EN", _ edit: ((inout [String: Any]) -> Void)? = nil) async throws -> ConsentCore {
+    private func bootIAB(language: String = "EN", customVendors: [[String: Any]]? = nil,
+                         _ edit: ((inout [String: Any]) -> Void)? = nil) async throws -> ConsentCore {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         var body = try Data(contentsOf: root.appendingPathComponent("examples/consent-demo/fixtures/iab-init.json"))
-        if let edit {
+        if edit != nil || customVendors != nil {
             var json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
-            var gvl = try XCTUnwrap(json["gvl"] as? [String: Any])
-            edit(&gvl)
-            json["gvl"] = gvl
+            if let edit {
+                var gvl = try XCTUnwrap(json["gvl"] as? [String: Any])
+                edit(&gvl)
+                json["gvl"] = gvl
+            }
+            if let customVendors { json["customVendors"] = customVendors }
             body = try JSONSerialization.data(withJSONObject: json)
         }
         let core = ConsentCore()

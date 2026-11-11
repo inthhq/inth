@@ -23,16 +23,39 @@ const LISTS = [
 /** One list name in {@link NativeIABChoices}. */
 export type IABChoiceList = (typeof LISTS)[number];
 
+/** The custom (non-IAB) vendor lists, keyed by string vendor ID. */
+const CUSTOM_LISTS = [
+	'customVendorConsents',
+	'customVendorLegitimateInterests',
+] as const;
+
+/** One custom vendor list name in {@link NativeIABChoices}. */
+export type IABCustomVendorList = (typeof CUSTOM_LISTS)[number];
+
 /** Purposes TCF never lets a vendor or publisher claim under legitimate interest. */
 const NEVER_LI = new Set([1, 3, 4, 5, 6]);
 
 /** A selection with nothing granted. */
 export const EMPTY_IAB_CHOICES: NativeIABChoices = Object.fromEntries(
-	LISTS.map((list) => [list, []])
+	[...LISTS, ...CUSTOM_LISTS].map((list) => [list, []])
 ) as unknown as NativeIABChoices;
 
 const sorted = (ids: Iterable<number>): readonly number[] =>
 	[...new Set(ids)].sort((left, right) => left - right);
+
+/** Custom vendor IDs in the order native sorts them. */
+const sortedNames = (ids: Iterable<string>): readonly string[] =>
+	[...new Set(ids)].sort();
+
+/** Both custom vendor lists of `choices`, filled and sorted. */
+const customLists = (
+	choices: Partial<NativeIABChoices> | null | undefined
+): Record<IABCustomVendorList, readonly string[]> => ({
+	customVendorConsents: sortedNames(choices?.customVendorConsents ?? []),
+	customVendorLegitimateInterests: sortedNames(
+		choices?.customVendorLegitimateInterests ?? []
+	),
+});
 
 /**
  * The selection a draft opens with: the committed one, completed, or nothing
@@ -62,7 +85,8 @@ export const seedIABChoices = function seedIABChoices(
 	if (!committed) {
 		// A first decision starts as the stock presenter starts it: every consent off
 		// and the disclosed legitimate interests not objected to, from native's own
-		// projection under the publisher's disclosure.
+		// projection under the publisher's disclosure. Custom vendors start with
+		// nothing, legitimate interest included, as the web's preference centre does.
 		const disclosed = snapshot.iab.acceptAll;
 		return {
 			...EMPTY_IAB_CHOICES,
@@ -79,8 +103,56 @@ export const seedIABChoices = function seedIABChoices(
 	) as Record<IABChoiceList, readonly number[]>;
 	return {
 		...filled,
+		...customLists(committed),
 		adTechProviderConsents: committed.adTechProviderConsents ?? null,
 	};
+};
+
+/**
+ * Whether `id` names a custom (non-IAB) vendor on `snapshot`: one `/init`
+ * served under `customVendors` that is not also a registered vendor, which the
+ * TC String represents.
+ *
+ * @param snapshot - Current native snapshot.
+ * @param id - Vendor ID as a string or number.
+ * @returns `true` for a custom vendor.
+ */
+export const isCustomVendor = function isCustomVendor(
+	snapshot: ConsentSnapshot,
+	id: string | number
+): boolean {
+	const key = String(id);
+	const { iab } = snapshot;
+	return (
+		(iab?.customVendors ?? []).some((vendor) => vendor.id === key) &&
+		!Object.hasOwn(iab?.gvl?.vendors ?? {}, key)
+	);
+};
+
+/**
+ * Add or remove one custom vendor from one custom vendor list. Turning
+ * legitimate interest off is the objection; there is no separate list.
+ *
+ * @param choices - Current selection.
+ * @param list - `customVendorConsents` or `customVendorLegitimateInterests`.
+ * @param id - Custom vendor ID.
+ * @param value - `true` to include it.
+ * @returns The same object when nothing changed.
+ */
+export const withCustomVendorChoice = function withCustomVendorChoice(
+	choices: NativeIABChoices,
+	list: IABCustomVendorList,
+	id: string,
+	value: boolean
+): NativeIABChoices {
+	const current = choices[list] ?? [];
+	if (current.includes(id) === value) {
+		return choices;
+	}
+	const next = value
+		? sortedNames([...current, id])
+		: current.filter((entry) => entry !== id);
+	return { ...choices, [list]: next };
 };
 
 /**
@@ -163,6 +235,7 @@ export const acceptAllIAB = function acceptAllIAB(
 		...(Object.fromEntries(
 			LISTS.map((list) => [list, sorted(accepted[list] ?? [])])
 		) as Record<IABChoiceList, readonly number[]>),
+		...customLists(accepted),
 		adTechProviderConsents: accepted.adTechProviderConsents ?? null,
 	};
 };
@@ -184,6 +257,7 @@ export const rejectAllIAB = function rejectAllIAB(
 			choices.adTechProviderConsents === undefined
 				? null
 				: [],
+		customVendorConsents: [],
 		publisherConsents: [],
 		publisherCustomConsents: [],
 		purposeConsents: [],
@@ -210,11 +284,14 @@ export const sameIABChoices = function sameIABChoices(
 		return false;
 	}
 	const same = (
-		a: readonly number[] | null | undefined,
-		b: readonly number[] | null | undefined
+		a: readonly (number | string)[] | null | undefined,
+		b: readonly (number | string)[] | null | undefined
 	) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+	const leftCustom = customLists(left);
+	const rightCustom = customLists(right);
 	return (
 		LISTS.every((list) => same(left[list], right[list])) &&
+		CUSTOM_LISTS.every((list) => same(leftCustom[list], rightCustom[list])) &&
 		same(left.adTechProviderConsents, right.adTechProviderConsents)
 	);
 };

@@ -65,13 +65,13 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 		val core = C15t.current
 		val (snapshot, additions) = C15tPayload.consistently({ C15t.snapshot() }) {
 			Triple(
-				core?.iabConsent,
+				core?.iabConsent to core?.iabCustomVendors().orEmpty(),
 				core?.iabAcceptAllChoices(),
 				core?.iabPresentation(),
 			)
 		}
-		return C15tPayload.snapshot(snapshot, fallbackLanguage = deviceLanguage(), iabConsent = additions.first,
-			iabAcceptAll = additions.second, iabPresentation = additions.third)
+		return C15tPayload.snapshot(snapshot, fallbackLanguage = deviceLanguage(), iabConsent = additions.first.first,
+			iabAcceptAll = additions.second, iabPresentation = additions.third, iabCustomVendors = additions.first.second)
 	}
 
 	/** WebView consent: the state a page reads, and a fresh token and request key for one WebView. */

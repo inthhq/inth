@@ -170,6 +170,7 @@ expectTypeOf<
 expectTypeOf<keyof NativeIABState>().toEqualTypeOf<
 	| 'acceptAll'
 	| 'committed'
+	| 'customVendors'
 	| 'disclosure'
 	| 'editable'
 	| 'gvl'

@@ -191,6 +191,15 @@ without staging. `setPurposeLegitimateInterest` and
 `setVendorLegitimateInterest` with `false` record an objection; purposes 1 and
 3 to 6 never take legitimate interest.
 
+Custom partners, the custom vendors in your policy's IAB settings, are in
+`useIABSnapshot()?.customVendors`, each with its `id`, name, privacy policy
+and purposes. Pass the `id` to `setVendorConsent`, `setVendorLegitimateInterest`
+and `useVendorConsent`, as `@c15t/react` takes it. Their choices are staged in
+`customVendorConsents` and `customVendorLegitimateInterests`, and `acceptAll()`
+and `rejectAll()` cover them. Native keeps them beside the TC String, not in
+it, so list them apart from IAB partners and say they are not registered with
+IAB.
+
 The staged values are for rendering controls. Gate vendors on the committed
 decision, which native SDK gates and `IABTCF_*` readers already use.
 `useIABSnapshot()` returns the served vendor list for your disclosure text, the

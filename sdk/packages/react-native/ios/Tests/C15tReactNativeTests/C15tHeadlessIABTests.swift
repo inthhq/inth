@@ -36,6 +36,7 @@ func headlessIABCore() async throws -> ConsentCore {
     var body = try XCTUnwrap(transport["body"] as? [String: Any])
     body["gvl"] = list["gvl"]
     body["adTechProviders"] = list["adTechProviders"]
+    body["customVendors"] = fixture["customVendors"]
     let configuration = try JSONDecoder().decode(
         IABConfiguration.self, from: JSONSerialization.data(withJSONObject: try XCTUnwrap(fixture["configuration"])))
     let now = try XCTUnwrap(fixture["now"] as? NSNumber).int64Value
@@ -53,7 +54,8 @@ func headlessIABCore() async throws -> ConsentCore {
 /// The `iab` slot the bridge sends for `core`.
 func headlessIABSlot(_ core: ConsentCore) -> [String: Any] {
     (jsonObject(C15tPayload.snapshot(core.snapshot(), iabConsent: core.iabConsent(),
-        iabAcceptAll: core.iabAcceptAllChoices(), iabPresentation: core.iabPresentation()))["iab"]
+        iabAcceptAll: core.iabAcceptAllChoices(), iabPresentation: core.iabPresentation(),
+        iabCustomVendors: core.iabCustomVendors()))["iab"]
         as? [String: Any]) ?? [:]
 }
 
@@ -87,6 +89,7 @@ final class C15tHeadlessIABTests: XCTestCase {
             "the policy's 30-day choice validity")
         XCTAssertEqual(disclosure as NSDictionary, try XCTUnwrap(fixture["disclosure"] as? NSDictionary))
         XCTAssertEqual(slot["acceptAll"] as? NSDictionary, try XCTUnwrap(fixture["acceptAll"] as? NSDictionary))
+        XCTAssertEqual(slot["customVendors"] as? NSArray, try XCTUnwrap(fixture["customVendors"] as? NSArray))
     }
 
     func testAHeadlessCommitWritesTheStringsTheStockSaveWrites() async throws {
@@ -98,6 +101,9 @@ final class C15tHeadlessIABTests: XCTestCase {
             let committed = try XCTUnwrap(iabSlot(core)["committed"] as? [String: Any], id)
             XCTAssertEqual(committed["tcString"] as? String, row["tcString"] as? String, id)
             XCTAssertEqual(committed["addtlConsent"] as? String, row["addtlConsent"] as? String, id)
+            let choices = try XCTUnwrap(row["choices"] as? [String: Any], id)
+            XCTAssertEqual((committed["choices"] as? [String: Any])?["customVendorConsents"] as? [String] ?? [],
+                choices["customVendorConsents"] as? [String] ?? [], id)
         }
     }
 

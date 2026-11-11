@@ -26,6 +26,8 @@ data class SnapshotEnvelope(
 	val snapshot: ConsentSnapshot,
 	@SerialName("lastIABActionAt") val lastIabActionAt: Long? = null,
 	val additionalConsentList: com.c15t.core.iab.AdditionalConsentList? = null,
+	/** `/init`'s custom (non-IAB) vendors. Absent in an envelope written before they were kept, which reads as none. */
+	val customVendors: List<com.c15t.core.iab.IabCustomVendor>? = null,
 	val iabListFetchedAt: Long? = null,
 	val iabConsent: com.c15t.core.iab.IabCommittedConsent? = null,
 	val pendingSaves: List<@Serializable(with = EnvelopeQueuedSaveSerializer::class) QueuedSave>? = null,

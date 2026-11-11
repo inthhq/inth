@@ -14,6 +14,8 @@ final class TrackingConsentTests: XCTestCase {
             let vendorConsents: [Int]
             let adTechProvidersListed: Bool
             let adTechProviderConsents: [Int]
+            let customVendors: [String: [Int]]
+            let customVendorConsents: [String]
             let expected: Expected
         }
         let cases: [Case]
@@ -31,7 +33,9 @@ final class TrackingConsentTests: XCTestCase {
                 vendorConsentPurposes: Dictionary(uniqueKeysWithValues: item.vendors.map { (Int($0.key)!, Set($0.value)) }),
                 vendorConsents: Set(item.vendorConsents),
                 adTechProvidersListed: item.adTechProvidersListed,
-                adTechProviderConsents: Set(item.adTechProviderConsents))
+                adTechProviderConsents: Set(item.adTechProviderConsents),
+                customVendorConsentPurposes: item.customVendors.mapValues { Set($0) },
+                customVendorConsents: Set(item.customVendorConsents))
             XCTAssertEqual(C15tTrackingConsent.iabMarketingPurposesConsented(input), item.expected.purposes, item.name)
             XCTAssertEqual(C15tTrackingConsent.iabMarketingConsented(input), item.expected.marketing, item.name)
         }

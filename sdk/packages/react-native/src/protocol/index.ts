@@ -54,6 +54,7 @@ export type {
 	ConsentSnapshot,
 	NativeAdTechProvider,
 	NativeIABCommittedConsent,
+	NativeIABCustomVendor,
 	NativeIABDisclosure,
 	NativeIABHeadlessGap,
 	NativeIABPurposePartnerCounts,

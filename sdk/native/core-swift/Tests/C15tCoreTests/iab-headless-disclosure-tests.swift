@@ -54,6 +54,7 @@ final class IABHeadlessDisclosureTests: XCTestCase {
         let acceptAll: IABChoices
         let cases: [Case]
         let conflicts: [Conflict]
+        let customVendors: JSONValue
     }
 
     struct VendorList: Decodable {
@@ -76,6 +77,7 @@ final class IABHeadlessDisclosureTests: XCTestCase {
             policyResolution: Fixture.matchedResolution(policy: Fixture.rule(model: "iab"))))!.objectValue!
         fields["gvl"] = list.gvl
         fields["adTechProviders"] = list.adTechProviders
+        fields["customVendors"] = vector.customVendors
         let http = StubHTTP()
         http.initResponse = HTTPResponse(status: 200, body: try C15tJSON.encode(JSONValue.object(fields)))
         http.setSavesFail(true)
@@ -119,6 +121,8 @@ final class IABHeadlessDisclosureTests: XCTestCase {
             displayItems: presentation.bannerSummary.displayItems,
             remainingCount: presentation.bannerSummary.remainingCount), expected.bannerSummary)
         XCTAssertEqual(presentation.language, expected.language)
+        XCTAssertEqual(presentation.customVendors.map(\.id),
+            vector.customVendors.arrayValue?.compactMap { $0.objectValue?["id"]?.stringValue })
         XCTAssertEqual(core.iabAcceptAllChoices(), vector.acceptAll)
     }
 
@@ -130,6 +134,7 @@ final class IABHeadlessDisclosureTests: XCTestCase {
             XCTAssertEqual(core.saveIAB(IABDraft(revision: draft.revision, choices: row.choices), categories: [:]).status,
                 .committed, row.id)
             let saved = try XCTUnwrap(core.iabConsent(), row.id)
+            XCTAssertEqual(saved.choices.customVendorConsents, row.choices.customVendorConsents, row.id)
             XCTAssertEqual(saved.tcString, row.tcString, row.id)
             XCTAssertEqual(saved.addtlConsent, row.addtlConsent, row.id)
             XCTAssertEqual(core.iabPresentation()?.restrictionConflicts(row.choices), [], row.id)

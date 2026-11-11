@@ -173,12 +173,23 @@ public final class ConsentPresenter: ObservableObject {
         disclosure?.vendors[id]?.selectionStatus(vendorId: id, choices: choices) ?? .off
     }
     /// Human-readable summary of both permitted legal bases in the current draft, from the shared copy.
-    public func partnerStatus(_ id: Int) -> String {
-        switch partnerSelection(id) {
+    public func partnerStatus(_ id: Int) -> String { statusText(partnerSelection(id)) }
+    /// Whether a custom (non-IAB) partner's legal bases are off, partly on or on in the current draft.
+    public func customPartnerSelection(_ id: String) -> IABVendorSelectionStatus {
+        disclosure?.customVendors.first { $0.id == id }?.selectionStatus(choices: choices) ?? .off
+    }
+    /// The same summary for a custom partner.
+    public func customPartnerStatus(_ id: String) -> String { statusText(customPartnerSelection(id)) }
+    private func statusText(_ selection: IABVendorSelectionStatus) -> String {
+        switch selection {
         case .off: return iabCopy.appOff
         case .partial: return iabCopy.appPartlyOn
         case .on: return iabCopy.appOn
         }
+    }
+    /// One custom partner's page, or `nil` when it is not in the current disclosure.
+    func customVendor(_ id: String) -> IABCustomVendorContent? {
+        disclosure.flatMap { IABCustomVendorContent($0, id: id) }
     }
     /// How the open session is shown: the first layer, and preferences opened from it, cover
     /// the screen; standing preferences are a sheet. `nil` while nothing is open.
@@ -315,6 +326,14 @@ public final class ConsentPresenter: ObservableObject {
     public func editLI(purpose: Bool, id: Int, enabled: Bool) {
         edit(purpose ? \.purposeLegitimateInterests : \.vendorLegitimateInterests, id: id, enabled: enabled)
         edit(purpose ? \.purposeObjections : \.vendorObjections, id: id, enabled: !enabled)
+    }
+    /// Grant or withdraw a custom partner's consent or legitimate interest. Turning legitimate
+    /// interest off is the objection; custom partners have no separate objection list.
+    public func editCustom(_ key: WritableKeyPath<IABChoices, [String]>, id: String, enabled: Bool) {
+        guard !pending, !stale else { return }
+        var values = Set(choices[keyPath: key])
+        if enabled { values.insert(id) } else { values.remove(id) }
+        choices[keyPath: key] = values.sorted()
     }
     public func editProvider(id: Int, enabled: Bool) {
         guard !pending, !stale else { return }

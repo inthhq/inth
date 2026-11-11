@@ -156,6 +156,8 @@ data class IabCopy(
     val commonSaveSettings: String,
     /** `iab.common.clearSelection` */
     val commonClearSelection: String,
+    /** `iab.common.customPartner` */
+    val commonCustomPartner: String,
     /** `iab.preferenceCenter.title` */
     val preferenceCenterTitle: String,
     /** `iab.preferenceCenter.features.description` */
@@ -182,6 +184,10 @@ data class IabCopy(
     val preferenceCenterVendorListAdTechProvidersHeading: String,
     /** `iab.preferenceCenter.vendorList.adTechProvidersNotice` */
     val preferenceCenterVendorListAdTechProvidersNotice: String,
+    /** `iab.preferenceCenter.vendorList.customVendorsHeading` */
+    val preferenceCenterVendorListCustomVendorsHeading: String,
+    /** `iab.preferenceCenter.vendorList.customVendorsNotice` */
+    val preferenceCenterVendorListCustomVendorsNotice: String,
     /** `iab.preferenceCenter.vendorList.privacyPolicy` */
     val preferenceCenterVendorListPrivacyPolicy: String,
     /** `iab.preferenceCenter.vendorList.dataCategories` */
@@ -361,6 +367,7 @@ data class IabCopy(
             commonCustomize = "Customize",
             commonSaveSettings = "Save Settings",
             commonClearSelection = "Clear",
+            commonCustomPartner = "Custom partner not registered with IAB",
             preferenceCenterTitle = "Privacy Settings",
             preferenceCenterFeaturesDescription = "These means of processing can be used solely in pursuit of one or several purposes for which you are given a choice in this notice.",
             preferenceCenterFeaturesTitle = "Features",
@@ -374,6 +381,8 @@ data class IabCopy(
             preferenceCenterVendorListIabVendorsHeading = "IAB Registered Vendors",
             preferenceCenterVendorListAdTechProvidersHeading = "Google Ad Tech Providers",
             preferenceCenterVendorListAdTechProvidersNotice = "Google works with these ad tech providers outside the IAB framework. Your consent reaches a provider only if you switch it on and also allow device storage and personalised advertising.",
+            preferenceCenterVendorListCustomVendorsHeading = "Custom Partners",
+            preferenceCenterVendorListCustomVendorsNotice = "These are custom partners not registered with IAB Transparency & Consent Framework (TCF). They process data based on your consent and may have different privacy practices than IAB-registered vendors.",
             preferenceCenterVendorListPrivacyPolicy = "Privacy Policy",
             preferenceCenterVendorListDataCategories = "Data Categories",
             preferenceCenterVendorListRetention = "Retention: {days}d",
@@ -475,6 +484,7 @@ data class IabCopy(
                 commonCustomize = text("commonCustomize") ?: return null,
                 commonSaveSettings = text("commonSaveSettings") ?: return null,
                 commonClearSelection = text("commonClearSelection") ?: return null,
+                commonCustomPartner = text("commonCustomPartner") ?: return null,
                 preferenceCenterTitle = text("preferenceCenterTitle") ?: return null,
                 preferenceCenterFeaturesDescription = text("preferenceCenterFeaturesDescription") ?: return null,
                 preferenceCenterFeaturesTitle = text("preferenceCenterFeaturesTitle") ?: return null,
@@ -488,6 +498,8 @@ data class IabCopy(
                 preferenceCenterVendorListIabVendorsHeading = text("preferenceCenterVendorListIabVendorsHeading") ?: return null,
                 preferenceCenterVendorListAdTechProvidersHeading = text("preferenceCenterVendorListAdTechProvidersHeading") ?: return null,
                 preferenceCenterVendorListAdTechProvidersNotice = text("preferenceCenterVendorListAdTechProvidersNotice") ?: return null,
+                preferenceCenterVendorListCustomVendorsHeading = text("preferenceCenterVendorListCustomVendorsHeading") ?: return null,
+                preferenceCenterVendorListCustomVendorsNotice = text("preferenceCenterVendorListCustomVendorsNotice") ?: return null,
                 preferenceCenterVendorListPrivacyPolicy = text("preferenceCenterVendorListPrivacyPolicy") ?: return null,
                 preferenceCenterVendorListDataCategories = text("preferenceCenterVendorListDataCategories") ?: return null,
                 preferenceCenterVendorListRetention = text("preferenceCenterVendorListRetention") ?: return null,

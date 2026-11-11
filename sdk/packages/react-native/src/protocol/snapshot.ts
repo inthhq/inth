@@ -156,6 +156,37 @@ export interface NativeIABState {
 	 * and configuration apply, and from a binary older than this field.
 	 */
 	readonly disclosure: NativeIABDisclosure | null;
+	/**
+	 * Partners the publisher declares outside the Global Vendor List, as `/init`
+	 * served them. They get their own consent and legitimate-interest choices
+	 * (`customVendorConsents`, `customVendorLegitimateInterests`), which native
+	 * keeps beside the TC String, and their purposes count toward which purposes
+	 * decide a category, as on the web. A binary older than this field reads as
+	 * `[]`.
+	 */
+	readonly customVendors: readonly NativeIABCustomVendor[];
+}
+
+/**
+ * A custom (non-IAB) vendor: `NonIABVendor` in `@c15t/schema`, with `id` always
+ * a string, as the web keys its consent maps (`String(vendor.id)`).
+ */
+export interface NativeIABCustomVendor {
+	readonly id: string;
+	readonly name: string;
+	readonly privacyPolicyUrl: string;
+	/** IAB purposes it asks consent for. */
+	readonly purposes: readonly number[];
+	/** IAB purposes it claims under legitimate interest. */
+	readonly legIntPurposes: readonly number[];
+	readonly specialFeatures: readonly number[];
+	readonly features: readonly number[];
+	readonly dataCategories: readonly number[];
+	readonly description?: string;
+	readonly cookieMaxAgeSeconds?: number;
+	readonly dataRetentionDays?: number;
+	readonly usesCookies: boolean;
+	readonly usesNonCookieAccess: boolean;
 }
 
 /**
