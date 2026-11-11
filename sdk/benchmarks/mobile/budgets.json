@@ -141,7 +141,7 @@
 			"max": 1326815,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Bytes C15tCore adds to an iOS binary, measured as the linked __TEXT plus __DATA of the arm64 simulator slice of a Release build. The integrated mobile release wave (#134) measures 1,207,625 B on the macOS runner. The growth over the 475,805 B recorded in results/latest.json bought IAB TCF in the core, the GPP encoder and resolver, WebView consent sync, observable models, the bundled and in-code policy paths, and the prompt-owed bookkeeping auto-present reads. The ceiling uses the headroom ratio of android_binary_bytes (1.0987). The earlier 1 MiB ceiling sat at 2.2 times its measurement, which would let the core double again unnoticed."
+			"note": "Bytes C15tCore adds to an iOS binary, measured as the linked __TEXT plus __DATA of the arm64 simulator slice of a Release build. canary at c11784370, this wave's base, measures 1,020,928 B (nightly validation run 42945664232, and push run 42894097433 on the same commit); IAB TCF was already in the core there. The integrated mobile release wave (#134) measures 1,207,625 B, so the wave adds 186,697 B: the policy-in-code and bundled-policy paths, the GPP encoder, resolver and storage rows, WebView consent sync, the observable consent models, and the prompt-owed bookkeeping auto-present reads. The ceiling uses the headroom ratio of android_binary_bytes (1.0987) over the wave's measurement. The 475,805 B in results/latest.json was recorded at bea070a on 2026-09-17, well before canary's current core, so it is no baseline for this row."
 		},
 		"ios_binding_bytes": {
 			"max": 262144,
