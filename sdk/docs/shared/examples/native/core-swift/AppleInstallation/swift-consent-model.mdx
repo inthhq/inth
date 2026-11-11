@@ -9,20 +9,16 @@ import Foundation
 
 @MainActor
 final class ConsentModel: ObservableObject {
-    @Published private(set) var snapshot: ConsentSnapshot?
+    @Published private(set) var state: PublishedConsent?
     @Published private(set) var presenter: ConsentPresenter?
     @Published private(set) var installationError: Error?
-    private(set) var core: ConsentCore?
     private let backendURL: URL
-    private var observation: ConsentSubscription?
 
     init(backendURL: URL) {
         self.backendURL = backendURL
         install()
     }
 
-    var isReady: Bool { snapshot.map { $0.ready && !$0.policyPending } ?? false }
-    var measurementAllowed: Bool { core?.isAllowed(.measurement) ?? false }
     var storageCanRetry: Bool { installationError as? C15tAppleInstallationError == .protectedStorageUnavailable }
 
     func retryProtectedStorage() {
@@ -31,30 +27,18 @@ final class ConsentModel: ObservableObject {
     }
 
     private func install() {
-        guard core == nil else { return }
+        guard state == nil else { return }
         do {
-            let installed = try C15tApple.install(C15tAppleConfiguration(
+            let core = try C15tApple.install(C15tAppleConfiguration(
                 transport: .hosted(backendURL),
                 consentCategories: [.necessary, .measurement, .marketing]
             ))
-            core = installed
-            // The handle owns the closure, so capture the model weakly.
-            observation = installed.onChange { [weak self] in self?.consentDidChange($0) }
-            snapshot = installed.snapshot()
-            presenter = ConsentPresenter(core: installed)
+            state = PublishedConsent(core: core)
+            presenter = ConsentPresenter(core: core)
             installationError = nil
         } catch {
             installationError = error
         }
     }
-
-    nonisolated func consentDidChange(_ snapshot: ConsentSnapshot) {
-        Task { @MainActor [weak self] in
-            guard let self, let core = self.core else { return }
-            self.snapshot = core.snapshot()
-        }
-    }
-
-    deinit { observation?.cancel() }
 }
 ```

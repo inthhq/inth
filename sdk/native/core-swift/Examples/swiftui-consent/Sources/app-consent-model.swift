@@ -16,7 +16,9 @@ final class AppConsentModel: ObservableObject {
     let measurement = MeasurementService()
     private let makeCore: () throws -> ConsentCore
     private let stockUI: Bool
-    private var observation: ConsentSubscription?
+    /// Retained for its updates: `$snapshot` stops when this model is released.
+    private var state: PublishedConsent?
+    private var snapshotUpdates: AnyCancellable?
     private var measurementGate: ConsentSubscription?
     private var eventsTask: Task<Void, Never>?
 
@@ -40,10 +42,14 @@ final class AppConsentModel: ObservableObject {
             let installed = try makeCore()
             core = installed
             installationError = nil
+            // #region docs:swiftui-snapshot title="Sources/app-consent-model.swift"
+            // PublishedConsent updates on the main actor, so this sink needs no hop.
+            // `$snapshot` delivers the current value first, then each new revision.
+            let state = PublishedConsent(core: installed)
+            snapshotUpdates = state.$snapshot.sink { [weak self] in self?.receive($0) }
+            self.state = state
+            // #endregion docs:swiftui-snapshot
             // #region docs:swiftui-observe title="Sources/app-consent-model.swift"
-            // The handle owns the closure, so capture the model weakly.
-            observation = installed.onChange { [weak self] in self?.consentDidChange($0) }
-            receive(installed.snapshot())
             measurementGate = installed.gate(ConsentCategory.measurement) { [measurement] decision in
                 // The callback can run on any queue. This service synchronizes its own state.
                 measurement.apply(decision)
@@ -62,16 +68,6 @@ final class AppConsentModel: ObservableObject {
             measurement.stop()
         }
     }
-
-    // #region docs:swiftui-snapshot title="Sources/app-consent-model.swift"
-    nonisolated func consentDidChange(_ snapshot: ConsentSnapshot) {
-        Task { @MainActor [weak self] in
-            // Read current state on arrival, rather than publishing an older queued callback.
-            guard let self, let core = self.core else { return }
-            self.receive(core.snapshot())
-        }
-    }
-    // #endregion docs:swiftui-snapshot
 
     private func receive(_ snapshot: ConsentSnapshot) {
         self.snapshot = snapshot
@@ -96,7 +92,7 @@ final class AppConsentModel: ObservableObject {
     }
 
     deinit {
-        observation?.cancel()
+        snapshotUpdates?.cancel()
         measurementGate?.cancel()
         eventsTask?.cancel()
         measurement.stop()

@@ -65,6 +65,26 @@ callback. The core keeps calling an inline lambda until you call `close()`, and
 dropping the handle without closing it does not stop the callback. Callbacks can
 arrive on a worker thread, so marshal UI updates to the main thread.
 
+## Show consent state in Compose
+
+`c15t-android` exposes the core's state as Kotlin flows. Import them from
+`com.c15t.android`:
+
+| API | What it gives you |
+| --- | --- |
+| `core.snapshotFlow` | A `StateFlow<ConsentSnapshot>` holding the current snapshot. |
+| `core.decisionFlow(category)` | A `StateFlow<ConsentDecision>` that emits only when that category's decision changes. |
+
+Both return the same instance on every call, so `collectAsState()` stays stable
+across recompositions. A collector receives values in its own context, so one
+started from Compose, `lifecycleScope` or `viewModelScope` runs on the main
+thread with no hop. A `StateFlow` conflates: a slow collector sees the latest
+snapshot, not every revision. Use `onChange` when your code must act on each
+revision.
+
+The [quickstart](/docs/frameworks/android/quickstart) screen shows the
+measurement decision this way.
+
 ## Save a category form
 
 Read `C15t.current` after installation and keep its snapshot revision when you
@@ -90,9 +110,12 @@ Inspect the returned `CommitResult`:
 | `queued == true` | Delivery is durable and can retry after reconnect. |
 | `delivered == false` | Do not claim the backend received the choice. Local success can still be true. |
 
-Run saves off the main thread because durable storage is part of the commit.
-Disable repeated submission while a save is pending. Announce failures to
-TalkBack and keep retry reachable.
+`awaitSave` runs `save` on `Dispatchers.IO` because durable storage is part of
+the commit. Cancelling the caller does not cancel a save that has started.
+`awaitRefresh` returns once the policy request has landed and `snapshotFlow`
+holds its result. `awaitFlushPending` replays the offline queue on
+`Dispatchers.IO`. Disable repeated submission while a save is pending. Announce
+failures to TalkBack and keep retry reachable.
 
 ## Use IAB authority for advertising
 

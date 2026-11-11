@@ -45,8 +45,7 @@ Keep simulator signing enabled, because the installer checks Keychain access.
 ## Install one engine for the app
 
 Create `ConsentModel.swift` in your app target. This model installs the engine
-once, keeps a presenter attached to it, and publishes current state for your
-SwiftUI views:
+once, then keeps a presenter and a `PublishedConsent` attached to it:
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-consent-model.mdx" />
 
@@ -54,9 +53,11 @@ Installation restores saved choices before it returns. A fresh app still has
 to fetch its policy, so `isReady` remains false until policy resolution
 finishes. Optional permissions stay off while that answer is unavailable.
 
-The model subscribes before reading the first snapshot. Its callback moves UI
-updates to the main actor, then reads the current value so an older queued
-callback cannot replace newer state.
+`PublishedConsent` comes from `C15tCore`. It is an `ObservableObject` that
+publishes the core's `snapshot` and a `ConsentDecision` per category, and it
+updates on the main actor. Your views observe it directly, with no observer
+code of their own. On iOS 17 and later, `ObservableConsent` offers the same
+state as an `@Observable` model.
 
 ## Add the consent screens
 
@@ -65,6 +66,14 @@ automatically. The Privacy settings button reopens it after a person has
 accepted or rejected optional use:
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-consent-root.mdx" />
+
+`ConsentRoot` hands the installed `PublishedConsent` to `PrivacyStatus`, which
+observes it. Create `PrivacyStatus.swift`:
+
+<include src="../../shared/examples/native/core-swift/AppleInstallation/swift-privacy-status.mdx" />
+
+The view re-renders on each new snapshot, so its labels change as soon as a
+save, a withdrawal or a policy refresh lands.
 
 Replace the sample `VStack` with your app content. Keep the modifier on a
 stable root and the Privacy settings action in a place people can find again,

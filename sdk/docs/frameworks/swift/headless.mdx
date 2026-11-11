@@ -11,8 +11,8 @@ Your UI reads that authority and saves explicit actions to it.
 For an app that never renders the stock screens, link `C15tCore` and
 `C15tApple` and omit `C15tConsentUI`. Keep the same protected installation as
 the [quickstart](/docs/frameworks/swift/quickstart). The quickstart's
-`ConsentModel` includes a stock presenter, so replace that presentation
-ownership with your own observable model when dropping the UI product.
+`ConsentModel` includes a stock presenter. Drop the presenter when you drop the
+UI product, and keep its `PublishedConsent` for your own views.
 
 ## Keep SDK gates current
 
@@ -35,10 +35,15 @@ registration. `onChange` follows the same rule. A closure that captures its
 owner should capture it weakly, as the example does, so the owner can still be
 released.
 
-Callbacks can run on any queue. Marshal UI updates to the main actor, as the
-sample does here:
+Gate callbacks can run on any queue, so the service guards its own state. UI
+state should come from `PublishedConsent`, or `ObservableConsent` on iOS 17
+and later, which update on the main actor. The sample republishes the snapshot
+with a Combine sink that needs no hop:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-snapshot.mdx" />
+
+A UIKit controller can subscribe to `decisionPublisher(for:)`, which delivers
+the current decision and then each change on the main thread.
 
 Use your vendor's supported disable, stop or reset API on withdrawal. The
 sample counter is local and makes no network requests; adapt the gate to the

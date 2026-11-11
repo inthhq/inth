@@ -2,6 +2,7 @@
 
 ```swift title="ConsentRoot.swift"
 import C15tConsentUI
+import C15tCore
 import SwiftUI
 import UIKit
 
@@ -29,13 +30,9 @@ struct ConsentRoot: View {
     private var content: some View {
         NavigationStack {
             VStack(spacing: 16) {
-                Text(consent.isReady ? "Privacy choices ready" : "Loading privacy choices")
-                Text(consent.measurementAllowed ? "Measurement allowed" : "Measurement off")
-                Button("Privacy settings") { consent.presenter?.presentPreferences() }
-                    .disabled(!consent.isReady)
-                Button("Retry policy connection") { consent.core?.refresh() }
-                    .disabled(consent.core == nil)
-                if consent.installationError != nil {
+                if let state = consent.state {
+                    PrivacyStatus(state: state, presenter: consent.presenter)
+                } else if consent.installationError != nil {
                     Text(consent.storageCanRetry
                         ? "Privacy settings are unavailable. Unlock your device and retry."
                         : "Privacy settings could not start. Check this app's consent configuration.")

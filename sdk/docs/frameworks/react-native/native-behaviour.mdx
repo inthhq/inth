@@ -54,7 +54,8 @@ changes through the vendor's supported enable, disable or shutdown API.
 Close the subscription when that integration ends. Do not tie an app-wide
 analytics gate to a short-lived React component or an Activity that rotates.
 Marshal UI work to the platform's main thread because native callbacks can
-arrive on a worker.
+arrive on a worker. Native UI code can read state from Kotlin's `snapshotFlow`
+and `decisionFlow`, or Swift's `PublishedConsent`, which need no hop.
 
 A single launch-time check misses withdrawal. The subscription must also cover
 policy changes, identity changes, foreground refresh and recovery.

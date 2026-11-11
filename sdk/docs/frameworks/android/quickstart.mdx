@@ -81,6 +81,10 @@ choices, and starts policy resolution. It also owns foreground and reconnect
 refresh. Install before optional SDK startup. Disable analytics and advertising
 SDK auto-initializers that can collect before `Application.onCreate`.
 
+The status line reads `decisionFlow(ConsentCategory.MEASUREMENT)` with
+`collectAsState()`, so it changes as soon as a choice is saved or withdrawn,
+with no observer code in the Activity.
+
 The presenter is a `ViewModel`, so rotation keeps its draft. It automatically
 shows an owed choice when policy is ready. Keep `C15tConsent` mounted alongside
 your app content, and put the **Privacy settings** button in your real settings
@@ -121,10 +125,11 @@ Build and launch the app against a policy that asks for a choice.
    stays off.
 2. Choose **Reject all**, then close and relaunch the app. The prompt stays
    closed and analytics stays off.
-3. Open **Privacy settings**, enable Analytics and save. Your analytics
-   integration can now enable collection.
-4. Reopen settings and turn Analytics off. Collection stops, including after
-   another process restart.
+3. Open **Privacy settings**, enable Analytics and save. The screen shows
+   Measurement allowed, and your analytics integration can now enable
+   collection.
+4. Reopen settings and turn Analytics off. The screen shows Measurement off and
+   collection stops, including after another process restart.
 5. Repeat the refusal and restart while offline. The choice persists locally;
    delivery retries after reconnecting.
 
