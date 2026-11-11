@@ -89,6 +89,30 @@ A missing tracking, reset or presenter method also needs a matching binary,
 even if the protocol number has not changed. See
 [compatibility and OTA](/docs/frameworks/react-native/platform-support).
 
+## The console says a native payload does not match
+
+In development, the consent client warns when the native module's bootstrap
+or commit result is missing a key that `@c15t/react-native` declares. The
+warning lists each key, such as `subjectId: required, absent from the payload`.
+It usually means the app's native build is older or newer than the JavaScript
+package. Rebuild the app so both halves come from the same release.
+
+To check a payload yourself, pass it to `describeBridgePayloadDrift`:
+
+{/* example: fragment */}
+
+```ts
+import { describeBridgePayloadDrift } from '@c15t/react-native';
+
+const problems = describeBridgePayloadDrift('commitResult', result, {
+	allowUnknownKeys: true,
+});
+```
+
+It returns one line per problem, or an empty list when the payload matches.
+`BridgePayloadName` names the payloads it checks, and `BRIDGE_PAYLOADS` lists
+the keys of each. Production builds print no warning.
+
 ## A save resolves but the choice is unchanged
 
 Inspect `CommitResult.ok` and `reason`. Awaiting the command only confirms it
@@ -100,6 +124,10 @@ returned a result.
 | `queue-write-failed` | Recover durable storage, keep the form open and retry. |
 | `concurrent-change` | Reload the current policy/disclosures and let the person review the choice again. |
 | Invalid intent or unavailable IAB authority | Check the command's scope and use the supported native flow. |
+
+`COMMIT_FAILURE_REASONS` lists every `reason` the native cores return,
+including IAB and bundled-policy refusals such as `bundled-policy-expired` and
+`iab-list-stale`.
 
 Preserve the draft on refusal and display an actionable error. A successful
 local save can remain queued while offline; it does not need to be repeated

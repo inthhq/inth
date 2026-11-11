@@ -88,6 +88,7 @@
 		"check-types": "tsc --noEmit && tsc -p tsconfig.type-tests.json",
 		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
 		"fmt": "bun oxfmt .",
+		"generate:bridge-schema": "tsx scripts/generate-bridge-schema.ts",
 		"generate:fixtures": "tsx scripts/generate-protocol-fixtures.ts",
 		"lint": "bun oxlint ./src",
 		"prepack": "bun run build:docs && bun -e \"for (const name of ['LICENSE.md', 'NOTICE']) await Bun.write(name, Bun.file('../../' + name));\" && bun ../../scripts/sync-vendored-core.ts && bun ../../scripts/sync-vendored-apple.ts && bun ../../scripts/verify-package-artifacts.ts",

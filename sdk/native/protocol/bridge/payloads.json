@@ -1,0 +1,561 @@
+{
+	"$comment": "Generated from packages/react-native/src/protocol/bridge-schema.ts by `bun run --cwd packages/react-native generate:bridge-schema`. Do not edit by hand.",
+	"payloads": {
+		"bootstrap": {
+			"direction": "native-to-js",
+			"fields": {
+				"hasStoredSnapshot": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"maxSupportedProtocolVersion": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				},
+				"minSupportedProtocolVersion": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				},
+				"nativeSdkVersion": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
+				},
+				"protocolVersion": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				},
+				"subjectId": {
+					"nullable": true,
+					"required": true,
+					"type": "string"
+				}
+			}
+		},
+		"commitIntent": {
+			"direction": "js-to-native",
+			"fields": {
+				"action": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": ["all", "necessary", "explicit"]
+				},
+				"consents": {
+					"nullable": false,
+					"required": false,
+					"fields": {},
+					"type": "object"
+				}
+			}
+		},
+		"commitResult": {
+			"direction": "native-to-js",
+			"fields": {
+				"confirmed": {
+					"nullable": false,
+					"required": true,
+					"type": "array"
+				},
+				"delivered": {
+					"nullable": false,
+					"required": false,
+					"type": "boolean"
+				},
+				"detail": {
+					"nullable": false,
+					"required": false,
+					"type": "string"
+				},
+				"ok": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"queued": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"reason": {
+					"nullable": false,
+					"required": false,
+					"type": "string",
+					"values": [
+						"invalid-intent",
+						"no-subject",
+						"not-bootstrapped",
+						"policy-pending",
+						"encode-failed",
+						"queue-write-failed",
+						"concurrent-change",
+						"bundled-policy-expired",
+						"additional-consent-list-stale",
+						"additional-consent-unavailable",
+						"iab-draft-required",
+						"iab-unavailable",
+						"iab-list-stale",
+						"iab-choices-required",
+						"invalid-iab-choices",
+						"invalid-additional-consent",
+						"invalid-action-time"
+					]
+				},
+				"revision": {
+					"nullable": true,
+					"required": true,
+					"type": "number"
+				},
+				"subjectId": {
+					"nullable": true,
+					"required": true,
+					"type": "string"
+				}
+			}
+		},
+		"errorEvent": {
+			"direction": "native-to-js",
+			"fields": {
+				"code": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
+				},
+				"message": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
+				}
+			}
+		},
+		"initializedEvent": {
+			"direction": "native-to-js",
+			"fields": {
+				"dirty": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"policyPending": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"ready": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"revision": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				}
+			}
+		},
+		"overridesInput": {
+			"direction": "js-to-native",
+			"fields": {
+				"country": {
+					"nullable": true,
+					"required": false,
+					"type": "string"
+				},
+				"gpc": {
+					"nullable": true,
+					"required": false,
+					"type": "boolean"
+				},
+				"language": {
+					"nullable": false,
+					"required": false,
+					"type": "string"
+				},
+				"region": {
+					"nullable": true,
+					"required": false,
+					"type": "string"
+				}
+			}
+		},
+		"presenterOutcome": {
+			"direction": "native-to-js",
+			"fields": {
+				"kind": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": ["committed", "acknowledged", "dismissed", "unavailable"]
+				},
+				"revision": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				},
+				"sessionId": {
+					"nullable": false,
+					"required": true,
+					"type": "string"
+				}
+			}
+		},
+		"presenterSession": {
+			"direction": "native-to-js",
+			"fields": {
+				"sessionId": {
+					"nullable": true,
+					"required": true,
+					"type": "string"
+				},
+				"status": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": ["presented", "already-presented", "not-required"]
+				}
+			}
+		},
+		"snapshot": {
+			"direction": "native-to-js",
+			"fields": {
+				"activeUI": {
+					"nullable": true,
+					"required": true,
+					"type": "string",
+					"values": ["none", "banner", "dialog"]
+				},
+				"consentCategories": {
+					"nullable": true,
+					"required": true,
+					"type": "array"
+				},
+				"effectivePermissions": {
+					"nullable": false,
+					"required": true,
+					"fields": {
+						"experience": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						},
+						"functionality": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						},
+						"marketing": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						},
+						"measurement": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						},
+						"necessary": {
+							"nullable": false,
+							"required": true,
+							"type": "boolean"
+						}
+					},
+					"type": "object"
+				},
+				"error": {
+					"nullable": true,
+					"required": true,
+					"fields": {
+						"code": {
+							"nullable": false,
+							"required": true,
+							"type": "string"
+						},
+						"message": {
+							"nullable": false,
+							"required": true,
+							"type": "string"
+						}
+					},
+					"type": "object"
+				},
+				"evaluatedAt": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				},
+				"explicitChoice": {
+					"nullable": true,
+					"required": true,
+					"fields": {
+						"categories": {
+							"nullable": false,
+							"required": true,
+							"type": "object"
+						},
+						"version": {
+							"nullable": false,
+							"required": true,
+							"type": "number"
+						}
+					},
+					"type": "object"
+				},
+				"iab": {
+					"nullable": true,
+					"required": true,
+					"type": "object"
+				},
+				"location": {
+					"nullable": true,
+					"required": true,
+					"fields": {
+						"countryCode": {
+							"nullable": true,
+							"required": true,
+							"type": "string"
+						},
+						"regionCode": {
+							"nullable": true,
+							"required": true,
+							"type": "string"
+						}
+					},
+					"type": "object"
+				},
+				"model": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": ["opt-in", "opt-out", "iab", "none"]
+				},
+				"nextDeadline": {
+					"nullable": true,
+					"required": true,
+					"type": "number"
+				},
+				"overrides": {
+					"nullable": false,
+					"required": true,
+					"fields": {
+						"country": {
+							"nullable": true,
+							"required": true,
+							"type": "string"
+						},
+						"gpc": {
+							"nullable": true,
+							"required": true,
+							"type": "boolean"
+						},
+						"language": {
+							"nullable": false,
+							"required": true,
+							"type": "string"
+						},
+						"region": {
+							"nullable": true,
+							"required": true,
+							"type": "string"
+						}
+					},
+					"type": "object"
+				},
+				"policyPending": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"policySnapshotToken": {
+					"nullable": true,
+					"required": true,
+					"type": "string"
+				},
+				"privacySignals": {
+					"nullable": false,
+					"required": true,
+					"fields": {
+						"gpc": {
+							"nullable": false,
+							"required": true,
+							"fields": {
+								"active": {
+									"nullable": false,
+									"required": true,
+									"type": "boolean"
+								},
+								"detected": {
+									"nullable": false,
+									"required": true,
+									"type": "boolean"
+								},
+								"override": {
+									"nullable": true,
+									"required": true,
+									"type": "boolean"
+								}
+							},
+							"type": "object"
+						}
+					},
+					"type": "object"
+				},
+				"promptRequirement": {
+					"nullable": false,
+					"required": true,
+					"fields": {
+						"kind": {
+							"nullable": false,
+							"required": true,
+							"type": "string",
+							"values": ["choice", "notice", "none"]
+						},
+						"reason": {
+							"nullable": false,
+							"required": false,
+							"type": "string",
+							"values": ["missing", "expired", "policy-changed"]
+						}
+					},
+					"type": "object"
+				},
+				"ready": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"resolution": {
+					"nullable": false,
+					"required": true,
+					"fields": {
+						"fingerprint": {
+							"nullable": true,
+							"required": true,
+							"type": "string"
+						},
+						"policyId": {
+							"nullable": true,
+							"required": true,
+							"type": "string"
+						},
+						"reason": {
+							"nullable": false,
+							"required": false,
+							"type": "string",
+							"values": [
+								"invalid-configuration",
+								"insufficient-inputs",
+								"transport",
+								"unsupported-contract",
+								"invalid-payload"
+							]
+						},
+						"status": {
+							"nullable": false,
+							"required": true,
+							"type": "string",
+							"values": ["unconfigured", "matched", "no-match", "failed"]
+						}
+					},
+					"type": "object"
+				},
+				"restrictions": {
+					"nullable": false,
+					"required": true,
+					"type": "object"
+				},
+				"revision": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				},
+				"subject": {
+					"nullable": true,
+					"required": true,
+					"fields": {
+						"externalId": {
+							"nullable": false,
+							"required": false,
+							"type": "string"
+						},
+						"subjectId": {
+							"nullable": false,
+							"required": false,
+							"type": "string"
+						}
+					},
+					"type": "object"
+				},
+				"translations": {
+					"nullable": true,
+					"required": true,
+					"type": "object"
+				}
+			}
+		},
+		"snapshotEvent": {
+			"direction": "native-to-js",
+			"fields": {
+				"dirty": {
+					"nullable": false,
+					"required": true,
+					"type": "boolean"
+				},
+				"revision": {
+					"nullable": false,
+					"required": true,
+					"type": "number"
+				}
+			}
+		},
+		"trackingAuthorization": {
+			"direction": "native-to-js",
+			"fields": {
+				"status": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": [
+						"authorized",
+						"denied",
+						"not-determined",
+						"restricted",
+						"unsupported"
+					]
+				}
+			}
+		},
+		"trackingRequest": {
+			"direction": "native-to-js",
+			"fields": {
+				"presentation": {
+					"nullable": false,
+					"required": false,
+					"type": "string",
+					"values": ["expanded", "standard"]
+				},
+				"stage": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": ["final", "additional-information"]
+				},
+				"status": {
+					"nullable": false,
+					"required": true,
+					"type": "string",
+					"values": [
+						"authorized",
+						"denied",
+						"not-determined",
+						"restricted",
+						"unsupported"
+					]
+				}
+			}
+		}
+	}
+}

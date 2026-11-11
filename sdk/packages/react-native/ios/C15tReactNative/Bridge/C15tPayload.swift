@@ -97,6 +97,9 @@ public enum C15tPayload {
 
     private static let overridesNullKeys = ["country", "region", "gpc"]
     private static let resolutionNullKeys = ["policyId", "fingerprint"]
+    /// `LocationResponse` declares both as `string | null`, and a synthesized encoder
+    /// drops a nil one, so the key is restored as an explicit null.
+    private static let locationNullKeys = ["countryCode", "regionCode"]
 
     /// The keys `NativeOverridesInput` declares. A document that names none of them is
     /// not an override set, and applying it would wipe a language the app relies on.
@@ -191,6 +194,14 @@ public enum C15tPayload {
             fields["resolution"] = .object(patched)
         }
 
+        if case let .object(location)? = fields["location"] {
+            var patched = location
+            for key in locationNullKeys where patched[key] == nil {
+                patched[key] = .null
+            }
+            fields["location"] = .object(patched)
+        }
+
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
     }
@@ -217,7 +228,6 @@ public enum C15tPayload {
             "subjectId": stringOrNull(snapshot.subject?.id),
             "queued": .bool(!rejected && result.status == .committed),
             "delivered": .bool(false),
-            "status": .string(result.status.rawValue),
         ]
         if let error = result.error {
             fields["reason"] = .string(error.code)
@@ -350,6 +360,12 @@ public enum C15tPayload {
     /// rather than rounded to the nearest action.
     public static func parseCommitIntent(_ raw: String?) -> CommitIntent? {
         guard let body = parseObject(raw) else { return nil }
+        // `explicit` is `action` and `consents`; `all` and `necessary` are `action`
+        // alone. Any other key, such as a `categories` scope or `consents` on a bulk
+        // action, is refused rather than dropped: dropping it would apply the action to
+        // the whole choice scope, which is not what the caller sent.
+        let allowed: Set<String> = body["action"]?.stringValue == "explicit" ? ["action", "consents"] : ["action"]
+        guard Set(body.keys).isSubset(of: allowed) else { return nil }
         switch body["action"]?.stringValue {
         case "all":
             return .all

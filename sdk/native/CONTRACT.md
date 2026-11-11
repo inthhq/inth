@@ -252,6 +252,16 @@ device the subject printed as absent and the location printed as empty while all
 fixtures stayed green. Names inside the core and inside a stored envelope are the
 core's own business; the JSON a bridge emits is not.
 
+So no compiler sees a bridge key, and a test does instead. `BRIDGE_PAYLOADS` in
+`packages/react-native/src/protocol/bridge-schema.ts` names every key of every
+payload the TurboModule carries, and `native/protocol/bridge/payloads.json` is
+generated from it (`generate:bridge-schema`). `bridge-schema.type-test.ts` holds the
+TypeScript types to the table, and `BridgeSchemaTest.kt` and
+`C15tBridgeSchemaTests.swift` hold every encoder and decoder to the JSON. A key
+renamed on one side fails one of the three. Codegen object types would not do this
+job: a returned object reaches Kotlin as `WritableMap` and Swift as `NSDictionary`,
+and an object argument cannot tell an omitted key from `null`.
+
 Revisions and error writes
 --------------------------
 
@@ -690,7 +700,12 @@ the queue holds bodies and nothing else, and a credential that comes back later
 cannot rescue bytes the producer already refused on its own terms.
 
 Commit refusal reasons are `invalid-intent`, `no-subject`, `not-bootstrapped`,
-`policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`.
+`policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`,
+plus the IAB and bundled-policy refusals `bundled-policy-expired`,
+`additional-consent-list-stale`, `additional-consent-unavailable`,
+`iab-draft-required`, `iab-unavailable`, `iab-list-stale`, `iab-choices-required`,
+`invalid-iab-choices` and `invalid-action-time`. `COMMIT_FAILURE_REASONS` in
+`packages/react-native/src/protocol/commit.ts` is the list.
 These are the values of `CommitResult.reason` when `ok` is false. Delivery
 failures such as `transport-unavailable`, `save-rejected` and
 `save-undeliverable` are error-event codes, not commit refusal reasons.

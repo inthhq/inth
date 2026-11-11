@@ -19,6 +19,16 @@ internal class MemoryStore(
 
 	override fun read(key: String): String? = data[key]
 
+	// The map is the whole store, with nothing buffered, so every write is durable. The
+	// SPI's default answers `false`, and the core refuses a consent write it cannot make
+	// durable, so a store that forgets this override persists nothing.
+	override fun writeDurably(key: String, value: String?): Boolean {
+		write(key, value)
+		return true
+	}
+
+	override fun keys(): Set<String> = data.keys.toSet()
+
 	override fun write(
 		key: String,
 		value: String?,

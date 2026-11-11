@@ -84,7 +84,6 @@ const selectBannerPromptKey = (snapshot: ConsentSnapshot): string =>
 		snapshot.resolution.fingerprint,
 		snapshot.subject?.subjectId,
 		snapshot.subject?.externalId,
-		snapshot.subject?.identityProvider,
 	]);
 
 const ConsentBannerActions = ({

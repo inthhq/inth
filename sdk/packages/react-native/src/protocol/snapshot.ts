@@ -49,7 +49,22 @@ export interface SnapshotResolution {
 	readonly policyId: string | null;
 	/** Fingerprint of the matched rule, `null` when nothing matched. */
 	readonly fingerprint: string | null;
+	/** Why the resolution failed. Present only when `status` is `failed`. */
+	readonly reason?: PolicyResolutionFailure;
 }
+
+/** Why a policy resolution failed, as the kernel's `PolicyResolutionFailure` names it. */
+export const POLICY_RESOLUTION_FAILURES = [
+	'invalid-configuration',
+	'insufficient-inputs',
+	'transport',
+	'unsupported-contract',
+	'invalid-payload',
+] as const;
+
+/** One of {@link POLICY_RESOLUTION_FAILURES}. */
+export type PolicyResolutionFailure =
+	(typeof POLICY_RESOLUTION_FAILURES)[number];
 
 /**
  * Privacy signals the native cores honor.
@@ -104,6 +119,15 @@ export interface NativeIABState {
 }
 
 /**
+ * The subject as the native cores publish it.
+ *
+ * The kernel's `ConsentSubject` without `identityProvider`: neither native
+ * subject model stores one, so no native snapshot can carry it, and declaring
+ * it would promise a key the bridge never sends.
+ */
+export type NativeConsentSubject = Omit<ConsentSubject, 'identityProvider'>;
+
+/**
  * The immutable snapshot `getSnapshot()` returns as a JSON string.
  *
  * `ready` and `policyPending` are the two flags a gate must consult: while
@@ -148,7 +172,7 @@ export interface ConsentSnapshot {
 	/** Signed token for write-time consistency, sent back on save. */
 	readonly policySnapshotToken: string | null;
 	/** Subject identifiers, carried once. */
-	readonly subject: ConsentSubject | null;
+	readonly subject: NativeConsentSubject | null;
 	/** Geographic context reported by the backend. */
 	readonly location: LocationResponse | null;
 	/** Geographic, language, and GPC overrides in effect. */
