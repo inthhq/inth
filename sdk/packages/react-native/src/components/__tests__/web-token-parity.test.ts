@@ -30,8 +30,14 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { darkTheme, lightTheme } from '../theme/create-consent-theme';
+import {
+	defaultConsentTheme,
+	resolveConsentTypeRoles,
+} from '../theme/create-consent-theme';
 import { CONSENT_SWITCH_GEOMETRY } from '../theme/use-consent-styles';
+
+/** The stock type roles, from the stock type tokens. */
+const lightRoles = resolveConsentTypeRoles(defaultConsentTheme.typography);
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -496,26 +502,26 @@ const webType = function webType(
 /** Maps a web colour token onto the part of a consent surface it paints. */
 const COLOR_PARITY: readonly (readonly [
 	web: string,
-	mobile: keyof typeof lightTheme.colors,
+	mobile: keyof typeof defaultConsentTheme.colors,
 ])[] = [
 	['border', 'border'],
 	['overlay', 'overlay'],
 	['primary', 'primary'],
 	['surface', 'surface'],
-	['surface-hover', 'surfaceRaised'],
+	['surface-hover', 'surfaceHover'],
 	['switch-thumb', 'switchThumb'],
 	['switch-track', 'switchTrack'],
-	['switch-track-active', 'switchTrackOn'],
+	['switch-track-active', 'switchTrackActive'],
 	['text', 'text'],
 	['text-muted', 'textMuted'],
-	['text-on-primary', 'onPrimary'],
+	['text-on-primary', 'textOnPrimary'],
 ];
 
 describe('web token parity', () => {
 	test('every light colour is the web colour', () => {
 		for (const [web, mobile] of COLOR_PARITY) {
 			expect({ [web]: asNativeColor(tokenBySuffix(web)) }, web).toEqual({
-				[web]: lightTheme.colors[mobile],
+				[web]: defaultConsentTheme.colors[mobile],
 			});
 		}
 	});
@@ -523,7 +529,7 @@ describe('web token parity', () => {
 	test('every dark colour is the web dark colour', () => {
 		for (const [web, mobile] of COLOR_PARITY) {
 			expect({ [web]: asNativeColor(tokenBySuffix(web, true)) }, web).toEqual({
-				[web]: darkTheme.colors[mobile],
+				[web]: defaultConsentTheme.dark[mobile],
 			});
 		}
 	});
@@ -531,15 +537,19 @@ describe('web token parity', () => {
 	test('corners follow the web radii', () => {
 		// The card is `radius.lg` and a control is `radius.md`, which is what
 		// `--consent-banner-border-radius` and `--button-border-radius` ask for.
-		expect(lightTheme.radius.surface).toBe(measure(tokenBySuffix('radius-lg')));
-		expect(lightTheme.radius.control).toBe(measure(tokenBySuffix('radius-md')));
+		expect(defaultConsentTheme.radius.lg).toBe(
+			measure(tokenBySuffix('radius-lg'))
+		);
+		expect(defaultConsentTheme.radius.md).toBe(
+			measure(tokenBySuffix('radius-md'))
+		);
 	});
 
 	test('the spacing scale is the web scale', () => {
-		expect(lightTheme.spacing).toEqual({
-			l: measure(tokenBySuffix('space-lg')),
-			m: measure(tokenBySuffix('space-md')),
-			s: measure(tokenBySuffix('space-sm')),
+		expect(defaultConsentTheme.spacing).toEqual({
+			lg: measure(tokenBySuffix('space-lg')),
+			md: measure(tokenBySuffix('space-md')),
+			sm: measure(tokenBySuffix('space-sm')),
 			xl: measure(tokenBySuffix('space-xl')),
 			xs: measure(tokenBySuffix('space-xs')),
 		});
@@ -556,18 +566,18 @@ describe('web token parity', () => {
 			".description[data-context='banner']:not(:global(.headless))"
 		);
 
-		expect(lightTheme.typography.bannerTitle).toEqual({
+		expect(lightRoles.bannerTitle).toEqual({
 			fontSize: title.fontSize,
 			lineHeight: title.lineHeight,
 			weight: String(title.fontWeight) as '500',
 		});
-		expect(lightTheme.typography.bannerBody).toEqual({
+		expect(lightRoles.bannerBody).toEqual({
 			fontSize: body.fontSize,
 			lineHeight: body.lineHeight,
 			weight: String(body.fontWeight) as '400',
 		});
-		expect(lightTheme.typography.bannerTitle.fontSize).toBeGreaterThan(
-			lightTheme.typography.bannerBody.fontSize
+		expect(lightRoles.bannerTitle.fontSize).toBeGreaterThan(
+			lightRoles.bannerBody.fontSize
 		);
 	});
 
@@ -585,27 +595,25 @@ describe('web token parity', () => {
 		const titleSize = measure(
 			webToken(panel, '--consent-dialog-title-font-size')
 		);
-		expect(lightTheme.typography.title).toEqual({
+		expect(lightRoles.title).toEqual({
 			fontSize: titleSize,
 			lineHeight: measure(title['line-height'] as string, titleSize),
 			weight: String(
 				webToken(panel, '--consent-dialog-title-font-weight')
 			) as '600',
 		});
-		expect(lightTheme.typography.body).toEqual({
+		expect(lightRoles.body).toEqual({
 			fontSize: description.fontSize,
 			lineHeight: description.lineHeight,
 			weight: String(description.fontWeight) as '400',
 		});
-		expect(lightTheme.typography.title.fontSize).toBeLessThan(
-			lightTheme.typography.body.fontSize
-		);
+		expect(lightRoles.title.fontSize).toBeLessThan(lightRoles.body.fontSize);
 	});
 
 	test('a button label is the web small button label', () => {
 		const label = webType(read(BUTTON_CSS), '.button-small', '.button');
 
-		expect(lightTheme.typography.label).toEqual({
+		expect(lightRoles.label).toEqual({
 			fontSize: label.fontSize,
 			lineHeight: label.lineHeight,
 			weight: String(label.fontWeight) as '500',

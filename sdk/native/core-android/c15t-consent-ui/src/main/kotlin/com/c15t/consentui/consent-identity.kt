@@ -70,13 +70,13 @@ internal data class HeaderIdentity(
                 Icon(if (isInth) ProviderMarks.inth else ProviderMarks.c15t, contentDescription = null, tint = theme.colors.text.color(),
                     modifier = Modifier.size(40.dp).testTag("c15t.first-layer.brand-logo.${if (isInth) "inth" else "c15t"}"))
             }
-            else -> Box(tile.background(theme.colors.accent.color().copy(alpha = 0.12f)).testTag("c15t.first-layer.brand-logo.initial"), contentAlignment = Alignment.Center) {
-                Text(HeaderIdentity.initial(identity.name), fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold,
-                    fontSize = 28.sp, color = theme.colors.accent.color(), modifier = Modifier.clearAndSetSemantics {})
+            else -> Box(tile.background(theme.colors.primary.color().copy(alpha = 0.12f)).testTag("c15t.first-layer.brand-logo.initial"), contentAlignment = Alignment.Center) {
+                Text(HeaderIdentity.initial(identity.name), fontFamily = theme.typography.headlineFont.family, fontWeight = FontWeight.SemiBold,
+                    fontSize = 28.sp, color = theme.colors.primary.color(), modifier = Modifier.clearAndSetSemantics {})
             }
         }
         Text(identity.name.uppercase(), style = MaterialTheme.typography.labelLarge, letterSpacing = 1.4.sp,
-            color = theme.colors.accent.color(),
+            color = theme.colors.primary.color(),
             modifier = Modifier.semantics { contentDescription = identity.name }.testTag("c15t.first-layer.brand"))
     }
 }

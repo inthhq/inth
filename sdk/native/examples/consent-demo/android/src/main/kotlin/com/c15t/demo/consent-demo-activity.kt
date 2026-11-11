@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
 import com.c15t.android.*
 import com.c15t.consentui.*
@@ -366,19 +367,22 @@ class DemoModel(application: Application) : AndroidViewModel(application) {
 }
 
 /**
- * A fictional grocery app's appearance: a teal accent on mint paper, its own mark and headline.
- * Everything here goes through the public theme.
+ * A fictional grocery app's appearance: a teal primary on mint paper, roomier spacing, a larger
+ * type scale, pill decisions, and its own mark and headline. Everything here goes through the
+ * public theme.
  */
 object PantryBrand {
     val theme = ConsentTheme(
         colors = ConsentTheme.Colors(
             canvas = ConsentThemeColor(0xF3FAF7, 0x0F1A17), surface = ConsentThemeColor(0xFFFFFF, 0x17241F),
             surfaceMuted = ConsentThemeColor(0xE2F1EB, 0x1F3029), text = ConsentThemeColor(0x10201C, 0xEAF4F0),
-            textSecondary = ConsentThemeColor(0x5C7169, 0x9DB3AC), accent = ConsentThemeColor(0x00796B, 0x4FD1C0),
-            onAccent = ConsentThemeColor(0xFFFFFF, 0x06302A), decision = ConsentThemeColor(0x00796B, 0x4FD1C0),
-            onDecision = ConsentThemeColor(0xFFFFFF, 0x06302A)),
-        cornerRadius = 10.dp,
-        headlineFont = ConsentTheme.HeadlineFont.SansSerif,
+            textMuted = ConsentThemeColor(0x5C7169, 0x9DB3AC), primary = ConsentThemeColor(0x00796B, 0x4FD1C0),
+            textOnPrimary = ConsentThemeColor(0xFFFFFF, 0x06302A), decision = ConsentThemeColor(0x00796B, 0x4FD1C0),
+            textOnDecision = ConsentThemeColor(0xFFFFFF, 0x06302A)),
+        radius = ConsentTheme.Radius(md = 10.dp),
+        spacing = ConsentTheme.Spacing(md = 20.dp, lg = 28.dp),
+        typography = ConsentTheme.Typography(fontSize = ConsentTheme.FontSize(sm = 15.sp, base = 18.sp)),
+        slots = mapOf(ConsentTheme.Slot.ButtonPrimary to ConsentTheme.SlotStyle(borderRadius = 26.dp)),
         brand = ConsentTheme.Brand(name = "Pantry", markResId = R.drawable.consent_demo_mark),
         copy = ConsentTheme.Copy(headline = "Before you shop.", introduction = "Pantry uses data to remember your basket, measure what works and show offers you might like."),
     )

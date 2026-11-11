@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
 import com.c15t.core.ConsentCore
 import com.c15t.core.CommitIntent
@@ -75,7 +76,8 @@ class ScreenAccessibilityTest {
             assertTrue(spinners.single().boundsInRoot.left >= accept.left && spinners.single().boundsInRoot.right <= accept.right)
         } finally {
             store.release.countDown()
-            try { compose.waitUntil(5_000) { presenter?.pending != true } }
+            // `pending` clears before `pendingAction`, and the commit finishes off the test thread here.
+            try { compose.waitUntil(5_000) { presenter?.pending != true && presenter?.pendingAction == null } }
             finally { Dispatchers.resetMain() }
         }
         assertNull(presenter?.pendingAction)
@@ -95,16 +97,16 @@ class ScreenAccessibilityTest {
     private fun assertStockSmallTextContrast(dark: Boolean) {
         val colors = ConsentTheme.Colors.c15t
         fun argb(color: ConsentThemeColor) = (if (dark) color.dark else color.light) or 0xFF000000.toInt()
-        val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.accent), Math.round(255 * 0.14f)), argb(colors.surface))
+        val tagFill = ColorUtils.compositeColors(ColorUtils.setAlphaComponent(argb(colors.primary), Math.round(255 * 0.14f)), argb(colors.surface))
         val pairs = listOf(
             Triple("status tag text on its tint", argb(colors.statusTagText), tagFill) to 4.5,
-            Triple("off tag text on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)) to 4.5,
+            Triple("off tag text on muted surface", argb(colors.textMuted), argb(colors.surfaceMuted)) to 4.5,
             Triple("summary text on muted surface", argb(colors.text), argb(colors.surfaceMuted)) to 4.5,
-            Triple("section label on muted surface", argb(colors.textSecondary), argb(colors.surfaceMuted)) to 4.5,
-            Triple("links on canvas", argb(colors.accent), argb(colors.canvas)) to 4.5,
-            Triple("links on surface", argb(colors.accent), argb(colors.surface)) to 4.5,
-            Triple("decision label", argb(colors.onDecision), argb(colors.decision)) to ConsentTheme.DECISION_CONTRAST_FLOOR,
-            Triple("save label", argb(colors.onAccent), argb(colors.accent)) to 4.5,
+            Triple("section label on muted surface", argb(colors.textMuted), argb(colors.surfaceMuted)) to 4.5,
+            Triple("links on canvas", argb(colors.primary), argb(colors.canvas)) to 4.5,
+            Triple("links on surface", argb(colors.primary), argb(colors.surface)) to 4.5,
+            Triple("decision label", argb(colors.textOnDecision), argb(colors.decision)) to ConsentTheme.DECISION_CONTRAST_FLOOR,
+            Triple("save label", argb(colors.textOnPrimary), argb(colors.primary)) to 4.5,
         )
         for ((pair, floor) in pairs) {
             val (name, foreground, background) = pair
@@ -113,11 +115,31 @@ class ScreenAccessibilityTest {
         }
     }
 
+    /** The colour and size a text node was laid out with, from the layout Compose drew. */
+    private fun drawnStyle(tag: String): androidx.compose.ui.text.TextStyle {
+        val node = compose.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
+        val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
+        node.config[androidx.compose.ui.semantics.SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        return layouts.single().layoutInput.style
+    }
+
+    @Test fun titleAndDescriptionSlotsReachTheFirstLayer() {
+        val theme = ConsentTheme(slots = mapOf(
+            ConsentTheme.Slot.ConsentBannerTitle to ConsentTheme.SlotStyle(color = ConsentThemeColor(0x8A1C7C), fontSize = 40.sp),
+            ConsentTheme.Slot.ConsentBannerDescription to ConsentTheme.SlotStyle(color = ConsentThemeColor(0x123456)),
+        ))
+        show(DecisionStore(), theme)
+        val title = drawnStyle("c15t.first-layer.title")
+        assertEquals(0x8A1C7C, title.color.toArgb() and 0xFFFFFF)
+        assertEquals(40.sp, title.fontSize)
+        assertEquals(0x123456, drawnStyle("c15t.first-layer.body").color.toArgb() and 0xFFFFFF)
+    }
+
     @Test fun squareThemeCanShowAWriteRefusal() {
         Dispatchers.setMain(Dispatchers.Unconfined)
         try {
             val store = DecisionStore()
-            val presenter = show(store, ConsentTheme(cornerRadius = 0.dp))
+            val presenter = show(store, ConsentTheme(radius = ConsentTheme.Radius(md = 0.dp)))
             store.refuseNext = true
             compose.runOnIdle { presenter.commit(ConsentPresenter.Action.REJECT) }
             compose.waitUntil(5_000) { presenter.errorMessage != null }

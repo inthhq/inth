@@ -1630,21 +1630,26 @@ Theme keys
 The `theme` prop writes the native theme keys, `com.c15t.consent.*`, that
 `ConsentTheme.InfoPlistKey` in `consent-theme.swift` and `ConsentTheme.Meta` in
 `consent-theme.kt` read. Its field names follow the web `Theme` in `@c15t/ui`,
-so a later rename of the native tokens does not rename the prop. The plugin maps
-them in `src/expo-plugin/theme.ts`:
+and so do the native token names. The prop is the `ConsentThemeOptions` type
+`createConsentTheme` takes, so one object themes both renderers. The plugin
+maps it in `src/expo-plugin/theme.ts`:
 
     theme field              web token                 iOS / Android key suffix
-    colors.primary           --c15t-primary            accent / ACCENT
-    colors.textOnPrimary     --c15t-text-on-primary    onAccent / ON_ACCENT
+    colors.primary           --c15t-primary            primary / PRIMARY
+    colors.textOnPrimary     --c15t-text-on-primary    textOnPrimary / TEXT_ON_PRIMARY
     colors.surface           --c15t-surface            surface / SURFACE
     colors.text              --c15t-text               text / TEXT
-    colors.textMuted         --c15t-text-muted         textSecondary / TEXT_SECONDARY
+    colors.textMuted         --c15t-text-muted         textMuted / TEXT_MUTED
     colors.canvas            (none)                    canvas / CANVAS
     colors.surfaceMuted      (none)                    surfaceMuted / SURFACE_MUTED
     colors.decision          (none)                    decision / DECISION
-    colors.textOnDecision    (none)                    onDecision / ON_DECISION
-    radius.md                --c15t-radius-md          cornerRadius / CORNER_RADIUS
+    colors.textOnDecision    (none)                    textOnDecision / TEXT_ON_DECISION
+    radius.sm, .md, .lg      --c15t-radius-*           radiusSm.. / RADIUS_SM..
+    spacing.xs .. .xl        --c15t-space-*            spaceXs.. / SPACE_XS..
+    typography.fontSize.*    --c15t-font-size-*        fontSizeSm.. / FONT_SIZE_SM..
+    typography.fontFamily    --c15t-font-family        fontFamily / FONT_FAMILY
     typography.headlineFont  (none)                    headlineFont / HEADLINE_FONT
+    slots.<slot>.<field>     web slots                 <slot>.<field> / <SLOT>_<FIELD>
     brand.name, brand.mark   (none)                    brandName, brandMark / BRAND_NAME, BRAND_MARK
     brand.hidden (inverted)  (none)                    brand / BRAND
     branding.provider        (none)                    brandingProvider / BRANDING_PROVIDER
@@ -1653,7 +1658,16 @@ them in `src/expo-plugin/theme.ts`:
 
 `dark.<color>` joins its `colors.<color>` as the `#light,#dark` pair both readers
 parse, and needs that light value. Colors must be `#RRGGBB`; a CSS function, an
-alpha channel, or a field the native screens do not draw fails the prebuild.
+alpha channel, or a field neither renderer draws fails the prebuild. Fields only
+the React Native components draw (`motion`, `typography.fontWeight`,
+`typography.lineHeight`, and colors such as `border`) are checked and not
+written.
+`typography.fontFamily` and `typography.headlineFont` take one string or
+`{ ios, android }`: iOS reads a PostScript name and Android a font resource name.
+A single string must be a valid resource name (lowercase letters, digits, `_`), or
+for `headlineFont` a keyword such as `serif`; otherwise the prebuild fails and
+shows the per-platform form. A per-platform name is written to that platform's
+key only. The body readers know no keywords, so `fontFamily: 'serif'` fails too.
 With `theme` set the plugin owns every key above and clears the ones the prop no
 longer names; without it the plugin registers no theme write, so an app-owned
 config plugin keeps working. The copy keys (`headline`, `introduction`) are not
@@ -1713,7 +1727,7 @@ Rules the plugin enforces at build time
   set on purpose and would be written back by the next prebuild. A finalized
   Android mod, which runs after every other plugin's mods, reads
   `gradle.properties` and the root and app `build.gradle(.kts)` and fails the
-  prebuild naming each literal below the floor and where to change it.
+  prebuild when the level Gradle applies (an app-module literal, else the last root `ext` assignment, else the last `gradle.properties` entry; comments never count) is below the floor, naming that setting and where to change it.
   `__tests__/android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
   57 and 58 templates. `targetSdkVersion` is never read.
 - Expo Go fails the build with a message rather than failing at runtime. The

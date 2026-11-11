@@ -170,14 +170,14 @@ const Header = ({
 				backgroundColor: colors.surface,
 				borderBottomColor: colors.border,
 				borderBottomWidth: 1,
-				gap: spacing.s,
-				paddingBottom: spacing.s,
-				paddingHorizontal: spacing.m,
-				paddingTop: safeArea.top + spacing.s,
+				gap: spacing.sm,
+				paddingBottom: spacing.sm,
+				paddingHorizontal: spacing.md,
+				paddingTop: safeArea.top + spacing.sm,
 			}}
 		>
 			<View
-				style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.s }}
+				style={{ alignItems: 'center', flexDirection: 'row', gap: spacing.sm }}
 			>
 				<Heading>c15t Bare</Heading>
 				<View style={{ marginLeft: 'auto' }}>
@@ -196,7 +196,7 @@ const Header = ({
 				/>
 			) : null}
 
-			<View style={{ flexDirection: 'row', gap: spacing.m }}>
+			<View style={{ flexDirection: 'row', gap: spacing.md }}>
 				{TABS.map((value) => {
 					const selected = value === tab;
 

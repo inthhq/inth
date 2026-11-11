@@ -1,6 +1,6 @@
 ---
 title: Customize
-description: Set the app identity, light and dark colors, first-layer copy and provider attribution on c15t's native SwiftUI consent screens.
+description: Set the app identity, light and dark colors, radii, spacing, type, per-part slots, first-layer copy and provider attribution on c15t's native SwiftUI consent screens.
 group: frameworks
 ---
 
@@ -11,8 +11,10 @@ appearance while the presenter continues to own drafts, saving and navigation.
 ## Set your app's theme
 
 Create `AppConsentTheme.swift` in your app target. This example gives the
-consent screen your app's name and asset, changes the accent in both
-appearances, and uses Inth provider attribution:
+consent screen your app's name and asset, changes the primary color in both
+appearances, widens the page gutter, sets a larger body size and a serif
+headline, rounds the outlined actions into pills, and uses Inth provider
+attribution:
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-app-theme.mdx" />
 
@@ -26,8 +28,8 @@ Pass the theme to the `.c15tConsent` modifier from the [quickstart](/docs/framew
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-themed-root.mdx" />
 
 `ConsentRootViewController` takes the same `theme` argument in a UIKit app.
-Your accent applies to switches, links and Save. Accept all and Reject all
-keep the same `decision` fill and `onDecision` label treatment.
+The primary color applies to switches, links and Save. Accept all and Reject
+all keep the same `decision` fill and `textOnDecision` label treatment.
 
 ## Choose what to change
 
@@ -37,13 +39,26 @@ keep the same `decision` fill and `onDecision` label treatment.
 | `brand = .hidden` | Removing that app identity block |
 | `copy.headline`, `copy.introduction` | First-layer wording |
 | `colors.canvas`, `surface`, `surfaceMuted` | Page, cards and subordinate content |
-| `colors.text`, `textSecondary` | Primary and supporting text |
-| `colors.accent`, `onAccent` | Links, switches and the Save action |
-| `colors.decision`, `onDecision` | Both Accept all and Reject all |
-| `cornerRadius` | Card and control shape |
-| `headlineFont` | System sans, serif, rounded or a bundled custom headline font |
+| `colors.text`, `textMuted` | Primary and supporting text |
+| `colors.primary`, `textOnPrimary` | Links, switches and the Save action |
+| `colors.decision`, `textOnDecision` | Both Accept all and Reject all |
+| `radius.md` | Card and button shape; `radius.sm` and `radius.lg` follow it until set |
+| `spacing.xs` to `spacing.xl` | Page gutters, section gaps and padding |
+| `typography.fontSize.sm`, `.base`, `.lg` | Supporting, body and headline sizes; `nil` keeps the text style |
+| `typography.fontFamily` | A bundled font for every role except the headline |
+| `typography.headlineFont` | System sans, serif, rounded or a bundled custom headline font |
+| `slots` | One part: `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary` or `.buttonSecondary` |
 | `branding` | `.c15t`, `.inth` or `.custom(name:markImageName:)` provider attribution |
 | `showsBranding` | Visibility of the provider attribution |
+
+Names that have a web token match it: `primary` is `--c15t-primary`, and
+`radius.md` is `--c15t-radius-md`. A font size groups text styles: `sm` sizes
+subheadline, footnote and captions, `base` sizes body and headline, and `lg`
+sizes the large title. Each style keeps its ratio to its group, and Dynamic
+Type still scales it. Spacing does not change a control's own padding, so tap
+targets keep their size. A slot's `color`, `backgroundColor`, `borderRadius`
+and `fontSize` override the tokens for that part only; `buttonPrimary` colors
+fall back to the stock decision colors below 5:1 contrast.
 
 `ConsentThemeColor` takes sRGB `0xRRGGBB` values for `light` and `dark`.
 Omitting `dark` uses the light value in both appearances. Keep text legible
@@ -64,15 +79,17 @@ priority over both.
 | --- | --- |
 | `com.c15t.consent.brandName` | Your app's name |
 | `com.c15t.consent.brandMark` | Image asset name |
-| `com.c15t.consent.accent` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for light,dark |
-| `com.c15t.consent.onAccent` | Label color using the same format |
+| `com.c15t.consent.primary` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for light,dark |
+| `com.c15t.consent.textOnPrimary` | Label color using the same format |
+| `com.c15t.consent.radiusMd`, `spaceLg`, `fontSizeBase` | A number of points; the other steps follow the same pattern |
+| `com.c15t.consent.buttonPrimary.borderRadius` | One slot field, as `<slot>.<field>` |
 | `com.c15t.consent.headline` | First-layer headline |
 | `com.c15t.consent.introduction` | First-layer introduction |
 | `com.c15t.consent.brandingProvider` | `c15t` or `inth` |
 | `com.c15t.consent.branding` | Boolean controlling provider attribution |
 
 Use a native Boolean for `branding`, rather than the string `"false"`.
-Other color and shape keys are declared in `ConsentTheme.InfoPlistKey`.
+Other color, size and slot keys are declared in `ConsentTheme.InfoPlistKey`.
 
 ## Account for language and screen size
 

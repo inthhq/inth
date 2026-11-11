@@ -124,7 +124,7 @@ fun C15tConsent(presenter: ConsentPresenter, privacyPolicyUrl: String, noticeMod
         if (presenter.announcementSequence > 0) hostView.announceForAccessibility(presenter.announcement)
     }
     CompositionLocalProvider(LocalConsentTheme provides resolved) {
-        MaterialTheme(colorScheme = resolved.colorScheme()) {
+        MaterialTheme(colorScheme = resolved.colorScheme(), typography = resolved.materialTypography()) {
             if (presenter.noticeVisible) {
                 Box(noticeModifier, contentAlignment = Alignment.BottomCenter) { NoticeCard(presenter, privacyPolicyUrl) }
             }
@@ -176,7 +176,7 @@ private fun ConsentDialog(presenter: ConsentPresenter, privacyPolicyUrl: String)
             }
             if (presenter.confirmDiscard) AlertDialog(onDismissRequest = { presenter.confirmDiscard = false },
                 modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag("c15t.prefs.discard"),
-                containerColor = theme.colors.surface.color(), shape = RoundedCornerShape(theme.cornerRadius + 6.dp),
+                containerColor = theme.colors.surface.color(), shape = RoundedCornerShape(theme.radius.resolvedLg),
                 title = { Text(presenter.iabCopy.appDiscardChangesTitle) }, text = { Text(presenter.iabCopy.appDiscardChangesDetail) },
                 confirmButton = { TextButton(onClick = { presenter.discard() }, modifier = Modifier.testTag("c15t.prefs.discard.confirm")) { Text(presenter.iabCopy.appDiscardChanges) } },
                 dismissButton = { TextButton(onClick = { presenter.confirmDiscard = false }, modifier = Modifier.testTag("c15t.prefs.discard.keep")) { Text(presenter.iabCopy.appKeepEditing) } })
@@ -235,14 +235,15 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
 
 // MARK: Shared pieces
 
-@Composable private fun Heading(text: String, id: String, style: TextStyle = MaterialTheme.typography.titleLarge) {
-    Text(text, style = style, color = LocalConsentTheme.current.colors.text.color(), modifier = Modifier.semantics { heading() }.testTag(id))
+@Composable private fun Heading(text: String, id: String, style: TextStyle = MaterialTheme.typography.titleLarge,
+    color: ConsentThemeColor = LocalConsentTheme.current.colors.text) {
+    Text(text, style = style, color = color.color(), modifier = Modifier.semantics { heading() }.testTag(id))
 }
 @Composable private fun Body(text: String, modifier: Modifier = Modifier) {
-    Text(text, style = MaterialTheme.typography.bodyMedium, color = LocalConsentTheme.current.colors.textSecondary.color(), modifier = modifier)
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = LocalConsentTheme.current.colors.textMuted.color(), modifier = modifier)
 }
 @Composable private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
-    Text(text, style = MaterialTheme.typography.labelLarge, color = LocalConsentTheme.current.colors.textSecondary.color(),
+    Text(text, style = MaterialTheme.typography.labelLarge, color = LocalConsentTheme.current.colors.textMuted.color(),
         modifier = modifier.padding(start = 16.dp, top = 20.dp, bottom = 8.dp).semantics { heading() })
 }
 @Composable private fun PolicyLink(url: String, copy: IabCopy) = ExternalLink(copy.preferenceCenterVendorListPrivacyPolicy, url, "c15t.privacy-policy")
@@ -250,11 +251,13 @@ private fun SettingsScaffold(p: ConsentPresenter, policyUrl: String, page: Strin
     val context = LocalContext.current
     TextButton(onClick = { val uri = Uri.parse(url); if (uri.scheme in listOf("https", "http")) context.startActivity(Intent(Intent.ACTION_VIEW, uri)) },
         modifier = Modifier.defaultMinSize(minHeight = 48.dp).testTag(id), contentPadding = PaddingValues(horizontal = 4.dp)) {
-        Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = LocalConsentTheme.current.colors.accent.color())
+        Text(text, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = LocalConsentTheme.current.colors.primary.color())
     }
 }
 
-private enum class ButtonVariant { DECISION, ACCENT, QUIET }
+private enum class ButtonVariant(val slot: ConsentTheme.Slot?) {
+    DECISION(ConsentTheme.Slot.ButtonPrimary), ACCENT(null), QUIET(ConsentTheme.Slot.ButtonSecondary)
+}
 
 /**
  * The one button shape. [ButtonVariant.DECISION] is Accept all and Reject all, which always share it;
@@ -267,7 +270,8 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
 @Composable private fun ConsentButton(text: String, id: String, enabled: Boolean, variant: ButtonVariant = ButtonVariant.DECISION,
     progress: Boolean = false, progressLabel: String = "", onClick: () -> Unit) {
     val theme = LocalConsentTheme.current
-    val shape = RoundedCornerShape(theme.cornerRadius)
+    val slot = variant.slot?.let(theme::slot)
+    val shape = RoundedCornerShape(slot?.borderRadius ?: theme.radius.md)
     val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).testTag(id).semantics {
         contentDescription = text
         if (progress) stateDescription = progressLabel
@@ -276,21 +280,24 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             if (progress) CircularProgressIndicator(Modifier.size(20.dp).align(Alignment.CenterStart).testTag("c15t.status.progress"),
                 color = LocalContentColor.current, strokeWidth = 2.dp)
-            Text(text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            val style = MaterialTheme.typography.bodyLarge
+            Text(text, style = slot?.fontSize?.let { style.copy(fontSize = it, lineHeight = (style.lineHeight.value * it.value / style.fontSize.value).sp) } ?: style,
+                fontWeight = FontWeight.SemiBold)
         }
     }
     when (variant) {
         ButtonVariant.DECISION, ButtonVariant.ACCENT -> {
-            val container = if (variant == ButtonVariant.DECISION) theme.colors.decision.color() else theme.colors.accent.color()
-            val content = if (variant == ButtonVariant.DECISION) theme.colors.onDecision.color() else theme.colors.onAccent.color()
+            val container = if (variant == ButtonVariant.DECISION) theme.decisionFill.color() else theme.colors.primary.color()
+            val content = if (variant == ButtonVariant.DECISION) theme.decisionLabel.color() else theme.colors.textOnPrimary.color()
             Button(onClick, modifier, enabled = enabled, shape = shape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = container, contentColor = content,
                     disabledContainerColor = if (progress) container else container.copy(alpha = 0.55f), disabledContentColor = content)) { label() }
         }
         ButtonVariant.QUIET -> OutlinedButton(onClick, modifier, enabled = enabled, shape = shape, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
             border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = if (enabled || progress) 0.18f else 0.1f)),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = theme.colors.text.color(),
-                disabledContentColor = if (progress) theme.colors.text.color() else theme.colors.textSecondary.color())) { label() }
+            colors = ButtonDefaults.outlinedButtonColors(containerColor = slot?.backgroundColor?.color() ?: Color.Transparent,
+                contentColor = (slot?.color ?: theme.colors.text).color(),
+                disabledContentColor = if (progress) (slot?.color ?: theme.colors.text).color() else theme.colors.textMuted.color())) { label() }
     }
 }
 
@@ -327,7 +334,7 @@ private enum class ButtonVariant { DECISION, ACCENT, QUIET }
     val glyph = with(density) { style.lineHeight.toDp() }
     // A no-break space keeps the label whole; it wraps as one word or not at all.
     val link = retryLabel.replace(' ', '\u00A0')
-    val accent = theme.colors.accent.color().copy(alpha = if (enabled) 1f else 0.5f)
+    val accent = theme.colors.primary.color().copy(alpha = if (enabled) 1f else 0.5f)
     val text = remember(message, accent, link) {
         buildAnnotatedString { append(message); append(' '); withStyle(SpanStyle(color = accent, fontWeight = FontWeight.SemiBold)) { append(link) } }
     }
@@ -392,7 +399,7 @@ internal fun inlineSpanLineBounds(layout: TextLayoutResult, span: IntRange): Lis
 /** A short status line on a tinted background: why the prompt is back, or that the draft is stale. */
 @Composable private fun InfoCallout(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val theme = LocalConsentTheme.current
-    Surface(color = InfoBackground.color(), shape = RoundedCornerShape(theme.calloutRadius), modifier = modifier.fillMaxWidth()) {
+    Surface(color = InfoBackground.color(), shape = RoundedCornerShape(theme.radius.resolvedSm), modifier = modifier.fillMaxWidth()) {
         CompositionLocalProvider(LocalContentColor provides InfoText.color()) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 ProvideTextStyle(MaterialTheme.typography.bodyMedium) { content() }
@@ -497,7 +504,7 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
                 // Edges follow the page: 24dp on the first layer, 16dp on preferences to meet the cards.
                 DecisionGroup(p, first, if (page) DecisionPart.PINNED else DecisionPart.ALL,
                     Modifier.widthIn(max = ContentWidth).fillMaxWidth().navigationBarsPadding().testTag("c15t.footer").animateContentSize()
-                        .padding(horizontal = if (first) 24.dp else 16.dp, vertical = 12.dp))
+                        .padding(horizontal = if (first) theme.spacing.lg else theme.spacing.md, vertical = theme.spacing.sm + theme.spacing.xs))
             }
         }
     }
@@ -516,15 +523,20 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     val page = actionsInPage()
     Scaffold(containerColor = theme.colors.canvas.color(), bottomBar = { DecisionFooter(p, first = true) }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).testTag("c15t.first-layer"), horizontalAlignment = Alignment.CenterHorizontally) {
-            Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            Column(Modifier.widthIn(max = ContentWidth).fillMaxWidth().padding(start = theme.spacing.lg, end = theme.spacing.lg, top = theme.spacing.xl, bottom = theme.spacing.md),
+                verticalArrangement = Arrangement.spacedBy(theme.spacing.md + theme.spacing.xs)) {
                 if (!theme.brand.hidden) IdentityHeader(p.copy.brandPlaceholder)
                 when (p.snapshot.promptRequirement.reason?.wireName) {
                     "expired" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text(p.copy.choiceExpired) }
                     "policy-changed" -> InfoCallout(Modifier.testTag("c15t.first-layer.reason")) { Text(p.copy.policyChanged) }
                 }
-                Heading(theme.copy.headline ?: p.copy.headline, "c15t.first-layer.title", headlineStyle(theme))
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(theme.copy.introduction ?: p.copy.introduction, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.testTag("c15t.first-layer.body"))
+                Heading(theme.copy.headline ?: p.copy.headline, "c15t.first-layer.title", headlineStyle(theme),
+                    color = theme.slot(ConsentTheme.Slot.ConsentBannerTitle).color ?: theme.colors.text)
+                Column(verticalArrangement = Arrangement.spacedBy(theme.spacing.sm + theme.spacing.xs)) {
+                    val description = theme.slot(ConsentTheme.Slot.ConsentBannerDescription)
+                    val body = MaterialTheme.typography.bodyLarge
+                    Text(theme.copy.introduction ?: p.copy.introduction, style = description.fontSize?.let { body.copy(fontSize = it, lineHeight = (body.lineHeight.value * it.value / body.fontSize.value).sp) } ?: body,
+                        color = (description.color ?: theme.colors.text).color(), modifier = Modifier.testTag("c15t.first-layer.body"))
                     if (!p.iab) Body(p.copy.firstLayerDescription)
                 }
                 if (p.iab) IabFirstLayer(p, partners)
@@ -537,9 +549,8 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
 }
 
 /** Display type breaks balanced, so a two-line headline never leaves one word on its last line. */
-@Composable private fun headlineStyle(theme: ConsentTheme): TextStyle = MaterialTheme.typography.headlineLarge.copy(
-    fontFamily = theme.headlineFont.family, fontWeight = FontWeight.SemiBold, fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.25).sp,
-    lineBreak = LineBreak.Heading)
+@Composable private fun headlineStyle(theme: ConsentTheme): TextStyle =
+    theme.headlineStyle(MaterialTheme.typography.headlineLarge).copy(lineBreak = LineBreak.Heading)
 
 /**
  * The IAB disclosure, as the web prompt gives it: what partners store, access and process with
@@ -552,7 +563,7 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
     val text = p.disclosure?.let { IabFirstLayerText.resolve(copy, it.bannerSummary) }
     Column(Modifier.fillMaxWidth().testTag("c15t.first-layer.iab"), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         if (text != null) {
-            val accent = theme.colors.accent.color()
+            val accent = theme.colors.primary.color()
             val description = remember(text, accent) {
                 buildAnnotatedString {
                     append(text.description)
@@ -560,16 +571,16 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
                 }
             }
             InlineActionText(description, text.partnersLink, text.partnersLabel, "c15t.first-layer.partner-count", !p.pending,
-                theme.colors.textSecondary.color(), MaterialTheme.typography.bodyMedium, Modifier.fillMaxWidth(),
+                theme.colors.textMuted.color(), MaterialTheme.typography.bodyMedium, Modifier.fillMaxWidth(),
                 textModifier = Modifier.testTag("c15t.first-layer.description"), onClick = partners)
             // The purposes partners ask for, on a quieter surface so they inform without competing.
-            Surface(color = theme.colors.surfaceMuted.color(), shape = RoundedCornerShape(theme.cornerRadius + 2.dp), modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.summary")) {
+            Surface(color = theme.colors.surfaceMuted.color(), shape = RoundedCornerShape(theme.radius.md + 2.dp), modifier = Modifier.fillMaxWidth().testTag("c15t.first-layer.summary")) {
                 Column(Modifier.padding(vertical = 6.dp)) {
                     val more = (p.disclosure?.bannerSummary?.remainingCount ?: 0) > 0
                     text.summary.forEachIndexed { index, name ->
                         val last = index == text.summary.lastIndex
                         Text(name, style = MaterialTheme.typography.bodyMedium,
-                            color = if (more && last) theme.colors.textSecondary.color() else theme.colors.text.color(),
+                            color = if (more && last) theme.colors.textMuted.color() else theme.colors.text.color(),
                             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
                                 .testTag(if (more && last) "c15t.first-layer.summary.more" else "c15t.first-layer.summary.item.$index"))
                         if (!last) Hairline(Modifier.padding(start = 16.dp))
@@ -587,10 +598,10 @@ private fun showsPinnedStatus(p: ConsentPresenter) = !p.stale && p.failedAction 
 
 @Composable private fun NoticeCard(presenter: ConsentPresenter, privacyPolicyUrl: String) {
     val theme = LocalConsentTheme.current
-    val shape = RoundedCornerShape(theme.cornerRadius + 6.dp)
-    Surface(Modifier.padding(12.dp).widthIn(max = ContentWidth).semantics { testTagsAsResourceId = true }.testTag("c15t.notice"),
+    val shape = RoundedCornerShape(theme.radius.resolvedLg)
+    Surface(Modifier.padding(theme.spacing.sm + theme.spacing.xs).widthIn(max = ContentWidth).semantics { testTagsAsResourceId = true }.testTag("c15t.notice"),
         shape = shape, color = theme.colors.surface.color(), shadowElevation = 6.dp, border = BorderStroke(1.dp, theme.colors.text.color().copy(alpha = 0.1f))) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.padding(theme.spacing.md + theme.spacing.xs), verticalArrangement = Arrangement.spacedBy(theme.spacing.sm + theme.spacing.xs)) {
             Heading(presenter.copy.noticeTitle, "c15t.notice.title", MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold))
             Body(presenter.copy.noticeDescription)
             EqualDecisions {
@@ -615,7 +626,7 @@ private fun groupShape(index: Int, count: Int, radius: androidx.compose.ui.unit.
 
 @Composable private fun GroupedRow(index: Int, count: Int, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val theme = LocalConsentTheme.current
-    Surface(color = theme.colors.surface.color(), shape = groupShape(index, count, theme.cornerRadius), modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+    Surface(color = theme.colors.surface.color(), shape = groupShape(index, count, theme.radius.md), modifier = modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
         Column {
             content()
             if (index < count - 1) Hairline(Modifier.padding(start = 16.dp))
@@ -633,7 +644,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color())
         if (!description.isNullOrEmpty()) Body(description)
-        if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color())
+        if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color())
     }
 }
 
@@ -652,9 +663,9 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             RowLabel(title, description)
-            if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color(), modifier = if (noteTag != null) Modifier.testTag(noteTag) else Modifier)
+            if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color(), modifier = if (noteTag != null) Modifier.testTag(noteTag) else Modifier)
         }
-        Text(status, style = MaterialTheme.typography.bodyMedium, color = theme.colors.textSecondary.color(), modifier = Modifier.testTag(statusTag))
+        Text(status, style = MaterialTheme.typography.bodyMedium, color = theme.colors.textMuted.color(), modifier = Modifier.testTag(statusTag))
     }
 }
 
@@ -710,7 +721,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                     if (p.iab) {
                         Body(p.iabCopy.appPreferencesIntro)
                         TextButton(onClick = { partners(null) }, contentPadding = PaddingValues(horizontal = 4.dp), modifier = Modifier.testTag("c15t.iab.partner-count")) {
-                            Text(p.iabCopy.format(p.iabCopy.appIabPartnerCount, mapOf("count" to "${p.disclosure?.vendors?.size ?: 0}")), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+                            Text(p.iabCopy.format(p.iabCopy.appIabPartnerCount, mapOf("count" to "${p.disclosure?.vendors?.size ?: 0}")), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
                         }
                     } else Body(p.copy.preferencesDescription)
                 }
@@ -771,7 +782,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                         PolicyLink(policyUrl, p.iabCopy)
                         p.snapshot.explicitChoice?.let {
                             Text(p.lastChanged(it.actionAt), style = MaterialTheme.typography.bodySmall,
-                                color = theme.colors.textSecondary.color(), modifier = Modifier.padding(start = 4.dp, bottom = 8.dp).testTag("c15t.prefs.last-changed"))
+                                color = theme.colors.textMuted.color(), modifier = Modifier.padding(start = 4.dp, bottom = 8.dp).testTag("c15t.prefs.last-changed"))
                         }
                     }
                 }
@@ -783,7 +794,7 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 
 @Composable private fun Footnote(text: String, modifier: Modifier = Modifier) {
     if (text.isEmpty() && modifier == Modifier) return
-    Text(text, style = MaterialTheme.typography.bodySmall, color = LocalConsentTheme.current.colors.textSecondary.color(), modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    Text(text, style = MaterialTheme.typography.bodySmall, color = LocalConsentTheme.current.colors.textMuted.color(), modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 }
 
 @Composable private fun NavigationRow(title: String, value: String, id: String, onClick: () -> Unit) {
@@ -791,8 +802,8 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
     Row(Modifier.fillMaxWidth().defaultMinSize(minHeight = 52.dp).clickable(onClick = onClick, role = Role.Button).testTag(id).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color(), modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodyMedium, color = theme.colors.textSecondary.color())
-        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = theme.colors.textSecondary.color(), modifier = Modifier.size(20.dp))
+        Text(value, style = MaterialTheme.typography.bodyMedium, color = theme.colors.textMuted.color())
+        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, contentDescription = null, tint = theme.colors.textMuted.color(), modifier = Modifier.size(20.dp))
     }
 }
 
@@ -817,8 +828,8 @@ private fun featuresExplanation(list: GlobalVendorList, copy: IabCopy): String =
     val theme = LocalConsentTheme.current
     var expanded by rememberSaveable(id) { mutableStateOf(false) }
     TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(start = 4.dp).testTag("$id.examples").semantics { stateDescription = if (expanded) copy.appExpanded else copy.appCollapsed }) {
-        Text("$label (${illustrations.size})", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
-        Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.accent.color(), modifier = Modifier.size(18.dp))
+        Text("$label (${illustrations.size})", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
+        Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.primary.color(), modifier = Modifier.size(18.dp))
     }
     if (expanded) Illustrations(illustrations, "$id.illustrations", Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp))
 }
@@ -851,8 +862,8 @@ private val adTechProviderPurposeIds = setOf(1, 3, 4)
         ChoiceRow(item.name.orEmpty(), item.description.orEmpty(), id in p.choices.purposeConsents, "c15t.iab.purpose.$id.consent", !p.pending && !p.stale && !p.listUnavailable,
             note = note) { on -> p.edit { it.copy(purposeConsents = it.purposeConsents.select(id, on)) } }
         TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.details").semantics { stateDescription = if (expanded) copy.appExpanded else copy.appCollapsed }) {
-            Text(if (expanded) copy.appHideDetails else copy.appDetails, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
-            Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.accent.color(), modifier = Modifier.size(18.dp))
+            Text(if (expanded) copy.appHideDetails else copy.appDetails, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
+            Icon(if (expanded) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, contentDescription = null, tint = theme.colors.primary.color(), modifier = Modifier.size(18.dp))
         }
         if (expanded) {
             Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -861,7 +872,7 @@ private val adTechProviderPurposeIds = setOf(1, 3, 4)
                 if (li) Body(p.iabCopy.appLegitimateInterestExplanation, Modifier.testTag("c15t.iab.purpose.$id.li-explanation"))
             }
             TextButton(onClick = partners, modifier = Modifier.padding(start = 4.dp).testTag("c15t.iab.purpose.$id.view-partners")) {
-                Text(copy.appViewPartners, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.accent.color())
+                Text(copy.appViewPartners, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
             }
             if (li) ChoiceRow(copy.preferenceCenterPurposeItemLegitimateInterest, "", id in p.choices.purposeLegitimateInterests, "c15t.iab.purpose.$id.li", !p.pending && !p.stale && !p.listUnavailable,
                 note = copy.preferenceCenterPurposeItemRightToObject + " " + copy.appTurnOffToObject) { on -> p.edit { it.copy(purposeLegitimateInterests = it.purposeLegitimateInterests.select(id, on), purposeObjections = it.purposeObjections.select(id, !on)) } }
@@ -900,10 +911,10 @@ private class SearchFieldLayout {
     val typeface = LocalFontFamilyResolver.current.resolve(style.fontFamily, style.fontWeight ?: FontWeight.Normal,
         style.fontStyle ?: FontStyle.Normal, style.fontSynthesis ?: FontSynthesis.All).value as android.graphics.Typeface
     val ink = theme.colors.text.color().toArgb()
-    val accent = theme.colors.accent.color().toArgb()
-    val selection = theme.colors.accent.color().copy(alpha = 0.4f).toArgb()
+    val accent = theme.colors.primary.color().toArgb()
+    val selection = theme.colors.primary.color().copy(alpha = 0.4f).toArgb()
     val colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = theme.colors.surface.color(), unfocusedContainerColor = theme.colors.surface.color(),
-        focusedBorderColor = theme.colors.accent.color(), unfocusedBorderColor = theme.colors.text.color().copy(alpha = 0.18f))
+        focusedBorderColor = theme.colors.primary.color(), unfocusedBorderColor = theme.colors.text.color().copy(alpha = 0.18f))
     val lineHeight = with(LocalDensity.current) { style.lineHeight.roundToPx() }
     val contentHeight = with(LocalDensity.current) { style.lineHeight.toDp() }
     val labelPadding = with(LocalDensity.current) { MaterialTheme.typography.bodySmall.lineHeight.toDp() / 2 }
@@ -914,11 +925,11 @@ private class SearchFieldLayout {
         OutlinedTextFieldDefaults.DecorationBox(value = value, singleLine = true, enabled = true,
             visualTransformation = VisualTransformation.None, interactionSource = interactions,
             label = { Text(label, modifier = Modifier.clearAndSetSemantics {}) },
-            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = theme.colors.textSecondary.color()) },
+            leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null, tint = theme.colors.textMuted.color()) },
             colors = colors,
             container = { OutlinedTextFieldDefaults.Container(enabled = true, isError = false, interactionSource = interactions,
                 colors = colors,
-                shape = RoundedCornerShape(theme.cornerRadius)) },
+                shape = RoundedCornerShape(theme.radius.md)) },
             innerTextField = {
                 Spacer(Modifier.fillMaxWidth().height(contentHeight).onGloballyPositioned {
                     layout.content = it; layout.updatePadding()
@@ -979,8 +990,8 @@ private class SearchFieldLayout {
 /** On, Partly on, or Off at a glance, beside the chevron into the partner. */
 @Composable private fun StatusTag(status: String, off: Boolean, modifier: Modifier = Modifier) {
     val theme = LocalConsentTheme.current
-    Text(status, style = MaterialTheme.typography.labelMedium, color = if (off) theme.colors.textSecondary.color() else theme.colors.statusTagText.color(),
-        modifier = modifier.background(if (off) theme.colors.surfaceMuted.color() else theme.colors.accent.color().copy(alpha = 0.14f), CircleShape).padding(horizontal = 8.dp, vertical = 4.dp))
+    Text(status, style = MaterialTheme.typography.labelMedium, color = if (off) theme.colors.textMuted.color() else theme.colors.statusTagText.color(),
+        modifier = modifier.background(if (off) theme.colors.surfaceMuted.color() else theme.colors.primary.color().copy(alpha = 0.14f), CircleShape).padding(horizontal = 8.dp, vertical = 4.dp))
 }
 
 @Composable private fun Vendors(p: ConsentPresenter, purpose: Int?, clear: () -> Unit, open: (Int) -> Unit, openProviders: () -> Unit) {
@@ -994,8 +1005,8 @@ private class SearchFieldLayout {
     Column(Modifier.fillMaxSize().testTag("c15t.iab.vendors")) {
         SearchField(search, { search = it }, p.iabCopy.appSearchPartners, "c15t.iab.vendors.search")
         if (purpose != null) TextButton(onClick = clear, modifier = Modifier.padding(horizontal = 12.dp).testTag("c15t.iab.vendors.filter.purpose.clear")) {
-            Text(p.iabCopy.format(p.iabCopy.appPurposeFilter, mapOf("purpose" to p.disclosure?.list?.purposes?.get(purpose)?.name.orEmpty())), style = MaterialTheme.typography.bodyMedium, color = theme.colors.accent.color())
-            Icon(Icons.Outlined.Clear, contentDescription = p.iabCopy.commonClearSelection, tint = theme.colors.accent.color(), modifier = Modifier.padding(start = 4.dp).size(16.dp))
+            Text(p.iabCopy.format(p.iabCopy.appPurposeFilter, mapOf("purpose" to p.disclosure?.list?.purposes?.get(purpose)?.name.orEmpty())), style = MaterialTheme.typography.bodyMedium, color = theme.colors.primary.color())
+            Icon(Icons.Outlined.Clear, contentDescription = p.iabCopy.commonClearSelection, tint = theme.colors.primary.color(), modifier = Modifier.padding(start = 4.dp).size(16.dp))
         }
         LazyColumn(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
             if (vendors.isEmpty()) item { Body(p.iabCopy.format(p.iabCopy.appNoPartnersMatch, mapOf("search" to search)), Modifier.padding(16.dp).testTag("c15t.iab.vendors.empty")) }
@@ -1006,7 +1017,7 @@ private class SearchFieldLayout {
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(v.name.orEmpty(), style = MaterialTheme.typography.titleMedium, color = theme.colors.text.color())
-                        Text(p.iabCopy.format(p.iabCopy.appVendorPurposeSummary, mapOf("purposes" to "${d.consentPurposes.size}", "legitimateInterest" to "${d.legitimateInterestPurposes.size}")), style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color())
+                        Text(p.iabCopy.format(p.iabCopy.appVendorPurposeSummary, mapOf("purposes" to "${d.consentPurposes.size}", "legitimateInterest" to "${d.legitimateInterestPurposes.size}")), style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color())
                     }
                     StatusTag(p.partnerStatus(id), p.disclosure?.vendors?.get(id)?.selectionStatus(id, p.choices) != IabVendorSelectionStatus.PARTIAL && p.disclosure?.vendors?.get(id)?.selectionStatus(id, p.choices) != IabVendorSelectionStatus.ON, Modifier.testTag("c15t.iab.vendors.vendor.$id.status"))
                 }
@@ -1062,7 +1073,7 @@ private class SearchFieldLayout {
                     GroupedRow(index, values.size) {
                         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(name, style = MaterialTheme.typography.bodyLarge, color = theme.colors.text.color(), modifier = Modifier.weight(1f))
-                            trailing(index)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = theme.colors.textSecondary.color()) }
+                            trailing(index)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color()) }
                         }
                     }
                 }

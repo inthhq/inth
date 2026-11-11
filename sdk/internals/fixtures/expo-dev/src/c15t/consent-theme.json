@@ -1,0 +1,19 @@
+{
+	"colors": {
+		"decision": "#172554",
+		"primary": "#2563EB",
+		"textOnDecision": "#FFFFFF"
+	},
+	"dark": {
+		"decision": "#DBEAFE",
+		"primary": "#60A5FA",
+		"textOnDecision": "#172554"
+	},
+	"radius": { "md": 16 },
+	"slots": { "buttonPrimary": { "borderRadius": 26 } },
+	"spacing": { "lg": 28, "md": 20 },
+	"typography": {
+		"fontSize": { "base": 17, "sm": 15 },
+		"headlineFont": "serif"
+	}
+}

@@ -36,8 +36,8 @@ struct IdentityHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             tile.accessibilityHidden(true)
-            Text(identity.name.uppercased()).font(.footnote.weight(.semibold)).tracking(1.4)
-                .foregroundStyle(theme.colors.accent.color)
+            Text(identity.name.uppercased()).font(theme.font(.footnote, weight: .semibold)).tracking(1.4)
+                .foregroundStyle(theme.colors.primary.color)
                 .accessibilityLabel(identity.name).accessibilityIdentifier("c15t.first-layer.brand")
         }
     }
@@ -75,10 +75,10 @@ private struct InitialTile: View {
     @Environment(\.consentTheme) private var theme
     var body: some View {
         ZStack {
-            tileShape(size).fill(theme.colors.accent.color.opacity(0.12))
+            tileShape(size).fill(theme.colors.primary.color.opacity(0.12))
             Text(String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)).uppercased())
-                .font(theme.headlineFont.font(.title, weight: .semibold))
-                .foregroundStyle(theme.colors.accent.color)
+                .font(theme.typography.headlineFont.font(.title, weight: .semibold))
+                .foregroundStyle(theme.colors.primary.color)
         }.frame(width: size, height: size)
     }
 }

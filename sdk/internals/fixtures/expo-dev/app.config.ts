@@ -3,6 +3,18 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 import type { ConfigPlugin } from 'expo/config-plugins';
 import expoPackage from 'expo/package.json';
 
+/*
+ * The appearance of the native consent screens, written into Info.plist and
+ * AndroidManifest.xml at prebuild. The theme is JSON so Node can load it here
+ * and Metro can bundle it into `src/app.tsx`, where the same values style the
+ * React Native components. The Expo and Customize docs pages show this block.
+ */
+// #region docs:expo-theme title="app.config.ts"
+import consentTheme from './src/c15t/consent-theme.json';
+
+const theme: C15tPluginProps['theme'] = consentTheme;
+// #endregion docs:expo-theme
+
 /**
  * Backend and key for the embedded consent core.
  *
@@ -80,28 +92,6 @@ Vous pouvez changer cela dans Réglages à tout moment.`,
 
 您可以随时在设置中更改。`,
 };
-
-/**
- * The native consent screens' appearance, written into Info.plist and
- * AndroidManifest.xml at prebuild. The Expo and Customize docs pages show this
- * block.
- */
-// #region docs:expo-theme title="app.config.ts"
-const theme: C15tPluginProps['theme'] = {
-	colors: {
-		decision: '#172554',
-		primary: '#2563EB',
-		textOnDecision: '#FFFFFF',
-	},
-	dark: {
-		decision: '#DBEAFE',
-		primary: '#60A5FA',
-		textOnDecision: '#172554',
-	},
-	radius: { md: 16 },
-	typography: { headlineFont: 'serif' },
-};
-// #endregion docs:expo-theme
 
 const c15tPluginProps: C15tPluginProps = {
 	androidMavenRepository: (process.env.C15T_MAVEN_URL ?? '').startsWith('file:')

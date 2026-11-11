@@ -17,7 +17,7 @@ import { resetConsentClient } from '../../native/client';
 import type { ConsentSnapshot } from '../../protocol';
 import { ConsentBanner } from '../consent-banner';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
-import { lightTheme } from '../theme/create-consent-theme';
+import { defaultConsentTheme } from '../theme/create-consent-theme';
 import {
 	CONTROL_ROLES,
 	mountSurface,
@@ -593,15 +593,19 @@ describe('banner action row', () => {
 			// Web strokes these rather than filling them: the card shows through. The
 			// accent action carries a 2pt ring, which is web's 1px border plus the
 			// accent ring laid inside it, and the neutral one is a single hairline.
-			expect(style.backgroundColor).toBe(lightTheme.colors.surface);
+			expect(style.backgroundColor).toBe(defaultConsentTheme.colors.surface);
 			expect(style.borderWidth).toBe(accent ? 2 : 1);
 			expect(style.borderColor).toBe(
-				accent ? lightTheme.colors.primary : lightTheme.colors.border
+				accent
+					? defaultConsentTheme.colors.primary
+					: defaultConsentTheme.colors.border
 			);
 			// Both sit off the card on the web's own smallest elevation.
 			expect(style.boxShadow).toBe('0 1px 2px 0 rgba(0, 0, 0, 0.05)');
 			expect(label.color).toBe(
-				accent ? lightTheme.colors.primary : lightTheme.colors.text
+				accent
+					? defaultConsentTheme.colors.primary
+					: defaultConsentTheme.colors.text
 			);
 			expect(label.fontWeight).toBe('500');
 		};
@@ -623,9 +627,11 @@ describe('banner action row', () => {
 				.parentElement as HTMLElement
 		);
 
-		expect(footer.backgroundColor).toBe(lightTheme.colors.surfaceRaised);
+		expect(footer.backgroundColor).toBe(
+			defaultConsentTheme.colors.surfaceHover
+		);
 		expect(footer.borderTopWidth).toBe(1);
-		expect(footer.borderTopColor).toBe(lightTheme.colors.border);
+		expect(footer.borderTopColor).toBe(defaultConsentTheme.colors.border);
 
 		const card = nodeStyle(
 			surfaceNode(tree.container(), 'Deine Privatsphaere')
@@ -633,9 +639,9 @@ describe('banner action row', () => {
 
 		// The heading above the band stays on the plain card surface, and the card
 		// itself carries the border and elevation the web banner draws.
-		expect(card.backgroundColor).toBe(lightTheme.colors.surface);
+		expect(card.backgroundColor).toBe(defaultConsentTheme.colors.surface);
 		expect(card.borderWidth).toBe(1);
-		expect(card.borderColor).toBe(lightTheme.colors.border);
+		expect(card.borderColor).toBe(defaultConsentTheme.colors.border);
 		expect(card.boxShadow).toBe('0 8px 24px rgba(0, 0, 0, 0.12)');
 
 		tree.unmount();

@@ -5,11 +5,15 @@ import type {
 	InfoPlist,
 } from '@expo/config-plugins';
 
+import type {
+	ConsentNativeSlot,
+	ConsentThemeOptions,
+} from '../components/theme/create-consent-theme';
 import { androidConfig } from './config-plugins';
 import { C15tPluginError } from './errors';
 
 /**
- * Colour fields of the `theme` prop.
+ * Colour fields of the `theme` prop that the native consent screens draw.
  *
  * Fields that have a web counterpart take its name from `Theme['colors']` in
  * `@c15t/ui`, which is also the `--c15t-*` custom property the web components
@@ -44,57 +48,16 @@ export type C15tThemeColorName = keyof C15tThemeColors;
 /**
  * The `theme` prop of `@c15t/react-native/expo-plugin`.
  *
- * Its shape follows the web `Theme` from `@c15t/ui`: `colors` holds the light
+ * It is the same type `createConsentTheme` takes, so one object can style the
+ * native consent screens here and the React Native components at runtime. Its
+ * shape follows the web `Theme` from `@c15t/ui`: `colors` holds the light
  * values and `dark` overrides them in the dark appearance. The plugin writes
- * each value into the native theme keys at prebuild, so the native consent
- * screens pick it up without app code.
+ * the values the native screens draw into the native theme keys at prebuild.
+ * Values only the React Native components draw, such as `motion`,
+ * `colors.border` and `typography.lineHeight`, are checked and left out of the
+ * native keys.
  */
-export interface C15tThemePluginProps {
-	/** Colours in the light appearance, and in the dark one unless `dark` overrides them. */
-	colors?: C15tThemeColors;
-	/** Dark-appearance overrides. Each one needs the same field in `colors`. */
-	dark?: C15tThemeColors;
-	/** Corner rounding. */
-	radius?: {
-		/**
-		 * Corner radius of buttons and cards, in points on iOS and dp on Android.
-		 * Web: `--c15t-radius-md`.
-		 */
-		md?: number;
-	};
-	/** Type settings. */
-	typography?: {
-		/**
-		 * Typeface of the first-layer headline. `serif`, `rounded`, `sans`, or a
-		 * font the app bundles: a PostScript name on iOS and a font resource name
-		 * on Android. One string serves both when it is a valid resource name
-		 * (`inter_bold`); otherwise give `{ ios: 'Inter-Bold', android:
-		 * 'inter_bold' }`. Android draws `rounded` with its sans face. Body text
-		 * always uses the system face.
-		 */
-		headlineFont?: string | { ios?: string; android?: string };
-	};
-	/** The app identity shown above the headline. */
-	brand?: {
-		/** App name shown as an eyebrow above the headline. */
-		name?: string;
-		/** Image for the mark: an asset-catalogue name on iOS and a drawable name on Android. */
-		mark?: string;
-		/** `true` hides the app name and mark. */
-		hidden?: boolean;
-	};
-	/** The provider attribution under the first-layer actions. */
-	branding?: {
-		/** Built-in provider mark and name. */
-		provider?: 'c15t' | 'inth';
-		/** Custom provider name. Replaces `provider`. */
-		name?: string;
-		/** Custom provider image, beside a custom `name`. */
-		mark?: string;
-		/** `true` hides the attribution. */
-		hidden?: boolean;
-	};
-}
+export type C15tThemePluginProps = ConsentThemeOptions;
 
 /** Native key pair for one theme value. */
 interface ThemeKey {
@@ -118,14 +81,32 @@ export const THEME_COLOR_KEYS: Readonly<Record<C15tThemeColorName, ThemeKey>> =
 	{
 		canvas: key('canvas', 'CANVAS'),
 		decision: key('decision', 'DECISION'),
-		primary: key('accent', 'ACCENT'),
+		primary: key('primary', 'PRIMARY'),
 		surface: key('surface', 'SURFACE'),
 		surfaceMuted: key('surfaceMuted', 'SURFACE_MUTED'),
 		text: key('text', 'TEXT'),
-		textMuted: key('textSecondary', 'TEXT_SECONDARY'),
-		textOnDecision: key('onDecision', 'ON_DECISION'),
-		textOnPrimary: key('onAccent', 'ON_ACCENT'),
+		textMuted: key('textMuted', 'TEXT_MUTED'),
+		textOnDecision: key('textOnDecision', 'TEXT_ON_DECISION'),
+		textOnPrimary: key('textOnPrimary', 'TEXT_ON_PRIMARY'),
 	};
+
+/**
+ * Colours only the React Native components draw. The prop accepts them so the
+ * object `createConsentTheme` takes passes here too, and writes none of them.
+ * `__tests__/theme.test.ts` checks the list against the components' palette.
+ */
+export const JS_ONLY_COLOR_NAMES = [
+	'border',
+	'contentText',
+	'disclosure',
+	'focus',
+	'overlay',
+	'primaryBorder',
+	'surfaceHover',
+	'switchThumb',
+	'switchTrack',
+	'switchTrackActive',
+] as const;
 
 /** Native keys for the non-colour theme values. */
 export const THEME_KEYS = {
@@ -136,9 +117,51 @@ export const THEME_KEYS = {
 	brandingMark: key('brandingMark', 'BRANDING_MARK'),
 	brandingName: key('brandingName', 'BRANDING_NAME'),
 	brandingProvider: key('brandingProvider', 'BRANDING_PROVIDER'),
-	cornerRadius: key('cornerRadius', 'CORNER_RADIUS'),
+	fontFamily: key('fontFamily', 'FONT_FAMILY'),
+	fontSizeBase: key('fontSizeBase', 'FONT_SIZE_BASE'),
+	fontSizeLg: key('fontSizeLg', 'FONT_SIZE_LG'),
+	fontSizeSm: key('fontSizeSm', 'FONT_SIZE_SM'),
 	headlineFont: key('headlineFont', 'HEADLINE_FONT'),
+	radiusLg: key('radiusLg', 'RADIUS_LG'),
+	radiusMd: key('radiusMd', 'RADIUS_MD'),
+	radiusSm: key('radiusSm', 'RADIUS_SM'),
+	spaceLg: key('spaceLg', 'SPACE_LG'),
+	spaceMd: key('spaceMd', 'SPACE_MD'),
+	spaceSm: key('spaceSm', 'SPACE_SM'),
+	spaceXl: key('spaceXl', 'SPACE_XL'),
+	spaceXs: key('spaceXs', 'SPACE_XS'),
 } as const satisfies Record<string, ThemeKey>;
+
+/** The native parts a theme can restyle, named after the web `slots`. */
+export const THEME_SLOTS: readonly ConsentNativeSlot[] = [
+	'consentBannerTitle',
+	'consentBannerDescription',
+	'buttonPrimary',
+	'buttonSecondary',
+];
+
+/** The fields of one slot, named after the CSS properties a web slot sets. */
+export const THEME_SLOT_FIELDS = [
+	'color',
+	'backgroundColor',
+	'borderRadius',
+	'fontSize',
+] as const;
+
+/** One {@link THEME_SLOT_FIELDS} entry. */
+type SlotField = (typeof THEME_SLOT_FIELDS)[number];
+
+/** `buttonPrimary` to `BUTTON_PRIMARY`. */
+const constantCase = (name: string): string =>
+	name.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase();
+
+/**
+ * Native key for one slot field: `com.c15t.consent.buttonPrimary.backgroundColor`
+ * on iOS and `com.c15t.consent.BUTTON_PRIMARY_BACKGROUND_COLOR` on Android,
+ * which is the format `InfoPlistKey.slot` and `Meta.slot` build.
+ */
+export const slotKey = (slot: ConsentNativeSlot, field: SlotField): ThemeKey =>
+	key(`${slot}.${field}`, `${constantCase(slot)}_${constantCase(field)}`);
 
 /**
  * Every native key the `theme` prop owns.
@@ -149,6 +172,9 @@ export const THEME_KEYS = {
 export const THEME_OWNED_KEYS: readonly ThemeKey[] = [
 	...Object.values(THEME_COLOR_KEYS),
 	...Object.values(THEME_KEYS),
+	...THEME_SLOTS.flatMap((slot) =>
+		THEME_SLOT_FIELDS.map((field) => slotKey(slot, field))
+	),
 ];
 
 /** One native value: plist keeps the type, the manifest gets its string. */
@@ -181,7 +207,7 @@ const asObject = function asObject(
 	return value as Record<string, unknown>;
 };
 
-/** Refuse fields the native screens cannot draw, so a web theme pasted in fails loudly. */
+/** Refuse fields neither renderer draws, so a web theme pasted in fails loudly. */
 const assertKnownFields = function assertKnownFields(
 	value: Record<string, unknown>,
 	label: string,
@@ -197,9 +223,20 @@ const assertKnownFields = function assertKnownFields(
 	}
 };
 
-const NATIVE_ONLY =
-	'The native consent screens support only these today; set the rest in ' +
-	'the web theme.';
+const UNSUPPORTED =
+	'Neither the native consent screens nor the React Native components draw ' +
+	'the rest; set it in the web theme.';
+
+const readHex = function readHex(value: unknown, label: string): string {
+	if (typeof value !== 'string' || !HEX_COLOR.test(value.trim())) {
+		throw new C15tPluginError(
+			`${label} must be a hex colour such as "#2563EB". The native ` +
+				`screens read #RRGGBB only, without alpha or CSS functions. Got ` +
+				`${quote(value)}.`
+		);
+	}
+	return value.trim().toUpperCase();
+};
 
 const readColors = function readColors(
 	value: unknown,
@@ -209,23 +246,44 @@ const readColors = function readColors(
 		return {};
 	}
 	const fields = asObject(value, label);
-	assertKnownFields(fields, label, COLOR_NAMES, NATIVE_ONLY);
+	assertKnownFields(
+		fields,
+		label,
+		[...COLOR_NAMES, ...JS_ONLY_COLOR_NAMES],
+		UNSUPPORTED
+	);
+	for (const name of JS_ONLY_COLOR_NAMES) {
+		const color = fields[name];
+		if (color !== undefined && (typeof color !== 'string' || color === '')) {
+			throw new C15tPluginError(
+				`${label}.${name} must be a colour string. Got ${quote(color)}.`
+			);
+		}
+	}
 	const colors: Partial<Record<C15tThemeColorName, string>> = {};
 	for (const name of COLOR_NAMES) {
 		const color = fields[name];
-		if (color === undefined) {
-			continue;
+		if (color !== undefined) {
+			colors[name] = readHex(color, `${label}.${name}`);
 		}
-		if (typeof color !== 'string' || !HEX_COLOR.test(color.trim())) {
-			throw new C15tPluginError(
-				`${label}.${name} must be a hex colour such as "#2563EB". The native ` +
-					`screens read #RRGGBB only, without alpha or CSS functions. Got ` +
-					`${quote(color)}.`
-			);
-		}
-		colors[name] = color.trim().toUpperCase();
 	}
 	return colors;
+};
+
+/** A light colour, or a light and dark pair, as the native value. */
+const readSlotColor = function readSlotColor(
+	value: unknown,
+	label: string
+): string | null {
+	if (value === undefined) {
+		return null;
+	}
+	if (typeof value === 'string') {
+		return readHex(value, label);
+	}
+	const pair = asObject(value, label);
+	assertKnownFields(pair, label, ['light', 'dark'], '');
+	return `${readHex(pair.light, `${label}.light`)},${readHex(pair.dark, `${label}.dark`)}`;
 };
 
 const readText = function readText(
@@ -257,6 +315,50 @@ const readFlag = function readFlag(
 	}
 	return value;
 };
+
+/**
+ * A finite number, 0 or more, or above 0 when `positive`. `unit` names what the
+ * native screens read it as.
+ */
+const readNumber = function readNumber(
+	value: unknown,
+	label: string,
+	unit: string,
+	positive = false
+): number | null {
+	if (value === undefined) {
+		return null;
+	}
+	if (
+		typeof value !== 'number' ||
+		!Number.isFinite(value) ||
+		(positive ? value <= 0 : value < 0)
+	) {
+		throw new C15tPluginError(
+			`${label} must be a number of ${unit}, ${positive ? 'above 0' : '0 or more'}. ` +
+				`Got ${quote(value)}.`
+		);
+	}
+	return value;
+};
+
+/** An object of numbers with known keys, for groups only the components read. */
+const checkNumbers = function checkNumbers(
+	value: unknown,
+	label: string,
+	known: readonly string[]
+): void {
+	if (value === undefined) {
+		return;
+	}
+	const fields = asObject(value, label);
+	assertKnownFields(fields, label, known, '');
+	for (const name of known) {
+		readNumber(fields[name], `${label}.${name}`, 'pixels');
+	}
+};
+
+const POINTS = 'points (dp on Android)';
 
 /** Native entries one part of the theme resolves to. */
 type ThemeEntries = ResolvedC15tTheme['entries'][number][];
@@ -301,21 +403,44 @@ const resolveRadius = function resolveRadius(value: unknown): ThemeEntries {
 		return [];
 	}
 	const radius = asObject(value, 'theme.radius');
-	assertKnownFields(radius, 'theme.radius', ['md'], NATIVE_ONLY);
-	const { md } = radius;
-	if (md === undefined) {
-		return [];
-	}
-	if (typeof md !== 'number' || !Number.isFinite(md) || md < 0) {
-		throw new C15tPluginError(
-			`theme.radius.md must be a number of points (dp on Android), 0 or ` +
-				`more. Got ${quote(md)}.`
-		);
-	}
-	return entriesOf([[THEME_KEYS.cornerRadius, md]]);
+	assertKnownFields(
+		radius,
+		'theme.radius',
+		['sm', 'md', 'lg', 'full'],
+		UNSUPPORTED
+	);
+	// `full` is the components' pill radius. The native screens draw none.
+	readNumber(radius.full, 'theme.radius.full', POINTS);
+	return entriesOf([
+		[THEME_KEYS.radiusSm, readNumber(radius.sm, 'theme.radius.sm', POINTS)],
+		[THEME_KEYS.radiusMd, readNumber(radius.md, 'theme.radius.md', POINTS)],
+		[THEME_KEYS.radiusLg, readNumber(radius.lg, 'theme.radius.lg', POINTS)],
+	]);
 };
 
-/** Names both native readers take as a built-in face. */
+const resolveSpacing = function resolveSpacing(value: unknown): ThemeEntries {
+	if (value === undefined) {
+		return [];
+	}
+	const spacing = asObject(value, 'theme.spacing');
+	assertKnownFields(
+		spacing,
+		'theme.spacing',
+		['xs', 'sm', 'md', 'lg', 'xl'],
+		UNSUPPORTED
+	);
+	const step = (name: 'xs' | 'sm' | 'md' | 'lg' | 'xl') =>
+		readNumber(spacing[name], `theme.spacing.${name}`, POINTS);
+	return entriesOf([
+		[THEME_KEYS.spaceXs, step('xs')],
+		[THEME_KEYS.spaceSm, step('sm')],
+		[THEME_KEYS.spaceMd, step('md')],
+		[THEME_KEYS.spaceLg, step('lg')],
+		[THEME_KEYS.spaceXl, step('xl')],
+	]);
+};
+
+/** Names both native headline readers take as a built-in face. */
 const HEADLINE_FONT_KEYWORDS = [
 	'serif',
 	'rounded',
@@ -332,28 +457,44 @@ const isKeyword = (name: string): boolean =>
 	HEADLINE_FONT_KEYWORDS.includes(name.toLowerCase());
 
 /**
- * Resolve `headlineFont`, per platform when the names differ.
+ * Resolve `headlineFont` or `fontFamily`, per platform when the names differ.
  *
  * iOS takes a PostScript name such as `Inter-Bold`; Android takes a font
  * resource name, which is lowercase letters, digits and `_`. A string that is
  * not a resource name would leave Android on its default face without a word,
  * so it fails here and asks for the `{ ios, android }` form.
+ *
+ * Only the headline readers know the keywords. The body readers look a name
+ * up as a bundled font and fall back to the system face, so a keyword there
+ * would do nothing on either platform and fails too.
  */
-const resolveHeadlineFont = function resolveHeadlineFont(
-	value: unknown
+const resolveFont = function resolveFont(
+	value: unknown,
+	field: 'fontFamily' | 'headlineFont'
 ): ThemeEntries {
-	const label = 'theme.typography.headlineFont';
-	const fontKey = THEME_KEYS.headlineFont;
-	const androidName = (name: string, field: string): string => {
+	const label = `theme.typography.${field}`;
+	const fontKey = THEME_KEYS[field];
+	const keywords = field === 'headlineFont';
+	const checked = (name: string, at: string): string => {
+		if (!keywords && isKeyword(name)) {
+			throw new C15tPluginError(
+				`${at} ${quote(name)} names a built-in face, which the native body ` +
+					`text cannot use: it takes a font the app bundles. Leave ${field} ` +
+					`out for the system face.`
+			);
+		}
+		return name;
+	};
+	const androidName = (name: string, at: string): string => {
 		if (!isKeyword(name) && !ANDROID_FONT_RESOURCE.test(name)) {
 			throw new C15tPluginError(
-				`${field} ${quote(name)} is not an Android font resource name ` +
+				`${at} ${quote(name)} is not an Android font resource name ` +
 					`(lowercase letters, digits and _), so Android would keep its ` +
 					`default face. Use { "ios": ${quote(name)}, "android": ` +
 					`"<res/font name>" }.`
 			);
 		}
-		return name;
+		return checked(name, at);
 	};
 	if (value === undefined || typeof value === 'string') {
 		const name = readText(value, label);
@@ -371,7 +512,13 @@ const resolveHeadlineFont = function resolveHeadlineFont(
 	return [
 		...(ios === null
 			? []
-			: [{ key: fontKey, platform: 'ios' as const, value: ios }]),
+			: [
+					{
+						key: fontKey,
+						platform: 'ios' as const,
+						value: checked(ios, `${label}.ios`),
+					},
+				]),
 		...(android === null
 			? []
 			: [
@@ -394,10 +541,89 @@ const resolveTypography = function resolveTypography(
 	assertKnownFields(
 		typography,
 		'theme.typography',
-		['headlineFont'],
-		'Native body text uses the system face.'
+		['fontFamily', 'headlineFont', 'fontSize', 'fontWeight', 'lineHeight'],
+		UNSUPPORTED
 	);
-	return resolveHeadlineFont(typography.headlineFont);
+	// Weights and line heights shape the React Native components only: the
+	// native screens keep the platform's per-role weights and line spacing.
+	checkNumbers(typography.fontWeight, 'theme.typography.fontWeight', [
+		'normal',
+		'medium',
+		'semibold',
+	]);
+	checkNumbers(typography.lineHeight, 'theme.typography.lineHeight', [
+		'tight',
+		'normal',
+		'relaxed',
+	]);
+	const sizes =
+		typography.fontSize === undefined
+			? {}
+			: asObject(typography.fontSize, 'theme.typography.fontSize');
+	assertKnownFields(
+		sizes,
+		'theme.typography.fontSize',
+		['sm', 'base', 'lg'],
+		''
+	);
+	const size = (name: 'sm' | 'base' | 'lg') =>
+		readNumber(
+			sizes[name],
+			`theme.typography.fontSize.${name}`,
+			'points (sp on Android)',
+			true
+		);
+	return [
+		...resolveFont(typography.fontFamily, 'fontFamily'),
+		...resolveFont(typography.headlineFont, 'headlineFont'),
+		...entriesOf([
+			[THEME_KEYS.fontSizeSm, size('sm')],
+			[THEME_KEYS.fontSizeBase, size('base')],
+			[THEME_KEYS.fontSizeLg, size('lg')],
+		]),
+	];
+};
+
+const resolveSlots = function resolveSlots(value: unknown): ThemeEntries {
+	if (value === undefined) {
+		return [];
+	}
+	const slots = asObject(value, 'theme.slots');
+	assertKnownFields(
+		slots,
+		'theme.slots',
+		THEME_SLOTS,
+		'The native consent screens restyle only these parts; the React Native ' +
+			'components take per-part styles through their `styles` prop.'
+	);
+	return THEME_SLOTS.flatMap((slot) => {
+		if (slots[slot] === undefined) {
+			return [];
+		}
+		const label = `theme.slots.${slot}`;
+		const style = asObject(slots[slot], label);
+		assertKnownFields(style, label, THEME_SLOT_FIELDS, '');
+		return entriesOf([
+			[slotKey(slot, 'color'), readSlotColor(style.color, `${label}.color`)],
+			[
+				slotKey(slot, 'backgroundColor'),
+				readSlotColor(style.backgroundColor, `${label}.backgroundColor`),
+			],
+			[
+				slotKey(slot, 'borderRadius'),
+				readNumber(style.borderRadius, `${label}.borderRadius`, POINTS),
+			],
+			[
+				slotKey(slot, 'fontSize'),
+				readNumber(
+					style.fontSize,
+					`${label}.fontSize`,
+					'points (sp on Android)',
+					true
+				),
+			],
+		]);
+	});
 };
 
 const resolveBrand = function resolveBrand(value: unknown): ThemeEntries {
@@ -479,14 +705,34 @@ export const resolveTheme = function resolveTheme(
 	assertKnownFields(
 		theme,
 		'theme',
-		['colors', 'dark', 'radius', 'typography', 'brand', 'branding'],
-		NATIVE_ONLY
+		[
+			'colors',
+			'dark',
+			'radius',
+			'spacing',
+			'typography',
+			'motion',
+			'slots',
+			'brand',
+			'branding',
+		],
+		UNSUPPORTED
 	);
+	// Motion shapes the React Native components only.
+	checkNumbers(theme.motion, 'theme.motion', [
+		'enterDistance',
+		'enterDuration',
+		'exitDuration',
+		'reducedEnterDuration',
+		'reducedExitDuration',
+	]);
 	return {
 		entries: [
 			...resolveColors(theme),
 			...resolveRadius(theme.radius),
+			...resolveSpacing(theme.spacing),
 			...resolveTypography(theme.typography),
+			...resolveSlots(theme.slots),
 			...resolveBrand(theme.brand),
 			...resolveBranding(theme.branding),
 		],

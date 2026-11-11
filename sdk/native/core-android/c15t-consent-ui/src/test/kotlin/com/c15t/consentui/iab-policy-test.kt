@@ -210,7 +210,7 @@ class IabPolicyTest {
     // TCF-CHECK: P11
     @Test fun primaryActionsShareTheirTextTreatmentAndReachFiveToOne() {
         // A host decision pair under 5:1 is replaced by the stock pair before anything draws.
-        val unreadable = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(decision = ConsentThemeColor(0x8CA2FF), onDecision = ConsentThemeColor(0xFFFFFF)))
+        val unreadable = ConsentTheme(colors = ConsentTheme.Colors.c15t.copy(decision = ConsentThemeColor(0x8CA2FF), textOnDecision = ConsentThemeColor(0xFFFFFF)))
         show(boot(), unreadable)
         val accept = buttonLabel("c15t.first-layer.accept-all", en.commonAcceptAll)
         val reject = buttonLabel("c15t.first-layer.reject-all", en.commonRejectAll)
@@ -221,7 +221,7 @@ class IabPolicyTest {
         assertEquals(FontWeight.SemiBold, accept.fontWeight)
         assertEquals(accept.color, reject.color)
         val stock = ConsentTheme.Colors.c15t
-        assertEquals(stock.onDecision.light, accept.color.toArgb() and 0xFFFFFF)
+        assertEquals(stock.textOnDecision.light, accept.color.toArgb() and 0xFFFFFF)
         assertTrue(ConsentTheme.contrastRatio(accept.color.toArgb() and 0xFFFFFF, stock.decision.light) >= 5.0)
         val a = compose.onNodeWithTag("c15t.first-layer.accept-all").fetchSemanticsNode().size
         val r = compose.onNodeWithTag("c15t.first-layer.reject-all").fetchSemanticsNode().size

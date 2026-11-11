@@ -285,7 +285,7 @@ export const ConsentPreferences = ({
 			label={copy.securedBy}
 			parts={surface.parts}
 			presentation={presentation}
-			radius={surface.theme.radius.surface}
+			radius={surface.theme.radius.lg}
 		/>
 	);
 
