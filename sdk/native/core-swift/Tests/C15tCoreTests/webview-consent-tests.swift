@@ -69,22 +69,18 @@ final class WebViewConsentTests: XCTestCase {
         XCTAssertEqual(permissions["marketing"], false)
     }
 
-    /// #113 adds `gppString` to ``ConsentSnapshot`` on a sibling branch. Once it is
-    /// here, this fails until ``WebViewConsentState/gppString(of:)`` reads it, so a
-    /// merge cannot leave every WebView reporting a nil GPP string.
-    func testTheGPPSeamReadsTheSnapshotOnceItCarriesOne() {
-        let snapshot = ConsentCore().snapshot()
-        let carries = Mirror(reflecting: snapshot).children.contains { $0.label == "gppString" }
-        if carries {
-            XCTAssertTrue(
-                WebViewConsentState.readsSnapshotGPP,
-                "#113 landed: in native/core-swift/Sources/C15tCore/WebViewConsent.swift, change the seam to "
-                    + "`static func gppString(of snapshot: ConsentSnapshot) -> String? { snapshot.gppString }` "
-                    + "and set `static let readsSnapshotGPP = true`"
-            )
-        } else {
-            XCTAssertNil(WebViewConsentState.gppString(of: snapshot))
-        }
+    /// The GPP string the snapshot carries is the one the page receives, at document
+    /// start and in every update.
+    func testTheSnapshotGPPStringReachesTheInjectedPayload() throws {
+        var draft = ConsentSnapshot.Draft(current: .coldStart)
+        draft.ready = true
+        draft.policyPending = false
+        draft.gppString = "DBABMA~CQ"
+        let state = WebViewConsentState(snapshot: draft.build(revision: 3), tcString: nil)
+        XCTAssertEqual(state.gppString, "DBABMA~CQ")
+        let script = try WebViewConsentScript(allowedOrigins: ["https://app.example"], token: "t0k3n", requestKey: "k3y")
+        XCTAssertTrue(script.documentStart(state).contains(#""gppString":"DBABMA~CQ""#))
+        XCTAssertTrue(script.update(state).contains(#""gppString":"DBABMA~CQ""#))
     }
 
     func testARevokedStateDeniesEverythingAndCarriesNoStrings() throws {

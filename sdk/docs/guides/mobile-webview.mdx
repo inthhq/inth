@@ -26,7 +26,7 @@ The page receives consent state and nothing else:
 | `permissions` | The app's effective permissions. Every optional category is `false` until `ready` |
 | `model` | `opt-in`, `opt-out`, `none` or `iab` |
 | `tcString` | The app's committed IAB TC string, when the app runs IAB TCF natively. Otherwise `null` |
-| `gppString` | Always `null` for now |
+| `gppString` | The app's IAB GPP string, when the app turns GPP on and a section applies. Otherwise `null` |
 | `revision` | The app's snapshot revision |
 
 The subject ID, external ID, location and consent records stay in the app.

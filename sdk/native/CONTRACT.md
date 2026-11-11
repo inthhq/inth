@@ -2097,7 +2097,7 @@ an empty list.
                        "measurement", "marketing" },  // effectivePermissions,
                                                       // all false until ready
       "tcString": string | null,  // the committed native TC string under IAB
-      "gppString": null           // reserved for GPP (#94)
+      "gppString": string | null  // snapshot.gppString; null while GPP is off
     }
 
 Nothing else crosses: no subject id, external id, policy snapshot token,
@@ -2170,9 +2170,11 @@ scope.
 
 The GPP string is read in one place per platform:
 `WebViewConsentState.gppStringOf(snapshot)` (Kotlin) and
-`WebViewConsentState.gppString(of:)` (Swift). Both return `null` until the
-snapshot carries a GPP string; a test on each platform fails once it does and
-the seam still returns `null`.
+`WebViewConsentState.gppString(of:)` (Swift). Both return `snapshot.gppString`,
+so the page gets the string the core wrote to `IABGPP_HDR_GppString`, and `null`
+while GPP is off or no section applies (see "IAB GPP"). React Native takes the
+state from those types through `getWebViewConsent()`. A test on each platform
+checks that a GPP string in the snapshot appears in the injected payload.
 
 ### Web side
 

@@ -13,8 +13,8 @@ import WebKit
 /// and follows the app's choice.
 ///
 /// Only pages whose origin is in the list receive anything, and only in the main
-/// frame. The state carries permissions, the model, the IAB TC string and a GPP slot;
-/// it never carries the subject id. Consent flows one way, from the app to the page.
+/// frame. The state carries permissions, the model, the IAB TC string and the GPP
+/// string; it never carries the subject id. Consent flows one way, from the app to the page.
 /// The page can only ask the app to open its preferences, through
 /// `onPreferencesRequested`.
 ///

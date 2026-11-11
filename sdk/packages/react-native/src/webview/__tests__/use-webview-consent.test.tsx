@@ -282,6 +282,32 @@ test('the native GPP string reaches the page unchanged', () => {
 	);
 });
 
+test('a GPP string in a new snapshot reaches the loaded page', () => {
+	const fake = createFakeNativeModule();
+	renderTree(
+		<ConsentProvider autoPresent={false}>
+			<Probe allowedOrigins={['https://www.example.com']} />
+		</ConsentProvider>
+	);
+	expect(latest().injectedJavaScriptBeforeContentLoaded).toContain(
+		'"gppString":null'
+	);
+	const injectJavaScript = vi.fn();
+	flush(() => {
+		latest().ref({ injectJavaScript });
+	});
+
+	flush(() => {
+		fake.pushSnapshot(buildSnapshot({ gppString: 'DBABMA~CQ', revision: 1 }));
+	});
+	expect(injectJavaScript).toHaveBeenCalledTimes(1);
+	const [script] = injectJavaScript.mock.calls[0] as [string];
+	expect(script).toContain('"gppString":"DBABMA~CQ"');
+	expect(latest().injectedJavaScriptBeforeContentLoaded).toContain(
+		'"gppString":"DBABMA~CQ"'
+	);
+});
+
 test('an entry holding a line break stays one invalid origin', () => {
 	createFakeNativeModule();
 	const message = captureErrorMessage(() => {

@@ -92,8 +92,8 @@ const call = (script: string, ...args: readonly unknown[]): string =>
  * second banner and follows the app's choice.
  *
  * Only pages on `allowedOrigins` receive anything, and only in the main
- * frame. The state carries permissions, the model, the IAB TC string and a
- * GPP slot; it never carries the subject id. Consent flows one way, from the
+ * frame. The state carries permissions, the model, the IAB TC string and the
+ * GPP string; it never carries the subject id. Consent flows one way, from the
  * app to the page.
  *
  * @param options - The allowed origins and the preferences callback.

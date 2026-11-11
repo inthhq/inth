@@ -74,27 +74,13 @@ class WebViewConsentTest {
 		assertFalse(permissions.getValue("marketing").jsonPrimitive.boolean)
 	}
 
-	/**
-	 * #113 adds `gppString` to [ConsentSnapshot] on a sibling branch. Once it is here,
-	 * this fails until [WebViewConsentState.gppStringOf] returns it, so a merge cannot
-	 * leave every WebView reporting a null GPP string.
-	 */
-	@Test fun `the GPP string the snapshot carries reaches the page`() {
-		val json = Json { ignoreUnknownKeys = true }
-		val snapshot = json.decodeFromString(ConsentSnapshot.serializer(), """{"gppString":"DBABMA~CQ"}""")
-		val carries = ConsentSnapshot::class.java.declaredFields.any { it.name == "gppString" }
-		val state = WebViewConsentState.from(snapshot, null)
-		if (carries) {
-			assertEquals(
-				"DBABMA~CQ",
-				state.gppString,
-				"#113 landed: in native/core-android/c15t-core/src/main/kotlin/com/c15t/core/webview/WebViewConsent.kt, " +
-					"delete @Suppress(\"UNUSED_PARAMETER\") above gppStringOf and change it to " +
-					"`internal fun gppStringOf(snapshot: ConsentSnapshot): String? = snapshot.gppString`",
-			)
-		} else {
-			assertNull(state.gppString)
-		}
+	/** The GPP string the snapshot carries is the one the page receives, at document start and in every update. */
+	@Test fun `the GPP string the snapshot carries reaches the injected payload`() {
+		val state = WebViewConsentState.from(decided.copy(gppString = "DBABMA~CQ"), null)
+		assertEquals("DBABMA~CQ", state.gppString)
+		val script = WebViewConsentScript(listOf("https://app.example"), token = "t0k3n", requestKey = "k3y")
+		assertTrue("\"gppString\":\"DBABMA~CQ\"" in script.documentStart(state))
+		assertTrue("\"gppString\":\"DBABMA~CQ\"" in script.update(state))
 	}
 
 	@Test fun `a revoked state denies everything and carries no strings`() {

@@ -215,7 +215,8 @@ export const createFakeNativeModule = function createFakeNativeModule(
 			return JSON.stringify({
 				key: 'fedcba9876543210fedcba9876543210',
 				state: {
-					gppString: null,
+					// Both bridges read the snapshot's GPP string into the WebView state.
+					gppString: current.gppString,
 					model: current.model,
 					permissions: current.effectivePermissions,
 					ready: current.ready && !current.policyPending,

@@ -49,13 +49,9 @@ public struct WebViewConsentState: Sendable, Equatable {
     }
 
     /// The GPP string a page receives for `snapshot`: the one place it is read, so
-    /// GPP cannot be left out of WebView state by accident. `nil` until the snapshot
-    /// carries one (#113). Then it returns `snapshot.gppString`, with
-    /// ``readsSnapshotGPP`` set to `true`; `WebViewConsentTests` fails until both are.
-    static func gppString(of snapshot: ConsentSnapshot) -> String? { nil }
-
-    /// Whether ``gppString(of:)`` reads the snapshot's GPP string.
-    static let readsSnapshotGPP = false
+    /// GPP cannot be left out of WebView state by accident. `nil` while GPP is off or
+    /// no section applies, as on the snapshot.
+    static func gppString(of snapshot: ConsentSnapshot) -> String? { snapshot.gppString }
 
     /// What a page receives when it must stop following the app: no state, every
     /// optional category denied. `previous` keeps the revision and model the page

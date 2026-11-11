@@ -51,12 +51,10 @@ data class WebViewConsentState(
 	companion object {
 		/**
 		 * The GPP string a page receives for [snapshot]: the one place it is read, so
-		 * GPP cannot be left out of WebView state by accident. `null` until the
-		 * snapshot carries one (#113); then it returns `snapshot.gppString`, and
-		 * `WebViewConsentTest` fails until it does.
+		 * GPP cannot be left out of WebView state by accident. `null` while GPP is off
+		 * or no section applies, as on the snapshot.
 		 */
-		@Suppress("UNUSED_PARAMETER")
-		internal fun gppStringOf(snapshot: ConsentSnapshot): String? = null
+		internal fun gppStringOf(snapshot: ConsentSnapshot): String? = snapshot.gppString
 
 		/**
 		 * What a page receives when it must stop following the app: no state, every
