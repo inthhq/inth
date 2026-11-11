@@ -174,9 +174,9 @@ Set the plugin's `iab` option to turn on IAB TCF. It takes your registered
 out of range. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
 lists the ranges and native keys.
 
-On Android, `iab` needs a hosted mode with a `backendURL`. Android has no
-offline mode, so Android prebuild fails if you combine `iab` with
-`mode: 'offline'`, even with a `backendURL`. iOS supports offline IAB.
+`iab` needs a backend mode with a `backendURL`, because a backend serves the
+Global Vendor List. Prebuild fails if you combine `iab` with
+`mode: 'offline'`.
 
 `vendors` narrows the disclosed vendor list; it does not turn IAB on. For
 publisher restrictions or custom purposes, use the

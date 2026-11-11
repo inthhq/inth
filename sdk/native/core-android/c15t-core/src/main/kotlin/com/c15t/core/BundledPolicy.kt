@@ -12,7 +12,13 @@ import java.security.MessageDigest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
-/** Build authority, not a visitor decision or a network refresh timestamp. */
+/**
+ * Build authority, not a visitor decision or a network refresh timestamp.
+ *
+ * A manifest bundled for one backend stays usable after [expiresAt]: an offline device
+ * still shows the prompt and records choices from it, and the core reports the age
+ * through `ConsentCore.onPolicyStale`. Nothing is granted until the person chooses.
+ */
 @Serializable
 data class BundledPolicyAuthority(
 	val endpoint: String,
@@ -21,11 +27,12 @@ data class BundledPolicyAuthority(
 	val manifestRevision: String,
 	val requiresAtp: Boolean = false,
 ) {
-	fun isCurrent(endpoint: String, now: Long) = this.endpoint == endpoint.trimEnd('/') &&
-		issuedAt >= 0 && now >= issuedAt && now < expiresAt && expiresAt > issuedAt
+	/** Bound to [endpoint] and already issued. Expiry does not end usability. */
+	fun isUsable(endpoint: String?, now: Long) = endpoint != null && this.endpoint == endpoint.trimEnd('/') &&
+		issuedAt >= 0 && now >= issuedAt && expiresAt > issuedAt
 
-	internal fun hasExpired(endpoint: String, now: Long) = this.endpoint == endpoint.trimEnd('/') &&
-		issuedAt >= 0 && expiresAt > issuedAt && now >= expiresAt
+	/** Past [expiresAt]. A stale manifest still prompts, and the core emits `policyStale`. */
+	fun isStale(now: Long) = now >= expiresAt
 }
 
 /** Reads a build resource before JavaScript. Invalid data never contributes authority. */
@@ -33,7 +40,7 @@ object BundledPolicy {
 	internal data class Selection(val authority: BundledPolicyAuthority, val mapped: MappedInit,
 		val gvlFetchedAt: Long?, val atpFetchedAt: Long?)
 
-	internal fun resolve(resource: String, endpoint: String, overrides: KernelOverrides, now: Long): Selection? = try {
+	internal fun resolve(resource: String, endpoint: String?, overrides: KernelOverrides, now: Long): Selection? = try {
 		val wrapper = Json.parseToJsonElement(resource).jsonObject
 		val payload = wrapper.getValue("payload").jsonPrimitive.content
 		val checksum = MessageDigest.getInstance("SHA-256").digest(payload.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
@@ -43,7 +50,7 @@ object BundledPolicy {
 		val authority = BundledPolicyAuthority(value.getValue("endpoint").jsonPrimitive.content,
 			value.getValue("issuedAt").jsonPrimitive.long, value.getValue("expiresAt").jsonPrimitive.long,
 			value.getValue("manifestRevision").jsonPrimitive.content, value["requiresAtp"]?.jsonPrimitive?.boolean == true)
-		require(authority.manifestRevision.isNotEmpty() && authority.isCurrent(endpoint, now))
+		require(authority.manifestRevision.isNotEmpty() && authority.isUsable(endpoint, now))
 		val packs = value.getValue("policyPacks").jsonArray.map { it.jsonObject }
 		require(packs.isNotEmpty())
 		packs.forEach { require(StrictPolicyReader.read(it["policyResolution"]) is PolicyRead.Matched) }

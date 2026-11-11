@@ -81,6 +81,7 @@ final class AppConsentModel: ObservableObject {
         case .saveReplayed(_, let ok):
             deliveryMessage = ok ? "A queued consent record reached the backend." : "Delivery retry failed. Check the queue and transport error."
         case .error(let error): deliveryMessage = "Transport or storage error: \(error.code)."
+        case .policyStale: deliveryMessage = "The bundled policy has expired. Connect to refresh it."
         case .initialized, .snapshot: break
         }
         if let core { receive(core.snapshot()) }

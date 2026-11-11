@@ -274,7 +274,8 @@ final class PresenterTests: XCTestCase {
         presenter.presentPreferences()
         let session = presenter.presentationID
         clock.advance(604_800_000)
-        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertFalse(core.snapshot().policyPending)
+        XCTAssertTrue(core.isPolicyStale)
         presenter.loadDraft()
         XCTAssertEqual(presenter.presentationID, session)
         XCTAssertNotNil(core.bundledPolicyInfo)
@@ -282,10 +283,9 @@ final class PresenterTests: XCTestCase {
         await settle(presenter)
         XCTAssertNil(presenter.errorCode)
         XCTAssertNil(presenter.presentationID)
-        XCTAssertTrue(core.snapshot().policyPending)
+        XCTAssertFalse(core.snapshot().policyPending)
         XCTAssertFalse(core.snapshot().effectivePermissions.measurement)
         XCTAssertTrue(core.snapshot().explicitChoice?.categories.values.allSatisfy { !$0.value } == true)
-        XCTAssertEqual(core.pendingSaveCount(), 1)
     }
 
     private final class RefusingStore: ConsentStore, @unchecked Sendable {

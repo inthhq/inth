@@ -228,6 +228,8 @@ describe('transport modes', () => {
 		expect(metaNamesOf(manifest)).toStrictEqual([
 			'expo.modules.updates.ENABLED',
 			...GOOGLE_CONSENT_META_DATA_NAMES,
+
+			'com.c15t.MODE',
 		]);
 	});
 

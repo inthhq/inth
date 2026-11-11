@@ -2,6 +2,10 @@ import CryptoKit
 import Foundation
 
 /// Build-authored policy authority. This is not a consent receipt or a refresh timestamp.
+///
+/// A manifest bundled for one backend stays usable after `expiresAt`: an offline device
+/// still shows the prompt and records choices from it, and the core emits
+/// ``CoreEvent/policyStale(_:)``. Nothing is granted until the person chooses.
 public struct BundledPolicyAuthority: Sendable, Codable, Equatable {
     public let endpoint: String
     public let issuedAt: Int64
@@ -9,15 +13,14 @@ public struct BundledPolicyAuthority: Sendable, Codable, Equatable {
     public let manifestRevision: String
     public let requiresAtp: Bool
 
-    func isCurrent(endpoint: String?, now: Int64) -> Bool {
+    /// Bound to `endpoint` and already issued. Expiry does not end usability.
+    func isUsable(endpoint: String?, now: Int64) -> Bool {
         endpoint?.trimmingCharacters(in: CharacterSet(charactersIn: "/")) == self.endpoint
-            && issuedAt >= 0 && now >= issuedAt && now < expiresAt && expiresAt > issuedAt
+            && issuedAt >= 0 && now >= issuedAt && expiresAt > issuedAt
     }
 
-    func hasExpired(endpoint: String?, now: Int64) -> Bool {
-        endpoint?.trimmingCharacters(in: CharacterSet(charactersIn: "/")) == self.endpoint
-            && issuedAt >= 0 && expiresAt > issuedAt && now >= expiresAt
-    }
+    /// Past `expiresAt`. A stale manifest still prompts, and the core emits `policyStale`.
+    public func isStale(now: Int64) -> Bool { now >= expiresAt }
 }
 
 /// A build export loaded synchronously before JavaScript. The configured endpoint must match.
@@ -64,7 +67,7 @@ public struct BundledPolicyResource: Sendable {
         let authority = BundledPolicyAuthority(
             endpoint: endpoint, issuedAt: issued, expiresAt: expiry, manifestRevision: revision,
             requiresAtp: value["requiresAtp"]?.boolValue == true)
-        guard authority.isCurrent(endpoint: self.endpoint, now: now) else { return nil }
+        guard authority.isUsable(endpoint: self.endpoint, now: now) else { return nil }
         // Validate every wire, including unmatched packs, before selecting one.
         for pack in packs {
             guard case .resolved = PolicyWireReader.read(pack["policyResolution"]),

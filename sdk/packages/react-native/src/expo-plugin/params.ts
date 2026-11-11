@@ -121,8 +121,8 @@ export interface C15tPluginProps {
 	/**
 	 * c15t backend base URL, without a trailing slash.
 	 *
-	 * Required for every mode except `offline`. A path is allowed, so a
-	 * deployment fronted by a same-origin route works unchanged.
+	 * Required for every mode except `offline`, which refuses it. A path is
+	 * allowed, so a deployment fronted by a same-origin route works unchanged.
 	 */
 	backendURL?: string;
 	/**
@@ -167,9 +167,11 @@ export interface C15tPluginProps {
 	 * Transport mode.
 	 *
 	 * `hosted` starts the core from the embedded config. `selfHosted` is the
-	 * same wire against a `@c15t/backend` the host runs itself. `offline` embeds
-	 * no backend, which makes every command local-only. `custom` leaves the core
-	 * unstarted so the host can install its own transport.
+	 * same wire against a `@c15t/backend` the host runs itself. `offline` is
+	 * no-backend mode on iOS and Android: nothing is sent, and it takes no
+	 * `backendURL`, `initURL`, `policyResource` or `iab`, because the two modes
+	 * do not mix and IAB TCF needs a backend to serve the vendor list. `custom`
+	 * leaves the core unstarted so the host can install its own transport.
 	 *
 	 * @defaultValue 'hosted'
 	 */
@@ -796,6 +798,20 @@ export const resolveParams = function resolveParams(
 		throw new C15tPluginError(
 			`backendURL is required for mode ${JSON.stringify(mode)}. ${USAGE}`
 		);
+	}
+	if (mode === 'offline') {
+		// No-backend mode and backend mode do not mix: a bundled manifest belongs to a
+		// backend, and IAB TCF needs a backend to serve the Global Vendor List.
+		const mixed = (
+			['backendURL', 'initURL', 'policyResource', 'iab'] as const
+		).filter((key) => props[key] !== undefined);
+		if (mixed.length > 0) {
+			throw new C15tPluginError(
+				`mode 'offline' is no-backend mode and takes no ${mixed.join(', ')}. ` +
+					'Use a backend mode for a bundled manifest or IAB TCF, which ' +
+					'needs a backend to serve the Global Vendor List.'
+			);
+		}
 	}
 
 	const initURL =

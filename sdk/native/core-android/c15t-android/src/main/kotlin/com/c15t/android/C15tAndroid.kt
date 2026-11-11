@@ -15,6 +15,7 @@ import com.c15t.core.spi.Clock
 import com.c15t.core.spi.TaskExecutor
 import com.c15t.core.transport.C15tTransport
 import com.c15t.core.transport.HostedTransport
+import com.c15t.core.transport.OfflineTransport
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -32,6 +33,15 @@ object C15tAndroid {
 	const val META_BACKEND_URL = "com.c15t.BACKEND_URL"
 
 	const val META_BUNDLED_POLICY = "com.c15t.POLICY_RESOURCE"
+
+	/**
+	 * `offline` selects no-backend mode: the core starts without [META_BACKEND_URL] and
+	 * sends nothing. Absent, the mode is backend mode, which needs [META_BACKEND_URL].
+	 */
+	const val META_MODE = "com.c15t.MODE"
+
+	/** The [META_MODE] value for no-backend mode. */
+	const val MODE_OFFLINE = "offline"
 
 	const val META_BACKEND_INIT_URL = "com.c15t.BACKEND_INIT_URL"
 	const val META_BACKEND_DOMAIN = "com.c15t.BACKEND_DOMAIN"
@@ -69,7 +79,8 @@ object C15tAndroid {
 	 * initializer and application code.
 	 *
 	 * @param transport override the backend transport, for a host that proxies
-	 * c15t through its own HTTP stack.
+	 * c15t through its own HTTP stack. Without one, a config with no backend URL gets
+	 * [OfflineTransport].
 	 * @param observeForeground register the process-foreground observer that replays
 	 * the offline queue. Turn it off only if the host drives [C15t.flushPending] and
 	 * [C15t.refresh] itself.
@@ -90,7 +101,7 @@ object C15tAndroid {
 	): ConsentCore {
 		val appContext = context.applicationContext
 		val store = C15tStores.create(appContext)
-		val http = transport ?: HostedTransport(C15tHttpClient(), config)
+		val http = transport ?: if (config.backendUrl == null) OfflineTransport else HostedTransport(C15tHttpClient(), config)
 
 		// One executor for both the core and the observer registered below, so the launch
 		// replay and the foreground replay cannot deliver the same queued entry twice.
@@ -143,14 +154,15 @@ object C15tAndroid {
 	/**
 	 * Start c15t from manifest metadata, the zero-code path.
 	 *
-	 * Without `com.c15t.BACKEND_URL` there is no backend to talk to, so this logs and
-	 * leaves the core uninstalled: reads still answer deny-all, which is the safe
-	 * state for a misconfigured build rather than a crash at startup.
+	 * Without `com.c15t.BACKEND_URL`, and without `com.c15t.MODE` set to `offline`, there
+	 * is nothing to start, so this logs and leaves the core uninstalled: reads still answer
+	 * deny-all, which is the safe state for a misconfigured build rather than a crash at
+	 * startup.
 	 */
 	fun bootstrap(context: Context) {
 		val config = configFrom(context)
 		if (config == null) {
-			Log.i(TAG, "no $META_BACKEND_URL meta-data declared; c15t stays inactive until C15tAndroid.install")
+			Log.i(TAG, "no $META_BACKEND_URL meta-data and no $META_MODE=$MODE_OFFLINE declared; c15t stays inactive until C15tAndroid.install")
 			return
 		}
 		install(context, config)
@@ -187,13 +199,19 @@ object C15tAndroid {
 		// manifest parser chose. A hand-edited manifest and an Expo-generated one do not
 		// arrive as the same Java type, and a reader that names one of them honours only
 		// the app that happened to spell it that way.
-		val backendUrl = C15tManifestValue.string(read(META_BACKEND_URL)) ?: return null
+		// The two modes do not mix. No-backend mode reads no backend URL and no bundled
+		// manifest, so a stray key from an earlier backend build cannot bring either back.
+		val offline = C15tManifestValue.string(read(META_MODE))?.trim()?.lowercase(Locale.ROOT) == MODE_OFFLINE
+		val backendUrl = if (offline) null else C15tManifestValue.string(read(META_BACKEND_URL)) ?: return null
+		if (offline && read(META_BACKEND_URL) != null) {
+			Log.w(TAG, "$META_MODE=$MODE_OFFLINE ignores $META_BACKEND_URL and $META_BUNDLED_POLICY")
+		}
 		// Absent stays absent. `false` is an answer and a missing key is not, and the
 		// core treats them differently when it derives the signal.
 		return NativeConfig(
 			backendUrl = backendUrl,
-			bundledPolicy = C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
-			initUrl = C15tManifestValue.string(read(META_BACKEND_INIT_URL)),
+			bundledPolicy = if (offline) null else C15tManifestValue.string(read(META_BUNDLED_POLICY))?.let(readAsset),
+			initUrl = if (offline) null else C15tManifestValue.string(read(META_BACKEND_INIT_URL)),
 			domain = C15tManifestValue.string(read(META_BACKEND_DOMAIN)),
 			consentCategories = declaredCategories(read(META_CATEGORIES)),
 			vendors = declaredVendors(read(META_VENDORS)),

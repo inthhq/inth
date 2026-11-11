@@ -144,20 +144,32 @@ const writtenKeys = async function writtenKeys(): Promise<{
 		.filter((key) => key.startsWith(C15T_KEY_PREFIX))
 		.sort();
 
-	const applied = await runMod(
-		config,
-		'android',
-		'manifest',
-		await AndroidConfig.Manifest.readAndroidManifestAsync(
-			join(FIXTURE_DIR, 'AndroidManifest.xml')
-		)
-	);
-	const application = AndroidConfig.Manifest.getMainApplicationOrThrow(
-		applied.modResults as AndroidConfig.Manifest.AndroidManifest
-	);
-	const android = (application['meta-data'] ?? [])
-		.map((entry) => entry.$['android:name'] ?? '')
-		.filter((name) => name.startsWith(C15T_KEY_PREFIX));
+	const androidKeys = async (
+		applied: ReturnType<typeof applyToFixture>
+	): Promise<string[]> => {
+		const result = await runMod(
+			applied,
+			'android',
+			'manifest',
+			await AndroidConfig.Manifest.readAndroidManifestAsync(
+				join(FIXTURE_DIR, 'AndroidManifest.xml')
+			)
+		);
+		const application = AndroidConfig.Manifest.getMainApplicationOrThrow(
+			result.modResults as AndroidConfig.Manifest.AndroidManifest
+		);
+		return (application['meta-data'] ?? [])
+			.map((entry) => entry.$['android:name'] ?? '')
+			.filter((name) => name.startsWith(C15T_KEY_PREFIX));
+	};
+	// No-backend mode writes the one key a backend build cannot: the two modes
+	// do not mix, so no single configuration writes every Android key.
+	const android = [
+		...new Set([
+			...(await androidKeys(config)),
+			...(await androidKeys(applyToFixture({ mode: 'offline' }))),
+		]),
+	];
 
 	return { android, ios: ios.sort() };
 };

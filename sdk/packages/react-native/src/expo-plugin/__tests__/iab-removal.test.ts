@@ -57,28 +57,31 @@ it('removing iab on incremental prebuild clears the earlier CMP identity', async
 	}
 });
 
-it('refuses an offline Android IAB build, which would start no core', async () => {
-	const offline = resolveParams({
-		iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' },
-		mode: 'offline',
-	});
+it('refuses IAB, a backend URL and a bundled manifest in no-backend mode', () => {
+	const iab = { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' };
+	for (const props of [
+		{ iab },
+		{ backendURL },
+		{ initURL: `${backendURL}/init` },
+		{ policyResource: 'c15t-policy.json' },
+	]) {
+		expect(() => resolveParams({ ...props, mode: 'offline' })).toThrow(
+			/mode 'offline' is no-backend mode/u
+		);
+	}
+});
+
+it('removes the offline mode key when a build moves back to a backend', async () => {
 	const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(
 		join(FIXTURE_DIR, 'AndroidManifest.xml')
 	);
-	expect(() => applyAndroidManifest(offline, manifest)).toThrow(
-		/iab can't use mode 'offline' on Android/u
-	);
-	// A backend URL doesn't make it offline on Android: it would go online instead.
-	const offlineWithBackend = resolveParams({
-		backendURL,
-		iab: { cmpId: 1234, cmpVersion: 7, publisherCountryCode: 'DE' },
-		mode: 'offline',
-	});
-	expect(() => applyAndroidManifest(offlineWithBackend, manifest)).toThrow(
-		/iab can't use mode 'offline' on Android/u
-	);
-	// iOS supports offline IAB, so its keys are still written.
-	expect(Object.keys(applyInfoPlist(offline, {}))).toContain(
-		IOS_IAB_PLIST_KEYS[0]
-	);
+	const names = () =>
+		(
+			AndroidConfig.Manifest.getMainApplication(manifest)?.['meta-data'] ?? []
+		).map((item) => item.$['android:name']);
+	applyAndroidManifest(resolveParams({ mode: 'offline' }), manifest);
+	expect(names()).toContain('com.c15t.MODE');
+	applyAndroidManifest(resolveParams({ backendURL }), manifest);
+	expect(names()).not.toContain('com.c15t.MODE');
+	expect(names()).toContain('com.c15t.BACKEND_URL');
 });

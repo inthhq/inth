@@ -149,7 +149,8 @@ class ScreenAccessibilityTest {
             clock.set(payload.getValue("expiresAt").jsonPrimitive.long + 1)
             val presenter = ConsentPresenter(core, autoPresent = false)
             presenter.presentPreferences()
-            assertTrue(presenter.snapshot.policyPending)
+            assertFalse(presenter.snapshot.policyPending)
+            assertTrue(core.isPolicyStale)
             compose.setContent {
                 C15tConsent(presenter, "https://app.test/privacy")
             }
@@ -160,7 +161,7 @@ class ScreenAccessibilityTest {
             compose.waitUntil(5_000) { presenter.errorMessage != null }
             compose.onNodeWithTag("c15t.prefs.error.retry").assertIsDisplayed().performClick()
             compose.waitUntil(5_000) { presenter.presentationID == null }
-            assertTrue(core.snapshot().policyPending)
+            assertFalse(core.snapshot().policyPending)
             ConsentCategory.OPTIONAL.forEach { assertFalse(core.snapshot().explicitChoice!!.valueOf(it)!!) }
         } finally { RuntimeEnvironment.setFontScale(1f); Dispatchers.resetMain() }
     }

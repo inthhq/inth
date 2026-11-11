@@ -150,7 +150,7 @@ class ConsentCore(
 		val fetchedAt: Long? = null,
 		val additionalConsentFetchedAt: Long? = null,
 		val choiceMs: Long = 0,
-		val expired: ConsentSnapshot = snapshot,
+		val unusable: ConsentSnapshot = snapshot,
 	)
 	private val readView = AtomicReference(ReadView(state.get()))
 	private var deadlineTask: ScheduledFuture<*>? = null
@@ -191,7 +191,7 @@ class ConsentCore(
 		}
 
 	private fun listIsUsable(): Boolean {
-		if (bundledPolicyAuthority?.isCurrent(config.backendUrl, clock.nowMillis()) == false) return false
+		if (bundledPolicyAuthority?.isUsable(config.backendUrl, clock.nowMillis()) == false) return false
 		val fetched = iabListFetchedAt ?: return false
 		val now = clock.nowMillis()
 		return fetched >= 0 && now >= fetched && now - fetched < config.iabListMaxAgeMs
@@ -336,6 +336,24 @@ class ConsentCore(
 	 */
 	private val snapshotObservers = CopyOnWriteArrayList<Registration<(ConsentSnapshot) -> Unit>>()
 	private val errorObservers = CopyOnWriteArrayList<Registration<(KernelError) -> Unit>>()
+	/**
+	 * A `policyStale` subscriber and the manifest it was last told about. Replay on
+	 * subscription and the announcement after a publication both deliver through it, so a
+	 * subscriber that arrives between the two hears the manifest once.
+	 */
+	private class StaleObserver(private val observer: (BundledPolicyAuthority) -> Unit) {
+		private val heard = AtomicReference<BundledPolicyAuthority?>(null)
+
+		fun deliver(authority: BundledPolicyAuthority) {
+			if (heard.getAndSet(authority) != authority) observer(authority)
+		}
+	}
+
+	private val policyStaleObservers = CopyOnWriteArrayList<StaleObserver>()
+	/** The stale manifest already announced, so one manifest is announced once. */
+	private var staleAnnounced: BundledPolicyAuthority? = null
+	/** A stale manifest recorded under the lock and announced after it is released. */
+	private val pendingStale = AtomicReference<BundledPolicyAuthority?>(null)
 
 	private val queue = PendingSaveQueue(store, config.maxPendingSaves, queueIdGenerator)
 
@@ -455,13 +473,27 @@ class ConsentCore(
 		// Both go through the executor: with TaskExecutor.DIRECT they stay
 		// synchronous, which is what the tests rely on.
 		mutation.release()
-		if (snapshot().policyPending) config.bundledPolicy?.let { resource ->
+		// Precedence: a live `/init` response, then the last good cached one, then the
+		// manifest bundled at build time. A cached response from an earlier bundle gives way
+		// to this build's bundle when that one is newer, or when the cached one is stale.
+		config.bundledPolicy?.let { resource ->
 			BundledPolicy.resolve(resource, config.backendUrl, config.overrides, clock.nowMillis())?.let { selection ->
-				applyInit(selection.mapped, config.detectedGpc, false, selection)
+				if (shouldAdoptBundle(selection.authority)) applyInit(selection.mapped, config.detectedGpc, false, selection)
 			}
 		}
+		announcePolicyStale()
 		background.execute { flushPending() }
 		background.execute { runInit() }
+	}
+
+	/** Whether a bundled manifest may replace the policy in force after hydration. */
+	private fun shouldAdoptBundle(candidate: BundledPolicyAuthority): Boolean {
+		if (snapshot().policyPending) return true
+		val retained = synchronized(mutationLock) { bundledPolicyAuthority } ?: return false
+		val now = clock.nowMillis()
+		return !retained.isUsable(config.backendUrl, now) ||
+			candidate.issuedAt > retained.issuedAt ||
+			retained.isStale(now) && !candidate.isStale(now)
 	}
 
 	/** Restore the vendor mirror from current native authority without reading it as consent. */
@@ -502,7 +534,7 @@ class ConsentCore(
 	fun snapshot(): ConsentSnapshot {
 		val view = readView.get()
 		view.authority?.let { authority ->
-			if (!authority.isCurrent(config.backendUrl, clock.nowMillis())) return view.expired
+			if (!authority.isUsable(config.backendUrl, clock.nowMillis())) return view.unusable
 		}
 		if (!view.requiresIab) return view.snapshot
 		val now = clock.nowMillis()
@@ -715,6 +747,32 @@ class ConsentCore(
 	}
 
 	/**
+	 * Whether the policy in force comes from a bundled manifest past its `expiresAt`.
+	 *
+	 * The prompt still shows and choices still save. Optional categories stay denied until
+	 * the person chooses, and a live `/init` replaces the manifest when the device is online.
+	 */
+	val isPolicyStale: Boolean
+		get() = readView.get().authority?.let {
+			val now = clock.nowMillis()
+			it.isUsable(config.backendUrl, now) && it.isStale(now)
+		} == true
+
+	/**
+	 * Observe the `policyStale` event: the bundled manifest in force has expired.
+	 *
+	 * Called once per stale manifest, and right away when one is already in force, so a
+	 * host that subscribes after bootstrap still hears it. Held until the returned handle
+	 * is closed, like [onError].
+	 */
+	fun onPolicyStale(observer: (BundledPolicyAuthority) -> Unit): Subscription {
+		val entry = StaleObserver(observer)
+		policyStaleObservers += entry
+		if (isPolicyStale) bundledPolicyInfo?.let(entry::deliver)
+		return Subscription { policyStaleObservers.remove(entry) }
+	}
+
+	/**
 	 * Record a consent decision.
 	 *
 	 * The snapshot and queued body land in one durable write before state moves, because
@@ -758,10 +816,8 @@ class ConsentCore(
 
 		synchronized(mutationLock) {
 			val current = state.get()
-			val withdrawingExpiredBundle = intent is CommitIntent.Necessary && evaluationPolicy != null &&
-				bundledPolicyAuthority?.hasExpired(config.backendUrl, at) == true
-			if (bundledPolicyAuthority?.isCurrent(config.backendUrl, at) == false && !withdrawingExpiredBundle)
-				return@mutate refusedCommit("bundled-policy-expired", "Connect to refresh consent policy.")
+			if (bundledPolicyAuthority?.isUsable(config.backendUrl, at) == false)
+				return@mutate refusedCommit(BUNDLED_POLICY_UNUSABLE, "Connect to refresh consent policy.")
 			if (bundledPolicyAuthority?.requiresAtp == true && intent !is CommitIntent.Necessary && currentAdditionalConsentList() == null)
 				return@mutate refusedCommit("additional-consent-list-stale", "Refresh the provider disclosures before saving.")
 			if (expectedRevision != null && expectedRevision != current.revision)
@@ -842,16 +898,14 @@ class ConsentCore(
 			val choiceScope = choiceScopeOf(policy) ?: fallbackChoiceScope()
 			val intentConsents = when (intent) {
 				is CommitIntent.All -> choiceScope.associateWith { true }
-				// Expired-policy rejection also withdraws older grants outside today's scope.
-				is CommitIntent.Necessary ->
-					(if (withdrawingExpiredBundle) ConsentCategory.OPTIONAL else choiceScope).associateWith { false }
+				is CommitIntent.Necessary -> choiceScope.associateWith { false }
 				is CommitIntent.Custom -> intent.consents
 					is CommitIntent.Iab -> intent.consents
 				}
 			// With nothing to decide, a bulk action still covers everything the subject
 			// was shown: strictly necessary alone.
 			action = if (
-				withdrawingExpiredBundle || intent is CommitIntent.Custom || intent is CommitIntent.Iab ||
+				intent is CommitIntent.Custom || intent is CommitIntent.Iab ||
 				choiceScope.size == policyScope.size ||
 				choiceScope.isEmpty()
 			) {
@@ -895,8 +949,6 @@ class ConsentCore(
 				now = actionAt,
 				choiceScope = choiceScope,
 			)
-			if (withdrawingExpiredBundle) published = published.copy(
-				effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
 		}
 
 		if (nextIab != null) published = published.copy(model = ConsentModel.IAB)
@@ -911,7 +963,7 @@ class ConsentCore(
 
 		val isIab = policy?.model == ConsentModel.IAB
 		val frozen = com.c15t.core.transport.SaveBodyBuilder.build(payload,
-			config.domain?.takeIf { it.isNotBlank() } ?: java.net.URI(config.backendUrl).host.orEmpty()).toString()
+			config.domain?.takeIf { it.isNotBlank() } ?: config.backendUrl?.let { java.net.URI(it).host }.orEmpty()).toString()
 		val entry = QueuedSave(
 			if (isIab) UUID.randomUUID().toString() else queueIdGenerator(),
 			actionAt, payload, body = frozen,
@@ -1404,8 +1456,10 @@ class ConsentCore(
 		store.clearConsentState()
 		storedSnapshotFound = false
 		mutation.release()
-		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { applyInit(it.mapped, config.detectedGpc, false, it) } }
+		// The cleared baseline goes out first, at revision + 1, as on iOS. The bundled
+		// manifest then publishes on top of it.
 		notifySnapshot()
+		config.bundledPolicy?.let { resource -> BundledPolicy.resolve(resource, config.backendUrl, configuredOverrides, clock.nowMillis())?.let { if (applyInit(it.mapped, config.detectedGpc, false, it).first) notifySnapshot() } }
 		background.execute { runInit() }
 	}
 
@@ -2093,7 +2147,11 @@ class ConsentCore(
 		).filter { it > now }.minOrNull() else null
 		val deadline = listOfNotNull(candidate.nextDeadline?.takeIf { it > now }, iabDeadline, bundledPolicyAuthority?.expiresAt?.takeIf { it > now }).minOrNull()
 		var snapshot = if (deadline == candidate.nextDeadline) candidate else candidate.copy(nextDeadline = deadline)
-		if (bundledPolicyAuthority?.isCurrent(config.backendUrl, now) == false) snapshot = snapshot.copy(effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
+		if (bundledPolicyAuthority?.isUsable(config.backendUrl, now) == false) snapshot = snapshot.copy(effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE)
+		bundledPolicyAuthority?.takeIf { it.isStale(now) && it.isUsable(config.backendUrl, now) && it != staleAnnounced }?.let {
+			staleAnnounced = it
+			pendingStale.set(it)
+		}
 		if (bundledPolicyAuthority != null) {
 			var permissions = snapshot.effectivePermissions
 			for (category in ConsentCategory.OPTIONAL) if (snapshot.explicitChoice?.consents?.get(category.wireName) != true) permissions = permissions.with(category, false)
@@ -2102,12 +2160,12 @@ class ConsentCore(
 		snapshot = snapshot.copy(promptOwedSince = promptOwedSince(state.get(), snapshot))
 		val denied = if (bundledPolicyAuthority == null && !requiresIab || snapshot.effectivePermissions == ConsentState.DENY_ALL)
 			snapshot else snapshot.copy(effectivePermissions = ConsentState.DENY_ALL)
-		val expired = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
+		val unusable = if (bundledPolicyAuthority == null) snapshot else snapshot.copy(
 			effectivePermissions = ConsentState.DENY_ALL, policyPending = true, activeUI = ActiveUI.NONE,
-			error = KernelError("bundled-policy-expired", "Connect to refresh consent policy."))
+			error = KernelError(BUNDLED_POLICY_UNUSABLE, "Connect to refresh consent policy."))
 		state.set(snapshot)
 		readView.set(ReadView(snapshot, bundledPolicyAuthority, denied, requiresIab, committedIab, iabListFetchedAt,
-			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0, expired))
+			additionalConsentList?.fetchedAt, evaluationPolicy?.choiceMs ?: 0, unusable))
 		if ((requiresIab || bundledPolicyAuthority != null) && now >= 0 && deadline != null) {
 			val reference = WeakReference(this)
 			deadlineTask = deadlineScheduler.schedule(
@@ -2217,7 +2275,13 @@ class ConsentCore(
 		gpc = GpcSignal.derive(override = overrides.gpc, detected = detected == true)
 		)
 
+	private fun announcePolicyStale() {
+		val authority = pendingStale.getAndSet(null) ?: return
+		for (entry in policyStaleObservers) entry.deliver(authority)
+	}
+
 	private fun notifySnapshot() {
+		announcePolicyStale()
 		val snapshot = snapshot()
 		for (registration in snapshotObservers) {
 			registration.callback(snapshot)
@@ -2236,6 +2300,9 @@ class ConsentCore(
 	}
 
 	private companion object {
+		/** A retained manifest that belongs to another backend URL or was issued in the future. */
+		const val BUNDLED_POLICY_UNUSABLE = "bundled-policy-unusable"
+
 		val deadlineScheduler = ScheduledThreadPoolExecutor(1) { runnable ->
 			Thread(runnable, "c15t-deadline").apply { isDaemon = true }
 		}.apply { removeOnCancelPolicy = true }

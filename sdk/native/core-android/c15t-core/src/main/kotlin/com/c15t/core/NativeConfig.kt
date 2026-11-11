@@ -11,7 +11,9 @@ import com.c15t.core.transport.C15tProtocol
  * semantics on its own. The backend identifies the project by URL, the same way
  * the hosted transport in `@c15t/core` assumes, so there is no key in this type.
  *
- * @property backendUrl c15t backend base URL, without a trailing slash.
+ * @property backendUrl c15t backend base URL, without a trailing slash. `null` selects
+ * no-backend mode: nothing is sent, and a [bundledPolicy] is refused because a bundled
+ * manifest belongs to a backend.
  * @property initUrl Overrides `$backendUrl/init`, for a deployment fronted by a
  * same-origin proxy.
  * @property domain Value sent as the `domain` field of `POST /subjects`. Defaults
@@ -59,7 +61,7 @@ import com.c15t.core.transport.C15tProtocol
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
  */
 data class NativeConfig(
-	val backendUrl: String,
+	val backendUrl: String?,
 	val initUrl: String? = null,
 	val domain: String? = null,
 	val sdkVersion: String = C15tProtocol.DEFAULT_SDK_VERSION,
@@ -72,11 +74,17 @@ data class NativeConfig(
 	val detectedGpc: Boolean? = null,
 	val extraHeaders: Map<String, String> = emptyMap(),
 	val maxPendingSaves: Int = 20,
-	/** Raw build resource, loaded by the Android adapter before JavaScript. */
+	/**
+	 * Raw manifest bundled at build time for [backendUrl], loaded by the Android adapter
+	 * before JavaScript. Used only while no live or cached `/init` response is available.
+	 */
 	val bundledPolicy: String? = null,
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)
-		require(backendUrl.isNotBlank()) { "NativeConfig.backendUrl must not be blank" }
+		require(backendUrl == null || backendUrl.isNotBlank()) { "NativeConfig.backendUrl must not be blank" }
+		require(backendUrl != null || bundledPolicy == null) {
+			"NativeConfig.bundledPolicy needs backendUrl: a bundled manifest belongs to backend mode"
+		}
 	}
 }
