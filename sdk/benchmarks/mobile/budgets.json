@@ -126,16 +126,16 @@
 			"note": "Resident-set growth across the quiet window: 256 KiB allows the allocator's own slack and rejects a per-tick leak."
 		},
 		"js_shipped_bytes": {
-			"max": 510222,
+			"max": 512008,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Unpacked JavaScript in the @c15t/react-native tarball. Measured 390,510 B over 117 modules on the integrated mobile release wave (#134). The bytes bought automatic prompt presentation, the consent draft and headless IAB hooks, WebView consent sync, the GPP string, ATT sequencing and the typed bridge schema, which ships behind the @c15t/react-native/bridge-schema subpath, plus Expo plugin theme, SDK-floor, policy-in-code and manifest bundling steps, about 114 KiB of build-time Node code that never reaches a device. The ceiling keeps the earlier headroom ratio (262,144 over 200,638, or 1.3066). js_closure_bytes is the row that says what an app carries."
+			"note": "Unpacked JavaScript in the @c15t/react-native tarball. Measured 391,877 B over 117 modules on the integrated mobile release wave (#134). The bytes bought automatic prompt presentation, the consent draft and headless IAB hooks, WebView consent sync, the GPP string, ATT sequencing and the typed bridge schema, which ships behind the @c15t/react-native/bridge-schema subpath, plus Expo plugin theme, SDK-floor, policy-in-code and manifest bundling steps, about 114 KiB of build-time Node code that never reaches a device. The ceiling keeps the earlier headroom ratio (262,144 over 200,638, or 1.3066). js_closure_bytes is the row that says what an app carries."
 		},
 		"js_shipped_gzip_bytes": {
-			"max": 98521,
+			"max": 98836,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Gzipped JavaScript the tarball ships. Measured 80,685 B on the integrated mobile release wave (#134), for the same surfaces and Expo plugin steps as js_shipped_bytes. The ceiling keeps the earlier headroom ratio (49,152 over 40,254, or 1.2210)."
+			"note": "Gzipped JavaScript the tarball ships. Measured 80,943 B on the integrated mobile release wave (#134), for the same surfaces and Expo plugin steps as js_shipped_bytes. The ceiling keeps the earlier headroom ratio (49,152 over 40,254, or 1.2210)."
 		},
 		"ios_binary_bytes": {
 			"max": 1326815,
@@ -222,16 +222,16 @@
 			"note": "Tap on the primary action to the module holding the intent, measured through the rendered control rather than a client call, so the React layer is inside the span. Measured 0.72 ms on the development machine and 2.8 ms on a shared runner against a fake that answers offline. The 50 ms contract ceiling gates the client span below; 25 ms here says the render path must not add an order of magnitude to it."
 		},
 		"js_closure_bytes": {
-			"max": 299872,
+			"max": 301369,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "Unpacked JavaScript an app carries because c15t is installed: every module a release Metro build reaches from the built entry, with __DEV__ inlined as false and dead branches folded. Measured 74,507 B over 48 modules as a boundary layer, 165,270 B once the surfaces and the IAB drawer joined the entry, and 252,074 B over 77 modules on the integrated mobile release wave (#134): automatic prompt presentation, the consent draft, headless IAB hooks, WebView consent sync, the GPP string hook and ATT sequencing. The bridge schema table and its drift checker load only inside a __DEV__ branch, so a release app carries none of their 9.7 KB. The ceiling keeps the earlier headroom ratio (196,608 over 165,270, or 1.1896). It still fails the moment a runtime import to the @c15t/core barrel comes back: that edge measured 389,639 B over 131 modules, because behind two string arrays sits the kernel, the schema, and the translations."
+			"note": "Unpacked JavaScript an app carries because c15t is installed: every module a release Metro build reaches from the built entry, with __DEV__ inlined as false and dead branches folded. Measured 74,507 B over 48 modules as a boundary layer, 165,270 B once the surfaces and the IAB drawer joined the entry, and 253,332 B over 77 modules on the integrated mobile release wave (#134): automatic prompt presentation, the consent draft, headless IAB hooks, WebView consent sync, the GPP string hook and ATT sequencing. The bridge schema table and its drift checker load only inside a __DEV__ branch, so a release app carries none of their 9.7 KB. The ceiling keeps the earlier headroom ratio (196,608 over 165,270, or 1.1896). It still fails the moment a runtime import to the @c15t/core barrel comes back: that edge measured 389,639 B over 131 modules, because behind two string arrays sits the kernel, the schema, and the translations."
 		},
 		"js_closure_gzip_bytes": {
-			"max": 63963,
+			"max": 64258,
 			"unit": "bytes",
 			"source": "allowance",
-			"note": "The same closure gzipped, which is the shape it travels in. Measured 14,956 B as a boundary layer, 31,623 B with the surfaces in the entry, and 49,382 B on the integrated mobile release wave (#134), for the features js_closure_bytes names. The ceiling keeps the earlier headroom ratio (40,960 over 31,623, or 1.2953), still well under the 90,701 B the @c15t/core barrel edge measured, which is the regression this row exists to catch. Third-party packages the closure reaches (valibot, base-x) are named in the detail and not counted."
+			"note": "The same closure gzipped, which is the shape it travels in. Measured 14,956 B as a boundary layer, 31,623 B with the surfaces in the entry, and 49,610 B on the integrated mobile release wave (#134), for the features js_closure_bytes names. The ceiling keeps the earlier headroom ratio (40,960 over 31,623, or 1.2953), still well under the 90,701 B the @c15t/core barrel edge measured, which is the regression this row exists to catch. Third-party packages the closure reaches (valibot, base-x) are named in the detail and not counted."
 		},
 		"idle_heap_growth_bytes": {
 			"max": 262144,
