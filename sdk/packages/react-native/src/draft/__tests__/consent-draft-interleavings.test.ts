@@ -374,6 +374,25 @@ describe('consent draft interleavings', () => {
 		core.client.dispose();
 	});
 
+	test('new defaults do not clear a category another surface overtook', () => {
+		const core = createCore({ ...FAKE_BOOTSTRAP, commitRevision: true });
+		const draft = createConsentDraft(core.client);
+		draft.subscribe(() => undefined);
+
+		draft.set('marketing', true);
+		core.record({ marketing: false });
+		core.announce();
+		expect(draft.getState().staleCategories).toEqual(['marketing']);
+		// A provider rerenders with a fresh `initial` object.
+		draft.setDefaults({ experience: true });
+
+		expect(draft.getState()).toMatchObject({
+			isStale: true,
+			staleCategories: ['marketing'],
+		});
+		core.client.dispose();
+	});
+
 	test('an older binary saves unpinned and says so once in development', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const core = createCore({ ...FAKE_BOOTSTRAP, commitRevision: false });

@@ -490,7 +490,14 @@ export const createConsentDraft = function createConsentDraft(
 		},
 		setDefaults: (next) => {
 			currentDefaults = next;
-			if (!differs(values, seed.values, seed.displayed)) {
+			// Only a clean draft takes new defaults: a staged edit, an overtaken
+			// category or a policy change still waits for the subject's review.
+			if (
+				staged.size === 0 &&
+				staleCategories.length === 0 &&
+				!stale &&
+				!differs(values, seed.values, seed.displayed)
+			) {
 				reseed();
 			}
 		},
