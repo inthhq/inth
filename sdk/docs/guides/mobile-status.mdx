@@ -20,8 +20,9 @@ is being prepared.
 | Expo | [Expo setup](/docs/frameworks/react-native/expo) | The RN package and config plugin in a custom native build |
 
 Swift and Kotlin apps can use the core and platform services without the stock
-UI. React Native hooks also support app-owned UI, although the current RN
-package still links the native presenter.
+UI. React Native apps can draw their own prompt and category preferences with
+the hooks and the draft API, although the current RN package still links the
+native presenter.
 
 ## Obtain the matching artifacts
 
@@ -54,9 +55,11 @@ category commands, hooks and native presenter sessions. The Expo plugin and
 bare RN metadata configure category startup and IAB CMP identity and publisher
 country during native builds.
 
-A separate RN distribution that excludes the stock native UI, together with a
-shared custom-UI draft API, is deferred from the first release. RN apps that
-need IAB publisher restrictions or custom purposes still use app-owned native
+An RN app can draw its own banner and category preferences with
+`ConsentPrompt` and the draft API; see
+[Build your own UI](/docs/frameworks/react-native/headless). An RN build that
+leaves out the stock native UI is not in this release. RN apps that need IAB
+publisher restrictions or custom purposes still use app-owned native
 installation.
 
 The [IAB guide](/docs/guides/mobile-iab) explains both setups. Use the stock
