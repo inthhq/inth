@@ -18,6 +18,7 @@ import {
 	holdAppScripts,
 	openBrowserContext,
 	privacySettings,
+	waitForConsentRuntime,
 } from './browser';
 import type { Requests } from './browser';
 import { startPostgres } from './postgres';
@@ -228,6 +229,10 @@ for (const target of selectedStarterTargets()) {
 
 				// The banner is gone, so the dialog is the preference dialog. Its
 				// copy depends on the backend's translations.
+				// A server-rendered control does nothing until hydration.
+				if (target.serverRendered) {
+					await waitForConsentRuntime(page);
+				}
 				await privacySettings(page).click();
 				await expect
 					.poll(() => page.getByRole('dialog').first().isVisible())

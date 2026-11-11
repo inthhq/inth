@@ -62,6 +62,9 @@ for (const target of selectedTargets()) {
 		let context: BrowserContext | undefined;
 		let page: Page;
 		let requests: Requests;
+		// `@c15t/browser` from npm installs no `window.c15t`, and its page is
+		// not hydrated, so opening preferences does not wait for it.
+		const hasRuntimeGlobal = target.id !== 'javascript';
 
 		beforeAll(async () => {
 			server = await startExample(target);
@@ -194,7 +197,7 @@ for (const target of selectedTargets()) {
 					}
 					// The visitor changes their mind in the dialog. The next visit
 					// requests no consent-gated vendor, preloaded or not.
-					await openPreferences(page);
+					await openPreferences(page, hasRuntimeGlobal);
 					await setCategory(page, 'Measurement', false);
 					await setCategory(page, 'Marketing', false);
 					await Promise.all([
@@ -251,7 +254,7 @@ for (const target of selectedTargets()) {
 			await page.waitForTimeout(400);
 			await rejectButton(page).click();
 			await expect.poll(() => rejectButton(page).isVisible()).toBe(false);
-			await openPreferences(page);
+			await openPreferences(page, hasRuntimeGlobal);
 			await page.waitForTimeout(400);
 			expect(await readConsentMotion(page)).toEqual([]);
 		});
@@ -314,7 +317,7 @@ for (const target of selectedTargets()) {
 				await page.goto(route);
 				await expect.poll(() => rejectButton(page).isVisible()).toBe(true);
 				await rejectButton(page).click();
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await expect.poll(() => saveButton(page).isVisible()).toBe(true);
 				await saveButton(page).click();
 				await expectNoTracking(page, requests);
@@ -359,7 +362,7 @@ for (const target of selectedTargets()) {
 				}
 				await expectNoTracking(page, requests);
 				expect(await rejectButton(page).isVisible()).toBe(false);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				expect(await categoryControl(page, 'Measurement').isChecked()).toBe(
 					false
 				);
@@ -374,7 +377,7 @@ for (const target of selectedTargets()) {
 				await visit(route);
 				await expect.poll(() => rejectButton(page).isVisible()).toBe(true);
 				await rejectButton(page).click();
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Measurement', true);
 				await setCategory(page, 'Marketing', false);
 				await saveButton(page).click();
@@ -393,11 +396,11 @@ for (const target of selectedTargets()) {
 				}
 				await expect.poll(() => video(page).count()).toBe(1);
 				expect(requests.xPixel).toBe(0);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Marketing', true);
 				await saveButton(page).click();
 				await expect.poll(() => requests.xPixel).toBe(1);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Measurement', false);
 				await setCategory(page, 'Marketing', false);
 				// Every example reloads after revocation. Assert against the new page.
@@ -415,7 +418,7 @@ for (const target of selectedTargets()) {
 						)
 						.toBe('denied');
 				}
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				expect(await categoryControl(page, 'Measurement').isChecked()).toBe(
 					false
 				);
@@ -461,7 +464,7 @@ for (const target of selectedTargets()) {
 				await expect.poll(() => video(page).count()).toBe(1);
 				await page.reload();
 				await expect.poll(() => video(page).count()).toBe(1);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				expect(requests.unexpected).toEqual([]);
 			});
 		}
@@ -533,7 +536,7 @@ for (const target of selectedTargets()) {
 				await visit(route);
 				await expect.poll(() => rejectButton(page).isVisible()).toBe(true);
 				await rejectButton(page).click();
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Measurement', true);
 				await setVendor(page, 'measurement', 'posthog', false);
 				await saveButton(page).click();
@@ -547,7 +550,7 @@ for (const target of selectedTargets()) {
 				await expect.poll(() => video(page).count()).toBe(1);
 				await page.waitForTimeout(300);
 				expect(requests.posthog).toBe(0);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await expandCategory(page, 'measurement');
 				expect(
 					await vendorSwitch(page, 'measurement', 'posthog').getAttribute(
@@ -566,7 +569,7 @@ for (const target of selectedTargets()) {
 					.click();
 				await expect.poll(() => requests.posthog).toBe(1);
 				await expect.poll(() => requests.xPixel).toBe(1);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await expandCategory(page, 'measurement');
 				expect(
 					await vendorSwitch(page, 'measurement', 'posthog').getAttribute(
@@ -757,7 +760,7 @@ for (const target of selectedTargets()) {
 				const cardBackground = () =>
 					card.evaluate((element) => getComputedStyle(element).backgroundColor);
 
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				expect(await cardBackground()).not.toBe('rgba(0, 0, 0, 0)');
 				await saveButton(page).click();
 				await expect.poll(() => card.isVisible()).toBe(false);
@@ -933,13 +936,13 @@ for (const target of selectedTargets()) {
 						new PageTransitionEvent('pageshow', { persisted: true })
 					);
 				});
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Measurement', true);
 				await saveButton(page).click();
 				await expect.poll(() => video(page).count()).toBe(1);
 				await expect.poll(() => requests.posthog).toBe(1);
 				expect(requests.xPixel).toBe(0);
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Measurement', false);
 				await saveButton(page).click();
 				await expect.poll(() => video(page).count()).toBe(0);
@@ -951,7 +954,7 @@ for (const target of selectedTargets()) {
 				await visit('/branded');
 				await expect.poll(() => rejectButton(page).isVisible()).toBe(true);
 				await rejectButton(page).click();
-				await openPreferences(page);
+				await openPreferences(page, hasRuntimeGlobal);
 				await setCategory(page, 'Measurement', true);
 				await saveButton(page).click();
 				await expect.poll(() => requests.posthog).toBe(1);
