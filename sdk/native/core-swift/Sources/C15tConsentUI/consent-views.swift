@@ -956,6 +956,7 @@ private struct DecisionGroup: View {
     let first: Bool
     let part: Part
     @Binding var path: [Destination]
+    @Environment(\.consentTheme) private var theme
 
     static func errorID(first: Bool) -> String { (first ? "c15t.first-layer" : "c15t.prefs") + ".error" }
     /// The one action a compact footer keeps at accessibility sizes, if any.
