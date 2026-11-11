@@ -440,7 +440,7 @@ const resolveSpacing = function resolveSpacing(value: unknown): ThemeEntries {
 	]);
 };
 
-/** Names both native readers take as a built-in face. */
+/** Names both native headline readers take as a built-in face. */
 const HEADLINE_FONT_KEYWORDS = [
 	'serif',
 	'rounded',
@@ -457,28 +457,44 @@ const isKeyword = (name: string): boolean =>
 	HEADLINE_FONT_KEYWORDS.includes(name.toLowerCase());
 
 /**
- * Resolve `headlineFont`, per platform when the names differ.
+ * Resolve `headlineFont` or `fontFamily`, per platform when the names differ.
  *
  * iOS takes a PostScript name such as `Inter-Bold`; Android takes a font
  * resource name, which is lowercase letters, digits and `_`. A string that is
  * not a resource name would leave Android on its default face without a word,
  * so it fails here and asks for the `{ ios, android }` form.
+ *
+ * Only the headline readers know the keywords. The body readers look a name
+ * up as a bundled font and fall back to the system face, so a keyword there
+ * would do nothing on either platform and fails too.
  */
-const resolveHeadlineFont = function resolveHeadlineFont(
-	value: unknown
+const resolveFont = function resolveFont(
+	value: unknown,
+	field: 'fontFamily' | 'headlineFont'
 ): ThemeEntries {
-	const label = 'theme.typography.headlineFont';
-	const fontKey = THEME_KEYS.headlineFont;
-	const androidName = (name: string, field: string): string => {
+	const label = `theme.typography.${field}`;
+	const fontKey = THEME_KEYS[field];
+	const keywords = field === 'headlineFont';
+	const checked = (name: string, at: string): string => {
+		if (!keywords && isKeyword(name)) {
+			throw new C15tPluginError(
+				`${at} ${quote(name)} names a built-in face, which the native body ` +
+					`text cannot use: it takes a font the app bundles. Leave ${field} ` +
+					`out for the system face.`
+			);
+		}
+		return name;
+	};
+	const androidName = (name: string, at: string): string => {
 		if (!isKeyword(name) && !ANDROID_FONT_RESOURCE.test(name)) {
 			throw new C15tPluginError(
-				`${field} ${quote(name)} is not an Android font resource name ` +
+				`${at} ${quote(name)} is not an Android font resource name ` +
 					`(lowercase letters, digits and _), so Android would keep its ` +
 					`default face. Use { "ios": ${quote(name)}, "android": ` +
 					`"<res/font name>" }.`
 			);
 		}
-		return name;
+		return checked(name, at);
 	};
 	if (value === undefined || typeof value === 'string') {
 		const name = readText(value, label);
@@ -496,7 +512,13 @@ const resolveHeadlineFont = function resolveHeadlineFont(
 	return [
 		...(ios === null
 			? []
-			: [{ key: fontKey, platform: 'ios' as const, value: ios }]),
+			: [
+					{
+						key: fontKey,
+						platform: 'ios' as const,
+						value: checked(ios, `${label}.ios`),
+					},
+				]),
 		...(android === null
 			? []
 			: [
@@ -552,13 +574,8 @@ const resolveTypography = function resolveTypography(
 			true
 		);
 	return [
-		...entriesOf([
-			[
-				THEME_KEYS.fontFamily,
-				readText(typography.fontFamily, 'theme.typography.fontFamily'),
-			],
-		]),
-		...resolveHeadlineFont(typography.headlineFont),
+		...resolveFont(typography.fontFamily, 'fontFamily'),
+		...resolveFont(typography.headlineFont, 'headlineFont'),
 		...entriesOf([
 			[THEME_KEYS.fontSizeSm, size('sm')],
 			[THEME_KEYS.fontSizeBase, size('base')],

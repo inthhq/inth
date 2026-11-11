@@ -142,16 +142,19 @@ export interface ConsentTypeStyle {
 export interface ConsentThemeTypography {
 	/**
 	 * Face for every text role. `undefined` is the platform face. Web:
-	 * `--c15t-font-family`. On the native presenter it is a PostScript name on iOS
-	 * and a font resource on Android.
+	 * `--c15t-font-family`. A bundled font: a PostScript name on iOS and a font
+	 * resource name on Android, given once when one name serves both
+	 * (`inter_bold`) or per platform as `{ ios: 'Inter-Regular', android:
+	 * 'inter_regular' }`.
 	 */
-	readonly fontFamily?: string;
+	readonly fontFamily?: ConsentFontName;
 	/**
-	 * Face of the headings. The native presenter also reads the keywords `serif`,
-	 * `rounded` and `sans`; the components in this package ignore those and use a
-	 * named font only.
+	 * Face of the headings, named as {@link ConsentThemeTypography.fontFamily}
+	 * is. The native presenter also reads the keywords `serif`, `rounded` and
+	 * `sans`; the components in this package ignore those and use a named font
+	 * only.
 	 */
-	readonly headlineFont?: string;
+	readonly headlineFont?: ConsentFontName;
 	/** Web: `--c15t-font-size-sm`, `-base` and `-lg`. */
 	readonly fontSize: {
 		/** 14 */
@@ -285,6 +288,16 @@ export interface ConsentNativeSlotStyle {
 }
 
 /**
+ * A font name, once for both platforms or per platform. iOS reads a PostScript
+ * name such as `Inter-Bold` and Android a font resource name such as
+ * `inter_bold`, so one string serves both only when it is a valid resource
+ * name. The Expo plugin fails prebuild on a single string Android cannot read.
+ */
+export type ConsentFontName =
+	| string
+	| { readonly ios?: string; readonly android?: string };
+
+/**
  * Partial overrides accepted by {@link createConsentTheme}, and the same shape
  * the Expo plugin's `theme` option takes, so one object styles the components
  * in this package and the native presenter.
@@ -307,8 +320,8 @@ export interface ConsentThemeOptions {
 	readonly spacing?: Partial<ConsentThemeSpacing>;
 	/** Type overrides. */
 	readonly typography?: {
-		readonly fontFamily?: string;
-		readonly headlineFont?: string;
+		readonly fontFamily?: ConsentFontName;
+		readonly headlineFont?: ConsentFontName;
 		readonly fontSize?: Partial<ConsentThemeTypography['fontSize']>;
 		readonly fontWeight?: Partial<ConsentThemeTypography['fontWeight']>;
 		readonly lineHeight?: Partial<ConsentThemeTypography['lineHeight']>;
