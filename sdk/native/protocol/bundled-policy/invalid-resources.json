@@ -4,7 +4,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "wrapper with an extra key",
 			"now": 1793232000000,
 			"resource": {
@@ -18,7 +17,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "checksum of other bytes",
 			"now": 1793232000000,
 			"resource": {
@@ -31,7 +29,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "payload that is not a string",
 			"now": 1793232000000,
 			"resource": {
@@ -1819,7 +1816,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "schema version 2",
 			"now": 1793232000000,
 			"resource": {
@@ -1832,7 +1828,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "unknown payload key",
 			"now": 1793232000000,
 			"resource": {
@@ -1845,7 +1840,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "another endpoint",
 			"now": 1793232000000,
 			"resource": {
@@ -1858,7 +1852,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "issued in the future",
 			"now": 1793232000000,
 			"resource": {
@@ -1871,7 +1864,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "expires before it was issued",
 			"now": 1793232000000,
 			"resource": {
@@ -1884,7 +1876,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "expires when it was issued",
 			"now": 1793232000000,
 			"resource": {
@@ -1897,7 +1888,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "negative issue time",
 			"now": 1793232000000,
 			"resource": {
@@ -1910,7 +1900,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "fractional issue time",
 			"now": 1793232000000,
 			"resource": {
@@ -1923,7 +1912,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "empty manifest revision",
 			"now": 1793232000000,
 			"resource": {
@@ -1936,7 +1924,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "missing manifest revision",
 			"now": 1793232000000,
 			"resource": {
@@ -1949,7 +1936,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "numeric manifest revision",
 			"now": 1793232000000,
 			"resource": {
@@ -1962,7 +1948,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "no policy packs",
 			"now": 1793232000000,
 			"resource": {
@@ -1975,7 +1960,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "missing default language",
 			"now": 1793232000000,
 			"resource": {
@@ -1988,7 +1972,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "unreadable policy wire",
 			"now": 1793232000000,
 			"resource": {
@@ -2001,7 +1984,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "no rule for an unknown location",
 			"now": 1793232000000,
 			"resource": {
@@ -2014,7 +1996,6 @@
 			"base": "parity",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "refused",
-			"iosKeepsList": false,
 			"name": "unknown-location rule that preselects",
 			"now": 1793232000000,
 			"resource": {
@@ -2027,7 +2008,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": false,
 			"name": "vendor list version 0",
 			"now": 1793232000000,
 			"resource": {
@@ -2040,7 +2020,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": false,
 			"name": "TCF policy version 0",
 			"now": 1793232000000,
 			"resource": {
@@ -2053,7 +2032,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": false,
 			"name": "purposes that are a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2066,7 +2044,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": false,
 			"name": "vendors that are a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2079,7 +2056,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a vendor that is a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2092,7 +2068,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a purpose that is a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2105,7 +2080,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a vendor key that is not a number",
 			"now": 1793232000000,
 			"resource": {
@@ -2118,7 +2092,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a vendor whose purposes are a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2131,7 +2104,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a fractional vendor id",
 			"now": 1793232000000,
 			"resource": {
@@ -2144,7 +2116,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a vendor name that is a number",
 			"now": 1793232000000,
 			"resource": {
@@ -2157,7 +2128,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a null vendor purpose id",
 			"now": 1793232000000,
 			"resource": {
@@ -2170,7 +2140,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a vendor URL that is a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2183,7 +2152,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "a vendor flag that is a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2196,7 +2164,18 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
+			"name": "vendors as a dense array",
+			"now": 1793232000000,
+			"resource": {
+				"payload": "{\"defaultLanguage\":\"en\",\"disclosures\":{\"gvl\":{\"data\":{\"features\":{},\"gvlSpecificationVersion\":2,\"lastUpdated\":\"2026-10-28T23:59:59.000Z\",\"purposes\":{\"1\":{\"description\":\"Purpose 1\",\"id\":1,\"name\":\"Purpose 1\"},\"2\":{\"description\":\"Purpose 2\",\"id\":2,\"name\":\"Purpose 2\"},\"3\":{\"id\":3,\"name\":\"Purpose 3\",\"description\":\"Purpose 3 disclosure\"},\"4\":{\"id\":4,\"name\":\"Purpose 4\",\"description\":\"Purpose 4 disclosure\"},\"7\":{\"description\":\"Purpose 7\",\"id\":7,\"name\":\"Purpose 7\"}},\"specialFeatures\":{\"1\":{\"description\":\"Purpose 1\",\"id\":1,\"name\":\"Purpose 1\"}},\"specialPurposes\":{},\"stacks\":{},\"tcfPolicyVersion\":5,\"vendorListVersion\":42,\"vendors\":[{\"cookieMaxAgeSeconds\":0,\"features\":[],\"flexiblePurposes\":[2],\"id\":1,\"legIntPurposes\":[2],\"name\":\"Vendor 1\",\"policyUrl\":\"https://vendor.example/privacy\",\"purposes\":[1,2],\"specialFeatures\":[],\"specialPurposes\":[],\"usesCookies\":false,\"usesNonCookieAccess\":false}]},\"fetchedAt\":1793231999000},\"atp\":{\"fetchedAt\":1793231998000,\"providers\":[{\"id\":1,\"name\":\"Google example ATP 1\",\"policyUrl\":\"https://provider1.example/privacy\"},{\"id\":2,\"name\":\"Google example ATP 2\",\"policyUrl\":\"https://provider2.example/privacy\"}]}},\"endpoint\":\"https://mobile-fixture.example.test\",\"expiresAt\":1793836800000,\"issuedAt\":1793232000000,\"manifestRevision\":\"f9288473b9068e7cdd1a856ebf1b7e7804474d53e5c1568d222deebcf26b2d0c\",\"policyPacks\":[{\"match\":{\"countries\":[\"AX\",\"GF\",\"GP\",\"MQ\",\"MF\",\"RE\",\"YT\",\"AT\",\"BE\",\"BG\",\"HR\",\"CY\",\"CZ\",\"DK\",\"EE\",\"FI\",\"FR\",\"DE\",\"GR\",\"HU\",\"IE\",\"IT\",\"LV\",\"LT\",\"LU\",\"MT\",\"NL\",\"PL\",\"PT\",\"RO\",\"SK\",\"SI\",\"ES\",\"SE\",\"IS\",\"LI\",\"NO\",\"GB\",\"GI\"],\"fallback\":true},\"policyResolution\":{\"fingerprints\":{\"choice\":\"7e5fef2ff86cf36fa0b09daf324fe70a2c956e4470b986382baf3f911fbb051e\",\"notice\":\"1e1e4b8f67bed623eb4bc97b15eb8932f87f66bb91f25f1a23393bed880b4046\",\"policy\":\"cbbf5d147ac468a745e188b4e4681e60a04debcbad2d0d5bc0fc618c31b06dae\",\"legacyMaterial\":\"e86078b4e8a0972035eda14a9b1b3afa592ddb12e8a40a42bb1b332091c6dff5\"},\"matchedBy\":\"default\",\"policy\":{\"actions\":{\"allowed\":[\"accept\",\"customize\",\"reject\"],\"equivalent\":[[\"accept\",\"reject\"]],\"required\":[\"accept\",\"reject\"]},\"copyRevision\":null,\"id\":\"europe_iab\",\"model\":\"iab\",\"preselectedCategories\":[],\"privacySignals\":{\"gpc\":{\"denyCategories\":[]}},\"prompt\":\"choice\",\"proof\":{\"storeIp\":true,\"storeLanguage\":true,\"storeUserAgent\":true},\"rights\":[\"disclosure\",\"preferences\"],\"scope\":[\"experience\",\"functionality\",\"marketing\",\"measurement\"],\"scopeMode\":\"permissive\",\"validity\":{\"choiceMs\":31536000000,\"noticeMs\":31536000000}},\"policyId\":\"europe_iab\",\"status\":\"matched\",\"version\":1},\"translations\":{\"en\":{\"language\":\"en\",\"translations\":{\"common\":{\"acceptAll\":\"Accept All\",\"acknowledge\":\"OK\",\"close\":\"Close\",\"customize\":\"Customize\",\"dismiss\":\"Dismiss\",\"rejectAll\":\"Reject All\",\"save\":\"Save Settings\",\"securedBy\":\"Secured by\"},\"consentGate\":{\"actionButton\":\"Enable {category} consent\",\"error\":\"This content could not be loaded.\",\"loading\":\"Loading content…\",\"policyBlocked\":\"This content is unavailable under your region's consent policy.\",\"title\":\"Accept {category} consent to view this content.\"},\"consentManagerDialog\":{\"description\":\"Customize your privacy settings here. You can choose which types of cookies and tracking technologies you allow.\",\"title\":\"Privacy Settings\",\"vendors\":{\"disabledByCategory\":\"Turn on this category to choose vendors.\",\"privacyPolicy\":\"Privacy policy\",\"switchLabel\":\"Allow {vendor}\",\"title\":\"Vendors ({count})\"}},\"consentTypes\":{\"experience\":{\"description\":\"These cookies help us provide a better user experience and test new features.\",\"title\":\"Experience\"},\"functionality\":{\"description\":\"These cookies enable enhanced functionality and personalization of the website.\",\"title\":\"Functionality\"},\"marketing\":{\"description\":\"These cookies are used to deliver relevant advertisements and track their effectiveness.\",\"title\":\"Marketing\"},\"measurement\":{\"description\":\"These cookies help us understand how visitors interact with the website and improve its performance.\",\"title\":\"Analytics\"},\"necessary\":{\"description\":\"These cookies are essential for the website to function properly and cannot be disabled.\",\"title\":\"Strictly Necessary\"}},\"cookieBanner\":{\"description\":\"This site uses cookies to improve your browsing experience, analyze site traffic, and show personalized content.\",\"noticeDescription\":\"We use cookies and similar technologies to run this site, measure traffic, and personalize content and ads. You can opt out or manage your preferences at any time.\",\"noticeTitle\":\"Privacy notice\",\"title\":\"We value your privacy\"},\"iab\":{\"banner\":{\"andMore\":\"And {count} more...\",\"description\":\"We and our {partnerCount} partners store and/or access information on your device and process personal data, such as unique identifiers and browsing data, for this website, to:\",\"legitimateInterestNotice\":\"Some partners claim a legitimate interest to process your data. You have the right to object to this processing, customize your choices, and withdraw your consent at any time.\",\"partnersLink\":\"{count} partners\",\"scopeGroup\":\"Your choice applies across our websites in this group.\",\"scopeServiceSpecific\":\"Your consent applies only to this website and will not affect other services.\",\"title\":\"Privacy Settings\"},\"common\":{\"acceptAll\":\"Accept All\",\"clearSelection\":\"Clear\",\"customPartner\":\"Custom partner not registered with IAB\",\"customize\":\"Customize\",\"loading\":\"Loading...\",\"rejectAll\":\"Reject All\",\"saveSettings\":\"Save Settings\",\"showingSelectedVendor\":\"Showing selected vendor\"},\"preferenceCenter\":{\"description\":\"Customize your privacy settings here. You can choose which types of cookies and tracking technologies you allow.\",\"features\":{\"description\":\"These means of processing can be used solely in pursuit of one or several purposes for which you are given a choice in this notice.\",\"title\":\"Features\"},\"footer\":{\"consentStorage\":\"Consent preferences are stored in a cookie named \\\"euconsent-v2\\\" for 13 months. The storage duration may be refreshed when you update your preferences.\"},\"purposeItem\":{\"examples\":\"Examples\",\"legitimateInterest\":\"Legitimate Interest\",\"objectButton\":\"Object\",\"objected\":\"Objected\",\"partners\":\"{count} partners\",\"partnersUsingPurpose\":\"Partners Using This Purpose\",\"rightToObject\":\"You have the right to object to processing based on legitimate interest.\",\"vendorsUseLegitimateInterest\":\"{count} vendors claim legitimate interest\",\"withYourPermission\":\"With Your Permission\"},\"specialPurposes\":{\"title\":\"Essential Functions (Required)\",\"tooltip\":\"These are required for site functionality and security. Per IAB TCF, you cannot object to these special purposes.\"},\"tabs\":{\"purposes\":\"Purposes\",\"vendors\":\"Vendors\"},\"title\":\"Privacy Settings\",\"vendorList\":{\"adTechProvidersHeading\":\"Google Ad Tech Providers\",\"adTechProvidersNotice\":\"Google works with these ad tech providers outside the IAB framework. Your consent reaches a provider only if you switch it on and also allow device storage and personalised advertising.\",\"customVendorsHeading\":\"Custom Partners\",\"customVendorsNotice\":\"These are custom partners not registered with IAB Transparency & Consent Framework (TCF). They process data based on your consent and may have different privacy practices than IAB-registered vendors.\",\"dataCategories\":\"Data Categories\",\"features\":\"Features\",\"iabVendorsHeading\":\"IAB Registered Vendors\",\"iabVendorsNotice\":\"These partners are registered with the IAB Transparency & Consent Framework (TCF), an industry standard for managing consent\",\"legitimateInterest\":\"Leg. Interest\",\"maxAge\":\"Max Age: {days}d\",\"maxAgeRefreshes\":\"(refreshes)\",\"noVendorsFound\":\"No vendors found matching \\\"{searchTerm}\\\"\",\"nonCookieAccess\":\"Non-Cookie Access\",\"partnerCount\":\"{count} partners\",\"partnerPlural\":\"partners\",\"partnerSingular\":\"partner\",\"privacyPolicy\":\"Privacy Policy\",\"purposes\":\"Purposes\",\"requiredNotice\":\"Required for site functionality, cannot be disabled\",\"retainedDays\":\"Retained: {days}d\",\"retention\":\"Retention: {days}d\",\"search\":\"Search vendors...\",\"showingCount\":\"{filtered} of {total} vendors\",\"specialFeatures\":\"Special Features\",\"specialPurposes\":\"Special Purposes\",\"storageDisclosure\":\"Storage Disclosure\",\"usesCookies\":\"Uses Cookies\"}}},\"legalLinks\":{\"cookiePolicy\":\"Cookie Policy\",\"privacyPolicy\":\"Privacy Policy\",\"termsOfService\":\"Terms of Service\"},\"rights\":{\"optOut\":\"Do not sell or share my data\",\"preferences\":\"Manage preferences\"}}}}}],\"requiresAtp\":true,\"schemaVersion\":1}",
+				"sha256": "323bb37b86ba725d6009e01f46be7d6f04d04432b55391bc992b067418f14c3f"
+			},
+			"structural": true
+		},
+		{
+			"base": "iab",
+			"endpoint": "https://mobile-fixture.example.test",
+			"expect": "no-usable-gvl",
 			"name": "stacks that are a string",
 			"now": 1793232000000,
 			"resource": {
@@ -2209,7 +2188,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": true,
 			"name": "standard texts without features",
 			"now": 1793232000000,
 			"resource": {
@@ -2222,7 +2200,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": false,
 			"name": "vendor list fetched after issue",
 			"now": 1793232000000,
 			"resource": {
@@ -2235,7 +2212,6 @@
 			"base": "iab",
 			"endpoint": "https://mobile-fixture.example.test",
 			"expect": "no-usable-gvl",
-			"iosKeepsList": false,
 			"name": "vendor list without a fetch time",
 			"now": 1793232000000,
 			"resource": {

@@ -52,7 +52,7 @@ const gvlProblem = function gvlProblem(
 	}
 	const entry = gvlEntryProblem(data);
 	if (entry !== null) {
-		return `its vendor list is one Android discards (${entry})`;
+		return `its vendor list is one devices discard (${entry})`;
 	}
 	return isWholeNumberIn(gvl.fetchedAt, 0, issuedAt)
 		? null

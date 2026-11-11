@@ -37,11 +37,10 @@ const isWholeNumberIn = (value: unknown, min: number, max: number) =>
 	(value as number) <= max;
 
 /**
- * The native vendor-list gate: `fetchGVL`'s acceptance test, and the Android
- * core's typed read. A list numbered 0, a policy version below 1, purposes and
- * vendors that are not objects, or any entry of the wrong type leave an Android
- * device with no vendor list. (iOS drops or blanks a malformed entry and keeps
- * the rest, so the list it shows is not the one exported either.)
+ * The native vendor-list gate: `fetchGVL`'s acceptance test, and the entry
+ * types both cores read. A list numbered 0, a policy version below 1, purposes
+ * and vendors that are not objects, or any entry of the wrong type leave a
+ * device with no vendor list.
  */
 export const gvlProblem = function gvlProblem(data: unknown): string | null {
 	if (!isRecord(data)) {

@@ -1512,6 +1512,12 @@ subject even for category-only saves. No installer or RN bridge is required for
 these checks, and vendor storage never supplies identity or consent authority.
 
 
+A vendor list with any entry of the wrong type is refused whole on both cores, as
+the CLI and Expo refuse it at build (`gvl-fields.ts`). The TC String's vendor-list
+version says the subject saw that list, and a list with entries dropped or blanked
+is not it. A refused list reads as no list: a core keeps the one it holds while
+that one is still within its age limit. `invalid-resources.json` pins the cases.
+
 Native IAB disclosure lifecycle: fetch time is durable and defaults to a seven-day
 list age limit. No-GVL responses do not renew it. Native lifecycle reads distinguish
 fresh, cached, offline, stale, missing and unconfigured states. Only exact

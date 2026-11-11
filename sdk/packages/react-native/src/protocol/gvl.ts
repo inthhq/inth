@@ -225,9 +225,10 @@ export interface GVLVendor {
  * `packages/iab/src/tcf/fetch-gvl.ts` -- and both refuse silently, reading a
  * refused list as "no list today". Those four are the only members here a reader
  * can treat as settled. Everything below them belongs to a third-party
- * document, and the cores stay forgiving about its contents on purpose: one
- * partner missing a `name` is a detail, not a reason to leave a device with no
- * vendor list at all. Inside a vendor, the names the encoder reads are `purposes`,
+ * document, where any field may be absent: one partner missing a `name` is a
+ * detail, not a reason to leave a device with no vendor list at all. A field of
+ * the wrong type is not: both cores refuse that list whole, with the entry rules
+ * in `packages/cli/src/mobile/gvl-fields.ts`. Inside a vendor, the names the encoder reads are `purposes`,
  * `legIntPurposes`, `specialPurposes`, `flexiblePurposes`, and `deletedDate` --
  * Kotlin's `READING_CONSENT_KEYS` writes that list down next to the code that
  * needs it.

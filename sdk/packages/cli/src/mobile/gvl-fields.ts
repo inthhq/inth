@@ -1,5 +1,6 @@
 /**
- * The vendor-list entry types the Android core's typed GVL model accepts.
+ * The vendor-list entry types both native cores accept: the Android core's typed
+ * GVL model and `GVLFieldType` in core-swift's `GlobalVendorList.swift`.
  *
  * The CLI (`packages/cli/src/mobile/gvl-fields.ts`) and the Expo plugin
  * (`packages/react-native/src/expo-plugin/gvl-fields.ts`) each carry this file,
@@ -11,7 +12,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 	value !== null && typeof value === 'object' && !Array.isArray(value);
 
 /**
- * The type of one GVL field, as the Android core's typed model reads it. Every
+ * The type of one GVL field, as both native cores read it. Every
  * field may be absent or null; a present value must have this type. Maps are
  * JSON objects whose values are never null, lists never hold null, and numbers
  * are whole. Unknown keys are ignored.
@@ -196,7 +197,7 @@ const fieldProblem: Check = function fieldProblem(value, type, path) {
 		: fieldsProblem(value, type, path, fieldProblem);
 };
 
-/** The first entry in a vendor list that Android's typed read refuses, or null. */
+/** The first entry in a vendor list both native cores refuse, or null. */
 export const gvlEntryProblem = function gvlEntryProblem(
 	data: unknown
 ): string | null {
