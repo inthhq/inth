@@ -107,9 +107,9 @@ available.
 
 ## Add the React root
 
-Follow [Add the consent provider and privacy settings](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings)
-to create `setup.tsx` and mount `PrivacyApp` in `App.tsx`. The same JavaScript
-setup works on both platforms. Pass your app's HTTPS privacy-policy URL.
+Follow [Add the consent provider](/docs/frameworks/react-native/quickstart#add-the-consent-provider)
+to wrap `App.tsx` in `ConsentProvider`. The same JavaScript setup works on both
+platforms. Pass your app's HTTPS privacy-policy URL.
 
 Disable automatic startup in each optional vendor SDK and add the
 [native gates](/docs/frameworks/react-native/native-behaviour) before its

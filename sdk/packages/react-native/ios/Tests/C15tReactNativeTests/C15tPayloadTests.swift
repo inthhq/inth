@@ -273,12 +273,12 @@ final class C15tPayloadTests: XCTestCase {
 
     func testConsentHostSessionsEncodeAsThePresenterSessionReadsThem() {
         XCTAssertEqual(
-            C15tPayload.consentHostSession(.presented(sessionID: "one")),
-            #"{"sessionId":"one","status":"presented"}"#
+            C15tPayload.consentHostSession(.presented(sessionID: "one", presentation: .prompt)),
+            #"{"presentation":"prompt","sessionId":"one","status":"presented"}"#
         )
         XCTAssertEqual(
-            C15tPayload.consentHostSession(.alreadyPresented(sessionID: "one")),
-            #"{"sessionId":"one","status":"already-presented"}"#
+            C15tPayload.consentHostSession(.alreadyPresented(sessionID: "one", presentation: .preferences)),
+            #"{"presentation":"preferences","sessionId":"one","status":"already-presented"}"#
         )
         XCTAssertEqual(
             C15tPayload.consentHostSession(.notRequired),

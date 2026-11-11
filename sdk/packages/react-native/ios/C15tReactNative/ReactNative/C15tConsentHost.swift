@@ -4,6 +4,7 @@ import C15tCore
 #if canImport(C15tConsentUI)
 import C15tConsentUI
 #endif
+import Combine
 import SwiftUI
 import UIKit
 
@@ -15,6 +16,15 @@ final class C15tConsentHost {
     private var controller: UIHostingController<AnyView>?
     private var sessionID: String?
     private var outcome: ((ConsentHostOutcome) -> Void)?
+    /// The open session shows standing settings rather than the owed prompt.
+    private var sessionPreferences = false
+    private var watch: AnyCancellable?
+
+    /// Whether anything of the open session is on screen or still saving.
+    private var showing: Bool {
+        guard let presenter else { return false }
+        return presenter.presentationID != nil || presenter.noticeVisible || presenter.pending
+    }
 
     func present(
         preferences: Bool,
@@ -24,7 +34,11 @@ final class C15tConsentHost {
         guard let url = URL(string: privacyPolicyURL), url.scheme == "https", url.host != nil else {
             throw HostError.invalidPrivacyPolicy
         }
-        if let sessionID { return .alreadyPresented(sessionID: sessionID) }
+        // A repeated prompt request re-asks the open session, so a notice cleared and owed again shows.
+        if sessionID != nil, !preferences { presenter?.presentPrompt() }
+        if let sessionID = current() {
+            return .alreadyPresented(sessionID: sessionID, presentation: sessionPreferences ? .preferences : .prompt)
+        }
         guard let core = C15t.current else { throw HostError.noCore }
         let snapshot = core.snapshot()
         if !preferences && (snapshot.policyPending || snapshot.promptRequirement.kind == .none) {
@@ -35,12 +49,18 @@ final class C15tConsentHost {
             .flatMap(\.windows).first(where: \.isKeyWindow)?.rootViewController else { throw HostError.noHost }
         var parent = root
         while let presented = parent.presentedViewController { parent = presented }
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         if preferences { presenter.presentPreferences() } else { presenter.presentPrompt() }
         let id = presenter.presentationID?.uuidString ?? UUID().uuidString
         self.sessionID = id
         self.presenter = presenter
         self.outcome = outcome
+        self.sessionPreferences = preferences
+        // A notice cleared outside this session (`dismissNotice()`, a reset) leaves it showing
+        // nothing and with no decision to close it: end it, so its outcome reaches JavaScript.
+        watch = presenter.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in self?.endIfShowingNothing() }
+        }
         let notice = !preferences && snapshot.promptRequirement.kind == .notice
         presenter.onOutcome = { [weak self] result in
             guard let self, self.sessionID == id else { return }
@@ -71,15 +91,26 @@ final class C15tConsentHost {
         self.overlay = overlay
         controller.didMove(toParent: parent)
         self.controller = controller
-        return .presented(sessionID: id)
+        return .presented(sessionID: id, presentation: preferences ? .preferences : .prompt)
     }
 
+    /// The open session, derived from what is on screen: a held session that shows nothing (its
+    /// notice was cleared by `dismissNotice()` or a reset, with no decision to close it) is ended
+    /// here with a dismissed outcome, so no request is answered with a session that is not visible.
+    private func current() -> String? {
+        if sessionID != nil, !showing { presenter?.onOutcome?(.dismissed) }
+        return sessionID
+    }
+
+    private func endIfShowingNothing() { _ = current() }
+
     func close(sessionID: String) {
-        guard self.sessionID == sessionID, let presenter, !presenter.pending else { return }
+        guard current() == sessionID, let presenter, !presenter.pending else { return }
         presenter.requestClose()
     }
 
     func detach() {
+        watch = nil
         outcome = nil
         sessionID = nil
         presenter?.onOutcome = nil

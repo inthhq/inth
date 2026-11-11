@@ -54,6 +54,32 @@ describe('shared native presenter boundary', () => {
 		expect(native.closeConsentPresenter).toHaveBeenCalledWith('obsolete');
 	});
 
+	test('reads what an open session shows, and nothing from an older binary', async () => {
+		native.presentConsentPrompt.mockResolvedValue(
+			JSON.stringify({
+				presentation: 'preferences',
+				sessionId: 'two',
+				status: 'already-presented',
+			})
+		);
+		expect(await presentConsentPrompt('https://app.test/privacy')).toEqual({
+			presentation: 'preferences',
+			sessionId: 'two',
+			status: 'already-presented',
+		});
+		native.presentConsentPrompt.mockResolvedValue(
+			JSON.stringify({
+				presentation: 'banner',
+				sessionId: 'two',
+				status: 'already-presented',
+			})
+		);
+		expect(await presentConsentPrompt('https://app.test/privacy')).toEqual({
+			sessionId: 'two',
+			status: 'already-presented',
+		});
+	});
+
 	test('receives compact final outcomes and removes the native listener', () => {
 		const receive = vi.fn();
 		const stop = onConsentPresenterOutcome(receive);

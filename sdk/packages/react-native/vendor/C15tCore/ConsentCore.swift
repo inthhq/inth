@@ -147,7 +147,14 @@ public final class ConsentCore: @unchecked Sendable {
     private let lock = Lock()
     private let mutationGate = MutationGate()
     private var needsGrantCleanup = false
-    private var currentSnapshot = ConsentSnapshot.coldStart
+    private var currentSnapshot = ConsentSnapshot.coldStart {
+        // Every installed state passes here, in order and under `lock`, so this is where the
+        // owed prompt is named. Assigning inside `didSet` does not run it again.
+        didSet {
+            let since = ConsentSnapshot.owedSince(previous: oldValue, next: currentSnapshot)
+            if currentSnapshot.promptOwedSince != since { currentSnapshot.promptOwedSince = since }
+        }
+    }
     private var bootstrapped = false
     private var config: CoreConfig?
     private var queue: PendingSaveQueue?
@@ -407,7 +414,15 @@ public final class ConsentCore: @unchecked Sendable {
         lock.withLock { readableSnapshotLocked() }
     }
 
+    /// What every reader sees: the sync read, observers, events and gate decisions alike.
     private func readableSnapshotLocked() -> ConsentSnapshot {
+        // The views below may be rebuilt from a draft, which carries no owed-prompt name.
+        var readable = constrainedSnapshotLocked()
+        readable.promptOwedSince = currentSnapshot.promptOwedSince
+        return readable
+    }
+
+    private func constrainedSnapshotLocked() -> ConsentSnapshot {
         let constrained = constrainBundledPolicyLocked(currentSnapshot)
         guard !constrained.policyPending, resolvedPolicy?.policy.model == .iab else { return constrained }
         if listIsUsableLocked(), let saved = committedIAB, let config, let resolvedPolicy,

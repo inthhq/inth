@@ -14,8 +14,19 @@ import java.util.UUID
 /** Compact host outcome. DISMISSED always means no decision. */
 enum class ConsentPresenterOutcome { SAVED, DISMISSED }
 
-/** One host-owned native session. Retain through activity recreation with ViewModelStore. */
-class ConsentPresenter(val core: ConsentCore, private val automaticPresentation: Boolean = true) : ViewModel() {
+/**
+ * One host-owned native session. Retain through activity recreation with ViewModelStore.
+ *
+ * With [autoPresent] on, the presenter opens an owed prompt by itself once the core is ready,
+ * once per owed prompt: a prompt the person answered or dismissed stays closed until the policy,
+ * the reason or the requirement changes. With it off, nothing shows until [presentPrompt].
+ */
+class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : ViewModel() {
+    /** Open an owed prompt by itself. Turning it on presents a prompt that is already owed. */
+    var autoPresent: Boolean
+        get() = autoPresentState
+        set(value) { autoPresentState = value; if (value) presentIfOwed() }
+    private var autoPresentState by mutableStateOf(autoPresent)
     var snapshot by mutableStateOf(core.snapshot()); private set
     var presentationID by mutableStateOf<String?>(null); private set
     var preferences by mutableStateOf(false); private set
@@ -39,7 +50,17 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
     private var seedCategories: Map<ConsentCategory, Boolean> = emptyMap()
     private var seedChoices = IabChoices()
     private var fromFirst = false
+    /**
+     * The owed prompt the person saw and closed, by its key. The key carries the core's
+     * `promptOwedSince`, so a prompt owed again never matches it: nothing has to clear it.
+     */
     private var suppressed: String? = null
+    /** The owed notice the host asked for while [autoPresent] is off, by its key; a later notice needs its own request. */
+    private var requestedNotice by mutableStateOf<String?>(null)
+    /** The open session shows the owed prompt (its first layer, or settings opened from it), not standing settings. */
+    private val sessionIsPrompt get() = presentationID != null && (!preferences || fromFirst)
+    /** The session [autoPresent] opened, by its id, as opposed to one the app asked for. */
+    private var automaticSession: String? = null
     private var lastAction: Action? = null
     private var reloadAfterRefresh = false
     // The handle owns the lambda; onCleared closes it so the core lets go of this presenter.
@@ -48,9 +69,14 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
 
     enum class Action { ACCEPT, REJECT, SAVE, ACKNOWLEDGE }
     init { receive(core.snapshot()) }
-    private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}"
+    /**
+     * Names the owed prompt. `promptOwedSince` moves whenever a prompt becomes owed again, so the
+     * same requirement owed again is a new prompt even when the snapshots between were coalesced.
+     */
+    private val promptKey get() = "${snapshot.resolution.fingerprint}:${snapshot.promptRequirement.acknowledge}:${snapshot.promptRequirement.reason}:${snapshot.promptOwedSince}"
     val iab get() = snapshot.model == ConsentModel.IAB
-    val noticeVisible get() = !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
+    val noticeVisible get() = snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge && presentationID == null
+        && (autoPresent || requestedNotice == promptKey)
     val listUnavailable get() = iab && (disclosure?.canEdit != true || core.iabStatus().availability in setOf(IabListAvailability.STALE, IabListAvailability.MISSING, IabListAvailability.UNAVAILABLE)
         || disclosure?.adTechProviders?.isNotEmpty() == true && core.additionalConsentStatus() == IabListAvailability.STALE)
     val dirty get() = categories != seedCategories || choices != seedChoices
@@ -110,20 +136,35 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
             } else loadDraft()
             reloadAfterRefresh = listUnavailable
         }
-        if (automaticPresentation && !next.policyPending && next.promptRequirement.acknowledge && presentationID == null && suppressed != promptKey) {
-            presentationID = UUID.randomUUID().toString(); preferences = false; loadDraft()
+        // Nothing owed ends the episode: the next owed prompt presents even if it looks like an old one.
+        presentIfOwed()
+    }
+    private fun presentIfOwed() {
+        if (autoPresent && snapshot.ready && !snapshot.policyPending && snapshot.promptRequirement.acknowledge && presentationID == null && !pending && suppressed != promptKey) {
+            presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
+            automaticSession = presentationID
         }
+    }
+    /**
+     * End a session that opened by itself, because the host now drawing it opted out of
+     * auto-present and never asked for it. Nothing was decided or dismissed, so it reports no
+     * outcome and leaves the owed prompt owed: a host that auto-presents opens it again.
+     */
+    internal fun withdrawAutomaticSession() {
+        if (!pending && presentationID != null && presentationID == automaticSession) presentationID = null
     }
     /** Open standing privacy settings without replacing an in-flight presentation. */
     fun presentPreferences() {
         if (pending || presentationID != null) return
         presentationID = UUID.randomUUID().toString(); preferences = true; fromFirst = false; loadDraft()
     }
-    /** Open an owed prompt without replacing an existing draft. */
+    /** Open an owed prompt without replacing an existing draft. An owed notice shows as the notice card. */
     fun presentPrompt() {
         if (pending || presentationID != null) return
         snapshot = core.snapshot()
-        if (snapshot.policyPending || !snapshot.promptRequirement.acknowledge) return
+        if (snapshot.policyPending) return
+        if (snapshot.promptRequirement.notice && !snapshot.promptRequirement.acknowledge) { requestedNotice = promptKey; return }
+        if (!snapshot.promptRequirement.acknowledge) return
         presentationID = UUID.randomUUID().toString(); preferences = false; fromFirst = false; loadDraft()
     }
     /** An obsolete host close must never dismiss a newer presentation. */
@@ -157,7 +198,7 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
         if (pending) return
         confirmDiscard = false
         if (fromFirst) { preferences = false; fromFirst = false; loadDraft() }
-        else { suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED) }
+        else { closeSession(ConsentPresenterOutcome.DISMISSED) }
     }
     /**
      * System Back from the first layer. An IAB first layer waits for a decision, so Back does
@@ -165,7 +206,17 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
      */
     fun backFromFirstLayer() {
         if (pending || iab) return
-        suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED)
+        closeSession(ConsentPresenterOutcome.DISMISSED)
+    }
+    /**
+     * Close the open session without a commit. Closing the prompt settles it; closing standing
+     * settings does not, so an owed prompt they covered is presented now.
+     */
+    private fun closeSession(outcome: ConsentPresenterOutcome) {
+        if (sessionIsPrompt) suppressed = promptKey
+        presentationID = null
+        onOutcome?.invoke(outcome)
+        presentIfOwed()
     }
     fun retry() { lastAction?.let(::commit) }
     fun refresh() { if (!pending) { reloadAfterRefresh = true; viewModelScope.launch(Dispatchers.IO) { core.refresh() } } }
@@ -173,9 +224,13 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
     fun commit(action: Action) {
         if (pending || stale) return
         if (action == Action.SAVE && !dirty && !snapshot.promptRequirement.acknowledge && !snapshot.promptRequirement.notice) {
-            suppressed = promptKey; presentationID = null; onOutcome?.invoke(ConsentPresenterOutcome.DISMISSED); return
+            closeSession(ConsentPresenterOutcome.DISMISSED); return
         }
         val session = presentationID
+        // The prompt the person acted on. A requirement that changes while the commit runs is a new one.
+        val handled = promptKey
+        // A notice is shown without a session; a session shows the prompt or standing settings.
+        val shownPrompt = session == null || sessionIsPrompt
         val revision = baseRevision
         val categoryDraft = categories.toMap()
         val choiceDraft = choices
@@ -196,10 +251,12 @@ class ConsentPresenter(val core: ConsentCore, private val automaticPresentation:
                 }
             }
             pending = false; pendingAction = null; showProgress = false
-            if (presentationID != session) return@launch
+            if (presentationID != session) { presentIfOwed(); return@launch }
             snapshot = core.snapshot()
             if (result.first) {
-                errorCode = null; failedAction = null; suppressed = promptKey; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) copy.noticeAcknowledged else copy.choicesSaved; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                errorCode = null; failedAction = null; if (shownPrompt) suppressed = handled; presentationID = null; announcement = if (action == Action.ACKNOWLEDGE) copy.noticeAcknowledged else copy.choicesSaved; onOutcome?.invoke(ConsentPresenterOutcome.SAVED)
+                // Snapshots that arrived while the commit ran were not acted on; the current one is.
+                presentIfOwed()
             } else {
                 errorCode = result.second ?: "save-rejected"; failedAction = action; stale = errorCode == "concurrent-change"
                 announcement = if (stale) iabCopy.appSettingsChanged else errorMessage.orEmpty()

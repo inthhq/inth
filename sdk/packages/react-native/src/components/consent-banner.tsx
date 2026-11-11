@@ -195,9 +195,12 @@ const ConsentBannerActions = ({
  * the policy owes an interaction and unmounts itself once the subject has acted,
  * and it picks notice or opt-in copy from `promptRequirement.kind`.
  *
+ * Pass `autoPresent={false}` to the provider when you render it, so the native
+ * prompt does not open as well.
+ *
  * @example
  * ```tsx
- * <ConsentProvider>
+ * <ConsentProvider autoPresent={false}>
  *     <App />
  *     <ConsentBanner />
  * </ConsentProvider>

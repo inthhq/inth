@@ -9,13 +9,23 @@ import C15tCore
 #endif
 import Foundation
 
+/// What an open native consent host session shows. The twin of
+/// `ConsentHostPresentation` in the Kotlin SDK.
+public enum ConsentHostPresentation: String, Equatable, Sendable {
+    /// The owed prompt: a first layer or a notice.
+    case prompt
+    /// Standing privacy settings.
+    case preferences
+}
+
 /// What the native consent host did with a presentation request. The twin of
 /// `ConsentHostSession` in the Kotlin SDK.
 public enum ConsentHostSession: Equatable, Sendable {
     /// A new session opened. Its outcome arrives once, as a ``ConsentHostOutcome``.
-    case presented(sessionID: String)
-    /// A session was already open. The request reused it and its draft.
-    case alreadyPresented(sessionID: String)
+    case presented(sessionID: String, presentation: ConsentHostPresentation)
+    /// A session was already open. The request reused it and its draft; `presentation` is
+    /// what that session shows.
+    case alreadyPresented(sessionID: String, presentation: ConsentHostPresentation)
     /// A prompt request found no prompt owed, so nothing opened.
     case notRequired
 }
@@ -202,6 +212,10 @@ public enum C15tPayload {
             fields["location"] = .object(patched)
         }
 
+        // Not kernel state, so the core's encoding leaves it out; JavaScript reads it to tell a
+        // new owed prompt from one it already presented, even when it skipped snapshots between.
+        fields["promptOwedSince"] = snapshot.promptOwedSince.map { .integer(Int64($0)) } ?? .null
+
         wire = .object(fields)
         return encodeValue(wire) ?? "{}"
     }
@@ -320,10 +334,16 @@ public enum C15tPayload {
     /// `ConsentPresenterSession` shape `src/native/presenter.ts` reads.
     public static func consentHostSession(_ session: ConsentHostSession) -> String {
         switch session {
-        case let .presented(id):
-            return encode(["sessionId": .string(id), "status": .string("presented")])
-        case let .alreadyPresented(id):
-            return encode(["sessionId": .string(id), "status": .string("already-presented")])
+        case let .presented(id, presentation):
+            return encode([
+                "sessionId": .string(id), "status": .string("presented"),
+                "presentation": .string(presentation.rawValue),
+            ])
+        case let .alreadyPresented(id, presentation):
+            return encode([
+                "sessionId": .string(id), "status": .string("already-presented"),
+                "presentation": .string(presentation.rawValue),
+            ])
         case .notRequired:
             return encode(["sessionId": .null, "status": .string("not-required")])
         }

@@ -138,6 +138,10 @@ private struct NoticeBoundsReporter: UIViewRepresentable {
         view.onChange = onChange
         DispatchQueue.main.async { [weak view] in view?.reportBounds() }
     }
+    /// The card is gone: a host that hit-tests against its bounds must stop doing so.
+    static func dismantleUIView(_ view: NoticeBoundsView, coordinator: ()) {
+        view.onChange?(.zero)
+    }
 }
 
 private final class NoticeBoundsView: UIView {

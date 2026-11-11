@@ -9,7 +9,9 @@ import type { PropsWithChildren } from 'react';
 import { benchmarkConfig } from './benchmark-config';
 
 export const ConsentBoundary = ({ children }: PropsWithChildren) => (
-	<ConsentProvider>{children}</ConsentProvider>
+	<ConsentProvider privacyPolicyURL={benchmarkConfig.c15t.privacyUrl}>
+		{children}
+	</ConsentProvider>
 );
 export const useSizeConsent = () => {
 	const status = useConsentStatus();

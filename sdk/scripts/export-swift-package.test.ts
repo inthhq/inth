@@ -228,7 +228,9 @@ describe('Swift source distribution', () => {
 		]) {
 			expect(root).toContain(`path: "${nativeRoot}/Tests/${name}"`);
 		}
-		expect(root).toContain('dependencies: ["C15tConsentUI", "C15tCore"]');
+		expect(root).toContain(
+			'dependencies: ["C15tConsentUI", "C15tCore", "C15tApple"]'
+		);
 		const testDirectory = join(
 			repo.output,
 			`${nativeRoot}/Tests/C15tCoreTests`

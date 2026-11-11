@@ -135,7 +135,7 @@ const boot = function boot(
 	return {
 		fake,
 		tree: renderTree(
-			<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
 				<Probe {...options} />
 			</ConsentProvider>
 		),
@@ -519,12 +519,12 @@ describe('useTrackingRequest', () => {
 		// render. The journey reads the list when it needs it rather than capturing it,
 		// so a host's own memo of the button keeps holding.
 		tree.rerender(
-			<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
 				<Probe categories={['marketing']} />
 			</ConsentProvider>
 		);
 		tree.rerender(
-			<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
 				<Probe categories={['marketing']} />
 			</ConsentProvider>
 		);
@@ -551,7 +551,7 @@ describe('useTrackingRequest', () => {
 		// when the journey began still holds `marketing`, and ending here would leave
 		// the subject who kept measurement granted stuck without their sheet.
 		tree.rerender(
-			<ConsentProvider>
+			<ConsentProvider autoPresent={false}>
 				<Probe categories={['measurement']} />
 			</ConsentProvider>
 		);
@@ -645,7 +645,7 @@ describe('a preference centre the host already owns', () => {
 		return {
 			fake,
 			tree: renderTree(
-				<ConsentProvider>
+				<ConsentProvider autoPresent={false}>
 					<SharedProbe />
 				</ConsentProvider>
 			),

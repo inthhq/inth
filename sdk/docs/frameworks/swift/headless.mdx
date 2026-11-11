@@ -9,10 +9,11 @@ still resolves policy, stores choices, validates drafts and queues delivery.
 Your UI reads that authority and saves explicit actions to it.
 
 For an app that never renders the stock screens, link `C15tCore` and
-`C15tApple` and omit `C15tConsentUI`. Keep the same protected installation as
-the [quickstart](/docs/frameworks/swift/quickstart). The quickstart's
-`ConsentModel` includes a stock presenter. Drop the presenter when you drop the
-UI product, and keep its `PublishedConsent` for your own views.
+`C15tApple` and omit `C15tConsentUI`. Install with `C15tApple.install(_:)`
+during launch, using the same `C15tAppleConfiguration` as the
+[quickstart](/docs/frameworks/swift/quickstart), and drop its `.c15tConsent`
+modifier. Your views observe the installed core through `PublishedConsent` or,
+on iOS 17 and later, `ObservableConsent`.
 
 ## Keep SDK gates current
 

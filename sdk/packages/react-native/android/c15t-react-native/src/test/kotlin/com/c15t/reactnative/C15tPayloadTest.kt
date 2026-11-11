@@ -1,6 +1,7 @@
 package com.c15t.reactnative
 
 import com.c15t.consentui.ConsentHostOutcome
+import com.c15t.consentui.ConsentHostPresentation
 import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
@@ -487,12 +488,12 @@ class C15tPayloadTest {
 	@Test
 	fun `consent host answers encode as the presenter session JSON reads them`() {
 		assertEquals(
-			"{\"sessionId\":\"one\",\"status\":\"presented\"}",
-			C15tPayload.consentHostSession(ConsentHostSession.Presented("one")),
+			"{\"sessionId\":\"one\",\"status\":\"presented\",\"presentation\":\"prompt\"}",
+			C15tPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
 		)
 		assertEquals(
-			"{\"sessionId\":\"one\",\"status\":\"already-presented\"}",
-			C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one")),
+			"{\"sessionId\":\"one\",\"status\":\"already-presented\",\"presentation\":\"preferences\"}",
+			C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
 		)
 		assertEquals(
 			"{\"sessionId\":null,\"status\":\"not-required\"}",

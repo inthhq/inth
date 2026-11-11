@@ -53,23 +53,41 @@ queued delivery and reconnects.
 
 ## Open the native screens
 
-Both functions take your app's HTTPS privacy-policy URL:
+`ConsentProvider` presents the initial prompt by itself when one is owed. Call
+these functions for anything else, such as a Privacy settings button, or for
+the initial prompt when you pass `autoPresent={false}`. Both take your app's
+HTTPS privacy-policy URL:
 
 | Function | Opens |
 | --- | --- |
 | `presentConsentPrompt(privacyPolicyURL)` | The initial native prompt, only when the policy requires an interaction. |
 | `presentPreferences(privacyPolicyURL)` | Standing privacy settings, including when the initial prompt is already answered. |
 
-Use the [quickstart's complete root](/docs/frameworks/react-native/quickstart#add-the-consent-provider-and-privacy-settings)
-for the imports, effect, result subscription and settings button.
+The [quickstart](/docs/frameworks/react-native/quickstart#keep-privacy-settings-reachable)
+shows a settings button.
 
 The returned `ConsentPresenterSession` describes presentation:
 
 | `status` | Meaning |
 | --- | --- |
 | `presented` | A native session opened. |
-| `already-presented` | A session is already open; repeated requests reuse it. |
+| `already-presented` | A session is already open, for example the one the provider presented. Repeated requests reuse it. |
 | `not-required` | No prompt is owed. `sessionId` is null. |
+
+When a session is open, `presentation` says what it shows: `prompt` for the
+initial prompt or a notice, `preferences` for standing privacy settings.
+`ConsentProvider` uses it to tell a shown prompt from one that is still owed
+behind open settings, and presents the prompt once they close. A binary built
+before this field omits it, and the provider waits for that session to close
+before deciding again.
+
+A rejected call carries one of two codes. `C15T_PRESENTER_INVALID_URL` means
+the native host refused the privacy-policy URL, and the same URL will fail
+again. `C15T_PRESENTER_UNAVAILABLE` means there was no foreground window,
+Activity or installed core yet, so a later call can succeed. `ConsentProvider`
+stops auto-presenting and logs a `console.error` after the first code. After
+the second it retries on the next consent change or foreground, and warns once
+per owed prompt outside production.
 
 Opening a screen is separate from saving a choice. Subscribe with
 `onConsentPresenterOutcome(listener)` before presenting, and call the returned
@@ -77,7 +95,9 @@ unsubscribe function when your React owner unmounts.
 
 ## Handle the final presenter outcome
 
-Each final outcome includes the session ID and snapshot revision:
+Each final outcome includes the session ID and snapshot revision. A session whose
+notice was cleared elsewhere, for example by `dismissNotice()`, shows nothing; the
+native host ends it with a `dismissed` outcome:
 
 | `kind` | Meaning |
 | --- | --- |

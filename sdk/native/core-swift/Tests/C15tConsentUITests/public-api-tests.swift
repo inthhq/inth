@@ -18,7 +18,7 @@ final class PublicAPITests: XCTestCase {
             iab: IABConfiguration(cmpId: 53, cmpVersion: 7, publisherCountryCode: "GB"), initRetry: .disabled))
         await core.waitUntilIdle()
         XCTAssertEqual(core.save(.all).status, .committed)
-        let presenter = ConsentPresenter(core: core, automaticPresentation: false)
+        let presenter = ConsentPresenter(core: core, autoPresent: false)
         XCTAssertNil(presenter.presentationID, "nothing is owed, so nothing opens by itself")
         presenter.presentPreferences()
         XCTAssertNotNil(presenter.presentationID)

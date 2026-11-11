@@ -1,3 +1,4 @@
+import C15tApple
 // #region docs:swift-app-theme title="AppConsentTheme.swift"
 import C15tConsentUI
 import SwiftUI
@@ -21,12 +22,13 @@ enum AppConsentTheme {
 // #endregion docs:swift-app-theme
 
 @MainActor
-private func brandedConsentRoot(consent: ConsentModel, privacyPolicyURL: URL) -> some View {
+private func brandedConsentRoot(configuration: C15tAppleConfiguration, privacyPolicyURL: URL) -> some View {
     // #region docs:swift-themed-root title="MyApp.swift"
-    ConsentRoot(
-        consent: consent,
-        privacyPolicyURL: privacyPolicyURL,
-        theme: AppConsentTheme.value
-    )
+    ContentView()
+        .c15tConsent(
+            configuration,
+            privacyPolicyURL: privacyPolicyURL,
+            theme: AppConsentTheme.value
+        )
     // #endregion docs:swift-themed-root
 }

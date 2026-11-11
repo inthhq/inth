@@ -81,6 +81,7 @@ export const buildSnapshot = function buildSnapshot(
 		policyPending: false,
 		policySnapshotToken: null,
 		privacySignals: { gpc: { active: false, detected: false, override: null } },
+		promptOwedSince: null,
 		promptRequirement: { kind: 'choice', reason: 'missing' },
 		ready: true,
 		resolution: { fingerprint: null, policyId: null, status: 'no-match' },

@@ -59,7 +59,6 @@ Add the platform and UI modules to your app's dependencies:
 ```kotlin title="app/build.gradle.kts"
 implementation("com.c15t:c15t-android:3.0.0-alpha.1")
 implementation("com.c15t:c15t-consent-ui:3.0.0-alpha.1")
-implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
 ```
 
 `c15t-android` brings in the consent core. `c15t-consent-ui` adds Compose
@@ -85,14 +84,36 @@ The status line reads `decisionFlow(ConsentCategory.MEASUREMENT)` with
 `collectAsState()`, so it changes as soon as a choice is saved or withdrawn,
 with no observer code in the Activity.
 
-The presenter is a `ViewModel`, so rotation keeps its draft. It automatically
-shows an owed choice when policy is ready. Keep `C15tConsent` mounted alongside
-your app content, and put the **Privacy settings** button in your real settings
-screen so it remains reachable after the initial banner closes.
+`C15tConsent(privacyPolicyUrl = ...)` is the whole prompt. Once the policy is
+ready it presents an owed prompt by itself, once per owed prompt. A stored
+choice that is still valid shows nothing. A new policy or an expired choice
+presents it again. Keep it mounted beside your app content.
+
+Every screen that mounts `C15tConsent` shares one `ConsentPrompt` per core.
+Rotation and Activity recreation keep the open prompt and its draft, and two
+screens never show two prompts. Put the **Privacy settings** button in your
+real settings screen so it stays reachable after the first prompt closes.
+`ConsentPrompt.of(core).presentPreferences()` opens settings from anywhere.
+
+To present the prompt yourself, pass `autoPresent = false` and call
+`ConsentPrompt.of(core).presentPrompt()` when you are ready.
+
+### Activities without Compose
+
+An Activity that builds its content with views makes one call after
+`setContentView`. Call it on every `onCreate`; the prompt survives
+recreation:
+
+<include src="../../shared/examples/native/examples/consent-demo/android-views.mdx" />
+
+`attachConsent` adds the stock screens above the Activity's content and returns
+the shared `ConsentPrompt`. It takes the same `autoPresent` and `theme`
+arguments as `C15tConsent`.
 
 Register the classes and permissions in your existing manifest. Keep your
 app's theme, icons and launch intent filter. Replace `com.c15t.demo` with the
-package name you used in the Kotlin file:
+package name you used in the Kotlin file. Register `SettingsActivity` too if
+you use the views example:
 
 {/* example: fragment */}
 

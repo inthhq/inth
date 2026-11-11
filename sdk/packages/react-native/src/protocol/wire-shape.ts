@@ -63,6 +63,60 @@ export const SNAPSHOT_KEYS = [
 ] as const;
 
 /**
+ * Keys a native bridge adds to the kernel's snapshot wire.
+ *
+ * They are native bookkeeping rather than kernel state, so `@c15t/core` has no such
+ * field and the protocol fixtures, which {@link SNAPSHOT_KEYS} is checked against, do
+ * not carry them. `promptOwedSince` is the revision at which the prompt owed now
+ * became owed, which the auto-present ledger uses to tell a new owed prompt from one
+ * it already presented when the bridge delivered only the latest snapshot.
+ */
+export const BRIDGE_SNAPSHOT_KEYS = ['promptOwedSince'] as const;
+
+/**
+ * Snapshot keys added after protocol version 1 shipped, with the value an older native
+ * build means by leaving the key out.
+ *
+ * A JavaScript-only update (Expo Updates, CodePush) can run this package over a binary
+ * built before a key existed, and the protocol version does not move for an additive
+ * key. Such a binary simply has none of the state the key describes, so the client
+ * fills the default before anything reads the snapshot or grades its shape: the public
+ * type keeps its promise, and an older binary is not reported as drift. Every key
+ * added to {@link SNAPSHOT_KEYS} or {@link BRIDGE_SNAPSHOT_KEYS} from here on belongs in
+ * this table, with the default that means "this build has no such state". A key whose
+ * absence cannot be answered that way needs a protocol version instead.
+ *
+ * `promptOwedSince: null` means the build names no owed prompt, so auto-present falls
+ * back to telling prompts apart by the transitions it observes.
+ */
+export const ADDITIVE_SNAPSHOT_DEFAULTS = {
+	promptOwedSince: null,
+} as const satisfies Partial<
+	Record<
+		(typeof SNAPSHOT_KEYS)[number] | (typeof BRIDGE_SNAPSHOT_KEYS)[number],
+		unknown
+	>
+>;
+
+/**
+ * Fill every {@link ADDITIVE_SNAPSHOT_DEFAULTS} key the payload leaves out.
+ *
+ * @param candidate - A parsed snapshot payload.
+ * @returns The same object when nothing was missing, else a copy with the defaults.
+ */
+export const withAdditiveSnapshotDefaults =
+	function withAdditiveSnapshotDefaults(
+		candidate: Record<string, unknown>
+	): Record<string, unknown> {
+		const missing = Object.keys(ADDITIVE_SNAPSHOT_DEFAULTS).some(
+			(key) => !Object.hasOwn(candidate, key)
+		);
+		return missing
+			? { ...ADDITIVE_SNAPSHOT_DEFAULTS, ...candidate }
+			: candidate;
+	};
+
+/**
  * The five objects whose key names come from `@c15t/core` and are not a native
  * implementation detail. Names inside a core, and names inside a stored envelope,
  * stay the core's own business.

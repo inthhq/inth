@@ -250,7 +250,9 @@ const mount = function mount(
 	probe.commands = [];
 	probe.counts = {};
 
-	return renderTree(<ConsentProvider>{children}</ConsentProvider>);
+	return renderTree(
+		<ConsentProvider autoPresent={false}>{children}</ConsentProvider>
+	);
 };
 
 afterEach(() => {

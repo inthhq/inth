@@ -10,8 +10,9 @@
  *
  * Three layers, top down:
  *
- * - {@link ConsentProvider} attaches to the native instance the app already booted
- *   and checks the protocol handshake.
+ * - {@link ConsentProvider} attaches to the native instance the app already booted,
+ *   checks the protocol handshake, and presents the native consent prompt when
+ *   one is owed (`autoPresent={false}` turns that off).
  * - The read hooks ({@link useSnapshot}, {@link useConsent},
  *   {@link useConsentStatus}, {@link useConsentSelector}) subscribe to the slice a component actually
  *   reads, so a consent change rerenders the components whose value moved.
@@ -168,7 +169,11 @@ export {
 	ConsentClientContext,
 	useConsentClient,
 } from './provider';
-export type { ConsentProviderProps } from './provider';
+export type {
+	ConsentProviderBaseProps,
+	ConsentProviderPromptProps,
+	ConsentProviderProps,
+} from './provider';
 export type { ConsentSafeAreaInsets } from './provider';
 
 // The Codegen spec is exported as types only. Importing it for values would

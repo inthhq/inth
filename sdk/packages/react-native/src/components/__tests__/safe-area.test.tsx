@@ -83,14 +83,24 @@ const mountWithInsets = function mountWithInsets(
 	createFakeNativeModule({ snapshot: translatedSnapshot() });
 
 	const tree = renderTree(
-		<ConsentProvider safeAreaInsets={insets}>{surface}</ConsentProvider>
+		<ConsentProvider
+			autoPresent={false}
+			safeAreaInsets={insets}
+		>
+			{surface}
+		</ConsentProvider>
 	);
 
 	return {
 		container: tree.container,
 		rerender: (nextInsets): void => {
 			tree.rerender(
-				<ConsentProvider safeAreaInsets={nextInsets}>{surface}</ConsentProvider>
+				<ConsentProvider
+					autoPresent={false}
+					safeAreaInsets={nextInsets}
+				>
+					{surface}
+				</ConsentProvider>
 			);
 		},
 		unmount: tree.unmount,
@@ -389,7 +399,10 @@ describe('consent surface safe area', () => {
 			const [insets, setInsets] = useState<ConsentSafeAreaInsets>(PORTRAIT);
 
 			return (
-				<ConsentProvider safeAreaInsets={insets}>
+				<ConsentProvider
+					autoPresent={false}
+					safeAreaInsets={insets}
+				>
 					<button
 						data-role="turn"
 						onClick={() => {

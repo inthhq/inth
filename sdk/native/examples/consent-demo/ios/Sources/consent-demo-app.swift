@@ -130,7 +130,9 @@ final class DemoSession: ObservableObject {
                     refresh(core)
                 }
             }
-            presenter = ConsentPresenter(core: core)
+            // The app-wide prompt the one-line modifier attaches to, so the journeys run
+            // the default auto-present path.
+            presenter = ConsentPrompt.shared(for: core).presenter
             refresh(core)
         } catch { setupError = String(describing: error) }
     }
@@ -221,12 +223,9 @@ struct DemoRoot: View {
     @State private var inspectBeforeShowingConsent = false
     var body: some View {
         if let presenter = session.presenter, let policyURL = session.policyURL {
-            let host = HostState(session: session, presenter: presenter)
-            if session.consentUIEnabled {
-                host.c15tConsent(presenter: presenter, privacyPolicyURL: policyURL, theme: consentTheme)
-            } else {
-                host
-            }
+            // Review inspection holds the prompt back with the opt-out until the reviewer asks for it.
+            HostState(session: session, presenter: presenter)
+                .c15tConsent(privacyPolicyURL: policyURL, theme: consentTheme, autoPresent: session.consentUIEnabled)
         } else {
             NavigationStack {
                 Form {

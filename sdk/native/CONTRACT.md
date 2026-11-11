@@ -395,6 +395,162 @@ with kotlinx-coroutines through `androidx.lifecycle`, so the flows add no runtim
 dependency. `ConsentCore.refresh(onComplete)` is the core-side hook `awaitRefresh`
 suspends on.
 
+Presenting the consent prompt
+-----------------------------
+
+The stock UI presents an owed prompt by itself. It is on by default on every
+platform, and each one offers the same opt-out:
+
+    React Native   <ConsentProvider privacyPolicyURL="https://...">     autoPresent={false}
+    SwiftUI        view.c15tConsent(configuration, privacyPolicyURL:)  autoPresent: false
+                   view.c15tConsent(privacyPolicyURL:)                 (core already installed)
+    UIKit          ConsentRootViewController(root:configuration:privacyPolicyURL:)
+    Compose        C15tConsent(privacyPolicyUrl = "https://...")       autoPresent = false
+    Activity       activity.attachConsent("https://...")               autoPresent = false
+
+The rules, identical on all three:
+
+- **Wait for an answer.** Nothing presents until `ready` is true and
+  `policyPending` is false, whatever supplied the policy: hosted init, a bundled
+  resource or a policy in code.
+- **One owed prompt, one presentation.** An owed prompt is named by the matched
+  policy fingerprint, the requirement's kind and its reason. A prompt the subject
+  answered or dismissed is not presented again under the same name. A new policy
+  (`policy-changed`), an expired choice (`expired`) or a requirement that went to
+  `none` and came back presents again. A change that arrives while a native
+  present call or a commit is still in flight is evaluated once it settles; it
+  is never dropped, and a commit closes only the prompt the subject acted on.
+- **The core names each owed prompt.** Both cores set `promptOwedSince` where they
+  install a state, under the mutation lock, so it sees every state in order: the
+  revision at which the prompt owed now became owed, kept while the same
+  requirement stays owed under the same policy, moved whenever a prompt becomes
+  owed again, and `null` while nothing is owed. Observers and the React Native
+  bridge may deliver only the latest snapshot, so a reader cannot rely on seeing
+  the moment with nothing owed; the presenters and the JavaScript ledger key their
+  suppression on it instead. It is not kernel state: it stays out of the kernel
+  wire encoding, the protocol fixtures and the stored envelope, and the bridges add
+  it to the `getSnapshot()` payload.
+- **Never two at once.** Swift and Kotlin keep one `ConsentPrompt` per core with a
+  single `ConsentPresenter`; every scene, Activity or composable that attaches
+  shares its session and draft, and only one attached host draws it: the first,
+  or a foreground host when the one drawing it is in the background. Auto-present
+  is the drawing host's setting and is off while no host is attached, so nothing
+  opens unseen. A host with auto-present off draws only a session the app asked
+  for, or one that opened by itself while that host drew it with auto-present
+  on: when it takes over a session that opened by itself for another host, the
+  session is withdrawn, with no outcome, and the owed prompt stays owed. The
+  installed core keeps its `ConsentPrompt` until it is uninstalled
+  (`C15t.uninstall()` on Kotlin, `C15t.resetForTests()` on Swift, both reported
+  through `C15t.onUninstall`); the registry holds prompts weakly and never keeps
+  a core alive. React Native keeps one ledger per client, so strict mode,
+  remounts and nested providers call native once, and the native host answers
+  any racing call with `already-presented`.
+- **Opting out changes nothing else.** With auto-present off, an owed notice is
+  held back too. A manual request covers the notice owed at that moment only;
+  once nothing is owed, a later notice needs its own request.
+  `presentPrompt`/`presentConsentPrompt` and `presentPreferences` work as they
+  did before.
+
+**The invariant.** On all three platforms: if a prompt is owed, auto-present is
+on, and nothing of ours is on screen, then a presentation is in flight or the next
+trigger makes one, unless the subject already saw this owed prompt and closed it,
+or native refused the privacy-policy URL. A ledger never records a prompt as shown
+on its own say-so; it records what native says is on screen. Property tests drive
+random sequences of the inputs below and check this after every input:
+`auto-present-machine.test.ts` (React Native), `AutoPresentTest` (Kotlin) and
+`AutoPresentTests` (Swift). A second property holds for the React Native hosts: a
+manual `presentConsentPrompt` or `presentPreferences` shows something or reports
+why not, and is never answered `already-presented` over a session that shows
+nothing (`ConsentHostTest.aRequestIsNeverAnsweredWithASessionThatShowsNothing`).
+
+**Few stored facts, one recomputed decision.** No platform remembers a decision.
+Each stores a handful of facts, each keyed by what it was decided for, so a change
+to any of those inputs invalidates it without an event having to reset it. After
+every input, "present now" is recomputed from the facts and the current inputs.
+
+The React Native ledger is the pure `stepAutoPresent` in
+`packages/react-native/src/provider/auto-present-machine.ts`. Its current inputs
+are the owed key (carrying `promptOwedSince`), the URL, whether a provider
+presents, a trigger count, and the build: whether the binary links the stock
+native screens. Only a bootstrap reporting `nativeUI: false` (a
+`c15t.nativeUI=false` build) means it does not; an absent flag means it does. It
+stores:
+
+    fact        keyed by              meaning
+    inFlight    owed key, URL         a present call is in flight
+    onScreen    session id            native reported this session open, and what it shows
+    dismissed   owed key              the subject saw this owed prompt and closed it
+    refused     URL                   native refused this URL for good
+    declined    owed key, URL, trigger  native said not now; the next trigger asks again
+    closed      session id            sessions whose outcome arrived, so a late answer cannot revive one
+    excluded    the binary            native rejected with C15T_NATIVE_UI_EXCLUDED
+    withdrawn   session id            a prompt the ledger's call opened after every presenting
+                                      provider left; closed again, its outcome is not the subject's
+
+    present now = provider presents and the binary links the stock screens
+                  and not excluded and a key is owed and nothing is in flight
+                  and nothing is on screen and dismissed != key and refused != URL
+                  and declined != (key, URL, this trigger)
+
+A native answer of `presented`, or `already-presented` for a prompt session,
+puts that session on screen; `already-presented` for settings, or from a binary
+that does not name its sessions, puts it on screen as settings, which the owed
+prompt waits behind. An unnamed answer keeps what is already known of that
+session. The app's own `presentConsentPrompt` and `presentPreferences` calls
+report the session they find open to the ledger too. A session's outcome takes
+it off screen; a dismissal of a prompt session records the owed key then
+current, because the open session reloads its draft. Nothing owed ends a
+dismissal. The outermost provider creates the ledger as it renders, whether or
+not it presents, and the ledger hears outcomes for the client's lifetime, so a
+prompt the subject dismissed while auto-present was off stays dismissed when it
+is turned on.
+
+The native presenters store the open session (`presentationID`, whether it is
+standing settings or the prompt, which is derived from `preferences` and whether
+settings were opened from the first layer), the suppressed key, the requested
+notice key and a running commit. Both keys carry `promptOwedSince`, so nothing
+has to clear them:
+
+    input                                     next
+    snapshot, owed, auto on, nothing open     open the prompt (unless suppressed)
+    presentPrompt / presentPreferences        open that session if none is open
+    close a prompt session                    suppress its key, outcome, re-evaluate
+    close a settings session                  outcome, re-evaluate (the owed prompt stays owed)
+    commit from a prompt or notice            suppress the key acted on
+    commit from settings                      no suppression; re-evaluate
+    autoPresent turned on                     re-evaluate
+    a host attaches or takes over             autoPresent = its setting; if off, withdraw a
+                                              session that opened by itself for another host
+    the drawing host detaches                 autoPresent off until a host attaches
+
+**The React Native hosts** report what an open session shows: every
+`presentConsentPrompt`/`presentPreferences` answer carries `presentation`,
+`prompt` or `preferences`, beside `sessionId`, and an older binary omits it. A
+host's open session is derived from what is on screen: one that shows nothing
+(its notice was cleared outside the host by `dismissNotice()` or a reset) is
+ended with a `dismissed` outcome by every entry point that reads it, and as soon
+as the host notices, so no request is answered with a session that is not
+visible. A
+repeated prompt request re-asks the open session, so a notice owed again shows.
+The host rejects a refused privacy-policy URL with `C15T_PRESENTER_INVALID_URL`,
+which is permanent: `ConsentProvider` reports it with `console.error` and stops
+offering that URL. A binary built without the stock screens rejects every
+presenter call with `C15T_NATIVE_UI_EXCLUDED`, also permanent: the provider
+reports it once and never asks again. When the bootstrap already says
+`nativeUI: false`, the provider asks nothing and does not check
+`privacyPolicyURL`, because the app draws its own consent UI. Every other refusal is `C15T_PRESENTER_UNAVAILABLE`, which is
+transient and is retried on the next consent change or foreground.
+
+**The notice card's touch area.** A UIKit root hit-tests against the card's
+bounds only while that scene draws the prompt and the notice is showing
+(`NoticeTouchRegion`), so an acknowledged or cleared card leaves no area that
+swallows the app's touches. The Android notice view wraps its content and takes
+no space once the card is gone.
+
+`ConsentPrompt.onFinished` (Swift and Kotlin) and `onConsentPresenterOutcome`
+(React Native) report each closed session with its outcome. A step that must
+follow the prompt, such as Apple's tracking request, attaches there.
+
 Native SDK gating
 -----------------
 
@@ -1084,6 +1240,16 @@ Version handshake
 when `protocolVersion` is outside the range the installed JavaScript package
 supports. This catches the Expo Updates case where a JavaScript-only update ships
 against an older embedded native build.
+
+A snapshot key added without a protocol bump must be additive: its absence has to
+mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS`
+(`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
+client fills it before reading or grading the snapshot, so an older binary is
+neither `undefined` behind a typed field nor reported as drift. A key whose absence
+cannot be answered that way needs a new protocol version. `promptOwedSince` is
+such a key, and a bridge-added one (`BRIDGE_SNAPSHOT_KEYS`): an older binary names
+no owed prompt, so it reads as `null`, and auto-present falls back to the
+transitions it observes.
 
 Conformance fixtures
 --------------------

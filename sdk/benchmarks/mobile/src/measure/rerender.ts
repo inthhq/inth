@@ -79,11 +79,11 @@ const SecondMeasurementProbe = categoryProbe('measurement2', 'measurement');
 const StatusProbe = (): ReactNode =>
 	probe('consentStatus', useConsentStatus().activeUI);
 
-/** The tree under test: the real provider, four subscribed components. */
+/** The tree under test: the real provider as an app mounts it, four subscribed components. */
 const BenchTree = (): ReactNode =>
 	createElement(
 		ConsentProvider,
-		null,
+		{ privacyPolicyURL: 'https://example.com/privacy' },
 		createElement(MarketingProbe),
 		createElement(MeasurementProbe),
 		createElement(StatusProbe),

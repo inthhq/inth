@@ -22,7 +22,6 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.c15t.android.*
 import com.c15t.consentui.*
 import com.c15t.core.*
@@ -49,11 +48,9 @@ class ConsentDemoActivity : ComponentActivity() {
                 if (core == null) Setup(model)
                 else if (model.consentPresentationDeferred) ReviewDiagnostics(model, onClose = model::showConsentScreen)
                 else {
-                    val presenter: ConsentPresenter = viewModel(factory = object : ViewModelProvider.Factory {
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                            @Suppress("UNCHECKED_CAST") return ConsentPresenter(core) as T
-                        }
-                    })
+                    // The app-wide prompt the one-line composable attaches to, so the journeys run
+                    // the default auto-present path.
+                    val presenter = remember(core) { ConsentPrompt.of(core) }.presenter
                     Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
                         Host(model, presenter)
                         val theme = if (model.fixtureTheme == "brand") PantryBrand.theme else null
@@ -69,7 +66,7 @@ class ConsentDemoActivity : ComponentActivity() {
                             "hidden" -> (providerTheme ?: ConsentTheme.c15t).copy(brand = ConsentTheme.Brand.Hidden)
                             else -> providerTheme
                         }
-                        C15tConsent(presenter, model.policyUrl, theme = identityTheme)
+                        C15tConsent(model.policyUrl, theme = identityTheme, core = core)
                     }
                 }
             }

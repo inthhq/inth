@@ -223,6 +223,8 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 				}
 				promise.resolve(C15tPayload.consentHostSession(session))
 			}
+			// The host refuses the URL before it touches any UI. Retrying the same URL cannot help.
+			catch (error: IllegalArgumentException) { promise.reject("C15T_PRESENTER_INVALID_URL", error.message, error) }
 			catch (error: Exception) { promise.reject("C15T_PRESENTER_UNAVAILABLE", error.message, error) }
 		}
 	}

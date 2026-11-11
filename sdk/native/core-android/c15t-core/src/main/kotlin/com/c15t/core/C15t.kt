@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicReference
 object C15t {
 	private val kernel = AtomicReference<ConsentCore?>()
 	private val installLock = Any()
+	private val uninstallListeners = java.util.concurrent.CopyOnWriteArrayList<(ConsentCore) -> Unit>()
 
 	/** The active kernel, or `null` before [bootstrap]. */
 	val current: ConsentCore?
@@ -90,7 +91,19 @@ object C15t {
 	 * keeps the subject id, and re-resolves the policy.
 	 */
 	fun uninstall() {
-		kernel.set(null)
+		val dropped = kernel.getAndSet(null) ?: return
+		for (listener in uninstallListeners) listener(dropped)
+	}
+
+	/**
+	 * Run [listener] with each core [uninstall] drops, so a layer that keeps something per core,
+	 * such as the stock consent UI, lets it go with the core.
+	 *
+	 * @return Stop listening.
+	 */
+	fun onUninstall(listener: (ConsentCore) -> Unit): Subscription {
+		uninstallListeners += listener
+		return Subscription { uninstallListeners -= listener }
 	}
 
 	/** The current snapshot, or a deny-all snapshot before [bootstrap]. */

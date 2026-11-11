@@ -109,6 +109,50 @@ class ConsentHostTest {
         assertEquals(1, outcomes.size)
     }
 
+    /**
+     * A notice cleared outside the host (`dismissNotice()`) leaves its session showing nothing. The
+     * host ends it with an outcome, so a later request opens what was asked for, not `already-presented`.
+     */
+    @Test fun aNoticeClearedOutsideEndsItsSessionAndPreferencesOpen() {
+        val core = boot(fixture("notice-init.json"))
+        val host = host()
+        val outcomes = mutableListOf<ConsentHostOutcome>()
+        val first = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
+        assertEquals(ConsentHostPresentation.PROMPT, first.presentation)
+        assertTrue(requireNotNull(presenter()).noticeVisible)
+        assertTrue(core.dismissNotice())
+        await { outcomes.isNotEmpty() }
+        assertTrue(outcomes.single() is ConsentHostOutcome.Dismissed)
+        assertEquals(first.sessionId, outcomes.single().sessionId)
+
+        val settings = opened(ConsentHost.present(host.get(), core, true, PRIVACY_URL, outcome = {}))
+        assertEquals(ConsentHostPresentation.PREFERENCES, settings.presentation)
+        assertNotNull(requireNotNull(presenter()).presentationID)
+    }
+
+    /** A notice owed again after its session ended opens a new session that shows it. */
+    @Test fun aNoticeOwedAgainOpensANewSession() {
+        val core = boot(fixture("notice-init.json"))
+        val host = host()
+        val outcomes = mutableListOf<ConsentHostOutcome>()
+        val first = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = outcomes::add))
+        assertTrue(core.dismissNotice())
+        await { outcomes.isNotEmpty() }
+        core.reset()
+        val again = opened(ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {}))
+        assertNotEquals(first.sessionId, again.sessionId)
+        assertTrue(requireNotNull(presenter()).noticeVisible)
+    }
+
+    /** A prompt request that meets open settings names them, so JavaScript waits for them to close. */
+    @Test fun aPromptRequestOverOpenSettingsNamesThem() {
+        val core = boot(fixture("category-init.json"))
+        val host = host()
+        val settings = opened(ConsentHost.present(host.get(), core, true, PRIVACY_URL, outcome = {}))
+        val prompt = ConsentHost.present(host.get(), core, false, PRIVACY_URL, outcome = {})
+        assertEquals(ConsentHostSession.AlreadyPresented(settings.sessionId, ConsentHostPresentation.PREFERENCES), prompt)
+    }
+
     @Test fun savedStateFromClosedNoticeCannotAttachANewerSession() {
         val core = boot(fixture("notice-init.json"))
         val host = host()
@@ -156,6 +200,61 @@ class ConsentHostTest {
         assertEquals(1, outcomes.size)
     }
 
+    /**
+     * Property (b): a manual prompt or settings request either shows something or says why not,
+     * never `already-presented` over a session that shows nothing. Random sequences of requests,
+     * external dismissals through the core, resets, saves, closes and decisions.
+     */
+    @Test fun aRequestIsNeverAnsweredWithASessionThatShowsNothing() {
+        for (fixture in listOf("notice-init.json", "category-init.json")) for (seed in 1..40) hostSequence(seed, fixture)
+    }
+
+    private fun hostSequence(seed: Int, name: String) {
+        val random = java.util.Random(seed.toLong())
+        val core = boot(fixture(name))
+        val host = host()
+        var sessionId: String? = null
+        val trace = mutableListOf<String>()
+        fun showing(p: ConsentPresenter?) = p != null && (p.presentationID != null || p.noticeVisible || p.pending)
+        repeat(40) {
+            val action = listOf("prompt", "preferences", "dismiss-notice", "reset", "saved", "close", "acknowledge", "accept", "idle")
+                .let { it[random.nextInt(it.size)] }
+            trace += action
+            when (action) {
+                "prompt", "preferences" -> {
+                    val preferences = action == "preferences"
+                    val answer = ConsentHost.present(host.get(), core, preferences, PRIVACY_URL, outcome = {})
+                    val context = "seed $seed ($name): $answer after ${trace.joinToString()}"
+                    when (answer) {
+                        is ConsentHostSession.Presented -> {
+                            assertTrue("$context shows nothing", showing(presenter()))
+                            sessionId = answer.sessionId
+                        }
+                        is ConsentHostSession.AlreadyPresented -> {
+                            assertTrue("$context shows nothing", showing(presenter()))
+                            sessionId = answer.sessionId
+                        }
+                        ConsentHostSession.NotRequired -> {
+                            val s = core.snapshot()
+                            assertFalse("$context for settings", preferences)
+                            assertTrue("$context while a prompt is owed", s.policyPending || !s.promptRequirement.acknowledge && !s.promptRequirement.notice)
+                        }
+                    }
+                }
+                "dismiss-notice" -> core.dismissNotice()
+                "reset" -> core.reset()
+                "saved" -> core.save(com.c15t.core.CommitIntent.All)
+                "close" -> sessionId?.let { ConsentHost.close(it) }
+                "acknowledge" -> presenter()?.takeIf { it.noticeVisible && !it.pending }?.let { it.commit(ConsentPresenter.Action.ACKNOWLEDGE); await { !it.pending } }
+                "accept" -> presenter()?.takeIf { it.presentationID != null && !it.pending }?.let { it.commit(ConsentPresenter.Action.ACCEPT); await { !it.pending } }
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        presenter()?.let { await { !it.pending }; it.discard() }
+        shadowOf(Looper.getMainLooper()).idle()
+        assertNull("seed $seed ($name): a session outlived the sequence", presenter())
+    }
+
     private fun host() = Robolectric.buildActivity(HostActivity::class.java).setup().visible().also { hosts += it }
 
     private fun noticeViews(activity: ComponentActivity): Int {
@@ -165,7 +264,7 @@ class ConsentHostTest {
 
     // Invoke production presenter actions while testing the actual host's final event closure.
     private fun presenter(): ConsentPresenter? {
-        val field = ConsentHost::class.java.getDeclaredField("active").apply { isAccessible = true }
+        val field = ConsentHost::class.java.getDeclaredField("held").apply { isAccessible = true }
         val session = field.get(ConsentHost) ?: return null
         return session.javaClass.getDeclaredField("presenter").apply { isAccessible = true }.get(session) as ConsentPresenter
     }

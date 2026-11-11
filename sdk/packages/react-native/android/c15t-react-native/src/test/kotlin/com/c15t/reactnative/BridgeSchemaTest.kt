@@ -1,6 +1,7 @@
 package com.c15t.reactnative
 
 import com.c15t.consentui.ConsentHostOutcome
+import com.c15t.consentui.ConsentHostPresentation
 import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
@@ -79,8 +80,8 @@ class BridgeSchemaTest {
 			"snapshotEvent" to C15tPayload.snapshotEvent(3),
 			"initializedEvent" to C15tPayload.initializedEvent(3),
 			"errorEvent" to C15tPayload.errorEvent(KernelError("transport-unavailable", "offline")),
-			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.Presented("one")),
-			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one")),
+			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
+			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
 			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.NotRequired),
 			"presenterOutcome" to C15tPayload.consentHostOutcome(ConsentHostOutcome.Committed("one", 4)),
 			"presenterOutcome" to C15tPayload.consentHostOutcome(ConsentHostOutcome.Unavailable("one", 4)),

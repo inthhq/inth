@@ -1,6 +1,7 @@
 package com.c15t.reactnative
 
 import com.c15t.consentui.ConsentHostOutcome
+import com.c15t.consentui.ConsentHostPresentation
 import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
@@ -159,6 +160,9 @@ object C15tPayload {
 	 * `T | null` is present as an explicit null, so a JavaScript reader never has to
 	 * branch on presence.
 	 *
+	 * `promptOwedSince` is added here, always present and `null` while nothing is owed. The
+	 * core tracks it but it is not kernel state, so [SnapshotWire] does not carry it.
+	 *
 	 * `privacySignals.gpc` goes out untouched as the `detected` / `override` /
 	 * `active` triple the core computes. It is what makes a GPC denial explainable
 	 * from the payload alone: `active` is the reason a category is denied, and
@@ -192,6 +196,9 @@ object C15tPayload {
 			}
 		}
 		conformed["overrides"] = JsonObject(conformedOverrides)
+		// Not kernel state, so SnapshotWire leaves it out; JavaScript reads it to tell a new
+		// owed prompt from one it already presented, even when it skipped the snapshots between.
+		conformed["promptOwedSince"] = snapshot.promptOwedSince?.let(::JsonPrimitive) ?: JsonNull
 		return encode(JsonObject(conformed))
 	}
 
@@ -291,10 +298,12 @@ object C15tPayload {
 				is ConsentHostSession.Presented -> {
 					put("sessionId", session.sessionId)
 					put("status", "presented")
+					put("presentation", presentation(session.presentation))
 				}
 				is ConsentHostSession.AlreadyPresented -> {
 					put("sessionId", session.sessionId)
 					put("status", "already-presented")
+					put("presentation", presentation(session.presentation))
 				}
 				ConsentHostSession.NotRequired -> {
 					put("sessionId", JsonNull)
@@ -303,6 +312,11 @@ object C15tPayload {
 			}
 		},
 	)
+
+	private fun presentation(value: ConsentHostPresentation): String = when (value) {
+		ConsentHostPresentation.PROMPT -> "prompt"
+		ConsentHostPresentation.PREFERENCES -> "preferences"
+	}
 
 	/** An `onConsentPresenterOutcome` event, in the `ConsentPresenterOutcome` shape. */
 	fun consentHostOutcome(outcome: ConsentHostOutcome): String = encode(

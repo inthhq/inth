@@ -1,20 +1,11 @@
 // #region docs:swift-uikit-app title="AppDelegate.swift"
+import C15tApple
+import C15tConsentUI
 import SwiftUI
 import UIKit
 
 @main
-@MainActor
 final class AppDelegate: UIResponder, UIApplicationDelegate {
-    private(set) var consent: ConsentModel?
-
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-    ) -> Bool {
-        consent = ConsentModel(backendURL: URL(string: "https://your-project.inth.app")!)
-        return true
-    }
-
     func application(
         _ application: UIApplication,
         configurationForConnecting session: UISceneSession,
@@ -27,7 +18,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-@MainActor
 final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
 
@@ -36,13 +26,16 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         willConnectTo session: UISceneSession,
         options connectionOptions: UIScene.ConnectionOptions
     ) {
-        guard let scene = scene as? UIWindowScene,
-              let consent = (UIApplication.shared.delegate as? AppDelegate)?.consent else { return }
+        guard let scene = scene as? UIWindowScene else { return }
         let window = UIWindow(windowScene: scene)
-        window.rootViewController = UIHostingController(rootView: ConsentRoot(
-            consent: consent,
+        window.rootViewController = ConsentRootViewController(
+            root: UIHostingController(rootView: ContentView()),
+            configuration: C15tAppleConfiguration(
+                transport: .hosted(URL(string: "https://your-project.inth.app")!),
+                consentCategories: [.necessary, .measurement, .marketing]
+            ),
             privacyPolicyURL: URL(string: "https://example.com/privacy")!
-        ))
+        )
         window.makeKeyAndVisible()
         self.window = window
     }
