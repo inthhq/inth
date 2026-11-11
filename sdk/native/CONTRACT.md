@@ -931,7 +931,7 @@ cannot rescue bytes the producer already refused on its own terms.
 
 Commit refusal reasons are `invalid-intent`, `no-subject`, `not-bootstrapped`,
 `policy-pending`, `encode-failed`, `queue-write-failed` and `concurrent-change`,
-plus the IAB and bundled-policy refusals `bundled-policy-expired`,
+plus the IAB and bundled-policy refusals `bundled-policy-unusable`,
 `additional-consent-list-stale`, `additional-consent-unavailable`,
 `iab-draft-required`, `iab-unavailable`, `iab-list-stale`, `iab-choices-required`,
 `invalid-iab-choices` and `invalid-action-time`. `COMMIT_FAILURE_REASONS` in

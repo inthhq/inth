@@ -34,6 +34,7 @@ export const FAKE_BOOTSTRAP = {
 	maxSupportedProtocolVersion: 1,
 	minSupportedProtocolVersion: 1,
 	nativeSdkVersion: 'rn->9.9.9',
+	nativeUI: true,
 	protocolVersion: 1,
 	subjectId: 'sub-1',
 };

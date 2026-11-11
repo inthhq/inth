@@ -25,6 +25,7 @@ import {
 	normalizeBridgeField,
 	renderBridgeSchema,
 } from '../bridge-schema';
+import { withAdditiveSnapshotDefaults } from '../wire-shape';
 
 const PROTOCOL_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),
@@ -127,10 +128,13 @@ describe('describeBridgePayloadDrift', () => {
 		).expected.snapshot as Record<string, unknown>;
 
 		expect(
-			describeBridgePayloadDrift('snapshot', {
-				...snapshot,
-				location: { country: 'DE', regionCode: null },
-			})
+			describeBridgePayloadDrift(
+				'snapshot',
+				withAdditiveSnapshotDefaults({
+					...snapshot,
+					location: { country: 'DE', regionCode: null },
+				})
+			)
 		).toEqual([
 			'location.countryCode: required, absent from the payload',
 			'location.country: not a key this payload declares',
@@ -143,6 +147,8 @@ describe('describeBridgePayloadDrift', () => {
 		]);
 	});
 
+	// The fixtures are kernel output, so they carry no bridge-added key; the client fills
+	// those the same way before it grades a payload.
 	test('accepts every snapshot the kernel fixtures pin', () => {
 		const index = JSON.parse(
 			readFileSync(resolve(PROTOCOL_DIR, 'index.json'), 'utf8')
@@ -161,7 +167,10 @@ describe('describeBridgePayloadDrift', () => {
 		const drifted = snapshots
 			.map(({ label, snapshot }) => ({
 				label,
-				problems: describeBridgePayloadDrift('snapshot', snapshot),
+				problems: describeBridgePayloadDrift(
+					'snapshot',
+					withAdditiveSnapshotDefaults(snapshot as Record<string, unknown>)
+				),
 			}))
 			.filter(({ problems }) => problems.length > 0);
 
@@ -263,7 +272,7 @@ describe('commitResult.reason', () => {
 		expect(undeclared).toEqual([]);
 	});
 
-	test.each(['bundled-policy-expired', 'invalid-additional-consent'])(
+	test.each(['bundled-policy-unusable', 'invalid-additional-consent'])(
 		'a legitimate refusal (%s) is not reported as drift',
 		(reason) => {
 			expect(

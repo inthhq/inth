@@ -93,7 +93,7 @@ export interface NativeIABChoices {
  * configuration), `iab-list-stale` (the vendor list expired), `iab-draft-required`
  * (no `revision`), `iab-choices-required`, `invalid-iab-choices` (IDs or legal
  * bases the list does not allow) and `additional-consent-unavailable`. Any
- * commit can also meet `bundled-policy-expired`, `additional-consent-list-stale`
+ * commit can also meet `bundled-policy-unusable`, `additional-consent-list-stale`
  * and `invalid-action-time` (the device clock is not usable).
  */
 export const COMMIT_FAILURE_REASONS = [
@@ -106,7 +106,7 @@ export const COMMIT_FAILURE_REASONS = [
 	'concurrent-change',
 	// IAB authority and bundled-policy refusals, which both native cores also
 	// copy into `reason`.
-	'bundled-policy-expired',
+	'bundled-policy-unusable',
 	'additional-consent-list-stale',
 	'additional-consent-unavailable',
 	'iab-draft-required',

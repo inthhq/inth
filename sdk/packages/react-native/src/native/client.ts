@@ -499,7 +499,9 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 		);
 	}
 
-	warnBridgeDrift('bootstrap', parsed);
+	// An older binary leaves out keys added since protocol version 1; fill what
+	// their absence means before grading the shape, so that is not drift.
+	warnBridgeDrift('bootstrap', { ...ADDITIVE_BOOTSTRAP_DEFAULTS, ...parsed });
 
 	const {
 		commitRevision,

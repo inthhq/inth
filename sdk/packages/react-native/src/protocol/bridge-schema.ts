@@ -80,16 +80,20 @@ export interface BridgeFields {
  */
 export const BRIDGE_PAYLOADS = {
 	bootstrap: {
+		commitRevision: 'boolean',
 		hasStoredSnapshot: 'boolean',
 		maxSupportedProtocolVersion: 'number',
 		minSupportedProtocolVersion: 'number',
 		nativeSdkVersion: 'string',
+		nativeUI: 'boolean',
 		protocolVersion: 'number',
 		subjectId: 'string | null',
 	},
 	commitIntent: {
-		action: { enum: ['all', 'necessary', 'explicit'] },
+		action: { enum: ['all', 'necessary', 'explicit', 'iab'] },
+		choices: { fields: {}, optional: true },
 		consents: { fields: {}, optional: true },
+		revision: 'number?',
 	},
 	commitResult: {
 		confirmed: 'array',
@@ -123,6 +127,7 @@ export const BRIDGE_PAYLOADS = {
 		sessionId: 'string',
 	},
 	presenterSession: {
+		presentation: { enum: ['prompt', 'preferences'], optional: true },
 		sessionId: 'string | null',
 		status: { enum: ['presented', 'already-presented', 'not-required'] },
 	},
@@ -144,6 +149,7 @@ export const BRIDGE_PAYLOADS = {
 			fields: { categories: 'object', version: 'number' },
 			nullable: true,
 		},
+		gppString: 'string | null',
 		iab: 'object | null',
 		location: {
 			fields: { countryCode: 'string | null', regionCode: 'string | null' },
@@ -172,6 +178,7 @@ export const BRIDGE_PAYLOADS = {
 				},
 			},
 		},
+		promptOwedSince: 'number | null',
 		promptRequirement: {
 			fields: {
 				kind: { enum: ['choice', 'notice', 'none'] },
