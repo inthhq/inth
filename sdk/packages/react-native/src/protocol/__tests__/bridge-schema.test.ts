@@ -310,7 +310,9 @@ describe('commitResult.reason', () => {
 /** Let every drift check already scheduled load the checker and report. */
 const flushDriftChecks = async (): Promise<void> => {
 	await import('../bridge-schema');
-	await new Promise((settle) => setTimeout(settle, 0));
+	await new Promise<void>((_resolve) => {
+		setTimeout(_resolve, 0);
+	});
 };
 
 describe('the consent client at the boundary', () => {

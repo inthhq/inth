@@ -275,7 +275,9 @@ core's own business; the JSON a bridge emits is not.
 So no compiler sees a bridge key, and a test does instead. `BRIDGE_PAYLOADS` in
 `packages/react-native/src/protocol/bridge-schema.ts` names every key of every
 payload the TurboModule carries, and `native/protocol/bridge/payloads.json` is
-generated from it (`generate:bridge-schema`). `bridge-schema.type-test.ts` holds the
+generated from it (`generate:bridge-schema`). It ships behind the
+`@c15t/react-native/bridge-schema` subpath, not the main entry, and the client
+loads it only in a `__DEV__` build, so a release app carries none of it. `bridge-schema.type-test.ts` holds the
 TypeScript types to the table, and `BridgeSchemaTest.kt` and
 `C15tBridgeSchemaTests.swift` hold every encoder and decoder to the JSON. A key
 renamed on one side fails one of the three. Codegen object types would not do this

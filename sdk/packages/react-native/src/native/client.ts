@@ -45,6 +45,7 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
+import type * as BridgeSchema from '../protocol/bridge-schema';
 import type { BridgePayloadName } from '../protocol/bridge-schema';
 import type { AllConsentNames } from '../protocol/vocabulary';
 import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
@@ -415,6 +416,33 @@ declare const __DEV__: boolean | undefined;
 const reportedBridgeDrift = new Set<string>();
 
 /**
+ * Report the drift {@link warnBridgeDrift} found, once the checker has loaded.
+ *
+ * @param schema - The loading bridge-schema module.
+ * @param name - Which payload `parsed` is.
+ * @param parsed - The parsed JSON.
+ */
+const reportBridgeDrift = async function reportBridgeDrift(
+	schema: Promise<typeof BridgeSchema>,
+	name: BridgePayloadName,
+	parsed: unknown
+): Promise<void> {
+	const { describeBridgePayloadDrift } = await schema;
+	const problems = describeBridgePayloadDrift(name, parsed, {
+		allowUnknownKeys: true,
+	});
+	const signature = `${name}\n${problems.join('\n')}`;
+	if (problems.length === 0 || reportedBridgeDrift.has(signature)) {
+		return;
+	}
+	reportedBridgeDrift.add(signature);
+	console.warn(
+		`c15t ConsentClient: the native ${name} payload does not match the declared wire shape.`,
+		problems
+	);
+};
+
+/**
  * Name the keys a native payload got wrong, once per distinct set of problems,
  * in a development build.
  *
@@ -434,23 +462,9 @@ const warnBridgeDrift = function warnBridgeDrift(
 	name: BridgePayloadName,
 	parsed: unknown
 ): void {
+	// The import stays inside this branch: started anywhere else, Metro would keep it.
 	if (typeof __DEV__ !== 'undefined' && __DEV__ && !isProduction()) {
-		void import('../protocol/bridge-schema').then(
-			({ describeBridgePayloadDrift }) => {
-				const problems = describeBridgePayloadDrift(name, parsed, {
-					allowUnknownKeys: true,
-				});
-				const signature = `${name}\n${problems.join('\n')}`;
-				if (problems.length === 0 || reportedBridgeDrift.has(signature)) {
-					return;
-				}
-				reportedBridgeDrift.add(signature);
-				console.warn(
-					`c15t ConsentClient: the native ${name} payload does not match the declared wire shape.`,
-					problems
-				);
-			}
-		);
+		void reportBridgeDrift(import('../protocol/bridge-schema'), name, parsed);
 	}
 };
 
