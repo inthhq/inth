@@ -269,12 +269,18 @@ internal fun AnalyticsConsentBinding(
  * withdrawal. An overtaken update records nothing when it returns; it asks for
  * current authority to be reapplied, so a grant that completes late cannot leave the
  * vendor enabled.
+ *
+ * By default a vendor failure in the first apply turns the vendor off, detaches and
+ * throws from the constructor. With [keepAfterInitialFailure], it is reported through
+ * [onError] instead and the binding stays attached, so the next publication or [sync]
+ * applies again, as after any later failure.
  */
 internal class ConsentBinding<State>(
 	private val core: ConsentCore,
 	category: ConsentCategory,
 	private val onError: (Exception) -> Unit,
 	private val read: ((ConsentCategory) -> Boolean) -> State,
+	keepAfterInitialFailure: Boolean = false,
 	private val apply: (previous: State?, state: State, current: () -> State) -> Unit,
 ) : AutoCloseable {
 	private val lock = Any()
@@ -305,11 +311,7 @@ internal class ConsentBinding<State>(
 				reconcile()
 			} catch (error: Exception) {
 				// A vendor failure must not prevent other observers receiving withdrawal.
-				try {
-					onError(error)
-				} catch (reporterError: Exception) {
-					Log.e("c15t", "Analytics integration error reporter failed", reporterError)
-				}
+				report(error)
 			}
 		}
 	}
@@ -321,18 +323,35 @@ internal class ConsentBinding<State>(
 		}
 		try {
 			reconcile()
+		} catch (error: Exception) {
+			if (!keepAfterInitialFailure) failConstruction(error)
+			// Nothing was recorded as applied, so the next publication or sync retries.
+			report(error)
 		} catch (error: Throwable) {
-			synchronized(lock) { closed = true }
-			detach()
-			// An enable can take effect before its vendor call reports failure.
-			try {
-				synchronized(lock) { needsSync = true }
-				reconcile()
-			} catch (cleanupError: Throwable) {
-				if (cleanupError !== error) error.addSuppressed(cleanupError)
-			}
-			throw error
+			failConstruction(error)
 		}
+	}
+
+	private fun report(error: Exception) {
+		try {
+			onError(error)
+		} catch (reporterError: Exception) {
+			Log.e("c15t", "Analytics integration error reporter failed", reporterError)
+		}
+	}
+
+	/** Turn the vendor off, detach and rethrow a failure from the first apply. */
+	private fun failConstruction(error: Throwable): Nothing {
+		synchronized(lock) { closed = true }
+		detach()
+		// An enable can take effect before its vendor call reports failure.
+		try {
+			synchronized(lock) { needsSync = true }
+			reconcile()
+		} catch (cleanupError: Throwable) {
+			if (cleanupError !== error) error.addSuppressed(cleanupError)
+		}
+		throw error
 	}
 
 	private fun current(): State = read { category -> !closed && core.isAllowed(category) }

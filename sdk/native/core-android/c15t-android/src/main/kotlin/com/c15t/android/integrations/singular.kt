@@ -13,7 +13,7 @@ import com.c15t.core.model.ConsentCategory
  * data-sharing limit; build the `SingularConfig` with `withLimitDataSharing` there
  * and return what `Singular.init` returns. If it returns `false` or throws, the
  * helper reports the failure, makes no tracking call, and tries [start] again on
- * the next update or [sync]. Restricting calls still follow consent while it may
+ * the next update or [sync], including when this happens during construction. Restricting calls still follow consent while it may
  * have started. Once Singular started, the helper calls
  * [resumeAllTracking] and [trackingOptIn] once per grant. While [category] has never been granted in this process, the
  * helper makes no Singular call, because Singular is not running. After it has
@@ -34,8 +34,9 @@ import com.c15t.core.model.ConsentCategory
  * @param stopAllTracking Call `Singular.stopAllTracking`.
  * @param resumeAllTracking Call `Singular.resumeAllTracking`.
  * @param trackingOptIn Call `Singular.trackingOptIn`.
- * @param onError Report automatic vendor-update failures without throwing. Explicit
- * construction, sync and close failures still throw to their caller.
+ * @param onError Report vendor failures during construction and automatic updates
+ * without throwing; the helper stays connected and applies consent again on the next
+ * update or [sync]. Explicit sync and close failures still throw to their caller.
  * @throws IllegalArgumentException If category is necessary.
  */
 class SingularIntegration(
@@ -57,7 +58,8 @@ class SingularIntegration(
 	// Set only once start succeeded, so a failed start is tried again.
 	@Volatile private var started = false
 
-	private val binding = ConsentBinding(core, category, onError, trackingAndAds(category)) { previous, (tracking, ads), current ->
+	// A failed start at launch must not drop the helper: it retries on the next update.
+	private val binding = ConsentBinding(core, category, onError, trackingAndAds(category), keepAfterInitialFailure = true) { previous, (tracking, ads), current ->
 		if (tracking) {
 			// Restricting comes first, so a start in flight or failing cannot delay it.
 			var limited = false

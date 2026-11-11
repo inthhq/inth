@@ -47,9 +47,12 @@ before that.
 
 If starting fails (Swift and Kotlin `start` return `false`, or it throws or
 rejects), the helper reports it, makes no tracking call, and tries `start`
-again on the next consent update or `sync()`. Calls that restrict tracking,
-such as `stopAllTracking()` and `limitDataSharing(true)`, still follow consent
-after a failed start, because Singular may have started anyway.
+again on the next consent update or `sync()`. That holds at launch too, when a
+saved grant makes the helper start Singular as you create it: the helper stays
+connected and reports the failure instead of throwing (on React Native,
+`ready` rejects). Calls that restrict tracking, such as `stopAllTracking()` and
+`limitDataSharing(true)`, still follow consent after a failed start, because
+Singular may have started anyway.
 
 ## Before you start
 

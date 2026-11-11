@@ -248,6 +248,49 @@ class SingularIntegrationTest {
 	}
 
 	@Test
+	fun `a failed start at construction is reported and retried, and a withdrawal still stops`() {
+		val core = kernel()
+		assertTrue(core.save(CommitIntent.All).ok)
+		val calls = mutableListOf<String>()
+		val failures = mutableListOf<Exception>()
+		val outcomes = ArrayDeque(listOf(false, true))
+		// Launch with stored consent: construction applies it, and the first start fails.
+		val integration = SingularIntegration(core,
+			start = { calls += "start:$it"; outcomes.removeFirst() },
+			limitDataSharing = { calls += "limit:$it" },
+			stopAllTracking = { calls += "stop" },
+			resumeAllTracking = { calls += "resume" },
+			trackingOptIn = { calls += "optIn" },
+			onError = failures::add,
+		)
+		assertEquals("a failed start makes no tracking call", listOf("start:false"), calls.drain())
+		assertEquals(listOf("Singular did not start"), failures.map { it.message })
+		integration.sync()
+		assertEquals(listOf("start:false", "limit:false", "resume", "optIn"), calls.drain())
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("stop", "limit:true"), calls.drain())
+		integration.close()
+	}
+
+	@Test
+	fun `a withdrawal after a failed start at construction still stops`() {
+		val core = kernel()
+		assertTrue(core.save(CommitIntent.All).ok)
+		val calls = mutableListOf<String>()
+		val integration = SingularIntegration(core,
+			start = { calls += "start:$it"; false },
+			limitDataSharing = { calls += "limit:$it" },
+			stopAllTracking = { calls += "stop" },
+			resumeAllTracking = { calls += "resume" },
+			trackingOptIn = { calls += "optIn" },
+			onError = {},
+		)
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		assertEquals(listOf("start:false", "stop", "limit:true"), calls)
+		integration.close()
+	}
+
+	@Test
 	fun `a marketing-only change while tracking changes only the sharing limit`() {
 		val core = kernel()
 		val calls = mutableListOf<String>()

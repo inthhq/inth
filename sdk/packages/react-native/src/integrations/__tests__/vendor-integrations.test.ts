@@ -581,4 +581,48 @@ describe('Singular start', () => {
 		expect(calls).toEqual(['start:false', 'stop', 'limit:true']);
 		await integration.disconnect();
 	});
+
+	test('a failed start at connect is reported and retried, and a withdrawal still stops', async () => {
+		// Launch with stored consent: connecting applies it, and the first start fails.
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Singular init threw');
+		const onError = vi.fn();
+		let fail = true;
+		const integration = connectSingular(
+			singularClient(calls, () => (fail ? Promise.reject(failure) : undefined)),
+			{ onError }
+		);
+		await expect(integration.ready).rejects.toBe(failure);
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		expect(calls.splice(0)).toEqual(['start:false']);
+		fail = false;
+		await integration.sync();
+		await settle(calls);
+		expect(calls.splice(0)).toEqual([
+			'start:false',
+			'limit:false',
+			'resume',
+			'optIn',
+		]);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['stop', 'limit:true']);
+		await integration.disconnect();
+	});
+
+	test('a withdrawal after a failed start at connect still stops', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Singular init threw');
+		const integration = connectSingular(
+			singularClient(calls, () => Promise.reject(failure)),
+			{ onError: vi.fn() }
+		);
+		await expect(integration.ready).rejects.toBe(failure);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['start:false', 'stop', 'limit:true']);
+		await integration.disconnect();
+	});
 });

@@ -148,6 +148,47 @@ final class EngagementIntegrationTests: XCTestCase {
         await core.waitUntilIdle()
     }
 
+    func testSingularFailedStartAtConstructionIsRetriedAndWithdrawalStillStops() async throws {
+        let core = try await resolvedCore()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let calls = VendorCalls()
+        let outcomes = StartOutcomes([false, true])
+        // Launch with stored consent: construction applies it, and the first start fails.
+        let integration = SingularIntegration(
+            core: core,
+            start: { calls.append("start:\($0)"); return outcomes.next() },
+            limitDataSharing: { calls.append("limit:\($0)") },
+            stopAllTracking: { calls.append("stop") },
+            resumeAllTracking: { calls.append("resume") },
+            trackingOptIn: { calls.append("optIn") }
+        )
+        XCTAssertEqual(calls.drain(), ["start:false"], "a failed start makes no tracking call")
+        integration.sync()
+        XCTAssertEqual(calls.drain(), ["start:false", "limit:false", "resume", "optIn"])
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        XCTAssertEqual(calls.drain(), ["stop", "limit:true"])
+        integration.cancel()
+        await core.waitUntilIdle()
+    }
+
+    func testSingularWithdrawalAfterAFailedStartAtConstructionStillStops() async throws {
+        let core = try await resolvedCore()
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let calls = VendorCalls()
+        let integration = SingularIntegration(
+            core: core,
+            start: { calls.append("start:\($0)"); return false },
+            limitDataSharing: { calls.append("limit:\($0)") },
+            stopAllTracking: { calls.append("stop") },
+            resumeAllTracking: { calls.append("resume") },
+            trackingOptIn: { calls.append("optIn") }
+        )
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        XCTAssertEqual(calls.all, ["start:false", "stop", "limit:true"])
+        integration.cancel()
+        await core.waitUntilIdle()
+    }
+
     func testSingularMarketingOnlyChangeWhileTrackingChangesOnlyTheLimit() async throws {
         let core = try await resolvedCore()
         let calls = VendorCalls()
