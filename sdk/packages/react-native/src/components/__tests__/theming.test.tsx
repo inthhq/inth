@@ -814,6 +814,25 @@ describe('theme', () => {
 		});
 		expect(keyword.title).toBeUndefined();
 	});
+
+	test('one theme names each font per platform, as the Expo plugin takes it', () => {
+		const theme = createConsentTheme({
+			typography: {
+				fontFamily: { android: 'inter_regular', ios: 'Inter-Regular' },
+				headlineFont: { android: 'fraunces_bold', ios: 'Fraunces-Bold' },
+			},
+		});
+
+		setPlatformOS('ios');
+		const ios = probeFonts({ theme });
+		expect(ios.title).toBe('Fraunces-Bold');
+		expect(ios.description).toBe('Inter-Regular');
+
+		setPlatformOS('android');
+		const android = probeFonts({ theme });
+		expect(android.title).toBe('fraunces_bold');
+		expect(android.description).toBe('inter_regular');
+	});
 });
 
 describe('platform behaviour', () => {

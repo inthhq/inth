@@ -9,7 +9,12 @@
  */
 
 import { useMemo } from 'react';
-import { I18nManager, useColorScheme, useWindowDimensions } from 'react-native';
+import {
+	I18nManager,
+	Platform,
+	useColorScheme,
+	useWindowDimensions,
+} from 'react-native';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 
 import { useConsentSafeArea } from '../../hooks/use-consent-safe-area';
@@ -27,6 +32,7 @@ import {
 } from './create-consent-theme';
 import type {
 	ConsentColorScheme,
+	ConsentFontName,
 	ConsentTheme,
 	ConsentTypeStyle,
 } from './create-consent-theme';
@@ -471,6 +477,21 @@ const HEADLINE_KEYWORDS = new Set([
 ]);
 
 /**
+ * The name a font goes by on the platform this runs on.
+ *
+ * @param font - One name for both platforms, or one per platform.
+ * @returns The name to draw with, or `undefined` for the platform face.
+ */
+const fontOnThisPlatform = function fontOnThisPlatform(
+	font: ConsentFontName | undefined
+): string | undefined {
+	if (font === undefined || typeof font === 'string') {
+		return font;
+	}
+	return Platform.OS === 'android' ? font.android : font.ios;
+};
+
+/**
  * Put the theme's faces on every part that draws text: `fontFamily` on all of
  * them, and a named `headlineFont` on the heading.
  *
@@ -482,7 +503,8 @@ const withFonts = function withFonts(
 	parts: ConsentResolvedParts,
 	typography: ConsentTheme['typography']
 ): ConsentResolvedParts {
-	const { fontFamily, headlineFont } = typography;
+	const fontFamily = fontOnThisPlatform(typography.fontFamily);
+	const headlineFont = fontOnThisPlatform(typography.headlineFont);
 	const heading =
 		headlineFont === undefined ||
 		HEADLINE_KEYWORDS.has(headlineFont.trim().toLowerCase())

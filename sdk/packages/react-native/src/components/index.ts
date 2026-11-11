@@ -61,6 +61,7 @@ export type {
 	ConsentThemeOptions,
 	ConsentThemeRadius,
 	ConsentThemeSpacing,
+	ConsentFontName,
 	ConsentThemeTypography,
 	ConsentTypeRoles,
 	ConsentTypeStyle,
