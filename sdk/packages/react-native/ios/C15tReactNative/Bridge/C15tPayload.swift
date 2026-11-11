@@ -103,6 +103,7 @@ public enum C15tPayload {
         "translations",
         "nextDeadline",
         "error",
+        "gppString",
     ]
 
     private static let overridesNullKeys = ["country", "region", "gpc"]

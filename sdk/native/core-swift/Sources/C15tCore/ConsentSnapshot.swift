@@ -447,6 +447,14 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
     /// field null rather than moving `policyPending` or the deny-all rule. See
     /// ``ConsentCore``'s init fold.
     public let iab: KernelIABState?
+    /// The IAB GPP string for this state, or `nil` when GPP is off or no section applies.
+    ///
+    /// Derived, never decided: ``ConsentCore`` fills it with ``GPPResolver`` from this
+    /// snapshot, the matched rule and the committed TC String each time it hands a
+    /// snapshot out. The stored envelope never carries it. Encoded as `null` when absent,
+    /// so the key is always on the wire.
+    public let gppString: String?
+
     /// The ``revision`` at which the prompt owed now became owed, or `nil` while nothing is owed.
     ///
     /// It changes every time a prompt becomes owed again, including the same requirement owed
@@ -493,7 +501,8 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
         nextDeadline: Int64? = nil,
         evaluatedAt: Int64 = 0,
         error: CoreErrorInfo? = nil,
-        iab: KernelIABState? = nil
+        iab: KernelIABState? = nil,
+        gppString: String? = nil
     ) {
         self.revision = revision
         self.policyPending = policyPending
@@ -516,6 +525,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
         self.evaluatedAt = evaluatedAt
         self.error = error
         self.iab = iab
+        self.gppString = gppString
     }
 
     /// The first-launch snapshot: not ready, policy pending, nothing permitted
@@ -563,6 +573,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
         /// dropped it would answer an init that served no list by forgetting the list
         /// the dialog is already showing.
         var iab: KernelIABState?
+        var gppString: String?
 
         init(current: ConsentSnapshot) {
             policyPending = current.policyPending
@@ -585,6 +596,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
             evaluatedAt = current.evaluatedAt
             error = current.error
             iab = current.iab
+            gppString = current.gppString
         }
 
         func build(revision: Int) -> ConsentSnapshot {
@@ -609,7 +621,8 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
                 nextDeadline: nextDeadline,
                 evaluatedAt: evaluatedAt,
                 error: error,
-                iab: iab
+                iab: iab,
+                gppString: gppString
             )
         }
     }
@@ -638,6 +651,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
         case evaluatedAt
         case error
         case iab
+        case gppString
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -682,6 +696,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
         // Always emitted: `null` when no list has been served, the list when one has.
         // See the property comment.
         try container.encode(iab, forKey: .iab)
+        try container.encode(gppString, forKey: .gppString)
     }
 
     public init(from decoder: any Decoder) throws {
@@ -767,5 +782,7 @@ public struct ConsentSnapshot: Sendable, Codable, Equatable {
         // cannot reproduce throws, and the store treats an unreadable envelope as
         // nothing stored.
         iab = try container.decodeIfPresent(KernelIABState.self, forKey: .iab)
+        // Derived on the way out, so a stored copy is never trusted.
+        gppString = nil
     }
 }

@@ -75,6 +75,11 @@ const EVERY_KEY_PROPS = {
 	consentCategories: ['necessary', 'functionality', 'measurement', 'marketing'],
 	domain: 'app.example.com',
 	forceGPC: true,
+	gpp: {
+		mspaMode: 'opt-out-option',
+		optOutCategories: ['marketing', 'measurement'],
+		tcf: false,
+	},
 	iab: {
 		cmpId: 1234,
 		cmpVersion: 7,

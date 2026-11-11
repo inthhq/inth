@@ -60,6 +60,7 @@ export const SNAPSHOT_KEYS = [
 	'evaluatedAt',
 	'error',
 	'iab',
+	'gppString',
 ] as const;
 
 /**
@@ -86,10 +87,12 @@ export const BRIDGE_SNAPSHOT_KEYS = ['promptOwedSince'] as const;
  * this table, with the default that means "this build has no such state". A key whose
  * absence cannot be answered that way needs a protocol version instead.
  *
- * `promptOwedSince: null` means the build names no owed prompt, so auto-present falls
- * back to telling prompts apart by the transitions it observes.
+ * `gppString: null` means the build writes no GPP string, which is also what a build
+ * with GPP off reports. `promptOwedSince: null` means the build names no owed prompt,
+ * so auto-present falls back to telling prompts apart by the transitions it observes.
  */
 export const ADDITIVE_SNAPSHOT_DEFAULTS = {
+	gppString: null,
 	promptOwedSince: null,
 } as const satisfies Partial<
 	Record<

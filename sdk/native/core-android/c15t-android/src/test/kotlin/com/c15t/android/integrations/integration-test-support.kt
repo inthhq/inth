@@ -26,7 +26,7 @@ internal fun kernel(store: MemoryStore = MemoryStore(), online: Boolean = true):
 		transport = object : C15tTransport {
 			override fun init(context: InitContext): TransportOutcome =
 				if (online) TransportOutcome.Success(
-					Json.parseToJsonElement("""{"policyResolution":{"version":1,"status":"matched","policyId":"app-policy","matchedBy":"country","fingerprints":{"policy":"policy-1","choice":"choice-1","notice":"notice-1"},"policy":{"id":"app-policy","model":"opt-in","prompt":"choice","scopeMode":"permissive","validity":{"choiceMs":2592000000,"noticeMs":15552000000}}},"policySnapshotToken":"snapshot-1"}"""),
+					Json.parseToJsonElement("""{"policyResolution":{"version":1,"status":"matched","policyId":"app-policy","matchedBy":"country","fingerprints":{"policy":"policy-1","choice":"choice-1","notice":"notice-1"},"policy":{"id":"app-policy","model":"opt-in","prompt":"choice","scopeMode":"permissive","rights":["disclosure","preferences"],"validity":{"choiceMs":2592000000,"noticeMs":15552000000}}},"policySnapshotToken":"snapshot-1"}"""),
 					emptyMap(),
 				) else TransportOutcome.NetworkFailure("offline")
 			override fun save(entry: QueuedSave): SaveOutcome = SaveOutcome.Unavailable("offline")

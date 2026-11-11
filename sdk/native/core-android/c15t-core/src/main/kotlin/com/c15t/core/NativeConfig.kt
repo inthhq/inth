@@ -59,6 +59,8 @@ import com.c15t.core.transport.C15tProtocol
  * @property extraHeaders Extra request headers, for a deployment that needs its own auth or tenant
  *   header.
  * @property maxPendingSaves Offline write queue depth; the contract maximum is 20.
+ * @property gpp Turns on the IAB GPP string: [com.c15t.core.model.ConsentSnapshot.gppString] and the `IABGPP_*`
+ *   storage keys. `null`, the default, writes no GPP signal. See [com.c15t.core.gpp.GppOptions].
  */
 data class NativeConfig(
 	val backendUrl: String?,
@@ -90,6 +92,7 @@ data class NativeConfig(
 	 * error stream instead of starting as if no policy had been declared.
 	 */
 	val policyError: String? = null,
+	val gpp: com.c15t.core.gpp.GppOptions? = null,
 ) {
 	init {
 		require(iabListMaxAgeMs > 0)

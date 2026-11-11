@@ -6,6 +6,7 @@
  */
 
 export { useC15tBootstrap } from './use-c15t-bootstrap';
+export { useGPPString } from './use-gpp-string';
 export { useSnapshot } from './use-snapshot';
 export {
 	useConsentActions,

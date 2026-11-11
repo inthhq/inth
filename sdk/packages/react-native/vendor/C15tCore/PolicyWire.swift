@@ -21,6 +21,26 @@ private struct WireProblem: Error {
 /// `POLICY_CONTRACT_VERSION` in `@c15t/schema`.
 public let c15tPolicyContractVersion = 1
 
+/// A persistent right the matched rule keeps reachable: `PolicyRight` in
+/// `packages/schema/src/shared/policy-rule.ts`.
+public enum PolicyRight: String, Sendable, Codable, CaseIterable, Comparable {
+    case disclosure
+    case preferences
+    case optOut = "opt-out"
+
+    public static func < (lhs: PolicyRight, rhs: PolicyRight) -> Bool { lhs.rawValue < rhs.rawValue }
+
+    /// The rights every rule of `model` carries: `requiredPolicyRights` in
+    /// `packages/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
+    static func required(for model: ConsentModel) -> [PolicyRight] {
+        switch model {
+        case .none: return []
+        case .optOut: return [.disclosure, .optOut, .preferences]
+        case .optIn, .iab: return [.disclosure, .preferences]
+        }
+    }
+}
+
 /// The validated policy projection the evaluator consumes.
 ///
 /// Wildcards are already expanded and the fingerprints are computed once, at
@@ -41,6 +61,9 @@ package struct EvaluationPolicy: Sendable, Equatable {
     let choiceMaxAgeMs: Int64
     /// Milliseconds a notice dismissal stays valid.
     let noticeMaxAgeMs: Int64
+    /// The rule's persistent rights, sorted. They decide whether a GPP US section
+    /// applies and which notices it reports; see ``GPPResolver``.
+    let rights: [PolicyRight]
 
     package init(
         model: ConsentModel,
@@ -49,8 +72,10 @@ package struct EvaluationPolicy: Sendable, Equatable {
         scopeMode: PolicyScopeMode,
         gpcDenyCategories: [OptionalConsentCategory],
         choiceMaxAgeMs: Int64,
-        noticeMaxAgeMs: Int64
+        noticeMaxAgeMs: Int64,
+        rights: [PolicyRight]? = nil
     ) {
+        self.rights = (rights ?? PolicyRight.required(for: model)).sorted()
         self.model = model
         self.prompt = prompt
         self.scope = scope
@@ -505,7 +530,8 @@ enum PolicyWireReader {
                 scopeMode: scopeMode,
                 gpcDenyCategories: denyCategories.sorted { $0.rawValue < $1.rawValue },
                 choiceMaxAgeMs: choiceMs,
-                noticeMaxAgeMs: noticeMs
+                noticeMaxAgeMs: noticeMs,
+                rights: rightValues.compactMap(PolicyRight.init(rawValue:))
             )
         )
     }

@@ -97,7 +97,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         gpc: Bool? = nil,
         bundledPolicyResource: String? = nil,
         policyRulesResource: String? = nil,
-        iab: IABConfiguration? = nil
+        iab: IABConfiguration? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.autoBootstrap = autoBootstrap
         self.transportMode = transportMode
@@ -113,6 +114,7 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         self.bundledPolicyResource = bundledPolicyResource
         self.policyRulesResource = policyRulesResource
         self.iab = iab
+        self.gpp = gpp
     }
 
     /// Whether the launch hook should start the core.
@@ -164,6 +166,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
     /// declaration without one, or with any value out of range, leaves this `nil`
     /// and ``iabIssue(in:)`` explains why.
     public var iab: IABConfiguration?
+    /// GPP options, or `nil` to write no GPP signal. Read from the `com.c15t.gpp*` keys.
+    public var gpp: GPPOptions?
 
     /// Keys read out of `Info.plist`. All optional.
     public enum InfoPlistKey {
@@ -196,6 +200,15 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
         public static let iabPublisherCountryCode = "com.c15t.iab.publisherCountryCode"
         /// Optional consent screen number, 0 to 63. The core's default is 1.
         public static let iabConsentScreen = "com.c15t.iab.consentScreen"
+        /// `true` turns on the IAB GPP string and the `IABGPP_*` keys.
+        public static let gpp = "com.c15t.gpp"
+        /// `opt-out-option` or `service-provider`. Only for MSPA signatories.
+        public static let gppMspaMode = "com.c15t.gpp.mspaMode"
+        /// Categories whose refusal reports a GPP opt-out, as an array. Absent means
+        /// `["marketing"]`; an empty array, or the string `none`, means no category does.
+        public static let gppOptOutCategories = "com.c15t.gpp.optOutCategories"
+        /// `false` leaves the TCF EU section out of the GPP string.
+        public static let gppTCF = "com.c15t.gpp.tcf"
     }
 
     /// A key a host app may still have in `Info.plist` that this build does not model.
@@ -319,8 +332,48 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
                 var configuration = declared
                 if let code = iabConsentLanguage(language) { configuration.consentLanguage = code }
                 return configuration
-            }
+            },
+            gpp: declaredGPP(in: infoPlist)
         )
+    }
+
+    /// Read the GPP options a host declared: `nil` unless `com.c15t.gpp` is `true`.
+    ///
+    /// An MSPA mode this build does not name reads as no mode, which reports the
+    /// transaction as not covered rather than claiming a coverage nobody configured.
+    public static func declaredGPP(in infoPlist: [String: Any]) -> GPPOptions? {
+        guard infoPlist[InfoPlistKey.gpp] as? Bool == true else { return nil }
+        return GPPOptions(
+            mspaMode: (infoPlist[InfoPlistKey.gppMspaMode] as? String).flatMap(GPPMspaMode.init(rawValue:)),
+            optOutCategories: declaredGPPOptOutCategories(infoPlist[InfoPlistKey.gppOptOutCategories]),
+            tcf: infoPlist[InfoPlistKey.gppTCF] as? Bool ?? true
+        )
+    }
+
+    /// `com.c15t.gpp.optOutCategories`, keeping "not set" apart from "set to empty".
+    ///
+    /// An absent key keeps the default, `marketing`. A present key is the app's list: an
+    /// empty array, a blank string or `none` is the empty list, meaning no category drives
+    /// the sale, sharing and targeted advertising opt-outs, as `GPPOptions(optOutCategories: [])`
+    /// and web's `optOutCategories: []` mean. A string is read as comma-separated ids, the
+    /// shape Android's metadata takes. Names this build does not model are dropped.
+    public static func declaredGPPOptOutCategories(_ raw: Any?) -> [ConsentCategory] {
+        guard let raw else { return [.marketing] }
+        let names: [String]
+        switch raw {
+        case let list as [String]:
+            names = list
+        case let text as String:
+            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty || trimmed.lowercased() == "none" { return [] }
+            names = trimmed.components(separatedBy: ",")
+        default:
+            return [.marketing]
+        }
+        var seen = Set<ConsentCategory>()
+        return names
+            .compactMap { ConsentCategory(rawValue: $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+            .filter { seen.insert($0).inserted }
     }
 
     /// A language tag as a TCF consent language: its primary subtag in two uppercase letters, or
@@ -524,7 +577,8 @@ public struct C15tBridgeConfiguration: Sendable, Equatable {
                 if case let .failure(error) = result { return String(describing: error) }
                 return nil
             },
-            iab: iab
+            iab: iab,
+            gpp: gpp
         )
         // A core this bridge configures serves a React Native app, so requests say `rn`,
         // as the Android binding does.

@@ -67,6 +67,14 @@ own:
                     tested against that file. Firebase helpers send its four
                     Firebase types; later vendor helpers read the same mapping.
 
+    IAB GPP         off until the host passes `gpp` (Kotlin NativeConfig.gpp,
+                    Swift CoreConfig.gpp, the Expo plugin's `gpp` option). Then
+                    both cores derive one GPP string per state, publish it as
+                    `snapshot.gppString`, and write the IABGPP_* rows in the
+                    same publication as the IABTCF_* rows. Sections: US National
+                    (usnat, MSPA version 2) and TCF EU (the committed TC String,
+                    unchanged). See "IAB GPP" at the end of this document.
+
 `docs/internal/native-iab-commits.mdx` defines the native commit, migration,
 withdrawal and delivery contract, including the storage adapter requirements.
 
@@ -1302,11 +1310,12 @@ A snapshot key added without a protocol bump must be additive: its absence has t
 mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS`
 (`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
 client fills it before reading or grading the snapshot, so an older binary is
-neither `undefined` behind a typed field nor reported as drift. A key whose absence
-cannot be answered that way needs a new protocol version. `promptOwedSince` is
-such a key, and a bridge-added one (`BRIDGE_SNAPSHOT_KEYS`): an older binary names
+neither `undefined` behind a typed field nor reported as drift. `gppString` is
+one: an older binary has no GPP, so it reads as `null`. `promptOwedSince` is
+another, and a bridge-added one (`BRIDGE_SNAPSHOT_KEYS`): an older binary names
 no owed prompt, so it reads as `null`, and auto-present falls back to the
-transitions it observes.
+transitions it observes. A key whose absence cannot be answered that way needs a
+new protocol version.
 
 Conformance fixtures
 --------------------
@@ -1974,3 +1983,73 @@ and durable replay stay installed.
 The iOS bridge reads `com.c15t.policy.resource` from Info.plist. Android reads
 `com.c15t.POLICY_RESOURCE` as an app asset path. The Expo plugin writes both from
 `policyResource` and copies the exact resource bytes during prebuild.
+
+## IAB GPP
+
+Both cores encode the IAB Global Privacy Platform string with the same rules as
+`@c15t/iab/gpp` on the web. `GppEncoder.kt` and `GPPEncoder.swift` port
+`packages/iab/src/gpp/encoder.ts`; `GppResolver.kt` and `GPPResolver.swift` port
+`resolveUSSectionDefinition` and `resolveUSSectionValues` from
+`packages/iab/src/gpp/us-section.ts`, restricted to the two sections a device
+encodes. State sections (`usca`, `usva` and the rest) are not encoded on mobile.
+
+**GPP is off by default.** A US section reports notices as given, and that is
+the app's claim about its own UI, so the SDK makes it only when the host turns
+GPP on. With `gpp` unset, `gppString` is `null` and no IABGPP_* row is written.
+Turning GPP off removes the rows an earlier launch wrote.
+
+**Which section applies.** Nothing applies until the snapshot is ready, no policy
+is pending and the resolution is `matched`. Then:
+
+| Matched rule | Section |
+| --- | --- |
+| `iab`, with a committed TC String that still authorizes vendors, `tcf` not `false` | TCF EU (ID 2): the TC String, byte for byte |
+| `iab`, any other case | none |
+| any other model with the `preferences` or `opt-out` right, and the country (override, else location) is `US` | US National (ID 7) |
+| anything else | none |
+
+The rule's `rights` come from `/init`. Kotlin's `EvaluationPolicy.rights` falls
+back to `requiredPolicyRights(model)` for an envelope stored before the key
+existed; Swift reads them from the stored wire.
+
+**US National values.** `SharingNotice` is 1 with the `disclosure` right, else 2.
+The three opt-out notices are 1. The sale, sharing and targeted advertising
+opt-outs are 1 when any `optOutCategories` entry (default `marketing`) is not
+permitted in the snapshot's effective permissions, else 2. `Gpc` is
+`privacySignals.gpc.active`. MSPA fields follow `mspaMode`: unset reports
+`MspaCoveredTransaction` 2 and both modes 0; service provider mode reports the
+notices and opt-outs as 0. Every field c15t has no input for is 0 (not
+applicable): `SensitiveDataProcessingOptOutNotice`,
+`SensitiveDataLimitUseNotice`, all 16 `SensitiveDataProcessing` entries, all 3
+`KnownChildSensitiveDataConsents` entries and `PersonalDataConsents`.
+
+**Why version 2.** IAB Tech Lab published US National version 3 on 2026-11-04.
+It replaces every field with `MspaVersion`, `MspaNotice`, `MspaOptOut` and a
+14-bit `MspaId` behind a section header. No reference decoder reads it yet
+(`@iabgpp/cmpapi` 3.2.0, `iabgpp-java` 4.0.0), and the web encodes version 2, so
+both cores encode version 2 until web and mobile move together.
+
+**Where the string goes.** `snapshot.gppString` carries it on the wire; the key
+is always present. The stored envelope never keeps a copy: Kotlin writes `null`
+and recomputes on install, Swift adds the string only to snapshots it hands out,
+so `isAllowed` never pays for an encode. The in-app rows follow the GPP CMP API
+"In-App Key Names" table and the TCF EU section's key table:
+
+| Key | Value |
+| --- | --- |
+| `IABGPP_HDR_Version` | `"1"`, the header version |
+| `IABGPP_HDR_Sections`, `IABGPP_GppSID` | section IDs joined with `_`, such as `"7"` |
+| `IABGPP_HDR_GppString` | the full GPP string |
+| `IABGPP_[ID]_String` | each section's string |
+| `IABGPP_2_TCString` | the TC String, the TCF EU table's name for the same value |
+| `IABGPP_TCFEU2_*` | the IABTCF_* consent rows renamed by the TCF EU table, plus `gdprApplies` 1. The table names `UseNonStandardStacks`, TCF 2.0's name for `UseNonStandardTexts` |
+
+No document defines per-field keys for US National, so none are written. The rows
+share the IABTCF_* sink: Android replaces both tables in one preferences commit,
+Apple treats `IABGPP_HDR_GppString` as a marker it removes first and writes last.
+
+**Conformance.** `native/protocol/gpp/cases.json` holds encoder and resolver
+cases with the expected string and in-app rows. `GppTest.kt` and
+`GPPTests.swift` assert every case, and
+`packages/iab/src/__tests__/native-gpp-fixtures.test.ts` checks each expected
+string against the web encoder and decodes it with `@iabgpp/cmpapi`.

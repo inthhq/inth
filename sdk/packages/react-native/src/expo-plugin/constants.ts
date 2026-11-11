@@ -27,6 +27,14 @@ export const ANDROID_META = {
 	domain: 'com.c15t.BACKEND_DOMAIN',
 	/** Staged-build switch that forces GPC on. */
 	forceGpc: 'com.c15t.FORCE_GPC',
+	/** `true` turns on the IAB GPP string, read by `C15tAndroid.declaredGpp`. */
+	gpp: 'com.c15t.GPP',
+	/** MSPA mode, `opt-out-option` or `service-provider`. */
+	gppMspaMode: 'com.c15t.GPP_MSPA_MODE',
+	/** Comma-separated categories whose refusal reports a GPP opt-out. */
+	gppOptOutCategories: 'com.c15t.GPP_OPT_OUT_CATEGORIES',
+	/** `false` leaves the TCF EU section out of the GPP string. */
+	gppTcf: 'com.c15t.GPP_TCF',
 	/** Registered IAB CMP ID, read by `C15tAndroid.declaredIab`. */
 	iabCmpId: 'com.c15t.IAB_CMP_ID',
 	/** CMP version, required with the CMP ID. */
@@ -64,6 +72,14 @@ export const IOS_PLIST_KEY = {
 	domain: 'com.c15t.backend.domain',
 	/** Staged-build switch that forces GPC on, as a real Boolean. */
 	forceGPC: 'com.c15t.forceGPC',
+	/** `true` turns on the IAB GPP string, as a real Boolean. */
+	gpp: 'com.c15t.gpp',
+	/** MSPA mode, `opt-out-option` or `service-provider`. */
+	gppMspaMode: 'com.c15t.gpp.mspaMode',
+	/** Category id array whose refusal reports a GPP opt-out. */
+	gppOptOutCategories: 'com.c15t.gpp.optOutCategories',
+	/** `false` leaves the TCF EU section out of the GPP string, as a real Boolean. */
+	gppTCF: 'com.c15t.gpp.tcf',
 	/** Registered IAB CMP ID, as a plist integer. */
 	iabCmpId: 'com.c15t.iab.cmpId',
 	/** CMP version, as a plist integer. */
@@ -185,4 +201,27 @@ export const IOS_IAB_PLIST_KEYS: readonly string[] = [
 	IOS_PLIST_KEY.iabCmpVersion,
 	IOS_PLIST_KEY.iabConsentScreen,
 	IOS_PLIST_KEY.iabPublisherCountryCode,
+];
+
+/**
+ * The `com.c15t.GPP_OPT_OUT_CATEGORIES` value for an empty list. Android
+ * meta-data has no reliably empty value, so `C15tAndroid.declaredGpp` reads
+ * this word, or a blank value, as "no category drives the opt-outs".
+ */
+export const GPP_NO_OPT_OUT_CATEGORIES = 'none';
+
+/** Every AndroidManifest meta-data name the plugin writes for GPP. */
+export const ANDROID_GPP_META_KEYS: readonly string[] = [
+	ANDROID_META.gpp,
+	ANDROID_META.gppMspaMode,
+	ANDROID_META.gppOptOutCategories,
+	ANDROID_META.gppTcf,
+];
+
+/** Every Info.plist key the plugin writes for GPP. */
+export const IOS_GPP_PLIST_KEYS: readonly string[] = [
+	IOS_PLIST_KEY.gpp,
+	IOS_PLIST_KEY.gppMspaMode,
+	IOS_PLIST_KEY.gppOptOutCategories,
+	IOS_PLIST_KEY.gppTCF,
 ];

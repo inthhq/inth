@@ -855,7 +855,7 @@ export default defineDocsConfig({
 							title: 'Consent API',
 						},
 						{
-							pages: ['configuration', 'offline', 'iab', 'identity'],
+							pages: ['configuration', 'offline', 'iab', 'gpp', 'identity'],
 							slug: 'advanced',
 							title: 'Advanced',
 						},
@@ -892,6 +892,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'/guides/mobile-iab',
+								'/guides/mobile-gpp',
 								'/guides/mobile-offline',
 								'/guides/mobile-identity',
 							],
@@ -927,6 +928,7 @@ export default defineDocsConfig({
 						{
 							pages: [
 								'/guides/mobile-iab',
+								'/guides/mobile-gpp',
 								'/guides/mobile-offline',
 								'/guides/mobile-identity',
 							],

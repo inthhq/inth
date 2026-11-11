@@ -158,17 +158,18 @@ public final class UserDefaultsStorageBus: TcStorageBusWriting, @unchecked Senda
     public func write(_ values: [String: TcBusValue]) {
         lock.lock()
         defer { lock.unlock() }
-        if lastPublished == values, TcStorageBusKeys.allNames.allSatisfy({ matches(values[$0], key: $0) }) {
+        if lastPublished == values, Self.ownedNames.allSatisfy({ matches(values[$0], key: $0) }) {
             return
         }
         lastPublished = nil
-        let markers = [TcStorageBusKeys.tcString, TcStorageBusKeys.addtlConsent]
+        // The GPP string is a marker too: a reader that sees it must find the rows it names.
+        let markers = [TcStorageBusKeys.tcString, TcStorageBusKeys.addtlConsent, GPPStorageBusKeys.hdrGppString]
         for key in markers { defaults.removeObject(forKey: key) }
         guard markers.allSatisfy({ defaults.object(forKey: $0) == nil }) else {
             refusePublication(); return
         }
-        for key in TcStorageBusKeys.allNames where !markers.contains(key) { set(values[key], key: key) }
-        guard TcStorageBusKeys.allNames.filter({ !markers.contains($0) }).allSatisfy({ matches(values[$0], key: $0) }) else {
+        for key in Self.ownedNames where !markers.contains(key) { set(values[key], key: key) }
+        guard Self.ownedNames.filter({ !markers.contains($0) }).allSatisfy({ matches(values[$0], key: $0) }) else {
             refusePublication(); return
         }
         // AC can authorize providers independently, so it is also withheld until all rows agree.
@@ -194,8 +195,11 @@ public final class UserDefaultsStorageBus: TcStorageBusWriting, @unchecked Senda
         case nil: return actual == nil
         }
     }
+    /// The `IABTCF_*` table and the `IABGPP_*` table, replaced together.
+    static let ownedNames = TcStorageBusKeys.allNames + GPPStorageBusKeys.allNames
+
     private func refusePublication() {
-        for key in TcStorageBusKeys.allNames { defaults.removeObject(forKey: key) }
+        for key in Self.ownedNames { defaults.removeObject(forKey: key) }
         onWriteFailure()
     }
     public func clear() { write([:]) }

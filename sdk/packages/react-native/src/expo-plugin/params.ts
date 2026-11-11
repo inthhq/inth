@@ -97,6 +97,48 @@ export interface C15tIabPluginProps {
 	consentScreen?: number;
 }
 
+/** MSPA mode for covered GPP transactions. */
+export type C15tGppMspaMode = 'opt-out-option' | 'service-provider';
+
+/**
+ * IAB GPP options: the ones web c15t's `gpp` option takes that apply on a
+ * device. `true` turns GPP on with the defaults.
+ */
+export interface C15tGppPluginProps {
+	/**
+	 * MSPA mode. Set it only if you signed the IAB Multi-State Privacy
+	 * Agreement; the transaction is then reported as covered.
+	 */
+	mspaMode?: C15tGppMspaMode;
+	/**
+	 * Categories whose refusal reports an opt-out of sale, sharing and
+	 * targeted advertising. `[]` means no category drives them, so they read
+	 * "did not opt out", as on web and in the Swift and Kotlin APIs.
+	 * `necessary` is always granted, so it never drives them.
+	 *
+	 * @defaultValue ['marketing']
+	 */
+	optOutCategories?: readonly C15tConsentCategoryId[];
+	/**
+	 * Include the TCF EU section under an `iab` policy.
+	 *
+	 * @defaultValue true
+	 */
+	tcf?: boolean;
+}
+
+/** Validated GPP options. */
+export interface ResolvedC15tGppParams {
+	/** `null` reports the transaction as not covered and writes no key. */
+	readonly mspaMode: C15tGppMspaMode | null;
+	/**
+	 * `null` when the option was not set: no key is written and the cores use
+	 * their default, `marketing`. A list, empty included, is written as given.
+	 */
+	readonly optOutCategories: readonly C15tConsentCategoryId[] | null;
+	readonly tcf: boolean;
+}
+
 /** Validated IAB settings. */
 export interface ResolvedC15tIabParams {
 	readonly cmpId: number;
@@ -252,6 +294,13 @@ export interface C15tPluginProps {
 	 * not turn IAB on.
 	 */
 	iab?: C15tIabPluginProps;
+	/**
+	 * IAB GPP: the GPP string on the snapshot (`useGPPString()`) and the
+	 * `IABGPP_*` keys ad SDKs read. US visitors under a rule that offers an
+	 * opt-out get the US National section; an `iab` rule gets the TCF EU
+	 * section. Omit it to leave GPP off.
+	 */
+	gpp?: boolean | C15tGppPluginProps;
 	/**
 	 * Transport mode.
 	 *
@@ -421,6 +470,8 @@ export interface ResolvedC15tParams {
 	readonly vendors: readonly number[];
 	/** IAB settings, or `null` when IAB TCF stays off. */
 	readonly iab: ResolvedC15tIabParams | null;
+	/** GPP options, or `null` when GPP stays off. */
+	readonly gpp: ResolvedC15tGppParams | null;
 	/** App Tracking Transparency opt-in, resolved. */
 	readonly appTrackingTransparency: {
 		readonly enabled: boolean;
@@ -700,6 +751,91 @@ const normalizeIab = function normalizeIab(
 		cmpVersion: iab.cmpVersion,
 		consentScreen: iab.consentScreen ?? null,
 		publisherCountryCode: country,
+	};
+};
+
+/**
+ * Validate `gpp.optOutCategories`, keeping an empty list empty.
+ *
+ * Unlike `consentCategories`, an empty list is a real answer here: no
+ * category drives the opt-outs. Collapsing it into "not set" would make
+ * both cores report an opt-out whenever `marketing` is refused, a signal the
+ * app did not configure. `necessary` is dropped, since it is always granted.
+ */
+const normalizeGppOptOutCategories = function normalizeGppOptOutCategories(
+	categories: readonly string[]
+): C15tConsentCategoryId[] {
+	if (!Array.isArray(categories)) {
+		throw new C15tPluginError(
+			'gpp.optOutCategories must be an array of category ids, such as ' +
+				'["marketing"]. Use [] for no category-driven opt-out.'
+		);
+	}
+	const trimmed = categories.map((category) => String(category).trim());
+	const unknown = [
+		...new Set(
+			trimmed.filter(
+				(category) =>
+					!(CONSENT_CATEGORY_IDS as readonly string[]).includes(category)
+			)
+		),
+	];
+	if (unknown.length > 0) {
+		throw new C15tPluginError(
+			`gpp.optOutCategories accepts only ${CONSENT_CATEGORY_IDS.join(', ')}; ` +
+				`unknown: ${unknown.map((name) => JSON.stringify(name)).join(', ')}.`
+		);
+	}
+	return [...new Set(trimmed)].filter(
+		(category) => category !== 'necessary'
+	) as C15tConsentCategoryId[];
+};
+
+const GPP_MSPA_MODES: readonly C15tGppMspaMode[] = [
+	'opt-out-option',
+	'service-provider',
+];
+
+/**
+ * Validate the GPP options.
+ *
+ * An unknown MSPA mode is refused rather than dropped: a covered-transaction
+ * claim is the publisher's to make, and a typo would ship a binary that
+ * reports a transaction as not covered while `app.json` says otherwise.
+ */
+const normalizeGpp = function normalizeGpp(
+	gpp: boolean | C15tGppPluginProps | undefined
+): ResolvedC15tGppParams | null {
+	if (gpp === undefined || gpp === false) {
+		return null;
+	}
+	if (gpp === true) {
+		return { mspaMode: null, optOutCategories: null, tcf: true };
+	}
+	if (gpp === null || typeof gpp !== 'object') {
+		throw new C15tPluginError(
+			'gpp must be true or an object such as { "mspaMode": "opt-out-option" }. ' +
+				'Omit it to leave GPP off.'
+		);
+	}
+	if (gpp.mspaMode !== undefined && !GPP_MSPA_MODES.includes(gpp.mspaMode)) {
+		throw new C15tPluginError(
+			`gpp.mspaMode must be ${GPP_MSPA_MODES.map((mode) => JSON.stringify(mode)).join(' or ')}. ` +
+				`Got ${JSON.stringify(gpp.mspaMode)}. Omit it unless you signed the MSPA.`
+		);
+	}
+	if (gpp.tcf !== undefined && typeof gpp.tcf !== 'boolean') {
+		throw new C15tPluginError(
+			`gpp.tcf must be true or false. Got ${JSON.stringify(gpp.tcf)}.`
+		);
+	}
+	return {
+		mspaMode: gpp.mspaMode ?? null,
+		optOutCategories:
+			gpp.optOutCategories === undefined
+				? null
+				: normalizeGppOptOutCategories(gpp.optOutCategories),
+		tcf: gpp.tcf ?? true,
 	};
 };
 
@@ -1490,6 +1626,7 @@ export const resolveParams = function resolveParams(
 		consentCategories: normalizeConsentCategories(props.consentCategories),
 		domain: normalizeOptionalText(props.domain, 'domain'),
 		forceGPC: props.forceGPC ?? false,
+		gpp: normalizeGpp(props.gpp),
 		iab: normalizeIab(props.iab),
 		initURL,
 		mode,

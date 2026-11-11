@@ -67,6 +67,9 @@ public struct C15tAppleConfiguration: Sendable {
     /// `IABTCF_CmpSdkVersion` to standard `UserDefaults` at startup and can commit
     /// IAB choices. There is no default CMP ID.
     public var iab: IABConfiguration?
+    /// Turns on the IAB GPP string and the `IABGPP_*` keys in standard `UserDefaults`.
+    /// `nil`, the default, writes no GPP signal.
+    public var gpp: GPPOptions?
 
     /// The host reported as `x-c15t-platform: <platform>-><version>` on hosted
     /// requests. `apple` for a Swift app; the React Native bridge sets `rn`, so the
@@ -86,7 +89,8 @@ public struct C15tAppleConfiguration: Sendable {
         bundledPolicy: BundledPolicyResource? = nil,
         policy: ConsentPolicy? = nil,
         policyError: String? = nil,
-        iab: IABConfiguration? = nil
+        iab: IABConfiguration? = nil,
+        gpp: GPPOptions? = nil
     ) {
         self.transport = transport
         self.storage = storage
@@ -100,6 +104,7 @@ public struct C15tAppleConfiguration: Sendable {
         self.policy = policy
         self.policyError = policyError
         self.iab = iab
+        self.gpp = gpp
     }
 
     /// Build the native transport. HTTP is allowed only for exact loopback hosts.
@@ -136,7 +141,7 @@ public struct C15tAppleConfiguration: Sendable {
             policy: noBackend ? policy : nil, policyError: noBackend ? policyError : nil,
             transport: try makeTransport(),
             consentCategories: consentCategories, vendors: vendors, iab: iab,
-            overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus()
+            overrides: overrides, gpc: gpc, storageBus: UserDefaultsStorageBus(), gpp: gpp
         )
     }
 }

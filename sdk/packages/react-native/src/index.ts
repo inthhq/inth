@@ -106,7 +106,7 @@ export type {
 	ConsentReadyProps,
 	ConsentReadyState,
 } from './headless';
-export { useC15tBootstrap, useSnapshot } from './hooks';
+export { useC15tBootstrap, useGPPString, useSnapshot } from './hooks';
 export {
 	useConsentActions,
 	useDismissNotice,
