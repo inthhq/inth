@@ -1,32 +1,111 @@
 // #region docs:iab-preferences title="iab-settings.tsx"
 import {
+	useAdTechProviderConsent,
 	useIAB,
 	useIABSnapshot,
 	usePurposeConsent,
-	useTCString,
+	useSpecialFeatureOptIn,
 	useVendorConsent,
 } from '@c15t/react-native';
-import type { IABDraftHandle } from '@c15t/react-native';
+import type {
+	GlobalVendorList,
+	IABDraftHandle,
+	NativeAdTechProvider,
+	NativeIABDisclosure,
+} from '@c15t/react-native';
+import { translations } from '@c15t/translations/en';
 import { useState } from 'react';
-import { Button, ScrollView, Switch, Text, View } from 'react-native';
+import { Button, Linking, ScrollView, Switch, Text, View } from 'react-native';
+
+// The standard IAB copy. Load the bundle for `disclosure.language` when your
+// app ships more than English.
+const copy = translations.iab;
+const labels = copy.preferenceCenter;
+const fill = (template: string, values: Record<string, number | string>) =>
+	template.replace(/\{(?<key>\w+)\}/gu, (_, key: string) =>
+		String(values[key] ?? '')
+	);
+
+const names = (
+	ids: readonly number[],
+	table: Record<string, { name: string }>
+) => ids.flatMap((id) => table[id]?.name ?? []).join(', ');
 
 const PurposeRow = ({
 	iab,
+	disclosure,
+	list,
 	id,
-	name,
 }: {
 	iab: IABDraftHandle;
+	disclosure: NativeIABDisclosure;
+	list: GlobalVendorList;
 	id: number;
-	name: string;
 }) => {
 	const allowed = usePurposeConsent(id);
+	const purpose = list.purposes[id];
+	const counts = disclosure.purposes[id];
+	if (!purpose || !counts) {
+		return null;
+	}
+	const partners = (count: number) =>
+		fill(labels.purposeItem.partners, { count });
 	return (
 		<View>
-			<Text>{name}</Text>
+			<Text>{purpose.name}</Text>
+			<Text>{purpose.description}</Text>
+			{purpose.illustrations.map((text) => (
+				<Text key={text}>{text}</Text>
+			))}
+			<Text>
+				{labels.purposeItem.withYourPermission}:{' '}
+				{partners(counts.consentPartnerCount)} ·{' '}
+				{labels.purposeItem.legitimateInterest}:{' '}
+				{partners(counts.legitimateInterestPartnerCount)}
+			</Text>
 			<Switch
-				accessibilityLabel={`Allow ${name}`}
+				accessibilityLabel={`${labels.purposeItem.withYourPermission}: ${purpose.name}`}
 				value={allowed}
 				onValueChange={(value) => iab.setPurposeConsent(id, value)}
+			/>
+			{counts.legitimateInterestPartnerCount > 0 ? (
+				<>
+					<Text>{labels.purposeItem.rightToObject}</Text>
+					<Switch
+						accessibilityLabel={`${labels.purposeItem.legitimateInterest}: ${purpose.name}`}
+						value={iab.choices.purposeLegitimateInterests.includes(id)}
+						onValueChange={(value) =>
+							iab.setPurposeLegitimateInterest(id, value)
+						}
+					/>
+				</>
+			) : null}
+		</View>
+	);
+};
+
+const SpecialFeatureRow = ({
+	iab,
+	list,
+	id,
+}: {
+	iab: IABDraftHandle;
+	list: GlobalVendorList;
+	id: number;
+}) => {
+	const optedIn = useSpecialFeatureOptIn(id);
+	const feature = list.specialFeatures[id];
+	if (!feature) {
+		return null;
+	}
+	return (
+		<View>
+			<Text>{feature.name}</Text>
+			<Text>{feature.description}</Text>
+			<Switch
+				accessibilityLabel={feature.name}
+				value={optedIn}
+				onValueChange={(value) => iab.setSpecialFeatureOptIn(id, value)}
 			/>
 		</View>
 	);
@@ -34,21 +113,111 @@ const PurposeRow = ({
 
 const VendorRow = ({
 	iab,
+	disclosure,
+	list,
 	id,
-	name,
 }: {
 	iab: IABDraftHandle;
-	id: number;
-	name: string;
+	disclosure: NativeIABDisclosure;
+	list: GlobalVendorList;
+	id: string;
 }) => {
 	const allowed = useVendorConsent(id);
+	const vendor = list.vendors[id];
+	// The legal bases after the publisher's restrictions, not the raw list's.
+	const bases = disclosure.vendors[id];
+	if (!vendor || !bases) {
+		return null;
+	}
+	const urls = vendor.urls.find((url) => url.langId === 'en') ?? vendor.urls[0];
+	const { vendorList } = labels;
+	const retention = vendor.dataRetention?.stdRetention;
 	return (
 		<View>
-			<Text>{name}</Text>
+			<Text>{vendor.name}</Text>
+			{urls?.privacy ? (
+				<Button
+					title={vendorList.privacyPolicy}
+					onPress={() => {
+						void Linking.openURL(urls.privacy ?? '');
+					}}
+				/>
+			) : null}
+			{urls?.legIntClaim ? (
+				<Button
+					title={labels.purposeItem.legitimateInterest}
+					onPress={() => {
+						void Linking.openURL(urls.legIntClaim ?? '');
+					}}
+				/>
+			) : null}
+			<Text>
+				{labels.purposeItem.withYourPermission}:{' '}
+				{names(bases.consentPurposes, list.purposes)}
+			</Text>
+			<Text>
+				{labels.purposeItem.legitimateInterest}:{' '}
+				{names(bases.legitimateInterestPurposes, list.purposes)}
+			</Text>
+			<Text>
+				{vendorList.specialPurposes}:{' '}
+				{names(vendor.specialPurposes, list.specialPurposes)}
+			</Text>
+			<Text>
+				{vendorList.features}: {names(vendor.features, list.features)}
+			</Text>
+			<Text>
+				{vendorList.specialFeatures}:{' '}
+				{names(vendor.specialFeatures, list.specialFeatures)}
+			</Text>
+			<Text>
+				{vendorList.dataCategories}:{' '}
+				{names(vendor.dataCategories ?? [], list.dataCategories ?? {})}
+			</Text>
+			{retention === undefined ? null : (
+				<Text>{fill(vendorList.retention, { days: retention })}</Text>
+			)}
+			{bases.consentPurposes.length > 0 ? (
+				<Switch
+					accessibilityLabel={`${labels.purposeItem.withYourPermission}: ${vendor.name}`}
+					value={allowed}
+					onValueChange={(value) => iab.setVendorConsent(id, value)}
+				/>
+			) : null}
+			{bases.legitimateInterestPurposes.length > 0 ? (
+				<Switch
+					accessibilityLabel={`${labels.purposeItem.legitimateInterest}: ${vendor.name}`}
+					value={iab.choices.vendorLegitimateInterests.includes(Number(id))}
+					onValueChange={(value) => iab.setVendorLegitimateInterest(id, value)}
+				/>
+			) : null}
+		</View>
+	);
+};
+
+const ProviderRow = ({
+	iab,
+	provider,
+}: {
+	iab: IABDraftHandle;
+	provider: NativeAdTechProvider;
+}) => {
+	const allowed = useAdTechProviderConsent(provider.id);
+	return (
+		<View>
+			<Text>{provider.name}</Text>
+			<Button
+				title={labels.vendorList.privacyPolicy}
+				onPress={() => {
+					void Linking.openURL(provider.policyUrl);
+				}}
+			/>
 			<Switch
-				accessibilityLabel={`Allow ${name}`}
+				accessibilityLabel={provider.name}
 				value={allowed}
-				onValueChange={(value) => iab.setVendorConsent(id, value)}
+				onValueChange={(value) =>
+					iab.setAdTechProviderConsent(provider.id, value)
+				}
 			/>
 		</View>
 	);
@@ -56,12 +225,13 @@ const VendorRow = ({
 
 export const IabSettings = ({ onSaved }: { onSaved: () => void }) => {
 	const iab = useIAB();
-	const list = useIABSnapshot()?.gvl;
-	const tcString = useTCString();
+	const state = useIABSnapshot();
 	const [message, setMessage] = useState('');
+	const list = state?.gvl;
+	const disclosure = state?.disclosure;
 
-	if (iab === null || !list) {
-		return <Text>The vendor list is not available yet.</Text>;
+	if (iab === null || !list || !disclosure) {
+		return <Text>{copy.common.loading}</Text>;
 	}
 
 	const save = async () => {
@@ -72,29 +242,85 @@ export const IabSettings = ({ onSaved }: { onSaved: () => void }) => {
 			setMessage(`Nothing saved: ${result.reason}.`);
 		}
 	};
+	const usesLegitimateInterest = Object.values(disclosure.vendors).some(
+		(vendor) => vendor.legitimateInterestPurposes.length > 0
+	);
 
 	return (
 		<ScrollView>
-			<Text>Purposes</Text>
-			{Object.entries(list.purposes).map(([id, purpose]) => (
+			<Button
+				title={copy.common.acceptAll}
+				onPress={() => {
+					iab.acceptAll();
+				}}
+			/>
+			<Button
+				title={copy.common.rejectAll}
+				onPress={() => {
+					iab.rejectAll();
+				}}
+			/>
+			{usesLegitimateInterest && copy.app ? (
+				<Text>{copy.app.legitimateInterestExplanation}</Text>
+			) : null}
+			<Text>{labels.tabs.purposes}</Text>
+			{disclosure.declaredPurposeIds.map((id) => (
 				<PurposeRow
 					key={id}
 					iab={iab}
-					id={Number(id)}
-					name={purpose.name}
+					disclosure={disclosure}
+					list={list}
+					id={id}
 				/>
 			))}
-			<Text>Partners</Text>
-			{Object.entries(list.vendors)
-				.filter(([, vendor]) => !vendor.deletedDate)
-				.map(([id, vendor]) => (
-					<VendorRow
-						key={id}
-						iab={iab}
-						id={Number(id)}
-						name={vendor.name}
-					/>
-				))}
+			<Text>{labels.vendorList.specialFeatures}</Text>
+			{disclosure.declaredSpecialFeatureIds.map((id) => (
+				<SpecialFeatureRow
+					key={id}
+					iab={iab}
+					list={list}
+					id={id}
+				/>
+			))}
+			<Text>{labels.vendorList.features}</Text>
+			<Text>
+				{list.standardTexts?.features ?? labels.features?.description}
+			</Text>
+			{Object.entries(list.features).map(([id, feature]) => (
+				<Text key={id}>
+					{feature.name}: {feature.description}
+				</Text>
+			))}
+			<Text>{labels.vendorList.iabVendorsHeading}</Text>
+			{Object.keys(disclosure.vendors).map((id) => (
+				<VendorRow
+					key={id}
+					iab={iab}
+					disclosure={disclosure}
+					list={list}
+					id={id}
+				/>
+			))}
+			{disclosure.adTechProviders?.length ? (
+				<>
+					<Text>{labels.vendorList.adTechProvidersHeading}</Text>
+					<Text>{labels.vendorList.adTechProvidersNotice}</Text>
+					{disclosure.adTechProviders.map((provider) => (
+						<ProviderRow
+							key={provider.id}
+							iab={iab}
+							provider={provider}
+						/>
+					))}
+				</>
+			) : null}
+			{disclosure.consentStorageMaxDays !== null && copy.app ? (
+				<Text>
+					{fill(copy.app.consentStorage, {
+						days: disclosure.consentStorageMaxDays,
+					})}
+				</Text>
+			) : null}
 			{iab.isStale ? (
 				<Button
 					title="The partner list changed. Review again"
@@ -104,14 +330,13 @@ export const IabSettings = ({ onSaved }: { onSaved: () => void }) => {
 				/>
 			) : (
 				<Button
-					title="Save choices"
+					title={copy.common.saveSettings}
 					onPress={() => {
 						void save();
 					}}
 				/>
 			)}
 			<Text accessibilityLiveRegion="polite">{message}</Text>
-			<Text selectable>{tcString ?? 'No decision saved yet.'}</Text>
 		</ScrollView>
 	);
 };

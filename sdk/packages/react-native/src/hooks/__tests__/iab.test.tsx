@@ -25,13 +25,16 @@ import type {
 	ConsentSnapshot,
 	GlobalVendorList,
 	NativeIABChoices,
+	NativeIABDisclosure,
 } from '../../protocol';
 import { ConsentProvider } from '../../provider/consent-provider';
 import { useSaveConsents } from '../use-consent-actions';
 import type { IABDraftHandle } from '../use-iab';
 import {
+	useAdTechProviderConsent,
 	useIAB,
 	useIABEnabled,
+	useIABSnapshot,
 	usePurposeConsent,
 	useSpecialFeatureOptIn,
 	useTCString,
@@ -113,12 +116,46 @@ const NATIVE_ACCEPT_ALL: NativeIABChoices = {
 	vendorLegitimateInterests: [9],
 };
 
+/**
+ * What native discloses for {@link GVL} under a restriction that moves partner
+ * 9's purpose 7 to consent, with one Additional Consent provider.
+ */
+const DISCLOSURE: NativeIABDisclosure = {
+	adTechProviderPurposeIds: [1, 3, 4],
+	adTechProviders: [
+		{ id: 89, name: 'Meta', policyUrl: 'https://provider.example/privacy' },
+	],
+	bannerSummary: { displayItems: [], remainingCount: 0, vendorCount: 3 },
+	consentStorageMaxDays: 30,
+	declaredPurposeIds: [1, 2, 3, 4, 7],
+	declaredSpecialFeatureIds: [1],
+	language: 'EN',
+	purposes: {},
+	vendors: {
+		'7': {
+			consentPurposes: [1, 3],
+			consentRequiredPurposes: [],
+			legitimateInterestPurposes: [],
+			legitimateInterestRequiredPurposes: [],
+			notAllowedPurposes: [],
+		},
+		'9': {
+			consentPurposes: [7],
+			consentRequiredPurposes: [7],
+			legitimateInterestPurposes: [2, 4],
+			legitimateInterestRequiredPurposes: [],
+			notAllowedPurposes: [],
+		},
+	},
+};
+
 const tcf = (overrides: Partial<ConsentSnapshot> = {}): ConsentSnapshot =>
 	buildSnapshot({
 		consentCategories: ['necessary', 'marketing'],
 		iab: {
 			acceptAll: NATIVE_ACCEPT_ALL,
 			committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+			disclosure: null,
 			editable: true,
 			gvl: GVL,
 			headlessUnsupported: [],
@@ -137,14 +174,18 @@ let latest: {
 	vendor7: boolean;
 	purpose1: boolean;
 	feature1: boolean;
+	provider89: boolean;
+	disclosure: NativeIABDisclosure | null;
 	save: ReturnType<typeof useSaveConsents>;
 } | null = null;
 
 const Probe = (): ReactNode => {
 	const value = {
+		disclosure: useIABSnapshot()?.disclosure ?? null,
 		enabled: useIABEnabled(),
 		feature1: useSpecialFeatureOptIn(1),
 		iab: useIAB(),
+		provider89: useAdTechProviderConsent(89),
 		purpose1: usePurposeConsent(1),
 		save: useSaveConsents(),
 		tcString: useTCString(),
@@ -237,6 +278,32 @@ describe('headless IAB hooks', () => {
 		});
 	});
 
+	test('edit under publisher restrictions and Additional Consent providers from the native disclosure', async () => {
+		mount(
+			tcf({
+				iab: {
+					acceptAll: { ...NATIVE_ACCEPT_ALL, adTechProviderConsents: [89] },
+					committed: null,
+					disclosure: DISCLOSURE,
+					editable: true,
+					gvl: GVL,
+					headlessUnsupported: [],
+				},
+			})
+		);
+
+		expect(current().disclosure).toEqual(DISCLOSURE);
+		expect(current().provider89).toBe(false);
+		flush(() => handle().setAdTechProviderConsent(89, true));
+		expect(current().provider89).toBe(true);
+
+		await current().save();
+		await flushPromises();
+		expect(JSON.parse(fake.commitIntents[0] ?? '').choices).toMatchObject({
+			adTechProviderConsents: [89],
+		});
+	});
+
 	test('accept all stages what native Accept all saves, publisher restrictions included', () => {
 		mount(tcf());
 
@@ -258,6 +325,7 @@ describe('headless IAB hooks', () => {
 				iab: {
 					acceptAll: NATIVE_ACCEPT_ALL,
 					committed: null,
+					disclosure: null,
 					editable: true,
 					gvl: GVL,
 					headlessUnsupported: [],
@@ -304,6 +372,7 @@ describe('headless IAB hooks', () => {
 							choices: COMMITTED,
 							tcString: 'CQ-1',
 						},
+						disclosure: null,
 						editable: false,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -323,6 +392,7 @@ describe('headless IAB hooks', () => {
 			iab: {
 				acceptAll: null,
 				committed: { addtlConsent: null, choices: COMMITTED, tcString: 'CQ-1' },
+				disclosure: null,
 				editable: false,
 				gvl: GVL,
 				headlessUnsupported: [],
@@ -351,6 +421,7 @@ describe('headless IAB hooks', () => {
 					iab: {
 						acceptAll: null,
 						committed: null,
+						disclosure: null,
 						editable: false,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -369,6 +440,7 @@ describe('headless IAB hooks', () => {
 							choices: NATIVE_ACCEPT_ALL,
 							tcString: 'CQ-2',
 						},
+						disclosure: null,
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -417,6 +489,7 @@ describe('headless IAB hooks', () => {
 							choices: intent.choices,
 							tcString: 'CQ-2',
 						},
+						disclosure: null,
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -457,6 +530,7 @@ describe('headless IAB hooks', () => {
 					iab: {
 						acceptAll: NATIVE_ACCEPT_ALL,
 						committed: { addtlConsent: null, choices, tcString: 'CQ-2' },
+						disclosure: null,
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -494,6 +568,7 @@ describe('headless IAB hooks', () => {
 		): ConsentSnapshot['iab'] => ({
 			acceptAll: editable ? NATIVE_ACCEPT_ALL : null,
 			committed: { addtlConsent: null, choices, tcString: 'CQ-2' },
+			disclosure: null,
 			editable,
 			gvl: GVL,
 			headlessUnsupported: [],
@@ -553,6 +628,7 @@ describe('headless IAB hooks', () => {
 						choices: COMMITTED,
 						tcString: 'CQ-1',
 					},
+					disclosure: null,
 					editable: false,
 					gvl: GVL,
 					headlessUnsupported: [],
@@ -565,9 +641,10 @@ describe('headless IAB hooks', () => {
 		expect(current().tcString).toBe('CQ-1');
 	});
 
-	test('offer no edits while a custom screen could not disclose everything', () => {
-		// Native could open a draft, but the publisher restricts legal bases, which
-		// the served list does not show.
+	test('offer no edits while an older binary names a configuration it could not disclose', () => {
+		// A binary from before `disclosure` could open a draft, but the publisher
+		// restricts legal bases, which the served list does not show. A current
+		// binary sends `disclosure` and names no gap.
 		mount(
 			tcf({
 				iab: {
@@ -577,6 +654,7 @@ describe('headless IAB hooks', () => {
 						choices: COMMITTED,
 						tcString: 'CQ-1',
 					},
+					disclosure: null,
 					editable: true,
 					gvl: GVL,
 					headlessUnsupported: ['publisher-restrictions'],
@@ -616,6 +694,7 @@ describe('headless IAB hooks', () => {
 							choices: { ...COMMITTED, vendorConsents: [] },
 							tcString: 'CQ-2',
 						},
+						disclosure: null,
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -644,6 +723,7 @@ describe('headless IAB hooks', () => {
 							choices: { ...COMMITTED, vendorConsents: [] },
 							tcString: 'CQ-2',
 						},
+						disclosure: null,
 						editable: true,
 						gvl: GVL,
 						headlessUnsupported: [],
@@ -688,6 +768,7 @@ describe('headless IAB hooks', () => {
 					iab: {
 						acceptAll: NATIVE_ACCEPT_ALL,
 						committed: null,
+						disclosure: null,
 						editable: true,
 						gvl: { ...GVL, vendorListVersion: 178 },
 						headlessUnsupported: [],

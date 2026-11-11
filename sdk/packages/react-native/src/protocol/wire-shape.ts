@@ -146,12 +146,14 @@ export const ADDITIVE_BOOTSTRAP_DEFAULTS = {
  * and the protocol version does not move for an additive key, so each absence must
  * mean "this build has no such state". An older bridge cannot commit a headless TCF
  * draft, so it is not `editable` and has no `acceptAll`; it publishes no committed
- * decision and names no `headlessUnsupported` configuration either. The client
+ * decision, no `disclosure`, and names no `headlessUnsupported` configuration
+ * either. The client
  * fills these before anything reads the snapshot.
  */
 export const ADDITIVE_IAB_DEFAULTS = {
 	acceptAll: null,
 	committed: null,
+	disclosure: null,
 	editable: false,
 	headlessUnsupported: [],
 } as const;

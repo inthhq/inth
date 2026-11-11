@@ -67,11 +67,11 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			Triple(
 				core?.iabConsent,
 				core?.iabAcceptAllChoices(),
-				core?.let { C15tPayload.headlessIabGaps(it.iabPublisherRestrictions, it.adTechProviderDisclosures()) }.orEmpty(),
+				core?.iabPresentation(),
 			)
 		}
 		return C15tPayload.snapshot(snapshot, fallbackLanguage = deviceLanguage(), iabConsent = additions.first,
-			iabAcceptAll = additions.second, iabHeadlessGaps = additions.third)
+			iabAcceptAll = additions.second, iabPresentation = additions.third)
 	}
 
 	/** WebView consent: the state a page reads, and a fresh token and request key for one WebView. */

@@ -125,13 +125,43 @@ staged selection, and `useTCString()` reads the committed TC String:
 
 <include src="../../shared/examples/react-native-bare/iab-preferences.mdx" />
 
-Headless IAB supports configurations without publisher restrictions or
-Additional Consent providers. Other configurations need the stock screens: a
-custom screen built on the served list would show the wrong legal bases or
-leave providers unnamed. For them `useIABSnapshot()?.headlessUnsupported`
-lists `'publisher-restrictions'` or `'additional-consent-providers'`,
-`editable` stays `false` and `useIAB()` returns `null`, so no custom screen can
-save a choice it could not disclose.
+Build the screen from `useIABSnapshot()?.disclosure`, not from the raw vendor
+list. It is the native core's own disclosure, the one the stock screens draw:
+
+- `vendors[id]` gives each vendor's legal bases after your publisher
+  restrictions. `consentPurposes` and `legitimateInterestPurposes` are what the
+  vendor may use; `notAllowedPurposes` were restricted away;
+  `consentRequiredPurposes` and `legitimateInterestRequiredPurposes` are
+  purposes a restriction moved from one basis to the other. Offer a vendor
+  consent switch only when `consentPurposes` is not empty, and a
+  legitimate-interest switch only when `legitimateInterestPurposes` is not
+  empty. Native refuses a save that turns either on for a vendor whose bases
+  are empty, with `reason: 'invalid-iab-choices'`.
+- `adTechProviders` lists the Google Additional Consent providers, each with
+  `id`, `name` and `policyUrl`, or `null` when none are configured. Show them in
+  their own section, apart from IAB vendors. `useAdTechProviderConsent(id)`
+  reads a provider's staged switch, `setAdTechProviderConsent(id, value)` sets
+  it, and `committed.choices.adTechProviderConsents` holds the saved state.
+  Native records every provider as off unless purposes 1, 3 and 4
+  (`adTechProviderPurposeIds`) all have consent.
+- `purposes[id]` gives the partner counts per purpose after restrictions, with
+  providers counted for purposes 1, 3 and 4. `declaredPurposeIds` and
+  `declaredSpecialFeatureIds` are the purposes and special features to list.
+- `bannerSummary` is the first layer's partner count (IAB vendors and
+  providers together) and its purpose, stack and special-feature names.
+- `consentStorageMaxDays` is how long the TC String stays in use on the device.
+
+The native core encodes the TC String and the Additional Consent string from
+your selection exactly as it does for the stock screens, so the same choices
+write the same strings. Copy comes from `@c15t/translations`; the example below
+uses the English bundle.
+
+A binary built before `disclosure` existed sends `disclosure: null` and lists
+`'publisher-restrictions'` or `'additional-consent-providers'` in
+`headlessUnsupported` when it has either. `useIAB()` then returns `null`, so no
+custom screen saves a choice it could not show. Use the stock screens with such
+a binary. A current binary always sends an empty `headlessUnsupported`, and
+`editable` stays `false` whenever it cannot send `disclosure`.
 
 `useIAB()` returns `null` unless the policy is `iab`, a vendor list was served
 and native can open a draft now. `useIABSnapshot()?.editable` is `false` while
@@ -163,10 +193,46 @@ without staging. `setPurposeLegitimateInterest` and
 
 The staged values are for rendering controls. Gate vendors on the committed
 decision, which native SDK gates and `IABTCF_*` readers already use.
-`useIABSnapshot()` returns the served vendor list for your disclosure text and
-the committed decision; `useIABEnabled()` tells you whether the policy is TCF.
-Keep the TCF disclosures, the partner count and your privacy-policy link on
-the screen, as the [IAB setup](/docs/guides/mobile-iab) guide requires.
+`useIABSnapshot()` returns the served vendor list for your disclosure text, the
+native `disclosure` and the committed decision; `useIABEnabled()` tells you
+whether the policy is TCF.
+
+### What your IAB screens must show
+
+IAB Europe checks a mobile CMP against the list in
+`native/protocol/iab/tcf-policy-checks.json`. The native core meets the signal
+checks for any screen: T1 (a TC String only after `save()`), T3, T4, T6 to T13,
+P13 and P29 (it never sets the non-standard-texts flags), and P21 (a first
+decision opens with every consent off). T5, CMP registration, is yours to
+complete with IAB Europe. A custom screen must render the rest.
+
+The first layer covers P3 to P12. This one takes its text from
+`@c15t/translations` and its numbers from `disclosure.bannerSummary`:
+
+<include src="../../shared/examples/react-native-bare/iab-first-layer.mdx" />
+
+| Check | What to render |
+| --- | --- |
+| P1, P2 | Show the first layer over most of the screen, apart from terms and your privacy policy. |
+| P3, P4, P5, P12 | `iab.app.description` with `partnerCount` set to `bannerSummary.vendorCount`. |
+| P6 | A button to the partner list, labelled `iab.banner.partnersLink`. |
+| P7 | `bannerSummary.displayItems`, and `iab.banner.andMore` with `remainingCount`. |
+| P8, P9 | `iab.app.scopeServiceSpecific` and `iab.app.withdraw`. |
+| P10, P11, P32 | Accept all and Reject all with the same styling and at least 5:1 contrast, plus Customize. |
+| T2 | Reject all through `useSaveConsents()('none')` or `useIAB().rejectAll()`, which turn every consent off. |
+| P14, P15 | Purpose and feature names, descriptions and `illustrations` from the vendor list, with no switch on features. |
+| P16 | `disclosure.adTechProviders` in their own section with `adTechProvidersHeading` and `adTechProvidersNotice`. |
+| P17, P22 | `iab.app.legitimateInterestExplanation` and each vendor's `legitimateInterestPurposes`. |
+| P18, P23 | `purposeItem.rightToObject` and a legitimate-interest switch per purpose and per vendor; `false` objects. |
+| P19 | Per vendor: privacy-policy link, legal bases from `disclosure.vendors`, special purposes, features and special features, with a consent switch per purpose and per vendor. |
+| P20 | A switch per `disclosure.declaredSpecialFeatureIds`. |
+| P25 | `disclosure.purposes[id]` partner counts on each purpose. |
+| P26 | The vendor's `legIntClaim` link. |
+| P27, P28 | The vendor's `dataRetention` and `dataCategories`. |
+| P30 | `iab.app.consentStorage` with `disclosure.consentStorageMaxDays`. |
+| P31 | An entry in your app's settings that opens the preferences screen again. |
+
+The preferences example above covers P14 to P30 for the second layer.
 
 ## Handle accept, reject and save failures
 
@@ -228,9 +294,9 @@ It is for features that require both. It does not ask for authorization.
 | `useConsentDraft()` | Stage several category choices and save them together. |
 | `ConsentDraftProvider` | A separate draft for one screen, with defaults for undecided categories. |
 | `useIAB()` | Stage and save a TCF purpose and vendor selection. |
-| `usePurposeConsent(id)`, `useVendorConsent(id)`, `useSpecialFeatureOptIn(id)` | One staged TCF selection, for a control. |
+| `usePurposeConsent(id)`, `useVendorConsent(id)`, `useSpecialFeatureOptIn(id)`, `useAdTechProviderConsent(id)` | One staged TCF or Additional Consent selection, for a control. |
 | `useTCString()` | The committed TC String. |
-| `useIABSnapshot()`, `useIABEnabled()` | The served vendor list and committed decision, and whether the policy is TCF. |
+| `useIABSnapshot()`, `useIABEnabled()` | The served vendor list, the native `disclosure` and the committed decision, and whether the policy is TCF. |
 | `useDismissNotice()` | Acknowledge a notice without recording a choice. |
 | `useIdentify()` | Attach an external id from your account system. |
 | `useSetOverrides()` | Pin country, region, language or GPC for testing. |

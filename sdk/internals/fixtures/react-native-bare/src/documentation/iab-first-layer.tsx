@@ -1,0 +1,62 @@
+// #region docs:iab-first-layer title="iab-first-layer.tsx"
+import { useIABSnapshot, useSaveConsents } from '@c15t/react-native';
+import { translations } from '@c15t/translations/en';
+import { Button, Text, View } from 'react-native';
+
+const copy = translations.iab;
+const fill = (template: string, values: Record<string, number | string>) =>
+	template.replace(/\{(?<key>\w+)\}/gu, (_, key: string) =>
+		String(values[key] ?? '')
+	);
+
+export const IabFirstLayer = ({
+	onManage,
+	onPartners,
+}: {
+	onManage: () => void;
+	onPartners: () => void;
+}) => {
+	const summary = useIABSnapshot()?.disclosure?.bannerSummary;
+	const save = useSaveConsents();
+	if (!(summary && copy.app)) {
+		return null;
+	}
+	// The count includes Google Additional Consent providers.
+	const partnerCount = summary.vendorCount;
+	return (
+		<View>
+			<Text>{fill(copy.app.description, { partnerCount })}</Text>
+			{summary.displayItems.map((item) => (
+				<Text key={item}>{item}</Text>
+			))}
+			{summary.remainingCount > 0 ? (
+				<Text>
+					{fill(copy.banner.andMore, { count: summary.remainingCount })}
+				</Text>
+			) : null}
+			<Text>{copy.app.scopeServiceSpecific}</Text>
+			<Text>{copy.app.withdraw}</Text>
+			<Button
+				title={fill(copy.banner.partnersLink, { count: partnerCount })}
+				onPress={onPartners}
+			/>
+			<Button
+				title={copy.common.acceptAll}
+				onPress={() => {
+					void save('all');
+				}}
+			/>
+			<Button
+				title={copy.common.rejectAll}
+				onPress={() => {
+					void save('none');
+				}}
+			/>
+			<Button
+				title={copy.common.customize}
+				onPress={onManage}
+			/>
+		</View>
+	);
+};
+// #endregion docs:iab-first-layer

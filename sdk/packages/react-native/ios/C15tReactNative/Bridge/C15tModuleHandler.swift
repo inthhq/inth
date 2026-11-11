@@ -196,13 +196,11 @@ public struct C15tModuleHandler {
         ensureCore()
         let core = C15t.current
         let (snapshot, additions) = C15tPayload.consistently(snapshot: { C15t.snapshot() }) {
-            (core?.iabConsent(), core?.iabAcceptAllChoices(), core.map {
-                C15tPayload.headlessIABGaps(
-                    publisherRestrictions: $0.iabPublisherRestrictions, adTechProviders: $0.adTechProviderDisclosures())
-            } ?? [], core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) })
+            (core?.iabConsent(), core?.iabAcceptAllChoices(), core?.iabPresentation(),
+             core.flatMap { C15tTrackingConsent.iabMarketingConsented($0) })
         }
         return C15tPayload.snapshot(snapshot, fallbackLanguage: deviceLanguage,
-            iabConsent: additions.0, iabAcceptAll: additions.1, iabHeadlessGaps: additions.2,
+            iabConsent: additions.0, iabAcceptAll: additions.1, iabPresentation: additions.2,
             iabMarketingPurposes: additions.3)
     }
 
