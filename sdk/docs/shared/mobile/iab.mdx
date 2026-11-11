@@ -135,10 +135,11 @@ The SDK asks Apple only when all of these hold:
   `NSUserTrackingUsageDescription` in `Info.plist`.
 - Apple's answer is still not determined. Once Apple has answered, the SDK asks
   again only with the yearly re-ask below, which is off by default.
-- The person's stored choice does not refuse marketing. This holds in every
-  order, including `beforeConsent`. Apple asks apps not to show its alert to
-  people who opted out in a separate consent control. Under an IAB TCF policy,
-  the TC String counts too; see [ATT and IAB TCF](#att-and-iab-tcf).
+- Marketing is not refused: by a stored choice, by a GPC signal, or by any other
+  explicit denial on the snapshot. This holds in every order, including
+  `beforeConsent`. Apple asks apps not to show its alert to people who opted
+  out in a separate consent control. Under an IAB TCF policy, the TC String
+  counts too; see [ATT and IAB TCF](#att-and-iab-tcf).
 - The app is active. Apple shows nothing to an app that is not active, so the
   request waits for the app to return to the foreground.
 - No c15t screen is open. That includes a notice card, and a prompt or settings
@@ -191,7 +192,24 @@ How it behaves:
 On Apple's expanded EU sheet, Additional Information closes Apple's sheet with
 no answer recorded and opens c15t's privacy settings. Closing them applies the
 after-consent rule in either order, so Apple's alert returns only while
-marketing is granted. Germany, France, Italy, Poland and Romania always get the
+marketing is granted. With `beforeConsent`, a tap on the sheet shown before an
+owed prompt lets that prompt open as the controls; closing it applies the same
+rule.
+
+Apple shows the Additional Information button only when something will handle
+the tap. The stock UI does, so the SDK asks for the button when it can open its
+own screens. A React Native app that draws its own consent UI, or a build
+without the stock native screens, gets the button only by passing
+`onTrackingAdditionalInformation` to `<ConsentProvider>`, which runs on a tap.
+Your own calls to `requestTrackingAuthorization()` and `C15tApple.tracking.request`
+show no button unless you pass a handler (`onAdditionalInformation:` in Swift);
+`useTrackingRequest()` asks for it and opens its preference centre.
+
+With `autoPresent={false}` and your own JavaScript consent UI, nothing in
+React Native asks Apple automatically: the provider asks after sessions the
+native screens report, and your UI does not open those. Call
+`useTrackingRequest()` or `requestTrackingAuthorization()` after your own
+consent step, and gate on `useIsTrackingAllowed('marketing')`. Germany, France, Italy, Poland and Romania always get the
 full-page sheet; the rest of the EU gets it when the app prefers it, which c15t
 does. `NSUserTrackingMarkdownUsageDescription` (`trackingMarkdownUsageDescription`
 in the Expo plugin) is the optional rich-text copy for that sheet.
@@ -215,7 +233,10 @@ returns the stored answer at once. Outside the EU the call shows nothing.
 
 The SDK stores when it last saw an answer. An answer given before this version
 has no stored time, so the SDK stores the current time when it first reads it
-and waits a full year from then. It never asks again when marketing is
+and waits a full year from then. On a re-ask the stored time moves only when
+Apple's answer changes. Apple gives no way to tell "shown and answered the
+same" from "not shown", and a silent return must not restart the year, so an
+unchanged answer costs one silent call per launch until it changes. It never asks again when marketing is
 refused, when tracking is restricted, or with `trackingRequest` set to
 `manual`. If the person turned off "Allow Apps to Request to Track", Apple shows
 nothing and returns the stored answer.
@@ -239,13 +260,21 @@ ATT and TCF answer different questions, and tracking needs both:
 - The SDK never writes an ATT answer into the TC String, and never changes the
   ATT answer because of the TC String.
 
+This gate decides only whether the SDK asks Apple. It does not decide whether a
+vendor may read the advertising identifier: purpose 1, that vendor's consent
+and the ATT answer do.
+
 Under an IAB TCF policy, the after-consent rule reads marketing the way the web
 IAB module derives it from the TC String: the `marketing` category stands for
 TCF purposes 2, 3 and 4, and counts as consented only when every one of them
-that some vendor asks consent for is consented. The c15t `marketing` category
+that some vendor asks consent for is consented. Someone must also be able to
+track: at least one consented vendor that asks consent for one of those
+purposes, or a consented Google ad tech provider. The c15t `marketing` category
 must be granted as well. So Accept all asks Apple, Reject all never does, and a
-custom choice asks only when it grants those purposes. A stored TC String that
-does not grant them counts as a refusal, so `beforeConsent` skips it too.
+custom choice asks only when it grants those purposes to a vendor. A stored TC
+String that does not counts as a refusal, so `beforeConsent` skips it too.
+Native IAB stores no consent for custom (non-IAB) vendors, so only registered
+vendors and ad tech providers count there.
 
 Additional Information on Apple's sheet opens the TCF preferences. When the
 person closes them, Apple's alert comes back only if those purposes are still

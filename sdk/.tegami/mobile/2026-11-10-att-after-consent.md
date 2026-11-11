@@ -37,3 +37,13 @@ time in a `C15tTrackingAnswerLog` and takes an injectable clock.
 
 Under an IAB TCF policy, marketing counts as granted for ATT only while the TC
 String also grants the `marketing` purposes, as the web IAB module derives them.
+
+A GPC signal or explicit denial on marketing now counts as a refusal. Under IAB
+TCF, ATT is asked only when at least one consented vendor or ad tech provider
+uses the marketing purposes. An Additional Information tap before the consent
+prompt asks again after the prompt, only if marketing is then granted.
+
+`C15tTrackingController.request(onAdditionalInformation:_:)`: Apple shows the
+Additional Information button only when a handler is passed. The stock prompt
+passes one; a direct call without it shows no button. On a yearly re-ask, the
+stored answer time moves only when Apple's answer changes.

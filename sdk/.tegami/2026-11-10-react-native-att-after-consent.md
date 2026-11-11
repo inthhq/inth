@@ -40,3 +40,20 @@ Under an IAB TCF policy, marketing counts as granted for ATT only while the TC
 String also grants the `marketing` purposes, derived as `@c15t/iab` does. Reject
 all never leads to Apple's alert, and Additional Information opens the TCF
 preferences.
+
+A GPC signal or explicit denial on marketing now counts as a refusal, so
+`beforeConsent` no longer asks at launch for someone who opted out that way.
+Under IAB TCF, ATT is asked only when at least one consented vendor (or Google
+ad tech provider) uses the marketing purposes; with every vendor refused, it is
+not. An Additional Information tap before the consent prompt asks again after
+the prompt, only if marketing is then granted.
+
+Apple's Additional Information button now shows only when something handles
+it. The provider asks for it when the stock native screens can open; pass the
+new `onTrackingAdditionalInformation` prop when you draw your own consent UI.
+`requestTrackingAuthorization()` shows no button; `useTrackingRequest()` does.
+The button needs the new native `requestTrackingAuthorizationWithOptions`
+method, so it appears after a native rebuild.
+
+On a yearly re-ask, the stored answer time moves only when Apple's answer
+changes, so a silent return does not push the next try a year out.

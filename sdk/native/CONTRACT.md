@@ -525,30 +525,44 @@ React Native outcome is sent once the cover has finished animating away.
 The stock prompt sequences ATT through `trackingRequest` (`afterConsent` by
 default, `beforeConsent`, `manual`) on `<ConsentProvider>`, `.c15tConsent(...)`
 and `ConsentRootViewController`. It asks only when
-`NSUserTrackingUsageDescription` is present, no stored choice refuses marketing,
-the app is active, a c15t root is attached and no c15t screen is on screen, and
-while Apple's answer is `not-determined`. `afterConsent` asks after a closed
-session, or at launch when no prompt is owed, and only while marketing is
-`granted`. `beforeConsent` (not the recommended order) holds every prompt that
-would open while it would ask: automatic, after a session, or the app's own
+`NSUserTrackingUsageDescription` is present, marketing is not refused (a stored
+choice, or a `gpc` or `explicit-denial` restriction on marketing), the app is
+active, a c15t root is attached and no c15t screen is on screen, and while
+Apple's answer is `not-determined`. `afterConsent` asks after a closed session,
+or at launch when no prompt is owed, and only while marketing is `granted`.
+`beforeConsent` (not the recommended order) holds every prompt that would open
+while it would ask: automatic, after a session, or the app's own
 `presentPrompt`/`presentConsentPrompt`, from the provider's first render or, in
 Swift, from the first scene that attaches. It never holds settings. A launch
-that owes no prompt asks at launch, once per launch.
+that owes no prompt asks at launch, once per launch. An Additional Information
+pause before an owed prompt lets the prompt open; closing it applies the
+after-consent rule.
 
 `trackingReprompt` (`never` by default, `yearly`) also calls the request once per
 launch when Apple's answer is `authorized` or `denied`, marketing is `granted`,
 and 365 days have passed since the SDK last saw an answer. Apple decides whether
 anything shows. The SDK stores that time in `C15tTrackingAnswerLog`; an answer
-with no stored time is stamped when first read and waits a year from then. The
-iOS bridge sends it as `answeredAt` on `getTrackingAuthorization()`. It never
-asks for `restricted` or with `manual`.
+with no stored time is stamped when first read and waits a year from then. On a
+re-ask the time moves only when the answer changes. The iOS bridge sends it as
+`answeredAt` on `getTrackingAuthorization()`. It never asks for `restricted` or
+with `manual`.
+
+The SDK asks Apple for the Additional Information button only when something
+handles the tap: the stock UI, `onTrackingAdditionalInformation`, or a handler
+passed to `C15tApple.tracking.request(onAdditionalInformation:)`. React Native
+asks through `requestTrackingAuthorizationWithOptions('{"additionalInformation":true}')`;
+the plain `requestTrackingAuthorization()` shows no button.
 
 Under an IAB TCF policy, marketing is `granted` for this sequence only while the
 c15t category is granted and the committed TC String grants `marketing` by the
 web derivation (`C15T_TO_IAB_PURPOSE_MAP.marketing`, decided by the purposes some
-vendor asks consent for); a TC String that does not grant it is a refusal. The
-iOS bridge sends that answer as the snapshot key `iabMarketingPurposes`. The ATT
-answer never writes consent or the TC String. Android has no ATT and no option.
+vendor asks consent for) to at least one consented vendor that asks consent for
+a deciding purpose, or a consented ad tech provider. Otherwise it is a refusal.
+`native/protocol/att/iab-marketing.json` holds the cases both sides run. The iOS
+bridge sends the answer, cached per snapshot revision, as the snapshot key
+`iabMarketingPurposes`. This decides only whether the SDK asks Apple, not
+whether a vendor may read the advertising identifier. The ATT answer never
+writes consent or the TC String. Android has no ATT and no option.
 
 Native SDK gating
 -----------------
