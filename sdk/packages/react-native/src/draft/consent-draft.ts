@@ -472,6 +472,9 @@ export const createConsentDraft = function createConsentDraft(
 		}
 		if (laterIAB !== null && iab !== null) {
 			iab = laterIAB;
+			// The same rule for the TCF selection: a decision after the save may have
+			// been made over it, so the subject reviews before saving it.
+			stale = overtaken;
 		}
 		publish();
 	};
