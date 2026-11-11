@@ -341,6 +341,23 @@ class C15tPayloadTest {
 	}
 
 	@Test
+	fun `the snapshot and its additions are read as one revision`() {
+		// A commit lands between the first snapshot read and the additions.
+		val revisions = ArrayDeque(listOf(4L, 5L, 5L))
+		var reads = 0
+		val (snapshot, additions) = C15tPayload.consistently({ ConsentSnapshot(revision = revisions.removeFirst()) }) {
+			reads += 1
+			"decision $reads"
+		}
+		assertEquals(5L, snapshot.revision)
+		assertEquals("the additions are the ones read with revision 5", "decision 2", additions)
+
+		var steady = 0
+		val (_, once) = C15tPayload.consistently({ ConsentSnapshot(revision = 7L) }) { ++steady }
+		assertEquals("a quiet core is read once", 1, once)
+	}
+
+	@Test
 	fun `headless IAB editing closes while a custom screen could not disclose everything`() {
 		val list = GlobalVendorList(purposes = emptyMap(), vendors = emptyMap(), vendorListVersion = 177, tcfPolicyVersion = 5)
 		val restriction = IabPublisherRestriction(purposeId = 2, type = 1, vendorIds = listOf(7))

@@ -226,6 +226,31 @@ object C15tPayload {
 	 * restrictions change a vendor's legal bases away from the list, and Additional Consent
 	 * providers are not on the snapshot at all; the stock screens show both.
 	 */
+	/**
+	 * Read the snapshot and the bridge's additions to it as one revision.
+	 *
+	 * The core locks each accessor on its own, so a commit between `snapshot()` and
+	 * `iabConsent` would pair one revision's snapshot with the next one's TCF decision, and
+	 * JavaScript caches a payload by its revision. The additions are read between two
+	 * snapshot reads and kept only when both name the same revision; otherwise the read
+	 * starts again, up to [attempts] times, and the last read is returned.
+	 */
+	fun <AdditionsType> consistently(
+		snapshot: () -> ConsentSnapshot,
+		attempts: Int = 4,
+		additions: () -> AdditionsType,
+	): Pair<ConsentSnapshot, AdditionsType> {
+		var before = snapshot()
+		var read = additions()
+		repeat(attempts - 1) {
+			val after = snapshot()
+			if (after.revision == before.revision) return before to read
+			before = after
+			read = additions()
+		}
+		return before to read
+	}
+
 	fun headlessIabGaps(publisherRestrictions: List<IabPublisherRestriction>, adTechProviders: List<AdTechProvider>?): List<String> =
 		buildList {
 			if (publisherRestrictions.isNotEmpty()) add(HEADLESS_GAP_PUBLISHER_RESTRICTIONS)

@@ -177,6 +177,27 @@ public enum C15tPayload {
     /// What a custom screen built on the served vendor list could not disclose. Publisher
     /// restrictions change a vendor's legal bases away from the list, and Additional Consent
     /// providers are not on the snapshot at all; the stock screens show both.
+    /// Read the snapshot and the bridge's additions to it as one revision.
+    ///
+    /// The core locks each accessor on its own, so a commit between `snapshot()` and
+    /// `iabConsent()` would pair one revision's snapshot with the next one's TCF decision,
+    /// and JavaScript caches a payload by its revision. The additions are read between two
+    /// snapshot reads and kept only when both name the same revision; otherwise the read
+    /// starts again, up to `attempts` times, and the last read is returned.
+    public static func consistently<Additions>(
+        snapshot: () -> ConsentSnapshot, attempts: Int = 4, additions: () -> Additions
+    ) -> (ConsentSnapshot, Additions) {
+        var before = snapshot()
+        var read = additions()
+        for _ in 1..<max(attempts, 1) {
+            let after = snapshot()
+            if after.revision == before.revision { return (before, read) }
+            before = after
+            read = additions()
+        }
+        return (before, read)
+    }
+
     public static func headlessIABGaps(
         publisherRestrictions: [IABPublisherRestriction], adTechProviders: [AdTechProvider]?
     ) -> [String] {
