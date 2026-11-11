@@ -580,7 +580,16 @@ export const createConsentDraft = function createConsentDraft(
 		},
 		setDefaults: (next) => {
 			currentDefaults = next;
-			if (!differs(values, iab, seed)) {
+			// Only a clean draft takes new defaults: a staged edit, an overtaken
+			// category, a policy change or a held-back TCF selection still waits for
+			// the subject's review.
+			if (
+				staged.size === 0 &&
+				staleCategories.length === 0 &&
+				!stale &&
+				withdrawnIAB === null &&
+				!differs(values, iab, seed)
+			) {
 				reseed();
 			}
 		},
