@@ -25,16 +25,22 @@ import {
 	C15T_ANDROID_VERSION,
 	EXPO_PLUGIN,
 	expoPluginEntry,
+	activityEntry,
+	composeEntry,
 	KOTLIN_INSTALL_IMPORTS,
 	KOTLIN_OFFLINE_IMPORTS,
+	KOTLIN_PRIVACY_SETTINGS,
 	kotlinInstall,
 	kotlinOfflineInstall,
 	kotlinString,
 	mergeExpoAppJson,
 	providerImport,
+	SWIFT_PRIVACY_SETTINGS,
 	swiftConfiguration,
 	swiftOfflineInstall,
 	swiftString,
+	swiftUIEntry,
+	uiKitEntry,
 } from '../../mobile/scaffold';
 import { normalizeMobileURL, resolveMobileOptions } from '../../mobile/setup';
 import type { MobilePrompts, MobileSetupResult } from '../../mobile/setup';
@@ -51,6 +57,10 @@ const SWIFT_SNIPPETS =
 	'native/core-swift/Tests/C15tAppleTests/CLISnippetTests.swift';
 const KOTLIN_SNIPPETS =
 	'native/core-android/c15t-android/src/test/kotlin/com/c15t/android/CliSnippetTest.kt';
+const SWIFT_ENTRY_SNIPPETS =
+	'native/core-swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift';
+const KOTLIN_ENTRY_SNIPPETS =
+	'native/core-android/c15t-consent-ui/src/test/kotlin/com/c15t/consentui/cli-entry-snippet-test.kt';
 const PRIVACY_URL = 'https://app.example/privacy';
 
 /** The lines between the `c15t-cli-snippet:<name>` markers in a native test, dedented. */
@@ -603,6 +613,24 @@ describe('offline setup in a Swift or Android app', () => {
 		);
 		expect(kotlinInstall(hosted)).toBe(
 			await nativeSnippet(KOTLIN_SNIPPETS, 'hosted')
+		);
+		expect(swiftUIEntry(swiftConfiguration(hosted), PRIVACY_URL)).toBe(
+			await nativeSnippet(SWIFT_ENTRY_SNIPPETS, 'swiftui')
+		);
+		expect(uiKitEntry(swiftConfiguration(hosted), PRIVACY_URL)).toBe(
+			await nativeSnippet(SWIFT_ENTRY_SNIPPETS, 'uikit')
+		);
+		expect(SWIFT_PRIVACY_SETTINGS).toBe(
+			await nativeSnippet(SWIFT_ENTRY_SNIPPETS, 'privacy-settings')
+		);
+		expect(composeEntry(PRIVACY_URL)).toBe(
+			await nativeSnippet(KOTLIN_ENTRY_SNIPPETS, 'compose')
+		);
+		expect(activityEntry(PRIVACY_URL)).toBe(
+			await nativeSnippet(KOTLIN_ENTRY_SNIPPETS, 'activity')
+		);
+		expect(KOTLIN_PRIVACY_SETTINGS).toBe(
+			await nativeSnippet(KOTLIN_ENTRY_SNIPPETS, 'privacy-settings')
 		);
 		const source = await readFile(path.join(REPO, KOTLIN_SNIPPETS), 'utf8');
 		// The test sits in com.c15t.android, so C15tAndroid needs no import there.

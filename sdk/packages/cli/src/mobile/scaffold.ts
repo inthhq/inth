@@ -198,7 +198,7 @@ export const mergeExpoAppJson = (
  * and a Privacy settings button stays reachable afterwards.
  *
  * Needs the `privacyPolicyURL` provider prop and `presentPreferences(url)` from the
- * auto-present release of `@c15t/react-native`; see the PR description.
+ * auto-present release of `@c15t/react-native`.
  */
 export const providerSource = (typescript: boolean): string => {
 	const props = typescript
@@ -549,8 +549,9 @@ export const swiftConfiguration = (options: MobileSetupOptions): string => {
  * engine from `configuration` and open the prompt when the policy asks for one.
  * With no configuration, they attach to the engine the app already installed.
  *
- * This is the auto-present API (`.c15tConsent(_:privacyPolicyURL:)`). The compile
- * tests cover it once that API is on this branch; see the PR description.
+ * This is the auto-present API (`.c15tConsent(_:privacyPolicyURL:)`).
+ * `native/core-swift/Tests/C15tConsentUITests/cli-entry-snippet-tests.swift` compiles
+ * this text with the hosted configuration, and the CLI tests compare the two.
  */
 export const swiftUIEntry = (
 	configuration: string | null,
