@@ -335,6 +335,8 @@ final class ThemeColorCacheTests: XCTestCase {
         let dark = color.uiColor(alpha: 0.5).resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
         XCTAssertEqual(light, UIColor(rgb: 0x335CFF))
         XCTAssertEqual(dark, UIColor(rgb: 0x8CA2FF).withAlphaComponent(0.5))
+    }
+}
 
 final class TypeScaleTests: XCTestCase {
     func testRolesKeepTheirRatioToTheGroupToken() {
