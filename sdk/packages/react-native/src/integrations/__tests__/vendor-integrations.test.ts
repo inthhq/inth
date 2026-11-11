@@ -11,7 +11,10 @@ import {
 	connectAdjust,
 	connectAdMob,
 	connectAppsFlyer,
+	connectBranch,
+	connectBraze,
 	connectMetaAppEvents,
+	connectSingular,
 } from '../index';
 import type { AnalyticsIntegrationOptions, GoogleAdsConsent } from '../index';
 
@@ -150,6 +153,54 @@ const cases: VendorCase[] = [
 		name: 'Meta App Events',
 		withdrawn: ['autoLog:false', 'advertiserId:false', 'ldu:true'],
 	},
+	{
+		connect: (calls, options) =>
+			connectBraze(
+				{
+					disableSDK: () => log(calls, 'disable'),
+					enableSDK: () => log(calls, 'enable'),
+					setGoogleAdsConsent: (consent) => log(calls, `ads:${ads(consent)}`),
+				},
+				options
+			),
+		denied: ['disable'],
+		granted: ['enable', 'ads:true:true:true'],
+		name: 'Braze',
+		withdrawn: ['disable'],
+	},
+	{
+		connect: (calls, options) =>
+			connectBranch(
+				{
+					setConsumerProtectionAttributionLevel: (level) =>
+						log(calls, `level:${level}`),
+					setDMAParamsForEEA: (consent) => log(calls, `dma:${ads(consent)}`),
+				},
+				options
+			),
+		denied: ['level:NONE', 'dma:false:false:false'],
+		granted: ['dma:true:true:true', 'level:FULL'],
+		name: 'Branch',
+		withdrawn: ['level:MINIMAL', 'dma:false:false:false'],
+	},
+	{
+		connect: (calls, options) =>
+			connectSingular(
+				{
+					limitDataSharing: (limit) => log(calls, `limit:${limit}`),
+					resumeAllTracking: () => log(calls, 'resume'),
+					start: (limit) => log(calls, `start:${limit}`),
+					stopAllTracking: () => log(calls, 'stop'),
+					trackingOptIn: () => log(calls, 'optIn'),
+				},
+				options
+			),
+		// Singular is not started before the first grant, so nothing is called.
+		denied: [],
+		granted: ['start:false', 'limit:false', 'resume', 'optIn'],
+		name: 'Singular',
+		withdrawn: ['stop', 'limit:true'],
+	},
 ];
 
 const vendor = (name: string): VendorCase => {
@@ -241,6 +292,58 @@ describe('a marketing-only change after a grant', () => {
 		fake.pushSnapshot(grant('measurement', 'marketing'));
 		await settle(calls);
 		expect(calls).toEqual(['sharing:true:true:true']);
+		await integration.disconnect();
+	});
+
+	test('Braze records attributes without enabling again', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('functionality') });
+		const calls: string[] = [];
+		const integration = vendor('Braze').connect(calls, {
+			category: 'functionality',
+			onError: vi.fn(),
+		});
+		await integration.ready;
+		expect(calls.splice(0)).toEqual(['enable', 'ads:false:false:false']);
+		fake.pushSnapshot(grant('functionality', 'marketing'));
+		await settle(calls);
+		expect(calls.splice(0)).toEqual(['ads:true:true:true']);
+		// Braze still runs, so the denial is written.
+		fake.pushSnapshot(grant('functionality'));
+		await settle(calls);
+		expect(calls.splice(0)).toEqual(['ads:false:false:false']);
+		await integration.disconnect();
+		expect(calls).toEqual(['disable']);
+	});
+
+	test('Branch raises measurement-only attribution to full', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('measurement') });
+		const calls: string[] = [];
+		const integration = vendor('Branch').connect(calls, { onError: vi.fn() });
+		await integration.ready;
+		expect(calls.splice(0)).toEqual(['level:MINIMAL', 'dma:false:false:false']);
+		fake.pushSnapshot(grant('measurement', 'marketing'));
+		await settle(calls);
+		expect(calls).toEqual(['dma:true:true:true', 'level:FULL']);
+		await integration.disconnect();
+	});
+
+	test('Singular changes only the sharing limit', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('measurement') });
+		const calls: string[] = [];
+		const integration = vendor('Singular').connect(calls, {
+			category: 'measurement',
+			onError: vi.fn(),
+		});
+		await integration.ready;
+		expect(calls.splice(0)).toEqual([
+			'start:true',
+			'limit:true',
+			'resume',
+			'optIn',
+		]);
+		fake.pushSnapshot(grant('measurement', 'marketing'));
+		await settle(calls);
+		expect(calls).toEqual(['limit:false']);
 		await integration.disconnect();
 	});
 });
@@ -345,5 +448,181 @@ describe('withdrawal still restricts collection when a vendor call fails', () =>
 		await vi.waitFor(() =>
 			expect(calls).toEqual(['advertiserId:false', 'ldu:true'])
 		);
+	});
+});
+
+describe('Braze, Singular and Branch withdrawal survives a failing vendor call', () => {
+	test('Braze withdrawal only disables, so a failing attribute write cannot block it', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const integration = connectBraze(
+			{
+				disableSDK: () => log(calls, 'disable'),
+				enableSDK: () => log(calls, 'enable'),
+				setGoogleAdsConsent: (consent) =>
+					consent.adUserData
+						? log(calls, 'ads:true')
+						: Promise.reject(new Error('Braze rejected attributes')),
+			},
+			{ onError: vi.fn() }
+		);
+		await integration.ready;
+		calls.length = 0;
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['disable']);
+	});
+
+	test('Singular limits data sharing when stop rejects, and reports it', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Singular rejected stop');
+		const onError = vi.fn();
+		let failStop = false;
+		const integration = connectSingular(
+			{
+				limitDataSharing: (limit) => log(calls, `limit:${limit}`),
+				resumeAllTracking: () => log(calls, 'resume'),
+				start: (limit) => log(calls, `start:${limit}`),
+				stopAllTracking: () =>
+					failStop ? Promise.reject(failure) : log(calls, 'stop'),
+				trackingOptIn: () => log(calls, 'optIn'),
+			},
+			{ onError }
+		);
+		await integration.ready;
+		calls.length = 0;
+		failStop = true;
+		fake.pushSnapshot(grant());
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		expect(calls).toEqual(['limit:true']);
+	});
+
+	test('Branch sends denied DMA parameters when lowering the level never settles', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const integration = connectBranch(
+			{
+				setConsumerProtectionAttributionLevel: (level) => {
+					log(calls, `level:${level}`);
+					return level === 'FULL' ? undefined : new Promise<void>(() => {});
+				},
+				setDMAParamsForEEA: (consent) =>
+					log(calls, `dma:${consent.adPersonalization}`),
+			},
+			{ onError: vi.fn() }
+		);
+		await integration.ready;
+		calls.length = 0;
+		fake.pushSnapshot(grant());
+		await vi.waitFor(() => expect(calls).toEqual(['level:NONE', 'dma:false']));
+	});
+});
+
+describe('Singular start', () => {
+	const singularClient = (
+		calls: string[],
+		start: (limit: boolean) => Promise<void> | undefined
+	) => ({
+		limitDataSharing: (limit: boolean) => log(calls, `limit:${limit}`),
+		resumeAllTracking: () => log(calls, 'resume'),
+		start: (limit: boolean) => {
+			log(calls, `start:${limit}`);
+			return start(limit);
+		},
+		stopAllTracking: () => log(calls, 'stop'),
+		trackingOptIn: () => log(calls, 'optIn'),
+	});
+
+	test('a failed start is reported, makes no tracking call, and is retried', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant() });
+		const calls: string[] = [];
+		const failure = new Error('Singular init threw');
+		const onError = vi.fn();
+		let fail = true;
+		const integration = connectSingular(
+			singularClient(calls, () => (fail ? Promise.reject(failure) : undefined)),
+			{ onError }
+		);
+		await integration.ready;
+		fake.pushSnapshot(grant('marketing'));
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		await settle(calls);
+		expect(calls.splice(0)).toEqual(['start:false']);
+		fail = false;
+		await integration.sync();
+		await settle(calls);
+		expect(calls.splice(0)).toEqual([
+			'start:false',
+			'limit:false',
+			'resume',
+			'optIn',
+		]);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['stop', 'limit:true']);
+		await integration.disconnect();
+	});
+
+	test('a withdrawal after a failed start still stops what start may have begun', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant() });
+		const calls: string[] = [];
+		const integration = connectSingular(
+			singularClient(calls, () =>
+				Promise.reject(new Error('Singular init threw'))
+			),
+			{ onError: vi.fn() }
+		);
+		await integration.ready;
+		fake.pushSnapshot(grant('marketing'));
+		await settle(calls);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['start:false', 'stop', 'limit:true']);
+		await integration.disconnect();
+	});
+
+	test('a failed start at connect is reported and retried, and a withdrawal still stops', async () => {
+		// Launch with stored consent: connecting applies it, and the first start fails.
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Singular init threw');
+		const onError = vi.fn();
+		let fail = true;
+		const integration = connectSingular(
+			singularClient(calls, () => (fail ? Promise.reject(failure) : undefined)),
+			{ onError }
+		);
+		await expect(integration.ready).rejects.toBe(failure);
+		await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(failure));
+		expect(calls.splice(0)).toEqual(['start:false']);
+		fail = false;
+		await integration.sync();
+		await settle(calls);
+		expect(calls.splice(0)).toEqual([
+			'start:false',
+			'limit:false',
+			'resume',
+			'optIn',
+		]);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['stop', 'limit:true']);
+		await integration.disconnect();
+	});
+
+	test('a withdrawal after a failed start at connect still stops', async () => {
+		const fake = createFakeNativeModule({ snapshot: grant('marketing') });
+		const calls: string[] = [];
+		const failure = new Error('Singular init threw');
+		const integration = connectSingular(
+			singularClient(calls, () => Promise.reject(failure)),
+			{ onError: vi.fn() }
+		);
+		await expect(integration.ready).rejects.toBe(failure);
+		fake.pushSnapshot(grant());
+		await settle(calls);
+		expect(calls).toEqual(['start:false', 'stop', 'limit:true']);
+		await integration.disconnect();
 	});
 });

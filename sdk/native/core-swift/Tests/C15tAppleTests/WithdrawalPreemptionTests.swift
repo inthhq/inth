@@ -87,6 +87,34 @@ final class WithdrawalPreemptionTests: XCTestCase {
                 trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
             return ConnectedHelper(cancel: helper.cancel)
         }),
+        ("Braze", { core, r in
+            let helper = BrazeIntegration(
+                core: core,
+                setEnabled: { r("enabled:\($0)") },
+                setGoogleAdsConsent: { r("ads:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Branch", { core, r in
+            let helper = BranchIntegration(
+                core: core,
+                setConsumerProtectionAttributionLevel: { r("level:\($0.rawValue)") },
+                setDMAParamsForEEA: { r("dma:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Singular", { core, r in
+            let helper = SingularIntegration(
+                core: core,
+                start: { r("start:\($0)"); return true },
+                limitDataSharing: { r("limit:\($0)") },
+                stopAllTracking: { r("stop") },
+                resumeAllTracking: { r("resume") },
+                trackingOptIn: { r("optIn") })
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
+        ("Amplitude", { core, r in
+            let helper = AmplitudeIntegration(core: core) { r("optOut:\($0)") }
+            return ConnectedHelper(cancel: helper.cancel)
+        }),
         ("Meta App Events", { core, r in
             let helper = MetaAppEventsIntegration(
                 core: core,
@@ -97,25 +125,31 @@ final class WithdrawalPreemptionTests: XCTestCase {
         }),
     ]
 
-    /// The calls a helper makes for denial, for a grant, and those only a grant makes.
+    /// The stop calls a withdrawal makes after a grant, the calls a first grant makes,
+    /// those only a grant makes, and those only a regrant after withdrawal makes.
     private func profile(
         _ connect: (ConsentCore, @escaping @Sendable (String) -> Void) -> ConnectedHelper
-    ) async throws -> (denied: [String], grant: [String], grantedOnly: Set<String>) {
+    ) async throws -> (denied: [String], grant: [String], grantedOnly: Set<String>, regrantOnly: Set<String>) {
         let core = try await resolvedCore()
         let probe = BlockingCalls()
         let helper = connect(core) { probe.call($0) }
-        let denied = probe.since(0)
         let mark = probe.count
         XCTAssertEqual(core.save(.all).status, .committed)
         let grant = probe.since(mark)
+        let withdrawalMark = probe.count
+        XCTAssertEqual(core.save(.necessary).status, .committed)
+        let denied = probe.since(withdrawalMark)
+        let regrantMark = probe.count
+        XCTAssertEqual(core.save(.all).status, .committed)
+        let regrant = probe.since(regrantMark)
         helper.cancel()
         await core.waitUntilIdle()
-        return (denied, grant, Set(grant).subtracting(denied))
+        return (denied, grant, Set(grant).subtracting(denied), Set(regrant).subtracting(denied))
     }
 
     func testWithdrawalAppliesAtOnceWhileAnyGrantTimeVendorCallIsBlocked() async throws {
         for (name, connect) in helpers {
-            let (denied, grant, grantedOnly) = try await profile(connect)
+            let (denied, grant, grantedOnly, _) = try await profile(connect)
             XCTAssertFalse(grantedOnly.isEmpty, "\(name) must make a grant-only call")
             // Hold each grant-time call in turn, so every enabling call is shown to
             // re-read consent rather than trust a stale grant.
@@ -162,7 +196,7 @@ final class WithdrawalPreemptionTests: XCTestCase {
 
     func testRegrantWaitsForABlockedPreemptingWithdrawalThenApplies() async throws {
         for (name, connect) in helpers {
-            let (_, _, grantedOnly) = try await profile(connect)
+            let (_, _, grantedOnly, regrantOnly) = try await profile(connect)
             let core = try await resolvedCore()
             let calls = BlockingCalls()
             let helper = connect(core) { calls.call($0) }
@@ -203,7 +237,7 @@ final class WithdrawalPreemptionTests: XCTestCase {
             XCTAssertEqual(withdrawn.wait(timeout: .now() + 5), .success, name)
             let afterRelease = calls.since(mark)
             XCTAssertTrue(
-                grantedOnly.isSubset(of: Set(afterRelease)),
+                regrantOnly.isSubset(of: Set(afterRelease)),
                 "\(name): the regrant applies once the withdrawal returns")
             let lastGrant = afterRelease.lastIndex { grantedOnly.contains($0) } ?? -1
             let lastDenial = afterRelease.lastIndex { !grantedOnly.contains($0) } ?? -1
@@ -232,6 +266,25 @@ final class WithdrawalPreemptionTests: XCTestCase {
                 enable: { r("enable") },
                 disable: { r("disable") },
                 trackThirdPartySharing: { r("sharing:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Braze": { core, r in
+            let helper = BrazeIntegration(
+                core: core,
+                category: .measurement,
+                setEnabled: { r("enabled:\($0)") },
+                setGoogleAdsConsent: { r("ads:\($0.adUserData)") })
+            return ConnectedHelper(cancel: helper.cancel)
+        },
+        "Singular": { core, r in
+            let helper = SingularIntegration(
+                core: core,
+                category: .measurement,
+                start: { r("start:\($0)"); return true },
+                limitDataSharing: { r("limit:\($0)") },
+                stopAllTracking: { r("stop") },
+                resumeAllTracking: { r("resume") },
+                trackingOptIn: { r("optIn") })
             return ConnectedHelper(cancel: helper.cancel)
         },
         "Meta App Events": { core, r in

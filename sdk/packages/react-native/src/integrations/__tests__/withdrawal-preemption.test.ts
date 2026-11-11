@@ -12,11 +12,14 @@ import {
 	connectAdMob,
 	connectAmplitude,
 	connectAppsFlyer,
+	connectBranch,
+	connectBraze,
 	connectFirebaseAnalytics,
 	connectMetaAppEvents,
 	connectMixpanel,
 	connectPostHog,
 	connectSentryReplay,
+	connectSingular,
 } from '../index';
 import type { AnalyticsIntegrationOptions, ConsentIntegration } from '../index';
 
@@ -136,24 +139,37 @@ const helpers: readonly (readonly [string, Connect])[] = [
 	['AppsFlyer', connectAppsFlyer],
 	['Adjust', connectAdjust],
 	['Meta App Events', connectMetaAppEvents],
+	['Braze', connectBraze],
+	['Branch', (client, options) => connectBranch(client, options)],
+	['Singular', connectSingular],
 ];
 
-/** The calls a helper makes for denial, and those only a grant makes. */
+/**
+ * The stop calls a withdrawal makes after a grant, the calls a first grant
+ * makes, those only a grant makes, and those only a regrant after withdrawal
+ * makes.
+ */
 const profile = async (connect: Connect) => {
 	const fake = createFakeNativeModule({ snapshot: permissions(false) });
 	const vendor = recorder();
 	const integration = connect(vendor.client as never, { onError: vi.fn() });
 	await integration.ready;
-	const denied = [...vendor.calls];
 	vendor.calls.length = 0;
 	fake.pushSnapshot(permissions(true));
 	await settle(vendor.calls);
-	const grantCalls = [...vendor.calls];
+	const grantCalls = vendor.calls.splice(0);
+	fake.pushSnapshot(permissions(false));
+	await settle(vendor.calls);
+	const denied = vendor.calls.splice(0);
+	fake.pushSnapshot(permissions(true));
+	await settle(vendor.calls);
+	const regrantCalls = vendor.calls.splice(0);
 	const grantedOnly = grantCalls.filter((call) => !denied.includes(call));
+	const regrantOnly = regrantCalls.filter((call) => !denied.includes(call));
 	await integration.disconnect();
 	resetConsentClient();
 	resetNativeStub();
-	return { denied, grantCalls, grantedOnly };
+	return { denied, grantCalls, grantedOnly, regrantOnly };
 };
 
 afterEach(() => {
@@ -212,7 +228,7 @@ describe.each(helpers)('%s', (_name, connect) => {
 	});
 
 	test('a regrant waits for a pending preempting withdrawal, then applies', async () => {
-		const { grantedOnly } = await profile(connect);
+		const { grantedOnly, regrantOnly } = await profile(connect);
 		const fake = createFakeNativeModule({ snapshot: permissions(false) });
 		const vendor = recorder();
 		const integration = connect(vendor.client as never, { onError: vi.fn() });
@@ -241,7 +257,7 @@ describe.each(helpers)('%s', (_name, connect) => {
 		await settle(vendor.calls);
 		const afterRelease = vendor.calls.slice(mark);
 		expect(
-			grantedOnly.every((call) => afterRelease.includes(call)),
+			regrantOnly.every((call) => afterRelease.includes(call)),
 			'the regrant applies once the withdrawal settles'
 		).toBe(true);
 		const lastDenial = Math.max(

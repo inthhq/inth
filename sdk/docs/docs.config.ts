@@ -1040,6 +1040,7 @@ export default defineDocsConfig({
 					pages: [
 						'activecampaign',
 						'attentive',
+						'braze',
 						'customer-io',
 						'insider',
 						'klaviyo',
@@ -1056,6 +1057,8 @@ export default defineDocsConfig({
 						'admob',
 						'appsflyer',
 						'adjust',
+						'branch',
+						'singular',
 						'amazon-ads',
 						'openai-pixel',
 						'pinterest-tag',

@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/branch-integration.ts (docs:rn-branch-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="branch-consent.ts"
+import { connectBranch } from '@c15t/react-native/integrations';
+import type {
+	BranchClient,
+	ConsentIntegration,
+} from '@c15t/react-native/integrations';
+
+export const connectAppBranch = (
+	branch: BranchClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectBranch(branch, { onError });
+```

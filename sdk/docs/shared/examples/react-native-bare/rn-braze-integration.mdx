@@ -1,0 +1,14 @@
+{/* Generated from internals/fixtures/react-native-bare/src/documentation/braze-integration.ts (docs:rn-braze-integration) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="braze-consent.ts"
+import { connectBraze } from '@c15t/react-native/integrations';
+import type {
+	BrazeClient,
+	ConsentIntegration,
+} from '@c15t/react-native/integrations';
+
+export const connectAppBraze = (
+	braze: BrazeClient,
+	onError: (error: unknown) => void
+): ConsentIntegration => connectBraze(braze, { onError });
+```

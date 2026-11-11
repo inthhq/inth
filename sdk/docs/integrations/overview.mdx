@@ -255,8 +255,8 @@ integration with the [consent verification guide](/docs/guides/verify-consent).
 ## Mobile SDKs
 
 c15t's mobile packages include consent helpers for Firebase Analytics, PostHog,
-Mixpanel, Amplitude, Sentry Session Replay, AdMob, AppsFlyer, Adjust and Meta
-App Events.
+Mixpanel, Amplitude, Sentry Session Replay, AdMob, AppsFlyer, Adjust, Meta App
+Events, Braze, Branch and Singular.
 Install the vendor's SDK in your app, then connect it to the native consent engine.
 The helpers add no vendor dependencies and do not change your consent UI.
 
@@ -267,12 +267,15 @@ The helpers add no vendor dependencies and do not change your consent UI.
 | Firebase Analytics | Bundled helper for Swift, Kotlin and RN/Expo. Sends all four Consent Mode v2 signals from consent, with the web's mapping. | [Firebase Analytics](/docs/integrations/firebase-analytics) |
 | PostHog | Bundled capture-permission helper for Swift, Kotlin and RN/Expo. Other PostHog products need separate configuration. | [PostHog](/docs/integrations/posthog#mobile) |
 | Mixpanel | Bundled tracking-command helper for Swift, Kotlin and RN/Expo. Queue and identity behavior differs by platform. | [Mixpanel](/docs/integrations/mixpanel-analytics#mobile) |
-| Amplitude Analytics | Bundled opt-out helper for RN/Expo. Native Swift and Kotlin support is deferred; older queued events and other products need separate handling. | [Amplitude](/docs/integrations/amplitude#mobile) |
+| Amplitude Analytics | Bundled opt-out helper for Swift, Kotlin and RN/Expo. Older queued events and other products need separate handling. | [Amplitude](/docs/integrations/amplitude#mobile) |
 | Sentry Session Replay | Bundled manual recording helper for Swift, Kotlin and RN/Expo. Crash reporting remains app-configured. | [Sentry Replay](/docs/integrations/sentry#mobile) |
 | AdMob (Google Mobile Ads) | Bundled helper for Swift, Kotlin and RN/Expo. Marketing drives limited ads, personalization and restricted data processing. EEA ads still need a certified CMP's TC string. | [AdMob](/docs/integrations/admob) |
 | AppsFlyer | Bundled helper for Swift, Kotlin and RN/Expo. Starts and stops the SDK, and sends DMA consent data. | [AppsFlyer](/docs/integrations/appsflyer) |
 | Adjust | Bundled helper for Swift, Kotlin and RN/Expo. Enables and disables the SDK, and sends Google DMA third-party sharing. | [Adjust](/docs/integrations/adjust) |
 | Meta (Facebook SDK) | Bundled helper for Swift, Kotlin and RN/Expo. Controls automatic App Events, advertiser ID collection and Limited Data Use. | [Meta App Events](/docs/integrations/meta-app-events) |
+| Braze | Bundled helper for Swift, Kotlin and RN/Expo. Enables and disables the SDK, and records DMA consent attributes. | [Braze](/docs/integrations/braze) |
+| Branch | Bundled helper for Swift, Kotlin and RN/Expo. Sets the attribution level and DMA parameters; deep links keep working. | [Branch](/docs/integrations/branch) |
+| Singular | Bundled helper for Swift, Kotlin and RN/Expo. Starts Singular on the first grant, then stops and resumes tracking and limits data sharing. | [Singular](/docs/integrations/singular) |
 | Other analytics SDKs | App-owned wiring through native subscriptions or React hooks. | [Native startup gates](/docs/frameworks/react-native/native-behaviour) |
 | IAB-aware advertising SDKs | Standard native TCF and Additional Consent signals, plus vendor and purpose gates. Verify each SDK and mediation configuration. | [Mobile IAB](/docs/guides/mobile-iab) |
 | GTM, gtag.js, browser pixels and website widgets | The existing web helpers operate in a browser. Use the vendor's mobile SDK where one exists. | [Web integrations](/docs/integrations/building-integrations) |

@@ -128,10 +128,12 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [AdRoll](./integrations/adroll.md): Load AdRoll with c15t after marketing consent and verify its loader, storage and revocation behavior.
 - [Ahrefs Analytics](./integrations/ahrefs-analytics.md): Load Ahrefs Web Analytics only after measurement consent with the c15t ahrefsAnalytics helper, and check it in DevTools.
 - [Amazon Ads](./integrations/amazon-ads.md): Load Amazon Ads with c15t after marketing consent and verify its loader, storage and revocation behavior.
-- [Amplitude](./integrations/amplitude.md): Load Amplitude Browser SDK 2 after web consent, or connect Amplitude Analytics opt-out in React Native and Expo, with withdrawal and reset handling.
+- [Amplitude](./integrations/amplitude.md): Load Amplitude Browser SDK 2 after web consent, or connect Amplitude Analytics opt-out in Swift, Kotlin, React Native and Expo, with withdrawal and reset handling.
 - [Appcues](./integrations/appcues.md): Load Appcues onboarding flows after experience consent, configure US or EU accounts, and reset the visitor on revocation.
 - [AppsFlyer](./integrations/appsflyer.md): Run AppsFlyer only while c15t consent allows it and send Google's DMA consent through AppsFlyer's consent API, in Swift, Kotlin, React Native and Expo.
 - [Attentive](./integrations/attentive.md): Load the Attentive tag only after marketing consent with the c15t attentiveTag helper, and check its requests and storage in DevTools.
+- [Branch](./integrations/branch.md): Set Branch's consumer protection attribution level and Google DMA parameters from c15t consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
+- [Braze](./integrations/braze.md): Keep the Braze SDK disabled until c15t consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
 - [Custom integrations](./integrations/building-integrations.md): Gate a vendor that has no @c15t/integrations helper, or sync consent with an SDK your app already loads, using a c15t script configuration.
 - [Clay](./integrations/clay.md): Load Clay web intent only after marketing consent and understand its storage and revocation limits.
 - [Clearbit](./integrations/clearbit.md): Load the Clearbit enrichment tag only after marketing consent with the c15t clearbit helper, and check it in DevTools.
@@ -188,6 +190,7 @@ These docs describe c15t v3. Find your app's row in Choose your setup, then foll
 - [Segment](./integrations/segment.md): Load Segment Analytics.js only after measurement consent with the c15t segment helper, guard your own track and identify calls, and check it in DevTools.
 - [Sentry](./integrations/sentry.md): Configure consent for Sentry error monitoring, user data and Session Replay on the web, and manual replay in Swift, Kotlin, React Native and Expo.
 - [Shopify](./integrations/shopify.md): Send c15t consent to Shopify's Customer Privacy API from a Hydrogen storefront, so Shopify analytics wait for the visitor's choice and follow each later change.
+- [Singular](./integrations/singular.md): Start Singular only after c15t consent allows it, then stop, resume and limit its data sharing in Swift, Kotlin, React Native and Expo, with Google's DMA signals passed through Singular.
 - [Snapchat Pixel](./integrations/snapchat-pixel.md): Load the Snapchat Pixel only after marketing consent with the c15t snapchatPixel helper, guard snaptr event calls, and check it in DevTools.
 - [Statable](./integrations/statable-analytics.md): Load Statable analytics after measurement consent with the c15t statableAnalytics helper, configure its ingestion endpoint, and verify requests and browser storage.
 - [The Trade Desk](./integrations/the-trade-desk.md): Load The Trade Desk with c15t after marketing consent and verify its loader, storage and revocation behavior.

@@ -72,6 +72,34 @@ internal val integrationHelpers = listOf(
 	}, { core, r, e ->
 		AdjustIntegration(core, MEASUREMENT, enable = { r("enable") }, disable = { r("disable") }, trackThirdPartySharing = { r("sharing:${it.adUserData}") }, onError = e)
 	}),
+	IntegrationHelper("Braze", { core, r, e ->
+		BrazeIntegration(core, enableSdk = { r("enable") }, disableSdk = { r("disable") }, setGoogleAdsConsent = { r("ads:${it.adUserData}") }, onError = e)
+	}, { core, r, e ->
+		BrazeIntegration(core, MEASUREMENT, enableSdk = { r("enable") }, disableSdk = { r("disable") }, setGoogleAdsConsent = { r("ads:${it.adUserData}") }, onError = e)
+	}),
+	IntegrationHelper("Branch", { core, r, e ->
+		BranchIntegration(core, setConsumerProtectionAttributionLevel = { r("level:$it") }, setDMAParamsForEEA = { r("dma:${it.adUserData}") }, onError = e)
+	}),
+	IntegrationHelper("Singular", { core, r, e ->
+		SingularIntegration(core,
+			start = { r("start:$it"); true },
+			limitDataSharing = { r("limit:$it") },
+			stopAllTracking = { r("stop") },
+			resumeAllTracking = { r("resume") },
+			trackingOptIn = { r("optIn") },
+			onError = e,
+		)
+	}, { core, r, e ->
+		SingularIntegration(core, MEASUREMENT,
+			start = { r("start:$it"); true },
+			limitDataSharing = { r("limit:$it") },
+			stopAllTracking = { r("stop") },
+			resumeAllTracking = { r("resume") },
+			trackingOptIn = { r("optIn") },
+			onError = e,
+		)
+	}),
+	IntegrationHelper("Amplitude", { core, r, e -> AmplitudeIntegration(core, setOptOut = { r("optOut:$it") }, onError = e) }),
 	IntegrationHelper("Meta App Events", { core, r, e ->
 		MetaAppEventsIntegration(core,
 			setAutoLogAppEventsEnabled = { r("autoLog:$it") },
@@ -97,17 +125,33 @@ class WithdrawalPreemptionTest(private val helper: IntegrationHelper) {
 		fun helpers(): List<IntegrationHelper> = integrationHelpers
 	}
 
-	/** The calls a helper makes for denial, for a grant, and those only a grant makes. */
-	private fun profile(): Triple<List<String>, List<String>, Set<String>> {
+	/** What a helper calls: see [profile]. */
+	private class Profile(val denied: List<String>, val grant: List<String>, val grantedOnly: Set<String>, val regrantOnly: Set<String>) {
+		operator fun component1() = denied
+		operator fun component2() = grant
+		operator fun component3() = grantedOnly
+		operator fun component4() = regrantOnly
+	}
+
+	/**
+	 * The stop calls a withdrawal makes after a grant, the calls a first grant makes,
+	 * those only a grant makes, and those only a regrant after withdrawal makes.
+	 */
+	private fun profile(): Profile {
 		val core = kernel()
 		val recorder = BlockingRecorder()
 		val integration = helper.connect(core, recorder::call, ::unexpectedError)
-		val denied = recorder.since(0)
 		val mark = recorder.calls.size
 		assertTrue(core.save(CommitIntent.All).ok)
 		val grant = recorder.since(mark)
+		val withdrawalMark = recorder.calls.size
+		assertTrue(core.save(CommitIntent.Necessary).ok)
+		val denied = recorder.since(withdrawalMark)
+		val regrantMark = recorder.calls.size
+		assertTrue(core.save(CommitIntent.All).ok)
+		val regrant = recorder.since(regrantMark)
 		integration.close()
-		return Triple(denied, grant, grant.toSet() - denied.toSet())
+		return Profile(denied, grant, grant.toSet() - denied.toSet(), regrant.toSet() - denied.toSet())
 	}
 
 	@Test
@@ -150,7 +194,7 @@ class WithdrawalPreemptionTest(private val helper: IntegrationHelper) {
 
 	@Test
 	fun `a regrant waits for a blocked preempting withdrawal, then applies`() {
-		val (_, _, grantedOnly) = profile()
+		val (_, _, grantedOnly, regrantOnly) = profile()
 		val core = kernel()
 		val recorder = BlockingRecorder()
 		val integration = helper.connect(core, recorder::call, ::unexpectedError)
@@ -180,7 +224,7 @@ class WithdrawalPreemptionTest(private val helper: IntegrationHelper) {
 		withdrawing.join(5_000)
 		assertFalse(withdrawing.isAlive)
 		val afterRelease = recorder.since(mark)
-		assertTrue("the regrant applies once the withdrawal returns", afterRelease.containsAll(grantedOnly))
+		assertTrue("the regrant applies once the withdrawal returns", afterRelease.containsAll(regrantOnly))
 		val lastGrant = afterRelease.indexOfLast { it in grantedOnly }
 		val lastDenial = afterRelease.indexOfLast { it !in grantedOnly }
 		assertTrue("the vendor ends granted", lastGrant > lastDenial)
