@@ -167,7 +167,7 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(listed.first?["id"] as? String, "internal-ads")
         XCTAssertEqual(listed.first?["purposes"] as? [Int], [1, 3])
         XCTAssertNil(listed.first?["description"], "absent optionals stay out, as Kotlin writes them")
-        XCTAssertEqual((jsonObject(C15tPayload.snapshot(snapshot))["iab"] as? [String: Any])?["customVendors"] as? [Any], [])
+        XCTAssertEqual(((jsonObject(C15tPayload.snapshot(snapshot))["iab"] as? [String: Any])?["customVendors"] as? [Any])?.count, 0)
 
         let lists = #""purposeConsents":[],"purposeLegitimateInterests":[],"purposeObjections":[],"vendorConsents":[],"vendorLegitimateInterests":[],"vendorObjections":[],"specialFeatureOptIns":[],"publisherConsents":[],"publisherLegitimateInterests":[],"publisherCustomConsents":[],"publisherCustomLegitimateInterests":[]"#
         let raw = #"{"action":"iab","choices":{"# + lists + #","customVendorConsents":["internal-ads"],"customVendorLegitimateInterests":[]},"consents":{}}"#
