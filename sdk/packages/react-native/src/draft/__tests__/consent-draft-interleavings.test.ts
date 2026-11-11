@@ -339,6 +339,41 @@ describe('consent draft interleavings', () => {
 		core.client.dispose();
 	});
 
+	test('an edit made while a save is pending survives the save landing', async () => {
+		const core = createCore({ ...FAKE_BOOTSTRAP, commitRevision: true });
+		const draft = createConsentDraft(core.client);
+		draft.subscribe(() => undefined);
+
+		draft.set('marketing', true);
+		const saving = draft.save();
+		draft.set('measurement', true);
+		await core.reply();
+		await saving;
+
+		// The save's own write is not a decision made elsewhere.
+		expect(draft.getState()).toMatchObject({
+			isDirty: true,
+			isStale: false,
+			values: { marketing: true, measurement: true },
+		});
+		core.client.dispose();
+	});
+
+	test('an edit made while a save is pending turns stale when another decision lands after it', async () => {
+		const core = createCore({ ...FAKE_BOOTSTRAP, commitRevision: true });
+		const draft = createConsentDraft(core.client);
+		draft.subscribe(() => undefined);
+
+		const saving = draft.save();
+		draft.set('measurement', true);
+		core.record({ measurement: false });
+		await core.reply();
+		await saving;
+
+		expect(draft.getState().staleCategories).toEqual(['measurement']);
+		core.client.dispose();
+	});
+
 	test('an older binary saves unpinned and says so once in development', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		const core = createCore({ ...FAKE_BOOTSTRAP, commitRevision: false });
