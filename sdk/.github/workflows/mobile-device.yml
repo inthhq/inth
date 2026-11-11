@@ -191,16 +191,16 @@ jobs:
       # proves nothing about it. The fixture renders its custom screens in this mode.
       - name: Build the Expo dev-client app for iOS without the stock consent screens
         if: matrix.kind == 'ios'
-        env:
-          # Read by the fixture's app.config.ts (the plugin's `nativeUI: false`) and by
-          # the podspec during `pod install`.
-          C15T_NATIVE_UI: '0'
         run: |
           set -ex
-          (cd internals/fixtures/expo-dev && bun x expo prebuild --platform ios --clean --no-install)
+          # The switch goes to prebuild only: the fixture's app.config.ts turns it into
+          # the plugin's `nativeUI: false`, which writes `c15t.nativeUI` to
+          # Podfile.properties.json. `pod install` runs without it, as in an app, so the
+          # podspec has to read that file; the variable would override the file.
+          (cd internals/fixtures/expo-dev && C15T_NATIVE_UI=0 bun x expo prebuild --platform ios --clean --no-install)
           grep -q '"c15t.nativeUI": "false"' internals/fixtures/expo-dev/ios/Podfile.properties.json
           cd internals/fixtures/expo-dev/ios
-          pod install
+          env -u C15T_NATIVE_UI pod install
           # The flag reached the pod target, and the excluded sources are not in it.
           grep -rq C15T_NO_NATIVE_UI 'Pods/Target Support Files/C15tReactNative'
           if grep -Eq 'consent-views\.swift|C15tConsentHost\.swift' Pods/Pods.xcodeproj/project.pbxproj; then
