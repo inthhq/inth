@@ -258,6 +258,21 @@ class ConsentHostAutoPresentTest {
         assertTrue(events.outcomes.isEmpty())
     }
 
+    /** React Native reloads while the prompt is up: the new runtime hears it is on screen. */
+    @Test fun aNewRuntimeHearsOfTheSessionOnScreen() {
+        val core = boot("category-init.json")
+        val host = host()
+        configure(core, host, autoPresent = true)
+        val open = events.presented.single().first
+        ConsentHost.detach(owner)
+
+        val reloaded = Any()
+        val heard = Events()
+        ConsentHost.configure(host.get().application, host.get(), core, true, PRIVACY_URL, reloaded, heard)
+        assertEquals(listOf(open), heard.open)
+        ConsentHost.detach(reloaded)
+    }
+
     @Test fun anOwedPromptIsNotLostAcrossUninstall() {
         val store = MemoryStore()
         val first = install(store)

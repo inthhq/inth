@@ -154,6 +154,8 @@ object ConsentHost {
     fun configure(application: Application, activity: Activity?, core: ConsentCore, autoPresent: Boolean,
         privacyPolicyUrl: String?, owner: Any, listener: Listener) {
         if (autoPresent) requireHttps(privacyPolicyUrl)
+        // A new runtime, such as React Native after a reload, has not heard of what is on screen.
+        val fresh = this.owner.get() !== owner
         this.owner = WeakReference(owner)
         this.listener = listener
         this.autoPresent = autoPresent
@@ -161,6 +163,7 @@ object ConsentHost {
         track(application)
         if (activity != null && activity !is ConsentHostActivity) foreground = WeakReference(activity)
         val attached = attach(core)
+        if (fresh) current()?.let { listener.presented(it.id, it.presentation, it.automatic) }
         // Opened by itself and never shown: not for an app that has just opted out.
         if (!autoPresent && held == null) attached.presenter.withdrawAutomaticSession()
         reconcile()

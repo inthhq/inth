@@ -169,12 +169,23 @@ public final class ConsentHostDriver {
     /// A scene became active: show what could not be shown before.
     public func retry() { reconcile() }
 
-    /// The runtime went away. A session on screen stays for the person to finish; nothing presents
-    /// by itself until a runtime configures the driver again.
+    /// The runtime went away. Its canvas comes off screen with it, and nothing presents by itself
+    /// until a runtime configures a driver again. An open session stays open in the prompt, so the
+    /// next runtime's driver shows it and reports it.
     public func detach() {
         configured = false
         autoPresent = false
-        prompt?.detach(token)
+        held = nil
+        leaving = []
+        canvas.hide()
+        subscription?.cancel()
+        subscription = nil
+        if let prompt {
+            prompt.onHostFinished = nil
+            prompt.onHostCoverDismissed = nil
+            prompt.detach(token)
+        }
+        prompt = nil
     }
 
     private static func https(_ raw: String) -> URL? {

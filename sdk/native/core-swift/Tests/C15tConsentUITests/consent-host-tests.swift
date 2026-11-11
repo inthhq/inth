@@ -213,6 +213,28 @@ final class ConsentHostTests: XCTestCase {
         XCTAssertNil(canvas.shown)
     }
 
+    /// React Native reloads while the prompt is up: the old overlay goes, and the new runtime's
+    /// driver shows the same session and reports it.
+    func testANewRuntimeTakesOverTheSessionOnScreen() async throws {
+        let (core, _) = try await boot("category-init.json")
+        // An installed core keeps its prompt between runtimes; this one is not installed.
+        let prompt = ConsentPrompt.shared(for: core)
+        defer { withExtendedLifetime(prompt) {} }
+        let (old, events, oldCanvas) = driver()
+        try old.configure(core: core, autoPresent: true, privacyPolicyURL: url)
+        let open = try XCTUnwrap(events.presented.first?.id)
+        old.detach()
+        XCTAssertNil(oldCanvas.shown, "the old runtime's overlay is gone")
+
+        let (reloaded, heard, canvas) = driver()
+        try reloaded.configure(core: core, autoPresent: true, privacyPolicyURL: url)
+        XCTAssertEqual(heard.open, [open])
+        XCTAssertNotNil(canvas.shown)
+        reloaded.close(sessionID: open)
+        XCTAssertEqual(heard.outcomes.map(\.ending), [.dismissed])
+        XCTAssertTrue(events.outcomes.isEmpty, "the old runtime hears nothing more")
+    }
+
     func testAnOwedPromptIsNotLostAcrossUninstall() async throws {
         C15t.resetForTests()
         defer { C15t.resetForTests() }
