@@ -403,10 +403,10 @@ class FakeCore {
 				// natively. The real module uses this to start and stop emitting.
 			},
 			closeConsentPresenter: () => Promise.resolve(),
+			commit: (intent) => this.commit(intent),
 			// The fixtures draw their own JavaScript banner with autoPresent={false};
 			// the fake has no native prompt to configure.
 			configureAutoPresent: () => Promise.resolve(),
-			commit: (intent) => this.commit(intent),
 			dismissNotice: () => {
 				this.dismissNotice();
 			},
