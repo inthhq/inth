@@ -1,6 +1,5 @@
 package com.c15t.reactnative
 
-import com.c15t.consentui.ConsentHost
 import com.c15t.core.C15t
 import com.c15t.core.Subscription
 import com.c15t.core.model.ConsentSnapshot
@@ -219,6 +218,9 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 	override fun presentConsentPrompt(privacyPolicyURL: String, promise: Promise) = presentNative(false, privacyPolicyURL, promise)
 	override fun presentPreferences(privacyPolicyURL: String, promise: Promise) = presentNative(true, privacyPolicyURL, promise)
 	private fun presentNative(preferences: Boolean, privacyPolicyURL: String, promise: Promise) {
+		if (!C15tNativeUi.AVAILABLE) {
+			promise.reject(C15tPayload.REJECT_NATIVE_UI_EXCLUDED, C15tPayload.MESSAGE_NATIVE_UI_EXCLUDED); return
+		}
 		if (!ensureCore()) { promise.reject(REJECT_NOT_BOOTSTRAPPED, C15tPayload.MESSAGE_NOT_BOOTSTRAPPED); return }
 		context.runOnUiQueueThread {
 			val activity = context.currentActivity
@@ -226,19 +228,14 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			if (activity == null || activity.isFinishing || core == null) {
 				promise.reject("C15T_PRESENTER_UNAVAILABLE", "Native presenter needs an active Activity and installed core"); return@runOnUiQueueThread
 			}
-			try {
-				val session = ConsentHost.present(activity, core, preferences, privacyPolicyURL, owner = this) {
-					publish("onConsentPresenterOutcome", C15tPayload.consentHostOutcome(it))
-				}
-				promise.resolve(C15tPayload.consentHostSession(session))
-			}
+			try { promise.resolve(C15tNativeUi.present(activity, core, preferences, privacyPolicyURL, owner = this) { publish("onConsentPresenterOutcome", it) }) }
 			// The host refuses the URL before it touches any UI. Retrying the same URL cannot help.
 			catch (error: IllegalArgumentException) { promise.reject("C15T_PRESENTER_INVALID_URL", error.message, error) }
 			catch (error: Exception) { promise.reject("C15T_PRESENTER_UNAVAILABLE", error.message, error) }
 		}
 	}
 	override fun closeConsentPresenter(sessionId: String, promise: Promise) {
-		context.runOnUiQueueThread { ConsentHost.close(sessionId); promise.resolve(null) }
+		context.runOnUiQueueThread { C15tNativeUi.close(sessionId); promise.resolve(null) }
 	}
 
 	override fun addListener(eventName: String) {
@@ -251,7 +248,7 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 
 	/** Drop the core subscriptions when React tears this module down. */
 	override fun invalidate() {
-		context.runOnUiQueueThread { ConsentHost.detach(this) }
+		context.runOnUiQueueThread { C15tNativeUi.detach(this) }
 		snapshotSubscription?.close()
 		errorSubscription?.close()
 		snapshotSubscription = null

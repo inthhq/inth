@@ -368,6 +368,16 @@ export interface C15tPluginProps {
 	 * Omit it to leave those keys to the app.
 	 */
 	theme?: C15tThemePluginProps;
+	/**
+	 * `false` builds without the stock native consent screens, for an app that
+	 * renders its own consent UI with the headless hooks. The iOS pod drops the
+	 * SwiftUI screens and the Android build drops `c15t-consent-ui`;
+	 * `presentConsentPrompt` and `presentPreferences` reject with
+	 * `C15T_NATIVE_UI_EXCLUDED`. Cannot be combined with `theme`.
+	 *
+	 * @defaultValue true
+	 */
+	nativeUI?: boolean;
 }
 
 /** Validated parameters, with defaults applied. */

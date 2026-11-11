@@ -60,6 +60,7 @@ import type {
 	NativeEventsLike,
 } from './module';
 import { C15tProtocolMismatchError } from './protocol-mismatch-error';
+import { watchWithoutNativeUI } from './without-native-ui';
 
 /**
  * Read one field out of a snapshot.
@@ -487,8 +488,13 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 
 	warnBridgeDrift('bootstrap', parsed);
 
-	const { commitRevision, hasStoredSnapshot, protocolVersion, subjectId } =
-		parsed as Record<string, unknown>;
+	const {
+		commitRevision,
+		hasStoredSnapshot,
+		nativeUI,
+		protocolVersion,
+		subjectId,
+	} = parsed as Record<string, unknown>;
 
 	if (typeof protocolVersion !== 'number') {
 		// A native build that reports no version predates the handshake, which
@@ -514,6 +520,12 @@ const parseBootstrap = function parseBootstrap(raw: string): BootstrapPayload {
 			protocolVersion
 		),
 		nativeSdkVersion: readString(parsed, 'nativeSdkVersion', 'unknown'),
+		// Only a boolean from the binary counts. An older binary sends nothing, and
+		// ADDITIVE_BOOTSTRAP_DEFAULTS says what that means: the screens are linked.
+		nativeUI:
+			typeof nativeUI === 'boolean'
+				? nativeUI
+				: ADDITIVE_BOOTSTRAP_DEFAULTS.nativeUI,
 		protocolVersion,
 		subjectId: typeof subjectId === 'string' ? subjectId : null,
 	};
@@ -891,7 +903,10 @@ export const createConsentClient = function createConsentClient(
 		return afterMutation(Promise.resolve(result));
 	};
 
-	return {
+	/** Stops the checks a build without the stock native screens runs. */
+	let stopWatching = (): void => undefined;
+
+	const api: ConsentClient = {
 		bootstrap,
 		commit,
 		decision: (category: AllConsentNames) =>
@@ -905,6 +920,7 @@ export const createConsentClient = function createConsentClient(
 			}
 		},
 		dispose: (): void => {
+			stopWatching();
 			stopListening();
 			trackingSubscribers.clear();
 		},
@@ -972,6 +988,14 @@ export const createConsentClient = function createConsentClient(
 			};
 		},
 	};
+
+	// Without the stock screens nothing else can collect consent, so say when
+	// nothing will.
+	if (!bootstrap.nativeUI) {
+		stopWatching = watchWithoutNativeUI(api, isProduction());
+	}
+
+	return api;
 };
 
 /**

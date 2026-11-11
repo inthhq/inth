@@ -61,6 +61,7 @@ class C15tPayloadTest {
 			"nothing was stored, so the handshake must not claim a cached snapshot",
 			payload["hasStoredSnapshot"]!!.jsonPrimitive.boolean,
 		)
+		assertTrue("this build links the stock screens", payload["nativeUI"]!!.jsonPrimitive.boolean)
 		assertFalse("the handshake carries the version, not the snapshot", payload.containsKey("effectivePermissions"))
 
 		val snapshot = parse(C15tPayload.snapshot(kernel.snapshot()))
@@ -623,15 +624,15 @@ class C15tPayloadTest {
 	fun `consent host answers encode as the presenter session JSON reads them`() {
 		assertEquals(
 			"{\"sessionId\":\"one\",\"status\":\"presented\",\"presentation\":\"prompt\"}",
-			C15tPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
+			C15tHostPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
 		)
 		assertEquals(
 			"{\"sessionId\":\"one\",\"status\":\"already-presented\",\"presentation\":\"preferences\"}",
-			C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
+			C15tHostPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
 		)
 		assertEquals(
 			"{\"sessionId\":null,\"status\":\"not-required\"}",
-			C15tPayload.consentHostSession(ConsentHostSession.NotRequired),
+			C15tHostPayload.consentHostSession(ConsentHostSession.NotRequired),
 		)
 	}
 
@@ -646,7 +647,7 @@ class C15tPayloadTest {
 		for ((kind, outcome) in kinds) {
 			assertEquals(
 				"{\"sessionId\":\"one\",\"kind\":\"$kind\",\"revision\":4}",
-				C15tPayload.consentHostOutcome(outcome),
+				C15tHostPayload.consentHostOutcome(outcome),
 			)
 		}
 	}

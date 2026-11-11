@@ -1,8 +1,5 @@
 package com.c15t.reactnative
 
-import com.c15t.consentui.ConsentHostOutcome
-import com.c15t.consentui.ConsentHostPresentation
-import com.c15t.consentui.ConsentHostSession
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
 import com.c15t.core.ConsentCore
@@ -142,8 +139,14 @@ object C15tPayload {
 			put("hasStoredSnapshot", hasStoredSnapshot)
 			// This build passes a commit's `revision` to the core as `expectedRevision`.
 			put("commitRevision", true)
+			put("nativeUI", C15tNativeUi.AVAILABLE)
 		},
 	)
+
+	/** What a presenter call rejects with in a build without the stock consent screens. */
+	const val REJECT_NATIVE_UI_EXCLUDED = "C15T_NATIVE_UI_EXCLUDED"
+	const val MESSAGE_NATIVE_UI_EXCLUDED =
+		"This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks."
 
 	/**
 	 * The `ConsentSnapshot` wire form.
@@ -360,53 +363,6 @@ object C15tPayload {
 			put("dirty", true)
 			put("ready", true)
 			put("policyPending", false)
-		},
-	)
-
-	/**
-	 * The answer to `presentConsentPrompt` and `presentPreferences`, in the
-	 * `ConsentPresenterSession` shape `src/native/presenter.ts` reads.
-	 */
-	fun consentHostSession(session: ConsentHostSession): String = encode(
-		buildJsonObject {
-			when (session) {
-				is ConsentHostSession.Presented -> {
-					put("sessionId", session.sessionId)
-					put("status", "presented")
-					put("presentation", presentation(session.presentation))
-				}
-				is ConsentHostSession.AlreadyPresented -> {
-					put("sessionId", session.sessionId)
-					put("status", "already-presented")
-					put("presentation", presentation(session.presentation))
-				}
-				ConsentHostSession.NotRequired -> {
-					put("sessionId", JsonNull)
-					put("status", "not-required")
-				}
-			}
-		},
-	)
-
-	private fun presentation(value: ConsentHostPresentation): String = when (value) {
-		ConsentHostPresentation.PROMPT -> "prompt"
-		ConsentHostPresentation.PREFERENCES -> "preferences"
-	}
-
-	/** An `onConsentPresenterOutcome` event, in the `ConsentPresenterOutcome` shape. */
-	fun consentHostOutcome(outcome: ConsentHostOutcome): String = encode(
-		buildJsonObject {
-			put("sessionId", outcome.sessionId)
-			put(
-				"kind",
-				when (outcome) {
-					is ConsentHostOutcome.Committed -> "committed"
-					is ConsentHostOutcome.Acknowledged -> "acknowledged"
-					is ConsentHostOutcome.Dismissed -> "dismissed"
-					is ConsentHostOutcome.Unavailable -> "unavailable"
-				},
-			)
-			put("revision", outcome.revision)
 		},
 	)
 

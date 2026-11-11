@@ -21,8 +21,8 @@ is being prepared.
 
 Swift and Kotlin apps can use the core and platform services without the stock
 UI. React Native apps can draw their own prompt, category preferences and IAB
-screens with the hooks and the draft API, although the current RN package still
-links the native presenter.
+screens with the hooks and the draft API, and can leave the native presenter out
+of the build.
 
 ## Obtain the matching artifacts
 
@@ -57,10 +57,12 @@ country during native builds.
 
 An RN app can draw its own banner, category preferences and IAB screens with
 `ConsentPrompt`, the draft API and the IAB hooks; see
-[Build your own UI](/docs/frameworks/react-native/headless). An RN build that
-leaves out the stock native UI is not in this release. RN apps that need IAB
-publisher restrictions or custom purposes still use app-owned native
-installation.
+[Build your own UI](/docs/frameworks/react-native/headless). It can also build
+without the stock native UI, with `nativeUI: false` in the Expo plugin or
+`c15t.nativeUI=false` in a bare app; see
+[Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
+RN apps that need IAB publisher restrictions or custom purposes still use
+app-owned native installation.
 
 The [IAB guide](/docs/guides/mobile-iab) explains both setups. Build vendor
 decisions with the IAB hooks or the stock presenter, never from the category

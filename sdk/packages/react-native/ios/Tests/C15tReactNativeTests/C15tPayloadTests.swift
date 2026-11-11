@@ -15,6 +15,7 @@ final class C15tPayloadTests: XCTestCase {
         XCTAssertEqual(payload["maxSupportedProtocolVersion"] as? Int, 1)
         XCTAssertEqual(payload["subjectId"] as? String, "sub-1")
         XCTAssertEqual(payload["hasStoredSnapshot"] as? Bool, true)
+        XCTAssertEqual(payload["nativeUI"] as? Bool, true, "a default build links the stock screens")
         XCTAssertNotNil(payload["nativeSdkVersion"] as? String, "the handshake must name the SDK version")
     }
 

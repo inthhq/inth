@@ -155,8 +155,22 @@ public enum C15tPayload {
             "hasStoredSnapshot": .bool(hasStoredSnapshot),
             // This build passes a commit's `revision` to the core as `expectedRevision`.
             "commitRevision": .bool(true),
+            "nativeUI": .bool(nativeUI),
         ])
     }
+
+    /// Whether this build links the stock consent screens. A build with `c15t.nativeUI`
+    /// false compiles with `C15T_NO_NATIVE_UI` and leaves them out.
+    #if C15T_NO_NATIVE_UI
+    public static let nativeUI = false
+    #else
+    public static let nativeUI = true
+    #endif
+
+    /// What a presenter call rejects with in a build without the stock consent screens.
+    public static let nativeUIExcludedCode = "C15T_NATIVE_UI_EXCLUDED"
+    public static let nativeUIExcludedMessage =
+        "This build leaves out the stock consent screens (c15t.nativeUI is false). Render your own consent UI with the headless hooks."
 
     /// The `ConsentSnapshot` wire form.
     ///

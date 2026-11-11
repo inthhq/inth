@@ -45,6 +45,8 @@
 		"android/c15t-react-native/consumer-rules.pro",
 		"android/c15t-react-native/library.gradle",
 		"android/c15t-react-native/src/main",
+		"android/c15t-react-native/src/nativeUi",
+		"android/c15t-react-native/src/withoutNativeUi",
 		"android/codegen/generate-spec.mjs",
 		"ios/C15tReactNative",
 		"vendor/C15tCore",

@@ -330,6 +330,8 @@ describe('CI selection', () => {
 			'packages/react-native/ios/C15tReactNative/Bridge/Wire.swift',
 			'packages/react-native/C15tReactNative.podspec',
 			'packages/react-native/Package.swift',
+			// Prebuild output: the plugin writes what `pod install` and Gradle read.
+			'packages/react-native/src/expo-plugin/native-ui.ts',
 		];
 		for (const file of device) {
 			expect(plan([file]).mobileBrowserOrDevice, file).toBe(true);

@@ -120,10 +120,12 @@ export const withAdditiveSnapshotDefaults =
  * Bootstrap keys added after protocol version 1 shipped, with what an older native
  * build means by leaving them out: the same additive rule as the snapshot keys.
  * A binary before `commitRevision` ignores a commit's `revision`, so it cannot be
- * trusted to refuse a draft built on an older snapshot.
+ * trusted to refuse a draft built on an older snapshot. Every binary before
+ * `nativeUI` linked the stock native screens.
  */
 export const ADDITIVE_BOOTSTRAP_DEFAULTS = {
 	commitRevision: false,
+	nativeUI: true,
 } as const;
 
 /**

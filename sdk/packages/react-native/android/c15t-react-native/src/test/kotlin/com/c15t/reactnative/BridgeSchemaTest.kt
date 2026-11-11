@@ -80,11 +80,11 @@ class BridgeSchemaTest {
 			"snapshotEvent" to C15tPayload.snapshotEvent(3),
 			"initializedEvent" to C15tPayload.initializedEvent(3),
 			"errorEvent" to C15tPayload.errorEvent(KernelError("transport-unavailable", "offline")),
-			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
-			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
-			"presenterSession" to C15tPayload.consentHostSession(ConsentHostSession.NotRequired),
-			"presenterOutcome" to C15tPayload.consentHostOutcome(ConsentHostOutcome.Committed("one", 4)),
-			"presenterOutcome" to C15tPayload.consentHostOutcome(ConsentHostOutcome.Unavailable("one", 4)),
+			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.Presented("one", ConsentHostPresentation.PROMPT)),
+			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.AlreadyPresented("one", ConsentHostPresentation.PREFERENCES)),
+			"presenterSession" to C15tHostPayload.consentHostSession(ConsentHostSession.NotRequired),
+			"presenterOutcome" to C15tHostPayload.consentHostOutcome(ConsentHostOutcome.Committed("one", 4)),
+			"presenterOutcome" to C15tHostPayload.consentHostOutcome(ConsentHostOutcome.Unavailable("one", 4)),
 		)
 
 		val problems = samples.flatMap { (name, raw) ->

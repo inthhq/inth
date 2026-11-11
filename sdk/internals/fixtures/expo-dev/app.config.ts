@@ -127,7 +127,9 @@ const c15tPluginProps: C15tPluginProps = {
 			? 'hosted'
 			: 'selfHosted',
 	policyResource: process.env.C15T_E2E_POLICY ?? './c15t-policy.json',
-	theme,
+	// `C15T_NATIVE_UI=0` builds without the stock native consent screens; the app
+	// then draws its own with the headless hooks (src/screens/headless.tsx).
+	...(process.env.C15T_NATIVE_UI === '0' ? { nativeUI: false } : { theme }),
 	trackingMarkdownUsageDescription,
 	trackingMarkdownUsageDescriptionLocalizations,
 	trackingUsageDescription,

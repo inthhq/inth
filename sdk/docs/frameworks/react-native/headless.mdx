@@ -28,9 +28,10 @@ Your custom flow is then responsible for showing an owed prompt and keeping
 preferences reachable. `presentConsentPrompt` and `presentPreferences` still
 open the native screens when you call them.
 
-Headless hooks are included in `@c15t/react-native`. The package still links
-the stock native UI. A separate UI-free RN distribution is deferred; see
-[mobile availability](/docs/guides/mobile-status).
+Headless hooks are included in `@c15t/react-native`. By default the build
+also links the stock native screens. An app that draws all of its consent UI
+can leave them out; see
+[Build without the stock native screens](#build-without-the-stock-native-screens).
 
 ## Read one permission
 
@@ -234,12 +235,52 @@ It is for features that require both. It does not ask for authorization.
 | `useIdentify()` | Attach an external id from your account system. |
 | `useSetOverrides()` | Pin country, region, language or GPC for testing. |
 | `useConsentActions()` | Stable `refresh`, `logout`, `reset` and `requestTrackingAuthorization` commands. |
-| `useC15tBootstrap()` | The native protocol and subject bootstrap payload. |
+| `useC15tBootstrap()` | The native protocol and subject bootstrap payload, and `nativeUI`, whether the stock native screens are linked. |
 | `ConsentGate` | Render-prop content for an allowed category, with an optional fallback. |
 | `ConsentReady` | Render-prop content after native readiness and policy resolution. |
 | `ConsentPrompt` | Your initial prompt while an interaction is owed. |
 | `useTrackingAuthorization()` | The separate platform tracking status. |
 | `useIsTrackingAllowed(category)` | A category permission combined with platform tracking authorization. |
+
+## Build without the stock native screens
+
+When your app draws its banner, preferences and IAB screens with the hooks
+above, leave the SwiftUI and Compose screens out of the binary. In Expo, set
+`nativeUI: false` in the config plugin options:
+
+{/* example: fragment */}
+
+```ts title="app.config.ts plugin options"
+nativeUI: false,
+```
+
+Prebuild then writes `c15t.nativeUI` as `false` to `ios/Podfile.properties.json`
+and `android/gradle.properties`. In a bare app, add `c15t.nativeUI=false` to
+`android/gradle.properties`, and either add `"c15t.nativeUI": "false"` to
+`ios/Podfile.properties.json` or run `C15T_NATIVE_UI=0 pod install`. Run
+`pod install` and rebuild both apps after changing it.
+
+The iOS pod then compiles without the SwiftUI screens, and the Android build
+drops the `c15t-consent-ui` dependency. The consent engine, IAB encoding,
+storage and SDK gates stay. `useC15tBootstrap().nativeUI` reads `false`, and
+`presentConsentPrompt` and `presentPreferences` reject with
+`C15T_NATIVE_UI_EXCLUDED`. Check that value before anything asks native to
+present a screen. The plugin refuses `nativeUI: false` together with `theme`,
+because the theme would style screens the build leaves out; pass that object to
+`createConsentTheme` instead.
+
+Your app must then show the owed prompt itself, for example with
+`ConsentPrompt`, and keep a privacy settings entry that opens your own
+preferences screen. In development, if a prompt has been owed for three
+seconds and no `ConsentPrompt` or `ConsentBanner` is mounted, the SDK logs a
+warning. If your app renders its prompt another way, wrap it in
+`ConsentPrompt`.
+
+Under a TCF policy, a build without the stock screens can collect IAB consent
+only where headless IAB works: without publisher restrictions or Additional
+Consent providers. With either one, the SDK reports a `console.error` at
+startup naming the reason, in every build, and no TCF decision can be
+collected. Keep the stock screens for those configurations.
 
 ## Check the custom flow
 
