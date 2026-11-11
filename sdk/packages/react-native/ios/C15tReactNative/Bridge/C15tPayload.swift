@@ -376,6 +376,14 @@ public enum C15tPayload {
         return encode(fields)
     }
 
+    /// Read `requestTrackingAuthorizationWithOptions`'s JSON options. Anything unreadable
+    /// asks for no Additional Information button.
+    public static func trackingRequestOffersAdditionalInformation(_ options: String) -> Bool {
+        guard let data = options.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
+        return object["additionalInformation"] as? Bool == true
+    }
+
     /// The `TrackingRequestPayload` a tracking request resolves with.
     ///
     /// `status` always travels, and it is Apple's arm unchanged. The two extra fields tell a
@@ -390,14 +398,6 @@ public enum C15tPayload {
     ///
     /// Both fields are additions to a payload older Swift builds already send, so a reader
     /// that predates them still finds the one field it knows.
-    /// Read `requestTrackingAuthorizationWithOptions`'s JSON options. Anything unreadable
-    /// asks for no Additional Information button.
-    public static func trackingRequestOffersAdditionalInformation(_ options: String) -> Bool {
-        guard let data = options.data(using: .utf8),
-              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return false }
-        return object["additionalInformation"] as? Bool == true
-    }
-
     public static func trackingRequestResult(
         _ result: C15tTrackingRequestResult
     ) -> String {

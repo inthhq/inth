@@ -42,6 +42,7 @@ import type {
 	ConsentSnapshot,
 	NativeEventName,
 	NativeOverridesInput,
+	NativeTrackingRequestOptions,
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
@@ -895,7 +896,9 @@ export const createConsentClient = function createConsentClient(
 			outcome = parseTrackingRequest(
 				withOptions
 					? await nativeModule.requestTrackingAuthorizationWithOptions(
-							JSON.stringify({ additionalInformation: true })
+							JSON.stringify({
+								additionalInformation: true,
+							} satisfies NativeTrackingRequestOptions)
 						)
 					: await nativeModule.requestTrackingAuthorization()
 			);

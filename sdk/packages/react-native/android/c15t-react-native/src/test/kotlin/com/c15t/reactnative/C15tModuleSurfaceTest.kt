@@ -51,7 +51,7 @@ class C15tModuleSurfaceTest {
 		}
 		assertEquals(
 			"the spec declares no method the bridge does not implement",
-			14,
+			15,
 			declared.size,
 		)
 	}

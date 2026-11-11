@@ -155,6 +155,18 @@ final class C15tBridgeSchemaTests: XCTestCase {
         }
     }
 
+    func testTheTrackingOptionsDecoderReadsTheKeysTheSchemaDeclares() throws {
+        var document: [String: Any] = [:]
+        for key in try fields("trackingRequestOptions").keys {
+            switch key {
+            case "additionalInformation": document[key] = true
+            default: XCTFail("trackingRequestOptions.\(key) has no sample here; add one")
+            }
+        }
+        XCTAssertTrue(C15tPayload.trackingRequestOffersAdditionalInformation(try encode(document)))
+        XCTAssertFalse(C15tPayload.trackingRequestOffersAdditionalInformation("{}"))
+    }
+
     func testAnIntentThatNamesAScopeIsRefusedNotWidened() {
         // Dropping `categories` would apply "all" to the whole choice scope, which is
         // more than a caller that scoped it asked for.

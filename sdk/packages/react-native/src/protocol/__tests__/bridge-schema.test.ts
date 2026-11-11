@@ -44,14 +44,14 @@ describe('native/protocol/bridge/payloads.json', () => {
 		expect(onDisk).toEqual(renderBridgeSchema());
 	});
 
-	test('marks the two payloads JavaScript sends', () => {
+	test('marks the three payloads JavaScript sends', () => {
 		const { payloads } = renderBridgeSchema();
 
 		expect(
 			Object.entries(payloads)
 				.filter(([, payload]) => payload.direction === 'js-to-native')
 				.map(([name]) => name)
-		).toEqual(['commitIntent', 'overridesInput']);
+		).toEqual(['commitIntent', 'overridesInput', 'trackingRequestOptions']);
 	});
 });
 
@@ -210,6 +210,7 @@ describe('describeBridgePayloadDrift', () => {
 			'snapshotEvent',
 			'trackingAuthorization',
 			'trackingRequest',
+			'trackingRequestOptions',
 		]);
 	});
 });

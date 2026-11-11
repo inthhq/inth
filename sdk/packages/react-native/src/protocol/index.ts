@@ -37,6 +37,7 @@ export { defaultNativeOverrides } from './overrides';
 export type {
 	TrackingAuthorization,
 	TrackingAuthorizationPayload,
+	NativeTrackingRequestOptions,
 	TrackingPresentation,
 	TrackingRequestPayload,
 	TrackingRequestStage,

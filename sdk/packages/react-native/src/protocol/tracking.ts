@@ -59,6 +59,17 @@ export interface TrackingAuthorizationPayload {
 }
 
 /**
+ * The JSON options `requestTrackingAuthorizationWithOptions` takes.
+ *
+ * `additionalInformation: true` asks Apple to show the Additional Information
+ * button on its EU sheet, for a caller that handles the tap. Absent or anything
+ * else, the sheet shows no button.
+ */
+export interface NativeTrackingRequestOptions {
+	readonly additionalInformation?: boolean;
+}
+
+/**
  * Whether a tracking request settled or only paused.
  *
  * `additional-information` is Apple's European Union sheet closing because the subject

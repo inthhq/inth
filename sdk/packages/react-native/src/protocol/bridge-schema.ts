@@ -219,6 +219,9 @@ export const BRIDGE_PAYLOADS = {
 		stage: { enum: TRACKING_REQUEST_STAGES },
 		status: { enum: TRACKING_AUTHORIZATION_STATUSES },
 	},
+	trackingRequestOptions: {
+		additionalInformation: 'boolean?',
+	},
 } as const satisfies Readonly<Record<string, BridgeFields>>;
 
 /** The name of one bridge payload. */
@@ -228,6 +231,7 @@ export type BridgePayloadName = keyof typeof BRIDGE_PAYLOADS;
 export const JS_TO_NATIVE_PAYLOADS = [
 	'commitIntent',
 	'overridesInput',
+	'trackingRequestOptions',
 ] as const satisfies readonly BridgePayloadName[];
 
 /** The explicit form of a field, as `payloads.json` carries it. */

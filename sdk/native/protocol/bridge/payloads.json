@@ -603,6 +603,16 @@
 					]
 				}
 			}
+		},
+		"trackingRequestOptions": {
+			"direction": "js-to-native",
+			"fields": {
+				"additionalInformation": {
+					"nullable": false,
+					"required": false,
+					"type": "boolean"
+				}
+			}
 		}
 	}
 }

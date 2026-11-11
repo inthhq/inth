@@ -25,6 +25,7 @@ import type { NativeInitializedEvent, NativeSnapshotEvent } from '../events';
 import type { NativeOverridesInput } from '../overrides';
 import type { ConsentSnapshot, NativeSnapshotError } from '../snapshot';
 import type {
+	NativeTrackingRequestOptions,
 	TrackingAuthorizationPayload,
 	TrackingRequestPayload,
 } from '../tracking';
@@ -201,6 +202,9 @@ expectTypeOf<
 >().toEqualTypeOf<true>();
 expectTypeOf<
 	Matches<TrackingRequestPayload, Schema['trackingRequest']>
+>().toEqualTypeOf<true>();
+expectTypeOf<
+	Matches<NativeTrackingRequestOptions, Schema['trackingRequestOptions']>
 >().toEqualTypeOf<true>();
 
 // The checker itself: a field the table calls an object must reject an array, or a
