@@ -29,6 +29,7 @@ import { emitNativeEvent, setNativeModule } from './react-native-stub';
 
 /** Handshake payload the fake module reports by default. */
 export const FAKE_BOOTSTRAP = {
+	commitRevision: true,
 	hasStoredSnapshot: true,
 	maxSupportedProtocolVersion: 1,
 	minSupportedProtocolVersion: 1,

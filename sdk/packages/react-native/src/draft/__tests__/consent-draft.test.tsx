@@ -104,7 +104,7 @@ describe('useConsentDraft', () => {
 
 		expect(result.ok).toBe(true);
 		expect(fake.commitIntents).toEqual([
-			'{"action":"explicit","consents":{"measurement":false,"marketing":true}}',
+			'{"action":"explicit","consents":{"measurement":false,"marketing":true},"revision":0}',
 		]);
 	});
 
@@ -222,7 +222,7 @@ describe('useConsentDraft', () => {
 		await flushPromises();
 
 		expect(fake.commitIntents).toEqual([
-			'{"action":"explicit","consents":{"measurement":true,"marketing":false}}',
+			'{"action":"explicit","consents":{"measurement":true,"marketing":false},"revision":0}',
 		]);
 	});
 
@@ -247,7 +247,7 @@ describe('useConsentDraft', () => {
 		await flushPromises();
 
 		expect(fake.commitIntents).toEqual([
-			'{"action":"explicit","consents":{"measurement":true,"marketing":true}}',
+			'{"action":"explicit","consents":{"measurement":true,"marketing":true},"revision":0}',
 		]);
 	});
 
@@ -283,7 +283,7 @@ describe('useConsentDraft', () => {
 		await flushPromises();
 
 		expect(fake.commitIntents).toEqual([
-			'{"action":"explicit","consents":{"measurement":true,"marketing":true}}',
+			'{"action":"explicit","consents":{"measurement":true,"marketing":true},"revision":1}',
 		]);
 	});
 
@@ -346,7 +346,7 @@ describe('useConsentDraft', () => {
 		await handle('screen').save();
 		await flushPromises();
 		expect(fake.commitIntents).toEqual([
-			'{"action":"explicit","consents":{"measurement":false,"marketing":true}}',
+			'{"action":"explicit","consents":{"measurement":false,"marketing":true},"revision":2}',
 		]);
 	});
 
@@ -370,7 +370,7 @@ describe('useConsentDraft', () => {
 
 		expect(fake.commitIntents).toEqual([
 			'{"action":"necessary"}',
-			'{"action":"explicit","consents":{"measurement":false,"marketing":false}}',
+			'{"action":"explicit","consents":{"measurement":false,"marketing":false},"revision":0}',
 		]);
 	});
 
@@ -403,7 +403,7 @@ describe('useConsentDraft', () => {
 		await handle('screen').save();
 		await flushPromises();
 		expect(fake.commitIntents).toEqual([
-			'{"action":"explicit","consents":{"measurement":true,"marketing":true}}',
+			'{"action":"explicit","consents":{"measurement":true,"marketing":true},"revision":1}',
 		]);
 	});
 

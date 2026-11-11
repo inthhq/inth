@@ -2,6 +2,7 @@ package com.c15t.reactnative
 
 import com.c15t.core.CommitIntent
 import com.c15t.core.CommitResult
+import com.c15t.core.ConsentCore
 import com.c15t.core.model.ConsentCategory
 import com.c15t.core.model.ConsentSnapshot
 import com.c15t.core.model.KernelError
@@ -18,6 +19,7 @@ import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
 
 /**
@@ -131,6 +133,8 @@ object C15tPayload {
 			put("nativeSdkVersion", sdkVersion)
 			putElement("subjectId", snapshot.subject?.id)
 			put("hasStoredSnapshot", hasStoredSnapshot)
+			// This build passes a commit's `revision` to the core as `expectedRevision`.
+			put("commitRevision", true)
 		},
 	)
 
@@ -294,6 +298,28 @@ object C15tPayload {
 	 * answers [REASON_INVALID_INTENT]. A commit is evidence, so a malformed one is
 	 * refused rather than rounded to the nearest action.
 	 */
+	/**
+	 * Apply a `commit(intent)` body to [core] and encode the result.
+	 *
+	 * A draft names the snapshot revision it was built on, and the core refuses the
+	 * commit with `concurrent-change` if the record moved since: JavaScript reads a
+	 * cached snapshot, so only this check can see a decision recorded in between. A
+	 * `revision` that is not a whole number is refused as `invalid-intent` rather than
+	 * saved unchecked.
+	 *
+	 * @param raw the JSON intent from `commit`.
+	 * @param core the bootstrapped core.
+	 * @return the `CommitResult` JSON.
+	 */
+	fun commit(raw: String?, core: ConsentCore): String {
+		val parsed = parseCommitIntent(raw) ?: return invalidIntent(raw)
+		val revision = when (val value = parseObject(raw)?.get("revision")) {
+			null -> null
+			else -> (value as? JsonPrimitive)?.takeIf { !it.isString }?.longOrNull ?: return invalidIntent(raw)
+		}
+		return commitResult(core.save(parsed, expectedRevision = revision), core.snapshot())
+	}
+
 	fun parseCommitIntent(raw: String?): CommitIntent? {
 		val body = parseObject(raw) ?: return null
 		return when (optString(body["action"])) {

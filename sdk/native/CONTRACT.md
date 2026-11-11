@@ -902,6 +902,14 @@ New Architecture only. TurboModule plus Codegen, no legacy bridge, no
     addListener(eventName): void              // RNEventEmitter spec
     removeListeners(count): void
 
+A commit intent may carry `revision`, the snapshot revision a draft was built on.
+The bridge passes it to `save` as `expectedRevision`, so the core refuses the commit
+with `concurrent-change` if anything was recorded since; JavaScript reads a cached
+snapshot, and only this check can see a decision made in between. A `revision` that
+is not a whole number is `invalid-intent`. `getBootstrap()` reports
+`commitRevision: true` from builds that do this; `ADDITIVE_BOOTSTRAP_DEFAULTS` reads
+an older binary as `false`, and the draft then saves unpinned.
+
 Events: `snapshot`, `error`, `initialized`. The payload is a JSON string. The
 module never sends a snapshot the JavaScript side already holds: it emits the new
 `revision` and JavaScript pulls with `getSnapshot()` only when a mounted

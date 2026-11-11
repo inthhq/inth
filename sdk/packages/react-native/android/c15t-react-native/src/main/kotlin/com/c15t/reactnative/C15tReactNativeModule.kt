@@ -96,13 +96,13 @@ class C15tReactNativeModule(appContext: ReactApplicationContext) : NativeC15tSpe
 			promise.resolve(C15tPayload.invalidIntent(intent))
 			return
 		}
-		if (!ensureCore()) {
+		val core = if (ensureCore()) C15t.current else null
+		if (core == null) {
 			promise.resolve(C15tPayload.notBootstrapped())
 			return
 		}
 		try {
-			val result = C15t.save(parsed)
-			promise.resolve(C15tPayload.commitResult(result, C15t.snapshot()))
+			promise.resolve(C15tPayload.commit(intent, core))
 		} catch (error: Exception) {
 			promise.reject(REJECT_COMMIT, error.message, error)
 		}

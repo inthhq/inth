@@ -32,6 +32,12 @@ export type CommitIntent =
 			readonly consents: Readonly<
 				Partial<Record<OptionalConsentCategory, boolean>>
 			>;
+			/**
+			 * The snapshot revision a draft was built on. A native build whose
+			 * bootstrap reports `commitRevision` refuses the commit with
+			 * `concurrent-change` when the record moved since; an older one ignores it.
+			 */
+			readonly revision?: number;
 			readonly categories?: readonly AllConsentNames[];
 	  };
 

@@ -63,6 +63,16 @@ export const SNAPSHOT_KEYS = [
 ] as const;
 
 /**
+ * Bootstrap keys added after protocol version 1 shipped, with what an older native
+ * build means by leaving them out: the same additive rule as the snapshot keys.
+ * A binary before `commitRevision` ignores a commit's `revision`, so it cannot be
+ * trusted to refuse a draft built on an older snapshot.
+ */
+export const ADDITIVE_BOOTSTRAP_DEFAULTS = {
+	commitRevision: false,
+} as const;
+
+/**
  * The five objects whose key names come from `@c15t/core` and are not a native
  * implementation detail. Names inside a core, and names inside a stored envelope,
  * stay the core's own business.

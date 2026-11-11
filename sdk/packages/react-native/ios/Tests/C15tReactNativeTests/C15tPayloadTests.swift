@@ -222,6 +222,36 @@ final class C15tPayloadTests: XCTestCase {
         }
     }
 
+    func testACommitBuiltOnAnOlderRevisionIsRefusedAndChangesNothing() throws {
+        let core = ConsentCore()
+        core.bootstrap(CoreConfig(store: InMemoryStore()))
+        let current = core.snapshot().revision
+        let before = try JSONEncoder().encode(core.snapshot())
+
+        XCTAssertEqual(
+            jsonObject(C15tPayload.bootstrap(snapshot: core.snapshot(), hasStoredSnapshot: false))["commitRevision"] as? Bool,
+            true, "the binary says it checks a commit's revision")
+        let stale = jsonObject(C15tPayload.commit(
+            #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current - 1)}"#, core: core))
+        XCTAssertEqual(stale["ok"] as? Bool, false)
+        XCTAssertEqual(stale["reason"] as? String, "concurrent-change")
+        XCTAssertEqual(try JSONEncoder().encode(core.snapshot()), before, "a refused draft must not touch the record")
+
+        for raw in [
+            #"{"action":"explicit","consents":{"marketing":true},"revision":"\#(current)"}"#,
+            #"{"action":"explicit","consents":{"marketing":true},"revision":null}"#,
+            #"{"action":"explicit","consents":{"marketing":true},"revision":1.5}"#,
+        ] {
+            XCTAssertEqual(jsonObject(C15tPayload.commit(raw, core: core))["reason"] as? String, "invalid-intent",
+                "a revision that is not a whole number is not ignored: \(raw)")
+        }
+        XCTAssertEqual(try JSONEncoder().encode(core.snapshot()), before)
+
+        let pinned = jsonObject(C15tPayload.commit(
+            #"{"action":"explicit","consents":{"marketing":true},"revision":\#(current)}"#, core: core))
+        XCTAssertNotEqual(pinned["reason"] as? String, "concurrent-change", "the current revision passes the check")
+    }
+
     func testCommitResultDistinguishesRejectedFromCommitted() {
         let snapshot = ConsentSnapshot(subject: SubjectSnapshot(id: "sub-1", externalId: nil))
         let committed = CommitResult(
